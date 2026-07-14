@@ -185,10 +185,38 @@ harness. Repository-specific tasks remain in their own project ledgers.
     `~/.local/bin/harness`. An isolated-home install test passed, the live local
     link resolves to the tracked command, and the live local doctor reports
     zero failures and zero warnings. No remote file has been changed.
-  - Next executable action: feed `harness inventory --host HOST` to Bash over
+  - Next executable action: feed `harness inventory --host HOST` to `sh` over
     each of the six existing SSH connections without creating remote files.
     Replace partial fixtures with the resulting value-free facts and generate
     exact host plans for review.
+
+  Read-only remote plan checkpoint (2026-07-14):
+
+  - Streamed the self-contained inventory script over stdin to `sh` on all six
+    targets. Every command exited successfully and created no remote file.
+    Replaced the partial fixtures with the complete allowlisted fact streams.
+  - All six profiles pass doctor with zero required failures. Warning totals
+    reflect only the absent harness/discovery links and selected tools: `ab`
+    13, `ab2` 13, `ai4s` 16, `al` 15, `rc` 14, and `t4` 15.
+  - Planned tool additions are:
+    - `ab`, `ab2`: ripgrep, htop, `uv`, Node/npm, Codex, Claude, lftp,
+      Tectonic; retain existing rclone;
+    - `ai4s`: ripgrep, tree, htop, SQLite, `uv`, Node/npm, Codex, Claude,
+      rclone, lftp, Tectonic;
+    - `al`: tmux, ripgrep, SQLite, `uv`, Node/npm, Codex, Claude, rclone,
+      lftp, Tectonic;
+    - `rc`: tmux, ripgrep, `uv`, Node/npm, Codex, Claude, rclone, lftp,
+      Tectonic;
+    - `t4`: ripgrep, tree, htop, `uv`, Node/npm, Codex, Claude, rclone,
+      lftp, Tectonic.
+  - Every target also plans a clean committed harness checkout and the three
+    Codex/Claude discovery links. Startup-file plans remain structural and do
+    not read contents. `al` still emits the known non-interactive `uenv start`
+    error before inventory output; remediate it before installing the common
+    shell hook.
+  - Exact plans are reproducible with `harness plan --host HOST --facts
+    tests/fixtures/HOST.facts`. Await review before implementing apply/rollback
+    or changing any remote file.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

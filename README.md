@@ -39,7 +39,13 @@ harness doctor --host local
 architecture, selected command presence, managed-link state, and shell-startup
 file type. It does not read startup-file contents, arbitrary environment
 values, credentials, histories, projects, or caches. Use `--format json` when
-machine-readable JSON is needed.
+machine-readable JSON is needed. The inventory executable is self-contained and
+can be streamed to an explicit remote POSIX shell without creating a file:
+
+```bash
+ssh HOST 'sh -s -- --host HOST' \
+  < libexec/harness-inventory
+```
 
 `plan` compares current or captured facts with a reviewed logical host profile.
 It is read-only and ends with `remote_changes=none`. `doctor` treats a host or

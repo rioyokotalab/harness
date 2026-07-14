@@ -30,6 +30,8 @@ awk -F= '
 if grep -F "$HOME" "$TEMP_DIR/local.facts" >/dev/null 2>&1; then
     fail "inventory exposed a home path"
 fi
+cut -d= -f1 "$TEMP_DIR/local.facts" | LC_ALL=C sort -u \
+    >"$TEMP_DIR/allowed-keys"
 
 "$HARNESS" inventory --host local --format json >"$TEMP_DIR/local.json"
 python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["schema"] == "1"' \
@@ -38,6 +40,19 @@ python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["sch
 for logical_host in local ab ab2 ai4s al rc t4; do
     fixture=$ROOT/tests/fixtures/$logical_host.facts
     [ -f "$fixture" ] || fail "missing fixture: $logical_host"
+    awk -F= '
+        NF != 2 { exit 1 }
+        $1 !~ /^[A-Za-z0-9_]+$/ { exit 1 }
+        $2 !~ /^[A-Za-z0-9._+-]+$/ { exit 1 }
+    ' "$fixture" || fail "unsafe fixture fact format: $logical_host"
+    cut -d= -f1 "$fixture" | LC_ALL=C sort >"$TEMP_DIR/fixture-keys"
+    if uniq -d "$TEMP_DIR/fixture-keys" | grep . >/dev/null 2>&1; then
+        fail "duplicate fixture fact: $logical_host"
+    fi
+    if comm -23 "$TEMP_DIR/fixture-keys" "$TEMP_DIR/allowed-keys" |
+        grep . >/dev/null 2>&1; then
+        fail "unknown fixture fact: $logical_host"
+    fi
     "$HARNESS" doctor --host "$logical_host" --facts "$fixture" \
         >"$TEMP_DIR/doctor-$logical_host.out" ||
         fail "doctor rejected fixture: $logical_host"
