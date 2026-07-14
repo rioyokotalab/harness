@@ -131,6 +131,10 @@ harness. Repository-specific tasks remain in their own project ledgers.
     resolved command before execution, and reports that command and its result.
     Host profiles may inform command selection, but must not conceal Slurm,
     PBS, or `yrun`/`ybatch` behavior from the user.
+  - Do not clone, update, or mirror project repositories or datasets as part of
+    fleet unification. The user will clone projects manually when needed. The
+    harness may recognize and support an already-present project, but must not
+    create its checkout or synchronize its working data implicitly.
 
   Local tool candidate checkpoint (2026-07-14):
 

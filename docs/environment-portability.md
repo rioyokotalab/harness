@@ -140,6 +140,11 @@ workloads may use Apptainer/Singularity or the site's native container layer;
 the personal harness should only provide discovery and consistent entry
 commands.
 
+Do not clone, update, or mirror project repositories or datasets during fleet
+setup. The user creates project checkouts manually when needed. Harness project
+behavior activates only for an already-present checkout and never synchronizes
+working data implicitly.
+
 Use a clean container environment when reproducibility requires isolation from
 host module variables. GPU and MPI validation remains site-specific because a
 container does not make the host driver, interconnect, or scheduler identical.
