@@ -28,16 +28,17 @@ deployment targets.
 | Logical host | Substrate | Shell/architecture | Site runtime | Harness |
 | --- | --- | --- | --- | --- |
 | current | Ubuntu 24.04 | Bash, x86_64 | modules, Docker/Podman, CUDA, local Slurm/`yrun` commands | installed |
-| `ab`, `ab2` | RHEL 9.4 | Bash, x86_64 | modules, Singularity CE, Podman, CUDA | absent |
-| `ri` | Ubuntu 24.04 | Bash, aarch64 | Slurm, NVIDIA GPU exposure | absent |
-| `al` | SLES 15 SP6 | Bash, aarch64 | uenv/`ml`, Slurm, Docker/Podman, NVIDIA GH200 | absent |
-| `rc` | Rocky 9.8 | Bash, x86_64 | modules, Singularity CE, Slurm | absent |
-| `t4` | RHEL 9.4 | Bash, x86_64 | modules, PBS, Apptainer, CUDA command | absent |
+| `ab`, `ab2` | RHEL 9.4 | Bash, x86_64 | modules, Singularity CE, Podman, CUDA | installed |
+| `ri` | Ubuntu 24.04 | Bash, aarch64 | Slurm, NVIDIA GPU exposure | installed |
+| `al` | SLES 15 SP6 | Bash, aarch64 | uenv/`ml`, Slurm, Docker/Podman, NVIDIA GH200 | installed |
+| `rc` | Rocky 9.8 | Bash, x86_64 | modules, Singularity CE, Slurm | installed |
+| `t4` | RHEL 9.4 | Bash, x86_64 | modules, PBS, Apptainer, CUDA command | installed |
 
 All six in-scope cluster shells have Git, Bash, and Python 3. None had `uv`,
-Node, Nix, Home Manager, or mise in the probed login environment. POSIX shell
-plus Git remains the practical bootstrap floor, keeping recovery independent
-of an optional language runtime.
+Node, Nix, Home Manager, or mise in its initial probed login environment. The
+portable layer has since installed checksum-pinned `uv` and ripgrep artifacts
+on every cluster target. POSIX shell plus Git remains the practical bootstrap
+floor, keeping recovery independent of an optional language runtime.
 
 The excluded aliases receive no harness profile, deployment, shell integration,
 or fleet health check. Connectivity checks for proxies or restricted services

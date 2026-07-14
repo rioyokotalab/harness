@@ -25,7 +25,7 @@ harness. Repository-specific tasks remain in their own project ledgers.
 
   Updated connectivity checkpoint (2026-07-14, current node, 11 aliases):
 
-  - Clean non-interactive remote-command success: `ab`, `ab2`, `ai4s`, `rc`,
+  - Clean non-interactive remote-command success: `ab`, `ab2`, `ri`, `rc`,
     `si`, `t4` (6).
   - `si` remains a known reachable SSH endpoint but is explicitly excluded
     from environment unification, profiles, deployment, and fleet validation.
@@ -84,6 +84,39 @@ harness. Repository-specific tasks remain in their own project ledgers.
     transaction to append its login hook to the first existing Bash login file
     instead of creating a higher-precedence `.bash_profile` that would bypass
     `.profile`.
+
+  `ri` convergence checkpoint (2026-07-14):
+
+  - Added the Ubuntu 24.04/AArch64/Slurm profile and value-free fixture, removed
+    the retired `ai4s` deployable profile/fixture, and taught shell transactions
+    to select Bash's first existing login file. The full phase-1 suite includes
+    isolated `.profile` apply/rollback coverage and passes.
+  - Cloned a clean control plane at `b55629f` from a Git bundle whose local and
+    remote SHA-256 was
+    `21bb8c2be1e0ec392549bfb3833e479d559e25c5275c169ba0debd1040d59bd4`.
+    Applied transaction `20260714T125539Z-1057040`; its repeated plan reports
+    22 keeps and no unexpected path.
+  - Applied shell transaction `20260714T125651Z-1058033`, deliberately rolled
+    it back to the exact original `.bashrc`/`.profile` lengths and modes, then
+    reapplied as `20260714T125728Z-1058618`. Both files have one managed suffix,
+    retained owner/mode 100074:0644, and `.bash_profile` remains absent. A real
+    login loads the common environment once without warnings.
+  - Installed pinned AArch64 ripgrep 15.1.0 and uv 0.9.18 as transactions
+    `20260714T125747Z-1059239` and `20260714T125748Z-1059238`. Both exact plans
+    are now idempotent `managed-artifact` keeps; all transaction manifests and
+    statuses are mode 600 and complete. No uv-managed Python directory was
+    created.
+  - Post-apply validation exposed two non-interactive PATH assumptions. Fixed
+    managed-link discovery in `db1d177` and user-bin inventory in `eeb1e94`,
+    each with a regression test that omits `~/.local/bin` from inherited PATH.
+    Checksummed bundles fast-forwarded `ri` cleanly to each fix; their SHA-256
+    values were `8cbef64c9565530d1d6ceaeb1610858ddd86754e34615ace8fc8d65ae0529fe3`
+    and `2c3644b451dedd073add65d9cff41f4bb39b3ce16dbd7273d342249b9e5cb2e8`.
+  - Final validation at `eeb1e94` reports clean Git state, idempotent control,
+    shell, ripgrep, and uv plans, `failures=0 warnings=8`, silent strict SSH,
+    and a real login running both pinned tools. The remaining warnings are the
+    not-yet-implemented selected tool classes; the current node remains the
+    only shell target blocked by plaintext credential rotation.
 
   Owner authorization checkpoint (2026-07-14):
 
@@ -477,10 +510,10 @@ harness. Repository-specific tasks remain in their own project ledgers.
     `PAGER=cat`, `HISTCONTROL=ignoreboth:erasedups`, the guard loaded once, and
     `prgenv` as a function. The earlier `SSH_AGENT_PID` logout warning did not
     recur, so no absent `.bash_logout` file was created.
-  - The common shell layer is now converged on `ab`, `ab2`, `al`, `rc`, and
-    `t4`. Remaining shell targets are the connectivity-blocked `ai4s` and the
-    current node, whose plaintext `.bashrc` credentials must be rotated and
-    removed before a managed shell transaction is considered.
+  - The common shell layer is now converged on `ab`, `ab2`, `ri`, `al`, `rc`,
+    and `t4`. The current node remains blocked because its plaintext `.bashrc`
+    credentials must be rotated and removed before a managed shell transaction
+    is considered.
 
   Portable-tool transaction checkpoint (2026-07-14):
 
