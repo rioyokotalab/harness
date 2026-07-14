@@ -541,6 +541,27 @@ harness. Repository-specific tasks remain in their own project ledgers.
     reachable checkouts to that one revision, then add the next independently
     sourced/checksum-verified artifact class to the same transaction engine.
 
+  uv artifact checkpoint (2026-07-14):
+
+  - Selected the observed local uv 0.9.18 as the next mirrored interface.
+    Official uv documentation supports direct GitHub release binaries, and
+    managed Python is explicitly a separate download surface. Sources:
+    <https://docs.astral.sh/uv/getting-started/installation/> and
+    <https://docs.astral.sh/uv/guides/install-python/>.
+  - Recorded the publisher-provided x86-64 and AArch64 GNU/Linux asset URLs and
+    SHA-256 values in the existing artifact manifest. Independently downloaded
+    both archives over TLS: both checksums passed, each had exactly one declared
+    `uv` member, the x86-64 binary reported `uv 0.9.18`, and `file` identified
+    the expected x86-64 and AArch64 ELF interpreters. Temporary files were
+    removed.
+  - Added fixture coverage proving that the `al` profile selects the AArch64
+    URL, checksum, and install target. This transaction installs only `uv`; it
+    does not run the upstream installer, modify profiles, install `uvx`, or
+    download a Python runtime.
+  - Next executable action: commit the manifest addition, run a full isolated
+    uv apply/rollback through the generic transaction engine, then pilot on
+    `ab2` before any fleet rollout.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 

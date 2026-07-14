@@ -102,6 +102,13 @@ if "$HARNESS" tool --host ab2 --name unsupported \
     >"$TEMP_DIR/unsupported-tool.out" 2>&1; then
     fail "tool plan accepted an unsupported artifact"
 fi
+mkdir -p "$TEMP_DIR/uv-plan-home"
+HOME="$TEMP_DIR/uv-plan-home" "$HARNESS" tool --host al --name uv \
+    --facts "$ROOT/tests/fixtures/al.facts" --plan >"$TEMP_DIR/uv-plan.out"
+grep 'INSTALL artifact=.*uv/0.9.18/linux-aarch64' "$TEMP_DIR/uv-plan.out" \
+    >/dev/null || fail "uv AArch64 artifact plan"
+grep 'sha256=f8e23ec786b18660ade6b033b6191b7e9c283c872eeb8c4531d56a873decf160' \
+    "$TEMP_DIR/uv-plan.out" >/dev/null || fail "uv AArch64 checksum plan"
 
 # Exercise a real apply/rollback against an isolated clean Git checkout.
 test_repo=$TEMP_DIR/repo
