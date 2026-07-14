@@ -1,0 +1,100 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH= cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() {
+    echo "Usage: harness plan --host LOGICAL_ID [--facts FILE]" >&2
+}
+
+logical_host=
+fact_file=
+owned_temp=
+trap '[ -n "$owned_temp" ] && rm -f "$owned_temp"' EXIT HUP INT TERM
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            logical_host=$2
+            shift 2
+            ;;
+        --facts)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            fact_file=$2
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            usage
+            exit 2
+            ;;
+    esac
+done
+[ -n "$logical_host" ] || { usage; exit 2; }
+profile=$(profile_for "$logical_host")
+if [ -z "$fact_file" ]; then
+    owned_temp=$(make_fact_file "$logical_host")
+    fact_file=$owned_temp
+fi
+[ -f "$fact_file" ] || die "missing fact file: $fact_file"
+
+fact_host=$(fact_get "$fact_file" logical_host)
+[ "$fact_host" = "$logical_host" ] ||
+    die "fact host $fact_host does not match requested host $logical_host"
+
+echo "PLAN host=$logical_host mode=read-only"
+echo "FACT os=$(fact_get "$fact_file" os_id) arch=$(fact_get "$fact_file" arch)"
+
+case $(fact_get "$fact_file" harness_checkout) in
+    present) echo "KEEP harness_checkout" ;;
+    absent) echo "CREATE harness_checkout source=clean-committed-revision" ;;
+    *) echo "CHECK harness_checkout reason=unknown-state" ;;
+esac
+
+for item in codex_guidance codex_rules claude_guidance; do
+    state=$(fact_get "$fact_file" "link_$item")
+    case "$state" in
+        symlink) echo "KEEP discovery_link name=$item" ;;
+        absent) echo "CREATE discovery_link name=$item" ;;
+        regular|directory|other)
+            echo "BLOCK discovery_link name=$item reason=unmanaged-$state"
+            ;;
+        *) echo "CHECK discovery_link name=$item reason=unknown-state" ;;
+    esac
+done
+
+for startup in bashrc bash_profile bash_login profile bash_logout; do
+    state=$(fact_get "$fact_file" "startup_$startup")
+    echo "INSPECT startup_file name=.$startup state=$state contents=not-read"
+done
+
+while IFS='|' read -r tool_name command_name policy; do
+    case "$tool_name" in ''|'#'*) continue ;; esac
+    state=$(fact_get "$fact_file" "tool_$command_name")
+    case "$state" in
+        present) echo "KEEP tool=$tool_name command=$command_name policy=$policy" ;;
+        absent) echo "INSTALL tool=$tool_name command=$command_name policy=$policy" ;;
+        *) echo "CHECK tool=$tool_name command=$command_name reason=unknown-state" ;;
+    esac
+done <"$HARNESS_ROOT/profiles/tools.tsv"
+
+for class in scheduler module environment container; do
+    commands=$(config_get "$profile" "${class}_commands")
+    csv_commands "$commands" | while IFS= read -r command_name; do
+        [ -n "$command_name" ] || continue
+        state=$(fact_get "$fact_file" "tool_$command_name")
+        case "$state" in
+            present) echo "KEEP site_command class=$class command=$command_name" ;;
+            absent) echo "WARN site_command class=$class command=$command_name state=absent" ;;
+            *) echo "CHECK site_command class=$class command=$command_name state=unknown" ;;
+        esac
+    done
+done
+
+echo "END plan host=$logical_host remote_changes=none"

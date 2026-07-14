@@ -1,0 +1,119 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH= cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() {
+    echo "Usage: harness doctor --host LOGICAL_ID [--facts FILE]" >&2
+}
+
+logical_host=
+fact_file=
+owned_temp=
+trap '[ -n "$owned_temp" ] && rm -f "$owned_temp"' EXIT HUP INT TERM
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            logical_host=$2
+            shift 2
+            ;;
+        --facts)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            fact_file=$2
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            usage
+            exit 2
+            ;;
+    esac
+done
+[ -n "$logical_host" ] || { usage; exit 2; }
+profile=$(profile_for "$logical_host")
+if [ -z "$fact_file" ]; then
+    owned_temp=$(make_fact_file "$logical_host")
+    fact_file=$owned_temp
+fi
+[ -f "$fact_file" ] || die "missing fact file: $fact_file"
+
+failures=0
+warnings=0
+pass() { echo "PASS $*"; }
+warn() { echo "WARN $*"; warnings=$((warnings + 1)); }
+fail() { echo "FAIL $*"; failures=$((failures + 1)); }
+
+fact_host=$(fact_get "$fact_file" logical_host)
+if [ "$fact_host" = "$logical_host" ]; then
+    pass "logical_host=$logical_host"
+else
+    fail "logical_host expected=$logical_host observed=$fact_host"
+fi
+
+for key in os_id arch; do
+    expected=$(config_get "$profile" "$key")
+    observed=$(fact_get "$fact_file" "$key")
+    if [ "$observed" = "$expected" ]; then
+        pass "$key=$observed"
+    else
+        fail "$key expected=$expected observed=$observed"
+    fi
+done
+
+for command_name in sh bash git; do
+    state=$(fact_get "$fact_file" "tool_$command_name")
+    if [ "$state" = present ]; then
+        pass "bootstrap command=$command_name"
+    else
+        fail "bootstrap command=$command_name state=$state"
+    fi
+done
+
+case $(fact_get "$fact_file" harness_checkout) in
+    present) pass "harness_checkout=present" ;;
+    *) warn "harness_checkout=not-installed" ;;
+esac
+for item in codex_guidance codex_rules claude_guidance; do
+    state=$(fact_get "$fact_file" "link_$item")
+    case "$state" in
+        symlink) pass "discovery_link=$item" ;;
+        absent|unknown) warn "discovery_link=$item state=not-installed" ;;
+        *) warn "discovery_link=$item state=unmanaged" ;;
+    esac
+done
+
+while IFS='|' read -r tool_name command_name policy; do
+    case "$tool_name" in ''|'#'*) continue ;; esac
+    state=$(fact_get "$fact_file" "tool_$command_name")
+    if [ "$state" = present ]; then
+        pass "selected_tool=$tool_name"
+    else
+        warn "selected_tool=$tool_name state=$state policy=$policy"
+    fi
+done <"$HARNESS_ROOT/profiles/tools.tsv"
+
+for class in scheduler module environment container; do
+    commands=$(config_get "$profile" "${class}_commands")
+    old_ifs=$IFS
+    IFS=,
+    for command_name in $commands; do
+        [ "$command_name" = none ] && continue
+        state=$(fact_get "$fact_file" "tool_$command_name")
+        if [ "$state" = present ]; then
+            pass "site_command class=$class command=$command_name"
+        else
+            warn "site_command class=$class command=$command_name state=$state"
+        fi
+    done
+    IFS=$old_ifs
+done
+
+echo "SUMMARY host=$logical_host failures=$failures warnings=$warnings"
+[ "$failures" -eq 0 ]

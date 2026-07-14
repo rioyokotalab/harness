@@ -1,0 +1,76 @@
+#!/bin/sh
+
+die() {
+    echo "harness: $*" >&2
+    exit 2
+}
+
+require_safe_id() {
+    value=$1
+    case "$value" in
+        ''|*[!A-Za-z0-9._-]*)
+            die "invalid logical host identifier: $value"
+            ;;
+    esac
+}
+
+config_get() {
+    config_file=$1
+    config_key=$2
+    [ -f "$config_file" ] || die "missing configuration: $config_file"
+    value=$(sed -n "s/^${config_key}=//p" "$config_file")
+    count=$(printf '%s\n' "$value" | awk 'NF { n++ } END { print n + 0 }')
+    [ "$count" -le 1 ] || die "duplicate key $config_key in $config_file"
+    printf '%s\n' "$value"
+}
+
+fact_get() {
+    fact_file=$1
+    fact_key=$2
+    [ -f "$fact_file" ] || die "missing fact file: $fact_file"
+    value=$(sed -n "s/^${fact_key}=//p" "$fact_file")
+    count=$(printf '%s\n' "$value" | awk 'NF { n++ } END { print n + 0 }')
+    [ "$count" -le 1 ] || die "duplicate fact $fact_key in $fact_file"
+    if [ -n "$value" ]; then
+        printf '%s\n' "$value"
+    else
+        printf '%s\n' unknown
+    fi
+}
+
+profile_for() {
+    logical_host=$1
+    require_safe_id "$logical_host"
+    profile=$HARNESS_ROOT/profiles/hosts/$logical_host.conf
+    [ -f "$profile" ] || die "unknown logical host profile: $logical_host"
+    printf '%s\n' "$profile"
+}
+
+path_kind() {
+    path=$1
+    if [ -L "$path" ]; then
+        printf '%s\n' symlink
+    elif [ -f "$path" ]; then
+        printf '%s\n' regular
+    elif [ -d "$path" ]; then
+        printf '%s\n' directory
+    elif [ -e "$path" ]; then
+        printf '%s\n' other
+    else
+        printf '%s\n' absent
+    fi
+}
+
+make_fact_file() {
+    logical_host=$1
+    temp_file=$(mktemp "${TMPDIR:-/tmp}/harness-facts.XXXXXX") ||
+        die "cannot create temporary fact file"
+    "$HARNESS_ROOT/libexec/harness-inventory" --host "$logical_host" >"$temp_file"
+    printf '%s\n' "$temp_file"
+}
+
+csv_commands() {
+    csv=$1
+    [ "$csv" = none ] && return
+    printf '%s\n' "$csv" | tr ',' '\n'
+}

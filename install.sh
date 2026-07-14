@@ -5,6 +5,7 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 CODEX_HOME=${CODEX_HOME:-"$HOME/.codex"}
 CLAUDE_HOME=${CLAUDE_HOME:-"$HOME/.claude"}
 USER_SKILLS="$HOME/.agents/skills"
+USER_BIN="$HOME/.local/bin"
 
 link_path() {
     source_path=$1
@@ -39,6 +40,7 @@ link_path "$ROOT/.codex/rules/default.rules" "$CODEX_HOME/rules/default.rules" \
     "$ROOT/codex/rules/default.rules"
 link_path "$ROOT/.claude/CLAUDE.md" "$CLAUDE_HOME/CLAUDE.md" \
     "$ROOT/claude/CLAUDE.md"
+link_path "$ROOT/bin/harness" "$USER_BIN/harness"
 
 for skill_path in "$ROOT"/shared/skills/*
 do
@@ -53,4 +55,4 @@ do
     link_path "$skill_path" "$CLAUDE_HOME/skills/$name"
 done
 
-echo "Codex and Claude harness discovery links installed. Start new sessions."
+echo "Harness command and Codex/Claude discovery links installed. Start new sessions."

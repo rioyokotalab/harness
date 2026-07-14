@@ -3,8 +3,16 @@
 !README.md
 !TODO.md
 !install.sh
+!bin/
+!bin/**
 !docs/
 !docs/**
+!libexec/
+!libexec/**
+!profiles/
+!profiles/**
+!tests/
+!tests/**
 !.codex/
 !.codex/**
 !.claude/

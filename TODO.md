@@ -167,6 +167,29 @@ harness. Repository-specific tasks remain in their own project ledgers.
     floor from a checksum-pinned user-space artifact. Never synchronize rclone
     or agent credentials and live state.
 
+  Phase-1 implementation checkpoint (2026-07-14):
+
+  - Implemented dependency-free `harness inventory`, `harness plan`, and
+    `harness doctor` commands under `bin/` and `libexec/`. Inventory emits only
+    allowlisted value-free facts and supports text and JSON. Plan and doctor
+    accept live facts or an explicit captured fact file.
+  - Added strict logical profiles for `local`, `ab`, `ab2`, `ai4s`, `al`,
+    `rc`, and `t4`, plus the reviewed C + P + A + D tool policy. Excluded SSH
+    aliases have no profile and are rejected.
+  - Added value-free fixtures for all seven environments and
+    `tests/test-phase1.sh`. The suite checks shell syntax, fact allowlisting,
+    JSON parsing, every fixture/profile pair, a read-only plan terminator,
+    expected remote checkout/tool actions, unknown-host rejection, and a
+    required architecture-mismatch failure.
+  - Extended the fail-closed installer to expose `bin/harness` as
+    `~/.local/bin/harness`. An isolated-home install test passed, the live local
+    link resolves to the tracked command, and the live local doctor reports
+    zero failures and zero warnings. No remote file has been changed.
+  - Next executable action: feed `harness inventory --host HOST` to Bash over
+    each of the six existing SSH connections without creating remote files.
+    Replace partial fixtures with the resulting value-free facts and generate
+    exact host plans for review.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 

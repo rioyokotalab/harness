@@ -1,0 +1,21 @@
+# name|command|policy
+git|git|system-feature-floor
+vim|vim|system-feature-floor
+tmux|tmux|system-or-pinned-user
+ripgrep|rg|system-or-pinned-user
+jq|jq|system-or-pinned-user
+tree|tree|system-or-pinned-user
+rsync|rsync|system-feature-floor
+curl|curl|system-feature-floor
+wget|wget|system-feature-floor
+htop|htop|system-or-pinned-user
+sqlite|sqlite3|system-or-pinned-user
+python|python3|managed-3.12
+uv|uv|pinned-user
+node|node|pinned-24
+npm|npm|with-node
+codex|codex|pinned-user
+claude|claude|pinned-user
+rclone|rclone|pinned-user
+lftp|lftp|system-or-pinned-user
+tectonic|tectonic|pinned-user

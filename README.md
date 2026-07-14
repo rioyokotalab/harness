@@ -13,12 +13,51 @@ directory into a Git repository.
 - `.claude/settings.example.json`: non-secret Claude settings template.
 - `shared/skills/`: reusable workflows exposed to both clients.
 - `install.sh`: idempotent, fail-closed discovery symlink installer.
+- `bin/harness` and `libexec/`: value-free inventory, planning, and health
+  checks for the portable environment.
+- `profiles/`: selected tool policy and logical host capabilities.
+- `tests/fixtures/`: value-free environment evidence used by the shell tests.
 - `docs/`: architecture and operating notes for the portable environment.
 - `TODO.md`: harness-owned planned and active work.
 
 The installer exposes the same global guidance as `~/.codex/AGENTS.md` and
 `~/.claude/CLAUDE.md`. It links every shared skill into
-`~/.codex/skills/`, `~/.agents/skills/`, and `~/.claude/skills/`.
+`~/.codex/skills/`, `~/.agents/skills/`, and `~/.claude/skills/`. It also links
+the read-only `harness` command into `~/.local/bin/`.
+
+## Environment observation and planning
+
+Phase 1 provides three dependency-free commands:
+
+```bash
+harness inventory --host local
+harness plan --host local
+harness doctor --host local
+```
+
+`inventory` emits a strict value-free fact stream: logical host, OS and
+architecture, selected command presence, managed-link state, and shell-startup
+file type. It does not read startup-file contents, arbitrary environment
+values, credentials, histories, projects, or caches. Use `--format json` when
+machine-readable JSON is needed.
+
+`plan` compares current or captured facts with a reviewed logical host profile.
+It is read-only and ends with `remote_changes=none`. `doctor` treats a host or
+bootstrap mismatch as a failure while reporting not-yet-installed selected
+tools and discovery links as warnings.
+
+Captured facts can be checked without connecting to a host:
+
+```bash
+harness plan --host al --facts tests/fixtures/al.facts
+harness doctor --host al --facts tests/fixtures/al.facts
+```
+
+Run the phase-1 validation suite with:
+
+```bash
+tests/test-phase1.sh
+```
 
 ## Deliberately excluded
 

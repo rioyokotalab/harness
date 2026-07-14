@@ -1,0 +1,113 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH= cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() {
+    echo "Usage: harness inventory [--host LOGICAL_ID] [--format text|json]" >&2
+}
+
+logical_host=unassigned
+format=text
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            logical_host=$2
+            shift 2
+            ;;
+        --format)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            format=$2
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            usage
+            exit 2
+            ;;
+    esac
+done
+require_safe_id "$logical_host"
+case "$format" in text|json) ;; *) die "unsupported format: $format" ;; esac
+
+safe_value() {
+    printf '%s' "$1" | tr -cd 'A-Za-z0-9._+-'
+}
+
+os_id=unknown
+os_version=unknown
+if [ -r /etc/os-release ]; then
+    raw_id=$(sed -n 's/^ID=//p' /etc/os-release | sed -n '1p' | tr -d '"')
+    raw_version=$(sed -n 's/^VERSION_ID=//p' /etc/os-release | sed -n '1p' | tr -d '"')
+    [ -n "$raw_id" ] && os_id=$(safe_value "$raw_id")
+    [ -n "$raw_version" ] && os_version=$(safe_value "$raw_version")
+fi
+arch=$(safe_value "$(uname -m 2>/dev/null || echo unknown)")
+kernel=$(safe_value "$(uname -r 2>/dev/null || echo unknown)")
+raw_shell=${SHELL:-}
+login_shell=$(safe_value "${raw_shell##*/}")
+[ -n "$login_shell" ] || login_shell=unknown
+
+generate_facts() {
+    echo "schema=1"
+    echo "logical_host=$logical_host"
+    echo "os_id=$os_id"
+    echo "os_version=$os_version"
+    echo "arch=$arch"
+    echo "kernel=$kernel"
+    echo "login_shell=$login_shell"
+
+    for command_name in \
+        sh bash git vim tmux rg jq tree rsync curl wget htop sqlite3 \
+        python3 uv node npm codex claude rclone lftp tectonic \
+        modulecmd ml uenv yrun ybatch sbatch srun squeue scancel \
+        qsub qstat qdel singularity apptainer docker podman nvcc nvidia-smi
+    do
+        if command -v "$command_name" >/dev/null 2>&1; then
+            state=present
+        else
+            state=absent
+        fi
+        fact_name=$(printf '%s' "$command_name" | tr '-' '_')
+        echo "tool_${fact_name}=$state"
+    done
+
+    if [ -d "$HOME/harness/.git" ]; then
+        echo "harness_checkout=present"
+    else
+        echo "harness_checkout=absent"
+    fi
+    echo "link_codex_guidance=$(path_kind "$HOME/.codex/AGENTS.md")"
+    echo "link_codex_rules=$(path_kind "$HOME/.codex/rules/default.rules")"
+    echo "link_claude_guidance=$(path_kind "$HOME/.claude/CLAUDE.md")"
+    echo "startup_bashrc=$(path_kind "$HOME/.bashrc")"
+    echo "startup_bash_profile=$(path_kind "$HOME/.bash_profile")"
+    echo "startup_bash_login=$(path_kind "$HOME/.bash_login")"
+    echo "startup_profile=$(path_kind "$HOME/.profile")"
+    echo "startup_bash_logout=$(path_kind "$HOME/.bash_logout")"
+}
+
+if [ "$format" = text ]; then
+    generate_facts
+else
+    generate_facts | awk -F= '
+        BEGIN { print "{"; first = 1 }
+        {
+            key = $1
+            value = substr($0, length(key) + 2)
+            gsub(/\\/, "\\\\", value)
+            gsub(/"/, "\\\"", value)
+            if (!first) printf ",\n"
+            printf "  \"%s\": \"%s\"", key, value
+            first = 0
+        }
+        END { print "\n}" }
+    '
+fi
