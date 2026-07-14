@@ -1127,6 +1127,22 @@ harness. Repository-specific tasks remain in their own project ledgers.
     only `sqlite3`; the other five environments retain feature-complete site
     commands. Fleet closure passes JSON, FTS5, RTree, clean Git, idempotent
     source selection, and zero doctor failures everywhere.
+  - Direct compile/link probes confirmed that lftp cannot share a safe source
+    build floor: `ri` lacks OpenSSL headers/libraries, while `ab`, `ab2`, `rc`,
+    and `t4` lack Expat and Readline link support; `al` is the only remote with
+    all four probed dependencies. Keep lftp as an explicit site-native gap. Do
+    not ship a no-TLS client or vendor a private dependency stack merely to
+    remove one doctor warning.
+  - Added the reusable `operate-native-hpc` personal skill. It requires visible
+    native scheduler/environment/container commands, explicit account/group
+    decisions, compute-node evidence, exact job-ID monitoring and cleanup,
+    rank/world-size validation, bounded LLM forward/backward gates, and matched
+    performance evidence. Its site reference records the validated ybatch,
+    PBS Pro, Slurm/uenv, heterogeneous-architecture, and AGE constraints without
+    account values. The skill contains no scheduler wrapper or executable
+    automation. `quick_validate.py`, placeholder inspection, and the complete
+    phase-1 suite pass; `install.sh` created the three local discovery links.
+    Commit and transactionally add the three discovery links on each remote.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

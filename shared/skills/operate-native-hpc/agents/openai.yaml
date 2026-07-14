@@ -1,0 +1,4 @@
+interface:
+  display_name: "Operate Native HPC"
+  short_description: "Run visible native HPC and LLM workflows"
+  default_prompt: "Use $operate-native-hpc to plan and run this workload with the site native scheduler and validation gates."
