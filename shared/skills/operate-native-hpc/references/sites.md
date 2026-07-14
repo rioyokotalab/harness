@@ -44,6 +44,7 @@ every placeholder before printing and executing a command.
   is unusable on the login node. Invoke it only inside `yrun`/`ybatch`; do not
   bypass its storage flags with `/usr/bin/podman`. The tracked job checks both
   native entry points before GPU/MPI work without selecting or pulling an image.
+- The default GCC passes the tracked ASan+UBSan smoke directly.
 
 ## ABCI: `ab` and `ab2`
 
@@ -54,6 +55,11 @@ every placeholder before printing and executing a command.
   submit even a one-minute smoke with guessed values.
 - Login nodes expose a native compiler/MPI baseline. Run GPU or scaled MPI
   checks only through a reviewed PBS allocation.
+- The default GCC advertises sanitizers but cannot link its missing runtime
+  targets. For a process-local sanitizer build, run native `module load
+  gcc/15.2.0`, compile with GCC, and set `ASAN_OPTIONS=detect_leaks=0` because
+  LeakSanitizer cannot operate under this site's ptrace context. ASan and UBSan
+  are validated; do not change the default compiler globally.
 
 ## RIKEN Rikyu: `ri`
 
@@ -65,6 +71,7 @@ every placeholder before printing and executing a command.
 - Login context exposes Apptainer 1.4.5 compatibility and Slurm OCI flags.
   Inspect current native help and the project's image before choosing one.
 - Architecture is AArch64. Use architecture-matching images and binaries.
+- The default GCC passes the tracked ASan+UBSan smoke directly.
 
 ## CSCS Alps: `al`
 
@@ -78,6 +85,7 @@ every placeholder before printing and executing a command.
   select a different reviewed uenv.
 - Compute architecture is AArch64. Validate CUDA/MPI inside the chosen uenv and
   allocation, not from the login baseline.
+- The default GCC passes the tracked ASan+UBSan smoke directly.
 
 ## R-CCS cloud: `rc`
 
@@ -89,6 +97,9 @@ every placeholder before printing and executing a command.
 - Base compute images expose neither CUDA toolkit nor MPI wrappers. Use the
   partition's native module or an architecture-matched project container after
   inspecting current site help.
+- The login default GCC cannot link its missing sanitizer runtime targets; no
+  alternate GCC module, Clang, or static sanitizer archive was found. Record
+  this as a site gap and run sanitizers in the reviewed project environment.
 
 ## TSUBAME: `t4`
 
@@ -97,3 +108,6 @@ every placeholder before printing and executing a command.
   already-reviewed project script; do not guess and consume points.
 - Login CUDA/MPI commands and absent login driver state do not establish GPU
   readiness. Validate them inside the AGE allocation.
+- For a process-local sanitizer build, run native `module load gcc/14.2.0`.
+  The tracked ASan, UBSan, and LeakSanitizer smoke passes with that module; do
+  not change the default compiler globally.

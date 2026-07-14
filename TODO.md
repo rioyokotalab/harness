@@ -1286,7 +1286,20 @@ harness. Repository-specific tasks remain in their own project ledgers.
     this gate rather than treating compiler flag acceptance as success. Commit
     and synchronize the source, then repeat the exact temporary build/execution
     on every remote login environment; retain absence or runtime failure as a
-    site capability fact rather than installing a replacement compiler.
+    site capability fact rather than installing a replacement compiler. Commit
+    `9bc0a09` and complete bundle SHA-256
+    `13311933d7de47ce67dfe8fb5e58fa1c9e32753126ff4bfe112bd3f10b352b30`
+    synchronized the source everywhere. Default GCC passes ASan+UBSan directly
+    on current, `ri`, and `al`. Default GCC on `ab`, `ab2`, `rc`, and `t4`
+    accepts the flags but fails to link missing site sanitizer runtime targets;
+    every failed temporary build was removed. Native module catalogs provided
+    process-local `gcc/15.2.0` on `ab`/`ab2` and `gcc/14.2.0` on `t4`; both
+    routes pass ASan+UBSan, and `t4` also passes LeakSanitizer. ABCI
+    LeakSanitizer terminates under the site's ptrace context, so its validated
+    command uses `ASAN_OPTIONS=detect_leaks=0`. `rc` has no alternate GCC
+    module, Clang, or static sanitizer archive; keep this as an explicit site
+    gap and use a reviewed project environment rather than modifying its
+    compiler. Add these exact environment routes to the native-HPC skill.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
