@@ -1190,7 +1190,17 @@ harness. Repository-specific tasks remain in their own project ledgers.
     exit `0:0`. Only its job-scoped output and empty directory were removed; no
     image was selected, pulled, or run. Add this allocation-context rule to the
     native-HPC skill, keep current login facts `unusable`, and validate the
-    revised profile/inventory behavior fleet-wide.
+    revised profile/inventory behavior fleet-wide. Commit `dc43fca` implements
+    those changes and passed shell syntax, the complete phase-1 suite, and skill
+    validation. All six clean checkouts were fast-forwarded from the complete
+    bundle with SHA-256
+    `f9983c6cee57bae590d043658f0a1d511f70b233475ea3bd23729ff9aa5a0aae`.
+    Fresh login inventories match every container profile with zero warnings on
+    the six clusters: `ab`/`ab2` have Singularity and Podman, `ri` has
+    Singularity/Apptainer, `al` has Docker/Podman, `rc` has Singularity/Podman,
+    and `t4` has Singularity/Apptainer. Current alone reports the two intended
+    compute-only warnings. Every doctor has zero failures and every checkout is
+    clean at `dc43fca`.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
