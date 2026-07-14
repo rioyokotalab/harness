@@ -1339,7 +1339,20 @@ harness. Repository-specific tasks remain in their own project ledgers.
     latter must not be carried to its AArch64 partitions. Rikyu exposes no
     module catalog and therefore retains an explicit reviewed-project-container
     requirement. Record these routes in the native-HPC skill, validate, and
-    synchronize the closure.
+    synchronize the closure. Closure commit `963ad1f` passed the phase suite
+    and skill validator; complete bundle SHA-256
+    `f2e5b37780f8a6ff4ae9bd9ee487e593f70293a95a53651f2bc7d1b572b7bcee`
+    fast-forwarded all six clean remotes to the same revision.
+  - Validate CUDA development separately from GPU execution by compiling the
+    tracked kernel with native `nvcc -O2` into disposable directories and never
+    launching it on login nodes. Default compilation passes with CUDA 12.8 on
+    current, CUDA 13.2 on `ab`/`ab2`, and CUDA 12.8 on `t4`. Bare `ri`, `al`,
+    and `rc` have no `nvcc`; the existing Alps `prgenv-gnu/25.11:v1` uenv
+    supplies CUDA 12.9 and passes compilation. R-CCS has no CUDA module in its
+    login catalog, and Rikyu has no module catalog, so both retain reviewed
+    architecture-matched project-container requirements. Record these as
+    compiler/header/link facts only; kernel execution remains allocation-only.
+    Validate the skill, commit the route facts, and synchronize them everywhere.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

@@ -48,6 +48,9 @@ every placeholder before printing and executing a command.
   is unusable on the login node. Invoke it only inside `yrun`/`ybatch`; do not
   bypass its storage flags with `/usr/bin/podman`. The tracked job checks both
   native entry points before GPU/MPI work without selecting or pulling an image.
+- Default CUDA 12.8 `nvcc` compiles the tracked kernel on the login node. That
+  is compiler/header/link evidence only; the validated kernel execution route
+  remains the native allocation smoke.
 - The default GCC passes the tracked ASan+UBSan smoke directly.
 - The default GCC passes the tracked C++20 concepts and `std::span` smoke.
 
@@ -60,6 +63,8 @@ every placeholder before printing and executing a command.
   submit even a one-minute smoke with guessed values.
 - Login nodes expose a native compiler/MPI baseline. Run GPU or scaled MPI
   checks only through a reviewed PBS allocation.
+- Default CUDA 13.2 `nvcc` compiles the tracked kernel on the login node. Do not
+  interpret this as driver or kernel-execution evidence.
 - Default HPC-X `mpicc` passes the tracked direct singleton development smoke.
   UCX reports that the configured compute-fabric device names are unavailable
   on the login node; retain the warning and validate multi-rank transport only
@@ -103,6 +108,8 @@ every placeholder before printing and executing a command.
 - The same uenv exposes `mpicc` and passes the tracked direct singleton MPI
   development smoke. Multi-rank validation still requires the native Slurm
   allocation and selected uenv integration.
+- The same uenv exposes CUDA 12.9 `nvcc` and compiles the tracked kernel. Run
+  the kernel only inside the native Slurm allocation with that uenv selected.
 - Compute architecture is AArch64. Validate CUDA/MPI inside the chosen uenv and
   allocation, not from the login baseline.
 - The default GCC passes the tracked ASan+UBSan smoke directly.
@@ -117,6 +124,9 @@ every placeholder before printing and executing a command.
 - Base compute images expose neither CUDA toolkit nor MPI wrappers. Use the
   partition's native module or an architecture-matched project container after
   inspecting current site help.
+- The login module catalog exposes no CUDA compiler. Select an architecture-
+  matched project container or site environment for kernel builds and runs;
+  do not install a generic login CUDA toolkit.
 - The login-only `module load mpi/mpich-x86_64` route passes the tracked direct
   singleton MPI development smoke. It is incompatible with the AArch64 compute
   partitions; select and validate their native module or project container in
@@ -135,6 +145,8 @@ every placeholder before printing and executing a command.
   already-reviewed project script; do not guess and consume points.
 - Login CUDA/MPI commands and absent login driver state do not establish GPU
   readiness. Validate them inside the AGE allocation.
+- Default CUDA 12.8 `nvcc` compiles the tracked kernel on the login node. This
+  remains compiler/header/link evidence until the binary runs in AGE.
 - Default HPC-X `mpicc` passes the tracked direct singleton MPI development
   smoke. Validate multi-rank transport only inside the reviewed AGE allocation.
 - For a process-local sanitizer build, run native `module load gcc/14.2.0`.
