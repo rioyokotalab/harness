@@ -1112,7 +1112,13 @@ harness. Repository-specific tasks remain in their own project ledgers.
     Exact four-file extraction plus the displayed native C build produced a
     3.53.3 CLI passing in-memory JSON, FTS5, and RTree tests. Add a dedicated
     source-build transaction with offline compile, tamper-refusal, and rollback
-    coverage; then run a real disposable build before AArch64 pilot on `ri`.
+    coverage. Real official-source disposable transaction
+    `20260714T152202Z-838785` built with system SQLite hidden, passed exact
+    version and all three feature gates, returned a managed plan with mode-600
+    state, and rolled back exactly while preserving a sentinel. Two preceding
+    disposable runners completed the build/rollback but omitted `tee` and then
+    `cat` from their artificial PATH; both temporary homes were removed and the
+    complete repeated trial passed. Next pilot rollback/reapply on AArch64 `ri`.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
