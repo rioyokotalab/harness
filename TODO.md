@@ -265,6 +265,31 @@ harness. Repository-specific tasks remain in their own project ledgers.
     the other five hosts or begin the separately transactional `ab2` shell/tool
     pilot after recording artifact checksums and startup-file backups.
 
+  Fleet control-plane checkpoint (2026-07-14):
+
+  - Rolled the control plane to `ab`, `al`, `rc`, and `t4`, and fast-forwarded
+    `ab2`, so all five are clean at `95075c4` with 22 keeps, zero planned
+    creates, and zero doctor failures. Transactions: `ab`
+    `20260714T114658Z-4160962`, `al` `20260714T115013Z-26535`, `rc`
+    `20260714T115019Z-1532458`, and `t4` `20260714T115026Z-2153095`; `ab2`
+    retains its validated transaction and was fast-forwarded in place.
+  - The first fleet command cloned `ab` successfully but stopped before apply
+    because the local shell expanded `$HOME` in the SSH command. Verified the
+    checkout was clean and no control link existed, then retried with remote
+    expansion quoted correctly. `ab` subsequently passed all gates.
+  - `ai4s` timed out once during SSH banner exchange, then accepted a no-op,
+    but later state probes became silent before returning any evidence. Leave
+    its control-plane state unknown and pending; do not retry mutation until a
+    fresh read-only state audit returns reliably.
+  - `al` passed the control-plane gates but emitted the known `uenv start`
+    non-interactive error for every SSH command. Its final doctor is
+    `failures=0 warnings=11`; remediate `.bashrc` before further rollout there.
+    Final warnings on the other converged hosts are selected-tool gaps: `ab`
+    9, `ab2` 9, `rc` 10, and `t4` 11.
+  - No rollout in this checkpoint edited startup files or installed tools.
+    Next safe actions are a fresh read-only `ai4s` audit and the backed-up shell
+    pilot on `ab2`; handle `al` startup remediation as its own transaction.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 
