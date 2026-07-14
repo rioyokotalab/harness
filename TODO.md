@@ -700,6 +700,26 @@ harness. Repository-specific tasks remain in their own project ledgers.
     architecture pilot. If all gates pass, roll out one host at a time to `al`,
     `rc`, and `t4`; retain the host-provided rclone on `ab` and `ab2`.
 
+  `ri` rclone pilot checkpoint (2026-07-14):
+
+  - Committed the implementation as `701517f` and fast-forwarded the clean `ri`
+    checkout through a bundle whose local and remote SHA-256 was
+    `a6b4dd1318a6e4b3a89ed68d00cac7280e30ddc547d23d1e6d51ebf0e95f661a`.
+    Preflight found native `unzip`, no rclone command, and both managed paths
+    absent; the exact ARM64 plan matched the reviewed URL, checksum, and member.
+  - Applied transaction `20260714T131350Z-1063085`. The AArch64 binary executed
+    and reported rclone 1.74.3, the repeated plan reported `managed-artifact`,
+    doctor warnings fell from eight to seven, transaction files were mode 600
+    and complete, no staging remained, and strict SSH stayed silent.
+  - Deliberate rollback removed only the stable link and exact versioned
+    directory, restored the eight-warning baseline and original `INSTALL` plan,
+    then reapply completed as `20260714T131418Z-1064064`. Final validation again
+    passes the version, idempotence, private-state, clean-Git, silent-SSH, and
+    real-login gates with the common shell guard loaded once.
+  - Next executable action: commit this pilot evidence, fast-forward clean
+    `al`, `rc`, and `t4` checkouts with one checksum-verified bundle, show each
+    architecture-specific plan, then apply and validate one host at a time.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 
