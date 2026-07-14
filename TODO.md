@@ -1058,8 +1058,12 @@ harness. Repository-specific tasks remain in their own project ledgers.
     The checksum gate rejected an initial x86 URL/digest pairing that used the
     neighboring GNU asset's digest; temporary files were removed and the exact
     musl pair then passed checksum, member, version, and ELF-architecture
-    checks. Add root-member tar extraction coverage, run a real disposable
-    transaction, then pilot rollback/reapply before serial rollout.
+    checks. Root-member tar extraction now materializes only the declared
+    member and has offline apply/rollback coverage. Real disposable x86-64
+    transaction `20260714T145706Z-604010` passed checksum, exact version,
+    managed planning, mode-600 state, a fresh isolated-cache TeX-to-PDF compile,
+    and exact rollback while preserving a pre-existing sentinel. Pilot
+    rollback/reapply on AArch64 before serial rollout.
   - Git LFS 3.7.1 is a strong LLM-project follow-up: the official security-fix
     release has publisher-digested x86-64 and AArch64 binaries. Keep it separate
     from the selected-tool rollout because installing the binary and enabling
