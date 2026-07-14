@@ -939,6 +939,13 @@ harness. Repository-specific tasks remain in their own project ledgers.
     suite passes; direct native CPU builds and Python execution pass locally.
     Pilot Ninja apply/rollback/reapply on `ab` before the remaining missing or
     broken hosts.
+  - The `ab` pilot installed transaction `20260714T141649Z-3281200`, validated
+    Ninja 1.13.2, rolled back to the original failing site shim exactly, and
+    reapplied final transaction `20260714T141651Z-3281873`. A same-process
+    final check initially reused Bash's cached `/usr/local/bin/ninja`; a fresh
+    strict session resolved the managed binary and all state/permission gates
+    passed. Report native caller command `hash -r` after link creation and add
+    regression coverage before continuing the fleet rollout.
   - Outstanding site evidence: the current node's `nvidia-smi` wrapper targets
     a missing `/usr/bin/nvidia-smi`; `ri` exposes four GB200 GPUs but its Slurm
     client cannot currently resolve a controller; `t4` exposes CUDA/MPI tools

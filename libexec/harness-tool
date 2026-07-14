@@ -244,6 +244,7 @@ if [ "$link_action" = CREATE ]; then
     mkdir -p "${stable_link%/*}"
     printf 'link|%s|%s\n' "$stable_link" "$installed_binary" >>"$transaction_manifest"
     ln -s "$installed_binary" "$stable_link"
+    echo "CALLER native='hash -r' reason=refresh-command-path-cache"
 fi
 
 rm -f "$archive"

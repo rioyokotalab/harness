@@ -127,6 +127,9 @@ doctor, extracts only the declared archive member into
 `~/.local/opt/TOOL/VERSION/TARGET`, validates the reported version, and then
 creates the `~/.local/bin` link. Rollback first verifies the installed binary
 hash and refuses any modified artifact before removing the link and directory.
+Apply reports the caller-side native `hash -r` command because a long-lived Bash
+process may have cached an earlier system command path; a new shell resolves the
+managed link without this refresh.
 The manifest covers ripgrep 15.1.0, uv 0.9.18, rclone 1.74.3, and Ninja 1.13.2
 on Linux x86-64 and AArch64. Tar and ZIP transactions extract only the declared
 binary member. A host tool is retained only when its native `--version` health

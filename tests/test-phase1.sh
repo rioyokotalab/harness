@@ -380,6 +380,8 @@ zip_tool_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
 [ -n "$zip_tool_transaction" ] || fail "missing ZIP tool transaction"
 grep "NATIVE unzip -p STAGING $zip_fixture_member > STAGING/rclone" \
     "$TEMP_DIR/zip-tool-apply.out" >/dev/null || fail "ZIP native extraction report"
+grep "CALLER native='hash -r' reason=refresh-command-path-cache" \
+    "$TEMP_DIR/zip-tool-apply.out" >/dev/null || fail "tool caller cache refresh"
 HOME="$test_home" PATH="/usr/bin:/bin" \
     "$test_home/.local/bin/rclone" --version >"$TEMP_DIR/zip-tool-version.out"
 grep '^rclone v1.74.3$' "$TEMP_DIR/zip-tool-version.out" >/dev/null ||
