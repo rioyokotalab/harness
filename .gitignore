@@ -3,6 +3,8 @@
 !README.md
 !TODO.md
 !install.sh
+!docs/
+!docs/**
 !.codex/
 !.codex/**
 !.claude/

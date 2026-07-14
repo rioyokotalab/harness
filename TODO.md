@@ -27,6 +27,8 @@ harness. Repository-specific tasks remain in their own project ledgers.
 
   - Clean non-interactive remote-command success: `ab`, `ab2`, `ai4s`, `rc`,
     `si`, `t4` (6).
+  - `si` remains a known reachable SSH endpoint but is explicitly excluded
+    from environment unification, profiles, deployment, and fleet validation.
   - `abci_login` is an acceptable proxy-only endpoint: its own session closes,
     but both downstream aliases `ab` and `ab2` pass through it.
   - `al` has the documented CSCS structure: its target is under
@@ -45,9 +47,12 @@ harness. Repository-specific tasks remain in their own project ledgers.
     passed; a fresh no-op took about seven seconds and a multiplexed repeat took
     about 0.7 seconds with a live master connection.
   - `github` is reachable/authenticated and correctly behaves as a restricted
-    non-cluster Git service.
+    non-cluster Git service. It is excluded from environment unification.
   - `web` is confirmed to be an intentional SFTP-only service; rejecting shell
     commands is correct and it is excluded from environment mirroring.
+  - The only environment-unification targets are the current node plus `ab`,
+    `ab2`, `ai4s`, `al`, `rc`, and `t4`. `abci_login` and `alps_login` remain
+    transport-only proxy nodes and receive no harness deployment.
 
   Required shell-startup remediation before synchronization:
 
@@ -67,9 +72,51 @@ harness. Repository-specific tasks remain in their own project ledgers.
     runtime injection mechanism, and verify that new shells receive only the
     intended environment without exposing values.
 
-  Next step: inventory the seven reachable cluster shells, resolve the startup
-  defects above, and design the declarative synchronization plan from the
-  validated results.
+  Environment inventory checkpoint (2026-07-14):
+
+  - The in-scope fleet cannot safely share a machine image or a package-manager
+    state. It spans Ubuntu, RHEL/Rocky, and SLES; `x86_64` and `aarch64`; and
+    Slurm, PBS, a local `yrun` wrapper, and hosts with no scheduler client on
+    the login path.
+  - Site software also differs intentionally: Environment Modules or `ml`,
+    CSCS uenv, Singularity CE, Apptainer, Docker/Podman, different system
+    Python/compiler/CMake versions, and different GPU/driver exposure.
+  - All six in-scope cluster shells have Git, Bash, and Python 3. None has
+    `uv`, Node, Nix, Home Manager, or mise in the probed login environment.
+    POSIX shell and Git remain the mandatory bootstrap floor; richer tools are
+    optional capabilities, not installer dependencies.
+  - Only the current node has a harness checkout and the Codex/Claude discovery
+    links. No remote files were changed during inventory.
+
+  Adopt the capability-driven design in
+  [`docs/environment-portability.md`](docs/environment-portability.md):
+
+  1. First implement read-only `inventory`, `plan`, and `doctor` commands plus
+     logical host profiles. Keep detection separate from policy and redact
+     values by construction.
+  2. Extend installation transactionally: explicit `--host`, dry-run by
+     default, checksum-pinned portable artifacts, backups/state records,
+     idempotent apply, and rollback. Never invoke root/system package managers
+     or overwrite an unmanaged path.
+  3. Add a minimal common Bash environment. Preserve site initialization and
+     make shell hooks opt-in until every startup file passes non-interactive
+     and interactive validation.
+  4. Add portable user tools only on supported targets. Use `uv` as an optional
+     managed Python/tool layer after the shell-and-Git bootstrap. Keep drivers,
+     MPI, CUDA, compilers, schedulers, modules, and uenv in site adapters. Keep
+     project dependencies in project lockfiles or containers.
+  5. Deploy one clean committed harness revision at a time, preferably through
+     a Git bundle until an explicit push is authorized. Use the existing SSH
+     agent; never distribute keys. Verify and, if necessary, roll back each
+     host independently before advancing.
+  6. Only after the current credential exposure is remediated, define a
+     value-free secret-name contract and host-local injection adapter. Doctor
+     may report a secret as present or missing but must never read or print its
+     value.
+
+  Next step: implement phase 1 locally, validate it against captured fixtures
+  for the current node and six in-scope cluster environments, and present the
+  exact per-host plan before any remote mutation.
 
 ## Planned
 
