@@ -3,9 +3,9 @@
 !README.md
 !TODO.md
 !install.sh
-!codex/
-!codex/**
-!claude/
-!claude/**
+!.codex/
+!.codex/**
+!.claude/
+!.claude/**
 !shared/
 !shared/**

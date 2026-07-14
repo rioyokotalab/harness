@@ -6,11 +6,11 @@ directory into a Git repository.
 
 ## Tracked
 
-- `codex/AGENTS.md`: canonical shared global working agreements.
-- `codex/rules/default.rules`: reviewed Codex command rules.
-- `codex/config.example.toml`: non-secret Codex settings template.
-- `claude/CLAUDE.md`: a repository symlink to the shared working agreements.
-- `claude/settings.example.json`: non-secret Claude settings template.
+- `.codex/AGENTS.md`: canonical shared global working agreements.
+- `.codex/rules/default.rules`: reviewed Codex command rules.
+- `.codex/config.example.toml`: non-secret Codex settings template.
+- `.claude/CLAUDE.md`: a repository symlink to the shared working agreements.
+- `.claude/settings.example.json`: non-secret Claude settings template.
 - `shared/skills/`: reusable workflows exposed to both clients.
 - `install.sh`: idempotent, fail-closed discovery symlink installer.
 - `TODO.md`: harness-owned planned and active work.

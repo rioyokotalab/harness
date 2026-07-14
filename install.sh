@@ -9,12 +9,18 @@ USER_SKILLS="$HOME/.agents/skills"
 link_path() {
     source_path=$1
     destination=$2
+    legacy_source=${3:-}
     parent=${destination%/*}
     mkdir -p "$parent"
 
     if [ -L "$destination" ]; then
         current=$(readlink "$destination")
         if [ "$current" = "$source_path" ]; then
+            return
+        fi
+        if [ -n "$legacy_source" ] && [ "$current" = "$legacy_source" ]; then
+            rm "$destination"
+            ln -s "$source_path" "$destination"
             return
         fi
         echo "refusing to replace different symlink: $destination -> $current" >&2
@@ -27,9 +33,12 @@ link_path() {
     ln -s "$source_path" "$destination"
 }
 
-link_path "$ROOT/codex/AGENTS.md" "$CODEX_HOME/AGENTS.md"
-link_path "$ROOT/codex/rules/default.rules" "$CODEX_HOME/rules/default.rules"
-link_path "$ROOT/claude/CLAUDE.md" "$CLAUDE_HOME/CLAUDE.md"
+link_path "$ROOT/.codex/AGENTS.md" "$CODEX_HOME/AGENTS.md" \
+    "$ROOT/codex/AGENTS.md"
+link_path "$ROOT/.codex/rules/default.rules" "$CODEX_HOME/rules/default.rules" \
+    "$ROOT/codex/rules/default.rules"
+link_path "$ROOT/.claude/CLAUDE.md" "$CLAUDE_HOME/CLAUDE.md" \
+    "$ROOT/claude/CLAUDE.md"
 
 for skill_path in "$ROOT"/shared/skills/*
 do

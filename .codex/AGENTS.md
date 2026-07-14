@@ -64,13 +64,13 @@ Choose the smallest correct surface:
 
 - Put short cross-project behavior and user preferences in this shared global
   guidance. Its canonical version-controlled source is
-  `~/harness/codex/AGENTS.md`; `~/harness/claude/CLAUDE.md` links to the same
+  `~/harness/.codex/AGENTS.md`; `~/harness/.claude/CLAUDE.md` links to the same
   content so Codex and Claude receive one consistent policy.
 - Put repeatable multi-step expertise in a focused personal skill under
   `~/harness/shared/skills/`, then run `~/harness/install.sh` to create the
   Codex and Claude discovery links.
-- Keep non-secret product-specific examples under `~/harness/codex/` or
-  `~/harness/claude/`. Live product settings remain outside the repository.
+- Keep non-secret product-specific examples under `~/harness/.codex/` or
+  `~/harness/.claude/`. Live product settings remain outside the repository.
 - Keep build commands, test suites, file formats, deployment, benchmark routes,
   data schemas, team policy, and other codebase facts in the closest project
   `AGENTS.md`, `CLAUDE.md`, or project skill.
