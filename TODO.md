@@ -4,7 +4,7 @@ This board is the authoritative current state for the portable Codex and Claude
 harness. Git preserves superseded chronology and command-level evidence. Keep
 live tasks, verified recovery facts, blockers, and next actions here; do not
 rebuild a second incident transcript in a session or report file. Next free id:
-T-181.
+T-182.
 
 ## Recovery priority — do before any other task
 
@@ -61,17 +61,14 @@ T-181.
   | Selected current-node user tools | committed checksum manifests; pre-incident versions in `5f6382b` ledger | Recovered: every selected tool is present; Node/npm are 24.16.0/11.13.0 | High; tool binaries only, never client state/config | None | exact transaction IDs and validation are recorded under T-171; rollback one transaction only if its owned path fails |
   | `.profile`, `.bash_profile`, `.bash_logout`, `~/sshservice-cli`, unknown former home paths | no authoritative local source | Unresolved/absent; do not fabricate | High for named absence, unknown completeness; potentially sensitive owner state | Owner-supplied authoritative source only | presence/mode checks only; no validation or rollback is possible without a source |
   | Owner `.bashrc`, SSH config, and agent socket | owner reconstruction and T-171 ledger | `.bashrc` intentional new file; SSH config intentionally final at 10 aliases; socket ephemeral | Owner-confirmed; contents/key material excluded | Owner maintains authentication and socket lifetime | status/parse and owner no-op evidence only; never replace from Git or copy key/session state |
-  | Six remote harness checkouts | last committed fleet evidence through `963ad1f`; local `5f6382b` CUDA delta | Current state unresolved after incident | Medium; value-free remote facts only | T-170 read-only reconciliation | native no-op, revision/status/inventory/plan/doctor per host; any later change uses one reviewed transaction and its recorded rollback |
+  | Six remote harness checkouts | last committed fleet evidence through `963ad1f`; local `5f6382b` CUDA delta | Recovered and synchronized through the T-170 rollout | High; value-free remote facts only | None | exact clean revisions, native no-op inventory/plan/doctor, and per-host ShellCheck validation; rollback evidence remains under T-170 |
 
-  **Reviewed post-audit execution order:** restore no Git object; preserve the
-  pre-incident reports; first remove raw recursive cleanup from the harness
-  tests (T-174), then reconstruct and validate the lost ShellCheck transaction
-  (T-173). Reconcile the local and six remote hosts read-only under T-170 before
-  any mutation. Recover the checksum-pinned current-node tools one transaction
-  at a time with an apply/validate/rollback/reapply pilot; T-175 must resolve
-  lftp's missing supported artifact separately. Leave owner profiles,
-  authentication, client state, and unknown home paths untouched. T-169 starts
-  only after the resulting environment baseline is frozen.
+  **Executed post-audit order:** restored no Git object and preserved the
+  pre-incident reports; removed raw recursive test cleanup (T-174), rebuilt and
+  validated ShellCheck (T-173), reconciled every host read-only, recovered the
+  selected current-node tools one transaction at a time, resolved lftp through
+  T-175, and then completed the clean fleet rollout. Owner profiles,
+  authentication, client state, and unknown home paths remained untouched.
 
 ## Active / recovery state
 
@@ -119,22 +116,24 @@ T-181.
     renewed agent. It contains no key material, must never be committed, and
     must be refreshed after that agent or node exits.
   - Commit `68fb820` made Node/npm recovery planning fail closed on version
-    mismatch. Commit `238f022` added autonomous bulk-deletion safety: global
-    guidance, Codex `forbidden` rules for common raw recursive `rm`, the
-    manifest-bound `harness guarded-delete` workflow, adversarial tests, and
-    Codex/Claude/shared-agent discovery. Skill, policy, focused, full-suite, and
-    fresh Codex checks passed; ShellCheck itself is currently unavailable.
+    mismatch. Commit `238f022` added the first autonomous bulk-deletion safety
+    layer: global guidance, Codex `forbidden` rules for common raw recursive
+    `rm`, the manifest-bound `harness guarded-delete` workflow, adversarial
+    tests, and Codex/Claude/shared-agent discovery. T-174 and T-176 later routed
+    test and internal transaction tree cleanup through the same revalidated
+    workflow. Skill, policy, focused, full-suite, and fresh-client checks pass;
+    T-173 restored ShellCheck 0.11.0 and T-177 made its warning gate durable.
 
   **Unresolved or intentionally not reconstructed**
 
   - The first audit found `.profile`, `.bash_profile`, `.bash_logout`, much of
     the former user-local tool/runtime state, `~/sshservice-cli`, and unknown
     top-level home paths missing. Later owner and harness reconstruction changed
-    part of that inventory. Treat all such claims as dated evidence until T-172
-    compares Git and current state; do not fabricate owner profiles or infer
-    that an absent path should exist. A 2026-07-15 website validation confirmed
-    normal-PATH `lftp` is still unavailable; its isolated deployment-policy
-    test stopped at that prerequisite without network or deployment.
+    part of that inventory. T-172 resolved every Git-backed candidate; do not
+    fabricate owner profiles or infer that an absent path should exist. The
+    first website validation found no normal-PATH lftp and stopped without
+    network or deployment; T-175 later restored it through a pinned local-only
+    transaction and reran the deployment-policy tests successfully.
   - The uncommitted ShellCheck transaction bytes after `5f6382b` were confirmed
     absent by T-172. T-173 reconstructed new checksum-pinned work at `2222fc5`.
     Local transaction `20260714T223339Z-461104` passed apply, lint, doctor,
@@ -160,8 +159,7 @@ T-181.
   complete. T-170 owns only the clean-revision fleet parity rollout.
 
 - **T-170 — Mirror the working environment across configured clusters
-  (read-only reconciliation complete 2026-07-15; parity rollout pending local
-  recovery and appended findings):**
+  (complete 2026-07-15):**
 
   - In-scope environments are the current node plus `ab`, `ab2`, `ri`, `al`,
     `rc`, and `t4`. `abci_login` and `alps_login` are transport-only;
@@ -174,12 +172,6 @@ T-181.
     Python, agent, source-build, and rollback paths; logical host profiles;
     checksum-pinned artifacts; exact state; and native HPC smoke/skill routes.
     It never distributes credentials or copies live client state.
-  - Before the incident, all six remote checkouts had been independently
-    synchronized through the MPI-route closure at `963ad1f`, with clean Git,
-    zero doctor failures, idempotent plans, and mode-0600 transaction state.
-    The 2026-07-15 reconciliation now proves that the later local `5f6382b`
-    CUDA revision also reached every remote: all six report clean `main`
-    checkouts at the exact same commit.
   - Stable completed capabilities include managed Bash blocks, portable Git
     policy, uv/Python 3.12, Node 24/npm 11, Codex/Claude commands, rclone,
     Tectonic, Git LFS, Ninja, SQLite, Tree on `t4`, shared skills, container and
@@ -190,48 +182,57 @@ T-181.
     `rc` sanitizer-runtime limitations, project-owned PyTorch/CUDA images, and
     allocation-only multi-rank/GPU evidence. Do not install private dependency
     stacks merely to erase a warning.
-  - The 2026-07-15 value-free read-only probes ran the exact native SSH route
-    for revision/status, inventory, plan, and doctor on all six targets. Every
-    checkout is clean; doctors have zero failures and warning counts
-    `ab=5`, `ab2=5`, `ri=3`, `al=2`, `rc=2`, `t4=2`. No scheduler job,
-    allocation, remote file, package, or setting was created or changed. The
-    current node is clean at `5ef1598`, with zero doctor failures and eight
-    warnings: missing Git LFS, uv, Claude, rclone, lftp, and Tectonic plus the
-    intentional login-node Docker/Podman limitations. Its system Node/npm are
-    present but remain the wrong versions (18.19.1/9.2.0).
-  - Complete T-178 through T-180 and T-175, recover the current-node tools,
-    then construct one exact clean-revision bundle and rollback plan. Advance
-    one remote host at a time with no allocation or project dependency changes.
-  - **2026-07-15 rollout checkpoint:** all dependencies above are complete.
-    Build one bundle from a clean committed `main`, verify its SHA-256 locally
-    and remotely, and require each remote to be clean at exact old revision
-    `5f6382b` before a fast-forward. Validate revision/status, value-free
-    inventory, no-op plan, doctor, and the new ABCI scheduler discovery. Install
-    ShellCheck through one host-scoped checksum transaction, then revalidate.
-    Rollback order is the recorded ShellCheck transaction first, followed only
-    on a clean checkout by `git reset --keep 5f6382b`; never run a broad reset,
-    copy client state, submit a scheduler job, or mutate a project environment.
+  - Bundle SHA-256 `74cbfca8…8d21a` fast-forwarded all six clean checkouts from
+    exact `5f6382b` to `2752ad0`; local and remote bundle copies and temporary
+    fact/plan/doctor files were individually unlinked and verified absent. The
+    ABCI profiles now discover all three PBS commands directly. ShellCheck
+    transactions are `ab=20260714T231752Z-286846`,
+    `ab2=20260714T231842Z-1765345`, `ri=20260714T231847Z-1138251`,
+    `al=20260714T231914Z-89535`, `rc=20260714T231922Z-3392644`, and
+    `t4=20260714T231932Z-719422`. Both architectures report 0.11.0; every
+    ShellCheck plan is `KEEP`, every checkout is clean at the target, remote
+    lftp selection is absent, and every doctor has zero failures. Remaining
+    warnings are the recorded intentional htop/tmux/container gaps. No job,
+    allocation, project environment, credential, client state, or external
+    repository changed.
 
-## Planned
+## Owner-review queue
 
-- **T-169 — Research advanced agent harness practices (blocked by T-170
-  reconciliation):**
-  1. Freeze the recovered harness behavior and evaluation criteria:
-     correctness, autonomy, context efficiency, recovery, security,
-     observability, portability, and measurable cost/runtime impact.
-  2. Collect primary-source advanced `CLAUDE.md`/`AGENTS.md` examples and
-     research on planning, memory, delegation, verification, reflection,
-     long-horizon execution, and multi-agent coordination. Record provenance,
-     license, intended environment, and exact mechanisms.
-  3. Compare each mechanism with the current ledger, safety, validation, and
-     portability behavior; classify it as covered, adopt, adapt, experiment, or
-     reject with evidence, risks, and context/runtime cost.
-  4. Produce a cited inventory, gap analysis, prioritized proposals, and
-     isolated benchmark designs. Independently verify material claims and avoid
-     license-incompatible copying.
+- **T-169 — Research advanced agent harness practices (research complete
+  2026-07-15; adoption remains owner-review gated):** froze the comparison at
+  the recovered, fully tested harness baseline. No researched mechanism was
+  implemented and no third-party text, code, or configuration was copied.
+  Official product documentation is used only as evidence about the intended
+  Codex/Claude environments; papers and evaluation reports are used only for
+  their stated mechanisms and limitations, so their software licenses do not
+  enter the current tree.
 
-Do not modify the harness from T-169 research findings until the owner reviews
-the evidence and proposed changes.
+  **Primary-source inventory and disposition**
+
+  | Mechanism and source | Current harness comparison | Disposition | Risk / cost |
+  | --- | --- | --- | --- |
+  | Outcome, constraints, verification, persistent goals, layered `AGENTS.md`, and focused skills ([OpenAI best practices](https://learn.chatgpt.com/guides/best-practices.md), [long-running work](https://learn.chatgpt.com/docs/long-running-work.md), [custom instructions](https://learn.chatgpt.com/docs/customization/agents-md.md)) | Global/project guidance, the durable task board, scoped skills, definition-of-done gates, and restart checkpoints already implement the durable parts | **Covered**; keep ledgers authoritative and instructions concise | More always-loaded prose consumes context and can reduce adherence; promote only stable rules |
+  | Generated local memory ([OpenAI memories](https://learn.chatgpt.com/docs/customization/memories.md), [Claude memory](https://code.claude.com/docs/en/memory)) | The checked-in ledger already provides reviewable provenance and survives compaction; both products distinguish required instructions from generated recall | **Reject as an authoritative state layer**; optional product memory may remain owner-controlled | Generated state can be stale, delayed, context-heavy, or inappropriate after external-context work |
+  | Interleaved reasoning, tool action, and observation ([ReAct paper](https://arxiv.org/abs/2210.03629)) | Small plan/tool/validation steps and evidence-backed replanning already follow this loop | **Covered**; retain observable evidence, not hidden reasoning transcripts | Extra narration without new evidence adds latency and context |
+  | Feedback retained across retries ([Reflexion paper](https://arxiv.org/abs/2303.11366)) | Raw failures and ledger checkpoints are retained, but there is no measured rule for converting a failed attempt into a bounded retry capsule | **Experiment**, only after T-181 establishes a baseline | Self-generated reflection can reinforce a wrong diagnosis; bound retries and require external test evidence |
+  | Agent-oriented command/file interfaces ([SWE-agent paper](https://arxiv.org/abs/2405.15793)) | Native commands, `rg`, `apply_patch`, task-specific harness verbs, exact manifests, and deterministic tests already supply a narrow, inspectable interface | **Covered/adapt**; add a wrapper only when repeated measured failures identify a specific interface gap | New wrappers increase maintenance and can obscure the native action |
+  | Isolated subagents and parallel work ([OpenAI subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents.md), [Claude subagents](https://code.claude.com/docs/en/sub-agents)) | `bounded-agent-delegation` already requires permission, independent scope, concise return evidence, and parent validation | **Covered**; reject default recursive teams or overlapping writes | Each worker adds tokens, startup latency, coordination risk, and possible context pollution |
+  | Lifecycle hooks and command policy ([OpenAI hooks](https://learn.chatgpt.com/docs/customization/hooks.md), [Claude hooks](https://code.claude.com/docs/en/hooks)) | Deletion safety is enforced inside the workflow with manifests/revalidation and supplemented by command policy; it does not depend on model adherence | **Reject hooks as the primary safety boundary**; consider read-only telemetry only if T-181 shows an observability gap | Product/config-specific, potentially experimental, and a hook failure must not weaken deletion protection |
+  | Long-task time horizons and acceptance quality ([METR time horizons](https://metr.org/time-horizons/), [maintainer-review study](https://metr.org/notes/2026-03-10-many-swe-bench-passing-prs-would-not-be-merged-into-main/)) | Harness tests prove explicit invariants but do not constitute a representative agent benchmark or maintainer acceptance test | **Adapt** through T-181; do not claim general autonomy from one suite or one successful recovery | Domain/task mix and grader choice materially change conclusions; repeated agent runs have real token/runtime cost |
+
+  **Gap analysis:** safety, durable state, rollback, portability, verification,
+  and bounded delegation are already strong and recently validated. The only
+  evidence-backed gap is comparative evaluation: there is no frozen task corpus
+  that can show whether a proposed planning, reflection, delegation, memory, or
+  observability change improves accepted outcomes without increasing unsafe
+  diffs, context, runtime, or recovery failures. T-181 is therefore the sole
+  proposed implementation prerequisite. Auto-memory, deeper agent teams,
+  always-on reflection, and hook-based deletion enforcement remain rejected
+  unless measurements overturn their current cost/risk case.
+
+Do not modify harness behavior from T-169 findings until the owner reviews the
+evidence and explicitly selects an experiment. T-181 is a proposal, not an
+authorized implementation task.
 
 ## Archived detail
 
@@ -336,8 +337,9 @@ live instructions.
   those value-free command directories. Inventory appends only existing,
   non-symlink, validated absolute profile directories after inherited/user
   paths; it does not source startup files. An isolated fake-site-path test,
-  shell lint/syntax, and the full suite pass. Remote verification waits for the
-  normal clean-revision rollout; no remote state changed during diagnosis.
+  shell lint/syntax, and the full suite pass. The T-170 rollout then verified
+  direct discovery on both ABCI hosts; no scheduler job or allocation was
+  created.
 - **T-180 — Make aggregate plans enforce pinned Node/npm versions (complete
   2026-07-15):** current inventory correctly reported Node 18.19.1 and npm
   9.2.0, but `harness plan` emitted `KEEP` from command presence alone. The
@@ -345,3 +347,22 @@ live instructions.
   `tools/runtimes.tsv` and emits an explicit observed/required mismatch action.
   Exact and old Node/npm fixture regressions, live local planning, shell lint/
   syntax, and the full suite pass.
+
+## Issue appended during T-169 research
+
+- **T-181 — Build an acceptance-grade agent harness evaluation corpus
+  (proposed; blocked on owner review):** before adopting any advanced agent
+  mechanism, freeze representative tasks for small fixes, ambiguous requests,
+  dirty-tree preservation, incident recovery/resume, destructive-operation
+  refusal, primary-source research, and bounded delegation. Run baseline and
+  one candidate at a time in disposable worktrees with fake homes, no
+  credentials, no live remote writes, and guarded cleanup. Pre-register
+  correctness and owner-style acceptance checks plus unintended-diff count,
+  recovery success, wall time, tool calls, context/token use, and failure mode;
+  repeat enough runs to expose nondeterminism. Require zero safety regressions
+  and no correctness loss before considering cost/latency gains. Candidate A
+  is one deterministic failure capsule plus at most one evidence-triggered
+  retry; candidate B is a read-only bounded subagent on independently scoped
+  exploration; candidate C is read-only lifecycle telemetry. Do not combine
+  candidates until each beats the unchanged baseline, and do not use product
+  memory, recursive teams, or hooks as safety enforcement.
