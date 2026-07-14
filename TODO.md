@@ -61,6 +61,13 @@ harness. Repository-specific tasks remain in their own project ledgers.
     restore to a separate path; if none exists, have the owner restore
     authentication and choose whether to reconstruct profiles, then authorize
     the exact non-secret control-plane/tool plans above.
+  - Third consecutive recovery-gate audit: no matching deletion process is
+    running; `harness` and `website` remain clean; no recovery tree has appeared;
+    the visible snapshot still has no home contents; and `.ssh/config`, shell
+    profiles, and `.local/bin` remain absent. Safe progress is exhausted without
+    an owner/admin recovery source or an explicit decision to rebuild those
+    owner-controlled surfaces. Mark the long-running T-170 goal blocked rather
+    than resuming remote mutation or fabricating authentication/profile state.
 
 - **T-170 — Mirror the working environment across configured clusters:**
   1. Enumerate only concrete host aliases from the current node's SSH config
