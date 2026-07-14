@@ -262,6 +262,46 @@ grep 'sha256=589f5b6dd4fcfee4dfda73013903c966abaa8abd93dbc9d436544e472b4f0e74' \
 grep 'CREATE link=.*\.local/bin/npm source=.*/bin/npm' \
     "$TEMP_DIR/node-arm-plan.out" >/dev/null || fail "Node npm activation plan"
 
+mkdir -p "$TEMP_DIR/runtime-facts-home"
+HOME="$TEMP_DIR/runtime-facts-home" "$HARNESS" runtime --host local --name node \
+    --facts "$ROOT/tests/fixtures/local.facts" --plan \
+    >"$TEMP_DIR/node-exact-facts-plan.out"
+grep 'KEEP runtime=node source=host-provided' \
+    "$TEMP_DIR/node-exact-facts-plan.out" >/dev/null || fail "exact captured Node retention"
+sed 's/^tool_node_version=v24\.16\.0$/tool_node_version=v18.19.1/' \
+    "$ROOT/tests/fixtures/local.facts" >"$TEMP_DIR/node-old.facts"
+HOME="$TEMP_DIR/runtime-facts-home" "$HARNESS" runtime --host local --name node \
+    --facts "$TEMP_DIR/node-old.facts" --plan \
+    >"$TEMP_DIR/node-old-facts-plan.out"
+grep 'SHADOW runtime=node reason=host-runtime-version-mismatch strategy=user-path' \
+    "$TEMP_DIR/node-old-facts-plan.out" >/dev/null || fail "old captured Node shadow plan"
+
+runtime_old_bin=$TEMP_DIR/runtime-old-bin
+runtime_old_home=$TEMP_DIR/runtime-old-home
+mkdir -p "$runtime_old_bin" "$runtime_old_home"
+printf '%s\n' '#!/bin/sh' 'echo v18.19.1' >"$runtime_old_bin/node"
+printf '%s\n' '#!/bin/sh' 'echo 9.2.0' >"$runtime_old_bin/npm"
+chmod 755 "$runtime_old_bin/node" "$runtime_old_bin/npm"
+HOME="$runtime_old_home" PATH="$runtime_old_bin:/usr/bin:/bin" \
+    "$HARNESS" runtime --host local --name node --plan \
+    >"$TEMP_DIR/node-old-host-plan.out"
+grep 'SHADOW runtime=node reason=host-runtime-version-mismatch strategy=user-path' \
+    "$TEMP_DIR/node-old-host-plan.out" >/dev/null || fail "old host Node shadow plan"
+grep 'INSTALL runtime_tree=.*node/24.16.0/linux-x86_64' \
+    "$TEMP_DIR/node-old-host-plan.out" >/dev/null || fail "old host Node install plan"
+
+runtime_exact_bin=$TEMP_DIR/runtime-exact-bin
+runtime_exact_home=$TEMP_DIR/runtime-exact-home
+mkdir -p "$runtime_exact_bin" "$runtime_exact_home"
+printf '%s\n' '#!/bin/sh' 'echo v24.16.0' >"$runtime_exact_bin/node"
+printf '%s\n' '#!/bin/sh' 'echo 11.13.0' >"$runtime_exact_bin/npm"
+chmod 755 "$runtime_exact_bin/node" "$runtime_exact_bin/npm"
+HOME="$runtime_exact_home" PATH="$runtime_exact_bin:/usr/bin:/bin" \
+    "$HARNESS" runtime --host local --name node --plan \
+    >"$TEMP_DIR/node-exact-host-plan.out"
+grep 'KEEP runtime=node source=host-provided' \
+    "$TEMP_DIR/node-exact-host-plan.out" >/dev/null || fail "exact host Node retention"
+
 path_home=$TEMP_DIR/path-home
 mkdir -p "$path_home/.local/bin"
 printf '%s\n' '#!/bin/sh' 'exit 0' >"$path_home/.local/bin/rg"

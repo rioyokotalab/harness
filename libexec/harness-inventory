@@ -70,6 +70,16 @@ safe_value() {
     printf '%s' "$1" | tr -cd 'A-Za-z0-9._+-'
 }
 
+command_version() {
+    raw_version=$($1 --version 2>/dev/null | sed -n '1p' || true)
+    cleaned_version=$(safe_value "$raw_version")
+    if [ -n "$cleaned_version" ]; then
+        printf '%s\n' "$cleaned_version"
+    else
+        printf '%s\n' unknown
+    fi
+}
+
 os_id=unknown
 os_version=unknown
 if [ -r /etc/os-release ]; then
@@ -151,6 +161,9 @@ generate_facts() {
         fact_name=$(printf '%s' "$command_name" | sed 's/+/p/g; s/-/_/g')
         echo "tool_${fact_name}=$state"
     done
+
+    echo "tool_node_version=$(command_version node)"
+    echo "tool_npm_version=$(command_version npm)"
 
     if [ -d "$HOME/harness/.git" ]; then
         echo "harness_checkout=present"

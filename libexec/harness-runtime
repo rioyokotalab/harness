@@ -47,14 +47,31 @@ commands='node npm npx corepack'
 managed=yes
 present=0
 absent=0
+host_unusable=no
+
+runtime_versions_match() {
+    candidate_node=$1
+    candidate_npm=$2
+    [ "$("$candidate_node" --version 2>/dev/null || true)" = "$node_version" ] &&
+        [ "$(PATH="${candidate_node%/*}:$PATH" "$candidate_npm" --version 2>/dev/null || true)" = "$npm_version" ]
+}
+
 if [ -n "$fact_file" ]; then
     fact_host=$(fact_get "$fact_file" logical_host)
     [ "$fact_host" = "$logical_host" ] || die "captured fact host mismatch"
     node_state=$(fact_get "$fact_file" tool_node)
     npm_state=$(fact_get "$fact_file" tool_npm)
     if [ "$node_state" = present ] && [ "$npm_state" = present ]; then
-        present=4
         managed=no
+        fact_node_version=$(fact_get "$fact_file" tool_node_version)
+        fact_npm_version=$(fact_get "$fact_file" tool_npm_version)
+        if [ "$fact_node_version" = "$node_version" ] &&
+            [ "$fact_npm_version" = "$npm_version" ]; then
+            present=4
+        else
+            absent=4
+            host_unusable=yes
+        fi
     elif [ "$node_state" = absent ] && [ "$npm_state" = absent ]; then
         absent=4
     else
@@ -74,13 +91,23 @@ else
         fi
     done
     if [ "$managed_count" -eq 4 ] && [ "$managed_collision" -eq 0 ]; then
-        present=4
+        if runtime_versions_match "$install_dir/bin/node" "$install_dir/bin/npm"; then
+            present=4
+        else
+            present=1
+            absent=1
+        fi
     elif [ "$managed_count" -ne 0 ] || [ "$managed_collision" -ne 0 ]; then
         present=1
         absent=1
     elif command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
-        present=4
         managed=no
+        if runtime_versions_match "$(command -v node)" "$(command -v npm)"; then
+            present=4
+        else
+            absent=4
+            host_unusable=yes
+        fi
     elif ! command -v node >/dev/null 2>&1 && ! command -v npm >/dev/null 2>&1; then
         absent=4
         managed=no
@@ -110,6 +137,9 @@ echo "RUNTIME_PLAN host=$logical_host runtime=$runtime_name version=$version arc
 case "$action" in
     KEEP) echo "KEEP runtime=$runtime_name source=$source" ;;
     INSTALL)
+        if [ "$host_unusable" = yes ]; then
+            echo "SHADOW runtime=$runtime_name reason=host-runtime-version-mismatch strategy=user-path"
+        fi
         echo "INSTALL runtime_tree=$install_dir"
         for command_name in $commands; do
             echo "CREATE link=$HOME/.local/bin/$command_name source=$install_dir/bin/$command_name"
