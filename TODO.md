@@ -297,6 +297,11 @@ harness. Repository-specific tasks remain in their own project ledgers.
     state probes returned no remote output, including one with a 45-second
     connect timeout and SSH keepalives. No reliable evidence establishes
     whether `~/harness` exists, so no mutation was attempted.
+  - After the five other cluster shells converged, a fresh sentinel/state audit
+    with a 15-second connect timeout and SSH keepalives failed during banner
+    exchange at `134.160.189.24:22`. No remote command started and no state was
+    changed. This independently confirms that `ai4s` remains connectivity-
+    blocked rather than merely missing a harness checkout.
   - Treat `ai4s` control-plane rollout as connectivity-blocked until a fresh
     read-only audit reports checkout and link state. Continue independent work
     on the other hosts without inferring success or absence.
@@ -446,6 +451,34 @@ harness. Repository-specific tasks remain in their own project ledgers.
     `t4`. Remaining shell targets are the connectivity-blocked `ai4s` and the
     current node, whose plaintext `.bashrc` credentials must be rotated and
     removed before a managed shell transaction is considered.
+
+  Portable-tool transaction checkpoint (2026-07-14):
+
+  - Began with ripgrep 15.1.0 because every reachable target that lacks it has
+    a first-party Linux release asset for its architecture. Recorded the
+    official x86-64 musl and AArch64 GNU asset URLs and their publisher-provided
+    SHA-256 values in `tools/artifacts.tsv`. Source:
+    <https://github.com/BurntSushi/ripgrep/releases/tag/15.1.0>.
+  - Implemented explicit `harness tool --host HOST --name ripgrep
+    --plan|--apply`. Dry-run reports the native HTTPS fetch, checksum, exact
+    archive member, versioned destination, and stable link. Apply requires a
+    clean committed harness and passing doctor, verifies SHA-256 before
+    extraction, extracts only the declared member, validates the version, and
+    activates it through `~/.local/bin/rg`.
+  - Extended all-path rollback for managed artifacts. It verifies the expected
+    directory shape and installed binary hash before any mutation; a changed
+    binary blocks removal of both artifact and link. Isolated tests exercise
+    the exact plan, unsupported-artifact refusal, changed-binary refusal, and
+    successful link/directory rollback without network access.
+  - Independently downloaded both declared archives over TLS into temporary
+    storage. Both SHA-256 checks passed, each archive contained exactly one
+    declared `rg` member, the x86-64 binary reported `ripgrep 15.1.0`, and
+    `file` identified the binaries as x86-64 static PIE and AArch64 GNU/Linux
+    ELF respectively. The temporary verification directory was removed.
+  - No remote tool has been installed yet. Next executable action: independently
+    commit the implementation, transfer it to `ab2`, and perform the same
+    plan/apply/rollback/reapply pilot used for the control plane and shell
+    layer.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

@@ -1,0 +1,200 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH= cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() {
+    echo "Usage: harness tool --host LOGICAL_ID --name TOOL [--facts FILE] [--plan|--apply]" >&2
+}
+logical_host=
+tool_name=
+fact_file=
+mode=plan
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --name) [ "$#" -ge 2 ] || { usage; exit 2; }; tool_name=$2; shift 2 ;;
+        --facts) [ "$#" -ge 2 ] || { usage; exit 2; }; fact_file=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        *) usage; exit 2 ;;
+    esac
+done
+[ -n "$logical_host" ] && [ -n "$tool_name" ] || { usage; exit 2; }
+profile=$(profile_for "$logical_host")
+require_safe_id "$tool_name"
+[ "$mode" != apply ] || [ -z "$fact_file" ] || die "tool apply does not accept captured facts"
+
+arch=$(config_get "$profile" arch)
+manifest=$HARNESS_ROOT/tools/artifacts.tsv
+records=$(awk -F'|' -v tool="$tool_name" -v arch="$arch" '
+    $1 == tool && $3 == "linux" && $4 == arch { print }
+' "$manifest")
+count=$(printf '%s\n' "$records" | awk 'NF { n++ } END { print n + 0 }')
+[ "$count" -eq 1 ] || die "no unique supported artifact for tool=$tool_name arch=$arch"
+IFS='|' read -r record_tool version artifact_os artifact_arch format url checksum member binary version_line <<EOF
+$records
+EOF
+[ "$record_tool" = "$tool_name" ] && [ "$artifact_arch" = "$arch" ] ||
+    die "artifact manifest mismatch"
+require_safe_id "$version"
+require_safe_id "$artifact_arch"
+require_safe_id "$binary"
+case "$member" in ''|/*|../*|*/../*|*/..) die "unsafe artifact member path" ;; esac
+case "$url" in https://*) ;; *) die "artifact URL must use HTTPS" ;; esac
+case "$checksum" in
+    *[!0-9a-f]*) die "invalid artifact checksum" ;;
+esac
+[ "${#checksum}" -eq 64 ] || die "invalid artifact checksum length"
+[ "$format" = tar.gz ] || die "unsupported artifact format: $format"
+
+install_dir=$HOME/.local/opt/$tool_name/$version/$artifact_os-$artifact_arch
+installed_binary=$install_dir/$binary
+stable_link=$HOME/.local/bin/$binary
+
+if [ -n "$fact_file" ]; then
+    fact_host=$(fact_get "$fact_file" logical_host)
+    [ "$fact_host" = "$logical_host" ] || die "captured fact host mismatch"
+    command_state=$(fact_get "$fact_file" "tool_$binary")
+elif command -v "$binary" >/dev/null 2>&1; then
+    command_state=present
+else
+    command_state=absent
+fi
+case "$command_state" in present|absent) ;; *) die "unknown command state: $command_state" ;; esac
+
+blocked=0
+artifact_action=KEEP
+link_action=KEEP
+if [ "$command_state" = present ]; then
+    :
+elif [ -e "$install_dir" ] || [ -L "$install_dir" ]; then
+    blocked=1
+    artifact_action=BLOCK
+else
+    artifact_action=INSTALL
+fi
+
+if [ "$command_state" != present ]; then
+    if [ -L "$stable_link" ]; then
+        if [ "$(readlink "$stable_link")" = "$installed_binary" ]; then
+            link_action=KEEP
+        else
+            link_action=BLOCK
+            blocked=1
+        fi
+    elif [ -e "$stable_link" ]; then
+        link_action=BLOCK
+        blocked=1
+    else
+        link_action=CREATE
+    fi
+fi
+
+echo "TOOL_PLAN host=$logical_host tool=$tool_name version=$version arch=$arch mode=$mode"
+if [ "$command_state" = present ]; then
+    echo "KEEP command=$binary source=host-provided"
+else
+    case "$artifact_action" in
+        INSTALL) echo "INSTALL artifact=$install_dir" ;;
+        KEEP) echo "KEEP artifact=$install_dir" ;;
+        BLOCK) echo "BLOCK artifact=$install_dir reason=existing-unmanaged-or-invalid" ;;
+    esac
+    case "$link_action" in
+        CREATE) echo "CREATE link=$stable_link source=$installed_binary" ;;
+        KEEP) echo "KEEP link=$stable_link" ;;
+        BLOCK) echo "BLOCK link=$stable_link reason=existing-unmanaged-path" ;;
+    esac
+    echo "FETCH url=$url sha256=$checksum"
+fi
+[ "$blocked" -eq 0 ] || die "tool plan contains blocked paths"
+[ "$mode" = apply ] || { echo "END tool host=$logical_host changes=not-applied"; exit 0; }
+[ "$command_state" != present ] || { echo "END tool host=$logical_host changes=none"; exit 0; }
+[ "$artifact_action" = INSTALL ] || [ "$link_action" = CREATE ] ||
+    { echo "END tool host=$logical_host changes=none"; exit 0; }
+
+[ -z "$(git -C "$HARNESS_ROOT" status --porcelain)" ] ||
+    die "tool apply requires clean harness"
+"$HARNESS_ROOT/libexec/harness-doctor" --host "$logical_host" >/dev/null ||
+    die "host doctor failed before tool apply"
+for required in curl sha256sum tar; do
+    command -v "$required" >/dev/null 2>&1 || die "tool apply requires command: $required"
+done
+
+state_root=$HOME/.local/state/harness/transactions
+mkdir -p "$state_root"
+chmod 700 "$HOME/.local/state/harness" "$state_root"
+transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+transaction_manifest=$state_root/$transaction_id.manifest
+: >"$transaction_manifest"; chmod 600 "$transaction_manifest"
+printf 'schema=1\nhost=%s\nrevision=%s\n' "$logical_host" \
+    "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" >>"$transaction_manifest"
+
+archive=$(mktemp "$state_root/$transaction_id.download.XXXXXX")
+stage=
+complete=0
+cleanup() {
+    status=$?
+    rm -f "$archive"
+    [ -z "$stage" ] || rm -rf "$stage"
+    if [ "$complete" -eq 0 ]; then
+        awk -F'|' '$1 == "link" { print $2 "|" $3 }' "$transaction_manifest" |
+            while IFS='|' read -r destination source; do
+                if [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ]; then
+                    rm "$destination"
+                fi
+            done
+        awk -F'|' '$1 == "artifact" { print $2 "|" $3 "|" $4 }' "$transaction_manifest" |
+            while IFS='|' read -r directory relative expected_hash; do
+                candidate=$directory/$relative
+                if [ -f "$candidate" ] && [ ! -L "$candidate" ] &&
+                    [ "$(sha256sum "$candidate" | awk '{print $1}')" = "$expected_hash" ] &&
+                    [ "$(find "$directory" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')" -eq 1 ]; then
+                    rm "$candidate"
+                    rmdir "$directory"
+                fi
+            done
+        echo failed >"$transaction_manifest.status"
+        chmod 600 "$transaction_manifest.status"
+    fi
+    exit "$status"
+}
+trap cleanup EXIT HUP INT TERM
+
+if [ "$artifact_action" = INSTALL ]; then
+    echo "NATIVE curl --proto =https --tlsv1.2 -fL --retry 2 $url -o STAGING"
+    curl --proto '=https' --tlsv1.2 -fL --retry 2 "$url" -o "$archive"
+    printf '%s  %s\n' "$checksum" "$archive" | sha256sum -c - >/dev/null
+    install_parent=${install_dir%/*}
+    mkdir -p "$install_parent"
+    stage=$(mktemp -d "$install_parent/.staging.XXXXXX")
+    tar -xzf "$archive" -C "$stage" --strip-components=1 "$member"
+    [ -f "$stage/$binary" ] && [ ! -L "$stage/$binary" ] ||
+        die "artifact did not contain the expected regular binary"
+    chmod 755 "$stage/$binary"
+    [ "$(find "$stage" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')" -eq 1 ] ||
+        die "artifact extraction created unexpected paths"
+    [ "$("$stage/$binary" --version | sed -n '1p')" = "$version_line" ] ||
+        die "installed tool version verification failed"
+    binary_hash=$(sha256sum "$stage/$binary" | awk '{print $1}')
+    printf 'artifact|%s|%s|%s\n' "$install_dir" "$binary" "$binary_hash" \
+        >>"$transaction_manifest"
+    mv -T "$stage" "$install_dir"
+    stage=
+fi
+
+if [ "$link_action" = CREATE ]; then
+    mkdir -p "${stable_link%/*}"
+    printf 'link|%s|%s\n' "$stable_link" "$installed_binary" >>"$transaction_manifest"
+    ln -s "$installed_binary" "$stable_link"
+fi
+
+rm -f "$archive"
+echo complete >"$transaction_manifest.status"; chmod 600 "$transaction_manifest.status"
+complete=1
+trap - EXIT HUP INT TERM
+echo "TRANSACTION id=$transaction_id status=complete"
+echo "END tool host=$logical_host changes=applied"

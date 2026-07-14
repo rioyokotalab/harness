@@ -15,6 +15,8 @@
 !shell/**
 !tests/
 !tests/**
+!tools/
+!tools/**
 !.codex/
 !.codex/**
 !.claude/

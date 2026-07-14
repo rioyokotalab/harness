@@ -114,6 +114,23 @@ interactive shell then provides `prgenv`, which prints and runs the native
 and agent workflows should report and invoke an explicit native `uenv run ...`
 or Slurm `--uenv` command instead.
 
+Checksum-pinned portable artifacts use an explicit one-tool transaction:
+
+```bash
+harness tool --host HOST --name ripgrep --plan
+harness tool --host HOST --name ripgrep --apply
+```
+
+The plan names the exact HTTPS release URL, SHA-256 value, versioned install
+directory, and stable link. Apply requires a clean harness and a passing host
+doctor, extracts only the declared archive member into
+`~/.local/opt/TOOL/VERSION/TARGET`, validates the reported version, and then
+creates the `~/.local/bin` link. Rollback first verifies the installed binary
+hash and refuses any modified artifact before removing the link and directory.
+The initial manifest covers ripgrep 15.1.0 on Linux x86-64 and AArch64; other
+selected tools remain plans until their official artifacts and checksums are
+recorded and tested.
+
 ## Deliberately excluded
 
 The live `~/.codex/config.toml`, `~/.claude/settings.json`,

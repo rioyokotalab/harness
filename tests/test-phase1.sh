@@ -20,6 +20,7 @@ for script in \
     "$ROOT/libexec/harness-apply" \
     "$ROOT/libexec/harness-remediate" \
     "$ROOT/libexec/harness-shell" \
+    "$ROOT/libexec/harness-tool" \
     "$ROOT/libexec/harness-rollback"
 do
     sh -n "$script" || fail "shell syntax: $script"
@@ -88,6 +89,18 @@ grep 'FAIL arch expected=x86_64 observed=aarch64' \
 
 if "$HARNESS" doctor --host excluded-host >"$TEMP_DIR/excluded.out" 2>&1; then
     fail "doctor accepted an unknown host"
+fi
+
+"$HARNESS" tool --host ab2 --name ripgrep --facts "$ROOT/tests/fixtures/ab2.facts" \
+    --plan >"$TEMP_DIR/tool-plan.out"
+grep 'INSTALL artifact=.*ripgrep/15.1.0/linux-x86_64' \
+    "$TEMP_DIR/tool-plan.out" >/dev/null || fail "tool artifact plan"
+grep 'sha256=1c9297be4a084eea7ecaedf93eb03d058d6faae29bbc57ecdaf5063921491599' \
+    "$TEMP_DIR/tool-plan.out" >/dev/null || fail "tool checksum plan"
+if "$HARNESS" tool --host ab2 --name unsupported \
+    --facts "$ROOT/tests/fixtures/ab2.facts" --plan \
+    >"$TEMP_DIR/unsupported-tool.out" 2>&1; then
+    fail "tool plan accepted an unsupported artifact"
 fi
 
 # Exercise a real apply/rollback against an isolated clean Git checkout.
@@ -207,5 +220,33 @@ HOME="$test_home" bash --noprofile --norc -ic \
     >"$TEMP_DIR/al-interactive.out" 2>&1 || fail "al interactive convenience"
 grep 'prgenv is a function' "$TEMP_DIR/al-interactive.out" >/dev/null ||
     fail "al interactive function missing"
+
+# Exercise artifact rollback and its all-path modification refusal without network.
+artifact_dir=$test_home/.local/opt/fixture/1/linux-x86_64
+artifact_link=$test_home/.local/bin/fixture
+mkdir -p "$artifact_dir" "${artifact_link%/*}"
+printf '%s\n' fixture-binary >"$artifact_dir/fixture"
+chmod 755 "$artifact_dir/fixture"
+artifact_hash=$(sha256sum "$artifact_dir/fixture" | awk '{print $1}')
+ln -s "$artifact_dir/fixture" "$artifact_link"
+artifact_transaction=fixture-artifact
+artifact_manifest=$test_home/.local/state/harness/transactions/$artifact_transaction.manifest
+printf 'schema=1\nhost=local\nrevision=test\nartifact|%s|fixture|%s\nlink|%s|%s\n' \
+    "$artifact_dir" "$artifact_hash" "$artifact_link" "$artifact_dir/fixture" \
+    >"$artifact_manifest"
+chmod 600 "$artifact_manifest"
+printf '%s\n' changed >"$artifact_dir/fixture"
+if HOME="$test_home" "$test_repo/bin/harness" rollback "$artifact_transaction" \
+    >"$TEMP_DIR/refused-artifact-rollback.out" 2>&1; then
+    fail "artifact rollback accepted a changed binary"
+fi
+[ -L "$artifact_link" ] || fail "artifact rollback partially removed link"
+printf '%s\n' fixture-binary >"$artifact_dir/fixture"
+chmod 755 "$artifact_dir/fixture"
+HOME="$test_home" "$test_repo/bin/harness" rollback "$artifact_transaction" \
+    >"$TEMP_DIR/artifact-rollback.out"
+[ ! -e "$artifact_link" ] && [ ! -L "$artifact_link" ] ||
+    fail "artifact rollback left link"
+[ ! -e "$artifact_dir" ] || fail "artifact rollback left directory"
 
 echo "phase-1 harness tests passed"
