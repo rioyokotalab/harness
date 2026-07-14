@@ -4,41 +4,79 @@ This board is the authoritative current state for the portable Codex and Claude
 harness. Git preserves superseded chronology and command-level evidence. Keep
 live tasks, verified recovery facts, blockers, and next actions here; do not
 rebuild a second incident transcript in a session or report file. Next free id:
-T-173.
+T-176.
 
 ## Recovery priority — do before any other task
 
 - **T-172 — Exhaustively re-audit Git history for additional recovery
-  candidates:**
-  1. Traverse the complete `harness` and `website` commit graphs, all local
-     refs, reflogs, and read-only unreachable-object reports. Start from the
-     last verified pre-incident revisions (`harness` `5f6382b`; `website`
-     `628b53a`) and reconcile every post-incident restoration commit.
-  2. Compare pre-incident tracked file inventories, modes, symlinks, subtrees,
-     and task state against the current checkouts. Include historical locations
-     renamed during website T-170–T-178 and harness T-170; do not assume the
-     current path existed at the older revision.
-  3. Audit durable non-secret recovery evidence: Git bundles and their recorded
-     hashes, transaction manifests, checksum allowlists, clean-clone tests,
-     deployment exclusions, task metrics, and driver logs. Check whether the
-     lost uncommitted ShellCheck transaction work survives in dangling Git
-     objects or another explicitly safe repository artifact; do not claim that
-     committed history contains uncommitted work without object evidence.
-  4. Produce a candidate table with original path, source commit/object,
-     pre-incident purpose, current state, confidence, sensitivity boundary,
-     dependencies, and exact validation/rollback. Separate confirmed loss,
-     already recovered state, intentional retirement, and unresolved evidence.
-  5. Never inspect or restore credentials, private keys, tokens, shell/client
-     histories, authentication stores, live client sessions, or secret values.
-     Report only that owner-controlled state is present, absent, or unresolved.
-  6. Restore nothing during the audit. Present one reviewed recovery plan first;
-     any later restoration must be narrow, reversible, independently validated,
-     and recorded here. This audit blocks T-170 fleet mutation and T-169.
+  candidates (complete 2026-07-15):** traversed both complete local commit
+  graphs, refs, reflogs, read-only unreachable-object reports, historical task
+  paths, pre-/post-incident trees, and durable non-secret recovery evidence.
+  The audit made no restoration, publication, package, owner-config, or fleet
+  change.
+
+  **Object and tree findings**
+
+  - Harness `5f6382b` has 79 paths (63 regular, 15 executable, one symlink);
+    current has 83 (65 regular, 17 executable, the same symlink). Every delta
+    is explained by post-incident commits: the Node version fix, recovery
+    ledgers, and guarded-delete implementation. `git fsck` found no unreachable
+    commit or tree, only four blobs. Content-free similarity and exact safe
+    markers map them to intermediate versions of `docs/recovery-session.md`
+    (`d1a0d80`, 8 additions/5 deletions), guarded-delete script
+    (`1ed2ca0`, 33/15), guarded-delete tests (`ac341fa`, 17/5), and the old
+    `TODO.md` (`e15cce3`, 6/2). All are superseded post-incident work, not the
+    lost pre-incident ShellCheck implementation.
+  - Website `628b53a` and current each contain 275 paths with identical mode
+    counts (257 regular, 18 executable; no symlink or submodule). The eight
+    damaged paths are byte-, object-, and mode-identical to `628b53a`. Only six
+    ledger files changed afterward. The 12 unreachable commits, 128 trees, and
+    218 blobs all predate the incident: named trees cover 216 blobs and encode
+    superseded July 12 evaluation variants or the July 14 ResearchMap
+    autostash; the two anonymous blobs are explicitly identified by safe header
+    fields as in-progress T-29 and T-30 `session.md` variants. None is a
+    recovery candidate.
+  - The ignored T-11 permission payload is absent from current ignored paths,
+    reachable objects, and all unreachable tree names. Its applied outcome is
+    recoverable from commits `b73c2c5`, `f92abf3`, `31b5b5b`, and `194fc04`,
+    but the payload itself is confirmed missing from available local evidence.
+    Surviving ignored T-170 reports and proposals are pre-incident evidence,
+    deploy-excluded, and superseded by the current harness; preserve them.
+  - No Git bundle remains under either checkout. The restored harness bundle's
+    recorded SHA-256 and source revision remain in committed evidence, as do
+    the clean-clone validations and remote rollout bundle hashes. Both current
+    repositories pass read-only object checks.
+
+  **Recovery candidate table**
+
+  | Original path/state | Source and purpose | Current classification | Confidence / sensitivity | Dependencies | Validation and rollback |
+  | --- | --- | --- | --- | --- | --- |
+  | `~/harness/**` | bundle SHA-256 `cbb4a1…f59bb4`, commit `5f6382b`; portable non-secret harness | Already recovered; all later deltas are committed and explained | High; allowlisted repository only | None | `git fsck`, 79-path tree/mode baseline, post-incident commit reconciliation; revert only an individually reviewed commit |
+  | Eight damaged website paths | website `628b53a`; public site/CV/build files | Already recovered exactly | High; tracked website data only | None | object/hash/mode equality against `628b53a`; rollback source is the same commit, so no action |
+  | Agent discovery/control-plane links | harness history plus transaction `20260714T202625Z-3548153`; client discovery | Already recovered: current plan has 28 `KEEP` links and doctor has zero failures | High; live settings/auth contents excluded | Retain owner config and surviving Claude state | `harness apply --host local --plan`, doctor, fresh-client discovery; transaction rollback is available but must not be run merely to retest recovery |
+  | T-11 permission proposal | no surviving payload object; commits through `194fc04` record intent/outcome | Payload confirmed missing, outcome superseded by T-179/current harness | High for absence; owner settings remain value-private | None | validate only recorded policy/discovery status; rollback current config only through a separate exact owner-config plan |
+  | Harness four anonymous blobs | `d1a0d80`, `1ed2ca0`, `ac341fa`, `e15cce3` | Intentionally retired intermediate post-incident snapshots | High; no secret content printed | None | safe marker/similarity mapping above; do not restore, and let normal Git maintenance retire them |
+  | Website unreachable graph and two anonymous session blobs | July 12 evaluation branches, July 14 autostash, T-29/T-30 checkpoints | Intentionally retired/superseded; accepted public changes are already in reachable history | High; repository paths only | None | commit dates, subjects, named-tree coverage, current-tree comparison; do not restore or publish |
+  | Lost uncommitted ShellCheck transaction work | no bundle commit, tree, named blob, ignored artifact, or safe anonymous-object match | Confirmed unavailable in local evidence; reconstruct from reviewed intent as new work | High for local absence; no credentials involved | T-173 and T-174 | new implementation must freeze a source/checksum, pass isolated apply/tamper/rollback tests, then a full suite with safe cleanup; rollback the new commit if rejected |
+  | Selected current-node user tools | committed checksum manifests; pre-incident versions in `5f6382b` ledger | Missing: normal-PATH ripgrep, uv, Claude, rclone, lftp, Tectonic, Git LFS; system Node/npm are 18.19.1/9.2.0 instead of 24.16.0/11.13.0 | High; tool binaries only, never client state/config | T-174 first; lftp needs T-175 | run exact plan, apply one transaction, verify version/doctor/idempotence, deliberate rollback pilot, then reapply; no bulk restore |
+  | `.profile`, `.bash_profile`, `.bash_logout`, `~/sshservice-cli`, unknown former home paths | no authoritative local source | Unresolved/absent; do not fabricate | High for named absence, unknown completeness; potentially sensitive owner state | Owner-supplied authoritative source only | presence/mode checks only; no validation or rollback is possible without a source |
+  | Owner `.bashrc`, SSH config, and agent socket | owner reconstruction and T-171 ledger | `.bashrc` intentional new file; SSH config intentionally final at 10 aliases; socket ephemeral | Owner-confirmed; contents/key material excluded | Owner maintains authentication and socket lifetime | status/parse and owner no-op evidence only; never replace from Git or copy key/session state |
+  | Six remote harness checkouts | last committed fleet evidence through `963ad1f`; local `5f6382b` CUDA delta | Current state unresolved after incident | Medium; value-free remote facts only | T-170 read-only reconciliation | native no-op, revision/status/inventory/plan/doctor per host; any later change uses one reviewed transaction and its recorded rollback |
+
+  **Reviewed post-audit execution order:** restore no Git object; preserve the
+  pre-incident reports; first remove raw recursive cleanup from the harness
+  tests (T-174), then reconstruct and validate the lost ShellCheck transaction
+  (T-173). Reconcile the local and six remote hosts read-only under T-170 before
+  any mutation. Recover the checksum-pinned current-node tools one transaction
+  at a time with an apply/validate/rollback/reapply pilot; T-175 must resolve
+  lftp's missing supported artifact separately. Leave owner profiles,
+  authentication, client state, and unknown home paths untouched. T-169 starts
+  only after the resulting environment baseline is frozen.
 
 ## Active / recovery state
 
 - **T-171 — Recover the current-node home after accidental deletion
-  (awaiting T-172 audit):**
+  (T-172 audit complete; execute the reviewed plan above):**
 
   **Incident and containment**
 
@@ -110,7 +148,7 @@ T-173.
   fleet mutation during that audit.
 
 - **T-170 — Mirror the working environment across configured clusters
-  (paused behind T-172):**
+  (ready for read-only reconciliation after T-172):**
 
   - In-scope environments are the current node plus `ab`, `ab2`, `ri`, `al`,
     `rc`, and `t4`. `abci_login` and `alps_login` are transport-only;
@@ -147,8 +185,8 @@ T-173.
 
 ## Planned
 
-- **T-169 — Research advanced agent harness practices (blocked by T-172 and
-  T-170 reconciliation):**
+- **T-169 — Research advanced agent harness practices (blocked by T-170
+  reconciliation):**
   1. Freeze the recovered harness behavior and evaluation criteria:
      correctness, autonomy, context efficiency, recovery, security,
      observability, portability, and measurable cost/runtime impact.
@@ -172,3 +210,22 @@ The former 1,600-line chronological board, recovery checkpoints, exact remote
 commands, transaction identifiers, and superseded observations remain in Git
 through commit `238f022` and earlier. Use them as evidence during T-172, not as
 live instructions.
+
+## Issues appended during the T-172 sweep
+
+- **T-173 — Reconstruct the lost ShellCheck transaction:** implement it as new
+  reviewed work because no pre-incident object survived. Freeze the supported
+  version, primary artifact provenance, architecture coverage, and checksums;
+  add isolated plan/apply/tamper/idempotence/rollback tests; do not infer or
+  claim recovery of the lost bytes.
+- **T-174 — Remove raw recursive cleanup from harness tests:**
+  `tests/test-phase1.sh` and `tests/test-guarded-delete.sh` still own temporary
+  trees with raw recursive cleanup. Replace that implicit exception with a
+  deterministic bounded cleanup path and adversarially prove it cannot expand
+  to the account home before running the full suite again.
+- **T-175 — Restore or deliberately retire lftp through a reproducible path:**
+  the local profile selects lftp 4.9.3 and the website deployment-policy test
+  requires it, but `harness tool --name lftp --plan` fails closed because no
+  supported checksum-pinned artifact exists. Add a verified user-space source
+  transaction or record an intentional dependency replacement; do not install
+  an unpinned package merely to clear the warning.
