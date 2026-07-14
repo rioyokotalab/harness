@@ -119,11 +119,11 @@ mkdir -p "$managed_rg_dir" "$test_home/.local/bin"
 printf '%s\n' '#!/bin/sh' 'echo test-only' >"$managed_rg_dir/rg"
 chmod 755 "$managed_rg_dir/rg"
 ln -s "$managed_rg_dir/rg" "$test_home/.local/bin/rg"
-HOME="$test_home" PATH="$test_home/.local/bin:/usr/bin:/bin" \
+HOME="$test_home" PATH="/usr/bin:/bin" \
     "$HARNESS" tool --host local --name ripgrep --plan \
     >"$TEMP_DIR/managed-tool-plan.out"
 grep 'KEEP command=rg source=managed-artifact' "$TEMP_DIR/managed-tool-plan.out" \
-    >/dev/null || fail "managed tool source label"
+    >/dev/null || fail "managed tool discovery outside PATH"
 rm "$test_home/.local/bin/rg" "$managed_rg_dir/rg"
 rmdir "$managed_rg_dir"
 cp -R "$ROOT/bin" "$ROOT/libexec" "$ROOT/profiles" "$ROOT/shared" \

@@ -59,6 +59,11 @@ if [ -n "$fact_file" ]; then
     fact_host=$(fact_get "$fact_file" logical_host)
     [ "$fact_host" = "$logical_host" ] || die "captured fact host mismatch"
     command_state=$(fact_get "$fact_file" "tool_$binary")
+elif [ -L "$stable_link" ] && [ "$(readlink "$stable_link")" = "$installed_binary" ] &&
+    [ -f "$installed_binary" ] && [ ! -L "$installed_binary" ] && [ -x "$installed_binary" ]; then
+    # Non-interactive SSH commands do not consistently inherit ~/.local/bin in
+    # PATH. Recognize the exact managed link without depending on shell startup.
+    command_state=present
 elif command -v "$binary" >/dev/null 2>&1; then
     command_state=present
 else
@@ -67,8 +72,7 @@ fi
 case "$command_state" in present|absent) ;; *) die "unknown command state: $command_state" ;; esac
 command_source=host-provided
 if [ -z "$fact_file" ] && [ "$command_state" = present ] && [ -L "$stable_link" ] &&
-    [ "$(readlink "$stable_link")" = "$installed_binary" ] &&
-    [ "$(command -v "$binary")" = "$stable_link" ]; then
+    [ "$(readlink "$stable_link")" = "$installed_binary" ]; then
     command_source=managed-artifact
 fi
 
