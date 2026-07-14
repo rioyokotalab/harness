@@ -979,6 +979,24 @@ harness. Repository-specific tasks remain in their own project ledgers.
     and even a one-minute validation can consume project points. Continue with
     non-chargeable readiness checks and site-native Slurm tests where the
     account has an unambiguous default allocation.
+  - `ri` default Slurm allocation passed a one-minute GB200 driver/Python smoke:
+    GB200, driver 580.159.03, compute capability 10.0. Neither `nvcc` nor MPI is
+    present on the compute base image; login context supplies Apptainer 1.4.5
+    and Slurm OCI flags, so LLM/CUDA/MPI dependencies belong in a project image.
+  - `rc` is heterogeneous across login and compute architectures. One-minute
+    native probes found an AArch64 GH200 480 GB node with driver 610.43.02 and
+    an AArch64 FX700 node, but neither base image exposes CUDA or MPI wrappers.
+    Do not execute the login node's x86-64 managed Python on those partitions;
+    add partition-specific module/container selection when a project chooses
+    its target architecture.
+  - Current-node job `90624` passed A4500 driver/CUDA runtime and Python, but
+    `srun --ntasks=2` started two Open MPI rank-1 singletons because no PMIx
+    server was reachable. Tighten `mpi.c` to require exactly two ranks and use
+    native `mpirun -n 2` inside this single-node allocation. The `ybatch`
+    wrapper also places extra arguments after its generated script, so `--wait`
+    and CLI output options are not scheduler options; declare a job-ID-scoped
+    output in the tracked script, monitor the parsed job ID, and clean exactly
+    that output after validation.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

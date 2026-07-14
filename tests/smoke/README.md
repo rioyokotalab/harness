@@ -20,5 +20,8 @@ site-specific.
 
 `jobs/local.slurm` is the current node's native `ybatch` smoke. It requests the
 smallest A4500 resource and validates CUDA runtime, two-rank MPI, and Python.
-The agent supplies an explicit temporary output path and waits for completion;
-the script does not normalize or conceal the generated Slurm commands.
+The site wrapper submits asynchronously and does not forward later scheduler
+options before its temporary script, so the job declares a job-ID-scoped output
+file itself. The agent parses the submitted ID, monitors only that job, validates
+the output, and removes it. The script does not normalize or conceal the
+generated Slurm commands.
