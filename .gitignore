@@ -11,6 +11,8 @@
 !libexec/**
 !profiles/
 !profiles/**
+!shell/
+!shell/**
 !tests/
 !tests/**
 !.codex/

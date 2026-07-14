@@ -18,6 +18,7 @@ for script in \
     "$ROOT/libexec/harness-plan" \
     "$ROOT/libexec/harness-doctor" \
     "$ROOT/libexec/harness-apply" \
+    "$ROOT/libexec/harness-shell" \
     "$ROOT/libexec/harness-rollback"
 do
     sh -n "$script" || fail "shell syntax: $script"
@@ -93,7 +94,7 @@ test_repo=$TEMP_DIR/repo
 test_home=$TEMP_DIR/home
 mkdir -p "$test_repo" "$test_home"
 cp -R "$ROOT/bin" "$ROOT/libexec" "$ROOT/profiles" "$ROOT/shared" \
-    "$ROOT/.codex" "$ROOT/.claude" "$test_repo/"
+    "$ROOT/shell" "$ROOT/.codex" "$ROOT/.claude" "$test_repo/"
 git -C "$test_repo" init -q
 git -C "$test_repo" config user.name harness-test
 git -C "$test_repo" config user.email harness-test.invalid
@@ -126,5 +127,33 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$transaction" \
 [ ! -L "$test_home/.codex/AGENTS.md" ] || fail "rollback left guidance link"
 grep 'status=rolled-back' "$TEMP_DIR/control-rollback.out" >/dev/null ||
     fail "rollback transaction status"
+
+printf '%s\n' 'export TEST_TOKEN=fake-secret-value' >"$test_home/.bashrc"
+printf '%s\n' '# existing login setup' >"$test_home/.bash_profile"
+cp "$test_home/.bashrc" "$TEMP_DIR/original-bashrc"
+cp "$test_home/.bash_profile" "$TEMP_DIR/original-bash-profile"
+HOME="$test_home" "$test_repo/bin/harness" shell --host local --plan \
+    >"$TEMP_DIR/shell-plan.out"
+grep 'APPEND file=.bashrc' "$TEMP_DIR/shell-plan.out" >/dev/null || fail "shell plan"
+HOME="$test_home" "$test_repo/bin/harness" shell --host local --apply \
+    >"$TEMP_DIR/shell-apply.out"
+shell_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' "$TEMP_DIR/shell-apply.out")
+[ -n "$shell_transaction" ] || fail "missing shell transaction"
+if grep -R 'fake-secret-value' "$test_home/.local/state/harness" >/dev/null 2>&1; then
+    fail "shell transaction copied pre-existing content"
+fi
+applied_size=$(wc -c <"$test_home/.bashrc" | tr -d ' ')
+printf '%s\n' '# later user change' >>"$test_home/.bashrc"
+if HOME="$test_home" "$test_repo/bin/harness" rollback "$shell_transaction" \
+    >"$TEMP_DIR/refused-shell-rollback.out" 2>&1; then
+    fail "shell rollback accepted later changes"
+fi
+grep 'later user change' "$test_home/.bashrc" >/dev/null ||
+    fail "shell rollback damaged later changes"
+truncate -s "$applied_size" "$test_home/.bashrc"
+HOME="$test_home" "$test_repo/bin/harness" rollback "$shell_transaction" \
+    >"$TEMP_DIR/shell-rollback.out"
+cmp -s "$test_home/.bashrc" "$TEMP_DIR/original-bashrc" || fail "bashrc rollback"
+cmp -s "$test_home/.bash_profile" "$TEMP_DIR/original-bash-profile" || fail "bash profile rollback"
 
 echo "phase-1 harness tests passed"

@@ -16,12 +16,43 @@ require_safe_id "$transaction_id"
 manifest=$HOME/.local/state/harness/transactions/$transaction_id.manifest
 [ -f "$manifest" ] || die "unknown transaction: $transaction_id"
 
-failures=0
-awk -F'|' '$1 == "link" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
-    "$manifest" | while IFS='|' read -r record destination source; do
-        [ "$record" = link ] || continue
+records=$(mktemp "${TMPDIR:-/tmp}/harness-rollback.XXXXXX")
+trap 'rm -f "$records"' EXIT HUP INT TERM
+awk -F'|' '$1 == "link" || $1 == "shell" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+    "$manifest" >"$records"
+
+# Validate every path before mutating any path.
+while IFS='|' read -r record destination field3 field4 field5; do
+    case "$destination" in "$HOME"/*) ;; *) die "unsafe transaction path" ;; esac
+    if [ "$record" = shell ]; then
+        original=$field3; bytes=$field4; payload=$field5
+        current=$(wc -c <"$destination" | tr -d ' ')
+        expected=$((original + bytes))
+        if [ "$current" -eq "$original" ]; then
+            continue
+        fi
+        [ "$current" -eq "$expected" ] && tail -c "$bytes" "$destination" | cmp -s - "$payload" ||
+            die "rollback blocked: shell file changed after apply: $destination"
+    elif [ -L "$destination" ]; then
+        [ "$(readlink "$destination")" = "$field3" ] ||
+            die "rollback blocked: link changed after apply: $destination"
+    elif [ -e "$destination" ]; then
+        die "rollback blocked: managed path changed type: $destination"
+    fi
+done <"$records"
+
+while IFS='|' read -r record destination field3 field4 field5; do
         case "$destination" in "$HOME"/*) ;; *) die "unsafe transaction path" ;; esac
-        if [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ]; then
+        if [ "$record" = shell ]; then
+            original=$field3; bytes=$field4; payload=$field5
+            current=$(wc -c <"$destination" | tr -d ' ')
+            if [ "$current" -eq "$original" ]; then
+                echo "KEEP file=$destination state=already-rolled-back"
+            else
+                echo "TRUNCATE file=$destination bytes=$original"
+                truncate -s "$original" "$destination"
+            fi
+        elif [ -L "$destination" ] && [ "$(readlink "$destination")" = "$field3" ]; then
             echo "REMOVE link=$destination"
             rm "$destination"
         elif [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
@@ -30,9 +61,7 @@ awk -F'|' '$1 == "link" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (li
             echo "BLOCK link=$destination reason=changed-after-apply" >&2
             exit 1
         fi
-    done || failures=1
-
-[ "$failures" -eq 0 ] || die "rollback stopped on a changed path"
+done <"$records"
 echo rolled-back >"$manifest.status"
 chmod 600 "$manifest.status"
 echo "TRANSACTION id=$transaction_id status=rolled-back"

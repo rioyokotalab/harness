@@ -303,6 +303,24 @@ harness. Repository-specific tasks remain in their own project ledgers.
     transaction for `ab2`. Do not copy whole startup files into backups because
     their unknown contents may include credentials; rollback must remove only
     the exact appended harness block when surrounding file state still matches.
+  - Shell pilot work started: added tracked `shell/profile.sh`,
+    `shell/interactive.sh`, and exact `.bashrc`/`.bash_profile` block payloads.
+    They set the selected local defaults, prepend `~/.local/bin` idempotently,
+    and guard interactive history initialization. These files are not yet
+    deployed; next implement suffix-verified append/rollback and isolated tests.
+  - Implemented `harness shell --host HOST --plan|--apply`. It requires regular
+    `.bashrc` and `.bash_profile` files, blocks pre-existing non-suffix markers,
+    and appends only the public tracked payload. Transaction state contains no
+    pre-existing file bytes or hashes.
+  - Extended rollback with an all-path preflight. An adversarial test added a
+    later edit after shell apply and exposed an initial partial-rollback flaw;
+    rollback now validates every recorded link/file before any removal or
+    truncation. The test proves the later edit is preserved, the first rollback
+    fails without partial mutation, and a clean retry restores both fake startup
+    files byte-for-byte without copying their fake secret into transaction state.
+  - Next executable action: commit, fast-forward `ab2`, show its shell dry run,
+    apply the two managed suffixes, validate non-interactive and interactive
+    startup, deliberately roll back, then reapply if all checks pass.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

@@ -1,0 +1,5 @@
+# >>> harness managed >>>
+if [ -r "$HOME/harness/shell/profile.sh" ]; then
+    . "$HOME/harness/shell/profile.sh"
+fi
+# <<< harness managed <<<

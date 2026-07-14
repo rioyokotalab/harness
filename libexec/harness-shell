@@ -1,0 +1,105 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH= cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() { echo "Usage: harness shell --host LOGICAL_ID [--plan|--apply]" >&2; }
+logical_host=
+mode=plan
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        *) usage; exit 2 ;;
+    esac
+done
+[ -n "$logical_host" ] || { usage; exit 2; }
+profile_for "$logical_host" >/dev/null
+command -v truncate >/dev/null 2>&1 || die "shell transaction requires truncate"
+
+temp_dir=$(mktemp -d "${TMPDIR:-/tmp}/harness-shell.XXXXXX")
+trap 'rm -rf "$temp_dir"' EXIT HUP INT TERM
+printf '\n' >"$temp_dir/bashrc.payload"
+cat "$HARNESS_ROOT/shell/bashrc.block" >>"$temp_dir/bashrc.payload"
+printf '\n' >"$temp_dir/bash_profile.payload"
+cat "$HARNESS_ROOT/shell/bash_profile.block" >>"$temp_dir/bash_profile.payload"
+
+blocked=0
+echo "SHELL_PLAN host=$logical_host mode=$mode contents=not-read"
+for name in bashrc bash_profile; do
+    destination=$HOME/.$name
+    payload=$temp_dir/$name.payload
+    bytes=$(wc -c <"$payload" | tr -d ' ')
+    if [ ! -f "$destination" ] || [ -L "$destination" ]; then
+        echo "BLOCK file=.$name reason=not-regular"
+        blocked=1
+    elif [ "$(wc -c <"$destination" | tr -d ' ')" -ge "$bytes" ] &&
+        tail -c "$bytes" "$destination" | cmp -s - "$payload"; then
+        echo "KEEP file=.$name suffix=harness-managed"
+    elif grep -F '# >>> harness managed >>>' "$destination" >/dev/null 2>&1; then
+        echo "BLOCK file=.$name reason=managed-marker-not-exact-suffix"
+        blocked=1
+    else
+        echo "APPEND file=.$name bytes=$bytes contents=harness-managed"
+    fi
+done
+[ "$blocked" -eq 0 ] || die "shell plan contains blocked files"
+[ "$mode" = apply ] || { echo "END shell host=$logical_host changes=not-applied"; exit 0; }
+
+[ -z "$(git -C "$HARNESS_ROOT" status --porcelain)" ] || die "shell apply requires clean harness"
+"$HARNESS_ROOT/libexec/harness-doctor" --host "$logical_host" >/dev/null || die "host doctor failed"
+state_root=$HOME/.local/state/harness/transactions
+mkdir -p "$state_root"
+chmod 700 "$HOME/.local/state/harness" "$state_root"
+transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+manifest=$state_root/$transaction_id.manifest
+: >"$manifest"; chmod 600 "$manifest"
+printf 'schema=1\nhost=%s\nrevision=%s\n' "$logical_host" "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" >>"$manifest"
+
+rollback_partial() {
+    awk -F'|' '$1 == "shell" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+        "$manifest" | while IFS='|' read -r record destination original bytes payload; do
+            current=$(wc -c <"$destination" | tr -d ' ')
+            expected=$((original + bytes))
+            if [ "$current" -eq "$expected" ] && tail -c "$bytes" "$destination" | cmp -s - "$payload"; then
+                truncate -s "$original" "$destination"
+            fi
+        done
+}
+complete=0
+cleanup() {
+    status=$?
+    if [ "$complete" -eq 0 ]; then
+        rollback_partial
+        echo failed >"$manifest.status"
+        chmod 600 "$manifest.status"
+    fi
+    rm -rf "$temp_dir"
+    exit "$status"
+}
+trap cleanup EXIT HUP INT TERM
+
+for name in bashrc bash_profile; do
+    destination=$HOME/.$name
+    payload=$temp_dir/$name.payload
+    bytes=$(wc -c <"$payload" | tr -d ' ')
+    if [ "$(wc -c <"$destination" | tr -d ' ')" -ge "$bytes" ] &&
+        tail -c "$bytes" "$destination" | cmp -s - "$payload"; then
+        continue
+    fi
+    original=$(wc -c <"$destination" | tr -d ' ')
+    stored=$state_root/$transaction_id.$name.payload
+    cp "$payload" "$stored"; chmod 600 "$stored"
+    cat "$payload" >>"$destination"
+    printf 'shell|%s|%s|%s|%s\n' "$destination" "$original" "$bytes" "$stored" >>"$manifest"
+done
+echo complete >"$manifest.status"; chmod 600 "$manifest.status"
+complete=1
+trap - EXIT HUP INT TERM
+rm -rf "$temp_dir"
+echo "TRANSACTION id=$transaction_id status=complete"
+echo "END shell host=$logical_host changes=applied"

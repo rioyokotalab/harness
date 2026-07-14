@@ -85,6 +85,18 @@ harness rollback TRANSACTION_ID
 Rollback removes only links that still point to the source recorded in the
 mode-600 manifest. It stops rather than remove a path changed after apply.
 
+Shell loaders use a separate append-only transaction:
+
+```bash
+harness shell --host HOST --plan
+harness shell --host HOST --apply
+```
+
+The transaction never copies or hashes pre-existing startup-file content. It
+records original byte length and a mode-600 copy of the public harness suffix.
+Rollback first validates every affected file, then truncates only exact,
+unchanged managed suffixes; any later user edit blocks the entire rollback.
+
 ## Deliberately excluded
 
 The live `~/.codex/config.toml`, `~/.claude/settings.json`,
