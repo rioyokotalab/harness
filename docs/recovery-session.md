@@ -55,6 +55,17 @@ validation only:
   tool-planner work during this SSH-config session.
 - T-170 remote mutation remains paused while T-171 is active.
 
+## Publication status
+
+- Cold-restart checkpoint commit `ce4148b` is committed locally.
+- The owner corrected `origin` to `github:rioyokotalab/harness`.
+- A read-only remote-head check on 2026-07-15 reached GitHub but failed with
+  public-key authentication before repository state could be read. This Codex
+  process has an absent or stale `SSH_AUTH_SOCK`; no remote ref was changed.
+- To publish, either run `git -C ~/harness push origin main` from the owner's
+  renewed-agent shell, or start Codex from that shell and request the push
+  again. Never provide a key passphrase to the agent.
+
 ## Handoff rule
 
 At every material change, update this file first with the current state, last
