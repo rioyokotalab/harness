@@ -416,6 +416,37 @@ harness. Repository-specific tasks remain in their own project ledgers.
     shell dry runs, then apply/validate/rollback/reapply the remediation before
     applying the common shell suffix.
 
+  `al` deployment checkpoint (2026-07-14):
+
+  - Committed the remediation as `5b51f58`, verified the complete Git bundle
+    locally and remotely with SHA-256
+    `c466841457f2e5da94c8af12cb93576a6c05577b6dcb90d707645ca7a7c65673`,
+    and fast-forwarded the clean `al` checkout from `95075c4`. The shared-home
+    staging artifact was removed after transfer.
+  - The remote dry runs found no pre-existing `prgenv` function, exactly one
+    reviewed 45-byte uenv patch, and two unblocked 195-byte host-specific shell
+    suffixes. Before mutation, `.bashrc` was owner 31254, mode 600, 172 bytes;
+    `.bash_profile` was owner 31254, mode 644, 552 bytes.
+  - Applied remediation transaction `20260714T121512Z-270890`. It preserved
+    `.bashrc` size/owner/mode, made the next plan `KEEP`, silenced `ssh al
+    true`, and produced a clean real-TTY login. Deliberate rollback restored
+    the exact original line and reproduced the known 526-byte uenv warning;
+    the next plan again proposed the one exact patch.
+  - Reapplied as remediation transaction `20260714T121553Z-290205`, then
+    applied shell transaction `20260714T121604Z-2866`. Final `.bashrc` and
+    `.bash_profile` sizes are 367 and 747 bytes, exactly 195 bytes larger, with
+    original owners/modes and one managed marker each. Both manifests/status
+    records are mode 600 and complete.
+  - Final plans are all `KEEP`, doctor reports `failures=0 warnings=11`, and
+    non-interactive SSH is silent. A real login TTY reports `EDITOR=vim`,
+    `PAGER=cat`, `HISTCONTROL=ignoreboth:erasedups`, the guard loaded once, and
+    `prgenv` as a function. The earlier `SSH_AGENT_PID` logout warning did not
+    recur, so no absent `.bash_logout` file was created.
+  - The common shell layer is now converged on `ab`, `ab2`, `al`, `rc`, and
+    `t4`. Remaining shell targets are the connectivity-blocked `ai4s` and the
+    current node, whose plaintext `.bashrc` credentials must be rotated and
+    removed before a managed shell transaction is considered.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 
