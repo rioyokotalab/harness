@@ -565,6 +565,28 @@ harness. Repository-specific tasks remain in their own project ledgers.
   - Next executable action: commit the isolated evidence, fast-forward `ab2`,
     then run a uv plan/apply/rollback/reapply pilot before any fleet rollout.
 
+  `ab2` uv pilot checkpoint (2026-07-14):
+
+  - Fast-forwarded `ab2` to `e0e5a54` with a complete bundle whose matching
+    local/remote SHA-256 was
+    `59e3c563b16d6853258f429a18478cf2cdddd458fd70b3740add0c09bf0dcf01`.
+    Preflight found uv and its managed paths absent, with no uv Python directory,
+    and selected the exact reviewed x86-64 asset/checksum.
+  - Applied transaction `20260714T123353Z-1079736`. uv reported 0.9.18, the
+    repeated plan reported `managed-artifact`, transaction files were mode 600
+    and complete, doctor warnings fell from eight to seven, and no Python
+    runtime was downloaded.
+  - Deliberate rollback removed both the uv link and versioned directory,
+    restored the `INSTALL` plan and eight-warning baseline, and left the absent
+    Python directory unchanged. Reapplied as transaction
+    `20260714T123414Z-1085400`.
+  - Final validation reports uv 0.9.18, an idempotent managed-artifact plan,
+    `failures=0 warnings=7`, mode-600 complete state, no uv-managed Python, and
+    silent SSH.
+  - Next safe action: fast-forward `ab`, `al`, `rc`, and `t4`, show their uv
+    plans, and apply one host at a time; keep Python installation separate and
+    keep `ai4s` blocked.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 
