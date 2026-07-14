@@ -199,15 +199,30 @@ agent and current proxy configuration.
 ## Shell integration
 
 Do not symlink a complete `.bashrc` across sites. Keep site startup intact and
-use a single guarded, managed hook only after inspection and owner approval.
-The hook must be fast, silent for non-interactive sessions, and must not start
-containers, contact the network, print environment values, or manage an SSH
-agent.
+use a single guarded, marked harness block. The owner has authorized changes to
+`.bashrc` and `.bash_profile` on `ab`, `ab2`, `ai4s`, `al`, `rc`, and `t4`.
+That authorization does not include excluded aliases, system startup files,
+credentials, authentication, or unrelated home files. The hook must be fast,
+silent for non-interactive sessions, and must not start containers, contact the
+network, print environment values, or manage an SSH agent.
+
+Preserve the existing file around the managed block. Record a restorable backup
+and original permissions before first mutation; update only the marked block on
+later applies. Structural inspection and plans must not print startup-file
+contents or environment values.
+
+Bash login precedence requires special care: it reads the first available file
+among `.bash_profile`, `.bash_login`, and `.profile`. If `.bash_profile` does
+not exist, the plan must identify any file it would supersede and show how that
+file's behavior remains in the source chain before creating `.bash_profile`.
+The managed login block should arrange for the interactive `.bashrc` path
+without duplicating initialization or changing non-interactive behavior.
 
 Validate, per host:
 
 - `ssh HOST true` is silent and succeeds;
 - an interactive login preserves site modules and expected prompt behavior;
+- file ownership and permissions match their pre-change state;
 - batch submission starts from a declared project/site environment;
 - agent discovery links resolve to the intended committed harness revision;
 - repeated apply is a no-op;

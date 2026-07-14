@@ -54,6 +54,25 @@ harness. Repository-specific tasks remain in their own project ledgers.
     `ab2`, `ai4s`, `al`, `rc`, and `t4`. `abci_login` and `alps_login` remain
     transport-only proxy nodes and receive no harness deployment.
 
+  Owner authorization checkpoint (2026-07-14):
+
+  - The user explicitly authorizes the rollout to modify `.bashrc` and
+    `.bash_profile` in the remote home directories of `ab`, `ab2`, `ai4s`,
+    `al`, `rc`, and `t4`. This does not authorize changes on excluded aliases,
+    system-wide startup files, credentials, authentication, or unrelated home
+    files.
+  - Preserve each site's existing startup behavior and modify only a bounded,
+    marked harness block. Before the first mutation, record file type,
+    permissions, and a restorable backup without printing file contents or
+    environment values. Repeated apply must update the block idempotently.
+  - For `.bash_profile`, first determine structurally whether it exists and
+    which login file Bash currently selects. If creating `.bash_profile` would
+    supersede an existing `.bash_login` or `.profile`, show the preserved source
+    chain in that host's plan before creation.
+  - This file-level authorization satisfies the owner-configuration boundary,
+    but the exact value-redacted diff, backup location, validation commands,
+    and rollback command must still be presented per host before rollout.
+
   Required shell-startup remediation before synchronization:
 
   - On `al`, make `.bashrc` invoke `uenv start` only in an appropriate
@@ -98,9 +117,10 @@ harness. Repository-specific tasks remain in their own project ledgers.
      default, checksum-pinned portable artifacts, backups/state records,
      idempotent apply, and rollback. Never invoke root/system package managers
      or overwrite an unmanaged path.
-  3. Add a minimal common Bash environment. Preserve site initialization and
-     make shell hooks opt-in until every startup file passes non-interactive
-     and interactive validation.
+  3. Add a minimal common Bash environment. Install it through bounded managed
+     blocks in the authorized remote `.bashrc` and `.bash_profile` files while
+     preserving site initialization; apply only after every startup file passes
+     non-interactive and interactive validation in the host plan.
   4. Add portable user tools only on supported targets. Use `uv` as an optional
      managed Python/tool layer after the shell-and-Git bootstrap. Keep drivers,
      MPI, CUDA, compilers, schedulers, modules, and uenv in site adapters. Keep
