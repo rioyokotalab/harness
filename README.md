@@ -211,6 +211,21 @@ Apply retains healthy site SQLite, builds only when needed, validates JSON,
 FTS5, and RTree in memory with user initialization disabled, and activates one
 owned binary through the normal fail-closed artifact rollback.
 
+The same source transaction supports Tree 2.3.2 on a host where `tree` is
+absent:
+
+```bash
+harness build-tool --host HOST --name tree --plan
+harness build-tool --host HOST --name tree --apply
+```
+
+Its plan shows the independently recorded SHA-256, exact 24-regular-file
+allowlist, and dependency-free native `cc` command. Apply retains any healthy
+site command, extracts only the declared build inputs, validates version and
+ASCII output, and owns only the compiled binary and stable link. The publisher
+does not provide a separate digest for this tarball; the source URL and pinned
+SHA-256 are therefore both explicit in the reviewed plan.
+
 ## Deliberately excluded
 
 The live `~/.codex/config.toml`, `~/.claude/settings.json`,

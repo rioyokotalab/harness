@@ -1224,6 +1224,26 @@ harness. Repository-specific tasks remain in their own project ledgers.
     each remote's Python 3.12 independently compiled the script, exercised its
     dependency-free help path, retained a clean checkout, and removed the
     staged bundle.
+  - Remaining live doctor warnings are `lftp` on every remote, `htop` on `ab`,
+    `ab2`, and `t4`, `tmux` on `al` and `rc`, and `tree` only on `t4`; current
+    has only its two intentional allocation-context container warnings. Keep
+    the library-dependent lftp/htop/tmux gaps explicit. Tree 2.3.2 is the one
+    safe self-contained source candidate: the maintainer's official 24-file
+    tarball at <https://oldmanprogrammer.net/tar/tree/tree-2.3.2.tgz> has
+    independently recorded SHA-256
+    `6b941dd6cbecfb4d3250700e4d08d8e0c251488981dd4868b90d744234300e21`.
+    Native builds from two fresh downloads passed exact checksum, version, and
+    deterministic ASCII output. The first output assertion incorrectly expected
+    a non-final-child glyph and stopped after the successful build; its trap
+    removed all files, and the corrected repeat passed. Extend the dedicated
+    source transaction with an exact 24-regular-file tar allowlist, explicit
+    `cc` command, feature/version health, binary-integrity rollback, and offline
+    fixture coverage. The first isolated test exposed `gzip` as an undeclared
+    subprocess of `tar -z`; it stopped before installation, and the corrected
+    preflight now requires both. The complete suite passes. `t4` has every
+    prerequisite, no command or managed-path collision, and its exact dry run
+    selects the intended x86-64 tree. Commit, deploy, then pilot
+    apply/rollback/reapply only on `t4`.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

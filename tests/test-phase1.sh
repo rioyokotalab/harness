@@ -226,6 +226,16 @@ grep 'sha256=646421e12aac110282ef8cc68f1a62d4bb15fc7b8f09da0b53e29ee690500431' \
 grep "COMPILE native='cc -O2 .* -o sqlite3'" "$TEMP_DIR/sqlite-arm-plan.out" \
     >/dev/null || fail "SQLite native compile plan"
 
+mkdir -p "$TEMP_DIR/tree-plan-home"
+HOME="$TEMP_DIR/tree-plan-home" "$HARNESS" build-tool --host t4 --name tree \
+    --facts "$ROOT/tests/fixtures/t4.facts" --plan >"$TEMP_DIR/tree-plan.out"
+grep 'BUILD artifact=.*tree/2.3.2/linux-x86_64' "$TEMP_DIR/tree-plan.out" \
+    >/dev/null || fail "Tree source-build plan"
+grep 'sha256=6b941dd6cbecfb4d3250700e4d08d8e0c251488981dd4868b90d744234300e21' \
+    "$TEMP_DIR/tree-plan.out" >/dev/null || fail "Tree source checksum plan"
+grep "COMPILE native='cc -O2 .* -o tree'" "$TEMP_DIR/tree-plan.out" \
+    >/dev/null || fail "Tree native compile plan"
+
 mkdir -p "$TEMP_DIR/runtime-plan-home"
 HOME="$TEMP_DIR/runtime-plan-home" "$HARNESS" runtime --host al --name node \
     --facts "$ROOT/tests/fixtures/al.facts" --plan >"$TEMP_DIR/node-arm-plan.out"
@@ -322,6 +332,39 @@ with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
 PY
 sqlite_fixture_hash=$(sha256sum "$sqlite_fixture_archive" | awk '{print $1}')
 sed -i "s/646421e12aac110282ef8cc68f1a62d4bb15fc7b8f09da0b53e29ee690500431/$sqlite_fixture_hash/" \
+    "$test_repo/tools/sources.tsv"
+tree_fixture_dir=$TEMP_DIR/tree-fixture
+tree_fixture_root=$tree_fixture_dir/tree-2.3.2
+tree_fixture_archive=$TEMP_DIR/tree-fixture.tar.gz
+mkdir -p "$tree_fixture_root/doc"
+printf '%s\n' \
+    '#include <stdio.h>' \
+    '#include <string.h>' \
+    'int main(int argc, char **argv) {' \
+    '  if (argc > 1 && strcmp(argv[1], "--version") == 0) {' \
+    '    puts("tree v2.3.2 fixture"); return 0;' \
+    '  }' \
+    '  puts("fixture"); return 0;' \
+    '}' >"$tree_fixture_root/tree.c"
+for source_file in color.c file.c filter.c hash.c html.c info.c json.c list.c \
+    strverscmp.c unix.c util.c xml.c; do
+    printf '%s\n' '/* fixture translation unit */' >"$tree_fixture_root/$source_file"
+done
+for fixture_file in CHANGES INSTALL LICENSE Makefile README TODO tree.h .gitignore \
+    doc/tree.1 doc/xml.dtd doc/global_info; do
+    printf '%s\n' fixture >"$tree_fixture_root/$fixture_file"
+done
+tar -czf "$tree_fixture_archive" -C "$tree_fixture_dir" \
+    tree-2.3.2/CHANGES tree-2.3.2/INSTALL tree-2.3.2/LICENSE \
+    tree-2.3.2/Makefile tree-2.3.2/README tree-2.3.2/TODO \
+    tree-2.3.2/color.c tree-2.3.2/file.c tree-2.3.2/filter.c \
+    tree-2.3.2/hash.c tree-2.3.2/html.c tree-2.3.2/info.c \
+    tree-2.3.2/json.c tree-2.3.2/list.c tree-2.3.2/strverscmp.c \
+    tree-2.3.2/tree.c tree-2.3.2/tree.h tree-2.3.2/unix.c \
+    tree-2.3.2/util.c tree-2.3.2/xml.c tree-2.3.2/doc/tree.1 \
+    tree-2.3.2/doc/xml.dtd tree-2.3.2/doc/global_info tree-2.3.2/.gitignore
+tree_fixture_hash=$(sha256sum "$tree_fixture_archive" | awk '{print $1}')
+sed -i "s/6b941dd6cbecfb4d3250700e4d08d8e0c251488981dd4868b90d744234300e21/$tree_fixture_hash/" \
     "$test_repo/tools/sources.tsv"
 runtime_fixture_parent=$TEMP_DIR/runtime-fixture
 runtime_fixture_root=$runtime_fixture_parent/node-v24.16.0-linux-x64
@@ -601,8 +644,8 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$tectonic_transaction" \
 source_bin=$TEMP_DIR/source-bin
 mkdir -p "$source_bin"
 ln -s "$fake_bin/curl" "$source_bin/curl"
-for command_name in as awk bash cc chmod cmp cp date dirname find git grep ld ln \
-    mkdir mktemp mv readlink rm sed sh sha256sum tail tr uname unzip wc; do
+for command_name in as awk bash cc chmod cmp cp date dirname find git grep gzip ld ln \
+    mkdir mktemp mv readlink rm sed sh sha256sum tail tar tr uname unzip wc; do
     ln -s "$(command -v "$command_name")" "$source_bin/$command_name"
 done
 HOME="$test_home" PATH="$source_bin" FIXTURE_ARCHIVE="$sqlite_fixture_archive" \
@@ -635,6 +678,37 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$sqlite_transaction" \
 [ ! -e "$test_home/.local/bin/sqlite3" ] && [ ! -L "$test_home/.local/bin/sqlite3" ] ||
     fail "SQLite rollback left stable link"
 [ ! -e "$sqlite_tree" ] || fail "SQLite rollback left artifact directory"
+
+HOME="$test_home" PATH="$source_bin" FIXTURE_ARCHIVE="$tree_fixture_archive" \
+    "$test_repo/bin/harness" build-tool --host local --name tree --apply \
+    >"$TEMP_DIR/tree-build-apply.out"
+tree_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/tree-build-apply.out")
+[ -n "$tree_transaction" ] || fail "missing Tree source-build transaction"
+grep '^NATIVE cc -O2 -DLARGEFILE_SOURCE ' "$TEMP_DIR/tree-build-apply.out" \
+    >/dev/null || fail "Tree native compile report"
+tree_tree=$test_home/.local/opt/tree/2.3.2/linux-x86_64
+tree_binary=$tree_tree/tree
+[ "$($tree_binary --version)" = 'tree v2.3.2 fixture' ] || fail "Tree built version"
+HOME="$test_home" PATH="$source_bin" \
+    "$test_repo/bin/harness" build-tool --host local --name tree --plan \
+    >"$TEMP_DIR/tree-build-repeat.out"
+grep 'KEEP command=tree source=managed-source-build' \
+    "$TEMP_DIR/tree-build-repeat.out" >/dev/null || fail "Tree managed source-build plan"
+cp -p "$tree_binary" "$TEMP_DIR/original-tree-binary"
+printf '%s\n' changed >>"$tree_binary"
+if HOME="$test_home" "$test_repo/bin/harness" rollback "$tree_transaction" \
+    >"$TEMP_DIR/refused-tree-rollback.out" 2>&1; then
+    fail "Tree rollback accepted changed binary"
+fi
+[ -L "$test_home/.local/bin/tree" ] && [ -d "$tree_tree" ] ||
+    fail "Tree rollback partially mutated paths"
+cp -p "$TEMP_DIR/original-tree-binary" "$tree_binary"
+HOME="$test_home" "$test_repo/bin/harness" rollback "$tree_transaction" \
+    >"$TEMP_DIR/tree-build-rollback.out"
+[ ! -e "$test_home/.local/bin/tree" ] && [ ! -L "$test_home/.local/bin/tree" ] ||
+    fail "Tree rollback left stable link"
+[ ! -e "$tree_tree" ] || fail "Tree rollback left artifact directory"
 
 # Exercise whole-tree runtime apply, changed-tree refusal, and exact rollback.
 runtime_bin=$TEMP_DIR/runtime-bin

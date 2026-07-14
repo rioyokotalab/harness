@@ -26,7 +26,7 @@ while [ "$#" -gt 0 ]; do
 done
 [ -n "$logical_host" ] && [ -n "$tool_name" ] || { usage; exit 2; }
 require_safe_id "$tool_name"
-[ "$tool_name" = sqlite ] || die "unsupported source-built tool: $tool_name"
+case "$tool_name" in sqlite|tree) ;; *) die "unsupported source-built tool: $tool_name" ;; esac
 [ "$mode" != apply ] || [ -z "$fact_file" ] || die "build-tool apply does not accept captured facts"
 
 profile=$(profile_for "$logical_host")
@@ -39,13 +39,20 @@ IFS='|' read -r record_tool version source_os source_arch format url checksum \
     publisher_sha3 root binary version_prefix <<EOF
 $records
 EOF
-[ "$record_tool" = sqlite ] && [ "$format" = zip ] || die "source manifest mismatch"
+case "$record_tool:$format" in
+    sqlite:zip|tree:tar.gz) ;;
+    *) die "source manifest mismatch" ;;
+esac
 for value in "$version" "$root" "$binary"; do require_safe_id "$value"; done
 case "$url" in https://*) ;; *) die "source URL must use HTTPS" ;; esac
-for digest in "$checksum" "$publisher_sha3"; do
+for digest in "$checksum"; do
     case "$digest" in *[!0-9a-f]*) die "invalid source digest" ;; esac
     [ "${#digest}" -eq 64 ] || die "invalid source digest length"
 done
+if [ "$publisher_sha3" != none ]; then
+    case "$publisher_sha3" in *[!0-9a-f]*) die "invalid publisher source digest" ;; esac
+    [ "${#publisher_sha3}" -eq 64 ] || die "invalid publisher source digest length"
+fi
 
 install_dir=$HOME/.local/opt/$tool_name/$version/$source_os-$arch
 installed_binary=$install_dir/$binary
@@ -56,6 +63,23 @@ sqlite_healthy() {
     "$candidate" -batch -noheader -init /dev/null :memory: \
         'select json_valid('"'"'{"ok":1}'"'"'); create virtual table f using fts5(x); create virtual table r using rtree(id,x1,x2); select 1;' \
         >/dev/null 2>&1
+}
+
+tree_healthy() {
+    candidate=$1
+    version_line=$("$candidate" --version 2>/dev/null | sed -n '1p' || true)
+    case "$version_line" in tree\ v[0-9]*) ;;
+        *) return 1 ;;
+    esac
+    LC_ALL=C "$candidate" --noreport --charset=ASCII \
+        "$HARNESS_ROOT/bin/harness" >/dev/null 2>&1
+}
+
+source_tool_healthy() {
+    case "$tool_name" in
+        sqlite) sqlite_healthy "$1" ;;
+        tree) tree_healthy "$1" ;;
+    esac
 }
 
 managed_exact=0
@@ -70,11 +94,11 @@ if [ -n "$fact_file" ]; then
 elif [ "$managed_exact" -eq 1 ]; then
     observed_version=$("$installed_binary" --version 2>/dev/null | sed -n '1p' || true)
     case "$observed_version" in "$version_prefix "*)
-        if sqlite_healthy "$installed_binary"; then command_state=present; else command_state=invalid-managed; fi ;;
+        if source_tool_healthy "$installed_binary"; then command_state=present; else command_state=invalid-managed; fi ;;
         *) command_state=invalid-managed ;;
     esac
 elif command -v "$binary" >/dev/null 2>&1; then
-    if sqlite_healthy "$binary"; then command_state=present; else command_state=unusable; fi
+    if source_tool_healthy "$binary"; then command_state=present; else command_state=unusable; fi
 else
     command_state=absent
 fi
@@ -124,8 +148,16 @@ else
         BLOCK) echo "BLOCK link=$stable_link reason=existing-unmanaged-path" ;;
     esac
     echo "FETCH url=$url sha256=$checksum publisher_sha3_256=$publisher_sha3"
-    echo "EXTRACT exact_root=$root files=sqlite3.c,shell.c,sqlite3.h,sqlite3ext.h"
-    echo "COMPILE native='cc -O2 -DSQLITE_THREADSAFE=1 -DSQLITE_ENABLE_FTS5 -DSQLITE_ENABLE_RTREE -DSQLITE_ENABLE_JSON1 -DSQLITE_ENABLE_MATH_FUNCTIONS -DHAVE_READLINE=0 shell.c sqlite3.c -pthread -ldl -lm -o sqlite3'"
+    case "$tool_name" in
+        sqlite)
+            echo "EXTRACT exact_root=$root files=sqlite3.c,shell.c,sqlite3.h,sqlite3ext.h"
+            echo "COMPILE native='cc -O2 -DSQLITE_THREADSAFE=1 -DSQLITE_ENABLE_FTS5 -DSQLITE_ENABLE_RTREE -DSQLITE_ENABLE_JSON1 -DSQLITE_ENABLE_MATH_FUNCTIONS -DHAVE_READLINE=0 shell.c sqlite3.c -pthread -ldl -lm -o sqlite3'"
+            ;;
+        tree)
+            echo "EXTRACT exact_root=$root regular_files=24 compile_files=Makefile,tree.h,13-c-sources"
+            echo "COMPILE native='cc -O2 -DLARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 color.c file.c filter.c hash.c html.c info.c json.c list.c strverscmp.c tree.c unix.c util.c xml.c -o tree'"
+            ;;
+    esac
 fi
 [ "$blocked" -eq 0 ] || die "build-tool plan contains blocked paths"
 [ "$mode" = apply ] || { echo "END build-tool host=$logical_host changes=not-applied"; exit 0; }
@@ -134,8 +166,16 @@ fi
 [ -z "$(git -C "$HARNESS_ROOT" status --porcelain)" ] || die "build-tool apply requires clean harness"
 "$HARNESS_ROOT/libexec/harness-doctor" --host "$logical_host" >/dev/null ||
     die "host doctor failed before build-tool apply"
-for required in curl sha256sum unzip cc find readlink; do
+for required in curl sha256sum cc find readlink; do
     command -v "$required" >/dev/null 2>&1 || die "build-tool apply requires command: $required"
+done
+case "$tool_name" in
+    sqlite) required_archive_commands=unzip ;;
+    tree) required_archive_commands='tar gzip' ;;
+esac
+for required in $required_archive_commands; do
+    command -v "$required" >/dev/null 2>&1 ||
+        die "build-tool apply requires command: $required"
 done
 
 state_root=$HOME/.local/state/harness/transactions
@@ -178,25 +218,75 @@ trap cleanup EXIT HUP INT TERM
 echo "NATIVE curl --proto =https --tlsv1.2 -fL --retry 2 $url -o SOURCE_STAGING"
 curl --proto '=https' --tlsv1.2 -fL --retry 2 "$url" -o "$archive"
 printf '%s  %s\n' "$checksum" "$archive" | sha256sum -c - >/dev/null
-unzip -Z1 "$archive" >"$entries"
-[ "$(wc -l <"$entries" | tr -d ' ')" -eq 5 ] || die "source archive entry count mismatch"
-for expected in "$root/" "$root/sqlite3.c" "$root/shell.c" "$root/sqlite3.h" "$root/sqlite3ext.h"; do
-    grep -Fx "$expected" "$entries" >/dev/null || die "source archive missing declared entry: $expected"
-done
 install_parent=${install_dir%/*}; mkdir -p "$install_parent"
 build_dir=$(mktemp -d "$install_parent/.build.XXXXXX")
 stage=$(mktemp -d "$install_parent/.staging.XXXXXX")
-for source_file in sqlite3.c shell.c sqlite3.h sqlite3ext.h; do
-    unzip -p "$archive" "$root/$source_file" >"$build_dir/$source_file"
-done
-echo "NATIVE cc -O2 -DSQLITE_THREADSAFE=1 -DSQLITE_ENABLE_FTS5 -DSQLITE_ENABLE_RTREE -DSQLITE_ENABLE_JSON1 -DSQLITE_ENABLE_MATH_FUNCTIONS -DHAVE_READLINE=0 shell.c sqlite3.c -pthread -ldl -lm -o sqlite3"
-cc -O2 -DSQLITE_THREADSAFE=1 -DSQLITE_ENABLE_FTS5 -DSQLITE_ENABLE_RTREE \
-    -DSQLITE_ENABLE_JSON1 -DSQLITE_ENABLE_MATH_FUNCTIONS -DHAVE_READLINE=0 \
-    "$build_dir/shell.c" "$build_dir/sqlite3.c" -pthread -ldl -lm -o "$stage/$binary"
+case "$tool_name" in
+    sqlite)
+        unzip -Z1 "$archive" >"$entries"
+        [ "$(wc -l <"$entries" | tr -d ' ')" -eq 5 ] || die "source archive entry count mismatch"
+        for expected in "$root/" "$root/sqlite3.c" "$root/shell.c" "$root/sqlite3.h" "$root/sqlite3ext.h"; do
+            grep -Fx "$expected" "$entries" >/dev/null || die "source archive missing declared entry: $expected"
+        done
+        for source_file in sqlite3.c shell.c sqlite3.h sqlite3ext.h; do
+            unzip -p "$archive" "$root/$source_file" >"$build_dir/$source_file"
+        done
+        echo "NATIVE cc -O2 -DSQLITE_THREADSAFE=1 -DSQLITE_ENABLE_FTS5 -DSQLITE_ENABLE_RTREE -DSQLITE_ENABLE_JSON1 -DSQLITE_ENABLE_MATH_FUNCTIONS -DHAVE_READLINE=0 shell.c sqlite3.c -pthread -ldl -lm -o sqlite3"
+        cc -O2 -DSQLITE_THREADSAFE=1 -DSQLITE_ENABLE_FTS5 -DSQLITE_ENABLE_RTREE \
+            -DSQLITE_ENABLE_JSON1 -DSQLITE_ENABLE_MATH_FUNCTIONS -DHAVE_READLINE=0 \
+            "$build_dir/shell.c" "$build_dir/sqlite3.c" -pthread -ldl -lm -o "$stage/$binary"
+        ;;
+    tree)
+        tar -tzf "$archive" >"$entries"
+        [ "$(wc -l <"$entries" | tr -d ' ')" -eq 24 ] || die "source archive entry count mismatch"
+        tar -tvzf "$archive" | awk '$1 !~ /^-/ { exit 1 }' ||
+            die "source archive contains a non-regular entry"
+        while IFS= read -r expected; do
+            grep -Fx "$root/$expected" "$entries" >/dev/null ||
+                die "source archive missing declared entry: $root/$expected"
+        done <<'EOF'
+CHANGES
+INSTALL
+LICENSE
+Makefile
+README
+TODO
+color.c
+file.c
+filter.c
+hash.c
+html.c
+info.c
+json.c
+list.c
+strverscmp.c
+tree.c
+tree.h
+unix.c
+util.c
+xml.c
+doc/tree.1
+doc/xml.dtd
+doc/global_info
+.gitignore
+EOF
+        for source_file in Makefile tree.h color.c file.c filter.c hash.c html.c \
+            info.c json.c list.c strverscmp.c tree.c unix.c util.c xml.c; do
+            tar -xOzf "$archive" "$root/$source_file" >"$build_dir/$source_file"
+        done
+        echo "NATIVE cc -O2 -DLARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 color.c file.c filter.c hash.c html.c info.c json.c list.c strverscmp.c tree.c unix.c util.c xml.c -o tree"
+        cc -O2 -DLARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 \
+            "$build_dir/color.c" "$build_dir/file.c" "$build_dir/filter.c" \
+            "$build_dir/hash.c" "$build_dir/html.c" "$build_dir/info.c" \
+            "$build_dir/json.c" "$build_dir/list.c" "$build_dir/strverscmp.c" \
+            "$build_dir/tree.c" "$build_dir/unix.c" "$build_dir/util.c" \
+            "$build_dir/xml.c" -o "$stage/$binary"
+        ;;
+esac
 [ -f "$stage/$binary" ] && [ ! -L "$stage/$binary" ] && [ -x "$stage/$binary" ] || die "source build did not produce executable"
 observed_version=$("$stage/$binary" --version | sed -n '1p')
 case "$observed_version" in "$version_prefix "*) ;; *) die "source-built version verification failed" ;; esac
-sqlite_healthy "$stage/$binary" || die "source-built feature verification failed"
+source_tool_healthy "$stage/$binary" || die "source-built feature verification failed"
 binary_hash=$(sha256sum "$stage/$binary" | awk '{print $1}')
 printf 'artifact|%s|%s|%s\n' "$install_dir" "$binary" "$binary_hash" >>"$transaction_manifest"
 mv -T "$stage" "$install_dir"; stage=
