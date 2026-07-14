@@ -742,6 +742,32 @@ harness. Repository-specific tasks remain in their own project ledgers.
     Node distribution tree or install either agent CLI before Node/npm rollback
     and PATH behavior are independently validated.
 
+  Node/npm artifact verification checkpoint (2026-07-14):
+
+  - Selected the observed local Node 24.16.0/npm 11.13.0 pair. The official
+    release archive publishes signed SHA-256 sums and Linux x64/ARM64 tarballs:
+    <https://nodejs.org/download/release/v24.16.0/>. The recorded tar.gz hashes
+    are `2faf6a387e9b62b888e21c54f01249fb27537ffecf1842f29f4c919d0a59a0ff`
+    for x64 and
+    `589f5b6dd4fcfee4dfda73013903c966abaa8abd93dbc9d436544e472b4f0e74`
+    for ARM64.
+  - Independently downloaded both archives over TLS and matched those hashes.
+    Each contains exactly one 5,729-entry distribution root and the expected
+    `bin/node`, `bin/npm`, `bin/npx`, and `bin/corepack` entries. The x64 tree
+    reports Node 24.16.0 and npm 11.13.0; `file` identifies the second Node
+    executable as AArch64 using `/lib/ld-linux-aarch64.so.1`. Temporary files
+    were removed.
+  - Treat Node as a multi-file runtime, not a single-binary artifact. The
+    transaction must own one versioned distribution tree, create four explicit
+    stable links, validate both Node and npm versions with the staged `bin` at
+    the front of PATH, store a compact whole-tree integrity record, and refuse
+    rollback if any tree entry or activation link changed. Apply, rollback, and
+    cleanup must remain all-path atomic.
+  - Next executable action: implement `harness runtime --host HOST --name node
+    --plan|--apply` with an isolated offline archive fixture. Prove changed-tree
+    rollback refusal and exact clean rollback before any real or remote apply;
+    then run a disposable-home transaction against the official x64 archive.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 
