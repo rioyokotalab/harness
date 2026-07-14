@@ -198,13 +198,19 @@ agent and current proxy configuration.
 
 ## Shell integration
 
+The owner has authorized changes to any file their account can edit on `ab`,
+`ab2`, `ai4s`, `al`, `rc`, and `t4` when necessary for this environment
+unification. This includes shell startup files, the harness checkout, discovery
+links, and evidence-backed user configuration. It does not broaden the task to
+excluded aliases, unrelated projects or personal data, credential or
+authentication material, external services, or destructive cleanup. A shared
+or system-wide file with wider impact must be identified explicitly in the host
+plan.
+
 Do not symlink a complete `.bashrc` across sites. Keep site startup intact and
-use a single guarded, marked harness block. The owner has authorized changes to
-`.bashrc` and `.bash_profile` on `ab`, `ab2`, `ai4s`, `al`, `rc`, and `t4`.
-That authorization does not include excluded aliases, system startup files,
-credentials, authentication, or unrelated home files. The hook must be fast,
-silent for non-interactive sessions, and must not start containers, contact the
-network, print environment values, or manage an SSH agent.
+use a single guarded, marked harness block. The hook must be fast, silent for
+non-interactive sessions, and must not start containers, contact the network,
+print environment values, or manage an SSH agent.
 
 Preserve the existing file around the managed block. Record a restorable backup
 and original permissions before first mutation; update only the marked block on

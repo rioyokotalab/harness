@@ -56,11 +56,17 @@ harness. Repository-specific tasks remain in their own project ledgers.
 
   Owner authorization checkpoint (2026-07-14):
 
-  - The user explicitly authorizes the rollout to modify `.bashrc` and
-    `.bash_profile` in the remote home directories of `ab`, `ab2`, `ai4s`,
-    `al`, `rc`, and `t4`. This does not authorize changes on excluded aliases,
-    system-wide startup files, credentials, authentication, or unrelated home
-    files.
+  - The user explicitly authorizes the rollout to modify any remote file their
+    account is permitted to edit on `ab`, `ab2`, `ai4s`, `al`, `rc`, and `t4`
+    when the change is necessary for T-170. This includes `.bashrc`,
+    `.bash_profile`, `.bash_logout`, the harness checkout and discovery links,
+    and other evidence-backed user configuration required by the approved
+    environment design.
+  - File writability does not broaden the task: excluded aliases, unrelated
+    projects or personal data, credentials and authentication material,
+    external services, and destructive or unrelated cleanup remain out of
+    scope. Shared or system-wide files with wider impact must be called out in
+    the exact host plan rather than treated as routine user configuration.
   - Preserve each site's existing startup behavior and modify only a bounded,
     marked harness block. Before the first mutation, record file type,
     permissions, and a restorable backup without printing file contents or
@@ -69,9 +75,10 @@ harness. Repository-specific tasks remain in their own project ledgers.
     which login file Bash currently selects. If creating `.bash_profile` would
     supersede an existing `.bash_login` or `.profile`, show the preserved source
     chain in that host's plan before creation.
-  - This file-level authorization satisfies the owner-configuration boundary,
-    but the exact value-redacted diff, backup location, validation commands,
-    and rollback command must still be presented per host before rollout.
+  - This broad file-level authorization satisfies the owner-configuration
+    boundary for in-scope changes, but the exact value-redacted diff, backup
+    location, validation commands, and rollback command must still be presented
+    per host before rollout.
 
   Required shell-startup remediation before synchronization:
 
@@ -118,9 +125,9 @@ harness. Repository-specific tasks remain in their own project ledgers.
      idempotent apply, and rollback. Never invoke root/system package managers
      or overwrite an unmanaged path.
   3. Add a minimal common Bash environment. Install it through bounded managed
-     blocks in the authorized remote `.bashrc` and `.bash_profile` files while
-     preserving site initialization; apply only after every startup file passes
-     non-interactive and interactive validation in the host plan.
+     blocks in remote startup files while preserving site initialization; apply
+     only after every affected startup file passes non-interactive and
+     interactive validation in the host plan.
   4. Add portable user tools only on supported targets. Use `uv` as an optional
      managed Python/tool layer after the shell-and-Git bootstrap. Keep drivers,
      MPI, CUDA, compilers, schedulers, modules, and uenv in site adapters. Keep
