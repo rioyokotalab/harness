@@ -238,6 +238,33 @@ harness. Repository-specific tasks remain in their own project ledgers.
     and reapply. This pilot changes control-plane links only; it does not yet
     edit shell startup files or install selected tools.
 
+  `ab2` control-plane pilot checkpoint (2026-07-14):
+
+  - Committed transaction support as `07351a4`. Created and verified a native
+    Git bundle containing `main`, then streamed it over SSH. The first clone
+    attempt omitted `-b main`; bundles do not advertise a remote `HEAD`, so Git
+    created an empty checkout and reported `remote HEAD refers to nonexistent
+    ref`. The revision check stopped the pilot before apply.
+  - Verified the failed `~/harness` contained only `.git` and had zero dirty
+    entries, removed only that agent-created artifact, and retried safely with
+    `git clone -b main`. The resulting checkout is clean at `07351a4`. Future
+    bundle deployment must always name the branch explicitly.
+  - The exact control-plane plan contained 22 creates and no replacements or
+    blocks: the harness command, three guidance/rule links, and six shared
+    skills exposed in each of the Codex, Claude, and shared agent directories.
+  - Applied transaction `20260714T114257Z-4146521`, validated a mode-600
+    manifest, 22 links, zero doctor failures, and silent `ssh ab2 true`, then
+    deliberately rolled it back. Rollback removed exactly the recorded links
+    in reverse order and preserved the audit manifest.
+  - Reapplied as transaction `20260714T114331Z-4149212`. Final validation shows
+    zero planned creates, 22 keeps, clean Git state, transaction status
+    `complete`, silent non-interactive SSH, and doctor `failures=0 warnings=9`;
+    the nine warnings are the selected tools not yet installed.
+  - No shell startup file, credential, project, dataset, or selected tool was
+    changed. Next action is either to roll out this validated control plane to
+    the other five hosts or begin the separately transactional `ab2` shell/tool
+    pilot after recording artifact checksums and startup-file backups.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 
