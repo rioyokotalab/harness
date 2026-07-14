@@ -196,6 +196,13 @@ T-182.
     allocation, project environment, credential, client state, or external
     repository changed.
 
+## Next task insertion point
+
+No active task. Insert the next user-defined task here as T-182; it takes
+execution priority over the owner-review-gated T-181 proposal below. Replace
+this paragraph with the task's outcome, constraints, verification, working
+files, and first executable action when the task is supplied.
+
 ## Owner-review queue
 
 - **T-169 — Research advanced agent harness practices (research complete
