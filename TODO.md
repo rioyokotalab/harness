@@ -58,7 +58,7 @@ T-181.
   | Harness four anonymous blobs | `d1a0d80`, `1ed2ca0`, `ac341fa`, `e15cce3` | Intentionally retired intermediate post-incident snapshots | High; no secret content printed | None | safe marker/similarity mapping above; do not restore, and let normal Git maintenance retire them |
   | Website unreachable graph and two anonymous session blobs | July 12 evaluation branches, July 14 autostash, T-29/T-30 checkpoints | Intentionally retired/superseded; accepted public changes are already in reachable history | High; repository paths only | None | commit dates, subjects, named-tree coverage, current-tree comparison; do not restore or publish |
   | Lost uncommitted ShellCheck transaction work | no bundle commit, tree, named blob, ignored artifact, or safe anonymous-object match | Confirmed unavailable in local evidence; reconstruct from reviewed intent as new work | High for local absence; no credentials involved | T-173 and T-174 | new implementation must freeze a source/checksum, pass isolated apply/tamper/rollback tests, then a full suite with safe cleanup; rollback the new commit if rejected |
-  | Selected current-node user tools | committed checksum manifests; pre-incident versions in `5f6382b` ledger | Missing: normal-PATH ripgrep, uv, Claude, rclone, lftp, Tectonic, Git LFS; system Node/npm are 18.19.1/9.2.0 instead of 24.16.0/11.13.0 | High; tool binaries only, never client state/config | T-174 first; lftp needs T-175 | run exact plan, apply one transaction, verify version/doctor/idempotence, deliberate rollback pilot, then reapply; no bulk restore |
+  | Selected current-node user tools | committed checksum manifests; pre-incident versions in `5f6382b` ledger | Recovered: every selected tool is present; Node/npm are 24.16.0/11.13.0 | High; tool binaries only, never client state/config | None | exact transaction IDs and validation are recorded under T-171; rollback one transaction only if its owned path fails |
   | `.profile`, `.bash_profile`, `.bash_logout`, `~/sshservice-cli`, unknown former home paths | no authoritative local source | Unresolved/absent; do not fabricate | High for named absence, unknown completeness; potentially sensitive owner state | Owner-supplied authoritative source only | presence/mode checks only; no validation or rollback is possible without a source |
   | Owner `.bashrc`, SSH config, and agent socket | owner reconstruction and T-171 ledger | `.bashrc` intentional new file; SSH config intentionally final at 10 aliases; socket ephemeral | Owner-confirmed; contents/key material excluded | Owner maintains authentication and socket lifetime | status/parse and owner no-op evidence only; never replace from Git or copy key/session state |
   | Six remote harness checkouts | last committed fleet evidence through `963ad1f`; local `5f6382b` CUDA delta | Current state unresolved after incident | Medium; value-free remote facts only | T-170 read-only reconciliation | native no-op, revision/status/inventory/plan/doctor per host; any later change uses one reviewed transaction and its recorded rollback |
@@ -75,9 +75,8 @@ T-181.
 
 ## Active / recovery state
 
-- **T-171 — Recover the current-node home after accidental deletion
-  (T-172 audit and local ShellCheck recovery complete; continue the reviewed
-  current-tool plan after T-170 reconciliation):**
+- **T-171 — Recover the current-node home after accidental deletion (complete
+  2026-07-15):**
 
   **Incident and containment**
 
@@ -141,15 +140,24 @@ T-181.
     Local transaction `20260714T223339Z-461104` passed apply, lint, doctor,
     idempotence, deliberate rollback, and absence checks; final transaction
     `20260714T223421Z-468645` reapplied ShellCheck 0.11.0 successfully.
+  - T-175 transaction `20260714T230032Z-752754` restored local-only lftp.
+    Transactions `20260714T231117Z-824985` (Git LFS),
+    `20260714T231119Z-825786` (uv), `20260714T231121Z-827283` (Claude),
+    `20260714T231126Z-829076` (rclone), `20260714T231330Z-845175`
+    (Tectonic), and `20260714T231332Z-824975` (Node/npm) restored every
+    remaining selected current-node tool. Exact version commands pass; the
+    aggregate plan is entirely `KEEP`, and doctor has zero failures with only
+    the intentional login-node Docker/Podman warnings. Git LFS hooks, rclone/
+    agent state, credentials, and owner profiles were not read or changed.
   - Product-managed policy may override local Codex defaults on some surfaces;
     the verified fresh host CLI honored the recovered values. The surviving
     website pre-commit hook was left unchanged because agents do not edit
     `.git`; its old Claude-size branch is inert under the current tracked tree.
 
-  **Next action:** recover the remaining checksum-pinned local tools one
-  transaction at a time, then prepare the T-170 clean-revision parity rollout.
-  Do not perform broad home reconstruction, owner config/profile edits,
-  credential recovery, or unplanned fleet mutation.
+  **Completion boundary:** no authoritative source exists for the intentionally
+  untouched former profiles, `~/sshservice-cli`, or unknown home paths; do not
+  fabricate them. Current selected-tool and agent-control-plane recovery is
+  complete. T-170 owns only the clean-revision fleet parity rollout.
 
 - **T-170 — Mirror the working environment across configured clusters
   (read-only reconciliation complete 2026-07-15; parity rollout pending local
@@ -194,6 +202,15 @@ T-181.
   - Complete T-178 through T-180 and T-175, recover the current-node tools,
     then construct one exact clean-revision bundle and rollback plan. Advance
     one remote host at a time with no allocation or project dependency changes.
+  - **2026-07-15 rollout checkpoint:** all dependencies above are complete.
+    Build one bundle from a clean committed `main`, verify its SHA-256 locally
+    and remotely, and require each remote to be clean at exact old revision
+    `5f6382b` before a fast-forward. Validate revision/status, value-free
+    inventory, no-op plan, doctor, and the new ABCI scheduler discovery. Install
+    ShellCheck through one host-scoped checksum transaction, then revalidate.
+    Rollback order is the recorded ShellCheck transaction first, followed only
+    on a clean checkout by `git reset --keep 5f6382b`; never run a broad reset,
+    copy client state, submit a scheduler job, or mutate a project environment.
 
 ## Planned
 
