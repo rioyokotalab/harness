@@ -1063,7 +1063,16 @@ harness. Repository-specific tasks remain in their own project ledgers.
     transaction `20260714T145706Z-604010` passed checksum, exact version,
     managed planning, mode-600 state, a fresh isolated-cache TeX-to-PDF compile,
     and exact rollback while preserving a pre-existing sentinel. Pilot
-    rollback/reapply on AArch64 before serial rollout.
+    rollback/reapply on AArch64 passed (`ri` first
+    `20260714T145921Z-1097328`, final `20260714T145922Z-1097899`). Serial final
+    transactions are `al` `20260714T150033Z-129107`, `ab`
+    `20260714T150106Z-2024317`, `ab2` `20260714T150155Z-4078071`, `rc`
+    `20260714T150244Z-3272728`, and `t4` `20260714T150336Z-848604`. Every host
+    passed a fresh isolated-cache TeX-to-PDF compile, exact version, normal-login
+    discovery, managed planning, mode-600 completed state, clean Git, and zero
+    doctor failures. The AArch64 pilot emitted a non-fatal missing-default
+    Fontconfig warning but downloaded its declared font and produced a valid
+    PDF; no temporary cache or smoke output was retained.
   - Git LFS 3.7.1 is a strong LLM-project follow-up: the official security-fix
     release has publisher-digested x86-64 and AArch64 binaries. Keep it separate
     from the selected-tool rollout because installing the binary and enabling
