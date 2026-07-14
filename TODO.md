@@ -1011,6 +1011,18 @@ harness. Repository-specific tasks remain in their own project ledgers.
     and `02c381be3269489119287dc0b5f4b99b870d886f058918994b51e06b701dd1be`,
     and disposable x86 execution reports 2.1.207. Add them as exact-member
     tool transactions, pilot rollback/reapply on AArch64, then roll out.
+  - Claude rollout final transactions are `al` `20260714T143426Z-239659`, `ab`
+    `20260714T143445Z-1914635`, `ab2` `20260714T143459Z-2829245`, `ri`
+    `20260714T143512Z-1085564`, `rc` `20260714T143544Z-3003718`, and `t4`
+    `20260714T143550Z-4014179`. Exact direct execution, managed plans, and
+    mode-600 completed state pass on all six, and local retains its healthy
+    host-provided 2.1.207. Interactive-login closure exposed one real ordering
+    defect on `t4`: a project path supplied Claude 2.1.128 before the managed
+    2.1.207 path. Refined the silent portable profile to remove duplicate
+    `~/.local/bin` entries and prepend exactly one; an offline regression keeps
+    the order of every other PATH entry. Synchronize and prove normal login
+    shells resolve managed Claude and Codex on all six before closing this
+    agent layer. No authentication or live agent state was read or copied.
   - Codex CLI 0.144.4 is not a single-binary npm artifact: it has a small
     launcher and one architecture resource package containing the native
     binary, code-mode host, ripgrep, sandbox helper, and shell resource. npm's

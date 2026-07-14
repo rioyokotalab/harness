@@ -391,6 +391,18 @@ cmp -s "$profile_home/.profile" "$TEMP_DIR/original-profile-login" ||
     fail "profile-selection login rollback"
 [ ! -e "$profile_home/.bash_profile" ] || fail "rollback created bash profile"
 
+# Site startup may put another user or project command directory before the
+# managed bin. The portable profile must move its directory to the front and
+# remove duplicates without losing the remaining order.
+profile_path_home=$TEMP_DIR/profile-path-home
+mkdir -p "$profile_path_home/.local/bin"
+HOME="$profile_path_home" \
+    PATH="/site/project/bin:$profile_path_home/.local/bin:/usr/bin:$profile_path_home/.local/bin:/bin" \
+    HARNESS_PROFILE="$test_repo/shell/profile.sh" \
+    EXPECTED_PATH="$profile_path_home/.local/bin:/site/project/bin:/usr/bin:/bin" \
+    sh -c '. "$HARNESS_PROFILE"; [ "$PATH" = "$EXPECTED_PATH" ]' ||
+    fail "managed bin path precedence"
+
 # Exercise exact-member ZIP apply and rollback without network access.
 fake_bin=$TEMP_DIR/fake-bin
 mkdir -p "$fake_bin"
