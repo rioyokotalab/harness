@@ -26,4 +26,8 @@ file under `.harness-smoke/` itself. Including a directory component is
 intentional: `ybatch` otherwise mistakes a bare output filename for a directory.
 The agent parses the submitted ID, monitors only that job, validates the output,
 and removes both it and the empty output directory. The script does not
-normalize or conceal the generated Slurm commands.
+normalize or conceal the generated Slurm commands. The current node's
+site-owned Docker/Podman wrapper deliberately redirects rootless storage and
+its runtime directory for Slurm. Its native `--version` path fails on the login
+node but is checked inside this allocation before the CUDA and MPI gates; image
+selection and execution remain project-specific.

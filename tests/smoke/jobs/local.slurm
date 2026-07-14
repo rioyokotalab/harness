@@ -9,6 +9,11 @@ set -eu
 build=$(mktemp -d "${SLURM_TMPDIR:-/tmp}/harness-smoke.XXXXXX")
 trap 'rm -rf "$build"' EXIT HUP INT TERM
 
+echo "NATIVE podman --version"
+podman --version
+echo "NATIVE docker --version"
+docker --version
+
 nvidia-smi --query-gpu=name,driver_version,compute_cap --format=csv,noheader
 
 echo "NATIVE nvcc -O2 tests/smoke/cuda.cu"

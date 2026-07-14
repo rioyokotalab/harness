@@ -80,6 +80,12 @@ grep 'CREATE harness_checkout' "$TEMP_DIR/plan-al.out" >/dev/null ||
     fail "remote checkout plan"
 grep 'INSTALL tool=uv' "$TEMP_DIR/plan-al.out" >/dev/null ||
     fail "remote uv plan"
+grep 'KEEP site_command class=container command=apptainer' \
+    "$TEMP_DIR/plan-ri.out" >/dev/null || fail "RIKEN Apptainer route"
+grep 'WARN site_command class=container command=docker state=unusable' \
+    "$TEMP_DIR/plan-local.out" >/dev/null || fail "compute-only Docker evidence"
+grep 'WARN site_command class=container command=podman state=unusable' \
+    "$TEMP_DIR/plan-local.out" >/dev/null || fail "compute-only Podman evidence"
 
 sed 's/^arch=x86_64$/arch=aarch64/' "$ROOT/tests/fixtures/local.facts" \
     >"$TEMP_DIR/wrong-arch.facts"
@@ -133,6 +139,12 @@ broken_home=$TEMP_DIR/broken-home
 mkdir -p "$broken_bin" "$broken_home"
 printf '%s\n' '#!/bin/sh' 'exit 1' >"$broken_bin/ninja"
 chmod 755 "$broken_bin/ninja"
+printf '%s\n' '#!/bin/sh' 'exit 1' >"$broken_bin/podman"
+chmod 755 "$broken_bin/podman"
+HOME="$broken_home" PATH="$broken_bin:/usr/bin:/bin" \
+    "$HARNESS" inventory --host local >"$TEMP_DIR/unusable-container-inventory.out"
+grep '^tool_podman=unusable$' "$TEMP_DIR/unusable-container-inventory.out" \
+    >/dev/null || fail "container version health probe"
 HOME="$broken_home" PATH="$broken_bin:/usr/bin:/bin" \
     "$HARNESS" tool --host local --name ninja --plan \
     >"$TEMP_DIR/ninja-unusable-plan.out"

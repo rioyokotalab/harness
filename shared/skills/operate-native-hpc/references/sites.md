@@ -27,6 +27,10 @@ every placeholder before printing and executing a command.
   remove only its output plus the empty `.harness-smoke` directory.
 - Inside the one-node allocation, the validated two-rank route is native
   `mpirun -n 2`; `srun -n 2` previously formed two rank-one singletons.
+- The site-owned Docker/Podman wrapper expects its Slurm runtime directory and
+  is unusable on the login node. Invoke it only inside `yrun`/`ybatch`; do not
+  bypass its storage flags with `/usr/bin/podman`. The tracked job checks both
+  native entry points before GPU/MPI work without selecting or pulling an image.
 
 ## ABCI: `ab` and `ab2`
 

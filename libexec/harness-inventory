@@ -121,6 +121,12 @@ generate_facts() {
             if [ "$command_name" = ninja ] &&
                 ! "$command_name" --version >/dev/null 2>&1; then
                 state=unusable
+            elif { [ "$command_name" = singularity ] ||
+                    [ "$command_name" = apptainer ] ||
+                    [ "$command_name" = docker ] ||
+                    [ "$command_name" = podman ]; } &&
+                ! "$command_name" --version >/dev/null 2>&1; then
+                state=unusable
             elif [ "$command_name" = sqlite3 ] &&
                 ! sqlite3 -batch -noheader -init /dev/null :memory: \
                     'select json_valid('"'"'{"ok":1}'"'"'); create virtual table f using fts5(x); create virtual table r using rtree(id,x1,x2); select 1;' \

@@ -1168,6 +1168,29 @@ harness. Repository-specific tasks remain in their own project ledgers.
     doctor failures, confirmed clean revision `47897e0`, mode-600 complete
     transaction state on every remote, and no staged bundle. The reusable
     native-HPC workflow is deployed and validated.
+  - LLM/HPC environment-entry audit confirmed that all seven environments have
+    `uv`, Python 3.12, C/C++/Fortran, CMake, and Ninja. Disposable, isolated
+    `uv venv` runs with `UV_PYTHON_DOWNLOADS=never`, an isolated cache, and the
+    standard-library smoke passed on every target and removed their temporary
+    trees; current and `ri` retain healthy site Python 3.12.3 while the other
+    five use managed 3.12.12. Login MPI/CUDA wrappers are present on current,
+    `ab`, `ab2`, and `t4`; `ri`, `al`, and `rc` correctly require their
+    site/project environment for those layers. No framework was installed
+    globally.
+  - A fresh `ri` login and live value-free inventory now expose Singularity
+    compatibility plus Apptainer 1.4.5, so replace its stale `container=none`
+    profile and fixture. Generalize safe container inventory from presence to
+    native `--version` health, with explicit `unusable` planning evidence.
+    This revealed that the current node's root-owned Docker/Podman wrapper
+    forces `/run/user_slurm/UID` and exits 1 on the login node even though the
+    login runtime directory is valid. Do not bypass its site storage policy.
+    Native `ybatch tests/smoke/jobs/local.slurm` job `90627` proved both wrapper
+    entry points report Podman 5.2.4 inside the allocation, then passed an A4500
+    CUDA kernel, two-rank MPI reduction, and Python smoke in four seconds with
+    exit `0:0`. Only its job-scoped output and empty directory were removed; no
+    image was selected, pulled, or run. Add this allocation-context rule to the
+    native-HPC skill, keep current login facts `unusable`, and validate the
+    revised profile/inventory behavior fleet-wide.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

@@ -93,6 +93,7 @@ for class in scheduler module environment container; do
         case "$state" in
             present) echo "KEEP site_command class=$class command=$command_name" ;;
             absent) echo "WARN site_command class=$class command=$command_name state=absent" ;;
+            unusable) echo "WARN site_command class=$class command=$command_name state=unusable" ;;
             *) echo "CHECK site_command class=$class command=$command_name state=unknown" ;;
         esac
     done
