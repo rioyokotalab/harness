@@ -290,6 +290,20 @@ harness. Repository-specific tasks remain in their own project ledgers.
     Next safe actions are a fresh read-only `ai4s` audit and the backed-up shell
     pilot on `ab2`; handle `al` startup remediation as its own transaction.
 
+  `ai4s` retry checkpoint (2026-07-14):
+
+  - A later read-only no-op succeeded once, but three subsequent structural
+    state probes returned no remote output, including one with a 45-second
+    connect timeout and SSH keepalives. No reliable evidence establishes
+    whether `~/harness` exists, so no mutation was attempted.
+  - Treat `ai4s` control-plane rollout as connectivity-blocked until a fresh
+    read-only audit reports checkout and link state. Continue independent work
+    on the other hosts without inferring success or absence.
+  - Next executable action: implement and isolate-test a shell managed-block
+    transaction for `ab2`. Do not copy whole startup files into backups because
+    their unknown contents may include credentials; rollback must remove only
+    the exact appended harness block when surrounding file state still matches.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 
