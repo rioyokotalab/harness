@@ -28,6 +28,12 @@ For the common CPU/build path, configure out of tree with the native command
 part of that login-node build because their environment and execution route are
 site-specific.
 
+`sanitizer.c` checks the native C compiler and AddressSanitizer/UBSan runtime.
+Build it in a temporary directory with `cc -O1 -g
+-fsanitize=address,undefined -fno-omit-frame-pointer tests/smoke/sanitizer.c -o
+BUILD/sanitizer`, then execute `BUILD/sanitizer`. A zero exit plus
+`sanitizer=pass` is the gate; compiler success alone is insufficient.
+
 `jobs/local.slurm` is the current node's native `ybatch` smoke. It requests the
 smallest A4500 resource and validates CUDA runtime, two-rank MPI, and Python.
 The site wrapper submits asynchronously and does not forward later scheduler

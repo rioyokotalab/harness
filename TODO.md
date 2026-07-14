@@ -1271,6 +1271,22 @@ harness. Repository-specific tasks remain in their own project ledgers.
     CUDA debugging/Nsight, Alps perf, and RIKEN GDB profiles and passes. Record
     in the native-HPC skill that login `--version` is discovery only: actual GPU
     capture still requires a native allocation and selected project environment.
+    Commit `a2c2b46` implements the capability layer and was fast-forwarded to
+    all six remotes from complete bundle SHA-256
+    `a8e6b7ae676d8a9e16864765d43b5480513be7aa2c04feacebfe97700fe7e500`.
+    Fresh live plans report exactly 7 diagnostic keeps on current, 6 on each of
+    `ab`, `ab2`, and `t4`, and 3 on each of `ri`, `al`, and `rc`, with zero
+    debugger/profiler warnings or unknown checks. Every doctor has zero failures
+    and every checkout is clean at `a2c2b46`.
+  - Add a deterministic heap/reduction source for native AddressSanitizer plus
+    UBSan validation. The exact local command `cc -O1 -g
+    -fsanitize=address,undefined -fno-omit-frame-pointer` built it in a
+    disposable directory, and executing the result printed `sanitizer=pass`
+    without a sanitizer diagnostic. The complete suite now compiles and runs
+    this gate rather than treating compiler flag acceptance as success. Commit
+    and synchronize the source, then repeat the exact temporary build/execution
+    on every remote login environment; retain absence or runtime failure as a
+    site capability fact rather than installing a replacement compiler.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

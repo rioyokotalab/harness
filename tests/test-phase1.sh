@@ -38,6 +38,11 @@ python3 "$ROOT/tests/smoke/llm_torch.py" --help \
 grep -- '--require-world-size' "$TEMP_DIR/llm-torch-help.out" >/dev/null ||
     fail "LLM PyTorch smoke world-size gate"
 
+cc -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer \
+    "$ROOT/tests/smoke/sanitizer.c" -o "$TEMP_DIR/sanitizer"
+[ "$("$TEMP_DIR/sanitizer")" = sanitizer=pass ] ||
+    fail "native sanitizer smoke"
+
 "$HARNESS" inventory --host local >"$TEMP_DIR/local.facts"
 awk -F= '
     NF != 2 { exit 1 }
