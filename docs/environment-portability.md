@@ -21,7 +21,7 @@ The 2026-07-14 read-only inventory found the following login environments.
 Versions are observations, not requirements.
 
 The complete unification target set is the current node plus `ab`, `ab2`,
-`ai4s`, `al`, `rc`, and `t4`. The aliases `si`, `web`, and `github` are out of
+`ri`, `al`, `rc`, and `t4`. The aliases `si`, `web`, and `github` are out of
 scope. `abci_login` and `alps_login` are transport-only proxy nodes, not
 deployment targets.
 
@@ -29,7 +29,7 @@ deployment targets.
 | --- | --- | --- | --- | --- |
 | current | Ubuntu 24.04 | Bash, x86_64 | modules, Docker/Podman, CUDA, local Slurm/`yrun` commands | installed |
 | `ab`, `ab2` | RHEL 9.4 | Bash, x86_64 | modules, Singularity CE, Podman, CUDA | absent |
-| `ai4s` | Rocky 9.6 | Bash, aarch64 | modules, Singularity CE, Slurm, NVIDIA GB200 | absent |
+| `ri` | Pending authenticated inventory | Pending | Pending | blocked before authentication |
 | `al` | SLES 15 SP6 | Bash, aarch64 | uenv/`ml`, Slurm, Docker/Podman, NVIDIA GH200 | absent |
 | `rc` | Rocky 9.8 | Bash, x86_64 | modules, Singularity CE, Slurm | absent |
 | `t4` | RHEL 9.4 | Bash, x86_64 | modules, PBS, Apptainer, CUDA command | absent |
@@ -230,7 +230,7 @@ agent and current proxy configuration.
 ## Shell integration
 
 The owner has authorized changes to any file their account can edit on `ab`,
-`ab2`, `ai4s`, `al`, `rc`, and `t4` when necessary for this environment
+`ab2`, `ri`, `al`, `rc`, and `t4` when necessary for this environment
 unification. This includes shell startup files, the harness checkout, discovery
 links, and evidence-backed user configuration. It does not broaden the task to
 excluded aliases, unrelated projects or personal data, credential or

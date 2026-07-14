@@ -42,7 +42,7 @@ cut -d= -f1 "$TEMP_DIR/local.facts" | LC_ALL=C sort -u \
 python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["schema"] == "1"' \
     "$TEMP_DIR/local.json" || fail "invalid JSON inventory"
 
-for logical_host in local ab ab2 ai4s al rc t4; do
+for logical_host in local ab ab2 al rc t4; do
     fixture=$ROOT/tests/fixtures/$logical_host.facts
     [ -f "$fixture" ] || fail "missing fixture: $logical_host"
     awk -F= '

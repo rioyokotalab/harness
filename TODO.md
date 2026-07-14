@@ -52,13 +52,31 @@ harness. Repository-specific tasks remain in their own project ledgers.
   - `web` is confirmed to be an intentional SFTP-only service; rejecting shell
     commands is correct and it is excluded from environment mirroring.
   - The only environment-unification targets are the current node plus `ab`,
-    `ab2`, `ai4s`, `al`, `rc`, and `t4`. `abci_login` and `alps_login` remain
+    `ab2`, `ri`, `al`, `rc`, and `t4`. `abci_login` and `alps_login` remain
     transport-only proxy nodes and receive no harness deployment.
+
+  `ai4s` to `ri` replacement checkpoint (2026-07-14):
+
+  - The user replaced the retired `ai4s` machine with SSH alias `ri`. `ai4s`
+    is no longer an environment target and must not retain a deployable logical
+    host profile. Historical `ai4s` evidence below remains as an audit record.
+  - `ri` resolves to `login.rikyu.r-ccs.riken.jp` with account `rku0075`.
+    Strict batch SSH reached the server but failed authentication with
+    `Permission denied (publickey,hostbased)` before any remote command ran.
+  - The local agent is healthy and `rc` still authenticates. SSH offered all
+    four currently loaded identities to `ri`; the server accepted none. This
+    rules out an unloaded/passphrase-locked agent and indicates that the new
+    account needs a matching public key registered or the configured username
+    corrected.
+  - No `ri` file was read or changed. Remove the retired `ai4s` profile and
+    fixture now, but do not guess a `ri` profile until a value-free inventory
+    can run successfully. After owner-side access is fixed, the next native
+    gate is `ssh -x -o BatchMode=yes -o StrictHostKeyChecking=yes ri true`.
 
   Owner authorization checkpoint (2026-07-14):
 
   - The user explicitly authorizes the rollout to modify any remote file their
-    account is permitted to edit on `ab`, `ab2`, `ai4s`, `al`, `rc`, and `t4`
+    account is permitted to edit on `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`
     when the change is necessary for T-170. This includes `.bashrc`,
     `.bash_profile`, `.bash_logout`, the harness checkout and discovery links,
     and other evidence-backed user configuration required by the approved
