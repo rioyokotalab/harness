@@ -48,3 +48,20 @@ client's live settings, install packages/plugins, or change authentication.
 After installation, start new Codex and Claude sessions so both clients rebuild
 global instruction and skill discovery. If `~/.claude/skills/` was created for
 the first time, Claude must be restarted before those skills appear.
+
+## Local shell compatibility
+
+The live shell startup files are intentionally not versioned here. On systems
+where Bash completion defines functions that require nondefault parser options,
+load the system completion script only for interactive shells. This prevents a
+noninteractive Codex shell snapshot from serializing completion-only functions
+while preserving normal terminal completion:
+
+```bash
+if [[ $- == *i* && -f /usr/share/bash-completion/bash_completion ]]; then
+  . /usr/share/bash-completion/bash_completion
+fi
+```
+
+This workaround is based on a local Codex CLI 0.144.3 diagnosis. Validate it
+against the installed CLI before applying it on another machine.
