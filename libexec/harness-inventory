@@ -111,6 +111,7 @@ generate_facts() {
         python3 uv node npm codex claude rclone lftp tectonic \
         cc gcc g++ gfortran clang clang++ nvc nvc++ nvfortran \
         make cmake ninja meson pkg-config gdb lldb cuda-gdb valgrind \
+        perf strace nsys ncu \
         mpicc mpicxx mpifort mpirun mpiexec git-lfs \
         modulecmd ml uenv yrun ybatch sbatch srun squeue scancel \
         sinfo scontrol qsub qstat qdel qrsh nodestatus \

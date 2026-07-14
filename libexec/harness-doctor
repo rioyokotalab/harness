@@ -100,13 +100,14 @@ while IFS='|' read -r tool_name command_name policy; do
     fi
 done <"$HARNESS_ROOT/profiles/tools.tsv"
 
-for class in scheduler module environment container; do
+for class in scheduler module environment container debugger profiler; do
     commands=$(config_get "$profile" "${class}_commands")
     old_ifs=$IFS
     IFS=,
     for command_name in $commands; do
         [ "$command_name" = none ] && continue
-        state=$(fact_get "$fact_file" "tool_$command_name")
+        fact_command=$(fact_key_for_command "$command_name")
+        state=$(fact_get "$fact_file" "tool_$fact_command")
         if [ "$state" = present ]; then
             pass "site_command class=$class command=$command_name"
         else

@@ -85,11 +85,12 @@ while IFS='|' read -r tool_name command_name policy; do
     esac
 done <"$HARNESS_ROOT/profiles/tools.tsv"
 
-for class in scheduler module environment container; do
+for class in scheduler module environment container debugger profiler; do
     commands=$(config_get "$profile" "${class}_commands")
     csv_commands "$commands" | while IFS= read -r command_name; do
         [ -n "$command_name" ] || continue
-        state=$(fact_get "$fact_file" "tool_$command_name")
+        fact_command=$(fact_key_for_command "$command_name")
+        state=$(fact_get "$fact_file" "tool_$fact_command")
         case "$state" in
             present) echo "KEEP site_command class=$class command=$command_name" ;;
             absent) echo "WARN site_command class=$class command=$command_name state=absent" ;;

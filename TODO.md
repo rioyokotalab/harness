@@ -1260,6 +1260,17 @@ harness. Repository-specific tasks remain in their own project ledgers.
     Fresh seven-environment source selection retains host Tree everywhere except
     the intended managed `t4` build; every exact plan is idempotent and every
     doctor has zero failures with the expected warning count.
+  - Native HPC diagnostics audit found no portable installation gap: all seven
+    environments have GDB and strace plus at least Valgrind or perf. Current,
+    `ab`, `ab2`, and `t4` expose login-path `cuda-gdb`, Nsight Systems, and
+    Nsight Compute; `ri`, `al`, and `rc` correctly leave GPU tooling to their
+    project image/uenv. Add value-free `perf`, `strace`, `nsys`, and `ncu`
+    inventory facts plus explicit per-host debugger/profiler capabilities.
+    Fix plan/doctor fact normalization for hyphenated site commands so
+    `cuda-gdb` resolves `tool_cuda_gdb`. The complete suite now exercises ABCI
+    CUDA debugging/Nsight, Alps perf, and RIKEN GDB profiles and passes. Record
+    in the native-HPC skill that login `--version` is discovery only: actual GPU
+    capture still requires a native allocation and selected project environment.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

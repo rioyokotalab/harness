@@ -15,6 +15,19 @@ are validated baselines, not permission to guess a project's resource choices.
 Always inspect the project script or native help before adding options. Replace
 every placeholder before printing and executing a command.
 
+## Debugging and profiling
+
+- Every target has native GDB and strace plus at least one of Valgrind or perf.
+  Use the project's compiler flags and preserve raw diagnostics; never infer a
+  compute-node failure from a login-only reproduction.
+- Current, `ab`, `ab2`, and `t4` expose `cuda-gdb`, Nsight Systems (`nsys`), and
+  Nsight Compute (`ncu`) on the login path. Run GPU capture only inside the
+  site's native allocation and selected CUDA environment. A successful
+  login-node `--version` is capability discovery, not GPU profiling evidence.
+- `ri`, `al`, and `rc` intentionally do not expose the Nsight CLI baseline.
+  Select debugging/profiling tools from the reviewed project image, module, or
+  uenv rather than installing a generic global CUDA toolkit.
+
 ## Current node
 
 - Use the native `yrun`/`ybatch` interface. The validated GPU/MPI smoke is

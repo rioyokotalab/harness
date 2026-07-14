@@ -94,6 +94,14 @@ grep 'WARN site_command class=container command=docker state=unusable' \
     "$TEMP_DIR/plan-local.out" >/dev/null || fail "compute-only Docker evidence"
 grep 'WARN site_command class=container command=podman state=unusable' \
     "$TEMP_DIR/plan-local.out" >/dev/null || fail "compute-only Podman evidence"
+grep 'KEEP site_command class=debugger command=cuda-gdb' \
+    "$TEMP_DIR/plan-ab.out" >/dev/null || fail "hyphenated debugger fact mapping"
+grep 'KEEP site_command class=profiler command=nsys' \
+    "$TEMP_DIR/plan-ab.out" >/dev/null || fail "ABCI Nsight profile"
+grep 'KEEP site_command class=profiler command=perf' \
+    "$TEMP_DIR/plan-al.out" >/dev/null || fail "Alps perf profile"
+grep 'KEEP site_command class=debugger command=gdb' \
+    "$TEMP_DIR/plan-ri.out" >/dev/null || fail "RIKEN debugger profile"
 
 sed 's/^arch=x86_64$/arch=aarch64/' "$ROOT/tests/fixtures/local.facts" \
     >"$TEMP_DIR/wrong-arch.facts"
