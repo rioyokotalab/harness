@@ -72,6 +72,18 @@ harness. Repository-specific tasks remain in their own project ledgers.
     fixture now, but do not guess a `ri` profile until a value-free inventory
     can run successfully. After owner-side access is fixed, the next native
     gate is `ssh -x -o BatchMode=yes -o StrictHostKeyChecking=yes ri true`.
+  - The user corrected the account-side access. The exact strict gate now exits
+    zero with no output. A self-contained inventory streamed to remote `sh`
+    also completed without creating files: `ri` is Ubuntu 24.04 on AArch64,
+    with Bash, Git, Python 3, Slurm, tmux, jq, tree, htop, and NVIDIA GPU
+    exposure. It lacks the harness, ripgrep, SQLite, uv, Node/npm, both agent
+    CLIs, rclone, lftp, and Tectonic.
+  - Startup structure is `.bashrc` regular, `.bash_profile`/`.bash_login`
+    absent, `.profile` regular, and `.bash_logout` regular. Add an explicit
+    Ubuntu/AArch64/Slurm `ri` profile and captured fixture. Extend the shell
+    transaction to append its login hook to the first existing Bash login file
+    instead of creating a higher-precedence `.bash_profile` that would bypass
+    `.profile`.
 
   Owner authorization checkpoint (2026-07-14):
 

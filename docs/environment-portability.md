@@ -29,7 +29,7 @@ deployment targets.
 | --- | --- | --- | --- | --- |
 | current | Ubuntu 24.04 | Bash, x86_64 | modules, Docker/Podman, CUDA, local Slurm/`yrun` commands | installed |
 | `ab`, `ab2` | RHEL 9.4 | Bash, x86_64 | modules, Singularity CE, Podman, CUDA | absent |
-| `ri` | Pending authenticated inventory | Pending | Pending | blocked before authentication |
+| `ri` | Ubuntu 24.04 | Bash, aarch64 | Slurm, NVIDIA GPU exposure | absent |
 | `al` | SLES 15 SP6 | Bash, aarch64 | uenv/`ml`, Slurm, Docker/Podman, NVIDIA GH200 | absent |
 | `rc` | Rocky 9.8 | Bash, x86_64 | modules, Singularity CE, Slurm | absent |
 | `t4` | RHEL 9.4 | Bash, x86_64 | modules, PBS, Apptainer, CUDA command | absent |

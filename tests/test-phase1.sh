@@ -42,7 +42,7 @@ cut -d= -f1 "$TEMP_DIR/local.facts" | LC_ALL=C sort -u \
 python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["schema"] == "1"' \
     "$TEMP_DIR/local.json" || fail "invalid JSON inventory"
 
-for logical_host in local ab ab2 al rc t4; do
+for logical_host in local ab ab2 ri al rc t4; do
     fixture=$ROOT/tests/fixtures/$logical_host.facts
     [ -f "$fixture" ] || fail "missing fixture: $logical_host"
     awk -F= '
@@ -239,6 +239,35 @@ HOME="$test_home" bash --noprofile --norc -ic \
     >"$TEMP_DIR/al-interactive.out" 2>&1 || fail "al interactive convenience"
 grep 'prgenv is a function' "$TEMP_DIR/al-interactive.out" >/dev/null ||
     fail "al interactive function missing"
+
+profile_home=$TEMP_DIR/profile-home
+mkdir -p "$profile_home"
+printf '%s\n' '# existing interactive setup' >"$profile_home/.bashrc"
+printf '%s\n' '# existing login setup' >"$profile_home/.profile"
+HOME="$profile_home" "$test_repo/bin/harness" shell --host ri --plan \
+    >"$TEMP_DIR/profile-shell-plan.out"
+grep 'APPEND file=.profile' "$TEMP_DIR/profile-shell-plan.out" >/dev/null ||
+    fail "existing profile login selection"
+if grep 'file=.bash_profile' "$TEMP_DIR/profile-shell-plan.out" >/dev/null; then
+    fail "shell plan bypassed existing profile"
+fi
+cp "$profile_home/.bashrc" "$TEMP_DIR/original-profile-bashrc"
+cp "$profile_home/.profile" "$TEMP_DIR/original-profile-login"
+HOME="$profile_home" "$test_repo/bin/harness" shell --host local --apply \
+    >"$TEMP_DIR/profile-shell-apply.out"
+profile_shell_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/profile-shell-apply.out")
+[ -n "$profile_shell_transaction" ] || fail "missing profile shell transaction"
+[ ! -e "$profile_home/.bash_profile" ] || fail "shell apply created bash profile"
+grep -F '# >>> harness managed >>>' "$profile_home/.profile" >/dev/null ||
+    fail "shell apply missed existing profile"
+HOME="$profile_home" "$test_repo/bin/harness" rollback "$profile_shell_transaction" \
+    >"$TEMP_DIR/profile-shell-rollback.out"
+cmp -s "$profile_home/.bashrc" "$TEMP_DIR/original-profile-bashrc" ||
+    fail "profile-selection bashrc rollback"
+cmp -s "$profile_home/.profile" "$TEMP_DIR/original-profile-login" ||
+    fail "profile-selection login rollback"
+[ ! -e "$profile_home/.bash_profile" ] || fail "rollback created bash profile"
 
 # Exercise artifact rollback and its all-path modification refusal without network.
 artifact_dir=$test_home/.local/opt/fixture/1/linux-x86_64

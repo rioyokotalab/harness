@@ -32,11 +32,22 @@ bash_profile_block=$HARNESS_ROOT/shell/bash_profile.$logical_host.block
 [ -f "$bash_profile_block" ] || bash_profile_block=$HARNESS_ROOT/shell/bash_profile.block
 cat "$bash_profile_block" >>"$temp_dir/bash_profile.payload"
 
+# Use the login file Bash already selects. Do not create a higher-precedence
+# file that would bypass an existing .bash_login or .profile.
+if [ -e "$HOME/.bash_profile" ] || [ -L "$HOME/.bash_profile" ]; then
+    login_name=bash_profile
+elif [ -e "$HOME/.bash_login" ] || [ -L "$HOME/.bash_login" ]; then
+    login_name=bash_login
+else
+    login_name=profile
+fi
+entries=$(printf 'bashrc|bashrc\n%s|bash_profile\n' "$login_name")
+
 blocked=0
 echo "SHELL_PLAN host=$logical_host mode=$mode contents=not-read"
-for name in bashrc bash_profile; do
+while IFS='|' read -r name payload_name; do
     destination=$HOME/.$name
-    payload=$temp_dir/$name.payload
+    payload=$temp_dir/$payload_name.payload
     bytes=$(wc -c <"$payload" | tr -d ' ')
     if [ ! -f "$destination" ] || [ -L "$destination" ]; then
         echo "BLOCK file=.$name reason=not-regular"
@@ -50,7 +61,9 @@ for name in bashrc bash_profile; do
     else
         echo "APPEND file=.$name bytes=$bytes contents=harness-managed"
     fi
-done
+done <<EOF
+$entries
+EOF
 [ "$blocked" -eq 0 ] || die "shell plan contains blocked files"
 [ "$mode" = apply ] || { echo "END shell host=$logical_host changes=not-applied"; exit 0; }
 
@@ -87,9 +100,9 @@ cleanup() {
 }
 trap cleanup EXIT HUP INT TERM
 
-for name in bashrc bash_profile; do
+while IFS='|' read -r name payload_name; do
     destination=$HOME/.$name
-    payload=$temp_dir/$name.payload
+    payload=$temp_dir/$payload_name.payload
     bytes=$(wc -c <"$payload" | tr -d ' ')
     if [ "$(wc -c <"$destination" | tr -d ' ')" -ge "$bytes" ] &&
         tail -c "$bytes" "$destination" | cmp -s - "$payload"; then
@@ -100,7 +113,9 @@ for name in bashrc bash_profile; do
     cp "$payload" "$stored"; chmod 600 "$stored"
     cat "$payload" >>"$destination"
     printf 'shell|%s|%s|%s|%s\n' "$destination" "$original" "$bytes" "$stored" >>"$manifest"
-done
+done <<EOF
+$entries
+EOF
 echo complete >"$manifest.status"; chmod 600 "$manifest.status"
 complete=1
 trap - EXIT HUP INT TERM
