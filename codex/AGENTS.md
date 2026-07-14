@@ -1,8 +1,9 @@
-# Global Codex working agreements
+# Global agent working agreements
 
-These personal defaults apply across repositories. A repository's `AGENTS.md`
-and closer nested guidance supply the project-specific commands, invariants,
-authority boundaries, and acceptance gates; follow those more specific rules.
+These personal defaults apply across repositories and agent clients. A
+repository's `AGENTS.md`, `CLAUDE.md`, and closer nested guidance supply the
+project-specific commands, invariants, authority boundaries, and acceptance
+gates; follow those more specific rules.
 
 ## Scope and safety
 
@@ -31,15 +32,17 @@ authority boundaries, and acceptance gates; follow those more specific rules.
 
 ## Reusable workflows
 
-- Use `$long-running-task-ledger` for durable multi-step or multi-session work.
-- Use `$bounded-agent-delegation` only when delegation is permitted and saves
-  more context than it costs.
-- Use `$evidence-first-research` for factual or literature research.
-- Use `$research-engineering-validation` for distributed training, scientific
-  HPC, GPU kernels, numerical software, or performance work.
-- Use `$research-presentation-workflow` for research talks and slide artifacts.
-- Use `$research-program-management` for multi-project and student-progress
-  coordination while preserving privacy and human judgment.
+- Use the `long-running-task-ledger` skill for durable multi-step or
+  multi-session work.
+- Use the `bounded-agent-delegation` skill only when delegation is permitted
+  and saves more context than it costs.
+- Use the `evidence-first-research` skill for factual or literature research.
+- Use the `research-engineering-validation` skill for distributed training,
+  scientific HPC, GPU kernels, numerical software, or performance work.
+- Use the `research-presentation-workflow` skill for research talks and slide
+  artifacts.
+- Use the `research-program-management` skill for multi-project and
+  student-progress coordination while preserving privacy and human judgment.
 
 ## Promote reusable configuration
 
@@ -59,32 +62,37 @@ automatically only when all of these are true:
 
 Choose the smallest correct surface:
 
-- Put short cross-project behavior and user preferences in this global
-  `~/.codex/AGENTS.md`. Its canonical version-controlled source is
-  `~/.codex/harness/AGENTS.md`.
+- Put short cross-project behavior and user preferences in this shared global
+  guidance. Its canonical version-controlled source is
+  `~/harness/codex/AGENTS.md`; `~/harness/claude/CLAUDE.md` links to the same
+  content so Codex and Claude receive one consistent policy.
 - Put repeatable multi-step expertise in a focused personal skill under
-  `~/.codex/harness/skills/`, then run `~/.codex/harness/install.sh` to create
-  the `~/.codex/skills/` and `$HOME/.agents/skills/` discovery links.
+  `~/harness/shared/skills/`, then run `~/harness/install.sh` to create the
+  Codex and Claude discovery links.
+- Keep non-secret product-specific examples under `~/harness/codex/` or
+  `~/harness/claude/`. Live product settings remain outside the repository.
 - Keep build commands, test suites, file formats, deployment, benchmark routes,
   data schemas, team policy, and other codebase facts in the closest project
-  `AGENTS.md` or project skill.
+  `AGENTS.md`, `CLAUDE.md`, or project skill.
 - Keep project repositories self-contained; never delete or weaken a necessary
   project rule merely because a personal equivalent exists.
 
 This instruction authorizes narrow automatic creation or maintenance of this
-global `AGENTS.md` and personal skill directories when the criteria above are
-unambiguously satisfied. Preserve unrelated content, validate skill structure
-and instruction discovery, and report the promotion and its rationale in the
-active project's ledger or final handoff. After a promotion passes validation,
-commit only the intended files in `~/.codex/harness` with a concise local Git
-commit. Do not add a remote or push the harness without explicit authorization.
+shared global guidance and personal skill directories when the criteria above
+are unambiguously satisfied. Preserve unrelated content, validate skill
+structure and instruction discovery in affected clients, and report the
+promotion and its rationale in the active project's ledger or final handoff.
+After a promotion passes validation, commit only the intended files in
+`~/harness` with a concise local Git commit. Do not change remotes or push the
+harness without explicit authorization.
 
-Do not automatically change `~/.codex/config.toml`, profiles, hooks, MCP
-servers, plugins, connectors, authentication, credentials, system files,
-installed packages, or external services. Accumulate such proposals in one
-owner-approval bundle with exact files, impact, commands, and rollback, then
-continue all safe work. If scope or reuse is uncertain, keep the rule local and
-propose promotion instead of guessing.
+Do not automatically change `~/.codex/config.toml`,
+`~/.claude/settings.json`, profiles, hooks, MCP servers, plugins, connectors,
+authentication, credentials, system files, installed packages, or external
+services. Accumulate such proposals in one owner-approval bundle with exact
+files, impact, commands, and rollback, then continue all safe work. If scope or
+reuse is uncertain, keep the rule local and propose promotion instead of
+guessing.
 
 ## Research defaults
 
