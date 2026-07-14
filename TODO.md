@@ -903,6 +903,22 @@ harness. Repository-specific tasks remain in their own project ledgers.
     absent on the first three and pre-existing on `t4`; do not enumerate or
     modify it. Synchronize the corrected transaction code, apply one host at a
     time, and prove `t4`'s default-path type is unchanged before and after.
+  - Synchronized clean revision `4509be7` to all six clusters from complete
+    bundle SHA-256
+    `0c033e42ccfc98530cd88f24398b0422558b4967c8ca95243633ccdc41c4f26d`.
+    Installed CPython 3.12.12 serially as transactions `ab`
+    `20260714T140609Z-3238657`, `ab2` `20260714T140630Z-2607267`, `rc`
+    `20260714T140650Z-2757791`, and `t4` `20260714T140714Z-3209289`; `al`
+    retains final transaction `20260714T140353Z-164269`. `ri` and the current
+    node retain their host-provided Python 3.12.3.
+  - Final seven-environment closure passed exact version/architecture,
+    SSL/SQLite, base-prefix, idempotent source selection, clean Git, and doctor
+    gates. All six strict `ssh -x` no-op gates were silent. The uv default path
+    stayed absent on `ab`, `ab2`, `al`, and `rc`, and stayed a pre-existing
+    uninspected directory on `t4`. Next inventory the LLM/HPC development
+    surfaces—compiler/build/debugger, accelerator driver/toolkit, MPI,
+    scheduler, modules/uenv, and containers—before selecting any portable
+    additions or site-native smoke tests.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
