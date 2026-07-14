@@ -25,10 +25,13 @@ for script in \
     "$ROOT/libexec/harness-python" \
     "$ROOT/libexec/harness-agent" \
     "$ROOT/libexec/harness-build-tool" \
+    "$ROOT/shared/skills/guarded-bulk-delete/scripts/guarded-delete" \
     "$ROOT/libexec/harness-rollback"
 do
     sh -n "$script" || fail "shell syntax: $script"
 done
+
+"$ROOT/tests/test-guarded-delete.sh" || fail "guarded-delete regression suite"
 
 python3 -c 'import sys; compile(open(sys.argv[1], encoding="utf-8").read(), sys.argv[1], "exec")' \
     "$ROOT/tests/smoke/llm_torch.py" ||

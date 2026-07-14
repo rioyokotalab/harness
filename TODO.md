@@ -15,12 +15,23 @@ bullet when it conflicts with the session checkpoint.
 ## Active
 
 - **T-171 — Recover the current-node home after accidental deletion (urgent):**
-  - **Current checkpoint:** the owner is completing the reconstructed
-    `~/.ssh/config` and intentionally wrote a new `~/.bashrc`. Do not touch
-    either file while the owner is editing. The next action is to wait for the
-    owner to declare the SSH config ready, then perform the static-only checks
-    in `docs/recovery-session.md`. This checkpoint supersedes older missing-file
-    and backup-gate observations below for the current SSH-config subtask.
+  - **Current checkpoint:** the owner confirmed `si` was intentionally removed
+    because it could not be recovered, making 10 aliases the final expected
+    inventory and closing the SSH-config subtask. The owner then requested
+    strict, reusable bulk-deletion guardrails that preserve agent autonomy and
+    use deterministic checks instead of approval prompts. Global guidance, a
+    guarded plan/apply deletion tool and skill, raw-recursive-rm execpolicy
+    blocks, and adversarial tests are implemented locally. Skill validation,
+    POSIX syntax, policy checks, the dedicated suite, and the full phase-1 suite
+    pass; ShellCheck is unavailable on the recovered node. The fail-closed
+    installer created and idempotently retained the three intended discovery
+    links, and a fresh tool-free Codex process returned `GUARD_OK` after loading
+    the new global rule and skill metadata. Final review added fail-closed
+    unreadable-tree inventory, race-free and canonical manifests, and safely
+    quoted apply output; the dedicated and full suites passed again. The
+    implementation and completed checkpoint form one local commit. Wait for a
+    new request; do not change owner hooks/product config, push, reopen broader
+    recovery, or resume T-170 fleet mutation.
   - Before the next cold restart, website T-179 reconstructed the superseding
     global/local agent configuration from T-11 and T-170--T-173 history.
     `~/.codex/config.toml` now has never/full-access policy plus trusted home and

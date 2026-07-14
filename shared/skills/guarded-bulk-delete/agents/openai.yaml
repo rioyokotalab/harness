@@ -1,0 +1,4 @@
+interface:
+  display_name: "Guarded Bulk Delete"
+  short_description: "Plan and verify safe recursive deletions"
+  default_prompt: "Use $guarded-bulk-delete to remove these generated directories safely without an approval prompt."

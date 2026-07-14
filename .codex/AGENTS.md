@@ -16,6 +16,13 @@ gates; follow those more specific rules.
   make the smallest atomic change. Otherwise collect one approval bundle and
   continue all safe in-scope work.
 - Do not treat a long-running instruction as permission to broaden scope.
+- Never run raw recursive or bulk deletion (`rm -r`, `rm -rf`, `find -delete`,
+  deletion loops/globs, `rsync --delete`, or equivalents). Use the
+  `guarded-bulk-delete` skill and its deterministic plan/apply tool. This is an
+  autonomous safety gate, not an approval gate: proceed without asking when
+  the canonical boundary, explicit targets, manifest, revalidation, and
+  post-delete checks all pass. Single exact non-recursive file removal and
+  patch-based tracked-file deletion remain allowed.
 
 ## Execution
 
@@ -47,6 +54,8 @@ gates; follow those more specific rules.
   artifacts.
 - Use the `research-program-management` skill for multi-project and
   student-progress coordination while preserving privacy and human judgment.
+- Use the `guarded-bulk-delete` skill before any command can recursively delete
+  a tree or expand deletion to multiple paths.
 
 ## Promote reusable configuration
 

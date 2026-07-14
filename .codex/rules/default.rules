@@ -9,4 +9,23 @@ prefix_rule(pattern=["curl", "-sS", "--get", "https://api.crossref.org/works", "
 prefix_rule(pattern=["curl", "-sS", "--get", "https://dblp.org/search/publ/api", "--data-urlencode", "q=On the Interplay Between Precision Rank Admissibility Iterative Refinement Hierarchical Low-Rank Matrix Solvers", "--data-urlencode", "format=json", "--data-urlencode", "h=5"], decision="allow")
 prefix_rule(pattern=["python3", "tools/researchmap-export.py", "--check-live"], decision="allow")
 prefix_rule(pattern=["git", "commit"], decision="allow")
+prefix_rule(
+    pattern=["rm", ["-r", "-R", "-rf", "-fr", "-Rf", "-fR", "--recursive"]],
+    decision="forbidden",
+    justification="Use `harness guarded-delete plan` followed by its exact autonomous apply command.",
+    match=["rm -rf build", "rm -r generated", "rm --recursive cache"],
+    not_match=["rm -f exact-file"],
+)
+prefix_rule(
+    pattern=["rm", ["-f", "--force"], ["-r", "-R", "--recursive"]],
+    decision="forbidden",
+    justification="Use `harness guarded-delete plan` followed by its exact autonomous apply command.",
+    match=["rm -f -r build", "rm --force --recursive cache"],
+)
+prefix_rule(
+    pattern=[["/bin/rm", "/usr/bin/rm"], ["-r", "-R", "-rf", "-fr", "-Rf", "-fR", "--recursive"]],
+    decision="forbidden",
+    justification="Use `harness guarded-delete plan` followed by its exact autonomous apply command.",
+    match=["/bin/rm -rf build", "/usr/bin/rm -r generated"],
+)
 prefix_rule(pattern=["/bin/bash", "-lc", "for path in sol.html fable.html terra.html opus-proposal.md; do curl -sS -o /dev/null -w \"$path %{http_code}\\n\" \"http://127.0.0.1:8000/tools/out/design-review/$path\"; done"], decision="allow")

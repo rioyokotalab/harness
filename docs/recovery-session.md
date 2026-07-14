@@ -1,6 +1,6 @@
 # T-171 current recovery session
 
-Updated: 2026-07-15 JST
+Updated: 2026-07-15T06:09+09:00
 
 This file is the authoritative cold-restart checkpoint for T-171. Read it
 before using the chronological incident record in `TODO.md`. When the two
@@ -8,8 +8,33 @@ files appear to conflict, this file describes the current state.
 
 ## Current state
 
-- The owner is actively completing `~/.ssh/config`. Do not edit, replace, or
-  validate it until the owner says the edit is finished.
+- The owner said "continue" after this recovery handoff, which was treated as
+  the readiness signal for the owner-edited `~/.ssh/config`. Static validation
+  is complete: the path is a regular owner file with mode 0600; all 11 expected
+  names parse successfully with `ssh -G`; no literal `TODO` marker remains;
+  and no `Match exec` directive is present. An independent declaration audit
+  found only 10 of the 11 expected aliases: `si` is not declared. `ssh -G si`
+  succeeds only because OpenSSH can expand an undeclared hostname, so that
+  parse result is not evidence that the alias exists. No network connection
+  was attempted and the file was not changed.
+- The owner confirmed that `si` was intentionally removed because its
+  configuration could not be recovered. The expected inventory is now 10
+  aliases, so the SSH-config recovery subtask is complete.
+- After the deletion incident, the owner requested strict reusable guardrails
+  for autonomous bulk deletion without approval prompts. The local harness now
+  has global guidance, a `guarded-bulk-delete` skill, a deterministic
+  `harness guarded-delete` plan/apply tool, Codex execpolicy rejection of raw
+  recursive `rm` forms, and a dedicated adversarial regression suite. The
+  skill validator, POSIX syntax checks, policy checks, dedicated suite, and
+  full phase-1 suite pass. ShellCheck could not run because it is unavailable
+  on the recovered node; no package was installed. The fail-closed installer
+  created the three intended Codex/shared-agent/Claude discovery links and an
+  idempotent repeat retained them. A fresh tool-free Codex process loaded the
+  global deletion rule and new skill metadata and returned `GUARD_OK` under
+  never/full-access. Final review additionally hardened partial-inventory
+  failure, race-free manifest publication, canonical manifest handling, and
+  shell-quoted apply output; the dedicated and full suites passed again. The
+  implementation and this completed checkpoint form one intended local commit.
 - The agent autonomy/configuration recovery is complete. Website T-179
   reconstructed T-11 and the superseding T-170--T-173 global/local split.
   `~/.codex/config.toml` is mode 0600 and now combines the current model
@@ -39,26 +64,19 @@ files appear to conflict, this file describes the current state.
 - The owner intentionally wrote a new `~/.bashrc`. Treat it as current owner
   configuration, not as a missing-file or backup-recovery blocker. Do not read,
   replace, or append to it as part of the SSH-config task.
-- The current task is SSH-config recovery, not home-wide reconstruction, tool
-  installation, shell-profile reconstruction, or T-170 fleet rollout. Do not
-  reopen the earlier backup-choice gate unless the owner explicitly asks to
-  resume broader home recovery.
+- The current task is local deletion-safety hardening after completing the
+  SSH-config recovery. It is not home-wide reconstruction, tool installation,
+  shell-profile reconstruction, or T-170 fleet rollout. Do not reopen the
+  earlier backup-choice gate unless the owner explicitly asks to resume broader
+  home recovery.
 - No key, passphrase, token, private authentication material, or credential
   value belongs in this checkpoint or in `TODO.md`.
 
 ## Next action
 
-After a cold restart, read this file and `~/harness/TODO.md`, confirm the
-recovered global guidance is loaded, and resume at this boundary: wait for the
-owner to say that `~/.ssh/config` is ready. Then perform static validation only:
-
-1. Check that the path is a regular owner file with mode 0600.
-2. Parse all 11 aliases with `ssh -G` and report failures without printing
-   expanded identity paths or other authentication values.
-3. Report any remaining literal `TODO` markers by alias and field name only;
-   do not print credential values or inspect keys.
-4. Do not attempt a network connection unless the owner separately requests
-   it after static validation.
+No automatic recovery action remains. Wait for the owner; do not modify owner
+hooks or product config, push, reopen broader home recovery, or resume T-170
+fleet mutation without a new request.
 
 ## Working state and boundaries
 

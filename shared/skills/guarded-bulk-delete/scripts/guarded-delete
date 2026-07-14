@@ -1,0 +1,417 @@
+#!/bin/sh
+set -eu
+
+PROGRAM=guarded-delete
+TAB=$(printf '\t')
+manifest_temp=
+target_list=
+
+usage() {
+    cat <<'EOF'
+Usage:
+  harness guarded-delete plan --within ABSOLUTE_DIR --manifest ABSOLUTE_FILE -- ABSOLUTE_DIR...
+  harness guarded-delete apply --manifest ABSOLUTE_FILE --token SHA256
+
+Plan records canonical targets, protected anchors, identities, entry counts,
+and byte counts in a mode-600 manifest. Apply accepts only that unchanged,
+fresh manifest and revalidates every fact before and after recursive deletion.
+EOF
+}
+
+die() {
+    echo "$PROGRAM: $*" >&2
+    exit 2
+}
+
+cleanup() {
+    [ -z "$manifest_temp" ] || rm -f -- "$manifest_temp"
+    [ -z "$target_list" ] || rm -f -- "$target_list"
+}
+
+trap cleanup EXIT HUP INT TERM
+
+require_command() {
+    command -v "$1" >/dev/null 2>&1 || die "required command is unavailable: $1"
+}
+
+reject_control_characters() {
+    value=$1
+    case "$value" in
+        *"$TAB"*|*'
+'*) die "paths containing tab or newline are unsupported" ;;
+    esac
+}
+
+canonical_existing_directory() {
+    value=$1
+    [ -d "$value" ] || die "directory does not exist: $value"
+    [ ! -L "$value" ] || die "symlink directories are not recursive-delete targets: $value"
+    realpath -e -- "$value"
+}
+
+path_id() {
+    stat -Lc '%d:%i' -- "$1"
+}
+
+is_same_or_descendant() {
+    candidate=$1
+    ancestor=$2
+    [ "$candidate" = "$ancestor" ] || case "$candidate" in
+        "$ancestor"/*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+is_strict_descendant() {
+    candidate=$1
+    ancestor=$2
+    [ "$candidate" != "$ancestor" ] && is_same_or_descendant "$candidate" "$ancestor"
+}
+
+tree_facts() (
+    target=$1
+    facts_file=$(mktemp "${TMPDIR:-/tmp}/guarded-delete-facts.XXXXXX") ||
+        die "cannot create tree inventory"
+    trap 'rm -f -- "$facts_file"' EXIT HUP INT TERM
+    find "$target" -xdev -printf '%s\n' >"$facts_file" ||
+        die "cannot inventory every target entry: $target"
+    awk '{ bytes += $1; entries++ } END {
+        printf "%d\t%.0f\n", entries + 0, bytes + 0
+    }' "$facts_file"
+)
+
+authoritative_home() {
+    uid=$1
+    getent passwd "$uid" | awk -F: -v uid="$uid" '
+        $3 == uid { print $6; found++ }
+        END { if (found != 1) exit 1 }
+    '
+}
+
+require_consistent_home() {
+    current_uid=$(id -u)
+    account_home=$(authoritative_home "$current_uid") ||
+        die "cannot resolve exactly one account home for uid $current_uid"
+    [ -n "${HOME:-}" ] || die "HOME is unset"
+    [ "$HOME" = "$account_home" ] ||
+        die "HOME differs from the account database; refuse environment-dependent deletion"
+    canonical_home=$(canonical_existing_directory "$account_home")
+    [ "$canonical_home" = "$account_home" ] ||
+        die "account home is not canonical: $account_home"
+    printf '%s\n' "$account_home"
+}
+
+repository_root() {
+    directory=$1
+    git -C "$directory" rev-parse --show-toplevel 2>/dev/null || printf '%s\n' -
+}
+
+reject_protected_target() {
+    target=$1
+    home=$2
+    cwd=$3
+    repo=$4
+    for protected in / "$home" "$cwd"; do
+        if is_same_or_descendant "$protected" "$target"; then
+            die "target is or contains a protected anchor: $target"
+        fi
+    done
+    if [ "$repo" != - ] && is_same_or_descendant "$repo" "$target"; then
+        die "target is or contains the repository root: $target"
+    fi
+}
+
+field_value() {
+    key=$1
+    file=$2
+    awk -F '\t' -v key="$key" '
+        $1 == key { value=$2; count++ }
+        END { if (count != 1) exit 1; print value }
+    ' "$file"
+}
+
+require_manifest_path() {
+    value=$1
+    case "$value" in
+        /*) ;;
+        *) die "manifest path must be absolute: $value" ;;
+    esac
+    reject_control_characters "$value"
+}
+
+shell_quote() {
+    printf "'"
+    printf '%s' "$1" | sed "s/'/'\\\\''/g"
+    printf "'"
+}
+
+plan() {
+    within=
+    manifest=
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            --within)
+                [ "$#" -ge 2 ] || die "--within requires a value"
+                within=$2
+                shift 2
+                ;;
+            --manifest)
+                [ "$#" -ge 2 ] || die "--manifest requires a value"
+                manifest=$2
+                shift 2
+                ;;
+            --)
+                shift
+                break
+                ;;
+            *) die "unknown plan argument: $1" ;;
+        esac
+    done
+    [ -n "$within" ] || die "plan requires --within"
+    [ -n "$manifest" ] || die "plan requires --manifest"
+    [ "$#" -gt 0 ] || die "plan requires at least one target directory"
+    case "$within" in
+        /*) ;;
+        *) die "--within must be an absolute path: $within" ;;
+    esac
+    require_manifest_path "$manifest"
+    reject_control_characters "$within"
+
+    uid=$(id -u)
+    home=$(require_consistent_home)
+    cwd=$(pwd -P)
+    repo=$(repository_root "$cwd")
+    [ "$repo" = - ] || repo=$(canonical_existing_directory "$repo")
+    root=$(canonical_existing_directory "$within")
+
+    for protected in / "$home"; do
+        if is_same_or_descendant "$protected" "$root"; then
+            die "--within is too broad and contains a protected anchor: $root"
+        fi
+    done
+
+    manifest_parent_input=${manifest%/*}
+    manifest_name=${manifest##*/}
+    [ -n "$manifest_name" ] || die "manifest path must name a file"
+    manifest_parent=$(canonical_existing_directory "$manifest_parent_input")
+    manifest=$manifest_parent/$manifest_name
+    [ ! -e "$manifest" ] && [ ! -L "$manifest" ] ||
+        die "refusing to replace an existing manifest: $manifest"
+
+    target_list=$(mktemp "${TMPDIR:-/tmp}/guarded-delete-targets.XXXXXX") ||
+        die "cannot create target inventory"
+    chmod 600 "$target_list"
+
+    for requested in "$@"; do
+        case "$requested" in
+            /*) ;;
+            *) die "target must be absolute: $requested" ;;
+        esac
+        reject_control_characters "$requested"
+        target=$(canonical_existing_directory "$requested")
+        is_strict_descendant "$target" "$root" ||
+            die "target is not a strict descendant of --within: $target"
+        reject_protected_target "$target" "$home" "$cwd" "$repo"
+        if is_same_or_descendant "$manifest" "$target"; then
+            die "manifest cannot be stored inside a deletion target: $manifest"
+        fi
+
+        while IFS="$TAB" read -r existing _rest; do
+            [ -n "$existing" ] || continue
+            if is_same_or_descendant "$target" "$existing" ||
+                is_same_or_descendant "$existing" "$target"; then
+                die "overlapping deletion targets are forbidden: $target"
+            fi
+        done <"$target_list"
+
+        parent=${target%/*}
+        facts=$(tree_facts "$target")
+        entries=${facts%%"$TAB"*}
+        bytes=${facts#*"$TAB"}
+        printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+            "$target" "$(path_id "$target")" "$parent" \
+            "$(path_id "$parent")" "$entries" "$bytes" >>"$target_list"
+    done
+
+    created=$(date +%s)
+    manifest_temp=$(mktemp "$manifest_parent/.guarded-delete-manifest.XXXXXX") ||
+        die "cannot create manifest beside destination"
+    chmod 600 "$manifest_temp"
+    {
+        printf 'schema\tguarded-delete-v1\n'
+        printf 'created_epoch\t%s\n' "$created"
+        printf 'uid\t%s\n' "$uid"
+        printf 'home\t%s\n' "$home"
+        printf 'home_id\t%s\n' "$(path_id "$home")"
+        printf 'cwd\t%s\n' "$cwd"
+        printf 'cwd_id\t%s\n' "$(path_id "$cwd")"
+        printf 'repo\t%s\n' "$repo"
+        if [ "$repo" = - ]; then
+            printf 'repo_id\t-\n'
+        else
+            printf 'repo_id\t%s\n' "$(path_id "$repo")"
+        fi
+        printf 'root\t%s\n' "$root"
+        printf 'root_id\t%s\n' "$(path_id "$root")"
+        while IFS="$TAB" read -r target target_id parent parent_id entries bytes; do
+            printf 'target\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+                "$target" "$target_id" "$parent" "$parent_id" "$entries" "$bytes"
+        done <"$target_list"
+    } >"$manifest_temp"
+    ln -- "$manifest_temp" "$manifest" ||
+        die "manifest destination appeared during plan: $manifest"
+    rm -f -- "$manifest_temp"
+    manifest_temp=
+    token=$(sha256sum "$manifest" | awk '{ print $1 }')
+
+    printf 'PLAN within=%s targets=%s\n' "$root" "$(awk -F '\t' '$1 == "target" { n++ } END { print n + 0 }' "$manifest")"
+    awk -F '\t' '$1 == "target" { printf "TARGET path=%s entries=%s bytes=%s\n", $2, $6, $7 }' "$manifest"
+    printf 'MANIFEST path=%s mode=600\n' "$manifest"
+    printf 'TOKEN sha256=%s\n' "$token"
+    printf 'NEXT harness guarded-delete apply --manifest '
+    shell_quote "$manifest"
+    printf ' --token %s\n' "$token"
+}
+
+validate_anchor() {
+    label=$1
+    path=$2
+    expected_id=$3
+    [ -d "$path" ] && [ ! -L "$path" ] || die "$label anchor changed type: $path"
+    [ "$(realpath -e -- "$path")" = "$path" ] || die "$label anchor is no longer canonical: $path"
+    [ "$(path_id "$path")" = "$expected_id" ] || die "$label anchor identity changed: $path"
+}
+
+apply_manifest() {
+    manifest=
+    supplied_token=
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            --manifest)
+                [ "$#" -ge 2 ] || die "--manifest requires a value"
+                manifest=$2
+                shift 2
+                ;;
+            --token)
+                [ "$#" -ge 2 ] || die "--token requires a value"
+                supplied_token=$2
+                shift 2
+                ;;
+            *) die "unknown apply argument: $1" ;;
+        esac
+    done
+    [ -n "$manifest" ] || die "apply requires --manifest"
+    [ -n "$supplied_token" ] || die "apply requires --token"
+    require_manifest_path "$manifest"
+    case "$supplied_token" in
+        *[!0-9a-f]*|'') die "token must be a lowercase SHA-256 value" ;;
+    esac
+    [ "${#supplied_token}" -eq 64 ] || die "token must contain 64 hexadecimal characters"
+    [ -f "$manifest" ] && [ ! -L "$manifest" ] || die "manifest must be a regular file"
+    [ "$(realpath -e -- "$manifest")" = "$manifest" ] || die "manifest path must be canonical"
+    [ "$(stat -c '%u' -- "$manifest")" = "$(id -u)" ] || die "manifest owner differs from current uid"
+    [ "$(stat -c '%a' -- "$manifest")" = 600 ] || die "manifest mode must be 600"
+    actual_token=$(sha256sum "$manifest" | awk '{ print $1 }')
+    [ "$actual_token" = "$supplied_token" ] || die "manifest token mismatch; re-plan"
+
+    schema=$(field_value schema "$manifest") || die "manifest schema field is invalid"
+    [ "$schema" = guarded-delete-v1 ] || die "unsupported manifest schema: $schema"
+    manifest_uid=$(field_value uid "$manifest") || die "manifest uid field is invalid"
+    [ "$manifest_uid" = "$(id -u)" ] || die "manifest uid differs from current uid"
+    created=$(field_value created_epoch "$manifest") || die "manifest timestamp field is invalid"
+    case "$created" in *[!0-9]*|'') die "manifest timestamp is invalid" ;; esac
+    now=$(date +%s)
+    age=$((now - created))
+    [ "$age" -ge 0 ] && [ "$age" -le 900 ] || die "manifest is stale; re-plan"
+
+    home=$(field_value home "$manifest") || die "manifest home field is invalid"
+    current_home=$(require_consistent_home)
+    [ "$home" = "$current_home" ] || die "account home changed since plan"
+    cwd=$(field_value cwd "$manifest") || die "manifest cwd field is invalid"
+    [ "$cwd" = "$(pwd -P)" ] || die "working directory changed since plan"
+    repo=$(field_value repo "$manifest") || die "manifest repository field is invalid"
+    current_repo=$(repository_root "$cwd")
+    [ "$current_repo" = - ] || current_repo=$(canonical_existing_directory "$current_repo")
+    [ "$repo" = "$current_repo" ] || die "repository root changed since plan"
+    root=$(field_value root "$manifest") || die "manifest root field is invalid"
+
+    validate_anchor home "$home" "$(field_value home_id "$manifest")"
+    validate_anchor cwd "$cwd" "$(field_value cwd_id "$manifest")"
+    if [ "$repo" != - ]; then
+        validate_anchor repository "$repo" "$(field_value repo_id "$manifest")"
+    fi
+    validate_anchor within "$root" "$(field_value root_id "$manifest")"
+    for protected in / "$home"; do
+        if is_same_or_descendant "$protected" "$root"; then
+            die "manifest --within is too broad: $root"
+        fi
+    done
+
+    target_count=$(awk -F '\t' '$1 == "target" { n++ } END { print n + 0 }' "$manifest")
+    [ "$target_count" -gt 0 ] || die "manifest contains no targets"
+    awk -F '\t' '$1 == "target" && NF != 7 { bad=1 } END { exit bad }' "$manifest" ||
+        die "manifest target record is invalid"
+
+    while IFS="$TAB" read -r kind target target_id parent parent_id entries bytes; do
+        [ "$kind" = target ] || continue
+        reject_control_characters "$target"
+        [ -d "$target" ] && [ ! -L "$target" ] || die "target changed type or disappeared: $target"
+        [ "$(realpath -e -- "$target")" = "$target" ] || die "target is no longer canonical: $target"
+        is_strict_descendant "$target" "$root" || die "target escaped --within: $target"
+        reject_protected_target "$target" "$home" "$cwd" "$repo"
+        [ "$(path_id "$target")" = "$target_id" ] || die "target identity changed: $target"
+        [ "$(path_id "$parent")" = "$parent_id" ] || die "target parent identity changed: $parent"
+        facts=$(tree_facts "$target")
+        current_entries=${facts%%"$TAB"*}
+        current_bytes=${facts#*"$TAB"}
+        [ "$current_entries" = "$entries" ] || die "target entry count changed; re-plan: $target"
+        [ "$current_bytes" = "$bytes" ] || die "target byte count changed; re-plan: $target"
+        if is_same_or_descendant "$manifest" "$target"; then
+            die "manifest is inside a deletion target: $manifest"
+        fi
+    done <"$manifest"
+
+    printf 'VALIDATED manifest=%s targets=%s age_seconds=%s\n' "$manifest" "$target_count" "$age"
+    while IFS="$TAB" read -r kind target target_id parent parent_id _entries _bytes; do
+        [ "$kind" = target ] || continue
+        [ "$(path_id "$parent")" = "$parent_id" ] || die "target parent changed before delete: $parent"
+        [ "$(path_id "$target")" = "$target_id" ] || die "target changed before delete: $target"
+        rm -rf --one-file-system -- "$target"
+        [ ! -e "$target" ] && [ ! -L "$target" ] || die "target remains after delete: $target"
+        printf 'DELETED path=%s\n' "$target"
+    done <"$manifest"
+
+    validate_anchor home "$home" "$(field_value home_id "$manifest")"
+    validate_anchor cwd "$cwd" "$(field_value cwd_id "$manifest")"
+    if [ "$repo" != - ]; then
+        validate_anchor repository "$repo" "$(field_value repo_id "$manifest")"
+    fi
+    validate_anchor within "$root" "$(field_value root_id "$manifest")"
+    printf 'VERIFIED protected_anchors=unchanged targets=absent\n'
+}
+
+for required in awk date find getent git id ln mktemp realpath rm sed sha256sum stat; do
+    require_command "$required"
+done
+rm --help 2>/dev/null | grep -- '--one-file-system' >/dev/null ||
+    die "rm lacks required --one-file-system support"
+
+action=${1:-}
+case "$action" in
+    plan)
+        shift
+        plan "$@"
+        ;;
+    apply)
+        shift
+        apply_manifest "$@"
+        ;;
+    help|-h|--help)
+        usage
+        ;;
+    '')
+        usage >&2
+        exit 2
+        ;;
+    *) die "unknown action: $action" ;;
+esac

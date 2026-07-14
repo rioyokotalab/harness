@@ -13,8 +13,8 @@ directory into a Git repository.
 - `.claude/settings.example.json`: non-secret Claude settings template.
 - `shared/skills/`: reusable workflows exposed to both clients.
 - `install.sh`: idempotent, fail-closed discovery symlink installer.
-- `bin/harness` and `libexec/`: value-free inventory, planning, and health
-  checks for the portable environment.
+- `bin/harness` and `libexec/`: value-free inventory, planning, health checks,
+  and guarded bulk deletion for the portable environment.
 - `profiles/`: selected tool policy and logical host capabilities.
 - `tests/fixtures/`: value-free environment evidence used by the shell tests.
 - `docs/`: architecture and operating notes for the portable environment.
@@ -64,6 +64,27 @@ Run the phase-1 validation suite with:
 ```bash
 tests/test-phase1.sh
 ```
+
+## Autonomous deletion safety
+
+Agents never run raw recursive or expanding deletion. They use a two-command
+workflow that does not prompt for approval:
+
+```bash
+harness guarded-delete plan --within /absolute/retained/root \
+  --manifest /absolute/retained/delete.manifest -- \
+  /absolute/retained/root/generated
+harness guarded-delete apply --manifest /absolute/retained/delete.manifest \
+  --token SHA256_FROM_PLAN
+```
+
+Planning canonicalizes a narrow retained boundary and explicit targets,
+rejects protected roots and overlapping trees, inventories entry and byte
+counts, and writes a mode-600 manifest. Apply accepts only that unchanged
+short-lived manifest, revalidates account and filesystem identities plus tree
+counts, uses one-filesystem recursive removal, and verifies both target absence
+and protected-anchor survival. Codex execpolicy separately forbids common raw
+recursive `rm` forms and directs the agent to this workflow.
 
 ## Transactional control plane
 
