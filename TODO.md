@@ -1201,6 +1201,23 @@ harness. Repository-specific tasks remain in their own project ledgers.
     and `t4` has Singularity/Apptainer. Current alone reports the two intended
     compute-only warnings. Every doctor has zero failures and every checkout is
     clean at `dc43fca`.
+  - None of the seven common Python 3.12 environments contains PyTorch; retain
+    that intentional project/site boundary. Add `tests/smoke/llm_torch.py` as a
+    bounded gate for an already-selected environment: it checks tensor/device
+    agreement, finite forward loss, finite nonzero backward gradients, a real
+    optimizer update, and, under native `torchrun`, process-group world size and
+    unique ranks without creating a checkpoint. Static compile, dependency-free
+    help, and a clear absent-PyTorch refusal are part of the phase-1 suite.
+    For independent numerical validation, the official
+    [PyTorch 2.12.1 CPU command](https://docs.pytorch.org/get-started/previous-versions/)
+    installed `torch==2.12.1+cpu` only into a disposable local uv environment.
+    Native single-process and two-process CPU runs both passed with loss
+    `2.806825`, gradient L1 `8.485694`, and parameter delta
+    `4.726678e-03`; the two-process run verified world size 2. The minimal wheel
+    emitted an optional-NumPy warning but the Torch-only numerical gates passed.
+    The temporary venv and its 183 MB cache were removed. Do not install a
+    global framework merely to run GPU validation; run the CUDA form later from
+    the first reviewed project image or lockfile environment.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

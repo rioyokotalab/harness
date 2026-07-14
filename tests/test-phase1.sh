@@ -30,6 +30,14 @@ do
     sh -n "$script" || fail "shell syntax: $script"
 done
 
+python3 -c 'import sys; compile(open(sys.argv[1], encoding="utf-8").read(), sys.argv[1], "exec")' \
+    "$ROOT/tests/smoke/llm_torch.py" ||
+    fail "LLM PyTorch smoke syntax"
+python3 "$ROOT/tests/smoke/llm_torch.py" --help \
+    >"$TEMP_DIR/llm-torch-help.out" || fail "LLM PyTorch smoke help"
+grep -- '--require-world-size' "$TEMP_DIR/llm-torch-help.out" >/dev/null ||
+    fail "LLM PyTorch smoke world-size gate"
+
 "$HARNESS" inventory --host local >"$TEMP_DIR/local.facts"
 awk -F= '
     NF != 2 { exit 1 }

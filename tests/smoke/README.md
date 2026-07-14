@@ -12,6 +12,16 @@ Python program uses only the standard library and is suitable for a fresh uv
 virtual environment. Project-specific PyTorch, CUDA, MPI, and numerical-library
 versions remain in project lockfiles or site environments.
 
+`llm_torch.py` is a bounded framework gate for an already-selected project or
+site PyTorch environment. A single process runs a tiny language-model
+forward/backward step, requires finite nonzero gradients, verifies an optimizer
+update and device placement, and emits no checkpoint. Under native `torchrun`,
+it also initializes the process group and requires unique ranks. Example native
+commands, after entering the reviewed environment, are
+`python tests/smoke/llm_torch.py --device cuda --require-world-size 1` and
+`torchrun --standalone --nproc-per-node=2 tests/smoke/llm_torch.py --device cuda
+--require-world-size 2`. The script never resolves or installs PyTorch.
+
 For the common CPU/build path, configure out of tree with the native command
 `cmake -S tests/smoke -B BUILD -G Ninja`, then run `cmake --build BUILD` and
 `ctest --test-dir BUILD --output-on-failure`. The MPI and CUDA sources are not
