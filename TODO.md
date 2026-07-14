@@ -1155,9 +1155,19 @@ harness. Repository-specific tasks remain in their own project ledgers.
     `al`, then exposed a real `rc` portability defect: its home has equivalent
     `/home/users/...` and `/hs/work0/home/users/...` mount paths, and invocation
     through the managed command used `readlink -f` to falsely block every
-    correct lexical link. Preserve a symlink's lexical target before canonical
-    fallback, cover the alias case in the full transactional suite, deploy the
-    fix, and repeat the independent seven-environment closure.
+    correct lexical link. Commit `47897e0` now preserves a symlink's lexical
+    target before canonical fallback, and a disposable aliased-checkout
+    apply/managed-plan/rollback regression passes in the full transactional
+    suite. The first `ab` update attempt ran `git bundle verify` outside its
+    checkout and stopped before fetch; its cleanup trap removed the staged file.
+    A corrected retry fast-forwarded all six clean checkouts from the complete
+    bundle with matching SHA-256
+    `60e54e96ede3026e243622c946cc45c3265ae2eac919ffc2fa5e923b1d428243`.
+    The repeated fresh seven-environment closure invoked the managed harness,
+    resolved all three skill links exactly, found zero creates, blocks, or
+    doctor failures, confirmed clean revision `47897e0`, mode-600 complete
+    transaction state on every remote, and no staged bundle. The reusable
+    native-HPC workflow is deployed and validated.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
