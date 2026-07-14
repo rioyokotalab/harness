@@ -65,6 +65,12 @@ else
     command_state=absent
 fi
 case "$command_state" in present|absent) ;; *) die "unknown command state: $command_state" ;; esac
+command_source=host-provided
+if [ -z "$fact_file" ] && [ "$command_state" = present ] && [ -L "$stable_link" ] &&
+    [ "$(readlink "$stable_link")" = "$installed_binary" ] &&
+    [ "$(command -v "$binary")" = "$stable_link" ]; then
+    command_source=managed-artifact
+fi
 
 blocked=0
 artifact_action=KEEP
@@ -96,7 +102,7 @@ fi
 
 echo "TOOL_PLAN host=$logical_host tool=$tool_name version=$version arch=$arch mode=$mode"
 if [ "$command_state" = present ]; then
-    echo "KEEP command=$binary source=host-provided"
+    echo "KEEP command=$binary source=$command_source"
 else
     case "$artifact_action" in
         INSTALL) echo "INSTALL artifact=$install_dir" ;;

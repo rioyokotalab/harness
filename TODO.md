@@ -482,6 +482,12 @@ harness. Repository-specific tasks remain in their own project ledgers.
     removed all test state. Restrict validation to the exact version prefix
     followed only by end-of-line or a space-delimited build suffix, then rerun
     the complete apply/rollback path before any remote pilot.
+  - The corrected committed apply then passed end to end in a disposable home:
+    it created a mode-755 binary and mode-600 complete transaction, reported
+    the pinned release, produced an idempotent plan, and rollback removed both
+    activation link and versioned directory. The disposable home was deleted.
+    Refine the repeated plan to label the structurally matching stable link as
+    `managed-artifact` rather than the less precise `host-provided`.
   - No remote tool has been installed yet. Next executable action: independently
     commit the implementation, transfer it to `ab2`, and perform the same
     plan/apply/rollback/reapply pilot used for the control plane and shell

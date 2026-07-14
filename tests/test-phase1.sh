@@ -107,8 +107,20 @@ fi
 test_repo=$TEMP_DIR/repo
 test_home=$TEMP_DIR/home
 mkdir -p "$test_repo" "$test_home"
+managed_rg_dir=$test_home/.local/opt/ripgrep/15.1.0/linux-x86_64
+mkdir -p "$managed_rg_dir" "$test_home/.local/bin"
+printf '%s\n' '#!/bin/sh' 'echo test-only' >"$managed_rg_dir/rg"
+chmod 755 "$managed_rg_dir/rg"
+ln -s "$managed_rg_dir/rg" "$test_home/.local/bin/rg"
+HOME="$test_home" PATH="$test_home/.local/bin:/usr/bin:/bin" \
+    "$HARNESS" tool --host local --name ripgrep --plan \
+    >"$TEMP_DIR/managed-tool-plan.out"
+grep 'KEEP command=rg source=managed-artifact' "$TEMP_DIR/managed-tool-plan.out" \
+    >/dev/null || fail "managed tool source label"
+rm "$test_home/.local/bin/rg" "$managed_rg_dir/rg"
+rmdir "$managed_rg_dir"
 cp -R "$ROOT/bin" "$ROOT/libexec" "$ROOT/profiles" "$ROOT/shared" \
-    "$ROOT/shell" "$ROOT/.codex" "$ROOT/.claude" "$test_repo/"
+    "$ROOT/shell" "$ROOT/tools" "$ROOT/.codex" "$ROOT/.claude" "$test_repo/"
 git -C "$test_repo" init -q
 git -C "$test_repo" config user.name harness-test
 git -C "$test_repo" config user.email harness-test.invalid
