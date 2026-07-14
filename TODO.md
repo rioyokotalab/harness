@@ -1081,9 +1081,16 @@ harness. Repository-specific tasks remain in their own project ledgers.
     exact-member extraction reports static binaries for both architectures.
     Presence-only fleet preflight found 3.7.1 on `rc`, older 3.4.1 on `ri`, and
     absence elsewhere. Add a security feature floor that retains 3.7.1 or
-    newer and visibly shadows older commands. Keep binary installation separate
-    from hook/filter activation: never run `git lfs install` implicitly, and
-    use explicit project-local activation only when that repository is in scope.
+    newer and visibly shadows older commands. Offline tests cover absent,
+    insecure-old, exact-current, future-newer, and both architecture plans.
+    Real disposable x86-64 transaction `20260714T151032Z-718054` passed exact
+    extraction/version, Git subcommand dispatch, local pointer generation,
+    managed planning, mode-600 state, and exact rollback; `.gitconfig` remained
+    absent and a pre-existing sentinel survived. Keep binary installation
+    separate from hook/filter activation: never run `git lfs install`
+    implicitly, and use explicit project-local activation only when that
+    repository is in scope. Next pilot rollback/reapply on AArch64 `ri`, where
+    the managed command should shadow but not remove site 3.4.1.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
