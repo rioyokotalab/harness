@@ -58,31 +58,48 @@ install_dir=$HOME/.local/opt/$tool_name/$version/$artifact_os-$artifact_arch
 installed_binary=$install_dir/$binary
 stable_link=$HOME/.local/bin/$binary
 
+managed_exact=0
+if [ -L "$stable_link" ] && [ "$(readlink "$stable_link")" = "$installed_binary" ] &&
+    [ -f "$installed_binary" ] && [ ! -L "$installed_binary" ] && [ -x "$installed_binary" ]; then
+    managed_exact=1
+fi
 if [ -n "$fact_file" ]; then
     fact_host=$(fact_get "$fact_file" logical_host)
     [ "$fact_host" = "$logical_host" ] || die "captured fact host mismatch"
     command_state=$(fact_get "$fact_file" "tool_$binary")
-elif [ -L "$stable_link" ] && [ "$(readlink "$stable_link")" = "$installed_binary" ] &&
-    [ -f "$installed_binary" ] && [ ! -L "$installed_binary" ] && [ -x "$installed_binary" ]; then
+elif [ "$managed_exact" -eq 1 ]; then
     # Non-interactive SSH commands do not consistently inherit ~/.local/bin in
     # PATH. Recognize the exact managed link without depending on shell startup.
-    command_state=present
+    observed_version=$("$installed_binary" --version 2>/dev/null | sed -n '1p' || true)
+    case "$observed_version" in
+        "$version_line"|"$version_line "*) command_state=present ;;
+        *) command_state=invalid-managed ;;
+    esac
 elif command -v "$binary" >/dev/null 2>&1; then
-    command_state=present
+    if "$binary" --version >/dev/null 2>&1; then
+        command_state=present
+    else
+        command_state=unusable
+    fi
 else
     command_state=absent
 fi
-case "$command_state" in present|absent) ;; *) die "unknown command state: $command_state" ;; esac
+case "$command_state" in present|absent|unusable|invalid-managed) ;;
+    *) die "unknown command state: $command_state" ;;
+esac
 command_source=host-provided
-if [ -z "$fact_file" ] && [ "$command_state" = present ] && [ -L "$stable_link" ] &&
-    [ "$(readlink "$stable_link")" = "$installed_binary" ]; then
+if [ -z "$fact_file" ] && [ "$command_state" = present ] && [ "$managed_exact" -eq 1 ]; then
     command_source=managed-artifact
 fi
 
 blocked=0
 artifact_action=KEEP
 link_action=KEEP
-if [ "$command_state" = present ]; then
+if [ "$command_state" = invalid-managed ]; then
+    blocked=1
+    artifact_action=BLOCK
+    link_action=BLOCK
+elif [ "$command_state" = present ]; then
     :
 elif [ -e "$install_dir" ] || [ -L "$install_dir" ]; then
     blocked=1
@@ -108,9 +125,14 @@ if [ "$command_state" != present ]; then
 fi
 
 echo "TOOL_PLAN host=$logical_host tool=$tool_name version=$version arch=$arch mode=$mode"
-if [ "$command_state" = present ]; then
+if [ "$command_state" = invalid-managed ]; then
+    echo "BLOCK command=$binary reason=managed-artifact-version-or-health-mismatch"
+elif [ "$command_state" = present ]; then
     echo "KEEP command=$binary source=$command_source"
 else
+    if [ "$command_state" = unusable ]; then
+        echo "SHADOW command=$binary reason=host-command-unusable strategy=user-path"
+    fi
     case "$artifact_action" in
         INSTALL) echo "INSTALL artifact=$install_dir" ;;
         KEEP) echo "KEEP artifact=$install_dir" ;;

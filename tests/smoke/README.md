@@ -1,0 +1,13 @@
+# Native LLM/HPC smoke sources
+
+These tiny deterministic programs let an agent validate each site's native
+compiler, build, MPI, accelerator, and Python path without cloning a project or
+hiding scheduler semantics behind a harness wrapper. Build outputs belong in a
+temporary directory. MPI and CUDA programs run only through the site's native
+allocation command; the agent must report that exact command before execution.
+
+The CPU programs perform closed-form-checked reductions. The MPI program checks
+the rank sum. The CUDA program checks a device kernel and synchronization. The
+Python program uses only the standard library and is suitable for a fresh uv
+virtual environment. Project-specific PyTorch, CUDA, MPI, and numerical-library
+versions remain in project lockfiles or site environments.

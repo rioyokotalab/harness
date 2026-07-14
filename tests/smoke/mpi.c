@@ -1,0 +1,17 @@
+#include <mpi.h>
+#include <stdio.h>
+
+int main(int argc, char **argv) {
+    int rank, size, total = 0;
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Reduce(&rank, &total, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    if (rank == 0) {
+        const int expected = size * (size - 1) / 2;
+        if (total != expected) MPI_Abort(MPI_COMM_WORLD, 1);
+        printf("mpi=pass ranks=%d\n", size);
+    }
+    MPI_Finalize();
+    return 0;
+}

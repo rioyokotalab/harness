@@ -80,6 +80,7 @@ while IFS='|' read -r tool_name command_name policy; do
     case "$state" in
         present) echo "KEEP tool=$tool_name command=$command_name policy=$policy" ;;
         absent) echo "INSTALL tool=$tool_name command=$command_name policy=$policy" ;;
+        unusable) echo "INSTALL tool=$tool_name command=$command_name policy=$policy reason=host-command-unusable" ;;
         *) echo "CHECK tool=$tool_name command=$command_name reason=unknown-state" ;;
     esac
 done <"$HARNESS_ROOT/profiles/tools.tsv"

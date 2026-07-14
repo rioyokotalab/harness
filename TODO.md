@@ -919,6 +919,32 @@ harness. Repository-specific tasks remain in their own project ledgers.
     surfaces—compiler/build/debugger, accelerator driver/toolkit, MPI,
     scheduler, modules/uenv, and containers—before selecting any portable
     additions or site-native smoke tests.
+  - Login-node LLM/HPC inventory found GCC/G++/Fortran, Make, CMake,
+    pkg-config, and GDB on all seven environments. Native CPU compiler tests
+    are therefore safe to standardize, but MPI, CUDA, scheduler, and container
+    tests must remain site-aware. `ab`, `ab2`, `t4`, and the current node expose
+    default MPI; `ri`, `al`, and `rc` require a compute image, uenv, or module.
+    `al` publicly lists GNU/OpenMPI and PyTorch uenv images, confirming that a
+    generic user MPI or global PyTorch install would conflict with site policy.
+  - `ab` and `ab2` have an unusable `/usr/local/bin/ninja` Python shim that
+    exits with `ModuleNotFoundError: ninja`; `al`, `rc`, and `t4` have no Ninja.
+    The current node and `ri` have working Ninja 1.11.1. Add official Ninja
+    1.13.2 x86-64 and AArch64 ZIP artifacts using GitHub-published SHA-256
+    digests, retain healthy host commands, and shadow only absent or failing
+    commands through `~/.local/bin`. Managed version or health mismatches must
+    block rather than be silently replaced.
+  - Added value-free compiler/build/debugger/MPI/accelerator discovery and
+    Ninja health state, plus deterministic C, C++/OpenMP, Fortran, MPI, CUDA,
+    and standard-library Python smoke sources. The complete offline phase-1
+    suite passes; direct native CPU builds and Python execution pass locally.
+    Pilot Ninja apply/rollback/reapply on `ab` before the remaining missing or
+    broken hosts.
+  - Outstanding site evidence: the current node's `nvidia-smi` wrapper targets
+    a missing `/usr/bin/nvidia-smi`; `ri` exposes four GB200 GPUs but its Slurm
+    client cannot currently resolve a controller; `t4` exposes CUDA/MPI tools
+    on the login node but no active NVIDIA driver there. Determine the intended
+    native compute-node route for each before interpreting login-node GPU or
+    scheduler results as workload readiness.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

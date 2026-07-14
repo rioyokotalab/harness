@@ -127,12 +127,19 @@ doctor, extracts only the declared archive member into
 `~/.local/opt/TOOL/VERSION/TARGET`, validates the reported version, and then
 creates the `~/.local/bin` link. Rollback first verifies the installed binary
 hash and refuses any modified artifact before removing the link and directory.
-The initial manifest covers ripgrep 15.1.0, uv 0.9.18, and rclone 1.74.3 on
-Linux x86-64 and AArch64. Tar and ZIP transactions extract only the declared
-binary member; other selected tools remain plans until their official artifacts
-and checksums are recorded and tested. Installing uv does not implicitly
-download Python or modify shell files; managed Python is a separate reviewed
-action.
+The manifest covers ripgrep 15.1.0, uv 0.9.18, rclone 1.74.3, and Ninja 1.13.2
+on Linux x86-64 and AArch64. Tar and ZIP transactions extract only the declared
+binary member. A host tool is retained only when its native `--version` health
+probe succeeds; an unusable host command can be shadowed by the verified
+user-space artifact without modifying the site path. Other selected tools
+remain plans until their official artifacts and checksums are recorded and
+tested. Installing uv does not implicitly download Python or modify shell
+files; managed Python is a separate reviewed action.
+
+Small deterministic compiler, OpenMP, MPI, CUDA, and Python sources live under
+`tests/smoke/`. They are invoked with explicit native compiler and scheduler
+commands, not a normalized HPC wrapper, so agent reports retain the site's real
+execution semantics.
 
 Checksum-pinned multi-file runtimes use a separate whole-tree transaction:
 

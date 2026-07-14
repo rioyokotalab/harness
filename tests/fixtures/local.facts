@@ -45,6 +45,7 @@ tool_docker=present
 tool_podman=present
 tool_nvcc=present
 tool_nvidia_smi=present
+tool_ninja=present
 harness_checkout=present
 link_codex_guidance=symlink
 link_codex_rules=symlink

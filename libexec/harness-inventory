@@ -96,15 +96,24 @@ generate_facts() {
     for command_name in \
         sh bash git vim tmux rg jq tree rsync curl wget htop sqlite3 \
         python3 uv node npm codex claude rclone lftp tectonic \
+        cc gcc g++ gfortran clang clang++ nvc nvc++ nvfortran \
+        make cmake ninja meson pkg-config gdb lldb cuda-gdb valgrind \
+        mpicc mpicxx mpifort mpirun mpiexec git-lfs \
         modulecmd ml uenv yrun ybatch sbatch srun squeue scancel \
-        qsub qstat qdel singularity apptainer docker podman nvcc nvidia-smi
+        sinfo scontrol qsub qstat qdel singularity apptainer docker podman \
+        nvcc nvidia-smi rocminfo rocm-smi
     do
         if command -v "$command_name" >/dev/null 2>&1; then
-            state=present
+            if [ "$command_name" = ninja ] &&
+                ! "$command_name" --version >/dev/null 2>&1; then
+                state=unusable
+            else
+                state=present
+            fi
         else
             state=absent
         fi
-        fact_name=$(printf '%s' "$command_name" | tr '-' '_')
+        fact_name=$(printf '%s' "$command_name" | sed 's/+/p/g; s/-/_/g')
         echo "tool_${fact_name}=$state"
     done
 

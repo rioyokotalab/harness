@@ -45,6 +45,7 @@ tool_docker=absent
 tool_podman=absent
 tool_nvcc=absent
 tool_nvidia_smi=present
+tool_ninja=present
 harness_checkout=absent
 link_codex_guidance=absent
 link_codex_rules=absent

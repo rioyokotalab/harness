@@ -126,6 +126,21 @@ grep 'sha256=8f8d47446e061f80c3256659fe8e21f56d72d96aaefe1275d088ea5eb6b42aa7' \
 grep 'EXTRACT format=zip member=rclone-v1.74.3-linux-arm64/rclone binary=rclone' \
     "$TEMP_DIR/rclone-arm-plan.out" >/dev/null || fail "rclone AArch64 extraction plan"
 
+broken_bin=$TEMP_DIR/broken-bin
+broken_home=$TEMP_DIR/broken-home
+mkdir -p "$broken_bin" "$broken_home"
+printf '%s\n' '#!/bin/sh' 'exit 1' >"$broken_bin/ninja"
+chmod 755 "$broken_bin/ninja"
+HOME="$broken_home" PATH="$broken_bin:/usr/bin:/bin" \
+    "$HARNESS" tool --host local --name ninja --plan \
+    >"$TEMP_DIR/ninja-unusable-plan.out"
+grep 'SHADOW command=ninja reason=host-command-unusable strategy=user-path' \
+    "$TEMP_DIR/ninja-unusable-plan.out" >/dev/null || fail "unusable host Ninja plan"
+grep 'INSTALL artifact=.*ninja/1.13.2/linux-x86_64' \
+    "$TEMP_DIR/ninja-unusable-plan.out" >/dev/null || fail "Ninja artifact plan"
+grep 'sha256=5749cbc4e668273514150a80e387a957f933c6ed3f5f11e03fb30955e2bbead6' \
+    "$TEMP_DIR/ninja-unusable-plan.out" >/dev/null || fail "Ninja x86-64 checksum plan"
+
 mkdir -p "$TEMP_DIR/runtime-plan-home"
 HOME="$TEMP_DIR/runtime-plan-home" "$HARNESS" runtime --host al --name node \
     --facts "$ROOT/tests/fixtures/al.facts" --plan >"$TEMP_DIR/node-arm-plan.out"
@@ -149,7 +164,7 @@ test_home=$TEMP_DIR/home
 mkdir -p "$test_repo" "$test_home"
 managed_rg_dir=$test_home/.local/opt/ripgrep/15.1.0/linux-x86_64
 mkdir -p "$managed_rg_dir" "$test_home/.local/bin"
-printf '%s\n' '#!/bin/sh' 'echo test-only' >"$managed_rg_dir/rg"
+printf '%s\n' '#!/bin/sh' 'echo "ripgrep 15.1.0"' >"$managed_rg_dir/rg"
 chmod 755 "$managed_rg_dir/rg"
 ln -s "$managed_rg_dir/rg" "$test_home/.local/bin/rg"
 HOME="$test_home" PATH="/usr/bin:/bin" \
@@ -159,6 +174,20 @@ grep 'KEEP command=rg source=managed-artifact' "$TEMP_DIR/managed-tool-plan.out"
     >/dev/null || fail "managed tool discovery outside PATH"
 rm "$test_home/.local/bin/rg" "$managed_rg_dir/rg"
 rmdir "$managed_rg_dir"
+managed_ninja_dir=$test_home/.local/opt/ninja/1.13.2/linux-x86_64
+mkdir -p "$managed_ninja_dir"
+printf '%s\n' '#!/bin/sh' 'echo 0.0' >"$managed_ninja_dir/ninja"
+chmod 755 "$managed_ninja_dir/ninja"
+ln -s "$managed_ninja_dir/ninja" "$test_home/.local/bin/ninja"
+if HOME="$test_home" PATH="/usr/bin:/bin" \
+    "$HARNESS" tool --host local --name ninja --plan \
+    >"$TEMP_DIR/invalid-managed-ninja.out" 2>&1; then
+    fail "tool plan accepted an invalid managed Ninja"
+fi
+grep 'BLOCK command=ninja reason=managed-artifact-version-or-health-mismatch' \
+    "$TEMP_DIR/invalid-managed-ninja.out" >/dev/null || fail "invalid managed Ninja evidence"
+rm "$test_home/.local/bin/ninja" "$managed_ninja_dir/ninja"
+rmdir "$managed_ninja_dir"
 cp -R "$ROOT/bin" "$ROOT/libexec" "$ROOT/profiles" "$ROOT/shared" \
     "$ROOT/shell" "$ROOT/tools" "$ROOT/.codex" "$ROOT/.claude" "$test_repo/"
 zip_fixture_dir=$TEMP_DIR/zip-fixture

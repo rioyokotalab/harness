@@ -92,6 +92,7 @@ The selected initial tool scope is:
 
 - core interfaces: Git, Vim, tmux, ripgrep, jq, tree, rsync, curl/wget, htop,
   and SQLite;
+- development build floor: host compiler/CMake plus system-or-pinned Ninja;
 - Python: `uv` and managed Python 3.12;
 - agents and JavaScript: Node 24/npm, Codex CLI, and Claude Code;
 - documents and transfer: rclone, lftp, and Tectonic.
@@ -309,6 +310,8 @@ Validate, per host:
   <https://docs.astral.sh/uv/guides/install-python/>
 - rclone 1.74.3 release artifacts and publisher checksums:
   <https://downloads.rclone.org/v1.74.3/>
+- Ninja 1.13.2 release artifacts and GitHub-published asset digests:
+  <https://github.com/ninja-build/ninja/releases/tag/v1.13.2>
 - Node 24.16.0 release artifacts and signed checksums:
   <https://nodejs.org/download/release/v24.16.0/>
 - Environment Modules model and shell support:
