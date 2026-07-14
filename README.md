@@ -169,6 +169,13 @@ single-quoted generated fixtures, dynamic sibling sourcing, and trap-invoked
 helpers remain visible during exploratory lint without obscuring actionable
 failures.
 
+The website deployment dependency is intentionally narrower than the portable
+fleet: `lftp` is selected only for the Ubuntu 24.04 x86-64 `local` profile.
+Its user-space transaction extracts only `./usr/bin/lftp` from Ubuntu Noble's
+checksum-pinned `4.9.2-2ubuntu1.1` package and relies on the declared Noble
+runtime library floor. Other hosts neither warn for nor install this distro-
+specific package.
+
 Agent binaries are separate from live client state. Installing Claude does not
 read, create, or synchronize authentication, settings, sessions, history, or
 project transcripts.

@@ -74,8 +74,9 @@ for startup in bashrc bash_profile bash_login profile bash_logout; do
     echo "INSPECT startup_file name=.$startup state=$state contents=not-read"
 done
 
-while IFS='|' read -r tool_name command_name policy; do
+while IFS='|' read -r tool_name command_name policy host_scope; do
     case "$tool_name" in ''|'#'*) continue ;; esac
+    case "$host_scope" in ''|all|"$logical_host") ;; *) continue ;; esac
     fact_command=$(fact_key_for_command "$command_name")
     state=$(fact_get "$fact_file" "tool_$fact_command")
     version_mismatch=0

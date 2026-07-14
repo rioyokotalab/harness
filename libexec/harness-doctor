@@ -89,8 +89,9 @@ for item in codex_guidance codex_rules claude_guidance; do
     esac
 done
 
-while IFS='|' read -r tool_name command_name policy; do
+while IFS='|' read -r tool_name command_name policy host_scope; do
     case "$tool_name" in ''|'#'*) continue ;; esac
+    case "$host_scope" in ''|all|"$logical_host") ;; *) continue ;; esac
     fact_command=$(fact_key_for_command "$command_name")
     state=$(fact_get "$fact_file" "tool_$fact_command")
     if [ "$state" = present ]; then

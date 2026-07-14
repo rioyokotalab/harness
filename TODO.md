@@ -262,12 +262,17 @@ live instructions.
   POSIX/Bash syntax, two dedicated runs, two full phase-1 runs, diff checks, and
   post-run searches for leftover roots/state all pass. The only recursive-rm
   strings left under `tests/` are inert exec-policy denial fixtures.
-- **T-175 — Restore or deliberately retire lftp through a reproducible path:**
-  the local profile selects lftp 4.9.3 and the website deployment-policy test
-  requires it, but `harness tool --name lftp --plan` fails closed because no
-  supported checksum-pinned artifact exists. Add a verified user-space source
-  transaction or record an intentional dependency replacement; do not install
-  an unpinned package merely to clear the warning.
+- **T-175 — Restore or deliberately retire lftp through a reproducible path
+  (implementation in progress):** the website deployment-policy test requires
+  lftp, but no portable upstream binary exists. Official project evidence says
+  4.9.3 is the latest source release; replacing lftp with rclone would require
+  re-expressing owner SSH routing and could attempt remote shell commands on the
+  SFTP-only target. Ubuntu Noble repository metadata instead provides the
+  local-compatible `4.9.2-2ubuntu1.1` package with SHA-256 `60140f…0b72`.
+  Independent download/hash, exact package layout, version, license, and linked
+  runtime-library checks pass. Implement one local-only exact-binary package
+  transaction and remove lftp from all remote host scopes; isolated transaction
+  and website policy gates remain pending.
 - **T-176 — Eliminate internal raw recursive deletion from harness
   transactions (complete 2026-07-15):** the T-174 whole-repository scan found direct recursive
   removal in rollback plus shell, tool, runtime, agent, Python, and source-build
