@@ -353,6 +353,38 @@ harness. Repository-specific tasks remain in their own project ledgers.
     rollout until its `uenv`/agent startup defects are remediated, and keep
     `ai4s` blocked pending reliable read-only connectivity.
 
+  Eligible-fleet shell rollout checkpoint (2026-07-14):
+
+  - Fast-forwarded the clean `ab`, `rc`, and `t4` checkouts from `95075c4` to
+    `f124e36` with a checksum-verified native Git bundle. Each pre-apply plan
+    contained only the two reviewed 144-byte appends. Their checkouts remain
+    clean and their host doctors had zero failures before mutation.
+  - Applied and validated shell transactions `ab`
+    `20260714T120521Z-27821`, `rc` `20260714T120542Z-1676365`, and `t4`
+    `20260714T120606Z-3929502`. Every original owner and mode was preserved,
+    every file grew by exactly 144 bytes, every startup file has exactly one
+    managed suffix, and every transaction manifest/status is mode 600 and
+    complete.
+  - Repeated plans return two `KEEP` results on all three hosts. Native
+    `ssh -x HOST true` is silent, and real `ssh -x -tt` login shells on all
+    three report the common Vim/cat/history settings with the interactive
+    guard loaded once.
+  - The first `ab` transfer staged the bundle under `/tmp`. `scp` succeeded,
+    but a new SSH connection reached a different login node and could not see
+    that node-local path; Git stopped before changing the checkout. Retrying
+    through a checksum-verified shared-home staging file succeeded, and that
+    file was removed after the fast-forward. Future load-balanced cluster
+    transfers must not assume `/tmp` is shared between connections.
+  - `al` remains intentionally excluded from shell apply until its
+    non-interactive `uenv start` and agent-logout defects are fixed and tested.
+    `ai4s` remains connectivity-blocked, and the current node remains blocked
+    on rotation/removal of plaintext credentials from `.bashrc`; neither was
+    mutated in this checkpoint.
+  - Next executable action: design a suffix-verified, content-minimizing
+    transaction for the two evidence-backed `al` startup defects, dry-run it,
+    and validate non-interactive and real interactive behavior before applying
+    the common shell suffix there.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 
