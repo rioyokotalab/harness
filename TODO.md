@@ -43,9 +43,22 @@ harness. Repository-specific tasks remain in their own project ledgers.
   - `web` is confirmed to be an intentional SFTP-only service; rejecting shell
     commands is correct and it is excluded from environment mirroring.
 
-  Next step: inventory the seven reachable cluster shells and design the
-  declarative synchronization plan; include the two `al` shell-startup warnings
-  as cluster-local differences to resolve or preserve deliberately.
+  Required shell-startup remediation before synchronization:
+
+  - On `al`, make `.bashrc` invoke `uenv start` only in an appropriate
+    interactive shell; preserve intended interactive behavior and use the
+    supported non-interactive `uenv run` path where needed.
+  - On `al`, make `.bash_logout` safe when `SSH_AGENT_PID` is unset. Do not
+    terminate a forwarded, shared, or externally managed agent, and preserve
+    intentional cleanup for agents actually owned by that shell.
+  - Audit non-interactive startup and logout on every reachable cluster for
+    analogous stderr, unset-variable, agent-lifecycle, or exit-status defects;
+    fix each evidence-backed issue and independently recheck both `ssh HOST
+    true` and a normal interactive login.
+
+  Next step: inventory the seven reachable cluster shells, resolve the startup
+  defects above, and design the declarative synchronization plan from the
+  validated results.
 
 ## Planned
 
