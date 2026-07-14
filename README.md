@@ -65,6 +65,26 @@ Run the phase-1 validation suite with:
 tests/test-phase1.sh
 ```
 
+## Transactional control plane
+
+After reviewing the read-only host plan, preview the exact managed links with:
+
+```bash
+harness apply --host HOST --plan
+```
+
+`--apply` requires a clean committed harness checkout and a passing host doctor.
+It refuses every unmanaged collision before mutation, records each created link
+under `~/.local/state/harness/transactions/`, and rolls back partial work if an
+apply command fails. To reverse one completed transaction:
+
+```bash
+harness rollback TRANSACTION_ID
+```
+
+Rollback removes only links that still point to the source recorded in the
+mode-600 manifest. It stops rather than remove a path changed after apply.
+
 ## Deliberately excluded
 
 The live `~/.codex/config.toml`, `~/.claude/settings.json`,

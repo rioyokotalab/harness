@@ -1,0 +1,38 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH= cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() {
+    echo "Usage: harness rollback TRANSACTION_ID" >&2
+}
+
+[ "$#" -eq 1 ] || { usage; exit 2; }
+transaction_id=$1
+require_safe_id "$transaction_id"
+manifest=$HOME/.local/state/harness/transactions/$transaction_id.manifest
+[ -f "$manifest" ] || die "unknown transaction: $transaction_id"
+
+failures=0
+awk -F'|' '$1 == "link" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+    "$manifest" | while IFS='|' read -r record destination source; do
+        [ "$record" = link ] || continue
+        case "$destination" in "$HOME"/*) ;; *) die "unsafe transaction path" ;; esac
+        if [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ]; then
+            echo "REMOVE link=$destination"
+            rm "$destination"
+        elif [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
+            echo "KEEP link=$destination state=already-absent"
+        else
+            echo "BLOCK link=$destination reason=changed-after-apply" >&2
+            exit 1
+        fi
+    done || failures=1
+
+[ "$failures" -eq 0 ] || die "rollback stopped on a changed path"
+echo rolled-back >"$manifest.status"
+chmod 600 "$manifest.status"
+echo "TRANSACTION id=$transaction_id status=rolled-back"

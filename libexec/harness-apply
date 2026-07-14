@@ -1,0 +1,116 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH= cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() {
+    echo "Usage: harness apply --host LOGICAL_ID [--plan|--apply]" >&2
+}
+
+logical_host=
+mode=plan
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+[ -n "$logical_host" ] || { usage; exit 2; }
+profile_for "$logical_host" >/dev/null
+
+if [ "$mode" = apply ]; then
+    [ -d "$HARNESS_ROOT/.git" ] || die "apply requires a Git harness checkout"
+    [ -z "$(git -C "$HARNESS_ROOT" status --porcelain)" ] ||
+        die "apply requires a clean committed harness checkout"
+    "$HARNESS_ROOT/libexec/harness-doctor" --host "$logical_host" >/dev/null ||
+        die "host doctor failed before apply"
+fi
+
+blocked=0
+echo "CONTROL_PLANE host=$logical_host mode=$mode"
+managed_links | while IFS='|' read -r source destination; do
+    if [ -L "$destination" ]; then
+        current=$(readlink "$destination")
+        if [ "$current" = "$source" ]; then
+            echo "KEEP link=$destination"
+        else
+            echo "BLOCK link=$destination reason=different-symlink"
+        fi
+    elif [ -e "$destination" ]; then
+        echo "BLOCK link=$destination reason=existing-path"
+    else
+        echo "CREATE link=$destination source=$source"
+    fi
+done
+
+# Repeat the preflight outside a pipeline so a block can stop all mutation.
+while IFS='|' read -r source destination; do
+    if [ -L "$destination" ]; then
+        [ "$(readlink "$destination")" = "$source" ] || blocked=1
+    elif [ -e "$destination" ]; then
+        blocked=1
+    fi
+done <<EOF
+$(managed_links)
+EOF
+[ "$blocked" -eq 0 ] || die "control-plane plan contains blocked paths"
+
+if [ "$mode" = plan ]; then
+    echo "END control_plane host=$logical_host changes=not-applied"
+    exit 0
+fi
+
+state_root=$HOME/.local/state/harness/transactions
+mkdir -p "$state_root"
+chmod 700 "$HOME/.local/state/harness" "$state_root"
+transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+manifest=$state_root/$transaction_id.manifest
+: >"$manifest"
+chmod 600 "$manifest"
+printf 'schema=1\nhost=%s\nrevision=%s\n' "$logical_host" \
+    "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" >>"$manifest"
+
+rollback_partial() {
+    awk -F'|' '$1 == "link" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+        "$manifest" | while IFS='|' read -r record destination source; do
+            [ "$record" = link ] || continue
+            if [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ]; then
+                rm "$destination"
+            fi
+        done
+}
+complete=0
+cleanup() {
+    status=$?
+    if [ "$complete" -eq 0 ]; then
+        rollback_partial
+        echo failed >"$manifest.status"
+        chmod 600 "$manifest.status"
+    fi
+    exit "$status"
+}
+trap cleanup EXIT HUP INT TERM
+
+while IFS='|' read -r source destination; do
+    if [ -L "$destination" ]; then
+        continue
+    fi
+    mkdir -p "${destination%/*}"
+    ln -s "$source" "$destination"
+    printf 'link|%s|%s\n' "$destination" "$source" >>"$manifest"
+done <<EOF
+$(managed_links)
+EOF
+
+echo complete >"$manifest.status"
+chmod 600 "$manifest.status"
+complete=1
+trap - EXIT HUP INT TERM
+echo "TRANSACTION id=$transaction_id status=complete"
+echo "END control_plane host=$logical_host changes=applied"

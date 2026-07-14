@@ -218,6 +218,26 @@ harness. Repository-specific tasks remain in their own project ledgers.
     tests/fixtures/HOST.facts`. Await review before implementing apply/rollback
     or changing any remote file.
 
+  Transaction implementation checkpoint (2026-07-14):
+
+  - The user approved the reviewed delta. Implemented `harness apply --host
+    HOST --plan|--apply` and `harness rollback TRANSACTION_ID` for the managed
+    control-plane links. Apply requires a clean committed checkout, passing
+    doctor, and collision-free preflight before mutation.
+  - Transactions record only created links, host, and harness revision in
+    mode-600 manifests under `~/.local/state/harness/transactions/`. Apply
+    automatically removes partial links after failure. Rollback removes only a
+    link that still matches its recorded source and refuses changed paths.
+  - The isolated test performs real plan/apply/rollback operations from a clean
+    temporary Git repository. It also replaces a managed link deliberately and
+    verifies rollback preserves the foreign target and fails safely before a
+    successful retry.
+  - Next executable action: commit this transaction implementation, transfer
+    the committed harness revision to `ab2` with a native Git bundle over SSH,
+    show the native remote plan, apply, validate, deliberately roll back once,
+    and reapply. This pilot changes control-plane links only; it does not yet
+    edit shell startup files or install selected tools.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 

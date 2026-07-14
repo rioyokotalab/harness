@@ -16,7 +16,9 @@ for script in \
     "$ROOT/libexec/harness-common" \
     "$ROOT/libexec/harness-inventory" \
     "$ROOT/libexec/harness-plan" \
-    "$ROOT/libexec/harness-doctor"
+    "$ROOT/libexec/harness-doctor" \
+    "$ROOT/libexec/harness-apply" \
+    "$ROOT/libexec/harness-rollback"
 do
     sh -n "$script" || fail "shell syntax: $script"
 done
@@ -85,5 +87,44 @@ grep 'FAIL arch expected=x86_64 observed=aarch64' \
 if "$HARNESS" doctor --host excluded-host >"$TEMP_DIR/excluded.out" 2>&1; then
     fail "doctor accepted an unknown host"
 fi
+
+# Exercise a real apply/rollback against an isolated clean Git checkout.
+test_repo=$TEMP_DIR/repo
+test_home=$TEMP_DIR/home
+mkdir -p "$test_repo" "$test_home"
+cp -R "$ROOT/bin" "$ROOT/libexec" "$ROOT/profiles" "$ROOT/shared" \
+    "$ROOT/.codex" "$ROOT/.claude" "$test_repo/"
+git -C "$test_repo" init -q
+git -C "$test_repo" config user.name harness-test
+git -C "$test_repo" config user.email harness-test.invalid
+git -C "$test_repo" add .
+git -C "$test_repo" commit -qm baseline
+HOME="$test_home" "$test_repo/bin/harness" apply --host local --plan \
+    >"$TEMP_DIR/control-plan.out"
+grep 'changes=not-applied' "$TEMP_DIR/control-plan.out" >/dev/null ||
+    fail "control-plane dry run"
+HOME="$test_home" "$test_repo/bin/harness" apply --host local --apply \
+    >"$TEMP_DIR/control-apply.out"
+transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/control-apply.out")
+[ -n "$transaction" ] || fail "missing apply transaction"
+[ -L "$test_home/.local/bin/harness" ] || fail "missing applied command link"
+[ -L "$test_home/.codex/AGENTS.md" ] || fail "missing applied guidance link"
+rm "$test_home/.local/bin/harness"
+ln -s "$TEMP_DIR/foreign" "$test_home/.local/bin/harness"
+if HOME="$test_home" "$test_repo/bin/harness" rollback "$transaction" \
+    >"$TEMP_DIR/refused-rollback.out" 2>&1; then
+    fail "rollback removed a changed link"
+fi
+[ "$(readlink "$test_home/.local/bin/harness")" = "$TEMP_DIR/foreign" ] ||
+    fail "rollback did not preserve a changed link"
+rm "$test_home/.local/bin/harness"
+ln -s "$test_repo/bin/harness" "$test_home/.local/bin/harness"
+HOME="$test_home" "$test_repo/bin/harness" rollback "$transaction" \
+    >"$TEMP_DIR/control-rollback.out"
+[ ! -L "$test_home/.local/bin/harness" ] || fail "rollback left command link"
+[ ! -L "$test_home/.codex/AGENTS.md" ] || fail "rollback left guidance link"
+grep 'status=rolled-back' "$TEMP_DIR/control-rollback.out" >/dev/null ||
+    fail "rollback transaction status"
 
 echo "phase-1 harness tests passed"

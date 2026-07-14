@@ -74,3 +74,18 @@ csv_commands() {
     [ "$csv" = none ] && return
     printf '%s\n' "$csv" | tr ',' '\n'
 }
+
+managed_links() {
+    printf '%s|%s\n' "$HARNESS_ROOT/bin/harness" "$HOME/.local/bin/harness"
+    printf '%s|%s\n' "$HARNESS_ROOT/.codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
+    printf '%s|%s\n' "$HARNESS_ROOT/.codex/rules/default.rules" \
+        "$HOME/.codex/rules/default.rules"
+    printf '%s|%s\n' "$HARNESS_ROOT/.claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+    for skill_path in "$HARNESS_ROOT"/shared/skills/*; do
+        [ -f "$skill_path/SKILL.md" ] || continue
+        name=${skill_path##*/}
+        printf '%s|%s\n' "$skill_path" "$HOME/.codex/skills/$name"
+        printf '%s|%s\n' "$skill_path" "$HOME/.agents/skills/$name"
+        printf '%s|%s\n' "$skill_path" "$HOME/.claude/skills/$name"
+    done
+}
