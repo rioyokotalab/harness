@@ -1243,7 +1243,17 @@ harness. Repository-specific tasks remain in their own project ledgers.
     preflight now requires both. The complete suite passes. `t4` has every
     prerequisite, no command or managed-path collision, and its exact dry run
     selects the intended x86-64 tree. Commit, deploy, then pilot
-    apply/rollback/reapply only on `t4`.
+    apply/rollback/reapply only on `t4`. Commit `97551e1` added the transaction;
+    `t4` fast-forwarded from the complete bundle with matching SHA-256
+    `e1a2bf5e11a7d84c36ed7c046d829f812dd5da9ac287131ba83b31bce1c9183d`.
+    First transaction `20260714T160609Z-2502708` passed exact version, ASCII
+    output, one-file ownership, managed idempotence, mode-600 state, clean Git,
+    and reduced doctor warnings from 3 to 2. Deliberate rollback removed only
+    its link and artifact, restored the absent plan and 3 warnings, and marked
+    that transaction rolled back. Final transaction
+    `20260714T160708Z-2532576` repeated all gates from a normal login and is the
+    retained Tree 2.3.2 installation. Synchronize the validated revision and
+    evidence to the other five remotes; they retain their healthy site Tree.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
