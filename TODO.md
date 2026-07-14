@@ -962,6 +962,23 @@ harness. Repository-specific tasks remain in their own project ledgers.
     on the login node but no active NVIDIA driver there. Determine the intended
     native compute-node route for each before interpreting login-node GPU or
     scheduler results as workload readiness.
+  - The identical out-of-tree CMake/Ninja/CTest sequence now passes C,
+    C++/OpenMP, and Fortran on all seven environments; standard-library Python
+    also passes everywhere. Compiler observations are GCC 11.5 on `ab`, `ab2`,
+    `rc`, and `t4`; 13.3 on the current node and `ri`; and 7.5 on `al`. These
+    are validated site baselines, not interchangeable ABI requirements.
+  - A true login-context scheduler probe corrected the earlier non-login
+    inventory: `ab` and `ab2` expose PBS Pro 2022.1.6 plus `nodestatus`; `t4`
+    exposes AGE `qsub`/`qstat`/`qrsh`; `ri`, `al`, and `rc` have reachable Slurm
+    controllers. Update the `ab`/`ab2` profiles from `none-observed` to PBS Pro
+    and the `t4` profile from generic PBS to AGE. Preserve context-dependent
+    absence in the original fixtures rather than pretending the commands are
+    available before site login initialization.
+  - Do not submit ABCI or TSUBAME compute smoke jobs until the owner selects the
+    billing group: both sites require an explicit group and resource request,
+    and even a one-minute validation can consume project points. Continue with
+    non-chargeable readiness checks and site-native Slurm tests where the
+    account has an unambiguous default allocation.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

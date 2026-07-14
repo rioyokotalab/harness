@@ -100,7 +100,8 @@ generate_facts() {
         make cmake ninja meson pkg-config gdb lldb cuda-gdb valgrind \
         mpicc mpicxx mpifort mpirun mpiexec git-lfs \
         modulecmd ml uenv yrun ybatch sbatch srun squeue scancel \
-        sinfo scontrol qsub qstat qdel singularity apptainer docker podman \
+        sinfo scontrol qsub qstat qdel qrsh nodestatus \
+        singularity apptainer docker podman \
         nvcc nvidia-smi rocminfo rocm-smi
     do
         if command -v "$command_name" >/dev/null 2>&1; then
