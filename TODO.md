@@ -4,7 +4,7 @@ This board is the authoritative current state for the portable Codex and Claude
 harness. Git preserves superseded chronology and command-level evidence. Keep
 live tasks, verified recovery facts, blockers, and next actions here; do not
 rebuild a second incident transcript in a session or report file. Next free id:
-T-176.
+T-177.
 
 ## Recovery priority — do before any other task
 
@@ -218,14 +218,31 @@ live instructions.
   version, primary artifact provenance, architecture coverage, and checksums;
   add isolated plan/apply/tamper/idempotence/rollback tests; do not infer or
   claim recovery of the lost bytes.
-- **T-174 — Remove raw recursive cleanup from harness tests:**
-  `tests/test-phase1.sh` and `tests/test-guarded-delete.sh` still own temporary
-  trees with raw recursive cleanup. Replace that implicit exception with a
+- **T-174 — Remove raw recursive cleanup from harness tests (complete
+  2026-07-15):**
+  `tests/test-phase1.sh` and the native Slurm smoke owned temporary trees with
+  raw recursive cleanup, while the guarded-delete regression suite silently
+  tolerated cleanup failure. Replace those implicit exceptions with a shared,
   deterministic bounded cleanup path and adversarially prove it cannot expand
   to the account home before running the full suite again.
+  Added one shared cleanup helper that accepts four explicit absolute paths,
+  delegates every tree removal to a fresh guarded-delete manifest/token, removes
+  its two fixed state files individually, propagates cleanup failure, and
+  preserves signal exit status. The phase-1 suite, guarded-delete suite, and
+  native Slurm smoke now use it. Home-target and raw-command adversarial tests,
+  POSIX/Bash syntax, two dedicated runs, two full phase-1 runs, diff checks, and
+  post-run searches for leftover roots/state all pass. The only recursive-rm
+  strings left under `tests/` are inert exec-policy denial fixtures.
 - **T-175 — Restore or deliberately retire lftp through a reproducible path:**
   the local profile selects lftp 4.9.3 and the website deployment-policy test
   requires it, but `harness tool --name lftp --plan` fails closed because no
   supported checksum-pinned artifact exists. Add a verified user-space source
   transaction or record an intentional dependency replacement; do not install
   an unpinned package merely to clear the warning.
+- **T-176 — Eliminate internal raw recursive deletion from harness
+  transactions:** the T-174 whole-repository scan found direct recursive
+  removal in rollback plus shell, tool, runtime, agent, Python, and source-build
+  staging cleanup. Move every bulk path through one manifest-bound primitive or
+  an equally strict in-process equivalent, retain exact rollback semantics, and
+  add fault/race tests; command-level exec policy alone cannot protect deletion
+  launched inside an otherwise allowed harness command.

@@ -5,7 +5,7 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
 RULES=$ROOT/.codex/rules/default.rules
 TEST_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/guarded-delete-test.XXXXXX")
-CLEANUP_MANIFEST=${TMPDIR:-/tmp}/guarded-delete-cleanup.$$.manifest
+CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 
 fail() {
     echo "FAIL: $*" >&2
@@ -29,24 +29,32 @@ expect_failure() {
 
 cleanup() {
     status=$?
+    trap - EXIT HUP INT TERM
+    cleanup_failed=0
     if [ -d "$TEST_ROOT" ]; then
-        plan_output=${TMPDIR:-/tmp}/guarded-delete-cleanup.$$.out
-        if (cd "$ROOT" && "$HARNESS" guarded-delete plan \
-            --within "${TMPDIR:-/tmp}" --manifest "$CLEANUP_MANIFEST" -- \
-            "$TEST_ROOT") >"$plan_output" 2>/dev/null; then
-            token=$(token_from "$plan_output")
-            (cd "$ROOT" && "$HARNESS" guarded-delete apply \
-                --manifest "$CLEANUP_MANIFEST" --token "$token") >/dev/null 2>&1 || true
-        fi
-        rm -f -- "$plan_output" "$CLEANUP_MANIFEST"
+        "$CLEANUP" "$HARNESS" "${TMPDIR:-/tmp}" "$TEST_ROOT" \
+            "${TMPDIR:-/tmp}" >/dev/null || cleanup_failed=1
+    fi
+    if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
+        echo "FAIL: guarded-delete suite cleanup" >&2
+        status=1
     fi
     exit "$status"
 }
 
-trap cleanup EXIT HUP INT TERM
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 sh -n "$ROOT/shared/skills/guarded-bulk-delete/scripts/guarded-delete" ||
     fail "guarded-delete shell syntax"
+sh -n "$CLEANUP" || fail "guarded test cleanup shell syntax"
+
+expect_failure '--within is too broad and contains a protected anchor' \
+    "$TEST_ROOT/cleanup-home.out" "$CLEANUP" "$HARNESS" /home "$HOME" \
+    "${TMPDIR:-/tmp}"
+[ -d "$HOME" ] || fail "adversarial cleanup removed the account home"
 
 for command in \
     'rm -rf /home/rioyokota' \

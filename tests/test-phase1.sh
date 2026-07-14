@@ -4,7 +4,27 @@ set -eu
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
 TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/harness-test.XXXXXX")
-trap 'rm -rf "$TEMP_DIR"' EXIT HUP INT TERM
+CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
+
+cleanup() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    cleanup_failed=0
+    if [ -d "$TEMP_DIR" ]; then
+        "$CLEANUP" "$HARNESS" "${TMPDIR:-/tmp}" "$TEMP_DIR" \
+            "${TMPDIR:-/tmp}" >/dev/null || cleanup_failed=1
+    fi
+    if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
+        echo "FAIL: guarded phase-1 cleanup" >&2
+        status=1
+    fi
+    exit "$status"
+}
+
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 fail() {
     echo "FAIL: $*" >&2
@@ -26,6 +46,7 @@ for script in \
     "$ROOT/libexec/harness-agent" \
     "$ROOT/libexec/harness-build-tool" \
     "$ROOT/shared/skills/guarded-bulk-delete/scripts/guarded-delete" \
+    "$ROOT/tests/guarded-test-cleanup.sh" \
     "$ROOT/libexec/harness-rollback"
 do
     sh -n "$script" || fail "shell syntax: $script"
