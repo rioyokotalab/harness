@@ -173,10 +173,11 @@ echo "NATIVE tar -xzf STAGING -C STAGING --strip-components=1"
 tar -xzf "$archive" -C "$stage" --strip-components=1
 [ -f "$stage/bin/node" ] && [ ! -L "$stage/bin/node" ] && [ -x "$stage/bin/node" ] ||
     die "runtime archive missing executable node"
+stage_real=$(readlink -f "$stage")
 for command_name in npm npx corepack; do
     [ -L "$stage/bin/$command_name" ] || die "runtime archive missing link: $command_name"
     resolved=$(readlink -f "$stage/bin/$command_name")
-    case "$resolved" in "$stage"/*) ;; *) die "runtime link escapes staged tree: $command_name" ;; esac
+    case "$resolved" in "$stage_real"/*) ;; *) die "runtime link escapes staged tree: $command_name" ;; esac
 done
 [ "$(find "$stage" -type l | wc -l | tr -d ' ')" -eq 3 ] || die "runtime archive has unexpected links"
 [ "$("$stage/bin/node" --version)" = "$node_version" ] || die "Node version verification failed"

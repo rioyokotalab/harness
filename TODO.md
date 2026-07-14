@@ -814,6 +814,19 @@ harness. Repository-specific tasks remain in their own project ledgers.
     five cluster checkouts, retain any complete host-provided Node/npm pair, and
     apply one host at a time only where both commands and all managed paths are
     absent.
+  - Fleet rollout applied successfully on `ab` (`20260714T134246Z-3141332`),
+    `ab2` (`20260714T134301Z-3039291`), and `al`
+    (`20260714T134317Z-258033`), then stopped safely during `rc` staging. The
+    checksum and extraction passed, but the containment check compared the
+    logical home path with `readlink -f`'s physical filesystem path and falsely
+    reported `runtime link escapes staged tree: npm`. Automatic cleanup left no
+    Node command, runtime tree, activation link, or staging directory on `rc`;
+    `t4` was not attempted.
+  - Fixed containment to compare the resolved link against the canonical staged
+    root. The offline runtime test now places HOME behind a symlink and passes
+    apply, changed-tree refusal, and rollback, reproducing the filesystem shape
+    that exposed the defect. Next commit and fast-forward this narrow fix, then
+    retry `rc` before advancing to `t4`.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

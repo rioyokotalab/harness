@@ -368,38 +368,40 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$zip_tool_transaction" \
 
 # Exercise whole-tree runtime apply, changed-tree refusal, and exact rollback.
 runtime_bin=$TEMP_DIR/runtime-bin
+runtime_home=$TEMP_DIR/runtime-home-link
+ln -s "$test_home" "$runtime_home"
 mkdir -p "$runtime_bin"
 ln -s "$fake_bin/curl" "$runtime_bin/curl"
 for command_name in awk bash chmod cmp cp date dd dirname find git gzip ln mkdir mktemp mv \
     readlink rm sed sh sha256sum tail tar tr uname wc; do
     ln -s "$(command -v "$command_name")" "$runtime_bin/$command_name"
 done
-HOME="$test_home" PATH="$runtime_bin" FIXTURE_ARCHIVE="$runtime_fixture_archive" \
+HOME="$runtime_home" PATH="$runtime_bin" FIXTURE_ARCHIVE="$runtime_fixture_archive" \
     "$test_repo/bin/harness" runtime --host local --name node --apply \
     >"$TEMP_DIR/runtime-apply.out"
 runtime_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
     "$TEMP_DIR/runtime-apply.out")
 [ -n "$runtime_transaction" ] || fail "missing runtime transaction"
-HOME="$test_home" PATH="$runtime_bin" \
+HOME="$runtime_home" PATH="$runtime_bin" \
     "$test_repo/bin/harness" runtime --host local --name node --plan \
     >"$TEMP_DIR/runtime-repeat.out"
 grep 'KEEP runtime=node source=managed-runtime' "$TEMP_DIR/runtime-repeat.out" \
     >/dev/null || fail "managed runtime plan"
-runtime_tree=$test_home/.local/opt/node/24.16.0/linux-x86_64
+runtime_tree=$runtime_home/.local/opt/node/24.16.0/linux-x86_64
 cp -p "$runtime_tree/lib/npm.sh" "$TEMP_DIR/original-runtime-npm"
 printf '%s\n' '# changed after apply' >>"$runtime_tree/lib/npm.sh"
-if HOME="$test_home" "$test_repo/bin/harness" rollback "$runtime_transaction" \
+if HOME="$runtime_home" "$test_repo/bin/harness" rollback "$runtime_transaction" \
     >"$TEMP_DIR/refused-runtime-rollback.out" 2>&1; then
     fail "runtime rollback accepted changed tree"
 fi
-[ -L "$test_home/.local/bin/node" ] && [ -d "$runtime_tree" ] ||
+[ -L "$runtime_home/.local/bin/node" ] && [ -d "$runtime_tree" ] ||
     fail "runtime rollback partially mutated paths"
 cp -p "$TEMP_DIR/original-runtime-npm" "$runtime_tree/lib/npm.sh"
-HOME="$test_home" "$test_repo/bin/harness" rollback "$runtime_transaction" \
+HOME="$runtime_home" "$test_repo/bin/harness" rollback "$runtime_transaction" \
     >"$TEMP_DIR/runtime-rollback.out"
 for command_name in node npm npx corepack; do
-    [ ! -e "$test_home/.local/bin/$command_name" ] &&
-        [ ! -L "$test_home/.local/bin/$command_name" ] ||
+    [ ! -e "$runtime_home/.local/bin/$command_name" ] &&
+        [ ! -L "$runtime_home/.local/bin/$command_name" ] ||
         fail "runtime rollback left link: $command_name"
 done
 [ ! -e "$runtime_tree" ] || fail "runtime rollback left tree"
