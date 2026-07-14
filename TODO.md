@@ -3,9 +3,91 @@
 This board owns planned and active work for the portable Codex and Claude
 harness. Repository-specific tasks remain in their own project ledgers.
 
+## Cold restart
+
+For the active T-171 recovery session, read
+[`docs/recovery-session.md`](docs/recovery-session.md) first. It is the
+authoritative immediate state and next-action handoff. The detailed T-171
+bullets below are a chronological incident record and include observations
+that have since been superseded; do not infer the current action from an older
+bullet when it conflicts with the session checkpoint.
+
 ## Active
 
 - **T-171 — Recover the current-node home after accidental deletion (urgent):**
+  - **Current checkpoint:** the owner is completing the reconstructed
+    `~/.ssh/config` and intentionally wrote a new `~/.bashrc`. Do not touch
+    either file while the owner is editing. The next action is to wait for the
+    owner to declare the SSH config ready, then perform the static-only checks
+    in `docs/recovery-session.md`. This checkpoint supersedes older missing-file
+    and backup-gate observations below for the current SSH-config subtask.
+  - On 2026-07-15 the owner explicitly authorized reconstructing
+    `~/.ssh/config` from the durable connection history. Recreate the 11 known
+    aliases with confirmed endpoint/account/routing fields only; leave unknown
+    users and identity-file paths as comments for owner completion. Do not
+    inspect keys or other authentication material. Validate the resulting file
+    statically before attempting any connection.
+  - Reconstructed `~/.ssh/config` as a regular owner file with mode 0600. It
+    contains all 11 known aliases: `abci_login`, `ab`, `ab2`, `ri`,
+    `alps_login`, `al`, `rc`, `t4`, `si`, `web`, and `github`. Confirmed
+    endpoint, account, proxy, and CSCS multiplexing fields are active; unknown
+    users and identity paths remain marked `TODO` in comments. `ssh -G` passes
+    for every alias. No connection was attempted and no key was inspected.
+  - Follow-up diagnosis started for `ab`: inspect only the effective route and
+    run a bounded strict batch no-op to distinguish proxy routing, host-key,
+    and authentication failure. The current `abci_login` stanza has no `User`,
+    so its proxy connection defaults to the current-node account rather than
+    inheriting `ab`'s account; confirm this is the observed failure before any
+    edit.
+  - `ab` diagnosis confirmed the first failure before the target hop:
+    effective `abci_login` user was `rioyokota`, and the strict batch probe was
+    rejected as `rioyokota@as.v3.abci.ai`. A one-off corrected proxy-user probe
+    advanced beyond that failure once but timed out during downstream banner
+    exchange; a bounded verbose repeat was rejected at access-server public-key
+    authentication. The current stanzas select no `IdentityFile`. Current ABCI
+    3.0 guidance uses `ProxyJump %r@as.v3.abci.ai` and selects the same identity
+    for the target and access-server hops. Source:
+    <https://docs.abci.ai/v3/en/getting-started/>. Do not inspect keys or edit
+    authentication configuration until the owner supplies the intended key
+    path or explicitly applies the corresponding directives.
+  - The owner added the missing `abci_login` account and confirmed `ab` now
+    connects. Follow-up value-redacted expansion shows `AddKeysToAgent no` and
+    no connection multiplexing on both `ab` and `abci_login`; SSH therefore
+    prompts whenever it must decrypt the key from disk. Recommended owner-side
+    remedy is to load the intended key into the existing agent with a bounded
+    lifetime (for example `ssh-add -t 8h KEY_PATH`) and optionally set
+    `AddKeysToAgent 8h` for the ABCI aliases. Retain the key passphrase; do not
+    store it in configuration or remove it from the key.
+  - Owner reports both ABCI aliases ready for validation. Run bounded strict
+    batch no-op commands on `ab` and `ab2`; this is a connectivity check only
+    and must not read keys or mutate either remote system.
+  - This Codex process could not confirm either alias: strict batch probes both
+    exited 255 at the access-server authentication step. Its inherited
+    `SSH_AUTH_SOCK` no longer references a live socket, so these failures do not
+    establish that the owner's current terminal agent lacks the key. Static
+    expansion shows `ab2` targets account `aah17783cq` while its shared
+    `abci_login` proxy uses `aca10017by`; although that differs from ABCI's
+    documented same-user `%r@as.v3.abci.ai` form, do not infer failure from the
+    difference without an end-to-end result.
+  - A deleted/stale agent socket cannot be renewed in place. Owner recovery is
+    to unset the stale agent variables, start a new `ssh-agent`, add the ABCI
+    key with a bounded lifetime, verify both aliases in that shell, and only
+    then start or resume Codex from the same shell so the new process inherits
+    the live `SSH_AUTH_SOCK`. An already-running Codex process cannot have its
+    parent environment retroactively updated.
+  - The owner ran strict batch no-op checks for both `ab` and `ab2` from the
+    renewed-agent shell and reports that both succeeded. This confirms the
+    shared `aca10017by` access-server hop can carry the `aah17783cq` target
+    connection in this account setup; no per-target proxy change is required.
+    A repeated check from the already-running Codex process still sees a stale
+    or absent agent socket and fails at proxy authentication, as expected. To
+    authorize future Codex-side SSH work, start the complete Codex process from
+    the renewed-agent environment; do not reinterpret its stale-process result
+    as a fleet connectivity regression.
+  - **Historical incident and recovery-gate record:** the following bullets
+    preserve time-specific evidence from the deletion and initial audit. Claims
+    that `.ssh/config` or `.bashrc` are absent are superseded by the current
+    checkpoint and must not be used to redirect the active SSH-config task.
   - On 2026-07-15 at approximately 01:41 JST, a temporary-HOME plan command
     incorrectly cleaned `$HOME` after the command-scoped assignment expired,
     launching `rm -rf /home/rioyokota`. This was an agent error, not a harness
@@ -68,6 +150,44 @@ harness. Repository-specific tasks remain in their own project ledgers.
     an owner/admin recovery source or an explicit decision to rebuild those
     owner-controlled surfaces. Mark the long-running T-170 goal blocked rather
     than resuming remote mutation or fabricating authentication/profile state.
+  - A resumed audit later on 2026-07-15 found only partial owner/client-side
+    reconstruction, not a backup restore. `.ssh/config` is now the already
+    documented reconstructed mode-600 file; `.bashrc` is a new 725-byte regular
+    file whose provenance and contents were deliberately not inspected;
+    `.profile`, `.bash_profile`, and `.bash_logout` remain absent. `.local/bin`
+    contains only the Codex launcher and the CSCS signer, while `.local/opt`,
+    `.local/state/harness`, and the Codex/agent skill links remain absent. The
+    surviving `safe` link still resolves to an empty directory. No matching
+    deletion process or new recovery tree was found, and both surviving Git
+    worktrees still pass object/worktree checks.
+  - Fresh dry runs make no changes. The control-plane plan now has 17 creates
+    and eight retained Claude links. The shell plan would append only the
+    tracked block to the new `.bashrc`, but still blocks because `.profile` is
+    absent. Do not infer that the new `.bashrc` replaces the deleted owner file,
+    and do not create `.profile` without the owner's explicit reconstruction
+    decision.
+  - Correct an earlier recovery-plan assumption: this process resolves `rg`
+    only from Codex's private package directory, not from a durable normal-shell
+    installation, and resolves system Node 18.19.1/npm 9.2.0 rather than the
+    selected Node 24.16.0/npm 11.13.0. The runtime planner treats command
+    presence as sufficient for a host-provided keep and does not verify the
+    selected Node/npm version floor, so its `KEEP` output is not recovery
+    evidence. Ripgrep must be planned with a normal-shell PATH rather than this
+    Codex process's private PATH. Claude 2.1.207 is supported by the existing
+    checksum-pinned tool transaction (`tool --name claude`), not by the Codex-
+    specific agent transaction. Fix and test the runtime plan gap before using
+    it for a clean rebuild; do not apply its current output.
+  - Hardened the Node runtime planner without changing the home. Live plans now
+    require exact Node 24.16.0/npm 11.13.0 versions before retaining a host
+    runtime; captured inventories carry the two allowlisted version facts and
+    fail closed on missing or mismatched versions. Both live and captured Node
+    18 fixtures now produce an explicit user-PATH shadow/install plan, while
+    exact Node 24 fixtures retain the host runtime. Shell syntax and the full
+    phase-1 suite pass with LeakSanitizer detection disabled because this traced
+    sandbox cannot run LSAN; the native sanitizer, compiler, MPI, and remaining
+    gates otherwise completed. A normal-PATH recovery dry run now correctly
+    plans pinned Node 24, ripgrep 15.1.0, and Claude 2.1.207 installs. No home or
+    remote path was changed.
 
 - **T-170 — Mirror the working environment across configured clusters:**
   1. Enumerate only concrete host aliases from the current node's SSH config
