@@ -1089,8 +1089,16 @@ harness. Repository-specific tasks remain in their own project ledgers.
     absent and a pre-existing sentinel survived. Keep binary installation
     separate from hook/filter activation: never run `git lfs install`
     implicitly, and use explicit project-local activation only when that
-    repository is in scope. Next pilot rollback/reapply on AArch64 `ri`, where
-    the managed command should shadow but not remove site 3.4.1.
+    repository is in scope. AArch64 `ri` pilot transaction
+    `20260714T151201Z-1100634` rolled back to the unchanged site 3.4.1 binary;
+    final `20260714T151202Z-1101328` restored managed 3.7.1. Other final
+    transactions are local `20260714T151224Z-733331`, `al`
+    `20260714T151248Z-204303`, `ab` `20260714T151251Z-31276`, `ab2`
+    `20260714T151255Z-3531290`, and `t4` `20260714T151300Z-1087921`; `rc`
+    retains host-provided 3.7.1. All seven pass normal-login Git dispatch,
+    pointer generation where installed, idempotent source selection, clean Git,
+    and zero doctor failures. Git-config metadata stayed unchanged across every
+    apply, and neither global nor project-local activation was run.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
