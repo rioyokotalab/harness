@@ -346,6 +346,29 @@ git -C "$test_repo" config user.name harness-test
 git -C "$test_repo" config user.email harness-test.invalid
 git -C "$test_repo" add .
 git -C "$test_repo" commit -qm baseline
+
+# A managed command link must preserve a valid lexical checkout path. Some HPC
+# homes have node-dependent canonical mount aliases, so readlink -f can name a
+# different but equivalent checkout and falsely block every managed link.
+alias_repo=$TEMP_DIR/repo-alias
+alias_home=$TEMP_DIR/alias-home
+mkdir -p "$alias_home"
+ln -s "$test_repo" "$alias_repo"
+HOME="$alias_home" "$alias_repo/bin/harness" apply --host local --apply \
+    >"$TEMP_DIR/alias-apply.out"
+alias_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/alias-apply.out")
+[ -n "$alias_transaction" ] || fail "missing aliased checkout transaction"
+HOME="$alias_home" "$alias_home/.local/bin/harness" apply --host local --plan \
+    >"$TEMP_DIR/alias-plan.out"
+if grep '^BLOCK ' "$TEMP_DIR/alias-plan.out" >/dev/null 2>&1; then
+    fail "managed command canonicalized an equivalent checkout alias"
+fi
+grep "KEEP link=$alias_home/.local/bin/harness" "$TEMP_DIR/alias-plan.out" \
+    >/dev/null || fail "managed command lost lexical checkout root"
+HOME="$alias_home" "$alias_repo/bin/harness" rollback "$alias_transaction" \
+    >"$TEMP_DIR/alias-rollback.out"
+
 HOME="$test_home" "$test_repo/bin/harness" apply --host local --plan \
     >"$TEMP_DIR/control-plan.out"
 grep 'changes=not-applied' "$TEMP_DIR/control-plan.out" >/dev/null ||

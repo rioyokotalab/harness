@@ -1142,7 +1142,22 @@ harness. Repository-specific tasks remain in their own project ledgers.
     account values. The skill contains no scheduler wrapper or executable
     automation. `quick_validate.py`, placeholder inspection, and the complete
     phase-1 suite pass; `install.sh` created the three local discovery links.
-    Commit and transactionally add the three discovery links on each remote.
+    Commit `9a59b34` added it. The `ri` rollback pilot
+    `20260714T153221Z-1107889` and final transaction
+    `20260714T153221Z-1108545` passed; final transactions on `ab`, `ab2`, `al`,
+    `rc`, and `t4` are `20260714T153243Z-3605318`,
+    `20260714T153246Z-2215045`, `20260714T153247Z-156743`,
+    `20260714T153249Z-3543456`, and `20260714T153251Z-1615711`. Each created
+    exactly the three intended links and immediately returned an idempotent
+    plan. A first independent audit runner was read-only but incorrectly
+    expanded its local home while constructing the remote command; discard its
+    result. The corrected literal-script audit passed on `ab`, `ab2`, `ri`, and
+    `al`, then exposed a real `rc` portability defect: its home has equivalent
+    `/home/users/...` and `/hs/work0/home/users/...` mount paths, and invocation
+    through the managed command used `readlink -f` to falsely block every
+    correct lexical link. Preserve a symlink's lexical target before canonical
+    fallback, cover the alias case in the full transactional suite, deploy the
+    fix, and repeat the independent seven-environment closure.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

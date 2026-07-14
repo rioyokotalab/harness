@@ -9,6 +9,23 @@ find_root() {
     fi
 
     if command -v readlink >/dev/null 2>&1; then
+        # Prefer the link's lexical target before canonicalizing it. Some HPC
+        # filesystems expose the same home through multiple mount paths. Links
+        # created through one valid path must not drift merely because -f
+        # selects another path on a different login node.
+        target=$(readlink -- "$0" 2>/dev/null || true)
+        if [ -n "$target" ]; then
+            case "$target" in
+                /*) resolved=$target ;;
+                *) resolved=$(dirname -- "$0")/$target ;;
+            esac
+            candidate=$(CDPATH= cd -- "$(dirname -- "$resolved")/.." 2>/dev/null && pwd || true)
+            if [ -n "$candidate" ] && [ -x "$candidate/libexec/harness-inventory" ]; then
+                printf '%s\n' "$candidate"
+                return
+            fi
+        fi
+
         resolved=$(readlink -f -- "$0" 2>/dev/null || true)
         if [ -n "$resolved" ]; then
             candidate=$(CDPATH= cd -- "$(dirname -- "$resolved")/.." && pwd)
