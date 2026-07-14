@@ -152,6 +152,18 @@ grep 'sha256=02c381be3269489119287dc0b5f4b99b870d886f058918994b51e06b701dd1be' \
 grep 'EXTRACT format=tar.gz member=package/claude binary=claude' \
     "$TEMP_DIR/claude-arm-plan.out" >/dev/null || fail "Claude extraction plan"
 
+mkdir -p "$TEMP_DIR/tectonic-plan-home"
+HOME="$TEMP_DIR/tectonic-plan-home" "$HARNESS" tool --host rc --name tectonic \
+    --facts "$ROOT/tests/fixtures/rc.facts" --plan >"$TEMP_DIR/tectonic-x86-plan.out"
+grep 'sha256=60b13a0826ae7ad9ce34b4a2df06bff2cfcfa6dda8a915477c0cbb84e1a4a902' \
+    "$TEMP_DIR/tectonic-x86-plan.out" >/dev/null || fail "Tectonic x86-64 checksum plan"
+HOME="$TEMP_DIR/tectonic-plan-home" "$HARNESS" tool --host al --name tectonic \
+    --facts "$ROOT/tests/fixtures/al.facts" --plan >"$TEMP_DIR/tectonic-arm-plan.out"
+grep 'sha256=f9aa39017dbd51f111fdb93dda222178cbe51c8193508fc567b523cc74fff9c1' \
+    "$TEMP_DIR/tectonic-arm-plan.out" >/dev/null || fail "Tectonic AArch64 checksum plan"
+grep 'EXTRACT format=tar.gz member=tectonic binary=tectonic' \
+    "$TEMP_DIR/tectonic-arm-plan.out" >/dev/null || fail "Tectonic root-member plan"
+
 mkdir -p "$TEMP_DIR/runtime-plan-home"
 HOME="$TEMP_DIR/runtime-plan-home" "$HARNESS" runtime --host al --name node \
     --facts "$ROOT/tests/fixtures/al.facts" --plan >"$TEMP_DIR/node-arm-plan.out"
@@ -211,6 +223,15 @@ python3 -c 'import sys,zipfile; z=zipfile.ZipFile(sys.argv[1], "w", zipfile.ZIP_
     "$zip_fixture_archive" "$zip_fixture_dir/rclone" "$zip_fixture_member"
 zip_fixture_hash=$(sha256sum "$zip_fixture_archive" | awk '{print $1}')
 sed -i "s/dbee7ccd7a5d617e4ed4cd4555c16669b511abfe8d31164f61be35ac9e999bd2/$zip_fixture_hash/" \
+    "$test_repo/tools/artifacts.tsv"
+tectonic_fixture_dir=$TEMP_DIR/tectonic-fixture
+tectonic_fixture_archive=$TEMP_DIR/tectonic-fixture.tar.gz
+mkdir -p "$tectonic_fixture_dir"
+printf '%s\n' '#!/bin/sh' 'echo "Tectonic 0.16.9"' >"$tectonic_fixture_dir/tectonic"
+chmod 755 "$tectonic_fixture_dir/tectonic"
+tar -czf "$tectonic_fixture_archive" -C "$tectonic_fixture_dir" tectonic
+tectonic_fixture_hash=$(sha256sum "$tectonic_fixture_archive" | awk '{print $1}')
+sed -i "s/60b13a0826ae7ad9ce34b4a2df06bff2cfcfa6dda8a915477c0cbb84e1a4a902/$tectonic_fixture_hash/" \
     "$test_repo/tools/artifacts.tsv"
 runtime_fixture_parent=$TEMP_DIR/runtime-fixture
 runtime_fixture_root=$runtime_fixture_parent/node-v24.16.0-linux-x64
@@ -443,6 +464,25 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$zip_tool_transaction" \
     fail "ZIP rollback left stable link"
 [ ! -e "$test_home/.local/opt/rclone/1.74.3/linux-x86_64" ] ||
     fail "ZIP rollback left artifact directory"
+
+# Exercise a root-member tar archive through the same exact-output path.
+HOME="$test_home" PATH="$fake_bin:/usr/bin:/bin" \
+    FIXTURE_ARCHIVE="$tectonic_fixture_archive" \
+    "$test_repo/bin/harness" tool --host local --name tectonic --apply \
+    >"$TEMP_DIR/tectonic-tool-apply.out"
+tectonic_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/tectonic-tool-apply.out")
+[ -n "$tectonic_transaction" ] || fail "missing Tectonic transaction"
+grep 'NATIVE tar -xOzf STAGING tectonic > STAGING/tectonic' \
+    "$TEMP_DIR/tectonic-tool-apply.out" >/dev/null || fail "root-member tar extraction report"
+[ "$(HOME="$test_home" "$test_home/.local/bin/tectonic" --version)" = 'Tectonic 0.16.9' ] ||
+    fail "Tectonic installed version"
+HOME="$test_home" "$test_repo/bin/harness" rollback "$tectonic_transaction" \
+    >"$TEMP_DIR/tectonic-tool-rollback.out"
+[ ! -e "$test_home/.local/bin/tectonic" ] && [ ! -L "$test_home/.local/bin/tectonic" ] ||
+    fail "Tectonic rollback left stable link"
+[ ! -e "$test_home/.local/opt/tectonic/0.16.9/linux-x86_64" ] ||
+    fail "Tectonic rollback left artifact directory"
 
 # Exercise whole-tree runtime apply, changed-tree refusal, and exact rollback.
 runtime_bin=$TEMP_DIR/runtime-bin

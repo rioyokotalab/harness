@@ -1049,6 +1049,22 @@ harness. Repository-specific tasks remain in their own project ledgers.
     clean revision `8e145dc`, and doctor with zero failures; local retains its
     healthy host-provided 0.144.4. No Codex authentication, settings, sessions,
     caches, or logs were read or copied.
+  - Tectonic 0.16.9 publishes one-file static musl artifacts for both fleet
+    architectures. GitHub's per-asset digests and independent downloads agree:
+    x86-64 is
+    `60b13a0826ae7ad9ce34b4a2df06bff2cfcfa6dda8a915477c0cbb84e1a4a902`
+    and AArch64 is
+    `f9aa39017dbd51f111fdb93dda222178cbe51c8193508fc567b523cc74fff9c1`.
+    The checksum gate rejected an initial x86 URL/digest pairing that used the
+    neighboring GNU asset's digest; temporary files were removed and the exact
+    musl pair then passed checksum, member, version, and ELF-architecture
+    checks. Add root-member tar extraction coverage, run a real disposable
+    transaction, then pilot rollback/reapply before serial rollout.
+  - Git LFS 3.7.1 is a strong LLM-project follow-up: the official security-fix
+    release has publisher-digested x86-64 and AArch64 binaries. Keep it separate
+    from the selected-tool rollout because installing the binary and enabling
+    repository/global hooks are different authority and rollback boundaries;
+    do not run `git lfs install` implicitly.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

@@ -215,8 +215,8 @@ if [ "$artifact_action" = INSTALL ]; then
     stage=$(mktemp -d "$install_parent/.staging.XXXXXX")
     case "$format" in
         tar.gz)
-            echo "NATIVE tar -xzf STAGING -C STAGING --strip-components=1 $member"
-            tar -xzf "$archive" -C "$stage" --strip-components=1 "$member"
+            echo "NATIVE tar -xOzf STAGING $member > STAGING/$binary"
+            tar -xOzf "$archive" "$member" >"$stage/$binary"
             ;;
         zip)
             echo "NATIVE unzip -p STAGING $member > STAGING/$binary"
