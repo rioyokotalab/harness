@@ -240,9 +240,17 @@ live instructions.
   transaction or record an intentional dependency replacement; do not install
   an unpinned package merely to clear the warning.
 - **T-176 — Eliminate internal raw recursive deletion from harness
-  transactions:** the T-174 whole-repository scan found direct recursive
+  transactions (complete 2026-07-15):** the T-174 whole-repository scan found direct recursive
   removal in rollback plus shell, tool, runtime, agent, Python, and source-build
-  staging cleanup. Move every bulk path through one manifest-bound primitive or
-  an equally strict in-process equivalent, retain exact rollback semantics, and
-  add fault/race tests; command-level exec policy alone cannot protect deletion
-  launched inside an otherwise allowed harness command.
+  staging cleanup. Added a shared internal primitive that canonicalizes three
+  explicit absolute boundaries, protects both the current and authoritative
+  account homes, creates mode-700 unique state, delegates deletion to the same
+  immutable short-lived manifest/token workflow, revalidates identity/counts/
+  bytes immediately before removal, verifies anchors afterward, removes its
+  manifest exactly on success, and preserves it on failure. Every production
+  caller now propagates cleanup failure and preserves signal status; rollback
+  retains its all-path preflight and reverse record order. Fake-HOME success and
+  home-root refusal, manifest drift/race refusal, changed-tree rollback refusal,
+  minimal-PATH command floors, recursive-command absence, syntax, dedicated
+  guard tests, and repeated full phase-1 suites pass. Command-level exec policy
+  is no longer the sole protection for deletion launched inside harness code.

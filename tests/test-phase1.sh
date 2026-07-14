@@ -52,6 +52,21 @@ do
     sh -n "$script" || fail "shell syntax: $script"
 done
 
+for script in \
+    "$ROOT/libexec/harness-rollback" \
+    "$ROOT/libexec/harness-shell" \
+    "$ROOT/libexec/harness-tool" \
+    "$ROOT/libexec/harness-runtime" \
+    "$ROOT/libexec/harness-python" \
+    "$ROOT/libexec/harness-agent" \
+    "$ROOT/libexec/harness-build-tool" \
+    "$ROOT/tests/smoke/jobs/local.slurm"
+do
+    if grep -E 'rm[[:space:]]+(-[^[:space:]]*)*[rR]|--recursive' "$script" >/dev/null; then
+        fail "raw recursive removal remains: $script"
+    fi
+done
+
 "$ROOT/tests/test-guarded-delete.sh" || fail "guarded-delete regression suite"
 
 python3 -c 'import sys; compile(open(sys.argv[1], encoding="utf-8").read(), sys.argv[1], "exec")' \
@@ -726,8 +741,9 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$tectonic_transaction" \
 source_bin=$TEMP_DIR/source-bin
 mkdir -p "$source_bin"
 ln -s "$fake_bin/curl" "$source_bin/curl"
-for command_name in as awk bash cc chmod cmp cp date dirname find git grep gzip ld ln \
-    mkdir mktemp mv readlink rm sed sh sha256sum tail tar tr uname unzip wc; do
+for command_name in as awk bash cc chmod cmp cp date dirname find getent git grep gzip id ld ln \
+    mkdir mktemp mv readlink realpath rm rmdir sed sh sha256sum stat tail tar tr \
+    uname unlink unzip wc; do
     ln -s "$(command -v "$command_name")" "$source_bin/$command_name"
 done
 HOME="$test_home" PATH="$source_bin" FIXTURE_ARCHIVE="$sqlite_fixture_archive" \
@@ -798,8 +814,8 @@ runtime_home=$TEMP_DIR/runtime-home-link
 ln -s "$test_home" "$runtime_home"
 mkdir -p "$runtime_bin"
 ln -s "$fake_bin/curl" "$runtime_bin/curl"
-for command_name in awk bash chmod cmp cp date dd dirname find git gzip ln mkdir mktemp mv \
-    readlink rm sed sh sha256sum tail tar tr uname wc; do
+for command_name in awk bash chmod cmp cp date dd dirname find getent git gzip id ln mkdir \
+    mktemp mv readlink realpath rm rmdir sed sh sha256sum stat tail tar tr uname unlink wc; do
     ln -s "$(command -v "$command_name")" "$runtime_bin/$command_name"
 done
 HOME="$runtime_home" PATH="$runtime_bin" FIXTURE_ARCHIVE="$runtime_fixture_archive" \
@@ -837,8 +853,8 @@ agent_bin=$TEMP_DIR/agent-bin
 agent_home=$TEMP_DIR/agent-home-link
 ln -s "$test_home" "$agent_home"
 mkdir -p "$agent_bin"
-for command_name in awk bash chmod cmp cp date dirname find git gzip ln mkdir mktemp mv \
-    readlink rm sed sh sha256sum tar tr uname wc; do
+for command_name in awk bash chmod cmp cp date dirname find getent git gzip id ln mkdir \
+    mktemp mv readlink realpath rm rmdir sed sh sha256sum stat tar tr uname unlink wc; do
     ln -s "$(command -v "$command_name")" "$agent_bin/$command_name"
 done
 printf '%s\n' '#!/bin/sh' 'echo v24.16.0' >"$agent_bin/node"
@@ -896,8 +912,8 @@ python_bin=$TEMP_DIR/python-bin
 python_home=$TEMP_DIR/python-home-link
 ln -s "$test_home" "$python_home"
 mkdir -p "$python_bin"
-for command_name in awk bash chmod cmp cp date dd dirname find git ln mkdir mktemp mv \
-    readlink rm sed sh sha256sum tail tar tr uname wc; do
+for command_name in awk bash chmod cmp cp date dd dirname find getent git id ln mkdir mktemp \
+    mv readlink realpath rm rmdir sed sh sha256sum stat tail tar tr uname unlink wc; do
     ln -s "$(command -v "$command_name")" "$python_bin/$command_name"
 done
 fake_python=$TEMP_DIR/python3.12

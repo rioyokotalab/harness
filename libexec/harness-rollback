@@ -154,21 +154,27 @@ while IFS='|' read -r record destination field3 field4 field5 field6 field7; do
                 echo "KEEP python=$destination state=already-absent"
             else
                 echo "REMOVE python=$destination"
-                rm -rf "$destination"
+                guarded_delete_tree "${destination%/*}" "$destination" \
+                    "$HOME/.local/state/harness/transactions" ||
+                    die "guarded Python rollback cleanup failed"
             fi
         elif [ "$record" = agent ]; then
             if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
                 echo "KEEP agent=$destination state=already-absent"
             else
                 echo "REMOVE agent=$destination"
-                rm -rf "$destination"
+                guarded_delete_tree "${destination%/*}" "$destination" \
+                    "$HOME/.local/state/harness/transactions" ||
+                    die "guarded agent rollback cleanup failed"
             fi
         elif [ "$record" = runtime ]; then
             if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
                 echo "KEEP runtime=$destination state=already-absent"
             else
                 echo "REMOVE runtime=$destination"
-                rm -rf "$destination"
+                guarded_delete_tree "${destination%/*}" "$destination" \
+                    "$HOME/.local/state/harness/transactions" ||
+                    die "guarded runtime rollback cleanup failed"
             fi
         elif [ "$record" = artifact ]; then
             relative=$field3

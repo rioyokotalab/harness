@@ -93,21 +93,32 @@ installed=0
 complete=0
 cleanup() {
     status=$?
-    [ -z "$tree_archive" ] || rm -f "$tree_archive"
-    [ -z "$stage" ] || rm -rf "$stage"
-    [ "$installed" -eq 0 ] || rm -rf "$install_dir"
+    cleanup_failed=0
+    [ -z "$tree_archive" ] || rm -f "$tree_archive" || cleanup_failed=1
+    if [ -n "$stage" ]; then
+        guarded_delete_tree "$install_parent" "$stage" "$state_root" ||
+            cleanup_failed=1
+    fi
     if [ "$complete" -eq 0 ]; then
         awk -F'|' '$1 == "link" { print $2 "|" $3 }' "$manifest" |
             while IFS='|' read -r destination target; do
                 [ -L "$destination" ] && [ "$(readlink "$destination")" = "$target" ] && rm "$destination"
             done
-        awk -F'|' '$1 == "python" { print $2 }' "$manifest" |
-            while IFS= read -r directory; do [ ! -d "$directory" ] || rm -rf "$directory"; done
+        if [ "$installed" -ne 0 ] && [ -d "$install_dir" ]; then
+            guarded_delete_tree "$install_parent" "$install_dir" "$state_root" ||
+                cleanup_failed=1
+        fi
         echo failed >"$manifest.status"; chmod 600 "$manifest.status"
+    fi
+    if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
+        status=2
     fi
     exit "$status"
 }
-trap cleanup EXIT HUP INT TERM
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 echo "NATIVE uv python install --install-dir STAGING --no-bin --no-cache --no-progress $minor"
 UV_NO_CONFIG=1 uv python install --install-dir "$stage" --no-bin --no-cache --no-progress "$minor"
@@ -140,9 +151,9 @@ printf 'python|%s|%s\n' "$install_dir" "$tree_hash" >>"$manifest"
 mkdir -p "$HOME/.local/bin"
 printf 'link|%s|%s\n' "$stable_link" "$target" >>"$manifest"
 ln -s "$target" "$stable_link"
-installed=0
 echo complete >"$manifest.status"; chmod 600 "$manifest.status"
 complete=1
+installed=0
 trap - EXIT HUP INT TERM
 echo "TRANSACTION id=$transaction_id status=complete"
 echo "END python host=$logical_host changes=applied"

@@ -21,8 +21,27 @@ done
 profile_for "$logical_host" >/dev/null
 command -v truncate >/dev/null 2>&1 || die "shell transaction requires truncate"
 
-temp_dir=$(mktemp -d "${TMPDIR:-/tmp}/harness-shell.XXXXXX")
-trap 'rm -rf "$temp_dir"' EXIT HUP INT TERM
+temp_parent=${TMPDIR:-/tmp}
+temp_dir=$(mktemp -d "$temp_parent/harness-shell.XXXXXX")
+cleanup_temp_dir() {
+    [ -z "$temp_dir" ] && return 0
+    guarded_delete_tree "$temp_parent" "$temp_dir" "$temp_parent" || return 1
+    temp_dir=
+}
+cleanup_plan() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    cleanup_failed=0
+    cleanup_temp_dir || cleanup_failed=1
+    if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
+        status=2
+    fi
+    exit "$status"
+}
+trap cleanup_plan EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 printf '\n' >"$temp_dir/bashrc.payload"
 bashrc_block=$HARNESS_ROOT/shell/bashrc.$logical_host.block
 [ -f "$bashrc_block" ] || bashrc_block=$HARNESS_ROOT/shell/bashrc.block
@@ -90,15 +109,22 @@ rollback_partial() {
 complete=0
 cleanup() {
     status=$?
+    cleanup_failed=0
     if [ "$complete" -eq 0 ]; then
         rollback_partial
         echo failed >"$manifest.status"
         chmod 600 "$manifest.status"
     fi
-    rm -rf "$temp_dir"
+    cleanup_temp_dir || cleanup_failed=1
+    if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
+        status=2
+    fi
     exit "$status"
 }
-trap cleanup EXIT HUP INT TERM
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 while IFS='|' read -r name payload_name; do
     destination=$HOME/.$name
@@ -118,7 +144,7 @@ $entries
 EOF
 echo complete >"$manifest.status"; chmod 600 "$manifest.status"
 complete=1
+cleanup_temp_dir || die "guarded shell staging cleanup failed"
 trap - EXIT HUP INT TERM
-rm -rf "$temp_dir"
 echo "TRANSACTION id=$transaction_id status=complete"
 echo "END shell host=$logical_host changes=applied"

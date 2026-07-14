@@ -189,12 +189,21 @@ archive=$(mktemp "$state_root/$transaction_id.source.XXXXXX")
 entries=$(mktemp "$state_root/$transaction_id.entries.XXXXXX")
 build_dir=
 stage=
+install_parent=
 complete=0
 cleanup() {
     status=$?
-    rm -f "$archive" "$entries"
-    [ -z "$build_dir" ] || rm -rf "$build_dir"
-    [ -z "$stage" ] || rm -rf "$stage"
+    cleanup_failed=0
+    rm -f "$archive" || cleanup_failed=1
+    rm -f "$entries" || cleanup_failed=1
+    if [ -n "$build_dir" ]; then
+        guarded_delete_tree "$install_parent" "$build_dir" "$state_root" ||
+            cleanup_failed=1
+    fi
+    if [ -n "$stage" ]; then
+        guarded_delete_tree "$install_parent" "$stage" "$state_root" ||
+            cleanup_failed=1
+    fi
     if [ "$complete" -eq 0 ]; then
         awk -F'|' '$1 == "link" { print $2 "|" $3 }' "$transaction_manifest" |
             while IFS='|' read -r destination source; do
@@ -211,9 +220,15 @@ cleanup() {
             done
         echo failed >"$transaction_manifest.status"; chmod 600 "$transaction_manifest.status"
     fi
+    if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
+        status=2
+    fi
     exit "$status"
 }
-trap cleanup EXIT HUP INT TERM
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 echo "NATIVE curl --proto =https --tlsv1.2 -fL --retry 2 $url -o SOURCE_STAGING"
 curl --proto '=https' --tlsv1.2 -fL --retry 2 "$url" -o "$archive"
@@ -290,12 +305,15 @@ source_tool_healthy "$stage/$binary" || die "source-built feature verification f
 binary_hash=$(sha256sum "$stage/$binary" | awk '{print $1}')
 printf 'artifact|%s|%s|%s\n' "$install_dir" "$binary" "$binary_hash" >>"$transaction_manifest"
 mv -T "$stage" "$install_dir"; stage=
-rm -rf "$build_dir"; build_dir=
+guarded_delete_tree "$install_parent" "$build_dir" "$state_root" ||
+    die "guarded source-build cleanup failed"
+build_dir=
 mkdir -p "${stable_link%/*}"
 printf 'link|%s|%s\n' "$stable_link" "$installed_binary" >>"$transaction_manifest"
 ln -s "$installed_binary" "$stable_link"
 echo "CALLER native='hash -r' reason=refresh-command-path-cache"
-rm -f "$archive" "$entries"
+rm -f "$archive"
+rm -f "$entries"
 echo complete >"$transaction_manifest.status"; chmod 600 "$transaction_manifest.status"
 complete=1
 trap - EXIT HUP INT TERM

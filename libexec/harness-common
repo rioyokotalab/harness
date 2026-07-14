@@ -65,6 +65,110 @@ path_kind() {
     fi
 }
 
+# Delete one already-identified tree only through the same immutable
+# plan/revalidate/apply workflow exposed to agents. The caller supplies an
+# existing retained boundary and a separate existing directory for short-lived
+# manifest state. A subshell contains failures so transaction traps can retain
+# their original status while reporting cleanup failure.
+guarded_delete_tree() (
+    set -eu
+    [ "$#" -eq 3 ] || { echo "harness: guarded_delete_tree requires boundary, target, and state parent" >&2; exit 2; }
+    boundary=$1
+    target=$2
+    state_parent=$3
+    case "$boundary:$target:$state_parent" in
+        /*:/*:/*) ;;
+        *) echo "harness: guarded_delete_tree paths must be absolute" >&2; exit 2 ;;
+    esac
+    for required in getent id mktemp realpath rmdir sed stat unlink; do
+        command -v "$required" >/dev/null 2>&1 || {
+            echo "harness: guarded_delete_tree requires command: $required" >&2
+            exit 2
+        }
+    done
+    [ -d "$boundary" ] && [ ! -L "$boundary" ] || {
+        echo "harness: guarded deletion boundary changed type: $boundary" >&2
+        exit 2
+    }
+    [ -d "$target" ] && [ ! -L "$target" ] || {
+        echo "harness: guarded deletion target changed type: $target" >&2
+        exit 2
+    }
+    [ -d "$state_parent" ] && [ ! -L "$state_parent" ] || {
+        echo "harness: guarded deletion state parent changed type: $state_parent" >&2
+        exit 2
+    }
+    boundary=$(realpath -e -- "$boundary")
+    target=$(realpath -e -- "$target")
+    state_parent=$(realpath -e -- "$state_parent")
+    current_home=$(realpath -e -- "$HOME") || {
+        echo "harness: current HOME is not a canonical directory" >&2
+        exit 2
+    }
+    case "$current_home" in
+        "$target"|"$target"/*)
+            echo "harness: guarded deletion target is or contains current HOME: $target" >&2
+            exit 2
+            ;;
+    esac
+
+    uid=$(id -u)
+    account_home=$(getent passwd "$uid" | awk -F: -v uid="$uid" '
+        $3 == uid { value=$6; count++ }
+        END { if (count != 1 || value == "") exit 1; print value }
+    ') || { echo "harness: cannot resolve authoritative account HOME" >&2; exit 2; }
+    account_home=$(realpath -e -- "$account_home") || {
+        echo "harness: authoritative account HOME is unavailable" >&2
+        exit 2
+    }
+    guard=$HARNESS_ROOT/shared/skills/guarded-bulk-delete/scripts/guarded-delete
+    [ -x "$guard" ] || { echo "harness: guarded-delete implementation is unavailable" >&2; exit 2; }
+
+    delete_state=$(mktemp -d "$state_parent/.harness-delete.XXXXXX") || {
+        echo "harness: cannot allocate guarded deletion state" >&2
+        exit 2
+    }
+    chmod 700 "$delete_state"
+    manifest=$delete_state/manifest
+    cleanup_delete_state() {
+        status=$?
+        trap - EXIT HUP INT TERM
+        if [ -n "${delete_state:-}" ] && [ -d "$delete_state" ]; then
+            if [ -e "$manifest" ] || [ -L "$manifest" ]; then
+                echo "harness: preserved failed guarded deletion manifest: $manifest" >&2
+            else
+                rmdir "$delete_state" 2>/dev/null ||
+                    echo "harness: preserved nonempty guarded deletion state: $delete_state" >&2
+            fi
+        fi
+        exit "$status"
+    }
+    trap cleanup_delete_state EXIT
+    trap 'exit 129' HUP
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+
+    plan_output=$(HOME="$account_home" "$guard" plan --within "$boundary" \
+        --manifest "$manifest" -- "$target")
+    printf '%s\n' "$plan_output"
+    token=$(printf '%s\n' "$plan_output" | sed -n 's/^TOKEN sha256=//p')
+    case "$token" in
+        *[!0-9a-f]*|'') echo "harness: guarded deletion plan emitted an invalid token" >&2; exit 2 ;;
+    esac
+    [ "${#token}" -eq 64 ] || { echo "harness: guarded deletion token length is invalid" >&2; exit 2; }
+    HOME="$account_home" "$guard" apply --manifest "$manifest" --token "$token"
+    [ -f "$manifest" ] && [ ! -L "$manifest" ] &&
+        [ "$(realpath -e -- "$manifest")" = "$manifest" ] &&
+        [ "$(stat -c '%u' -- "$manifest")" = "$uid" ] &&
+        [ "$(stat -c '%a' -- "$manifest")" = 600 ] || {
+            echo "harness: guarded deletion manifest changed after apply" >&2
+            exit 2
+        }
+    unlink "$manifest"
+    rmdir "$delete_state"
+    delete_state=
+)
+
 make_fact_file() {
     logical_host=$1
     temp_file=$(mktemp "${TMPDIR:-/tmp}/harness-facts.XXXXXX") ||

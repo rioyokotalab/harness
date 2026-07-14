@@ -122,25 +122,40 @@ printf 'schema=1\nhost=%s\nrevision=%s\n' "$logical_host" \
 launcher_archive=$(mktemp "$state_root/$transaction_id.launcher.XXXXXX")
 native_archive=$(mktemp "$state_root/$transaction_id.native.XXXXXX")
 stage=
+install_parent=
 tree_archive=
+installed=0
 complete=0
 cleanup() {
     status=$?
-    rm -f "$launcher_archive" "$native_archive"
-    [ -z "$tree_archive" ] || rm -f "$tree_archive"
-    [ -z "$stage" ] || rm -rf "$stage"
+    cleanup_failed=0
+    rm -f "$launcher_archive" || cleanup_failed=1
+    rm -f "$native_archive" || cleanup_failed=1
+    [ -z "$tree_archive" ] || rm -f "$tree_archive" || cleanup_failed=1
+    if [ -n "$stage" ]; then
+        guarded_delete_tree "$install_parent" "$stage" "$state_root" ||
+            cleanup_failed=1
+    fi
     if [ "$complete" -eq 0 ]; then
         awk -F'|' '$1 == "link" { print $2 "|" $3 }' "$manifest" |
             while IFS='|' read -r destination target; do
                 [ -L "$destination" ] && [ "$(readlink "$destination")" = "$target" ] && rm "$destination"
             done
-        awk -F'|' '$1 == "agent" { print $2 }' "$manifest" |
-            while IFS= read -r directory; do [ ! -d "$directory" ] || rm -rf "$directory"; done
+        if [ "$installed" -ne 0 ] && [ -d "$install_dir" ]; then
+            guarded_delete_tree "$install_parent" "$install_dir" "$state_root" ||
+                cleanup_failed=1
+        fi
         echo failed >"$manifest.status"; chmod 600 "$manifest.status"
+    fi
+    if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
+        status=2
     fi
     exit "$status"
 }
-trap cleanup EXIT HUP INT TERM
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 echo "NATIVE curl --proto =https --tlsv1.2 -fL --retry 2 $launcher_url -o LAUNCHER_STAGING"
 curl --proto '=https' --tlsv1.2 -fL --retry 2 "$launcher_url" -o "$launcher_archive"
@@ -179,14 +194,16 @@ tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
 tree_hash=$(sha256sum "$tree_archive" | awk '{print $1}')
 rm "$tree_archive"; tree_archive=
 printf 'agent|%s|%s\n' "$install_dir" "$tree_hash" >>"$manifest"
-mv -T "$stage" "$install_dir"; stage=
+mv -T "$stage" "$install_dir"; stage=; installed=1
 mkdir -p "$HOME/.local/bin"
 printf 'link|%s|%s\n' "$stable_link" "$installed_command" >>"$manifest"
 ln -s "$installed_command" "$stable_link"
 echo "CALLER native='hash -r' reason=refresh-command-path-cache"
-rm -f "$launcher_archive" "$native_archive"
+rm -f "$launcher_archive"
+rm -f "$native_archive"
 echo complete >"$manifest.status"; chmod 600 "$manifest.status"
 complete=1
+installed=0
 trap - EXIT HUP INT TERM
 echo "TRANSACTION id=$transaction_id status=complete"
 echo "END agent host=$logical_host changes=applied"

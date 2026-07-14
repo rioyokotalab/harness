@@ -51,6 +51,32 @@ sh -n "$ROOT/shared/skills/guarded-bulk-delete/scripts/guarded-delete" ||
     fail "guarded-delete shell syntax"
 sh -n "$CLEANUP" || fail "guarded test cleanup shell syntax"
 
+mkdir -p "$TEST_ROOT/internal/fake-home/delete-me/nested" "$TEST_ROOT/internal/state"
+printf '%s\n' delete >"$TEST_ROOT/internal/fake-home/delete-me/nested/file"
+env HOME="$TEST_ROOT/internal/fake-home" HARNESS_ROOT="$ROOT" sh -c '
+    . "$1"
+    guarded_delete_tree "$2" "$3" "$4"
+' sh "$ROOT/libexec/harness-common" "$TEST_ROOT/internal/fake-home" \
+    "$TEST_ROOT/internal/fake-home/delete-me" "$TEST_ROOT/internal/state" \
+    >"$TEST_ROOT/internal-delete.out"
+[ ! -e "$TEST_ROOT/internal/fake-home/delete-me" ] ||
+    fail "internal guarded deletion left its target"
+[ -d "$TEST_ROOT/internal/fake-home" ] ||
+    fail "internal guarded deletion removed fake HOME"
+grep 'VERIFIED protected_anchors=unchanged targets=absent' \
+    "$TEST_ROOT/internal-delete.out" >/dev/null ||
+    fail "internal guarded deletion verification marker"
+
+expect_failure 'target is or contains current HOME' \
+    "$TEST_ROOT/internal-home.out" env HOME="$TEST_ROOT/internal/fake-home" \
+    HARNESS_ROOT="$ROOT" sh -c '
+        . "$1"
+        guarded_delete_tree "$2" "$3" "$4"
+    ' sh "$ROOT/libexec/harness-common" "$TEST_ROOT/internal" \
+    "$TEST_ROOT/internal/fake-home" "$TEST_ROOT/internal/state"
+[ -d "$TEST_ROOT/internal/fake-home" ] ||
+    fail "internal guarded deletion removed fake HOME on refusal"
+
 expect_failure '--within is too broad and contains a protected anchor' \
     "$TEST_ROOT/cleanup-home.out" "$CLEANUP" "$HARNESS" /home "$HOME" \
     "${TMPDIR:-/tmp}"
