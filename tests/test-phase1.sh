@@ -21,6 +21,7 @@ for script in \
     "$ROOT/libexec/harness-remediate" \
     "$ROOT/libexec/harness-shell" \
     "$ROOT/libexec/harness-tool" \
+    "$ROOT/libexec/harness-runtime" \
     "$ROOT/libexec/harness-rollback"
 do
     sh -n "$script" || fail "shell syntax: $script"
@@ -124,6 +125,14 @@ grep 'sha256=8f8d47446e061f80c3256659fe8e21f56d72d96aaefe1275d088ea5eb6b42aa7' \
 grep 'EXTRACT format=zip member=rclone-v1.74.3-linux-arm64/rclone binary=rclone' \
     "$TEMP_DIR/rclone-arm-plan.out" >/dev/null || fail "rclone AArch64 extraction plan"
 
+mkdir -p "$TEMP_DIR/runtime-plan-home"
+HOME="$TEMP_DIR/runtime-plan-home" "$HARNESS" runtime --host al --name node \
+    --facts "$ROOT/tests/fixtures/al.facts" --plan >"$TEMP_DIR/node-arm-plan.out"
+grep 'sha256=589f5b6dd4fcfee4dfda73013903c966abaa8abd93dbc9d436544e472b4f0e74' \
+    "$TEMP_DIR/node-arm-plan.out" >/dev/null || fail "Node AArch64 checksum plan"
+grep 'CREATE link=.*\.local/bin/npm source=.*/bin/npm' \
+    "$TEMP_DIR/node-arm-plan.out" >/dev/null || fail "Node npm activation plan"
+
 path_home=$TEMP_DIR/path-home
 mkdir -p "$path_home/.local/bin"
 printf '%s\n' '#!/bin/sh' 'exit 0' >"$path_home/.local/bin/rg"
@@ -162,6 +171,21 @@ python3 -c 'import sys,zipfile; z=zipfile.ZipFile(sys.argv[1], "w", zipfile.ZIP_
 zip_fixture_hash=$(sha256sum "$zip_fixture_archive" | awk '{print $1}')
 sed -i "s/dbee7ccd7a5d617e4ed4cd4555c16669b511abfe8d31164f61be35ac9e999bd2/$zip_fixture_hash/" \
     "$test_repo/tools/artifacts.tsv"
+runtime_fixture_parent=$TEMP_DIR/runtime-fixture
+runtime_fixture_root=$runtime_fixture_parent/node-v24.16.0-linux-x64
+runtime_fixture_archive=$TEMP_DIR/node-fixture.tar.gz
+mkdir -p "$runtime_fixture_root/bin" "$runtime_fixture_root/lib"
+printf '%s\n' '#!/bin/sh' 'echo v24.16.0' >"$runtime_fixture_root/bin/node"
+printf '%s\n' '#!/bin/sh' 'echo 11.13.0' >"$runtime_fixture_root/lib/npm.sh"
+chmod 755 "$runtime_fixture_root/bin/node" "$runtime_fixture_root/lib/npm.sh"
+for command_name in npm npx corepack; do
+    ln -s ../lib/npm.sh "$runtime_fixture_root/bin/$command_name"
+done
+tar -czf "$runtime_fixture_archive" -C "$runtime_fixture_parent" \
+    node-v24.16.0-linux-x64
+runtime_fixture_hash=$(sha256sum "$runtime_fixture_archive" | awk '{print $1}')
+sed -i "s/2faf6a387e9b62b888e21c54f01249fb27537ffecf1842f29f4c919d0a59a0ff/$runtime_fixture_hash/" \
+    "$test_repo/tools/runtimes.tsv"
 git -C "$test_repo" init -q
 git -C "$test_repo" config user.name harness-test
 git -C "$test_repo" config user.email harness-test.invalid
@@ -341,6 +365,44 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$zip_tool_transaction" \
     fail "ZIP rollback left stable link"
 [ ! -e "$test_home/.local/opt/rclone/1.74.3/linux-x86_64" ] ||
     fail "ZIP rollback left artifact directory"
+
+# Exercise whole-tree runtime apply, changed-tree refusal, and exact rollback.
+runtime_bin=$TEMP_DIR/runtime-bin
+mkdir -p "$runtime_bin"
+ln -s "$fake_bin/curl" "$runtime_bin/curl"
+for command_name in awk bash chmod cmp cp date dd dirname find git gzip ln mkdir mktemp mv \
+    readlink rm sed sh sha256sum tail tar tr uname wc; do
+    ln -s "$(command -v "$command_name")" "$runtime_bin/$command_name"
+done
+HOME="$test_home" PATH="$runtime_bin" FIXTURE_ARCHIVE="$runtime_fixture_archive" \
+    "$test_repo/bin/harness" runtime --host local --name node --apply \
+    >"$TEMP_DIR/runtime-apply.out"
+runtime_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/runtime-apply.out")
+[ -n "$runtime_transaction" ] || fail "missing runtime transaction"
+HOME="$test_home" PATH="$runtime_bin" \
+    "$test_repo/bin/harness" runtime --host local --name node --plan \
+    >"$TEMP_DIR/runtime-repeat.out"
+grep 'KEEP runtime=node source=managed-runtime' "$TEMP_DIR/runtime-repeat.out" \
+    >/dev/null || fail "managed runtime plan"
+runtime_tree=$test_home/.local/opt/node/24.16.0/linux-x86_64
+cp -p "$runtime_tree/lib/npm.sh" "$TEMP_DIR/original-runtime-npm"
+printf '%s\n' '# changed after apply' >>"$runtime_tree/lib/npm.sh"
+if HOME="$test_home" "$test_repo/bin/harness" rollback "$runtime_transaction" \
+    >"$TEMP_DIR/refused-runtime-rollback.out" 2>&1; then
+    fail "runtime rollback accepted changed tree"
+fi
+[ -L "$test_home/.local/bin/node" ] && [ -d "$runtime_tree" ] ||
+    fail "runtime rollback partially mutated paths"
+cp -p "$TEMP_DIR/original-runtime-npm" "$runtime_tree/lib/npm.sh"
+HOME="$test_home" "$test_repo/bin/harness" rollback "$runtime_transaction" \
+    >"$TEMP_DIR/runtime-rollback.out"
+for command_name in node npm npx corepack; do
+    [ ! -e "$test_home/.local/bin/$command_name" ] &&
+        [ ! -L "$test_home/.local/bin/$command_name" ] ||
+        fail "runtime rollback left link: $command_name"
+done
+[ ! -e "$runtime_tree" ] || fail "runtime rollback left tree"
 
 # Exercise artifact rollback and its all-path modification refusal without network.
 artifact_dir=$test_home/.local/opt/fixture/1/linux-x86_64

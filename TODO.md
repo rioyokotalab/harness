@@ -768,6 +768,32 @@ harness. Repository-specific tasks remain in their own project ledgers.
     rollback refusal and exact clean rollback before any real or remote apply;
     then run a disposable-home transaction against the official x64 archive.
 
+  Node/npm runtime implementation checkpoint (2026-07-14):
+
+  - Implemented a dedicated `harness runtime --host HOST --name node
+    --plan|--apply` transaction and strict two-architecture runtime manifest.
+    It owns only `~/.local/opt/node/24.16.0/linux-ARCH` and four stable links;
+    an existing host Node/npm pair is retained, while partial or colliding
+    states block instead of being overwritten.
+  - Apply requires a clean harness and passing doctor, verifies the publisher
+    SHA-256, rejects archive entries outside the one declared root, validates
+    exactly three internal symlinks remain inside the staged tree, and checks
+    Node 24.16.0 plus npm 11.13.0 before activation. It records a compact tar
+    digest of the complete 5,729-entry tree and mode-600 transaction state.
+  - Extended all-path rollback for managed runtime trees. It validates all four
+    activation links and recomputes the complete tree digest before any
+    mutation. The offline fixture deliberately changed one runtime file;
+    rollback failed without removing any link or tree, then metadata-exact
+    restoration allowed complete removal. The full phase-1 suite passes.
+  - A disposable-home transaction downloaded the official x64 archive, created
+    a mode-755 Node binary and mode-600 complete state, reported both pinned
+    versions, returned an idempotent `managed-runtime` plan, and rolled back all
+    four links and the complete tree. The disposable home was removed.
+  - Next executable action: commit this implementation, fast-forward `ri`, show
+    the exact ARM64 plan, and perform apply/rollback/reapply as the architecture
+    pilot. Do not install Codex or Claude until Node/npm is validated across the
+    fleet and their own package integrity/state boundaries are designed.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 

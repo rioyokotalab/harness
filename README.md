@@ -134,6 +134,21 @@ and checksums are recorded and tested. Installing uv does not implicitly
 download Python or modify shell files; managed Python is a separate reviewed
 action.
 
+Checksum-pinned multi-file runtimes use a separate whole-tree transaction:
+
+```bash
+harness runtime --host HOST --name node --plan
+harness runtime --host HOST --name node --apply
+```
+
+The Node runtime manifest covers Node 24.16.0/npm 11.13.0 on Linux x86-64 and
+AArch64. Apply validates the publisher checksum, rejects unsafe archive paths,
+checks the staged Node and npm versions, records an integrity digest for the
+entire owned distribution tree, and activates `node`, `npm`, `npx`, and
+`corepack`. Rollback validates every link and recomputes the whole-tree digest
+before removing any path; a modified runtime fails closed without partial
+cleanup.
+
 ## Deliberately excluded
 
 The live `~/.codex/config.toml`, `~/.claude/settings.json`,

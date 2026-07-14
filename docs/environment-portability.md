@@ -309,6 +309,8 @@ Validate, per host:
   <https://docs.astral.sh/uv/guides/install-python/>
 - rclone 1.74.3 release artifacts and publisher checksums:
   <https://downloads.rclone.org/v1.74.3/>
+- Node 24.16.0 release artifacts and signed checksums:
+  <https://nodejs.org/download/release/v24.16.0/>
 - Environment Modules model and shell support:
   <https://modules.readthedocs.io/en/stable/>
 - Apptainer environment isolation and `--cleanenv`:

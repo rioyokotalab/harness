@@ -1,0 +1,203 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH= cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() {
+    echo "Usage: harness runtime --host LOGICAL_ID --name RUNTIME [--facts FILE] [--plan|--apply]" >&2
+}
+logical_host=
+runtime_name=
+fact_file=
+mode=plan
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --name) [ "$#" -ge 2 ] || { usage; exit 2; }; runtime_name=$2; shift 2 ;;
+        --facts) [ "$#" -ge 2 ] || { usage; exit 2; }; fact_file=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        *) usage; exit 2 ;;
+    esac
+done
+[ -n "$logical_host" ] && [ -n "$runtime_name" ] || { usage; exit 2; }
+[ "$runtime_name" = node ] || die "unsupported runtime: $runtime_name"
+[ "$mode" != apply ] || [ -z "$fact_file" ] || die "runtime apply does not accept captured facts"
+profile=$(profile_for "$logical_host")
+arch=$(config_get "$profile" arch)
+records=$(awk -F'|' -v runtime="$runtime_name" -v arch="$arch" '
+    $1 == runtime && $3 == "linux" && $4 == arch { print }
+' "$HARNESS_ROOT/tools/runtimes.tsv")
+count=$(printf '%s\n' "$records" | awk 'NF { n++ } END { print n + 0 }')
+[ "$count" -eq 1 ] || die "no unique supported runtime=$runtime_name arch=$arch"
+IFS='|' read -r record_runtime version runtime_os runtime_arch format url checksum archive_root node_version npm_version <<EOF
+$records
+EOF
+for value in "$version" "$runtime_arch" "$archive_root"; do require_safe_id "$value"; done
+[ "$format" = tar.gz ] || die "unsupported runtime format: $format"
+case "$url" in https://*) ;; *) die "runtime URL must use HTTPS" ;; esac
+case "$checksum" in *[!0-9a-f]*) die "invalid runtime checksum" ;; esac
+[ "${#checksum}" -eq 64 ] || die "invalid runtime checksum length"
+
+install_dir=$HOME/.local/opt/$runtime_name/$version/$runtime_os-$runtime_arch
+commands='node npm npx corepack'
+managed=yes
+present=0
+absent=0
+if [ -n "$fact_file" ]; then
+    fact_host=$(fact_get "$fact_file" logical_host)
+    [ "$fact_host" = "$logical_host" ] || die "captured fact host mismatch"
+    node_state=$(fact_get "$fact_file" tool_node)
+    npm_state=$(fact_get "$fact_file" tool_npm)
+    if [ "$node_state" = present ] && [ "$npm_state" = present ]; then
+        present=4
+        managed=no
+    elif [ "$node_state" = absent ] && [ "$npm_state" = absent ]; then
+        absent=4
+    else
+        present=1
+        absent=1
+    fi
+else
+    managed_count=0
+    managed_collision=0
+    for command_name in $commands; do
+        stable=$HOME/.local/bin/$command_name
+        source=$install_dir/bin/$command_name
+        if [ -L "$stable" ] && [ "$(readlink "$stable")" = "$source" ]; then
+            managed_count=$((managed_count + 1))
+        elif [ -e "$stable" ] || [ -L "$stable" ]; then
+            managed_collision=1
+        fi
+    done
+    if [ "$managed_count" -eq 4 ] && [ "$managed_collision" -eq 0 ]; then
+        present=4
+    elif [ "$managed_count" -ne 0 ] || [ "$managed_collision" -ne 0 ]; then
+        present=1
+        absent=1
+    elif command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
+        present=4
+        managed=no
+    elif ! command -v node >/dev/null 2>&1 && ! command -v npm >/dev/null 2>&1; then
+        absent=4
+        managed=no
+    else
+        present=1
+        absent=1
+        managed=no
+    fi
+fi
+
+blocked=0
+source=host-provided
+action=KEEP
+if [ "$managed" = yes ] && [ "$present" -eq 4 ] && [ -d "$install_dir" ]; then
+    source=managed-runtime
+elif [ "$present" -eq 4 ] && [ "$absent" -eq 0 ] && [ "$managed" = no ]; then
+    source=host-provided
+elif [ "$present" -eq 0 ] && [ "$absent" -eq 4 ] && [ ! -e "$install_dir" ] &&
+    [ ! -L "$install_dir" ]; then
+    action=INSTALL
+else
+    action=BLOCK
+    blocked=1
+fi
+
+echo "RUNTIME_PLAN host=$logical_host runtime=$runtime_name version=$version arch=$arch mode=$mode"
+case "$action" in
+    KEEP) echo "KEEP runtime=$runtime_name source=$source" ;;
+    INSTALL)
+        echo "INSTALL runtime_tree=$install_dir"
+        for command_name in $commands; do
+            echo "CREATE link=$HOME/.local/bin/$command_name source=$install_dir/bin/$command_name"
+        done
+        echo "FETCH url=$url sha256=$checksum"
+        echo "EXTRACT format=$format root=$archive_root"
+        ;;
+    BLOCK) echo "BLOCK runtime=$runtime_name reason=partial-or-unmanaged-state" ;;
+esac
+[ "$blocked" -eq 0 ] || die "runtime plan contains blocked paths"
+[ "$mode" = apply ] || { echo "END runtime host=$logical_host changes=not-applied"; exit 0; }
+[ "$action" = INSTALL ] || { echo "END runtime host=$logical_host changes=none"; exit 0; }
+
+[ -z "$(git -C "$HARNESS_ROOT" status --porcelain)" ] || die "runtime apply requires clean harness"
+"$HARNESS_ROOT/libexec/harness-doctor" --host "$logical_host" >/dev/null ||
+    die "host doctor failed before runtime apply"
+for required in curl sha256sum tar readlink; do
+    command -v "$required" >/dev/null 2>&1 || die "runtime apply requires command: $required"
+done
+
+state_root=$HOME/.local/state/harness/transactions
+mkdir -p "$state_root"; chmod 700 "$HOME/.local/state/harness" "$state_root"
+transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+manifest=$state_root/$transaction_id.manifest
+: >"$manifest"; chmod 600 "$manifest"
+printf 'schema=1\nhost=%s\nrevision=%s\n' "$logical_host" \
+    "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" >>"$manifest"
+archive=$(mktemp "$state_root/$transaction_id.download.XXXXXX")
+stage=
+tree_archive=
+complete=0
+cleanup() {
+    status=$?
+    rm -f "$archive"
+    [ -z "$tree_archive" ] || rm -f "$tree_archive"
+    [ -z "$stage" ] || rm -rf "$stage"
+    if [ "$complete" -eq 0 ]; then
+        awk -F'|' '$1 == "link" { print $2 "|" $3 }' "$manifest" |
+            while IFS='|' read -r destination target; do
+                [ -L "$destination" ] && [ "$(readlink "$destination")" = "$target" ] && rm "$destination"
+            done
+        awk -F'|' '$1 == "runtime" { print $2 }' "$manifest" |
+            while IFS= read -r directory; do [ ! -d "$directory" ] || rm -rf "$directory"; done
+        echo failed >"$manifest.status"; chmod 600 "$manifest.status"
+    fi
+    exit "$status"
+}
+trap cleanup EXIT HUP INT TERM
+
+echo "NATIVE curl --proto =https --tlsv1.2 -fL --retry 2 $url -o STAGING"
+curl --proto '=https' --tlsv1.2 -fL --retry 2 "$url" -o "$archive"
+printf '%s  %s\n' "$checksum" "$archive" | sha256sum -c - >/dev/null
+tar -tzf "$archive" | awk -v root="$archive_root" '
+    index($0, root "/") != 1 || $0 ~ /(^|\/)\.\.($|\/)/ { bad=1 }
+    END { exit bad }
+' || die "runtime archive contains an unsafe path"
+install_parent=${install_dir%/*}
+mkdir -p "$install_parent"
+stage=$(mktemp -d "$install_parent/.staging.XXXXXX")
+echo "NATIVE tar -xzf STAGING -C STAGING --strip-components=1"
+tar -xzf "$archive" -C "$stage" --strip-components=1
+[ -f "$stage/bin/node" ] && [ ! -L "$stage/bin/node" ] && [ -x "$stage/bin/node" ] ||
+    die "runtime archive missing executable node"
+for command_name in npm npx corepack; do
+    [ -L "$stage/bin/$command_name" ] || die "runtime archive missing link: $command_name"
+    resolved=$(readlink -f "$stage/bin/$command_name")
+    case "$resolved" in "$stage"/*) ;; *) die "runtime link escapes staged tree: $command_name" ;; esac
+done
+[ "$(find "$stage" -type l | wc -l | tr -d ' ')" -eq 3 ] || die "runtime archive has unexpected links"
+[ "$("$stage/bin/node" --version)" = "$node_version" ] || die "Node version verification failed"
+[ "$(PATH="$stage/bin:/usr/bin:/bin" "$stage/bin/npm" --version)" = "$npm_version" ] ||
+    die "npm version verification failed"
+tree_archive=$(mktemp "$state_root/$transaction_id.tree.XXXXXX")
+tar -cf "$tree_archive" -C "$stage" .
+tree_hash=$(sha256sum "$tree_archive" | awk '{print $1}')
+rm "$tree_archive"; tree_archive=
+printf 'runtime|%s|%s\n' "$install_dir" "$tree_hash" >>"$manifest"
+mv -T "$stage" "$install_dir"; stage=
+mkdir -p "$HOME/.local/bin"
+for command_name in $commands; do
+    destination=$HOME/.local/bin/$command_name
+    target=$install_dir/bin/$command_name
+    printf 'link|%s|%s\n' "$destination" "$target" >>"$manifest"
+    ln -s "$target" "$destination"
+done
+rm -f "$archive"
+echo complete >"$manifest.status"; chmod 600 "$manifest.status"
+complete=1
+trap - EXIT HUP INT TERM
+echo "TRANSACTION id=$transaction_id status=complete"
+echo "END runtime host=$logical_host changes=applied"

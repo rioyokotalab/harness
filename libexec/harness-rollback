@@ -18,7 +18,7 @@ manifest=$HOME/.local/state/harness/transactions/$transaction_id.manifest
 
 records=$(mktemp "${TMPDIR:-/tmp}/harness-rollback.XXXXXX")
 trap 'rm -f "$records"' EXIT HUP INT TERM
-awk -F'|' '$1 == "link" || $1 == "shell" || $1 == "patch" || $1 == "artifact" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+awk -F'|' '$1 == "link" || $1 == "shell" || $1 == "patch" || $1 == "artifact" || $1 == "runtime" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
     "$manifest" >"$records"
 
 # Validate every path before mutating any path.
@@ -58,6 +58,20 @@ while IFS='|' read -r record destination field3 field4 field5 field6 field7; do
         dd if="$destination" bs=1 skip="$offset" count="$bytes" 2>/dev/null |
             cmp -s - "$applied_payload" ||
             die "rollback blocked: reviewed patch changed after apply: $destination"
+    elif [ "$record" = runtime ]; then
+        expected_hash=$field3
+        case "$destination" in "$HOME/.local/opt/node/"*) ;; *) die "unsafe runtime path" ;; esac
+        if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
+            continue
+        fi
+        [ -d "$destination" ] && [ ! -L "$destination" ] ||
+            die "rollback blocked: runtime changed type: $destination"
+        tree_archive=$(mktemp "${TMPDIR:-/tmp}/harness-runtime-tree.XXXXXX")
+        tar -cf "$tree_archive" -C "$destination" .
+        observed_hash=$(sha256sum "$tree_archive" | awk '{print $1}')
+        rm "$tree_archive"
+        [ "$observed_hash" = "$expected_hash" ] ||
+            die "rollback blocked: runtime tree changed: $destination"
     elif [ "$record" = artifact ]; then
         relative=$field3; expected_hash=$field4
         case "$relative" in ''|*/*|.|..) die "unsafe artifact relative path" ;; esac
@@ -103,6 +117,13 @@ while IFS='|' read -r record destination field3 field4 field5 field6 field7; do
                 echo "RESTORE file=$destination patch=reviewed-exact-bytes"
                 dd if="$original_payload" of="$destination" bs=1 seek="$offset" \
                     conv=notrunc 2>/dev/null
+            fi
+        elif [ "$record" = runtime ]; then
+            if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
+                echo "KEEP runtime=$destination state=already-absent"
+            else
+                echo "REMOVE runtime=$destination"
+                rm -rf "$destination"
             fi
         elif [ "$record" = artifact ]; then
             relative=$field3
