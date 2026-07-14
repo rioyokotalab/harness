@@ -13,6 +13,7 @@ directory into a Git repository.
 - `claude/settings.example.json`: non-secret Claude settings template.
 - `shared/skills/`: reusable workflows exposed to both clients.
 - `install.sh`: idempotent, fail-closed discovery symlink installer.
+- `TODO.md`: harness-owned planned and active work.
 
 The installer exposes the same global guidance as `~/.codex/AGENTS.md` and
 `~/.claude/CLAUDE.md`. It links every shared skill into
