@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 
-SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH= cd -- "$SELF_DIR/.." && pwd)}
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
 export HARNESS_ROOT
 . "$SELF_DIR/harness-common"
 
@@ -36,6 +36,8 @@ count=$(printf '%s\n' "$records" | awk 'NF { n++ } END { print n + 0 }')
 IFS='|' read -r record_runtime version runtime_os runtime_arch format url checksum archive_root node_version npm_version <<EOF
 $records
 EOF
+[ "$record_runtime:$runtime_os:$runtime_arch" = "$runtime_name:linux:$arch" ] ||
+    die "runtime manifest mismatch"
 for value in "$version" "$runtime_arch" "$archive_root"; do require_safe_id "$value"; done
 [ "$format" = tar.gz ] || die "unsupported runtime format: $format"
 case "$url" in https://*) ;; *) die "runtime URL must use HTTPS" ;; esac
@@ -122,7 +124,7 @@ blocked=0
 source=host-provided
 action=KEEP
 if [ "$managed" = yes ] && [ "$present" -eq 4 ] && [ -d "$install_dir" ]; then
-    source=managed-runtime
+    source='managed-runtime'
 elif [ "$present" -eq 4 ] && [ "$absent" -eq 0 ] && [ "$managed" = no ]; then
     source=host-provided
 elif [ "$present" -eq 0 ] && [ "$absent" -eq 4 ] && [ ! -e "$install_dir" ] &&

@@ -163,6 +163,11 @@ files; managed Python is a separate reviewed action.
 
 ShellCheck uses an exact `version: 0.11.0` line from its multi-line version
 report. The invariant product banner alone is not accepted as version proof.
+When ShellCheck is available, the phase-1 suite checks every tracked shell
+entry point at warning/error severity. Info-level diagnostics from deliberately
+single-quoted generated fixtures, dynamic sibling sourcing, and trap-invoked
+helpers remain visible during exploratory lint without obscuring actionable
+failures.
 
 Agent binaries are separate from live client state. Installing Claude does not
 read, create, or synchronize authentication, settings, sessions, history, or

@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
 TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/harness-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
@@ -51,6 +51,12 @@ for script in \
 do
     sh -n "$script" || fail "shell syntax: $script"
 done
+
+if command -v shellcheck >/dev/null 2>&1; then
+    git -C "$ROOT" grep -Il -z '^#!.*\(sh\|bash\)' -- . \
+        ':(exclude)tests/fixtures/**' |
+        xargs -0 shellcheck --severity=warning || fail "ShellCheck warning/error gate"
+fi
 
 for script in \
     "$ROOT/libexec/harness-rollback" \
@@ -1073,7 +1079,7 @@ printf '%s\n' fixture-binary >"$artifact_dir/fixture"
 chmod 755 "$artifact_dir/fixture"
 artifact_hash=$(sha256sum "$artifact_dir/fixture" | awk '{print $1}')
 ln -s "$artifact_dir/fixture" "$artifact_link"
-artifact_transaction=fixture-artifact
+artifact_transaction='fixture-artifact'
 artifact_manifest=$test_home/.local/state/harness/transactions/$artifact_transaction.manifest
 printf 'schema=1\nhost=local\nrevision=test\nartifact|%s|fixture|%s\nlink|%s|%s\n' \
     "$artifact_dir" "$artifact_hash" "$artifact_link" "$artifact_dir/fixture" \

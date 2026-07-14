@@ -4,7 +4,7 @@ This board is the authoritative current state for the portable Codex and Claude
 harness. Git preserves superseded chronology and command-level evidence. Keep
 live tasks, verified recovery facts, blockers, and next actions here; do not
 rebuild a second incident transcript in a session or report file. Next free id:
-T-177.
+T-178.
 
 ## Recovery priority — do before any other task
 
@@ -76,7 +76,8 @@ T-177.
 ## Active / recovery state
 
 - **T-171 — Recover the current-node home after accidental deletion
-  (T-172 audit complete; execute the reviewed plan above):**
+  (T-172 audit and local ShellCheck recovery complete; continue the reviewed
+  current-tool plan after T-170 reconciliation):**
 
   **Incident and containment**
 
@@ -135,20 +136,23 @@ T-177.
     that an absent path should exist. A 2026-07-15 website validation confirmed
     normal-PATH `lftp` is still unavailable; its isolated deployment-policy
     test stopped at that prerequisite without network or deployment.
-  - The uncommitted ShellCheck transaction work after `5f6382b` was not in the
-    restored bundle. T-172 must search read-only Git/object evidence before it
-    is classified as permanently lost or reconstructed from intent.
+  - The uncommitted ShellCheck transaction bytes after `5f6382b` were confirmed
+    absent by T-172. T-173 reconstructed new checksum-pinned work at `2222fc5`.
+    Local transaction `20260714T223339Z-461104` passed apply, lint, doctor,
+    idempotence, deliberate rollback, and absence checks; final transaction
+    `20260714T223421Z-468645` reapplied ShellCheck 0.11.0 successfully.
   - Product-managed policy may override local Codex defaults on some surfaces;
     the verified fresh host CLI honored the recovered values. The surviving
     website pre-commit hook was left unchanged because agents do not edit
     `.git`; its old Claude-size branch is inert under the current tracked tree.
 
-  **Next action:** execute T-172. Do not perform broad home reconstruction,
-  owner config/profile edits, package installation, credential recovery, or
-  fleet mutation during that audit.
+  **Next action:** execute T-170 read-only reconciliation, then recover the
+  remaining checksum-pinned local tools one transaction at a time. Resolve
+  lftp through T-175 first. Do not perform broad home reconstruction, owner
+  config/profile edits, credential recovery, or unplanned fleet mutation.
 
 - **T-170 — Mirror the working environment across configured clusters
-  (ready for read-only reconciliation after T-172):**
+  (ready for read-only reconciliation):**
 
   - In-scope environments are the current node plus `ab`, `ab2`, `ri`, `al`,
     `rc`, and `t4`. `abci_login` and `alps_login` are transport-only;
@@ -232,8 +236,9 @@ live instructions.
   0.11.0 and GPLv3. Exact/old host behavior, inventory/doctor integration,
   both architecture plans, isolated apply, idempotence, tamper refusal,
   rollback, guarded cleanup, syntax/diff checks, and the full phase-1 suite
-  pass. Local installation remains a T-171 recovery transaction, not evidence
-  that the lost implementation bytes were recovered.
+  pass. The later T-171 local transaction pilot also passed; that successful
+  reconstruction is not evidence that the lost implementation bytes were
+  recovered.
 - **T-174 — Remove raw recursive cleanup from harness tests (complete
   2026-07-15):**
   `tests/test-phase1.sh` and the native Slurm smoke owned temporary trees with
@@ -270,3 +275,16 @@ live instructions.
   minimal-PATH command floors, recursive-command absence, syntax, dedicated
   guard tests, and repeated full phase-1 suites pass. Command-level exec policy
   is no longer the sole protection for deletion launched inside harness code.
+- **T-177 — Resolve findings from the restored ShellCheck (complete
+  2026-07-15):** the local recovery pilot found one real source-manifest
+  checksum-loop defect plus warning-level portability/style findings. Replaced
+  the ineffective one-item loop with exact checksum validation, made previously
+  discarded manifest identity fields enforce their schemas, made rollback and
+  remediation conditionals explicit, quoted literal hyphenated values, and
+  used the portable explicit empty-`CDPATH` form. The phase-1 suite now lints
+  every tracked shell entry point at warning/error severity when ShellCheck is
+  available. Warning/error lint, POSIX syntax, diff checks, guarded-delete
+  regressions, and the full phase-1 suite pass. Remaining exploratory messages
+  are info-only dynamic sibling sourcing, deliberately single-quoted generated
+  fixture bodies, manifest pipeline analysis, or trap-invoked helpers; they are
+  neither globally suppressed nor actionable failures.

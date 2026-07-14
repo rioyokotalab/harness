@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 
-SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH= cd -- "$SELF_DIR/.." && pwd)}
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
 export HARNESS_ROOT
 . "$SELF_DIR/harness-common"
 
@@ -31,6 +31,7 @@ count=$(printf '%s\n' "$records" | awk 'NF { n++ } END { print n + 0 }')
 IFS='|' read -r record_minor patch uv_version python_os python_arch implementation <<EOF
 $records
 EOF
+[ "$record_minor:$python_arch" = "$minor:$arch" ] || die "Python manifest mismatch"
 [ "$implementation" = cpython ] || die "unsupported Python implementation"
 
 install_dir=$HOME/.local/opt/python/$minor/$python_os-$python_arch

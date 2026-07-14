@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 
-SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH= cd -- "$SELF_DIR/.." && pwd)}
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
 export HARNESS_ROOT
 . "$SELF_DIR/harness-common"
 
@@ -31,8 +31,10 @@ while IFS='|' read -r record destination field3 field4 field5 field6 field7; do
         if [ "$current" -eq "$original" ]; then
             continue
         fi
-        [ "$current" -eq "$expected" ] && tail -c "$bytes" "$destination" | cmp -s - "$payload" ||
+        if [ "$current" -ne "$expected" ] ||
+            ! tail -c "$bytes" "$destination" | cmp -s - "$payload"; then
             die "rollback blocked: shell file changed after apply: $destination"
+        fi
     elif [ "$record" = patch ]; then
         offset=$field3; original_size=$field4; bytes=$field5
         original_payload=$field6; applied_payload=$field7

@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
 RULES=$ROOT/.codex/rules/default.rules
 TEST_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/guarded-delete-test.XXXXXX")
@@ -90,6 +90,7 @@ for command in \
     '/usr/bin/rm --recursive output'
 do
     # These fixed test strings contain no expansion and are split intentionally.
+    # shellcheck disable=SC2086
     set -- $command
     codex execpolicy check --pretty --rules "$RULES" -- "$@" \
         >"$TEST_ROOT/rule.out" 2>/dev/null || fail "execpolicy check: $command"
@@ -179,7 +180,6 @@ token_manifest=$TEST_ROOT/token.manifest
 "$HARNESS" guarded-delete plan --within "$TEST_ROOT/root" \
     --manifest "$token_manifest" -- "$TEST_ROOT/root/token-target" \
     >"$TEST_ROOT/token.plan"
-token=$(token_from "$TEST_ROOT/token.plan")
 expect_failure 'manifest token mismatch; re-plan' "$TEST_ROOT/token.out" \
     "$HARNESS" guarded-delete apply --manifest "$token_manifest" \
     --token 0000000000000000000000000000000000000000000000000000000000000000

@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 
-SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH= cd -- "$SELF_DIR/.." && pwd)}
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
 export HARNESS_ROOT
 . "$SELF_DIR/harness-common"
 
@@ -89,9 +89,11 @@ trap cleanup EXIT HUP INT TERM
 
 dd if="$applied_payload" of="$destination" bs=1 seek="$offset" conv=notrunc 2>/dev/null
 current_size=$(wc -c <"$destination" | tr -d ' ')
-[ "$current_size" -eq "$original_size" ] &&
-    dd if="$destination" bs=1 skip="$offset" count="${#applied_line}" 2>/dev/null |
-        cmp -s - "$applied_payload" || die "reviewed patch verification failed"
+if [ "$current_size" -ne "$original_size" ] ||
+    ! dd if="$destination" bs=1 skip="$offset" count="${#applied_line}" 2>/dev/null |
+        cmp -s - "$applied_payload"; then
+    die "reviewed patch verification failed"
+fi
 echo complete >"$manifest.status"; chmod 600 "$manifest.status"
 complete=1
 trap - EXIT HUP INT TERM

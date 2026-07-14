@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 
-SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH= cd -- "$SELF_DIR/.." && pwd)}
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
 export HARNESS_ROOT
 . "$SELF_DIR/harness-common"
 
@@ -43,12 +43,11 @@ case "$record_tool:$format" in
     sqlite:zip|tree:tar.gz) ;;
     *) die "source manifest mismatch" ;;
 esac
+[ "$source_arch" = any ] || die "source manifest architecture mismatch"
 for value in "$version" "$root" "$binary"; do require_safe_id "$value"; done
 case "$url" in https://*) ;; *) die "source URL must use HTTPS" ;; esac
-for digest in "$checksum"; do
-    case "$digest" in *[!0-9a-f]*) die "invalid source digest" ;; esac
-    [ "${#digest}" -eq 64 ] || die "invalid source digest length"
-done
+case "$checksum" in *[!0-9a-f]*) die "invalid source digest" ;; esac
+[ "${#checksum}" -eq 64 ] || die "invalid source digest length"
 if [ "$publisher_sha3" != none ]; then
     case "$publisher_sha3" in *[!0-9a-f]*) die "invalid publisher source digest" ;; esac
     [ "${#publisher_sha3}" -eq 64 ] || die "invalid publisher source digest length"

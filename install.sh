@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 CODEX_HOME=${CODEX_HOME:-"$HOME/.codex"}
 CLAUDE_HOME=${CLAUDE_HOME:-"$HOME/.claude"}
 USER_SKILLS="$HOME/.agents/skills"

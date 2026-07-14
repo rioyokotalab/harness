@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 
-SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH= cd -- "$SELF_DIR/.." && pwd)}
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
 export HARNESS_ROOT
 . "$SELF_DIR/harness-common"
 
@@ -41,6 +41,8 @@ IFS='|' read -r record_agent version agent_os agent_arch node_version \
     command_relative version_line <<EOF
 $records
 EOF
+[ "$record_agent:$agent_os:$agent_arch" = "$agent_name:linux:$arch" ] ||
+    die "agent manifest mismatch"
 for value in "$version" "$agent_arch"; do require_safe_id "$value"; done
 for url in "$launcher_url" "$native_url"; do case "$url" in https://*) ;; *) die "agent URL must use HTTPS" ;; esac; done
 for checksum in "$launcher_checksum" "$native_checksum"; do

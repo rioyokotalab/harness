@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 
-SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH= cd -- "$SELF_DIR/.." && pwd)}
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
 export HARNESS_ROOT
 . "$SELF_DIR/harness-common"
 
@@ -99,6 +99,7 @@ printf 'schema=1\nhost=%s\nrevision=%s\n' "$logical_host" "$(git -C "$HARNESS_RO
 rollback_partial() {
     awk -F'|' '$1 == "shell" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
         "$manifest" | while IFS='|' read -r record destination original bytes payload; do
+            [ "$record" = shell ] || die "invalid partial rollback record"
             current=$(wc -c <"$destination" | tr -d ' ')
             expected=$((original + bytes))
             if [ "$current" -eq "$expected" ] && tail -c "$bytes" "$destination" | cmp -s - "$payload"; then
