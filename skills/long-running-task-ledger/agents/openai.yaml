@@ -1,0 +1,4 @@
+interface:
+  display_name: "Long-running Task Ledger"
+  short_description: "Checkpoint multi-session work without losing state"
+  default_prompt: "Use $long-running-task-ledger to structure and checkpoint this multi-session task."

@@ -1,0 +1,10 @@
+*
+!.gitignore
+!README.md
+!AGENTS.md
+!config.example.toml
+!install.sh
+!skills/
+!skills/**
+!rules/
+!rules/**

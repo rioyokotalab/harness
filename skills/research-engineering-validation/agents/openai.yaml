@@ -1,0 +1,4 @@
+interface:
+  display_name: "Research Engineering Validation"
+  short_description: "Validate HPC, GPU, and distributed optimizations"
+  default_prompt: "Use $research-engineering-validation to optimize this research code with matched evidence."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Evidence-first Research"
+  short_description: "Research claims with provenance and verification"
+  default_prompt: "Use $evidence-first-research to investigate this question with traceable sources."

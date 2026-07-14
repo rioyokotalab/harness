@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bounded Agent Delegation"
+  short_description: "Delegate isolated work with reviewable handoffs"
+  default_prompt: "Use $bounded-agent-delegation to decide and structure safe subagent work."

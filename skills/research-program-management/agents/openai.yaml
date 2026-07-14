@@ -1,0 +1,4 @@
+interface:
+  display_name: "Research Program Management"
+  short_description: "Track projects and student progress responsibly"
+  default_prompt: "Use $research-program-management to organize these projects and next actions."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Research Presentation Workflow"
+  short_description: "Build sourced and visually verified research slides"
+  default_prompt: "Use $research-presentation-workflow to plan and verify this research presentation."
