@@ -1217,7 +1217,13 @@ harness. Repository-specific tasks remain in their own project ledgers.
     emitted an optional-NumPy warning but the Torch-only numerical gates passed.
     The temporary venv and its 183 MB cache were removed. Do not install a
     global framework merely to run GPU validation; run the CUDA form later from
-    the first reviewed project image or lockfile environment.
+    the first reviewed project image or lockfile environment. Commit `1ffc9f1`
+    adds the source and tests. All six clean remotes were fast-forwarded from
+    the complete bundle with SHA-256
+    `189648da0ae91aaf08865b846c3fdc354d4ea247457ae105dc6e38527ce858a9`;
+    each remote's Python 3.12 independently compiled the script, exercised its
+    dependency-free help path, retained a clean checkout, and removed the
+    staged bundle.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
