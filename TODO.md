@@ -519,6 +519,28 @@ harness. Repository-specific tasks remain in their own project ledgers.
     tool revision, show their architecture-specific plans, and apply ripgrep
     one host at a time. Keep `ai4s` connectivity-blocked.
 
+  Reachable-fleet ripgrep checkpoint (2026-07-14):
+
+  - Audited `ab`, `al`, `rc`, and `t4`: each checkout was clean and `rg` plus
+    both managed paths were absent. Fast-forwarded all four through a complete
+    shared-home bundle whose local and remote SHA-256 was
+    `1b4dff75d85416125175dbf9a1707f394a7418a4c7b3eef19a89d701200b6b34`.
+  - All four architecture-specific plans were unblocked. Applied ripgrep
+    transactions `ab` `20260714T122908Z-2059611`, `al`
+    `20260714T122926Z-253490`, `rc` `20260714T122942Z-1915736`, and `t4`
+    `20260714T123000Z-476119`. The AArch64 GNU binary executed successfully on
+    `al`; the other three used the x86-64 static PIE asset.
+  - Every transaction manifest/status is mode 600 and complete. All five
+    reachable clusters (`ab`, `ab2`, `al`, `rc`, `t4`) report ripgrep 15.1.0,
+    an idempotent `managed-artifact` plan, clean harness Git state, zero doctor
+    failures, and silent non-interactive SSH.
+  - Final warning counts are `ab` 8, `ab2` 8, `al` 10, `rc` 9, and `t4` 10.
+    Each fell by exactly one from its pre-ripgrep baseline. `ai4s` received no
+    checkout or tool mutation because its SSH banner remains unreachable.
+  - Next executable action: commit this fleet evidence, fast-forward all five
+    reachable checkouts to that one revision, then add the next independently
+    sourced/checksum-verified artifact class to the same transaction engine.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 
