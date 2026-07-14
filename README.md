@@ -127,10 +127,12 @@ doctor, extracts only the declared archive member into
 `~/.local/opt/TOOL/VERSION/TARGET`, validates the reported version, and then
 creates the `~/.local/bin` link. Rollback first verifies the installed binary
 hash and refuses any modified artifact before removing the link and directory.
-The initial manifest covers ripgrep 15.1.0 and uv 0.9.18 on Linux x86-64 and
-AArch64; other selected tools remain plans until their official artifacts and
-checksums are recorded and tested. Installing uv does not implicitly download
-Python or modify shell files; managed Python is a separate reviewed action.
+The initial manifest covers ripgrep 15.1.0, uv 0.9.18, and rclone 1.74.3 on
+Linux x86-64 and AArch64. Tar and ZIP transactions extract only the declared
+binary member; other selected tools remain plans until their official artifacts
+and checksums are recorded and tested. Installing uv does not implicitly
+download Python or modify shell files; managed Python is a separate reviewed
+action.
 
 ## Deliberately excluded
 

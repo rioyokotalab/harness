@@ -110,6 +110,20 @@ grep 'INSTALL artifact=.*uv/0.9.18/linux-aarch64' "$TEMP_DIR/uv-plan.out" \
 grep 'sha256=f8e23ec786b18660ade6b033b6191b7e9c283c872eeb8c4531d56a873decf160' \
     "$TEMP_DIR/uv-plan.out" >/dev/null || fail "uv AArch64 checksum plan"
 
+mkdir -p "$TEMP_DIR/rclone-plan-home"
+HOME="$TEMP_DIR/rclone-plan-home" "$HARNESS" tool --host rc --name rclone \
+    --facts "$ROOT/tests/fixtures/rc.facts" --plan >"$TEMP_DIR/rclone-x86-plan.out"
+grep 'sha256=dbee7ccd7a5d617e4ed4cd4555c16669b511abfe8d31164f61be35ac9e999bd2' \
+    "$TEMP_DIR/rclone-x86-plan.out" >/dev/null || fail "rclone x86-64 checksum plan"
+grep 'EXTRACT format=zip member=rclone-v1.74.3-linux-amd64/rclone binary=rclone' \
+    "$TEMP_DIR/rclone-x86-plan.out" >/dev/null || fail "rclone x86-64 extraction plan"
+HOME="$TEMP_DIR/rclone-plan-home" "$HARNESS" tool --host al --name rclone \
+    --facts "$ROOT/tests/fixtures/al.facts" --plan >"$TEMP_DIR/rclone-arm-plan.out"
+grep 'sha256=8f8d47446e061f80c3256659fe8e21f56d72d96aaefe1275d088ea5eb6b42aa7' \
+    "$TEMP_DIR/rclone-arm-plan.out" >/dev/null || fail "rclone AArch64 checksum plan"
+grep 'EXTRACT format=zip member=rclone-v1.74.3-linux-arm64/rclone binary=rclone' \
+    "$TEMP_DIR/rclone-arm-plan.out" >/dev/null || fail "rclone AArch64 extraction plan"
+
 path_home=$TEMP_DIR/path-home
 mkdir -p "$path_home/.local/bin"
 printf '%s\n' '#!/bin/sh' 'exit 0' >"$path_home/.local/bin/rg"
@@ -137,6 +151,17 @@ rm "$test_home/.local/bin/rg" "$managed_rg_dir/rg"
 rmdir "$managed_rg_dir"
 cp -R "$ROOT/bin" "$ROOT/libexec" "$ROOT/profiles" "$ROOT/shared" \
     "$ROOT/shell" "$ROOT/tools" "$ROOT/.codex" "$ROOT/.claude" "$test_repo/"
+zip_fixture_dir=$TEMP_DIR/zip-fixture
+zip_fixture_archive=$TEMP_DIR/rclone-fixture.zip
+zip_fixture_member=rclone-v1.74.3-linux-amd64/rclone
+mkdir -p "$zip_fixture_dir"
+printf '%s\n' '#!/bin/sh' 'echo "rclone v1.74.3"' >"$zip_fixture_dir/rclone"
+chmod 755 "$zip_fixture_dir/rclone"
+python3 -c 'import sys,zipfile; z=zipfile.ZipFile(sys.argv[1], "w", zipfile.ZIP_DEFLATED); z.write(sys.argv[2], sys.argv[3]); z.close()' \
+    "$zip_fixture_archive" "$zip_fixture_dir/rclone" "$zip_fixture_member"
+zip_fixture_hash=$(sha256sum "$zip_fixture_archive" | awk '{print $1}')
+sed -i "s/dbee7ccd7a5d617e4ed4cd4555c16669b511abfe8d31164f61be35ac9e999bd2/$zip_fixture_hash/" \
+    "$test_repo/tools/artifacts.tsv"
 git -C "$test_repo" init -q
 git -C "$test_repo" config user.name harness-test
 git -C "$test_repo" config user.email harness-test.invalid
@@ -277,6 +302,45 @@ cmp -s "$profile_home/.bashrc" "$TEMP_DIR/original-profile-bashrc" ||
 cmp -s "$profile_home/.profile" "$TEMP_DIR/original-profile-login" ||
     fail "profile-selection login rollback"
 [ ! -e "$profile_home/.bash_profile" ] || fail "rollback created bash profile"
+
+# Exercise exact-member ZIP apply and rollback without network access.
+fake_bin=$TEMP_DIR/fake-bin
+mkdir -p "$fake_bin"
+printf '%s\n' \
+    '#!/bin/sh' \
+    'out=' \
+    'while [ "$#" -gt 0 ]; do' \
+    '    case "$1" in' \
+    '        -o) out=$2; shift 2 ;;' \
+    '        *) shift ;;' \
+    '    esac' \
+    'done' \
+    '[ -n "$out" ]' \
+    'cp "$FIXTURE_ARCHIVE" "$out"' >"$fake_bin/curl"
+chmod 755 "$fake_bin/curl"
+HOME="$test_home" PATH="$fake_bin:/usr/bin:/bin" FIXTURE_ARCHIVE="$zip_fixture_archive" \
+    "$test_repo/bin/harness" tool --host local --name rclone --apply \
+    >"$TEMP_DIR/zip-tool-apply.out"
+zip_tool_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/zip-tool-apply.out")
+[ -n "$zip_tool_transaction" ] || fail "missing ZIP tool transaction"
+grep "NATIVE unzip -p STAGING $zip_fixture_member > STAGING/rclone" \
+    "$TEMP_DIR/zip-tool-apply.out" >/dev/null || fail "ZIP native extraction report"
+HOME="$test_home" PATH="/usr/bin:/bin" \
+    "$test_home/.local/bin/rclone" --version >"$TEMP_DIR/zip-tool-version.out"
+grep '^rclone v1.74.3$' "$TEMP_DIR/zip-tool-version.out" >/dev/null ||
+    fail "ZIP installed version"
+HOME="$test_home" PATH="/usr/bin:/bin" \
+    "$test_repo/bin/harness" tool --host local --name rclone --plan \
+    >"$TEMP_DIR/zip-tool-repeat.out"
+grep 'KEEP command=rclone source=managed-artifact' "$TEMP_DIR/zip-tool-repeat.out" \
+    >/dev/null || fail "ZIP managed artifact plan"
+HOME="$test_home" "$test_repo/bin/harness" rollback "$zip_tool_transaction" \
+    >"$TEMP_DIR/zip-tool-rollback.out"
+[ ! -e "$test_home/.local/bin/rclone" ] && [ ! -L "$test_home/.local/bin/rclone" ] ||
+    fail "ZIP rollback left stable link"
+[ ! -e "$test_home/.local/opt/rclone/1.74.3/linux-x86_64" ] ||
+    fail "ZIP rollback left artifact directory"
 
 # Exercise artifact rollback and its all-path modification refusal without network.
 artifact_dir=$test_home/.local/opt/fixture/1/linux-x86_64

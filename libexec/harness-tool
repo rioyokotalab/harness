@@ -43,13 +43,16 @@ EOF
 require_safe_id "$version"
 require_safe_id "$artifact_arch"
 require_safe_id "$binary"
-case "$member" in ''|/*|../*|*/../*|*/..) die "unsafe artifact member path" ;; esac
+case "$member" in ''|/*|../*|*/../*|*/..|*'*'*|*'?'*|*'['*|*']'*)
+    die "unsafe artifact member path"
+    ;;
+esac
 case "$url" in https://*) ;; *) die "artifact URL must use HTTPS" ;; esac
 case "$checksum" in
     *[!0-9a-f]*) die "invalid artifact checksum" ;;
 esac
 [ "${#checksum}" -eq 64 ] || die "invalid artifact checksum length"
-[ "$format" = tar.gz ] || die "unsupported artifact format: $format"
+case "$format" in tar.gz|zip) ;; *) die "unsupported artifact format: $format" ;; esac
 
 install_dir=$HOME/.local/opt/$tool_name/$version/$artifact_os-$artifact_arch
 installed_binary=$install_dir/$binary
@@ -119,6 +122,7 @@ else
         BLOCK) echo "BLOCK link=$stable_link reason=existing-unmanaged-path" ;;
     esac
     echo "FETCH url=$url sha256=$checksum"
+    echo "EXTRACT format=$format member=$member binary=$binary"
 fi
 [ "$blocked" -eq 0 ] || die "tool plan contains blocked paths"
 [ "$mode" = apply ] || { echo "END tool host=$logical_host changes=not-applied"; exit 0; }
@@ -130,9 +134,15 @@ fi
     die "tool apply requires clean harness"
 "$HARNESS_ROOT/libexec/harness-doctor" --host "$logical_host" >/dev/null ||
     die "host doctor failed before tool apply"
-for required in curl sha256sum tar; do
+for required in curl sha256sum; do
     command -v "$required" >/dev/null 2>&1 || die "tool apply requires command: $required"
 done
+case "$format" in
+    tar.gz) extractor=tar ;;
+    zip) extractor=unzip ;;
+esac
+command -v "$extractor" >/dev/null 2>&1 ||
+    die "tool apply requires command: $extractor"
 
 state_root=$HOME/.local/state/harness/transactions
 mkdir -p "$state_root"
@@ -181,7 +191,16 @@ if [ "$artifact_action" = INSTALL ]; then
     install_parent=${install_dir%/*}
     mkdir -p "$install_parent"
     stage=$(mktemp -d "$install_parent/.staging.XXXXXX")
-    tar -xzf "$archive" -C "$stage" --strip-components=1 "$member"
+    case "$format" in
+        tar.gz)
+            echo "NATIVE tar -xzf STAGING -C STAGING --strip-components=1 $member"
+            tar -xzf "$archive" -C "$stage" --strip-components=1 "$member"
+            ;;
+        zip)
+            echo "NATIVE unzip -p STAGING $member > STAGING/$binary"
+            unzip -p "$archive" "$member" >"$stage/$binary"
+            ;;
+    esac
     [ -f "$stage/$binary" ] && [ ! -L "$stage/$binary" ] ||
         die "artifact did not contain the expected regular binary"
     chmod 755 "$stage/$binary"

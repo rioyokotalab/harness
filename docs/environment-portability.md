@@ -307,6 +307,8 @@ Validate, per host:
   <https://docs.astral.sh/uv/>
 - uv managed Python behavior:
   <https://docs.astral.sh/uv/guides/install-python/>
+- rclone 1.74.3 release artifacts and publisher checksums:
+  <https://downloads.rclone.org/v1.74.3/>
 - Environment Modules model and shell support:
   <https://modules.readthedocs.io/en/stable/>
 - Apptainer environment isolation and `--cleanenv`:

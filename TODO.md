@@ -671,6 +671,35 @@ harness. Repository-specific tasks remain in their own project ledgers.
     design managed Python 3.12 as its own pinned, rollback-aware transaction or
     add another self-contained selected tool artifact. `ai4s` remains blocked.
 
+  rclone artifact implementation checkpoint (2026-07-14):
+
+  - Selected the observed local rclone 1.74.3 as the next self-contained layer.
+    The official release directory publishes Linux AMD64 and ARM64 ZIP archives
+    and a release-wide `SHA256SUMS` file:
+    <https://downloads.rclone.org/v1.74.3/>. All six cluster targets have native
+    `unzip`; `ab` and `ab2` already provide rclone, so only `ri`, `al`, `rc`,
+    and `t4` need a managed artifact.
+  - Independently downloaded both official archives over TLS. Their SHA-256
+    values matched the publisher file, each archive contained the same six-file
+    layout, and exact-member extraction produced one static executable. The
+    AMD64 binary reported rclone 1.74.3; `file` identified the second binary as
+    AArch64. Temporary verification files were removed.
+  - Extended the existing transaction engine to accept only `tar.gz` or `zip`,
+    reject wildcard member paths, report the exact native extraction command,
+    and use `unzip -p` to materialize only the declared ZIP member. The same
+    checksum, version, single-file directory, mode-600 state, managed-link, and
+    all-path rollback gates remain in force.
+  - Added both architecture records and plan assertions. An offline fixture
+    exercises ZIP apply, idempotent discovery outside inherited PATH, and exact
+    rollback without network. A disposable-home transaction against the real
+    AMD64 release then installed a mode-755 rclone 1.74.3 binary, produced
+    mode-600 complete state, returned an idempotent managed plan, and rolled
+    back both paths exactly. The full phase-1 suite passes.
+  - Next executable action: commit this implementation, checksum-transfer it to
+    `ri`, show the exact ARM64 plan, and perform apply/rollback/reapply as the
+    architecture pilot. If all gates pass, roll out one host at a time to `al`,
+    `rc`, and `t4`; retain the host-provided rclone on `ab` and `ab2`.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 
