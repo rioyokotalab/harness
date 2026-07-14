@@ -493,6 +493,32 @@ harness. Repository-specific tasks remain in their own project ledgers.
     plan/apply/rollback/reapply pilot used for the control plane and shell
     layer.
 
+  `ab2` ripgrep pilot checkpoint (2026-07-14):
+
+  - Fast-forwarded the clean `ab2` harness from `42e9a11` to `822d9c4` using a
+    complete shared-home Git bundle with matching local/remote SHA-256
+    `2ed0c79efac1f9a2cb67035af6731832d87573f01990a37aed915cd768a15a36`.
+    The staging bundle was removed after transfer.
+  - Preflight confirmed `rg` and both managed paths absent, with native
+    `curl`, `sha256sum`, and `tar` available. The remote plan exactly matched
+    the reviewed x86-64 URL, publisher checksum, versioned directory, and
+    stable link.
+  - Applied transaction `20260714T122652Z-97806`. The installed binary was mode
+    755, reported `ripgrep 15.1.0 (rev af60c2de9d)`, and linked from
+    `~/.local/bin/rg`. The mode-600 transaction was complete, download staging
+    count was zero, the repeated plan reported `managed-artifact`, doctor
+    warnings fell from nine to eight, and SSH remained silent.
+  - Deliberate rollback removed both the stable link and exact versioned
+    directory. The plan returned to `INSTALL`, doctor warnings returned to
+    nine, and neither path remained. Reapplied cleanly as transaction
+    `20260714T122725Z-961686`.
+  - Final validation again reports the pinned version, a mode-600 complete
+    transaction, an idempotent managed-artifact plan, `failures=0 warnings=8`,
+    clean harness Git state, and silent non-interactive SSH.
+  - Next safe action: fast-forward `ab`, `al`, `rc`, and `t4` to the committed
+    tool revision, show their architecture-specific plans, and apply ripgrep
+    one host at a time. Keep `ai4s` connectivity-blocked.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 
