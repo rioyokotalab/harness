@@ -423,7 +423,8 @@ printf '%s\n' \
     '  *platform.python_version*) echo 3.12.12 ;;' \
     '  *platform.machine*) echo x86_64 ;;' \
     '  *) exit 0 ;;' \
-    'esac' >"$fake_python"
+    'esac' \
+    'printf "%s\n" "$0" >"${0%/*}/../relocation-state"' >"$fake_python"
 chmod 755 "$fake_python"
 printf '%s\n' \
     '#!/bin/sh' \

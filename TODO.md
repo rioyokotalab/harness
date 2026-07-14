@@ -877,6 +877,20 @@ harness. Repository-specific tasks remain in their own project ledgers.
     apply/rollback/reapply on ARM64 `ri`, and validate exact patch,
     architecture, SSL, SQLite, prefix, state permissions, silent SSH, and no
     writes beneath uv's default Python directory.
+  - The first live ARM64 pilot installed correctly on `al` as transaction
+    `20260714T135818Z-57995`, but rollback again failed closed after final-path
+    execution changed exactly one non-cache file:
+    `_sysconfigdata__linux_aarch64-linux-gnu.py`. A disposable second uv install
+    and recursive content comparison found no other difference; `.gitignore`
+    and `.lock` also matched. This is relocation state created because the
+    integrity digest was recorded while the interpreter still lived under its
+    staging prefix.
+  - Move activation before the final validation and digest, while retaining
+    cleanup ownership if any post-move gate fails. Extend the offline fixture
+    to rewrite a relocation-state file from its executable path, proving the
+    final digest is recorded only after activation. Then repair only the
+    agent-created pilot manifest hash from the independently observed current
+    tree, exercise rollback, and reapply with the corrected transaction.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

@@ -89,11 +89,13 @@ install_parent=${install_dir%/*}
 mkdir -p "$install_parent"
 stage=$(mktemp -d "$install_parent/.staging.XXXXXX")
 tree_archive=
+installed=0
 complete=0
 cleanup() {
     status=$?
     [ -z "$tree_archive" ] || rm -f "$tree_archive"
     [ -z "$stage" ] || rm -rf "$stage"
+    [ "$installed" -eq 0 ] || rm -rf "$install_dir"
     if [ "$complete" -eq 0 ]; then
         awk -F'|' '$1 == "link" { print $2 "|" $3 }' "$manifest" |
             while IFS='|' read -r destination target; do
@@ -121,18 +123,24 @@ python_path=$implementation_dir/bin/python$minor
     die "managed Python architecture verification failed"
 "$python_path" -c 'import ssl, sqlite3, sys; assert sys.prefix == sys.base_prefix; assert ssl.OPENSSL_VERSION; assert sqlite3.sqlite_version'
 relative=${implementation_dir#"$stage"/}
+mv -T "$stage" "$install_dir"; stage=; installed=1
+target=$install_dir/$relative/bin/python$minor
+[ "$("$target" -c 'import platform; print(platform.python_version())')" = "$patch" ] ||
+    die "activated Python patch verification failed"
+[ "$("$target" -c 'import platform; print(platform.machine())')" = "$arch" ] ||
+    die "activated Python architecture verification failed"
+"$target" -c 'import ssl, sqlite3, sys; assert sys.prefix == sys.base_prefix; assert ssl.OPENSSL_VERSION; assert sqlite3.sqlite_version'
 tree_archive=$(mktemp "$state_root/$transaction_id.tree.XXXXXX")
 tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
     --exclude='*/__pycache__' --exclude='*.pyc' --exclude='*.pyo' \
-    -cf "$tree_archive" -C "$stage" .
+    -cf "$tree_archive" -C "$install_dir" .
 tree_hash=$(sha256sum "$tree_archive" | awk '{print $1}')
 rm "$tree_archive"; tree_archive=
 printf 'python|%s|%s\n' "$install_dir" "$tree_hash" >>"$manifest"
-mv -T "$stage" "$install_dir"; stage=
-target=$install_dir/$relative/bin/python$minor
 mkdir -p "$HOME/.local/bin"
 printf 'link|%s|%s\n' "$stable_link" "$target" >>"$manifest"
 ln -s "$target" "$stable_link"
+installed=0
 echo complete >"$manifest.status"; chmod 600 "$manifest.status"
 complete=1
 trap - EXIT HUP INT TERM
