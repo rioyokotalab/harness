@@ -1307,7 +1307,14 @@ harness. Repository-specific tasks remain in their own project ledgers.
     syntax; use that already-present reviewed image if its default GCC 7.5
     cannot compile the source. Synchronize the committed smoke, try the default
     command everywhere, and use only explicit site modules/uenvs where the
-    captured default fails.
+    captured default fails. Commit `5617971` and complete bundle SHA-256
+    `1cc3e1d431dbc3d0d5e39fcc9a9945dc78db922fcd1aa73d2325a66bdf42efed`
+    synchronized the source to all six remotes. The exact default command
+    passed on current, `ab`, `ab2`, `ri`, `rc`, and `t4`; Alps' bare GCC 7.5
+    rejected `-std=c++20` as expected. The explicit native command `uenv run
+    prgenv-gnu/25.11:v1 --view=default -- c++` selected Spack GCC 14.2 and
+    produced `cpp20=pass`. Record the default and Alps routes in the native-HPC
+    skill, validate the full repository, and synchronize a closure commit.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

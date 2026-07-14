@@ -45,6 +45,7 @@ every placeholder before printing and executing a command.
   bypass its storage flags with `/usr/bin/podman`. The tracked job checks both
   native entry points before GPU/MPI work without selecting or pulling an image.
 - The default GCC passes the tracked ASan+UBSan smoke directly.
+- The default GCC passes the tracked C++20 concepts and `std::span` smoke.
 
 ## ABCI: `ab` and `ab2`
 
@@ -60,6 +61,7 @@ every placeholder before printing and executing a command.
   gcc/15.2.0`, compile with GCC, and set `ASAN_OPTIONS=detect_leaks=0` because
   LeakSanitizer cannot operate under this site's ptrace context. ASan and UBSan
   are validated; do not change the default compiler globally.
+- The default GCC 11.5 passes the tracked C++20 concepts and `std::span` smoke.
 
 ## RIKEN Rikyu: `ri`
 
@@ -72,6 +74,7 @@ every placeholder before printing and executing a command.
   Inspect current native help and the project's image before choosing one.
 - Architecture is AArch64. Use architecture-matching images and binaries.
 - The default GCC passes the tracked ASan+UBSan smoke directly.
+- The default GCC passes the tracked C++20 concepts and `std::span` smoke.
 
 ## CSCS Alps: `al`
 
@@ -83,6 +86,10 @@ every placeholder before printing and executing a command.
 - The locally present validated image is `prgenv-gnu/25.11:v1`; it is large and
   should not be replaced or pulled merely to chase a newer tag. A project may
   select a different reviewed uenv.
+- The bare login GCC 7.5 does not accept `-std=c++20`. The validated
+  process-local route is `uenv run prgenv-gnu/25.11:v1 --view=default -- c++`;
+  its Spack GCC 14.2 passes the tracked concepts and `std::span` smoke. Keep the
+  uenv selection explicit rather than changing the login compiler globally.
 - Compute architecture is AArch64. Validate CUDA/MPI inside the chosen uenv and
   allocation, not from the login baseline.
 - The default GCC passes the tracked ASan+UBSan smoke directly.
@@ -100,6 +107,9 @@ every placeholder before printing and executing a command.
 - The login default GCC cannot link its missing sanitizer runtime targets; no
   alternate GCC module, Clang, or static sanitizer archive was found. Record
   this as a site gap and run sanitizers in the reviewed project environment.
+- The login default GCC 11.5 passes the tracked C++20 concepts and `std::span`
+  smoke. Revalidate on the selected compute architecture when the built binary
+  will not run on the x86-64 login node.
 
 ## TSUBAME: `t4`
 
@@ -111,3 +121,4 @@ every placeholder before printing and executing a command.
 - For a process-local sanitizer build, run native `module load gcc/14.2.0`.
   The tracked ASan, UBSan, and LeakSanitizer smoke passes with that module; do
   not change the default compiler globally.
+- The default GCC 11.5 passes the tracked C++20 concepts and `std::span` smoke.
