@@ -720,6 +720,28 @@ harness. Repository-specific tasks remain in their own project ledgers.
     `al`, `rc`, and `t4` checkouts with one checksum-verified bundle, show each
     architecture-specific plan, then apply and validate one host at a time.
 
+  Reachable-fleet rclone checkpoint (2026-07-14):
+
+  - Fast-forwarded clean `al`, `rc`, and `t4` checkouts to the pilot-evidence
+    revision with one complete bundle whose local and remote SHA-256 was
+    `f2309f8ab259adb538449bf744b0391c178bd2b91b13bacd9b262c782aab3c9d`.
+    All exact plans matched their architecture and preflight found no collision.
+  - Applied rclone transactions `al` `20260714T131606Z-290742`, `rc`
+    `20260714T131625Z-2295042`, and `t4` `20260714T131651Z-1849980`. Each binary
+    reports rclone 1.74.3, each repeated plan reports `managed-artifact`, and
+    every manifest/status pair is mode 600 and complete.
+  - Fast-forwarded clean `ab`, `ab2`, and `ri` checkouts without changing their
+    tool state. Final fleet validation at `d6d9376` reports host-provided rclone
+    1.72.1 on `ab`/`ab2`, managed 1.74.3 on `ri`/`al`/`rc`/`t4`, zero doctor
+    failures, clean Git state, idempotent plans, and silent strict SSH on all
+    six targets. Warning counts are `ab` 7, `ab2` 7, `ri` 7, `al` 8, `rc` 7,
+    and `t4` 8.
+  - Next executable action: checkpoint and synchronize this evidence, then
+    design Node 24.16.0/npm 11.13.0 as a separately pinned multi-file runtime
+    transaction. Do not force the single-binary artifact engine to manage the
+    Node distribution tree or install either agent CLI before Node/npm rollback
+    and PATH behavior are independently validated.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 
