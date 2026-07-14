@@ -43,6 +43,24 @@ harness. Repository-specific tasks remain in their own project ledgers.
     `.ssh/config` is absent; do not reconstruct host/authentication settings by
     guesswork or continue the ShellCheck rollout until T-171 has an approved
     recovery source and scope.
+  - Fresh object/worktree validation passes for the recovered `harness` at
+    `16bfd6e` and `website` at `628b53a67071`; website retains only ordinary
+    unreachable Git objects and no worktree change. A repeated process audit
+    found no matching deletion command.
+  - Read-only local recovery plans made no changes. `harness apply --plan`
+    would recreate the harness command, Codex guidance/rules, and Codex/agent
+    skill links while retaining surviving Claude links. Pinned transactions
+    would reinstall ripgrep 15.1.0, uv 0.9.18, rclone 1.74.3, Tectonic 0.16.9,
+    Git LFS 3.7.1, Codex 0.144.4, and Claude 2.1.207 from the already-recorded
+    checksum manifests; host Node 24.16.0 and Python 3.12 remain healthy and
+    require no replacement. Do not apply these plans before the backup decision.
+  - `harness shell --plan` blocks both `.bashrc` and `.profile` as non-regular
+    because they are absent. This is the intended refusal: do not fabricate
+    empty owner profiles or discard unknown pre-incident content. The owner
+    approval bundle is therefore: first request a server-side pre-01:41 JST
+    restore to a separate path; if none exists, have the owner restore
+    authentication and choose whether to reconstruct profiles, then authorize
+    the exact non-secret control-plane/tool plans above.
 
 - **T-170 — Mirror the working environment across configured clusters:**
   1. Enumerate only concrete host aliases from the current node's SSH config
