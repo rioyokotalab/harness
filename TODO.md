@@ -38,6 +38,12 @@ harness. Repository-specific tasks remain in their own project ledgers.
     in a non-interactive shell, and `.bash_logout` references unset
     `SSH_AGENT_PID`; preserve them as inventory findings rather than connection
     failures.
+  - Current-node convenience is installed: `.bashrc` defines `cscs-renew` to
+    run the supported signer and reload only `~/.ssh/cscs-key` into the shared
+    agent for one day. `Host al` uses `ControlMaster auto`, a hashed control
+    socket under `~/.ssh/`, and `ControlPersist 8h`. Bash/config validation
+    passed; a fresh no-op took about seven seconds and a multiplexed repeat took
+    about 0.7 seconds with a live master connection.
   - `github` is reachable/authenticated and correctly behaves as a restricted
     non-cluster Git service.
   - `web` is confirmed to be an intentional SFTP-only service; rejecting shell
@@ -55,6 +61,11 @@ harness. Repository-specific tasks remain in their own project ledgers.
     analogous stderr, unset-variable, agent-lifecycle, or exit-status defects;
     fix each evidence-backed issue and independently recheck both `ssh HOST
     true` and a normal interactive login.
+  - The current node's `.bashrc` contains plaintext API credentials discovered
+    during the scoped helper edit. Never mirror or commit them. Rotate the
+    affected credentials, move them to an approved secret store or protected
+    runtime injection mechanism, and verify that new shells receive only the
+    intended environment without exposing values.
 
   Next step: inventory the seven reachable cluster shells, resolve the startup
   defects above, and design the declarative synchronization plan from the
