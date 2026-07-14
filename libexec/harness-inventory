@@ -64,6 +64,37 @@ case "$format" in text|json) ;; *) die "unsupported format: $format" ;; esac
 # Managed user tools are part of the portable environment even when a remote
 # non-interactive shell omits ~/.local/bin from its inherited PATH.
 PATH=$HOME/.local/bin:$PATH
+
+# Site scheduler commands may be installed through login-shell PATH setup that
+# a read-only non-interactive probe intentionally does not source. When invoked
+# from a checkout, append only explicit, existing absolute directories from the
+# logical host profile. Existing user and inherited site commands retain
+# precedence.
+if [ -n "${HARNESS_ROOT:-}" ]; then
+    command_path_profile=$HARNESS_ROOT/profiles/hosts/$logical_host.conf
+    if [ -f "$command_path_profile" ]; then
+        site_command_paths=$(sed -n 's/^command_paths=//p' "$command_path_profile")
+        site_command_path_count=$(printf '%s\n' "$site_command_paths" |
+            awk 'NF { n++ } END { print n + 0 }')
+        [ "$site_command_path_count" -le 1 ] || die "duplicate command_paths profile key"
+        old_ifs=$IFS
+        IFS=,
+        for site_command_path in $site_command_paths; do
+            [ "$site_command_path" = none ] && continue
+            case "$site_command_path" in
+                /*) ;;
+                *) die "site command path must be absolute" ;;
+            esac
+            case "$site_command_path" in
+                *[!A-Za-z0-9._/-]*) die "unsafe site command path" ;;
+            esac
+            if [ -d "$site_command_path" ] && [ ! -L "$site_command_path" ]; then
+                PATH=$PATH:$site_command_path
+            fi
+        done
+        IFS=$old_ifs
+    fi
+fi
 export PATH
 
 safe_value() {

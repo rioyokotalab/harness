@@ -4,7 +4,7 @@ This board is the authoritative current state for the portable Codex and Claude
 harness. Git preserves superseded chronology and command-level evidence. Keep
 live tasks, verified recovery facts, blockers, and next actions here; do not
 rebuild a second incident transcript in a session or report file. Next free id:
-T-178.
+T-181.
 
 ## Recovery priority — do before any other task
 
@@ -152,7 +152,8 @@ T-178.
   config/profile edits, credential recovery, or unplanned fleet mutation.
 
 - **T-170 — Mirror the working environment across configured clusters
-  (ready for read-only reconciliation):**
+  (read-only reconciliation complete 2026-07-15; parity rollout pending local
+  recovery and appended findings):**
 
   - In-scope environments are the current node plus `ab`, `ab2`, `ri`, `al`,
     `rc`, and `t4`. `abci_login` and `alps_login` are transport-only;
@@ -168,9 +169,9 @@ T-178.
   - Before the incident, all six remote checkouts had been independently
     synchronized through the MPI-route closure at `963ad1f`, with clean Git,
     zero doctor failures, idempotent plans, and mode-0600 transaction state.
-    Local `5f6382b` then recorded validated native CUDA compiler routes; do not
-    claim that revision reached every remote until T-172 and a later read-only
-    fleet reconciliation prove it.
+    The 2026-07-15 reconciliation now proves that the later local `5f6382b`
+    CUDA revision also reached every remote: all six report clean `main`
+    checkouts at the exact same commit.
   - Stable completed capabilities include managed Bash blocks, portable Git
     policy, uv/Python 3.12, Node 24/npm 11, Codex/Claude commands, rclone,
     Tectonic, Git LFS, Ninja, SQLite, Tree on `t4`, shared skills, container and
@@ -181,11 +182,18 @@ T-178.
     `rc` sanitizer-runtime limitations, project-owned PyTorch/CUDA images, and
     allocation-only multi-rank/GPU evidence. Do not install private dependency
     stacks merely to erase a warning.
-  - The accidental deletion invalidated current-node and fleet-parity
-    assumptions. Do not resume remote mutation from the old chronological
-    notes. After T-172, recapture value-free local and remote inventories,
-    establish exact revisions, make a reviewed diff/rollback plan, then advance
-    one host at a time only under a new user request.
+  - The 2026-07-15 value-free read-only probes ran the exact native SSH route
+    for revision/status, inventory, plan, and doctor on all six targets. Every
+    checkout is clean; doctors have zero failures and warning counts
+    `ab=5`, `ab2=5`, `ri=3`, `al=2`, `rc=2`, `t4=2`. No scheduler job,
+    allocation, remote file, package, or setting was created or changed. The
+    current node is clean at `5ef1598`, with zero doctor failures and eight
+    warnings: missing Git LFS, uv, Claude, rclone, lftp, and Tectonic plus the
+    intentional login-node Docker/Podman limitations. Its system Node/npm are
+    present but remain the wrong versions (18.19.1/9.2.0).
+  - Complete T-178 through T-180 and T-175, recover the current-node tools,
+    then construct one exact clean-revision bundle and rollback plan. Advance
+    one remote host at a time with no allocation or project dependency changes.
 
 ## Planned
 
@@ -288,3 +296,25 @@ live instructions.
   are info-only dynamic sibling sourcing, deliberately single-quoted generated
   fixture bodies, manifest pipeline analysis, or trap-invoked helpers; they are
   neither globally suppressed nor actionable failures.
+- **T-178 — Normalize hyphenated tool fact keys (complete 2026-07-15):** the
+  reconciled plans reported `git-lfs` as unknown even when inventory and doctor
+  agreed it was present because `harness-plan` did not map command punctuation
+  to the fact-key schema. It now uses the shared mapper; present and unusable
+  Git LFS fixture regressions and the full suite pass.
+- **T-179 — Reconcile ABCI scheduler discovery (complete 2026-07-15):** both
+  `ab` and `ab2` reported PBS commands absent in the direct non-interactive
+  inventory. Read-only native comparisons proved that `bash -lc` resolves
+  `qsub`, `qstat`, and `qdel` in `/opt/pbs/bin` and `nodestatus` in
+  `/home/apps/pbs_wrapper/bin` on both hosts. The host profiles now declare
+  those value-free command directories. Inventory appends only existing,
+  non-symlink, validated absolute profile directories after inherited/user
+  paths; it does not source startup files. An isolated fake-site-path test,
+  shell lint/syntax, and the full suite pass. Remote verification waits for the
+  normal clean-revision rollout; no remote state changed during diagnosis.
+- **T-180 — Make aggregate plans enforce pinned Node/npm versions (complete
+  2026-07-15):** current inventory correctly reported Node 18.19.1 and npm
+  9.2.0, but `harness plan` emitted `KEEP` from command presence alone. The
+  aggregate plan now reads the architecture-specific required versions from
+  `tools/runtimes.tsv` and emits an explicit observed/required mismatch action.
+  Exact and old Node/npm fixture regressions, live local planning, shell lint/
+  syntax, and the full suite pass.

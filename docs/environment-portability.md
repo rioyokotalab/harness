@@ -48,6 +48,12 @@ The inventory intentionally did not read environment values, shell-file
 contents, credentials, histories, project data, or caches. It made no remote
 changes.
 
+ABCI exposes PBS Pro commands through login-shell path setup rather than the
+direct non-interactive SSH path. The `ab` and `ab2` profiles therefore append
+the observed `/opt/pbs/bin` and `/home/apps/pbs_wrapper/bin` directories for
+inventory command discovery only. The harness does not source startup files or
+replace inherited/user command precedence to obtain these facts.
+
 ## Layer model
 
 ### 0. Site substrate: observe, never normalize

@@ -157,6 +157,14 @@ grep 'KEEP site_command class=profiler command=perf' \
     "$TEMP_DIR/plan-al.out" >/dev/null || fail "Alps perf profile"
 grep 'KEEP site_command class=debugger command=gdb' \
     "$TEMP_DIR/plan-ri.out" >/dev/null || fail "RIKEN debugger profile"
+grep 'KEEP tool=git-lfs command=git-lfs' "$TEMP_DIR/plan-rc.out" >/dev/null ||
+    fail "hyphenated selected-tool fact mapping"
+grep 'INSTALL tool=git-lfs command=git-lfs .*reason=host-command-unusable' \
+    "$TEMP_DIR/plan-ri.out" >/dev/null || fail "unusable hyphenated selected tool"
+grep 'KEEP tool=node command=node' "$TEMP_DIR/plan-local.out" >/dev/null ||
+    fail "exact pinned Node aggregate plan"
+grep 'KEEP tool=npm command=npm' "$TEMP_DIR/plan-local.out" >/dev/null ||
+    fail "exact pinned npm aggregate plan"
 
 sed 's/^arch=x86_64$/arch=aarch64/' "$ROOT/tests/fixtures/local.facts" \
     >"$TEMP_DIR/wrong-arch.facts"
@@ -347,8 +355,17 @@ HOME="$TEMP_DIR/runtime-facts-home" "$HARNESS" runtime --host local --name node 
     >"$TEMP_DIR/node-exact-facts-plan.out"
 grep 'KEEP runtime=node source=host-provided' \
     "$TEMP_DIR/node-exact-facts-plan.out" >/dev/null || fail "exact captured Node retention"
-sed 's/^tool_node_version=v24\.16\.0$/tool_node_version=v18.19.1/' \
+sed -e 's/^tool_node_version=v24\.16\.0$/tool_node_version=v18.19.1/' \
+    -e 's/^tool_npm_version=11\.13\.0$/tool_npm_version=9.2.0/' \
     "$ROOT/tests/fixtures/local.facts" >"$TEMP_DIR/node-old.facts"
+HOME="$TEMP_DIR/runtime-facts-home" "$HARNESS" plan --host local \
+    --facts "$TEMP_DIR/node-old.facts" >"$TEMP_DIR/node-old-aggregate-plan.out"
+grep 'INSTALL tool=node command=node .*reason=host-command-version-mismatch observed=v18.19.1 required=v24.16.0' \
+    "$TEMP_DIR/node-old-aggregate-plan.out" >/dev/null ||
+    fail "old captured Node aggregate plan"
+grep 'INSTALL tool=npm command=npm .*reason=host-command-version-mismatch observed=9.2.0 required=11.13.0' \
+    "$TEMP_DIR/node-old-aggregate-plan.out" >/dev/null ||
+    fail "old captured npm aggregate plan"
 HOME="$TEMP_DIR/runtime-facts-home" "$HARNESS" runtime --host local --name node \
     --facts "$TEMP_DIR/node-old.facts" --plan \
     >"$TEMP_DIR/node-old-facts-plan.out"
@@ -422,6 +439,20 @@ rm "$test_home/.local/bin/ninja" "$managed_ninja_dir/ninja"
 rmdir "$managed_ninja_dir"
 cp -R "$ROOT/bin" "$ROOT/libexec" "$ROOT/profiles" "$ROOT/shared" \
     "$ROOT/shell" "$ROOT/tools" "$ROOT/.codex" "$ROOT/.claude" "$test_repo/"
+site_command_bin=$TEMP_DIR/site-command-bin
+mkdir -p "$site_command_bin"
+for command_name in qsub qstat qdel nodestatus; do
+    printf '%s\n' '#!/bin/sh' 'exit 0' >"$site_command_bin/$command_name"
+    chmod 755 "$site_command_bin/$command_name"
+done
+sed -i "s|^command_paths=.*$|command_paths=$site_command_bin|" \
+    "$test_repo/profiles/hosts/ab.conf"
+HOME="$test_home" PATH="/usr/bin:/bin" "$test_repo/bin/harness" \
+    inventory --host ab >"$TEMP_DIR/site-command-inventory.out"
+for command_name in qsub qstat qdel nodestatus; do
+    grep "^tool_${command_name}=present$" "$TEMP_DIR/site-command-inventory.out" \
+        >/dev/null || fail "profile site-command discovery: $command_name"
+done
 zip_fixture_dir=$TEMP_DIR/zip-fixture
 zip_fixture_archive=$TEMP_DIR/rclone-fixture.zip
 zip_fixture_member=rclone-v1.74.3-linux-amd64/rclone

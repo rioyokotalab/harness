@@ -76,11 +76,35 @@ done
 
 while IFS='|' read -r tool_name command_name policy; do
     case "$tool_name" in ''|'#'*) continue ;; esac
-    state=$(fact_get "$fact_file" "tool_$command_name")
+    fact_command=$(fact_key_for_command "$command_name")
+    state=$(fact_get "$fact_file" "tool_$fact_command")
+    version_mismatch=0
+    required_version=
+    observed_version=
+    if [ "$state" = present ] && { [ "$tool_name" = node ] || [ "$tool_name" = npm ]; }; then
+        runtime_field=9
+        [ "$tool_name" = npm ] && runtime_field=10
+        required_version=$(awk -F'|' -v arch="$(fact_get "$fact_file" arch)" \
+            -v field="$runtime_field" '
+                $1 == "node" && $3 == "linux" && $4 == arch { print $field }
+            ' "$HARNESS_ROOT/tools/runtimes.tsv")
+        [ -n "$required_version" ] || die "missing pinned $tool_name runtime version"
+        observed_version=$(fact_get "$fact_file" "tool_${fact_command}_version")
+        if [ "$observed_version" != "$required_version" ]; then
+            state=unusable
+            version_mismatch=1
+        fi
+    fi
     case "$state" in
         present) echo "KEEP tool=$tool_name command=$command_name policy=$policy" ;;
         absent) echo "INSTALL tool=$tool_name command=$command_name policy=$policy" ;;
-        unusable) echo "INSTALL tool=$tool_name command=$command_name policy=$policy reason=host-command-unusable" ;;
+        unusable)
+            if [ "$version_mismatch" -eq 1 ]; then
+                echo "INSTALL tool=$tool_name command=$command_name policy=$policy reason=host-command-version-mismatch observed=$observed_version required=$required_version"
+            else
+                echo "INSTALL tool=$tool_name command=$command_name policy=$policy reason=host-command-unusable"
+            fi
+            ;;
         *) echo "CHECK tool=$tool_name command=$command_name reason=unknown-state" ;;
     esac
 done <"$HARNESS_ROOT/profiles/tools.tsv"
