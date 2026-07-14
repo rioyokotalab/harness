@@ -21,6 +21,15 @@ bullet when it conflicts with the session checkpoint.
     owner to declare the SSH config ready, then perform the static-only checks
     in `docs/recovery-session.md`. This checkpoint supersedes older missing-file
     and backup-gate observations below for the current SSH-config subtask.
+  - Before the next cold restart, website T-179 reconstructed the superseding
+    global/local agent configuration from T-11 and T-170--T-173 history.
+    `~/.codex/config.toml` now has never/full-access policy plus trusted home and
+    website projects while preserving the current model settings; harness
+    transaction `20260714T202625Z-3548153` recreated all 17 missing discovery
+    links and retained eight Claude links. A fresh host Codex process loaded
+    the global agreements and ledger skill with the recovered policy. The
+    website ledger is idle at local commit `e9ac8a0`, one commit ahead of its
+    remote. This recovery does not change the SSH-config next action above.
   - On 2026-07-15 the owner explicitly authorized reconstructing
     `~/.ssh/config` from the durable connection history. Recreate the 11 known
     aliases with confirmed endpoint/account/routing fields only; leave unknown

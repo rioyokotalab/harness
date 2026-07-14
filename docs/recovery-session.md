@@ -10,6 +10,21 @@ files appear to conflict, this file describes the current state.
 
 - The owner is actively completing `~/.ssh/config`. Do not edit, replace, or
   validate it until the owner says the edit is finished.
+- The agent autonomy/configuration recovery is complete. Website T-179
+  reconstructed T-11 and the superseding T-170--T-173 global/local split.
+  `~/.codex/config.toml` is mode 0600 and now combines the current model
+  settings with `approval_policy = "never"`, `sandbox_mode =
+  "danger-full-access"`, and trusted entries for both `/home/rioyokota` and
+  `/home/rioyokota/website`.
+- Harness transaction `20260714T202625Z-3548153` recreated 17 missing links
+  and retained eight surviving Claude links. The live discovery surfaces now
+  include global Codex guidance, default rules, the harness command, seven
+  Codex skill links, and seven shared-agent skill links. A fresh host Codex
+  process reported the recovered never/full-access policy and returned
+  `GLOBAL_OK SKILL_OK` after loading the global agreements and ledger skill.
+- The website task ledger is idle with T-179 complete at local commit
+  `e9ac8a0`. The website branch is one commit ahead of `origin/main`; do not
+  push it unless the owner asks.
 - The config was reconstructed from the durable, value-redacted connection
   history with 11 aliases: `abci_login`, `ab`, `ab2`, `ri`, `alps_login`, `al`,
   `rc`, `t4`, `si`, `web`, and `github`.
@@ -33,8 +48,9 @@ files appear to conflict, this file describes the current state.
 
 ## Next action
 
-Wait for the owner to say that `~/.ssh/config` is ready. Then perform static
-validation only:
+After a cold restart, read this file and `~/harness/TODO.md`, confirm the
+recovered global guidance is loaded, and resume at this boundary: wait for the
+owner to say that `~/.ssh/config` is ready. Then perform static validation only:
 
 1. Check that the path is a regular owner file with mode 0600.
 2. Parse all 11 aliases with `ssh -G` and report failures without printing
@@ -51,15 +67,18 @@ validation only:
 - Durable task board: `~/harness/TODO.md`.
 - This immediate session checkpoint: `~/harness/docs/recovery-session.md`.
 - Harness checkout: branch `main`. It includes Node-planner commit `68fb820`,
-  which is valid but unrelated to the next recovery action. Do not continue
-  tool-planner work during this SSH-config session.
+  the pushed recovery checkpoints through `bc2603f`, and this updated handoff.
+  The Node-planner work is valid but unrelated to the next recovery action; do
+  not continue tool-planner work during this SSH-config session.
 - T-170 remote mutation remains paused while T-171 is active.
 
 ## Publication status
 
 - The owner corrected `origin` to `github:rioyokotalab/harness`.
-- The owner pushed the recovery checkpoint. A later read-only comparison
-  confirmed local and remote `main` both at `44bd299` before this update.
+- The owner pushed the recovery checkpoints through `bc2603f`. This handoff
+  update is local until separately pushed.
+- Website commit `e9ac8a0` records the global-configuration recovery locally
+  and is one commit ahead of its remote.
 
 ## SSH agent state
 
