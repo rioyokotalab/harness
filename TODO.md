@@ -587,6 +587,27 @@ harness. Repository-specific tasks remain in their own project ledgers.
     plans, and apply one host at a time; keep Python installation separate and
     keep `ai4s` blocked.
 
+  Reachable-fleet uv checkpoint (2026-07-14):
+
+  - Fast-forwarded `ab`, `al`, `rc`, and `t4` to the uv pilot revision through
+    a complete bundle with SHA-256
+    `6ff8a91db712d7b8167d8ea580f66a1ffc198d7a610adedec635b66f694b8c94`.
+    All four plans were unblocked and selected the expected architecture.
+  - Applied uv transactions `ab` `20260714T123533Z-2871307`, `al`
+    `20260714T123535Z-74225`, `rc` `20260714T123537Z-1964222`, and `t4`
+    `20260714T123540Z-639983`. Every manifest/status pair is mode 600 and
+    complete; the AArch64 binary executes successfully on `al`.
+  - All five reachable clusters report uv 0.9.18, an idempotent
+    `managed-artifact` plan, zero doctor failures, and silent SSH. Warning
+    counts are now `ab` 7, `ab2` 7, `al` 9, `rc` 8, and `t4` 9.
+  - `t4` had a pre-existing `~/.local/share/uv/python` directory before uv was
+    installed; it remains present and was not inspected or modified. The other
+    four still have no uv Python directory, confirming that the artifact
+    transaction did not implicitly download Python.
+  - Next executable action: checkpoint and synchronize this evidence, then
+    design managed Python 3.12 as its own pinned, rollback-aware transaction or
+    add another self-contained selected tool artifact. `ai4s` remains blocked.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 
