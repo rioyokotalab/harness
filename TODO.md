@@ -891,6 +891,18 @@ harness. Repository-specific tasks remain in their own project ledgers.
     final digest is recorded only after activation. Then repair only the
     agent-created pilot manifest hash from the independently observed current
     tree, exercise rollback, and reapply with the corrected transaction.
+  - Corrected the activation order and committed it as `91948f9`. On `al`, the
+    repaired first-pilot manifest then rolled back exactly; corrected
+    transaction `20260714T140211Z-131352` survived final-path execution and
+    SSL/SQLite imports, rolled back exactly, and final transaction
+    `20260714T140353Z-164269` restored CPython 3.12.12 on AArch64. The uv
+    default Python directory remained absent throughout.
+  - Fleet presence-only preflight found host-provided Python 3.12.3 on `ri`,
+    so it must remain unshadowed. `ab`, `ab2`, `rc`, and `t4` have no
+    `python3.12` command or managed Python path. The uv default Python path is
+    absent on the first three and pre-existing on `t4`; do not enumerate or
+    modify it. Synchronize the corrected transaction code, apply one host at a
+    time, and prove `t4`'s default-path type is unchanged before and after.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
