@@ -558,9 +558,12 @@ harness. Repository-specific tasks remain in their own project ledgers.
     URL, checksum, and install target. This transaction installs only `uv`; it
     does not run the upstream installer, modify profiles, install `uvx`, or
     download a Python runtime.
-  - Next executable action: commit the manifest addition, run a full isolated
-    uv apply/rollback through the generic transaction engine, then pilot on
-    `ab2` before any fleet rollout.
+  - A committed end-to-end transaction passed in a disposable home: uv 0.9.18
+    downloaded, verified, installed, and reported `managed-artifact`; no uv
+    Python directory appeared. Rollback removed the stable link and versioned
+    directory, and the disposable home was deleted.
+  - Next executable action: commit the isolated evidence, fast-forward `ab2`,
+    then run a uv plan/apply/rollback/reapply pilot before any fleet rollout.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
