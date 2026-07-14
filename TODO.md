@@ -146,10 +146,10 @@ T-181.
     website pre-commit hook was left unchanged because agents do not edit
     `.git`; its old Claude-size branch is inert under the current tracked tree.
 
-  **Next action:** execute T-170 read-only reconciliation, then recover the
-  remaining checksum-pinned local tools one transaction at a time. Resolve
-  lftp through T-175 first. Do not perform broad home reconstruction, owner
-  config/profile edits, credential recovery, or unplanned fleet mutation.
+  **Next action:** recover the remaining checksum-pinned local tools one
+  transaction at a time, then prepare the T-170 clean-revision parity rollout.
+  Do not perform broad home reconstruction, owner config/profile edits,
+  credential recovery, or unplanned fleet mutation.
 
 - **T-170 — Mirror the working environment across configured clusters
   (read-only reconciliation complete 2026-07-15; parity rollout pending local
@@ -263,16 +263,21 @@ live instructions.
   post-run searches for leftover roots/state all pass. The only recursive-rm
   strings left under `tests/` are inert exec-policy denial fixtures.
 - **T-175 — Restore or deliberately retire lftp through a reproducible path
-  (implementation in progress):** the website deployment-policy test requires
-  lftp, but no portable upstream binary exists. Official project evidence says
-  4.9.3 is the latest source release; replacing lftp with rclone would require
+  (complete 2026-07-15):** the website deployment-policy test requires lftp,
+  but no portable upstream binary exists. Official project evidence says 4.9.3
+  is the latest source release; replacing lftp with rclone would require
   re-expressing owner SSH routing and could attempt remote shell commands on the
   SFTP-only target. Ubuntu Noble repository metadata instead provides the
   local-compatible `4.9.2-2ubuntu1.1` package with SHA-256 `60140f…0b72`.
-  Independent download/hash, exact package layout, version, license, and linked
-  runtime-library checks pass. Implement one local-only exact-binary package
-  transaction and remove lftp from all remote host scopes; isolated transaction
-  and website policy gates remain pending.
+  Independent download/hash, exact package layout, version, GPLv3+, and linked
+  runtime-library checks pass. Commit `292c6b4` added a local-only exact-binary
+  package transaction and retired lftp from every remote host scope. Both
+  package plans, remote rejection, isolated apply/idempotence/tamper refusal/
+  rollback, ShellCheck/syntax/diff gates, and the full phase-1 suite pass. Live
+  transaction `20260714T230032Z-752754` installed the pinned binary; website
+  commit `362847d` then passed its real file-backend mirror, deletion guard,
+  publish/preview regressions, and complete offline security suite. No live
+  server, credential, push, or deployment operation ran.
 - **T-176 — Eliminate internal raw recursive deletion from harness
   transactions (complete 2026-07-15):** the T-174 whole-repository scan found direct recursive
   removal in rollback plus shell, tool, runtime, agent, Python, and source-build
