@@ -1024,8 +1024,11 @@ harness. Repository-specific tasks remain in their own project ledgers.
     `node_modules` layout, Node 24.16.0 gating, launcher validation, normalized
     whole-tree integrity, mode-600 state, and all-path rollback. Offline tests
     prove idempotence, caller cache reporting, changed-tree refusal without
-    partial mutation, and exact cleanup. Run an official-archive disposable
-    apply/rollback before any cluster pilot.
+    partial mutation, and exact cleanup. A real official-archive disposable
+    x86-64 transaction (`20260714T144309Z-446045`) also passed checksum,
+    execution, managed-state, mode-600, and exact rollback checks while
+    preserving its pre-existing Node link. Pilot rollback/reapply on AArch64
+    before serial fleet rollout.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
