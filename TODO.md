@@ -1027,8 +1027,16 @@ harness. Repository-specific tasks remain in their own project ledgers.
     partial mutation, and exact cleanup. A real official-archive disposable
     x86-64 transaction (`20260714T144309Z-446045`) also passed checksum,
     execution, managed-state, mode-600, and exact rollback checks while
-    preserving its pre-existing Node link. Pilot rollback/reapply on AArch64
-    before serial fleet rollout.
+    preserving its pre-existing Node link. The `ri` AArch64 pilot passed
+    rollback/reapply (`20260714T144528Z-1087203` rolled back; final
+    `20260714T144536Z-1089642`). Serial final transactions are `al`
+    `20260714T144559Z-190488`, `ab` `20260714T144610Z-3392759`, `ab2`
+    `20260714T144622Z-3394138`, `rc` `20260714T144632Z-3101084`, and `t4`
+    `20260714T144646Z-412525`. Fleet closure passed exact 0.144.4 execution,
+    interactive-login discovery, managed planning, mode-600 completed state,
+    clean revision `8e145dc`, and doctor with zero failures; local retains its
+    healthy host-provided 0.144.4. No Codex authentication, settings, sessions,
+    caches, or logs were read or copied.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
