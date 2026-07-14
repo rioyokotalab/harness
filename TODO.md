@@ -322,6 +322,37 @@ harness. Repository-specific tasks remain in their own project ledgers.
     apply the two managed suffixes, validate non-interactive and interactive
     startup, deliberately roll back, then reapply if all checks pass.
 
+  `ab2` shell pilot checkpoint (2026-07-14):
+
+  - Committed suffix-verified shell transactions as `42e9a11` and
+    fast-forwarded the clean `ab2` checkout to that revision with a native Git
+    bundle. The reviewed dry run planned one 144-byte append to each of
+    `.bashrc` and `.bash_profile` and no blocked path.
+  - Applied transaction `20260714T120012Z-2710544`. The files retained their
+    original owners and modes (`17783:0644` and `17783:0640`) and grew from
+    592/424 bytes to 736/568 bytes. A repeated plan returned two `KEEP`
+    results, and `ssh ab2 true` remained silent.
+  - Deliberately rolled that transaction back. Rollback restored the exact
+    original byte lengths and modes, removed both public managed markers, left
+    non-interactive SSH silent, and made the next plan return the same two
+    appends. No pre-existing startup-file bytes were copied to transaction
+    state or displayed.
+  - Reapplied cleanly as transaction `20260714T120159Z-1639880`. Its manifest,
+    status, and two public payload records are mode 600; the status is
+    `complete`. Both startup files have exactly one managed suffix, the dry
+    run is idempotent, and a real `ssh -tt` login reports `EDITOR=vim`,
+    `PAGER=cat`, `HISTCONTROL=ignoreboth:erasedups`, and the interactive guard
+    loaded once.
+  - An earlier non-TTY `bash -ic` check emitted pre-existing job-control/stty
+    warnings, while the real TTY login completed normally. Two post-apply
+    validation probes also initially used stale marker/state filename
+    assumptions; they caused no mutation, and corrected probes used the
+    tracked marker plus the actual `.manifest.status` path.
+  - Next safe action: fast-forward `ab`, `rc`, and `t4` to `42e9a11`, show each
+    shell plan, and apply/validate one host at a time. Keep `al` out of this
+    rollout until its `uenv`/agent startup defects are remediated, and keep
+    `ai4s` blocked pending reliable read-only connectivity.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 
