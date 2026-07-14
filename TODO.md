@@ -1118,7 +1118,15 @@ harness. Repository-specific tasks remain in their own project ledgers.
     state, and rolled back exactly while preserving a sentinel. Two preceding
     disposable runners completed the build/rollback but omitted `tee` and then
     `cat` from their artificial PATH; both temporary homes were removed and the
-    complete repeated trial passed. Next pilot rollback/reapply on AArch64 `ri`.
+    complete repeated trial passed. The first `ri` post-build runner then used
+    incorrectly nested JSON quoting and stopped after successful transaction
+    `20260714T152355Z-1103259`; read-only diagnosis proved the build healthy.
+    A quote-free equivalent feature probe validated it, rollback removed it
+    exactly, and final AArch64 transaction `20260714T152459Z-1103991` passed.
+    `al` final transaction is `20260714T152545Z-200303`. Both owned trees retain
+    only `sqlite3`; the other five environments retain feature-complete site
+    commands. Fleet closure passes JSON, FTS5, RTree, clean Git, idempotent
+    source selection, and zero doctor failures everywhere.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
