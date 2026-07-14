@@ -177,6 +177,21 @@ and creates only `python3.12`. It does not modify uv's default Python directory
 or shadow site `python`/`python3`. Rollback checks all non-cache entries and
 ignores only generated `__pycache__`, `.pyc`, and `.pyo` files.
 
+Codex uses a separate two-archive agent transaction:
+
+```bash
+harness agent --host HOST --name codex --plan
+harness agent --host HOST --name codex --apply
+```
+
+The manifest pins the small official npm launcher and the matching x86-64 or
+AArch64 native resource package independently. Apply verifies both checksums,
+reconstructs only the expected `node_modules` layout in an owned tree, requires
+the pinned Node runtime, validates `codex --version`, and records a normalized
+whole-tree digest. Rollback fails closed if any launcher, binary, or bundled
+resource changed. Authentication, configuration, sessions, caches, and logs are
+not read or copied.
+
 ## Deliberately excluded
 
 The live `~/.codex/config.toml`, `~/.claude/settings.json`,

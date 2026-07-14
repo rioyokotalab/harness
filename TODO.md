@@ -1011,6 +1011,21 @@ harness. Repository-specific tasks remain in their own project ledgers.
     and `02c381be3269489119287dc0b5f4b99b870d886f058918994b51e06b701dd1be`,
     and disposable x86 execution reports 2.1.207. Add them as exact-member
     tool transactions, pilot rollback/reapply on AArch64, then roll out.
+  - Codex CLI 0.144.4 is not a single-binary npm artifact: it has a small
+    launcher and one architecture resource package containing the native
+    binary, code-mode host, ripgrep, sandbox helper, and shell resource. npm's
+    published SHA-512 values match downloaded root/x86-64/AArch64 bytes; their
+    recorded SHA-256 values are
+    `613aadb30be4b6a6daa45cbd086f5d4a84636bcd8c036510c106464bd087f193`,
+    `9a4a45314e80b53c4761b80067e3a68c2302f9a9026059b5f54f22dec8f34323`,
+    and `38461c769ce95e734a4200bb5e7aac8bbe8a8052603d648eae4afaa26ac066a7`.
+  - Added `harness agent --host HOST --name codex --plan|--apply` with two
+    checksum gates, safe regular-file-only extraction into an exact owned
+    `node_modules` layout, Node 24.16.0 gating, launcher validation, normalized
+    whole-tree integrity, mode-600 state, and all-path rollback. Offline tests
+    prove idempotence, caller cache reporting, changed-tree refusal without
+    partial mutation, and exact cleanup. Run an official-archive disposable
+    apply/rollback before any cluster pilot.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

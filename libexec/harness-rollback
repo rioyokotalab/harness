@@ -18,7 +18,7 @@ manifest=$HOME/.local/state/harness/transactions/$transaction_id.manifest
 
 records=$(mktemp "${TMPDIR:-/tmp}/harness-rollback.XXXXXX")
 trap 'rm -f "$records"' EXIT HUP INT TERM
-awk -F'|' '$1 == "link" || $1 == "shell" || $1 == "patch" || $1 == "artifact" || $1 == "runtime" || $1 == "python" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+awk -F'|' '$1 == "link" || $1 == "shell" || $1 == "patch" || $1 == "artifact" || $1 == "runtime" || $1 == "python" || $1 == "agent" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
     "$manifest" >"$records"
 
 # Validate every path before mutating any path.
@@ -74,6 +74,21 @@ while IFS='|' read -r record destination field3 field4 field5 field6 field7; do
         rm "$tree_archive"
         [ "$observed_hash" = "$expected_hash" ] ||
             die "rollback blocked: Python tree changed: $destination expected=$expected_hash observed=$observed_hash"
+    elif [ "$record" = agent ]; then
+        expected_hash=$field3
+        case "$destination" in "$HOME/.local/opt/agents/"*) ;; *) die "unsafe agent path" ;; esac
+        if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
+            continue
+        fi
+        [ -d "$destination" ] && [ ! -L "$destination" ] ||
+            die "rollback blocked: agent tree changed type: $destination"
+        tree_archive=$(mktemp "${TMPDIR:-/tmp}/harness-agent-tree.XXXXXX")
+        tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
+            -cf "$tree_archive" -C "$destination" .
+        observed_hash=$(sha256sum "$tree_archive" | awk '{print $1}')
+        rm "$tree_archive"
+        [ "$observed_hash" = "$expected_hash" ] ||
+            die "rollback blocked: agent tree changed: $destination"
     elif [ "$record" = runtime ]; then
         expected_hash=$field3
         case "$destination" in "$HOME/.local/opt/node/"*) ;; *) die "unsafe runtime path" ;; esac
@@ -139,6 +154,13 @@ while IFS='|' read -r record destination field3 field4 field5 field6 field7; do
                 echo "KEEP python=$destination state=already-absent"
             else
                 echo "REMOVE python=$destination"
+                rm -rf "$destination"
+            fi
+        elif [ "$record" = agent ]; then
+            if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
+                echo "KEEP agent=$destination state=already-absent"
+            else
+                echo "REMOVE agent=$destination"
                 rm -rf "$destination"
             fi
         elif [ "$record" = runtime ]; then

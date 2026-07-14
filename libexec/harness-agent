@@ -1,0 +1,192 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH= cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() {
+    echo "Usage: harness agent --host LOGICAL_ID --name AGENT [--facts FILE] [--plan|--apply]" >&2
+}
+
+logical_host=
+agent_name=
+fact_file=
+mode=plan
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --name) [ "$#" -ge 2 ] || { usage; exit 2; }; agent_name=$2; shift 2 ;;
+        --facts) [ "$#" -ge 2 ] || { usage; exit 2; }; fact_file=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        *) usage; exit 2 ;;
+    esac
+done
+[ -n "$logical_host" ] && [ -n "$agent_name" ] || { usage; exit 2; }
+require_safe_id "$agent_name"
+[ "$agent_name" = codex ] || die "unsupported agent: $agent_name"
+[ "$mode" != apply ] || [ -z "$fact_file" ] || die "agent apply does not accept captured facts"
+
+profile=$(profile_for "$logical_host")
+arch=$(config_get "$profile" arch)
+records=$(awk -F'|' -v agent="$agent_name" -v arch="$arch" '
+    $1 == agent && $3 == "linux" && $4 == arch { print }
+' "$HARNESS_ROOT/tools/agents.tsv")
+count=$(printf '%s\n' "$records" | awk 'NF { n++ } END { print n + 0 }')
+[ "$count" -eq 1 ] || die "no unique supported agent=$agent_name arch=$arch"
+IFS='|' read -r record_agent version agent_os agent_arch node_version \
+    launcher_url launcher_checksum native_directory native_url native_checksum \
+    command_relative version_line <<EOF
+$records
+EOF
+for value in "$version" "$agent_arch"; do require_safe_id "$value"; done
+for url in "$launcher_url" "$native_url"; do case "$url" in https://*) ;; *) die "agent URL must use HTTPS" ;; esac; done
+for checksum in "$launcher_checksum" "$native_checksum"; do
+    case "$checksum" in *[!0-9a-f]*) die "invalid agent checksum" ;; esac
+    [ "${#checksum}" -eq 64 ] || die "invalid agent checksum length"
+done
+case "$native_directory" in @openai/codex-linux-x64|@openai/codex-linux-arm64) ;;
+    *) die "unsafe native package directory" ;;
+esac
+case "$command_relative" in node_modules/@openai/codex/bin/codex.js) ;;
+    *) die "unsafe agent command path" ;;
+esac
+
+install_dir=$HOME/.local/opt/agents/$agent_name/$version/$agent_os-$agent_arch
+installed_command=$install_dir/$command_relative
+stable_link=$HOME/.local/bin/$agent_name
+action=BLOCK
+source=unknown
+blocked=0
+if [ -L "$stable_link" ] && [ "$(readlink "$stable_link")" = "$installed_command" ]; then
+    if [ -d "$install_dir" ] && [ -x "$installed_command" ] &&
+        [ "$(PATH="$HOME/.local/bin:/usr/bin:/bin" "$installed_command" --version 2>/dev/null)" = "$version_line" ]; then
+        action=KEEP
+        source=managed-agent
+    else
+        blocked=1
+    fi
+elif [ -e "$install_dir" ] || [ -L "$install_dir" ]; then
+    blocked=1
+elif [ -n "$fact_file" ]; then
+    fact_host=$(fact_get "$fact_file" logical_host)
+    [ "$fact_host" = "$logical_host" ] || die "captured fact host mismatch"
+    case $(fact_get "$fact_file" "tool_$agent_name") in
+        present) action=KEEP; source=host-provided ;;
+        absent) action=INSTALL; source=managed-agent ;;
+        *) blocked=1 ;;
+    esac
+elif command -v "$agent_name" >/dev/null 2>&1 && "$agent_name" --version >/dev/null 2>&1; then
+    action=KEEP
+    source=host-provided
+elif [ -e "$stable_link" ] || [ -L "$stable_link" ]; then
+    blocked=1
+else
+    action=INSTALL
+    source=managed-agent
+fi
+
+echo "AGENT_PLAN host=$logical_host agent=$agent_name version=$version arch=$arch mode=$mode"
+case "$action" in
+    KEEP) echo "KEEP agent=$agent_name source=$source" ;;
+    INSTALL)
+        echo "INSTALL agent_tree=$install_dir"
+        echo "CREATE link=$stable_link source=$installed_command"
+        echo "FETCH role=launcher url=$launcher_url sha256=$launcher_checksum"
+        echo "FETCH role=native url=$native_url sha256=$native_checksum"
+        echo "EXTRACT layout=node_modules command=$command_relative"
+        ;;
+    BLOCK) echo "BLOCK agent=$agent_name reason=partial-unmanaged-or-invalid-state" ;;
+esac
+[ "$blocked" -eq 0 ] || die "agent plan contains blocked paths"
+[ "$mode" = apply ] || { echo "END agent host=$logical_host changes=not-applied"; exit 0; }
+[ "$action" = INSTALL ] || { echo "END agent host=$logical_host changes=none"; exit 0; }
+
+[ -z "$(git -C "$HARNESS_ROOT" status --porcelain)" ] || die "agent apply requires clean harness"
+"$HARNESS_ROOT/libexec/harness-doctor" --host "$logical_host" >/dev/null ||
+    die "host doctor failed before agent apply"
+for required in curl sha256sum tar find readlink node; do
+    command -v "$required" >/dev/null 2>&1 || die "agent apply requires command: $required"
+done
+[ "$(node --version)" = "v$node_version" ] || die "agent requires Node $node_version"
+
+state_root=$HOME/.local/state/harness/transactions
+mkdir -p "$state_root"; chmod 700 "$HOME/.local/state/harness" "$state_root"
+transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+manifest=$state_root/$transaction_id.manifest
+: >"$manifest"; chmod 600 "$manifest"
+printf 'schema=1\nhost=%s\nrevision=%s\n' "$logical_host" \
+    "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" >>"$manifest"
+launcher_archive=$(mktemp "$state_root/$transaction_id.launcher.XXXXXX")
+native_archive=$(mktemp "$state_root/$transaction_id.native.XXXXXX")
+stage=
+tree_archive=
+complete=0
+cleanup() {
+    status=$?
+    rm -f "$launcher_archive" "$native_archive"
+    [ -z "$tree_archive" ] || rm -f "$tree_archive"
+    [ -z "$stage" ] || rm -rf "$stage"
+    if [ "$complete" -eq 0 ]; then
+        awk -F'|' '$1 == "link" { print $2 "|" $3 }' "$manifest" |
+            while IFS='|' read -r destination target; do
+                [ -L "$destination" ] && [ "$(readlink "$destination")" = "$target" ] && rm "$destination"
+            done
+        awk -F'|' '$1 == "agent" { print $2 }' "$manifest" |
+            while IFS= read -r directory; do [ ! -d "$directory" ] || rm -rf "$directory"; done
+        echo failed >"$manifest.status"; chmod 600 "$manifest.status"
+    fi
+    exit "$status"
+}
+trap cleanup EXIT HUP INT TERM
+
+echo "NATIVE curl --proto =https --tlsv1.2 -fL --retry 2 $launcher_url -o LAUNCHER_STAGING"
+curl --proto '=https' --tlsv1.2 -fL --retry 2 "$launcher_url" -o "$launcher_archive"
+printf '%s  %s\n' "$launcher_checksum" "$launcher_archive" | sha256sum -c - >/dev/null
+echo "NATIVE curl --proto =https --tlsv1.2 -fL --retry 2 $native_url -o NATIVE_STAGING"
+curl --proto '=https' --tlsv1.2 -fL --retry 2 "$native_url" -o "$native_archive"
+printf '%s  %s\n' "$native_checksum" "$native_archive" | sha256sum -c - >/dev/null
+for archive in "$launcher_archive" "$native_archive"; do
+    tar -tzf "$archive" | awk '
+        index($0, "package/") != 1 || $0 ~ /(^|\/)\.\.($|\/)/ { bad=1 }
+        END { exit bad }
+    ' || die "agent archive contains an unsafe path"
+    tar -tvzf "$archive" | awk 'substr($1, 1, 1) != "-" && substr($1, 1, 1) != "d" { bad=1 } END { exit bad }' ||
+        die "agent archive contains unsupported entry types"
+done
+
+install_parent=${install_dir%/*}
+mkdir -p "$install_parent"
+stage=$(mktemp -d "$install_parent/.staging.XXXXXX")
+launcher_dir=$stage/node_modules/@openai/codex
+native_dir=$stage/node_modules/$native_directory
+mkdir -p "$launcher_dir" "$native_dir"
+echo "NATIVE tar -xzf LAUNCHER_STAGING -C LAUNCHER_TREE --strip-components=1"
+tar -xzf "$launcher_archive" -C "$launcher_dir" --strip-components=1
+echo "NATIVE tar -xzf NATIVE_STAGING -C NATIVE_TREE --strip-components=1"
+tar -xzf "$native_archive" -C "$native_dir" --strip-components=1
+[ -x "$stage/$command_relative" ] && [ ! -L "$stage/$command_relative" ] ||
+    die "agent launcher missing or invalid"
+[ "$(find "$stage" -type l | wc -l | tr -d ' ')" -eq 0 ] ||
+    die "agent archives created unexpected links"
+[ "$(PATH="$HOME/.local/bin:/usr/bin:/bin" "$stage/$command_relative" --version 2>/dev/null)" = "$version_line" ] ||
+    die "agent version verification failed"
+tree_archive=$(mktemp "$state_root/$transaction_id.tree.XXXXXX")
+tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
+    -cf "$tree_archive" -C "$stage" .
+tree_hash=$(sha256sum "$tree_archive" | awk '{print $1}')
+rm "$tree_archive"; tree_archive=
+printf 'agent|%s|%s\n' "$install_dir" "$tree_hash" >>"$manifest"
+mv -T "$stage" "$install_dir"; stage=
+mkdir -p "$HOME/.local/bin"
+printf 'link|%s|%s\n' "$stable_link" "$installed_command" >>"$manifest"
+ln -s "$installed_command" "$stable_link"
+echo "CALLER native='hash -r' reason=refresh-command-path-cache"
+rm -f "$launcher_archive" "$native_archive"
+echo complete >"$manifest.status"; chmod 600 "$manifest.status"
+complete=1
+trap - EXIT HUP INT TERM
+echo "TRANSACTION id=$transaction_id status=complete"
+echo "END agent host=$logical_host changes=applied"

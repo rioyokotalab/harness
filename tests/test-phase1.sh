@@ -23,6 +23,7 @@ for script in \
     "$ROOT/libexec/harness-tool" \
     "$ROOT/libexec/harness-runtime" \
     "$ROOT/libexec/harness-python" \
+    "$ROOT/libexec/harness-agent" \
     "$ROOT/libexec/harness-rollback"
 do
     sh -n "$script" || fail "shell syntax: $script"
@@ -226,6 +227,29 @@ tar -czf "$runtime_fixture_archive" -C "$runtime_fixture_parent" \
 runtime_fixture_hash=$(sha256sum "$runtime_fixture_archive" | awk '{print $1}')
 sed -i "s/2faf6a387e9b62b888e21c54f01249fb27537ffecf1842f29f4c919d0a59a0ff/$runtime_fixture_hash/" \
     "$test_repo/tools/runtimes.tsv"
+agent_launcher_parent=$TEMP_DIR/agent-launcher-fixture
+agent_launcher_root=$agent_launcher_parent/package
+agent_launcher_archive=$TEMP_DIR/codex-launcher-fixture.tar.gz
+mkdir -p "$agent_launcher_root/bin"
+printf '%s\n' '#!/bin/sh' 'echo "codex-cli 0.144.4"' >"$agent_launcher_root/bin/codex.js"
+chmod 755 "$agent_launcher_root/bin/codex.js"
+printf '%s\n' '{"name":"@openai/codex","version":"0.144.4"}' \
+    >"$agent_launcher_root/package.json"
+tar -czf "$agent_launcher_archive" -C "$agent_launcher_parent" package
+agent_launcher_hash=$(sha256sum "$agent_launcher_archive" | awk '{print $1}')
+agent_native_parent=$TEMP_DIR/agent-native-fixture
+agent_native_root=$agent_native_parent/package
+agent_native_archive=$TEMP_DIR/codex-native-fixture.tar.gz
+mkdir -p "$agent_native_root/vendor/x86_64-unknown-linux-musl/bin"
+printf '%s\n' native-fixture >"$agent_native_root/vendor/x86_64-unknown-linux-musl/bin/codex"
+printf '%s\n' '{"name":"@openai/codex","version":"0.144.4-linux-x64"}' \
+    >"$agent_native_root/package.json"
+tar -czf "$agent_native_archive" -C "$agent_native_parent" package
+agent_native_hash=$(sha256sum "$agent_native_archive" | awk '{print $1}')
+sed -i "s/613aadb30be4b6a6daa45cbd086f5d4a84636bcd8c036510c106464bd087f193/$agent_launcher_hash/g" \
+    "$test_repo/tools/agents.tsv"
+sed -i "s/9a4a45314e80b53c4761b80067e3a68c2302f9a9026059b5f54f22dec8f34323/$agent_native_hash/" \
+    "$test_repo/tools/agents.tsv"
 git -C "$test_repo" init -q
 git -C "$test_repo" config user.name harness-test
 git -C "$test_repo" config user.email harness-test.invalid
@@ -447,6 +471,65 @@ for command_name in node npm npx corepack; do
         fail "runtime rollback left link: $command_name"
 done
 [ ! -e "$runtime_tree" ] || fail "runtime rollback left tree"
+
+# Exercise the two-archive agent tree, changed-tree refusal, and exact rollback.
+agent_bin=$TEMP_DIR/agent-bin
+agent_home=$TEMP_DIR/agent-home-link
+ln -s "$test_home" "$agent_home"
+mkdir -p "$agent_bin"
+for command_name in awk bash chmod cmp cp date dirname find git gzip ln mkdir mktemp mv \
+    readlink rm sed sh sha256sum tar tr uname wc; do
+    ln -s "$(command -v "$command_name")" "$agent_bin/$command_name"
+done
+printf '%s\n' '#!/bin/sh' 'echo v24.16.0' >"$agent_bin/node"
+chmod 755 "$agent_bin/node"
+printf '%s\n' \
+    '#!/bin/sh' \
+    'url=' \
+    'out=' \
+    'while [ "$#" -gt 0 ]; do' \
+    '  case "$1" in' \
+    '    https://*) url=$1; shift ;;' \
+    '    -o) out=$2; shift 2 ;;' \
+    '    *) shift ;;' \
+    '  esac' \
+    'done' \
+    'case "$url" in' \
+    '  *linux-x64*) cp "$FIXTURE_AGENT_NATIVE" "$out" ;;' \
+    '  *) cp "$FIXTURE_AGENT_LAUNCHER" "$out" ;;' \
+    'esac' >"$agent_bin/curl"
+chmod 755 "$agent_bin/curl"
+HOME="$agent_home" PATH="$agent_bin" \
+    FIXTURE_AGENT_LAUNCHER="$agent_launcher_archive" \
+    FIXTURE_AGENT_NATIVE="$agent_native_archive" \
+    "$test_repo/bin/harness" agent --host local --name codex --apply \
+    >"$TEMP_DIR/agent-apply.out"
+agent_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/agent-apply.out")
+[ -n "$agent_transaction" ] || fail "missing agent transaction"
+grep "CALLER native='hash -r' reason=refresh-command-path-cache" \
+    "$TEMP_DIR/agent-apply.out" >/dev/null || fail "agent caller cache refresh"
+HOME="$agent_home" PATH="$agent_bin" \
+    "$test_repo/bin/harness" agent --host local --name codex --plan \
+    >"$TEMP_DIR/agent-repeat.out"
+grep 'KEEP agent=codex source=managed-agent' "$TEMP_DIR/agent-repeat.out" >/dev/null ||
+    fail "managed agent plan"
+agent_tree=$agent_home/.local/opt/agents/codex/0.144.4/linux-x86_64
+agent_launcher=$agent_tree/node_modules/@openai/codex/bin/codex.js
+cp -p "$agent_launcher" "$TEMP_DIR/original-agent-launcher"
+printf '%s\n' '# changed after apply' >>"$agent_launcher"
+if HOME="$agent_home" "$test_repo/bin/harness" rollback "$agent_transaction" \
+    >"$TEMP_DIR/refused-agent-rollback.out" 2>&1; then
+    fail "agent rollback accepted changed tree"
+fi
+[ -L "$agent_home/.local/bin/codex" ] && [ -d "$agent_tree" ] ||
+    fail "agent rollback partially mutated paths"
+cp -p "$TEMP_DIR/original-agent-launcher" "$agent_launcher"
+HOME="$agent_home" "$test_repo/bin/harness" rollback "$agent_transaction" \
+    >"$TEMP_DIR/agent-rollback.out"
+[ ! -e "$agent_home/.local/bin/codex" ] && [ ! -L "$agent_home/.local/bin/codex" ] ||
+    fail "agent rollback left command link"
+[ ! -e "$agent_tree" ] || fail "agent rollback left tree"
 
 # Exercise uv-managed Python apply, changed-tree refusal, and exact rollback.
 python_bin=$TEMP_DIR/python-bin
