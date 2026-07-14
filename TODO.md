@@ -5,6 +5,42 @@ harness. Repository-specific tasks remain in their own project ledgers.
 
 ## Active
 
+- **T-171 — Recover the current-node home after accidental deletion (urgent):**
+  - On 2026-07-15 at approximately 01:41 JST, a temporary-HOME plan command
+    incorrectly cleaned `$HOME` after the command-scoped assignment expired,
+    launching `rm -rf /home/rioyokota`. This was an agent error, not a harness
+    transaction. The first tool cancellation did not kill child PID `1786591`;
+    a later process audit found it still running. PID `1786591` and launching
+    shell `1786291` were explicitly terminated, force-killed if necessary, and
+    a fresh process audit confirmed no matching deletion process remained.
+  - Restored `~/harness` from the previously verified complete bundle SHA-256
+    `cbb4a138f53323181c51174b9e68acfca57f3c2f14038dbd7f21829bedf59bb4`.
+    Its checkout is clean at `5f6382b9fe641a969235bf0fc0f46dbc2ef8cfea`.
+    The uncommitted ShellCheck transaction work that followed that revision was
+    lost and must be reconstructed only after home recovery is resolved.
+  - The surviving `~/website` checkout was clean at `628b53a67071` before the
+    still-running process deleted eight tracked paths. Restored exactly
+    `README.md`, `cv/build-cv.sh`, `cv/cv.cls`, `cv/cv.pdf`, `cv/cv.tex`,
+    `package.json`, `publish.sh`, and `style.css` from that HEAD; the worktree
+    is clean again. No untracked website path was changed.
+  - Confirmed missing current-node surfaces include `.bashrc`, `.bash_profile`,
+    `.profile`, `.bash_logout`, `.ssh/config`, `.local/bin`, `.local/opt`,
+    `.local/state/harness`, Codex discovery links, `.agents/skills`,
+    `~/sshservice-cli`, and additional top-level paths that existed before the
+    incident. Do not infer that this list is exhaustive. Credential contents
+    were not inspected, and no credential recovery was attempted.
+  - `/home` is NFS and exposes `/home/.zfs/snapshot`, but the only visible
+    snapshot is `initial` dated 2025-10-20, so it is too old for an automatic
+    full-home restore. Ask the owner whether an administrator/server-side
+    snapshot, backup, or another authoritative source exists. Restoring
+    credentials, live client state, profiles, or the whole home requires
+    explicit owner direction. After data recovery, rebuild the managed portable
+    layer transactionally and independently validate every surviving path.
+  - T-170 fleet mutation is paused. SSH aliases cannot be used reliably while
+    `.ssh/config` is absent; do not reconstruct host/authentication settings by
+    guesswork or continue the ShellCheck rollout until T-171 has an approved
+    recovery source and scope.
+
 - **T-170 — Mirror the working environment across configured clusters:**
   1. Enumerate only concrete host aliases from the current node's SSH config
      and probe them non-interactively through the user's unlocked SSH agent.
