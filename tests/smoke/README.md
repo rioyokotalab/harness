@@ -17,3 +17,8 @@ For the common CPU/build path, configure out of tree with the native command
 `ctest --test-dir BUILD --output-on-failure`. The MPI and CUDA sources are not
 part of that login-node build because their environment and execution route are
 site-specific.
+
+`jobs/local.slurm` is the current node's native `ybatch` smoke. It requests the
+smallest A4500 resource and validates CUDA runtime, two-rank MPI, and Python.
+The agent supplies an explicit temporary output path and waits for completion;
+the script does not normalize or conceal the generated Slurm commands.
