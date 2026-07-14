@@ -29,9 +29,12 @@ harness. Repository-specific tasks remain in their own project ledgers.
     `~/sshservice-cli`, and additional top-level paths that existed before the
     incident. Do not infer that this list is exhaustive. Credential contents
     were not inspected, and no credential recovery was attempted.
-  - `/home` is NFS and exposes `/home/.zfs/snapshot`, but the only visible
-    snapshot is `initial` dated 2025-10-20, so it is too old for an automatic
-    full-home restore. Ask the owner whether an administrator/server-side
+  - `/home` is NFS and exposes `/home/.zfs/snapshot`. The only visible snapshot
+    is `initial` dated 2025-10-20, and a direct entry count found it empty; it
+    cannot recover this home. The surviving 68-byte `~/.sync_get.sh` is a 2020
+    caller-driven command that fetches only a small dotfile set from a host
+    argument, not an authoritative backup manifest. No usable local recovery
+    source has been found. Ask the owner whether an administrator/server-side
     snapshot, backup, or another authoritative source exists. Restoring
     credentials, live client state, profiles, or the whole home requires
     explicit owner direction. After data recovery, rebuild the managed portable
