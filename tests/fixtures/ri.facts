@@ -28,6 +28,7 @@ tool_claude=absent
 tool_rclone=absent
 tool_lftp=absent
 tool_tectonic=absent
+tool_shellcheck=absent
 tool_modulecmd=absent
 tool_ml=absent
 tool_uenv=absent

@@ -152,14 +152,17 @@ Apply reports the caller-side native `hash -r` command because a long-lived Bash
 process may have cached an earlier system command path; a new shell resolves the
 managed link without this refresh.
 The manifest covers ripgrep 15.1.0, uv 0.9.18, rclone 1.74.3, Ninja 1.13.2,
-and the native Claude Code 2.1.207 binary on Linux x86-64 and AArch64. Tar and
-ZIP transactions extract only the declared
+ShellCheck 0.11.0, and the native Claude Code 2.1.207 binary on Linux x86-64
+and AArch64. Tar and ZIP transactions extract only the declared
 binary member. A host tool is retained only when its native `--version` health
 probe succeeds; an unusable host command can be shadowed by the verified
 user-space artifact without modifying the site path. Other selected tools
 remain plans until their official artifacts and checksums are recorded and
 tested. Installing uv does not implicitly download Python or modify shell
 files; managed Python is a separate reviewed action.
+
+ShellCheck uses an exact `version: 0.11.0` line from its multi-line version
+report. The invariant product banner alone is not accepted as version proof.
 
 Agent binaries are separate from live client state. Installing Claude does not
 read, create, or synchronize authentication, settings, sessions, history, or

@@ -185,6 +185,23 @@ grep 'INSTALL artifact=.*uv/0.9.18/linux-aarch64' "$TEMP_DIR/uv-plan.out" \
 grep 'sha256=f8e23ec786b18660ade6b033b6191b7e9c283c872eeb8c4531d56a873decf160' \
     "$TEMP_DIR/uv-plan.out" >/dev/null || fail "uv AArch64 checksum plan"
 
+mkdir -p "$TEMP_DIR/shellcheck-plan-home"
+HOME="$TEMP_DIR/shellcheck-plan-home" "$HARNESS" tool --host local --name shellcheck \
+    --facts "$ROOT/tests/fixtures/local.facts" --plan \
+    >"$TEMP_DIR/shellcheck-x86-plan.out"
+grep 'sha256=b7af85e41cc99489dcc21d66c6d5f3685138f06d34651e6d34b42ec6d54fe6f6' \
+    "$TEMP_DIR/shellcheck-x86-plan.out" >/dev/null ||
+    fail "ShellCheck x86-64 checksum plan"
+grep 'EXTRACT format=tar.gz member=shellcheck-v0.11.0/shellcheck binary=shellcheck' \
+    "$TEMP_DIR/shellcheck-x86-plan.out" >/dev/null ||
+    fail "ShellCheck x86-64 extraction plan"
+HOME="$TEMP_DIR/shellcheck-plan-home" "$HARNESS" tool --host al --name shellcheck \
+    --facts "$ROOT/tests/fixtures/al.facts" --plan \
+    >"$TEMP_DIR/shellcheck-arm-plan.out"
+grep 'sha256=68a8133197a50beb8803f8d42f9908d1af1c5540d4bb05fdfca8c1fa47decefc' \
+    "$TEMP_DIR/shellcheck-arm-plan.out" >/dev/null ||
+    fail "ShellCheck AArch64 checksum plan"
+
 mkdir -p "$TEMP_DIR/rclone-plan-home"
 HOME="$TEMP_DIR/rclone-plan-home" "$HARNESS" tool --host rc --name rclone \
     --facts "$ROOT/tests/fixtures/rc.facts" --plan >"$TEMP_DIR/rclone-x86-plan.out"
@@ -232,6 +249,23 @@ HOME="$broken_home" PATH="$broken_bin:/usr/bin:/bin" \
     >"$TEMP_DIR/git-lfs-live-new-plan.out"
 grep 'KEEP command=git-lfs source=host-provided' "$TEMP_DIR/git-lfs-live-new-plan.out" \
     >/dev/null || fail "Git LFS newer host retention"
+printf '%s\n' '#!/bin/sh' 'printf "%s\n" "ShellCheck - shell script analysis tool" "version: 0.10.0"' \
+    >"$broken_bin/shellcheck"
+chmod 755 "$broken_bin/shellcheck"
+HOME="$broken_home" PATH="$broken_bin:/usr/bin:/bin" \
+    "$HARNESS" tool --host local --name shellcheck --plan \
+    >"$TEMP_DIR/shellcheck-live-old-plan.out"
+grep 'SHADOW command=shellcheck reason=host-command-unusable strategy=user-path' \
+    "$TEMP_DIR/shellcheck-live-old-plan.out" >/dev/null ||
+    fail "ShellCheck exact live version floor"
+printf '%s\n' '#!/bin/sh' 'printf "%s\n" "ShellCheck - shell script analysis tool" "version: 0.11.0"' \
+    >"$broken_bin/shellcheck"
+HOME="$broken_home" PATH="$broken_bin:/usr/bin:/bin" \
+    "$HARNESS" tool --host local --name shellcheck --plan \
+    >"$TEMP_DIR/shellcheck-live-exact-plan.out"
+grep 'KEEP command=shellcheck source=host-provided' \
+    "$TEMP_DIR/shellcheck-live-exact-plan.out" >/dev/null ||
+    fail "ShellCheck exact host retention"
 
 mkdir -p "$TEMP_DIR/claude-plan-home"
 HOME="$TEMP_DIR/claude-plan-home" "$HARNESS" tool --host al --name claude \
@@ -401,6 +435,19 @@ chmod 755 "$tectonic_fixture_dir/tectonic"
 tar -czf "$tectonic_fixture_archive" -C "$tectonic_fixture_dir" tectonic
 tectonic_fixture_hash=$(sha256sum "$tectonic_fixture_archive" | awk '{print $1}')
 sed -i "s/60b13a0826ae7ad9ce34b4a2df06bff2cfcfa6dda8a915477c0cbb84e1a4a902/$tectonic_fixture_hash/" \
+    "$test_repo/tools/artifacts.tsv"
+shellcheck_fixture_dir=$TEMP_DIR/shellcheck-fixture/shellcheck-v0.11.0
+shellcheck_fixture_archive=$TEMP_DIR/shellcheck-fixture.tar.gz
+mkdir -p "$shellcheck_fixture_dir"
+printf '%s\n' \
+    '#!/bin/sh' \
+    'printf "%s\n" "ShellCheck - shell script analysis tool" "version: 0.11.0" "license: GNU General Public License, version 3"' \
+    >"$shellcheck_fixture_dir/shellcheck"
+chmod 755 "$shellcheck_fixture_dir/shellcheck"
+tar -czf "$shellcheck_fixture_archive" -C "$TEMP_DIR/shellcheck-fixture" \
+    shellcheck-v0.11.0/shellcheck
+shellcheck_fixture_hash=$(sha256sum "$shellcheck_fixture_archive" | awk '{print $1}')
+sed -i "s/b7af85e41cc99489dcc21d66c6d5f3685138f06d34651e6d34b42ec6d54fe6f6/$shellcheck_fixture_hash/" \
     "$test_repo/tools/artifacts.tsv"
 sqlite_fixture_dir=$TEMP_DIR/sqlite-fixture
 sqlite_fixture_root=$sqlite_fixture_dir/sqlite-amalgamation-3530300
@@ -736,6 +783,42 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$tectonic_transaction" \
     fail "Tectonic rollback left stable link"
 [ ! -e "$test_home/.local/opt/tectonic/0.16.9/linux-x86_64" ] ||
     fail "Tectonic rollback left artifact directory"
+
+# Exercise ShellCheck's multi-line version gate, exact-member apply,
+# idempotence, tamper refusal, and rollback.
+HOME="$test_home" PATH="$fake_bin:/usr/bin:/bin" \
+    FIXTURE_ARCHIVE="$shellcheck_fixture_archive" \
+    "$test_repo/bin/harness" tool --host local --name shellcheck --apply \
+    >"$TEMP_DIR/shellcheck-tool-apply.out"
+shellcheck_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/shellcheck-tool-apply.out")
+[ -n "$shellcheck_transaction" ] || fail "missing ShellCheck transaction"
+grep 'NATIVE tar -xOzf STAGING shellcheck-v0.11.0/shellcheck > STAGING/shellcheck' \
+    "$TEMP_DIR/shellcheck-tool-apply.out" >/dev/null ||
+    fail "ShellCheck native extraction report"
+shellcheck_binary=$test_home/.local/opt/shellcheck/0.11.0/linux-x86_64/shellcheck
+"$shellcheck_binary" --version | grep '^version: 0.11.0$' >/dev/null ||
+    fail "ShellCheck installed version"
+HOME="$test_home" PATH="/usr/bin:/bin" \
+    "$test_repo/bin/harness" tool --host local --name shellcheck --plan \
+    >"$TEMP_DIR/shellcheck-tool-repeat.out"
+grep 'KEEP command=shellcheck source=managed-artifact' \
+    "$TEMP_DIR/shellcheck-tool-repeat.out" >/dev/null ||
+    fail "ShellCheck managed artifact plan"
+cp -p "$shellcheck_binary" "$TEMP_DIR/original-shellcheck-binary"
+printf '%s\n' tampered >>"$shellcheck_binary"
+if HOME="$test_home" "$test_repo/bin/harness" rollback "$shellcheck_transaction" \
+    >"$TEMP_DIR/refused-shellcheck-rollback.out" 2>&1; then
+    fail "ShellCheck rollback accepted changed binary"
+fi
+cp -p "$TEMP_DIR/original-shellcheck-binary" "$shellcheck_binary"
+HOME="$test_home" "$test_repo/bin/harness" rollback "$shellcheck_transaction" \
+    >"$TEMP_DIR/shellcheck-tool-rollback.out"
+[ ! -e "$test_home/.local/bin/shellcheck" ] &&
+    [ ! -L "$test_home/.local/bin/shellcheck" ] ||
+    fail "ShellCheck rollback left stable link"
+[ ! -e "$test_home/.local/opt/shellcheck/0.11.0/linux-x86_64" ] ||
+    fail "ShellCheck rollback left artifact directory"
 
 # Exercise the checksum-pinned source build, tamper refusal, and exact cleanup.
 source_bin=$TEMP_DIR/source-bin

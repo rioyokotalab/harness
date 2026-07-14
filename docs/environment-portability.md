@@ -96,6 +96,7 @@ The selected initial tool scope is:
 - Python: `uv` and managed Python 3.12;
 - agents and JavaScript: Node 24/npm, Codex CLI, and Claude Code;
 - documents and transfer: rclone, lftp, and Tectonic.
+- shell validation: exact-version ShellCheck 0.11.0.
 
 For every entry, declare either a host-provided feature/version floor or a
 checksum-pinned user-space artifact. A host command that passes its doctor check
@@ -312,6 +313,10 @@ Validate, per host:
   <https://downloads.rclone.org/v1.74.3/>
 - Ninja 1.13.2 release artifacts and GitHub-published asset digests:
   <https://github.com/ninja-build/ninja/releases/tag/v1.13.2>
+- ShellCheck 0.11.0 release artifacts and GitHub-published asset digests:
+  <https://github.com/koalaman/shellcheck/releases/tag/v0.11.0>
+- ShellCheck 0.11.0 GPLv3 license at the selected tag:
+  <https://github.com/koalaman/shellcheck/blob/v0.11.0/LICENSE>
 - Node 24.16.0 release artifacts and signed checksums:
   <https://nodejs.org/download/release/v24.16.0/>
 - Environment Modules model and shell support:

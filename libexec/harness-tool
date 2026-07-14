@@ -58,6 +58,28 @@ install_dir=$HOME/.local/opt/$tool_name/$version/$artifact_os-$artifact_arch
 installed_binary=$install_dir/$binary
 stable_link=$HOME/.local/bin/$binary
 
+tool_version_matches() {
+    version_candidate=$1
+    case "$tool_name" in
+        shellcheck)
+            "$version_candidate" --version 2>/dev/null |
+                awk -v expected="$version_line" '
+                    $0 == expected { matched = 1 }
+                    END { exit matched ? 0 : 1 }
+                '
+            ;;
+        *)
+            observed_version=$(
+                "$version_candidate" --version 2>/dev/null | sed -n '1p' || true
+            )
+            case "$observed_version" in
+                "$version_line"|"$version_line "*) return 0 ;;
+                *) return 1 ;;
+            esac
+            ;;
+    esac
+}
+
 host_command_healthy() {
     case "$tool_name" in
         git-lfs)
@@ -75,6 +97,7 @@ host_command_healthy() {
                 exit 0
             }'
             ;;
+        shellcheck) tool_version_matches "$binary" ;;
         *) "$binary" --version >/dev/null 2>&1 ;;
     esac
 }
@@ -92,11 +115,11 @@ if [ -n "$fact_file" ]; then
 elif [ "$managed_exact" -eq 1 ]; then
     # Non-interactive SSH commands do not consistently inherit ~/.local/bin in
     # PATH. Recognize the exact managed link without depending on shell startup.
-    observed_version=$("$installed_binary" --version 2>/dev/null | sed -n '1p' || true)
-    case "$observed_version" in
-        "$version_line"|"$version_line "*) command_state=present ;;
-        *) command_state=invalid-managed ;;
-    esac
+    if tool_version_matches "$installed_binary"; then
+        command_state=present
+    else
+        command_state=invalid-managed
+    fi
 elif command -v "$binary" >/dev/null 2>&1; then
     if host_command_healthy; then
         command_state=present
@@ -261,11 +284,8 @@ if [ "$artifact_action" = INSTALL ]; then
     chmod 755 "$stage/$binary"
     [ "$(find "$stage" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')" -eq 1 ] ||
         die "artifact extraction created unexpected paths"
-    observed_version=$("$stage/$binary" --version | sed -n '1p')
-    case "$observed_version" in
-        "$version_line"|"$version_line "*) ;;
-        *) die "installed tool version verification failed" ;;
-    esac
+    tool_version_matches "$stage/$binary" ||
+        die "installed tool version verification failed"
     binary_hash=$(sha256sum "$stage/$binary" | awk '{print $1}')
     printf 'artifact|%s|%s|%s\n' "$install_dir" "$binary" "$binary_hash" \
         >>"$transaction_manifest"

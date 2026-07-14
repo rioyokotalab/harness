@@ -21,3 +21,4 @@ rclone|rclone|pinned-user
 lftp|lftp|system-or-pinned-user
 tectonic|tectonic|pinned-user
 ninja|ninja|system-or-pinned-user
+shellcheck|shellcheck|system-or-pinned-user-exact-0.11.0

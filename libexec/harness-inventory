@@ -118,7 +118,7 @@ generate_facts() {
 
     for command_name in \
         sh bash git vim tmux rg jq tree rsync curl wget htop sqlite3 \
-        python3 uv node npm codex claude rclone lftp tectonic \
+        python3 uv node npm codex claude rclone lftp tectonic shellcheck \
         cc gcc g++ gfortran clang clang++ nvc nvc++ nvfortran \
         make cmake ninja meson pkg-config gdb lldb cuda-gdb valgrind \
         perf strace nsys ncu \
@@ -152,6 +152,11 @@ generate_facts() {
                 else
                     state=unusable
                 fi
+            elif [ "$command_name" = shellcheck ] &&
+                ! shellcheck --version 2>/dev/null |
+                    awk '$0 == "version: 0.11.0" { matched = 1 }
+                        END { exit matched ? 0 : 1 }'; then
+                state=unusable
             else
                 state=present
             fi

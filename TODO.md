@@ -213,11 +213,27 @@ live instructions.
 
 ## Issues appended during the T-172 sweep
 
-- **T-173 — Reconstruct the lost ShellCheck transaction:** implement it as new
-  reviewed work because no pre-incident object survived. Freeze the supported
-  version, primary artifact provenance, architecture coverage, and checksums;
-  add isolated plan/apply/tamper/idempotence/rollback tests; do not infer or
-  claim recovery of the lost bytes.
+- **T-173 — Reconstruct the lost ShellCheck transaction (complete
+  2026-07-15):** implemented it as new work because no pre-incident object
+  survived. Froze the supported version, primary artifact provenance,
+  architecture coverage, and checksums; added isolated plan/apply/tamper/
+  idempotence/rollback tests without inferring or claiming recovery of the
+  lost bytes.
+
+  **2026-07-15 reconstruction checkpoint:** the official project release and
+  GitHub release metadata identify v0.11.0 as the current stable release and
+  publish Linux x86-64 and AArch64 tarball digests. The tag's license is GPLv3.
+  Reconstruct this as a checksum-pinned `tar.gz` transaction using only the
+  exact `shellcheck-v0.11.0/shellcheck` member. Its multi-line `--version`
+  output requires an exact `version: 0.11.0` health check; matching only the
+  invariant banner would not prove the installed version. Both official
+  archives independently reproduced their published digests and contained
+  exactly one declared member; the verified x86-64 binary reported version
+  0.11.0 and GPLv3. Exact/old host behavior, inventory/doctor integration,
+  both architecture plans, isolated apply, idempotence, tamper refusal,
+  rollback, guarded cleanup, syntax/diff checks, and the full phase-1 suite
+  pass. Local installation remains a T-171 recovery transaction, not evidence
+  that the lost implementation bytes were recovered.
 - **T-174 — Remove raw recursive cleanup from harness tests (complete
   2026-07-15):**
   `tests/test-phase1.sh` and the native Slurm smoke owned temporary trees with
