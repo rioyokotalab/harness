@@ -91,7 +91,8 @@ done
 
 while IFS='|' read -r tool_name command_name policy; do
     case "$tool_name" in ''|'#'*) continue ;; esac
-    state=$(fact_get "$fact_file" "tool_$command_name")
+    fact_command=$(fact_key_for_command "$command_name")
+    state=$(fact_get "$fact_file" "tool_$fact_command")
     if [ "$state" = present ]; then
         pass "selected_tool=$tool_name"
     else

@@ -84,6 +84,19 @@ raw_shell=${SHELL:-}
 login_shell=$(safe_value "${raw_shell##*/}")
 [ -n "$login_shell" ] || login_shell=unknown
 
+version_at_least() {
+    awk -v have="$1" -v need="$2" 'BEGIN {
+        nh = split(have, h, "."); nn = split(need, n, ".")
+        if (nh != 3 || nn != 3) exit 1
+        for (i = 1; i <= 3; i++) {
+            if (h[i] !~ /^[0-9]+$/ || n[i] !~ /^[0-9]+$/) exit 1
+            if ((h[i] + 0) > (n[i] + 0)) exit 0
+            if ((h[i] + 0) < (n[i] + 0)) exit 1
+        }
+        exit 0
+    }'
+}
+
 generate_facts() {
     echo "schema=1"
     echo "logical_host=$logical_host"
@@ -108,6 +121,15 @@ generate_facts() {
             if [ "$command_name" = ninja ] &&
                 ! "$command_name" --version >/dev/null 2>&1; then
                 state=unusable
+            elif [ "$command_name" = git-lfs ]; then
+                lfs_line=$(git-lfs version 2>/dev/null | sed -n '1p' || true)
+                lfs_version=${lfs_line#git-lfs/}
+                lfs_version=${lfs_version%% *}
+                if version_at_least "$lfs_version" 3.7.1; then
+                    state=present
+                else
+                    state=unusable
+                fi
             else
                 state=present
             fi

@@ -38,6 +38,10 @@ fact_get() {
     fi
 }
 
+fact_key_for_command() {
+    printf '%s' "$1" | sed 's/+/p/g; s/-/_/g'
+}
+
 profile_for() {
     logical_host=$1
     require_safe_id "$logical_host"

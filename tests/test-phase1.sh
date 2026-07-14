@@ -141,6 +141,19 @@ grep 'INSTALL artifact=.*ninja/1.13.2/linux-x86_64' \
     "$TEMP_DIR/ninja-unusable-plan.out" >/dev/null || fail "Ninja artifact plan"
 grep 'sha256=5749cbc4e668273514150a80e387a957f933c6ed3f5f11e03fb30955e2bbead6' \
     "$TEMP_DIR/ninja-unusable-plan.out" >/dev/null || fail "Ninja x86-64 checksum plan"
+printf '%s\n' '#!/bin/sh' 'echo "git-lfs/3.4.1 (fixture)"' >"$broken_bin/git-lfs"
+chmod 755 "$broken_bin/git-lfs"
+HOME="$broken_home" PATH="$broken_bin:/usr/bin:/bin" \
+    "$HARNESS" tool --host local --name git-lfs --plan \
+    >"$TEMP_DIR/git-lfs-live-old-plan.out"
+grep 'SHADOW command=git-lfs reason=host-command-unusable strategy=user-path' \
+    "$TEMP_DIR/git-lfs-live-old-plan.out" >/dev/null || fail "Git LFS live security floor"
+printf '%s\n' '#!/bin/sh' 'echo "git-lfs/3.8.0 (fixture)"' >"$broken_bin/git-lfs"
+HOME="$broken_home" PATH="$broken_bin:/usr/bin:/bin" \
+    "$HARNESS" tool --host local --name git-lfs --plan \
+    >"$TEMP_DIR/git-lfs-live-new-plan.out"
+grep 'KEEP command=git-lfs source=host-provided' "$TEMP_DIR/git-lfs-live-new-plan.out" \
+    >/dev/null || fail "Git LFS newer host retention"
 
 mkdir -p "$TEMP_DIR/claude-plan-home"
 HOME="$TEMP_DIR/claude-plan-home" "$HARNESS" tool --host al --name claude \
@@ -163,6 +176,24 @@ grep 'sha256=f9aa39017dbd51f111fdb93dda222178cbe51c8193508fc567b523cc74fff9c1' \
     "$TEMP_DIR/tectonic-arm-plan.out" >/dev/null || fail "Tectonic AArch64 checksum plan"
 grep 'EXTRACT format=tar.gz member=tectonic binary=tectonic' \
     "$TEMP_DIR/tectonic-arm-plan.out" >/dev/null || fail "Tectonic root-member plan"
+
+mkdir -p "$TEMP_DIR/git-lfs-plan-home"
+HOME="$TEMP_DIR/git-lfs-plan-home" "$HARNESS" tool --host ab --name git-lfs \
+    --facts "$ROOT/tests/fixtures/ab.facts" --plan >"$TEMP_DIR/git-lfs-x86-plan.out"
+grep 'sha256=1c0b6ee5200ca708c5cebebb18fdeb0e1c98f1af5c1a9cba205a4c0ab5a5ec08' \
+    "$TEMP_DIR/git-lfs-x86-plan.out" >/dev/null || fail "Git LFS x86-64 checksum plan"
+HOME="$TEMP_DIR/git-lfs-plan-home" "$HARNESS" tool --host al --name git-lfs \
+    --facts "$ROOT/tests/fixtures/al.facts" --plan >"$TEMP_DIR/git-lfs-arm-plan.out"
+grep 'sha256=73a9c90eeb4312133a63c3eaee0c38c019ea7bfa0953d174809d25b18588dd8d' \
+    "$TEMP_DIR/git-lfs-arm-plan.out" >/dev/null || fail "Git LFS AArch64 checksum plan"
+HOME="$TEMP_DIR/git-lfs-plan-home" "$HARNESS" tool --host ri --name git-lfs \
+    --facts "$ROOT/tests/fixtures/ri.facts" --plan >"$TEMP_DIR/git-lfs-old-plan.out"
+grep 'SHADOW command=git-lfs reason=host-command-unusable strategy=user-path' \
+    "$TEMP_DIR/git-lfs-old-plan.out" >/dev/null || fail "Git LFS captured security floor"
+HOME="$TEMP_DIR/git-lfs-plan-home" "$HARNESS" tool --host rc --name git-lfs \
+    --facts "$ROOT/tests/fixtures/rc.facts" --plan >"$TEMP_DIR/git-lfs-current-plan.out"
+grep 'KEEP command=git-lfs source=host-provided' "$TEMP_DIR/git-lfs-current-plan.out" \
+    >/dev/null || fail "Git LFS captured current host retention"
 
 mkdir -p "$TEMP_DIR/runtime-plan-home"
 HOME="$TEMP_DIR/runtime-plan-home" "$HARNESS" runtime --host al --name node \

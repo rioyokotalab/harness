@@ -8,6 +8,7 @@ login_shell=bash
 tool_sh=present
 tool_bash=present
 tool_git=present
+tool_git_lfs=present
 tool_vim=present
 tool_tmux=absent
 tool_rg=absent

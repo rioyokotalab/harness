@@ -192,6 +192,11 @@ whole-tree digest. Rollback fails closed if any launcher, binary, or bundled
 resource changed. Authentication, configuration, sessions, caches, and logs are
 not read or copied.
 
+The Git LFS artifact installs only the `git-lfs` command. The harness does not
+run `git lfs install`, write global Git filters or hooks, or contact an LFS
+remote. Enable it per project with an explicit native `git lfs install --local`
+only when that repository is in scope.
+
 ## Deliberately excluded
 
 The live `~/.codex/config.toml`, `~/.claude/settings.json`,

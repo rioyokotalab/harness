@@ -1074,10 +1074,16 @@ harness. Repository-specific tasks remain in their own project ledgers.
     Fontconfig warning but downloaded its declared font and produced a valid
     PDF; no temporary cache or smoke output was retained.
   - Git LFS 3.7.1 is a strong LLM-project follow-up: the official security-fix
-    release has publisher-digested x86-64 and AArch64 binaries. Keep it separate
-    from the selected-tool rollout because installing the binary and enabling
-    repository/global hooks are different authority and rollback boundaries;
-    do not run `git lfs install` implicitly.
+    release has publisher-digested x86-64 and AArch64 binaries. Independent
+    downloads match the publisher values
+    `1c0b6ee5200ca708c5cebebb18fdeb0e1c98f1af5c1a9cba205a4c0ab5a5ec08`
+    and `73a9c90eeb4312133a63c3eaee0c38c019ea7bfa0953d174809d25b18588dd8d`;
+    exact-member extraction reports static binaries for both architectures.
+    Presence-only fleet preflight found 3.7.1 on `rc`, older 3.4.1 on `ri`, and
+    absence elsewhere. Add a security feature floor that retains 3.7.1 or
+    newer and visibly shadows older commands. Keep binary installation separate
+    from hook/filter activation: never run `git lfs install` implicitly, and
+    use explicit project-local activation only when that repository is in scope.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

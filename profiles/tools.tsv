@@ -1,5 +1,6 @@
 # name|command|policy
 git|git|system-feature-floor
+git-lfs|git-lfs|system-or-pinned-user-security-floor-3.7.1
 vim|vim|system-feature-floor
 tmux|tmux|system-or-pinned-user
 ripgrep|rg|system-or-pinned-user
