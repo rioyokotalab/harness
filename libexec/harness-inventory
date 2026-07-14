@@ -61,6 +61,11 @@ done
 require_safe_id "$logical_host"
 case "$format" in text|json) ;; *) die "unsupported format: $format" ;; esac
 
+# Managed user tools are part of the portable environment even when a remote
+# non-interactive shell omits ~/.local/bin from its inherited PATH.
+PATH=$HOME/.local/bin:$PATH
+export PATH
+
 safe_value() {
     printf '%s' "$1" | tr -cd 'A-Za-z0-9._+-'
 }

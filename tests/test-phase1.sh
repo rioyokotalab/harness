@@ -110,6 +110,15 @@ grep 'INSTALL artifact=.*uv/0.9.18/linux-aarch64' "$TEMP_DIR/uv-plan.out" \
 grep 'sha256=f8e23ec786b18660ade6b033b6191b7e9c283c872eeb8c4531d56a873decf160' \
     "$TEMP_DIR/uv-plan.out" >/dev/null || fail "uv AArch64 checksum plan"
 
+path_home=$TEMP_DIR/path-home
+mkdir -p "$path_home/.local/bin"
+printf '%s\n' '#!/bin/sh' 'exit 0' >"$path_home/.local/bin/rg"
+chmod 755 "$path_home/.local/bin/rg"
+HOME="$path_home" PATH="/usr/bin:/bin" "$HARNESS" inventory --host local \
+    >"$TEMP_DIR/user-bin-inventory.out"
+grep '^tool_rg=present$' "$TEMP_DIR/user-bin-inventory.out" >/dev/null ||
+    fail "inventory missed user tool outside inherited PATH"
+
 # Exercise a real apply/rollback against an isolated clean Git checkout.
 test_repo=$TEMP_DIR/repo
 test_home=$TEMP_DIR/home
