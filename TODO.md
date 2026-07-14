@@ -114,6 +114,55 @@ harness. Repository-specific tasks remain in their own project ledgers.
   - Only the current node has a harness checkout and the Codex/Claude discovery
     links. No remote files were changed during inventory.
 
+  User preference decisions:
+
+  - Unify every portable, non-sensitive shell-convenience category: prompt,
+    aliases, functions, history policy, navigation helpers, and editor/pager
+    defaults. The harness becomes their source of truth; host profiles retain
+    only evidence-backed site differences. Inventory and reconcile the exact
+    behavior without reading or migrating credential values.
+  - Make the harness the source of truth for portable, non-secret Git, Vim, and
+    tmux configuration. Use thin live includes/source hooks and preserve
+    host-local Git identity, signing, credentials, machine paths, and mandatory
+    site overrides outside the repository. Do not infer plugin installation or
+    network downloads from this configuration decision.
+  - Do not create normalized scheduler wrapper commands. Build an agentic
+    workflow that uses each site's native scheduler commands, shows the exact
+    resolved command before execution, and reports that command and its result.
+    Host profiles may inform command selection, but must not conceal Slurm,
+    PBS, or `yrun`/`ybatch` behavior from the user.
+
+  Local tool candidate checkpoint (2026-07-14):
+
+  - Configured local defaults are Vim as `EDITOR` and `cat` as `PAGER`; tracked
+    candidates exist for Git and Vim configuration. File presence was checked
+    without reading configuration contents.
+  - Deliberate user-space tools observed on the current node are `uv` 0.9.18,
+    Node 24.16/npm 11.13, Codex CLI 0.144.4, Claude Code 2.1.207, ripgrep
+    15.1, rclone 1.74.3, Tectonic 0.16.9, and lftp 4.9.3. Their executable
+    names and versions are safe candidate inputs; credentials, client state,
+    and tool-specific configuration are not.
+  - Useful system-provided interfaces include Git, Vim/Neovim/Emacs, tmux,
+    tree, jq, rsync, curl/wget, htop, SQLite, Make, CMake, Ninja, GCC/GDB, Go,
+    Docker/Podman, CUDA commands, and Environment Modules. Treat compilers,
+    CUDA, containers, numerical libraries, and build stacks as site/project
+    capabilities rather than pinned personal binaries.
+  - Common shell enhancements not currently installed include `fd`, `fzf`,
+    `zoxide`, `bat`, `eza`, `direnv`, `yq`, GitHub CLI, `delta`, `lazygit`,
+    `shellcheck`, and `shfmt`. Adding them would be an intentional improvement,
+    not mirroring existing behavior.
+  - The user selected bundles C + P + A + D for the initial rollout:
+    - core shell interfaces: Git, Vim, tmux, ripgrep, jq, tree, rsync,
+      curl/wget, htop, and SQLite;
+    - Python: `uv` plus managed Python 3.12;
+    - agents/Node: Node 24/npm, Codex CLI, and Claude Code;
+    - documents/transfer: rclone, lftp, and Tectonic.
+  - Do not add the currently absent modern shell/Git enhancements or extra
+    editor configuration in the initial rollout. For each selected tool, the
+    manifest must distinguish a host-provided command with a tested feature
+    floor from a checksum-pinned user-space artifact. Never synchronize rclone
+    or agent credentials and live state.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 
@@ -124,10 +173,10 @@ harness. Repository-specific tasks remain in their own project ledgers.
      default, checksum-pinned portable artifacts, backups/state records,
      idempotent apply, and rollback. Never invoke root/system package managers
      or overwrite an unmanaged path.
-  3. Add a minimal common Bash environment. Install it through bounded managed
-     blocks in remote startup files while preserving site initialization; apply
-     only after every affected startup file passes non-interactive and
-     interactive validation in the host plan.
+  3. Add the full portable common Bash experience selected above. Install it
+     through bounded managed blocks in remote startup files while preserving
+     site initialization; apply only after every affected startup file passes
+     non-interactive and interactive validation in the host plan.
   4. Add portable user tools only on supported targets. Use `uv` as an optional
      managed Python/tool layer after the shell-and-Git bootstrap. Keep drivers,
      MPI, CUDA, compilers, schedulers, modules, and uenv in site adapters. Keep

@@ -62,7 +62,7 @@ Keep these in the harness repository:
 
 - global Codex/Claude instructions and shared skills;
 - small shell-neutral executables under a user-owned bin directory;
-- common Git, terminal, editor, prompt, and navigation policy where adopted;
+- common Git, terminal, editor, prompt, and navigation policy;
 - logical host profiles and site adapters;
 - pinned tool declarations, checksums, and supported target triples;
 - inventory, plan, apply, doctor, and rollback logic.
@@ -71,6 +71,14 @@ The same Git revision should be present everywhere. Generated state and host
 facts live outside the repository under `~/.local/state/harness/`; optional
 owner configuration lives under `~/.config/harness/`.
 
+The harness also owns the portable, non-secret Git, Vim, and tmux configuration.
+Expose tracked common fragments through thin live include/source hooks rather
+than cloning an opaque dotfile. Keep Git identity, signing, credentials, URL or
+machine-specific paths, and mandatory site overrides in untracked host-local
+configuration. Vim and tmux local overrides follow the same model. This choice
+does not itself authorize plugin installation or plugin-manager network access;
+those are separate tool-manifest actions.
+
 ### 2. Portable tools: same interface where an artifact is supported
 
 Install self-contained, checksum-verified releases into versioned directories
@@ -78,6 +86,21 @@ such as `~/.local/opt/TOOL/VERSION/TARGET`, with stable links in
 `~/.local/bin`. A tool manifest must enumerate supported OS/architecture/ABI
 targets; unsupported hosts are a reported skip, not a partially applied
 installation.
+
+The selected initial tool scope is:
+
+- core interfaces: Git, Vim, tmux, ripgrep, jq, tree, rsync, curl/wget, htop,
+  and SQLite;
+- Python: `uv` and managed Python 3.12;
+- agents and JavaScript: Node 24/npm, Codex CLI, and Claude Code;
+- documents and transfer: rclone, lftp, and Tectonic.
+
+For every entry, declare either a host-provided feature/version floor or a
+checksum-pinned user-space artifact. A host command that passes its doctor check
+need not be shadowed merely to make version strings identical. The initial
+scope excludes new shell/Git enhancements and extra editor configurations that
+were not selected. Configuration or state containing rclone or agent
+credentials is never synchronized.
 
 `uv` is a useful optional Python and Python-CLI layer on supported Linux hosts:
 its official documentation describes standalone installation, managed Python
@@ -97,9 +120,12 @@ mechanisms. Examples include module initialization, uenv entry, scheduler type,
 container command, scratch roots, and whether login-node GPU checks are valid.
 
 Profiles must not hide important scheduler semantics behind misleading aliases.
-Common project commands may dispatch to a Slurm, PBS, or local adapter only
-when the project supplies the resource request explicitly. A profile should
-fail with a useful explanation when a concept is unavailable.
+Do not expose normalized scheduler wrapper commands. An agentic workflow may
+use the profile to select and construct the appropriate native Slurm, PBS, or
+`yrun`/`ybatch` command, but it must show the resolved command before execution
+and report the same command with its result. Project resource requests remain
+explicit, native commands remain available, and unavailable operations fail
+with a useful explanation.
 
 Environment Modules are designed to modify each shell dynamically. The harness
 should extend, not replace, the site's initial module environment. At CSCS,
@@ -212,6 +238,13 @@ use a single guarded, marked harness block. The hook must be fast, silent for
 non-interactive sessions, and must not start containers, contact the network,
 print environment values, or manage an SSH agent.
 
+The owner selected all portable, non-sensitive shell-convenience categories for
+unification. The harness therefore owns the common prompt, aliases, functions,
+history policy, navigation helpers, and editor/pager defaults. Host profiles
+may override only an evidence-backed site requirement. Exact behavior should be
+reconciled into tracked fragments rather than copied wholesale from any one
+startup file, and credential values must never be read or migrated.
+
 Preserve the existing file around the managed block. Record a restorable backup
 and original permissions before first mutation; update only the marked block on
 later applies. Structural inspection and plans must not print startup-file
@@ -245,8 +278,9 @@ Validate, per host:
 5. **Tool pilot:** add one checksum-pinned portable tool and optional `uv` on
    supported Linux targets; prove unsupported-target skips and offline errors.
 6. **Fleet rollout:** proceed one host at a time with transaction records.
-7. **Project adapters:** add project-owned scheduler/container entry points only
-   when a concrete project requires them.
+7. **Project workflows:** add project-owned agent workflows that construct,
+   display, and execute native scheduler/container commands only when a
+   concrete project requires them.
 
 ## Acceptance criteria
 

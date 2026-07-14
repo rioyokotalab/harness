@@ -29,6 +29,10 @@ gates; follow those more specific rules.
   output when it matters, and distinguish confirmed facts from hypotheses.
 - Run validation proportional to risk. A generated artifact, optimization, or
   delegated result is not complete until independently checked.
+- When an agent executes through a platform CLI, prefer recognizable native
+  commands over opaque convenience wrappers so plans and reports expose what
+  actually ran. Keep portability mapping in the workflow and report the
+  resolved native command.
 
 ## Reusable workflows
 
