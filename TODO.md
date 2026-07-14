@@ -36,10 +36,11 @@ harness. Repository-specific tasks remain in their own project ledgers.
     `IdentitiesOnly yes`; `alps_login` resolves to Ela. After the user renewed
     the CSCS-signed identity, a strict non-interactive `ssh al true` passed in
     nine seconds. Source: <https://docs.cscs.ch/access/ssh/>. The remote startup
-    still emits two non-fatal hygiene warnings: `.bashrc` attempts `uenv start`
-    in a non-interactive shell, and `.bash_logout` references unset
-    `SSH_AGENT_PID`; preserve them as inventory findings rather than connection
-    failures.
+    still emits a non-fatal hygiene warning because `.bashrc` attempts `uenv
+    start` in a non-interactive shell. An earlier logout emitted an unset
+    `SSH_AGENT_PID` warning, but the captured inventory and a later targeted
+    audit both found `.bash_logout` absent; preserve the earlier observation
+    without inferring a current user-file defect.
   - Current-node convenience is installed: `.bashrc` defines `cscs-renew` to
     run the supported signer and reload only `~/.ssh/cscs-key` into the shared
     agent for one day. `Host al` uses `ControlMaster auto`, a hashed control
@@ -85,9 +86,9 @@ harness. Repository-specific tasks remain in their own project ledgers.
   - On `al`, make `.bashrc` invoke `uenv start` only in an appropriate
     interactive shell; preserve intended interactive behavior and use the
     supported non-interactive `uenv run` path where needed.
-  - On `al`, make `.bash_logout` safe when `SSH_AGENT_PID` is unset. Do not
-    terminate a forwarded, shared, or externally managed agent, and preserve
-    intentional cleanup for agents actually owned by that shell.
+  - On `al`, do not create or patch `.bash_logout` unless the earlier unset
+    `SSH_AGENT_PID` warning is reproduced and its current source is identified.
+    Never terminate a forwarded, shared, or externally managed agent.
   - Audit non-interactive startup and logout on every reachable cluster for
     analogous stderr, unset-variable, agent-lifecycle, or exit-status defects;
     fix each evidence-backed issue and independently recheck both `ssh HOST
@@ -350,8 +351,9 @@ harness. Repository-specific tasks remain in their own project ledgers.
     tracked marker plus the actual `.manifest.status` path.
   - Next safe action: fast-forward `ab`, `rc`, and `t4` to `42e9a11`, show each
     shell plan, and apply/validate one host at a time. Keep `al` out of this
-    rollout until its `uenv`/agent startup defects are remediated, and keep
-    `ai4s` blocked pending reliable read-only connectivity.
+    rollout until its `uenv` startup defect is remediated and the earlier
+    logout warning is rechecked, and keep `ai4s` blocked pending reliable
+    read-only connectivity.
 
   Eligible-fleet shell rollout checkpoint (2026-07-14):
 
@@ -376,14 +378,43 @@ harness. Repository-specific tasks remain in their own project ledgers.
     file was removed after the fast-forward. Future load-balanced cluster
     transfers must not assume `/tmp` is shared between connections.
   - `al` remains intentionally excluded from shell apply until its
-    non-interactive `uenv start` and agent-logout defects are fixed and tested.
+    non-interactive `uenv start` defect is fixed and the earlier, currently
+    unreproduced logout warning is rechecked.
     `ai4s` remains connectivity-blocked, and the current node remains blocked
     on rotation/removal of plaintext credentials from `.bashrc`; neither was
     mutated in this checkpoint.
   - Next executable action: design a suffix-verified, content-minimizing
-    transaction for the two evidence-backed `al` startup defects, dry-run it,
-    and validate non-interactive and real interactive behavior before applying
-    the common shell suffix there.
+    transaction for the reviewed `al` uenv startup defect, dry-run it, and
+    validate non-interactive and real interactive behavior before applying the
+    common shell suffix there.
+
+  `al` remediation implementation checkpoint (2026-07-14):
+
+  - Current official CSCS guidance explicitly says not to use `uenv start` in
+    `.bashrc`: it creates an interactive child shell. Automated commands should
+    use `uenv run`, and Slurm jobs should use the native uenv integration.
+    Source: <https://docs.cscs.ch/software/uenv/using/>.
+  - A targeted remote audit printed only exact public matches. It found one
+    offending line, `uenv start prgenv-gnu/25.11:v1 --view=default`, in the
+    mode-600 `.bashrc`. It confirmed `.bash_logout` is absent, consistent with
+    the captured fixture, so no logout file is currently eligible for editing.
+  - Implemented `harness remediate --host al --plan|--apply`. It recognizes
+    only that reviewed line, replaces it in place with an equal-length public
+    comment, and stores only the original/applied 45-byte patches in mode-600
+    transaction state. It neither copies nor hashes surrounding bytes.
+  - Extended all-path rollback to validate patch payloads, file length, and the
+    exact patched range before restoration. Isolated tests prove apply,
+    idempotent planning, changed-patch refusal, exact rollback, unreviewed-host
+    refusal, and that a fake credential elsewhere in `.bashrc` never enters
+    state.
+  - Added host-specific Alps shell payloads and an interactive-only `prgenv`
+    function. It reports and calls the exact native `uenv start
+    prgenv-gnu/25.11:v1 --view=default`; non-interactive shells do not define
+    it. The full phase-1 suite and shell syntax checks pass.
+  - Next executable action: commit this implementation, fast-forward the clean
+    `al` checkout with a checksum-verified bundle, show both remediation and
+    shell dry runs, then apply/validate/rollback/reapply the remediation before
+    applying the common shell suffix.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

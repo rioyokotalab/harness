@@ -18,6 +18,7 @@ for script in \
     "$ROOT/libexec/harness-plan" \
     "$ROOT/libexec/harness-doctor" \
     "$ROOT/libexec/harness-apply" \
+    "$ROOT/libexec/harness-remediate" \
     "$ROOT/libexec/harness-shell" \
     "$ROOT/libexec/harness-rollback"
 do
@@ -155,5 +156,56 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$shell_transaction" \
     >"$TEMP_DIR/shell-rollback.out"
 cmp -s "$test_home/.bashrc" "$TEMP_DIR/original-bashrc" || fail "bashrc rollback"
 cmp -s "$test_home/.bash_profile" "$TEMP_DIR/original-bash-profile" || fail "bash profile rollback"
+
+printf '%s\n' 'uenv start prgenv-gnu/25.11:v1 --view=default' >>"$test_home/.bashrc"
+cp "$test_home/.bashrc" "$TEMP_DIR/original-remediation-bashrc"
+HOME="$test_home" "$test_repo/bin/harness" remediate --host al --plan \
+    >"$TEMP_DIR/remediation-plan.out"
+grep 'PATCH file=.bashrc match=reviewed-uenv-start' \
+    "$TEMP_DIR/remediation-plan.out" >/dev/null || fail "remediation plan"
+HOME="$test_home" "$test_repo/bin/harness" remediate --host al --apply \
+    >"$TEMP_DIR/remediation-apply.out"
+remediation_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/remediation-apply.out")
+[ -n "$remediation_transaction" ] || fail "missing remediation transaction"
+grep -F -x '# harness: use prgenv for an interactive uenv' \
+    "$test_home/.bashrc" >/dev/null || fail "remediation exact patch"
+if grep -R 'fake-secret-value' "$test_home/.local/state/harness" >/dev/null 2>&1; then
+    fail "remediation transaction copied pre-existing content"
+fi
+sed -i 's/^# harness: use prgenv/# xarness: use prgenv/' "$test_home/.bashrc"
+if HOME="$test_home" "$test_repo/bin/harness" rollback "$remediation_transaction" \
+    >"$TEMP_DIR/refused-remediation-rollback.out" 2>&1; then
+    fail "remediation rollback accepted a changed patch"
+fi
+grep -F -x '# xarness: use prgenv for an interactive uenv' \
+    "$test_home/.bashrc" >/dev/null || fail "remediation rollback damaged changed patch"
+sed -i 's/^# xarness: use prgenv/# harness: use prgenv/' "$test_home/.bashrc"
+HOME="$test_home" "$test_repo/bin/harness" rollback "$remediation_transaction" \
+    >"$TEMP_DIR/remediation-rollback.out"
+cmp -s "$test_home/.bashrc" "$TEMP_DIR/original-remediation-bashrc" ||
+    fail "remediation rollback"
+HOME="$test_home" "$test_repo/bin/harness" shell --host al --plan \
+    >"$TEMP_DIR/al-shell-plan.out"
+al_payload_bytes=$((1 + $(wc -c <"$test_repo/shell/bashrc.al.block" | tr -d ' ')))
+grep "APPEND file=.bashrc bytes=$al_payload_bytes" "$TEMP_DIR/al-shell-plan.out" \
+    >/dev/null || fail "al host-specific shell payload"
+al_profile_payload_bytes=$((1 + $(wc -c <"$test_repo/shell/bash_profile.al.block" | tr -d ' ')))
+grep "APPEND file=.bash_profile bytes=$al_profile_payload_bytes" \
+    "$TEMP_DIR/al-shell-plan.out" >/dev/null || fail "al host-specific login payload"
+if HOME="$test_home" "$test_repo/bin/harness" remediate --host rc --plan \
+    >"$TEMP_DIR/unknown-remediation.out" 2>&1; then
+    fail "remediation accepted an unreviewed host"
+fi
+ln -s "$test_repo" "$test_home/harness"
+if HOME="$test_home" bash --noprofile --norc -c \
+    '. "$HOME/harness/shell/bashrc.al.block"; type prgenv >/dev/null 2>&1'; then
+    fail "al convenience loaded in a non-interactive shell"
+fi
+HOME="$test_home" bash --noprofile --norc -ic \
+    '. "$HOME/harness/shell/bashrc.al.block"; type prgenv' \
+    >"$TEMP_DIR/al-interactive.out" 2>&1 || fail "al interactive convenience"
+grep 'prgenv is a function' "$TEMP_DIR/al-interactive.out" >/dev/null ||
+    fail "al interactive function missing"
 
 echo "phase-1 harness tests passed"

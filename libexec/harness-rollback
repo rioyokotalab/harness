@@ -18,11 +18,11 @@ manifest=$HOME/.local/state/harness/transactions/$transaction_id.manifest
 
 records=$(mktemp "${TMPDIR:-/tmp}/harness-rollback.XXXXXX")
 trap 'rm -f "$records"' EXIT HUP INT TERM
-awk -F'|' '$1 == "link" || $1 == "shell" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+awk -F'|' '$1 == "link" || $1 == "shell" || $1 == "patch" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
     "$manifest" >"$records"
 
 # Validate every path before mutating any path.
-while IFS='|' read -r record destination field3 field4 field5; do
+while IFS='|' read -r record destination field3 field4 field5 field6 field7; do
     case "$destination" in "$HOME"/*) ;; *) die "unsafe transaction path" ;; esac
     if [ "$record" = shell ]; then
         original=$field3; bytes=$field4; payload=$field5
@@ -33,6 +33,31 @@ while IFS='|' read -r record destination field3 field4 field5; do
         fi
         [ "$current" -eq "$expected" ] && tail -c "$bytes" "$destination" | cmp -s - "$payload" ||
             die "rollback blocked: shell file changed after apply: $destination"
+    elif [ "$record" = patch ]; then
+        offset=$field3; original_size=$field4; bytes=$field5
+        original_payload=$field6; applied_payload=$field7
+        case "$original_payload:$applied_payload" in
+            "$HOME/.local/state/harness/transactions/"*:"$HOME/.local/state/harness/transactions/"*) ;;
+            *) die "rollback blocked: unsafe patch payload path" ;;
+        esac
+        [ -f "$original_payload" ] && [ ! -L "$original_payload" ] &&
+            [ -f "$applied_payload" ] && [ ! -L "$applied_payload" ] ||
+            die "rollback blocked: missing patch payload"
+        [ "$(wc -c <"$original_payload" | tr -d ' ')" -eq "$bytes" ] &&
+            [ "$(wc -c <"$applied_payload" | tr -d ' ')" -eq "$bytes" ] ||
+            die "rollback blocked: patch payload size changed"
+        [ -f "$destination" ] && [ ! -L "$destination" ] ||
+            die "rollback blocked: patched file changed type: $destination"
+        current_size=$(wc -c <"$destination" | tr -d ' ')
+        [ "$current_size" -eq "$original_size" ] ||
+            die "rollback blocked: patched file size changed: $destination"
+        if dd if="$destination" bs=1 skip="$offset" count="$bytes" 2>/dev/null |
+            cmp -s - "$original_payload"; then
+            continue
+        fi
+        dd if="$destination" bs=1 skip="$offset" count="$bytes" 2>/dev/null |
+            cmp -s - "$applied_payload" ||
+            die "rollback blocked: reviewed patch changed after apply: $destination"
     elif [ -L "$destination" ]; then
         [ "$(readlink "$destination")" = "$field3" ] ||
             die "rollback blocked: link changed after apply: $destination"
@@ -41,7 +66,7 @@ while IFS='|' read -r record destination field3 field4 field5; do
     fi
 done <"$records"
 
-while IFS='|' read -r record destination field3 field4 field5; do
+while IFS='|' read -r record destination field3 field4 field5 field6 field7; do
         case "$destination" in "$HOME"/*) ;; *) die "unsafe transaction path" ;; esac
         if [ "$record" = shell ]; then
             original=$field3; bytes=$field4; payload=$field5
@@ -51,6 +76,17 @@ while IFS='|' read -r record destination field3 field4 field5; do
             else
                 echo "TRUNCATE file=$destination bytes=$original"
                 truncate -s "$original" "$destination"
+            fi
+        elif [ "$record" = patch ]; then
+            offset=$field3; bytes=$field5
+            original_payload=$field6; applied_payload=$field7
+            if dd if="$destination" bs=1 skip="$offset" count="$bytes" 2>/dev/null |
+                cmp -s - "$original_payload"; then
+                echo "KEEP file=$destination patch=already-rolled-back"
+            else
+                echo "RESTORE file=$destination patch=reviewed-exact-bytes"
+                dd if="$original_payload" of="$destination" bs=1 seek="$offset" \
+                    conv=notrunc 2>/dev/null
             fi
         elif [ -L "$destination" ] && [ "$(readlink "$destination")" = "$field3" ]; then
             echo "REMOVE link=$destination"

@@ -97,6 +97,23 @@ records original byte length and a mode-600 copy of the public harness suffix.
 Rollback first validates every affected file, then truncates only exact,
 unchanged managed suffixes; any later user edit blocks the entire rollback.
 
+Reviewed host-specific defects use a separate exact-patch transaction. The
+currently supported remediation disables the known Alps `uenv start` line in
+`.bashrc` without copying or hashing any surrounding bytes:
+
+```bash
+harness remediate --host al --plan
+harness remediate --host al --apply
+```
+
+It replaces only the reviewed equal-length public line and stores only the
+original and applied public patch bytes in mode-600 transaction state. Rollback
+checks the file length and exact patched region before restoring it. The Alps
+interactive shell then provides `prgenv`, which prints and runs the native
+`uenv start prgenv-gnu/25.11:v1 --view=default` command. Scripts, Slurm jobs,
+and agent workflows should report and invoke an explicit native `uenv run ...`
+or Slurm `--uenv` command instead.
+
 ## Deliberately excluded
 
 The live `~/.codex/config.toml`, `~/.claude/settings.json`,

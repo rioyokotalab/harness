@@ -10,3 +10,14 @@ export HISTCONTROL HISTSIZE HISTFILESIZE
 if [ -n "${BASH_VERSION:-}" ]; then
     shopt -s histappend
 fi
+
+case ${HARNESS_LOGICAL_HOST:-} in
+    ''|*[!A-Za-z0-9._-]*) ;;
+    *)
+        host_interactive=$HOME/harness/shell/hosts/$HARNESS_LOGICAL_HOST.sh
+        if [ -r "$host_interactive" ]; then
+            . "$host_interactive"
+        fi
+        unset host_interactive
+        ;;
+esac

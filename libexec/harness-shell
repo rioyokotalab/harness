@@ -24,9 +24,13 @@ command -v truncate >/dev/null 2>&1 || die "shell transaction requires truncate"
 temp_dir=$(mktemp -d "${TMPDIR:-/tmp}/harness-shell.XXXXXX")
 trap 'rm -rf "$temp_dir"' EXIT HUP INT TERM
 printf '\n' >"$temp_dir/bashrc.payload"
-cat "$HARNESS_ROOT/shell/bashrc.block" >>"$temp_dir/bashrc.payload"
+bashrc_block=$HARNESS_ROOT/shell/bashrc.$logical_host.block
+[ -f "$bashrc_block" ] || bashrc_block=$HARNESS_ROOT/shell/bashrc.block
+cat "$bashrc_block" >>"$temp_dir/bashrc.payload"
 printf '\n' >"$temp_dir/bash_profile.payload"
-cat "$HARNESS_ROOT/shell/bash_profile.block" >>"$temp_dir/bash_profile.payload"
+bash_profile_block=$HARNESS_ROOT/shell/bash_profile.$logical_host.block
+[ -f "$bash_profile_block" ] || bash_profile_block=$HARNESS_ROOT/shell/bash_profile.block
+cat "$bash_profile_block" >>"$temp_dir/bash_profile.payload"
 
 blocked=0
 echo "SHELL_PLAN host=$logical_host mode=$mode contents=not-read"

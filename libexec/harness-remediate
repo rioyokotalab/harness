@@ -1,0 +1,99 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH= cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() { echo "Usage: harness remediate --host al [--plan|--apply]" >&2; }
+logical_host=
+mode=plan
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        *) usage; exit 2 ;;
+    esac
+done
+[ "$logical_host" = al ] || die "no reviewed remediation for host: ${logical_host:-missing}"
+profile_for "$logical_host" >/dev/null
+command -v dd >/dev/null 2>&1 || die "remediation requires dd"
+
+destination=$HOME/.bashrc
+original_line='uenv start prgenv-gnu/25.11:v1 --view=default'
+applied_line='# harness: use prgenv for an interactive uenv'
+[ "${#original_line}" -eq "${#applied_line}" ] || die "internal patch length mismatch"
+
+echo "REMEDIATION_PLAN host=al mode=$mode contents=exact-public-line-only"
+if [ ! -f "$destination" ] || [ -L "$destination" ]; then
+    echo "BLOCK file=.bashrc reason=not-regular"
+    die "remediation plan contains a blocked file"
+fi
+original_count=$(grep -F -x -c "$original_line" "$destination" || true)
+applied_count=$(grep -F -x -c "$applied_line" "$destination" || true)
+if [ "$original_count" -eq 1 ] && [ "$applied_count" -eq 0 ]; then
+    echo "PATCH file=.bashrc match=reviewed-uenv-start bytes=${#original_line} replacement=disable-autostart"
+    change=1
+elif [ "$original_count" -eq 0 ] && [ "$applied_count" -eq 1 ]; then
+    echo "KEEP file=.bashrc patch=reviewed-uenv-start-disabled"
+    change=0
+else
+    echo "BLOCK file=.bashrc reason=reviewed-line-missing-duplicate-or-ambiguous"
+    die "remediation plan contains a blocked file"
+fi
+[ "$mode" = apply ] || { echo "END remediation host=al changes=not-applied"; exit 0; }
+[ "$change" -eq 1 ] || { echo "END remediation host=al changes=none"; exit 0; }
+
+[ -z "$(git -C "$HARNESS_ROOT" status --porcelain)" ] ||
+    die "remediation apply requires clean harness"
+offset=$(grep -F -x -b "$original_line" "$destination" | sed -n 's/:.*//p')
+case "$offset" in ''|*[!0-9]*) die "cannot locate reviewed patch offset" ;; esac
+original_size=$(wc -c <"$destination" | tr -d ' ')
+
+state_root=$HOME/.local/state/harness/transactions
+mkdir -p "$state_root"
+chmod 700 "$HOME/.local/state/harness" "$state_root"
+transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+manifest=$state_root/$transaction_id.manifest
+: >"$manifest"; chmod 600 "$manifest"
+printf 'schema=1\nhost=%s\nrevision=%s\n' "$logical_host" \
+    "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" >>"$manifest"
+original_payload=$state_root/$transaction_id.patch.original
+applied_payload=$state_root/$transaction_id.patch.applied
+printf %s "$original_line" >"$original_payload"
+printf %s "$applied_line" >"$applied_payload"
+chmod 600 "$original_payload" "$applied_payload"
+printf 'patch|%s|%s|%s|%s|%s|%s\n' "$destination" "$offset" \
+    "$original_size" "${#original_line}" "$original_payload" "$applied_payload" \
+    >>"$manifest"
+
+complete=0
+cleanup() {
+    status=$?
+    if [ "$complete" -eq 0 ]; then
+        current_size=$(wc -c <"$destination" | tr -d ' ')
+        if [ "$current_size" -eq "$original_size" ] &&
+            dd if="$destination" bs=1 skip="$offset" count="${#applied_line}" 2>/dev/null |
+                cmp -s - "$applied_payload"; then
+            dd if="$original_payload" of="$destination" bs=1 seek="$offset" \
+                conv=notrunc 2>/dev/null
+        fi
+        echo failed >"$manifest.status"
+        chmod 600 "$manifest.status"
+    fi
+    exit "$status"
+}
+trap cleanup EXIT HUP INT TERM
+
+dd if="$applied_payload" of="$destination" bs=1 seek="$offset" conv=notrunc 2>/dev/null
+current_size=$(wc -c <"$destination" | tr -d ' ')
+[ "$current_size" -eq "$original_size" ] &&
+    dd if="$destination" bs=1 skip="$offset" count="${#applied_line}" 2>/dev/null |
+        cmp -s - "$applied_payload" || die "reviewed patch verification failed"
+echo complete >"$manifest.status"; chmod 600 "$manifest.status"
+complete=1
+trap - EXIT HUP INT TERM
+echo "TRANSACTION id=$transaction_id status=complete"
+echo "END remediation host=al changes=applied"
