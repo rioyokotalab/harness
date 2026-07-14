@@ -1,0 +1,140 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH= cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() { echo "Usage: harness python --host LOGICAL_ID --minor VERSION [--plan|--apply]" >&2; }
+logical_host=
+minor=
+mode=plan
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --minor) [ "$#" -ge 2 ] || { usage; exit 2; }; minor=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        *) usage; exit 2 ;;
+    esac
+done
+[ -n "$logical_host" ] && [ -n "$minor" ] || { usage; exit 2; }
+[ "$minor" = 3.12 ] || die "unsupported managed Python minor: $minor"
+profile=$(profile_for "$logical_host")
+arch=$(config_get "$profile" arch)
+records=$(awk -F'|' -v minor="$minor" -v arch="$arch" '
+    $1 == minor && $4 == "linux" && $5 == arch { print }
+' "$HARNESS_ROOT/tools/python.tsv")
+count=$(printf '%s\n' "$records" | awk 'NF { n++ } END { print n + 0 }')
+[ "$count" -eq 1 ] || die "no unique managed Python minor=$minor arch=$arch"
+IFS='|' read -r record_minor patch uv_version python_os python_arch implementation <<EOF
+$records
+EOF
+[ "$implementation" = cpython ] || die "unsupported Python implementation"
+
+install_dir=$HOME/.local/opt/python/$minor/$python_os-$python_arch
+stable_link=$HOME/.local/bin/python$minor
+action=BLOCK
+source=unknown
+blocked=0
+if [ -L "$stable_link" ]; then
+    target=$(readlink "$stable_link")
+    case "$target" in "$install_dir"/*/bin/python"$minor")
+        [ -d "$install_dir" ] || { blocked=1; action=BLOCK; }
+        [ "$blocked" -ne 0 ] || { action=KEEP; source=managed-python; }
+        ;;
+        *) blocked=1 ;;
+    esac
+elif [ -e "$stable_link" ] || [ -e "$install_dir" ] || [ -L "$install_dir" ]; then
+    blocked=1
+elif command -v "python$minor" >/dev/null 2>&1; then
+    observed=$("python$minor" -c 'import platform; print(platform.python_version())')
+    case "$observed" in "$minor".*) action=KEEP; source=host-provided ;; *) blocked=1 ;; esac
+else
+    action=INSTALL
+    source=uv-managed
+fi
+
+echo "PYTHON_PLAN host=$logical_host minor=$minor patch=$patch arch=$arch mode=$mode"
+case "$action" in
+    KEEP) echo "KEEP python=$minor source=$source" ;;
+    INSTALL)
+        echo "INSTALL python_tree=$install_dir"
+        echo "CREATE link=$stable_link source=$install_dir/IMPLEMENTATION/bin/python$minor"
+        echo "NATIVE uv python install --install-dir STAGING --no-bin --no-cache --no-progress $minor"
+        ;;
+    BLOCK) echo "BLOCK python=$minor reason=partial-or-unmanaged-state" ;;
+esac
+[ "$blocked" -eq 0 ] || die "Python plan contains blocked paths"
+[ "$mode" = apply ] || { echo "END python host=$logical_host changes=not-applied"; exit 0; }
+[ "$action" = INSTALL ] || { echo "END python host=$logical_host changes=none"; exit 0; }
+
+[ -z "$(git -C "$HARNESS_ROOT" status --porcelain)" ] || die "Python apply requires clean harness"
+"$HARNESS_ROOT/libexec/harness-doctor" --host "$logical_host" >/dev/null ||
+    die "host doctor failed before Python apply"
+for required in uv tar sha256sum find readlink; do
+    command -v "$required" >/dev/null 2>&1 || die "Python apply requires command: $required"
+done
+[ "$(uv --version)" = "uv $uv_version" ] || die "managed Python requires uv $uv_version"
+
+state_root=$HOME/.local/state/harness/transactions
+mkdir -p "$state_root"; chmod 700 "$HOME/.local/state/harness" "$state_root"
+transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+manifest=$state_root/$transaction_id.manifest
+: >"$manifest"; chmod 600 "$manifest"
+printf 'schema=1\nhost=%s\nrevision=%s\n' "$logical_host" \
+    "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" >>"$manifest"
+install_parent=${install_dir%/*}
+mkdir -p "$install_parent"
+stage=$(mktemp -d "$install_parent/.staging.XXXXXX")
+tree_archive=
+complete=0
+cleanup() {
+    status=$?
+    [ -z "$tree_archive" ] || rm -f "$tree_archive"
+    [ -z "$stage" ] || rm -rf "$stage"
+    if [ "$complete" -eq 0 ]; then
+        awk -F'|' '$1 == "link" { print $2 "|" $3 }' "$manifest" |
+            while IFS='|' read -r destination target; do
+                [ -L "$destination" ] && [ "$(readlink "$destination")" = "$target" ] && rm "$destination"
+            done
+        awk -F'|' '$1 == "python" { print $2 }' "$manifest" |
+            while IFS= read -r directory; do [ ! -d "$directory" ] || rm -rf "$directory"; done
+        echo failed >"$manifest.status"; chmod 600 "$manifest.status"
+    fi
+    exit "$status"
+}
+trap cleanup EXIT HUP INT TERM
+
+echo "NATIVE uv python install --install-dir STAGING --no-bin --no-cache --no-progress $minor"
+UV_NO_CONFIG=1 uv python install --install-dir "$stage" --no-bin --no-cache --no-progress "$minor"
+implementation_dir=$(find "$stage" -mindepth 1 -maxdepth 1 -type d -name 'cpython-*' -print)
+[ "$(printf '%s\n' "$implementation_dir" | awk 'NF { n++ } END { print n + 0 }')" -eq 1 ] ||
+    die "uv created an unexpected Python installation layout"
+python_path=$implementation_dir/bin/python$minor
+[ -f "$python_path" ] && [ ! -L "$python_path" ] && [ -x "$python_path" ] ||
+    die "uv-managed Python executable missing"
+[ "$("$python_path" -c 'import platform; print(platform.python_version())')" = "$patch" ] ||
+    die "managed Python patch verification failed"
+[ "$("$python_path" -c 'import platform; print(platform.machine())')" = "$arch" ] ||
+    die "managed Python architecture verification failed"
+"$python_path" -c 'import ssl, sqlite3, sys; assert sys.prefix == sys.base_prefix; assert ssl.OPENSSL_VERSION; assert sqlite3.sqlite_version'
+relative=${implementation_dir#"$stage"/}
+tree_archive=$(mktemp "$state_root/$transaction_id.tree.XXXXXX")
+tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
+    --exclude='*/__pycache__' --exclude='*.pyc' --exclude='*.pyo' \
+    -cf "$tree_archive" -C "$stage" .
+tree_hash=$(sha256sum "$tree_archive" | awk '{print $1}')
+rm "$tree_archive"; tree_archive=
+printf 'python|%s|%s\n' "$install_dir" "$tree_hash" >>"$manifest"
+mv -T "$stage" "$install_dir"; stage=
+target=$install_dir/$relative/bin/python$minor
+mkdir -p "$HOME/.local/bin"
+printf 'link|%s|%s\n' "$stable_link" "$target" >>"$manifest"
+ln -s "$target" "$stable_link"
+echo complete >"$manifest.status"; chmod 600 "$manifest.status"
+complete=1
+trap - EXIT HUP INT TERM
+echo "TRANSACTION id=$transaction_id status=complete"
+echo "END python host=$logical_host changes=applied"

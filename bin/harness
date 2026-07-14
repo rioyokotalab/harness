@@ -38,6 +38,7 @@ Transactional commands:
   shell       plan or append managed shell-loader blocks
   tool        plan or install one checksum-pinned portable tool
   runtime     plan or install one checksum-pinned portable runtime
+  python      plan or install one uv-managed Python minor
   rollback    reverse one unchanged managed transaction
 
 Other commands:
@@ -55,7 +56,7 @@ if [ "$#" -gt 0 ]; then
 fi
 
 case "$command_name" in
-    inventory|plan|doctor|apply|remediate|shell|tool|runtime|rollback)
+    inventory|plan|doctor|apply|remediate|shell|tool|runtime|python|rollback)
         exec "$ROOT/libexec/harness-$command_name" "$@"
         ;;
     help|-h|--help)

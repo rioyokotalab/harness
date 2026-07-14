@@ -149,6 +149,19 @@ entire owned distribution tree, and activates `node`, `npm`, `npx`, and
 before removing any path; a modified runtime fails closed without partial
 cleanup.
 
+Managed CPython uses uv through a separate owned-tree transaction:
+
+```bash
+harness python --host HOST --minor 3.12 --plan
+harness python --host HOST --minor 3.12 --apply
+```
+
+The transaction installs CPython 3.12.12 into a harness-specific directory
+with uv 0.9.18, disables project configuration discovery and cache retention,
+and creates only `python3.12`. It does not modify uv's default Python directory
+or shadow site `python`/`python3`. Rollback checks all non-cache entries and
+ignores only generated `__pycache__`, `.pyc`, and `.pyo` files.
+
 ## Deliberately excluded
 
 The live `~/.codex/config.toml`, `~/.claude/settings.json`,

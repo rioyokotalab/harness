@@ -22,6 +22,7 @@ for script in \
     "$ROOT/libexec/harness-shell" \
     "$ROOT/libexec/harness-tool" \
     "$ROOT/libexec/harness-runtime" \
+    "$ROOT/libexec/harness-python" \
     "$ROOT/libexec/harness-rollback"
 do
     sh -n "$script" || fail "shell syntax: $script"
@@ -405,6 +406,80 @@ for command_name in node npm npx corepack; do
         fail "runtime rollback left link: $command_name"
 done
 [ ! -e "$runtime_tree" ] || fail "runtime rollback left tree"
+
+# Exercise uv-managed Python apply, changed-tree refusal, and exact rollback.
+python_bin=$TEMP_DIR/python-bin
+python_home=$TEMP_DIR/python-home-link
+ln -s "$test_home" "$python_home"
+mkdir -p "$python_bin"
+for command_name in awk bash chmod cmp cp date dd dirname find git ln mkdir mktemp mv \
+    readlink rm sed sh sha256sum tail tar tr uname wc; do
+    ln -s "$(command -v "$command_name")" "$python_bin/$command_name"
+done
+fake_python=$TEMP_DIR/python3.12
+printf '%s\n' \
+    '#!/bin/sh' \
+    'case "${2:-}" in' \
+    '  *platform.python_version*) echo 3.12.12 ;;' \
+    '  *platform.machine*) echo x86_64 ;;' \
+    '  *) exit 0 ;;' \
+    'esac' >"$fake_python"
+chmod 755 "$fake_python"
+printf '%s\n' \
+    '#!/bin/sh' \
+    'if [ "${1:-}" = --version ]; then echo "uv 0.9.18"; exit 0; fi' \
+    'install_dir=' \
+    'while [ "$#" -gt 0 ]; do' \
+    '  case "$1" in --install-dir) install_dir=$2; shift 2 ;; *) shift ;; esac' \
+    'done' \
+    '[ -n "$install_dir" ]' \
+    'target=$install_dir/cpython-3.12.12-linux-x86_64-gnu/bin' \
+    'mkdir -p "$target"' \
+    'cp "$FIXTURE_PYTHON" "$target/python3.12"' >"$python_bin/uv"
+chmod 755 "$python_bin/uv"
+HOME="$python_home" PATH="$python_bin" FIXTURE_PYTHON="$fake_python" \
+    "$test_repo/bin/harness" python --host local --minor 3.12 --apply \
+    >"$TEMP_DIR/python-apply.out"
+python_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/python-apply.out")
+[ -n "$python_transaction" ] || fail "missing Python transaction"
+HOME="$python_home" PATH="$python_bin" \
+    "$test_repo/bin/harness" python --host local --minor 3.12 --plan \
+    >"$TEMP_DIR/python-repeat.out"
+grep 'KEEP python=3.12 source=managed-python' "$TEMP_DIR/python-repeat.out" \
+    >/dev/null || fail "managed Python plan"
+python_tree=$python_home/.local/opt/python/3.12/linux-x86_64
+python_executable=$(find "$python_tree" -type f -name python3.12 -print -quit)
+python_tree_archive=$TEMP_DIR/python-tree.tar
+tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
+    --exclude='*/__pycache__' --exclude='*.pyc' --exclude='*.pyo' \
+    -cf "$python_tree_archive" -C "$python_tree" .
+python_tree_hash=$(sha256sum "$python_tree_archive" | awk '{print $1}')
+python_expected_hash=$(awk -F'|' '$1 == "python" { print $3 }' \
+    "$python_home/.local/state/harness/transactions/$python_transaction.manifest")
+[ "$python_tree_hash" = "$python_expected_hash" ] || fail "Python tree changed during activation"
+cp -p "$python_executable" "$TEMP_DIR/original-python"
+printf '%s\n' '# changed after apply' >>"$python_executable"
+if HOME="$python_home" "$test_repo/bin/harness" rollback "$python_transaction" \
+    >"$TEMP_DIR/refused-python-rollback.out" 2>&1; then
+    fail "Python rollback accepted changed tree"
+fi
+[ -L "$python_home/.local/bin/python3.12" ] && [ -d "$python_tree" ] ||
+    fail "Python rollback partially mutated paths"
+cp -p "$TEMP_DIR/original-python" "$python_executable"
+python_impl=$(find "$python_tree" -mindepth 1 -maxdepth 1 -type d -name 'cpython-*' -print -quit)
+mkdir -p "$python_impl/bin/__pycache__"
+printf '%s\n' generated-cache >"$python_impl/bin/__pycache__/module.pyc"
+tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
+    --exclude='*/__pycache__' --exclude='*.pyc' --exclude='*.pyo' \
+    -cf "$python_tree_archive" -C "$python_tree" .
+python_restored_hash=$(sha256sum "$python_tree_archive" | awk '{print $1}')
+[ "$python_restored_hash" = "$python_expected_hash" ] || fail "Python tree restoration mismatch"
+HOME="$python_home" "$test_repo/bin/harness" rollback "$python_transaction" \
+    >"$TEMP_DIR/python-rollback.out"
+[ ! -e "$python_home/.local/bin/python3.12" ] &&
+    [ ! -L "$python_home/.local/bin/python3.12" ] || fail "Python rollback left link"
+[ ! -e "$python_tree" ] || fail "Python rollback left tree"
 
 # Exercise artifact rollback and its all-path modification refusal without network.
 artifact_dir=$test_home/.local/opt/fixture/1/linux-x86_64
