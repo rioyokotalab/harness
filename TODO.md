@@ -828,6 +828,25 @@ harness. Repository-specific tasks remain in their own project ledgers.
     that exposed the defect. Next commit and fast-forward this narrow fix, then
     retry `rc` before advancing to `t4`.
 
+  Reachable-fleet Node/npm checkpoint (2026-07-14):
+
+  - Committed the canonical-path fix as `e8cd1db`, verified bundle SHA-256
+    `68d76ed622f5bb978208b9a2d9a03147ad638aa71dde7f4a1621f50305dd6c40`,
+    and retried `rc` successfully before advancing to `t4`. Final transactions
+    are `ab` `20260714T134246Z-3141332`, `ab2`
+    `20260714T134301Z-3039291`, `ri` `20260714T134052Z-1070696`, `al`
+    `20260714T134317Z-258033`, `rc` `20260714T134608Z-2570586`, and `t4`
+    `20260714T134633Z-2638939`.
+  - All six clusters report Node 24.16.0 and npm 11.13.0, an idempotent
+    `managed-runtime` plan, mode-600 complete transaction state, clean harness
+    Git state, zero doctor failures, and silent strict SSH. Warning counts are
+    now `ab` 5, `ab2` 5, `ri` 5, `al` 6, `rc` 5, and `t4` 6. The current node
+    already provides the same Node/npm versions and was not shadowed.
+  - Next executable action: checkpoint and synchronize this evidence, then add
+    managed Python 3.12 as an explicit uv operation with per-host preflight.
+    Preserve `t4`'s pre-existing uv Python state and do not infer its contents;
+    design adoption/refusal behavior before any Python mutation there.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 
