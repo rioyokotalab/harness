@@ -40,6 +40,13 @@ native `c++ -std=c++20 -O2 tests/smoke/cpp20.cpp -o BUILD/cpp20`, then execute
 install or globally select a new compiler; enter the reviewed module, uenv, or
 project toolchain and report that exact native command.
 
+`mpi.c` defaults to the two ranks used by the allocation smoke jobs. Passing
+`1` explicitly permits a direct singleton run that validates an MPI compiler,
+headers, link, and initialization without launching processes or consuming an
+allocation: `mpicc -O2 tests/smoke/mpi.c -o BUILD/mpi && BUILD/mpi 1`. This is
+not multi-rank readiness evidence. Run the default two-rank gate only through
+the site's reported native allocation and MPI launch commands.
+
 `jobs/local.slurm` is the current node's native `ybatch` smoke. It requests the
 smallest A4500 resource and validates CUDA runtime, two-rank MPI, and Python.
 The site wrapper submits asynchronously and does not forward later scheduler

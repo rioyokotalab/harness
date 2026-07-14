@@ -1315,6 +1315,18 @@ harness. Repository-specific tasks remain in their own project ledgers.
     prgenv-gnu/25.11:v1 --view=default -- c++` selected Spack GCC 14.2 and
     produced `cpp20=pass`. Record the default and Alps routes in the native-HPC
     skill, validate the full repository, and synchronize a closure commit.
+    Closure commit `6b4cf8a` passed the phase suite and skill validator, and
+    complete bundle SHA-256
+    `7e694436b767aa59475ae6a3419c110753633c6fb39cd412b86dc432ea0629e3`
+    fast-forwarded all six clean remotes to the same revision.
+  - Extend the deterministic MPI source with an explicit expected-rank argument
+    while preserving its two-rank default. Add a phase gate that uses native
+    `mpicc` and direct `MPI_Init` singleton execution (`mpi 1`) to validate the
+    compiler, headers, link, and runtime without launching processes on login
+    nodes. This is deliberately not multi-rank evidence: retain the allocation
+    requirement for the default two-rank run. Synchronize the source, try the
+    exact singleton command in each default site environment, then use only a
+    documented module/uenv route where MPI is absent.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
