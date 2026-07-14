@@ -1300,6 +1300,14 @@ harness. Repository-specific tasks remain in their own project ledgers.
     module, Clang, or static sanitizer archive; keep this as an explicit site
     gap and use a reviewed project environment rather than modifying its
     compiler. Add these exact environment routes to the native-HPC skill.
+  - Add a deterministic C++20 concepts/`std::span` compile-and-run gate for
+    modern HPC extension development. The local native command `c++ -std=c++20
+    -O2` produces `cpp20=pass`, and the full suite runs the executable. Alps
+    documents native `uenv run prgenv-gnu/25.11:v1 --view=default -- COMMAND`
+    syntax; use that already-present reviewed image if its default GCC 7.5
+    cannot compile the source. Synchronize the committed smoke, try the default
+    command everywhere, and use only explicit site modules/uenvs where the
+    captured default fails.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

@@ -34,6 +34,12 @@ Build it in a temporary directory with `cc -O1 -g
 BUILD/sanitizer`, then execute `BUILD/sanitizer`. A zero exit plus
 `sanitizer=pass` is the gate; compiler success alone is insufficient.
 
+`cpp20.cpp` checks a real C++20 concepts-and-span compile and execution. Use the
+native `c++ -std=c++20 -O2 tests/smoke/cpp20.cpp -o BUILD/cpp20`, then execute
+`BUILD/cpp20` and require `cpp20=pass`. An old site default is not a reason to
+install or globally select a new compiler; enter the reviewed module, uenv, or
+project toolchain and report that exact native command.
+
 `jobs/local.slurm` is the current node's native `ybatch` smoke. It requests the
 smallest A4500 resource and validates CUDA runtime, two-rank MPI, and Python.
 The site wrapper submits asynchronously and does not forward later scheduler

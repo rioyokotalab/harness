@@ -42,6 +42,8 @@ cc -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer \
     "$ROOT/tests/smoke/sanitizer.c" -o "$TEMP_DIR/sanitizer"
 [ "$("$TEMP_DIR/sanitizer")" = sanitizer=pass ] ||
     fail "native sanitizer smoke"
+c++ -std=c++20 -O2 "$ROOT/tests/smoke/cpp20.cpp" -o "$TEMP_DIR/cpp20"
+[ "$("$TEMP_DIR/cpp20")" = cpp20=pass ] || fail "native C++20 smoke"
 
 "$HARNESS" inventory --host local >"$TEMP_DIR/local.facts"
 awk -F= '
