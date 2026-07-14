@@ -33,18 +33,19 @@ harness. Repository-specific tasks remain in their own project ledgers.
     `*.alps.cscs.ch`, it uses `ProxyJump alps_login`, an identity file, and
     `IdentitiesOnly yes`; `alps_login` resolves to Ela. Both currently fail at
     Ela with `Permission denied (publickey)`. CSCS requires a CSCS-signed key,
-    whose default validity is one day, so renew/sign and load that key before
-    retrying. Source: <https://docs.cscs.ch/access/ssh/>.
+    whose default validity is one day. The effective identity is the current
+    default `~/.ssh/cscs-key`, but `cscs-key` is not installed on this node.
+    The local `~/sshservice-cli` scripts use the retired password/OTP service
+    and must not be run; install the supported `cscs-key` client, run
+    `cscs-key sign`, reload that identity into the agent, and retry. Source:
+    <https://docs.cscs.ch/access/ssh/>.
   - `github` is reachable/authenticated and correctly behaves as a restricted
     non-cluster Git service.
-  - `web` reaches SSH without a transport error, but both `true` and a marker
-    command exit 1 without output. It is not usable for environment inventory
-    unless this is an intentional restricted service or its remote shell is
-    repaired.
+  - `web` is confirmed to be an intentional SFTP-only service; rejecting shell
+    commands is correct and it is excluded from environment mirroring.
 
-  Next step: renew the CSCS-signed key and clarify whether `web` intentionally
-  disallows remote commands; then rerun those two paths before inventorying the
-  six clean cluster shells.
+  Next step: renew the CSCS-signed key, rerun `al`, then inventory the six clean
+  cluster shells plus `al` if it passes.
 
 ## Planned
 
