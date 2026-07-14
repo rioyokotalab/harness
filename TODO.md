@@ -1326,7 +1326,20 @@ harness. Repository-specific tasks remain in their own project ledgers.
     nodes. This is deliberately not multi-rank evidence: retain the allocation
     requirement for the default two-rank run. Synchronize the source, try the
     exact singleton command in each default site environment, then use only a
-    documented module/uenv route where MPI is absent.
+    documented module/uenv route where MPI is absent. Commit `85ce56f` and
+    complete bundle SHA-256
+    `d3290e4ea8268cc0bf832969483710ba76506055715393b54ff49ffcd22a322e`
+    synchronized the gate to all six remotes. Native direct singleton execution
+    passed on current, `ab`, `ab2`, and `t4`; current reported its allocation-
+    only CUDA plugin as unavailable, and ABCI reported compute-fabric UCX device
+    names unavailable on the login node. Both are retained non-fatal context,
+    not multi-rank evidence. Default `mpicc` is absent on `ri`, `al`, and `rc`.
+    The existing Alps `prgenv-gnu/25.11:v1` uenv passes with Spack GCC 14.2,
+    and R-CCS login passes after native `module load mpi/mpich-x86_64`; the
+    latter must not be carried to its AArch64 partitions. Rikyu exposes no
+    module catalog and therefore retains an explicit reviewed-project-container
+    requirement. Record these routes in the native-HPC skill, validate, and
+    synchronize the closure.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

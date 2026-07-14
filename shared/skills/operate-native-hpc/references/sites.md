@@ -40,6 +40,10 @@ every placeholder before printing and executing a command.
   remove only its output plus the empty `.harness-smoke` directory.
 - Inside the one-node allocation, the validated two-rank route is native
   `mpirun -n 2`; `srun -n 2` previously formed two rank-one singletons.
+- Default `mpicc` passes the tracked direct singleton development smoke. Its
+  login-node Open MPI initialization reports missing CUDA components because
+  `libcuda.so.1` is allocation-only; retain that diagnostic and do not treat
+  singleton success as accelerator or multi-rank evidence.
 - The site-owned Docker/Podman wrapper expects its Slurm runtime directory and
   is unusable on the login node. Invoke it only inside `yrun`/`ybatch`; do not
   bypass its storage flags with `/usr/bin/podman`. The tracked job checks both
@@ -56,6 +60,10 @@ every placeholder before printing and executing a command.
   submit even a one-minute smoke with guessed values.
 - Login nodes expose a native compiler/MPI baseline. Run GPU or scaled MPI
   checks only through a reviewed PBS allocation.
+- Default HPC-X `mpicc` passes the tracked direct singleton development smoke.
+  UCX reports that the configured compute-fabric device names are unavailable
+  on the login node; retain the warning and validate multi-rank transport only
+  inside the reviewed PBS allocation.
 - The default GCC advertises sanitizers but cannot link its missing runtime
   targets. For a process-local sanitizer build, run native `module load
   gcc/15.2.0`, compile with GCC, and set `ASAN_OPTIONS=detect_leaks=0` because
@@ -70,6 +78,8 @@ every placeholder before printing and executing a command.
 - The base compute environment has no `nvcc` or MPI wrapper. Put CUDA toolkit,
   framework, and MPI user dependencies in the project's explicit image or
   environment; do not install them globally.
+- No login MPI compiler or module catalog is exposed. Run the singleton and
+  multi-rank gates inside the reviewed project container or environment.
 - Login context exposes Apptainer 1.4.5 compatibility and Slurm OCI flags.
   Inspect current native help and the project's image before choosing one.
 - Architecture is AArch64. Use architecture-matching images and binaries.
@@ -90,6 +100,9 @@ every placeholder before printing and executing a command.
   process-local route is `uenv run prgenv-gnu/25.11:v1 --view=default -- c++`;
   its Spack GCC 14.2 passes the tracked concepts and `std::span` smoke. Keep the
   uenv selection explicit rather than changing the login compiler globally.
+- The same uenv exposes `mpicc` and passes the tracked direct singleton MPI
+  development smoke. Multi-rank validation still requires the native Slurm
+  allocation and selected uenv integration.
 - Compute architecture is AArch64. Validate CUDA/MPI inside the chosen uenv and
   allocation, not from the login baseline.
 - The default GCC passes the tracked ASan+UBSan smoke directly.
@@ -104,6 +117,10 @@ every placeholder before printing and executing a command.
 - Base compute images expose neither CUDA toolkit nor MPI wrappers. Use the
   partition's native module or an architecture-matched project container after
   inspecting current site help.
+- The login-only `module load mpi/mpich-x86_64` route passes the tracked direct
+  singleton MPI development smoke. It is incompatible with the AArch64 compute
+  partitions; select and validate their native module or project container in
+  the allocation instead of carrying this login binary across architectures.
 - The login default GCC cannot link its missing sanitizer runtime targets; no
   alternate GCC module, Clang, or static sanitizer archive was found. Record
   this as a site gap and run sanitizers in the reviewed project environment.
@@ -118,6 +135,8 @@ every placeholder before printing and executing a command.
   already-reviewed project script; do not guess and consume points.
 - Login CUDA/MPI commands and absent login driver state do not establish GPU
   readiness. Validate them inside the AGE allocation.
+- Default HPC-X `mpicc` passes the tracked direct singleton MPI development
+  smoke. Validate multi-rank transport only inside the reviewed AGE allocation.
 - For a process-local sanitizer build, run native `module load gcc/14.2.0`.
   The tracked ASan, UBSan, and LeakSanitizer smoke passes with that module; do
   not change the default compiler globally.
