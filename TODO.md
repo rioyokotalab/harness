@@ -23,29 +23,28 @@ harness. Repository-specific tasks remain in their own project ledgers.
      plan; verify each cluster independently and preserve intentional local
      differences.
 
-  Connectivity checkpoint (2026-07-14, current node, 35 concrete aliases):
+  Updated connectivity checkpoint (2026-07-14, current node, 11 aliases):
 
-  - Clean non-interactive no-op success: `ab`, `ab2`, `ai4s`, `login-01`,
-    `rc`, `si`, `t4` (7).
-  - Transport/authentication reached but no-op did not return success:
-    `abci_login` (remote closed the session after reaching session setup) and
-    `web` (remote command exit 1 without an SSH transport error). `github` is
-    reachable/authenticated but is a non-cluster restricted Git service and
-    rejects the `true` command.
-  - TCP connection refused: `a100`, `a4500-02`, `a4500-03`, `a4500-04`,
-    `a6000`, `ad-01`, `am-02`, `am-03`, `am4`, `dgx-b200`, `epyc-7502` (11).
-  - No route: `a4500-01`, `am-01` (2). DNS failure: `md`, `rtx6000-ada` (2).
-  - Timed out: `al` (banner), `aws` (connect), `su` (bounded probe) (3).
-  - Strict host-key verification blocked unknown keys: `login-02`, `maas-01`
-    (2); do not accept them until their fingerprints are verified out of band.
-  - The unlocked agent key was rejected: `alps_login`, `ip`, `po`, `st`, `wi`
-    (5). Resolve whether these require another already-owned key, renewed
-    account access, VPN/routing, or site-specific interactive authentication;
-    never place passphrases or private keys in the harness.
+  - Clean non-interactive remote-command success: `ab`, `ab2`, `ai4s`, `rc`,
+    `si`, `t4` (6).
+  - `abci_login` is an acceptable proxy-only endpoint: its own session closes,
+    but both downstream aliases `ab` and `ab2` pass through it.
+  - `al` has the documented CSCS structure: its target is under
+    `*.alps.cscs.ch`, it uses `ProxyJump alps_login`, an identity file, and
+    `IdentitiesOnly yes`; `alps_login` resolves to Ela. Both currently fail at
+    Ela with `Permission denied (publickey)`. CSCS requires a CSCS-signed key,
+    whose default validity is one day, so renew/sign and load that key before
+    retrying. Source: <https://docs.cscs.ch/access/ssh/>.
+  - `github` is reachable/authenticated and correctly behaves as a restricted
+    non-cluster Git service.
+  - `web` reaches SSH without a transport error, but both `true` and a marker
+    command exit 1 without output. It is not usable for environment inventory
+    unless this is an intentional restricted service or its remote shell is
+    repaired.
 
-  Next step: resolve or explicitly retire the failed aliases, then inventory
-  portable environment state only on the seven cleanly reachable clusters and
-  any session-stage aliases confirmed safe for remote commands.
+  Next step: renew the CSCS-signed key and clarify whether `web` intentionally
+  disallows remote commands; then rerun those two paths before inventorying the
+  six clean cluster shells.
 
 ## Planned
 
