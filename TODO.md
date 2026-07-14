@@ -475,6 +475,13 @@ harness. Repository-specific tasks remain in their own project ledgers.
     declared `rg` member, the x86-64 binary reported `ripgrep 15.1.0`, and
     `file` identified the binaries as x86-64 static PIE and AArch64 GNU/Linux
     ELF respectively. The temporary verification directory was removed.
+  - The first committed end-to-end isolated apply failed closed after download
+    and extraction because the version validator expected the whole first line
+    to equal `ripgrep 15.1.0`, while the binary appends a parenthesized revision.
+    Automatic cleanup removed the staged artifact and temporary-home cleanup
+    removed all test state. Restrict validation to the exact version prefix
+    followed only by end-of-line or a space-delimited build suffix, then rerun
+    the complete apply/rollback path before any remote pilot.
   - No remote tool has been installed yet. Next executable action: independently
     commit the implementation, transfer it to `ab2`, and perform the same
     plan/apply/rollback/reapply pilot used for the control plane and shell

@@ -177,8 +177,11 @@ if [ "$artifact_action" = INSTALL ]; then
     chmod 755 "$stage/$binary"
     [ "$(find "$stage" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')" -eq 1 ] ||
         die "artifact extraction created unexpected paths"
-    [ "$("$stage/$binary" --version | sed -n '1p')" = "$version_line" ] ||
-        die "installed tool version verification failed"
+    observed_version=$("$stage/$binary" --version | sed -n '1p')
+    case "$observed_version" in
+        "$version_line"|"$version_line "*) ;;
+        *) die "installed tool version verification failed" ;;
+    esac
     binary_hash=$(sha256sum "$stage/$binary" | awk '{print $1}')
     printf 'artifact|%s|%s|%s\n' "$install_dir" "$binary" "$binary_hash" \
         >>"$transaction_manifest"
