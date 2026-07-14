@@ -5,7 +5,47 @@ harness. Repository-specific tasks remain in their own project ledgers.
 
 ## Active
 
-None.
+- **T-170 — Mirror the working environment across configured clusters:**
+  1. Enumerate only concrete host aliases from the current node's SSH config
+     and probe them non-interactively through the user's unlocked SSH agent.
+     Use strict host-key checking, short timeouts, and a no-op remote command;
+     do not copy keys, credentials, or other authentication material.
+  2. Record which aliases pass, which fail at name resolution, routing,
+     host-key verification, authentication, or remote command execution, and
+     identify intentional non-cluster aliases separately.
+  3. For reachable clusters, inventory only the portable environment surfaces
+     the user approves (harness checkout, shell/tool configuration, package
+     manifests, client discovery links, and version facts). Never copy secrets,
+     live client state, caches, sessions, histories, or machine-specific paths.
+  4. Define a declarative source of truth, per-cluster differences, dry-run
+     synchronization, rollback, and validation before changing any remote.
+  5. Apply changes only after the user reviews the inventory and synchronization
+     plan; verify each cluster independently and preserve intentional local
+     differences.
+
+  Connectivity checkpoint (2026-07-14, current node, 35 concrete aliases):
+
+  - Clean non-interactive no-op success: `ab`, `ab2`, `ai4s`, `login-01`,
+    `rc`, `si`, `t4` (7).
+  - Transport/authentication reached but no-op did not return success:
+    `abci_login` (remote closed the session after reaching session setup) and
+    `web` (remote command exit 1 without an SSH transport error). `github` is
+    reachable/authenticated but is a non-cluster restricted Git service and
+    rejects the `true` command.
+  - TCP connection refused: `a100`, `a4500-02`, `a4500-03`, `a4500-04`,
+    `a6000`, `ad-01`, `am-02`, `am-03`, `am4`, `dgx-b200`, `epyc-7502` (11).
+  - No route: `a4500-01`, `am-01` (2). DNS failure: `md`, `rtx6000-ada` (2).
+  - Timed out: `al` (banner), `aws` (connect), `su` (bounded probe) (3).
+  - Strict host-key verification blocked unknown keys: `login-02`, `maas-01`
+    (2); do not accept them until their fingerprints are verified out of band.
+  - The unlocked agent key was rejected: `alps_login`, `ip`, `po`, `st`, `wi`
+    (5). Resolve whether these require another already-owned key, renewed
+    account access, VPN/routing, or site-specific interactive authentication;
+    never place passphrases or private keys in the harness.
+
+  Next step: resolve or explicitly retire the failed aliases, then inventory
+  portable environment state only on the seven cleanly reachable clusters and
+  any session-stage aliases confirmed safe for remote commands.
 
 ## Planned
 
