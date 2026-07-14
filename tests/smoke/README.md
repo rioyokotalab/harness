@@ -11,3 +11,9 @@ the rank sum. The CUDA program checks a device kernel and synchronization. The
 Python program uses only the standard library and is suitable for a fresh uv
 virtual environment. Project-specific PyTorch, CUDA, MPI, and numerical-library
 versions remain in project lockfiles or site environments.
+
+For the common CPU/build path, configure out of tree with the native command
+`cmake -S tests/smoke -B BUILD -G Ninja`, then run `cmake --build BUILD` and
+`ctest --test-dir BUILD --output-on-failure`. The MPI and CUDA sources are not
+part of that login-node build because their environment and execution route are
+site-specific.

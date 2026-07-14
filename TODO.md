@@ -946,6 +946,16 @@ harness. Repository-specific tasks remain in their own project ledgers.
     strict session resolved the managed binary and all state/permission gates
     passed. Report native caller command `hash -r` after link creation and add
     regression coverage before continuing the fleet rollout.
+  - Synchronized the cache-refresh revision `ec3d81b`, then installed final
+    Ninja 1.13.2 transactions `ab2` `20260714T141842Z-2698713`, `al`
+    `20260714T141853Z-173294`, `rc` `20260714T141904Z-2862193`, and `t4`
+    `20260714T141918Z-3572846`. Each passed exact version, architecture where
+    relevant, mode-600 state, idempotent managed plan, and clean Git checks.
+    The current node and `ri` deliberately retain healthy host Ninja 1.11.1.
+  - Added an out-of-tree CMake project for the deterministic CPU sources. Local
+    native `cmake -G Ninja`, build, and CTest passed C, C++/OpenMP, and Fortran;
+    synchronize this test definition and run the same commands on every login
+    environment before proceeding to site-native MPI/GPU allocations.
   - Outstanding site evidence: the current node's `nvidia-smi` wrapper targets
     a missing `/usr/bin/nvidia-smi`; `ri` exposes four GB200 GPUs but its Slurm
     client cannot currently resolve a controller; `t4` exposes CUDA/MPI tools
