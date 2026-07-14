@@ -2,8 +2,8 @@
 #YBATCH -r a4500_1
 #SBATCH --time=00:02:00
 #SBATCH --job-name=harness-smoke
-#SBATCH --output=.harness-smoke-%j.out
-#SBATCH --error=.harness-smoke-%j.out
+#SBATCH --output=.harness-smoke/%j.out
+#SBATCH --error=.harness-smoke/%j.out
 
 set -eu
 build=$(mktemp -d "${SLURM_TMPDIR:-/tmp}/harness-smoke.XXXXXX")

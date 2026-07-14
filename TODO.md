@@ -997,6 +997,20 @@ harness. Repository-specific tasks remain in their own project ledgers.
     and CLI output options are not scheduler options; declare a job-ID-scoped
     output in the tracked script, monitor the parsed job ID, and clean exactly
     that output after validation.
+  - Current-node retry job `90625` passed the tightened end-to-end gates on an
+    RTX A4500: driver 595.58.03, compute capability 8.6, CUDA kernel, exactly
+    two MPI ranks via `mpirun`, and Python. Its known output and the wrapper's
+    accidental literal directory were removed. Use `.harness-smoke/%j.out`
+    going forward because `ybatch` misclassifies a bare output filename as a
+    directory; remove the job-scoped file and empty directory after validation.
+  - Begin the portable agent-command layer without touching authentication or
+    settings. Claude Code 2.1.207 publishes single native x86-64 and AArch64 npm
+    artifacts; downloaded bytes match npm's published SHA-512 integrity values,
+    recorded SHA-256 values are
+    `862d403aa07a49548215fb8b1255cb5a66fd31601e33e13bc8e6925526d242c0`
+    and `02c381be3269489119287dc0b5f4b99b870d886f058918994b51e06b701dd1be`,
+    and disposable x86 execution reports 2.1.207. Add them as exact-member
+    tool transactions, pilot rollback/reapply on AArch64, then roll out.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

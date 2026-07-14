@@ -22,6 +22,8 @@ site-specific.
 smallest A4500 resource and validates CUDA runtime, two-rank MPI, and Python.
 The site wrapper submits asynchronously and does not forward later scheduler
 options before its temporary script, so the job declares a job-ID-scoped output
-file itself. The agent parses the submitted ID, monitors only that job, validates
-the output, and removes it. The script does not normalize or conceal the
-generated Slurm commands.
+file under `.harness-smoke/` itself. Including a directory component is
+intentional: `ybatch` otherwise mistakes a bare output filename for a directory.
+The agent parses the submitted ID, monitors only that job, validates the output,
+and removes both it and the empty output directory. The script does not
+normalize or conceal the generated Slurm commands.

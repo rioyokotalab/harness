@@ -141,6 +141,16 @@ grep 'INSTALL artifact=.*ninja/1.13.2/linux-x86_64' \
 grep 'sha256=5749cbc4e668273514150a80e387a957f933c6ed3f5f11e03fb30955e2bbead6' \
     "$TEMP_DIR/ninja-unusable-plan.out" >/dev/null || fail "Ninja x86-64 checksum plan"
 
+mkdir -p "$TEMP_DIR/claude-plan-home"
+HOME="$TEMP_DIR/claude-plan-home" "$HARNESS" tool --host al --name claude \
+    --facts "$ROOT/tests/fixtures/al.facts" --plan >"$TEMP_DIR/claude-arm-plan.out"
+grep 'INSTALL artifact=.*claude/2.1.207/linux-aarch64' \
+    "$TEMP_DIR/claude-arm-plan.out" >/dev/null || fail "Claude AArch64 artifact plan"
+grep 'sha256=02c381be3269489119287dc0b5f4b99b870d886f058918994b51e06b701dd1be' \
+    "$TEMP_DIR/claude-arm-plan.out" >/dev/null || fail "Claude AArch64 checksum plan"
+grep 'EXTRACT format=tar.gz member=package/claude binary=claude' \
+    "$TEMP_DIR/claude-arm-plan.out" >/dev/null || fail "Claude extraction plan"
+
 mkdir -p "$TEMP_DIR/runtime-plan-home"
 HOME="$TEMP_DIR/runtime-plan-home" "$HARNESS" runtime --host al --name node \
     --facts "$ROOT/tests/fixtures/al.facts" --plan >"$TEMP_DIR/node-arm-plan.out"
