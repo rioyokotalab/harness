@@ -31,21 +31,21 @@ harness. Repository-specific tasks remain in their own project ledgers.
     but both downstream aliases `ab` and `ab2` pass through it.
   - `al` has the documented CSCS structure: its target is under
     `*.alps.cscs.ch`, it uses `ProxyJump alps_login`, an identity file, and
-    `IdentitiesOnly yes`; `alps_login` resolves to Ela. Both currently fail at
-    Ela with `Permission denied (publickey)`. CSCS requires a CSCS-signed key,
-    whose default validity is one day. The effective identity is the current
-    default `~/.ssh/cscs-key`, but `cscs-key` is not installed on this node.
-    The local `~/sshservice-cli` scripts use the retired password/OTP service
-    and must not be run; install the supported `cscs-key` client, run
-    `cscs-key sign`, reload that identity into the agent, and retry. Source:
-    <https://docs.cscs.ch/access/ssh/>.
+    `IdentitiesOnly yes`; `alps_login` resolves to Ela. After the user renewed
+    the CSCS-signed identity, a strict non-interactive `ssh al true` passed in
+    nine seconds. Source: <https://docs.cscs.ch/access/ssh/>. The remote startup
+    still emits two non-fatal hygiene warnings: `.bashrc` attempts `uenv start`
+    in a non-interactive shell, and `.bash_logout` references unset
+    `SSH_AGENT_PID`; preserve them as inventory findings rather than connection
+    failures.
   - `github` is reachable/authenticated and correctly behaves as a restricted
     non-cluster Git service.
   - `web` is confirmed to be an intentional SFTP-only service; rejecting shell
     commands is correct and it is excluded from environment mirroring.
 
-  Next step: renew the CSCS-signed key, rerun `al`, then inventory the six clean
-  cluster shells plus `al` if it passes.
+  Next step: inventory the seven reachable cluster shells and design the
+  declarative synchronization plan; include the two `al` shell-startup warnings
+  as cluster-local differences to resolve or preserve deliberately.
 
 ## Planned
 
