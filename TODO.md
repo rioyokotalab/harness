@@ -794,6 +794,27 @@ harness. Repository-specific tasks remain in their own project ledgers.
     pilot. Do not install Codex or Claude until Node/npm is validated across the
     fleet and their own package integrity/state boundaries are designed.
 
+  `ri` Node/npm pilot checkpoint (2026-07-14):
+
+  - Committed the runtime implementation as `922a138` and fast-forwarded the
+    clean `ri` checkout through a bundle whose local and remote SHA-256 was
+    `1813d3cabd7f17bf5f83b1f0b81da149bb98b0530f28673491ce14febc0fa7fb`.
+    Preflight found Node/npm and all five managed paths absent; the ARM64 plan
+    matched the reviewed URL, checksum, tree, and four links.
+  - Applied transaction `20260714T134013Z-1067663`. Node reported 24.16.0, npm
+    11.13.0, the repeated plan reported `managed-runtime`, transaction state
+    was mode 600 and complete, doctor warnings fell from seven to five, and the
+    checkout remained clean.
+  - Deliberate whole-tree rollback validated the digest, removed all four links
+    and the exact distribution tree, restored the seven-warning baseline and
+    original install plan, then reapply completed as
+    `20260714T134052Z-1070696`. The final state again passes version,
+    idempotence, state-permission, and clean-Git gates.
+  - Next executable action: commit this pilot evidence, fast-forward the other
+    five cluster checkouts, retain any complete host-provided Node/npm pair, and
+    apply one host at a time only where both commands and all managed paths are
+    absent.
+
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
 
