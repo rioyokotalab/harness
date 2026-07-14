@@ -1099,6 +1099,20 @@ harness. Repository-specific tasks remain in their own project ledgers.
     pointer generation where installed, idempotent source selection, clean Git,
     and zero doctor failures. Git-config metadata stayed unchanged across every
     apply, and neither global nor project-local activation was run.
+  - Source-build prerequisite inventory found no safe uniform dependency floor
+    for lftp, tmux, or htop: `ri` and `al` lack different pkg-config development
+    libraries. Do not create a second bundled package manager merely to erase
+    those warnings. SQLite is a narrow exception because its publisher supports
+    the self-contained amalgamation and every environment already passed a C
+    compiler baseline.
+  - SQLite 3.53.3's official amalgamation matched publisher SHA3-256
+    `d45c688a8cb23f68611a894a756a12d7eb6ab6e9e2468ca70adbeab3808b5ab9`;
+    its independently recorded SHA-256 is
+    `646421e12aac110282ef8cc68f1a62d4bb15fc7b8f09da0b53e29ee690500431`.
+    Exact four-file extraction plus the displayed native C build produced a
+    3.53.3 CLI passing in-memory JSON, FTS5, and RTree tests. Add a dedicated
+    source-build transaction with offline compile, tamper-refusal, and rollback
+    coverage; then run a real disposable build before AArch64 pilot on `ri`.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):

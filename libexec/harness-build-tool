@@ -1,0 +1,213 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH= cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() {
+    echo "Usage: harness build-tool --host LOGICAL_ID --name TOOL [--facts FILE] [--plan|--apply]" >&2
+}
+
+logical_host=
+tool_name=
+fact_file=
+mode=plan
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --name) [ "$#" -ge 2 ] || { usage; exit 2; }; tool_name=$2; shift 2 ;;
+        --facts) [ "$#" -ge 2 ] || { usage; exit 2; }; fact_file=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        *) usage; exit 2 ;;
+    esac
+done
+[ -n "$logical_host" ] && [ -n "$tool_name" ] || { usage; exit 2; }
+require_safe_id "$tool_name"
+[ "$tool_name" = sqlite ] || die "unsupported source-built tool: $tool_name"
+[ "$mode" != apply ] || [ -z "$fact_file" ] || die "build-tool apply does not accept captured facts"
+
+profile=$(profile_for "$logical_host")
+arch=$(config_get "$profile" arch)
+records=$(awk -F'|' -v tool="$tool_name" '$1 == tool && $3 == "linux" && $4 == "any" { print }' \
+    "$HARNESS_ROOT/tools/sources.tsv")
+count=$(printf '%s\n' "$records" | awk 'NF { n++ } END { print n + 0 }')
+[ "$count" -eq 1 ] || die "no unique source record for tool=$tool_name"
+IFS='|' read -r record_tool version source_os source_arch format url checksum \
+    publisher_sha3 root binary version_prefix <<EOF
+$records
+EOF
+[ "$record_tool" = sqlite ] && [ "$format" = zip ] || die "source manifest mismatch"
+for value in "$version" "$root" "$binary"; do require_safe_id "$value"; done
+case "$url" in https://*) ;; *) die "source URL must use HTTPS" ;; esac
+for digest in "$checksum" "$publisher_sha3"; do
+    case "$digest" in *[!0-9a-f]*) die "invalid source digest" ;; esac
+    [ "${#digest}" -eq 64 ] || die "invalid source digest length"
+done
+
+install_dir=$HOME/.local/opt/$tool_name/$version/$source_os-$arch
+installed_binary=$install_dir/$binary
+stable_link=$HOME/.local/bin/$binary
+
+sqlite_healthy() {
+    candidate=$1
+    "$candidate" -batch -noheader -init /dev/null :memory: \
+        'select json_valid('"'"'{"ok":1}'"'"'); create virtual table f using fts5(x); create virtual table r using rtree(id,x1,x2); select 1;' \
+        >/dev/null 2>&1
+}
+
+managed_exact=0
+if [ -L "$stable_link" ] && [ "$(readlink "$stable_link")" = "$installed_binary" ] &&
+    [ -f "$installed_binary" ] && [ ! -L "$installed_binary" ] && [ -x "$installed_binary" ]; then
+    managed_exact=1
+fi
+if [ -n "$fact_file" ]; then
+    [ "$(fact_get "$fact_file" logical_host)" = "$logical_host" ] || die "captured fact host mismatch"
+    fact_command=$(fact_key_for_command "$binary")
+    command_state=$(fact_get "$fact_file" "tool_$fact_command")
+elif [ "$managed_exact" -eq 1 ]; then
+    observed_version=$("$installed_binary" --version 2>/dev/null | sed -n '1p' || true)
+    case "$observed_version" in "$version_prefix "*)
+        if sqlite_healthy "$installed_binary"; then command_state=present; else command_state=invalid-managed; fi ;;
+        *) command_state=invalid-managed ;;
+    esac
+elif command -v "$binary" >/dev/null 2>&1; then
+    if sqlite_healthy "$binary"; then command_state=present; else command_state=unusable; fi
+else
+    command_state=absent
+fi
+case "$command_state" in present|absent|unusable|invalid-managed) ;;
+    *) die "unknown command state: $command_state" ;;
+esac
+command_source=host-provided
+if [ -z "$fact_file" ] && [ "$command_state" = present ] && [ "$managed_exact" -eq 1 ]; then
+    command_source=managed-source-build
+fi
+
+blocked=0
+artifact_action=KEEP
+link_action=KEEP
+if [ "$command_state" = invalid-managed ]; then
+    blocked=1; artifact_action=BLOCK; link_action=BLOCK
+elif [ "$command_state" = present ]; then
+    :
+elif [ -e "$install_dir" ] || [ -L "$install_dir" ]; then
+    blocked=1; artifact_action=BLOCK
+else
+    artifact_action=BUILD
+fi
+if [ "$command_state" != present ]; then
+    if [ -L "$stable_link" ]; then
+        if [ "$(readlink "$stable_link")" = "$installed_binary" ]; then link_action=KEEP
+        else link_action=BLOCK; blocked=1; fi
+    elif [ -e "$stable_link" ]; then link_action=BLOCK; blocked=1
+    else link_action=CREATE; fi
+fi
+
+echo "BUILD_TOOL_PLAN host=$logical_host tool=$tool_name version=$version arch=$arch mode=$mode"
+if [ "$command_state" = invalid-managed ]; then
+    echo "BLOCK command=$binary reason=managed-build-version-or-health-mismatch"
+elif [ "$command_state" = present ]; then
+    echo "KEEP command=$binary source=$command_source"
+else
+    [ "$command_state" != unusable ] || echo "SHADOW command=$binary reason=host-command-unusable strategy=user-path"
+    case "$artifact_action" in
+        BUILD) echo "BUILD artifact=$install_dir" ;;
+        KEEP) echo "KEEP artifact=$install_dir" ;;
+        BLOCK) echo "BLOCK artifact=$install_dir reason=existing-unmanaged-or-invalid" ;;
+    esac
+    case "$link_action" in
+        CREATE) echo "CREATE link=$stable_link source=$installed_binary" ;;
+        KEEP) echo "KEEP link=$stable_link" ;;
+        BLOCK) echo "BLOCK link=$stable_link reason=existing-unmanaged-path" ;;
+    esac
+    echo "FETCH url=$url sha256=$checksum publisher_sha3_256=$publisher_sha3"
+    echo "EXTRACT exact_root=$root files=sqlite3.c,shell.c,sqlite3.h,sqlite3ext.h"
+    echo "COMPILE native='cc -O2 -DSQLITE_THREADSAFE=1 -DSQLITE_ENABLE_FTS5 -DSQLITE_ENABLE_RTREE -DSQLITE_ENABLE_JSON1 -DSQLITE_ENABLE_MATH_FUNCTIONS -DHAVE_READLINE=0 shell.c sqlite3.c -pthread -ldl -lm -o sqlite3'"
+fi
+[ "$blocked" -eq 0 ] || die "build-tool plan contains blocked paths"
+[ "$mode" = apply ] || { echo "END build-tool host=$logical_host changes=not-applied"; exit 0; }
+[ "$command_state" != present ] || { echo "END build-tool host=$logical_host changes=none"; exit 0; }
+
+[ -z "$(git -C "$HARNESS_ROOT" status --porcelain)" ] || die "build-tool apply requires clean harness"
+"$HARNESS_ROOT/libexec/harness-doctor" --host "$logical_host" >/dev/null ||
+    die "host doctor failed before build-tool apply"
+for required in curl sha256sum unzip cc find readlink; do
+    command -v "$required" >/dev/null 2>&1 || die "build-tool apply requires command: $required"
+done
+
+state_root=$HOME/.local/state/harness/transactions
+mkdir -p "$state_root"; chmod 700 "$HOME/.local/state/harness" "$state_root"
+transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+transaction_manifest=$state_root/$transaction_id.manifest
+: >"$transaction_manifest"; chmod 600 "$transaction_manifest"
+printf 'schema=1\nhost=%s\nrevision=%s\n' "$logical_host" \
+    "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" >>"$transaction_manifest"
+archive=$(mktemp "$state_root/$transaction_id.source.XXXXXX")
+entries=$(mktemp "$state_root/$transaction_id.entries.XXXXXX")
+build_dir=
+stage=
+complete=0
+cleanup() {
+    status=$?
+    rm -f "$archive" "$entries"
+    [ -z "$build_dir" ] || rm -rf "$build_dir"
+    [ -z "$stage" ] || rm -rf "$stage"
+    if [ "$complete" -eq 0 ]; then
+        awk -F'|' '$1 == "link" { print $2 "|" $3 }' "$transaction_manifest" |
+            while IFS='|' read -r destination source; do
+                [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ] && rm "$destination"
+            done
+        awk -F'|' '$1 == "artifact" { print $2 "|" $3 "|" $4 }' "$transaction_manifest" |
+            while IFS='|' read -r directory relative expected_hash; do
+                candidate=$directory/$relative
+                if [ -f "$candidate" ] && [ ! -L "$candidate" ] &&
+                    [ "$(sha256sum "$candidate" | awk '{print $1}')" = "$expected_hash" ] &&
+                    [ "$(find "$directory" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')" -eq 1 ]; then
+                    rm "$candidate"; rmdir "$directory"
+                fi
+            done
+        echo failed >"$transaction_manifest.status"; chmod 600 "$transaction_manifest.status"
+    fi
+    exit "$status"
+}
+trap cleanup EXIT HUP INT TERM
+
+echo "NATIVE curl --proto =https --tlsv1.2 -fL --retry 2 $url -o SOURCE_STAGING"
+curl --proto '=https' --tlsv1.2 -fL --retry 2 "$url" -o "$archive"
+printf '%s  %s\n' "$checksum" "$archive" | sha256sum -c - >/dev/null
+unzip -Z1 "$archive" >"$entries"
+[ "$(wc -l <"$entries" | tr -d ' ')" -eq 5 ] || die "source archive entry count mismatch"
+for expected in "$root/" "$root/sqlite3.c" "$root/shell.c" "$root/sqlite3.h" "$root/sqlite3ext.h"; do
+    grep -Fx "$expected" "$entries" >/dev/null || die "source archive missing declared entry: $expected"
+done
+install_parent=${install_dir%/*}; mkdir -p "$install_parent"
+build_dir=$(mktemp -d "$install_parent/.build.XXXXXX")
+stage=$(mktemp -d "$install_parent/.staging.XXXXXX")
+for source_file in sqlite3.c shell.c sqlite3.h sqlite3ext.h; do
+    unzip -p "$archive" "$root/$source_file" >"$build_dir/$source_file"
+done
+echo "NATIVE cc -O2 -DSQLITE_THREADSAFE=1 -DSQLITE_ENABLE_FTS5 -DSQLITE_ENABLE_RTREE -DSQLITE_ENABLE_JSON1 -DSQLITE_ENABLE_MATH_FUNCTIONS -DHAVE_READLINE=0 shell.c sqlite3.c -pthread -ldl -lm -o sqlite3"
+cc -O2 -DSQLITE_THREADSAFE=1 -DSQLITE_ENABLE_FTS5 -DSQLITE_ENABLE_RTREE \
+    -DSQLITE_ENABLE_JSON1 -DSQLITE_ENABLE_MATH_FUNCTIONS -DHAVE_READLINE=0 \
+    "$build_dir/shell.c" "$build_dir/sqlite3.c" -pthread -ldl -lm -o "$stage/$binary"
+[ -f "$stage/$binary" ] && [ ! -L "$stage/$binary" ] && [ -x "$stage/$binary" ] || die "source build did not produce executable"
+observed_version=$("$stage/$binary" --version | sed -n '1p')
+case "$observed_version" in "$version_prefix "*) ;; *) die "source-built version verification failed" ;; esac
+sqlite_healthy "$stage/$binary" || die "source-built feature verification failed"
+binary_hash=$(sha256sum "$stage/$binary" | awk '{print $1}')
+printf 'artifact|%s|%s|%s\n' "$install_dir" "$binary" "$binary_hash" >>"$transaction_manifest"
+mv -T "$stage" "$install_dir"; stage=
+rm -rf "$build_dir"; build_dir=
+mkdir -p "${stable_link%/*}"
+printf 'link|%s|%s\n' "$stable_link" "$installed_binary" >>"$transaction_manifest"
+ln -s "$installed_binary" "$stable_link"
+echo "CALLER native='hash -r' reason=refresh-command-path-cache"
+rm -f "$archive" "$entries"
+echo complete >"$transaction_manifest.status"; chmod 600 "$transaction_manifest.status"
+complete=1
+trap - EXIT HUP INT TERM
+echo "TRANSACTION id=$transaction_id status=complete"
+echo "END build-tool host=$logical_host changes=applied"

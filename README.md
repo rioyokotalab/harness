@@ -197,6 +197,20 @@ run `git lfs install`, write global Git filters or hooks, or contact an LFS
 remote. Enable it per project with an explicit native `git lfs install --local`
 only when that repository is in scope.
 
+SQLite uses a dedicated checksum-pinned source transaction because the
+publisher provides no AArch64 Linux CLI binary:
+
+```bash
+harness build-tool --host HOST --name sqlite --plan
+harness build-tool --host HOST --name sqlite --apply
+```
+
+The plan displays the publisher SHA3-256, the independently recorded SHA-256,
+the four exact amalgamation members, and the complete native `cc` command.
+Apply retains healthy site SQLite, builds only when needed, validates JSON,
+FTS5, and RTree in memory with user initialization disabled, and activates one
+owned binary through the normal fail-closed artifact rollback.
+
 ## Deliberately excluded
 
 The live `~/.codex/config.toml`, `~/.claude/settings.json`,

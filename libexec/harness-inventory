@@ -121,6 +121,11 @@ generate_facts() {
             if [ "$command_name" = ninja ] &&
                 ! "$command_name" --version >/dev/null 2>&1; then
                 state=unusable
+            elif [ "$command_name" = sqlite3 ] &&
+                ! sqlite3 -batch -noheader -init /dev/null :memory: \
+                    'select json_valid('"'"'{"ok":1}'"'"'); create virtual table f using fts5(x); create virtual table r using rtree(id,x1,x2); select 1;' \
+                    >/dev/null 2>&1; then
+                state=unusable
             elif [ "$command_name" = git-lfs ]; then
                 lfs_line=$(git-lfs version 2>/dev/null | sed -n '1p' || true)
                 lfs_version=${lfs_line#git-lfs/}

@@ -24,6 +24,7 @@ for script in \
     "$ROOT/libexec/harness-runtime" \
     "$ROOT/libexec/harness-python" \
     "$ROOT/libexec/harness-agent" \
+    "$ROOT/libexec/harness-build-tool" \
     "$ROOT/libexec/harness-rollback"
 do
     sh -n "$script" || fail "shell syntax: $script"
@@ -195,6 +196,16 @@ HOME="$TEMP_DIR/git-lfs-plan-home" "$HARNESS" tool --host rc --name git-lfs \
 grep 'KEEP command=git-lfs source=host-provided' "$TEMP_DIR/git-lfs-current-plan.out" \
     >/dev/null || fail "Git LFS captured current host retention"
 
+mkdir -p "$TEMP_DIR/sqlite-plan-home"
+HOME="$TEMP_DIR/sqlite-plan-home" "$HARNESS" build-tool --host al --name sqlite \
+    --facts "$ROOT/tests/fixtures/al.facts" --plan >"$TEMP_DIR/sqlite-arm-plan.out"
+grep 'BUILD artifact=.*sqlite/3.53.3/linux-aarch64' "$TEMP_DIR/sqlite-arm-plan.out" \
+    >/dev/null || fail "SQLite AArch64 source-build plan"
+grep 'sha256=646421e12aac110282ef8cc68f1a62d4bb15fc7b8f09da0b53e29ee690500431' \
+    "$TEMP_DIR/sqlite-arm-plan.out" >/dev/null || fail "SQLite source checksum plan"
+grep "COMPILE native='cc -O2 .* -o sqlite3'" "$TEMP_DIR/sqlite-arm-plan.out" \
+    >/dev/null || fail "SQLite native compile plan"
+
 mkdir -p "$TEMP_DIR/runtime-plan-home"
 HOME="$TEMP_DIR/runtime-plan-home" "$HARNESS" runtime --host al --name node \
     --facts "$ROOT/tests/fixtures/al.facts" --plan >"$TEMP_DIR/node-arm-plan.out"
@@ -264,6 +275,34 @@ tar -czf "$tectonic_fixture_archive" -C "$tectonic_fixture_dir" tectonic
 tectonic_fixture_hash=$(sha256sum "$tectonic_fixture_archive" | awk '{print $1}')
 sed -i "s/60b13a0826ae7ad9ce34b4a2df06bff2cfcfa6dda8a915477c0cbb84e1a4a902/$tectonic_fixture_hash/" \
     "$test_repo/tools/artifacts.tsv"
+sqlite_fixture_dir=$TEMP_DIR/sqlite-fixture
+sqlite_fixture_root=$sqlite_fixture_dir/sqlite-amalgamation-3530300
+sqlite_fixture_archive=$TEMP_DIR/sqlite-fixture.zip
+mkdir -p "$sqlite_fixture_root"
+printf '%s\n' \
+    '#include <stdio.h>' \
+    '#include <string.h>' \
+    'int main(int argc, char **argv) {' \
+    '  if (argc > 1 && strcmp(argv[1], "--version") == 0) {' \
+    '    puts("3.53.3 fixture"); return 0;' \
+    '  }' \
+    '  puts("1"); puts("1"); return 0;' \
+    '}' >"$sqlite_fixture_root/shell.c"
+printf '%s\n' '/* fixture translation unit */' >"$sqlite_fixture_root/sqlite3.c"
+printf '%s\n' '/* fixture header */' >"$sqlite_fixture_root/sqlite3.h"
+printf '%s\n' '/* fixture extension header */' >"$sqlite_fixture_root/sqlite3ext.h"
+python3 - "$sqlite_fixture_dir" "$sqlite_fixture_archive" <<'PY'
+import pathlib, sys, zipfile
+base, output = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+root = base / "sqlite-amalgamation-3530300"
+with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
+    archive.writestr("sqlite-amalgamation-3530300/", "")
+    for name in ("sqlite3.c", "shell.c", "sqlite3.h", "sqlite3ext.h"):
+        archive.write(root / name, f"sqlite-amalgamation-3530300/{name}")
+PY
+sqlite_fixture_hash=$(sha256sum "$sqlite_fixture_archive" | awk '{print $1}')
+sed -i "s/646421e12aac110282ef8cc68f1a62d4bb15fc7b8f09da0b53e29ee690500431/$sqlite_fixture_hash/" \
+    "$test_repo/tools/sources.tsv"
 runtime_fixture_parent=$TEMP_DIR/runtime-fixture
 runtime_fixture_root=$runtime_fixture_parent/node-v24.16.0-linux-x64
 runtime_fixture_archive=$TEMP_DIR/node-fixture.tar.gz
@@ -514,6 +553,45 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$tectonic_transaction" \
     fail "Tectonic rollback left stable link"
 [ ! -e "$test_home/.local/opt/tectonic/0.16.9/linux-x86_64" ] ||
     fail "Tectonic rollback left artifact directory"
+
+# Exercise the checksum-pinned source build, tamper refusal, and exact cleanup.
+source_bin=$TEMP_DIR/source-bin
+mkdir -p "$source_bin"
+ln -s "$fake_bin/curl" "$source_bin/curl"
+for command_name in as awk bash cc chmod cmp cp date dirname find git grep ld ln \
+    mkdir mktemp mv readlink rm sed sh sha256sum tail tr uname unzip wc; do
+    ln -s "$(command -v "$command_name")" "$source_bin/$command_name"
+done
+HOME="$test_home" PATH="$source_bin" FIXTURE_ARCHIVE="$sqlite_fixture_archive" \
+    "$test_repo/bin/harness" build-tool --host local --name sqlite --apply \
+    >"$TEMP_DIR/sqlite-build-apply.out"
+sqlite_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/sqlite-build-apply.out")
+[ -n "$sqlite_transaction" ] || fail "missing SQLite source-build transaction"
+grep '^NATIVE cc -O2 ' "$TEMP_DIR/sqlite-build-apply.out" >/dev/null ||
+    fail "SQLite native compile report"
+sqlite_tree=$test_home/.local/opt/sqlite/3.53.3/linux-x86_64
+sqlite_binary=$sqlite_tree/sqlite3
+[ "$($sqlite_binary --version)" = '3.53.3 fixture' ] || fail "SQLite built version"
+HOME="$test_home" PATH="$source_bin" \
+    "$test_repo/bin/harness" build-tool --host local --name sqlite --plan \
+    >"$TEMP_DIR/sqlite-build-repeat.out"
+grep 'KEEP command=sqlite3 source=managed-source-build' \
+    "$TEMP_DIR/sqlite-build-repeat.out" >/dev/null || fail "SQLite managed source-build plan"
+cp -p "$sqlite_binary" "$TEMP_DIR/original-sqlite-binary"
+printf '%s\n' changed >>"$sqlite_binary"
+if HOME="$test_home" "$test_repo/bin/harness" rollback "$sqlite_transaction" \
+    >"$TEMP_DIR/refused-sqlite-rollback.out" 2>&1; then
+    fail "SQLite rollback accepted changed binary"
+fi
+[ -L "$test_home/.local/bin/sqlite3" ] && [ -d "$sqlite_tree" ] ||
+    fail "SQLite rollback partially mutated paths"
+cp -p "$TEMP_DIR/original-sqlite-binary" "$sqlite_binary"
+HOME="$test_home" "$test_repo/bin/harness" rollback "$sqlite_transaction" \
+    >"$TEMP_DIR/sqlite-build-rollback.out"
+[ ! -e "$test_home/.local/bin/sqlite3" ] && [ ! -L "$test_home/.local/bin/sqlite3" ] ||
+    fail "SQLite rollback left stable link"
+[ ! -e "$sqlite_tree" ] || fail "SQLite rollback left artifact directory"
 
 # Exercise whole-tree runtime apply, changed-tree refusal, and exact rollback.
 runtime_bin=$TEMP_DIR/runtime-bin
