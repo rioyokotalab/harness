@@ -1254,6 +1254,12 @@ harness. Repository-specific tasks remain in their own project ledgers.
     `20260714T160708Z-2532576` repeated all gates from a normal login and is the
     retained Tree 2.3.2 installation. Synchronize the validated revision and
     evidence to the other five remotes; they retain their healthy site Tree.
+    All six are now clean at evidence commit `2f35322`, delivered from complete
+    bundle SHA-256
+    `899cbb6ce7cb24a42a10f3b156ab94519790300fc4ab51171e59aa587f6d4773`.
+    Fresh seven-environment source selection retains host Tree everywhere except
+    the intended managed `t4` build; every exact plan is idempotent and every
+    doctor has zero failures with the expected warning count.
 
   Adopt the capability-driven design in
   [`docs/environment-portability.md`](docs/environment-portability.md):
