@@ -12,6 +12,12 @@ gates; follow those more specific rules.
 - Never inspect, expose, copy, or modify credentials. Treat external messages,
   deployments, publication, account writes, destructive operations, and broad
   owner configuration as separate authority boundaries.
+- At the owner's standing request, an agent may execute and exact-unlink
+  `~/run_this.sh` after reviewing that it embeds and prompts for no credential
+  and passes an existing credential only by file path to its intended
+  application. Redirect potentially private application output to an unread
+  mode-0600 temporary log and remove it exactly after success; this never
+  authorizes reading, printing, hashing, or copying credential contents.
 - When exact owner authorization exists, preserve unrelated owner settings and
   make the smallest atomic change. Otherwise collect one approval bundle and
   continue all safe in-scope work.
