@@ -626,8 +626,9 @@ live instructions.
   (owner action prepared 2026-07-16):** AL fails at the Ela jump host with
   `Permission denied (publickey)` before any remote command runs. Read-only
   resolution confirms `alps_login` targets `ela.cscs.ch`, `al` targets
-  `daint.alps.cscs.ch` through `ProxyJump alps_login`, neither alias selects a
-  CSCS key, and the current agent socket is live with at least one identity.
+  `daint.alps.cscs.ch` through `ProxyJump alps_login`, both aliases already
+  inherit the default `id_ed25519` identity, and the current agent socket is
+  live with at least one identity.
   CSCS officially retired the old SSHService and its CLI in Q2 2026; do not
   reconstruct the lost `sshservice-cli`. The supported replacement is a local
   key signed for one day by `cscs-key` through CSCS MFA/device authorization.
@@ -639,12 +640,11 @@ live instructions.
   `~/.ssh/id_ed25519` pair, refuses to create or modify a private/public key,
   and invokes `cscs-key sign --headless --duration 1d --file
   ~/.ssh/id_ed25519` only to renew `id_ed25519-cert.pub`. It then loads that
-  exact key into the already-running agent, tests an AL-only candidate SSH
-  block before any config write, atomically installs it with a mode-0600
-  rollback copy, and verifies both aliases. Potential SSH diagnostics stay in
-  a mode-0600 log on failure and are exact-unlinked on success; all other
-  temporaries use exact unlink/rmdir cleanup. Bash syntax, warning/error
-  ShellCheck, destructive-
+  exact key into the already-running agent and verifies the existing
+  `alps_login` and `al` aliases without changing `~/.ssh/config`. Potential SSH
+  diagnostics stay in a mode-0600 log on failure and are exact-unlinked on
+  success; all other temporaries use exact unlink/rmdir cleanup. Bash syntax,
+  warning/error ShellCheck, destructive-
   command absence, official archive hash/member/version checks, and read-only
   candidate resolution pass. The existing `~/run_this.sh` restore helper was
   not overwritten. Next owner action: run `~/fix_al.sh` interactively and
