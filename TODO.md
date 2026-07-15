@@ -325,13 +325,18 @@ T-185.
   independent encrypted generation at a second site, owner-held mode-0600
   password files, a manual all-hidden-path snapshot, `check --read-data`, and
   `restore --verify`. Scheduling is explicitly deferred until manual restore
-  evidence is stable. Agents have not read or created credentials, initialized
-  a repository, or backed up secret-bearing state. Therefore every approved
-  clean-slate deletion and owner-sensitive `.mozilla`/`.muttrc`/agent-state
-  action remains closed pending the owner credential step and verified restore.
+  evidence is stable. The owner created unique mode-0600 password files on all
+  seven nodes without exposing them. Empty repositories are initialized and
+  structurally present on `local`, `ab`, `ri`, `al`, `rc`, and `t4`; AB2
+  initialization is deferred with all other AB2 work until its quota increase.
+  Agents have not read credentials or opened an encrypted repository. Therefore
+  every approved clean-slate deletion and owner-sensitive
+  `.mozilla`/`.muttrc`/agent-state action remains closed pending successful
+  snapshots and verified restores.
   The final parity, doctor, real-shell, origin, and all-backend temp audits pass.
-  Next action: ask the owner to create the declared unique passwords without
-  sharing them, then resume at repository initialization and manual restore.
+  Owner-run snapshot plus `check --read-data` scripts are staged on the six
+  initialized nodes; AB2 has no script. Next action: collect those six success
+  results, then stage the restore verification.
 
 ## Owner-review queue
 
@@ -523,13 +528,17 @@ live instructions.
 ## Issue appended during the T-182 Restic initialization
 
 - **T-184 — Reject truncated guarded-delete manifests at plan time
-  (in progress 2026-07-15):** AB2 exhausted its persistent-storage quota while
+  (complete 2026-07-15):** AB2 exhausted its persistent-storage quota while
   Restic initialized, leaving a partial repository. The cleanup plan correctly
   inventoried 262 entries and 1,081,344 bytes, but the quota-exhausted
   destination retained an empty manifest while the command printed the token
   of the intended content. Apply rejected the mismatch before deletion, so the
-  target remained intact. Build manifest content on independent temporary
-  storage, verify target-filesystem copy and published-link size plus SHA-256,
-  add an adversarial truncating-copy regression, and rerun the complete guard
-  and phase-1 suites before retrying cleanup. Keep all other AB2 migration and
-  backup work deferred until the approved quota increase is active.
+  target remained intact. Commit `f31aeb5` builds manifest content on
+  independent temporary storage and verifies exact target-filesystem copy and
+  published-link size plus SHA-256. A truncating copy that falsely exits zero
+  cannot publish a manifest; focused guard tests and the complete phase-1 suite
+  pass. After fleet distribution, a fresh manifest on AB2's separate default
+  home recorded the same 262 entries and 1,081,344 bytes; apply revalidated and
+  removed only the partial repository, then its exact manifest was unlinked.
+  The failed repository and temporary script are absent. All other AB2
+  migration and backup work remains deferred until the quota increase is active.

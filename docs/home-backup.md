@@ -74,6 +74,8 @@ MOVE_LARGE=$(awk -F'|' -v host="$HOST" '$1 == host { print $4 }' \
     "$HOME/harness/profiles/home-layout.tsv")
 MOVE_FAST=$(awk -F'|' -v host="$HOST" '$1 == host { print $5 }' \
     "$HOME/harness/profiles/home-layout.tsv")
+PERSISTENT_CANONICAL=$(readlink -f "$HARNESS_PERSISTENT_ROOT")
+CACHE_CANONICAL=$(readlink -f "$HARNESS_CACHE_ROOT")
 for NAME in $(printf '%s,%s\n' "$MOVE_LARGE" "$MOVE_FAST" | tr ',' ' '); do
     test "$NAME" = none && continue
     case "$NAME" in .[A-Za-z0-9._-]*) ;; *) exit 2 ;; esac
@@ -81,12 +83,12 @@ for NAME in $(printf '%s,%s\n' "$MOVE_LARGE" "$MOVE_FAST" | tr ',' ' '); do
     test -L "$LINK" || continue
     TARGET=$(readlink -f "$LINK")
     case "$TARGET" in
-        "$HARNESS_PERSISTENT_ROOT"/*|"$HARNESS_CACHE_ROOT"/*) ;;
+        "$PERSISTENT_CANONICAL"/*|"$CACHE_CANONICAL"/*) ;;
         *) printf 'refusing relocated target outside approved roots: %s\n' "$NAME" >&2; exit 2 ;;
     esac
     printf '%s\0' "$TARGET" >>"$SOURCE_MANIFEST"
 done
-unset NAME LINK TARGET MOVE_LARGE MOVE_FAST
+unset NAME LINK TARGET MOVE_LARGE MOVE_FAST PERSISTENT_CANONICAL CACHE_CANONICAL
 
 restic -r "$PRIMARY" --password-file "$PASSWORD_FILE" backup \
     --files-from-raw "$SOURCE_MANIFEST" --host "$HOST" \
