@@ -352,6 +352,12 @@ T-186.
   `.mozilla`/`.muttrc`/agent-state action remains closed pending successful
   local-scratch and AL restore results plus independent encrypted generations.
   The final parity, doctor, real-shell, origin, and all-backend temp audits pass.
+  Bundle SHA-256 `b1dd3f0e…41d` then fast-forwarded the clean `ab`, `ri`, `rc`,
+  and `t4` checkouts from exact `6db9296` to `0c44c5f`. Each node verified the
+  bundle, clean target revision, wrapper syntax, and Restic 0.19.1 execution
+  through the new route; every remote and local bundle was exact-unlinked and
+  verified absent. AL was unreachable at the authentication boundary and AB2
+  remains wholly deferred, so neither checkout changed.
   Next action: let the already-running guarded cleanup of the intentionally
   interrupted local NFS restore finish, rerun that restore on mode-0700
   node-local scratch without adding a second NFS workload, and run AL after the
