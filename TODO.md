@@ -4,7 +4,7 @@ This board is the authoritative current state for the portable Codex and Claude
 harness. Git preserves superseded chronology and command-level evidence. Keep
 live tasks, verified recovery facts, blockers, and next actions here; do not
 rebuild a second incident transcript in a session or report file. Next free id:
-T-182.
+T-184.
 
 ## Recovery priority — do before any other task
 
@@ -292,8 +292,46 @@ T-182.
   archive digest and extracted one regular binary, then correctly rejected it
   before installation because the generic health probe invoked `--version`
   instead of Restic's `version` subcommand. Staging was guard-deleted and no
-  binary or link remained. Add an argument-sensitive regression fixture for
-  the native subcommand before retrying any node.
+  binary or link remained. Commit `e75f719` added an argument-sensitive
+  regression fixture and the native `version` subcommand; all seven live
+  installations now report Restic 0.19.1.
+
+  **Fleet execution checkpoint:** commits through `4f34299` are clean on all
+  seven checkouts. Restic 0.19.1 is installed everywhere; tmux 3.6b is installed
+  on `al` and `rc`; htop 3.5.1 is installed on `ab`, `ab2`, and `t4`. Every
+  checkout has 28 `KEEP` control-plane links, managed shell loaders, the exact
+  canonical Vim configuration, and the shared SSH include. Real PTY sessions
+  on all six remotes proved the host roots, interactive-only exit wrapper, and
+  Ctrl-D guard; non-interactive sessions retained builtin `exit` and loaded no
+  remote-session policy. The explicit `harness_remote_codex HOST` path uses one
+  allowlisted PTY connection and per-invocation agent forwarding. No harness
+  commit was pushed.
+
+  `.local` now resolves to the selected persistent root on `local`, `ab`, `ri`,
+  `al`, `rc`, and `t4`; `ab2` deliberately remains a default-home directory
+  until its 10 TB quota is active. The current-node migration retained two
+  independently materialized, checksum-identical 5,821-entry copies before
+  activation; its 686,904,121-byte original was then removed through a narrowed
+  schema-v2 guard. Approved fast-state moves are complete for `.nsightsystems`,
+  `.nv`, `.triton`, and `.starpu` on `ab`, and `.allinea`, `.apptainer`, `.cupy`,
+  `.lhotse`, `.nv`, and `.triton` on `t4`; each has a persistent pre-migration
+  copy. Node-backup links and mode-0700 (or inherited setgid-2700) Restic parents
+  exist on every node. All known incident/rollout bundles and harness temporary
+  directories were exact-unlinked or guard-deleted, and a full `/tmp/harness*`
+  audit was empty afterward.
+
+  **Encrypted-backup gate:** `profiles/restic-repositories.tsv` and
+  `docs/home-backup.md` define unique per-node primary repositories, an
+  independent encrypted generation at a second site, owner-held mode-0600
+  password files, a manual all-hidden-path snapshot, `check --read-data`, and
+  `restore --verify`. Scheduling is explicitly deferred until manual restore
+  evidence is stable. Agents have not read or created credentials, initialized
+  a repository, or backed up secret-bearing state. Therefore every approved
+  clean-slate deletion and owner-sensitive `.mozilla`/`.muttrc`/agent-state
+  action remains closed pending the owner credential step and verified restore.
+  The final parity, doctor, real-shell, origin, and all-backend temp audits pass.
+  Next action: ask the owner to create the declared unique passwords without
+  sharing them, then resume at repository initialization and manual restore.
 
 ## Owner-review queue
 
@@ -469,12 +507,15 @@ live instructions.
 ## Issue appended during T-182 fleet validation
 
 - **T-183 — Make private-origin login synchronization credential-safe
-  (in progress 2026-07-15):** real PTY logins proved that all six remote shell
+  (complete 2026-07-15):** real PTY logins proved that all six remote shell
   policies were active, but also exposed local bundle paths left as Git origins.
   Replacing only those local-path origins with the canonical private GitHub
   origin then showed the expected authentication failures on nodes without a
-  forwarded agent. Keep ordinary login silent without inspecting or copying
-  keys, allow fetch/publish only through a pre-existing agent socket, add an
-  agentless regression, redistribute the fix, and repeat real interactive and
-  non-interactive fleet checks. No push or SSH owner-setting change is part of
-  this correction.
+  forwarded agent. Commit `2c2dff0` makes an SSH private origin a silent no-op
+  without an agent socket, suppresses raw authentication diagnostics, preserves
+  fast-forward-only fetch with a pre-existing socket, and adds an agentless
+  regression. Every bundle-local origin was replaced only after validating the
+  canonical URL as an allowlisted credential-free GitHub form. The fix was
+  distributed cleanly; repeated real PTY and non-interactive checks passed on
+  all six remotes. Commit `4f34299` added the explicit one-connection launcher.
+  No key, agent identity, push, or SSH owner setting was read or changed.
