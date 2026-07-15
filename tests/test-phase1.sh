@@ -85,6 +85,33 @@ remote_type=$(env -u SHLVL -u HARNESS_INTERACTIVE_LOADED \
     '. "$HOME/harness/shell/profile.sh"; printf "%s|%s|%s\n" "$(type -t exit)" "$IGNOREEOF" "$HARNESS_LOGICAL_HOST"' \
     2>/dev/null)
 [ "$remote_type" = 'function|1|ab' ] || fail "interactive remote-session policy"
+
+# A private SSH origin without an agent must be a silent no-op. In particular,
+# normal logins must not attempt authentication merely because a checkout was
+# originally distributed from a short-lived bundle.
+no_agent_home=$TEMP_DIR/no-agent-home
+mkdir -p "$no_agent_home/harness/.git" "$no_agent_home/.local/bin"
+cp -R "$ROOT/shell" "$no_agent_home/harness/"
+no_agent_log=$TEMP_DIR/no-agent-git.log
+cat >"$no_agent_home/.local/bin/git" <<'EOF'
+#!/bin/sh
+case " $* " in
+    *' status --porcelain '*) exit 0 ;;
+    *' remote get-url origin '*) printf '%s\n' 'git@github.com:owner/private.git' ;;
+    *' fetch '*) printf '%s\n' fetch >>"$NO_AGENT_LOG"; exit 99 ;;
+    *) exit 0 ;;
+esac
+EOF
+chmod 755 "$no_agent_home/.local/bin/git"
+no_agent_output=$(env -u SHLVL -u SSH_AUTH_SOCK \
+    -u HARNESS_INTERACTIVE_LOADED -u HARNESS_REMOTE_SESSION_LOADED -u TMUX \
+    HOME="$no_agent_home" PATH=/usr/bin:/bin SSH_TTY=/dev/pts/test \
+    HARNESS_LOGICAL_HOST=ab NO_AGENT_LOG="$no_agent_log" \
+    bash --noprofile --norc -ic \
+    '. "$HOME/harness/shell/profile.sh"; printf "%s\n" login-ready' 2>/dev/null)
+[ "$no_agent_output" = login-ready ] || fail "agentless login was not silent"
+[ ! -e "$no_agent_log" ] || fail "agentless login attempted an SSH fetch"
+
 tmux_type=$(env -u SHLVL -u HARNESS_INTERACTIVE_LOADED \
     -u HARNESS_REMOTE_SESSION_LOADED HOME="$profile_home" PATH=/usr/bin:/bin \
     SSH_TTY=/dev/pts/test \

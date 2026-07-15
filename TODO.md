@@ -465,3 +465,16 @@ live instructions.
   exploration; candidate C is read-only lifecycle telemetry. Do not combine
   candidates until each beats the unchanged baseline, and do not use product
   memory, recursive teams, or hooks as safety enforcement.
+
+## Issue appended during T-182 fleet validation
+
+- **T-183 — Make private-origin login synchronization credential-safe
+  (in progress 2026-07-15):** real PTY logins proved that all six remote shell
+  policies were active, but also exposed local bundle paths left as Git origins.
+  Replacing only those local-path origins with the canonical private GitHub
+  origin then showed the expected authentication failures on nodes without a
+  forwarded agent. Keep ordinary login silent without inspecting or copying
+  keys, allow fetch/publish only through a pre-existing agent socket, add an
+  agentless regression, redistribute the fix, and repeat real interactive and
+  non-interactive fleet checks. No push or SSH owner-setting change is part of
+  this correction.

@@ -237,6 +237,14 @@ commits. A later remote-backed flow may fetch an explicitly published revision.
 Do not rsync a dirty working tree and do not copy SSH keys; use the existing
 agent and current proxy configuration.
 
+The private GitHub origin is usable from an interactive remote login only when
+that session already has an SSH agent socket, normally through an explicit
+`ssh -A LOGICAL_ID` connection. The login hook never enumerates agent keys and
+silently skips the fetch when no socket exists. This keeps ordinary and
+non-interactive sessions free of authentication failures. Publishing remains
+an explicit `exit`-time choice, requires staged changes, and fails closed if the
+forwarded agent cannot authenticate; no node receives a copied private key.
+
 ## Shell integration
 
 The owner has authorized changes to any file their account can edit on `ab`,

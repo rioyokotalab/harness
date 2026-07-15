@@ -18,8 +18,33 @@ harness_login_sync() {
         printf '%s\n' 'harness: login sync skipped because the checkout is dirty' >&2
         return 0
     fi
-    if ! timeout 12 git -C "$harness_repo" fetch --quiet origin main; then
+    harness_fetch_url=$(git -C "$harness_repo" remote get-url origin 2>/dev/null) || {
+        unset harness_repo harness_fetch_url
+        return 0
+    }
+    case $harness_fetch_url in
+        git@*:*|ssh://*|github:*)
+            # Private SSH remotes require a local or forwarded agent. Do not
+            # probe keys, print fingerprints, or turn an ordinary login into a
+            # predictable authentication failure.
+            [ -S "${SSH_AUTH_SOCK:-}" ] || {
+                unset harness_repo harness_fetch_url
+                return 0
+            }
+            ;;
+        /*)
+            # Bundle-based rollout may leave a local-path origin behind. A
+            # vanished short-lived bundle is not a login error.
+            [ -r "$harness_fetch_url" ] || {
+                unset harness_repo harness_fetch_url
+                return 0
+            }
+            ;;
+    esac
+    if ! timeout 12 git -C "$harness_repo" fetch --quiet origin main \
+        >/dev/null 2>&1; then
         printf '%s\n' 'harness: login fetch failed; continuing with the local revision' >&2
+        unset harness_repo harness_fetch_url
         return 0
     fi
     if git -C "$harness_repo" merge-base --is-ancestor HEAD origin/main; then
@@ -31,7 +56,7 @@ harness_login_sync() {
     elif ! git -C "$harness_repo" merge-base --is-ancestor origin/main HEAD; then
         printf '%s\n' 'harness: local and origin/main diverged; login sync did not merge' >&2
     fi
-    unset harness_repo
+    unset harness_repo harness_fetch_url
 }
 
 harness_publish_staged() {
