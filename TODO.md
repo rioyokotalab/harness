@@ -343,8 +343,9 @@ T-185.
   `.mozilla`/`.muttrc`/agent-state action remains closed pending the six active
   restore results and independent encrypted generations.
   The final parity, doctor, real-shell, origin, and all-backend temp audits pass.
-  Next action: complete the local restore, guarded-delete only its temporary
-  restore tree, then run and clean the five remote restores one at a time.
+  Next action: finish guarded cleanup of the intentionally interrupted local
+  NFS restore, rerun that restore on mode-0700 node-local scratch, then run and
+  clean the five remote restores one at a time.
 
   **Independent-generation safety checkpoint:** foreground work during the
   read-only local restore added a credential-free `harness replica plan/apply`
@@ -358,6 +359,26 @@ T-185.
   removed by the suite's guarded cleanup. ShellCheck and the complete phase-1
   suite pass. Live replica execution remains closed until the current restore
   finishes and this commit is distributed to the participating nodes.
+
+  **Current-node NFS diagnosis:** the first local `restore --verify` was
+  intentionally interrupted with exit 130 after more than eight hours of
+  measurable progress, not because Restic hung. It had read approximately the
+  full 1.04 GB/329-entry encrypted repository and written about 3.07 GB, while
+  the private mode-0600 log continued changing. The partial materialization was
+  70,939 entries and 2,866,582,512 bytes. The process and the subsequent exact
+  guarded deletion repeatedly entered kernel `D` state in
+  `rpc_wait_bit_killable` on `/mnt/nfs-03/safe`, an NFSv4.2 hard mount from
+  `192.168.33.30:/tank/safe`. Mount statistics show effectively zero network
+  retransmissions and no RPC backlog, but metadata round trips average roughly
+  85 ms for REMOVE, 75 ms for CREATE, 117 ms for SETATTR, 43 ms for OPEN, and
+  220 ms for SYMLINK, with rare session operations taking seconds. A live
+  sample achieved only 7.6 removes/second. The root cause is therefore
+  small-file metadata amplification on the `/tank` NFS service, not capacity,
+  client CPU, Restic integrity, credentials, or packet loss. Keep packed Restic
+  repositories and immutable replica generations on large storage, but use
+  node-local mode-0700 scratch for restore materialization and reconsider live
+  metadata-heavy trees on this service. The immutable cleanup manifest targets
+  only the partial local restore and remains retained while apply runs.
 
 ## Owner-review queue
 
