@@ -1,0 +1,22 @@
+#!/bin/sh
+set -eu
+
+restic_command=$(command -v restic 2>/dev/null || true)
+if [ -z "$restic_command" ] && [ -x "$HOME/.local/bin/restic" ]; then
+    restic_command=$HOME/.local/bin/restic
+fi
+
+case $restic_command in
+    /*) ;;
+    *)
+        echo "cannot find an executable Restic command in PATH or at \$HOME/.local/bin/restic" >&2
+        exit 127
+        ;;
+esac
+
+[ -x "$restic_command" ] || {
+    echo "resolved Restic command is not executable: $restic_command" >&2
+    exit 126
+}
+
+exec "$restic_command" "$@"

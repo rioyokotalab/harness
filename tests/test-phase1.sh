@@ -39,6 +39,7 @@ for script in \
     "$ROOT/libexec/harness-doctor" \
     "$ROOT/libexec/harness-replica" \
     "$ROOT/libexec/harness-repository-fingerprint" \
+    "$ROOT/libexec/harness-restic" \
     "$ROOT/libexec/harness-apply" \
     "$ROOT/libexec/harness-remediate" \
     "$ROOT/libexec/harness-shell" \
@@ -54,6 +55,34 @@ for script in \
 do
     sh -n "$script" || fail "shell syntax: $script"
 done
+
+# Direct non-interactive SSH can omit ~/.local/bin even when the managed
+# Restic installation is healthy. The harness route must find that exact
+# fallback, while retaining normal PATH precedence when a site command exists.
+restic_route_home=$TEMP_DIR/restic-route-home
+restic_route_path=$TEMP_DIR/restic-route-path
+mkdir -p "$restic_route_home/.local/bin" "$restic_route_path"
+cat >"$restic_route_home/.local/bin/restic" <<'EOF'
+#!/bin/sh
+printf 'managed|%s\n' "$*"
+EOF
+cat >"$restic_route_path/restic" <<'EOF'
+#!/bin/sh
+printf 'path|%s\n' "$*"
+EOF
+chmod 755 "$restic_route_home/.local/bin/restic" "$restic_route_path/restic"
+restic_route_output=$(HOME="$restic_route_home" PATH=/usr/bin:/bin \
+    "$HARNESS" restic version)
+[ "$restic_route_output" = 'managed|version' ] ||
+    fail "managed Restic fallback route"
+restic_route_output=$(HOME="$restic_route_home" \
+    PATH="$restic_route_path:/usr/bin:/bin" "$HARNESS" restic version)
+[ "$restic_route_output" = 'path|version' ] ||
+    fail "Restic PATH precedence route"
+if HOME="$TEMP_DIR/restic-route-absent" PATH=/usr/bin:/bin \
+    "$HARNESS" restic version >"$TEMP_DIR/restic-route-absent.out" 2>&1; then
+    fail "Restic route accepted an absent command"
+fi
 
 for script in "$ROOT"/shell/cache.sh "$ROOT"/shell/profile.sh \
     "$ROOT"/shell/environments/*.sh; do

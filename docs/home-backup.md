@@ -44,7 +44,8 @@ test -f "$HOME/.config/restic/home-control.password"
 test ! -L "$HOME/.config/restic/home-control.password"
 test "$(stat -c %a "$HOME/.config/restic/home-control.password")" = 600
 PASSWORD_FILE=$HOME/.config/restic/home-control.password
-restic -r "$PRIMARY" --password-file "$PASSWORD_FILE" init
+"$HOME/harness/bin/harness" restic -r "$PRIMARY" \
+    --password-file "$PASSWORD_FILE" init
 ```
 
 Initialization is one-time and must fail rather than replace an existing
@@ -90,10 +91,12 @@ for NAME in $(printf '%s,%s\n' "$MOVE_LARGE" "$MOVE_FAST" | tr ',' ' '); do
 done
 unset NAME LINK TARGET MOVE_LARGE MOVE_FAST PERSISTENT_CANONICAL CACHE_CANONICAL
 
-restic -r "$PRIMARY" --password-file "$PASSWORD_FILE" backup \
+"$HOME/harness/bin/harness" restic -r "$PRIMARY" \
+    --password-file "$PASSWORD_FILE" backup \
     --files-from-raw "$SOURCE_MANIFEST" --host "$HOST" \
     --tag harness-hidden-home-manual
-restic -r "$PRIMARY" --password-file "$PASSWORD_FILE" check --read-data
+"$HOME/harness/bin/harness" restic -r "$PRIMARY" \
+    --password-file "$PASSWORD_FILE" check --read-data
 cleanup_source_manifest
 trap - EXIT HUP INT TERM
 ```
@@ -113,10 +116,12 @@ diff, or inspect secret-bearing restored files.
 ```bash
 umask 077
 RESTORE_ROOT=$(mktemp -d "$HARNESS_PERSISTENT_ROOT/restic-restore-test.${HOST}.XXXXXX")
-restic -r "$PRIMARY" --password-file "$PASSWORD_FILE" restore latest \
+"$HOME/harness/bin/harness" restic -r "$PRIMARY" \
+    --password-file "$PASSWORD_FILE" restore latest \
     --host "$HOST" --tag harness-hidden-home-manual \
     --target "$RESTORE_ROOT" --verify
-restic -r "$PRIMARY" --password-file "$PASSWORD_FILE" snapshots \
+"$HOME/harness/bin/harness" restic -r "$PRIMARY" \
+    --password-file "$PASSWORD_FILE" snapshots \
     --host "$HOST" --tag harness-hidden-home-manual --compact
 ```
 

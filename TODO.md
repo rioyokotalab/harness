@@ -4,7 +4,7 @@ This board is the authoritative current state for the portable Codex and Claude
 harness. Git preserves superseded chronology and command-level evidence. Keep
 live tasks, verified recovery facts, blockers, and next actions here; do not
 rebuild a second incident transcript in a session or report file. Next free id:
-T-185.
+T-186.
 
 ## Recovery priority — do before any other task
 
@@ -333,19 +333,30 @@ T-185.
   owner-run snapshot plus `check --read-data` transaction completed on all six
   initialized nodes (`local`, `ab`, `ri`, `al`, `rc`, and `t4`), and each now
   has a structurally visible manual hidden-home snapshot. AB2 has no repository
-  or helper and remains deferred with its other work. Full restore verification
-  is now in progress sequentially to avoid competing storage load: the local
-  `restore --verify` is isolated below the selected persistent root, while the
-  five byte-identical remote helpers are staged but not running. Potentially
-  private Restic output is retained in an unread mode-0600 log until success;
-  the reviewed helper and log are exact-unlinked only after success. Therefore
-  every approved clean-slate deletion and owner-sensitive
-  `.mozilla`/`.muttrc`/agent-state action remains closed pending the six active
-  restore results and independent encrypted generations.
+  or helper and remains deferred with its other work. Restore verification is
+  complete on `ab`, `ri`, `rc`, and `t4`: each helper ran `restore --verify`,
+  the wrapper validated a nonempty restored tree using only aggregate metadata,
+  and the helper plus unread mode-0600 log were exact-unlinked after success.
+  Their restored trees were each removed by a separate immutable
+  guarded-delete manifest; apply revalidated every target, preserved protected
+  anchors, verified absence, and the exact manifests were then unlinked. Each
+  empty restore-test parent was subsequently removed by one exact non-recursive
+  `rmdir` and verified absent. RI
+  initially failed before creating a target because its non-interactive SSH
+  `PATH` omitted the healthy managed Restic binary; a reviewed
+  `~/.local/bin/restic` fallback fixed the helper, and the retry then succeeded
+  without reading either private log. AL was not launched because its SSH path
+  failed at public-key authentication; its staged helper remains untouched. The
+  current-node NFS restore remains pending as described below. Therefore every
+  approved clean-slate deletion and owner-sensitive
+  `.mozilla`/`.muttrc`/agent-state action remains closed pending successful
+  local-scratch and AL restore results plus independent encrypted generations.
   The final parity, doctor, real-shell, origin, and all-backend temp audits pass.
-  Next action: finish guarded cleanup of the intentionally interrupted local
-  NFS restore, rerun that restore on mode-0700 node-local scratch, then run and
-  clean the five remote restores one at a time.
+  Next action: let the already-running guarded cleanup of the intentionally
+  interrupted local NFS restore finish, rerun that restore on mode-0700
+  node-local scratch without adding a second NFS workload, and run AL after the
+  owner's existing SSH authentication path becomes available. Then complete
+  the independent encrypted generations before reopening sensitive cleanup.
 
   **Independent-generation safety checkpoint:** foreground work during the
   read-only local restore added a credential-free `harness replica plan/apply`
@@ -584,3 +595,23 @@ live instructions.
   removed only the partial repository, then its exact manifest was unlinked.
   The failed repository and temporary script are absent. All other AB2
   migration and backup work remains deferred until the quota increase is active.
+
+## Issue appended during the T-182 remote restore gate
+
+- **T-185 — Make non-interactive Restic resolution use the managed binary
+  (complete 2026-07-16):** RI's first restore helper stopped before target
+  creation because direct non-interactive SSH omitted `~/.local/bin` from
+  `PATH`, although the checksum-pinned Restic 0.19.1 binary was healthy at
+  `~/.local/bin/restic`. A reviewed helper fallback selected `command -v
+  restic` first and then the exact executable managed path; syntax, ShellCheck,
+  host detection, and helper hashes passed, and the retry completed verified
+  restore plus guarded cleanup without inspecting private logs. The new
+  `harness restic` route now gives a normal absolute `PATH` command precedence,
+  falls back to the executable managed path, and fails if neither exists. The
+  manual initialization, snapshot, check, restore, and snapshot-list commands
+  all use this route. Synthetic fallback/precedence tests, live minimal-`PATH`
+  Restic 0.19.1 execution, POSIX syntax, warning/error ShellCheck, diff checks,
+  and the full phase-1 suite pass. The first full-suite attempt exposed a stale
+  process-local OpenMPI module table; the native unload/load refresh restored
+  its declared `mpicc` path, after which the suite passed with only the already
+  documented login-node CUDA-library warnings.
