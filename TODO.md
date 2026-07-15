@@ -353,10 +353,14 @@ T-188.
   identities. A fresh plan/apply pair in one persistent `daint-ln003` session
   then revalidated and removed only the restore tree; its manifest and empty
   parent were exact-unlinked/non-recursively removed and verified absent. The
-  current-node NFS restore remains pending as described below. Therefore every
+  current node then restored 70,959 entries and 3,077,206,016 allocated bytes
+  to mode-0700 local `/tmp` scratch in seconds. Its helper and both unread
+  private logs were exact-unlinked after success; a fresh guarded manifest
+  removed the scratch tree, preserved protected anchors, and its manifest and
+  empty parent are absent. Therefore every
   approved clean-slate deletion and owner-sensitive
-  `.mozilla`/`.muttrc`/agent-state action remains closed pending successful
-  local-scratch restore results plus independent encrypted generations.
+  `.mozilla`/`.muttrc`/agent-state action remains closed only pending the
+  independent encrypted generations.
   The final parity, doctor, real-shell, origin, and all-backend temp audits pass.
   Bundle SHA-256 `b1dd3f0e…41d` then fast-forwarded the clean `ab`, `ri`, `rc`,
   and `t4` checkouts from exact `6db9296` to `0c44c5f`. Each node verified the
@@ -370,10 +374,8 @@ T-188.
   from their `0c44c5f`/`27a1a91` checkpoints to `0f200ac`. Every node verified
   the bundle and clean target, Restic 0.19.1, and its host-specific replica
   plan; all remote and local bundle copies are absent.
-  Next action: let the already-running guarded cleanup of the intentionally
-  interrupted local NFS restore finish, rerun that restore on mode-0700
-  node-local scratch without adding a second NFS workload, then complete the
-  independent encrypted generations before reopening sensitive cleanup.
+  Next action: create and validate one independent encrypted generation for
+  each of the six initialized repositories before reopening sensitive cleanup.
 
   **Independent-generation safety checkpoint:** foreground work during the
   read-only local restore added a credential-free `harness replica plan/apply`
@@ -385,8 +387,9 @@ T-188.
   exact staging rename. Synthetic tests cover both copy directions plus every
   rejection above; failed staging fixtures are retained for evidence and then
   removed by the suite's guarded cleanup. ShellCheck and the complete phase-1
-  suite pass. Live replica execution remains closed until the current restore
-  finishes and this commit is distributed to the participating nodes.
+  suite pass. Restore evidence is now complete and the implementation is
+  distributed to all five active remotes, so live execution is open for the
+  six initialized repositories. AB2 remains rejected.
 
   **Current-node NFS diagnosis:** the first local `restore --verify` was
   intentionally interrupted with exit 130 after more than eight hours of
@@ -405,8 +408,14 @@ T-188.
   client CPU, Restic integrity, credentials, or packet loss. Keep packed Restic
   repositories and immutable replica generations on large storage, but use
   node-local mode-0700 scratch for restore materialization and reconsider live
-  metadata-heavy trees on this service. The immutable cleanup manifest targets
-  only the partial local restore and remains retained while apply runs.
+  metadata-heavy trees on this service. The first long-running guarded apply
+  later exited without a retained terminal result after partially reducing the
+  target to 4,125 entries and 135,734,272 allocated bytes. Because the target
+  remained, it was not treated as success: the expired manifest was
+  exact-unlinked, a fresh manifest rebound the reduced tree, and apply then
+  verified protected anchors unchanged and target absent. The manifest and
+  empty NFS restore parent are absent. The subsequent `/tmp` restore and
+  cleanup completed as recorded above.
 
 ## Owner-review queue
 
