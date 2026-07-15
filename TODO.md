@@ -623,7 +623,7 @@ live instructions.
   documented login-node CUDA-library warnings.
 
 - **T-186 — Replace retired CSCS SSHService authentication for AL
-  (owner action prepared 2026-07-16):** AL fails at the Ela jump host with
+  (complete 2026-07-16):** AL failed at the Ela jump host with
   `Permission denied (publickey)` before any remote command runs. Read-only
   resolution confirms `alps_login` targets `ela.cscs.ch`, `al` targets
   `daint.alps.cscs.ch` through `ProxyJump alps_login`, both aliases already
@@ -633,20 +633,14 @@ live instructions.
   reconstruct the lost `sshservice-cli`. The supported replacement is a local
   key signed for one day by `cscs-key` through CSCS MFA/device authorization.
 
-  Mode-0700 owner script `~/fix_al.sh` pins official `cscs-key` v1.1.0 Linux
-  x86-64 archive SHA-256 `299f6952…f9ed`, accepts only its single regular
-  `cscs-key` member, and installs it under the managed `.local` tree. Per the
-  owner's correction, it now requires the existing regular mode-600/644
-  `~/.ssh/id_ed25519` pair, refuses to create or modify a private/public key,
-  and invokes `cscs-key sign --headless --duration 1d --file
-  ~/.ssh/id_ed25519` only to renew `id_ed25519-cert.pub`. It then loads that
-  exact key into the already-running agent and verifies the existing
-  `alps_login` and `al` aliases without changing `~/.ssh/config`. Potential SSH
-  diagnostics stay in a mode-0600 log on failure and are exact-unlinked on
-  success; all other temporaries use exact unlink/rmdir cleanup. Bash syntax,
-  warning/error ShellCheck, destructive-
-  command absence, official archive hash/member/version checks, and read-only
-  candidate resolution pass. The existing `~/run_this.sh` restore helper was
-  not overwritten. Next owner action: run `~/fix_al.sh` interactively and
-  complete the displayed CSCS device authorization; agents must not execute or
-  observe that credential flow. After success, resume the staged AL restore.
+  The owner renewed the existing certificate directly with `cscs-key sign
+  --headless -f ~/.ssh/id_ed25519`; no new private key, SSH configuration, or
+  repair installation was needed. A read-only connection now proves `ssh al`
+  authentication succeeds. The owner added local alias `al` for that renewal
+  command at line 5 of the current node's `.bashrc`, before the exact harness
+  managed suffix. `harness shell` preserves this owner prefix, and the tracked
+  harness contains no matching alias, so login synchronization cannot mirror
+  it to another node. A fresh interactive shell resolves the alias. The unused
+  mode-0700 `~/fix_al.sh` was hash-revalidated, exact-unlinked, and verified
+  absent; it never ran, and no private diagnostic log exists. Next action:
+  resume the already-staged AL restore helper while the certificate is valid.
