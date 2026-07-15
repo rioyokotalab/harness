@@ -4,7 +4,7 @@ This board is the authoritative current state for the portable Codex and Claude
 harness. Git preserves superseded chronology and command-level evidence. Keep
 live tasks, verified recovery facts, blockers, and next actions here; do not
 rebuild a second incident transcript in a session or report file. Next free id:
-T-188.
+T-189.
 
 ## Recovery priority — do before any other task
 
@@ -374,8 +374,15 @@ T-188.
   from their `0c44c5f`/`27a1a91` checkpoints to `0f200ac`. Every node verified
   the bundle and clean target, Restic 0.19.1, and its host-specific replica
   plan; all remote and local bundle copies are absent.
-  Next action: create and validate one independent encrypted generation for
-  each of the six initialized repositories before reopening sensitive cleanup.
+  Generation `20260715T222741Z` is independently validated for `local`: its
+  encrypted repository was copied and promoted at T4, then passed a fresh
+  all-pack read and verified restore without using `/mnt/nfs-03`. The `ab`
+  generation has been fingerprint-validated and promoted locally, but its
+  independent Restic validation is paused because that generation is on
+  `/mnt/nfs-03`. Copies for `ri`, `al`, `rc`, and `t4` are likewise paused at
+  the owner's explicit no-NFS boundary. Next action: validate `ab` and create
+  and validate the other four generations when `/mnt/nfs-03` work resumes;
+  only then reopen sensitive cleanup.
 
   **Independent-generation safety checkpoint:** foreground work during the
   read-only local restore added a credential-free `harness replica plan/apply`
@@ -676,3 +683,22 @@ live instructions.
   manifest, and empty parent are absent. The AL native-site reference now
   requires persistent-connection plan/apply rather than weakening the
   account-home identity guard.
+
+## Task appended during the T-182 independent-generation gate
+
+- **T-188 — Validate the NFS-independent off-site generation (complete
+  2026-07-16):** generation `20260715T222741Z` for `local` is immutable at
+  T4 under `/gs/bs/jh250019/yokota/restic-replicas/local`. A fresh T4-side
+  inventory reproduced the promoted fingerprint exactly: 328 entries,
+  1,040,723,827 bytes, SHA-256
+  `d1dc612c6f96da112f957a370fe4f46ac3333074668093e365b4f0a82ff1d6a1`;
+  its lock directory is empty. With caching disabled, Restic accessed that
+  generation over SFTP, found the tagged local snapshot, passed
+  `check --read-data`, and passed `restore --verify` into node-local `/tmp`.
+  The nonempty restored tree had 70,959 entries and 3,077,206,016 aggregate
+  bytes. The reviewed credential-passing helper and unread mode-0600 log were
+  exact-unlinked after success. A fresh guarded manifest then revalidated and
+  removed only the 70,959-entry restore tree (2,895,957,642 planned bytes),
+  preserved protected anchors, and verified the target absent; the exact
+  manifest and empty parent are also absent. This validation did not access
+  `/mnt/nfs-03`.
