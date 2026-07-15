@@ -104,6 +104,12 @@ every placeholder before printing and executing a command.
 
 ## CSCS Alps: `al`
 
+- The `al` SSH alias can land separate invocations on different Daint login
+  nodes. Those nodes may report different device/inode identities for the same
+  shared lexical account home. When a guarded-delete plan/apply pair targets
+  AL storage, keep both commands in one persistent SSH connection, inspect the
+  emitted plan there, and apply its exact token there. Never weaken or bypass
+  account-home identity validation to accommodate load balancing.
 - Slurm requires an explicit project account (`-A`). Ask for it; never infer it
   from local files or past output.
 - Use uenv explicitly. Automated commands use native `uenv run`; Slurm jobs use

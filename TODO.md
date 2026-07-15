@@ -4,7 +4,7 @@ This board is the authoritative current state for the portable Codex and Claude
 harness. Git preserves superseded chronology and command-level evidence. Keep
 live tasks, verified recovery facts, blockers, and next actions here; do not
 rebuild a second incident transcript in a session or report file. Next free id:
-T-187.
+T-188.
 
 ## Recovery priority — do before any other task
 
@@ -334,7 +334,7 @@ T-187.
   initialized nodes (`local`, `ab`, `ri`, `al`, `rc`, and `t4`), and each now
   has a structurally visible manual hidden-home snapshot. AB2 has no repository
   or helper and remains deferred with its other work. Restore verification is
-  complete on `ab`, `ri`, `rc`, and `t4`: each helper ran `restore --verify`,
+  complete on `ab`, `ri`, `al`, `rc`, and `t4`: each helper ran `restore --verify`,
   the wrapper validated a nonempty restored tree using only aggregate metadata,
   and the helper plus unread mode-0600 log were exact-unlinked after success.
   Their restored trees were each removed by a separate immutable
@@ -345,24 +345,31 @@ T-187.
   initially failed before creating a target because its non-interactive SSH
   `PATH` omitted the healthy managed Restic binary; a reviewed
   `~/.local/bin/restic` fallback fixed the helper, and the retry then succeeded
-  without reading either private log. AL was not launched because its SSH path
-  failed at public-key authentication; its staged helper remains untouched. The
+  without reading either private log. After the owner renewed the existing
+  CSCS-signed `id_ed25519` certificate, AL restored 11,065 entries on Capstor;
+  its helper and unread private log were exact-unlinked after success. Its
+  first guarded cleanup apply failed closed before deletion because separate
+  SSH connections landed on login nodes with different lexical-home
+  identities. A fresh plan/apply pair in one persistent `daint-ln003` session
+  then revalidated and removed only the restore tree; its manifest and empty
+  parent were exact-unlinked/non-recursively removed and verified absent. The
   current-node NFS restore remains pending as described below. Therefore every
   approved clean-slate deletion and owner-sensitive
   `.mozilla`/`.muttrc`/agent-state action remains closed pending successful
-  local-scratch and AL restore results plus independent encrypted generations.
+  local-scratch restore results plus independent encrypted generations.
   The final parity, doctor, real-shell, origin, and all-backend temp audits pass.
   Bundle SHA-256 `b1dd3f0e…41d` then fast-forwarded the clean `ab`, `ri`, `rc`,
   and `t4` checkouts from exact `6db9296` to `0c44c5f`. Each node verified the
   bundle, clean target revision, wrapper syntax, and Restic 0.19.1 execution
   through the new route; every remote and local bundle was exact-unlinked and
-  verified absent. AL was unreachable at the authentication boundary and AB2
-  remains wholly deferred, so neither checkout changed.
+  verified absent. Later bundle SHA-256 `fd7647f3…0200` fast-forwarded AL's
+  clean checkout from exact `6db9296` to `27a1a91`; Restic 0.19.1 and the AL
+  replica plan route passed, and both bundle copies were exact-unlinked. AB2
+  remains wholly deferred and unchanged.
   Next action: let the already-running guarded cleanup of the intentionally
   interrupted local NFS restore finish, rerun that restore on mode-0700
-  node-local scratch without adding a second NFS workload, and run AL after the
-  owner's existing SSH authentication path becomes available. Then complete
-  the independent encrypted generations before reopening sensitive cleanup.
+  node-local scratch without adding a second NFS workload, then complete the
+  independent encrypted generations before reopening sensitive cleanup.
 
   **Independent-generation safety checkpoint:** foreground work during the
   read-only local restore added a credential-free `harness replica plan/apply`
@@ -642,5 +649,17 @@ live instructions.
   harness contains no matching alias, so login synchronization cannot mirror
   it to another node. A fresh interactive shell resolves the alias. The unused
   mode-0700 `~/fix_al.sh` was hash-revalidated, exact-unlinked, and verified
-  absent; it never ran, and no private diagnostic log exists. Next action:
-  resume the already-staged AL restore helper while the certificate is valid.
+  absent; it never ran, and no private diagnostic log exists. The staged AL
+  restore then completed as recorded under T-182.
+
+- **T-187 — Keep guarded deletion on one load-balanced AL login node
+  (complete 2026-07-16):** an AL restore-cleanup plan and apply used separate
+  SSH connections. Load balancing moved apply to a login node that reported a
+  different identity for lexical home `/users/ryokota`; schema-v2 validation
+  rejected it before deletion and retained both target and manifest. After the
+  failed manifest was verified and exact-unlinked, one persistent SSH session
+  on `daint-ln003` emitted a fresh plan for the unchanged 11,065-entry target
+  and applied its exact token. Protected anchors were unchanged; target,
+  manifest, and empty parent are absent. The AL native-site reference now
+  requires persistent-connection plan/apply rather than weakening the
+  account-home identity guard.
