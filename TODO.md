@@ -329,14 +329,22 @@ T-185.
   seven nodes without exposing them. Empty repositories are initialized and
   structurally present on `local`, `ab`, `ri`, `al`, `rc`, and `t4`; AB2
   initialization is deferred with all other AB2 work until its quota increase.
-  Agents have not read credentials or opened an encrypted repository. Therefore
+  Agents have not read credentials or inspected repository/restored content. The
+  owner-run snapshot plus `check --read-data` transaction completed on all six
+  initialized nodes (`local`, `ab`, `ri`, `al`, `rc`, and `t4`), and each now
+  has a structurally visible manual hidden-home snapshot. AB2 has no repository
+  or helper and remains deferred with its other work. Full restore verification
+  is now in progress sequentially to avoid competing storage load: the local
+  `restore --verify` is isolated below the selected persistent root, while the
+  five byte-identical remote helpers are staged but not running. Potentially
+  private Restic output is retained in an unread mode-0600 log until success;
+  the reviewed helper and log are exact-unlinked only after success. Therefore
   every approved clean-slate deletion and owner-sensitive
-  `.mozilla`/`.muttrc`/agent-state action remains closed pending successful
-  snapshots and verified restores.
+  `.mozilla`/`.muttrc`/agent-state action remains closed pending the six active
+  restore results and independent encrypted generations.
   The final parity, doctor, real-shell, origin, and all-backend temp audits pass.
-  Owner-run snapshot plus `check --read-data` scripts are staged on the six
-  initialized nodes; AB2 has no script. Next action: collect those six success
-  results, then stage the restore verification.
+  Next action: complete the local restore, guarded-delete only its temporary
+  restore tree, then run and clean the five remote restores one at a time.
 
 ## Owner-review queue
 

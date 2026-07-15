@@ -123,9 +123,10 @@ restic -r "$PRIMARY" --password-file "$PASSWORD_FILE" snapshots \
 Record only success status, snapshot ID, time, and aggregate file/byte counts.
 Never copy restored secrets into the tracked harness. Remove `RESTORE_ROOT`
 only with `harness guarded-delete plan/apply` using its exact canonical path and
-immutable token. Once all seven nodes have successful `check --read-data` and
-restore evidence, scheduling may be proposed separately; it is not enabled by
-this workflow.
+immutable token. Once all currently initialized nodes have successful
+`check --read-data` and restore evidence, scheduling may be proposed separately
+for those nodes; it is not enabled by this workflow. AB2 joins the same gate
+only after its quota increase permits initialization and a manual test cycle.
 
 ## Independent encrypted generation
 
