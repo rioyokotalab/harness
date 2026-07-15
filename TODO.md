@@ -634,14 +634,17 @@ live instructions.
 
   Mode-0700 owner script `~/fix_al.sh` pins official `cscs-key` v1.1.0 Linux
   x86-64 archive SHA-256 `299f6952…f9ed`, accepts only its single regular
-  `cscs-key` member, installs it under the managed `.local` tree, creates the
-  default Ed25519 pair only when both key files are absent, and invokes
-  `cscs-key sign --headless --duration 1d`. It then loads that exact key into
-  the already-running agent, tests an AL-only candidate SSH block before any
-  config write, atomically installs it with a mode-0600 rollback copy, and
-  verifies both aliases. Potential SSH diagnostics stay in a mode-0600 log on
-  failure and are exact-unlinked on success; all other temporaries use exact
-  unlink/rmdir cleanup. Bash syntax, warning/error ShellCheck, destructive-
+  `cscs-key` member, and installs it under the managed `.local` tree. Per the
+  owner's correction, it now requires the existing regular mode-600/644
+  `~/.ssh/id_ed25519` pair, refuses to create or modify a private/public key,
+  and invokes `cscs-key sign --headless --duration 1d --file
+  ~/.ssh/id_ed25519` only to renew `id_ed25519-cert.pub`. It then loads that
+  exact key into the already-running agent, tests an AL-only candidate SSH
+  block before any config write, atomically installs it with a mode-0600
+  rollback copy, and verifies both aliases. Potential SSH diagnostics stay in
+  a mode-0600 log on failure and are exact-unlinked on success; all other
+  temporaries use exact unlink/rmdir cleanup. Bash syntax, warning/error
+  ShellCheck, destructive-
   command absence, official archive hash/member/version checks, and read-only
   candidate resolution pass. The existing `~/run_this.sh` restore helper was
   not overwritten. Next owner action: run `~/fix_al.sh` interactively and
