@@ -67,6 +67,15 @@ stable_link=$HOME/.local/bin/$binary
 tool_version_matches() {
     version_candidate=$1
     case "$tool_name" in
+        restic)
+            observed_version=$(
+                "$version_candidate" version 2>/dev/null | sed -n '1p' || true
+            )
+            case "$observed_version" in
+                "$version_line"|"$version_line "*) return 0 ;;
+                *) return 1 ;;
+            esac
+            ;;
         shellcheck)
             "$version_candidate" --version 2>/dev/null |
                 awk -v expected="$version_line" '

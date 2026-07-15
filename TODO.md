@@ -288,6 +288,13 @@ T-182.
   distribute the revision, and run read-only fleet plans before applying tools
   or configuration.
 
+  **Restic probe correction:** the first local apply verified the official
+  archive digest and extracted one regular binary, then correctly rejected it
+  before installation because the generic health probe invoked `--version`
+  instead of Restic's `version` subcommand. Staging was guard-deleted and no
+  binary or link remained. Add an argument-sensitive regression fixture for
+  the native subcommand before retrying any node.
+
 ## Owner-review queue
 
 - **T-169 — Research advanced agent harness practices (research complete

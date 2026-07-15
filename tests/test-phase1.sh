@@ -560,7 +560,8 @@ zip_fixture_hash=$(sha256sum "$zip_fixture_archive" | awk '{print $1}')
 sed -i "s/dbee7ccd7a5d617e4ed4cd4555c16669b511abfe8d31164f61be35ac9e999bd2/$zip_fixture_hash/" \
     "$test_repo/tools/artifacts.tsv"
 restic_fixture=$TEMP_DIR/restic-fixture
-printf '%s\n' '#!/bin/sh' 'echo "restic 0.19.1 compiled with go1.26.0 on linux/amd64"' \
+printf '%s\n' '#!/bin/sh' '[ "${1:-}" = version ] || exit 2' \
+    'echo "restic 0.19.1 compiled with go1.26.0 on linux/amd64"' \
     >"$restic_fixture.binary"
 chmod 755 "$restic_fixture.binary"
 bzip2 -c "$restic_fixture.binary" >"$restic_fixture.bz2"
