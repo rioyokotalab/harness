@@ -130,6 +130,20 @@ only after its quota increase permits initialization and a manual test cycle.
 
 ## Independent encrypted generation
 
+Generate and review the credential-free route before any live copy:
+
+```bash
+harness replica plan --host "$HOST" --generation "$(date -u +%Y%m%dT%H%M%SZ)"
+```
+
+The planner is deliberately read-only: it validates the declared direction,
+paths, timestamp, AB2 deferral, staging/final names, and native `rsync -aH`
+shape without connecting or copying. Apply is fail-closed on path collisions,
+repository symlinks or locks, source drift during the copy, and any mismatch
+among source-before, source-after, staging, and promoted fingerprints. A failed
+copy retains its new staging directory for diagnosis and guarded cleanup; it
+never deletes or overwrites an older generation.
+
 Run this only while no Restic command is writing the primary. From the current
 node, copy each remote repository to a newly created generation beneath its
 declared local replica root using the existing SSH alias and `rsync -aH`; never

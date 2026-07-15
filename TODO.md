@@ -346,6 +346,19 @@ T-185.
   Next action: complete the local restore, guarded-delete only its temporary
   restore tree, then run and clean the five remote restores one at a time.
 
+  **Independent-generation safety checkpoint:** foreground work during the
+  read-only local restore added a credential-free `harness replica plan/apply`
+  transaction without touching any live repository or remote. It derives only
+  the seven-row declared routes, keeps AB2 rejected, copies with native
+  `rsync -aH` and no deletion option, fingerprints encrypted repository bytes
+  before and after copying, rejects locks, symlinks, nested filesystems, path
+  collisions, source drift, and staging mismatches, and promotes only by an
+  exact staging rename. Synthetic tests cover both copy directions plus every
+  rejection above; failed staging fixtures are retained for evidence and then
+  removed by the suite's guarded cleanup. ShellCheck and the complete phase-1
+  suite pass. Live replica execution remains closed until the current restore
+  finishes and this commit is distributed to the participating nodes.
+
 ## Owner-review queue
 
 - **T-169 — Research advanced agent harness practices (research complete

@@ -1,0 +1,206 @@
+#!/bin/sh
+set -eu
+
+. "$HARNESS_ROOT/libexec/harness-common"
+
+usage() {
+    cat <<'EOF'
+Usage: harness replica {plan|apply} --host HOST --generation YYYYMMDDTHHMMSSZ
+
+Plan or create one credential-free immutable encrypted Restic repository
+generation. Apply refuses collisions, active Restic locks, repository symlinks,
+source drift, and destination mismatches. It never deletes a generation.
+AB2 remains rejected until its quota deferral is removed explicitly.
+EOF
+}
+
+validate_absolute_path() {
+    label=$1
+    value=$2
+    case "$value" in
+        /*) ;;
+        *) die "$label must be absolute" ;;
+    esac
+    case "$value" in
+        *[!A-Za-z0-9._/-]*|*//*|*/./*|*/../*|*/.|*/..|*/)
+            die "$label contains an unsafe path component"
+            ;;
+    esac
+}
+
+mode=${1:-}
+case "$mode" in
+    plan|apply) ;;
+    *)
+    usage >&2
+    exit 2
+    ;;
+esac
+shift
+
+logical_host=
+generation=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host)
+            [ "$#" -ge 2 ] || die "--host requires a value"
+            logical_host=$2
+            shift 2
+            ;;
+        --generation)
+            [ "$#" -ge 2 ] || die "--generation requires a value"
+            generation=$2
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *) die "unknown replica option: $1" ;;
+    esac
+done
+
+require_safe_id "$logical_host"
+[ "$logical_host" != ab2 ] || die "AB2 replica work is deferred until its quota increase is active"
+case "$logical_host" in
+    local|ab|ri|al|rc|t4) ;;
+    *) die "replica route is not declared for host: $logical_host" ;;
+esac
+case "$generation" in
+    [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]T[0-9][0-9][0-9][0-9][0-9][0-9]Z) ;;
+    *) die "generation must use UTC basic format YYYYMMDDTHHMMSSZ" ;;
+esac
+date_input=$(printf '%s\n' "$generation" | sed \
+    's/^\([0-9][0-9][0-9][0-9]\)\([0-9][0-9]\)\([0-9][0-9]\)T\([0-9][0-9]\)\([0-9][0-9]\)\([0-9][0-9]\)Z$/\1-\2-\3 \4:\5:\6 UTC/')
+date -u -d "$date_input" '+%Y%m%dT%H%M%SZ' 2>/dev/null |
+    grep -Fx "$generation" >/dev/null || die "generation is not a valid UTC timestamp"
+
+map=$HARNESS_ROOT/profiles/restic-repositories.tsv
+[ -f "$map" ] && [ ! -L "$map" ] || die "Restic repository map is unavailable"
+row=$(awk -F'|' -v host="$logical_host" '
+    $0 !~ /^#/ && $1 == host { row=$0; count++ }
+    END { if (count != 1) exit 1; print row }
+' "$map") || die "replica map must contain exactly one row for $logical_host"
+
+primary=$(printf '%s\n' "$row" | cut -d'|' -f2)
+replica_root=$(printf '%s\n' "$row" | cut -d'|' -f3)
+password_path=$(printf '%s\n' "$row" | cut -d'|' -f4)
+transport=$(printf '%s\n' "$row" | cut -d'|' -f5)
+[ "$(printf '%s\n' "$row" | awk -F'|' '{ print NF }')" -eq 5 ] ||
+    die "replica map row must have five fields"
+validate_absolute_path "primary repository" "$primary"
+validate_absolute_path "replica root" "$replica_root"
+expected_password_path=\~/.config/restic/home-control.password
+[ "$password_path" = "$expected_password_path" ] ||
+    die "replica map password declaration drifted"
+require_safe_id "$transport"
+
+staging=$replica_root/.staging-$generation
+final=$replica_root/$generation
+if [ "$logical_host" = local ]; then
+    [ "$transport" = t4 ] || die "local replica transport must be t4"
+    source_scope=local
+    source_transport=none
+    destination_scope=remote
+    destination_transport=$transport
+    rsync_source=$primary/
+    rsync_destination=$transport:$staging/
+else
+    [ "$transport" = local ] || die "remote replica transport must be local"
+    source_scope=remote
+    source_transport=$logical_host
+    destination_scope=local
+    destination_transport=none
+    rsync_source=$logical_host:$primary/
+    rsync_destination=$staging/
+fi
+
+cat <<EOF
+PLAN schema=1 operation=restic-encrypted-generation
+HOST logical=$logical_host
+SOURCE scope=$source_scope transport=$source_transport path=$primary
+DESTINATION scope=$destination_scope transport=$destination_transport root=$replica_root
+STAGING path=$staging
+FINAL path=$final
+REQUIRE destination-root-existing=yes staging-absent=yes final-absent=yes source-restic-writer=absent
+REQUIRE source-before-after-fingerprint=equal destination-fingerprint=equal
+NATIVE rsync -aH -- '$rsync_source' '$rsync_destination'
+PROMOTE rename-staging-only-after-exact-verification=yes
+DELETE source=no destination-old-generations=no rsync-delete=no
+EOF
+
+[ "$mode" = apply ] || {
+    printf '%s\n' "NEXT harness replica apply --host '$logical_host' --generation '$generation'"
+    printf '%s\n' 'STATUS plan-only'
+    exit 0
+}
+
+fingerprint=$HARNESS_ROOT/libexec/harness-repository-fingerprint
+[ -x "$fingerprint" ] || die "repository fingerprint helper is unavailable"
+command -v rsync >/dev/null 2>&1 || die "rsync is unavailable"
+command -v ssh >/dev/null 2>&1 || die "ssh is unavailable"
+
+remote_run() {
+    remote_host=$1
+    remote_command=$2
+    ssh -o BatchMode=yes "$remote_host" "$remote_command"
+}
+
+remote_fingerprint() {
+    remote_host=$1
+    remote_path=$2
+    remote_run "$remote_host" \
+        "\$HOME/harness/libexec/harness-repository-fingerprint '$remote_path'"
+}
+
+if [ "$logical_host" = local ]; then
+    [ -d "$primary" ] && [ ! -L "$primary" ] || die "local primary changed type"
+    source_before=$("$fingerprint" "$primary") || die "local source fingerprint failed"
+    remote_run "$transport" \
+        "test -d '$replica_root' && test ! -L '$replica_root' && test ! -e '$staging' && test ! -L '$staging' && test ! -e '$final' && test ! -L '$final'" ||
+        die "remote destination preflight failed"
+    remote_run "$transport" "umask 077 && mkdir -- '$staging'" ||
+        die "remote staging creation failed"
+    rsync -aH -- "$rsync_source" "$rsync_destination" ||
+        die "rsync failed; staging was retained"
+    source_after=$("$fingerprint" "$primary") || die "local source revalidation failed"
+    destination_fingerprint=$(remote_fingerprint "$transport" "$staging") ||
+        die "remote destination fingerprint failed; staging was retained"
+else
+    source_before=$(remote_fingerprint "$logical_host" "$primary") ||
+        die "remote source fingerprint failed"
+    [ -d "$replica_root" ] && [ ! -L "$replica_root" ] ||
+        die "local destination root changed type"
+    [ ! -e "$staging" ] && [ ! -L "$staging" ] || die "staging destination already exists"
+    [ ! -e "$final" ] && [ ! -L "$final" ] || die "final destination already exists"
+    umask 077
+    mkdir -- "$staging" || die "local staging creation failed"
+    rsync -aH -- "$rsync_source" "$rsync_destination" ||
+        die "rsync failed; staging was retained"
+    source_after=$(remote_fingerprint "$logical_host" "$primary") ||
+        die "remote source revalidation failed; staging was retained"
+    destination_fingerprint=$("$fingerprint" "$staging") ||
+        die "local destination fingerprint failed; staging was retained"
+fi
+
+[ "$source_before" = "$source_after" ] ||
+    die "source changed during copy; staging was retained"
+[ "$source_before" = "$destination_fingerprint" ] ||
+    die "destination differs from source; staging was retained"
+
+if [ "$logical_host" = local ]; then
+    remote_run "$transport" \
+        "test -d '$staging' && test ! -L '$staging' && test ! -e '$final' && test ! -L '$final' && mv -- '$staging' '$final'" ||
+        die "remote generation promotion failed; staging was retained when possible"
+    final_fingerprint=$(remote_fingerprint "$transport" "$final") ||
+        die "remote final generation verification failed"
+else
+    [ -d "$staging" ] && [ ! -L "$staging" ] || die "local staging changed type"
+    [ ! -e "$final" ] && [ ! -L "$final" ] || die "local final destination appeared"
+    mv -- "$staging" "$final" || die "local generation promotion failed"
+    final_fingerprint=$("$fingerprint" "$final") || die "local final generation verification failed"
+fi
+[ "$final_fingerprint" = "$source_before" ] || die "promoted generation fingerprint drifted"
+
+printf 'APPLIED host=%s generation=%s fingerprint=%s\n' \
+    "$logical_host" "$generation" "$final_fingerprint"

@@ -1,0 +1,56 @@
+#!/bin/sh
+set -eu
+
+[ "$#" -eq 1 ] || {
+    echo "usage: harness-repository-fingerprint ABSOLUTE_REPOSITORY" >&2
+    exit 2
+}
+root=$1
+case "$root" in
+    /*) ;;
+    *) echo "repository path must be absolute" >&2; exit 2 ;;
+esac
+[ -d "$root" ] && [ ! -L "$root" ] || {
+    echo "repository root must be a non-symlink directory" >&2
+    exit 2
+}
+for directory in data index keys locks snapshots; do
+    [ -d "$root/$directory" ] && [ ! -L "$root/$directory" ] || {
+        echo "repository structure is incomplete" >&2
+        exit 2
+    }
+done
+[ -f "$root/config" ] && [ ! -L "$root/config" ] || {
+    echo "repository structure is incomplete" >&2
+    exit 2
+}
+if find "$root" -xdev -type l -print -quit | grep -q .; then
+    echo "repository contains a symlink" >&2
+    exit 2
+fi
+if find "$root/locks" -xdev -mindepth 1 -print -quit | grep -q .; then
+    echo "repository has an active or stale Restic lock" >&2
+    exit 2
+fi
+device_count=$(find "$root" -xdev -printf '%D\n' | LC_ALL=C sort -u | wc -l | tr -d ' ')
+[ "$device_count" -eq 1 ] || {
+    echo "repository contains a nested filesystem" >&2
+    exit 2
+}
+
+entries=$(find "$root" -xdev -printf . | wc -c | tr -d ' ')
+bytes=$(find "$root" -xdev -type f -printf '%s\n' |
+    awk '{ total += $1 } END { printf "%.0f\n", total }')
+digest=$(
+    CDPATH='' cd -- "$root"
+    find . -xdev -type f -print0 | LC_ALL=C sort -z |
+        xargs -0 -r sha256sum | sha256sum | awk '{ print $1 }'
+)
+case "$entries:$bytes:$digest" in
+    *[!0-9a-f:]*) echo "repository fingerprint is malformed" >&2; exit 2 ;;
+esac
+[ "${#digest}" -eq 64 ] || {
+    echo "repository fingerprint digest is malformed" >&2
+    exit 2
+}
+printf 'entries=%s;bytes=%s;sha256=%s\n' "$entries" "$bytes" "$digest"

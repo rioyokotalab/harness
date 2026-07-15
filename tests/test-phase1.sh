@@ -37,6 +37,8 @@ for script in \
     "$ROOT/libexec/harness-inventory" \
     "$ROOT/libexec/harness-plan" \
     "$ROOT/libexec/harness-doctor" \
+    "$ROOT/libexec/harness-replica" \
+    "$ROOT/libexec/harness-repository-fingerprint" \
     "$ROOT/libexec/harness-apply" \
     "$ROOT/libexec/harness-remediate" \
     "$ROOT/libexec/harness-shell" \
@@ -166,6 +168,147 @@ do
 done
 
 "$ROOT/tests/test-guarded-delete.sh" || fail "guarded-delete regression suite"
+
+replica_generation=20260715T120000Z
+"$HARNESS" replica plan --host local --generation "$replica_generation" \
+    >"$TEMP_DIR/replica-local.out" || fail "local replica plan"
+grep -F "SOURCE scope=local transport=none path=/mnt/nfs-03/safe/Users/rioyokota/restic/home-control" \
+    "$TEMP_DIR/replica-local.out" >/dev/null || fail "local replica source route"
+grep -F "DESTINATION scope=remote transport=t4 root=/gs/bs/jh250019/yokota/restic-replicas/local" \
+    "$TEMP_DIR/replica-local.out" >/dev/null || fail "local replica destination route"
+grep -F "NATIVE rsync -aH -- '/mnt/nfs-03/safe/Users/rioyokota/restic/home-control/' 't4:/gs/bs/jh250019/yokota/restic-replicas/local/.staging-$replica_generation/'" \
+    "$TEMP_DIR/replica-local.out" >/dev/null || fail "local replica native command"
+
+"$HARNESS" replica plan --host ri --generation "$replica_generation" \
+    >"$TEMP_DIR/replica-remote.out" || fail "remote replica plan"
+grep -F "SOURCE scope=remote transport=ri path=/data1/rkp00015/rku00075/restic/home-control" \
+    "$TEMP_DIR/replica-remote.out" >/dev/null || fail "remote replica source route"
+grep -F "DESTINATION scope=local transport=none root=/mnt/nfs-03/safe/Users/rioyokota/restic-replicas/ri" \
+    "$TEMP_DIR/replica-remote.out" >/dev/null || fail "remote replica destination route"
+grep -F "NATIVE rsync -aH -- 'ri:/data1/rkp00015/rku00075/restic/home-control/' '/mnt/nfs-03/safe/Users/rioyokota/restic-replicas/ri/.staging-$replica_generation/'" \
+    "$TEMP_DIR/replica-remote.out" >/dev/null || fail "remote replica native command"
+if grep -E -- '--delete|home-control\.password' "$TEMP_DIR"/replica-*.out >/dev/null; then
+    fail "replica plan exposed a password path or deletion option"
+fi
+if "$HARNESS" replica plan --host ab2 --generation "$replica_generation" \
+    >"$TEMP_DIR/replica-ab2.out" 2>&1; then
+    fail "replica plan accepted deferred AB2"
+fi
+if "$HARNESS" replica plan --host local --generation 20260230T120000Z \
+    >"$TEMP_DIR/replica-date.out" 2>&1; then
+    fail "replica plan accepted an invalid timestamp"
+fi
+
+replica_repo=$TEMP_DIR/replica-harness
+replica_source=$TEMP_DIR/replica-source
+replica_destination=$TEMP_DIR/replica-destination
+replica_local_destination=$TEMP_DIR/replica-local-destination
+replica_remote_home=$TEMP_DIR/replica-remote-home
+replica_fake_bin=$TEMP_DIR/replica-fake-bin
+mkdir -p "$replica_repo" "$replica_source" "$replica_destination" \
+    "$replica_local_destination" \
+    "$replica_remote_home" "$replica_fake_bin"
+cp -R "$ROOT/bin" "$ROOT/libexec" "$ROOT/profiles" "$replica_repo/"
+awk -F'|' -v OFS='|' -v source="$replica_source" -v destination="$replica_destination" '
+    $1 == "ri" { $2=source; $3=destination }
+    $1 == "local" { $2=source; $3=local_destination }
+    { print }
+' local_destination="$replica_local_destination" \
+    "$ROOT/profiles/restic-repositories.tsv" \
+    >"$replica_repo/profiles/restic-repositories.tsv"
+ln -s "$replica_repo" "$replica_remote_home/harness"
+for directory in data index keys locks snapshots; do
+    mkdir "$replica_source/$directory"
+done
+printf '%s\n' 'synthetic encrypted config' >"$replica_source/config"
+printf '%s\n' 'synthetic encrypted object' >"$replica_source/data/object"
+cat >"$replica_fake_bin/ssh" <<'EOF'
+#!/bin/sh
+[ "$1" = -o ] && [ "$2" = BatchMode=yes ] || exit 90
+shift 2
+case "$1" in ri|t4) ;; *) exit 91 ;; esac
+shift
+[ "$#" -eq 1 ] || exit 92
+HOME=$FAKE_REMOTE_HOME sh -c "$1"
+EOF
+cat >"$replica_fake_bin/rsync" <<'EOF'
+#!/bin/sh
+[ "$1" = -aH ] && [ "$2" = -- ] || exit 93
+source=${3#*:}
+destination=${4#*:}
+cp -a "$source/." "$destination/"
+case ${FAKE_RSYNC_MODE:-clean} in
+    clean) ;;
+    corrupt) printf '%s\n' corrupt >>"$destination/config" ;;
+    drift) printf '%s\n' drift >>"$source/config" ;;
+    *) exit 94 ;;
+esac
+EOF
+chmod 755 "$replica_fake_bin/ssh" "$replica_fake_bin/rsync"
+
+PATH="$replica_fake_bin:$PATH" FAKE_REMOTE_HOME="$replica_remote_home" \
+    "$replica_repo/bin/harness" replica apply --host ri \
+    --generation 20260715T120001Z >"$TEMP_DIR/replica-apply.out" ||
+    fail "synthetic replica apply"
+[ -d "$replica_destination/20260715T120001Z" ] || fail "replica generation promotion"
+[ ! -e "$replica_destination/.staging-20260715T120001Z" ] ||
+    fail "replica staging remained after success"
+[ "$("$replica_repo/libexec/harness-repository-fingerprint" "$replica_source")" = \
+    "$("$replica_repo/libexec/harness-repository-fingerprint" "$replica_destination/20260715T120001Z")" ] ||
+    fail "replica final fingerprint"
+PATH="$replica_fake_bin:$PATH" FAKE_REMOTE_HOME="$replica_remote_home" \
+    "$replica_repo/bin/harness" replica apply --host local \
+    --generation 20260715T120001Z >"$TEMP_DIR/replica-local-apply.out" ||
+    fail "synthetic local-to-remote replica apply"
+[ -d "$replica_local_destination/20260715T120001Z" ] ||
+    fail "local-to-remote replica generation promotion"
+[ ! -e "$replica_local_destination/.staging-20260715T120001Z" ] ||
+    fail "local-to-remote staging remained after success"
+if PATH="$replica_fake_bin:$PATH" FAKE_REMOTE_HOME="$replica_remote_home" \
+    "$replica_repo/bin/harness" replica apply --host ri \
+    --generation 20260715T120001Z >"$TEMP_DIR/replica-collision.out" 2>&1; then
+    fail "replica apply accepted a final-path collision"
+fi
+
+if PATH="$replica_fake_bin:$PATH" FAKE_REMOTE_HOME="$replica_remote_home" \
+    FAKE_RSYNC_MODE=corrupt "$replica_repo/bin/harness" replica apply --host ri \
+    --generation 20260715T120002Z >"$TEMP_DIR/replica-corrupt.out" 2>&1; then
+    fail "replica apply promoted a mismatched copy"
+fi
+[ -d "$replica_destination/.staging-20260715T120002Z" ] ||
+    fail "mismatched replica staging was not retained"
+[ ! -e "$replica_destination/20260715T120002Z" ] ||
+    fail "mismatched replica was promoted"
+
+if PATH="$replica_fake_bin:$PATH" FAKE_REMOTE_HOME="$replica_remote_home" \
+    FAKE_RSYNC_MODE=drift "$replica_repo/bin/harness" replica apply --host ri \
+    --generation 20260715T120003Z >"$TEMP_DIR/replica-drift.out" 2>&1; then
+    fail "replica apply ignored source drift"
+fi
+[ -d "$replica_destination/.staging-20260715T120003Z" ] ||
+    fail "source-drift staging was not retained"
+[ ! -e "$replica_destination/20260715T120003Z" ] ||
+    fail "source-drift replica was promoted"
+
+printf '%s\n' active >"$replica_source/locks/active"
+if PATH="$replica_fake_bin:$PATH" FAKE_REMOTE_HOME="$replica_remote_home" \
+    "$replica_repo/bin/harness" replica apply --host ri \
+    --generation 20260715T120004Z >"$TEMP_DIR/replica-lock.out" 2>&1; then
+    fail "replica apply accepted an active or stale Restic lock"
+fi
+[ ! -e "$replica_destination/.staging-20260715T120004Z" ] ||
+    fail "replica staging was created despite a Restic lock"
+unlink "$replica_source/locks/active"
+
+ln -s config "$replica_source/config-link"
+if PATH="$replica_fake_bin:$PATH" FAKE_REMOTE_HOME="$replica_remote_home" \
+    "$replica_repo/bin/harness" replica apply --host ri \
+    --generation 20260715T120005Z >"$TEMP_DIR/replica-symlink.out" 2>&1; then
+    fail "replica apply accepted a repository symlink"
+fi
+[ ! -e "$replica_destination/.staging-20260715T120005Z" ] ||
+    fail "replica staging was created despite a source symlink"
+unlink "$replica_source/config-link"
 
 python3 -c 'import sys; compile(open(sys.argv[1], encoding="utf-8").read(), sys.argv[1], "exec")' \
     "$ROOT/tests/smoke/llm_torch.py" ||
