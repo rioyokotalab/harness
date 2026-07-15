@@ -4,7 +4,7 @@ This board is the authoritative current state for the portable Codex and Claude
 harness. Git preserves superseded chronology and command-level evidence. Keep
 live tasks, verified recovery facts, blockers, and next actions here; do not
 rebuild a second incident transcript in a session or report file. Next free id:
-T-186.
+T-187.
 
 ## Recovery priority — do before any other task
 
@@ -621,3 +621,29 @@ live instructions.
   process-local OpenMPI module table; the native unload/load refresh restored
   its declared `mpicc` path, after which the suite passed with only the already
   documented login-node CUDA-library warnings.
+
+- **T-186 — Replace retired CSCS SSHService authentication for AL
+  (owner action prepared 2026-07-16):** AL fails at the Ela jump host with
+  `Permission denied (publickey)` before any remote command runs. Read-only
+  resolution confirms `alps_login` targets `ela.cscs.ch`, `al` targets
+  `daint.alps.cscs.ch` through `ProxyJump alps_login`, neither alias selects a
+  CSCS key, and the current agent socket is live with at least one identity.
+  CSCS officially retired the old SSHService and its CLI in Q2 2026; do not
+  reconstruct the lost `sshservice-cli`. The supported replacement is a local
+  key signed for one day by `cscs-key` through CSCS MFA/device authorization.
+
+  Mode-0700 owner script `~/fix_al.sh` pins official `cscs-key` v1.1.0 Linux
+  x86-64 archive SHA-256 `299f6952…f9ed`, accepts only its single regular
+  `cscs-key` member, installs it under the managed `.local` tree, creates the
+  default Ed25519 pair only when both key files are absent, and invokes
+  `cscs-key sign --headless --duration 1d`. It then loads that exact key into
+  the already-running agent, tests an AL-only candidate SSH block before any
+  config write, atomically installs it with a mode-0600 rollback copy, and
+  verifies both aliases. Potential SSH diagnostics stay in a mode-0600 log on
+  failure and are exact-unlinked on success; all other temporaries use exact
+  unlink/rmdir cleanup. Bash syntax, warning/error ShellCheck, destructive-
+  command absence, official archive hash/member/version checks, and read-only
+  candidate resolution pass. The existing `~/run_this.sh` restore helper was
+  not overwritten. Next owner action: run `~/fix_al.sh` interactively and
+  complete the displayed CSCS device authorization; agents must not execute or
+  observe that credential flow. After success, resume the staged AL restore.
