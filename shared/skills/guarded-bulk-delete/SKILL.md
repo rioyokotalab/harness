@@ -33,10 +33,11 @@ mode-600 manifest.
 Run the exact `NEXT` command emitted by the plan. Do not edit the manifest or
 reconstruct its token.
 
-Apply fails closed unless the account home, working directory, repository,
-boundary, parent and target identities, entry counts, byte counts, owner,
-mode, token, and 15-minute freshness window all still match. It deletes only
-the canonical target roots, stays on each target filesystem, then verifies the
+Apply fails closed unless the lexical account home, its canonical resolved
+home, working directory, repository, boundary, parent and target identities,
+entry counts, byte counts, owner, mode, token, and 15-minute freshness window
+all still match. Both account-home spellings are protected. It deletes only the
+canonical target roots, stays on each target filesystem, then verifies the
 targets are absent and protected anchors are unchanged.
 
 If any check fails, preserve the failure, inspect the changed state, and create

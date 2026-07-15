@@ -198,10 +198,51 @@ T-182.
 
 ## Next task insertion point
 
-No active task. Insert the next user-defined task here as T-182; it takes
-execution priority over the owner-review-gated T-181 proposal below. Replace
-this paragraph with the task's outcome, constraints, verification, working
-files, and first executable action when the task is supplied.
+- **T-182 — Relocate, back up, and normalize the seven-node home control plane
+  (in progress 2026-07-15):** migrate approved high-growth cache/tool state to
+  the owner-selected large/fast roots; retain small node-local histories at
+  their default paths; reconstruct portable Bash, Vim, SSH-fragment, tool, and
+  28-link parity; add verified Restic recovery; and remove only the explicitly
+  reviewed clean-slate paths. Credential-bearing paths remain uninspected and
+  require the agreed owner-run backup/move/removal commands. `ab2` storage
+  migration is externally blocked until its requested 10 TB group quota is
+  active, but other nodes proceed independently.
+
+  **Safety and acceptance:** repair the RC lexical/canonical account-home guard
+  before any bulk cleanup; use immutable guarded-delete manifests for every
+  directory-tree deletion; preserve node-local histories and authentication;
+  require restore tests, fresh interactive and non-interactive SSH validation,
+  control-plane idempotence, and fleet doctor evidence. Login synchronization
+  is interactive-only and fast-forward-only. Explicit `exit` prompts to publish
+  only dirty harness work; Ctrl-D is disabled in top-level interactive remote
+  shells. No automatic logout push, credential copy, scheduler job, deployment,
+  or unreviewed external write is authorized.
+
+  **Working files:** `TODO.md`,
+  `shared/skills/guarded-bulk-delete/scripts/guarded-delete`,
+  `tests/test-guarded-delete.sh`, shell/config manifests and transactions under
+  `libexec/`, `profiles/`, `shell/`, `tools/`, `tests/`, and
+  `shared/skills/operate-native-hpc/references/sites.md`.
+
+  **Current checkpoint:** repository clean at `00c07aa` before this ledger edit;
+  all six remotes connected during planning. Current node owns canonical
+  `.vimrc` SHA-256 `2226d098…b2f3`. RC account home is lexical
+  `/home/users/rio.yokota` and resolves to `/hs/work0/home/users/rio.yokota`;
+  the current guard rejects this valid site layout. First executable action is
+  to add adversarial lexical/canonical-home tests, repair the guard, and run the
+  complete guarded-delete suite before touching remote state.
+
+  **2026-07-15 guard checkpoint:** guarded-delete schema v2 now records and
+  revalidates both the lexical NSS home and canonical resolved home, protects
+  both spellings, and keeps the internal cleanup helper's `$HOME` lexical.
+  Dedicated tests cover successful aliased-home plan/apply, broad lexical-home
+  rejection, canonical identity drift, target drift, and prior protected-root
+  cases. `tests/test-guarded-delete.sh` and the complete
+  `tests/test-phase1.sh` pass; the only emitted diagnostics are the already
+  recorded login-node Open MPI CUDA-library warnings. No remote state has been
+  changed. Next action: commit this independently verified safety repair, then
+  validate its read-only plan behavior on RC before implementing migration
+  transactions.
 
 ## Owner-review queue
 

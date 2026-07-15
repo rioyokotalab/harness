@@ -88,17 +88,26 @@ authoritative_home() {
     '
 }
 
-require_consistent_home() {
+consistent_home_facts() {
     current_uid=$(id -u)
     account_home=$(authoritative_home "$current_uid") ||
         die "cannot resolve exactly one account home for uid $current_uid"
+    case "$account_home" in
+        /*) ;;
+        *) die "account home is not absolute: $account_home" ;;
+    esac
+    reject_control_characters "$account_home"
     [ -n "${HOME:-}" ] || die "HOME is unset"
     [ "$HOME" = "$account_home" ] ||
         die "HOME differs from the account database; refuse environment-dependent deletion"
-    canonical_home=$(canonical_existing_directory "$account_home")
-    [ "$canonical_home" = "$account_home" ] ||
-        die "account home is not canonical: $account_home"
-    printf '%s\n' "$account_home"
+    [ -d "$account_home" ] || die "account home is unavailable: $account_home"
+    canonical_home=$(realpath -e -- "$account_home") ||
+        die "cannot resolve canonical account home: $account_home"
+    [ -d "$canonical_home" ] && [ ! -L "$canonical_home" ] ||
+        die "canonical account home is not a real directory: $canonical_home"
+    [ "$(path_id "$account_home")" = "$(path_id "$canonical_home")" ] ||
+        die "lexical and canonical account homes differ in identity"
+    printf '%s\t%s\n' "$account_home" "$canonical_home"
 }
 
 repository_root() {
@@ -108,10 +117,11 @@ repository_root() {
 
 reject_protected_target() {
     target=$1
-    home=$2
-    cwd=$3
-    repo=$4
-    for protected in / "$home" "$cwd"; do
+    home_lexical=$2
+    home_canonical=$3
+    cwd=$4
+    repo=$5
+    for protected in / "$home_lexical" "$home_canonical" "$cwd"; do
         if is_same_or_descendant "$protected" "$target"; then
             die "target is or contains a protected anchor: $target"
         fi
@@ -178,13 +188,15 @@ plan() {
     reject_control_characters "$within"
 
     uid=$(id -u)
-    home=$(require_consistent_home)
+    home_facts=$(consistent_home_facts)
+    home_lexical=${home_facts%%"$TAB"*}
+    home_canonical=${home_facts#*"$TAB"}
     cwd=$(pwd -P)
     repo=$(repository_root "$cwd")
     [ "$repo" = - ] || repo=$(canonical_existing_directory "$repo")
     root=$(canonical_existing_directory "$within")
 
-    for protected in / "$home"; do
+    for protected in / "$home_lexical" "$home_canonical"; do
         if is_same_or_descendant "$protected" "$root"; then
             die "--within is too broad and contains a protected anchor: $root"
         fi
@@ -211,7 +223,7 @@ plan() {
         target=$(canonical_existing_directory "$requested")
         is_strict_descendant "$target" "$root" ||
             die "target is not a strict descendant of --within: $target"
-        reject_protected_target "$target" "$home" "$cwd" "$repo"
+        reject_protected_target "$target" "$home_lexical" "$home_canonical" "$cwd" "$repo"
         if is_same_or_descendant "$manifest" "$target"; then
             die "manifest cannot be stored inside a deletion target: $manifest"
         fi
@@ -238,11 +250,13 @@ plan() {
         die "cannot create manifest beside destination"
     chmod 600 "$manifest_temp"
     {
-        printf 'schema\tguarded-delete-v1\n'
+        printf 'schema\tguarded-delete-v2\n'
         printf 'created_epoch\t%s\n' "$created"
         printf 'uid\t%s\n' "$uid"
-        printf 'home\t%s\n' "$home"
-        printf 'home_id\t%s\n' "$(path_id "$home")"
+        printf 'home_lexical\t%s\n' "$home_lexical"
+        printf 'home_lexical_id\t%s\n' "$(path_id "$home_lexical")"
+        printf 'home_canonical\t%s\n' "$home_canonical"
+        printf 'home_canonical_id\t%s\n' "$(path_id "$home_canonical")"
         printf 'cwd\t%s\n' "$cwd"
         printf 'cwd_id\t%s\n' "$(path_id "$cwd")"
         printf 'repo\t%s\n' "$repo"
@@ -282,6 +296,17 @@ validate_anchor() {
     [ "$(path_id "$path")" = "$expected_id" ] || die "$label anchor identity changed: $path"
 }
 
+validate_home_alias() {
+    lexical=$1
+    canonical=$2
+    expected_id=$3
+    [ -d "$lexical" ] || die "lexical home anchor changed type: $lexical"
+    [ "$(realpath -e -- "$lexical")" = "$canonical" ] ||
+        die "canonical account home changed: $lexical"
+    [ "$(path_id "$lexical")" = "$expected_id" ] ||
+        die "lexical home anchor identity changed: $lexical"
+}
+
 apply_manifest() {
     manifest=
     supplied_token=
@@ -315,7 +340,7 @@ apply_manifest() {
     [ "$actual_token" = "$supplied_token" ] || die "manifest token mismatch; re-plan"
 
     schema=$(field_value schema "$manifest") || die "manifest schema field is invalid"
-    [ "$schema" = guarded-delete-v1 ] || die "unsupported manifest schema: $schema"
+    [ "$schema" = guarded-delete-v2 ] || die "unsupported manifest schema: $schema"
     manifest_uid=$(field_value uid "$manifest") || die "manifest uid field is invalid"
     [ "$manifest_uid" = "$(id -u)" ] || die "manifest uid differs from current uid"
     created=$(field_value created_epoch "$manifest") || die "manifest timestamp field is invalid"
@@ -324,9 +349,17 @@ apply_manifest() {
     age=$((now - created))
     [ "$age" -ge 0 ] && [ "$age" -le 900 ] || die "manifest is stale; re-plan"
 
-    home=$(field_value home "$manifest") || die "manifest home field is invalid"
-    current_home=$(require_consistent_home)
-    [ "$home" = "$current_home" ] || die "account home changed since plan"
+    home_lexical=$(field_value home_lexical "$manifest") ||
+        die "manifest lexical home field is invalid"
+    home_canonical=$(field_value home_canonical "$manifest") ||
+        die "manifest canonical home field is invalid"
+    current_home_facts=$(consistent_home_facts)
+    current_home_lexical=${current_home_facts%%"$TAB"*}
+    current_home_canonical=${current_home_facts#*"$TAB"}
+    [ "$home_lexical" = "$current_home_lexical" ] ||
+        die "lexical account home changed since plan"
+    [ "$home_canonical" = "$current_home_canonical" ] ||
+        die "canonical account home changed since plan"
     cwd=$(field_value cwd "$manifest") || die "manifest cwd field is invalid"
     [ "$cwd" = "$(pwd -P)" ] || die "working directory changed since plan"
     repo=$(field_value repo "$manifest") || die "manifest repository field is invalid"
@@ -335,13 +368,16 @@ apply_manifest() {
     [ "$repo" = "$current_repo" ] || die "repository root changed since plan"
     root=$(field_value root "$manifest") || die "manifest root field is invalid"
 
-    validate_anchor home "$home" "$(field_value home_id "$manifest")"
+    validate_home_alias "$home_lexical" "$home_canonical" \
+        "$(field_value home_lexical_id "$manifest")"
+    validate_anchor canonical-home "$home_canonical" \
+        "$(field_value home_canonical_id "$manifest")"
     validate_anchor cwd "$cwd" "$(field_value cwd_id "$manifest")"
     if [ "$repo" != - ]; then
         validate_anchor repository "$repo" "$(field_value repo_id "$manifest")"
     fi
     validate_anchor within "$root" "$(field_value root_id "$manifest")"
-    for protected in / "$home"; do
+    for protected in / "$home_lexical" "$home_canonical"; do
         if is_same_or_descendant "$protected" "$root"; then
             die "manifest --within is too broad: $root"
         fi
@@ -358,7 +394,7 @@ apply_manifest() {
         [ -d "$target" ] && [ ! -L "$target" ] || die "target changed type or disappeared: $target"
         [ "$(realpath -e -- "$target")" = "$target" ] || die "target is no longer canonical: $target"
         is_strict_descendant "$target" "$root" || die "target escaped --within: $target"
-        reject_protected_target "$target" "$home" "$cwd" "$repo"
+        reject_protected_target "$target" "$home_lexical" "$home_canonical" "$cwd" "$repo"
         [ "$(path_id "$target")" = "$target_id" ] || die "target identity changed: $target"
         [ "$(path_id "$parent")" = "$parent_id" ] || die "target parent identity changed: $parent"
         facts=$(tree_facts "$target")
@@ -381,7 +417,10 @@ apply_manifest() {
         printf 'DELETED path=%s\n' "$target"
     done <"$manifest"
 
-    validate_anchor home "$home" "$(field_value home_id "$manifest")"
+    validate_home_alias "$home_lexical" "$home_canonical" \
+        "$(field_value home_lexical_id "$manifest")"
+    validate_anchor canonical-home "$home_canonical" \
+        "$(field_value home_canonical_id "$manifest")"
     validate_anchor cwd "$cwd" "$(field_value cwd_id "$manifest")"
     if [ "$repo" != - ]; then
         validate_anchor repository "$repo" "$(field_value repo_id "$manifest")"

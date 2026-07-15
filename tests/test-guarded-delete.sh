@@ -129,6 +129,53 @@ expect_failure 'HOME differs from the account database' "$TEST_ROOT/home.out" \
     "$TEST_ROOT/root/keep"
 [ ! -e "$TEST_ROOT/home.manifest" ] || fail "HOME mismatch created manifest"
 
+mkdir -p "$TEST_ROOT/fake-bin" "$TEST_ROOT/aliased-real/account" \
+    "$TEST_ROOT/aliased-real/account/child" "$TEST_ROOT/aliased-other/account" \
+    "$TEST_ROOT/root/alias-success" \
+    "$TEST_ROOT/root/alias-drift"
+ln -s "$TEST_ROOT/aliased-real" "$TEST_ROOT/aliased-home-root"
+printf '%s\n' \
+    '#!/bin/sh' \
+    'if [ "$1" = passwd ]; then' \
+    '    printf "fake:x:%s:1:fake:%s:/bin/sh\\n" "$(id -u)" "$FAKE_ACCOUNT_HOME"' \
+    'else' \
+    '    exec /usr/bin/getent "$@"' \
+    'fi' >"$TEST_ROOT/fake-bin/getent"
+chmod 700 "$TEST_ROOT/fake-bin/getent"
+alias_home=$TEST_ROOT/aliased-home-root/account
+alias_path=$TEST_ROOT/fake-bin:$PATH
+
+alias_manifest=$TEST_ROOT/alias.manifest
+env PATH="$alias_path" HOME="$alias_home" FAKE_ACCOUNT_HOME="$alias_home" \
+    "$HARNESS" guarded-delete plan --within "$TEST_ROOT/root" \
+    --manifest "$alias_manifest" -- "$TEST_ROOT/root/alias-success" \
+    >"$TEST_ROOT/alias.plan"
+alias_token=$(token_from "$TEST_ROOT/alias.plan")
+env PATH="$alias_path" HOME="$alias_home" FAKE_ACCOUNT_HOME="$alias_home" \
+    "$HARNESS" guarded-delete apply --manifest "$alias_manifest" \
+    --token "$alias_token" >"$TEST_ROOT/alias.apply"
+[ ! -e "$TEST_ROOT/root/alias-success" ] || fail "aliased-home apply left target"
+
+expect_failure '--within is too broad and contains a protected anchor' \
+    "$TEST_ROOT/alias-protected.out" env PATH="$alias_path" HOME="$alias_home" \
+    FAKE_ACCOUNT_HOME="$alias_home" "$HARNESS" guarded-delete plan \
+    --within "$alias_home" --manifest "$TEST_ROOT/alias-protected.manifest" -- \
+    "$alias_home/child"
+
+alias_drift_manifest=$TEST_ROOT/alias-drift.manifest
+env PATH="$alias_path" HOME="$alias_home" FAKE_ACCOUNT_HOME="$alias_home" \
+    "$HARNESS" guarded-delete plan --within "$TEST_ROOT/root" \
+    --manifest "$alias_drift_manifest" -- "$TEST_ROOT/root/alias-drift" \
+    >"$TEST_ROOT/alias-drift.plan"
+alias_drift_token=$(token_from "$TEST_ROOT/alias-drift.plan")
+unlink "$TEST_ROOT/aliased-home-root"
+ln -s "$TEST_ROOT/aliased-other" "$TEST_ROOT/aliased-home-root"
+expect_failure 'canonical account home changed since plan' \
+    "$TEST_ROOT/alias-drift.out" env PATH="$alias_path" HOME="$alias_home" \
+    FAKE_ACCOUNT_HOME="$alias_home" "$HARNESS" guarded-delete apply \
+    --manifest "$alias_drift_manifest" --token "$alias_drift_token"
+[ -d "$TEST_ROOT/root/alias-drift" ] || fail "aliased-home drift deleted target"
+
 expect_failure '--within is too broad and contains a protected anchor' \
     "$TEST_ROOT/protected-home.out" "$HARNESS" guarded-delete plan \
     --within /home --manifest "$TEST_ROOT/protected-home.manifest" -- "$HOME"

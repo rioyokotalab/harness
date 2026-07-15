@@ -117,8 +117,13 @@ guarded_delete_tree() (
         $3 == uid { value=$6; count++ }
         END { if (count != 1 || value == "") exit 1; print value }
     ') || { echo "harness: cannot resolve authoritative account HOME" >&2; exit 2; }
-    account_home=$(realpath -e -- "$account_home") || {
+    canonical_account_home=$(realpath -e -- "$account_home") || {
         echo "harness: authoritative account HOME is unavailable" >&2
+        exit 2
+    }
+    [ "$(stat -Lc '%d:%i' -- "$account_home")" = \
+        "$(stat -Lc '%d:%i' -- "$canonical_account_home")" ] || {
+        echo "harness: lexical and canonical account HOME identities differ" >&2
         exit 2
     }
     guard=$HARNESS_ROOT/shared/skills/guarded-bulk-delete/scripts/guarded-delete
