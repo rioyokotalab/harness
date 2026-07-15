@@ -272,6 +272,22 @@ T-182.
   unblocked. Next action: commit this layer, then add checksum-pinned Restic and
   the approved tmux/htop installation routes before distributing the revision.
 
+  **Portable tool checkpoint:** Restic 0.19.1 now has exact x86-64 and AArch64
+  single-binary transactions pinned to the SHA-256 digests published with the
+  official release. tmux 3.6b and htop 3.5.1 use their official release source
+  assets and publisher digests; tmux statically links the official libevent
+  2.1.12-stable distribution whose independently reproduced SHA-256 is pinned
+  because that older release asset predates GitHub's digest metadata. Archive
+  root, entry-count, path, and type gates reject undeclared content before
+  extraction. A real isolated build verified htop 3.5.1, tmux 3.6b, static
+  libevent linkage, managed idempotence, rollback, and guarded removal of both
+  build trees; the full phase-1 suite also passes Restic bzip2 apply/rollback,
+  both architectures' plans, and both source plans. The two isolated validation
+  roots (1,170 and 422 entries) were removed through one schema-v2 manifest and
+  verified absent. No live home or remote node changed. Next action: commit,
+  distribute the revision, and run read-only fleet plans before applying tools
+  or configuration.
+
 ## Owner-review queue
 
 - **T-169 — Research advanced agent harness practices (research complete

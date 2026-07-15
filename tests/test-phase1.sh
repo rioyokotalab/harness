@@ -289,6 +289,20 @@ grep 'sha256=8f8d47446e061f80c3256659fe8e21f56d72d96aaefe1275d088ea5eb6b42aa7' \
 grep 'EXTRACT format=zip member=rclone-v1.74.3-linux-arm64/rclone binary=rclone' \
     "$TEMP_DIR/rclone-arm-plan.out" >/dev/null || fail "rclone AArch64 extraction plan"
 
+mkdir -p "$TEMP_DIR/restic-plan-home"
+HOME="$TEMP_DIR/restic-plan-home" "$HARNESS" tool --host local --name restic \
+    --facts "$ROOT/tests/fixtures/local.facts" --plan \
+    >"$TEMP_DIR/restic-x86-plan.out"
+grep 'sha256=f415415624dcc452f2a02b8c33641791a8c6d6d3b65bbb3543fcf9a25151585c' \
+    "$TEMP_DIR/restic-x86-plan.out" >/dev/null || fail "Restic x86-64 checksum plan"
+HOME="$TEMP_DIR/restic-plan-home" "$HARNESS" tool --host al --name restic \
+    --facts "$ROOT/tests/fixtures/al.facts" --plan \
+    >"$TEMP_DIR/restic-arm-plan.out"
+grep 'sha256=a5f64aaab53d51e311fa3829124c5b703f2d14cf187d8640b6be3b2b49376465' \
+    "$TEMP_DIR/restic-arm-plan.out" >/dev/null || fail "Restic AArch64 checksum plan"
+grep 'EXTRACT format=bz2 member=restic binary=restic' \
+    "$TEMP_DIR/restic-arm-plan.out" >/dev/null || fail "Restic bzip2 extraction plan"
+
 broken_bin=$TEMP_DIR/broken-bin
 broken_home=$TEMP_DIR/broken-home
 mkdir -p "$broken_bin" "$broken_home"
@@ -399,6 +413,28 @@ grep 'sha256=6b941dd6cbecfb4d3250700e4d08d8e0c251488981dd4868b90d744234300e21' \
     "$TEMP_DIR/tree-plan.out" >/dev/null || fail "Tree source checksum plan"
 grep "COMPILE native='cc -O2 .* -o tree'" "$TEMP_DIR/tree-plan.out" \
     >/dev/null || fail "Tree native compile plan"
+
+mkdir -p "$TEMP_DIR/tmux-plan-home"
+HOME="$TEMP_DIR/tmux-plan-home" "$HARNESS" build-tool --host al --name tmux \
+    --facts "$ROOT/tests/fixtures/al.facts" --plan >"$TEMP_DIR/tmux-plan.out"
+grep 'BUILD artifact=.*tmux/3.6b/linux-aarch64' "$TEMP_DIR/tmux-plan.out" \
+    >/dev/null || fail "tmux AArch64 source-build plan"
+grep 'sha256=390759d25fdba016887ec982b808927e637070fd7d03a8021f8ef3102b9ae3c7' \
+    "$TEMP_DIR/tmux-plan.out" >/dev/null || fail "tmux source checksum plan"
+grep 'DEPENDENCY name=libevent version=2.1.12-stable entries=234 linkage=static' \
+    "$TEMP_DIR/tmux-plan.out" >/dev/null || fail "tmux pinned dependency plan"
+grep 'sha256=92e6de1be9ec176428fd2367677e61ceffc2ee1cb119035037a27d346b0403bb' \
+    "$TEMP_DIR/tmux-plan.out" >/dev/null || fail "libevent dependency checksum plan"
+
+mkdir -p "$TEMP_DIR/htop-plan-home"
+HOME="$TEMP_DIR/htop-plan-home" "$HARNESS" build-tool --host t4 --name htop \
+    --facts "$ROOT/tests/fixtures/t4.facts" --plan >"$TEMP_DIR/htop-plan.out"
+grep 'BUILD artifact=.*htop/3.5.1/linux-x86_64' "$TEMP_DIR/htop-plan.out" \
+    >/dev/null || fail "htop x86-64 source-build plan"
+grep 'sha256=526cecd62870aa8d14d2a79a35ea197e4e2b5317d275b567cee0574b2ddb2e9a' \
+    "$TEMP_DIR/htop-plan.out" >/dev/null || fail "htop source checksum plan"
+grep "COMPILE native='./configure --prefix=DEST --without-libunwind && make -j2'" \
+    "$TEMP_DIR/htop-plan.out" >/dev/null || fail "htop native compile plan"
 
 mkdir -p "$TEMP_DIR/runtime-plan-home"
 HOME="$TEMP_DIR/runtime-plan-home" "$HARNESS" runtime --host al --name node \
@@ -522,6 +558,14 @@ python3 -c 'import sys,zipfile; z=zipfile.ZipFile(sys.argv[1], "w", zipfile.ZIP_
     "$zip_fixture_archive" "$zip_fixture_dir/rclone" "$zip_fixture_member"
 zip_fixture_hash=$(sha256sum "$zip_fixture_archive" | awk '{print $1}')
 sed -i "s/dbee7ccd7a5d617e4ed4cd4555c16669b511abfe8d31164f61be35ac9e999bd2/$zip_fixture_hash/" \
+    "$test_repo/tools/artifacts.tsv"
+restic_fixture=$TEMP_DIR/restic-fixture
+printf '%s\n' '#!/bin/sh' 'echo "restic 0.19.1 compiled with go1.26.0 on linux/amd64"' \
+    >"$restic_fixture.binary"
+chmod 755 "$restic_fixture.binary"
+bzip2 -c "$restic_fixture.binary" >"$restic_fixture.bz2"
+restic_fixture_hash=$(sha256sum "$restic_fixture.bz2" | awk '{print $1}')
+sed -i "s/f415415624dcc452f2a02b8c33641791a8c6d6d3b65bbb3543fcf9a25151585c/$restic_fixture_hash/" \
     "$test_repo/tools/artifacts.tsv"
 tectonic_fixture_dir=$TEMP_DIR/tectonic-fixture
 tectonic_fixture_archive=$TEMP_DIR/tectonic-fixture.tar.gz
@@ -928,6 +972,26 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$zip_tool_transaction" \
     fail "ZIP rollback left stable link"
 [ ! -e "$test_home/.local/opt/rclone/1.74.3/linux-x86_64" ] ||
     fail "ZIP rollback left artifact directory"
+
+# Exercise the single-binary bzip2 release format used by Restic.
+HOME="$test_home" PATH="$fake_bin:/usr/bin:/bin" \
+    FIXTURE_ARCHIVE="$restic_fixture.bz2" \
+    "$test_repo/bin/harness" tool --host local --name restic --apply \
+    >"$TEMP_DIR/restic-tool-apply.out"
+restic_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/restic-tool-apply.out")
+[ -n "$restic_transaction" ] || fail "missing Restic transaction"
+grep 'NATIVE bzip2 -dc STAGING > STAGING/restic' \
+    "$TEMP_DIR/restic-tool-apply.out" >/dev/null || fail "Restic native extraction report"
+[ "$("$test_home/.local/bin/restic" version)" = \
+    'restic 0.19.1 compiled with go1.26.0 on linux/amd64' ] ||
+    fail "Restic installed version"
+HOME="$test_home" "$test_repo/bin/harness" rollback "$restic_transaction" \
+    >"$TEMP_DIR/restic-tool-rollback.out"
+[ ! -e "$test_home/.local/bin/restic" ] && [ ! -L "$test_home/.local/bin/restic" ] ||
+    fail "Restic rollback left stable link"
+[ ! -e "$test_home/.local/opt/restic/0.19.1/linux-x86_64" ] ||
+    fail "Restic rollback left artifact directory"
 
 # Exercise a root-member tar archive through the same exact-output path.
 HOME="$test_home" PATH="$fake_bin:/usr/bin:/bin" \

@@ -1,3 +1,5 @@
 # name|version|os|arch|format|url|sha256|publisher-sha3-256|root|binary|version-prefix
 sqlite|3.53.3|linux|any|zip|https://sqlite.org/2026/sqlite-amalgamation-3530300.zip|646421e12aac110282ef8cc68f1a62d4bb15fc7b8f09da0b53e29ee690500431|d45c688a8cb23f68611a894a756a12d7eb6ab6e9e2468ca70adbeab3808b5ab9|sqlite-amalgamation-3530300|sqlite3|3.53.3
 tree|2.3.2|linux|any|tar.gz|https://oldmanprogrammer.net/tar/tree/tree-2.3.2.tgz|6b941dd6cbecfb4d3250700e4d08d8e0c251488981dd4868b90d744234300e21|none|tree-2.3.2|tree|tree v2.3.2
+tmux|3.6b|linux|any|tar.gz|https://github.com/tmux/tmux/releases/download/3.6b/tmux-3.6b.tar.gz|390759d25fdba016887ec982b808927e637070fd7d03a8021f8ef3102b9ae3c7|none|tmux-3.6b|tmux|tmux 3.6b
+htop|3.5.1|linux|any|tar.xz|https://github.com/htop-dev/htop/releases/download/3.5.1/htop-3.5.1.tar.xz|526cecd62870aa8d14d2a79a35ea197e4e2b5317d275b567cee0574b2ddb2e9a|none|htop-3.5.1|htop|htop 3.5.1

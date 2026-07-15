@@ -26,7 +26,7 @@ while [ "$#" -gt 0 ]; do
 done
 [ -n "$logical_host" ] && [ -n "$tool_name" ] || { usage; exit 2; }
 require_safe_id "$tool_name"
-case "$tool_name" in sqlite|tree) ;; *) die "unsupported source-built tool: $tool_name" ;; esac
+case "$tool_name" in sqlite|tree|tmux|htop) ;; *) die "unsupported source-built tool: $tool_name" ;; esac
 [ "$mode" != apply ] || [ -z "$fact_file" ] || die "build-tool apply does not accept captured facts"
 
 profile=$(profile_for "$logical_host")
@@ -40,7 +40,7 @@ IFS='|' read -r record_tool version source_os source_arch format url checksum \
 $records
 EOF
 case "$record_tool:$format" in
-    sqlite:zip|tree:tar.gz) ;;
+    sqlite:zip|tree:tar.gz|tmux:tar.gz|htop:tar.xz) ;;
     *) die "source manifest mismatch" ;;
 esac
 [ "$source_arch" = any ] || die "source manifest architecture mismatch"
@@ -51,6 +51,35 @@ case "$checksum" in *[!0-9a-f]*) die "invalid source digest" ;; esac
 if [ "$publisher_sha3" != none ]; then
     case "$publisher_sha3" in *[!0-9a-f]*) die "invalid publisher source digest" ;; esac
     [ "${#publisher_sha3}" -eq 64 ] || die "invalid publisher source digest length"
+fi
+
+dependency_name=none
+dependency_version=none
+dependency_format=none
+dependency_url=none
+dependency_checksum=none
+dependency_root=none
+dependency_entries=0
+if [ "$tool_name" = tmux ]; then
+    dependency_records=$(awk -F'|' -v tool="$tool_name" '$1 == tool { print }' \
+        "$HARNESS_ROOT/tools/source-dependencies.tsv")
+    dependency_count=$(printf '%s\n' "$dependency_records" | awk 'NF { n++ } END { print n + 0 }')
+    [ "$dependency_count" -eq 1 ] || die "no unique source dependency for tool=$tool_name"
+    IFS='|' read -r dependency_tool dependency_name dependency_version \
+        dependency_format dependency_url dependency_checksum dependency_root \
+        dependency_entries <<EOF
+$dependency_records
+EOF
+    [ "$dependency_tool" = tmux ] && [ "$dependency_name" = libevent ] &&
+        [ "$dependency_format" = tar.gz ] || die "source dependency manifest mismatch"
+    for value in "$dependency_name" "$dependency_version" "$dependency_root"; do
+        require_safe_id "$value"
+    done
+    case "$dependency_url" in https://*) ;; *) die "dependency URL must use HTTPS" ;; esac
+    case "$dependency_checksum" in *[!0-9a-f]*) die "invalid dependency digest" ;; esac
+    [ "${#dependency_checksum}" -eq 64 ] || die "invalid dependency digest length"
+    case "$dependency_entries" in ''|*[!0-9]*) die "invalid dependency entry count" ;; esac
+    [ "$dependency_entries" -gt 0 ] || die "invalid dependency entry count"
 fi
 
 install_dir=$HOME/.local/opt/$tool_name/$version/$source_os-$arch
@@ -74,10 +103,21 @@ tree_healthy() {
         "$HARNESS_ROOT/bin/harness" >/dev/null 2>&1
 }
 
+tmux_healthy() {
+    [ "$("$1" -V 2>/dev/null)" = "$version_prefix" ]
+}
+
+htop_healthy() {
+    observed=$("$1" --version 2>/dev/null | sed -n '1p' || true)
+    case "$observed" in "$version_prefix"|"$version_prefix-"*) return 0 ;; *) return 1 ;; esac
+}
+
 source_tool_healthy() {
     case "$tool_name" in
         sqlite) sqlite_healthy "$1" ;;
         tree) tree_healthy "$1" ;;
+        tmux) tmux_healthy "$1" ;;
+        htop) htop_healthy "$1" ;;
     esac
 }
 
@@ -91,10 +131,21 @@ if [ -n "$fact_file" ]; then
     fact_command=$(fact_key_for_command "$binary")
     command_state=$(fact_get "$fact_file" "tool_$fact_command")
 elif [ "$managed_exact" -eq 1 ]; then
-    observed_version=$("$installed_binary" --version 2>/dev/null | sed -n '1p' || true)
-    case "$observed_version" in "$version_prefix "*)
-        if source_tool_healthy "$installed_binary"; then command_state=present; else command_state=invalid-managed; fi ;;
-        *) command_state=invalid-managed ;;
+    case "$tool_name" in
+        tmux|htop)
+            if source_tool_healthy "$installed_binary"; then
+                command_state=present
+            else
+                command_state=invalid-managed
+            fi
+            ;;
+        *)
+            observed_version=$("$installed_binary" --version 2>/dev/null | sed -n '1p' || true)
+            case "$observed_version" in "$version_prefix "*)
+                if source_tool_healthy "$installed_binary"; then command_state=present; else command_state=invalid-managed; fi ;;
+                *) command_state=invalid-managed ;;
+            esac
+            ;;
     esac
 elif command -v "$binary" >/dev/null 2>&1; then
     if source_tool_healthy "$binary"; then command_state=present; else command_state=unusable; fi
@@ -156,6 +207,16 @@ else
             echo "EXTRACT exact_root=$root regular_files=24 compile_files=Makefile,tree.h,13-c-sources"
             echo "COMPILE native='cc -O2 -DLARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 color.c file.c filter.c hash.c html.c info.c json.c list.c strverscmp.c tree.c unix.c util.c xml.c -o tree'"
             ;;
+        tmux)
+            echo "EXTRACT exact_root=$root entries=214 types=regular-only"
+            echo "DEPENDENCY name=$dependency_name version=$dependency_version entries=$dependency_entries linkage=static"
+            echo "FETCH dependency_url=$dependency_url sha256=$dependency_checksum"
+            echo "COMPILE native='./configure --prefix=DEST with pinned static libevent && make -j2'"
+            ;;
+        htop)
+            echo "EXTRACT exact_root=$root entries=382 excluded_symlink=README"
+            echo "COMPILE native='./configure --prefix=DEST --without-libunwind && make -j2'"
+            ;;
     esac
 fi
 [ "$blocked" -eq 0 ] || die "build-tool plan contains blocked paths"
@@ -171,6 +232,8 @@ done
 case "$tool_name" in
     sqlite) required_archive_commands=unzip ;;
     tree) required_archive_commands='tar gzip' ;;
+    tmux) required_archive_commands='tar gzip make pkg-config' ;;
+    htop) required_archive_commands='tar xz make pkg-config' ;;
 esac
 for required in $required_archive_commands; do
     command -v "$required" >/dev/null 2>&1 ||
@@ -186,6 +249,11 @@ printf 'schema=1\nhost=%s\nrevision=%s\n' "$logical_host" \
     "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" >>"$transaction_manifest"
 archive=$(mktemp "$state_root/$transaction_id.source.XXXXXX")
 entries=$(mktemp "$state_root/$transaction_id.entries.XXXXXX")
+archive_verbose=$(mktemp "$state_root/$transaction_id.verbose.XXXXXX")
+dependency_archive=
+if [ "$tool_name" = tmux ]; then
+    dependency_archive=$(mktemp "$state_root/$transaction_id.dependency.XXXXXX")
+fi
 build_dir=
 stage=
 install_parent=
@@ -195,6 +263,10 @@ cleanup() {
     cleanup_failed=0
     rm -f "$archive" || cleanup_failed=1
     rm -f "$entries" || cleanup_failed=1
+    rm -f "$archive_verbose" || cleanup_failed=1
+    if [ -n "$dependency_archive" ]; then
+        rm -f "$dependency_archive" || cleanup_failed=1
+    fi
     if [ -n "$build_dir" ]; then
         guarded_delete_tree "$install_parent" "$build_dir" "$state_root" ||
             cleanup_failed=1
@@ -232,6 +304,13 @@ trap 'exit 143' TERM
 echo "NATIVE curl --proto =https --tlsv1.2 -fL --retry 2 $url -o SOURCE_STAGING"
 curl --proto '=https' --tlsv1.2 -fL --retry 2 "$url" -o "$archive"
 printf '%s  %s\n' "$checksum" "$archive" | sha256sum -c - >/dev/null
+if [ "$tool_name" = tmux ]; then
+    echo "NATIVE curl --proto =https --tlsv1.2 -fL --retry 2 $dependency_url -o DEPENDENCY_STAGING"
+    curl --proto '=https' --tlsv1.2 -fL --retry 2 "$dependency_url" \
+        -o "$dependency_archive"
+    printf '%s  %s\n' "$dependency_checksum" "$dependency_archive" |
+        sha256sum -c - >/dev/null
+fi
 install_parent=${install_dir%/*}; mkdir -p "$install_parent"
 build_dir=$(mktemp -d "$install_parent/.build.XXXXXX")
 stage=$(mktemp -d "$install_parent/.staging.XXXXXX")
@@ -296,10 +375,91 @@ EOF
             "$build_dir/tree.c" "$build_dir/unix.c" "$build_dir/util.c" \
             "$build_dir/xml.c" -o "$stage/$binary"
         ;;
+    tmux)
+        tar -tzf "$archive" >"$entries"
+        [ "$(wc -l <"$entries" | tr -d ' ')" -eq 214 ] ||
+            die "tmux source archive entry count mismatch"
+        awk -v prefix="$root/" '
+            index($0, prefix) != 1 || $0 ~ /(^|\/)\.\.(\/|$)/ || $0 ~ /^\// { exit 1 }
+        ' "$entries" || die "tmux source archive contains an unsafe path"
+        tar -tvzf "$archive" >"$archive_verbose"
+        awk 'substr($1, 1, 1) != "-" { exit 1 }' "$archive_verbose" ||
+            die "tmux source archive contains a non-regular entry"
+
+        tar -tzf "$dependency_archive" >"$entries"
+        [ "$(wc -l <"$entries" | tr -d ' ')" -eq "$dependency_entries" ] ||
+            die "dependency source archive entry count mismatch"
+        awk -v prefix="$dependency_root/" '
+            index($0, prefix) != 1 || $0 ~ /(^|\/)\.\.(\/|$)/ || $0 ~ /^\// { exit 1 }
+        ' "$entries" || die "dependency source archive contains an unsafe path"
+        tar -tvzf "$dependency_archive" >"$archive_verbose"
+        awk 'substr($1, 1, 1) != "-" && substr($1, 1, 1) != "d" { exit 1 }' \
+            "$archive_verbose" || die "dependency source archive contains an unsafe type"
+
+        tar -xzf "$dependency_archive" -C "$build_dir" --no-same-owner \
+            --no-same-permissions
+        dependency_build=$build_dir/$dependency_root
+        [ -d "$dependency_build" ] && [ ! -L "$dependency_build" ] ||
+            die "dependency extraction did not create the exact root"
+        dependency_prefix=$build_dir/libevent-prefix
+        echo "NATIVE ./configure --prefix=DEPENDENCY_PREFIX --disable-shared --enable-static --disable-openssl"
+        (cd "$dependency_build" &&
+            ./configure --prefix="$dependency_prefix" --disable-shared \
+                --enable-static --disable-openssl >/dev/null &&
+            make -j2 >/dev/null && make install >/dev/null)
+        [ "$(find "$dependency_prefix" -type f -name libevent.a | wc -l | tr -d ' ')" -eq 1 ] ||
+            die "static libevent dependency build failed"
+
+        tar -xzf "$archive" -C "$build_dir" --no-same-owner --no-same-permissions
+        source_build=$build_dir/$root
+        [ -d "$source_build" ] && [ ! -L "$source_build" ] ||
+            die "tmux extraction did not create the exact root"
+        echo "NATIVE PKG_CONFIG_PATH=DEPENDENCY_PREFIX/lib/pkgconfig ./configure --prefix=DEST && make -j2"
+        (cd "$source_build" &&
+            PKG_CONFIG_PATH="$dependency_prefix/lib/pkgconfig" \
+                ./configure --prefix="$install_dir" >/dev/null &&
+            make -j2 >/dev/null)
+        cp "$source_build/tmux" "$stage/$binary"
+        ;;
+    htop)
+        tar -tJf "$archive" >"$entries"
+        [ "$(wc -l <"$entries" | tr -d ' ')" -eq 382 ] ||
+            die "htop source archive entry count mismatch"
+        awk -v root="$root" -v prefix="$root/" '
+            $0 != root "/" && index($0, prefix) != 1 { exit 1 }
+            $0 ~ /(^|\/)\.\.(\/|$)/ || $0 ~ /^\// { exit 1 }
+        ' "$entries" || die "htop source archive contains an unsafe path"
+        tar -tJvf "$archive" >"$archive_verbose"
+        awk -v link="$root/README" '
+            substr($1, 1, 1) == "-" || substr($1, 1, 1) == "d" { next }
+            substr($1, 1, 1) == "l" && $(NF - 2) == link && $(NF - 1) == "->" && $NF == "README.md" { next }
+            { exit 1 }
+        ' "$archive_verbose" || die "htop source archive contains an unsafe type"
+        tar -xJf "$archive" -C "$build_dir" --no-same-owner \
+            --no-same-permissions --exclude="$root/README"
+        source_build=$build_dir/$root
+        [ -d "$source_build" ] && [ ! -L "$source_build" ] ||
+            die "htop extraction did not create the exact root"
+        echo "NATIVE ./configure --prefix=DEST --without-libunwind && make -j2"
+        (cd "$source_build" &&
+            ./configure --prefix="$install_dir" --without-libunwind >/dev/null &&
+            make -j2 >/dev/null)
+        cp "$source_build/htop" "$stage/$binary"
+        ;;
 esac
 [ -f "$stage/$binary" ] && [ ! -L "$stage/$binary" ] && [ -x "$stage/$binary" ] || die "source build did not produce executable"
-observed_version=$("$stage/$binary" --version | sed -n '1p')
-case "$observed_version" in "$version_prefix "*) ;; *) die "source-built version verification failed" ;; esac
+case "$tool_name" in
+    tmux)
+        [ "$("$stage/$binary" -V)" = "$version_prefix" ] ||
+            die "source-built version verification failed"
+        ;;
+    *)
+        observed_version=$("$stage/$binary" --version | sed -n '1p')
+        case "$observed_version" in "$version_prefix"|"$version_prefix "*|"$version_prefix-"*) ;;
+            *) die "source-built version verification failed" ;;
+        esac
+        ;;
+esac
 source_tool_healthy "$stage/$binary" || die "source-built feature verification failed"
 binary_hash=$(sha256sum "$stage/$binary" | awk '{print $1}')
 printf 'artifact|%s|%s|%s\n' "$install_dir" "$binary" "$binary_hash" >>"$transaction_manifest"
@@ -313,6 +473,10 @@ ln -s "$installed_binary" "$stable_link"
 echo "CALLER native='hash -r' reason=refresh-command-path-cache"
 rm -f "$archive"
 rm -f "$entries"
+rm -f "$archive_verbose"
+if [ -n "$dependency_archive" ]; then
+    rm -f "$dependency_archive"
+fi
 echo complete >"$transaction_manifest.status"; chmod 600 "$transaction_manifest.status"
 complete=1
 trap - EXIT HUP INT TERM

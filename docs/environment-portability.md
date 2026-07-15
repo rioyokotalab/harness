@@ -318,6 +318,14 @@ Validate, per host:
   <https://docs.astral.sh/uv/guides/install-python/>
 - rclone 1.74.3 release artifacts and publisher checksums:
   <https://downloads.rclone.org/v1.74.3/>
+- Restic 0.19.1 standalone release artifacts and publisher checksums:
+  <https://github.com/restic/restic/releases/tag/v0.19.1>
+- tmux 3.6b release source and build documentation:
+  <https://github.com/tmux/tmux/releases/tag/3.6b>
+- htop 3.5.1 release source and publisher checksum:
+  <https://github.com/htop-dev/htop/releases/tag/3.5.1>
+- tmux's pinned static libevent dependency:
+  <https://github.com/libevent/libevent/releases/tag/release-2.1.12-stable>
 - Ninja 1.13.2 release artifacts and GitHub-published asset digests:
   <https://github.com/ninja-build/ninja/releases/tag/v1.13.2>
 - ShellCheck 0.11.0 release artifacts and GitHub-published asset digests:

@@ -28,6 +28,7 @@ tool_npm_version=11.13.0
 tool_codex=present
 tool_claude=present
 tool_rclone=present
+tool_restic=absent
 tool_lftp=present
 tool_tectonic=present
 tool_shellcheck=absent

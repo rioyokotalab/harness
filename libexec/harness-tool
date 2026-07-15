@@ -58,7 +58,7 @@ case "$checksum" in
     *[!0-9a-f]*) die "invalid artifact checksum" ;;
 esac
 [ "${#checksum}" -eq 64 ] || die "invalid artifact checksum length"
-case "$format" in tar.gz|zip|deb) ;; *) die "unsupported artifact format: $format" ;; esac
+case "$format" in tar.gz|zip|deb|bz2) ;; *) die "unsupported artifact format: $format" ;; esac
 
 install_dir=$HOME/.local/opt/$tool_name/$version/$artifact_os-$artifact_arch
 installed_binary=$install_dir/$binary
@@ -110,7 +110,7 @@ host_command_healthy() {
                 exit 0
             }'
             ;;
-        shellcheck) tool_version_matches "$binary" ;;
+        shellcheck|restic) tool_version_matches "$binary" ;;
         *) "$binary" --version >/dev/null 2>&1 ;;
     esac
 }
@@ -221,6 +221,7 @@ case "$format" in
     tar.gz) extractor=tar ;;
     zip) extractor=unzip ;;
     deb) extractor=dpkg-deb ;;
+    bz2) extractor=bzip2 ;;
 esac
 command -v "$extractor" >/dev/null 2>&1 ||
     die "tool apply requires command: $extractor"
@@ -298,6 +299,10 @@ if [ "$artifact_action" = INSTALL ]; then
         deb)
             echo "NATIVE dpkg-deb --fsys-tarfile STAGING | tar -xOf - $member > STAGING/$binary"
             dpkg-deb --fsys-tarfile "$archive" | tar -xOf - "$member" >"$stage/$binary"
+            ;;
+        bz2)
+            echo "NATIVE bzip2 -dc STAGING > STAGING/$binary"
+            bzip2 -dc "$archive" >"$stage/$binary"
             ;;
     esac
     [ -f "$stage/$binary" ] && [ ! -L "$stage/$binary" ] ||
