@@ -18,13 +18,45 @@ manifest=$HOME/.local/state/harness/transactions/$transaction_id.manifest
 
 records=$(mktemp "${TMPDIR:-/tmp}/harness-rollback.XXXXXX")
 trap 'rm -f "$records"' EXIT HUP INT TERM
-awk -F'|' '$1 == "link" || $1 == "shell" || $1 == "patch" || $1 == "artifact" || $1 == "runtime" || $1 == "python" || $1 == "agent" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+awk -F'|' '$1 == "link" || $1 == "managed-link-new" || $1 == "managed-link-replaced" || $1 == "shell" || $1 == "shell-new" || $1 == "patch" || $1 == "artifact" || $1 == "runtime" || $1 == "python" || $1 == "agent" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
     "$manifest" >"$records"
 
 # Validate every path before mutating any path.
 while IFS='|' read -r record destination field3 field4 field5 field6 field7; do
     case "$destination" in "$HOME"/*) ;; *) die "unsafe transaction path" ;; esac
-    if [ "$record" = shell ]; then
+    if [ "$record" = managed-link-new ]; then
+        source=$field3
+        if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
+            continue
+        fi
+        [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ] ||
+            die "rollback blocked: managed link changed after apply: $destination"
+    elif [ "$record" = managed-link-replaced ]; then
+        source=$field3; backup=$field4; original_hash=$field5
+        case "$backup" in "$HOME/.local/state/harness/transactions/"*) ;; *) die "rollback blocked: unsafe managed-link backup path" ;; esac
+        [ -f "$backup" ] && [ ! -L "$backup" ] &&
+            [ "$(sha256sum "$backup" | awk '{print $1}')" = "$original_hash" ] ||
+            die "rollback blocked: managed-link backup changed"
+        if [ -f "$destination" ] && [ ! -L "$destination" ] &&
+            [ "$(sha256sum "$destination" | awk '{print $1}')" = "$original_hash" ]; then
+            continue
+        fi
+        [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ] ||
+            die "rollback blocked: replaced managed link changed: $destination"
+    elif [ "$record" = shell-new ]; then
+        bytes=$field4; payload=$field5
+        case "$payload" in "$HOME/.local/state/harness/transactions/"*) ;; *) die "rollback blocked: unsafe new-shell payload path" ;; esac
+        [ -f "$payload" ] && [ ! -L "$payload" ] ||
+            die "rollback blocked: missing new-shell payload"
+        [ "$(wc -c <"$payload" | tr -d ' ')" -eq "$bytes" ] ||
+            die "rollback blocked: new-shell payload size changed"
+        if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
+            continue
+        fi
+        [ -f "$destination" ] && [ ! -L "$destination" ] &&
+            cmp -s "$destination" "$payload" ||
+            die "rollback blocked: new shell file changed after apply: $destination"
+    elif [ "$record" = shell ]; then
         original=$field3; bytes=$field4; payload=$field5
         current=$(wc -c <"$destination" | tr -d ' ')
         expected=$((original + bytes))
@@ -131,7 +163,32 @@ done <"$records"
 
 while IFS='|' read -r record destination field3 field4 field5 field6 field7; do
         case "$destination" in "$HOME"/*) ;; *) die "unsafe transaction path" ;; esac
-        if [ "$record" = shell ]; then
+        if [ "$record" = managed-link-new ]; then
+            if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
+                echo "KEEP link=$destination state=already-rolled-back"
+            else
+                echo "REMOVE link=$destination"
+                rm "$destination"
+            fi
+        elif [ "$record" = managed-link-replaced ]; then
+            source=$field3; backup=$field4; original_hash=$field5; original_mode=$field6
+            if [ -f "$destination" ] && [ ! -L "$destination" ] &&
+                [ "$(sha256sum "$destination" | awk '{print $1}')" = "$original_hash" ]; then
+                echo "KEEP file=$destination state=already-rolled-back"
+            else
+                echo "RESTORE file=$destination source=transaction-backup"
+                rm "$destination"
+                cp "$backup" "$destination"
+                chmod "$original_mode" "$destination"
+            fi
+        elif [ "$record" = shell-new ]; then
+            if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
+                echo "KEEP file=$destination state=already-rolled-back"
+            else
+                echo "REMOVE file=$destination"
+                rm "$destination"
+            fi
+        elif [ "$record" = shell ]; then
             original=$field3; bytes=$field4; payload=$field5
             current=$(wc -c <"$destination" | tr -d ' ')
             if [ "$current" -eq "$original" ]; then

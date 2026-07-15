@@ -1,0 +1,12 @@
+syntax on			" syntax highlighting
+colorscheme default		" use default colorscheme
+set hlsearch			" highlight search
+set cindent                     " use C indent
+set cino=(N                     " C indent option N after (
+set shiftwidth=2                " width to autoindent
+set backspace=indent,eol,start  " backspace behavior
+set laststatus=2		" show filename
+set tags=.tags;$HOME		" use CTAGS"
+
+" save cursor position
+autocmd BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif

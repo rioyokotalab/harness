@@ -244,6 +244,34 @@ T-182.
   validate its read-only plan behavior on RC before implementing migration
   transactions.
 
+  **RC validation:** local commit `2ebf80d` was streamed to RC without
+  installation and planned both known `/tmp/harness-shell.*` residue trees.
+  The mode-600 schema-v2 manifest recorded lexical
+  `/home/users/rio.yokota`, canonical `/hs/work0/home/users/rio.yokota`, and
+  exact target facts (three entries, 344 bytes each); no target was deleted.
+  The exact temporary manifest was unlinked and verified absent. The guard
+  repair therefore resolves the observed RC failure without weakening protected
+  roots. Next action: implement the portable storage/shell configuration and
+  its plan/apply/rollback tests before fleet distribution.
+
+  **Portable configuration checkpoint:** all seven profiles now declare the
+  owner-selected persistent and cache roots, with the still-blocked `ab2`
+  quota recorded separately from the other six executable migrations. The
+  silent profile layer exports application cache roots without creating paths;
+  top-level interactive SSH sessions alone perform a bounded fast-forward
+  login fetch, prompt on explicit `exit` to publish staged harness changes, and
+  disable Ctrl-D exit. Fresh `.profile`/`.bashrc` creation and rollback are now
+  transactional. The current `.vimrc` is preserved byte-for-byte as the
+  canonical managed source, and a separate non-secret SSH fragment contains
+  only `Host github` and `Host *`; node-local SSH configuration is retained and
+  receives one managed include. Exact replacement, changed-state refusal, and
+  rollback are covered by the full phase-1 suite. The native-HPC reference now
+  links each target to official documentation; no public RIKYU user guide was
+  found on 2026-07-15, so the official system announcement and site-local help
+  are recorded without substituting Fugaku commands. Local read-only plans are
+  unblocked. Next action: commit this layer, then add checksum-pinned Restic and
+  the approved tmux/htop installation routes before distributing the revision.
+
 ## Owner-review queue
 
 - **T-169 — Research advanced agent harness practices (research complete

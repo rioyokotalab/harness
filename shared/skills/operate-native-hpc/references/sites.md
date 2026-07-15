@@ -3,6 +3,17 @@
 Use this reference only after resolving an in-scope logical profile. Facts here
 are validated baselines, not permission to guess a project's resource choices.
 
+## Documentation index
+
+| Target | Task reference |
+|---|---|
+| current | [Validated local operational baseline](#current-node); run native `yrun --help` and `ybatch --help` for the live interface |
+| `ab`, `ab2` | [ABCI 3.0 User Guide](https://docs.abci.ai/v3/en/) |
+| `ri` | [Official RIKYU system announcement](https://www.riken.jp/en/news_pubs/news/2026/20260619_1/index.html); no public user guide was found as of 2026-07-15, so consult site-local help and do not substitute Fugaku commands |
+| `al` | [CSCS Alps documentation](https://docs.cscs.ch/alps/) |
+| `rc` | [R-CCS Cloud Service Portal and manual](https://portal.cloud.r-ccs.riken.jp/) |
+| `t4` | [TSUBAME4 documentation index](https://www.t4.cii.isct.ac.jp/docs/all/) |
+
 ## Common status and cancellation
 
 | Target | Scheduler | Submit/launch | Status | Cancel |

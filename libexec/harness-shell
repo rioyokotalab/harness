@@ -68,7 +68,9 @@ while IFS='|' read -r name payload_name; do
     destination=$HOME/.$name
     payload=$temp_dir/$payload_name.payload
     bytes=$(wc -c <"$payload" | tr -d ' ')
-    if [ ! -f "$destination" ] || [ -L "$destination" ]; then
+    if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
+        echo "CREATE file=.$name bytes=$bytes contents=harness-managed"
+    elif [ ! -f "$destination" ] || [ -L "$destination" ]; then
         echo "BLOCK file=.$name reason=not-regular"
         blocked=1
     elif [ "$(wc -c <"$destination" | tr -d ' ')" -ge "$bytes" ] &&
@@ -97,13 +99,21 @@ manifest=$state_root/$transaction_id.manifest
 printf 'schema=1\nhost=%s\nrevision=%s\n' "$logical_host" "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" >>"$manifest"
 
 rollback_partial() {
-    awk -F'|' '$1 == "shell" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+    awk -F'|' '$1 == "shell" || $1 == "shell-new" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
         "$manifest" | while IFS='|' read -r record destination original bytes payload; do
-            [ "$record" = shell ] || die "invalid partial rollback record"
-            current=$(wc -c <"$destination" | tr -d ' ')
-            expected=$((original + bytes))
-            if [ "$current" -eq "$expected" ] && tail -c "$bytes" "$destination" | cmp -s - "$payload"; then
-                truncate -s "$original" "$destination"
+            if [ "$record" = shell-new ]; then
+                if [ -f "$destination" ] && [ ! -L "$destination" ] &&
+                    cmp -s "$destination" "$payload"; then
+                    rm "$destination"
+                fi
+            elif [ "$record" = shell ]; then
+                current=$(wc -c <"$destination" | tr -d ' ')
+                expected=$((original + bytes))
+                if [ "$current" -eq "$expected" ] && tail -c "$bytes" "$destination" | cmp -s - "$payload"; then
+                    truncate -s "$original" "$destination"
+                fi
+            else
+                die "invalid partial rollback record"
             fi
         done
 }
@@ -131,6 +141,14 @@ while IFS='|' read -r name payload_name; do
     destination=$HOME/.$name
     payload=$temp_dir/$payload_name.payload
     bytes=$(wc -c <"$payload" | tr -d ' ')
+    if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
+        stored=$state_root/$transaction_id.$name.payload
+        cp "$payload" "$stored"; chmod 600 "$stored"
+        cp "$payload" "$destination"
+        chmod 644 "$destination"
+        printf 'shell-new|%s|0|%s|%s\n' "$destination" "$bytes" "$stored" >>"$manifest"
+        continue
+    fi
     if [ "$(wc -c <"$destination" | tr -d ' ')" -ge "$bytes" ] &&
         tail -c "$bytes" "$destination" | cmp -s - "$payload"; then
         continue

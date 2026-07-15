@@ -1,5 +1,5 @@
 # >>> harness managed >>>
-HARNESS_LOGICAL_HOST=al
+HARNESS_LOGICAL_HOST=ri
 export HARNESS_LOGICAL_HOST
 if [ -r "$HOME/harness/shell/profile.sh" ]; then
     . "$HOME/harness/shell/profile.sh"

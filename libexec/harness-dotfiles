@@ -1,0 +1,193 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() { echo "Usage: harness dotfiles --host LOGICAL_ID [--plan|--apply]" >&2; }
+logical_host=
+mode=plan
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        *) usage; exit 2 ;;
+    esac
+done
+[ -n "$logical_host" ] || { usage; exit 2; }
+profile_for "$logical_host" >/dev/null
+
+vim_source=$HARNESS_ROOT/config/vim/vimrc
+ssh_source=$HARNESS_ROOT/config/ssh/harness.conf
+for source in "$vim_source" "$ssh_source"; do
+    [ -f "$source" ] && [ ! -L "$source" ] || die "missing canonical dotfile: $source"
+done
+
+links=$(printf '%s|%s\n%s|%s\n' \
+    "$vim_source" "$HOME/.vimrc" \
+    "$ssh_source" "$HOME/.ssh/config.d/harness.conf")
+blocked=0
+changes=0
+echo "DOTFILE_PLAN host=$logical_host mode=$mode contents=canonical-nonsecret-only"
+if [ -L "$HOME/.ssh" ] || { [ -e "$HOME/.ssh" ] && [ ! -d "$HOME/.ssh" ]; }; then
+    echo "BLOCK directory=$HOME/.ssh reason=unsupported-existing-type"
+    blocked=1
+fi
+if [ -L "$HOME/.ssh/config.d" ] ||
+    { [ -e "$HOME/.ssh/config.d" ] && [ ! -d "$HOME/.ssh/config.d" ]; }; then
+    echo "BLOCK directory=$HOME/.ssh/config.d reason=unsupported-existing-type"
+    blocked=1
+fi
+while IFS='|' read -r source destination; do
+    if [ -L "$destination" ]; then
+        if [ "$(readlink "$destination")" = "$source" ]; then
+            echo "KEEP link=$destination"
+        else
+            echo "BLOCK link=$destination reason=different-symlink"
+            blocked=1
+        fi
+    elif [ -f "$destination" ]; then
+        if cmp -s "$source" "$destination"; then
+            echo "REPLACE file=$destination reason=canonicalize-as-managed-link contents=identical"
+        else
+            echo "REPLACE file=$destination reason=owner-approved-canonical-version contents=not-read"
+        fi
+        changes=1
+    elif [ -e "$destination" ]; then
+        echo "BLOCK link=$destination reason=unsupported-existing-type"
+        blocked=1
+    else
+        echo "CREATE link=$destination source=$source"
+        changes=1
+    fi
+done <<EOF
+$links
+EOF
+
+include_line='Include ~/.ssh/config.d/harness.conf'
+ssh_config=$HOME/.ssh/config
+if [ -L "$ssh_config" ] || { [ -e "$ssh_config" ] && [ ! -f "$ssh_config" ]; }; then
+    echo "BLOCK file=$ssh_config reason=unsupported-existing-type"
+    blocked=1
+elif [ ! -e "$ssh_config" ]; then
+    echo "CREATE file=$ssh_config contents=single-managed-include"
+    changes=1
+else
+    include_count=$(grep -E -c '^[[:space:]]*Include[[:space:]]+~/\.ssh/config\.d/harness\.conf[[:space:]]*$' \
+        "$ssh_config" || true)
+    if [ "$include_count" -eq 0 ]; then
+        echo "APPEND file=$ssh_config contents=single-managed-include"
+        changes=1
+    elif [ "$include_count" -eq 1 ]; then
+        echo "KEEP file=$ssh_config include=harness"
+    else
+        echo "BLOCK file=$ssh_config reason=duplicate-managed-include"
+        blocked=1
+    fi
+fi
+[ "$blocked" -eq 0 ] || die "dotfile plan contains blocked paths"
+[ "$mode" = apply ] || { echo "END dotfiles host=$logical_host changes=not-applied"; exit 0; }
+[ -z "$(git -C "$HARNESS_ROOT" status --porcelain)" ] ||
+    die "dotfile apply requires clean harness"
+"$HARNESS_ROOT/libexec/harness-doctor" --host "$logical_host" >/dev/null ||
+    die "host doctor failed"
+[ "$changes" -eq 1 ] || { echo "END dotfiles host=$logical_host changes=none"; exit 0; }
+
+state_root=$HOME/.local/state/harness/transactions
+mkdir -p "$state_root"
+chmod 700 "$HOME/.local/state/harness" "$state_root"
+transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+manifest=$state_root/$transaction_id.manifest
+: >"$manifest"; chmod 600 "$manifest"
+printf 'schema=1\nhost=%s\nrevision=%s\n' "$logical_host" \
+    "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" >>"$manifest"
+
+rollback_partial() {
+    awk -F'|' '$1 == "managed-link-new" || $1 == "managed-link-replaced" || $1 == "shell" || $1 == "shell-new" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+        "$manifest" | while IFS='|' read -r record destination field3 field4 field5 field6; do
+        case "$record" in
+            managed-link-new)
+                [ -L "$destination" ] && [ "$(readlink "$destination")" = "$field3" ] && rm "$destination" || true
+                ;;
+            managed-link-replaced)
+                if [ -L "$destination" ] && [ "$(readlink "$destination")" = "$field3" ]; then
+                    rm "$destination"
+                    cp "$field4" "$destination"
+                    chmod "$field6" "$destination"
+                fi
+                ;;
+            shell)
+                current=$(wc -c <"$destination" | tr -d ' ')
+                [ "$current" -eq $((field3 + field4)) ] &&
+                    tail -c "$field4" "$destination" | cmp -s - "$field5" &&
+                    truncate -s "$field3" "$destination" || true
+                ;;
+            shell-new)
+                [ -f "$destination" ] && [ ! -L "$destination" ] &&
+                    cmp -s "$destination" "$field5" && rm "$destination" || true
+                ;;
+        esac
+    done
+}
+complete=0
+cleanup() {
+    status=$?
+    if [ "$complete" -eq 0 ]; then
+        rollback_partial
+        echo failed >"$manifest.status"; chmod 600 "$manifest.status"
+    fi
+    exit "$status"
+}
+trap cleanup EXIT HUP INT TERM
+
+mkdir -p "$HOME/.ssh/config.d"
+[ -d "$HOME/.ssh" ] && [ ! -L "$HOME/.ssh" ] &&
+    [ -d "$HOME/.ssh/config.d" ] && [ ! -L "$HOME/.ssh/config.d" ] ||
+    die "SSH configuration directory changed type"
+chmod 700 "$HOME/.ssh" "$HOME/.ssh/config.d"
+while IFS='|' read -r source destination; do
+    if [ -L "$destination" ]; then
+        continue
+    elif [ -f "$destination" ]; then
+        backup=$state_root/$transaction_id.${destination##*/}.original
+        cp "$destination" "$backup"; chmod 600 "$backup"
+        original_hash=$(sha256sum "$backup" | awk '{print $1}')
+        original_mode=$(stat -c '%a' "$destination")
+        rm "$destination"
+        ln -s "$source" "$destination"
+        printf 'managed-link-replaced|%s|%s|%s|%s|%s\n' "$destination" \
+            "$source" "$backup" "$original_hash" "$original_mode" >>"$manifest"
+    else
+        ln -s "$source" "$destination"
+        printf 'managed-link-new|%s|%s\n' "$destination" "$source" >>"$manifest"
+    fi
+done <<EOF
+$links
+EOF
+
+payload=$state_root/$transaction_id.ssh-include.payload
+if [ ! -e "$ssh_config" ]; then
+    printf '%s\n' "$include_line" >"$payload"; chmod 600 "$payload"
+    cp "$payload" "$ssh_config"; chmod 600 "$ssh_config"
+    bytes=$(wc -c <"$payload" | tr -d ' ')
+    printf 'shell-new|%s|0|%s|%s\n' "$ssh_config" "$bytes" "$payload" >>"$manifest"
+else
+    include_count=$(grep -E -c '^[[:space:]]*Include[[:space:]]+~/\.ssh/config\.d/harness\.conf[[:space:]]*$' \
+        "$ssh_config" || true)
+    if [ "$include_count" -eq 0 ]; then
+        printf '\n%s\n' "$include_line" >"$payload"; chmod 600 "$payload"
+        original=$(wc -c <"$ssh_config" | tr -d ' ')
+        bytes=$(wc -c <"$payload" | tr -d ' ')
+        cat "$payload" >>"$ssh_config"
+        printf 'shell|%s|%s|%s|%s\n' "$ssh_config" "$original" "$bytes" "$payload" >>"$manifest"
+    fi
+fi
+
+echo complete >"$manifest.status"; chmod 600 "$manifest.status"
+complete=1
+trap - EXIT HUP INT TERM
+echo "TRANSACTION id=$transaction_id status=complete"
+echo "END dotfiles host=$logical_host changes=applied"

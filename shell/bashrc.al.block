@@ -1,7 +1,7 @@
 # >>> harness managed >>>
 HARNESS_LOGICAL_HOST=al
+export HARNESS_LOGICAL_HOST
 if [ -r "$HOME/harness/shell/profile.sh" ]; then
     . "$HOME/harness/shell/profile.sh"
 fi
-unset HARNESS_LOGICAL_HOST
 # <<< harness managed <<<

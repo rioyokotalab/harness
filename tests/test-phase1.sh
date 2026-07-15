@@ -40,6 +40,7 @@ for script in \
     "$ROOT/libexec/harness-apply" \
     "$ROOT/libexec/harness-remediate" \
     "$ROOT/libexec/harness-shell" \
+    "$ROOT/libexec/harness-dotfiles" \
     "$ROOT/libexec/harness-tool" \
     "$ROOT/libexec/harness-runtime" \
     "$ROOT/libexec/harness-python" \
@@ -51,6 +52,45 @@ for script in \
 do
     sh -n "$script" || fail "shell syntax: $script"
 done
+
+for script in "$ROOT"/shell/cache.sh "$ROOT"/shell/profile.sh \
+    "$ROOT"/shell/environments/*.sh; do
+    sh -n "$script" || fail "shell configuration syntax: $script"
+done
+for script in "$ROOT"/shell/interactive.sh "$ROOT"/shell/remote-session.sh \
+    "$ROOT"/shell/hosts/*.sh; do
+    bash -n "$script" || fail "Bash configuration syntax: $script"
+done
+
+# The portable profile must remain silent and side-effect free in
+# non-interactive sessions while exporting the selected node's roots.
+profile_home=$TEMP_DIR/profile-home
+mkdir -p "$profile_home/harness"
+cp -R "$ROOT/shell" "$profile_home/harness/"
+profile_output=$(HOME="$profile_home" PATH=/usr/bin:/bin \
+    HARNESS_LOGICAL_HOST=ab sh -c \
+    '. "$HOME/harness/shell/profile.sh"; printf "%s|%s|%s\n" "$HARNESS_PERSISTENT_ROOT" "$HARNESS_CACHE_ROOT" "$XDG_CACHE_HOME"')
+[ "$profile_output" = \
+    '/groups/gag51395/yokota|/groups/gag51395/yokota/cache|/groups/gag51395/yokota/cache/xdg' ] ||
+    fail "portable non-interactive profile"
+[ ! -e "$profile_home/.cache" ] || fail "profile created a cache directory"
+
+# A top-level interactive SSH shell receives the exit prompt function and
+# Ctrl-D guard; tmux and nested shells do not.
+remote_type=$(env -u SHLVL -u HARNESS_INTERACTIVE_LOADED \
+    -u HARNESS_REMOTE_SESSION_LOADED -u TMUX \
+    HOME="$profile_home" PATH=/usr/bin:/bin \
+    SSH_TTY=/dev/pts/test \
+    HARNESS_LOGICAL_HOST=ab bash --noprofile --norc -ic \
+    '. "$HOME/harness/shell/profile.sh"; printf "%s|%s|%s\n" "$(type -t exit)" "$IGNOREEOF" "$HARNESS_LOGICAL_HOST"' \
+    2>/dev/null)
+[ "$remote_type" = 'function|1|ab' ] || fail "interactive remote-session policy"
+tmux_type=$(env -u SHLVL -u HARNESS_INTERACTIVE_LOADED \
+    -u HARNESS_REMOTE_SESSION_LOADED HOME="$profile_home" PATH=/usr/bin:/bin \
+    SSH_TTY=/dev/pts/test \
+    TMUX=/tmp/tmux HARNESS_LOGICAL_HOST=ab bash --noprofile --norc -ic \
+    '. "$HOME/harness/shell/profile.sh"; type -t exit' 2>/dev/null)
+[ "$tmux_type" = builtin ] || fail "tmux session unexpectedly overrides exit"
 
 if command -v shellcheck >/dev/null 2>&1; then
     git -C "$ROOT" grep -Il -z '^#!.*\(sh\|bash\)' -- . \
@@ -456,7 +496,7 @@ grep 'BLOCK command=ninja reason=managed-artifact-version-or-health-mismatch' \
     "$TEMP_DIR/invalid-managed-ninja.out" >/dev/null || fail "invalid managed Ninja evidence"
 rm "$test_home/.local/bin/ninja" "$managed_ninja_dir/ninja"
 rmdir "$managed_ninja_dir"
-cp -R "$ROOT/bin" "$ROOT/libexec" "$ROOT/profiles" "$ROOT/shared" \
+cp -R "$ROOT/bin" "$ROOT/config" "$ROOT/libexec" "$ROOT/profiles" "$ROOT/shared" \
     "$ROOT/shell" "$ROOT/tools" "$ROOT/.codex" "$ROOT/.claude" "$test_repo/"
 site_command_bin=$TEMP_DIR/site-command-bin
 mkdir -p "$site_command_bin"
@@ -779,6 +819,57 @@ cmp -s "$profile_home/.bashrc" "$TEMP_DIR/original-profile-bashrc" ||
 cmp -s "$profile_home/.profile" "$TEMP_DIR/original-profile-login" ||
     fail "profile-selection login rollback"
 [ ! -e "$profile_home/.bash_profile" ] || fail "rollback created bash profile"
+
+new_shell_home=$TEMP_DIR/new-shell-home
+mkdir -p "$new_shell_home"
+HOME="$new_shell_home" "$test_repo/bin/harness" shell --host local --plan \
+    >"$TEMP_DIR/new-shell-plan.out"
+grep 'CREATE file=.bashrc' "$TEMP_DIR/new-shell-plan.out" >/dev/null ||
+    fail "absent bashrc creation plan"
+grep 'CREATE file=.profile' "$TEMP_DIR/new-shell-plan.out" >/dev/null ||
+    fail "absent profile creation plan"
+HOME="$new_shell_home" "$test_repo/bin/harness" shell --host local --apply \
+    >"$TEMP_DIR/new-shell-apply.out"
+new_shell_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/new-shell-apply.out")
+[ -f "$new_shell_home/.bashrc" ] && [ -f "$new_shell_home/.profile" ] ||
+    fail "absent shell files were not created"
+HOME="$new_shell_home" "$test_repo/bin/harness" rollback "$new_shell_transaction" \
+    >"$TEMP_DIR/new-shell-rollback.out"
+[ ! -e "$new_shell_home/.bashrc" ] && [ ! -e "$new_shell_home/.profile" ] ||
+    fail "new shell file rollback"
+
+dotfile_home=$TEMP_DIR/dotfile-home
+mkdir -p "$dotfile_home/.ssh"
+printf '%s\n' 'set number' >"$dotfile_home/.vimrc"
+printf '%s\n' 'Host node-only' '    HostName node.invalid' \
+    >"$dotfile_home/.ssh/config"
+cp "$dotfile_home/.vimrc" "$TEMP_DIR/original-vimrc"
+cp "$dotfile_home/.ssh/config" "$TEMP_DIR/original-ssh-config"
+HOME="$dotfile_home" "$test_repo/bin/harness" dotfiles --host local --plan \
+    >"$TEMP_DIR/dotfile-plan.out"
+grep 'REPLACE file=.*\.vimrc reason=owner-approved-canonical-version' \
+    "$TEMP_DIR/dotfile-plan.out" >/dev/null || fail "canonical Vim plan"
+grep 'APPEND file=.*\.ssh/config contents=single-managed-include' \
+    "$TEMP_DIR/dotfile-plan.out" >/dev/null || fail "SSH include plan"
+HOME="$dotfile_home" "$test_repo/bin/harness" dotfiles --host local --apply \
+    >"$TEMP_DIR/dotfile-apply.out"
+dotfile_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/dotfile-apply.out")
+[ "$(readlink "$dotfile_home/.vimrc")" = "$test_repo/config/vim/vimrc" ] ||
+    fail "canonical Vim link"
+[ "$(readlink "$dotfile_home/.ssh/config.d/harness.conf")" = \
+    "$test_repo/config/ssh/harness.conf" ] || fail "shared SSH fragment link"
+[ "$(grep -c '^Include ~/.ssh/config.d/harness.conf$' \
+    "$dotfile_home/.ssh/config")" -eq 1 ] || fail "single SSH include"
+HOME="$dotfile_home" "$test_repo/bin/harness" rollback "$dotfile_transaction" \
+    >"$TEMP_DIR/dotfile-rollback.out"
+cmp -s "$dotfile_home/.vimrc" "$TEMP_DIR/original-vimrc" ||
+    fail "Vim rollback"
+cmp -s "$dotfile_home/.ssh/config" "$TEMP_DIR/original-ssh-config" ||
+    fail "SSH include rollback"
+[ ! -e "$dotfile_home/.ssh/config.d/harness.conf" ] ||
+    fail "SSH fragment rollback"
 
 # Site startup may put another user or project command directory before the
 # managed bin. The portable profile must move its directory to the front and
