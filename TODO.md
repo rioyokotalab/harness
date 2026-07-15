@@ -4,7 +4,7 @@ This board is the authoritative current state for the portable Codex and Claude
 harness. Git preserves superseded chronology and command-level evidence. Keep
 live tasks, verified recovery facts, blockers, and next actions here; do not
 rebuild a second incident transcript in a session or report file. Next free id:
-T-189.
+T-191.
 
 ## Recovery priority — do before any other task
 
@@ -197,6 +197,146 @@ T-189.
     repository changed.
 
 ## Next task insertion point
+
+- **T-189 — Create a ledger-backed plan–interview–execute skill (complete
+  2026-07-16):** promoted the owner's repeatedly successful PIE working model
+  into `shared/skills/plan-interview-execute`. It requires a thorough
+  evidence-based on-disk plan, one-decision-at-a-time interview with every
+  answer immediately checkpointed, an explicit owner `go`, and thorough
+  stepwise execution reconstructed from the ledger rather than chat. Resume,
+  drift, failure, authority, validation, completion, and handoff behavior are
+  explicit. The standard skill initializer was not executable directly and
+  failed with exit 126 before creating anything; invoking that same initializer
+  with Python was safe and succeeded. The skill has no unnecessary resources,
+  passes `quick_validate.py` and diff checks, and its exact shared directory is
+  discoverable through Codex, Claude, and `.agents` links. T-190 is its first
+  live forward use; no subagent was used or permitted. The first complete
+  phase-1 run passed guarded-delete tests and then stopped because the loaded
+  OpenMPI module's stale process-local table exposed no `mpicc`. Unloading and
+  reloading the same declared `openmpi/5.0-cuda-12.8` module restored its
+  native compiler path; the retry passed the full suite with only the already
+  documented login-node CUDA-library warnings.
+
+- **T-190 — Automate onboarding a newly configured SSH node (PIE phase:
+  interviewing, 2026-07-16):** create a reusable personal skill that starts
+  after the owner adds a node to SSH configuration, performs a value-redacted
+  read-only inventory, resolves only material site-specific decisions through
+  PIE, and, after `go`, transactionally reaches the established fleet baseline.
+
+  **Outcome and scope:** accept one owner-supplied SSH alias and a validated
+  logical host ID; add the node's capability/site declarations and test
+  fixture; bootstrap a clean committed harness revision; install the portable
+  tools and 28 managed control-plane links; integrate shell, Vim, tmux, Git,
+  and shared SSH fragments while preserving owner prefixes/local overrides;
+  classify top-level hidden state from names and aggregate metadata only;
+  configure approved persistent/cache roots; and complete manual encrypted
+  snapshot, all-pack check, restore verification, and an immutable independent
+  generation before any reviewed clean-slate deletion or scheduling proposal.
+  The skill must work for a new site as well as another host at a known site.
+
+  **Non-goals and authority:** never read `~/.ssh` or credential contents,
+  copy/generate private keys or backup passwords, automate login UI, install as
+  root, modify site runtimes/drivers/schedulers, clone projects/data, run jobs,
+  delete unreviewed paths, weaken guardrails, publish/push, enable scheduling,
+  or alter unrelated owner settings. Resolve the supplied alias through normal
+  native SSH behavior without parsing its configuration. External actions stay
+  separately gated even after PIE `go`.
+
+  **Confirmed baseline:** a host currently requires a strict
+  `profiles/hosts/HOST.conf`, rows in `profiles/home-layout.tsv` and
+  `profiles/restic-repositories.tsv`, host shell blocks and an environment
+  adapter, a sanitized inventory fixture, remote-Codex allowlisting, and test
+  expectations that currently enumerate seven logical hosts. `harness
+  inventory/plan/apply/doctor/rollback`, checksum-pinned tool transactions,
+  dotfile transactions, guarded deletion, Restic routing, replica
+  fingerprint/promotion, Git-bundle transport, interactive exit/Ctrl-D policy,
+  and client skill discovery already exist and should be composed rather than
+  reimplemented. Current source is intentionally dirty only for T-189/T-190
+  and the cross-repository ledger checkpoint; execution must start from a clean
+  committed baseline.
+
+  **Frozen implementation plan after interview:**
+
+  1. Scaffold `shared/skills/onboard-mirrored-node` with the standard skill
+     initializer, concise procedural instructions, deterministic scripts only
+     where repeated parsing/scaffolding would otherwise be error-prone, and
+     matching UI metadata.
+  2. Define a strict invocation contract for the supplied alias and logical
+     ID. Reject empty, option-like, malformed, reserved local, proxy/transport,
+     service, and already-managed IDs; never enumerate SSH configuration.
+  3. Add a read-only preflight that uses recognizable native SSH commands,
+     verifies reachability and POSIX-shell/Git/Python bootstrap floors, records
+     lexical/canonical home identity, OS/architecture, scheduler/module/uenv/
+     container/tool capabilities, quota/mount facts, and top-level hidden-path
+     names plus aggregate sizes without reading contents or environment values.
+     Keep potentially private raw output in an unread mode-0600 temporary log
+     and retain only an allowlisted sanitized inventory.
+  4. Make the skill run PIE for each node. Reuse known policy automatically;
+     ask one question at a time only for root selection, unknown hidden-path
+     treatment, replica placement, unsupported tool choices, and any new
+     authority. Checkpoint each answer before continuing.
+  5. Generate a complete proposed host change set in a disposable worktree or
+     narrowly scoped staging area: capability profile, sanitized fixture,
+     home/backup rows, shell/environment adapters, dynamic fleet membership,
+     documentation pointer, and tests. Refuse duplicate rows or unmanaged
+     collisions.
+  6. Refactor hard-coded fleet allowlists/expected-host tests to derive safe
+     managed IDs from strict profile declarations where doing so preserves
+     exclusions; keep transport and service aliases impossible to target.
+  7. Run syntax, lint, schema, fixture, plan, adversarial alias, secret-output,
+     transaction, guarded-delete, and complete phase-1 tests locally. Inspect
+     the exact diff and commit only the intended harness files; do not push.
+  8. Revalidate host reachability and source identity. Bootstrap with a
+     credential-free Git bundle over the existing SSH route when origin fetch
+     is unavailable; never rsync a dirty tree or copy authentication state.
+  9. Run remote inventory and plan first. Apply only managed user-space paths
+     transactionally, validate each stage, and use the recorded rollback route
+     on failure before advancing.
+  10. Create and validate the chosen persistent/cache roots, then migrate only
+      explicitly classified high-growth state. Preserve independent copies
+      before activation and use guarded-delete manifests for every tree
+      removal; retain node-local histories separately.
+  11. Validate all 28 links, managed markers, owner-prefix preservation,
+      canonical Vim parity, shell syntax, real interactive/non-interactive PTY
+      behavior, exit/Ctrl-D policy, Restic resolution, doctor, idempotence,
+      clean checkout, and absence of transient artifacts.
+  12. Pause for the owner-only creation/retention of a unique mode-0600 Restic
+      password when needed. Agents may validate only path/type/mode and pass it
+      by path; they never inspect, hash, print, copy, or generate it.
+  13. Run the reviewed hidden-home snapshot, `check --read-data`, verified
+      restore to suitable scratch, guarded cleanup, independent encrypted
+      generation at a different site, fingerprint comparison, and a fresh
+      generation check/restore. Record aggregate metadata only.
+  14. Re-run fleet parity without serializing independent nodes unnecessarily,
+      update the durable node/site references and ledgers, remove exact
+      temporary bundle/helper/log paths, and commit the final local evidence.
+      Leave backup scheduling proposal-only until repeated manual restores are
+      stable.
+
+  **Safety, recovery, and acceptance:** fail closed on host ambiguity, dirty
+  source, profile/schema conflict, lexical/canonical home drift, quota
+  uncertainty, symlink or filesystem-boundary surprises, unsupported artifact,
+  missing backup credential, live repository lock, source drift, or any
+  validation mismatch. Preserve raw failures privately and state whether retry
+  is safe. Acceptance requires clean committed source, exact declared profile
+  and sanitized fixture, full local tests, successful remote plan/apply/doctor
+  and rollback evidence, interactive/non-interactive shell proofs, exact
+  managed-link and configuration parity with documented host-local exceptions,
+  stable relocated-state activation, and independently restored encrypted
+  backup. An interruption resumes from the first unverified ledger step.
+
+  **Decision register:** D1 invocation/discovery is open: choose explicit
+  `onboard HOST` without inspecting SSH configuration (recommended) or grant a
+  new authority boundary for some form of SSH-config discovery. D2 automation
+  boundary is open: retain one owner-only Restic password checkpoint
+  (recommended) or name an already-approved secret-manager integration. D3
+  first-run scope is provisionally full parity, including storage and backup;
+  choosing control-plane-only would defer those gates to a separate PIE run.
+  All later root, path, and replica decisions are per-node questions asked only
+  after sanitized inventory exists.
+
+  **Next action:** ask D1 only. Record the answer here before asking D2; do not
+  scaffold or execute the onboarding skill yet.
 
 - **T-182 — Relocate, back up, and normalize the seven-node home control plane
   (in progress 2026-07-15):** migrate approved high-growth cache/tool state to

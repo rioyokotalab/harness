@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan, Interview, Execute"
+  short_description: "Run thorough ledger-backed PIE workflows"
+  default_prompt: "Use $plan-interview-execute to plan this work, resolve decisions one at a time, and execute only after my go."
