@@ -218,7 +218,7 @@ T-191.
   documented login-node CUDA-library warnings.
 
 - **T-190 — Automate onboarding a newly configured SSH node (PIE phase:
-  interviewing, 2026-07-16):** create a reusable personal skill that starts
+  ready-for-go, 2026-07-16):** create a reusable personal skill that starts
   after the owner adds a node to SSH configuration, performs a value-redacted
   read-only inventory, resolves only material site-specific decisions through
   PIE, and, after `go`, transactionally reaches the established fleet baseline.
@@ -325,18 +325,34 @@ T-191.
   stable relocated-state activation, and independently restored encrypted
   backup. An interruption resumes from the first unverified ledger step.
 
-  **Decision register:** D1 invocation/discovery is open: choose explicit
-  `onboard HOST` without inspecting SSH configuration (recommended) or grant a
-  new authority boundary for some form of SSH-config discovery. D2 automation
-  boundary is open: retain one owner-only Restic password checkpoint
-  (recommended) or name an already-approved secret-manager integration. D3
-  first-run scope is provisionally full parity, including storage and backup;
-  choosing control-plane-only would defer those gates to a separate PIE run.
+  **Decision register:** D1 is resolved by the owner: invoke the skill
+  explicitly as `onboard HOST` after the owner adds that alias to SSH
+  configuration. The skill must neither read nor enumerate SSH configuration;
+  the supplied alias is the complete discovery boundary. This freezes plan
+  steps 2–3 around strict alias validation and normal native SSH resolution.
+  D2 is resolved by the owner: retain one owner-only Restic password
+  checkpoint. The owner creates a unique mode-0600 password file and retains
+  the value in the external password manager; the workflow may validate only
+  path, regular-file type, non-symlink status, ownership, and mode, and pass
+  that path to Restic without inspecting, hashing, printing, copying, or
+  generating the credential. After this checkpoint, execution resumes
+  automatically at plan step 13. D3 is resolved by the owner: first-run
+  onboarding must reach full parity, including portable control-plane setup,
+  suitable storage roots, explicitly approved hidden-state migration, and
+  independently restored encrypted backup. Scheduling and any unreviewed
+  deletion remain excluded rather than being implied by full parity.
   All later root, path, and replica decisions are per-node questions asked only
   after sanitized inventory exists.
 
-  **Next action:** ask D1 only. Record the answer here before asking D2; do not
-  scaffold or execute the onboarding skill yet.
+  **Interview audit:** D1–D3 are complete and mutually consistent. The frozen
+  plan preserves the explicit-alias boundary, the owner-only credential step,
+  and full first-run parity without granting publication, scheduling,
+  unreviewed deletion, root installation, credential inspection, or scheduler
+  authority.
+
+  **Next action:** wait for an explicit owner `go`. After `go`, reconstruct this
+  frozen plan from disk, set the phase to `executing`, and begin step 1; do not
+  scaffold or execute the onboarding skill before that gate.
 
 - **T-182 — Relocate, back up, and normalize the seven-node home control plane
   (in progress 2026-07-15):** migrate approved high-growth cache/tool state to
