@@ -365,7 +365,11 @@ T-188.
   verified absent. Later bundle SHA-256 `fd7647f3…0200` fast-forwarded AL's
   clean checkout from exact `6db9296` to `27a1a91`; Restic 0.19.1 and the AL
   replica plan route passed, and both bundle copies were exact-unlinked. AB2
-  remains wholly deferred and unchanged.
+  remains wholly deferred and unchanged. Fleet bundle SHA-256
+  `0d5866be…6af5` subsequently fast-forwarded the five active clean remotes
+  from their `0c44c5f`/`27a1a91` checkpoints to `0f200ac`. Every node verified
+  the bundle and clean target, Restic 0.19.1, and its host-specific replica
+  plan; all remote and local bundle copies are absent.
   Next action: let the already-running guarded cleanup of the intentionally
   interrupted local NFS restore finish, rerun that restore on mode-0700
   node-local scratch without adding a second NFS workload, then complete the
