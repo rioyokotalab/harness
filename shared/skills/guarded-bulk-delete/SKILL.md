@@ -26,7 +26,10 @@ harness guarded-delete plan \
 
 Read the `PLAN`, every `TARGET`, and `NEXT` line. Confirm that the canonical
 boundary and targets match the task. A plan is read-only except for its
-mode-600 manifest.
+mode-600 manifest. Manifest content is first built on independent temporary
+storage, then copied and hard-linked into place only after exact size and
+SHA-256 verification. Quota exhaustion, truncation, or delayed destination
+write failure must fail planning without publishing a usable manifest.
 
 ## Apply
 

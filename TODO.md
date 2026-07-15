@@ -4,7 +4,7 @@ This board is the authoritative current state for the portable Codex and Claude
 harness. Git preserves superseded chronology and command-level evidence. Keep
 live tasks, verified recovery facts, blockers, and next actions here; do not
 rebuild a second incident transcript in a session or report file. Next free id:
-T-184.
+T-185.
 
 ## Recovery priority — do before any other task
 
@@ -519,3 +519,17 @@ live instructions.
   distributed cleanly; repeated real PTY and non-interactive checks passed on
   all six remotes. Commit `4f34299` added the explicit one-connection launcher.
   No key, agent identity, push, or SSH owner setting was read or changed.
+
+## Issue appended during the T-182 Restic initialization
+
+- **T-184 — Reject truncated guarded-delete manifests at plan time
+  (in progress 2026-07-15):** AB2 exhausted its persistent-storage quota while
+  Restic initialized, leaving a partial repository. The cleanup plan correctly
+  inventoried 262 entries and 1,081,344 bytes, but the quota-exhausted
+  destination retained an empty manifest while the command printed the token
+  of the intended content. Apply rejected the mismatch before deletion, so the
+  target remained intact. Build manifest content on independent temporary
+  storage, verify target-filesystem copy and published-link size plus SHA-256,
+  add an adversarial truncating-copy regression, and rerun the complete guard
+  and phase-1 suites before retrying cleanup. Keep all other AB2 migration and
+  backup work deferred until the approved quota increase is active.

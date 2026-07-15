@@ -4,6 +4,7 @@ set -eu
 PROGRAM=guarded-delete
 TAB=$(printf '\t')
 manifest_temp=
+manifest_source=
 target_list=
 
 usage() {
@@ -25,6 +26,7 @@ die() {
 
 cleanup() {
     [ -z "$manifest_temp" ] || rm -f -- "$manifest_temp"
+    [ -z "$manifest_source" ] || rm -f -- "$manifest_source"
     [ -z "$target_list" ] || rm -f -- "$target_list"
 }
 
@@ -246,9 +248,9 @@ plan() {
     done
 
     created=$(date +%s)
-    manifest_temp=$(mktemp "$manifest_parent/.guarded-delete-manifest.XXXXXX") ||
-        die "cannot create manifest beside destination"
-    chmod 600 "$manifest_temp"
+    manifest_source=$(mktemp "${TMPDIR:-/tmp}/guarded-delete-manifest-source.XXXXXX") ||
+        die "cannot create independent manifest source"
+    chmod 600 "$manifest_source"
     {
         printf 'schema\tguarded-delete-v2\n'
         printf 'created_epoch\t%s\n' "$created"
@@ -271,12 +273,38 @@ plan() {
             printf 'target\t%s\t%s\t%s\t%s\t%s\t%s\n' \
                 "$target" "$target_id" "$parent" "$parent_id" "$entries" "$bytes"
         done <"$target_list"
-    } >"$manifest_temp"
+    } >"$manifest_source" || die "cannot write independent manifest source"
+
+    planned_target_count=$(awk 'END { print NR + 0 }' "$target_list")
+    source_target_count=$(awk -F '\t' '$1 == "target" { n++ } END { print n + 0 }' \
+        "$manifest_source")
+    [ "$planned_target_count" -gt 0 ] &&
+        [ "$source_target_count" -eq "$planned_target_count" ] ||
+        die "independent manifest source is incomplete"
+    expected_size=$(stat -c '%s' -- "$manifest_source")
+    [ "$expected_size" -gt 0 ] || die "independent manifest source is empty"
+    expected_token=$(sha256sum "$manifest_source" | awk '{ print $1 }')
+
+    manifest_temp=$(mktemp "$manifest_parent/.guarded-delete-manifest.XXXXXX") ||
+        die "cannot create manifest beside destination"
+    chmod 600 "$manifest_temp"
+    cp -- "$manifest_source" "$manifest_temp" ||
+        die "cannot persist manifest beside destination"
+    persisted_size=$(stat -c '%s' -- "$manifest_temp")
+    persisted_token=$(sha256sum "$manifest_temp" | awk '{ print $1 }')
+    [ "$persisted_size" -eq "$expected_size" ] &&
+        [ "$persisted_token" = "$expected_token" ] ||
+        die "persisted manifest differs from planned content"
     ln -- "$manifest_temp" "$manifest" ||
         die "manifest destination appeared during plan: $manifest"
+    [ "$(stat -c '%s' -- "$manifest")" -eq "$expected_size" ] &&
+        [ "$(sha256sum "$manifest" | awk '{ print $1 }')" = "$expected_token" ] ||
+        die "published manifest differs from planned content"
     rm -f -- "$manifest_temp"
     manifest_temp=
-    token=$(sha256sum "$manifest" | awk '{ print $1 }')
+    rm -f -- "$manifest_source"
+    manifest_source=
+    token=$expected_token
 
     printf 'PLAN within=%s targets=%s\n' "$root" "$(awk -F '\t' '$1 == "target" { n++ } END { print n + 0 }' "$manifest")"
     awk -F '\t' '$1 == "target" { printf "TARGET path=%s entries=%s bytes=%s\n", $2, $6, $7 }' "$manifest"
@@ -429,7 +457,7 @@ apply_manifest() {
     printf 'VERIFIED protected_anchors=unchanged targets=absent\n'
 }
 
-for required in awk date find getent git id ln mktemp realpath rm sed sha256sum stat; do
+for required in awk cp date find getent git id ln mktemp realpath rm sed sha256sum stat; do
     require_command "$required"
 done
 rm --help 2>/dev/null | grep -- '--one-file-system' >/dev/null ||

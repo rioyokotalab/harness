@@ -199,6 +199,28 @@ expect_failure 'manifest cannot be stored inside a deletion target' \
     --manifest "$TEST_ROOT/root/manifest-target/delete.manifest" -- \
     "$TEST_ROOT/root/manifest-target"
 
+# A quota-exhausted or faulty destination may accept creation but persist zero
+# bytes. Even when the copy command itself reports success, planning must reject
+# the byte/hash mismatch and must never publish a destination manifest.
+mkdir -p "$TEST_ROOT/root/persist-failure" "$TEST_ROOT/fake-persist-bin"
+cat >"$TEST_ROOT/fake-persist-bin/cp" <<'EOF'
+#!/bin/sh
+case "$1" in --) shift ;; esac
+: >"$2"
+exit 0
+EOF
+chmod 700 "$TEST_ROOT/fake-persist-bin/cp"
+expect_failure 'persisted manifest differs from planned content' \
+    "$TEST_ROOT/persist-failure.out" env \
+    PATH="$TEST_ROOT/fake-persist-bin:$PATH" \
+    "$HARNESS" guarded-delete plan --within "$TEST_ROOT/root" \
+    --manifest "$TEST_ROOT/persist-failure.manifest" -- \
+    "$TEST_ROOT/root/persist-failure"
+[ ! -e "$TEST_ROOT/persist-failure.manifest" ] ||
+    fail "failed persistence published a manifest"
+[ -d "$TEST_ROOT/root/persist-failure" ] ||
+    fail "failed persistence removed its target"
+
 mkdir -p "$TEST_ROOT/root/real-target"
 ln -s "$TEST_ROOT/root/real-target" "$TEST_ROOT/root/symlink-target"
 expect_failure 'symlink directories are not recursive-delete targets' \
