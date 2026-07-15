@@ -11,6 +11,25 @@ if [ -n "${BASH_VERSION:-}" ]; then
     shopt -s histappend
 fi
 
+# Launch one in-scope remote Codex session with a PTY. Agent forwarding is
+# explicit per invocation so ordinary SSH sessions keep the safer site default;
+# it also gives the private-origin login sync and exit-time publish path access
+# to the owner's already-running local agent without copying key material.
+harness_remote_codex() {
+    if [ "$#" -ne 1 ]; then
+        printf '%s\n' 'usage: harness_remote_codex {ab|ab2|ri|al|rc|t4}' >&2
+        return 2
+    fi
+    case $1 in
+        ab|ab2|ri|al|rc|t4) ;;
+        *)
+            printf 'harness_remote_codex: excluded host: %s\n' "$1" >&2
+            return 2
+            ;;
+    esac
+    command ssh -A -t "$1" 'exec bash -lic '\''cd "$HOME" && exec codex'\'''
+}
+
 case ${HARNESS_LOGICAL_HOST:-} in
     ''|*[!A-Za-z0-9._-]*) ;;
     *)

@@ -16,6 +16,8 @@ directory into a Git repository.
 - `bin/harness` and `libexec/`: value-free inventory, planning, health checks,
   and guarded bulk deletion for the portable environment.
 - `profiles/`: selected tool policy and logical host capabilities.
+- `profiles/restic-repositories.tsv` and `docs/home-backup.md`: non-secret
+  seven-node encrypted-backup topology and the owner-only restore gate.
 - `tests/fixtures/`: value-free environment evidence used by the shell tests.
 - `docs/`: architecture and operating notes for the portable environment.
 - `TODO.md`: harness-owned planned and active work.
@@ -284,6 +286,10 @@ Clone this repository to `~/harness`, inspect it, then run:
 ```bash
 ./install.sh
 ```
+
+For hidden-home recovery, follow [docs/home-backup.md](docs/home-backup.md).
+Encrypted repositories, replica generations, password files, and restored
+payloads remain ignored external state and must never be added to Git.
 
 The installer creates only known symlinks. It refuses to replace an existing
 regular file or a symlink with a different target. It does not edit either

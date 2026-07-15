@@ -119,6 +119,31 @@ tmux_type=$(env -u SHLVL -u HARNESS_INTERACTIVE_LOADED \
     '. "$HOME/harness/shell/profile.sh"; type -t exit' 2>/dev/null)
 [ "$tmux_type" = builtin ] || fail "tmux session unexpectedly overrides exit"
 
+remote_codex_home=$TEMP_DIR/remote-codex-home
+remote_codex_bin=$TEMP_DIR/remote-codex-bin
+remote_codex_log=$TEMP_DIR/remote-codex.log
+mkdir -p "$remote_codex_home/harness" "$remote_codex_bin"
+cp -R "$ROOT/shell" "$remote_codex_home/harness/"
+cat >"$remote_codex_bin/ssh" <<'EOF'
+#!/bin/sh
+printf '%s\n' "$*" >"$REMOTE_CODEX_LOG"
+EOF
+chmod 755 "$remote_codex_bin/ssh"
+HOME="$remote_codex_home" PATH="$remote_codex_bin:/usr/bin:/bin" \
+    REMOTE_CODEX_LOG="$remote_codex_log" HARNESS_LOGICAL_HOST=local \
+    bash --noprofile --norc -ic \
+    '. "$HOME/harness/shell/profile.sh"; harness_remote_codex ab' 2>/dev/null
+[ "$(cat "$remote_codex_log")" = \
+    "-A -t ab exec bash -lic 'cd \"\$HOME\" && exec codex'" ] ||
+    fail "one-connection remote Codex launcher"
+if HOME="$remote_codex_home" PATH="$remote_codex_bin:/usr/bin:/bin" \
+    REMOTE_CODEX_LOG="$remote_codex_log" HARNESS_LOGICAL_HOST=local \
+    bash --noprofile --norc -ic \
+    '. "$HOME/harness/shell/profile.sh"; harness_remote_codex github' \
+    >/dev/null 2>&1; then
+    fail "remote Codex launcher accepted an excluded service"
+fi
+
 if command -v shellcheck >/dev/null 2>&1; then
     git -C "$ROOT" grep -Il -z '^#!.*\(sh\|bash\)' -- . \
         ':(exclude)tests/fixtures/**' |
@@ -205,6 +230,24 @@ for logical_host in local ab ab2 ri al rc t4; do
         "$TEMP_DIR/plan-$logical_host.out" >/dev/null ||
         fail "plan mutation marker: $logical_host"
 done
+
+restic_rows=$(awk -F'|' '
+    /^#/ { next }
+    NF != 5 { exit 1 }
+    $1 !~ /^(local|ab|ab2|ri|al|rc|t4)$/ { exit 1 }
+    $2 !~ /^\// || $3 !~ /^\// { exit 1 }
+    $4 != "~/.config/restic/home-control.password" { exit 1 }
+    $5 !~ /^(local|local-after-quota|t4)$/ { exit 1 }
+    { count[$1]++; rows++ }
+    END {
+        if (rows != 7) exit 1
+        for (host in count) if (count[host] != 1) exit 1
+        print rows
+    }
+' "$ROOT/profiles/restic-repositories.tsv")
+[ "$restic_rows" -eq 7 ] || fail "Restic repository map must declare seven hosts"
+[ "$(sed '/^#/d' "$ROOT/profiles/restic-repositories.tsv" | cut -d'|' -f2 | sort | uniq -d | wc -l)" -eq 0 ] ||
+    fail "Restic primary repositories must be unique"
 
 grep 'CREATE harness_checkout' "$TEMP_DIR/plan-al.out" >/dev/null ||
     fail "remote checkout plan"
