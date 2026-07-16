@@ -45,6 +45,7 @@ for script in \
     "$ROOT/libexec/harness-apply" \
     "$ROOT/libexec/harness-remediate" \
     "$ROOT/libexec/harness-shell" \
+    "$ROOT/libexec/harness-cache-bootstrap" \
     "$ROOT/libexec/harness-dotfiles" \
     "$ROOT/libexec/harness-tool" \
     "$ROOT/libexec/harness-runtime" \
@@ -100,7 +101,7 @@ if HOME="$TEMP_DIR/restic-route-absent" PATH=/usr/bin:/bin \
     fail "Restic route accepted an absent command"
 fi
 
-for script in "$ROOT"/shell/cache.sh "$ROOT"/shell/profile.sh \
+for script in "$ROOT"/shell/cache.sh "$ROOT"/shell/early-cache.sh "$ROOT"/shell/profile.sh \
     "$ROOT"/shell/environments/*.sh; do
     sh -n "$script" || fail "shell configuration syntax: $script"
 done
@@ -210,6 +211,7 @@ fi
 for script in \
     "$ROOT/libexec/harness-rollback" \
     "$ROOT/libexec/harness-shell" \
+    "$ROOT/libexec/harness-cache-bootstrap" \
     "$ROOT/libexec/harness-tool" \
     "$ROOT/libexec/harness-runtime" \
     "$ROOT/libexec/harness-python" \
@@ -1088,6 +1090,81 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$shell_transaction" \
     >"$TEMP_DIR/shell-rollback.out"
 cmp -s "$test_home/.bashrc" "$TEMP_DIR/original-bashrc" || fail "bashrc rollback"
 cmp -s "$test_home/.bash_profile" "$TEMP_DIR/original-bash-profile" || fail "bash profile rollback"
+
+# Early cache bootstrapping prepends only a public managed payload. It must not
+# copy existing startup content, must precede owner commands, and must be
+# removable while preserving later owner edits.
+cache_home=$TEMP_DIR/cache-bootstrap-home
+mkdir -p "$cache_home"
+printf '%s\n' \
+    'export TEST_TOKEN=fake-secret-value' \
+    'printf "%s\\n" "${XDG_CACHE_HOME:-unset}" >"$HOME/bashrc-observed"' \
+    >"$cache_home/.bashrc"
+printf '%s\n' \
+    'printf "%s\\n" "${XDG_CACHE_HOME:-unset}" >"$HOME/login-observed"' \
+    >"$cache_home/.bash_profile"
+HOME="$cache_home" "$test_repo/bin/harness" shell --host local --apply \
+    >"$TEMP_DIR/cache-shell-apply.out"
+ln -s "$test_repo" "$cache_home/harness"
+HOME="$cache_home" "$test_repo/bin/harness" cache-bootstrap --host local --plan \
+    >"$TEMP_DIR/cache-bootstrap-plan.out"
+[ "$(grep -c '^PREPEND file=' "$TEMP_DIR/cache-bootstrap-plan.out")" -eq 2 ] ||
+    fail "cache bootstrap plan did not cover both startup files"
+HOME="$cache_home" "$test_repo/bin/harness" cache-bootstrap --host local --apply \
+    >"$TEMP_DIR/cache-bootstrap-apply.out"
+cache_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/cache-bootstrap-apply.out")
+[ -n "$cache_transaction" ] || fail "missing cache bootstrap transaction"
+HOME="$cache_home" "$test_repo/bin/harness" cache-bootstrap --host local --plan \
+    >"$TEMP_DIR/cache-bootstrap-idempotent.out"
+[ "$(grep -c '^KEEP file=' "$TEMP_DIR/cache-bootstrap-idempotent.out")" -eq 2 ] ||
+    fail "cache bootstrap is not idempotent"
+for startup in .bashrc .bash_profile; do
+    [ "$(sed -n '1p' "$cache_home/$startup")" = '# >>> harness early managed >>>' ] ||
+        fail "cache bootstrap is not the first startup block: $startup"
+done
+if grep -R 'fake-secret-value' "$cache_home/.local/state/harness" >/dev/null 2>&1; then
+    fail "cache bootstrap copied pre-existing startup content"
+fi
+HOME="$cache_home" PATH=/usr/bin:/bin sh "$cache_home/.bash_profile" \
+    >"$TEMP_DIR/cache-login-output.out" 2>&1 || fail "cache bootstrap login execution"
+HOME="$cache_home" PATH=/usr/bin:/bin sh "$cache_home/.bashrc" \
+    >"$TEMP_DIR/cache-bashrc-output.out" 2>&1 || fail "cache bootstrap bashrc execution"
+[ ! -s "$TEMP_DIR/cache-login-output.out" ] && [ ! -s "$TEMP_DIR/cache-bashrc-output.out" ] ||
+    fail "cache bootstrap startup was not silent"
+expected_cache=/mnt/nfs-03/fast/Users/rioyokota/home-cache/xdg
+[ "$(cat "$cache_home/login-observed")" = "$expected_cache" ] ||
+    fail "login owner command ran before cache bootstrap"
+[ "$(cat "$cache_home/bashrc-observed")" = "$expected_cache" ] ||
+    fail "bashrc owner command ran before cache bootstrap"
+[ ! -e "$cache_home/.cache" ] || fail "cache bootstrap created a default cache directory"
+sed -i 's/^HARNESS_LOGICAL_HOST=local$/HARNESS_LOGICAL_HOST=changed/' \
+    "$cache_home/.bashrc"
+if HOME="$cache_home" "$test_repo/bin/harness" rollback "$cache_transaction" \
+    >"$TEMP_DIR/cache-bootstrap-refused-rollback.out" 2>&1; then
+    fail "cache bootstrap rollback accepted a changed prefix"
+fi
+grep -F -x 'HARNESS_LOGICAL_HOST=changed' "$cache_home/.bashrc" >/dev/null ||
+    fail "refused cache rollback damaged the changed prefix"
+grep -F '# >>> harness early managed >>>' "$cache_home/.bash_profile" >/dev/null ||
+    fail "cache rollback mutated another file before validation completed"
+sed -i 's/^HARNESS_LOGICAL_HOST=changed$/HARNESS_LOGICAL_HOST=local/' \
+    "$cache_home/.bashrc"
+printf '%s\n' '# later owner change' >>"$cache_home/.bashrc"
+printf '%s\n' '# later owner change' >>"$cache_home/.bash_profile"
+HOME="$cache_home" "$test_repo/bin/harness" rollback "$cache_transaction" \
+    >"$TEMP_DIR/cache-bootstrap-rollback.out"
+for startup in .bashrc .bash_profile; do
+    if grep -F '# >>> harness early managed >>>' "$cache_home/$startup" >/dev/null; then
+        fail "cache bootstrap rollback left an early marker: $startup"
+    fi
+    grep -F -x '# later owner change' "$cache_home/$startup" >/dev/null ||
+        fail "cache bootstrap rollback lost a later owner edit: $startup"
+    grep -F '# >>> harness managed >>>' "$cache_home/$startup" >/dev/null ||
+        fail "cache bootstrap rollback damaged the managed suffix: $startup"
+done
+grep -F -x 'export TEST_TOKEN=fake-secret-value' "$cache_home/.bashrc" >/dev/null ||
+    fail "cache bootstrap rollback damaged pre-existing startup content"
 
 printf '%s\n' 'uenv start prgenv-gnu/25.11:v1 --view=default' >>"$test_home/.bashrc"
 cp "$test_home/.bashrc" "$TEMP_DIR/original-remediation-bashrc"

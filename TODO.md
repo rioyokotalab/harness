@@ -570,7 +570,7 @@ distributed, numerical-equivalence, or performance claim beforehand.
 
 ### T-201 — Early-login cache redirection
 
-**Phase/status:** `planned` from RI's T-199 recurrence. Determine, without
+**Phase/status:** `validated implementation; live rollout pending` from RI's T-199 recurrence. Determine, without
 tracing values or reading unrelated startup content, whether the managed cache
 exports can be installed before any user application startup on all seven
 nodes. Design the smallest silent POSIX block and prove non-interactive,
@@ -578,6 +578,19 @@ interactive, batch, nested, and direct-SSH behavior. It must not make cache
 targets part of T-191 backup sources, change scheduler state, create directories
 on healthy login, or overwrite owner startup content. Roll out only after fake
 home tests and per-node plans pass.
+
+**Implementation checkpoint:** `harness cache-bootstrap` now plans and
+transactionally prepends an exact silent cache-only block to `.bashrc` and
+Bash's existing selected login file. It stores only the public prefix, disables
+editor swap/backup/user configuration, revalidates exact suffix/type/owner/mode
+before mutation, and supports exact-prefix rollback that preserves later owner
+edits. `docs/early-cache-bootstrap.md` records the contract. Fake-home tests
+prove first-command ordering, idempotence, silence, no `~/.cache` creation, no
+copy of a synthetic secret, refusal before mutation when a prefix changes, and
+successful rollback with later changes. Portable and native full suites pass.
+Commit and distribute the exact revision, obtain clean seven-node plans, then
+apply and test fresh login, direct SSH, interactive/nested Bash, and scheduler
+inheritance before guarded cleanup of any RI recurrence.
 
 ### T-202 — AB Mozilla application-native relocation
 

@@ -23,19 +23,9 @@ export EDITOR=vim
 export VISUAL=vim
 export PAGER=cat
 
-case ${HARNESS_LOGICAL_HOST:-} in
-    ''|*[!A-Za-z0-9._-]*) ;;
-    *)
-        harness_environment=$HOME/harness/shell/environments/$HARNESS_LOGICAL_HOST.sh
-        if [ -r "$harness_environment" ]; then
-            . "$harness_environment"
-        fi
-        unset harness_environment
-        if [ -r "$HOME/harness/shell/cache.sh" ]; then
-            . "$HOME/harness/shell/cache.sh"
-        fi
-        ;;
-esac
+if [ -r "$HOME/harness/shell/early-cache.sh" ]; then
+    . "$HOME/harness/shell/early-cache.sh"
+fi
 
 case $- in
     *i*)

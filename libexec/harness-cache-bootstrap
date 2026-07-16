@@ -1,0 +1,196 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() { echo "Usage: harness cache-bootstrap --host LOGICAL_ID [--plan|--apply]" >&2; }
+logical_host=
+mode=plan
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        *) usage; exit 2 ;;
+    esac
+done
+[ -n "$logical_host" ] || { usage; exit 2; }
+profile_for "$logical_host" >/dev/null
+for required in cmp ex head stat wc; do
+    command -v "$required" >/dev/null 2>&1 || die "cache bootstrap requires command: $required"
+done
+
+temp_parent=${TMPDIR:-/tmp}
+payload=$(mktemp "$temp_parent/harness-cache-bootstrap.XXXXXX")
+suffix=$(mktemp "$temp_parent/harness-cache-suffix.XXXXXX")
+cleanup_files() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    test ! -e "$payload" || unlink -- "$payload"
+    test ! -e "$suffix" || unlink -- "$suffix"
+    exit "$status"
+}
+trap cleanup_files EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+chmod 600 "$payload" "$suffix"
+cat >"$payload" <<EOF
+# >>> harness early managed >>>
+HARNESS_LOGICAL_HOST=$logical_host
+export HARNESS_LOGICAL_HOST
+if [ -r "\$HOME/harness/shell/early-cache.sh" ]; then
+    . "\$HOME/harness/shell/early-cache.sh"
+fi
+# <<< harness early managed <<<
+EOF
+prepare_suffix() {
+    name=$1
+    case $name in
+        bashrc)
+            block=$HARNESS_ROOT/shell/bashrc.$logical_host.block
+            [ -f "$block" ] || block=$HARNESS_ROOT/shell/bashrc.block
+            ;;
+        bash_profile|bash_login|profile)
+            block=$HARNESS_ROOT/shell/bash_profile.$logical_host.block
+            [ -f "$block" ] || block=$HARNESS_ROOT/shell/bash_profile.block
+            ;;
+        *) die "unexpected shell startup name: $name" ;;
+    esac
+    printf '\n' >"$suffix"
+    cat "$block" >>"$suffix"
+}
+
+if [ -e "$HOME/.bash_profile" ] || [ -L "$HOME/.bash_profile" ]; then
+    login_name=bash_profile
+elif [ -e "$HOME/.bash_login" ] || [ -L "$HOME/.bash_login" ]; then
+    login_name=bash_login
+else
+    login_name=profile
+fi
+entries=$(printf 'bashrc\n%s\n' "$login_name")
+payload_bytes=$(wc -c <"$payload" | tr -d ' ')
+payload_lines=$(awk 'END { print NR + 0 }' "$payload")
+uid=$(id -u)
+
+blocked=0
+echo "CACHE_BOOTSTRAP_PLAN host=$logical_host mode=$mode contents=not-read"
+for name in $entries; do
+    destination=$HOME/.$name
+    prepare_suffix "$name"
+    suffix_bytes=$(wc -c <"$suffix" | tr -d ' ')
+    if [ ! -f "$destination" ] || [ -L "$destination" ]; then
+        echo "BLOCK file=.$name reason=not-strict-regular"
+        blocked=1
+    elif [ "$(stat -c %u "$destination")" != "$uid" ]; then
+        echo "BLOCK file=.$name reason=not-owned-by-current-user"
+        blocked=1
+    elif [ "$(wc -c <"$destination" | tr -d ' ')" -lt "$suffix_bytes" ] ||
+        ! tail -c "$suffix_bytes" "$destination" | cmp -s - "$suffix"; then
+        echo "BLOCK file=.$name reason=managed-suffix-not-exact"
+        blocked=1
+    elif head -c "$payload_bytes" "$destination" | cmp -s - "$payload"; then
+        echo "KEEP file=.$name prefix=harness-early-managed"
+    elif grep -F '# >>> harness early managed >>>' "$destination" >/dev/null 2>&1; then
+        echo "BLOCK file=.$name reason=early-marker-not-exact-prefix"
+        blocked=1
+    else
+        echo "PREPEND file=.$name bytes=$payload_bytes contents=harness-early-managed"
+    fi
+done
+[ "$blocked" -eq 0 ] || die "cache bootstrap plan contains blocked files"
+[ "$mode" = apply ] || { echo "END cache-bootstrap host=$logical_host changes=not-applied"; exit 0; }
+
+[ -z "$(git -C "$HARNESS_ROOT" status --porcelain)" ] || die "cache bootstrap apply requires clean harness"
+"$HARNESS_ROOT/libexec/harness-doctor" --host "$logical_host" >/dev/null || die "host doctor failed"
+state_root=$HOME/.local/state/harness/transactions
+mkdir -p "$state_root"
+chmod 700 "$HOME/.local/state/harness" "$state_root"
+transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+manifest=$state_root/$transaction_id.manifest
+: >"$manifest"; chmod 600 "$manifest"
+printf 'schema=1\nhost=%s\nrevision=%s\n' "$logical_host" "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" >>"$manifest"
+
+remove_exact_prefix() {
+    destination=$1
+    stored=$2
+    lines=$3
+    bytes=$4
+    before=$(wc -c <"$destination" | tr -d ' ')
+    head -c "$bytes" "$destination" | cmp -s - "$stored" || return 1
+    ex -n -u NONE -U NONE -i NONE -N -es "$destination" <<EOF
+set nobackup nowritebackup noswapfile
+1,${lines}delete
+write
+quit
+EOF
+    after=$(wc -c <"$destination" | tr -d ' ')
+    [ "$after" -eq $((before - bytes)) ]
+}
+
+complete=0
+rollback_partial() {
+    awk -F'|' '$1 == "shell-prefix" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+        "$manifest" | while IFS='|' read -r _record destination _original bytes stored lines _mode; do
+            if head -c "$bytes" "$destination" | cmp -s - "$stored"; then
+                remove_exact_prefix "$destination" "$stored" "$lines" "$bytes" || return 1
+            fi
+        done
+}
+cleanup_apply() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ "$complete" -eq 0 ]; then
+        rollback_partial || status=2
+        echo failed >"$manifest.status"
+        chmod 600 "$manifest.status"
+    fi
+    test ! -e "$payload" || unlink -- "$payload"
+    test ! -e "$suffix" || unlink -- "$suffix"
+    exit "$status"
+}
+trap cleanup_apply EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+for name in $entries; do
+    destination=$HOME/.$name
+    prepare_suffix "$name"
+    suffix_bytes=$(wc -c <"$suffix" | tr -d ' ')
+    [ -f "$destination" ] && [ ! -L "$destination" ] || die "cache bootstrap destination changed type"
+    [ "$(stat -c %u "$destination")" = "$uid" ] || die "cache bootstrap destination changed owner"
+    [ "$(wc -c <"$destination" | tr -d ' ')" -ge "$suffix_bytes" ] &&
+        tail -c "$suffix_bytes" "$destination" | cmp -s - "$suffix" || die "cache bootstrap managed suffix changed"
+    if head -c "$payload_bytes" "$destination" | cmp -s - "$payload"; then
+        continue
+    fi
+    if grep -F '# >>> harness early managed >>>' "$destination" >/dev/null 2>&1; then
+        die "cache bootstrap early marker changed before apply"
+    fi
+    original=$(wc -c <"$destination" | tr -d ' ')
+    original_mode=$(stat -c %a "$destination")
+    stored=$state_root/$transaction_id.$name.early.payload
+    cp "$payload" "$stored"; chmod 600 "$stored"
+    printf 'shell-prefix|%s|%s|%s|%s|%s|%s\n' \
+        "$destination" "$original" "$payload_bytes" "$stored" "$payload_lines" "$original_mode" >>"$manifest"
+    ex -n -u NONE -U NONE -i NONE -N -es "$destination" <<EOF
+set nobackup nowritebackup noswapfile
+0read $stored
+write
+quit
+EOF
+    [ "$(stat -c %a "$destination")" = "$original_mode" ] || die "cache bootstrap changed file mode"
+    [ "$(wc -c <"$destination" | tr -d ' ')" -eq $((original + payload_bytes)) ] || die "cache bootstrap size verification failed"
+    head -c "$payload_bytes" "$destination" | cmp -s - "$stored" || die "cache bootstrap prefix verification failed"
+done
+echo complete >"$manifest.status"; chmod 600 "$manifest.status"
+complete=1
+test ! -e "$payload" || unlink -- "$payload"
+test ! -e "$suffix" || unlink -- "$suffix"
+trap - EXIT HUP INT TERM
+echo "TRANSACTION id=$transaction_id status=complete"
+echo "END cache-bootstrap host=$logical_host changes=applied"

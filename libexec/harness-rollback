@@ -18,7 +18,7 @@ manifest=$HOME/.local/state/harness/transactions/$transaction_id.manifest
 
 records=$(mktemp "${TMPDIR:-/tmp}/harness-rollback.XXXXXX")
 trap 'rm -f "$records"' EXIT HUP INT TERM
-awk -F'|' '$1 == "link" || $1 == "managed-link-new" || $1 == "managed-link-replaced" || $1 == "shell" || $1 == "shell-new" || $1 == "patch" || $1 == "artifact" || $1 == "runtime" || $1 == "python" || $1 == "agent" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+awk -F'|' '$1 == "link" || $1 == "managed-link-new" || $1 == "managed-link-replaced" || $1 == "shell" || $1 == "shell-new" || $1 == "shell-prefix" || $1 == "patch" || $1 == "artifact" || $1 == "runtime" || $1 == "python" || $1 == "agent" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
     "$manifest" >"$records"
 
 # Validate every path before mutating any path.
@@ -66,6 +66,17 @@ while IFS='|' read -r record destination field3 field4 field5 field6 field7; do
         if [ "$current" -ne "$expected" ] ||
             ! tail -c "$bytes" "$destination" | cmp -s - "$payload"; then
             die "rollback blocked: shell file changed after apply: $destination"
+        fi
+    elif [ "$record" = shell-prefix ]; then
+        bytes=$field4; payload=$field5; lines=$field6
+        case "$payload" in "$HOME/.local/state/harness/transactions/"*) ;; *) die "rollback blocked: unsafe shell-prefix payload path" ;; esac
+        [ -f "$payload" ] && [ ! -L "$payload" ] || die "rollback blocked: missing shell-prefix payload"
+        [ "$(wc -c <"$payload" | tr -d ' ')" -eq "$bytes" ] || die "rollback blocked: shell-prefix payload size changed"
+        [ "$lines" -gt 0 ] 2>/dev/null || die "rollback blocked: invalid shell-prefix line count"
+        [ -f "$destination" ] && [ ! -L "$destination" ] || die "rollback blocked: prefixed shell file changed type"
+        if ! head -c "$bytes" "$destination" | cmp -s - "$payload" &&
+            awk 'NR == 1 && $0 == "# >>> harness early managed >>>" { found=1 } END { exit found ? 0 : 1 }' "$destination"; then
+            die "rollback blocked: shell prefix changed after apply: $destination"
         fi
     elif [ "$record" = patch ]; then
         offset=$field3; original_size=$field4; bytes=$field5
@@ -196,6 +207,22 @@ while IFS='|' read -r record destination field3 field4 field5 field6 field7; do
             else
                 echo "TRUNCATE file=$destination bytes=$original"
                 truncate -s "$original" "$destination"
+            fi
+        elif [ "$record" = shell-prefix ]; then
+            bytes=$field4; payload=$field5; lines=$field6
+            if head -c "$bytes" "$destination" | cmp -s - "$payload"; then
+                before=$(wc -c <"$destination" | tr -d ' ')
+                echo "REMOVE-PREFIX file=$destination bytes=$bytes"
+                ex -n -u NONE -U NONE -i NONE -N -es "$destination" <<EOF
+set nobackup nowritebackup noswapfile
+1,${lines}delete
+write
+quit
+EOF
+                after=$(wc -c <"$destination" | tr -d ' ')
+                [ "$after" -eq $((before - bytes)) ] || die "shell-prefix rollback size verification failed"
+            else
+                echo "KEEP file=$destination prefix=already-rolled-back"
             fi
         elif [ "$record" = patch ]; then
             offset=$field3; bytes=$field5
