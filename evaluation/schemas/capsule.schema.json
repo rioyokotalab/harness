@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "task_id", "run_id", "source_revision", "failed_checks", "evidence", "retry_eligible", "next_verification"],
+  "properties": {
+    "schema": {"const": 1},
+    "task_id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+    "run_id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+    "source_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "failed_checks": {"type": "array", "maxItems": 16, "items": {"type": "string", "pattern": "^[a-z0-9_-]+$"}},
+    "evidence": {"type": "array", "maxItems": 16, "items": {"type": "string", "maxLength": 160}},
+    "retry_eligible": {"const": true},
+    "next_verification": {"type": "string", "maxLength": 160}
+  }
+}

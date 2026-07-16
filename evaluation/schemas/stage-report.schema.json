@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "experiment_id", "stage", "client", "totals", "arms", "paired", "task_families", "flagged_pairs", "scope_note"],
+  "properties": {
+    "schema": {"const": 1},
+    "experiment_id": {"type": "string"},
+    "stage": {"enum": ["pilot", "full"]},
+    "client": {
+      "type": "object", "additionalProperties": false,
+      "required": ["command", "version", "model", "reasoning_effort", "speed", "sandbox", "ephemeral", "automatic_delegation"],
+      "properties": {
+        "command": {"type": "string"}, "version": {"type": "string"}, "model": {"type": "string"},
+        "reasoning_effort": {"type": "string"}, "speed": {"type": "string"}, "sandbox": {"type": "string"},
+        "ephemeral": {"type": "boolean"}, "automatic_delegation": {"type": "boolean"}
+      }
+    },
+    "totals": {
+      "type": "object", "additionalProperties": false,
+      "required": ["primary_runs", "model_invocations", "retries", "passed", "safety_failures", "duration_ms", "input_tokens", "input_tokens_known_runs", "output_tokens", "output_tokens_known_runs"],
+      "properties": {
+        "primary_runs": {"type": "integer", "minimum": 0}, "model_invocations": {"type": "integer", "minimum": 0},
+        "retries": {"type": "integer", "minimum": 0}, "passed": {"type": "integer", "minimum": 0},
+        "safety_failures": {"type": "integer", "minimum": 0}, "duration_ms": {"type": "integer", "minimum": 0},
+        "input_tokens": {"type": ["integer", "null"], "minimum": 0}, "input_tokens_known_runs": {"type": "integer", "minimum": 0},
+        "output_tokens": {"type": ["integer", "null"], "minimum": 0}, "output_tokens_known_runs": {"type": "integer", "minimum": 0}
+      }
+    },
+    "arms": {
+      "type": "object", "additionalProperties": false, "required": ["baseline", "candidate"],
+      "properties": {
+        "baseline": {"$ref": "#/$defs/armMetrics"},
+        "candidate": {"$ref": "#/$defs/armMetrics"}
+      }
+    },
+    "paired": {"$ref": "#/$defs/pairedMetrics"},
+    "task_families": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["task_id", "baseline", "candidate", "paired"],
+        "properties": {"task_id": {"type": "string"}, "baseline": {"$ref": "#/$defs/armMetrics"}, "candidate": {"$ref": "#/$defs/armMetrics"}, "paired": {"$ref": "#/$defs/pairedMetrics"}}
+      }
+    },
+    "flagged_pairs": {"type": "integer", "minimum": 0},
+    "scope_note": {"type": "string"}
+  },
+  "$defs": {
+    "armMetrics": {
+      "type": "object", "additionalProperties": false,
+      "required": ["runs", "passed", "pass_rate", "pass_rate_wilson_95", "model_invocations", "duration_ms", "input_tokens", "input_tokens_known_runs", "output_tokens", "output_tokens_known_runs"],
+      "properties": {
+        "runs": {"type": "integer", "minimum": 0}, "passed": {"type": "integer", "minimum": 0},
+        "pass_rate": {"type": ["number", "null"]},
+        "pass_rate_wilson_95": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": ["number", "null"]}},
+        "model_invocations": {"type": "integer", "minimum": 0}, "duration_ms": {"type": "integer", "minimum": 0},
+        "input_tokens": {"type": ["integer", "null"], "minimum": 0}, "input_tokens_known_runs": {"type": "integer", "minimum": 0},
+        "output_tokens": {"type": ["integer", "null"], "minimum": 0}, "output_tokens_known_runs": {"type": "integer", "minimum": 0}
+      }
+    },
+    "pairedMetrics": {
+      "type": "object", "additionalProperties": false,
+      "required": ["pairs", "candidate_minus_baseline_pass_rate", "distribution_free_95_interval", "interval_method", "candidate_only_passes", "baseline_only_passes", "ties"],
+      "properties": {
+        "pairs": {"type": "integer", "minimum": 0}, "candidate_minus_baseline_pass_rate": {"type": "number"},
+        "distribution_free_95_interval": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}},
+        "interval_method": {"type": "string"}, "candidate_only_passes": {"type": "integer", "minimum": 0},
+        "baseline_only_passes": {"type": "integer", "minimum": 0}, "ties": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

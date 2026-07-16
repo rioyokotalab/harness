@@ -289,9 +289,9 @@ queue delay.
 
 ### T-181 — Acceptance-grade harness evaluation corpus
 
-**Phase/status:** `ready-for-go`; the four-decision interview is complete and
-audited without contradiction. No evaluator, model run, or candidate
-implementation is authorized until a new explicit go. Baseline revision is
+**Phase/status:** `executing` from the owner's explicit 2026-07-16 `go`; the
+four-decision interview is complete and audited without contradiction. Build
+and validate the evaluator before any model invocation. Baseline revision is
 clean published `d5b82cd`. Current Codex CLI is
 0.144.5. `/tmp` has 290 GB free and is the preferred disposable run root;
 the 94%-used home filesystem is not a run-artifact destination. CLI startup
@@ -409,11 +409,16 @@ candidate adoption for a separate owner decision. Go authorizes at most these
 authorize credentials inspection, live remotes, packages, schedulers,
 deployment, unrelated configuration, candidate adoption, or raw deletion.
 
-**Acceptance and next action:** all required owner input is collected. The
-first post-go working set is `TODO.md`, a new `evaluation/` tree, focused
-evaluation tests, and minimal README/test-suite integration. Wait now for a new
-explicit `go`, `proceed`, or `execute`; then reconstruct this frozen plan from
-disk and begin with implementation only, not a model invocation.
+**Execution checkpoint:** the active working set is `TODO.md`, a new
+`evaluation/` tree, focused evaluation tests, and minimal README/test-suite
+integration. The implementation is complete and model-free validation passes:
+closed-schema corpus/result/capsule/report checks, adversarial evaluator
+self-tests, ShellCheck, JSON parsing, Codex invocation-option preflight, and the
+full phase-1 suite after reloading the declared OpenMPI module. The suite's only
+diagnostic was the known login-node warning that the CUDA-enabled OpenMPI build
+cannot load `libcuda.so.1`; its singleton MPI gate passed. No model has been
+invoked. Next commit, fetch/reconcile, and publish this exact implementation;
+only from a clean published revision begin the 18-primary-run pilot.
 
 ## Stable operational facts
 

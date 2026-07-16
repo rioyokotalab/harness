@@ -25,3 +25,8 @@
 !.claude/**
 !shared/
 !shared/**
+!evaluation/
+!evaluation/**
+evaluation/runs/
+evaluation/results/raw/
+evaluation/results/*.tmp

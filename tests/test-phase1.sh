@@ -63,6 +63,8 @@ done
     fail "Restic schedule focused suite"
 "$ROOT/tests/test-onboard-mirrored-node.sh" >/dev/null ||
     fail "onboarding focused suite"
+"$ROOT/tests/test-evaluation.sh" >/dev/null ||
+    fail "evaluation focused suite"
 
 # Direct non-interactive SSH can omit ~/.local/bin even when the managed
 # Restic installation is healthy. The harness route must find that exact

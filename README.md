@@ -82,6 +82,22 @@ Run the phase-1 validation suite with:
 tests/test-phase1.sh
 ```
 
+## Agent harness evaluation
+
+`evaluation/` contains a synthetic, credential-free acceptance corpus and a
+deterministic runner for paired baseline/candidate experiments. The runner uses
+ephemeral Codex sessions in canonical mode-0700 `/tmp` roots, retains bounded
+mode-0600 raw evidence outside agent workspaces, and routes run-tree cleanup
+through `harness guarded-delete`. Candidate results are evidence for a separate
+owner review; they never change the live harness automatically.
+
+Validate the corpus and runner without invoking a model:
+
+```bash
+python3 evaluation/evaluate.py validate
+tests/test-evaluation.sh
+```
+
 ## Autonomous deletion safety
 
 Agents never run raw recursive or expanding deletion. They use a two-command
