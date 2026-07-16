@@ -534,11 +534,39 @@ T-191.
   encrypted repository was copied and promoted at T4, then passed a fresh
   all-pack read and verified restore without using `/mnt/nfs-03`. The `ab`
   generation has been fingerprint-validated and promoted locally, but its
-  independent Restic validation is paused because that generation is on
-  `/mnt/nfs-03`. Copies for `ri`, `al`, `rc`, and `t4` are likewise paused at
-  the owner's explicit no-NFS boundary. Next action: validate `ab` and create
-  and validate the other four generations when `/mnt/nfs-03` work resumes;
-  only then reopen sensitive cleanup.
+  independent Restic validation remains pending because it requires the AB
+  password at the replica site. On 2026-07-16 the owner reopened NFS work and
+  requested background execution with five-minute reporting. No prior
+  Restic/replica task was running. RI source preflight found no Restic writer
+  or lock and recorded 286 entries, 325,277,900 bytes, and SHA-256
+  `62099e9e5b20393fda4ac02bae6c0decd02a93f508ca4672ab766207dec271cc`;
+  its generation staging/final paths were absent. A first `nohup` launch was
+  killed by the command supervisor before creating either path; it produced no
+  status, retained an empty unread mode-0600 log and reviewed helper, and both
+  exact files were then unlinked, making retry safe. Persistent background
+  session `1422` then completed the reviewed apply: RI generation
+  `20260715T222741Z` was promoted with the exact source fingerprint above.
+  The serialized AL, RC, and T4 applies then passed the same writer/lock,
+  collision, source-before/after, staging, and promoted-final gates:
+  AL is 289 entries, 361,725,145 bytes, SHA-256
+  `ee644eb6d134f7657b4e65345ea8e0694ea523fe82c6e304abbd7bebfd601c07`;
+  RC is 298 entries, 525,388,529 bytes, SHA-256
+  `4025fbc83ce39b9915b58aba6451567459c7f1c06e82f39f06ae1a1da0d412b2`;
+  and T4 is 497 entries, 4,092,281,307 bytes, SHA-256
+  `1da892c7bb066b84317cf67cebc82ef68223b212bf2861c25b934225f877038c`.
+  A final shallow audit found final generations for `ab`, `ri`, `al`, `rc`,
+  and `t4`, no corresponding staging path, and no Restic or rsync process.
+
+  Independent Restic validation remains closed on credential transport. A
+  loopback-only reverse SSH preflight from AB reached this node but failed
+  `publickey` authentication because the forwarded agent is not authorized by
+  this node's SSH server. No repository or credential was accessed or changed.
+  Do not copy password bytes, weaken SSH authentication, or expose a writable
+  unauthenticated repository to bypass this. Next action: use an owner-supplied
+  approved password-file path at the replica site or implement and test a
+  strictly read-only, user-private transport before running `check --read-data`
+  and verified restores for `ab`, `ri`, `al`, `rc`, and `t4`. Only after all
+  generations validate may sensitive cleanup reopen.
 
   **Independent-generation safety checkpoint:** foreground work during the
   read-only local restore added a credential-free `harness replica plan/apply`
