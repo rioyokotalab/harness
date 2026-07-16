@@ -1026,6 +1026,17 @@ offline environment creation from the visible interpreter. It does not select
 framework packages, validate a lock, seed pip, claim wheel availability, or
 authorize any T-206 install/download.
 
+**First fleet pass and correction:** exact commit `de81e5e` reached all six
+clean remotes and every transfer bundle is absent. Local, AB, AB2, RC, and T4
+passed. RI's non-interactive SSH `PATH` omitted its intact pinned
+`~/.local/bin/uv`, while AL exposed system Python 3.6 even though its intact
+managed Python 3.12.12 link is `~/.local/bin/python3.12`; neither finding is an
+installation gap. The corrected gate keeps normal `uv` PATH precedence with an
+exact managed-link fallback and prefers the declared managed Python 3.12 link
+over generic system `python3`. Focused execution, portable full-suite, and
+public-audit checks pass locally. Commit, distribute, and rerun all seven before
+closing; no artifact download or package change is authorized or required.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

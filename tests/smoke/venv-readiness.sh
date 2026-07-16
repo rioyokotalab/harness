@@ -34,22 +34,30 @@ case $host in ri|al) expected_arch=aarch64 ;; *) expected_arch=x86_64 ;; esac
     printf 'FAIL host=%s gate=venv-readiness-v1 reason=architecture\n' "$host"
     exit 2
 }
-if ! command -v uv >/dev/null 2>&1; then
+uv=$(command -v uv || true)
+if [ -z "$uv" ] && [ -x "$HOME/.local/bin/uv" ]; then
+    uv=$HOME/.local/bin/uv
+fi
+if [ -z "$uv" ]; then
     printf 'FAIL host=%s gate=venv-readiness-v1 reason=uv-absent\n' "$host"
     exit 2
 fi
-python=$(command -v python3)
+if [ -x "$HOME/.local/bin/python3.12" ]; then
+    python=$HOME/.local/bin/python3.12
+else
+    python=$(command -v python3 || true)
+fi
 [ -n "$python" ] || {
     printf 'FAIL host=%s gate=venv-readiness-v1 reason=python-absent\n' "$host"
     exit 2
 }
-printf 'UV %s\n' "$(uv --version)"
+printf 'UV %s\n' "$("$uv" --version)"
 printf 'BASE_PYTHON %s\n' "$("$python" --version)"
 UV_CACHE_DIR=$build/uv-cache
 UV_OFFLINE=1
 UV_PYTHON_DOWNLOADS=never
 export UV_CACHE_DIR UV_OFFLINE UV_PYTHON_DOWNLOADS
-if ! uv --offline --no-python-downloads venv --no-project --python "$python" \
+if ! "$uv" --offline --no-python-downloads venv --no-project --python "$python" \
     "$build/venv" >"$build/uv.out" 2>&1; then
     printf 'FAIL host=%s gate=venv-readiness-v1 reason=offline-create\n' "$host"
     exit 2
