@@ -379,9 +379,19 @@ cc -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer \
     fail "native sanitizer smoke"
 c++ -std=c++20 -O2 "$ROOT/tests/smoke/cpp20.cpp" -o "$TEMP_DIR/cpp20"
 [ "$("$TEMP_DIR/cpp20")" = cpp20=pass ] || fail "native C++20 smoke"
-mpicc -O2 "$ROOT/tests/smoke/mpi.c" -o "$TEMP_DIR/mpi"
-[ "$("$TEMP_DIR/mpi" 1)" = "mpi=pass ranks=1" ] ||
-    fail "native MPI singleton smoke"
+case ${HARNESS_PORTABLE_CI:-0} in
+    0)
+        mpicc -O2 "$ROOT/tests/smoke/mpi.c" -o "$TEMP_DIR/mpi"
+        [ "$("$TEMP_DIR/mpi" 1)" = "mpi=pass ranks=1" ] ||
+            fail "native MPI singleton smoke"
+        ;;
+    1)
+        printf '%s\n' 'SKIP native MPI singleton smoke: portable CI has no declared MPI toolchain'
+        ;;
+    *)
+        fail "HARNESS_PORTABLE_CI must be 0 or 1"
+        ;;
+esac
 
 "$HARNESS" inventory --host local >"$TEMP_DIR/local.facts"
 awk -F= '

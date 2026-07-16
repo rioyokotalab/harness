@@ -330,13 +330,14 @@ warnings were explicitly ignored by OpenMPI.
 **Phase/status:** `planning`; repository-side CI is authorized, external
 GitHub settings are proposal-only. Use only pinned official actions and
 least-privilege read permissions. Harness CI must run deterministic syntax,
-ShellCheck when provided by the repository toolchain, focused evaluator tests,
-and phase-1 gates without credentials, remote nodes, scheduler writes, or model
-calls. Website CI must run its existing offline credential-free checks and
-locked browser tests, but no deploy/live/network check. Preserve the website's
-current unrelated dirty ledger and defer its workflow edit until clean. Record
-exact recommended branch protections, required checks, rollback, and remaining
-owner-side settings without changing GitHub configuration automatically.
+ShellCheck, focused evaluator tests, and portable phase-1 gates without
+credentials, remote nodes, scheduler writes, model calls, or a false claim
+about generic-runner MPI readiness. Website CI must run its existing
+credential-free checks and locked browser tests, but no deploy/live check.
+Preserve the website's current unrelated dirty ledger and defer its workflow
+edit until clean. Record exact recommended branch protections, required checks,
+rollback, and remaining owner-side settings without changing GitHub
+configuration automatically.
 
 ### T-195 — Seven-node configuration-drift audit
 

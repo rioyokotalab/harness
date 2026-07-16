@@ -27,6 +27,8 @@
 !shared/**
 !evaluation/
 !evaluation/**
+!.github/
+!.github/**
 evaluation/runs/
 evaluation/results/raw/
 evaluation/results/*.tmp
