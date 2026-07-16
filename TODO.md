@@ -628,6 +628,13 @@ then validates the independent declared host/cache/XDG paths and publishes a
 mode-0600 result. Focused and portable full suites pass. Commit, distribute,
 collision-check, and run this five-minute/default-priority gate before closing.
 
+**Batch-gate submission checkpoint:** exact commit `96de5d2` is clean on all
+seven nodes; all collision checks found absent results and zero exact-name
+jobs. Native schedulers accepted local Ybatch `91169`; AB PBS `2045001.pbs1`;
+AB2 PBS `2045000.pbs1`; RI Slurm `6997`; AL Slurm `4223834`; RC Slurm
+`211014`; and T4 AGE `8179679`. Monitor only these IDs and publish no batch
+inheritance claim until scheduler accounting and terminal private results agree.
+
 ### T-202 — AB Mozilla application-native relocation
 
 **Phase/status:** `owner-gated`; not a quota emergency. AB's retained
