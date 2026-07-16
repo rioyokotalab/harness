@@ -1177,6 +1177,20 @@ distribute, perform fresh result/job/checkpoint collision checks, then submit
 the same proven five-minute/default-priority CPU routes once per node and
 monitor only captured IDs.
 
+**First submission checkpoint and two pre-job corrections:** exact commit
+`42d8709` reached six clean remotes and all result, checkpoint, and scheduler
+names passed fresh collision checks. PBS accepted AB `2045091.pbs1` and AB2
+`2045092.pbs1`; Slurm accepted RI `7016`, AL `4224483`, and RC `211075`;
+AGE accepted corrected T4 job `8180931`. Local Ybatch printed an underlying
+invalid-partition rejection but returned zero, creating no job or result: its
+resource must be the proven `#YBATCH -r thrp_1` directive, not invented Slurm
+partition/resource directives. T4's first request was likewise rejected before
+job creation because `-A` is only an accounting string; native `-w v` proved
+that this site selects the reviewed group with `-g jh250019`, after which the
+single submission succeeded. Preserve the six accepted IDs. Commit/distribute
+the local-only directive correction, recheck exact local name/result/checkpoint
+absence, and retry local once without touching any accepted job.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

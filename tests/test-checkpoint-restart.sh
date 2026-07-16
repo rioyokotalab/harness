@@ -27,6 +27,10 @@ trap 'exit 143' TERM
 
 bash -n "$JOB"
 bash -n "$LOCAL_JOB"
+grep -F '#YBATCH -r thrp_1' "$LOCAL_JOB" >/dev/null || fail "local native resource"
+if grep -E '^#SBATCH --(partition|resource)=' "$LOCAL_JOB" >/dev/null; then
+    fail "local resource was expressed as a Slurm option"
+fi
 c++ -std=c++20 -O2 -Wall -Wextra -Werror "$SOURCE" -o "$TEST_ROOT/checkpoint_restart"
 reference=$("$TEST_ROOT/checkpoint_restart" reference 1000)
 checkpoint=$TEST_ROOT/state.chk

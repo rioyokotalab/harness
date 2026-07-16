@@ -1,7 +1,6 @@
 #!/bin/bash
+#YBATCH -r thrp_1
 #SBATCH --job-name=t217rlocal
-#SBATCH --partition=threadripper
-#SBATCH --resource=thrp_1
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --time=00:05:00
