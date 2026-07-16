@@ -1483,6 +1483,16 @@ exactly one five-minute/default-priority two-node request as job `4224814`;
 immediate reconciliation matched owner `ryokota`, name `t230mal`, and pending
 state. Monitor only this ID and do not replace it for queue delay.
 
+**V1 terminal diagnosis and v2 correction:** AL `4224814` ran immediately.
+Source-contract and compilation passed, but the second node could not execute
+the binary built under the first node's private `/tmp`; Slurm recorded failure
+and the mode-0600 v1 result preserves that diagnosis without publishing either
+hostname. This is a multi-node staging defect, not MPI/fabric evidence. V2 uses
+a unique mode-0700 build directory under the already shared private
+`~/.local/state/harness/hpc-readiness` root, then guarded-cleans it with that
+root as the explicit boundary. Preserve v1 evidence; validate, commit,
+distribute, and retry only with a new v2 result and job name.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

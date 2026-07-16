@@ -15,8 +15,8 @@ esac
 
 root=$HOME/harness
 state_root=$HOME/.local/state/harness/hpc-readiness
-result=$state_root/t230-multinode-mpi-al-v1.out
-scratch=${SLURM_TMPDIR:-${TMPDIR:-/tmp}}
+result=$state_root/t230-multinode-mpi-al-v2.out
+build_root=$state_root
 build=
 capture=
 published=0
@@ -27,12 +27,13 @@ chmod 700 "$state_root"
     printf 'multinode-mpi-readiness: result already exists: %s\n' "$result" >&2
     exit 2
 }
-capture=$(mktemp "$state_root/.t230-multinode-mpi-al-v1.XXXXXX")
+capture=$(mktemp "$state_root/.t230-multinode-mpi-al-v2.XXXXXX")
 chmod 600 "$capture"
-if ! build=$(mktemp -d "$scratch/t230-multinode-mpi-al-v1.XXXXXX"); then
+if ! build=$(mktemp -d "$build_root/.t230-multinode-build-al-v2.XXXXXX"); then
     unlink -- "$capture"
     exit 2
 fi
+chmod 700 "$build"
 
 finish() {
     status=$?
@@ -40,7 +41,7 @@ finish() {
     cleanup_failed=0
     if [ -n "$build" ] && [ -d "$build" ]; then
         "$root/tests/guarded-test-cleanup.sh" "$HOME/.local/bin/harness" \
-            "$scratch" "$build" "$scratch" >/dev/null || cleanup_failed=1
+            "$build_root" "$build" "$build_root" >/dev/null || cleanup_failed=1
     fi
     if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then status=1; fi
     if [ -n "$capture" ] && [ -f "$capture" ] && [ "$published" -eq 0 ]; then
@@ -76,4 +77,4 @@ printf '%s\n' 'NATIVE mpicc -O2 tests/smoke/mpi-multinode.c -o BUILD/mpi-multino
 mpicc -O2 "$root/tests/smoke/mpi-multinode.c" -o "$build/mpi-multinode"
 printf '%s\n' 'NATIVE srun --nodes=2 --ntasks=2 --ntasks-per-node=1 BUILD/mpi-multinode'
 srun --nodes=2 --ntasks=2 --ntasks-per-node=1 "$build/mpi-multinode"
-printf 'PASS host=%s gate=multinode-mpi-v1 ranks=2 hosts=2\n' "$host"
+printf 'PASS host=%s gate=multinode-mpi-v2 ranks=2 hosts=2 build=shared-private-state\n' "$host"
