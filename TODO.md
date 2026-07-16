@@ -677,6 +677,12 @@ preservation, changed-patch refusal, and exact rollback; portable and native
 full suites pass. Commit and distribute, then require a clean live plan before
 applying and capturing the AB2 transaction ID.
 
+**Live outcome:** exact revision `000045f` produced one unambiguous 162-byte
+live plan, and transaction `20260716T142824Z-1970447` completed. This is the
+exact rollback ID. Require an idempotent KEEP plan, unchanged file mode/size,
+zero pyenv literal matches in the reviewed file, and warning-free direct,
+login, and interactive sessions before closing T-204.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
