@@ -1696,6 +1696,19 @@ local numerical name independently reports one collision, proving the helper
 does not erase a real queued job. T-238 is complete; the same fail-closed rule
 is installed for Codex, Claude, and agents through the shared native-HPC skill.
 
+### T-239 — Post-affinity fleet identity and result-hygiene audit
+
+**Phase/status:** `complete`, derived from T-237/T-238. After exact evidence
+commit `a93f21b` reached all six remotes, a fresh bounded fleet audit found all
+seven nodes clean at that revision, canonical control-plane 34/0/0, the same
+complete smoke-tree object `82d3cf9b0532580914f343d90dcb24fe4c1f287d`,
+valid private-result metadata, zero capture temps, and zero node failures.
+Result counts local/AB/AB2/RI/AL/RC/T4 are 6/10/10/7/10/9/9: this includes the
+four completed T-237 remote passes plus RC's preserved v1 diagnostic and v2
+pass, but correctly excludes queued AB/AB2 and held local work. The report is
+`docs/audits/fleet-readiness-post-affinity-2026-07-17.json`, SHA-256
+`6beada610527ea9fb068c496a0d5114ae0ca4e8fb942d4a5b02b70d26feffa71`.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

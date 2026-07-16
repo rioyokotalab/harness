@@ -139,3 +139,17 @@ The post-rollout
 [`audits/fleet-readiness-result-hygiene-2026-07-17.json`](audits/fleet-readiness-result-hygiene-2026-07-17.json)
 reports the previously validated per-node counts, zero temporary entries, clean
 exact `44fbfb2` revisions, canonical control-plane parity, and zero failures.
+
+## T-239 post-affinity fleet verification
+
+The bounded post-affinity audit
+[`audits/fleet-readiness-post-affinity-2026-07-17.json`](audits/fleet-readiness-post-affinity-2026-07-17.json)
+was generated from exact clean revision `a93f21b`. All seven nodes report that
+revision, a clean worktree, canonical control-plane 34/0/0, and identical
+complete `tests/smoke` tree `82d3cf9b0532580914f343d90dcb24fe4c1f287d`.
+Private-result metadata remains valid with zero capture temps everywhere. The
+counts are local/AB/AB2/RI/AL/RC/T4 = 6/10/10/7/10/9/9, reflecting four T-237
+passes plus RC's preserved diagnostic v1 and passing v2; the two queued ABCI
+jobs and held local job have not published results. The audit has zero node
+failures and SHA-256
+`6beada610527ea9fb068c496a0d5114ae0ca4e8fb942d4a5b02b70d26feffa71`.
