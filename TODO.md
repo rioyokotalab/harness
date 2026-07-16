@@ -2243,10 +2243,10 @@ managed uv/Python 3.12 remains canonical and the existing directories are not
 part of this task. D6 is resolved as removal of the unused AL/T4
 `UV_VENV_ROOT` plus `activate` helpers; future use is explicit through `uv run`
 or direct activation. D7 is planning the newly authorized deletion of exact
-`.pyenv`/`.venv` trees. It does not yet convert “all unrelated data” into a
-deletion set, and no directory is a target until its absolute path, retained
-boundary, metadata-only aggregate, recovery status, and guarded transaction
-are frozen. All other per-node decisions above are
+`.pyenv`/`.venv` trees. The owner resolved “all unrelated data” as exactly the
+four inventoried trees and nothing broader. Their absolute paths and retained
+boundaries are frozen; recovery handling and guarded transactions remain open.
+All other per-node decisions above are
 resolved from live command/path evidence, the frozen common policy, or clear
 broken/conflicting behavior.
 
@@ -2282,12 +2282,12 @@ implementation; run seven read-only plans; pilot local apply/rollback/reapply;
 apply and independently validate one node at a time; then publish/distribute the
 compact completion evidence. Stop on any metadata/content drift, syntax or
 shell-mode regression, module mismatch, managed-tool loss, SSH effective-config
-mismatch, dirty checkout, or incomplete rollback. D7's exact candidate
-inventory is complete and the task is interviewing the meaning of “unrelated
-data” one question at a time. First decide whether scope is only the four exact
-obsolete environment trees or a separate broader audit and explicit target
-list; then decide fresh recovery coverage for the frozen targets. A new
-explicit `go` will be required after the destructive scope freezes.
+mismatch, dirty checkout, or incomplete rollback. D7's deletion set is frozen
+as only the four exact obsolete environment trees above; no broader audit or
+deletion is in scope. Next decide whether to create fresh recovery coverage or
+use only a same-filesystem quarantine/validation window before irreversible
+guarded deletion. A new explicit `go` will be required after the destructive
+scope freezes.
 
 ## Stable operational facts
 
