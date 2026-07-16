@@ -438,6 +438,19 @@ cleanliness, identity, syntax, doctor, and read-only T-191 status gates. Do not
 resubmit, cancel, or alter any scheduled job. Halt only the affected node on
 drift; exact-unlink each reviewed transfer artifact after success.
 
+**Compatibility checkpoint:** a path-level diff from `a2823d3` through the
+current clean main branch proves identical Git object IDs for `bin/harness`,
+`libexec/harness-common`, `libexec/harness-restic`,
+`libexec/harness-restic-primary`, `libexec/harness-restic-schedule`, and both
+Restic repository/schedule maps. The queued jobs therefore execute byte-identical
+dispatch, state schema, successor, and snapshot code after fast-forward. The
+only runtime-adjacent diffs are interactive-shell profile-derived host discovery
+and removal of a redundant hard-coded host case in the separately manual
+replica helper; neither is in the scheduled call graph. T-195 independently
+proved each remote clean at the expected ancestor with the captured production
+job present. Next: publish this checkpoint, create one prerequisite-bound Git
+bundle, and require exact preflight/fast-forward/postflight in each connection.
+
 ### T-199 — Recreated hidden-state classification
 
 **Phase/status:** `planned` from T-195. Metadata-only audit the exact recreated
