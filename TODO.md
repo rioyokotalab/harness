@@ -4,7 +4,7 @@ This board is the authoritative current state for the portable Codex and Claude
 harness. Git preserves superseded chronology and command-level evidence. Keep
 live tasks, verified recovery facts, blockers, and next actions here; do not
 rebuild a second incident transcript in a session or report file. Next free id:
-T-191.
+T-192.
 
 ## Recovery priority — do before any other task
 
@@ -513,10 +513,10 @@ T-191.
   to mode-0700 local `/tmp` scratch in seconds. Its helper and both unread
   private logs were exact-unlinked after success; a fresh guarded manifest
   removed the scratch tree, preserved protected anchors, and its manifest and
-  empty parent are absent. Therefore every
-  approved clean-slate deletion and owner-sensitive
-  `.mozilla`/`.muttrc`/agent-state action remains closed only pending the
-  independent encrypted generations.
+  empty parent are absent. The later independent-generation restore gate now
+  satisfies the backup prerequisite for the separately approved clean-slate
+  and owner-sensitive `.mozilla`/`.muttrc`/agent-state work; those actions
+  remain separately scoped and unexecuted in this Restic-only pass.
   The final parity, doctor, real-shell, origin, and all-backend temp audits pass.
   Bundle SHA-256 `b1dd3f0e…41d` then fast-forwarded the clean `ab`, `ri`, `rc`,
   and `t4` checkouts from exact `6db9296` to `0c44c5f`. Each node verified the
@@ -530,12 +530,10 @@ T-191.
   from their `0c44c5f`/`27a1a91` checkpoints to `0f200ac`. Every node verified
   the bundle and clean target, Restic 0.19.1, and its host-specific replica
   plan; all remote and local bundle copies are absent.
-  Generation `20260715T222741Z` is independently validated for `local`: its
-  encrypted repository was copied and promoted at T4, then passed a fresh
-  all-pack read and verified restore without using `/mnt/nfs-03`. The `ab`
-  generation has been fingerprint-validated and promoted locally, but its
-  independent Restic validation remains pending because it requires the AB
-  password at the replica site. On 2026-07-16 the owner reopened NFS work and
+  Generation `20260715T222741Z` is independently validated for all six
+  initialized repositories. The `local` encrypted repository was copied and
+  promoted at T4, then passed a fresh all-pack read and verified restore
+  without using `/mnt/nfs-03`. On 2026-07-16 the owner reopened NFS work and
   requested background execution with five-minute reporting. No prior
   Restic/replica task was running. RI source preflight found no Restic writer
   or lock and recorded 286 entries, 325,277,900 bytes, and SHA-256
@@ -557,16 +555,43 @@ T-191.
   A final shallow audit found final generations for `ab`, `ri`, `al`, `rc`,
   and `t4`, no corresponding staging path, and no Restic or rsync process.
 
-  Independent Restic validation remains closed on credential transport. A
-  loopback-only reverse SSH preflight from AB reached this node but failed
-  `publickey` authentication because the forwarded agent is not authorized by
-  this node's SSH server. No repository or credential was accessed or changed.
-  Do not copy password bytes, weaken SSH authentication, or expose a writable
-  unauthenticated repository to bypass this. Next action: use an owner-supplied
-  approved password-file path at the replica site or implement and test a
-  strictly read-only, user-private transport before running `check --read-data`
-  and verified restores for `ab`, `ri`, `al`, `rc`, and `t4`. Only after all
-  generations validate may sensitive cleanup reopen.
+  **Independent-generation restore gate (complete 2026-07-16):** a private
+  reverse Unix-socket relay let Restic run on each source node with its existing
+  owner-only password-file path while an append-only, cache-disabled `rclone
+  serve restic --stdio` process exposed only the corresponding encrypted final
+  generation on this node. Both ends rejected non-sockets, unexpected owners,
+  or modes other than 0600; Restic used `--no-lock --no-cache`. No password
+  byte was read, printed, hashed, copied, or transported. Each node selected the
+  one expected host/tag snapshot, passed `check --read-data`, restored into
+  node-local mode-0700 `/tmp` with `--verify`, and exposed only aggregate
+  evidence:
+
+  | repository | snapshots | restored entries | aggregate bytes |
+  | --- | ---: | ---: | ---: |
+  | `local` (replica at T4) | 1 | 70,959 | 3,077,206,016 |
+  | `ab` | 1 | 71,894 | 30,969,669,511 |
+  | `ri` | 1 | 5,942 | 1,004,958,051 |
+  | `al` | 1 | 11,065 | 1,093,720,005 |
+  | `rc` | 1 | 22,097 | 1,499,682,444 |
+  | `t4` | 1 | 35,892 | 5,529,165,205 |
+
+  Every restored tree was removed only after a fresh immutable guarded-delete
+  manifest and one-time token revalidated the exact target and protected
+  anchors. AB's first non-PTY cleanup stopped at stdin EOF after validation;
+  its retained target was subsequently removed by that same guard. AL's first
+  persistent relay exposed a clean process-lifecycle stall, so the successful
+  retry used one `rclone --stdio` child per connection. RC's first cleanup apply
+  rejected its lexical/canonical manifest identity before deletion; the same
+  manifest and token immediately revalidated in a persistent RC session, and
+  the validator now canonicalizes the manifest path. These failures changed no
+  repository or restore content. Final audits found no validation process,
+  local relay socket, helper, private log/JSON, manifest, or restore tree on the
+  current node or any active remote. Exact cleanup also covered the known
+  workflow-owned probe sockets on ABCI login1/login2/login4 and the mode-0700
+  relay helper on login1; login3 was already clear. AB2 remains the sole agreed
+  quota-deferred repository. Manual restore evidence is now stable enough to
+  prepare a separate scheduling proposal, but no scheduler, cron entry, login
+  hook, or other automatic external write is enabled by T-182.
 
   **Independent-generation safety checkpoint:** foreground work during the
   read-only local restore added a credential-free `harness replica plan/apply`
@@ -886,3 +911,19 @@ live instructions.
   preserved protected anchors, and verified the target absent; the exact
   manifest and empty parent are also absent. This validation did not access
   `/mnt/nfs-03`.
+
+## Issue appended after stable manual Restic validation
+
+- **T-191 — Add recurring backups only after scheduling scope is explicit
+  (PIE interview pending 2026-07-16):** all six initialized primaries and all
+  six independent generation routes now have successful full-data checks and
+  verified restores, satisfying the owner's manual-stability gate. AB2 remains
+  quota-deferred. No cron entry, user timer, site scheduler job, login hook,
+  retention deletion, or automatic replica write exists. Before changing an
+  external scheduler, resolve one owner choice at a time: whether recurrence
+  covers primary snapshots only or also serialized independent-generation
+  creation; then choose cadence, per-node native mechanism, failure reporting,
+  retention without unguarded deletion, and the AL daily-certificate boundary.
+  Freeze and review the exact six-node plan before enabling it, keep
+  non-interactive sessions silent, and prove one scheduled dry run plus one
+  manual restore cycle before treating automation as healthy.

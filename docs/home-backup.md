@@ -159,7 +159,41 @@ generation from `.staging-TIMESTAMP` to `TIMESTAMP`.
 
 Because this copies only already encrypted repository objects, it needs no
 Restic password and must not copy the password file. Validate the finished
-generation by pointing Restic at it and personally supplying the same external
-password. Retire old generations only through a separately planned
-guarded-delete transaction after a newer generation passes both integrity and
-restore tests.
+generation with the password still resident on its source node, using the
+private relay constraints below. Retire old generations only through a
+separately planned guarded-delete transaction after a newer generation passes
+both integrity and restore tests.
+
+## Replica validation without credential movement
+
+The validated topology keeps the password file on the node that owns it and
+serves the encrypted generation from the replica site:
+
+```text
+source-node Restic -> mode-0600 reverse Unix socket -> replica-site
+                    rclone serve restic --stdio --append-only
+```
+
+Use one accepted Unix-socket connection and one `rclone --stdio` child per
+Restic command. A persistent `rclone` child can leave shutdown ownership
+ambiguous after an otherwise successful transfer. Before opening the relay,
+both endpoints must verify an exact allowlisted socket path, socket type,
+current user ownership, and mode 0600. The replica-side socket must be changed
+to 0600 before SSH creates the reverse forward. Run the server with
+`--append-only --cache-objects=false`, and run Restic with `--no-lock
+--no-cache`. Do not use TCP listeners, unauthenticated writable service modes,
+or SSH authentication exceptions.
+
+On the source node, pass the existing mode-0600 password file to Restic only by
+path; never read, print, hash, copy, or forward its bytes. Select the declared
+host and `harness-hidden-home-manual` tag, require a nonempty snapshot result,
+then run `check --read-data` and `restore latest --verify` into node-local
+mode-0700 scratch. Keep command output in an unread mode-0600 temporary log and
+record only snapshot count plus aggregate restored entry/byte counts.
+
+Remove the restored tree only through a fresh canonical guarded-delete
+plan/apply pair. Exact-unlink the private log, metadata JSON, relay helpers,
+manifest, and sockets only after success, and non-recursively remove the empty
+restore parent. A final audit must find no Restic/rclone process or validation
+temporary path. AB2 remains excluded until its quota permits repository
+initialization and the same manual validation cycle.
