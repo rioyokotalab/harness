@@ -12,6 +12,39 @@ class ValidationError(Exception):
     pass
 
 
+SCHEMA_KEYWORDS = {
+    "$schema",
+    "$id",
+    "title",
+    "type",
+    "additionalProperties",
+    "required",
+    "properties",
+    "const",
+    "enum",
+    "pattern",
+    "minLength",
+    "items",
+    "minItems",
+    "uniqueItems",
+    "minimum",
+}
+
+
+def validate_schema_definition(schema, path="$schema"):
+    if not isinstance(schema, dict):
+        raise ValidationError("schema node is not an object")
+    if set(schema).difference(SCHEMA_KEYWORDS):
+        raise ValidationError("schema uses an unsupported keyword")
+    properties = schema.get("properties", {})
+    if not isinstance(properties, dict):
+        raise ValidationError("schema properties are malformed")
+    for name, child in properties.items():
+        validate_schema_definition(child, "{}.properties.{}".format(path, name))
+    if "items" in schema:
+        validate_schema_definition(schema["items"], path + ".items")
+
+
 def load_unique(path):
     def unique_object(pairs):
         result = {}
@@ -104,6 +137,7 @@ def main(argv):
         root = Path(__file__).resolve().parent.parent
         schema_path = root / "docs/schemas/hpc-project-intake.schema.json"
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        validate_schema_definition(schema)
         document = load_unique(manifest)
         validate(schema, document)
         if require_ready and document["status"] != "ready":

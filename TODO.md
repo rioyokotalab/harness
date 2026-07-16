@@ -1808,6 +1808,21 @@ on default Python 3.6.15 (AL), 3.9.25 (AB/AB2/RC/T4), and 3.12.3 (local/RI).
 All seven checkouts remain clean and no test or transfer residue exists. T-244
 is complete, replacing T-243's previously local-only portability evidence.
 
+### T-245 — Fail-closed intake schema evolution
+
+**Phase/status:** `implementing`, derived from T-243. The dependency-free
+validator must reject any schema keyword outside its implemented subset before
+reading a manifest; otherwise a future constraint such as `maxLength` could be
+silently ignored. Recursively audit every schema node while treating property
+names separately from keywords, add an unsupported-keyword regression, then
+run focused/full/public validation, publish, and distribute. This changes no
+manifest, project, credential, scheduler, package, or external service.
+
+**Outcome:** the validator now recursively rejects unknown schema keywords
+before manifest parsing, and the synthetic regression proves `maxLength`
+cannot be silently ignored. Focused, portable phase-1, and public-audit suites
+pass. T-245 is complete without accessing any real manifest or external state.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

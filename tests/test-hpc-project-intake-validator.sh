@@ -58,6 +58,20 @@ if grep -E 'from __future__ import annotations|list\[|dict\[|tuple\[|Path \|' "$
     printf '%s\n' 'FAIL: validator requires newer-than-Python-3.6 syntax' >&2
     exit 1
 fi
+python3 - "$VALIDATOR" <<'PY'
+import importlib.util
+import sys
+
+spec = importlib.util.spec_from_file_location("intake_validator", sys.argv[1])
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+try:
+    module.validate_schema_definition({"type": "string", "maxLength": 3})
+except module.ValidationError:
+    pass
+else:
+    raise SystemExit("unsupported schema keyword was accepted")
+PY
 write_valid ready
 "$VALIDATOR" --require-ready "$manifest" | grep -F 'status=pass phase=ready targets=2 artifacts=1 libraries=1' >/dev/null
 write_valid draft
