@@ -1846,9 +1846,9 @@ exit, result, or temp. Final content-blind result hygiene passes 6/10/10/7/10/
 9/9 with zero invalid and zero temporary entries. Before the handoff commit,
 all seven checkouts were clean at exact `6e744af`, origin matched, every
 transfer artifact was absent, and website's unrelated dirty files remained
-untouched. Full/public validation and final fleet distribution are the
-remaining publication gates for this same outcome; no pending or owner-gated
-item is reported complete.
+untouched. Full/public validation passed, handoff commit `b63bb61` was pushed,
+and final fleet distribution reached that exact clean revision with no
+transfer artifact. No pending or owner-gated item was reported complete.
 
 ### T-247 — Resume captured readiness jobs and final temporary cleanup
 
@@ -1880,6 +1880,19 @@ protected anchors plus post-delete absence. Owner-, project-, resource-,
 site-support-, external-setting-, and destructive-retention gates remain gates;
 the terminal instruction does not supply missing project choices or authorize
 Restic retention/prune.
+
+**Initial integrity and residue checkpoint:** full phase 1 passed after the
+documented process-local OpenMPI module refresh. Exact head `8e84215` is clean
+and connectivity-valid on all seven nodes, matches `origin/main`, and every
+bundle transfer reported its artifact absent. Content-blind HPC hygiene passes
+with result counts 6/10/10/7/10/9/9, zero invalid metadata, and zero capture
+temps. Known harness `/tmp` prefixes, fleet-sync work/bundles, guarded-delete
+work/manifests, failed staging/build names, persistent-root restore/probe
+prefixes, `run_this.sh`, and `fix_al.sh` are absent. The two tracked `.tmp`
+destructive-safety fixtures and private transaction manifests are deliberate
+test/rollback evidence, not temporary residue, and remain untouched. All seven
+T-191 chain states are active singletons, every disabled smoke successor is
+absent, and the fleet has zero running Restic processes before eligibility.
 
 ## Stable operational facts
 
