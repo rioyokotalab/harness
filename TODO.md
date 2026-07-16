@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-205.
+and compact historical pointers here. Next free ID: T-206.
 
 ## Current state
 
@@ -697,6 +697,25 @@ mode 0640 and byte-identical in size, both startup files contain zero pyenv
 literal matches, fresh direct/login paths contain no `.pyenv` component, and
 direct/login/interactive checks pass without a pyenv diagnostic. T-204 is
 complete; transaction `20260716T142824Z-1970447` remains the rollback point.
+
+### T-205 — Fail-closed scheduler-chain visibility
+
+**Phase/status:** `executing`; prompted by a false-negative RI audit. A direct
+non-login `restic-schedule status` reported captured Sunday job `6862` absent,
+while native login-environment `sacct`, `scontrol`, and `squeue` independently
+proved the exact job healthy, owner-matched, `PENDING` for its declared
+2026-07-19 02:00 JST eligibility, and unchanged. The direct shell lacked only
+RI's public `SLURM_CONF_SERVER=sctl1:6817,sctl2:6817`; no scheduler state was
+changed and no replacement job was submitted.
+
+Declare that public endpoint in RI's host profile for direct harness calls and
+change exact Slurm status queries to an owner-scoped scheduler listing that
+must succeed before absence is inferred. A scheduler connectivity failure must
+fail closed, produce no “missing job” warning, and never reach adoption or
+submission as if discovery were empty. Add a deterministic failure regression,
+run the full portable suite, distribute the exact commit, then prove both
+direct and login status see the original `6862` and that all seven original
+T-191 jobs remain singleton and unchanged before closing T-205.
 
 ## Stable operational facts
 

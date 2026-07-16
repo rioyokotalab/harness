@@ -101,6 +101,16 @@ if [ "${HARNESS_TESTING:-0}" != 1 ] &&
         unset old_ifs command_path
         export PATH
     fi
+    if [ "$scheduler" = slurm ] && [ -z "${SLURM_CONF_SERVER:-}" ]; then
+        scheduler_conf_server=$(config_get "$profile" scheduler_conf_server)
+        if [ -n "$scheduler_conf_server" ]; then
+            case "$scheduler_conf_server" in
+                *[!A-Za-z0-9.,:_-]*) die "invalid declared Slurm configuration server" ;;
+            esac
+            SLURM_CONF_SERVER=$scheduler_conf_server
+            export SLURM_CONF_SERVER
+        fi
+    fi
 fi
 
 uid=$(id -u)
@@ -292,7 +302,9 @@ scheduler_find_name() {
     wanted=$1
     case "$scheduler" in
         slurm|ybatch)
-            squeue --me -h -n "$wanted" -o '%i|%j' 2>/dev/null |
+            query=$(squeue --me -h -n "$wanted" -o '%i|%j' 2>/dev/null) ||
+                die "native Slurm job discovery failed"
+            printf '%s\n' "$query" |
                 awk -F'|' -v name="$wanted" '$2 == name { print $1 }'
             ;;
         pbs)
@@ -313,7 +325,8 @@ scheduler_query_id() {
     JOB_STATE=
     case "$scheduler" in
         slurm|ybatch)
-            query=$(squeue -h -j "$wanted_id" -o '%i|%j|%T|%u' 2>/dev/null || true)
+            query=$(squeue --me -h -o '%i|%j|%T|%u' 2>/dev/null) ||
+                die "native Slurm job query failed"
             match=$(printf '%s\n' "$query" | awk -F'|' -v id="$wanted_id" \
                 -v name="$wanted_name" -v user="$username" \
                 '$1 == id && $2 == name && $4 == user { print $3 }')
@@ -418,7 +431,7 @@ scheduler_submit() {
             ;;
     esac
     if ! valid_job_id "$submitted"; then
-        matches=$(scheduler_find_name "$JOB_NAME" || true)
+        matches=$(scheduler_find_name "$JOB_NAME")
         count=$(printf '%s\n' "$matches" | awk 'NF { n++ } END { print n + 0 }')
         [ "$count" -eq 1 ] || die "ambiguous scheduler submission result"
         submitted=$(printf '%s\n' "$matches" | awk 'NF { print; exit }')
@@ -433,7 +446,7 @@ adopt_or_submit() {
     submit_kind=$1
     epoch=$2
     job_name_for "$submit_kind" "$epoch"
-    matches=$(scheduler_find_name "$JOB_NAME" || true)
+    matches=$(scheduler_find_name "$JOB_NAME")
     count=$(printf '%s\n' "$matches" | awk 'NF { n++ } END { print n + 0 }')
     case "$count" in
         0) scheduler_submit "$submit_kind" "$epoch" ;;

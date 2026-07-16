@@ -134,6 +134,7 @@ case "$command_name" in
         fi
         ;;
     squeue)
+        [ "${FAKE_QUERY_FAIL:-0}" != 1 ] || exit 2
         wanted_name=
         wanted_id=
         previous=
@@ -145,6 +146,7 @@ case "$command_name" in
         awk -F'|' -v name="$wanted_name" -v id="$wanted_id" -v user="$username" '
             (name != "" && $2 == name) { print $1 "|" $2 }
             (id != "" && $1 == id) { print $1 "|" $2 "|" $3 "|" user }
+            (name == "" && id == "") { print $1 "|" $2 "|" $3 "|" user }
         ' "$jobs"
         ;;
     qstat)
@@ -308,6 +310,26 @@ run_schedule ri slurm "$warning_home" warning >"$TEST_ROOT/missing.warning" 2>&1
     fail "missing warning command"
 grep 'captured future job is missing' "$TEST_ROOT/missing.warning" >/dev/null ||
     fail "missing job warning"
+expect_failure 'native Slurm job query failed' "$TEST_ROOT/query-failure.out" \
+    env HOME="$warning_home" PATH="$fake_bin:/usr/bin:/bin" \
+    HARNESS_TESTING=1 HARNESS_LOGICAL_HOST=ri FAKE_QUERY_FAIL=1 \
+    FAKE_SCHED_DIR="$fake_sched" FAKE_FAMILY=slurm \
+    "$HARNESS" restic-schedule warning --host ri
+if grep 'captured future job is missing' "$TEST_ROOT/query-failure.out" >/dev/null; then
+    fail "scheduler query failure was reported as a missing job"
+fi
+query_seed_home=$TEST_ROOT/query-seed-home
+mkdir -p "$query_seed_home"
+: >"$fake_sched/jobs"
+expect_failure 'native Slurm job discovery failed' "$TEST_ROOT/query-seed-failure.out" \
+    env HOME="$query_seed_home" PATH="$fake_bin:/usr/bin:/bin" \
+    HARNESS_TESTING=1 HARNESS_TESTING_ALLOW_UNSMOKED_SEED=1 \
+    HARNESS_LOGICAL_HOST=ri HARNESS_NOW_EPOCH=1784149200 FAKE_QUERY_FAIL=1 \
+    FAKE_SCHED_DIR="$fake_sched" FAKE_FAMILY=slurm \
+    "$HARNESS" restic-schedule seed --host ri
+[ ! -s "$fake_sched/jobs" ] || fail "scheduler discovery failure submitted a job"
+[ ! -e "$query_seed_home/.local/state/harness/restic-chain/chain.state" ] ||
+    fail "scheduler discovery failure created chain state"
 
 primary_home=$TEST_ROOT/primary-home
 primary_persistent=$TEST_ROOT/primary-persistent
