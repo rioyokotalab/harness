@@ -110,3 +110,7 @@ only aggregate counts. All seven nodes report 34 keeps, zero creates, zero
 blocks, clean worktrees, and no probe failure. This closes the fixed-four-link
 blind spot without duplicating the managed-link declaration or exposing plan
 paths in the public audit.
+
+T-226 subsequently made this summary a fail-closed identity component: a
+missing summary, explicit control-plane error, or duplicate summary now fails
+that node instead of leaving a superficially successful partial record.

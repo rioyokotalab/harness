@@ -188,6 +188,8 @@ def parse_probe(host: str, output: str) -> dict[str, Any]:
     }
     schema = False
     marker = False
+    control_plane_summaries = 0
+    control_plane_failed = False
     for line in output.splitlines():
         fields = line.split("\t")
         tag = fields[0]
@@ -224,6 +226,9 @@ def parse_probe(host: str, output: str) -> dict[str, Any]:
         elif tag == "CONTROL_PLANE" and len(fields) == 4 and all(
             field.isdigit() for field in fields[1:]
         ):
+            control_plane_summaries += 1
+            if control_plane_summaries != 1:
+                raise AuditError(f"duplicate control plane summary: {host}")
             data["control_plane"] = {
                 "keep": int(fields[1]),
                 "create": int(fields[2]),
@@ -247,10 +252,14 @@ def parse_probe(host: str, output: str) -> dict[str, Any]:
             data["versions"][label] = {"state": state, "value": value}
         elif tag.endswith("_ERROR") and fields == [tag, "1"]:
             data.setdefault("errors", []).append(tag.removesuffix("_ERROR").lower())
+            if tag == "CONTROL_PLANE_ERROR":
+                control_plane_failed = True
         else:
             data["discarded_stdout_lines"] += 1
     if not schema or not marker or "head" not in data or "dirty_entries" not in data:
         raise AuditError(f"incomplete probe identity: {host}")
+    if control_plane_summaries != 1 or control_plane_failed:
+        raise AuditError(f"incomplete control plane summary: {host}")
     return data
 
 

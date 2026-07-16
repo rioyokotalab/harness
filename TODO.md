@@ -1342,6 +1342,24 @@ seven clean, failure-free nodes at exactly 34/0/0. Its SHA-256 is
 T-225 is complete and future fleet audits can detect every declared discovery
 link without a duplicated list.
 
+### T-226 — Fail-closed canonical control-plane audit identity
+
+**Phase/status:** `complete`, derived from independent review of T-225. The
+collector currently records an explicit control-plane error but its parser can
+still return a successful node record when the canonical plan summary is
+missing. Require exactly one valid summary and reject missing, explicit-error,
+or duplicate summaries. Add focused negative tests, run the portable full and
+public-audit suites, then publish and distribute the verified correction. This
+does not apply links or alter remote state beyond the version-controlled
+control-plane rollout.
+
+**Outcome:** the parser now requires exactly one valid canonical summary and
+rejects missing, explicit-error, and duplicate forms. Focused negative tests,
+the full suite with its declared `HARNESS_PORTABLE_CI=1` environment, and the
+public-repository audit pass. An initial full-suite invocation selected its
+native MPI branch and stopped at absent `mpicc`; no product test failed and the
+portable rerun passed. T-226 is ready for version-controlled rollout.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

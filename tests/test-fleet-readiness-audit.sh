@@ -50,4 +50,30 @@ assert x['nodes']['ab']['doctor']=={'failures':0,'warnings':2}
 assert x['nodes']['ab']['schedule']['chain']['job']=='123.pbs'
 assert x['nodes']['ab']['control_plane']=={'keep':34,'create':0,'block':0}
 PY
+PYTHONDONTWRITEBYTECODE=1 python3 - "$AUDIT" <<'PY'
+import importlib.util
+import sys
+
+path = sys.argv[1]
+spec = importlib.util.spec_from_file_location("fleet_readiness_audit", path)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+identity = "\n".join((
+    "SCHEMA\t1",
+    "HOST\tab",
+    "HEAD\t0123456789012345678901234567890123456789",
+    "DIRTY\t0",
+))
+for label, suffix in (
+    ("missing", ""),
+    ("explicit error", "\nCONTROL_PLANE_ERROR\t1"),
+    ("duplicate", "\nCONTROL_PLANE\t34\t0\t0\nCONTROL_PLANE\t34\t0\t0"),
+):
+    try:
+        module.parse_probe("ab", identity + suffix)
+    except module.AuditError:
+        pass
+    else:
+        raise AssertionError(f"{label} control-plane summary did not fail closed")
+PY
 printf '%s\n' 'fleet readiness audit tests passed'
