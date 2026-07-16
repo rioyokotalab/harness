@@ -1293,6 +1293,82 @@ HOME="$ab2_remediation_home" "$test_repo/bin/harness" rollback \
     "$ab2_remediation_transaction" >"$TEMP_DIR/ab2-remediation-rollback.out"
 cmp -s "$ab2_remediation_home/.bash_profile" \
     "$TEMP_DIR/original-ab2-remediation-profile" || fail "AB2 remediation rollback"
+
+bash_common_home=$TEMP_DIR/bash-common-remediation-home
+mkdir -p "$bash_common_home"
+cat >"$bash_common_home/.bashrc" <<'EOF'
+export TEST_TOKEN=fake-secret-value
+# Source .bash_common
+if [ -f "$HOME/.bash_common" ]; then
+. "$HOME/.bash_common"
+fi
+# later owner line
+EOF
+printf '%s\n' 'retained until separately exact-unlinked' >"$bash_common_home/.bash_common"
+chmod 640 "$bash_common_home/.bashrc"
+HOME="$bash_common_home" "$test_repo/bin/harness" remediate --host ab \
+    --remove-bash-common-reference --plan >"$TEMP_DIR/bash-common-plan.out"
+grep 'REMOVE-BLOCK file=.bashrc match=reviewed-bash-common-reference kind=home-quoted lines=4' \
+    "$TEMP_DIR/bash-common-plan.out" >/dev/null || fail "bash-common remediation plan"
+HOME="$bash_common_home" "$test_repo/bin/harness" remediate --host ab \
+    --remove-bash-common-reference --apply >"$TEMP_DIR/bash-common-apply.out"
+grep 'REMEDIATION_APPLIED host=ab file=.bashrc removed=reviewed-bash-common-reference' \
+    "$TEMP_DIR/bash-common-apply.out" >/dev/null || fail "bash-common remediation apply"
+if grep -F '.bash_common' "$bash_common_home/.bashrc" >/dev/null; then
+    fail "bash-common remediation retained a reference"
+fi
+grep -F -x 'export TEST_TOKEN=fake-secret-value' "$bash_common_home/.bashrc" >/dev/null ||
+    fail "bash-common remediation damaged preceding owner content"
+grep -F -x '# later owner line' "$bash_common_home/.bashrc" >/dev/null ||
+    fail "bash-common remediation damaged following owner content"
+[ "$(stat -c %a "$bash_common_home/.bashrc")" = 640 ] ||
+    fail "bash-common remediation changed file mode"
+[ -f "$bash_common_home/.bash_common" ] ||
+    fail "bash-common reference remediation removed the separately managed file"
+for path in "$bash_common_home"/.bashrc.harness-remediate.*; do
+    [ ! -e "$path" ] && [ ! -L "$path" ] || fail "bash-common remediation left a temporary file"
+done
+HOME="$bash_common_home" "$test_repo/bin/harness" remediate --host ab \
+    --remove-bash-common-reference --plan >"$TEMP_DIR/bash-common-idempotent.out"
+grep 'KEEP file=.bashrc reference=.bash_common-absent' \
+    "$TEMP_DIR/bash-common-idempotent.out" >/dev/null || fail "bash-common remediation idempotence"
+
+bash_common_tilde_home=$TEMP_DIR/bash-common-remediation-tilde-home
+mkdir -p "$bash_common_tilde_home"
+cat >"$bash_common_tilde_home/.bashrc" <<'EOF'
+# preceding owner line
+# Source .bash_common
+if [ -f ~/.bash_common ]; then
+  . ~/.bash_common
+fi
+export AFTER_BLOCK=retained
+EOF
+HOME="$bash_common_tilde_home" "$test_repo/bin/harness" remediate --host rc \
+    --remove-bash-common-reference --apply >"$TEMP_DIR/bash-common-tilde-apply.out"
+grep 'REMEDIATION_APPLIED host=rc file=.bashrc removed=reviewed-bash-common-reference' \
+    "$TEMP_DIR/bash-common-tilde-apply.out" >/dev/null || fail "tilde bash-common remediation apply"
+grep -F -x '# preceding owner line' "$bash_common_tilde_home/.bashrc" >/dev/null ||
+    fail "tilde bash-common remediation damaged preceding content"
+grep -F -x 'export AFTER_BLOCK=retained' "$bash_common_tilde_home/.bashrc" >/dev/null ||
+    fail "tilde bash-common remediation damaged following content"
+
+bash_common_ambiguous_home=$TEMP_DIR/bash-common-remediation-ambiguous-home
+mkdir -p "$bash_common_ambiguous_home"
+cat >"$bash_common_ambiguous_home/.bashrc" <<'EOF'
+# Source .bash_common
+if [ -f "$HOME/.bash_common" ]; then
+. "$HOME/.bash_common"
+fi
+# Source .bash_common
+EOF
+cp "$bash_common_ambiguous_home/.bashrc" "$TEMP_DIR/original-ambiguous-bashrc"
+if HOME="$bash_common_ambiguous_home" "$test_repo/bin/harness" remediate --host t4 \
+    --remove-bash-common-reference --apply >"$TEMP_DIR/bash-common-ambiguous.out" 2>&1; then
+    fail "bash-common remediation accepted an ambiguous block"
+fi
+cmp -s "$bash_common_ambiguous_home/.bashrc" "$TEMP_DIR/original-ambiguous-bashrc" ||
+    fail "refused bash-common remediation changed the destination"
+
 HOME="$test_home" "$test_repo/bin/harness" shell --host al --plan \
     >"$TEMP_DIR/al-shell-plan.out"
 al_payload_bytes=$((1 + $(wc -c <"$test_repo/shell/bashrc.al.block" | tr -d ' ')))

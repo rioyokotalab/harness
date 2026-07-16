@@ -1,8 +1,8 @@
 # host|persistent-root|cache-root|move-large|move-fast|delete-after-backup|owner-action
-local|/mnt/nfs-03/safe/Users/rioyokota|/mnt/nfs-03/fast/Users/rioyokota/home-cache|.local|none|.cache,.dotnet,.npm,.nv,.rustup,.sync_get.sh|move-nonsecret-agent-state-only
+local|/mnt/nfs-03/safe/Users/rioyokota|/mnt/nfs-03/fast/Users/rioyokota/home-cache|.local|none|.bash_common,.cache,.dotnet,.npm,.nv,.rustup,.sync_get.sh|move-nonsecret-agent-state-only
 ab|/groups/gag51395/yokota|/groups/gag51395/yokota/cache|.local|.nsightsystems,.nv,.triton,.starpu|.bash_common,.bash_logout,.cache,.dbus,.emacs,.emacs.d,.gvfs,.kshrc,.matplotlib,.p,.pyenv,.saves,.viminfo.tmp,.zshrc|move-.mozilla
 ab2|/groups/gah51624/yokota|/groups/gah51624/yokota/cache|.local|none|.bash_common,.cache,.emacs,.emacs.d,.pyenv|none
-ri|/data1/rkp00015/rku00075|/data1/rkp00015/rku00075/cache|.local|none|.apptainer,.bash_logout,.cache|none
+ri|/data1/rkp00015/rku00075|/data1/rkp00015/rku00075/cache|.local|none|.apptainer,.bash_common,.bash_logout,.cache|none
 al|/capstor/store/cscs/director2/g177/ryokota|/capstor/scratch/cscs/ryokota/home-cache|.local|none|.bash_common,.dvipsrc,.emacs,.emacs.d,.fonts,.forward,.gnu-emacs,.inputrc,.mozilla,.xemacs,.xim.template,.xinitrc.template|remove-.muttrc
 rc|/lvs0/rccs-asfm/rio.yokota|/lvs0/rccs-asfm/rio.yokota/cache|.local|none|.bash_common,.bash_logout,.emacs,.emacs.d,.pyenv,.singularity,.wget-hsts,.zshrc|none
 t4|/gs/bs/jh250019/yokota|/gs/fs/jh250019/yokota/home-cache|.local|.allinea,.apptainer,.cupy,.lhotse,.nv,.triton|.bash_common,.bash_logout,.cache,.eclipse,.emacs,.emacs.d,.intel,.itarc,.npm,.pyenv,.vscode-server,.wget-hsts|remove-.mozilla

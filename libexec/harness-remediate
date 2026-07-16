@@ -6,17 +6,170 @@ HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
 export HARNESS_ROOT
 . "$SELF_DIR/harness-common"
 
-usage() { echo "Usage: harness remediate --host al|ab2 [--plan|--apply]" >&2; }
+usage() {
+    echo "Usage: harness remediate --host LOGICAL_ID [--remove-bash-common-reference] [--plan|--apply]" >&2
+}
 logical_host=
 mode=plan
+remediation=legacy
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --remove-bash-common-reference) remediation=bash-common-reference; shift ;;
         --plan) mode=plan; shift ;;
         --apply) mode=apply; shift ;;
         *) usage; exit 2 ;;
     esac
 done
+if [ "$remediation" = bash-common-reference ]; then
+    case $logical_host in
+        local|ab|ab2|ri|al|rc|t4) ;;
+        *) die "no reviewed bash-common remediation for host: ${logical_host:-missing}" ;;
+    esac
+    profile_for "$logical_host" >/dev/null
+    for required in bash chmod cmp dd grep id mktemp mv stat unlink wc; do
+        command -v "$required" >/dev/null 2>&1 ||
+            die "bash-common remediation requires $required"
+    done
+
+    destination=$HOME/.bashrc
+    uid=$(id -u)
+    payload_home=$(mktemp "${TMPDIR:-/tmp}/harness-remediate-bash-common-home.XXXXXX")
+    payload_tilde=$(mktemp "${TMPDIR:-/tmp}/harness-remediate-bash-common-tilde.XXXXXX")
+    candidate=
+    candidate_identity=
+    cleanup_bash_common() {
+        status=$?
+        trap - EXIT HUP INT TERM
+        if [ -n "$candidate" ] && { [ -e "$candidate" ] || [ -L "$candidate" ]; }; then
+            if [ -f "$candidate" ] && [ ! -L "$candidate" ] &&
+               [ "$(stat -c '%d:%i:%u' -- "$candidate")" = "$candidate_identity" ]; then
+                unlink -- "$candidate" || status=1
+            else
+                status=1
+            fi
+        fi
+        [ ! -e "$payload_home" ] || unlink -- "$payload_home" || status=1
+        [ ! -e "$payload_tilde" ] || unlink -- "$payload_tilde" || status=1
+        exit "$status"
+    }
+    trap cleanup_bash_common EXIT
+    trap 'exit 129' HUP
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+    chmod 600 "$payload_home" "$payload_tilde"
+    printf '%s\n' \
+        '# Source .bash_common' \
+        'if [ -f "$HOME/.bash_common" ]; then' \
+        '. "$HOME/.bash_common"' \
+        'fi' >"$payload_home"
+    printf '%s\n' \
+        '# Source .bash_common' \
+        'if [ -f ~/.bash_common ]; then' \
+        '  . ~/.bash_common' \
+        'fi' >"$payload_tilde"
+
+    echo "REMEDIATION_PLAN host=$logical_host mode=$mode contents=exact-public-bash-common-block-only"
+    if [ ! -f "$destination" ] || [ -L "$destination" ]; then
+        echo "BLOCK file=.bashrc reason=not-regular"
+        die "remediation plan contains a blocked file"
+    fi
+    IFS=' ' read -r original_device original_inode original_owner original_mode original_links original_size <<EOF
+$(stat -c '%d %i %u %a %h %s' -- "$destination")
+EOF
+    [ "$original_owner" = "$uid" ] && [ "$original_links" -eq 1 ] || {
+        echo "BLOCK file=.bashrc reason=unsafe-metadata"
+        die "remediation plan contains a blocked file"
+    }
+    header_count=$(grep -F -x -c '# Source .bash_common' "$destination" || true)
+    reference_count=$(grep -F -c '.bash_common' "$destination" || true)
+    change=0
+    if [ "$header_count" -eq 0 ] && [ "$reference_count" -eq 0 ]; then
+        echo "KEEP file=.bashrc reference=.bash_common-absent"
+    elif [ "$header_count" -eq 1 ] && [ "$reference_count" -eq 3 ]; then
+        offset=$(grep -F -x -b '# Source .bash_common' "$destination" | sed -n 's/:.*//p')
+        line=$(grep -F -x -n '# Source .bash_common' "$destination" | sed -n 's/:.*//p')
+        case $offset:$line in
+            *[!0-9:]*|:*|*:) die "cannot locate reviewed bash-common block" ;;
+        esac
+        home_bytes=$(wc -c <"$payload_home" | tr -d ' ')
+        tilde_bytes=$(wc -c <"$payload_tilde" | tr -d ' ')
+        if dd if="$destination" bs=1 skip="$offset" count="$home_bytes" 2>/dev/null |
+            cmp -s - "$payload_home"; then
+            block_kind=home-quoted
+            bytes=$home_bytes
+            payload=$payload_home
+        elif dd if="$destination" bs=1 skip="$offset" count="$tilde_bytes" 2>/dev/null |
+            cmp -s - "$payload_tilde"; then
+            block_kind=tilde
+            bytes=$tilde_bytes
+            payload=$payload_tilde
+        else
+            echo "BLOCK file=.bashrc reason=reviewed-block-not-exact"
+            die "remediation plan contains a blocked file"
+        fi
+        echo "REMOVE-BLOCK file=.bashrc match=reviewed-bash-common-reference kind=$block_kind lines=4 bytes=$bytes"
+        change=1
+    else
+        echo "BLOCK file=.bashrc reason=reviewed-block-missing-duplicate-or-ambiguous"
+        die "remediation plan contains a blocked file"
+    fi
+    [ "$mode" = apply ] || {
+        echo "END remediation host=$logical_host changes=not-applied"
+        exit 0
+    }
+    [ "$change" -eq 1 ] || {
+        echo "END remediation host=$logical_host changes=none"
+        exit 0
+    }
+    [ -z "$(git -C "$HARNESS_ROOT" status --porcelain)" ] ||
+        die "remediation apply requires clean harness"
+
+    current_identity=$(stat -c '%d:%i:%u:%a:%h:%s' -- "$destination")
+    [ "$current_identity" = "$original_device:$original_inode:$original_owner:$original_mode:$original_links:$original_size" ] ||
+        die "bash-common destination changed before apply"
+    dd if="$destination" bs=1 skip="$offset" count="$bytes" 2>/dev/null |
+        cmp -s - "$payload" || die "reviewed bash-common block changed before apply"
+
+    candidate=$(mktemp "$HOME/.bashrc.harness-remediate.XXXXXX")
+    candidate_identity=$(stat -c '%d:%i:%u' -- "$candidate")
+    dd if="$destination" bs=1 count="$offset" 2>/dev/null >"$candidate"
+    suffix_offset=$((offset + bytes))
+    dd if="$destination" bs=1 skip="$suffix_offset" 2>/dev/null >>"$candidate"
+    expected_size=$((original_size - bytes))
+    [ "$(wc -c <"$candidate" | tr -d ' ')" -eq "$expected_size" ] ||
+        die "bash-common candidate size verification failed"
+    if grep -F '.bash_common' "$candidate" >/dev/null; then
+        die "bash-common candidate retains an unexpected reference"
+    fi
+    bash -n "$candidate" || die "bash-common candidate shell syntax failed"
+    chmod "$original_mode" "$candidate"
+
+    [ "$(stat -c '%d:%i:%u:%a:%h:%s' -- "$destination")" = "$current_identity" ] ||
+        die "bash-common destination changed during apply"
+    dd if="$destination" bs=1 skip="$offset" count="$bytes" 2>/dev/null |
+        cmp -s - "$payload" || die "reviewed bash-common block changed during apply"
+    mv -f -- "$candidate" "$destination"
+    candidate=
+    candidate_identity=
+
+    IFS=' ' read -r final_owner final_mode final_links final_size <<EOF
+$(stat -c '%u %a %h %s' -- "$destination")
+EOF
+    [ "$final_owner" = "$uid" ] && [ "$final_mode" = "$original_mode" ] &&
+        [ "$final_links" -eq 1 ] && [ "$final_size" -eq "$expected_size" ] ||
+        die "bash-common destination metadata verification failed"
+    if grep -F '.bash_common' "$destination" >/dev/null; then
+        die "bash-common reference remains after apply"
+    fi
+    bash -n "$destination" || die "bash-common destination shell syntax failed"
+    unlink -- "$payload_home"
+    unlink -- "$payload_tilde"
+    trap - EXIT HUP INT TERM
+    echo "REMEDIATION_APPLIED host=$logical_host file=.bashrc removed=reviewed-bash-common-reference bytes=$bytes"
+    echo "END remediation host=$logical_host changes=applied"
+    exit 0
+fi
 case $logical_host in
     al|ab2) ;;
     *) die "no reviewed remediation for host: ${logical_host:-missing}" ;;

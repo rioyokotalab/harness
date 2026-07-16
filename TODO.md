@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-248.
+and compact historical pointers here. Next free ID: T-249.
 
 ## Current state
 
@@ -1907,6 +1907,46 @@ external state change by polling exactly these four IDs, then follow the
 dependency order above. Do not cancel, replace, resize, or reprioritize them.
 T-191 still has its independent time gate at the recorded Sunday eligibility
 points. No task is complete, failed, or authorized beyond its existing gate.
+
+### T-248 — Remove obsolete `.bash_common` startup references and files
+
+**Phase/status:** `implementing` under the owner's explicit 2026-07-17 request
+for all seven managed nodes. Value-limited discovery inspected only startup
+lines containing `bash_common` plus path metadata. Local and RI already have no
+reference and no file. AB2 has the exact reviewed four-line `$HOME`-quoted
+reference but no file. AB has that reference and one regular owner file. RC and
+T4 have the exact reviewed four-line tilde reference and one regular owner file
+each. No other `.bash_profile`, `.profile`, or `.bash_login` reference was
+found. AL is temporarily unreachable because its CSCS SSH certificate requires
+owner renewal; do not weaken authentication or infer its live state.
+
+Add an explicit `harness remediate --remove-bash-common-reference` mode for all
+managed logical hosts. It must accept only either reviewed four-line block or
+complete reference absence, reject duplicates/partial/changed blocks and unsafe
+metadata, preserve every byte outside the block and the original mode, validate
+shell syntax before and after atomic same-directory replacement, and exact-
+unlink every private runtime temporary. It intentionally does not remove the
+separately managed `.bash_common` path. After focused/full validation, push and
+mirror the exact revision, run read-only plans, apply only clean exact plans,
+then independently revalidate and exact-unlink at most one regular owner
+`.bash_common` file per node. Never use a deletion list, loop, wildcard, or
+recursive command. Prove fresh direct/login/interactive shell silence and no
+remaining reference/file. Local/RI absence is an idempotent success; preserve
+AL as an explicit authentication blocker until its live plan can run.
+
+**Implementation checkpoint:** the new explicit remediation mode recognizes
+the two live four-line variants, reconstructs a private same-directory
+candidate from the exact byte prefix and suffix, validates its size and Bash
+syntax, revalidates the source identity/block immediately before atomic
+replacement, preserves owner/mode/link-count invariants, and exact-cleans all
+runtime temporaries. It refuses partial, duplicate, changed, symlinked, or
+unsafe-metadata inputs and treats complete absence idempotently. Synthetic
+tests prove both variants, preceding/following owner-line preservation, mode
+preservation, an unrelated fake-secret line remaining only in place, file
+separation, ambiguity refusal without mutation, idempotence, and zero temp.
+Warning-level ShellCheck, diff checks, and the complete phase-1 suite pass after
+the documented process-local OpenMPI refresh. Commit/push/distribute this
+implementation before running any live apply or exact file unlink.
 
 ## Stable operational facts
 
