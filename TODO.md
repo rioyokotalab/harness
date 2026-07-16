@@ -1910,8 +1910,8 @@ points. No task is complete, failed, or authorized beyond its existing gate.
 
 ### T-248 — Remove obsolete `.bash_common` startup references and files
 
-**Phase/status:** `implementing` under the owner's explicit 2026-07-17 request
-for all seven managed nodes. Value-limited discovery inspected only startup
+**Phase/status:** `complete` under the owner's explicit 2026-07-17 request for
+all seven managed nodes. Initial value-limited discovery inspected only startup
 lines containing `bash_common` plus path metadata. Local and RI already have no
 reference and no file. AB2 has the exact reviewed four-line `$HOME`-quoted
 reference but no file. AB has that reference and one regular owner file. RC and
@@ -1960,15 +1960,14 @@ absent file, original `.bashrc` mode, clean harness checkout, and no remediation
 temp. Fresh login and interactive Bash exit zero on all six with zero captured
 `bash_common` match; private captures were exact-unlinked.
 
-AL remains the sole incomplete node. A repeated BatchMode connection fails
-`Permission denied (publickey)` before any checkout, startup, or file action.
-The owner must renew the existing certificate with the previously established
-`cscs-key sign --headless -f ~/.ssh/id_ed25519`; this task does not authorize an
-agent to modify authentication material. After renewal: fast-forward clean AL
-from `9686791` to the latest exact harness revision, run the bash-common
-read-only plan, apply only an exact reviewed block or keep absence, independently
-revalidate and exact-unlink only `$HOME/.bash_common` if it is a regular
-owner/single-link file, and repeat the same idempotent/shell/temp postflights.
+**AL completion:** after the owner renewed the existing certificate, AL's clean
+checkout fast-forwarded from `9686791` to `7be5e45` with no transfer artifact.
+Its read-only plan accepted only the exact 75-byte tilde block. The atomic apply
+preserved `.bashrc` mode 600, and an independent regular/owner/single-link check
+preceded exact unlink of the 385-byte mode-644 `.bash_common`. The idempotent
+plan now keeps complete absence; reference, file, remediation-temp, and shell-
+capture match counts are zero. Fresh login and interactive Bash both exit zero,
+and the private capture was exact-unlinked. This completes all seven nodes.
 
 ## Stable operational facts
 
