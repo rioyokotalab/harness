@@ -66,6 +66,7 @@ for script in \
     "$ROOT/tests/smoke/jobs/multinode-mpi-readiness.sh" \
     "$ROOT/tests/smoke/jobs/shared-executable-visibility.sh" \
     "$ROOT/tools/hpc-result-hygiene.sh" \
+    "$ROOT/tools/hpc-job-preflight.sh" \
     "$ROOT/tests/smoke/jobs/source-contract.sh" \
     "$ROOT/libexec/harness-rollback"
 do
@@ -92,6 +93,8 @@ done
     fail "shared executable visibility focused suite"
 "$ROOT/tests/test-hpc-result-hygiene.sh" >/dev/null ||
     fail "HPC result hygiene focused suite"
+"$ROOT/tests/test-hpc-job-preflight.sh" >/dev/null ||
+    fail "HPC job preflight focused suite"
 "$ROOT/tests/test-llm-hpc-next-actions.sh" >/dev/null ||
     fail "LLM/HPC next-action queue focused suite"
 "$ROOT/tests/test-storage-readiness.sh" >/dev/null ||

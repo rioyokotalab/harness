@@ -64,6 +64,10 @@ Install Git LFS hooks only inside an in-scope repository with an explicit
    wrapper exit status without a parseable, queryable ID is a rejected or
    indeterminate submission, never success. Capture the exact output path
    without scraping unrelated jobs.
+   Before submission, treat an exact-name collision query as a safety gate:
+   capture and check the native query's exit status before parsing or counting
+   its output. Never use an unchecked pipeline such as `squeue | wc -l`, which
+   can convert a scheduler/DNS failure into a false zero-job result.
 3. Monitor only that job with the site's native status command. Report state
    changes and meaningful output; unchanged queued state is normal.
 4. Cancel only the captured job ID when cancellation is requested or a verified

@@ -1663,6 +1663,31 @@ distinct v2 name/result, commit and distribute the route correction, then
 test-only/collision-check before one RC retry. Do not overwrite v1 or alter
 the already queued jobs.
 
+### T-238 — Fail-closed scheduler job collision preflight
+
+**Phase/status:** `implementing`, derived from RI's transient T-237 Slurm/DNS
+failure. Replace ad hoc exact-name counting with a read-only helper that first
+captures the native `squeue`, `qselect`, or `qstat` exit status, validates its
+family-specific output, and only then counts exact owner/name matches. It must
+also require an absent fixed private result, zero job-scoped capture temps, a
+mode-0700 owner state directory when present, and safe bounded arguments. It
+must never submit, cancel, mutate scheduler state, inspect result content, or
+print unrelated job rows. Add fake-native tests proving Slurm/PBS/AGE query
+failures cannot become zero-job passes, plus job/result collision tests. On
+success, promote the evidenced fail-closed rule to the native-HPC skill and
+verify both Codex and Claude discovery links.
+
+**Implementation checkpoint:** `tools/hpc-job-preflight.sh` validates bounded
+job/result/temp identifiers and state-directory metadata, captures each native
+query before parsing, recognizes padded Slurm fields, and emits only its
+resolved command plus one aggregate. Synthetic tests prove success, query-
+failure refusal, exact Slurm collision, PBS/AGE failure refusal, and result
+collision. A live local check correctly reports existing job `91220` as one
+collision rather than a zero-job pass. Warning-level ShellCheck, portable
+phase 1, public audit, and skill installation pass; both clients resolve the
+updated shared skill. Commit/distribute before trying absent-name checks on
+the other native scheduler families.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
