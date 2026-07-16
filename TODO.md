@@ -1360,6 +1360,12 @@ public-repository audit pass. An initial full-suite invocation selected its
 native MPI branch and stopped at absent `mpicc`; no product test failed and the
 portable rerun passed. T-226 is ready for version-controlled rollout.
 
+The exact correction reached all six remotes through guarded fleet-sync. The
+post-rollout seven-node audit is failure-free at clean `7fbe572`, with exactly
+34 keeps, zero creates, zero blocks, and no retained control-plane errors on
+each node. Its SHA-256 is
+`9dfae5c2418adabecd691b91813c9b73f38173e986e79572ef5ce0efa8a70cd6`.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

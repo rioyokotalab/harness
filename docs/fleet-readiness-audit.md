@@ -114,3 +114,7 @@ paths in the public audit.
 T-226 subsequently made this summary a fail-closed identity component: a
 missing summary, explicit control-plane error, or duplicate summary now fails
 that node instead of leaving a superficially successful partial record.
+The post-rollout
+[`audits/fleet-readiness-fail-closed-2026-07-17.json`](audits/fleet-readiness-fail-closed-2026-07-17.json)
+independently reports all seven clean nodes at exact revision `7fbe572`, with
+34/0/0 canonical counts, no retained control-plane errors, and no failures.
