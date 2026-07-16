@@ -32,6 +32,22 @@ jobs:
           cc --version | sed -n '1p'
           c++ --version | sed -n '1p'
           shellcheck --version | sed -n '2p'
+      - name: Run ShellCheck warning gate
+        run: |
+          set -euo pipefail
+          git grep -Il -z '^#!.*\(sh\|bash\)' -- . \
+            ':(exclude)tests/fixtures/**' |
+            xargs -0 shellcheck --severity=warning
+      - name: Run focused deterministic suites
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          set -euo pipefail
+          tests/test-restic-schedule.sh
+          tests/test-onboard-mirrored-node.sh
+          tests/test-evaluation.sh
+          tests/test-public-repo-audit.sh
+          tests/test-guarded-delete.sh
       - name: Run credential-free portable phase-one gate
         env:
           HARNESS_PORTABLE_CI: "1"
