@@ -3,6 +3,7 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 PROBE=$ROOT/tools/hpc-topology-surface.sh
+AUDIT=$ROOT/docs/audits/hpc-topology-login-surface-2026-07-17.json
 TEST_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/hpc-topology-surface.XXXXXX")
 fake_bin=$TEST_ROOT/bin
 mkdir -p "$fake_bin"
@@ -40,5 +41,20 @@ if PATH=$fake_bin:/usr/bin:/bin HARNESS_LOGICAL_HOST=local "$PROBE" >"$TEST_ROOT
     exit 1
 fi
 grep -F 'malformed lscpu topology output' "$TEST_ROOT/malformed.out" >/dev/null
+
+python3 - "$AUDIT" <<'PY'
+import json
+import sys
+
+x = json.load(open(sys.argv[1]))
+assert x["schema"] == 1
+assert x["scope"] == "login_surface_only"
+assert set(x["nodes"]) == {"local", "ab", "ab2", "ri", "al", "rc", "t4"}
+assert all(node["taskset"] == "present" and node["lscpu"] == "present" for node in x["nodes"].values())
+assert all(isinstance(node["login_numa_nodes"], int) and node["login_numa_nodes"] > 0 for node in x["nodes"].values())
+for key, total in x["totals"].items():
+    field = key.removesuffix("_present")
+    assert total == sum(node[field] == "present" for node in x["nodes"].values())
+PY
 
 printf '%s\n' 'HPC topology surface tests: PASS'

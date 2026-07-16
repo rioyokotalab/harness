@@ -1,0 +1,86 @@
+{
+  "generated_date": "2026-07-17",
+  "nodes": {
+    "ab": {
+      "hwloc_info": "present",
+      "likwid_pin": "absent",
+      "login_numa_nodes": 2,
+      "lscpu": "present",
+      "lstopo": "present",
+      "numactl": "absent",
+      "numastat": "absent",
+      "taskset": "present"
+    },
+    "ab2": {
+      "hwloc_info": "present",
+      "likwid_pin": "absent",
+      "login_numa_nodes": 2,
+      "lscpu": "present",
+      "lstopo": "present",
+      "numactl": "absent",
+      "numastat": "absent",
+      "taskset": "present"
+    },
+    "al": {
+      "hwloc_info": "present",
+      "likwid_pin": "absent",
+      "login_numa_nodes": 4,
+      "lscpu": "present",
+      "lstopo": "present",
+      "numactl": "present",
+      "numastat": "present",
+      "taskset": "present"
+    },
+    "local": {
+      "hwloc_info": "present",
+      "likwid_pin": "absent",
+      "login_numa_nodes": 1,
+      "lscpu": "present",
+      "lstopo": "present",
+      "numactl": "present",
+      "numastat": "present",
+      "taskset": "present"
+    },
+    "rc": {
+      "hwloc_info": "absent",
+      "likwid_pin": "absent",
+      "login_numa_nodes": 2,
+      "lscpu": "present",
+      "lstopo": "absent",
+      "numactl": "present",
+      "numastat": "present",
+      "taskset": "present"
+    },
+    "ri": {
+      "hwloc_info": "present",
+      "likwid_pin": "absent",
+      "login_numa_nodes": 2,
+      "lscpu": "present",
+      "lstopo": "present",
+      "numactl": "present",
+      "numastat": "present",
+      "taskset": "present"
+    },
+    "t4": {
+      "hwloc_info": "present",
+      "likwid_pin": "absent",
+      "login_numa_nodes": 2,
+      "lscpu": "present",
+      "lstopo": "present",
+      "numactl": "present",
+      "numastat": "present",
+      "taskset": "present"
+    }
+  },
+  "schema": 1,
+  "scope": "login_surface_only",
+  "totals": {
+    "hwloc_info_present": 6,
+    "likwid_pin_present": 0,
+    "lscpu_present": 7,
+    "lstopo_present": 6,
+    "numactl_present": 5,
+    "numastat_present": 5,
+    "taskset_present": 7
+  }
+}

@@ -18,6 +18,11 @@ pass; AB and AB2 are queued; and RC's diagnostic SMT placement failure has a
 narrow `--hint=nomultithread` v2 correction. Local remains held behind its two
 older pending jobs.
 
+T-240 adds one explicitly deferred successor: after T-237 finishes, validate
+allocation-level NUMA memory policy/locality without turning it into a
+benchmark. Login-surface tool presence is recorded now, but no login NUMA
+count is a compute-node placement claim.
+
 The next high-value execution branch needs an explicit framework/version and
 architecture-matched immutable artifacts. After that choice, run one locked
 single-device correctness gate before any training, distributed framework, or

@@ -59,6 +59,15 @@
         "Q5"
       ],
       "status": "blocked_by_choice"
+    },
+    {
+      "action": "test allocation-level NUMA memory policy and locality without benchmarking",
+      "evidence": "T-237,T-240",
+      "id": "Q10",
+      "requires": [
+        "Q3"
+      ],
+      "status": "blocked_by_dependency"
     }
   ],
   "schema": 1,
@@ -70,6 +79,7 @@
     "project_gated",
     "owner_resource_gated",
     "site_or_project_gated",
-    "blocked_by_choice"
+    "blocked_by_choice",
+    "blocked_by_dependency"
   ]
 }

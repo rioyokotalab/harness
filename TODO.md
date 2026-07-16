@@ -1721,6 +1721,16 @@ Validate synthetically, commit and distribute, then collect all seven nodes in
 one machine-readable audit. Interpret it strictly as login-surface preparation,
 not compute-node binding, NUMA performance, or permission to install tools.
 
+**Outcome:** exact probe commit `3255ed0` reached all six clean remotes and all
+seven bounded runs passed. Every login surface has Linux affinity/sysfs,
+`taskset`, and `lscpu`; five have `numactl`/`numastat`, six have hwloc, and none
+has LIKWID. Login NUMA counts range from one to four and remain explicitly
+non-compute evidence. The machine-readable audit and human interpretation are
+`docs/audits/hpc-topology-login-surface-2026-07-17.json` and
+`docs/hpc-topology-login-surface.md`. T-240 is complete; Q10 records a later
+allocation-level memory-policy gate behind T-237 rather than submitting more
+work now.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
