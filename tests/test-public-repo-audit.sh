@@ -37,7 +37,9 @@ git -C "$repo" init -q
 git -C "$repo" config user.name test
 git -C "$repo" config user.email test@example.invalid
 
-fake_value='ghp_FAKEVALUEFORREDACTION1234567890'
+# Assemble the hostile sentinel at runtime so the scanner test itself does not
+# leave a token-shaped literal in the current source tree.
+fake_value='ghp_''FAKEVALUEFORREDACTION1234567890'
 printf 'safe=true\n' >"$repo/config.txt"
 printf 'api_key=%s\n' "$fake_value" >"$repo/.env"
 git -C "$repo" add config.txt .env

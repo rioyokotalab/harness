@@ -305,7 +305,8 @@ blobs, operational paths, and ignored/untracked boundaries. Do not rewrite
 history, change visibility, inspect authentication stores, or mutate website
 files while its unrelated fresh ledger closeout remains dirty. Acceptance is a
 versioned scanner with hostile fixtures, bounded reports for both repositories,
-and independent confirmation that no matched value reaches stdout or Git.
+and independent confirmation that no matched repository value is copied into
+stdout, stderr, or a report.
 
 **Implementation checkpoint:** `tools/public-repo-audit.py` now scans all
 reachable blobs with one Git batch reader and one raw-history pass, publishes
