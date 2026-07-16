@@ -1322,6 +1322,17 @@ those absent links. Independent postflight now reports exactly 34 keeps, zero
 creates, and zero blocks on every node. No repository bytes, owner files,
 credentials, scheduler state, or unrelated links were changed.
 
+### T-225 — Canonical control-plane completeness in fleet audits
+
+**Phase/status:** `executing`, derived from T-224. Extend the existing bounded
+fleet readiness probe to invoke the canonical `harness apply --plan` and retain
+only its keep/create/block counts after requiring a complete end marker. This
+reuses `managed_links` instead of hard-coding a second skill list, while the
+existing four detailed control-link records remain for diagnosis. Update parser
+and fake-SSH tests, run the focused/full/public suites, then perform one new
+seven-node read-only audit and require 34/0/0 everywhere. The audit must not
+apply links, read link contents, or expose discarded remote output.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

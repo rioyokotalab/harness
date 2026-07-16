@@ -29,6 +29,7 @@ printf '%s\n' \
   'INVENTORY	{"arch":"x86_64","logical_host":"ab","schema":"1"}' \
   'DOCTOR	SUMMARY host=ab failures=0 warnings=2' \
   'SCHEDULE	RESTIC_SCHEDULE_CHAIN host=ab status=active job=123.pbs name=hab eligible=1784388600 present=1 state=Q' \
+  'CONTROL_PLANE	34	0	0' \
   'CONTROL	.codex/AGENTS.md	symlink	/home/test/harness/.codex/AGENTS.md' \
   'STORAGE	.local	symlink	/large/test/home-local' \
   'SMOKE	mpi.c	0123456789012345678901234567890123456789' \
@@ -47,5 +48,6 @@ assert list(x['nodes'])==['ab']
 assert x['nodes']['ab']['head']=='0123456789012345678901234567890123456789'
 assert x['nodes']['ab']['doctor']=={'failures':0,'warnings':2}
 assert x['nodes']['ab']['schedule']['chain']['job']=='123.pbs'
+assert x['nodes']['ab']['control_plane']=={'keep':34,'create':0,'block':0}
 PY
 printf '%s\n' 'fleet readiness audit tests passed'

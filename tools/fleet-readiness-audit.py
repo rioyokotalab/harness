@@ -52,6 +52,25 @@ if [ -n "$status" ]; then
 else
     printf 'SCHEDULE_ERROR\t1\n'
 fi
+if control_plan=$("$harness" apply --host "$host" --plan 2>/dev/null); then
+    control_summary=$(printf '%s\n' "$control_plan" | awk '
+        /^KEEP / { keep++ }
+        /^CREATE / { create++ }
+        /^BLOCK / { block++ }
+        /^END control_plane / { ended=1 }
+        END {
+            if (!ended) exit 2
+            printf "%d\t%d\t%d", keep + 0, create + 0, block + 0
+        }
+    ') || control_summary=
+    if [ -n "$control_summary" ]; then
+        printf 'CONTROL_PLANE\t%s\n' "$control_summary"
+    else
+        printf 'CONTROL_PLANE_ERROR\t1\n'
+    fi
+else
+    printf 'CONTROL_PLANE_ERROR\t1\n'
+fi
 for rel in .codex/AGENTS.md .codex/rules/default.rules .claude/CLAUDE.md .vimrc; do
     path=$HOME/$rel
     if [ -L "$path" ]; then
@@ -201,6 +220,14 @@ def parse_probe(host: str, output: str) -> dict[str, Any]:
                 "status": match.group(3), "job": match.group(4), "name": match.group(5),
                 "eligible_epoch": int(match.group(6)), "present": match.group(7) == "1",
                 "state": match.group(8),
+            }
+        elif tag == "CONTROL_PLANE" and len(fields) == 4 and all(
+            field.isdigit() for field in fields[1:]
+        ):
+            data["control_plane"] = {
+                "keep": int(fields[1]),
+                "create": int(fields[2]),
+                "block": int(fields[3]),
             }
         elif tag in {"CONTROL", "STORAGE"} and len(fields) == 4:
             name, kind, target = fields[1:]
