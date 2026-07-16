@@ -30,3 +30,9 @@ native site command visibly, and run only the smallest correctness gate. Keep
 performance deferred until correctness, checkpoint cleanup, and immutable
 environment evidence pass. Distributed work remains a separate resource
 decision.
+
+Validation requires no installed package: run
+`~/harness/tools/hpc-project-intake-validate.py --require-ready MANIFEST`.
+The validator refuses symlinks, oversized or duplicate-key JSON, undeclared
+fields, invalid types/ranges/patterns, and a draft manifest. It prints only
+phase and aggregate item counts, never manifest values.

@@ -1772,6 +1772,26 @@ job or permission to bypass `ybatch`. The durable boundary and escalation
 condition are in `docs/local-readiness-queue-diagnosis.md`; no scheduler state
 changed.
 
+### T-243 — Dependency-free HPC intake validator
+
+**Phase/status:** `implementing`, derived from T-241. Implement the exact JSON
+Schema subset used by the intake contract with Python's standard library so
+every node can validate a project manifest without installing `jsonschema`.
+Require a regular non-symlink file under 1 MiB, duplicate-key rejection,
+closed-object fields, exact types (including boolean/integer distinction),
+required/const/enum/pattern/minimum/unique-item checks, and an optional strict
+`--require-ready` gate. Emit only phase and aggregate counts, never values.
+Test valid ready/draft forms plus draft-ready, unknown-field, digest,
+credential-reference, and symlink failures; run full/public validation,
+publish, and distribute without reading any real project or credential data.
+
+**Outcome:** `tools/hpc-project-intake-validate.py` implements the contract's
+closed JSON Schema subset using only the Python standard library and provides
+the strict ready gate documented in `docs/hpc-project-intake.md`. Synthetic
+ready/draft and six refusal paths pass, along with warning-level ShellCheck,
+portable phase 1, and public audit. T-243 is complete; no real manifest,
+project, credential, package, scheduler, or external service was accessed.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

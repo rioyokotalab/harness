@@ -100,6 +100,8 @@ done
     fail "HPC topology surface focused suite"
 "$ROOT/tests/test-hpc-project-intake.sh" >/dev/null ||
     fail "HPC project intake focused suite"
+"$ROOT/tests/test-hpc-project-intake-validator.sh" >/dev/null ||
+    fail "HPC project intake validator focused suite"
 "$ROOT/tests/test-llm-hpc-next-actions.sh" >/dev/null ||
     fail "LLM/HPC next-action queue focused suite"
 "$ROOT/tests/test-storage-readiness.sh" >/dev/null ||
