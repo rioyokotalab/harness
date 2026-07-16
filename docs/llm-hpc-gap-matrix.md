@@ -23,6 +23,8 @@ records, the T-212/T-213 debugger records, the T-209/T-211 storage and
 checkpoint records, and the T-214 offline-environment record in `TODO.md`.
 T-227 additionally proves the same dependency-free frozen/offline project lock
 on all seven login nodes, with identical lock digest and guarded cleanup.
+T-230 proves one bounded two-node/two-rank distinct-host MPI route on AL; the
+other six nodes retain their prior multi-node status.
 The immutable transport mechanisms are designed in
 [`immutable-environment-matrix.md`](immutable-environment-matrix.md), but no
 immutable image runtime execution is claimed.
@@ -40,9 +42,9 @@ immutable image runtime execution is claimed.
 4. T-227 closes only the dependency-free frozen-lock control-plane gate.
    Third-party wheel availability and immutable image execution remain behind
    T-206's framework/artifact choice.
-5. Plan multi-node MPI separately on the five supported routes. It needs
-   explicit two-node resource review and must not be inferred from the current
-   one-node evidence.
+5. AL now passes the bounded two-node MPI correctness gate. Local still needs a
+   wrapper dry-run; AB, AB2, and T4 require explicit full-node resource changes;
+   RI and RC still need architecture-matched MPI environments.
 6. Keep framework/image selection under T-206's owner gate. Once selected, run
    one locked, architecture-matched single-device LLM smoke before distributed
    or performance work.
@@ -50,6 +52,6 @@ immutable image runtime execution is claimed.
    documented site support instead of installing ad hoc base-home packages or
    bypassing policy.
 
-No row claims training throughput, multi-node fabric behavior, GPU-aware MPI,
+No row claims training throughput, multi-node fabric performance, GPU-aware MPI,
 framework correctness, mixed precision, large-model memory fit, or scientific
 application accuracy.

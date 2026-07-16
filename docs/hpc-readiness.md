@@ -71,10 +71,23 @@ left `mpiprocs` at one. The corrected request declared `mpiprocs=2` inside the
 same 32-CPU node; it did not oversubscribe or enlarge the allocation. RI and RC
 remain explicit route gaps rather than inferred MPI failures.
 
-These are correctness and environment gates, not benchmarks. They do not
-claim framework availability, MPI collective correctness beyond the tracked
-rank/world-size program, multi-node behavior, GPU-aware MPI,
+These one-node results are correctness and environment gates, not benchmarks.
+Except for the separate AL gate below, they do not claim framework availability,
+MPI collective correctness beyond the tracked rank/world-size program,
+multi-node behavior, GPU-aware MPI,
 cross-architecture numerical equivalence, or performance. RI and RC still need
 a reviewed CUDA toolkit and MPI route, every node still needs a selected and
 locked LLM framework environment or image, and RC's CPU sanitizer runtime
 remains a declared gap.
+
+## Two-node MPI gate
+
+T-230 adds one deliberately narrower distributed result. AL Slurm job
+`4224822` used the validated `prgenv-gnu/25.11:v1` uenv, two normal-partition
+nodes, two ranks, and one rank per node. The tracked program gathered processor
+identities and required two distinct values while publishing only the count.
+Scheduler accounting and the private mode-0600 result are both zero, the
+queued-source contract passed, and shared private build state was guarded-
+cleaned. This proves MPI startup, gather/broadcast, and distinct-host placement
+on AL only; it makes no latency, bandwidth, scaling, GPU-aware MPI, or other-
+route claim.

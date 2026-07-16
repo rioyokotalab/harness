@@ -1456,7 +1456,7 @@ module load, package operation, or billing action occurred.
 
 ### T-230 — AL two-node MPI distinct-host correctness gate
 
-**Phase/status:** `in progress`, derived from T-229's documented AL candidate.
+**Phase/status:** `complete`, derived from T-229's documented AL candidate.
 Add a separate MPI C gate that gathers processor identities but publishes only
 the count, requiring exactly two ranks on exactly two distinct hosts. The AL
 job must use the validated `prgenv-gnu/25.11:v1` uenv, two nodes, one rank per
@@ -1492,6 +1492,14 @@ a unique mode-0700 build directory under the already shared private
 `~/.local/state/harness/hpc-readiness` root, then guarded-cleans it with that
 root as the explicit boundary. Preserve v1 evidence; validate, commit,
 distribute, and retry only with a new v2 result and job name.
+
+**Outcome:** v2 commit `268a5cd` reached all six clean remotes. Fresh preflight
+preserved v1, required v2 result/name/build/capture absence, and passed the
+six-path source contract. Native Slurm accepted only job `4224822`; it ran on
+two nodes and completed scheduler/result zero with `ranks=2 hosts=2`. Both
+mode-0600 v1/v2 results remain private, while exact postflight found no v2
+build or capture residue. T-230 closes AL's distinct-host correctness gate only;
+all performance, GPU-aware, and other-node claims remain open or gated.
 
 ## Stable operational facts
 

@@ -14,7 +14,7 @@ without submitting anything.
 | AB | resource change gated | `rt_HF`, `select=2:mpiprocs=1`; HPC-X with `$PBS_NODEFILE`, 1 rank/node | proven `rt_HC` route is single-node; two full H nodes change cost/resource scope |
 | AB2 | resource change gated | same as AB under group `gah51624` | same resource/cost change |
 | RI | no base route | none | architecture-matched MPI environment is not selected |
-| AL | documented candidate | normal, 2 nodes, 2 tasks, 1 task/node, validated uenv; `srun` | fresh collision/cost preflight and one bounded submission |
+| AL | validated pass | normal, 2 nodes, 2 tasks, 1 task/node, validated uenv; `srun` | correctness gate complete; performance and GPU-aware MPI remain separate |
 | RC | no base route | none | architecture-matched MPI environment is not selected |
 | T4 | resource change gated | `node_f=2`; Open MPI with 1 rank/node | proven `cpu_4` route is fractional; two full nodes consume a different points scope |
 
@@ -47,3 +47,13 @@ and name, retain scheduler and private-result exit zero, and use default
 priority with a five-minute limit. It must submit at most once per approved
 route and make no throughput, scaling, GPU-aware MPI, or production-fabric
 claim. RI and RC remain excluded until their project environments are chosen.
+
+## T-230 AL execution
+
+AL v1 job `4224814` proved why node-local build staging is invalid: rank 1
+could not see the executable compiled under rank 0's `/tmp`. That terminal
+failure is retained privately and is not MPI/fabric evidence. V2 compiled the
+same tracked gate in a unique mode-0700 directory under shared private state.
+Job `4224822` then completed with scheduler/result zero, two ranks, two distinct
+processor identities, exact queued-source provenance, and no build/capture
+residue. Processor names were compared in the allocation but never published.
