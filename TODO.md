@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-215.
+and compact historical pointers here. Next free ID: T-248.
 
 ## Current state
 
@@ -1665,7 +1665,7 @@ the already queued jobs.
 
 ### T-238 — Fail-closed scheduler job collision preflight
 
-**Phase/status:** `implementing`, derived from RI's transient T-237 Slurm/DNS
+**Phase/status:** `complete`, derived from RI's transient T-237 Slurm/DNS
 failure. Replace ad hoc exact-name counting with a read-only helper that first
 captures the native `squeue`, `qselect`, or `qstat` exit status, validates its
 family-specific output, and only then counts exact owner/name matches. It must
@@ -1711,7 +1711,7 @@ pass, but correctly excludes queued AB/AB2 and held local work. The report is
 
 ### T-240 — NUMA and topology login-surface audit
 
-**Phase/status:** `implementing`, derived from T-237. Add a read-only bounded
+**Phase/status:** `complete`, derived from T-237. Add a read-only bounded
 probe for the standard affinity/NUMA inspection surface (`taskset`, `numactl`,
 `numastat`, `lscpu`, hwloc, and LIKWID) plus an aggregate count of NUMA domains
 described by the login process. Require process/sysfs topology metadata and a
@@ -1733,7 +1733,7 @@ work now.
 
 ### T-241 — Project intake contract for owner-gated HPC branches
 
-**Phase/status:** `implementing`, derived from Q5/Q6. Define a strict, public,
+**Phase/status:** `complete`, derived from Q5/Q6. Define a strict, public,
 value-free schema for the project-owned choices that precede framework or
 scientific-library work: targets, locked framework/version evidence,
 language/MPI/library ABI features, architecture-matched artifacts, licenses,
@@ -1774,7 +1774,7 @@ changed.
 
 ### T-243 — Dependency-free HPC intake validator
 
-**Phase/status:** `implementing`, derived from T-241. Implement the exact JSON
+**Phase/status:** `complete`, derived from T-241. Implement the exact JSON
 Schema subset used by the intake contract with Python's standard library so
 every node can validate a project manifest without installing `jsonschema`.
 Require a regular non-symlink file under 1 MiB, duplicate-key rejection,
@@ -1794,7 +1794,7 @@ project, credential, package, scheduler, or external service was accessed.
 
 ### T-244 — Seven-interpreter intake-validator compatibility
 
-**Phase/status:** `implementing`, correcting T-243's untested fleet claim. AL's
+**Phase/status:** `complete`, correcting T-243's untested fleet claim. AL's
 default Python is 3.6, so remove postponed annotations and PEP 585 built-in
 generic syntax from the dependency-free validator. Replace bytecode compilation
 in its test with AST parsing so older clients cannot leave checkout-local
@@ -1810,7 +1810,7 @@ is complete, replacing T-243's previously local-only portability evidence.
 
 ### T-245 — Fail-closed intake schema evolution
 
-**Phase/status:** `implementing`, derived from T-243. The dependency-free
+**Phase/status:** `complete`, derived from T-243. The dependency-free
 validator must reject any schema keyword outside its implemented subset before
 reading a manifest; otherwise a future constraint such as `maxLength` could be
 silently ignored. Recursively audit every schema node while treating property
@@ -1849,6 +1849,37 @@ transfer artifact was absent, and website's unrelated dirty files remained
 untouched. Full/public validation and final fleet distribution are the
 remaining publication gates for this same outcome; no pending or owner-gated
 item is reported complete.
+
+### T-247 — Resume captured readiness jobs and final temporary cleanup
+
+**Phase/status:** `executing` under the owner's 2026-07-17 instruction to
+resume all tasks, finish every currently authorized action, and then clean
+temporary files. The clean local branch and `origin/main` both began at exact
+handoff commit `b63bb610e2dc6a1467b98e91dbb1b070ac93d7fd`. Initial fail-closed
+native reconciliation confirms local T-210 `91220` remains pending for
+resources and local T-217 `91240` remains pending for priority. AB T-237
+`2045152.pbs1` and AB2 `2045153.pbs1` remain queued for their already accepted
+full `rt_HC` node requests. No fixed result exists yet for those four jobs.
+
+The protected T-191 weekly chain remains captured and singleton: local `90939`,
+AB `2044027.pbs1`, AB2 `2044028.pbs1`, RI `6862`, AL `4221054`, RC `210816`,
+and T4 `8175651`. Their first eligibility points are Sunday 2026-07-19, so
+pending/held state before then is expected. Monitor only exact IDs and fail
+closed on scheduler query errors. Never replace, duplicate, reprioritize, or
+cancel a delayed job. After both older local readiness jobs are terminal,
+fresh-preflight and submit local T-237 exactly once; then close T-237/Q3 and
+execute Q10's bounded non-benchmark NUMA gate. Preserve private results and
+diagnostic failures as evidence.
+
+Final cleanup starts only after job reconciliation so an active capture is not
+mistaken for residue. First run content-blind result hygiene and exact-prefix
+metadata inventories on all seven nodes. Remove only verified job-scoped
+temporary entries; use guarded plan/apply for every multi-path or recursive
+cleanup, exact-unlink only independently revalidated single files, and require
+protected anchors plus post-delete absence. Owner-, project-, resource-,
+site-support-, external-setting-, and destructive-retention gates remain gates;
+the terminal instruction does not supply missing project choices or authorize
+Restic retention/prune.
 
 ## Stable operational facts
 
