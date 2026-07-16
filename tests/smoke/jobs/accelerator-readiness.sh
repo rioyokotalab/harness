@@ -6,7 +6,7 @@ case ${HARNESS_LOGICAL_HOST:-} in
     *) printf '%s\n' 'accelerator-readiness: invalid HARNESS_LOGICAL_HOST' >&2; exit 2 ;;
 esac
 
-gate=accelerator-readiness-v1
+gate=accelerator-readiness-v2
 run_tag=${HARNESS_READINESS_RUN_TAG:-v1}
 case $run_tag in
     ''|*[!A-Za-z0-9._-]*)
@@ -23,7 +23,10 @@ esac
 # through native submission flags, so this script never nests a scheduler action.
 if [ "${T200_ACCEL_ENV_READY:-0}" != 1 ]; then
     case $host in
-        local) module load cuda/12.8 ;;
+        local)
+            module unload cuda/12.8 >/dev/null 2>&1 || true
+            module load cuda/12.8
+            ;;
         ab|ab2) module load cuda/13.2/13.2.1 ;;
         t4) module purge; module load cuda/12.8.0 ;;
     esac
@@ -83,7 +86,7 @@ umask 077
 printf 'GATE host=%s kind=%s run=%s\n' "$host" "$gate" "$run_tag"
 actual_arch=$(uname -m)
 case $host in
-    ri|al) expected_arch=aarch64 ;;
+    ri|al|rc) expected_arch=aarch64 ;;
     *) expected_arch=x86_64 ;;
 esac
 [ "$actual_arch" = "$expected_arch" ] || {

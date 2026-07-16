@@ -583,6 +583,28 @@ framework skip because no reviewed PyTorch environment or image exists.
 Commit, distribute, collision-check, print exact native commands, then monitor
 only captured IDs without touching T-191.
 
+**Accelerator v1 submission checkpoint:** exact commit `2e48072` reached six
+clean remotes through a verified 4,811-byte bundle, with all bundle files then
+absent. Result/name collision checks passed before native acceptance of local
+Ybatch `91206`; AB PBS `2045030.pbs1`; AB2 PBS `2045029.pbs1`; AL Slurm
+`4224038`; RC Slurm `211017`; and T4 AGE `8179763`. RI rejected the request
+before creating a job because site policy requires job-level `--gpus=1`, not
+per-node `--gres=gpu:1`. Exact-name reconciliation found no RI job or result.
+ABCI IDs were recovered by exact `qselect` after the asynchronous controller
+calls outlived the initial terminal yield; never resubmit those names.
+
+**Accelerator v1 evidence and v2 correction:** AL and T4 completed with
+scheduler/result zero, driver metadata, one-device CUDA kernel success, and the
+declared framework skip. AB2 also completed the same gate with PBS exit zero;
+AB remains queued. Local proved the A4500 driver but failed before compilation
+because the inherited module table claimed CUDA loaded while its PATH lacked
+`nvcc`. RC proved the allocated GH200 compute node is `aarch64`, contradicting
+the x86 login-node assumption, and failed that intentional architecture gate.
+Preserve both private v1 failures. V2 explicitly unloads/reloads local CUDA and
+declares RC compute as Arm; after AB's immutable v1 job finishes, distribute
+the correction and retry only local, RC, and the previously unsubmitted RI
+with run tag v2 and RI's required `--gpus=1` spelling.
+
 ### T-201 — Early-login cache redirection
 
 **Phase/status:** `complete`; RI's shell-independent recurrence moved to T-203. Determine, without

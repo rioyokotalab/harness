@@ -32,6 +32,8 @@ grep -Fx '#SBATCH --time=00:05:00' "$ACCEL_LOCAL" >/dev/null
 grep -F 'module load cuda/13.2/13.2.1' "$ACCEL_JOB" >/dev/null
 grep -F 'module load cuda/12.8.0' "$ACCEL_JOB" >/dev/null
 grep -F 'module load cuda/12.8' "$ACCEL_JOB" >/dev/null
+grep -F 'module unload cuda/12.8' "$ACCEL_JOB" >/dev/null
+grep -F 'ri|al|rc) expected_arch=aarch64' "$ACCEL_JOB" >/dev/null
 grep -F 'CUDA_VISIBLE_DEVICES=0' "$ACCEL_JOB" >/dev/null
 grep -F 'cuda-compile: no reviewed toolkit route' "$ACCEL_JOB" >/dev/null
 grep -F 'framework: no reviewed project environment or image' "$ACCEL_JOB" >/dev/null
