@@ -216,6 +216,8 @@ for declaration in 'local ybatch' 'ri slurm' 'ab pbs' 't4 age'; do
     if [ "$host" = ri ]; then
         grep -- '--account=rkp00015' "$TEST_ROOT/$host.seed" >/dev/null ||
             fail "RI native account request"
+        grep -- '--gres=none' "$TEST_ROOT/$host.seed" >/dev/null ||
+            fail "Slurm explicit no-GRES request"
     fi
     [ "$(wc -l <"$fake_sched/jobs" | tr -d ' ')" -eq 1 ] || fail "$host singleton"
     run_schedule "$host" "$family" "$home" status >"$TEST_ROOT/$host.status" ||

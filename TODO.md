@@ -43,9 +43,10 @@ and compact historical pointers here. Next free ID: T-193.
 
 **Status:** executing from the explicit owner `proceed` on 2026-07-16. Local,
 AB, AB2, AL, RC, and T4 have passed the allocated read-only smoke and exact
-successor-cancellation gate. RI's live Slurm policy requires an explicit
-project account, contrary to frozen D19; the owner selected `rkp00015`. Update
-and validate that one schedule row, finish RI's gate, then seed all seven.
+successor-cancellation gate. RI's first `rkp00015` smoke also passed, but live
+accounting exposed that its default partition injected one GB200 because the
+controller did not emit the declared `gpus=0`. Add and validate an explicit
+Slurm `--gres=none`, rerun the affected Slurm smokes, then seed all seven.
 
 **Verified prerequisite:** every primary and independent generation has a
 successful full-data check and verified restore. Recurrence covers primary
@@ -73,7 +74,7 @@ eligibility points, not promised starts.
 | `local` | `ybatch`; default account; `thrp_1`; 30 min; default priority; evidence-only fallback `epyc-7502_1` | 00:30 JST |
 | `ab` | PBS `-P gag51395`; `rt_HC`; `select=1`; 30 min; default Spot priority | 01:00 JST |
 | `ab2` | PBS `-P gah51624`; `rt_HC`; `select=1`; 30 min; default Spot priority | 01:30 JST |
-| `ri` | Slurm `-A rkp00015`, default partition; one node/task/CPU; no GPU; 30 min | 02:00 JST |
+| `ri` | Slurm `-A rkp00015`, default partition; one node/task/CPU; explicit `--gres=none`; 30 min | 02:00 JST |
 | `rc` | Slurm `-A cloud-users -p r340`; one node/task/CPU; no GPU; 30 min | 02:30 JST |
 | `t4` | AGE `-g jh250019 -l cpu_4=1 -l h_rt=00:30:00`; omit `-p` | 03:00 JST |
 | `al` | Slurm `-A g177-1 -p normal`; one node/task/CPU; no GPU; 30 min | 01:00 Europe/Zurich local time |
@@ -249,9 +250,14 @@ accepted whole-node allocation; RC parent `210790` completed in three seconds
 with two billed CPUs; and T4 accounting is recorded above. All bundle copies
 were exact-unlinked and every checkout is clean at `4c678d5`. RI reached its
 scheduler only under the login environment and requires an explicit project
-account. The owner selected `rkp00015`; record and validate that exact account
-request, then run RI's bounded smoke under its required login environment. Do
-not seed any production chain until RI passes the same smoke gate.
+account. The owner selected `rkp00015`. Parent `6850` passed in two seconds and
+exact `scancel 6852` verified its successor absent, but accounting showed the
+default `gpu` partition injected one GB200 and 400 GiB (`ReqTRES` and
+`AllocTRES`) even though the row declares `gpus=0`. RI exposes no CPU partition.
+Native, non-submitting `sbatch --test-only --gres=none` succeeded on RI, AL,
+and RC, and all three reported test IDs were verified absent. Make the no-GRES
+request explicit, rerun the affected Slurm smoke gates against the final
+request, and do not seed production until those exact requests pass.
 
 ### T-190 — Create automated mirrored-node onboarding skill
 

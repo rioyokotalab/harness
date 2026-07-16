@@ -79,6 +79,10 @@ for field in "$account" "$partition"; do
     case "$field" in ''|*[!A-Za-z0-9._-]*) die "invalid scheduler declaration" ;; esac
 done
 case "$resource" in ''|*[!A-Za-z0-9_=,.-]*) die "invalid scheduler resource" ;; esac
+if [ "$scheduler" = slurm ]; then
+    [ "$resource" = nodes=1,ntasks=1,cpus=1,gpus=0 ] ||
+        die "invalid reviewed Slurm resource"
+fi
 case "$walltime" in [0-9][0-9]:[0-5][0-9]:[0-5][0-9]) ;; *) die "invalid walltime" ;; esac
 [ "$priority" = default ] || die "only default priority is reviewed"
 
@@ -384,7 +388,7 @@ scheduler_submit() {
         slurm)
             set -- --parsable "--begin=$SLURM_TIME" "--job-name=$JOB_NAME" \
                 --output=/dev/null --error=/dev/null "--time=$walltime" \
-                --nodes=1 --ntasks=1 --cpus-per-task=1
+                --nodes=1 --ntasks=1 --cpus-per-task=1 --gres=none
             [ "$account" = none ] || set -- "$@" "--account=$account"
             [ "$partition" = none ] || set -- "$@" "--partition=$partition"
             printf 'NATIVE %s: sbatch' "$logical_host" >&2
