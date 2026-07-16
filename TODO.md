@@ -471,6 +471,14 @@ needs at most two further replacement primary starts and one replacement retry
 beyond the already expanded ceiling. All other experiment controls remain
 frozen.
 
+**Second replacement authority (2026-07-16):** the owner explicitly answered
+`Yes` to the narrow checkpoint above. The total ceiling is increased only by
+two further replacement primary starts and one replacement retry for the
+invalid semantic-oracle pair. Semantic-oracle correction revision `fafdfb1` is
+clean and matches `origin/main`; every other stage, safety, review, and adoption
+boundary remains frozen. Next publish this authority checkpoint, confirm the
+canonical run root is absent, and restart the full pilot from new evidence.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
