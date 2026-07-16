@@ -16,9 +16,9 @@ and compact historical pointers here. Next free ID: T-193.
   generations have passed full-data checks and verified restores. Exact
   snapshot, fingerprint, aggregate restore, transaction, and cleanup evidence
   is retained in Git through `303938f` and in `docs/home-backup.md`.
-- No recurring backup job, login-node cron, user timer, retention deletion, or
-  automatic replica job exists. Recheck live scheduler state before T-191
-  execution rather than relying on this statement.
+- Exactly one native weekly primary job is seeded on each managed node. No
+  login-node cron, user timer, retention deletion, or automatic replica job
+  exists. T-191 remains verification-pending until all seven first runs pass.
 - Global invariants remain authoritative in `.codex/AGENTS.md`: never inspect
   credentials; never use raw recursive/bulk deletion; preserve unrelated owner
   state; print native scheduler actions; validate proportional to risk; do not
@@ -41,12 +41,11 @@ and compact historical pointers here. Next free ID: T-193.
 
 ### T-191 — Scheduler-native weekly primary snapshots
 
-**Status:** executing from the explicit owner `proceed` on 2026-07-16. All
-seven nodes passed the final allocated read-only smoke and exact successor-
-cancellation gate. RI's only partition rewrites even explicit `--gres=none`
-to one GB200 plus 400 GiB; the owner accepted that allocation for weekly RI
-snapshots. Re-audit captured state, then seed exactly one production job per
-node. No production chain exists yet.
+**Status:** verification-pending after the explicit owner `proceed`. All seven
+final smokes passed, and exactly one production job per node is present for
+Sunday 2026-07-19. Idempotent reseeding kept every captured ID and created no
+duplicate. Monitor each first snapshot and its strictly future successor; valid
+queue delay is healthy. RI's forced one-GB200 allocation is owner-accepted.
 
 **Verified prerequisite:** every primary and independent generation has a
 successful full-data check and verified restore. Recurrence covers primary
@@ -261,8 +260,31 @@ received the same injected GPU allocation, passed in two seconds, and exact
 and RC parent `210808` also passed, with exact successors `4221038` and
 `210810` disabled. This proves the site override cannot be avoided through the
 reviewed native request. The owner accepted the forced RI GPU allocation; all
-required production choices are resolved and the exact seven-node pre-seed
-audit is next.
+required production choices were resolved before the exact seven-node pre-seed
+audit and production submissions below.
+
+**Production seed checkpoint (2026-07-16):** the exact pre-seed audit found all
+checkouts clean at `324360b`, every chain absent, and every smoke state
+`verified-disabled` with its successor absent. Native seeding then accepted the
+following singleton jobs; an immediate second seed on every node returned
+`status=kept` for the same ID.
+
+| Host | Captured production ID | First eligibility |
+|---|---:|---|
+| `local` | `90939` | 2026-07-19 00:30 JST |
+| `ab` | `2044027.pbs1` | 2026-07-19 01:00 JST |
+| `ab2` | `2044028.pbs1` | 2026-07-19 01:30 JST |
+| `ri` | `6862` | 2026-07-19 02:00 JST |
+| `rc` | `210816` | 2026-07-19 02:30 JST |
+| `t4` | `8175651` | 2026-07-19 03:00 JST |
+| `al` | `4221054` | 2026-07-19 01:00 Europe/Zurich |
+
+Every controller status reports `active`, exact identity present, and the
+expected scheduler pending/held state. Next action: monitor only these captured
+IDs; after each admission verify successful snapshot evidence, exactly one
+successor at the next strictly future Sunday, private state consistency, and
+healthy interactive-login silence. Do not duplicate or cancel jobs merely for
+queue delay.
 
 ### T-190 — Create automated mirrored-node onboarding skill
 
