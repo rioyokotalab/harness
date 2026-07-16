@@ -42,10 +42,11 @@ and compact historical pointers here. Next free ID: T-193.
 
 ### T-191 — Scheduler-native weekly primary snapshots
 
-**Status:** executing from the explicit owner `proceed` on 2026-07-16. No
-scheduler mutation has started. First step: implement the strict schedule
-schema, shared primary helper, controller, and deterministic local tests; only
-after all local gates pass may live scheduler smokes begin.
+**Status:** executing from the explicit owner `proceed` on 2026-07-16. Local,
+AB, AB2, AL, RC, and T4 have passed the allocated read-only smoke and exact
+successor-cancellation gate. RI is paused before submission because its live
+Slurm policy requires an explicit project account, contrary to frozen D19;
+ask the owner for that one material choice, then finish RI before seeding.
 
 **Verified prerequisite:** every primary and independent generation has a
 successful full-data check and verified restore. Recurrence covers primary
@@ -221,15 +222,36 @@ AGE job `8175315`. Its managed read-only Restic check passed, but compute-side
 successor submission stopped before adoption because `qsub` was absent from
 the batch job's `PATH`; the private mode-0600 diagnostic contains only the
 resolved native command and the `command not found` error. Login-side
-validation identifies the executable directory as
+validation identified the executable directory as
 `/apps/t4/rhel9/uge/latest/bin/lx-amd64`, a mode-0755 directory owned by
-`geadmin` and canonically linked to the installed 2023.1.1 AGE tree. Declare
-that exact non-secret command path in the T4 host profile, rerun all local
-gates, roll out one clean commit, and retry only T4. AB and AB2 remain valid
-queued parents and must not be duplicated. RI reached its scheduler under a
-login shell but now requires an explicit project account, contradicting the
-frozen default-account row; resolve that material choice with the owner before
-retrying RI.
+`geadmin` and canonically linked to the installed 2023.1.1 AGE tree. Commit
+`4c678d5` declared that path, passed focused, guarded-delete, and complete
+phase-1 gates, and was bundle-fast-forwarded to all six clean remotes. Retry
+parent `8175392` then passed on `all.q/r2n6`, four CPU slots, exit 0 in 3.498
+seconds; exact `qdel 8175400` verified its Sunday successor disabled.
+
+**Six-node smoke checkpoint:** every accepted parent below completed the
+managed read-only Restic check and created exactly one future Sunday successor;
+each successor was canceled by captured exact ID and its private state is now
+`verified-disabled`. No smoke took a snapshot.
+
+| Host | Accepted parent | Exact disabled successor |
+|---|---:|---:|
+| `local` | `90931` | `90932` |
+| `ab` | `2043932.pbs1` | `2043966.pbs1` |
+| `ab2` | `2043931.pbs1` | `2043964.pbs1` |
+| `al` | `4220993` | `4220994` |
+| `rc` | `210790` | `210791` |
+| `t4` | `8175392` | `8175400` |
+
+Local parent `90931` completed in 12 seconds on `threadripper-3960x` with six
+CPUs and 15,600 MiB; AL parent `4220993` completed in nine seconds with the
+accepted whole-node allocation; RC parent `210790` completed in three seconds
+with two billed CPUs; and T4 accounting is recorded above. All bundle copies
+were exact-unlinked and every checkout is clean at `4c678d5`. RI reached its
+scheduler only under the login environment and requires an explicit project
+account; do not guess or seed any production chain until the owner resolves
+that new choice and RI passes the same smoke gate.
 
 ### T-190 — Create automated mirrored-node onboarding skill
 
