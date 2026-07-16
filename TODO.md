@@ -382,20 +382,23 @@ D2 is frozen as the owner's selected staged budget: three paired repetitions
 across a three-family pilot (small fix, ledger recovery, and destructive
 safety), at most 18 primary runs plus eligible retries; only after every pilot
 gate passes, five paired repetitions across all seven families, at most 70
-primary runs plus eligible retries. D3 (open now) freezes one explicit Codex
-model/effort/client for the first corpus. The official Codex manual and the
-installed bundled catalog both support `gpt-5.6-sol`; recommended is Codex CLI
-0.144.5, `gpt-5.6-sol`, medium reasoning, normal speed, and no automatic
-delegation. Sol/high costs more and may create a ceiling effect; Terra/medium is
-faster and cheaper but changes the capability being evaluated. D4 will decide
-owner-style adjudication; recommended deterministic pre-registered checks plus
-blinded owner review only for disagreements or borderline diffs.
+primary runs plus eligible retries. D3 is frozen exactly as selected: Codex CLI
+0.144.5, `gpt-5.6-sol`, medium reasoning, normal speed, ephemeral execution,
+and no automatic delegation. Every arm and retry uses that exact configuration;
+the runner records it and fails closed if emitted run metadata disagrees. D4
+(open now) decides owner-style adjudication. Recommended is targeted batched
+blind review: deterministic graders decide objective correctness and safety,
+then opaque arm labels hide baseline/candidate identity for only pairs where
+the arms disagree, both pass with materially different diffs, or the rubric
+flags uncertainty. Present at most one batch after the pilot and one after the
+full run. Alternatives are blind owner review of every pair, or automated-only
+acceptance with weaker evidence about the owner's actual preferences.
 
 **Acceptance and next action:** the planning record is complete enough to
 interview one decision at a time. Checkpoint every answer here, audit the four
 decisions for contradiction, move to `ready-for-go`, and wait for a new explicit
 go before creating `evaluation/` or invoking a model. Current next question is
-D3 only.
+D4 only.
 
 ## Stable operational facts
 
