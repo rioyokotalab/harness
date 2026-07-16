@@ -915,6 +915,15 @@ and repeat evidence, the full suite, public audit, commit/distribution, and
 fresh result/name collision checks. The still-captured ABCI T-207 MPI jobs are
 distinct work; do not cancel, resize, or duplicate them.
 
+**Submission checkpoint:** exact commit `0d46b99` was installed into six clean
+remote worktrees through a verified 5,110-byte public bundle, with every bundle
+then absent. Fresh result/name collision checks passed before native acceptance
+of local Ybatch `91220`; AB PBS `2045064.pbs1`; AB2 PBS `2045063.pbs1`; RI
+Slurm `7013`; AL Slurm `4224277`; RC Slurm `211060`; and T4 AGE `8179846`.
+RI, AL, RC, and T4 already report scheduler/result zero and the identical frozen
+hex result twice. Local and both ABCI jobs remain validly pending; monitor only
+these captured IDs and never infer failure or resubmit from queue delay.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
