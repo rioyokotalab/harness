@@ -1278,6 +1278,23 @@ for queued version-controlled jobs. T-221 is complete as a read-only source
 gate; existing queued T-217 jobs retain their manually verified unchanged
 source because their already submitted environment predates this helper.
 
+**First live evidence:** on all seven clean checkouts, the helper accepted
+submitted T-217 revision `42d8709` against current `3d50c0a` for exactly the
+common job, C++ source, guarded cleanup helper, and host profile. This proves
+the later fleet fast-forwards were unrelated to the queued computation paths.
+
+### T-222 — Checkpoint-format golden-vector specification
+
+**Phase/status:** `complete`, extending T-217 without a new allocation.
+`docs/checkpoint-restart-format.md` specifies every v1 byte offset, unsigned
+big-endian encoding, state-step semantics, FNV-1a constants and non-security
+boundary, exact 40-byte step-400 vector, SHA-256, and million-step final state.
+The focused test binds the document to the generated golden bytes and checksum
+scope. The document explicitly excludes directory-fsync crash durability,
+concurrency, scheduler requeue/signals, distributed state, schema evolution,
+performance, and application suitability. No live checkpoint, scheduler, or
+external state was changed.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
