@@ -1454,6 +1454,28 @@ site reference; `install.sh` confirmed all Codex, agents, and Claude discovery
 links still resolve to that shared skill. No scheduler job, environment change,
 module load, package operation, or billing action occurred.
 
+### T-230 — AL two-node MPI distinct-host correctness gate
+
+**Phase/status:** `in progress`, derived from T-229's documented AL candidate.
+Add a separate MPI C gate that gathers processor identities but publishes only
+the count, requiring exactly two ranks on exactly two distinct hosts. The AL
+job must use the validated `prgenv-gnu/25.11:v1` uenv, two nodes, one rank per
+node, five minutes, default priority, T-221 source-contract enforcement,
+private collision-refusing result publication, and guarded scratch cleanup.
+Run focused/native compile-negative/full/public validation, commit/distribute,
+freshly collision-check, submit exactly once, reconcile one native Slurm ID,
+and monitor only it. Do not claim latency, bandwidth, scaling, GPU-aware MPI,
+collectives beyond startup/broadcast/gather, or any other node route.
+
+**Implementation checkpoint:** the new C gate gathers fixed-size MPI processor
+identities, requires two different values, broadcasts the verdict, and emits
+only `ranks=2 hosts=2`. The AL-only job requires two allocated nodes, invokes
+T-221 over all executable inputs, compiles inside allocation scratch, launches
+one rank per node, collision-refuses a private result, and guarded-cleans.
+Focused/static/ShellCheck tests, a native compile plus expected same-host
+rejection, native and portable full suites, and the public audit pass. Commit
+and distribute before any collision check or submission.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

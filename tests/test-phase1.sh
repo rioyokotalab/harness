@@ -63,6 +63,7 @@ for script in \
     "$ROOT/tests/smoke/venv-readiness.sh" \
     "$ROOT/tests/smoke/jobs/checkpoint-restart-readiness.sh" \
     "$ROOT/tests/smoke/jobs/local-checkpoint-restart.slurm" \
+    "$ROOT/tests/smoke/jobs/multinode-mpi-readiness.sh" \
     "$ROOT/tests/smoke/jobs/source-contract.sh" \
     "$ROOT/libexec/harness-rollback"
 do
@@ -83,6 +84,8 @@ done
     fail "HPC readiness job focused suite"
 "$ROOT/tests/test-hpc-multinode-mpi-routes.sh" >/dev/null ||
     fail "multi-node MPI route focused suite"
+"$ROOT/tests/test-multinode-mpi-readiness.sh" >/dev/null ||
+    fail "multi-node MPI readiness focused suite"
 "$ROOT/tests/test-storage-readiness.sh" >/dev/null ||
     fail "storage readiness focused suite"
 "$ROOT/tests/test-debugger-readiness.sh" >/dev/null ||
@@ -419,6 +422,8 @@ case ${HARNESS_PORTABLE_CI:-0} in
         mpicc -O2 "$ROOT/tests/smoke/mpi.c" -o "$TEMP_DIR/mpi"
         [ "$("$TEMP_DIR/mpi" 1)" = "mpi=pass ranks=1" ] ||
             fail "native MPI singleton smoke"
+        mpicc -O2 "$ROOT/tests/smoke/mpi-multinode.c" -o "$TEMP_DIR/mpi-multinode" ||
+            fail "native multi-node MPI source compile"
         ;;
     1)
         printf '%s\n' 'SKIP native MPI singleton smoke: portable CI has no declared MPI toolchain'
