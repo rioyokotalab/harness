@@ -10,9 +10,11 @@ ACCEL_JOB=$ROOT/tests/smoke/jobs/accelerator-readiness.sh
 ACCEL_LOCAL=$ROOT/tests/smoke/jobs/local-accelerator.slurm
 MPI_JOB=$ROOT/tests/smoke/jobs/mpi-readiness.sh
 MPI_LOCAL=$ROOT/tests/smoke/jobs/local-mpi.slurm
+NUMERICAL_JOB=$ROOT/tests/smoke/jobs/numerical-readiness.sh
+NUMERICAL_LOCAL=$ROOT/tests/smoke/jobs/local-numerical.slurm
 
 bash -n "$JOB" "$LOCAL" "$CACHE_JOB" "$CACHE_LOCAL" "$ACCEL_JOB" "$ACCEL_LOCAL" \
-    "$MPI_JOB" "$MPI_LOCAL"
+    "$MPI_JOB" "$MPI_LOCAL" "$NUMERICAL_JOB" "$NUMERICAL_LOCAL"
 grep -Fx '#YBATCH -r thrp_1' "$LOCAL" >/dev/null
 grep -Fx '#SBATCH --time=00:05:00' "$LOCAL" >/dev/null
 grep -F 'uenv run prgenv-gnu/25.11:v1 --view=default' "$JOB" >/dev/null
@@ -50,6 +52,12 @@ grep -F 'module load ylab/hpcx/2.21.0' "$MPI_JOB" >/dev/null
 grep -F 'NATIVE srun --ntasks=2 BUILD/mpi 2' "$MPI_JOB" >/dev/null
 grep -F 'NATIVE mpirun -n 2 BUILD/mpi 2' "$MPI_JOB" >/dev/null
 grep -F 'no reviewed base MPI route' "$MPI_JOB" >/dev/null
+grep -Fx '#YBATCH -r thrp_1' "$NUMERICAL_LOCAL" >/dev/null
+grep -F 'module load gcc/15.2.0' "$NUMERICAL_JOB" >/dev/null
+grep -F 'module load gcc/14.2.0' "$NUMERICAL_JOB" >/dev/null
+grep -F -- '-fno-fast-math -ffp-contract=off -frounding-math' "$NUMERICAL_JOB" >/dev/null
+grep -F 'expected_numerator = -14036' "$ROOT/tests/smoke/numerical.cpp" >/dev/null
+grep -F '0x3ff0000000000001' "$ROOT/tests/smoke/numerical.cpp" >/dev/null
 for source in cpu.c cpu.cpp cpu.f90; do
     grep -F "$source" "$ROOT/tests/smoke/CMakeLists.txt" >/dev/null
 done
@@ -58,12 +66,12 @@ for source in cpp20.cpp python.py sanitizer.c; do
 done
 if grep -E 'rm[[:space:]]+(-[^[:space:]]*)*[rR]|--recursive|rsync[[:space:]].*--delete' \
     "$JOB" "$LOCAL" "$CACHE_JOB" "$CACHE_LOCAL" "$ACCEL_JOB" "$ACCEL_LOCAL" \
-    "$MPI_JOB" "$MPI_LOCAL" >/dev/null; then
+    "$MPI_JOB" "$MPI_LOCAL" "$NUMERICAL_JOB" "$NUMERICAL_LOCAL" >/dev/null; then
     printf '%s\n' 'FAIL: unsafe cleanup in readiness job' >&2
     exit 1
 fi
 if grep -E '(^|[^A-Za-z0-9_])(qsub|sbatch|srun|yrun|ybatch|scancel|qdel)([^A-Za-z0-9_]|$)' \
-    "$JOB" "$CACHE_JOB" "$ACCEL_JOB" >/dev/null; then
+    "$JOB" "$CACHE_JOB" "$ACCEL_JOB" "$NUMERICAL_JOB" >/dev/null; then
     printf '%s\n' 'FAIL: generic readiness job hides scheduler action' >&2
     exit 1
 fi

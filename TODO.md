@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-210.
+and compact historical pointers here. Next free ID: T-211.
 
 ## Current state
 
@@ -895,6 +895,25 @@ identity, exact-unlinked the probe, and reported cleanup absent. Independent
 postflight searches for the restricted probe prefix found no residue in any
 declared root. T-209 is complete; shared `df` values remain point-in-time
 health evidence, not quota or future-capacity guarantees.
+
+### T-210 — Cross-architecture numerical consistency gate
+
+**Phase/status:** `executing` after T-200. The new tracked C++20 source uses
+4,096 deterministic dyadic products whose frozen integer numerator is `-14036`
+and exact binary64 result is `-0x1.b6ap+2`. It asserts IEEE-754 binary64,
+round-to-nearest, forward/reverse bit identity, signed zero, the next value
+after 1.0, quiet NaN, and two byte-identical outputs. Compile flags are
+`-O2 -fno-fast-math -ffp-contract=off -frounding-math -Wall -Wextra -Werror`;
+this is a strict reproducibility baseline, not permission to generalize to
+fast-math, BLAS, GPU, mixed precision, or project numerics.
+
+The scheduler-neutral job reuses the proven CPU compiler routes, validates the
+allocated architecture, publishes one private fixed result, and guarded-cleans
+scratch. Planned native requests are the T-200 five-minute/default-priority CPU
+routes on all seven nodes. First run syntax/static tests, direct local compile
+and repeat evidence, the full suite, public audit, commit/distribution, and
+fresh result/name collision checks. The still-captured ABCI T-207 MPI jobs are
+distinct work; do not cancel, resize, or duplicate them.
 
 ## Stable operational facts
 
