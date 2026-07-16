@@ -1548,7 +1548,7 @@ identical complete smoke-tree object
 
 ### T-233 — Private HPC result metadata hygiene audit
 
-**Phase/status:** `in progress`, derived from the growing readiness evidence
+**Phase/status:** `complete`, derived from the growing readiness evidence
 set. Add a content-blind probe for the declared private HPC result directory.
 Require its owner/mode 0700 and each `tNNN-*.out` path to be a regular,
 non-symlink, owner mode-0600, single-linked, bounded file. Count `.tNNN*`
@@ -1562,6 +1562,13 @@ mode-0644, and active-temporary cases pass, as do ShellCheck, one real local
 metadata-only run, the portable full suite, and public audit. Local currently
 has six valid result files and zero temporary entries. Commit/distribute before
 collecting the other six aggregate records.
+
+**Outcome:** exact implementation commit `1eb1100` reached all six clean
+remotes without bundle residue. Concurrent metadata-only probes passed on all
+seven nodes: local/AB/AB2/RI/AL/RC/T4 have 6/10/10/6/9/7/8 valid private
+results respectively, with zero invalid and zero temporary entries everywhere.
+No result content was opened, no credential path was inspected, and no cleanup
+or scheduler action occurred.
 
 ## Stable operational facts
 
