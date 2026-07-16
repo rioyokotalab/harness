@@ -64,6 +64,7 @@ for script in \
     "$ROOT/tests/smoke/jobs/checkpoint-restart-readiness.sh" \
     "$ROOT/tests/smoke/jobs/local-checkpoint-restart.slurm" \
     "$ROOT/tests/smoke/jobs/multinode-mpi-readiness.sh" \
+    "$ROOT/tests/smoke/jobs/shared-executable-visibility.sh" \
     "$ROOT/tests/smoke/jobs/source-contract.sh" \
     "$ROOT/libexec/harness-rollback"
 do
@@ -86,6 +87,8 @@ done
     fail "multi-node MPI route focused suite"
 "$ROOT/tests/test-multinode-mpi-readiness.sh" >/dev/null ||
     fail "multi-node MPI readiness focused suite"
+"$ROOT/tests/test-shared-executable-visibility.sh" >/dev/null ||
+    fail "shared executable visibility focused suite"
 "$ROOT/tests/test-storage-readiness.sh" >/dev/null ||
     fail "storage readiness focused suite"
 "$ROOT/tests/test-debugger-readiness.sh" >/dev/null ||

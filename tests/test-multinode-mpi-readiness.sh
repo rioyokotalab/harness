@@ -20,6 +20,8 @@ for token in \
     'build_root=$state_root' \
     '.t230-multinode-build-al-v2.XXXXXX' \
     '"$build_root" "$build" "$build_root"' \
+    'shared-executable-visibility.sh' \
+    'SHARED_EXECUTABLE ranks=2 sha256=%s status=pass' \
     'srun --nodes=2 --ntasks=2 --ntasks-per-node=1' \
     'guarded-test-cleanup.sh' \
     'RESULT host=%s status=%s'

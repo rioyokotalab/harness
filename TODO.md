@@ -1501,6 +1501,26 @@ mode-0600 v1/v2 results remain private, while exact postflight found no v2
 build or capture residue. T-230 closes AL's distinct-host correctness gate only;
 all performance, GPU-aware, and other-node claims remain open or gated.
 
+### T-231 — Shared multi-node executable visibility contract
+
+**Phase/status:** `complete`, derived from T-230 v1. Add a reusable per-rank
+gate that requires a regular non-symlink executable canonically inside an
+explicit shared build boundary and matching a frozen SHA-256. Integrate it into
+future T-230 executions so the controller requires two identical pass records
+before MPI launch, add hostile digest/symlink/outside-boundary tests, and
+promote the node-local-versus-shared rule into the native-HPC skill. This hashes
+only a newly built public executable; it must never target credentials or
+unrelated private data. No new scheduler run is required because T-230 v2
+already proved both ranks could execute the same shared binary.
+
+**Outcome:** the contract now rejects invalid digests, executable symlinks,
+and paths outside the canonical declared boundary, and emits only a digest/pass
+record. Future T-230 execution requires two identical visibility records before
+MPI launch. Focused hostile/static/ShellCheck, portable full, and public-audit
+tests pass. The durable shared-staging rule was added to the native-HPC skill,
+and `install.sh` independently reconfirmed all three client discovery links.
+No credential/private-data path was hashed and no scheduler job was submitted.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

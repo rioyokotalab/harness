@@ -65,6 +65,7 @@ umask 077
 "$root/tests/smoke/jobs/source-contract.sh" "$HARNESS_EXPECTED_REV" \
     tests/smoke/mpi-multinode.c \
     tests/smoke/jobs/multinode-mpi-readiness.sh \
+    tests/smoke/jobs/shared-executable-visibility.sh \
     tests/smoke/jobs/source-contract.sh \
     tests/guarded-test-cleanup.sh \
     profiles/hpc-multinode-mpi-routes.tsv \
@@ -75,6 +76,13 @@ umask 077
 command -v mpicc >/dev/null
 printf '%s\n' 'NATIVE mpicc -O2 tests/smoke/mpi-multinode.c -o BUILD/mpi-multinode'
 mpicc -O2 "$root/tests/smoke/mpi-multinode.c" -o "$build/mpi-multinode"
+digest=$(sha256sum "$build/mpi-multinode" | awk '{ print $1 }')
+visibility=$(srun --nodes=2 --ntasks=2 --ntasks-per-node=1 \
+    "$root/tests/smoke/jobs/shared-executable-visibility.sh" \
+    "$build_root" "$build/mpi-multinode" "$digest")
+[ "$(printf '%s\n' "$visibility" | grep -Fxc \
+    "SHARED_EXECUTABLE sha256=$digest status=pass")" -eq 2 ] || exit 2
+printf 'SHARED_EXECUTABLE ranks=2 sha256=%s status=pass\n' "$digest"
 printf '%s\n' 'NATIVE srun --nodes=2 --ntasks=2 --ntasks-per-node=1 BUILD/mpi-multinode'
 srun --nodes=2 --ntasks=2 --ntasks-per-node=1 "$build/mpi-multinode"
 printf 'PASS host=%s gate=multinode-mpi-v2 ranks=2 hosts=2 build=shared-private-state\n' "$host"

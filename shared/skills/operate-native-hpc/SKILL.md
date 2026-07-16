@@ -52,6 +52,12 @@ Install Git LFS hooks only inside an in-scope repository with an explicit
    verify the declared job/source paths are unchanged when compute starts;
    repository HEAD alone is too strict for unrelated successors and too weak
    when relevant working-tree bytes drift.
+   For a multi-node job, never assume rank-local `TMPDIR`, `SLURM_TMPDIR`, or
+   node-local scratch is shared. Put executable/runtime inputs under an
+   explicitly reviewed shared boundary or stage them independently to every
+   node, then require the expected digest and executability from each intended
+   node before the application launch. Never use this check on credential or
+   unrelated private-data paths.
 2. Submit or launch the exact native command. Require the scheduler family's
    exact success grammar for one returned job ID, then immediately query that
    ID and match its owner/name before treating submission as accepted. A zero
