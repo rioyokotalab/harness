@@ -1191,6 +1191,29 @@ single submission succeeded. Preserve the six accepted IDs. Commit/distribute
 the local-only directive correction, recheck exact local name/result/checkpoint
 absence, and retry local once without touching any accepted job.
 
+**Corrected submission and early evidence:** exact correction commit `851e746`
+reached all six clean remotes without changing the already submitted common job
+body. Fresh local reconciliation passed before Ybatch accepted local `91240`;
+it is queued alongside the older, distinct T-210 job `91220`. RI `7016`, AL
+`4224483`, RC `211075`, and T4 `8180931` already have scheduler/result zero,
+the identical frozen final state on AArch64 and x86-64, and no restricted
+checkpoint residue. AB/AB2 remain validly queued for capacity. Monitor only
+these captured IDs and do not replace them.
+
+### T-218 — Fail-closed native scheduler submission reconciliation
+
+**Phase/status:** `complete`, derived from T-217's pre-job failures. Local
+Ybatch demonstrably returned zero while its underlying Slurm submission
+rejected an invalid directive. The shared `operate-native-hpc` skill now
+requires the scheduler family's exact one-ID success grammar followed by an
+immediate native query matching ID, owner, and job name; wrapper exit zero
+alone is never acceptance. Its current-node reference records the exact Ybatch
+failure mode and reconciliation rule. The existing Codex and Claude discovery
+links resolve to this shared directory, so no client setting, hook, profile, or
+installation change is needed. This rule applies to future project and harness
+jobs and preserves the native command rather than adding an opaque scheduler
+wrapper.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

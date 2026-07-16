@@ -48,8 +48,12 @@ Install Git LFS hooks only inside an in-scope repository with an explicit
 1. Freeze a correctness baseline before optimization. Use the tracked
    `~/harness/tests/smoke/` sources only for environment validation, not as a
    substitute for project tests.
-2. Submit or launch the exact native command. Capture the returned job ID and
-   the exact output path without scraping unrelated jobs.
+2. Submit or launch the exact native command. Require the scheduler family's
+   exact success grammar for one returned job ID, then immediately query that
+   ID and match its owner/name before treating submission as accepted. A zero
+   wrapper exit status without a parseable, queryable ID is a rejected or
+   indeterminate submission, never success. Capture the exact output path
+   without scraping unrelated jobs.
 3. Monitor only that job with the site's native status command. Report state
    changes and meaningful output; unchanged queued state is normal.
 4. Cancel only the captured job ID when cancellation is requested or a verified

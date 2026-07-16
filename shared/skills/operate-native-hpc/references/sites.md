@@ -46,6 +46,11 @@ every placeholder before printing and executing a command.
 - `ybatch` submits asynchronously and treats later CLI arguments as script
   arguments, not scheduler options. Keep scheduler directives inside the job
   script.
+- `ybatch` has returned zero even when its underlying `sbatch` rejected an
+  invalid directive. Accept only the exact `Submitted batch job ID` line and
+  immediately require `squeue -j ID` to match the expected owner and job name;
+  otherwise reconcile by exact name/result and treat the attempt as having
+  created no captured job.
 - A bare output name can be misclassified as a directory. Use the tracked
   `.harness-smoke/%j.out`, parse the returned job ID, monitor only that ID, and
   remove only its output plus the empty `.harness-smoke` directory.
