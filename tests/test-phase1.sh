@@ -43,6 +43,7 @@ for script in \
     "$ROOT/libexec/harness-restic" \
     "$ROOT/libexec/harness-restic-primary" \
     "$ROOT/libexec/harness-restic-schedule" \
+    "$ROOT/libexec/harness-fleet-sync" \
     "$ROOT/libexec/harness-apply" \
     "$ROOT/libexec/harness-remediate" \
     "$ROOT/libexec/harness-shell" \
@@ -81,6 +82,8 @@ done
     fail "debugger readiness focused suite"
 "$ROOT/tests/test-venv-readiness.sh" >/dev/null ||
     fail "venv readiness focused suite"
+"$ROOT/tests/test-fleet-sync.sh" >/dev/null ||
+    fail "fleet sync focused suite"
 
 # Direct non-interactive SSH can omit ~/.local/bin even when the managed
 # Restic installation is healthy. The harness route must find that exact

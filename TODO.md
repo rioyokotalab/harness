@@ -1074,9 +1074,9 @@ T-214 is complete within its deliberately dependency-free scope.
 
 ### T-215 — Load-balanced-safe harness fast-forward workflow
 
-**Phase/status:** `planned` after repeated verified bundle rollouts. Replace the
+**Phase/status:** `executing` after repeated verified bundle rollouts. Replace the
 error-prone manual transport sequence with a transparent plan/apply command
-that prints the native Git/SSH/SCP operations, requires an explicit expected
+that prints the native Git/SSH streaming operations, requires an explicit expected
 old and new commit, refuses dirty or divergent worktrees, creates one
 mode-0600 prerequisite-bound Git bundle, verifies size and digest before each
 fetch, fast-forwards only, and exact-unlinks every transfer artifact after
@@ -1086,6 +1086,21 @@ live fleet use is allowed only after phase-1, public-audit, collision, cleanup,
 and interrupted-transaction tests pass. It must never force, reset, merge,
 stash, inspect credentials, alter remotes, or conceal the resolved native
 commands.
+
+**Implementation checkpoint:** `harness fleet-sync` now requires full source
+and target commit IDs, exact target `HEAD`, ancestry, unique safe targets, and
+a clean local checkout for apply. One all-host read-only preflight precedes any
+write. Apply creates a prerequisite-bound mode-0600 bundle in a private local
+transaction directory and streams it through native SSH into persistent
+account state; the remote revalidates old HEAD, clean worktree, collision,
+size, SHA-256, bundle prerequisite, fetched target, fast-forward, and final
+cleanliness before exact unlink. Target-already-current nodes are idempotent
+keeps, so partial fleet completion is resumable. Focused fake-remote tests pass
+normal, repeat, dirty, divergent, collision, and signal-interrupted cases with
+zero transfer residue. ShellCheck, portable phase-1, and public audit pass, and
+a real six-node read-only plan reports six clean updates from `c17f8dd` to
+`9e96f96`. Commit and push the implementation, rerun the plan against the new
+target, then perform its first live apply and independent postflight.
 
 ## Stable operational facts
 

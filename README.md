@@ -182,6 +182,26 @@ interactive shell then provides `prgenv`, which prints and runs the native
 and agent workflows should report and invoke an explicit native `uenv run ...`
 or Slurm `--uenv` command instead.
 
+Clean mirrored harness checkouts use a guarded, prerequisite-bound
+fast-forward transaction. Both revisions must be full commit IDs, the target
+must be the local checkout's current `HEAD`, and plan is the default:
+
+```bash
+harness fleet-sync --from OLD_COMMIT --to NEW_COMMIT --plan
+harness fleet-sync --from OLD_COMMIT --to NEW_COMMIT --apply
+```
+
+The command first queries every target through native SSH and refuses dirty,
+divergent, or transfer-collision state before any write. Apply additionally
+requires a clean local checkout, creates a mode-0600 Git bundle in private
+transaction state, and streams it over SSH into each account's persistent
+`~/.local/state/harness` path. Each remote revalidates its old commit, bundle
+size and SHA-256, fetch target, and clean fast-forward before exact-unlinking
+the bundle. Earlier remotes already at the exact target are retained, so a
+partially completed fleet run can be resumed without reset, force, merge, or
+stash. The command prints the resolved native Git and SSH operations; it never
+changes Git remotes or accesses SSH key material.
+
 Checksum-pinned portable artifacts use an explicit one-tool transaction:
 
 ```bash

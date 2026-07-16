@@ -1,0 +1,235 @@
+#!/bin/sh
+set -efu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() {
+    echo "Usage: harness fleet-sync --from COMMIT --to COMMIT [--hosts CSV] [--plan|--apply]" >&2
+}
+
+require_commit() {
+    value=$1
+    case "$value" in ''|*[!0-9a-f]*) die "commit must be 40 lowercase hexadecimal characters" ;; esac
+    [ "${#value}" -eq 40 ] || die "commit must be 40 lowercase hexadecimal characters"
+}
+
+from=
+to=
+hosts_csv=ab,ab2,ri,al,rc,t4
+mode=plan
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --from) [ "$#" -ge 2 ] || { usage; exit 2; }; from=$2; shift 2 ;;
+        --to) [ "$#" -ge 2 ] || { usage; exit 2; }; to=$2; shift 2 ;;
+        --hosts) [ "$#" -ge 2 ] || { usage; exit 2; }; hosts_csv=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+
+require_commit "$from"
+require_commit "$to"
+[ "$from" != "$to" ] || die "source and target commits must differ"
+[ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
+    die "fleet-sync requires a Git harness checkout"
+[ "$(git -C "$HARNESS_ROOT" rev-parse --verify HEAD)" = "$to" ] ||
+    die "target commit must be the current harness HEAD"
+git -C "$HARNESS_ROOT" cat-file -e "$from^{commit}" 2>/dev/null ||
+    die "source commit is unavailable"
+git -C "$HARNESS_ROOT" merge-base --is-ancestor "$from" "$to" ||
+    die "source commit is not an ancestor of target"
+if [ "$mode" = apply ]; then
+    [ -z "$(git -C "$HARNESS_ROOT" status --porcelain=v1)" ] ||
+        die "apply requires a clean committed harness checkout"
+fi
+
+hosts=$(printf '%s\n' "$hosts_csv" | tr ',' '\n')
+seen=' '
+host_count=0
+for host in $hosts; do
+    require_safe_id "$host"
+    [ "$host" != local ] || die "local is not a remote fleet target"
+    case "$seen" in *" $host "*) die "duplicate fleet target: $host" ;; esac
+    seen="$seen$host "
+    host_count=$((host_count + 1))
+    [ "$host_count" -le 16 ] || die "too many fleet targets"
+done
+[ "$host_count" -gt 0 ] || die "at least one fleet target is required"
+
+from_short=$(printf '%s' "$from" | cut -c1-12)
+to_short=$(printf '%s' "$to" | cut -c1-12)
+filename=harness-transfer-$from_short-$to_short.bundle
+
+remote_plan='set -eu
+old=$1
+new=$2
+filename=$3
+repo=$HOME/harness
+state=$HOME/.local/state/harness
+bundle=$state/$filename
+test -d "$repo/.git"
+test ! -L "$repo/.git"
+cd "$repo"
+head=$(git rev-parse --verify HEAD)
+dirty=$(git status --porcelain=v1 | wc -l | tr -d " ")
+if test -e "$bundle" || test -L "$bundle"; then artifact=present; else artifact=absent; fi
+printf "REMOTE head=%s dirty=%s artifact=%s\n" "$head" "$dirty" "$artifact"'
+
+updates=' '
+keeps=' '
+echo "FLEET_SYNC mode=$mode from=$from to=$to transport=ssh-stream"
+for host in $hosts; do
+    echo "NATIVE ssh $host git-rev-parse+status+artifact-preflight"
+    remote_command="/bin/sh -c '$remote_plan' sh '$from' '$to' '$filename'"
+    output=$(ssh -o BatchMode=yes -o ConnectTimeout=15 "$host" \
+        "$remote_command") ||
+        die "remote preflight failed: $host"
+    set -- $output
+    [ "$#" -eq 4 ] && [ "$1" = REMOTE ] || die "invalid remote preflight output: $host"
+    remote_head=${2#head=}
+    remote_dirty=${3#dirty=}
+    remote_artifact=${4#artifact=}
+    case "$remote_dirty" in ''|*[!0-9]*) die "invalid remote dirty count: $host" ;; esac
+    [ "$remote_dirty" -eq 0 ] || die "remote worktree is dirty: $host"
+    [ "$remote_artifact" = absent ] || die "remote transfer artifact already exists: $host"
+    if [ "$remote_head" = "$to" ]; then
+        keeps="$keeps$host "
+        echo "KEEP host=$host head=$remote_head"
+    elif [ "$remote_head" = "$from" ]; then
+        updates="$updates$host "
+        echo "UPDATE host=$host from=$from to=$to"
+    else
+        die "remote head is neither source nor target: $host"
+    fi
+done
+
+if [ "$mode" = plan ]; then
+    echo "NATIVE git bundle create MODE0600/transfer.bundle HEAD ^$from"
+    echo "END fleet_sync changes=not-applied"
+    exit 0
+fi
+
+state_root=$HOME/.local/state/harness
+mkdir -p -- "$state_root"
+chmod 700 "$HOME/.local/state/harness"
+work=$(mktemp -d "$state_root/.fleet-sync-$to_short.XXXXXX") ||
+    die "cannot allocate local bundle state"
+chmod 700 "$work"
+bundle=$work/transfer.bundle
+work_identity=$(stat -c '%d:%i:%u:%a' -- "$work")
+local_uid=$(id -u)
+bundle_identity=
+
+cleanup_local() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ -f "$bundle" ] && [ ! -L "$bundle" ] &&
+       [ "$(stat -c %u -- "$bundle")" = "$local_uid" ]; then
+        current_bundle_identity=$(stat -c '%d:%i:%u:%a' -- "$bundle")
+        if [ -z "$bundle_identity" ] || [ "$current_bundle_identity" = "$bundle_identity" ]; then
+            unlink -- "$bundle" || status=1
+        fi
+    fi
+    if [ -d "$work" ] && [ ! -L "$work" ] &&
+       [ "$(stat -c '%d:%i:%u:%a' -- "$work")" = "$work_identity" ]; then
+        rmdir -- "$work" 2>/dev/null || status=1
+    fi
+    exit "$status"
+}
+trap cleanup_local EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+echo "NATIVE git bundle create $bundle HEAD ^$from"
+git -C "$HARNESS_ROOT" bundle create "$bundle" HEAD "^$from"
+chmod 600 "$bundle"
+bundle_identity=$(stat -c '%d:%i:%u:%a' -- "$bundle")
+case "$bundle_identity" in *:600) ;; *) die "local bundle identity or mode is invalid" ;; esac
+git -C "$HARNESS_ROOT" bundle verify "$bundle" >/dev/null 2>&1 ||
+    die "local bundle verification failed"
+bundle_size=$(stat -c %s -- "$bundle")
+bundle_sha=$(sha256sum "$bundle")
+bundle_sha=${bundle_sha%% *}
+case "$bundle_sha" in *[!0-9a-f]*|'') die "invalid local bundle digest" ;; esac
+[ "${#bundle_sha}" -eq 64 ] || die "invalid local bundle digest length"
+
+remote_apply='set -eu
+old=$1
+new=$2
+expected_size=$3
+expected_sha=$4
+filename=$5
+repo=$HOME/harness
+state=$HOME/.local/state/harness
+bundle=$state/$filename
+test -d "$repo/.git"
+test ! -L "$repo/.git"
+cd "$repo"
+test "$(git rev-parse --verify HEAD)" = "$old"
+test -z "$(git status --porcelain=v1)"
+test ! -e "$bundle"
+test ! -L "$bundle"
+mkdir -p -- "$state"
+chmod 700 "$state"
+umask 077
+: >"$bundle"
+chmod 600 "$bundle"
+identity=$(stat -c "%d:%i:%u:%a" -- "$bundle")
+created=1
+cleanup() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if test "$created" -eq 1 && test -f "$bundle" && test ! -L "$bundle" &&
+       test "$(stat -c "%d:%i:%u:%a" -- "$bundle")" = "$identity"; then
+        unlink -- "$bundle" || status=1
+    fi
+    exit "$status"
+}
+trap cleanup EXIT
+trap "exit 129" HUP
+trap "exit 130" INT
+trap "exit 143" TERM
+cat >"$bundle"
+test "$(stat -c %s -- "$bundle")" = "$expected_size"
+observed_sha=$(sha256sum "$bundle")
+observed_sha=${observed_sha%% *}
+test "$observed_sha" = "$expected_sha"
+git bundle verify "$bundle" >/dev/null 2>&1
+git fetch -q "$bundle" HEAD
+test "$(git rev-parse FETCH_HEAD)" = "$new"
+git merge --ff-only -q FETCH_HEAD
+test "$(git rev-parse --verify HEAD)" = "$new"
+test -z "$(git status --porcelain=v1)"
+unlink -- "$bundle"
+created=0
+test ! -e "$bundle"
+printf "APPLIED head=%s artifact=absent\n" "$new"'
+
+for host in $hosts; do
+    case "$updates" in
+        *" $host "*)
+            echo "NATIVE ssh $host verified-bundle-stdin+git-fetch+git-merge--ff-only+exact-unlink"
+            remote_command="/bin/sh -c '$remote_apply' sh '$from' '$to' '$bundle_size' '$bundle_sha' '$filename'"
+            output=$(ssh -o BatchMode=yes -o ConnectTimeout=15 "$host" \
+                "$remote_command" <"$bundle") ||
+                die "remote fast-forward failed: $host"
+            [ "$output" = "APPLIED head=$to artifact=absent" ] ||
+                die "invalid remote apply output: $host"
+            echo "APPLIED host=$host head=$to artifact=absent"
+            ;;
+        *) echo "KEPT host=$host head=$to" ;;
+    esac
+done
+
+unlink -- "$bundle"
+bundle_identity=
+rmdir -- "$work"
+work=
+trap - EXIT HUP INT TERM
+echo "END fleet_sync changes=applied"
