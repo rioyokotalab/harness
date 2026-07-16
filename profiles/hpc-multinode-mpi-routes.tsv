@@ -1,5 +1,5 @@
 # host|status|scheduler|allocation_shape|launcher_shape|evidence|blocker
-local|candidate_needs_dry_run|ybatch|thrp_1,nodes=2,ntasks=2,ntasks-per-node=1,time=00:05:00|mpirun_-n_2_--map-by_ppr:1:node|native_partition_4_nodes+T207_one-node_pass|custom_wrapper_two-node_shape_unvalidated+queue_congested
+local|blocked_no_test_only|ybatch|thrp_1,nodes=2,ntasks=2,ntasks-per-node=1,time=00:05:00|mpirun_-n_2_--map-by_ppr:1:node|native_partition_4_nodes+T207_one-node_pass+T236_interface_audit|no_residue-free_scheduler_verify_mode+queue_congested
 ab|resource_change_gated|pbspro|group=gag51395,queue=rt_HF,select=2:mpiprocs=1,walltime=00:05:00|mpirun_-np_2_-map-by_ppr:1:node_-hostfile_PBS_NODEFILE|official_ABCI_MPI+native_rt_HF_128-node_max+T207_one-node_pass|rt_HC_is_single-node+rt_HF_full-node_cost
 ab2|resource_change_gated|pbspro|group=gah51624,queue=rt_HF,select=2:mpiprocs=1,walltime=00:05:00|mpirun_-np_2_-map-by_ppr:1:node_-hostfile_PBS_NODEFILE|official_ABCI_MPI+native_rt_HF_128-node_max+T207_one-node_pass|rt_HC_is_single-node+rt_HF_full-node_cost
 ri|no_base_route|slurm|none|none|T207_declared_skip|architecture-matched_MPI_environment_not_selected

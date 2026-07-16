@@ -1609,6 +1609,17 @@ safe planning tasks, and five explicitly gated branches with Q9 depending on
 the framework/artifact choice. Focused schema/dependency tests, the portable
 full suite, and public audit pass. No queue item was converted into execution.
 
+### T-236 — Local multi-node MPI non-mutating verification audit
+
+**Phase/status:** `complete`, derived from T-229/Q4. Read-only native inspection
+found that the user-facing `sbatch` refuses direct use, native Slurm 25.11.6
+offers no test-only/verify option, and `ybatch -d` exits before cleaning its
+generated temporary script. The underlying renderer and four-node partition
+make the candidate plausible but do not validate wrapper accounting or rank
+placement. The route is now `blocked_no_test_only`, Q4 reflects the scheduler
+interface block, and the stable warning is in the native-HPC site reference.
+No dry run, temporary script, job, or scheduler mutation occurred.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

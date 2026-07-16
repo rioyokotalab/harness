@@ -25,7 +25,7 @@
       "action": "perform a native test-only review of the local two-node MPI shape",
       "evidence": "T-229",
       "id": "Q4",
-      "status": "safe_to_plan"
+      "status": "blocked_by_scheduler_interface"
     },
     {
       "action": "select framework, version, licenses, and architecture-matched immutable artifacts",
@@ -65,6 +65,7 @@
   "status_vocabulary": [
     "captured_pending",
     "safe_to_plan",
+    "blocked_by_scheduler_interface",
     "owner_gated",
     "project_gated",
     "owner_resource_gated",

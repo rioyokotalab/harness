@@ -61,6 +61,10 @@ scope exclusions are mandatory; they are not project or training authority.
   remove only its output plus the empty `.harness-smoke` directory.
 - Inside the one-node allocation, the validated two-rank route is native
   `mpirun -n 2`; `srun -n 2` previously formed two rank-one singletons.
+- The current Slurm/ybatch surface has no residue-free test-only mode: direct
+  `sbatch` is refused, native `/usr/bin/sbatch` exposes no verify option, and
+  `ybatch -d` exits before its generated temporary script is cleaned. Do not
+  claim a multi-node dry run or bypass `ybatch` resource accounting.
 - Default `mpicc` passes the tracked direct singleton development smoke. Its
   login-node Open MPI initialization reports missing CUDA components because
   `libcuda.so.1` is allocation-only; retain that diagnostic and do not treat

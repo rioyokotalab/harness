@@ -10,7 +10,7 @@ without submitting anything.
 
 | Node | Decision | Candidate allocation and launch | Remaining gate |
 |---|---|---|---|
-| current | needs native dry-run | `thrp_1`; 2 nodes, 2 tasks, 1 task/node; Open MPI `ppr:1:node` | wrapper-generated two-node request is unvalidated; local queue is congested |
+| current | blocked: no test-only interface | `thrp_1`; 2 nodes, 2 tasks, 1 task/node; Open MPI `ppr:1:node` | neither Slurm nor the residue-free wrapper surface offers non-mutating verification; local queue is congested |
 | AB | resource change gated | `rt_HF`, `select=2:mpiprocs=1`; HPC-X with `$PBS_NODEFILE`, 1 rank/node | proven `rt_HC` route is single-node; two full H nodes change cost/resource scope |
 | AB2 | resource change gated | same as AB under group `gah51624` | same resource/cost change |
 | RI | no base route | none | architecture-matched MPI environment is not selected |
