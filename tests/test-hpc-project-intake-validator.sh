@@ -58,7 +58,7 @@ if grep -E 'from __future__ import annotations|list\[|dict\[|tuple\[|Path \|' "$
     printf '%s\n' 'FAIL: validator requires newer-than-Python-3.6 syntax' >&2
     exit 1
 fi
-python3 - "$VALIDATOR" <<'PY'
+PYTHONDONTWRITEBYTECODE=1 python3 - "$VALIDATOR" <<'PY'
 import importlib.util
 import sys
 

@@ -1820,8 +1820,12 @@ manifest, project, credential, scheduler, package, or external service.
 
 **Outcome:** the validator now recursively rejects unknown schema keywords
 before manifest parsing, and the synthetic regression proves `maxLength`
-cannot be silently ignored. Focused, portable phase-1, and public-audit suites
-pass. T-245 is complete without accessing any real manifest or external state.
+cannot be silently ignored. The first import-based test exposed one local
+`tools/__pycache__`; guarded plan/apply deleted exactly its two entries with
+protected anchors unchanged, and `PYTHONDONTWRITEBYTECODE=1` now contains the
+import inside the private test boundary. Focused, portable phase-1, and public-
+audit suites now pass with two independent clean no-bytecode postflights.
+T-245 is complete without accessing a real manifest or external state.
 
 ## Stable operational facts
 
