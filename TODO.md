@@ -721,6 +721,19 @@ trace startup values, list child names, inspect contents, weaken `HOME`, or
 guess an application. If a responsible component is proven, prefer its native
 cache configuration and re-run the SFTP-versus-shell experiment.
 
+**Value-free diagnosis:** the preserved recurrence is currently a real
+mode-0700 cache directory containing one mode-0644 zero-byte regular file;
+directory and child birth/change times are identical
+(`2026-07-16T14:12:51Z`), and no process holds the directory open. RI uses the
+stock `/usr/lib/openssh/sftp-server`, has no user or system SSH rc file, and its
+SSH PAM stack lists only standard access, environment, key, limits, loginuid,
+mail, MOTD, nologin, and SELinux modules. This excludes a visible SSH rc
+wrapper, internal-sftp customization, shell startup, persistent writer, or
+multi-file application cache, but it does not identify the creator. Further
+attribution needs site-admin audit evidence or a site explanation; do not
+enumerate the marker name, install tracing, repeat deletion, or infer an
+application from a zero-byte file.
+
 ### T-204 — Remove obsolete AB2 pyenv startup calls
 
 **Phase/status:** `complete`. AB2 emitted exactly three
