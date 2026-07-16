@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-211.
+and compact historical pointers here. Next free ID: T-212.
 
 ## Current state
 
@@ -923,6 +923,26 @@ Slurm `7013`; AL Slurm `4224277`; RC Slurm `211060`; and T4 AGE `8179846`.
 RI, AL, RC, and T4 already report scheduler/result zero and the identical frozen
 hex result twice. Local and both ABCI jobs remain validly pending; monitor only
 these captured IDs and never infer failure or resubmit from queue delay.
+
+### T-211 — Atomic checkpoint publication gate
+
+**Phase/status:** `executing` after T-209. Extend the storage gate with a
+mutually exclusive `--checkpoint-probe` that operates only in the declared
+persistent root. It creates one unique mode-0600 staging file, writes and
+fsyncs exactly 1 MiB of deterministic bytes, verifies the frozen SHA-256,
+publishes without overwrite through a same-filesystem hard link, proves both
+names are the same inode/link count, exact-unlinks staging, re-verifies the
+published size/hash, syncs it, revalidates root identity, and exact-unlinks the
+published name. Trap cleanup handles the two explicit validated names without
+a deletion loop, glob deletion, or recursive action.
+
+Fake-root tests prove publication, hash, cleanup, zero residue, mutual
+exclusion from the 4 KiB write probe, and declared canonical-alias behavior.
+This establishes bounded atomic checkpoint publication mechanics only; it is
+not a checkpoint-format, directory-fsync, recovery, quota, throughput, or
+distributed-coordination claim. Run the full suite/public audit, commit and
+distribute, repeat read-only plans, then execute one live persistent-root probe
+per node and independently verify the restricted prefix is absent.
 
 ## Stable operational facts
 

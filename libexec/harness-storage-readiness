@@ -7,11 +7,12 @@ export HARNESS_ROOT
 . "$SELF_DIR/harness-common"
 
 usage() {
-    printf '%s\n' 'Usage: harness storage-readiness --host LOGICAL_ID [--write-probe]' >&2
+    printf '%s\n' 'Usage: harness storage-readiness --host LOGICAL_ID [--write-probe | --checkpoint-probe]' >&2
 }
 
 logical_host=
 write_probe=0
+checkpoint_probe=0
 while [ "$#" -gt 0 ]; do
     case $1 in
         --host)
@@ -20,10 +21,13 @@ while [ "$#" -gt 0 ]; do
             shift 2
             ;;
         --write-probe) write_probe=1; shift ;;
+        --checkpoint-probe) checkpoint_probe=1; shift ;;
         -h|--help) usage; exit 0 ;;
         *) usage; exit 2 ;;
     esac
 done
+[ "$write_probe" -eq 0 ] || [ "$checkpoint_probe" -eq 0 ] ||
+    die "write and checkpoint probes are mutually exclusive"
 [ -n "$logical_host" ] || { usage; exit 2; }
 require_safe_id "$logical_host"
 profile=$(profile_for "$logical_host")
@@ -63,27 +67,33 @@ done
 uid=$(id -u)
 home=$(realpath -e -- "$HOME") || die "current HOME is not canonical"
 active_probe=
+active_publish=
 active_root=
 active_root_identity=
+
+cleanup_one() {
+    cleanup_path=$1
+    [ -n "$cleanup_path" ] || return 0
+    valid=1
+    [ -f "$cleanup_path" ] && [ ! -L "$cleanup_path" ] || valid=0
+    [ "$(dirname -- "$cleanup_path")" = "$active_root" ] || valid=0
+    [ "$(stat -c %d:%i -- "$active_root")" = "$active_root_identity" ] || valid=0
+    case ${cleanup_path##*/} in
+        .harness-storage-readiness."$logical_host".*) ;;
+        *) valid=0 ;;
+    esac
+    if [ "$valid" -eq 1 ] && [ "$(stat -c %u -- "$cleanup_path")" = "$uid" ]; then
+        unlink -- "$cleanup_path"
+    else
+        return 1
+    fi
+}
 
 cleanup_probe() {
     status=$?
     trap - EXIT HUP INT TERM
-    if [ -n "$active_probe" ]; then
-        valid=1
-        [ -f "$active_probe" ] && [ ! -L "$active_probe" ] || valid=0
-        [ "$(dirname -- "$active_probe")" = "$active_root" ] || valid=0
-        [ "$(stat -c %d:%i -- "$active_root")" = "$active_root_identity" ] || valid=0
-        case ${active_probe##*/} in
-            .harness-storage-readiness."$logical_host".*) ;;
-            *) valid=0 ;;
-        esac
-        if [ "$valid" -eq 1 ] && [ "$(stat -c %u -- "$active_probe")" = "$uid" ]; then
-            unlink -- "$active_probe" || status=2
-        else
-            status=2
-        fi
-    fi
+    cleanup_one "$active_publish" || status=2
+    cleanup_one "$active_probe" || status=2
     exit "$status"
 }
 trap cleanup_probe EXIT
@@ -146,5 +156,62 @@ check_root() {
         "$logical_host" "$label"
 }
 
+checkpoint_root() {
+    declared=$1
+    [ "$checkpoint_probe" -eq 1 ] || return 0
+    [ -d "$declared" ] && [ ! -L "$declared" ] || die "persistent root changed before checkpoint probe"
+    canonical_root=$(realpath -e -- "$declared") || die "persistent root cannot be canonicalized"
+    if [ "$canonical_root" != "$declared" ]; then
+        [ "$canonical_root" = "$(config_get "$profile" persistent_canonical_root)" ] ||
+            die "persistent checkpoint canonical identity is not explicitly declared"
+    fi
+    case $canonical_root in "$home"|"$home"/*) die "persistent checkpoint root is inside HOME" ;; esac
+    active_root=$declared
+    active_root_identity=$(stat -c %d:%i -- "$active_root")
+    [ "$active_root_identity" = "$(stat -c %d:%i -- "$canonical_root")" ] ||
+        die "persistent checkpoint canonical object mismatch"
+    umask 077
+    active_probe=$(mktemp "$active_root/.harness-storage-readiness.$logical_host.checkpoint.XXXXXX") ||
+        die "cannot create checkpoint staging file"
+    chmod 600 "$active_probe"
+    active_publish=$active_probe.published
+    [ ! -e "$active_publish" ] && [ ! -L "$active_publish" ] ||
+        die "checkpoint publication name already exists"
+    [ -f "$active_probe" ] && [ ! -L "$active_probe" ] || die "checkpoint staging type changed"
+    [ "$(stat -c %u -- "$active_probe")" = "$uid" ] || die "checkpoint staging owner mismatch"
+    [ "$(stat -c %a -- "$active_probe")" = 600 ] || die "checkpoint staging mode mismatch"
+    dd if=/dev/zero of="$active_probe" bs=1048576 count=1 conv=fsync status=none
+    [ "$(stat -c %s -- "$active_probe")" = 1048576 ] || die "checkpoint staging size mismatch"
+    expected_hash=30e14955ebf1352266dc2ff8067e68104607e750abb9d3b36582b8af909fcb58
+    observed_hash=$(sha256sum -- "$active_probe" | awk '{ print $1 }')
+    [ "$observed_hash" = "$expected_hash" ] || die "checkpoint staging hash mismatch"
+    [ "$(stat -c %d:%i -- "$active_root")" = "$active_root_identity" ] ||
+        die "persistent root identity changed before publication"
+    ln -- "$active_probe" "$active_publish"
+    [ "$(stat -c %d:%i -- "$active_probe")" = "$(stat -c %d:%i -- "$active_publish")" ] ||
+        die "checkpoint publication is not the staged inode"
+    [ "$(stat -c %h -- "$active_probe")" = 2 ] || die "checkpoint link count mismatch"
+    unlink -- "$active_probe"
+    active_probe=
+    [ -f "$active_publish" ] && [ ! -L "$active_publish" ] || die "checkpoint publication changed type"
+    [ "$(stat -c %h -- "$active_publish")" = 1 ] || die "checkpoint publication link count changed"
+    [ "$(stat -c %s -- "$active_publish")" = 1048576 ] || die "checkpoint publication size mismatch"
+    observed_hash=$(sha256sum -- "$active_publish" | awk '{ print $1 }')
+    [ "$observed_hash" = "$expected_hash" ] || die "checkpoint publication hash mismatch"
+    sync -d -- "$active_publish"
+    [ "$(stat -c %d:%i -- "$active_root")" = "$active_root_identity" ] ||
+        die "persistent root identity changed before final cleanup"
+    unlink -- "$active_publish"
+    active_publish=
+    [ -z "$(find "$active_root" -maxdepth 1 -type f \
+        -name ".harness-storage-readiness.$logical_host.checkpoint.*" -print -quit)" ] ||
+        die "checkpoint probe residue remains"
+    active_root=
+    active_root_identity=
+    printf 'CHECKPOINT host=%s bytes=1048576 hash=verified publish=atomic-hardlink cleanup=absent\n' \
+        "$logical_host"
+}
+
 check_root persistent "$persistent_root"
 check_root cache "$cache_root"
+checkpoint_root "$persistent_root"

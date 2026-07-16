@@ -54,6 +54,17 @@ run --write-probe >"$TEST_ROOT/probe.out" || fail "write probe"
 [ -z "$(find "$persistent" "$cache" -maxdepth 1 -name '.harness-storage-readiness.*' -print -quit)" ] ||
     fail "write probe remained"
 
+run --checkpoint-probe >"$TEST_ROOT/checkpoint.out" || fail "checkpoint probe"
+grep -F 'CHECKPOINT host=local bytes=1048576 hash=verified publish=atomic-hardlink cleanup=absent' \
+    "$TEST_ROOT/checkpoint.out" >/dev/null || fail "checkpoint result"
+[ -z "$(find "$persistent" -maxdepth 1 -name '.harness-storage-readiness.*' -print -quit)" ] ||
+    fail "checkpoint probe remained"
+if run --write-probe --checkpoint-probe >"$TEST_ROOT/mutual.out" 2>&1; then
+    fail "accepted two write modes"
+fi
+grep -F 'write and checkpoint probes are mutually exclusive' "$TEST_ROOT/mutual.out" >/dev/null ||
+    fail "mutual exclusion evidence"
+
 inside=$home/inside
 mkdir "$inside"
 printf 'local|%s|%s|none|none|none|none\n' "$inside" "$cache" >"$layout"
