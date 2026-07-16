@@ -88,6 +88,8 @@ done
     fail "fleet sync focused suite"
 "$ROOT/tests/test-checkpoint-restart.sh" >/dev/null ||
     fail "checkpoint restart focused suite"
+"$ROOT/tests/test-hpc-cpu-routes.sh" >/dev/null ||
+    fail "bounded CPU route focused suite"
 
 # Direct non-interactive SSH can omit ~/.local/bin even when the managed
 # Restic installation is healthy. The harness route must find that exact

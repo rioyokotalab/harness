@@ -1226,6 +1226,28 @@ T-206's framework choice, T-210's captured local job, and T-217's captured
 jobs remain intentionally non-terminal. No scheduler, file, application, or
 external setting was changed by this reconciliation.
 
+### T-220 — Versioned bounded CPU-route manifest
+
+**Phase/status:** `complete`, derived from repeated T-200/T-210/T-217 reuse.
+Freeze the seven already proven one-node/five-minute/default-priority CPU
+submission shapes in a value-free TSV: scheduler family, reviewed billing
+account or group, queue/partition, resource tokens, environment route, and
+site-specific submission spelling. Add strict schema/uniqueness/token tests and
+human scope documentation. This is a reference for agents to render and report
+native commands, not an execution wrapper or new allocation authority. It must
+explicitly exclude project jobs, training, GPU selection, MPI, multi-node,
+performance, longer duration, priority, and any resource not already evidenced.
+Validate phase-1 and public-audit safety, then commit, push, and distribute.
+
+**Outcome:** `profiles/hpc-cpu-routes.tsv` freezes exactly seven unique rows and
+`docs/bounded-cpu-routes.md` renders the native shapes and strict exclusions.
+The manifest distinguishes PBS `-P`, Slurm account/partition, AL uenv, local
+`#YBATCH -r`, and T4 `-g`; it also records RI's mandatory injected GPU and RC's
+x86 CPU partition. Exact-row/schema tests, ShellCheck, portable phase-1, and
+public audit pass. T-220 is complete as a read-only reference surface; it
+creates no job and grants no authority beyond the previously reviewed bounded
+readiness routes.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

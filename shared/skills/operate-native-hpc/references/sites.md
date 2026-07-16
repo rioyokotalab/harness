@@ -26,6 +26,11 @@ are validated baselines, not permission to guess a project's resource choices.
 Always inspect the project script or native help before adding options. Replace
 every placeholder before printing and executing a command.
 
+For the harness's already-reviewed one-node/five-minute CPU readiness jobs only,
+`~/harness/profiles/hpc-cpu-routes.tsv` and
+`~/harness/docs/bounded-cpu-routes.md` freeze the proven native shapes. Their
+scope exclusions are mandatory; they are not project or training authority.
+
 ## Debugging and profiling
 
 - Every target has native GDB and strace plus at least one of Valgrind or perf.

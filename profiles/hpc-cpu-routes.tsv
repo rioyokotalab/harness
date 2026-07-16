@@ -1,0 +1,8 @@
+# host|scheduler|billing_flag|billing_value|queue_flag|queue_value|resource|environment|duration|note
+local|ybatch|none|none|none|none|ybatch:thrp_1|base|00:05:00|local-resource-directive
+ab|pbspro|-P|gag51395|-q|rt_HC|pbs:select=1|module:gcc/15.2.0|00:05:00|full-node-cpu
+ab2|pbspro|-P|gah51624|-q|rt_HC|pbs:select=1|module:gcc/15.2.0|00:05:00|full-node-cpu
+ri|slurm|--account|rkp00015|--partition|gpu|slurm:nodes=1,ntasks=1,cpus-per-task=1,gres=none|base|00:05:00|site-injects-gpu
+al|slurm|--account|g177-1|--partition|normal|slurm:nodes=1,ntasks=1,cpus-per-task=1|uenv:prgenv-gnu/25.11:v1,view=default|00:05:00|native-uenv
+rc|slurm|--account|cloud-users|--partition|r340|slurm:nodes=1,ntasks=1,cpus-per-task=1,gres=none|base|00:05:00|x86-cpu-route
+t4|age|-g|jh250019|none|none|age:cpu_4=1|module:gcc/14.2.0|00:05:00|native-group-flag
