@@ -1971,11 +1971,11 @@ and the private capture was exact-unlinked. This completes all seven nodes.
 
 ### T-249 — Canonical aliases and simplified Bash startup workflow
 
-**Phase/status:** `planning` after the owner expanded the frozen plan to remove
+**Phase/status:** `interviewing` after the owner expanded the frozen plan to remove
 `.pyenv`, `.venv`, and “all unrelated data.” D1-D6 remain resolved. The first
 two names are authorized in principle but their exact per-node paths,
 boundaries, identities, aggregate contents, and recovery status are not yet
-frozen; the final phrase is not a safely enumerable target. No deletion or
+frozen; D7 now asks what the final phrase means. No deletion or
 startup mutation has run. Every directory-tree removal must use the guarded
 bulk-delete plan/exact-NEXT apply workflow.
 Planning discovery was read-only on every live startup file and redacted any
@@ -2250,6 +2250,27 @@ are frozen. All other per-node decisions above are
 resolved from live command/path evidence, the frozen common policy, or clear
 broken/conflicting behavior.
 
+**D7 metadata-only deletion inventory:** exactly four candidate trees exist.
+AB `/home/aca10017by/.pyenv` is a mode-0750 owner directory with 55,837
+same-filesystem entries and 6,522,612 KiB apparent usage. RC lexical
+`/home/users/rio.yokota/.pyenv` (canonical home is
+`/hs/work0/home/users/rio.yokota`) is mode 0755 with 11,057 entries and 335,976
+KiB. T4 `/home/8/uq02038/.pyenv` is mode 0755 with 1,636 entries and 15,384
+KiB. T4 `/gs/bs/jh250019/yokota/.venv` is a mode-2755 owner directory; its
+full metadata walk was deliberately stopped after exceeding the planning
+window, and both local/remote probe processes are absent. The guarded planner
+will compute its authoritative identity/count/bytes if selected. Every checked
+home `.pyenv`/`.venv` and persistent-root `.venv` on the other nodes is absent.
+
+Each existing tree requires its own retained canonical boundary: AB home; one
+persistent RC connection that binds lexical/canonical home; T4 home; and T4
+persistent root. Do not combine those boundaries, use a glob/list/loop remover,
+or delete before startup references are transactionally absent and managed
+uv/Python plus known shell workflows pass. The exact guarded plan must publish
+a fresh mode-0600 manifest, and apply must use only its emitted NEXT command
+within 15 minutes, revalidate identity/count/bytes, preserve anchors, and prove
+the target absent. No fresh-backup decision or broader target exists yet.
+
 The owner then requested continued PIE discussion backed by a careful
 line-by-line review of `.bashrc` and `.bash_profile` on all nodes. That review
 and its value-limited supporting checks are complete. The startup decision
@@ -2261,10 +2282,12 @@ implementation; run seven read-only plans; pilot local apply/rollback/reapply;
 apply and independently validate one node at a time; then publish/distribute the
 compact completion evidence. Stop on any metadata/content drift, syntax or
 shell-mode regression, module mismatch, managed-tool loss, SSH effective-config
-mismatch, dirty checkout, or incomplete rollback. D7 now returns the whole task
-to planning: inventory only exact `.pyenv`/`.venv` candidates and their backup
-coverage, then interview the meaning of “unrelated data” one question at a
-time. A new explicit `go` will be required after the destructive scope freezes.
+mismatch, dirty checkout, or incomplete rollback. D7's exact candidate
+inventory is complete and the task is interviewing the meaning of “unrelated
+data” one question at a time. First decide whether scope is only the four exact
+obsolete environment trees or a separate broader audit and explicit target
+list; then decide fresh recovery coverage for the frozen targets. A new
+explicit `go` will be required after the destructive scope freezes.
 
 ## Stable operational facts
 
