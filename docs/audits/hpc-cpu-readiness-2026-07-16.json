@@ -1,0 +1,106 @@
+{
+  "gate": "cpu-readiness-v2",
+  "generated_date": "2026-07-16",
+  "nodes": {
+    "ab": {
+      "architecture": "x86_64",
+      "cmake": "3.26.5",
+      "compiler": "GCC 15.2.0",
+      "ctest": "3/3 pass",
+      "job_id": "2044973.pbs1",
+      "python": "3.12.8",
+      "result_status": 0,
+      "sanitizer": "pass",
+      "scheduler": "PBS",
+      "scheduler_exit": 0
+    },
+    "ab2": {
+      "architecture": "x86_64",
+      "cmake": "3.26.5",
+      "compiler": "GCC 15.2.0",
+      "ctest": "3/3 pass",
+      "job_id": "2044969.pbs1",
+      "python": "3.9.25",
+      "result_status": 0,
+      "sanitizer": "pass",
+      "scheduler": "PBS",
+      "scheduler_exit": 0
+    },
+    "al": {
+      "architecture": "aarch64",
+      "cmake": "3.31.9",
+      "compiler": "GCC 14.2.0",
+      "ctest": "3/3 pass",
+      "job_id": "4223564",
+      "python": "3.14.0",
+      "result_status": 0,
+      "sanitizer": "pass",
+      "scheduler": "Slurm",
+      "scheduler_exit": 0
+    },
+    "local": {
+      "architecture": "x86_64",
+      "cmake": "3.28.3",
+      "compiler": "GCC 13.3.0",
+      "ctest": "3/3 pass",
+      "job_id": "91158",
+      "python": "3.12.3",
+      "result_status": 0,
+      "sanitizer": "pass",
+      "scheduler": "Ybatch/Slurm",
+      "scheduler_exit": 0
+    },
+    "rc": {
+      "architecture": "x86_64",
+      "cmake": "3.31.8",
+      "compiler": "GCC 11.5.0",
+      "ctest": "3/3 pass",
+      "job_id": "211007",
+      "python": "3.12.9",
+      "result_status": 0,
+      "sanitizer": "declared skip: base-toolchain runtime gap",
+      "scheduler": "Slurm",
+      "scheduler_exit": 0
+    },
+    "ri": {
+      "architecture": "aarch64",
+      "cmake": "3.28.3",
+      "compiler": "GCC 13.3.0",
+      "ctest": "3/3 pass",
+      "job_id": "6979",
+      "python": "3.12.3",
+      "result_status": 0,
+      "sanitizer": "pass",
+      "scheduler": "Slurm",
+      "scheduler_exit": 0
+    },
+    "t4": {
+      "architecture": "x86_64",
+      "cmake": "3.26.5",
+      "compiler": "GCC 14.2.0",
+      "ctest": "3/3 pass",
+      "job_id": "8179553",
+      "python": "3.9.25",
+      "result_status": 0,
+      "sanitizer": "pass",
+      "scheduler": "AGE",
+      "scheduler_exit": 0
+    }
+  },
+  "schema": 1,
+  "scope": [
+    "scheduler compute execution",
+    "architecture assertion",
+    "coherent C/C++/Fortran compiler selection",
+    "CMake and Ninja build",
+    "three CTest cases including OpenMP",
+    "direct C++20",
+    "Python standard library",
+    "ASan and UBSan where declared"
+  ],
+  "summary": {
+    "nodes_passed": 7,
+    "nodes_total": 7,
+    "scheduler_exit_zero": 7
+  }
+}

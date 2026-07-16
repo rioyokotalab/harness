@@ -488,7 +488,7 @@ inspected; T-202 owns an application-native migration choice.
 
 ### T-200 — Scheduler-native LLM/HPC capability matrix
 
-**Phase/status:** `planned` from T-195. Convert identical tracked smoke sources
+**Phase/status:** `executing`; CPU/compiler/Python gate complete. Convert identical tracked smoke sources
 and site declarations into a reproducible login-versus-compute matrix. First
 record exact native commands and environment/container routes; then, only under
 existing allocation authority, run matched single-rank CPU/compiler/Python and
@@ -557,6 +557,16 @@ explicit GCC 14 triplet; RI proves the non-login publication correction. AB v1
 also completed status zero, clearing its duplicate-work constraint. A fresh AB
 v2 preflight then passed and PBS accepted `2044973.pbs1`. AB2 v2
 `2044969.pbs1` remains queued. These are the only two outstanding CPU-v2 IDs.
+
+**CPU-gate outcome:** both remaining PBS jobs completed with scheduler exit
+zero and terminal result zero. The matched seven-node report is
+`docs/hpc-readiness.md` with machine-readable evidence in
+`docs/audits/hpc-cpu-readiness-2026-07-16.json`. All nodes passed coherent
+C/C++/Fortran builds, 3/3 CTest including OpenMP, direct C++20, and Python;
+six sanitizer gates passed and RC retains its explicit runtime-gap skip. This
+closes only the CPU/compiler/Python prerequisite. Next freeze a minimal
+single-device accelerator/framework gate per declared site route; make no MPI,
+distributed, numerical-equivalence, or performance claim beforehand.
 
 ### T-201 — Early-login cache redirection
 
