@@ -216,6 +216,21 @@ first executable line, adds ordering regression, overwrites one mode-0600
 controller diagnostic per job, and safely reconciles an absent submitted smoke
 as failed before retry. No snapshot has run and no uncaptured job was created.
 
+**T4 retry checkpoint:** corrective commit `613a0f2` allowed a safe retry as
+AGE job `8175315`. Its managed read-only Restic check passed, but compute-side
+successor submission stopped before adoption because `qsub` was absent from
+the batch job's `PATH`; the private mode-0600 diagnostic contains only the
+resolved native command and the `command not found` error. Login-side
+validation identifies the executable directory as
+`/apps/t4/rhel9/uge/latest/bin/lx-amd64`, a mode-0755 directory owned by
+`geadmin` and canonically linked to the installed 2023.1.1 AGE tree. Declare
+that exact non-secret command path in the T4 host profile, rerun all local
+gates, roll out one clean commit, and retry only T4. AB and AB2 remain valid
+queued parents and must not be duplicated. RI reached its scheduler under a
+login shell but now requires an explicit project account, contradicting the
+frozen default-account row; resolve that material choice with the owner before
+retrying RI.
+
 ### T-190 — Create automated mirrored-node onboarding skill
 
 **Status:** PIE interview complete; separately awaiting an explicit owner `go`.
