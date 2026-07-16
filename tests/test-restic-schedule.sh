@@ -51,6 +51,8 @@ rows=$(awk -F'|' '
     END { print count + 0 }
 ' "$schedule_map") || fail "schedule schema"
 [ "$rows" -eq 7 ] || fail "schedule row count"
+grep '^ri|slurm|Asia/Tokyo|Sun|02:00|rkp00015|none|' "$schedule_map" >/dev/null ||
+    fail "RI explicit project account"
 
 fake_bin=$TEST_ROOT/fake-bin
 fake_sched=$TEST_ROOT/fake-scheduler
@@ -211,6 +213,10 @@ for declaration in 'local ybatch' 'ri slurm' 'ab pbs' 't4 age'; do
         fail "$host seed"
     grep "RESTIC_SCHEDULE_SEED host=$host" "$TEST_ROOT/$host.seed" >/dev/null ||
         fail "$host seed output"
+    if [ "$host" = ri ]; then
+        grep -- '--account=rkp00015' "$TEST_ROOT/$host.seed" >/dev/null ||
+            fail "RI native account request"
+    fi
     [ "$(wc -l <"$fake_sched/jobs" | tr -d ' ')" -eq 1 ] || fail "$host singleton"
     run_schedule "$host" "$family" "$home" status >"$TEST_ROOT/$host.status" ||
         fail "$host status"

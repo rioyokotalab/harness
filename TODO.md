@@ -7,9 +7,8 @@ and compact historical pointers here. Next free ID: T-193.
 
 ## Current state
 
-- Repository: `main` at `303938f`, two local commits ahead of `origin/main`;
-  pushing remains unauthorized. This TODO compaction is the only current
-  worktree change.
+- Repository: local `main` is clean and ahead of `origin/main`; pushing remains
+  unauthorized.
 - Managed environments: `local`, `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`.
   `abci_login` and `alps_login` are transports; `github` and `web` are
   services. Retired `si` is not a target.
@@ -44,9 +43,9 @@ and compact historical pointers here. Next free ID: T-193.
 
 **Status:** executing from the explicit owner `proceed` on 2026-07-16. Local,
 AB, AB2, AL, RC, and T4 have passed the allocated read-only smoke and exact
-successor-cancellation gate. RI is paused before submission because its live
-Slurm policy requires an explicit project account, contrary to frozen D19;
-ask the owner for that one material choice, then finish RI before seeding.
+successor-cancellation gate. RI's live Slurm policy requires an explicit
+project account, contrary to frozen D19; the owner selected `rkp00015`. Update
+and validate that one schedule row, finish RI's gate, then seed all seven.
 
 **Verified prerequisite:** every primary and independent generation has a
 successful full-data check and verified restore. Recurrence covers primary
@@ -74,7 +73,7 @@ eligibility points, not promised starts.
 | `local` | `ybatch`; default account; `thrp_1`; 30 min; default priority; evidence-only fallback `epyc-7502_1` | 00:30 JST |
 | `ab` | PBS `-P gag51395`; `rt_HC`; `select=1`; 30 min; default Spot priority | 01:00 JST |
 | `ab2` | PBS `-P gah51624`; `rt_HC`; `select=1`; 30 min; default Spot priority | 01:30 JST |
-| `ri` | Slurm default account/partition; one node/task/CPU; no GPU; 30 min | 02:00 JST |
+| `ri` | Slurm `-A rkp00015`, default partition; one node/task/CPU; no GPU; 30 min | 02:00 JST |
 | `rc` | Slurm `-A cloud-users -p r340`; one node/task/CPU; no GPU; 30 min | 02:30 JST |
 | `t4` | AGE `-g jh250019 -l cpu_4=1 -l h_rt=00:30:00`; omit `-p` | 03:00 JST |
 | `al` | Slurm `-A g177-1 -p normal`; one node/task/CPU; no GPU; 30 min | 01:00 Europe/Zurich local time |
@@ -250,8 +249,9 @@ accepted whole-node allocation; RC parent `210790` completed in three seconds
 with two billed CPUs; and T4 accounting is recorded above. All bundle copies
 were exact-unlinked and every checkout is clean at `4c678d5`. RI reached its
 scheduler only under the login environment and requires an explicit project
-account; do not guess or seed any production chain until the owner resolves
-that new choice and RI passes the same smoke gate.
+account. The owner selected `rkp00015`; record and validate that exact account
+request, then run RI's bounded smoke under its required login environment. Do
+not seed any production chain until RI passes the same smoke gate.
 
 ### T-190 — Create automated mirrored-node onboarding skill
 
