@@ -106,6 +106,11 @@ if smoke_tree=$(git -C "$root" rev-parse HEAD:tests/smoke 2>/dev/null); then
 else
     printf 'SMOKE_TREE_ERROR\t1\n'
 fi
+if hygiene=$("$root/tools/hpc-result-hygiene.sh" 2>/dev/null); then
+    printf 'HPC_RESULT_HYGIENE\t%s\n' "$hygiene"
+else
+    printf 'HPC_RESULT_HYGIENE_ERROR\t1\n'
+fi
 probe_version() {
     label=$1
     shift
@@ -197,6 +202,8 @@ def parse_probe(host: str, output: str) -> dict[str, Any]:
     control_plane_failed = False
     smoke_tree_summaries = 0
     smoke_tree_failed = False
+    result_hygiene_summaries = 0
+    result_hygiene_failed = False
     for line in output.splitlines():
         fields = line.split("\t")
         tag = fields[0]
@@ -257,6 +264,22 @@ def parse_probe(host: str, output: str) -> dict[str, Any]:
             if smoke_tree_summaries != 1:
                 raise AuditError(f"duplicate smoke tree identity: {host}")
             data["smoke_tree"] = fields[1]
+        elif tag == "HPC_RESULT_HYGIENE" and len(fields) == 2:
+            match = re.fullmatch(
+                rf"HPC_RESULT_HYGIENE host={re.escape(host)} state=(absent|present) "
+                r"state_ok=1 results=([0-9]+) invalid=0 temporary=([0-9]+) status=pass",
+                fields[1],
+            )
+            if not match:
+                raise AuditError(f"invalid HPC result hygiene summary: {host}")
+            result_hygiene_summaries += 1
+            if result_hygiene_summaries != 1:
+                raise AuditError(f"duplicate HPC result hygiene summary: {host}")
+            data["hpc_result_hygiene"] = {
+                "state": match.group(1),
+                "results": int(match.group(2)),
+                "temporary": int(match.group(3)),
+            }
         elif tag == "VERSION" and len(fields) == 4:
             label, state, value = fields[1:]
             if not re.fullmatch(r"[a-z]+", label) or state not in {"present", "absent"} or len(value) > 180 or any(ord(char) < 32 for char in value):
@@ -268,6 +291,8 @@ def parse_probe(host: str, output: str) -> dict[str, Any]:
                 control_plane_failed = True
             if tag == "SMOKE_TREE_ERROR":
                 smoke_tree_failed = True
+            if tag == "HPC_RESULT_HYGIENE_ERROR":
+                result_hygiene_failed = True
         else:
             data["discarded_stdout_lines"] += 1
     if not schema or not marker or "head" not in data or "dirty_entries" not in data:
@@ -276,6 +301,8 @@ def parse_probe(host: str, output: str) -> dict[str, Any]:
         raise AuditError(f"incomplete control plane summary: {host}")
     if smoke_tree_summaries != 1 or smoke_tree_failed:
         raise AuditError(f"incomplete smoke tree identity: {host}")
+    if result_hygiene_summaries != 1 or result_hygiene_failed:
+        raise AuditError(f"incomplete HPC result hygiene summary: {host}")
     return data
 
 

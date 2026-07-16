@@ -1570,6 +1570,22 @@ results respectively, with zero invalid and zero temporary entries everywhere.
 No result content was opened, no credential path was inspected, and no cleanup
 or scheduler action occurred.
 
+### T-234 — Fail-closed HPC result hygiene in fleet audits
+
+**Phase/status:** `in progress`, derived from T-233. Invoke the content-blind
+metadata probe inside the bounded fleet collector and retain only state,
+result-count, and temporary-count fields. Require exactly one valid pass
+summary per node; reject missing, explicit-error, malformed, or duplicate
+forms. Add negative parser tests, run focused/full/public validation,
+publish/distribute, then require a fresh seven-node audit. Never retain a
+result filename or open result content.
+
+**Implementation checkpoint:** the collector/parser now require one bounded
+aggregate with `state_ok=1`, `invalid=0`, and `status=pass`; only state and
+result/temporary counts enter JSON. Missing, explicit-error, malformed, and
+duplicate cases fail closed. Focused negative, portable full, and public-audit
+suites pass. Commit/distribute before the live audit.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

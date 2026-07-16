@@ -34,6 +34,7 @@ printf '%s\n' \
   'STORAGE	.local	symlink	/large/test/home-local' \
   'SMOKE	mpi.c	0123456789012345678901234567890123456789' \
   'SMOKE_TREE	1123456789012345678901234567890123456789' \
+  'HPC_RESULT_HYGIENE	HPC_RESULT_HYGIENE host=ab state=present state_ok=1 results=10 invalid=0 temporary=0 status=pass' \
   'VERSION	python	present	Python 3.12.3'
 EOF
 chmod 700 "$TEST_ROOT/ssh"
@@ -51,6 +52,7 @@ assert x['nodes']['ab']['doctor']=={'failures':0,'warnings':2}
 assert x['nodes']['ab']['schedule']['chain']['job']=='123.pbs'
 assert x['nodes']['ab']['control_plane']=={'keep':34,'create':0,'block':0}
 assert x['nodes']['ab']['smoke_tree']=='1123456789012345678901234567890123456789'
+assert x['nodes']['ab']['hpc_result_hygiene']=={'state':'present','results':10,'temporary':0}
 PY
 PYTHONDONTWRITEBYTECODE=1 python3 - "$AUDIT" <<'PY'
 import importlib.util
@@ -90,5 +92,19 @@ for label, suffix in (
         pass
     else:
         raise AssertionError(f"{label} smoke tree identity did not fail closed")
+
+complete += "\nSMOKE_TREE\t1123456789012345678901234567890123456789"
+good = "HPC_RESULT_HYGIENE\tHPC_RESULT_HYGIENE host=ab state=present state_ok=1 results=10 invalid=0 temporary=0 status=pass"
+for label, suffix in (
+    ("missing", ""),
+    ("explicit error", "\nHPC_RESULT_HYGIENE_ERROR\t1"),
+    ("duplicate", "\n" + good + "\n" + good),
+):
+    try:
+        module.parse_probe("ab", complete + suffix)
+    except module.AuditError:
+        pass
+    else:
+        raise AssertionError(f"{label} HPC result hygiene summary did not fail closed")
 PY
 printf '%s\n' 'fleet readiness audit tests passed'
