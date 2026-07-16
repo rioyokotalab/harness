@@ -635,6 +635,14 @@ the already documented ignored login-node `libcuda.so.1` warnings. Publish the
 correction and authority atomically, then use the frozen guarded cleanup entry
 point on the invalid root before creating fresh full-stage evidence.
 
+**Fresh-full restart checkpoint:** correction/authority commit `b13048f` is
+published and exactly matches `origin/main`. The evaluator's guarded cleanup
+planned one canonical target under `/tmp` (2,303 entries, 5,560,744 bytes),
+revalidated it immediately, verified protected anchors unchanged, and left
+both `/tmp/harness-eval-t181` and its mode-0600 manifest absent. Revalidate the
+clean corpus/client and the 35-pair/70-primary plan, then create that same
+canonical path anew and run the full stage once from entirely fresh evidence.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
