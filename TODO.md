@@ -1973,7 +1973,7 @@ and the private capture was exact-unlinked. This completes all seven nodes.
 
 **Phase/status:** `interviewing` after completing the owner's expanded,
 careful line-by-line necessity review of every managed node's `.bashrc` and
-`.bash_profile`. D1, D2, D2a, and D3 are resolved; D4-D6 remain open and live
+`.bash_profile`. D1-D4 are resolved; D5-D6 remain open and live
 files remain read-only.
 Planning discovery was read-only on every live startup file and redacted any
 credential-like line before agent output. No startup, package, scheduler,
@@ -2060,9 +2060,8 @@ features. The remaining per-node classification is:
   owner block, and remove the now-duplicate editor/history/prompt lines. `FS` is
   only `$HOME`; its `.local/bin` export duplicates `shell/profile.sh`, while
   global `CPATH`, `LIBRARY_PATH`, `LD_LIBRARY_PATH`, and `PKG_CONFIG_PATH`
-  affect every compiler/linker process and are not used by harness. D4 decides
-  whether to replace this entire legacy install block with project/module-
-  scoped build environments.
+  affect every compiler/linker process and are not used by harness. D4 removes
+  this entire legacy install block in favor of managed/project/module paths.
 - `AB .bashrc`: retain interactive-only `stty -ixon` and the explicit no-pager
   preference. Remove duplicate `ls`; remove `hosts`, `interactive`, and
   `interactive_full` because login-shell checks prove `qrsh` absent and the
@@ -2088,21 +2087,21 @@ features. The remaining per-node classification is:
   site-only `l` unless the owner later rejects it. No `.bash_profile` exists.
 - `AL .bashrc`: remove duplicate `ls` plus the obsolete start-image comments;
   the tracked `prgenv` function already provides the explicit uenv entry. `AL
-  .bash_profile`: retain `.bashrc` sourcing, remove D2's agent block, and apply
-  D4 to the redundant/risky local-install exports. The declared `.venv` is
+  .bash_profile`: retain `.bashrc` sourcing, remove D2's agent block, and remove
+  D4's redundant/risky local-install exports. The declared `.venv` is
   absent; D6 decides whether to remove `UV_VENV_ROOT` and `activate` rather than
   keep a function with no current target.
 - `RC .bashrc`: retain `/etc/bashrc` and the no-pager preference; remove the
   exact pre-`DATA` path block that can introduce `/.local/bin`, because the
   managed `$HOME/.local/bin` resolves to the same large-storage installation.
-  `RC .bash_profile`: retain `.bashrc` sourcing; apply D4 to `DATA` and global
+  `RC .bash_profile`: retain `.bashrc` sourcing; remove D4's `DATA` and global
   install/build exports, remove D2's agent block, and let D5 decide the existing
   PyEnv initialization because its tree/executable currently exist.
 - `T4 .bashrc`: retain `/etc/bashrc`, working `interactive`/`points` aliases,
   and replace inline modules with D3's unconditional compatibility hook. Remove
   the eager backtick Makefile completion: both home Makefile spellings are
   absent and sourcing general startup must not scan the current directory.
-  `T4 .bash_profile`: retain `.bashrc` sourcing. D4 covers `FS` and global
+  `T4 .bash_profile`: retain `.bashrc` sourcing. Remove D4's `FS` and global
   install/build exports. Remove redundant `PYTHONUSERBASE` and the conflicting
   `UV_CACHE_DIR`; D6 decides the active persistent `.venv`/`activate` helper.
   Remove login-wide `MPLBACKEND=Qt5Agg` and nonexistent `/tmp/runtime-$USER`;
@@ -2112,6 +2111,14 @@ features. The remaining per-node classification is:
   harness cache root and remove the slow-storage override. Keep canonical
   `APPTAINER_CACHEDIR` in `shell/cache.sh`; move `APPTAINER_TMPDIR` into T4 job
   setup because `T4TMPDIR` is absent on login and supplied only in jobs.
+
+Read-only D4 impact discovery found `.local/include`, `.local/lib`, and
+`.local/lib/pkgconfig` all absent on local, AL, RC, and T4. The removed global
+build variables therefore point at no current user installation surface. Live
+acceptance still requires `$HOME/.local/bin` first through the managed profile,
+all managed tools visible, exact D3 module stacks, shell-mode silence, and the
+full harness validation suite; unknown private scripts require a named test and
+cannot be declared compatible from startup inspection alone.
 
 These proposals remove only exact reviewed executable/comment groups. They do
 not minify whole files, remove site initialization, create a `.bash_profile`,
@@ -2221,10 +2228,11 @@ of unique site aliases, local-only `al`, exact RC path-block removal, and
 minimal preservation of all other startup content are resolved by the owner's
 request, prior decisions, and the preserve-unrelated-work boundary.
 
-D4 (open) covers legacy global install/build exports on local, AL, RC, and T4.
-Recommendation: keep only managed `$HOME/.local/bin`, replace `FS`/`DATA` in
-new work with `HARNESS_PERSISTENT_ROOT`, and put include/library/pkg-config
-paths in project or module environments rather than every shell. D5 (open)
+D4 is resolved as removal of the entire legacy global install/build blocks on
+local, AL, RC, and T4, including `FS`/`DATA`, redundant PATH additions, and
+include/library/pkg-config exports. Managed `$HOME/.local/bin` and
+`HARNESS_PERSISTENT_ROOT` replace the valid portions; aggregate discovery found
+no current `.local` include/library/pkg-config surface. D5 (open)
 covers AB/RC PyEnv initialization; managed uv/Python 3.12 is recommended unless
 the owner still actively selects PyEnv versions. D6 (open) covers the AL/T4
 `UV_VENV_ROOT` plus `activate` helper; remove AL's targetless helper and either
@@ -2236,9 +2244,9 @@ broken/conflicting behavior.
 The owner then requested continued PIE discussion backed by a careful
 line-by-line review of `.bashrc` and `.bash_profile` on all nodes. The review
 and value-limited supporting checks above are complete; phase returns to
-`interviewing`. Ask D4, D5, and D6 exactly one at a time. After the final
+`interviewing`. Ask D5 and D6 exactly one at a time. After the final
 answer, audit the register, set `ready-for-go`, and wait for an explicit `go`.
-Next unresolved question: D4.
+Next unresolved question: D5.
 
 ## Stable operational facts
 
