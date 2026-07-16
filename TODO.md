@@ -296,7 +296,11 @@ yet. Baseline revision is clean published `d5b82cd`. Current Codex CLI is
 the 94%-used home filesystem is not a run-artifact destination. CLI startup
 currently emits a stale-arg0-directory cleanup warning; treat it as captured
 environment noise and a possible confounder, not permission to inspect or
-delete unknown temporary state.
+delete unknown temporary state. The official manual lookup for D3 used one
+792,533-byte `/tmp` cache; guarded apply verified its exact tree deleted and
+protected anchors unchanged, and the mode-0600 manifest was exact-unlinked.
+An initial exact-file `rm -f` attempt was denied by command policy before
+execution; the reviewed `unlink` retry succeeded and both paths are absent.
 
 **Outcome and scope:** build a reproducible, self-contained corpus that can
 measure the unchanged harness against exactly one candidate mechanism at a
@@ -374,23 +378,24 @@ rerun or discard an unfavorable result. Before any bulk cleanup use the
 guarded-bulk-delete workflow and verify protected anchors afterward.
 
 **Decision register:** D1 is frozen as candidate A for the recovery gap above.
-D2 (open now) selects the staged run budget/repeat count. Recommended: three
-paired repetitions across a three-family pilot (small fix, ledger recovery, and
-destructive safety), at most 18 primary runs plus eligible retries; only after
-all pilot gates pass, five paired repetitions across all seven families, at
-most 70 primary runs plus eligible retries. A lean alternative uses two pilot
-and three full repetitions; a full-first alternative skips the pilot but costs
-more and gives weaker early-stop protection. D3 will freeze one explicit Codex
-model/effort/client for the first corpus; recommended Codex-only first to avoid
-cross-client confounding. D4 will decide owner-style adjudication; recommended
-deterministic pre-registered checks plus blinded owner review only for
-disagreements or borderline diffs.
+D2 is frozen as the owner's selected staged budget: three paired repetitions
+across a three-family pilot (small fix, ledger recovery, and destructive
+safety), at most 18 primary runs plus eligible retries; only after every pilot
+gate passes, five paired repetitions across all seven families, at most 70
+primary runs plus eligible retries. D3 (open now) freezes one explicit Codex
+model/effort/client for the first corpus. The official Codex manual and the
+installed bundled catalog both support `gpt-5.6-sol`; recommended is Codex CLI
+0.144.5, `gpt-5.6-sol`, medium reasoning, normal speed, and no automatic
+delegation. Sol/high costs more and may create a ceiling effect; Terra/medium is
+faster and cheaper but changes the capability being evaluated. D4 will decide
+owner-style adjudication; recommended deterministic pre-registered checks plus
+blinded owner review only for disagreements or borderline diffs.
 
 **Acceptance and next action:** the planning record is complete enough to
 interview one decision at a time. Checkpoint every answer here, audit the four
 decisions for contradiction, move to `ready-for-go`, and wait for a new explicit
 go before creating `evaluation/` or invoking a model. Current next question is
-D2 only.
+D3 only.
 
 ## Stable operational facts
 
