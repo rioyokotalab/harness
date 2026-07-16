@@ -817,6 +817,14 @@ remain explicit no-route skips: neither exposes an architecture-compatible MPI
 wrapper on its selected Arm compute base. Do not allocate them for this gate or
 carry RC's x86 login-only MPICH binary onto GH200.
 
+**Submission checkpoint:** exact commit `e034477` was installed into six clean
+remote worktrees by a verified 3,277-byte public bundle; every bundle is
+absent. Fresh result/name collision checks passed before native acceptance of
+local Ybatch `91213`; AB PBS `2045044.pbs1`; AB2 PBS `2045043.pbs1`; AL Slurm
+`4224197`; and T4 AGE `8179808`. Local, AL, and T4 already report two unique
+ranks, scheduler/result zero, and guarded cleanup. The two ABCI jobs remain
+validly queued; monitor only these captured IDs and do not submit replacements.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
