@@ -667,6 +667,19 @@ The bounded adjudication and limitation are recorded in
 evidence before correcting the post-experiment oracle and batch redaction;
 candidate adoption remains explicitly out of scope.
 
+**Post-experiment evaluator hardening:** after publishing the frozen evidence,
+the read-only oracle is corrected model-free to accept either the named
+traversal concept or an explicit statement that input escapes `root`; it still
+requires `artifact_path` and rejects unrelated findings. The review writer now
+replaces both arms' workspace/arm roots with neutral synthetic paths, replaces
+the run root, and neutralizes standalone `baseline`/`candidate` words before a
+review batch is written. Regressions reproduce the final false-negative wording
+and the observed path/name leak. These fixes improve future experiments only;
+they do not mutate, regrade, or rerun the published T-181 evidence. JSON/regex
+probes, corpus validation, focused evaluator tests, and the complete phase-1
+suite pass; the latter again emitted only the documented ignored login-node
+`libcuda.so.1` warnings after reloading the declared OpenMPI module.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

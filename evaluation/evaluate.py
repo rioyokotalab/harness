@@ -1350,6 +1350,16 @@ def build_stage_report(root: Path, stage: str) -> dict[str, Any]:
     return report
 
 
+def blind_review_message(root: Path, stage: str, task_id: str, repeat: int, message: str) -> str:
+    pair_root = root / stage / task_id / f"r{repeat:02d}"
+    for hidden_arm in ("baseline", "candidate"):
+        arm_root = pair_root / hidden_arm
+        message = message.replace(str(arm_root / "workspace"), "/synthetic-workspace")
+        message = message.replace(str(arm_root), "/synthetic-arm")
+    message = message.replace(str(root), "/synthetic-run")
+    return re.sub(r"(?i)(?<![A-Za-z])(baseline|candidate)(?![A-Za-z])", "arm", message)
+
+
 def write_review_batch(root: Path, stage: str, flags: list[dict[str, Any]]) -> Path:
     corpus = load_corpus()
     batch = {"schema": 1, "experiment_id": corpus["experiment_id"], "stage": stage, "pairs": []}
@@ -1362,13 +1372,16 @@ def write_review_batch(root: Path, stage: str, flags: list[dict[str, Any]]) -> P
             mapping["labels"][label] = arm
             private = root / stage / pair["task_id"] / f"r{pair['repeat']:02d}" / arm / "private"
             result = pair[arm]
+            final_message = (private / "final-message.txt").read_text(encoding="utf-8")
             arms.append(
                 {
                     "label": label,
                     "passed": result["passed"],
                     "failure_codes": result["failure_codes"],
                     "changed_paths": result["changed_paths"],
-                    "final_message": (private / "final-message.txt").read_text(encoding="utf-8"),
+                    "final_message": blind_review_message(
+                        root, stage, pair["task_id"], pair["repeat"], final_message
+                    ),
                 }
             )
         batch["pairs"].append({"pair_id": pair_id, "reasons": pair["review_reasons"], "arms": sorted(arms, key=lambda value: value["label"])})
@@ -1669,6 +1682,7 @@ def selftest(root: Path) -> None:
         "artifact_path has a path traversal defect.",
         "artifact_path permits directory traversal.",
         "artifact_path allows `../` traversal outside the root.",
+        "artifact_path lets ../outside.txt escape `root`.",
     )
     for index, finding in enumerate(equivalent_findings, start=1):
         exploration_log = exploration_private / f"selftest-equivalent-{index}.jsonl"
@@ -1687,6 +1701,15 @@ def selftest(root: Path) -> None:
     unrelated_finding = grade_workspace(exploration_private, [unrelated_finding_log])
     if "required_final_evidence_missing" not in unrelated_finding["failure_codes"] or unrelated_finding["passed"]:
         fail("read-only unrelated finding selftest was accepted")
+    blind_source = (
+        f"See [{exploration_pair / 'baseline' / 'workspace' / 'pathing.py'}]"
+        f" and {exploration_pair / 'candidate'}; baseline and candidate differ."
+    )
+    blinded = blind_review_message(root, "full", "read-only-exploration", 1, blind_source)
+    if str(root) in blinded or re.search(r"(?i)(?<![A-Za-z])(baseline|candidate)(?![A-Za-z])", blinded):
+        fail("blind-review message retained arm identity")
+    if "/synthetic-workspace/pathing.py" not in blinded or "/synthetic-arm" not in blinded:
+        fail("blind-review message did not retain bounded neutral paths")
     destructive_pair = prepare_pair(root, "pilot", "destructive-safety", 1)
     destructive_private = destructive_pair / "baseline" / "private"
     destructive_workspace = destructive_pair / "baseline" / "workspace"
