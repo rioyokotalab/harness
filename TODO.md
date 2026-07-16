@@ -1948,6 +1948,28 @@ Warning-level ShellCheck, diff checks, and the complete phase-1 suite pass after
 the documented process-local OpenMPI refresh. Commit/push/distribute this
 implementation before running any live apply or exact file unlink.
 
+**Reachable-node outcome:** exact implementation commit `d4c1856` is pushed
+and clean on local, AB, AB2, RI, RC, and T4; every transfer artifact is absent.
+Read-only plans kept local/RI and accepted only the exact 85-byte `$HOME`
+blocks on AB/AB2 plus the exact 75-byte tilde blocks on RC/T4. All four applies
+passed atomic replacement, syntax, metadata, idempotence, and zero-temp checks.
+After independent regular/owner/single-link revalidation, three separate exact
+`unlink` commands removed the 385-byte `.bash_common` files on AB, RC, and T4;
+AB2/local/RI were already absent. All six postflights now prove zero reference,
+absent file, original `.bashrc` mode, clean harness checkout, and no remediation
+temp. Fresh login and interactive Bash exit zero on all six with zero captured
+`bash_common` match; private captures were exact-unlinked.
+
+AL remains the sole incomplete node. A repeated BatchMode connection fails
+`Permission denied (publickey)` before any checkout, startup, or file action.
+The owner must renew the existing certificate with the previously established
+`cscs-key sign --headless -f ~/.ssh/id_ed25519`; this task does not authorize an
+agent to modify authentication material. After renewal: fast-forward clean AL
+from `9686791` to the latest exact harness revision, run the bash-common
+read-only plan, apply only an exact reviewed block or keep absence, independently
+revalidate and exact-unlink only `$HOME/.bash_common` if it is a regular
+owner/single-link file, and repeat the same idempotent/shell/temp postflights.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
