@@ -32,7 +32,7 @@ umask 077
 actual_arch=$(uname -m)
 case $host in ri|al) expected_arch=aarch64 ;; *) expected_arch=x86_64 ;; esac
 [ "$actual_arch" = "$expected_arch" ] || {
-    printf 'FAIL host=%s gate=debugger-readiness-v1 reason=architecture\n' "$host"
+    printf 'FAIL host=%s gate=debugger-readiness-v2 reason=architecture\n' "$host"
     exit 2
 }
 command -v cc >/dev/null
@@ -50,20 +50,29 @@ if ! gdb --batch --nx --nh \
     -ex 'print value' \
     -ex continue \
     "$build/debugger" >"$capture" 2>&1; then
-    printf 'FAIL host=%s gate=debugger-readiness-v1 reason=gdb-exit\n' "$host"
+    reason=gdb-exit-uncategorized
+    if grep -E 'ptrace: Operation not permitted|Could not trace the inferior process' \
+        "$capture" >/dev/null; then
+        reason=ptrace-policy
+    elif grep -F 'vfork: Resource temporarily unavailable' "$capture" >/dev/null; then
+        reason=process-limit
+    elif grep -F 'No space left on device' "$capture" >/dev/null; then
+        reason=temporary-storage
+    fi
+    printf 'FAIL host=%s gate=debugger-readiness-v2 reason=%s\n' "$host" "$reason"
     exit 2
 fi
 grep -F 'Breakpoint 1, checkpoint' "$capture" >/dev/null || {
-    printf 'FAIL host=%s gate=debugger-readiness-v1 reason=breakpoint\n' "$host"
+    printf 'FAIL host=%s gate=debugger-readiness-v2 reason=breakpoint\n' "$host"
     exit 2
 }
 grep -F '$1 = 35' "$capture" >/dev/null || {
-    printf 'FAIL host=%s gate=debugger-readiness-v1 reason=argument\n' "$host"
+    printf 'FAIL host=%s gate=debugger-readiness-v2 reason=argument\n' "$host"
     exit 2
 }
 grep -F 'exited normally' "$capture" >/dev/null || {
-    printf 'FAIL host=%s gate=debugger-readiness-v1 reason=program-exit\n' "$host"
+    printf 'FAIL host=%s gate=debugger-readiness-v2 reason=program-exit\n' "$host"
     exit 2
 }
-printf 'PASS host=%s gate=debugger-readiness-v1 arch=%s cleanup=guarded\n' \
+printf 'PASS host=%s gate=debugger-readiness-v2 arch=%s cleanup=guarded\n' \
     "$host" "$actual_arch"

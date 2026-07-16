@@ -976,6 +976,15 @@ establishes only direct local-process GDB usability; it does not claim remote
 debugging, scheduler attach, MPI/GPU debugging, core-file policy, optimized
 debug info, or profiler capability.
 
+**V1 result and V2 classification:** local, RI, AL, and RC passed. AB, AB2,
+and T4 returned nonzero from GDB before the stable breakpoint checks; the raw
+logs were correctly guarded-cleaned and no cause is inferred. V2 maps only an
+allowlist of raw signatures to `ptrace-policy`, `process-limit`, or
+`temporary-storage`, otherwise reports `gdb-exit-uncategorized`; it never emits
+the matched line. Commit/distribute and rerun only the three failures. Treat a
+confirmed login ptrace policy as a boundary and test compute-node debugging in
+a separate bounded task rather than attempting a bypass.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

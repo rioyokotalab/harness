@@ -10,6 +10,9 @@ grep -F 'gdb --batch --nx --nh' "$JOB" >/dev/null
 grep -F -- "-ex 'break checkpoint'" "$JOB" >/dev/null
 grep -F -- "-ex 'print value'" "$JOB" >/dev/null
 grep -F 'guarded-test-cleanup.sh' "$JOB" >/dev/null
+grep -F 'reason=ptrace-policy' "$JOB" >/dev/null
+grep -F 'reason=process-limit' "$JOB" >/dev/null
+grep -F 'reason=temporary-storage' "$JOB" >/dev/null
 grep -F '__attribute__((noinline))' "$SOURCE" >/dev/null
 grep -F 'checkpoint(35) == 42' "$SOURCE" >/dev/null
 if grep -E 'rm[[:space:]]+(-[^[:space:]]*)*[rR]|--recursive|find[[:space:]].*-delete|rsync[[:space:]].*--delete' \
