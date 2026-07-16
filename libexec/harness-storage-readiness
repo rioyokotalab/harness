@@ -26,7 +26,11 @@ while [ "$#" -gt 0 ]; do
 done
 [ -n "$logical_host" ] || { usage; exit 2; }
 require_safe_id "$logical_host"
-profile_for "$logical_host" >/dev/null
+profile=$(profile_for "$logical_host")
+if [ "${HARNESS_TESTING:-0}" = 1 ] && [ -n "${HARNESS_HOST_PROFILE:-}" ]; then
+    profile=$HARNESS_HOST_PROFILE
+fi
+[ -f "$profile" ] && [ ! -L "$profile" ] || die "invalid host profile"
 case ${HARNESS_LOGICAL_HOST:-$logical_host} in
     "$logical_host") ;;
     *) die "logical host does not match this environment" ;;
@@ -60,6 +64,7 @@ uid=$(id -u)
 home=$(realpath -e -- "$HOME") || die "current HOME is not canonical"
 active_probe=
 active_root=
+active_root_identity=
 
 cleanup_probe() {
     status=$?
@@ -68,6 +73,7 @@ cleanup_probe() {
         valid=1
         [ -f "$active_probe" ] && [ ! -L "$active_probe" ] || valid=0
         [ "$(dirname -- "$active_probe")" = "$active_root" ] || valid=0
+        [ "$(stat -c %d:%i -- "$active_root")" = "$active_root_identity" ] || valid=0
         case ${active_probe##*/} in
             .harness-storage-readiness."$logical_host".*) ;;
             *) valid=0 ;;
@@ -89,11 +95,21 @@ check_root() {
     label=$1
     declared=$2
     [ -d "$declared" ] && [ ! -L "$declared" ] || die "$label root is not a real directory"
-    root=$(realpath -e -- "$declared") || die "$label root cannot be canonicalized"
-    [ "$root" = "$declared" ] || die "$label root canonical identity differs"
-    case $root in
+    canonical_root=$(realpath -e -- "$declared") || die "$label root cannot be canonicalized"
+    canonical_alias=0
+    if [ "$canonical_root" != "$declared" ]; then
+        expected_canonical=$(config_get "$profile" "${label}_canonical_root")
+        [ "$canonical_root" = "$expected_canonical" ] ||
+            die "$label root canonical identity is not explicitly declared"
+        canonical_alias=1
+    fi
+    case $canonical_root in
         "$home"|"$home"/*) die "$label root is inside HOME" ;;
     esac
+    root=$declared
+    root_identity=$(stat -c %d:%i -- "$root")
+    [ "$root_identity" = "$(stat -c %d:%i -- "$canonical_root")" ] ||
+        die "$label root canonical object mismatch"
     [ "$(stat -c %u -- "$root")" = "$uid" ] || die "$label root owner mismatch"
     [ -w "$root" ] || die "$label root is not writable"
     filesystem=$(stat -f -c %T -- "$root")
@@ -104,12 +120,13 @@ check_root() {
     esac
     [ -n "$available_kib" ] && [ -n "$available_inodes" ] ||
         die "$label capacity probe returned no value"
-    printf 'STORAGE host=%s label=%s status=ready filesystem=%s available_kib=%s available_inodes=%s outside_home=1\n' \
-        "$logical_host" "$label" "$filesystem" "$available_kib" "$available_inodes"
+    printf 'STORAGE host=%s label=%s status=ready filesystem=%s available_kib=%s available_inodes=%s outside_home=1 canonical_alias=%s\n' \
+        "$logical_host" "$label" "$filesystem" "$available_kib" "$available_inodes" "$canonical_alias"
 
     [ "$write_probe" -eq 1 ] || return 0
     umask 077
     active_root=$root
+    active_root_identity=$root_identity
     active_probe=$(mktemp "$root/.harness-storage-readiness.$logical_host.$label.XXXXXX") ||
         die "$label cannot create exact probe"
     chmod 600 "$active_probe"
@@ -118,10 +135,13 @@ check_root() {
     [ "$(stat -c %a -- "$active_probe")" = 600 ] || die "$label probe mode mismatch"
     dd if=/dev/zero of="$active_probe" bs=4096 count=1 conv=fsync status=none
     [ "$(stat -c %s -- "$active_probe")" = 4096 ] || die "$label probe size mismatch"
+    [ "$(stat -c %d:%i -- "$active_root")" = "$active_root_identity" ] ||
+        die "$label root identity changed before cleanup"
     unlink -- "$active_probe"
     [ ! -e "$active_probe" ] && [ ! -L "$active_probe" ] || die "$label probe remains"
     active_probe=
     active_root=
+    active_root_identity=
     printf 'STORAGE_WRITE host=%s label=%s bytes=4096 fsync=pass cleanup=absent\n' \
         "$logical_host" "$label"
 }

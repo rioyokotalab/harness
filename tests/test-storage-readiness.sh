@@ -33,11 +33,14 @@ cache=$TEST_ROOT/cache
 mkdir -p "$home" "$persistent" "$cache"
 chmod 700 "$home" "$persistent" "$cache"
 layout=$TEST_ROOT/layout.tsv
+profile=$TEST_ROOT/host.conf
+printf '%s\n' 'schema=1' >"$profile"
 printf 'local|%s|%s|none|none|none|none\n' "$persistent" "$cache" >"$layout"
 
 run() {
     env HOME="$home" HARNESS_TESTING=1 HARNESS_LOGICAL_HOST=local \
-        HARNESS_HOME_LAYOUT="$layout" "$HARNESS" storage-readiness "$@" --host local
+        HARNESS_HOME_LAYOUT="$layout" HARNESS_HOST_PROFILE="$profile" \
+        "$HARNESS" storage-readiness "$@" --host local
 }
 
 run >"$TEST_ROOT/plan.out" || fail "read-only plan"
@@ -65,5 +68,22 @@ printf 'local|%s|%s|none|none|none|none\n' "$TEST_ROOT/root-link" "$cache" >"$la
 if run >"$TEST_ROOT/symlink.out" 2>&1; then fail "accepted symlink root"; fi
 grep -F 'persistent root is not a real directory' "$TEST_ROOT/symlink.out" >/dev/null ||
     fail "symlink evidence"
+
+real_parent=$TEST_ROOT/real-parent
+real_persistent=$real_parent/persistent
+mkdir -p "$real_persistent"
+ln -s "$real_parent" "$TEST_ROOT/alias-parent"
+alias_persistent=$TEST_ROOT/alias-parent/persistent
+printf 'local|%s|%s|none|none|none|none\n' "$alias_persistent" "$cache" >"$layout"
+printf '%s\n' 'schema=1' >"$profile"
+if run >"$TEST_ROOT/undeclared-alias.out" 2>&1; then fail "accepted undeclared canonical alias"; fi
+grep -F 'persistent root canonical identity is not explicitly declared' \
+    "$TEST_ROOT/undeclared-alias.out" >/dev/null || fail "undeclared alias evidence"
+printf 'schema=1\npersistent_canonical_root=%s\n' "$real_persistent" >"$profile"
+run --write-probe >"$TEST_ROOT/declared-alias.out" || fail "declared canonical alias"
+grep '^STORAGE host=local label=persistent .*canonical_alias=1$' \
+    "$TEST_ROOT/declared-alias.out" >/dev/null || fail "declared alias evidence"
+[ -z "$(find "$real_persistent" -maxdepth 1 -name '.harness-storage-readiness.*' -print -quit)" ] ||
+    fail "declared alias probe remained"
 
 printf '%s\n' 'storage readiness tests: PASS'

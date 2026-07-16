@@ -878,6 +878,16 @@ run fresh read-only plans, then execute one bounded live probe per root and
 verify no probe name remains. This is correctness only, not an I/O benchmark or
 quota/capacity reservation.
 
+**RC fail-closed correction:** the first live plan stopped before writing
+because `/lvs0/rccs-asfm/rio.yokota` canonically resolves to the same
+device/inode at `/lvs0/dne0/rccs-asfm/rio.yokota`; cache has the analogous
+alias, while neither root is HOME. The host profile now declares those two
+exact canonical identities. The gate still rejects undeclared intermediate
+aliases and symlink endpoints, and binds cleanup to the captured root
+device/inode. Tests prove undeclared-alias rejection, exact declared-alias
+acceptance, write/fsync, and zero residue. Recommit/distribute this correction,
+then repeat every read-only plan before any live probe.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
