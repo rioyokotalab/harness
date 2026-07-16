@@ -1572,7 +1572,7 @@ or scheduler action occurred.
 
 ### T-234 — Fail-closed HPC result hygiene in fleet audits
 
-**Phase/status:** `in progress`, derived from T-233. Invoke the content-blind
+**Phase/status:** `complete`, derived from T-233. Invoke the content-blind
 metadata probe inside the bounded fleet collector and retain only state,
 result-count, and temporary-count fields. Require exactly one valid pass
 summary per node; reject missing, explicit-error, malformed, or duplicate
@@ -1585,6 +1585,13 @@ aggregate with `state_ok=1`, `invalid=0`, and `status=pass`; only state and
 result/temporary counts enter JSON. Missing, explicit-error, malformed, and
 duplicate cases fail closed. Focused negative, portable full, and public-audit
 suites pass. Commit/distribute before the live audit.
+
+**Outcome:** exact implementation commit `44fbfb2` reached all six clean
+remotes without transfer residue. The fresh audit is failure-free on all seven
+clean nodes and records the same 6/10/10/6/9/7/8 valid-result counts with zero
+temporary entries. Its SHA-256 is
+`f6c10f58f3c0e13273303cc6154670fad2c05a9784ba76fd21785793444f8a21`.
+No result content or filename entered the report.
 
 ## Stable operational facts
 

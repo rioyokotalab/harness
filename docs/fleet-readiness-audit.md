@@ -135,3 +135,7 @@ bounded fleet probe. Exactly one valid aggregate is required per node; invalid
 metadata or probe errors fail the node, while temporary-entry counts remain
 visible for reconciliation with exact scheduler IDs. No result content or
 filename is retained.
+The post-rollout
+[`audits/fleet-readiness-result-hygiene-2026-07-17.json`](audits/fleet-readiness-result-hygiene-2026-07-17.json)
+reports the previously validated per-node counts, zero temporary entries, clean
+exact `44fbfb2` revisions, canonical control-plane parity, and zero failures.
