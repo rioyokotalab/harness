@@ -7,8 +7,9 @@ and compact historical pointers here. Next free ID: T-193.
 
 ## Current state
 
-- Repository: local `main` is clean and ahead of `origin/main`; pushing remains
-  unauthorized.
+- Repository: local `main` is clean. The owner authorized frequent ordinary
+  pushes for the now-public harness and website repositories; fetch before
+  work and push, preserve contributor commits, and never force-push.
 - Managed environments: `local`, `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`.
   `abci_login` and `alps_login` are transports; `github` and `web` are
   services. Retired `si` is not a target.

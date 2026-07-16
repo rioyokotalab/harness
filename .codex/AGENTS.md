@@ -42,6 +42,10 @@ gates; follow those more specific rules.
   output when it matters, and distinguish confirmed facts from hypotheses.
 - Run validation proportional to risk. A generated artifact, optimization, or
   delegated result is not complete until independently checked.
+- For an owner-authorized collaborative repository, fetch before starting work
+  and again before pushing, integrate non-conflicting contributor commits, and
+  push small verified commits promptly instead of accumulating a long local
+  queue. Never force-push or overwrite ambiguous remote work.
 - When an agent executes through a platform CLI, prefer recognizable native
   commands over opaque convenience wrappers so plans and reports expose what
   actually ran. Keep portability mapping in the workflow and report the
