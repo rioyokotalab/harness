@@ -29,6 +29,9 @@ default token access and pin actions to a full commit SHA:
 - <https://github.com/actions/checkout/releases/tag/v6.0.2>
 - <https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md>
 
+The first complete hosted validation succeeded as
+[Harness CI run 29499772796](https://github.com/rioyokotalab/harness/actions/runs/29499772796).
+
 ## Deferred website workflow
 
 The website working tree had fresh unrelated ledger edits, so T-194 did not

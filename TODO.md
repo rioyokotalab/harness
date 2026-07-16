@@ -327,8 +327,9 @@ warnings were explicitly ignored by OpenMPI.
 
 ### T-194 — Contributor-safe CI and merge-control proposal
 
-**Phase/status:** `planning`; repository-side CI is authorized, external
-GitHub settings are proposal-only. Use only pinned official actions and
+**Phase/status:** `partially complete`; harness CI is implemented and verified,
+website CI is deferred behind its fresh unrelated driver state, and external
+GitHub settings remain proposal-only. Use only pinned official actions and
 least-privilege read permissions. Harness CI must run deterministic syntax,
 ShellCheck, focused evaluator tests, and portable phase-1 gates without
 credentials, remote nodes, scheduler writes, model calls, or a false claim
@@ -338,6 +339,17 @@ Preserve the website's current unrelated dirty ledger and defer its workflow
 edit until clean. Record exact recommended branch protections, required checks,
 rollback, and remaining owner-side settings without changing GitHub
 configuration automatically.
+
+**Outcome/checkpoint:** Harness workflow `.github/workflows/ci.yml` uses
+read-only permissions, checkout v6.0.2 pinned to full commit
+`de0fac2e4500dabe0009e67214ff5f5447ce83dd`, no persisted credential, complete
+history, and fixed `ubuntu-24.04`. Hosted run `29499772796` passed ShellCheck,
+all five focused suites, and the portable phase-1 gate. The generic runner
+explicitly skips only native MPI and Codex-client policy semantics; the default
+managed-node suite still requires both and passed locally. Exact branch-rule,
+rollback, and deferred website instructions are in
+`docs/ci-and-merge-controls.md`. Do not take over the website files until its
+current driver checkpoint becomes clean or stale.
 
 ### T-195 — Seven-node configuration-drift audit
 
