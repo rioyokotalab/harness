@@ -540,6 +540,16 @@ required unload/reload of `openmpi/5.0-cuda-12.8`; expected login-node
 `libcuda` component warnings remain non-fatal). Commit and distribute v2, then
 repeat collision checks and retry only RI/T4 plus any later v1 failure.
 
+**CPU-gate v2 submission checkpoint:** exact commit `8cded82` was transported
+to all six remotes with a verified 3,099-byte bundle after direct GitHub fetch
+proved unavailable there. A shared-`/tmp` name collision between AB accounts
+caused no checkout mutation; the corrected transport used unique private
+per-account state paths, and every local/remote bundle is absent after clean
+fast-forwards. Fresh v2 collision checks passed before accepting: local Ybatch
+`91158`; AB2 PBS `2044969.pbs1`; RI Slurm `6979`; AL Slurm `4223564`; RC Slurm
+`211007`; and T4 AGE `8179553`. AB v2 is deliberately deferred while its v1
+job remains live. Monitor only these IDs and the previously captured AB v1 ID.
+
 ### T-201 — Early-login cache redirection
 
 **Phase/status:** `planned` from RI's T-199 recurrence. Determine, without
