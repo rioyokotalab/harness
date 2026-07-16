@@ -1546,6 +1546,23 @@ identical complete smoke-tree object
 `17bdf765d814abd4851c2a282064419f88e905c2`. The report SHA-256 is
 `3c707a2b452d34b561c7826fa7f8ecd7a96c51adddb2da9d9bbbe6232685f747`.
 
+### T-233 — Private HPC result metadata hygiene audit
+
+**Phase/status:** `in progress`, derived from the growing readiness evidence
+set. Add a content-blind probe for the declared private HPC result directory.
+Require its owner/mode 0700 and each `tNNN-*.out` path to be a regular,
+non-symlink, owner mode-0600, single-linked, bounded file. Count `.tNNN*`
+temporary paths without failing or deleting because a captured job may be
+active. Add synthetic absent/pass/bad-mode/temporary tests, run full/public
+validation, publish/distribute, then execute concurrently on all seven nodes
+and record aggregate counts only. Never open a result or inspect credentials.
+
+**Implementation checkpoint:** synthetic absent, valid mode-0600, invalid
+mode-0644, and active-temporary cases pass, as do ShellCheck, one real local
+metadata-only run, the portable full suite, and public audit. Local currently
+has six valid result files and zero temporary entries. Commit/distribute before
+collecting the other six aggregate records.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
