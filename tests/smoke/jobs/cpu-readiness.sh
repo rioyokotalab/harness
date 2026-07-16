@@ -6,16 +6,51 @@ case ${HARNESS_LOGICAL_HOST:-} in
     *) printf '%s\n' 'cpu-readiness: invalid HARNESS_LOGICAL_HOST' >&2; exit 2 ;;
 esac
 
-if [ "$host" = al ] && [ "${T200_IN_UENV:-0}" != 1 ]; then
-    T200_IN_UENV=1
-    export T200_IN_UENV
-    exec uenv run prgenv-gnu/25.11:v1 --view=default -- "$0"
+gate=cpu-readiness-v2
+run_tag=${HARNESS_READINESS_RUN_TAG:-v2}
+case $run_tag in
+    ''|*[!A-Za-z0-9._-]*)
+        printf '%s\n' 'cpu-readiness: invalid HARNESS_READINESS_RUN_TAG' >&2
+        exit 2
+        ;;
+esac
+[ "${#run_tag}" -le 32 ] || {
+    printf '%s\n' 'cpu-readiness: HARNESS_READINESS_RUN_TAG is too long' >&2
+    exit 2
+}
+
+# Scheduler entry may require a login shell to expose site environment tools,
+# but the test body and its EXIT trap must not inherit site login-shell defects.
+if [ "${T200_ENV_READY:-0}" != 1 ]; then
+    case $host in
+        ab|ab2)
+            module load gcc/15.2.0
+            CC=$(command -v gcc)
+            CXX=$(command -v g++)
+            FC=$(command -v gfortran)
+            export CC CXX FC
+            ;;
+        al)
+            export T200_ENV_READY=1
+            exec uenv run prgenv-gnu/25.11:v1 --view=default -- \
+                env T200_ENV_READY=1 /bin/bash "$0"
+            ;;
+        t4)
+            module load gcc/14.2.0
+            CC=$(command -v gcc)
+            CXX=$(command -v g++)
+            FC=$(command -v gfortran)
+            export CC CXX FC
+            ;;
+    esac
+    export T200_ENV_READY=1
+    exec /bin/bash "$0"
 fi
 
 root=$HOME/harness
 smoke=$root/tests/smoke
 state_root=$HOME/.local/state/harness/hpc-readiness
-result=$state_root/t200-cpu-$host.out
+result=$state_root/t200-cpu-$host-$run_tag.out
 scratch=${SLURM_TMPDIR:-${TMPDIR:-/tmp}}
 build=
 capture=
@@ -27,9 +62,9 @@ chmod 700 "$state_root"
     printf 'cpu-readiness: result already exists: %s\n' "$result" >&2
     exit 2
 }
-capture=$(mktemp "$state_root/.t200-cpu-$host.XXXXXX")
+capture=$(mktemp "$state_root/.t200-cpu-$host-$run_tag.XXXXXX")
 chmod 600 "$capture"
-if ! build=$(mktemp -d "$scratch/t200-cpu-$host.XXXXXX"); then
+if ! build=$(mktemp -d "$scratch/t200-cpu-$host-$run_tag.XXXXXX"); then
     unlink -- "$capture"
     exit 2
 fi
@@ -63,7 +98,7 @@ trap 'exit 143' TERM
 exec >"$capture" 2>&1
 umask 077
 
-printf 'GATE host=%s kind=cpu-readiness-v1\n' "$host"
+printf 'GATE host=%s kind=%s run=%s\n' "$host" "$gate" "$run_tag"
 actual_arch=$(uname -m)
 case $host in
     ri|al) expected_arch=aarch64 ;;
@@ -78,21 +113,24 @@ printf 'CPUS %s\n' "$(getconf _NPROCESSORS_ONLN)"
 
 case $host in
     ab|ab2)
-        printf '%s\n' 'NATIVE module load gcc/15.2.0'
-        module load gcc/15.2.0
+        printf '%s\n' 'ENV module=gcc/15.2.0'
         ;;
     al)
         printf '%s\n' 'ENV uenv=prgenv-gnu/25.11:v1 view=default'
         ;;
     t4)
-        printf '%s\n' 'NATIVE module load gcc/14.2.0'
-        module load gcc/14.2.0
+        printf '%s\n' 'ENV module=gcc/14.2.0'
         ;;
 esac
 
-printf 'CC %s\n' "$(cc --version | sed -n '1p')"
-printf 'CXX %s\n' "$(c++ --version | sed -n '1p')"
-printf 'FORTRAN %s\n' "$(gfortran --version | sed -n '1p')"
+: "${CC:=cc}" "${CXX:=c++}" "${FC:=gfortran}"
+export CC CXX FC
+printf 'CC_COMMAND %s\n' "$(command -v "$CC")"
+printf 'CXX_COMMAND %s\n' "$(command -v "$CXX")"
+printf 'FC_COMMAND %s\n' "$(command -v "$FC")"
+printf 'CC %s\n' "$("$CC" --version | sed -n '1p')"
+printf 'CXX %s\n' "$("$CXX" --version | sed -n '1p')"
+printf 'FORTRAN %s\n' "$("$FC" --version | sed -n '1p')"
 printf 'CMAKE %s\n' "$(cmake --version | sed -n '1p')"
 printf 'NINJA %s\n' "$(ninja --version | sed -n '1p')"
 printf 'PYTHON %s\n' "$(python3 --version)"
@@ -104,8 +142,8 @@ cmake --build "$build/cmake"
 printf '%s\n' 'NATIVE ctest --test-dir BUILD/cmake --output-on-failure'
 ctest --test-dir "$build/cmake" --output-on-failure
 
-printf '%s\n' 'NATIVE c++ -std=c++20 -O2 tests/smoke/cpp20.cpp -o BUILD/cpp20'
-c++ -std=c++20 -O2 "$smoke/cpp20.cpp" -o "$build/cpp20"
+printf '%s\n' 'NATIVE $CXX -std=c++20 -O2 tests/smoke/cpp20.cpp -o BUILD/cpp20'
+"$CXX" -std=c++20 -O2 "$smoke/cpp20.cpp" -o "$build/cpp20"
 "$build/cpp20"
 
 printf '%s\n' 'NATIVE python3 tests/smoke/python.py'
@@ -116,17 +154,17 @@ case $host in
         printf '%s\n' 'SKIP sanitizer: declared RC base-toolchain runtime gap'
         ;;
     ab|ab2)
-        printf '%s\n' 'NATIVE cc -fsanitize=address,undefined (ASAN_OPTIONS=detect_leaks=0)'
-        cc -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer \
+        printf '%s\n' 'NATIVE $CC -fsanitize=address,undefined (ASAN_OPTIONS=detect_leaks=0)'
+        "$CC" -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer \
             "$smoke/sanitizer.c" -o "$build/sanitizer"
         ASAN_OPTIONS=detect_leaks=0 "$build/sanitizer"
         ;;
     *)
-        printf '%s\n' 'NATIVE cc -fsanitize=address,undefined tests/smoke/sanitizer.c'
-        cc -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer \
+        printf '%s\n' 'NATIVE $CC -fsanitize=address,undefined tests/smoke/sanitizer.c'
+        "$CC" -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer \
             "$smoke/sanitizer.c" -o "$build/sanitizer"
         "$build/sanitizer"
         ;;
 esac
 
-printf 'PASS host=%s gate=cpu-readiness-v1\n' "$host"
+printf 'PASS host=%s gate=%s run=%s\n' "$host" "$gate" "$run_tag"

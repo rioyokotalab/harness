@@ -521,6 +521,25 @@ AB PBS `2044959.pbs1`; AB2 PBS `2044958.pbs1`; RI Slurm `6978`; AL Slurm
 IDs, preserve the T-191 production jobs, and publish a capability claim only
 from each private result plus scheduler accounting.
 
+**CPU-gate v1 evidence:** local `91133`, AB2 `2044958.pbs1`, AL `4223373`,
+and RC `211005` completed with status zero and passed C/C++/Fortran CTest,
+C++20, Python, and the applicable sanitizer gate. RI `6978` reached every pass
+marker but the site login shell's EXIT context failed afterward, so scheduler
+accounting correctly records failure and no clean claim is made. T4 `8179531`
+passed through Python but exposed a reproducible mixed-toolchain defect: its
+GCC module supplies `gcc`/`g++`/`gfortran` while leaving `cc` at the base GCC
+11 linker, which cannot link UBSan. AB `2044959.pbs1` remains queued for the
+requested 32 CPU resource. Raw failed results remain private and untouched.
+
+**CPU-gate v2 correction:** the job now resolves and exports a coherent
+compiler triplet after AB/AB2/T4 module setup, re-executes the test body in
+non-login Bash after site environment setup, and accepts a restricted run tag
+so retries cannot overwrite prior evidence. Focused tests, invalid-tag tests,
+shell parsing, and the full native phase-1 suite pass (the latter after the
+required unload/reload of `openmpi/5.0-cuda-12.8`; expected login-node
+`libcuda` component warnings remain non-fatal). Commit and distribute v2, then
+repeat collision checks and retry only RI/T4 plus any later v1 failure.
+
 ### T-201 — Early-login cache redirection
 
 **Phase/status:** `planned` from RI's T-199 recurrence. Determine, without

@@ -11,6 +11,12 @@ grep -Fx '#SBATCH --time=00:05:00' "$LOCAL" >/dev/null
 grep -F 'uenv run prgenv-gnu/25.11:v1 --view=default' "$JOB" >/dev/null
 grep -F 'module load gcc/15.2.0' "$JOB" >/dev/null
 grep -F 'module load gcc/14.2.0' "$JOB" >/dev/null
+grep -F 'HARNESS_READINESS_RUN_TAG' "$JOB" >/dev/null
+grep -F 'exec /bin/bash "$0"' "$JOB" >/dev/null
+grep -F 'CC=$(command -v gcc)' "$JOB" >/dev/null
+grep -F 'CXX=$(command -v g++)' "$JOB" >/dev/null
+grep -F 'FC=$(command -v gfortran)' "$JOB" >/dev/null
+grep -F 'export HARNESS_READINESS_RUN_TAG=v2' "$LOCAL" >/dev/null
 for source in cpu.c cpu.cpp cpu.f90; do
     grep -F "$source" "$ROOT/tests/smoke/CMakeLists.txt" >/dev/null
 done

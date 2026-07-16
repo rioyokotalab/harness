@@ -7,4 +7,5 @@
 
 set -eu
 export HARNESS_LOGICAL_HOST=local
+export HARNESS_READINESS_RUN_TAG=v2
 exec "$HOME/harness/tests/smoke/jobs/cpu-readiness.sh"
