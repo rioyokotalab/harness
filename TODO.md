@@ -1396,6 +1396,24 @@ any node. The gap matrix now records this narrow seven-node pass separately
 while preserving immutable image execution as not tested and framework/image
 selection as owner-gated.
 
+### T-228 — Bounded scientific-library login-surface audit
+
+**Phase/status:** `in progress`, derived from the scientific-coding workstream.
+Add a fixed, bounded probe for visible HDF5, NetCDF, ADIOS2, FFTW, BLAS,
+LAPACK, and OpenBLAS wrapper/`pkg-config` surfaces. Report only sanitized
+presence/version records and explicitly classify the result as login-context
+discovery, not a compute capability or absence claim. Test with synthetic
+tools, run the portable/public suites, publish/distribute, then execute once on
+all seven login environments. Do not enumerate module catalogs or environment
+variables, install packages, allocate compute, or modify application state.
+
+**Implementation checkpoint:** the probe now emits a fixed 19-line schema,
+checks five wrapper names and nine package identifiers, and bounds unsafe or
+unexpected version text to `unreported`. Synthetic present/absent/version and
+invalid-host tests pass, as do one real local run, the portable full suite, and
+the public audit. Commit and distribute before collecting the seven-node
+login-surface matrix.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
