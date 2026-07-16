@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-193.
+and compact historical pointers here. Next free ID: T-198.
 
 ## Current state
 
@@ -292,6 +292,94 @@ IDs; after each admission verify successful snapshot evidence, exactly one
 successor at the next strictly future Sunday, private state consistency, and
 healthy interactive-login silence. Do not duplicate or cancel jobs merely for
 queue delay.
+
+### T-193 — Reproducible public-repository safety audit
+
+**Phase/status:** `executing` under the owner's 2026-07-16 eight-hour go.
+Extend website T-185's manual review with one credential-value-free scanner
+that audits the current tree and reachable history of both public repositories.
+Report only rule IDs, paths, commits, sizes, counts, and metadata fingerprints;
+never print matching values. Cover suspicious filenames, private-key headers,
+common token/credential assignments, credential-context entropy, oversized
+blobs, operational paths, and ignored/untracked boundaries. Do not rewrite
+history, change visibility, inspect authentication stores, or mutate website
+files while its unrelated fresh ledger closeout remains dirty. Acceptance is a
+versioned scanner with hostile fixtures, bounded reports for both repositories,
+and independent confirmation that no matched value reaches stdout or Git.
+
+**Implementation checkpoint:** `tools/public-repo-audit.py` now scans all
+reachable blobs with one Git batch reader and one raw-history pass, publishes
+only bounded per-rule samples with complete counts, and refuses to overwrite
+reports. Its guarded hostile
+fixture proves a fake token present only in deleted history triggers path,
+token-shape, and assignment rules while the value remains absent from stdout,
+stderr, and JSON. Provisional full scans completed without a private-key,
+known-token, or suspicious-path finding. Website's sole assignment candidate
+is in a historical, HEAD-absent jQuery 1.2.3 blob; a value-free comparison
+proved the candidate exactly equals the official CDN's vendor expression.
+Commit and publish the tested scanner first, then regenerate canonical reports
+from the clean harness revision and retain website's unrelated dirty-count fact.
+
+### T-194 — Contributor-safe CI and merge-control proposal
+
+**Phase/status:** `planning`; repository-side CI is authorized, external
+GitHub settings are proposal-only. Use only pinned official actions and
+least-privilege read permissions. Harness CI must run deterministic syntax,
+ShellCheck when provided by the repository toolchain, focused evaluator tests,
+and phase-1 gates without credentials, remote nodes, scheduler writes, or model
+calls. Website CI must run its existing offline credential-free checks and
+locked browser tests, but no deploy/live/network check. Preserve the website's
+current unrelated dirty ledger and defer its workflow edit until clean. Record
+exact recommended branch protections, required checks, rollback, and remaining
+owner-side settings without changing GitHub configuration automatically.
+
+### T-195 — Seven-node configuration-drift audit
+
+**Phase/status:** `planning`; execute after T-193's local scanner is frozen.
+Use only the declared aliases `local`, `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`.
+Collect a bounded allowlisted inventory of logical identity, harness revision
+and cleanliness, profile/control-plane discovery, storage-link targets,
+managed tool versions, native scheduler availability, T-191's captured exact
+job state, and existing HPC smoke sources. Never dump environments, enumerate
+SSH configuration, read credentials, submit/cancel jobs, install packages, or
+touch NFS data trees. Separate login-node capability from compute readiness and
+record site-specific drift rather than normalizing it away.
+
+### T-196 — Backup lifecycle phase 2
+
+**Phase/status:** `planning`, execution-gated on all seven T-191 first snapshots
+and successors passing. During this window, produce a PIE decision register and
+recommended defaults for retention, `forget`/`prune`, scheduled full-data
+checks, restore drills, and independent replica recurrence. No deletion,
+retention command, new scheduler job, or replica automation is authorized by
+this planning task. The eventual plan must preserve rollback evidence, bound
+repository locks and maintenance time, and introduce each destructive or
+recurring mechanism only after a manual dry run and restore gate.
+
+### T-197 — Evaluation follow-up decision
+
+**Phase/status:** `executing`; evidence-only, with no new model invocation or
+candidate adoption. Reconcile T-181's pilot/full reports and review limitation,
+quantify correctness, retry, latency, and token tradeoffs, and record an
+adopt/adapt/experiment/reject decision. Default recommendation: do not adopt
+failure-capsule candidate A because it showed no substantive correctness gain,
+used comparable retries, and increased aggregate cost; require a materially
+different mechanism and pre-registered hypothesis before another 70-run study.
+
+### Eight-hour LLM/HPC readiness workstream
+
+After T-193–T-197 reach their safe terminal states, continue assigning new
+task IDs and executing bounded work that improves all-node readiness for LLM
+training and scientific HPC coding. Prefer, in order: a reproducible capability
+matrix; credential-free environment manifests; portable CPU/C++/Fortran/MPI/
+CUDA/Python build gates; architecture-aware container/uenv plans; scheduler-
+native single-device then distributed LLM smokes; checkpoint/data-path and
+profiling plans; and matched performance baselines. Use existing tracked smoke
+sources before adding code. No project/model/dataset clone, package install,
+image pull, allocation/billing spend, global configuration, or destructive
+cleanup is implied; prepare and validate read-only or model-free surfaces while
+ledgering any owner-only action bundle. Checkpoint and push small verified
+harness changes frequently while preserving concurrent contributor work.
 
 ## Stable operational facts
 
