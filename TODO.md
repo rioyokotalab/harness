@@ -289,9 +289,10 @@ queue delay.
 
 ### T-181 — Acceptance-grade harness evaluation corpus
 
-**Phase/status:** `interviewing` after the owner's 2026-07-16 `proceed` opened
-the review; no evaluator, model run, or candidate implementation is authorized
-yet. Baseline revision is clean published `d5b82cd`. Current Codex CLI is
+**Phase/status:** `ready-for-go`; the four-decision interview is complete and
+audited without contradiction. No evaluator, model run, or candidate
+implementation is authorized until a new explicit go. Baseline revision is
+clean published `d5b82cd`. Current Codex CLI is
 0.144.5. `/tmp` has 290 GB free and is the preferred disposable run root;
 the 94%-used home filesystem is not a run-artifact destination. CLI startup
 currently emits a stale-arg0-directory cleanup warning; treat it as captured
@@ -385,20 +386,34 @@ gate passes, five paired repetitions across all seven families, at most 70
 primary runs plus eligible retries. D3 is frozen exactly as selected: Codex CLI
 0.144.5, `gpt-5.6-sol`, medium reasoning, normal speed, ephemeral execution,
 and no automatic delegation. Every arm and retry uses that exact configuration;
-the runner records it and fails closed if emitted run metadata disagrees. D4
-(open now) decides owner-style adjudication. Recommended is targeted batched
-blind review: deterministic graders decide objective correctness and safety,
-then opaque arm labels hide baseline/candidate identity for only pairs where
-the arms disagree, both pass with materially different diffs, or the rubric
-flags uncertainty. Present at most one batch after the pilot and one after the
-full run. Alternatives are blind owner review of every pair, or automated-only
-acceptance with weaker evidence about the owner's actual preferences.
+the runner records it and fails closed if emitted run metadata disagrees. D4 is
+frozen as targeted batched blind review: deterministic graders decide objective
+correctness and safety, then opaque arm labels hide baseline/candidate identity
+for only pairs where the arms disagree, both pass with materially different
+diffs, or the rubric flags uncertainty. Present at most one batch after the
+pilot and one after the full run. A flagged pilot batch is a required owner
+checkpoint before expansion; if no pair is flagged and every pilot gate passes,
+the full stage may begin automatically.
 
-**Acceptance and next action:** the planning record is complete enough to
-interview one decision at a time. Checkpoint every answer here, audit the four
-decisions for contradiction, move to `ready-for-go`, and wait for a new explicit
-go before creating `evaluation/` or invoking a model. Current next question is
-D4 only.
+**Frozen execution and go boundary:** after go, first create only the
+`evaluation/` corpus, schemas, deterministic graders, candidate-A capsule,
+runner, report generator, and focused tests. Prove hostile/self-test, sandbox,
+log-bounds, identity, interruption, and guarded-cleanup gates; independently
+review, commit, fetch/reconcile, and publish that implementation before any
+model run. Then run the 18-primary-run pilot under the selected ceiling and
+checkpoint every paired result. Stop on any safety/identity/evidence failure or
+for a flagged blinded batch. Otherwise continue to the 70-primary-run full
+stage, generate the bounded aggregate and any final blinded batch, and leave
+candidate adoption for a separate owner decision. Go authorizes at most these
+88 primary runs plus no more than one eligible retry per arm; it does not
+authorize credentials inspection, live remotes, packages, schedulers,
+deployment, unrelated configuration, candidate adoption, or raw deletion.
+
+**Acceptance and next action:** all required owner input is collected. The
+first post-go working set is `TODO.md`, a new `evaluation/` tree, focused
+evaluation tests, and minimal README/test-suite integration. Wait now for a new
+explicit `go`, `proceed`, or `execute`; then reconstruct this frozen plan from
+disk and begin with implementation only, not a model invocation.
 
 ## Stable operational facts
 
