@@ -91,6 +91,9 @@ every placeholder before printing and executing a command.
 
 - Slurm has a validated default one-minute compute route. A compute probe saw
   NVIDIA GB200, driver 580.159.03, and compute capability 10.0.
+- The only visible partition is `gpu`. Its site policy injects one GB200 and
+  400 GiB even when `sbatch` explicitly requests `--gres=none`; do not describe
+  a RI batch job as CPU-only or assume a no-GPU allocation is available.
 - The base compute environment has no `nvcc` or MPI wrapper. Put CUDA toolkit,
   framework, and MPI user dependencies in the project's explicit image or
   environment; do not install them globally.

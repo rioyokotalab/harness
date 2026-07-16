@@ -41,12 +41,12 @@ and compact historical pointers here. Next free ID: T-193.
 
 ### T-191 — Scheduler-native weekly primary snapshots
 
-**Status:** executing from the explicit owner `proceed` on 2026-07-16. Local,
-All seven nodes passed the final allocated read-only smoke and exact
-successor-cancellation gate. Production seeding is paused because RI's only
-partition rewrites even explicit `--gres=none` to one GB200 plus 400 GiB; the
-owner must choose whether weekly RI snapshots may use that allocation or RI
-should remain manual. No production chain exists on any node.
+**Status:** executing from the explicit owner `proceed` on 2026-07-16. All
+seven nodes passed the final allocated read-only smoke and exact successor-
+cancellation gate. RI's only partition rewrites even explicit `--gres=none`
+to one GB200 plus 400 GiB; the owner accepted that allocation for weekly RI
+snapshots. Re-audit captured state, then seed exactly one production job per
+node. No production chain exists yet.
 
 **Verified prerequisite:** every primary and independent generation has a
 successful full-data check and verified restore. Recurrence covers primary
@@ -260,8 +260,9 @@ received the same injected GPU allocation, passed in two seconds, and exact
 `scancel 6858` verified its successor absent. Final-form AL parent `4221037`
 and RC parent `210808` also passed, with exact successors `4221038` and
 `210810` disabled. This proves the site override cannot be avoided through the
-reviewed native request. Do not seed production until the owner either accepts
-RI's weekly GPU allocation or excludes RI from recurrence.
+reviewed native request. The owner accepted the forced RI GPU allocation; all
+required production choices are resolved and the exact seven-node pre-seed
+audit is next.
 
 ### T-190 — Create automated mirrored-node onboarding skill
 
