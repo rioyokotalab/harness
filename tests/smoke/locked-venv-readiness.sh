@@ -1,0 +1,76 @@
+#!/bin/bash
+set -euo pipefail
+
+case ${HARNESS_LOGICAL_HOST:-} in
+    local|ab|ab2|ri|al|rc|t4) host=$HARNESS_LOGICAL_HOST ;;
+    *) printf '%s\n' 'locked-venv-readiness: invalid HARNESS_LOGICAL_HOST' >&2; exit 2 ;;
+esac
+
+root=$HOME/harness
+fixture=$root/tests/fixtures/offline-project
+scratch=${TMPDIR:-/tmp}
+build=$(mktemp -d "$scratch/t227-locked-venv-$host.XXXXXX")
+cleanup=$root/tests/guarded-test-cleanup.sh
+
+finish() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    cleanup_failed=0
+    if [ -d "$build" ]; then
+        "$cleanup" "$HOME/.local/bin/harness" "$scratch" "$build" "$scratch" \
+            >/dev/null || cleanup_failed=1
+    fi
+    if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then status=1; fi
+    exit "$status"
+}
+trap finish EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+umask 077
+actual_arch=$(uname -m)
+case $host in ri|al) expected_arch=aarch64 ;; *) expected_arch=x86_64 ;; esac
+[ "$actual_arch" = "$expected_arch" ] || {
+    printf 'FAIL host=%s gate=locked-venv-v1 reason=architecture\n' "$host"
+    exit 2
+}
+uv=$(command -v uv || true)
+if [ -z "$uv" ] && [ -x "$HOME/.local/bin/uv" ]; then uv=$HOME/.local/bin/uv; fi
+[ -n "$uv" ] || {
+    printf 'FAIL host=%s gate=locked-venv-v1 reason=uv-absent\n' "$host"
+    exit 2
+}
+if [ -x "$HOME/.local/bin/python3.12" ]; then
+    python=$HOME/.local/bin/python3.12
+else
+    python=$(command -v python3 || true)
+fi
+[ -n "$python" ] || {
+    printf 'FAIL host=%s gate=locked-venv-v1 reason=python-absent\n' "$host"
+    exit 2
+}
+
+mkdir "$build/project"
+cp -- "$fixture/pyproject.toml" "$fixture/uv.lock" "$build/project/"
+UV_PROJECT_ENVIRONMENT=$build/venv
+UV_CACHE_DIR=$build/uv-cache
+UV_OFFLINE=1
+UV_PYTHON_DOWNLOADS=never
+export UV_PROJECT_ENVIRONMENT UV_CACHE_DIR UV_OFFLINE UV_PYTHON_DOWNLOADS
+printf 'UV %s\n' "$("$uv" --version)"
+printf 'BASE_PYTHON %s\n' "$("$python" --version)"
+printf 'LOCK_SHA256 %s\n' "$(sha256sum "$build/project/uv.lock" | awk '{ print $1 }')"
+"$uv" sync --project "$build/project" --frozen --offline \
+    --no-python-downloads --no-install-project --no-editable --no-config \
+    --python "$python" >/dev/null
+[ -x "$build/venv/bin/python" ] || {
+    printf 'FAIL host=%s gate=locked-venv-v1 reason=python-entrypoint\n' "$host"
+    exit 2
+}
+"$build/venv/bin/python" -I -c \
+    'import site,sys; assert sys.prefix != sys.base_prefix; assert site.ENABLE_USER_SITE is False'
+"$build/venv/bin/python" -I "$root/tests/smoke/python.py" >/dev/null
+printf 'VENV_PYTHON %s\n' "$("$build/venv/bin/python" --version)"
+printf 'PASS host=%s gate=locked-venv-v1 arch=%s lock=frozen offline=1 downloads=disabled config=ignored cleanup=guarded\n' \
+    "$host" "$actual_arch"

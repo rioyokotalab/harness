@@ -58,6 +58,7 @@ for script in \
     "$ROOT/shared/skills/onboard-mirrored-node/scripts/onboard-preflight" \
     "$ROOT/tests/guarded-test-cleanup.sh" \
     "$ROOT/tests/smoke/debugger-readiness.sh" \
+    "$ROOT/tests/smoke/locked-venv-readiness.sh" \
     "$ROOT/tests/smoke/venv-readiness.sh" \
     "$ROOT/tests/smoke/jobs/checkpoint-restart-readiness.sh" \
     "$ROOT/tests/smoke/jobs/local-checkpoint-restart.slurm" \
@@ -85,6 +86,8 @@ done
     fail "debugger readiness focused suite"
 "$ROOT/tests/test-venv-readiness.sh" >/dev/null ||
     fail "venv readiness focused suite"
+"$ROOT/tests/test-locked-venv-readiness.sh" >/dev/null ||
+    fail "locked venv readiness focused suite"
 "$ROOT/tests/test-fleet-sync.sh" >/dev/null ||
     fail "fleet sync focused suite"
 "$ROOT/tests/test-checkpoint-restart.sh" >/dev/null ||

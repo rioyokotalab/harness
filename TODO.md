@@ -1366,6 +1366,27 @@ post-rollout seven-node audit is failure-free at clean `7fbe572`, with exactly
 each node. Its SHA-256 is
 `9dfae5c2418adabecd691b91813c9b73f38173e986e79572ef5ce0efa8a70cd6`.
 
+### T-227 — Frozen offline project-lock execution gate
+
+**Phase/status:** `in progress`, derived from T-214 and the immutable-environment
+gap. Add one dependency-free committed `pyproject.toml`/`uv.lock` fixture and a
+direct gate that copies it into private scratch, ignores user uv configuration,
+disables indexes and Python downloads, and runs `uv sync --frozen --offline`
+against the already validated managed Python 3.12. Verify isolated execution
+and guarded cleanup on all seven login nodes. This proves lock consumption and
+environment materialization only: it does not prove dependency-wheel
+availability, framework correctness, containers, accelerators, or training.
+
+**Implementation checkpoint:** the committed dependency-free fixture and
+direct gate now bind the project environment and uv cache to private scratch,
+require frozen/offline/no-download/no-config operation, run isolated Python,
+and guarded-clean the entire temporary tree. Focused static validation, one
+real local execution with uv 0.9.18/Python 3.12.3, the portable full suite, and
+the public audit pass. The shared lock SHA-256 is
+`7c5def12be70a50d2ada04c10bd10fad00c098f017ed657af260b20c91087dbe`.
+Commit, distribute, then run the direct gate once on each node without a
+scheduler allocation.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
