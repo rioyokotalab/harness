@@ -550,6 +550,14 @@ fast-forwards. Fresh v2 collision checks passed before accepting: local Ybatch
 `211007`; and T4 AGE `8179553`. AB v2 is deliberately deferred while its v1
 job remains live. Monitor only these IDs and the previously captured AB v1 ID.
 
+**CPU-gate v2 continuation:** local, RI, AL, RC, and T4 v2 completed with
+scheduler success, terminal status zero, coherent compiler identity, 3/3
+CTest, C++20, Python, and applicable sanitizer evidence. T4 now proves the
+explicit GCC 14 triplet; RI proves the non-login publication correction. AB v1
+also completed status zero, clearing its duplicate-work constraint. A fresh AB
+v2 preflight then passed and PBS accepted `2044973.pbs1`. AB2 v2
+`2044969.pbs1` remains queued. These are the only two outstanding CPU-v2 IDs.
+
 ### T-201 — Early-login cache redirection
 
 **Phase/status:** `planned` from RI's T-199 recurrence. Determine, without
