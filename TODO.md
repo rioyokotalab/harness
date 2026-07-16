@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-201.
+and compact historical pointers here. Next free ID: T-203.
 
 ## Current state
 
@@ -464,8 +464,9 @@ seven local/remote transfer artifacts are absent. No scheduler write occurred.
 
 ### T-199 — Recreated hidden-state classification
 
-**Phase/status:** `planned` from T-195. Metadata-only audit the exact recreated
-paths: local `.cache`/`.nv`; AB `.cache`/`.mozilla`; AB2 `.cache`; RI
+**Phase/status:** `partially complete`; metadata audit and all already approved
+deletions are complete, while AB Mozilla relocation is owner-gated. The exact
+scope was local `.cache`/`.nv`; AB `.cache`/`.mozilla`; AB2 `.cache`; RI
 `.cache`/`.apptainer`; AL `.mozilla`; and T4 `.cache`. Record link/type,
 ownership/mode, same-filesystem fact, bounded apparent size, application owner,
 and whether XDG or application configuration can redirect future writes.
@@ -473,6 +474,17 @@ Reconcile the already approved per-node delete/move policy before action.
 Never inspect file contents. Any multi-tree deletion must use guarded-delete;
 any move must be transactional with application-specific rollback and must not
 cross the active Restic/scheduler path unexpectedly.
+
+**Outcome:** `docs/hidden-state-cleanup.md` records metadata without file names
+or contents. Guarded staging/plan/exact-NEXT apply/postflight removed local
+`.cache`/`.nv`, AB/AB2/T4 `.cache`, RI `.cache`/`.apptainer`, and AL `.mozilla`;
+AB and T4 released roughly 23.4 GiB apparent legacy cache. Manifests, plan
+files, and staging boundaries are absent, and the post-cleanup fleet audit kept
+all T-191 jobs present. RI fresh-login startup recreated an empty `.cache`
+before the managed cache block; a second guarded cleanup left it absent and
+assigned durable prevention to T-201. AB `.mozilla` is only 12 KiB but crosses
+filesystems and can contain authentication state, so it was neither copied nor
+inspected; T-202 owns an application-native migration choice.
 
 ### T-200 — Scheduler-native LLM/HPC capability matrix
 
@@ -485,6 +497,27 @@ inputs and collect architecture, driver/runtime/framework, MPI/backend, device,
 and numerical evidence. Do not infer compute absence from login PATH, install
 packages, clone models/datasets, pull images, or scale until the smaller gate
 passes.
+
+### T-201 — Early-login cache redirection
+
+**Phase/status:** `planned` from RI's T-199 recurrence. Determine, without
+tracing values or reading unrelated startup content, whether the managed cache
+exports can be installed before any user application startup on all seven
+nodes. Design the smallest silent POSIX block and prove non-interactive,
+interactive, batch, nested, and direct-SSH behavior. It must not make cache
+targets part of T-191 backup sources, change scheduler state, create directories
+on healthy login, or overwrite owner startup content. Roll out only after fake
+home tests and per-node plans pass.
+
+### T-202 — AB Mozilla application-native relocation
+
+**Phase/status:** `owner-gated`; not a quota emergency. AB's retained
+`.mozilla` is 12 KiB, Firefox is not running, the intended fast target is
+absent, and source/target parents are on different filesystems. Never inspect
+or agent-copy this potentially credential-bearing profile. Present an
+application-native new-profile/re-authentication route, selective non-secret
+owner migration, launch test, rollback, and final symlink plan as a future PIE
+interview.
 
 ## Stable operational facts
 
