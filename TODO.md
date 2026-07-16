@@ -1709,6 +1709,18 @@ pass, but correctly excludes queued AB/AB2 and held local work. The report is
 `docs/audits/fleet-readiness-post-affinity-2026-07-17.json`, SHA-256
 `6beada610527ea9fb068c496a0d5114ae0ca4e8fb942d4a5b02b70d26feffa71`.
 
+### T-240 — NUMA and topology login-surface audit
+
+**Phase/status:** `implementing`, derived from T-237. Add a read-only bounded
+probe for the standard affinity/NUMA inspection surface (`taskset`, `numactl`,
+`numastat`, `lscpu`, hwloc, and LIKWID) plus an aggregate count of NUMA domains
+described by the login process. Require process/sysfs topology metadata and a
+successful, numeric `lscpu` result; command failure must not become a zero-node
+claim. Publish only present/absent states and counts—no CPU IDs or hostname.
+Validate synthetically, commit and distribute, then collect all seven nodes in
+one machine-readable audit. Interpret it strictly as login-surface preparation,
+not compute-node binding, NUMA performance, or permission to install tools.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
