@@ -1973,7 +1973,7 @@ and the private capture was exact-unlinked. This completes all seven nodes.
 
 **Phase/status:** `interviewing` after completing the owner's expanded,
 careful line-by-line necessity review of every managed node's `.bashrc` and
-`.bash_profile`. D1-D4 are resolved; D5-D6 remain open and live
+`.bash_profile`. D1-D5 are resolved; D6 remains open and live
 files remain read-only.
 Planning discovery was read-only on every live startup file and redacted any
 credential-like line before agent output. No startup, package, scheduler,
@@ -2069,8 +2069,8 @@ features. The remaining per-node classification is:
   `usage` alias; its referenced strict regular owner data file exists. Replace
   the inline module block with D3's unconditional compatibility hook.
   `AB .bash_profile`: retain `.bashrc` sourcing; remove D2's agent block and the
-  dead commented MPI line. The PyEnv tree and executable currently exist, so
-  D5—not old deletion prose—decides whether its six-line initialization stays.
+  dead commented MPI line. D5 removes the six-line PyEnv initialization because
+  the owner no longer uses PyEnv; its existing tree remains outside this task.
 - `AB2 .bashrc`: make the same `stty`, pager, broken `hosts`/`interactive*`,
   working `points`, duplicate `ls`, and D3 module decisions as AB. `AB2
   .bash_profile`: retain `.bashrc` sourcing, remove the six inert fixed-width
@@ -2095,8 +2095,9 @@ features. The remaining per-node classification is:
   exact pre-`DATA` path block that can introduce `/.local/bin`, because the
   managed `$HOME/.local/bin` resolves to the same large-storage installation.
   `RC .bash_profile`: retain `.bashrc` sourcing; remove D4's `DATA` and global
-  install/build exports, remove D2's agent block, and let D5 decide the existing
-  PyEnv initialization because its tree/executable currently exist.
+  install/build exports, remove D2's agent block, and remove the PyEnv
+  initialization under D5 because the owner no longer uses it. Do not delete
+  the existing tree in this startup-file task.
 - `T4 .bashrc`: retain `/etc/bashrc`, working `interactive`/`points` aliases,
   and replace inline modules with D3's unconditional compatibility hook. Remove
   the eager backtick Makefile completion: both home Makefile spellings are
@@ -2232,9 +2233,10 @@ D4 is resolved as removal of the entire legacy global install/build blocks on
 local, AL, RC, and T4, including `FS`/`DATA`, redundant PATH additions, and
 include/library/pkg-config exports. Managed `$HOME/.local/bin` and
 `HARNESS_PERSISTENT_ROOT` replace the valid portions; aggregate discovery found
-no current `.local` include/library/pkg-config surface. D5 (open)
-covers AB/RC PyEnv initialization; managed uv/Python 3.12 is recommended unless
-the owner still actively selects PyEnv versions. D6 (open) covers the AL/T4
+no current `.local` include/library/pkg-config surface. D5 is resolved as
+removal of AB/RC PyEnv initialization because the owner no longer uses PyEnv;
+managed uv/Python 3.12 remains canonical and the existing directories are not
+part of this task. D6 (open) covers the AL/T4
 `UV_VENV_ROOT` plus `activate` helper; remove AL's targetless helper and either
 retain T4 as a tracked site helper or replace it with explicit `uv run`/project
 activation according to owner usage. All other per-node decisions above are
@@ -2244,9 +2246,9 @@ broken/conflicting behavior.
 The owner then requested continued PIE discussion backed by a careful
 line-by-line review of `.bashrc` and `.bash_profile` on all nodes. The review
 and value-limited supporting checks above are complete; phase returns to
-`interviewing`. Ask D5 and D6 exactly one at a time. After the final
+`interviewing`. Ask D6. After the final
 answer, audit the register, set `ready-for-go`, and wait for an explicit `go`.
-Next unresolved question: D5.
+Next unresolved question: D6.
 
 ## Stable operational facts
 
