@@ -2099,8 +2099,15 @@ interactive layer loaded by every managed `.bashrc`. Remove their duplicate
 owner-file definitions; keep `al` local-only and keep unique sorted site aliases
 outside the common fragment. This follows the documented harness model, fixes
 the effective history override, and avoids literal fleet duplication. D2
-(open) chooses whether to remove the five automatic `ssh-agent` blocks;
-removal is recommended in favor of explicit forwarding. D3 (open) chooses
+(resolved: remove) removes the five automatic remote `ssh-agent` startup
+blocks without terminating any existing process. Those blocks spawn an empty
+per-login agent and do not load a key; usable authentication continues through
+an agent already running on the current node and explicit forwarding. D2a
+(open clarification) chooses whether forwarding remains explicit through
+`harness_remote_codex`/`ssh -A` or becomes automatic for selected SSH hosts.
+Explicit forwarding is recommended; automatic forwarding would expand scope
+to owner SSH configuration and exposes the local agent to every selected
+remote session while connected. D3 (open) chooses
 whether AB/AB2/T4 module loads become interactive-only per-host behavior;
 interactive-only is recommended, with batch/project jobs continuing to load
 their exact environments explicitly. The canonical collision rule, retention
@@ -2109,7 +2116,7 @@ minimal preservation of all other startup content are resolved by the owner's
 request, prior decisions, and the preserve-unrelated-work boundary.
 
 Checkpoint after each interview answer, then audit the register, set
-`ready-for-go`, and wait for an explicit `go`. Next unresolved question: D2.
+`ready-for-go`, and wait for an explicit `go`. Next unresolved question: D2a.
 
 ## Stable operational facts
 
