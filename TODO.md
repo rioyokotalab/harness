@@ -463,9 +463,10 @@ T-193.
   allowlisted PTY connection and per-invocation agent forwarding. No harness
   commit was pushed.
 
-  `.local` now resolves to the selected persistent root on `local`, `ab`, `ri`,
-  `al`, `rc`, and `t4`; `ab2` deliberately remains a default-home directory
-  until its 10 TB quota is active. The current-node migration retained two
+  `.local` now resolves to the selected persistent root on all seven nodes.
+  AB2 joined after its 10 TB quota became active and retains a separate
+  pre-migration copy under its declared node-backup root. The current-node
+  migration retained two
   independently materialized, checksum-identical 5,821-entry copies before
   activation; its 686,904,121-byte original was then removed through a narrowed
   schema-v2 guard. Approved fast-state moves are complete for `.nsightsystems`,
@@ -482,15 +483,12 @@ T-193.
   password files, a manual all-hidden-path snapshot, `check --read-data`, and
   `restore --verify`. Scheduling is explicitly deferred until manual restore
   evidence is stable. The owner created unique mode-0600 password files on all
-  seven nodes without exposing them. Empty repositories are initialized and
-  structurally present on `local`, `ab`, `ri`, `al`, `rc`, and `t4`; AB2
-  initialization is deferred with all other AB2 work until its quota increase.
-  Agents have not read credentials or inspected repository/restored content. The
-  owner-run snapshot plus `check --read-data` transaction completed on all six
-  initialized nodes (`local`, `ab`, `ri`, `al`, `rc`, and `t4`), and each now
-  has a structurally visible manual hidden-home snapshot. AB2 has no repository
-  or helper and remains deferred with its other work. Restore verification is
-  complete on `ab`, `ri`, `al`, `rc`, and `t4`: each helper ran `restore --verify`,
+  seven nodes without exposing them. Repositories are initialized and
+  structurally present on all seven nodes. Agents have not read credentials or
+  inspected repository/restored content. The owner-authorized snapshot plus
+  `check --read-data` transaction completed on all seven nodes, and each now
+  has a structurally visible manual hidden-home snapshot. Restore verification
+  is complete on `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`: each helper ran `restore --verify`,
   the wrapper validated a nonempty restored tree using only aggregate metadata,
   and the helper plus unread mode-0600 log were exact-unlinked after success.
   Their restored trees were each removed by a separate immutable
@@ -552,8 +550,8 @@ T-193.
   `4025fbc83ce39b9915b58aba6451567459c7f1c06e82f39f06ae1a1da0d412b2`;
   and T4 is 497 entries, 4,092,281,307 bytes, SHA-256
   `1da892c7bb066b84317cf67cebc82ef68223b212bf2861c25b934225f877038c`.
-  A final shallow audit found final generations for `ab`, `ri`, `al`, `rc`,
-  and `t4`, no corresponding staging path, and no Restic or rsync process.
+  A final shallow audit found final generations for `ab`, `ab2`, `ri`, `al`,
+  `rc`, and `t4`, no corresponding staging path, and no Restic or rsync process.
 
   **Independent-generation restore gate (complete 2026-07-16):** a private
   reverse Unix-socket relay let Restic run on each source node with its existing
@@ -570,6 +568,7 @@ T-193.
   | --- | ---: | ---: | ---: |
   | `local` (replica at T4) | 1 | 70,959 | 3,077,206,016 |
   | `ab` | 1 | 71,894 | 30,969,669,511 |
+  | `ab2` | 1 | 49,750 | 10,001,005,819 |
   | `ri` | 1 | 5,942 | 1,004,958,051 |
   | `al` | 1 | 11,065 | 1,093,720,005 |
   | `rc` | 1 | 22,097 | 1,499,682,444 |
@@ -588,16 +587,17 @@ T-193.
   local relay socket, helper, private log/JSON, manifest, or restore tree on the
   current node or any active remote. Exact cleanup also covered the known
   workflow-owned probe sockets on ABCI login1/login2/login4 and the mode-0700
-  relay helper on login1; login3 was already clear. AB2 was the sole agreed
-  quota-deferred repository; its later quota activation is tracked under
-  T-192. Manual restore evidence is now stable enough to
+  relay helper on login1; login3 was already clear. AB2's later matching relay
+  validation and quota activation are tracked under T-192. Manual restore
+  evidence is now stable enough to
   prepare a separate scheduling proposal, but no scheduler, cron entry, login
   hook, or other automatic external write is enabled by T-182.
 
   **Independent-generation safety checkpoint:** foreground work during the
   read-only local restore added a credential-free `harness replica plan/apply`
   transaction without touching any live repository or remote. It derives only
-  the seven-row declared routes, keeps AB2 rejected, copies with native
+  the seven-row declared routes, initially kept AB2 rejected until its quota
+  gate, copies with native
   `rsync -aH` and no deletion option, fingerprints encrypted repository bytes
   before and after copying, rejects locks, symlinks, nested filesystems, path
   collisions, source drift, and staging mismatches, and promotes only by an
@@ -606,7 +606,8 @@ T-193.
   removed by the suite's guarded cleanup. ShellCheck and the complete phase-1
   suite pass. Restore evidence is now complete and the implementation is
   distributed to all five active remotes, so live execution is open for the
-  six initialized repositories. AB2 remains rejected.
+  six initially initialized repositories. T-192 later activates the same route
+  for AB2 after its quota and manual restore gates pass.
 
   **Current-node NFS diagnosis:** the first local `restore --verify` was
   intentionally interrupted with exit 130 after more than eight hours of
@@ -916,24 +917,23 @@ live instructions.
 ## Issue appended after stable manual Restic validation
 
 - **T-191 — Add recurring backups only after scheduling scope is explicit
-  (PIE interview pending 2026-07-16):** all six initialized primaries and all
-  six independent generation routes now have successful full-data checks and
-  verified restores, satisfying the owner's manual-stability gate. AB2 is
-  undergoing its manual gate under T-192 and remains outside scheduling. No
+  (PIE interview pending 2026-07-16):** all seven primaries and all seven
+  independent generation routes now have successful full-data checks and
+  verified restores, satisfying the owner's manual-stability gate. No
   cron entry, user timer, site scheduler job, login hook,
   retention deletion, or automatic replica write exists. Before changing an
   external scheduler, resolve one owner choice at a time: whether recurrence
   covers primary snapshots only or also serialized independent-generation
   creation; then choose cadence, per-node native mechanism, failure reporting,
   retention without unguarded deletion, and the AL daily-certificate boundary.
-  Freeze and review the exact six-node plan before enabling it, keep
+  Freeze and review the exact seven-node plan before enabling it, keep
   non-interactive sessions silent, and prove one scheduled dry run plus one
   manual restore cycle before treating automation as healthy.
 
 ## Task appended after the AB2 quota increase
 
-- **T-192 — Complete the previously deferred AB2 storage and Restic gate (in
-  progress 2026-07-16):** the owner reports that the requested capacity is
+- **T-192 — Complete the previously deferred AB2 storage and Restic gate
+  (complete 2026-07-16):** the owner reports that the requested capacity is
   active. Read-only native SSH validation confirms `/groups` exposes 10 TB with
   24 KB used and 99,999,994 free inodes; `/groups/gah51624/yokota` is the
   expected owner directory (mode 2755, uid 17783, group 51624). The cache root
@@ -965,6 +965,74 @@ live instructions.
   stopped only because the process-local module table claimed Open MPI was
   loaded without exporting `mpicc`; native unload/load of the same declared
   `openmpi/5.0-cuda-12.8` module restored the path, and the clean retry passed
-  with only the documented login-node `libcuda.so.1` warnings. Next action:
-  commit this unblocking layer and deliver it to the clean AB2 checkout by a
-  verified credential-free Git bundle.
+  with only the documented login-node `libcuda.so.1` warnings. The unblocking
+  commit and verified credential-free Git-bundle delivery complete below.
+
+  **Primary-backup checkpoint:** commit `1c2050a` passed local validation and
+  fast-forwarded AB2's clean checkout from exact `6db9296` through a verified
+  35,188-byte Git bundle (SHA-256 `2ab3b829…1687`). The first `scp` connection
+  closed before creating a remote file; a no-delete native `rsync -a` retry
+  copied the exact bundle, which passed `git bundle verify`, prerequisite and
+  target revision checks, and `merge --ff-only`. Restic 0.19.1 and the exact
+  AB2 replica plan then passed; both bundle copies are absent.
+
+  The reviewed owner-authorized `~/run_this.sh` used the existing password only
+  by its validated file path, initialized the primary, snapshotted every
+  top-level hidden path, passed `check --read-data`, and passed
+  `restore --verify` into node-local `/tmp`. Aggregate evidence is one snapshot,
+  49,750 restored entries, and 10,001,005,819 bytes. The encrypted repository
+  fingerprint is 628 entries, 6,381,168,856 bytes, SHA-256
+  `a047d309b677a06699d8336e61b4f0fdbc8223146bf7cd74284d5fd782c955df`.
+  A fresh guarded manifest revalidated and removed only that restore tree,
+  preserved protected anchors, and verified target absence. The source
+  manifest, private log/JSON, guarded manifest, empty restore parent, remote
+  helper, and local helper are absent. The cache root and primary repository
+  remain healthy. The immutable independent generation and restore gate
+  complete below.
+
+  **Replica-generation checkpoint:** the reviewed generation
+  `20260716T023458Z` used native `rsync -aH` without deletion from AB2's primary
+  to the current NFS replica root. Its first apply reached no payload because
+  the load-balanced AB2 SSH transport timed out, leaving only the expected
+  one-entry/two-byte staging directory. A fresh guarded manifest removed that
+  exact staging target, preserved protected anchors, and its manifest is absent.
+  The safe retry transferred the repository despite intermittent NFS
+  `rpc_wait_bit_killable`/`wait_on_commit` waits, then source-before,
+  source-after, staging, and promoted-final fingerprints all matched: 628
+  entries, 6,381,168,856 bytes, SHA-256
+  `a047d309b677a06699d8336e61b4f0fdbc8223146bf7cd74284d5fd782c955df`.
+  Final exists, staging is absent, and the primary was not changed. The fresh
+  full-data check and verified restore against that final are recorded below.
+
+  **Independent restore and clean-slate checkpoint:** the private mode-0600
+  reverse Unix-socket relay kept the password exclusively on AB2, served only
+  the exact append-only final generation, and ran Restic with no lock or cache.
+  That generation passed `check --read-data` and `restore --verify`; aggregate
+  evidence again matched one snapshot, 49,750 entries, and 10,001,005,819
+  bytes. A fresh guarded manifest removed only the restore tree. Relay children
+  exited zero, and helper, socket, private log/JSON, manifest, and restore-parent
+  paths are absent on both ends.
+
+  AB2's `.local` is now an absolute symlink to
+  `/groups/gah51624/yokota/home/.local`; 10,864 entries and 1,049,034,153
+  regular-file bytes match both the active target and retained
+  `home-backups/ab2/pre-migration/.local` copy by aggregate checks and empty
+  no-delete `rsync -aHn --itemize-changes` comparisons. Two fail-closed retries
+  preserved the source: steering interrupted the first partial copies, and the
+  first guard rejected account home as too broad. The final transaction moved
+  the original atomically beneath a narrow staging boundary, activated the
+  verified symlink, then guard-deleted only the moved original.
+
+  The separately approved cleanup moved `.cache`, `.emacs.d`, and `.pyenv`
+  beneath another narrow boundary; one manifest revalidated and removed exactly
+  855, 10, and 37,872 entries respectively. Exact regular-file unlinks removed
+  only `.bash_common` and `.emacs`. `.bash_history` retained its device, inode,
+  size, and mtime. Final audit finds the checkout clean at `1c2050a`, the
+  primary and independent final present, `.local` active with its retained
+  pre-migration copy, all five approved paths absent, no helper/manifest/staging
+  residue, and the expected remaining hidden control files. Scheduling remains
+  owner-gated by T-191; no automatic job or hook was added. Restic 0.19.1 and
+  htop 3.5.1 still execute through the migrated `.local`, live `harness doctor
+  --host ab2` reports zero failures/warnings, and one idempotent `install.sh`
+  pass adds the newly tracked PIE discovery links and verifies all 31 current
+  command/policy/skill links without replacing any conflicting owner path.
