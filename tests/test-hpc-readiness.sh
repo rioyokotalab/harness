@@ -8,8 +8,11 @@ CACHE_JOB=$ROOT/tests/smoke/jobs/cache-startup-readiness.sh
 CACHE_LOCAL=$ROOT/tests/smoke/jobs/local-cache-startup.slurm
 ACCEL_JOB=$ROOT/tests/smoke/jobs/accelerator-readiness.sh
 ACCEL_LOCAL=$ROOT/tests/smoke/jobs/local-accelerator.slurm
+MPI_JOB=$ROOT/tests/smoke/jobs/mpi-readiness.sh
+MPI_LOCAL=$ROOT/tests/smoke/jobs/local-mpi.slurm
 
-bash -n "$JOB" "$LOCAL" "$CACHE_JOB" "$CACHE_LOCAL" "$ACCEL_JOB" "$ACCEL_LOCAL"
+bash -n "$JOB" "$LOCAL" "$CACHE_JOB" "$CACHE_LOCAL" "$ACCEL_JOB" "$ACCEL_LOCAL" \
+    "$MPI_JOB" "$MPI_LOCAL"
 grep -Fx '#YBATCH -r thrp_1' "$LOCAL" >/dev/null
 grep -Fx '#SBATCH --time=00:05:00' "$LOCAL" >/dev/null
 grep -F 'uenv run prgenv-gnu/25.11:v1 --view=default' "$JOB" >/dev/null
@@ -40,6 +43,13 @@ grep -F 'CUDA_VISIBLE_DEVICES=0' "$ACCEL_JOB" >/dev/null
 grep -F 'cuda-compile: no reviewed toolkit route' "$ACCEL_JOB" >/dev/null
 grep -F 'framework: no reviewed project environment or image' "$ACCEL_JOB" >/dev/null
 grep -F 'cudaGetDeviceCount' "$ROOT/tests/smoke/cuda.cu" >/dev/null
+grep -Fx '#YBATCH -r thrp_1' "$MPI_LOCAL" >/dev/null
+grep -Fx '#SBATCH --ntasks=2' "$MPI_LOCAL" >/dev/null
+grep -F 'module load hpcx/2.26' "$MPI_JOB" >/dev/null
+grep -F 'module load ylab/hpcx/2.21.0' "$MPI_JOB" >/dev/null
+grep -F 'NATIVE srun --ntasks=2 BUILD/mpi 2' "$MPI_JOB" >/dev/null
+grep -F 'NATIVE mpirun -n 2 BUILD/mpi 2' "$MPI_JOB" >/dev/null
+grep -F 'no reviewed base MPI route' "$MPI_JOB" >/dev/null
 for source in cpu.c cpu.cpp cpu.f90; do
     grep -F "$source" "$ROOT/tests/smoke/CMakeLists.txt" >/dev/null
 done
@@ -47,13 +57,19 @@ for source in cpp20.cpp python.py sanitizer.c; do
     grep -F "$source" "$JOB" >/dev/null
 done
 if grep -E 'rm[[:space:]]+(-[^[:space:]]*)*[rR]|--recursive|rsync[[:space:]].*--delete' \
-    "$JOB" "$LOCAL" "$CACHE_JOB" "$CACHE_LOCAL" "$ACCEL_JOB" "$ACCEL_LOCAL" >/dev/null; then
+    "$JOB" "$LOCAL" "$CACHE_JOB" "$CACHE_LOCAL" "$ACCEL_JOB" "$ACCEL_LOCAL" \
+    "$MPI_JOB" "$MPI_LOCAL" >/dev/null; then
     printf '%s\n' 'FAIL: unsafe cleanup in readiness job' >&2
     exit 1
 fi
 if grep -E '(^|[^A-Za-z0-9_])(qsub|sbatch|srun|yrun|ybatch|scancel|qdel)([^A-Za-z0-9_]|$)' \
     "$JOB" "$CACHE_JOB" "$ACCEL_JOB" >/dev/null; then
     printf '%s\n' 'FAIL: generic readiness job hides scheduler action' >&2
+    exit 1
+fi
+if grep -E '(^|[^A-Za-z0-9_])(qsub|sbatch|yrun|ybatch|scancel|qdel)([^A-Za-z0-9_]|$)' \
+    "$MPI_JOB" >/dev/null; then
+    printf '%s\n' 'FAIL: MPI readiness job hides submission or cancellation' >&2
     exit 1
 fi
 printf '%s\n' 'HPC readiness job tests passed'

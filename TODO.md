@@ -805,6 +805,18 @@ guarded scratch cleanup. Reuse T-191-approved CPU accounts/resources, default
 priority, and five-minute limits. Do not infer ABI compatibility from login
 PATH, cross node boundaries, run a benchmark, or use an unreviewed container.
 
+**Route freeze:** the five reviewed base routes are local Open MPI 5.0.8 with
+native `mpirun -n 2`; AB/AB2 HPC-X 2.26/Open MPI 5.0.10rc1 with `mpirun -n
+2`; AL `prgenv-gnu/25.11:v1` Cray MPICH 8.1.32 with native `srun --ntasks=2`;
+and T4 HPC-X 2.21/Open MPI 4.1.7rc1 with `mpirun -n 2`. The tracked job
+unloads/reloads the exact module where applicable, compiles one source, asserts
+the allocated architecture, and publishes one mode-0600 result. Local uses
+Ybatch `thrp_1`; AB/AB2 use their approved `rt_HC select=1`; AL uses
+`g177-1/normal` plus native uenv integration; and T4 uses `cpu_4=1`. RI and RC
+remain explicit no-route skips: neither exposes an architecture-compatible MPI
+wrapper on its selected Arm compute base. Do not allocate them for this gate or
+carry RC's x86 login-only MPICH binary onto GH200.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
