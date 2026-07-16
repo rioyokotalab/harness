@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-203.
+and compact historical pointers here. Next free ID: T-205.
 
 ## Current state
 
@@ -570,7 +570,7 @@ distributed, numerical-equivalence, or performance claim beforehand.
 
 ### T-201 — Early-login cache redirection
 
-**Phase/status:** `validated implementation; live rollout pending` from RI's T-199 recurrence. Determine, without
+**Phase/status:** `live prefix validated; scheduler inheritance pending` from RI's T-199 recurrence. Determine, without
 tracing values or reading unrelated startup content, whether the managed cache
 exports can be installed before any user application startup on all seven
 nodes. Design the smallest silent POSIX block and prove non-interactive,
@@ -610,6 +610,24 @@ postplans, correct first-line/type/mode metadata, declared cache variables in
 fresh login/direct/non-interactive/interactive/nested sessions, no startup
 output regression, and no default-home cache recurrence before closing T-201.
 
+**Live shell postflight:** every node reports two idempotent KEEP actions, exact
+first-line prefixes, and unchanged file modes. Fresh login, direct SSH,
+inherited non-interactive, interactive, and nested Bash assertions all see the
+declared host/cache/XDG values. RI's interactive warning text is the intended
+T-191 schedule warning, not a cache-bootstrap output. Guarded cleanup removed
+the pre-fix 4 KiB AB/AB2 remnants and their SFTP-only postflights remain absent.
+RI's 4 KiB/two-entry remnant was twice guarded-cleaned with manifests and
+boundaries fully removed, but an SFTP subsystem-only connection found the
+directory recreated without running shell startup. T-203 owns that distinct
+site/PAM-or-concurrent-process diagnosis; do not churn it with repeated deletes
+or weaken `HOME`. Close T-201 only after one native batch inherits the declared
+variables on each node. `tests/smoke/jobs/cache-startup-readiness.sh` is the
+small, scheduler-neutral gate: it removes all inherited managed cache values,
+enters login Bash, re-enters non-login Bash to avoid RI's known EXIT defect,
+then validates the independent declared host/cache/XDG paths and publishes a
+mode-0600 result. Focused and portable full suites pass. Commit, distribute,
+collision-check, and run this five-minute/default-priority gate before closing.
+
 ### T-202 — AB Mozilla application-native relocation
 
 **Phase/status:** `owner-gated`; not a quota emergency. AB's retained
@@ -619,6 +637,27 @@ or agent-copy this potentially credential-bearing profile. Present an
 application-native new-profile/re-authentication route, selective non-secret
 owner migration, launch test, rollback, and final symlink plan as a future PIE
 interview.
+
+### T-203 — RI shell-independent default-cache recurrence
+
+**Phase/status:** `planned` from T-201. RI recreates a 4 KiB/two-entry
+`~/.cache` after an exact guarded cleanup even when the next connection uses
+the SFTP subsystem and no Bash startup file. Preserve the tiny directory while
+diagnosing; repeated deletion is not progress. Use value-free timing/type/count
+evidence and official site/PAM documentation or owner/site support. Do not
+trace startup values, list child names, inspect contents, weaken `HOME`, or
+guess an application. If a responsible component is proven, prefer its native
+cache configuration and re-run the SFTP-versus-shell experiment.
+
+### T-204 — Remove obsolete AB2 pyenv startup calls
+
+**Phase/status:** `planned` from repeated live evidence. AB2 emits exactly three
+`pyenv: command not found` diagnostics on each login because `.pyenv` was
+owner-approved for deletion while startup invocations remain. Identify only
+the exact pyenv-related lines and structural context needed for a reviewed
+patch; never print unrelated startup content. Add a transactional, byte-exact
+remediation with rollback and fake-home tests, preserve all other owner lines,
+then prove direct/login/interactive silence without reinstalling pyenv.
 
 ## Stable operational facts
 
