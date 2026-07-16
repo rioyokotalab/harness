@@ -600,6 +600,16 @@ transport cleanup. Seven native `cache-bootstrap --plan` runs reported
 Apply only this exact revision, capture all transaction IDs, then require an
 idempotent two-KEEP postplan before opening fresh test sessions.
 
+**Live-apply checkpoint:** repeated exact-revision plans passed at `2f72425`.
+All seven transactional applies completed: local
+`20260716T140611Z-3466811`; AB `20260716T140613Z-3409425`; AB2
+`20260716T140612Z-1704569`; RI `20260716T140609Z-602570`; AL
+`20260716T140620Z-250841`; RC `20260716T140615Z-1162732`; and T4
+`20260716T140619Z-2984771`. These are the exact rollback IDs. Require two KEEP
+postplans, correct first-line/type/mode metadata, declared cache variables in
+fresh login/direct/non-interactive/interactive/nested sessions, no startup
+output regression, and no default-home cache recurrence before closing T-201.
+
 ### T-202 — AB Mozilla application-native relocation
 
 **Phase/status:** `owner-gated`; not a quota emergency. AB's retained
