@@ -1971,10 +1971,10 @@ and the private capture was exact-unlinked. This completes all seven nodes.
 
 ### T-249 — Canonical aliases and simplified Bash startup workflow
 
-**Phase/status:** `interviewing` after completing the owner's expanded,
+**Phase/status:** `ready-for-go` after completing the owner's expanded,
 careful line-by-line necessity review of every managed node's `.bashrc` and
-`.bash_profile`. D1-D5 are resolved; D6 remains open and live
-files remain read-only.
+`.bash_profile`. D1-D6 are resolved, the register is internally consistent,
+and live files remain read-only pending an explicit owner `go`.
 Planning discovery was read-only on every live startup file and redacted any
 credential-like line before agent output. No startup, package, scheduler,
 authentication, or external state changed. The desired outcome is one durable,
@@ -2089,8 +2089,8 @@ features. The remaining per-node classification is:
   the tracked `prgenv` function already provides the explicit uenv entry. `AL
   .bash_profile`: retain `.bashrc` sourcing, remove D2's agent block, and remove
   D4's redundant/risky local-install exports. The declared `.venv` is
-  absent; D6 decides whether to remove `UV_VENV_ROOT` and `activate` rather than
-  keep a function with no current target.
+  absent; D6 removes `UV_VENV_ROOT` and `activate` because the owner does not
+  use the helper.
 - `RC .bashrc`: retain `/etc/bashrc` and the no-pager preference; remove the
   exact pre-`DATA` path block that can introduce `/.local/bin`, because the
   managed `$HOME/.local/bin` resolves to the same large-storage installation.
@@ -2103,8 +2103,9 @@ features. The remaining per-node classification is:
   the eager backtick Makefile completion: both home Makefile spellings are
   absent and sourcing general startup must not scan the current directory.
   `T4 .bash_profile`: retain `.bashrc` sourcing. Remove D4's `FS` and global
-  install/build exports. Remove redundant `PYTHONUSERBASE` and the conflicting
-  `UV_CACHE_DIR`; D6 decides the active persistent `.venv`/`activate` helper.
+  install/build exports. Remove redundant `PYTHONUSERBASE`, the conflicting
+  `UV_CACHE_DIR`, and D6's unused `.venv`/`activate` helper. The existing
+  persistent `.venv` directory remains untouched.
   Remove login-wide `MPLBACKEND=Qt5Agg` and nonexistent `/tmp/runtime-$USER`;
   projects/jobs must choose a GUI/headless backend and create a private runtime
   directory when needed. Remove D2's agent block. Move `MASTER_ADDR` derivation
@@ -2236,19 +2237,26 @@ include/library/pkg-config exports. Managed `$HOME/.local/bin` and
 no current `.local` include/library/pkg-config surface. D5 is resolved as
 removal of AB/RC PyEnv initialization because the owner no longer uses PyEnv;
 managed uv/Python 3.12 remains canonical and the existing directories are not
-part of this task. D6 (open) covers the AL/T4
-`UV_VENV_ROOT` plus `activate` helper; remove AL's targetless helper and either
-retain T4 as a tracked site helper or replace it with explicit `uv run`/project
-activation according to owner usage. All other per-node decisions above are
+part of this task. D6 is resolved as removal of the unused AL/T4
+`UV_VENV_ROOT` plus `activate` helpers; T4's existing persistent `.venv`
+directory remains untouched, and future use is explicit through `uv run` or
+direct activation. All other per-node decisions above are
 resolved from live command/path evidence, the frozen common policy, or clear
 broken/conflicting behavior.
 
 The owner then requested continued PIE discussion backed by a careful
 line-by-line review of `.bashrc` and `.bash_profile` on all nodes. The review
 and value-limited supporting checks above are complete; phase returns to
-`interviewing`. Ask D6. After the final
-answer, audit the register, set `ready-for-go`, and wait for an explicit `go`.
-Next unresolved question: D6.
+The decision audit found no gaps or contradictions. The frozen execution order
+is: implement and synthetically validate the tracked common policy, module
+interface, exact startup normalizer, and exact local SSH-forwarding transaction;
+run all focused/full/public gates; publish and distribute the exact clean
+implementation; run seven read-only plans; pilot local apply/rollback/reapply;
+apply and independently validate one node at a time; then publish/distribute the
+compact completion evidence. Stop on any metadata/content drift, syntax or
+shell-mode regression, module mismatch, managed-tool loss, SSH effective-config
+mismatch, dirty checkout, or incomplete rollback. Next action: wait for an
+explicit owner `go`; that go authorizes only this frozen T-249 plan.
 
 ## Stable operational facts
 
