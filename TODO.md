@@ -1971,7 +1971,10 @@ and the private capture was exact-unlinked. This completes all seven nodes.
 
 ### T-249 — Canonical aliases and simplified Bash startup workflow
 
-**Phase/status:** `interviewing` under the owner's explicit PIE request.
+**Phase/status:** `planning` after the owner expanded PIE to a careful
+line-by-line necessity review of every managed node's `.bashrc` and
+`.bash_profile`. D1, D2, D2a, and D3 are resolved; live files remain read-only
+while per-node simplification choices are identified.
 Planning discovery was read-only on every live startup file and redacted any
 credential-like line before agent output. No startup, package, scheduler,
 authentication, or external state changed. The desired outcome is one durable,
@@ -2132,7 +2135,7 @@ per-login agent and do not load a key; usable authentication continues through
 an agent already running on the current node and forwarded access. D2a is
 resolved as automatic forwarding for exactly AB, AB2, AL, RC, RI, and T4
 through the current node's existing host-specific SSH stanzas; never place it
-under `Host *` or mirror it remotely. D3 (revised/open) chooses the compatible
+under `Host *` or mirror it remotely. D3 is resolved as the compatible
 dedicated module-stack design: extract the exact AB/AB2/T4 commands into one
 tracked source-only interface, replace each inline block with an unconditional
 call so existing job scripts that source `.bashrc` still work, and recommend
@@ -2143,9 +2146,12 @@ of unique site aliases, local-only `al`, exact RC path-block removal, and
 minimal preservation of all other startup content are resolved by the owner's
 request, prior decisions, and the preserve-unrelated-work boundary.
 
-Checkpoint after each interview answer, then audit the register, set
-`ready-for-go`, and wait for an explicit `go`. Next unresolved question: D3's
-revised compatibility design.
+The owner then requested continued PIE discussion backed by a careful
+line-by-line review of `.bashrc` and `.bash_profile` on all nodes. Complete
+value-limited external-fact checks, add the per-node classifications and new
+decision register here, return to `interviewing`, and ask exactly one material
+choice at a time. After the final answer, audit the register, set
+`ready-for-go`, and wait for an explicit `go`.
 
 ## Stable operational facts
 
