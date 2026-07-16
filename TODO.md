@@ -607,6 +607,34 @@ evidence. Preserve the complete run root and pause for the owner's blind
 adjudication. Do not resume, alter the oracle, consult the mapping, reuse these
 results, or spend replacement model starts before that decision.
 
+**Autonomous completion authority (2026-07-16):** the owner asked Codex to
+complete T-181 without further interruption. This accepts both opaque
+read-only-exploration answers as substantively correct and confirms the exact
+phrase split above as a semantic-oracle defect. Narrowly extend the model
+budget by exactly 14 replacement primary starts and one replacement retry for
+the invalidated partial full stage; this does not add a task, repeat, candidate,
+or adoption authority. Correct the oracle to accept the closed equivalent set
+`path traversal`, `directory traversal`, and ``../` traversal`` while still
+requiring `artifact_path`; add positive and negative model-free regressions,
+run the complete validation suite, independently review and publish the fix,
+then guarded-clean the invalid run root. Start one fresh 70-primary full stage
+from a new mode-0700 root and finish all pre-registered reporting, review,
+ledger, publication, and cleanup steps autonomously. A genuine safety failure,
+credential boundary, or external blocker still fails closed, but routine
+acceptance/review decisions should be resolved from the frozen rubric without
+interrupting the owner.
+
+**Traversal-oracle correction checkpoint:** the frozen read-only rubric still
+requires `artifact_path`, but its defect phrase is now a closed regular
+expression accepting only `path traversal`, `directory traversal`, or
+``../` traversal``. Model-free self-tests prove all three equivalent findings
+pass and an unrelated `render_title` finding fails. JSON/regex checks, corpus
+validation, focused evaluation tests, and the complete phase-1 suite pass after
+process-local unload/reload of `openmpi/5.0-cuda-12.8`; the suite emitted only
+the already documented ignored login-node `libcuda.so.1` warnings. Publish the
+correction and authority atomically, then use the frozen guarded cleanup entry
+point on the invalid root before creating fresh full-stage evidence.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

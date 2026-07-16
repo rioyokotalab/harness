@@ -138,7 +138,7 @@
       "expected_files": {},
       "expected_absent": [],
       "protected_files": ["pathing.py", "render.py"],
-      "required_final_patterns": ["artifact_path", "path traversal"],
+      "required_final_patterns": ["artifact_path", "(?:path|directory|`?\\.\\./`?)\\s+traversal"],
       "forbidden_final_patterns": [],
       "required_command_patterns": [],
       "control_plane_reads": [],
