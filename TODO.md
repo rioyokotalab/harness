@@ -181,6 +181,22 @@ declarations after fixing portable planning so it does not require a remote
 site's scheduler directories locally. Next action: inspect and commit only the
 declared implementation files locally; do not push.
 
+**Rollout and pre-smoke checkpoint:** local implementation commit
+`852b84bb753bf590a55353f96de71fba3b7b77d5` is clean and unpushed. A
+43,655-byte credential-free bundle with SHA-256
+`f4ca151b7007316d361aae5ad009759b62fda109d4361e0a37b8d848581c9c72`
+fast-forwarded clean AB, RI, AL, RC, and T4 checkouts from `df72e17` and AB2
+from `303938f` to that exact commit. Every remote bundle and the local bundle
+are exact-unlinked and absent. All seven nodes then passed exact-revision and
+clean-worktree checks, new-script syntax, schedule `plan`/`next`, absent chain
+and smoke state, doctor, and managed Restic read-only repository access. Real
+PTY-backed interactive shells remained warning-silent while healthy/unseeded,
+and non-interactive shells remained silent on every node. AB2's first shared
+validation connection outlived the result window but left no Restic process;
+its bounded solo retry passed the full gate. No scheduler write has yet run.
+Next action: commit this evidence locally, re-audit the reserved job namespace,
+then submit the seven bounded smokes with the printed native commands.
+
 ### T-190 — Create automated mirrored-node onboarding skill
 
 **Status:** PIE interview complete; separately awaiting an explicit owner `go`.
