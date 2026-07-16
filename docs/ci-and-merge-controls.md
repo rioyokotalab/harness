@@ -12,13 +12,15 @@ compares live guidance with its older frozen baseline revision; a shallow
 checkout cannot satisfy that invariant.
 
 The unique required-check candidate is `portable-phase1`. It runs the complete
-phase-one integration suite except for the native MPI singleton compile/run.
+phase-one integration suite except for two explicitly client/site-specific
+checks: the native MPI singleton compile/run and the Codex exec-policy smoke.
 GitHub's declared Ubuntu 24.04 image includes the required C/C++ compilers,
-ShellCheck, rsync, and archive tools but no MPI implementation. The workflow
-sets `HARNESS_PORTABLE_CI=1`, which prints that one explicit skip. An unset or
-zero value retains the mandatory native MPI gate on the managed nodes, and any
-other value fails. This prevents generic CI from pretending to validate an HPC
-MPI stack while preserving all credential-free portable regressions.
+ShellCheck, rsync, and archive tools but neither an MPI implementation nor the
+declared Codex client. The workflow sets `HARNESS_PORTABLE_CI=1`, which prints
+each explicit skip. An unset or zero value retains both mandatory native gates
+on the managed nodes, and any other value fails. This prevents generic CI from
+pretending to validate an HPC MPI stack or local agent policy while preserving
+all credential-free portable filesystem and integration regressions.
 
 The security choices follow GitHub's official guidance to grant read-only
 default token access and pin actions to a full commit SHA:

@@ -57,6 +57,7 @@ jobs:
         run: tests/test-public-repo-audit.sh
       - name: Test guarded bulk deletion
         env:
+          HARNESS_PORTABLE_CI: "1"
           PYTHONDONTWRITEBYTECODE: "1"
         run: tests/test-guarded-delete.sh
       - name: Run credential-free portable phase-one gate

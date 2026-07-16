@@ -82,26 +82,36 @@ expect_failure '--within is too broad and contains a protected anchor' \
     "${TMPDIR:-/tmp}"
 [ -d "$HOME" ] || fail "adversarial cleanup removed the account home"
 
-for command in \
-    'rm -rf /home/rioyokota' \
-    'rm -r generated' \
-    'rm -f -r cache' \
-    '/bin/rm -Rf build' \
-    '/usr/bin/rm --recursive output'
-do
-    # These fixed test strings contain no expansion and are split intentionally.
-    # shellcheck disable=SC2086
-    set -- $command
-    codex execpolicy check --pretty --rules "$RULES" -- "$@" \
-        >"$TEST_ROOT/rule.out" 2>/dev/null || fail "execpolicy check: $command"
-    grep '"decision": "forbidden"' "$TEST_ROOT/rule.out" >/dev/null ||
-        fail "execpolicy did not forbid: $command"
-done
-codex execpolicy check --pretty --rules "$RULES" -- rm -f exact-file \
-    >"$TEST_ROOT/rule-safe.out" 2>/dev/null || fail "non-recursive execpolicy check"
-if grep '"decision": "forbidden"' "$TEST_ROOT/rule-safe.out" >/dev/null; then
-    fail "execpolicy forbade exact non-recursive removal"
-fi
+case ${HARNESS_PORTABLE_CI:-0} in
+    0)
+        for command in \
+            'rm -rf /home/rioyokota' \
+            'rm -r generated' \
+            'rm -f -r cache' \
+            '/bin/rm -Rf build' \
+            '/usr/bin/rm --recursive output'
+        do
+            # These fixed test strings contain no expansion and are split intentionally.
+            # shellcheck disable=SC2086
+            set -- $command
+            codex execpolicy check --pretty --rules "$RULES" -- "$@" \
+                >"$TEST_ROOT/rule.out" 2>/dev/null || fail "execpolicy check: $command"
+            grep '"decision": "forbidden"' "$TEST_ROOT/rule.out" >/dev/null ||
+                fail "execpolicy did not forbid: $command"
+        done
+        codex execpolicy check --pretty --rules "$RULES" -- rm -f exact-file \
+            >"$TEST_ROOT/rule-safe.out" 2>/dev/null || fail "non-recursive execpolicy check"
+        if grep '"decision": "forbidden"' "$TEST_ROOT/rule-safe.out" >/dev/null; then
+            fail "execpolicy forbade exact non-recursive removal"
+        fi
+        ;;
+    1)
+        printf '%s\n' 'SKIP Codex exec-policy smoke: portable CI has no declared Codex client'
+        ;;
+    *)
+        fail "HARNESS_PORTABLE_CI must be 0 or 1"
+        ;;
+esac
 
 mkdir -p "$TEST_ROOT/root/success target/nested" "$TEST_ROOT/root/keep"
 printf '%s\n' delete >"$TEST_ROOT/root/success target/nested/file"
