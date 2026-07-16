@@ -439,6 +439,14 @@ design requires owner authority for at most three replacement primary starts
 and one replacement retry beyond the original ceiling. No invalidated preflight
 result will be silently reused or presented as experiment evidence.
 
+**Replacement authority (2026-07-16):** the owner explicitly answered `go` to
+the narrow checkpoint above. The total ceiling is therefore increased only by
+three replacement primary starts and one replacement retry for the invalidated
+preflight; every other frozen scope, stage gate, and adoption boundary is
+unchanged. Correction revision `8482928` is clean and matches `origin/main`.
+Next publish this authority checkpoint, confirm a new run root is absent, and
+restart the complete 18-primary-run pilot without reusing preflight evidence.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
