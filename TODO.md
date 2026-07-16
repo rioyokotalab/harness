@@ -2038,10 +2038,22 @@ no startup call. Preserve all other Python, compiler, cache, distributed,
 completion, site, and owner lines unless a frozen interview decision names an
 exact block.
 
+**Automatic-forwarding scope added by D2a:** the current node's strict regular,
+owner, mode-0600, single-link `.ssh/config` has one unique stanza for each of
+AB, AB2, AL, RC, RI, and T4 before `Host *`, no visible `ForwardAgent`
+directive, and filtered `ssh -G` reports `forwardagent no` for all six. The
+current session has an agent socket; its keys were not enumerated. Insert only
+`ForwardAgent yes` into those six existing stanzas, never `Host *`, proxy, web,
+or GitHub stanzas. Revalidate through filtered `ssh -G`, store only the public
+inserted directive in transaction evidence, preserve mode and unrelated bytes,
+and provide exact rollback. This current-node SSH setting is intentionally not
+mirrored to remotes.
+
 **Frozen non-goals and boundaries:** never read, hash, copy, or persist a
-credential value; never copy `.bash_history`; do not change SSH configuration,
-agents/keys, packages, modules themselves, scheduler state, projects, system
-files, or Restic policy. Do not symlink whole startup files or publish their
+credential value; never copy `.bash_history`; except for D2a's six exact local
+`ForwardAgent yes` insertions, do not change SSH configuration. Do not inspect
+agent keys or change agents/keys, packages, modules themselves, scheduler state,
+projects, system files, or Restic policy. Do not symlink whole startup files or publish their
 unrelated contents. No raw recursive/bulk deletion is needed. A live apply must
 accept only reviewed public blocks or complete idempotent absence, require a
 clean exact harness revision and strict file metadata, preserve all bytes
@@ -2056,8 +2068,10 @@ unlimited in-memory/on-disk history, `histappend`, editor defaults, and the
 exact current prompt; (4) implement a plan/apply normalizer that recognizes
 only the seven reviewed alias layouts, removes common duplicates, sorts
 retained site aliases, removes local duplicate common policy, and removes the
-exact defective RC path block; (5) include only the optional `ssh-agent` and
-module-block transformations selected in D2/D3; (6) store only reviewed public
+exact defective RC path block; (5) remove D2's remote `ssh-agent` blocks and
+transactionally add D2a's six exact local SSH directives, with filtered
+effective-config validation; include only the module-block transformation
+selected in D3; (6) store only reviewed public
 original/applied payloads in mode-0600 transaction state, build same-directory
 private candidates, run `bash -n`, revalidate identity/size/bytes immediately
 before atomic rename, preserve mode/owner/single-link state, and exact-clean
@@ -2079,7 +2093,9 @@ limits are unlimited, history appends, and the prompt is exact. Fresh direct
 SSH and non-interactive Bash remain silent; login, interactive, and nested Bash
 exit zero; cache roots, logical host, local-bin precedence, required site
 module behavior selected in D3, remote Codex function, and scheduler warning
-behavior remain valid. Startup modes/owners/single links are unchanged, every
+behavior remain valid. Filtered `ssh -G` reports forwarding yes for exactly the
+six managed remote aliases while proxy/service/global behavior is unchanged;
+no key is enumerated or copied. Startup modes/owners/single links are unchanged, every
 plan becomes KEEP, rollback evidence is valid, checkouts are clean at one
 pushed revision, and transfer/normalizer/shell-capture artifacts are absent.
 
@@ -2088,7 +2104,10 @@ semantics, so canonical-name values are explicit and site-only names are
 preserved. Moving module setup can break scripts that implicitly rely on login
 state; D3 and direct/non-interactive/module postflights gate it. Removing
 automatic agents can affect users who relied on a newly spawned unforwarded
-agent; D2 is explicit. Startup precedence or partial mutation can break login,
+agent; D2 is explicit. Automatic forwarding exposes the current node's agent
+socket to processes with access to each selected remote account for the SSH
+session lifetime; D2a deliberately limits this to six named hosts and never
+copies private keys. Startup precedence or partial mutation can break login,
 so candidates receive syntax and byte/metadata checks, each node stops
 independently on drift, and exact transaction rollback is tested before fleet
 rollout. A live rollback never restores or stores unrelated startup bytes.
@@ -2102,12 +2121,10 @@ the effective history override, and avoids literal fleet duplication. D2
 (resolved: remove) removes the five automatic remote `ssh-agent` startup
 blocks without terminating any existing process. Those blocks spawn an empty
 per-login agent and do not load a key; usable authentication continues through
-an agent already running on the current node and explicit forwarding. D2a
-(open clarification) chooses whether forwarding remains explicit through
-`harness_remote_codex`/`ssh -A` or becomes automatic for selected SSH hosts.
-Explicit forwarding is recommended; automatic forwarding would expand scope
-to owner SSH configuration and exposes the local agent to every selected
-remote session while connected. D3 (open) chooses
+an agent already running on the current node and forwarded access. D2a is
+resolved as automatic forwarding for exactly AB, AB2, AL, RC, RI, and T4
+through the current node's existing host-specific SSH stanzas; never place it
+under `Host *` or mirror it remotely. D3 (open) chooses
 whether AB/AB2/T4 module loads become interactive-only per-host behavior;
 interactive-only is recommended, with batch/project jobs continuing to load
 their exact environments explicitly. The canonical collision rule, retention
@@ -2116,7 +2133,7 @@ minimal preservation of all other startup content are resolved by the owner's
 request, prior decisions, and the preserve-unrelated-work boundary.
 
 Checkpoint after each interview answer, then audit the register, set
-`ready-for-go`, and wait for an explicit `go`. Next unresolved question: D2a.
+`ready-for-go`, and wait for an explicit `go`. Next unresolved question: D3.
 
 ## Stable operational facts
 
