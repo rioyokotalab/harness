@@ -1802,6 +1802,12 @@ in its test with AST parsing so older clients cannot leave checkout-local
 publish and distribute, then execute the complete synthetic validator suite on
 all seven default interpreters and require clean worktrees afterward.
 
+**Outcome:** correction commit `2ab7743` removes newer annotation syntax and
+uses AST parsing without bytecode output. The complete synthetic suite passes
+on default Python 3.6.15 (AL), 3.9.25 (AB/AB2/RC/T4), and 3.12.3 (local/RI).
+All seven checkouts remain clean and no test or transfer residue exists. T-244
+is complete, replacing T-243's previously local-only portability evidence.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
