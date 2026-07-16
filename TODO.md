@@ -1200,6 +1200,10 @@ the identical frozen final state on AArch64 and x86-64, and no restricted
 checkpoint residue. AB/AB2 remain validly queued for capacity. Monitor only
 these captured IDs and do not replace them.
 
+AB `2045091.pbs1` subsequently reached scheduler exit zero and published the
+same frozen final state with exact checkpoint cleanup. AB2 and local remain the
+only T-217 queued jobs.
+
 ### T-218 — Fail-closed native scheduler submission reconciliation
 
 **Phase/status:** `complete`, derived from T-217's pre-job failures. Local
@@ -1247,6 +1251,32 @@ x86 CPU partition. Exact-row/schema tests, ShellCheck, portable phase-1, and
 public audit pass. T-220 is complete as a read-only reference surface; it
 creates no job and grants no authority beyond the previously reviewed bounded
 readiness routes.
+
+### T-221 — Queued-job source immutability contract
+
+**Phase/status:** `complete`, derived from concurrent safe fleet fast-forwards
+while T-217 jobs were queued. Add a small read-only Git gate that receives one
+full submitted revision plus an explicit list of tracked job/source paths. At
+compute start it must require the revision object, ancestor relationship,
+regular tracked files, identical committed bytes and modes, and no path-local
+index/worktree changes; unrelated later documentation commits may pass. Emit
+only commit IDs, count, and stable status. Add isolated tests for unchanged,
+unrelated successor, relevant committed change, dirty change, missing/unsafe
+path, invalid revision, and non-ancestor revision. Document how a submission
+exports the expected revision and invokes the native helper before work. Do not
+snapshot repositories, read credentials, block safe unrelated fast-forwards,
+or claim that Git identity alone freezes external modules, images, data, or
+scheduler state.
+
+**Outcome:** `tests/smoke/jobs/source-contract.sh` implements the ancestor plus
+explicit-path contract and `docs/queued-job-source-contract.md` documents the
+native export/invocation and external-state limits. Isolated repositories prove
+the base and unrelated-successor passes and all required refusal cases,
+including a fetched non-ancestor commit. ShellCheck, portable phase-1, and
+public audit pass. The `operate-native-hpc` skill now requires this principle
+for queued version-controlled jobs. T-221 is complete as a read-only source
+gate; existing queued T-217 jobs retain their manually verified unchanged
+source because their already submitted environment predates this helper.
 
 ## Stable operational facts
 

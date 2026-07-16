@@ -61,6 +61,7 @@ for script in \
     "$ROOT/tests/smoke/venv-readiness.sh" \
     "$ROOT/tests/smoke/jobs/checkpoint-restart-readiness.sh" \
     "$ROOT/tests/smoke/jobs/local-checkpoint-restart.slurm" \
+    "$ROOT/tests/smoke/jobs/source-contract.sh" \
     "$ROOT/libexec/harness-rollback"
 do
     sh -n "$script" || fail "shell syntax: $script"
@@ -90,6 +91,8 @@ done
     fail "checkpoint restart focused suite"
 "$ROOT/tests/test-hpc-cpu-routes.sh" >/dev/null ||
     fail "bounded CPU route focused suite"
+"$ROOT/tests/test-source-contract.sh" >/dev/null ||
+    fail "source contract focused suite"
 
 # Direct non-interactive SSH can omit ~/.local/bin even when the managed
 # Restic installation is healthy. The harness route must find that exact

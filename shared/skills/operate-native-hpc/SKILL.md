@@ -48,6 +48,10 @@ Install Git LFS hooks only inside an in-scope repository with an explicit
 1. Freeze a correctness baseline before optimization. Use the tracked
    `~/harness/tests/smoke/` sources only for environment validation, not as a
    substitute for project tests.
+   For a queued version-controlled job, capture the submitted revision and
+   verify the declared job/source paths are unchanged when compute starts;
+   repository HEAD alone is too strict for unrelated successors and too weak
+   when relevant working-tree bytes drift.
 2. Submit or launch the exact native command. Require the scheduler family's
    exact success grammar for one returned job ID, then immediately query that
    ID and match its owner/name before treating submission as accepted. A zero
