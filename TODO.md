@@ -565,6 +565,14 @@ rejected; the full phase-1 suite passes. Publish this correction, then pause:
 a fresh complete pilot needs exactly four further replacement primary starts
 and no additional retry allowance. All other controls remain frozen.
 
+**Fifth replacement authority (2026-07-16):** the owner explicitly answered
+`Yes` to the narrow checkpoint above. The total ceiling is increased only by
+four replacement primary starts for the invalid whole-command run; no retry
+allowance was added. Path-local correction revision `0c55d72` is clean and
+matches `origin/main`. Every other stage, safety, review, and adoption boundary
+is unchanged. Next publish this authority checkpoint, prove the canonical run
+root absent, and restart the complete pilot.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
