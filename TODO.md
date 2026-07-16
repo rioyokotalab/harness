@@ -592,6 +592,14 @@ Commit and distribute the exact revision, obtain clean seven-node plans, then
 apply and test fresh login, direct SSH, interactive/nested Bash, and scheduler
 inheritance before guarded cleanup of any RI recurrence.
 
+**Live-plan checkpoint:** exact revision `070479c` is clean on all seven
+checkouts after checksum-verified private bundle transport and complete
+transport cleanup. Seven native `cache-bootstrap --plan` runs reported
+`contents=not-read`, no block, and exactly two prepends: `.bashrc` plus
+`.profile` on local/RI, or `.bashrc` plus `.bash_profile` on AB/AB2/AL/RC/T4.
+Apply only this exact revision, capture all transaction IDs, then require an
+idempotent two-KEEP postplan before opening fresh test sessions.
+
 ### T-202 — AB Mozilla application-native relocation
 
 **Phase/status:** `owner-gated`; not a quota emergency. AB's retained
