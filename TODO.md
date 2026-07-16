@@ -1971,12 +1971,12 @@ and the private capture was exact-unlinked. This completes all seven nodes.
 
 ### T-249 — Canonical aliases and simplified Bash startup workflow
 
-**Phase/status:** `interviewing` after the owner expanded the frozen plan to remove
+**Phase/status:** `ready-for-go` after the owner expanded the frozen plan to remove
 `.pyenv`, `.venv`, and “all unrelated data.” D1-D6 remain resolved. The first
 two names are authorized in principle but their exact per-node paths,
 boundaries, identities, aggregate contents, and recovery status are not yet
-frozen; D7 now asks what the final phrase means. No deletion or
-startup mutation has run. Every directory-tree removal must use the guarded
+frozen; D7 is now fully resolved. No deletion or startup mutation has run.
+Every directory-tree removal must use the guarded
 bulk-delete plan/exact-NEXT apply workflow.
 Planning discovery was read-only on every live startup file and redacted any
 credential-like line before agent output. No startup, package, scheduler,
@@ -2242,7 +2242,7 @@ removal of AB/RC PyEnv initialization because the owner no longer uses PyEnv;
 managed uv/Python 3.12 remains canonical and the existing directories are not
 part of this task. D6 is resolved as removal of the unused AL/T4
 `UV_VENV_ROOT` plus `activate` helpers; future use is explicit through `uv run`
-or direct activation. D7 is planning the newly authorized deletion of exact
+or direct activation. D7 resolves the newly authorized deletion of exact
 `.pyenv`/`.venv` trees. The owner resolved “all unrelated data” as exactly the
 four inventoried trees and nothing broader. Their absolute paths and retained
 boundaries are frozen; recovery handling and guarded transactions remain open.
@@ -2269,7 +2269,23 @@ or delete before startup references are transactionally absent and managed
 uv/Python plus known shell workflows pass. The exact guarded plan must publish
 a fresh mode-0600 manifest, and apply must use only its emitted NEXT command
 within 15 minutes, revalidate identity/count/bytes, preserve anchors, and prove
-the target absent. No fresh-backup decision or broader target exists yet.
+the target absent. No broader target exists.
+
+**D7 frozen recovery/deletion sequence:** the owner selected no fresh backup.
+After the exact startup changes and their first live validation, independently
+revalidate each source directory and atomically rename it to one unique
+same-parent quarantine name on the same filesystem. Record its identity and
+prove the original name absent; if any subsequent pre-delete shell, managed
+Python/uv, module, tool, cache, login, direct, interactive, nested, or known job-
+entry gate fails, restore only that unchanged quarantine to its original name.
+If all gates pass, create four separate guarded-delete plans/manifests—never a
+loop or combined boundary—and execute only each emitted exact NEXT command
+within its freshness window. RC planning/apply stays in one persistent
+connection so lexical/canonical home identity cannot drift. After apply, prove
+original and quarantine names absent and retained anchors unchanged. Historical
+home snapshots may incidentally contain older PyEnv data, but no recovery is
+claimed; T4 persistent `.venv` has intentionally no guaranteed recovery after
+deletion.
 
 The owner then requested continued PIE discussion backed by a careful
 line-by-line review of `.bashrc` and `.bash_profile` on all nodes. That review
@@ -2284,10 +2300,10 @@ compact completion evidence. Stop on any metadata/content drift, syntax or
 shell-mode regression, module mismatch, managed-tool loss, SSH effective-config
 mismatch, dirty checkout, or incomplete rollback. D7's deletion set is frozen
 as only the four exact obsolete environment trees above; no broader audit or
-deletion is in scope. Next decide whether to create fresh recovery coverage or
-use only a same-filesystem quarantine/validation window before irreversible
-guarded deletion. A new explicit `go` will be required after the destructive
-scope freezes.
+deletion is in scope. The owner selected same-filesystem quarantine and full
+validation followed by irreversible guarded deletion, with no fresh backup.
+The complete D1-D7 register is internally consistent. Next action: wait for a
+new explicit owner `go`; that go authorizes only this frozen T-249 plan.
 
 ## Stable operational facts
 
