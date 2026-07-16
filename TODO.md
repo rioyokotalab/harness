@@ -809,7 +809,7 @@ image pull, or live environment selection remains owner-gated.
 
 ### T-207 — Scheduler-native MPI correctness gate
 
-**Phase/status:** `executing` after T-200. Discover and freeze each site's
+**Phase/status:** `complete` after T-200. Discover and freeze each site's
 declared MPI/compiler route, then run the tracked bounded MPI source with two
 ranks on one allocated node before any multi-node or GPU-aware claim. Require
 rank uniqueness, expected world size, launcher identity, compiler/library
@@ -865,6 +865,16 @@ absence, and fail-closed exact-name queries passed before PBS accepted AB
 default priority, the existing `rt_HC` project, and
 `select=1:mpiprocs=2`. Monitor only these IDs; do not duplicate or replace
 them while queued or running.
+
+**Outcome:** AB `2045086.pbs1` and AB2 `2045085.pbs1` completed with
+`mpiprocs=2`, PBS exit zero, private-result zero, and two unique ranks. Together
+with local `91213`, AL `4224197`, and T4 `8179808`, all five reviewed native
+routes pass. RI and RC remain explicit no-route skips and received no MPI
+allocation. The public value-free matrix is
+`docs/audits/hpc-mpi-readiness-2026-07-17.json`, summarized in
+`docs/hpc-readiness.md`. T-207 closes only one-node/two-rank compiler, launcher,
+rank, and world-size correctness; it makes no collective, multi-node,
+GPU-aware, ABI-portability, or performance claim.
 
 ### T-208 — Immutable training-environment transport matrix
 
@@ -1074,7 +1084,7 @@ T-214 is complete within its deliberately dependency-free scope.
 
 ### T-215 — Load-balanced-safe harness fast-forward workflow
 
-**Phase/status:** `executing` after repeated verified bundle rollouts. Replace the
+**Phase/status:** `complete` after repeated verified bundle rollouts. Replace the
 error-prone manual transport sequence with a transparent plan/apply command
 that prints the native Git/SSH streaming operations, requires an explicit expected
 old and new commit, refuses dirty or divergent worktrees, creates one
@@ -1101,6 +1111,14 @@ zero transfer residue. ShellCheck, portable phase-1, and public audit pass, and
 a real six-node read-only plan reports six clean updates from `c17f8dd` to
 `9e96f96`. Commit and push the implementation, rerun the plan against the new
 target, then perform its first live apply and independent postflight.
+
+**Outcome:** implementation commit `e8b0e9a` was pushed, a fresh real plan
+reported six clean updates from `c17f8dd`, and the new command performed its
+own first rollout. Every remote independently verified the streamed bundle and
+fast-forwarded to exact `e8b0e9a`; a repeat plan reports six clean idempotent
+keeps and all remote artifacts absent. The private local transaction directory
+is also absent. T-215 is complete and supersedes manual `/tmp`/SCP bundle
+rollouts for future clean mirrored-harness updates.
 
 ## Stable operational facts
 

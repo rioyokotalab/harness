@@ -47,9 +47,34 @@ GH200 compute partition is Arm although its CPU baseline partition is x86.
 Those exact v2 corrections passed. RI's scheduler also requires job-level
 `--gpus=1`; its rejected per-node GRES attempt created no job.
 
+## Two-rank MPI gate
+
+Five reviewed native MPI routes passed the bounded one-node/two-rank gate. Its
+machine-readable matrix is
+[`audits/hpc-mpi-readiness-2026-07-17.json`](audits/hpc-mpi-readiness-2026-07-17.json).
+Each passing route compiled the same tracked C source, launched two ranks with
+the site's native launcher, proved unique ranks and exact world size, and has
+both scheduler and private-result status zero.
+
+| Node | Compute architecture | MPI route | Native launcher | Outcome |
+|---|---|---|---|---|
+| current (`local`) | x86_64 | Open MPI 5.0.8 | `mpirun -n 2` | pass |
+| AB | x86_64 | HPC-X 2.26 / Open MPI 5.0.10rc1 | `mpirun -n 2` | pass |
+| AB2 | x86_64 | HPC-X 2.26 / Open MPI 5.0.10rc1 | `mpirun -n 2` | pass |
+| RI | aarch64 | no reviewed base route | not run | declared skip |
+| AL | aarch64 | Cray MPICH 8.1.32 | `srun --ntasks=2` | pass |
+| RC | aarch64 | no reviewed base route | not run | declared skip |
+| T4 | x86_64 | HPC-X 2.21 / Open MPI 4.1.7rc1 | `mpirun -n 2` | pass |
+
+AB and AB2 initially exposed one PBS launch slot because their one-node request
+left `mpiprocs` at one. The corrected request declared `mpiprocs=2` inside the
+same 32-CPU node; it did not oversubscribe or enlarge the allocation. RI and RC
+remain explicit route gaps rather than inferred MPI failures.
+
 These are correctness and environment gates, not benchmarks. They do not
-claim framework availability, MPI launch, collective correctness, multi-node
-behavior, cross-architecture numerical equivalence, or performance. RI and RC
-still need a reviewed CUDA toolkit route, every node still needs a selected
-and locked LLM framework environment or image, and RC's CPU sanitizer runtime
+claim framework availability, MPI collective correctness beyond the tracked
+rank/world-size program, multi-node behavior, GPU-aware MPI,
+cross-architecture numerical equivalence, or performance. RI and RC still need
+a reviewed CUDA toolkit and MPI route, every node still needs a selected and
+locked LLM framework environment or image, and RC's CPU sanitizer runtime
 remains a declared gap.

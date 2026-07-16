@@ -1,0 +1,100 @@
+{
+  "generated_date": "2026-07-17",
+  "nodes": {
+    "ab": {
+      "architecture": "x86_64",
+      "compiler_wrapper": "HPC-X 2.26 mpicc",
+      "gate": "mpi-readiness-v2",
+      "job_id": "2045086.pbs1",
+      "launcher": "mpirun -n 2",
+      "mpi_implementation": "Open MPI 5.0.10rc1",
+      "result_status": 0,
+      "scheduler": "PBS",
+      "scheduler_exit": 0,
+      "status": "pass",
+      "world_size": 2
+    },
+    "ab2": {
+      "architecture": "x86_64",
+      "compiler_wrapper": "HPC-X 2.26 mpicc",
+      "gate": "mpi-readiness-v2",
+      "job_id": "2045085.pbs1",
+      "launcher": "mpirun -n 2",
+      "mpi_implementation": "Open MPI 5.0.10rc1",
+      "result_status": 0,
+      "scheduler": "PBS",
+      "scheduler_exit": 0,
+      "status": "pass",
+      "world_size": 2
+    },
+    "al": {
+      "architecture": "aarch64",
+      "compiler_wrapper": "prgenv-gnu/25.11:v1 mpicc",
+      "gate": "mpi-readiness-v1",
+      "job_id": "4224197",
+      "launcher": "srun --ntasks=2",
+      "mpi_implementation": "Cray MPICH 8.1.32",
+      "result_status": 0,
+      "scheduler": "Slurm",
+      "scheduler_exit": 0,
+      "status": "pass",
+      "world_size": 2
+    },
+    "local": {
+      "architecture": "x86_64",
+      "compiler_wrapper": "openmpi/5.0-cuda-12.8 mpicc",
+      "gate": "mpi-readiness-v1",
+      "job_id": "91213",
+      "launcher": "mpirun -n 2",
+      "mpi_implementation": "Open MPI 5.0.8",
+      "result_status": 0,
+      "scheduler": "Ybatch/Slurm",
+      "scheduler_exit": 0,
+      "status": "pass",
+      "world_size": 2
+    },
+    "rc": {
+      "architecture": "aarch64",
+      "gate": "not run",
+      "job_id": null,
+      "reason": "no reviewed architecture-compatible base MPI route",
+      "scheduler": "Slurm",
+      "status": "declared skip"
+    },
+    "ri": {
+      "architecture": "aarch64",
+      "gate": "not run",
+      "job_id": null,
+      "reason": "no reviewed architecture-compatible base MPI route",
+      "scheduler": "Slurm",
+      "status": "declared skip"
+    },
+    "t4": {
+      "architecture": "x86_64",
+      "compiler_wrapper": "ylab/hpcx/2.21.0 mpicc",
+      "gate": "mpi-readiness-v1",
+      "job_id": "8179808",
+      "launcher": "mpirun -n 2",
+      "mpi_implementation": "Open MPI 4.1.7rc1",
+      "result_status": 0,
+      "scheduler": "AGE",
+      "scheduler_exit": 0,
+      "status": "pass",
+      "world_size": 2
+    }
+  },
+  "schema": 1,
+  "scope": [
+    "one allocated compute node",
+    "two ranks",
+    "rank uniqueness and exact world size",
+    "native compiler wrapper and launcher",
+    "scheduler and private-result terminal status"
+  ],
+  "summary": {
+    "declared_no_route": 2,
+    "nodes_total": 7,
+    "routes_passed": 5,
+    "scheduler_exit_zero": 5
+  }
+}
