@@ -60,10 +60,6 @@ while [ "$#" -gt 0 ]; do
 done
 
 require_safe_id "$logical_host"
-case "$logical_host" in
-    local|ab|ab2|ri|al|rc|t4) ;;
-    *) die "replica route is not declared for host: $logical_host" ;;
-esac
 case "$generation" in
     [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]T[0-9][0-9][0-9][0-9][0-9][0-9]Z) ;;
     *) die "generation must use UTC basic format YYYYMMDDTHHMMSSZ" ;;

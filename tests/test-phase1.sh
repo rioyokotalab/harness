@@ -52,6 +52,7 @@ for script in \
     "$ROOT/libexec/harness-agent" \
     "$ROOT/libexec/harness-build-tool" \
     "$ROOT/shared/skills/guarded-bulk-delete/scripts/guarded-delete" \
+    "$ROOT/shared/skills/onboard-mirrored-node/scripts/onboard-preflight" \
     "$ROOT/tests/guarded-test-cleanup.sh" \
     "$ROOT/libexec/harness-rollback"
 do
@@ -60,6 +61,8 @@ done
 
 "$ROOT/tests/test-restic-schedule.sh" >/dev/null ||
     fail "Restic schedule focused suite"
+"$ROOT/tests/test-onboard-mirrored-node.sh" >/dev/null ||
+    fail "onboarding focused suite"
 
 # Direct non-interactive SSH can omit ~/.local/bin even when the managed
 # Restic installation is healthy. The harness route must find that exact
@@ -158,8 +161,11 @@ tmux_type=$(env -u SHLVL -u HARNESS_INTERACTIVE_LOADED \
 remote_codex_home=$TEMP_DIR/remote-codex-home
 remote_codex_bin=$TEMP_DIR/remote-codex-bin
 remote_codex_log=$TEMP_DIR/remote-codex.log
-mkdir -p "$remote_codex_home/harness" "$remote_codex_bin"
+mkdir -p "$remote_codex_home/harness/profiles/hosts" "$remote_codex_bin"
 cp -R "$ROOT/shell" "$remote_codex_home/harness/"
+cp "$ROOT/profiles/hosts/ab.conf" "$remote_codex_home/harness/profiles/hosts/"
+cp "$ROOT/profiles/hosts/ab.conf" \
+    "$remote_codex_home/harness/profiles/hosts/invented.conf"
 cat >"$remote_codex_bin/ssh" <<'EOF'
 #!/bin/sh
 printf '%s\n' "$*" >"$REMOTE_CODEX_LOG"
@@ -172,6 +178,13 @@ HOME="$remote_codex_home" PATH="$remote_codex_bin:/usr/bin:/bin" \
 [ "$(cat "$remote_codex_log")" = \
     "-A -t ab exec bash -lic 'cd \"\$HOME\" && exec codex'" ] ||
     fail "one-connection remote Codex launcher"
+HOME="$remote_codex_home" PATH="$remote_codex_bin:/usr/bin:/bin" \
+    REMOTE_CODEX_LOG="$remote_codex_log" HARNESS_LOGICAL_HOST=local \
+    bash --noprofile --norc -ic \
+    '. "$HOME/harness/shell/profile.sh"; harness_remote_codex invented' 2>/dev/null
+[ "$(cat "$remote_codex_log")" = \
+    "-A -t invented exec bash -lic 'cd \"\$HOME\" && exec codex'" ] ||
+    fail "profile-derived remote Codex fleet membership"
 if HOME="$remote_codex_home" PATH="$remote_codex_bin:/usr/bin:/bin" \
     REMOTE_CODEX_LOG="$remote_codex_log" HARNESS_LOGICAL_HOST=local \
     bash --noprofile --norc -ic \
@@ -382,7 +395,17 @@ cut -d= -f1 "$TEMP_DIR/local.facts" | LC_ALL=C sort -u \
 python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["schema"] == "1"' \
     "$TEMP_DIR/local.json" || fail "invalid JSON inventory"
 
-for logical_host in local ab ab2 ri al rc t4; do
+for profile in "$ROOT"/profiles/hosts/*.conf; do
+    [ -f "$profile" ] && [ ! -L "$profile" ] ||
+        fail "managed profile is not a strict regular file: $profile"
+    logical_host=${profile##*/}
+    logical_host=${logical_host%.conf}
+    [ -f "$ROOT/shell/environments/$logical_host.sh" ] ||
+        fail "missing environment declaration: $logical_host"
+    [ -f "$ROOT/shell/bashrc.$logical_host.block" ] ||
+        fail "missing Bash rc declaration: $logical_host"
+    [ -f "$ROOT/shell/bash_profile.$logical_host.block" ] ||
+        fail "missing Bash profile declaration: $logical_host"
     fixture=$ROOT/tests/fixtures/$logical_host.facts
     [ -f "$fixture" ] || fail "missing fixture: $logical_host"
     awk -F= '
@@ -412,21 +435,33 @@ for logical_host in local ab ab2 ri al rc t4; do
         fail "plan mutation marker: $logical_host"
 done
 
+for profile in "$ROOT"/profiles/hosts/*.conf; do
+    basename "$profile" .conf
+done | LC_ALL=C sort >"$TEMP_DIR/profile-hosts"
+sed '/^#/d' "$ROOT/profiles/home-layout.tsv" | cut -d'|' -f1 |
+    LC_ALL=C sort >"$TEMP_DIR/home-layout-hosts"
+cmp -s "$TEMP_DIR/profile-hosts" "$TEMP_DIR/home-layout-hosts" ||
+    fail "home-layout hosts must exactly match managed profiles"
+sed '/^#/d' "$ROOT/profiles/restic-repositories.tsv" | cut -d'|' -f1 |
+    LC_ALL=C sort >"$TEMP_DIR/restic-hosts"
+cmp -s "$TEMP_DIR/profile-hosts" "$TEMP_DIR/restic-hosts" ||
+    fail "Restic repository hosts must exactly match managed profiles"
+
 restic_rows=$(awk -F'|' '
     /^#/ { next }
     NF != 5 { exit 1 }
-    $1 !~ /^(local|ab|ab2|ri|al|rc|t4)$/ { exit 1 }
+    $1 !~ /^[A-Za-z0-9._-]+$/ { exit 1 }
     $2 !~ /^\// || $3 !~ /^\// { exit 1 }
     $4 != "~/.config/restic/home-control.password" { exit 1 }
     $5 !~ /^(local|t4)$/ { exit 1 }
     { count[$1]++; rows++ }
     END {
-        if (rows != 7) exit 1
         for (host in count) if (count[host] != 1) exit 1
         print rows
     }
 ' "$ROOT/profiles/restic-repositories.tsv")
-[ "$restic_rows" -eq 7 ] || fail "Restic repository map must declare seven hosts"
+[ "$restic_rows" -eq "$(wc -l <"$TEMP_DIR/profile-hosts" | tr -d ' ')" ] ||
+    fail "Restic repository map must declare every managed profile"
 [ "$(sed '/^#/d' "$ROOT/profiles/restic-repositories.tsv" | cut -d'|' -f2 | sort | uniq -d | wc -l)" -eq 0 ] ||
     fail "Restic primary repositories must be unique"
 

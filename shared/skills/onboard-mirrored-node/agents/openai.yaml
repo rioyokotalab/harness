@@ -1,0 +1,4 @@
+interface:
+  display_name: "Onboard Mirrored Node"
+  short_description: "Safely mirror a newly configured node"
+  default_prompt: "Use $onboard-mirrored-node to onboard a configured SSH host into my mirrored harness."

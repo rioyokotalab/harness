@@ -246,8 +246,9 @@ an explicit `exit`-time choice, requires staged changes, and fails closed if the
 forwarded agent cannot authenticate; no node receives a copied private key.
 `harness_remote_codex LOGICAL_ID` combines that explicit agent forwarding, one
 PTY SSH connection, the normal interactive login hook, and a remote Codex
-launch. It accepts only `ab`, `ab2`, `ri`, `al`, `rc`, or `t4`; transport and
-service aliases are rejected. Because the remote process can use the forwarded
+launch. It accepts any non-local logical host backed by a strict regular file
+under `profiles/hosts/`; malformed, service, proxy, and unmanaged aliases are
+rejected. Because the remote process can use the forwarded
 agent for the life of that session, invoke this function only on a trusted node
 and exit it when finished.
 

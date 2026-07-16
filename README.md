@@ -62,6 +62,20 @@ harness plan --host al --facts tests/fixtures/al.facts
 harness doctor --host al --facts tests/fixtures/al.facts
 ```
 
+## New mirrored node onboarding
+
+After adding one explicit SSH alias, ask Codex or Claude to `onboard HOST`. The
+shared `onboard-mirrored-node` skill uses the durable Plan–Interview–Execute
+workflow: it treats that alias as the entire discovery boundary, collects one
+value-free inventory, resolves unknown storage and policy choices one at a
+time, and waits for an explicit go before staging or applying changes. It never
+enumerates SSH configuration or handles credential contents.
+
+First-run acceptance includes portable control-plane parity, approved storage
+migration, primary backup/check/restore, and an independently restored
+encrypted generation. Scheduler recurrence is deliberately separate and can be
+considered only after the manual restore evidence is stable.
+
 Run the phase-1 validation suite with:
 
 ```bash

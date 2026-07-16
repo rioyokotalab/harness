@@ -1,0 +1,123 @@
+#!/bin/sh
+set -eu
+
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd -P)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SCRIPT_DIR/../../../.." && pwd -P)}
+
+die() {
+    printf 'onboard-preflight: %s\n' "$*" >&2
+    exit 2
+}
+
+facts=
+cleanup() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ -n "$facts" ] && { [ -e "$facts" ] || [ -L "$facts" ]; }; then
+        rm -f -- "$facts"
+    fi
+    exit "$status"
+}
+
+usage() {
+    printf '%s\n' 'Usage: onboard-preflight {validate|inventory} HOST' >&2
+}
+
+require_new_host() {
+    host=$1
+    [ "${#host}" -le 32 ] || die "logical host identifier is too long"
+    case "$host" in
+        [a-z]*) ;;
+        *) die "logical host identifier must start with a lowercase letter and contain only lowercase letters, digits, dot, underscore, or hyphen" ;;
+    esac
+    case "$host" in
+        *[!a-z0-9._-]*) die "logical host identifier must start with a lowercase letter and contain only lowercase letters, digits, dot, underscore, or hyphen" ;;
+    esac
+    case "$host" in
+        *..*) die "logical host identifier must not contain consecutive dots" ;;
+        local|si|web|github|abci_login|alps_login)
+            die "reserved or service logical host identifier: $host"
+            ;;
+    esac
+
+    for path in \
+        "$HARNESS_ROOT/profiles/hosts/$host.conf" \
+        "$HARNESS_ROOT/shell/environments/$host.sh" \
+        "$HARNESS_ROOT/shell/bashrc.$host.block" \
+        "$HARNESS_ROOT/shell/bash_profile.$host.block" \
+        "$HARNESS_ROOT/tests/fixtures/$host.facts"
+    do
+        [ ! -e "$path" ] && [ ! -L "$path" ] ||
+            die "logical host declaration already exists: ${path#"$HARNESS_ROOT"/}"
+    done
+
+    for map in \
+        "$HARNESS_ROOT/profiles/home-layout.tsv" \
+        "$HARNESS_ROOT/profiles/restic-repositories.tsv" \
+        "$HARNESS_ROOT/profiles/restic-schedules.tsv"
+    do
+        [ -f "$map" ] && [ ! -L "$map" ] || die "required declaration map is unavailable: $map"
+        if awk -F'|' -v host="$host" '$0 !~ /^#/ && $1 == host { found=1 } END { exit found ? 0 : 1 }' "$map"; then
+            die "logical host declaration already exists in ${map#"$HARNESS_ROOT"/}"
+        fi
+    done
+}
+
+validate_inventory() {
+    facts=$1
+    host=$2
+    [ -f "$facts" ] && [ ! -L "$facts" ] || die "inventory capture is not a regular file"
+    bytes=$(wc -c <"$facts" | tr -d ' ')
+    lines=$(wc -l <"$facts" | tr -d ' ')
+    [ "$bytes" -le 65536 ] || die "inventory exceeds 65536 bytes"
+    [ "$lines" -ge 7 ] && [ "$lines" -le 512 ] || die "inventory line count is outside the accepted range"
+
+    awk -F= -v expected_host="$host" '
+        BEGIN { required["schema"]; required["logical_host"]; required["os_id"];
+                required["arch"]; required["login_shell"]; required["tool_sh"];
+                required["tool_bash"]; required["tool_git"]; required["harness_checkout"] }
+        $0 !~ /^[a-z][a-z0-9_]*=[A-Za-z0-9._+-]+$/ { exit 10 }
+        seen[$1]++ > 0 { exit 11 }
+        $1 == "schema" && $2 != "1" { exit 12 }
+        $1 == "logical_host" && $2 != expected_host { exit 13 }
+        END {
+            for (key in required) if (!(key in seen)) exit 14
+        }
+    ' "$facts" || die "inventory failed schema, uniqueness, value, or identity validation"
+}
+
+[ "$#" -eq 2 ] || { usage; exit 2; }
+mode=$1
+logical_host=$2
+require_new_host "$logical_host"
+
+case "$mode" in
+    validate)
+        printf 'ONBOARD schema=1 host=%s boundary=ssh-alias-only status=accepted\n' "$logical_host"
+        ;;
+    inventory)
+        inventory_helper=$HARNESS_ROOT/libexec/harness-inventory
+        [ -f "$inventory_helper" ] && [ ! -L "$inventory_helper" ] ||
+            die "inventory helper is unavailable"
+        command -v ssh >/dev/null 2>&1 || die "ssh is unavailable"
+        old_umask=$(umask)
+        umask 077
+        facts=$(mktemp "${TMPDIR:-/tmp}/harness-onboard.XXXXXX") || die "cannot create private inventory capture"
+        umask "$old_umask"
+        trap cleanup EXIT
+        trap 'exit 129' HUP
+        trap 'exit 130' INT
+        trap 'exit 143' TERM
+        remote_command="exec sh -s -- --host $logical_host"
+        if ! ssh -o BatchMode=yes "$logical_host" "$remote_command" \
+            <"$inventory_helper" >"$facts"; then
+            die "read-only inventory connection failed"
+        fi
+        validate_inventory "$facts" "$logical_host"
+        cat "$facts"
+        ;;
+    *)
+        usage
+        exit 2
+        ;;
+esac

@@ -289,9 +289,12 @@ queue delay.
 
 ### T-190 — Create automated mirrored-node onboarding skill
 
-**Status:** PIE interview complete; separately awaiting an explicit owner `go`.
-T-191 is currently ordered first. The skill does not onboard a node until the
-owner supplies an already-configured SSH alias.
+**Status:** validating after implementation from the owner's explicit `go` on
+2026-07-16 while T-191 waits for its first Sunday runs. The skill, deterministic
+preflight/inventory helper, strict declaration contract, profile-derived fleet
+membership, discovery links, focused adversarial suite, guarded-delete suite,
+Restic-schedule suite, and full phase-1 suite all pass. This implementation did
+not onboard a live node.
 
 **Frozen decisions:** invocation is `onboard HOST`; the supplied alias is the
 entire discovery boundary and the workflow must not read/enumerate SSH config.
@@ -324,8 +327,9 @@ dirty source, schema collision, canonical-home drift, quota/filesystem
 uncertainty, symlink surprise, unsupported artifact, repository lock, source
 drift, or validation mismatch.
 
-**Next action:** after a separate owner `go`, scaffold the skill and implement
-the local tests before requesting any onboarding alias.
+**Next action:** independently inspect and commit the exact implementation,
+fetch/reconcile and publish under the owner's standing public-repository
+authority, then compact T-190 into the completed index with the commit pointer.
 
 ### T-181 — Acceptance-grade harness evaluation corpus
 
