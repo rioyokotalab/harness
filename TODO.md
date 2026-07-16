@@ -1827,6 +1827,29 @@ import inside the private test boundary. Focused, portable phase-1, and public-
 audit suites now pass with two independent clean no-bytecode postflights.
 T-245 is complete without accessing a real manifest or external state.
 
+### T-246 — Eight-hour LLM/HPC durable handoff
+
+**Phase/status:** `complete`. Consolidate only the current active job IDs,
+fixed result contracts, completed readiness layers, explicit gates, protected
+Sunday jobs, and next safe order into
+`docs/llm-hpc-readiness-handoff-2026-07-17.md`. Reconcile it against one final
+native scheduler poll, private-result hygiene pass, exact clean fleet head,
+origin parity, full/public validation, and the untouched website boundary.
+Publish/distribute only after those facts agree; do not convert pending or
+owner-gated work into a completion claim.
+
+**Outcome:** the durable capsule records the exact four active jobs, held local
+T-237 route, protected Sunday IDs, completed readiness layers, and next safe
+order. A 30-minute exact-ID monitor ended with all states unchanged and no
+query failure: local remains Resources/Priority; AB/AB2 remain queued with no
+exit, result, or temp. Final content-blind result hygiene passes 6/10/10/7/10/
+9/9 with zero invalid and zero temporary entries. Before the handoff commit,
+all seven checkouts were clean at exact `6e744af`, origin matched, every
+transfer artifact was absent, and website's unrelated dirty files remained
+untouched. Full/public validation and final fleet distribution are the
+remaining publication gates for this same outcome; no pending or owner-gated
+item is reported complete.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
