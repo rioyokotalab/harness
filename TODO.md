@@ -1204,6 +1204,10 @@ AB `2045091.pbs1` subsequently reached scheduler exit zero and published the
 same frozen final state with exact checkpoint cleanup. AB2 and local remain the
 only T-217 queued jobs.
 
+AB2 `2045092.pbs1` subsequently reached scheduler/result zero with the same
+frozen state and no checkpoint residue. Local `91240` is the sole remaining
+T-217 job; keep monitoring it without replacement.
+
 ### T-218 — Fail-closed native scheduler submission reconciliation
 
 **Phase/status:** `complete`, derived from T-217's pre-job failures. Local
@@ -1294,6 +1298,16 @@ scope. The document explicitly excludes directory-fsync crash durability,
 concurrency, scheduler requeue/signals, distributed state, schema evolution,
 performance, and application suitability. No live checkpoint, scheduler, or
 external state was changed.
+
+### T-223 — Concurrent checkpoint-writer exclusion
+
+**Phase/status:** `complete`; the focused T-217 test now launches two real
+processes racing to create the same exact checkpoint with different steps. It
+requires exactly one zero exit, one collision failure, a mode-0600/40-byte
+winner, and successful validation/resume at only the winning step. The format
+document records this one-filesystem evidence while retaining explicit no-claim
+boundaries for distributed or multi-node coordination, crash durability, and
+scheduler preemption. No persistent-root file or scheduler job was created.
 
 ## Stable operational facts
 

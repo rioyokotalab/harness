@@ -39,8 +39,10 @@ The frozen uninterrupted state after 1,000,000 steps is
 `0x7f7cadf8669fc055`.
 
 The writer uses collision-refusing creation, mode 0600, complete writes, and
-file `fsync`. Atomic publication and exact cleanup are validated separately by
-T-211/T-217. This fixture does not claim directory-fsync crash durability,
-concurrent writers, scheduler requeue, signal recovery, distributed state,
-schema evolution beyond rejecting unknown versions, performance, or suitability
-for floating-point/scientific application data.
+file `fsync`. A focused two-process race on one filesystem proves that
+exactly one writer wins the same path and the winning record remains valid. Atomic
+publication and exact cleanup are validated separately by T-211/T-217. This
+fixture does not claim directory-fsync crash durability, distributed or
+multi-node writer coordination, scheduler requeue, signal recovery,
+distributed state, schema evolution beyond rejecting unknown versions,
+performance, or suitability for floating-point/scientific application data.
