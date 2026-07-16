@@ -63,6 +63,12 @@ explicit `--write-probe` mode writes and fsyncs one mode-0600 4 KiB file per
 root, revalidates the root identity, and exact-unlinks only that file. It is a
 correctness gate, not a benchmark or quota promise.
 
+The mutually exclusive `--checkpoint-probe` mode uses only the persistent
+root. It writes and fsyncs a deterministic 1 MiB staging file, verifies its
+hash, atomically publishes it with a collision-refusing hard link, re-verifies
+the published inode/size/hash, and exact-unlinks both names. This checks bounded
+publication mechanics, not an application checkpoint format or recovery flow.
+
 Captured facts can be checked without connecting to a host:
 
 ```bash

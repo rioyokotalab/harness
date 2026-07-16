@@ -926,7 +926,7 @@ these captured IDs and never infer failure or resubmit from queue delay.
 
 ### T-211 — Atomic checkpoint publication gate
 
-**Phase/status:** `executing` after T-209. Extend the storage gate with a
+**Phase/status:** `complete` after T-209. Extend the storage gate with a
 mutually exclusive `--checkpoint-probe` that operates only in the declared
 persistent root. It creates one unique mode-0600 staging file, writes and
 fsyncs exactly 1 MiB of deterministic bytes, verifies the frozen SHA-256,
@@ -943,6 +943,12 @@ not a checkpoint-format, directory-fsync, recovery, quota, throughput, or
 distributed-coordination claim. Run the full suite/public audit, commit and
 distribute, repeat read-only plans, then execute one live persistent-root probe
 per node and independently verify the restricted prefix is absent.
+
+**Outcome:** exact commit `f1dafda` reached all six clean remotes and every
+bundle is absent. Seven repeated plans passed. Each persistent root then
+published and verified the exact 1 MiB checkpoint probe and reported both
+names absent. An independent restricted-prefix postflight found zero residue
+on all seven nodes. T-211 is complete within its narrow atomic-hardlink scope.
 
 ## Stable operational facts
 
