@@ -1,0 +1,130 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() {
+    printf '%s\n' 'Usage: harness storage-readiness --host LOGICAL_ID [--write-probe]' >&2
+}
+
+logical_host=
+write_probe=0
+while [ "$#" -gt 0 ]; do
+    case $1 in
+        --host)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            logical_host=$2
+            shift 2
+            ;;
+        --write-probe) write_probe=1; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+[ -n "$logical_host" ] || { usage; exit 2; }
+require_safe_id "$logical_host"
+profile_for "$logical_host" >/dev/null
+case ${HARNESS_LOGICAL_HOST:-$logical_host} in
+    "$logical_host") ;;
+    *) die "logical host does not match this environment" ;;
+esac
+
+layout=$HARNESS_ROOT/profiles/home-layout.tsv
+if [ "${HARNESS_TESTING:-0}" = 1 ] && [ -n "${HARNESS_HOME_LAYOUT:-}" ]; then
+    layout=$HARNESS_HOME_LAYOUT
+fi
+[ -f "$layout" ] && [ ! -L "$layout" ] || die "invalid home layout declaration"
+row=$(awk -F'|' -v host="$logical_host" '
+    $0 !~ /^#/ && $1 == host {
+        if (NF != 7) exit 2
+        print
+        count++
+    }
+    END { if (count != 1) exit 1 }
+' "$layout") || die "home layout row is not unique and valid"
+IFS='|' read -r row_host persistent_root cache_root _ <<EOF
+$row
+EOF
+[ "$row_host" = "$logical_host" ] || die "home layout host mismatch"
+for root in "$persistent_root" "$cache_root"; do
+    case $root in
+        /*) ;;
+        *) die "storage root is not absolute" ;;
+    esac
+done
+
+uid=$(id -u)
+home=$(realpath -e -- "$HOME") || die "current HOME is not canonical"
+active_probe=
+active_root=
+
+cleanup_probe() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ -n "$active_probe" ]; then
+        valid=1
+        [ -f "$active_probe" ] && [ ! -L "$active_probe" ] || valid=0
+        [ "$(dirname -- "$active_probe")" = "$active_root" ] || valid=0
+        case ${active_probe##*/} in
+            .harness-storage-readiness."$logical_host".*) ;;
+            *) valid=0 ;;
+        esac
+        if [ "$valid" -eq 1 ] && [ "$(stat -c %u -- "$active_probe")" = "$uid" ]; then
+            unlink -- "$active_probe" || status=2
+        else
+            status=2
+        fi
+    fi
+    exit "$status"
+}
+trap cleanup_probe EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+check_root() {
+    label=$1
+    declared=$2
+    [ -d "$declared" ] && [ ! -L "$declared" ] || die "$label root is not a real directory"
+    root=$(realpath -e -- "$declared") || die "$label root cannot be canonicalized"
+    [ "$root" = "$declared" ] || die "$label root canonical identity differs"
+    case $root in
+        "$home"|"$home"/*) die "$label root is inside HOME" ;;
+    esac
+    [ "$(stat -c %u -- "$root")" = "$uid" ] || die "$label root owner mismatch"
+    [ -w "$root" ] || die "$label root is not writable"
+    filesystem=$(stat -f -c %T -- "$root")
+    available_kib=$(df -Pk -- "$root" | awk 'NR == 2 { print $4 }')
+    available_inodes=$(df -Pi -- "$root" | awk 'NR == 2 { print $4 }')
+    case "$available_kib:$available_inodes" in
+        *[!0-9:]*) die "$label capacity probe returned an unsafe value" ;;
+    esac
+    [ -n "$available_kib" ] && [ -n "$available_inodes" ] ||
+        die "$label capacity probe returned no value"
+    printf 'STORAGE host=%s label=%s status=ready filesystem=%s available_kib=%s available_inodes=%s outside_home=1\n' \
+        "$logical_host" "$label" "$filesystem" "$available_kib" "$available_inodes"
+
+    [ "$write_probe" -eq 1 ] || return 0
+    umask 077
+    active_root=$root
+    active_probe=$(mktemp "$root/.harness-storage-readiness.$logical_host.$label.XXXXXX") ||
+        die "$label cannot create exact probe"
+    chmod 600 "$active_probe"
+    [ -f "$active_probe" ] && [ ! -L "$active_probe" ] || die "$label probe changed type"
+    [ "$(stat -c %u -- "$active_probe")" = "$uid" ] || die "$label probe owner mismatch"
+    [ "$(stat -c %a -- "$active_probe")" = 600 ] || die "$label probe mode mismatch"
+    dd if=/dev/zero of="$active_probe" bs=4096 count=1 conv=fsync status=none
+    [ "$(stat -c %s -- "$active_probe")" = 4096 ] || die "$label probe size mismatch"
+    unlink -- "$active_probe"
+    [ ! -e "$active_probe" ] && [ ! -L "$active_probe" ] || die "$label probe remains"
+    active_probe=
+    active_root=
+    printf 'STORAGE_WRITE host=%s label=%s bytes=4096 fsync=pass cleanup=absent\n' \
+        "$logical_host" "$label"
+}
+
+check_root persistent "$persistent_root"
+check_root cache "$cache_root"

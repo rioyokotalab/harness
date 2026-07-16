@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-209.
+and compact historical pointers here. Next free ID: T-210.
 
 ## Current state
 
@@ -857,6 +857,26 @@ caches under the declared fast cache root, and only non-secret definitions,
 locks, provenance, and digests in harness. Before T-206 chooses anything,
 validate licensing, CUDA/driver compatibility, compute-node runtime, GPU
 selection, bind paths, home isolation, cache placement, and exact rollback.
+
+### T-209 — Declared training-storage readiness gate
+
+**Phase/status:** `executing`; read-only fleet discovery passed. Every declared
+persistent and cache root is a real owner-writable directory outside canonical
+home. Current uses NFS; the other roots use Lustre. Each reported filesystem
+has more than 750 GiB free and more than 977,000 free inodes at discovery time,
+but shared-filesystem `df` values are not a user-quota promise.
+
+`harness storage-readiness --host HOST` now revalidates the unique public
+layout row, exact canonical root identity, owner, writability, outside-home
+boundary, filesystem type, and current free blocks/inodes without mutation.
+`--write-probe` adds one mode-0600 4 KiB write+fsync in each exact root and
+unlinks only that already-validated file, with a trap that refuses cleanup if
+type, owner, dirname, or basename identity changes. Fake-root tests prove the
+read-only path, two successful exact cleanups, inside-HOME rejection, symlink
+rejection, and zero residue. After full-suite validation, commit/distribute,
+run fresh read-only plans, then execute one bounded live probe per root and
+verify no probe name remains. This is correctness only, not an I/O benchmark or
+quota/capacity reservation.
 
 ## Stable operational facts
 
