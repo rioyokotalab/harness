@@ -36,6 +36,7 @@ Phase 1 provides three dependency-free commands:
 harness inventory --host local
 harness plan --host local
 harness doctor --host local
+harness storage-readiness --host local
 ```
 
 `inventory` emits a strict value-free fact stream: logical host, OS and
@@ -54,6 +55,13 @@ ssh HOST 'sh -s -- --host HOST' \
 It is read-only and ends with `remote_changes=none`. `doctor` treats a host or
 bootstrap mismatch as a failure while reporting not-yet-installed selected
 tools and discovery links as warnings.
+
+`storage-readiness` validates only the two roots declared for a logical host:
+canonical identity, ownership, writability, outside-home placement,
+filesystem, and current free blocks/inodes. It is read-only by default. The
+explicit `--write-probe` mode writes and fsyncs one mode-0600 4 KiB file per
+root, revalidates the root identity, and exact-unlinks only that file. It is a
+correctness gate, not a benchmark or quota promise.
 
 Captured facts can be checked without connecting to a host:
 

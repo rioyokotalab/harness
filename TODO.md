@@ -860,7 +860,7 @@ selection, bind paths, home isolation, cache placement, and exact rollback.
 
 ### T-209 — Declared training-storage readiness gate
 
-**Phase/status:** `executing`; read-only fleet discovery passed. Every declared
+**Phase/status:** `complete`; read-only fleet discovery passed. Every declared
 persistent and cache root is a real owner-writable directory outside canonical
 home. Current uses NFS; the other roots use Lustre. Each reported filesystem
 has more than 750 GiB free and more than 977,000 free inodes at discovery time,
@@ -887,6 +887,14 @@ aliases and symlink endpoints, and binds cleanup to the captured root
 device/inode. Tests prove undeclared-alias rejection, exact declared-alias
 acceptance, write/fsync, and zero residue. Recommit/distribute this correction,
 then repeat every read-only plan before any live probe.
+
+**Outcome:** exact commit `e5e89ce` reached all six clean remotes and every
+transport bundle is absent. Seven repeated plans passed. Fourteen live probes
+then each wrote and fsynced exactly 4 KiB with mode 0600, revalidated the root
+identity, exact-unlinked the probe, and reported cleanup absent. Independent
+postflight searches for the restricted probe prefix found no residue in any
+declared root. T-209 is complete; shared `df` values remain point-in-time
+health evidence, not quota or future-capacity guarantees.
 
 ## Stable operational facts
 
