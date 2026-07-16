@@ -1971,10 +1971,13 @@ and the private capture was exact-unlinked. This completes all seven nodes.
 
 ### T-249 — Canonical aliases and simplified Bash startup workflow
 
-**Phase/status:** `ready-for-go` after completing the owner's expanded,
-careful line-by-line necessity review of every managed node's `.bashrc` and
-`.bash_profile`. D1-D6 are resolved, the register is internally consistent,
-and live files remain read-only pending an explicit owner `go`.
+**Phase/status:** `planning` after the owner expanded the frozen plan to remove
+`.pyenv`, `.venv`, and “all unrelated data.” D1-D6 remain resolved. The first
+two names are authorized in principle but their exact per-node paths,
+boundaries, identities, aggregate contents, and recovery status are not yet
+frozen; the final phrase is not a safely enumerable target. No deletion or
+startup mutation has run. Every directory-tree removal must use the guarded
+bulk-delete plan/exact-NEXT apply workflow.
 Planning discovery was read-only on every live startup file and redacted any
 credential-like line before agent output. No startup, package, scheduler,
 authentication, or external state changed. The desired outcome is one durable,
@@ -2238,16 +2241,19 @@ no current `.local` include/library/pkg-config surface. D5 is resolved as
 removal of AB/RC PyEnv initialization because the owner no longer uses PyEnv;
 managed uv/Python 3.12 remains canonical and the existing directories are not
 part of this task. D6 is resolved as removal of the unused AL/T4
-`UV_VENV_ROOT` plus `activate` helpers; T4's existing persistent `.venv`
-directory remains untouched, and future use is explicit through `uv run` or
-direct activation. All other per-node decisions above are
+`UV_VENV_ROOT` plus `activate` helpers; future use is explicit through `uv run`
+or direct activation. D7 is planning the newly authorized deletion of exact
+`.pyenv`/`.venv` trees. It does not yet convert “all unrelated data” into a
+deletion set, and no directory is a target until its absolute path, retained
+boundary, metadata-only aggregate, recovery status, and guarded transaction
+are frozen. All other per-node decisions above are
 resolved from live command/path evidence, the frozen common policy, or clear
 broken/conflicting behavior.
 
 The owner then requested continued PIE discussion backed by a careful
-line-by-line review of `.bashrc` and `.bash_profile` on all nodes. The review
-and value-limited supporting checks above are complete; phase returns to
-The decision audit found no gaps or contradictions. The frozen execution order
+line-by-line review of `.bashrc` and `.bash_profile` on all nodes. That review
+and its value-limited supporting checks are complete. The startup decision
+audit found no gaps or contradictions. Its frozen execution order
 is: implement and synthetically validate the tracked common policy, module
 interface, exact startup normalizer, and exact local SSH-forwarding transaction;
 run all focused/full/public gates; publish and distribute the exact clean
@@ -2255,8 +2261,10 @@ implementation; run seven read-only plans; pilot local apply/rollback/reapply;
 apply and independently validate one node at a time; then publish/distribute the
 compact completion evidence. Stop on any metadata/content drift, syntax or
 shell-mode regression, module mismatch, managed-tool loss, SSH effective-config
-mismatch, dirty checkout, or incomplete rollback. Next action: wait for an
-explicit owner `go`; that go authorizes only this frozen T-249 plan.
+mismatch, dirty checkout, or incomplete rollback. D7 now returns the whole task
+to planning: inventory only exact `.pyenv`/`.venv` candidates and their backup
+coverage, then interview the meaning of “unrelated data” one question at a
+time. A new explicit `go` will be required after the destructive scope freezes.
 
 ## Stable operational facts
 
