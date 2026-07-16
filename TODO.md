@@ -513,6 +513,14 @@ explicit `--gres=none` but accepted site-injected GB200; AL Slurm
 collision, print each full native submit command, then monitor only captured
 IDs. No GPU/framework claim follows from this CPU gate.
 
+**CPU-gate submission checkpoint (2026-07-16):** the repeated pre-submit gate
+found every fixed result absent and zero exact-name collisions. Seven native
+five-minute/default-priority jobs were then accepted: current Ybatch `91133`;
+AB PBS `2044959.pbs1`; AB2 PBS `2044958.pbs1`; RI Slurm `6978`; AL Slurm
+`4223373`; RC Slurm `211005`; and T4 AGE `8179531`. Monitor only these captured
+IDs, preserve the T-191 production jobs, and publish a capability claim only
+from each private result plus scheduler accounting.
+
 ### T-201 — Early-login cache redirection
 
 **Phase/status:** `planned` from RI's T-199 recurrence. Determine, without
