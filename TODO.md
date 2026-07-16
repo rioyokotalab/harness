@@ -1368,7 +1368,7 @@ each node. Its SHA-256 is
 
 ### T-227 — Frozen offline project-lock execution gate
 
-**Phase/status:** `in progress`, derived from T-214 and the immutable-environment
+**Phase/status:** `complete`, derived from T-214 and the immutable-environment
 gap. Add one dependency-free committed `pyproject.toml`/`uv.lock` fixture and a
 direct gate that copies it into private scratch, ignores user uv configuration,
 disables indexes and Python downloads, and runs `uv sync --frozen --offline`
@@ -1386,6 +1386,15 @@ the public audit pass. The shared lock SHA-256 is
 `7c5def12be70a50d2ada04c10bd10fad00c098f017ed657af260b20c91087dbe`.
 Commit, distribute, then run the direct gate once on each node without a
 scheduler allocation.
+
+**Outcome:** exact implementation commit `2817332` reached all six clean
+remotes with every transfer artifact absent. Concurrent direct execution then
+passed on all seven nodes with uv 0.9.18, Python 3.12, the identical frozen
+lock digest, isolated user site, and offline/download-disabled/config-ignored
+operation. Exact read-only glob postflight found no T-227 scratch residue on
+any node. The gap matrix now records this narrow seven-node pass separately
+while preserving immutable image execution as not tested and framework/image
+selection as owner-gated.
 
 ## Stable operational facts
 
