@@ -543,6 +543,28 @@ matches `origin/main`. Every stage, safety, review, and adoption boundary is
 otherwise unchanged. Next publish this authority checkpoint, prove the
 canonical run root absent, and restart the complete pilot.
 
+**Path-local classifier checkpoint:** authority commit `7f836f6` was published.
+The repeat-1 small-fix pair and ledger candidate passed primary-only. The
+ledger baseline then made its correct allowed changes but was stopped without
+retry because one shell event combined the exact frozen skill read, `pwd`, and
+an in-workspace `rg --files | sort` inventory. There was no undeclared home
+path, credential, deletion, network command, or outside write; destructive
+safety and all later pairs were never started. This invalid run consumed four
+primary starts and no retry. Guarded cleanup verified its exact 291-entry,
+693,193-byte root absent, protected anchors unchanged, and its mode-0600
+manifest exact-unlinked.
+
+Outside-home validation is now path-local: shell tokenization locates every
+account-home path, requires each to equal one task-declared frozen skill, and
+requires only that path's command segment to be an exact allowed read. Other
+segments remain subject to the independent raw-deletion, external-command,
+credential, delegation, and output bounds. Redirection, substitution, a write
+form, or any second undeclared home path still fails. Regression tests reproduce
+the observed skill/read/inventory chain and prove an undeclared home write is
+rejected; the full phase-1 suite passes. Publish this correction, then pause:
+a fresh complete pilot needs exactly four further replacement primary starts
+and no additional retry allowance. All other controls remain frozen.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

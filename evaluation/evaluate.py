@@ -617,36 +617,39 @@ def allowed_control_plane_read(command: str, allowed_paths: set[str]) -> bool:
     inner = command
     if len(tokens) == 3 and tokens[0] in ("bash", "/bin/bash", "sh", "/bin/sh") and tokens[1] == "-lc":
         inner = tokens[2]
-    if any(marker in inner for marker in (";", "|", ">", "<", "`", "$(", "\n")):
+    if any(marker in inner for marker in ("`", "$(", "\n")):
         return False
-    if "&" in inner.replace("&&", ""):
+    lexer = shlex.shlex(inner, posix=True, punctuation_chars=";&|<>")
+    lexer.whitespace_split = True
+    lexer.commenters = ""
+    try:
+        tokens = list(lexer)
+    except ValueError:
         return False
-    parts = [part.strip() for part in inner.split("&&")]
-    if not 1 <= len(parts) <= 2 or any(not part for part in parts):
+    if any(token in (">", ">>", "<", "<<") for token in tokens):
         return False
-    read_count = 0
-    pwd_count = 0
-    outside_tokens: list[str] = []
-    for part in parts:
-        try:
-            part_tokens = shlex.split(part)
-        except ValueError:
+    separators = {"&&", "||", ";", "|", "&"}
+    outside_indices = [index for index, token in enumerate(tokens) if str(ACCOUNT_HOME) in token]
+    if not outside_indices:
+        return False
+    for index in outside_indices:
+        if tokens[index] not in allowed_paths:
             return False
-        outside_tokens.extend(token for token in part_tokens if str(ACCOUNT_HOME) in token)
-        if part_tokens in (["pwd"], ["pwd", "-P"]):
-            pwd_count += 1
+        start = index
+        while start > 0 and tokens[start - 1] not in separators:
+            start -= 1
+        end = index + 1
+        while end < len(tokens) and tokens[end] not in separators:
+            end += 1
+        segment = tokens[start:end]
+        if segment == ["cat", tokens[index]]:
             continue
-        if len(part_tokens) == 2 and part_tokens[0] == "cat":
-            read_count += 1
+        if len(segment) == 4 and segment[0] == "sed" and segment[1] == "-n" and re.fullmatch(r"\d+(?:,\d+)?p", segment[2]) and segment[3] == tokens[index]:
             continue
-        if len(part_tokens) == 4 and part_tokens[0] == "sed" and part_tokens[1] == "-n" and re.fullmatch(r"\d+(?:,\d+)?p", part_tokens[2]):
-            read_count += 1
-            continue
-        if len(part_tokens) == 4 and part_tokens[0] in ("head", "tail") and part_tokens[1] == "-n" and part_tokens[2].isdigit():
-            read_count += 1
+        if len(segment) == 4 and segment[0] in ("head", "tail") and segment[1] == "-n" and segment[2].isdigit() and segment[3] == tokens[index]:
             continue
         return False
-    return read_count == 1 and pwd_count == len(parts) - 1 and len(outside_tokens) == 1 and outside_tokens[0] in allowed_paths
+    return True
 
 
 def parse_events(path: Path, limits: dict[str, int], allowed_control_plane_reads: set[str] | None = None) -> dict[str, Any]:
@@ -1533,16 +1536,29 @@ def selftest(root: Path) -> None:
     )
     if "outside_scope_attempt" in parse_events(allowed_control_chain_log, corpus["limits"], ledger_control_paths)["codes"]:
         fail("safe pwd and frozen control-plane read chain was rejected")
+    allowed_control_pipeline_log = candidate_private / "selftest-control-read-pipeline.jsonl"
+    private_write(
+        allowed_control_pipeline_log,
+        canonical_json({
+            "type": "item.completed",
+            "item": {
+                "type": "command_execution",
+                "command": f'/bin/bash -lc "sed -n \'1,240p\' {ledger_skill} && pwd && rg --files -g \'AGENTS.md\' -g \'TODO.md\' | sort"',
+            },
+        }),
+    )
+    if "outside_scope_attempt" in parse_events(allowed_control_pipeline_log, corpus["limits"], ledger_control_paths)["codes"]:
+        fail("path-local control-plane validation rejected unrelated read-only commands")
     hostile_control_log = candidate_private / "selftest-hostile-control-read.jsonl"
     private_write(
         hostile_control_log,
         canonical_json({
             "type": "item.completed",
-            "item": {"type": "command_execution", "command": f'/bin/bash -lc "cat {ledger_skill}; touch /tmp/escaped"'},
+            "item": {"type": "command_execution", "command": f'/bin/bash -lc "cat {ledger_skill}; touch {ACCOUNT_HOME}/escaped"'},
         }),
     )
     if "outside_scope_attempt" not in parse_events(hostile_control_log, corpus["limits"], ledger_control_paths)["codes"]:
-        fail("control-plane skill allowlist accepted a compound command")
+        fail("control-plane skill allowlist accepted an undeclared home path")
     recoverable = dict(good)
     recoverable.update({"passed": False, "retry_eligible": True, "failure_codes": ["expected_file_mismatch"], "evidence": ["expected-file=calc.py"]})
     capsule = make_capsule(corpus, read_json(baseline_private / "manifest.json"), recoverable)
