@@ -69,6 +69,8 @@ done
     fail "public repository audit focused suite"
 "$ROOT/tests/test-fleet-readiness-audit.sh" >/dev/null ||
     fail "fleet readiness audit focused suite"
+"$ROOT/tests/test-hpc-readiness.sh" >/dev/null ||
+    fail "HPC readiness job focused suite"
 
 # Direct non-interactive SSH can omit ~/.local/bin even when the managed
 # Restic installation is healthy. The harness route must find that exact

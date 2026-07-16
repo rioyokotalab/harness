@@ -498,6 +498,21 @@ and numerical evidence. Do not infer compute absence from login PATH, install
 packages, clone models/datasets, pull images, or scale until the smaller gate
 passes.
 
+**CPU-gate checkpoint:** `tests/smoke/jobs/cpu-readiness.sh` is a
+scheduler-neutral five-minute job that fails on architecture drift, selects
+only the validated process-local GCC/uenv routes, builds and runs C/C++/Fortran
+with CMake/Ninja, runs a direct C++20 and standard-library Python gate, and
+executes sanitizers except for RC's declared base-runtime gap. It publishes one
+new mode-0600 result and guarded-cleans node-local build state. Scheduler
+actions remain explicit outside the generic script. Planned native requests
+reuse only T-191-approved accounts/resources at default priority: local
+`ybatch`/`thrp_1`; AB/AB2 PBS `rt_HC select=1`; RI Slurm `rkp00015/gpu` with
+explicit `--gres=none` but accepted site-injected GB200; AL Slurm
+`g177-1/normal`; RC Slurm `cloud-users/r340`; and T4 AGE
+`jh250019 cpu_4=1`. Validate, commit, distribute, recheck no exact-name/result
+collision, print each full native submit command, then monitor only captured
+IDs. No GPU/framework claim follows from this CPU gate.
+
 ### T-201 — Early-login cache redirection
 
 **Phase/status:** `planned` from RI's T-199 recurrence. Determine, without
