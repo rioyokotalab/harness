@@ -2021,9 +2021,13 @@ Five selected `.bash_profile` files (AB, AB2, AL, RC, T4) automatically start
 remote-session model, which intentionally uses the local forwarded agent only
 for an explicit `harness_remote_codex` session and otherwise skips private
 fetches. AB/AB2 and T4 also unconditionally load large compiler/GPU modules in
-`.bashrc`, affecting non-interactive commands; a per-host interactive fragment
-could preserve the convenience without contaminating direct SSH or batch
-entry. These are owner choices because existing workflows may rely on them.
+`.bashrc`. The owner sometimes deliberately sources `.bashrc` in job scripts
+and requires those non-interactive module loads to remain compatible. Do not
+make them interactive-only during this task. The safer transition is to extract
+the exact reviewed commands into a dedicated tracked, sourceable module-stack
+file, have `.bashrc` call that file unconditionally for compatibility, and let
+new or updated Bash job scripts source only the dedicated file. A later task
+may make `.bashrc` interactive-only only after known jobs have migrated.
 
 Every `.local` is already a declared symlink to large storage, and the common
 profile places `$HOME/.local/bin` first and deduplicates it. Most legacy local-
@@ -2070,8 +2074,9 @@ only the seven reviewed alias layouts, removes common duplicates, sorts
 retained site aliases, removes local duplicate common policy, and removes the
 exact defective RC path block; (5) remove D2's remote `ssh-agent` blocks and
 transactionally add D2a's six exact local SSH directives, with filtered
-effective-config validation; include only the module-block transformation
-selected in D3; (6) store only reviewed public
+effective-config validation; replace AB/AB2/T4's exact inline module blocks
+with the D3 source-only compatibility hook and tracked module-stack helper;
+(6) store only reviewed public
 original/applied payloads in mode-0600 transaction state, build same-directory
 private candidates, run `bash -n`, revalidate identity/size/bytes immediately
 before atomic rename, preserve mode/owner/single-link state, and exact-clean
@@ -2091,8 +2096,9 @@ value; retained site aliases occur once and are alphabetic in their owning
 block; `al` exists only locally. `EDITOR`/`VISUAL` are `vim`, both history
 limits are unlimited, history appends, and the prompt is exact. Fresh direct
 SSH and non-interactive Bash remain silent; login, interactive, and nested Bash
-exit zero; cache roots, logical host, local-bin precedence, required site
-module behavior selected in D3, remote Codex function, and scheduler warning
+exit zero; cache roots, logical host, local-bin precedence, D3's identical
+module stack after both non-interactive `.bashrc` sourcing and direct helper
+sourcing, remote Codex function, and scheduler warning
 behavior remain valid. Filtered `ssh -G` reports forwarding yes for exactly the
 six managed remote aliases while proxy/service/global behavior is unchanged;
 no key is enumerated or copied. Startup modes/owners/single links are unchanged, every
@@ -2101,8 +2107,10 @@ pushed revision, and transfer/normalizer/shell-capture artifacts are absent.
 
 **Risks and recovery:** alias name collisions can silently change command
 semantics, so canonical-name values are explicit and site-only names are
-preserved. Moving module setup can break scripts that implicitly rely on login
-state; D3 and direct/non-interactive/module postflights gate it. Removing
+preserved. Moving module commands behind a helper can break jobs if the hook,
+host dispatch, or source semantics drift; D3 retains unconditional `.bashrc`
+compatibility and requires matched old-versus-new module-state postflights
+before job scripts are migrated. Removing
 automatic agents can affect users who relied on a newly spawned unforwarded
 agent; D2 is explicit. Automatic forwarding exposes the current node's agent
 socket to processes with access to each selected remote account for the SSH
@@ -2124,16 +2132,20 @@ per-login agent and do not load a key; usable authentication continues through
 an agent already running on the current node and forwarded access. D2a is
 resolved as automatic forwarding for exactly AB, AB2, AL, RC, RI, and T4
 through the current node's existing host-specific SSH stanzas; never place it
-under `Host *` or mirror it remotely. D3 (open) chooses
-whether AB/AB2/T4 module loads become interactive-only per-host behavior;
-interactive-only is recommended, with batch/project jobs continuing to load
-their exact environments explicitly. The canonical collision rule, retention
+under `Host *` or mirror it remotely. D3 (revised/open) chooses the compatible
+dedicated module-stack design: extract the exact AB/AB2/T4 commands into one
+tracked source-only interface, replace each inline block with an unconditional
+call so existing job scripts that source `.bashrc` still work, and recommend
+that new or updated Bash jobs source the dedicated interface directly. This is
+preferred over either silently breaking existing jobs or preserving module
+commands inside a general interactive file forever. The canonical collision rule, retention
 of unique site aliases, local-only `al`, exact RC path-block removal, and
 minimal preservation of all other startup content are resolved by the owner's
 request, prior decisions, and the preserve-unrelated-work boundary.
 
 Checkpoint after each interview answer, then audit the register, set
-`ready-for-go`, and wait for an explicit `go`. Next unresolved question: D3.
+`ready-for-go`, and wait for an explicit `go`. Next unresolved question: D3's
+revised compatibility design.
 
 ## Stable operational facts
 
