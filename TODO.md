@@ -376,8 +376,8 @@ T-199. No node or scheduler was mutated.
 
 ### T-196 — Backup lifecycle phase 2
 
-**Phase/status:** `planning`, execution-gated on all seven T-191 first snapshots
-and successors passing. During this window, produce a PIE decision register and
+**Phase/status:** `design complete`, execution-gated on all seven T-191 first
+snapshots and successors passing. The PIE decision register and
 recommended defaults for retention, `forget`/`prune`, scheduled full-data
 checks, restore drills, and independent replica recurrence. No deletion,
 retention command, new scheduler job, or replica automation is authorized by
@@ -385,15 +385,31 @@ this planning task. The eventual plan must preserve rollback evidence, bound
 repository locks and maintenance time, and introduce each destructive or
 recurring mechanism only after a manual dry run and restore gate.
 
+**Outcome:** `docs/backup-lifecycle-phase2.md` records official Restic 0.19.1
+semantics, recommended generous retention, separate forget/prune transactions,
+deterministic data-check coverage, restore drills, manual-first independent
+replicas, collision/lock rules, phased acceptance gates, rollback evidence, and
+five owner choices. No Restic, scheduler, replica, deletion, or credential-path
+command ran. Keep-all remains the effective policy until T-191 production
+stabilizes and the owner separately approves exact destructive commands.
+
 ### T-197 — Evaluation follow-up decision
 
-**Phase/status:** `executing`; evidence-only, with no new model invocation or
+**Phase/status:** `complete`; evidence-only, with no new model invocation or
 candidate adoption. Reconcile T-181's pilot/full reports and review limitation,
 quantify correctness, retry, latency, and token tradeoffs, and record an
 adopt/adapt/experiment/reject decision. Default recommendation: do not adopt
 failure-capsule candidate A because it showed no substantive correctness gain,
 used comparable retries, and increased aggregate cost; require a materially
 different mechanism and pre-registered hypothesis before another 70-run study.
+
+**Outcome:** `docs/evaluation-follow-up.md` records `reject` for candidate A
+and retains the baseline. Pilot was 9/9 versus 9/9; the full canonical result
+remains 35/35 baseline versus 34/35 candidate with one retry per arm and no
+safety failures. Targeted review classified the one difference as an oracle
+false negative, so substantive correctness tied while candidate full-stage
+duration/input/output rose 13.328%/3.135%/3.292%. The review's arm-bearing path
+leak limits subjective blinding. No model, grader, report, or guidance changed.
 
 ### Eight-hour LLM/HPC readiness workstream
 
