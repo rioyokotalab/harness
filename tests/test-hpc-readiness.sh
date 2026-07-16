@@ -13,9 +13,12 @@ MPI_LOCAL=$ROOT/tests/smoke/jobs/local-mpi.slurm
 NUMERICAL_JOB=$ROOT/tests/smoke/jobs/numerical-readiness.sh
 NUMERICAL_LOCAL=$ROOT/tests/smoke/jobs/local-numerical.slurm
 COMPUTE_DEBUG_JOB=$ROOT/tests/smoke/jobs/compute-debugger-readiness.sh
+AFFINITY_JOB=$ROOT/tests/smoke/jobs/affinity-readiness.sh
+AFFINITY_LOCAL=$ROOT/tests/smoke/jobs/local-affinity.slurm
 
 bash -n "$JOB" "$LOCAL" "$CACHE_JOB" "$CACHE_LOCAL" "$ACCEL_JOB" "$ACCEL_LOCAL" \
-    "$MPI_JOB" "$MPI_LOCAL" "$NUMERICAL_JOB" "$NUMERICAL_LOCAL" "$COMPUTE_DEBUG_JOB"
+    "$MPI_JOB" "$MPI_LOCAL" "$NUMERICAL_JOB" "$NUMERICAL_LOCAL" "$COMPUTE_DEBUG_JOB" \
+    "$AFFINITY_JOB" "$AFFINITY_LOCAL"
 grep -Fx '#YBATCH -r thrp_1' "$LOCAL" >/dev/null
 grep -Fx '#SBATCH --time=00:05:00' "$LOCAL" >/dev/null
 grep -F 'uenv run prgenv-gnu/25.11:v1 --view=default' "$JOB" >/dev/null
@@ -61,6 +64,10 @@ grep -F 'expected_numerator = -14036' "$ROOT/tests/smoke/numerical.cpp" >/dev/nu
 grep -F '0x3ff0000000000001' "$ROOT/tests/smoke/numerical.cpp" >/dev/null
 grep -F 't213-debugger-compute-$host-$run_tag.out' "$COMPUTE_DEBUG_JOB" >/dev/null
 grep -F 'HARNESS_LOGICAL_HOST=$host' "$COMPUTE_DEBUG_JOB" >/dev/null
+grep -Fx '#YBATCH -r thrp_1' "$AFFINITY_LOCAL" >/dev/null
+grep -Fx '#SBATCH --cpus-per-task=2' "$AFFINITY_LOCAL" >/dev/null
+grep -F 'tests/smoke/jobs/source-contract.sh' "$AFFINITY_JOB" >/dev/null
+grep -F '"$build/affinity" 2' "$AFFINITY_JOB" >/dev/null
 for source in cpu.c cpu.cpp cpu.f90; do
     grep -F "$source" "$ROOT/tests/smoke/CMakeLists.txt" >/dev/null
 done
@@ -70,12 +77,13 @@ done
 if grep -E 'rm[[:space:]]+(-[^[:space:]]*)*[rR]|--recursive|rsync[[:space:]].*--delete' \
     "$JOB" "$LOCAL" "$CACHE_JOB" "$CACHE_LOCAL" "$ACCEL_JOB" "$ACCEL_LOCAL" \
     "$MPI_JOB" "$MPI_LOCAL" "$NUMERICAL_JOB" "$NUMERICAL_LOCAL" \
-    "$COMPUTE_DEBUG_JOB" >/dev/null; then
+    "$COMPUTE_DEBUG_JOB" "$AFFINITY_JOB" "$AFFINITY_LOCAL" >/dev/null; then
     printf '%s\n' 'FAIL: unsafe cleanup in readiness job' >&2
     exit 1
 fi
 if grep -E '(^|[^A-Za-z0-9_])(qsub|sbatch|srun|yrun|ybatch|scancel|qdel)([^A-Za-z0-9_]|$)' \
-    "$JOB" "$CACHE_JOB" "$ACCEL_JOB" "$NUMERICAL_JOB" "$COMPUTE_DEBUG_JOB" >/dev/null; then
+    "$JOB" "$CACHE_JOB" "$ACCEL_JOB" "$NUMERICAL_JOB" "$COMPUTE_DEBUG_JOB" \
+    "$AFFINITY_JOB" >/dev/null; then
     printf '%s\n' 'FAIL: generic readiness job hides scheduler action' >&2
     exit 1
 fi

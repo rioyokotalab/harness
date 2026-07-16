@@ -40,6 +40,14 @@ native `c++ -std=c++20 -O2 tests/smoke/cpp20.cpp -o BUILD/cpp20`, then execute
 install or globally select a new compiler; enter the reviewed module, uenv, or
 project toolchain and report that exact native command.
 
+`affinity.cpp` is a non-benchmark scheduler-allocation gate. It reads the
+process affinity mask, requires Linux CPU topology metadata for every allowed
+CPU, selects two distinct physical cores, and proves two worker threads can be
+pinned to those cores. It emits counts only—not CPU identifiers or hostnames—
+and does not repeat the OpenMP arithmetic test. A pass establishes bounded
+cpuset/topology plumbing for that allocation, not NUMA placement, memory
+affinity, performance, or project tuning.
+
 `mpi.c` defaults to the two ranks used by the allocation smoke jobs. Passing
 `1` explicitly permits a direct singleton run that validates an MPI compiler,
 headers, link, and initialization without launching processes or consuming an

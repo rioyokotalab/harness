@@ -1620,6 +1620,23 @@ placement. The route is now `blocked_no_test_only`, Q4 reflects the scheduler
 interface block, and the stable warning is in the native-HPC site reference.
 No dry run, temporary script, job, or scheduler mutation occurred.
 
+### T-237 — Scheduler-allocation CPU affinity and topology gate
+
+**Phase/status:** `implementing`, derived from T-216/Q3. Add a portable Linux
+C++20 gate that reads only the allocation process's CPU affinity mask and
+sysfs topology, requires at least two distinct physical cores, and proves two
+workers can be pinned to separate allowed cores. Emit aggregate counts only;
+do not publish CPU IDs, hostnames, timings, or benchmark claims, and do not
+repeat the OpenMP arithmetic gate. The scheduler-neutral job must use private
+mode-0600 result publication, guarded scratch cleanup, and an exact submitted-
+source contract. Reuse only the proven one-node, five-minute, default-priority
+CPU routes, with two CPUs per task where the native scheduler exposes that
+shape. Validate and commit first; then distribute, collision-check, print the
+resolved native commands, submit at most once per node, and monitor captured
+IDs without replacing delayed work. The two existing local jobs remain a
+duplicate-load constraint: do not submit a third local readiness job while
+they are pending.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
