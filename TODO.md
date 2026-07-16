@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-212.
+and compact historical pointers here. Next free ID: T-213.
 
 ## Current state
 
@@ -959,6 +959,22 @@ bundle is absent. Seven repeated plans passed. Each persistent root then
 published and verified the exact 1 MiB checkpoint probe and reported both
 names absent. An independent restricted-prefix postflight found zero residue
 on all seven nodes. T-211 is complete within its narrow atomic-hardlink scope.
+
+### T-212 — Direct development-debugger gate
+
+**Phase/status:** `executing`; no scheduler allocation is required. The tracked
+tiny C program has a non-inlined `checkpoint(35)` that returns 42. The bounded
+login-node gate compiles it with `-g3 -O0 -fno-omit-frame-pointer`, runs GDB in
+batch/no-init mode, and privately requires the exact function breakpoint,
+argument value 35, continuation, and normal exit. Only compiler/GDB version and
+a stable pass/fail category reach stdout; raw debugger output stays inside a
+mode-0700 temporary tree removed through guarded cleanup.
+
+Local direct execution and static/safety tests pass. Run the full suite/public
+audit, commit and distribute, then execute once on all seven login nodes. This
+establishes only direct local-process GDB usability; it does not claim remote
+debugging, scheduler attach, MPI/GPU debugging, core-file policy, optimized
+debug info, or profiler capability.
 
 ## Stable operational facts
 
