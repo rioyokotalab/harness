@@ -1002,6 +1002,13 @@ and publishes one mode-0600 fixed result even on failure. Use approved
 process limits, core policy, packages, or login behavior. Commit/distribute,
 collision-check, submit once, and monitor only captured IDs.
 
+**Submission checkpoint:** exact commit `5fadfbd` reached all six clean remotes
+through a verified 2,332-byte public bundle; every bundle is absent. Fresh
+result/name collision checks passed before PBS accepted AB `2045079.pbs1` and
+AB2 `2045078.pbs1`, and AGE accepted T4 `8180554`. T4 already completed with
+scheduler/result zero and the full inner breakpoint/argument gate. The two
+ABCI jobs are validly queued; monitor only those IDs without replacement.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
