@@ -809,7 +809,7 @@ image pull, or live environment selection remains owner-gated.
 
 ### T-207 — Scheduler-native MPI correctness gate
 
-**Phase/status:** `planned` after T-200. Discover and freeze each site's
+**Phase/status:** `executing` after T-200. Discover and freeze each site's
 declared MPI/compiler route, then run the tracked bounded MPI source with two
 ranks on one allocated node before any multi-node or GPU-aware claim. Require
 rank uniqueness, expected world size, launcher identity, compiler/library
@@ -847,6 +847,17 @@ private capture/trap first, performs the same exact process-local module setup
 inside that capture, and continues without re-exec. After tests and exact
 distribution, retry only AB/AB2 with run tag v2 and distinct names; a second
 failure must still publish its bounded diagnostic instead of disappearing.
+
+**ABCI v2 evidence and bounded v3 retry:** both corrected jobs published their
+private diagnostics and exited one. Compilation and HPC-X initialization
+passed; native `mpirun -n 2` then reported one scheduler slot because the PBS
+request's implicit `mpiprocs` value was one. This is a request-shape defect,
+not an MPI correctness failure. Preserve v2. Retry only AB/AB2 with fresh run
+tag v3 and names, changing the same approved one-node `rt_HC` request to
+`select=1:mpiprocs=2`; this exposes two launch slots within the already granted
+32 CPUs and does not oversubscribe, resize the node count, or change priority.
+Collision-check result and job name immediately before each single submission,
+then monitor only the captured IDs.
 
 ### T-208 — Immutable training-environment transport matrix
 
@@ -993,7 +1004,7 @@ hands bounded compute validation to T-213.
 
 ### T-213 — Compute-node debugger gate for restricted logins
 
-**Phase/status:** `executing` after T-212. Run the same guarded GDB breakpoint,
+**Phase/status:** `complete` after T-212. Run the same guarded GDB breakpoint,
 argument, continuation, and normal-exit test inside one five-minute/default-
 priority CPU allocation on AB, AB2, and T4 only. A scheduler-neutral wrapper
 requires the native allocation identity, captures only safe direct-gate output,
@@ -1009,9 +1020,17 @@ AB2 `2045078.pbs1`, and AGE accepted T4 `8180554`. T4 already completed with
 scheduler/result zero and the full inner breakpoint/argument gate. The two
 ABCI jobs are validly queued; monitor only those IDs without replacement.
 
+**Outcome:** T4 completed with scheduler/result zero and the full breakpoint,
+argument, continuation, and normal-exit gate. AB `2045079.pbs1` and AB2
+`2045078.pbs1` both ran on compute nodes and reproduced the stable
+`ptrace-policy` classification with private results and PBS exit two. Compute
+allocation therefore does not remove ABCI's policy boundary. T-213 is closed
+as one pass and two explicit site-policy gaps; do not attempt a ptrace bypass or
+change security, core, package, or scheduler settings.
+
 ### T-214 — Offline project virtual-environment gate
 
-**Phase/status:** `executing`; no allocation or package installation is
+**Phase/status:** `complete`; no allocation or package installation is
 required. The tracked direct gate selects only the already-present `python3`,
 requires managed `uv`, sets `UV_OFFLINE=1` and
 `UV_PYTHON_DOWNLOADS=never`, and creates an unseeded project-independent venv
@@ -1036,6 +1055,30 @@ exact managed-link fallback and prefers the declared managed Python 3.12 link
 over generic system `python3`. Focused execution, portable full-suite, and
 public-audit checks pass locally. Commit, distribute, and rerun all seven before
 closing; no artifact download or package change is authorized or required.
+
+**Outcome:** exact correction commit `c17f8dd` reached all six clean remotes.
+All seven nodes then passed with uv 0.9.18 and Python 3.12, offline mode and
+Python downloads disabled, isolated user site, standard-library smoke, and
+guarded cleanup. An AB transfer initially landed in login2 node-local `/tmp`;
+the repository was untouched until a home-based retry passed, and the exact
+mode-0600 artifact was SHA-256-revalidated, unlinked, and independently absent
+on login1 through login4. All local and remote transfer artifacts are absent.
+T-214 is complete within its deliberately dependency-free scope.
+
+### T-215 — Load-balanced-safe harness fast-forward workflow
+
+**Phase/status:** `planned` after repeated verified bundle rollouts. Replace the
+error-prone manual transport sequence with a transparent plan/apply command
+that prints the native Git/SSH/SCP operations, requires an explicit expected
+old and new commit, refuses dirty or divergent worktrees, creates one
+mode-0600 prerequisite-bound Git bundle, verifies size and digest before each
+fetch, fast-forwards only, and exact-unlinks every transfer artifact after
+postflight. Use a unique account-home staging file rather than node-local
+`/tmp` on load-balanced sites. Test entirely with local fake remotes first;
+live fleet use is allowed only after phase-1, public-audit, collision, cleanup,
+and interrupted-transaction tests pass. It must never force, reset, merge,
+stash, inspect credentials, alter remotes, or conceal the resolved native
+commands.
 
 ## Stable operational facts
 
