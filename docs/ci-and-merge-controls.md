@@ -7,6 +7,9 @@
 v6.0.2 commit and disables persisted Git credentials. It has no secrets,
 deployment, model calls, remote-node access, scheduler commands, package
 installation, or cache writes outside its ephemeral runner.
+Checkout fetches complete public history because the evaluation validator
+compares live guidance with its older frozen baseline revision; a shallow
+checkout cannot satisfy that invariant.
 
 The unique required-check candidate is `portable-phase1`. It runs the complete
 phase-one integration suite except for the native MPI singleton compile/run.
