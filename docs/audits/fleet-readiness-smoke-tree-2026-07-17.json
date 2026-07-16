@@ -1,0 +1,1834 @@
+{
+  "failures": {},
+  "nodes": {
+    "ab": {
+      "control_plane": {
+        "block": 0,
+        "create": 0,
+        "keep": 34
+      },
+      "controls": {
+        ".claude/CLAUDE.md": {
+          "kind": "symlink",
+          "target": "/home/aca10017by/harness/.claude/CLAUDE.md"
+        },
+        ".codex/AGENTS.md": {
+          "kind": "symlink",
+          "target": "/home/aca10017by/harness/.codex/AGENTS.md"
+        },
+        ".codex/rules/default.rules": {
+          "kind": "symlink",
+          "target": "/home/aca10017by/harness/.codex/rules/default.rules"
+        },
+        ".vimrc": {
+          "kind": "symlink",
+          "target": "/home/aca10017by/harness/config/vim/vimrc"
+        }
+      },
+      "dirty_entries": 0,
+      "discarded_stdout_lines": 0,
+      "doctor": {
+        "failures": 0,
+        "warnings": 0
+      },
+      "head": "081e0e8c89a7507e35d962812791c6635732e772",
+      "host": "ab",
+      "inventory": {
+        "arch": "x86_64",
+        "harness_checkout": "present",
+        "kernel": "5.14.0-427.13.1.el9_4.x86_64",
+        "link_claude_guidance": "symlink",
+        "link_codex_guidance": "symlink",
+        "link_codex_rules": "symlink",
+        "logical_host": "ab",
+        "login_shell": "bash",
+        "os_id": "rhel",
+        "os_version": "9.4",
+        "schema": "1",
+        "startup_bash_login": "absent",
+        "startup_bash_logout": "regular",
+        "startup_bash_profile": "regular",
+        "startup_bashrc": "regular",
+        "startup_profile": "absent",
+        "tool_apptainer": "absent",
+        "tool_bash": "present",
+        "tool_cc": "present",
+        "tool_clang": "absent",
+        "tool_clangpp": "absent",
+        "tool_claude": "present",
+        "tool_cmake": "present",
+        "tool_codex": "present",
+        "tool_cuda_gdb": "present",
+        "tool_curl": "present",
+        "tool_docker": "absent",
+        "tool_gcc": "present",
+        "tool_gdb": "present",
+        "tool_gfortran": "present",
+        "tool_git": "present",
+        "tool_git_lfs": "present",
+        "tool_gpp": "present",
+        "tool_htop": "present",
+        "tool_jq": "present",
+        "tool_lftp": "absent",
+        "tool_lldb": "absent",
+        "tool_make": "present",
+        "tool_meson": "absent",
+        "tool_ml": "present",
+        "tool_modulecmd": "present",
+        "tool_mpicc": "present",
+        "tool_mpicxx": "present",
+        "tool_mpiexec": "present",
+        "tool_mpifort": "present",
+        "tool_mpirun": "present",
+        "tool_ncu": "present",
+        "tool_ninja": "present",
+        "tool_node": "present",
+        "tool_node_version": "v24.16.0",
+        "tool_nodestatus": "present",
+        "tool_npm": "present",
+        "tool_npm_version": "11.13.0",
+        "tool_nsys": "present",
+        "tool_nvc": "absent",
+        "tool_nvcc": "present",
+        "tool_nvcpp": "absent",
+        "tool_nvfortran": "absent",
+        "tool_nvidia_smi": "absent",
+        "tool_perf": "absent",
+        "tool_pkg_config": "present",
+        "tool_podman": "present",
+        "tool_python3": "present",
+        "tool_qdel": "present",
+        "tool_qrsh": "absent",
+        "tool_qstat": "present",
+        "tool_qsub": "present",
+        "tool_rclone": "present",
+        "tool_restic": "present",
+        "tool_rg": "present",
+        "tool_rocm_smi": "absent",
+        "tool_rocminfo": "absent",
+        "tool_rsync": "present",
+        "tool_sbatch": "absent",
+        "tool_scancel": "absent",
+        "tool_scontrol": "absent",
+        "tool_sh": "present",
+        "tool_shellcheck": "present",
+        "tool_sinfo": "absent",
+        "tool_singularity": "present",
+        "tool_sqlite3": "present",
+        "tool_squeue": "absent",
+        "tool_srun": "absent",
+        "tool_strace": "present",
+        "tool_tectonic": "present",
+        "tool_tmux": "present",
+        "tool_tree": "present",
+        "tool_uenv": "absent",
+        "tool_uv": "present",
+        "tool_valgrind": "present",
+        "tool_vim": "present",
+        "tool_wget": "present",
+        "tool_ybatch": "absent",
+        "tool_yrun": "absent"
+      },
+      "schedule": {
+        "chain": {
+          "eligible_epoch": 1784390400,
+          "job": "2044027.pbs1",
+          "name": "hab2607190100",
+          "present": true,
+          "state": "W",
+          "status": "active"
+        },
+        "smoke": {
+          "eligible_epoch": 1784390400,
+          "job": "2043966.pbs1",
+          "name": "sab2607190100",
+          "present": false,
+          "state": "none",
+          "status": "verified-disabled"
+        }
+      },
+      "smoke_sources": {
+        "CMakeLists.txt": "de2081fe7f435810ffc7eb258bd5138ea545fbb6",
+        "cpp20.cpp": "ec3d72fa317814204668822281d74d41f2677e03",
+        "cpu.c": "5ad7b3513b810e34017069bc77d6522ccd95db90",
+        "cpu.cpp": "63d0ee312e8fd84fd8b143aacecd201b9d33b63f",
+        "cpu.f90": "73289de506971aff51ddb4ee502ef8184fb5ec65",
+        "cuda.cu": "b829aaf72bfd7d3249d9acd89be3272d7653bbf5",
+        "llm_torch.py": "c4b5ff0983c581f0ccaaded413636aa8bac7a171",
+        "mpi.c": "d6a38ef3f20000fea8903c73521f3acbbca94dbb",
+        "python.py": "5e7fa7177753951c6ee1452d7148323688d68bc9",
+        "sanitizer.c": "c0437bff94366862481f36710d47019c791c381f"
+      },
+      "smoke_tree": "17bdf765d814abd4851c2a282064419f88e905c2",
+      "stderr_present": false,
+      "storage": {
+        ".allinea": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".apptainer": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".cache": {
+          "kind": "directory",
+          "target": "-"
+        },
+        ".cupy": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".lhotse": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".local": {
+          "kind": "symlink",
+          "target": "/groups/gag51395/yokota/home/.local"
+        },
+        ".mozilla": {
+          "kind": "directory",
+          "target": "-"
+        },
+        ".nsightsystems": {
+          "kind": "symlink",
+          "target": "/groups/gag51395/yokota/cache/home/.nsightsystems"
+        },
+        ".nv": {
+          "kind": "symlink",
+          "target": "/groups/gag51395/yokota/cache/home/.nv"
+        },
+        ".starpu": {
+          "kind": "symlink",
+          "target": "/groups/gag51395/yokota/cache/home/.starpu"
+        },
+        ".triton": {
+          "kind": "symlink",
+          "target": "/groups/gag51395/yokota/cache/home/.triton"
+        }
+      },
+      "versions": {
+        "cc": {
+          "state": "present",
+          "value": "cc (GCC) 11.5.0 20240719 (Red Hat 11.5.0-5) "
+        },
+        "claude": {
+          "state": "present",
+          "value": "2.1.207 (Claude Code) "
+        },
+        "cmake": {
+          "state": "present",
+          "value": "cmake version 3.26.5 "
+        },
+        "codex": {
+          "state": "present",
+          "value": "codex-cli 0.144.4 "
+        },
+        "cuda": {
+          "state": "present",
+          "value": "nvcc: NVIDIA (R) Cuda compiler driver "
+        },
+        "cxx": {
+          "state": "present",
+          "value": "c++ (GCC) 11.5.0 20240719 (Red Hat 11.5.0-5) "
+        },
+        "fortran": {
+          "state": "present",
+          "value": "GNU Fortran (GCC) 11.5.0 20240719 (Red Hat 11.5.0-5) "
+        },
+        "git": {
+          "state": "present",
+          "value": "git version 2.47.3 "
+        },
+        "mpi": {
+          "state": "present",
+          "value": "gcc (GCC) 11.5.0 20240719 (Red Hat 11.5.0-5) "
+        },
+        "ninja": {
+          "state": "present",
+          "value": "1.13.2 "
+        },
+        "node": {
+          "state": "present",
+          "value": "v24.16.0 "
+        },
+        "python": {
+          "state": "present",
+          "value": "Python 3.12.8 "
+        },
+        "restic": {
+          "state": "present",
+          "value": "restic 0.19.1 compiled with go1.26.4 on linux/amd64 "
+        }
+      }
+    },
+    "ab2": {
+      "control_plane": {
+        "block": 0,
+        "create": 0,
+        "keep": 34
+      },
+      "controls": {
+        ".claude/CLAUDE.md": {
+          "kind": "symlink",
+          "target": "/home/aah17783cq/harness/.claude/CLAUDE.md"
+        },
+        ".codex/AGENTS.md": {
+          "kind": "symlink",
+          "target": "/home/aah17783cq/harness/.codex/AGENTS.md"
+        },
+        ".codex/rules/default.rules": {
+          "kind": "symlink",
+          "target": "/home/aah17783cq/harness/.codex/rules/default.rules"
+        },
+        ".vimrc": {
+          "kind": "symlink",
+          "target": "/home/aah17783cq/harness/config/vim/vimrc"
+        }
+      },
+      "dirty_entries": 0,
+      "discarded_stdout_lines": 0,
+      "doctor": {
+        "failures": 0,
+        "warnings": 0
+      },
+      "head": "081e0e8c89a7507e35d962812791c6635732e772",
+      "host": "ab2",
+      "inventory": {
+        "arch": "x86_64",
+        "harness_checkout": "present",
+        "kernel": "5.14.0-427.13.1.el9_4.x86_64",
+        "link_claude_guidance": "symlink",
+        "link_codex_guidance": "symlink",
+        "link_codex_rules": "symlink",
+        "logical_host": "ab2",
+        "login_shell": "bash",
+        "os_id": "rhel",
+        "os_version": "9.4",
+        "schema": "1",
+        "startup_bash_login": "absent",
+        "startup_bash_logout": "absent",
+        "startup_bash_profile": "regular",
+        "startup_bashrc": "regular",
+        "startup_profile": "absent",
+        "tool_apptainer": "absent",
+        "tool_bash": "present",
+        "tool_cc": "present",
+        "tool_clang": "absent",
+        "tool_clangpp": "absent",
+        "tool_claude": "present",
+        "tool_cmake": "present",
+        "tool_codex": "present",
+        "tool_cuda_gdb": "present",
+        "tool_curl": "present",
+        "tool_docker": "absent",
+        "tool_gcc": "present",
+        "tool_gdb": "present",
+        "tool_gfortran": "present",
+        "tool_git": "present",
+        "tool_git_lfs": "present",
+        "tool_gpp": "present",
+        "tool_htop": "present",
+        "tool_jq": "present",
+        "tool_lftp": "absent",
+        "tool_lldb": "absent",
+        "tool_make": "present",
+        "tool_meson": "absent",
+        "tool_ml": "present",
+        "tool_modulecmd": "present",
+        "tool_mpicc": "present",
+        "tool_mpicxx": "present",
+        "tool_mpiexec": "present",
+        "tool_mpifort": "present",
+        "tool_mpirun": "present",
+        "tool_ncu": "present",
+        "tool_ninja": "present",
+        "tool_node": "present",
+        "tool_node_version": "v24.16.0",
+        "tool_nodestatus": "present",
+        "tool_npm": "present",
+        "tool_npm_version": "11.13.0",
+        "tool_nsys": "present",
+        "tool_nvc": "absent",
+        "tool_nvcc": "present",
+        "tool_nvcpp": "absent",
+        "tool_nvfortran": "absent",
+        "tool_nvidia_smi": "absent",
+        "tool_perf": "absent",
+        "tool_pkg_config": "present",
+        "tool_podman": "present",
+        "tool_python3": "present",
+        "tool_qdel": "present",
+        "tool_qrsh": "absent",
+        "tool_qstat": "present",
+        "tool_qsub": "present",
+        "tool_rclone": "present",
+        "tool_restic": "present",
+        "tool_rg": "present",
+        "tool_rocm_smi": "absent",
+        "tool_rocminfo": "absent",
+        "tool_rsync": "present",
+        "tool_sbatch": "absent",
+        "tool_scancel": "absent",
+        "tool_scontrol": "absent",
+        "tool_sh": "present",
+        "tool_shellcheck": "present",
+        "tool_sinfo": "absent",
+        "tool_singularity": "present",
+        "tool_sqlite3": "present",
+        "tool_squeue": "absent",
+        "tool_srun": "absent",
+        "tool_strace": "present",
+        "tool_tectonic": "present",
+        "tool_tmux": "present",
+        "tool_tree": "present",
+        "tool_uenv": "absent",
+        "tool_uv": "present",
+        "tool_valgrind": "present",
+        "tool_vim": "present",
+        "tool_wget": "present",
+        "tool_ybatch": "absent",
+        "tool_yrun": "absent"
+      },
+      "schedule": {
+        "chain": {
+          "eligible_epoch": 1784392200,
+          "job": "2044028.pbs1",
+          "name": "hab22607190130",
+          "present": true,
+          "state": "W",
+          "status": "active"
+        },
+        "smoke": {
+          "eligible_epoch": 1784392200,
+          "job": "2043964.pbs1",
+          "name": "sab22607190130",
+          "present": false,
+          "state": "none",
+          "status": "verified-disabled"
+        }
+      },
+      "smoke_sources": {
+        "CMakeLists.txt": "de2081fe7f435810ffc7eb258bd5138ea545fbb6",
+        "cpp20.cpp": "ec3d72fa317814204668822281d74d41f2677e03",
+        "cpu.c": "5ad7b3513b810e34017069bc77d6522ccd95db90",
+        "cpu.cpp": "63d0ee312e8fd84fd8b143aacecd201b9d33b63f",
+        "cpu.f90": "73289de506971aff51ddb4ee502ef8184fb5ec65",
+        "cuda.cu": "b829aaf72bfd7d3249d9acd89be3272d7653bbf5",
+        "llm_torch.py": "c4b5ff0983c581f0ccaaded413636aa8bac7a171",
+        "mpi.c": "d6a38ef3f20000fea8903c73521f3acbbca94dbb",
+        "python.py": "5e7fa7177753951c6ee1452d7148323688d68bc9",
+        "sanitizer.c": "c0437bff94366862481f36710d47019c791c381f"
+      },
+      "smoke_tree": "17bdf765d814abd4851c2a282064419f88e905c2",
+      "stderr_present": false,
+      "storage": {
+        ".allinea": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".apptainer": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".cache": {
+          "kind": "directory",
+          "target": "-"
+        },
+        ".cupy": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".lhotse": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".local": {
+          "kind": "symlink",
+          "target": "/groups/gah51624/yokota/home/.local"
+        },
+        ".mozilla": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".nsightsystems": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".nv": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".starpu": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".triton": {
+          "kind": "absent",
+          "target": "-"
+        }
+      },
+      "versions": {
+        "cc": {
+          "state": "present",
+          "value": "cc (GCC) 11.5.0 20240719 (Red Hat 11.5.0-5) "
+        },
+        "claude": {
+          "state": "present",
+          "value": "2.1.207 (Claude Code) "
+        },
+        "cmake": {
+          "state": "present",
+          "value": "cmake version 3.26.5 "
+        },
+        "codex": {
+          "state": "present",
+          "value": "codex-cli 0.144.4 "
+        },
+        "cuda": {
+          "state": "present",
+          "value": "nvcc: NVIDIA (R) Cuda compiler driver "
+        },
+        "cxx": {
+          "state": "present",
+          "value": "c++ (GCC) 11.5.0 20240719 (Red Hat 11.5.0-5) "
+        },
+        "fortran": {
+          "state": "present",
+          "value": "GNU Fortran (GCC) 11.5.0 20240719 (Red Hat 11.5.0-5) "
+        },
+        "git": {
+          "state": "present",
+          "value": "git version 2.47.3 "
+        },
+        "mpi": {
+          "state": "present",
+          "value": "gcc (GCC) 11.5.0 20240719 (Red Hat 11.5.0-5) "
+        },
+        "ninja": {
+          "state": "present",
+          "value": "1.13.2 "
+        },
+        "node": {
+          "state": "present",
+          "value": "v24.16.0 "
+        },
+        "python": {
+          "state": "present",
+          "value": "Python 3.9.25 "
+        },
+        "restic": {
+          "state": "present",
+          "value": "restic 0.19.1 compiled with go1.26.4 on linux/amd64 "
+        }
+      }
+    },
+    "al": {
+      "control_plane": {
+        "block": 0,
+        "create": 0,
+        "keep": 34
+      },
+      "controls": {
+        ".claude/CLAUDE.md": {
+          "kind": "symlink",
+          "target": "/users/ryokota/harness/.claude/CLAUDE.md"
+        },
+        ".codex/AGENTS.md": {
+          "kind": "symlink",
+          "target": "/users/ryokota/harness/.codex/AGENTS.md"
+        },
+        ".codex/rules/default.rules": {
+          "kind": "symlink",
+          "target": "/users/ryokota/harness/.codex/rules/default.rules"
+        },
+        ".vimrc": {
+          "kind": "symlink",
+          "target": "/users/ryokota/harness/config/vim/vimrc"
+        }
+      },
+      "dirty_entries": 0,
+      "discarded_stdout_lines": 0,
+      "doctor": {
+        "failures": 0,
+        "warnings": 0
+      },
+      "head": "081e0e8c89a7507e35d962812791c6635732e772",
+      "host": "al",
+      "inventory": {
+        "arch": "aarch64",
+        "harness_checkout": "present",
+        "kernel": "6.4.0-150600.23.53-64kb",
+        "link_claude_guidance": "symlink",
+        "link_codex_guidance": "symlink",
+        "link_codex_rules": "symlink",
+        "logical_host": "al",
+        "login_shell": "bash",
+        "os_id": "sles",
+        "os_version": "15.6",
+        "schema": "1",
+        "startup_bash_login": "absent",
+        "startup_bash_logout": "absent",
+        "startup_bash_profile": "regular",
+        "startup_bashrc": "regular",
+        "startup_profile": "regular",
+        "tool_apptainer": "absent",
+        "tool_bash": "present",
+        "tool_cc": "present",
+        "tool_clang": "absent",
+        "tool_clangpp": "absent",
+        "tool_claude": "present",
+        "tool_cmake": "present",
+        "tool_codex": "present",
+        "tool_cuda_gdb": "absent",
+        "tool_curl": "present",
+        "tool_docker": "present",
+        "tool_gcc": "present",
+        "tool_gdb": "present",
+        "tool_gfortran": "present",
+        "tool_git": "present",
+        "tool_git_lfs": "present",
+        "tool_gpp": "present",
+        "tool_htop": "present",
+        "tool_jq": "present",
+        "tool_lftp": "absent",
+        "tool_lldb": "absent",
+        "tool_make": "present",
+        "tool_meson": "absent",
+        "tool_ml": "present",
+        "tool_modulecmd": "absent",
+        "tool_mpicc": "absent",
+        "tool_mpicxx": "absent",
+        "tool_mpiexec": "absent",
+        "tool_mpifort": "absent",
+        "tool_mpirun": "absent",
+        "tool_ncu": "absent",
+        "tool_ninja": "present",
+        "tool_node": "present",
+        "tool_node_version": "v24.16.0",
+        "tool_nodestatus": "absent",
+        "tool_npm": "present",
+        "tool_npm_version": "11.13.0",
+        "tool_nsys": "absent",
+        "tool_nvc": "absent",
+        "tool_nvcc": "absent",
+        "tool_nvcpp": "absent",
+        "tool_nvfortran": "absent",
+        "tool_nvidia_smi": "present",
+        "tool_perf": "present",
+        "tool_pkg_config": "present",
+        "tool_podman": "present",
+        "tool_python3": "present",
+        "tool_qdel": "absent",
+        "tool_qrsh": "absent",
+        "tool_qstat": "absent",
+        "tool_qsub": "absent",
+        "tool_rclone": "present",
+        "tool_restic": "present",
+        "tool_rg": "present",
+        "tool_rocm_smi": "absent",
+        "tool_rocminfo": "absent",
+        "tool_rsync": "present",
+        "tool_sbatch": "present",
+        "tool_scancel": "present",
+        "tool_scontrol": "present",
+        "tool_sh": "present",
+        "tool_shellcheck": "present",
+        "tool_sinfo": "present",
+        "tool_singularity": "absent",
+        "tool_sqlite3": "present",
+        "tool_squeue": "present",
+        "tool_srun": "present",
+        "tool_strace": "present",
+        "tool_tectonic": "present",
+        "tool_tmux": "present",
+        "tool_tree": "present",
+        "tool_uenv": "present",
+        "tool_uv": "present",
+        "tool_valgrind": "absent",
+        "tool_vim": "present",
+        "tool_wget": "present",
+        "tool_ybatch": "absent",
+        "tool_yrun": "absent"
+      },
+      "schedule": {
+        "chain": {
+          "eligible_epoch": 1784415600,
+          "job": "4221054",
+          "name": "hal2607190100",
+          "present": true,
+          "state": "PENDING",
+          "status": "active"
+        },
+        "smoke": {
+          "eligible_epoch": 1784415600,
+          "job": "4221038",
+          "name": "sal2607190100",
+          "present": false,
+          "state": "none",
+          "status": "verified-disabled"
+        }
+      },
+      "smoke_sources": {
+        "CMakeLists.txt": "de2081fe7f435810ffc7eb258bd5138ea545fbb6",
+        "cpp20.cpp": "ec3d72fa317814204668822281d74d41f2677e03",
+        "cpu.c": "5ad7b3513b810e34017069bc77d6522ccd95db90",
+        "cpu.cpp": "63d0ee312e8fd84fd8b143aacecd201b9d33b63f",
+        "cpu.f90": "73289de506971aff51ddb4ee502ef8184fb5ec65",
+        "cuda.cu": "b829aaf72bfd7d3249d9acd89be3272d7653bbf5",
+        "llm_torch.py": "c4b5ff0983c581f0ccaaded413636aa8bac7a171",
+        "mpi.c": "d6a38ef3f20000fea8903c73521f3acbbca94dbb",
+        "python.py": "5e7fa7177753951c6ee1452d7148323688d68bc9",
+        "sanitizer.c": "c0437bff94366862481f36710d47019c791c381f"
+      },
+      "smoke_tree": "17bdf765d814abd4851c2a282064419f88e905c2",
+      "stderr_present": false,
+      "storage": {
+        ".allinea": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".apptainer": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".cache": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".cupy": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".lhotse": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".local": {
+          "kind": "symlink",
+          "target": "/capstor/store/cscs/director2/g177/ryokota/home/.local"
+        },
+        ".mozilla": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".nsightsystems": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".nv": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".starpu": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".triton": {
+          "kind": "absent",
+          "target": "-"
+        }
+      },
+      "versions": {
+        "cc": {
+          "state": "present",
+          "value": "cc (SUSE Linux) 7.5.0 "
+        },
+        "claude": {
+          "state": "present",
+          "value": "2.1.207 (Claude Code) "
+        },
+        "cmake": {
+          "state": "present",
+          "value": "cmake version 3.28.3 "
+        },
+        "codex": {
+          "state": "present",
+          "value": "codex-cli 0.144.4 "
+        },
+        "cuda": {
+          "state": "absent",
+          "value": "-"
+        },
+        "cxx": {
+          "state": "present",
+          "value": "c++ (SUSE Linux) 7.5.0 "
+        },
+        "fortran": {
+          "state": "present",
+          "value": "GNU Fortran (SUSE Linux) 7.5.0 "
+        },
+        "git": {
+          "state": "present",
+          "value": "git version 2.43.0 "
+        },
+        "mpi": {
+          "state": "absent",
+          "value": "-"
+        },
+        "ninja": {
+          "state": "present",
+          "value": "1.13.2 "
+        },
+        "node": {
+          "state": "present",
+          "value": "v24.16.0 "
+        },
+        "python": {
+          "state": "present",
+          "value": "Python 3.6.15 "
+        },
+        "restic": {
+          "state": "present",
+          "value": "restic 0.19.1 compiled with go1.26.4 on linux/arm64 "
+        }
+      }
+    },
+    "local": {
+      "control_plane": {
+        "block": 0,
+        "create": 0,
+        "keep": 34
+      },
+      "controls": {
+        ".claude/CLAUDE.md": {
+          "kind": "symlink",
+          "target": "/home/rioyokota/harness/.claude/CLAUDE.md"
+        },
+        ".codex/AGENTS.md": {
+          "kind": "symlink",
+          "target": "/home/rioyokota/harness/.codex/AGENTS.md"
+        },
+        ".codex/rules/default.rules": {
+          "kind": "symlink",
+          "target": "/home/rioyokota/harness/.codex/rules/default.rules"
+        },
+        ".vimrc": {
+          "kind": "symlink",
+          "target": "/home/rioyokota/harness/config/vim/vimrc"
+        }
+      },
+      "dirty_entries": 0,
+      "discarded_stdout_lines": 0,
+      "doctor": {
+        "failures": 0,
+        "warnings": 5
+      },
+      "head": "081e0e8c89a7507e35d962812791c6635732e772",
+      "host": "local",
+      "inventory": {
+        "arch": "x86_64",
+        "harness_checkout": "present",
+        "kernel": "6.8.0-110-generic",
+        "link_claude_guidance": "symlink",
+        "link_codex_guidance": "symlink",
+        "link_codex_rules": "symlink",
+        "logical_host": "local",
+        "login_shell": "bash",
+        "os_id": "ubuntu",
+        "os_version": "24.04",
+        "schema": "1",
+        "startup_bash_login": "absent",
+        "startup_bash_logout": "absent",
+        "startup_bash_profile": "absent",
+        "startup_bashrc": "regular",
+        "startup_profile": "regular",
+        "tool_apptainer": "absent",
+        "tool_bash": "present",
+        "tool_cc": "present",
+        "tool_clang": "absent",
+        "tool_clangpp": "absent",
+        "tool_claude": "present",
+        "tool_cmake": "present",
+        "tool_codex": "present",
+        "tool_cuda_gdb": "absent",
+        "tool_curl": "present",
+        "tool_docker": "unusable",
+        "tool_gcc": "present",
+        "tool_gdb": "present",
+        "tool_gfortran": "present",
+        "tool_git": "present",
+        "tool_git_lfs": "present",
+        "tool_gpp": "present",
+        "tool_htop": "present",
+        "tool_jq": "present",
+        "tool_lftp": "present",
+        "tool_lldb": "absent",
+        "tool_make": "present",
+        "tool_meson": "absent",
+        "tool_ml": "absent",
+        "tool_modulecmd": "present",
+        "tool_mpicc": "absent",
+        "tool_mpicxx": "absent",
+        "tool_mpiexec": "absent",
+        "tool_mpifort": "absent",
+        "tool_mpirun": "absent",
+        "tool_ncu": "absent",
+        "tool_ninja": "present",
+        "tool_node": "present",
+        "tool_node_version": "v24.16.0",
+        "tool_nodestatus": "absent",
+        "tool_npm": "present",
+        "tool_npm_version": "11.13.0",
+        "tool_nsys": "absent",
+        "tool_nvc": "absent",
+        "tool_nvcc": "absent",
+        "tool_nvcpp": "absent",
+        "tool_nvfortran": "absent",
+        "tool_nvidia_smi": "present",
+        "tool_perf": "present",
+        "tool_pkg_config": "present",
+        "tool_podman": "unusable",
+        "tool_python3": "present",
+        "tool_qdel": "absent",
+        "tool_qrsh": "absent",
+        "tool_qstat": "absent",
+        "tool_qsub": "absent",
+        "tool_rclone": "present",
+        "tool_restic": "present",
+        "tool_rg": "present",
+        "tool_rocm_smi": "absent",
+        "tool_rocminfo": "absent",
+        "tool_rsync": "present",
+        "tool_sbatch": "present",
+        "tool_scancel": "present",
+        "tool_scontrol": "present",
+        "tool_sh": "present",
+        "tool_shellcheck": "present",
+        "tool_sinfo": "present",
+        "tool_singularity": "absent",
+        "tool_sqlite3": "present",
+        "tool_squeue": "present",
+        "tool_srun": "present",
+        "tool_strace": "present",
+        "tool_tectonic": "present",
+        "tool_tmux": "present",
+        "tool_tree": "present",
+        "tool_uenv": "absent",
+        "tool_uv": "present",
+        "tool_valgrind": "present",
+        "tool_vim": "present",
+        "tool_wget": "present",
+        "tool_ybatch": "present",
+        "tool_yrun": "present"
+      },
+      "schedule": {
+        "chain": {
+          "eligible_epoch": 1784388600,
+          "job": "90939",
+          "name": "hlocal2607190030",
+          "present": true,
+          "state": "PENDING",
+          "status": "active"
+        },
+        "smoke": {
+          "eligible_epoch": 1784388600,
+          "job": "90932",
+          "name": "slocal2607190030",
+          "present": false,
+          "state": "none",
+          "status": "verified-disabled"
+        }
+      },
+      "smoke_sources": {
+        "CMakeLists.txt": "de2081fe7f435810ffc7eb258bd5138ea545fbb6",
+        "cpp20.cpp": "ec3d72fa317814204668822281d74d41f2677e03",
+        "cpu.c": "5ad7b3513b810e34017069bc77d6522ccd95db90",
+        "cpu.cpp": "63d0ee312e8fd84fd8b143aacecd201b9d33b63f",
+        "cpu.f90": "73289de506971aff51ddb4ee502ef8184fb5ec65",
+        "cuda.cu": "b829aaf72bfd7d3249d9acd89be3272d7653bbf5",
+        "llm_torch.py": "c4b5ff0983c581f0ccaaded413636aa8bac7a171",
+        "mpi.c": "d6a38ef3f20000fea8903c73521f3acbbca94dbb",
+        "python.py": "5e7fa7177753951c6ee1452d7148323688d68bc9",
+        "sanitizer.c": "c0437bff94366862481f36710d47019c791c381f"
+      },
+      "smoke_tree": "17bdf765d814abd4851c2a282064419f88e905c2",
+      "stderr_present": false,
+      "storage": {
+        ".allinea": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".apptainer": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".cache": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".cupy": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".lhotse": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".local": {
+          "kind": "symlink",
+          "target": "/mnt/nfs-03/safe/Users/rioyokota/home/.local"
+        },
+        ".mozilla": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".nsightsystems": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".nv": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".starpu": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".triton": {
+          "kind": "absent",
+          "target": "-"
+        }
+      },
+      "versions": {
+        "cc": {
+          "state": "present",
+          "value": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0 "
+        },
+        "claude": {
+          "state": "present",
+          "value": "2.1.207 (Claude Code) "
+        },
+        "cmake": {
+          "state": "present",
+          "value": "cmake version 3.28.3 "
+        },
+        "codex": {
+          "state": "present",
+          "value": "codex-cli 0.144.5 "
+        },
+        "cuda": {
+          "state": "absent",
+          "value": "-"
+        },
+        "cxx": {
+          "state": "present",
+          "value": "c++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0 "
+        },
+        "fortran": {
+          "state": "present",
+          "value": "GNU Fortran (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0 "
+        },
+        "git": {
+          "state": "present",
+          "value": "git version 2.43.0 "
+        },
+        "mpi": {
+          "state": "absent",
+          "value": "-"
+        },
+        "ninja": {
+          "state": "present",
+          "value": "1.11.1 "
+        },
+        "node": {
+          "state": "present",
+          "value": "v24.16.0 "
+        },
+        "python": {
+          "state": "present",
+          "value": "Python 3.12.3 "
+        },
+        "restic": {
+          "state": "present",
+          "value": "restic 0.19.1 compiled with go1.26.4 on linux/amd64 "
+        }
+      }
+    },
+    "rc": {
+      "control_plane": {
+        "block": 0,
+        "create": 0,
+        "keep": 34
+      },
+      "controls": {
+        ".claude/CLAUDE.md": {
+          "kind": "symlink",
+          "target": "/home/users/rio.yokota/harness/.claude/CLAUDE.md"
+        },
+        ".codex/AGENTS.md": {
+          "kind": "symlink",
+          "target": "/home/users/rio.yokota/harness/.codex/AGENTS.md"
+        },
+        ".codex/rules/default.rules": {
+          "kind": "symlink",
+          "target": "/home/users/rio.yokota/harness/.codex/rules/default.rules"
+        },
+        ".vimrc": {
+          "kind": "symlink",
+          "target": "/home/users/rio.yokota/harness/config/vim/vimrc"
+        }
+      },
+      "dirty_entries": 0,
+      "discarded_stdout_lines": 0,
+      "doctor": {
+        "failures": 0,
+        "warnings": 0
+      },
+      "head": "081e0e8c89a7507e35d962812791c6635732e772",
+      "host": "rc",
+      "inventory": {
+        "arch": "x86_64",
+        "harness_checkout": "present",
+        "kernel": "5.14.0-687.26.1.el9_8.x86_64",
+        "link_claude_guidance": "symlink",
+        "link_codex_guidance": "symlink",
+        "link_codex_rules": "symlink",
+        "logical_host": "rc",
+        "login_shell": "bash",
+        "os_id": "rocky",
+        "os_version": "9.8",
+        "schema": "1",
+        "startup_bash_login": "absent",
+        "startup_bash_logout": "regular",
+        "startup_bash_profile": "regular",
+        "startup_bashrc": "regular",
+        "startup_profile": "absent",
+        "tool_apptainer": "absent",
+        "tool_bash": "present",
+        "tool_cc": "present",
+        "tool_clang": "absent",
+        "tool_clangpp": "absent",
+        "tool_claude": "present",
+        "tool_cmake": "present",
+        "tool_codex": "present",
+        "tool_cuda_gdb": "absent",
+        "tool_curl": "present",
+        "tool_docker": "absent",
+        "tool_gcc": "present",
+        "tool_gdb": "present",
+        "tool_gfortran": "present",
+        "tool_git": "present",
+        "tool_git_lfs": "present",
+        "tool_gpp": "present",
+        "tool_htop": "present",
+        "tool_jq": "present",
+        "tool_lftp": "absent",
+        "tool_lldb": "absent",
+        "tool_make": "present",
+        "tool_meson": "absent",
+        "tool_ml": "present",
+        "tool_modulecmd": "present",
+        "tool_mpicc": "absent",
+        "tool_mpicxx": "absent",
+        "tool_mpiexec": "absent",
+        "tool_mpifort": "absent",
+        "tool_mpirun": "absent",
+        "tool_ncu": "absent",
+        "tool_ninja": "present",
+        "tool_node": "present",
+        "tool_node_version": "v24.16.0",
+        "tool_nodestatus": "absent",
+        "tool_npm": "present",
+        "tool_npm_version": "11.13.0",
+        "tool_nsys": "absent",
+        "tool_nvc": "absent",
+        "tool_nvcc": "absent",
+        "tool_nvcpp": "absent",
+        "tool_nvfortran": "absent",
+        "tool_nvidia_smi": "absent",
+        "tool_perf": "absent",
+        "tool_pkg_config": "present",
+        "tool_podman": "present",
+        "tool_python3": "present",
+        "tool_qdel": "absent",
+        "tool_qrsh": "absent",
+        "tool_qstat": "absent",
+        "tool_qsub": "absent",
+        "tool_rclone": "present",
+        "tool_restic": "present",
+        "tool_rg": "present",
+        "tool_rocm_smi": "absent",
+        "tool_rocminfo": "absent",
+        "tool_rsync": "present",
+        "tool_sbatch": "present",
+        "tool_scancel": "present",
+        "tool_scontrol": "present",
+        "tool_sh": "present",
+        "tool_shellcheck": "present",
+        "tool_sinfo": "present",
+        "tool_singularity": "present",
+        "tool_sqlite3": "present",
+        "tool_squeue": "present",
+        "tool_srun": "present",
+        "tool_strace": "present",
+        "tool_tectonic": "present",
+        "tool_tmux": "present",
+        "tool_tree": "present",
+        "tool_uenv": "absent",
+        "tool_uv": "present",
+        "tool_valgrind": "present",
+        "tool_vim": "present",
+        "tool_wget": "present",
+        "tool_ybatch": "absent",
+        "tool_yrun": "absent"
+      },
+      "schedule": {
+        "chain": {
+          "eligible_epoch": 1784395800,
+          "job": "210816",
+          "name": "hrc2607190230",
+          "present": true,
+          "state": "PENDING",
+          "status": "active"
+        },
+        "smoke": {
+          "eligible_epoch": 1784395800,
+          "job": "210810",
+          "name": "src2607190230",
+          "present": false,
+          "state": "none",
+          "status": "verified-disabled"
+        }
+      },
+      "smoke_sources": {
+        "CMakeLists.txt": "de2081fe7f435810ffc7eb258bd5138ea545fbb6",
+        "cpp20.cpp": "ec3d72fa317814204668822281d74d41f2677e03",
+        "cpu.c": "5ad7b3513b810e34017069bc77d6522ccd95db90",
+        "cpu.cpp": "63d0ee312e8fd84fd8b143aacecd201b9d33b63f",
+        "cpu.f90": "73289de506971aff51ddb4ee502ef8184fb5ec65",
+        "cuda.cu": "b829aaf72bfd7d3249d9acd89be3272d7653bbf5",
+        "llm_torch.py": "c4b5ff0983c581f0ccaaded413636aa8bac7a171",
+        "mpi.c": "d6a38ef3f20000fea8903c73521f3acbbca94dbb",
+        "python.py": "5e7fa7177753951c6ee1452d7148323688d68bc9",
+        "sanitizer.c": "c0437bff94366862481f36710d47019c791c381f"
+      },
+      "smoke_tree": "17bdf765d814abd4851c2a282064419f88e905c2",
+      "stderr_present": true,
+      "storage": {
+        ".allinea": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".apptainer": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".cache": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".cupy": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".lhotse": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".local": {
+          "kind": "symlink",
+          "target": "/lvs0/rccs-asfm/rio.yokota/home/.local"
+        },
+        ".mozilla": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".nsightsystems": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".nv": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".starpu": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".triton": {
+          "kind": "absent",
+          "target": "-"
+        }
+      },
+      "versions": {
+        "cc": {
+          "state": "present",
+          "value": "cc (GCC) 11.5.0 20240719 (Red Hat 11.5.0-14) "
+        },
+        "claude": {
+          "state": "present",
+          "value": "2.1.207 (Claude Code) "
+        },
+        "cmake": {
+          "state": "present",
+          "value": "cmake version 3.31.8 "
+        },
+        "codex": {
+          "state": "present",
+          "value": "codex-cli 0.144.4 "
+        },
+        "cuda": {
+          "state": "absent",
+          "value": "-"
+        },
+        "cxx": {
+          "state": "present",
+          "value": "c++ (GCC) 11.5.0 20240719 (Red Hat 11.5.0-14) "
+        },
+        "fortran": {
+          "state": "present",
+          "value": "GNU Fortran (GCC) 11.5.0 20240719 (Red Hat 11.5.0-14) "
+        },
+        "git": {
+          "state": "present",
+          "value": "git version 2.52.0 "
+        },
+        "mpi": {
+          "state": "absent",
+          "value": "-"
+        },
+        "ninja": {
+          "state": "present",
+          "value": "1.13.2 "
+        },
+        "node": {
+          "state": "present",
+          "value": "v24.16.0 "
+        },
+        "python": {
+          "state": "present",
+          "value": "Python 3.12.9 "
+        },
+        "restic": {
+          "state": "present",
+          "value": "restic 0.19.1 compiled with go1.26.4 on linux/amd64 "
+        }
+      }
+    },
+    "ri": {
+      "control_plane": {
+        "block": 0,
+        "create": 0,
+        "keep": 34
+      },
+      "controls": {
+        ".claude/CLAUDE.md": {
+          "kind": "symlink",
+          "target": "/home/rku00075/harness/.claude/CLAUDE.md"
+        },
+        ".codex/AGENTS.md": {
+          "kind": "symlink",
+          "target": "/home/rku00075/harness/.codex/AGENTS.md"
+        },
+        ".codex/rules/default.rules": {
+          "kind": "symlink",
+          "target": "/home/rku00075/harness/.codex/rules/default.rules"
+        },
+        ".vimrc": {
+          "kind": "symlink",
+          "target": "/home/rku00075/harness/config/vim/vimrc"
+        }
+      },
+      "dirty_entries": 0,
+      "discarded_stdout_lines": 0,
+      "doctor": {
+        "failures": 0,
+        "warnings": 0
+      },
+      "head": "081e0e8c89a7507e35d962812791c6635732e772",
+      "host": "ri",
+      "inventory": {
+        "arch": "aarch64",
+        "harness_checkout": "present",
+        "kernel": "6.17.0-1026-nvidia-64k",
+        "link_claude_guidance": "symlink",
+        "link_codex_guidance": "symlink",
+        "link_codex_rules": "symlink",
+        "logical_host": "ri",
+        "login_shell": "bash",
+        "os_id": "ubuntu",
+        "os_version": "24.04",
+        "schema": "1",
+        "startup_bash_login": "absent",
+        "startup_bash_logout": "regular",
+        "startup_bash_profile": "absent",
+        "startup_bashrc": "regular",
+        "startup_profile": "regular",
+        "tool_apptainer": "present",
+        "tool_bash": "present",
+        "tool_cc": "present",
+        "tool_clang": "absent",
+        "tool_clangpp": "absent",
+        "tool_claude": "present",
+        "tool_cmake": "present",
+        "tool_codex": "present",
+        "tool_cuda_gdb": "absent",
+        "tool_curl": "present",
+        "tool_docker": "absent",
+        "tool_gcc": "present",
+        "tool_gdb": "present",
+        "tool_gfortran": "present",
+        "tool_git": "present",
+        "tool_git_lfs": "present",
+        "tool_gpp": "present",
+        "tool_htop": "present",
+        "tool_jq": "present",
+        "tool_lftp": "absent",
+        "tool_lldb": "absent",
+        "tool_make": "present",
+        "tool_meson": "absent",
+        "tool_ml": "absent",
+        "tool_modulecmd": "absent",
+        "tool_mpicc": "absent",
+        "tool_mpicxx": "absent",
+        "tool_mpiexec": "absent",
+        "tool_mpifort": "absent",
+        "tool_mpirun": "absent",
+        "tool_ncu": "absent",
+        "tool_ninja": "present",
+        "tool_node": "present",
+        "tool_node_version": "v24.16.0",
+        "tool_nodestatus": "absent",
+        "tool_npm": "present",
+        "tool_npm_version": "11.13.0",
+        "tool_nsys": "absent",
+        "tool_nvc": "absent",
+        "tool_nvcc": "absent",
+        "tool_nvcpp": "absent",
+        "tool_nvfortran": "absent",
+        "tool_nvidia_smi": "present",
+        "tool_perf": "absent",
+        "tool_pkg_config": "present",
+        "tool_podman": "absent",
+        "tool_python3": "present",
+        "tool_qdel": "absent",
+        "tool_qrsh": "absent",
+        "tool_qstat": "absent",
+        "tool_qsub": "absent",
+        "tool_rclone": "present",
+        "tool_restic": "present",
+        "tool_rg": "present",
+        "tool_rocm_smi": "absent",
+        "tool_rocminfo": "absent",
+        "tool_rsync": "present",
+        "tool_sbatch": "present",
+        "tool_scancel": "present",
+        "tool_scontrol": "present",
+        "tool_sh": "present",
+        "tool_shellcheck": "present",
+        "tool_sinfo": "present",
+        "tool_singularity": "present",
+        "tool_sqlite3": "present",
+        "tool_squeue": "present",
+        "tool_srun": "present",
+        "tool_strace": "present",
+        "tool_tectonic": "present",
+        "tool_tmux": "present",
+        "tool_tree": "present",
+        "tool_uenv": "absent",
+        "tool_uv": "present",
+        "tool_valgrind": "present",
+        "tool_vim": "present",
+        "tool_wget": "present",
+        "tool_ybatch": "absent",
+        "tool_yrun": "absent"
+      },
+      "schedule": {
+        "chain": {
+          "eligible_epoch": 1784394000,
+          "job": "6862",
+          "name": "hri2607190200",
+          "present": true,
+          "state": "PENDING",
+          "status": "active"
+        },
+        "smoke": {
+          "eligible_epoch": 1784394000,
+          "job": "6858",
+          "name": "sri2607190200",
+          "present": false,
+          "state": "none",
+          "status": "verified-disabled"
+        }
+      },
+      "smoke_sources": {
+        "CMakeLists.txt": "de2081fe7f435810ffc7eb258bd5138ea545fbb6",
+        "cpp20.cpp": "ec3d72fa317814204668822281d74d41f2677e03",
+        "cpu.c": "5ad7b3513b810e34017069bc77d6522ccd95db90",
+        "cpu.cpp": "63d0ee312e8fd84fd8b143aacecd201b9d33b63f",
+        "cpu.f90": "73289de506971aff51ddb4ee502ef8184fb5ec65",
+        "cuda.cu": "b829aaf72bfd7d3249d9acd89be3272d7653bbf5",
+        "llm_torch.py": "c4b5ff0983c581f0ccaaded413636aa8bac7a171",
+        "mpi.c": "d6a38ef3f20000fea8903c73521f3acbbca94dbb",
+        "python.py": "5e7fa7177753951c6ee1452d7148323688d68bc9",
+        "sanitizer.c": "c0437bff94366862481f36710d47019c791c381f"
+      },
+      "smoke_tree": "17bdf765d814abd4851c2a282064419f88e905c2",
+      "stderr_present": true,
+      "storage": {
+        ".allinea": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".apptainer": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".cache": {
+          "kind": "directory",
+          "target": "-"
+        },
+        ".cupy": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".lhotse": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".local": {
+          "kind": "symlink",
+          "target": "/data1/rkp00015/rku00075/home/.local"
+        },
+        ".mozilla": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".nsightsystems": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".nv": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".starpu": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".triton": {
+          "kind": "absent",
+          "target": "-"
+        }
+      },
+      "versions": {
+        "cc": {
+          "state": "present",
+          "value": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0 "
+        },
+        "claude": {
+          "state": "present",
+          "value": "2.1.207 (Claude Code) "
+        },
+        "cmake": {
+          "state": "present",
+          "value": "cmake version 3.28.3 "
+        },
+        "codex": {
+          "state": "present",
+          "value": "codex-cli 0.144.4 "
+        },
+        "cuda": {
+          "state": "absent",
+          "value": "-"
+        },
+        "cxx": {
+          "state": "present",
+          "value": "c++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0 "
+        },
+        "fortran": {
+          "state": "present",
+          "value": "GNU Fortran (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0 "
+        },
+        "git": {
+          "state": "present",
+          "value": "git version 2.43.0 "
+        },
+        "mpi": {
+          "state": "absent",
+          "value": "-"
+        },
+        "ninja": {
+          "state": "present",
+          "value": "1.11.1 "
+        },
+        "node": {
+          "state": "present",
+          "value": "v24.16.0 "
+        },
+        "python": {
+          "state": "present",
+          "value": "Python 3.12.3 "
+        },
+        "restic": {
+          "state": "present",
+          "value": "restic 0.19.1 compiled with go1.26.4 on linux/arm64 "
+        }
+      }
+    },
+    "t4": {
+      "control_plane": {
+        "block": 0,
+        "create": 0,
+        "keep": 34
+      },
+      "controls": {
+        ".claude/CLAUDE.md": {
+          "kind": "symlink",
+          "target": "/home/8/uq02038/harness/.claude/CLAUDE.md"
+        },
+        ".codex/AGENTS.md": {
+          "kind": "symlink",
+          "target": "/home/8/uq02038/harness/.codex/AGENTS.md"
+        },
+        ".codex/rules/default.rules": {
+          "kind": "symlink",
+          "target": "/home/8/uq02038/harness/.codex/rules/default.rules"
+        },
+        ".vimrc": {
+          "kind": "symlink",
+          "target": "/home/8/uq02038/harness/config/vim/vimrc"
+        }
+      },
+      "dirty_entries": 0,
+      "discarded_stdout_lines": 0,
+      "doctor": {
+        "failures": 0,
+        "warnings": 0
+      },
+      "head": "081e0e8c89a7507e35d962812791c6635732e772",
+      "host": "t4",
+      "inventory": {
+        "arch": "x86_64",
+        "harness_checkout": "present",
+        "kernel": "5.14.0-687.10.1.el9_8.x86_64",
+        "link_claude_guidance": "symlink",
+        "link_codex_guidance": "symlink",
+        "link_codex_rules": "symlink",
+        "logical_host": "t4",
+        "login_shell": "bash",
+        "os_id": "rhel",
+        "os_version": "9.4",
+        "schema": "1",
+        "startup_bash_login": "absent",
+        "startup_bash_logout": "regular",
+        "startup_bash_profile": "regular",
+        "startup_bashrc": "regular",
+        "startup_profile": "absent",
+        "tool_apptainer": "present",
+        "tool_bash": "present",
+        "tool_cc": "present",
+        "tool_clang": "present",
+        "tool_clangpp": "present",
+        "tool_claude": "present",
+        "tool_cmake": "present",
+        "tool_codex": "present",
+        "tool_cuda_gdb": "present",
+        "tool_curl": "present",
+        "tool_docker": "absent",
+        "tool_gcc": "present",
+        "tool_gdb": "present",
+        "tool_gfortran": "present",
+        "tool_git": "present",
+        "tool_git_lfs": "present",
+        "tool_gpp": "present",
+        "tool_htop": "present",
+        "tool_jq": "present",
+        "tool_lftp": "absent",
+        "tool_lldb": "absent",
+        "tool_make": "present",
+        "tool_meson": "absent",
+        "tool_ml": "present",
+        "tool_modulecmd": "present",
+        "tool_mpicc": "present",
+        "tool_mpicxx": "present",
+        "tool_mpiexec": "present",
+        "tool_mpifort": "present",
+        "tool_mpirun": "present",
+        "tool_ncu": "present",
+        "tool_ninja": "present",
+        "tool_node": "present",
+        "tool_node_version": "v24.16.0",
+        "tool_nodestatus": "absent",
+        "tool_npm": "present",
+        "tool_npm_version": "11.13.0",
+        "tool_nsys": "present",
+        "tool_nvc": "absent",
+        "tool_nvcc": "present",
+        "tool_nvcpp": "absent",
+        "tool_nvfortran": "absent",
+        "tool_nvidia_smi": "present",
+        "tool_perf": "absent",
+        "tool_pkg_config": "present",
+        "tool_podman": "absent",
+        "tool_python3": "present",
+        "tool_qdel": "present",
+        "tool_qrsh": "present",
+        "tool_qstat": "present",
+        "tool_qsub": "present",
+        "tool_rclone": "present",
+        "tool_restic": "present",
+        "tool_rg": "present",
+        "tool_rocm_smi": "absent",
+        "tool_rocminfo": "absent",
+        "tool_rsync": "present",
+        "tool_sbatch": "absent",
+        "tool_scancel": "absent",
+        "tool_scontrol": "absent",
+        "tool_sh": "present",
+        "tool_shellcheck": "present",
+        "tool_sinfo": "absent",
+        "tool_singularity": "present",
+        "tool_sqlite3": "present",
+        "tool_squeue": "absent",
+        "tool_srun": "absent",
+        "tool_strace": "present",
+        "tool_tectonic": "present",
+        "tool_tmux": "present",
+        "tool_tree": "present",
+        "tool_uenv": "absent",
+        "tool_uv": "present",
+        "tool_valgrind": "present",
+        "tool_vim": "present",
+        "tool_wget": "present",
+        "tool_ybatch": "absent",
+        "tool_yrun": "absent"
+      },
+      "schedule": {
+        "chain": {
+          "eligible_epoch": 1784397600,
+          "job": "8175651",
+          "name": "ht42607190300",
+          "present": true,
+          "state": "present",
+          "status": "active"
+        },
+        "smoke": {
+          "eligible_epoch": 1784397600,
+          "job": "8175400",
+          "name": "st42607190300",
+          "present": false,
+          "state": "none",
+          "status": "verified-disabled"
+        }
+      },
+      "smoke_sources": {
+        "CMakeLists.txt": "de2081fe7f435810ffc7eb258bd5138ea545fbb6",
+        "cpp20.cpp": "ec3d72fa317814204668822281d74d41f2677e03",
+        "cpu.c": "5ad7b3513b810e34017069bc77d6522ccd95db90",
+        "cpu.cpp": "63d0ee312e8fd84fd8b143aacecd201b9d33b63f",
+        "cpu.f90": "73289de506971aff51ddb4ee502ef8184fb5ec65",
+        "cuda.cu": "b829aaf72bfd7d3249d9acd89be3272d7653bbf5",
+        "llm_torch.py": "c4b5ff0983c581f0ccaaded413636aa8bac7a171",
+        "mpi.c": "d6a38ef3f20000fea8903c73521f3acbbca94dbb",
+        "python.py": "5e7fa7177753951c6ee1452d7148323688d68bc9",
+        "sanitizer.c": "c0437bff94366862481f36710d47019c791c381f"
+      },
+      "smoke_tree": "17bdf765d814abd4851c2a282064419f88e905c2",
+      "stderr_present": false,
+      "storage": {
+        ".allinea": {
+          "kind": "symlink",
+          "target": "/gs/fs/jh250019/yokota/home-cache/home/.allinea"
+        },
+        ".apptainer": {
+          "kind": "symlink",
+          "target": "/gs/fs/jh250019/yokota/home-cache/home/.apptainer"
+        },
+        ".cache": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".cupy": {
+          "kind": "symlink",
+          "target": "/gs/fs/jh250019/yokota/home-cache/home/.cupy"
+        },
+        ".lhotse": {
+          "kind": "symlink",
+          "target": "/gs/fs/jh250019/yokota/home-cache/home/.lhotse"
+        },
+        ".local": {
+          "kind": "symlink",
+          "target": "/gs/bs/jh250019/yokota/home/.local"
+        },
+        ".mozilla": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".nsightsystems": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".nv": {
+          "kind": "symlink",
+          "target": "/gs/fs/jh250019/yokota/home-cache/home/.nv"
+        },
+        ".starpu": {
+          "kind": "absent",
+          "target": "-"
+        },
+        ".triton": {
+          "kind": "symlink",
+          "target": "/gs/fs/jh250019/yokota/home-cache/home/.triton"
+        }
+      },
+      "versions": {
+        "cc": {
+          "state": "present",
+          "value": "cc (GCC) 11.5.0 20240719 (Red Hat 11.5.0-5) "
+        },
+        "claude": {
+          "state": "present",
+          "value": "2.1.207 (Claude Code) "
+        },
+        "cmake": {
+          "state": "present",
+          "value": "cmake version 3.26.5 "
+        },
+        "codex": {
+          "state": "present",
+          "value": "codex-cli 0.144.4 "
+        },
+        "cuda": {
+          "state": "present",
+          "value": "nvcc: NVIDIA (R) Cuda compiler driver "
+        },
+        "cxx": {
+          "state": "present",
+          "value": "c++ (GCC) 11.5.0 20240719 (Red Hat 11.5.0-5) "
+        },
+        "fortran": {
+          "state": "present",
+          "value": "GNU Fortran (GCC) 11.5.0 20240719 (Red Hat 11.5.0-5) "
+        },
+        "git": {
+          "state": "present",
+          "value": "git version 2.47.3 "
+        },
+        "mpi": {
+          "state": "present",
+          "value": "gcc (GCC) 11.5.0 20240719 (Red Hat 11.5.0-5) "
+        },
+        "ninja": {
+          "state": "present",
+          "value": "1.13.2 "
+        },
+        "node": {
+          "state": "present",
+          "value": "v24.16.0 "
+        },
+        "python": {
+          "state": "present",
+          "value": "Python 3.9.25 "
+        },
+        "restic": {
+          "state": "present",
+          "value": "restic 0.19.1 compiled with go1.26.4 on linux/amd64 "
+        }
+      }
+    }
+  },
+  "schema": 1,
+  "scope": "bounded read-only login readiness"
+}

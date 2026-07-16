@@ -124,3 +124,8 @@ subtree. This automatically covers newer readiness sources and jobs without a
 second hand-maintained filename list. The older per-file records remain for
 bounded diagnosis, but a missing, explicit-error, or duplicate subtree identity
 now fails that node.
+The post-rollout
+[`audits/fleet-readiness-smoke-tree-2026-07-17.json`](audits/fleet-readiness-smoke-tree-2026-07-17.json)
+reports all seven clean nodes at exact `081e0e8`, identical subtree object
+`17bdf765d814abd4851c2a282064419f88e905c2`, canonical control-plane 34/0/0,
+and zero failures.

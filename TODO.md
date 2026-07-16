@@ -1523,7 +1523,7 @@ No credential/private-data path was hashed and no scheduler job was submitted.
 
 ### T-232 — Fail-closed complete smoke-subtree fleet identity
 
-**Phase/status:** `in progress`, derived from review of the T-225/T-226 audit.
+**Phase/status:** `complete`, derived from review of the T-225/T-226 audit.
 The fleet probe still hashes a fixed legacy list of ten smoke files, excluding
 newer checkpoint, environment, and multi-node gates. Add exactly one required
 Git tree identity for the complete tracked `tests/smoke` subtree, while keeping
@@ -1538,6 +1538,13 @@ object at `HEAD:tests/smoke`; the parser requires exactly one valid identity
 and rejects missing, explicit-error, and duplicate forms. Focused negative,
 portable full, and public-audit suites pass. Commit/distribute before the live
 read-only audit so all seven nodes report the same complete subtree object.
+
+**Outcome:** exact implementation commit `081e0e8` reached all six clean
+remotes with no bundle residue. The post-rollout audit reports all seven nodes
+clean at that revision, canonical control-plane 34/0/0, zero failures, and the
+identical complete smoke-tree object
+`17bdf765d814abd4851c2a282064419f88e905c2`. The report SHA-256 is
+`3c707a2b452d34b561c7826fa7f8ecd7a96c51adddb2da9d9bbbe6232685f747`.
 
 ## Stable operational facts
 
