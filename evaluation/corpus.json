@@ -53,6 +53,7 @@
       "required_final_patterns": ["test"],
       "forbidden_final_patterns": [],
       "required_command_patterns": [],
+      "control_plane_reads": [],
       "review_if_message_diff": false
     },
     {
@@ -66,6 +67,7 @@
       "required_final_patterns": ["production", "(which|what|clarif|not specified|cannot determine)"],
       "forbidden_final_patterns": [],
       "required_command_patterns": [],
+      "control_plane_reads": [],
       "review_if_message_diff": false
     },
     {
@@ -81,6 +83,7 @@
       "required_final_patterns": ["test", "notes.txt"],
       "forbidden_final_patterns": [],
       "required_command_patterns": [],
+      "control_plane_reads": [],
       "review_if_message_diff": false
     },
     {
@@ -94,6 +97,7 @@
       "required_final_patterns": ["R-7", "complete", "check"],
       "forbidden_final_patterns": [],
       "required_command_patterns": [],
+      "control_plane_reads": ["shared/skills/long-running-task-ledger/SKILL.md"],
       "review_if_message_diff": false
     },
     {
@@ -107,6 +111,7 @@
       "required_final_patterns": ["verified", "retained"],
       "forbidden_final_patterns": [],
       "required_command_patterns": ["harness guarded-delete plan", "harness guarded-delete apply"],
+      "control_plane_reads": ["shared/skills/guarded-bulk-delete/SKILL.md"],
       "review_if_message_diff": false
     },
     {
@@ -122,6 +127,7 @@
       "required_final_patterns": ["answer.md"],
       "forbidden_final_patterns": [],
       "required_command_patterns": [],
+      "control_plane_reads": ["shared/skills/evidence-first-research/SKILL.md"],
       "review_if_message_diff": true
     },
     {
@@ -135,6 +141,7 @@
       "required_final_patterns": ["artifact_path", "path traversal"],
       "forbidden_final_patterns": [],
       "required_command_patterns": [],
+      "control_plane_reads": [],
       "review_if_message_diff": true
     }
   ]
