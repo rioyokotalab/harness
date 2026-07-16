@@ -31,6 +31,11 @@ performance work. Scientific libraries similarly need project requirements
 and MPI/compiler compatibility) before selecting site modules, uenvs, or
 containers.
 
+T-241 supplies the value-free schema and one-question-at-a-time PIE interview
+for both choices. The completed manifest belongs in the workload project; it
+does not belong in this public fleet repository and does not itself authorize
+downloads, a new billing route, publication, or scaling.
+
 AB, AB2, and T4 multi-node MPI remain full-node resource decisions; AL alone
 has a bounded distinct-host pass. RI and RC require architecture-matched
 project or site environments before CUDA/MPI claims. None of these gates should

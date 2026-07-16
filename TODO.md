@@ -1731,6 +1731,32 @@ non-compute evidence. The machine-readable audit and human interpretation are
 allocation-level memory-policy gate behind T-237 rather than submitting more
 work now.
 
+### T-241 — Project intake contract for owner-gated HPC branches
+
+**Phase/status:** `implementing`, derived from Q5/Q6. Define a strict, public,
+value-free schema for the project-owned choices that precede framework or
+scientific-library work: targets, locked framework/version evidence,
+language/MPI/library ABI features, architecture-matched artifacts, licenses,
+native scheduler resources, data/checkpoint/retention references, numerical
+success, and runtime credential references. Pair it with an eleven-question
+PIE interview that asks one question at a time and keeps the completed manifest
+in the project rather than harness. Credential identifiers are allowed;
+values, contents, hashes, and copies are forbidden. `status=ready` must not
+imply download, billing, publication, or scale authority. Validate schema
+closure and critical invariants, run full/public checks, publish, and
+distribute without changing any project, package, image, scheduler, or
+external service.
+
+**Outcome:** the closed JSON Schema and eleven-question PIE interview are
+`docs/schemas/hpc-project-intake.schema.json` and
+`docs/hpc-project-intake.md`. They require explicit targets, locks, ABI
+features, immutable artifact digests, bounded native resources, data/checkpoint
+references, numerical/restart contracts, deferred performance, and value-free
+credential references. Focused schema/document tests, warning-level
+ShellCheck, portable phase 1, and public audit pass. T-241 is complete as a
+preparation artifact; Q5/Q6 correctly remain owner/project gated and no live
+project, package, image, scheduler, or service changed.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

@@ -29,13 +29,13 @@
     },
     {
       "action": "select framework, version, licenses, and architecture-matched immutable artifacts",
-      "evidence": "T-206,T-208,T-227",
+      "evidence": "T-206,T-208,T-227,T-241",
       "id": "Q5",
       "status": "owner_gated"
     },
     {
       "action": "select project scientific-library requirements and site-native environments before compile gates",
-      "evidence": "T-228",
+      "evidence": "T-228,T-241",
       "id": "Q6",
       "status": "project_gated"
     },

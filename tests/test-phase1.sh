@@ -98,6 +98,8 @@ done
     fail "HPC job preflight focused suite"
 "$ROOT/tests/test-hpc-topology-surface.sh" >/dev/null ||
     fail "HPC topology surface focused suite"
+"$ROOT/tests/test-hpc-project-intake.sh" >/dev/null ||
+    fail "HPC project intake focused suite"
 "$ROOT/tests/test-llm-hpc-next-actions.sh" >/dev/null ||
     fail "LLM/HPC next-action queue focused suite"
 "$ROOT/tests/test-storage-readiness.sh" >/dev/null ||
