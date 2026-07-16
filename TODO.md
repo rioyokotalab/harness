@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-198.
+and compact historical pointers here. Next free ID: T-201.
 
 ## Current state
 
@@ -353,7 +353,7 @@ current driver checkpoint becomes clean or stale.
 
 ### T-195 — Seven-node configuration-drift audit
 
-**Phase/status:** `planning`; execute after T-193's local scanner is frozen.
+**Phase/status:** `complete`; executed after T-193's local scanner was frozen.
 Use only the declared aliases `local`, `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`.
 Collect a bounded allowlisted inventory of logical identity, harness revision
 and cleanliness, profile/control-plane discovery, storage-link targets,
@@ -362,6 +362,17 @@ job state, and existing HPC smoke sources. Never dump environments, enumerate
 SSH configuration, read credentials, submit/cancel jobs, install packages, or
 touch NFS data trees. Separate login-node capability from compute readiness and
 record site-specific drift rather than normalizing it away.
+
+**Outcome:** committed collector `tools/fleet-readiness-audit.py` made one
+bounded login-shell connection per remote concurrently and one local probe.
+`docs/audits/fleet-readiness-2026-07-16.json` has all seven nodes, zero probe
+failures, zero discarded stdout, clean checkouts, doctor failures zero, exact
+T-191 chains present, disabled smokes absent, four control links correct, and
+all ten smoke blobs identical. Remotes are clean at ancestor `a2823d3`, 36
+commits behind local `26690a8`. Site login baselines differ as expected and do
+not establish compute readiness. Recreated default-home directories are listed
+without content inspection in `docs/fleet-readiness-audit.md` and assigned to
+T-199. No node or scheduler was mutated.
 
 ### T-196 — Backup lifecycle phase 2
 
@@ -398,6 +409,42 @@ image pull, allocation/billing spend, global configuration, or destructive
 cleanup is implied; prepare and validate read-only or model-free surfaces while
 ledgering any owner-only action bundle. Checkpoint and push small verified
 harness changes frequently while preserving concurrent contributor work.
+
+### T-198 — Safe remote harness fast-forward
+
+**Phase/status:** `planned` from T-195. All six remotes are clean at ancestor
+`a2823d3`, 36 commits behind the local/public branch. Before any rollout,
+classify every intervening path and prove that the T-191 scheduled entrypoint,
+repository declarations, and private-state schema remain compatible with the
+already queued jobs. If compatible, use the established credential-free
+bundle/fast-forward route, one exact revision on every remote, with pre/post
+cleanliness, identity, syntax, doctor, and read-only T-191 status gates. Do not
+resubmit, cancel, or alter any scheduled job. Halt only the affected node on
+drift; exact-unlink each reviewed transfer artifact after success.
+
+### T-199 — Recreated hidden-state classification
+
+**Phase/status:** `planned` from T-195. Metadata-only audit the exact recreated
+paths: local `.cache`/`.nv`; AB `.cache`/`.mozilla`; AB2 `.cache`; RI
+`.cache`/`.apptainer`; AL `.mozilla`; and T4 `.cache`. Record link/type,
+ownership/mode, same-filesystem fact, bounded apparent size, application owner,
+and whether XDG or application configuration can redirect future writes.
+Reconcile the already approved per-node delete/move policy before action.
+Never inspect file contents. Any multi-tree deletion must use guarded-delete;
+any move must be transactional with application-specific rollback and must not
+cross the active Restic/scheduler path unexpectedly.
+
+### T-200 — Scheduler-native LLM/HPC capability matrix
+
+**Phase/status:** `planned` from T-195. Convert identical tracked smoke sources
+and site declarations into a reproducible login-versus-compute matrix. First
+record exact native commands and environment/container routes; then, only under
+existing allocation authority, run matched single-rank CPU/compiler/Python and
+single-device CUDA/framework correctness before any distributed test. Freeze
+inputs and collect architecture, driver/runtime/framework, MPI/backend, device,
+and numerical evidence. Do not infer compute absence from login PATH, install
+packages, clone models/datasets, pull images, or scale until the smaller gate
+passes.
 
 ## Stable operational facts
 
