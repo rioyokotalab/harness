@@ -1120,6 +1120,19 @@ keeps and all remote artifacts absent. The private local transaction directory
 is also absent. T-215 is complete and supersedes manual `/tmp`/SCP bundle
 rollouts for future clean mirrored-harness updates.
 
+### T-216 — Consolidated LLM/HPC readiness gap matrix
+
+**Phase/status:** `executing`; this is evidence consolidation only. Build one
+machine-readable and one human matrix from the already validated CPU,
+accelerator, MPI, numerical, debugger, storage/checkpoint, offline-environment,
+and immutable-transport records. For every node and capability, distinguish
+`pass`, `declared gap`, `owner-gated`, `pending captured job`, and `not tested`;
+never convert absence of evidence into absence of capability. Link exact
+evidence artifacts and job IDs without copying private result paths or raw
+logs. Use the matrix to rank the next bounded tasks by fleet coverage and
+scientific/LLM value, validate JSON and public-audit safety, then commit, push,
+and distribute through T-215.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
