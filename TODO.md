@@ -353,14 +353,16 @@ candidate adoption remains a separate owner decision after results.
    loss, reproducible recovery, and a clearly reported cost. A failed gate
    rejects the candidate without weakening the baseline.
 
-**Candidate-specific controls:** A deterministic failure capsule contains only
-the task/run IDs, source revision, failed grader/check ID, bounded value-free
-evidence, retry eligibility, and exact next verification; both arms receive an
-equal one-retry ceiling so extra inference is measured rather than hidden.
-Candidate B permits one read-only bounded subagent only for the independently
-scoped exploration family, with parent review and total child cost counted.
-Candidate C is read-only telemetry and therefore succeeds on coverage and
-non-interference, not on an unsupported claim of better task correctness.
+**Selected candidate and controls (D1):** the owner selected A. Its deterministic
+failure capsule contains only the task/run IDs, source revision, failed
+grader/check ID, bounded value-free evidence, retry eligibility, and exact next
+verification. A retry is eligible only after a deterministic, recoverable
+correctness/acceptance failure with unchanged safety and source identities. A
+safety violation, timeout, source drift, destructive ambiguity, malformed log,
+or cleanup failure ends that arm without retry. The unchanged control receives
+only a generic failure notice while the candidate receives the capsule; both
+arms have the same one-retry ceiling and all retry cost is counted. Candidates
+B and C are excluded from this experiment and remain unimplemented.
 
 **Safety, rollback, and interruption:** source revision, fixture digest,
 candidate digest, run ID, and grader digest bind each result. Refuse a dirty
@@ -371,21 +373,24 @@ arm, mark the pair incomplete, and resume only the missing arm; never silently
 rerun or discard an unfavorable result. Before any bulk cleanup use the
 guarded-bulk-delete workflow and verify protected anchors afterward.
 
-**Decision register:** D1 (open now) selects candidate A, B, or C; recommended
-A because bounded evidence-triggered retry is the one uncovered recovery gap
-and can be tested without changing a safety boundary. D2 will select a staged
-run budget/repeat count; recommended three paired pilot repetitions followed by
-five full repetitions only after pilot gates pass. D3 will freeze one explicit
-Codex model/effort/client for the first corpus; recommended Codex-only first to
-avoid cross-client confounding. D4 will decide owner-style adjudication;
-recommended deterministic pre-registered checks plus blinded owner review only
-for disagreements or borderline diffs.
+**Decision register:** D1 is frozen as candidate A for the recovery gap above.
+D2 (open now) selects the staged run budget/repeat count. Recommended: three
+paired repetitions across a three-family pilot (small fix, ledger recovery, and
+destructive safety), at most 18 primary runs plus eligible retries; only after
+all pilot gates pass, five paired repetitions across all seven families, at
+most 70 primary runs plus eligible retries. A lean alternative uses two pilot
+and three full repetitions; a full-first alternative skips the pilot but costs
+more and gives weaker early-stop protection. D3 will freeze one explicit Codex
+model/effort/client for the first corpus; recommended Codex-only first to avoid
+cross-client confounding. D4 will decide owner-style adjudication; recommended
+deterministic pre-registered checks plus blinded owner review only for
+disagreements or borderline diffs.
 
 **Acceptance and next action:** the planning record is complete enough to
 interview one decision at a time. Checkpoint every answer here, audit the four
 decisions for contradiction, move to `ready-for-go`, and wait for a new explicit
 go before creating `evaluation/` or invoking a model. Current next question is
-D1 only.
+D2 only.
 
 ## Stable operational facts
 
