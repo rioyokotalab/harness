@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-208.
+and compact historical pointers here. Next free ID: T-209.
 
 ## Current state
 
@@ -837,6 +837,26 @@ local Ybatch `91213`; AB PBS `2045044.pbs1`; AB2 PBS `2045043.pbs1`; AL Slurm
 `4224197`; and T4 AGE `8179808`. Local, AL, and T4 already report two unique
 ranks, scheduler/result zero, and guarded cleanup. The two ABCI jobs remain
 validly queued; monitor only these captured IDs and do not submit replacements.
+
+### T-208 — Immutable training-environment transport matrix
+
+**Phase/status:** `design complete`; execution remains under T-206's owner
+gate. Native value-free discovery and official documentation are reconciled in
+`docs/immutable-environment-matrix.md`. The fleet has four viable mechanisms:
+allocation-only Docker/Podman wrappers on local; SingularityCE 4.4.1 on
+AB/AB2; Apptainer 1.4.5 plus Slurm OCI flags on RI; native uenv 10.0.1 plus
+Slurm integration on AL; SingularityCE 4.5.0 plus Slurm OCI flags on RC; and
+Apptainer 1.4.0 on T4. No image, registry, daemon, or credential was accessed.
+
+Use one reviewed dependency definition/lock with two immutable architecture
+artifacts and recorded digests, not one binary image: x86_64 for local,
+AB/AB2, and T4; aarch64 for RI, AL, and RC. Prefer AL's site-native uenv and
+Singularity/Apptainer SIF elsewhere unless a tested site-native OCI bundle is
+materially better. Store large images/bundles under each persistent root,
+caches under the declared fast cache root, and only non-secret definitions,
+locks, provenance, and digests in harness. Before T-206 chooses anything,
+validate licensing, CUDA/driver compatibility, compute-node runtime, GPU
+selection, bind paths, home isolation, cache placement, and exact rollback.
 
 ## Stable operational facts
 
