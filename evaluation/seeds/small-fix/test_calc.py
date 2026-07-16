@@ -14,6 +14,14 @@ class ClampTests(unittest.TestCase):
     def test_custom_bounds(self):
         self.assertEqual(clamp(7, 5, 6), 6)
 
+    def test_inclusive_bounds(self):
+        self.assertEqual(clamp(5, 5, 6), 5)
+        self.assertEqual(clamp(6, 5, 6), 6)
+
+    def test_invalid_bounds(self):
+        with self.assertRaises(ValueError):
+            clamp(5, 6, 5)
+
 
 if __name__ == "__main__":
     unittest.main()

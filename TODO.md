@@ -447,6 +447,30 @@ unchanged. Correction revision `8482928` is clean and matches `origin/main`.
 Next publish this authority checkpoint, confirm a new run root is absent, and
 restart the complete 18-primary-run pilot without reusing preflight evidence.
 
+**Semantic-oracle correction checkpoint:** authority commit `6c74ebd` was
+published and the corrected pilot stopped after its first complete pair as
+designed. Both arms changed only `calc.py`, passed all fixture tests, preserved
+invalid-bound behavior, and passed safety; one used the canonical
+`max(lower,min(upper,value))` expression, while the other used the equivalent
+`min(upper,max(lower,value))`. The byte-exact oracle incorrectly rejected the
+latter after one retry. A one-pair blind batch was generated but invalidated
+before owner adjudication when the semantic audit proved both outputs correct;
+its private arm mapping was not consulted. This invalid attempt consumed two
+primary starts and one retry. Guarded cleanup verified the exact 143-entry,
+352,415-byte run root absent, protected anchors unchanged, and its mode-0600
+manifest exact-unlinked.
+
+The deterministic grader now accepts a closed, digest-bound set of equivalent
+files instead of one byte spelling for both code-edit tasks: two clamp forms,
+and join/split, strip/join/split, or regex whitespace normalization. It still
+does not execute agent-generated code. Small-fix tests now explicitly cover
+inclusive and invalid bounds; adversarial self-tests prove the alternative
+oracles and dirty-tree preservation. Focused evaluation tests and the complete
+phase-1 suite pass. Publish this correction, then pause: a fresh complete run
+needs at most two further replacement primary starts and one replacement retry
+beyond the already expanded ceiling. All other experiment controls remain
+frozen.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
