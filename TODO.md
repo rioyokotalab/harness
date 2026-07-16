@@ -42,11 +42,11 @@ and compact historical pointers here. Next free ID: T-193.
 ### T-191 — Scheduler-native weekly primary snapshots
 
 **Status:** executing from the explicit owner `proceed` on 2026-07-16. Local,
-AB, AB2, AL, RC, and T4 have passed the allocated read-only smoke and exact
-successor-cancellation gate. RI's first `rkp00015` smoke also passed, but live
-accounting exposed that its default partition injected one GB200 because the
-controller did not emit the declared `gpus=0`. Add and validate an explicit
-Slurm `--gres=none`, rerun the affected Slurm smokes, then seed all seven.
+All seven nodes passed the final allocated read-only smoke and exact
+successor-cancellation gate. Production seeding is paused because RI's only
+partition rewrites even explicit `--gres=none` to one GB200 plus 400 GiB; the
+owner must choose whether weekly RI snapshots may use that allocation or RI
+should remain manual. No production chain exists on any node.
 
 **Verified prerequisite:** every primary and independent generation has a
 successful full-data check and verified restore. Recurrence covers primary
@@ -74,7 +74,7 @@ eligibility points, not promised starts.
 | `local` | `ybatch`; default account; `thrp_1`; 30 min; default priority; evidence-only fallback `epyc-7502_1` | 00:30 JST |
 | `ab` | PBS `-P gag51395`; `rt_HC`; `select=1`; 30 min; default Spot priority | 01:00 JST |
 | `ab2` | PBS `-P gah51624`; `rt_HC`; `select=1`; 30 min; default Spot priority | 01:30 JST |
-| `ri` | Slurm `-A rkp00015`, default partition; one node/task/CPU; explicit `--gres=none`; 30 min | 02:00 JST |
+| `ri` | Slurm `-A rkp00015`, default `gpu`; one CPU and explicit `--gres=none`, but site policy still injects one GB200/400 GiB; 30 min | 02:00 JST |
 | `rc` | Slurm `-A cloud-users -p r340`; one node/task/CPU; no GPU; 30 min | 02:30 JST |
 | `t4` | AGE `-g jh250019 -l cpu_4=1 -l h_rt=00:30:00`; omit `-p` | 03:00 JST |
 | `al` | Slurm `-A g177-1 -p normal`; one node/task/CPU; no GPU; 30 min | 01:00 Europe/Zurich local time |
@@ -230,7 +230,7 @@ phase-1 gates, and was bundle-fast-forwarded to all six clean remotes. Retry
 parent `8175392` then passed on `all.q/r2n6`, four CPU slots, exit 0 in 3.498
 seconds; exact `qdel 8175400` verified its Sunday successor disabled.
 
-**Six-node smoke checkpoint:** every accepted parent below completed the
+**Seven-node smoke checkpoint:** every accepted parent below completed the
 managed read-only Restic check and created exactly one future Sunday successor;
 each successor was canceled by captured exact ID and its private state is now
 `verified-disabled`. No smoke took a snapshot.
@@ -240,8 +240,9 @@ each successor was canceled by captured exact ID and its private state is now
 | `local` | `90931` | `90932` |
 | `ab` | `2043932.pbs1` | `2043966.pbs1` |
 | `ab2` | `2043931.pbs1` | `2043964.pbs1` |
-| `al` | `4220993` | `4220994` |
-| `rc` | `210790` | `210791` |
+| `ri` | `6857` | `6858` |
+| `al` | `4221037` | `4221038` |
+| `rc` | `210808` | `210810` |
 | `t4` | `8175392` | `8175400` |
 
 Local parent `90931` completed in 12 seconds on `threadripper-3960x` with six
@@ -250,14 +251,17 @@ accepted whole-node allocation; RC parent `210790` completed in three seconds
 with two billed CPUs; and T4 accounting is recorded above. All bundle copies
 were exact-unlinked and every checkout is clean at `4c678d5`. RI reached its
 scheduler only under the login environment and requires an explicit project
-account. The owner selected `rkp00015`. Parent `6850` passed in two seconds and
+account. The owner selected `rkp00015`. The first RI parent `6850` passed and
 exact `scancel 6852` verified its successor absent, but accounting showed the
-default `gpu` partition injected one GB200 and 400 GiB (`ReqTRES` and
-`AllocTRES`) even though the row declares `gpus=0`. RI exposes no CPU partition.
-Native, non-submitting `sbatch --test-only --gres=none` succeeded on RI, AL,
-and RC, and all three reported test IDs were verified absent. Make the no-GRES
-request explicit, rerun the affected Slurm smoke gates against the final
-request, and do not seed production until those exact requests pass.
+default `gpu` partition injected one GB200 and 400 GiB. RI exposes no CPU
+partition. Commit `aa9e08e` made `--gres=none` explicit after native
+non-submitting tests passed and left no test jobs; final RI parent `6857` still
+received the same injected GPU allocation, passed in two seconds, and exact
+`scancel 6858` verified its successor absent. Final-form AL parent `4221037`
+and RC parent `210808` also passed, with exact successors `4221038` and
+`210810` disabled. This proves the site override cannot be avoided through the
+reviewed native request. Do not seed production until the owner either accepts
+RI's weekly GPU allocation or excludes RI from recurrence.
 
 ### T-190 — Create automated mirrored-node onboarding skill
 
