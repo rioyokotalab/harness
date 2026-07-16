@@ -118,3 +118,9 @@ The post-rollout
 [`audits/fleet-readiness-fail-closed-2026-07-17.json`](audits/fleet-readiness-fail-closed-2026-07-17.json)
 independently reports all seven clean nodes at exact revision `7fbe572`, with
 34/0/0 canonical counts, no retained control-plane errors, and no failures.
+
+T-232 adds a required Git tree identity for the complete tracked `tests/smoke`
+subtree. This automatically covers newer readiness sources and jobs without a
+second hand-maintained filename list. The older per-file records remain for
+bounded diagnosis, but a missing, explicit-error, or duplicate subtree identity
+now fails that node.

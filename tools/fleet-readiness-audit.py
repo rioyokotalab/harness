@@ -101,6 +101,11 @@ for rel in CMakeLists.txt cpp20.cpp cpu.c cpu.cpp cpu.f90 cuda.cu llm_torch.py m
         printf 'SMOKE\t%s\tabsent\n' "$rel"
     fi
 done
+if smoke_tree=$(git -C "$root" rev-parse HEAD:tests/smoke 2>/dev/null); then
+    printf 'SMOKE_TREE\t%s\n' "$smoke_tree"
+else
+    printf 'SMOKE_TREE_ERROR\t1\n'
+fi
 probe_version() {
     label=$1
     shift
@@ -190,6 +195,8 @@ def parse_probe(host: str, output: str) -> dict[str, Any]:
     marker = False
     control_plane_summaries = 0
     control_plane_failed = False
+    smoke_tree_summaries = 0
+    smoke_tree_failed = False
     for line in output.splitlines():
         fields = line.split("\t")
         tag = fields[0]
@@ -245,6 +252,11 @@ def parse_probe(host: str, output: str) -> dict[str, Any]:
             if not re.fullmatch(r"[A-Za-z0-9_.-]+", fields[1]) or (fields[2] != "absent" and not HEX_OBJECT.fullmatch(fields[2])):
                 raise AuditError(f"invalid smoke metadata: {host}")
             data["smoke_sources"][fields[1]] = fields[2]
+        elif tag == "SMOKE_TREE" and len(fields) == 2 and HEX_OBJECT.fullmatch(fields[1]):
+            smoke_tree_summaries += 1
+            if smoke_tree_summaries != 1:
+                raise AuditError(f"duplicate smoke tree identity: {host}")
+            data["smoke_tree"] = fields[1]
         elif tag == "VERSION" and len(fields) == 4:
             label, state, value = fields[1:]
             if not re.fullmatch(r"[a-z]+", label) or state not in {"present", "absent"} or len(value) > 180 or any(ord(char) < 32 for char in value):
@@ -254,12 +266,16 @@ def parse_probe(host: str, output: str) -> dict[str, Any]:
             data.setdefault("errors", []).append(tag.removesuffix("_ERROR").lower())
             if tag == "CONTROL_PLANE_ERROR":
                 control_plane_failed = True
+            if tag == "SMOKE_TREE_ERROR":
+                smoke_tree_failed = True
         else:
             data["discarded_stdout_lines"] += 1
     if not schema or not marker or "head" not in data or "dirty_entries" not in data:
         raise AuditError(f"incomplete probe identity: {host}")
     if control_plane_summaries != 1 or control_plane_failed:
         raise AuditError(f"incomplete control plane summary: {host}")
+    if smoke_tree_summaries != 1 or smoke_tree_failed:
+        raise AuditError(f"incomplete smoke tree identity: {host}")
     return data
 
 

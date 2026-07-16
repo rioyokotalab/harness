@@ -1521,6 +1521,24 @@ tests pass. The durable shared-staging rule was added to the native-HPC skill,
 and `install.sh` independently reconfirmed all three client discovery links.
 No credential/private-data path was hashed and no scheduler job was submitted.
 
+### T-232 — Fail-closed complete smoke-subtree fleet identity
+
+**Phase/status:** `in progress`, derived from review of the T-225/T-226 audit.
+The fleet probe still hashes a fixed legacy list of ten smoke files, excluding
+newer checkpoint, environment, and multi-node gates. Add exactly one required
+Git tree identity for the complete tracked `tests/smoke` subtree, while keeping
+the legacy per-file records for diagnosis. Reject missing, explicit-error, or
+duplicate tree identities; add negative parser tests; run focused/full/public
+validation; publish/distribute; then require one new failure-free seven-node
+audit with identical subtree identity. This is read-only and must not execute
+any smoke or alter scheduler state.
+
+**Implementation checkpoint:** the remote probe now resolves the Git tree
+object at `HEAD:tests/smoke`; the parser requires exactly one valid identity
+and rejects missing, explicit-error, and duplicate forms. Focused negative,
+portable full, and public-audit suites pass. Commit/distribute before the live
+read-only audit so all seven nodes report the same complete subtree object.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

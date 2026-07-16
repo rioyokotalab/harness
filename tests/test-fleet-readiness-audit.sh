@@ -33,6 +33,7 @@ printf '%s\n' \
   'CONTROL	.codex/AGENTS.md	symlink	/home/test/harness/.codex/AGENTS.md' \
   'STORAGE	.local	symlink	/large/test/home-local' \
   'SMOKE	mpi.c	0123456789012345678901234567890123456789' \
+  'SMOKE_TREE	1123456789012345678901234567890123456789' \
   'VERSION	python	present	Python 3.12.3'
 EOF
 chmod 700 "$TEST_ROOT/ssh"
@@ -49,6 +50,7 @@ assert x['nodes']['ab']['head']=='0123456789012345678901234567890123456789'
 assert x['nodes']['ab']['doctor']=={'failures':0,'warnings':2}
 assert x['nodes']['ab']['schedule']['chain']['job']=='123.pbs'
 assert x['nodes']['ab']['control_plane']=={'keep':34,'create':0,'block':0}
+assert x['nodes']['ab']['smoke_tree']=='1123456789012345678901234567890123456789'
 PY
 PYTHONDONTWRITEBYTECODE=1 python3 - "$AUDIT" <<'PY'
 import importlib.util
@@ -75,5 +77,18 @@ for label, suffix in (
         pass
     else:
         raise AssertionError(f"{label} control-plane summary did not fail closed")
+
+complete = identity + "\nCONTROL_PLANE\t34\t0\t0"
+for label, suffix in (
+    ("missing", ""),
+    ("explicit error", "\nSMOKE_TREE_ERROR\t1"),
+    ("duplicate", "\nSMOKE_TREE\t1123456789012345678901234567890123456789\nSMOKE_TREE\t1123456789012345678901234567890123456789"),
+):
+    try:
+        module.parse_probe("ab", complete + suffix)
+    except module.AuditError:
+        pass
+    else:
+        raise AssertionError(f"{label} smoke tree identity did not fail closed")
 PY
 printf '%s\n' 'fleet readiness audit tests passed'
