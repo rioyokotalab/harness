@@ -643,6 +643,30 @@ both `/tmp/harness-eval-t181` and its mode-0600 manifest absent. Revalidate the
 clean corpus/client and the 35-pair/70-primary plan, then create that same
 canonical path anew and run the full stage once from entirely fresh evidence.
 
+**Full-stage evidence checkpoint:** fresh-restart commit `58cbe05` was clean,
+published, and matched `origin/main` before the model stage. All 70 primaries
+completed in 2,650,917 ms with 72 model invocations, two retries, 69
+deterministic passes, zero safety failures, 6,839,021 input tokens, and 69,040
+output tokens. Baseline recorded 35/35 passes and candidate 34/35; the paired
+deterministic difference is -0.028571 with the pre-registered distribution-free
+95% interval [-0.258132, 0.200990]. Both arms used 36 invocations. Candidate
+used 13.3% more duration, 3.1% more input tokens, and 3.3% more output tokens
+than baseline. The allowlisted schema-validated aggregate is
+`evaluation/results/t181-failure-capsule-v1-full.json`.
+
+The single full-stage review batch contained 13 trigger-selected pairs. All
+were substantively accepted: twelve already passed both deterministic graders;
+the sole deterministic failure correctly named `artifact_path`, explained
+relative and absolute escape from `root`, preserved the worktree, and passed
+safety, so its adjacent-phrase miss is a semantic-oracle false negative. Keep
+the canonical 69/70 report unchanged rather than rewriting evidence. The
+private arm mapping was not opened, but final-message links themselves leaked
+`baseline`/`candidate` workspace segments, so the review was not fully blind.
+The bounded adjudication and limitation are recorded in
+`evaluation/results/t181-failure-capsule-v1-full-review.md`. Publish this frozen
+evidence before correcting the post-experiment oracle and batch redaction;
+candidate adoption remains explicitly out of scope.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
