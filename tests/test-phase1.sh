@@ -57,6 +57,7 @@ for script in \
     "$ROOT/shared/skills/onboard-mirrored-node/scripts/onboard-preflight" \
     "$ROOT/tests/guarded-test-cleanup.sh" \
     "$ROOT/tests/smoke/debugger-readiness.sh" \
+    "$ROOT/tests/smoke/venv-readiness.sh" \
     "$ROOT/libexec/harness-rollback"
 do
     sh -n "$script" || fail "shell syntax: $script"
@@ -78,6 +79,8 @@ done
     fail "storage readiness focused suite"
 "$ROOT/tests/test-debugger-readiness.sh" >/dev/null ||
     fail "debugger readiness focused suite"
+"$ROOT/tests/test-venv-readiness.sh" >/dev/null ||
+    fail "venv readiness focused suite"
 
 # Direct non-interactive SSH can omit ~/.local/bin even when the managed
 # Restic installation is healthy. The harness route must find that exact

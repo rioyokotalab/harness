@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-214.
+and compact historical pointers here. Next free ID: T-215.
 
 ## Current state
 
@@ -1008,6 +1008,23 @@ result/name collision checks passed before PBS accepted AB `2045079.pbs1` and
 AB2 `2045078.pbs1`, and AGE accepted T4 `8180554`. T4 already completed with
 scheduler/result zero and the full inner breakpoint/argument gate. The two
 ABCI jobs are validly queued; monitor only those IDs without replacement.
+
+### T-214 — Offline project virtual-environment gate
+
+**Phase/status:** `executing`; no allocation or package installation is
+required. The tracked direct gate selects only the already-present `python3`,
+requires managed `uv`, sets `UV_OFFLINE=1` and
+`UV_PYTHON_DOWNLOADS=never`, and creates an unseeded project-independent venv
+plus uv cache inside one mode-0700 temporary tree. It never activates the venv,
+contacts an index, resolves dependencies, or writes project/home state. The
+venv Python must run isolated with user site disabled and pass the tracked
+standard-library smoke before guarded cleanup.
+
+Run local execution, static/safety tests, the full suite and public audit;
+commit/distribute; then execute once on all seven login nodes. This proves only
+offline environment creation from the visible interpreter. It does not select
+framework packages, validate a lock, seed pip, claim wheel availability, or
+authorize any T-206 install/download.
 
 ## Stable operational facts
 
