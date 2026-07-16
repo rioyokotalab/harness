@@ -1,0 +1,113 @@
+{
+  "generated_date": "2026-07-17",
+  "nodes": {
+    "ab": {
+      "accelerator": "NVIDIA H200",
+      "architecture": "x86_64",
+      "compute_capability": "9.0",
+      "cuda": "13.2",
+      "cuda_kernel": "pass",
+      "driver": "580.105.08",
+      "gate": "accelerator-readiness-v1",
+      "job_id": "2045030.pbs1",
+      "result_status": 0,
+      "scheduler": "PBS",
+      "scheduler_exit": 0
+    },
+    "ab2": {
+      "accelerator": "NVIDIA H200",
+      "architecture": "x86_64",
+      "compute_capability": "9.0",
+      "cuda": "13.2",
+      "cuda_kernel": "pass",
+      "driver": "580.105.08",
+      "gate": "accelerator-readiness-v1",
+      "job_id": "2045029.pbs1",
+      "result_status": 0,
+      "scheduler": "PBS",
+      "scheduler_exit": 0
+    },
+    "al": {
+      "accelerator": "NVIDIA GH200 120GB",
+      "architecture": "aarch64",
+      "compute_capability": "9.0",
+      "cuda": "12.9",
+      "cuda_kernel": "pass",
+      "driver": "590.48.01",
+      "gate": "accelerator-readiness-v1",
+      "job_id": "4224038",
+      "result_status": 0,
+      "scheduler": "Slurm",
+      "scheduler_exit": 0
+    },
+    "local": {
+      "accelerator": "NVIDIA RTX A4500",
+      "architecture": "x86_64",
+      "compute_capability": "8.6",
+      "cuda": "12.8",
+      "cuda_kernel": "pass",
+      "driver": "595.58.03",
+      "gate": "accelerator-readiness-v2",
+      "job_id": "91211",
+      "result_status": 0,
+      "scheduler": "Ybatch/Slurm",
+      "scheduler_exit": 0
+    },
+    "rc": {
+      "accelerator": "NVIDIA GH200 480GB",
+      "architecture": "aarch64",
+      "compute_capability": "9.0",
+      "cuda": "declared skip: no reviewed toolkit route",
+      "cuda_kernel": "not run",
+      "driver": "610.43.02",
+      "gate": "accelerator-readiness-v2",
+      "job_id": "211018",
+      "result_status": 0,
+      "scheduler": "Slurm",
+      "scheduler_exit": 0
+    },
+    "ri": {
+      "accelerator": "NVIDIA GB200",
+      "architecture": "aarch64",
+      "compute_capability": "10.0",
+      "cuda": "declared skip: no reviewed toolkit route",
+      "cuda_kernel": "not run",
+      "driver": "580.159.03",
+      "gate": "accelerator-readiness-v2",
+      "job_id": "7009",
+      "result_status": 0,
+      "scheduler": "Slurm",
+      "scheduler_exit": 0
+    },
+    "t4": {
+      "accelerator": "NVIDIA H100 MIG",
+      "architecture": "x86_64",
+      "compute_capability": "9.0",
+      "cuda": "12.8",
+      "cuda_kernel": "pass",
+      "driver": "580.105.08",
+      "gate": "accelerator-readiness-v1",
+      "job_id": "8179763",
+      "result_status": 0,
+      "scheduler": "AGE",
+      "scheduler_exit": 0
+    }
+  },
+  "schema": 1,
+  "scope": [
+    "scheduler compute execution",
+    "compute architecture assertion",
+    "single selected logical device",
+    "NVIDIA driver metadata",
+    "CUDA compile and one-device kernel where a reviewed toolkit exists"
+  ],
+  "summary": {
+    "cuda_kernel_passed": 5,
+    "driver_runtime_passed": 7,
+    "framework_skipped": 7,
+    "nodes_passed": 7,
+    "nodes_total": 7,
+    "scheduler_exit_zero": 7,
+    "toolkit_declared_skip": 2
+  }
+}

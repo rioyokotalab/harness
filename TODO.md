@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-207.
+and compact historical pointers here. Next free ID: T-208.
 
 ## Current state
 
@@ -488,7 +488,8 @@ inspected; T-202 owns an application-native migration choice.
 
 ### T-200 — Scheduler-native LLM/HPC capability matrix
 
-**Phase/status:** `executing`; CPU/compiler/Python gate complete. Convert identical tracked smoke sources
+**Phase/status:** `capability baseline complete`; framework selection moved to
+T-206. Convert identical tracked smoke sources
 and site declarations into a reproducible login-versus-compute matrix. First
 record exact native commands and environment/container routes; then, only under
 existing allocation authority, run matched single-rank CPU/compiler/Python and
@@ -612,6 +613,16 @@ fresh collision checks then preceded Slurm acceptance of RI `7009` and RC
 `211018`. Both use run tag v2 and distinct names. The local retry wrapper is
 being versioned with name `t200glocal2` and run tag v2 before its own fresh
 collision check and Ybatch submission. Monitor only the captured IDs.
+
+**Accelerator outcome:** RI `7009`, RC `211018`, and local `91211` completed
+with scheduler/result zero. The final seven-node matrix is
+`docs/audits/hpc-accelerator-readiness-2026-07-17.json` and the human report is
+`docs/hpc-readiness.md`: seven driver/runtime passes, five one-device CUDA
+compile/kernel passes, and two explicit no-toolkit skips. Every node records
+the intentional framework skip. T-200's safe base-environment capability
+matrix is complete; it makes no framework, MPI, distributed, numerical, or
+performance claim. T-206 owns the owner-gated framework selection, and T-207
+owns the next smaller scheduler-native MPI gate.
 
 ### T-201 — Early-login cache redirection
 
@@ -782,6 +793,17 @@ node. First reconcile architecture, CUDA/driver compatibility, package source,
 lockfile or digest, cache placement, license, and rollback. This task may
 prepare a value-free option matrix autonomously, but package installation,
 image pull, or live environment selection remains owner-gated.
+
+### T-207 — Scheduler-native MPI correctness gate
+
+**Phase/status:** `planned` after T-200. Discover and freeze each site's
+declared MPI/compiler route, then run the tracked bounded MPI source with two
+ranks on one allocated node before any multi-node or GPU-aware claim. Require
+rank uniqueness, expected world size, launcher identity, compiler/library
+provenance, scheduler/result zero, private collision-resistant evidence, and
+guarded scratch cleanup. Reuse T-191-approved CPU accounts/resources, default
+priority, and five-minute limits. Do not infer ABI compatibility from login
+PATH, cross node boundaries, run a benchmark, or use an unreviewed container.
 
 ## Stable operational facts
 
