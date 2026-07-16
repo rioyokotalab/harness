@@ -1649,6 +1649,20 @@ shell parsing, warning-level ShellCheck, portable phase 1, and public audit
 pass. Commit the revision binding, push and distribute before any scheduler
 action.
 
+**First submission checkpoint and RC correction:** exact runnable commit
+`9f4b3d2` reached all six clean remotes and the gate compiled/executed on all
+seven reviewed login toolchains. Result/name/temp collision checks passed
+before native schedulers accepted AB `2045152.pbs1`, AB2 `2045153.pbs1`, RI
+`7020`, AL `4225162`, RC `211077`, and T4 `8182351`; local remains held behind
+`91220`/`91240`. RI, AL, and T4 already have private mode-0600 PASS/status-zero
+results and terminal scheduler status zero. AB/AB2 are queued. RC v1 preserved
+a clean diagnostic failure: Slurm allocated two logical CPUs, but the gate
+found only one physical core, and both result and accounting report status 2.
+Native `sbatch --help` exposes `--hint`; freeze `--hint=nomultithread` with a
+distinct v2 name/result, commit and distribute the route correction, then
+test-only/collision-check before one RC retry. Do not overwrite v1 or alter
+the already queued jobs.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

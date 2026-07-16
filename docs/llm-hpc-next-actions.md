@@ -13,7 +13,10 @@ residue-free scheduler verification interface, so that second item is now
 blocked until the site provides one or an actual submission is separately
 authorized. T-237 has implemented and locally validated the first gate; its
 source is immutable and its seven bounded routes are ready for collision-
-checked native submission.
+checked native submission. Six remote jobs are now captured: RI, AL, and T4
+pass; AB and AB2 are queued; and RC's diagnostic SMT placement failure has a
+narrow `--hint=nomultithread` v2 correction. Local remains held behind its two
+older pending jobs.
 
 The next high-value execution branch needs an explicit framework/version and
 architecture-matched immutable artifacts. After that choice, run one locked

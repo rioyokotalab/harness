@@ -19,7 +19,7 @@
       "action": "test scheduler cpuset and topology binding without repeating OpenMP arithmetic",
       "evidence": "T-200,T-216,T-237",
       "id": "Q3",
-      "status": "ready_to_execute"
+      "status": "executing"
     },
     {
       "action": "perform a native test-only review of the local two-node MPI shape",
@@ -64,7 +64,7 @@
   "schema": 1,
   "status_vocabulary": [
     "captured_pending",
-    "ready_to_execute",
+    "executing",
     "blocked_by_scheduler_interface",
     "owner_gated",
     "project_gated",
