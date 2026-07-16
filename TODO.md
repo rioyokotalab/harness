@@ -1637,6 +1637,18 @@ IDs without replacing delayed work. The two existing local jobs remain a
 duplicate-load constraint: do not submit a third local readiness job while
 they are pending.
 
+**Implementation checkpoint:** `tests/smoke/affinity.cpp` validates the
+allocation-visible affinity mask, topology metadata, two distinct physical
+cores, and exact two-worker pinning while emitting counts only. The generic
+job publishes one private result, guarded-cleans its build, and refuses source
+drift from exact implementation commit `3b96936`. The seven-row route manifest
+freezes only the proven one-node/default-priority resource families and a
+five-minute limit; Slurm routes request two CPUs per task, while ABCI/T4 reuse
+their existing full/fractional-node shapes. Positive/negative source tests,
+shell parsing, warning-level ShellCheck, portable phase 1, and public audit
+pass. Commit the revision binding, push and distribute before any scheduler
+action.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

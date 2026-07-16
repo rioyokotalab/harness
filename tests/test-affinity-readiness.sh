@@ -5,6 +5,7 @@ ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 SOURCE=$ROOT/tests/smoke/affinity.cpp
 JOB=$ROOT/tests/smoke/jobs/affinity-readiness.sh
 LOCAL=$ROOT/tests/smoke/jobs/local-affinity.slurm
+ROUTES=$ROOT/profiles/hpc-affinity-routes.tsv
 work=$(mktemp -d "${TMPDIR:-/tmp}/harness-affinity-test.XXXXXX")
 
 cleanup() {
@@ -30,8 +31,18 @@ fi
 grep -Fx '#YBATCH -r thrp_1' "$LOCAL" >/dev/null
 grep -Fx '#SBATCH --cpus-per-task=2' "$LOCAL" >/dev/null
 grep -F 'HARNESS_EXPECTED_REV' "$JOB" >/dev/null
+grep -F 'export HARNESS_EXPECTED_REV=3b969366202f78f7f7b9d60f4d7c9671dc8b0ccd' "$LOCAL" >/dev/null
 grep -F 'tests/smoke/jobs/source-contract.sh' "$JOB" >/dev/null
 grep -F '"$build/affinity" 2' "$JOB" >/dev/null
+[ "$(grep -cv '^#' "$ROUTES")" -eq 7 ]
+for host in local ab ab2 ri al rc t4; do
+    [ "$(awk -F '|' -v host="$host" '$1 == host { count++ } END { print count + 0 }' "$ROUTES")" -eq 1 ]
+done
+awk -F '|' '
+    /^#/ { next }
+    NF != 11 || $8 != 2 || $10 != "00:05:00" || $11 !~ /^t237a/ { bad=1 }
+    END { exit bad }
+' "$ROUTES"
 if grep -E 'rm[[:space:]]+(-[^[:space:]]*)*[rR]|--recursive|find[[:space:]].*-delete|rsync[[:space:]].*--delete' \
     "$JOB" "$LOCAL" "$ROOT/tests/guarded-test-cleanup.sh" >/dev/null; then
     printf '%s\n' 'FAIL: unsafe cleanup in affinity readiness gate' >&2

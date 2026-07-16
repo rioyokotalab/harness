@@ -11,7 +11,9 @@ owner choice is then limited to a scheduler cpuset/topology gate and a native
 test-only review of the local two-node MPI request. T-236 subsequently found no
 residue-free scheduler verification interface, so that second item is now
 blocked until the site provides one or an actual submission is separately
-authorized.
+authorized. T-237 has implemented and locally validated the first gate; its
+source is immutable and its seven bounded routes are ready for collision-
+checked native submission.
 
 The next high-value execution branch needs an explicit framework/version and
 architecture-matched immutable artifacts. After that choice, run one locked
