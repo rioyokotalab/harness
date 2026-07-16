@@ -428,7 +428,7 @@ harness changes frequently while preserving concurrent contributor work.
 
 ### T-198 — Safe remote harness fast-forward
 
-**Phase/status:** `planned` from T-195. All six remotes are clean at ancestor
+**Phase/status:** `complete`. All six remotes were clean at ancestor
 `a2823d3`, 36 commits behind the local/public branch. Before any rollout,
 classify every intervening path and prove that the T-191 scheduled entrypoint,
 repository declarations, and private-state schema remain compatible with the
@@ -450,6 +450,17 @@ replica helper; neither is in the scheduled call graph. T-195 independently
 proved each remote clean at the expected ancestor with the captured production
 job present. Next: publish this checkpoint, create one prerequisite-bound Git
 bundle, and require exact preflight/fast-forward/postflight in each connection.
+
+**Outcome:** mode-0600 bundle SHA-256
+`91a6ec436e3f238be1b1dae4b0c65bb07715457da3f9a153f07f8840614fdb57`
+fast-forwarded all six remotes to `a916b10`. Five direct transactions passed
+every postflight. RI also fast-forwarded and removed its bundle, then hit only
+the documented non-login Slurm query boundary; a login-shell read-only
+postflight passed. The independent canonical report
+`docs/audits/fleet-readiness-post-rollout-a916b10.json` proves all seven exact,
+clean, doctor failures zero, captured production jobs unchanged/present,
+disabled smokes absent, control links correct, and smoke blobs identical. All
+seven local/remote transfer artifacts are absent. No scheduler write occurred.
 
 ### T-199 — Recreated hidden-state classification
 

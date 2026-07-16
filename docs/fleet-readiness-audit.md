@@ -80,3 +80,22 @@ job state. It does not prove GPU type, driver/runtime compatibility, framework
 imports, collectives, filesystem throughput, or multi-node training. Those
 claims require scheduler-native allocated tests in site-declared environments,
 starting with single-device/rank correctness before scale.
+
+## T-198 post-rollout verification
+
+After proving the queued T-191 runtime objects byte-identical across the old
+and target revisions, a prerequisite-bound mode-0600 Git bundle fast-forwarded
+all six remotes from `a2823d3` to `a916b10`. Each write connection revalidated
+the old HEAD, clean `main`, bundle SHA-256, fast-forward target,
+scheduled-script syntax, doctor, exact captured production job, clean target
+worktree, and remote bundle absence. Five nodes completed in their direct
+connection. RI fast-forwarded and cleaned its bundle, then failed only because
+its known non-login Slurm environment cannot query job state; a login-shell
+read-only postflight proved the same target/clean/job/absence invariants.
+
+`docs/audits/fleet-readiness-post-rollout-a916b10.json` independently re-probed
+all seven nodes. Every checkout is clean at exact revision `a916b10`, every
+doctor has zero failures, every original production job remains active and
+present under the same ID, every smoke successor remains verified disabled and
+absent, all control links are symlinks, all smoke blobs agree, and no unexpected
+stdout was retained. The local and six remote bundle files were exact-unlinked.
