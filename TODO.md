@@ -1971,10 +1971,10 @@ and the private capture was exact-unlinked. This completes all seven nodes.
 
 ### T-249 — Canonical aliases and simplified Bash startup workflow
 
-**Phase/status:** `planning` after the owner expanded PIE to a careful
-line-by-line necessity review of every managed node's `.bashrc` and
-`.bash_profile`. D1, D2, D2a, and D3 are resolved; live files remain read-only
-while per-node simplification choices are identified.
+**Phase/status:** `interviewing` after completing the owner's expanded,
+careful line-by-line necessity review of every managed node's `.bashrc` and
+`.bash_profile`. D1, D2, D2a, and D3 are resolved; D4-D6 remain open and live
+files remain read-only.
 Planning discovery was read-only on every live startup file and redacted any
 credential-like line before agent output. No startup, package, scheduler,
 authentication, or external state changed. The desired outcome is one durable,
@@ -2044,6 +2044,81 @@ remediation or infer deletion from old policy. T4 also has a `.pyenv` tree but
 no startup call. Preserve all other Python, compiler, cache, distributed,
 completion, site, and owner lines unless a frozen interview decision names an
 exact block.
+
+**Careful line-group review and simplification proposal:** comment-only headers
+and blank separators have no runtime cost and should not be churned unless the
+adjacent executable block is removed. On every node, keep the seven-line early
+cache prefix first and the managed profile loader; keep the selected login
+file's `.bashrc` source. Current and RI correctly have no `.bash_profile` and
+must continue using their existing `.profile` rather than creating a higher-
+precedence file. Keep `/etc/bashrc` sourcing on RC/T4 and the normal RI
+interactive guard, completion, `checkwinsize`, `lesspipe`, and `dircolors`
+features. The remaining per-node classification is:
+
+- `local .bashrc`: move the eight safe common aliases into D1's alphabetic
+  tracked fragment, retain only the redacted local-only `al` alias in a labelled
+  owner block, and remove the now-duplicate editor/history/prompt lines. `FS` is
+  only `$HOME`; its `.local/bin` export duplicates `shell/profile.sh`, while
+  global `CPATH`, `LIBRARY_PATH`, `LD_LIBRARY_PATH`, and `PKG_CONFIG_PATH`
+  affect every compiler/linker process and are not used by harness. D4 decides
+  whether to replace this entire legacy install block with project/module-
+  scoped build environments.
+- `AB .bashrc`: retain interactive-only `stty -ixon` and the explicit no-pager
+  preference. Remove duplicate `ls`; remove `hosts`, `interactive`, and
+  `interactive_full` because login-shell checks prove `qrsh` absent and the
+  current scheduler is PBS rather than SGE. Retain working `points` and AB's
+  `usage` alias; its referenced strict regular owner data file exists. Replace
+  the inline module block with D3's unconditional compatibility hook.
+  `AB .bash_profile`: retain `.bashrc` sourcing; remove D2's agent block and the
+  dead commented MPI line. The PyEnv tree and executable currently exist, so
+  D5—not old deletion prose—decides whether its six-line initialization stays.
+- `AB2 .bashrc`: make the same `stty`, pager, broken `hosts`/`interactive*`,
+  working `points`, duplicate `ls`, and D3 module decisions as AB. `AB2
+  .bash_profile`: retain `.bashrc` sourcing, remove the six inert fixed-width
+  comments left by the completed PyEnv remediation, remove D2's agent block,
+  and remove the dead commented MPI line.
+- `RI .bashrc`: keep the early prefix, but move the silent managed profile
+  loader before the non-interactive return so direct Bash obtains the managed
+  local-bin/editor/cache environment while `shell/interactive.sh` still gates
+  aliases, history, prompt, login sync, and warnings on `$-`. Remove the
+  overridden distro history limits/control, prompt/title construction, and
+  common aliases. Retain `checkwinsize`, `lesspipe`, `dircolors`, and Bash
+  completion. Remove `alert` because `notify-send` is absent; remove deprecated
+  `egrep`/`fgrep` aliases and the absent `.bash_aliases` hook; retain simple
+  site-only `l` unless the owner later rejects it. No `.bash_profile` exists.
+- `AL .bashrc`: remove duplicate `ls` plus the obsolete start-image comments;
+  the tracked `prgenv` function already provides the explicit uenv entry. `AL
+  .bash_profile`: retain `.bashrc` sourcing, remove D2's agent block, and apply
+  D4 to the redundant/risky local-install exports. The declared `.venv` is
+  absent; D6 decides whether to remove `UV_VENV_ROOT` and `activate` rather than
+  keep a function with no current target.
+- `RC .bashrc`: retain `/etc/bashrc` and the no-pager preference; remove the
+  exact pre-`DATA` path block that can introduce `/.local/bin`, because the
+  managed `$HOME/.local/bin` resolves to the same large-storage installation.
+  `RC .bash_profile`: retain `.bashrc` sourcing; apply D4 to `DATA` and global
+  install/build exports, remove D2's agent block, and let D5 decide the existing
+  PyEnv initialization because its tree/executable currently exist.
+- `T4 .bashrc`: retain `/etc/bashrc`, working `interactive`/`points` aliases,
+  and replace inline modules with D3's unconditional compatibility hook. Remove
+  the eager backtick Makefile completion: both home Makefile spellings are
+  absent and sourcing general startup must not scan the current directory.
+  `T4 .bash_profile`: retain `.bashrc` sourcing. D4 covers `FS` and global
+  install/build exports. Remove redundant `PYTHONUSERBASE` and the conflicting
+  `UV_CACHE_DIR`; D6 decides the active persistent `.venv`/`activate` helper.
+  Remove login-wide `MPLBACKEND=Qt5Agg` and nonexistent `/tmp/runtime-$USER`;
+  projects/jobs must choose a GUI/headless backend and create a private runtime
+  directory when needed. Remove D2's agent block. Move `MASTER_ADDR` derivation
+  into distributed job scripts. Add portable `HF_HOME` under the declared
+  harness cache root and remove the slow-storage override. Keep canonical
+  `APPTAINER_CACHEDIR` in `shell/cache.sh`; move `APPTAINER_TMPDIR` into T4 job
+  setup because `T4TMPDIR` is absent on login and supplied only in jobs.
+
+These proposals remove only exact reviewed executable/comment groups. They do
+not minify whole files, remove site initialization, create a `.bash_profile`,
+or treat a missing direct-shell command as evidence when a safe login-shell
+probe found it present. The dedicated module interface remains source-only and
+must not be placed in the early cache layer, whose side-effect-free contract is
+unchanged.
 
 **Automatic-forwarding scope added by D2a:** the current node's strict regular,
 owner, mode-0600, single-link `.ssh/config` has one unique stanza for each of
@@ -2146,12 +2221,24 @@ of unique site aliases, local-only `al`, exact RC path-block removal, and
 minimal preservation of all other startup content are resolved by the owner's
 request, prior decisions, and the preserve-unrelated-work boundary.
 
+D4 (open) covers legacy global install/build exports on local, AL, RC, and T4.
+Recommendation: keep only managed `$HOME/.local/bin`, replace `FS`/`DATA` in
+new work with `HARNESS_PERSISTENT_ROOT`, and put include/library/pkg-config
+paths in project or module environments rather than every shell. D5 (open)
+covers AB/RC PyEnv initialization; managed uv/Python 3.12 is recommended unless
+the owner still actively selects PyEnv versions. D6 (open) covers the AL/T4
+`UV_VENV_ROOT` plus `activate` helper; remove AL's targetless helper and either
+retain T4 as a tracked site helper or replace it with explicit `uv run`/project
+activation according to owner usage. All other per-node decisions above are
+resolved from live command/path evidence, the frozen common policy, or clear
+broken/conflicting behavior.
+
 The owner then requested continued PIE discussion backed by a careful
-line-by-line review of `.bashrc` and `.bash_profile` on all nodes. Complete
-value-limited external-fact checks, add the per-node classifications and new
-decision register here, return to `interviewing`, and ask exactly one material
-choice at a time. After the final answer, audit the register, set
-`ready-for-go`, and wait for an explicit `go`.
+line-by-line review of `.bashrc` and `.bash_profile` on all nodes. The review
+and value-limited supporting checks above are complete; phase returns to
+`interviewing`. Ask D4, D5, and D6 exactly one at a time. After the final
+answer, audit the register, set `ready-for-go`, and wait for an explicit `go`.
+Next unresolved question: D4.
 
 ## Stable operational facts
 
