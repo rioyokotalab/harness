@@ -295,7 +295,7 @@ queue delay.
 
 ### T-193 — Reproducible public-repository safety audit
 
-**Phase/status:** `executing` under the owner's 2026-07-16 eight-hour go.
+**Phase/status:** `complete` under the owner's 2026-07-16 eight-hour go.
 Extend website T-185's manual review with one credential-value-free scanner
 that audits the current tree and reachable history of both public repositories.
 Report only rule IDs, paths, commits, sizes, counts, and metadata fingerprints;
@@ -308,18 +308,22 @@ versioned scanner with hostile fixtures, bounded reports for both repositories,
 and independent confirmation that no matched repository value is copied into
 stdout, stderr, or a report.
 
-**Implementation checkpoint:** `tools/public-repo-audit.py` now scans all
+**Outcome:** `tools/public-repo-audit.py` scans all
 reachable blobs with one Git batch reader and one raw-history pass, publishes
 only bounded per-rule samples with complete counts, and refuses to overwrite
 reports. Its guarded hostile
 fixture proves a fake token present only in deleted history triggers path,
 token-shape, and assignment rules while the value remains absent from stdout,
 stderr, and JSON. Provisional full scans completed without a private-key,
-known-token, or suspicious-path finding. Website's sole assignment candidate
-is in a historical, HEAD-absent jQuery 1.2.3 blob; a value-free comparison
-proved the candidate exactly equals the official CDN's vendor expression.
-Commit and publish the tested scanner first, then regenerate canonical reports
-from the clean harness revision and retain website's unrelated dirty-count fact.
+high-entropy-credential, or suspicious-path finding. Harness's sole token-shape
+item is its synthetic historical fixture. Website's sole assignment candidate
+is a historical, HEAD-absent jQuery 1.2.3 vendor expression. Canonical reports
+and interpretation are in `docs/audits/` and
+`docs/public-repository-safety.md`; the website report preserves its four-entry
+concurrent dirty-count fact without reading or mutating those files. Focused
+hostile tests, evaluation regression tests, and the complete phase-1 suite
+passed before publication; the expected login-node OpenMPI CUDA-library
+warnings were explicitly ignored by OpenMPI.
 
 ### T-194 — Contributor-safe CI and merge-control proposal
 

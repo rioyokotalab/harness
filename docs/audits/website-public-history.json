@@ -1,0 +1,912 @@
+{
+  "counts": {
+    "blobs": 4404,
+    "commits": 379,
+    "dirty_entries": 4,
+    "findings": 378,
+    "ignored_files": 1282,
+    "objects": 7809,
+    "retained_findings": 110,
+    "tracked_files": 278,
+    "untracked_files": 0
+  },
+  "finding_counts": {
+    "credential-assignment": 1,
+    "credential-path-reference": 113,
+    "large-blob": 9,
+    "operational-absolute-path": 255
+  },
+  "findings": [
+    {
+      "example_commit": "6120072b32360b765c6662f9a87539ddba559559",
+      "metadata_fingerprint": "41bd8cba84863c6706c09298f35b646e763456b59f77ed39350823abc201c088",
+      "object_id": "d70a0a3f583dd70be3e322bb868cb3199374ed48",
+      "path": "lightbox/js/jquery.js",
+      "rule_id": "credential-assignment",
+      "size": 54106
+    },
+    {
+      "example_commit": "fb6f7d05eeeb99a5037acb62c6da94bad138d511",
+      "metadata_fingerprint": "d9e12fcccf926b6c8699e2fafee229f4e909e4cef69a4e06513159117a8acbf5",
+      "object_id": "31c10aa3fbe9463a3fd509506368dd7ce596c25e",
+      "path": ".claude/agents/site-author.md",
+      "rule_id": "credential-path-reference",
+      "size": 9889
+    },
+    {
+      "example_commit": "2f58b059674c5216bf298b6b2914d09e63ba634f",
+      "metadata_fingerprint": "35d6b22d4021f8a993cd4c17809264377220225b9a0d09d59827d01d63493d55",
+      "object_id": "39a9a46bada0c5a2a25ef72e1ec99c0b296cb003",
+      "path": ".claude/agents/site-author.md",
+      "rule_id": "credential-path-reference",
+      "size": 5630
+    },
+    {
+      "example_commit": "8bdb63fba70242ae43c32ee34c6244ae6003f96f",
+      "metadata_fingerprint": "bf2baf245b0edae23147f58dd1e3ca6f0e843a8977651791a88b5f96ff6925e1",
+      "object_id": "3fed21d188c1b75c4ce5c4c4e6669ea3cc782e06",
+      "path": ".claude/agents/site-author.md",
+      "rule_id": "credential-path-reference",
+      "size": 3508
+    },
+    {
+      "example_commit": "11497bc70747747db19a0763c42c0ead6d70980d",
+      "metadata_fingerprint": "40ced40ebb52723769cb11a28e0263bc71e1e6f604771ec36fe8bf5b4e56e638",
+      "object_id": "4bc26bb0d2e264f7918e091b457e53dba278fb8b",
+      "path": ".claude/agents/site-author.md",
+      "rule_id": "credential-path-reference",
+      "size": 4088
+    },
+    {
+      "example_commit": "194fc041146018033b8a6bc5bfab9eaa9353ae78",
+      "metadata_fingerprint": "84184d0189324c636794ac02d36210cc5e56bc08218ce63ef561c477efebb6f9",
+      "object_id": "6047ed04569e584959df53726c705c750d8655da",
+      "path": ".claude/agents/site-author.md",
+      "rule_id": "credential-path-reference",
+      "size": 5620
+    },
+    {
+      "example_commit": "a55d3e2ed9a7aadf98f7baa22d4428a814421d45",
+      "metadata_fingerprint": "540e9ee70c94226f886841cf4e2823c3d502a2e711db10787c7b17e9ee86190d",
+      "object_id": "6193090e099715d40fd02173cb05eb32c3d5176d",
+      "path": ".claude/agents/site-author.md",
+      "rule_id": "credential-path-reference",
+      "size": 8612
+    },
+    {
+      "example_commit": "2ab7d8ba7c5d1f939293c67b10ec86acbd14dbe6",
+      "metadata_fingerprint": "0653197257a40ce4f7ec7936cdfbb9b4f2b880d58e1cd40c720c27e8fe224b4e",
+      "object_id": "0a48f3ad18e0a74b11347d06dd67845db50856d3",
+      "path": ".claude/agents/site-publisher.md",
+      "rule_id": "credential-path-reference",
+      "size": 5385
+    },
+    {
+      "example_commit": "194fc041146018033b8a6bc5bfab9eaa9353ae78",
+      "metadata_fingerprint": "dccba17ab07bcd20f6a8a7a73eee731e0859f613444cc5cbe3f1f2d811eaf2a8",
+      "object_id": "0c393b1de1197d989cc3a759043dc94d60e61ae5",
+      "path": ".claude/agents/site-publisher.md",
+      "rule_id": "credential-path-reference",
+      "size": 3288
+    },
+    {
+      "example_commit": "78dfa613477bf94844aa2b62131f5c8e3cc0945a",
+      "metadata_fingerprint": "8d500a7f75649648f32a9142fa29bc329796dce216cb4646e2143a65ccd3e049",
+      "object_id": "00cd5d8972f8bc7969d4373758a93422005fe51c",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 30339
+    },
+    {
+      "example_commit": "8bdb63fba70242ae43c32ee34c6244ae6003f96f",
+      "metadata_fingerprint": "317d663e6873e1503be456df68f01ab683086a5d8667b8022dce2ff685a539c2",
+      "object_id": "00f2113efe53efe156e8b6d736120b9f5f5be126",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 33547
+    },
+    {
+      "example_commit": "45de00433dbfb8fe1c63ab88bda3f09d0ec81949",
+      "metadata_fingerprint": "df7906735b8b1e7d9dffe7023355b9d8ef56ad989a050e35ad9b9b0841468b22",
+      "object_id": "0738acbaab318a0acd418f4a93fa6e7c6e30a303",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 12219
+    },
+    {
+      "example_commit": "d867c08fc18b086431fd8aa8437418fc0dd2a61d",
+      "metadata_fingerprint": "1be07c8e114cf9a3bcba2e2e8928169e64e94dcac18aa13693707e438aded271",
+      "object_id": "08d6c44b0b534d3432178e7c1972bd90ea20bee0",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 21858
+    },
+    {
+      "example_commit": "c55bd527570b39c6b4e4036460ae43bb877ea7c6",
+      "metadata_fingerprint": "d41d7cded832f13c05981a2b25af2d9ee6efe8a9aa84e7f873eee6f52ebeb8bb",
+      "object_id": "14fe03aff2a4ff282c8e0101fd3d9e3e8e178fa9",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 35999
+    },
+    {
+      "example_commit": "6427c71f01a4b603bb7064845d60b60d2c03ee6b",
+      "metadata_fingerprint": "35ed6556fc44397659e1dce170cd323f1194151d1a8c2de085299f8797e20c68",
+      "object_id": "17c17f4cde8ed1464295fa7879e3b6b9e14957dd",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 32400
+    },
+    {
+      "example_commit": "3a00e40594a8ad0d38e8632d9e3fe2bbfe67a1f7",
+      "metadata_fingerprint": "905a061a715f239da65a601a88548cfdb04738b5df6fdc04df099ed49d8ecbbe",
+      "object_id": "1a84fd2c0e3b28c71e3173b57267a885f0e44358",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 30050
+    },
+    {
+      "example_commit": "aecde1e746bd0beaedf405c6ddeeb8a7bc19464d",
+      "metadata_fingerprint": "9e33640d45ff6cca4e91f67b5fe0d3c096d5fd808586ffa50cc9a764effa36f4",
+      "object_id": "1d3fc32445a7caaf9d625fe27015c6e58a880153",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 27479
+    },
+    {
+      "example_commit": "1467909edb7ef4c16a6eb54d4fd1885843dd9aef",
+      "metadata_fingerprint": "74416a6db7e830a0064e2c4e539999d605fce125d0975d18ad10faab0ff94a4a",
+      "object_id": "202d2377030fb0e970c8fe834d2b41beb4f1311e",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 4259
+    },
+    {
+      "example_commit": "c1517d0b3b870b3b884b520a0261ca28ca5ce971",
+      "metadata_fingerprint": "1b57fc7b6dff32b34192e5d4c4b137dfb741eab9d859b098824e6b57f9b4fd68",
+      "object_id": "20600ad41da04b0c8812b913212f3a925869f69e",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 17193
+    },
+    {
+      "example_commit": "cbc2865e4023395aed0021b66ff184aa3fd1f075",
+      "metadata_fingerprint": "a4728f311611e4004b9fe3b48164cdf15422c33b4ced89b4f5af6fbcef7230b7",
+      "object_id": "2579d8ff04964118b0a98b488f3934555d437c37",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 6782
+    },
+    {
+      "example_commit": "a55d3e2ed9a7aadf98f7baa22d4428a814421d45",
+      "metadata_fingerprint": "4216076de3ea17fae9330c2449024d56153c3e95545c39b0ee354085990f75ee",
+      "object_id": "25c300dad44e55d14c0ae514b4b41ada59befb96",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 40382
+    },
+    {
+      "example_commit": "289d895e44fdb684b5a09c1612acc5d017a581a0",
+      "metadata_fingerprint": "ca6078014cd52dd90f6253570f107e642cefd18f5b93a20f2b06ae431d091e21",
+      "object_id": "25def25340863dd48b3bf5394f3e2568d552dbee",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 15890
+    },
+    {
+      "example_commit": "56c040492877255c6040c2cbe219fa081c57aad8",
+      "metadata_fingerprint": "923220a96ee0ed382f13bb3e21fe2495d9fe5ae4cb737e035ec9b7b19484ba3b",
+      "object_id": "2a153c526aea67aae5756ba6f56fca5056c9cacf",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 9289
+    },
+    {
+      "example_commit": "7336d4c6983e8cc9348f6341f84d3363968b5306",
+      "metadata_fingerprint": "84b8f5b47886c8a50e2a9e0d1b78bfc87948fafcb06293a5325092e5832f4e04",
+      "object_id": "309044bafd1e9d2944e3531f99243a2a25940c45",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 10346
+    },
+    {
+      "example_commit": "143335be15ddfe19277c05c4e7ff9425f5d990ee",
+      "metadata_fingerprint": "65a50fdf1b5129c5f2a07ba07c15ff88604cee3f510e37bcc8919b6e02a11412",
+      "object_id": "3226e06b2ce8c72f5f916ad906267010494e25ef",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 30106
+    },
+    {
+      "example_commit": "46dc3b2039747809d13abe257233a6b302160c62",
+      "metadata_fingerprint": "da9e0aa928d4db13142d39e3b926318325d873f07e8b205ff621458d11cba378",
+      "object_id": "36045c8dca8daf58282cf3ac1cae318cd4dce7f9",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 19816
+    },
+    {
+      "example_commit": "215da0f2cef820eb775d7037616af1852ce365ed",
+      "metadata_fingerprint": "3a9c43666600d1398e4ac92cbaa98fa41964ad3e4a3004311769579cf8ef22f1",
+      "object_id": "3786588982d71f0a64847354e5383bbfc0e783cd",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 34089
+    },
+    {
+      "example_commit": "1eb707f478255e192025b2123f7f5fb677c249cb",
+      "metadata_fingerprint": "a87af50f5e7e9b208af1f60a26d3212888466b8881f67a22c56273f8d304a7f3",
+      "object_id": "3f5a52d00e8f104c7ee86a95b4c33df4ff42cac6",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 28535
+    },
+    {
+      "example_commit": "d5b02ec50895d409b3707430e980774a99594616",
+      "metadata_fingerprint": "f1c672deff0db87b3ddc392373c5e3ed641fd17ba27bcb860afeb39dfe35a3e2",
+      "object_id": "42c7bef132f876bf275c1df7ad73de325312ee63",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 7005
+    },
+    {
+      "example_commit": "a5bd50263e290dee24e4513c2aa1c003c55d5b2c",
+      "metadata_fingerprint": "54ae01fe5cf5689b7773bd0aa3689d21fec1e41b42813f36e55839b2d553a18d",
+      "object_id": "480906e86a2030abd317c273137b7f6840c05371",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 25105
+    },
+    {
+      "example_commit": "a57b5e4e878d8eb1f33ac738af2b4e24a885ade3",
+      "metadata_fingerprint": "5985dcffc11ee53300c2c52f4c2a3c5a6941fff0a4176fc73fb40f39fd789a6f",
+      "object_id": "4a8e5348f61039e65e5bb1334cba8c960955b01a",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 3169
+    },
+    {
+      "example_commit": "196f999a5eeaecbfa10c29e683e5b45b0faaa6a6",
+      "metadata_fingerprint": "0a506b6ee240d372aabef036e8a2401ed71b83dace183b98c6a069926bb0b7bb",
+      "object_id": "4cbe3ea534fa91888a3e38b40d2d8f6ab0ff93cb",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 35432
+    },
+    {
+      "example_commit": "81811a192c980a718711b43b86d88a152674c263",
+      "metadata_fingerprint": "68757b7e21afe511e8a4789b497882042b7468677fd10b7d323a3b72ca6ca224",
+      "object_id": "5d6a5d45086e8336fbac51e833c809a77953b808",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 4632
+    },
+    {
+      "example_commit": "8525b57a12c8ccbafed7b8a5668993a44dce2b68",
+      "metadata_fingerprint": "9bc6430c4df89edb760b28d1e0401b31cace068ba40c5db5f3b63096f40bbd49",
+      "object_id": "5fb5ae54099e5e48c7a3664610fd0277c2ce361a",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 35330
+    },
+    {
+      "example_commit": "6120072b32360b765c6662f9a87539ddba559559",
+      "metadata_fingerprint": "03053914aff79f07968321d677c74d16f5141b3dcc7203dc7560ef4c2483ca74",
+      "object_id": "6043d58d778fc04f410536d1508807b3e6978b1f",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 9849
+    },
+    {
+      "example_commit": "674119278e219df3d981fd8b5867fa8f7b23f9d5",
+      "metadata_fingerprint": "a7a9195808daab42b80ed615116580de2edbce39a4bf9e6f3dceef430dd7dd18",
+      "object_id": "617f84bf17683c744896602bec9a8a1b55f4085e",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 23404
+    },
+    {
+      "example_commit": "37c31774a2cc48bac48fa99d841f2541fb60abd5",
+      "metadata_fingerprint": "4beb881be248b09f8e24567c4430b847eea206d6b54d61eb54dab912d467f2de",
+      "object_id": "622f6fee4446cdca51ccf66104c21f6265a87384",
+      "path": "CLAUDE.md",
+      "rule_id": "credential-path-reference",
+      "size": 20264
+    },
+    {
+      "example_commit": "df64bb3682bf089aaed41ed32e6628472cb2ec07",
+      "metadata_fingerprint": "b7f8735d5c6daa8acfc08099f7be1d6488c0bb754b0892d734502a9807680ed1",
+      "object_id": "011134e38e236b6c76c76a71568d9f9dbefb1714",
+      "path": "README.md",
+      "rule_id": "credential-path-reference",
+      "size": 4683
+    },
+    {
+      "example_commit": "54ebb662eca9ed21d642b0a49749255f9f10d6c3",
+      "metadata_fingerprint": "7fa9633b6aaea282f62882d124db6d40402dce1574c41fe66048d49f5c608aeb",
+      "object_id": "1d8641356ddf1476f5916782fbdff22722298441",
+      "path": "README.md",
+      "rule_id": "credential-path-reference",
+      "size": 4695
+    },
+    {
+      "example_commit": "e5c627549433d90714a9e2563cb53be467ba5a96",
+      "metadata_fingerprint": "fe8978ba114e2cf672f2f265dec331d7ef1b043cc6e85a85fdd8a699c17998d2",
+      "object_id": "11328e6998ecf7986149b6d116bb9e2645ffc78f",
+      "path": "deploy.sh",
+      "rule_id": "credential-path-reference",
+      "size": 871
+    },
+    {
+      "example_commit": "badadcbf1d49d5b52c87b376e9d301bb6688cb51",
+      "metadata_fingerprint": "6c90f8b8080d30595b11b973332ac031c8923d625b6d9471dfd04ced6228a4e2",
+      "object_id": "1f3f14dc8795d6904a4747534c3dd5b4510db6d3",
+      "path": "deploy.sh",
+      "rule_id": "credential-path-reference",
+      "size": 1730
+    },
+    {
+      "example_commit": "1d8dbfc19351ba73f4bf464150c5b218a4570fb5",
+      "metadata_fingerprint": "ba2efa50fc57e01cd893a5b2322303141c45691f984a211cf40fd47ce72e99fc",
+      "object_id": "2cefe4a2cd50e1d156f21f906039edb58aef2afd",
+      "path": "deploy.sh",
+      "rule_id": "credential-path-reference",
+      "size": 775
+    },
+    {
+      "example_commit": "0b60471c4a5c1bbbd506689c26dfef07f5e15696",
+      "metadata_fingerprint": "e468af3aed5823f08ab5cb11881a9f7fdd226b57b36214d2cb93f8ff1f221c0e",
+      "object_id": "4183231cc6459f0d8bdb4addc387f2140374b034",
+      "path": "deploy.sh",
+      "rule_id": "credential-path-reference",
+      "size": 1733
+    },
+    {
+      "example_commit": "362847d63e2ec2068de698729af195a7082764e0",
+      "metadata_fingerprint": "16fde4bcc2c792381e7f7a14f5ac99bef92025e0419d68db115c9024d49af69c",
+      "object_id": "443122110d82fe50ebac70114cba711743689ca4",
+      "path": "deploy.sh",
+      "rule_id": "credential-path-reference",
+      "size": 1591
+    },
+    {
+      "example_commit": "4ea50114323969424edcea7725b7e3ac8d27b031",
+      "metadata_fingerprint": "75b9e0d1bc61d994e3414b6c9d0904159ee16f2237980f76d59627714778d254",
+      "object_id": "097f9dc80f82b44fd0e44beb210c982cfa83e2ae",
+      "path": "publish.sh",
+      "rule_id": "credential-path-reference",
+      "size": 2216
+    },
+    {
+      "example_commit": "270d494c793b4777f780de8416dc3215a263a2b6",
+      "metadata_fingerprint": "b76a940caa3a5d5a18d6cb143182c337cac0e250302ae9ac14e724d9f90dae78",
+      "object_id": "5ab865e3d12a1c6ed1e7954ee030bc20a9b8bdb0",
+      "path": "publish.sh",
+      "rule_id": "credential-path-reference",
+      "size": 3438
+    },
+    {
+      "example_commit": "52458fdfd0a47d7154f5c049f942aadb3f204875",
+      "metadata_fingerprint": "d902b428fd5536843cb7451eab984833d5e364099c8da001dbddd9378e75c771",
+      "object_id": "192299c3a545347080ae5a23c42e57a7e0bda460",
+      "path": "skills/publish-and-verify.md",
+      "rule_id": "credential-path-reference",
+      "size": 5125
+    },
+    {
+      "example_commit": "270d494c793b4777f780de8416dc3215a263a2b6",
+      "metadata_fingerprint": "efeb2effbc349a2cfd9d7ed4282f7c4d87a3639c4f876f66faf1cac5bf761321",
+      "object_id": "2097bf392440ebd51c8ede25c5c5d9777ac75147",
+      "path": "skills/publish-and-verify.md",
+      "rule_id": "credential-path-reference",
+      "size": 5086
+    },
+    {
+      "example_commit": "8ffbb2aa393329d4206d0f557ca13a9462f7e390",
+      "metadata_fingerprint": "58a69687381f14d479dc41d21ad0ef3152bf23f8dbe6f29a5a360a8f58e8ebab",
+      "object_id": "4329aca09155e20c3513b95806052aafaf11bba8",
+      "path": "skills/publish-and-verify.md",
+      "rule_id": "credential-path-reference",
+      "size": 1931
+    },
+    {
+      "example_commit": "2bdc78250cf79bf97286d2c44934291c0e84e33c",
+      "metadata_fingerprint": "23bdb941cd627918440e61ea0d09b984b89dd5b453153202eae577b2bfd9b0ce",
+      "object_id": "4cb726ebb4f06a39746732362f919005e457237a",
+      "path": "skills/publish-and-verify.md",
+      "rule_id": "credential-path-reference",
+      "size": 4757
+    },
+    {
+      "example_commit": "2f58b059674c5216bf298b6b2914d09e63ba634f",
+      "metadata_fingerprint": "89275a3e2f20c52fc8a3299e59a2d2795cba31f42e82bff786eadfb692d41a54",
+      "object_id": "54971c93b633d5da3a7950bc97b7774986912b56",
+      "path": "skills/publish-and-verify.md",
+      "rule_id": "credential-path-reference",
+      "size": 5302
+    },
+    {
+      "example_commit": "c1517d0b3b870b3b884b520a0261ca28ca5ce971",
+      "metadata_fingerprint": "9119fdd77b719a7dad2d9016e7514ef33c302f61c7546d392716c52c563c9c79",
+      "object_id": "ce33715427ea974b887e2b733b0a274ea8a4af1b",
+      "path": "IMG_8209.PNG",
+      "rule_id": "large-blob",
+      "size": 1276260
+    },
+    {
+      "example_commit": "0bc3315e8745934fcacf5939b70408d340a3a91c",
+      "metadata_fingerprint": "70920c6f11949aba426c88207eae4e9564d86630a37cb6a70d4f932b68f16ec3",
+      "object_id": "ad1dfe0d9b7b14df19c016460b93e9d0fa8f82e7",
+      "path": "jp/picture/images/2024-12.jpg",
+      "rule_id": "large-blob",
+      "size": 4986614
+    },
+    {
+      "example_commit": "0bc3315e8745934fcacf5939b70408d340a3a91c",
+      "metadata_fingerprint": "7eb87c9bec19363b9b4d01740f62a1e236fc13e7a9e2874fbaae9521718403eb",
+      "object_id": "32c07d5c4dd2e15db20abfc3734d1c7180f5f30b",
+      "path": "jp/picture/images/2025-10.jpg",
+      "rule_id": "large-blob",
+      "size": 7614928
+    },
+    {
+      "example_commit": "0bc3315e8745934fcacf5939b70408d340a3a91c",
+      "metadata_fingerprint": "a07bc4ba0b51274ce27e4f83c99b9e84cafdb1597c804dbad4034739e68944a4",
+      "object_id": "416a5cb3c3958df051937ba8a14b6ddc7ae980fe",
+      "path": "jp/picture/images/2025-4.jpg",
+      "rule_id": "large-blob",
+      "size": 8784227
+    },
+    {
+      "example_commit": "1a943a91703a24cc44b8dbac82b5762f3e4aefb9",
+      "metadata_fingerprint": "e255586cb5911911fcc2f0f199e3dceabc39bb5b506c0f9f91c50f824ba4109d",
+      "object_id": "317afffb76069777fb98af5d8d8789b8d2e017a8",
+      "path": "jp/picture/images/2025-9-2.jpg",
+      "rule_id": "large-blob",
+      "size": 1050919
+    },
+    {
+      "example_commit": "0bc3315e8745934fcacf5939b70408d340a3a91c",
+      "metadata_fingerprint": "e016fdd3aeff3a6bbbac5650907ba58b62fa0f7697d58d40970f4f65d3c86847",
+      "object_id": "d1cc29569024bddbd0a4b203b1e3bbc60a80275d",
+      "path": "jp/picture/images/2025-9.jpg",
+      "rule_id": "large-blob",
+      "size": 6703873
+    },
+    {
+      "example_commit": "0bc3315e8745934fcacf5939b70408d340a3a91c",
+      "metadata_fingerprint": "4d3c783cd2d90a80a9d85cb3de3d7d8992333ab23cd983ef73a87ae59bb6f275",
+      "object_id": "55c7368739403f52a4a3cc3d7873f94b3d18b74f",
+      "path": "jp/picture/images/2026-3.jpg",
+      "rule_id": "large-blob",
+      "size": 8807469
+    },
+    {
+      "example_commit": "0bc3315e8745934fcacf5939b70408d340a3a91c",
+      "metadata_fingerprint": "0598f8566b52de3a9774de6f52c192c530a453910e2e5eca15353f9acb33b96d",
+      "object_id": "abe592edc242336240072eefa0a3a9ba617c77ad",
+      "path": "jp/picture/images/2026-4.jpg",
+      "rule_id": "large-blob",
+      "size": 3640725
+    },
+    {
+      "example_commit": "b7336527c7ecf783bcb7d12d1956140398ca5235",
+      "metadata_fingerprint": "801d343f03f23d2b9ab3cce57e8addcbe51536a3f7759d66ae3bf0d24126c7ae",
+      "object_id": "f02bb610db6027a82a8beb654e48c3da5dac07cc",
+      "path": "jp/research/002.pdf",
+      "rule_id": "large-blob",
+      "size": 2046700
+    },
+    {
+      "example_commit": "2f58b059674c5216bf298b6b2914d09e63ba634f",
+      "metadata_fingerprint": "ac1d8b271520bdc2b377abfca1e16ba30393e1323592b4561f12a695e927f080",
+      "object_id": "04d02ff13005163638847922d0e39f3def202467",
+      "path": ".claude/agents/codex-offload-policy.md",
+      "rule_id": "operational-absolute-path",
+      "size": 15387
+    },
+    {
+      "example_commit": "194fc041146018033b8a6bc5bfab9eaa9353ae78",
+      "metadata_fingerprint": "446f06ab463c3b1bce21ae19068ff1778455c36eae11b8c7b60998c9a01c1743",
+      "object_id": "2eb7d7323be4c59b43c5b2090088be4eac54308c",
+      "path": ".claude/agents/codex-offload-policy.md",
+      "rule_id": "operational-absolute-path",
+      "size": 15739
+    },
+    {
+      "example_commit": "2ab7d8ba7c5d1f939293c67b10ec86acbd14dbe6",
+      "metadata_fingerprint": "107d72067c22e9e444bff3c063761a39a0673fca6a68dc2e6dd0e35e3e4f7c70",
+      "object_id": "0ba081c74b5c89fda7555d21220be7ff15c0094a",
+      "path": ".claude/agents/site-checker.md",
+      "rule_id": "operational-absolute-path",
+      "size": 9056
+    },
+    {
+      "example_commit": "c55bd527570b39c6b4e4036460ae43bb877ea7c6",
+      "metadata_fingerprint": "727d8cbdb0738cdf8b7abc300e6f8cf88483d8b49ffc886cd745f50354cab072",
+      "object_id": "19a4771686fe658f8d345ab8e825d9797d9d6aa1",
+      "path": ".claude/agents/site-editor.md",
+      "rule_id": "operational-absolute-path",
+      "size": 7170
+    },
+    {
+      "example_commit": "194fc041146018033b8a6bc5bfab9eaa9353ae78",
+      "metadata_fingerprint": "970db97ff04b2ec0ed4e437f7bf39a045e403ec005edb7ca86c50609fce1ae24",
+      "object_id": "1d0252222a0e74756d4ccaec8c04e18f62401334",
+      "path": ".claude/agents/site-editor.md",
+      "rule_id": "operational-absolute-path",
+      "size": 4902
+    },
+    {
+      "example_commit": "f75629576df266e213f19467038a63034a0b18b9",
+      "metadata_fingerprint": "6fb9c3fdfc937b0c31e4b1718a15b6603fc33b6038667d866dedd8ba6dabdd64",
+      "object_id": "27bb7d3e8fd20b2068c9b1a14881b69a487bb29a",
+      "path": ".claude/agents/site-editor.md",
+      "rule_id": "operational-absolute-path",
+      "size": 2657
+    },
+    {
+      "example_commit": "c55bd527570b39c6b4e4036460ae43bb877ea7c6",
+      "metadata_fingerprint": "98d773dd871fb1f794465606d1bc3e201206d2ffc9155c4bb8f6eeb822f8495f",
+      "object_id": "181bc03fbb1b7f1db83d05d6d7c9d8943ba58d3e",
+      "path": ".claude/agents/site-rescue.md",
+      "rule_id": "operational-absolute-path",
+      "size": 2520
+    },
+    {
+      "example_commit": "a55d3e2ed9a7aadf98f7baa22d4428a814421d45",
+      "metadata_fingerprint": "88322f0276153877410e422fca6d57beb941663f95a67efe8c4334897ba018c4",
+      "object_id": "2f883d6ed39c744df9b81300e2f08ec9ae847cb0",
+      "path": ".claude/agents/site-rescue.md",
+      "rule_id": "operational-absolute-path",
+      "size": 3357
+    },
+    {
+      "example_commit": "69a0eed1ebfbc1ece75746034008fa6323083b93",
+      "metadata_fingerprint": "ec57f50323c75a70a89bee1308b06f3ebb8cf0f116f64bb13c0c9c47b6a59fe5",
+      "object_id": "02a0cd5b139a13e82d1aaf348e7a3fbf1d04e624",
+      "path": "AGENTS.md",
+      "rule_id": "operational-absolute-path",
+      "size": 6784
+    },
+    {
+      "example_commit": "e8a4832c511da90d2fb342ebc17ea21186555d06",
+      "metadata_fingerprint": "1c108ec47525af9213b53b84536b0eb0ae036377d7f1da74a03fb10098a5bbbc",
+      "object_id": "18258cebcb1a334f97b924bc42bef79d154fed92",
+      "path": "AGENTS.md",
+      "rule_id": "operational-absolute-path",
+      "size": 6879
+    },
+    {
+      "example_commit": "e2d83666d217b37e1800d5c0ffb28b52945b5bb8",
+      "metadata_fingerprint": "934ec06cddefa75cf763fd8eb83d562c81c2491f5a61b0a26ea8afc1e631b9d8",
+      "object_id": "1c53a462ded9eb69759eb81b52584d2ff5dfe98e",
+      "path": "AGENTS.md",
+      "rule_id": "operational-absolute-path",
+      "size": 7111
+    },
+    {
+      "example_commit": "2da4a849c0bc57e84450208cc5b36d6e77fd0ddb",
+      "metadata_fingerprint": "3ea4f474bb648c9d5eccb4b5cbe500992c9c08c5bcdde5f5384f2906bfa79968",
+      "object_id": "1da67f8618c390d80422dc482ccb44573e428468",
+      "path": "AGENTS.md",
+      "rule_id": "operational-absolute-path",
+      "size": 9671
+    },
+    {
+      "example_commit": "2f58b059674c5216bf298b6b2914d09e63ba634f",
+      "metadata_fingerprint": "d920f64aa378f89c6bfd70a0b1110ebec6dc59aa506ba142964a50ad422c902b",
+      "object_id": "20b70e25f79e249ec92efd34c51758f177467e0c",
+      "path": "AGENTS.md",
+      "rule_id": "operational-absolute-path",
+      "size": 7214
+    },
+    {
+      "example_commit": "66dff20f8cc9805b0d4435ca3c68ba9c4192f861",
+      "metadata_fingerprint": "52d26ab3c8d5bdc418fa3f822b410b2f4f53827d330d24981020e7467550958f",
+      "object_id": "00802cf0adb9ac1349da1e11ccc6371259f0f503",
+      "path": "CLAUDE.md",
+      "rule_id": "operational-absolute-path",
+      "size": 9914
+    },
+    {
+      "example_commit": "8bdb63fba70242ae43c32ee34c6244ae6003f96f",
+      "metadata_fingerprint": "2ae5cf0e4438a87309f195fe0b8b81366753569d9295b417b7e2fa4ff395c4eb",
+      "object_id": "00f2113efe53efe156e8b6d736120b9f5f5be126",
+      "path": "CLAUDE.md",
+      "rule_id": "operational-absolute-path",
+      "size": 33547
+    },
+    {
+      "example_commit": "c55bd527570b39c6b4e4036460ae43bb877ea7c6",
+      "metadata_fingerprint": "af2e3e7291459beeee73681f97e58a6a0e2243a943b066c593d4d2772ae4df12",
+      "object_id": "14fe03aff2a4ff282c8e0101fd3d9e3e8e178fa9",
+      "path": "CLAUDE.md",
+      "rule_id": "operational-absolute-path",
+      "size": 35999
+    },
+    {
+      "example_commit": "2da4a849c0bc57e84450208cc5b36d6e77fd0ddb",
+      "metadata_fingerprint": "5f7214e205ee9d83a0cc6659a10d31c06966e3eef924676cc2b8838c506cb2f8",
+      "object_id": "225a4b11e2c0da1bf5ee24738cdf208beec04912",
+      "path": "CLAUDE.md",
+      "rule_id": "operational-absolute-path",
+      "size": 9819
+    },
+    {
+      "example_commit": "a55d3e2ed9a7aadf98f7baa22d4428a814421d45",
+      "metadata_fingerprint": "86f2c9daa4e4b69d61b1771b90c6160c524e1578f4ccf7a74106ff004cc3e2bb",
+      "object_id": "25c300dad44e55d14c0ae514b4b41ada59befb96",
+      "path": "CLAUDE.md",
+      "rule_id": "operational-absolute-path",
+      "size": 40382
+    },
+    {
+      "example_commit": "194fc041146018033b8a6bc5bfab9eaa9353ae78",
+      "metadata_fingerprint": "7b2d6c399b8ca22f36193e2a4090fc5b989f6d2434b29a49bca48a11a714f233",
+      "object_id": "09a8a7d2758b0a7b82d6326d684d6112aa9a2a04",
+      "path": "skills/codex-dispatch.md",
+      "rule_id": "operational-absolute-path",
+      "size": 3365
+    },
+    {
+      "example_commit": "614063513955d503bf869f6b07e430a229bbf09d",
+      "metadata_fingerprint": "930d3d4aa2b758acd769ef4f62e5dcf9f71eafdcdfd91d27e95e5df6f89269fb",
+      "object_id": "30bad9526ccc852ced02915a9616e926d55c23d9",
+      "path": "skills/codex-dispatch.md",
+      "rule_id": "operational-absolute-path",
+      "size": 2838
+    },
+    {
+      "example_commit": "a4920276a170432e292b40b9c029a0af6e2ceb42",
+      "metadata_fingerprint": "10b6990283c6c87261e849ea9c7c21b2291f2973c2e786612ad2fd0ac2b2147e",
+      "object_id": "30ee470d8390e2af2c880d2c06b40b044498bec6",
+      "path": "skills/codex-dispatch.md",
+      "rule_id": "operational-absolute-path",
+      "size": 3462
+    },
+    {
+      "example_commit": "0dec933f46286d6e011c7f6e45ee55fa05635a38",
+      "metadata_fingerprint": "1c801177afde62578743828dbdb27039212abb4f6066d88ca44712d67011a399",
+      "object_id": "15dc5cc8721f66db2d6ba11b277928833ba7ef90",
+      "path": "tools/agent-benchmark/results.jsonl",
+      "rule_id": "operational-absolute-path",
+      "size": 80834
+    },
+    {
+      "example_commit": "e8a4832c511da90d2fb342ebc17ea21186555d06",
+      "metadata_fingerprint": "5cf9b4505ce3061f320e2144219f4952559763ed4a3b0c5ca1e7b6f5981e1e96",
+      "object_id": "23783193ee2ccbca3073f2bda34b5c24c6d95ec4",
+      "path": "tools/agent-benchmark/results.jsonl",
+      "rule_id": "operational-absolute-path",
+      "size": 211196
+    },
+    {
+      "example_commit": "6e96a6b0fc3445dfd689d825391792ff83421fba",
+      "metadata_fingerprint": "1d4e380924802eb375385851563d50aec4c784bd54796399f5db7c0e5e4c7f8e",
+      "object_id": "000412ad0bef774ae00e4bf4fda2a86d10a56261",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 60013
+    },
+    {
+      "example_commit": "c190e48235656a9c80572050dc7377a76ed17fbc",
+      "metadata_fingerprint": "4eca3f7f64d83935facbef3f022567aede083f31a3193f58239ae986a4180589",
+      "object_id": "02a4969c8b23374c80a4c28203b5a5f7949c0e2f",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 18988
+    },
+    {
+      "example_commit": "66dff20f8cc9805b0d4435ca3c68ba9c4192f861",
+      "metadata_fingerprint": "c0af8d58103cb993da5ba7cf5bfeea2fd32e5b14e6cee737c579c1d314b15c14",
+      "object_id": "037e877cab204fa653a10127bb84054a55670c1b",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 60234
+    },
+    {
+      "example_commit": "6d6b430c7ba9b7fad0dcbfc8e0627376439df93d",
+      "metadata_fingerprint": "c6387e681be3e1efdc8ff69608bd13a9191f57301ff61d1c4b59a597130707df",
+      "object_id": "03e408334461ba6ef5d8c2fa11baa9d363b174ad",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 60013
+    },
+    {
+      "example_commit": "11f890c503727d69c1bc5c180b390098e655901b",
+      "metadata_fingerprint": "9e8ddb42a14f5f37b833eaf4c421e6cd6ba5bba677f8b68cd1a2fe73ed2c1224",
+      "object_id": "03f141dc5f05fccce7daab2da8029467b5fe88b4",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 627
+    },
+    {
+      "example_commit": "a4920276a170432e292b40b9c029a0af6e2ceb42",
+      "metadata_fingerprint": "69e61b59ddbc6321c09771f5ef515d0b9a9ca0fa43fb9eb2e8ec939c1204454a",
+      "object_id": "0652563264f2ce9def46c0f29a51bfd2b03cbf55",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 59213
+    },
+    {
+      "example_commit": "7140f44a8d60fe24a11401464477763ad7dacb31",
+      "metadata_fingerprint": "a0e12dd93a3f824622177b9fff495c6f2c0faa5852357dc184c302571d34ac4c",
+      "object_id": "082a2eda151e831474df524ef575056350709fdd",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 60456
+    },
+    {
+      "example_commit": "115c1960b03f61a3a1d15da8c1c336e3a259e6b8",
+      "metadata_fingerprint": "3e0b8b9e550accf7741be1a323750b38c852c60e9f3d9bd5bc57888df3014f95",
+      "object_id": "0ad5aa7c28ea57cd40be40f094d97c3af4ea3f6e",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 7806
+    },
+    {
+      "example_commit": "9fa7548685d188e637a980af4e20d9188e95d1ca",
+      "metadata_fingerprint": "01ca1168bd63f6d431f7d72053fb559d927afcf719dcb3ad50f416c7e12fde1f",
+      "object_id": "0c120d14ce929c589006b1373d8cd43f87942100",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 29235
+    },
+    {
+      "example_commit": "a6dbe6418438b87ccde2c98ccab25a79656d80e6",
+      "metadata_fingerprint": "1b0dc841902fcc56352785d87e2a631d10c45935c972513779c957dc26ccb6b6",
+      "object_id": "0e067d2b22f488a3963d76f452471dc2e99fdd45",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 32786
+    },
+    {
+      "example_commit": "194fc041146018033b8a6bc5bfab9eaa9353ae78",
+      "metadata_fingerprint": "b87122f60f5c3d84702bb36827e95e246f89e507ba75c632d20d13d0aa86ad86",
+      "object_id": "13ba2df05ae31791a9be3a8267e9ce643bec2cbc",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 55129
+    },
+    {
+      "example_commit": "f8387542694bb5665159696b2af265e12fcb257a",
+      "metadata_fingerprint": "cdeadf062e0e7817be2d6846b7a85b7d0c53c432c64758c6366d3714e5de6d28",
+      "object_id": "141dc628e2024fe863b1276029fe6e88efa27754",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 50679
+    },
+    {
+      "example_commit": "6a19104435729e3f817e34c309e5e0c763a337c9",
+      "metadata_fingerprint": "c13f54fb5bfc94853d5858a19a156cdcf00eb1ff376f0ff9e6120ef3f92bc170",
+      "object_id": "14c5704935d99c019d630b90e418b436739a5a2f",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 36815
+    },
+    {
+      "example_commit": "28f8685ea8f2cf1d65bcf56bd69eac9a50a75f58",
+      "metadata_fingerprint": "adb7fe97950ad481cce593ee83d750197059c2bc24317ead1983445f51697547",
+      "object_id": "1532ba4e540eb0f13970bf3f2f557a96265f961f",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 54957
+    },
+    {
+      "example_commit": "dcfb54981b4226a360451b6c05754991da04c5c4",
+      "metadata_fingerprint": "8f78a0c6e1490caf01fd11148511ad6d425780e756534090be5ef270fac11045",
+      "object_id": "166db69e0f4cc6ce70b9bdf1ab5ad238dca4c04f",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 21466
+    },
+    {
+      "example_commit": "ba37e9ecb1a570ca6180e3261a2e3f2c6294db58",
+      "metadata_fingerprint": "3fd8d0685ad8fec85451d346f1ab1015501dbad22dc0d29a0eb951f54a6022c2",
+      "object_id": "17c197af2ee05165d4f78752429e634b5e13cc56",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 56631
+    },
+    {
+      "example_commit": "0c9a316b00fb60eb4385c65611cd06ab85b11b13",
+      "metadata_fingerprint": "f70fb238661c2f1a0e181eda7af75dac5c915f989d05505ee161de6c93b472f4",
+      "object_id": "197b056433c2651d21cdbb7544e105fbbc588294",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 56990
+    },
+    {
+      "example_commit": "06d46af78966a3e7b5b0a3344eeed791e1a3a9be",
+      "metadata_fingerprint": "390f150d3e012d97ff7dce46fe7afea97f5ee2b3c2565abe6e41f12c5d85257c",
+      "object_id": "199407cc1f01d33b0ffbf78fc812ef9387921001",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 33023
+    },
+    {
+      "example_commit": "4bddf8f6e54ded5de28c5216a9cec329abfc8e67",
+      "metadata_fingerprint": "c84272795d6b780004c0f6ff9cc15e50c07e4b80be1d3a28be060e8ad578c1c4",
+      "object_id": "1a050ad3f7db2b3dbbdf38154524da94def98b7a",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 60011
+    },
+    {
+      "example_commit": "56fdb5288c7b0789be5beed26b30a47e482c7eaf",
+      "metadata_fingerprint": "3de20cf209a5cc94b58709fe232585b13a30461193c1abbeb2d03dbcea14e860",
+      "object_id": "1e3c16914cbf7c7a12f1c1722be9a104e5f91fad",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 28763
+    },
+    {
+      "example_commit": "9b3c5e033836779ca2a2826ccc517e3114f6f5fc",
+      "metadata_fingerprint": "fb797db91bb5ffde979b49f032f005defb68d03a8057f3a900a820e8f59127cd",
+      "object_id": "28295f53e389f1714a5f42f5224595282217e955",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 32237
+    },
+    {
+      "example_commit": "cc9428bb0b5c74aa9c1767001f47e0e92884be55",
+      "metadata_fingerprint": "da0ac08704d72a441bdfe891c3e75c2a7e2f07c2b47f8b4ca49affd7fcf3f433",
+      "object_id": "294d21b6f258f45fe449b039f7077e8d44ee7173",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 23895
+    },
+    {
+      "example_commit": "7a9cf407b8ea6209d40a29c771fa5b4a9d4c8c3e",
+      "metadata_fingerprint": "4addf23a83cbf1becb3e9b6be89386696ac18bbbe5dfd17aa7a6d63d20d52447",
+      "object_id": "2ca4b67b0e049469ab57207d153188ef2c0ca132",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 60013
+    },
+    {
+      "example_commit": "e915c574bf87be05f7290970720b4732675a107f",
+      "metadata_fingerprint": "5ad0f214a090aa654ccdd0a57fbe2c82544a6ae707942b5dc25711bd89314bff",
+      "object_id": "2d79a2f1d96b66c958da05d5be756395651afb56",
+      "path": "tools/codex-log.md",
+      "rule_id": "operational-absolute-path",
+      "size": 16453
+    },
+    {
+      "example_commit": "e915c574bf87be05f7290970720b4732675a107f",
+      "metadata_fingerprint": "ac1246223d249a6d9fe5818e029d6b76921090c72f63c191d01ebb6d480d23cb",
+      "object_id": "1c683c4b9ef927e5c04bea6939e5afc145b3cfae",
+      "path": "tools/researchmap-metadata-todo.md",
+      "rule_id": "operational-absolute-path",
+      "size": 13163
+    },
+    {
+      "example_commit": "57a4dae670efad92d3192f86bf2ac1857a5da24d",
+      "metadata_fingerprint": "974b880d728ece8156d9486b0fd49b1601461b406381f26668f438295b3fcb1b",
+      "object_id": "2808cab1bfe5889f151591fd6e1da0db3614a1f4",
+      "path": "tools/researchmap-metadata-todo.md",
+      "rule_id": "operational-absolute-path",
+      "size": 10963
+    },
+    {
+      "example_commit": "52458fdfd0a47d7154f5c049f942aadb3f204875",
+      "metadata_fingerprint": "b19740be218fe2a3067a797ee9696a8f3fec1453f667857972e0258798df2992",
+      "object_id": "2b0f4ad2b41b6de1d46adeb72c839abf12634a82",
+      "path": "tools/todo.md",
+      "rule_id": "operational-absolute-path",
+      "size": 2410
+    }
+  ],
+  "findings_truncated": true,
+  "head": "a8717928ebfae855d65fe4ac8ce9e98e7850d596",
+  "limits": {
+    "large_blob_bytes": 1000000,
+    "max_findings": 500,
+    "max_findings_per_rule": 50
+  },
+  "repository": "website",
+  "schema": 1,
+  "scope": "all reachable refs plus value-free working-tree counts",
+  "value_exposed": false
+}
