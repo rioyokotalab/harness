@@ -1309,6 +1309,19 @@ document records this one-filesystem evidence while retaining explicit no-claim
 boundaries for distributed or multi-node coordination, crash durability, and
 scheduler preemption. No persistent-root file or scheduler job was created.
 
+### T-224 — Fleet Git and control-plane integrity audit
+
+**Phase/status:** `complete`; strict connectivity-only Git fsck, exact clean
+`e4ad156` HEAD, required executable blobs/modes, and local fleet-sync residue
+absence passed on all seven nodes. A lexical-link audit initially exposed the
+danger of comparing RC's canonical alias against its lexical home; the
+canonical `harness apply --plan` was used instead. It found no blocks but six
+missing onboarding/PIE discovery links on AB, RI, AL, RC, and T4, and three
+missing onboarding links on AB2. The existing transactional apply created only
+those absent links. Independent postflight now reports exactly 34 keeps, zero
+creates, and zero blocks on every node. No repository bytes, owner files,
+credentials, scheduler state, or unrelated links were changed.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
