@@ -1,0 +1,742 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() {
+    cat >&2 <<'EOF'
+Usage: harness restic-schedule COMMAND --host LOGICAL_ID [--smoke]
+
+Commands:
+  plan       print the declared native schedule without changing state
+  next       print the next strictly-future eligibility (read-only)
+  status     inspect only the captured chain/smoke state and exact job ID
+  warning    print only an active interactive warning
+  smoke      submit one bounded allocated smoke
+  seed       submit/adopt one real future weekly chain member
+  run        internal allocated entry point; requires --kind
+  disable    cancel and verify only the captured future ID
+EOF
+}
+
+command_name=${1:-}
+[ "$#" -gt 0 ] && shift
+logical_host=
+kind=
+smoke_scope=0
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            logical_host=$2
+            shift 2
+            ;;
+        --kind)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            kind=$2
+            shift 2
+            ;;
+        --smoke) smoke_scope=1; shift ;;
+        *) usage; exit 2 ;;
+    esac
+done
+case "$command_name" in
+    plan|next|status|warning|smoke|seed|run|disable) ;;
+    *) usage; exit 2 ;;
+esac
+[ -n "$logical_host" ] || { usage; exit 2; }
+require_safe_id "$logical_host"
+profile=$(profile_for "$logical_host")
+case ${HARNESS_LOGICAL_HOST:-$logical_host} in
+    "$logical_host") ;;
+    *) die "logical host does not match this environment" ;;
+esac
+
+schedule_map=$HARNESS_ROOT/profiles/restic-schedules.tsv
+if [ "${HARNESS_TESTING:-0}" = 1 ] && [ -n "${HARNESS_SCHEDULE_MAP:-}" ]; then
+    schedule_map=$HARNESS_SCHEDULE_MAP
+fi
+[ -f "$schedule_map" ] && [ ! -L "$schedule_map" ] ||
+    die "invalid Restic schedule map"
+schedule_row=$(awk -F'|' -v host="$logical_host" '
+    $0 !~ /^#/ && $1 == host { print; count++ }
+    END { if (count != 1) exit 1 }
+' "$schedule_map") || die "Restic schedule row is not unique"
+IFS='|' read -r row_host scheduler timezone weekday eligibility account partition resource walltime priority <<EOF
+$schedule_row
+EOF
+[ "$row_host" = "$logical_host" ] || die "Restic schedule host mismatch"
+case "$scheduler" in slurm|ybatch|pbs|age) ;; *) die "invalid scheduler family" ;; esac
+case "$timezone" in ''|*[!A-Za-z0-9_+./-]*) die "invalid schedule timezone" ;; esac
+[ "$weekday" = Sun ] || die "only the reviewed Sunday schedule is accepted"
+case "$eligibility" in [012][0-9]:[0-5][0-9]) ;; *) die "invalid eligibility time" ;; esac
+hour=${eligibility%:*}
+[ "$hour" -le 23 ] || die "invalid eligibility hour"
+for field in "$account" "$partition"; do
+    case "$field" in ''|*[!A-Za-z0-9._-]*) die "invalid scheduler declaration" ;; esac
+done
+case "$resource" in ''|*[!A-Za-z0-9_=,.-]*) die "invalid scheduler resource" ;; esac
+case "$walltime" in [0-9][0-9]:[0-5][0-9]:[0-5][0-9]) ;; *) die "invalid walltime" ;; esac
+[ "$priority" = default ] || die "only default priority is reviewed"
+
+if [ "${HARNESS_TESTING:-0}" != 1 ] &&
+    [ "$command_name" != plan ] && [ "$command_name" != next ]; then
+    command_paths=$(config_get "$profile" command_paths)
+    if [ "$command_paths" != none ]; then
+        old_ifs=$IFS
+        IFS=,
+        for command_path in $command_paths; do
+            [ -d "$command_path" ] && [ ! -L "$command_path" ] ||
+                die "declared scheduler command path is unavailable"
+            PATH=$PATH:$command_path
+        done
+        IFS=$old_ifs
+        unset old_ifs command_path
+        export PATH
+    fi
+fi
+
+uid=$(id -u)
+username=$(id -un)
+state_dir=$HOME/.local/state/harness/restic-chain
+chain_state=$state_dir/chain.state
+smoke_state=$state_dir/smoke.state
+event_file=$state_dir/events
+jobs_dir=$state_dir/jobs
+lock_dir=$state_dir/lock
+lock_held=0
+
+validate_private_file() {
+    path=$1
+    [ -f "$path" ] && [ ! -L "$path" ] || die "private state is not a regular file"
+    [ "$(stat -c '%u' -- "$path")" = "$uid" ] || die "private state owner mismatch"
+    [ "$(stat -c '%a' -- "$path")" = 600 ] || die "private state mode mismatch"
+}
+
+validate_state_dir() {
+    [ -d "$state_dir" ] && [ ! -L "$state_dir" ] || die "private state directory is invalid"
+    [ "$(stat -c '%u' -- "$state_dir")" = "$uid" ] || die "private state directory owner mismatch"
+    [ "$(stat -c '%a' -- "$state_dir")" = 700 ] || die "private state directory mode mismatch"
+}
+
+ensure_state_dir() {
+    umask 077
+    if [ ! -e "$state_dir" ] && [ ! -L "$state_dir" ]; then
+        mkdir -p "$state_dir"
+        chmod 700 "$HOME/.local/state/harness" "$state_dir"
+    fi
+    validate_state_dir
+    if [ ! -e "$jobs_dir" ] && [ ! -L "$jobs_dir" ]; then
+        mkdir "$jobs_dir"
+        chmod 700 "$jobs_dir"
+    fi
+    [ -d "$jobs_dir" ] && [ ! -L "$jobs_dir" ] || die "private jobs directory is invalid"
+    [ "$(stat -c '%u' -- "$jobs_dir")" = "$uid" ] || die "private jobs directory owner mismatch"
+    [ "$(stat -c '%a' -- "$jobs_dir")" = 700 ] || die "private jobs directory mode mismatch"
+}
+
+state_get() {
+    file=$1
+    key=$2
+    validate_private_file "$file"
+    value=$(sed -n "s/^${key}=//p" "$file")
+    count=$(printf '%s\n' "$value" | awk 'NF { n++ } END { print n + 0 }')
+    [ "$count" -le 1 ] || die "duplicate private state key"
+    printf '%s\n' "$value"
+}
+
+atomic_write() {
+    destination=$1
+    content=$2
+    ensure_state_dir
+    if [ -e "$destination" ] || [ -L "$destination" ]; then
+        validate_private_file "$destination"
+    fi
+    temp=$(mktemp "$state_dir/.state.XXXXXX") || die "cannot create private state"
+    chmod 600 "$temp"
+    printf '%s\n' "$content" >"$temp"
+    mv -f -- "$temp" "$destination"
+    validate_private_file "$destination"
+}
+
+record_event() {
+    event=$1
+    ensure_state_dir
+    temp=$(mktemp "$state_dir/.events.XXXXXX") || die "cannot create private event state"
+    chmod 600 "$temp"
+    if [ -e "$event_file" ] || [ -L "$event_file" ]; then
+        validate_private_file "$event_file"
+        tail -n 51 "$event_file" >"$temp"
+    fi
+    printf '%s|host=%s|event=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        "$logical_host" "$event" >>"$temp"
+    mv -f -- "$temp" "$event_file"
+    validate_private_file "$event_file"
+}
+
+release_lock() {
+    [ "$lock_held" -eq 1 ] || return 0
+    rmdir "$lock_dir" || return 1
+    lock_held=0
+}
+
+cleanup_lock() {
+    cleanup_status=$?
+    trap - EXIT HUP INT TERM
+    if ! release_lock; then
+        cleanup_status=2
+    fi
+    exit "$cleanup_status"
+}
+
+acquire_lock() {
+    ensure_state_dir
+    if ! mkdir "$lock_dir" 2>/dev/null; then
+        die "Restic chain lock is already held; inspect before retry"
+    fi
+    chmod 700 "$lock_dir"
+    lock_held=1
+    trap cleanup_lock EXIT
+    trap 'exit 129' HUP
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+}
+
+next_epoch() {
+    now=${HARNESS_NOW_EPOCH:-$(date +%s)}
+    case "$now" in ''|*[!0-9]*) die "invalid current epoch" ;; esac
+    local_date=$(TZ=$timezone date -d "@$now" +%F) || die "cannot resolve local date"
+    day_number=$(TZ=$timezone date -d "@$now" +%u) || die "cannot resolve local weekday"
+    days=$((7 - day_number))
+    target_date=$(TZ=$timezone date -d "$local_date +$days days" +%F) ||
+        die "cannot resolve Sunday date"
+    NEXT_EPOCH=$(TZ=$timezone date -d "$target_date $eligibility:00" +%s) ||
+        die "cannot resolve Sunday eligibility"
+    if [ "$NEXT_EPOCH" -le "$now" ]; then
+        NEXT_EPOCH=$(TZ=$timezone date -d "$target_date +7 days $eligibility:00" +%s) ||
+            die "cannot resolve following Sunday eligibility"
+    fi
+}
+
+format_epoch() {
+    epoch=$1
+    SLURM_TIME=$(TZ=$timezone date -d "@$epoch" +%Y-%m-%dT%H:%M:%S)
+    QSUB_TIME=$(TZ=$timezone date -d "@$epoch" +%Y%m%d%H%M.%S)
+    NAME_STAMP=$(TZ=$timezone date -d "@$epoch" +%y%m%d%H%M)
+    HUMAN_TIME=$(TZ=$timezone date -d "@$epoch" +%Y-%m-%dT%H:%M:%S%z)
+}
+
+job_name_for() {
+    job_kind=$1
+    epoch=$2
+    format_epoch "$epoch"
+    case "$job_kind" in
+        weekly) JOB_NAME=h${logical_host}${NAME_STAMP} ;;
+        smoke|smoke-successor) JOB_NAME=s${logical_host}${NAME_STAMP} ;;
+        *) die "invalid job kind" ;;
+    esac
+    case "$JOB_NAME" in *[!A-Za-z0-9._-]*) die "invalid generated job name" ;; esac
+}
+
+make_job_script() {
+    job_kind=$1
+    epoch=$2
+    job_name_for "$job_kind" "$epoch"
+    ensure_state_dir
+    script=$jobs_dir/$JOB_NAME.sh
+    temp=$(mktemp "$jobs_dir/.job.XXXXXX") || die "cannot create job script"
+    chmod 600 "$temp"
+    {
+        printf '%s\n' '#!/bin/sh' 'set -eu' 'umask 077'
+        if [ "$scheduler" = ybatch ]; then
+            printf '#YBATCH -r %s\n' "$resource"
+            printf '#SBATCH --begin=%s\n' "$SLURM_TIME"
+            printf '#SBATCH --time=%s\n' "$walltime"
+            printf '#SBATCH --job-name=%s\n' "$JOB_NAME"
+            printf '%s\n' '#SBATCH --output=/dev/null' '#SBATCH --error=/dev/null'
+        fi
+        printf 'export HARNESS_LOGICAL_HOST=%s\n' "$logical_host"
+        printf 'exec "$HOME/harness/bin/harness" restic-schedule run --host %s --kind %s\n' \
+            "$logical_host" "$job_kind"
+    } >"$temp"
+    if [ -e "$script" ] || [ -L "$script" ]; then
+        validate_private_file "$script"
+    fi
+    mv -f -- "$temp" "$script"
+    chmod 600 "$script"
+    JOB_SCRIPT=$script
+}
+
+valid_job_id() {
+    candidate=$1
+    case "$scheduler" in
+        slurm|ybatch|age) case "$candidate" in ''|*[!0-9]*) return 1 ;; esac ;;
+        pbs) case "$candidate" in ''|*[!A-Za-z0-9._-]*) return 1 ;; esac ;;
+    esac
+    return 0
+}
+
+scheduler_find_name() {
+    wanted=$1
+    case "$scheduler" in
+        slurm|ybatch)
+            squeue --me -h -n "$wanted" -o '%i|%j' 2>/dev/null |
+                awk -F'|' -v name="$wanted" '$2 == name { print $1 }'
+            ;;
+        pbs)
+            qstat -u "$username" 2>/dev/null |
+                awk -v name="$wanted" '$2 == name { print $1 }'
+            ;;
+        age)
+            qstat -u "$username" 2>/dev/null |
+                awk -v name="$wanted" '$3 == name { print $1 }'
+            ;;
+    esac
+}
+
+scheduler_query_id() {
+    wanted_id=$1
+    wanted_name=$2
+    JOB_PRESENT=0
+    JOB_STATE=
+    case "$scheduler" in
+        slurm|ybatch)
+            query=$(squeue -h -j "$wanted_id" -o '%i|%j|%T|%u' 2>/dev/null || true)
+            match=$(printf '%s\n' "$query" | awk -F'|' -v id="$wanted_id" \
+                -v name="$wanted_name" -v user="$username" \
+                '$1 == id && $2 == name && $4 == user { print $3 }')
+            ;;
+        pbs)
+            query=$(qstat -f "$wanted_id" 2>/dev/null || true)
+            found_id=$(printf '%s\n' "$query" | sed -n 's/^Job Id: *//p' | sed -n '1p')
+            found_name=$(printf '%s\n' "$query" | sed -n 's/^[[:space:]]*Job_Name = //p' | sed -n '1p')
+            found_owner=$(printf '%s\n' "$query" | sed -n 's/^[[:space:]]*Job_Owner = \([^@]*\).*/\1/p' | sed -n '1p')
+            match=
+            if [ "$found_id" = "$wanted_id" ] && [ "$found_name" = "$wanted_name" ] &&
+                [ "$found_owner" = "$username" ]; then
+                match=$(printf '%s\n' "$query" | sed -n 's/^[[:space:]]*job_state = //p' | sed -n '1p')
+            fi
+            ;;
+        age)
+            query=$(qstat -j "$wanted_id" 2>/dev/null || true)
+            found_id=$(printf '%s\n' "$query" | sed -n 's/^[[:space:]]*job_number:[[:space:]]*//p' | sed -n '1p')
+            found_name=$(printf '%s\n' "$query" | sed -n 's/^[[:space:]]*job_name:[[:space:]]*//p' | sed -n '1p')
+            found_owner=$(printf '%s\n' "$query" | sed -n 's/^[[:space:]]*owner:[[:space:]]*//p' | sed -n '1p')
+            match=
+            if [ "$found_id" = "$wanted_id" ] && [ "$found_name" = "$wanted_name" ] &&
+                [ "$found_owner" = "$username" ]; then
+                match=present
+            fi
+            ;;
+    esac
+    if [ -n "$match" ]; then
+        JOB_PRESENT=1
+        JOB_STATE=$match
+    fi
+}
+
+wait_job_present() {
+    wait_id=$1
+    wait_name=$2
+    attempt=0
+    while [ "$attempt" -lt 5 ]; do
+        scheduler_query_id "$wait_id" "$wait_name"
+        [ "$JOB_PRESENT" -eq 0 ] || return 0
+        attempt=$((attempt + 1))
+        [ "$attempt" -ge 5 ] || sleep 1
+    done
+    return 1
+}
+
+wait_job_absent() {
+    wait_id=$1
+    wait_name=$2
+    attempt=0
+    while [ "$attempt" -lt 5 ]; do
+        scheduler_query_id "$wait_id" "$wait_name"
+        [ "$JOB_PRESENT" -eq 1 ] || return 0
+        attempt=$((attempt + 1))
+        [ "$attempt" -ge 5 ] || sleep 1
+    done
+    return 1
+}
+
+scheduler_submit() {
+    submit_kind=$1
+    epoch=$2
+    make_job_script "$submit_kind" "$epoch"
+    format_epoch "$epoch"
+    output=
+    case "$scheduler" in
+        ybatch)
+            printf 'NATIVE %s: ybatch %s\n' "$logical_host" "$JOB_SCRIPT" >&2
+            output=$(ybatch "$JOB_SCRIPT") || die "native ybatch submission failed"
+            submitted=$(printf '%s\n' "$output" | sed -n 's/^Submitted batch job \([0-9][0-9]*\)$/\1/p')
+            ;;
+        slurm)
+            set -- --parsable "--begin=$SLURM_TIME" "--job-name=$JOB_NAME" \
+                --output=/dev/null --error=/dev/null "--time=$walltime" \
+                --nodes=1 --ntasks=1 --cpus-per-task=1
+            [ "$account" = none ] || set -- "$@" "--account=$account"
+            [ "$partition" = none ] || set -- "$@" "--partition=$partition"
+            printf 'NATIVE %s: sbatch' "$logical_host" >&2
+            for argument in "$@" "$JOB_SCRIPT"; do printf ' %s' "$argument" >&2; done
+            printf '\n' >&2
+            output=$(sbatch "$@" "$JOB_SCRIPT") || die "native Slurm submission failed"
+            submitted=$(printf '%s\n' "$output" | sed -n 's/^\([0-9][0-9]*\)\(;.*\)\{0,1\}$/\1/p')
+            ;;
+        pbs)
+            printf 'NATIVE %s: qsub -P %s -q %s -l %s -l walltime=%s -a %s -N %s -o /dev/null -e /dev/null %s\n' \
+                "$logical_host" "$account" "$partition" "$resource" "$walltime" \
+                "$QSUB_TIME" "$JOB_NAME" "$JOB_SCRIPT" >&2
+            output=$(qsub -P "$account" -q "$partition" -l "$resource" \
+                -l "walltime=$walltime" -a "$QSUB_TIME" -N "$JOB_NAME" \
+                -o /dev/null -e /dev/null "$JOB_SCRIPT") || die "native PBS submission failed"
+            submitted=$(printf '%s\n' "$output" | sed -n 's/^\([A-Za-z0-9._-][A-Za-z0-9._-]*\)$/\1/p')
+            ;;
+        age)
+            printf 'NATIVE %s: qsub -g %s -l %s -l h_rt=%s -a %s -N %s -o /dev/null -e /dev/null %s\n' \
+                "$logical_host" "$account" "$resource" "$walltime" "$QSUB_TIME" \
+                "$JOB_NAME" "$JOB_SCRIPT" >&2
+            output=$(qsub -g "$account" -l "$resource" -l "h_rt=$walltime" \
+                -a "$QSUB_TIME" -N "$JOB_NAME" -o /dev/null -e /dev/null \
+                "$JOB_SCRIPT") || die "native AGE submission failed"
+            submitted=$(printf '%s\n' "$output" | sed -n \
+                's/^Your job \([0-9][0-9]*\) (.*) has been submitted$/\1/p')
+            ;;
+    esac
+    if ! valid_job_id "$submitted"; then
+        matches=$(scheduler_find_name "$JOB_NAME" || true)
+        count=$(printf '%s\n' "$matches" | awk 'NF { n++ } END { print n + 0 }')
+        [ "$count" -eq 1 ] || die "ambiguous scheduler submission result"
+        submitted=$(printf '%s\n' "$matches" | awk 'NF { print; exit }')
+        valid_job_id "$submitted" || die "reconciled scheduler job ID is invalid"
+    fi
+    wait_job_present "$submitted" "$JOB_NAME" ||
+        die "submitted scheduler job failed identity validation"
+    SUBMITTED_ID=$submitted
+}
+
+adopt_or_submit() {
+    submit_kind=$1
+    epoch=$2
+    job_name_for "$submit_kind" "$epoch"
+    matches=$(scheduler_find_name "$JOB_NAME" || true)
+    count=$(printf '%s\n' "$matches" | awk 'NF { n++ } END { print n + 0 }')
+    case "$count" in
+        0) scheduler_submit "$submit_kind" "$epoch" ;;
+        1)
+            SUBMITTED_ID=$(printf '%s\n' "$matches" | awk 'NF { print; exit }')
+            valid_job_id "$SUBMITTED_ID" || die "existing scheduler job ID is invalid"
+            wait_job_present "$SUBMITTED_ID" "$JOB_NAME" ||
+                die "existing scheduler job failed identity validation"
+            ;;
+        *) die "multiple matching scheduler jobs; refusing duplicate" ;;
+    esac
+}
+
+scheduler_cancel() {
+    cancel_id=$1
+    case "$scheduler" in
+        slurm|ybatch)
+            printf 'NATIVE %s: scancel %s\n' "$logical_host" "$cancel_id" >&2
+            scancel "$cancel_id" || die "native Slurm cancellation failed"
+            ;;
+        pbs|age)
+            printf 'NATIVE %s: qdel %s\n' "$logical_host" "$cancel_id" >&2
+            qdel "$cancel_id" || die "native qdel cancellation failed"
+            ;;
+    esac
+}
+
+write_chain_state() {
+    chain_status=$1
+    job_id=$2
+    job_name=$3
+    epoch=$4
+    last_result=$5
+    snapshot_id=$6
+    atomic_write "$chain_state" "schema=1
+host=$logical_host
+status=$chain_status
+job_id=$job_id
+job_name=$job_name
+eligibility_epoch=$epoch
+last_result=$last_result
+snapshot_id=$snapshot_id"
+}
+
+write_smoke_state() {
+    smoke_status=$1
+    current_id=$2
+    current_name=$3
+    current_epoch=$4
+    successor_id=$5
+    successor_name=$6
+    successor_epoch=$7
+    atomic_write "$smoke_state" "schema=1
+host=$logical_host
+status=$smoke_status
+job_id=$current_id
+job_name=$current_name
+eligibility_epoch=$current_epoch
+successor_id=$successor_id
+successor_name=$successor_name
+successor_epoch=$successor_epoch"
+}
+
+current_allocated_id() {
+    case "$scheduler" in
+        slurm|ybatch) CURRENT_ID=${SLURM_JOB_ID:-} ;;
+        pbs) CURRENT_ID=${PBS_JOBID:-} ;;
+        age) CURRENT_ID=${JOB_ID:-} ;;
+    esac
+    valid_job_id "$CURRENT_ID" || die "allocated scheduler job ID is missing or invalid"
+}
+
+show_one_state() {
+    label=$1
+    file=$2
+    [ -e "$file" ] || [ -L "$file" ] || {
+        printf 'RESTIC_SCHEDULE_%s host=%s status=absent\n' "$label" "$logical_host"
+        return
+    }
+    validate_private_file "$file"
+    status_value=$(state_get "$file" status)
+    job_id=$(state_get "$file" job_id)
+    job_name=$(state_get "$file" job_name)
+    epoch=$(state_get "$file" eligibility_epoch)
+    if [ "$label" = SMOKE ] &&
+        { [ "$status_value" = successor-pending ] ||
+          [ "$status_value" = verified-disabled ]; }; then
+        job_id=$(state_get "$file" successor_id)
+        job_name=$(state_get "$file" successor_name)
+        epoch=$(state_get "$file" successor_epoch)
+    fi
+    scheduler_query_id "$job_id" "$job_name"
+    printf 'RESTIC_SCHEDULE_%s host=%s status=%s job=%s name=%s eligible=%s present=%s state=%s\n' \
+        "$label" "$logical_host" "$status_value" "$job_id" "$job_name" \
+        "$epoch" "$JOB_PRESENT" "${JOB_STATE:-none}"
+}
+
+case "$command_name" in
+    plan)
+        printf 'RESTIC_SCHEDULE_PLAN host=%s scheduler=%s timezone=%s weekday=%s time=%s account=%s partition=%s resource=%s walltime=%s priority=%s changes=none\n' \
+            "$logical_host" "$scheduler" "$timezone" "$weekday" "$eligibility" \
+            "$account" "$partition" "$resource" "$walltime" "$priority"
+        ;;
+    next)
+        next_epoch
+        format_epoch "$NEXT_EPOCH"
+        printf 'RESTIC_SCHEDULE_NEXT host=%s epoch=%s local=%s\n' \
+            "$logical_host" "$NEXT_EPOCH" "$HUMAN_TIME"
+        ;;
+    status)
+        if [ -e "$state_dir" ] || [ -L "$state_dir" ]; then validate_state_dir; fi
+        show_one_state CHAIN "$chain_state"
+        show_one_state SMOKE "$smoke_state"
+        ;;
+    warning)
+        [ -e "$chain_state" ] || [ -L "$chain_state" ] || exit 0
+        validate_state_dir
+        status_value=$(state_get "$chain_state" status)
+        [ "$status_value" = active ] || exit 0
+        job_id=$(state_get "$chain_state" job_id)
+        job_name=$(state_get "$chain_state" job_name)
+        last_result=$(state_get "$chain_state" last_result)
+        scheduler_query_id "$job_id" "$job_name"
+        if [ "$JOB_PRESENT" -ne 1 ]; then
+            printf 'harness: weekly backup chain warning on %s: captured future job is missing\n' "$logical_host"
+        elif [ "$last_result" = backup-failed ] || [ "$last_result" = successor-failed ]; then
+            printf 'harness: weekly backup chain warning on %s: last run failed; successor is %s\n' \
+                "$logical_host" "$JOB_STATE"
+        fi
+        ;;
+    smoke)
+        acquire_lock
+        if [ -e "$smoke_state" ] || [ -L "$smoke_state" ]; then
+            validate_private_file "$smoke_state"
+            old_status=$(state_get "$smoke_state" status)
+            case "$old_status" in verified-disabled|cancelled|failed) ;;
+                *) die "smoke state already exists; inspect or disable it" ;;
+            esac
+        fi
+        now=${HARNESS_NOW_EPOCH:-$(date +%s)}
+        smoke_epoch=$((now + 60))
+        adopt_or_submit smoke "$smoke_epoch"
+        write_smoke_state submitted "$SUBMITTED_ID" "$JOB_NAME" "$smoke_epoch" none none 0
+        record_event smoke-submitted
+        printf 'RESTIC_SCHEDULE_SMOKE host=%s job=%s name=%s status=submitted\n' \
+            "$logical_host" "$SUBMITTED_ID" "$JOB_NAME"
+        ;;
+    seed)
+        acquire_lock
+        if [ "${HARNESS_TESTING_ALLOW_UNSMOKED_SEED:-0}" != 1 ]; then
+            [ -e "$smoke_state" ] && [ ! -L "$smoke_state" ] ||
+                die "seed requires a passed smoke and verified successor cancellation"
+            validate_private_file "$smoke_state"
+            [ "$(state_get "$smoke_state" status)" = verified-disabled ] ||
+                die "seed requires a passed smoke and verified successor cancellation"
+        fi
+        if [ -e "$chain_state" ] || [ -L "$chain_state" ]; then
+            validate_private_file "$chain_state"
+            old_status=$(state_get "$chain_state" status)
+            if [ "$old_status" = active ]; then
+                old_id=$(state_get "$chain_state" job_id)
+                old_name=$(state_get "$chain_state" job_name)
+                scheduler_query_id "$old_id" "$old_name"
+                [ "$JOB_PRESENT" -eq 1 ] || die "active chain state has no matching job"
+                printf 'RESTIC_SCHEDULE_SEED host=%s job=%s name=%s status=kept\n' \
+                    "$logical_host" "$old_id" "$old_name"
+                exit 0
+            fi
+            [ "$old_status" = disabled ] || die "chain state is not seedable"
+        fi
+        next_epoch
+        adopt_or_submit weekly "$NEXT_EPOCH"
+        write_chain_state active "$SUBMITTED_ID" "$JOB_NAME" "$NEXT_EPOCH" seeded none
+        record_event chain-seeded
+        printf 'RESTIC_SCHEDULE_SEED host=%s job=%s name=%s status=submitted\n' \
+            "$logical_host" "$SUBMITTED_ID" "$JOB_NAME"
+        ;;
+    run)
+        case "$kind" in weekly|smoke|smoke-successor) ;; *) die "invalid allocated run kind" ;; esac
+        acquire_lock
+        current_allocated_id
+        case "$kind" in
+            weekly)
+                validate_private_file "$chain_state"
+                [ "$(state_get "$chain_state" status)" = active ] ||
+                    die "allocated weekly state is not active"
+                expected_id=$(state_get "$chain_state" job_id)
+                expected_name=$(state_get "$chain_state" job_name)
+                [ "$CURRENT_ID" = "$expected_id" ] || die "allocated weekly job ID does not match state"
+                next_epoch
+                if ! adopt_or_submit weekly "$NEXT_EPOCH"; then
+                    write_chain_state active "$expected_id" "$expected_name" \
+                        "$(state_get "$chain_state" eligibility_epoch)" successor-failed none
+                    record_event successor-failed
+                    exit 2
+                fi
+                successor_id=$SUBMITTED_ID
+                successor_name=$JOB_NAME
+                write_chain_state active "$successor_id" "$successor_name" \
+                    "$NEXT_EPOCH" running none
+                record_event successor-recorded
+                if primary_output=$("$HARNESS_ROOT/bin/harness" restic-primary weekly \
+                    --host "$logical_host" 2>/dev/null); then
+                    snapshot_id=$(printf '%s\n' "$primary_output" |
+                        sed -n 's/.* snapshot=\([0-9a-f][0-9a-f]*\) .*/\1/p')
+                    case "$snapshot_id" in ''|*[!0-9a-f]*) snapshot_id=none ;; esac
+                    write_chain_state active "$successor_id" "$successor_name" \
+                        "$NEXT_EPOCH" success "$snapshot_id"
+                    record_event snapshot-passed
+                    exit 0
+                fi
+                write_chain_state active "$successor_id" "$successor_name" \
+                    "$NEXT_EPOCH" backup-failed none
+                record_event snapshot-failed
+                exit 2
+                ;;
+            smoke)
+                validate_private_file "$smoke_state"
+                [ "$(state_get "$smoke_state" status)" = submitted ] ||
+                    die "allocated smoke state is not submitted"
+                expected_id=$(state_get "$smoke_state" job_id)
+                expected_name=$(state_get "$smoke_state" job_name)
+                expected_epoch=$(state_get "$smoke_state" eligibility_epoch)
+                [ "$CURRENT_ID" = "$expected_id" ] || die "allocated smoke job ID does not match state"
+                if ! "$HARNESS_ROOT/bin/harness" restic-primary check \
+                    --host "$logical_host" >/dev/null 2>&1; then
+                    write_smoke_state failed "$expected_id" "$expected_name" \
+                        "$expected_epoch" none none 0
+                    record_event smoke-restic-failed
+                    exit 2
+                fi
+                next_epoch
+                if ! adopt_or_submit smoke-successor "$NEXT_EPOCH"; then
+                    write_smoke_state failed "$expected_id" "$expected_name" \
+                        "$expected_epoch" none none 0
+                    record_event smoke-successor-failed
+                    exit 2
+                fi
+                write_smoke_state successor-pending "$expected_id" "$expected_name" \
+                    "$expected_epoch" "$SUBMITTED_ID" "$JOB_NAME" "$NEXT_EPOCH"
+                record_event smoke-passed
+                ;;
+            smoke-successor)
+                validate_private_file "$smoke_state"
+                [ "$(state_get "$smoke_state" status)" = successor-pending ] ||
+                    die "smoke successor state is not pending"
+                [ "$(state_get "$smoke_state" successor_id)" = "$CURRENT_ID" ] ||
+                    die "allocated smoke successor ID does not match state"
+                write_smoke_state failed "$(state_get "$smoke_state" job_id)" \
+                    "$(state_get "$smoke_state" job_name)" \
+                    "$(state_get "$smoke_state" eligibility_epoch)" "$CURRENT_ID" \
+                    "$(state_get "$smoke_state" successor_name)" \
+                    "$(state_get "$smoke_state" successor_epoch)"
+                record_event smoke-successor-ran
+                exit 2
+                ;;
+        esac
+        ;;
+    disable)
+        acquire_lock
+        if [ "$smoke_scope" -eq 1 ]; then
+            validate_private_file "$smoke_state"
+            disable_status=$(state_get "$smoke_state" status)
+            case "$disable_status" in
+                successor-pending)
+                    disable_id=$(state_get "$smoke_state" successor_id)
+                    disable_name=$(state_get "$smoke_state" successor_name)
+                    final_smoke_status=verified-disabled
+                    ;;
+                submitted)
+                    disable_id=$(state_get "$smoke_state" job_id)
+                    disable_name=$(state_get "$smoke_state" job_name)
+                    final_smoke_status=cancelled
+                    ;;
+                verified-disabled|cancelled)
+                    printf 'RESTIC_SCHEDULE_DISABLE host=%s scope=smoke status=kept\n' "$logical_host"
+                    exit 0
+                    ;;
+                *) die "smoke state is not safely cancellable" ;;
+            esac
+            scheduler_query_id "$disable_id" "$disable_name"
+            [ "$JOB_PRESENT" -eq 1 ] || die "captured smoke job is missing; refusing broad cleanup"
+            scheduler_cancel "$disable_id"
+            wait_job_absent "$disable_id" "$disable_name" ||
+                die "captured smoke job remains after cancellation"
+            write_smoke_state "$final_smoke_status" "$(state_get "$smoke_state" job_id)" \
+                "$(state_get "$smoke_state" job_name)" \
+                "$(state_get "$smoke_state" eligibility_epoch)" "$disable_id" \
+                "$disable_name" "$(state_get "$smoke_state" successor_epoch)"
+            record_event smoke-disabled
+            printf 'RESTIC_SCHEDULE_DISABLE host=%s scope=smoke job=%s status=%s\n' \
+                "$logical_host" "$disable_id" "$final_smoke_status"
+        else
+            validate_private_file "$chain_state"
+            disable_status=$(state_get "$chain_state" status)
+            if [ "$disable_status" = disabled ]; then
+                printf 'RESTIC_SCHEDULE_DISABLE host=%s scope=chain status=kept\n' "$logical_host"
+                exit 0
+            fi
+            [ "$disable_status" = active ] || die "chain state is not safely cancellable"
+            disable_id=$(state_get "$chain_state" job_id)
+            disable_name=$(state_get "$chain_state" job_name)
+            disable_epoch=$(state_get "$chain_state" eligibility_epoch)
+            scheduler_query_id "$disable_id" "$disable_name"
+            [ "$JOB_PRESENT" -eq 1 ] || die "captured chain job is missing; refusing broad cleanup"
+            scheduler_cancel "$disable_id"
+            wait_job_absent "$disable_id" "$disable_name" ||
+                die "captured chain job remains after cancellation"
+            write_chain_state disabled "$disable_id" "$disable_name" "$disable_epoch" disabled none
+            record_event chain-disabled
+            printf 'RESTIC_SCHEDULE_DISABLE host=%s scope=chain job=%s status=disabled\n' \
+                "$logical_host" "$disable_id"
+        fi
+        ;;
+esac

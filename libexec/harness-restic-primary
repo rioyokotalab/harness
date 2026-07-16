@@ -1,0 +1,155 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() {
+    echo "Usage: harness restic-primary {check|weekly} --host LOGICAL_ID" >&2
+}
+
+mode=${1:-}
+[ "$#" -gt 0 ] && shift
+logical_host=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            logical_host=$2
+            shift 2
+            ;;
+        *) usage; exit 2 ;;
+    esac
+done
+case "$mode" in check|weekly) ;; *) usage; exit 2 ;; esac
+[ -n "$logical_host" ] || { usage; exit 2; }
+require_safe_id "$logical_host"
+profile_for "$logical_host" >/dev/null
+case ${HARNESS_LOGICAL_HOST:-$logical_host} in
+    "$logical_host") ;;
+    *) die "logical host does not match this environment" ;;
+esac
+
+repository_map=$HARNESS_ROOT/profiles/restic-repositories.tsv
+layout_map=$HARNESS_ROOT/profiles/home-layout.tsv
+if [ "${HARNESS_TESTING:-0}" = 1 ]; then
+    [ -z "${HARNESS_REPOSITORY_MAP:-}" ] || repository_map=$HARNESS_REPOSITORY_MAP
+    [ -z "${HARNESS_HOME_LAYOUT_MAP:-}" ] || layout_map=$HARNESS_HOME_LAYOUT_MAP
+fi
+[ -f "$repository_map" ] && [ ! -L "$repository_map" ] ||
+    die "invalid Restic repository map"
+[ -f "$layout_map" ] && [ ! -L "$layout_map" ] ||
+    die "invalid home layout map"
+
+repository_row=$(awk -F'|' -v host="$logical_host" '
+    $0 !~ /^#/ && $1 == host { print; count++ }
+    END { if (count != 1) exit 1 }
+' "$repository_map") || die "Restic repository row is not unique"
+IFS='|' read -r row_host primary _replica password_decl _transport <<EOF
+$repository_row
+EOF
+[ "$row_host" = "$logical_host" ] || die "Restic repository host mismatch"
+case "$primary" in /*) ;; *) die "primary repository is not absolute" ;; esac
+literal_tilde='~'
+expected_password_decl=$literal_tilde/.config/restic/home-control.password
+[ "$password_decl" = "$expected_password_decl" ] ||
+    die "unexpected Restic password declaration"
+
+layout_row=$(awk -F'|' -v host="$logical_host" '
+    $0 !~ /^#/ && $1 == host { print; count++ }
+    END { if (count != 1) exit 1 }
+' "$layout_map") || die "home layout row is not unique"
+IFS='|' read -r layout_host persistent cache move_large move_fast _remove _special <<EOF
+$layout_row
+EOF
+[ "$layout_host" = "$logical_host" ] || die "home layout host mismatch"
+for root in "$persistent" "$cache"; do
+    case "$root" in /*) ;; *) die "declared storage root is not absolute" ;; esac
+    [ -d "$root" ] && [ ! -L "$root" ] || die "declared storage root is unavailable"
+done
+[ -d "$primary" ] && [ ! -L "$primary" ] ||
+    die "primary repository is unavailable or a symlink"
+
+uid=$(id -u)
+password_file=$HOME/.config/restic/home-control.password
+[ -f "$password_file" ] && [ ! -L "$password_file" ] ||
+    die "Restic password file must be a regular non-symlink"
+[ "$(stat -c '%u' -- "$password_file")" = "$uid" ] ||
+    die "Restic password file owner mismatch"
+[ "$(stat -c '%a' -- "$password_file")" = 600 ] ||
+    die "Restic password file mode must be 600"
+
+umask 077
+temp_parent=${TMPDIR:-/tmp}
+[ -d "$temp_parent" ] && [ ! -L "$temp_parent" ] ||
+    die "temporary directory is unavailable"
+source_manifest=$(mktemp "$temp_parent/harness-restic-sources.${logical_host}.XXXXXX") ||
+    die "cannot create source manifest"
+capture=$(mktemp "$temp_parent/harness-restic-output.${logical_host}.XXXXXX") || {
+    unlink "$source_manifest"
+    die "cannot create private Restic output"
+}
+chmod 600 "$source_manifest" "$capture"
+
+cleanup() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    for path in "$source_manifest" "$capture"; do
+        if [ -f "$path" ] && [ ! -L "$path" ]; then
+            unlink "$path" || status=2
+        fi
+    done
+    exit "$status"
+}
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+find "$HOME" -mindepth 1 -maxdepth 1 -name '.*' -print0 >"$source_manifest"
+persistent_canonical=$(readlink -f -- "$persistent") ||
+    die "cannot canonicalize persistent root"
+cache_canonical=$(readlink -f -- "$cache") ||
+    die "cannot canonicalize cache root"
+names=$(printf '%s,%s\n' "$move_large" "$move_fast" | tr ',' ' ')
+for name in $names; do
+    [ "$name" = none ] && continue
+    case "$name" in .[A-Za-z0-9._-]*) ;; *) die "invalid relocated path name" ;; esac
+    link=$HOME/$name
+    [ -L "$link" ] || continue
+    target=$(readlink -f -- "$link") || die "cannot canonicalize relocated target"
+    case "$target" in
+        "$persistent_canonical"/*|"$cache_canonical"/*) ;;
+        *) die "relocated target is outside declared roots" ;;
+    esac
+    [ -d "$target" ] || die "relocated target is not a directory"
+    printf '%s\0' "$target" >>"$source_manifest"
+done
+unset names name link target
+
+case "$mode" in
+    check)
+        "$HARNESS_ROOT/bin/harness" restic -r "$primary" \
+            --password-file "$password_file" snapshots --host "$logical_host" \
+            --compact >"$capture" 2>&1 || die "Restic repository check failed"
+        printf 'RESTIC_PRIMARY_CHECK host=%s status=passed\n' "$logical_host"
+        ;;
+    weekly)
+        "$HARNESS_ROOT/bin/harness" restic -r "$primary" \
+            --password-file "$password_file" backup --json \
+            --files-from-raw "$source_manifest" --host "$logical_host" \
+            --tag harness-hidden-home-weekly >"$capture" 2>&1 ||
+            die "Restic weekly snapshot failed"
+        snapshot_id=$(sed -n \
+            's/.*"snapshot_id":"\([0-9a-f][0-9a-f]*\)".*/\1/p' "$capture" |
+            tail -n 1)
+        case "$snapshot_id" in
+            *[!0-9a-f]*|'') die "Restic did not return a valid snapshot ID" ;;
+        esac
+        [ "${#snapshot_id}" -eq 64 ] || die "Restic snapshot ID length mismatch"
+        printf 'RESTIC_PRIMARY_SNAPSHOT host=%s snapshot=%s status=passed\n' \
+            "$logical_host" "$snapshot_id"
+        ;;
+esac

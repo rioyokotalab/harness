@@ -40,6 +40,8 @@ for script in \
     "$ROOT/libexec/harness-replica" \
     "$ROOT/libexec/harness-repository-fingerprint" \
     "$ROOT/libexec/harness-restic" \
+    "$ROOT/libexec/harness-restic-primary" \
+    "$ROOT/libexec/harness-restic-schedule" \
     "$ROOT/libexec/harness-apply" \
     "$ROOT/libexec/harness-remediate" \
     "$ROOT/libexec/harness-shell" \
@@ -55,6 +57,9 @@ for script in \
 do
     sh -n "$script" || fail "shell syntax: $script"
 done
+
+"$ROOT/tests/test-restic-schedule.sh" >/dev/null ||
+    fail "Restic schedule focused suite"
 
 # Direct non-interactive SSH can omit ~/.local/bin even when the managed
 # Restic installation is healthy. The harness route must find that exact

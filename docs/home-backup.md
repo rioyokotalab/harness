@@ -129,10 +129,63 @@ RESTORE_ROOT=$(mktemp -d "$HARNESS_PERSISTENT_ROOT/restic-restore-test.${HOST}.X
 Record only success status, snapshot ID, time, and aggregate file/byte counts.
 Never copy restored secrets into the tracked harness. Remove `RESTORE_ROOT`
 only with `harness guarded-delete plan/apply` using its exact canonical path and
-immutable token. Once all currently initialized nodes have successful
-`check --read-data` and restore evidence, scheduling may be proposed separately
-for those nodes; it is not enabled by this workflow. A newly initialized node
-joins the same gate only after its own manual test cycle.
+immutable token. Only a node with successful `check --read-data` and restore
+evidence may enter the recurring workflow below. A newly initialized node joins
+the same gate only after its own manual test cycle.
+
+## Scheduler-native weekly primary snapshots
+
+The reviewed schedule is declared in `profiles/restic-schedules.tsv`. It uses
+the site's compute scheduler, never login-node cron, a user timer, central SSH,
+or a sleeping process. Inspecting the plan and next eligibility is read-only:
+
+```bash
+harness restic-schedule plan --host "$HOST"
+harness restic-schedule next --host "$HOST"
+harness restic-schedule status --host "$HOST"
+```
+
+The controller maintains exactly one future job. When admitted, that job first
+validates its captured identity and atomically submits or adopts the one
+deterministically named successor. Only after the successor is validated and
+recorded does it invoke `harness restic-primary weekly`, which creates one
+incremental snapshot tagged `harness-hidden-home-weekly`. It does not run
+`check --read-data`, restore, replica creation, `forget`, `prune`, or any other
+deletion. A delayed queued job remains healthy; if it passes one or more Sunday
+points, it runs once and schedules the earliest configured Sunday strictly in
+the future rather than backfilling.
+
+Private mode-0600 state lives below
+`~/.local/state/harness/restic-chain/`. The interactive shell reads only that
+captured state and exact scheduler ID. Healthy and unseeded state is silent;
+non-interactive sessions never invoke the warning. A failed snapshot keeps its
+already-recorded successor and warns at the next interactive login.
+
+Live activation has two separate gates. First, `smoke` submits a bounded real
+allocation that checks architecture/path access, password-file metadata,
+managed Restic read-only repository access, and compute-side successor
+submission without taking a snapshot. Its captured distant test successor must
+be cancelled and verified absent with the exact smoke scope:
+
+```bash
+harness restic-schedule smoke --host "$HOST"
+harness restic-schedule status --host "$HOST"
+harness restic-schedule disable --smoke --host "$HOST"
+```
+
+Only after the smoke passes and its successor is absent may `seed` create the
+one real future weekly job:
+
+```bash
+harness restic-schedule seed --host "$HOST"
+harness restic-schedule status --host "$HOST"
+```
+
+Disable recurrence only through `harness restic-schedule disable --host
+"$HOST"`. It revalidates, prints, cancels, and verifies absence of the one
+captured future ID. It never performs a broad user/job-name cancellation or
+deletes the retained private evidence. Print and review every reported
+`NATIVE` scheduler command during smoke, seed, and disable operations.
 
 ## Independent encrypted generation
 

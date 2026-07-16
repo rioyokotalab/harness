@@ -16,8 +16,9 @@ directory into a Git repository.
 - `bin/harness` and `libexec/`: value-free inventory, planning, health checks,
   and guarded bulk deletion for the portable environment.
 - `profiles/`: selected tool policy and logical host capabilities.
-- `profiles/restic-repositories.tsv` and `docs/home-backup.md`: non-secret
-  seven-node encrypted-backup topology and the owner-only restore gate.
+- `profiles/restic-repositories.tsv`, `profiles/restic-schedules.tsv`, and
+  `docs/home-backup.md`: non-secret seven-node encrypted-backup topology,
+  scheduler declarations, and restore/recurrence gates.
 - `tests/fixtures/`: value-free environment evidence used by the shell tests.
 - `docs/`: architecture and operating notes for the portable environment.
 - `TODO.md`: harness-owned planned and active work.

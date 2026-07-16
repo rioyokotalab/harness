@@ -1,0 +1,8 @@
+# host|scheduler|timezone|weekday|time|account|partition|resource|walltime|priority
+local|ybatch|Asia/Tokyo|Sun|00:30|none|threadripper-3960x|thrp_1|00:30:00|default
+ab|pbs|Asia/Tokyo|Sun|01:00|gag51395|rt_HC|select=1|00:30:00|default
+ab2|pbs|Asia/Tokyo|Sun|01:30|gah51624|rt_HC|select=1|00:30:00|default
+ri|slurm|Asia/Tokyo|Sun|02:00|none|none|nodes=1,ntasks=1,cpus=1,gpus=0|00:30:00|default
+rc|slurm|Asia/Tokyo|Sun|02:30|cloud-users|r340|nodes=1,ntasks=1,cpus=1,gpus=0|00:30:00|default
+t4|age|Asia/Tokyo|Sun|03:00|jh250019|none|cpu_4=1|00:30:00|default
+al|slurm|Europe/Zurich|Sun|01:00|g177-1|normal|nodes=1,ntasks=1,cpus=1,gpus=0|00:30:00|default

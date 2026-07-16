@@ -44,3 +44,14 @@ esac
 if [ -r "$HOME/harness/shell/remote-session.sh" ]; then
     . "$HOME/harness/shell/remote-session.sh"
 fi
+
+# Read only the private node-local chain state. Healthy and unseeded state is
+# silent; the helper performs no scheduler write, network operation, or prompt.
+case ${HARNESS_LOGICAL_HOST:-} in
+    local|ab|ab2|ri|al|rc|t4)
+        if [ -x "$HOME/harness/bin/harness" ]; then
+            "$HOME/harness/bin/harness" restic-schedule warning \
+                --host "$HARNESS_LOGICAL_HOST" 2>/dev/null || :
+        fi
+        ;;
+esac
