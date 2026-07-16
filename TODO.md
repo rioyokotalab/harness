@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-213.
+and compact historical pointers here. Next free ID: T-214.
 
 ## Current state
 
@@ -984,6 +984,23 @@ allowlist of raw signatures to `ptrace-policy`, `process-limit`, or
 the matched line. Commit/distribute and rerun only the three failures. Treat a
 confirmed login ptrace policy as a boundary and test compute-node debugging in
 a separate bounded task rather than attempting a bypass.
+
+**Outcome:** V2 identifies AB and AB2 as `ptrace-policy` and T4 as
+`process-limit`, without emitting matched raw lines. Local, RI, AL, and RC are
+direct-development passes; the other three are explicit login-node gaps, not
+installation failures. T-212 is complete within its direct-login scope and
+hands bounded compute validation to T-213.
+
+### T-213 — Compute-node debugger gate for restricted logins
+
+**Phase/status:** `executing` after T-212. Run the same guarded GDB breakpoint,
+argument, continuation, and normal-exit test inside one five-minute/default-
+priority CPU allocation on AB, AB2, and T4 only. A scheduler-neutral wrapper
+requires the native allocation identity, captures only safe direct-gate output,
+and publishes one mode-0600 fixed result even on failure. Use approved
+`rt_HC select=1` groups for ABCI and `cpu_4=1` for T4. Do not change ptrace,
+process limits, core policy, packages, or login behavior. Commit/distribute,
+collision-check, submit once, and monitor only captured IDs.
 
 ## Stable operational facts
 
