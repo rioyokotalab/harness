@@ -1476,6 +1476,13 @@ Focused/static/ShellCheck tests, a native compile plus expected same-host
 rejection, native and portable full suites, and the public audit pass. Commit
 and distribute before any collision check or submission.
 
+**Submission checkpoint:** exact implementation commit `48b4b45` reached all
+six clean remotes with every bundle absent. AL then passed exact HEAD/worktree,
+private-result, job-name, and six-path T-221 preflight. Native Slurm accepted
+exactly one five-minute/default-priority two-node request as job `4224814`;
+immediate reconciliation matched owner `ryokota`, name `t230mal`, and pending
+state. Monitor only this ID and do not replace it for queue delay.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
