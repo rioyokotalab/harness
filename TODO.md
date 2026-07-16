@@ -1894,6 +1894,20 @@ test/rollback evidence, not temporary residue, and remain untouched. All seven
 T-191 chain states are active singletons, every disabled smoke successor is
 absent, and the fleet has zero running Restic processes before eligibility.
 
+**External-wait checkpoint (2026-07-17 06:14 JST):** repeated fail-closed
+native polls across more than three autonomous goal continuations remain
+unchanged. Local `91220` is `PENDING/Resources`, local `91240` is
+`PENDING/Priority`, and AB `2045152.pbs1` plus AB2 `2045153.pbs1` are queued
+with insufficient currently available `ncpus`; all queries succeed and no
+terminal accounting or fixed result exists. The safe engineering, integrity,
+source-contract, chain-state, and residue work available during this wait is
+exhausted. Pause autonomous continuations as externally blocked rather than
+spending more scheduler queries. Resume on a later owner request or observed
+external state change by polling exactly these four IDs, then follow the
+dependency order above. Do not cancel, replace, resize, or reprioritize them.
+T-191 still has its independent time gate at the recorded Sunday eligibility
+points. No task is complete, failed, or authorized beyond its existing gate.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
