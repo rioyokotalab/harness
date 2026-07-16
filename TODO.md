@@ -1133,6 +1133,17 @@ logs. Use the matrix to rank the next bounded tasks by fleet coverage and
 scientific/LLM value, validate JSON and public-audit safety, then commit, push,
 and distribute through T-215.
 
+**Outcome:** `docs/audits/llm-hpc-gap-matrix-2026-07-17.json` and
+`docs/llm-hpc-gap-matrix.md` consolidate the existing evidence with the exact
+five-state vocabulary. The fleet has seven CPU/storage/checkpoint/offline-venv
+passes; seven accelerator-driver passes; five CUDA-kernel, five MPI, and five
+usable debugger passes; six numerical passes plus captured local job `91220`;
+and one sanitizer gap. Immutable execution and multi-node MPI remain explicitly
+untested, while framework selection remains owner-gated on all nodes. The
+ranked next safe tasks are OpenMP correctness and checkpoint/restart semantics;
+multi-node MPI is held for explicit resource review. Validate JSON, links,
+public-audit safety, commit/push, and distribute before closing T-216.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
