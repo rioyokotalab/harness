@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-249.
+and compact historical pointers here. Next free ID: T-250.
 
 ## Current state
 
@@ -1968,6 +1968,145 @@ preceded exact unlink of the 385-byte mode-644 `.bash_common`. The idempotent
 plan now keeps complete absence; reference, file, remediation-temp, and shell-
 capture match counts are zero. Fresh login and interactive Bash both exit zero,
 and the private capture was exact-unlinked. This completes all seven nodes.
+
+### T-249 — Canonical aliases and simplified Bash startup workflow
+
+**Phase/status:** `interviewing` under the owner's explicit PIE request.
+Planning discovery was read-only on every live startup file and redacted any
+credential-like line before agent output. No startup, package, scheduler,
+authentication, or external state changed. The desired outcome is one durable,
+testable common alias/editor/history/prompt policy on all seven nodes, no
+duplicate alias definitions, alphabetic alias ordering, and a smaller startup
+workflow that preserves necessary site behavior. The previously explicit
+local-only `al` convenience alias remains excluded from mirroring.
+
+**Confirmed inventory:** all `.bashrc` files are strict regular owner files
+with one link. Modes are local 0664, AB 0700, AB2/RI/T4 0644, and AL/RC 0600.
+AB, AB2, AL, RC, and T4 select regular `.bash_profile`; local and RI have no
+`.bash_profile`/`.bash_login` and select regular `.profile`. Each selected
+startup file retains the exact early-cache prefix and managed profile suffix.
+The common portable commands required by the local aliases (`vim`, `du`,
+`sort`, `head`, `grep`, and `ls`) are visible on all seven nodes.
+
+The current node's safe canonical aliases are `a`, `ducks`, `grep`, `la`,
+`ll`, `lla`, `ls`, and `v`, already alphabetic. Alias `al` was value-redacted
+and remains local-only by prior owner decision. Existing remote-only names are
+AB `hosts`, `interactive`, `interactive_full`, `points`, `usage`; AB2 `hosts`,
+`interactive`, `interactive_full`, `points`; RI `alert`, `egrep`, `fgrep`, and
+`l`; and T4 `interactive`, `points`. Preserve these unrelated site aliases by
+default and sort them; AL has only duplicate `ls`, and RC has none. RI conflicts
+with the canonical definitions for `grep`, `la`, and `ll`; every other common
+collision is `ls`. The owner's current-node value wins each common-name
+collision because the requested source is explicitly canonical.
+
+**Workflow findings:** `shell/profile.sh` already owns `EDITOR=vim` and
+`VISUAL=vim`, so copying an editor export into six owner files would add only
+duplication. `shell/interactive.sh` runs after each `.bashrc` managed suffix and
+currently overwrites the local empty/unlimited `HISTSIZE` and `HISTFILESIZE`
+with 50,000 and 100,000. The requested unlimited policy therefore requires a
+tracked-layer correction. The current prompt exists only in local `.bashrc`;
+RI has a distro prompt and the other nodes inherit site defaults. A tracked
+interactive prompt applied last can make the requested `\u@\h:\W\$ ` exact
+without replacing whole site startup files.
+
+The early prefix in both the interactive and selected login file is
+intentional: cache variables must precede any owner application. The managed
+suffix in both files is also retained because login and non-interactive Bash
+do not traverse the same source chain on every site; the profile and
+interactive helpers are idempotent. Do not remove either control-plane layer
+merely because an ordinary interactive login may encounter both.
+
+Five selected `.bash_profile` files (AB, AB2, AL, RC, T4) automatically start
+`ssh-agent` when no socket is inherited. This conflicts with the tracked
+remote-session model, which intentionally uses the local forwarded agent only
+for an explicit `harness_remote_codex` session and otherwise skips private
+fetches. AB/AB2 and T4 also unconditionally load large compiler/GPU modules in
+`.bashrc`, affecting non-interactive commands; a per-host interactive fragment
+could preserve the convenience without contaminating direct SSH or batch
+entry. These are owner choices because existing workflows may rely on them.
+
+Every `.local` is already a declared symlink to large storage, and the common
+profile places `$HOME/.local/bin` first and deduplicates it. Most legacy local-
+install blocks also set compile variables, so preserve them unless an exact
+line is independently proven redundant. One RC `.bashrc` block is a confirmed
+defect: it references `DATA` before `.bash_profile` defines it and can prepend
+`/.local/bin`; remove that exact block and rely on the already equivalent
+`$HOME/.local/bin` link. AB and RC currently have real `.pyenv` trees and
+executable links, so preserve their PyEnv blocks; do not repeat AB2's earlier
+remediation or infer deletion from old policy. T4 also has a `.pyenv` tree but
+no startup call. Preserve all other Python, compiler, cache, distributed,
+completion, site, and owner lines unless a frozen interview decision names an
+exact block.
+
+**Frozen non-goals and boundaries:** never read, hash, copy, or persist a
+credential value; never copy `.bash_history`; do not change SSH configuration,
+agents/keys, packages, modules themselves, scheduler state, projects, system
+files, or Restic policy. Do not symlink whole startup files or publish their
+unrelated contents. No raw recursive/bulk deletion is needed. A live apply must
+accept only reviewed public blocks or complete idempotent absence, require a
+clean exact harness revision and strict file metadata, preserve all bytes
+outside those blocks plus original modes, and fail closed on drift, duplicate,
+partial, symlinked, or ambiguous inputs.
+
+**Execution sequence after explicit go:** (1) reconstruct this ledger and
+revalidate Git/fleet/startup metadata; (2) add a sorted tracked common-alias
+fragment or literal per-file blocks according to D1, with fake-home tests and a
+local-only `al` exclusion; (3) make the tracked interactive policy enforce
+unlimited in-memory/on-disk history, `histappend`, editor defaults, and the
+exact current prompt; (4) implement a plan/apply normalizer that recognizes
+only the seven reviewed alias layouts, removes common duplicates, sorts
+retained site aliases, removes local duplicate common policy, and removes the
+exact defective RC path block; (5) include only the optional `ssh-agent` and
+module-block transformations selected in D2/D3; (6) store only reviewed public
+original/applied payloads in mode-0600 transaction state, build same-directory
+private candidates, run `bash -n`, revalidate identity/size/bytes immediately
+before atomic rename, preserve mode/owner/single-link state, and exact-clean
+runtime temporaries; (7) prove plan/apply/idempotence/rollback, changed-input
+refusal, alphabetic order, one definition per name, local-only exclusion,
+synthetic-secret preservation without copying it into transaction state, and
+zero residue; (8) run warning-level ShellCheck, focused tests, `git diff
+--check`, portable and native phase 1, and the public-repository audit; (9)
+fetch, review, commit, push, and fleet-sync the exact implementation before any
+live plan; (10) run seven read-only plans, pilot local apply/rollback/reapply,
+then apply one node at a time with transaction IDs and immediate postflight;
+and (11) push the compact outcome checkpoint and mirror that exact revision.
+
+**Acceptance gates:** all seven effective interactive shells expose exactly
+one canonical definition for each mirrored alias and the exact canonical
+value; retained site aliases occur once and are alphabetic in their owning
+block; `al` exists only locally. `EDITOR`/`VISUAL` are `vim`, both history
+limits are unlimited, history appends, and the prompt is exact. Fresh direct
+SSH and non-interactive Bash remain silent; login, interactive, and nested Bash
+exit zero; cache roots, logical host, local-bin precedence, required site
+module behavior selected in D3, remote Codex function, and scheduler warning
+behavior remain valid. Startup modes/owners/single links are unchanged, every
+plan becomes KEEP, rollback evidence is valid, checkouts are clean at one
+pushed revision, and transfer/normalizer/shell-capture artifacts are absent.
+
+**Risks and recovery:** alias name collisions can silently change command
+semantics, so canonical-name values are explicit and site-only names are
+preserved. Moving module setup can break scripts that implicitly rely on login
+state; D3 and direct/non-interactive/module postflights gate it. Removing
+automatic agents can affect users who relied on a newly spawned unforwarded
+agent; D2 is explicit. Startup precedence or partial mutation can break login,
+so candidates receive syntax and byte/metadata checks, each node stops
+independently on drift, and exact transaction rollback is tested before fleet
+rollout. A live rollback never restores or stores unrelated startup bytes.
+
+**Decision register:** D1 (open) chooses central tracked common policy versus
+literal duplication in each `.bashrc`; central is recommended because it is
+already the documented harness model and fixes the effective history override.
+D2 (open) chooses whether to remove the five automatic `ssh-agent` blocks;
+removal is recommended in favor of explicit forwarding. D3 (open) chooses
+whether AB/AB2/T4 module loads become interactive-only per-host behavior;
+interactive-only is recommended, with batch/project jobs continuing to load
+their exact environments explicitly. The canonical collision rule, retention
+of unique site aliases, local-only `al`, exact RC path-block removal, and
+minimal preservation of all other startup content are resolved by the owner's
+request, prior decisions, and the preserve-unrelated-work boundary.
+
+Checkpoint after each interview answer, then audit the register, set
+`ready-for-go`, and wait for an explicit `go`. Next unresolved question: D1.
 
 ## Stable operational facts
 
