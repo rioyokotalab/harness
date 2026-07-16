@@ -99,3 +99,14 @@ doctor has zero failures, every original production job remains active and
 present under the same ID, every smoke successor remains verified disabled and
 absent, all control links are symlinks, all smoke blobs agree, and no unexpected
 stdout was retained. The local and six remote bundle files were exact-unlinked.
+
+## T-225 canonical control-plane verification
+
+The follow-up
+[`audits/fleet-readiness-control-plane-2026-07-17.json`](audits/fleet-readiness-control-plane-2026-07-17.json)
+was generated from exact clean revision `ba6972e` after T-224's transactional
+link repair. The probe now invokes the canonical control-plane plan and retains
+only aggregate counts. All seven nodes report 34 keeps, zero creates, zero
+blocks, clean worktrees, and no probe failure. This closes the fixed-four-link
+blind spot without duplicating the managed-link declaration or exposing plan
+paths in the public audit.

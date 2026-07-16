@@ -1324,7 +1324,7 @@ credentials, scheduler state, or unrelated links were changed.
 
 ### T-225 — Canonical control-plane completeness in fleet audits
 
-**Phase/status:** `executing`, derived from T-224. Extend the existing bounded
+**Phase/status:** `complete`, derived from T-224. Extend the existing bounded
 fleet readiness probe to invoke the canonical `harness apply --plan` and retain
 only its keep/create/block counts after requiring a complete end marker. This
 reuses `managed_links` instead of hard-coding a second skill list, while the
@@ -1332,6 +1332,15 @@ existing four detailed control-link records remain for diagnosis. Update parser
 and fake-SSH tests, run the focused/full/public suites, then perform one new
 seven-node read-only audit and require 34/0/0 everywhere. The audit must not
 apply links, read link contents, or expose discarded remote output.
+
+**Outcome:** the collector and fake-SSH parser test now carry canonical
+`keep/create/block` counts. Focused, portable full, and public-audit suites
+pass. After implementation commit `ba6972e` reached six clean remotes, the new
+audit `docs/audits/fleet-readiness-control-plane-2026-07-17.json` reported all
+seven clean, failure-free nodes at exactly 34/0/0. Its SHA-256 is
+`3a2ad49a78ed2263825665fda3e4f27cf3da0cbb00c62682a31430203795421e`.
+T-225 is complete and future fleet audits can detect every declared discovery
+link without a duplicated list.
 
 ## Stable operational facts
 
