@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-206.
+and compact historical pointers here. Next free ID: T-207.
 
 ## Current state
 
@@ -568,6 +568,21 @@ closes only the CPU/compiler/Python prerequisite. Next freeze a minimal
 single-device accelerator/framework gate per declared site route; make no MPI,
 distributed, numerical-equivalence, or performance claim beforehand.
 
+**Accelerator-gate freeze:** queue and account discovery identifies the
+smallest declared route at each site: local Ybatch `a4500_1`; AB/AB2 PBS
+`rt_HG select=1` (exactly 16 CPU/one GPU by queue default and maximum); RI
+Slurm `rkp00015/gpu --gres=gpu:1`; AL Slurm `g177-1/normal` with native
+`--uenv=prgenv-gnu/25.11:v1 --view=default`; RC Slurm
+`cloud-users/qc-gh200 --gres=gpu:1` (one GH200 per node and all-account
+permission); and T4 AGE `jh250019 gpu_h=1` (one H100 MIG slice). Default
+priority and a five-minute limit are mandatory. The tracked v1 job selects one
+logical device, proves driver metadata everywhere, and compiles/runs the
+one-device CUDA kernel on the five reviewed toolkit routes. RI and RC record an
+explicit compile skip rather than infer a toolkit. Every node records the
+framework skip because no reviewed PyTorch environment or image exists.
+Commit, distribute, collision-check, print exact native commands, then monitor
+only captured IDs without touching T-191.
+
 ### T-201 — Early-login cache redirection
 
 **Phase/status:** `complete`; RI's shell-independent recurrence moved to T-203. Determine, without
@@ -725,6 +740,18 @@ Fresh direct status sees all seven original T-191 IDs; RI direct and login
 status both see unchanged job `6862` `PENDING`. The test suite also proves that
 a Slurm discovery failure emits no false missing warning, submits no job, and
 creates no chain state. T-205 is complete without any scheduler write.
+
+### T-206 — Reviewed LLM framework environment
+
+**Phase/status:** `planned`, intentionally gated after T-200 accelerator
+evidence. No managed node exposes PyTorch in its declared base login or AL uenv
+route. Select a reproducible project-scoped environment or immutable image for
+the tracked tiny-language-model forward/backward test; do not install into a
+base home, pull an unpinned image, or silently choose divergent versions per
+node. First reconcile architecture, CUDA/driver compatibility, package source,
+lockfile or digest, cache placement, license, and rollback. This task may
+prepare a value-free option matrix autonomously, but package installation,
+image pull, or live environment selection remains owner-gated.
 
 ## Stable operational facts
 

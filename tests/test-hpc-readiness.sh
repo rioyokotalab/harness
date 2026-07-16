@@ -6,8 +6,10 @@ JOB=$ROOT/tests/smoke/jobs/cpu-readiness.sh
 LOCAL=$ROOT/tests/smoke/jobs/local-cpu.slurm
 CACHE_JOB=$ROOT/tests/smoke/jobs/cache-startup-readiness.sh
 CACHE_LOCAL=$ROOT/tests/smoke/jobs/local-cache-startup.slurm
+ACCEL_JOB=$ROOT/tests/smoke/jobs/accelerator-readiness.sh
+ACCEL_LOCAL=$ROOT/tests/smoke/jobs/local-accelerator.slurm
 
-bash -n "$JOB" "$LOCAL" "$CACHE_JOB" "$CACHE_LOCAL"
+bash -n "$JOB" "$LOCAL" "$CACHE_JOB" "$CACHE_LOCAL" "$ACCEL_JOB" "$ACCEL_LOCAL"
 grep -Fx '#YBATCH -r thrp_1' "$LOCAL" >/dev/null
 grep -Fx '#SBATCH --time=00:05:00' "$LOCAL" >/dev/null
 grep -F 'uenv run prgenv-gnu/25.11:v1 --view=default' "$JOB" >/dev/null
@@ -25,6 +27,15 @@ grep -F 'unset HARNESS_LOGICAL_HOST HARNESS_PERSISTENT_ROOT HARNESS_CACHE_ROOT' 
 grep -F 'exec /bin/bash -l "$0"' "$CACHE_JOB" >/dev/null
 grep -F 'exec /bin/bash "$0"' "$CACHE_JOB" >/dev/null
 grep -F 'gate=cache-startup-v1' "$CACHE_JOB" >/dev/null
+grep -Fx '#YBATCH -r a4500_1' "$ACCEL_LOCAL" >/dev/null
+grep -Fx '#SBATCH --time=00:05:00' "$ACCEL_LOCAL" >/dev/null
+grep -F 'module load cuda/13.2/13.2.1' "$ACCEL_JOB" >/dev/null
+grep -F 'module load cuda/12.8.0' "$ACCEL_JOB" >/dev/null
+grep -F 'module load cuda/12.8' "$ACCEL_JOB" >/dev/null
+grep -F 'CUDA_VISIBLE_DEVICES=0' "$ACCEL_JOB" >/dev/null
+grep -F 'cuda-compile: no reviewed toolkit route' "$ACCEL_JOB" >/dev/null
+grep -F 'framework: no reviewed project environment or image' "$ACCEL_JOB" >/dev/null
+grep -F 'cudaGetDeviceCount' "$ROOT/tests/smoke/cuda.cu" >/dev/null
 for source in cpu.c cpu.cpp cpu.f90; do
     grep -F "$source" "$ROOT/tests/smoke/CMakeLists.txt" >/dev/null
 done
@@ -32,12 +43,12 @@ for source in cpp20.cpp python.py sanitizer.c; do
     grep -F "$source" "$JOB" >/dev/null
 done
 if grep -E 'rm[[:space:]]+(-[^[:space:]]*)*[rR]|--recursive|rsync[[:space:]].*--delete' \
-    "$JOB" "$LOCAL" "$CACHE_JOB" "$CACHE_LOCAL" >/dev/null; then
+    "$JOB" "$LOCAL" "$CACHE_JOB" "$CACHE_LOCAL" "$ACCEL_JOB" "$ACCEL_LOCAL" >/dev/null; then
     printf '%s\n' 'FAIL: unsafe cleanup in readiness job' >&2
     exit 1
 fi
 if grep -E '(^|[^A-Za-z0-9_])(qsub|sbatch|srun|yrun|ybatch|scancel|qdel)([^A-Za-z0-9_]|$)' \
-    "$JOB" "$CACHE_JOB" >/dev/null; then
+    "$JOB" "$CACHE_JOB" "$ACCEL_JOB" >/dev/null; then
     printf '%s\n' 'FAIL: generic readiness job hides scheduler action' >&2
     exit 1
 fi
