@@ -1398,7 +1398,7 @@ selection as owner-gated.
 
 ### T-228 — Bounded scientific-library login-surface audit
 
-**Phase/status:** `in progress`, derived from the scientific-coding workstream.
+**Phase/status:** `complete`, derived from the scientific-coding workstream.
 Add a fixed, bounded probe for visible HDF5, NetCDF, ADIOS2, FFTW, BLAS,
 LAPACK, and OpenBLAS wrapper/`pkg-config` surfaces. Report only sanitized
 presence/version records and explicitly classify the result as login-context
@@ -1413,6 +1413,15 @@ unexpected version text to `unreported`. Synthetic present/absent/version and
 invalid-host tests pass, as do one real local run, the portable full suite, and
 the public audit. Commit and distribute before collecting the seven-node
 login-surface matrix.
+
+**Outcome:** exact probe commit `57d6a26` reached all six clean remotes with no
+transfer residue. All seven concurrent probes passed and exposed `pkg-config`.
+The visible current/RI login surfaces advertise BLAS, LAPACK, OpenBLAS, and
+FFTW metadata; RC advertises `h5cc`, `nc-config`, and NetCDF 4.8.1 metadata;
+the fixed surface is otherwise absent. The canonical JSON and interpretation
+explicitly preserve this as process-local discovery, not an installation or
+compute gap. No module catalog, environment dump, allocation, compilation,
+package change, or application write occurred.
 
 ## Stable operational facts
 

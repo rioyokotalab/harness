@@ -1,0 +1,83 @@
+{
+  "generated_date": "2026-07-17",
+  "nodes": {
+    "ab": {
+      "arch": "x86_64",
+      "packages": {},
+      "pkg_config": true,
+      "wrappers": []
+    },
+    "ab2": {
+      "arch": "x86_64",
+      "packages": {},
+      "pkg_config": true,
+      "wrappers": []
+    },
+    "al": {
+      "arch": "aarch64",
+      "packages": {},
+      "pkg_config": true,
+      "wrappers": []
+    },
+    "local": {
+      "arch": "x86_64",
+      "packages": {
+        "blas": "0.3.26+ds",
+        "fftw3": "3.3.10",
+        "lapack": "0.3.26+ds",
+        "openblas": "0.3.26"
+      },
+      "pkg_config": true,
+      "wrappers": []
+    },
+    "rc": {
+      "arch": "x86_64",
+      "packages": {
+        "netcdf": "4.8.1"
+      },
+      "pkg_config": true,
+      "wrappers": [
+        "h5cc",
+        "nc-config"
+      ]
+    },
+    "ri": {
+      "arch": "aarch64",
+      "packages": {
+        "blas": "0.3.26+ds",
+        "fftw3": "3.3.10",
+        "lapack": "0.3.26+ds",
+        "openblas": "0.3.26"
+      },
+      "pkg_config": true,
+      "wrappers": []
+    },
+    "t4": {
+      "arch": "x86_64",
+      "packages": {},
+      "pkg_config": true,
+      "wrappers": []
+    }
+  },
+  "probe_commit": "57d6a265e29d8c1b11bb76f79cdc0b36403409e2",
+  "schema": 1,
+  "scope": "visible login environment only",
+  "tested_packages": [
+    "adios2",
+    "blas",
+    "fftw3",
+    "hdf5",
+    "hdf5-openmpi",
+    "lapack",
+    "netcdf",
+    "netcdf-fortran",
+    "openblas"
+  ],
+  "tested_wrappers": [
+    "h5cc",
+    "h5pcc",
+    "nc-config",
+    "nf-config",
+    "adios2-config"
+  ]
+}
