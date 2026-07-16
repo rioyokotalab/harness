@@ -573,6 +573,22 @@ matches `origin/main`. Every other stage, safety, review, and adoption boundary
 is unchanged. Next publish this authority checkpoint, prove the canonical run
 root absent, and restart the complete pilot.
 
+**Clean pilot checkpoint (2026-07-16):** authority commit `6e5a53b` was
+published and the fresh, digest-bound pilot completed without triggering a
+gate. All 18 primary runs passed, with 18 total model invocations, zero
+retries, zero safety failures, and zero flagged pairs across nine comparisons.
+Baseline and candidate each passed 9/9; every pair was a correctness tie, so
+the observed candidate-minus-baseline pass-rate difference was 0.0 with the
+pre-registered distribution-free 95% interval [-0.452701, 0.452701]. Total
+recorded duration was 1,065,397 ms; token telemetry was present for all runs
+(2,208,918 input and 26,115 output tokens). The schema-validated, allowlisted
+aggregate is `evaluation/results/t181-failure-capsule-v1-pilot.json`; private
+raw evidence remains only in the mode-0700 canonical run root. Because every
+pilot gate passed and no blind-review item was generated, publish this
+checkpoint, revalidate the clean source and bound run identity, then proceed
+automatically to the frozen 70-primary full stage. Candidate adoption remains
+a separate owner decision.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
