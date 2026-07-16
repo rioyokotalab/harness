@@ -1140,9 +1140,42 @@ passes; seven accelerator-driver passes; five CUDA-kernel, five MPI, and five
 usable debugger passes; six numerical passes plus captured local job `91220`;
 and one sanitizer gap. Immutable execution and multi-node MPI remain explicitly
 untested, while framework selection remains owner-gated on all nodes. The
-ranked next safe tasks are OpenMP correctness and checkpoint/restart semantics;
-multi-node MPI is held for explicit resource review. Validate JSON, links,
-public-audit safety, commit/push, and distribute before closing T-216.
+ranked next safe tasks are checkpoint/restart semantics and, later, scheduler
+cpuset/topology binding; T-200 already covers basic OpenMP reduction.
+Multi-node MPI is held for explicit resource review. Exact commit `d513bf3`
+reached all six clean remotes with every transfer artifact absent. T-216 is
+complete.
+
+### T-217 — Portable checkpoint/restart equivalence gate
+
+**Phase/status:** `executing` after T-211 and T-216. Add a small tracked C++20
+state machine with a versioned, architecture-neutral checkpoint format and
+integrity checksum. In one bounded scheduler allocation, compare an
+uninterrupted deterministic integer run against two separate processes: one
+writes and fsyncs a mode-0600 checkpoint at a frozen step, and the other
+validates and resumes it to the same final state. Use one unique exact file in
+the declared persistent root, collision refusal, identity revalidation, exact
+unlink on every normal/failure path, private result publication, and guarded
+scratch cleanup. Add focused tests for round trip plus truncated, corrupted,
+wrong-version, and wrong-step rejection. Reuse the proven T-210 compiler and
+five-minute/default-priority CPU routes; do not claim scheduler requeue,
+signal-preemption handling, distributed checkpoints, application formats,
+throughput, or crash-consistent directory metadata.
+
+**Implementation checkpoint:** the tracked C++20 program encodes a fixed
+40-byte big-endian record with magic, version, flags, step, state, and FNV-1a
+integrity; writes with `O_EXCL`, mode 0600, full-write handling, and `fsync`;
+and rejects non-regular/incorrect-size, magic, version, flags, checksum, and
+step defects before resume. The frozen 400-step record SHA-256 is
+`0cc4aab240009663fdc78161d523446dc3a71330e7b445b77aa7aa3cdb4dbfe1`,
+and the million-step state is `0x7f7cadf8669fc055`. The scheduler-neutral job
+builds in guarded scratch, uses exactly one collision-refusing checkpoint name
+in the declared persistent root, compares two-process resume with the frozen
+uninterrupted result, revalidates file identity, and exact-unlinks it. Focused
+negative tests, ShellCheck, portable phase-1, and public audit pass. Commit and
+distribute, perform fresh result/job/checkpoint collision checks, then submit
+the same proven five-minute/default-priority CPU routes once per node and
+monitor only captured IDs.
 
 ## Stable operational facts
 

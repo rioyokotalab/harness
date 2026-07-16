@@ -29,12 +29,12 @@ image or environment execution is claimed.
 
 1. Monitor only local numerical job `91220`; do not duplicate it. Its terminal
    evidence is the sole pending result in an otherwise six-node pass.
-2. Add a bounded scheduler-native OpenMP thread/reduction gate. It exercises a
-   common scientific-HPC execution mode with existing compilers and no package,
-   image, credential, or owner-setting change.
-3. Add a bounded checkpoint/restart application gate on the already validated
+2. Add a bounded checkpoint/restart application gate on the already validated
    persistent-storage primitive. This should prove restart semantics, not just
    atomic publication.
+3. T-200 already proved a two-thread OpenMP reduction on every node. A later
+   CPU follow-up should therefore test scheduler cpuset/topology binding rather
+   than repeat basic OpenMP arithmetic.
 4. Plan multi-node MPI separately on the five supported routes. It needs
    explicit two-node resource review and must not be inferred from the current
    one-node evidence.
