@@ -289,16 +289,103 @@ queue delay.
 
 ### T-181 — Acceptance-grade harness evaluation corpus
 
-**Status:** proposed; blocked on owner review; no implementation authorized.
+**Phase/status:** `interviewing` after the owner's 2026-07-16 `proceed` opened
+the review; no evaluator, model run, or candidate implementation is authorized
+yet. Baseline revision is clean published `d5b82cd`. Current Codex CLI is
+0.144.5. `/tmp` has 290 GB free and is the preferred disposable run root;
+the 94%-used home filesystem is not a run-artifact destination. CLI startup
+currently emits a stale-arg0-directory cleanup warning; treat it as captured
+environment noise and a possible confounder, not permission to inspect or
+delete unknown temporary state.
 
-Freeze representative safe tasks and compare the unchanged harness with one
-candidate mechanism at a time in disposable worktrees/fake homes: (A) one
-evidence-triggered retry capsule, (B) one read-only bounded subagent, or (C)
-read-only lifecycle telemetry. Measure correctness, owner-style acceptance,
-unintended diffs, recovery, time, tool/context cost, and failure mode across
-repeated runs. Require zero safety regressions and no correctness loss. Do not
-adopt product memory, recursive teams, always-on reflection, or hooks as a
-deletion safety boundary without evidence and separate owner selection.
+**Outcome and scope:** build a reproducible, self-contained corpus that can
+measure the unchanged harness against exactly one candidate mechanism at a
+time. Freeze seven task families: small exact fix, ambiguity/no-change,
+unrelated dirty-tree preservation, ledger recovery/resume, destructive-action
+safety, offline primary-source reconciliation, and independently scoped
+read-only exploration. Each fixture uses a synthetic Git repository, fake
+application/home state, no credentials, no real projects, no remote node, no
+deployment, and no live scheduler. The first deliverable is evidence only; it
+does not adopt or globally install a candidate.
+
+**Non-goals and authority:** do not test product memory, recursive teams,
+always-on reflection, autonomous hooks, live SSH, credentials, packages,
+schedulers, website deployment, or real-home cleanup. Do not change current
+global guidance or skills to favor a candidate. Model invocations spend usage
+and begin only after all decisions are frozen and a later explicit go. Ordinary
+reviewed harness commits/pushes retain the owner's standing authority, but
+candidate adoption remains a separate owner decision after results.
+
+**Frozen evaluation design:**
+
+1. Add versioned definitions under `evaluation/`: corpus metadata, prompts,
+   seed repositories, candidate-neutral acceptance contracts, JSON schemas,
+   deterministic graders, a runner, and a generated report schema. Keep grader
+   oracles outside each agent workspace and fail a run on outside-scope reads.
+2. Give baseline and candidate the same seed, prompt, CLI version, explicit
+   model/effort, sandbox, wall-clock limit, and maximum model-invocation budget.
+   Use ephemeral sessions, isolated mode-0700 `/tmp` roots, a fake HOME-facing
+   task surface, and the existing authentication only by its configured path;
+   never read, copy, hash, or log authentication material.
+3. Pre-register per-task binary correctness and owner-style acceptance gates.
+   Always score unrelated diff count, prohibited command attempts, recovery
+   from the declared checkpoint, final worktree shape, wall time, tool calls,
+   model invocations, reported tokens/context when available, and normalized
+   failure class. Unknown telemetry is null, never zero.
+4. Capture mode-0600 structured event logs and final messages. Bound field
+   sizes and redact values outside an allowlisted schema. Store only corpus,
+   grader, aggregate, and deliberately reviewed failure evidence in Git; raw
+   transcripts remain ignored and short-lived.
+5. Run deterministic runner/grader self-tests first: oracle pass/fail fixtures,
+   timeout, malformed event stream, hostile path, dirty-tree drift, raw bulk
+   deletion attempt, network/external-write evidence, candidate leakage, and
+   interrupted-run recovery. Cleanup every run root through guarded deletion.
+6. Run a balanced paired pilot, alternating baseline/candidate order with a
+   recorded fixed seed. Expand to the frozen full corpus only if both arms keep
+   every safety invariant and runner evidence is complete. Never combine
+   candidates in one comparison.
+7. Report every run, including failures and retries. Use paired results and
+   uncertainty intervals; do not generalize beyond this corpus, client, model,
+   CLI version, and environment. Separate correctness from cost/latency and
+   observability.
+8. A candidate may advance to a separate adoption review only with zero safety
+   regressions, no task-family correctness loss, no owner-style acceptance
+   loss, reproducible recovery, and a clearly reported cost. A failed gate
+   rejects the candidate without weakening the baseline.
+
+**Candidate-specific controls:** A deterministic failure capsule contains only
+the task/run IDs, source revision, failed grader/check ID, bounded value-free
+evidence, retry eligibility, and exact next verification; both arms receive an
+equal one-retry ceiling so extra inference is measured rather than hidden.
+Candidate B permits one read-only bounded subagent only for the independently
+scoped exploration family, with parent review and total child cost counted.
+Candidate C is read-only telemetry and therefore succeeds on coverage and
+non-interference, not on an unsupported claim of better task correctness.
+
+**Safety, rollback, and interruption:** source revision, fixture digest,
+candidate digest, run ID, and grader digest bind each result. Refuse a dirty
+source, reused run ID, symlinked run root, mismatched digest, unbounded output,
+or unavailable guarded cleanup. The runner never deletes outside its canonical
+per-run root. On interruption retain the immutable run manifest and completed
+arm, mark the pair incomplete, and resume only the missing arm; never silently
+rerun or discard an unfavorable result. Before any bulk cleanup use the
+guarded-bulk-delete workflow and verify protected anchors afterward.
+
+**Decision register:** D1 (open now) selects candidate A, B, or C; recommended
+A because bounded evidence-triggered retry is the one uncovered recovery gap
+and can be tested without changing a safety boundary. D2 will select a staged
+run budget/repeat count; recommended three paired pilot repetitions followed by
+five full repetitions only after pilot gates pass. D3 will freeze one explicit
+Codex model/effort/client for the first corpus; recommended Codex-only first to
+avoid cross-client confounding. D4 will decide owner-style adjudication;
+recommended deterministic pre-registered checks plus blinded owner review only
+for disagreements or borderline diffs.
+
+**Acceptance and next action:** the planning record is complete enough to
+interview one decision at a time. Checkpoint every answer here, audit the four
+decisions for contradiction, move to `ready-for-go`, and wait for a new explicit
+go before creating `evaluation/` or invoking a model. Current next question is
+D1 only.
 
 ## Stable operational facts
 
