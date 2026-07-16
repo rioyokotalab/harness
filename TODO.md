@@ -197,6 +197,25 @@ its bounded solo retry passed the full gate. No scheduler write has yet run.
 Next action: commit this evidence locally, re-audit the reserved job namespace,
 then submit the seven bounded smokes with the printed native commands.
 
+**First live-smoke checkpoint:** the reserved namespace/process re-audit was
+clean. AB parent `2043932.pbs1`, AB2 `2043931.pbs1`, AL `4220993`, RC
+`210790`, and T4 `8175288` were accepted with their exact printed native
+requests. AL and RC completed read-only Restic checks, created exactly one
+Sunday successor (`4220994` and `210791`), and exact `scancel` plus absence
+verification left both smoke states `verified-disabled`. AB/AB2 remain valid
+queued parents and were not duplicated. Local failed before state adoption:
+`ybatch` injected `thrp_1` directives after `set -eu`, so Slurm ignored the
+partition and accepted no job. RI direct SSH lacked the site Slurm DNS/config
+environment; native `scontrol ping` and `sbatch --version` pass under both
+`bash -lc` and `bash -lic`, so retry must use the login environment and let the
+smoke prove compute-side resubmission. T4 ran on `cpu_4=1` (four slots, no GPU)
+for 0.93 seconds and exited 2 before advancing state; only `smoke-submitted`
+exists, with no lock or diagnostic. This exposed missing private diagnostics.
+Current corrective work moves local `#YBATCH`/`#SBATCH` directives before the
+first executable line, adds ordering regression, overwrites one mode-0600
+controller diagnostic per job, and safely reconciles an absent submitted smoke
+as failed before retry. No snapshot has run and no uncaptured job was created.
+
 ### T-190 — Create automated mirrored-node onboarding skill
 
 **Status:** PIE interview complete; separately awaiting an explicit owner `go`.

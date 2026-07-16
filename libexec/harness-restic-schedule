@@ -250,7 +250,7 @@ make_job_script() {
     temp=$(mktemp "$jobs_dir/.job.XXXXXX") || die "cannot create job script"
     chmod 600 "$temp"
     {
-        printf '%s\n' '#!/bin/sh' 'set -eu' 'umask 077'
+        printf '%s\n' '#!/bin/sh'
         if [ "$scheduler" = ybatch ]; then
             printf '#YBATCH -r %s\n' "$resource"
             printf '#SBATCH --begin=%s\n' "$SLURM_TIME"
@@ -258,8 +258,13 @@ make_job_script() {
             printf '#SBATCH --job-name=%s\n' "$JOB_NAME"
             printf '%s\n' '#SBATCH --output=/dev/null' '#SBATCH --error=/dev/null'
         fi
+        printf '%s\n' 'set -eu' 'umask 077'
+        printf '%s\n' \
+            'diagnostic="$HOME/.local/state/harness/restic-chain/diagnostic.log"' \
+            ': >"$diagnostic"' \
+            'chmod 600 "$diagnostic"'
         printf 'export HARNESS_LOGICAL_HOST=%s\n' "$logical_host"
-        printf 'exec "$HOME/harness/bin/harness" restic-schedule run --host %s --kind %s\n' \
+        printf 'exec "$HOME/harness/bin/harness" restic-schedule run --host %s --kind %s >>"$diagnostic" 2>&1\n' \
             "$logical_host" "$job_kind"
     } >"$temp"
     if [ -e "$script" ] || [ -L "$script" ]; then
@@ -560,7 +565,18 @@ case "$command_name" in
         if [ -e "$smoke_state" ] || [ -L "$smoke_state" ]; then
             validate_private_file "$smoke_state"
             old_status=$(state_get "$smoke_state" status)
-            case "$old_status" in verified-disabled|cancelled|failed) ;;
+            case "$old_status" in
+                submitted)
+                    old_id=$(state_get "$smoke_state" job_id)
+                    old_name=$(state_get "$smoke_state" job_name)
+                    scheduler_query_id "$old_id" "$old_name"
+                    [ "$JOB_PRESENT" -eq 0 ] ||
+                        die "submitted smoke job still exists; refusing duplicate"
+                    write_smoke_state failed "$old_id" "$old_name" \
+                        "$(state_get "$smoke_state" eligibility_epoch)" none none 0
+                    record_event smoke-parent-missing
+                    ;;
+                verified-disabled|cancelled|failed) ;;
                 *) die "smoke state already exists; inspect or disable it" ;;
             esac
         fi

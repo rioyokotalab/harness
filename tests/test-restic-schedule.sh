@@ -105,6 +105,11 @@ case "$command_name" in
         script=$1
         name=$(sed -n 's/^#SBATCH --job-name=//p' "$script")
         [ -n "$name" ] || exit 2
+        ybatch_line=$(grep -n '^#YBATCH ' "$script" | cut -d: -f1)
+        executable_line=$(grep -n '^set -eu$' "$script" | cut -d: -f1)
+        [ "$ybatch_line" -lt "$executable_line" ] || exit 2
+        grep '^chmod 600 "$diagnostic"$' "$script" >/dev/null || exit 2
+        grep '>>"$diagnostic" 2>&1$' "$script" >/dev/null || exit 2
         id=$(next_id)
         add_job "$id" "$name"
         printf 'Submitted batch job %s\n' "$id"
@@ -263,6 +268,28 @@ expect_failure 'ambiguous scheduler submission result' "$TEST_ROOT/hostile.out" 
     FAKE_NO_RECORD=1 "$HARNESS" restic-schedule seed --host ri
 [ ! -e "$hostile_home/.local/state/harness/restic-chain/chain.state" ] ||
     fail "hostile output created chain state"
+
+retry_home=$TEST_ROOT/retry-home
+mkdir -p "$retry_home"
+: >"$fake_sched/jobs"
+env HOME="$retry_home" PATH="$fake_bin:/usr/bin:/bin" HARNESS_TESTING=1 \
+    HARNESS_LOGICAL_HOST=ri HARNESS_NOW_EPOCH=1784149200 \
+    FAKE_SCHED_DIR="$fake_sched" FAKE_FAMILY=slurm \
+    "$HARNESS" restic-schedule smoke --host ri >"$TEST_ROOT/retry.first" 2>&1 ||
+    fail "missing-parent first smoke"
+retry_state=$retry_home/.local/state/harness/restic-chain/smoke.state
+retry_id=$(sed -n 's/^job_id=//p' "$retry_state")
+FAKE_SCHED_DIR="$fake_sched" FAKE_FAMILY=slurm "$fake_bin/scancel" "$retry_id"
+env HOME="$retry_home" PATH="$fake_bin:/usr/bin:/bin" HARNESS_TESTING=1 \
+    HARNESS_LOGICAL_HOST=ri HARNESS_NOW_EPOCH=1784149260 \
+    FAKE_SCHED_DIR="$fake_sched" FAKE_FAMILY=slurm \
+    "$HARNESS" restic-schedule smoke --host ri >"$TEST_ROOT/retry.second" 2>&1 ||
+    fail "missing-parent reconciled smoke"
+[ "$(wc -l <"$fake_sched/jobs" | tr -d ' ')" -eq 1 ] ||
+    fail "missing-parent retry was not singleton"
+grep 'event=smoke-parent-missing' \
+    "$retry_home/.local/state/harness/restic-chain/events" >/dev/null ||
+    fail "missing-parent event"
 
 warning_home=$TEST_ROOT/warning-home
 mkdir -p "$warning_home"
