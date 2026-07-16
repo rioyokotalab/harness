@@ -505,6 +505,14 @@ correction, then pause before another model: a complete fresh run needs exactly
 three further replacement primary starts beyond the current ceiling; no extra
 replacement retry is needed. All remaining controls stay frozen.
 
+**Third replacement authority (2026-07-16):** the owner explicitly answered
+`Yes` to the narrow checkpoint above. The total ceiling is increased only by
+three further replacement primary starts for the invalid control-plane run;
+no retry allowance was added. Control-plane correction revision `8409315` is
+clean and matches `origin/main`. Every remaining stage, safety, review, and
+adoption boundary is unchanged. Next publish this authority checkpoint, prove
+the canonical run root absent, and restart the complete pilot.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
