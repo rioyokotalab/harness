@@ -29,6 +29,8 @@ grep -F 'exec /bin/bash "$0"' "$CACHE_JOB" >/dev/null
 grep -F 'gate=cache-startup-v1' "$CACHE_JOB" >/dev/null
 grep -Fx '#YBATCH -r a4500_1' "$ACCEL_LOCAL" >/dev/null
 grep -Fx '#SBATCH --time=00:05:00' "$ACCEL_LOCAL" >/dev/null
+grep -Fx '#SBATCH --job-name=t200glocal2' "$ACCEL_LOCAL" >/dev/null
+grep -F 'export HARNESS_READINESS_RUN_TAG=v2' "$ACCEL_LOCAL" >/dev/null
 grep -F 'module load cuda/13.2/13.2.1' "$ACCEL_JOB" >/dev/null
 grep -F 'module load cuda/12.8.0' "$ACCEL_JOB" >/dev/null
 grep -F 'module load cuda/12.8' "$ACCEL_JOB" >/dev/null

@@ -605,6 +605,14 @@ declares RC compute as Arm; after AB's immutable v1 job finishes, distribute
 the correction and retry only local, RC, and the previously unsubmitted RI
 with run tag v2 and RI's required `--gpus=1` spelling.
 
+**V2 retry checkpoint:** AB v1 completed with PBS exit/result zero before exact
+commit `1e6f930` was distributed, so no queued job observed moving source.
+RI's corrected request passed native `--test-only` without creating a job;
+fresh collision checks then preceded Slurm acceptance of RI `7009` and RC
+`211018`. Both use run tag v2 and distinct names. The local retry wrapper is
+being versioned with name `t200glocal2` and run tag v2 before its own fresh
+collision check and Ybatch submission. Monitor only the captured IDs.
+
 ### T-201 — Early-login cache redirection
 
 **Phase/status:** `complete`; RI's shell-independent recurrence moved to T-203. Determine, without
