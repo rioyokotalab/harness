@@ -81,6 +81,8 @@ done
     fail "fleet readiness audit focused suite"
 "$ROOT/tests/test-hpc-readiness.sh" >/dev/null ||
     fail "HPC readiness job focused suite"
+"$ROOT/tests/test-hpc-multinode-mpi-routes.sh" >/dev/null ||
+    fail "multi-node MPI route focused suite"
 "$ROOT/tests/test-storage-readiness.sh" >/dev/null ||
     fail "storage readiness focused suite"
 "$ROOT/tests/test-debugger-readiness.sh" >/dev/null ||

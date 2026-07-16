@@ -1423,6 +1423,37 @@ explicitly preserve this as process-local discovery, not an installation or
 compute gap. No module catalog, environment dump, allocation, compilation,
 package change, or application write occurred.
 
+### T-229 — Multi-node MPI route decision record
+
+**Phase/status:** `complete`, derived from T-207/T-216. Reconcile the five
+one-node MPI passes with current official scheduler/site documentation and
+bounded native read-only inspection to determine which routes have enough
+evidence for a future two-node correctness gate. Record exact candidate native
+resource/launcher shapes, unresolved account or topology choices, and explicit
+no-route outcomes. Do not submit jobs, enumerate full queues/nodes/modules,
+change environments, or infer multi-node support from a one-node pass. Any
+future allocation remains a separate collision-checked task at default
+priority.
+
+**Evidence checkpoint:** official ABCI documentation and live PBS metadata
+confirm that the proven `rt_HC` route cannot exceed one node; two-node MPI
+requires `rt_HF`, `$PBS_NODEFILE`, and a full-node resource change. Official
+TSUBAME guidance likewise requires full `node_f` resources rather than the
+proven fractional `cpu_4` route. CSCS documents the exact two-node Slurm/uenv
+shape and live `normal` accepts multiple nodes. Local has four nodes in the
+partition and a plausible two-node Open MPI shape, but its custom wrapper has
+no validated multi-node dry-run. RI/RC still lack architecture-matched routes.
+Freeze these as explicit candidates/gates; submit nothing under T-229.
+
+**Outcome:** the versioned seven-row route manifest and sourced decision record
+now distinguish AL's documented candidate, local's required wrapper dry-run,
+AB/AB2/T4 full-node resource changes, and RI/RC no-route outcomes. Focused
+schema tests, the portable full suite, and the public audit pass. The stable
+ABCI, Alps, and TSUBAME distinctions were promoted into the shared native-HPC
+site reference; `install.sh` confirmed all Codex, agents, and Claude discovery
+links still resolve to that shared skill. No scheduler job, environment change,
+module load, package operation, or billing action occurred.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

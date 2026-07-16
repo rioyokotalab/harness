@@ -84,6 +84,9 @@ scope exclusions are mandatory; they are not project or training authority.
   submit even a one-minute smoke with guessed values.
 - Login nodes expose a native compiler/MPI baseline. Run GPU or scaled MPI
   checks only through a reviewed PBS allocation.
+- ABCI multi-node MPI requires the full-node `rt_HF` resource; the proven
+  `rt_HC` CPU gate is limited to one node. Preserve `$PBS_NODEFILE` and require
+  an explicit rank-per-node mapping. Treat `rt_HF` as a new resource/cost gate.
 - Default CUDA 13.2 `nvcc` compiles the tracked kernel on the login node. Do not
   interpret this as driver or kernel-execution evidence.
 - Default HPC-X `mpicc` passes the tracked direct singleton development smoke.
@@ -138,6 +141,9 @@ scope exclusions are mandatory; they are not project or training authority.
 - The same uenv exposes `mpicc` and passes the tracked direct singleton MPI
   development smoke. Multi-rank validation still requires the native Slurm
   allocation and selected uenv integration.
+- The documented multi-node shape is explicit `--nodes`, total tasks, and
+  `--ntasks-per-node` with native `srun`; preserve the selected uenv through
+  Slurm rather than relying on login-shell inheritance.
 - The same uenv exposes CUDA 12.9 `nvcc` and compiles the tracked kernel. Run
   the kernel only inside the native Slurm allocation with that uenv selected.
 - Compute architecture is AArch64. Validate CUDA/MPI inside the chosen uenv and
@@ -179,6 +185,9 @@ scope exclusions are mandatory; they are not project or training authority.
   remains compiler/header/link evidence until the binary runs in AGE.
 - Default HPC-X `mpicc` passes the tracked direct singleton MPI development
   smoke. Validate multi-rank transport only inside the reviewed AGE allocation.
+- Multi-node MPI uses full `node_f=N` resources and an explicit processes-per-
+  node launcher mapping. The proven fractional `cpu_4` gate must not be scaled
+  into a multi-node claim; `node_f` is a separate points/resource decision.
 - For a process-local sanitizer build, run native `module load gcc/14.2.0`.
   The tracked ASan, UBSan, and LeakSanitizer smoke passes with that module; do
   not change the default compiler globally.
