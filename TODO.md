@@ -2093,10 +2093,13 @@ so candidates receive syntax and byte/metadata checks, each node stops
 independently on drift, and exact transaction rollback is tested before fleet
 rollout. A live rollback never restores or stores unrelated startup bytes.
 
-**Decision register:** D1 (open) chooses central tracked common policy versus
-literal duplication in each `.bashrc`; central is recommended because it is
-already the documented harness model and fixes the effective history override.
-D2 (open) chooses whether to remove the five automatic `ssh-agent` blocks;
+**Decision register:** D1 (resolved: central tracked common policy) defines the
+eight portable aliases and editor/history/prompt behavior once in the tracked
+interactive layer loaded by every managed `.bashrc`. Remove their duplicate
+owner-file definitions; keep `al` local-only and keep unique sorted site aliases
+outside the common fragment. This follows the documented harness model, fixes
+the effective history override, and avoids literal fleet duplication. D2
+(open) chooses whether to remove the five automatic `ssh-agent` blocks;
 removal is recommended in favor of explicit forwarding. D3 (open) chooses
 whether AB/AB2/T4 module loads become interactive-only per-host behavior;
 interactive-only is recommended, with batch/project jobs continuing to load
@@ -2106,7 +2109,7 @@ minimal preservation of all other startup content are resolved by the owner's
 request, prior decisions, and the preserve-unrelated-work boundary.
 
 Checkpoint after each interview answer, then audit the register, set
-`ready-for-go`, and wait for an explicit `go`. Next unresolved question: D1.
+`ready-for-go`, and wait for an explicit `go`. Next unresolved question: D2.
 
 ## Stable operational facts
 
