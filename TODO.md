@@ -700,7 +700,7 @@ complete; transaction `20260716T142824Z-1970447` remains the rollback point.
 
 ### T-205 — Fail-closed scheduler-chain visibility
 
-**Phase/status:** `executing`; prompted by a false-negative RI audit. A direct
+**Phase/status:** `complete`; prompted by a false-negative RI audit. A direct
 non-login `restic-schedule status` reported captured Sunday job `6862` absent,
 while native login-environment `sacct`, `scontrol`, and `squeue` independently
 proved the exact job healthy, owner-matched, `PENDING` for its declared
@@ -716,6 +716,15 @@ submission as if discovery were empty. Add a deterministic failure regression,
 run the full portable suite, distribute the exact commit, then prove both
 direct and login status see the original `6862` and that all seven original
 T-191 jobs remain singleton and unchanged before closing T-205.
+
+**Outcome:** targeted scheduling tests, the native full phase-1 suite, warning
+level ShellCheck, diff checks, and the value-free public audit passed. Exact
+commit `d3d0eff` was fast-forwarded into six clean remote worktrees through a
+5,105-byte verified public bundle, and every local/remote bundle is absent.
+Fresh direct status sees all seven original T-191 IDs; RI direct and login
+status both see unchanged job `6862` `PENDING`. The test suite also proves that
+a Slurm discovery failure emits no false missing warning, submits no job, and
+creates no chain state. T-205 is complete without any scheduler write.
 
 ## Stable operational facts
 
