@@ -838,6 +838,16 @@ local Ybatch `91213`; AB PBS `2045044.pbs1`; AB2 PBS `2045043.pbs1`; AL Slurm
 ranks, scheduler/result zero, and guarded cleanup. The two ABCI jobs remain
 validly queued; monitor only these captured IDs and do not submit replacements.
 
+**ABCI v1 failure and v2 correction:** both PBS jobs eventually reached
+terminal `Exit_status=1` without creating their private result, while the
+identical source already passed local, AL, and T4. The only pre-result code was
+the HPC-X module unload/reload plus non-login re-exec, so no MPI transport claim
+or diagnostic can be inferred. Preserve both failed records. V2 installs the
+private capture/trap first, performs the same exact process-local module setup
+inside that capture, and continues without re-exec. After tests and exact
+distribution, retry only AB/AB2 with run tag v2 and distinct names; a second
+failure must still publish its bounded diagnostic instead of disappearing.
+
 ### T-208 — Immutable training-environment transport matrix
 
 **Phase/status:** `design complete`; execution remains under T-206's owner

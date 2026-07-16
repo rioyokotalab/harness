@@ -10,7 +10,7 @@ case ${HARNESS_LOGICAL_HOST:-} in
     *) printf '%s\n' 'mpi-readiness: invalid HARNESS_LOGICAL_HOST' >&2; exit 2 ;;
 esac
 
-gate=mpi-readiness-v1
+gate=mpi-readiness-v2
 run_tag=${HARNESS_READINESS_RUN_TAG:-v1}
 case $run_tag in
     ''|*[!A-Za-z0-9._-]*)
@@ -22,25 +22,6 @@ esac
     printf '%s\n' 'mpi-readiness: HARNESS_READINESS_RUN_TAG is too long' >&2
     exit 2
 }
-
-if [ "${T207_MPI_ENV_READY:-0}" != 1 ]; then
-    case $host in
-        local)
-            module unload openmpi/5.0-cuda-12.8 >/dev/null 2>&1 || true
-            module load openmpi/5.0-cuda-12.8
-            ;;
-        ab|ab2)
-            module unload hpcx/2.26 >/dev/null 2>&1 || true
-            module load hpcx/2.26
-            ;;
-        t4)
-            module unload ylab/hpcx/2.21.0 >/dev/null 2>&1 || true
-            module load ylab/hpcx/2.21.0
-            ;;
-    esac
-    export T207_MPI_ENV_READY=1
-    exec /bin/bash "$0"
-fi
 
 root=$HOME/harness
 state_root=$HOME/.local/state/harness/hpc-readiness
@@ -92,6 +73,20 @@ exec >"$capture" 2>&1
 umask 077
 
 printf 'GATE host=%s kind=%s run=%s\n' "$host" "$gate" "$run_tag"
+case $host in
+    local)
+        module unload openmpi/5.0-cuda-12.8 >/dev/null 2>&1 || true
+        module load openmpi/5.0-cuda-12.8
+        ;;
+    ab|ab2)
+        module unload hpcx/2.26 >/dev/null 2>&1 || true
+        module load hpcx/2.26
+        ;;
+    t4)
+        module unload ylab/hpcx/2.21.0 >/dev/null 2>&1 || true
+        module load ylab/hpcx/2.21.0
+        ;;
+esac
 actual_arch=$(uname -m)
 case $host in al) expected_arch=aarch64 ;; *) expected_arch=x86_64 ;; esac
 [ "$actual_arch" = "$expected_arch" ] || {
