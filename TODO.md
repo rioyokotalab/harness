@@ -859,6 +859,13 @@ tag v3 and names, changing the same approved one-node `rt_HC` request to
 Collision-check result and job name immediately before each single submission,
 then monitor only the captured IDs.
 
+**V3 submission checkpoint:** clean exact source commit `c17f8dd`, private-result
+absence, and fail-closed exact-name queries passed before PBS accepted AB
+`2045086.pbs1` and AB2 `2045085.pbs1`. Both use run tag v3, five minutes,
+default priority, the existing `rt_HC` project, and
+`select=1:mpiprocs=2`. Monitor only these IDs; do not duplicate or replace
+them while queued or running.
+
 ### T-208 — Immutable training-environment transport matrix
 
 **Phase/status:** `design complete`; execution remains under T-206's owner
