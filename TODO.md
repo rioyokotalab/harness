@@ -712,7 +712,7 @@ interview.
 
 ### T-203 — RI shell-independent default-cache recurrence
 
-**Phase/status:** `planned` from T-201. RI recreates a 4 KiB/two-entry
+**Phase/status:** `site-support-gated` from T-201. RI recreates a 4 KiB/two-entry
 `~/.cache` after an exact guarded cleanup even when the next connection uses
 the SFTP subsystem and no Bash startup file. Preserve the tiny directory while
 diagnosing; repeated deletion is not progress. Use value-free timing/type/count
@@ -990,7 +990,7 @@ on all seven nodes. T-211 is complete within its narrow atomic-hardlink scope.
 
 ### T-212 — Direct development-debugger gate
 
-**Phase/status:** `executing`; no scheduler allocation is required. The tracked
+**Phase/status:** `complete`; no scheduler allocation is required. The tracked
 tiny C program has a non-inlined `checkpoint(35)` that returns 42. The bounded
 login-node gate compiles it with `-g3 -O0 -fno-omit-frame-pointer`, runs GDB in
 batch/no-init mode, and privately requires the exact function breakpoint,
@@ -1122,7 +1122,7 @@ rollouts for future clean mirrored-harness updates.
 
 ### T-216 — Consolidated LLM/HPC readiness gap matrix
 
-**Phase/status:** `executing`; this is evidence consolidation only. Build one
+**Phase/status:** `complete`; this is evidence consolidation only. Build one
 machine-readable and one human matrix from the already validated CPU,
 accelerator, MPI, numerical, debugger, storage/checkpoint, offline-environment,
 and immutable-transport records. For every node and capability, distinguish
@@ -1213,6 +1213,18 @@ links resolve to this shared directory, so no client setting, hook, profile, or
 installation change is needed. This rule applies to future project and harness
 jobs and preserves the native command rather than adding an opaque scheduler
 wrapper.
+
+### T-219 — Ledger terminal-status reconciliation
+
+**Phase/status:** `complete`; a full phase-label audit found no new executable
+work hidden behind terminal outcomes. T-212 and T-216 were corrected from stale
+`executing` labels to `complete`. T-203 is now explicitly
+`site-support-gated`: its value-free local diagnosis is exhausted and neither
+repeated deletion nor invasive tracing is authorized. T-191's live weekly
+chain, T-196's retention/prune execution gate, T-202's private Mozilla choice,
+T-206's framework choice, T-210's captured local job, and T-217's captured
+jobs remain intentionally non-terminal. No scheduler, file, application, or
+external setting was changed by this reconciliation.
 
 ## Stable operational facts
 
