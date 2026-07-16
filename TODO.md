@@ -1593,6 +1593,22 @@ temporary entries. Its SHA-256 is
 `f6c10f58f3c0e13273303cc6154670fad2c05a9784ba76fd21785793444f8a21`.
 No result content or filename entered the report.
 
+### T-235 — Consolidated post-workstream LLM/HPC priority queue
+
+**Phase/status:** `complete`, derived from T-216 and T-227–T-234. Create one
+machine-readable queue and concise human interpretation containing only
+unfinished or newly proposed readiness actions. Distinguish captured pending
+jobs, safe-to-plan engineering, owner/resource/project/site gates, and explicit
+dependencies. Validate IDs, status vocabulary, captured job identities, and
+dependency references; run public-audit safety; publish and distribute. This is
+evidence consolidation only and performs no scheduler, package, environment,
+or external-setting change.
+
+**Outcome:** the nine-item queue now preserves local jobs `91220`/`91240`, two
+safe planning tasks, and five explicitly gated branches with Q9 depending on
+the framework/artifact choice. Focused schema/dependency tests, the portable
+full suite, and public audit pass. No queue item was converted into execution.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

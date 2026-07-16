@@ -1,0 +1,74 @@
+{
+  "generated_date": "2026-07-17",
+  "items": [
+    {
+      "action": "monitor local numerical job without replacement",
+      "evidence": "T-210",
+      "id": "Q1",
+      "job": "91220",
+      "status": "captured_pending"
+    },
+    {
+      "action": "monitor local checkpoint/restart job without replacement",
+      "evidence": "T-217",
+      "id": "Q2",
+      "job": "91240",
+      "status": "captured_pending"
+    },
+    {
+      "action": "test scheduler cpuset and topology binding without repeating OpenMP arithmetic",
+      "evidence": "T-200,T-216",
+      "id": "Q3",
+      "status": "safe_to_plan"
+    },
+    {
+      "action": "perform a native test-only review of the local two-node MPI shape",
+      "evidence": "T-229",
+      "id": "Q4",
+      "status": "safe_to_plan"
+    },
+    {
+      "action": "select framework, version, licenses, and architecture-matched immutable artifacts",
+      "evidence": "T-206,T-208,T-227",
+      "id": "Q5",
+      "status": "owner_gated"
+    },
+    {
+      "action": "select project scientific-library requirements and site-native environments before compile gates",
+      "evidence": "T-228",
+      "id": "Q6",
+      "status": "project_gated"
+    },
+    {
+      "action": "decide whether full-node two-node MPI spend is warranted on AB, AB2, and T4",
+      "evidence": "T-229,T-230",
+      "id": "Q7",
+      "status": "owner_resource_gated"
+    },
+    {
+      "action": "obtain architecture-matched MPI and CUDA environment routes for RI and RC",
+      "evidence": "T-207,T-208,T-229",
+      "id": "Q8",
+      "status": "site_or_project_gated"
+    },
+    {
+      "action": "run immutable image and locked single-device LLM correctness only after Q5",
+      "evidence": "T-206,T-208",
+      "id": "Q9",
+      "requires": [
+        "Q5"
+      ],
+      "status": "blocked_by_choice"
+    }
+  ],
+  "schema": 1,
+  "status_vocabulary": [
+    "captured_pending",
+    "safe_to_plan",
+    "owner_gated",
+    "project_gated",
+    "owner_resource_gated",
+    "site_or_project_gated",
+    "blocked_by_choice"
+  ]
+}

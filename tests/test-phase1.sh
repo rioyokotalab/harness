@@ -92,6 +92,8 @@ done
     fail "shared executable visibility focused suite"
 "$ROOT/tests/test-hpc-result-hygiene.sh" >/dev/null ||
     fail "HPC result hygiene focused suite"
+"$ROOT/tests/test-llm-hpc-next-actions.sh" >/dev/null ||
+    fail "LLM/HPC next-action queue focused suite"
 "$ROOT/tests/test-storage-readiness.sh" >/dev/null ||
     fail "storage readiness focused suite"
 "$ROOT/tests/test-debugger-readiness.sh" >/dev/null ||
