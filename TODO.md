@@ -535,6 +535,14 @@ pause: a scientifically fresh pilot needs exactly eleven further replacement
 primary starts beyond the current ceiling and no additional retry allowance.
 All other controls remain frozen.
 
+**Fourth replacement authority (2026-07-16):** the owner explicitly answered
+`yes` to the narrow checkpoint above. The total ceiling is increased only by
+eleven replacement primary starts for the invalid safe-chain run; no retry
+allowance was added. Safe-chain correction revision `df8bf97` is clean and
+matches `origin/main`. Every stage, safety, review, and adoption boundary is
+otherwise unchanged. Next publish this authority checkpoint, prove the
+canonical run root absent, and restart the complete pilot.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
