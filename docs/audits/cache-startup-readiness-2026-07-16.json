@@ -1,0 +1,24 @@
+{
+  "batch_gate": {
+    "ab": {"job_id": "2045001.pbs1", "result_status": 0, "scheduler": "PBS", "scheduler_exit": 0},
+    "ab2": {"job_id": "2045000.pbs1", "result_status": 0, "scheduler": "PBS", "scheduler_exit": 0},
+    "al": {"job_id": "4223834", "result_status": 0, "scheduler": "Slurm", "scheduler_exit": 0},
+    "local": {"job_id": "91169", "result_status": 0, "scheduler": "Ybatch/Slurm", "scheduler_exit": 0},
+    "rc": {"job_id": "211014", "result_status": 0, "scheduler": "Slurm", "scheduler_exit": 0},
+    "ri": {"job_id": "6997", "result_status": 0, "scheduler": "Slurm", "scheduler_exit": 0},
+    "t4": {"job_id": "8179679", "result_status": 0, "scheduler": "AGE", "scheduler_exit": 0}
+  },
+  "generated_date": "2026-07-16",
+  "prefix_transactions": {
+    "ab": "20260716T140613Z-3409425",
+    "ab2": "20260716T140612Z-1704569",
+    "al": "20260716T140620Z-250841",
+    "local": "20260716T140611Z-3466811",
+    "rc": "20260716T140615Z-1162732",
+    "ri": "20260716T140609Z-602570",
+    "t4": "20260716T140619Z-2984771"
+  },
+  "schema": 1,
+  "shell_modes_passed": ["direct SSH", "login", "inherited non-interactive", "interactive", "nested interactive"],
+  "summary": {"batch_nodes_passed": 7, "batch_nodes_total": 7, "prefix_nodes_applied": 7, "prefix_nodes_total": 7}
+}

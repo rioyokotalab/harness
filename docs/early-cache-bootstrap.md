@@ -36,3 +36,20 @@ checks, exact cache-variable comparison with the declared root, and a
 postflight confirming that startup itself did not recreate default-home cache
 state. Any recurring tree is cleaned only through guarded deletion after the
 ordering fix is proven.
+
+## Live outcome
+
+All seven nodes applied the prefix transaction and retained their original
+startup-file modes. Fresh direct SSH, login, inherited non-interactive,
+interactive, and nested Bash checks see the declared cache values. The native
+batch gate explicitly removes inherited values before entering login Bash; all
+seven scheduler records and terminal results report zero. Machine-readable
+evidence is in
+[`audits/cache-startup-readiness-2026-07-16.json`](audits/cache-startup-readiness-2026-07-16.json).
+
+AB and AB2 remained free of their pre-fix default cache directories after
+guarded cleanup. RI recreated a tiny directory even through an SFTP subsystem
+session, which does not execute Bash startup files. That distinct site/PAM or
+concurrent-process behavior is outside this bootstrap's causal scope and is
+tracked separately; repeated deletion and broad `HOME` redirection are not
+acceptable substitutes for attribution.

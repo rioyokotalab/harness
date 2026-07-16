@@ -570,7 +570,7 @@ distributed, numerical-equivalence, or performance claim beforehand.
 
 ### T-201 — Early-login cache redirection
 
-**Phase/status:** `live prefix validated; scheduler inheritance pending` from RI's T-199 recurrence. Determine, without
+**Phase/status:** `complete`; RI's shell-independent recurrence moved to T-203. Determine, without
 tracing values or reading unrelated startup content, whether the managed cache
 exports can be installed before any user application startup on all seven
 nodes. Design the smallest silent POSIX block and prove non-interactive,
@@ -635,6 +635,15 @@ AB2 PBS `2045000.pbs1`; RI Slurm `6997`; AL Slurm `4223834`; RC Slurm
 `211014`; and T4 AGE `8179679`. Monitor only these IDs and publish no batch
 inheritance claim until scheduler accounting and terminal private results agree.
 
+**Batch-gate outcome:** all seven terminal private results report PASS/status
+zero and all native scheduler records report exit zero. The matched evidence is
+`docs/audits/cache-startup-readiness-2026-07-16.json`. Each job first removed
+the submit shell's managed values, entered login Bash, and independently
+reconstructed the declared host/cache/XDG/application-cache paths. T-201 is
+complete: ordering, shell modes, rollback, and batch inheritance are proven.
+The persistent RI directory is explicitly not attributed to Bash and remains
+isolated in T-203.
+
 ### T-202 — AB Mozilla application-native relocation
 
 **Phase/status:** `owner-gated`; not a quota emergency. AB's retained
@@ -658,7 +667,7 @@ cache configuration and re-run the SFTP-versus-shell experiment.
 
 ### T-204 — Remove obsolete AB2 pyenv startup calls
 
-**Phase/status:** `planned` from repeated live evidence. AB2 emits exactly three
+**Phase/status:** `complete`. AB2 emitted exactly three
 `pyenv: command not found` diagnostics on each login because `.pyenv` was
 owner-approved for deletion while startup invocations remain. Identify only
 the exact pyenv-related lines and structural context needed for a reviewed
@@ -682,6 +691,12 @@ live plan, and transaction `20260716T142824Z-1970447` completed. This is the
 exact rollback ID. Require an idempotent KEEP plan, unchanged file mode/size,
 zero pyenv literal matches in the reviewed file, and warning-free direct,
 login, and interactive sessions before closing T-204.
+
+**Postflight:** the live plan is now an idempotent KEEP; `.bash_profile` remains
+mode 0640 and byte-identical in size, both startup files contain zero pyenv
+literal matches, fresh direct/login paths contain no `.pyenv` component, and
+direct/login/interactive checks pass without a pyenv diagnostic. T-204 is
+complete; transaction `20260716T142824Z-1970447` remains the rollback point.
 
 ## Stable operational facts
 
