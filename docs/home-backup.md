@@ -12,8 +12,9 @@ primary repository on its selected persistent storage. Encrypted repository
 bytes receive a second, versioned copy at a different site: remote primaries go
 to the current node's safe NFS root, while the current node's primary goes to
 T4. A versioned empty destination avoids synchronization with deletion and
-keeps an independently checkable generation. `ab2` remains deferred until its
-10 TB quota is active.
+keeps an independently checkable generation. All seven declared routes are
+active; each node must still pass its own manual initialization, full-data
+check, restore, and independent-generation gate before scheduling or cleanup.
 
 Restic's documented `backup --files-from-raw`, `check --read-data`, and
 `restore --verify` paths are used here. Relevant upstream references are the
@@ -130,8 +131,8 @@ Never copy restored secrets into the tracked harness. Remove `RESTORE_ROOT`
 only with `harness guarded-delete plan/apply` using its exact canonical path and
 immutable token. Once all currently initialized nodes have successful
 `check --read-data` and restore evidence, scheduling may be proposed separately
-for those nodes; it is not enabled by this workflow. AB2 joins the same gate
-only after its quota increase permits initialization and a manual test cycle.
+for those nodes; it is not enabled by this workflow. A newly initialized node
+joins the same gate only after its own manual test cycle.
 
 ## Independent encrypted generation
 
@@ -142,7 +143,7 @@ harness replica plan --host "$HOST" --generation "$(date -u +%Y%m%dT%H%M%SZ)"
 ```
 
 The planner is deliberately read-only: it validates the declared direction,
-paths, timestamp, AB2 deferral, staging/final names, and native `rsync -aH`
+paths, timestamp, staging/final names, and native `rsync -aH`
 shape without connecting or copying. Apply is fail-closed on path collisions,
 repository symlinks or locks, source drift during the copy, and any mismatch
 among source-before, source-after, staging, and promoted fingerprints. A failed
@@ -195,5 +196,5 @@ Remove the restored tree only through a fresh canonical guarded-delete
 plan/apply pair. Exact-unlink the private log, metadata JSON, relay helpers,
 manifest, and sockets only after success, and non-recursively remove the empty
 restore parent. A final audit must find no Restic/rclone process or validation
-temporary path. AB2 remains excluded until its quota permits repository
-initialization and the same manual validation cycle.
+temporary path. Every newly initialized route must complete the same manual
+validation cycle.

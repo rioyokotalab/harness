@@ -219,10 +219,14 @@ grep -F "NATIVE rsync -aH -- 'ri:/data1/rkp00015/rku00075/restic/home-control/' 
 if grep -E -- '--delete|home-control\.password' "$TEMP_DIR"/replica-*.out >/dev/null; then
     fail "replica plan exposed a password path or deletion option"
 fi
-if "$HARNESS" replica plan --host ab2 --generation "$replica_generation" \
-    >"$TEMP_DIR/replica-ab2.out" 2>&1; then
-    fail "replica plan accepted deferred AB2"
-fi
+"$HARNESS" replica plan --host ab2 --generation "$replica_generation" \
+    >"$TEMP_DIR/replica-ab2.out" || fail "AB2 replica plan"
+grep -F "SOURCE scope=remote transport=ab2 path=/groups/gah51624/yokota/restic/home-control" \
+    "$TEMP_DIR/replica-ab2.out" >/dev/null || fail "AB2 replica source route"
+grep -F "DESTINATION scope=local transport=none root=/mnt/nfs-03/safe/Users/rioyokota/restic-replicas/ab2" \
+    "$TEMP_DIR/replica-ab2.out" >/dev/null || fail "AB2 replica destination route"
+grep -F "NATIVE rsync -aH -- 'ab2:/groups/gah51624/yokota/restic/home-control/' '/mnt/nfs-03/safe/Users/rioyokota/restic-replicas/ab2/.staging-$replica_generation/'" \
+    "$TEMP_DIR/replica-ab2.out" >/dev/null || fail "AB2 replica native command"
 if "$HARNESS" replica plan --host local --generation 20260230T120000Z \
     >"$TEMP_DIR/replica-date.out" 2>&1; then
     fail "replica plan accepted an invalid timestamp"
@@ -409,7 +413,7 @@ restic_rows=$(awk -F'|' '
     $1 !~ /^(local|ab|ab2|ri|al|rc|t4)$/ { exit 1 }
     $2 !~ /^\// || $3 !~ /^\// { exit 1 }
     $4 != "~/.config/restic/home-control.password" { exit 1 }
-    $5 !~ /^(local|local-after-quota|t4)$/ { exit 1 }
+    $5 !~ /^(local|t4)$/ { exit 1 }
     { count[$1]++; rows++ }
     END {
         if (rows != 7) exit 1

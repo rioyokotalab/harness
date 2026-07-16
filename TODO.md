@@ -4,7 +4,7 @@ This board is the authoritative current state for the portable Codex and Claude
 harness. Git preserves superseded chronology and command-level evidence. Keep
 live tasks, verified recovery facts, blockers, and next actions here; do not
 rebuild a second incident transcript in a session or report file. Next free id:
-T-192.
+T-193.
 
 ## Recovery priority — do before any other task
 
@@ -588,8 +588,9 @@ T-192.
   local relay socket, helper, private log/JSON, manifest, or restore tree on the
   current node or any active remote. Exact cleanup also covered the known
   workflow-owned probe sockets on ABCI login1/login2/login4 and the mode-0700
-  relay helper on login1; login3 was already clear. AB2 remains the sole agreed
-  quota-deferred repository. Manual restore evidence is now stable enough to
+  relay helper on login1; login3 was already clear. AB2 was the sole agreed
+  quota-deferred repository; its later quota activation is tracked under
+  T-192. Manual restore evidence is now stable enough to
   prepare a separate scheduling proposal, but no scheduler, cron entry, login
   hook, or other automatic external write is enabled by T-182.
 
@@ -917,8 +918,9 @@ live instructions.
 - **T-191 — Add recurring backups only after scheduling scope is explicit
   (PIE interview pending 2026-07-16):** all six initialized primaries and all
   six independent generation routes now have successful full-data checks and
-  verified restores, satisfying the owner's manual-stability gate. AB2 remains
-  quota-deferred. No cron entry, user timer, site scheduler job, login hook,
+  verified restores, satisfying the owner's manual-stability gate. AB2 is
+  undergoing its manual gate under T-192 and remains outside scheduling. No
+  cron entry, user timer, site scheduler job, login hook,
   retention deletion, or automatic replica write exists. Before changing an
   external scheduler, resolve one owner choice at a time: whether recurrence
   covers primary snapshots only or also serialized independent-generation
@@ -927,3 +929,42 @@ live instructions.
   Freeze and review the exact six-node plan before enabling it, keep
   non-interactive sessions silent, and prove one scheduled dry run plus one
   manual restore cycle before treating automation as healthy.
+
+## Task appended after the AB2 quota increase
+
+- **T-192 — Complete the previously deferred AB2 storage and Restic gate (in
+  progress 2026-07-16):** the owner reports that the requested capacity is
+  active. Read-only native SSH validation confirms `/groups` exposes 10 TB with
+  24 KB used and 99,999,994 free inodes; `/groups/gah51624/yokota` is the
+  expected owner directory (mode 2755, uid 17783, group 51624). The cache root
+  and primary Restic repository remain absent, while the existing password file
+  passes regular-file, non-symlink, mode-0600, and owner checks without content
+  inspection. AB2's checkout is clean but still at pre-Restic revision
+  `6db9296`, where the `restic` route is unavailable.
+
+  **Execution checkpoint:** remove only the explicit quota-deferral markers in
+  `profiles/home-layout.tsv`, `profiles/restic-repositories.tsv`,
+  `libexec/harness-replica`, its tests, and `docs/home-backup.md`; run the
+  complete local suite; commit and fast-forward the clean AB2 checkout through
+  a verified credential-free Git bundle. Then initialize and manually validate
+  AB2's encrypted repository using its existing password file only by path,
+  snapshot every top-level hidden path, run `check --read-data` and
+  `restore --verify`, guard-delete only the restore scratch, promote a new
+  fingerprint-matched independent generation to the current NFS replica root,
+  and validate that generation through the private Unix-socket relay. Only
+  after both restore gates pass may the already approved `.local` move and
+  `.bash_common`/`.cache`/Emacs/`.pyenv` cleanup proceed. Scheduling remains
+  separately owner-gated by T-191.
+
+  **Quota-deferral implementation checkpoint:** the tracked AB2 home row now
+  has no owner-action blocker, its Restic transport is the normal local replica
+  route, and `harness replica` accepts `ab2` with the exact declared source and
+  destination while preserving the existing no-delete transaction. Syntax,
+  warning-level ShellCheck, the guarded-delete suite, the focused AB2 plan
+  assertions, and the complete phase-1 suite pass. The first full-suite run
+  stopped only because the process-local module table claimed Open MPI was
+  loaded without exporting `mpicc`; native unload/load of the same declared
+  `openmpi/5.0-cuda-12.8` module restored the path, and the clean retry passed
+  with only the documented login-node `libcuda.so.1` warnings. Next action:
+  commit this unblocking layer and deliver it to the clean AB2 checkout by a
+  verified credential-free Git bundle.

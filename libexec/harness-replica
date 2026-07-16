@@ -10,7 +10,6 @@ Usage: harness replica {plan|apply} --host HOST --generation YYYYMMDDTHHMMSSZ
 Plan or create one credential-free immutable encrypted Restic repository
 generation. Apply refuses collisions, active Restic locks, repository symlinks,
 source drift, and destination mismatches. It never deletes a generation.
-AB2 remains rejected until its quota deferral is removed explicitly.
 EOF
 }
 
@@ -61,9 +60,8 @@ while [ "$#" -gt 0 ]; do
 done
 
 require_safe_id "$logical_host"
-[ "$logical_host" != ab2 ] || die "AB2 replica work is deferred until its quota increase is active"
 case "$logical_host" in
-    local|ab|ri|al|rc|t4) ;;
+    local|ab|ab2|ri|al|rc|t4) ;;
     *) die "replica route is not declared for host: $logical_host" ;;
 esac
 case "$generation" in
