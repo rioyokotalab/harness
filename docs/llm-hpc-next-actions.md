@@ -6,7 +6,10 @@ It consolidates only unfinished or newly proposed readiness work after T-234.
 
 First, preserve and monitor local jobs `91220` (numerical) and `91240`
 (checkpoint/restart). Both remain validly captured; ordinary resource/priority
-delay does not authorize duplication. Safe engineering that does not require an
+delay does not authorize duplication. T-242 confirms they are immediately
+eligible, unconstrained small jobs under ordinary site resource/priority wait;
+the local interface still supplies no safe reason to replace or bypass them.
+Safe engineering that does not require an
 owner choice is then limited to a scheduler cpuset/topology gate and a native
 test-only review of the local two-node MPI request. T-236 subsequently found no
 residue-free scheduler verification interface, so that second item is now

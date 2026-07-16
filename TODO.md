@@ -1757,6 +1757,21 @@ ShellCheck, portable phase 1, and public audit pass. T-241 is complete as a
 preparation artifact; Q5/Q6 correctly remain owner/project gated and no live
 project, package, image, scheduler, or service changed.
 
+### T-242 — Read-only local readiness queue diagnosis
+
+**Phase/status:** `complete`, derived from the prolonged T-210/T-217 wait.
+Exact native inspection found both jobs immediately eligible, dependency-free,
+normal-QOS/nice-zero, one-CPU/2.6-GB/five-minute requests with no node, feature,
+license, or reservation constraint. The four-node partition snapshot had one
+network-down, one mixed, and two idle nodes, but Slurm still authoritatively
+reports `91220` as `Resources` and `91240` as `Priority`, both with unknown
+start. Its basic-priority/backfill order places protected Sunday job `90939`
+(`BeginTime`, 2026-07-19 00:30) ahead of both; preemption and reservations are
+absent. This is a site/scheduler wait, not evidence of a malformed captured
+job or permission to bypass `ybatch`. The durable boundary and escalation
+condition are in `docs/local-readiness-queue-diagnosis.md`; no scheduler state
+changed.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
