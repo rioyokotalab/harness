@@ -666,6 +666,17 @@ patch; never print unrelated startup content. Add a transactional, byte-exact
 remediation with rollback and fake-home tests, preserve all other owner lines,
 then prove direct/login/interactive silence without reinstalling pyenv.
 
+**Implementation checkpoint:** the live value-limited review found one exact
+six-line block in AB2 `.bash_profile` (heading, `PYENV_ROOT`/`PATH`, and three
+`eval` calls) and no pyenv line in `.bashrc`. `harness remediate --host ab2`
+now verifies that entire public block and transactionally replaces it with six
+same-length inert comments, preserving every unrelated byte and offset. The
+existing patch rollback validates exact size/offset/payload. Fake-home tests
+prove plan/apply/idempotence, no synthetic-secret copy, surrounding-line
+preservation, changed-patch refusal, and exact rollback; portable and native
+full suites pass. Commit and distribute, then require a clean live plan before
+applying and capturing the AB2 transaction ID.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

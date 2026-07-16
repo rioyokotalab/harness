@@ -1194,6 +1194,53 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$remediation_transaction" \
     >"$TEMP_DIR/remediation-rollback.out"
 cmp -s "$test_home/.bashrc" "$TEMP_DIR/original-remediation-bashrc" ||
     fail "remediation rollback"
+
+ab2_remediation_home=$TEMP_DIR/ab2-remediation-home
+mkdir -p "$ab2_remediation_home"
+cat >"$ab2_remediation_home/.bash_profile" <<'EOF'
+export TEST_TOKEN=fake-secret-value
+# PyEnv
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init --path)"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
+# later owner line
+EOF
+cp "$ab2_remediation_home/.bash_profile" "$TEMP_DIR/original-ab2-remediation-profile"
+HOME="$ab2_remediation_home" "$test_repo/bin/harness" remediate --host ab2 --plan \
+    >"$TEMP_DIR/ab2-remediation-plan.out"
+grep 'PATCH file=.bash_profile match=reviewed-pyenv-block' \
+    "$TEMP_DIR/ab2-remediation-plan.out" >/dev/null || fail "AB2 remediation plan"
+HOME="$ab2_remediation_home" "$test_repo/bin/harness" remediate --host ab2 --apply \
+    >"$TEMP_DIR/ab2-remediation-apply.out"
+ab2_remediation_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/ab2-remediation-apply.out")
+[ -n "$ab2_remediation_transaction" ] || fail "missing AB2 remediation transaction"
+if grep -F 'pyenv' "$ab2_remediation_home/.bash_profile" >/dev/null; then
+    fail "AB2 remediation left an obsolete pyenv call"
+fi
+grep -F -x 'export TEST_TOKEN=fake-secret-value' \
+    "$ab2_remediation_home/.bash_profile" >/dev/null || fail "AB2 remediation damaged preceding owner content"
+grep -F -x '# later owner line' "$ab2_remediation_home/.bash_profile" >/dev/null ||
+    fail "AB2 remediation damaged following owner content"
+if grep -R 'fake-secret-value' "$ab2_remediation_home/.local/state/harness" >/dev/null 2>&1; then
+    fail "AB2 remediation copied unrelated startup content"
+fi
+HOME="$ab2_remediation_home" "$test_repo/bin/harness" remediate --host ab2 --plan \
+    >"$TEMP_DIR/ab2-remediation-idempotent.out"
+grep 'KEEP file=.bash_profile patch=reviewed-pyenv-block-disabled' \
+    "$TEMP_DIR/ab2-remediation-idempotent.out" >/dev/null || fail "AB2 remediation idempotence"
+sed -i 's/^# off  $/# xff  /' "$ab2_remediation_home/.bash_profile"
+if HOME="$ab2_remediation_home" "$test_repo/bin/harness" rollback \
+    "$ab2_remediation_transaction" >"$TEMP_DIR/refused-ab2-remediation.out" 2>&1; then
+    fail "AB2 remediation rollback accepted a changed patch"
+fi
+sed -i 's/^# xff  $/# off  /' "$ab2_remediation_home/.bash_profile"
+HOME="$ab2_remediation_home" "$test_repo/bin/harness" rollback \
+    "$ab2_remediation_transaction" >"$TEMP_DIR/ab2-remediation-rollback.out"
+cmp -s "$ab2_remediation_home/.bash_profile" \
+    "$TEMP_DIR/original-ab2-remediation-profile" || fail "AB2 remediation rollback"
 HOME="$test_home" "$test_repo/bin/harness" shell --host al --plan \
     >"$TEMP_DIR/al-shell-plan.out"
 al_payload_bytes=$((1 + $(wc -c <"$test_repo/shell/bashrc.al.block" | tr -d ' ')))

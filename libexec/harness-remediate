@@ -6,7 +6,7 @@ HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
 export HARNESS_ROOT
 . "$SELF_DIR/harness-common"
 
-usage() { echo "Usage: harness remediate --host al [--plan|--apply]" >&2; }
+usage() { echo "Usage: harness remediate --host al|ab2 [--plan|--apply]" >&2; }
 logical_host=
 mode=plan
 while [ "$#" -gt 0 ]; do
@@ -17,9 +17,144 @@ while [ "$#" -gt 0 ]; do
         *) usage; exit 2 ;;
     esac
 done
-[ "$logical_host" = al ] || die "no reviewed remediation for host: ${logical_host:-missing}"
+case $logical_host in
+    al|ab2) ;;
+    *) die "no reviewed remediation for host: ${logical_host:-missing}" ;;
+esac
 profile_for "$logical_host" >/dev/null
 command -v dd >/dev/null 2>&1 || die "remediation requires dd"
+
+if [ "$logical_host" = ab2 ]; then
+    destination=$HOME/.bash_profile
+    temp_parent=${TMPDIR:-/tmp}
+    original_known=$(mktemp "$temp_parent/harness-remediate-ab2-original.XXXXXX")
+    applied_known=$(mktemp "$temp_parent/harness-remediate-ab2-applied.XXXXXX")
+    cleanup_known() {
+        status=$?
+        trap - EXIT HUP INT TERM
+        test ! -e "$original_known" || unlink -- "$original_known"
+        test ! -e "$applied_known" || unlink -- "$applied_known"
+        exit "$status"
+    }
+    trap cleanup_known EXIT
+    trap 'exit 129' HUP
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+    chmod 600 "$original_known" "$applied_known"
+    cat >"$original_known" <<'EOF'
+# PyEnv
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init --path)"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
+EOF
+    awk '
+        NR == 1 {
+            value = "# off"
+            while (length(value) < length($0)) value = value " "
+            print value
+            next
+        }
+        {
+            value = "#"
+            while (length(value) < length($0)) value = value " "
+            print value
+        }
+    ' "$original_known" >"$applied_known"
+    bytes=$(wc -c <"$original_known" | tr -d ' ')
+    [ "$(wc -c <"$applied_known" | tr -d ' ')" -eq "$bytes" ] ||
+        die "internal AB2 patch length mismatch"
+
+    echo "REMEDIATION_PLAN host=ab2 mode=$mode contents=exact-public-block-only"
+    if [ ! -f "$destination" ] || [ -L "$destination" ]; then
+        echo "BLOCK file=.bash_profile reason=not-regular"
+        die "remediation plan contains a blocked file"
+    fi
+    original_count=$(grep -F -x -c '# PyEnv' "$destination" || true)
+    applied_count=$(grep -F -x -c '# off  ' "$destination" || true)
+    if [ "$original_count" -eq 1 ] && [ "$applied_count" -eq 0 ]; then
+        offset=$(grep -F -x -b '# PyEnv' "$destination" | sed -n 's/:.*//p')
+        case $offset in ''|*[!0-9]*) die "cannot locate reviewed AB2 patch offset" ;; esac
+        dd if="$destination" bs=1 skip="$offset" count="$bytes" 2>/dev/null |
+            cmp -s - "$original_known" || die "reviewed AB2 block is not exact"
+        echo "PATCH file=.bash_profile match=reviewed-pyenv-block bytes=$bytes replacement=neutral-comments"
+        change=1
+    elif [ "$original_count" -eq 0 ] && [ "$applied_count" -eq 1 ]; then
+        offset=$(grep -F -x -b '# off  ' "$destination" | sed -n 's/:.*//p')
+        case $offset in ''|*[!0-9]*) die "cannot locate applied AB2 patch offset" ;; esac
+        dd if="$destination" bs=1 skip="$offset" count="$bytes" 2>/dev/null |
+            cmp -s - "$applied_known" || die "applied AB2 block is not exact"
+        echo "KEEP file=.bash_profile patch=reviewed-pyenv-block-disabled"
+        change=0
+    else
+        echo "BLOCK file=.bash_profile reason=reviewed-block-missing-duplicate-or-ambiguous"
+        die "remediation plan contains a blocked file"
+    fi
+    [ "$mode" = apply ] || { echo "END remediation host=ab2 changes=not-applied"; exit 0; }
+    [ "$change" -eq 1 ] || { echo "END remediation host=ab2 changes=none"; exit 0; }
+    [ -z "$(git -C "$HARNESS_ROOT" status --porcelain)" ] ||
+        die "remediation apply requires clean harness"
+
+    original_size=$(wc -c <"$destination" | tr -d ' ')
+    dd if="$destination" bs=1 skip="$offset" count="$bytes" 2>/dev/null |
+        cmp -s - "$original_known" || die "reviewed AB2 block changed before apply"
+    state_root=$HOME/.local/state/harness/transactions
+    mkdir -p "$state_root"
+    chmod 700 "$HOME/.local/state/harness" "$state_root"
+    transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+    manifest=$state_root/$transaction_id.manifest
+    : >"$manifest"; chmod 600 "$manifest"
+    printf 'schema=1\nhost=%s\nrevision=%s\n' "$logical_host" \
+        "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" >>"$manifest"
+    original_payload=$state_root/$transaction_id.patch.original
+    applied_payload=$state_root/$transaction_id.patch.applied
+    cp "$original_known" "$original_payload"
+    cp "$applied_known" "$applied_payload"
+    chmod 600 "$original_payload" "$applied_payload"
+    printf 'patch|%s|%s|%s|%s|%s|%s\n' "$destination" "$offset" \
+        "$original_size" "$bytes" "$original_payload" "$applied_payload" >>"$manifest"
+
+    complete=0
+    cleanup_apply() {
+        status=$?
+        trap - EXIT HUP INT TERM
+        if [ "$complete" -eq 0 ]; then
+            current_size=$(wc -c <"$destination" | tr -d ' ')
+            if [ "$current_size" -eq "$original_size" ] &&
+                dd if="$destination" bs=1 skip="$offset" count="$bytes" 2>/dev/null |
+                    cmp -s - "$applied_payload"; then
+                dd if="$original_payload" of="$destination" bs=1 seek="$offset" \
+                    conv=notrunc 2>/dev/null
+            fi
+            echo failed >"$manifest.status"
+            chmod 600 "$manifest.status"
+        fi
+        test ! -e "$original_known" || unlink -- "$original_known"
+        test ! -e "$applied_known" || unlink -- "$applied_known"
+        exit "$status"
+    }
+    trap cleanup_apply EXIT
+    trap 'exit 129' HUP
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+
+    dd if="$applied_payload" of="$destination" bs=1 seek="$offset" conv=notrunc 2>/dev/null
+    current_size=$(wc -c <"$destination" | tr -d ' ')
+    if [ "$current_size" -ne "$original_size" ] ||
+        ! dd if="$destination" bs=1 skip="$offset" count="$bytes" 2>/dev/null |
+            cmp -s - "$applied_payload"; then
+        die "reviewed AB2 patch verification failed"
+    fi
+    echo complete >"$manifest.status"; chmod 600 "$manifest.status"
+    complete=1
+    unlink -- "$original_known"
+    unlink -- "$applied_known"
+    trap - EXIT HUP INT TERM
+    echo "TRANSACTION id=$transaction_id status=complete"
+    echo "END remediation host=ab2 changes=applied"
+    exit 0
+fi
 
 destination=$HOME/.bashrc
 original_line='uenv start prgenv-gnu/25.11:v1 --view=default'
