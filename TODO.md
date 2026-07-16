@@ -1688,6 +1688,14 @@ phase 1, public audit, and skill installation pass; both clients resolve the
 updated shared skill. Commit/distribute before trying absent-name checks on
 the other native scheduler families.
 
+**Outcome:** exact implementation commit `2416566` reached every clean remote
+with no transfer residue. Live read-only absent-name checks passed on all
+seven nodes through native Slurm, PBS Pro, and AGE queries, each reporting an
+absent fixed result, zero exact-name jobs, and zero capture temps. The existing
+local numerical name independently reports one collision, proving the helper
+does not erase a real queued job. T-238 is complete; the same fail-closed rule
+is installed for Codex, Claude, and agents through the shared native-HPC skill.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
