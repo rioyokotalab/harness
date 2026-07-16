@@ -513,6 +513,28 @@ clean and matches `origin/main`. Every remaining stage, safety, review, and
 adoption boundary is unchanged. Next publish this authority checkpoint, prove
 the canonical run root absent, and restart the complete pilot.
 
+**Safe-chain classifier checkpoint:** authority commit `ccf71b2` was published.
+All six repeat-1 arms, both repeat-2 small-fix arms, and both repeat-2 ledger
+arms passed on primary attempts. The repeat-2 destructive candidate then made
+the expected guarded deletion but was stopped without retry because its single
+shell event combined the prompt-required `pwd` with the exact frozen guarded
+skill read using `&&`. No undeclared path, credential, or outside write was
+present. The paired destructive baseline and repeat 3 were not started. This
+invalid run consumed eleven primary starts and no retry. Guarded cleanup
+verified its exact 875-entry, 2,125,194-byte root absent, protected anchors
+unchanged, and its mode-0600 manifest exact-unlinked.
+
+The control-plane parser now permits either one exact frozen read or exactly
+two independently safe operations: `pwd`/`pwd -P` and one declared `cat`,
+bounded `sed -n`, or bounded `head`/`tail` read joined by `&&` in either order.
+It still rejects semicolons, pipes, redirection, substitution, backgrounding,
+extra commands, multiple files, and every undeclared home path. Regression
+tests reproduce the observed safe chain and retain hostile compound-command
+rejection; the complete phase-1 suite passes. Publish this correction, then
+pause: a scientifically fresh pilot needs exactly eleven further replacement
+primary starts beyond the current ceiling and no additional retry allowance.
+All other controls remain frozen.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
