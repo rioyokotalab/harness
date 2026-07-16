@@ -1792,6 +1792,16 @@ ready/draft and six refusal paths pass, along with warning-level ShellCheck,
 portable phase 1, and public audit. T-243 is complete; no real manifest,
 project, credential, package, scheduler, or external service was accessed.
 
+### T-244 — Seven-interpreter intake-validator compatibility
+
+**Phase/status:** `implementing`, correcting T-243's untested fleet claim. AL's
+default Python is 3.6, so remove postponed annotations and PEP 585 built-in
+generic syntax from the dependency-free validator. Replace bytecode compilation
+in its test with AST parsing so older clients cannot leave checkout-local
+`__pycache__`. Add a syntax-policy assertion, rerun local full/public checks,
+publish and distribute, then execute the complete synthetic validator suite on
+all seven default interpreters and require clean worktrees afterward.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

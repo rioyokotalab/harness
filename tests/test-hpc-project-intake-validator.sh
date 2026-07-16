@@ -53,7 +53,11 @@ expect_failure() {
     fi
 }
 
-PYTHONPYCACHEPREFIX=$TEST_ROOT/pycache python3 -m py_compile "$VALIDATOR"
+python3 -c 'import ast, sys; ast.parse(open(sys.argv[1]).read())' "$VALIDATOR"
+if grep -E 'from __future__ import annotations|list\[|dict\[|tuple\[|Path \|' "$VALIDATOR" >/dev/null; then
+    printf '%s\n' 'FAIL: validator requires newer-than-Python-3.6 syntax' >&2
+    exit 1
+fi
 write_valid ready
 "$VALIDATOR" --require-ready "$manifest" | grep -F 'status=pass phase=ready targets=2 artifacts=1 libraries=1' >/dev/null
 write_valid draft

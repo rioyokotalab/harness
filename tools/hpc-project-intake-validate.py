@@ -1,23 +1,20 @@
 #!/usr/bin/env python3
 """Validate an HPC project intake without third-party Python packages."""
 
-from __future__ import annotations
-
 import json
 import os
 import re
 import sys
 from pathlib import Path
-from typing import Any
 
 
 class ValidationError(Exception):
     pass
 
 
-def load_unique(path: Path) -> Any:
-    def unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
-        result: dict[str, Any] = {}
+def load_unique(path):
+    def unique_object(pairs):
+        result = {}
         for key, value in pairs:
             if key in result:
                 raise ValidationError("duplicate object key")
@@ -30,7 +27,7 @@ def load_unique(path: Path) -> Any:
         raise ValidationError("manifest is not readable JSON") from error
 
 
-def type_matches(value: Any, expected: str) -> bool:
+def type_matches(value, expected):
     return {
         "object": isinstance(value, dict),
         "array": isinstance(value, list),
@@ -40,7 +37,7 @@ def type_matches(value: Any, expected: str) -> bool:
     }.get(expected, False)
 
 
-def validate(schema: dict[str, Any], value: Any, path: str = "$") -> None:
+def validate(schema, value, path="$"):
     expected = schema.get("type")
     if expected is not None and not type_matches(value, expected):
         raise ValidationError(f"{path}: wrong type")
@@ -87,7 +84,7 @@ def validate(schema: dict[str, Any], value: Any, path: str = "$") -> None:
             raise ValidationError(f"{path}: integer is below the minimum")
 
 
-def main(argv: list[str]) -> int:
+def main(argv):
     require_ready = False
     if len(argv) == 3 and argv[1] == "--require-ready":
         require_ready = True
