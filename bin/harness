@@ -56,6 +56,7 @@ Transactional commands:
   remediate   plan or apply an exact reviewed host remediation
   shell       plan or append managed shell-loader blocks
   cache-bootstrap  plan or prepend silent cache variables before user startup
+  startup-normalize  plan, apply, or roll back reviewed Bash/SSH simplification
   dotfiles    plan or apply canonical Vim and shared SSH configuration
   tool        plan or install one checksum-pinned portable tool
   runtime     plan or install one checksum-pinned portable runtime
@@ -86,7 +87,7 @@ if [ "$#" -gt 0 ]; then
 fi
 
 case "$command_name" in
-    inventory|plan|doctor|storage-readiness|replica|apply|remediate|shell|cache-bootstrap|dotfiles|tool|runtime|python|agent|build-tool|rollback|restic|restic-primary|restic-schedule|fleet-sync)
+    inventory|plan|doctor|storage-readiness|replica|apply|remediate|shell|cache-bootstrap|startup-normalize|dotfiles|tool|runtime|python|agent|build-tool|rollback|restic|restic-primary|restic-schedule|fleet-sync)
         exec "$ROOT/libexec/harness-$command_name" "$@"
         ;;
     guarded-delete)

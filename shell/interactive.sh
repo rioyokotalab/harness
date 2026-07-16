@@ -4,17 +4,20 @@ HARNESS_INTERACTIVE_LOADED=1
 export HARNESS_INTERACTIVE_LOADED
 
 HISTCONTROL=ignoreboth:erasedups
-HISTSIZE=50000
-HISTFILESIZE=100000
+HISTSIZE=
+HISTFILESIZE=
 export HISTCONTROL HISTSIZE HISTFILESIZE
 if [ -n "${BASH_VERSION:-}" ]; then
     shopt -s histappend
 fi
+PS1='\u@\h:\W\$ '
 
-# Launch one in-scope remote Codex session with a PTY. Agent forwarding is
-# explicit per invocation so ordinary SSH sessions keep the safer site default;
-# it also gives the private-origin login sync and exit-time publish path access
-# to the owner's already-running local agent without copying key material.
+if [ -r "$HOME/harness/shell/common-aliases.sh" ]; then
+    . "$HOME/harness/shell/common-aliases.sh"
+fi
+
+# Launch one in-scope remote Codex session with a PTY. The explicit -A agrees
+# with the current node's per-host SSH policy and never copies key material.
 harness_remote_codex() {
     if [ "$#" -ne 1 ]; then
         printf '%s\n' 'usage: harness_remote_codex LOGICAL_HOST' >&2

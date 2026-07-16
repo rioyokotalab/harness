@@ -142,6 +142,10 @@ should extend, not replace, the site's initial module environment. At CSCS,
 uenv remains the site mechanism rather than being started unconditionally by
 generic non-interactive shell startup.
 
+The implemented Bash layering and the deliberately non-interactive AB/AB2/T4
+module compatibility hook are documented in
+[startup-policy.md](startup-policy.md).
+
 ### 4. Project runtimes: reproducible per project, not global
 
 Projects own language lockfiles, compiler/MPI compatibility, container

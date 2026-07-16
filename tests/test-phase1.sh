@@ -74,6 +74,12 @@ do
     sh -n "$script" || fail "shell syntax: $script"
 done
 
+python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harness-startup-normalize").read_text())' ||
+    fail "Python syntax: harness-startup-normalize"
+
+"$ROOT/tests/test-startup-normalize.sh" >/dev/null ||
+    fail "startup normalization focused suite"
+
 "$ROOT/tests/test-restic-schedule.sh" >/dev/null ||
     fail "Restic schedule focused suite"
 "$ROOT/tests/test-onboard-mirrored-node.sh" >/dev/null ||
@@ -151,7 +157,8 @@ if HOME="$TEMP_DIR/restic-route-absent" PATH=/usr/bin:/bin \
     fail "Restic route accepted an absent command"
 fi
 
-for script in "$ROOT"/shell/cache.sh "$ROOT"/shell/early-cache.sh "$ROOT"/shell/profile.sh \
+for script in "$ROOT"/shell/cache.sh "$ROOT"/shell/common-aliases.sh \
+    "$ROOT"/shell/early-cache.sh "$ROOT"/shell/module-stack.sh "$ROOT"/shell/profile.sh \
     "$ROOT"/shell/environments/*.sh; do
     sh -n "$script" || fail "shell configuration syntax: $script"
 done

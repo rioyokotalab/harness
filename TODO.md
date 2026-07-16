@@ -1971,7 +1971,15 @@ and the private capture was exact-unlinked. This completes all seven nodes.
 
 ### T-249 — Canonical aliases and simplified Bash startup workflow
 
-**Phase/status:** `ready-for-go` after the owner expanded the frozen plan to remove
+**Phase/status:** `executing` after the owner's explicit `go`. The local
+implementation checkpoint is complete: the tracked common policy,
+source-only module-stack interface, exact transactional startup/SSH normalizer,
+rollback path, focused transaction test, documentation, public-repository
+audit, and full phase-1 suite all pass. The suite ran with
+`openmpi/5.0-cuda-12.8`; its login-node `libcuda.so.1` component warnings were
+expected and the suite ended `phase-1 harness tests passed`. No live startup,
+SSH, quarantine, or deletion action has run. Next: publish this tested control
+plane, guarded-fast-forward every node, then run read-only per-node plans.
 `.pyenv`, `.venv`, and “all unrelated data.” D1-D6 remain resolved. The first
 two names are authorized in principle but their exact per-node paths,
 boundaries, identities, aggregate contents, and recovery status are not yet
