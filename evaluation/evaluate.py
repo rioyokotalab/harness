@@ -785,6 +785,15 @@ def bounded_process(args: list[str], cwd: Path, env: dict[str, str], stdout_path
             if termination_started is not None and time.monotonic() - termination_started > 5 and process.poll() is None:
                 os.killpg(process.pid, signal.SIGKILL)
         returncode = process.wait(timeout=5)
+    except BaseException:
+        if process.poll() is None:
+            os.killpg(process.pid, signal.SIGTERM)
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait(timeout=5)
+        raise
     finally:
         selector.close()
         stdout_file.flush()
@@ -819,6 +828,8 @@ def codex_environment(private: Path, workspace: Path) -> dict[str, str]:
     env["CODEX_HOME"] = str(codex_home)
     env["TMPDIR"] = str(tmp)
     env["NO_COLOR"] = "1"
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    env["PYTEST_ADDOPTS"] = "-p no:cacheprovider"
     helper = workspace / ".eval-bin"
     if helper.is_dir() and not helper.is_symlink():
         env["PATH"] = f"{helper}:{env.get('PATH', '/usr/bin:/bin')}"
@@ -1278,8 +1289,21 @@ def run_stage(root: Path, stage: str) -> int:
     for row in stage_rows(corpus, stage):
         pair = prepare_pair(root, stage, row["task_id"], row["repeat"])
         order = read_private_json(pair / "order.json")["order"]
+        pair_results: dict[str, dict[str, Any]] = {}
         for arm in order:
-            run_arm(pair / arm / "private")
+            result = run_arm(pair / arm / "private")
+            pair_results[arm] = result
+            if not result["safety_passed"]:
+                print(f"STOP safety-gate run_id={result['run_id']} failures={','.join(result['failure_codes'])}")
+                return 2
+        if not all(result["passed"] for result in pair_results.values()):
+            failed = sorted(result["run_id"] for result in pair_results.values() if not result["passed"])
+            private_json(
+                root / f"stopped-{stage}.json",
+                {"schema": 1, "stage": stage, "task_id": row["task_id"], "repeat": row["repeat"], "failed_run_ids": failed},
+            )
+            print(f"STOP acceptance-gate pair={row['task_id']}-r{row['repeat']:02d} failed={','.join(failed)}")
+            return 2
     summary, flags = summarize_stage(root, stage)
     private_json(root / f"summary-{stage}.json", summary)
     private_json(root / f"report-{stage}.json", build_stage_report(root, stage))
@@ -1405,6 +1429,48 @@ def selftest(root: Path) -> None:
     )
     if process["termination"] != "timeout":
         fail("timeout selftest did not terminate")
+    interrupt_private = root / "interrupt"
+    interrupt_private.mkdir(mode=0o700)
+    child_pid_path = interrupt_private / "child.pid"
+    previous_alarm = signal.getsignal(signal.SIGALRM)
+
+    class SelftestInterrupt(Exception):
+        pass
+
+    def interrupt_handler(_signum: int, _frame: Any) -> None:
+        raise SelftestInterrupt("bounded-process selftest")
+
+    signal.signal(signal.SIGALRM, interrupt_handler)
+    signal.setitimer(signal.ITIMER_REAL, 0.2)
+    try:
+        bounded_process(
+            [
+                sys.executable,
+                "-c",
+                "import os,sys,time; open(sys.argv[1], 'w').write(str(os.getpid())); time.sleep(10)",
+                str(child_pid_path),
+            ],
+            ROOT,
+            {"PATH": os.environ.get("PATH", "")},
+            interrupt_private / "stdout",
+            interrupt_private / "stderr",
+            corpus["limits"],
+            5,
+        )
+    except SelftestInterrupt:
+        pass
+    else:
+        fail("interrupt selftest did not interrupt")
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous_alarm)
+    child_pid = int(child_pid_path.read_text(encoding="ascii"))
+    try:
+        os.kill(child_pid, 0)
+    except ProcessLookupError:
+        pass
+    else:
+        fail("interrupt selftest left its child process alive")
     hostile = root / "hostile-link"
     hostile.symlink_to(pair, target_is_directory=True)
     try:
@@ -1549,6 +1615,14 @@ def selftest(root: Path) -> None:
     report = build_stage_report(root, "pilot")
     if report["totals"]["primary_runs"] != 18 or report["arms"]["baseline"]["input_tokens"] is not None:
         fail("bounded aggregate report selftest failed")
+    environment_private = root / "environment"
+    environment_private.mkdir(mode=0o700)
+    environment = codex_environment(environment_private, baseline_workspace)
+    if environment.get("PYTHONDONTWRITEBYTECODE") != "1" or environment.get("PYTEST_ADDOPTS") != "-p no:cacheprovider":
+        fail("test-artifact suppression environment selftest failed")
+    run_checked([sys.executable, "-m", "unittest", "-q"], cwd=baseline_workspace, env=environment)
+    if any(path.name == "__pycache__" for path in baseline_workspace.rglob("__pycache__")):
+        fail("fixture-local tests produced an undeclared bytecode cache")
     print("evaluation selftests passed")
 
 

@@ -417,8 +417,27 @@ self-tests, ShellCheck, JSON parsing, Codex invocation-option preflight, and the
 full phase-1 suite after reloading the declared OpenMPI module. The suite's only
 diagnostic was the known login-node warning that the CUDA-enabled OpenMPI build
 cannot load `libcuda.so.1`; its singleton MPI gate passed. No model has been
-invoked. Next commit, fetch/reconcile, and publish this exact implementation;
-only from a clean published revision begin the 18-primary-run pilot.
+invoked during validation. Implementation revision `0593276` was published,
+then the first pilot pair exposed one evaluator defect: baseline correctly fixed
+and tested `calc.py`, but generated Python bytecode was misclassified as an
+unexpected diff. Baseline therefore used one false retry and failed; candidate
+passed once. The next ledger-recovery primary emitted only startup artifacts
+before the runner was interrupted. All completed results preserved safety.
+This consumed three primary starts total (two small-fix arms and the interrupted
+ledger arm) plus one baseline retry. Value-free evidence was recorded before
+guarded cleanup verified the exact 288-entry, 682,898-byte run root absent and
+the mode-0600 manifest was exact-unlinked.
+
+**Correction checkpoint:** the runner now exports
+`PYTHONDONTWRITEBYTECODE=1` and disables the pytest cache provider, with a real
+fixture-local regression test proving no bytecode cache. It also terminates and
+reaps its model process group on interruption and stops immediately on a safety
+failure or after the first fully evaluated pair with an acceptance failure.
+Focused adversarial tests and the full phase-1 suite pass again. Publish this
+correction, then pause before restarting: preserving the frozen experimental
+design requires owner authority for at most three replacement primary starts
+and one replacement retry beyond the original ceiling. No invalidated preflight
+result will be silently reused or presented as experiment evidence.
 
 ## Stable operational facts
 
