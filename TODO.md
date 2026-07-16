@@ -287,50 +287,6 @@ successor at the next strictly future Sunday, private state consistency, and
 healthy interactive-login silence. Do not duplicate or cancel jobs merely for
 queue delay.
 
-### T-190 — Create automated mirrored-node onboarding skill
-
-**Status:** validating after implementation from the owner's explicit `go` on
-2026-07-16 while T-191 waits for its first Sunday runs. The skill, deterministic
-preflight/inventory helper, strict declaration contract, profile-derived fleet
-membership, discovery links, focused adversarial suite, guarded-delete suite,
-Restic-schedule suite, and full phase-1 suite all pass. This implementation did
-not onboard a live node.
-
-**Frozen decisions:** invocation is `onboard HOST`; the supplied alias is the
-entire discovery boundary and the workflow must not read/enumerate SSH config.
-Retain one owner-only checkpoint to create and externally retain a unique
-mode-0600 Restic password; agents validate metadata and pass the path only.
-First-run onboarding reaches full portable parity, approved storage migration,
-primary full-data check/restore, and an independently restored encrypted
-generation. Scheduling and unreviewed deletion remain excluded.
-
-**Execution outline:** scaffold and validate
-`shared/skills/onboard-mirrored-node`; reject malformed/reserved/proxy/service/
-managed IDs; collect a value-redacted native inventory; use PIE one question at
-a time only for unknown storage, hidden-state, replica, tool, or authority
-choices; generate profile, home/Restic rows, shell/environment adapters,
-sanitized fixture, documentation, and tests in narrow staging; derive managed
-fleet membership from strict profiles rather than hard-coded link counts; run
-all local/adversarial tests; commit locally without push; bootstrap by verified
-Git bundle; perform remote plan before transactional apply; create roots and
-migrate only approved high-growth paths with retained copies and guarded
-deletion; validate shell/Vim/SSH fragments, current managed links, doctor,
-idempotence, and interactive/non-interactive behavior; pause for the owner
-password step; complete both restore gates; clean exact temporary artifacts;
-and checkpoint final fleet evidence.
-
-**Authority/stop rules:** never inspect/copy/generate credentials, automate
-login UI, install as root, change site scheduler/runtime/driver configuration,
-clone projects/data, run jobs, push/publish, enable scheduling, delete
-unreviewed paths, or alter unrelated owner settings. Fail closed on identity,
-dirty source, schema collision, canonical-home drift, quota/filesystem
-uncertainty, symlink surprise, unsupported artifact, repository lock, source
-drift, or validation mismatch.
-
-**Next action:** independently inspect and commit the exact implementation,
-fetch/reconcile and publish under the owner's standing public-repository
-authority, then compact T-190 into the completed index with the commit pointer.
-
 ### T-181 — Acceptance-grade harness evaluation corpus
 
 **Status:** proposed; blocked on owner review; no implementation authorized.
@@ -400,4 +356,5 @@ transaction IDs, aggregate counts, hashes, or failure chronology is required.
 | T-187 | AL guarded plan/apply constrained to one persistent login session. |
 | T-188 | NFS-independent local replica at T4 passed full check/restore (`56c15a7`). |
 | T-189 | Ledger-backed PIE skill created and validated at `dfaea9e`. |
+| T-190 | Automated guarded mirrored-node onboarding skill completed, installed, tested, and published at `b5bb171`. No live node was onboarded. |
 | T-192 | AB2 quota deferral, primary, replica, restore, migration, and cleanup completed at `1c2050a` and `303938f`. |
