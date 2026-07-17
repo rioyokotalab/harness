@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-250.
+and compact historical pointers here. Next free ID: T-251.
 
 ## Current state
 
@@ -45,6 +45,69 @@ and compact historical pointers here. Next free ID: T-250.
   candidate table and audit evidence in the pre-compaction TODO history.
 
 ## Active tasks
+
+### T-250 — Seven-node top-level project and directory cleanup
+
+**Phase/status:** `interviewing` under the owner's request to examine every
+top-level home directory on local, AB, AB2, RI, AL, RC, and T4, describe it,
+interview one deletion decision at a time, and safely delete only approved
+targets. Scope includes hidden directories. A top-level symlink to a directory
+is not followed as one opaque deletion candidate: inventory its resolved
+boundary and interview each immediate child directory separately. Regular
+files and symlinks to files are out of scope.
+
+**Privacy and authority boundaries:** discovery may collect only path/type,
+owner/mode/link identity, bounded aggregate size, Git cleanliness and local
+tracking state, recent metadata, and narrow project-description clues from
+ordinary README/build manifests. Never open credential stores, private keys,
+authentication/session databases, arbitrary datasets, or Git remote URLs.
+Project names and the owner decision map remain private node-local state, not
+the public repository; this ledger records only aggregate progress and safety
+rules. No project, symlink, scheduler job, package, repository, or external
+service changes during planning/interviewing. Existing harness, website,
+control-plane, relocated application state, active-job sources/workdirs, and
+backup roots receive explicit dependency checks rather than an inferred delete
+recommendation.
+
+**Planning and interview sequence:** (1) obtain a complete sorted seven-node
+inventory of strict directories and directory symlinks; (2) for each symlink,
+bind its lexical and canonical target and inventory only immediate child
+directories; (3) classify known control/application/project roles, sizes,
+last-change evidence, Git dirty/ahead/untracked state, and active scheduler or
+process references without reading content; (4) deduplicate aliases that name
+the same device/inode so one object is never questioned twice; (5) freeze a
+stable private candidate order and ask exactly one keep/delete question at a
+time, recommending keep whenever purpose, recovery, active use, or ownership
+is uncertain; (6) after the last answer, audit the selected set, publish only
+aggregate scope here, enter `ready-for-go`, and wait for a fresh explicit go.
+
+**Frozen deletion design pending interview:** deletion requires an explicit
+per-candidate `delete` decision plus the final go. Immediately before action,
+revalidate canonical boundary, device/inode/owner/mode/link count, aggregate
+entry/byte count, Git/process/scheduler references, and recovery choice. Move
+each approved tree by exact same-filesystem atomic rename into its own retained
+mode-0700 quarantine boundary; restore it if any post-rename dependency test
+fails. Then create one short-lived mode-0600 guarded-delete manifest per
+canonical boundary, inspect every `TARGET` and exact emitted `NEXT`, apply
+within 15 minutes, verify protected anchors and target absence, and exact-clean
+only empty quarantine boundaries/manifests. Never combine nodes/boundaries,
+delete a symlink target through the link path, use a glob/list/loop remover, or
+run raw recursive deletion. No deletion has run. Next action: complete
+the one-question-at-a-time interview, beginning with the global recovery
+policy and then the frozen private candidate order.
+
+**Inventory checkpoint:** read-only discovery completed on all seven nodes:
+175 directory records resolve to 153 distinct decisions and 22 top-level
+directory-symlink parents. The resolved inventory contains 12 project trees,
+4 user-work/service trees, 6 previously obsolete trees, 11 regenerable cache
+trees, 36 application-state trees, 23 tooling trees, 47 active control trees,
+and 14 backup trees. Bounded full size walks completed for 125 candidates; 28
+large/control/backup candidates were intentionally skipped or timed out rather
+than expanding the probe. Twenty candidates are Git checkouts with local-only
+safety facts recorded. No duplicate canonical device/inode identity remains.
+The stable private inventory and decision journal are mode-0600 under the
+node-local T-250 state boundary; public Git intentionally contains no project
+names or individual decisions. No deletion has run.
 
 ### T-191 — Scheduler-native weekly primary snapshots
 
