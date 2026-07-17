@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-259.
+and compact historical pointers here. Next free ID: T-260.
 
 ## Current state
 
@@ -46,9 +46,36 @@ and compact historical pointers here. Next free ID: T-259.
 
 ## Active tasks
 
+### T-259 — Restore aliases in new tmux windows
+
+**Phase/status:** `implementation-complete/publish-pending` under the owner's
+explicit fix request. Tmux correctly uses `/bin/bash` with an empty default
+command, and the live local startup normalizer reports `.bashrc` normalized. The failure is the
+exported same-shell recursion sentinel: tmux global environment contains
+`HARNESS_INTERACTIVE_LOADED=1`, so every new window inherits it and
+`shell/interactive.sh` returns before defining aliases. A bounded child-shell
+probe reproduced `ls=file` and missing `ll`; clearing only the two harness-load
+sentinels produced `ls=alias` and `ll=alias`.
+
+**Proposed correction:** keep `HARNESS_INTERACTIVE_LOADED` and
+`HARNESS_REMOTE_SESSION_LOADED` as unexported shell-local guards, remove the
+stale exact tmux global sentinel, and add a regression proving a child/new-window
+shell reads the aliases while duplicate sourcing in one shell remains guarded.
+Do not alter unrelated tmux variables or startup content.
+
+**Implementation checkpoint:** both recursion guards are now unexported and
+remain effective within one shell. The focused regression proves the direct-SSH
+guard is likewise shell-local, duplicate profile sourcing retains the aliases,
+and a child interactive shell independently loads `ll`. The exact stale tmux
+global value was revalidated and unset; a temporary fresh window reported
+`ls=alias` and `ll=alias`, then that exact window was removed. Warning-level
+ShellCheck, focused session/agent/startup suites, the complete portable phase-1
+suite, diff, and public-audit gates pass. Commit and publish this as the final
+direct-main checkpoint before T-258 creates strict rulesets.
+
 ### T-258 — Activate and validate strict GitHub merge controls
 
-**Phase/status:** `waiting-owner-permission`; no GitHub setting has been
+**Phase/status:** `ready-final-preflight`; no GitHub ruleset has been
 changed. Resume T-194 only after a fresh authenticated preflight proves both
 repositories can be merged through the frozen policy. The exact tracked
 ruleset payloads and rollback remain unchanged.
@@ -72,6 +99,12 @@ that remains true, and do not infer authority to grant repository write access.
 After the CI repair is published and green, obtain explicit owner direction to
 upgrade `rioyokota2` to Write on both repositories, revalidate the effective
 permission, and only then create and verify the two rulesets and test PRs.
+
+The owner explicitly authorized both Write upgrades and accepted both
+repository invitations as `rioyokota2`. Authenticated post-acceptance preflight
+reports effective `write` in both repositories, zero pending Write invitations,
+and zero rulesets. The reviewer gate is satisfied; retain these facts through
+the final pre-ruleset shell fix, hosted CI pass, and ruleset-creation preflight.
 
 **Implementation checkpoint:** the evaluator now rejects any corpus baseline
 other than exact `d5b82cd32e779ec154db5f2721ec5f52dfcd7752` and reads guidance

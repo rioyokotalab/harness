@@ -4,6 +4,8 @@ The harness centralizes portable interactive behavior while retaining each
 site's required startup structure. `shell/profile.sh` owns the default editor
 and portable path/cache policy. `shell/interactive.sh` owns unlimited Bash
 history, the prompt, and the sorted aliases in `shell/common-aliases.sh`.
+Its duplicate-source sentinel is shell-local rather than exported, so every
+new child or tmux-window shell can load its own interactive policy.
 
 AB, AB2, and T4 deliberately source `shell/module-stack.sh` from `.bashrc`
 without an interactive-shell guard. Existing job scripts sometimes source

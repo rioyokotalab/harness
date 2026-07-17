@@ -40,6 +40,11 @@ profile_home=$TEMP_DIR/home
 git_log=$TEMP_DIR/git.log
 mkdir -p "$profile_home/harness/.git" "$profile_home/.local/bin"
 cp -R "$ROOT/shell" "$profile_home/harness/"
+cat >"$profile_home/.bashrc" <<'EOF'
+HARNESS_LOGICAL_HOST=local
+export HARNESS_LOGICAL_HOST
+. "$HOME/harness/shell/profile.sh"
+EOF
 cat >"$profile_home/.local/bin/git" <<'EOF'
 #!/bin/sh
 printf '%s\n' invoked >>"$LOGIN_GIT_LOG"
@@ -52,10 +57,22 @@ direct_output=$(env -u SHLVL -u IGNOREEOF -u TMUX \
     HOME="$profile_home" PATH=/usr/bin:/bin SSH_TTY=/dev/pts/test \
     SSH_AUTH_SOCK=/tmp/forwarded-agent.sock HARNESS_LOGICAL_HOST=ab \
     LOGIN_GIT_LOG="$git_log" bash --noprofile --norc -ic \
-    '. "$HOME/harness/shell/profile.sh"; printf "%s|%s\n" "$(type -t exit)" "${IGNOREEOF-unset}"' \
+    '. "$HOME/harness/shell/profile.sh"; if export -p | grep -q HARNESS_REMOTE_SESSION_LOADED; then scope=exported; else scope=local; fi; printf "%s|%s|%s\n" "$(type -t exit)" "${IGNOREEOF-unset}" "$scope"' \
     2>/dev/null)
-[ "$direct_output" = 'builtin|1' ] || fail "direct SSH policy"
+[ "$direct_output" = 'builtin|1|local' ] || fail "direct SSH policy"
 [ ! -e "$git_log" ] || fail "direct SSH startup invoked Git"
+
+alias_output=$(env -u HARNESS_INTERACTIVE_LOADED -u HARNESS_REMOTE_SESSION_LOADED \
+    HOME="$profile_home" PATH=/usr/bin:/bin HISTFILE=/dev/null \
+    bash --noprofile -ic '
+        first=$(type -t ll)
+        if export -p | grep -q HARNESS_INTERACTIVE_LOADED; then scope=exported; else scope=local; fi
+        . "$HOME/harness/shell/profile.sh"
+        second=$(type -t ll)
+        child=$(HISTFILE=/dev/null bash --noprofile -ic "type -t ll" 2>/dev/null)
+        printf "%s|%s|%s|%s\n" "$first" "$scope" "$second" "$child"
+    ' 2>/dev/null)
+[ "$alias_output" = 'alias|local|alias|alias' ] || fail "shell-local interactive guard"
 
 tmux_output=$(env -u SHLVL -u IGNOREEOF \
     -u HARNESS_INTERACTIVE_LOADED -u HARNESS_REMOTE_SESSION_LOADED \
@@ -77,4 +94,4 @@ nested_output=$(env -u IGNOREEOF -u TMUX \
 [ "$nested_output" = 'builtin|unset' ] || fail "nested-shell exclusion"
 [ ! -e "$git_log" ] || fail "nested startup invoked Git"
 
-printf '%s\n' 'PASS: remote-session lifecycle contract'
+printf '%s\n' 'PASS: shell-session lifecycle contract'

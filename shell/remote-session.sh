@@ -8,7 +8,6 @@ case $- in *i*) ;; *) return 0 ;; esac
 [ "${SHLVL:-0}" -le 1 ] || return 0
 [ -z "${HARNESS_REMOTE_SESSION_LOADED:-}" ] || return 0
 HARNESS_REMOTE_SESSION_LOADED=1
-export HARNESS_REMOTE_SESSION_LOADED
 
 IGNOREEOF=1
 export IGNOREEOF
