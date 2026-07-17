@@ -267,9 +267,14 @@ rule forbids an automatic retry. Framework lock commit `6bcadab` is published;
 the verified immutable x86-64 and AArch64 wheelhouses are 2.6 GiB and 2.7 GiB,
 with manifest hashes `b5961b56df9301d3fc19234e5c6679ed186e5c49d1f5d1796a656fd3dcd626e6`
 and `ed070849ba8da9fcf34e574a0f26e6adf510ffa7a8722201af4ecf7a64346988`.
-Current next action is to retain T4 monitoring, distribute the two verified
-wheelhouses without mutation, and run the seven single-device gates per ready
-node; do not change source-contract paths while T4 remains queued.
+Both wheelhouses are now independently verified and immutable at every declared
+persistent root. Local `91513`, RI `7182`, AL `4228772`, RC `211836`, and T4
+`8188301` pass all seven single-device gates with scheduler/result zero and
+guarded cleanup; ABCI retries `2046732.pbs1` and `2046731.pbs1` are captured
+queued and must not be duplicated. Website task T-186 is complete at `e0e9686`;
+hosted CI run `29567532337` passes and no deployment ran. Current next action
+is exact monitoring of the two ABCI framework jobs, T4 MPI `8185316`, and AL
+cleanup allocation `4228581`, followed by public evidence/status closeout.
 
 ### T-250 — Seven-node top-level project and directory cleanup
 
@@ -1186,10 +1191,15 @@ x86-64 is 2.6 GiB with manifest hash
 `b5961b56df9301d3fc19234e5c6679ed186e5c49d1f5d1796a656fd3dcd626e6`;
 AArch64 is 2.7 GiB with manifest hash
 `ed070849ba8da9fcf34e574a0f26e6adf510ffa7a8722201af4ecf7a64346988`.
-Every artifact file is mode 0444 and each directory mode 0555. Distribute
-without mutation, then run all seven gates independently on each ready node;
-never install into base home, mutate an artifact, or infer distributed or
-performance readiness.
+Every artifact file is mode 0444 and each directory mode 0555. All seven nodes
+now hold and independently verify the matching immutable wheelhouse. Local,
+RI, AL, RC, and T4 have terminal scheduler/result-zero evidence for exact
+Python/architecture selection, artifact and lock hashes, Torch/CUDA versions,
+one visible CUDA device, finite tensor arithmetic, the tracked tiny-LM update,
+and guarded cache/home cleanup. AB and AB2 have completed the same functional
+surface in preserved earlier results; their corrected zero-residue retries are
+queued as `2046732.pbs1` and `2046731.pbs1`. Do not duplicate them, install into
+base home, mutate an artifact, or infer distributed or performance readiness.
 
 ### T-207 — Scheduler-native MPI correctness gate
 
