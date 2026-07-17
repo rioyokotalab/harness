@@ -15,13 +15,16 @@ residue-free scheduler verification interface; T-251 later authorized one
 bounded actual submission instead. That local attempt passed its source
 contract but stopped at the unavailable post-restart `mpicc` route and is not
 retried. T-237's six remote routes now pass, including RC's narrow
-`--hint=nomultithread` v2 correction. The former local hold is cleared, and
-exact local job `91581` is captured pending for resources.
+`--hint=nomultithread` v2 correction. The former local hold is cleared. Pending
+Threadripper job `91581` was exactly canceled under the owner's relocation
+direction; replacement job `91590` completed on `epyc-7502` with
+scheduler/result zero, 16 physical cores visible, two pinned workers, and zero
+job-scoped residue.
 
-T-240 adds one explicitly deferred successor: after T-237 finishes, validate
-allocation-level NUMA memory policy/locality without turning it into a
-benchmark. Login-surface tool presence is recorded now, but no login NUMA
-count is a compute-node placement claim.
+T-240's explicitly deferred successor is now safe to plan: validate allocation-
+level NUMA memory policy/locality without turning it into a benchmark. Login-
+surface tool presence is recorded now, but no login NUMA count is a compute-
+node placement claim and no Q10 allocation has been submitted.
 
 T-251 selected CPython 3.12 plus PyTorch 2.12.1/CUDA 13.0 as the first
 framework release. Two immutable architecture-matched wheelhouses and all

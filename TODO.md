@@ -54,11 +54,12 @@ already supplied the missing choices and executed their bounded routes. The
 queue now retains the terminal local two-node MPI attempt, the resolved full-
 node AB/AB2/T4 MPI decisions and outcomes, the selected framework release, and
 the completed dual-architecture wheelhouse plus seven-node single-device gate
-as complete evidence. Q3 remains the one executing item through captured local
-job `91581`; Q10 remains dependent on Q3. Q6 and Q8 retain their named project
-or site-environment gates. Focused queue validation and public-audit safety
-tests pass. No scheduler, package, artifact, project, or external setting was
-changed by this reconciliation.
+as complete evidence. At this reconciliation checkpoint Q3 remained the one
+executing item through captured local job `91581` and Q10 remained dependent
+on it; T-237 records the later Epyc completion and Q10 release. Q6 and Q8 retain
+their named project or site-environment gates. Focused queue validation and
+public-audit safety tests pass. No scheduler, package, artifact, project, or
+external setting was changed by this reconciliation.
 
 ### T-251 — Resolve owner and site-support gates
 
@@ -2074,8 +2075,8 @@ No dry run, temporary script, job, or scheduler mutation occurred.
 
 ### T-237 — Scheduler-allocation CPU affinity and topology gate
 
-**Phase/status:** `executing`; all six remote nodes pass and local job `91581`
-is captured pending for resources. Add a portable Linux C++20 gate that
+**Phase/status:** `complete`; all seven nodes pass. Replacement local job
+`91590` completed on `epyc-7502`. Add a portable Linux C++20 gate that
 reads only the allocation process's CPU affinity mask and
 sysfs topology, requires at least two distinct physical cores, and proves two
 workers can be pinned to separate allowed cores. Emit aggregate counts only;
@@ -2157,6 +2158,47 @@ write occurred and retry was safe. Native `git rev-parse 8c36d8b` resolved the
 actual implementation revision as
 `8c36d8b4a29992a80ed4a38efc4b08ad960423af`, which is the only revision the
 runnable v2 wrapper may accept.
+
+Published runnable commit `843edf0` passed the corrected exact source contract,
+focused readiness tests, warning-level ShellCheck, and public-audit safety. A
+later pre-cancel check also stopped before scheduler action when an unverified
+expanded runnable commit ID did not match `HEAD`; native `git rev-parse
+843edf0` resolved the exact published value
+`843edf0f6c431f51cab152c05d49e4200eaca7da`, after which every pre-cancel gate
+passed. Exact `scancel 91581` reconciled the owner/name-matched old job as
+`CANCELLED` with exit `0:0`; its generated Ybatch script was already absent.
+Fresh `sinfo` then reported `epyc-7502` idle with 64 CPUs and no GPU. The v2
+preflight found its fixed result absent, zero exact-name jobs, and zero capture
+temporaries. Native Ybatch accepted exactly one replacement, `91590`, and the
+immediate query matched owner `rioyokota`, name `t237aepyc2`, partition
+`epyc-7502`, and pending state with no wait reason. Monitor only `91590`; do not
+submit another replacement. Require scheduler/result agreement, two distinct
+physical cores, two successfully pinned workers, mode-0600 result metadata,
+and zero job-scoped residue before closing T-237/Q3.
+
+**Local outcome:** job `91590` completed on node/partition `epyc-7502` with
+scheduler exit `0:0`. Its regular owner mode-0600 single-link v2 result passed
+the frozen source contract and reported 16 allowed CPUs, 64 online CPUs, 16
+physical cores, and exactly two successfully pinned workers, followed by
+PASS/result status zero. The first result postflight expected two captured
+source-contract lines and stopped safely when it found one: the wrapper's
+pre-exec contract intentionally writes to scheduler `/dev/null` before the
+generic gate opens its private capture, so the result contract contains one
+line. The corrected one-line validation passed. Exact capture/build-prefix and
+generated-script checks report zero residue; the generated Ybatch script was
+already absent. T-237/Q3 is complete without a benchmark or topology-
+performance claim. Q10 is now safe to plan but received no submission under
+this relocation request. Focused affinity/HPC/queue/public-audit tests pass.
+The portable full suite stops at the pre-existing evaluation freeze check:
+live `.codex/AGENTS.md` changed in committed recovery work `f391e83`, while
+T-181 intentionally names baseline revision `d5b82cd`; no T-237 path affects
+that comparison. Preserve this exact failure for a separate evaluation-policy
+decision rather than weakening the frozen experiment during scheduler work.
+The final pre-push refresh stopped before Git network access because both the
+process socket is unset and tmux's global `SSH_AUTH_SOCK` no longer names a
+usable current-user Unix socket. The local outcome commit was therefore not
+pushed; retrying fetch/push is safe after the owner restores the agent, and
+must again bind only the revalidated socket to those exact Git commands.
 
 ### T-238 — Fail-closed scheduler job collision preflight
 
