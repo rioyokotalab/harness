@@ -4,12 +4,11 @@ The canonical queue is
 [`audits/llm-hpc-next-actions-2026-07-17.json`](audits/llm-hpc-next-actions-2026-07-17.json).
 It consolidates only unfinished or newly proposed readiness work after T-234.
 
-First, preserve and monitor local jobs `91220` (numerical) and `91240`
-(checkpoint/restart). Both remain validly captured; ordinary resource/priority
-delay does not authorize duplication. T-242 confirms they are immediately
-eligible, unconstrained small jobs under ordinary site resource/priority wait;
-the local interface still supplies no safe reason to replace or bypass them.
-Safe engineering that does not require an
+The two formerly pending local gates are complete after the owner's T-251
+relocation direction. Old Threadripper jobs `91220` (numerical) and `91240`
+(checkpoint/restart) were exactly canceled. Corrected native Epyc jobs `91472`
+and `91474` completed with scheduler/result zero, private PASS artifacts, and
+zero job-scoped residue. Do not repeat them. Safe engineering that does not require an
 owner choice is then limited to a scheduler cpuset/topology gate and a native
 test-only review of the local two-node MPI request. T-236 subsequently found no
 residue-free scheduler verification interface, so that second item is now
@@ -18,8 +17,7 @@ authorized. T-237 has implemented and locally validated the first gate; its
 source is immutable and its seven bounded routes are ready for collision-
 checked native submission. Six remote jobs are now captured: RI, AL, and T4
 pass; AB and AB2 are queued; and RC's diagnostic SMT placement failure has a
-narrow `--hint=nomultithread` v2 correction. Local remains held behind its two
-older pending jobs.
+narrow `--hint=nomultithread` v2 correction. The former local hold is cleared.
 
 T-240 adds one explicitly deferred successor: after T-237 finishes, validate
 allocation-level NUMA memory policy/locality without turning it into a

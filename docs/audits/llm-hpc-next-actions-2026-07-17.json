@@ -2,18 +2,20 @@
   "generated_date": "2026-07-17",
   "items": [
     {
-      "action": "monitor local numerical job without replacement",
-      "evidence": "T-210",
+      "action": "retain verified local numerical evidence without repeating the job",
+      "evidence": "T-210,T-251",
       "id": "Q1",
-      "job": "91220",
-      "status": "captured_pending"
+      "job": "91472",
+      "replaces": "91220",
+      "status": "complete"
     },
     {
-      "action": "monitor local checkpoint/restart job without replacement",
-      "evidence": "T-217",
+      "action": "retain verified local checkpoint/restart evidence without repeating the job",
+      "evidence": "T-217,T-251",
       "id": "Q2",
-      "job": "91240",
-      "status": "captured_pending"
+      "job": "91474",
+      "replaces": "91240",
+      "status": "complete"
     },
     {
       "action": "test scheduler cpuset and topology binding without repeating OpenMP arithmetic",
@@ -72,7 +74,7 @@
   ],
   "schema": 1,
   "status_vocabulary": [
-    "captured_pending",
+    "complete",
     "executing",
     "blocked_by_scheduler_interface",
     "owner_gated",

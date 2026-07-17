@@ -240,8 +240,19 @@ single-link generated temporary script if it remains, and submit the two
 replacement jobs through Ybatch's declared `epyc-7502_1` resource, one at a
 time. Capture and monitor only each returned, owner/name-matched job ID; never
 touch unrelated job `90939`, bypass Ybatch, change priority, or reuse a `v1`
-result. Current next action is to implement and test those two versioned job
-routes before the first exact cancellation.
+result. That recovery is complete. The first `v2` Epyc requests, `91468` and
+`91469`, exposed a task-shape conflict between an explicit one-task override
+and the native resource's eight-task allocation; both remained pending, were
+exactly canceled, and produced no result. The corrected `v3` wrappers preserve
+the native task count. Numerical job `91472` and checkpoint/restart job `91474`
+then ran on `epyc-7502`, completed with scheduler/result status zero, and
+published private mode-0600 PASS results. The numerical output repeated the
+frozen `-0x1.b6ap+2` value identically. Checkpoint/restart reproduced frozen
+state `0x7f7cadf8669fc055`; its exact checkpoint, both generated job scripts,
+and both guarded scratch trees are absent. Source contracts passed against
+commit `afef3d64a93696d1a55019ac28395d94ed83e3e6`. Current next action returns
+to frozen execution step 2: implement the remaining documentation/status,
+framework, and four bounded MPI routes before fleet distribution.
 
 ### T-250 — Seven-node top-level project and directory cleanup
 
@@ -1296,6 +1307,15 @@ RI, AL, RC, and T4 already report scheduler/result zero and the identical frozen
 hex result twice. Local and both ABCI jobs remain validly pending; monitor only
 these captured IDs and never infer failure or resubmit from queue delay.
 
+**Local recovery:** after the owner explicitly directed use of an available
+node, old Threadripper attempt `91220` was reconciled and exactly canceled.
+The first Epyc request `91468` never started because its explicit one-task
+override conflicted with the native eight-task resource shape; it was also
+exactly canceled with no result. Corrected Ybatch job `91472` ran on
+`epyc-7502`, completed `0:0`, and published the frozen identical numerical
+result with private mode 0600 and zero scratch/job-script residue. T-210 remains
+executing only for its already captured ABCI routes; do not repeat local.
+
 ### T-211 — Atomic checkpoint publication gate
 
 **Phase/status:** `complete` after T-209. Extend the storage gate with a
@@ -1482,7 +1502,7 @@ complete.
 
 ### T-217 — Portable checkpoint/restart equivalence gate
 
-**Phase/status:** `executing` after T-211 and T-216. Add a small tracked C++20
+**Phase/status:** `complete` after T-211 and T-216. Add a small tracked C++20
 state machine with a versioned, architecture-neutral checkpoint format and
 integrity checksum. In one bounded scheduler allocation, compare an
 uninterrupted deterministic integer run against two separate processes: one
@@ -1539,8 +1559,16 @@ same frozen final state with exact checkpoint cleanup. AB2 and local remain the
 only T-217 queued jobs.
 
 AB2 `2045092.pbs1` subsequently reached scheduler/result zero with the same
-frozen state and no checkpoint residue. Local `91240` is the sole remaining
-T-217 job; keep monitoring it without replacement.
+frozen state and no checkpoint residue. After cluster recovery, the owner
+explicitly directed relocation of local `91240` from the allocated
+Threadripper partition. It was exactly canceled. First Epyc request `91469`
+never started because its explicit one-task override conflicted with the
+native eight-task resource shape and was exactly canceled without a result.
+Corrected Ybatch job `91474` ran on `epyc-7502`, completed `0:0`, reproduced
+the same frozen state, published a private mode-0600 PASS result, and left no
+checkpoint, guarded scratch, or generated job-script residue. All seven routes
+now have scheduler/result-zero evidence; T-217 is complete within its stated
+portable restart scope.
 
 ### T-218 — Fail-closed native scheduler submission reconciliation
 

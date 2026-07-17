@@ -13,7 +13,8 @@ assert [item["id"] for item in items] == [f"Q{i}" for i in range(1, 11)]
 assert len({item["id"] for item in items}) == len(items)
 allowed = set(x["status_vocabulary"])
 assert all(item["status"] in allowed for item in items)
-assert {item.get("job") for item in items if item["status"] == "captured_pending"} == {"91220", "91240"}
+assert {item.get("job") for item in items if item["status"] == "complete"} == {"91472", "91474"}
+assert {item.get("replaces") for item in items if item["status"] == "complete"} == {"91220", "91240"}
 assert next(item for item in items if item["id"] == "Q9")["requires"] == ["Q5"]
 assert next(item for item in items if item["id"] == "Q10")["requires"] == ["Q3"]
 assert sum(item["status"] == "executing" for item in items) == 1
