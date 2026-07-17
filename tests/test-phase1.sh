@@ -57,6 +57,7 @@ for script in \
     "$ROOT/shared/skills/guarded-bulk-delete/scripts/guarded-delete" \
     "$ROOT/shared/skills/onboard-mirrored-node/scripts/onboard-preflight" \
     "$ROOT/tests/guarded-test-cleanup.sh" \
+    "$ROOT/tests/test-github-rulesets.sh" \
     "$ROOT/tests/test-remote-session.sh" \
     "$ROOT/tests/test-ssh-agent-profile.sh" \
     "$ROOT/tests/smoke/debugger-readiness.sh" \
@@ -85,6 +86,8 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "SSH agent profile focused suite"
 "$ROOT/tests/test-remote-session.sh" >/dev/null ||
     fail "remote-session focused suite"
+"$ROOT/tests/test-github-rulesets.sh" >/dev/null ||
+    fail "GitHub ruleset payload focused suite"
 
 "$ROOT/tests/test-restic-schedule.sh" >/dev/null ||
     fail "Restic schedule focused suite"

@@ -106,6 +106,15 @@ reports effective `write` in both repositories, zero pending Write invitations,
 and zero rulesets. The reviewer gate is satisfied; retain these facts through
 the final pre-ruleset shell fix, hosted CI pass, and ruleset-creation preflight.
 
+The first authenticated creation attempt stopped with HTTP 422 before creating
+anything because tracked rule 3 used invalid REST type `linear_history`.
+Post-failure inspection proves both repositories still have zero rulesets and
+zero active `main` rules. GitHub's v2026-03-10 schema names the rule
+`required_linear_history`; correct both public payloads, add an exact payload
+regression, and republish/revalidate before one transactional retry. The failed
+rollback handler also treated error JSON as a possible ID; on retry, assign a
+rollback identity only after a successful request and strict numeric check.
+
 **Implementation checkpoint:** the evaluator now rejects any corpus baseline
 other than exact `d5b82cd32e779ec154db5f2721ec5f52dfcd7752` and reads guidance
 from that immutable commit without comparing today's live guidance. Complete
