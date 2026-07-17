@@ -389,7 +389,7 @@ RI_DIRCOLORS_AFTER = """if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
 fi
 """
-RI_TAIL_BEFORE = """# colored GCC warnings and errors
+RI_TAIL_BEFORE = r"""# colored GCC warnings and errors
 #export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
 # some more ls aliases
@@ -399,7 +399,7 @@ alias l='ls -CF'
 
 # Add an "alert" alias for long running commands.  Use like so:
 #   sleep 10; alert
-alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\\s*[0-9]\\+\\s*//;s/[;&|]\\s*alert$//'\'')"'
+alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
 
 # Alias definitions.
 # You may want to put all your additions into a separate file like
@@ -520,7 +520,8 @@ def validate_normalized(host, relpath, data):
         forbidden.extend(["alias a=", "alias ducks=", "alias grep=", "alias la=",
                           "alias ll=", "alias lla=", "alias ls=", "alias v="])
         if host in ("ab", "ab2", "t4"):
-            if text.count("shell/module-stack.sh") != 1:
+            # The readable-file guard and source command each name the helper.
+            if text.count("shell/module-stack.sh") != 2:
                 raise Refusal("module-stack hook mismatch for %s" % host)
         if host == "ri":
             forbidden.extend(["alias alert=", "alias egrep=", "alias fgrep=",
