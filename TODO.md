@@ -48,11 +48,11 @@ and compact historical pointers here. Next free ID: T-252.
 
 ### T-251 — Resolve owner and site-support gates
 
-**Phase/status:** `ready-for-go` under the owner's 2026-07-17 request to resolve
+**Phase/status:** `executing` after the owner's explicit 2026-07-17 `go` for
 all owner-gated and site-support-gated TODO issues. This is one consolidated
 Plan–Interview–Execute task; planning and interviewing are read-only except for
-ledger checkpoints. After every decision is frozen, set `ready-for-go` and
-wait for a fresh explicit go before any target change or external write.
+ledger checkpoints. The frozen eight-decision bundle below is the complete
+execution authority; any new material choice returns to interviewing.
 
 **Scope and current inventory:** reconcile (1) T-194's harness/website GitHub
 merge controls and deferred website CI; (2) T-196's five backup-lifecycle
@@ -224,8 +224,24 @@ policy now, while their live phases remain behind measured T-191 stability and
 later exact destructive approvals. It does not create a generic D7 project
 environment, background framework updater, support message, credential change,
 or performance run. Ruleset activation stops rather than locking the owner out
-if no eligible reviewer exists. Current next action: wait for one explicit
-`go`, then reconstruct this frozen bundle from disk and begin step 1.
+if no eligible reviewer exists. Execution checkpoint: the explicit `go` has
+been received. Initial revalidation found harness exactly synchronized with
+`origin/main`, the website clean and still three ledger-only commits ahead, and
+the local package mount and Ybatch tools restored. All three `thrp_1` nodes are
+allocated: captured numerical job `91220` remains `PENDING/Resources` and
+checkpoint-restart job `91240` remains `PENDING/Priority`, with neither fixed
+`v1` result present. The owner then explicitly directed relocation to an
+available node. This amends only the local pending-job route: add committed,
+source-contract-enforced Epyc 7502 wrappers with distinct job names and `v2`
+results, validate and push them, and recheck collisions before any scheduler
+mutation. Then cancel exactly `91220` and `91240` one at a time, reconcile each
+as absent or terminal, exact-unlink only an unchanged regular owner-owned
+single-link generated temporary script if it remains, and submit the two
+replacement jobs through Ybatch's declared `epyc-7502_1` resource, one at a
+time. Capture and monitor only each returned, owner/name-matched job ID; never
+touch unrelated job `90939`, bypass Ybatch, change priority, or reuse a `v1`
+result. Current next action is to implement and test those two versioned job
+routes before the first exact cancellation.
 
 ### T-250 — Seven-node top-level project and directory cleanup
 
