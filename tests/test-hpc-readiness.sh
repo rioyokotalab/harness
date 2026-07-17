@@ -16,11 +16,12 @@ NUMERICAL_EPYC=$ROOT/tests/smoke/jobs/local-numerical-epyc.slurm
 COMPUTE_DEBUG_JOB=$ROOT/tests/smoke/jobs/compute-debugger-readiness.sh
 AFFINITY_JOB=$ROOT/tests/smoke/jobs/affinity-readiness.sh
 AFFINITY_LOCAL=$ROOT/tests/smoke/jobs/local-affinity.slurm
+AFFINITY_EPYC=$ROOT/tests/smoke/jobs/local-affinity-epyc.slurm
 
 bash -n "$JOB" "$LOCAL" "$CACHE_JOB" "$CACHE_LOCAL" "$ACCEL_JOB" "$ACCEL_LOCAL" \
     "$MPI_JOB" "$MPI_LOCAL" "$NUMERICAL_JOB" "$NUMERICAL_LOCAL" \
     "$NUMERICAL_EPYC" "$COMPUTE_DEBUG_JOB" \
-    "$AFFINITY_JOB" "$AFFINITY_LOCAL"
+    "$AFFINITY_JOB" "$AFFINITY_LOCAL" "$AFFINITY_EPYC"
 grep -Fx '#YBATCH -r thrp_1' "$LOCAL" >/dev/null
 grep -Fx '#SBATCH --time=00:05:00' "$LOCAL" >/dev/null
 grep -F 'uenv run prgenv-gnu/25.11:v1 --view=default' "$JOB" >/dev/null
@@ -76,6 +77,14 @@ grep -F 't213-debugger-compute-$host-$run_tag.out' "$COMPUTE_DEBUG_JOB" >/dev/nu
 grep -F 'HARNESS_LOGICAL_HOST=$host' "$COMPUTE_DEBUG_JOB" >/dev/null
 grep -Fx '#YBATCH -r thrp_1' "$AFFINITY_LOCAL" >/dev/null
 grep -Fx '#SBATCH --cpus-per-task=2' "$AFFINITY_LOCAL" >/dev/null
+grep -Fx '#YBATCH -r epyc-7502_1' "$AFFINITY_EPYC" >/dev/null
+grep -Fx '#SBATCH --cpus-per-task=2' "$AFFINITY_EPYC" >/dev/null
+grep -Fx '#SBATCH --job-name=t237aepyc2' "$AFFINITY_EPYC" >/dev/null
+if grep -F '#SBATCH --ntasks=' "$AFFINITY_EPYC" >/dev/null; then
+    printf '%s\n' 'FAIL: Epyc affinity job overrides native task count' >&2
+    exit 1
+fi
+grep -F 'tests/smoke/jobs/local-affinity-epyc.slurm' "$AFFINITY_EPYC" >/dev/null
 grep -F 'tests/smoke/jobs/source-contract.sh' "$AFFINITY_JOB" >/dev/null
 grep -F '"$build/affinity" 2' "$AFFINITY_JOB" >/dev/null
 for source in cpu.c cpu.cpp cpu.f90; do
@@ -88,7 +97,7 @@ if grep -E 'rm[[:space:]]+(-[^[:space:]]*)*[rR]|--recursive|rsync[[:space:]].*--
     "$JOB" "$LOCAL" "$CACHE_JOB" "$CACHE_LOCAL" "$ACCEL_JOB" "$ACCEL_LOCAL" \
     "$MPI_JOB" "$MPI_LOCAL" "$NUMERICAL_JOB" "$NUMERICAL_LOCAL" \
     "$NUMERICAL_EPYC" \
-    "$COMPUTE_DEBUG_JOB" "$AFFINITY_JOB" "$AFFINITY_LOCAL" >/dev/null; then
+    "$COMPUTE_DEBUG_JOB" "$AFFINITY_JOB" "$AFFINITY_LOCAL" "$AFFINITY_EPYC" >/dev/null; then
     printf '%s\n' 'FAIL: unsafe cleanup in readiness job' >&2
     exit 1
 fi

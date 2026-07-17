@@ -2134,6 +2134,21 @@ do not replace it for queue delay. On terminal state, require scheduler/result
 agreement, the frozen source contract, mode-0600 private result metadata, and
 zero job-scoped residue before closing T-237/Q3 or starting Q10.
 
+**Owner-authorized Epyc relocation:** a fresh native `sinfo -N` query shows
+`epyc-7502` idle, while captured job `91581` remains pending for resources on
+`threadripper-3960x` with one task and two CPUs. The already proven Ybatch
+resource is `epyc-7502_1`; prior T-210/T-217 evidence requires preserving its
+native eight-task shape rather than forcing `--ntasks=1`. Add and publish a
+distinct `t237aepyc2`/v2 wrapper that requests two CPUs per task, includes
+itself and every executable input in the submitted source contract, and writes
+only distinct result `t237-affinity-local-v2.out`. After the exact revision is
+clean and pushed, revalidate old-job identity plus v1/v2 result/temp/name
+collisions, cancel only `91581`, prove it absent or terminal, exact-unlink only
+an unchanged regular owner-owned generated Ybatch script if one remains, then
+submit the v2 wrapper once. Accept only one parsed Slurm ID that immediately
+matches owner and name; monitor only that replacement. No other job, resource,
+priority, result, or scheduler state is authorized to change.
+
 ### T-238 — Fail-closed scheduler job collision preflight
 
 **Phase/status:** `complete`, derived from RI's transient T-237 Slurm/DNS

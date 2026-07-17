@@ -1,5 +1,5 @@
 # host|scheduler|billing_flag|billing_value|queue_flag|queue_value|resource|minimum_visible_cpus|environment|duration|job_name
-local|ybatch|none|none|none|none|ybatch:thrp_1,slurm:cpus-per-task=2|2|base|00:05:00|t237alocal
+local|ybatch|none|none|none|none|ybatch:epyc-7502_1,slurm:native-tasks,cpus-per-task=2|2|base|00:05:00|t237aepyc2
 ab|pbspro|-P|gag51395|-q|rt_HC|pbs:select=1|2|module:gcc/15.2.0|00:05:00|t237aab
 ab2|pbspro|-P|gah51624|-q|rt_HC|pbs:select=1|2|module:gcc/15.2.0|00:05:00|t237aab2
 ri|slurm|--account|rkp00015|--partition|gpu|slurm:nodes=1,ntasks=1,cpus-per-task=2,gres=none|2|base|00:05:00|t237ari
