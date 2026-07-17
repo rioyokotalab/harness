@@ -48,7 +48,7 @@ and compact historical pointers here. Next free ID: T-258.
 
 ### T-257 — Remove automatic Git work from shell lifecycle
 
-**Phase/status:** `executing` under the owner's explicit request. Remove the
+**Phase/status:** `complete` under the owner's explicit request. Remove the
 remote-session login fetch/fast-forward hook and the shell-exit staged
 commit/push prompt. Repository synchronization and publication must instead be
 explicit actions taken after inspecting the checkout. Retain the independent
@@ -65,6 +65,22 @@ small tracked change, then guarded-fleet-sync the exact clean revision so
 future logins on all managed nodes use it. Recovery is an ordinary revert of
 that revision; already-running shells may retain their previously loaded
 function definitions until replaced or explicitly unset.
+
+**Outcome:** commit `e52a3d0` removes both automatic Git lifecycle hooks while
+retaining the direct-SSH Ctrl-D guard and unrelated remote Codex/startup
+behavior. The dedicated regression proves a fresh direct SSH shell reports
+`builtin|1`, tmux and nested shells report `builtin|unset`, and a fake Git
+binary is never invoked during startup even with a checkout and apparent
+forwarded agent. Bash/sh syntax, warning-level ShellCheck, focused startup,
+SSH-agent, public-audit, and fleet-sync suites pass. The aggregate suite reaches
+only its pre-existing frozen evaluation-baseline mismatch before stopping.
+All six clean remotes were actually at common ancestor `545e261`, so guarded
+fleet-sync correctly rejected the initially assumed source and then
+fast-forwarded the verified common-ancestor range. A post-apply probe briefly
+observed AB2's in-flight exact transfer name; no manual cleanup was performed,
+and independent metadata/HEAD checks plus a repeat plan prove all six remotes
+clean at exact `e52a3d0`, every transfer artifact absent, and six idempotent
+`KEEP` results.
 
 ### T-256 — Preflight GitHub API and repository-settings capability
 
