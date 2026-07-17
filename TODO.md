@@ -48,7 +48,7 @@ and compact historical pointers here. Next free ID: T-252.
 
 ### T-251 — Resolve owner and site-support gates
 
-**Phase/status:** `interviewing` under the owner's 2026-07-17 request to resolve
+**Phase/status:** `ready-for-go` under the owner's 2026-07-17 request to resolve
 all owner-gated and site-support-gated TODO issues. This is one consolidated
 Plan–Interview–Execute task; planning and interviewing are read-only except for
 ledger checkpoints. After every decision is frozen, set `ready-for-go` and
@@ -171,18 +171,61 @@ scientific-library or MPI-enabled project environment until a named workload
 supplies its language bindings, HDF5/NetCDF/FFTW/BLAS requirements, threading/
 integer ABI, compiler, MPI ABI, and numerical contract. The existing bounded
 login-surface evidence remains discovery only; this defer does not block D6's
-framework artifacts or single-device gates. D8 authorize only the later collision-checked local two-node MPI correctness
-job while deferring AB/AB2/T4 full-node spend until a concrete distributed
-workload exists. CUDA 13.x requires driver 580 or newer and every recorded
+framework artifacts or single-device gates. D8 is resolved against the
+recommendation: do not wait for a project workload before running the bounded
+full-node tests. After the final go, implement, validate, and submit at most
+once each on AB (`gag51395`, `rt_HF`, `select=2:mpiprocs=1`), AB2
+(`gah51624`, same resource), and T4 (`jh250019`, `node_f=2`), all for five
+minutes at default priority with one rank per node. The local `thrp_1`, two-
+node/two-rank job is also authorized, but only after `ybatch` and the nodes
+recover and the captured local jobs no longer create the recorded duplicate-
+load constraint; never bypass resource accounting with `/usr/bin/sbatch`.
+Reuse the tracked distinct-host gate and shared executable visibility contract,
+require source immutability, exact world size two on two distinct nodes,
+scheduler/result zero, one reconciled native job ID, and zero job-scoped
+residue. AL's existing pass is not repeated; RI/RC remain excluded by D7.
+These are correctness tests only, with no performance, scaling, collective,
+GPU-aware MPI, or production-fabric claim. CUDA 13.x requires driver 580 or newer and every recorded
 fleet driver meets that threshold; live runtime validation remains mandatory.
 
 The backup pilot-node choice remains deferred until comparable repository
 size/duration evidence exists. The exact first live `forget` and later separate
 `prune` commands remain distinct future destructive approvals after T-191's
 stabilization gates; this interview cannot pre-authorize them. D6 does not
-authorize a registry pull/build, and D8 cannot submit while local recovery and
-the captured jobs still gate the queue. Current next action: ask D8 only and
-checkpoint its answer, then audit the complete register for `ready-for-go`.
+authorize a registry pull/build before the final go. D8's AB/AB2/T4 routes do
+not wait on local recovery; only the local route retains that hard prerequisite.
+
+**Frozen execution and approval bundle:** the eight-choice audit has no
+remaining contradiction or owner question. A fresh explicit `go` authorizes
+only this sequence: (1) set `executing`, re-fetch/revalidate both repositories,
+current fleet declarations, target metadata, scheduler collisions, and
+external-state prerequisites; (2) update harness documentation/status for
+T-202/T-203/T-196 and implement the locked framework definitions, provenance,
+bounded framework gate, and four MPI job routes with focused/full/public tests;
+(3) push and fleet-sync each clean harness implementation checkpoint before
+any queued source can run; (4) review and publish the website's three existing
+commits without rewriting, add its credential-free offline CI separately, and
+require the hosted check to pass; (5) execute AB's unused-profile removal only
+through one reversible quarantine and the guarded bulk-delete plan/exact-NEXT
+workflow; (6) build/pull only digest-pinned D6 inputs, create the two immutable
+architecture artifacts under declared persistent roots with caches redirected,
+then run the smallest seven native single-device gates independently where
+each site is ready; (7) submit the newly authorized AB/AB2/T4 MPI routes
+without waiting for local, and submit local only when its hard gates pass;
+(8) close T-203 without a support request and record every terminal/deferred
+result; and (9) only after all needed direct repository pushes are complete,
+verify an eligible non-author reviewer and activate/test the two strict GitHub
+rulesets. Print every native scheduler command, accept only one reconciled job
+ID, monitor only captured IDs, and stop the affected route on drift.
+
+This go does not authorize any live Restic `forget`, `prune`, retention,
+scheduled check/restore, replica deletion, or replica automation: D3-D5 resolve
+policy now, while their live phases remain behind measured T-191 stability and
+later exact destructive approvals. It does not create a generic D7 project
+environment, background framework updater, support message, credential change,
+or performance run. Ruleset activation stops rather than locking the owner out
+if no eligible reviewer exists. Current next action: wait for one explicit
+`go`, then reconstruct this frozen bundle from disk and begin step 1.
 
 ### T-250 — Seven-node top-level project and directory cleanup
 
