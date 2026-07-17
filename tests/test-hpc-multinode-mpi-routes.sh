@@ -20,11 +20,11 @@ for number, line in enumerate(path.read_text().splitlines(), 1):
 hosts = [row[0] for row in rows]
 assert hosts == ["local", "ab", "ab2", "ri", "al", "rc", "t4"]
 assert len(set(hosts)) == 7
-allowed = {"blocked_no_test_only", "resource_change_gated", "no_base_route", "candidate_documented", "validated_pass"}
+allowed = {"authorized_pending", "no_base_route", "candidate_documented", "validated_pass"}
 assert all(row[1] in allowed for row in rows)
 assert [row[1] for row in rows].count("no_base_route") == 2
 assert next(row for row in rows if row[0] == "al")[1] == "validated_pass"
-assert next(row for row in rows if row[0] == "local")[1] == "blocked_no_test_only"
+assert {row[0] for row in rows if row[1] == "authorized_pending"} == {"local", "ab", "ab2", "t4"}
 assert all("priority" not in row[3].lower() and "nice" not in row[3].lower() for row in rows)
 PY
 printf '%s\n' 'multi-node MPI route tests: PASS'
