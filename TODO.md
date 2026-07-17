@@ -149,9 +149,12 @@ quarterly full restore of the latest weekly snapshot to a new scratch target.
 Also run a small sampled restore monthly, repeat structural/full-data and kept-
 snapshot restore checks after prune, never restore in place, and use guarded
 cleanup for restored trees. This provides deterministic complete pack coverage
-each quarter without a full pack read every month. D5 accept monthly manual
-replicas after checks/restores, retain two verified generations, and schedule
-only after three clean manual cycles; D6 select the reference framework as
+each quarter without a full pack read every month. D5 is resolved as one
+new immutable encrypted generation per node each month only after that cycle's
+checks and restores pass, verify it before atomic promotion, and retain the
+latest two verified generations. Never synchronize with deletion or replace a
+verified generation before its successor passes. Scheduler recurrence remains
+a separate later action after three clean manual fleet cycles. D6 select the reference framework as
 Python 3.12 plus PyTorch 2.12.1/CUDA 13.0 from official wheels, one lock and two
 architecture-specific immutable artifacts, followed by the seven smallest
 single-device gates; D7 explicitly defer scientific-library and MPI-enabled
@@ -166,8 +169,8 @@ size/duration evidence exists. The exact first live `forget` and later separate
 `prune` commands remain distinct future destructive approvals after T-191's
 stabilization gates; this interview cannot pre-authorize them. D6 does not
 authorize a registry pull/build, and D8 cannot submit while local recovery and
-the captured jobs still gate the queue. Current next action: ask D5 only and
-checkpoint its answer before D6.
+the captured jobs still gate the queue. Current next action: ask D6 only and
+checkpoint its answer before D7.
 
 ### T-250 — Seven-node top-level project and directory cleanup
 
