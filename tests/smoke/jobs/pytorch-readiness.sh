@@ -58,7 +58,8 @@ finish() {
     trap - EXIT HUP INT TERM
     cleanup_failed=0
     if [ -n "$build" ] && [ -d "$build" ]; then
-        HOME=$real_home "$root/tests/guarded-test-cleanup.sh" \
+        HOME=$real_home TMPDIR=$scratch \
+            "$root/tests/guarded-test-cleanup.sh" \
             "$real_home/.local/bin/harness" \
             "$scratch" "$build" "$scratch" >/dev/null || cleanup_failed=1
     fi
@@ -152,6 +153,13 @@ printf '%s\n' 'NATIVE python3.12 -m venv BUILD/venv'
 printf '%s\n' 'NATIVE BUILD/venv/bin/python -m pip install --no-index --no-cache-dir --find-links WHEELHOUSE --require-hashes -r LOCK'
 "$build/venv/bin/python" -m pip install --no-index --no-cache-dir \
     --find-links "$wheelhouse" --require-hashes -r "$lock"
+
+if [ "$host" = al ]; then
+    allocated_visible=${CUDA_VISIBLE_DEVICES:-}
+    [ -n "$allocated_visible" ] || exit 2
+    export CUDA_VISIBLE_DEVICES=${allocated_visible%%,*}
+    printf '%s\n' 'DEVICE_SELECTION host=al source=first-allocated-logical-device'
+fi
 
 "$build/venv/bin/python" - <<'PY'
 import math

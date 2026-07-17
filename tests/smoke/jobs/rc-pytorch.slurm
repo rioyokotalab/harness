@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=t251frc2
+#SBATCH --job-name=t251frc3
 #SBATCH --account=cloud-users
 #SBATCH --partition=qc-gh200
 #SBATCH --gres=gpu:1
@@ -10,6 +10,6 @@
 
 set -eu
 export HARNESS_LOGICAL_HOST=rc
-export HARNESS_READINESS_RUN_TAG=v2
+export HARNESS_READINESS_RUN_TAG=v3
 export HARNESS_EXPECTED_REV=195b26cbe4d6454cb7d62635debb306c1200214d
 exec "$HOME/harness/tests/smoke/jobs/pytorch-readiness.sh"

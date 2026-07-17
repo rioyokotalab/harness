@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=t251fal2
+#SBATCH --job-name=t251fal3
 #SBATCH --account=g177-1
 #SBATCH --partition=normal
 #SBATCH --nodes=1
@@ -12,6 +12,6 @@
 
 set -eu
 export HARNESS_LOGICAL_HOST=al
-export HARNESS_READINESS_RUN_TAG=v2
+export HARNESS_READINESS_RUN_TAG=v3
 export HARNESS_EXPECTED_REV=195b26cbe4d6454cb7d62635debb306c1200214d
 exec "$HOME/harness/tests/smoke/jobs/pytorch-readiness.sh"

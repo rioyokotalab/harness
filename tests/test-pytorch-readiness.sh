@@ -19,7 +19,10 @@ grep -F 'tests/guarded-test-cleanup.sh' "$JOB" >/dev/null
 # Require the literal runtime assignment.
 # shellcheck disable=SC2016
 grep -F 'HOME=$real_home' "$JOB" >/dev/null
+# shellcheck disable=SC2016
+grep -F 'TMPDIR=$scratch' "$JOB" >/dev/null
 grep -F '/usr/bin/python3.12' "$JOB" >/dev/null
+grep -F 'source=first-allocated-logical-device' "$JOB" >/dev/null
 grep -F 'residue=%s' "$JOB" >/dev/null
 
 printf '%s\n' 'test-pytorch-readiness: PASS'
