@@ -48,33 +48,34 @@ and compact historical pointers here. Next free ID: T-255.
 
 ### T-254 — Add GitHub CLI's official Debian/Ubuntu repository
 
-**Phase/status:** `verification-pending-owner` after the owner authorized the
-official repository but not the `gh` package or authentication. GitHub's live
+**Phase/status:** `complete-terminal` after the owner confirmed this account
+has no sudo permission. The system APT-repository route cannot be executed by
+this owner account and was closed without a system change. GitHub's live
 official install declaration names keyring
 `/etc/apt/keyrings/githubcli-archive-keyring.gpg`, source
 `/etc/apt/sources.list.d/github-cli.list`, amd64 architecture, and repository
 `https://cli.github.com/packages stable main`. Both system targets are absent.
-This account's noninteractive sudo preflight requires a password, which an
-agent must not request or handle.
+This account's noninteractive sudo preflight requires a password and the owner
+has no sudo permission; an agent must not request or handle credentials.
 
-**Verified staging and next action:** owner-only mode-0700 directory
-`~/.local/state/harness/github-cli-repo-20260718` contains only the mode-0600
-official 4,528-byte keyring and exact one-line source candidate. The keyring's
-SHA-256 is the published
+**Verified outcome:** the owner-only staging directory contained only the
+mode-0600 official 4,528-byte keyring and exact one-line source candidate. The
+keyring matched published SHA-256
 `6084d5d7bd8e288441e0e94fc6275570895da18e6751f70f057485dc2d1a811b`.
 An optional GPG display created an empty 32-byte default keybox and stalled on
 home storage; the exact owner file was revalidated and unlinked, and all
-diagnostic processes are absent. The owner must install the two staged files
-with modes 0644 and run `apt-get update`; no package installation is included.
+diagnostic processes are absent. After the owner reported no sudo capability,
+both unchanged staging files were exactly unlinked and their empty directory
+removed. Both `/etc` targets remain absent and no package was installed.
 
-**Acceptance/recovery:** require regular root-owned single-link system files,
-the exact source line, matching staged/system keyring bytes and published
-SHA-256, a successful native APT refresh, and `apt-cache policy gh` selecting a
-candidate whose source is `https://cli.github.com/packages`. Then exact-unlink
-the two unchanged staging files and remove their empty directory. Rollback is
-exact removal of only the two newly installed system files followed by
-`apt-get update`; preserve all other APT configuration. Installing `gh` and
-browser authentication remain separately authorized actions.
+**Alternative boundary:** GitHub publishes official precompiled Linux amd64
+release archives that require no root installation. The live releases API
+currently names v2.96.0 and publishes asset digest
+`83d5c2ccad5498f58bf6368acb1ab32588cf43ab3a4b1c301bf36328b1c8bd60`.
+A checksum-pinned user-local installation under the harness tool layout is the
+recommended replacement, but it is a new package-installation action and is
+not inferred from the failed APT-repository authorization. Browser
+authentication remains a further separate owner interaction.
 
 ### T-253 — Stabilize the local SSH agent across tmux and Codex
 
