@@ -418,6 +418,18 @@ their recorded future eligibility. No job was submitted, replaced, cancelled,
 resized, or reprioritized. Node recovery is an external wait; the protected
 Sunday chain itself needs no repair.
 
+The same outage audit confirms the declared `/mnt/nfs-03/safe` and
+`/mnt/nfs-03/fast` roots are present read-write on hard NFSv4.2 mounts, and the
+local primary repository remains a regular owner mode-0700 directory.
+`harness doctor --host local` has zero failures, but the separate site packages
+mount has not returned: `yrun`, `ybatch`, and `yokota-rns` are absent. The
+root-owned `/usr/share/yokota-rns/completion_yrun.sh` assumes `yokota-rns` is
+present and calls `dirname` without an operand when it is not, which explains
+the temporary login warning. No system or startup file was changed. Before
+local job execution or any new submission, require the packages mount to
+return, rerun doctor, and require native `yrun`/`ybatch` discovery; the existing
+captured jobs remain untouched meanwhile.
+
 ### T-193 — Reproducible public-repository safety audit
 
 **Phase/status:** `complete` under the owner's 2026-07-16 eight-hour go.
