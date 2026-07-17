@@ -24,16 +24,17 @@
       "status": "executing"
     },
     {
-      "action": "perform a native test-only review of the local two-node MPI shape",
-      "evidence": "T-229",
+      "action": "retain the terminal at-most-once local two-node MPI attempt without retry",
+      "evidence": "T-236,T-251",
       "id": "Q4",
-      "status": "blocked_by_scheduler_interface"
+      "job": "91483",
+      "status": "complete"
     },
     {
       "action": "select framework, version, licenses, and architecture-matched immutable artifacts",
-      "evidence": "T-206,T-208,T-227,T-241",
+      "evidence": "T-206,T-208,T-251",
       "id": "Q5",
-      "status": "owner_gated"
+      "status": "complete"
     },
     {
       "action": "select project scientific-library requirements and site-native environments before compile gates",
@@ -42,10 +43,15 @@
       "status": "project_gated"
     },
     {
-      "action": "decide whether full-node two-node MPI spend is warranted on AB, AB2, and T4",
-      "evidence": "T-229,T-230",
+      "action": "retain the terminal full-node AB, AB2, and T4 two-node MPI outcomes",
+      "evidence": "T-229,T-230,T-251",
       "id": "Q7",
-      "status": "owner_resource_gated"
+      "jobs": [
+        "2046527.pbs1",
+        "2046531.pbs1",
+        "8185316"
+      ],
+      "status": "complete"
     },
     {
       "action": "obtain architecture-matched MPI and CUDA environment routes for RI and RC",
@@ -54,13 +60,13 @@
       "status": "site_or_project_gated"
     },
     {
-      "action": "run immutable image and locked single-device LLM correctness only after Q5",
-      "evidence": "T-206,T-208",
+      "action": "retain the immutable dual-architecture wheelhouses and seven locked single-device LLM correctness passes",
+      "evidence": "T-206,T-208,T-251",
       "id": "Q9",
       "requires": [
         "Q5"
       ],
-      "status": "blocked_by_choice"
+      "status": "complete"
     },
     {
       "action": "test allocation-level NUMA memory policy and locality without benchmarking",

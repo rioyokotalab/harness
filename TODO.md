@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-252.
+and compact historical pointers here. Next free ID: T-253.
 
 ## Current state
 
@@ -45,6 +45,20 @@ and compact historical pointers here. Next free ID: T-252.
   candidate table and audit evidence in the pre-compaction TODO history.
 
 ## Active tasks
+
+### T-252 — Reconcile the post-T-251 readiness queue
+
+**Phase/status:** `complete`. The canonical LLM/HPC next-action queue still
+described Q4/Q5/Q7/Q9 using their pre-interview gates even though T-251 had
+already supplied the missing choices and executed their bounded routes. The
+queue now retains the terminal local two-node MPI attempt, the resolved full-
+node AB/AB2/T4 MPI decisions and outcomes, the selected framework release, and
+the completed dual-architecture wheelhouse plus seven-node single-device gate
+as complete evidence. Q3 remains the one executing item through captured local
+job `91581`; Q10 remains dependent on Q3. Q6 and Q8 retain their named project
+or site-environment gates. Focused queue validation and public-audit safety
+tests pass. No scheduler, package, artifact, project, or external setting was
+changed by this reconciliation.
 
 ### T-251 — Resolve owner and site-support gates
 
