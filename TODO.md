@@ -48,11 +48,14 @@ and compact historical pointers here. Next free ID: T-252.
 
 ### T-251 — Resolve owner and site-support gates
 
-**Phase/status:** `executing` after the owner's explicit 2026-07-17 `go` for
-all owner-gated and site-support-gated TODO issues. This is one consolidated
-Plan–Interview–Execute task; planning and interviewing are read-only except for
-ledger checkpoints. The frozen eight-decision bundle below is the complete
-execution authority; any new material choice returns to interviewing.
+**Phase/status:** `complete` at 2026-07-17 11:51 UTC. The owner's explicit `go`
+resolved every owner-gated and site-support-gated issue as a verified pass, a
+terminal at-most-once result, or an evidence-backed defer. The strict GitHub
+rulesets remain intentionally inactive until an eligible non-author reviewer is
+proved; live backup retention remains separately gated by T-191 stability and
+later exact destructive approval; the deferred project environment still needs
+a named workload. Any new material choice starts a new interview rather than
+reopening this frozen execution authority implicitly.
 
 **Scope and current inventory:** reconcile (1) T-194's harness/website GitHub
 merge controls and deferred website CI; (2) T-196's five backup-lifecycle
@@ -277,8 +280,9 @@ gates with scheduler/result zero and guarded cleanup. The delayed ABCI jobs ran
 without replacement when queue capacity became available. Alps cleanup
 allocation `4228581` completed with scheduler status zero and reported
 `TARGET_ABSENT`. Website task T-186 is complete at `e0e9686`; hosted CI run
-`29567532337` passes and no deployment ran. Current next action is terminal
-evidence publication and fleet checkout synchronization.
+`29567532337` passes and no deployment ran. Terminal evidence commit `9388512`
+is published, and all six remote harness checkouts are clean and synchronized
+to it with zero transfer-bundle residue.
 The value-free framework checkpoint is published at `1785fad`. Public GitHub
 organization membership exposes possible non-owner reviewers but does not
 prove repository write/review eligibility, and unauthenticated collaborator
