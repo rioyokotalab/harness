@@ -32,8 +32,11 @@ bash -n "$LOCAL_JOB"
 bash -n "$EPYC_JOB"
 grep -F '#YBATCH -r thrp_1' "$LOCAL_JOB" >/dev/null || fail "local native resource"
 grep -Fx '#YBATCH -r epyc-7502_1' "$EPYC_JOB" >/dev/null || fail "Epyc native resource"
-grep -Fx '#SBATCH --job-name=t217repyc2' "$EPYC_JOB" >/dev/null || fail "Epyc job name"
-grep -F 'export HARNESS_READINESS_RUN_TAG=v2' "$EPYC_JOB" >/dev/null || fail "Epyc run tag"
+grep -Fx '#SBATCH --job-name=t217repyc3' "$EPYC_JOB" >/dev/null || fail "Epyc job name"
+grep -F 'export HARNESS_READINESS_RUN_TAG=v3' "$EPYC_JOB" >/dev/null || fail "Epyc run tag"
+if grep -F '#SBATCH --ntasks=' "$EPYC_JOB" >/dev/null; then
+    fail "Epyc job overrides native task count"
+fi
 grep -F 'tests/smoke/jobs/source-contract.sh' "$EPYC_JOB" >/dev/null ||
     fail "Epyc source contract"
 if grep -E '^#SBATCH --(partition|resource)=' "$LOCAL_JOB" >/dev/null; then

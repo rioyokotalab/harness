@@ -60,8 +60,12 @@ grep -F 'NATIVE mpirun -n 2 BUILD/mpi 2' "$MPI_JOB" >/dev/null
 grep -F 'no reviewed base MPI route' "$MPI_JOB" >/dev/null
 grep -Fx '#YBATCH -r thrp_1' "$NUMERICAL_LOCAL" >/dev/null
 grep -Fx '#YBATCH -r epyc-7502_1' "$NUMERICAL_EPYC" >/dev/null
-grep -Fx '#SBATCH --job-name=t210nepyc2' "$NUMERICAL_EPYC" >/dev/null
-grep -F 'export HARNESS_READINESS_RUN_TAG=v2' "$NUMERICAL_EPYC" >/dev/null
+grep -Fx '#SBATCH --job-name=t210nepyc3' "$NUMERICAL_EPYC" >/dev/null
+grep -F 'export HARNESS_READINESS_RUN_TAG=v3' "$NUMERICAL_EPYC" >/dev/null
+if grep -F '#SBATCH --ntasks=' "$NUMERICAL_EPYC" >/dev/null; then
+    printf '%s\n' 'FAIL: Epyc job overrides native task count' >&2
+    exit 1
+fi
 grep -F 'tests/smoke/jobs/source-contract.sh' "$NUMERICAL_EPYC" >/dev/null
 grep -F 'module load gcc/15.2.0' "$NUMERICAL_JOB" >/dev/null
 grep -F 'module load gcc/14.2.0' "$NUMERICAL_JOB" >/dev/null
