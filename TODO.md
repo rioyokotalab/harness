@@ -406,6 +406,18 @@ successor at the next strictly future Sunday, private state consistency, and
 healthy interactive-login silence. Do not duplicate or cancel jobs merely for
 queue delay.
 
+**Power-outage continuity checkpoint (2026-07-17 06:12 UTC):** exact native
+queries after the local cluster restart find all seven captured production
+IDs still present with their expected owner/name identity and future
+eligibility. Local `90939` survived the Slurm restart and remains
+`PENDING/BeginTime` for 2026-07-19 00:30 JST. Its `threadripper-3960x`
+partition is configured up, but all three nodes currently report `down` with
+reason `NO NETWORK ADDRESS FOUND` while the cluster is being restored. AB and
+AB2 remain in PBS scheduled-wait state, and RI, AL, RC, and T4 retain
+their recorded future eligibility. No job was submitted, replaced, cancelled,
+resized, or reprioritized. Node recovery is an external wait; the protected
+Sunday chain itself needs no repair.
+
 ### T-193 — Reproducible public-repository safety audit
 
 **Phase/status:** `complete` under the owner's 2026-07-16 eight-hour go.
