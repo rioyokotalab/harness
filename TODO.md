@@ -275,6 +275,13 @@ queued and must not be duplicated. Website task T-186 is complete at `e0e9686`;
 hosted CI run `29567532337` passes and no deployment ran. Current next action
 is exact monitoring of the two ABCI framework jobs, T4 MPI `8185316`, and AL
 cleanup allocation `4228581`, followed by public evidence/status closeout.
+The value-free framework checkpoint is published at `1785fad`. Public GitHub
+organization membership exposes possible non-owner reviewers but does not
+prove repository write/review eligibility, and unauthenticated collaborator
+queries cannot supply that proof. Therefore the D2 precondition is not met:
+both strict rulesets remain inactive exactly as frozen, with activation deferred
+until an eligible non-author reviewer can be authenticated without making
+`main` unmergeable.
 
 ### T-250 — Seven-node top-level project and directory cleanup
 
