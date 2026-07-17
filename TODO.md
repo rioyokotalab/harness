@@ -118,9 +118,14 @@ compatibility matrix
 and the Restic 0.19.1 sources already recorded in
 `docs/backup-lifecycle-phase2.md`.
 
-Ask and checkpoint exactly these material choices, one at a time: D1 retain
-AB's tiny backed-up Mozilla profile and close relocation, or authorize a new
-application-native profile/re-authentication migration; D2 publish the three
+Ask and checkpoint exactly these material choices, one at a time: D1 resolved
+as deletion of AB's unused live Mozilla profile with no inspection, migration,
+or fresh backup; existing historical backup snapshots remain outside this
+deletion. After the final go, first revalidate the exact owner directory,
+Firefox/process absence, canonical home boundary, and metadata, then use one
+same-filesystem quarantine plus the guarded bulk-delete plan/exact-NEXT apply
+workflow; any failed pre-delete gate restores the unchanged quarantine. D2
+publish the three
 reviewed website commits, add its offline CI, and activate the documented
 `main` rulesets on both repositories; D3 accept the eight-week/two-restore
 stabilization threshold and 12-weekly/12-monthly/3-yearly scoped retention
@@ -142,8 +147,8 @@ size/duration evidence exists. The exact first live `forget` and later separate
 `prune` commands remain distinct future destructive approvals after T-191's
 stabilization gates; this interview cannot pre-authorize them. D6 does not
 authorize a registry pull/build, and D8 cannot submit while local recovery and
-the captured jobs still gate the queue. Current next action: ask D1 only and
-checkpoint its answer before D2.
+the captured jobs still gate the queue. Current next action: ask D2 only and
+checkpoint its answer before D3.
 
 ### T-250 — Seven-node top-level project and directory cleanup
 
