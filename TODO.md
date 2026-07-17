@@ -48,12 +48,11 @@ and compact historical pointers here. Next free ID: T-251.
 
 ### T-250 — Seven-node top-level project and directory cleanup
 
-**Phase/status:** `executing-withheld` after the owner's fresh final `go` at
-2026-07-17 02:12 UTC. Fifty of 51 approved deletions are complete and
-post-verified; the one RI cache target remains present and was never
-quarantined because native `squeue` cannot obtain its Slurm configuration after
-repeated DNS SRV lookup failures. The task remains active rather than falsely
-complete. It covers the request to examine every
+**Phase/status:** `complete` at 2026-07-17 03:48 UTC. All 51 approved deletions
+are post-verified and all 102 keep decisions remain retained. RI's DNS-based
+Slurm discovery is still unavailable, but the profile-declared configuration
+servers provided a successful native scheduler safety gate before its final
+target was processed. The task covered the request to examine every
 top-level home directory on local, AB, AB2, RI, AL, RC, and T4, describe it,
 interview one deletion decision at a time, and safely delete only approved
 targets. Scope includes hidden directories. A top-level symlink to a directory
@@ -97,23 +96,25 @@ canonical boundary, inspect every `TARGET` and exact emitted `NEXT`, apply
 within 15 minutes, verify protected anchors and target absence, and exact-clean
 only empty quarantine boundaries/manifests. Never combine nodes/boundaries,
 delete a symlink target through the link path, use a glob/list/loop remover, or
-run raw recursive deletion. The approved sets on local, AB, AB2, AL, RC, and
-T4 passed fresh identity/process/scheduler checks, atomic quarantine,
+run raw recursive deletion. The approved sets on local, AB, AB2, RI, AL, RC,
+and T4 passed fresh identity/process/scheduler checks, atomic quarantine,
 dependency smokes, one guarded plan/apply pair per canonical boundary,
 protected-anchor checks, and exact manifest/quarantine cleanup. Their private
-journals record 5, 12, 1, 3, 4, and 25 deleted targets respectively. AL's
+journals record 5, 12, 1, 1, 3, 4, and 25 deleted targets respectively. AL's
 documented login-node device identity difference was handled without bypass:
 the original evidence was preserved, the sole device-ID drift was confirmed,
 and fresh preflight, quarantine, plan, and apply all ran through one pinned SSH
 connection. T4's guarded recount exposed substantially more cache data than
 its bounded inventory estimate, but the exact owner-approved quarantine
-identities still matched. Fleet `harness doctor` validation passes on all seven
-nodes, with only the already-known optional capability warnings. Bounded
-follow-up checks find no recreated selected cache or legacy npm directory on
-the six completed nodes. Next action: retry native
-`ssh ri squeue -u rku00075`; only after it succeeds may the unchanged RI target
-repeat preflight, quarantine, dependency validation, guarded deletion, and
-cleanup.
+identities still matched. RI used its declared
+`SLURM_CONF_SERVER=sctl1:6817,sctl2:6817` route to query and preserve the exact
+pending harness backup job before and after cleanup. Fleet `harness doctor`
+validation passes on all seven nodes, with only the already-known optional
+capability warnings. Every quarantine root and manifest is absent. Bounded
+follow-up checks attribute the newly created local and RI `.cache` directories
+to `pam_motd`: each is a distinct inode containing only the zero-byte
+`motd.legal-displayed` marker. The other selected cache and legacy npm paths
+remain absent.
 
 **Inventory checkpoint:** read-only discovery completed on all seven nodes:
 175 directory records resolve to 153 distinct decisions and 22 top-level
@@ -127,11 +128,10 @@ safety facts recorded. No duplicate canonical device/inode identity remains.
 The stable private inventory and decision journal are mode-0600 under the
 node-local T-250 state boundary; public Git intentionally contains no project
 names or individual decisions. The owner selected no new archive or backup:
-approved targets rely only on temporary same-filesystem quarantine and guarded
-deletion, with permanent loss accepted after quarantine purge. Execution has
-deleted and verified 50 approved targets; RI's one approved target is withheld
-unchanged behind the scheduler gate. Interview progress: all 153 directory
-decisions are resolved:
+approved targets relied only on temporary same-filesystem quarantine and
+guarded deletion, with permanent loss accepted after quarantine purge.
+Execution deleted and verified all 51 approved targets. Interview progress:
+all 153 directory decisions are resolved:
 51 owner-selected deletes under the no-backup policy and 102 keeps. The owner
 globally selected keep for every harness-owned, harness-configured, or
 harness-dependent directory; 73 remaining tooling, backup, agent, SSH,
@@ -141,10 +141,10 @@ state remain outside that bulk decision. Matching-name fleet-wide decisions
 are applied only when the owner explicitly requests them. All five inventoried
 directories named `.cache` are selected for deletion; active harness cache
 roots are excluded. Bounded fresh-shell and workload-startup smokes checked
-recreation on every completed node and found none; RI remains untested because
-its selected cache remains present. No persistent login-node watcher was
-installed. The current-node legacy npm state was included in those checks. All
-five Vim runtime directories
+recreation on every node. Local and RI recreated only the PAM legal-notice
+marker described above; the remaining selected cache paths and the current-node
+legacy npm path remain absent. No persistent login-node watcher was installed.
+All five Vim runtime directories
 were resolved as keep under the harness-managed rule. All seven shared XDG
 configuration roots were retained because they cannot be safely split as
 top-level targets and include harness-dependent state. Four remaining GnuPG/PKI
