@@ -143,8 +143,13 @@ yearly snapshots selected only by the exact weekly tag and canonical host/path;
 manual, migration, and incident snapshots remain excluded. Any chain or
 restore anomaly resets the affected node's stability count, and keep-all stays
 effective until every prerequisite and later exact-command approval passes.
-D4 accept monthly structural and deterministic quarter-data checks plus
-quarterly full-data checks and full restore drills; D5 accept monthly manual
+D4 is resolved as monthly structural checks, a deterministic rotating
+`--read-data-subset=n/4` check each month, quarterly full-data checks, and a
+quarterly full restore of the latest weekly snapshot to a new scratch target.
+Also run a small sampled restore monthly, repeat structural/full-data and kept-
+snapshot restore checks after prune, never restore in place, and use guarded
+cleanup for restored trees. This provides deterministic complete pack coverage
+each quarter without a full pack read every month. D5 accept monthly manual
 replicas after checks/restores, retain two verified generations, and schedule
 only after three clean manual cycles; D6 select the reference framework as
 Python 3.12 plus PyTorch 2.12.1/CUDA 13.0 from official wheels, one lock and two
@@ -161,8 +166,8 @@ size/duration evidence exists. The exact first live `forget` and later separate
 `prune` commands remain distinct future destructive approvals after T-191's
 stabilization gates; this interview cannot pre-authorize them. D6 does not
 authorize a registry pull/build, and D8 cannot submit while local recovery and
-the captured jobs still gate the queue. Current next action: ask D4 only and
-checkpoint its answer before D5.
+the captured jobs still gate the queue. Current next action: ask D5 only and
+checkpoint its answer before D6.
 
 ### T-250 — Seven-node top-level project and directory cleanup
 
