@@ -48,7 +48,8 @@ and compact historical pointers here. Next free ID: T-251.
 
 ### T-250 — Seven-node top-level project and directory cleanup
 
-**Phase/status:** `ready-for-go` under the owner's request to examine every
+**Phase/status:** `executing-preflight` after the owner's fresh final `go` at
+2026-07-17 02:12 UTC, under the request to examine every
 top-level home directory on local, AB, AB2, RI, AL, RC, and T4, describe it,
 interview one deletion decision at a time, and safely delete only approved
 targets. Scope includes hidden directories. A top-level symlink to a directory
@@ -92,9 +93,9 @@ canonical boundary, inspect every `TARGET` and exact emitted `NEXT`, apply
 within 15 minutes, verify protected anchors and target absence, and exact-clean
 only empty quarantine boundaries/manifests. Never combine nodes/boundaries,
 delete a symlink target through the link path, use a glob/list/loop remover, or
-run raw recursive deletion. No deletion has run. Next action: wait for the
-fresh final owner `go`, then execute the frozen revalidation, quarantine,
-dependency-test, guarded-delete, and recreation-attribution workflow.
+run raw recursive deletion. No deletion has run. Next action: execute the
+frozen revalidation; quarantine only unchanged, inactive targets, then run
+dependency tests, guarded deletion, and recreation-attribution checks.
 
 **Inventory checkpoint:** read-only discovery completed on all seven nodes:
 175 directory records resolve to 153 distinct decisions and 22 top-level
@@ -133,8 +134,9 @@ were confirmed. The final contradiction audit found no protected control,
 tooling, backup, credential, harness, or website target in the delete set and
 no duplicate canonical identity. Selected deletions total at least 8.61 GB of
 known-size data plus five bounded-size timeouts on T4. Per-node delete counts
-are local 5, AB 12, AB2 1, RI 1, AL 3, RC 4, and T4 25. A fresh final `go` is
-required before any quarantine or deletion begins.
+are local 5, AB 12, AB2 1, RI 1, AL 3, RC 4, and T4 25. The final `go` has been
+received; any identity, state, process, scheduler, or dependency drift must
+withhold the affected target rather than weaken a guard.
 
 ### T-191 — Scheduler-native weekly primary snapshots
 
