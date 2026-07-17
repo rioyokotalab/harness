@@ -58,7 +58,8 @@ finish() {
     trap - EXIT HUP INT TERM
     cleanup_failed=0
     if [ -n "$build" ] && [ -d "$build" ]; then
-        "$root/tests/guarded-test-cleanup.sh" "$real_home/.local/bin/harness" \
+        HOME=$real_home "$root/tests/guarded-test-cleanup.sh" \
+            "$real_home/.local/bin/harness" \
             "$scratch" "$build" "$scratch" >/dev/null || cleanup_failed=1
     fi
     if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then status=1; fi
@@ -96,10 +97,26 @@ case $host in
     t4) [ -n "${JOB_ID:-}" ] ;;
 esac
 [ "$(uname -m)" = "$expected_arch" ]
-python=$real_home/.local/bin/python3.12
-[ -x "$python" ]
-[ "$($python -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')" = 3.12 ]
-printf '%s\n' 'GATE exact-python status=pass version=3.12'
+python=
+for candidate in \
+    "$real_home/.local/bin/python3.12" \
+    /usr/bin/python3.12 \
+    /usr/local/bin/python3.12
+do
+    [ -x "$candidate" ] || continue
+    metadata=$($candidate -c \
+        'import platform, sys; print(f"{sys.version_info[0]}.{sys.version_info[1]} {platform.machine()}")' \
+        2>/dev/null) || continue
+    [ "$metadata" = "3.12 $expected_arch" ] || continue
+    python=$candidate
+    break
+done
+[ -n "$python" ] || {
+    printf 'FAIL exact-python expected=3.12/%s\n' "$expected_arch"
+    exit 2
+}
+printf 'GATE exact-python status=pass version=3.12 architecture=%s path=%s\n' \
+    "$expected_arch" "$python"
 
 [ -d "$wheelhouse" ] && [ ! -L "$wheelhouse" ]
 [ "$(stat -c %a "$wheelhouse")" = 555 ]

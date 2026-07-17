@@ -16,6 +16,10 @@ grep -F -- '--require-hashes' "$JOB" >/dev/null
 grep -F 'torch.cuda.device_count() == 1' "$JOB" >/dev/null
 grep -F 'tests/smoke/llm_torch.py' "$JOB" >/dev/null
 grep -F 'tests/guarded-test-cleanup.sh' "$JOB" >/dev/null
+# Require the literal runtime assignment.
+# shellcheck disable=SC2016
+grep -F 'HOME=$real_home' "$JOB" >/dev/null
+grep -F '/usr/bin/python3.12' "$JOB" >/dev/null
 grep -F 'residue=%s' "$JOB" >/dev/null
 
 printf '%s\n' 'test-pytorch-readiness: PASS'
