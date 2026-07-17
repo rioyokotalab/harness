@@ -48,7 +48,7 @@ and compact historical pointers here. Next free ID: T-251.
 
 ### T-250 — Seven-node top-level project and directory cleanup
 
-**Phase/status:** `interviewing` under the owner's request to examine every
+**Phase/status:** `ready-for-go` under the owner's request to examine every
 top-level home directory on local, AB, AB2, RI, AL, RC, and T4, describe it,
 interview one deletion decision at a time, and safely delete only approved
 targets. Scope includes hidden directories. A top-level symlink to a directory
@@ -92,9 +92,9 @@ canonical boundary, inspect every `TARGET` and exact emitted `NEXT`, apply
 within 15 minutes, verify protected anchors and target absence, and exact-clean
 only empty quarantine boundaries/manifests. Never combine nodes/boundaries,
 delete a symlink target through the link path, use a glob/list/loop remover, or
-run raw recursive deletion. No deletion has run. Next action: complete
-the one-question-at-a-time interview, beginning with the global recovery
-policy and then the frozen private candidate order.
+run raw recursive deletion. No deletion has run. Next action: wait for the
+fresh final owner `go`, then execute the frozen revalidation, quarantine,
+dependency-test, guarded-delete, and recreation-attribution workflow.
 
 **Inventory checkpoint:** read-only discovery completed on all seven nodes:
 175 directory records resolve to 153 distinct decisions and 22 top-level
@@ -110,8 +110,8 @@ node-local T-250 state boundary; public Git intentionally contains no project
 names or individual decisions. The owner selected no new archive or backup:
 approved targets will rely only on temporary same-filesystem quarantine and
 guarded deletion, with permanent loss accepted after quarantine purge. No
-deletion has run. Interview progress: 152 of 153 directory decisions resolved:
-51 owner-selected deletes under the no-backup policy and 101 keeps. The owner
+deletion has run. Interview progress: all 153 directory decisions are resolved:
+51 owner-selected deletes under the no-backup policy and 102 keeps. The owner
 globally selected keep for every harness-owned, harness-configured, or
 harness-dependent directory; 73 remaining tooling, backup, agent, SSH,
 cache-root, and control-repository entries were resolved by that rule. Shared
@@ -129,7 +129,12 @@ top-level targets and include harness-dependent state. Four remaining GnuPG/PKI
 credential stores were retained without content inspection under the mandatory
 credential boundary. The active AL and RC cache roots were safety-reclassified
 from regenerable cache to protected control after their live shell references
-were confirmed. The active website checkout is the only unresolved candidate.
+were confirmed. The final contradiction audit found no protected control,
+tooling, backup, credential, harness, or website target in the delete set and
+no duplicate canonical identity. Selected deletions total at least 8.61 GB of
+known-size data plus five bounded-size timeouts on T4. Per-node delete counts
+are local 5, AB 12, AB2 1, RI 1, AL 3, RC 4, and T4 25. A fresh final `go` is
+required before any quarantine or deletion begins.
 
 ### T-191 — Scheduler-native weekly primary snapshots
 
