@@ -154,10 +154,19 @@ new immutable encrypted generation per node each month only after that cycle's
 checks and restores pass, verify it before atomic promotion, and retain the
 latest two verified generations. Never synchronize with deletion or replace a
 verified generation before its successor passes. Scheduler recurrence remains
-a separate later action after three clean manual fleet cycles. D6 select the reference framework as
-Python 3.12 plus PyTorch 2.12.1/CUDA 13.0 from official wheels, one lock and two
-architecture-specific immutable artifacts, followed by the seven smallest
-single-device gates; D7 explicitly defer scientific-library and MPI-enabled
+a separate later action after three clean manual fleet cycles. D6 is resolved
+as the reference framework Python 3.12 plus PyTorch 2.12.1/CUDA 13.0 from
+official wheels, one lock and two architecture-specific immutable artifacts,
+followed by the seven smallest single-device gates. The owner additionally
+requires a maintained baseline: treat this as the first immutable release, not
+a permanent floating selection. On each relevant harness maintenance/resume,
+compare official stable/security releases, licenses, both-architecture wheel
+availability, and fleet driver/runtime compatibility. Build upgrades as new
+candidate digests, rerun all seven bounded single-device gates, retain the
+previous verified artifacts for rollback, and promote only a complete pass.
+Never mutate an existing digest, use a floating tag, or silently auto-upgrade;
+background monitoring or pull-request automation is not authorized by this
+choice. D7 explicitly defer scientific-library and MPI-enabled
 project environments until a named workload supplies ABI/binding requirements;
 and D8 authorize only the later collision-checked local two-node MPI correctness
 job while deferring AB/AB2/T4 full-node spend until a concrete distributed
@@ -169,8 +178,8 @@ size/duration evidence exists. The exact first live `forget` and later separate
 `prune` commands remain distinct future destructive approvals after T-191's
 stabilization gates; this interview cannot pre-authorize them. D6 does not
 authorize a registry pull/build, and D8 cannot submit while local recovery and
-the captured jobs still gate the queue. Current next action: ask D6 only and
-checkpoint its answer before D7.
+the captured jobs still gate the queue. Current next action: ask D7 only and
+checkpoint its answer before D8.
 
 ### T-250 — Seven-node top-level project and directory cleanup
 
