@@ -48,8 +48,8 @@ and compact historical pointers here. Next free ID: T-254.
 
 ### T-253 — Stabilize the local SSH agent across tmux and Codex
 
-**Phase/status:** `verification-pending-owner` after the authorized cutover.
-The configuration implementation and local non-credential gates are complete.
+**Phase/status:** `complete` after the authorized cutover and owner identity
+load. The configuration implementation and all bounded acceptance gates pass.
 This already-running Codex process cannot acquire a new environment, but the
 current tmux session and fresh login shells now name the fixed socket. Before
 cutover, tmux session/global state named different stale sockets and the only
@@ -92,14 +92,15 @@ startup-normalization, public-audit, discovery-link, shell-syntax, warning-level
 ShellCheck, and diff gates pass. Portable phase 1 stops only at the already
 recorded T-181 frozen-evaluation mismatch after the new focused test passes.
 
-The fresh agent intentionally contains no agent-selected identity. Specific
-GitHub SSH and origin-fetch probes both fail `publickey` until the owner loads
-the intended key interactively; `~/run_this.sh`, `gh`, and GitHub token
-environment are absent, so neither key loading nor API/settings authority can
-be inferred or automated. After owner loading, open a new tmux pane, restart
-Codex there, rerun the documented SSH/fetch checks, then fetch-before-push and
-publish the pending harness commits. Do not weaken the T-181 baseline merely
-to turn the unrelated portable aggregate green.
+The owner loaded the intended identity and reported the new setup working.
+Independent fixed-socket preflight then received GitHub's authenticated
+no-shell response with its expected exit 1, and an authenticated origin fetch
+succeeded with published `843edf0` still an ancestor of local `950e63a`.
+`~/run_this.sh`, `gh`, and GitHub token environment remain absent: repository
+SSH transport is proved, while API/settings authority remains independently
+unavailable. The pending commits can now take their required final fetch and
+normal push. Do not weaken the T-181 baseline merely to turn the unrelated
+portable aggregate green.
 
 ### T-252 — Reconcile the post-T-251 readiness queue
 
