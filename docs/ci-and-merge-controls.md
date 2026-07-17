@@ -8,8 +8,9 @@ v6.0.2 commit and disables persisted Git credentials. It has no secrets,
 deployment, model calls, remote-node access, scheduler commands, package
 installation, or cache writes outside its ephemeral runner.
 Checkout fetches complete public history because the evaluation validator
-compares live guidance with its older frozen baseline revision; a shallow
-checkout cannot satisfy that invariant.
+loads its guidance from the experiment's exact immutable baseline revision; a
+shallow checkout may not contain that commit. Later live global-guidance
+maintenance does not alter the frozen baseline, corpus, or recorded reports.
 
 The unique required-check candidate is `portable-phase1`. It runs the complete
 phase-one integration suite except for two explicitly client/site-specific

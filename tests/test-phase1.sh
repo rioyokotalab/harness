@@ -243,21 +243,24 @@ cat >"$remote_codex_bin/ssh" <<'EOF'
 printf '%s\n' "$*" >"$REMOTE_CODEX_LOG"
 EOF
 chmod 755 "$remote_codex_bin/ssh"
-HOME="$remote_codex_home" PATH="$remote_codex_bin:/usr/bin:/bin" \
+env -u HARNESS_INTERACTIVE_LOADED -u HARNESS_REMOTE_SESSION_LOADED \
+    HOME="$remote_codex_home" PATH="$remote_codex_bin:/usr/bin:/bin" \
     REMOTE_CODEX_LOG="$remote_codex_log" HARNESS_LOGICAL_HOST=local \
     bash --noprofile --norc -ic \
     '. "$HOME/harness/shell/profile.sh"; harness_remote_codex ab' 2>/dev/null
 [ "$(cat "$remote_codex_log")" = \
     "-A -t ab exec bash -lic 'cd \"\$HOME\" && exec codex'" ] ||
     fail "one-connection remote Codex launcher"
-HOME="$remote_codex_home" PATH="$remote_codex_bin:/usr/bin:/bin" \
+env -u HARNESS_INTERACTIVE_LOADED -u HARNESS_REMOTE_SESSION_LOADED \
+    HOME="$remote_codex_home" PATH="$remote_codex_bin:/usr/bin:/bin" \
     REMOTE_CODEX_LOG="$remote_codex_log" HARNESS_LOGICAL_HOST=local \
     bash --noprofile --norc -ic \
     '. "$HOME/harness/shell/profile.sh"; harness_remote_codex invented' 2>/dev/null
 [ "$(cat "$remote_codex_log")" = \
     "-A -t invented exec bash -lic 'cd \"\$HOME\" && exec codex'" ] ||
     fail "profile-derived remote Codex fleet membership"
-if HOME="$remote_codex_home" PATH="$remote_codex_bin:/usr/bin:/bin" \
+if env -u HARNESS_INTERACTIVE_LOADED -u HARNESS_REMOTE_SESSION_LOADED \
+    HOME="$remote_codex_home" PATH="$remote_codex_bin:/usr/bin:/bin" \
     REMOTE_CODEX_LOG="$remote_codex_log" HARNESS_LOGICAL_HOST=local \
     bash --noprofile --norc -ic \
     '. "$HOME/harness/shell/profile.sh"; harness_remote_codex github' \
@@ -1399,7 +1402,8 @@ if HOME="$test_home" bash --noprofile --norc -c \
     '. "$HOME/harness/shell/bashrc.al.block"; type prgenv >/dev/null 2>&1'; then
     fail "al convenience loaded in a non-interactive shell"
 fi
-HOME="$test_home" bash --noprofile --norc -ic \
+env -u HARNESS_INTERACTIVE_LOADED -u HARNESS_REMOTE_SESSION_LOADED \
+    HOME="$test_home" bash --noprofile --norc -ic \
     '. "$HOME/harness/shell/bashrc.al.block"; type prgenv' \
     >"$TEMP_DIR/al-interactive.out" 2>&1 || fail "al interactive convenience"
 grep 'prgenv is a function' "$TEMP_DIR/al-interactive.out" >/dev/null ||

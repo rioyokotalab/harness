@@ -69,3 +69,13 @@ Do not rerun candidate A unchanged. A future study requires all of:
 
 Until such a proposal exists, there is no follow-up model spend and the current
 global guidance remains canonical.
+
+## Frozen baseline maintenance
+
+The evaluator loads experiment guidance from exact commit
+`d5b82cd32e779ec154db5f2721ec5f52dfcd7752`. That revision is an immutable
+experimental input, not a requirement that the live global guidance stop
+evolving after the experiment. Validation rejects any different corpus
+baseline revision and retains complete Git history so it can read the exact
+file from the frozen commit. This maintenance rule changes no corpus task,
+guidance byte, report, score, or adoption decision.

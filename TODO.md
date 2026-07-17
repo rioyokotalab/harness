@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-258.
+and compact historical pointers here. Next free ID: T-259.
 
 ## Current state
 
@@ -45,6 +45,45 @@ and compact historical pointers here. Next free ID: T-258.
   candidate table and audit evidence in the pre-compaction TODO history.
 
 ## Active tasks
+
+### T-258 — Activate and validate strict GitHub merge controls
+
+**Phase/status:** `executing-prerequisite-repair`; no GitHub setting has been
+changed. Resume T-194 only after a fresh authenticated preflight proves both
+repositories can be merged through the frozen policy. The exact tracked
+ruleset payloads and rollback remain unchanged.
+
+**Preflight checkpoint:** on 2026-07-18, harness and website are clean and
+exactly synchronized with `origin/main`; stored GitHub API authentication is
+usable; authenticated repository metadata reports `admin=true`, default branch
+`main`, and squash/rebase merge enabled for both. Both repositories have zero
+rulesets and zero active rules on `main`. Website's latest required workflow is
+green. Harness run `29616864629` failed only because the evaluator loads frozen
+baseline `d5b82cd` but also rejects all later live global-guidance evolution.
+Repair that contradiction by requiring the exact immutable baseline revision
+and loading guidance from it without comparing the live file; do not change the
+corpus revision, experiment reports, scores, or baseline content.
+
+**Owner gate:** the authenticated collaborator-permission endpoint reports
+effective `read` for `rioyokota2` in both repositories. GitHub's current
+required-review documentation says an approval counts only from a collaborator
+with Write or Admin access. Do not activate the one-approval rulesets while
+that remains true, and do not infer authority to grant repository write access.
+After the CI repair is published and green, obtain explicit owner direction to
+upgrade `rioyokota2` to Write on both repositories, revalidate the effective
+permission, and only then create and verify the two rulesets and test PRs.
+
+**Implementation checkpoint:** the evaluator now rejects any corpus baseline
+other than exact `d5b82cd32e779ec154db5f2721ec5f52dfcd7752` and reads guidance
+from that immutable commit without comparing today's live guidance. Complete
+history remains required, and no corpus/report/score/baseline byte changed.
+The phase-1 synthetic interactive-shell tests also clear inherited harness-load
+sentinels so a developer's current tmux environment cannot suppress the
+functions they intend to test. Evaluation-focused, remote-session,
+public-audit, diff, and the complete `HARNESS_PORTABLE_CI=1` phase-1 suite all
+pass locally. Publish this final pre-ruleset checkpoint, require its hosted
+`portable-phase1` run to pass, then stop at the explicit collaborator-permission
+gate above.
 
 ### T-257 — Remove automatic Git work from shell lifecycle
 

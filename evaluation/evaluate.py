@@ -27,6 +27,7 @@ CORPUS_PATH = EVAL_ROOT / "corpus.json"
 SAFE_ID = re.compile(r"^[a-z][a-z0-9-]{0,63}$")
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
+FROZEN_BASELINE_REVISION = "d5b82cd32e779ec154db5f2721ec5f52dfcd7752"
 USAGE_KEYS = ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens")
 APPENDIX = """
 
@@ -249,12 +250,9 @@ def grader_digest() -> str:
 
 def baseline_guidance(corpus: dict[str, Any]) -> bytes:
     revision = corpus.get("baseline_revision", "")
-    if not HEX40.fullmatch(revision):
-        fail("baseline revision is not a full commit id")
+    if revision != FROZEN_BASELINE_REVISION:
+        fail("baseline revision differs from the frozen experiment")
     data = git(["show", f"{revision}:.codex/AGENTS.md"]).encode()
-    live = (ROOT / ".codex" / "AGENTS.md").read_bytes()
-    if live != data:
-        fail("live global guidance differs from the frozen baseline")
     return data + APPENDIX.encode()
 
 
