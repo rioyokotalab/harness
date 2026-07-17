@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-256.
+and compact historical pointers here. Next free ID: T-257.
 
 ## Current state
 
@@ -45,6 +45,43 @@ and compact historical pointers here. Next free ID: T-256.
   candidate table and audit evidence in the pre-compaction TODO history.
 
 ## Active tasks
+
+### T-256 — Preflight GitHub API and repository-settings capability
+
+**Phase/status:** `complete` after the owner completed GitHub CLI's browser
+authentication and every bounded preflight passed. Treat API authentication
+separately from the already proved
+SSH transport. Never request, print, store, hash, or inspect the token; do not
+use `--show-token`, write any GitHub setting, or infer write authority from a
+public unauthenticated endpoint.
+
+**Frozen preflight:** remove token environment overrides, require stored-login
+status by exit code with output suppressed, make authenticated `/user` and
+rate-limit requests with bodies suppressed, verify the harness repository's
+authenticated `permissions.admin` boolean, read repository rulesets, and
+inspect only the response's OAuth-scope header for `repo`. The last two facts
+support a no-write settings-capability inference; no REST endpoint offers a
+mutation-free proof that a future ruleset write will succeed.
+
+**Acceptance/recovery:** every request must return success through the installed
+v2.96.0 client; the active Git protocol remains SSH; repository-admin is true;
+the OAuth scope includes `repo`; and the ruleset endpoint returns 200. Report
+API read capability as proved and repository ruleset-write capability as an
+inference, still subject to repository/organization policy at mutation time.
+Authentication rollback is owner-only `gh auth logout`; never inspect or copy
+the stored credential.
+
+**Outcome:** with `GH_TOKEN` and `GITHUB_TOKEN` explicitly removed, stored-auth
+status passed by exit code with all output suppressed. Authenticated `/user`
+and rate-limit requests passed with bodies suppressed; Git protocol is `ssh`;
+the harness repository returned `permissions.admin=true`; only the OAuth scope
+header was filtered and it contains exact `repo`; and the v2026-03-10
+repository-rulesets read returned success. GitHub API read capability is proved.
+Repository ruleset-write capability is supported by authenticated repository
+admin plus the OAuth grant but remains an evidence-backed inference because no
+setting write was authorized or performed. T-251's eligible-reviewer gate and
+inactive strict rulesets remain unchanged. No token, response body, setting,
+repository, SSH state, or authentication configuration was printed or changed.
 
 ### T-255 — Install official GitHub CLI without sudo
 
