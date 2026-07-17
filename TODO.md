@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-254.
+and compact historical pointers here. Next free ID: T-255.
 
 ## Current state
 
@@ -45,6 +45,36 @@ and compact historical pointers here. Next free ID: T-254.
   candidate table and audit evidence in the pre-compaction TODO history.
 
 ## Active tasks
+
+### T-254 — Add GitHub CLI's official Debian/Ubuntu repository
+
+**Phase/status:** `verification-pending-owner` after the owner authorized the
+official repository but not the `gh` package or authentication. GitHub's live
+official install declaration names keyring
+`/etc/apt/keyrings/githubcli-archive-keyring.gpg`, source
+`/etc/apt/sources.list.d/github-cli.list`, amd64 architecture, and repository
+`https://cli.github.com/packages stable main`. Both system targets are absent.
+This account's noninteractive sudo preflight requires a password, which an
+agent must not request or handle.
+
+**Verified staging and next action:** owner-only mode-0700 directory
+`~/.local/state/harness/github-cli-repo-20260718` contains only the mode-0600
+official 4,528-byte keyring and exact one-line source candidate. The keyring's
+SHA-256 is the published
+`6084d5d7bd8e288441e0e94fc6275570895da18e6751f70f057485dc2d1a811b`.
+An optional GPG display created an empty 32-byte default keybox and stalled on
+home storage; the exact owner file was revalidated and unlinked, and all
+diagnostic processes are absent. The owner must install the two staged files
+with modes 0644 and run `apt-get update`; no package installation is included.
+
+**Acceptance/recovery:** require regular root-owned single-link system files,
+the exact source line, matching staged/system keyring bytes and published
+SHA-256, a successful native APT refresh, and `apt-cache policy gh` selecting a
+candidate whose source is `https://cli.github.com/packages`. Then exact-unlink
+the two unchanged staging files and remove their empty directory. Rollback is
+exact removal of only the two newly installed system files followed by
+`apt-get update`; preserve all other APT configuration. Installing `gh` and
+browser authentication remain separately authorized actions.
 
 ### T-253 — Stabilize the local SSH agent across tmux and Codex
 
