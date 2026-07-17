@@ -45,3 +45,19 @@ AB, AB2, AL, RC, RI, and T4 stanzas in `~/.ssh/config`. It does not add forwardi
 under `Host *`, GitHub, proxy, or service stanzas. Remote startup files no longer
 start their own `ssh-agent`; remote sessions use the current node's already
 running agent through those six bounded stanzas.
+
+## SSH agent lifecycle
+
+The current Ubuntu node runs one packaged systemd user `ssh-agent` at
+`$XDG_RUNTIME_DIR/openssh_agent`. The local environment declaration exports
+that stable path before tmux or Codex starts. Keys are loaded interactively by
+the owner into the live agent; the harness neither selects nor inspects them.
+Do not start per-shell agents.
+
+tmux keeps a separate environment for each session. New clients update the
+current session, while global tmux state can be stale indefinitely. Recovery
+therefore checks the process socket first, the current tmux session second, and
+the fixed declared socket last. Every candidate must be a current-user-owned
+Unix socket, and a recovered value is scoped to the one intended Git or SSH
+command. See [SSH agent operation](ssh-agent.md) for activation, validation,
+and rollback.

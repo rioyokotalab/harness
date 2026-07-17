@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-253.
+and compact historical pointers here. Next free ID: T-254.
 
 ## Current state
 
@@ -45,6 +45,61 @@ and compact historical pointers here. Next free ID: T-253.
   candidate table and audit evidence in the pre-compaction TODO history.
 
 ## Active tasks
+
+### T-253 — Stabilize the local SSH agent across tmux and Codex
+
+**Phase/status:** `verification-pending-owner` after the authorized cutover.
+The configuration implementation and local non-credential gates are complete.
+This already-running Codex process cannot acquire a new environment, but the
+current tmux session and fresh login shells now name the fixed socket. Before
+cutover, tmux session/global state named different stale sockets and the only
+orphaned `ssh-agent` had no listening Unix socket. Ubuntu's packaged user unit
+now owns `$XDG_RUNTIME_DIR/openssh_agent`.
+GitHub transport and hosting API/settings authority remain separate capability
+gates, and no identity may be listed, inspected, copied, or selected by an
+agent.
+
+**Frozen implementation:** activate the packaged `ssh-agent.service` as a
+`default.target` user want; declare its fixed socket only in the tracked local
+environment so remote forwarded sockets remain untouched; correct the global
+recovery agreement to use process, current tmux session, then fixed declared
+socket and never tmux global state; document owner-only key loading, tmux/Codex
+restart, exact preflight, security constraints, and rollback; add synthetic
+profile coverage; update the live current tmux session; and retire only the
+revalidated inert agent after the replacement service is healthy. Codex needs
+no configuration override because its documented default inherits the launch
+environment.
+
+**Acceptance/recovery:** require an active user service, a current-user-owned
+fixed Unix socket, exact local export, unchanged forwarded remote export,
+current tmux-session propagation, no remaining revalidated inert agent, shell
+syntax, focused profile tests, `git diff --check`, public audit, and the known
+portable-suite result. GitHub SSH and repository fetch pass only after the
+owner loads an intended identity; API/settings capability is reported
+independently. Rollback stops the service, removes its `default.target` want,
+reverts the fixed export, and begins a fresh login; never terminate an agent
+before its PID/owner/command and zero-listener state are revalidated.
+
+**Outcome checkpoint (2026-07-18):** HTTPS refresh proved published
+`843edf0` remains an ancestor before implementation. The packaged user service
+is enabled through `default.target`, active with exactly one owner agent, and
+owns fixed Unix socket `/run/user/5035/openssh_agent`. A fresh login exports
+that path, the current `harness` tmux session names it, and stale tmux-global
+agent variables are absent. Old PID `101652` was revalidated as the owner's
+`ssh-agent`, PPID 1, with zero listening sockets immediately before exact TERM;
+it is absent and the replacement stayed healthy. The focused agent-profile,
+startup-normalization, public-audit, discovery-link, shell-syntax, warning-level
+ShellCheck, and diff gates pass. Portable phase 1 stops only at the already
+recorded T-181 frozen-evaluation mismatch after the new focused test passes.
+
+The fresh agent intentionally contains no agent-selected identity. Specific
+GitHub SSH and origin-fetch probes both fail `publickey` until the owner loads
+the intended key interactively; `~/run_this.sh`, `gh`, and GitHub token
+environment are absent, so neither key loading nor API/settings authority can
+be inferred or automated. After owner loading, open a new tmux pane, restart
+Codex there, rerun the documented SSH/fetch checks, then fetch-before-push and
+publish the pending harness commits. Do not weaken the T-181 baseline merely
+to turn the unrelated portable aggregate green.
 
 ### T-252 — Reconcile the post-T-251 readiness queue
 

@@ -49,11 +49,13 @@ gates; follow those more specific rules.
 - Treat authenticated Git transport and hosting-service API or administration
   access as separate capabilities. Preflight and report them independently;
   never infer API or settings authority from a successful fetch or push.
-- Under tmux, when an intended Git or SSH command needs authentication and the
-  process lacks a usable `SSH_AUTH_SOCK`, read only that exact variable from
-  tmux's global environment. Require it to name a current-user-owned Unix
-  socket, bind it only to the intended command, and otherwise fail closed.
-  Never list, inspect, copy, or request SSH keys or passphrases.
+- When an intended Git or SSH command needs agent authentication, require its
+  `SSH_AUTH_SOCK` to name a current-user-owned Unix socket. If the process
+  socket is unusable under tmux, recover only from the current tmux session's
+  exact `SSH_AUTH_SOCK`, then from a host-declared fixed agent socket; never use
+  tmux's global environment. Bind a recovered socket only to the intended
+  command and otherwise fail closed. Never list, inspect, copy, or request SSH
+  keys or passphrases.
 - When an agent executes through a platform CLI, prefer recognizable native
   commands over opaque convenience wrappers so plans and reports expose what
   actually ran. Keep portability mapping in the workflow and report the
