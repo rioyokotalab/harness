@@ -110,9 +110,10 @@ node-local T-250 state boundary; public Git intentionally contains no project
 names or individual decisions. The owner selected no new archive or backup:
 approved targets will rely only on temporary same-filesystem quarantine and
 guarded deletion, with permanent loss accepted after quarantine purge. No
-deletion has run. Interview progress: 11 of 153 directory decisions resolved;
-all 11 are owner-selected deletes under the no-backup policy. The next private
-candidate is the twelfth frozen project entry.
+deletion has run. Interview progress: 22 of 153 directory decisions resolved:
+18 owner-selected deletes under the no-backup policy and 4 keeps. Matching-name
+fleet-wide decisions are applied only when the owner explicitly requests them;
+the next private candidate is the first regenerable-cache entry.
 
 ### T-191 — Scheduler-native weekly primary snapshots
 
