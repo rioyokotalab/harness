@@ -1,9 +1,10 @@
-# Backup lifecycle phase 2 decision register
+# Backup lifecycle phase 2 locked policy
 
 ## Current gate
 
-This is a design artifact only. T-191's seven first production snapshots are
-eligible on Sunday 2026-07-19 and have not run yet. No retention deletion,
+T-251 resolved the policy choices in this document. T-191's seven first
+production snapshots are eligible on Sunday 2026-07-19 and have not run yet.
+No retention deletion,
 prune, recurring check, restore job, replica automation, or scheduler write is
 authorized. Keep every snapshot until all seven first jobs and their strictly
 future successors complete, private chain state is consistent, full-data checks
@@ -21,9 +22,9 @@ cover the repository over several invocations. Sources:
 - <https://restic.readthedocs.io/en/stable/045_working_with_repos.html>
 - <https://restic.readthedocs.io/en/v0.19.1/050_restore.html>
 
-## Recommended defaults for the later owner interview
+## Locked defaults
 
-These are recommendations, not decisions or commands to execute.
+These are owner-approved policy decisions, not live commands to execute.
 
 | Decision | Recommended default | Reason |
 |---|---|---|
@@ -121,17 +122,16 @@ start/end time, exit status, file/byte counts, and comparison result privately.
 Exact-unlink only the private manifest after successful evidence capture; clean
 the restored tree with guarded-delete under its canonical scratch boundary.
 
-## Owner choices still required before execution
+## Remaining execution gates
 
-1. Accept or revise the 12-weekly/12-monthly/3-yearly policy and eight-week
-   stabilization threshold.
+1. Complete eight consecutive successful weekly chains, two verified restores
+   per node, and one current verified independent generation; any anomaly
+   resets the affected node's count.
 2. Select the first pilot node after measured repository size/duration evidence.
-3. Accept quarterly full-data checks and restore drills plus monthly deterministic
-   quarter checks.
-4. Confirm the monthly manual independent-generation cadence and the number of
-   generations to retain.
-5. Approve the exact first live `forget` command and later the separate exact
+3. Complete three clean manual fleet cycles before proposing scheduler
+   recurrence for checks, restores, or replica generation.
+4. Approve the exact first live `forget` command and later the separate exact
    `prune` command. These are distinct destructive authority boundaries.
 
-Until those choices and gates are complete, T-196 remains execution-blocked but
+Until those gates are complete, T-196 remains execution-blocked but
 does not block read-only monitoring or unrelated LLM/HPC readiness work.

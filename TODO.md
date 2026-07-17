@@ -721,22 +721,23 @@ T-199. No node or scheduler was mutated.
 
 ### T-196 — Backup lifecycle phase 2
 
-**Phase/status:** `design complete`, execution-gated on all seven T-191 first
-snapshots and successors passing. The PIE decision register and
-recommended defaults for retention, `forget`/`prune`, scheduled full-data
-checks, restore drills, and independent replica recurrence. No deletion,
-retention command, new scheduler job, or replica automation is authorized by
-this planning task. The eventual plan must preserve rollback evidence, bound
-repository locks and maintenance time, and introduce each destructive or
-recurring mechanism only after a manual dry run and restore gate.
+**Phase/status:** `policy resolved`, execution-gated on eight successful weekly
+chains, two verified restores per node, and a current verified independent
+generation. T-251 locked the 12-weekly/12-monthly/3-yearly exact-group policy,
+monthly rotating quarter-data checks, quarterly full-data/full-restore checks,
+monthly sampled restores, and monthly manual independent generations retaining
+the latest two verified copies. No live retention, `forget`, `prune`, recurring
+check/restore, or replica automation is authorized yet. The eventual actions
+remain behind their later exact-command authority boundaries.
 
 **Outcome:** `docs/backup-lifecycle-phase2.md` records official Restic 0.19.1
 semantics, recommended generous retention, separate forget/prune transactions,
 deterministic data-check coverage, restore drills, manual-first independent
 replicas, collision/lock rules, phased acceptance gates, rollback evidence, and
-five owner choices. No Restic, scheduler, replica, deletion, or credential-path
-command ran. Keep-all remains the effective policy until T-191 production
-stabilizes and the owner separately approves exact destructive commands.
+the resolved owner policy. No Restic, scheduler, replica, deletion, or
+credential-path command ran. Keep-all remains effective until T-191 production
+stabilizes and the owner separately approves the exact first `forget` and later
+separate `prune` commands.
 
 ### T-197 — Evaluation follow-up decision
 
@@ -809,8 +810,8 @@ seven local/remote transfer artifacts are absent. No scheduler write occurred.
 
 ### T-199 — Recreated hidden-state classification
 
-**Phase/status:** `partially complete`; metadata audit and all already approved
-deletions are complete, while AB Mozilla relocation is owner-gated. The exact
+**Phase/status:** `complete`; metadata audit and every approved deletion are
+complete, including T-251's exact AB Mozilla removal. The exact
 scope was local `.cache`/`.nv`; AB `.cache`/`.mozilla`; AB2 `.cache`; RI
 `.cache`/`.apptainer`; AL `.mozilla`; and T4 `.cache`. Record link/type,
 ownership/mode, same-filesystem fact, bounded apparent size, application owner,
@@ -827,9 +828,10 @@ AB and T4 released roughly 23.4 GiB apparent legacy cache. Manifests, plan
 files, and staging boundaries are absent, and the post-cleanup fleet audit kept
 all T-191 jobs present. RI fresh-login startup recreated an empty `.cache`
 before the managed cache block; a second guarded cleanup left it absent and
-assigned durable prevention to T-201. AB `.mozilla` is only 12 KiB but crosses
-filesystems and can contain authentication state, so it was neither copied nor
-inspected; T-202 owns an application-native migration choice.
+assigned durable prevention to T-201. AB `.mozilla` was only 12 KiB, crossed
+filesystems, and could contain authentication state, so it was never copied or
+inspected. T-251's owner decision removed it through same-filesystem quarantine
+and guarded deletion; T-202 records the terminal evidence.
 
 ### T-200 — Scheduler-native LLM/HPC capability matrix
 
@@ -1047,17 +1049,21 @@ isolated in T-203.
 
 ### T-202 — AB Mozilla application-native relocation
 
-**Phase/status:** `owner-gated`; not a quota emergency. AB's retained
-`.mozilla` is 12 KiB, Firefox is not running, the intended fast target is
-absent, and source/target parents are on different filesystems. Never inspect
-or agent-copy this potentially credential-bearing profile. Present an
-application-native new-profile/re-authentication route, selective non-secret
-owner migration, launch test, rollback, and final symlink plan as a future PIE
-interview.
+**Phase/status:** `complete`; the owner explicitly did not need the profile and
+selected deletion with no inspection, migration, or fresh backup. Fresh
+preflight proved the exact mode-0700 owner directory, canonical home boundary,
+Firefox-process absence, and absent quarantine/manifest. The unchanged inode
+was atomically renamed into a same-filesystem mode-0700 quarantine. Guarded
+plan token `02e205ed35fbc086c5d7b220625d3a6e21c8d94c33afd900ad2a3d82962995cf`
+bound one target with three entries and 12,288 bytes; its exact apply deleted
+and verified only that target. The source, quarantine, mode-0600 manifest, and
+Firefox process are absent, and `harness doctor --host ab` passes. Profile
+contents and credentials were never inspected or copied; historical backup
+snapshots remain outside this action.
 
 ### T-203 — RI shell-independent default-cache recurrence
 
-**Phase/status:** `site-support-gated` from T-201. RI recreates a 4 KiB/two-entry
+**Phase/status:** `complete` from T-201 and T-250. RI recreates a 4 KiB/two-entry
 `~/.cache` after an exact guarded cleanup even when the next connection uses
 the SFTP subsystem and no Bash startup file. Preserve the tiny directory while
 diagnosing; repeated deletion is not progress. Use value-free timing/type/count
@@ -1078,6 +1084,13 @@ multi-file application cache, but it does not identify the creator. Further
 attribution needs site-admin audit evidence or a site explanation; do not
 enumerate the marker name, install tracing, repeat deletion, or infer an
 application from a zero-byte file.
+
+**Resolution:** the later owner-authorized T-250 bounded inventory identified
+the sole zero-byte marker as `motd.legal-displayed`; the same cache shape was
+independently recreated locally. This attributes the harmless owner cache to
+the native `pam_motd` login path, superseding the earlier unknown-attribution
+text. Preserve it, do not weaken `HOME`, and send no unnecessary support
+request.
 
 ### T-204 — Remove obsolete AB2 pyenv startup calls
 
