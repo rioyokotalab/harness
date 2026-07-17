@@ -112,6 +112,8 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "LLM/HPC next-action queue focused suite"
 "$ROOT/tests/test-pytorch-lock.sh" >/dev/null ||
     fail "PyTorch dual-architecture lock focused suite"
+"$ROOT/tests/test-pytorch-readiness.sh" >/dev/null ||
+    fail "PyTorch single-device readiness focused suite"
 "$ROOT/tests/test-storage-readiness.sh" >/dev/null ||
     fail "storage readiness focused suite"
 "$ROOT/tests/test-debugger-readiness.sh" >/dev/null ||

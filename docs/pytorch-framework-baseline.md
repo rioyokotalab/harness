@@ -30,6 +30,14 @@ forward/backward/update gate; and cache/home isolation with zero job residue.
 They prove only this tiny correctness surface, not performance, mixed
 precision, model fit, distributed training, or production suitability.
 
+`profiles/pytorch-framework-routes.tsv` declares the seven native submissions.
+Each job installs only from its architecture-matched persistent wheelhouse into
+a job-local virtual environment with network indexes disabled. It redirects
+HOME, XDG, pip, and temporary state into the guarded job tree, preserves the
+scheduler's single-device selection, and publishes success only after guarded
+cleanup reports zero residue. No package is installed into the account's base
+home or a shared site environment.
+
 PyTorch 2.13.0 is visible on the official CUDA 13.0 index as of 2026-07-17.
 It is a future candidate, not an implicit baseline change. A maintained update
 must freeze a new lock and two new artifact digests, confirm licenses and fleet

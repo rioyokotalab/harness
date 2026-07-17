@@ -1,0 +1,13 @@
+#!/bin/bash
+#PBS -N t251fab
+#PBS -q rt_HG
+#PBS -l select=1
+#PBS -l walltime=00:10:00
+#PBS -j oe
+#PBS -o /dev/null
+
+set -eu
+export HARNESS_LOGICAL_HOST=ab
+export HARNESS_READINESS_RUN_TAG=v1
+export HARNESS_EXPECTED_REV=0000000000000000000000000000000000000000
+exec "$HOME/harness/tests/smoke/jobs/pytorch-readiness.sh"
