@@ -9,5 +9,5 @@
 set -eu
 export HARNESS_LOGICAL_HOST=ab2
 export HARNESS_READINESS_RUN_TAG=v1
-export HARNESS_EXPECTED_REV=3eccb8010edc2605e826957c6a55594e1144461a
+export HARNESS_EXPECTED_REV=195b26cbe4d6454cb7d62635debb306c1200214d
 exec "$HOME/harness/tests/smoke/jobs/pytorch-readiness.sh"
