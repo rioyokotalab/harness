@@ -12,12 +12,14 @@ MPI_JOB=$ROOT/tests/smoke/jobs/mpi-readiness.sh
 MPI_LOCAL=$ROOT/tests/smoke/jobs/local-mpi.slurm
 NUMERICAL_JOB=$ROOT/tests/smoke/jobs/numerical-readiness.sh
 NUMERICAL_LOCAL=$ROOT/tests/smoke/jobs/local-numerical.slurm
+NUMERICAL_EPYC=$ROOT/tests/smoke/jobs/local-numerical-epyc.slurm
 COMPUTE_DEBUG_JOB=$ROOT/tests/smoke/jobs/compute-debugger-readiness.sh
 AFFINITY_JOB=$ROOT/tests/smoke/jobs/affinity-readiness.sh
 AFFINITY_LOCAL=$ROOT/tests/smoke/jobs/local-affinity.slurm
 
 bash -n "$JOB" "$LOCAL" "$CACHE_JOB" "$CACHE_LOCAL" "$ACCEL_JOB" "$ACCEL_LOCAL" \
-    "$MPI_JOB" "$MPI_LOCAL" "$NUMERICAL_JOB" "$NUMERICAL_LOCAL" "$COMPUTE_DEBUG_JOB" \
+    "$MPI_JOB" "$MPI_LOCAL" "$NUMERICAL_JOB" "$NUMERICAL_LOCAL" \
+    "$NUMERICAL_EPYC" "$COMPUTE_DEBUG_JOB" \
     "$AFFINITY_JOB" "$AFFINITY_LOCAL"
 grep -Fx '#YBATCH -r thrp_1' "$LOCAL" >/dev/null
 grep -Fx '#SBATCH --time=00:05:00' "$LOCAL" >/dev/null
@@ -57,6 +59,10 @@ grep -F 'NATIVE srun --ntasks=2 BUILD/mpi 2' "$MPI_JOB" >/dev/null
 grep -F 'NATIVE mpirun -n 2 BUILD/mpi 2' "$MPI_JOB" >/dev/null
 grep -F 'no reviewed base MPI route' "$MPI_JOB" >/dev/null
 grep -Fx '#YBATCH -r thrp_1' "$NUMERICAL_LOCAL" >/dev/null
+grep -Fx '#YBATCH -r epyc-7502_1' "$NUMERICAL_EPYC" >/dev/null
+grep -Fx '#SBATCH --job-name=t210nepyc2' "$NUMERICAL_EPYC" >/dev/null
+grep -F 'export HARNESS_READINESS_RUN_TAG=v2' "$NUMERICAL_EPYC" >/dev/null
+grep -F 'tests/smoke/jobs/source-contract.sh' "$NUMERICAL_EPYC" >/dev/null
 grep -F 'module load gcc/15.2.0' "$NUMERICAL_JOB" >/dev/null
 grep -F 'module load gcc/14.2.0' "$NUMERICAL_JOB" >/dev/null
 grep -F -- '-fno-fast-math -ffp-contract=off -frounding-math' "$NUMERICAL_JOB" >/dev/null
@@ -77,6 +83,7 @@ done
 if grep -E 'rm[[:space:]]+(-[^[:space:]]*)*[rR]|--recursive|rsync[[:space:]].*--delete' \
     "$JOB" "$LOCAL" "$CACHE_JOB" "$CACHE_LOCAL" "$ACCEL_JOB" "$ACCEL_LOCAL" \
     "$MPI_JOB" "$MPI_LOCAL" "$NUMERICAL_JOB" "$NUMERICAL_LOCAL" \
+    "$NUMERICAL_EPYC" \
     "$COMPUTE_DEBUG_JOB" "$AFFINITY_JOB" "$AFFINITY_LOCAL" >/dev/null; then
     printf '%s\n' 'FAIL: unsafe cleanup in readiness job' >&2
     exit 1

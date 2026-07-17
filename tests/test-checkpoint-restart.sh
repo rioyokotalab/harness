@@ -5,6 +5,7 @@ ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 SOURCE=$ROOT/tests/smoke/checkpoint_restart.cpp
 JOB=$ROOT/tests/smoke/jobs/checkpoint-restart-readiness.sh
 LOCAL_JOB=$ROOT/tests/smoke/jobs/local-checkpoint-restart.slurm
+EPYC_JOB=$ROOT/tests/smoke/jobs/local-checkpoint-restart-epyc.slurm
 FORMAT_DOC=$ROOT/docs/checkpoint-restart-format.md
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 TEST_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/checkpoint-restart-test.XXXXXX")
@@ -28,7 +29,13 @@ trap 'exit 143' TERM
 
 bash -n "$JOB"
 bash -n "$LOCAL_JOB"
+bash -n "$EPYC_JOB"
 grep -F '#YBATCH -r thrp_1' "$LOCAL_JOB" >/dev/null || fail "local native resource"
+grep -Fx '#YBATCH -r epyc-7502_1' "$EPYC_JOB" >/dev/null || fail "Epyc native resource"
+grep -Fx '#SBATCH --job-name=t217repyc2' "$EPYC_JOB" >/dev/null || fail "Epyc job name"
+grep -F 'export HARNESS_READINESS_RUN_TAG=v2' "$EPYC_JOB" >/dev/null || fail "Epyc run tag"
+grep -F 'tests/smoke/jobs/source-contract.sh' "$EPYC_JOB" >/dev/null ||
+    fail "Epyc source contract"
 if grep -E '^#SBATCH --(partition|resource)=' "$LOCAL_JOB" >/dev/null; then
     fail "local resource was expressed as a Slurm option"
 fi
@@ -97,5 +104,5 @@ grep -F 'exactly one writer wins' "$FORMAT_DOC" >/dev/null ||
 grep -F 'O_EXCL' "$SOURCE" >/dev/null || fail "checkpoint collision refusal"
 grep -F 'unlink -- "$checkpoint"' "$JOB" >/dev/null || fail "exact live cleanup"
 if grep -E 'rm[[:space:]]+(-[^[:space:]]*)*[rR]|--recursive|find[[:space:]].*-delete|rsync[[:space:]].*--delete' \
-    "$JOB" "$LOCAL_JOB"; then fail "unsafe cleanup"; fi
+    "$JOB" "$LOCAL_JOB" "$EPYC_JOB"; then fail "unsafe cleanup"; fi
 printf '%s\n' 'checkpoint restart tests: PASS'
