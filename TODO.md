@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-251.
+and compact historical pointers here. Next free ID: T-252.
 
 ## Current state
 
@@ -45,6 +45,58 @@ and compact historical pointers here. Next free ID: T-251.
   candidate table and audit evidence in the pre-compaction TODO history.
 
 ## Active tasks
+
+### T-251 — Resolve owner and site-support gates
+
+**Phase/status:** `planning` under the owner's 2026-07-17 request to resolve
+all owner-gated and site-support-gated TODO issues. This is one consolidated
+Plan–Interview–Execute task; planning and interviewing are read-only except for
+ledger checkpoints. After every decision is frozen, set `ready-for-go` and
+wait for a fresh explicit go before any target change or external write.
+
+**Scope and current inventory:** reconcile (1) T-194's harness/website GitHub
+merge controls and deferred website CI; (2) T-196's five backup-lifecycle
+choices while preserving its T-191 stabilization prerequisite; (3) T-202's AB
+Mozilla application-native relocation; (4) T-203's RI cache-attribution support
+escalation; (5) T-206/T-208 and Q5/Q6/Q8/Q9's framework, scientific-library,
+project-environment, and immutable-artifact choices; (6) Q7's AB/AB2/T4
+full-node multi-node MPI resource decision; and (7) Q4/T-236's local
+no-test-only scheduler-interface block. The website checkout is currently clean
+but three commits ahead of `origin/main`; preserve those unrelated commits and
+do not modify or publish them during planning. Local cluster recovery and the
+captured T-191/T-210/T-217/T-237 jobs remain independent execution gates, not
+reasons to change these decisions.
+
+**Authority boundaries and non-goals:** do not inspect or copy credential or
+Mozilla profile contents; send no support message; change no GitHub setting;
+publish no website commit; install no package; pull/build no image; submit,
+cancel, resize, or reprioritize no scheduler job; run no Restic retention,
+forget, prune, or replica command; and perform no deletion or profile move
+during planning/interviewing. A final go authorizes only the frozen plan and
+does not collapse these separate external-write, scheduler-spend, credential,
+or destructive-retention boundaries.
+
+**Planning sequence:** (1) reconcile every ledger gate with current local and
+official evidence; (2) eliminate stale or discoverable questions; (3) freeze
+one ordered decision register with a recommended default and explicit defer
+criterion for each gate; (4) interview exactly one material decision at a
+time, checkpointing every answer; (5) audit contradictions and prerequisites;
+and (6) present one approval bundle with exact implementation surfaces,
+support-message drafts, native scheduler/resource shapes, external settings,
+rollback, and validation. Execution order will prioritize reversible
+repository work and drafts, then explicit external settings/messages, then
+application/environment actions, with destructive backup lifecycle work still
+blocked until its independently recorded stabilization gates pass.
+
+**Acceptance and recovery:** every named gate must end as either an approved
+bounded action with prerequisites/rollback, an evidence-backed explicit
+defer/close decision, or a sent support request with a durable waiting
+condition. No gate becomes complete merely because execution is time-gated.
+Interrupted work resumes from the single next unresolved question. Any new
+scope, cost, license, project, credential, scheduler, or destructive choice
+returns to interviewing rather than being inferred. Current next action:
+complete official-evidence discovery and then set `interviewing` with the exact
+question count and first unresolved decision.
 
 ### T-250 — Seven-node top-level project and directory cleanup
 
