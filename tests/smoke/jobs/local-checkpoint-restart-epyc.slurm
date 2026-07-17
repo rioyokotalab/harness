@@ -11,7 +11,7 @@
 set -eu
 export HARNESS_LOGICAL_HOST=local
 export HARNESS_READINESS_RUN_TAG=v2
-export HARNESS_EXPECTED_REV=0000000000000000000000000000000000000000
+export HARNESS_EXPECTED_REV=afef3d64a93696d1a55019ac28395d94ed83e3e6
 "$HOME/harness/tests/smoke/jobs/source-contract.sh" "$HARNESS_EXPECTED_REV" \
     profiles/hosts/local.conf \
     tests/smoke/checkpoint_restart.cpp \
