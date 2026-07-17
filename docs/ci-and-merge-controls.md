@@ -32,32 +32,31 @@ default token access and pin actions to a full commit SHA:
 The first complete hosted validation succeeded as
 [Harness CI run 29499772796](https://github.com/rioyokotalab/harness/actions/runs/29499772796).
 
-## Deferred website workflow
+## Implemented website workflow
 
-The website working tree had fresh unrelated ledger edits, so T-194 did not
-take over or modify it. Once its driver commits and publishes those edits, add
-`.github/workflows/ci.yml` there with the same read-only token, immutable
-checkout commit, `ubuntu-24.04`, no secrets, no deployment, and a unique job
-name such as `website-offline-ci`. Its steps should be:
+The website's unrelated driver work completed before T-251 added and published
+`.github/workflows/ci.yml`. It uses the same read-only token, immutable checkout
+commit, `ubuntu-24.04`, no secrets, and no deployment. Its `Offline checks` job:
 
-1. `python3 tools/security-check.py` (without `--live`).
-2. `python3 tools/supply-chain-check.py` (without `--online`).
-3. `npm ci --ignore-scripts` using the committed lockfile.
-4. `npm run test:browser:install` for the lockfile-selected Playwright browser.
-5. `npm test`; the browser test itself must make no live-site or deployment
-   request.
-6. `python3 tools/task-metrics.py validate` only if the workflow does not
-   create or rewrite ledger telemetry.
+1. Fetches the pinned public harness solely for its guarded-delete helper.
+2. Installs the pinned `lftp` package used by the local-mirror test.
+3. Validates task metrics, Markdown size, standards, security, and supply-chain
+   policy without live-site or online-policy checks.
+4. Runs `npm ci` from the committed lockfile and installs its locked Chromium
+   browser with Playwright.
+5. Runs the 38 local browser tests without a deployment request.
 
 Browser setup needs a version-selected download, so it is not an offline step;
 the checks after setup are credential-free and local. Do not use
 `pull_request_target`, upload repository contents as artifacts, restore a
 mutable dependency cache, or invoke `publish.sh`, `deploy.sh`, SSH, or lftp.
 
-## Owner-side merge-control proposal
+## Frozen merge controls
 
-No GitHub setting was changed. After `portable-phase1` has succeeded on the
-repository, configure a `main` branch rule with:
+No GitHub setting was changed as of the 2026-07-17 preflight. After
+`portable-phase1` and `Offline checks` succeeded from GitHub Actions integration
+`15368`, the owner identified `rioyokota2` as the reviewer for PRs authored by
+`rioyokota`. Configure each repository's `main` branch with:
 
 - pull requests required, one non-author approval, stale approvals dismissed,
   and conversation resolution required;
@@ -67,16 +66,21 @@ repository, configure a `main` branch rule with:
   administrator bypass disabled;
 - no required deployment and no write-capable workflow token.
 
-For the website, require its distinct `website-offline-ci` only after that
-workflow has completed successfully at least once. GitHub notes that a check
-must have succeeded recently before it can be selected, and duplicate job
-names across workflows can make required checks ambiguous. Relevant official
-documentation:
+The exact REST payloads are
+[`harness-main.json`](github-rulesets/harness-main.json) and
+[`website-main.json`](github-rulesets/website-main.json). They use no bypass
+actor and allow only squash or rebase merges, matching the linear-history rule.
+Before activation, the authenticated owner must confirm at least one of those
+merge methods is enabled and that `rioyokota2` has Write or Admin permission in
+both repositories. The current unauthenticated process cannot see either
+private setting. Relevant official documentation:
 
-- <https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches>
+- <https://docs.github.com/en/rest/repos/rules?apiVersion=2026-03-10>
+- <https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets>
 - <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/troubleshooting-required-status-checks>
 
-Rollback is to disable the branch rule or remove only the named required check;
-the committed workflow remains a read-only signal and can be reverted with a
-normal Git revert. This proposal intentionally does not call the GitHub API or
-change repository settings.
+Creation requires an authenticated repository-Administration write. Validate
+the returned ruleset identity and the public active rules immediately, then use
+one `rioyokota` test PR approved by `rioyokota2` per repository. Rollback is to
+disable or delete only the newly created ruleset; the committed workflow remains
+a read-only signal and can be reverted with a normal Git revert.
