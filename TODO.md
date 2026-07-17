@@ -48,7 +48,7 @@ and compact historical pointers here. Next free ID: T-252.
 
 ### T-251 — Resolve owner and site-support gates
 
-**Phase/status:** `planning` under the owner's 2026-07-17 request to resolve
+**Phase/status:** `interviewing` under the owner's 2026-07-17 request to resolve
 all owner-gated and site-support-gated TODO issues. This is one consolidated
 Plan–Interview–Execute task; planning and interviewing are read-only except for
 ledger checkpoints. After every decision is frozen, set `ready-for-go` and
@@ -94,9 +94,56 @@ defer/close decision, or a sent support request with a durable waiting
 condition. No gate becomes complete merely because execution is time-gated.
 Interrupted work resumes from the single next unresolved question. Any new
 scope, cost, license, project, credential, scheduler, or destructive choice
-returns to interviewing rather than being inferred. Current next action:
-complete official-evidence discovery and then set `interviewing` with the exact
-question count and first unresolved decision.
+returns to interviewing rather than being inferred.
+
+**Evidence reconciliation and decision register (eight questions):** later
+T-250 evidence supersedes T-203's unknown attribution: both recreated local and
+RI directories contain only the zero-byte `motd.legal-displayed` marker and
+were boundedly attributed to `pam_motd`. Close T-203 by correcting its stale
+phase text and documenting the native harmless owner cache; do not delete it,
+weaken `HOME`, or send an unnecessary support request. Public GitHub API
+inspection on 2026-07-17 reports no repository rulesets on either harness or
+website. The clean website checkout is three unpublished ledger-only commits
+ahead of `origin/main`; preserve and review them as one prerequisite before any
+website CI change. Official evidence used for the remaining recommendations is
+GitHub's ruleset documentation
+<https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets>,
+Mozilla's Profile Manager guidance
+<https://support.mozilla.org/en-US/kb/profile-manager-create-remove-switch-firefox-profiles?style_mode=inproduct>,
+PyTorch's version matrix
+<https://pytorch.org/get-started/previous-versions/>, the official CUDA 13.0
+wheel index <https://download.pytorch.org/whl/cu130/torch/>, NVIDIA's driver
+compatibility matrix
+<https://docs.nvidia.com/deploy/cuda-compatibility/minor-version-compatibility.html>,
+and the Restic 0.19.1 sources already recorded in
+`docs/backup-lifecycle-phase2.md`.
+
+Ask and checkpoint exactly these material choices, one at a time: D1 retain
+AB's tiny backed-up Mozilla profile and close relocation, or authorize a new
+application-native profile/re-authentication migration; D2 publish the three
+reviewed website commits, add its offline CI, and activate the documented
+`main` rulesets on both repositories; D3 accept the eight-week/two-restore
+stabilization threshold and 12-weekly/12-monthly/3-yearly scoped retention
+policy; D4 accept monthly structural and deterministic quarter-data checks plus
+quarterly full-data checks and full restore drills; D5 accept monthly manual
+replicas after checks/restores, retain two verified generations, and schedule
+only after three clean manual cycles; D6 select the reference framework as
+Python 3.12 plus PyTorch 2.12.1/CUDA 13.0 from official wheels, one lock and two
+architecture-specific immutable artifacts, followed by the seven smallest
+single-device gates; D7 explicitly defer scientific-library and MPI-enabled
+project environments until a named workload supplies ABI/binding requirements;
+and D8 authorize only the later collision-checked local two-node MPI correctness
+job while deferring AB/AB2/T4 full-node spend until a concrete distributed
+workload exists. CUDA 13.x requires driver 580 or newer and every recorded
+fleet driver meets that threshold; live runtime validation remains mandatory.
+
+The backup pilot-node choice remains deferred until comparable repository
+size/duration evidence exists. The exact first live `forget` and later separate
+`prune` commands remain distinct future destructive approvals after T-191's
+stabilization gates; this interview cannot pre-authorize them. D6 does not
+authorize a registry pull/build, and D8 cannot submit while local recovery and
+the captured jobs still gate the queue. Current next action: ask D1 only and
+checkpoint its answer before D2.
 
 ### T-250 — Seven-node top-level project and directory cleanup
 
