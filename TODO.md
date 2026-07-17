@@ -166,9 +166,12 @@ candidate digests, rerun all seven bounded single-device gates, retain the
 previous verified artifacts for rollback, and promote only a complete pass.
 Never mutate an existing digest, use a floating tag, or silently auto-upgrade;
 background monitoring or pull-request automation is not authorized by this
-choice. D7 explicitly defer scientific-library and MPI-enabled
-project environments until a named workload supplies ABI/binding requirements;
-and D8 authorize only the later collision-checked local two-node MPI correctness
+choice. D7 is resolved as an explicit defer: do not create a generic
+scientific-library or MPI-enabled project environment until a named workload
+supplies its language bindings, HDF5/NetCDF/FFTW/BLAS requirements, threading/
+integer ABI, compiler, MPI ABI, and numerical contract. The existing bounded
+login-surface evidence remains discovery only; this defer does not block D6's
+framework artifacts or single-device gates. D8 authorize only the later collision-checked local two-node MPI correctness
 job while deferring AB/AB2/T4 full-node spend until a concrete distributed
 workload exists. CUDA 13.x requires driver 580 or newer and every recorded
 fleet driver meets that threshold; live runtime validation remains mandatory.
@@ -178,8 +181,8 @@ size/duration evidence exists. The exact first live `forget` and later separate
 `prune` commands remain distinct future destructive approvals after T-191's
 stabilization gates; this interview cannot pre-authorize them. D6 does not
 authorize a registry pull/build, and D8 cannot submit while local recovery and
-the captured jobs still gate the queue. Current next action: ask D7 only and
-checkpoint its answer before D8.
+the captured jobs still gate the queue. Current next action: ask D8 only and
+checkpoint its answer, then audit the complete register for `ready-for-go`.
 
 ### T-250 — Seven-node top-level project and directory cleanup
 
