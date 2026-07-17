@@ -93,6 +93,14 @@ reports six clean idempotent `KEEP` results. The only remaining prerequisite
 before ruleset creation is explicit owner authorization for the two Write-role
 upgrades described above.
 
+**Current waiting state:** final pre-ruleset ledger commit `c57b316` is on
+`origin/main`, and hosted Harness CI run `29618148063` passed at that exact
+revision. AB, AB2, RI, RC, and T4 are clean at `c57b316` with transfer
+artifacts absent. AL's read-only fleet preflight and one bounded native retry
+both returned `Permission denied (publickey)` through the still-valid fixed
+agent socket, so no AL write was attempted and AL remains clean at `bcb0cc4`.
+Retrying only AL is safe after the owner restores its intended SSH identity.
+
 ### T-257 — Remove automatic Git work from shell lifecycle
 
 **Phase/status:** `complete` under the owner's explicit request. Remove the
