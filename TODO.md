@@ -99,8 +99,8 @@ policy and then the frozen private candidate order.
 **Inventory checkpoint:** read-only discovery completed on all seven nodes:
 175 directory records resolve to 153 distinct decisions and 22 top-level
 directory-symlink parents. The resolved inventory contains 12 project trees,
-4 user-work/service trees, 6 previously obsolete trees, 11 regenerable cache
-trees, 36 application-state trees, 23 tooling trees, 47 active control trees,
+4 user-work/service trees, 6 previously obsolete trees, 10 regenerable cache
+trees, 36 application-state trees, 23 tooling trees, 48 active control trees,
 and 14 backup trees. Bounded full size walks completed for 125 candidates; 28
 large/control/backup candidates were intentionally skipped or timed out rather
 than expanding the probe. Twenty candidates are Git checkouts with local-only
@@ -113,7 +113,8 @@ guarded deletion, with permanent loss accepted after quarantine purge. No
 deletion has run. Interview progress: 22 of 153 directory decisions resolved:
 18 owner-selected deletes under the no-backup policy and 4 keeps. Matching-name
 fleet-wide decisions are applied only when the owner explicitly requests them;
-the next private candidate is the first regenerable-cache entry.
+the active AL cache root was safety-reclassified from regenerable cache to
+protected control after its live shell references were confirmed.
 
 ### T-191 — Scheduler-native weekly primary snapshots
 
