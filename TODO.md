@@ -124,10 +124,19 @@ or fresh backup; existing historical backup snapshots remain outside this
 deletion. After the final go, first revalidate the exact owner directory,
 Firefox/process absence, canonical home boundary, and metadata, then use one
 same-filesystem quarantine plus the guarded bulk-delete plan/exact-NEXT apply
-workflow; any failed pre-delete gate restores the unchanged quarantine. D2
-publish the three
-reviewed website commits, add its offline CI, and activate the documented
-`main` rulesets on both repositories; D3 accept the eight-week/two-restore
+workflow; any failed pre-delete gate restores the unchanged quarantine. D2 is
+resolved as the strict staged merge-control policy: fetch and review the three
+existing website ledger commits, publish them without rewriting, add and pass
+the credential-free offline website CI in a separate change, then activate the
+documented `main` rulesets on harness and website. Both rulesets require pull
+requests, one non-author approval, stale-approval dismissal, conversation
+resolution, the repository's CI check on an up-to-date branch, linear history,
+and no force-push, deletion, or administrator bypass. This intentionally ends
+ordinary direct pushes to `main`; validate the active public rulesets and a
+test pull-request path before declaring D2 complete. Before activation, require
+evidence that at least one eligible non-author reviewer exists; otherwise stop
+at the passing CI/reviewed settings plan rather than make `main` unmergeable.
+D3 accept the eight-week/two-restore
 stabilization threshold and 12-weekly/12-monthly/3-yearly scoped retention
 policy; D4 accept monthly structural and deterministic quarter-data checks plus
 quarterly full-data checks and full restore drills; D5 accept monthly manual
@@ -147,8 +156,8 @@ size/duration evidence exists. The exact first live `forget` and later separate
 `prune` commands remain distinct future destructive approvals after T-191's
 stabilization gates; this interview cannot pre-authorize them. D6 does not
 authorize a registry pull/build, and D8 cannot submit while local recovery and
-the captured jobs still gate the queue. Current next action: ask D2 only and
-checkpoint its answer before D3.
+the captured jobs still gate the queue. Current next action: ask D3 only and
+checkpoint its answer before D4.
 
 ### T-250 — Seven-node top-level project and directory cleanup
 
