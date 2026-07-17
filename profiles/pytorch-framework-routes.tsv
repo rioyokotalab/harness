@@ -5,4 +5,4 @@ ab2	x86_64	pytorch-2.12.1-cu130-cp312-x86_64-wheelhouse	b5961b56df9301d3fc19234e
 ri	aarch64	pytorch-2.12.1-cu130-cp312-aarch64-wheelhouse	ed070849ba8da9fcf34e574a0f26e6adf510ffa7a8722201af4ecf7a64346988	sbatch tests/smoke/jobs/ri-pytorch.slurm
 al	aarch64	pytorch-2.12.1-cu130-cp312-aarch64-wheelhouse	ed070849ba8da9fcf34e574a0f26e6adf510ffa7a8722201af4ecf7a64346988	sbatch tests/smoke/jobs/al-pytorch.slurm
 rc	aarch64	pytorch-2.12.1-cu130-cp312-aarch64-wheelhouse	ed070849ba8da9fcf34e574a0f26e6adf510ffa7a8722201af4ecf7a64346988	sbatch tests/smoke/jobs/rc-pytorch.slurm
-t4	x86_64	pytorch-2.12.1-cu130-cp312-x86_64-wheelhouse	b5961b56df9301d3fc19234e5c6679ed186e5c49d1f5d1796a656fd3dcd626e6	qsub -A jh250019 tests/smoke/jobs/t4-pytorch.sh
+t4	x86_64	pytorch-2.12.1-cu130-cp312-x86_64-wheelhouse	b5961b56df9301d3fc19234e5c6679ed186e5c49d1f5d1796a656fd3dcd626e6	qsub -g jh250019 tests/smoke/jobs/t4-pytorch.sh

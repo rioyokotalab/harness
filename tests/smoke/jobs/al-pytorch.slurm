@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=t251fal
-#SBATCH --account=g177
+#SBATCH --account=g177-1
 #SBATCH --partition=normal
 #SBATCH --nodes=1
 #SBATCH --time=00:10:00
