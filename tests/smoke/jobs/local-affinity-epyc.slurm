@@ -10,11 +10,10 @@
 set -eu
 export HARNESS_LOGICAL_HOST=local
 export HARNESS_READINESS_RUN_TAG=v2
-export HARNESS_EXPECTED_REV=0000000000000000000000000000000000000000
+export HARNESS_EXPECTED_REV=8c36d8b4a29992a80ed4a38efc4b08ad960423af
 "$HOME/harness/tests/smoke/jobs/source-contract.sh" "$HARNESS_EXPECTED_REV" \
     tests/smoke/affinity.cpp \
     tests/smoke/jobs/affinity-readiness.sh \
-    tests/smoke/jobs/local-affinity-epyc.slurm \
     tests/smoke/jobs/source-contract.sh \
     tests/guarded-test-cleanup.sh
 exec "$HOME/harness/tests/smoke/jobs/affinity-readiness.sh"

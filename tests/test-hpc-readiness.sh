@@ -84,7 +84,7 @@ if grep -F '#SBATCH --ntasks=' "$AFFINITY_EPYC" >/dev/null; then
     printf '%s\n' 'FAIL: Epyc affinity job overrides native task count' >&2
     exit 1
 fi
-grep -F 'tests/smoke/jobs/local-affinity-epyc.slurm' "$AFFINITY_EPYC" >/dev/null
+grep -F 'tests/smoke/jobs/source-contract.sh' "$AFFINITY_EPYC" >/dev/null
 grep -F 'tests/smoke/jobs/source-contract.sh' "$AFFINITY_JOB" >/dev/null
 grep -F '"$build/affinity" 2' "$AFFINITY_JOB" >/dev/null
 for source in cpu.c cpu.cpp cpu.f90; do

@@ -36,7 +36,7 @@ grep -Fx '#SBATCH --cpus-per-task=2' "$LOCAL_EPYC" >/dev/null
 grep -Fx '#SBATCH --job-name=t237aepyc2' "$LOCAL_EPYC" >/dev/null
 grep -F 'export HARNESS_READINESS_RUN_TAG=v2' "$LOCAL_EPYC" >/dev/null
 grep -E '^export HARNESS_EXPECTED_REV=[0-9a-f]{40}$' "$LOCAL_EPYC" >/dev/null
-grep -F 'tests/smoke/jobs/local-affinity-epyc.slurm' "$LOCAL_EPYC" >/dev/null
+grep -F 'tests/smoke/jobs/source-contract.sh' "$LOCAL_EPYC" >/dev/null
 if grep -F '#SBATCH --ntasks=' "$LOCAL_EPYC" >/dev/null; then
     printf '%s\n' 'FAIL: Epyc affinity job overrides native task count' >&2
     exit 1

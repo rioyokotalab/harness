@@ -2140,14 +2140,23 @@ zero job-scoped residue before closing T-237/Q3 or starting Q10.
 resource is `epyc-7502_1`; prior T-210/T-217 evidence requires preserving its
 native eight-task shape rather than forcing `--ntasks=1`. Add and publish a
 distinct `t237aepyc2`/v2 wrapper that requests two CPUs per task, includes
-itself and every executable input in the submitted source contract, and writes
-only distinct result `t237-affinity-local-v2.out`. After the exact revision is
+every gate executable input in the submitted source contract, and writes only
+distinct result `t237-affinity-local-v2.out`. The submitted wrapper itself is
+frozen in the published runnable commit and scheduler-staged at submission.
+After the exact revision is
 clean and pushed, revalidate old-job identity plus v1/v2 result/temp/name
 collisions, cancel only `91581`, prove it absent or terminal, exact-unlink only
 an unchanged regular owner-owned generated Ybatch script if one remains, then
 submit the v2 wrapper once. Accept only one parsed Slurm ID that immediately
 matches owner and name; monitor only that replacement. No other job, resource,
 priority, result, or scheduler state is authorized to change.
+
+The first local freeze validation used an incorrectly expanded short commit
+ID and the source contract refused it as `revision unavailable`; no scheduler
+write occurred and retry was safe. Native `git rev-parse 8c36d8b` resolved the
+actual implementation revision as
+`8c36d8b4a29992a80ed4a38efc4b08ad960423af`, which is the only revision the
+runnable v2 wrapper may accept.
 
 ### T-238 — Fail-closed scheduler job collision preflight
 
