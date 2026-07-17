@@ -1735,8 +1735,9 @@ No dry run, temporary script, job, or scheduler mutation occurred.
 
 ### T-237 — Scheduler-allocation CPU affinity and topology gate
 
-**Phase/status:** `implementing`, derived from T-216/Q3. Add a portable Linux
-C++20 gate that reads only the allocation process's CPU affinity mask and
+**Phase/status:** `executing`; all six remote nodes pass and the local route is
+held behind captured jobs `91220`/`91240`. Add a portable Linux C++20 gate that
+reads only the allocation process's CPU affinity mask and
 sysfs topology, requires at least two distinct physical cores, and proves two
 workers can be pinned to separate allowed cores. Emit aggregate counts only;
 do not publish CPU IDs, hostnames, timings, or benchmark claims, and do not
@@ -1767,14 +1768,18 @@ action.
 seven reviewed login toolchains. Result/name/temp collision checks passed
 before native schedulers accepted AB `2045152.pbs1`, AB2 `2045153.pbs1`, RI
 `7020`, AL `4225162`, RC `211077`, and T4 `8182351`; local remains held behind
-`91220`/`91240`. RI, AL, and T4 already have private mode-0600 PASS/status-zero
-results and terminal scheduler status zero. AB/AB2 are queued. RC v1 preserved
-a clean diagnostic failure: Slurm allocated two logical CPUs, but the gate
-found only one physical core, and both result and accounting report status 2.
-Native `sbatch --help` exposes `--hint`; freeze `--hint=nomultithread` with a
-distinct v2 name/result, commit and distribute the route correction, then
-test-only/collision-check before one RC retry. Do not overwrite v1 or alter
-the already queued jobs.
+`91220`/`91240`. RI, AL, and T4 have private mode-0600 PASS/status-zero results
+and terminal scheduler status zero. RC v1 preserved a clean diagnostic
+failure: Slurm allocated two logical CPUs, but the gate found only one physical
+core, and both result and accounting report status 2. Correction commit
+`8a0dcba` added `--hint=nomultithread`; distinct RC v2 job `211079` then passed
+with two physical cores. Do not overwrite either RC result. On the 2026-07-17
+resume, AB `2045152.pbs1` and AB2 `2045153.pbs1` both reported historical PBS
+state `F`, exact expected owner/name, and `Exit_status=0`. Their regular
+mode-0600 results pass the frozen source contract, expose 16 physical cores,
+pin two workers, end with status zero, and leave zero capture temporaries.
+Local is the sole remaining T-237 route and must not be submitted until both
+older local jobs are terminal.
 
 ### T-238 — Fail-closed scheduler job collision preflight
 
@@ -2020,6 +2025,21 @@ external state change by polling exactly these four IDs, then follow the
 dependency order above. Do not cancel, replace, resize, or reprioritize them.
 T-191 still has its independent time gate at the recorded Sunday eligibility
 points. No task is complete, failed, or authorized beyond its existing gate.
+
+**Resume checkpoint (2026-07-17 05:52 UTC):** the owner's later resume request
+triggered one exact-ID poll. Native local `squeue` still matches owner/job
+identity: `91220` (`t210nlocal`) is pending because required nodes are down,
+drained, or reserved for higher-priority partitions, and `91240`
+(`t217rlocal`) is pending for priority. The initial Git/AB/AB2 SSH attempts
+failed after the restart because this process had not inherited the owner's
+new agent socket; no scheduler query was misreported as a zero-job result.
+After the owner started and loaded the local agent, its owner-controlled socket
+enabled a successful fetch proving local `HEAD` and `origin/main` still exact,
+followed by the terminal AB/AB2 reconciliation recorded in T-237. No scheduler
+write, cancellation, replacement, resize, or reprioritization occurred. The
+next action is to monitor only local `91220` and `91240`; after both are
+terminal, validate their fixed results and fresh-preflight the one held local
+T-237 submission. T-191 remains independently time-gated until Sunday.
 
 ### T-248 — Remove obsolete `.bash_common` startup references and files
 

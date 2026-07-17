@@ -10,8 +10,6 @@ canonical queue in `docs/audits/llm-hpc-next-actions-2026-07-17.json`.
 |---|---|---|---|---|
 | local | T-210 numerical | `91220` | pending: Resources, start unknown | `t210-numerical-local-v1.out` absent |
 | local | T-217 checkpoint/restart | `91240` | pending: Priority, start unknown | `t217-checkpoint-restart-local-v1.out` absent |
-| AB | T-237 affinity | `2045152.pbs1` | queued: insufficient `ncpus` for full `rt_HC` node | `t237-affinity-ab-v1.out` absent |
-| AB2 | T-237 affinity | `2045153.pbs1` | queued: insufficient `ncpus` for full `rt_HC` node | `t237-affinity-ab2-v1.out` absent |
 
 Never replace, duplicate, reprioritize, cancel, or broaden these requests merely
 because they are delayed. Query only the captured ID. A terminal claim requires
@@ -26,11 +24,13 @@ no residue-free dry-run mode.
 
 ## T-237 completed evidence
 
-RI `7020`, AL `4225162`, RC correction `211079`, and T4 `8182351` have terminal
-scheduler/result status zero. RC v1 `211077` is intentionally preserved as a
-diagnostic status-2 result: two allocated logical CPUs exposed one physical
-core. V2 added `--hint=nomultithread`, exposed two physical cores, and passed.
-Do not delete or overwrite either RC result.
+AB `2045152.pbs1`, AB2 `2045153.pbs1`, RI `7020`, AL `4225162`, RC correction
+`211079`, and T4 `8182351` have terminal scheduler/result status zero. The AB
+and AB2 results additionally pass the frozen source contract and leave zero
+capture temporaries. RC v1 `211077` is intentionally preserved as a diagnostic
+status-2 result: two allocated logical CPUs exposed one physical core. V2
+added `--hint=nomultithread`, exposed two physical cores, and passed. Do not
+delete or overwrite either RC result.
 
 ## Readiness layers completed in this window
 
@@ -40,8 +40,8 @@ Do not delete or overwrite either RC result.
   hygiene.
 - T-235/T-236 consolidated the priority queue and proved the local multi-node
   MPI route has no safe test-only interface.
-- T-237 added the non-benchmark allocation affinity/topology gate; four remote
-  nodes pass and two are captured pending.
+- T-237 added the non-benchmark allocation affinity/topology gate; all six
+  remote nodes pass and the local route remains held behind two older jobs.
 - T-238 added a cross-scheduler fail-closed collision preflight after a real RI
   DNS/config transient demonstrated why unchecked status pipelines are unsafe.
 - T-239 found all seven nodes clean, control-plane 34/0/0, identical smoke-tree
@@ -54,13 +54,13 @@ Do not delete or overwrite either RC result.
 
 ## Next safe order
 
-1. Poll only the four active IDs above. Reconcile any terminal job immediately
+1. Poll only the two active IDs above. Reconcile any terminal job immediately
    against its fixed result; preserve failures for diagnosis.
 2. Close T-210/T-217 when local accounting and results agree. Only then submit
    the held local T-237 route after its fresh collision preflight.
-3. Close T-237/Q3 after AB, AB2, and local pass or retain an explicit diagnosed
-   gap. Q10 (allocation-level NUMA memory-policy correctness) remains blocked
-   until then and is not a benchmark.
+3. Close T-237/Q3 after local passes or retain an explicit diagnosed gap. Q10
+   (allocation-level NUMA memory-policy correctness) remains blocked until
+   then and is not a benchmark.
 4. For a real workload, use `docs/hpc-project-intake.md` through PIE and validate
    the project-owned manifest with
    `tools/hpc-project-intake-validate.py --require-ready`. Q5/Q6 remain owner or
