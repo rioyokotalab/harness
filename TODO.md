@@ -48,7 +48,7 @@ and compact historical pointers here. Next free ID: T-259.
 
 ### T-258 — Activate and validate strict GitHub merge controls
 
-**Phase/status:** `executing-prerequisite-repair`; no GitHub setting has been
+**Phase/status:** `waiting-owner-permission`; no GitHub setting has been
 changed. Resume T-194 only after a fresh authenticated preflight proves both
 repositories can be merged through the frozen policy. The exact tracked
 ruleset payloads and rollback remain unchanged.
@@ -84,6 +84,14 @@ public-audit, diff, and the complete `HARNESS_PORTABLE_CI=1` phase-1 suite all
 pass locally. Publish this final pre-ruleset checkpoint, require its hosted
 `portable-phase1` run to pass, then stop at the explicit collaborator-permission
 gate above.
+
+**Published checkpoint:** repair commit `bcb0cc4` is synchronized with
+`origin/main`; hosted Harness CI run `29617995322` completed successfully at
+that exact revision. Guarded fleet-sync applied the verified range to all six
+remote checkouts, exact-unlinked every transfer artifact, and a repeat plan
+reports six clean idempotent `KEEP` results. The only remaining prerequisite
+before ruleset creation is explicit owner authorization for the two Write-role
+upgrades described above.
 
 ### T-257 — Remove automatic Git work from shell lifecycle
 
