@@ -107,7 +107,11 @@ than expanding the probe. Twenty candidates are Git checkouts with local-only
 safety facts recorded. No duplicate canonical device/inode identity remains.
 The stable private inventory and decision journal are mode-0600 under the
 node-local T-250 state boundary; public Git intentionally contains no project
-names or individual decisions. No deletion has run.
+names or individual decisions. The owner selected no new archive or backup:
+approved targets will rely only on temporary same-filesystem quarantine and
+guarded deletion, with permanent loss accepted after quarantine purge. No
+deletion has run. Interview progress: 0 of 153 directory decisions resolved;
+next private candidate is the first frozen project entry.
 
 ### T-191 — Scheduler-native weekly primary snapshots
 
