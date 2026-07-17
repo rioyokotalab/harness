@@ -57,6 +57,7 @@ for script in \
     "$ROOT/shared/skills/guarded-bulk-delete/scripts/guarded-delete" \
     "$ROOT/shared/skills/onboard-mirrored-node/scripts/onboard-preflight" \
     "$ROOT/tests/guarded-test-cleanup.sh" \
+    "$ROOT/tests/test-remote-session.sh" \
     "$ROOT/tests/test-ssh-agent-profile.sh" \
     "$ROOT/tests/smoke/debugger-readiness.sh" \
     "$ROOT/tests/smoke/locked-venv-readiness.sh" \
@@ -82,6 +83,8 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "startup normalization focused suite"
 "$ROOT/tests/test-ssh-agent-profile.sh" >/dev/null ||
     fail "SSH agent profile focused suite"
+"$ROOT/tests/test-remote-session.sh" >/dev/null ||
+    fail "remote-session focused suite"
 
 "$ROOT/tests/test-restic-schedule.sh" >/dev/null ||
     fail "Restic schedule focused suite"
@@ -187,8 +190,8 @@ profile_output=$(HOME="$profile_home" PATH=/usr/bin:/bin \
     fail "portable non-interactive profile"
 [ ! -e "$profile_home/.cache" ] || fail "profile created a cache directory"
 
-# A top-level interactive SSH shell receives the exit prompt function and
-# Ctrl-D guard; tmux and nested shells do not.
+# A top-level interactive SSH shell receives only the Ctrl-D guard. Git
+# synchronization/publication is explicit and exit remains Bash's builtin.
 remote_type=$(env -u SHLVL -u HARNESS_INTERACTIVE_LOADED \
     -u HARNESS_REMOTE_SESSION_LOADED -u TMUX \
     HOME="$profile_home" PATH=/usr/bin:/bin \
@@ -196,33 +199,29 @@ remote_type=$(env -u SHLVL -u HARNESS_INTERACTIVE_LOADED \
     HARNESS_LOGICAL_HOST=ab bash --noprofile --norc -ic \
     '. "$HOME/harness/shell/profile.sh"; printf "%s|%s|%s\n" "$(type -t exit)" "$IGNOREEOF" "$HARNESS_LOGICAL_HOST"' \
     2>/dev/null)
-[ "$remote_type" = 'function|1|ab' ] || fail "interactive remote-session policy"
+[ "$remote_type" = 'builtin|1|ab' ] || fail "interactive remote-session policy"
 
-# A private SSH origin without an agent must be a silent no-op. In particular,
-# normal logins must not attempt authentication merely because a checkout was
-# originally distributed from a short-lived bundle.
-no_agent_home=$TEMP_DIR/no-agent-home
-mkdir -p "$no_agent_home/harness/.git" "$no_agent_home/.local/bin"
-cp -R "$ROOT/shell" "$no_agent_home/harness/"
-no_agent_log=$TEMP_DIR/no-agent-git.log
-cat >"$no_agent_home/.local/bin/git" <<'EOF'
+# Interactive login must not invoke Git, even when a checkout and an apparent
+# forwarded agent are present.
+explicit_git_home=$TEMP_DIR/explicit-git-home
+mkdir -p "$explicit_git_home/harness/.git" "$explicit_git_home/.local/bin"
+cp -R "$ROOT/shell" "$explicit_git_home/harness/"
+login_git_log=$TEMP_DIR/login-git.log
+cat >"$explicit_git_home/.local/bin/git" <<'EOF'
 #!/bin/sh
-case " $* " in
-    *' status --porcelain '*) exit 0 ;;
-    *' remote get-url origin '*) printf '%s\n' 'git@github.com:owner/private.git' ;;
-    *' fetch '*) printf '%s\n' fetch >>"$NO_AGENT_LOG"; exit 99 ;;
-    *) exit 0 ;;
-esac
+printf '%s\n' invoked >>"$LOGIN_GIT_LOG"
+exit 99
 EOF
-chmod 755 "$no_agent_home/.local/bin/git"
-no_agent_output=$(env -u SHLVL -u SSH_AUTH_SOCK \
+chmod 755 "$explicit_git_home/.local/bin/git"
+explicit_git_output=$(env -u SHLVL \
     -u HARNESS_INTERACTIVE_LOADED -u HARNESS_REMOTE_SESSION_LOADED -u TMUX \
-    HOME="$no_agent_home" PATH=/usr/bin:/bin SSH_TTY=/dev/pts/test \
-    HARNESS_LOGICAL_HOST=ab NO_AGENT_LOG="$no_agent_log" \
+    HOME="$explicit_git_home" PATH=/usr/bin:/bin SSH_TTY=/dev/pts/test \
+    SSH_AUTH_SOCK=/tmp/forwarded-agent.sock HARNESS_LOGICAL_HOST=ab \
+    LOGIN_GIT_LOG="$login_git_log" \
     bash --noprofile --norc -ic \
     '. "$HOME/harness/shell/profile.sh"; printf "%s\n" login-ready' 2>/dev/null)
-[ "$no_agent_output" = login-ready ] || fail "agentless login was not silent"
-[ ! -e "$no_agent_log" ] || fail "agentless login attempted an SSH fetch"
+[ "$explicit_git_output" = login-ready ] || fail "explicit Git login policy"
+[ ! -e "$login_git_log" ] || fail "interactive login invoked Git"
 
 tmux_type=$(env -u SHLVL -u HARNESS_INTERACTIVE_LOADED \
     -u HARNESS_REMOTE_SESSION_LOADED HOME="$profile_home" PATH=/usr/bin:/bin \

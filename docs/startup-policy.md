@@ -61,3 +61,16 @@ the fixed declared socket last. Every candidate must be a current-user-owned
 Unix socket, and a recovered value is scoped to the one intended Git or SSH
 command. See [SSH agent operation](ssh-agent.md) for activation, validation,
 and rollback.
+
+## Explicit repository lifecycle
+
+Shell startup never fetches or merges the harness checkout, and shell exit
+never commits or pushes it. Network availability, authentication, checkout
+state, and publication decisions therefore cannot delay login or leaving a
+shell. Inspect the worktree and run the intended fetch, integration, commit,
+and pull-request workflow explicitly.
+
+The independent `IGNOREEOF=1` guard remains enabled only in a fresh top-level
+direct SSH shell to protect against accidental Ctrl-D. It does not override
+Bash's `exit` builtin. Tmux, nested shells, non-interactive shells, and local
+shells do not receive this direct-SSH guard.

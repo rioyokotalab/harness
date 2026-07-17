@@ -1,5 +1,6 @@
-# Interactive remote-session behavior. Never run network or prompt logic in a
-# non-interactive shell, local session, nested shell, or tmux shell.
+# shellcheck shell=bash
+# Top-level interactive SSH policy. Repository synchronization and publication
+# are deliberately explicit; this file only guards against accidental Ctrl-D.
 case $- in *i*) ;; *) return 0 ;; esac
 [ -n "${SSH_TTY:-}" ] || return 0
 [ "${HARNESS_LOGICAL_HOST:-local}" != local ] || return 0
@@ -9,106 +10,5 @@ case $- in *i*) ;; *) return 0 ;; esac
 HARNESS_REMOTE_SESSION_LOADED=1
 export HARNESS_REMOTE_SESSION_LOADED
 
-harness_login_sync() {
-    harness_repo=$HOME/harness
-    [ -d "$harness_repo/.git" ] || return 0
-    command -v git >/dev/null 2>&1 || return 0
-    command -v timeout >/dev/null 2>&1 || return 0
-    if [ -n "$(git -C "$harness_repo" status --porcelain 2>/dev/null)" ]; then
-        printf '%s\n' 'harness: login sync skipped because the checkout is dirty' >&2
-        return 0
-    fi
-    harness_fetch_url=$(git -C "$harness_repo" remote get-url origin 2>/dev/null) || {
-        unset harness_repo harness_fetch_url
-        return 0
-    }
-    case $harness_fetch_url in
-        git@*:*|ssh://*|github:*)
-            # Private SSH remotes require a local or forwarded agent. Do not
-            # probe keys, print fingerprints, or turn an ordinary login into a
-            # predictable authentication failure.
-            [ -S "${SSH_AUTH_SOCK:-}" ] || {
-                unset harness_repo harness_fetch_url
-                return 0
-            }
-            ;;
-        /*)
-            # Bundle-based rollout may leave a local-path origin behind. A
-            # vanished short-lived bundle is not a login error.
-            [ -r "$harness_fetch_url" ] || {
-                unset harness_repo harness_fetch_url
-                return 0
-            }
-            ;;
-    esac
-    if ! timeout 12 git -C "$harness_repo" fetch --quiet origin main \
-        >/dev/null 2>&1; then
-        printf '%s\n' 'harness: login fetch failed; continuing with the local revision' >&2
-        unset harness_repo harness_fetch_url
-        return 0
-    fi
-    if git -C "$harness_repo" merge-base --is-ancestor HEAD origin/main; then
-        if [ "$(git -C "$harness_repo" rev-parse HEAD)" != \
-            "$(git -C "$harness_repo" rev-parse origin/main)" ]; then
-            git -C "$harness_repo" merge --ff-only --quiet origin/main ||
-                printf '%s\n' 'harness: login fast-forward failed' >&2
-        fi
-    elif ! git -C "$harness_repo" merge-base --is-ancestor origin/main HEAD; then
-        printf '%s\n' 'harness: local and origin/main diverged; login sync did not merge' >&2
-    fi
-    unset harness_repo harness_fetch_url
-}
-
-harness_publish_staged() {
-    harness_repo=$HOME/harness
-    if git -C "$harness_repo" diff --cached --quiet; then
-        printf '%s\n' 'harness: nothing staged; stage intended files before publishing' >&2
-        return 1
-    fi
-    git -C "$harness_repo" diff --check --cached || return 1
-    timeout 12 git -C "$harness_repo" fetch --quiet origin main || return 1
-    git -C "$harness_repo" merge-base --is-ancestor origin/main HEAD || {
-        printf '%s\n' 'harness: origin/main is not an ancestor; sync before publishing' >&2
-        return 1
-    }
-    git -C "$harness_repo" commit -m \
-        "Publish staged harness changes from ${HARNESS_LOGICAL_HOST}" || return 1
-    timeout 20 git -C "$harness_repo" push origin HEAD:main
-}
-
-exit() {
-    harness_exit_status=${1:-$?}
-    harness_repo=$HOME/harness
-    if [ -d "$harness_repo/.git" ] &&
-        { ! git -C "$harness_repo" diff --quiet ||
-          ! git -C "$harness_repo" diff --cached --quiet ||
-          [ -n "$(git -C "$harness_repo" ls-files --others --exclude-standard)" ]; }; then
-        git -C "$harness_repo" status --short
-        while :; do
-            printf '%s' 'Publish staged harness changes before exit? [y/N/c] '
-            IFS= read -r harness_reply || harness_reply=n
-            case $harness_reply in
-                y|Y|yes|YES)
-                    if harness_publish_staged; then
-                        break
-                    fi
-                    printf '%s\n' 'harness: publish failed; exit cancelled' >&2
-                    unset harness_exit_status harness_repo harness_reply
-                    return 1
-                    ;;
-                c|C|cancel|CANCEL)
-                    unset harness_exit_status harness_repo harness_reply
-                    return 0
-                    ;;
-                n|N|no|NO|'') break ;;
-                *) printf '%s\n' 'Please answer y, n, or c.' ;;
-            esac
-        done
-    fi
-    unset harness_repo harness_reply
-    builtin exit "$harness_exit_status"
-}
-
 IGNOREEOF=1
 export IGNOREEOF
-harness_login_sync

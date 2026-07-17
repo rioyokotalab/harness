@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-257.
+and compact historical pointers here. Next free ID: T-258.
 
 ## Current state
 
@@ -45,6 +45,26 @@ and compact historical pointers here. Next free ID: T-257.
   candidate table and audit evidence in the pre-compaction TODO history.
 
 ## Active tasks
+
+### T-257 — Remove automatic Git work from shell lifecycle
+
+**Phase/status:** `executing` under the owner's explicit request. Remove the
+remote-session login fetch/fast-forward hook and the shell-exit staged
+commit/push prompt. Repository synchronization and publication must instead be
+explicit actions taken after inspecting the checkout. Retain the independent
+top-level direct-SSH `IGNOREEOF=1` guard, the remote Codex launcher, and all
+unrelated startup behavior.
+
+**Acceptance/recovery:** a fresh top-level interactive SSH shell must leave
+`exit` as Bash's builtin, set `IGNOREEOF=1`, and invoke no Git command during
+startup even when a checkout and apparent agent are present. Tmux and nested
+shells must remain free of the direct-SSH policy. Shell syntax, a dedicated
+remote-session regression, the portable suite, and the public audit must pass
+apart from any already-frozen unrelated baseline failure. Commit and push the
+small tracked change, then guarded-fleet-sync the exact clean revision so
+future logins on all managed nodes use it. Recovery is an ordinary revert of
+that revision; already-running shells may retain their previously loaded
+function definitions until replaced or explicitly unset.
 
 ### T-256 — Preflight GitHub API and repository-settings capability
 
