@@ -1977,9 +1977,17 @@ source-only module-stack interface, exact transactional startup/SSH normalizer,
 rollback path, focused transaction test, documentation, public-repository
 audit, and full phase-1 suite all pass. The suite ran with
 `openmpi/5.0-cuda-12.8`; its login-node `libcuda.so.1` component warnings were
-expected and the suite ended `phase-1 harness tests passed`. No live startup,
-SSH, quarantine, or deletion action has run. Next: publish this tested control
-plane, guarded-fast-forward every node, then run read-only per-node plans.
+expected and the suite ended `phase-1 harness tests passed`. Revisions
+`ce2ccce` and `2e93750` were pushed and guarded-fast-forwarded to all six remote
+nodes. Every exact live plan passed. The current-node apply/rollback/reapply
+pilot passed, then AB, AB2, RI, AL, RC, and T4 applied one at a time with clean
+idempotent plans, Bash syntax checks, interactive policy checks, and the
+applicable non-interactive `.bashrc`/module-helper checks. All six effective SSH
+configs now say `ForwardAgent yes` only for their named stanzas; the current
+agent has an identity and every fresh remote connection received its live
+forwarded socket. No quarantine or obsolete-environment deletion has run.
+Next: revalidate and atomically quarantine only the four frozen trees, then use
+four independent guarded-delete plan/apply transactions.
 `.pyenv`, `.venv`, and “all unrelated data.” D1-D6 remain resolved. The first
 two names are authorized in principle but their exact per-node paths,
 boundaries, identities, aggregate contents, and recovery status are not yet
