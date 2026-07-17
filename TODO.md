@@ -1971,24 +1971,22 @@ and the private capture was exact-unlinked. This completes all seven nodes.
 
 ### T-249 — Canonical aliases and simplified Bash startup workflow
 
-**Phase/status:** `executing` after the owner's explicit `go`. The local
-implementation checkpoint is complete: the tracked common policy,
-source-only module-stack interface, exact transactional startup/SSH normalizer,
-rollback path, focused transaction test, documentation, public-repository
-audit, and full phase-1 suite all pass. The suite ran with
-`openmpi/5.0-cuda-12.8`; its login-node `libcuda.so.1` component warnings were
-expected and the suite ended `phase-1 harness tests passed`. Revisions
-`ce2ccce` and `2e93750` were pushed and guarded-fast-forwarded to all six remote
-nodes. Every exact live plan passed. The current-node apply/rollback/reapply
-pilot passed, then AB, AB2, RI, AL, RC, and T4 applied one at a time with clean
-idempotent plans, Bash syntax checks, interactive policy checks, and the
-applicable non-interactive `.bashrc`/module-helper checks. All six effective SSH
-configs now say `ForwardAgent yes` only for their named stanzas; the current
-agent has an identity and every fresh remote connection received its live
-forwarded socket. No quarantine or obsolete-environment deletion has run.
-Next: revalidate and atomically quarantine only the four frozen trees, then use
-four independent guarded-delete plan/apply transactions.
-`.pyenv`, `.venv`, and “all unrelated data.” D1-D6 remain resolved. The first
+**Phase/status:** `complete`. The common alias/editor/history/prompt policy,
+source-only module interface, startup simplifications, and six bounded local
+SSH forwarding directives are live and idempotent on all seven nodes. The local
+apply/rollback/reapply pilot and every node-specific postflight passed; startup
+modes were preserved, all fresh remote sessions received the current agent's
+forwarded socket, and every checkout remained clean. Four independent guarded
+transactions deleted only the frozen obsolete trees: AB `.pyenv` (55,837
+entries), RC `.pyenv` (11,057), T4 `.pyenv` (1,636), and T4 persistent `.venv`
+(146,372 entries; 27,444,235,927 logical bytes). RC plan/apply stayed in one
+persistent connection. Protected anchors were unchanged; original, quarantine,
+temporary boundary, and deletion-manifest paths are absent. No fresh backup was
+created, as selected. Implementation and live-rollout evidence begins at
+`ce2ccce`, `2e93750`, and `53402ec`.
+
+**Archived frozen plan:** the owner expanded scope to remove `.pyenv`, `.venv`,
+and “all unrelated data.” D1-D6 remain resolved. The first
 two names are authorized in principle but their exact per-node paths,
 boundaries, identities, aggregate contents, and recovery status are not yet
 frozen; D7 is now fully resolved. No deletion or startup mutation has run.
@@ -2261,7 +2259,7 @@ part of this task. D6 is resolved as removal of the unused AL/T4
 or direct activation. D7 resolves the newly authorized deletion of exact
 `.pyenv`/`.venv` trees. The owner resolved “all unrelated data” as exactly the
 four inventoried trees and nothing broader. Their absolute paths and retained
-boundaries are frozen; recovery handling and guarded transactions remain open.
+boundaries were frozen; the guarded transactions are complete.
 All other per-node decisions above are
 resolved from live command/path evidence, the frozen common policy, or clear
 broken/conflicting behavior.
@@ -2318,8 +2316,8 @@ mismatch, dirty checkout, or incomplete rollback. D7's deletion set is frozen
 as only the four exact obsolete environment trees above; no broader audit or
 deletion is in scope. The owner selected same-filesystem quarantine and full
 validation followed by irreversible guarded deletion, with no fresh backup.
-The complete D1-D7 register is internally consistent. Next action: wait for a
-new explicit owner `go`; that go authorizes only this frozen T-249 plan.
+The complete D1-D7 register was internally consistent, and the owner's explicit
+`go` executed only this frozen T-249 plan. All acceptance gates passed.
 
 ## Stable operational facts
 
@@ -2380,3 +2378,4 @@ transaction IDs, aggregate counts, hashes, or failure chronology is required.
 | T-189 | Ledger-backed PIE skill created and validated at `dfaea9e`. |
 | T-190 | Automated guarded mirrored-node onboarding skill completed, installed, tested, and published at `b5bb171`. No live node was onboarded. |
 | T-192 | AB2 quota deferral, primary, replica, restore, migration, and cleanup completed at `1c2050a` and `303938f`. |
+| T-249 | Seven-node startup normalization, bounded agent forwarding, and four exact guarded environment deletions completed; durable evidence begins at `ce2ccce`, `2e93750`, and `53402ec`. |
