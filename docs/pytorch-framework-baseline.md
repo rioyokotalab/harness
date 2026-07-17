@@ -38,6 +38,16 @@ scheduler's single-device selection, and publishes success only after guarded
 cleanup reports zero residue. No package is installed into the account's base
 home or a shared site environment.
 
+## 2026-07-17 execution status
+
+The architecture-matched wheelhouse is immutable and independently verified at
+all seven persistent roots. Local, RI, AL, RC, and T4 have scheduler and
+private-result status zero for all seven gates. AB and AB2 are captured in the
+approved `rt_HG` queue; their scheduler currently reports insufficient queue
+CPU resource, so they remain queued without replacement or route expansion.
+The value-free machine-readable checkpoint is
+`docs/audits/hpc-pytorch-readiness-2026-07-17.json`.
+
 PyTorch 2.13.0 is visible on the official CUDA 13.0 index as of 2026-07-17.
 It is a future candidate, not an implicit baseline change. A maintained update
 must freeze a new lock and two new artifact digests, confirm licenses and fleet

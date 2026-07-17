@@ -1,0 +1,83 @@
+{
+  "artifact_lock_sha256": "07cc4a2e19ede271942d8050ef6f9e7349cefbf5b526b98bdc24dafde1401967",
+  "artifacts": {
+    "aarch64_manifest_sha256": "ed070849ba8da9fcf34e574a0f26e6adf510ffa7a8722201af4ecf7a64346988",
+    "x86_64_manifest_sha256": "b5961b56df9301d3fc19234e5c6679ed186e5c49d1f5d1796a656fd3dcd626e6"
+  },
+  "generated_date": "2026-07-17",
+  "nodes": {
+    "ab": {
+      "architecture": "x86_64",
+      "job_id": "2046732.pbs1",
+      "result_status": null,
+      "scheduler": "PBS",
+      "scheduler_exit": null,
+      "state": "queued"
+    },
+    "ab2": {
+      "architecture": "x86_64",
+      "job_id": "2046731.pbs1",
+      "result_status": null,
+      "scheduler": "PBS",
+      "scheduler_exit": null,
+      "state": "queued"
+    },
+    "al": {
+      "architecture": "aarch64",
+      "job_id": "4228772",
+      "result_status": 0,
+      "scheduler": "Slurm",
+      "scheduler_exit": 0,
+      "state": "passed"
+    },
+    "local": {
+      "architecture": "x86_64",
+      "job_id": "91513",
+      "result_status": 0,
+      "scheduler": "Ybatch/Slurm",
+      "scheduler_exit": 0,
+      "state": "passed"
+    },
+    "rc": {
+      "architecture": "aarch64",
+      "job_id": "211836",
+      "result_status": 0,
+      "scheduler": "Slurm",
+      "scheduler_exit": 0,
+      "state": "passed"
+    },
+    "ri": {
+      "architecture": "aarch64",
+      "job_id": "7182",
+      "result_status": 0,
+      "scheduler": "Slurm",
+      "scheduler_exit": 0,
+      "state": "passed"
+    },
+    "t4": {
+      "architecture": "x86_64",
+      "job_id": "8188301",
+      "result_status": 0,
+      "scheduler": "AGE",
+      "scheduler_exit": 0,
+      "state": "passed"
+    }
+  },
+  "schema": 1,
+  "scope": [
+    "exact Python 3.12 and compute architecture",
+    "immutable artifact and lock hashes",
+    "PyTorch 2.12.1 and CUDA 13.0 build identity",
+    "one visible scheduler-allocated CUDA device",
+    "finite CUDA tensor arithmetic",
+    "tracked tiny-language-model forward/backward/update",
+    "redirected cache/home state and guarded zero-residue cleanup"
+  ],
+  "source_commit": "207fbe9d7fe074ab7fd1eddb6335fe257f0c66fb",
+  "summary": {
+    "nodes_passed": 5,
+    "nodes_queued": 2,
+    "nodes_total": 7,
+    "status": "in_progress"
+  }
+}
