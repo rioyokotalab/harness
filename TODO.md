@@ -48,8 +48,8 @@ and compact historical pointers here. Next free ID: T-260.
 
 ### T-259 — Restore aliases in new tmux windows
 
-**Phase/status:** `implementation-complete/publish-pending` under the owner's
-explicit fix request. Tmux correctly uses `/bin/bash` with an empty default
+**Phase/status:** `complete` under the owner's explicit fix request. Tmux
+correctly uses `/bin/bash` with an empty default
 command, and the live local startup normalizer reports `.bashrc` normalized. The failure is the
 exported same-shell recursion sentinel: tmux global environment contains
 `HARNESS_INTERACTIVE_LOADED=1`, so every new window inherits it and
@@ -73,12 +73,17 @@ ShellCheck, focused session/agent/startup suites, the complete portable phase-1
 suite, diff, and public-audit gates pass. Commit and publish this as the final
 direct-main checkpoint before T-258 creates strict rulesets.
 
+**Outcome:** implementation commit `887f2c9` and corrected final pre-ruleset
+payload commit `2ac2e98` are published, hosted-CI green, and synchronized to
+all seven clean checkouts with transfer artifacts absent. The live tmux global
+sentinel remains absent. T-259 is complete; future changes to this ledger now
+exercise T-258's protected pull-request path.
+
 ### T-258 — Activate and validate strict GitHub merge controls
 
-**Phase/status:** `ready-final-preflight`; no GitHub ruleset has been
-changed. Resume T-194 only after a fresh authenticated preflight proves both
-repositories can be merged through the frozen policy. The exact tracked
-ruleset payloads and rollback remain unchanged.
+**Phase/status:** `active-awaiting-test-pr-approval`. Resume T-194 only through
+the newly protected pull-request path. The exact tracked ruleset payloads and
+rollback remain authoritative.
 
 **Preflight checkpoint:** on 2026-07-18, harness and website are clean and
 exactly synchronized with `origin/main`; stored GitHub API authentication is
@@ -114,6 +119,17 @@ zero active `main` rules. GitHub's v2026-03-10 schema names the rule
 regression, and republish/revalidate before one transactional retry. The failed
 rollback handler also treated error JSON as a possible ID; on retry, assign a
 rollback identity only after a successful request and strict numeric check.
+
+**Active controls checkpoint:** corrected payload commit `2ac2e98` passed
+hosted run `29620480186` and reached all seven clean checkouts before external
+creation. Transactional retry created harness ruleset `19127355` and website
+ruleset `19127356`; authenticated exact reads prove one active repository
+ruleset and five active `main` rules each, no bypass actor, required
+`portable-phase1`/`Offline checks` contexts from integration `15368`, one
+approval, stale dismissal, conversation resolution, up-to-date branches,
+required linear history, and deletion/non-fast-forward blocking. Create one
+small test PR per repository, request `rioyokota2`, require both CI checks and
+non-author approvals, then merge only through an allowed linear method.
 
 **Implementation checkpoint:** the evaluator now rejects any corpus baseline
 other than exact `d5b82cd32e779ec154db5f2721ec5f52dfcd7752` and reads guidance
