@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-255.
+and compact historical pointers here. Next free ID: T-256.
 
 ## Current state
 
@@ -45,6 +45,46 @@ and compact historical pointers here. Next free ID: T-255.
   candidate table and audit evidence in the pre-compaction TODO history.
 
 ## Active tasks
+
+### T-255 — Install official GitHub CLI without sudo
+
+**Phase/status:** `complete` under the owner's explicit authorization for the
+user-local alternative after T-254 proved the APT route unavailable. GitHub's
+live releases API and release page identify immutable v2.96.0, published
+2026-07-02, as latest and as a security update. The current node is Linux
+amd64/x86_64. Release asset `gh_2.96.0_linux_amd64.tar.gz` declares SHA-256
+`83d5c2ccad5498f58bf6368acb1ab32588cf43ab3a4b1c301bf36328b1c8bd60`;
+the checksums asset declares SHA-256
+`fc046371efa250e2875208341a786a35a01717d5eebec6903e199a9b8a3f3565`.
+
+**Frozen implementation:** require absent `~/.local/opt/gh`, exact published
+archive and checksum agreement, and a safe regular archive member before
+creating versioned `~/.local/opt/gh/2.96.0/bin/gh`, retaining the release
+license, and atomically creating `~/.local/bin/gh`. Do not use sudo, change APT,
+authenticate, inspect credentials, install extensions, or distribute to the
+fleet. Keep downloads as exact mode-0600 `/tmp` files and unlink them after
+validation.
+
+**Acceptance/recovery:** the resolved command and direct versioned executable
+must report 2.96.0; binary and license must be regular owner single-link files,
+the command link must target the exact version, the harness path profile must
+select it, repository/public-audit gates must pass, and downloads must be
+absent. Rollback exact-unlinks only the command link, binary, and license, then
+removes their empty directories. Browser authentication remains a separate
+owner interaction and API capability stays unproved until its read-only
+preflight passes without exposing the token.
+
+**Outcome:** both release downloads matched their API digests, the published
+checksums file independently named the same archive digest, and the two exact
+archive members were regular with no traversal path. Owner files
+`~/.local/opt/gh/2.96.0/bin/gh` (0755) and `LICENSE` (0644) plus exact command
+link `~/.local/bin/gh` are single-link/versioned as declared. Both the direct
+binary and resolved command report `gh version 2.96.0 (2026-07-02)`. The two
+mode-0600 `/tmp` downloads were revalidated and exactly unlinked. Authentication
+status is the expected unavailable exit 1; the owner must next run the
+documented browser flow with `--skip-ssh-key` and then permit a credential-safe
+read-only API preflight. No APT, sudo, SSH key, extension, remote node, or
+credential state changed.
 
 ### T-254 — Add GitHub CLI's official Debian/Ubuntu repository
 
