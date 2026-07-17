@@ -110,6 +110,8 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "HPC project intake validator focused suite"
 "$ROOT/tests/test-llm-hpc-next-actions.sh" >/dev/null ||
     fail "LLM/HPC next-action queue focused suite"
+"$ROOT/tests/test-pytorch-lock.sh" >/dev/null ||
+    fail "PyTorch dual-architecture lock focused suite"
 "$ROOT/tests/test-storage-readiness.sh" >/dev/null ||
     fail "storage readiness focused suite"
 "$ROOT/tests/test-debugger-readiness.sh" >/dev/null ||

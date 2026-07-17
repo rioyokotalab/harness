@@ -1155,15 +1155,17 @@ creates no chain state. T-205 is complete without any scheduler write.
 
 ### T-206 — Reviewed LLM framework environment
 
-**Phase/status:** `planned`, intentionally gated after T-200 accelerator
-evidence. No managed node exposes PyTorch in its declared base login or AL uenv
-route. Select a reproducible project-scoped environment or immutable image for
-the tracked tiny-language-model forward/backward test; do not install into a
-base home, pull an unpinned image, or silently choose divergent versions per
-node. First reconcile architecture, CUDA/driver compatibility, package source,
-lockfile or digest, cache placement, license, and rollback. This task may
-prepare a value-free option matrix autonomously, but package installation,
-image pull, or live environment selection remains owner-gated.
+**Phase/status:** `executing` under T-251's resolved framework choice. The first
+release is CPython 3.12 plus PyTorch 2.12.1/CUDA 13.0 from official wheels, one
+dual-architecture hash lock, and separate immutable x86-64/AArch64 wheelhouse
+artifacts. Both official Torch wheels and all 29 transitive packages resolve;
+the AArch64 Triton 3.7.1 wheel requires its official `linux_aarch64` tag.
+`docs/pytorch-framework-baseline.md` freezes sources, licenses, rollback, seven
+single-device gates, and maintenance semantics. PyTorch 2.13.0 is recorded only
+as a future candidate. Build both collision-refusing artifacts under declared
+persistent roots with caches redirected, then run all seven gates independently
+on each ready node; never install into base home, mutate an artifact, or infer
+distributed/performance readiness.
 
 ### T-207 — Scheduler-native MPI correctness gate
 
