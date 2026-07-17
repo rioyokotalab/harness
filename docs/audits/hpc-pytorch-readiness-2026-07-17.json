@@ -9,18 +9,18 @@
     "ab": {
       "architecture": "x86_64",
       "job_id": "2046732.pbs1",
-      "result_status": null,
+      "result_status": 0,
       "scheduler": "PBS",
-      "scheduler_exit": null,
-      "state": "queued"
+      "scheduler_exit": 0,
+      "state": "passed"
     },
     "ab2": {
       "architecture": "x86_64",
       "job_id": "2046731.pbs1",
-      "result_status": null,
+      "result_status": 0,
       "scheduler": "PBS",
-      "scheduler_exit": null,
-      "state": "queued"
+      "scheduler_exit": 0,
+      "state": "passed"
     },
     "al": {
       "architecture": "aarch64",
@@ -75,9 +75,9 @@
   ],
   "source_commit": "207fbe9d7fe074ab7fd1eddb6335fe257f0c66fb",
   "summary": {
-    "nodes_passed": 5,
-    "nodes_queued": 2,
+    "nodes_passed": 7,
+    "nodes_queued": 0,
     "nodes_total": 7,
-    "status": "in_progress"
+    "status": "complete"
   }
 }

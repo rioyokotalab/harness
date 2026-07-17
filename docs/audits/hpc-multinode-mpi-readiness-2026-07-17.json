@@ -1,0 +1,82 @@
+{
+  "generated_date": "2026-07-17",
+  "nodes": {
+    "ab": {
+      "job_id": "2046527.pbs1",
+      "hosts": 2,
+      "ranks": 2,
+      "residue_count": 0,
+      "result_status": 0,
+      "scheduler": "PBS",
+      "scheduler_exit": 0,
+      "source_contract": "62229208500ffb150953e580ba508167aba52eb0",
+      "state": "passed"
+    },
+    "ab2": {
+      "job_id": "2046531.pbs1",
+      "hosts": 2,
+      "ranks": 2,
+      "residue_count": 0,
+      "result_status": 0,
+      "scheduler": "PBS",
+      "scheduler_exit": 0,
+      "source_contract": "62229208500ffb150953e580ba508167aba52eb0",
+      "state": "passed"
+    },
+    "al": {
+      "job_id": "4224822",
+      "hosts": 2,
+      "ranks": 2,
+      "residue_count": 0,
+      "result_status": 0,
+      "scheduler": "Slurm",
+      "scheduler_exit": 0,
+      "source_contract": "268a5cdb66cb7fcd57816a2c607d50609d8b841f",
+      "state": "passed"
+    },
+    "local": {
+      "job_id": "91483",
+      "reason": "compute-start mpicc route absent",
+      "residue_count": 0,
+      "result_status": 1,
+      "scheduler": "Ybatch/Slurm",
+      "scheduler_exit": 1,
+      "source_contract": "62229208500ffb150953e580ba508167aba52eb0",
+      "state": "failed_environment"
+    },
+    "rc": {
+      "reason": "no reviewed architecture-compatible MPI environment",
+      "state": "excluded"
+    },
+    "ri": {
+      "reason": "no reviewed architecture-compatible MPI environment",
+      "state": "excluded"
+    },
+    "t4": {
+      "job_id": "8185316",
+      "reason": "compute environment could not locate ylab/hpcx/2.21.0",
+      "residue_count": 0,
+      "result_status": 1,
+      "scheduler": "AGE",
+      "scheduler_exit": 1,
+      "source_contract": "62229208500ffb150953e580ba508167aba52eb0",
+      "state": "failed_environment"
+    }
+  },
+  "schema": 1,
+  "scope": [
+    "exactly two MPI ranks",
+    "two distinct compute hosts",
+    "shared executable visibility",
+    "immutable queued-source contract",
+    "scheduler and private-result status",
+    "guarded zero job-scoped residue"
+  ],
+  "summary": {
+    "nodes_excluded": 2,
+    "nodes_failed_environment": 2,
+    "nodes_passed": 3,
+    "nodes_total": 7,
+    "status": "terminal"
+  }
+}

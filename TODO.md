@@ -258,23 +258,27 @@ Subsequent execution completed the repository implementation and distributed
 frozen MPI source commit `774877a` to all seven clean checkouts with focused
 tests and zero transfer residue. AB `2046527.pbs1` and AB2 `2046531.pbs1`
 passed with scheduler/result zero, two ranks, two distinct hosts, shared
-executable visibility, and guarded cleanup. T4 `8185316` is captured pending
-and must not be duplicated. Local `91483` ran once on two Threadripper nodes
-but failed immediately after its passing source contract because the previously
-validated `mpicc` route is no longer visible after restart; its private result
-records status one and all build/job-script residue is absent. The at-most-once
-rule forbids an automatic retry. Framework lock commit `6bcadab` is published;
+executable visibility, and guarded cleanup. Local `91483` ran once on two
+Threadripper nodes but failed immediately after its passing source contract
+because the previously validated `mpicc` route is no longer visible after
+restart; its private result records status one and all build/job-script residue
+is absent. The at-most-once rule forbids an automatic retry. T4 `8185316` later
+ran once, passed its source contract, and stopped before MPI launch because the
+compute environment could not locate `ylab/hpcx/2.21.0`; AGE and the private
+result record status one and job-scoped residue is zero. It is likewise not
+retried. Framework lock commit `6bcadab` is published;
 the verified immutable x86-64 and AArch64 wheelhouses are 2.6 GiB and 2.7 GiB,
 with manifest hashes `b5961b56df9301d3fc19234e5c6679ed186e5c49d1f5d1796a656fd3dcd626e6`
 and `ed070849ba8da9fcf34e574a0f26e6adf510ffa7a8722201af4ecf7a64346988`.
 Both wheelhouses are now independently verified and immutable at every declared
-persistent root. Local `91513`, RI `7182`, AL `4228772`, RC `211836`, and T4
-`8188301` pass all seven single-device gates with scheduler/result zero and
-guarded cleanup; ABCI retries `2046732.pbs1` and `2046731.pbs1` are captured
-queued and must not be duplicated. Website task T-186 is complete at `e0e9686`;
-hosted CI run `29567532337` passes and no deployment ran. Current next action
-is exact monitoring of the two ABCI framework jobs, T4 MPI `8185316`, and AL
-cleanup allocation `4228581`, followed by public evidence/status closeout.
+persistent root. Local `91513`, AB `2046732.pbs1`, AB2 `2046731.pbs1`, RI
+`7182`, AL `4228772`, RC `211836`, and T4 `8188301` pass all seven single-device
+gates with scheduler/result zero and guarded cleanup. The delayed ABCI jobs ran
+without replacement when queue capacity became available. Alps cleanup
+allocation `4228581` completed with scheduler status zero and reported
+`TARGET_ABSENT`. Website task T-186 is complete at `e0e9686`; hosted CI run
+`29567532337` passes and no deployment ran. Current next action is terminal
+evidence publication and fleet checkout synchronization.
 The value-free framework checkpoint is published at `1785fad`. Public GitHub
 organization membership exposes possible non-owner reviewers but does not
 prove repository write/review eligibility, and unauthenticated collaborator

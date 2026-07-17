@@ -82,12 +82,14 @@ remains a declared gap.
 
 ## Two-node MPI gate
 
-T-230 adds one deliberately narrower distributed result. AL Slurm job
-`4224822` used the validated `prgenv-gnu/25.11:v1` uenv, two normal-partition
-nodes, two ranks, and one rank per node. The tracked program gathered processor
-identities and required two distinct values while publishing only the count.
-Scheduler accounting and the private mode-0600 result are both zero, the
-queued-source contract passed, and shared private build state was guarded-
-cleaned. This proves MPI startup, gather/broadcast, and distinct-host placement
-on AL only; it makes no latency, bandwidth, scaling, GPU-aware MPI, or other-
-route claim.
+The terminal machine-readable matrix is
+[`audits/hpc-multinode-mpi-readiness-2026-07-17.json`](audits/hpc-multinode-mpi-readiness-2026-07-17.json).
+AL Slurm job `4224822`, AB PBS job `2046527.pbs1`, and AB2 PBS job
+`2046531.pbs1` each passed with scheduler/result zero, exactly two ranks on two
+distinct hosts, exact queued-source provenance, shared executable visibility,
+and guarded cleanup. Local job `91483` and T4 AGE job `8185316` passed their
+source contracts but stopped before MPI launch because the compute-start MPI
+compiler/module route was absent; both are terminal at-most-once environment
+failures with zero residue. RI and RC were excluded because no reviewed
+architecture-compatible project environment was selected. These results make
+no latency, bandwidth, scaling, GPU-aware MPI, or production-fabric claim.
