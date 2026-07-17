@@ -254,6 +254,23 @@ commit `afef3d64a93696d1a55019ac28395d94ed83e3e6`. Current next action returns
 to frozen execution step 2: implement the remaining documentation/status,
 framework, and four bounded MPI routes before fleet distribution.
 
+Subsequent execution completed the repository implementation and distributed
+frozen MPI source commit `774877a` to all seven clean checkouts with focused
+tests and zero transfer residue. AB `2046527.pbs1` and AB2 `2046531.pbs1`
+passed with scheduler/result zero, two ranks, two distinct hosts, shared
+executable visibility, and guarded cleanup. T4 `8185316` is captured pending
+and must not be duplicated. Local `91483` ran once on two Threadripper nodes
+but failed immediately after its passing source contract because the previously
+validated `mpicc` route is no longer visible after restart; its private result
+records status one and all build/job-script residue is absent. The at-most-once
+rule forbids an automatic retry. Framework lock commit `6bcadab` is published;
+the verified immutable x86-64 and AArch64 wheelhouses are 2.6 GiB and 2.7 GiB,
+with manifest hashes `b5961b56df9301d3fc19234e5c6679ed186e5c49d1f5d1796a656fd3dcd626e6`
+and `ed070849ba8da9fcf34e574a0f26e6adf510ffa7a8722201af4ecf7a64346988`.
+Current next action is to retain T4 monitoring, distribute the two verified
+wheelhouses without mutation, and run the seven single-device gates per ready
+node; do not change source-contract paths while T4 remains queued.
+
 ### T-250 — Seven-node top-level project and directory cleanup
 
 **Phase/status:** `complete` at 2026-07-17 03:48 UTC. All 51 approved deletions
@@ -1162,10 +1179,17 @@ artifacts. Both official Torch wheels and all 29 transitive packages resolve;
 the AArch64 Triton 3.7.1 wheel requires its official `linux_aarch64` tag.
 `docs/pytorch-framework-baseline.md` freezes sources, licenses, rollback, seven
 single-device gates, and maintenance semantics. PyTorch 2.13.0 is recorded only
-as a future candidate. Build both collision-refusing artifacts under declared
-persistent roots with caches redirected, then run all seven gates independently
-on each ready node; never install into base home, mutate an artifact, or infer
-distributed/performance readiness.
+as a future candidate. Both collision-refusing artifacts are now published
+under local declared persistent storage with lock hash
+`07cc4a2e19ede271942d8050ef6f9e7349cefbf5b526b98bdc24dafde1401967`:
+x86-64 is 2.6 GiB with manifest hash
+`b5961b56df9301d3fc19234e5c6679ed186e5c49d1f5d1796a656fd3dcd626e6`;
+AArch64 is 2.7 GiB with manifest hash
+`ed070849ba8da9fcf34e574a0f26e6adf510ffa7a8722201af4ecf7a64346988`.
+Every artifact file is mode 0444 and each directory mode 0555. Distribute
+without mutation, then run all seven gates independently on each ready node;
+never install into base home, mutate an artifact, or infer distributed or
+performance readiness.
 
 ### T-207 — Scheduler-native MPI correctness gate
 
