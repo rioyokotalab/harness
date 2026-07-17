@@ -81,9 +81,9 @@ exercise T-258's protected pull-request path.
 
 ### T-258 — Activate and validate strict GitHub merge controls
 
-**Phase/status:** `active-awaiting-test-pr-approval`. Resume T-194 only through
-the newly protected pull-request path. The exact tracked ruleset payloads and
-rollback remain authoritative.
+**Phase/status:** `complete`. Resume future work only through the protected
+pull-request path. The exact tracked ruleset payloads and rollback remain
+authoritative.
 
 **Preflight checkpoint:** on 2026-07-18, harness and website are clean and
 exactly synchronized with `origin/main`; stored GitHub API authentication is
@@ -130,6 +130,15 @@ approval, stale dismissal, conversation resolution, up-to-date branches,
 required linear history, and deletion/non-fast-forward blocking. Create one
 small test PR per repository, request `rioyokota2`, require both CI checks and
 non-author approvals, then merge only through an allowed linear method.
+
+**Outcome:** Harness PR #1 passed required `portable-phase1`, received
+non-author `rioyokota2` approval on exact tested head `d2ecbcf`, and
+squash-merged through ruleset `19127355` as `3c81dc5`. Website PR #1 likewise
+passed required `Offline checks`, received non-author approval on exact tested
+head `a4515a5`, and squash-merged through ruleset `19127356` as `162bef0`.
+Authenticated post-merge reads prove both rulesets remain active and exact,
+with five `main` rules and no bypass actor. Neither validation changed or
+deployed a public-site file; T-258 is complete.
 
 **Implementation checkpoint:** the evaluator now rejects any corpus baseline
 other than exact `d5b82cd32e779ec154db5f2721ec5f52dfcd7752` and reads guidance
