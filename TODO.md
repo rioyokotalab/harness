@@ -1194,7 +1194,7 @@ creates no chain state. T-205 is complete without any scheduler write.
 
 ### T-206 — Reviewed LLM framework environment
 
-**Phase/status:** `executing` under T-251's resolved framework choice. The first
+**Phase/status:** `complete` under T-251's resolved framework choice. The first
 release is CPython 3.12 plus PyTorch 2.12.1/CUDA 13.0 from official wheels, one
 dual-architecture hash lock, and separate immutable x86-64/AArch64 wheelhouse
 artifacts. Both official Torch wheels and all 29 transitive packages resolve;
@@ -1209,14 +1209,16 @@ x86-64 is 2.6 GiB with manifest hash
 AArch64 is 2.7 GiB with manifest hash
 `ed070849ba8da9fcf34e574a0f26e6adf510ffa7a8722201af4ecf7a64346988`.
 Every artifact file is mode 0444 and each directory mode 0555. All seven nodes
-now hold and independently verify the matching immutable wheelhouse. Local,
-RI, AL, RC, and T4 have terminal scheduler/result-zero evidence for exact
-Python/architecture selection, artifact and lock hashes, Torch/CUDA versions,
-one visible CUDA device, finite tensor arithmetic, the tracked tiny-LM update,
-and guarded cache/home cleanup. AB and AB2 have completed the same functional
-surface in preserved earlier results; their corrected zero-residue retries are
-queued as `2046732.pbs1` and `2046731.pbs1`. Do not duplicate them, install into
-base home, mutate an artifact, or infer distributed or performance readiness.
+hold and independently verify the matching immutable wheelhouse. Local
+`91513`, AB `2046732.pbs1`, AB2 `2046731.pbs1`, RI `7182`, AL `4228772`, RC
+`211836`, and T4 `8188301` have terminal scheduler/result-zero evidence for
+exact Python/architecture selection, artifact and lock hashes, Torch/CUDA
+versions, one visible CUDA device, finite tensor arithmetic, the tracked tiny-
+LM update, and guarded cache/home cleanup. The delayed ABCI retries ran without
+replacement. The public value-free audit
+`docs/audits/hpc-pytorch-readiness-2026-07-17.json` reports seven passes and
+zero queued nodes. Do not repeat them, install into base home, mutate an
+artifact, or infer distributed or performance readiness.
 
 ### T-207 — Scheduler-native MPI correctness gate
 
@@ -1381,6 +1383,14 @@ exactly canceled with no result. Corrected Ybatch job `91472` ran on
 `epyc-7502`, completed `0:0`, and published the frozen identical numerical
 result with private mode 0600 and zero scratch/job-script residue. T-210 remains
 executing only for its already captured ABCI routes; do not repeat local.
+
+**ABCI resume attempt (2026-07-17):** an exact-ID metadata-only reconciliation
+of AB `2045064.pbs1` and AB2 `2045063.pbs1` failed closed before either native
+`qstat` command ran because both SSH connections were denied at public-key
+authentication. No scheduler state or result absence was inferred, no key or
+credential was inspected, and no remote state changed. Retrying the same two
+exact queries is safe only after the owner-controlled agent again supplies
+usable ABCI authentication; do not replace or duplicate either job meanwhile.
 
 ### T-211 — Atomic checkpoint publication gate
 
@@ -2050,8 +2060,8 @@ No dry run, temporary script, job, or scheduler mutation occurred.
 
 ### T-237 — Scheduler-allocation CPU affinity and topology gate
 
-**Phase/status:** `executing`; all six remote nodes pass and the local route is
-held behind captured jobs `91220`/`91240`. Add a portable Linux C++20 gate that
+**Phase/status:** `executing`; all six remote nodes pass and local job `91581`
+is captured pending for resources. Add a portable Linux C++20 gate that
 reads only the allocation process's CPU affinity mask and
 sysfs topology, requires at least two distinct physical cores, and proves two
 workers can be pinned to separate allowed cores. Emit aggregate counts only;
@@ -2093,8 +2103,22 @@ resume, AB `2045152.pbs1` and AB2 `2045153.pbs1` both reported historical PBS
 state `F`, exact expected owner/name, and `Exit_status=0`. Their regular
 mode-0600 results pass the frozen source contract, expose 16 physical cores,
 pin two workers, end with status zero, and leave zero capture temporaries.
-Local is the sole remaining T-237 route and must not be submitted until both
-older local jobs are terminal.
+Local became the sole remaining T-237 route and remained held until both older
+local jobs were terminal.
+
+**Local submission checkpoint (2026-07-17):** T-251's terminal evidence for
+the relocated numerical and checkpoint/restart jobs clears the former local
+hold. The exact four-path source contract against `3b96936` passed at current
+head `f391e83`; focused affinity tests and shell parsing passed; and the
+fail-closed preflight found fixed result `t237-affinity-local-v1.out` absent,
+zero exact-name `t237alocal` jobs, and zero `.t237-affinity-local-v1` capture
+temporaries. Native command
+`ybatch /home/rioyokota/harness/tests/smoke/jobs/local-affinity.slurm` accepted
+exactly one Slurm job, `91581`; the immediate native query matched owner
+`rioyokota`, job name `t237alocal`, and pending state. Monitor only `91581` and
+do not replace it for queue delay. On terminal state, require scheduler/result
+agreement, the frozen source contract, mode-0600 private result metadata, and
+zero job-scoped residue before closing T-237/Q3 or starting Q10.
 
 ### T-238 — Fail-closed scheduler job collision preflight
 
