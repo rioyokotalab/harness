@@ -642,6 +642,24 @@ on this Mac. No deletion fallback was used. The disposable tree remains at
 `/private/tmp/harness-gh-stage14.DACMP6`; removing it later requires a
 macOS-capable guarded-delete path, not raw recursive deletion.
 
+The owner authorized stage 15's disposable long-gap acceptance drill and no
+part of stage 16. Read-only reconstruction maps every frozen acceptance gate
+to `tests/test-personal-macos-update.sh`: isolated synthetic public/private
+bare origins and clones plus a private state root begin at the oldest released
+schema-v1 engine/companion baseline; the primary route proves an initial direct
+fast-forward, compatibility and initialization, a current no-op, exact state
+rollback/reapply, then a second direct fast-forward with ordered v1 migration
+and exact prior-state restoration while repositories stay current. A separate
+injected private-fast-forward failure proves public-first partial-update retry
+safety without state mutation. Incompatible schema and prohibited private
+layout cases fail before checkout mutation or private-value disclosure. No
+newer schema exists to migrate, and missed intermediate deployments are not
+replayed. Exact execution action: publish this stage boundary, require the
+protected Linux `portable-phase1` run containing that drill, inspect its result,
+then checkpoint stage 15 complete only if the full gate passes. Do not access a
+live private companion, mutate the pilot Mac, dispatch a separate workflow, or
+begin sequential rollout.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
