@@ -48,10 +48,11 @@ and compact historical pointers here. Next free ID: T-262.
 
 ### T-261 — Add low-friction interactive destructive-command safeguards
 
-**Phase/status:** `complete`; the owner gave explicit `go`. The owner wants protections
-against commands such as `rm -rf` without adding routine prompts or changing
-batch jobs. No live shell behavior, scheduler state, filesystem target, Git
-state outside this planning branch, or external service has been changed.
+**Phase/status:** `complete`; the owner gave explicit `go`. The requested
+protections against commands such as `rm -rf` are active without routine
+prompts or changes to batch jobs. Implementation changed only the tracked
+interactive shell layer and synchronized harness checkouts; it performed no
+real destructive command or scheduler operation.
 
 **Desired outcome:** ordinary interactive commands retain their native
 arguments, output, exit status, and speed, while unusually high-blast-radius
