@@ -102,7 +102,10 @@ setup_pair() {
 
     write_private_host "$private_source/hosts/mac-test-pilot.conf" \
         language,agents sqlite,ninja
-    git -C "$private_source" add hosts/mac-test-pilot.conf
+    cp "$ROOT/tests/fixtures/personal-macos/private-v1/ssh_config" \
+        "$private_source/ssh_config"
+    chmod 600 "$private_source/ssh_config"
+    git -C "$private_source" add hosts/mac-test-pilot.conf ssh_config
     git -C "$private_source" commit -q -m 'synthetic private v1 current'
     git -C "$private_source" push -q origin main
     git -C "$private_work" fetch -q origin

@@ -17,9 +17,14 @@ harness macos-profile --host LOGICAL_ID
 ```
 
 The private checkout must be clean, owner-controlled, mode-restricted, and
-contain only `companion.conf` plus strict `hosts/*.conf` manifests. The
+contain only `companion.conf`, strict `hosts/*.conf` manifests, and the one
+optional whole-file `ssh_config` payload. The
 resolver validates every tracked host manifest, not only the selected one, and
 refuses untracked or modified content.
+
+The payload exception and its privacy boundary are defined in
+[`personal-macos-private-v1.md`](schemas/personal-macos-private-v1.md). It is
+absent before explicit first adoption and is never printed by the resolver.
 
 ## Value-minimized observation
 
@@ -183,6 +188,41 @@ zsh/account-shell recovery route, Terminal preferences, `/etc/shells`, `chsh`,
 zsh startup files, Keychain, and login items remain untouched.
 
 ## Explicit long-gap update
+
+Whole-file SSH reconciliation is the first independent stage of an explicit
+owner-started catch-up. Run its plan before fetching targets for the general
+engine/private-policy update:
+
+```bash
+harness macos-ssh-sync --host LOGICAL_ID --plan
+harness macos-ssh-sync --host LOGICAL_ID --apply
+```
+
+The first Mac instead uses `--seed --plan` and `--seed --apply` after reviewing
+its current config. The reconciler fetches the private companion with prompts
+disabled, compares the live file and fetched payload to the private recorded
+base, and takes only a clean no-op, local-only publish, remote-only pull, or
+same-content convergence. A simultaneous unequal local edit and remote advance
+is `diverged`; no timestamp, machine priority, force-push, reset, or automatic
+merge chooses a winner. Fetch or push authentication failure leaves both the
+live file and recorded base unchanged.
+
+Apply syntax-validates a bounded regular single-link source, publishes only
+after the companion is clean and current, and atomically replaces only
+`~/.ssh/config` at mode 0600. It records a private mode-0600 transaction and
+last-applied revision/content identity. Exact rollback is allowed only while
+both the applied file and local state remain unchanged:
+
+```bash
+harness macos-ssh-sync --rollback TRANSACTION_ID
+```
+
+Rollback never rewinds private Git. Re-running apply therefore catches the
+file up to the current private revision. The command never reads or copies
+keys, `known_hosts`, agent state, credentials, or another `~/.ssh` entry, and
+it installs no `launchd` task or other background job. Detailed protocol and
+the separate fixed Linux mirror are documented in
+[`ssh-config-sync.md`](ssh-config-sync.md).
 
 Fetching is a separate, explicit step. After fetching `origin/main` in both
 clean checkouts, resolve each target to its full commit ID locally and review a

@@ -1,0 +1,558 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+. "$SELF_DIR/harness-macos-common"
+
+usage() {
+    cat >&2 <<'EOF'
+Usage:
+  harness macos-ssh-sync --host LOGICAL_ID [--seed] [--plan|--apply]
+  harness macos-ssh-sync --rollback TRANSACTION_ID
+EOF
+}
+
+prepare_state() {
+    for state_path in "$HOME/.local" "$HOME/.local/state" "$state_root" \
+        "$state_directory" "$transaction_root"; do
+        if [ -e "$state_path" ] || [ -L "$state_path" ]; then
+            [ -d "$state_path" ] && [ ! -L "$state_path" ] ||
+                die "Mac SSH sync state has unsafe type"
+            [ "$(macos_stat_owner "$state_path")" = "$current_uid" ] ||
+                die "Mac SSH sync state has unsafe owner"
+            case "$state_path" in
+                "$state_root"|"$state_directory"|"$transaction_root")
+                    [ "$(macos_stat_mode "$state_path")" = 700 ] ||
+                        die "Mac SSH sync state has unsafe mode"
+                    ;;
+            esac
+        fi
+    done
+    umask 077
+    for state_path in "$HOME/.local" "$HOME/.local/state" "$state_root" \
+        "$state_directory" "$transaction_root"; do
+        if [ ! -e "$state_path" ] && [ ! -L "$state_path" ]; then
+            mkdir "$state_path"
+            chmod 700 "$state_path"
+        fi
+    done
+}
+
+write_status() {
+    status_class=$1
+    status_agreement=$2
+    status_new=$state_directory/.ssh-sync-status.$$
+    [ ! -e "$status_new" ] && [ ! -L "$status_new" ] ||
+        die "Mac SSH sync status path collision"
+    printf 'schema=1\nclass=%s\nagreement=%s\n' \
+        "$status_class" "$status_agreement" >"$status_new"
+    chmod 600 "$status_new"
+    mv "$status_new" "$status_file"
+}
+
+stop_class() {
+    stop_value=$1
+    stop_agreement=${2:-no}
+    prepare_state
+    write_status "$stop_value" "$stop_agreement"
+    printf 'MACOS_SSH_SYNC class=%s agreement=%s action=stopped\n' \
+        "$stop_value" "$stop_agreement"
+    exit 2
+}
+
+validate_public_checkout() {
+    [ "$(uname -s)" = Darwin ] || die "Mac SSH sync requires Darwin"
+    [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
+        die "Mac SSH sync requires a Git harness checkout"
+    [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" = \
+        "$(CDPATH='' cd -- "$HARNESS_ROOT" && pwd -P)" ] ||
+        die "Mac SSH sync public checkout is ambiguous"
+    [ "$(git -C "$HARNESS_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null)" = main ] ||
+        die "Mac SSH sync requires the public main branch"
+    [ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
+        die "Mac SSH sync requires a clean public checkout"
+}
+
+validate_private_checkout() {
+    macos_require_private_directory "$private_root" "$current_uid"
+    macos_require_private_directory "$private_root/.git" "$current_uid"
+    macos_require_private_directory "$private_root/hosts" "$current_uid"
+    [ "$(git -C "$private_root" rev-parse --show-toplevel 2>/dev/null)" = \
+        "$(CDPATH='' cd -- "$private_root" && pwd -P)" ] ||
+        die "private companion Git root is ambiguous"
+    [ "$(git -C "$private_root" symbolic-ref --quiet --short HEAD 2>/dev/null)" = main ] ||
+        die "private companion branch is incompatible"
+    [ "$(git -C "$private_root" config --get branch.main.remote 2>/dev/null)" = origin ] &&
+        [ "$(git -C "$private_root" config --get branch.main.merge 2>/dev/null)" = \
+            refs/heads/main ] || die "private companion tracking is ambiguous"
+    [ "$(git -C "$private_root" remote)" = origin ] ||
+        die "private companion remote selection is ambiguous"
+    private_url_count=$(git -C "$private_root" config --get-all \
+        remote.origin.url 2>/dev/null | awk 'NF { n++ } END { print n + 0 }')
+    [ "$private_url_count" -eq 1 ] || die "private companion origin is ambiguous"
+    [ -z "$(git -C "$private_root" status --porcelain --untracked-files=normal)" ] ||
+        die "private companion checkout is not clean"
+}
+
+validate_state() {
+    macos_require_private_file "$state_file" "$current_uid"
+    macos_validate_manifest "$state_file" \
+        schema,logical_id,private_revision,content_identity \
+        schema,logical_id,private_revision,content_identity
+    [ "$(macos_manifest_get "$state_file" schema)" = 1 ] &&
+        [ "$(macos_manifest_get "$state_file" logical_id)" = "$logical_host" ] ||
+        die "Mac SSH sync state is incompatible"
+    state_revision=$(macos_manifest_get "$state_file" private_revision)
+    state_identity=$(macos_manifest_get "$state_file" content_identity)
+    macos_hash_is_safe "$state_revision" && [ "${#state_revision}" -eq 40 ] ||
+        die "Mac SSH sync state revision is invalid"
+    macos_hash_is_safe "$state_identity" && [ "${#state_identity}" -eq 64 ] ||
+        die "Mac SSH sync state identity is invalid"
+}
+
+export_payload() {
+    export_revision=$1
+    export_file=$2
+    git -C "$private_root" show "$export_revision:ssh_config" \
+        >"$export_file" 2>/dev/null || return 1
+    chmod 600 "$export_file"
+    macos_validate_ssh_config "$export_file" "$current_uid" 600
+}
+
+fetch_private() {
+    fetch_log=$state_directory/.ssh-sync-fetch.$$
+    [ ! -e "$fetch_log" ] && [ ! -L "$fetch_log" ] ||
+        die "Mac SSH sync fetch log collision"
+    : >"$fetch_log"
+    chmod 600 "$fetch_log"
+    if GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/usr/bin/false \
+        SSH_ASKPASS=/usr/bin/false \
+        GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=15' \
+        git -C "$private_root" fetch -q origin main \
+        >"$fetch_log" 2>&1; then
+        unlink "$fetch_log"
+        return 0
+    fi
+    unlink "$fetch_log"
+    return 1
+}
+
+push_private() {
+    push_log=$state_directory/.ssh-sync-push.$$
+    [ ! -e "$push_log" ] && [ ! -L "$push_log" ] ||
+        die "Mac SSH sync push log collision"
+    : >"$push_log"
+    chmod 600 "$push_log"
+    if GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/usr/bin/false \
+        SSH_ASKPASS=/usr/bin/false \
+        GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=15' \
+        git -C "$private_root" push -q origin HEAD:main \
+        >"$push_log" 2>&1; then
+        unlink "$push_log"
+        return 0
+    fi
+    unlink "$push_log"
+    return 1
+}
+
+commit_private() {
+    commit_log=$state_directory/.ssh-sync-commit.$$
+    [ ! -e "$commit_log" ] && [ ! -L "$commit_log" ] ||
+        die "Mac SSH sync commit log collision"
+    : >"$commit_log"
+    chmod 600 "$commit_log"
+    if git -C "$private_root" -c commit.gpgsign=false commit -q \
+        -m 'Update shared Mac SSH configuration' -- ssh_config \
+        >"$commit_log" 2>&1; then
+        unlink "$commit_log"
+        return 0
+    fi
+    unlink "$commit_log"
+    return 1
+}
+
+validate_transaction_manifest() {
+    transaction_manifest=$1
+    macos_validate_manifest "$transaction_manifest" \
+        schema,operation,config_before_hash,config_after_hash,state_before,state_before_hash,state_after_hash \
+        schema,operation,config_before_hash,config_after_hash,state_before,state_before_hash,state_after_hash
+    [ "$(macos_manifest_get "$transaction_manifest" schema)" = 1 ] &&
+        [ "$(macos_manifest_get "$transaction_manifest" operation)" = \
+            macos-ssh-sync ] || die "Mac SSH sync transaction is incompatible"
+}
+
+rollback_transaction() {
+    rollback_id=$1
+    macos_private_id_is_safe "$rollback_id" || die "invalid Mac SSH sync transaction"
+    prepare_state
+    rollback_manifest=$transaction_root/$rollback_id.macos-ssh-sync.manifest
+    rollback_status=$transaction_root/$rollback_id.macos-ssh-sync.status
+    rollback_config=$transaction_root/$rollback_id.macos-ssh-sync.before
+    rollback_state_file=$transaction_root/$rollback_id.macos-ssh-sync.state-before
+    macos_require_private_file "$rollback_manifest" "$current_uid"
+    macos_require_private_file "$rollback_status" "$current_uid"
+    macos_require_private_file "$rollback_config" "$current_uid"
+    [ "$(sed -n '1p' "$rollback_status")" = complete ] ||
+        die "Mac SSH sync transaction is not complete"
+    validate_transaction_manifest "$rollback_manifest"
+    before_hash=$(macos_manifest_get "$rollback_manifest" config_before_hash)
+    after_hash=$(macos_manifest_get "$rollback_manifest" config_after_hash)
+    state_before=$(macos_manifest_get "$rollback_manifest" state_before)
+    state_before_hash=$(macos_manifest_get "$rollback_manifest" state_before_hash)
+    state_after_hash=$(macos_manifest_get "$rollback_manifest" state_after_hash)
+    macos_hash_is_safe "$before_hash" && macos_hash_is_safe "$after_hash" &&
+        macos_hash_is_safe "$state_after_hash" ||
+        die "Mac SSH sync transaction identity is invalid"
+    macos_validate_ssh_config "$live_config" "$current_uid" 600
+    [ "$(macos_checksum_file "$live_config")" = "$after_hash" ] ||
+        die "Mac SSH sync rollback blocked by changed configuration"
+    macos_require_private_file "$state_file" "$current_uid"
+    [ "$(macos_checksum_file "$state_file")" = "$state_after_hash" ] ||
+        die "Mac SSH sync rollback blocked by changed state"
+    [ "$(macos_checksum_file "$rollback_config")" = "$before_hash" ] ||
+        die "Mac SSH sync rollback image changed"
+    rollback_stage=$ssh_directory/.harness-config.$rollback_id.rollback
+    [ ! -e "$rollback_stage" ] && [ ! -L "$rollback_stage" ] ||
+        die "Mac SSH sync rollback path collision"
+    cp "$rollback_config" "$rollback_stage"
+    chmod 600 "$rollback_stage"
+    macos_validate_ssh_config "$rollback_stage" "$current_uid" 600
+    mv "$rollback_stage" "$live_config"
+    case "$state_before" in
+        absent)
+            [ "$state_before_hash" = none ] ||
+                die "Mac SSH sync prior state is invalid"
+            unlink "$state_file"
+            ;;
+        present)
+            macos_hash_is_safe "$state_before_hash" ||
+                die "Mac SSH sync prior state is invalid"
+            macos_require_private_file "$rollback_state_file" "$current_uid"
+            [ "$(macos_checksum_file "$rollback_state_file")" = \
+                "$state_before_hash" ] || die "Mac SSH sync prior state changed"
+            rollback_state_stage=$state_directory/.ssh-sync-state.$rollback_id.rollback
+            [ ! -e "$rollback_state_stage" ] && [ ! -L "$rollback_state_stage" ] ||
+                die "Mac SSH sync rollback state collision"
+            cp "$rollback_state_file" "$rollback_state_stage"
+            chmod 600 "$rollback_state_stage"
+            mv "$rollback_state_stage" "$state_file"
+            ;;
+        *) die "Mac SSH sync prior state is invalid" ;;
+    esac
+    printf '%s\n' rolled-back >"$rollback_status"
+    write_status current yes
+    printf 'MACOS_SSH_SYNC class=current agreement=yes action=rolled-back transaction=%s\n' \
+        "$rollback_id"
+}
+
+apply_local_transaction() (
+    candidate=$1
+    new_revision=$2
+    prepare_state
+    transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+    manifest=$transaction_root/$transaction_id.macos-ssh-sync.manifest
+    transaction_status=$transaction_root/$transaction_id.macos-ssh-sync.status
+    config_backup=$transaction_root/$transaction_id.macos-ssh-sync.before
+    state_backup=$transaction_root/$transaction_id.macos-ssh-sync.state-before
+    config_stage=$ssh_directory/.harness-config.$transaction_id
+    state_stage=$state_directory/.ssh-sync-state.$transaction_id
+    for transaction_path in "$manifest" "$transaction_status" "$config_backup" \
+        "$state_backup" "$config_stage" "$state_stage"; do
+        [ ! -e "$transaction_path" ] && [ ! -L "$transaction_path" ] ||
+            die "Mac SSH sync transaction path collision"
+    done
+    macos_validate_ssh_config "$live_config" "$current_uid" 600,644
+    live_before_hash=$(macos_checksum_file "$live_config")
+    candidate_hash=$(macos_checksum_file "$candidate")
+    cp "$live_config" "$config_backup"
+    chmod 600 "$config_backup"
+    state_before=absent
+    state_before_hash=none
+    if [ -f "$state_file" ] && [ ! -L "$state_file" ]; then
+        validate_state
+        cp "$state_file" "$state_backup"
+        chmod 600 "$state_backup"
+        state_before=present
+        state_before_hash=$(macos_checksum_file "$state_backup")
+    fi
+    printf 'schema=1\nlogical_id=%s\nprivate_revision=%s\ncontent_identity=%s\n' \
+        "$logical_host" "$new_revision" "$candidate_hash" >"$state_stage"
+    chmod 600 "$state_stage"
+    state_after_hash=$(macos_checksum_file "$state_stage")
+    printf 'schema=1\noperation=macos-ssh-sync\nconfig_before_hash=%s\nconfig_after_hash=%s\nstate_before=%s\nstate_before_hash=%s\nstate_after_hash=%s\n' \
+        "$live_before_hash" "$candidate_hash" "$state_before" \
+        "$state_before_hash" "$state_after_hash" >"$manifest"
+    chmod 600 "$manifest"
+    printf '%s\n' prepared >"$transaction_status"
+    chmod 600 "$transaction_status"
+
+    cp "$candidate" "$config_stage"
+    chmod 600 "$config_stage"
+    macos_validate_ssh_config "$config_stage" "$current_uid" 600
+    [ "$(macos_checksum_file "$live_config")" = "$live_before_hash" ] ||
+        die "Mac SSH sync destination changed before apply"
+    applied=0
+    cleanup_apply() {
+        apply_status=$?
+        trap - EXIT HUP INT TERM
+        if [ "$applied" -eq 1 ]; then
+            recovery_stage=$ssh_directory/.harness-config.$transaction_id.recovery
+            if [ ! -e "$recovery_stage" ] && [ ! -L "$recovery_stage" ]; then
+                cp "$config_backup" "$recovery_stage"
+                chmod 600 "$recovery_stage"
+                mv "$recovery_stage" "$live_config"
+            fi
+        fi
+        [ ! -e "$config_stage" ] || unlink "$config_stage"
+        [ ! -e "$state_stage" ] || unlink "$state_stage"
+        printf '%s\n' failed >"$transaction_status"
+        exit "$apply_status"
+    }
+    trap cleanup_apply EXIT
+    trap 'exit 129' HUP
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+    mv "$config_stage" "$live_config"
+    applied=1
+    mv "$state_stage" "$state_file"
+    printf '%s\n' complete >"$transaction_status"
+    applied=0
+    trap - EXIT HUP INT TERM
+    write_status current yes
+    printf 'MACOS_SSH_SYNC class=current agreement=yes action=applied transaction=%s rollback=available\n' \
+        "$transaction_id"
+)
+
+logical_host=
+mode=plan
+seed=0
+rollback_id=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --seed) seed=1; shift ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        --rollback)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            mode=rollback
+            rollback_id=$2
+            shift 2
+            ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+
+case ${HOME:-} in /*) ;; *) die "Mac SSH sync requires an absolute HOME" ;; esac
+current_uid=$(id -u)
+private_root=$HOME/.config/harness/private
+ssh_directory=$HOME/.ssh
+live_config=$ssh_directory/config
+state_root=$HOME/.local/state/harness
+state_directory=$state_root/personal-macos
+state_file=$state_directory/ssh-sync.conf
+status_file=$state_directory/ssh-sync-status.conf
+transaction_root=$state_root/transactions
+
+if [ "$mode" = rollback ]; then
+    [ -n "$rollback_id" ] && [ -z "$logical_host" ] && [ "$seed" -eq 0 ] ||
+        { usage; exit 2; }
+    [ "$(uname -s)" = Darwin ] || die "Mac SSH sync requires Darwin"
+    [ -d "$HOME" ] && [ ! -L "$HOME" ] &&
+        [ "$(macos_stat_owner "$HOME")" = "$current_uid" ] ||
+        die "Mac SSH sync HOME is unsafe"
+    [ -d "$ssh_directory" ] && [ ! -L "$ssh_directory" ] &&
+        [ "$(macos_stat_owner "$ssh_directory")" = "$current_uid" ] ||
+        die "Mac SSH sync destination parent is unsafe"
+    rollback_transaction "$rollback_id"
+    exit 0
+fi
+
+[ -n "$logical_host" ] || { usage; exit 2; }
+macos_private_id_is_safe "$logical_host" || die "invalid private logical identifier"
+[ -d "$HOME" ] && [ ! -L "$HOME" ] &&
+    [ "$(macos_stat_owner "$HOME")" = "$current_uid" ] ||
+    die "Mac SSH sync HOME is unsafe"
+[ -d "$ssh_directory" ] && [ ! -L "$ssh_directory" ] &&
+    [ "$(macos_stat_owner "$ssh_directory")" = "$current_uid" ] ||
+    die "Mac SSH sync destination parent is unsafe"
+macos_validate_ssh_config "$live_config" "$current_uid" 600,644
+validate_public_checkout
+validate_private_checkout
+"$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
+    die "private profile is not ready for Mac SSH sync"
+prepare_state
+
+candidate=$(mktemp "${TMPDIR:-/tmp}/harness-macos-ssh.XXXXXX") ||
+    die "cannot allocate Mac SSH validation file"
+chmod 600 "$candidate"
+base_candidate=$(mktemp "${TMPDIR:-/tmp}/harness-macos-ssh-base.XXXXXX") || {
+    unlink "$candidate"
+    die "cannot allocate Mac SSH base validation file"
+}
+chmod 600 "$base_candidate"
+cleanup_candidates() {
+    cleanup_status=$?
+    trap - EXIT HUP INT TERM
+    [ ! -e "$candidate" ] || unlink "$candidate"
+    [ ! -e "$base_candidate" ] || unlink "$base_candidate"
+    exit "$cleanup_status"
+}
+trap cleanup_candidates EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+fetch_private || stop_class auth-failed no
+origin_revision=$(git -C "$private_root" rev-parse --verify refs/remotes/origin/main)
+head_revision=$(git -C "$private_root" rev-parse --verify HEAD)
+origin_has_payload=0
+if export_payload "$origin_revision" "$candidate"; then
+    origin_has_payload=1
+fi
+local_identity=$(macos_checksum_file "$live_config")
+
+state_present=0
+if [ -f "$state_file" ] && [ ! -L "$state_file" ]; then
+    validate_state
+    state_present=1
+fi
+
+action=
+target_revision=
+if [ "$state_present" -eq 0 ]; then
+    if [ "$origin_has_payload" -eq 0 ]; then
+        if [ "$seed" -eq 0 ]; then
+            write_status current no
+            echo "MACOS_SSH_SYNC class=current agreement=no action=seed-required"
+            [ "$mode" = plan ] && exit 0
+            exit 2
+        fi
+        if [ "$head_revision" = "$origin_revision" ]; then
+            action=seed
+        elif git -C "$private_root" merge-base --is-ancestor "$origin_revision" \
+            "$head_revision" >/dev/null 2>&1 &&
+            [ "$(git -C "$private_root" diff --name-only \
+                "$origin_revision..$head_revision")" = ssh_config ]; then
+            export_payload "$head_revision" "$candidate" || stop_class invalid no
+            [ "$(macos_checksum_file "$candidate")" = "$local_identity" ] ||
+                stop_class diverged no
+            action=retry-push
+        else
+            stop_class diverged no
+        fi
+    else
+        [ "$seed" -eq 0 ] || stop_class invalid no
+        remote_identity=$(macos_checksum_file "$candidate")
+        [ "$local_identity" = "$remote_identity" ] || stop_class diverged no
+        git -C "$private_root" merge-base --is-ancestor "$head_revision" \
+            "$origin_revision" >/dev/null 2>&1 || stop_class diverged no
+        action=adopt
+        target_revision=$origin_revision
+    fi
+else
+    [ "$origin_has_payload" -eq 1 ] || stop_class invalid no
+    git -C "$private_root" cat-file -e "$state_revision^{commit}" 2>/dev/null ||
+        stop_class invalid no
+    export_payload "$state_revision" "$base_candidate" || stop_class invalid no
+    [ "$(macos_checksum_file "$base_candidate")" = "$state_identity" ] ||
+        stop_class invalid no
+    git -C "$private_root" merge-base --is-ancestor "$state_revision" \
+        "$origin_revision" >/dev/null 2>&1 || stop_class diverged no
+    remote_identity=$(macos_checksum_file "$candidate")
+    local_changed=0
+    remote_changed=0
+    [ "$local_identity" = "$state_identity" ] || local_changed=1
+    [ "$origin_revision" = "$state_revision" ] || remote_changed=1
+
+    if [ "$local_changed" -eq 1 ] && [ "$remote_changed" -eq 1 ] &&
+        [ "$local_identity" != "$remote_identity" ]; then
+        stop_class diverged no
+    elif [ "$local_changed" -eq 1 ] && [ "$remote_changed" -eq 0 ]; then
+        if [ "$head_revision" = "$origin_revision" ]; then
+            action=publish
+        elif git -C "$private_root" merge-base --is-ancestor "$origin_revision" \
+            "$head_revision" >/dev/null 2>&1 &&
+            [ "$(git -C "$private_root" diff --name-only "$origin_revision..$head_revision")" = \
+                ssh_config ]; then
+            export_payload "$head_revision" "$candidate" || stop_class invalid no
+            [ "$(macos_checksum_file "$candidate")" = "$local_identity" ] ||
+                stop_class diverged no
+            action=retry-push
+        else
+            stop_class diverged no
+        fi
+    elif [ "$remote_changed" -eq 1 ]; then
+        git -C "$private_root" merge-base --is-ancestor "$head_revision" \
+            "$origin_revision" >/dev/null 2>&1 || stop_class diverged no
+        action=pull
+        target_revision=$origin_revision
+    else
+        [ "$head_revision" = "$origin_revision" ] || stop_class diverged no
+        action=current
+        target_revision=$origin_revision
+    fi
+fi
+
+case "$action" in
+    current)
+        if [ "$(macos_stat_mode "$live_config")" = 600 ]; then
+            write_status current yes
+            echo "MACOS_SSH_SYNC class=current agreement=yes action=none"
+            exit 0
+        fi
+        action=normalize
+        cp "$live_config" "$candidate"
+        chmod 600 "$candidate"
+        ;;
+    seed|publish)
+        cp "$live_config" "$candidate"
+        chmod 600 "$candidate"
+        macos_validate_ssh_config "$candidate" "$current_uid" 600
+        ;;
+    adopt|pull) ;;
+    retry-push) ;;
+    *) stop_class invalid no ;;
+esac
+
+if [ "$mode" = plan ]; then
+    write_status current no
+    printf 'MACOS_SSH_SYNC class=current agreement=no action=%s apply=not-requested\n' \
+        "$action"
+    exit 0
+fi
+
+case "$action" in
+    seed|publish)
+        payload_stage=$private_root/.ssh_config.$$
+        [ ! -e "$payload_stage" ] && [ ! -L "$payload_stage" ] ||
+            stop_class invalid no
+        cp "$candidate" "$payload_stage"
+        chmod 600 "$payload_stage"
+        macos_validate_ssh_config "$payload_stage" "$current_uid" 600
+        mv "$payload_stage" "$private_root/ssh_config"
+        git -C "$private_root" add -- ssh_config
+        if ! commit_private; then
+            stop_class invalid no
+        fi
+        target_revision=$(git -C "$private_root" rev-parse HEAD)
+        push_private || stop_class auth-failed no
+        ;;
+    retry-push)
+        target_revision=$head_revision
+        push_private || stop_class auth-failed no
+        ;;
+    adopt|pull)
+        git -C "$private_root" merge --ff-only -q "$origin_revision" ||
+            stop_class diverged no
+        target_revision=$origin_revision
+        export_payload "$target_revision" "$candidate" || stop_class invalid no
+        ;;
+    normalize) ;;
+esac
+
+apply_local_transaction "$candidate" "$target_revision"

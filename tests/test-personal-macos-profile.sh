@@ -40,14 +40,15 @@ make_profile() {
     cp "$FIXTURE/companion.conf" "$private/companion.conf"
     cp "$FIXTURE/hosts/mac-test-pilot.conf" \
         "$private/hosts/mac-test-pilot.conf"
+    cp "$FIXTURE/ssh_config" "$private/ssh_config"
     chmod 700 "$home" "$home/.config" "$home/.config/harness" \
         "$private" "$private/hosts"
     chmod 600 "$private/companion.conf" \
-        "$private/hosts/mac-test-pilot.conf"
+        "$private/hosts/mac-test-pilot.conf" "$private/ssh_config"
     git -C "$private" init -q -b main
     git -C "$private" config user.name mac-test
     git -C "$private" config user.email mac-test.invalid
-    git -C "$private" add companion.conf hosts/mac-test-pilot.conf
+    git -C "$private" add companion.conf hosts/mac-test-pilot.conf ssh_config
     git -C "$private" commit -q -m 'synthetic private v1'
     chmod 700 "$private/.git"
     printf '%s\n' "$home"
@@ -59,6 +60,7 @@ valid_output=$(HOME="$valid_home" "$HARNESS" macos-profile \
 expected_output='MACOS_PRIVATE_PROFILE status=valid schema=1 engine_schema=1
 SELECTION baseline=macos-cli-v1 capability_groups=2 extra_formulae=2
 PUBLIC_FORMULAE count=8
+SSH_PAYLOAD state=present values=not-emitted
 END private_profile values=not-emitted'
 [ "$valid_output" = "$expected_output" ] || fail "valid value-free output"
 case "$valid_output" in
@@ -66,6 +68,83 @@ case "$valid_output" in
         fail "valid output exposed private profile values"
         ;;
 esac
+
+absent_home=$(make_profile payload-absent)
+git -C "$absent_home/.config/harness/private" rm -q ssh_config
+git -C "$absent_home/.config/harness/private" commit -q -m \
+    'synthetic pre-adoption layout'
+absent_output=$(HOME="$absent_home" "$HARNESS" macos-profile \
+    --host mac-test-pilot)
+printf '%s\n' "$absent_output" | grep -F \
+    'SSH_PAYLOAD state=absent values=not-emitted' >/dev/null ||
+    fail "pre-adoption payload absence"
+
+payload_mode_home=$(make_profile payload-mode)
+chmod 644 "$payload_mode_home/.config/harness/private/ssh_config"
+if HOME="$payload_mode_home" "$HARNESS" macos-profile --host mac-test-pilot \
+    >"$TEMP_DIR/payload-mode.out" 2>&1; then
+    fail "unsafe SSH payload mode accepted"
+fi
+grep -F 'SSH configuration has unsafe mode' \
+    "$TEMP_DIR/payload-mode.out" >/dev/null || fail "SSH payload mode refusal"
+
+payload_link_home=$(make_profile payload-link)
+mv "$payload_link_home/.config/harness/private/ssh_config" \
+    "$payload_link_home/.config/harness/private/ssh_config.real"
+ln -s ssh_config.real "$payload_link_home/.config/harness/private/ssh_config"
+if HOME="$payload_link_home" "$HARNESS" macos-profile --host mac-test-pilot \
+    >"$TEMP_DIR/payload-link.out" 2>&1; then
+    fail "symlink SSH payload accepted"
+fi
+grep -F 'SSH configuration has unsafe type' \
+    "$TEMP_DIR/payload-link.out" >/dev/null || fail "SSH payload symlink refusal"
+
+payload_hardlink_home=$(make_profile payload-hardlink)
+ln "$payload_hardlink_home/.config/harness/private/ssh_config" \
+    "$payload_hardlink_home/.config/harness/private/ssh_config.second"
+if HOME="$payload_hardlink_home" "$HARNESS" macos-profile --host mac-test-pilot \
+    >"$TEMP_DIR/payload-hardlink.out" 2>&1; then
+    fail "hard-linked SSH payload accepted"
+fi
+grep -F 'SSH configuration has unsafe link count' \
+    "$TEMP_DIR/payload-hardlink.out" >/dev/null || fail "SSH payload hard-link refusal"
+
+payload_grammar_home=$(make_profile payload-grammar)
+payload_sentinel=PRIVATE_SSH_SENTINEL
+printf '%s\n' "Host $payload_sentinel" '    ProxyCommand "unterminated' > \
+    "$payload_grammar_home/.config/harness/private/ssh_config"
+chmod 600 "$payload_grammar_home/.config/harness/private/ssh_config"
+if HOME="$payload_grammar_home" "$HARNESS" macos-profile --host mac-test-pilot \
+    >"$TEMP_DIR/payload-grammar.out" 2>&1; then
+    fail "invalid SSH payload grammar accepted"
+fi
+grep -F 'SSH configuration grammar is invalid' \
+    "$TEMP_DIR/payload-grammar.out" >/dev/null || fail "SSH payload grammar refusal"
+if grep -F "$payload_sentinel" "$TEMP_DIR/payload-grammar.out" >/dev/null; then
+    fail "SSH payload grammar refusal exposed private content"
+fi
+
+payload_key_home=$(make_profile payload-key)
+printf '%s\n' '-----BEGIN OPENSSH PRIVATE KEY-----' > \
+    "$payload_key_home/.config/harness/private/ssh_config"
+chmod 600 "$payload_key_home/.config/harness/private/ssh_config"
+if HOME="$payload_key_home" "$HARNESS" macos-profile --host mac-test-pilot \
+    >"$TEMP_DIR/payload-key.out" 2>&1; then
+    fail "credential material in SSH payload accepted"
+fi
+grep -F 'SSH configuration contains prohibited credential material' \
+    "$TEMP_DIR/payload-key.out" >/dev/null || fail "credential material refusal"
+
+payload_include_home=$(make_profile payload-include)
+printf '%s\n' 'Include ~/.ssh/other-private-config' > \
+    "$payload_include_home/.config/harness/private/ssh_config"
+chmod 600 "$payload_include_home/.config/harness/private/ssh_config"
+if HOME="$payload_include_home" "$HARNESS" macos-profile --host mac-test-pilot \
+    >"$TEMP_DIR/payload-include.out" 2>&1; then
+    fail "external SSH include accepted"
+fi
+grep -F 'SSH configuration contains prohibited external or credential material' \
+    "$TEMP_DIR/payload-include.out" >/dev/null || fail "SSH include refusal"
 
 wrong_mode_home=$(make_profile wrong-mode)
 chmod 755 "$wrong_mode_home/.config/harness/private"

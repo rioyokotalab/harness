@@ -1,0 +1,4 @@
+Host synthetic-example
+    HostName 192.0.2.10
+    User synthetic-user
+    BatchMode yes

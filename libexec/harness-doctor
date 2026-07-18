@@ -118,5 +118,25 @@ for class in scheduler module environment container debugger profiler; do
     IFS=$old_ifs
 done
 
+if [ "$logical_host" = local ]; then
+    mirror_status=$HOME/.local/state/harness/ssh-config-mirror/status.conf
+    if [ ! -e "$mirror_status" ] && [ ! -L "$mirror_status" ]; then
+        pass "ssh_config_mirror class=current agreement=not-run"
+    elif [ -f "$mirror_status" ] && [ ! -L "$mirror_status" ] &&
+        [ "$(stat -c %u -- "$mirror_status")" = "$(id -u)" ] &&
+        [ "$(stat -c %a -- "$mirror_status")" = 600 ] &&
+        awk -F= '
+            $0 == "schema=1" { schema++ ; next }
+            $0 == "class=current" { class++ ; next }
+            $0 == "agreement=yes" { agreement++ ; next }
+            { bad = 1 }
+            END { exit bad || schema != 1 || class != 1 || agreement != 1 }
+        ' "$mirror_status"; then
+        pass "ssh_config_mirror class=current agreement=yes"
+    else
+        fail "ssh_config_mirror class=invalid agreement=no"
+    fi
+fi
+
 echo "SUMMARY host=$logical_host failures=$failures warnings=$warnings"
 [ "$failures" -eq 0 ]

@@ -79,6 +79,15 @@ validate_private_target() {
                 [ "$target_mode" = 100644:blob ] ||
                     die "private target tracked layout is invalid"
                 ;;
+            ssh_config)
+                target_mode=$(git -C "$private_checkout" ls-tree \
+                    "$private_target" -- "$target_path" | awk '{ print $1 ":" $2 }')
+                [ "$target_mode" = 100644:blob ] ||
+                    die "private target tracked layout is invalid"
+                export_commit_file "$private_checkout" "$private_target" \
+                    "$target_path" "$target_ssh_file"
+                macos_validate_ssh_config "$target_ssh_file" "$current_uid" 600
+                ;;
             hosts/*.conf)
                 target_name=${target_path#hosts/}
                 target_id=${target_name%.conf}
@@ -332,12 +341,19 @@ target_host_file=$(mktemp "${TMPDIR:-/tmp}/harness-macos-host.XXXXXX") || {
     unlink "$target_companion_file"
     die "cannot allocate host target validation file"
 }
+target_ssh_file=$(mktemp "${TMPDIR:-/tmp}/harness-macos-ssh.XXXXXX") || {
+    unlink "$target_public_file"
+    unlink "$target_companion_file"
+    unlink "$target_host_file"
+    die "cannot allocate SSH target validation file"
+}
 cleanup_target_files() {
     status=$?
     trap - EXIT HUP INT TERM
     [ ! -e "$target_public_file" ] || unlink "$target_public_file"
     [ ! -e "$target_companion_file" ] || unlink "$target_companion_file"
     [ ! -e "$target_host_file" ] || unlink "$target_host_file"
+    [ ! -e "$target_ssh_file" ] || unlink "$target_ssh_file"
     exit "$status"
 }
 trap cleanup_target_files EXIT
@@ -381,6 +397,7 @@ if [ "$public_action" = fast-forward ] &&
     [ ! -e "$target_public_file" ] || unlink "$target_public_file"
     [ ! -e "$target_companion_file" ] || unlink "$target_companion_file"
     [ ! -e "$target_host_file" ] || unlink "$target_host_file"
+    [ ! -e "$target_ssh_file" ] || unlink "$target_ssh_file"
     trap - EXIT HUP INT TERM
     HARNESS_MACOS_UPDATE_RESUMED=1 \
         exec "$HARNESS_ROOT/libexec/harness-macos-update" \
