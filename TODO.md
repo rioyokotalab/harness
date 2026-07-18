@@ -479,6 +479,28 @@ that can review the unmanaged dependent change before any formula apply. Never
 bypass the current refusal or broaden private desired intent from installed
 state.
 
+The owner selected the recommended Bash-only route. After the planning
+checkpoint passed protected PR #25 and published as `75dca87`, the clean
+published-engine plan again reported four changes and zero blocks. Initial
+apply created the launcher/loader links and exact guarded startup blocks with a
+private complete transaction; the next plan was a four-part no-op. A clean
+interactive launcher probe set the managed marker, loaded exactly once, and
+placed `~/.local/bin` first. A clean non-interactive launcher probe retained
+the launcher marker by design while the thin startup loader stayed unset and
+silent. The native account shell remained unchanged. Deliberate exact rollback
+marked the first private transaction rolled back and restored the original
+four-change plan. Accepted reapply created a new private complete transaction;
+final plan is a four-part no-op. Fresh mode-0600 facts and doctor now pass every
+architecture, checkout, profile, discovery-link, Bash-link, and Bash-startup
+gate; the sole not-ready result is the six deliberately deferred public
+formulae. No package, dependency, Homebrew metadata, ownership/mode, native
+login-shell, Terminal, Keychain, zsh, background, or system state changed.
+Stage 14 remains open only for Homebrew. Exact next action: redesign the public
+adapter to plan and validate actual dependency/dependent deltas instead of
+bypassing its conservative unmanaged-dependent refusal, add focused synthetic
+coverage, pass protected CI, then present the exact bounded package plan for
+separate authority.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
