@@ -48,9 +48,17 @@ Read-only phase-1 commands:
   inventory   emit value-free host capability facts
   plan        compare facts with a logical host profile
   doctor      validate required invariants and report optional gaps
+  macos-inventory  emit value-minimized personal-Mac capability facts
+  macos-plan   render a read-only personal-Mac convergence plan
+  macos-doctor validate personal-Mac required and optional readiness
+  macos-profile  validate a private personal-Mac desired-state profile
+  macos-update  plan/apply clean public and private Mac fast-forwards
   storage-readiness  validate declared large/cache storage; optionally probe writes
 
 Transactional commands:
+  macos-control  plan/apply/rollback personal-Mac discovery links
+  macos-homebrew plan/apply bounded personal-Mac managed formula catch-up
+  macos-bash     plan/apply/rollback personal-Mac Bash integration
   replica     plan or create one immutable encrypted-repository generation
   apply       plan or apply managed control-plane links
   remediate   plan or apply an exact reviewed host remediation
@@ -87,7 +95,7 @@ if [ "$#" -gt 0 ]; then
 fi
 
 case "$command_name" in
-    inventory|plan|doctor|storage-readiness|replica|apply|remediate|shell|cache-bootstrap|startup-normalize|dotfiles|tool|runtime|python|agent|build-tool|rollback|restic|restic-primary|restic-schedule|fleet-sync)
+    inventory|plan|doctor|macos-inventory|macos-plan|macos-doctor|macos-profile|macos-update|macos-control|macos-homebrew|macos-bash|storage-readiness|replica|apply|remediate|shell|cache-bootstrap|startup-normalize|dotfiles|tool|runtime|python|agent|build-tool|rollback|restic|restic-primary|restic-schedule|fleet-sync)
         exec "$ROOT/libexec/harness-$command_name" "$@"
         ;;
     guarded-delete)

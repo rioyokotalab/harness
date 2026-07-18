@@ -1,0 +1,355 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+. "$SELF_DIR/harness-macos-common"
+
+usage() {
+    cat >&2 <<'EOF'
+Usage:
+  harness macos-control --host LOGICAL_ID [--plan|--apply]
+  harness macos-control --rollback TRANSACTION_ID
+EOF
+}
+
+relative_destination() {
+    case "$1" in
+        "$HOME"/*) printf '%s\n' "${1#"$HOME"/}" ;;
+        *) die "unsafe Mac control destination" ;;
+    esac
+}
+
+require_safe_field() {
+    case "$1" in
+        *'|'*|*'
+'*|*//*|*/./*|*/../*|*/.|*/..) die "unsafe Mac control path field" ;;
+    esac
+}
+
+require_safe_parent_chain() {
+    parent=${1%/*}
+    while [ "$parent" != "$HOME" ]; do
+        case "$parent" in "$HOME"/*) ;; *) die "unsafe Mac control parent" ;; esac
+        if [ -e "$parent" ] || [ -L "$parent" ]; then
+            [ -d "$parent" ] && [ ! -L "$parent" ] ||
+                die "Mac control parent path is unsafe"
+            [ "$(macos_stat_owner "$parent")" = "$current_uid" ] ||
+                die "Mac control parent owner is unsafe"
+        fi
+        parent=${parent%/*}
+    done
+}
+
+record_missing_parents() {
+    parent=${1%/*}
+    while [ "$parent" != "$HOME" ]; do
+        if [ ! -e "$parent" ] && [ ! -L "$parent" ]; then
+            missing_directories=$missing_directories$(printf '\n%s' "$parent")
+        fi
+        parent=${parent%/*}
+    done
+}
+
+validate_public_checkout() {
+    [ "$(uname -s)" = Darwin ] || die "Mac control requires Darwin"
+    [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
+        die "Mac control requires a Git harness checkout"
+    [ "$(CDPATH='' cd -- "$HARNESS_ROOT" && pwd -P)" = "$HARNESS_ROOT" ] &&
+        [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" = \
+            "$HARNESS_ROOT" ] || die "Mac control checkout root is ambiguous"
+    [ "$(git -C "$HARNESS_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null)" = \
+        main ] || die "Mac control requires the main branch"
+    [ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
+        die "Mac control requires a clean committed harness checkout"
+}
+
+prepare_transaction_root() {
+    state_root=$HOME/.local/state/harness
+    transaction_root=$state_root/transactions
+
+    # Inspect the complete fixed chain before creating any component. Existing
+    # personal directory modes are preserved; only harness-private state must
+    # already be mode 0700.
+    for state_path in "$HOME/.local" "$HOME/.local/state" \
+        "$state_root" "$transaction_root"; do
+        if [ -e "$state_path" ] || [ -L "$state_path" ]; then
+            [ -d "$state_path" ] && [ ! -L "$state_path" ] ||
+                die "Mac control state path is unsafe"
+            [ "$(macos_stat_owner "$state_path")" = "$current_uid" ] ||
+                die "Mac control state path owner is unsafe"
+            case "$state_path" in
+                "$state_root"|"$transaction_root")
+                    [ "$(macos_stat_mode "$state_path")" = 700 ] ||
+                        die "Mac control state path mode is unsafe"
+                    ;;
+            esac
+        fi
+    done
+
+    umask 077
+    for state_path in "$HOME/.local" "$HOME/.local/state" \
+        "$state_root" "$transaction_root"; do
+        if [ ! -e "$state_path" ] && [ ! -L "$state_path" ]; then
+            mkdir "$state_path"
+            chmod 700 "$state_path"
+        fi
+    done
+}
+
+validate_manifest_records() {
+    control_manifest=$1
+    awk -F'|' '
+        NR == 1 { if ($0 != "schema=1") bad = 1; next }
+        NR == 2 { if ($0 != "operation=macos-control") bad = 1; next }
+        NR == 3 {
+            if ($0 !~ /^revision=[0-9a-f]+$/ ||
+                (length($0) != 49 && length($0) != 73)) bad = 1
+            next
+        }
+        $1 == "directory" { if (NF != 2 || seen[$2]++) bad = 1; next }
+        $1 == "link" { if (NF != 3 || seen[$2]++) bad = 1; next }
+        { bad = 1 }
+        END { exit bad ? 1 : 0 }
+    ' "$control_manifest" >/dev/null 2>&1 ||
+        die "Mac control transaction manifest is malformed"
+}
+
+rollback_transaction() {
+    rollback_id=$1
+    macos_private_id_is_safe "$rollback_id" || die "invalid Mac control transaction"
+    transaction_root=$HOME/.local/state/harness/transactions
+    manifest=$transaction_root/$rollback_id.macos-control.manifest
+    status_file=$transaction_root/$rollback_id.macos-control.status
+    macos_require_private_directory "$transaction_root" "$current_uid"
+    macos_require_private_file "$manifest" "$current_uid"
+    macos_require_private_file "$status_file" "$current_uid"
+    [ "$(sed -n '1p' "$status_file")" = complete ] ||
+        die "Mac control transaction is not complete"
+    validate_manifest_records "$manifest"
+
+    # Validate every record and every created directory before any unlink.
+    while IFS='|' read -r record destination source; do
+        case "$record" in
+            link)
+                case "$destination" in "$HOME"/*) ;; *) die "unsafe Mac control link" ;; esac
+                case "$source" in "$HARNESS_ROOT"/*) ;; *) die "unsafe Mac control source" ;; esac
+                require_safe_field "$destination"
+                require_safe_field "$source"
+                [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ] ||
+                    die "Mac control rollback blocked by changed link"
+                ;;
+            directory)
+                case "$destination" in "$HOME"/*) ;; *) die "unsafe Mac control directory" ;; esac
+                require_safe_field "$destination"
+                [ -d "$destination" ] && [ ! -L "$destination" ] ||
+                    die "Mac control rollback blocked by changed directory"
+                [ "$(macos_stat_owner "$destination")" = "$current_uid" ] ||
+                    die "Mac control rollback blocked by changed directory owner"
+                ;;
+        esac
+    done <"$manifest"
+
+    awk -F'|' '$1 == "directory" { print $2 }' "$manifest" |
+        while IFS= read -r directory; do
+            find "$directory" -mindepth 1 -maxdepth 1 -print |
+                while IFS= read -r child; do
+                    awk -F'|' -v child="$child" \
+                        '($1 == "link" || $1 == "directory") && $2 == child { found = 1 }
+                         END { exit found ? 0 : 1 }' "$manifest" ||
+                        die "Mac control rollback blocked by non-transaction content"
+                done
+        done
+
+    awk -F'|' '$1 == "link" { line[NR] = $0 }
+        END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+        "$manifest" | while IFS='|' read -r record destination source; do
+            [ "$record" = link ] || continue
+            [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ] ||
+                die "Mac control link changed during rollback"
+            unlink "$destination"
+        done
+    awk -F'|' '$1 == "directory" { line[NR] = $0 }
+        END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+        "$manifest" | while IFS='|' read -r record directory; do
+            [ "$record" = directory ] || continue
+            rmdir "$directory" || die "Mac control directory changed during rollback"
+        done
+    printf '%s\n' rolled-back >"$status_file"
+    echo "TRANSACTION id=$rollback_id status=rolled-back"
+}
+
+logical_host=
+mode=plan
+rollback_id=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        --rollback)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            mode=rollback
+            rollback_id=$2
+            shift 2
+            ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+case ${HOME:-} in /*) ;; *) die "Mac control requires an absolute HOME" ;; esac
+current_uid=$(id -u)
+[ -d "$HOME" ] && [ ! -L "$HOME" ] &&
+    [ "$(macos_stat_owner "$HOME")" = "$current_uid" ] ||
+    die "Mac control HOME is unsafe"
+[ "$(CDPATH='' cd -- "$HOME" && pwd -P)" = "$HOME" ] ||
+    die "Mac control HOME is ambiguous"
+require_safe_field "$HOME"
+require_safe_field "$HARNESS_ROOT"
+
+if [ "$mode" = rollback ]; then
+    [ -n "$rollback_id" ] && [ -z "$logical_host" ] || { usage; exit 2; }
+    rollback_transaction "$rollback_id"
+    exit 0
+fi
+
+[ -n "$logical_host" ] || { usage; exit 2; }
+macos_private_id_is_safe "$logical_host" || die "invalid private logical identifier"
+validate_public_checkout
+"$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
+    die "private profile is not ready for Mac control"
+
+blocked=0
+changes=0
+missing_directories=
+echo "MACOS_CONTROL mode=$mode privacy=value-free"
+while IFS='|' read -r source destination; do
+    [ -e "$source" ] || [ -L "$source" ] || die "Mac control source is unavailable"
+    case "$source" in "$HARNESS_ROOT"/*) ;; *) die "unsafe Mac control source" ;; esac
+    require_safe_parent_chain "$destination"
+    relative=$(relative_destination "$destination")
+    if [ -L "$destination" ]; then
+        if [ "$(readlink "$destination")" = "$source" ]; then
+            echo "KEEP link=$relative"
+        else
+            echo "BLOCK link=$relative reason=different-symlink"
+            blocked=$((blocked + 1))
+        fi
+    elif [ -e "$destination" ]; then
+        echo "BLOCK link=$relative reason=existing-path"
+        blocked=$((blocked + 1))
+    else
+        echo "CREATE link=$relative"
+        changes=$((changes + 1))
+        record_missing_parents "$destination"
+    fi
+done <<EOF
+$(managed_links)
+EOF
+printf 'PREFLIGHT macos_control blocked=%s changes=%s\n' "$blocked" "$changes"
+[ "$blocked" -eq 0 ] || die "Mac control plan contains blocked paths"
+[ "$mode" = apply ] || {
+    printf 'END macos_control blocked=0 changes=%s applied=no\n' "$changes"
+    exit 0
+}
+[ "$changes" -gt 0 ] || { echo 'END macos_control changes=none'; exit 0; }
+
+# Repeat all preflights immediately before mutation.
+validate_public_checkout
+"$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
+    die "private profile changed before Mac control apply"
+while IFS='|' read -r source destination; do
+    require_safe_parent_chain "$destination"
+    if [ -L "$destination" ]; then
+        [ "$(readlink "$destination")" = "$source" ] ||
+            die "Mac control destination changed before apply"
+    elif [ -e "$destination" ]; then
+        die "Mac control destination changed before apply"
+    fi
+done <<EOF
+$(managed_links)
+EOF
+
+prepare_transaction_root
+transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+manifest=$transaction_root/$transaction_id.macos-control.manifest
+status_file=$transaction_root/$transaction_id.macos-control.status
+[ ! -e "$manifest" ] && [ ! -L "$manifest" ] &&
+    [ ! -e "$status_file" ] && [ ! -L "$status_file" ] ||
+    die "Mac control transaction identifier collision"
+printf 'schema=1\noperation=macos-control\nrevision=%s\n' \
+    "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" >"$manifest"
+chmod 600 "$manifest"
+printf '%s\n' prepared >"$status_file"
+chmod 600 "$status_file"
+
+apply_complete=0
+rollback_partial() {
+    awk -F'|' '$1 == "link" { line[NR] = $0 }
+        END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+        "$manifest" | while IFS='|' read -r record destination source; do
+            [ "$record" = link ] || continue
+            if [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ]; then
+                unlink "$destination"
+            fi
+        done
+    awk -F'|' '$1 == "directory" { line[NR] = $0 }
+        END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+        "$manifest" | while IFS='|' read -r record directory; do
+            [ "$record" = directory ] || continue
+            rmdir "$directory" 2>/dev/null || true
+        done
+}
+cleanup_apply() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ "$apply_complete" -eq 0 ]; then
+        rollback_partial
+        printf '%s\n' failed >"$status_file"
+    fi
+    exit "$status"
+}
+trap cleanup_apply EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+printf '%s\n' "$missing_directories" | awk '
+    NF && !seen[$0]++ {
+        line[++n] = $0
+        value = $0
+        depth[n] = gsub(/\//, "/", value)
+        if (depth[n] > maximum) maximum = depth[n]
+    }
+    END {
+        for (level = 1; level <= maximum; level++)
+            for (i = 1; i <= n; i++)
+                if (depth[i] == level) print line[i]
+    }' |
+    while IFS= read -r directory; do
+        case "$directory" in
+            "$HOME/.local"|"$HOME/.local/state"|"$state_root"|"$transaction_root")
+                continue
+                ;;
+        esac
+        mkdir "$directory"
+        chmod 700 "$directory"
+        printf 'directory|%s\n' "$directory" >>"$manifest"
+    done
+
+while IFS='|' read -r source destination; do
+    [ -e "$destination" ] || [ -L "$destination" ] || {
+        ln -s "$source" "$destination"
+        printf 'link|%s|%s\n' "$destination" "$source" >>"$manifest"
+    }
+done <<EOF
+$(managed_links)
+EOF
+
+printf '%s\n' complete >"$status_file"
+apply_complete=1
+trap - EXIT HUP INT TERM
+echo "TRANSACTION id=$transaction_id status=complete links=$changes"
+echo 'END macos_control changes=applied'

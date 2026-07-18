@@ -21,6 +21,13 @@ gates; follow those more specific rules.
 - When exact owner authorization exists, preserve unrelated owner settings and
   make the smallest atomic change. Otherwise collect one approval bundle and
   continue all safe in-scope work.
+- The owner grants standing authorization for ordinary Git operations within
+  the active task scope, including fetch/pull, branch creation, commits,
+  merges, rebases, pushes, and task pull-request creation or merge. Continue to
+  apply all preflight, preservation, collaboration, and no-force-push rules;
+  this does not authorize hosting settings or administration, workflow
+  dispatch, deployments, external messages, destructive cleanup, or credential
+  access.
 - Do not treat a long-running instruction as permission to broaden scope.
 - Never run raw recursive or bulk deletion (`rm -r`, `rm -rf`, `find -delete`,
   deletion loops/globs, `rsync --delete`, or equivalents). Use the
@@ -63,11 +70,13 @@ gates; follow those more specific rules.
 
 ## Reusable workflows
 
-At task start, compare the task against the installed shared skills and read
-every matching skill before working; apply skills by default rather than only
-on explicit request. Closer project rules stay authoritative, and project
-repositories remain operationally self-contained: skills guide the agent's
-working method and never become project runtime dependencies.
+At every task start, actively compare the request and repository guidance
+against the installed shared skills and workflows. Read every matching skill
+completely and apply each applicable one by default, including its planning,
+ledger, validation, and handoff gates; do not invoke irrelevant workflows.
+Closer project rules stay authoritative, and project repositories remain
+operationally self-contained: skills guide the agent's working method and
+never become project runtime dependencies.
 
 - Use the `long-running-task-ledger` skill for durable multi-step or
   multi-session work.

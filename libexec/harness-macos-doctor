@@ -1,0 +1,185 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+. "$SELF_DIR/harness-macos-common"
+
+usage() {
+    echo "Usage: harness macos-doctor --host LOGICAL_ID [--facts FILE]" >&2
+}
+
+logical_host=
+fact_file=
+owned_fact=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --facts) [ "$#" -ge 2 ] || { usage; exit 2; }; fact_file=$2; shift 2 ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+[ -n "$logical_host" ] || { usage; exit 2; }
+macos_private_id_is_safe "$logical_host" || die "invalid private logical identifier"
+case ${HOME:-} in /*) ;; *) die "macOS doctor requires an absolute HOME" ;; esac
+current_uid=$(id -u)
+public_profile=$HARNESS_ROOT/profiles/personal-macos/base.conf
+macos_validate_public_profile "$public_profile"
+
+if [ -z "$fact_file" ]; then
+    owned_fact=$(mktemp "${TMPDIR:-/tmp}/harness-macos-doctor-facts.XXXXXX") ||
+        die "cannot allocate macOS fact file"
+    fact_file=$owned_fact
+    "$SELF_DIR/harness-macos-inventory" --host "$logical_host" >"$fact_file"
+    chmod 600 "$fact_file"
+fi
+cleanup_doctor_fact() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ -n "$owned_fact" ] &&
+        { [ -e "$owned_fact" ] || [ -L "$owned_fact" ]; }; then
+        unlink "$owned_fact"
+    fi
+    exit "$status"
+}
+trap cleanup_doctor_fact EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+macos_require_private_file "$fact_file" "$current_uid"
+macos_validate_fact_file "$fact_file" "$public_profile"
+[ "$(macos_manifest_get "$fact_file" logical_id)" = "$logical_host" ] ||
+    die "personal-Mac fact identity mismatch"
+
+failures=0
+warnings=0
+echo 'MACOS_DOCTOR privacy=value-free'
+for requirement in architecture homebrew command_line_tools private_profile \
+    harness_checkout; do
+    value=$(macos_manifest_get "$fact_file" "$requirement")
+    expected=present
+    [ "$requirement" != architecture ] || expected=supported
+    [ "$requirement" != private_profile ] || expected=valid
+    case "$requirement:$value" in
+        architecture:arm64|architecture:x86_64|homebrew:present|\
+        command_line_tools:present|private_profile:valid|harness_checkout:present)
+            echo "PASS required=$requirement state=$value"
+            ;;
+        *)
+            echo "FAIL required=$requirement state=$value expected=$expected"
+            failures=$((failures + 1))
+            ;;
+    esac
+done
+
+case $(macos_manifest_get "$fact_file" homebrew_prefix_class) in
+    apple-silicon-default|intel-default) ;;
+    *) echo 'WARN optional=homebrew_prefix state=nondefault-or-unknown'; warnings=$((warnings + 1)) ;;
+esac
+
+for link_name in codex_guidance codex_rules claude_guidance bash_launcher; do
+    value=$(macos_manifest_get "$fact_file" "link_$link_name")
+    case "$link_name" in
+        codex_guidance)
+            link_destination=$HOME/.codex/AGENTS.md
+            link_source=$HARNESS_ROOT/.codex/AGENTS.md
+            ;;
+        codex_rules)
+            link_destination=$HOME/.codex/rules/default.rules
+            link_source=$HARNESS_ROOT/.codex/rules/default.rules
+            ;;
+        claude_guidance)
+            link_destination=$HOME/.claude/CLAUDE.md
+            link_source=$HARNESS_ROOT/.claude/CLAUDE.md
+            ;;
+        bash_launcher)
+            link_destination=$HOME/.local/bin/harness-bash
+            link_source=$HARNESS_ROOT/bin/harness-bash
+            ;;
+    esac
+    if [ "$value" = symlink ] && [ -L "$link_destination" ] &&
+        [ "$(readlink "$link_destination")" = "$link_source" ]; then
+        echo "PASS required=link_$link_name state=symlink"
+    else
+        echo "FAIL required=link_$link_name state=$value expected=symlink"
+        failures=$((failures + 1))
+    fi
+done
+
+bash_loader_destination=$HOME/.config/harness/managed/personal-macos.bash
+bash_loader_source=$HARNESS_ROOT/shell/personal-macos.bash
+if [ -L "$bash_loader_destination" ] &&
+    [ "$(readlink "$bash_loader_destination")" = "$bash_loader_source" ]; then
+    echo 'PASS required=bash_loader state=symlink'
+else
+    echo 'FAIL required=bash_loader state=missing-or-wrong expected=symlink'
+    failures=$((failures + 1))
+fi
+bash_startup_block=$HARNESS_ROOT/shell/personal-macos-startup.block
+for bash_startup_name in bash_profile bashrc; do
+    bash_startup_path=$HOME/.$bash_startup_name
+    if [ -f "$bash_startup_path" ] && [ ! -L "$bash_startup_path" ] &&
+        [ "$(macos_stat_owner "$bash_startup_path")" = "$current_uid" ] &&
+        [ "$(macos_stat_links "$bash_startup_path")" = 1 ] &&
+        macos_file_contains_exact_block_once \
+            "$bash_startup_block" "$bash_startup_path"; then
+        echo "PASS required=$bash_startup_name state=managed-block-v1"
+    else
+        echo "FAIL required=$bash_startup_name state=missing-or-wrong expected=managed-block-v1"
+        failures=$((failures + 1))
+    fi
+done
+
+public_formulae=$(macos_manifest_get "$public_profile" managed_formulae)
+public_missing=0
+for formula in $(printf '%s\n' "$public_formulae" | tr ',' ' '); do
+    state=$(macos_manifest_get "$fact_file" \
+        "formula_$(macos_formula_key "$formula")")
+    [ "$state" = present ] || public_missing=$((public_missing + 1))
+done
+if [ "$public_missing" -eq 0 ]; then
+    echo 'PASS required=public_formulae missing=0 total=8'
+else
+    echo "FAIL required=public_formulae missing=$public_missing total=8"
+    failures=$((failures + 1))
+fi
+
+private_missing=0
+if "$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null 2>&1; then
+    host_manifest=$HOME/.config/harness/private/hosts/$logical_host.conf
+    extra_formulae=$(macos_manifest_get "$host_manifest" extra_formulae)
+    brew_command=$(command -v brew 2>/dev/null || true)
+    if [ "$extra_formulae" != none ]; then
+        if [ "$(macos_manifest_get "$fact_file" homebrew)" != present ] ||
+            [ -z "$brew_command" ]; then
+            private_missing=$(macos_token_count "$extra_formulae")
+        else
+            for formula in $(printf '%s\n' "$extra_formulae" | tr ',' ' '); do
+                if ! HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ANALYTICS=1 \
+                    "$brew_command" list --formula --versions "$formula" \
+                    >/dev/null 2>&1; then
+                    private_missing=$((private_missing + 1))
+                fi
+            done
+        fi
+    fi
+else
+    private_missing=unknown
+fi
+if [ "$private_missing" = 0 ]; then
+    echo 'PASS required=private_formulae missing=0 values=not-emitted'
+else
+    echo "FAIL required=private_formulae missing=$private_missing values=not-emitted"
+    failures=$((failures + 1))
+fi
+
+if [ "$failures" -eq 0 ]; then
+    echo "END macos_doctor status=ready failures=0 warnings=$warnings"
+    exit 0
+fi
+echo "END macos_doctor status=not-ready failures=$failures warnings=$warnings"
+exit 1

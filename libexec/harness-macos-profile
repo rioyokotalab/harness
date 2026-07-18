@@ -1,0 +1,111 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+. "$SELF_DIR/harness-macos-common"
+
+usage() {
+    echo "Usage: harness macos-profile --host LOGICAL_ID" >&2
+}
+
+logical_host=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            logical_host=$2
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            usage
+            exit 2
+            ;;
+    esac
+done
+[ -n "$logical_host" ] || { usage; exit 2; }
+macos_private_id_is_safe "$logical_host" || die "invalid private logical identifier"
+
+case ${HOME:-} in
+    /*) ;;
+    *) die "private companion requires an absolute HOME" ;;
+esac
+
+public_profile=$HARNESS_ROOT/profiles/personal-macos/base.conf
+[ -f "$public_profile" ] && [ ! -L "$public_profile" ] ||
+    die "public personal-Mac baseline is unavailable"
+macos_validate_public_profile "$public_profile"
+
+public_schema=$(macos_manifest_get "$public_profile" schema)
+family=$(macos_manifest_get "$public_profile" family)
+private_schema_min=$(macos_manifest_get "$public_profile" private_schema_min)
+private_schema_max=$(macos_manifest_get "$public_profile" private_schema_max)
+public_baseline=$(macos_manifest_get "$public_profile" baseline)
+managed_formulae=$(macos_manifest_get "$public_profile" managed_formulae)
+[ "$family" = personal-macos ] || die "public personal-Mac baseline is incompatible"
+
+private_root=$HOME/.config/harness/private
+private_git=$private_root/.git
+private_hosts=$private_root/hosts
+companion_manifest=$private_root/companion.conf
+host_manifest=$private_hosts/$logical_host.conf
+current_uid=$(id -u)
+
+macos_require_private_directory "$private_root" "$current_uid"
+macos_require_private_directory "$private_git" "$current_uid"
+macos_require_private_directory "$private_hosts" "$current_uid"
+macos_require_private_file "$companion_manifest" "$current_uid"
+macos_require_private_file "$host_manifest" "$current_uid"
+
+macos_validate_companion_manifest "$companion_manifest" "$public_schema" \
+    "$private_schema_min" "$private_schema_max"
+
+private_schema=$(macos_manifest_get "$companion_manifest" schema)
+minimum_engine_schema=$(macos_manifest_get "$companion_manifest" minimum_engine_schema)
+
+[ "$minimum_engine_schema" -le "$public_schema" ] ||
+    die "private companion schema is incompatible"
+
+git -C "$private_root" rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
+    die "private companion is not a Git checkout"
+[ "$(git -C "$private_root" rev-parse --show-toplevel 2>/dev/null)" = \
+    "$(CDPATH='' cd -- "$private_root" && pwd -P)" ] ||
+    die "private companion Git root is ambiguous"
+
+git -C "$private_root" ls-files | while IFS= read -r tracked_path; do
+    case "$tracked_path" in
+        companion.conf) ;;
+        hosts/*.conf)
+            tracked_name=${tracked_path#hosts/}
+            tracked_id=${tracked_name%.conf}
+            if [ "$tracked_name" != "$tracked_id.conf" ] ||
+                ! macos_private_id_is_safe "$tracked_id"; then
+                die "private companion tracked layout is invalid"
+            fi
+            tracked_file=$private_root/$tracked_path
+            macos_require_private_file "$tracked_file" "$current_uid"
+            macos_validate_host_manifest "$tracked_file" "$tracked_id" \
+                "$private_schema" "$public_baseline"
+            ;;
+        *) die "private companion tracked layout is invalid" ;;
+    esac
+done
+[ -z "$(git -C "$private_root" status --porcelain --untracked-files=normal)" ] ||
+    die "private companion checkout is not clean"
+
+macos_validate_host_manifest "$host_manifest" "$logical_host" \
+    "$private_schema" "$public_baseline"
+capability_groups=$(macos_manifest_get "$host_manifest" capability_groups)
+extra_formulae=$(macos_manifest_get "$host_manifest" extra_formulae)
+
+printf '%s\n' \
+    "MACOS_PRIVATE_PROFILE status=valid schema=$private_schema engine_schema=$public_schema" \
+    "SELECTION baseline=$public_baseline capability_groups=$(macos_token_count "$capability_groups") extra_formulae=$(macos_token_count "$extra_formulae")" \
+    "PUBLIC_FORMULAE count=$(macos_token_count "$managed_formulae")" \
+    'END private_profile values=not-emitted'

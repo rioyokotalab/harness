@@ -1,0 +1,575 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+. "$SELF_DIR/harness-macos-common"
+
+usage() {
+    cat >&2 <<'EOF'
+Usage:
+  harness macos-bash --host LOGICAL_ID [--plan|--apply]
+  harness macos-bash --rollback TRANSACTION_ID
+EOF
+}
+
+safe_field() {
+    case "$1" in
+        ''|*'|'*|*'
+'*|*//*|*/./*|*/../*|*/.|*/..) return 1 ;;
+        *) return 0 ;;
+    esac
+}
+
+relative_home_path() {
+    case "$1" in "$HOME"/*) printf '%s\n' "${1#"$HOME"/}" ;; *)
+        die "unsafe managed Bash destination"
+    esac
+}
+
+validate_public_checkout() {
+    [ "$(uname -s)" = Darwin ] || die "managed Bash integration requires Darwin"
+    [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
+        die "managed Bash integration requires a Git harness checkout"
+    [ "$(CDPATH='' cd -- "$HARNESS_ROOT" && pwd -P)" = "$HARNESS_ROOT" ] &&
+        [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" = \
+            "$HARNESS_ROOT" ] || die "managed Bash checkout root is ambiguous"
+    [ "$(git -C "$HARNESS_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null)" = \
+        main ] || die "managed Bash integration requires the main branch"
+    [ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
+        die "managed Bash integration requires a clean committed checkout"
+}
+
+resolve_homebrew_bash() {
+    brew_command=$(command -v brew 2>/dev/null || true)
+    [ -n "$brew_command" ] && [ -x "$brew_command" ] && [ ! -L "$brew_command" ] ||
+        die "managed Homebrew is unavailable for Bash integration"
+    brew_prefix=$(HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ANALYTICS=1 \
+        HOMEBREW_NO_ENV_HINTS=1 "$brew_command" --prefix 2>/dev/null) ||
+        die "managed Homebrew prefix query failed for Bash integration"
+    safe_field "$brew_prefix" || die "managed Homebrew prefix is unsafe"
+    case "$brew_prefix" in /*) ;; *) die "managed Homebrew prefix is unsafe" ;; esac
+    [ "$brew_command" = "$brew_prefix/bin/brew" ] ||
+        die "active Homebrew executable does not match its prefix"
+    HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_ENV_HINTS=1 \
+        "$brew_command" list --formula --versions bash >/dev/null 2>&1 ||
+        die "managed Homebrew Bash is not installed"
+    bash_prefix=$(HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ANALYTICS=1 \
+        HOMEBREW_NO_ENV_HINTS=1 "$brew_command" --prefix bash 2>/dev/null) ||
+        die "managed Homebrew Bash prefix query failed"
+    safe_field "$bash_prefix" || die "managed Homebrew Bash prefix is unsafe"
+    case "$bash_prefix" in "$brew_prefix"/*) ;; *)
+        die "managed Homebrew Bash prefix is outside Homebrew"
+    esac
+    [ -x "$bash_prefix/bin/bash" ] ||
+        die "managed Homebrew Bash executable is unavailable"
+    bash_physical_dir=$(CDPATH='' cd -- "$bash_prefix/bin" && pwd -P) ||
+        die "managed Homebrew Bash executable path is ambiguous"
+    case "$bash_physical_dir" in "$brew_prefix"/Cellar/bash/*/bin) ;; *)
+        die "managed Homebrew Bash executable is outside its cellar"
+    esac
+}
+
+require_safe_parent_chain() {
+    parent=${1%/*}
+    while [ "$parent" != "$HOME" ]; do
+        case "$parent" in "$HOME"/*) ;; *) die "unsafe managed Bash parent" ;; esac
+        if [ -e "$parent" ] || [ -L "$parent" ]; then
+            [ -d "$parent" ] && [ ! -L "$parent" ] ||
+                die "managed Bash parent path is unsafe"
+            [ "$(macos_stat_owner "$parent")" = "$current_uid" ] ||
+                die "managed Bash parent owner is unsafe"
+        fi
+        parent=${parent%/*}
+    done
+}
+
+record_missing_parents() {
+    parent=${1%/*}
+    while [ "$parent" != "$HOME" ]; do
+        if [ ! -e "$parent" ] && [ ! -L "$parent" ]; then
+            missing_directories=$missing_directories$(printf '\n%s' "$parent")
+        fi
+        parent=${parent%/*}
+    done
+}
+
+block_occurs_exactly_once() {
+    macos_file_contains_exact_block_once "$startup_block" "$1"
+}
+
+startup_state() {
+    startup_path=$1
+    if [ -L "$startup_path" ] || { [ -e "$startup_path" ] && [ ! -f "$startup_path" ]; }; then
+        printf '%s\n' blocked-type
+        return
+    fi
+    if [ ! -e "$startup_path" ]; then
+        printf '%s\n' append-new
+        return
+    fi
+    [ "$(macos_stat_owner "$startup_path")" = "$current_uid" ] || {
+        printf '%s\n' blocked-owner
+        return
+    }
+    [ "$(macos_stat_links "$startup_path")" = 1 ] || {
+        printf '%s\n' blocked-hardlink
+        return
+    }
+    begin_count=$(grep -F -x -c '# >>> harness personal macOS Bash v1 >>>' \
+        "$startup_path" 2>/dev/null || true)
+    end_count=$(grep -F -x -c '# <<< harness personal macOS Bash v1 <<<' \
+        "$startup_path" 2>/dev/null || true)
+    if [ "$begin_count" -eq 0 ] && [ "$end_count" -eq 0 ]; then
+        printf '%s\n' append-existing
+    elif [ "$begin_count" -eq 1 ] && [ "$end_count" -eq 1 ] &&
+        block_occurs_exactly_once "$startup_path"; then
+        printf '%s\n' keep
+    else
+        printf '%s\n' blocked-marker
+    fi
+}
+
+prepare_transaction_root() {
+    state_root=$HOME/.local/state/harness
+    transaction_root=$state_root/transactions
+    for state_path in "$HOME/.local" "$HOME/.local/state" \
+        "$state_root" "$transaction_root"; do
+        if [ -e "$state_path" ] || [ -L "$state_path" ]; then
+            [ -d "$state_path" ] && [ ! -L "$state_path" ] ||
+                die "managed Bash state path is unsafe"
+            [ "$(macos_stat_owner "$state_path")" = "$current_uid" ] ||
+                die "managed Bash state path owner is unsafe"
+            case "$state_path" in
+                "$state_root"|"$transaction_root")
+                    [ "$(macos_stat_mode "$state_path")" = 700 ] ||
+                        die "managed Bash state path mode is unsafe"
+                    ;;
+            esac
+        fi
+    done
+    umask 077
+    for state_path in "$HOME/.local" "$HOME/.local/state" \
+        "$state_root" "$transaction_root"; do
+        if [ ! -e "$state_path" ] && [ ! -L "$state_path" ]; then
+            mkdir "$state_path"
+            chmod 700 "$state_path"
+        fi
+    done
+}
+
+validate_transaction_manifest() {
+    awk -F'|' '
+        NR == 1 { if ($0 != "schema=1") bad = 1; next }
+        NR == 2 { if ($0 != "operation=macos-bash") bad = 1; next }
+        NR == 3 {
+            if ($0 !~ /^revision=[0-9a-f]+$/ ||
+                (length($0) != 49 && length($0) != 73)) bad = 1
+            next
+        }
+        $1 == "append" { if (NF != 9 || seen[$2]++) bad = 1; next }
+        $1 == "directory" { if (NF != 2 || seen[$2]++) bad = 1; next }
+        $1 == "link" { if (NF != 3 || seen[$2]++) bad = 1; next }
+        { bad = 1 }
+        END { exit bad ? 1 : 0 }
+    ' "$1" >/dev/null 2>&1 || die "managed Bash transaction manifest is malformed"
+}
+
+truncate_file_to() {
+    truncate_path=$1
+    truncate_bytes=$2
+    dd if=/dev/null of="$truncate_path" bs=1 seek="$truncate_bytes" count=0 \
+        2>/dev/null
+}
+
+rollback_transaction() {
+    rollback_id=$1
+    macos_private_id_is_safe "$rollback_id" || die "invalid managed Bash transaction"
+    transaction_root=$HOME/.local/state/harness/transactions
+    manifest=$transaction_root/$rollback_id.macos-bash.manifest
+    status_file=$transaction_root/$rollback_id.macos-bash.status
+    macos_require_private_directory "$transaction_root" "$current_uid"
+    macos_require_private_file "$manifest" "$current_uid"
+    macos_require_private_file "$status_file" "$current_uid"
+    [ "$(sed -n '1p' "$status_file")" = complete ] ||
+        die "managed Bash transaction is not complete"
+    validate_transaction_manifest "$manifest"
+
+    while IFS='|' read -r record destination created pre_bytes pre_hash pre_mode \
+        post_bytes post_hash separator; do
+        case "$record" in
+            append)
+                case "$destination" in "$HOME"/*) ;; *) die "unsafe managed Bash file" ;; esac
+                safe_field "$destination" || die "unsafe managed Bash file"
+                case "$created:$pre_bytes:$pre_mode:$post_bytes:$separator" in
+                    yes:0:absent:*:0|no:*:*:*:0|no:*:*:*:1) ;;
+                    *) die "managed Bash append record is malformed" ;;
+                esac
+                case "$pre_bytes:$post_bytes" in
+                    *[!0-9:]*|:*|*:) die "managed Bash append record is malformed" ;;
+                esac
+                if [ "$created" = no ]; then
+                    case "$pre_mode" in ''|*[!0-9]*)
+                        die "managed Bash append mode is malformed" ;;
+                    esac
+                fi
+                [ "$created" = yes ] || macos_hash_is_safe "$pre_hash" ||
+                    die "managed Bash append pre-hash is malformed"
+                macos_hash_is_safe "$post_hash" ||
+                    die "managed Bash append post-hash is malformed"
+                [ -f "$destination" ] && [ ! -L "$destination" ] &&
+                    [ "$(macos_stat_owner "$destination")" = "$current_uid" ] &&
+                    [ "$(macos_stat_links "$destination")" = 1 ] &&
+                    [ "$(wc -c <"$destination" | tr -d ' ')" = "$post_bytes" ] &&
+                    [ "$(macos_checksum_file "$destination")" = "$post_hash" ] ||
+                    die "managed Bash rollback blocked by changed startup file"
+                ;;
+            link)
+                case "$destination" in "$HOME"/*) ;; *) die "unsafe managed Bash link" ;; esac
+                case "$created" in "$HARNESS_ROOT"/*) ;; *) die "unsafe managed Bash source" ;; esac
+                [ -L "$destination" ] && [ "$(readlink "$destination")" = "$created" ] ||
+                    die "managed Bash rollback blocked by changed link"
+                ;;
+            directory)
+                case "$destination" in "$HOME"/*) ;; *) die "unsafe managed Bash directory" ;; esac
+                [ -d "$destination" ] && [ ! -L "$destination" ] &&
+                    [ "$(macos_stat_owner "$destination")" = "$current_uid" ] ||
+                    die "managed Bash rollback blocked by changed directory"
+                ;;
+        esac
+    done <"$manifest"
+
+    awk -F'|' '$1 == "directory" { print $2 }' "$manifest" |
+        while IFS= read -r directory; do
+            find "$directory" -mindepth 1 -maxdepth 1 -print |
+                while IFS= read -r child; do
+                    awk -F'|' -v child="$child" \
+                        '($1 == "link" || ($1 == "append" && $3 == "yes") ||
+                          $1 == "directory") && $2 == child { found = 1 }
+                         END { exit found ? 0 : 1 }' "$manifest" ||
+                        die "managed Bash rollback blocked by non-transaction content"
+                done
+        done
+
+    awk -F'|' '$1 == "append" { line[NR] = $0 }
+        END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+        "$manifest" |
+        while IFS='|' read -r record destination created pre_bytes pre_hash \
+            pre_mode post_bytes post_hash separator; do
+            [ "$record" = append ] || continue
+            [ "$(macos_checksum_file "$destination")" = "$post_hash" ] ||
+                die "managed Bash startup file changed during rollback"
+            if [ "$created" = yes ]; then
+                unlink "$destination"
+            else
+                truncate_file_to "$destination" "$pre_bytes" ||
+                    die "managed Bash startup truncation failed"
+                [ "$(macos_checksum_file "$destination")" = "$pre_hash" ] &&
+                    [ "$(macos_stat_mode "$destination")" = "$pre_mode" ] ||
+                    die "managed Bash startup rollback verification failed"
+            fi
+        done
+    awk -F'|' '$1 == "link" { line[NR] = $0 }
+        END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+        "$manifest" | while IFS='|' read -r record destination source; do
+            [ "$record" = link ] || continue
+            [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ] ||
+                die "managed Bash link changed during rollback"
+            unlink "$destination"
+        done
+    awk -F'|' '$1 == "directory" { line[NR] = $0 }
+        END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+        "$manifest" | while IFS='|' read -r record directory; do
+            [ "$record" = directory ] || continue
+            rmdir "$directory" || die "managed Bash directory changed during rollback"
+        done
+    printf '%s\n' rolled-back >"$status_file"
+    echo "TRANSACTION id=$rollback_id status=rolled-back"
+}
+
+logical_host=
+mode=plan
+rollback_id=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        --rollback) [ "$#" -ge 2 ] || { usage; exit 2; }; mode=rollback; rollback_id=$2; shift 2 ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+case ${HOME:-} in /*) ;; *) die "managed Bash integration requires an absolute HOME" ;; esac
+current_uid=$(id -u)
+[ -d "$HOME" ] && [ ! -L "$HOME" ] &&
+    [ "$(macos_stat_owner "$HOME")" = "$current_uid" ] &&
+    [ "$(CDPATH='' cd -- "$HOME" && pwd -P)" = "$HOME" ] ||
+    die "managed Bash HOME is unsafe or ambiguous"
+safe_field "$HOME" || die "managed Bash HOME path is unsafe"
+safe_field "$HARNESS_ROOT" || die "managed Bash checkout path is unsafe"
+
+if [ "$mode" = rollback ]; then
+    [ -n "$rollback_id" ] && [ -z "$logical_host" ] || { usage; exit 2; }
+    rollback_transaction "$rollback_id"
+    exit 0
+fi
+[ -n "$logical_host" ] || { usage; exit 2; }
+macos_private_id_is_safe "$logical_host" || die "invalid private logical identifier"
+validate_public_checkout
+"$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
+    die "private profile is not ready for managed Bash integration"
+resolve_homebrew_bash
+
+launcher_source=$HARNESS_ROOT/bin/harness-bash
+loader_source=$HARNESS_ROOT/shell/personal-macos.bash
+startup_block=$HARNESS_ROOT/shell/personal-macos-startup.block
+for public_source in "$launcher_source" "$loader_source" "$startup_block"; do
+    [ -f "$public_source" ] && [ ! -L "$public_source" ] ||
+        die "managed Bash public source is unavailable"
+done
+launcher_destination=$HOME/.local/bin/harness-bash
+loader_destination=$HOME/.config/harness/managed/personal-macos.bash
+missing_directories=
+blocked=0
+changes=0
+echo "MACOS_BASH mode=$mode privacy=value-free native_shell=preserved"
+while IFS='|' read -r source destination; do
+    require_safe_parent_chain "$destination"
+    relative=$(relative_home_path "$destination")
+    if [ -L "$destination" ]; then
+        if [ "$(readlink "$destination")" = "$source" ]; then
+            echo "KEEP link=$relative"
+        else
+            echo "BLOCK link=$relative reason=different-symlink"
+            blocked=$((blocked + 1))
+        fi
+    elif [ -e "$destination" ]; then
+        echo "BLOCK link=$relative reason=existing-path"
+        blocked=$((blocked + 1))
+    else
+        echo "CREATE link=$relative"
+        changes=$((changes + 1))
+        record_missing_parents "$destination"
+    fi
+done <<EOF
+$launcher_source|$launcher_destination
+$loader_source|$loader_destination
+EOF
+for startup_path in "$HOME/.bash_profile" "$HOME/.bashrc"; do
+    state=$(startup_state "$startup_path")
+    relative=$(relative_home_path "$startup_path")
+    case "$state" in
+        keep) echo "KEEP startup=$relative block=v1" ;;
+        append-new|append-existing)
+            echo "APPEND startup=$relative position=end preserves=bytes-mode-acl"
+            changes=$((changes + 1))
+            ;;
+        blocked-*)
+            echo "BLOCK startup=$relative reason=${state#blocked-}"
+            blocked=$((blocked + 1))
+            ;;
+    esac
+done
+printf 'PREFLIGHT macos_bash blocked=%s changes=%s\n' "$blocked" "$changes"
+[ "$blocked" -eq 0 ] || die "managed Bash plan contains blocked paths"
+[ "$mode" = apply ] || {
+    printf 'END macos_bash blocked=0 changes=%s applied=no\n' "$changes"
+    exit 0
+}
+[ "$changes" -gt 0 ] || { echo 'END macos_bash changes=none'; exit 0; }
+
+validate_public_checkout
+"$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
+    die "private profile changed before managed Bash apply"
+resolve_homebrew_bash
+for startup_path in "$HOME/.bash_profile" "$HOME/.bashrc"; do
+    case "$(startup_state "$startup_path")" in keep|append-new|append-existing) ;; *)
+        die "managed Bash startup state changed before apply"
+    esac
+done
+while IFS='|' read -r source destination; do
+    require_safe_parent_chain "$destination"
+    if [ -L "$destination" ]; then
+        [ "$(readlink "$destination")" = "$source" ] ||
+            die "managed Bash link changed before apply"
+    elif [ -e "$destination" ]; then
+        die "managed Bash link changed before apply"
+    fi
+done <<EOF
+$launcher_source|$launcher_destination
+$loader_source|$loader_destination
+EOF
+
+prepare_transaction_root
+transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+manifest=$transaction_root/$transaction_id.macos-bash.manifest
+status_file=$transaction_root/$transaction_id.macos-bash.status
+[ ! -e "$manifest" ] && [ ! -L "$manifest" ] &&
+    [ ! -e "$status_file" ] && [ ! -L "$status_file" ] ||
+    die "managed Bash transaction identifier collision"
+umask 077
+printf 'schema=1\noperation=macos-bash\nrevision=%s\n' \
+    "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" >"$manifest"
+chmod 600 "$manifest"
+printf '%s\n' prepared >"$status_file"
+chmod 600 "$status_file"
+
+apply_complete=0
+candidate_file=
+rollback_partial() {
+    awk -F'|' '$1 == "append" { line[NR] = $0 }
+        END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+        "$manifest" |
+        while IFS='|' read -r record destination created pre_bytes pre_hash \
+            pre_mode post_bytes post_hash separator; do
+            [ "$record" = append ] || continue
+            if [ "$created" = yes ]; then
+                if [ -f "$destination" ] && [ ! -L "$destination" ]; then
+                    current_bytes=$(wc -c <"$destination" | tr -d ' ')
+                    if [ "$current_bytes" = 0 ] ||
+                        [ "$(macos_checksum_file "$destination")" = "$post_hash" ]; then
+                        unlink "$destination"
+                    fi
+                fi
+            elif [ -f "$destination" ] && [ ! -L "$destination" ]; then
+                current_hash=$(macos_checksum_file "$destination")
+                if [ "$current_hash" = "$post_hash" ]; then
+                    truncate_file_to "$destination" "$pre_bytes" || true
+                fi
+            fi
+        done
+    awk -F'|' '$1 == "link" { line[NR] = $0 }
+        END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+        "$manifest" | while IFS='|' read -r record destination source; do
+            [ "$record" = link ] || continue
+            if [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ]; then
+                unlink "$destination"
+            fi
+        done
+    awk -F'|' '$1 == "directory" { line[NR] = $0 }
+        END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+        "$manifest" | while IFS='|' read -r record directory; do
+            [ "$record" = directory ] || continue
+            rmdir "$directory" 2>/dev/null || true
+        done
+}
+cleanup_apply() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ -n "$candidate_file" ] &&
+        { [ -e "$candidate_file" ] || [ -L "$candidate_file" ]; }; then
+        unlink "$candidate_file"
+    fi
+    if [ "$apply_complete" -eq 0 ]; then
+        rollback_partial
+        printf '%s\n' failed >"$status_file"
+    fi
+    exit "$status"
+}
+trap cleanup_apply EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+# Prepare immutable expected hashes for both append operations before any
+# startup file is changed. The short-lived candidate is private and exact-unlinked.
+for startup_path in "$HOME/.bash_profile" "$HOME/.bashrc"; do
+    state=$(startup_state "$startup_path")
+    [ "$state" != keep ] || continue
+    case "$state" in append-new) created=yes ;; append-existing) created=no ;; *)
+        die "managed Bash startup state changed during transaction preparation"
+    esac
+    if [ "$created" = yes ]; then
+        pre_bytes=0
+        pre_hash=absent
+        pre_mode=absent
+        separator=0
+    else
+        pre_bytes=$(wc -c <"$startup_path" | tr -d ' ')
+        pre_hash=$(macos_checksum_file "$startup_path")
+        pre_mode=$(macos_stat_mode "$startup_path")
+        if [ "$pre_bytes" -gt 0 ] &&
+            [ "$(tail -c 1 "$startup_path" | wc -l | tr -d ' ')" -eq 0 ]; then
+            separator=1
+        else
+            separator=0
+        fi
+    fi
+    candidate_file=$transaction_root/$transaction_id.macos-bash.candidate
+    [ ! -e "$candidate_file" ] && [ ! -L "$candidate_file" ] ||
+        die "managed Bash candidate path collision"
+    if [ "$created" = yes ]; then : >"$candidate_file"; else
+        cp "$startup_path" "$candidate_file"
+    fi
+    chmod 600 "$candidate_file"
+    [ "$separator" -eq 0 ] || printf '\n' >>"$candidate_file"
+    cat "$startup_block" >>"$candidate_file"
+    post_bytes=$(wc -c <"$candidate_file" | tr -d ' ')
+    post_hash=$(macos_checksum_file "$candidate_file")
+    unlink "$candidate_file"
+    candidate_file=
+    printf 'append|%s|%s|%s|%s|%s|%s|%s|%s\n' "$startup_path" \
+        "$created" "$pre_bytes" "$pre_hash" "$pre_mode" "$post_bytes" \
+        "$post_hash" "$separator" >>"$manifest"
+done
+
+printf '%s\n' "$missing_directories" | awk '
+    NF && !seen[$0]++ {
+        line[++n] = $0
+        value = $0
+        depth[n] = gsub(/\//, "/", value)
+        if (depth[n] > maximum) maximum = depth[n]
+    }
+    END {
+        for (level = 1; level <= maximum; level++)
+            for (i = 1; i <= n; i++)
+                if (depth[i] == level) print line[i]
+    }' | while IFS= read -r directory; do
+        case "$directory" in
+            "$HOME/.local"|"$HOME/.local/state"|"$state_root"|"$transaction_root")
+                continue ;;
+        esac
+        mkdir "$directory"
+        chmod 700 "$directory"
+        printf 'directory|%s\n' "$directory" >>"$manifest"
+    done
+
+while IFS='|' read -r source destination; do
+    if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
+        ln -s "$source" "$destination"
+        printf 'link|%s|%s\n' "$destination" "$source" >>"$manifest"
+    fi
+done <<EOF
+$launcher_source|$launcher_destination
+$loader_source|$loader_destination
+EOF
+
+awk -F'|' '$1 == "append" { print }' "$manifest" |
+    while IFS='|' read -r record destination created pre_bytes pre_hash \
+        pre_mode post_bytes post_hash separator; do
+        [ "$record" = append ] || continue
+        if [ "$created" = yes ]; then
+            [ ! -e "$destination" ] && [ ! -L "$destination" ] ||
+                die "managed Bash startup file appeared before append"
+            : >"$destination"
+            chmod 600 "$destination"
+        else
+            [ "$(macos_checksum_file "$destination")" = "$pre_hash" ] &&
+                [ "$(macos_stat_mode "$destination")" = "$pre_mode" ] ||
+                die "managed Bash startup file changed before append"
+        fi
+        [ "$separator" -eq 0 ] || printf '\n' >>"$destination"
+        cat "$startup_block" >>"$destination"
+        [ "$(wc -c <"$destination" | tr -d ' ')" = "$post_bytes" ] &&
+            [ "$(macos_checksum_file "$destination")" = "$post_hash" ] ||
+            die "managed Bash startup append verification failed"
+    done
+
+printf '%s\n' complete >"$status_file"
+apply_complete=1
+trap - EXIT HUP INT TERM
+echo "TRANSACTION id=$transaction_id status=complete"
+echo 'END macos_bash applied=yes native_shell=preserved rollback=available'

@@ -37,6 +37,15 @@ for script in \
     "$ROOT/libexec/harness-inventory" \
     "$ROOT/libexec/harness-plan" \
     "$ROOT/libexec/harness-doctor" \
+    "$ROOT/libexec/harness-macos-common" \
+    "$ROOT/libexec/harness-macos-inventory" \
+    "$ROOT/libexec/harness-macos-plan" \
+    "$ROOT/libexec/harness-macos-doctor" \
+    "$ROOT/libexec/harness-macos-profile" \
+    "$ROOT/libexec/harness-macos-update" \
+    "$ROOT/libexec/harness-macos-control" \
+    "$ROOT/libexec/harness-macos-homebrew" \
+    "$ROOT/libexec/harness-macos-bash" \
     "$ROOT/libexec/harness-storage-readiness" \
     "$ROOT/libexec/harness-replica" \
     "$ROOT/libexec/harness-repository-fingerprint" \
@@ -100,6 +109,20 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "Claude takeover focused suite"
 "$ROOT/tests/test-local-mpi-profile.sh" >/dev/null ||
     fail "local MPI profile focused suite"
+"$ROOT/tests/test-personal-macos-profile.sh" >/dev/null ||
+    fail "personal macOS private-profile focused suite"
+"$ROOT/tests/test-personal-macos-inventory.sh" >/dev/null ||
+    fail "personal macOS inventory focused suite"
+"$ROOT/tests/test-personal-macos-plan-doctor.sh" >/dev/null ||
+    fail "personal macOS plan/doctor focused suite"
+"$ROOT/tests/test-personal-macos-control.sh" >/dev/null ||
+    fail "personal macOS control-plane focused suite"
+"$ROOT/tests/test-personal-macos-homebrew.sh" >/dev/null ||
+    fail "personal macOS Homebrew focused suite"
+"$ROOT/tests/test-personal-macos-bash.sh" >/dev/null ||
+    fail "personal macOS Bash focused suite"
+"$ROOT/tests/test-personal-macos-update.sh" >/dev/null ||
+    fail "personal macOS long-gap update focused suite"
 
 "$ROOT/tests/test-restic-schedule.sh" >/dev/null ||
     fail "Restic schedule focused suite"

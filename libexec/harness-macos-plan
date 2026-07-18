@@ -1,0 +1,236 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+. "$SELF_DIR/harness-macos-common"
+
+usage() {
+    echo "Usage: harness macos-plan --host LOGICAL_ID [--facts FILE]" >&2
+}
+
+list_count() {
+    printf '%s\n' "$1" | awk '{ for (i = 1; i <= NF; i++) count++ } END { print count + 0 }'
+}
+
+logical_host=
+fact_file=
+owned_fact=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            logical_host=$2
+            shift 2
+            ;;
+        --facts)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            fact_file=$2
+            shift 2
+            ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+[ -n "$logical_host" ] || { usage; exit 2; }
+macos_private_id_is_safe "$logical_host" || die "invalid private logical identifier"
+case ${HOME:-} in /*) ;; *) die "macOS plan requires an absolute HOME" ;; esac
+current_uid=$(id -u)
+
+public_profile=$HARNESS_ROOT/profiles/personal-macos/base.conf
+[ -f "$public_profile" ] && [ ! -L "$public_profile" ] ||
+    die "public personal-Mac baseline is unavailable"
+macos_validate_public_profile "$public_profile"
+
+if [ -z "$fact_file" ]; then
+    owned_fact=$(mktemp "${TMPDIR:-/tmp}/harness-macos-plan-facts.XXXXXX") ||
+        die "cannot allocate macOS fact file"
+    fact_file=$owned_fact
+    "$SELF_DIR/harness-macos-inventory" --host "$logical_host" >"$fact_file"
+    chmod 600 "$fact_file"
+fi
+cleanup_plan_fact() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ -n "$owned_fact" ] &&
+        { [ -e "$owned_fact" ] || [ -L "$owned_fact" ]; }; then
+        unlink "$owned_fact"
+    fi
+    exit "$status"
+}
+trap cleanup_plan_fact EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+macos_require_private_file "$fact_file" "$current_uid"
+macos_validate_fact_file "$fact_file" "$public_profile"
+[ "$(macos_manifest_get "$fact_file" logical_id)" = "$logical_host" ] ||
+    die "personal-Mac fact identity mismatch"
+[ "$(macos_manifest_get "$fact_file" private_profile)" = valid ] ||
+    die "private profile is not ready for planning"
+"$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
+    die "private profile changed after observation"
+
+host_manifest=$HOME/.config/harness/private/hosts/$logical_host.conf
+capability_groups=$(macos_manifest_get "$host_manifest" capability_groups)
+extra_formulae=$(macos_manifest_get "$host_manifest" extra_formulae)
+public_formulae=$(macos_manifest_get "$public_profile" managed_formulae)
+if [ "$extra_formulae" = none ]; then
+    all_formulae=$public_formulae
+else
+    all_formulae=$public_formulae,$extra_formulae
+fi
+printf '%s\n' "$all_formulae" | tr ',' '\n' |
+    awk 'seen[$0]++ { exit 1 }' || die "duplicate public/private formula selection"
+
+blocked=0
+echo 'MACOS_PLAN mode=read-only privacy=local-details'
+printf 'FACT architecture=%s account_shell=%s homebrew=%s prefix=%s clt=%s\n' \
+    "$(macos_manifest_get "$fact_file" architecture)" \
+    "$(macos_manifest_get "$fact_file" account_shell)" \
+    "$(macos_manifest_get "$fact_file" homebrew)" \
+    "$(macos_manifest_get "$fact_file" homebrew_prefix_class)" \
+    "$(macos_manifest_get "$fact_file" command_line_tools)"
+printf 'PRIVATE capability_groups=%s extra_formulae=%s values=not-emitted\n' \
+    "$(macos_token_count "$capability_groups")" \
+    "$(macos_token_count "$extra_formulae")"
+
+case $(macos_manifest_get "$fact_file" architecture) in
+    arm64|x86_64) ;;
+    *) echo 'BLOCK platform reason=unsupported-architecture'; blocked=$((blocked + 1)) ;;
+esac
+case $(macos_manifest_get "$fact_file" command_line_tools) in
+    present) ;;
+    *) echo 'BLOCK homebrew reason=command-line-tools-absent'; blocked=$((blocked + 1)) ;;
+esac
+case $(macos_manifest_get "$fact_file" homebrew_prefix_class) in
+    apple-silicon-default|intel-default) ;;
+    other) echo 'WARN homebrew reason=nondefault-prefix' ;;
+    *) ;;
+esac
+
+for link_name in codex_guidance codex_rules claude_guidance bash_launcher; do
+    link_state=$(macos_manifest_get "$fact_file" "link_$link_name")
+    case "$link_name" in
+        codex_guidance)
+            link_destination=$HOME/.codex/AGENTS.md
+            link_source=$HARNESS_ROOT/.codex/AGENTS.md
+            ;;
+        codex_rules)
+            link_destination=$HOME/.codex/rules/default.rules
+            link_source=$HARNESS_ROOT/.codex/rules/default.rules
+            ;;
+        claude_guidance)
+            link_destination=$HOME/.claude/CLAUDE.md
+            link_source=$HARNESS_ROOT/.claude/CLAUDE.md
+            ;;
+        bash_launcher)
+            link_destination=$HOME/.local/bin/harness-bash
+            link_source=$HARNESS_ROOT/bin/harness-bash
+            ;;
+    esac
+    case "$link_state" in
+        symlink)
+            if [ -L "$link_destination" ] &&
+                [ "$(readlink "$link_destination")" = "$link_source" ]; then
+                echo "KEEP link=$link_name"
+            else
+                echo "BLOCK link=$link_name reason=wrong-symlink-target"
+                blocked=$((blocked + 1))
+            fi
+            ;;
+        absent) echo "CREATE link=$link_name collision_check=required" ;;
+        *)
+            echo "BLOCK link=$link_name reason=unmanaged-$link_state"
+            blocked=$((blocked + 1))
+            ;;
+    esac
+done
+
+missing_formulae=
+installed_formulae=
+outdated_formulae=
+homebrew_state=$(macos_manifest_get "$fact_file" homebrew)
+brew_command=$(command -v brew 2>/dev/null || true)
+if [ "$homebrew_state" != present ]; then
+    echo "BLOCK homebrew reason=state-$homebrew_state"
+    blocked=$((blocked + 1))
+elif [ -z "$brew_command" ]; then
+    echo 'BLOCK homebrew reason=command-unavailable'
+    blocked=$((blocked + 1))
+else
+    formula_query=$(printf '%s\n' "$all_formulae" | tr ',' '\n' |
+        while IFS= read -r formula; do
+            if HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ANALYTICS=1 \
+                "$brew_command" list --formula --versions "$formula" \
+                >/dev/null 2>&1; then
+                printf 'present|%s\n' "$formula"
+            else
+                printf 'absent|%s\n' "$formula"
+            fi
+        done)
+    while IFS='|' read -r formula_state formula; do
+        case "$formula_state" in
+            present) installed_formulae="$installed_formulae $formula" ;;
+            absent) missing_formulae="$missing_formulae $formula" ;;
+        esac
+        case ",$public_formulae," in
+            *",$formula,"*)
+                fact_key=formula_$(macos_formula_key "$formula")
+                captured_state=$(macos_manifest_get "$fact_file" "$fact_key")
+                [ "$captured_state" = "$formula_state" ] ||
+                    die "captured public formula state drifted"
+                ;;
+        esac
+    done <<EOF
+$formula_query
+EOF
+    missing_formulae=${missing_formulae# }
+    installed_formulae=${installed_formulae# }
+
+    if [ -n "$installed_formulae" ]; then
+        # Formula tokens are schema-restricted and cannot contain shell spaces.
+        # shellcheck disable=SC2086
+        set -- $installed_formulae
+        outdated_output=$(HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ANALYTICS=1 \
+            "$brew_command" outdated --formula --quiet "$@" 2>/dev/null) ||
+            die "scoped Homebrew outdated query failed"
+        while IFS= read -r formula; do
+            [ -z "$formula" ] && continue
+            case " $installed_formulae " in
+                *" $formula "*) ;;
+                *) die "Homebrew outdated query returned unmanaged scope" ;;
+            esac
+            case " $outdated_formulae " in
+                *" $formula "*) die "Homebrew outdated query returned duplicates" ;;
+            esac
+            outdated_formulae="$outdated_formulae $formula"
+        done <<EOF
+$outdated_output
+EOF
+        outdated_formulae=${outdated_formulae# }
+    fi
+
+    echo "HOMEBREW_METADATA authority=separate command='env HOMEBREW_NO_ANALYTICS=1 brew update'"
+    if [ -n "$missing_formulae" ]; then
+        printf "HOMEBREW_DRY_RUN stage=install count=%s command='env HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 brew install --formula --dry-run --no-ask %s'\n" \
+            "$(list_count "$missing_formulae")" "$missing_formulae"
+        printf "HOMEBREW_APPLY stage=install count=%s command='env HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 brew install --formula --no-ask %s'\n" \
+            "$(list_count "$missing_formulae")" "$missing_formulae"
+    else
+        echo 'KEEP homebrew_install count=0'
+    fi
+    if [ -n "$outdated_formulae" ]; then
+        printf "HOMEBREW_DRY_RUN stage=upgrade count=%s command='env HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 brew upgrade --formula --dry-run --no-ask %s'\n" \
+            "$(list_count "$outdated_formulae")" "$outdated_formulae"
+        printf "HOMEBREW_APPLY stage=upgrade count=%s command='env HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 brew upgrade --formula --no-ask %s'\n" \
+            "$(list_count "$outdated_formulae")" "$outdated_formulae"
+    else
+        echo 'KEEP homebrew_upgrade count=0'
+    fi
+fi
+
+printf 'END macos_plan blocked=%s package_changes=not-applied network=none\n' "$blocked"

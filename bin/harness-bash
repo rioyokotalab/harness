@@ -1,0 +1,63 @@
+#!/bin/sh
+set -eu
+
+[ "$(uname -s)" = Darwin ] || {
+    echo "harness-bash: Homebrew Bash launcher requires Darwin" >&2
+    exit 2
+}
+case ${HOME:-} in /*) ;; *) echo "harness-bash: absolute HOME required" >&2; exit 2 ;; esac
+
+brew_command=$(command -v brew 2>/dev/null || true)
+[ -n "$brew_command" ] && [ -x "$brew_command" ] && [ ! -L "$brew_command" ] || {
+    echo "harness-bash: Homebrew is unavailable" >&2
+    exit 2
+}
+brew_prefix=$(HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ANALYTICS=1 \
+    HOMEBREW_NO_ENV_HINTS=1 "$brew_command" --prefix 2>/dev/null) || {
+    echo "harness-bash: Homebrew prefix query failed" >&2
+    exit 2
+}
+[ "$brew_command" = "$brew_prefix/bin/brew" ] || {
+    echo "harness-bash: active Homebrew executable/prefix mismatch" >&2
+    exit 2
+}
+HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_ENV_HINTS=1 \
+    "$brew_command" list --formula --versions bash >/dev/null 2>&1 || {
+    echo "harness-bash: managed Homebrew Bash is not installed" >&2
+    exit 2
+}
+bash_prefix=$(HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ANALYTICS=1 \
+    HOMEBREW_NO_ENV_HINTS=1 "$brew_command" --prefix bash 2>/dev/null) || {
+    echo "harness-bash: Homebrew Bash prefix query failed" >&2
+    exit 2
+}
+case "$bash_prefix" in "$brew_prefix"/*) ;; *)
+    echo "harness-bash: Homebrew Bash prefix is unsafe" >&2
+    exit 2
+esac
+bash_command=$bash_prefix/bin/bash
+[ -x "$bash_command" ] || {
+    echo "harness-bash: Homebrew Bash executable is unavailable" >&2
+    exit 2
+}
+bash_physical_dir=$(CDPATH='' cd -- "$bash_prefix/bin" && pwd -P) || {
+    echo "harness-bash: Homebrew Bash executable path is ambiguous" >&2
+    exit 2
+}
+case "$bash_physical_dir" in "$brew_prefix"/Cellar/bash/*/bin) ;; *)
+    echo "harness-bash: Homebrew Bash executable is outside its cellar" >&2
+    exit 2
+esac
+
+case :${PATH:-}: in
+    *:"$HOME/.local/bin":*) ;;
+    *) PATH=$HOME/.local/bin${PATH:+:$PATH} ;;
+esac
+export PATH
+HARNESS_PERSONAL_MACOS_BASH=1
+export HARNESS_PERSONAL_MACOS_BASH
+
+if [ "$#" -eq 0 ]; then
+    exec "$bash_command" --login
+fi
+exec "$bash_command" "$@"
