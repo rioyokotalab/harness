@@ -78,6 +78,11 @@ Closer project rules stay authoritative, and project repositories remain
 operationally self-contained: skills guide the agent's working method and
 never become project runtime dependencies.
 
+- Whenever applying a skill, explicitly name that skill in user-facing
+  commentary before its first skill-directed action and state why it applies.
+  Name each applicable skill separately; if a skill later causes an external
+  action or pause, identify it again at that point.
+
 - Use the `long-running-task-ledger` skill for durable multi-step or
   multi-session work.
 - Use the `plan-interview-execute` skill for consequential, ambiguous, or
