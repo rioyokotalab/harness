@@ -1,0 +1,119 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+. "$SELF_DIR/harness-macos-common"
+
+usage() {
+    echo "Usage: harness macos-inventory --host LOGICAL_ID" >&2
+}
+
+logical_host=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            logical_host=$2
+            shift 2
+            ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+[ -n "$logical_host" ] || { usage; exit 2; }
+macos_private_id_is_safe "$logical_host" || die "invalid private logical identifier"
+case ${HOME:-} in /*) ;; *) die "macOS inventory requires an absolute HOME" ;; esac
+
+[ "$(uname -s)" = Darwin ] || die "macOS inventory requires Darwin"
+case $(uname -m) in
+    arm64) architecture=arm64 ;;
+    x86_64) architecture=x86_64 ;;
+    *) architecture=other ;;
+esac
+
+case ${SHELL##*/} in
+    zsh) shell_class=zsh ;;
+    bash) shell_class=bash ;;
+    *) shell_class=other ;;
+esac
+
+if command -v xcode-select >/dev/null 2>&1 &&
+    xcode-select -p >/dev/null 2>&1; then
+    command_line_tools=present
+else
+    command_line_tools=absent
+fi
+
+brew_command=$(command -v brew 2>/dev/null || true)
+homebrew=absent
+homebrew_prefix_class=none
+if [ -n "$brew_command" ]; then
+    if "$brew_command" --version >/dev/null 2>&1 &&
+        brew_prefix=$("$brew_command" --prefix 2>/dev/null); then
+        homebrew=present
+        case "$brew_prefix" in
+            /opt/homebrew) homebrew_prefix_class=apple-silicon-default ;;
+            /usr/local) homebrew_prefix_class=intel-default ;;
+            *) homebrew_prefix_class=other ;;
+        esac
+    else
+        homebrew=unusable
+        homebrew_prefix_class=unknown
+    fi
+fi
+
+public_profile=$HARNESS_ROOT/profiles/personal-macos/base.conf
+[ -f "$public_profile" ] && [ ! -L "$public_profile" ] ||
+    die "public personal-Mac baseline is unavailable"
+macos_validate_public_profile "$public_profile"
+managed_formulae=$(macos_manifest_get "$public_profile" managed_formulae)
+
+private_root=$HOME/.config/harness/private
+if [ ! -e "$private_root" ] && [ ! -L "$private_root" ]; then
+    private_profile=absent
+elif "$SELF_DIR/harness-macos-profile" --host "$logical_host" \
+    >/dev/null 2>&1; then
+    private_profile=valid
+else
+    private_profile=invalid
+fi
+
+if [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ]; then
+    harness_checkout=present
+else
+    harness_checkout=invalid
+fi
+
+printf '%s\n' \
+    'schema=1' \
+    'family=personal-macos' \
+    "logical_id=$logical_host" \
+    "architecture=$architecture" \
+    "account_shell=$shell_class" \
+    "homebrew=$homebrew" \
+    "homebrew_prefix_class=$homebrew_prefix_class" \
+    "command_line_tools=$command_line_tools" \
+    "private_profile=$private_profile" \
+    "harness_checkout=$harness_checkout" \
+    "link_codex_guidance=$(path_kind "$HOME/.codex/AGENTS.md")" \
+    "link_codex_rules=$(path_kind "$HOME/.codex/rules/default.rules")" \
+    "link_claude_guidance=$(path_kind "$HOME/.claude/CLAUDE.md")" \
+    "link_bash_launcher=$(path_kind "$HOME/.local/bin/harness-bash")"
+
+printf '%s\n' "$managed_formulae" | tr ',' '\n' |
+    while IFS= read -r formula; do
+        formula_key=$(printf '%s' "$formula" | sed 's/+/p/g; s/[-@.]/_/g')
+        formula_state=unknown
+        if [ "$homebrew" = present ]; then
+            if "$brew_command" list --formula --versions "$formula" \
+                >/dev/null 2>&1; then
+                formula_state=present
+            else
+                formula_state=absent
+            fi
+        fi
+        printf 'formula_%s=%s\n' "$formula_key" "$formula_state"
+    done

@@ -233,7 +233,7 @@ long-gap drill, then one-at-a-time rollout. Privacy-negative tests precede any
 Mac observation; control-plane rollback precedes package/shell stages; every
 live package or external-service action retains its separate authority gate.
 
-**Execution checkpoint:** stages 1–3 are complete. The frozen D1–D10 record is
+**Execution checkpoint:** stages 1–6 are complete. The frozen D1–D10 record is
 unchanged. Stage 2 added `harness macos-profile`, the public
 `profiles/personal-macos/base.conf`, strict companion v1 schema/example,
 synthetic v1 fixture, and `tests/test-personal-macos-profile.sh`. The resolver
@@ -255,9 +255,20 @@ audit, and `git diff --check` passed on 2026-07-18. No private repository, Mac,
 live fact, authentication, GitHub service, package, shell, or external state
 was accessed or changed.
 
-**Next:** implement stage 4 Darwin/Linux portability primitives and matched
-synthetic tests, then stage 5 value-minimized macOS observation. Keep live Mac
-access gated on privacy-negative validation. Go does not itself authorize
+Stages 4–6 add `harness macos-inventory` without changing the Linux inventory.
+Shared helpers select GNU or BSD `stat` and SHA-256 routes. The Darwin-only,
+read-only inventory emits architecture and native-shell classes, Homebrew
+presence/prefix class, Command Line Tools status, strict private-profile and
+checkout state, fixed link kinds, and only the eight public-formula states. It
+suppresses actual prefixes, versions, paths, private selections, detailed
+profile failures, and all broader inventory. Synthetic arm64/x86_64, Linux
+refusal, BSD metadata, present/absent/unusable Homebrew, missing Command Line
+Tools, invalid profile, exact scoped Brew query, and privacy-leak tests pass,
+along with all earlier focused/audit checks on 2026-07-18.
+
+**Next:** implement stage 7 read-only macOS plan and doctor with required versus
+optional results and exact bounded native Homebrew command rendering. Keep live
+Mac access gated on privacy-negative validation. Go does not itself authorize
 credentials/authentication changes, GitHub creation or publication, Homebrew
 installation/upgrades, package cleanup, background automation, or destructive
 actions.

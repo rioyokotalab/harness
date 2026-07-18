@@ -38,6 +38,7 @@ for script in \
     "$ROOT/libexec/harness-plan" \
     "$ROOT/libexec/harness-doctor" \
     "$ROOT/libexec/harness-macos-common" \
+    "$ROOT/libexec/harness-macos-inventory" \
     "$ROOT/libexec/harness-macos-profile" \
     "$ROOT/libexec/harness-macos-update" \
     "$ROOT/libexec/harness-storage-readiness" \
@@ -105,6 +106,8 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "local MPI profile focused suite"
 "$ROOT/tests/test-personal-macos-profile.sh" >/dev/null ||
     fail "personal macOS private-profile focused suite"
+"$ROOT/tests/test-personal-macos-inventory.sh" >/dev/null ||
+    fail "personal macOS inventory focused suite"
 "$ROOT/tests/test-personal-macos-update.sh" >/dev/null ||
     fail "personal macOS long-gap update focused suite"
 

@@ -2,7 +2,7 @@
 
 **Phase:** executing
 
-**Updated:** 2026-07-18 17:27 JST
+**Updated:** 2026-07-18 17:34 JST
 
 **Owner:** repository driver
 
@@ -474,6 +474,12 @@ engine before private/state mutation, and transactionally initializes or
 migrates schema-v1 local state. Synthetic drills pass for direct old-to-current
 catch-up, idempotence, changed-state rollback refusal, exact state rollback and
 reapply, incompatible schema/layout refusal, and partial-public-update retry.
-Implement stage 4 next: Darwin/Linux portability primitives with matched
-synthetic tests. Do not create or access the private GitHub repository, connect
-to a Mac, inspect live machine facts, or mutate Homebrew/shell state.
+Stages 4–6 are also complete: shared helpers select GNU or BSD metadata safely,
+the Darwin-only inventory emits only the frozen value-minimized fact set, and
+the strict resolver covers all private tracked manifests. Synthetic arm64 and
+x86_64 routes, Linux refusal, present/absent/unusable Homebrew, missing Command
+Line Tools, invalid private state, scoped public-formula queries, and privacy
+leak assertions pass. Implement stage 7 next: read-only macOS plan and doctor
+with exact bounded Homebrew command rendering. Do not create or access the
+private GitHub repository, connect to a Mac, inspect live machine facts, or
+mutate Homebrew/shell state.

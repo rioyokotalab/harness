@@ -21,6 +21,24 @@ contain only `companion.conf` plus strict `hosts/*.conf` manifests. The
 resolver validates every tracked host manifest, not only the selected one, and
 refuses untracked or modified content.
 
+## Value-minimized observation
+
+`harness macos-inventory --host LOGICAL_ID` is Darwin-only and read-only. It
+reports only the OS family, architecture class, native account-shell class,
+Homebrew availability and prefix class, Command Line Tools availability,
+strict private-profile status, public-checkout status, fixed discovery-link
+kinds, and presence of the eight public baseline formulae. It does not print
+Homebrew or OS versions, actual prefixes, developer-tool paths, private group
+or formula selections, other installed packages, hardware identifiers,
+networks, user names, or file contents.
+
+Inventory invokes only `brew --version`, `brew --prefix`, and one scoped
+`brew list --formula --versions FORMULA` query for each public formula. It
+performs no update, install, upgrade, cleanup, service, tap, bundle, network,
+or mutation operation. Private profile failures collapse to `invalid`; their
+paths, values, and detailed errors remain suppressed. A live capture must be
+written under `umask 077` to the private local harness state, never committed.
+
 ## Explicit long-gap update
 
 Fetching is a separate, explicit step. After fetching `origin/main` in both
