@@ -499,7 +499,7 @@ separately reviewed destructive action, not an automatic failure trap.
 | D11 | Shell/tmux synchronization population | Synchronize private personal configuration among the four Macs only | Including Linux/HPC nodes requires separate public portable fragments and must preserve every site's startup policy; whole-file cross-platform copying is excluded | selected — four personal Macs only |
 | D12 | Shell/tmux payload representation | Synchronize shared private Bash and tmux fragments behind thin managed loaders | Whole `.bashrc` replacement conflicts with the existing loader transaction and machine/site-local state; whole tmux replacement prevents safe local overrides | selected — thin local loaders plus private shared fragments |
 | D13 | Multi-payload convergence | Treat every adopted payload in one private revision as an atomic desired-state set | Independent per-file apply can leave a pulled revision only partly active; separate repositories multiply catch-up and conflict state | selected — SSH, Bash, and tmux validate and apply atomically |
-| D14 | Activation of changed configuration | Make changes effective for new managed Bash shells and new tmux servers; keep current-process reload explicit and separate | Automatic sourcing/reload can execute changed commands in an active session and makes rollback incomplete | interviewing — ask next |
+| D14 | Activation of changed configuration | Make changes effective for new managed Bash shells and new tmux servers; keep current-process reload explicit and separate | Automatic sourcing/reload can execute changed commands in an active session and makes rollback incomplete | selected — new shells/servers only; manual reload separate |
 
 ## Proposed shell and tmux synchronization expansion
 
@@ -520,7 +520,9 @@ through the companion. Linux/HPC startup and tmux configuration are outside
 this private payload contract. The owner also selected atomic convergence:
 every adopted SSH, Bash, and tmux candidate in a private revision validates
 before mutation, and all live managed copies replace as one transaction or
-none do.
+none do. Changes become active only when a managed Bash shell or tmux server is
+newly started. Existing sessions are never automatically sourced or reloaded;
+any manual reload is an explicit action outside catch-up apply.
 
 After D11–D14 are selected, implementation should extend the strict private
 schema only for explicitly adopted payloads, preserve schema-v1 and SSH-only
@@ -559,9 +561,11 @@ doctor status surfaces must pass the complete clean-checkout phase-one and
 protected CI gates before any live payload is seeded. After publication, the
 next live action is a separate owner-started `office` plan using `--seed`; no
 private companion or real SSH destination is mutated by the generic-engine
-stage. That seed is now paused while D11–D14 are interviewed for the requested
-shell/tmux expansion; implementation waits for a fresh explicit `go` after the
-amended plan reaches `ready-for-go`.
+stage. D11–D14 are now frozen for the requested shell/tmux expansion and the
+amended plan is `ready-for-go`. A fresh explicit `go` authorizes generic public
+implementation, validation, protected publication, and required clean-checkout
+synchronization only. Private configuration access, the `office` seed, live
+apply, rollback/reapply, and active-session reload remain separate later gates.
 
 Stages 2–3 are complete and retry-safe in the public repository. The strict
 resolver now validates the entire clean private Git tree. `harness

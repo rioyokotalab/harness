@@ -50,16 +50,17 @@ and compact historical pointers here. Next free ID: T-269.
 
 ## Next resume checkpoint
 
-Resume T-268 in `interviewing`. D1–D10 and the already published SSH-sync
+Resume T-268 in `ready-for-go`. D1–D10 and the already published SSH-sync
 S1–S10 contract remain frozen, but before the first private `office` seed the
 owner requested that `.bashrc` and `tmux.conf` synchronization be designed
 through a fresh PIE decision cycle. No personal configuration has been read,
 copied, or changed for this expansion. D11 and D12 are now selected: the target
 population is the four personal Macs, synchronized Bash/tmux configuration
 uses thin local loaders plus private shared fragments rather than whole-file
-replacement, and SSH/Bash/tmux converge as one atomic adopted-config set per
-private revision. Resolve D14, freeze the amended plan, and wait for a fresh
-explicit `go` before implementing
+replacement, SSH/Bash/tmux converge as one atomic adopted-config set per
+private revision, and changes activate only in new managed Bash shells and new
+tmux servers unless the owner explicitly reloads an existing session. The
+amended plan is frozen; wait for a fresh explicit `go` before implementing
 the generic engine or running a private seed. Independently resume T-191 after
 the first Sunday eligibility. Fetch and prove a clean fleet, then query only the seven
 captured IDs below through their declared native scheduler routes. Do not infer
@@ -133,7 +134,7 @@ separate `prune` commands.
 
 ### T-268 — Private personal macOS fleet
 
-**Phase/status:** `interviewing`. Design a separate personal-macOS target
+**Phase/status:** `ready-for-go`. Design a separate personal-macOS target
 family that reuses harness safety and control-plane principles without adding
 four private machines to the public Linux/HPC profiles. Generic code, schemas,
 synthetic fixtures, tests, and any deliberately selected non-sensitive CLI
@@ -983,11 +984,22 @@ fragments. They are never replaced wholesale, and Linux/HPC configuration is
 not part of this private sync. The owner selected D13 as one atomic
 adopted-config set per private revision: SSH, Bash, and tmux candidates all
 validate before any live replacement, and any invalid or divergent payload
-blocks the complete apply rather than leaving partial desired state. D14 is
-live activation behavior (recommended: new Bash shells and new tmux servers
-only, with manual reload separate). The next question is D14 only. The earlier
-`office` SSH seed is paused until D14 is resolved and this ledger reaches
-`ready-for-go`.
+blocks the complete apply rather than leaving partial desired state. The owner
+selected D14 so synchronized changes activate only in newly started managed
+Bash shells and newly started tmux servers. Reloading a current shell or tmux
+server is a separate explicit manual action and never part of catch-up apply.
+
+**Amended decision audit:** D11–D14 are resolved and internally consistent with
+D1–D10 and SSH S1–S10. The frozen design is four-Mac-only pull synchronization,
+thin local `.bashrc`/`.tmux.conf` loaders, private managed Bash/tmux fragments,
+one atomic SSH/Bash/tmux desired-state set per private revision, fail-closed
+validation/application, exact unchanged-only rollback, and no automatic active-
+session reload. A fresh `go` authorizes implementation, synthetic validation,
+protected publication, and required clean managed-checkout synchronization of
+generic public code. It does not authorize reading or publishing private
+configuration, running the `office` seed, mutating a live Mac, reloading active
+sessions, or applying a private payload; those remain later owner-started and
+separately reviewed authority gates.
 
 ## Stable operational facts
 
