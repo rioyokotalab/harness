@@ -448,6 +448,14 @@ separately reviewed destructive action, not an automatic failure trap.
   shell, enters the current Homebrew Bash through a stable path, is silent in
   non-interactive contexts, preserves existing local configuration, and rolls
   back exactly while unchanged.
+- Before sequential rollout, a cross-platform Core-tool compatibility matrix
+  exercises the oldest supported Linux floors and current macOS/Homebrew
+  versions. It covers feature and output compatibility plus Git safety
+  defaults, tmux/Vim configuration, jq language behavior, rsync protocol and
+  argument handling, curl TLS/protocol support, and SQLite forward
+  compatibility. User-space CLIs must not replace site shared libraries or
+  alter `LD_LIBRARY_PATH`; actual AI/HPC workflows must pass before a broader
+  managed baseline is accepted.
 - Each Mac is accepted independently. Aggregate completion reports only counts
   and capability classes in public evidence.
 

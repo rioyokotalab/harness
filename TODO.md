@@ -447,6 +447,19 @@ post-apply plan exited zero with all six remote hosts retained clean at the
 target and every transfer artifact absent. This synchronization changed no
 personal Mac, private companion, package, shell, scheduler, or backup state.
 
+Before sequential Mac rollout, add a cross-platform Core-tool compatibility
+gate. Exercise the oldest observed Linux floors and current macOS/Homebrew
+versions for Git, Git LFS, Vim, tmux, ripgrep, jq, tree, rsync, curl, wget,
+htop, and SQLite. Check feature, output, configuration, protocol, and shared-
+data behavior rather than assuming version-number equality. Give focused
+coverage to Git safety defaults, tmux/Vim configuration floors, jq 1.8
+language changes, rsync argument/protocol negotiation, curl TLS/protocol
+removals, and SQLite forward compatibility. Keep upgraded CLIs isolated in
+user space; never replace site shared libraries or alter `LD_LIBRARY_PATH`.
+The current evidence found no mainstream AI/HPC requirement for an older Core
+CLI, but this negative finding must be validated against the actual workflows
+before accepting a wider managed baseline.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
