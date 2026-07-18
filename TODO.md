@@ -548,6 +548,23 @@ will repeat every checkout/profile/prefix/dependency/dependent/dry-run gate,
 retain mode-0600 pre/post/delta/log evidence, and stop on any drift; package
 rollback remains manual-review-only.
 
+The owner authorized that one bounded apply after the checkpoint. PR #29
+passed required `portable-phase1` and published the authority record as
+`f1a0ce4`. The first combined invocation returned after plan without reaching a
+transaction and changed nothing; the unchanged plan and absent transaction
+made one standalone retry safe. That retry created a private mode-0600 failed
+transaction, installed exactly one selected formula, then Homebrew raised an
+internal bottle-metadata exception while beginning the first dependency. Its
+own diagnostic requires `brew update` before retry. The current read-only plan
+is retry-safe but changed to five remaining selected installs and three
+selected upgrades; zero unmanaged selected-root dependents remain. No Git LFS
+configuration command, retry, metadata refresh, cleanup, removal, ownership,
+service, cask, tap, or automatic rollback ran. Exact authority now required:
+approve the separately displayed Homebrew metadata refresh. After refresh,
+rerun the full bounded plan and request confirmation if its selected,
+dependency, or dependent scope differs; otherwise retry only the remaining
+plan while retaining the failed evidence.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
