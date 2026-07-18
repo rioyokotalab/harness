@@ -1,0 +1,453 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+. "$SELF_DIR/harness-macos-common"
+
+usage() {
+    echo "Usage: harness macos-homebrew --host LOGICAL_ID [--plan|--apply]" >&2
+}
+
+safe_path_field() {
+    case "$1" in
+        ''|*'|'*|*'
+'*|*//*|*/./*|*/../*|*/.|*/..) return 1 ;;
+        *) return 0 ;;
+    esac
+}
+
+formula_in_list() {
+    case " $1 " in *" $2 "*) return 0 ;; *) return 1 ;; esac
+}
+
+append_unique_formula() {
+    append_list=$1
+    append_formula=$2
+    if formula_in_list "$append_list" "$append_formula"; then
+        printf '%s\n' "$append_list"
+    elif [ -n "$append_list" ]; then
+        printf '%s %s\n' "$append_list" "$append_formula"
+    else
+        printf '%s\n' "$append_formula"
+    fi
+}
+
+formula_count() {
+    printf '%s\n' "$1" |
+        awk '{ for (i = 1; i <= NF; i++) count++ } END { print count + 0 }'
+}
+
+validate_formula_output() {
+    formula_output=$1
+    printf '%s\n' "$formula_output" | awk '
+        NF == 0 { next }
+        $0 !~ /^[A-Za-z0-9][A-Za-z0-9@+._\/-]*$/ { bad = 1 }
+        /\// { bad = 1 }
+        seen[$0]++ { bad = 1 }
+        END { exit bad ? 1 : 0 }
+    ' >/dev/null 2>&1 || die "Homebrew returned unsafe or tapped formula scope"
+}
+
+validate_version_output() {
+    version_formula=$1
+    version_output=$2
+    printf '%s\n' "$version_output" | awk -v formula="$version_formula" '
+        NR != 1 || $1 != formula || NF < 2 || /[|[:cntrl:]]/ { bad = 1 }
+        END { exit bad ? 1 : 0 }
+    ' >/dev/null 2>&1 || die "Homebrew returned malformed managed version evidence"
+}
+
+brew_read() {
+    HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ANALYTICS=1 \
+        HOMEBREW_NO_ENV_HINTS=1 "$brew_command" "$@"
+}
+
+validate_public_checkout() {
+    [ "$(uname -s)" = Darwin ] || die "managed Homebrew catch-up requires Darwin"
+    [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
+        die "managed Homebrew catch-up requires a Git harness checkout"
+    [ "$(CDPATH='' cd -- "$HARNESS_ROOT" && pwd -P)" = "$HARNESS_ROOT" ] &&
+        [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" = \
+            "$HARNESS_ROOT" ] || die "managed Homebrew checkout root is ambiguous"
+    [ "$(git -C "$HARNESS_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null)" = \
+        main ] || die "managed Homebrew catch-up requires the main branch"
+    [ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
+        die "managed Homebrew catch-up requires a clean committed harness checkout"
+}
+
+resolve_brew() {
+    brew_command=$(command -v brew 2>/dev/null || true)
+    [ -n "$brew_command" ] && [ -x "$brew_command" ] && [ ! -L "$brew_command" ] ||
+        die "managed Homebrew executable is unavailable or unsafe"
+    brew_prefix=$(brew_read --prefix 2>/dev/null) ||
+        die "managed Homebrew prefix query failed"
+    safe_path_field "$brew_prefix" || die "managed Homebrew prefix is unsafe"
+    case "$brew_prefix" in /*) ;; *) die "managed Homebrew prefix is unsafe" ;; esac
+    [ "$brew_command" = "$brew_prefix/bin/brew" ] ||
+        die "active Homebrew executable does not match its prefix"
+    case "$(uname -m):$brew_prefix" in
+        arm64:/opt/homebrew) prefix_class=apple-silicon-default ;;
+        x86_64:/usr/local) prefix_class=intel-default ;;
+        arm64:*|x86_64:*) prefix_class=other ;;
+        *) die "managed Homebrew architecture is unsupported" ;;
+    esac
+}
+
+discover_scope() {
+    missing_formulae=
+    installed_formulae=
+    outdated_formulae=
+    dependencies=
+    unmanaged_dependents=
+
+    for formula in $managed_formulae; do
+        if version_output=$(brew_read list --formula --versions "$formula" 2>/dev/null); then
+            validate_version_output "$formula" "$version_output"
+            installed_formulae=$(append_unique_formula "$installed_formulae" "$formula")
+        else
+            missing_formulae=$(append_unique_formula "$missing_formulae" "$formula")
+        fi
+    done
+
+    if [ -n "$installed_formulae" ]; then
+        # Formula tokens are schema-restricted and cannot contain shell spaces.
+        # shellcheck disable=SC2086
+        set -- $installed_formulae
+        outdated_output=$(brew_read outdated --formula --quiet "$@" 2>/dev/null) ||
+            die "scoped Homebrew outdated query failed"
+        validate_formula_output "$outdated_output"
+        for formula in $outdated_output; do
+            formula_in_list "$installed_formulae" "$formula" ||
+                die "Homebrew outdated query returned unmanaged scope"
+            outdated_formulae=$(append_unique_formula "$outdated_formulae" "$formula")
+        done
+    fi
+
+    # Homebrew documents --union for multiple dependency roots. Tapped
+    # formulae and tapped dependencies are deliberately outside phase 1.
+    # shellcheck disable=SC2086
+    set -- $managed_formulae
+    dependency_output=$(brew_read deps --union --full-name --formula "$@" 2>/dev/null) ||
+        die "scoped Homebrew dependency query failed"
+    validate_formula_output "$dependency_output"
+    for formula in $dependency_output; do
+        formula_in_list "$managed_formulae" "$formula" ||
+            dependencies=$(append_unique_formula "$dependencies" "$formula")
+    done
+    allowed_formulae=$managed_formulae
+    [ -z "$dependencies" ] || allowed_formulae="$allowed_formulae $dependencies"
+
+    # Homebrew may check and upgrade installed dependents. Refuse the apply
+    # conservatively if any dependent falls outside the selected roots and
+    # their declared dependency closure.
+    for formula in $allowed_formulae; do
+        dependent_output=$(brew_read uses --installed --recursive --formula \
+            "$formula" 2>/dev/null) || die "scoped Homebrew dependent query failed"
+        validate_formula_output "$dependent_output"
+        for dependent in $dependent_output; do
+            formula_in_list "$allowed_formulae" "$dependent" ||
+                unmanaged_dependents=$(append_unique_formula \
+                    "$unmanaged_dependents" "$dependent")
+        done
+    done
+}
+
+validate_dry_run_log() {
+    dry_log=$1
+    [ -s "$dry_log" ] || die "Homebrew dry-run returned no reviewable output"
+    if awk '
+        {
+            line = tolower($0)
+            if (line ~ /(^|[^[:alnum:]_])(cask|service|sudo|license|tap|cleanup|uninstall|autoremove)([^[:alnum:]_]|$)/)
+                bad = 1
+        }
+        END { exit bad ? 0 : 1 }
+    ' "$dry_log"; then
+        die "Homebrew dry-run reported prohibited scope"
+    fi
+    for formula in $missing_formulae $outdated_formulae; do
+        awk -v formula="$formula" 'index($0, formula) { found = 1 }
+            END { exit found ? 0 : 1 }' "$dry_log" ||
+            die "Homebrew dry-run omitted a planned managed formula"
+    done
+}
+
+run_dry_runs() {
+    : >"$dry_run_log"
+    chmod 600 "$dry_run_log"
+    if [ -n "$missing_formulae" ]; then
+        # shellcheck disable=SC2086
+        set -- $missing_formulae
+        HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 \
+            HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_ENV_HINTS=1 NONINTERACTIVE=1 \
+            "$brew_command" install --formula --dry-run --no-ask "$@" \
+            >>"$dry_run_log" 2>&1 </dev/null ||
+            die "managed Homebrew install dry-run failed"
+    fi
+    if [ -n "$outdated_formulae" ]; then
+        # shellcheck disable=SC2086
+        set -- $outdated_formulae
+        HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 \
+            HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_ENV_HINTS=1 NONINTERACTIVE=1 \
+            "$brew_command" upgrade --formula --dry-run --no-ask "$@" \
+            >>"$dry_run_log" 2>&1 </dev/null ||
+            die "managed Homebrew upgrade dry-run failed"
+    fi
+    if [ -n "$missing_formulae$outdated_formulae" ]; then
+        validate_dry_run_log "$dry_run_log"
+    fi
+}
+
+prepare_transaction_root() {
+    state_root=$HOME/.local/state/harness
+    transaction_root=$state_root/transactions
+    for state_path in "$HOME/.local" "$HOME/.local/state" \
+        "$state_root" "$transaction_root"; do
+        if [ -e "$state_path" ] || [ -L "$state_path" ]; then
+            [ -d "$state_path" ] && [ ! -L "$state_path" ] ||
+                die "managed Homebrew state path is unsafe"
+            [ "$(macos_stat_owner "$state_path")" = "$current_uid" ] ||
+                die "managed Homebrew state path owner is unsafe"
+            case "$state_path" in
+                "$state_root"|"$transaction_root")
+                    [ "$(macos_stat_mode "$state_path")" = 700 ] ||
+                        die "managed Homebrew state path mode is unsafe"
+                    ;;
+            esac
+        fi
+    done
+    umask 077
+    for state_path in "$HOME/.local" "$HOME/.local/state" \
+        "$state_root" "$transaction_root"; do
+        if [ ! -e "$state_path" ] && [ ! -L "$state_path" ]; then
+            mkdir "$state_path"
+            chmod 700 "$state_path"
+        fi
+    done
+}
+
+capture_evidence() {
+    evidence_file=$1
+    evidence_phase=$2
+    : >"$evidence_file"
+    chmod 600 "$evidence_file"
+    printf 'schema=1\nphase=%s\nprefix=%s\n' \
+        "$evidence_phase" "$brew_prefix" >>"$evidence_file"
+    for evidence_kind in selected dependency; do
+        case "$evidence_kind" in
+            selected) evidence_formulae=$managed_formulae ;;
+            dependency) evidence_formulae=$dependencies ;;
+        esac
+        for formula in $evidence_formulae; do
+            if version_output=$(brew_read list --formula --versions \
+                "$formula" 2>/dev/null); then
+                validate_version_output "$formula" "$version_output"
+                printf '%s|%s|%s\n' "$evidence_kind" "$formula" \
+                    "${version_output#"$formula "}" >>"$evidence_file"
+            else
+                printf '%s|%s|absent\n' "$evidence_kind" "$formula" \
+                    >>"$evidence_file"
+            fi
+        done
+    done
+}
+
+logical_host=
+mode=plan
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+[ -n "$logical_host" ] || { usage; exit 2; }
+macos_private_id_is_safe "$logical_host" || die "invalid private logical identifier"
+case ${HOME:-} in /*) ;; *) die "managed Homebrew catch-up requires an absolute HOME" ;; esac
+current_uid=$(id -u)
+[ -d "$HOME" ] && [ ! -L "$HOME" ] &&
+    [ "$(macos_stat_owner "$HOME")" = "$current_uid" ] &&
+    [ "$(CDPATH='' cd -- "$HOME" && pwd -P)" = "$HOME" ] ||
+    die "managed Homebrew HOME is unsafe or ambiguous"
+safe_path_field "$HOME" || die "managed Homebrew path is unsafe"
+safe_path_field "$HARNESS_ROOT" || die "managed Homebrew path is unsafe"
+
+validate_public_checkout
+"$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
+    die "private profile is not ready for managed Homebrew catch-up"
+public_profile=$HARNESS_ROOT/profiles/personal-macos/base.conf
+host_manifest=$HOME/.config/harness/private/hosts/$logical_host.conf
+public_formulae=$(macos_manifest_get "$public_profile" managed_formulae)
+extra_formulae=$(macos_manifest_get "$host_manifest" extra_formulae)
+all_formulae=$public_formulae
+[ "$extra_formulae" = none ] || all_formulae=$all_formulae,$extra_formulae
+printf '%s\n' "$all_formulae" | tr ',' '\n' |
+    awk '/\// || seen[$0]++ { exit 1 }' ||
+    die "managed Homebrew selection contains a tap or duplicate"
+managed_formulae=$(printf '%s\n' "$all_formulae" | tr ',' ' ')
+
+resolve_brew
+initial_prefix=$brew_prefix
+dry_run_log=$(mktemp "${TMPDIR:-/tmp}/harness-macos-homebrew-dry.XXXXXX") ||
+    die "cannot allocate managed Homebrew dry-run log"
+chmod 600 "$dry_run_log"
+cleanup_dry_run() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ -e "$dry_run_log" ] || [ -L "$dry_run_log" ]; then unlink "$dry_run_log"; fi
+    exit "$status"
+}
+trap cleanup_dry_run EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+discover_scope
+[ -z "$unmanaged_dependents" ] ||
+    die "managed Homebrew scope has installed unmanaged dependents"
+run_dry_runs
+printf 'MACOS_HOMEBREW mode=%s privacy=local-details prefix=%s\n' \
+    "$mode" "$prefix_class"
+printf "INSTALL count=%s formulae='%s'\n" \
+    "$(formula_count "$missing_formulae")" "$missing_formulae"
+printf "UPGRADE count=%s formulae='%s'\n" \
+    "$(formula_count "$outdated_formulae")" "$outdated_formulae"
+printf 'DEPENDENCIES count=%s scope=validated unmanaged_dependents=0\n' \
+    "$(formula_count "$dependencies")"
+printf 'DRY_RUN status=validated install=%s upgrade=%s\n' \
+    "$(formula_count "$missing_formulae")" \
+    "$(formula_count "$outdated_formulae")"
+
+[ "$mode" = apply ] || {
+    echo 'END macos_homebrew applied=no metadata_refresh=separate'
+    exit 0
+}
+[ -n "$missing_formulae$outdated_formulae" ] || {
+    echo 'END macos_homebrew changes=none metadata_refresh=separate'
+    exit 0
+}
+
+# Repeat desired-state, checkout, prefix, scope, dependent, and dry-run gates
+# immediately before the irreversible package-manager stage.
+planned_missing=$missing_formulae
+planned_outdated=$outdated_formulae
+planned_dependencies=$dependencies
+validate_public_checkout
+"$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
+    die "private profile changed before managed Homebrew apply"
+resolve_brew
+[ "$brew_prefix" = "$initial_prefix" ] ||
+    die "managed Homebrew prefix changed before apply"
+discover_scope
+[ -z "$unmanaged_dependents" ] ||
+    die "managed Homebrew scope gained an unmanaged dependent"
+[ "$missing_formulae" = "$planned_missing" ] &&
+    [ "$outdated_formulae" = "$planned_outdated" ] &&
+    [ "$dependencies" = "$planned_dependencies" ] ||
+    die "managed Homebrew plan changed before apply"
+run_dry_runs
+
+prepare_transaction_root
+transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+manifest=$transaction_root/$transaction_id.macos-homebrew.manifest
+status_file=$transaction_root/$transaction_id.macos-homebrew.status
+pre_file=$transaction_root/$transaction_id.macos-homebrew.pre.tsv
+post_file=$transaction_root/$transaction_id.macos-homebrew.post.tsv
+delta_file=$transaction_root/$transaction_id.macos-homebrew.delta.diff
+apply_log=$transaction_root/$transaction_id.macos-homebrew.apply.log
+for transaction_file in "$manifest" "$status_file" "$pre_file" \
+    "$post_file" "$delta_file" "$apply_log"; do
+    [ ! -e "$transaction_file" ] && [ ! -L "$transaction_file" ] ||
+        die "managed Homebrew transaction identifier collision"
+done
+umask 077
+printf 'schema=1\noperation=macos-homebrew\nrevision=%s\nlogical_id=%s\nprefix=%s\n' \
+    "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" "$logical_host" \
+    "$brew_prefix" >"$manifest"
+for formula in $managed_formulae; do printf 'formula=%s\n' "$formula" >>"$manifest"; done
+chmod 600 "$manifest"
+printf '%s\n' prepared >"$status_file"
+chmod 600 "$status_file"
+: >"$apply_log"
+chmod 600 "$apply_log"
+
+apply_complete=0
+finish_failed_apply() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ "$apply_complete" -eq 0 ]; then
+        (capture_evidence "$post_file" failed-post) >/dev/null 2>&1 || true
+        if diff -u "$pre_file" "$post_file" >"$delta_file" 2>/dev/null; then
+            :
+        else
+            # A difference is expected after a partial package-manager run;
+            # an evidence error must not mask the original apply failure.
+            :
+        fi
+        chmod 600 "$delta_file" 2>/dev/null || true
+        printf '%s\n' failed >"$status_file"
+    fi
+    [ -e "$dry_run_log" ] || [ -L "$dry_run_log" ] || exit "$status"
+    unlink "$dry_run_log"
+    exit "$status"
+}
+trap finish_failed_apply EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+capture_evidence "$pre_file" pre
+
+if [ -n "$missing_formulae" ]; then
+    printf 'stage=install count=%s\n' "$(formula_count "$missing_formulae")" \
+        >>"$apply_log"
+    # shellcheck disable=SC2086
+    set -- $missing_formulae
+    HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 \
+        HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_ENV_HINTS=1 NONINTERACTIVE=1 \
+        "$brew_command" install --formula --no-ask "$@" \
+        >>"$apply_log" 2>&1 </dev/null ||
+        die "managed Homebrew install failed; automatic rollback is unavailable"
+fi
+resolve_brew
+[ "$brew_prefix" = "$initial_prefix" ] ||
+    die "managed Homebrew prefix changed after install"
+if [ -n "$outdated_formulae" ]; then
+    printf 'stage=upgrade count=%s\n' "$(formula_count "$outdated_formulae")" \
+        >>"$apply_log"
+    # shellcheck disable=SC2086
+    set -- $outdated_formulae
+    HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 \
+        HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_ENV_HINTS=1 NONINTERACTIVE=1 \
+        "$brew_command" upgrade --formula --no-ask "$@" \
+        >>"$apply_log" 2>&1 </dev/null ||
+        die "managed Homebrew upgrade failed; automatic rollback is unavailable"
+fi
+resolve_brew
+[ "$brew_prefix" = "$initial_prefix" ] ||
+    die "managed Homebrew prefix changed after apply"
+discover_scope
+[ -z "$missing_formulae$outdated_formulae" ] ||
+    die "managed Homebrew post-state did not converge"
+[ "$dependencies" = "$planned_dependencies" ] ||
+    die "managed Homebrew dependency scope changed during apply"
+[ -z "$unmanaged_dependents" ] ||
+    die "managed Homebrew post-state gained an unmanaged dependent"
+capture_evidence "$post_file" post
+if diff -u "$pre_file" "$post_file" >"$delta_file"; then :; else
+    [ "$?" -eq 1 ] || die "managed Homebrew evidence diff failed"
+fi
+chmod 600 "$delta_file"
+printf '%s\n' complete >"$status_file"
+apply_complete=1
+trap - EXIT HUP INT TERM
+unlink "$dry_run_log"
+printf 'TRANSACTION id=%s status=complete install=%s upgrade=%s\n' \
+    "$transaction_id" "$(formula_count "$planned_missing")" \
+    "$(formula_count "$planned_outdated")"
+echo 'END macos_homebrew applied=yes rollback=manual-review-only metadata_refresh=separate'

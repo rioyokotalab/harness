@@ -98,6 +98,48 @@ The transaction record remains local under `~/.local/state/harness`; neither
 plan, apply, nor rollback touches packages, shell startup, Git remotes, or the
 private repository's contents.
 
+## Bounded Homebrew catch-up
+
+Private `capability_groups` are classification labels and are never converted
+into guessed package names. The exact Homebrew allowlist is the eight-formula
+public baseline plus the selected private `extra_formulae`. Phase 1 refuses
+tapped formula names and tapped dependencies; support for a private tap would
+need its own trust, update, and rollback design.
+
+```bash
+harness macos-homebrew --host LOGICAL_ID --plan
+harness macos-homebrew --host LOGICAL_ID --apply
+```
+
+Both modes require Darwin, a canonical clean committed public `main`, a valid
+private profile, and one active regular `brew` executable matching its reported
+prefix. The command queries versions only for selected formulae, resolves only
+their dependency closure, checks installed dependents of every allowed member,
+and refuses an installed dependent outside the selected roots and dependency
+closure. It never lists or dumps the whole installed package set.
+
+Plan runs exact formula-only install and upgrade dry-runs with automatic update,
+cleanup, analytics, prompts, and environment hints disabled. It refuses empty
+or incomplete dry-run evidence and output that indicates a cask, service,
+`sudo`, license, tap, cleanup, uninstall, or autoremove scope. Metadata refresh
+remains the separately displayed `brew update` authority; this command does not
+run it implicitly.
+
+Apply repeats the checkout, private profile, prefix, selected action set,
+dependency closure, installed-dependent, and dry-run gates immediately before
+mutation. It then installs only missing selected formulae and upgrades only
+outdated selected formulae. Homebrew may update their dependency closure, but
+the command does not disable installed-dependent linkage checks because the
+official guidance warns that doing so can leave broken linkage. It uses no
+cleanup, removal, cask, service, tap, bundle, or whole-machine upgrade command.
+
+Every non-no-op apply records mode-0600 local intent, pre-state, post-state,
+dependency delta, command output, and complete/failed status. Homebrew package
+changes are not transactionally reversible: failure evidence is retained, and
+any downgrade, reinstall, uninstall, or dependency removal remains a separate
+exact reviewed recovery action. A converged second apply is a no-op and creates
+no transaction.
+
 ## Explicit long-gap update
 
 Fetching is a separate, explicit step. After fetching `origin/main` in both

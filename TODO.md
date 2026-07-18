@@ -51,7 +51,7 @@ and compact historical pointers here. Next free ID: T-269.
 ## Next resume checkpoint
 
 Resume T-268 in `executing`; D1–D10 are frozen and the owner gave explicit
-`go` on 2026-07-18. Continue stage 9 from the exact next action in
+`go` on 2026-07-18. Continue stage 10 from the exact next action in
 `docs/plans/personal-macos-fleet.md`. Independently resume T-191 after the first
 Sunday eligibility. Fetch and prove a clean fleet, then query only the seven
 captured IDs below through their declared native scheduler routes. Do not infer
@@ -233,7 +233,7 @@ long-gap drill, then one-at-a-time rollout. Privacy-negative tests precede any
 Mac observation; control-plane rollback precedes package/shell stages; every
 live package or external-service action retains its separate authority gate.
 
-**Execution checkpoint:** stages 1–8 are complete. The frozen D1–D10 record is
+**Execution checkpoint:** stages 1–9 are complete. The frozen D1–D10 record is
 unchanged. Stage 2 added `harness macos-profile`, the public
 `profiles/personal-macos/base.conf`, strict companion v1 schema/example,
 synthetic v1 fixture, and `tests/test-personal-macos-profile.sh`. The resolver
@@ -295,10 +295,28 @@ symlinked state refusal, partial-failure cleanup, and exact rollback pass with
 all earlier focused macOS suites on 2026-07-18. No live Mac or external state
 was accessed or changed.
 
-**Next:** implement stage 9 bounded Homebrew catch-up with dry-run scope
-validation, explicit managed-formula evidence, no cleanup/removal, and safe
-failure records. Keep live Mac access gated on privacy-negative validation. Go
-does not itself authorize
+Stage 9 adds `harness macos-homebrew`. The exact formula allowlist is the
+public baseline plus explicit private `extra_formulae`; capability labels are
+never guessed into packages, and tapped names/dependencies are refused. The
+adapter validates the active prefix, reads only selected versions and their
+dependency/dependent closure, conservatively blocks any installed unmanaged
+dependent, and runs exact formula-only dry-runs with update, cleanup,
+analytics, prompts, and environment hints disabled. Apply repeats all gates,
+never refreshes metadata implicitly, never invokes whole-machine inventory,
+Bundle, casks, services, taps, cleanup, or removal, and retains mode-0600 local
+pre/post/dependency/delta/log/status evidence. Because package changes are not
+reversible, failed transactions explicitly retain evidence and require later
+review rather than automatic uninstall or downgrade. Synthetic missing and
+outdated convergence, scoped-command audit, dependency evidence, no-op,
+unmanaged-dependent refusal, prohibited dry-run refusal, tapped-selection
+refusal, and injected apply failure pass on 2026-07-18. Official Homebrew
+manpage, FAQ, Versions, and Installation guidance were revalidated on the same
+date. No live Homebrew or Mac state was read or changed.
+
+**Next:** implement stage 10 stable Homebrew Bash launcher and
+collision-refusing thin Bash integration with native-shell recovery,
+idempotence, and exact file rollback. Keep live Mac access gated on
+privacy-negative validation. Go does not itself authorize
 credentials/authentication changes, GitHub creation or publication, Homebrew
 installation/upgrades, package cleanup, background automation, or destructive
 actions.

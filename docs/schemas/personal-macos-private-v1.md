@@ -34,7 +34,12 @@ extra_formulae=none
 `macos-cli-v1` formula set. `capability_groups` is `none` or a duplicate-free
 comma-separated list of safe group identifiers. `extra_formulae` is `none` or
 a duplicate-free comma-separated list of syntactically safe Homebrew formula
-names. Installed state is never used to populate either field.
+names. Capability-group labels classify private intent; the Homebrew adapter
+does not infer package names from them. Every privately selected Homebrew
+formula must therefore be named explicitly in `extra_formulae`. Phase 1
+catch-up further refuses tapped formula names even though the general token
+grammar reserves `/` for a future separately designed tap contract. Installed
+state is never used to populate either field.
 
 Only curated desired intent belongs in the companion. Hostnames, user names,
 serial or hardware identifiers, network details, local paths, copied

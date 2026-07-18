@@ -276,9 +276,9 @@ checkout and recomputing the complete plan.
 ### 5. Homebrew as an adapter, not the source of truth
 
 Discovery uses the active `brew` executable and `brew --prefix`. The harness
-checks only explicitly desired formulae. A catch-up uses a generated
-short-lived Brewfile derived from the selected public/private allowlist,
-installs missing managed formulae, and upgrades existing managed formulae. The
+checks only explicitly desired formulae. Catch-up uses exact formula-only
+native install and upgrade commands derived from the selected public/private
+allowlist, rather than Bundle's broader multi-type convergence surface. The
 upgrade is an explicit plan section after repository/schema migration, not an
 implicit Git-update side effect. It never dumps installed state, cleans up,
 upgrades unmanaged formulae, starts services, or manages casks/MAS/VS Code
@@ -484,13 +484,17 @@ Line Tools, invalid private state, scoped public-formula queries, and privacy
 leak assertions pass. Stage 7 is complete: plan and doctor strictly validate
 mode-0600 facts, revalidate live selected scope, reject fact/link/outdated
 drift, keep doctor output value-free, and render exact official formula-only
-Homebrew metadata/dry-run/apply commands without executing them. Implement
-Stage 8 is complete: Mac control-plane discovery links are collision-refusing,
+Homebrew metadata/dry-run/apply commands without executing them.
+Stages 8–9 are complete. Mac control-plane discovery links are collision-refusing,
 idempotent, mode-restricted, transaction-backed, partial-failure safe, and
 exactly reversible while unchanged. Synthetic tests cover pre-existing links
 and directory modes, regular and symlink collisions, symlinked state and
 parent paths, injected partial failure, changed-link refusal, unexpected
-content refusal, exact rollback, and second-run no-op. Implement stage 9 next:
-bounded Homebrew catch-up with dry-run scope validation and transaction
-evidence. Do not create or access the private GitHub repository, connect to a
-Mac, inspect live machine facts, or mutate Homebrew/shell state.
+content refusal, exact rollback, and second-run no-op. Bounded Homebrew catch-up
+uses the public baseline plus explicit private formulae, refuses taps and
+unmanaged installed dependents, validates exact formula-only dry-runs, repeats
+all gates before apply, and retains local pre/post/dependency/failure evidence
+without promising package rollback. Implement stage 10 next: the stable
+Homebrew Bash launcher and collision-refusing thin Bash integration. Do not
+create or access the private GitHub repository, connect to a Mac, inspect live
+machine facts, or mutate Homebrew/shell state.
