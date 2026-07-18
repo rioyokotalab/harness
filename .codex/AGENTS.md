@@ -63,13 +63,25 @@ gates; follow those more specific rules.
 
 ## Reusable workflows
 
+At task start, compare the task against the installed shared skills and read
+every matching skill before working; apply skills by default rather than only
+on explicit request. Closer project rules stay authoritative, and project
+repositories remain operationally self-contained: skills guide the agent's
+working method and never become project runtime dependencies.
+
 - Use the `long-running-task-ledger` skill for durable multi-step or
   multi-session work.
+- Use the `plan-interview-execute` skill for consequential, ambiguous, or
+  multi-session work that needs owner decisions frozen before execution.
 - Use the `bounded-agent-delegation` skill only when delegation is permitted
   and saves more context than it costs.
 - Use the `evidence-first-research` skill for factual or literature research.
 - Use the `research-engineering-validation` skill for distributed training,
   scientific HPC, GPU kernels, numerical software, or performance work.
+- Use the `operate-native-hpc` skill for scheduler, allocation, distributed
+  run, and matched performance work on the managed HPC targets.
+- Use the `onboard-mirrored-node` skill when the owner adds a new SSH alias
+  and asks to mirror the existing control plane.
 - Use the `research-presentation-workflow` skill for research talks and slide
   artifacts.
 - Use the `research-program-management` skill for multi-project and
