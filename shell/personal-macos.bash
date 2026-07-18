@@ -25,6 +25,15 @@ done
 harness_personal_path=${harness_personal_path#:}
 harness_personal_path=${harness_personal_path%:}
 PATH=$harness_personal_bin${harness_personal_path:+:$harness_personal_path}
+
+harness_personal_private_bash=$HOME/.config/harness/managed/personal-macos-private.bash
+if [ -f "$harness_personal_private_bash" ] &&
+    [ ! -L "$harness_personal_private_bash" ]; then
+    # Config sync owns this private mode-0600 runtime fragment. Only a new
+    # managed interactive Bash process loads it.
+    # shellcheck disable=SC1090
+    . "$harness_personal_private_bash"
+fi
 unset harness_personal_bin harness_personal_path harness_personal_prefix \
-    harness_personal_suffix
+    harness_personal_suffix harness_personal_private_bash
 export PATH

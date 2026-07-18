@@ -1,6 +1,7 @@
 # T-268 plan — private personal macOS fleet
 
-**Phase:** executing
+**Phase:** executing — generic configuration-bundle engine validated;
+protected publication pending
 
 **Updated:** 2026-07-19 JST
 
@@ -43,10 +44,10 @@ ledgers.
 
 - MDM, Apple Business Manager, configuration profiles, FileVault recovery-key
   escrow, Apple Account/iCloud management, or OS update enforcement;
-- copying complete dotfiles, `~/Library`, application preferences, browser
-  state, histories, caches, keys, Keychain contents, or installed-app
-  inventories; the later S1–S10 expansion adds exactly one private whole-file
-  SSH configuration payload and no other dotfile exception;
+- copying other complete dotfiles, `~/Library`, application preferences,
+  browser state, histories, caches, keys, Keychain contents, or installed-app
+  inventories; S1–S10 and D11–D14 add only the atomic private SSH, Bash-fragment,
+  and complete-tmux payload set described below;
 - public host profiles containing Mac names, serial numbers, hardware UUIDs,
   usernames, network addresses, location, personal app lists, or local paths;
 - `brew bundle dump`, `brew bundle cleanup`, unmanaged-formula or cask removal,
@@ -136,10 +137,11 @@ Primary sources:
   rollout.
 - **D2 — Private Git companion.** The authoritative personal-Mac desired state
   will live in a separate private Git repository. It contains curated baseline
-  selections, schemas, and opaque per-Mac deltas. S1–S10 later add one exact
-  repository-root SSH-config payload as the sole copied-configuration
-  exception. It never contains other copied dotfiles, observed package/app
-  inventories, live facts, transaction records, credential material, or secret values. The
+  selections, schemas, and opaque per-Mac deltas. S1–S10 first add one exact
+  repository-root SSH-config payload; D11–D14 later expand it to the exact
+  atomic `ssh_config`, private `bashrc` fragment, and complete `tmux.conf` set.
+  It never contains other copied dotfiles, observed package/app inventories,
+  live facts, transaction records, credential material, or secret values. The
   public harness remains the generic engine and must be fully testable without
   access to the private repository. Private repository creation, remote
   configuration, and publication remain separate external authority
@@ -496,23 +498,81 @@ separately reviewed destructive action, not an automatic failure trap.
 | D8 | Private-state recovery | Use the owner's existing private backup after defining exact non-secret state; do not add backup automation now | New encrypted sync or backup automation is a separate project and authority boundary; putting live facts/transactions in Git increases exposure and churn | selected — private Git recovers intent; existing backup plus reconstruction covers local runtime state |
 | D9 | Shared CLI baseline | Keep a small public bootstrap/development baseline and select additional capability groups privately per Mac | Mirroring the entire Linux list adds unnecessary tools; making the whole baseline private weakens public testing and reproducibility | selected — eight-formula public baseline; extra capability groups are private opt-ins |
 | D10 | Private companion hosting | Use one private GitHub repository with clean fast-forward-only clones on each Mac | Another private Git host is viable but needs its own transport and recovery contract; local-only storage cannot synchronize four intermittent Macs | selected — owner-controlled private GitHub repository |
+| D11 | Shell/tmux synchronization population | Synchronize private personal configuration among the four Macs only | Including Linux/HPC nodes requires separate public portable fragments and must preserve every site's startup policy; whole-file cross-platform copying is excluded | selected — four personal Macs only |
+| D12 | Shell/tmux payload representation | Keep the thin `.bashrc` loader and synchronize a private Bash fragment; synchronize the complete `~/.tmux.conf` directly | Replacing `.bashrc` conflicts with existing loader ownership; adding a tmux loader creates an unwanted second runtime configuration | selected, corrected — Bash loader; one complete live tmux config |
+| D13 | Multi-payload convergence | Treat every adopted payload in one private revision as an atomic desired-state set | Independent per-file apply can leave a pulled revision only partly active; separate repositories multiply catch-up and conflict state | selected — SSH, Bash, and tmux validate and apply atomically |
+| D14 | Activation of changed configuration | Make changes effective for new managed Bash shells and new tmux servers; keep current-process reload explicit and separate | Automatic sourcing/reload can execute changed commands in an active session and makes rollback incomplete | selected — new shells/servers only; manual reload separate |
+
+## Proposed shell and tmux synchronization expansion
+
+This expansion re-enters PIE interviewing before the first live SSH seed. It
+does not alter D1–D10 or the published SSH-only engine. Repository-only
+discovery established that `harness macos-bash` already owns one exact loader
+block in `.bashrc`, while Linux/HPC policy forbids complete `.bashrc`
+replacement and reserves machine/site-specific startup behavior. The existing
+portability design calls for tmux common configuration, but no tracked tmux
+configuration exists yet. No live or private configuration was inspected.
+
+The owner selected the four personal Macs as the complete private-sync
+population. Bash retains its existing thin `.bashrc` loader and synchronizes a
+private managed fragment. The initially recorded tmux-loader choice was
+explicitly corrected: the complete `~/.tmux.conf` converges directly, with no
+tmux loader, second runtime configuration, or local override file. Linux/HPC
+startup and tmux configuration are outside this private payload contract. The
+owner also selected atomic convergence:
+every adopted SSH, Bash, and tmux candidate in a private revision validates
+before mutation, and all live managed copies replace as one transaction or
+none do. Changes become active only when a managed Bash shell or tmux server is
+newly started. Existing sessions are never automatically sourced or reloaded;
+any manual reload is an explicit action outside catch-up apply.
+
+After D11–D14 are selected, implementation should extend the strict private
+schema only for explicitly adopted payloads, preserve schema-v1 and SSH-only
+compatibility, and validate candidates before live mutation. Bash desired bytes
+are copied into a private mode-0600 managed runtime fragment rather than sourced
+from the Git checkout. The `.bashrc` writer remains the current collision-
+refusing loader adapter. The complete tmux payload is atomically copied to
+`~/.tmux.conf` after collision and metadata checks, preserving the prior image
+for unchanged-only rollback. Private content, paths, hashes, revisions, and
+diffs must remain absent from public output and evidence.
+
+The reconciler should fail closed on dirty or non-fast-forward private Git,
+per-payload divergence, invalid syntax, unsafe ownership/type/mode/link count,
+partial adoption, changed rollback targets, or any validator that could execute
+plugins, shell commands, network access, or external includes unexpectedly.
+Recommended convergence is atomic across all adopted payloads in the selected
+private revision. Apply should not re-source the current shell or reload a
+running tmux server automatically.
+
+Synthetic acceptance must cover first adoption, old-state fast-forward,
+local-only publication, remote-only application, equal no-op, concurrent
+divergence, multi-payload atomic failure, exact rollback/reapply, machine-local
+override preservation, syntax and metadata refusal, injected Git/replacement
+failures, privacy sentinels, and unchanged Linux behavior. The tmux syntax
+surface must pass the oldest declared supported version in the Core-tool
+compatibility gate. Focused suites, the full portable phase-one suite,
+ShellCheck, diff check, public-history privacy audit, and protected CI precede
+any owner-started private plan. Live seed apply, deliberate rollback/reapply,
+and each later Mac remain separate authority gates.
 
 ## Next action
 
-The S1–S10 generic SSH synchronization expansion is implemented in the public
-engine with synthetic privacy and failure coverage. The private v1 transition,
-Mac equal-writer reconciler, fixed `local`-to-`t4` adapter, exact rollback, and
-doctor status surfaces must pass the complete clean-checkout phase-one and
-protected CI gates before any live payload is seeded. After publication, the
-next live action is a separate owner-started `office` plan using `--seed`; no
-private companion or real SSH destination is mutated by the generic-engine
-stage.
+The D11–D14 generic implementation now validates and reconciles SSH, the
+private Bash fragment, and the one complete tmux config as one private-revision
+bundle. Focused and clean-clone portable validation pass, including privacy,
+legacy public-contract, syntax-without-execution, divergence, commit/push
+retry, replacement unwind, and exact rollback gates. Publish this public code
+through protected CI and synchronize only clean managed harness checkouts.
+After publication, the next live action is a separate owner-started pilot seed
+plan; no private companion or real Mac configuration is mutated by the generic
+engine stage. Private configuration access, seed apply, rollback/reapply, and
+active-session reload remain separate later gates.
 
 Stages 2–3 are complete and retry-safe in the public repository. The strict
 resolver now validates the entire clean private Git tree. `harness
 macos-update` enforces explicit fetched targets and clean expected-branch
 fast-forwards, validates both target contracts, hands off to the target public
-engine before private/state mutation, and transactionally initializes or
+engine after compatibility validation and before private/state mutation, and transactionally initializes or
 migrates schema-v1 local state. Synthetic drills pass for direct old-to-current
 catch-up, idempotence, changed-state rollback refusal, exact state rollback and
 reapply, incompatible schema/layout refusal, and partial-public-update retry.

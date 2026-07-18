@@ -42,7 +42,7 @@ public_profile=$HARNESS_ROOT/profiles/personal-macos/base.conf
     die "public personal-Mac baseline is unavailable"
 macos_validate_public_profile "$public_profile"
 
-public_schema=$(macos_manifest_get "$public_profile" schema)
+engine_schema=2
 family=$(macos_manifest_get "$public_profile" family)
 private_schema_min=$(macos_manifest_get "$public_profile" private_schema_min)
 private_schema_max=$(macos_manifest_get "$public_profile" private_schema_max)
@@ -64,13 +64,13 @@ macos_require_private_directory "$private_hosts" "$current_uid"
 macos_require_private_file "$companion_manifest" "$current_uid"
 macos_require_private_file "$host_manifest" "$current_uid"
 
-macos_validate_companion_manifest "$companion_manifest" "$public_schema" \
+macos_validate_companion_manifest "$companion_manifest" "$engine_schema" \
     "$private_schema_min" "$private_schema_max"
 
 private_schema=$(macos_manifest_get "$companion_manifest" schema)
 minimum_engine_schema=$(macos_manifest_get "$companion_manifest" minimum_engine_schema)
 
-[ "$minimum_engine_schema" -le "$public_schema" ] ||
+[ "$minimum_engine_schema" -le "$engine_schema" ] ||
     die "private companion schema is incompatible"
 
 git -C "$private_root" rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
@@ -80,11 +80,23 @@ git -C "$private_root" rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
     die "private companion Git root is ambiguous"
 
 ssh_payload_state=absent
+bash_payload_state=absent
+tmux_payload_state=absent
 git -C "$private_root" ls-files | while IFS= read -r tracked_path; do
     case "$tracked_path" in
         companion.conf) ;;
         ssh_config)
             macos_validate_ssh_config "$ssh_payload" "$current_uid" 600
+            ;;
+        bashrc)
+            [ "$minimum_engine_schema" -ge 2 ] ||
+                die "private companion tracked layout is invalid"
+            macos_validate_bash_config "$private_root/bashrc" "$current_uid" 600
+            ;;
+        tmux.conf)
+            [ "$minimum_engine_schema" -ge 2 ] ||
+                die "private companion tracked layout is invalid"
+            macos_validate_tmux_config "$private_root/tmux.conf" "$current_uid" 600
             ;;
         hosts/*.conf)
             tracked_name=${tracked_path#hosts/}
@@ -105,6 +117,19 @@ if git -C "$private_root" ls-files --error-unmatch ssh_config \
     >/dev/null 2>&1; then
     ssh_payload_state=present
 fi
+if git -C "$private_root" ls-files --error-unmatch bashrc \
+    >/dev/null 2>&1; then
+    bash_payload_state=present
+fi
+if git -C "$private_root" ls-files --error-unmatch tmux.conf \
+    >/dev/null 2>&1; then
+    tmux_payload_state=present
+fi
+case "$minimum_engine_schema:$ssh_payload_state:$bash_payload_state:$tmux_payload_state" in
+    1:absent:absent:absent|1:present:absent:absent) ;;
+    2:absent:absent:absent|2:present:present:present) ;;
+    *) die "private companion payload set is incomplete or incompatible" ;;
+esac
 [ -z "$(git -C "$private_root" status --porcelain --untracked-files=normal)" ] ||
     die "private companion checkout is not clean"
 
@@ -114,8 +139,10 @@ capability_groups=$(macos_manifest_get "$host_manifest" capability_groups)
 extra_formulae=$(macos_manifest_get "$host_manifest" extra_formulae)
 
 printf '%s\n' \
-    "MACOS_PRIVATE_PROFILE status=valid schema=$private_schema engine_schema=$public_schema" \
+    "MACOS_PRIVATE_PROFILE status=valid schema=$private_schema engine_schema=$engine_schema" \
     "SELECTION baseline=$public_baseline capability_groups=$(macos_token_count "$capability_groups") extra_formulae=$(macos_token_count "$extra_formulae")" \
     "PUBLIC_FORMULAE count=$(macos_token_count "$managed_formulae")" \
     "SSH_PAYLOAD state=$ssh_payload_state values=not-emitted" \
+    "BASH_PAYLOAD state=$bash_payload_state values=not-emitted" \
+    "TMUX_PAYLOAD state=$tmux_payload_state values=not-emitted" \
     'END private_profile values=not-emitted'

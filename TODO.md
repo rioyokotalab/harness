@@ -50,12 +50,17 @@ and compact historical pointers here. Next free ID: T-269.
 
 ## Next resume checkpoint
 
-Resume T-268 in `executing`; D1–D10 and SSH-sync S1–S10 are frozen, and the
-generic SSH engine is published at `d5ebb33`. The next T-268 action is a
-separate owner-started private `office` seed plan; revalidate locally and
-obtain separate apply authority before publishing a private payload or changing
-the live Mac config. Independently resume T-191 after the first
-Sunday eligibility. Fetch and prove a clean fleet, then query only the seven
+Resume T-268 in `executing`. D1–D14 are frozen and the generic public
+SSH/Bash/tmux configuration-bundle engine is implemented on
+`agent/t268-shell-tmux-sync-plan`. The public baseline remains exactly readable
+by deployed engine 1; engine 2 is an internal capability. Focused tests and a
+normal clean clone pass the complete portable phase-one, ShellCheck warning,
+diff, public-repository/privacy, and repository-independence gates. Fetch and
+integrate current `origin/main`, publish through the protected task-PR
+workflow, then guarded-sync only clean managed harness checkouts. Stop before
+private companion access, a pilot seed, live Mac mutation, or active-session
+reload. Independently resume T-191 after
+the first Sunday eligibility. Fetch and prove a clean fleet, then query only the seven
 captured IDs below through their declared native scheduler routes. Do not infer
 absence from a failed query, and do not cancel, replace, or duplicate a delayed
 job. T-196 remains blocked until T-191 reaches eight successful weekly chains,
@@ -164,9 +169,11 @@ upgrade stage is separate from these migrations.
 
 **Decision D2:** selected a separate private Git companion as the authoritative
 desired-state layer. It will version curated baseline selections, schema, and
-opaque host deltas only; copied dotfiles/configuration, observed inventories,
-live facts, transactions, credentials, and secrets are prohibited. Public and
-private repositories fast-forward independently, but their engine/schema
+opaque host deltas. S1–S10 first added the exact SSH payload exception;
+D11–D14 later expanded it to the exact atomic SSH, private Bash-fragment, and
+complete-tmux payload set. Other copied configuration, observed inventories,
+live facts, transactions, credentials, and secrets remain prohibited. Public
+and private repositories fast-forward independently, but their engine/schema
 compatibility must pass before any machine mutation. Partial repository update
 is retry-safe and never permits partial apply. Creating/configuring/publishing
 the private remote remains a separate execution authority boundary.
@@ -226,9 +233,10 @@ on each Mac and fast-forward-only catch-up. Runtime state is never pushed.
 Repository creation/name, authentication/remotes, and publication remain
 separate external authority checks during execution.
 
-**Final decision audit:** D1–D10 are internally consistent and no material
-design input remains. The frozen order is public schema/private contract,
-long-gap updater, Darwin portability and observation, strict resolver,
+**Original decision audit:** D1–D10 are internally consistent for the completed
+CLI/Bash-launcher stages and published SSH-only S1–S10 engine. The frozen order
+is public schema/private contract, long-gap updater, Darwin portability and
+observation, strict resolver,
 plan/doctor/transactions, bounded Homebrew and Bash support, synthetic and
 Linux regression validation, local pilot observation and staged rollback, a
 long-gap drill, then one-at-a-time rollout. Privacy-negative tests precede any
@@ -917,6 +925,123 @@ private. Obtain separate authority before `--seed --apply`; after apply,
 deliberately exercise unchanged-only rollback and accepted reapply before
 planning another Mac. Do not start the `local`-to-`t4` command from the login
 node or combine it with the Mac stage.
+
+**Shell/tmux sync PIE checkpoint (2026-07-19):** the owner paused that private
+seed and requested synchronization of `.bashrc` and `tmux.conf` as well. Safe
+repository discovery found two ownership constraints. First, the pilot's
+`.bashrc` is already transactionally modified by `harness macos-bash` only to
+append a thin public loader while preserving all other bytes, metadata, and
+machine-local content. Second, the cross-platform policy already requires
+portable tmux configuration to use a sourced fragment with local overrides,
+and explicitly forbids replacing complete Linux/HPC `.bashrc` files because
+site startup and owner-only state must remain local. No tracked tmux
+configuration has yet been implemented. Discovery inspected only public
+repository policy and code; it did not inspect a live `.bashrc`, `.tmux.conf`,
+private companion, or configuration value.
+
+The provisional execution plan, which is not authorized until the interview
+closes and the owner gives a fresh `go`, is:
+
+1. Freeze the target population (personal Macs only, or Macs plus managed
+   Linux/HPC nodes) without weakening the existing site-local Bash contract.
+2. Freeze representation per payload. Bash keeps its existing thin managed
+   loader and synchronizes a private shared fragment without replacing
+   `.bashrc`. Tmux synchronizes the complete `~/.tmux.conf` directly; it has no
+   loader, second runtime config, or machine-local override file.
+3. Freeze convergence granularity: recommended one atomic adopted-config set
+   per private revision, with fail-closed three-way/equal-writer handling for
+   each payload and no partial live apply. Preserve SSH's published behavior
+   and schema-v1 backward compatibility.
+4. Extend the strict private companion contract only for explicitly adopted
+   payloads. Keep credentials, histories, runtime state, plugins, generated
+   files, and observed inventories excluded; never print private bytes, paths,
+   hashes, revisions, or diffs in public output or evidence.
+5. Reconcile existing ownership transactionally. The managed `.bashrc` loader
+   remains the sole writer to `.bashrc`; synchronized Bash bytes are copied to
+   a private mode-0600 managed runtime fragment only after validation. The
+   complete tmux payload replaces only `~/.tmux.conf` atomically after strict
+   collision/metadata checks and preserves its prior image for exact unchanged-
+   only rollback. Applying configuration does not automatically re-execute the
+   current shell or reload a running tmux server.
+6. Add non-executing Bash syntax validation and select a tmux validation route
+   that cannot silently execute plugin, shell, network, or include behavior.
+   Gate the shared tmux syntax against the oldest declared supported tmux floor
+   as part of the already-recorded Core-tool compatibility task.
+7. Add synthetic tests for absent/present adoption, local-only publish,
+   remote-only catch-up from an old revision, equal no-op, multi-payload atomic
+   apply, divergence, invalid syntax, unsafe file identity/metadata, injected
+   Git and replacement failures, changed-target rollback refusal, privacy
+   leaks, machine-local override preservation, and Linux regression safety.
+8. Run focused suites, full portable phase-one validation, ShellCheck, diff and
+   public-history privacy audits, then publish through protected CI. Only after
+   publication may an owner-started pilot session run value-minimized seed
+   plans. Each private apply, rollback/reapply drill, and subsequent Mac rollout
+   retains a separate live authority gate.
+
+Owner clarification selected D11 as the four personal Macs only. D12 was first
+recorded as thin loaders for both payloads, then explicitly corrected: Bash
+keeps the existing thin `.bashrc` loader and private shared fragment, while the
+complete `~/.tmux.conf` is synchronized directly with no tmux loader or second
+runtime configuration. Linux/HPC configuration is not part of this private
+sync. The owner selected D13 as one atomic
+adopted-config set per private revision: SSH, Bash, and tmux candidates all
+validate before any live replacement, and any invalid or divergent payload
+blocks the complete apply rather than leaving partial desired state. The owner
+selected D14 so synchronized changes activate only in newly started managed
+Bash shells and newly started tmux servers. Reloading a current shell or tmux
+server is a separate explicit manual action and never part of catch-up apply.
+
+**Amended decision audit:** D11–D14 are resolved and internally consistent with
+D1–D10 and SSH S1–S10. The frozen design is four-Mac-only pull synchronization,
+the existing thin `.bashrc` loader plus private Bash fragment, direct complete
+`~/.tmux.conf` synchronization with no second runtime config, one atomic
+SSH/Bash/tmux desired-state set per private revision, fail-closed validation/
+application, exact unchanged-only rollback, and no automatic active-session
+reload. A fresh `go` authorizes implementation, synthetic validation,
+protected publication, and required clean managed-checkout synchronization of
+generic public code. It does not authorize reading or publishing private
+configuration, running the `office` seed, mutating a live Mac, reloading active
+sessions, or applying a private payload; those remain later owner-started and
+separately reviewed authority gates.
+
+**Execution authorization (2026-07-19):** the owner gave the fresh `go` after
+the corrected D12 audit. Generic public schema, reconciler, loaders, synthetic
+tests, documentation, protected publication, and required clean-checkout
+synchronization are authorized. Private companion access, live configuration
+inspection or mutation, pilot seed/apply, and active-session reload remain
+explicitly excluded.
+
+**Generic bundle implementation checkpoint (2026-07-19):**
+`harness macos-config-sync` now treats repository-root `ssh_config`, `bashrc`,
+and `tmux.conf` as one engine-2 private bundle. Bash retains the published thin
+`.bashrc` loader and reads only the synchronized owner-only fragment in a new
+managed interactive shell; tmux has one complete live `~/.tmux.conf` and no
+loader or second runtime file. The reconciler supports explicit seed/adopt,
+same-content convergence, local publication, remote pull, failed-push retry,
+mode normalization, divergence refusal, one three-file/state transaction, and
+unchanged-only rollback. It never reloads an active shell or tmux server.
+
+Validation rejects partial/unknown private trees, unsafe metadata, files over
+1 MiB, private-key markers, credential-like assignments, invalid Bash, and
+invalid tmux. Tmux uses documented `source-file -n` on an isolated disposable
+server; synthetic `run-shell` sentinels prove parsing does not execute them.
+Injected private replacement, private commit, and third-live-file replacement
+failures unwind to clean exact preimages. The frozen engine-1 public baseline
+regression passes. A Mac still on engine 1 after bundle publication must first
+perform the documented public-only clean Git fast-forward, because the old
+coupled updater validates its private target before public handoff; it can then
+directly catch up the private checkout with engine 2 without replaying missed
+releases.
+
+Committed implementation through `5958af0` passes focused profile, long-gap
+update, and bundle reconciliation suites. A normal clean validation clone
+passes `HARNESS_PORTABLE_CI=1 tests/test-phase1.sh`, public repository audit,
+repository independence, ShellCheck warning level, and `git diff --check`.
+No private repository, configuration value, personal Mac, package, active
+session, or live destination was read or changed. Exact next action: commit
+this ledger/documentation checkpoint, refresh the clean clone and repeat the
+full portable publication gate, fetch `origin/main`, then publish the task PR.
+Stop before any owner-private seed plan.
 
 ## Stable operational facts
 

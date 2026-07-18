@@ -173,8 +173,9 @@ rewriting the owner's existing login/non-login source precedence; an
 idempotence guard prevents duplicate loading if an owner profile already
 sources `.bashrc`. The loader is silent and inactive in non-interactive Bash.
 In an interactive Bash it only marks the managed environment and moves
-`~/.local/bin` to the front of `PATH`; it performs no Git, network, Homebrew,
-doctor, or background action.
+`~/.local/bin` to the front of `PATH`, then sources the optional regular
+non-symlink private runtime fragment managed by config sync. It performs no
+Git, network, Homebrew, doctor, or background action.
 
 Plan refuses symlinks, non-regular files, foreign owners, hard links, partial
 or duplicate markers, link collisions, and unsafe parent/state paths. Apply
@@ -187,11 +188,37 @@ their prior hash and mode. Changed owner content blocks rollback. The native
 zsh/account-shell recovery route, Terminal preferences, `/etc/shells`, `chsh`,
 zsh startup files, Keychain, and login items remain untouched.
 
+## Explicit private configuration synchronization
+
+Engine schema 2 adds one atomic private configuration bundle:
+
+```bash
+harness macos-config-sync --host LOGICAL_ID --plan
+harness macos-config-sync --host LOGICAL_ID --seed --plan
+harness macos-config-sync --host LOGICAL_ID --seed --apply
+```
+
+The first Mac seeds the complete live `~/.ssh/config`, the reviewed private
+Bash runtime fragment, and the complete live `~/.tmux.conf`. Bash retains its
+thin `.bashrc` loader; tmux has exactly one live configuration file and no
+loader. The three payloads validate and apply as one transaction. Another Mac
+with no bundle state reports `adopt-required` and needs an explicit `--adopt`
+plan/apply. Catch-up never sources a shell or reloads a running tmux server;
+changes activate only in new managed Bash processes and new tmux servers.
+
+The equal-writer protocol permits current no-op, local-only normal publication,
+remote-only fast-forward/application, same-content convergence, and prompt-free
+push retry. Any unequal local change plus remote payload advance is
+`diverged`; it never guesses a winner. Exact rollback prevalidates all three
+post-images and state before restoring any prior image. Private Git remains
+current, so reapply catches forward. The full safety contract and command
+sequence are in [`personal-macos-config-sync.md`](personal-macos-config-sync.md).
+
 ## Explicit long-gap update
 
-Whole-file SSH reconciliation is the first independent stage of an explicit
-owner-started catch-up. Run its plan before fetching targets for the general
-engine/private-policy update:
+The atomic config reconciler is the first independent stage of an explicit
+owner-started catch-up. The SSH-only command remains a legacy compatibility
+route for an engine-1 companion:
 
 ```bash
 harness macos-ssh-sync --host LOGICAL_ID --plan
@@ -239,6 +266,24 @@ fetched `origin/main`, and ancestry from the current revision. It validates the
 public engine contract and every file in the private target tree before any
 fast-forward. It never rebases, resets, force-updates, autostashes, cleans,
 removes packages, or infers desired state from installed tools.
+
+There is one deliberate bootstrap rule for a Mac still running the published
+engine-1 updater after the private companion has adopted an engine-2
+configuration bundle. Engine 1 validates the private target before its public
+handoff and therefore cannot read that newer target. On that Mac, first fetch
+and fast-forward only the clean public checkout with ordinary Git, then invoke
+the now-current updater for the public/private pair:
+
+```bash
+git -C /path/to/harness fetch origin main
+git -C /path/to/harness merge --ff-only refs/remotes/origin/main
+```
+
+This direct public fast-forward may cross any number of missed releases and
+does not touch private Git, packages, links, or live configuration. The public
+baseline remains byte-compatible with engine 1 specifically so this bootstrap
+is accepted. Do not bypass a dirty, detached, locally advanced, or
+non-fast-forward checkout; stop and review it instead.
 
 Apply repeats every gate, fast-forwards the public checkout first, hands off to
 the target engine, then fast-forwards the private checkout and writes only a

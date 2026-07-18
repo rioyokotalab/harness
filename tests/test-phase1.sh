@@ -44,6 +44,7 @@ for script in \
     "$ROOT/libexec/harness-macos-profile" \
     "$ROOT/libexec/harness-macos-update" \
     "$ROOT/libexec/harness-macos-ssh-sync" \
+    "$ROOT/libexec/harness-macos-config-sync" \
     "$ROOT/libexec/harness-macos-control" \
     "$ROOT/libexec/harness-macos-homebrew" \
     "$ROOT/libexec/harness-macos-bash" \
@@ -127,6 +128,8 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "personal macOS long-gap update focused suite"
 "$ROOT/tests/test-personal-macos-ssh-sync.sh" >/dev/null ||
     fail "personal macOS SSH-sync focused suite"
+"$ROOT/tests/test-personal-macos-config-sync.sh" >/dev/null ||
+    fail "personal macOS config-sync focused suite"
 "$ROOT/tests/test-ssh-config-mirror.sh" >/dev/null ||
     fail "fixed SSH-config mirror focused suite"
 
