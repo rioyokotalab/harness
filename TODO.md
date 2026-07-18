@@ -43,7 +43,10 @@ and compact historical pointers here. Next free ID: T-266.
 - Cross-client takeover is repository-backed: root `AGENTS.md` and `CLAUDE.md`
   share the project protocol, `.claude/CLAUDE.md` shares the global policy, and
   isolated installer/control-plane tests cover Claude guidance plus every
-  shared-skill discovery link. Chat and client auto-memory are non-authoritative.
+  shared-skill discovery link. A live 2026-07-18 preflight passed on all seven
+  environments with Claude Code 2.1.207, canonical guidance, 10/10 shared
+  skills, 34/34 managed links, and zero planned changes. Chat and client
+  auto-memory are non-authoritative.
 
 ## Next resume checkpoint
 
@@ -205,4 +208,4 @@ aggregate counts, hashes, or failure chronology is required.
 | T-262 | Active ledger compacted from 3,364 lines to the three resumable tasks; safeguard and live zero-approval ruleset documentation/payloads aligned and the complete portable suite passed. |
 | T-263 | Harness and website made operationally independent: website owns cleanup, CI, policy/audit evidence, and rootless lftp bootstrap; harness removed all website-specific ownership. Isolated clones and required CI passed; website PR #3 merged as `6f1ad83`, harness PR #7 as `f1b095c`. No deployment, live tool removal, account setting, fleet, or scheduler action ran. |
 | T-264 | Reconciled the compact active ledger and public README with the deployed seven-node control plane, backup recurrence gate, SSH-agent/session behavior, protected collaboration workflow, and harness/website independence. |
-| T-265 | Made Codex-to-Claude takeover repository-complete: added root project instructions and Claude import, explicit cross-client handoff policy, collision-before-mutation installer preflight, and focused plus transactional tests for Claude guidance/settings/skills. |
+| T-265 | Made Codex-to-Claude takeover repository-complete: added root project instructions and Claude import, explicit cross-client handoff policy, collision-before-mutation installer preflight, and focused plus transactional tests for Claude guidance/settings/skills. Live seven-environment preflight passed Claude 2.1.207, canonical guidance, 10/10 shared skills, and 34/34 managed links with no planned changes. |
