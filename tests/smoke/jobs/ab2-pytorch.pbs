@@ -1,5 +1,6 @@
 #!/bin/bash
 #PBS -N t251fab2v2
+#PBS -m n
 #PBS -q rt_HG
 #PBS -l select=1
 #PBS -l walltime=00:10:00

@@ -2,6 +2,7 @@
 set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+SITES=$ROOT/shared/skills/operate-native-hpc/references/sites.md
 JOB=$ROOT/tests/smoke/jobs/cpu-readiness.sh
 LOCAL=$ROOT/tests/smoke/jobs/local-cpu.slurm
 CACHE_JOB=$ROOT/tests/smoke/jobs/cache-startup-readiness.sh
@@ -22,6 +23,12 @@ bash -n "$JOB" "$LOCAL" "$CACHE_JOB" "$CACHE_LOCAL" "$ACCEL_JOB" "$ACCEL_LOCAL" 
     "$MPI_JOB" "$MPI_LOCAL" "$NUMERICAL_JOB" "$NUMERICAL_LOCAL" \
     "$NUMERICAL_EPYC" "$COMPUTE_DEBUG_JOB" \
     "$AFFINITY_JOB" "$AFFINITY_LOCAL" "$AFFINITY_EPYC"
+grep -F 'Suppress PBS lifecycle email by default for every agent-run job.' "$SITES" >/dev/null
+grep -F '`#PBS -m n`' "$SITES" >/dev/null
+for pbs_job in "$ROOT"/tests/smoke/jobs/ab*.pbs; do
+    [ -f "$pbs_job" ]
+    [ "$(grep -Fxc '#PBS -m n' "$pbs_job")" -eq 1 ]
+done
 grep -Fx '#YBATCH -r thrp_1' "$LOCAL" >/dev/null
 grep -Fx '#SBATCH --time=00:05:00' "$LOCAL" >/dev/null
 grep -F 'uenv run prgenv-gnu/25.11:v1 --view=default' "$JOB" >/dev/null

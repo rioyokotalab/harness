@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-260.
+and compact historical pointers here. Next free ID: T-261.
 
 ## Current state
 
@@ -45,6 +45,26 @@ and compact historical pointers here. Next free ID: T-260.
   candidate table and audit evidence in the pre-compaction TODO history.
 
 ## Active tasks
+
+### T-260 — Disable PBS job email by default on ABCI
+
+**Phase/status:** `complete` under the owner's explicit default-policy
+request. Every agent-run PBS Pro job on `ab` or `ab2` must suppress lifecycle
+mail with `-m n` or `#PBS -m n` unless the owner explicitly requests
+notifications for that job. Apply the default to the native-HPC site guidance,
+all tracked ABCI PBS job templates, and the harness's native weekly PBS
+submission path. Do not apply PBS semantics to T4's AGE `qsub`, change any
+scheduler resource/account choice, or submit a job while implementing this
+policy.
+
+**Outcome:** the native-HPC ABCI reference now requires no-mail PBS submissions
+by default and permits notifications only by explicit owner request. All four
+tracked ABCI PBS templates contain exactly one `#PBS -m n`; the native weekly
+PBS scheduler prints and executes `qsub -m n` while T4's AGE path is unchanged.
+The fake PBS regression rejects a missing actual `-m n`, focused scheduler/HPC
+tests and skill validation pass, warning-level ShellCheck, the complete
+portable phase-1 suite, diff checks, and the public audit pass. No live job,
+scheduler state, account/resource choice, or external setting changed.
 
 ### T-259 — Restore aliases in new tmux windows
 
