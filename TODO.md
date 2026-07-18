@@ -578,6 +578,23 @@ failed transaction. Exact authority now required for one retry of this
 remaining irreversible apply. The failed transaction must be retained; no
 cleanup, rollback, Git LFS configuration, or whole-machine upgrade is implied.
 
+The owner authorized one remaining-plan retry after PR #31 passed required
+`portable-phase1` and published the refresh checkpoint as `0c18495`. The clean
+plan matched exactly. The retry created a second private mode-0600 failed
+transaction and reproduced the same Homebrew internal bottle-tab exception on
+the first shared dependency; it changed no additional selected formula. The
+current bounded plan remains five installs, three upgrades, 12 shared
+dependencies, and zero unmanaged selected-root dependents. Read-only diagnosis
+found the Homebrew engine itself on a clean legacy tracked branch at version
+5.0.7, 3,380 commits behind the current remote 6.x head. The earlier `brew
+update` refreshed taps but failed to advance the engine because its expected
+remote ref was then unavailable. A direct fetch now proves the current engine
+is a strict ancestor of both remote default refs and the worktree is clean.
+Exact authority now required for a Homebrew-repository `git merge --ff-only`
+to the already fetched tracked remote head, followed by version and bounded
+read-only-plan validation. Do not use reset, rebase, update-reset, reinstall,
+cache deletion, package retry, or transaction cleanup.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
