@@ -19,7 +19,6 @@ codex|codex|pinned-user
 claude|claude|pinned-user
 rclone|rclone|pinned-user
 restic|restic|system-or-pinned-user-exact-0.19.1
-lftp|lftp|local-system-or-pinned-ubuntu24.04|local
 tectonic|tectonic|pinned-user
 ninja|ninja|system-or-pinned-user
 shellcheck|shellcheck|system-or-pinned-user-exact-0.11.0

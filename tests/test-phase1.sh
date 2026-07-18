@@ -58,6 +58,7 @@ for script in \
     "$ROOT/shared/skills/onboard-mirrored-node/scripts/onboard-preflight" \
     "$ROOT/tests/guarded-test-cleanup.sh" \
     "$ROOT/tests/test-github-rulesets.sh" \
+    "$ROOT/tests/test-repository-independence.sh" \
     "$ROOT/tests/test-remote-session.sh" \
     "$ROOT/tests/test-safety-guards.sh" \
     "$ROOT/tests/test-ssh-agent-profile.sh" \
@@ -91,6 +92,8 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "interactive safety-guard focused suite"
 "$ROOT/tests/test-github-rulesets.sh" >/dev/null ||
     fail "GitHub ruleset payload focused suite"
+"$ROOT/tests/test-repository-independence.sh" >/dev/null ||
+    fail "repository independence focused suite"
 
 "$ROOT/tests/test-restic-schedule.sh" >/dev/null ||
     fail "Restic schedule focused suite"
@@ -586,10 +589,6 @@ grep 'KEEP tool=node command=node' "$TEMP_DIR/plan-local.out" >/dev/null ||
     fail "exact pinned Node aggregate plan"
 grep 'KEEP tool=npm command=npm' "$TEMP_DIR/plan-local.out" >/dev/null ||
     fail "exact pinned npm aggregate plan"
-if grep 'tool=lftp' "$TEMP_DIR/plan-al.out" >/dev/null; then
-    fail "local-only lftp leaked into remote aggregate plan"
-fi
-
 sed 's/^arch=x86_64$/arch=aarch64/' "$ROOT/tests/fixtures/local.facts" \
     >"$TEMP_DIR/wrong-arch.facts"
 if "$HARNESS" doctor --host local --facts "$TEMP_DIR/wrong-arch.facts" \
@@ -639,22 +638,6 @@ HOME="$TEMP_DIR/shellcheck-plan-home" "$HARNESS" tool --host al --name shellchec
 grep 'sha256=68a8133197a50beb8803f8d42f9908d1af1c5540d4bb05fdfca8c1fa47decefc' \
     "$TEMP_DIR/shellcheck-arm-plan.out" >/dev/null ||
     fail "ShellCheck AArch64 checksum plan"
-
-mkdir -p "$TEMP_DIR/lftp-plan-home"
-sed 's/^tool_lftp=present$/tool_lftp=absent/' \
-    "$ROOT/tests/fixtures/local.facts" >"$TEMP_DIR/lftp-absent.facts"
-HOME="$TEMP_DIR/lftp-plan-home" "$HARNESS" tool --host local --name lftp \
-    --facts "$TEMP_DIR/lftp-absent.facts" --plan \
-    >"$TEMP_DIR/lftp-plan.out"
-grep 'sha256=60140fcd971e86f0be1cea9d206a4cdf9baead70cb65adcc09403c6294290b72' \
-    "$TEMP_DIR/lftp-plan.out" >/dev/null || fail "lftp package checksum plan"
-grep 'EXTRACT format=deb member=./usr/bin/lftp binary=lftp' \
-    "$TEMP_DIR/lftp-plan.out" >/dev/null || fail "lftp exact package member plan"
-if HOME="$TEMP_DIR/lftp-plan-home" "$HARNESS" tool --host al --name lftp \
-    --facts "$ROOT/tests/fixtures/al.facts" --plan \
-    >"$TEMP_DIR/lftp-remote-plan.out" 2>&1; then
-    fail "lftp artifact accepted a remote host"
-fi
 
 mkdir -p "$TEMP_DIR/rclone-plan-home"
 HOME="$TEMP_DIR/rclone-plan-home" "$HARNESS" tool --host rc --name rclone \
@@ -970,18 +953,6 @@ tar -czf "$shellcheck_fixture_archive" -C "$TEMP_DIR/shellcheck-fixture" \
     shellcheck-v0.11.0/shellcheck
 shellcheck_fixture_hash=$(sha256sum "$shellcheck_fixture_archive" | awk '{print $1}')
 sed -i "s/b7af85e41cc99489dcc21d66c6d5f3685138f06d34651e6d34b42ec6d54fe6f6/$shellcheck_fixture_hash/" \
-    "$test_repo/tools/artifacts.tsv"
-lftp_fixture_root=$TEMP_DIR/lftp-fixture-root
-lftp_fixture_archive=$TEMP_DIR/lftp-fixture.deb
-mkdir -p "$lftp_fixture_root/usr/bin"
-printf '%s\n' \
-    '#!/bin/sh' \
-    'echo "LFTP | Version 4.9.2 | fixture Ubuntu package"' \
-    >"$lftp_fixture_root/usr/bin/lftp"
-chmod 755 "$lftp_fixture_root/usr/bin/lftp"
-tar -cf "$lftp_fixture_archive" -C "$lftp_fixture_root" ./usr/bin/lftp
-lftp_fixture_hash=$(sha256sum "$lftp_fixture_archive" | awk '{print $1}')
-sed -i "s/60140fcd971e86f0be1cea9d206a4cdf9baead70cb65adcc09403c6294290b72/$lftp_fixture_hash/" \
     "$test_repo/tools/artifacts.tsv"
 sqlite_fixture_dir=$TEMP_DIR/sqlite-fixture
 sqlite_fixture_root=$sqlite_fixture_dir/sqlite-amalgamation-3530300
@@ -1628,40 +1599,6 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$shellcheck_transaction" \
     fail "ShellCheck rollback left stable link"
 [ ! -e "$test_home/.local/opt/shellcheck/0.11.0/linux-x86_64" ] ||
     fail "ShellCheck rollback left artifact directory"
-
-# Exercise the local-only checksum-pinned Ubuntu package transaction.
-HOME="$test_home" PATH="$fake_bin:/usr/bin:/bin" \
-    FIXTURE_ARCHIVE="$lftp_fixture_archive" \
-    "$test_repo/bin/harness" tool --host local --name lftp --apply \
-    >"$TEMP_DIR/lftp-tool-apply.out"
-lftp_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
-    "$TEMP_DIR/lftp-tool-apply.out")
-[ -n "$lftp_transaction" ] || fail "missing lftp transaction"
-grep 'NATIVE dpkg-deb --fsys-tarfile STAGING | tar -xOf - ./usr/bin/lftp > STAGING/lftp' \
-    "$TEMP_DIR/lftp-tool-apply.out" >/dev/null ||
-    fail "lftp native package extraction report"
-lftp_binary=$test_home/.local/opt/lftp/4.9.2-2ubuntu1.1/ubuntu24.04-x86_64/lftp
-"$lftp_binary" --version | grep 'Version 4.9.2' >/dev/null ||
-    fail "lftp installed version"
-HOME="$test_home" PATH="/usr/bin:/bin" \
-    "$test_repo/bin/harness" tool --host local --name lftp --plan \
-    >"$TEMP_DIR/lftp-tool-repeat.out"
-grep 'KEEP command=lftp source=managed-artifact' \
-    "$TEMP_DIR/lftp-tool-repeat.out" >/dev/null ||
-    fail "lftp managed package plan"
-cp -p "$lftp_binary" "$TEMP_DIR/original-lftp-binary"
-printf '%s\n' tampered >>"$lftp_binary"
-if HOME="$test_home" "$test_repo/bin/harness" rollback "$lftp_transaction" \
-    >"$TEMP_DIR/refused-lftp-rollback.out" 2>&1; then
-    fail "lftp rollback accepted changed binary"
-fi
-cp -p "$TEMP_DIR/original-lftp-binary" "$lftp_binary"
-HOME="$test_home" "$test_repo/bin/harness" rollback "$lftp_transaction" \
-    >"$TEMP_DIR/lftp-tool-rollback.out"
-[ ! -e "$test_home/.local/bin/lftp" ] && [ ! -L "$test_home/.local/bin/lftp" ] ||
-    fail "lftp rollback left stable link"
-[ ! -e "$test_home/.local/opt/lftp/4.9.2-2ubuntu1.1/ubuntu24.04-x86_64" ] ||
-    fail "lftp rollback left artifact directory"
 
 # Exercise the checksum-pinned source build, tamper refusal, and exact cleanup.
 source_bin=$TEMP_DIR/source-bin
