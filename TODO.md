@@ -27,7 +27,7 @@ and compact historical pointers here. Next free ID: T-264.
   login-node cron, user timer, retention deletion, or automatic replica job
   exists. T-191 remains verification-pending until all seven first runs pass.
 - All managed checkouts are kept clean and synchronized through guarded
-  fleet-sync; `968796f` is the latest verified fleet checkpoint. Fresh
+  fleet-sync; current published `main` is the fleet resume point. Fresh
   interactive Bash shells load shell-local destructive-command safeguards;
   child and batch shells do not. Login and shell exit perform no automatic Git
   work.
@@ -58,12 +58,13 @@ and compact historical pointers here. Next free ID: T-264.
 The 2026-07-18 resume proved all six remote checkouts clean at `d80a036`, then
 guarded-fast-forwarded and revalidated the complete fleet at `968796f`. T-210's
 two remaining ABCI jobs passed and T-210 is complete. All seven T-191 jobs are
-still captured with their exact owner/name and future eligibility. Resume T-191
-after the first Sunday eligibility by querying only the seven IDs below; do not
-infer absence from a failed query, and do not cancel, replace, or duplicate a
-delayed job. T-196 remains blocked until T-191 reaches eight successful weekly
-chains, two verified restores per node, and a current verified independent
-generation.
+still captured with their exact owner/name and future eligibility. The
+published ledger was then synchronized and revalidated across the fleet. Resume
+T-191 after the first Sunday eligibility by querying only the seven IDs below;
+do not infer absence from a failed query, and do not cancel, replace, or
+duplicate a delayed job. T-196 remains blocked until T-191 reaches eight
+successful weekly chains, two verified restores per node, and a current
+verified independent generation.
 
 ## Active tasks
 
