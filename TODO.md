@@ -3,13 +3,14 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-264.
+and compact historical pointers here. Next free ID: T-265.
 
 ## Current state
 
-- Repository: local `main` is clean. The owner authorized frequent ordinary
-  pushes for the now-public harness and website repositories; fetch before
-  work and push, preserve contributor commits, and never force-push.
+- Repository: published `main` and all managed fleet checkouts are clean and
+  synchronized. The owner authorized frequent ordinary pushes for the
+  now-public harness and website repositories; fetch before work and push,
+  preserve contributor commits, and never force-push.
 - Managed environments: `local`, `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`.
   `abci_login` and `alps_login` are transports; `github` and `web` are
   services. Retired `si` is not a target.
@@ -40,31 +41,14 @@ and compact historical pointers here. Next free ID: T-264.
   state; print native scheduler actions; validate proportional to risk; do not
   push without explicit authority.
 
-## Recovery priority
+## Next resume checkpoint
 
-- **T-172 — Exhaustively re-audit Git history (complete 2026-07-15):** audited
-  both repositories' reachable graphs, refs, reflogs, read-only unreachable
-  objects, historical task paths, and pre-/post-incident trees. No additional
-  recoverable pre-incident home content or lost ShellCheck implementation was
-  found. The website's eight damaged paths were already identical to commit
-  `628b53a`; harness recovery and every later delta were reconciled. Four
-  harness blobs and the website unreachable graph are superseded intermediate
-  work, not recovery candidates. The ignored T-11 payload and former owner
-  profiles remain unavailable; do not fabricate them. Git preserves the full
-  candidate table and audit evidence in the pre-compaction TODO history.
-
-## Pause/resume checkpoint
-
-The 2026-07-18 resume proved all six remote checkouts clean at `d80a036`, then
-guarded-fast-forwarded and revalidated the complete fleet at `968796f`. T-210's
-two remaining ABCI jobs passed and T-210 is complete. All seven T-191 jobs are
-still captured with their exact owner/name and future eligibility. The
-published ledger was then synchronized and revalidated across the fleet. Resume
-T-191 after the first Sunday eligibility by querying only the seven IDs below;
-do not infer absence from a failed query, and do not cancel, replace, or
-duplicate a delayed job. T-196 remains blocked until T-191 reaches eight
-successful weekly chains, two verified restores per node, and a current
-verified independent generation.
+Resume T-191 after the first Sunday eligibility. Fetch and prove a clean fleet,
+then query only the seven captured IDs below through their declared native
+scheduler routes. Do not infer absence from a failed query, and do not cancel,
+replace, or duplicate a delayed job. T-196 remains blocked until T-191 reaches
+eight successful weekly chains, two verified restores per node, and a current
+verified independent generation. T-210 is complete and must not be repeated.
 
 ## Active tasks
 
@@ -216,3 +200,4 @@ aggregate counts, hashes, or failure chronology is required.
 | T-261 | Interactive destructive-command safeguards implemented, CI-tested, and rolled out across all seven nodes at `accca9d`; completion checkpoint `d910a40`. |
 | T-262 | Active ledger compacted from 3,364 lines to the three resumable tasks; safeguard and live zero-approval ruleset documentation/payloads aligned and the complete portable suite passed. |
 | T-263 | Harness and website made operationally independent: website owns cleanup, CI, policy/audit evidence, and rootless lftp bootstrap; harness removed all website-specific ownership. Isolated clones and required CI passed; website PR #3 merged as `6f1ad83`, harness PR #7 as `f1b095c`. No deployment, live tool removal, account setting, fleet, or scheduler action ran. |
+| T-264 | Reconciled the compact active ledger and public README with the deployed seven-node control plane, backup recurrence gate, SSH-agent/session behavior, protected collaboration workflow, and harness/website independence. |
