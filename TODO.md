@@ -59,13 +59,12 @@ local checkout remains on another contributor's clean branch with
 because two read-only SSH preflights failed with public-key authentication.
 The standing renewal script was unavailable or failed its strict no-credential
 contract, so no authentication command ran. This does not block the independent
-pilot plan. In an owner-started pilot-Mac session, first ensure the
-public checkout is current (use the documented public-only engine-1 bootstrap
-if necessary), review `docs/personal-macos-config-sync.md`, prepare all three
-private live candidates without exposing their values, and run only
-`harness macos-config-sync --host LOGICAL_ID --seed --plan`. Separate authority
-is required before seed apply, rollback/reapply, another Mac, or active-session
-reload. Independently resume T-191 after
+pilot plan. From the pilot's clean public harness root, run exactly:
+`git fetch origin main && git merge --ff-only refs/remotes/origin/main`, then
+`./bin/harness macos-pilot-plan --host LOGICAL_ID`. The helper performs the
+owner-guided Bash curation, validates all three live candidates, and runs seed
+plan only. Separate authority is required before seed apply, rollback/reapply,
+another Mac, or active-session reload. Independently resume T-191 after
 the first Sunday eligibility. Fetch and prove a clean fleet, then query only the seven
 captured IDs below through their declared native scheduler routes. Do not infer
 absence from a failed query, and do not cancel, replace, or duplicate a delayed
@@ -1063,7 +1062,7 @@ the declared AL certificate, rerun guarded fleet-sync plan/apply from
 `al` only; first revalidate that its checkout is still clean and that no
 transfer artifact exists.
 
-**Pilot command simplification (implementation pending publication):** the
+**Pilot command simplification (published 2026-07-19):** the
 owner requested the minimum runnable surface while already in the pilot
 checkout. One new interactive command, `harness macos-pilot-plan --host
 LOGICAL_ID`, performs the public clean fast-forward and target-engine handoff,
@@ -1071,8 +1070,11 @@ requires private Git clean/current without merging it, opens only `.bashrc` and
 the private Bash fragment in isolated Vim for owner curation, validates the
 three live candidates without executing them, and runs seed plan only. It has
 no apply option. Synthetic coverage proves the fragment is curated, private
-Git remains unchanged, and the final authority boundary is explicit. Publish
-this helper through protected CI before asking the pilot to run it.
+Git remains unchanged, and the final authority boundary is explicit. Protected
+PR #45 passed required `portable-phase1` run `29665301562`, job `88134632579`,
+in 2m4s and squash-merged as published `main`
+`1606f2a5311dbf48bcbeb1d54a86e98a1d858a7f`. No private configuration or live
+Mac was accessed during implementation or publication.
 
 ## Stable operational facts
 
