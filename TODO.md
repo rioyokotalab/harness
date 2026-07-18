@@ -518,6 +518,24 @@ Exact next action: publish the adapter/docs/test correction, require
 The expected remaining selected-root dependent must be explicitly selected or
 deferred by the owner before any separately authorized formula apply.
 
+PR #27 passed required `portable-phase1` and published the dependency-scope
+redesign as `ca28a73`. The clean native read-only plan now completes its exact
+dry-runs and reports six selected installs, two selected upgrades, 12 shared
+dependencies preserved, and exactly one direct selected-root dependent; it
+then exits blocked before transaction or mutation. The dependent's name and
+selection remain private. Exact decision now required: explicitly add that
+formula to private desired intent because the owner wants it maintained, or
+leave intent unchanged and defer Homebrew convergence. Installed state alone
+must not decide.
+
+The owner explicitly selected the one direct dependent for management. Its
+name remains private. The strict companion now has one extra formula, is clean
+on `main`, validates against schema v1 with zero capability groups, and is
+pushed to its private origin. No package or dependency changed. Exact next
+action after this value-free checkpoint publishes: run the clean native
+Homebrew plan again, review its exact selected/dependency/dry-run scope, and
+request separate authority before the irreversible apply.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
