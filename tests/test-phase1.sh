@@ -59,6 +59,7 @@ for script in \
     "$ROOT/tests/guarded-test-cleanup.sh" \
     "$ROOT/tests/test-github-rulesets.sh" \
     "$ROOT/tests/test-claude-takeover.sh" \
+    "$ROOT/tests/test-local-mpi-profile.sh" \
     "$ROOT/tests/test-repository-independence.sh" \
     "$ROOT/tests/test-remote-session.sh" \
     "$ROOT/tests/test-safety-guards.sh" \
@@ -97,6 +98,8 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "repository independence focused suite"
 "$ROOT/tests/test-claude-takeover.sh" >/dev/null ||
     fail "Claude takeover focused suite"
+"$ROOT/tests/test-local-mpi-profile.sh" >/dev/null ||
+    fail "local MPI profile focused suite"
 
 "$ROOT/tests/test-restic-schedule.sh" >/dev/null ||
     fail "Restic schedule focused suite"

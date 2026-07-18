@@ -74,13 +74,20 @@ umask 077
     tests/smoke/jobs/multinode-mpi-readiness.sh \
     tests/smoke/jobs/shared-executable-visibility.sh \
     tests/smoke/jobs/source-contract.sh \
+    shell/module-stack.sh \
     tests/guarded-test-cleanup.sh \
     profiles/hpc-multinode-mpi-routes.tsv \
     "profiles/hosts/$host.conf"
 case $host in al) expected_arch=aarch64 ;; *) expected_arch=x86_64 ;; esac
 [ "$(uname -m)" = "$expected_arch" ] || exit 2
 case $host in
-    local|al)
+    local)
+        [ -n "${SLURM_JOB_ID:-}" ] || exit 2
+        [ "${SLURM_JOB_NUM_NODES:-}" = 2 ] || exit 2
+        # shellcheck source=/dev/null
+        . "$root/shell/module-stack.sh" local
+        ;;
+    al)
         [ -n "${SLURM_JOB_ID:-}" ] || exit 2
         [ "${SLURM_JOB_NUM_NODES:-}" = 2 ] || exit 2
         ;;

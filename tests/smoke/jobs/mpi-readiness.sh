@@ -75,8 +75,8 @@ umask 077
 printf 'GATE host=%s kind=%s run=%s\n' "$host" "$gate" "$run_tag"
 case $host in
     local)
-        module unload openmpi/5.0-cuda-12.8 >/dev/null 2>&1 || true
-        module load openmpi/5.0-cuda-12.8
+        # shellcheck source=/dev/null
+        . "$root/shell/module-stack.sh" local
         ;;
     ab|ab2)
         module unload hpcx/2.26 >/dev/null 2>&1 || true

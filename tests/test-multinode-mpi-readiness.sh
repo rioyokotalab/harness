@@ -20,6 +20,8 @@ do
 done
 for token in \
     'source-contract.sh' \
+    'shell/module-stack.sh' \
+    '. "$root/shell/module-stack.sh" local' \
     '[ "${SLURM_JOB_NUM_NODES:-}" = 2 ]' \
     'build_root=$state_root' \
     '.$task-multinode-build-$host-$run_tag.XXXXXX' \
