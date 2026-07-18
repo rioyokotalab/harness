@@ -77,6 +77,18 @@ gates; follow those more specific rules.
 - Use the `guarded-bulk-delete` skill before any command can recursively delete
   a tree or expand deletion to multiple paths.
 
+## Cross-client handoff
+
+- Make unfinished work resumable from the repository alone. Git, the closest
+  instruction files, and the declared task ledger are authoritative; chat
+  history, client summaries, and Claude auto-memory are optional context only.
+- At takeover, inspect the branch, working tree, recent commits, ledger, and
+  mutable external state before continuing. Resume the recorded next action
+  rather than reconstructing intent from conversation.
+- At handoff, record verified results, exact identifiers, failures and retry
+  safety, modified files, validation already run, remaining checks, the next
+  executable action, and any authority required.
+
 ## Promote reusable configuration
 
 During and after work in any repository, evaluate whether a correction,

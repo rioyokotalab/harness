@@ -34,25 +34,57 @@ link_path() {
     ln -s "$source_path" "$destination"
 }
 
-link_path "$ROOT/.codex/AGENTS.md" "$CODEX_HOME/AGENTS.md" \
-    "$ROOT/codex/AGENTS.md"
-link_path "$ROOT/.codex/rules/default.rules" "$CODEX_HOME/rules/default.rules" \
-    "$ROOT/codex/rules/default.rules"
-link_path "$ROOT/.claude/CLAUDE.md" "$CLAUDE_HOME/CLAUDE.md" \
-    "$ROOT/claude/CLAUDE.md"
-link_path "$ROOT/bin/harness" "$USER_BIN/harness"
+preflight_path() {
+    source_path=$1
+    destination=$2
+    legacy_source=${3:-}
 
-for skill_path in "$ROOT"/shared/skills/*
-do
-    [ -d "$skill_path" ] || continue
-    if [ ! -f "$skill_path/SKILL.md" ]; then
-        echo "refusing skill directory without SKILL.md: $skill_path" >&2
+    if [ -L "$destination" ]; then
+        current=$(readlink "$destination")
+        [ "$current" = "$source_path" ] && return
+        [ -n "$legacy_source" ] && [ "$current" = "$legacy_source" ] && return
+        echo "refusing to replace different symlink: $destination -> $current" >&2
         exit 1
     fi
-    name=${skill_path##*/}
-    link_path "$skill_path" "$CODEX_HOME/skills/$name"
-    link_path "$skill_path" "$USER_SKILLS/$name"
-    link_path "$skill_path" "$CLAUDE_HOME/skills/$name"
+    if [ -e "$destination" ]; then
+        echo "refusing to replace existing path: $destination" >&2
+        exit 1
+    fi
+}
+
+managed_links() {
+    printf '%s|%s|%s\n' "$ROOT/.codex/AGENTS.md" "$CODEX_HOME/AGENTS.md" \
+        "$ROOT/codex/AGENTS.md"
+    printf '%s|%s|%s\n' "$ROOT/.codex/rules/default.rules" \
+        "$CODEX_HOME/rules/default.rules" "$ROOT/codex/rules/default.rules"
+    printf '%s|%s|%s\n' "$ROOT/.claude/CLAUDE.md" "$CLAUDE_HOME/CLAUDE.md" \
+        "$ROOT/claude/CLAUDE.md"
+    printf '%s|%s|\n' "$ROOT/bin/harness" "$USER_BIN/harness"
+
+    for skill_path in "$ROOT"/shared/skills/*
+    do
+        [ -d "$skill_path" ] || continue
+        if [ ! -f "$skill_path/SKILL.md" ]; then
+            echo "refusing skill directory without SKILL.md: $skill_path" >&2
+            exit 1
+        fi
+        name=${skill_path##*/}
+        printf '%s|%s|\n' "$skill_path" "$CODEX_HOME/skills/$name"
+        printf '%s|%s|\n' "$skill_path" "$USER_SKILLS/$name"
+        printf '%s|%s|\n' "$skill_path" "$CLAUDE_HOME/skills/$name"
+    done
+}
+
+links=$(managed_links)
+
+# Refuse every known collision before creating or migrating any link. This
+# keeps a late Claude or skill collision from leaving a partial installation.
+printf '%s\n' "$links" | while IFS='|' read -r source destination legacy; do
+    preflight_path "$source" "$destination" "$legacy"
+done
+
+printf '%s\n' "$links" | while IFS='|' read -r source destination legacy; do
+    link_path "$source" "$destination" "$legacy"
 done
 
 echo "Harness command and Codex/Claude discovery links installed. Start new sessions."
