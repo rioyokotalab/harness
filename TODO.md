@@ -439,6 +439,14 @@ mode changes before any formula action, then gate Homebrew and managed-Bash
 mutations independently. No package, Bash startup, login-shell, Terminal,
 Keychain, background, system, or Homebrew ownership change is authorized yet.
 
+After stage 13 published as `9417286`, guarded fleet-sync preflight verified
+the six remote managed Linux checkouts clean at `1395048`, with no transfer
+artifact collisions. Apply fast-forwarded `ab`, `ab2`, `ri`, `al`, `rc`, and
+`t4` to `9417286`; the local checkout was already at that target. A complete
+post-apply plan exited zero with all six remote hosts retained clean at the
+target and every transfer artifact absent. This synchronization changed no
+personal Mac, private companion, package, shell, scheduler, or backup state.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
