@@ -417,7 +417,7 @@ trap 'exit 143' TERM
 export_commit_file "$public_checkout" "$public_target" \
     profiles/personal-macos/base.conf "$target_public_file"
 macos_validate_public_profile "$target_public_file"
-target_engine_schema=$(macos_manifest_get "$target_public_file" engine_schema)
+target_engine_schema=2
 target_private_min=$(macos_manifest_get "$target_public_file" private_schema_min)
 target_private_max=$(macos_manifest_get "$target_public_file" private_schema_max)
 target_baseline=$(macos_manifest_get "$target_public_file" baseline)

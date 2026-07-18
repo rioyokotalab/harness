@@ -262,10 +262,9 @@ macos_validate_tmux_config() {
 macos_validate_public_profile() {
     macos_public_profile=$1
     macos_validate_manifest "$macos_public_profile" \
-        schema,engine_schema,family,private_schema_min,private_schema_max,baseline,managed_formulae \
-        schema,engine_schema,family,private_schema_min,private_schema_max,baseline,managed_formulae
+        schema,family,private_schema_min,private_schema_max,baseline,managed_formulae \
+        schema,family,private_schema_min,private_schema_max,baseline,managed_formulae
     [ "$(macos_manifest_get "$macos_public_profile" schema)" = 1 ] &&
-        [ "$(macos_manifest_get "$macos_public_profile" engine_schema)" = 2 ] &&
         [ "$(macos_manifest_get "$macos_public_profile" family)" = personal-macos ] &&
         [ "$(macos_manifest_get "$macos_public_profile" private_schema_min)" = 1 ] &&
         [ "$(macos_manifest_get "$macos_public_profile" private_schema_max)" = 1 ] &&

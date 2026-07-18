@@ -31,6 +31,21 @@ fail() {
     exit 1
 }
 
+# Engine-1 deployments validate this exact public contract before they can
+# fast-forward and re-exec the newer updater. Keep the baseline compatible so
+# very old Macs can cross the engine-1-to-engine-2 handoff in one update.
+legacy_public_profile=$TEMP_DIR/legacy-public-profile.conf
+cat >"$legacy_public_profile" <<'EOF'
+schema=1
+family=personal-macos
+private_schema_min=1
+private_schema_max=1
+baseline=macos-cli-v1
+managed_formulae=bash,git,git-lfs,tmux,ripgrep,jq,tree,shellcheck
+EOF
+cmp -s "$legacy_public_profile" "$ROOT/profiles/personal-macos/base.conf" ||
+    fail "public baseline no longer passes the frozen engine-1 contract"
+
 configure_identity() {
     git -C "$1" config user.name mac-test
     git -C "$1" config user.email mac-test.invalid

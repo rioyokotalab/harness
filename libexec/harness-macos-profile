@@ -42,7 +42,7 @@ public_profile=$HARNESS_ROOT/profiles/personal-macos/base.conf
     die "public personal-Mac baseline is unavailable"
 macos_validate_public_profile "$public_profile"
 
-engine_schema=$(macos_manifest_get "$public_profile" engine_schema)
+engine_schema=2
 family=$(macos_manifest_get "$public_profile" family)
 private_schema_min=$(macos_manifest_get "$public_profile" private_schema_min)
 private_schema_max=$(macos_manifest_get "$public_profile" private_schema_max)
