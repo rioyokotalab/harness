@@ -140,6 +140,44 @@ any downgrade, reinstall, uninstall, or dependency removal remains a separate
 exact reviewed recovery action. A converged second apply is a no-op and creates
 no transaction.
 
+## Managed Homebrew Bash
+
+`~/.local/bin/harness-bash` is a stable, network-free launcher. It resolves the
+active regular `brew`, verifies that the command matches its reported prefix,
+checks that the selected `bash` formula is installed, and resolves the Bash
+executable inside Homebrew's physical Bash cellar. With no arguments it enters
+an interactive login Bash; otherwise it passes the supplied arguments through
+unchanged. Its only Homebrew operations are local prefix and named-formula
+reads. It never updates metadata, installs or upgrades a package, edits startup
+files, or changes the account login shell.
+
+```bash
+harness macos-bash --host LOGICAL_ID --plan
+harness macos-bash --host LOGICAL_ID --apply
+harness macos-bash --rollback TRANSACTION_ID
+```
+
+The integration command manages the launcher link, a link to the public thin
+interactive loader, and one identical marker-guarded block at the end of both
+`.bash_profile` and `.bashrc`. Loading both files directly avoids assuming or
+rewriting the owner's existing login/non-login source precedence; an
+idempotence guard prevents duplicate loading if an owner profile already
+sources `.bashrc`. The loader is silent and inactive in non-interactive Bash.
+In an interactive Bash it only marks the managed environment and moves
+`~/.local/bin` to the front of `PATH`; it performs no Git, network, Homebrew,
+doctor, or background action.
+
+Plan refuses symlinks, non-regular files, foreign owners, hard links, partial
+or duplicate markers, link collisions, and unsafe parent/state paths. Apply
+hashes the exact expected append before mutation, appends in place, and never
+chmods or replaces an existing startup inode, preserving its preceding bytes,
+mode, and ACL. New startup files are mode 0600. Rollback validates both complete
+post-images and every created link/directory before mutation, then exact-unlinks
+created files or truncates existing files to their prior byte count and verifies
+their prior hash and mode. Changed owner content blocks rollback. The native
+zsh/account-shell recovery route, Terminal preferences, `/etc/shells`, `chsh`,
+zsh startup files, Keychain, and login items remain untouched.
+
 ## Explicit long-gap update
 
 Fetching is a separate, explicit step. After fetching `origin/main` in both

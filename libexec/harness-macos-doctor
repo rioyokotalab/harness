@@ -110,6 +110,30 @@ for link_name in codex_guidance codex_rules claude_guidance bash_launcher; do
     fi
 done
 
+bash_loader_destination=$HOME/.config/harness/managed/personal-macos.bash
+bash_loader_source=$HARNESS_ROOT/shell/personal-macos.bash
+if [ -L "$bash_loader_destination" ] &&
+    [ "$(readlink "$bash_loader_destination")" = "$bash_loader_source" ]; then
+    echo 'PASS required=bash_loader state=symlink'
+else
+    echo 'FAIL required=bash_loader state=missing-or-wrong expected=symlink'
+    failures=$((failures + 1))
+fi
+bash_startup_block=$HARNESS_ROOT/shell/personal-macos-startup.block
+for bash_startup_name in bash_profile bashrc; do
+    bash_startup_path=$HOME/.$bash_startup_name
+    if [ -f "$bash_startup_path" ] && [ ! -L "$bash_startup_path" ] &&
+        [ "$(macos_stat_owner "$bash_startup_path")" = "$current_uid" ] &&
+        [ "$(macos_stat_links "$bash_startup_path")" = 1 ] &&
+        macos_file_contains_exact_block_once \
+            "$bash_startup_block" "$bash_startup_path"; then
+        echo "PASS required=$bash_startup_name state=managed-block-v1"
+    else
+        echo "FAIL required=$bash_startup_name state=missing-or-wrong expected=managed-block-v1"
+        failures=$((failures + 1))
+    fi
+done
+
 public_formulae=$(macos_manifest_get "$public_profile" managed_formulae)
 public_missing=0
 for formula in $(printf '%s\n' "$public_formulae" | tr ',' ' '); do

@@ -68,6 +68,7 @@ if [ "$1" = -f ]; then
     case "$format" in
         %u) exec /usr/bin/stat -c %u -- "$1" ;;
         %Lp) exec /usr/bin/stat -c %a -- "$1" ;;
+        %l) exec /usr/bin/stat -c %h -- "$1" ;;
     esac
 fi
 exec /usr/bin/stat "$@"
@@ -193,6 +194,13 @@ grep -F 'END macos_doctor status=not-ready' \
     "$TEMP_DIR/doctor-not-ready.out" >/dev/null || fail "not-ready doctor result"
 
 ln -s "$ROOT/bin/harness-bash" "$home/.local/bin/harness-bash"
+mkdir -p "$home/.config/harness/managed"
+chmod 700 "$home/.config/harness/managed"
+ln -s "$ROOT/shell/personal-macos.bash" \
+    "$home/.config/harness/managed/personal-macos.bash"
+cp "$ROOT/shell/personal-macos-startup.block" "$home/.bash_profile"
+cp "$ROOT/shell/personal-macos-startup.block" "$home/.bashrc"
+chmod 600 "$home/.bash_profile" "$home/.bashrc"
 ready_facts=$TEMP_DIR/ready-facts.conf
 HOME="$home" SHELL=/bin/zsh BREW_LOG="$TEMP_DIR/ready-inventory.log" \
     FAKE_TREE_PRESENT=1 PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \

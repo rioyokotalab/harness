@@ -51,7 +51,7 @@ and compact historical pointers here. Next free ID: T-269.
 ## Next resume checkpoint
 
 Resume T-268 in `executing`; D1–D10 are frozen and the owner gave explicit
-`go` on 2026-07-18. Continue stage 10 from the exact next action in
+`go` on 2026-07-18. Continue stage 12 from the exact next action in
 `docs/plans/personal-macos-fleet.md`. Independently resume T-191 after the first
 Sunday eligibility. Fetch and prove a clean fleet, then query only the seven
 captured IDs below through their declared native scheduler routes. Do not infer
@@ -233,7 +233,7 @@ long-gap drill, then one-at-a-time rollout. Privacy-negative tests precede any
 Mac observation; control-plane rollback precedes package/shell stages; every
 live package or external-service action retains its separate authority gate.
 
-**Execution checkpoint:** stages 1–9 are complete. The frozen D1–D10 record is
+**Execution checkpoint:** stages 1–11 are complete. The frozen D1–D10 record is
 unchanged. Stage 2 added `harness macos-profile`, the public
 `profiles/personal-macos/base.conf`, strict companion v1 schema/example,
 synthetic v1 fixture, and `tests/test-personal-macos-profile.sh`. The resolver
@@ -313,13 +313,45 @@ refusal, and injected apply failure pass on 2026-07-18. Official Homebrew
 manpage, FAQ, Versions, and Installation guidance were revalidated on the same
 date. No live Homebrew or Mac state was read or changed.
 
-**Next:** implement stage 10 stable Homebrew Bash launcher and
-collision-refusing thin Bash integration with native-shell recovery,
-idempotence, and exact file rollback. Keep live Mac access gated on
-privacy-negative validation. Go does not itself authorize
-credentials/authentication changes, GitHub creation or publication, Homebrew
-installation/upgrades, package cleanup, background automation, or destructive
-actions.
+Stage 10 adds the network-free `harness-bash` launcher and transactional
+`harness macos-bash`. The launcher resolves a regular active Homebrew command,
+its reported prefix, the installed Bash formula, and the physical Bash cellar;
+it preserves the native account shell and performs only local prefix/version
+reads. Integration collision-checks launcher/loader links plus `.bash_profile`
+and `.bashrc`, rejects symlinks, hard links, foreign owners, unsafe parents,
+and partial/duplicate markers, and appends one identical guarded loader block
+in place. Existing startup bytes, inode, mode, and ACL are preserved; new files
+are mode 0600. The loader is silent/inactive non-interactively and only marks
+the managed interactive shell plus de-duplicates `~/.local/bin` to the front of
+`PATH`. Exact rollback validates full post-images before unlink/truncation and
+refuses later owner changes. Synthetic launcher routing, prefix/cellar refusal,
+fresh interactive behavior, non-interactive silence, no-op, exact rollback,
+changed-file, marker, symlink, hard-link, and injected partial-failure tests
+pass on 2026-07-18. Doctor now requires the loader link and both exact startup
+blocks. No Terminal preference, `/etc/shells`, `chsh`, zsh, Keychain, login
+item, background job, live Mac, or external state was accessed or changed.
+
+Stage 11 full synthetic validation passed on 2026-07-18: all seven focused
+personal-macOS suites, public-repository/privacy audit, repository independence,
+Claude takeover, the complete `tests/test-phase1.sh` including its ShellCheck
+warning gate, and `git diff --check`. Native macOS CI was not added: a hosted
+runner would either rely on mutable preinstalled Homebrew state or install
+packages during CI, while the synthetic tests already assert BSD metadata call
+shapes, prefix classes, exact native commands, transaction behavior, and
+privacy boundaries. This decision adds no external CI cost or mutable package
+action and can be revisited after pilot evidence identifies a native-only gap.
+
+**Next/authority boundary:** stage 12 must begin in an owner-started local
+Codex or Claude session inside the selected pilot Mac's public harness checkout,
+not from this cluster login node. Reconstruct this ledger there, then request
+one exact approval bundle before creating/configuring the private GitHub
+companion or changing authentication/remotes. Assign the opaque logical ID and
+private formula intent only in that private/local context. After the strict
+profile is valid, run value-minimized inventory to a mode-0600 local fact file
+and review the read-only plan; do not apply links, Homebrew, or Bash in stage
+12. Go does not itself authorize credentials/authentication changes, GitHub
+creation or publication, Homebrew installation/upgrades, package cleanup,
+background automation, or destructive actions.
 
 ## Stable operational facts
 

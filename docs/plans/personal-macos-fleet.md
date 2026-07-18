@@ -494,7 +494,19 @@ content refusal, exact rollback, and second-run no-op. Bounded Homebrew catch-up
 uses the public baseline plus explicit private formulae, refuses taps and
 unmanaged installed dependents, validates exact formula-only dry-runs, repeats
 all gates before apply, and retains local pre/post/dependency/failure evidence
-without promising package rollback. Implement stage 10 next: the stable
-Homebrew Bash launcher and collision-refusing thin Bash integration. Do not
-create or access the private GitHub repository, connect to a Mac, inspect live
-machine facts, or mutate Homebrew/shell state.
+without promising package rollback. Stage 10 is complete: the stable launcher
+resolves the physical Homebrew Bash cellar without hard-coded architecture
+prefixes, and transactional thin-loader integration preserves native-shell
+recovery, existing startup bytes/inodes/modes/ACLs, interactive idempotence,
+and non-interactive silence. Stage 11 is complete: every focused macOS suite,
+privacy/public-repository audit, repository-independence audit, Claude takeover
+test, ShellCheck gate, complete portable phase-1 suite, and diff check pass.
+A native macOS CI job was not added because it would depend on mutable hosted
+Homebrew state or install packages during CI without materially strengthening
+the fully synthetic adapter tests. Stage 12 now requires the owner to start a
+local Codex or Claude session in the public harness checkout on the selected
+pilot Mac. That session must re-read Git and `TODO.md`, obtain separate authority
+before creating/configuring the private GitHub companion, assign the opaque ID
+only privately, and capture value-minimized mode-0600 facts locally. Do not
+connect to or infer the Mac from this login node, and do not mutate Homebrew or
+shell state during observation.

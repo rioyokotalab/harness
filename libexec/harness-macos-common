@@ -21,6 +21,31 @@ macos_stat_mode() {
     esac
 }
 
+macos_stat_links() {
+    case $(uname -s) in
+        Darwin) stat -f '%l' -- "$1" ;;
+        *) stat -c '%h' -- "$1" ;;
+    esac
+}
+
+macos_file_contains_exact_block_once() {
+    macos_exact_block=$1
+    macos_exact_file=$2
+    awk '
+        NR == FNR { block[++block_lines] = $0; next }
+        { file[++file_lines] = $0 }
+        END {
+            for (start = 1; start <= file_lines - block_lines + 1; start++) {
+                exact = 1
+                for (offset = 1; offset <= block_lines; offset++)
+                    if (file[start + offset - 1] != block[offset]) exact = 0
+                if (exact) matches++
+            }
+            exit matches == 1 ? 0 : 1
+        }
+    ' "$macos_exact_block" "$macos_exact_file" >/dev/null 2>&1
+}
+
 macos_require_private_directory() {
     macos_private_directory=$1
     macos_expected_uid=$2

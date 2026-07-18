@@ -1,0 +1,6 @@
+# shellcheck shell=bash
+# >>> harness personal macOS Bash v1 >>>
+if [ -r "$HOME/.config/harness/managed/personal-macos.bash" ]; then
+    . "$HOME/.config/harness/managed/personal-macos.bash"
+fi
+# <<< harness personal macOS Bash v1 <<<
