@@ -384,6 +384,21 @@ adapter/test/ledger correction through a protected task PR, require
 mode-0600 inventory/read-only plan before declaring stage 12 complete. Stage
 13 link apply/rollback remains separately authorized and has not begun.
 
+The separately authorized GitHub-CLI bootstrap dry-run then exposed a second
+native Homebrew gap before any package mutation: current Homebrew rejects the
+rendered `--no-ask` option. The safe portable contract is now to remove that
+unsupported flag and invoke formula-only dry-run/apply through
+`env -u HOMEBREW_ASK` with `NONINTERACTIVE=1`, automatic update/cleanup and
+analytics disabled, and all existing dependency/scope gates intact. The same
+dry-run also proved the pilot's Homebrew prefix and cache/log paths are not
+writable by the current account. No suggested broad `sudo chown` or `chmod`
+ran, and `gh` was not installed through Homebrew. A checksum-verified temporary
+official GitHub CLI created and merged PR #19; required `portable-phase1`
+passed and published `main` is `504f7a8`. Exact next action: validate and
+publish the no-prompt portability correction through the protected workflow,
+then repeat the clean stage-12 inventory/read-only plan. Do not change
+Homebrew ownership or apply its rendered package commands.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

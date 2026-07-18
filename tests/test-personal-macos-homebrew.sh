@@ -98,6 +98,7 @@ case "$1" in
         fi
         ;;
     install|upgrade)
+        [ "${HOMEBREW_ASK+x}" != x ] || exit 95
         action=$1
         shift
         dry=0
@@ -105,7 +106,7 @@ case "$1" in
         while [ "$#" -gt 0 ]; do
             case "$1" in
                 --dry-run) dry=1 ;;
-                --formula|--no-ask) ;;
+                --formula) ;;
                 *) formulae="$formulae $1" ;;
             esac
             shift
@@ -204,9 +205,9 @@ if grep -E '^(update|cleanup|services|tap|bundle|list --formula$)( |$)' \
     "$plan_log" >/dev/null; then
     fail "Homebrew plan used an unscoped or prohibited command"
 fi
-grep -F -x 'install --formula --dry-run --no-ask tree' "$plan_log" >/dev/null ||
+grep -F -x 'install --formula --dry-run tree' "$plan_log" >/dev/null ||
     fail "scoped install dry-run"
-grep -F -x 'upgrade --formula --dry-run --no-ask git sqlite' \
+grep -F -x 'upgrade --formula --dry-run git sqlite' \
     "$plan_log" >/dev/null || fail "scoped upgrade dry-run"
 
 apply_home=$(make_home apply)

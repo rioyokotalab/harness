@@ -188,18 +188,20 @@ run_dry_runs() {
     if [ -n "$missing_formulae" ]; then
         # shellcheck disable=SC2086
         set -- $missing_formulae
-        HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 \
-            HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_ENV_HINTS=1 NONINTERACTIVE=1 \
-            "$brew_command" install --formula --dry-run --no-ask "$@" \
+        env -u HOMEBREW_ASK HOMEBREW_NO_AUTO_UPDATE=1 \
+            HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 \
+            HOMEBREW_NO_ENV_HINTS=1 NONINTERACTIVE=1 \
+            "$brew_command" install --formula --dry-run "$@" \
             >>"$dry_run_log" 2>&1 </dev/null ||
             die "managed Homebrew install dry-run failed"
     fi
     if [ -n "$outdated_formulae" ]; then
         # shellcheck disable=SC2086
         set -- $outdated_formulae
-        HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 \
-            HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_ENV_HINTS=1 NONINTERACTIVE=1 \
-            "$brew_command" upgrade --formula --dry-run --no-ask "$@" \
+        env -u HOMEBREW_ASK HOMEBREW_NO_AUTO_UPDATE=1 \
+            HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 \
+            HOMEBREW_NO_ENV_HINTS=1 NONINTERACTIVE=1 \
+            "$brew_command" upgrade --formula --dry-run "$@" \
             >>"$dry_run_log" 2>&1 </dev/null ||
             die "managed Homebrew upgrade dry-run failed"
     fi
@@ -415,9 +417,10 @@ if [ -n "$missing_formulae" ]; then
         >>"$apply_log"
     # shellcheck disable=SC2086
     set -- $missing_formulae
-    HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 \
-        HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_ENV_HINTS=1 NONINTERACTIVE=1 \
-        "$brew_command" install --formula --no-ask "$@" \
+    env -u HOMEBREW_ASK HOMEBREW_NO_AUTO_UPDATE=1 \
+        HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 \
+        HOMEBREW_NO_ENV_HINTS=1 NONINTERACTIVE=1 \
+        "$brew_command" install --formula "$@" \
         >>"$apply_log" 2>&1 </dev/null ||
         die "managed Homebrew install failed; automatic rollback is unavailable"
 fi
@@ -429,9 +432,10 @@ if [ -n "$outdated_formulae" ]; then
         >>"$apply_log"
     # shellcheck disable=SC2086
     set -- $outdated_formulae
-    HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 \
-        HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_ENV_HINTS=1 NONINTERACTIVE=1 \
-        "$brew_command" upgrade --formula --no-ask "$@" \
+    env -u HOMEBREW_ASK HOMEBREW_NO_AUTO_UPDATE=1 \
+        HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 \
+        HOMEBREW_NO_ENV_HINTS=1 NONINTERACTIVE=1 \
+        "$brew_command" upgrade --formula "$@" \
         >>"$apply_log" 2>&1 </dev/null ||
         die "managed Homebrew upgrade failed; automatic rollback is unavailable"
 fi

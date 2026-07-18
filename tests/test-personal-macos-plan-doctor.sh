@@ -121,9 +121,9 @@ for expected in \
     'PRIVATE capability_groups=2 extra_formulae=2 values=not-emitted' \
     'CREATE link=bash_launcher collision_check=required' \
     "HOMEBREW_METADATA authority=separate command='env HOMEBREW_NO_ANALYTICS=1 brew update'" \
-    "HOMEBREW_DRY_RUN stage=install count=1 command='env HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 brew install --formula --dry-run --no-ask tree'" \
-    "HOMEBREW_APPLY stage=install count=1 command='env HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 brew install --formula --no-ask tree'" \
-    "HOMEBREW_DRY_RUN stage=upgrade count=2 command='env HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 brew upgrade --formula --dry-run --no-ask git sqlite'" \
+    "HOMEBREW_DRY_RUN stage=install count=1 command='env -u HOMEBREW_ASK HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 brew install --formula --dry-run tree'" \
+    "HOMEBREW_APPLY stage=install count=1 command='env -u HOMEBREW_ASK HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 brew install --formula tree'" \
+    "HOMEBREW_DRY_RUN stage=upgrade count=2 command='env -u HOMEBREW_ASK HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 brew upgrade --formula --dry-run git sqlite'" \
     'END macos_plan blocked=0 package_changes=not-applied network=none'
 do
     printf '%s\n' "$plan_output" | grep -F -x "$expected" >/dev/null ||

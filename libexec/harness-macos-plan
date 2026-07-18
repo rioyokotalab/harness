@@ -223,17 +223,17 @@ EOF
 
     echo "HOMEBREW_METADATA authority=separate command='env HOMEBREW_NO_ANALYTICS=1 brew update'"
     if [ -n "$missing_formulae" ]; then
-        printf "HOMEBREW_DRY_RUN stage=install count=%s command='env HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 brew install --formula --dry-run --no-ask %s'\n" \
+        printf "HOMEBREW_DRY_RUN stage=install count=%s command='env -u HOMEBREW_ASK HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 brew install --formula --dry-run %s'\n" \
             "$(list_count "$missing_formulae")" "$missing_formulae"
-        printf "HOMEBREW_APPLY stage=install count=%s command='env HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 brew install --formula --no-ask %s'\n" \
+        printf "HOMEBREW_APPLY stage=install count=%s command='env -u HOMEBREW_ASK HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 brew install --formula %s'\n" \
             "$(list_count "$missing_formulae")" "$missing_formulae"
     else
         echo 'KEEP homebrew_install count=0'
     fi
     if [ -n "$outdated_formulae" ]; then
-        printf "HOMEBREW_DRY_RUN stage=upgrade count=%s command='env HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 brew upgrade --formula --dry-run --no-ask %s'\n" \
+        printf "HOMEBREW_DRY_RUN stage=upgrade count=%s command='env -u HOMEBREW_ASK HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 brew upgrade --formula --dry-run %s'\n" \
             "$(list_count "$outdated_formulae")" "$outdated_formulae"
-        printf "HOMEBREW_APPLY stage=upgrade count=%s command='env HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 brew upgrade --formula --no-ask %s'\n" \
+        printf "HOMEBREW_APPLY stage=upgrade count=%s command='env -u HOMEBREW_ASK HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 brew upgrade --formula %s'\n" \
             "$(list_count "$outdated_formulae")" "$outdated_formulae"
     else
         echo 'KEEP homebrew_upgrade count=0'
