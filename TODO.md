@@ -341,6 +341,16 @@ shapes, prefix classes, exact native commands, transaction behavior, and
 privacy boundaries. This decision adds no external CI cost or mutable package
 action and can be revisited after pilot evidence identifies a native-only gap.
 
+The public engine was published through protected PR #17 after required
+`portable-phase1` passed, merging as
+`a0b74a4a6936c591684325226c872f1ba02f327e`. Guarded fleet-sync then
+fast-forwarded the six clean remote managed checkouts from
+`3fa041271520162779567ba297ac7b7403ec2718` to that merge; `local` was already
+at the target. A post-apply plan verified `local`, `ab`, `ab2`, `ri`, `al`,
+`rc`, and `t4` clean at the target with every transfer artifact absent. This
+publication and fleet synchronization touched no personal Mac or private
+companion state.
+
 **Next/authority boundary:** stage 12 must begin in an owner-started local
 Codex or Claude session inside the selected pilot Mac's public harness checkout,
 not from this cluster login node. Reconstruct this ledger there, then request
