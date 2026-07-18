@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-265.
+and compact historical pointers here. Next free ID: T-266.
 
 ## Current state
 
@@ -40,6 +40,10 @@ and compact historical pointers here. Next free ID: T-265.
   credentials; never use raw recursive/bulk deletion; preserve unrelated owner
   state; print native scheduler actions; validate proportional to risk; do not
   push without explicit authority.
+- Cross-client takeover is repository-backed: root `AGENTS.md` and `CLAUDE.md`
+  share the project protocol, `.claude/CLAUDE.md` shares the global policy, and
+  isolated installer/control-plane tests cover Claude guidance plus every
+  shared-skill discovery link. Chat and client auto-memory are non-authoritative.
 
 ## Next resume checkpoint
 
@@ -201,3 +205,4 @@ aggregate counts, hashes, or failure chronology is required.
 | T-262 | Active ledger compacted from 3,364 lines to the three resumable tasks; safeguard and live zero-approval ruleset documentation/payloads aligned and the complete portable suite passed. |
 | T-263 | Harness and website made operationally independent: website owns cleanup, CI, policy/audit evidence, and rootless lftp bootstrap; harness removed all website-specific ownership. Isolated clones and required CI passed; website PR #3 merged as `6f1ad83`, harness PR #7 as `f1b095c`. No deployment, live tool removal, account setting, fleet, or scheduler action ran. |
 | T-264 | Reconciled the compact active ledger and public README with the deployed seven-node control plane, backup recurrence gate, SSH-agent/session behavior, protected collaboration workflow, and harness/website independence. |
+| T-265 | Made Codex-to-Claude takeover repository-complete: added root project instructions and Claude import, explicit cross-client handoff policy, collision-before-mutation installer preflight, and focused plus transactional tests for Claude guidance/settings/skills. |

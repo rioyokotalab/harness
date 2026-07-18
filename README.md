@@ -8,10 +8,13 @@ operation.
 
 ## Tracked
 
+- `AGENTS.md`: project-specific resume, validation, and handoff rules.
+- `CLAUDE.md`: the project-root Claude import of `AGENTS.md`.
 - `.codex/AGENTS.md`: canonical shared global working agreements.
 - `.codex/rules/default.rules`: reviewed Codex command rules.
 - `.codex/config.example.toml`: non-secret Codex settings template.
-- `.claude/CLAUDE.md`: a repository symlink to the shared working agreements.
+- `.claude/CLAUDE.md`: the Claude user-guidance source, linked to the shared
+  global working agreements.
 - `.claude/settings.example.json`: non-secret Claude settings template.
 - `shared/skills/`: reusable workflows exposed to both clients.
 - `install.sh`: idempotent, fail-closed discovery symlink installer.
@@ -30,6 +33,24 @@ The installer exposes the same global guidance as `~/.codex/AGENTS.md` and
 `~/.codex/skills/`, `~/.agents/skills/`, and `~/.claude/skills/`. It also links
 the `harness` command into `~/.local/bin/`; read-only and mutating subcommands
 remain explicitly separated and mutating commands default to plan mode.
+
+## Cross-client takeover
+
+Codex reads the root `AGENTS.md`; Claude reads the root `CLAUDE.md`, which
+imports that same project file. Claude also receives the shared personal policy
+through `.claude/CLAUDE.md`, and the installer exposes every shared skill under
+the officially supported `~/.claude/skills/` location. This follows Claude
+Code's documented [instruction hierarchy](https://code.claude.com/docs/en/memory)
+and [skill discovery](https://code.claude.com/docs/en/slash-commands).
+
+Both clients must reconstruct unfinished work from Git and [TODO.md](TODO.md),
+not from conversation history or client-local auto-memory. The project rules
+freeze the same start, validation, publication, fleet-sync, and handoff
+protocol for either client. `tests/test-claude-takeover.sh` validates the
+instruction chain, settings example, all three skill-discovery surfaces,
+idempotent installation, and collision-before-mutation behavior. The main
+control-plane test independently proves Claude guidance and skill links are
+created and transactionally rolled back with the Codex links.
 
 ## Current deployed state
 
