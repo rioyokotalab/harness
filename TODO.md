@@ -565,6 +565,19 @@ rerun the full bounded plan and request confirmation if its selected,
 dependency, or dependent scope differs; otherwise retry only the remaining
 plan while retaining the failed evidence.
 
+The owner authorized exactly `env HOMEBREW_NO_ANALYTICS=1 brew update`. After
+PR #30 passed required `portable-phase1` and published the partial-failure
+checkpoint as `b8a87bb`, that command updated the core and cask metadata and
+changed no formula. It emitted a non-fatal missing remote-main-ref diagnostic
+but completed its tap update and outdated report. The post-refresh bounded
+plan exits zero with five remaining selected installs, three selected
+upgrades, the same 12 shared dependencies, zero unmanaged selected-root
+dependents, and validated exact dry-runs. This differs from the pre-failure
+plan only by the one selected formula already installed and evidenced in the
+failed transaction. Exact authority now required for one retry of this
+remaining irreversible apply. The failed transaction must be retained; no
+cleanup, rollback, Git LFS configuration, or whole-machine upgrade is implied.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
