@@ -634,6 +634,14 @@ synthetic temporary fixture after live convergence and changed no managed
 state. The required protected Linux `portable-phase1` run remains
 authoritative and must pass before merge.
 
+PR #34 passed required `portable-phase1` and published the completed stage-14
+checkpoint as `8ad536b`. A post-merge guarded cleanup plan for the temporary
+verified GitHub CLI extraction stopped before manifest creation because the
+guarded-delete implementation requires Linux `getent`, which is unavailable
+on this Mac. No deletion fallback was used. The disposable tree remains at
+`/private/tmp/harness-gh-stage14.DACMP6`; removing it later requires a
+macOS-capable guarded-delete path, not raw recursive deletion.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
