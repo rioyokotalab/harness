@@ -13,8 +13,10 @@ require an owner choice was then limited to a scheduler cpuset/topology gate
 and a native test-only review of the local two-node MPI request. T-236 found no
 residue-free scheduler verification interface; T-251 later authorized one
 bounded actual submission instead. That local attempt passed its source
-contract but stopped at the unavailable post-restart `mpicc` route and is not
-retried. T-237's six remote routes now pass, including RC's narrow
+contract but stopped at the then-undeclared post-restart `mpicc` module route
+and is not retried. T-266 corrected future interactive and tracked batch routes
+to load the reviewed local Open MPI module explicitly. T-237's six remote
+routes now pass, including RC's narrow
 `--hint=nomultithread` v2 correction. The former local hold is cleared. Pending
 Threadripper job `91581` was exactly canceled under the owner's relocation
 direction; replacement job `91590` completed on `epyc-7502` with
@@ -41,8 +43,8 @@ downloads, a new billing route, publication, or scaling.
 
 AB and AB2's authorized full-node two-node MPI routes pass. T4's at-most-once
 full-node route stopped before launch because its compute environment could not
-locate the declared HPC-X module, while local stopped at its unavailable MPI
-compiler; neither is retried. AL retains its bounded distinct-host pass. RI and
-RC require architecture-matched project or site environments before MPI
-claims. None of these gates should be erased by ad hoc home-directory package
-installation.
+locate the declared HPC-X module, while local's historical attempt stopped
+before T-266 made the Open MPI module route explicit; neither is retried. AL
+retains its bounded distinct-host pass. RI and RC require architecture-matched
+project or site environments before MPI claims. None of these gates should be
+erased by ad hoc home-directory package installation.

@@ -65,10 +65,13 @@ scope exclusions are mandatory; they are not project or training authority.
   `sbatch` is refused, native `/usr/bin/sbatch` exposes no verify option, and
   `ybatch -d` exits before its generated temporary script is cleaned. Do not
   claim a multi-node dry run or bypass `ybatch` resource accounting.
-- Default `mpicc` passes the tracked direct singleton development smoke. Its
-  login-node Open MPI initialization reports missing CUDA components because
-  `libcuda.so.1` is allocation-only; retain that diagnostic and do not treat
-  singleton success as accelerator or multi-rank evidence.
+- The reviewed `openmpi/5.0-cuda-12.8` module supplies `mpicc` and `mpirun`;
+  they are not part of the base PATH. Managed interactive shells load that
+  module only when no MPI compiler is already selected, and tracked batch jobs
+  source `shell/module-stack.sh local` explicitly. Its login-node Open MPI
+  initialization can report missing CUDA components because `libcuda.so.1` is
+  allocation-only; retain that diagnostic and do not treat singleton success
+  as accelerator or multi-rank evidence.
 - The site-owned Docker/Podman wrapper expects its Slurm runtime directory and
   is unusable on the login node. Invoke it only inside `yrun`/`ybatch`; do not
   bypass its storage flags with `/usr/bin/podman`. The tracked job checks both

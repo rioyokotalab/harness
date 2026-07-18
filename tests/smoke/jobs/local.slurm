@@ -9,6 +9,9 @@ set -eu
 build=$(mktemp -d "${SLURM_TMPDIR:-/tmp}/harness-smoke.XXXXXX")
 cleanup=$HOME/harness/tests/guarded-test-cleanup.sh
 
+# shellcheck source=/dev/null
+. "$HOME/harness/shell/module-stack.sh" local
+
 cleanup_build() {
     status=$?
     trap - EXIT HUP INT TERM

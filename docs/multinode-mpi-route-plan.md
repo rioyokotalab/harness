@@ -11,7 +11,7 @@ of the local, AB, AB2, and T4 routes.
 
 | Node | Decision | Candidate allocation and launch | Remaining gate |
 |---|---|---|---|
-| current | terminal environment failure | `thrp_1`; 2 nodes, 2 tasks, 1 task/node; Open MPI `ppr:1:node` | job `91483` passed its source contract but compute-start `mpicc` was absent; at-most-once, no retry |
+| current | historical terminal attempt; route corrected | `thrp_1`; 2 nodes, 2 tasks, 1 task/node; Open MPI `ppr:1:node` | job `91483` stopped because compute-start `mpicc` was absent; T-266 made the reviewed module explicit for future jobs, but the at-most-once attempt is not retried |
 | AB | validated pass | `rt_HF`, `select=2:mpiprocs=1`; HPC-X with `$PBS_NODEFILE`, 1 rank/node | job `2046527.pbs1` passed with two ranks on two distinct hosts |
 | AB2 | validated pass | same as AB under group `gah51624` | job `2046531.pbs1` passed with two ranks on two distinct hosts |
 | RI | no base route | none | architecture-matched MPI environment is not selected |
@@ -67,6 +67,8 @@ visibility, and guarded zero residue. AL's existing `4224822` pass was not
 repeated. Local job `91483` and T4 job `8185316` each passed the immutable source
 contract and then stopped before MPI launch: local had no compute-start `mpicc`,
 while T4 could not locate the previously proven `ylab/hpcx/2.21.0` module.
+T-266 corrected the local route for future tracked jobs by explicitly sourcing
+the reviewed Open MPI module; it does not retroactively change job `91483`.
 Their scheduler/result status is one, their job-scoped residue is zero, and the
 at-most-once contract forbids automatic retries. RI and RC remain excluded by
 the deferred project-environment decision. The terminal machine-readable

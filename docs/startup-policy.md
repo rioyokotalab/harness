@@ -16,6 +16,13 @@ the clearer source-only interface:
 . "$HOME/harness/shell/module-stack.sh" "$HARNESS_LOGICAL_HOST"
 ```
 
+On the current node, a fresh interactive shell loads the reviewed
+`openmpi/5.0-cuda-12.8` module only when `mpicc` is otherwise absent. This
+makes the compiler available in new tmux windows without replacing an MPI
+toolchain the owner already selected. Tracked local batch jobs source the same
+module stack explicitly; they never rely on an interactive shell's exported
+PATH.
+
 The current node's local-only `al` alias stays in its live `.bashrc`. It is not
 tracked, copied, hashed, or included in transaction state. Other safe aliases
 are common across all nodes. Site-only aliases remain in the relevant live
