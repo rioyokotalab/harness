@@ -50,12 +50,14 @@ and compact historical pointers here. Next free ID: T-269.
 
 ## Next resume checkpoint
 
-Resume T-268 in `executing`; D1–D10 and SSH-sync S1–S10 are frozen, and the
-generic SSH engine is published at `d5ebb33`. The next T-268 action is a
-separate owner-started private `office` seed plan; revalidate locally and
-obtain separate apply authority before publishing a private payload or changing
-the live Mac config. Independently resume T-191 after the first
-Sunday eligibility. Fetch and prove a clean fleet, then query only the seven
+Resume T-268 in `interviewing`. D1–D10 and the already published SSH-sync
+S1–S10 contract remain frozen, but before the first private `office` seed the
+owner requested that `.bashrc` and `tmux.conf` synchronization be designed
+through a fresh PIE decision cycle. No personal configuration has been read,
+copied, or changed for this expansion. Resolve D11–D14 one question at a time,
+freeze the amended plan, and wait for a fresh explicit `go` before implementing
+the generic engine or running a private seed. Independently resume T-191 after
+the first Sunday eligibility. Fetch and prove a clean fleet, then query only the seven
 captured IDs below through their declared native scheduler routes. Do not infer
 absence from a failed query, and do not cancel, replace, or duplicate a delayed
 job. T-196 remains blocked until T-191 reaches eight successful weekly chains,
@@ -127,7 +129,7 @@ separate `prune` commands.
 
 ### T-268 — Private personal macOS fleet
 
-**Phase/status:** `executing`. Design a separate personal-macOS target
+**Phase/status:** `interviewing`. Design a separate personal-macOS target
 family that reuses harness safety and control-plane principles without adding
 four private machines to the public Linux/HPC profiles. Generic code, schemas,
 synthetic fixtures, tests, and any deliberately selected non-sensitive CLI
@@ -226,9 +228,10 @@ on each Mac and fast-forward-only catch-up. Runtime state is never pushed.
 Repository creation/name, authentication/remotes, and publication remain
 separate external authority checks during execution.
 
-**Final decision audit:** D1–D10 are internally consistent and no material
-design input remains. The frozen order is public schema/private contract,
-long-gap updater, Darwin portability and observation, strict resolver,
+**Original decision audit:** D1–D10 are internally consistent for the completed
+CLI/Bash-launcher stages and published SSH-only S1–S10 engine. The frozen order
+is public schema/private contract, long-gap updater, Darwin portability and
+observation, strict resolver,
 plan/doctor/transactions, bounded Homebrew and Bash support, synthetic and
 Linux regression validation, local pilot observation and staged rollback, a
 long-gap drill, then one-at-a-time rollout. Privacy-negative tests precede any
@@ -917,6 +920,66 @@ private. Obtain separate authority before `--seed --apply`; after apply,
 deliberately exercise unchanged-only rollback and accepted reapply before
 planning another Mac. Do not start the `local`-to-`t4` command from the login
 node or combine it with the Mac stage.
+
+**Shell/tmux sync PIE checkpoint (2026-07-19):** the owner paused that private
+seed and requested synchronization of `.bashrc` and `tmux.conf` as well. Safe
+repository discovery found two ownership constraints. First, the pilot's
+`.bashrc` is already transactionally modified by `harness macos-bash` only to
+append a thin public loader while preserving all other bytes, metadata, and
+machine-local content. Second, the cross-platform policy already requires
+portable tmux configuration to use a sourced fragment with local overrides,
+and explicitly forbids replacing complete Linux/HPC `.bashrc` files because
+site startup and owner-only state must remain local. No tracked tmux fragment
+has yet been implemented. Discovery inspected only public repository policy
+and code; it did not inspect a live `.bashrc`, `.tmux.conf`, private companion,
+or configuration value.
+
+The provisional execution plan, which is not authorized until the interview
+closes and the owner gives a fresh `go`, is:
+
+1. Freeze the target population (personal Macs only, or Macs plus managed
+   Linux/HPC nodes) without weakening the existing site-local Bash contract.
+2. Freeze representation per payload: recommended private shared Bash and
+   tmux fragments behind thin managed loaders, rather than replacing opaque
+   whole startup files. Define whether machine-local override files exist and
+   ensure they are never copied or inferred.
+3. Freeze convergence granularity: recommended one atomic adopted-config set
+   per private revision, with fail-closed three-way/equal-writer handling for
+   each payload and no partial live apply. Preserve SSH's published behavior
+   and schema-v1 backward compatibility.
+4. Extend the strict private companion contract only for explicitly adopted
+   payloads. Keep credentials, histories, runtime state, plugins, generated
+   files, and observed inventories excluded; never print private bytes, paths,
+   hashes, revisions, or diffs in public output or evidence.
+5. Reconcile existing ownership transactionally. The managed `.bashrc` loader
+   remains the sole writer to `.bashrc`; synchronized desired bytes are copied
+   to private mode-0600 managed runtime files only after validation. A tmux
+   loader must collision-check and preserve any prior file with exact rollback.
+   Applying configuration does not automatically re-execute the current shell
+   or reload a running tmux server unless that is separately selected.
+6. Add non-executing Bash syntax validation and select a tmux validation route
+   that cannot silently execute plugin, shell, network, or include behavior.
+   Gate the shared tmux syntax against the oldest declared supported tmux floor
+   as part of the already-recorded Core-tool compatibility task.
+7. Add synthetic tests for absent/present adoption, local-only publish,
+   remote-only catch-up from an old revision, equal no-op, multi-payload atomic
+   apply, divergence, invalid syntax, unsafe file identity/metadata, injected
+   Git and replacement failures, changed-target rollback refusal, privacy
+   leaks, machine-local override preservation, and Linux regression safety.
+8. Run focused suites, full portable phase-one validation, ShellCheck, diff and
+   public-history privacy audits, then publish through protected CI. Only after
+   publication may an owner-started pilot session run value-minimized seed
+   plans. Each private apply, rollback/reapply drill, and subsequent Mac rollout
+   retains a separate live authority gate.
+
+Open decision register: D11 is target population (recommended: the four
+personal Macs only); D12 is whole files versus shared fragments (recommended:
+shared fragments behind thin loaders); D13 is independent payload revisions
+versus one atomic adopted-config set (recommended: atomic set); D14 is live
+activation behavior (recommended: new Bash shells and new tmux servers only,
+with manual reload separate). The next question is D11 only. The earlier
+`office` SSH seed is paused until D11–D14 are resolved and this ledger reaches
+`ready-for-go`.
 
 ## Stable operational facts
 
