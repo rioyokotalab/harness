@@ -536,6 +536,18 @@ action after this value-free checkpoint publishes: run the clean native
 Homebrew plan again, review its exact selected/dependency/dry-run scope, and
 request separate authority before the irreversible apply.
 
+PR #28 passed required `portable-phase1` and published the value-free private
+intent checkpoint as `88b8808`. The clean native Homebrew plan now exits zero:
+six selected installs, three selected upgrades, 12 shared dependencies
+preserved, zero unmanaged selected-root dependents, and both exact dry-runs
+validated. Automatic metadata update, cleanup, analytics, prompts, services,
+casks, taps, removal, and whole-machine inventory remain disabled. No package,
+dependency, or transaction changed. Exact authority now required: approve one
+irreversible `harness macos-homebrew --apply` using this frozen scope. Apply
+will repeat every checkout/profile/prefix/dependency/dependent/dry-run gate,
+retain mode-0600 pre/post/delta/log evidence, and stop on any drift; package
+rollback remains manual-review-only.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
