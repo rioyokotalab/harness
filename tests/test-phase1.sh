@@ -45,6 +45,7 @@ for script in \
     "$ROOT/libexec/harness-macos-update" \
     "$ROOT/libexec/harness-macos-ssh-sync" \
     "$ROOT/libexec/harness-macos-config-sync" \
+    "$ROOT/libexec/harness-macos-pilot-plan" \
     "$ROOT/libexec/harness-macos-control" \
     "$ROOT/libexec/harness-macos-homebrew" \
     "$ROOT/libexec/harness-macos-bash" \

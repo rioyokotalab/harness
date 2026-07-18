@@ -1,0 +1,186 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+. "$SELF_DIR/harness-macos-common"
+
+usage() {
+    echo 'Usage: harness macos-pilot-plan --host LOGICAL_ID' >&2
+}
+
+fetch_checkout() {
+    pilot_fetch_checkout=$1
+    pilot_fetch_label=$2
+    : >"$fetch_log"
+    chmod 600 "$fetch_log"
+    if GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/usr/bin/false \
+        SSH_ASKPASS=/usr/bin/false \
+        GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=15' \
+        git -C "$pilot_fetch_checkout" fetch -q origin main \
+        >"$fetch_log" 2>&1; then
+        return 0
+    fi
+    die "$pilot_fetch_label fetch failed; no configuration changed"
+}
+
+validate_public_checkout() {
+    [ "$(uname -s)" = Darwin ] || die "pilot plan requires Darwin"
+    [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
+        die "pilot plan requires a Git harness checkout"
+    [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" = \
+        "$(CDPATH='' cd -- "$HARNESS_ROOT" && pwd -P)" ] ||
+        die "pilot public checkout root is ambiguous"
+    [ "$(git -C "$HARNESS_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null)" = \
+        main ] || die "pilot public checkout is not on main"
+    [ "$(git -C "$HARNESS_ROOT" config --get branch.main.remote 2>/dev/null)" = \
+        origin ] &&
+        [ "$(git -C "$HARNESS_ROOT" config --get branch.main.merge 2>/dev/null)" = \
+            refs/heads/main ] || die "pilot public tracking is ambiguous"
+    [ "$(git -C "$HARNESS_ROOT" remote)" = origin ] ||
+        die "pilot public remote selection is ambiguous"
+    pilot_public_url_count=$(git -C "$HARNESS_ROOT" config --get-all \
+        remote.origin.url 2>/dev/null | awk 'NF { n++ } END { print n + 0 }')
+    [ "$pilot_public_url_count" -eq 1 ] ||
+        die "pilot public origin is ambiguous"
+    [ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
+        die "pilot public checkout is not clean"
+}
+
+validate_private_checkout() {
+    macos_require_private_directory "$private_root" "$current_uid"
+    macos_require_private_directory "$private_root/.git" "$current_uid"
+    macos_require_private_directory "$private_root/hosts" "$current_uid"
+    [ "$(git -C "$private_root" rev-parse --show-toplevel 2>/dev/null)" = \
+        "$(CDPATH='' cd -- "$private_root" && pwd -P)" ] ||
+        die "pilot private checkout root is ambiguous"
+    [ "$(git -C "$private_root" symbolic-ref --quiet --short HEAD 2>/dev/null)" = \
+        main ] || die "pilot private checkout is not on main"
+    [ "$(git -C "$private_root" config --get branch.main.remote 2>/dev/null)" = \
+        origin ] &&
+        [ "$(git -C "$private_root" config --get branch.main.merge 2>/dev/null)" = \
+            refs/heads/main ] || die "pilot private tracking is ambiguous"
+    [ "$(git -C "$private_root" remote)" = origin ] ||
+        die "pilot private remote selection is ambiguous"
+    pilot_private_url_count=$(git -C "$private_root" config --get-all \
+        remote.origin.url 2>/dev/null | awk 'NF { n++ } END { print n + 0 }')
+    [ "$pilot_private_url_count" -eq 1 ] ||
+        die "pilot private origin is ambiguous"
+    [ -z "$(git -C "$private_root" status --porcelain --untracked-files=normal)" ] ||
+        die "pilot private checkout is not clean"
+}
+
+logical_host=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            logical_host=$2
+            shift 2
+            ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+[ -n "$logical_host" ] || { usage; exit 2; }
+macos_private_id_is_safe "$logical_host" || die "invalid private logical identifier"
+case ${HOME:-} in /*) ;; *) die "pilot plan requires an absolute HOME" ;; esac
+
+current_uid=$(id -u)
+private_root=$HOME/.config/harness/private
+managed_directory=$HOME/.config/harness/managed
+live_bash=$managed_directory/personal-macos-private.bash
+live_startup=$HOME/.bashrc
+live_ssh=$HOME/.ssh/config
+live_tmux=$HOME/.tmux.conf
+
+fetch_log=$(mktemp "${TMPDIR:-/tmp}/harness-macos-pilot-fetch.XXXXXX") ||
+    die "cannot allocate pilot fetch log"
+chmod 600 "$fetch_log"
+cleanup_fetch_log() {
+    pilot_status=$?
+    trap - EXIT HUP INT TERM
+    [ ! -e "$fetch_log" ] || unlink "$fetch_log"
+    exit "$pilot_status"
+}
+trap cleanup_fetch_log EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+validate_public_checkout
+fetch_checkout "$HARNESS_ROOT" public
+public_target=$(git -C "$HARNESS_ROOT" rev-parse --verify refs/remotes/origin/main)
+git -C "$HARNESS_ROOT" merge-base --is-ancestor HEAD "$public_target" \
+    >/dev/null 2>&1 || die "pilot public target is not a clean fast-forward"
+public_before=$(git -C "$HARNESS_ROOT" rev-parse HEAD)
+git -C "$HARNESS_ROOT" merge --ff-only -q "$public_target" ||
+    die "pilot public fast-forward failed"
+if [ "$public_before" != "$public_target" ] &&
+    [ "${HARNESS_MACOS_PILOT_RESUMED:-0}" != 1 ]; then
+    unlink "$fetch_log"
+    trap - EXIT HUP INT TERM
+    HARNESS_MACOS_PILOT_RESUMED=1 \
+        exec "$HARNESS_ROOT/libexec/harness-macos-pilot-plan" \
+        --host "$logical_host"
+fi
+
+validate_private_checkout
+fetch_checkout "$private_root" private
+private_target=$(git -C "$private_root" rev-parse --verify refs/remotes/origin/main)
+[ "$(git -C "$private_root" rev-parse HEAD)" = "$private_target" ] ||
+    die "pilot private checkout is behind origin main; stop for update review"
+
+"$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
+    die "pilot private profile is not ready"
+
+[ -d "$managed_directory" ] && [ ! -L "$managed_directory" ] &&
+    [ "$(macos_stat_owner "$managed_directory")" = "$current_uid" ] &&
+    [ "$(macos_stat_mode "$managed_directory")" = 700 ] ||
+    die "pilot managed Bash directory is unsafe or unavailable"
+[ -f "$live_startup" ] && [ ! -L "$live_startup" ] &&
+    [ "$(macos_stat_owner "$live_startup")" = "$current_uid" ] &&
+    [ "$(macos_stat_links "$live_startup")" = 1 ] ||
+    die "pilot Bash startup file is unsafe or unavailable"
+macos_file_contains_exact_block_once \
+    "$HARNESS_ROOT/shell/personal-macos-startup.block" "$live_startup" ||
+    die "pilot Bash startup file does not contain the exact managed loader"
+
+if [ -e "$live_bash" ] || [ -L "$live_bash" ]; then
+    [ -f "$live_bash" ] && [ ! -L "$live_bash" ] &&
+        [ "$(macos_stat_owner "$live_bash")" = "$current_uid" ] &&
+        [ "$(macos_stat_links "$live_bash")" = 1 ] ||
+        die "pilot private Bash fragment is unsafe"
+else
+    umask 077
+    : >"$live_bash"
+fi
+chmod 600 "$live_bash"
+
+command -v vim >/dev/null 2>&1 || die "Vim is unavailable for pilot curation"
+printf '%s\n' \
+    'PILOT_EDIT move only Bash settings shared by all four Macs' \
+    'PILOT_EDIT keep the managed loader and machine-local settings in .bashrc' \
+    'PILOT_EDIT do not place credentials or credential assignments in the shared fragment'
+vim -u NONE -U NONE -N -n -i NONE -O "$live_startup" "$live_bash"
+
+LC_ALL=C grep '[^[:space:]]' "$live_bash" >/dev/null 2>&1 ||
+    die "pilot private Bash fragment is empty"
+[ -f "$live_startup" ] && [ ! -L "$live_startup" ] &&
+    [ "$(macos_stat_owner "$live_startup")" = "$current_uid" ] &&
+    [ "$(macos_stat_links "$live_startup")" = 1 ] ||
+    die "pilot editor left the Bash startup file unsafe"
+macos_file_contains_exact_block_once \
+    "$HARNESS_ROOT/shell/personal-macos-startup.block" "$live_startup" ||
+    die "pilot editor changed the managed Bash loader"
+command -v bash >/dev/null 2>&1 || die "Bash validator is unavailable"
+bash --noprofile --norc -n "$live_startup" >/dev/null 2>&1 ||
+    die "pilot Bash startup grammar is invalid"
+macos_validate_ssh_config "$live_ssh" "$current_uid" 600,644
+macos_validate_bash_config "$live_bash" "$current_uid" 600
+macos_validate_tmux_config "$live_tmux" "$current_uid" 600,644
+
+"$SELF_DIR/harness-macos-config-sync" --host "$logical_host" --seed --plan
+echo 'END macos_pilot_plan bundle_apply=not-requested curation=owner-edited next=separate-seed-apply-authority'

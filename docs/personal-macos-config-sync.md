@@ -81,6 +81,24 @@ The pilot first prepares and reviews all three live candidates. The Bash
 candidate is a deliberately curated private fragment; the engine never copies
 or tries to infer common commands from the rest of `.bashrc`.
 
+The first pilot can perform the complete safe preparation and seed-plan stage
+with one interactive command from the public harness root:
+
+```bash
+./bin/harness macos-pilot-plan --host LOGICAL_ID
+```
+
+The helper promptlessly fetches and clean-fast-forwards public `main`, then
+hands off to the fetched helper. It requires the private companion already
+clean and current; it fetches but never merges private Git. It opens `.bashrc`
+and the private shared fragment side-by-side in an isolated Vim without user
+plugins, swap, or history. The owner moves only settings shared by all four
+Macs, preserving the exact managed loader and machine-local settings in
+`.bashrc`. The helper then validates the complete SSH, Bash, and tmux live set
+and runs `--seed --plan`. It has no apply option and never commits, pushes, or
+applies the private bundle. Bash curation itself changes the two owner files
+and affects only subsequently started managed Bash processes.
+
 ```bash
 harness macos-config-sync --host LOGICAL_ID --plan
 harness macos-config-sync --host LOGICAL_ID --seed --plan
