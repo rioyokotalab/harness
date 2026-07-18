@@ -39,6 +39,36 @@ or mutation operation. Private profile failures collapse to `invalid`; their
 paths, values, and detailed errors remain suppressed. A live capture must be
 written under `umask 077` to the private local harness state, never committed.
 
+## Read-only plan and doctor
+
+`harness macos-plan --host LOGICAL_ID [--facts FILE]` validates a mode-0600
+fact snapshot, revalidates the strict private companion, refuses captured/live
+formula or link drift, and renders collision-aware link actions. Its only live
+Homebrew reads are scoped `brew list --formula --versions FORMULA` and
+`brew outdated --formula --quiet FORMULA...` commands with automatic metadata
+updates and analytics disabled. It never executes a rendered command.
+
+The plan shows a separately authorized explicit metadata refresh, followed by
+exact dry-run and apply commands for only missing or outdated managed formulae.
+Install and upgrade commands disable automatic update and cleanup and use
+Homebrew's formula-only, dry-run, and no-prompt flags. They do not set
+`HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK`: Homebrew documents that disabling
+that check can leave broken linkage. The later apply gate must instead inspect
+dry-run scope and stop if an unmanaged dependent would change.
+
+`harness macos-doctor --host LOGICAL_ID [--facts FILE]` emits a value-free
+ready/not-ready result. It requires a supported architecture, usable Homebrew,
+Command Line Tools, a valid private profile, the public checkout, exact managed
+link targets, all eight public formulae, and all selected private formulae.
+Private formula and capability names are reported only as counts.
+
+Command behavior was frozen against the official Homebrew manpage and FAQ on
+2026-07-18:
+
+- <https://docs.brew.sh/Manpage>
+- <https://docs.brew.sh/FAQ>
+- <https://docs.brew.sh/Versions>
+
 ## Explicit long-gap update
 
 Fetching is a separate, explicit step. After fetching `origin/main` in both

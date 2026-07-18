@@ -177,3 +177,66 @@ macos_validate_host_manifest() {
     macos_validate_token_csv \
         "$(macos_manifest_get "$macos_host_manifest" extra_formulae)" formula
 }
+
+macos_formula_key() {
+    printf '%s' "$1" | sed 's/+/p/g; s/[-@.]/_/g'
+}
+
+macos_value_is_one_of() {
+    macos_candidate=$1
+    shift
+    for macos_allowed_value do
+        [ "$macos_candidate" != "$macos_allowed_value" ] || return 0
+    done
+    return 1
+}
+
+macos_validate_fact_file() {
+    macos_fact_file=$1
+    macos_fact_profile=$2
+    macos_fact_keys=schema,family,logical_id,architecture,account_shell,homebrew,homebrew_prefix_class,command_line_tools,private_profile,harness_checkout,link_codex_guidance,link_codex_rules,link_claude_guidance,link_bash_launcher,formula_bash,formula_git,formula_git_lfs,formula_tmux,formula_ripgrep,formula_jq,formula_tree,formula_shellcheck
+    macos_fact_formulae=$(macos_manifest_get "$macos_fact_profile" managed_formulae)
+    macos_validate_manifest "$macos_fact_file" "$macos_fact_keys" "$macos_fact_keys"
+    [ "$(macos_manifest_get "$macos_fact_file" schema)" = 1 ] &&
+        [ "$(macos_manifest_get "$macos_fact_file" family)" = personal-macos ] ||
+        die "personal-Mac fact schema is incompatible"
+    macos_private_id_is_safe \
+        "$(macos_manifest_get "$macos_fact_file" logical_id)" ||
+        die "personal-Mac fact identity is malformed"
+    macos_value_is_one_of \
+        "$(macos_manifest_get "$macos_fact_file" architecture)" \
+        arm64 x86_64 other || die "personal-Mac architecture fact is malformed"
+    macos_value_is_one_of \
+        "$(macos_manifest_get "$macos_fact_file" account_shell)" \
+        zsh bash other || die "personal-Mac shell fact is malformed"
+    macos_value_is_one_of "$(macos_manifest_get "$macos_fact_file" homebrew)" \
+        present absent unusable || die "personal-Mac Homebrew fact is malformed"
+    macos_value_is_one_of \
+        "$(macos_manifest_get "$macos_fact_file" homebrew_prefix_class)" \
+        apple-silicon-default intel-default other none unknown ||
+        die "personal-Mac Homebrew prefix fact is malformed"
+    macos_value_is_one_of \
+        "$(macos_manifest_get "$macos_fact_file" command_line_tools)" \
+        present absent || die "personal-Mac developer-tools fact is malformed"
+    macos_value_is_one_of \
+        "$(macos_manifest_get "$macos_fact_file" private_profile)" \
+        valid absent invalid || die "personal-Mac private-profile fact is malformed"
+    macos_value_is_one_of \
+        "$(macos_manifest_get "$macos_fact_file" harness_checkout)" \
+        present invalid || die "personal-Mac checkout fact is malformed"
+    for macos_fact_link in link_codex_guidance link_codex_rules \
+        link_claude_guidance link_bash_launcher; do
+        macos_value_is_one_of \
+            "$(macos_manifest_get "$macos_fact_file" "$macos_fact_link")" \
+            symlink regular directory other absent ||
+            die "personal-Mac link fact is malformed"
+    done
+    printf '%s\n' "$macos_fact_formulae" | tr ',' '\n' |
+        while IFS= read -r macos_fact_formula; do
+            macos_fact_formula_key=formula_$(macos_formula_key "$macos_fact_formula")
+            macos_value_is_one_of \
+                "$(macos_manifest_get "$macos_fact_file" \
+                    "$macos_fact_formula_key")" present absent unknown ||
+                die "personal-Mac formula fact is malformed"
+        done
+}

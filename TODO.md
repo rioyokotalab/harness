@@ -266,9 +266,23 @@ refusal, BSD metadata, present/absent/unusable Homebrew, missing Command Line
 Tools, invalid profile, exact scoped Brew query, and privacy-leak tests pass,
 along with all earlier focused/audit checks on 2026-07-18.
 
-**Next:** implement stage 7 read-only macOS plan and doctor with required versus
-optional results and exact bounded native Homebrew command rendering. Keep live
-Mac access gated on privacy-negative validation. Go does not itself authorize
+Stage 7 adds `harness macos-plan` and `harness macos-doctor`. Facts are strict,
+mode-0600, private, and identity-bound. Plan revalidates actual fixed-link
+targets and scoped formula presence, refuses captured/live or unmanaged
+outdated drift, and only reads Homebrew with automatic update/analytics
+disabled. It renders a separately authorized `brew update`, then exact
+formula-only install/upgrade dry-runs and no-prompt applies with automatic
+cleanup disabled; it executes none of them. Doctor reports private selections
+only as counts. Official Homebrew manpage/FAQ/versions evidence and the reason
+not to disable dependent linkage checks are recorded in
+`docs/personal-macos.md`. Malformed/leaking facts, wrong links, formula drift,
+unmanaged outdated output, missing readiness, ready state, and implicit
+mode-0600 fact capture/cleanup pass, along with every earlier focused/audit
+check on 2026-07-18.
+
+**Next:** implement stage 8 Mac control-plane link transactions, idempotence,
+changed-target refusal, and exact rollback. Keep live Mac access gated on
+privacy-negative validation. Go does not itself authorize
 credentials/authentication changes, GitHub creation or publication, Homebrew
 installation/upgrades, package cleanup, background automation, or destructive
 actions.

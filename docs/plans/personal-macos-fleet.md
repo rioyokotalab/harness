@@ -2,7 +2,7 @@
 
 **Phase:** executing
 
-**Updated:** 2026-07-18 17:34 JST
+**Updated:** 2026-07-18 17:49 JST
 
 **Owner:** repository driver
 
@@ -105,6 +105,8 @@ Primary sources:
 
 - <https://docs.brew.sh/Installation>
 - <https://docs.brew.sh/Brew-Bundle-and-Brewfile>
+- <https://docs.brew.sh/Manpage>
+- <https://docs.brew.sh/FAQ>
 - <https://docs.brew.sh/Versions>
 - <https://support.apple.com/guide/terminal/trml113/mac>
 - <https://support.apple.com/guide/security/secddd1d86a6/web>
@@ -479,7 +481,10 @@ the Darwin-only inventory emits only the frozen value-minimized fact set, and
 the strict resolver covers all private tracked manifests. Synthetic arm64 and
 x86_64 routes, Linux refusal, present/absent/unusable Homebrew, missing Command
 Line Tools, invalid private state, scoped public-formula queries, and privacy
-leak assertions pass. Implement stage 7 next: read-only macOS plan and doctor
-with exact bounded Homebrew command rendering. Do not create or access the
-private GitHub repository, connect to a Mac, inspect live machine facts, or
-mutate Homebrew/shell state.
+leak assertions pass. Stage 7 is complete: plan and doctor strictly validate
+mode-0600 facts, revalidate live selected scope, reject fact/link/outdated
+drift, keep doctor output value-free, and render exact official formula-only
+Homebrew metadata/dry-run/apply commands without executing them. Implement
+stage 8 next: Mac control-plane link transactions with idempotence and exact
+rollback. Do not create or access the private GitHub repository, connect to a
+Mac, inspect live machine facts, or mutate Homebrew/shell state.
