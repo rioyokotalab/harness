@@ -417,6 +417,28 @@ Stage 14 Homebrew/Bash remains unauthorized, and the non-writable Homebrew
 prefix is a known blocker that must not be repaired with broad ownership or
 mode changes without a separate exact plan and authority.
 
+Stage 13 completed on 2026-07-18 under the owner's separate `proceed` authority.
+The collision plan reported 34 absent discovery links and zero blocks. The
+first apply created exactly those links with a private mode-0600 complete
+transaction; its second plan was a 34/34 no-op. Fresh non-persistent read-only
+Codex 0.144.5 and Claude Code 2.1.214 sessions each loaded canonical guidance
+and discovered 10/10 shared skills. Fresh post-apply facts and doctor passed
+architecture, Homebrew presence, Command Line Tools, private profile, public
+checkout, all Codex/Claude guidance/rule links, and zero private formulae. Its
+five not-ready results were exactly the excluded stage-14 Bash
+launcher/loader/startup blocks and six missing public formulae. No attempt was
+made to repair them. Deliberate rollback marked the first private transaction
+rolled back and restored the exact prior 34-link-create plan with no residue.
+The accepted reapply created a new private complete transaction; final plan is
+again a 34/34 no-op, and two new non-persistent read-only client sessions again
+passed canonical guidance plus 10/10 skills. Public Git contains no private
+path, logical ID, repository, transaction ID, manifest, or fact payload.
+Exact next action: request a separately reviewed stage-14 plan and authority.
+Resolve the non-writable Homebrew prefix without broad recursive ownership or
+mode changes before any formula action, then gate Homebrew and managed-Bash
+mutations independently. No package, Bash startup, login-shell, Terminal,
+Keychain, background, system, or Homebrew ownership change is authorized yet.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
