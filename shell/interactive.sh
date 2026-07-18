@@ -16,6 +16,10 @@ if [ -r "$HOME/harness/shell/common-aliases.sh" ]; then
     . "$HOME/harness/shell/common-aliases.sh"
 fi
 
+if [ -r "$HOME/harness/shell/safety-guards.sh" ]; then
+    . "$HOME/harness/shell/safety-guards.sh"
+fi
+
 # Launch one in-scope remote Codex session with a PTY. The explicit -A agrees
 # with the current node's per-host SSH policy and never copies key material.
 harness_remote_codex() {
