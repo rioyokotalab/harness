@@ -64,6 +64,26 @@ profile_output=$(env -u HARNESS_INTERACTIVE_LOADED \
 [ "$(wc -l <"$module_log")" -eq 2 ] || fail 'unexpected module command count'
 
 : >"$module_log"
+ab_output=$(env -u HARNESS_INTERACTIVE_LOADED \
+    -u HARNESS_REMOTE_SESSION_LOADED HOME="$home" PATH=/usr/bin:/bin \
+    MPI_MODULE_LOG="$module_log" HARNESS_LOGICAL_HOST=ab \
+    bash --noprofile --norc -ic '
+        module() {
+            printf "%s\n" "$*" >>"$MPI_MODULE_LOG"
+            if [ "$1" = load ]; then
+                PATH=$HOME/fake-mpi:$PATH
+                export PATH
+            fi
+        }
+        . "$HOME/harness/shell/profile.sh"
+        command -v mpicc
+    ' 2>/dev/null || :)
+[ -z "$ab_output" ] ||
+    fail 'interactive ab profile made the fake mpicc available'
+[ ! -s "$module_log" ] ||
+    fail 'interactive ab profile invoked the local MPI module hook'
+
+: >"$module_log"
 HOME="$home" PATH="$home/fake-mpi:/usr/bin:/bin" \
     MPI_MODULE_LOG="$module_log" bash --noprofile --norc -c '
         module() { printf "%s\n" "$*" >>"$MPI_MODULE_LOG"; }
