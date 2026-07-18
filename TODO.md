@@ -460,6 +460,25 @@ The current evidence found no mainstream AI/HPC requirement for an older Core
 CLI, but this negative finding must be validated against the actual workflows
 before accepting a wider managed baseline.
 
+Stage 14 entered read-only planning on 2026-07-18. A fresh fetch proved clean
+published `main` at `a7ff2df`. The managed-Bash plan passes with zero blocks
+and four reversible changes: two fixed links plus marker-guarded appends to
+`.bash_profile` and `.bashrc`, preserving their existing bytes, modes, ACLs,
+and the native account shell. The bounded Homebrew plan correctly stops before
+dry-run because installed unmanaged formulae depend on the managed dependency
+closure. A separately reproduced exact scoped dry-run shows six selected
+formula installs, two selected upgrades, shared dependency upgrades, and one
+unmanaged dependent upgrade. No package or dependency changed. The earlier
+non-writable-prefix conclusion was a restricted-sandbox false positive: under
+the current owner-local execution context, all fixed Homebrew prefix,
+Cellar/bin/lock, cache, and log roots checked are current-user-owned and
+writable. No ownership or mode repair is needed or authorized. Exact decision
+now required: either execute the reversible managed-Bash apply/rollback/reapply
+while deferring Homebrew, or first redesign and publish dependency-delta gates
+that can review the unmanaged dependent change before any formula apply. Never
+bypass the current refusal or broaden private desired intent from installed
+state.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
