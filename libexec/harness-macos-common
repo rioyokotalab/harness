@@ -207,7 +207,7 @@ macos_validate_private_config_file() {
         die "$macos_config_label configuration contains prohibited credential material"
     fi
     if LC_ALL=C grep -E -i \
-        '(^|[^[:alnum:]_])(token|password|secret|api[_-]?key)[[:space:]]*=' \
+        '(^|[[:space:]])(export[[:space:]]+)?[A-Za-z_][A-Za-z0-9_]*(token|password|secret|api[_-]?key)[A-Za-z0-9_]*[[:space:]]*=' \
         "$macos_config_file" >/dev/null 2>&1; then
         die "$macos_config_label configuration contains prohibited credential material"
     fi
