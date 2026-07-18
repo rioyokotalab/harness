@@ -4,8 +4,8 @@ The public harness resolves desired state from the fixed local checkout
 `~/.config/harness/private`. This path is intentionally outside the public
 repository. The checkout root, `.git`, and `hosts` directories must be owned by
 the current user, mode 0700, and not symlinks. `companion.conf`, the selected
-`hosts/LOGICAL_ID.conf`, and an adopted `ssh_config` payload must be owned by
-the current user, mode 0600, regular, single-linked files and not symlinks.
+`hosts/LOGICAL_ID.conf`, and every adopted configuration payload must be owned
+by the current user, mode 0600, regular, single-linked files and not symlinks.
 Clone or create the future private repository under `umask 077`.
 
 Files are strict, non-executed `key=value` manifests. Blank lines are allowed;
@@ -13,11 +13,18 @@ comments, whitespace padding, duplicate or unknown keys, additional `=`, and
 control characters are rejected. The resolver never sources either file and
 never prints their paths or private values.
 
-`companion.conf` contains exactly:
+`companion.conf` contains exactly one of these compatible engine requirements:
 
 ```text
 schema=1
 minimum_engine_schema=1
+```
+
+or, after atomic configuration-bundle adoption:
+
+```text
+schema=1
+minimum_engine_schema=2
 ```
 
 The selected host file contains exactly these keys:
@@ -50,25 +57,45 @@ manifests, including in comments. Runtime facts and rollback evidence stay under
 local harness state and are reconstructed when not recoverable from the
 owner's existing backup.
 
-The one deliberate exception is an optional repository-root file named
-`ssh_config`. Its presence means whole-file SSH synchronization has been
-adopted; its absence is the compatible pre-adoption v1 layout. No other copied
-configuration path is allowed. The payload may contain the private host,
+Engine 1 permits one deliberate optional repository-root file named
+`ssh_config`. This legacy SSH-only layout remains valid for compatibility, but
+it cannot contain Bash or tmux payloads. Engine 2 permits either no payloads or
+exactly the atomic set `ssh_config`, `bashrc`, and `tmux.conf`; partial sets are
+invalid. The payloads are desired-state copies, not runtime files. Git must
+represent each as one ordinary non-executable blob.
+
+The SSH payload may contain the private host,
 account, network, and path values required by OpenSSH, but it must contain only
 SSH configuration—not private-key bytes, passwords, tokens, agent state,
 `known_hosts`, runtime facts, or transaction data. `Include` and `Match exec`
 are rejected so validation cannot read or execute another private file or
 command. It is limited to 1 MiB and must pass a canonicalization-disabled
-`ssh -G` validation before publication or apply. Git must represent it as one
-ordinary non-executable blob. Public logs,
-tests, commits, task ledgers, and CI artifacts never contain its bytes, path
-values, content hash, or revision; public tests use only the synthetic fixture.
+`ssh -G` validation before publication or apply. Public logs, tests, commits,
+task ledgers, and CI artifacts never contain its bytes, path values, content
+hash, or revision; public tests use only the synthetic fixture.
 
-First adoption is explicit. `harness macos-ssh-sync --host LOGICAL_ID --seed`
-reviews the existing local config as the initial candidate. Once present,
-there is exactly one shared payload and every Mac is an equal writer under the
-fail-closed fast-forward protocol. Keys, `known_hosts`, and every other
-`~/.ssh` entry remain outside the companion.
+The `bashrc` payload is the private shared Bash fragment, not a replacement for
+the live `.bashrc`. It is limited to 1 MiB, rejects credential-like assignments
+and private-key material, and passes `bash --noprofile --norc -n` without
+executing commands. Apply copies it to the owner-only runtime fragment
+`~/.config/harness/managed/personal-macos-private.bash`; the existing public
+thin loader sources it only in a newly started managed interactive Bash.
+
+The `tmux.conf` payload is the complete desired `~/.tmux.conf`, not a loader or
+second runtime fragment. It has the same size and credential-material gates.
+Validation uses an isolated tmux server and `source-file -n`, which parses the
+complete file but executes none of its commands. Apply replaces only the live
+`~/.tmux.conf`; a running tmux server is never reloaded automatically.
+
+Legacy SSH-only adoption remains available through `harness macos-ssh-sync`.
+Atomic bundle adoption uses
+`harness macos-config-sync --host LOGICAL_ID --seed`; it requires all three
+reviewed local candidates and changes
+`minimum_engine_schema` to 2 in the same private commit. Once adopted, the
+three payloads are one desired-state set and every Mac is an equal writer under
+the fail-closed fast-forward protocol. A later Mac requires explicit `--adopt`
+before replacing absent or different live files. Keys, `known_hosts`, and every
+other `~/.ssh` entry remain outside the companion.
 
 The tracked example under
 `profiles/personal-macos/private-companion.example/` is synthetic and

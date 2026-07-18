@@ -219,6 +219,33 @@ case "$doctor_output" in
         ;;
 esac
 
+cp "$ROOT/tests/fixtures/personal-macos/private-v2/companion.conf" \
+    "$private/companion.conf"
+cp "$ROOT/tests/fixtures/personal-macos/private-v1/ssh_config" \
+    "$private/ssh_config"
+cp "$ROOT/tests/fixtures/personal-macos/private-v2/bashrc" "$private/bashrc"
+cp "$ROOT/tests/fixtures/personal-macos/private-v2/tmux.conf" "$private/tmux.conf"
+chmod 600 "$private/companion.conf" "$private/ssh_config" "$private/bashrc" \
+    "$private/tmux.conf"
+git -C "$private" add companion.conf ssh_config bashrc tmux.conf
+git -C "$private" commit -q -m 'synthetic adopted config bundle'
+config_state_directory=$home/.local/state/harness/personal-macos
+mkdir -p "$config_state_directory"
+chmod 700 "$home/.local" "$home/.local/state" \
+    "$home/.local/state/harness" "$config_state_directory"
+printf '%s\n' 'schema=2' 'class=current' 'agreement=yes' \
+    >"$config_state_directory/config-sync-status.conf"
+chmod 600 "$config_state_directory/config-sync-status.conf"
+bundle_doctor_output=$(HOME="$home" BREW_LOG="$TEMP_DIR/doctor-bundle.log" \
+    FAKE_TREE_PRESENT=1 PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
+    "$DOCTOR" --host mac-test-pilot --facts "$ready_facts")
+printf '%s\n' "$bundle_doctor_output" | grep -F -x \
+    'PASS required=config_sync class=current agreement=yes payloads=3' \
+    >/dev/null || fail "config bundle doctor status"
+printf '%s\n' "$bundle_doctor_output" | grep -F -x \
+    'END macos_doctor status=ready failures=0 warnings=0' >/dev/null ||
+    fail "config bundle ready doctor result"
+
 implicit_plan=$(HOME="$home" SHELL=/bin/zsh TMPDIR="$TEMP_DIR" \
     BREW_LOG="$TEMP_DIR/implicit-plan.log" FAKE_TREE_PRESENT=1 \
     PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \

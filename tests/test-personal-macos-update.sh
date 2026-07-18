@@ -136,7 +136,7 @@ printf '%s\n' "$plan_output" | grep -F \
     'MACOS_UPDATE mode=plan public=fast-forward private=fast-forward' \
     >/dev/null || fail "direct long-gap plan"
 printf '%s\n' "$plan_output" | grep -F \
-    'COMPAT engine_schema=1 private_schema=1' >/dev/null ||
+    'COMPAT engine_schema=2 private_schema=1' >/dev/null ||
     fail "engine/private compatibility plan"
 printf '%s\n' "$plan_output" | grep -F \
     'MIGRATION state=initialize' >/dev/null || fail "v1 initialization plan"
@@ -367,5 +367,62 @@ fi
 [ "$(git -C "$layout_public" rev-parse HEAD)" = "$layout_public_old" ] &&
     [ "$(git -C "$layout_private" rev-parse HEAD)" = \
         "$layout_private_old" ] || fail "target layout plan changed a checkout"
+
+# shellcheck disable=SC2034
+IFS='|' read -r bundle_home bundle_public bundle_private \
+    bundle_public_old bundle_public_target bundle_private_old \
+    bundle_private_target <<EOF
+$(setup_pair config-bundle)
+EOF
+bundle_source=$TEMP_DIR/config-bundle-private-source
+cp "$ROOT/tests/fixtures/personal-macos/private-v2/companion.conf" \
+    "$bundle_source/companion.conf"
+cp "$ROOT/tests/fixtures/personal-macos/private-v2/bashrc" \
+    "$bundle_source/bashrc"
+cp "$ROOT/tests/fixtures/personal-macos/private-v2/tmux.conf" \
+    "$bundle_source/tmux.conf"
+chmod 600 "$bundle_source/companion.conf" "$bundle_source/bashrc" \
+    "$bundle_source/tmux.conf"
+git -C "$bundle_source" add companion.conf bashrc tmux.conf
+git -C "$bundle_source" commit -q -m 'synthetic engine-2 config bundle'
+git -C "$bundle_source" push -q origin main
+git -C "$bundle_private" fetch -q origin
+bundle_private_target=$(git -C "$bundle_private" \
+    rev-parse refs/remotes/origin/main)
+bundle_plan=$(HOME="$bundle_home" HARNESS_ROOT="$bundle_public" \
+    "$UPDATE" --host mac-test-pilot --public-target "$bundle_public_target" \
+    --private-target "$bundle_private_target" --plan)
+printf '%s\n' "$bundle_plan" | grep -F \
+    'COMPAT engine_schema=2 private_schema=1' >/dev/null ||
+    fail "engine-2 config bundle target"
+
+# shellcheck disable=SC2034
+IFS='|' read -r incomplete_home incomplete_public incomplete_private \
+    incomplete_public_old incomplete_public_target incomplete_private_old \
+    incomplete_private_target <<EOF
+$(setup_pair incomplete-bundle)
+EOF
+incomplete_source=$TEMP_DIR/incomplete-bundle-private-source
+cp "$ROOT/tests/fixtures/personal-macos/private-v2/companion.conf" \
+    "$incomplete_source/companion.conf"
+cp "$ROOT/tests/fixtures/personal-macos/private-v2/bashrc" \
+    "$incomplete_source/bashrc"
+chmod 600 "$incomplete_source/companion.conf" "$incomplete_source/bashrc"
+git -C "$incomplete_source" add companion.conf bashrc
+git -C "$incomplete_source" commit -q -m 'synthetic incomplete engine-2 bundle'
+git -C "$incomplete_source" push -q origin main
+git -C "$incomplete_private" fetch -q origin
+incomplete_private_target=$(git -C "$incomplete_private" \
+    rev-parse refs/remotes/origin/main)
+if HOME="$incomplete_home" HARNESS_ROOT="$incomplete_public" \
+    "$UPDATE" --host mac-test-pilot \
+    --public-target "$incomplete_public_target" \
+    --private-target "$incomplete_private_target" --plan \
+    >"$TEMP_DIR/incomplete-target.out" 2>&1; then
+    fail "incomplete engine-2 target accepted"
+fi
+grep -F 'payload set is incomplete or incompatible' \
+    "$TEMP_DIR/incomplete-target.out" >/dev/null ||
+    fail "incomplete engine-2 target refusal"
 
 echo "personal macOS long-gap update tests passed"

@@ -50,7 +50,7 @@ and compact historical pointers here. Next free ID: T-269.
 
 ## Next resume checkpoint
 
-Resume T-268 in `ready-for-go`. D1–D10 and the already published SSH-sync
+Resume T-268 in `executing`. D1–D10 and the already published SSH-sync
 S1–S10 contract remain frozen, but before the first private `office` seed the
 owner requested that `.bashrc` and `tmux.conf` synchronization be designed
 through a fresh PIE decision cycle. No personal configuration has been read,
@@ -61,8 +61,9 @@ synchronized directly with no tmux loader or second runtime config.
 SSH/Bash/tmux converge as one atomic adopted-config set per
 private revision, and changes activate only in new managed Bash shells and new
 tmux servers unless the owner explicitly reloads an existing session. The
-amended plan is frozen; wait for a fresh explicit `go` before implementing
-the generic engine or running a private seed. Independently resume T-191 after
+amended plan is frozen and the owner gave a fresh explicit `go` on 2026-07-19.
+Implement and validate only the generic public engine; do not run a private
+seed. Independently resume T-191 after
 the first Sunday eligibility. Fetch and prove a clean fleet, then query only the seven
 captured IDs below through their declared native scheduler routes. Do not infer
 absence from a failed query, and do not cancel, replace, or duplicate a delayed
@@ -135,7 +136,7 @@ separate `prune` commands.
 
 ### T-268 — Private personal macOS fleet
 
-**Phase/status:** `ready-for-go`. Design a separate personal-macOS target
+**Phase/status:** `executing`. Design a separate personal-macOS target
 family that reuses harness safety and control-plane principles without adding
 four private machines to the public Linux/HPC profiles. Generic code, schemas,
 synthetic fixtures, tests, and any deliberately selected non-sensitive CLI
@@ -1004,6 +1005,13 @@ generic public code. It does not authorize reading or publishing private
 configuration, running the `office` seed, mutating a live Mac, reloading active
 sessions, or applying a private payload; those remain later owner-started and
 separately reviewed authority gates.
+
+**Execution authorization (2026-07-19):** the owner gave the fresh `go` after
+the corrected D12 audit. Generic public schema, reconciler, loaders, synthetic
+tests, documentation, protected publication, and required clean-checkout
+synchronization are authorized. Private companion access, live configuration
+inspection or mutation, pilot seed/apply, and active-session reload remain
+explicitly excluded.
 
 ## Stable operational facts
 

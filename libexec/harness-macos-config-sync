@@ -1,0 +1,1012 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+. "$SELF_DIR/harness-macos-common"
+
+usage() {
+    cat >&2 <<'EOF'
+Usage:
+  harness macos-config-sync --host LOGICAL_ID [--seed|--adopt] [--plan|--apply]
+  harness macos-config-sync --rollback TRANSACTION_ID
+EOF
+}
+
+prepare_state() {
+    for config_state_path in "$HOME/.local" "$HOME/.local/state" "$state_root" \
+        "$state_directory" "$transaction_root"; do
+        if [ -e "$config_state_path" ] || [ -L "$config_state_path" ]; then
+            [ -d "$config_state_path" ] && [ ! -L "$config_state_path" ] ||
+                die "Mac config sync state has unsafe type"
+            [ "$(macos_stat_owner "$config_state_path")" = "$current_uid" ] ||
+                die "Mac config sync state has unsafe owner"
+            case "$config_state_path" in
+                "$state_root"|"$state_directory"|"$transaction_root")
+                    [ "$(macos_stat_mode "$config_state_path")" = 700 ] ||
+                        die "Mac config sync state has unsafe mode"
+                    ;;
+            esac
+        fi
+    done
+    umask 077
+    for config_state_path in "$HOME/.local" "$HOME/.local/state" "$state_root" \
+        "$state_directory" "$transaction_root"; do
+        if [ ! -e "$config_state_path" ] && [ ! -L "$config_state_path" ]; then
+            mkdir "$config_state_path"
+            chmod 700 "$config_state_path"
+        fi
+    done
+}
+
+write_status() {
+    config_status_class=$1
+    config_status_agreement=$2
+    config_status_new=$state_directory/.config-sync-status.$$
+    [ ! -e "$config_status_new" ] && [ ! -L "$config_status_new" ] ||
+        die "Mac config sync status path collision"
+    printf 'schema=2\nclass=%s\nagreement=%s\n' \
+        "$config_status_class" "$config_status_agreement" >"$config_status_new"
+    chmod 600 "$config_status_new"
+    mv "$config_status_new" "$status_file"
+}
+
+stop_class() {
+    config_stop_value=$1
+    config_stop_agreement=${2:-no}
+    prepare_state
+    write_status "$config_stop_value" "$config_stop_agreement"
+    printf 'MACOS_CONFIG_SYNC class=%s agreement=%s action=stopped\n' \
+        "$config_stop_value" "$config_stop_agreement"
+    exit 2
+}
+
+validate_public_checkout() {
+    [ "$(uname -s)" = Darwin ] || die "Mac config sync requires Darwin"
+    [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
+        die "Mac config sync requires a Git harness checkout"
+    [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" = \
+        "$(CDPATH='' cd -- "$HARNESS_ROOT" && pwd -P)" ] ||
+        die "Mac config sync public checkout is ambiguous"
+    [ "$(git -C "$HARNESS_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null)" = main ] ||
+        die "Mac config sync requires the public main branch"
+    [ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
+        die "Mac config sync requires a clean public checkout"
+}
+
+validate_private_checkout() {
+    macos_require_private_directory "$private_root" "$current_uid"
+    macos_require_private_directory "$private_root/.git" "$current_uid"
+    macos_require_private_directory "$private_root/hosts" "$current_uid"
+    [ "$(git -C "$private_root" rev-parse --show-toplevel 2>/dev/null)" = \
+        "$(CDPATH='' cd -- "$private_root" && pwd -P)" ] ||
+        die "private companion Git root is ambiguous"
+    [ "$(git -C "$private_root" symbolic-ref --quiet --short HEAD 2>/dev/null)" = main ] ||
+        die "private companion branch is incompatible"
+    [ "$(git -C "$private_root" config --get branch.main.remote 2>/dev/null)" = origin ] &&
+        [ "$(git -C "$private_root" config --get branch.main.merge 2>/dev/null)" = \
+            refs/heads/main ] || die "private companion tracking is ambiguous"
+    [ "$(git -C "$private_root" remote)" = origin ] ||
+        die "private companion remote selection is ambiguous"
+    config_url_count=$(git -C "$private_root" config --get-all \
+        remote.origin.url 2>/dev/null | awk 'NF { n++ } END { print n + 0 }')
+    [ "$config_url_count" -eq 1 ] || die "private companion origin is ambiguous"
+    [ -z "$(git -C "$private_root" status --porcelain --untracked-files=normal)" ] ||
+        die "private companion checkout is not clean"
+}
+
+validate_live_parents() {
+    [ -d "$HOME" ] && [ ! -L "$HOME" ] &&
+        [ "$(macos_stat_owner "$HOME")" = "$current_uid" ] ||
+        die "Mac config sync HOME is unsafe"
+    [ -d "$ssh_directory" ] && [ ! -L "$ssh_directory" ] &&
+        [ "$(macos_stat_owner "$ssh_directory")" = "$current_uid" ] ||
+        die "Mac config sync SSH parent is unsafe"
+    [ -d "$managed_directory" ] && [ ! -L "$managed_directory" ] &&
+        [ "$(macos_stat_owner "$managed_directory")" = "$current_uid" ] &&
+        [ "$(macos_stat_mode "$managed_directory")" = 700 ] ||
+        die "Mac config sync Bash parent is unsafe"
+}
+
+validate_live_bundle() {
+    macos_validate_ssh_config "$live_ssh" "$current_uid" 600,644
+    macos_validate_bash_config "$live_bash" "$current_uid" 600
+    macos_validate_tmux_config "$live_tmux" "$current_uid" 600,644
+}
+
+validate_candidate_bundle() {
+    config_candidate_prefix=$1
+    macos_validate_ssh_config "$config_candidate_prefix.ssh" "$current_uid" 600
+    macos_validate_bash_config "$config_candidate_prefix.bash" "$current_uid" 600
+    macos_validate_tmux_config "$config_candidate_prefix.tmux" "$current_uid" 600
+}
+
+revision_layout() {
+    config_layout_revision=$1
+    config_layout_companion=$2
+    config_layout_paths=$(git -C "$private_root" ls-tree -r --name-only \
+        "$config_layout_revision" 2>/dev/null) ||
+        die "private companion target tree is unavailable"
+    printf '%s\n' "$config_layout_paths" | while IFS= read -r config_layout_path; do
+        case "$config_layout_path" in
+            companion.conf|ssh_config|bashrc|tmux.conf) ;;
+            hosts/*.conf)
+                config_layout_name=${config_layout_path#hosts/}
+                config_layout_id=${config_layout_name%.conf}
+                [ "$config_layout_name" = "$config_layout_id.conf" ] &&
+                    macos_private_id_is_safe "$config_layout_id" ||
+                    die "private companion target layout is invalid"
+                git -C "$private_root" show \
+                    "$config_layout_revision:$config_layout_path" \
+                    >"$layout_host" 2>/dev/null ||
+                    die "private companion target host is unavailable"
+                chmod 600 "$layout_host"
+                macos_validate_host_manifest "$layout_host" "$config_layout_id" \
+                    1 macos-cli-v1
+                ;;
+            *) die "private companion target layout is invalid" ;;
+        esac
+        config_layout_mode=$(git -C "$private_root" ls-tree \
+            "$config_layout_revision" -- "$config_layout_path" |
+            awk '{ print $1 ":" $2 }')
+        [ "$config_layout_mode" = 100644:blob ] ||
+            die "private companion target layout is invalid"
+    done
+    printf '%s\n' "$config_layout_paths" |
+        grep -F -x "hosts/$logical_host.conf" >/dev/null ||
+        die "selected private target profile is unavailable"
+    git -C "$private_root" show "$config_layout_revision:companion.conf" \
+        >"$config_layout_companion" 2>/dev/null ||
+        die "private companion contract is unavailable"
+    chmod 600 "$config_layout_companion"
+    macos_validate_companion_manifest "$config_layout_companion" 2 1 1
+    config_layout_minimum=$(macos_manifest_get \
+        "$config_layout_companion" minimum_engine_schema)
+    config_layout_ssh=0
+    config_layout_bash=0
+    config_layout_tmux=0
+    git -C "$private_root" cat-file -e \
+        "$config_layout_revision:ssh_config" 2>/dev/null && config_layout_ssh=1
+    git -C "$private_root" cat-file -e \
+        "$config_layout_revision:bashrc" 2>/dev/null && config_layout_bash=1
+    git -C "$private_root" cat-file -e \
+        "$config_layout_revision:tmux.conf" 2>/dev/null && config_layout_tmux=1
+    case "$config_layout_minimum:$config_layout_ssh:$config_layout_bash:$config_layout_tmux" in
+        1:0:0:0|2:0:0:0) printf '%s\n' absent ;;
+        1:1:0:0) printf '%s\n' legacy ;;
+        2:1:1:1) printf '%s\n' bundle ;;
+        *) die "private companion payload set is incomplete or incompatible" ;;
+    esac
+}
+
+export_bundle() {
+    config_export_revision=$1
+    config_export_prefix=$2
+    git -C "$private_root" show "$config_export_revision:ssh_config" \
+        >"$config_export_prefix.ssh" 2>/dev/null || return 1
+    git -C "$private_root" show "$config_export_revision:bashrc" \
+        >"$config_export_prefix.bash" 2>/dev/null || return 1
+    git -C "$private_root" show "$config_export_revision:tmux.conf" \
+        >"$config_export_prefix.tmux" 2>/dev/null || return 1
+    chmod 600 "$config_export_prefix.ssh" "$config_export_prefix.bash" \
+        "$config_export_prefix.tmux"
+    validate_candidate_bundle "$config_export_prefix"
+}
+
+copy_live_bundle() {
+    config_live_prefix=$1
+    cp "$live_ssh" "$config_live_prefix.ssh"
+    cp "$live_bash" "$config_live_prefix.bash"
+    cp "$live_tmux" "$config_live_prefix.tmux"
+    chmod 600 "$config_live_prefix.ssh" "$config_live_prefix.bash" \
+        "$config_live_prefix.tmux"
+    validate_candidate_bundle "$config_live_prefix"
+}
+
+bundle_identities() {
+    config_identity_prefix=$1
+    config_identity_ssh=$(macos_checksum_file "$config_identity_prefix.ssh")
+    config_identity_bash=$(macos_checksum_file "$config_identity_prefix.bash")
+    config_identity_tmux=$(macos_checksum_file "$config_identity_prefix.tmux")
+}
+
+bundle_equal() {
+    config_equal_left=$1
+    config_equal_right=$2
+    cmp -s "$config_equal_left.ssh" "$config_equal_right.ssh" &&
+        cmp -s "$config_equal_left.bash" "$config_equal_right.bash" &&
+        cmp -s "$config_equal_left.tmux" "$config_equal_right.tmux"
+}
+
+validate_state() {
+    macos_require_private_file "$state_file" "$current_uid"
+    macos_validate_manifest "$state_file" \
+        schema,logical_id,private_revision,ssh_identity,bash_identity,tmux_identity \
+        schema,logical_id,private_revision,ssh_identity,bash_identity,tmux_identity
+    [ "$(macos_manifest_get "$state_file" schema)" = 2 ] &&
+        [ "$(macos_manifest_get "$state_file" logical_id)" = "$logical_host" ] ||
+        die "Mac config sync state is incompatible"
+    state_revision=$(macos_manifest_get "$state_file" private_revision)
+    state_ssh_identity=$(macos_manifest_get "$state_file" ssh_identity)
+    state_bash_identity=$(macos_manifest_get "$state_file" bash_identity)
+    state_tmux_identity=$(macos_manifest_get "$state_file" tmux_identity)
+    macos_hash_is_safe "$state_revision" && [ "${#state_revision}" -eq 40 ] &&
+        macos_hash_is_safe "$state_ssh_identity" &&
+        [ "${#state_ssh_identity}" -eq 64 ] &&
+        macos_hash_is_safe "$state_bash_identity" &&
+        [ "${#state_bash_identity}" -eq 64 ] &&
+        macos_hash_is_safe "$state_tmux_identity" &&
+        [ "${#state_tmux_identity}" -eq 64 ] ||
+        die "Mac config sync state identity is invalid"
+}
+
+fetch_private() {
+    config_fetch_log=$state_directory/.config-sync-fetch.$$
+    [ ! -e "$config_fetch_log" ] && [ ! -L "$config_fetch_log" ] ||
+        die "Mac config sync fetch log collision"
+    : >"$config_fetch_log"
+    chmod 600 "$config_fetch_log"
+    if GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/usr/bin/false \
+        SSH_ASKPASS=/usr/bin/false \
+        GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=15' \
+        git -C "$private_root" fetch -q origin main \
+        >"$config_fetch_log" 2>&1; then
+        unlink "$config_fetch_log"
+        return 0
+    fi
+    unlink "$config_fetch_log"
+    return 1
+}
+
+push_private() {
+    config_push_log=$state_directory/.config-sync-push.$$
+    [ ! -e "$config_push_log" ] && [ ! -L "$config_push_log" ] ||
+        die "Mac config sync push log collision"
+    : >"$config_push_log"
+    chmod 600 "$config_push_log"
+    if GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/usr/bin/false \
+        SSH_ASKPASS=/usr/bin/false \
+        GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=15' \
+        git -C "$private_root" push -q origin HEAD:main \
+        >"$config_push_log" 2>&1; then
+        unlink "$config_push_log"
+        return 0
+    fi
+    unlink "$config_push_log"
+    return 1
+}
+
+commit_private() {
+    config_commit_log=$state_directory/.config-sync-commit.$$
+    [ ! -e "$config_commit_log" ] && [ ! -L "$config_commit_log" ] ||
+        die "Mac config sync commit log collision"
+    : >"$config_commit_log"
+    chmod 600 "$config_commit_log"
+    if git -C "$private_root" -c commit.gpgsign=false commit -q \
+        -m 'Update shared Mac configuration bundle' -- \
+        companion.conf ssh_config bashrc tmux.conf \
+        >"$config_commit_log" 2>&1; then
+        unlink "$config_commit_log"
+        return 0
+    fi
+    unlink "$config_commit_log"
+    return 1
+}
+
+private_diff_is_bundle_only() {
+    config_diff_from=$1
+    config_diff_to=$2
+    git -C "$private_root" diff --name-only "$config_diff_from..$config_diff_to" |
+        awk '
+            $0 == "companion.conf" || $0 == "ssh_config" ||
+            $0 == "bashrc" || $0 == "tmux.conf" { next }
+            { bad = 1 }
+            END { exit bad ? 1 : 0 }
+        '
+}
+
+write_bundle_to_private() (
+    set -eu
+    config_write_prefix=$1
+    config_companion_stage=$private_root/.companion.conf.$$
+    config_ssh_stage=$private_root/.ssh_config.$$
+    config_bash_stage=$private_root/.bashrc.$$
+    config_tmux_stage=$private_root/.tmux.conf.$$
+    for config_write_path in "$config_companion_stage" "$config_ssh_stage" \
+        "$config_bash_stage" "$config_tmux_stage"; do
+        [ ! -e "$config_write_path" ] && [ ! -L "$config_write_path" ] ||
+            die "private companion bundle path collision"
+    done
+    config_private_companion_backup=$state_directory/.config-sync-private-companion.$$
+    config_private_ssh_backup=$state_directory/.config-sync-private-ssh.$$
+    config_private_bash_backup=$state_directory/.config-sync-private-bash.$$
+    config_private_tmux_backup=$state_directory/.config-sync-private-tmux.$$
+    for config_private_backup in "$config_private_companion_backup" \
+        "$config_private_ssh_backup" "$config_private_bash_backup" \
+        "$config_private_tmux_backup"; do
+        [ ! -e "$config_private_backup" ] && [ ! -L "$config_private_backup" ] ||
+            die "private companion backup path collision"
+    done
+    cp "$private_root/companion.conf" "$config_private_companion_backup"
+    chmod 600 "$config_private_companion_backup"
+    config_private_ssh_before=absent
+    config_private_bash_before=absent
+    config_private_tmux_before=absent
+    if [ -e "$private_root/ssh_config" ] || [ -L "$private_root/ssh_config" ]; then
+        macos_validate_ssh_config "$private_root/ssh_config" "$current_uid" 600
+        cp "$private_root/ssh_config" "$config_private_ssh_backup"
+        chmod 600 "$config_private_ssh_backup"
+        config_private_ssh_before=present
+    fi
+    if [ -e "$private_root/bashrc" ] || [ -L "$private_root/bashrc" ]; then
+        macos_validate_bash_config "$private_root/bashrc" "$current_uid" 600
+        cp "$private_root/bashrc" "$config_private_bash_backup"
+        chmod 600 "$config_private_bash_backup"
+        config_private_bash_before=present
+    fi
+    if [ -e "$private_root/tmux.conf" ] || [ -L "$private_root/tmux.conf" ]; then
+        macos_validate_tmux_config "$private_root/tmux.conf" "$current_uid" 600
+        cp "$private_root/tmux.conf" "$config_private_tmux_backup"
+        chmod 600 "$config_private_tmux_backup"
+        config_private_tmux_before=present
+    fi
+    config_private_complete=0
+    cleanup_private_write() {
+        config_private_status=$?
+        trap - EXIT HUP INT TERM
+        if [ "$config_private_complete" -eq 0 ]; then
+            git -C "$private_root" reset -q HEAD -- \
+                companion.conf ssh_config bashrc tmux.conf >/dev/null 2>&1 || true
+            cp "$config_private_companion_backup" "$config_companion_stage"
+            chmod 600 "$config_companion_stage"
+            mv "$config_companion_stage" "$private_root/companion.conf"
+            if [ "$config_private_ssh_before" = present ]; then
+                cp "$config_private_ssh_backup" "$config_ssh_stage"
+                chmod 600 "$config_ssh_stage"
+                mv "$config_ssh_stage" "$private_root/ssh_config"
+            elif [ -e "$private_root/ssh_config" ] || [ -L "$private_root/ssh_config" ]; then
+                unlink "$private_root/ssh_config"
+            fi
+            if [ "$config_private_bash_before" = present ]; then
+                cp "$config_private_bash_backup" "$config_bash_stage"
+                chmod 600 "$config_bash_stage"
+                mv "$config_bash_stage" "$private_root/bashrc"
+            elif [ -e "$private_root/bashrc" ] || [ -L "$private_root/bashrc" ]; then
+                unlink "$private_root/bashrc"
+            fi
+            if [ "$config_private_tmux_before" = present ]; then
+                cp "$config_private_tmux_backup" "$config_tmux_stage"
+                chmod 600 "$config_tmux_stage"
+                mv "$config_tmux_stage" "$private_root/tmux.conf"
+            elif [ -e "$private_root/tmux.conf" ] || [ -L "$private_root/tmux.conf" ]; then
+                unlink "$private_root/tmux.conf"
+            fi
+        fi
+        [ ! -e "$config_companion_stage" ] || unlink "$config_companion_stage"
+        [ ! -e "$config_ssh_stage" ] || unlink "$config_ssh_stage"
+        [ ! -e "$config_bash_stage" ] || unlink "$config_bash_stage"
+        [ ! -e "$config_tmux_stage" ] || unlink "$config_tmux_stage"
+        [ ! -e "$config_private_companion_backup" ] ||
+            unlink "$config_private_companion_backup"
+        [ ! -e "$config_private_ssh_backup" ] || unlink "$config_private_ssh_backup"
+        [ ! -e "$config_private_bash_backup" ] || unlink "$config_private_bash_backup"
+        [ ! -e "$config_private_tmux_backup" ] || unlink "$config_private_tmux_backup"
+        exit "$config_private_status"
+    }
+    trap cleanup_private_write EXIT
+    trap 'exit 129' HUP
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+    printf 'schema=1\nminimum_engine_schema=2\n' >"$config_companion_stage"
+    cp "$config_write_prefix.ssh" "$config_ssh_stage"
+    cp "$config_write_prefix.bash" "$config_bash_stage"
+    cp "$config_write_prefix.tmux" "$config_tmux_stage"
+    chmod 600 "$config_companion_stage" "$config_ssh_stage" \
+        "$config_bash_stage" "$config_tmux_stage"
+    macos_validate_companion_manifest "$config_companion_stage" 2 1 1
+    macos_validate_ssh_config "$config_ssh_stage" "$current_uid" 600
+    macos_validate_bash_config "$config_bash_stage" "$current_uid" 600
+    macos_validate_tmux_config "$config_tmux_stage" "$current_uid" 600
+    mv "$config_companion_stage" "$private_root/companion.conf"
+    mv "$config_ssh_stage" "$private_root/ssh_config"
+    mv "$config_bash_stage" "$private_root/bashrc"
+    mv "$config_tmux_stage" "$private_root/tmux.conf"
+    git -C "$private_root" add -- companion.conf ssh_config bashrc tmux.conf
+    config_private_complete=1
+    trap - EXIT HUP INT TERM
+    unlink "$config_private_companion_backup"
+    [ ! -e "$config_private_ssh_backup" ] || unlink "$config_private_ssh_backup"
+    [ ! -e "$config_private_bash_backup" ] || unlink "$config_private_bash_backup"
+    [ ! -e "$config_private_tmux_backup" ] || unlink "$config_private_tmux_backup"
+)
+
+validate_transaction_manifest() {
+    config_transaction_manifest=$1
+    config_transaction_keys=schema,operation,ssh_before,ssh_before_hash,ssh_after_hash,bash_before,bash_before_hash,bash_after_hash,tmux_before,tmux_before_hash,tmux_after_hash,state_before,state_before_hash,state_after_hash
+    macos_validate_manifest "$config_transaction_manifest" \
+        "$config_transaction_keys" "$config_transaction_keys"
+    [ "$(macos_manifest_get "$config_transaction_manifest" schema)" = 2 ] &&
+        [ "$(macos_manifest_get "$config_transaction_manifest" operation)" = \
+            macos-config-sync ] || die "Mac config sync transaction is incompatible"
+}
+
+apply_local_transaction() (
+    config_apply_prefix=$1
+    config_apply_revision=$2
+    prepare_state
+    config_transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+    config_manifest=$transaction_root/$config_transaction_id.macos-config-sync.manifest
+    config_transaction_status=$transaction_root/$config_transaction_id.macos-config-sync.status
+    config_ssh_backup=$transaction_root/$config_transaction_id.macos-config-sync.ssh-before
+    config_bash_backup=$transaction_root/$config_transaction_id.macos-config-sync.bash-before
+    config_tmux_backup=$transaction_root/$config_transaction_id.macos-config-sync.tmux-before
+    config_state_backup=$transaction_root/$config_transaction_id.macos-config-sync.state-before
+    config_ssh_stage=$ssh_directory/.harness-config.$config_transaction_id
+    config_bash_stage=$managed_directory/.personal-macos-private.$config_transaction_id
+    config_tmux_stage=$HOME/.tmux.conf.harness.$config_transaction_id
+    config_state_stage=$state_directory/.config-sync-state.$config_transaction_id
+    for config_reserved in "$config_manifest" "$config_transaction_status" \
+        "$config_ssh_backup" "$config_bash_backup" "$config_tmux_backup" \
+        "$config_state_backup" "$config_ssh_stage" "$config_bash_stage" \
+        "$config_tmux_stage" "$config_state_stage"; do
+        [ ! -e "$config_reserved" ] && [ ! -L "$config_reserved" ] ||
+            die "Mac config sync transaction path collision"
+    done
+
+    config_ssh_before=absent
+    config_ssh_before_hash=none
+    if [ -e "$live_ssh" ] || [ -L "$live_ssh" ]; then
+        macos_validate_ssh_config "$live_ssh" "$current_uid" 600,644
+        config_ssh_before=present
+        config_ssh_before_hash=$(macos_checksum_file "$live_ssh")
+        cp "$live_ssh" "$config_ssh_backup"
+        chmod 600 "$config_ssh_backup"
+    fi
+    config_bash_before=absent
+    config_bash_before_hash=none
+    if [ -e "$live_bash" ] || [ -L "$live_bash" ]; then
+        macos_validate_bash_config "$live_bash" "$current_uid" 600
+        config_bash_before=present
+        config_bash_before_hash=$(macos_checksum_file "$live_bash")
+        cp "$live_bash" "$config_bash_backup"
+        chmod 600 "$config_bash_backup"
+    fi
+    config_tmux_before=absent
+    config_tmux_before_hash=none
+    if [ -e "$live_tmux" ] || [ -L "$live_tmux" ]; then
+        macos_validate_tmux_config "$live_tmux" "$current_uid" 600,644
+        config_tmux_before=present
+        config_tmux_before_hash=$(macos_checksum_file "$live_tmux")
+        cp "$live_tmux" "$config_tmux_backup"
+        chmod 600 "$config_tmux_backup"
+    fi
+    config_state_before=absent
+    config_state_before_hash=none
+    if [ -e "$state_file" ] || [ -L "$state_file" ]; then
+        validate_state
+        config_state_before=present
+        config_state_before_hash=$(macos_checksum_file "$state_file")
+        cp "$state_file" "$config_state_backup"
+        chmod 600 "$config_state_backup"
+    fi
+
+    bundle_identities "$config_apply_prefix"
+    printf 'schema=2\nlogical_id=%s\nprivate_revision=%s\nssh_identity=%s\nbash_identity=%s\ntmux_identity=%s\n' \
+        "$logical_host" "$config_apply_revision" "$config_identity_ssh" \
+        "$config_identity_bash" "$config_identity_tmux" >"$config_state_stage"
+    chmod 600 "$config_state_stage"
+    config_state_after_hash=$(macos_checksum_file "$config_state_stage")
+    printf 'schema=2\noperation=macos-config-sync\nssh_before=%s\nssh_before_hash=%s\nssh_after_hash=%s\nbash_before=%s\nbash_before_hash=%s\nbash_after_hash=%s\ntmux_before=%s\ntmux_before_hash=%s\ntmux_after_hash=%s\nstate_before=%s\nstate_before_hash=%s\nstate_after_hash=%s\n' \
+        "$config_ssh_before" "$config_ssh_before_hash" "$config_identity_ssh" \
+        "$config_bash_before" "$config_bash_before_hash" "$config_identity_bash" \
+        "$config_tmux_before" "$config_tmux_before_hash" "$config_identity_tmux" \
+        "$config_state_before" "$config_state_before_hash" \
+        "$config_state_after_hash" >"$config_manifest"
+    chmod 600 "$config_manifest"
+    printf '%s\n' prepared >"$config_transaction_status"
+    chmod 600 "$config_transaction_status"
+
+    cp "$config_apply_prefix.ssh" "$config_ssh_stage"
+    cp "$config_apply_prefix.bash" "$config_bash_stage"
+    cp "$config_apply_prefix.tmux" "$config_tmux_stage"
+    chmod 600 "$config_ssh_stage" "$config_bash_stage" "$config_tmux_stage"
+    macos_validate_ssh_config "$config_ssh_stage" "$current_uid" 600
+    macos_validate_bash_config "$config_bash_stage" "$current_uid" 600
+    macos_validate_tmux_config "$config_tmux_stage" "$current_uid" 600
+
+    config_ssh_applied=0
+    config_bash_applied=0
+    config_tmux_applied=0
+    config_state_applied=0
+    config_apply_complete=0
+    cleanup_config_apply() {
+        config_apply_status=$?
+        trap - EXIT HUP INT TERM
+        if [ "$config_state_applied" -eq 1 ]; then
+            if [ "$config_state_before" = present ]; then
+                cp "$config_state_backup" "$config_state_stage"
+                chmod 600 "$config_state_stage"
+                mv "$config_state_stage" "$state_file"
+            elif [ -f "$state_file" ] && [ ! -L "$state_file" ] &&
+                [ "$(macos_checksum_file "$state_file")" = \
+                    "$config_state_after_hash" ]; then
+                unlink "$state_file"
+            fi
+        fi
+        if [ "$config_tmux_applied" -eq 1 ]; then
+            if [ "$config_tmux_before" = present ]; then
+                cp "$config_tmux_backup" "$config_tmux_stage"
+                chmod 600 "$config_tmux_stage"
+                mv "$config_tmux_stage" "$live_tmux"
+            elif [ -f "$live_tmux" ] && [ ! -L "$live_tmux" ] &&
+                [ "$(macos_checksum_file "$live_tmux")" = "$config_identity_tmux" ]; then
+                unlink "$live_tmux"
+            fi
+        fi
+        if [ "$config_bash_applied" -eq 1 ]; then
+            if [ "$config_bash_before" = present ]; then
+                cp "$config_bash_backup" "$config_bash_stage"
+                chmod 600 "$config_bash_stage"
+                mv "$config_bash_stage" "$live_bash"
+            elif [ -f "$live_bash" ] && [ ! -L "$live_bash" ] &&
+                [ "$(macos_checksum_file "$live_bash")" = "$config_identity_bash" ]; then
+                unlink "$live_bash"
+            fi
+        fi
+        if [ "$config_ssh_applied" -eq 1 ]; then
+            if [ "$config_ssh_before" = present ]; then
+                cp "$config_ssh_backup" "$config_ssh_stage"
+                chmod 600 "$config_ssh_stage"
+                mv "$config_ssh_stage" "$live_ssh"
+            elif [ -f "$live_ssh" ] && [ ! -L "$live_ssh" ] &&
+                [ "$(macos_checksum_file "$live_ssh")" = "$config_identity_ssh" ]; then
+                unlink "$live_ssh"
+            fi
+        fi
+        [ ! -e "$config_ssh_stage" ] || unlink "$config_ssh_stage"
+        [ ! -e "$config_bash_stage" ] || unlink "$config_bash_stage"
+        [ ! -e "$config_tmux_stage" ] || unlink "$config_tmux_stage"
+        [ ! -e "$config_state_stage" ] || unlink "$config_state_stage"
+        if [ "$config_apply_complete" -eq 0 ]; then
+            printf '%s\n' failed >"$config_transaction_status"
+        fi
+        exit "$config_apply_status"
+    }
+    trap cleanup_config_apply EXIT
+    trap 'exit 129' HUP
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+
+    mv "$config_ssh_stage" "$live_ssh"
+    config_ssh_applied=1
+    mv "$config_bash_stage" "$live_bash"
+    config_bash_applied=1
+    mv "$config_tmux_stage" "$live_tmux"
+    config_tmux_applied=1
+    mv "$config_state_stage" "$state_file"
+    config_state_applied=1
+    printf '%s\n' complete >"$config_transaction_status"
+    config_apply_complete=1
+    trap - EXIT HUP INT TERM
+    write_status current yes
+    printf 'MACOS_CONFIG_SYNC class=current agreement=yes action=applied transaction=%s rollback=available activation=new-sessions\n' \
+        "$config_transaction_id"
+)
+
+validate_rollback_file() {
+    config_validate_live=$1
+    config_validate_before=$2
+    config_validate_backup=$3
+    config_validate_before_hash=$4
+    config_validate_after_hash=$5
+    [ -f "$config_validate_live" ] && [ ! -L "$config_validate_live" ] &&
+        [ "$(macos_checksum_file "$config_validate_live")" = \
+            "$config_validate_after_hash" ] ||
+        die "Mac config sync rollback blocked by changed configuration"
+    case "$config_validate_before" in
+        absent)
+            [ "$config_validate_before_hash" = none ] ||
+                die "Mac config sync prior configuration state is invalid"
+            ;;
+        present)
+            macos_hash_is_safe "$config_validate_before_hash" ||
+                die "Mac config sync prior configuration state is invalid"
+            macos_require_private_file "$config_validate_backup" "$current_uid"
+            [ "$(macos_checksum_file "$config_validate_backup")" = \
+                "$config_validate_before_hash" ] ||
+                die "Mac config sync rollback image changed"
+            ;;
+        *) die "Mac config sync prior configuration state is invalid" ;;
+    esac
+}
+
+restore_transaction_file() {
+    config_restore_live=$1
+    config_restore_before=$2
+    config_restore_backup=$3
+    config_restore_stage=$4
+    case "$config_restore_before" in
+        absent)
+            unlink "$config_restore_live"
+            ;;
+        present)
+            macos_require_private_file "$config_restore_backup" "$current_uid"
+            cp "$config_restore_backup" "$config_restore_stage"
+            chmod 600 "$config_restore_stage"
+            mv "$config_restore_stage" "$config_restore_live"
+            ;;
+        *) die "Mac config sync prior configuration state is invalid" ;;
+    esac
+}
+
+rollback_transaction() {
+    config_rollback_id=$1
+    macos_private_id_is_safe "$config_rollback_id" ||
+        die "invalid Mac config sync transaction"
+    prepare_state
+    config_rollback_manifest=$transaction_root/$config_rollback_id.macos-config-sync.manifest
+    config_rollback_status=$transaction_root/$config_rollback_id.macos-config-sync.status
+    config_rollback_ssh=$transaction_root/$config_rollback_id.macos-config-sync.ssh-before
+    config_rollback_bash=$transaction_root/$config_rollback_id.macos-config-sync.bash-before
+    config_rollback_tmux=$transaction_root/$config_rollback_id.macos-config-sync.tmux-before
+    config_rollback_state=$transaction_root/$config_rollback_id.macos-config-sync.state-before
+    macos_require_private_file "$config_rollback_manifest" "$current_uid"
+    macos_require_private_file "$config_rollback_status" "$current_uid"
+    [ "$(sed -n '1p' "$config_rollback_status")" = complete ] ||
+        die "Mac config sync transaction is not complete"
+    validate_transaction_manifest "$config_rollback_manifest"
+    config_rollback_state_after=$(macos_manifest_get \
+        "$config_rollback_manifest" state_after_hash)
+    macos_require_private_file "$state_file" "$current_uid"
+    [ "$(macos_checksum_file "$state_file")" = "$config_rollback_state_after" ] ||
+        die "Mac config sync rollback blocked by changed state"
+
+    config_rollback_ssh_before=$(macos_manifest_get \
+        "$config_rollback_manifest" ssh_before)
+    config_rollback_bash_before=$(macos_manifest_get \
+        "$config_rollback_manifest" bash_before)
+    config_rollback_tmux_before=$(macos_manifest_get \
+        "$config_rollback_manifest" tmux_before)
+    validate_rollback_file "$live_ssh" "$config_rollback_ssh_before" \
+        "$config_rollback_ssh" \
+        "$(macos_manifest_get "$config_rollback_manifest" ssh_before_hash)" \
+        "$(macos_manifest_get "$config_rollback_manifest" ssh_after_hash)"
+    validate_rollback_file "$live_bash" "$config_rollback_bash_before" \
+        "$config_rollback_bash" \
+        "$(macos_manifest_get "$config_rollback_manifest" bash_before_hash)" \
+        "$(macos_manifest_get "$config_rollback_manifest" bash_after_hash)"
+    validate_rollback_file "$live_tmux" "$config_rollback_tmux_before" \
+        "$config_rollback_tmux" \
+        "$(macos_manifest_get "$config_rollback_manifest" tmux_before_hash)" \
+        "$(macos_manifest_get "$config_rollback_manifest" tmux_after_hash)"
+    config_rollback_state_before=$(macos_manifest_get \
+        "$config_rollback_manifest" state_before)
+    config_rollback_state_before_hash=$(macos_manifest_get \
+        "$config_rollback_manifest" state_before_hash)
+    case "$config_rollback_state_before" in
+        absent)
+            [ "$config_rollback_state_before_hash" = none ] ||
+                die "Mac config sync prior state is invalid"
+            ;;
+        present)
+            macos_hash_is_safe "$config_rollback_state_before_hash" ||
+                die "Mac config sync prior state is invalid"
+            macos_require_private_file "$config_rollback_state" "$current_uid"
+            [ "$(macos_checksum_file "$config_rollback_state")" = \
+                "$config_rollback_state_before_hash" ] ||
+                die "Mac config sync prior state changed"
+            ;;
+        *) die "Mac config sync prior state is invalid" ;;
+    esac
+
+    config_rollback_ssh_stage=$ssh_directory/.harness-config.$config_rollback_id.rollback
+    config_rollback_bash_stage=$managed_directory/.personal-macos-private.$config_rollback_id.rollback
+    config_rollback_tmux_stage=$HOME/.tmux.conf.harness.$config_rollback_id.rollback
+    for config_rollback_stage in "$config_rollback_ssh_stage" \
+        "$config_rollback_bash_stage" "$config_rollback_tmux_stage"; do
+        [ ! -e "$config_rollback_stage" ] && [ ! -L "$config_rollback_stage" ] ||
+            die "Mac config sync rollback path collision"
+    done
+    restore_transaction_file "$live_ssh" "$config_rollback_ssh_before" \
+        "$config_rollback_ssh" "$config_rollback_ssh_stage"
+    restore_transaction_file "$live_bash" "$config_rollback_bash_before" \
+        "$config_rollback_bash" "$config_rollback_bash_stage"
+    restore_transaction_file "$live_tmux" "$config_rollback_tmux_before" \
+        "$config_rollback_tmux" "$config_rollback_tmux_stage"
+    case "$config_rollback_state_before" in
+        absent) unlink "$state_file" ;;
+        present)
+            macos_require_private_file "$config_rollback_state" "$current_uid"
+            config_rollback_state_stage=$state_directory/.config-sync-state.$config_rollback_id.rollback
+            cp "$config_rollback_state" "$config_rollback_state_stage"
+            chmod 600 "$config_rollback_state_stage"
+            mv "$config_rollback_state_stage" "$state_file"
+            ;;
+        *) die "Mac config sync prior state is invalid" ;;
+    esac
+    printf '%s\n' rolled-back >"$config_rollback_status"
+    write_status current yes
+    printf 'MACOS_CONFIG_SYNC class=current agreement=yes action=rolled-back transaction=%s activation=unchanged\n' \
+        "$config_rollback_id"
+}
+
+logical_host=
+mode=plan
+seed=0
+adopt=0
+rollback_id=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --seed) seed=1; shift ;;
+        --adopt) adopt=1; shift ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        --rollback)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            mode=rollback
+            rollback_id=$2
+            shift 2
+            ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+
+case ${HOME:-} in /*) ;; *) die "Mac config sync requires an absolute HOME" ;; esac
+[ "$seed" -eq 0 ] || [ "$adopt" -eq 0 ] || { usage; exit 2; }
+current_uid=$(id -u)
+private_root=$HOME/.config/harness/private
+ssh_directory=$HOME/.ssh
+managed_directory=$HOME/.config/harness/managed
+live_ssh=$ssh_directory/config
+live_bash=$managed_directory/personal-macos-private.bash
+live_tmux=$HOME/.tmux.conf
+state_root=$HOME/.local/state/harness
+state_directory=$state_root/personal-macos
+state_file=$state_directory/config-sync.conf
+status_file=$state_directory/config-sync-status.conf
+transaction_root=$state_root/transactions
+
+if [ "$mode" = rollback ]; then
+    [ -n "$rollback_id" ] && [ -z "$logical_host" ] &&
+        [ "$seed" -eq 0 ] && [ "$adopt" -eq 0 ] || { usage; exit 2; }
+    [ "$(uname -s)" = Darwin ] || die "Mac config sync requires Darwin"
+    validate_live_parents
+    rollback_transaction "$rollback_id"
+    exit 0
+fi
+
+[ -n "$logical_host" ] || { usage; exit 2; }
+macos_private_id_is_safe "$logical_host" || die "invalid private logical identifier"
+validate_live_parents
+validate_public_checkout
+validate_private_checkout
+"$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
+    die "private profile is not ready for Mac config sync"
+prepare_state
+
+candidate_directory=$(mktemp -d "${TMPDIR:-/tmp}/harness-macos-config.XXXXXX") ||
+    die "cannot allocate Mac config validation directory"
+candidate=$candidate_directory/candidate
+base_candidate=$candidate_directory/base
+head_candidate=$candidate_directory/head
+origin_companion=$candidate_directory/origin-companion
+base_companion=$candidate_directory/base-companion
+head_companion=$candidate_directory/head-companion
+layout_host=$candidate_directory/layout-host
+for config_temp_file in "$candidate.ssh" "$candidate.bash" "$candidate.tmux" \
+    "$base_candidate.ssh" "$base_candidate.bash" "$base_candidate.tmux" \
+    "$head_candidate.ssh" "$head_candidate.bash" "$head_candidate.tmux" \
+    "$origin_companion" "$base_companion" "$head_companion" "$layout_host"; do
+    : >"$config_temp_file"
+    chmod 600 "$config_temp_file"
+done
+cleanup_candidates() {
+    config_cleanup_status=$?
+    trap - EXIT HUP INT TERM
+    [ ! -e "$candidate.ssh" ] || unlink "$candidate.ssh"
+    [ ! -e "$candidate.bash" ] || unlink "$candidate.bash"
+    [ ! -e "$candidate.tmux" ] || unlink "$candidate.tmux"
+    [ ! -e "$base_candidate.ssh" ] || unlink "$base_candidate.ssh"
+    [ ! -e "$base_candidate.bash" ] || unlink "$base_candidate.bash"
+    [ ! -e "$base_candidate.tmux" ] || unlink "$base_candidate.tmux"
+    [ ! -e "$head_candidate.ssh" ] || unlink "$head_candidate.ssh"
+    [ ! -e "$head_candidate.bash" ] || unlink "$head_candidate.bash"
+    [ ! -e "$head_candidate.tmux" ] || unlink "$head_candidate.tmux"
+    [ ! -e "$origin_companion" ] || unlink "$origin_companion"
+    [ ! -e "$base_companion" ] || unlink "$base_companion"
+    [ ! -e "$head_companion" ] || unlink "$head_companion"
+    [ ! -e "$layout_host" ] || unlink "$layout_host"
+    rmdir "$candidate_directory"
+    exit "$config_cleanup_status"
+}
+trap cleanup_candidates EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+fetch_private || stop_class auth-failed no
+origin_revision=$(git -C "$private_root" rev-parse --verify refs/remotes/origin/main)
+head_revision=$(git -C "$private_root" rev-parse --verify HEAD)
+origin_layout=$(revision_layout "$origin_revision" "$origin_companion")
+
+state_present=0
+if [ -e "$state_file" ] || [ -L "$state_file" ]; then
+    validate_state
+    state_present=1
+fi
+
+action=
+target_revision=
+if [ "$state_present" -eq 0 ]; then
+    case "$origin_layout" in
+        absent)
+            [ "$adopt" -eq 0 ] || stop_class invalid no
+            if [ "$head_revision" = "$origin_revision" ]; then
+                if [ "$seed" -eq 0 ]; then
+                    write_status current no
+                    echo 'MACOS_CONFIG_SYNC class=current agreement=no action=seed-required'
+                    [ "$mode" = plan ] && exit 0
+                    exit 2
+                fi
+                validate_live_bundle
+                copy_live_bundle "$candidate"
+                action=seed
+            elif git -C "$private_root" merge-base --is-ancestor \
+                "$origin_revision" "$head_revision" >/dev/null 2>&1 &&
+                private_diff_is_bundle_only "$origin_revision" "$head_revision" &&
+                [ "$(revision_layout "$head_revision" "$head_companion")" = bundle ]; then
+                export_bundle "$head_revision" "$head_candidate" || stop_class invalid no
+                validate_live_bundle
+                copy_live_bundle "$candidate"
+                bundle_equal "$candidate" "$head_candidate" || stop_class diverged no
+                action=retry-push
+                target_revision=$head_revision
+            else
+                stop_class diverged no
+            fi
+            ;;
+        bundle)
+            [ "$seed" -eq 0 ] || stop_class invalid no
+            export_bundle "$origin_revision" "$candidate" || stop_class invalid no
+            if [ "$adopt" -eq 0 ]; then
+                write_status current no
+                echo 'MACOS_CONFIG_SYNC class=current agreement=no action=adopt-required'
+                [ "$mode" = plan ] && exit 0
+                exit 2
+            fi
+            git -C "$private_root" merge-base --is-ancestor \
+                "$head_revision" "$origin_revision" >/dev/null 2>&1 ||
+                stop_class diverged no
+            action=adopt
+            target_revision=$origin_revision
+            ;;
+        legacy)
+            [ "$adopt" -eq 0 ] || stop_class invalid no
+            if [ "$seed" -eq 0 ]; then
+                write_status current no
+                echo 'MACOS_CONFIG_SYNC class=current agreement=no action=legacy-migration-required'
+                [ "$mode" = plan ] && exit 0
+                exit 2
+            fi
+            [ "$head_revision" = "$origin_revision" ] || stop_class diverged no
+            validate_live_bundle
+            copy_live_bundle "$candidate"
+            git -C "$private_root" show "$origin_revision:ssh_config" \
+                >"$head_candidate.ssh" 2>/dev/null || stop_class invalid no
+            chmod 600 "$head_candidate.ssh"
+            macos_validate_ssh_config "$head_candidate.ssh" "$current_uid" 600
+            cmp -s "$candidate.ssh" "$head_candidate.ssh" || stop_class diverged no
+            action=migrate-seed
+            ;;
+        *) stop_class invalid no ;;
+    esac
+else
+    [ "$origin_layout" = bundle ] || stop_class invalid no
+    git -C "$private_root" cat-file -e "$state_revision^{commit}" 2>/dev/null ||
+        stop_class invalid no
+    [ "$(revision_layout "$state_revision" "$base_companion")" = bundle ] ||
+        stop_class invalid no
+    export_bundle "$state_revision" "$base_candidate" || stop_class invalid no
+    bundle_identities "$base_candidate"
+    [ "$config_identity_ssh" = "$state_ssh_identity" ] &&
+        [ "$config_identity_bash" = "$state_bash_identity" ] &&
+        [ "$config_identity_tmux" = "$state_tmux_identity" ] ||
+        stop_class invalid no
+    git -C "$private_root" merge-base --is-ancestor \
+        "$state_revision" "$origin_revision" >/dev/null 2>&1 ||
+        stop_class diverged no
+    validate_live_bundle
+    copy_live_bundle "$head_candidate"
+    export_bundle "$origin_revision" "$candidate" || stop_class invalid no
+    local_changed=0
+    remote_changed=0
+    bundle_equal "$head_candidate" "$base_candidate" || local_changed=1
+    bundle_equal "$candidate" "$base_candidate" || remote_changed=1
+
+    if [ "$local_changed" -eq 1 ] && [ "$remote_changed" -eq 1 ]; then
+        if bundle_equal "$head_candidate" "$candidate"; then
+            git -C "$private_root" merge-base --is-ancestor \
+                "$head_revision" "$origin_revision" >/dev/null 2>&1 ||
+                stop_class diverged no
+            action=pull
+            target_revision=$origin_revision
+        else
+            stop_class diverged no
+        fi
+    elif [ "$local_changed" -eq 1 ]; then
+        cp "$head_candidate.ssh" "$candidate.ssh"
+        cp "$head_candidate.bash" "$candidate.bash"
+        cp "$head_candidate.tmux" "$candidate.tmux"
+        chmod 600 "$candidate.ssh" "$candidate.bash" "$candidate.tmux"
+        if [ "$head_revision" = "$origin_revision" ]; then
+            action=publish
+        elif git -C "$private_root" merge-base --is-ancestor \
+            "$origin_revision" "$head_revision" >/dev/null 2>&1 &&
+            private_diff_is_bundle_only "$origin_revision" "$head_revision" &&
+            [ "$(revision_layout "$head_revision" "$head_companion")" = bundle ]; then
+            export_bundle "$head_revision" "$base_candidate" || stop_class invalid no
+            bundle_equal "$candidate" "$base_candidate" || stop_class diverged no
+            action=retry-push
+            target_revision=$head_revision
+        else
+            stop_class diverged no
+        fi
+    elif [ "$remote_changed" -eq 1 ] || [ "$head_revision" != "$origin_revision" ]; then
+        git -C "$private_root" merge-base --is-ancestor \
+            "$head_revision" "$origin_revision" >/dev/null 2>&1 ||
+            stop_class diverged no
+        action=pull
+        target_revision=$origin_revision
+    else
+        action=current
+        target_revision=$origin_revision
+    fi
+fi
+
+case "$action" in
+    current)
+        if [ "$(macos_stat_mode "$live_ssh")" = 600 ] &&
+            [ "$(macos_stat_mode "$live_tmux")" = 600 ]; then
+            write_status current yes
+            echo 'MACOS_CONFIG_SYNC class=current agreement=yes action=none activation=unchanged'
+            exit 0
+        fi
+        copy_live_bundle "$candidate"
+        action=normalize
+        ;;
+    seed|migrate-seed|publish|retry-push|adopt|pull|normalize) ;;
+    *) stop_class invalid no ;;
+esac
+
+if [ "$mode" = plan ]; then
+    write_status current no
+    printf 'MACOS_CONFIG_SYNC class=current agreement=no action=%s apply=not-requested activation=none\n' \
+        "$action"
+    exit 0
+fi
+
+case "$action" in
+    seed|migrate-seed|publish)
+        write_bundle_to_private "$candidate"
+        commit_private || stop_class invalid no
+        target_revision=$(git -C "$private_root" rev-parse HEAD)
+        push_private || stop_class auth-failed no
+        ;;
+    retry-push)
+        push_private || stop_class auth-failed no
+        export_bundle "$target_revision" "$candidate" || stop_class invalid no
+        ;;
+    adopt|pull)
+        git -C "$private_root" merge --ff-only -q "$origin_revision" ||
+            stop_class diverged no
+        target_revision=$origin_revision
+        export_bundle "$target_revision" "$candidate" || stop_class invalid no
+        ;;
+    normalize) ;;
+esac
+
+apply_local_transaction "$candidate" "$target_revision"

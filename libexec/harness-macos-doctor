@@ -178,12 +178,44 @@ else
 fi
 
 ssh_sync_state=$HOME/.local/state/harness/personal-macos/ssh-sync-status.conf
+config_sync_state=$HOME/.local/state/harness/personal-macos/config-sync-status.conf
 ssh_payload_adopted=0
+config_bundle_adopted=0
 if git -C "$HOME/.config/harness/private" ls-files --error-unmatch \
     ssh_config >/dev/null 2>&1; then
     ssh_payload_adopted=1
 fi
-if [ "$ssh_payload_adopted" -eq 0 ] &&
+if [ "$ssh_payload_adopted" -eq 1 ] &&
+    git -C "$HOME/.config/harness/private" ls-files --error-unmatch \
+        bashrc >/dev/null 2>&1 &&
+    git -C "$HOME/.config/harness/private" ls-files --error-unmatch \
+        tmux.conf >/dev/null 2>&1; then
+    config_bundle_adopted=1
+fi
+if [ "$config_bundle_adopted" -eq 1 ]; then
+    if [ -f "$config_sync_state" ] && [ ! -L "$config_sync_state" ]; then
+        macos_require_private_file "$config_sync_state" "$current_uid"
+        macos_validate_manifest "$config_sync_state" schema,class,agreement \
+            schema,class,agreement
+        config_sync_schema=$(macos_manifest_get "$config_sync_state" schema)
+        config_sync_class=$(macos_manifest_get "$config_sync_state" class)
+        config_sync_agreement=$(macos_manifest_get "$config_sync_state" agreement)
+        [ "$config_sync_schema" = 2 ] || die "Mac config sync status is malformed"
+        case "$config_sync_class:$config_sync_agreement" in
+            current:yes)
+                echo 'PASS required=config_sync class=current agreement=yes payloads=3'
+                ;;
+            current:no|diverged:no|invalid:no|offline:no|auth-failed:no)
+                echo "FAIL required=config_sync class=$config_sync_class agreement=no payloads=3"
+                failures=$((failures + 1))
+                ;;
+            *) die "Mac config sync status is malformed" ;;
+        esac
+    else
+        echo 'FAIL required=config_sync class=invalid agreement=no payloads=3'
+        failures=$((failures + 1))
+    fi
+elif [ "$ssh_payload_adopted" -eq 0 ] &&
     [ ! -e "$ssh_sync_state" ] && [ ! -L "$ssh_sync_state" ]; then
     echo 'PASS optional=ssh_sync class=current agreement=not-adopted'
 elif [ -f "$ssh_sync_state" ] && [ ! -L "$ssh_sync_state" ]; then

@@ -57,10 +57,12 @@ make_profile() {
 valid_home=$(make_profile valid)
 valid_output=$(HOME="$valid_home" "$HARNESS" macos-profile \
     --host mac-test-pilot)
-expected_output='MACOS_PRIVATE_PROFILE status=valid schema=1 engine_schema=1
+expected_output='MACOS_PRIVATE_PROFILE status=valid schema=1 engine_schema=2
 SELECTION baseline=macos-cli-v1 capability_groups=2 extra_formulae=2
 PUBLIC_FORMULAE count=8
 SSH_PAYLOAD state=present values=not-emitted
+BASH_PAYLOAD state=absent values=not-emitted
+TMUX_PAYLOAD state=absent values=not-emitted
 END private_profile values=not-emitted'
 [ "$valid_output" = "$expected_output" ] || fail "valid value-free output"
 case "$valid_output" in
@@ -78,6 +80,44 @@ absent_output=$(HOME="$absent_home" "$HARNESS" macos-profile \
 printf '%s\n' "$absent_output" | grep -F \
     'SSH_PAYLOAD state=absent values=not-emitted' >/dev/null ||
     fail "pre-adoption payload absence"
+
+bundle_home=$(make_profile payload-bundle)
+bundle_private=$bundle_home/.config/harness/private
+cp "$ROOT/tests/fixtures/personal-macos/private-v2/companion.conf" \
+    "$bundle_private/companion.conf"
+cp "$ROOT/tests/fixtures/personal-macos/private-v2/bashrc" \
+    "$bundle_private/bashrc"
+cp "$ROOT/tests/fixtures/personal-macos/private-v2/tmux.conf" \
+    "$bundle_private/tmux.conf"
+chmod 600 "$bundle_private/companion.conf" "$bundle_private/bashrc" \
+    "$bundle_private/tmux.conf"
+git -C "$bundle_private" add companion.conf bashrc tmux.conf
+git -C "$bundle_private" commit -q -m 'synthetic atomic config bundle'
+bundle_output=$(HOME="$bundle_home" "$HARNESS" macos-profile \
+    --host mac-test-pilot)
+printf '%s\n' "$bundle_output" | grep -F \
+    'BASH_PAYLOAD state=present values=not-emitted' >/dev/null ||
+    fail "bundle Bash payload state"
+printf '%s\n' "$bundle_output" | grep -F \
+    'TMUX_PAYLOAD state=present values=not-emitted' >/dev/null ||
+    fail "bundle tmux payload state"
+
+incomplete_home=$(make_profile payload-incomplete)
+incomplete_private=$incomplete_home/.config/harness/private
+cp "$ROOT/tests/fixtures/personal-macos/private-v2/companion.conf" \
+    "$incomplete_private/companion.conf"
+cp "$ROOT/tests/fixtures/personal-macos/private-v2/bashrc" \
+    "$incomplete_private/bashrc"
+chmod 600 "$incomplete_private/companion.conf" "$incomplete_private/bashrc"
+git -C "$incomplete_private" add companion.conf bashrc
+git -C "$incomplete_private" commit -q -m 'synthetic incomplete config bundle'
+if HOME="$incomplete_home" "$HARNESS" macos-profile --host mac-test-pilot \
+    >"$TEMP_DIR/incomplete-bundle.out" 2>&1; then
+    fail "incomplete config bundle accepted"
+fi
+grep -F 'payload set is incomplete or incompatible' \
+    "$TEMP_DIR/incomplete-bundle.out" >/dev/null ||
+    fail "incomplete config bundle refusal"
 
 payload_mode_home=$(make_profile payload-mode)
 chmod 644 "$payload_mode_home/.config/harness/private/ssh_config"

@@ -88,6 +88,28 @@ validate_private_target() {
                     "$target_path" "$target_ssh_file"
                 macos_validate_ssh_config "$target_ssh_file" "$current_uid" 600
                 ;;
+            bashrc)
+                [ "$target_minimum_engine" -ge 2 ] ||
+                    die "private target tracked layout is invalid"
+                target_mode=$(git -C "$private_checkout" ls-tree \
+                    "$private_target" -- "$target_path" | awk '{ print $1 ":" $2 }')
+                [ "$target_mode" = 100644:blob ] ||
+                    die "private target tracked layout is invalid"
+                export_commit_file "$private_checkout" "$private_target" \
+                    "$target_path" "$target_bash_file"
+                macos_validate_bash_config "$target_bash_file" "$current_uid" 600
+                ;;
+            tmux.conf)
+                [ "$target_minimum_engine" -ge 2 ] ||
+                    die "private target tracked layout is invalid"
+                target_mode=$(git -C "$private_checkout" ls-tree \
+                    "$private_target" -- "$target_path" | awk '{ print $1 ":" $2 }')
+                [ "$target_mode" = 100644:blob ] ||
+                    die "private target tracked layout is invalid"
+                export_commit_file "$private_checkout" "$private_target" \
+                    "$target_path" "$target_tmux_file"
+                macos_validate_tmux_config "$target_tmux_file" "$current_uid" 600
+                ;;
             hosts/*.conf)
                 target_name=${target_path#hosts/}
                 target_id=${target_name%.conf}
@@ -112,6 +134,20 @@ validate_private_target() {
         selected_found=1
     fi
     [ "$selected_found" -eq 1 ] || die "selected private target profile is unavailable"
+    target_ssh_state=absent
+    target_bash_state=absent
+    target_tmux_state=absent
+    printf '%s\n' "$target_paths" | grep -F -x ssh_config >/dev/null &&
+        target_ssh_state=present
+    printf '%s\n' "$target_paths" | grep -F -x bashrc >/dev/null &&
+        target_bash_state=present
+    printf '%s\n' "$target_paths" | grep -F -x tmux.conf >/dev/null &&
+        target_tmux_state=present
+    case "$target_minimum_engine:$target_ssh_state:$target_bash_state:$target_tmux_state" in
+        1:absent:absent:absent|1:present:absent:absent) ;;
+        2:absent:absent:absent|2:present:present:present) ;;
+        *) die "private target payload set is incomplete or incompatible" ;;
+    esac
 }
 
 validate_state_file() {
@@ -347,6 +383,21 @@ target_ssh_file=$(mktemp "${TMPDIR:-/tmp}/harness-macos-ssh.XXXXXX") || {
     unlink "$target_host_file"
     die "cannot allocate SSH target validation file"
 }
+target_bash_file=$(mktemp "${TMPDIR:-/tmp}/harness-macos-bash-config.XXXXXX") || {
+    unlink "$target_public_file"
+    unlink "$target_companion_file"
+    unlink "$target_host_file"
+    unlink "$target_ssh_file"
+    die "cannot allocate Bash target validation file"
+}
+target_tmux_file=$(mktemp "${TMPDIR:-/tmp}/harness-macos-tmux-config.XXXXXX") || {
+    unlink "$target_public_file"
+    unlink "$target_companion_file"
+    unlink "$target_host_file"
+    unlink "$target_ssh_file"
+    unlink "$target_bash_file"
+    die "cannot allocate tmux target validation file"
+}
 cleanup_target_files() {
     status=$?
     trap - EXIT HUP INT TERM
@@ -354,6 +405,8 @@ cleanup_target_files() {
     [ ! -e "$target_companion_file" ] || unlink "$target_companion_file"
     [ ! -e "$target_host_file" ] || unlink "$target_host_file"
     [ ! -e "$target_ssh_file" ] || unlink "$target_ssh_file"
+    [ ! -e "$target_bash_file" ] || unlink "$target_bash_file"
+    [ ! -e "$target_tmux_file" ] || unlink "$target_tmux_file"
     exit "$status"
 }
 trap cleanup_target_files EXIT
@@ -364,7 +417,7 @@ trap 'exit 143' TERM
 export_commit_file "$public_checkout" "$public_target" \
     profiles/personal-macos/base.conf "$target_public_file"
 macos_validate_public_profile "$target_public_file"
-target_engine_schema=$(macos_manifest_get "$target_public_file" schema)
+target_engine_schema=$(macos_manifest_get "$target_public_file" engine_schema)
 target_private_min=$(macos_manifest_get "$target_public_file" private_schema_min)
 target_private_max=$(macos_manifest_get "$target_public_file" private_schema_max)
 target_baseline=$(macos_manifest_get "$target_public_file" baseline)
@@ -374,6 +427,8 @@ export_commit_file "$private_checkout" "$private_target" companion.conf \
 macos_validate_companion_manifest "$target_companion_file" \
     "$target_engine_schema" "$target_private_min" "$target_private_max"
 target_private_schema=$(macos_manifest_get "$target_companion_file" schema)
+target_minimum_engine=$(macos_manifest_get \
+    "$target_companion_file" minimum_engine_schema)
 validate_private_target
 
 public_action=$(checkout_state "$public_checkout" "$public_target")
@@ -398,6 +453,8 @@ if [ "$public_action" = fast-forward ] &&
     [ ! -e "$target_companion_file" ] || unlink "$target_companion_file"
     [ ! -e "$target_host_file" ] || unlink "$target_host_file"
     [ ! -e "$target_ssh_file" ] || unlink "$target_ssh_file"
+    [ ! -e "$target_bash_file" ] || unlink "$target_bash_file"
+    [ ! -e "$target_tmux_file" ] || unlink "$target_tmux_file"
     trap - EXIT HUP INT TERM
     HARNESS_MACOS_UPDATE_RESUMED=1 \
         exec "$HARNESS_ROOT/libexec/harness-macos-update" \

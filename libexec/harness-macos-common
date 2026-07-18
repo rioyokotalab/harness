@@ -180,12 +180,92 @@ macos_validate_ssh_config() {
         >/dev/null 2>&1 || die "SSH configuration grammar is invalid"
 }
 
+macos_validate_private_config_file() {
+    macos_config_label=$1
+    macos_config_file=$2
+    macos_config_uid=$3
+    macos_config_modes=$4
+    [ -f "$macos_config_file" ] && [ ! -L "$macos_config_file" ] ||
+        die "$macos_config_label configuration has unsafe type"
+    [ "$(macos_stat_owner "$macos_config_file")" = "$macos_config_uid" ] ||
+        die "$macos_config_label configuration has unsafe owner"
+    [ "$(macos_stat_links "$macos_config_file")" = 1 ] ||
+        die "$macos_config_label configuration has unsafe link count"
+    macos_config_mode=$(macos_stat_mode "$macos_config_file")
+    case ",$macos_config_modes," in
+        *,"$macos_config_mode",*) ;;
+        *) die "$macos_config_label configuration has unsafe mode" ;;
+    esac
+    macos_config_size=$(wc -c <"$macos_config_file" | tr -d ' ')
+    case "$macos_config_size" in
+        ''|*[!0-9]*) die "$macos_config_label configuration size is invalid" ;;
+    esac
+    [ "$macos_config_size" -le 1048576 ] ||
+        die "$macos_config_label configuration size is invalid"
+    if LC_ALL=C grep -E 'BEGIN ([A-Z0-9 ]+ )?PRIVATE KEY' \
+        "$macos_config_file" >/dev/null 2>&1; then
+        die "$macos_config_label configuration contains prohibited credential material"
+    fi
+    if LC_ALL=C grep -E -i \
+        '(^|[^[:alnum:]_])(token|password|secret|api[_-]?key)[[:space:]]*=' \
+        "$macos_config_file" >/dev/null 2>&1; then
+        die "$macos_config_label configuration contains prohibited credential material"
+    fi
+}
+
+macos_validate_bash_config() {
+    macos_bash_file=$1
+    macos_bash_uid=$2
+    macos_bash_modes=$3
+    macos_validate_private_config_file Bash "$macos_bash_file" \
+        "$macos_bash_uid" "$macos_bash_modes"
+    command -v bash >/dev/null 2>&1 ||
+        die "Bash configuration validator is unavailable"
+    bash --noprofile --norc -n "$macos_bash_file" >/dev/null 2>&1 ||
+        die "Bash configuration grammar is invalid"
+}
+
+macos_validate_tmux_config() {
+    macos_tmux_file=$1
+    macos_tmux_uid=$2
+    macos_tmux_modes=$3
+    macos_validate_private_config_file tmux "$macos_tmux_file" \
+        "$macos_tmux_uid" "$macos_tmux_modes"
+    command -v tmux >/dev/null 2>&1 ||
+        die "tmux configuration validator is unavailable"
+    (
+        umask 077
+        macos_tmux_temp=$(mktemp -d "${TMPDIR:-/tmp}/harness-tmux-validate.XXXXXX") ||
+            exit 1
+        macos_tmux_socket=harness-validate-$$
+        macos_tmux_socket_directory=$macos_tmux_temp/tmux-$(id -u)
+        macos_tmux_socket_path=$macos_tmux_socket_directory/$macos_tmux_socket
+        macos_tmux_status=0
+        TMUX_TMPDIR=$macos_tmux_temp tmux -L "$macos_tmux_socket" \
+            -f /dev/null new-session -d -s harness-validate /bin/sleep 30 \
+            >/dev/null 2>&1 || macos_tmux_status=$?
+        if [ "$macos_tmux_status" -eq 0 ]; then
+            TMUX_TMPDIR=$macos_tmux_temp tmux -L "$macos_tmux_socket" \
+                source-file -n "$macos_tmux_file" >/dev/null 2>&1 ||
+                macos_tmux_status=$?
+        fi
+        TMUX_TMPDIR=$macos_tmux_temp tmux -L "$macos_tmux_socket" \
+            kill-server >/dev/null 2>&1 || true
+        [ ! -S "$macos_tmux_socket_path" ] || unlink "$macos_tmux_socket_path"
+        [ ! -d "$macos_tmux_socket_directory" ] ||
+            rmdir "$macos_tmux_socket_directory"
+        rmdir "$macos_tmux_temp"
+        exit "$macos_tmux_status"
+    ) || die "tmux configuration grammar is invalid"
+}
+
 macos_validate_public_profile() {
     macos_public_profile=$1
     macos_validate_manifest "$macos_public_profile" \
-        schema,family,private_schema_min,private_schema_max,baseline,managed_formulae \
-        schema,family,private_schema_min,private_schema_max,baseline,managed_formulae
+        schema,engine_schema,family,private_schema_min,private_schema_max,baseline,managed_formulae \
+        schema,engine_schema,family,private_schema_min,private_schema_max,baseline,managed_formulae
     [ "$(macos_manifest_get "$macos_public_profile" schema)" = 1 ] &&
+        [ "$(macos_manifest_get "$macos_public_profile" engine_schema)" = 2 ] &&
         [ "$(macos_manifest_get "$macos_public_profile" family)" = personal-macos ] &&
         [ "$(macos_manifest_get "$macos_public_profile" private_schema_min)" = 1 ] &&
         [ "$(macos_manifest_get "$macos_public_profile" private_schema_max)" = 1 ] &&
