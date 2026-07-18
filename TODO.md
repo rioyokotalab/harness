@@ -660,6 +660,21 @@ then checkpoint stage 15 complete only if the full gate passes. Do not access a
 live private companion, mutate the pilot Mac, dispatch a separate workflow, or
 begin sequential rollout.
 
+PR #36 published the frozen drill boundary as `1d02796`. Protected Harness CI
+run `29647147390`, job `88087186629`, passed `portable-phase1` in 1m39s; that
+gate executed the full disposable long-gap update suite and all phase-one
+regressions. The accepted evidence therefore covers both direct
+fast-forwards, compatibility validation, initialization and ordered v1
+migration, idempotent current behavior, public-first partial-update retry,
+changed-state rollback refusal, exact state restoration without Git rewind,
+incompatible-schema/layout refusal, privacy-negative output, and guarded
+fixture cleanup. No live public/private checkout, pilot state, package, shell,
+service, or other machine was changed by the drill. Stage 15 is complete.
+Exact next action: plan stage 16 against one privately selected remaining Mac,
+revalidate that Mac independently, and obtain separate authority for its
+update/migration plan before any apply. Do not batch Macs or infer their state
+from the pilot.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
