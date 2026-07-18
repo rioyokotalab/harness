@@ -48,7 +48,7 @@ and compact historical pointers here. Next free ID: T-262.
 
 ### T-261 — Add low-friction interactive destructive-command safeguards
 
-**Phase/status:** `executing`; the owner gave explicit `go`. The owner wants protections
+**Phase/status:** `complete`; the owner gave explicit `go`. The owner wants protections
 against commands such as `rm -rf` without adding routine prompts or changing
 batch jobs. No live shell behavior, scheduler state, filesystem target, Git
 state outside this planning branch, or external service has been changed.
@@ -108,8 +108,7 @@ through the interactive profile, and absence from child/non-interactive shells.
 Bash/sh syntax, warning-level ShellCheck, remote-session/startup regression,
 diff checks, and the complete `HARNESS_PORTABLE_CI=1` phase-1 suite pass. A
 fresh local read-only pilot reports all selected commands as shell-local
-functions and native commands in a non-interactive child. Publication, hosted
-CI, and one-node-at-a-time fleet rollout remain pending.
+functions and native commands in a non-interactive child.
 
 **Recovery:** revert the tracked change and synchronize that exact revision.
 Already-running shells may retain function definitions until a fresh shell or
@@ -123,8 +122,17 @@ cost through Git interception or changed overwrite/glob semantics. The owner
 accepted silent native pass-through for ordinary forms, explicit refusal for
 the frozen risky forms, `command NAME ...` as the visible expert bypass, local
 pilot before one-node-at-a-time fleet rollout, and no change to non-interactive
-jobs. The plan is frozen and awaits a separate explicit `go` before target
-implementation begins.
+jobs. The owner's separate explicit `go` authorized and completed that plan.
+
+**Outcome:** implementation commit `3d21407` passed hosted `portable-phase1`
+run `29624935519` and PR #4 squash-merged under the live zero-approval ruleset
+as `accca9d`. Local, AB, AB2, RI, AL, RC, and T4 satisfy the required
+Bash/realpath/getent primitives; fresh interactive probes report `rm`, `rsync`,
+and `qdel` as shell-local functions and native `rm` in a non-interactive child.
+Guarded fleet synchronization applied one node at a time, exactly unlinked
+every bundle, and a repeat plan reports six clean idempotent `KEEP` results at
+`accca9d`. No real deletion, permission change, rsync deletion, scheduler
+cancellation, or non-interactive behavior was exercised or changed.
 
 ### T-260 — Disable PBS job email by default on ABCI
 
