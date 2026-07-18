@@ -70,11 +70,13 @@ gates; follow those more specific rules.
 
 ## Reusable workflows
 
-At task start, compare the task against the installed shared skills and read
-every matching skill before working; apply skills by default rather than only
-on explicit request. Closer project rules stay authoritative, and project
-repositories remain operationally self-contained: skills guide the agent's
-working method and never become project runtime dependencies.
+At every task start, actively compare the request and repository guidance
+against the installed shared skills and workflows. Read every matching skill
+completely and apply each applicable one by default, including its planning,
+ledger, validation, and handoff gates; do not invoke irrelevant workflows.
+Closer project rules stay authoritative, and project repositories remain
+operationally self-contained: skills guide the agent's working method and
+never become project runtime dependencies.
 
 - Use the `long-running-task-ledger` skill for durable multi-step or
   multi-session work.
