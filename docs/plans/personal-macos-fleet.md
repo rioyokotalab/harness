@@ -485,6 +485,12 @@ leak assertions pass. Stage 7 is complete: plan and doctor strictly validate
 mode-0600 facts, revalidate live selected scope, reject fact/link/outdated
 drift, keep doctor output value-free, and render exact official formula-only
 Homebrew metadata/dry-run/apply commands without executing them. Implement
-stage 8 next: Mac control-plane link transactions with idempotence and exact
-rollback. Do not create or access the private GitHub repository, connect to a
+Stage 8 is complete: Mac control-plane discovery links are collision-refusing,
+idempotent, mode-restricted, transaction-backed, partial-failure safe, and
+exactly reversible while unchanged. Synthetic tests cover pre-existing links
+and directory modes, regular and symlink collisions, symlinked state and
+parent paths, injected partial failure, changed-link refusal, unexpected
+content refusal, exact rollback, and second-run no-op. Implement stage 9 next:
+bounded Homebrew catch-up with dry-run scope validation and transaction
+evidence. Do not create or access the private GitHub repository, connect to a
 Mac, inspect live machine facts, or mutate Homebrew/shell state.

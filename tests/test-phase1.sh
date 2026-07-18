@@ -43,6 +43,7 @@ for script in \
     "$ROOT/libexec/harness-macos-doctor" \
     "$ROOT/libexec/harness-macos-profile" \
     "$ROOT/libexec/harness-macos-update" \
+    "$ROOT/libexec/harness-macos-control" \
     "$ROOT/libexec/harness-storage-readiness" \
     "$ROOT/libexec/harness-replica" \
     "$ROOT/libexec/harness-repository-fingerprint" \
@@ -112,6 +113,8 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "personal macOS inventory focused suite"
 "$ROOT/tests/test-personal-macos-plan-doctor.sh" >/dev/null ||
     fail "personal macOS plan/doctor focused suite"
+"$ROOT/tests/test-personal-macos-control.sh" >/dev/null ||
+    fail "personal macOS control-plane focused suite"
 "$ROOT/tests/test-personal-macos-update.sh" >/dev/null ||
     fail "personal macOS long-gap update focused suite"
 

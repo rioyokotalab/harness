@@ -56,6 +56,7 @@ Read-only phase-1 commands:
   storage-readiness  validate declared large/cache storage; optionally probe writes
 
 Transactional commands:
+  macos-control  plan/apply/rollback personal-Mac discovery links
   replica     plan or create one immutable encrypted-repository generation
   apply       plan or apply managed control-plane links
   remediate   plan or apply an exact reviewed host remediation
@@ -92,7 +93,7 @@ if [ "$#" -gt 0 ]; then
 fi
 
 case "$command_name" in
-    inventory|plan|doctor|macos-inventory|macos-plan|macos-doctor|macos-profile|macos-update|storage-readiness|replica|apply|remediate|shell|cache-bootstrap|startup-normalize|dotfiles|tool|runtime|python|agent|build-tool|rollback|restic|restic-primary|restic-schedule|fleet-sync)
+    inventory|plan|doctor|macos-inventory|macos-plan|macos-doctor|macos-profile|macos-update|macos-control|storage-readiness|replica|apply|remediate|shell|cache-bootstrap|startup-normalize|dotfiles|tool|runtime|python|agent|build-tool|rollback|restic|restic-primary|restic-schedule|fleet-sync)
         exec "$ROOT/libexec/harness-$command_name" "$@"
         ;;
     guarded-delete)

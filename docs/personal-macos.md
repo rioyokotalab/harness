@@ -69,6 +69,35 @@ Command behavior was frozen against the official Homebrew manpage and FAQ on
 - <https://docs.brew.sh/FAQ>
 - <https://docs.brew.sh/Versions>
 
+## Transactional discovery links
+
+`harness macos-control --host LOGICAL_ID --plan` validates a canonical clean
+public `main` checkout and the strict private profile, then reports only fixed
+home-relative discovery-link actions. It manages the harness launcher, Codex
+and Claude guidance, Codex rules, and each public shared skill's Codex, Agents,
+and Claude discovery links. It does not replace regular files, directories,
+different symlinks, symlinked parents, or paths owned by another account.
+
+`harness macos-control --host LOGICAL_ID --apply` repeats every preflight,
+creates only missing owner-private parent directories and absent links, and
+records exactly what it created in a mode-0600 local transaction. Existing
+correct links and existing personal directory modes are preserved. A partial
+failure removes only links and directories created by that attempt; a second
+successful apply is a no-op.
+
+```bash
+harness macos-control --rollback TRANSACTION_ID
+```
+
+Rollback first validates the entire private manifest, every recorded link,
+every created directory, and the absence of non-transaction content. It then
+unlinks only unchanged transaction-owned links and removes only now-empty
+transaction-owned directories in reverse order. A changed link, directory,
+owner, status, manifest, or unexpected file blocks rollback before mutation.
+The transaction record remains local under `~/.local/state/harness`; neither
+plan, apply, nor rollback touches packages, shell startup, Git remotes, or the
+private repository's contents.
+
 ## Explicit long-gap update
 
 Fetching is a separate, explicit step. After fetching `origin/main` in both

@@ -51,7 +51,7 @@ and compact historical pointers here. Next free ID: T-269.
 ## Next resume checkpoint
 
 Resume T-268 in `executing`; D1–D10 are frozen and the owner gave explicit
-`go` on 2026-07-18. Continue stage 2 from the exact next action in
+`go` on 2026-07-18. Continue stage 9 from the exact next action in
 `docs/plans/personal-macos-fleet.md`. Independently resume T-191 after the first
 Sunday eligibility. Fetch and prove a clean fleet, then query only the seven
 captured IDs below through their declared native scheduler routes. Do not infer
@@ -233,7 +233,7 @@ long-gap drill, then one-at-a-time rollout. Privacy-negative tests precede any
 Mac observation; control-plane rollback precedes package/shell stages; every
 live package or external-service action retains its separate authority gate.
 
-**Execution checkpoint:** stages 1–6 are complete. The frozen D1–D10 record is
+**Execution checkpoint:** stages 1–8 are complete. The frozen D1–D10 record is
 unchanged. Stage 2 added `harness macos-profile`, the public
 `profiles/personal-macos/base.conf`, strict companion v1 schema/example,
 synthetic v1 fixture, and `tests/test-personal-macos-profile.sh`. The resolver
@@ -280,9 +280,25 @@ unmanaged outdated output, missing readiness, ready state, and implicit
 mode-0600 fact capture/cleanup pass, along with every earlier focused/audit
 check on 2026-07-18.
 
-**Next:** implement stage 8 Mac control-plane link transactions, idempotence,
-changed-target refusal, and exact rollback. Keep live Mac access gated on
-privacy-negative validation. Go does not itself authorize
+Stage 8 adds `harness macos-control`. It validates canonical owner-controlled
+paths, a clean committed public `main`, and the strict private profile before
+creating any discovery link. It refuses regular-path, different-symlink,
+symlink-parent, ambiguous-root, foreign-owner, and unsafe transaction-state
+collisions. Apply creates only missing private parents and links, preserves
+existing correct links and existing personal directory modes, records exact
+mode-0600 transactions, and unwinds injected partial failures. Rollback
+validates the whole manifest and all recorded state before mutation, refuses
+changed links or unexpected content, and removes only unchanged links plus
+empty directories created by that transaction. Plan/apply idempotence,
+pre-existing-link preservation, changed-link and unexpected-content refusal,
+symlinked state refusal, partial-failure cleanup, and exact rollback pass with
+all earlier focused macOS suites on 2026-07-18. No live Mac or external state
+was accessed or changed.
+
+**Next:** implement stage 9 bounded Homebrew catch-up with dry-run scope
+validation, explicit managed-formula evidence, no cleanup/removal, and safe
+failure records. Keep live Mac access gated on privacy-negative validation. Go
+does not itself authorize
 credentials/authentication changes, GitHub creation or publication, Homebrew
 installation/upgrades, package cleanup, background automation, or destructive
 actions.
