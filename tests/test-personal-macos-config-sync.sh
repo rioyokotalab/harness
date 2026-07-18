@@ -244,6 +244,27 @@ run_sync "$private_fail_home" --host mac-test-pilot --seed --apply >/dev/null ||
     fail "retry after private bundle replacement failure"
 
 # shellcheck disable=SC2034
+IFS='|' read -r commit_fail_home commit_fail_repo commit_fail_writer \
+    commit_fail_origin <<EOF
+$(setup_home commit-failure)
+EOF
+git -C "$commit_fail_repo" config user.name ''
+git -C "$commit_fail_repo" config user.email ''
+if run_sync "$commit_fail_home" --host mac-test-pilot --seed --apply \
+    >"$TEMP_DIR/commit-failure.out" 2>&1; then
+    fail "private bundle commit failure succeeded"
+fi
+[ -z "$(git -C "$commit_fail_repo" status --porcelain --untracked-files=normal)" ] ||
+    fail "private commit failure left dirty companion"
+[ ! -e "$commit_fail_repo/ssh_config" ] &&
+    [ ! -e "$commit_fail_repo/bashrc" ] &&
+    [ ! -e "$commit_fail_repo/tmux.conf" ] ||
+    fail "private commit failure left partial payloads"
+grep -F -x 'minimum_engine_schema=1' \
+    "$commit_fail_repo/companion.conf" >/dev/null ||
+    fail "private commit failure changed compatibility contract"
+
+# shellcheck disable=SC2034
 IFS='|' read -r invalid_home invalid_private invalid_writer invalid_origin <<EOF
 $(setup_home invalid)
 EOF
