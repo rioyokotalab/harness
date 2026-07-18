@@ -501,6 +501,23 @@ bypassing its conservative unmanaged-dependent refusal, add focused synthetic
 coverage, pass protected CI, then present the exact bounded package plan for
 separate authority.
 
+The owner then authorized tackling the Homebrew engine issue, not a live
+package apply. The focused redesign checks installed dependents only for the
+explicitly selected roots. Packages that merely share dependency libraries
+remain unmanaged, while Homebrew's normal installed-dependent linkage checks
+remain enabled. A direct or recursive dependent outside selected intent is
+shown only in the private local plan, produces a value-free block reason, and
+stops before transaction creation or apply. The dependency closure remains
+captured and compared before/after apply. Synthetic coverage now requires a
+selected-root dependent to block, proves a shared-dependency user is not
+queried or absorbed into intent, and retains prohibited dry-run, failure
+evidence, no-op, tap, and exact-scope gates. Portable shell syntax and diff
+checks pass locally; protected CI is the authoritative focused/Linux gate.
+Exact next action: publish the adapter/docs/test correction, require
+`portable-phase1`, fast-forward the pilot, and run the native read-only plan.
+The expected remaining selected-root dependent must be explicitly selected or
+deferred by the owner before any separately authorized formula apply.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

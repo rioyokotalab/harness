@@ -115,9 +115,12 @@ harness macos-homebrew --host LOGICAL_ID --apply
 Both modes require Darwin, a canonical clean committed public `main`, a valid
 private profile, and one active regular `brew` executable matching its reported
 prefix. The command queries versions only for selected formulae, resolves only
-their dependency closure, checks installed dependents of every allowed member,
-and refuses an installed dependent outside the selected roots and dependency
-closure. It never lists or dumps the whole installed package set.
+their dependency closure, and checks installed dependents of every explicitly
+selected root. An installed dependent outside the selected roots is displayed
+locally and blocks plan acceptance and apply. Packages that merely share a
+dependency remain unmanaged; Homebrew's installed-dependent linkage checks
+stay enabled to protect them. It never lists or dumps the whole installed
+package set.
 
 Plan runs exact formula-only install and upgrade dry-runs with automatic update,
 cleanup, analytics, prompts, and environment hints disabled. It refuses empty

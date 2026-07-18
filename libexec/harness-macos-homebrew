@@ -147,10 +147,10 @@ discover_scope() {
     allowed_formulae=$managed_formulae
     [ -z "$dependencies" ] || allowed_formulae="$allowed_formulae $dependencies"
 
-    # Homebrew may check and upgrade installed dependents. Refuse the apply
-    # conservatively if any dependent falls outside the selected roots and
-    # their declared dependency closure.
-    for formula in $allowed_formulae; do
+    # Homebrew may check and upgrade installed dependents of selected roots.
+    # Shared dependency users remain outside managed intent; Homebrew's normal
+    # installed-dependent linkage checks stay enabled to protect them.
+    for formula in $managed_formulae; do
         dependent_output=$(brew_read uses --installed --recursive --formula \
             "$formula" 2>/dev/null) || die "scoped Homebrew dependent query failed"
         validate_formula_output "$dependent_output"
@@ -317,8 +317,6 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 discover_scope
-[ -z "$unmanaged_dependents" ] ||
-    die "managed Homebrew scope has installed unmanaged dependents"
 run_dry_runs
 printf 'MACOS_HOMEBREW mode=%s privacy=local-details prefix=%s\n' \
     "$mode" "$prefix_class"
@@ -326,11 +324,19 @@ printf "INSTALL count=%s formulae='%s'\n" \
     "$(formula_count "$missing_formulae")" "$missing_formulae"
 printf "UPGRADE count=%s formulae='%s'\n" \
     "$(formula_count "$outdated_formulae")" "$outdated_formulae"
-printf 'DEPENDENCIES count=%s scope=validated unmanaged_dependents=0\n' \
+printf 'DEPENDENCIES count=%s scope=validated shared_users=preserved\n' \
     "$(formula_count "$dependencies")"
+printf "UNMANAGED_DEPENDENTS count=%s formulae='%s'\n" \
+    "$(formula_count "$unmanaged_dependents")" "$unmanaged_dependents"
 printf 'DRY_RUN status=validated install=%s upgrade=%s\n' \
     "$(formula_count "$missing_formulae")" \
     "$(formula_count "$outdated_formulae")"
+
+[ -z "$unmanaged_dependents" ] || {
+    echo 'BLOCK macos_homebrew reason=selected-root-has-unmanaged-dependent'
+    echo 'END macos_homebrew applied=no blocked=1 metadata_refresh=separate'
+    exit 2
+}
 
 [ "$mode" = apply ] || {
     echo 'END macos_homebrew applied=no metadata_refresh=separate'
@@ -354,7 +360,7 @@ resolve_brew
     die "managed Homebrew prefix changed before apply"
 discover_scope
 [ -z "$unmanaged_dependents" ] ||
-    die "managed Homebrew scope gained an unmanaged dependent"
+    die "managed Homebrew selected root gained an unmanaged dependent"
 [ "$missing_formulae" = "$planned_missing" ] &&
     [ "$outdated_formulae" = "$planned_outdated" ] &&
     [ "$dependencies" = "$planned_dependencies" ] ||
@@ -448,7 +454,7 @@ discover_scope
 [ "$dependencies" = "$planned_dependencies" ] ||
     die "managed Homebrew dependency scope changed during apply"
 [ -z "$unmanaged_dependents" ] ||
-    die "managed Homebrew post-state gained an unmanaged dependent"
+    die "managed Homebrew selected root gained an unmanaged dependent after apply"
 capture_evidence "$post_file" post
 if diff -u "$pre_file" "$post_file" >"$delta_file"; then :; else
     [ "$?" -eq 1 ] || die "managed Homebrew evidence diff failed"
