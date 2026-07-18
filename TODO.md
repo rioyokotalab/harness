@@ -50,15 +50,16 @@ and compact historical pointers here. Next free ID: T-269.
 
 ## Next resume checkpoint
 
-Resume T-268 in `executing`. D1–D14 are frozen and the generic public
-SSH/Bash/tmux configuration-bundle engine is implemented on
-`agent/t268-shell-tmux-sync-plan`. The public baseline remains exactly readable
-by deployed engine 1; engine 2 is an internal capability. Focused tests and a
-normal clean clone pass the complete portable phase-one, ShellCheck warning,
-diff, public-repository/privacy, and repository-independence gates. Fetch and
-integrate current `origin/main`, publish through the protected task-PR
-workflow, then guarded-sync only clean managed harness checkouts. Stop before
-private companion access, a pilot seed, live Mac mutation, or active-session
+Resume T-268 in `pilot-plan-pending`. The generic atomic personal-Mac
+SSH/Bash/tmux configuration-bundle engine is published at `8b63df2`; all six
+remote managed Linux checkouts are clean at that revision, while the shared
+local checkout remains on another contributor's clean branch with
+`origin/main` fetched. In an owner-started pilot-Mac session, first ensure the
+public checkout is current (use the documented public-only engine-1 bootstrap
+if necessary), review `docs/personal-macos-config-sync.md`, prepare all three
+private live candidates without exposing their values, and run only
+`harness macos-config-sync --host LOGICAL_ID --seed --plan`. Separate authority
+is required before seed apply, rollback/reapply, another Mac, or active-session
 reload. Independently resume T-191 after
 the first Sunday eligibility. Fetch and prove a clean fleet, then query only the seven
 captured IDs below through their declared native scheduler routes. Do not infer
@@ -1038,10 +1039,20 @@ update, and bundle reconciliation suites. A normal clean validation clone
 passes `HARNESS_PORTABLE_CI=1 tests/test-phase1.sh`, public repository audit,
 repository independence, ShellCheck warning level, and `git diff --check`.
 No private repository, configuration value, personal Mac, package, active
-session, or live destination was read or changed. Exact next action: commit
-this ledger/documentation checkpoint, refresh the clean clone and repeat the
-full portable publication gate, fetch `origin/main`, then publish the task PR.
-Stop before any owner-private seed plan.
+session, or live destination was read or changed during implementation.
+
+**Generic bundle publication checkpoint (2026-07-19):** protected PR #42
+passed required `portable-phase1` run `29663990517`, job `88131245362`, in
+2m12s and squash-merged as published `main`
+`8b63df2bdaf6ee8ff7db6f100faa78829da9aa8e`. The six remote managed Linux
+checkouts were all clean at common ancestor `d5ebb33`; guarded verified-bundle
+fleet apply fast-forwarded `ab`, `ab2`, `ri`, `al`, `rc`, and `t4` to the
+published target. A complete post-apply plan reported six `KEEP`s and every
+transfer artifact absent. The shared local checkout was preserved on another
+contributor's clean branch; only its `origin/main` was fetched. No private
+companion, personal Mac configuration, package, active session, or live Mac
+destination was read or changed. Exact next action is the owner-started pilot
+seed plan in the resume checkpoint above.
 
 ## Stable operational facts
 
