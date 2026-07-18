@@ -54,7 +54,12 @@ Resume T-268 in `pilot-plan-pending`. The generic atomic personal-Mac
 SSH/Bash/tmux configuration-bundle engine is published at `8b63df2`; all six
 remote managed Linux checkouts are clean at that revision, while the shared
 local checkout remains on another contributor's clean branch with
-`origin/main` fetched. In an owner-started pilot-Mac session, first ensure the
+`origin/main` fetched. The publication-handoff ledger was then synchronized to
+`ab`, `ab2`, `ri`, `rc`, and `t4`; `al` remains clean at the engine revision
+because two read-only SSH preflights failed with public-key authentication.
+The standing renewal script was unavailable or failed its strict no-credential
+contract, so no authentication command ran. This does not block the independent
+pilot plan. In an owner-started pilot-Mac session, first ensure the
 public checkout is current (use the documented public-only engine-1 bootstrap
 if necessary), review `docs/personal-macos-config-sync.md`, prepare all three
 private live candidates without exposing their values, and run only
@@ -1052,7 +1057,11 @@ transfer artifact absent. The shared local checkout was preserved on another
 contributor's clean branch; only its `origin/main` was fetched. No private
 companion, personal Mac configuration, package, active session, or live Mac
 destination was read or changed. Exact next action is the owner-started pilot
-seed plan in the resume checkpoint above.
+seed plan in the resume checkpoint above. Separately, after the owner renews
+the declared AL certificate, rerun guarded fleet-sync plan/apply from
+`8b63df2bdaf6ee8ff7db6f100faa78829da9aa8e` to current published `main` for
+`al` only; first revalidate that its checkout is still clean and that no
+transfer artifact exists.
 
 ## Stable operational facts
 
