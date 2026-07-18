@@ -51,7 +51,8 @@ updates and analytics disabled. It never executes a rendered command.
 The plan shows a separately authorized explicit metadata refresh, followed by
 exact dry-run and apply commands for only missing or outdated managed formulae.
 Install and upgrade commands disable automatic update and cleanup and use
-Homebrew's formula-only, dry-run, and no-prompt flags. They do not set
+Homebrew's formula-only and dry-run flags while explicitly unsetting
+`HOMEBREW_ASK` for no-prompt execution. They do not set
 `HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK`: Homebrew documents that disabling
 that check can leave broken linkage. The later apply gate must instead inspect
 dry-run scope and stop if an unmanaged dependent would change.
