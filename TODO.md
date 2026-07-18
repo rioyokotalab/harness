@@ -27,7 +27,7 @@ and compact historical pointers here. Next free ID: T-264.
   login-node cron, user timer, retention deletion, or automatic replica job
   exists. T-191 remains verification-pending until all seven first runs pass.
 - All managed checkouts are kept clean and synchronized through guarded
-  fleet-sync; `d910a40` is the last pre-compaction fleet checkpoint. Fresh
+  fleet-sync; `968796f` is the latest verified fleet checkpoint. Fresh
   interactive Bash shells load shell-local destructive-command safeguards;
   child and batch shells do not. Login and shell exit perform no automatic Git
   work.
@@ -55,13 +55,15 @@ and compact historical pointers here. Next free ID: T-264.
 
 ## Pause/resume checkpoint
 
-The owner intentionally paused the original scheduler work after completing
-T-249 through T-261 housekeeping. Resume by fetching and proving a clean fleet,
-then query only T-210's captured ABCI jobs `2045064.pbs1` and `2045063.pbs1`
-and T-191's seven captured weekly-chain IDs. Do not infer absence from a failed
-query, and do not cancel, replace, or duplicate a delayed job. T-196 remains
-blocked until T-191 reaches eight successful weekly chains, two verified
-restores per node, and a current verified independent generation.
+The 2026-07-18 resume proved all six remote checkouts clean at `d80a036`, then
+guarded-fast-forwarded and revalidated the complete fleet at `968796f`. T-210's
+two remaining ABCI jobs passed and T-210 is complete. All seven T-191 jobs are
+still captured with their exact owner/name and future eligibility. Resume T-191
+after the first Sunday eligibility by querying only the seven IDs below; do not
+infer absence from a failed query, and do not cancel, replace, or duplicate a
+delayed job. T-196 remains blocked until T-191 reaches eight successful weekly
+chains, two verified restores per node, and a current verified independent
+generation.
 
 ## Active tasks
 
@@ -69,8 +71,11 @@ restores per node, and a current verified independent generation.
 
 **Status:** verification-pending. All seven bounded smokes passed and exactly
 one production job per node was seeded for Sunday 2026-07-19. The last
-read-only continuity audit on 2026-07-17 found every captured job present with
-the expected owner/name and future eligibility; no job was submitted, replaced,
+read-only continuity audit on 2026-07-18 found every captured job present with
+the expected owner/name and future eligibility. Local, RI, AL, and RC report
+native Slurm `PENDING`/`BeginTime`; AB and AB2 report PBS `W`; T4's AGE record
+is present. Every private mode-0600 chain state remains `active` with
+`last_result=seeded` and `snapshot_id=none`. No job was submitted, replaced,
 canceled, resized, or reprioritized.
 
 | Host | Captured production ID | First eligibility |
@@ -92,15 +97,16 @@ snapshots. No `forget`, `prune`, retention deletion, automatic replica,
 login-node cron/timer, or scheduled full-data check is authorized. RI's
 site-forced one-GB200 allocation is owner-accepted.
 
-**Resume/acceptance:** fetch and prove a clean fleet, then query only the seven
-IDs above with each site's declared native scheduler route. A failed query is
-unknown state, not absence. After admission, require scheduler and snapshot
-success, one owner/name-matched successor at the next strictly future Sunday,
-consistent private state, and healthy interactive-login silence. T-191 remains
-open until all seven first snapshots and successors pass. Canonical commands
-and resource/timezone declarations are in `profiles/restic-schedules.tsv`,
-`libexec/harness-restic-schedule`, and `docs/home-backup.md`; full
-implementation and failure chronology is retained at `d910a40:TODO.md`.
+**Resume/acceptance:** after the first eligibility, fetch and prove a clean
+fleet, then query only the seven IDs above with each site's declared native
+scheduler route. A failed query is unknown state, not absence. After admission,
+require scheduler and snapshot success, one owner/name-matched successor at the
+next strictly future Sunday, consistent private state, and healthy interactive-
+login silence. T-191 remains open until all seven first snapshots and
+successors pass. Canonical commands and resource/timezone declarations are in
+`profiles/restic-schedules.tsv`, `libexec/harness-restic-schedule`, and
+`docs/home-backup.md`; full implementation and failure chronology is retained
+at `d910a40:TODO.md`.
 
 ### T-196 — Backup lifecycle phase 2
 
@@ -121,27 +127,6 @@ the resolved owner policy. No Restic, scheduler, replica, deletion, or
 credential-path command ran. Keep-all remains effective until T-191 production
 stabilizes and the owner separately approves the exact first `forget` and later
 separate `prune` commands.
-
-### T-210 — Cross-architecture numerical consistency gate
-
-**Phase/status:** `executing` only for two already captured ABCI jobs. The
-frozen C++20 gate requires the exact binary64 result `-0x1.b6ap+2` twice under
-the strict no-fast-math/fixed-rounding contract. Local replacement job `91472`
-passed on `epyc-7502`; RI, AL, RC, and T4 also passed with scheduler/result
-zero and identical output. Do not repeat those five routes.
-
-AB `2045064.pbs1` and AB2 `2045063.pbs1` are the only remaining captures.
-The last exact-ID reconciliation on 2026-07-17 failed before native `qstat`
-because SSH authentication was unavailable, so their scheduler/result state
-remains unknown. No job was canceled, replaced, or duplicated.
-
-**Resume/acceptance:** after a clean fetch/fleet check and usable owner-controlled
-authentication, query only those two PBS IDs and their fixed private result
-paths. Treat connection or scheduler failure as unknown. If terminal, reconcile
-scheduler status, private mode-0600 result, exact frozen value, source contract,
-and zero job-scoped residue. Never resubmit from queue delay or absence without
-terminal accounting and collision preflight. Full source, submission, and local
-recovery chronology is retained at `d910a40:TODO.md`.
 
 ## Stable operational facts
 
@@ -215,6 +200,7 @@ aggregate counts, hashes, or failure chronology is required.
 | T-192 | AB2 quota deferral, primary, replica, restore, migration, and cleanup completed at `1c2050a` and `303938f`. |
 | T-193–T-195 | Public-repository audit, contributor CI/ruleset preparation, and seven-node drift audit completed or superseded; full detail is at `d910a40:TODO.md`. |
 | T-197–T-209 | Evaluation decision and portable environment/HPC capability foundations completed; full detail is at `d910a40:TODO.md`. |
+| T-210 | Cross-architecture numerical consistency passed on all seven routes. On 2026-07-18, exact PBS history confirmed AB `2045064.pbs1` and AB2 `2045063.pbs1` terminal `F`/`Exit_status=0`; both private mode-0600 results matched the frozen source contract and `-0x1.b6ap+2`, with zero capture residue. Full chronology is at `d910a40:TODO.md`. |
 | T-211–T-246 | Checkpointing, debugger, MPI, scheduler, topology, intake, audit, and durable-handoff gates completed; full detail is at `d910a40:TODO.md`. |
 | T-247 | Captured readiness work and cleanup were completed or superseded by T-249–T-252; full chronology is at `d910a40:TODO.md`. |
 | T-248 | Obsolete `.bash_common` startup references and files removed transactionally. |
