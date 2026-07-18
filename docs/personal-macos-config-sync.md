@@ -70,6 +70,13 @@ and can be pushed by an ordinary retry.
 
 ## Adoption and operation
 
+Before publishing or adopting the first bundle, fast-forward the public
+harness checkout on each available Mac to engine 2. A sleeping Mac that later
+returns on engine 1 uses the public-only fast-forward bootstrap documented in
+[`personal-macos.md`](personal-macos.md), then runs the current updater. This
+preserves direct catch-up from an old public state even after the private
+companion requires engine 2.
+
 The pilot first prepares and reviews all three live candidates. The Bash
 candidate is a deliberately curated private fragment; the engine never copies
 or tries to infer common commands from the rest of `.bashrc`.

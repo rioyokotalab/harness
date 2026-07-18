@@ -267,6 +267,24 @@ public engine contract and every file in the private target tree before any
 fast-forward. It never rebases, resets, force-updates, autostashes, cleans,
 removes packages, or infers desired state from installed tools.
 
+There is one deliberate bootstrap rule for a Mac still running the published
+engine-1 updater after the private companion has adopted an engine-2
+configuration bundle. Engine 1 validates the private target before its public
+handoff and therefore cannot read that newer target. On that Mac, first fetch
+and fast-forward only the clean public checkout with ordinary Git, then invoke
+the now-current updater for the public/private pair:
+
+```bash
+git -C /path/to/harness fetch origin main
+git -C /path/to/harness merge --ff-only refs/remotes/origin/main
+```
+
+This direct public fast-forward may cross any number of missed releases and
+does not touch private Git, packages, links, or live configuration. The public
+baseline remains byte-compatible with engine 1 specifically so this bootstrap
+is accepted. Do not bypass a dirty, detached, locally advanced, or
+non-fast-forward checkout; stop and review it instead.
+
 Apply repeats every gate, fast-forwards the public checkout first, hands off to
 the target engine, then fast-forwards the private checkout and writes only a
 mode-0600 local schema-v1 state record:

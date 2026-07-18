@@ -50,20 +50,16 @@ and compact historical pointers here. Next free ID: T-269.
 
 ## Next resume checkpoint
 
-Resume T-268 in `executing`. D1–D10 and the already published SSH-sync
-S1–S10 contract remain frozen, but before the first private `office` seed the
-owner requested that `.bashrc` and `tmux.conf` synchronization be designed
-through a fresh PIE decision cycle. No personal configuration has been read,
-copied, or changed for this expansion. D11 and corrected D12 are selected: the
-target population is the four personal Macs; Bash uses its existing thin local
-loader plus a private shared fragment, while the complete `~/.tmux.conf` is
-synchronized directly with no tmux loader or second runtime config.
-SSH/Bash/tmux converge as one atomic adopted-config set per
-private revision, and changes activate only in new managed Bash shells and new
-tmux servers unless the owner explicitly reloads an existing session. The
-amended plan is frozen and the owner gave a fresh explicit `go` on 2026-07-19.
-Implement and validate only the generic public engine; do not run a private
-seed. Independently resume T-191 after
+Resume T-268 in `executing`. D1–D14 are frozen and the generic public
+SSH/Bash/tmux configuration-bundle engine is implemented on
+`agent/t268-shell-tmux-sync-plan`. The public baseline remains exactly readable
+by deployed engine 1; engine 2 is an internal capability. Focused tests and a
+normal clean clone pass the complete portable phase-one, ShellCheck warning,
+diff, public-repository/privacy, and repository-independence gates. Fetch and
+integrate current `origin/main`, publish through the protected task-PR
+workflow, then guarded-sync only clean managed harness checkouts. Stop before
+private companion access, a pilot seed, live Mac mutation, or active-session
+reload. Independently resume T-191 after
 the first Sunday eligibility. Fetch and prove a clean fleet, then query only the seven
 captured IDs below through their declared native scheduler routes. Do not infer
 absence from a failed query, and do not cancel, replace, or duplicate a delayed
@@ -173,9 +169,11 @@ upgrade stage is separate from these migrations.
 
 **Decision D2:** selected a separate private Git companion as the authoritative
 desired-state layer. It will version curated baseline selections, schema, and
-opaque host deltas only; copied dotfiles/configuration, observed inventories,
-live facts, transactions, credentials, and secrets are prohibited. Public and
-private repositories fast-forward independently, but their engine/schema
+opaque host deltas. S1–S10 first added the exact SSH payload exception;
+D11–D14 later expanded it to the exact atomic SSH, private Bash-fragment, and
+complete-tmux payload set. Other copied configuration, observed inventories,
+live facts, transactions, credentials, and secrets remain prohibited. Public
+and private repositories fast-forward independently, but their engine/schema
 compatibility must pass before any machine mutation. Partial repository update
 is retry-safe and never permits partial apply. Creating/configuring/publishing
 the private remote remains a separate execution authority boundary.
@@ -1012,6 +1010,38 @@ tests, documentation, protected publication, and required clean-checkout
 synchronization are authorized. Private companion access, live configuration
 inspection or mutation, pilot seed/apply, and active-session reload remain
 explicitly excluded.
+
+**Generic bundle implementation checkpoint (2026-07-19):**
+`harness macos-config-sync` now treats repository-root `ssh_config`, `bashrc`,
+and `tmux.conf` as one engine-2 private bundle. Bash retains the published thin
+`.bashrc` loader and reads only the synchronized owner-only fragment in a new
+managed interactive shell; tmux has one complete live `~/.tmux.conf` and no
+loader or second runtime file. The reconciler supports explicit seed/adopt,
+same-content convergence, local publication, remote pull, failed-push retry,
+mode normalization, divergence refusal, one three-file/state transaction, and
+unchanged-only rollback. It never reloads an active shell or tmux server.
+
+Validation rejects partial/unknown private trees, unsafe metadata, files over
+1 MiB, private-key markers, credential-like assignments, invalid Bash, and
+invalid tmux. Tmux uses documented `source-file -n` on an isolated disposable
+server; synthetic `run-shell` sentinels prove parsing does not execute them.
+Injected private replacement, private commit, and third-live-file replacement
+failures unwind to clean exact preimages. The frozen engine-1 public baseline
+regression passes. A Mac still on engine 1 after bundle publication must first
+perform the documented public-only clean Git fast-forward, because the old
+coupled updater validates its private target before public handoff; it can then
+directly catch up the private checkout with engine 2 without replaying missed
+releases.
+
+Committed implementation through `5958af0` passes focused profile, long-gap
+update, and bundle reconciliation suites. A normal clean validation clone
+passes `HARNESS_PORTABLE_CI=1 tests/test-phase1.sh`, public repository audit,
+repository independence, ShellCheck warning level, and `git diff --check`.
+No private repository, configuration value, personal Mac, package, active
+session, or live destination was read or changed. Exact next action: commit
+this ledger/documentation checkpoint, refresh the clean clone and repeat the
+full portable publication gate, fetch `origin/main`, then publish the task PR.
+Stop before any owner-private seed plan.
 
 ## Stable operational facts
 

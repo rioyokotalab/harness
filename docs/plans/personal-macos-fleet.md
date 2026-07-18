@@ -1,6 +1,7 @@
 # T-268 plan — private personal macOS fleet
 
-**Phase:** executing
+**Phase:** executing — generic configuration-bundle engine validated;
+protected publication pending
 
 **Updated:** 2026-07-19 JST
 
@@ -43,10 +44,10 @@ ledgers.
 
 - MDM, Apple Business Manager, configuration profiles, FileVault recovery-key
   escrow, Apple Account/iCloud management, or OS update enforcement;
-- copying complete dotfiles, `~/Library`, application preferences, browser
-  state, histories, caches, keys, Keychain contents, or installed-app
-  inventories; the later S1–S10 expansion adds exactly one private whole-file
-  SSH configuration payload and no other dotfile exception;
+- copying other complete dotfiles, `~/Library`, application preferences,
+  browser state, histories, caches, keys, Keychain contents, or installed-app
+  inventories; S1–S10 and D11–D14 add only the atomic private SSH, Bash-fragment,
+  and complete-tmux payload set described below;
 - public host profiles containing Mac names, serial numbers, hardware UUIDs,
   usernames, network addresses, location, personal app lists, or local paths;
 - `brew bundle dump`, `brew bundle cleanup`, unmanaged-formula or cask removal,
@@ -136,10 +137,11 @@ Primary sources:
   rollout.
 - **D2 — Private Git companion.** The authoritative personal-Mac desired state
   will live in a separate private Git repository. It contains curated baseline
-  selections, schemas, and opaque per-Mac deltas. S1–S10 later add one exact
-  repository-root SSH-config payload as the sole copied-configuration
-  exception. It never contains other copied dotfiles, observed package/app
-  inventories, live facts, transaction records, credential material, or secret values. The
+  selections, schemas, and opaque per-Mac deltas. S1–S10 first add one exact
+  repository-root SSH-config payload; D11–D14 later expand it to the exact
+  atomic `ssh_config`, private `bashrc` fragment, and complete `tmux.conf` set.
+  It never contains other copied dotfiles, observed package/app inventories,
+  live facts, transaction records, credential material, or secret values. The
   public harness remains the generic engine and must be fully testable without
   access to the private repository. Private repository creation, remote
   configuration, and publication remain separate external authority
@@ -555,24 +557,22 @@ and each later Mac remain separate authority gates.
 
 ## Next action
 
-The S1–S10 generic SSH synchronization expansion is implemented in the public
-engine with synthetic privacy and failure coverage. The private v1 transition,
-Mac equal-writer reconciler, fixed `local`-to-`t4` adapter, exact rollback, and
-doctor status surfaces must pass the complete clean-checkout phase-one and
-protected CI gates before any live payload is seeded. After publication, the
-next live action is a separate owner-started `office` plan using `--seed`; no
-private companion or real SSH destination is mutated by the generic-engine
-stage. D11–D14 are now frozen for the requested shell/tmux expansion and the
-amended plan is `ready-for-go`. A fresh explicit `go` authorizes generic public
-implementation, validation, protected publication, and required clean-checkout
-synchronization only. Private configuration access, the `office` seed, live
-apply, rollback/reapply, and active-session reload remain separate later gates.
+The D11–D14 generic implementation now validates and reconciles SSH, the
+private Bash fragment, and the one complete tmux config as one private-revision
+bundle. Focused and clean-clone portable validation pass, including privacy,
+legacy public-contract, syntax-without-execution, divergence, commit/push
+retry, replacement unwind, and exact rollback gates. Publish this public code
+through protected CI and synchronize only clean managed harness checkouts.
+After publication, the next live action is a separate owner-started pilot seed
+plan; no private companion or real Mac configuration is mutated by the generic
+engine stage. Private configuration access, seed apply, rollback/reapply, and
+active-session reload remain separate later gates.
 
 Stages 2–3 are complete and retry-safe in the public repository. The strict
 resolver now validates the entire clean private Git tree. `harness
 macos-update` enforces explicit fetched targets and clean expected-branch
 fast-forwards, validates both target contracts, hands off to the target public
-engine before private/state mutation, and transactionally initializes or
+engine after compatibility validation and before private/state mutation, and transactionally initializes or
 migrates schema-v1 local state. Synthetic drills pass for direct old-to-current
 catch-up, idempotence, changed-state rollback refusal, exact state rollback and
 reapply, incompatible schema/layout refusal, and partial-public-update retry.
