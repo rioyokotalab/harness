@@ -885,6 +885,21 @@ run the clean-checkout full phase-one/ShellCheck/diff/public-privacy gates,
 fetch and integrate current `origin/main`, then publish through the protected
 task-PR workflow. Stop before any private seed or live apply.
 
+The generic engine is committed as `172fd01` after a conflict-free rebase onto
+published `main` `5b4091b`. A normal clean clone (not the linked implementation
+worktree) passed `HARNESS_PORTABLE_CI=1 tests/test-phase1.sh`, including the
+new suites, ShellCheck warning/error gate, repository independence, and all
+portable regressions. `git diff --check` passed and a full current-history
+public audit reported `value_exposed=false`. An initial non-portable full-suite
+attempt reached the native MPI smoke and stopped only because this non-login
+process has no `mpicc`; no test mutation escaped its guarded fixture and the
+protected portable mode deliberately skips that undeclared toolchain. The
+normal validation clone and its audit files were removed through guarded
+cleanup and verified absent. Exact next action: fetch once more, push
+`agent/t268-ssh-sync-engine`, create the task PR, wait for protected Harness CI,
+merge only after the required check passes, and verify published `main`. No
+fleet sync or private/live SSH apply belongs to this publication stage.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
