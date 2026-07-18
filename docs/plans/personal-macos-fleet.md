@@ -2,7 +2,7 @@
 
 **Phase:** executing
 
-**Updated:** 2026-07-18 17:09 JST
+**Updated:** 2026-07-18 17:27 JST
 
 **Owner:** repository driver
 
@@ -466,11 +466,14 @@ separately reviewed destructive action, not an automatic failure trap.
 
 ## Next action
 
-Stage 2 is complete and retry-safe in the public repository. The strict
-`harness macos-profile` resolver, public baseline, v1 companion contract,
-value-free examples/fixtures, and focused privacy-negative suite pass without
-accessing private or live state. Implement stage 3 next: clean expected-branch
-public/private fast-forward planning, engine/private-schema compatibility,
-and synthetic v1 migration/idempotence/partial-update tests. Do not create or
-access the private GitHub repository, connect to a Mac, inspect live machine
-facts, or mutate Homebrew/shell state.
+Stages 2–3 are complete and retry-safe in the public repository. The strict
+resolver now validates the entire clean private Git tree. `harness
+macos-update` enforces explicit fetched targets and clean expected-branch
+fast-forwards, validates both target contracts, hands off to the target public
+engine before private/state mutation, and transactionally initializes or
+migrates schema-v1 local state. Synthetic drills pass for direct old-to-current
+catch-up, idempotence, changed-state rollback refusal, exact state rollback and
+reapply, incompatible schema/layout refusal, and partial-public-update retry.
+Implement stage 4 next: Darwin/Linux portability primitives with matched
+synthetic tests. Do not create or access the private GitHub repository, connect
+to a Mac, inspect live machine facts, or mutate Homebrew/shell state.

@@ -49,6 +49,7 @@ Read-only phase-1 commands:
   plan        compare facts with a logical host profile
   doctor      validate required invariants and report optional gaps
   macos-profile  validate a private personal-Mac desired-state profile
+  macos-update  plan/apply clean public and private Mac fast-forwards
   storage-readiness  validate declared large/cache storage; optionally probe writes
 
 Transactional commands:
@@ -88,7 +89,7 @@ if [ "$#" -gt 0 ]; then
 fi
 
 case "$command_name" in
-    inventory|plan|doctor|macos-profile|storage-readiness|replica|apply|remediate|shell|cache-bootstrap|startup-normalize|dotfiles|tool|runtime|python|agent|build-tool|rollback|restic|restic-primary|restic-schedule|fleet-sync)
+    inventory|plan|doctor|macos-profile|macos-update|storage-readiness|replica|apply|remediate|shell|cache-bootstrap|startup-normalize|dotfiles|tool|runtime|python|agent|build-tool|rollback|restic|restic-primary|restic-schedule|fleet-sync)
         exec "$ROOT/libexec/harness-$command_name" "$@"
         ;;
     guarded-delete)

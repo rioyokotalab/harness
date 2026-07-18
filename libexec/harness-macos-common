@@ -1,0 +1,179 @@
+#!/bin/sh
+
+macos_private_id_is_safe() {
+    case "$1" in
+        ''|*[!A-Za-z0-9._-]*|.|..|.*) return 1 ;;
+        *) return 0 ;;
+    esac
+}
+
+macos_stat_owner() {
+    case $(uname -s) in
+        Darwin) stat -f '%u' -- "$1" ;;
+        *) stat -c '%u' -- "$1" ;;
+    esac
+}
+
+macos_stat_mode() {
+    case $(uname -s) in
+        Darwin) stat -f '%Lp' -- "$1" ;;
+        *) stat -c '%a' -- "$1" ;;
+    esac
+}
+
+macos_require_private_directory() {
+    macos_private_directory=$1
+    macos_expected_uid=$2
+    [ -d "$macos_private_directory" ] && [ ! -L "$macos_private_directory" ] ||
+        die "private companion directory has unsafe type"
+    [ "$(macos_stat_owner "$macos_private_directory")" = "$macos_expected_uid" ] ||
+        die "private companion directory has unsafe owner"
+    [ "$(macos_stat_mode "$macos_private_directory")" = 700 ] ||
+        die "private companion directory has unsafe mode"
+}
+
+macos_require_private_file() {
+    macos_private_file=$1
+    macos_expected_uid=$2
+    [ -f "$macos_private_file" ] && [ ! -L "$macos_private_file" ] ||
+        die "private companion manifest has unsafe type"
+    [ "$(macos_stat_owner "$macos_private_file")" = "$macos_expected_uid" ] ||
+        die "private companion manifest has unsafe owner"
+    [ "$(macos_stat_mode "$macos_private_file")" = 600 ] ||
+        die "private companion manifest has unsafe mode"
+}
+
+macos_validate_manifest() {
+    macos_manifest=$1
+    macos_allowed_keys=$2
+    macos_required_keys=$3
+    awk -F= -v allowed="$macos_allowed_keys" -v required="$macos_required_keys" '
+        BEGIN {
+            split(allowed, values, ",")
+            for (i in values) allowed_key[values[i]] = 1
+            split(required, values, ",")
+            for (i in values) required_key[values[i]] = 1
+        }
+        $0 == "" { next }
+        {
+            if ($0 !~ /^[A-Za-z][A-Za-z0-9_]*=[^=[:cntrl:]]*$/) bad = 1
+            key = $1
+            if (!(key in allowed_key)) bad = 1
+            if (++seen[key] != 1) bad = 1
+        }
+        END {
+            for (key in required_key)
+                if (!(key in seen) || seen[key] != 1) bad = 1
+            exit bad ? 1 : 0
+        }
+    ' "$macos_manifest" >/dev/null 2>&1 ||
+        die "private companion manifest is malformed"
+}
+
+macos_manifest_get() {
+    macos_manifest=$1
+    macos_manifest_key=$2
+    awk -F= -v key="$macos_manifest_key" \
+        '$1 == key { print substr($0, length(key) + 2) }' "$macos_manifest"
+}
+
+macos_validate_token_csv() {
+    macos_token_csv=$1
+    macos_token_kind=$2
+    [ "$macos_token_csv" = none ] && return 0
+    printf '%s\n' "$macos_token_csv" | awk -F, -v kind="$macos_token_kind" '
+        NF == 0 { exit 1 }
+        {
+            for (i = 1; i <= NF; i++) {
+                token = $i
+                if (token == "" || seen[token]++) exit 1
+                if (kind == "group") {
+                    if (token !~ /^[A-Za-z][A-Za-z0-9._-]*$/) exit 1
+                } else {
+                    if (token !~ /^[A-Za-z0-9][A-Za-z0-9@+._\/-]*$/ ||
+                        token ~ /\.\./ || token ~ /\/\// || token ~ /\/$/)
+                        exit 1
+                }
+            }
+        }
+    ' >/dev/null 2>&1 || die "private companion token list is malformed"
+}
+
+macos_token_count() {
+    [ "$1" = none ] && { printf '%s\n' 0; return; }
+    printf '%s\n' "$1" | awk -F, '{ print NF }'
+}
+
+macos_hash_is_safe() {
+    case "$1" in
+        *[!0-9a-f]*|'') return 1 ;;
+    esac
+    [ "${#1}" -eq 40 ] || [ "${#1}" -eq 64 ]
+}
+
+macos_checksum_file() {
+    if command -v shasum >/dev/null 2>&1; then
+        shasum -a 256 "$1" | awk '{ print $1 }'
+    elif command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$1" | awk '{ print $1 }'
+    else
+        die "no SHA-256 command is available"
+    fi
+}
+
+macos_validate_public_profile() {
+    macos_public_profile=$1
+    macos_validate_manifest "$macos_public_profile" \
+        schema,family,private_schema_min,private_schema_max,baseline,managed_formulae \
+        schema,family,private_schema_min,private_schema_max,baseline,managed_formulae
+    [ "$(macos_manifest_get "$macos_public_profile" schema)" = 1 ] &&
+        [ "$(macos_manifest_get "$macos_public_profile" family)" = personal-macos ] &&
+        [ "$(macos_manifest_get "$macos_public_profile" private_schema_min)" = 1 ] &&
+        [ "$(macos_manifest_get "$macos_public_profile" private_schema_max)" = 1 ] &&
+        [ "$(macos_manifest_get "$macos_public_profile" baseline)" = macos-cli-v1 ] &&
+        [ "$(macos_manifest_get "$macos_public_profile" managed_formulae)" = \
+            bash,git,git-lfs,tmux,ripgrep,jq,tree,shellcheck ] ||
+        die "public personal-Mac baseline is incompatible"
+    macos_validate_token_csv \
+        "$(macos_manifest_get "$macos_public_profile" managed_formulae)" formula
+}
+
+macos_validate_companion_manifest() {
+    macos_companion_manifest=$1
+    macos_engine_schema=$2
+    macos_private_min=$3
+    macos_private_max=$4
+    macos_validate_manifest "$macos_companion_manifest" \
+        schema,minimum_engine_schema schema,minimum_engine_schema
+    macos_private_schema=$(macos_manifest_get "$macos_companion_manifest" schema)
+    macos_minimum_engine=$(macos_manifest_get \
+        "$macos_companion_manifest" minimum_engine_schema)
+    case "$macos_private_schema:$macos_minimum_engine:$macos_engine_schema:$macos_private_min:$macos_private_max" in
+        *[!0-9:]*) die "private companion schema is incompatible" ;;
+    esac
+    [ "$macos_private_schema" -ge "$macos_private_min" ] &&
+        [ "$macos_private_schema" -le "$macos_private_max" ] &&
+        [ "$macos_minimum_engine" -ge 1 ] &&
+        [ "$macos_minimum_engine" -le "$macos_engine_schema" ] ||
+        die "private companion schema is incompatible"
+}
+
+macos_validate_host_manifest() {
+    macos_host_manifest=$1
+    macos_expected_id=$2
+    macos_expected_schema=$3
+    macos_expected_baseline=$4
+    macos_validate_manifest "$macos_host_manifest" \
+        schema,logical_id,baseline,capability_groups,extra_formulae \
+        schema,logical_id,baseline,capability_groups,extra_formulae
+    [ "$(macos_manifest_get "$macos_host_manifest" schema)" = \
+        "$macos_expected_schema" ] || die "private host schema is incompatible"
+    [ "$(macos_manifest_get "$macos_host_manifest" logical_id)" = \
+        "$macos_expected_id" ] || die "private logical identifier mismatch"
+    [ "$(macos_manifest_get "$macos_host_manifest" baseline)" = \
+        "$macos_expected_baseline" ] || die "private baseline selection is incompatible"
+    macos_validate_token_csv \
+        "$(macos_manifest_get "$macos_host_manifest" capability_groups)" group
+    macos_validate_token_csv \
+        "$(macos_manifest_get "$macos_host_manifest" extra_formulae)" formula
+}

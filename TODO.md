@@ -233,22 +233,31 @@ long-gap drill, then one-at-a-time rollout. Privacy-negative tests precede any
 Mac observation; control-plane rollback precedes package/shell stages; every
 live package or external-service action retains its separate authority gate.
 
-**Execution checkpoint:** stages 1–2 are complete. The frozen D1–D10 record is
+**Execution checkpoint:** stages 1–3 are complete. The frozen D1–D10 record is
 unchanged. Stage 2 added `harness macos-profile`, the public
 `profiles/personal-macos/base.conf`, strict companion v1 schema/example,
 synthetic v1 fixture, and `tests/test-personal-macos-profile.sh`. The resolver
-does not source manifests or print private paths/values and refuses unsafe
-types, owners, modes, symlinks, identifiers, syntax, keys, duplicates, schemas,
-baselines, groups, and formula tokens. Focused success/privacy tests,
-ShellCheck (with the existing dynamic-source exclusions), repository
-independence, Claude takeover, public-repository audit, and `git diff --check`
-passed on 2026-07-18. No private repository, Mac, live fact, authentication,
-GitHub service, package, shell, or external state was accessed or changed.
+now also proves the checkout is clean and validates every tracked host while
+rejecting any unapproved tracked path. Stage 3 added `harness macos-update`,
+shared portable manifest/checksum helpers, `docs/personal-macos.md`, and a
+synthetic long-gap suite. It requires full fetched `origin/main` commits,
+clean tracked `main` branches, one origin, ancestry, compatible target trees,
+and a valid current companion before apply. Public fast-forward hands off to
+the target engine before private/state mutation. Local schema-v1 state is
+mode-0600 and transaction-backed; rollback never rewinds repositories.
 
-**Next:** implement stage 3: a clean expected-branch public/private
-fast-forward planner, engine/private-schema compatibility gate, and synthetic
-v1 migration/idempotence/partial-update retry tests. Keep all tests in
-disposable synthetic repositories and state roots. Go does not itself authorize
+Synthetic direct catch-up, second-run no-op, absent/present-state rollback,
+changed-state refusal, rollback/reapply, incompatible schema, prohibited target
+layout, injected private-fast-forward failure, and partial-update retry all
+pass. Focused profile/update suites, ShellCheck (with existing dynamic-source
+exclusions), repository independence, Claude takeover, public-repository
+audit, and `git diff --check` passed on 2026-07-18. No private repository, Mac,
+live fact, authentication, GitHub service, package, shell, or external state
+was accessed or changed.
+
+**Next:** implement stage 4 Darwin/Linux portability primitives and matched
+synthetic tests, then stage 5 value-minimized macOS observation. Keep live Mac
+access gated on privacy-negative validation. Go does not itself authorize
 credentials/authentication changes, GitHub creation or publication, Homebrew
 installation/upgrades, package cleanup, background automation, or destructive
 actions.

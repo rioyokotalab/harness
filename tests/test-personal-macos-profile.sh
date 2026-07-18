@@ -36,14 +36,20 @@ make_profile() {
     name=$1
     home=$TEMP_DIR/$name
     private=$home/.config/harness/private
-    mkdir -p "$private/.git" "$private/hosts"
+    mkdir -p "$private/hosts"
     cp "$FIXTURE/companion.conf" "$private/companion.conf"
     cp "$FIXTURE/hosts/mac-test-pilot.conf" \
         "$private/hosts/mac-test-pilot.conf"
     chmod 700 "$home" "$home/.config" "$home/.config/harness" \
-        "$private" "$private/.git" "$private/hosts"
+        "$private" "$private/hosts"
     chmod 600 "$private/companion.conf" \
         "$private/hosts/mac-test-pilot.conf"
+    git -C "$private" init -q -b main
+    git -C "$private" config user.name mac-test
+    git -C "$private" config user.email mac-test.invalid
+    git -C "$private" add companion.conf hosts/mac-test-pilot.conf
+    git -C "$private" commit -q -m 'synthetic private v1'
+    chmod 700 "$private/.git"
     printf '%s\n' "$home"
 }
 
@@ -127,6 +133,24 @@ grep -F 'private companion manifest is malformed' \
 if grep -F "$private_sentinel" "$TEMP_DIR/unknown.out" >/dev/null ||
     grep -F "$unknown_home" "$TEMP_DIR/unknown.out" >/dev/null; then
     fail "unknown-key refusal exposed private content"
+fi
+
+layout_home=$(make_profile layout)
+layout_sentinel=PRIVATE_COPIED_CONFIGURATION
+printf '%s\n' "$layout_sentinel" > \
+    "$layout_home/.config/harness/private/copied-config.txt"
+git -C "$layout_home/.config/harness/private" add copied-config.txt
+git -C "$layout_home/.config/harness/private" commit -q -m \
+    'synthetic prohibited layout'
+if HOME="$layout_home" "$HARNESS" macos-profile --host mac-test-pilot \
+    >"$TEMP_DIR/layout.out" 2>&1; then
+    fail "unapproved tracked private content accepted"
+fi
+grep -F 'private companion tracked layout is invalid' \
+    "$TEMP_DIR/layout.out" >/dev/null || fail "tracked-layout refusal"
+if grep -F "$layout_sentinel" "$TEMP_DIR/layout.out" >/dev/null ||
+    grep -F "$layout_home" "$TEMP_DIR/layout.out" >/dev/null; then
+    fail "tracked-layout refusal exposed private content"
 fi
 
 mismatch_home=$(make_profile mismatch)
