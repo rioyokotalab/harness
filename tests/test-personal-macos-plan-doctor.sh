@@ -98,6 +98,7 @@ case "$1" in
             echo git
             echo sqlite
         fi
+        exit 1
         ;;
     *) exit 99 ;;
 esac

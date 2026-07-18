@@ -116,8 +116,15 @@ discover_scope() {
         # Formula tokens are schema-restricted and cannot contain shell spaces.
         # shellcheck disable=SC2086
         set -- $installed_formulae
+        outdated_status=0
         outdated_output=$(brew_read outdated --formula --quiet "$@" 2>/dev/null) ||
-            die "scoped Homebrew outdated query failed"
+            outdated_status=$?
+        case "$outdated_status" in
+            0) ;;
+            1) [ -n "$outdated_output" ] ||
+                die "scoped Homebrew outdated query failed" ;;
+            *) die "scoped Homebrew outdated query failed" ;;
+        esac
         validate_formula_output "$outdated_output"
         for formula in $outdated_output; do
             formula_in_list "$installed_formulae" "$formula" ||

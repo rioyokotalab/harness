@@ -83,6 +83,7 @@ case "$1" in
     outdated)
         [ "$2:$3" = --formula:--quiet ] || exit 92
         sed -n '/./p' "$BREW_STATE/outdated"
+        [ ! -s "$BREW_STATE/outdated" ] || exit 1
         ;;
     deps)
         [ "$2:$3:$4:$5" = --union:--full-name:--formula:bash ] || {

@@ -363,6 +363,27 @@ and review the read-only plan; do not apply links, Homebrew, or Bash in stage
 creation or publication, Homebrew installation/upgrades, package cleanup,
 background automation, or destructive actions.
 
+On 2026-07-18 the owner-started Darwin pilot session completed the authorized
+private-companion bootstrap and stage-12 observation without recording its
+repository, logical ID, paths, or manifests publicly. The clean strict private
+profile has zero optional capability groups and formulae; the value-minimized
+fact file is owner-only mode 0600. The first read-only plan exposed a native
+Homebrew semantic gap: named `brew outdated` correctly emitted two scoped
+outdated public-baseline formulae and exited 1, which both public adapters
+misclassified as query failure. The focused correction accepts exit 1 only
+with nonempty output that still passes the existing strict managed-scope
+validation; synthetic fakes now reproduce that native status. Portable syntax
+and diff checks pass, and the corrected live plan reports four absent managed
+links, six missing public formulae, two outdated public formulae, zero blocks,
+and no applied package or network action. Native focused suites cannot complete
+on this Mac because their cleanup fixture deliberately depends on the Linux
+guarded-delete toolchain, and `shellcheck` is not installed; protected CI is
+the remaining authoritative regression gate. Exact next action: publish this
+adapter/test/ledger correction through a protected task PR, require
+`portable-phase1`, then fast-forward the clean pilot checkout and repeat the
+mode-0600 inventory/read-only plan before declaring stage 12 complete. Stage
+13 link apply/rollback remains separately authorized and has not begun.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
