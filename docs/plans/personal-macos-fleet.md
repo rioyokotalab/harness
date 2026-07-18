@@ -1,8 +1,8 @@
 # T-268 plan — private personal macOS fleet
 
-**Phase:** ready-for-go
+**Phase:** executing
 
-**Updated:** 2026-07-18 16:49 JST
+**Updated:** 2026-07-18 17:09 JST
 
 **Owner:** repository driver
 
@@ -466,11 +466,11 @@ separately reviewed destructive action, not an automatic failure trap.
 
 ## Next action
 
-The final D1–D10 audit found no remaining material decision or contradiction.
-Wait for an explicit owner instruction such as `go`, `proceed`, or `execute`.
-On go, reconstruct this frozen plan, set T-268 to `executing`, and begin with
-the public schema, synthetic fixtures, privacy-negative tests, and strict
-private resolver; do not connect to a Mac or mutate Homebrew/shell state until
-their preceding gates pass. The go does not itself authorize GitHub repository
-creation/publication, authentication changes, package installation/upgrades,
-or other external authority boundaries named above.
+Stage 2 is complete and retry-safe in the public repository. The strict
+`harness macos-profile` resolver, public baseline, v1 companion contract,
+value-free examples/fixtures, and focused privacy-negative suite pass without
+accessing private or live state. Implement stage 3 next: clean expected-branch
+public/private fast-forward planning, engine/private-schema compatibility,
+and synthetic v1 migration/idempotence/partial-update tests. Do not create or
+access the private GitHub repository, connect to a Mac, inspect live machine
+facts, or mutate Homebrew/shell state.

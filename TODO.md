@@ -50,8 +50,8 @@ and compact historical pointers here. Next free ID: T-269.
 
 ## Next resume checkpoint
 
-Resume T-268 in `ready-for-go`; all D1–D10 decisions are frozen. Wait for an
-explicit `go`, then reconstruct the exhaustive plan and decision register in
+Resume T-268 in `executing`; D1–D10 are frozen and the owner gave explicit
+`go` on 2026-07-18. Continue stage 2 from the exact next action in
 `docs/plans/personal-macos-fleet.md`. Independently resume T-191 after the first
 Sunday eligibility. Fetch and prove a clean fleet, then query only the seven
 captured IDs below through their declared native scheduler routes. Do not infer
@@ -125,7 +125,7 @@ separate `prune` commands.
 
 ### T-268 — Private personal macOS fleet
 
-**Phase/status:** `ready-for-go`. Design a separate personal-macOS target
+**Phase/status:** `executing`. Design a separate personal-macOS target
 family that reuses harness safety and control-plane principles without adding
 four private machines to the public Linux/HPC profiles. Generic code, schemas,
 synthetic fixtures, tests, and any deliberately selected non-sensitive CLI
@@ -233,12 +233,25 @@ long-gap drill, then one-at-a-time rollout. Privacy-negative tests precede any
 Mac observation; control-plane rollback precedes package/shell stages; every
 live package or external-service action retains its separate authority gate.
 
-**Next:** wait for explicit `go`. Then set T-268 to `executing` and begin with
-the public schema, synthetic fixtures, privacy-negative tests, and strict
-private resolver. Do not access a Mac until those gates pass. Go does not itself
-authorize credentials/authentication changes, GitHub creation or publication,
-Homebrew installation/upgrades, package cleanup, background automation, or
-destructive actions.
+**Execution checkpoint:** stages 1–2 are complete. The frozen D1–D10 record is
+unchanged. Stage 2 added `harness macos-profile`, the public
+`profiles/personal-macos/base.conf`, strict companion v1 schema/example,
+synthetic v1 fixture, and `tests/test-personal-macos-profile.sh`. The resolver
+does not source manifests or print private paths/values and refuses unsafe
+types, owners, modes, symlinks, identifiers, syntax, keys, duplicates, schemas,
+baselines, groups, and formula tokens. Focused success/privacy tests,
+ShellCheck (with the existing dynamic-source exclusions), repository
+independence, Claude takeover, public-repository audit, and `git diff --check`
+passed on 2026-07-18. No private repository, Mac, live fact, authentication,
+GitHub service, package, shell, or external state was accessed or changed.
+
+**Next:** implement stage 3: a clean expected-branch public/private
+fast-forward planner, engine/private-schema compatibility gate, and synthetic
+v1 migration/idempotence/partial-update retry tests. Keep all tests in
+disposable synthetic repositories and state roots. Go does not itself authorize
+credentials/authentication changes, GitHub creation or publication, Homebrew
+installation/upgrades, package cleanup, background automation, or destructive
+actions.
 
 ## Stable operational facts
 
