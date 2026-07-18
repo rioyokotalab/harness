@@ -21,6 +21,25 @@ tracked, copied, hashed, or included in transaction state. Other safe aliases
 are common across all nodes. Site-only aliases remain in the relevant live
 `.bashrc` and are unique and alphabetic.
 
+## Interactive destructive-command safeguards
+
+Every fresh interactive Bash shell sources `shell/safety-guards.sh`. Thin
+shell-local functions preserve native behavior for ordinary `rm`, `rsync`,
+`find`, `chmod`, `chown`, `qdel`, and `scancel` forms. Risky forms perform the
+additional deterministic check and return status 64 before native execution:
+
+- recursive removal containing `/`, a lexical or canonical account home, the
+  declared persistent root, or the current directory;
+- a likely broad expansion of at least eight immediate children of one of
+  those protected roots;
+- rsync deletion modes, `find -delete`, recursive permission changes over a
+  protected root, or scheduler cancellation that is not one exact job ID.
+
+The functions and their load sentinel are not exported. Non-interactive and
+batch shells therefore keep native command resolution. `command NAME ...` and
+absolute executable paths are visible deliberate bypasses; the wrappers are
+an accidental-use guard and do not replace manifest-backed guarded deletion.
+
 ## Transactional normalization
 
 `harness startup-normalize --host HOST --plan` validates strict regular-file

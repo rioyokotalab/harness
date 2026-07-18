@@ -133,6 +133,18 @@ counts, uses one-filesystem recursive removal, and verifies both target absence
 and protected-anchor survival. Codex execpolicy separately forbids common raw
 recursive `rm` forms and directs the agent to this workflow.
 
+Fresh interactive Bash shells also load `shell/safety-guards.sh`. Direct
+high-blast-radius forms are refused before native execution: recursive `rm`
+that contains a protected root or broadly expands its immediate children,
+`rsync` deletion modes, `find -delete`, recursive `chmod`/`chown` over a
+protected root, and broad `qdel`/`scancel` selectors. Ordinary forms pass their
+original arguments directly to the native command without a prompt.
+
+This is an accidental-use safety belt, not a security boundary. A deliberate
+`command NAME ...`, absolute executable path, child shell, or batch script
+bypasses the interactive function. Agents must still use `harness
+guarded-delete` for every recursive or expanding deletion.
+
 ## Transactional control plane
 
 After reviewing the read-only host plan, preview the exact managed links with:
