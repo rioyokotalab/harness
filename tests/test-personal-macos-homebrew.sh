@@ -96,6 +96,10 @@ case "$1" in
         if [ "${FAKE_UNMANAGED_DEPENDENT:-0}" = 1 ] && [ "$5" = git ]; then
             printf '%s\n' personal-tool
         fi
+        if [ "${FAKE_UNMANAGED_DEPENDENCY_USER:-0}" = 1 ] && \
+            [ "$5" = openssl@3 ]; then
+            printf '%s\n' personal-tool
+        fi
         ;;
     install|upgrade)
         [ "${HOMEBREW_ASK+x}" != x ] || exit 95
@@ -192,7 +196,8 @@ for expected in \
     'MACOS_HOMEBREW mode=plan privacy=local-details prefix=other' \
     "INSTALL count=1 formulae='tree'" \
     "UPGRADE count=2 formulae='git sqlite'" \
-    'DEPENDENCIES count=1 scope=validated unmanaged_dependents=0' \
+    'DEPENDENCIES count=1 scope=validated shared_users=preserved' \
+    "UNMANAGED_DEPENDENTS count=0 formulae=''" \
     'DRY_RUN status=validated install=1 upgrade=2' \
     'END macos_homebrew applied=no metadata_refresh=separate'
 do
@@ -258,14 +263,30 @@ grep -F -x 'END macos_homebrew changes=none metadata_refresh=separate' \
 dependent_home=$(make_home dependent)
 dependent_state=$(make_brew_state dependent)
 if FAKE_UNMANAGED_DEPENDENT=1 run_homebrew "$dependent_home" "$dependent_state" \
-    "$TEMP_DIR/dependent.log" --host mac-test-pilot --apply \
+    "$TEMP_DIR/dependent.log" --host mac-test-pilot --plan \
     >"$TEMP_DIR/dependent.out" 2>&1; then
-    fail "Homebrew apply accepted an unmanaged installed dependent"
+    fail "Homebrew plan accepted an unmanaged selected-root dependent"
 fi
-grep -F 'scope has installed unmanaged dependents' \
+grep -F -x "UNMANAGED_DEPENDENTS count=1 formulae='personal-tool'" \
+    "$TEMP_DIR/dependent.out" >/dev/null || fail "unmanaged-dependent plan"
+grep -F -x 'BLOCK macos_homebrew reason=selected-root-has-unmanaged-dependent' \
     "$TEMP_DIR/dependent.out" >/dev/null || fail "unmanaged-dependent refusal"
 [ ! -e "$dependent_home/.local" ] ||
     fail "unmanaged-dependent refusal created transaction state"
+
+shared_home=$(make_home shared-dependent)
+shared_state=$(make_brew_state shared-dependent)
+if ! FAKE_UNMANAGED_DEPENDENCY_USER=1 run_homebrew "$shared_home" "$shared_state" \
+    "$TEMP_DIR/shared.log" --host mac-test-pilot --plan \
+    >"$TEMP_DIR/shared.out" 2>&1; then
+    fail "Homebrew plan rejected an unmanaged shared-dependency user"
+fi
+grep -F -x "UNMANAGED_DEPENDENTS count=0 formulae=''" \
+    "$TEMP_DIR/shared.out" >/dev/null || fail "shared-dependency user preservation"
+if grep -F -x 'uses --installed --recursive --formula openssl@3' \
+    "$TEMP_DIR/shared.log" >/dev/null; then
+    fail "Homebrew plan treated a shared dependency as a selected root"
+fi
 
 dry_home=$(make_home prohibited-dry-run)
 dry_state=$(make_brew_state prohibited-dry-run)
