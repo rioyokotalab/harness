@@ -21,6 +21,13 @@ gates; follow those more specific rules.
 - When exact owner authorization exists, preserve unrelated owner settings and
   make the smallest atomic change. Otherwise collect one approval bundle and
   continue all safe in-scope work.
+- The owner grants standing authorization for ordinary Git operations within
+  the active task scope, including fetch/pull, branch creation, commits,
+  merges, rebases, pushes, and task pull-request creation or merge. Continue to
+  apply all preflight, preservation, collaboration, and no-force-push rules;
+  this does not authorize hosting settings or administration, workflow
+  dispatch, deployments, external messages, destructive cleanup, or credential
+  access.
 - Do not treat a long-running instruction as permission to broaden scope.
 - Never run raw recursive or bulk deletion (`rm -r`, `rm -rf`, `find -delete`,
   deletion loops/globs, `rsync --delete`, or equivalents). Use the
