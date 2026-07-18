@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-268.
+and compact historical pointers here. Next free ID: T-269.
 
 ## Current state
 
@@ -50,12 +50,15 @@ and compact historical pointers here. Next free ID: T-268.
 
 ## Next resume checkpoint
 
-Resume T-191 after the first Sunday eligibility. Fetch and prove a clean fleet,
-then query only the seven captured IDs below through their declared native
-scheduler routes. Do not infer absence from a failed query, and do not cancel,
-replace, or duplicate a delayed job. T-196 remains blocked until T-191 reaches
-eight successful weekly chains, two verified restores per node, and a current
-verified independent generation. T-210 is complete and must not be repeated.
+Resume T-268 in `ready-for-go`; all D1–D10 decisions are frozen. Wait for an
+explicit `go`, then reconstruct the exhaustive plan and decision register in
+`docs/plans/personal-macos-fleet.md`. Independently resume T-191 after the first
+Sunday eligibility. Fetch and prove a clean fleet, then query only the seven
+captured IDs below through their declared native scheduler routes. Do not infer
+absence from a failed query, and do not cancel, replace, or duplicate a delayed
+job. T-196 remains blocked until T-191 reaches eight successful weekly chains,
+two verified restores per node, and a current verified independent generation.
+T-210 is complete and must not be repeated.
 
 ## Active tasks
 
@@ -119,6 +122,123 @@ the resolved owner policy. No Restic, scheduler, replica, deletion, or
 credential-path command ran. Keep-all remains effective until T-191 production
 stabilizes and the owner separately approves the exact first `forget` and later
 separate `prune` commands.
+
+### T-268 — Private personal macOS fleet
+
+**Phase/status:** `ready-for-go`. Design a separate personal-macOS target
+family that reuses harness safety and control-plane principles without adding
+four private machines to the public Linux/HPC profiles. Generic code, schemas,
+synthetic fixtures, tests, and any deliberately selected non-sensitive CLI
+baseline may be public; machine identity, local configuration, installed-app
+inventory, private desired state, live facts, credentials, and transaction
+detail must remain local or in an explicitly chosen private store.
+
+**Verified discovery:** the current harness materially assumes Linux, Bash,
+GNU file/hash tools, Linux artifacts, systemd-style local SSH-agent handling,
+and controller-initiated SSH. Homebrew and Apple documentation support a
+separate adapter: discover the active Homebrew prefix, avoid Bundle's default
+upgrade behavior, never use dump/cleanup as inventory or convergence, preserve
+native zsh/Keychain/TCC/login-item behavior, and require no background service
+or broad privacy permission in the initial rollout. No Mac was identified,
+connected, inventoried, or changed; no package, shell, SSH, privacy, login-item,
+backup, repository, or external-service action ran.
+
+**Plan:** `docs/plans/personal-macos-fleet.md` contains scope/non-goals,
+confirmed facts and assumptions, primary sources, the recommended public-engine
+plus private-state architecture, 17 execution stages, safety/rollback gates,
+acceptance criteria, and decisions D1–D10. The selected design is Mac-local
+pull/apply, a strict private overlay, managed-allowlist Homebrew catch-up
+upgrades, a current Homebrew Bash launcher with the native shell preserved,
+manual operation before any `launchd` work, and one low-risk local pilot before
+sequential rollout.
+
+**Decision D1:** selected pull-based local operation because Macs are
+intermittently online and some are rarely used. The login node will not push
+or apply. Each Mac must directly fast-forward a clean expected checkout from
+any released Mac baseline to the current published target, then run
+schema-versioned, idempotent local-state migrations without replaying missed
+rollouts or backfilling historical package actions. D4's current managed-tool
+upgrade stage is separate from these migrations.
+
+**Decision D2:** selected a separate private Git companion as the authoritative
+desired-state layer. It will version curated baseline selections, schema, and
+opaque host deltas only; copied dotfiles/configuration, observed inventories,
+live facts, transactions, credentials, and secrets are prohibited. Public and
+private repositories fast-forward independently, but their engine/schema
+compatibility must pass before any machine mutation. Partial repository update
+is retry-safe and never permits partial apply. Creating/configuring/publishing
+the private remote remains a separate execution authority boundary.
+
+**Decision D3:** selected CLI-only initial scope. The pilot manages selected
+command-line development/agent capabilities and Codex/Claude discovery links.
+GUI applications/casks, App Store state, preferences, editor extensions,
+Homebrew services, login/background items, and macOS settings are excluded and
+require a separate later phase.
+
+**Decision D4:** selected automatic catch-up upgrades for the explicitly
+managed CLI formula allowlist after public/private fast-forward and schema
+migration validate. The upgrade is a separately printed stage with private
+pre/post version and dependency evidence. Unmanaged formulae, casks, services,
+taps, App Store apps, editor extensions, dump, cleanup, and removal remain
+untouched. Because Homebrew upgrade is not transactionally reversible, any
+downgrade/reinstall/uninstall recovery requires a later exact reviewed plan.
+
+**Decision D5:** selected managed current Homebrew Bash through a stable harness
+launcher while retaining the unchanged native macOS account shell as an
+independent recovery path. The launcher discovers the Homebrew prefix; only a
+thin collision-refusing Bash loader may be added. Terminal preferences,
+`/etc/shells`, `chsh`, and zsh files remain untouched.
+
+**Decision D6:** selected explicit manual catch-up only. Login, wake, managed
+Bash entry, agent startup, and shell exit perform no fetch, migration,
+Homebrew action, apply, or doctor. No `launchd`, login item, cron, or background
+job is added; long-gap updates run only when the owner deliberately starts and
+can observe plan/apply.
+
+**Decision D7:** selected a Codex/Claude session started locally on the pilot
+Mac, specifically the current client Mac the owner is using to connect to this
+login node. No inbound SSH, Remote Login change, SSH-config enumeration, or
+live configuration transfer to the cluster is required. Hostname, model,
+serial, network details, username, and private paths remain private; an opaque
+logical ID is assigned only in the private desired-state repository during
+authorized execution. Public records contain only value-free aggregate
+outcomes.
+
+**Decision D8:** selected the private Git companion as the recovery source for
+curated desired intent, with private local facts and transaction/rollback
+records covered by the owner's existing Mac backup where available and
+otherwise rebuilt through fresh value-minimized observation and planning. No
+new encrypted sync service, backup job, backup repository, or versioning of
+live facts/transactions is in scope.
+
+**Decision D9:** selected the small public Homebrew baseline `bash`, `git`,
+`git-lfs`, `tmux`, `ripgrep`, `jq`, `tree`, and `shellcheck`. Language runtimes,
+agent installers, backup/transfer tools, and build/document tools are private
+opt-in capability groups per Mac. Automatic catch-up upgrades only the public
+baseline and explicitly selected private groups; installed state never implies
+desired state.
+
+**Decision D10:** selected one owner-controlled private GitHub repository as
+the desired-state companion, with an independent clean expected-branch clone
+on each Mac and fast-forward-only catch-up. Runtime state is never pushed.
+Repository creation/name, authentication/remotes, and publication remain
+separate external authority checks during execution.
+
+**Final decision audit:** D1–D10 are internally consistent and no material
+design input remains. The frozen order is public schema/private contract,
+long-gap updater, Darwin portability and observation, strict resolver,
+plan/doctor/transactions, bounded Homebrew and Bash support, synthetic and
+Linux regression validation, local pilot observation and staged rollback, a
+long-gap drill, then one-at-a-time rollout. Privacy-negative tests precede any
+Mac observation; control-plane rollback precedes package/shell stages; every
+live package or external-service action retains its separate authority gate.
+
+**Next:** wait for explicit `go`. Then set T-268 to `executing` and begin with
+the public schema, synthetic fixtures, privacy-negative tests, and strict
+private resolver. Do not access a Mac until those gates pass. Go does not itself
+authorize credentials/authentication changes, GitHub creation or publication,
+Homebrew installation/upgrades, package cleanup, background automation, or
+destructive actions.
 
 ## Stable operational facts
 
