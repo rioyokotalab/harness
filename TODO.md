@@ -399,6 +399,24 @@ publish the no-prompt portability correction through the protected workflow,
 then repeat the clean stage-12 inventory/read-only plan. Do not change
 Homebrew ownership or apply its rendered package commands.
 
+Stage 12 completed on 2026-07-18 after PR #20 passed required
+`portable-phase1` and published the no-prompt correction as `42399aa`. The
+pilot checkout and strict private companion are clean; a fresh owner-only
+mode-0600 fact capture and published-engine read-only plan passed with four
+absent managed links, six missing public formulae, two outdated public
+formulae, zero blocks, and `package_changes=not-applied network=none`. No
+private value, repository identifier, logical ID, path, or manifest entered
+public Git, and no discovery link, package, Homebrew ownership, shell startup,
+background, or system state changed. The separately authorized GitHub CLI
+device authentication was used only for protected PRs #19 and #20; its
+checksum-verified temporary binary is safe to exact-unlink after this
+checkpoint publishes. Exact next action: request separate stage-13 authority,
+then run discovery-link plan/apply, fresh Codex and Claude doctor checks,
+deliberate exact rollback, prior-state verification, and accepted reapply.
+Stage 14 Homebrew/Bash remains unauthorized, and the non-writable Homebrew
+prefix is a known blocker that must not be repaired with broad ownership or
+mode changes without a separate exact plan and authority.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
