@@ -52,7 +52,14 @@ if [ -n "${MACOS_TEST_FAIL_DEST:-}" ] && [ "$last" = "$MACOS_TEST_FAIL_DEST" ] &
 fi
 exec /usr/bin/mv "$@"
 EOF
-chmod 755 "$fake_bin/uname" "$fake_bin/stat" "$fake_bin/mv"
+cat >"$fake_bin/vim" <<'EOF'
+#!/bin/sh
+last=
+for argument do last=$argument; done
+printf '%s\n' 'export HARNESS_SYNTHETIC_SHARED_BASH=pilot' >"$last"
+EOF
+chmod 755 "$fake_bin/uname" "$fake_bin/stat" "$fake_bin/mv" \
+    "$fake_bin/vim"
 
 configure_identity() {
     git -C "$1" config user.name mac-test
@@ -60,18 +67,25 @@ configure_identity() {
 }
 
 public=$TEMP_DIR/public
-mkdir -p "$public/libexec" "$public/profiles/personal-macos"
+public_origin=$TEMP_DIR/public-origin.git
+mkdir -p "$public/libexec" "$public/profiles/personal-macos" "$public/shell"
 cp -p "$ROOT/libexec/harness-common" "$ROOT/libexec/harness-macos-common" \
     "$ROOT/libexec/harness-macos-profile" \
-    "$ROOT/libexec/harness-macos-config-sync" "$public/libexec/"
+    "$ROOT/libexec/harness-macos-config-sync" \
+    "$ROOT/libexec/harness-macos-pilot-plan" "$public/libexec/"
 cp "$ROOT/profiles/personal-macos/base.conf" \
     "$public/profiles/personal-macos/base.conf"
+cp "$ROOT/shell/personal-macos-startup.block" "$public/shell/"
 git -C "$public" init -q -b main
 configure_identity "$public"
-git -C "$public" add libexec profiles
+git -C "$public" add libexec profiles shell
 git -C "$public" commit -q -m 'synthetic public config sync engine'
+git init -q --bare -b main "$public_origin"
+git -C "$public" remote add origin "$public_origin"
+git -C "$public" push -q -u origin main
 chmod 700 "$public/.git"
 SYNC=$public/libexec/harness-macos-config-sync
+PILOT=$public/libexec/harness-macos-pilot-plan
 
 setup_home() {
     name=$1
@@ -116,6 +130,29 @@ run_sync() {
     HOME="$test_home" HARNESS_ROOT="$public" PATH="$fake_bin:/usr/bin:/bin" \
         "$SYNC" "$@"
 }
+
+# shellcheck disable=SC2034
+IFS='|' read -r pilot_home pilot_private pilot_writer pilot_origin <<EOF
+$(setup_home pilot-helper)
+EOF
+{
+    printf '%s\n' '# synthetic owner-local Bash setting'
+    cat "$ROOT/shell/personal-macos-startup.block"
+} >"$pilot_home/.bashrc"
+chmod 600 "$pilot_home/.bashrc"
+pilot_output=$(HOME="$pilot_home" HARNESS_ROOT="$public" \
+    PATH="$fake_bin:/usr/bin:/bin" "$PILOT" --host mac-test-pilot)
+printf '%s\n' "$pilot_output" | grep -F \
+    'action=seed apply=not-requested activation=none' >/dev/null ||
+    fail "pilot helper seed plan"
+printf '%s\n' "$pilot_output" | grep -F \
+    'END macos_pilot_plan bundle_apply=not-requested curation=owner-edited next=separate-seed-apply-authority' \
+    >/dev/null || fail "pilot helper authority boundary"
+grep -F -x 'export HARNESS_SYNTHETIC_SHARED_BASH=pilot' \
+    "$pilot_home/.config/harness/managed/personal-macos-private.bash" \
+    >/dev/null || fail "pilot helper did not curate Bash fragment"
+git -C "$pilot_private" cat-file -e HEAD:ssh_config 2>/dev/null &&
+    fail "pilot helper plan changed private repository"
 
 IFS='|' read -r home private writer origin <<EOF
 $(setup_home primary)

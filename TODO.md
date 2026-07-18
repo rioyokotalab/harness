@@ -1063,6 +1063,17 @@ the declared AL certificate, rerun guarded fleet-sync plan/apply from
 `al` only; first revalidate that its checkout is still clean and that no
 transfer artifact exists.
 
+**Pilot command simplification (implementation pending publication):** the
+owner requested the minimum runnable surface while already in the pilot
+checkout. One new interactive command, `harness macos-pilot-plan --host
+LOGICAL_ID`, performs the public clean fast-forward and target-engine handoff,
+requires private Git clean/current without merging it, opens only `.bashrc` and
+the private Bash fragment in isolated Vim for owner curation, validates the
+three live candidates without executing them, and runs seed plan only. It has
+no apply option. Synthetic coverage proves the fragment is curated, private
+Git remains unchanged, and the final authority boundary is explicit. Publish
+this helper through protected CI before asking the pilot to run it.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
