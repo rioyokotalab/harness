@@ -1,0 +1,368 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() {
+    echo "Usage: harness ssh-config-mirror [--plan|--apply|--rollback]" >&2
+}
+
+stat_owner() { stat -c '%u' -- "$1"; }
+stat_mode() { stat -c '%a' -- "$1"; }
+stat_links() { stat -c '%h' -- "$1"; }
+
+checksum_file() {
+    sha256sum "$1" | awk '{ print $1 }'
+}
+
+validate_source() {
+    [ -f "$source_config" ] && [ ! -L "$source_config" ] ||
+        die "SSH mirror source has unsafe type"
+    [ "$(stat_owner "$source_config")" = "$current_uid" ] ||
+        die "SSH mirror source has unsafe owner"
+    [ "$(stat_links "$source_config")" = 1 ] ||
+        die "SSH mirror source has unsafe link count"
+    source_mode=$(stat_mode "$source_config")
+    [ "$source_mode" = 600 ] || [ "$source_mode" = 644 ] ||
+        die "SSH mirror source has unsafe mode"
+    source_size=$(wc -c <"$source_config" | tr -d ' ')
+    case "$source_size" in ''|*[!0-9]*) die "SSH mirror source size is invalid" ;; esac
+    [ "$source_size" -gt 0 ] && [ "$source_size" -le 1048576 ] ||
+        die "SSH mirror source size is invalid"
+    if LC_ALL=C grep -E 'BEGIN ([A-Z0-9 ]+ )?PRIVATE KEY' \
+        "$source_config" >/dev/null 2>&1; then
+        die "SSH mirror source contains prohibited credential material"
+    fi
+    if LC_ALL=C grep -E -i \
+        '^[[:space:]]*Include[[:space:]]|^[[:space:]]*Match[[:space:]].*([[:space:]]|^)exec([[:space:]]|$)|(^|[^[:alnum:]_])(token|password)[[:space:]=:]' \
+        "$source_config" >/dev/null 2>&1; then
+        die "SSH mirror source contains prohibited external or credential material"
+    fi
+    ssh -o CanonicalizeHostname=no -G -F "$source_config" \
+        harness-validation.invalid \
+        >/dev/null 2>&1 || die "SSH mirror source grammar is invalid"
+}
+
+safe_agent_socket() {
+    socket_candidate=$1
+    case "$socket_candidate" in /*) ;; *) return 1 ;; esac
+    [ -S "$socket_candidate" ] &&
+        [ "$(stat_owner "$socket_candidate")" = "$current_uid" ]
+}
+
+resolve_agent_socket() {
+    if [ -n "${SSH_AUTH_SOCK:-}" ] && safe_agent_socket "$SSH_AUTH_SOCK"; then
+        printf '%s\n' "$SSH_AUTH_SOCK"
+        return
+    fi
+    if [ -n "${TMUX:-}" ] && command -v tmux >/dev/null 2>&1; then
+        tmux_value=$(tmux show-environment SSH_AUTH_SOCK 2>/dev/null || true)
+        case "$tmux_value" in SSH_AUTH_SOCK=*) tmux_value=${tmux_value#SSH_AUTH_SOCK=} ;; *) tmux_value= ;; esac
+        if [ -n "$tmux_value" ] && safe_agent_socket "$tmux_value"; then
+            printf '%s\n' "$tmux_value"
+            return
+        fi
+    fi
+    case ${XDG_RUNTIME_DIR:-} in
+        /*)
+            fixed_socket=$XDG_RUNTIME_DIR/openssh_agent
+            if safe_agent_socket "$fixed_socket"; then
+                printf '%s\n' "$fixed_socket"
+                return
+            fi
+            ;;
+    esac
+    return 1
+}
+
+prepare_state() {
+    for local_state_path in "$HOME/.local" "$HOME/.local/state" \
+        "$state_root" "$state_directory"; do
+        if [ -e "$local_state_path" ] || [ -L "$local_state_path" ]; then
+            [ -d "$local_state_path" ] && [ ! -L "$local_state_path" ] ||
+                die "SSH mirror local state has unsafe type"
+            [ "$(stat_owner "$local_state_path")" = "$current_uid" ] ||
+                die "SSH mirror local state has unsafe owner"
+            case "$local_state_path" in
+                "$state_root"|"$state_directory")
+                    [ "$(stat_mode "$local_state_path")" = 700 ] ||
+                        die "SSH mirror local state has unsafe mode"
+                    ;;
+            esac
+        fi
+    done
+    umask 077
+    for local_state_path in "$HOME/.local" "$HOME/.local/state" \
+        "$state_root" "$state_directory"; do
+        if [ ! -e "$local_state_path" ] && [ ! -L "$local_state_path" ]; then
+            mkdir "$local_state_path"
+            chmod 700 "$local_state_path"
+        fi
+    done
+}
+
+write_status() {
+    mirror_class=$1
+    mirror_agreement=$2
+    mirror_status_new=$state_directory/.status.$$
+    [ ! -e "$mirror_status_new" ] && [ ! -L "$mirror_status_new" ] ||
+        die "SSH mirror status collision"
+    printf 'schema=1\nclass=%s\nagreement=%s\n' \
+        "$mirror_class" "$mirror_agreement" >"$mirror_status_new"
+    chmod 600 "$mirror_status_new"
+    mv "$mirror_status_new" "$status_file"
+}
+
+run_remote() {
+    remote_body=$1
+    remote_input=${2:-none}
+    remote_log=$state_directory/.remote.$$
+    [ ! -e "$remote_log" ] && [ ! -L "$remote_log" ] ||
+        die "SSH mirror remote log collision"
+    : >"$remote_log"
+    chmod 600 "$remote_log"
+    remote_command="/bin/sh -c '$remote_body' sh '$source_identity'"
+    if [ "$remote_input" = config ]; then
+        if remote_output=$(SSH_AUTH_SOCK="$agent_socket" ssh -o BatchMode=yes \
+            -o ConnectTimeout=15 t4 "$remote_command" \
+            <"$source_config" 2>"$remote_log"); then
+            remote_result=0
+        else
+            remote_result=$?
+        fi
+    else
+        if remote_output=$(SSH_AUTH_SOCK="$agent_socket" ssh -o BatchMode=yes \
+            -o ConnectTimeout=15 t4 "$remote_command" 2>"$remote_log"); then
+            remote_result=0
+        else
+            remote_result=$?
+        fi
+    fi
+    unlink "$remote_log"
+    [ "$remote_result" -eq 0 ] || return 1
+    printf '%s\n' "$remote_output"
+}
+
+remote_plan='set -eu
+expected=$1
+config=$HOME/.ssh/config
+invalid() { printf "RESULT class=invalid agreement=no action=stopped\n"; exit 0; }
+test -f "$config" && test ! -L "$config" || invalid
+test "$(stat -c %u -- "$config")" = "$(id -u)" || invalid
+test "$(stat -c %h -- "$config")" = 1 || invalid
+mode=$(stat -c %a -- "$config")
+test "$mode" = 600 || test "$mode" = 644 || invalid
+grep -E -i "^[[:space:]]*Include[[:space:]]|^[[:space:]]*Match[[:space:]].*([[:space:]]|^)exec([[:space:]]|$)|(^|[^[:alnum:]_])(token|password)[[:space:]=:]" "$config" >/dev/null 2>&1 && invalid
+ssh -o CanonicalizeHostname=no -G -F "$config" harness-validation.invalid >/dev/null 2>&1 || invalid
+observed=$(sha256sum "$config")
+observed=${observed%% *}
+if test "$observed" = "$expected" && test "$mode" = 600; then
+    printf "RESULT class=current agreement=yes action=none\n"
+else
+    printf "RESULT class=current agreement=no action=replace\n"
+fi'
+
+remote_apply='set -eu
+expected=$1
+uid=$(id -u)
+ssh_dir=$HOME/.ssh
+config=$ssh_dir/config
+stage=$ssh_dir/.harness-config-stage.$$
+state=$HOME/.local/state/harness/ssh-config-mirror
+previous=$state/previous
+manifest=$state/latest.conf
+status=$state/status
+invalid() { printf "RESULT class=invalid agreement=no action=stopped\n"; exit 0; }
+test -d "$ssh_dir" && test ! -L "$ssh_dir" || invalid
+test "$(stat -c %u -- "$ssh_dir")" = "$uid" || invalid
+test ! -e "$stage" && test ! -L "$stage" || invalid
+umask 077
+: >"$stage"
+chmod 600 "$stage"
+stage_identity=$(stat -c "%d:%i:%u:%a" -- "$stage")
+cleanup() {
+    result=$?
+    trap - EXIT HUP INT TERM
+    if test -f "$stage" && test ! -L "$stage" &&
+       test "$(stat -c "%d:%i:%u:%a" -- "$stage")" = "$stage_identity"; then
+        unlink "$stage" || result=1
+    fi
+    exit "$result"
+}
+trap cleanup EXIT
+trap "exit 129" HUP
+trap "exit 130" INT
+trap "exit 143" TERM
+cat >"$stage"
+test "$(stat -c %s -- "$stage")" -gt 0 || invalid
+test "$(stat -c %s -- "$stage")" -le 1048576 || invalid
+test "$(stat -c %h -- "$stage")" = 1 || invalid
+observed=$(sha256sum "$stage")
+observed=${observed%% *}
+test "$observed" = "$expected" || invalid
+grep -E -i "^[[:space:]]*Include[[:space:]]|^[[:space:]]*Match[[:space:]].*([[:space:]]|^)exec([[:space:]]|$)|(^|[^[:alnum:]_])(token|password)[[:space:]=:]" "$stage" >/dev/null 2>&1 && invalid
+ssh -o CanonicalizeHostname=no -G -F "$stage" harness-validation.invalid >/dev/null 2>&1 || invalid
+test -f "$config" && test ! -L "$config" || invalid
+test "$(stat -c %u -- "$config")" = "$uid" || invalid
+test "$(stat -c %h -- "$config")" = 1 || invalid
+mode=$(stat -c %a -- "$config")
+test "$mode" = 600 || test "$mode" = 644 || invalid
+grep -E -i "^[[:space:]]*Include[[:space:]]|^[[:space:]]*Match[[:space:]].*([[:space:]]|^)exec([[:space:]]|$)|(^|[^[:alnum:]_])(token|password)[[:space:]=:]" "$config" >/dev/null 2>&1 && invalid
+ssh -o CanonicalizeHostname=no -G -F "$config" harness-validation.invalid >/dev/null 2>&1 || invalid
+before=$(sha256sum "$config")
+before=${before%% *}
+if test "$before" = "$expected" && test "$mode" = 600; then
+    unlink "$stage"
+    printf "RESULT class=current agreement=yes action=none\n"
+    exit 0
+fi
+for parent in "$HOME/.local" "$HOME/.local/state" "$HOME/.local/state/harness" "$state"; do
+    if test -e "$parent" || test -L "$parent"; then
+        test -d "$parent" && test ! -L "$parent" || invalid
+        test "$(stat -c %u -- "$parent")" = "$uid" || invalid
+        case "$parent" in
+            "$HOME/.local/state/harness"|"$state") test "$(stat -c %a -- "$parent")" = 700 || invalid ;;
+        esac
+    else
+        mkdir "$parent"
+        chmod 700 "$parent"
+    fi
+done
+previous_new=$state/.previous.$$
+manifest_new=$state/.latest.$$
+test ! -e "$previous_new" && test ! -L "$previous_new" || invalid
+test ! -e "$manifest_new" && test ! -L "$manifest_new" || invalid
+cp "$config" "$previous_new"
+chmod 600 "$previous_new"
+test "$(sha256sum "$previous_new" | cut -d " " -f 1)" = "$before" || invalid
+printf "schema=1\nbefore_hash=%s\nafter_hash=%s\n" "$before" "$expected" >"$manifest_new"
+chmod 600 "$manifest_new"
+mv "$previous_new" "$previous"
+mv "$manifest_new" "$manifest"
+mv "$stage" "$config"
+printf "complete\n" >"$status"
+chmod 600 "$status"
+printf "RESULT class=current agreement=yes action=applied rollback=available\n"'
+
+remote_rollback='set -eu
+unused=$1
+uid=$(id -u)
+ssh_dir=$HOME/.ssh
+config=$ssh_dir/config
+state=$HOME/.local/state/harness/ssh-config-mirror
+previous=$state/previous
+manifest=$state/latest.conf
+status=$state/status
+invalid() { printf "RESULT class=invalid agreement=no action=stopped\n"; exit 0; }
+test -d "$state" && test ! -L "$state" || invalid
+test "$(stat -c %u -- "$state")" = "$uid" || invalid
+test "$(stat -c %a -- "$state")" = 700 || invalid
+for file in "$config" "$previous" "$manifest" "$status"; do
+    test -f "$file" && test ! -L "$file" || invalid
+    test "$(stat -c %u -- "$file")" = "$uid" || invalid
+    test "$(stat -c %h -- "$file")" = 1 || invalid
+    test "$(stat -c %a -- "$file")" = 600 || invalid
+done
+test "$(sed -n 1p "$status")" = complete || invalid
+schema=
+before_hash=
+after_hash=
+while IFS="=" read -r key value; do
+    case "$key" in
+        schema) test -z "$schema" || invalid; schema=$value ;;
+        before_hash) test -z "$before_hash" || invalid; before_hash=$value ;;
+        after_hash) test -z "$after_hash" || invalid; after_hash=$value ;;
+        *) invalid ;;
+    esac
+done <"$manifest"
+test "$schema" = 1 || invalid
+test "${#before_hash}" = 64 && test "${#after_hash}" = 64 || invalid
+current=$(sha256sum "$config")
+current=${current%% *}
+prior=$(sha256sum "$previous")
+prior=${prior%% *}
+test "$current" = "$after_hash" || invalid
+test "$prior" = "$before_hash" || invalid
+grep -E -i "^[[:space:]]*Include[[:space:]]|^[[:space:]]*Match[[:space:]].*([[:space:]]|^)exec([[:space:]]|$)|(^|[^[:alnum:]_])(token|password)[[:space:]=:]" "$previous" >/dev/null 2>&1 && invalid
+ssh -o CanonicalizeHostname=no -G -F "$previous" harness-validation.invalid >/dev/null 2>&1 || invalid
+stage=$ssh_dir/.harness-config-rollback.$$
+test ! -e "$stage" && test ! -L "$stage" || invalid
+cp "$previous" "$stage"
+chmod 600 "$stage"
+mv "$stage" "$config"
+printf "rolled-back\n" >"$status"
+printf "RESULT class=current agreement=no action=rolled-back\n"'
+
+mode=plan
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        --rollback) mode=rollback; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+
+[ "${HARNESS_LOGICAL_HOST:-}" = local ] ||
+    die "SSH config mirror is restricted to the declared local profile"
+[ "$(uname -s)" = Linux ] || die "SSH config mirror requires Linux"
+case ${HOME:-} in /*) ;; *) die "SSH config mirror requires an absolute HOME" ;; esac
+current_uid=$(id -u)
+[ -d "$HOME" ] && [ ! -L "$HOME" ] && [ "$(stat_owner "$HOME")" = "$current_uid" ] ||
+    die "SSH config mirror HOME is unsafe"
+source_config=$HOME/.ssh/config
+state_root=$HOME/.local/state/harness
+state_directory=$state_root/ssh-config-mirror
+status_file=$state_directory/status.conf
+prepare_state
+
+if [ "$mode" != rollback ]; then
+    validate_source
+    source_identity=$(checksum_file "$source_config")
+else
+    source_identity=rollback
+fi
+agent_socket=$(resolve_agent_socket) || {
+    write_status auth-failed no
+    echo "SSH_CONFIG_MIRROR class=auth-failed agreement=no action=stopped"
+    exit 2
+}
+
+case "$mode" in
+    plan) remote_result=$(run_remote "$remote_plan") || remote_result= ;;
+    apply) remote_result=$(run_remote "$remote_apply" config) || remote_result= ;;
+    rollback) remote_result=$(run_remote "$remote_rollback") || remote_result= ;;
+esac
+
+case "$remote_result" in
+    "RESULT class=current agreement=yes action=none")
+        write_status current yes
+        echo "SSH_CONFIG_MIRROR class=current agreement=yes action=none"
+        ;;
+    "RESULT class=current agreement=no action=replace")
+        write_status current no
+        echo "SSH_CONFIG_MIRROR class=current agreement=no action=replace apply=not-requested"
+        ;;
+    "RESULT class=current agreement=yes action=applied rollback=available")
+        write_status current yes
+        echo "SSH_CONFIG_MIRROR class=current agreement=yes action=applied rollback=available"
+        ;;
+    "RESULT class=current agreement=no action=rolled-back")
+        write_status current no
+        echo "SSH_CONFIG_MIRROR class=current agreement=no action=rolled-back"
+        ;;
+    "RESULT class=invalid agreement=no action=stopped")
+        write_status invalid no
+        echo "SSH_CONFIG_MIRROR class=invalid agreement=no action=stopped"
+        exit 2
+        ;;
+    *)
+        write_status offline no
+        echo "SSH_CONFIG_MIRROR class=offline agreement=no action=stopped"
+        exit 2
+        ;;
+esac

@@ -50,9 +50,11 @@ and compact historical pointers here. Next free ID: T-269.
 
 ## Next resume checkpoint
 
-Resume T-268 in `executing`; D1–D10 are frozen and the owner gave explicit
-`go` on 2026-07-18. Continue stage 12 from the exact next action in
-`docs/plans/personal-macos-fleet.md`. Independently resume T-191 after the first
+Resume T-268 in `executing`; D1–D10 and SSH-sync S1–S10 are frozen, and the
+owner gave explicit `go` for the SSH expansion on 2026-07-19. Complete the
+generic public-engine publication described in the T-268 checkpoint below;
+live private seeding and machine mutation remain later sequential stages.
+Independently resume T-191 after the first
 Sunday eligibility. Fetch and prove a clean fleet, then query only the seven
 captured IDs below through their declared native scheduler routes. Do not infer
 absence from a failed query, and do not cancel, replace, or duplicate a delayed
@@ -800,9 +802,11 @@ Linux command, since Mac-local pull cannot safely originate the Linux source.
 executed on `local` for the one-way `t4` mirror. It is not part of a Mac command
 or a broad fleet action, and it cannot target any other Linux host.
 
-**Frozen SSH-sync execution plan:** T-268 remains `ready-for-go`; no config
-mutation or private publication is authorized until the owner gives a new
-explicit go for this frozen expansion.
+**Frozen SSH-sync execution plan:** T-268 is `executing`; the owner gave the
+new explicit `go` for this frozen expansion on 2026-07-19. That go authorizes
+the generic public engine/schema/tests and protected publication. Live private
+payload seeding, Mac config mutation, and `local`-to-`t4` apply remain the
+sequential later stages already separated below.
 
 1. Extend the public private-companion schema contract to allow exactly one
    repository-root shared Mac SSH-config payload with strict regular-file,
@@ -851,6 +855,50 @@ dirty unrelated private state, non-fast-forward Git, unavailable authentication,
 unexpected endpoint/scope, changed rollback target, or any output that could
 expose private values. Recovery never force-pushes, guesses a winner, copies a
 credential, rewrites another Linux node, or falls back to raw deletion.
+
+**SSH-sync implementation checkpoint (2026-07-19):** the isolated
+`agent/t268-ssh-sync-engine` worktree now contains the generic engine and no
+live/private bytes. The v1 private contract accepts an optional root
+`ssh_config` only as the backward-compatible pre-adoption transition; once
+seeded, it is the sole shared payload. Strict owner/mode/type/size/link-count,
+tracked-blob, credential-marker, `Include`, `Match exec`, canonicalization-off,
+and OpenSSH grammar gates are implemented. `harness macos-ssh-sync` covers
+explicit seed, equal no-op, local-only normal commit/push, remote-only
+fast-forward/apply, same-content convergence, divergence stop, private status,
+atomic mode-0600 replacement, exact unchanged rollback, prompt-free Git, and
+retry after failed push. `harness ssh-config-mirror` is callable only with the
+declared `local` identity and has no target option; it always uses `t4`,
+BatchMode, a current-user-owned agent socket, remote mode-0600 staging and
+grammar validation, one prior image, atomic replacement, and unchanged-only
+rollback. Doctor surfaces report only class/agreement state.
+
+Focused synthetic suites pass for the schema/profile, long-gap updater, Mac
+reconciler, and fixed Linux mirror. Covered cases include first seed,
+remote-only pull, local-only publish, equal no-op, concurrent divergence,
+invalid grammar and external directives, unsafe modes/types/hard links,
+fetch/push/offline/agent failures, injected atomic-replace failure, exact
+rollback/reapply, privacy sentinels, fixed `local`/`t4`, and exclusion of every
+other Linux node. No real SSH endpoint, private companion, Mac config, key,
+agent identity, `known_hosts`, package, service, scheduler, or background job
+was read or changed. Exact next action: commit the focused implementation,
+run the clean-checkout full phase-one/ShellCheck/diff/public-privacy gates,
+fetch and integrate current `origin/main`, then publish through the protected
+task-PR workflow. Stop before any private seed or live apply.
+
+The generic engine is committed as `172fd01` after a conflict-free rebase onto
+published `main` `5b4091b`. A normal clean clone (not the linked implementation
+worktree) passed `HARNESS_PORTABLE_CI=1 tests/test-phase1.sh`, including the
+new suites, ShellCheck warning/error gate, repository independence, and all
+portable regressions. `git diff --check` passed and a full current-history
+public audit reported `value_exposed=false`. An initial non-portable full-suite
+attempt reached the native MPI smoke and stopped only because this non-login
+process has no `mpicc`; no test mutation escaped its guarded fixture and the
+protected portable mode deliberately skips that undeclared toolchain. The
+normal validation clone and its audit files were removed through guarded
+cleanup and verified absent. Exact next action: fetch once more, push
+`agent/t268-ssh-sync-engine`, create the task PR, wait for protected Harness CI,
+merge only after the required check passes, and verify published `main`. No
+fleet sync or private/live SSH apply belongs to this publication stage.
 
 ## Stable operational facts
 

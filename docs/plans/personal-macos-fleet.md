@@ -2,7 +2,7 @@
 
 **Phase:** executing
 
-**Updated:** 2026-07-18 17:49 JST
+**Updated:** 2026-07-19 JST
 
 **Owner:** repository driver
 
@@ -44,8 +44,9 @@ ledgers.
 - MDM, Apple Business Manager, configuration profiles, FileVault recovery-key
   escrow, Apple Account/iCloud management, or OS update enforcement;
 - copying complete dotfiles, `~/Library`, application preferences, browser
-  state, histories, caches, SSH configuration, keys, Keychain contents, or
-  installed-app inventories;
+  state, histories, caches, keys, Keychain contents, or installed-app
+  inventories; the later S1–S10 expansion adds exactly one private whole-file
+  SSH configuration payload and no other dotfile exception;
 - public host profiles containing Mac names, serial numbers, hardware UUIDs,
   usernames, network addresses, location, personal app lists, or local paths;
 - `brew bundle dump`, `brew bundle cleanup`, unmanaged-formula or cask removal,
@@ -135,9 +136,10 @@ Primary sources:
   rollout.
 - **D2 — Private Git companion.** The authoritative personal-Mac desired state
   will live in a separate private Git repository. It contains curated baseline
-  selections, schemas, and opaque per-Mac deltas only. It never contains copied
-  dotfiles, captured local configuration, observed package/app inventories,
-  live facts, transaction records, credential material, or secret values. The
+  selections, schemas, and opaque per-Mac deltas. S1–S10 later add one exact
+  repository-root SSH-config payload as the sole copied-configuration
+  exception. It never contains other copied dotfiles, observed package/app
+  inventories, live facts, transaction records, credential material, or secret values. The
   public harness remains the generic engine and must be fully testable without
   access to the private repository. Private repository creation, remote
   configuration, and publication remain separate external authority
@@ -178,9 +180,11 @@ Primary sources:
 - **D7 access route — local pilot session.** The owner will start a
   Codex/Claude session locally on the selected pilot Mac. The pilot is not
   accessed from the cluster, no inbound SSH or Remote Login is required, and
-  no SSH configuration is enumerated. Live facts and detailed plan/transaction
-  evidence stay on the Mac. Public evidence uses only an opaque logical ID and
-  value-free aggregate outcomes.
+  the original inventory does not enumerate SSH configuration. The later
+  S1–S10 owner-started sync handles exactly the complete config under its
+  separate private contract. Live facts and detailed plan/transaction evidence
+  stay on the Mac. Public evidence uses only an opaque logical ID and value-free
+  aggregate outcomes.
 - **D7 pilot — current client Mac.** The first pilot is the Mac the owner is
   currently using to connect to this login node. Its hostname, model, serial,
   network details, username, and private paths are not recorded in the public
@@ -206,6 +210,24 @@ Primary sources:
   configuring authentication/remotes, and publishing commits are separately
   checked external authority boundaries during execution.
 
+### SSH synchronization expansion (S1–S10)
+
+The owner subsequently authorized one narrow whole-file exception. All Macs
+are equal writers to a single private `ssh_config` payload and reconcile it
+only during explicit owner-started catch-up. Normal Git fast-forwards and
+pushes are required; simultaneous unequal local and remote changes stop as
+`diverged`. A Mac apply syntax-validates and atomically replaces only
+`~/.ssh/config` at mode 0600 with exact local transaction rollback. It never
+touches another SSH file or creates background automation.
+
+Linux uses a different explicit adapter callable only from the declared
+`local` profile and fixed to destination `t4`. It validates locally and on the
+remote, requires `BatchMode=yes` plus a current-user-owned agent socket,
+retains exactly one prior mode-0600 remote image, and cannot target `ab`,
+`ab2`, `ri`, `al`, or `rc`. Public output is value-free. The frozen detailed
+protocol and execution gates are recorded in T-268 and
+[`docs/ssh-config-sync.md`](../ssh-config-sync.md).
+
 ## Recommended architecture
 
 ### 1. Separate target family
@@ -230,11 +252,12 @@ No tool ever generates a private manifest from installed state.
 
 After D1 established long-gap convergence, the recommended storage behind that
 local path changed from four independent files to a separate private Git
-companion. It would version only curated desired state and opaque host deltas,
-so an occasionally used Mac can fast-forward public engine and private policy
-before one migration/apply plan. It must exclude copied dotfiles, observed
-package/app inventories, live facts, transaction logs, credentials, and secret
-values. The public engine remains usable and testable without the companion;
+companion. It versions curated desired state, opaque host deltas, and—after
+S1–S10—exactly one root `ssh_config` payload, so an occasionally used Mac can
+fast-forward public engine and private policy before one migration/apply plan.
+It must exclude every other copied dotfile, observed package/app inventories,
+live facts, transaction logs, credentials, and secret values. The public
+engine remains usable and testable without the companion;
 creating a private remote is a separate external-service authority boundary.
 This recommendation is selected by D2.
 
@@ -464,17 +487,26 @@ separately reviewed destructive action, not an automatic failure trap.
 | ID | Decision | Recommended default | Alternatives / consequence | Status |
 | --- | --- | --- | --- | --- |
 | D1 | Control topology and stale catch-up | Mac-local pull/apply; direct clean fast-forward plus schema migrations from any released Mac baseline | Central mutation is excluded; missed rollouts must not require replay or package backfill | selected — Macs are intermittently online and some are rarely used |
-| D2 | Private desired-state storage | Separate private Git companion containing curated intent only, resolved through a strict local path | Four local-only manifests reduce remote exposure but weaken consistency, recovery, and long-gap convergence; public host state violates privacy | selected — private Git companion |
+| D2 | Private desired-state storage | Separate private Git companion containing curated intent plus the later single S1–S10 SSH payload exception, resolved through a strict local path | Four local-only manifests reduce remote exposure but weaken consistency, recovery, and long-gap convergence; public host state violates privacy | selected — private Git companion |
 | D3 | Phase-1 managed scope | CLI development tools plus agent discovery links only | Adding GUI casks, App Store apps, preferences, services, or OS settings increases privacy and rollback risk | selected — CLI-only |
 | D4 | Homebrew convergence | Automatically install/upgrade only the explicit managed allowlist during manual catch-up; no dump, cleanup, removal, or unmanaged upgrade | `--no-upgrade` reduces catch-up changes but leaves managed tools stale; full convergence or ambient whole-machine upgrades violate scope | selected — automatic managed-allowlist catch-up upgrades |
 | D5 | Interactive shell | Current Homebrew Bash through a stable harness launcher; retain native account shell and thin managed Bash loader | `chsh` makes Homebrew a login dependency and touches system shell policy; `/bin/bash` avoids Homebrew but is old | selected — recommended launcher/native recovery route |
 | D6 | Background automation | Manual invocation only for the first rollout | `launchd` pull/doctor adds unattended network/change behavior and user-visible background state | selected — explicit manual catch-up only |
-| D7 | Pilot and discovery boundary | Owner starts a local session on one low-risk Mac and supplies a non-sensitive logical ID | Exact existing alias or owner-captured value-free facts are possible; SSH-config enumeration and automatic discovery are prohibited | selected — local session on the current client Mac; identity remains private |
+| D7 | Pilot and discovery boundary | Owner starts a local session on one low-risk Mac and supplies a non-sensitive logical ID | Automatic discovery remains prohibited; the later S1–S10 sync handles exactly one reviewed whole-file SSH payload | selected — local session on the current client Mac; identity remains private |
 | D8 | Private-state recovery | Use the owner's existing private backup after defining exact non-secret state; do not add backup automation now | New encrypted sync or backup automation is a separate project and authority boundary; putting live facts/transactions in Git increases exposure and churn | selected — private Git recovers intent; existing backup plus reconstruction covers local runtime state |
 | D9 | Shared CLI baseline | Keep a small public bootstrap/development baseline and select additional capability groups privately per Mac | Mirroring the entire Linux list adds unnecessary tools; making the whole baseline private weakens public testing and reproducibility | selected — eight-formula public baseline; extra capability groups are private opt-ins |
 | D10 | Private companion hosting | Use one private GitHub repository with clean fast-forward-only clones on each Mac | Another private Git host is viable but needs its own transport and recovery contract; local-only storage cannot synchronize four intermittent Macs | selected — owner-controlled private GitHub repository |
 
 ## Next action
+
+The S1–S10 generic SSH synchronization expansion is implemented in the public
+engine with synthetic privacy and failure coverage. The private v1 transition,
+Mac equal-writer reconciler, fixed `local`-to-`t4` adapter, exact rollback, and
+doctor status surfaces must pass the complete clean-checkout phase-one and
+protected CI gates before any live payload is seeded. After publication, the
+next live action is a separate owner-started `office` plan using `--seed`; no
+private companion or real SSH destination is mutated by the generic-engine
+stage.
 
 Stages 2–3 are complete and retry-safe in the public repository. The strict
 resolver now validates the entire clean private Git tree. `harness
@@ -511,10 +543,7 @@ privacy/public-repository audit, repository-independence audit, Claude takeover
 test, ShellCheck gate, complete portable phase-1 suite, and diff check pass.
 A native macOS CI job was not added because it would depend on mutable hosted
 Homebrew state or install packages during CI without materially strengthening
-the fully synthetic adapter tests. Stage 12 now requires the owner to start a
-local Codex or Claude session in the public harness checkout on the selected
-pilot Mac. That session must re-read Git and `TODO.md`, obtain separate authority
-before creating/configuring the private GitHub companion, assign the opaque ID
-only privately, and capture value-minimized mode-0600 facts locally. Do not
-connect to or infer the Mac from this login node, and do not mutate Homebrew or
-shell state during observation.
+the fully synthetic adapter tests. Stages 12–15 subsequently completed on the
+owner-started pilot route with value-free public evidence, as recorded in
+T-268. Stage 16 was paused before another Mac was touched so the S1–S10 SSH
+expansion could be designed and published first.

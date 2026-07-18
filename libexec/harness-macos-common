@@ -146,6 +146,40 @@ macos_checksum_file() {
     fi
 }
 
+macos_validate_ssh_config() {
+    macos_ssh_file=$1
+    macos_ssh_uid=$2
+    macos_ssh_modes=$3
+    [ -f "$macos_ssh_file" ] && [ ! -L "$macos_ssh_file" ] ||
+        die "SSH configuration has unsafe type"
+    [ "$(macos_stat_owner "$macos_ssh_file")" = "$macos_ssh_uid" ] ||
+        die "SSH configuration has unsafe owner"
+    [ "$(macos_stat_links "$macos_ssh_file")" = 1 ] ||
+        die "SSH configuration has unsafe link count"
+    macos_ssh_mode=$(macos_stat_mode "$macos_ssh_file")
+    case ",$macos_ssh_modes," in
+        *,"$macos_ssh_mode",*) ;;
+        *) die "SSH configuration has unsafe mode" ;;
+    esac
+    macos_ssh_size=$(wc -c <"$macos_ssh_file" | tr -d ' ')
+    case "$macos_ssh_size" in ''|*[!0-9]*) die "SSH configuration size is invalid" ;; esac
+    [ "$macos_ssh_size" -gt 0 ] && [ "$macos_ssh_size" -le 1048576 ] ||
+        die "SSH configuration size is invalid"
+    if LC_ALL=C grep -E 'BEGIN ([A-Z0-9 ]+ )?PRIVATE KEY' \
+        "$macos_ssh_file" >/dev/null 2>&1; then
+        die "SSH configuration contains prohibited credential material"
+    fi
+    if LC_ALL=C grep -E -i \
+        '^[[:space:]]*Include[[:space:]]|^[[:space:]]*Match[[:space:]].*([[:space:]]|^)exec([[:space:]]|$)|(^|[^[:alnum:]_])(token|password)[[:space:]=:]' \
+        "$macos_ssh_file" >/dev/null 2>&1; then
+        die "SSH configuration contains prohibited external or credential material"
+    fi
+    command -v ssh >/dev/null 2>&1 || die "SSH configuration validator is unavailable"
+    ssh -o CanonicalizeHostname=no -G -F "$macos_ssh_file" \
+        harness-validation.invalid \
+        >/dev/null 2>&1 || die "SSH configuration grammar is invalid"
+}
+
 macos_validate_public_profile() {
     macos_public_profile=$1
     macos_validate_manifest "$macos_public_profile" \

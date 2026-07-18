@@ -43,6 +43,7 @@ for script in \
     "$ROOT/libexec/harness-macos-doctor" \
     "$ROOT/libexec/harness-macos-profile" \
     "$ROOT/libexec/harness-macos-update" \
+    "$ROOT/libexec/harness-macos-ssh-sync" \
     "$ROOT/libexec/harness-macos-control" \
     "$ROOT/libexec/harness-macos-homebrew" \
     "$ROOT/libexec/harness-macos-bash" \
@@ -53,6 +54,7 @@ for script in \
     "$ROOT/libexec/harness-restic-primary" \
     "$ROOT/libexec/harness-restic-schedule" \
     "$ROOT/libexec/harness-fleet-sync" \
+    "$ROOT/libexec/harness-ssh-config-mirror" \
     "$ROOT/libexec/harness-apply" \
     "$ROOT/libexec/harness-remediate" \
     "$ROOT/libexec/harness-shell" \
@@ -123,6 +125,10 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "personal macOS Bash focused suite"
 "$ROOT/tests/test-personal-macos-update.sh" >/dev/null ||
     fail "personal macOS long-gap update focused suite"
+"$ROOT/tests/test-personal-macos-ssh-sync.sh" >/dev/null ||
+    fail "personal macOS SSH-sync focused suite"
+"$ROOT/tests/test-ssh-config-mirror.sh" >/dev/null ||
+    fail "fixed SSH-config mirror focused suite"
 
 "$ROOT/tests/test-restic-schedule.sh" >/dev/null ||
     fail "Restic schedule focused suite"

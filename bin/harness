@@ -53,6 +53,7 @@ Read-only phase-1 commands:
   macos-doctor validate personal-Mac required and optional readiness
   macos-profile  validate a private personal-Mac desired-state profile
   macos-update  plan/apply clean public and private Mac fast-forwards
+  macos-ssh-sync  reconcile one private whole-file Mac SSH configuration
   storage-readiness  validate declared large/cache storage; optionally probe writes
 
 Transactional commands:
@@ -75,6 +76,7 @@ Transactional commands:
   restic-primary   validate or create one declared hidden-home snapshot
   restic-schedule  inspect or operate the node-local weekly scheduler chain
   fleet-sync  plan or apply a guarded fast-forward to clean mirrored nodes
+  ssh-config-mirror  explicitly mirror local SSH configuration only to t4
 
 Safety commands:
   guarded-delete  plan, execute, and verify bounded recursive deletion
@@ -95,7 +97,7 @@ if [ "$#" -gt 0 ]; then
 fi
 
 case "$command_name" in
-    inventory|plan|doctor|macos-inventory|macos-plan|macos-doctor|macos-profile|macos-update|macos-control|macos-homebrew|macos-bash|storage-readiness|replica|apply|remediate|shell|cache-bootstrap|startup-normalize|dotfiles|tool|runtime|python|agent|build-tool|rollback|restic|restic-primary|restic-schedule|fleet-sync)
+    inventory|plan|doctor|macos-inventory|macos-plan|macos-doctor|macos-profile|macos-update|macos-ssh-sync|macos-control|macos-homebrew|macos-bash|storage-readiness|replica|apply|remediate|shell|cache-bootstrap|startup-normalize|dotfiles|tool|runtime|python|agent|build-tool|rollback|restic|restic-primary|restic-schedule|fleet-sync|ssh-config-mirror)
         exec "$ROOT/libexec/harness-$command_name" "$@"
         ;;
     guarded-delete)
