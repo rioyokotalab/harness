@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-267.
+and compact historical pointers here. Next free ID: T-268.
 
 ## Current state
 
@@ -210,3 +210,4 @@ aggregate counts, hashes, or failure chronology is required.
 | T-264 | Reconciled the compact active ledger and public README with the deployed seven-node control plane, backup recurrence gate, SSH-agent/session behavior, protected collaboration workflow, and harness/website independence. |
 | T-265 | Made Codex-to-Claude takeover repository-complete: added root project instructions and Claude import, explicit cross-client handoff policy, collision-before-mutation installer preflight, and focused plus transactional tests for Claude guidance/settings/skills. Live seven-environment preflight passed Claude 2.1.207, canonical guidance, 10/10 shared skills, and 34/34 managed links with no planned changes. |
 | T-266 | Corrected local MPI discovery: fresh interactive shells preserve an existing toolchain or load the reviewed Open MPI 5.0.8 module, tracked local batch jobs select the same module explicitly, and focused regression coverage protects both boundaries. |
+| T-267 | Ran three independent Claude Code cold-takeover tasks with bounded tools: ledger reconstruction and the MPI audit passed, Claude added a correct cross-host MPI isolation regression, exact permissions denied one extra history query and two spelling-variant test attempts, and primary review plus the complete portable suite passed. Durable evaluation: `docs/audits/claude-live-takeover-2026-07-18.md`. |
