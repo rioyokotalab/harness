@@ -51,10 +51,10 @@ and compact historical pointers here. Next free ID: T-269.
 ## Next resume checkpoint
 
 Resume T-268 in `executing`; D1–D10 and SSH-sync S1–S10 are frozen, and the
-owner gave explicit `go` for the SSH expansion on 2026-07-19. Complete the
-generic public-engine publication described in the T-268 checkpoint below;
-live private seeding and machine mutation remain later sequential stages.
-Independently resume T-191 after the first
+generic SSH engine is published at `d5ebb33`. The next T-268 action is a
+separate owner-started private `office` seed plan; revalidate locally and
+obtain separate apply authority before publishing a private payload or changing
+the live Mac config. Independently resume T-191 after the first
 Sunday eligibility. Fetch and prove a clean fleet, then query only the seven
 captured IDs below through their declared native scheduler routes. Do not infer
 absence from a failed query, and do not cancel, replace, or duplicate a delayed
@@ -895,10 +895,28 @@ attempt reached the native MPI smoke and stopped only because this non-login
 process has no `mpicc`; no test mutation escaped its guarded fixture and the
 protected portable mode deliberately skips that undeclared toolchain. The
 normal validation clone and its audit files were removed through guarded
-cleanup and verified absent. Exact next action: fetch once more, push
-`agent/t268-ssh-sync-engine`, create the task PR, wait for protected Harness CI,
-merge only after the required check passes, and verify published `main`. No
-fleet sync or private/live SSH apply belongs to this publication stage.
+cleanup and verified absent.
+
+PR #40 passed protected Harness CI run `29660884552`, job `88123222816`, in
+1m50s and squash-merged as published `main` `d5ebb33` on 2026-07-19 JST. A
+guarded fleet plan then found all six remote managed checkouts clean at their
+common older ancestor `a7ff2df`; the direct verified-bundle apply
+fast-forwarded `ab`, `ab2`, `ri`, `al`, `rc`, and `t4` to `d5ebb33`, and every
+transfer artifact was absent afterward. This distributed only the public
+harness engine; it did not invoke either SSH-config command or mutate a live
+config. The shared `local` checkout was preserved because another session owns
+its active contributor branch; its `origin/main` is fetched at `d5ebb33`, but
+no branch switch or worktree rewrite was attempted. The temporary fleet clone
+was removed by guarded cleanup and verified absent.
+
+Exact next T-268 action: in a new owner-started session on `office`, fetch
+published `main`, read this ledger and `docs/ssh-config-sync.md`, confirm the
+private companion is clean/current, and run only `harness macos-ssh-sync
+--host LOGICAL_ID --seed --plan`. Keep its logical ID and all plan details
+private. Obtain separate authority before `--seed --apply`; after apply,
+deliberately exercise unchanged-only rollback and accepted reapply before
+planning another Mac. Do not start the `local`-to-`t4` command from the login
+node or combine it with the Mac stage.
 
 ## Stable operational facts
 
