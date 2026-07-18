@@ -50,7 +50,10 @@ protocol for either client. `tests/test-claude-takeover.sh` validates the
 instruction chain, settings example, all three skill-discovery surfaces,
 idempotent installation, and collision-before-mutation behavior. The main
 control-plane test independently proves Claude guidance and skill links are
-created and transactionally rolled back with the Codex links.
+created and transactionally rolled back with the Codex links. A live
+seven-environment preflight on 2026-07-18 confirmed Claude Code 2.1.207,
+canonical guidance, all 10 shared skills, and all 34 managed links on every
+node, with zero planned control-plane changes.
 
 ## Current deployed state
 
