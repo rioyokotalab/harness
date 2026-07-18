@@ -27,7 +27,6 @@ tool_codex=absent
 tool_claude=absent
 tool_rclone=absent
 tool_restic=absent
-tool_lftp=absent
 tool_tectonic=absent
 tool_shellcheck=absent
 tool_modulecmd=present

@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-263.
+and compact historical pointers here. Next free ID: T-264.
 
 ## Current state
 
@@ -64,6 +64,66 @@ blocked until T-191 reaches eight successful weekly chains, two verified
 restores per node, and a current verified independent generation.
 
 ## Active tasks
+
+### T-263 — Decouple the harness and website repositories
+
+**Phase/status:** `validating`. The owner gave explicit `go` on 2026-07-18.
+Fresh fetches reconfirmed exact `main` revisions `d80a036` (harness) and
+`daca468` (website), with only the recorded planning-ledger edits present.
+Website T-188 is the website-local resume point. The first action was the
+website-owned guarded-cleanup implementation, now complete; no account write,
+deployment, live tool removal, or publication has run.
+
+**Execution checkpoint:** website owns and has focused/full passing validation
+for guarded cleanup, CI, ruleset/audit evidence, public-history scanning, and
+the rootless pinned lftp bootstrap; its 38 browser tests also pass. Harness no
+longer declares, implements, inventories, tests, or documents the website-only
+lftp transaction and no longer owns the website ruleset/audit artifacts. The
+complete harness phase-one suite and both independence regressions pass. Next
+commit each implementation and run its full suite from an isolated clone with
+the peer checkout absent.
+
+**Outcome:** each repository can be cloned, tested, maintained, and governed
+without the other repository being present or fetched. Preserve safety
+properties, public-history provenance, current deployment behavior, and
+independent Git/CI/ruleset lifecycles.
+
+**Original dependency map:** website cleanup and offline CI invoked the harness
+guarded-delete engine, and CI fetched a pinned harness revision. Harness owned
+the website ruleset restore payload, website audit
+artifact/result prose, and the local-only `lftp` package transaction used for
+website deployment. There is no cross-repository submodule, worktree, or
+symlink. Historical task references are provenance, not operational
+dependencies.
+
+**Approved scope after explicit go:**
+
+1. Give website a repository-owned copy of the manifest/token guarded-delete
+   engine, focused safety regressions, and a local cleanup wrapper; remove
+   `HARNESS_BIN` and the harness fetch from website code and CI.
+2. Move current website ruleset restore data, validation, and website-specific
+   public-history audit evidence into website; leave harness responsible only
+   for its own payload, evidence, and generic scanner.
+3. Make `lftp` an explicit website prerequisite with a website-owned,
+   checksum-pinned rootless bootstrap for the current local Ubuntu target;
+   remove the website-only selection, artifact, special-case implementation,
+   tests, inventory fact, and prose from harness. Preserve the existing live
+   binary unless a later, separately scoped cleanup is requested.
+4. Add repository-local checks rejecting new operational cross-references,
+   while allowing plainly labeled immutable historical provenance. Update
+   current documentation and compact ledgers without rewriting Git history.
+5. Validate website from a clean clone with no harness checkout or harness path
+   available, and validate harness from a clean clone with no website checkout.
+   Run each complete local suite, then publish independent PRs, require each
+   repository's own CI, and merge website before removing the harness side.
+
+**Non-goals/boundaries:** do not deploy the site, mutate GitHub rulesets or
+other account settings, inspect credentials, rewrite history, remove the live
+user-local `lftp`, alter global owner configuration, or resume T-191/T-196/
+T-210. Rollback is an ordinary revert in the affected repository. Acceptance
+requires zero executable/configuration/CI dependence in either direction,
+local ownership of policy and audit artifacts, preserved guarded-cleanup
+failure behavior, and independently passing clean-clone validation.
 
 ### T-191 — Scheduler-native weekly primary snapshots
 

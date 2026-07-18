@@ -33,42 +33,22 @@ default token access and pin actions to a full commit SHA:
 The first complete hosted validation succeeded as
 [Harness CI run 29499772796](https://github.com/rioyokotalab/harness/actions/runs/29499772796).
 
-## Implemented website workflow
-
-The website's unrelated driver work completed before T-251 added and published
-`.github/workflows/ci.yml`. It uses the same read-only token, immutable checkout
-commit, `ubuntu-24.04`, no secrets, and no deployment. Its `Offline checks` job:
-
-1. Fetches the pinned public harness solely for its guarded-delete helper.
-2. Installs the pinned `lftp` package used by the local-mirror test.
-3. Validates task metrics, Markdown size, standards, security, and supply-chain
-   policy without live-site or online-policy checks.
-4. Runs `npm ci` from the committed lockfile and installs its locked Chromium
-   browser with Playwright.
-5. Runs the 38 local browser tests without a deployment request.
-
-Browser setup needs a version-selected download, so it is not an offline step;
-the checks after setup are credential-free and local. Do not use
-`pull_request_target`, upload repository contents as artifacts, restore a
-mutable dependency cache, or invoke `publish.sh`, `deploy.sh`, SSH, or lftp.
-
 ## Active merge controls
 
-Harness ruleset `19127355` and website ruleset `19127356` are active on
-`main`. Both require a pull request, conversation resolution, an up-to-date
-branch, linear history, and the repository's GitHub Actions check from
-integration `15368`. Force pushes and branch deletion are blocked, there is no
-bypass actor, and workflows retain read-only token permissions.
+Harness ruleset `19127355` is active on `main`. It requires a pull request,
+conversation resolution, an up-to-date branch, linear history, and this
+repository's GitHub Actions check from integration `15368`. Force pushes and
+branch deletion are blocked, there is no bypass actor, and the workflow retains
+read-only token permissions.
 
 The owner later chose zero required approvals so personal work does not depend
 on a second account. An author may therefore merge after the required CI check
 passes and conversations are resolved; a review remains optional. PR #4 and
 PR #5 in the harness repository exercised this zero-approval path successfully.
 
-The exact restore/update payloads are
-[`harness-main.json`](github-rulesets/harness-main.json) and
-[`website-main.json`](github-rulesets/website-main.json). They match the live
-zero-approval policy, use no bypass actor, and allow only squash or rebase
+The exact restore/update payload is
+[`harness-main.json`](github-rulesets/harness-main.json). It matches the live
+zero-approval policy, uses no bypass actor, and allows only squash or rebase
 merges. Relevant official documentation:
 
 - <https://docs.github.com/en/rest/repos/rules?apiVersion=2026-03-10>

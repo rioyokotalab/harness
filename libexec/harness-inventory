@@ -149,7 +149,7 @@ generate_facts() {
 
     for command_name in \
         sh bash git vim tmux rg jq tree rsync curl wget htop sqlite3 \
-        python3 uv node npm codex claude rclone restic lftp tectonic shellcheck \
+        python3 uv node npm codex claude rclone restic tectonic shellcheck \
         cc gcc g++ gfortran clang clang++ nvc nvc++ nvfortran \
         make cmake ninja meson pkg-config gdb lldb cuda-gdb valgrind \
         perf strace nsys ncu \

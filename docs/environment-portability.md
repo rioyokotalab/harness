@@ -101,8 +101,7 @@ The selected initial tool scope is:
 - development build floor: host compiler/CMake plus system-or-pinned Ninja;
 - Python: `uv` and managed Python 3.12;
 - agents and JavaScript: Node 24/npm, Codex CLI, and Claude Code;
-- documents and transfer: rclone and Tectonic; lftp is a local-only website
-  deployment dependency, not a portable fleet target.
+- documents and transfer: rclone and Tectonic;
 - shell validation: exact-version ShellCheck 0.11.0.
 
 For every entry, declare either a host-provided feature/version floor or a
@@ -351,10 +350,6 @@ Validate, per host:
   <https://github.com/koalaman/shellcheck/releases/tag/v0.11.0>
 - ShellCheck 0.11.0 GPLv3 license at the selected tag:
   <https://github.com/koalaman/shellcheck/blob/v0.11.0/LICENSE>
-- lftp project release history and license:
-  <https://lftp.yar.ru/>
-- Ubuntu Noble lftp 4.9.2 update package pinned by repository SHA-256:
-  <https://archive.ubuntu.com/ubuntu/pool/main/l/lftp/lftp_4.9.2-2ubuntu1.1_amd64.deb>
 - Node 24.16.0 release artifacts and signed checksums:
   <https://nodejs.org/download/release/v24.16.0/>
 - Environment Modules model and shell support:

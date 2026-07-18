@@ -11,7 +11,6 @@ import sys
 root = pathlib.Path(sys.argv[1])
 expected_contexts = {
     "harness-main.json": "portable-phase1",
-    "website-main.json": "Offline checks",
 }
 expected_types = [
     "deletion",

@@ -27,24 +27,9 @@ credential *paths* and intentionally documented operational filesystem paths.
 They do not contain credential values, but they do disclose deployment
 topology and should continue to be treated as public information.
 
-`website-public-history.json` covers website revision `a8717928`. It found no
-private-key header, known token shape, suspicious secret filename, or
-high-entropy credential. Its single credential-assignment candidate is in a
-historical, HEAD-absent `lightbox/js/jquery.js` blob. A value-free comparison
-found the candidate expression identical to the corresponding expression in
-the official [jQuery 1.2.3 distribution](https://code.jquery.com/jquery-1.2.3.min.js),
-so it is classified as vendor-code noise rather than a credential. The nine
-large blobs are public image/PDF assets. Operational paths remain an intentional
-privacy/topology exposure, not a credential finding.
-
-The website working tree had four unrelated ledger-only dirty entries during
-the scan. Those uncommitted contents were not inspected or modified. The report
-therefore attests to its recorded HEAD and reachable public history, not the
-concurrent local edits.
-
 ## Reproduction and interpretation
 
-Run each audit only to a new output path; the tool refuses overwrite:
+Run an audit only to a new output path; the tool refuses overwrite:
 
 ```sh
 python3 tools/public-repo-audit.py --repo /path/to/repo --name NAME \
