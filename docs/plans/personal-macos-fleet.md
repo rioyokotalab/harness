@@ -498,8 +498,8 @@ separately reviewed destructive action, not an automatic failure trap.
 | D10 | Private companion hosting | Use one private GitHub repository with clean fast-forward-only clones on each Mac | Another private Git host is viable but needs its own transport and recovery contract; local-only storage cannot synchronize four intermittent Macs | selected — owner-controlled private GitHub repository |
 | D11 | Shell/tmux synchronization population | Synchronize private personal configuration among the four Macs only | Including Linux/HPC nodes requires separate public portable fragments and must preserve every site's startup policy; whole-file cross-platform copying is excluded | selected — four personal Macs only |
 | D12 | Shell/tmux payload representation | Synchronize shared private Bash and tmux fragments behind thin managed loaders | Whole `.bashrc` replacement conflicts with the existing loader transaction and machine/site-local state; whole tmux replacement prevents safe local overrides | selected — thin local loaders plus private shared fragments |
-| D13 | Multi-payload convergence | Treat every adopted payload in one private revision as an atomic desired-state set | Independent per-file apply can leave a pulled revision only partly active; separate repositories multiply catch-up and conflict state | interviewing — ask next |
-| D14 | Activation of changed configuration | Make changes effective for new managed Bash shells and new tmux servers; keep current-process reload explicit and separate | Automatic sourcing/reload can execute changed commands in an active session and makes rollback incomplete | pending D13 |
+| D13 | Multi-payload convergence | Treat every adopted payload in one private revision as an atomic desired-state set | Independent per-file apply can leave a pulled revision only partly active; separate repositories multiply catch-up and conflict state | selected — SSH, Bash, and tmux validate and apply atomically |
+| D14 | Activation of changed configuration | Make changes effective for new managed Bash shells and new tmux servers; keep current-process reload explicit and separate | Automatic sourcing/reload can execute changed commands in an active session and makes rollback incomplete | interviewing — ask next |
 
 ## Proposed shell and tmux synchronization expansion
 
@@ -517,7 +517,10 @@ population and selected the same thin-loader pattern for Bash and tmux. The
 live `.bashrc` and `.tmux.conf` therefore remain local integration surfaces;
 they source private managed runtime fragments whose desired bytes converge
 through the companion. Linux/HPC startup and tmux configuration are outside
-this private payload contract.
+this private payload contract. The owner also selected atomic convergence:
+every adopted SSH, Bash, and tmux candidate in a private revision validates
+before mutation, and all live managed copies replace as one transaction or
+none do.
 
 After D11–D14 are selected, implementation should extend the strict private
 schema only for explicitly adopted payloads, preserve schema-v1 and SSH-only
