@@ -595,6 +595,20 @@ to the already fetched tracked remote head, followed by version and bounded
 read-only-plan validation. Do not use reset, rebase, update-reset, reinstall,
 cache deletion, package retry, or transaction cleanup.
 
+The owner authorized exactly that fast-forward-only engine repair after PR
+#32 passed required `portable-phase1` and published the diagnosis checkpoint as
+`dfd68f3`. `git -C /opt/homebrew merge --ff-only origin/master` advanced the
+clean engine from `d61f229fd2` to `2cd4aea237`; local `master` now exactly
+matches `origin/master`, and `brew --version` reports 6.0.11-96-g2cd4aea. The
+subsequent bounded read-only plan exits zero without the bottle-tab exception
+and retains the same remaining scope: five selected installs, three selected
+upgrades, 12 shared dependencies preserved, zero unmanaged selected-root
+dependents, and validated exact dry-runs. No formula, dependency, transaction,
+cache, ownership, service, cask, tap, or cleanup state changed during this
+repair and validation. Exact authority is now required for one package-apply
+retry against this unchanged remaining plan; the two failed transactions must
+remain retained and package rollback remains manual-review-only.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
