@@ -496,9 +496,9 @@ separately reviewed destructive action, not an automatic failure trap.
 | D8 | Private-state recovery | Use the owner's existing private backup after defining exact non-secret state; do not add backup automation now | New encrypted sync or backup automation is a separate project and authority boundary; putting live facts/transactions in Git increases exposure and churn | selected — private Git recovers intent; existing backup plus reconstruction covers local runtime state |
 | D9 | Shared CLI baseline | Keep a small public bootstrap/development baseline and select additional capability groups privately per Mac | Mirroring the entire Linux list adds unnecessary tools; making the whole baseline private weakens public testing and reproducibility | selected — eight-formula public baseline; extra capability groups are private opt-ins |
 | D10 | Private companion hosting | Use one private GitHub repository with clean fast-forward-only clones on each Mac | Another private Git host is viable but needs its own transport and recovery contract; local-only storage cannot synchronize four intermittent Macs | selected — owner-controlled private GitHub repository |
-| D11 | Shell/tmux synchronization population | Synchronize private personal configuration among the four Macs only | Including Linux/HPC nodes requires separate public portable fragments and must preserve every site's startup policy; whole-file cross-platform copying is excluded | interviewing — ask first |
-| D12 | Shell/tmux payload representation | Synchronize shared private Bash and tmux fragments behind thin managed loaders | Whole `.bashrc` replacement conflicts with the existing loader transaction and machine/site-local state; whole tmux replacement prevents safe local overrides | pending D11 |
-| D13 | Multi-payload convergence | Treat every adopted payload in one private revision as an atomic desired-state set | Independent per-file apply can leave a pulled revision only partly active; separate repositories multiply catch-up and conflict state | pending D12 |
+| D11 | Shell/tmux synchronization population | Synchronize private personal configuration among the four Macs only | Including Linux/HPC nodes requires separate public portable fragments and must preserve every site's startup policy; whole-file cross-platform copying is excluded | selected — four personal Macs only |
+| D12 | Shell/tmux payload representation | Synchronize shared private Bash and tmux fragments behind thin managed loaders | Whole `.bashrc` replacement conflicts with the existing loader transaction and machine/site-local state; whole tmux replacement prevents safe local overrides | selected — thin local loaders plus private shared fragments |
+| D13 | Multi-payload convergence | Treat every adopted payload in one private revision as an atomic desired-state set | Independent per-file apply can leave a pulled revision only partly active; separate repositories multiply catch-up and conflict state | interviewing — ask next |
 | D14 | Activation of changed configuration | Make changes effective for new managed Bash shells and new tmux servers; keep current-process reload explicit and separate | Automatic sourcing/reload can execute changed commands in an active session and makes rollback incomplete | pending D13 |
 
 ## Proposed shell and tmux synchronization expansion
@@ -511,6 +511,13 @@ replacement and reserves machine/site-specific startup behavior. The existing
 portability design also calls for tmux common configuration to be sourced with
 local overrides, but no tracked tmux fragment exists yet. No live or private
 configuration was inspected.
+
+The owner selected the four personal Macs as the complete private-sync
+population and selected the same thin-loader pattern for Bash and tmux. The
+live `.bashrc` and `.tmux.conf` therefore remain local integration surfaces;
+they source private managed runtime fragments whose desired bytes converge
+through the companion. Linux/HPC startup and tmux configuration are outside
+this private payload contract.
 
 After D11–D14 are selected, implementation should extend the strict private
 schema only for explicitly adopted payloads, preserve schema-v1 and SSH-only

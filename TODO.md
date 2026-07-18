@@ -54,8 +54,11 @@ Resume T-268 in `interviewing`. D1–D10 and the already published SSH-sync
 S1–S10 contract remain frozen, but before the first private `office` seed the
 owner requested that `.bashrc` and `tmux.conf` synchronization be designed
 through a fresh PIE decision cycle. No personal configuration has been read,
-copied, or changed for this expansion. Resolve D11–D14 one question at a time,
-freeze the amended plan, and wait for a fresh explicit `go` before implementing
+copied, or changed for this expansion. D11 and D12 are now selected: the target
+population is the four personal Macs, and synchronized Bash/tmux configuration
+uses thin local loaders plus private shared fragments rather than whole-file
+replacement. Resolve D13–D14 one question at a time, freeze the amended plan,
+and wait for a fresh explicit `go` before implementing
 the generic engine or running a private seed. Independently resume T-191 after
 the first Sunday eligibility. Fetch and prove a clean fleet, then query only the seven
 captured IDs below through their declared native scheduler routes. Do not infer
@@ -972,14 +975,15 @@ closes and the owner gives a fresh `go`, is:
    plans. Each private apply, rollback/reapply drill, and subsequent Mac rollout
    retains a separate live authority gate.
 
-Open decision register: D11 is target population (recommended: the four
-personal Macs only); D12 is whole files versus shared fragments (recommended:
-shared fragments behind thin loaders); D13 is independent payload revisions
-versus one atomic adopted-config set (recommended: atomic set); D14 is live
-activation behavior (recommended: new Bash shells and new tmux servers only,
-with manual reload separate). The next question is D11 only. The earlier
-`office` SSH seed is paused until D11–D14 are resolved and this ledger reaches
-`ready-for-go`.
+Owner clarification selected D11 as the four personal Macs only and D12 as the
+same thin-loader approach already used for managed Bash: `.bashrc` and
+`.tmux.conf` remain local integration surfaces and source synchronized private
+fragments. They are never replaced wholesale, and Linux/HPC configuration is
+not part of this private sync. D13 is independent payload revisions versus one
+atomic adopted-config set (recommended: atomic set); D14 is live activation
+behavior (recommended: new Bash shells and new tmux servers only, with manual
+reload separate). The next question is D13 only. The earlier `office` SSH seed
+is paused until D13–D14 are resolved and this ledger reaches `ready-for-go`.
 
 ## Stable operational facts
 
