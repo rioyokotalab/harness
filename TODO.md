@@ -54,10 +54,11 @@ Resume T-268 in `ready-for-go`. D1–D10 and the already published SSH-sync
 S1–S10 contract remain frozen, but before the first private `office` seed the
 owner requested that `.bashrc` and `tmux.conf` synchronization be designed
 through a fresh PIE decision cycle. No personal configuration has been read,
-copied, or changed for this expansion. D11 and D12 are now selected: the target
-population is the four personal Macs, synchronized Bash/tmux configuration
-uses thin local loaders plus private shared fragments rather than whole-file
-replacement, SSH/Bash/tmux converge as one atomic adopted-config set per
+copied, or changed for this expansion. D11 and corrected D12 are selected: the
+target population is the four personal Macs; Bash uses its existing thin local
+loader plus a private shared fragment, while the complete `~/.tmux.conf` is
+synchronized directly with no tmux loader or second runtime config.
+SSH/Bash/tmux converge as one atomic adopted-config set per
 private revision, and changes activate only in new managed Bash shells and new
 tmux servers unless the owner explicitly reloads an existing session. The
 amended plan is frozen; wait for a fresh explicit `go` before implementing
@@ -934,20 +935,20 @@ append a thin public loader while preserving all other bytes, metadata, and
 machine-local content. Second, the cross-platform policy already requires
 portable tmux configuration to use a sourced fragment with local overrides,
 and explicitly forbids replacing complete Linux/HPC `.bashrc` files because
-site startup and owner-only state must remain local. No tracked tmux fragment
-has yet been implemented. Discovery inspected only public repository policy
-and code; it did not inspect a live `.bashrc`, `.tmux.conf`, private companion,
-or configuration value.
+site startup and owner-only state must remain local. No tracked tmux
+configuration has yet been implemented. Discovery inspected only public
+repository policy and code; it did not inspect a live `.bashrc`, `.tmux.conf`,
+private companion, or configuration value.
 
 The provisional execution plan, which is not authorized until the interview
 closes and the owner gives a fresh `go`, is:
 
 1. Freeze the target population (personal Macs only, or Macs plus managed
    Linux/HPC nodes) without weakening the existing site-local Bash contract.
-2. Freeze representation per payload: recommended private shared Bash and
-   tmux fragments behind thin managed loaders, rather than replacing opaque
-   whole startup files. Define whether machine-local override files exist and
-   ensure they are never copied or inferred.
+2. Freeze representation per payload. Bash keeps its existing thin managed
+   loader and synchronizes a private shared fragment without replacing
+   `.bashrc`. Tmux synchronizes the complete `~/.tmux.conf` directly; it has no
+   loader, second runtime config, or machine-local override file.
 3. Freeze convergence granularity: recommended one atomic adopted-config set
    per private revision, with fail-closed three-way/equal-writer handling for
    each payload and no partial live apply. Preserve SSH's published behavior
@@ -957,11 +958,12 @@ closes and the owner gives a fresh `go`, is:
    files, and observed inventories excluded; never print private bytes, paths,
    hashes, revisions, or diffs in public output or evidence.
 5. Reconcile existing ownership transactionally. The managed `.bashrc` loader
-   remains the sole writer to `.bashrc`; synchronized desired bytes are copied
-   to private mode-0600 managed runtime files only after validation. A tmux
-   loader must collision-check and preserve any prior file with exact rollback.
-   Applying configuration does not automatically re-execute the current shell
-   or reload a running tmux server unless that is separately selected.
+   remains the sole writer to `.bashrc`; synchronized Bash bytes are copied to
+   a private mode-0600 managed runtime fragment only after validation. The
+   complete tmux payload replaces only `~/.tmux.conf` atomically after strict
+   collision/metadata checks and preserves its prior image for exact unchanged-
+   only rollback. Applying configuration does not automatically re-execute the
+   current shell or reload a running tmux server.
 6. Add non-executing Bash syntax validation and select a tmux validation route
    that cannot silently execute plugin, shell, network, or include behavior.
    Gate the shared tmux syntax against the oldest declared supported tmux floor
@@ -977,11 +979,12 @@ closes and the owner gives a fresh `go`, is:
    plans. Each private apply, rollback/reapply drill, and subsequent Mac rollout
    retains a separate live authority gate.
 
-Owner clarification selected D11 as the four personal Macs only and D12 as the
-same thin-loader approach already used for managed Bash: `.bashrc` and
-`.tmux.conf` remain local integration surfaces and source synchronized private
-fragments. They are never replaced wholesale, and Linux/HPC configuration is
-not part of this private sync. The owner selected D13 as one atomic
+Owner clarification selected D11 as the four personal Macs only. D12 was first
+recorded as thin loaders for both payloads, then explicitly corrected: Bash
+keeps the existing thin `.bashrc` loader and private shared fragment, while the
+complete `~/.tmux.conf` is synchronized directly with no tmux loader or second
+runtime configuration. Linux/HPC configuration is not part of this private
+sync. The owner selected D13 as one atomic
 adopted-config set per private revision: SSH, Bash, and tmux candidates all
 validate before any live replacement, and any invalid or divergent payload
 blocks the complete apply rather than leaving partial desired state. The owner
@@ -991,10 +994,11 @@ server is a separate explicit manual action and never part of catch-up apply.
 
 **Amended decision audit:** D11–D14 are resolved and internally consistent with
 D1–D10 and SSH S1–S10. The frozen design is four-Mac-only pull synchronization,
-thin local `.bashrc`/`.tmux.conf` loaders, private managed Bash/tmux fragments,
-one atomic SSH/Bash/tmux desired-state set per private revision, fail-closed
-validation/application, exact unchanged-only rollback, and no automatic active-
-session reload. A fresh `go` authorizes implementation, synthetic validation,
+the existing thin `.bashrc` loader plus private Bash fragment, direct complete
+`~/.tmux.conf` synchronization with no second runtime config, one atomic
+SSH/Bash/tmux desired-state set per private revision, fail-closed validation/
+application, exact unchanged-only rollback, and no automatic active-session
+reload. A fresh `go` authorizes implementation, synthetic validation,
 protected publication, and required clean managed-checkout synchronization of
 generic public code. It does not authorize reading or publishing private
 configuration, running the `office` seed, mutating a live Mac, reloading active
