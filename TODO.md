@@ -609,6 +609,31 @@ repair and validation. Exact authority is now required for one package-apply
 retry against this unchanged remaining plan; the two failed transactions must
 remain retained and package rollback remains manual-review-only.
 
+The owner authorized that one bounded retry. A fresh fetched-main preflight
+and native plan matched the frozen scope exactly. Transaction
+`20260718T133449Z-27726` completed with five selected installs and three
+selected upgrades; the adapter retained its 12-dependency closure and reported
+no unmanaged selected-root dependents. The immediate convergence plan exits
+zero with zero installs, zero upgrades, and zero unmanaged dependents. The
+macOS-specific doctor passes all required architecture, Homebrew, Command Line
+Tools, private-profile, checkout, discovery-link, Bash-link/startup, and public
+and private formula gates with zero failures or warnings. An attempted generic
+`harness doctor --host office` was a non-mutating wrong-family CLI invocation
+and rejected the private logical profile; `harness macos-doctor --host office`
+is the applicable route and passed. The two earlier failed transactions remain
+retained, no cleanup or automatic rollback ran, and package rollback remains
+manual-review-only. Stage 14 is complete. Exact next action: separately review
+and authorize stage 15's disposable long-gap acceptance drill; do not begin
+sequential rollout.
+
+Checkpoint validation: `git diff --check` passes. Direct native execution of
+`tests/test-personal-macos-homebrew.sh` stops in its Linux-oriented fake BSD
+`stat` shim because that shim delegates to unsupported macOS `/usr/bin/stat
+-c`; cleanup then reports unsupported `realpath -e`. This occurred in the
+synthetic temporary fixture after live convergence and changed no managed
+state. The required protected Linux `portable-phase1` run remains
+authoritative and must pass before merge.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
