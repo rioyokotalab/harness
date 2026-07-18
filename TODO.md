@@ -675,6 +675,183 @@ revalidate that Mac independently, and obtain separate authority for its
 update/migration plan before any apply. Do not batch Macs or infer their state
 from the pilot.
 
+The owner introduced a new SSH-configuration synchronization requirement
+before continuing rollout. All personal Macs are equal writers: `office` is
+not canonical, a complete `~/.ssh/config` change made on any Mac must be
+propagated to the others, and “mirror” means exact whole-file replacement
+rather than a managed include. Separately, the `local` Linux node's complete
+`~/.ssh/config` must mirror one-way to `t4`; `ab`, `ab2`, `ri`, `al`, and `rc`
+must remain unchanged. Keys, agent state, `known_hosts`, and other `~/.ssh`
+contents are out of scope. This conflicts with the current personal-Mac design
+and private companion contract, both of which prohibit copied SSH
+configuration, and with the existing `harness dotfiles` include-only adapter.
+T-268 is therefore back in `interviewing` for this explicit scope expansion.
+No SSH config has been read, copied, published, or changed. Next decision:
+freeze multi-writer conflict handling and the private transport/source-of-truth
+model before inspecting config contents or designing apply/rollback.
+
+**SSH-sync decision S1:** selected fail-closed multi-writer Git semantics. Each
+Mac may originate a complete config revision, but a push/pull that is not a
+clean fast-forward stops and requires an explicit private merge. No timestamp,
+machine priority, automatic conflict resolution, or last-writer-wins overwrite
+may discard another Mac's revision. Exact prior revisions provide recovery.
+Next decision: choose an isolated private repository or deliberately expand the
+existing `harness-mac` companion contract to store the copied SSH config.
+
+**SSH-sync decision S2:** selected deliberate expansion of the private
+`harness-mac` companion rather than a second repository. Its strict tracked
+layout may add one complete shared Mac SSH config, while public Git and public
+logs retain only value-free validation results. The config remains separate
+from runtime facts/transactions and must never contain private-key contents,
+tokens, passwords, agent state, `known_hosts`, or other credential material.
+Apply must validate a regular mode-0600 destination and SSH syntax, retain an
+exact private rollback image, and atomically replace only `~/.ssh/config`.
+Next decision: choose explicit owner-invoked synchronization or background
+propagation timing.
+
+**SSH-sync decision S3:** selected automatic background synchronization via a
+per-user macOS `launchd` agent, explicitly superseding D6 only for this one SSH
+config workflow. Package, repository-engine, migration, shell, and other apply
+actions remain manual. The agent must validate syntax and identity before
+publishing or replacing, use normal non-force Git operations, stop on
+divergence or unrelated private-checkout dirt, and leave the last valid local
+config untouched on authentication, network, validation, or merge failure.
+It may never prompt, access key contents, or emit config values to logs.
+Next decision: freeze event/interval scheduling for local edits and remote
+updates.
+
+**SSH-sync decision S4:** selected a `launchd` `WatchPaths` trigger on the Mac
+SSH config plus a five-minute `StartInterval` remote poll. One owner-local lock
+serializes triggers; content/revision comparison makes self-triggered atomic
+replacement a no-op. A local validated change is committed and pushed when the
+private checkout is clean and current; remote fast-forwards are validated and
+atomically applied. Divergence remains a visible stopped state requiring an
+explicit merge. Next decision: choose propagation timing for the independent
+one-way `local` Linux to `t4` mirror.
+
+**SSH-sync decision S5:** selected automatic propagation for the independent
+one-way `local` Linux to `t4` mirror. `local` is the sole source and `t4` is
+destination-only; no `t4` edit is copied back, and `ab`, `ab2`, `ri`, `al`, and
+`rc` remain excluded. The job must use non-interactive `BatchMode=yes` through
+the owner's existing agent, fail without prompting when authentication or
+connectivity is unavailable, validate source and staged destination syntax,
+retain a mode-0600 exact prior image on `t4`, and atomically replace only
+`~/.ssh/config`. It may not enumerate or copy keys, agent state, `known_hosts`,
+or other SSH files. Next decision: freeze the Linux timer cadence and trigger
+model.
+
+**SSH-sync decision S6:** selected a five-minute persistent per-user systemd
+timer on `local`. Each activation validates the source, compares a cryptographic
+content identity, and contacts `t4` only for a changed valid revision;
+`Persistent=true` catches up after downtime. Activations serialize and use
+bounded non-interactive SSH timeouts. Next action: perform value-minimized
+read-only source/destination discovery, then settle rollback retention and
+operator-visible failure reporting.
+
+Read-only discovery on the current Mac found one regular parseable SSH config:
+mode 0644, five `Host` blocks, zero `Match` and `Include` directives, zero
+`IdentityFile` references, and two forwarding directives. No values or bytes
+were emitted or copied. Managed Mac destinations will normalize the exact file
+to mode 0600 on first authorized apply. This Mac has an explicit `t4` SSH route
+but no explicit logical `local` route, so Linux-source discovery and timer
+installation must occur in an owner-started session on `local` or through a
+separately approved route; no endpoint will be guessed.
+
+**SSH-sync decision S7:** selected one mode-0600 prior rollback image on `t4`.
+It is replaced only after a newly staged source passes identity and SSH syntax
+validation, immediately before atomic destination replacement. Mac rollback
+uses complete private Git history rather than extra config archives. Next
+decision: freeze value-free failure visibility and notification behavior.
+
+**SSH-sync decision S8:** selected value-free local status files, bounded local
+logs, and `harness doctor` reporting, with native `launchd`/systemd status as
+the operator surface. No desktop notification, email, Slack, or other external
+message is added. Public output reports only current/diverged/invalid/offline/
+auth-failed classes and revision/hash agreement, never config values,
+endpoints, usernames, private paths, or raw Git/SSH diagnostics. Next decision:
+freeze unattended private-Git authentication boundaries for the Mac agent.
+
+**SSH-sync decision S9:** selected reuse of each Mac's existing private-repo
+authentication only, exercised with non-interactive Git/SSH behavior. Harness
+will not install, copy, inspect, select, or reconfigure keys, tokens, helpers,
+Keychain entries, agents, or remote URLs. An unavailable credential records
+only `auth-failed` locally and leaves the live config and private checkout
+unchanged. The Linux timer follows the same existing-agent/BatchMode boundary.
+Next decision: freeze rollout order—validate the generic implementation and
+private schema on `office` first, then require an independent owner-started
+session for each other Mac and finally a separate `local` session for the
+one-way `t4` timer.
+
+The owner then revised the propagation model: SSH-config synchronization must
+be part of the original explicit owner-started pull/catch-up workflow. This
+supersedes S3–S6 scheduling only. No `launchd` agent, WatchPaths trigger,
+background poll, systemd timer, or persistent unattended catch-up will be
+created. S1 exact fail-closed multi-writer Git conflict handling, S2 storage in
+the private `harness-mac` companion, S7 one prior `t4` rollback image, S8
+value-free status/logging, and S9 no credential management remain selected.
+For Macs, an owner-started catch-up must first reconcile/publish any valid
+local config edit or stop on divergence, then fast-forward the private repo,
+validate the selected complete config, and atomically apply it as mode 0600.
+Next decision: clarify whether the one-way `local` to `t4` mirror belongs in
+the same explicit user-run command family or remains a separate explicit
+Linux command, since Mac-local pull cannot safely originate the Linux source.
+
+**SSH-sync decision S10:** selected a separate explicit owner-run Linux command
+executed on `local` for the one-way `t4` mirror. It is not part of a Mac command
+or a broad fleet action, and it cannot target any other Linux host.
+
+**Frozen SSH-sync execution plan:** T-268 remains `ready-for-go`; no config
+mutation or private publication is authorized until the owner gives a new
+explicit go for this frozen expansion.
+
+1. Extend the public private-companion schema contract to allow exactly one
+   repository-root shared Mac SSH-config payload with strict regular-file,
+   owner, tracked-layout, size, and no-symlink/hard-link gates. Keep its bytes
+   private and update privacy-negative fixtures so public output never exposes
+   directives, endpoints, usernames, paths, or hashes. Existing host manifests
+   remain curated intent and runtime state remains prohibited.
+2. Add a Mac SSH-sync adapter integrated into the explicit Mac catch-up route.
+   It records a private last-applied revision/content identity. A valid local
+   edit against the recorded base becomes the candidate private revision only
+   after fetch proves the private checkout current and clean; it commits and
+   pushes normally. A simultaneous remote advance plus local edit stops as
+   diverged with both versions preserved for explicit private Git merge. A
+   remote-only fast-forward is syntax-validated and atomically replaces only
+   `~/.ssh/config` at mode 0600. First adoption requires the reviewed current
+   config to seed the private payload; no Mac has permanent writer priority.
+3. Store private mode-0600 Mac transaction/status evidence sufficient for
+   exact rollback to the prior file while unchanged. Validate destination
+   parent/type/owner, reject symlinks and hard links, preserve unrelated
+   `~/.ssh` contents, and never inspect/copy keys, `known_hosts`, agents, or
+   credentials. No automatic package, shell, Git-engine update, or background
+   action is implied by config sync.
+4. Add a separate Linux adapter callable only as an explicit command on the
+   declared `local` profile with destination fixed to `t4`. It validates the
+   regular source and SSH grammar locally, requires a current-user-owned agent
+   socket and `BatchMode=yes`, stages bytes remotely as mode 0600, validates
+   staged grammar on `t4`, preserves exactly one prior mode-0600 image, and
+   atomically replaces only `t4:~/.ssh/config` when content differs. It must
+   refuse execution on any other source or destination and never pull `t4`
+   changes back.
+5. Add synthetic tests for first seed, remote-only pull, local-only publish,
+   equal no-op, concurrent divergence, invalid syntax, unsafe types/modes,
+   injected fetch/push/atomic-replace failures, exact rollback, privacy leaks,
+   fixed `local`/`t4` scope, and explicit exclusion of `ab`, `ab2`, `ri`, `al`,
+   and `rc`. Run focused suites, `tests/test-phase1.sh`, ShellCheck, diff check,
+   and protected `portable-phase1` before pilot mutation.
+6. Roll out sequentially: first publish the generic engine/schema; then review
+   and seed the current `office` payload privately, run plan/apply/doctor and
+   deliberate rollback/reapply; then repeat from an owner-started local session
+   on each other Mac. Finally resume from an owner-started `local` Linux session
+   for read-only source/`t4` discovery, exact plan, separate apply authority,
+   destination validation, deliberate rollback, and accepted reapply.
+
+Stop conditions are config divergence, invalid grammar, unsafe identity/type,
+dirty unrelated private state, non-fast-forward Git, unavailable authentication,
+unexpected endpoint/scope, changed rollback target, or any output that could
+expose private values. Recovery never force-pushes, guesses a winner, copies a
+credential, rewrites another Linux node, or falls back to raw deletion.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
