@@ -2,7 +2,9 @@
 
 This repository versions the portable, non-sensitive part of the personal
 agent setup. It lives at `~/harness` instead of turning either client runtime
-directory into a Git repository.
+directory into a Git repository. It is self-contained: it neither imports from
+nor requires a sibling `website` checkout for installation, CI, cleanup, or
+operation.
 
 ## Tracked
 
@@ -13,8 +15,8 @@ directory into a Git repository.
 - `.claude/settings.example.json`: non-secret Claude settings template.
 - `shared/skills/`: reusable workflows exposed to both clients.
 - `install.sh`: idempotent, fail-closed discovery symlink installer.
-- `bin/harness` and `libexec/`: value-free inventory, planning, health checks,
-  and guarded bulk deletion for the portable environment.
+- `bin/harness` and `libexec/`: value-free observation, guarded transactional
+  control-plane operations, backup workflows, and bounded deletion safety.
 - `profiles/`: selected tool policy and logical host capabilities.
 - `profiles/restic-repositories.tsv`, `profiles/restic-schedules.tsv`, and
   `docs/home-backup.md`: non-secret seven-node encrypted-backup topology,
@@ -26,11 +28,42 @@ directory into a Git repository.
 The installer exposes the same global guidance as `~/.codex/AGENTS.md` and
 `~/.claude/CLAUDE.md`. It links every shared skill into
 `~/.codex/skills/`, `~/.agents/skills/`, and `~/.claude/skills/`. It also links
-the read-only `harness` command into `~/.local/bin/`.
+the `harness` command into `~/.local/bin/`; read-only and mutating subcommands
+remain explicitly separated and mutating commands default to plan mode.
+
+## Current deployed state
+
+The managed fleet comprises `local`, `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`.
+Each environment has a clean harness checkout synchronized to published
+`main`. The `abci_login` and `alps_login` aliases are transport-only, and the
+retired `si` environment is not a target. Exact host capabilities and native
+scheduler differences remain declared in `profiles/` rather than hidden behind
+a normalized remote wrapper.
+
+All seven hidden-home Restic primaries and all seven independent encrypted
+generations have passed full-data checks and verified restores. Exactly one
+scheduler-native weekly primary job is seeded on each environment; first-run
+snapshot and successor verification remains active work in [TODO.md](TODO.md).
+Keep-all retention is still in force: there is no scheduled `forget`, `prune`,
+replica, full-data check, login-node cron job, or user timer. The reviewed
+topology and operating gates are in [docs/home-backup.md](docs/home-backup.md).
+
+Fresh interactive Bash shells load the deployed accidental-use safeguards for
+high-blast-radius filesystem and scheduler commands. The current Ubuntu node
+uses one packaged systemd user SSH agent with tmux-aware socket recovery as
+documented in [docs/ssh-agent.md](docs/ssh-agent.md). Login and shell exit run
+no automatic Git fetch, commit, or push hooks.
+
+This public repository uses a protected `main` branch with required CI, linear
+history, conversation resolution, and force-push/deletion protection. Required
+review approvals are intentionally zero; a passing required check is still
+mandatory. Current work, blockers, and exact resume commands live only in
+[TODO.md](TODO.md), while completed command-level evidence remains in Git
+history.
 
 ## Environment observation and planning
 
-Phase 1 provides three dependency-free commands:
+Phase 1 provides four dependency-free observation commands:
 
 ```bash
 harness inventory --host local
