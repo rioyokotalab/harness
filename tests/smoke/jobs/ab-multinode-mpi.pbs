@@ -1,5 +1,6 @@
 #!/bin/bash
 #PBS -N t251mab
+#PBS -m n
 #PBS -q rt_HF
 #PBS -l select=2:mpiprocs=1
 #PBS -l walltime=00:05:00

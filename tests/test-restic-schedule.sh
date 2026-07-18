@@ -118,14 +118,21 @@ case "$command_name" in
         ;;
     qsub)
         name=
+        mail_points=
         previous=
         for argument in "$@"; do
             if [ "$previous" = -N ]; then name=$argument; fi
+            if [ "$previous" = -m ]; then mail_points=$argument; fi
             previous=$argument
         done
         [ -n "$name" ] || exit 2
         id=$(next_id)
-        if [ "$FAKE_FAMILY" = pbs ]; then full_id=$id.server; else full_id=$id; fi
+        if [ "$FAKE_FAMILY" = pbs ]; then
+            [ "$mail_points" = n ] || exit 2
+            full_id=$id.server
+        else
+            full_id=$id
+        fi
         add_job "$full_id" "$name"
         if [ "$FAKE_FAMILY" = pbs ]; then
             printf '%s\n' "$full_id"
@@ -220,6 +227,9 @@ for declaration in 'local ybatch' 'ri slurm' 'ab pbs' 't4 age'; do
             fail "RI native account request"
         grep -- '--gres=none' "$TEST_ROOT/$host.seed" >/dev/null ||
             fail "Slurm explicit no-GRES request"
+    elif [ "$host" = ab ]; then
+        grep -F 'NATIVE ab: qsub -m n ' "$TEST_ROOT/$host.seed" >/dev/null ||
+            fail "PBS no-mail default"
     fi
     [ "$(wc -l <"$fake_sched/jobs" | tr -d ' ')" -eq 1 ] || fail "$host singleton"
     run_schedule "$host" "$family" "$home" status >"$TEST_ROOT/$host.status" ||

@@ -11,6 +11,9 @@ for host in local ab ab2 ri al rc t4; do
     [ "$(awk -F '\t' -v host="$host" '$1 == host {count++} END {print count+0}' "$ROUTES")" -eq 1 ]
     grep -F "HARNESS_LOGICAL_HOST=$host" "$ROOT/tests/smoke/jobs/$host-pytorch."* >/dev/null
 done
+for host in ab ab2; do
+    [ "$(grep -Fxc '#PBS -m n' "$ROOT/tests/smoke/jobs/$host-pytorch.pbs")" -eq 1 ]
+done
 grep -F 'PIP_NO_INDEX=1' "$JOB" >/dev/null
 grep -F -- '--require-hashes' "$JOB" >/dev/null
 grep -F 'torch.cuda.device_count() == 1' "$JOB" >/dev/null

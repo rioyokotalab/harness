@@ -411,10 +411,10 @@ scheduler_submit() {
             submitted=$(printf '%s\n' "$output" | sed -n 's/^\([0-9][0-9]*\)\(;.*\)\{0,1\}$/\1/p')
             ;;
         pbs)
-            printf 'NATIVE %s: qsub -P %s -q %s -l %s -l walltime=%s -a %s -N %s -o /dev/null -e /dev/null %s\n' \
+            printf 'NATIVE %s: qsub -m n -P %s -q %s -l %s -l walltime=%s -a %s -N %s -o /dev/null -e /dev/null %s\n' \
                 "$logical_host" "$account" "$partition" "$resource" "$walltime" \
                 "$QSUB_TIME" "$JOB_NAME" "$JOB_SCRIPT" >&2
-            output=$(qsub -P "$account" -q "$partition" -l "$resource" \
+            output=$(qsub -m n -P "$account" -q "$partition" -l "$resource" \
                 -l "walltime=$walltime" -a "$QSUB_TIME" -N "$JOB_NAME" \
                 -o /dev/null -e /dev/null "$JOB_SCRIPT") || die "native PBS submission failed"
             submitted=$(printf '%s\n' "$output" | sed -n 's/^\([A-Za-z0-9._-][A-Za-z0-9._-]*\)$/\1/p')

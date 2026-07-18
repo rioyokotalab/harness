@@ -46,6 +46,9 @@ do
     grep -Fx "$second" "$file" >/dev/null
     grep -F 'export HARNESS_READINESS_RUN_TAG=v1' "$file" >/dev/null
 done
+for file in "$AB_JOB" "$AB2_JOB"; do
+    [ "$(grep -Fxc '#PBS -m n' "$file")" -eq 1 ]
+done
 if grep -F 'SLURM_TMPDIR' "$JOB" >/dev/null; then
     printf '%s\n' 'FAIL: multi-node executable returned to node-local scratch' >&2
     exit 1

@@ -83,6 +83,11 @@ scope exclusions are mandatory; they are not project or training authority.
 
 - Use PBS Pro `qsub`, `qstat`, and `qdel`; `nodestatus` is available for site
   discovery.
+- Suppress PBS lifecycle email by default for every agent-run job. Put
+  `#PBS -m n` in an agent-generated script, or add `-m n` to the printed native
+  `qsub` command when submitting a script without that directive. Override
+  this default only when the owner explicitly requests notifications for that
+  job. This is PBS-specific; never carry it to T4's AGE `qsub` by inference.
 - Every compute request needs an explicit billing group and resource request.
   Ask the owner for both or use an already-reviewed project script. Do not
   submit even a one-minute smoke with guessed values.
