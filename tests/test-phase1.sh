@@ -59,6 +59,7 @@ for script in \
     "$ROOT/tests/guarded-test-cleanup.sh" \
     "$ROOT/tests/test-github-rulesets.sh" \
     "$ROOT/tests/test-remote-session.sh" \
+    "$ROOT/tests/test-safety-guards.sh" \
     "$ROOT/tests/test-ssh-agent-profile.sh" \
     "$ROOT/tests/smoke/debugger-readiness.sh" \
     "$ROOT/tests/smoke/locked-venv-readiness.sh" \
@@ -86,6 +87,8 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "SSH agent profile focused suite"
 "$ROOT/tests/test-remote-session.sh" >/dev/null ||
     fail "remote-session focused suite"
+"$ROOT/tests/test-safety-guards.sh" >/dev/null ||
+    fail "interactive safety-guard focused suite"
 "$ROOT/tests/test-github-rulesets.sh" >/dev/null ||
     fail "GitHub ruleset payload focused suite"
 
@@ -176,6 +179,7 @@ for script in "$ROOT"/shell/cache.sh "$ROOT"/shell/common-aliases.sh \
     sh -n "$script" || fail "shell configuration syntax: $script"
 done
 for script in "$ROOT"/shell/interactive.sh "$ROOT"/shell/remote-session.sh \
+    "$ROOT"/shell/safety-guards.sh \
     "$ROOT"/shell/hosts/*.sh; do
     bash -n "$script" || fail "Bash configuration syntax: $script"
 done

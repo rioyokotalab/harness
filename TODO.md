@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-261.
+and compact historical pointers here. Next free ID: T-262.
 
 ## Current state
 
@@ -45,6 +45,86 @@ and compact historical pointers here. Next free ID: T-261.
   candidate table and audit evidence in the pre-compaction TODO history.
 
 ## Active tasks
+
+### T-261 — Add low-friction interactive destructive-command safeguards
+
+**Phase/status:** `executing`; the owner gave explicit `go`. The owner wants protections
+against commands such as `rm -rf` without adding routine prompts or changing
+batch jobs. No live shell behavior, scheduler state, filesystem target, Git
+state outside this planning branch, or external service has been changed.
+
+**Desired outcome:** ordinary interactive commands retain their native
+arguments, output, exit status, and speed, while unusually high-blast-radius
+forms fail closed before invoking the native command. Safeguards are sourced
+only into interactive Bash, are never exported to child or batch shells, and
+retain `command NAME ...` as the visible expert bypass. The first recommended
+bundle covers recursive `rm` against `/`, an account home, or declared
+persistent roots; `rsync` deletion modes; `find -delete`; broad scheduler
+cancellation; and recursive `chmod`/`chown` against protected roots. Exact,
+ordinary file removal, synchronization without deletion, read-only `find`,
+single-job cancellation, and safe subtree permission changes remain unchanged.
+
+**Non-goals:** do not alias destructive commands to `-i`, enable a trash can,
+install a DEBUG trap, scan or record command lines, modify non-interactive
+scripts, silently reinterpret user arguments, or claim that an interactive
+guard replaces the existing manifest-backed `harness guarded-delete` workflow.
+Do not add `noclobber`, `failglob`, or Git command interception in the default
+bundle unless the owner separately chooses their real compatibility cost.
+
+**Proposed design:** put the policy in one tracked, portable shell fragment
+loaded by `shell/interactive.sh`. Thin Bash functions perform a cheap flag and
+arity classification. Normal forms immediately call the native command. Risky
+forms call a deterministic helper that rejects protected lexical/canonical
+roots and broad selectors; legitimate recursive deletion is redirected to
+`harness guarded-delete`. Refusals name the risk and the explicit safe route,
+without confirmation prompts. Tests use fake native commands and disposable
+fixtures only; no test executes a real destructive operation.
+
+**Execution/validation plan after explicit go:** freeze the exact command and
+flag matrix; implement the fragment/helper and focused fake-command regression;
+prove interactive-only loading, no exported functions, native pass-through,
+protected-root rejection, expert bypass visibility, and fail-closed malformed
+input; run Bash/sh syntax, warning-level ShellCheck, focused startup tests, the
+complete portable suite, diff checks, and public audit; publish through the
+protected pull-request path; then use guarded fleet synchronization and fresh
+shell probes on local, AB, AB2, RI, AL, RC, and T4. Stop on semantic drift,
+latency in ordinary forms, dirty checkouts, or any node-specific incompatibility.
+
+**Implementation checkpoint:** `shell/safety-guards.sh` now provides
+interactive-only, shell-local wrappers for the frozen command matrix. Normal
+forms immediately invoke the native command with the original argument vector;
+only recursive/path-sensitive forms invoke path helpers. Protected roots include
+`/`, lexical and canonical account homes, the declared persistent root, and—for
+recursive removal—the current directory. Eight or more expanded immediate
+children of one protected root are treated as a likely broad glob. Final
+symlinks remain removable without following their referent. PBS and Slurm
+wrappers allow one exact scalar/array job ID plus reviewed action options, while
+rejecting multi-job and user/name/account/partition/state-style selectors.
+
+The focused fake-native regression proves native pass-through, deliberate
+`command` bypass, protected-root and broad-glob refusal, rsync/find/permission
+guards, exact scheduler cancellation, broad-selector refusal, integration
+through the interactive profile, and absence from child/non-interactive shells.
+Bash/sh syntax, warning-level ShellCheck, remote-session/startup regression,
+diff checks, and the complete `HARNESS_PORTABLE_CI=1` phase-1 suite pass. A
+fresh local read-only pilot reports all selected commands as shell-local
+functions and native commands in a non-interactive child. Publication, hosted
+CI, and one-node-at-a-time fleet rollout remain pending.
+
+**Recovery:** revert the tracked change and synchronize that exact revision.
+Already-running shells may retain function definitions until a fresh shell or
+explicit `unset -f` removes them; non-interactive jobs are unaffected throughout.
+
+**Decision register:** D1 is resolved as the recommended core bundle:
+filesystem safeguards plus broad scheduler-cancellation protection. The
+filesystem-only option would leave an equally high-blast-radius interactive
+surface uncovered, while the stricter option would introduce compatibility
+cost through Git interception or changed overwrite/glob semantics. The owner
+accepted silent native pass-through for ordinary forms, explicit refusal for
+the frozen risky forms, `command NAME ...` as the visible expert bypass, local
+pilot before one-node-at-a-time fleet rollout, and no change to non-interactive
+jobs. The plan is frozen and awaits a separate explicit `go` before target
+implementation begins.
 
 ### T-260 — Disable PBS job email by default on ABCI
 
