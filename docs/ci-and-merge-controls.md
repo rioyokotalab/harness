@@ -52,36 +52,31 @@ the checks after setup are credential-free and local. Do not use
 `pull_request_target`, upload repository contents as artifacts, restore a
 mutable dependency cache, or invoke `publish.sh`, `deploy.sh`, SSH, or lftp.
 
-## Frozen merge controls
+## Active merge controls
 
-No GitHub setting was changed as of the 2026-07-17 preflight. After
-`portable-phase1` and `Offline checks` succeeded from GitHub Actions integration
-`15368`, the owner identified `rioyokota2` as the reviewer for PRs authored by
-`rioyokota`. Configure each repository's `main` branch with:
+Harness ruleset `19127355` and website ruleset `19127356` are active on
+`main`. Both require a pull request, conversation resolution, an up-to-date
+branch, linear history, and the repository's GitHub Actions check from
+integration `15368`. Force pushes and branch deletion are blocked, there is no
+bypass actor, and workflows retain read-only token permissions.
 
-- pull requests required, one non-author approval, stale approvals dismissed,
-  and conversation resolution required;
-- required status check `portable-phase1` from GitHub Actions, with the branch
-  required to be up to date;
-- force pushes and branch deletion disabled, linear history required, and
-  administrator bypass disabled;
-- no required deployment and no write-capable workflow token.
+The owner later chose zero required approvals so personal work does not depend
+on a second account. An author may therefore merge after the required CI check
+passes and conversations are resolved; a review remains optional. PR #4 and
+PR #5 in the harness repository exercised this zero-approval path successfully.
 
-The exact REST payloads are
+The exact restore/update payloads are
 [`harness-main.json`](github-rulesets/harness-main.json) and
-[`website-main.json`](github-rulesets/website-main.json). They use no bypass
-actor and allow only squash or rebase merges, matching the linear-history rule.
-Before activation, the authenticated owner must confirm at least one of those
-merge methods is enabled and that `rioyokota2` has Write or Admin permission in
-both repositories. The current unauthenticated process cannot see either
-private setting. Relevant official documentation:
+[`website-main.json`](github-rulesets/website-main.json). They match the live
+zero-approval policy, use no bypass actor, and allow only squash or rebase
+merges. Relevant official documentation:
 
 - <https://docs.github.com/en/rest/repos/rules?apiVersion=2026-03-10>
 - <https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets>
 - <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/troubleshooting-required-status-checks>
 
-Creation requires an authenticated repository-Administration write. Validate
-the returned ruleset identity and the public active rules immediately, then use
-one `rioyokota` test PR approved by `rioyokota2` per repository. Rollback is to
-disable or delete only the newly created ruleset; the committed workflow remains
-a read-only signal and can be reverted with a normal Git revert.
+Any future update requires an authenticated repository-Administration write.
+Validate the returned ruleset identity and active rules immediately, then test
+the required CI path with a bounded PR. Rollback is to disable or delete only
+the affected ruleset; the committed workflow remains a read-only signal and
+can be reverted with a normal Git revert.
