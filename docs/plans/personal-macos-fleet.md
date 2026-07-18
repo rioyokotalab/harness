@@ -1,7 +1,6 @@
 # T-268 plan — private personal macOS fleet
 
-**Phase:** executing — generic configuration-bundle engine validated;
-protected publication pending
+**Phase:** pilot plan pending — generic configuration-bundle engine published
 
 **Updated:** 2026-07-19 JST
 
@@ -557,16 +556,17 @@ and each later Mac remain separate authority gates.
 
 ## Next action
 
-The D11–D14 generic implementation now validates and reconciles SSH, the
+The published D11–D14 generic implementation validates and reconciles SSH, the
 private Bash fragment, and the one complete tmux config as one private-revision
-bundle. Focused and clean-clone portable validation pass, including privacy,
+bundle. Focused, clean-clone portable, and protected CI validation pass,
+including privacy,
 legacy public-contract, syntax-without-execution, divergence, commit/push
-retry, replacement unwind, and exact rollback gates. Publish this public code
-through protected CI and synchronize only clean managed harness checkouts.
-After publication, the next live action is a separate owner-started pilot seed
-plan; no private companion or real Mac configuration is mutated by the generic
-engine stage. Private configuration access, seed apply, rollback/reapply, and
-active-session reload remain separate later gates.
+retry, replacement unwind, and exact rollback gates. PR #42 published the
+engine as `8b63df2`, and guarded fleet sync brought all six remote managed
+Linux checkouts to that target without touching their local configuration.
+The next live action is a separate owner-started pilot seed plan. Private
+configuration access, seed apply, rollback/reapply, and active-session reload
+remain separate later gates.
 
 Stages 2–3 are complete and retry-safe in the public repository. The strict
 resolver now validates the entire clean private Git tree. `harness
