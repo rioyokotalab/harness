@@ -195,9 +195,16 @@ EOF
         # Formula tokens are schema-restricted and cannot contain shell spaces.
         # shellcheck disable=SC2086
         set -- $installed_formulae
+        outdated_status=0
         outdated_output=$(HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ANALYTICS=1 \
             "$brew_command" outdated --formula --quiet "$@" 2>/dev/null) ||
-            die "scoped Homebrew outdated query failed"
+            outdated_status=$?
+        case "$outdated_status" in
+            0) ;;
+            1) [ -n "$outdated_output" ] ||
+                die "scoped Homebrew outdated query failed" ;;
+            *) die "scoped Homebrew outdated query failed" ;;
+        esac
         while IFS= read -r formula; do
             [ -z "$formula" ] && continue
             case " $installed_formulae " in
