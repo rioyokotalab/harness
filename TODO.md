@@ -1076,6 +1076,16 @@ in 2m4s and squash-merged as published `main`
 `1606f2a5311dbf48bcbeb1d54a86e98a1d858a7f`. No private configuration or live
 Mac was accessed during implementation or publication.
 
+A plan-only pilot invocation completed owner-guided Bash curation, then stopped
+at tmux validation with the bounded `unsafe type` class; no private Git commit,
+push, or bundle apply occurred, and no configuration value was recorded
+publicly. The generic helper did not yet handle an absent canonical path. It
+now creates only an empty regular mode-0600 `~/.tmux.conf` when absent,
+preserving default behavior and the one-file D12 contract; it continues to
+refuse symlinks and other path types. Focused synthetic coverage exercises
+this exact absent-to-empty preparation. Publish the correction before the
+pilot fetches and safely reruns the helper.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

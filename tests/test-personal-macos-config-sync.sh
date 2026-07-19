@@ -140,6 +140,7 @@ EOF
     cat "$ROOT/shell/personal-macos-startup.block"
 } >"$pilot_home/.bashrc"
 chmod 600 "$pilot_home/.bashrc"
+unlink "$pilot_home/.tmux.conf"
 pilot_output=$(HOME="$pilot_home" HARNESS_ROOT="$public" \
     PATH="$fake_bin:/usr/bin:/bin" "$PILOT" --host mac-test-pilot)
 printf '%s\n' "$pilot_output" | grep -F \
@@ -148,6 +149,14 @@ printf '%s\n' "$pilot_output" | grep -F \
 printf '%s\n' "$pilot_output" | grep -F \
     'END macos_pilot_plan bundle_apply=not-requested curation=owner-edited next=separate-seed-apply-authority' \
     >/dev/null || fail "pilot helper authority boundary"
+printf '%s\n' "$pilot_output" | grep -F \
+    'PILOT_TMUX canonical=created-empty behavior=defaults-preserved' \
+    >/dev/null || fail "pilot helper absent tmux preparation"
+[ -f "$pilot_home/.tmux.conf" ] && [ ! -L "$pilot_home/.tmux.conf" ] &&
+    [ ! -s "$pilot_home/.tmux.conf" ] ||
+    fail "pilot helper did not create one empty canonical tmux config"
+[ "$(stat -c %a "$pilot_home/.tmux.conf")" = 600 ] ||
+    fail "pilot helper empty tmux mode"
 grep -F -x 'export HARNESS_SYNTHETIC_SHARED_BASH=pilot' \
     "$pilot_home/.config/harness/managed/personal-macos-private.bash" \
     >/dev/null || fail "pilot helper did not curate Bash fragment"
