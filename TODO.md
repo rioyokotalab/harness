@@ -121,6 +121,19 @@ jobs and owner sessions. At the seven-hour boundary, publish a final value-free
 checkpoint and leave unresolved package, Mac, container, vendor-cache, or
 agent-upgrade choices explicit.
 
+**Ref-consistency gap / implementation:** a fresh seven-node backup audit
+passed every primary repository query, exact future-chain identity/state, and
+warning-silence check without scheduler mutation. Repository audit then proved
+all six Linux worktrees clean/current with one worktree, but every
+`origin/main` remained at common ancestor `545e261` after verified-bundle
+fleet-sync. The checkout was correct but ordinary Git status was misleading.
+Update fleet-sync preflight to capture and require remote `origin/main` as an
+available ancestor of the protected target. On apply, compare-and-swap that ref
+to the verified target after the fast-forward; for an already-current checkout,
+perform a ref-only compare-and-swap without touching the worktree. Add initial
+advance, idempotence, stale-ref repair, and divergence/refusal coverage before
+protected publication and guarded fleet repair.
+
 ### T-271 — Comprehensive post-pilot update and cleanup
 
 **Phase/status:** `complete`. Reconciled stale public ledger/control-plane
