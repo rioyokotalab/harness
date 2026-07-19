@@ -1192,10 +1192,19 @@ already calls for portable non-secret tmux configuration but no tracked tmux
 payload or Linux adapter exists; engine 2 currently stores the complete Mac
 `~/.tmux.conf` only in the private companion and explicitly excludes Linux.
 This invalidates D11–D13's population and atomic-bundle assumptions. Phase
-remains `interviewing`, and rollout stays paused. Open decision T1: select one
-cross-platform tmux source of truth and edit/convergence model before any live
-config is inspected. No code, private companion, tmux file, active server, or
-node state has been changed.
+remains `interviewing`, and rollout stays paused.
+
+**Decision T1:** selected one complete, deliberately non-sensitive
+cross-platform tmux configuration tracked in the public harness as the source
+of truth for all eleven environments. It will use the oldest supported common
+tmux grammar, contain no credentials or machine-private values, provide no
+second config or local override, and advance through the existing protected
+public-harness and per-machine catch-up workflows. The private Mac `tmux.conf`
+payload becomes obsolete and must be removed through an explicit compatible
+migration without losing the pilot's accepted prior image. Open decision T2:
+choose a single symlinked live file (recommended) or transactional copied
+materialization. No code, private companion, tmux file, active server, or node
+state has been changed.
 
 ## Stable operational facts
 
