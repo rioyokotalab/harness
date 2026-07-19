@@ -195,6 +195,27 @@ tests. Make only the encountered focused fixtures Darwin-portable, then require
 their focused tests and the complete phase-1 suite locally and in protected CI
 before publication or rollout.
 
+PR #98 passed protected phase-1 and merged as `d87b0fc`. It adds portable
+controller/remote fleet-sync metadata adapters and fixes macOS interactive
+safety classification without weakening protected-root checks. `local` and all
+six Linux checkouts advanced cleanly with exact bundle removal. Fresh
+interactive classifiers on `office`, `local`, `ab`, `ab2`, `ri`, `al`, `rc`,
+and `t4` all prove the wrapper is loaded, a nonexistent safe subtree is
+allowed, and the exact account home remains dangerous. A guarded plan/apply
+then removed 29 stale isolated test-fixture trees (35,052 KiB); all targets and
+the exact cleanup target list, plan log, and manifest are absent.
+
+**Darwin fixture follow-through:** native focused execution next exposed a
+consistent test-isolation class: synthetic Darwin stat shims delegated to GNU
+`stat`, lexical `/var` fixture homes did not match canonical `/private/var`,
+Homebrew function-scoped failure flags leaked under macOS `sh`, and several
+mode assertions plus fake `mv` paths were GNU-specific. Make only those test
+adapters host-native and environment-independent. The macOS Bash, Homebrew,
+inventory, private-profile, startup, safety, repository-independence, and
+fleet-sync focused suites already pass natively; longer control/update/sync
+fixtures can exceed the local command window, so protected phase-1 remains the
+required aggregate gate before merge.
+
 ### T-271 — Comprehensive post-pilot update and cleanup
 
 **Phase/status:** `complete`. Reconciled stale public ledger/control-plane

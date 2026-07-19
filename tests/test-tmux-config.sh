@@ -3,14 +3,16 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/harness-tmux-config-test.XXXXXX")
+unset HARNESS_LOGICAL_HOST HARNESS_HOME_ROOT HARNESS_HOME_CANONICAL_ROOT
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-tmux-config-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
     if [ -d "$TEMP_DIR" ]; then
-        "$CLEANUP" "$HARNESS" "${TMPDIR:-/tmp}" "$TEMP_DIR" "${TMPDIR:-/tmp}" >/dev/null || status=1
+        "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEMP_DIR" "$TEMP_BASE" >/dev/null || status=1
     fi
     exit "$status"
 }
@@ -19,6 +21,12 @@ trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 fail() { echo "FAIL: $*" >&2; exit 1; }
+file_mode() {
+    case $(uname -s) in
+        Darwin) stat -f %Lp "$1" ;;
+        *) stat -c %a "$1" ;;
+    esac
+}
 
 command -v tmux >/dev/null 2>&1 || fail "tmux unavailable"
 home=$TEMP_DIR/home
@@ -114,5 +122,5 @@ transaction=$(sed -n 's/.*transaction=\([^ ]*\).*/\1/p' "$TEMP_DIR/adopt.out")
 HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$home" "$ROOT/libexec/harness-tmux-config" --rollback "$transaction" \
     >"$TEMP_DIR/adopt-rollback.out"
 cmp -s "$home/.tmux.conf" "$TEMP_DIR/prior" || fail "regular rollback bytes"
-[ "$(stat -c %a "$home/.tmux.conf")" = 640 ] || fail "regular rollback mode"
+[ "$(file_mode "$home/.tmux.conf")" = 640 ] || fail "regular rollback mode"
 echo 'personal tmux configuration tests: PASS'

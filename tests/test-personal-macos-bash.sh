@@ -6,7 +6,8 @@ HARNESS=$ROOT/bin/harness
 MACOS_BASH=$ROOT/libexec/harness-macos-bash
 LAUNCHER=$ROOT/bin/harness-bash
 FIXTURE=$ROOT/tests/fixtures/personal-macos/private-v1
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/harness-macos-bash-test.XXXXXX")
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-macos-bash-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 
 cleanup() {
@@ -14,8 +15,8 @@ cleanup() {
     trap - EXIT HUP INT TERM
     cleanup_failed=0
     if [ -d "$TEMP_DIR" ]; then
-        "$CLEANUP" "$HARNESS" "${TMPDIR:-/tmp}" "$TEMP_DIR" \
-            "${TMPDIR:-/tmp}" >/dev/null || cleanup_failed=1
+        "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEMP_DIR" \
+            "$TEMP_BASE" >/dev/null || cleanup_failed=1
     fi
     if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
         echo "FAIL: guarded personal-Mac Bash cleanup" >&2
@@ -32,6 +33,20 @@ trap 'exit 143' TERM
 fail() {
     echo "FAIL: $*" >&2
     exit 1
+}
+
+file_mode() {
+    case $(uname -s) in
+        Darwin) /usr/bin/stat -f '%Lp' "$1" ;;
+        *) /usr/bin/stat -c '%a' -- "$1" ;;
+    esac
+}
+
+file_inode() {
+    case $(uname -s) in
+        Darwin) /usr/bin/stat -f '%i' "$1" ;;
+        *) /usr/bin/stat -c '%i' -- "$1" ;;
+    esac
 }
 
 PUBLIC=$TEMP_DIR/public
@@ -59,10 +74,18 @@ EOF
 cat >"$FAKE_BIN/stat" <<'EOF'
 #!/bin/sh
 case "${1:-}:${2:-}" in
-    -f:%u) shift 2; [ "${1:-}" = -- ] && shift; exec /usr/bin/stat -c '%u' -- "$@" ;;
-    -f:%Lp) shift 2; [ "${1:-}" = -- ] && shift; exec /usr/bin/stat -c '%a' -- "$@" ;;
-    -f:%l) shift 2; [ "${1:-}" = -- ] && shift; exec /usr/bin/stat -c '%h' -- "$@" ;;
+    -f:%u) native_format=%u ;;
+    -f:%Lp) native_format=%a ;;
+    -f:%l) native_format=%h ;;
     *) exec /usr/bin/stat "$@" ;;
+esac
+shift 2; [ "${1:-}" = -- ] && shift
+case $(/usr/bin/uname -s) in
+    Darwin)
+        case "$native_format" in %a) native_format=%Lp ;; %h) native_format=%l ;; esac
+        exec /usr/bin/stat -f "$native_format" "$@"
+        ;;
+    *) exec /usr/bin/stat -c "$native_format" -- "$@" ;;
 esac
 EOF
 cat >"$FAKE_PREFIX/bin/brew" <<'EOF'
@@ -170,7 +193,7 @@ grep -F 'executable/prefix mismatch' "$TEMP_DIR/launcher-mismatch.out" >/dev/nul
 basic_home=$(make_home basic)
 printf '%s' '# owner rc without final newline' >"$basic_home/.bashrc"
 chmod 640 "$basic_home/.bashrc"
-basic_inode=$(/usr/bin/stat -c '%i' "$basic_home/.bashrc")
+basic_inode=$(file_inode "$basic_home/.bashrc")
 cp "$basic_home/.bashrc" "$TEMP_DIR/basic-original-rc"
 basic_log=$TEMP_DIR/basic-brew.log
 run_macos_bash "$basic_home" "$basic_log" --host mac-test-pilot --plan \
@@ -194,11 +217,11 @@ basic_tx=$(sed -n 's/^TRANSACTION id=\([^ ]*\) status=complete/\1/p' \
 [ -L "$basic_home/.config/harness/managed/personal-macos.bash" ] &&
     [ "$(readlink "$basic_home/.config/harness/managed/personal-macos.bash")" = \
         "$PUBLIC/shell/personal-macos.bash" ] || fail "managed Bash loader link"
-[ "$(/usr/bin/stat -c '%a' "$basic_home/.bashrc")" = 640 ] ||
+[ "$(file_mode "$basic_home/.bashrc")" = 640 ] ||
     fail "managed Bash changed existing rc mode"
-[ "$(/usr/bin/stat -c '%i' "$basic_home/.bashrc")" = "$basic_inode" ] ||
+[ "$(file_inode "$basic_home/.bashrc")" = "$basic_inode" ] ||
     fail "managed Bash replaced the existing rc inode"
-[ "$(/usr/bin/stat -c '%a' "$basic_home/.bash_profile")" = 600 ] ||
+[ "$(file_mode "$basic_home/.bash_profile")" = 600 ] ||
     fail "managed Bash new profile mode"
 head -c "$(wc -c <"$TEMP_DIR/basic-original-rc" | tr -d ' ')" \
     "$basic_home/.bashrc" | cmp -s - "$TEMP_DIR/basic-original-rc" ||
@@ -249,9 +272,9 @@ run_macos_bash "$basic_home" "$TEMP_DIR/basic-rollback.log" \
     --rollback "$basic_tx" >"$TEMP_DIR/basic.rollback"
 cmp -s "$basic_home/.bashrc" "$TEMP_DIR/basic-original-rc" ||
     fail "managed Bash rollback did not restore exact rc bytes"
-[ "$(/usr/bin/stat -c '%a' "$basic_home/.bashrc")" = 640 ] ||
+[ "$(file_mode "$basic_home/.bashrc")" = 640 ] ||
     fail "managed Bash rollback did not preserve rc mode"
-[ "$(/usr/bin/stat -c '%i' "$basic_home/.bashrc")" = "$basic_inode" ] ||
+[ "$(file_inode "$basic_home/.bashrc")" = "$basic_inode" ] ||
     fail "managed Bash rollback replaced the rc inode"
 [ ! -e "$basic_home/.bash_profile" ] && [ ! -L "$basic_home/.bash_profile" ] ||
     fail "managed Bash rollback retained created profile"
