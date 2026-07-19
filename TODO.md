@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-270.
+and compact historical pointers here. Next free ID: T-271.
 
 ## Current state
 
@@ -134,6 +134,46 @@ eligibility; do not infer absence from a failed query or cancel, replace, or
 duplicate a delayed job. T-210 is complete and must not be repeated.
 
 ## Active tasks
+
+### T-270 — Post-pilot landmark housekeeping
+
+**Phase/status:** `validating`. Perform a bounded housekeeping pass after the
+successful T-268/T-269 `office` pilot applies while preserving their separate
+resume boundaries, all owner/private state, and Git history.
+
+**Read-only inventory (2026-07-19):** the public checkout is clean on `main` at
+current `origin/main` `561805feaa340bca732fb33fb68a1c49fa62a93d`. There is
+one worktree, no local or remote task branch after fetched-ref pruning, and no
+open pull request. Homebrew's dry-run reports approximately 189.2 MB of obsolete
+portable-Ruby payloads, but package-manager cleanup would remove multiple files
+and is excluded unless the owner explicitly expands scope. No private config,
+credential, live client setting, active session, or transaction payload was
+inspected.
+
+**Recommended plan:** keep this repository-only. Compact superseded T-268 and
+T-269 failure/publication chronology in `TODO.md` only where Git and the final
+published checkpoints retain the facts; preserve active rollout, observation,
+rollback/reapply, and authority boundaries verbatim. Recheck branch/worktree/PR
+state, `git diff --check`, relevant ledger pointers, and protected publication
+of the documentation-only result. Do not delete files, clean Homebrew, remove
+private transactions, prune live rollback evidence, change packages/settings,
+reload sessions, or advance either rollout.
+
+**Decision H1:** selected repository-only ledger/Git housekeeping. Homebrew
+cleanup, package changes, file deletion, private transaction cleanup, live
+configuration/session changes, and rollout execution are excluded. The frozen
+execution order is: compact only superseded T-268/T-269 chronology while
+preserving their active boundaries; verify ledger pointers, clean branch and
+single-worktree state, no open PRs, and `git diff --check`; publish the
+documentation-only result through protected review; then leave clean `main` as
+the resume point. All required input is collected and the explicit owner `go`
+was received. The candidate removes only superseded pilot failure and authority
+handoffs retained in Git, while preserving the published correction, successful
+plans, final applies, fresh-session observation, and separate rollback/rollout
+boundaries. `git diff --check`, ledger-pointer review, one-worktree state, no
+merged task branches, and no open PRs pass. Exact next action: publish this
+documentation-only candidate through protected review, then independently
+verify clean `main` before marking T-270 complete.
 
 ### T-196 — Backup lifecycle phase 2
 
@@ -1407,67 +1447,6 @@ inspection. It may correct the planning workflow and rerun
 migration plan. It must not inspect private values or run
 `macos-config-migrate --apply`.
 
-**Coordinated pilot correction checkpoint (2026-07-19):** T-268 now precedes
-T-269 in the shared pilot run. After generic publication and a clean `office`
-catch-up, rerun `./bin/harness macos-pilot-plan --host office` and stop after
-the migration plan. Existing owner edits in `.bashrc` and the private Bash
-fragment remain authoritative and must not be inspected or overwritten. If
-the fragment is still nonempty, stop only for the owner to finish that
-content-level edit. No migration, tmux, private-companion, agent-config,
-package, authentication, rollback/reapply, or session apply is authorized.
-
-**Pilot-plan tmux-validator failure handoff (2026-07-19):** the authorized
-coordinated run started from a clean public `main` at
-`243d87f611fd72428466fa5e9b5b5ba66c116bb3`. The pilot helper opened the two
-curation files; its value-free editor status showed that the private Bash
-fragment was already empty, so the editor was closed without saving or changing
-either file. The helper advanced past the prior empty-fragment gate and then
-stopped before `macos-config-migrate --plan` with the exact result
-`harness: tmux configuration grammar is invalid`. No apply, private commit or
-push, tmux link, agent-config action, rollback/reapply, or session reload ran.
-Public-code and isolated-public-config diagnosis confirmed that tmux 3.7b fails
-to create the validator socket beneath macOS's long default temporary path with
-`File name too long`; the same tracked public tmux configuration parses
-successfully when the isolated validator uses a short `/tmp` socket root. This
-is a public validator-path portability failure, not evidence of invalid private
-content. Exact next action requires separate authority to implement and publish
-a synthetic-tested short-socket-root correction, then cleanly catch up
-`office` and retry only `./bin/harness macos-pilot-plan --host office`. The
-retry must still stop at the migration plan; no migration or tmux apply is
-authorized.
-
-**Tmux-validator correction checkpoint (2026-07-19):** the owner authorized
-the narrow public correction, focused synthetic validation, protected
-publication, clean pilot catch-up, and plan-only T-268/T-269 retry. The helper
-now creates its isolated tmux validation root directly beneath lexical `/tmp`,
-keeping the Unix socket path within the platform limit while retaining a
-private `mktemp` directory and exact socket/server/directory cleanup. A focused
-regression supplies an ambient temporary path long enough to reproduce the old
-failure and requires the public tmux plan to succeed. Portable shell syntax,
-warning-level ShellCheck, `git diff --check`, and direct native tmux 3.7b
-validation of the tracked public config under a long ambient temporary path
-pass. The complete tmux adapter test on this Mac reaches its already-recorded
-BSD fixture limit (`realpath -e`) before the adapter assertions, so protected
-Linux `portable-phase1` remains the authoritative complete regression gate.
-No live or private configuration, link, package, session, or apply changed.
-Exact next action: commit and publish this correction through the protected PR
-workflow, then fast-forward clean `office` and retry the two authorized plans
-in order. Neither apply is authorized.
-
-**Publication transport handoff (2026-07-19):** correction commit `3bdb51d`
-was normally pushed as `origin/task/t268-tmux-short-socket` after a fresh fetch
-confirmed current `origin/main` remained `243d87f`. Automated PR creation then
-stopped because the native `gh` command and the standing owner helper
-`~/run_this.sh` are both absent on `office`. Authenticated Git push works, but
-hosting-service API access remains a separate unavailable capability; no
-package, authentication, live setting, or external service configuration was
-changed. Exact owner action: open a task PR from
-`task/t268-tmux-short-socket` to `main`, require `portable-phase1`, and merge
-without force only after it passes. Retry is safe: the remote branch is clean
-and published, no PR was created by this run, and neither T-268 nor T-269 apply
-ran. After merge, resume with a clean public fast-forward and the two authorized
-plans in order.
-
 **Tmux-validator publication and T-268 plan outcome (2026-07-19):** with the
 owner's narrow package authorization, Homebrew installed `gh` 2.96.0 and its
 automatic 30-day cleanup removed superseded formula versions, cached bottles,
@@ -1486,12 +1465,6 @@ MACOS_CONFIG_MIGRATE class=current private_layout=legacy action=migrate apply=no
 END macos_config_migrate next=separate-apply-authority
 END macos_pilot_plan migration_apply=not-requested curation=owner-edited next=separate-migration-apply-authority
 ```
-
-T-268 has therefore reached its required value-free migration plan. No
-migration, tmux link, private commit/push, rollback/reapply, or active-session
-reload ran. Exact next separately authorized apply command:
-`./bin/harness macos-config-migrate --host office --apply`. Do not run it
-without fresh owner authority.
 
 **T-268 pilot migration apply outcome (2026-07-19):** under fresh owner
 authority, the frozen migration apply completed from `class=current` and
@@ -1656,16 +1629,6 @@ office` and stop after its migration plan, then run only
 `./bin/harness agent-config-catch-up --host office --adopt --plan`. Neither
 apply is authorized.
 
-**Coordinated pilot gate handoff (2026-07-19):** T-269's adoption plan did not
-run because the preceding T-268 pilot helper stopped at the confirmed public
-tmux-validator temporary-path failure recorded above. No `agent-config-catch-up`
-command, live settings read, adoption, link mutation, component action,
-authentication action, rollback/reapply, or session reload ran. After the
-T-268 public correction is separately authorized, published, caught up on a
-clean `office`, and its migration plan completes, the exact next T-269 command
-remains `./bin/harness agent-config-catch-up --host office --adopt --plan`.
-Do not apply.
-
 **Pilot adoption plan outcome (2026-07-19):** only after T-268 reached its
 migration-plan boundary, the corrected Darwin route ran
 `./bin/harness agent-config-catch-up --host office --adopt --plan` and exited
@@ -1688,13 +1651,6 @@ AGENT_CONFIG mode=plan adopt=yes blocked=0 changes=3 activation=new-sessions
 END agent_config apply=not-requested
 END agent_config_catch_up changes=not-applied
 ```
-
-T-269 has reached its required value-free adoption plan through `macos-update`.
-No live setting bytes were read, and no adoption, link mutation, component
-authorization, authentication, rollback/reapply, or session reload ran. Exact
-next separately authorized apply command:
-`./bin/harness agent-config-catch-up --host office --adopt --apply`. Do not run
-it without fresh owner authority, and retain T-268 migration apply precedence.
 
 **T-269 pilot adoption apply outcome (2026-07-19):** after the successful
 T-268 migration apply, the owner ran the frozen Darwin catch-up apply. The
