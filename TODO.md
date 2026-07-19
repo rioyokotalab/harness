@@ -51,27 +51,25 @@ and compact historical pointers here. Next free ID: T-272.
 
 ## Next resume checkpoint
 
-T-268 and T-269 remain separate `executing` rollout tasks. The `office` pilot
-has completed both ordered live applies. T-268 migrated the private companion
-to SSH-only desired state, installed the public Bash pre/local/post ordering,
-and linked the one public tmux configuration with a recoverable local
-transaction. T-269 adopted the public Codex and Claude settings plus launcher;
-its immediate doctor reported `status=ready failures=0`, with zero component
-declarations and no package action. Neither apply reloaded an active shell,
-tmux server, Codex session, or Claude session, and private transaction
-identifiers remain local.
+T-268 and T-269 have completed the accessible rollout on `office`, `local`,
+`ab`, `ab2`, `ri`, `al`, `rc`, and `t4`. All eight checkouts are clean on
+published `main`. The seven managed compute environments have current public
+tmux, Codex, Claude, and launcher state; doctors report ready, fresh isolated
+tmux servers load the canonical configuration, fresh interactive Bash routes
+ordinary Codex through the managed launcher, and batch/native Codex remains
+installer-owned. Rollback/reapply drills passed on every agent-config rollout;
+private transaction identifiers remain local. `local` additionally recovered
+its opaque Codex preferences and 93 trust tables after the D16 rollback defect,
+and the verified recovery tree plus deletion manifest are absent.
 
-Exact next owner action on `office`: start fresh managed Bash and tmux sessions
-and fresh Codex and Claude sessions, then confirm the frozen behavior. Any
-unchanged-only rollback/reapply drill remains separately authorized. After
-pilot observation, resume the explicit rollout order: independently revalidate
-`local`, run separately authorized local tmux and agent-config plans/applies/
-doctors/drills, then plan the six Linux remotes and obtain one reviewed
-stop-on-first-failure authority bundle before sequential apply to `ab`, `ab2`,
-`ri`, `al`, `rc`, and `t4`. The one-way `local`-to-`t4` SSH mirror remains a
-separate explicit Linux command and authority gate. Only after Linux acceptance
-should each remaining Mac be brought online and planned/applied independently;
-never batch Macs or infer their state from `office`.
+Exact next deployment boundary: bring each of the three remaining Macs online
+and plan/apply it independently; never batch Macs or infer their state from
+`office`. Revalidate public/private clean state, transport, logical identity,
+native agent ownership, and value-free plans before each Mac. The one-way
+`local`-to-`t4` SSH mirror remains a separate explicit command and authority
+gate and was not run. Linux schedulers, future weekly jobs, packages,
+components, authentication, and active owner sessions were not changed by the
+configuration rollout.
 
 Before every rollout step, fetch and revalidate the current published target,
 clean checkout, transport/authentication, private schema where applicable, and
@@ -2196,6 +2194,21 @@ noncanonical lexical HOME only when logical host, lexical path, canonical path,
 directory type, and current owner all match. Add declared-alias apply/rollback
 and mismatch refusal coverage, publish through protected CI, fleet-sync the
 six clean checkouts again, and rerun the full tmux plan before any tmux apply.
+
+**D17 protected rollout / accessible-fleet acceptance:** PR #91 passed
+protected phase-1 and merged as `128d963`. Guarded fleet-sync advanced all six
+clean Linux checkouts from `d670c2a` with no bundle residue. The full tmux plan
+then passed absent/link on `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`; sequential
+applies completed and every immediate plan is current/none. Final acceptance
+on all six reports agent doctor ready, a fresh isolated tmux server with the
+canonical status/bindings, fresh interactive Bash resolving managed Codex and
+Claude commands, native batch Codex unchanged, and clean Git. The earlier
+read-only audit also confirmed zero doctor failures, ready declared storage,
+and each exact weekly successor still present; no scheduler action ran. A
+Codex-version check on `local` emitted an upstream stale-arg0 cleanup warning,
+but bounded owner-temp inventory found no matching stale directory and no
+cleanup was attempted. Accessible-fleet T-268/T-269 rollout is complete; only
+the three independently gated Macs remain.
 
 ## Stable operational facts
 
