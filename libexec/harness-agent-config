@@ -69,8 +69,8 @@ codex_config_is_managed() {
     [ "$(macos_stat_owner "$codex_live")" = "$current_uid" ] &&
         [ "$(macos_stat_links "$codex_live")" = 1 ] || return 1
     awk '
-        NR == 1 { if ($0 != "approval_policy = \"never\"") bad=1; next }
-        NR == 2 { if ($0 != "sandbox_mode = \"danger-full-access\"") bad=1; next }
+        $0 == "approval_policy = \"never\"" { if (++approval != 1 || section) bad=1; next }
+        $0 == "sandbox_mode = \"danger-full-access\"" { if (++sandbox != 1 || section) bad=1; next }
         $0 ~ /^model = "([^"\\]|\\.)*"$/ { if (++model != 1 || section) bad=1; next }
         $0 ~ /^model_reasoning_effort = "([^"\\]|\\.)*"$/ { if (++effort != 1 || section) bad=1; next }
         {
@@ -79,7 +79,7 @@ codex_config_is_managed() {
             if (expect && $0 == "trust_level = \"trusted\"") { expect=0; next }
             bad=1
         }
-        END { exit NR >= 2 && !bad && !expect ? 0 : 1 }
+        END { exit approval == 1 && sandbox == 1 && !bad && !expect ? 0 : 1 }
     ' "$codex_live" >/dev/null 2>&1
 }
 
