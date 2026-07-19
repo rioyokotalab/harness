@@ -138,6 +138,8 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "personal macOS SSH-sync focused suite"
 "$ROOT/tests/test-personal-macos-config-sync.sh" >/dev/null ||
     fail "personal macOS config-sync focused suite"
+"$ROOT/tests/test-personal-macos-config-migrate.sh" >/dev/null ||
+    fail "personal macOS config-migration focused suite"
 "$ROOT/tests/test-ssh-config-mirror.sh" >/dev/null ||
     fail "fixed SSH-config mirror focused suite"
 

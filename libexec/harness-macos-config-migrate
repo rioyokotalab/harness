@@ -78,9 +78,15 @@ fetch_private() {
         unlink "$log"
         die "Mac configuration migration private fetch failed"
     fi
-    [ "$(git -C "$private_root" rev-parse HEAD)" = \
-        "$(git -C "$private_root" rev-parse refs/remotes/origin/main)" ] ||
-        die "Mac configuration migration private checkout is not current"
+    private_head=$(git -C "$private_root" rev-parse HEAD)
+    private_origin=$(git -C "$private_root" rev-parse refs/remotes/origin/main)
+    if [ "$private_head" != "$private_origin" ]; then
+        git -C "$private_root" merge-base --is-ancestor "$private_origin" "$private_head" >/dev/null 2>&1 &&
+            [ "$(git -C "$private_root" diff --name-only "$private_origin..$private_head")" = \
+                "$(printf 'bashrc\ncompanion.conf\ntmux.conf')" ] ||
+            die "Mac configuration migration private checkout is not a safe forward retry"
+        private_push_pending=yes
+    fi
 }
 
 private_layout() {
@@ -126,7 +132,21 @@ require_ssh_agent_for_origin() {
 }
 
 migrate_private() {
-    [ "$(private_layout)" = legacy ] || return 0
+    if [ "$(private_layout)" = ssh-only ]; then
+        [ "$private_push_pending" = yes ] || return 0
+        require_ssh_agent_for_origin
+        retry_log=$transaction_root/.macos-config-migrate-push.$$
+        : >"$retry_log"; chmod 600 "$retry_log"
+        if ! GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/usr/bin/false SSH_ASKPASS=/usr/bin/false \
+            GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=15' \
+            git -C "$private_root" push -q origin HEAD:main >"$retry_log" 2>&1; then
+            unlink "$retry_log"
+            die "Mac configuration migration private push failed; retry is forward-only"
+        fi
+        unlink "$retry_log"
+        private_push_pending=no
+        return 0
+    fi
     require_ssh_agent_for_origin
     companion_stage=$private_root/.companion.conf.$$
     printf 'schema=1\nminimum_engine_schema=1\n' >"$companion_stage"
@@ -141,6 +161,7 @@ migrate_private() {
         -m 'Retire private Bash and tmux payloads' -- companion.conf bashrc tmux.conf \
         >"$log" 2>&1; then
         unlink "$log"
+        git -C "$private_root" restore --staged --worktree -- companion.conf bashrc tmux.conf
         die "Mac configuration migration private commit failed"
     fi
     unlink "$log"
@@ -153,6 +174,7 @@ migrate_private() {
         die "Mac configuration migration private push failed; retry is forward-only"
     fi
     unlink "$log"
+    private_push_pending=no
 }
 
 child_transaction() {
@@ -253,6 +275,7 @@ if [ "$mode" = rollback ]; then
 fi
 [ -n "$logical_host" ] && macos_private_id_is_safe "$logical_host" || { usage; exit 2; }
 validate_private
+private_push_pending=no
 fetch_private
 layout=$(private_layout)
 require_empty_fragment
@@ -284,6 +307,7 @@ for log in "$ssh_log" "$bash_log" "$tmux_log"; do : >"$log"; chmod 600 "$log"; d
 ssh_transaction=
 bash_transaction=
 tmux_transaction=
+local_retired=0
 complete=0
 cleanup_apply() {
     status=$?
@@ -291,6 +315,12 @@ cleanup_apply() {
     [ -z "$tmux_transaction" ] || "$SELF_DIR/harness-tmux-config" --rollback "$tmux_transaction" >/dev/null 2>&1 || true
     [ -z "$bash_transaction" ] || "$SELF_DIR/harness-macos-bash-hooks" --rollback "$bash_transaction" >/dev/null 2>&1 || true
     [ -z "$ssh_transaction" ] || "$SELF_DIR/harness-macos-ssh-sync" --rollback "$ssh_transaction" >/dev/null 2>&1 || true
+    if [ "$local_retired" -eq 1 ]; then
+        [ "$loader_before" != present ] || ln -s "$HARNESS_ROOT/shell/personal-macos.bash" "$old_loader"
+        restore_optional "$fragment_before" "$fragment_backup" "$private_fragment" || true
+        restore_optional "$config_state_before" "$config_state_backup" "$config_state" || true
+        restore_optional "$config_status_before" "$config_status_backup" "$config_status" || true
+    fi
     for log in "$ssh_log" "$bash_log" "$tmux_log"; do [ ! -e "$log" ] || unlink "$log"; done
     [ "$complete" -eq 1 ] || printf '%s\n' failed >"$status_file"
     exit "$status"
@@ -313,6 +343,7 @@ for log in "$ssh_log" "$bash_log" "$tmux_log"; do unlink "$log"; done
 [ ! -L "$old_loader" ] || unlink "$old_loader"
 [ ! -e "$config_state" ] || unlink "$config_state"
 [ ! -e "$config_status" ] || unlink "$config_status"
+local_retired=1
 cat >"$manifest" <<EOF
 schema=1
 operation=macos-config-migrate
