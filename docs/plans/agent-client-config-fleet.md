@@ -210,18 +210,18 @@ refuse ambiguous drift, support exact local rollback, and never interpret
 
 ## Decision register
 
-### C1 — Default permission posture (open; ask first)
+### C1 — Default permission posture (selected)
 
-- **A — Two-tier autonomy (recommended):** ordinary sessions use a zero-routine-
-  prompt but bounded mode; an explicit owner launcher selects full
-  access/bypass only for authorized machine/fleet work. This reduces ambient
-  blast radius while keeping an intentional unattended route.
-- **B — Exact Linux parity everywhere:** Codex globally uses
-  `danger-full-access` plus `never`, and Claude globally uses
-  `bypassPermissions`. This most directly removes prompts but makes every new
-  session maximally privileged.
-- **C — Interactive default:** retain workspace/on-request and Claude default
-  permissions, accepting routine prompts.
+- **Selected — Zero client action-approval prompts:** the owner's exact
+  requirement is, "I don't want to be asked for approval by anyone." Within
+  T-269, ordinary and newly started Codex and Claude sessions must therefore
+  produce no agent action-approval prompts. Codex globally uses `never` plus
+  `danger-full-access`; Claude globally uses `bypassPermissions` and suppresses
+  its dangerous-mode startup warning. This supersedes the earlier two-tier
+  recommendation.
+- This decision does not suppress authentication, macOS privacy/TCC, OS
+  administrator, workspace/provider policy, or other non-agent system dialogs.
+  No target configuration changed during the interview checkpoint.
 
 ### C2 — Canonical storage (open)
 
@@ -283,7 +283,7 @@ refuse ambiguous drift, support exact local rollback, and never interpret
 
 ## Exact next action
 
-Ask C1 only. After each answer, checkpoint the decision and ask the next open
+Ask C2 only. After each answer, checkpoint the decision and ask the next open
 item. Do not change any live client setting during the interview. After C7,
 audit for contradictions, set `ready-for-go`, and wait for a fresh explicit
 `go`.

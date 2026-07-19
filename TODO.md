@@ -59,10 +59,14 @@ does not synchronize either live user settings file, which explains the likely
 pilot mismatch. Product docs and repository ownership are reconciled in
 `docs/plans/agent-client-config-fleet.md`. No credential, non-whitelisted config
 value, hook command, project path, endpoint, or authentication state was read
-into public evidence, and no live config changed. Ask only decision C1: choose
-the fleet's default permission posture. T-268 remains independently resumable
-from its pilot-plan failure handoff, and T-196 remains at 1/8 until the 2026-07-26
-successors are eligible.
+into public evidence, and no live config changed. C1 is frozen as zero Codex or
+Claude action-approval prompts in ordinary sessions: Codex uses `never` with
+`danger-full-access`, and Claude uses `bypassPermissions` with its dangerous-
+mode startup warning suppressed. Authentication, macOS privacy/TCC, OS
+administrator, and provider-enforced dialogs remain separate boundaries. Ask
+only decision C2: confirm the canonical desired-state storage. T-268 remains
+independently resumable from its pilot-plan failure handoff, and T-196 remains
+at 1/8 until the 2026-07-26 successors are eligible.
 
 Resume T-268 in `executing` with pilot curation/plan authorized on `office`.
 Corrective PIE decisions B2, B3, T1–T3,
@@ -1388,10 +1392,14 @@ cause. No live client setting changed.
 
 **Plan/next action:** the complete architecture, risks, seven-decision register,
 execution order, rollback, and acceptance gates are in
-`docs/plans/agent-client-config-fleet.md`. Ask C1 only: choose two-tier
-autonomy (recommended), exact global Linux parity, or interactive defaults.
-Checkpoint every answer; do not implement until C1–C7 are resolved and the
-owner gives a fresh explicit `go`.
+`docs/plans/agent-client-config-fleet.md`. C1 is frozen as zero Codex or Claude
+action-approval prompts in ordinary sessions, implemented by global Linux
+parity (`never` plus `danger-full-access` for Codex; `bypassPermissions` plus a
+suppressed dangerous-mode startup warning for Claude). This does not suppress
+authentication, macOS privacy/TCC, OS administrator, or provider-enforced
+dialogs. Ask C2 only: confirm the existing private companion as canonical
+desired-state storage (recommended). Checkpoint every answer; do not implement
+until C1–C7 are resolved and the owner gives a fresh explicit `go`.
 
 ## Stable operational facts
 
