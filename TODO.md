@@ -1795,6 +1795,38 @@ transient trust and frozen flags. No implementation or live action is
 authorized until D11 is selected, the exact installer command/rollback is
 planned, and a fresh `go` follows.
 
+**Decision D11 selected / ready-for-go:** retain exactly one native Codex
+package installation. Use the official standalone installer's documented
+`CODEX_INSTALL_DIR` override to create its visible native entry under the
+private mode-0700 `~/.local/libexec/harness-codex-native` directory; the
+standalone package cache remains the single package under `CODEX_HOME`.
+Publicly correct `harness-codex` to resolve only that reviewed native entry and
+pass explicit `--ask-for-approval never --sandbox danger-full-access` flags
+plus transient current-root trust. Extend agent-config's transaction to verify
+the native entry is an executable non-managed path before adopting
+`~/.local/bin/codex`; never copy a binary or persist its resolved package-cache
+target. Synthetic tests must prove native-entry absence/refusal, recursion
+refusal, explicit frozen flags, partial adoption, rollback, and reapply.
+
+Execution order is frozen: (1) implement and validate only generic public code;
+(2) publish through protected CI and cleanly fast-forward `office`; (3) fetch
+the official installer from its documented HTTPS endpoint, validate the
+download/command boundary without printing it, and run it once with only
+`CODEX_INSTALL_DIR` changed and no credential input; (4) prove the relocated
+entry launches the same single installed package before any adoption; (5) run
+the value-free one-change plan/apply/doctor; (6) launch fresh Codex and require
+`approval: never`, `sandbox: danger-full-access`, and a fixed readiness reply;
+(7) launch fresh Claude and require its fixed readiness reply; (8) retain the
+apply transaction until acceptance, then record the outcome. Failure recovery
+before adoption unlinks only the exact newly created visible native entry if
+it is unchanged and empty parent removal is safe; after adoption, exact
+unchanged-only rollback restores the original native symlink before any such
+cleanup. No second package cache, package upgrade beyond what the official
+installer necessarily performs, credential/authentication change, component,
+active-session reload, drill, other node, or rollout is authorized. Phase is
+`ready-for-go`; exact first action after a fresh `go` is the public launcher and
+transaction implementation, not the live installer.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
