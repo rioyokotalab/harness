@@ -49,6 +49,12 @@ trap 'exit 143' TERM
 
 sh -n "$ROOT/shared/skills/guarded-bulk-delete/scripts/guarded-delete" ||
     fail "guarded-delete shell syntax"
+grep -F 'never pipe them directly to a shell' \
+    "$ROOT/shared/skills/guarded-bulk-delete/SKILL.md" >/dev/null ||
+    fail "guarded-delete installer provenance gate"
+grep -F 'Owner approval alone is insufficient.' \
+    "$ROOT/shared/skills/guarded-bulk-delete/SKILL.md" >/dev/null ||
+    fail "guarded-delete installer approval boundary"
 sh -n "$CLEANUP" || fail "guarded test cleanup shell syntax"
 
 # Exercise the Darwin adapter shapes on Linux CI without weakening production

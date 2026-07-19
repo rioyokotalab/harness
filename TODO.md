@@ -1894,6 +1894,21 @@ then resume the already-frozen D11 native-entry/adoption/fresh-session gates.
 Phase is `ready-for-go`; no policy, skill, installer, package, live link, or
 session changed while D12 was interviewed.
 
+**D12 implementation checkpoint (2026-07-19):** canonical global guidance now
+prohibits agent-directed raw/bulk deletion while defining the frozen eight-gate
+reviewed-installer exception and stating that owner approval alone is
+insufficient. The shared guarded-delete skill applies the same classifier and
+leaves its manifest workflow unchanged. Focused discovery assertions protect
+the provenance and approval boundaries; the guidance remains below its 200-line
+limit, frontmatter shape, portable shell syntax, and `git diff --check` pass.
+The skill-creator `quick_validate.py` could not start because its own environment
+lacks the `yaml` module; no package was installed. Repository-native focused
+tests reached their existing macOS GNU `realpath -e`/`stat -c` cleanup fixtures
+after the new assertions passed, so protected Linux `portable-phase1` remains
+the authoritative complete gate. No installer, package, deletion, live link,
+credential, component, or session changed. Exact next action: publish D12
+through protected CI before using the exception.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

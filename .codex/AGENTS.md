@@ -29,13 +29,23 @@ gates; follow those more specific rules.
   dispatch, deployments, external messages, destructive cleanup, or credential
   access.
 - Do not treat a long-running instruction as permission to broaden scope.
-- Never run raw recursive or bulk deletion (`rm -r`, `rm -rf`, `find -delete`,
-  deletion loops/globs, `rsync --delete`, or equivalents). Use the
-  `guarded-bulk-delete` skill and its deterministic plan/apply tool. This is an
-  autonomous safety gate, not an approval gate: proceed without asking when
-  the canonical boundary, explicit targets, manifest, revalidation, and
-  post-delete checks all pass. Single exact non-recursive file removal and
-  patch-based tracked-file deletion remain allowed.
+- Never issue agent-directed raw recursive or bulk deletion (`rm -r`, `rm -rf`,
+  `find -delete`, deletion loops/globs, `rsync --delete`, or equivalents), or
+  hide it in a script under agent control. Use the `guarded-bulk-delete` skill
+  and its deterministic plan/apply tool. This is an autonomous safety gate, not
+  an approval gate: proceed without asking when its boundary, manifest,
+  revalidation, and post-delete checks pass. Single exact non-recursive file
+  removal and patch-based tracked-file deletion remain allowed.
+- A reviewed vendor installer or trusted package manager may perform its own
+  internal recursive cleanup only through the exception defined by the
+  `guarded-bulk-delete` skill: obtain exact bytes from an official HTTPS source
+  instead of piping remote code to a shell; review syntax, destructive
+  primitives, and target derivation; use explicit non-interactive destinations;
+  confine deletion to declared package-owned release/cache/staging/temp roots;
+  exclude account-home roots, repositories, workspaces, credentials, backups,
+  and unrelated user data; execute the exact reviewed artifact; and verify
+  installed state and residue afterward. Ambiguity falls back to guarded
+  deletion. Owner approval alone never creates an exception.
 
 ## Execution
 

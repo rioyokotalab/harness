@@ -57,6 +57,8 @@ grep -F 'Git and `TODO.md` as the durable source of truth' "$ROOT/AGENTS.md" \
     >/dev/null || fail "project takeover source of truth"
 grep -F 'Claude auto-memory are optional context only' "$ROOT/.codex/AGENTS.md" \
     >/dev/null || fail "global cross-client handoff policy"
+grep -F 'Owner approval alone never creates an exception.' "$ROOT/.codex/AGENTS.md" \
+    >/dev/null || fail "global reviewed-installer deletion boundary"
 [ "$(wc -l <"$ROOT/.codex/AGENTS.md" | tr -d ' ')" -le 200 ] ||
     fail "shared global guidance exceeds the reviewed Claude size bound"
 
