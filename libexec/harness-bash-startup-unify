@@ -84,18 +84,32 @@ def login_section(middle: bytes) -> bytes:
 
 
 def remove_redundant_bashrc_loaders(middle: bytes) -> tuple[bytes, int]:
-    """Drop only standalone profile lines that source the now-canonical .bashrc."""
+    """Drop conventional profile loaders for the now-canonical .bashrc."""
     loader = re.compile(
         rb'^[ \t]*(?:source|\.)[ \t]+(?:"?\$HOME/\.bashrc"?|"?~/\.bashrc"?)'
         rb'[ \t]*(?:#[^\r\n]*)?(?:\r?\n)?$'
     )
+    guard = re.compile(
+        rb'^[ \t]*if[ \t]+\[[ \t]+-[erf][ \t]+'
+        rb'(?:"?\$HOME/\.bashrc"?|"?~/\.bashrc"?)[ \t]+\][ \t]*;?'
+        rb'[ \t]*then[ \t]*(?:#[^\r\n]*)?(?:\r?\n)?$'
+    )
+    closing = re.compile(rb'^[ \t]*fi[ \t]*(?:#[^\r\n]*)?(?:\r?\n)?$')
+    lines = middle.splitlines(keepends=True)
     kept = []
     removed = 0
-    for line in middle.splitlines(keepends=True):
-        if loader.match(line):
+    index = 0
+    while index < len(lines):
+        if index + 2 < len(lines) and guard.match(lines[index]) and \
+                loader.match(lines[index + 1]) and closing.match(lines[index + 2]):
             removed += 1
+            index += 3
+        elif loader.match(lines[index]):
+            removed += 1
+            index += 1
         else:
-            kept.append(line)
+            kept.append(lines[index])
+            index += 1
     return b"".join(kept), removed
 
 
