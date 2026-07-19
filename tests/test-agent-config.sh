@@ -303,9 +303,24 @@ printf '%s\n' '# host|persistent-root|cache-root|move-large|move-fast|delete-aft
     "local-test|$layout_root|$layout_root/cache|.local|none|none|none" >"$layout_file"
 HOME="$layout_home" HARNESS_ROOT="$PUBLIC" HARNESS_TEST_ALLOW_NONMAIN=1 \
     HARNESS_LOGICAL_HOST=local-test HARNESS_HOME_LAYOUT_FILE="$layout_file" \
-    "$PUBLIC/libexec/harness-agent-config" --plan >"$TEMP_DIR/layout.plan"
-[ "$(grep -c 'state=absent action=link' "$TEMP_DIR/layout.plan")" -eq 3 ] ||
-    fail "declared local symlink plan"
+    "$PUBLIC/libexec/harness-agent-config" --apply >"$TEMP_DIR/layout.apply"
+layout_transaction=$(transaction "$TEMP_DIR/layout.apply")
+[ -n "$layout_transaction" ] || fail "declared local symlink transaction"
+HOME="$layout_home" HARNESS_ROOT="$PUBLIC" HARNESS_TEST_ALLOW_NONMAIN=1 \
+    HARNESS_LOGICAL_HOST=local-test HARNESS_HOME_LAYOUT_FILE="$layout_file" \
+    "$PUBLIC/libexec/harness-agent-config" --doctor >"$TEMP_DIR/layout.doctor"
+grep -F 'status=ready failures=0' "$TEMP_DIR/layout.doctor" >/dev/null ||
+    fail "declared local symlink doctor"
+HOME="$layout_home" HARNESS_ROOT="$PUBLIC" HARNESS_TEST_ALLOW_NONMAIN=1 \
+    HARNESS_LOGICAL_HOST=local-test HARNESS_HOME_LAYOUT_FILE="$layout_file" \
+    "$PUBLIC/libexec/harness-agent-config" --rollback "$layout_transaction" \
+    >"$TEMP_DIR/layout.rollback"
+[ ! -e "$layout_home/.codex" ] && [ ! -L "$layout_home/.codex" ] ||
+    fail "declared local symlink Codex rollback"
+[ ! -e "$layout_home/.claude" ] && [ ! -L "$layout_home/.claude" ] ||
+    fail "declared local symlink Claude rollback"
+[ ! -e "$layout_home/.local/bin/harness-codex" ] ||
+    fail "declared local symlink launcher rollback"
 if HOME="$layout_home" HARNESS_ROOT="$PUBLIC" HARNESS_TEST_ALLOW_NONMAIN=1 \
     HARNESS_LOGICAL_HOST=undeclared HARNESS_HOME_LAYOUT_FILE="$layout_file" \
     "$PUBLIC/libexec/harness-agent-config" --plan >"$TEMP_DIR/layout-undeclared.out" 2>&1; then

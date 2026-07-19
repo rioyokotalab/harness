@@ -2133,6 +2133,16 @@ declared apply/rollback and escaping-target no-mutation coverage. Publish and
 pass protected phase-1, fast-forward clean `local`, rerun both plans, and only
 then resume the already-authorized apply sequence if the plans are unchanged.
 
+**D15.1 mirrored pre-apply stop:** D15 passed protected phase-1 and merged as
+`e375c4c`. Final transaction-path review before remote mutation found the same
+stale real-directory-only check in agent-config's state initializer; its plan
+also does not enter that path. No remote command or live mutation followed.
+D15.1 applies the already-reviewed declared-layout predicate at that final
+call site and upgrades the synthetic agent layout case from plan-only to full
+apply, ready doctor, and rollback with all three live paths absent afterward.
+After protected publication, revalidate that both plans are unchanged and
+resume the retained apply authority.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
