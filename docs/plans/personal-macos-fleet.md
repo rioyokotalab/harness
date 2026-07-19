@@ -1,6 +1,6 @@
 # T-268 plan — private personal macOS fleet
 
-**Phase:** generic correction executing — implementation and portable validation complete
+**Phase:** generic correction published — awaiting separate pilot-plan authority
 
 **Updated:** 2026-07-19 JST
 
