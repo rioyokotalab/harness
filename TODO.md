@@ -51,7 +51,7 @@ and compact historical pointers here. Next free ID: T-270.
 
 ## Next resume checkpoint
 
-Resume T-269 in `validating`. The owner gave the frozen-plan `go` after C1–C7
+Resume T-269 in `executing`. The owner gave the frozen-plan `go` after C1–C7
 passed their final audit. The current Linux node's value-free baseline
 proves that Codex uses `approval_policy=never` with
 `sandbox_mode=danger-full-access`, while Claude uses
@@ -90,11 +90,11 @@ authentication/OAuth, OS dialogs, and observing a fresh interactive session
 remain manual; no background or login-time mutation is allowed. C1–C7 are
 internally consistent and no material design input remains. Generic public
 implementation, synthetic validation, protected publication, and clean-checkout
-distribution are authorized. Adoption of live values, live settings/link
+distribution are complete. Adoption of live values, live settings/link
 mutation, plugin/MCP authorization, and every rollout apply/rollback drill
-remain later recorded gates. Exact first step: add the two minimal frozen
-canonical settings bodies and synthetic-first validation/link transactions;
-do not inspect either existing live settings file.
+remain later recorded gates. Exact next action: in an owner-started `office`
+session, fetch current `main`, reconstruct T-269, and request plan-only authority
+for `./bin/harness agent-config-catch-up --adopt --plan`. Do not apply.
 T-268 remains independently resumable from its pilot-plan failure handoff, and
 T-196 remains at 1/8 until the 2026-07-26 successors are eligible.
 
@@ -1405,7 +1405,7 @@ migration plan. It must not inspect private values or run
 
 ### T-269 — Private cross-platform Codex and Claude configuration
 
-**Phase/status:** `validating`. Mirror deliberately selected Codex and Claude
+**Phase/status:** `executing`. Mirror deliberately selected Codex and Claude
 user configuration across four pull-based Macs and seven managed Linux
 environments without copying authentication, credentials, sessions, histories,
 memories, caches, databases, client-generated state, private endpoints, or raw
@@ -1505,6 +1505,23 @@ session, authentication, component, or remote node was read or changed. Exact
 next action: publish the clean task branch through a protected PR, require
 `portable-phase1`, merge without force, and guarded-fast-forward only clean
 managed checkouts. Stop before every live adoption or rollout gate.
+
+**Generic publication outcome (2026-07-19):** protected PR #67 passed required
+`portable-phase1` run `29677428042`, job `88167332036`, in 2m12s and
+squash-merged as published `main`
+`6a7e177d05742fbbde054a1af94e2c85810e3790`. Guarded fleet preflight found
+`ab`, `ab2`, `ri`, `al`, `rc`, and `t4` clean at `af6f1bd`; verified-bundle
+apply fast-forwarded all six to the published target, and the independent final
+plan reported six `KEEP` results with every transfer artifact absent. Only
+generic public code moved. No command invoked `agent-config`,
+`agent-config-catch-up`, or `agent-config-fleet` against a live target; no live
+settings, launcher, component, authentication, session, or private value
+changed. Exact next action: start from the independently owner-controlled
+`office` session, fetch current public `main`, and obtain plan-only authority
+before running `./bin/harness agent-config-catch-up --adopt --plan`. That plan
+may classify path types and fetch/fast-forward the clean checkout but must not
+read settings bytes or apply links. Apply/rollback/reapply remains a later
+separate gate.
 
 ## Stable operational facts
 
