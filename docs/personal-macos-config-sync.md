@@ -99,6 +99,13 @@ and runs `--seed --plan`. It has no apply option and never commits, pushes, or
 applies the private bundle. Bash curation itself changes the two owner files
 and affects only subsequently started managed Bash processes.
 
+If the canonical `~/.tmux.conf` is absent, the helper creates exactly that one
+regular mode-0600 file empty. An empty tmux configuration preserves default
+runtime behavior while establishing the single future synchronization target.
+The helper never creates `~/tmux.conf`, `~/.config/tmux/tmux.conf`, a loader,
+or an override. Any existing symlink or non-regular canonical path still stops
+before seed planning.
+
 ```bash
 harness macos-config-sync --host LOGICAL_ID --plan
 harness macos-config-sync --host LOGICAL_ID --seed --plan

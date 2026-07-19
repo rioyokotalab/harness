@@ -95,6 +95,9 @@ live_bash=$managed_directory/personal-macos-private.bash
 live_startup=$HOME/.bashrc
 live_ssh=$HOME/.ssh/config
 live_tmux=$HOME/.tmux.conf
+[ -d "$HOME" ] && [ ! -L "$HOME" ] &&
+    [ "$(macos_stat_owner "$HOME")" = "$current_uid" ] ||
+    die "pilot HOME is unsafe"
 
 fetch_log=$(mktemp "${TMPDIR:-/tmp}/harness-macos-pilot-fetch.XXXXXX") ||
     die "cannot allocate pilot fetch log"
@@ -158,6 +161,16 @@ else
     : >"$live_bash"
 fi
 chmod 600 "$live_bash"
+
+if [ -e "$live_tmux" ] || [ -L "$live_tmux" ]; then
+    [ -f "$live_tmux" ] && [ ! -L "$live_tmux" ] ||
+        die "pilot tmux configuration has unsafe type"
+else
+    umask 077
+    : >"$live_tmux"
+    chmod 600 "$live_tmux"
+    echo 'PILOT_TMUX canonical=created-empty behavior=defaults-preserved'
+fi
 
 command -v vim >/dev/null 2>&1 || die "Vim is unavailable for pilot curation"
 printf '%s\n' \
