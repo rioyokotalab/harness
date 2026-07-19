@@ -5,16 +5,23 @@ SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
 export HARNESS_ROOT
 . "$SELF_DIR/harness-common"
+. "$SELF_DIR/harness-macos-common"
 
 usage() {
-    echo "Usage: harness agent-config-catch-up [--plan|--apply] [--adopt] [--drill]" >&2
+    echo "Usage: harness agent-config-catch-up [--host LOGICAL_ID] [--plan|--apply] [--adopt] [--drill]" >&2
 }
 
 mode=plan
 adopt=no
 drill=no
+logical_host=
 while [ "$#" -gt 0 ]; do
     case "$1" in
+        --host)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            logical_host=$2
+            shift 2
+            ;;
         --plan) mode=plan; shift ;;
         --apply) mode=apply; shift ;;
         --adopt) adopt=yes; shift ;;
@@ -24,6 +31,15 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 [ "$mode" = apply ] || [ "$drill" = no ] || { usage; exit 2; }
+
+platform=$(uname -s)
+if [ "$platform" = Darwin ]; then
+    [ -n "$logical_host" ] || die "Mac agent configuration catch-up requires --host"
+    macos_private_id_is_safe "$logical_host" ||
+        die "invalid private logical identifier"
+else
+    [ -z "$logical_host" ] || die "--host is only valid for Mac catch-up"
+fi
 
 [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
     die "agent configuration catch-up requires a Git harness checkout"
@@ -47,6 +63,44 @@ target=$(git -C "$HARNESS_ROOT" rev-parse origin/main)
 git -C "$HARNESS_ROOT" merge-base --is-ancestor "$head" "$target" ||
     die "agent configuration catch-up is not a clean fast-forward"
 if [ "$head" = "$target" ]; then checkout_action=none; else checkout_action=fast-forward; fi
+
+if [ "$platform" = Darwin ]; then
+    private_checkout=$HOME/.config/harness/private
+    [ -d "$private_checkout" ] && [ ! -L "$private_checkout" ] ||
+        die "Mac private companion checkout has unsafe type"
+    [ -z "$(git -C "$private_checkout" status --porcelain --untracked-files=normal)" ] ||
+        die "Mac private companion checkout is not clean"
+    echo 'NATIVE git fetch --no-tags origin main (private companion)'
+    GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=15' \
+        git -C "$private_checkout" fetch --no-tags origin main >/dev/null 2>&1 ||
+        die "Mac private companion catch-up fetch failed"
+    private_head=$(git -C "$private_checkout" rev-parse HEAD)
+    private_target=$(git -C "$private_checkout" rev-parse origin/main)
+    git -C "$private_checkout" merge-base --is-ancestor \
+        "$private_head" "$private_target" ||
+        die "Mac private companion catch-up is not a clean fast-forward"
+    if [ "$private_head" = "$private_target" ]; then
+        private_action=none
+    else
+        private_action=fast-forward
+    fi
+    printf 'MAC_AGENT_CONFIG_ROUTE public=%s private=%s compatibility=required migration=required\n' \
+        "$checkout_action" "$private_action"
+    "$SELF_DIR/harness-macos-update" --host "$logical_host" \
+        --public-target "$target" --private-target "$private_target" \
+        "--$mode"
+    if [ "$mode" = plan ] &&
+        { [ "$checkout_action" != none ] || [ "$private_action" != none ]; }; then
+        echo 'AGENT_CONFIG post_update_plan=required apply=not-requested'
+        echo 'END agent_config_catch_up changes=not-applied route=macos-update'
+        exit 0
+    fi
+    if [ "$mode" = apply ]; then
+        [ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
+            die "agent configuration checkout changed after Mac catch-up"
+    fi
+    checkout_action=none
+fi
 printf 'AGENT_CONFIG_CATCH_UP mode=%s checkout=%s target=current adopt=%s drill=%s\n' \
     "$mode" "$checkout_action" "$adopt" "$drill"
 

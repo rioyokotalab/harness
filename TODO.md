@@ -51,7 +51,11 @@ and compact historical pointers here. Next free ID: T-270.
 
 ## Next resume checkpoint
 
-Resume T-269 in `executing`. The owner gave the frozen-plan `go` after C1–C7
+Resume T-268 and T-269 in one coordinated `executing` pilot-Mac run while
+keeping both task records separate. Publish the corrected T-269 Darwin route,
+cleanly catch up `office`, run T-268's authorized pilot migration plan first,
+then run T-269's corrected value-free adoption plan. Neither apply is
+authorized. T-269 otherwise retains the frozen-plan `go` after C1–C7
 passed their final audit. The current Linux node's value-free baseline
 proves that Codex uses `approval_policy=never` with
 `sandbox_mode=danger-full-access`, while Claude uses
@@ -92,10 +96,10 @@ internally consistent and no material design input remains. Generic public
 implementation, synthetic validation, protected publication, and clean-checkout
 distribution are complete. Adoption of live values, live settings/link
 mutation, plugin/MCP authorization, and every rollout apply/rollback drill
-remain later recorded gates. Exact next action: in an owner-started `office`
-session, fetch current `main`, reconstruct T-269, and request plan-only authority
-for `./bin/harness agent-config-catch-up --adopt --plan`. Do not apply.
-T-268 remains independently resumable from its pilot-plan failure handoff, and
+remain later recorded gates. Exact next action after corrected publication and
+the T-268 plan: run only `./bin/harness agent-config-catch-up --host office
+--adopt --plan`. Do not apply. T-268 remains separately resumable from its
+pilot-plan failure handoff, and
 T-196 remains at 1/8 until the 2026-07-26 successors are eligible.
 
 Resume T-268 in `executing` with pilot curation/plan authorized on `office`.
@@ -1403,6 +1407,15 @@ inspection. It may correct the planning workflow and rerun
 migration plan. It must not inspect private values or run
 `macos-config-migrate --apply`.
 
+**Coordinated pilot correction checkpoint (2026-07-19):** T-268 now precedes
+T-269 in the shared pilot run. After generic publication and a clean `office`
+catch-up, rerun `./bin/harness macos-pilot-plan --host office` and stop after
+the migration plan. Existing owner edits in `.bashrc` and the private Bash
+fragment remain authoritative and must not be inspected or overwritten. If
+the fragment is still nonempty, stop only for the owner to finish that
+content-level edit. No migration, tmux, private-companion, agent-config,
+package, authentication, rollback/reapply, or session apply is authorized.
+
 ### T-269 — Private cross-platform Codex and Claude configuration
 
 **Phase/status:** `executing`. Mirror deliberately selected Codex and Claude
@@ -1522,6 +1535,33 @@ before running `./bin/harness agent-config-catch-up --adopt --plan`. That plan
 may classify path types and fetch/fast-forward the clean checkout but must not
 read settings bytes or apply links. Apply/rollback/reapply remains a later
 separate gate.
+
+**Coordinated Mac catch-up correction checkpoint (2026-07-19):** public-code
+diagnosis confirmed that `agent-config-catch-up` fetched and fast-forwarded the
+public harness directly, bypassing T-268's private-companion compatibility and
+migration-state gates. The minimal correction keeps explicit pull-based
+long-offline catch-up but, on Darwin, requires the opaque logical host, fetches
+both clean fast-forward-only targets, and delegates checkout convergence to
+`macos-update` before invoking the target agent-config engine. Linux behavior
+is unchanged. The focused route-only synthetic test proves plan mode does not
+advance the public checkout and delegates both targets; `sh -n`, warning-level
+ShellCheck, and `git diff --check` pass. The full portable phase-one attempt on
+the pilot Mac stopped in an existing GNU-utility-dependent startup fixture on
+BSD `stat`/`realpath`, so protected Linux CI remains the authoritative full
+gate. No private value or live configuration was read, inferred, or changed.
+Exact next action: publish through protected CI, cleanly fast-forward `office`,
+complete T-268's migration plan, then run only
+`./bin/harness agent-config-catch-up --host office --adopt --plan`.
+
+The correction is committed as `f50f3b2` on
+`task/t268-t269-coordinated-mac-catch-up` and normally pushed to `origin` after
+a fresh `origin/main` fetch confirmed it remained a direct descendant. PR
+creation then stopped because this pilot environment has no `gh` executable;
+authenticated Git push does not imply hosting-API authority, so no alternate
+credential or API route was attempted. Retry is safe: create the task PR from
+the pushed branch, require protected `portable-phase1`, merge without force,
+then resume the clean `office` catch-up and the two plan-only commands in the
+recorded order. No pilot plan has run in this resumed session.
 
 ## Stable operational facts
 

@@ -26,7 +26,8 @@ mkdir -p "$PUBLIC/bin" "$PUBLIC/libexec" "$PUBLIC/config/agent-clients"
 cp "$ROOT/bin/harness" "$ROOT/bin/harness-codex" "$PUBLIC/bin/"
 cp "$ROOT/libexec/harness-agent-config" "$ROOT/libexec/harness-common" \
     "$ROOT/libexec/harness-agent-config-catch-up" \
-    "$ROOT/libexec/harness-macos-common" "$PUBLIC/libexec/"
+    "$ROOT/libexec/harness-macos-common" \
+    "$ROOT/libexec/harness-macos-update" "$PUBLIC/libexec/"
 cp "$ROOT/config/agent-clients/codex.toml" \
     "$ROOT/config/agent-clients/claude.json" \
     "$ROOT/config/agent-clients/components.tsv" \
@@ -34,6 +35,13 @@ cp "$ROOT/config/agent-clients/codex.toml" \
 chmod 755 "$PUBLIC/bin/harness" "$PUBLIC/bin/harness-codex" \
     "$PUBLIC/libexec/harness-agent-config" \
     "$PUBLIC/libexec/harness-agent-config-catch-up"
+cat >"$PUBLIC/libexec/harness-macos-update" <<'EOF'
+#!/bin/sh
+printf 'DELEGATED_MACOS_UPDATE'
+for argument do printf ' %s' "$argument"; done
+printf '\n'
+EOF
+chmod 755 "$PUBLIC/libexec/harness-macos-update"
 git -C "$PUBLIC" init -q -b main
 git -C "$PUBLIC" config user.name agent-config-test
 git -C "$PUBLIC" config user.email agent-config-test.invalid
@@ -68,7 +76,21 @@ run_config() {
 transaction() { sed -n 's/.*transaction=\([^ ]*\).*/\1/p' "$1"; }
 
 catch_home=$(make_home catch-up)
+LINUX_FAKE_BIN=$TEMP_DIR/linux-fake-bin
+mkdir "$LINUX_FAKE_BIN"
+cat >"$LINUX_FAKE_BIN/uname" <<'EOF'
+#!/bin/sh
+if [ ! -e "$UNAME_FIRST_CALL" ]; then
+    : >"$UNAME_FIRST_CALL"
+    printf '%s\n' Linux
+else
+    /usr/bin/uname "$@"
+fi
+EOF
+chmod 755 "$LINUX_FAKE_BIN/uname"
 HOME="$catch_home" HARNESS_ROOT="$PUBLIC" \
+    UNAME_FIRST_CALL="$TEMP_DIR/uname-first-call" \
+    PATH="$LINUX_FAKE_BIN:/usr/bin:/bin" \
     "$PUBLIC/libexec/harness-agent-config-catch-up" --apply --drill \
     >"$TEMP_DIR/catch-up.out"
 grep -F 'checkout=fast-forward' "$TEMP_DIR/catch-up.out" >/dev/null ||
@@ -77,6 +99,54 @@ grep -F 'status=ready activation=new-sessions' "$TEMP_DIR/catch-up.out" >/dev/nu
     fail "direct catch-up readiness"
 [ "$(git -C "$PUBLIC" rev-parse HEAD)" = "$(git -C "$PUBLIC" rev-parse origin/main)" ] ||
     fail "direct catch-up target"
+
+# The Mac route must compose with macos-update and must not independently
+# advance the public checkout. A stub isolates the routing contract here;
+# test-personal-macos-update.sh exercises the delegated compatibility and
+# migration engine itself.
+printf '%s\n' coordinated >"$PUBLISHER/coordinated-catch-up-marker"
+git -C "$PUBLISHER" add coordinated-catch-up-marker
+git -C "$PUBLISHER" commit -q -m 'synthetic coordinated release'
+git -C "$PUBLISHER" push -q origin main
+git -C "$PUBLIC" fetch -q origin main
+MAC_PRIVATE_SOURCE=$TEMP_DIR/mac-private-source
+MAC_PRIVATE_ORIGIN=$TEMP_DIR/mac-private-origin.git
+mac_home=$(make_home mac-catch-up)
+mkdir -p "$MAC_PRIVATE_SOURCE" "$mac_home/.config/harness"
+git -C "$MAC_PRIVATE_SOURCE" init -q -b main
+git -C "$MAC_PRIVATE_SOURCE" config user.name agent-config-test
+git -C "$MAC_PRIVATE_SOURCE" config user.email agent-config-test.invalid
+printf '%s\n' 'schema=synthetic' >"$MAC_PRIVATE_SOURCE/companion.conf"
+git -C "$MAC_PRIVATE_SOURCE" add companion.conf
+git -C "$MAC_PRIVATE_SOURCE" commit -q -m baseline
+git init -q --bare -b main "$MAC_PRIVATE_ORIGIN"
+git -C "$MAC_PRIVATE_SOURCE" remote add origin "$MAC_PRIVATE_ORIGIN"
+git -C "$MAC_PRIVATE_SOURCE" push -q -u origin main
+git clone -q "$MAC_PRIVATE_ORIGIN" "$mac_home/.config/harness/private"
+MAC_FAKE_BIN=$TEMP_DIR/mac-fake-bin
+mkdir "$MAC_FAKE_BIN"
+cat >"$MAC_FAKE_BIN/uname" <<'EOF'
+#!/bin/sh
+printf '%s\n' Darwin
+EOF
+chmod 755 "$MAC_FAKE_BIN/uname"
+mac_public_before=$(git -C "$PUBLIC" rev-parse HEAD)
+HOME="$mac_home" HARNESS_ROOT="$PUBLIC" \
+    PATH="$MAC_FAKE_BIN:/usr/bin:/bin" \
+    "$PUBLIC/libexec/harness-agent-config-catch-up" \
+    --host mac-test-pilot --adopt --plan >"$TEMP_DIR/mac-catch-up.out"
+grep -F 'MAC_AGENT_CONFIG_ROUTE public=fast-forward private=none compatibility=required migration=required' \
+    "$TEMP_DIR/mac-catch-up.out" >/dev/null || fail "coordinated Mac route"
+grep -F 'DELEGATED_MACOS_UPDATE --host mac-test-pilot --public-target ' \
+    "$TEMP_DIR/mac-catch-up.out" >/dev/null || fail "macos-update delegation"
+grep -F 'post_update_plan=required apply=not-requested' \
+    "$TEMP_DIR/mac-catch-up.out" >/dev/null || fail "Mac post-update plan boundary"
+[ "$(git -C "$PUBLIC" rev-parse HEAD)" = "$mac_public_before" ] ||
+    fail "Mac plan independently advanced public checkout"
+if [ "${HARNESS_AGENT_CONFIG_ROUTE_ONLY:-0}" = 1 ]; then
+    echo 'agent configuration catch-up routing tests: PASS'
+    exit 0
+fi
 
 home=$(make_home absent)
 run_config "$home" --plan >"$TEMP_DIR/absent.plan"
