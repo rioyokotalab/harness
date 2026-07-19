@@ -3,14 +3,15 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/harness-macos-config-migrate-test.XXXXXX")
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-macos-config-migrate-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
     if [ -d "$TEMP_DIR" ]; then
-        "$CLEANUP" "$HARNESS" "${TMPDIR:-/tmp}" "$TEMP_DIR" "${TMPDIR:-/tmp}" >/dev/null || status=1
+        "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEMP_DIR" "$TEMP_BASE" >/dev/null || status=1
     fi
     exit "$status"
 }
@@ -35,10 +36,18 @@ real_stat=$(command -v stat)
 cat >"$fake_bin/stat" <<'EOF'
 #!/bin/sh
 case "$1:$2" in
-    -f:%u) shift 2; exec "$MACOS_TEST_REAL_STAT" -c %u "$@" ;;
-    -f:%Lp) shift 2; exec "$MACOS_TEST_REAL_STAT" -c %a "$@" ;;
-    -f:%l) shift 2; exec "$MACOS_TEST_REAL_STAT" -c %h "$@" ;;
+    -f:%u) native_format=%u ;;
+    -f:%Lp) native_format=%a ;;
+    -f:%l) native_format=%h ;;
     *) exec "$MACOS_TEST_REAL_STAT" "$@" ;;
+esac
+shift 2
+case $(/usr/bin/uname -s) in
+    Darwin)
+        case "$native_format" in %a) native_format=%Lp ;; %h) native_format=%l ;; esac
+        exec "$MACOS_TEST_REAL_STAT" -f "$native_format" "$@"
+        ;;
+    *) exec "$MACOS_TEST_REAL_STAT" -c "$native_format" "$@" ;;
 esac
 EOF
 chmod 755 "$fake_bin/uname" "$fake_bin/stat"
@@ -64,7 +73,10 @@ cp "$ROOT/tests/fixtures/personal-macos/private-v2/bashrc" "$private/bashrc"
 : >"$private/tmux.conf"
 cp "$ROOT/tests/fixtures/personal-macos/private-v1/hosts/mac-test-pilot.conf" \
     "$private/hosts/office.conf"
-sed -i 's/mac-test-pilot/office/' "$private/hosts/office.conf"
+case $(uname -s) in
+    Darwin) sed -i '' 's/mac-test-pilot/office/' "$private/hosts/office.conf" ;;
+    *) sed -i 's/mac-test-pilot/office/' "$private/hosts/office.conf" ;;
+esac
 chmod 700 "$private" "$private/.git" "$private/hosts"
 chmod 600 "$private/companion.conf" "$private/ssh_config" "$private/bashrc" \
     "$private/tmux.conf" "$private/hosts/office.conf"

@@ -216,6 +216,18 @@ fleet-sync focused suites already pass natively; longer control/update/sync
 fixtures can exceed the local command window, so protected phase-1 remains the
 required aggregate gate before merge.
 
+PR #99 passed protected phase-1 and merged as `75c99c5`; `local` and all six
+Linux checkouts are clean/equal-ref at that commit. Native macOS focused tests
+now also pass for Bash, Homebrew, tmux, config migration, checkpoint/restart,
+public-repository audit, and the synthetic Linux SSH-config mirror. This work
+found one remaining production portability gap: `guarded_delete_tree`, used by
+tool/runtime/rollback cleanup, still wrapped the already portable guard with
+Linux-only account, canonical-path, and metadata commands. Add Darwin adapters
+for authoritative account-home lookup and existing-path owner/mode/identity
+checks without changing its protected targets, manifest, apply revalidation,
+or post-delete exact-unlink behavior. The full guarded-delete suite must pass
+natively on Darwin and in protected Linux CI before rollout.
+
 ### T-271 — Comprehensive post-pilot update and cleanup
 
 **Phase/status:** `complete`. Reconciled stale public ledger/control-plane

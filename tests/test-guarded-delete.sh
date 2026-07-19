@@ -4,12 +4,16 @@ set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
 RULES=$ROOT/.codex/rules/default.rules
-TEST_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/guarded-delete-test.XXXXXX")
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+TEST_ROOT=$(mktemp -d "$TEMP_BASE/guarded-delete-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 
 fail() {
     echo "FAIL: $*" >&2
     exit 1
+}
+file_mode() {
+    case $(uname -s) in Darwin) stat -f %Lp "$1" ;; *) stat -c %a "$1" ;; esac
 }
 
 token_from() {
@@ -32,8 +36,8 @@ cleanup() {
     trap - EXIT HUP INT TERM
     cleanup_failed=0
     if [ -d "$TEST_ROOT" ]; then
-        "$CLEANUP" "$HARNESS" "${TMPDIR:-/tmp}" "$TEST_ROOT" \
-            "${TMPDIR:-/tmp}" >/dev/null || cleanup_failed=1
+        "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEST_ROOT" \
+            "$TEMP_BASE" >/dev/null || cleanup_failed=1
     fi
     if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
         echo "FAIL: guarded-delete suite cleanup" >&2
@@ -141,8 +145,10 @@ expect_failure 'target is or contains current HOME' \
 [ -d "$TEST_ROOT/internal/fake-home" ] ||
     fail "internal guarded deletion removed fake HOME on refusal"
 
+home_parent=${HOME%/*}
+[ -n "$home_parent" ] || home_parent=/
 expect_failure '--within is too broad and contains a protected anchor' \
-    "$TEST_ROOT/cleanup-home.out" "$CLEANUP" "$HARNESS" /home "$HOME" \
+    "$TEST_ROOT/cleanup-home.out" "$CLEANUP" "$HARNESS" "$home_parent" "$HOME" \
     "${TMPDIR:-/tmp}"
 [ -d "$HOME" ] || fail "adversarial cleanup removed the account home"
 
@@ -186,7 +192,7 @@ success_manifest="$TEST_ROOT/success manifest"
     "$TEST_ROOT/root/success target") >"$TEST_ROOT/success.plan"
 success_token=$(token_from "$TEST_ROOT/success.plan")
 [ -n "$success_token" ] || fail "success plan token"
-[ "$(stat -c '%a' "$success_manifest")" = 600 ] || fail "manifest mode"
+[ "$(file_mode "$success_manifest")" = 600 ] || fail "manifest mode"
 grep -F "NEXT harness guarded-delete apply --manifest '$success_manifest' --token $success_token" \
     "$TEST_ROOT/success.plan" >/dev/null || fail "shell-quoted next command"
 (cd "$ROOT" && "$HARNESS" guarded-delete apply \
@@ -215,7 +221,11 @@ printf '%s\n' \
     'else' \
     '    exec /usr/bin/getent "$@"' \
     'fi' >"$TEST_ROOT/fake-bin/getent"
-chmod 700 "$TEST_ROOT/fake-bin/getent"
+cat >"$TEST_ROOT/fake-bin/dscacheutil" <<'EOF'
+#!/bin/sh
+printf 'dir: %s\n' "$FAKE_ACCOUNT_HOME"
+EOF
+chmod 700 "$TEST_ROOT/fake-bin/getent" "$TEST_ROOT/fake-bin/dscacheutil"
 alias_home=$TEST_ROOT/aliased-home-root/account
 alias_path=$TEST_ROOT/fake-bin:$PATH
 
@@ -252,7 +262,7 @@ expect_failure 'canonical account home changed since plan' \
 
 expect_failure '--within is too broad and contains a protected anchor' \
     "$TEST_ROOT/protected-home.out" "$HARNESS" guarded-delete plan \
-    --within /home --manifest "$TEST_ROOT/protected-home.manifest" -- "$HOME"
+    --within "$home_parent" --manifest "$TEST_ROOT/protected-home.manifest" -- "$HOME"
 [ -d "$HOME" ] || fail "protected home disappeared"
 
 expect_failure 'target is not a strict descendant of --within' \
