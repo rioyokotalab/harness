@@ -194,7 +194,10 @@ only its unchanged postimage on rollback/failure recovery, and uses `:` for an
 otherwise empty login-only guard. Existing profiles retain exact backups and
 metadata. Synthetic absent apply/rollback/injected-failure tests pass. Exact
 next action: clean-commit, run phase one, publish through protected CI,
-fleet-sync, then resume at the untouched `local` plan.
+fleet-sync, then resume at the untouched `local` plan. The clean run passed all
+52 focused suites, guarded deletion, and compiler gates, explicitly skipped
+native MPI, and reached only the known Darwin doctor boundary; protected Ubuntu
+CI remains the publication gate.
 
 **Onboarding-skill checkpoint:** `skill-creator` initialized
 `shared/skills/onboard-personal-mac` with Codex UI metadata. The implemented
