@@ -102,6 +102,10 @@ and affects only subsequently started managed Bash processes.
 If the canonical `~/.tmux.conf` is absent, the helper creates exactly that one
 regular mode-0600 file empty. An empty tmux configuration preserves default
 runtime behavior while establishing the single future synchronization target.
+The validator accepts that empty defaults payload after its normal file,
+ownership, mode, size, and prohibited-content gates; it does not pass the
+commandless file to `source-file -n`, whose empty-input status varies between
+tmux releases. Nonempty payloads retain isolated parse-only validation.
 The helper never creates `~/tmux.conf`, `~/.config/tmux/tmux.conf`, a loader,
 or an override. Any existing symlink or non-regular canonical path still stops
 before seed planning.

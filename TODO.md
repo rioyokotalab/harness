@@ -1086,6 +1086,24 @@ refuse symlinks and other path types. Focused synthetic coverage exercises
 this exact absent-to-empty preparation. Publish the correction before the
 pilot fetches and safely reruns the helper.
 
+The published absent-path correction was then exercised on the pilot and
+created the intended empty regular mode-0600 canonical file, but the validator
+reported `tmux configuration grammar is invalid`. Public-code diagnosis found
+that the validator always invokes `source-file -n`; tmux releases differ on
+the status of a commandless source file even though an empty startup config is
+the deliberate default-behavior payload. The focused correction accepts an
+empty file only after all existing identity, mode, size, and prohibited-content
+checks, while retaining isolated parse-only validation for every nonempty
+payload. Synthetic coverage makes its tmux wrapper reject empty `source-file`
+input so this native semantic cannot regress. No live or private configuration
+content was inspected. Portable shell syntax, warning-level ShellCheck, a
+direct empty-file validator probe, and `git diff --check` pass locally. The
+complete focused suite reaches its previously recorded Darwin fixture limit
+(`stat -c` is unavailable), so protected Linux CI remains authoritative. Exact
+next action: publish through the protected task PR, require the complete
+`portable-phase1` check, fast-forward the clean pilot checkout, and safely
+rerun `macos-pilot-plan`; seed apply and session reload remain unauthorized.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
