@@ -171,6 +171,25 @@ run_config "$home" --apply >"$TEMP_DIR/noop.out"
 grep -F 'action=none activation=unchanged' "$TEMP_DIR/noop.out" >/dev/null ||
     fail "second apply no-op"
 
+# A single drifted path must be adoptable without rejecting or relinking the
+# two paths that are already current. Rollback restores only that preimage.
+unlink "$home/.local/bin/codex"
+ln -s /opt/owner/codex "$home/.local/bin/codex"
+run_config "$home" --adopt --apply >"$TEMP_DIR/partial.apply"
+partial_tx=$(transaction "$TEMP_DIR/partial.apply")
+[ -n "$partial_tx" ] || fail "partial adoption transaction"
+run_config "$home" --doctor >"$TEMP_DIR/partial.doctor"
+grep -F 'status=ready failures=0' "$TEMP_DIR/partial.doctor" >/dev/null ||
+    fail "partial adoption doctor"
+run_config "$home" --rollback "$partial_tx" >"$TEMP_DIR/partial.rollback"
+[ -L "$home/.local/bin/codex" ] &&
+    [ "$(readlink "$home/.local/bin/codex")" = /opt/owner/codex ] ||
+    fail "partial adoption rollback"
+run_config "$home" --adopt --apply >"$TEMP_DIR/partial.reapply"
+run_config "$home" --doctor >"$TEMP_DIR/partial.reapply.doctor"
+grep -F 'status=ready failures=0' "$TEMP_DIR/partial.reapply.doctor" >/dev/null ||
+    fail "partial adoption reapply doctor"
+
 FAKE_BIN=$TEMP_DIR/fake-bin
 PROJECT=$TEMP_DIR/project
 mkdir "$FAKE_BIN" "$PROJECT"
