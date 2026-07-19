@@ -1921,6 +1921,41 @@ T-181 instructions while allowing the current shared skill to evolve. Retry is
 safe; no installer, package, deletion, live link, credential, component, or
 session changed.
 
+**D12 publication / reviewed install / fresh-session stop (2026-07-19):** the
+corrected PR #81 run passed `portable-phase1` in 2m24s and squash-merged D12 as
+`7c74f1d`; clean `office` fast-forwarded to it. Exact official installer bytes
+with SHA-256 `1154e9da...a7a5d` passed syntax and destructive-target review.
+Non-interactive execution used an explicit alternate visible-command directory,
+kept profile mutation disabled through command-scoped `PATH`, reused the same
+single standalone package, and left no review artifact. The native entry and
+fresh Bash/tmux/Claude checks passed. Agent-config's pre-apply plan unexpectedly
+found a regular Codex file, absent Claude file, and the old native launcher
+symlink; the authorized adopt transaction preserved those preimages, linked all
+three public targets, and its doctor passed. Fresh Codex then reported the
+frozen approval/sandbox values and returned readiness, but final consistency
+found two independent current-client conflicts. First, Codex appended one
+redacted project section with only `trust_level` to the directly linked public
+body; a sanitized reproduction proved that the purported transient trust
+override is persisted. Second, the standalone runtime reclaimed
+`~/.local/bin/codex`, so the doctor now reports only the launcher as a different
+symlink. The public canonical body was restored after each reproduction and no
+private path/value entered Git. The cache contains two release directories;
+no obsolete release was deleted.
+
+Phase returns to `interviewing` for revised C2/C4. Recommended D13 leaves the
+official installer/runtime as sole owner of `codex`, installs the public wrapper
+under `~/.local/bin/harness-codex`, routes fresh managed interactive shells to
+that wrapper, and changes the live Codex config from a direct public link to a
+private local rendered file containing the canonical public settings plus
+client-persisted private trust records. Public Git never stores or reads those
+records; reconciliation validates only the canonical managed prefix and
+preserves an allowlisted local project-trust suffix transactionally. Claude
+remains a direct public link. Alternative D13 abandons wrapper/trust management
+and leaves native Codex plus its local config entirely owner-managed. No new
+apply, rollback, cleanup, package action, other-node change, or rollout is
+authorized until D13 is selected, its migration/rollback is frozen, and a fresh
+`go` follows.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
