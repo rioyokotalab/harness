@@ -242,6 +242,18 @@ rejected. The full evaluation selftest passes natively afterward. Also isolate
 the Restic scheduler fixture from BSD `date`/`stat`/`tr` and Homebrew-only `jq`
 locations; production scheduling remains Linux-native and unchanged.
 
+PR #101 passed protected phase-1 (including the isolated Restic schedule gate)
+and merged as `bb06628`; the evaluator selftest passes natively on Darwin and
+all seven managed checkouts are clean/equal-ref at that commit. A subsequent
+native validation batch passed onboarding, fleet audit, MPI routes, project
+intake, PyTorch, debugger, venv, and scientific-library gates. It exposed
+GNU-only metadata/canonicalization in three small read-only HPC helpers and
+their fixtures. Add Darwin adapters for shared-executable canonical paths and
+digests plus result/preflight metadata, while keeping the actual scheduler and
+topology probes Linux-only. Native focused shared-executable, result-hygiene,
+job-preflight, intake-validator, topology-audit, and storage-readiness tests
+must pass before protected publication.
+
 ### T-271 — Comprehensive post-pilot update and cleanup
 
 **Phase/status:** `complete`. Reconciled stale public ledger/control-plane

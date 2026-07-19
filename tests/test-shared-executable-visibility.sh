@@ -4,8 +4,12 @@ set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 CHECK=$ROOT/tests/smoke/jobs/shared-executable-visibility.sh
 BOUNDARY=$ROOT/tests/smoke/jobs
-EXPECTED=$(sha256sum "$CHECK" | awk '{ print $1 }')
-LINK=$(mktemp "${TMPDIR:-/tmp}/shared-executable-link.XXXXXX")
+case $(uname -s) in
+    Darwin) EXPECTED=$(shasum -a 256 "$CHECK" | awk '{ print $1 }') ;;
+    *) EXPECTED=$(sha256sum "$CHECK" | awk '{ print $1 }') ;;
+esac
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+LINK=$(mktemp "$TEMP_BASE/shared-executable-link.XXXXXX")
 unlink -- "$LINK"
 trap '[ ! -L "$LINK" ] || unlink -- "$LINK"' EXIT HUP INT TERM
 
@@ -18,7 +22,7 @@ if "$CHECK" "$BOUNDARY" "$CHECK" 00000000000000000000000000000000000000000000000
     exit 1
 fi
 ln -s -- "$CHECK" "$LINK"
-if "$CHECK" "${TMPDIR:-/tmp}" "$LINK" "$EXPECTED" >/dev/null 2>&1; then
+if "$CHECK" "$TEMP_BASE" "$LINK" "$EXPECTED" >/dev/null 2>&1; then
     printf '%s\n' 'FAIL: executable symlink accepted' >&2
     exit 1
 fi
