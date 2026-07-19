@@ -142,11 +142,12 @@ refuse ambiguous drift, support exact local rollback, and never interpret
    or publication.
 4. Do not place the current 93 absolute Linux trust records in the canonical
    Codex file. A tracked Bash launcher resolves the canonical current project
-   root locally and injects it as a transient trusted override, preserving one
-   settings body and keeping the resolved path out of Git. It must preserve all
-   arguments/subcommands, call the one native standalone installation through
-   its separate installer-managed visible entry, refuse recursive fallback,
-   and pass the frozen approval/sandbox settings explicitly.
+   native client through a separately named managed wrapper. Fresh interactive
+   shells route `codex` through that wrapper, while the official runtime retains
+   its native command. The wrapper must preserve all arguments/subcommands,
+   refuse recursive fallback, and pass the frozen approval/sandbox settings
+   explicitly. Client-written project trust remains in a strict private live
+   config suffix and never enters Git.
 5. Store reviewed portable Claude user-hook implementation in `harness`; hook
    references must be identical on every target. Exclude non-managed Codex
    command hooks because bypassing their hash review would also trust arbitrary

@@ -63,13 +63,13 @@ git -C "$PUBLISHER" push -q origin main
 
 make_home() {
     home=$TEMP_DIR/$1
-    mkdir -p "$home/.local/libexec/harness-codex-native"
-    chmod 700 "$home" "$home/.local/libexec/harness-codex-native"
-    cat >"$home/.local/libexec/harness-codex-native/codex" <<'EOF'
+    mkdir -p "$home/.local/bin"
+    chmod 700 "$home"
+    cat >"$home/.local/bin/codex" <<'EOF'
 #!/bin/sh
 printf '%s\n' "$@"
 EOF
-    chmod 755 "$home/.local/libexec/harness-codex-native/codex"
+    chmod 755 "$home/.local/bin/codex"
     printf '%s\n' "$home"
 }
 run_config() {
@@ -155,16 +155,16 @@ fi
 
 home=$(make_home absent)
 missing_native_home=$(make_home missing-native)
-unlink "$missing_native_home/.local/libexec/harness-codex-native/codex"
+unlink "$missing_native_home/.local/bin/codex"
 if run_config "$missing_native_home" --plan >"$TEMP_DIR/missing-native.out" 2>&1; then
     fail "missing native Codex accepted"
 fi
 grep -F 'AGENT_CONFIG_NATIVE_CODEX state=absent action=relocate-required' \
     "$TEMP_DIR/missing-native.out" >/dev/null || fail "missing native Codex state"
 recursive_native_home=$(make_home recursive-native)
-unlink "$recursive_native_home/.local/libexec/harness-codex-native/codex"
+unlink "$recursive_native_home/.local/bin/codex"
 ln -s "$PUBLIC/bin/harness-codex" \
-    "$recursive_native_home/.local/libexec/harness-codex-native/codex"
+    "$recursive_native_home/.local/bin/codex"
 if run_config "$recursive_native_home" --plan >"$TEMP_DIR/recursive-native.out" 2>&1; then
     fail "recursive native Codex accepted"
 fi
@@ -176,26 +176,37 @@ run_config "$home" --plan >"$TEMP_DIR/absent.plan"
 run_config "$home" --apply >"$TEMP_DIR/absent.apply"
 tx=$(transaction "$TEMP_DIR/absent.apply")
 [ -n "$tx" ] || fail "missing transaction"
-[ -L "$home/.codex/config.toml" ] &&
-    [ "$(readlink "$home/.codex/config.toml")" = "$PUBLIC/config/agent-clients/codex.toml" ] ||
-    fail "Codex canonical link"
+[ -f "$home/.codex/config.toml" ] && [ ! -L "$home/.codex/config.toml" ] &&
+    cmp -s "$home/.codex/config.toml" "$PUBLIC/config/agent-clients/codex.toml" ||
+    fail "Codex managed regular file"
 [ -L "$home/.claude/settings.json" ] &&
     [ "$(readlink "$home/.claude/settings.json")" = "$PUBLIC/config/agent-clients/claude.json" ] ||
     fail "Claude canonical link"
-[ -L "$home/.local/bin/codex" ] &&
-    [ "$(readlink "$home/.local/bin/codex")" = "$PUBLIC/bin/harness-codex" ] ||
+[ -L "$home/.local/bin/harness-codex" ] &&
+    [ "$(readlink "$home/.local/bin/harness-codex")" = "$PUBLIC/bin/harness-codex" ] ||
     fail "Codex launcher link"
 run_config "$home" --doctor >"$TEMP_DIR/doctor.out"
 grep -F 'status=ready failures=0' "$TEMP_DIR/doctor.out" >/dev/null ||
     fail "ready doctor"
+printf '%s\n' '' '[projects."/synthetic/private-project"]' \
+    'trust_level = "trusted"' >>"$home/.codex/config.toml"
+run_config "$home" --doctor >"$TEMP_DIR/trust-suffix.doctor"
+grep -F 'status=ready failures=0' "$TEMP_DIR/trust-suffix.doctor" >/dev/null ||
+    fail "private trust suffix doctor"
+printf '%s\n' 'model = "private"' >>"$home/.codex/config.toml"
+if run_config "$home" --doctor >"$TEMP_DIR/invalid-suffix.doctor" 2>&1; then
+    fail "invalid private suffix accepted"
+fi
+cp "$PUBLIC/config/agent-clients/codex.toml" "$home/.codex/config.toml"
+chmod 600 "$home/.codex/config.toml"
 run_config "$home" --apply >"$TEMP_DIR/noop.out"
 grep -F 'action=none activation=unchanged' "$TEMP_DIR/noop.out" >/dev/null ||
     fail "second apply no-op"
 
 # A single drifted path must be adoptable without rejecting or relinking the
 # two paths that are already current. Rollback restores only that preimage.
-unlink "$home/.local/bin/codex"
-ln -s /opt/owner/codex "$home/.local/bin/codex"
+unlink "$home/.local/bin/harness-codex"
+ln -s /opt/owner/codex "$home/.local/bin/harness-codex"
 run_config "$home" --adopt --apply >"$TEMP_DIR/partial.apply"
 partial_tx=$(transaction "$TEMP_DIR/partial.apply")
 [ -n "$partial_tx" ] || fail "partial adoption transaction"
@@ -203,8 +214,8 @@ run_config "$home" --doctor >"$TEMP_DIR/partial.doctor"
 grep -F 'status=ready failures=0' "$TEMP_DIR/partial.doctor" >/dev/null ||
     fail "partial adoption doctor"
 run_config "$home" --rollback "$partial_tx" >"$TEMP_DIR/partial.rollback"
-[ -L "$home/.local/bin/codex" ] &&
-    [ "$(readlink "$home/.local/bin/codex")" = /opt/owner/codex ] ||
+[ -L "$home/.local/bin/harness-codex" ] &&
+    [ "$(readlink "$home/.local/bin/harness-codex")" = /opt/owner/codex ] ||
     fail "partial adoption rollback"
 run_config "$home" --adopt --apply >"$TEMP_DIR/partial.reapply"
 run_config "$home" --doctor >"$TEMP_DIR/partial.reapply.doctor"
@@ -215,8 +226,7 @@ PROJECT=$TEMP_DIR/project
 mkdir "$PROJECT"
 git -C "$PROJECT" init -q
 launcher_output=$(cd "$PROJECT" && HOME="$home" \
-    PATH="$home/.local/bin:/usr/bin:/bin" codex exec --help)
-project_root=$(CDPATH='' cd -- "$PROJECT" && pwd -P)
+    PATH="$home/.local/bin:/usr/bin:/bin" harness-codex exec --help)
 printf '%s\n' "$launcher_output" | sed -n '1p' |
     grep -F -x -- '--ask-for-approval' >/dev/null || fail "launcher approval flag"
 printf '%s\n' "$launcher_output" | sed -n '2p' | grep -F -x never >/dev/null ||
@@ -225,12 +235,7 @@ printf '%s\n' "$launcher_output" | sed -n '3p' |
     grep -F -x -- '--sandbox' >/dev/null || fail "launcher sandbox flag"
 printf '%s\n' "$launcher_output" | sed -n '4p' |
     grep -F -x danger-full-access >/dev/null || fail "launcher sandbox value"
-printf '%s\n' "$launcher_output" | sed -n '5p' | grep -F -x -- '-c' >/dev/null ||
-    fail "launcher config flag"
-printf '%s\n' "$launcher_output" | sed -n '6p' |
-    grep -F -x "projects.\"$project_root\".trust_level=\"trusted\"" >/dev/null ||
-    fail "launcher transient trust"
-printf '%s\n' "$launcher_output" | sed -n '7p' | grep -F -x exec >/dev/null ||
+printf '%s\n' "$launcher_output" | sed -n '5p' | grep -F -x exec >/dev/null ||
     fail "launcher arguments"
 
 printf '%s\n' changed >"$home/.codex/config.toml.changed"
@@ -242,33 +247,33 @@ fi
 grep -F 'rollback blocked by changed live path' "$TEMP_DIR/changed.out" >/dev/null ||
     fail "changed link refusal"
 unlink "$home/.codex/config.toml"
-ln -s "$PUBLIC/config/agent-clients/codex.toml" "$home/.codex/config.toml"
+cp "$PUBLIC/config/agent-clients/codex.toml" "$home/.codex/config.toml"
+chmod 600 "$home/.codex/config.toml"
 unlink "$home/.codex/config.toml.changed"
 run_config "$home" --rollback "$tx" >"$TEMP_DIR/rollback.out"
 [ ! -e "$home/.codex" ] && [ ! -L "$home/.codex" ] || fail "Codex absent rollback"
 [ ! -e "$home/.claude" ] && [ ! -L "$home/.claude" ] || fail "Claude absent rollback"
-[ ! -e "$home/.local/bin" ] && [ ! -L "$home/.local/bin" ] || fail "launcher absent rollback"
+[ ! -e "$home/.local/bin/harness-codex" ] || fail "launcher absent rollback"
 
 adopt_home=$(make_home adopt)
 mkdir -p "$adopt_home/.codex" "$adopt_home/.claude" "$adopt_home/.local/bin"
-printf '%s\n' '# owner Codex' >"$adopt_home/.codex/config.toml"
+ln -s /opt/owner/codex-config "$adopt_home/.codex/config.toml"
 printf '%s\n' '{"owner":true}' >"$adopt_home/.claude/settings.json"
-ln -s /opt/owner/codex "$adopt_home/.local/bin/codex"
-chmod 640 "$adopt_home/.codex/config.toml" "$adopt_home/.claude/settings.json"
+ln -s /opt/owner/codex "$adopt_home/.local/bin/harness-codex"
+chmod 640 "$adopt_home/.claude/settings.json"
 if run_config "$adopt_home" --plan >"$TEMP_DIR/adopt-refuse.out" 2>&1; then
     fail "adoption accepted without authority"
 fi
 run_config "$adopt_home" --adopt --apply >"$TEMP_DIR/adopt.apply"
 adopt_tx=$(transaction "$TEMP_DIR/adopt.apply")
 run_config "$adopt_home" --rollback "$adopt_tx" >"$TEMP_DIR/adopt.rollback"
-grep -F -x '# owner Codex' "$adopt_home/.codex/config.toml" >/dev/null ||
-    fail "Codex regular preimage"
+[ -L "$adopt_home/.codex/config.toml" ] &&
+    [ "$(readlink "$adopt_home/.codex/config.toml")" = /opt/owner/codex-config ] ||
+    fail "Codex symlink preimage"
 grep -F -x '{"owner":true}' "$adopt_home/.claude/settings.json" >/dev/null ||
     fail "Claude regular preimage"
-[ "$(stat -c %a "$adopt_home/.codex/config.toml")" = 640 ] ||
-    fail "Codex preimage mode"
-[ -L "$adopt_home/.local/bin/codex" ] &&
-    [ "$(readlink "$adopt_home/.local/bin/codex")" = /opt/owner/codex ] ||
+[ -L "$adopt_home/.local/bin/harness-codex" ] &&
+    [ "$(readlink "$adopt_home/.local/bin/harness-codex")" = /opt/owner/codex ] ||
     fail "launcher symlink preimage"
 
 drill_home=$(make_home drill)
@@ -288,7 +293,8 @@ if run_config "$unsafe_home" --apply >"$TEMP_DIR/unsafe.out" 2>&1; then
 fi
 grep -F 'state=unsafe action=blocked' "$TEMP_DIR/unsafe.out" >/dev/null ||
     fail "unsafe destination refusal"
-[ ! -e "$unsafe_home/.local/bin" ] && [ ! -e "$unsafe_home/.local/state" ] ||
+[ ! -e "$unsafe_home/.local/bin/harness-codex" ] &&
+    [ ! -e "$unsafe_home/.local/state" ] ||
     fail "blocked apply mutated state"
 
 hardlink_home=$(make_home hardlink)
@@ -307,7 +313,7 @@ mkdir -p "$FAIL_BIN" "$failure_home/.codex" "$failure_home/.claude" \
     "$failure_home/.local/bin"
 printf '%s\n' codex-owner >"$failure_home/.codex/config.toml"
 printf '%s\n' claude-owner >"$failure_home/.claude/settings.json"
-printf '%s\n' launcher-owner >"$failure_home/.local/bin/codex"
+printf '%s\n' launcher-owner >"$failure_home/.local/bin/harness-codex"
 cat >"$FAIL_BIN/ln" <<'EOF'
 #!/bin/sh
 last=
@@ -330,7 +336,7 @@ grep -F -x codex-owner "$failure_home/.codex/config.toml" >/dev/null ||
     fail "partial failure did not restore Codex"
 grep -F -x claude-owner "$failure_home/.claude/settings.json" >/dev/null ||
     fail "partial failure did not restore Claude"
-grep -F -x launcher-owner "$failure_home/.local/bin/codex" >/dev/null ||
+grep -F -x launcher-owner "$failure_home/.local/bin/harness-codex" >/dev/null ||
     fail "partial failure did not preserve launcher"
 
 invalid=$TEMP_DIR/invalid-public

@@ -1988,6 +1988,21 @@ release, or cleanup-boundary mismatch stops. Phase is `ready-for-go`; no new
 implementation, apply, rollback, cleanup, package, session, or rollout action
 has run under D13.
 
+**D13 implementation checkpoint (2026-07-19):** generic public code now leaves
+the installer-owned native `codex` path untouched, manages only
+`harness-codex`, routes interactive Bash through a shell-local function, passes
+the frozen flags without a project override, and treats the live Codex config
+as an owner-only regular file. Doctor accepts only the exact public two-line
+prefix plus repeated trust-only project tables; invalid suffix content blocks
+without printing it. Apply renders the initial regular file, while Claude stays
+linked. Synthetic coverage passes native absence/recursion, private trust
+acceptance and invalid-suffix refusal, launcher flags, partial adoption,
+rollback/reapply, and injected failure recovery. Portable syntax, warning-level
+ShellCheck, focused agent-config, and diff checks pass. No live config, wrapper,
+native command, package, cleanup target, credential, component, or session
+changed. Exact next action: publish through protected CI before the frozen
+`office` migration.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

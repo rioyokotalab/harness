@@ -5,8 +5,9 @@ The harness owns exactly one public user-settings body for each client:
 - `config/agent-clients/codex.toml`
 - `config/agent-clients/claude.json`
 
-The live paths are direct links to those files. There is no rendered copy,
-private overlay, operating-system overlay, or host overlay. Authentication,
+Claude's live path is a direct link. Codex's live path is an owner-only regular
+file whose exact managed prefix is the public body and whose optional local
+suffix contains only client-written trusted-project tables. Authentication,
 credentials, sessions, histories, memories, caches, databases, private
 endpoints, and machine-specific trust remain outside this contract.
 
@@ -19,18 +20,16 @@ recursive-deletion circuit-breaker prompts.
 
 ## Project trust launcher
 
-`bin/harness-codex` resolves the current physical Git root, or the physical
-working directory outside Git, and supplies that exact path to the native Codex
-binary as a transient `projects."…".trust_level="trusted"` override. It also
-passes the frozen `never` approval and `danger-full-access` sandbox settings as
+`bin/harness-codex` calls the installer-owned native
+`~/.local/bin/codex` and passes the frozen `never` approval and
+`danger-full-access` sandbox settings as
 explicit CLI flags, which take precedence over ordinary configuration layers.
-It stores and prints no path. The managed live launcher is
-`~/.local/bin/codex`; the single native standalone installation exposes its
-separate visible entry at
-`~/.local/libexec/harness-codex-native/codex`. The wrapper refuses to search
-`PATH`, preventing recursion or silent fallback, and preserves all arguments
-and subcommands. Projects launched through another binary may still show the
-Codex trust screen or use different permission defaults.
+The managed live launcher is `~/.local/bin/harness-codex`. Fresh managed
+interactive Bash shells define a shell-local `codex` function that calls it;
+non-interactive and batch shells retain native resolution. The wrapper uses an
+absolute native path, preventing recursion or silent fallback, and preserves
+all arguments and subcommands. Client-persisted project trust stays only in the
+private live regular file and never dirties public Git.
 
 ## Declarative components
 
@@ -56,7 +55,7 @@ An existing regular file or different symlink is preservation state and blocks
 the normal plan. After separately reviewing its ownership and deciding that the
 public canonical body should replace it, plan with `--adopt`. Apply records a
 mode-0600 local manifest and exact regular-file or symlink preimages before
-atomically linking both settings files and the launcher:
+atomically rendering Codex and linking Claude plus the managed launcher:
 
 ```bash
 ./bin/harness agent-config --adopt --plan
@@ -64,7 +63,7 @@ atomically linking both settings files and the launcher:
 ```
 
 The apply output contains a transaction identifier. Rollback first proves all
-three live links and every transaction-created directory are unchanged, then
+three managed paths and every transaction-created directory are unchanged, then
 restores exact prior bytes, modes, and symlink targets. `--drill` automates one
 apply, unchanged-only rollback, accepted reapply, and doctor sequence. Changes
 activate only in fresh Codex and Claude sessions.

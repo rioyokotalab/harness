@@ -25,12 +25,11 @@ case "$project_root" in
 '*) echo "harness-codex: current project root cannot be encoded safely" >&2; exit 2 ;;
 esac
 
-native_codex=$HOME/.local/libexec/harness-codex-native/codex
+native_codex=$HOME/.local/bin/codex
 [ -x "$native_codex" ] || {
     echo "harness-codex: relocated native codex command is unavailable" >&2
     exit 2
 }
 
-override=projects.\"$project_root\".trust_level=\"trusted\"
 exec "$native_codex" --ask-for-approval never --sandbox danger-full-access \
-    -c "$override" "$@"
+    "$@"

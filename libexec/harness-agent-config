@@ -41,20 +41,10 @@ launcher_source=$HARNESS_ROOT/bin/harness-codex
 components_source=$HARNESS_ROOT/config/agent-clients/components.tsv
 codex_live=$HOME/.codex/config.toml
 claude_live=$HOME/.claude/settings.json
-launcher_live=$HOME/.local/bin/codex
-native_codex_dir=$HOME/.local/libexec/harness-codex-native
-native_codex_live=$native_codex_dir/codex
+launcher_live=$HOME/.local/bin/harness-codex
+native_codex_live=$HOME/.local/bin/codex
 
 native_codex_state() {
-    [ -d "$native_codex_dir" ] && [ ! -L "$native_codex_dir" ] || {
-        printf '%s\n' absent
-        return
-    }
-    [ "$(macos_stat_owner "$native_codex_dir")" = "$current_uid" ] &&
-        [ "$(macos_stat_mode "$native_codex_dir")" = 700 ] || {
-            printf '%s\n' unsafe
-            return
-        }
     [ -x "$native_codex_live" ] || {
         printf '%s\n' absent
         return
@@ -71,6 +61,23 @@ native_codex_state() {
         "$launcher_source_physical") printf '%s\n' recursive ;;
         *) printf '%s\n' ready ;;
     esac
+}
+
+codex_config_is_managed() {
+    [ -f "$codex_live" ] && [ ! -L "$codex_live" ] || return 1
+    [ "$(macos_stat_owner "$codex_live")" = "$current_uid" ] &&
+        [ "$(macos_stat_links "$codex_live")" = 1 ] || return 1
+    awk '
+        NR == 1 { if ($0 != "approval_policy = \"never\"") bad=1; next }
+        NR == 2 { if ($0 != "sandbox_mode = \"danger-full-access\"") bad=1; next }
+        NR > 2 {
+            if ($0 == "") next
+            if ($0 ~ /^\[projects\.\"([^\"\\]|\\.)+\"\]$/) { expect=1; next }
+            if (expect && $0 == "trust_level = \"trusted\"") { expect=0; next }
+            bad=1
+        }
+        END { exit NR >= 2 && !bad && !expect ? 0 : 1 }
+    ' "$codex_live" >/dev/null 2>&1
 }
 
 require_home() {
@@ -164,6 +171,18 @@ path_state() {
     fi
 }
 
+label_state() {
+    if [ "$1" = codex ]; then
+        if codex_config_is_managed; then printf '%s\n' current
+        elif [ -L "$codex_live" ]; then printf '%s\n' symlink
+        elif [ -e "$codex_live" ]; then printf '%s\n' unsafe
+        else printf '%s\n' absent
+        fi
+    else
+        path_state "$(label_destination "$1")" "$(label_source "$1")"
+    fi
+}
+
 require_safe_parent_chain() {
     parent=${1%/*}
     while [ "$parent" != "$HOME" ]; do
@@ -203,6 +222,8 @@ restore_label() {
     restore_source=$(label_source "$restore_label_name")
     if [ -L "$restore_destination" ] && [ "$(readlink "$restore_destination")" = "$restore_source" ]; then
         unlink "$restore_destination"
+    elif [ "$restore_label_name" = codex ] && codex_config_is_managed; then
+        unlink "$restore_destination"
     fi
     case "$restore_prior" in
         current) ;;
@@ -236,8 +257,12 @@ rollback_transaction() {
     for label in codex claude launcher; do
         destination=$(label_destination "$label")
         source=$(label_source "$label")
-        [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ] ||
-            die "agent configuration rollback blocked by changed live path"
+        if [ "$label" = codex ]; then
+            codex_config_is_managed || die "agent configuration rollback blocked by changed live path"
+        else
+            [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ] ||
+                die "agent configuration rollback blocked by changed live path"
+        fi
         record=$(awk -F'|' -v label="$label" '$1 == "path" && $2 == label { print; count++ } END { if (count != 1) exit 1 }' "$manifest") ||
             die "agent configuration transaction manifest is malformed"
         old_ifs=$IFS; IFS='|'; set -- $record; IFS=$old_ifs
@@ -296,7 +321,7 @@ for label in codex claude launcher; do
     destination=$(label_destination "$label")
     source=$(label_source "$label")
     require_safe_parent_chain "$destination"
-    state=$(path_state "$destination" "$source")
+    state=$(label_state "$label")
     case "$state:$adopt" in
         current:*) action=none ;;
         absent:*) action='link'; changes=$((changes + 1)) ;;
@@ -354,7 +379,7 @@ done
 for label in codex claude launcher; do
     destination=$(label_destination "$label")
     source=$(label_source "$label")
-    prior=$(path_state "$destination" "$source")
+    prior=$(label_state "$label")
     backup=absent
     prior_mode=absent
     case "$prior" in
@@ -401,13 +426,19 @@ for label in codex claude launcher; do
     source=$(label_source "$label")
     record=$(awk -F'|' -v label="$label" '$1 == "path" && $2 == label { print }' "$manifest")
     old_ifs=$IFS; IFS='|'; set -- $record; IFS=$old_ifs
-    [ "$(path_state "$destination" "$source")" = "$3" ] ||
+    [ "$(label_state "$label")" = "$3" ] ||
         die "agent configuration changed before link"
     [ "$3" = current ] && continue
     [ ! -e "$destination" ] && [ ! -L "$destination" ] || unlink "$destination"
-    ln -s "$source" "$destination"
-    [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ] ||
-        die "agent configuration link verification failed"
+    if [ "$label" = codex ]; then
+        cp "$source" "$destination"
+        chmod 600 "$destination"
+        codex_config_is_managed || die "agent configuration file verification failed"
+    else
+        ln -s "$source" "$destination"
+        [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ] ||
+            die "agent configuration link verification failed"
+    fi
 done
 printf '%s\n' complete >"$status_file"
 complete=1
