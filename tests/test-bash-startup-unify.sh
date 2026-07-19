@@ -18,6 +18,12 @@ trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
+file_mode() {
+    case $(uname -s) in
+        Darwin) stat -f %Lp "$1" ;;
+        *) stat -c %a "$1" ;;
+    esac
+}
 
 repo=$TEMP_DIR/repo
 home=$TEMP_DIR/home
@@ -61,8 +67,8 @@ if grep -F 'PRIVATE_SENTINEL' "$TEMP_DIR/plan.out" >/dev/null; then fail 'plan l
 run --host local --apply >"$TEMP_DIR/apply.out"
 transaction=$(sed -n 's/^BASH_STARTUP_UNIFY action=applied transaction=\([^ ]*\).*/\1/p' "$TEMP_DIR/apply.out")
 [ -n "$transaction" ] || fail 'transaction id'
-[ "$(stat -f %Lp "$home/.bashrc" 2>/dev/null || stat -c %a "$home/.bashrc")" = 640 ] || fail 'bashrc mode preservation'
-[ "$(stat -f %Lp "$home/.bash_profile" 2>/dev/null || stat -c %a "$home/.bash_profile")" = 600 ] || fail 'profile mode preservation'
+[ "$(file_mode "$home/.bashrc")" = 640 ] || fail 'bashrc mode preservation'
+[ "$(file_mode "$home/.bash_profile")" = 600 ] || fail 'profile mode preservation'
 grep -F -x '# >>> harness canonical bash profile >>>' "$home/.bash_profile" >/dev/null || fail 'thin profile marker'
 cmp -s "$home/.bash_profile" "$repo/shell/bash_profile.canonical" || fail 'exact thin profile'
 grep -F -x '# >>> harness login-only local >>>' "$home/.bashrc" >/dev/null || fail 'login-only marker'

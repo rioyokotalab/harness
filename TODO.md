@@ -208,6 +208,13 @@ native compiler gates, and the explicit MPI skip, then reaches only the known
 Darwin-to-Linux `local` doctor refusal. Protected Ubuntu phase-one is the
 remaining generic publication gate; no live startup plan or apply has run.
 
+Protected PR #112's first run failed only the new focused test on Ubuntu: its
+test-only mode helper tried BSD `stat -f` first, which GNU stat accepts with
+different filesystem output instead of failing into the fallback. The adapter
+itself preserved both modes; all other 51 suites passed. Select `stat` by
+`uname` like the established test helpers and rerun; no production behavior or
+live state changed.
+
 **Stage-1 implementation checkpoint:** the task branch adds a bounded Python
 focused-suite runner, an explicit manifest with per-suite labels/logs, a
 parallelism/failure-attribution regression, and a separately gated native MPI
