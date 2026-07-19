@@ -1773,6 +1773,28 @@ precedence before another apply. Do not adopt the launcher again or claim pilot
 acceptance until a protected correction preserves a separately callable native
 binary and fresh Codex reports both frozen values.
 
+**Revised C4 planning checkpoint (2026-07-19):** current official Codex
+guidance confirms that the standalone installer's visible command defaults to
+`~/.local/bin/codex`, while its package cache remains under `CODEX_HOME`; the
+frozen managed launcher therefore collided with the supported native install
+surface on this pilot. Official precedence places CLI flags above project,
+profile, user, system, and built-in configuration, subject to managed
+requirements. Value-free probes found no project/system config or local system
+requirements, and an explicit `--sandbox danger-full-access` fresh run passed,
+so full access is allowed; implicit fresh runs nevertheless reported changing
+read-only/workspace-write modes and cannot satisfy C1. Phase returns to
+`interviewing` for one revised C4 decision. Recommended D11 is to relocate the
+visible native standalone command to a separate documented install directory,
+then let the reviewed launcher own `~/.local/bin/codex` and pass the frozen
+approval/sandbox settings explicitly alongside transient trust. This adds one
+separately authorized official installer/package action but keeps `codex` as
+the ordinary command and avoids a private cached-target dependency. Alternative
+D11 is to leave native `codex` untouched and expose only a separately named
+managed wrapper, weakening C4 because ordinary `codex` invocations can bypass
+transient trust and frozen flags. No implementation or live action is
+authorized until D11 is selected, the exact installer command/rollback is
+planned, and a fresh `go` follows.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
