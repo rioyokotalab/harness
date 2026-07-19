@@ -1416,6 +1416,58 @@ the fragment is still nonempty, stop only for the owner to finish that
 content-level edit. No migration, tmux, private-companion, agent-config,
 package, authentication, rollback/reapply, or session apply is authorized.
 
+**Pilot-plan tmux-validator failure handoff (2026-07-19):** the authorized
+coordinated run started from a clean public `main` at
+`243d87f611fd72428466fa5e9b5b5ba66c116bb3`. The pilot helper opened the two
+curation files; its value-free editor status showed that the private Bash
+fragment was already empty, so the editor was closed without saving or changing
+either file. The helper advanced past the prior empty-fragment gate and then
+stopped before `macos-config-migrate --plan` with the exact result
+`harness: tmux configuration grammar is invalid`. No apply, private commit or
+push, tmux link, agent-config action, rollback/reapply, or session reload ran.
+Public-code and isolated-public-config diagnosis confirmed that tmux 3.7b fails
+to create the validator socket beneath macOS's long default temporary path with
+`File name too long`; the same tracked public tmux configuration parses
+successfully when the isolated validator uses a short `/tmp` socket root. This
+is a public validator-path portability failure, not evidence of invalid private
+content. Exact next action requires separate authority to implement and publish
+a synthetic-tested short-socket-root correction, then cleanly catch up
+`office` and retry only `./bin/harness macos-pilot-plan --host office`. The
+retry must still stop at the migration plan; no migration or tmux apply is
+authorized.
+
+**Tmux-validator correction checkpoint (2026-07-19):** the owner authorized
+the narrow public correction, focused synthetic validation, protected
+publication, clean pilot catch-up, and plan-only T-268/T-269 retry. The helper
+now creates its isolated tmux validation root directly beneath lexical `/tmp`,
+keeping the Unix socket path within the platform limit while retaining a
+private `mktemp` directory and exact socket/server/directory cleanup. A focused
+regression supplies an ambient temporary path long enough to reproduce the old
+failure and requires the public tmux plan to succeed. Portable shell syntax,
+warning-level ShellCheck, `git diff --check`, and direct native tmux 3.7b
+validation of the tracked public config under a long ambient temporary path
+pass. The complete tmux adapter test on this Mac reaches its already-recorded
+BSD fixture limit (`realpath -e`) before the adapter assertions, so protected
+Linux `portable-phase1` remains the authoritative complete regression gate.
+No live or private configuration, link, package, session, or apply changed.
+Exact next action: commit and publish this correction through the protected PR
+workflow, then fast-forward clean `office` and retry the two authorized plans
+in order. Neither apply is authorized.
+
+**Publication transport handoff (2026-07-19):** correction commit `3bdb51d`
+was normally pushed as `origin/task/t268-tmux-short-socket` after a fresh fetch
+confirmed current `origin/main` remained `243d87f`. Automated PR creation then
+stopped because the native `gh` command and the standing owner helper
+`~/run_this.sh` are both absent on `office`. Authenticated Git push works, but
+hosting-service API access remains a separate unavailable capability; no
+package, authentication, live setting, or external service configuration was
+changed. Exact owner action: open a task PR from
+`task/t268-tmux-short-socket` to `main`, require `portable-phase1`, and merge
+without force only after it passes. Retry is safe: the remote branch is clean
+and published, no PR was created by this run, and neither T-268 nor T-269 apply
+ran. After merge, resume with a clean public fast-forward and the two authorized
+plans in order.
+
 ### T-269 — Private cross-platform Codex and Claude configuration
 
 **Phase/status:** `executing`. Mirror deliberately selected Codex and Claude
@@ -1567,6 +1619,16 @@ authentication, rollback/reapply, or session action. Exact next action is on
 office` and stop after its migration plan, then run only
 `./bin/harness agent-config-catch-up --host office --adopt --plan`. Neither
 apply is authorized.
+
+**Coordinated pilot gate handoff (2026-07-19):** T-269's adoption plan did not
+run because the preceding T-268 pilot helper stopped at the confirmed public
+tmux-validator temporary-path failure recorded above. No `agent-config-catch-up`
+command, live settings read, adoption, link mutation, component action,
+authentication action, rollback/reapply, or session reload ran. After the
+T-268 public correction is separately authorized, published, caught up on a
+clean `office`, and its migration plan completes, the exact next T-269 command
+remains `./bin/harness agent-config-catch-up --host office --adopt --plan`.
+Do not apply.
 
 ## Stable operational facts
 

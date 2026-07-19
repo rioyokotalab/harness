@@ -23,6 +23,13 @@ fail() { echo "FAIL: $*" >&2; exit 1; }
 command -v tmux >/dev/null 2>&1 || fail "tmux unavailable"
 home=$TEMP_DIR/home
 mkdir "$home"
+long_tmp=$TEMP_DIR/long-default-temporary-directory/with-enough-components/to-exceed-the-tmux-socket-path-limit
+mkdir -p "$long_tmp"
+HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$home" TMPDIR="$long_tmp" \
+    "$ROOT/libexec/harness-tmux-config" --plan >"$TEMP_DIR/long-tmp-plan.out" ||
+    fail "long TMPDIR tmux validation"
+grep -F 'state=absent action=link' "$TEMP_DIR/long-tmp-plan.out" >/dev/null ||
+    fail "long TMPDIR plan"
 HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$home" "$ROOT/libexec/harness-tmux-config" --plan \
     >"$TEMP_DIR/plan.out"
 grep -F 'state=absent action=link' "$TEMP_DIR/plan.out" >/dev/null || fail "absent plan"
