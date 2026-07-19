@@ -86,7 +86,7 @@ a delayed job. T-210 is complete and must not be repeated.
 
 ### T-271 — Comprehensive post-pilot update and cleanup
 
-**Phase/status:** `validating`. Reconcile stale public ledger/control-plane
+**Phase/status:** `complete`. Reconciled stale public ledger/control-plane
 state after the completed `office` pilot, then perform only the owner-selected
 bounded update and cleanup surfaces with independent safety and authority gates.
 
@@ -1830,3 +1830,4 @@ aggregate counts, hashes, or failure chronology is required.
 | T-266 | Corrected local MPI discovery: fresh interactive shells preserve an existing toolchain or load the reviewed Open MPI 5.0.8 module, tracked local batch jobs select the same module explicitly, and focused regression coverage protects both boundaries. |
 | T-267 | Ran three independent Claude Code cold-takeover tasks with bounded tools: ledger reconstruction and the MPI audit passed, Claude added a correct cross-host MPI isolation regression, exact permissions denied one extra history query and two spelling-variant test attempts, and primary review plus the complete portable suite passed. Durable evaluation: `docs/audits/claude-live-takeover-2026-07-18.md`. |
 | T-270 | Post-pilot repository housekeeping compacted superseded T-268/T-269 handoffs while preserving final applies and active authority boundaries; protected PR #74 passed `portable-phase1` and merged as `4e3f4ed`. One clean worktree, no open PRs, and no merged task branches remained; Homebrew, private transactions, live settings/sessions, and rollout state were untouched. |
+| T-271 | Corrected the stale post-pilot resume checkpoint, added manifest-compatible native macOS guarded-delete adapters with synthetic Darwin and protected Linux validation, and guardedly removed the sole known stage-14 temporary tree (239 entries, 53,144,497 bytes) with protected anchors unchanged; implementation PR #76 merged as `2e278a6`, outcome PR #77 as `0c1c3d2`. Packages, fleet/live configuration, drills, and sessions were unchanged. |
