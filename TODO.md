@@ -50,19 +50,18 @@ and compact historical pointers here. Next free ID: T-269.
 
 ## Next resume checkpoint
 
-Resume T-268 in `bash-order-interviewing`. The first personal-Mac pilot completed
-the atomic SSH/Bash/tmux seed, unchanged-only rollback, explicit forward
-reapply, final no-op reconciliation, and value-free doctor acceptance with zero
-failures or warnings. No active shell or tmux session was reloaded. The owner
-then clarified that Mac `.bashrc` ordering must mirror the Linux managed-prefix,
-machine-local-middle, managed-suffix model; the published Mac loader currently
-has only a managed suffix and does not satisfy that intent. Pause stage 16 and
-do not change another Mac until the replacement representation, migration, and
-rollback gates are frozen through PIE and published. The
-post-publication Linux fleet catch-up is independent: `ab`, `ab2`, `ri`, `rc`,
-and `t4` are clean at published checkpoint `01971f1`, with transfer artifacts
-absent; revalidate `al` separately after its declared certificate
-authentication is available. The shared local checkout remains on another
+Resume T-268 in `ready-for-go`. The corrective PIE decisions B2, B3, T1–T3,
+M1, and R1 are frozen: Macs reuse the existing public Linux Bash pre/post hooks
+around local startup bytes; the private Bash payload is retired through
+owner-guided lossless curation; all eleven environments use one reviewed public
+complete tmux config through `~/.tmux.conf`; and the pilot transition is one
+recoverable migration back to private SSH-only agreement. Wait for a fresh
+explicit `go` before implementation. Generic implementation and publication
+authorize no private/live access; pilot, Linux, and later-Mac applies retain the
+separate R1 gates. The five reachable remote checkouts `ab`, `ab2`, `ri`, `rc`,
+and `t4` are clean at published checkpoint `63af57f`, with transfer artifacts
+absent; AL was reachable for value-free tmux discovery but its harness checkout
+was not revalidated or advanced. The shared local checkout remains on another
 contributor's clean branch with `origin/main` fetched. Independently resume
 T-191 after the first Sunday eligibility. Fetch and prove a clean fleet, then
 query only the seven captured IDs below through their declared native scheduler
@@ -1256,8 +1255,27 @@ and converts local bundle state back to SSH-only agreement. Any live-file or
 state failure restores every exact preimage. A normal-pushed private schema
 advance is never force-rewound; a post-push local failure remains a bounded
 forward retry. Deliberate unchanged-only rollback/reapply is required, and no
-active shell or tmux server is reloaded. Open decision R1: freeze the sequential
-live rollout and separate authority gates after generic publication.
+active shell or tmux server is reloaded.
+
+**Decision R1:** selected generic implementation and protected publication
+first, with no live/private mutation; then an owner-started pilot plan and
+separately authorized apply/rollback/reapply; then a `local` Linux tmux
+plan/apply/rollback/reapply drill; then one reviewed authority bundle applied
+sequentially to the six remote Linux nodes with stop-on-first-failure; then one
+independently planned remaining Mac at a time. No apply reloads an active shell
+or tmux server.
+
+**Corrective decision audit:** B2/B3, T1–T3, M1, and R1 supersede D11–D13 and
+retain D14. They are consistent with D1–D10 and SSH S1–S10: Mac SSH remains the
+only private synchronized configuration; Bash and tmux advance through public
+harness catch-up; old Macs use a public-first migration bridge; the tmux file
+is complete and singular; private bytes never enter public evidence; all live
+replacements have exact unchanged-only rollback; and every later machine is
+independently validated. Phase is `ready-for-go`. A fresh `go` authorizes the
+generic implementation, synthetic validation, protected PR, and required
+clean-checkout fleet synchronization only. It does not authorize private
+companion access, owner curation, live hook/link mutation, rollback/reapply, or
+active-session reload; those remain the explicit R1 gates.
 
 ## Stable operational facts
 
