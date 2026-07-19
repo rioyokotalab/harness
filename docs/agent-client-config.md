@@ -21,11 +21,16 @@ recursive-deletion circuit-breaker prompts.
 
 `bin/harness-codex` resolves the current physical Git root, or the physical
 working directory outside Git, and supplies that exact path to the native Codex
-binary as a transient `projects."…".trust_level="trusted"` override. It stores
-and prints no path. The managed live launcher is `~/.local/bin/codex`; it finds
-the native client later on `PATH` without recursing into itself and preserves
-all arguments and subcommands. Projects launched through another binary may
-still show the Codex trust screen.
+binary as a transient `projects."…".trust_level="trusted"` override. It also
+passes the frozen `never` approval and `danger-full-access` sandbox settings as
+explicit CLI flags, which take precedence over ordinary configuration layers.
+It stores and prints no path. The managed live launcher is
+`~/.local/bin/codex`; the single native standalone installation exposes its
+separate visible entry at
+`~/.local/libexec/harness-codex-native/codex`. The wrapper refuses to search
+`PATH`, preventing recursion or silent fallback, and preserves all arguments
+and subcommands. Projects launched through another binary may still show the
+Codex trust screen or use different permission defaults.
 
 ## Declarative components
 

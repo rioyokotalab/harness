@@ -1827,6 +1827,21 @@ active-session reload, drill, other node, or rollout is authorized. Phase is
 `ready-for-go`; exact first action after a fresh `go` is the public launcher and
 transaction implementation, not the live installer.
 
+**D11 implementation checkpoint (2026-07-19):** the public launcher now calls
+only the fixed relocated native entry, refuses missing execution, passes
+explicit frozen approval/sandbox flags plus transient trust, and never searches
+`PATH`. Agent-config reports a value-free native-entry state and blocks plan or
+apply unless its private directory is owner-controlled mode 0700, its entry is
+executable, and its resolved target is not the public launcher. Synthetic
+coverage now rejects missing and recursive native entries and proves explicit
+flag order together with the existing partial-adopt/doctor/rollback/reapply
+sequence. Portable syntax, warning-level ShellCheck, and diff checks pass; the
+focused Mac run passed every new assertion before reaching its separately
+recorded GNU `stat -c` fixture failure. No installer, package cache, live path,
+credential, component, or session changed. Exact next action: publish the
+generic correction through protected Linux CI before running the frozen
+official installer relocation on `office`.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

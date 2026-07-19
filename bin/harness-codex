@@ -25,24 +25,12 @@ case "$project_root" in
 '*) echo "harness-codex: current project root cannot be encoded safely" >&2; exit 2 ;;
 esac
 
-native_codex=
-old_ifs=$IFS
-IFS=:
-for path_entry in $PATH; do
-    [ -n "$path_entry" ] || path_entry=.
-    candidate=$path_entry/codex
-    [ -x "$candidate" ] || continue
-    case "$candidate" in
-        "$HOME/.local/bin/codex"|"$HARNESS_ROOT/bin/harness-codex") continue ;;
-    esac
-    native_codex=$candidate
-    break
-done
-IFS=$old_ifs
-[ -n "$native_codex" ] || {
-    echo "harness-codex: native codex command is unavailable outside the managed launcher" >&2
+native_codex=$HOME/.local/libexec/harness-codex-native/codex
+[ -x "$native_codex" ] || {
+    echo "harness-codex: relocated native codex command is unavailable" >&2
     exit 2
 }
 
 override=projects.\"$project_root\".trust_level=\"trusted\"
-exec "$native_codex" -c "$override" "$@"
+exec "$native_codex" --ask-for-approval never --sandbox danger-full-access \
+    -c "$override" "$@"
