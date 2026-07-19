@@ -2171,6 +2171,32 @@ synthetic/live-safe verification that cannot repeat the lossy pre-fix path.
 Retain all local transaction evidence and the recovery directory until D16 and
 fresh-session acceptance pass.
 
+**D16 acceptance / Linux rollout / D17:** PR #90 passed protected phase-1 and
+merged as `d670c2a`. Clean `local` fast-forwarded, doctor and no-change drill
+passed, a fresh isolated tmux server loaded the managed bindings, fresh
+interactive Bash resolved ordinary Codex through the managed function, native
+and wrapper Codex plus Claude reported versions, and the recovered 1/1/93
+private structure remained intact. Guarded deletion then removed only the
+retained recovery tree (5 entries, 9,670 bytes), verified protected anchors
+unchanged, and the exact manifest was unlinked; final doctor remained ready.
+
+Read-only fleet audit found all six Linux checkouts clean on common source
+`243d87f`, doctors at zero failures (RI retained two optional warnings), both
+declared storage roots ready, and all exact weekly successors present. Guarded
+fleet-sync plan/apply advanced all six by verified bundle to `d670c2a` with no
+artifact residue. Agent-config plans were unblocked; sequential stop-on-first-
+failure apply/drills completed on `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`, and
+every final doctor is ready. Transaction identifiers remain private locally.
+
+Tmux plans were absent/link on `ab`, `ab2`, `ri`, and `al`, then stopped before
+any apply because `rc` exposes lexical HOME `/home/users/rio.yokota` through
+canonical mount `/hs/work0/home/users/rio.yokota`; `t4` was not reached. D17
+adds those exact public identity fields only to the `rc` profile and permits a
+noncanonical lexical HOME only when logical host, lexical path, canonical path,
+directory type, and current owner all match. Add declared-alias apply/rollback
+and mismatch refusal coverage, publish through protected CI, fleet-sync the
+six clean checkouts again, and rerun the full tmux plan before any tmux apply.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

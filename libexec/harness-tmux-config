@@ -36,9 +36,27 @@ validate_checkout() {
 require_home() {
     case ${HOME:-} in /*) ;; *) die "tmux configuration requires an absolute HOME" ;; esac
     [ -d "$HOME" ] && [ ! -L "$HOME" ] &&
-        [ "$(macos_stat_owner "$HOME")" = "$current_uid" ] &&
-        [ "$(CDPATH='' cd -- "$HOME" && pwd -P)" = "$HOME" ] ||
+        [ "$(macos_stat_owner "$HOME")" = "$current_uid" ] ||
         die "tmux configuration HOME is unsafe or ambiguous"
+    physical_home=$(CDPATH='' cd -- "$HOME" && pwd -P) ||
+        die "tmux configuration HOME is unsafe or ambiguous"
+    if [ "$physical_home" != "$HOME" ]; then
+        logical_host=${HARNESS_LOGICAL_HOST:-}
+        case "$logical_host" in ''|*[!A-Za-z0-9._-]*)
+            die "tmux configuration HOME is unsafe or ambiguous" ;;
+        esac
+        profile=$(profile_for "$logical_host")
+        declared_home=$(config_get "$profile" home_root)
+        declared_physical_home=$(config_get "$profile" home_canonical_root)
+        if [ "${HARNESS_TESTING:-0}" = 1 ]; then
+            [ -z "${HARNESS_HOME_ROOT:-}" ] || declared_home=$HARNESS_HOME_ROOT
+            [ -z "${HARNESS_HOME_CANONICAL_ROOT:-}" ] ||
+                declared_physical_home=$HARNESS_HOME_CANONICAL_ROOT
+        fi
+        [ "$HOME" = "$declared_home" ] &&
+            [ "$physical_home" = "$declared_physical_home" ] ||
+            die "tmux configuration HOME is unsafe or ambiguous"
+    fi
 }
 
 declared_local_symlink_is_safe() {

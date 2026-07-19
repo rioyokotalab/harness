@@ -43,6 +43,33 @@ HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$home" "$ROOT/libexec/harness-tmux-config" --
     >"$TEMP_DIR/rollback.out"
 [ ! -e "$home/.tmux.conf" ] && [ ! -L "$home/.tmux.conf" ] || fail "absent rollback"
 
+alias_physical=$TEMP_DIR/alias-physical
+alias_parent=$TEMP_DIR/alias-parent
+mkdir -p "$alias_physical/home"
+ln -s "$alias_physical" "$alias_parent"
+alias_home=$alias_parent/home
+HARNESS_TESTING=1 HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$alias_home" \
+    HARNESS_LOGICAL_HOST=rc HARNESS_HOME_ROOT="$alias_home" \
+    HARNESS_HOME_CANONICAL_ROOT="$alias_physical/home" \
+    "$ROOT/libexec/harness-tmux-config" --apply >"$TEMP_DIR/alias-apply.out"
+[ -L "$alias_home/.tmux.conf" ] || fail "declared HOME alias apply"
+alias_transaction=$(sed -n 's/.*transaction=\([^ ]*\).*/\1/p' "$TEMP_DIR/alias-apply.out")
+HARNESS_TESTING=1 HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$alias_home" \
+    HARNESS_LOGICAL_HOST=rc HARNESS_HOME_ROOT="$alias_home" \
+    HARNESS_HOME_CANONICAL_ROOT="$alias_physical/home" \
+    "$ROOT/libexec/harness-tmux-config" --rollback "$alias_transaction" \
+    >"$TEMP_DIR/alias-rollback.out"
+[ ! -e "$alias_home/.tmux.conf" ] && [ ! -L "$alias_home/.tmux.conf" ] ||
+    fail "declared HOME alias rollback"
+if HARNESS_TESTING=1 HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$alias_home" \
+    HARNESS_LOGICAL_HOST=rc HARNESS_HOME_ROOT="$alias_home" \
+    HARNESS_HOME_CANONICAL_ROOT="$TEMP_DIR/wrong-home" \
+    "$ROOT/libexec/harness-tmux-config" --plan >"$TEMP_DIR/alias-refuse.out" 2>&1; then
+    fail "mismatched HOME alias accepted"
+fi
+grep -F 'tmux configuration HOME is unsafe or ambiguous' "$TEMP_DIR/alias-refuse.out" >/dev/null ||
+    fail "mismatched HOME alias refusal"
+
 layout_home=$TEMP_DIR/layout-home
 layout_root=$TEMP_DIR/layout-persistent
 mkdir -p "$layout_home" "$layout_root/local-state"
