@@ -1307,6 +1307,17 @@ session, or remote node was accessed or changed. Exact next action: fetch
 `origin`, push the task branch, open the protected PR, wait for required CI,
 merge without force, then run guarded clean-checkout fleet synchronization.
 
+**Protected-CI retry checkpoint:** PR #53 opened at
+`https://github.com/rioyokotalab/harness/pull/53`. Required run `29670914004`
+passed ShellCheck, scheduling, onboarding, evaluation, public-history privacy,
+and guarded-delete stages, then failed only because the new synthetic migration
+fixture tried to rename a branch in GitHub's detached-HEAD checkout. Commit
+`8fbd8f7` makes the fixture create `main` from detached HEAD while preserving
+the named-branch path. The migration suite passed both locally and from an
+isolated detached clone, and the complete portable phase-one suite passed again.
+Retry safety: push the normal fast-forward commit and wait for the replacement
+required check; no live or private state was involved.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
