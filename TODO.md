@@ -1237,7 +1237,10 @@ validation on disposable isolated servers passed the exact payload on all
 seven Linux nodes, including the 3.2a floor; every candidate file, socket, and
 temporary directory was exactly removed. No active server was contacted or
 reloaded. T3 is selected subject to the same native parse gate on each Mac
-before linking.
+before linking. Open decision B3: choose owner-guided side-by-side curation
+(recommended) or an automatic byte-preserving insertion for retiring the
+pilot's private Bash fragment. The migration must prove no retained private
+line is lost before removing that payload from the companion and local state.
 
 ## Stable operational facts
 
