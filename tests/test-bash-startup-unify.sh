@@ -49,7 +49,7 @@ cat "$prefix" >"$home/.bashrc"
 printf '%s\n' 'export BASHRC_LOCAL=kept' 'export PRIVATE_SENTINEL_BASHRC=opaque' >>"$home/.bashrc"
 cat "$repo/shell/bashrc.local.block" >>"$home/.bashrc"
 cat "$prefix" >"$home/.bash_profile"
-printf '%s\n' 'export PROFILE_LOGIN_ONLY=kept' 'export PRIVATE_SENTINEL_PROFILE=opaque' >>"$home/.bash_profile"
+printf '%s\n' 'export PROFILE_LOGIN_ONLY=kept' '. "$HOME/.bashrc"' 'export PRIVATE_SENTINEL_PROFILE=opaque' >>"$home/.bash_profile"
 cat "$repo/shell/bash_profile.local.block" >>"$home/.bash_profile"
 chmod 640 "$home/.bashrc"
 chmod 600 "$home/.bash_profile"
@@ -63,6 +63,7 @@ run() {
 
 run --host local --plan >"$TEMP_DIR/plan.out"
 grep -F 'state=merge' "$TEMP_DIR/plan.out" >/dev/null || fail 'merge plan'
+grep -F 'redundant_profile_loaders=1' "$TEMP_DIR/plan.out" >/dev/null || fail 'redundant loader classification'
 if grep -F 'PRIVATE_SENTINEL' "$TEMP_DIR/plan.out" >/dev/null; then fail 'plan leaked owner bytes'; fi
 run --host local --apply >"$TEMP_DIR/apply.out"
 transaction=$(sed -n 's/^BASH_STARTUP_UNIFY action=applied transaction=\([^ ]*\).*/\1/p' "$TEMP_DIR/apply.out")
@@ -74,6 +75,9 @@ cmp -s "$home/.bash_profile" "$repo/shell/bash_profile.canonical" || fail 'exact
 grep -F -x '# >>> harness login-only local >>>' "$home/.bashrc" >/dev/null || fail 'login-only marker'
 grep -F -x 'export PROFILE_LOGIN_ONLY=kept' "$home/.bashrc" >/dev/null || fail 'profile middle preservation'
 grep -F -x 'export BASHRC_LOCAL=kept' "$home/.bashrc" >/dev/null || fail 'bashrc middle preservation'
+if grep -F -x '. "$HOME/.bashrc"' "$home/.bashrc" >/dev/null; then fail 'recursive profile loader retained'; fi
+profile_login=$(HOME="$home" /bin/bash --noprofile --norc -c '. "$HOME/.bash_profile"; printf "%s|%s\n" "${BASHRC_LOCAL-unset}" "${PROFILE_LOGIN_ONLY-unset}"')
+[ "$profile_login" = 'kept|unset' ] || fail 'thin profile load'
 nonlogin=$(HOME="$home" /bin/bash --noprofile --norc -c '. "$HOME/.bashrc"; printf "%s|%s\n" "${BASHRC_LOCAL-unset}" "${PROFILE_LOGIN_ONLY-unset}"')
 [ "$nonlogin" = 'kept|unset' ] || fail 'non-login scope'
 login=$(HOME="$home" /bin/bash --noprofile --norc -l -c '. "$HOME/.bashrc"; printf "%s|%s\n" "${BASHRC_LOCAL-unset}" "${PROFILE_LOGIN_ONLY-unset}"')
