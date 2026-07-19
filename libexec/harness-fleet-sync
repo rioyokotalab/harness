@@ -87,9 +87,9 @@ origins=' '
 ref_repairs=' '
 echo "FLEET_SYNC mode=$mode from=$from to=$to transport=ssh-stream"
 for host in $hosts; do
-    echo "NATIVE ssh $host git-rev-parse+status+artifact-preflight"
+    echo "NATIVE ssh -x $host git-rev-parse+status+artifact-preflight"
     remote_command="/bin/sh -c '$remote_plan' sh '$from' '$to' '$filename'"
-    output=$(ssh -o BatchMode=yes -o ConnectTimeout=15 "$host" \
+    output=$(ssh -x -o BatchMode=yes -o ConnectTimeout=15 "$host" \
         "$remote_command") ||
         die "remote preflight failed: $host"
     set -- $output
@@ -113,7 +113,7 @@ for host in $hosts; do
     fi
     if [ "$remote_head" = "$to" ]; then
         keeps="$keeps$host "
-        echo "KEEP host=$host head=$remote_head"
+        echo "KEEP host=$host head=$remote_head origin=$remote_origin"
     elif [ "$remote_head" = "$from" ]; then
         updates="$updates$host "
         echo "UPDATE host=$host from=$from to=$to"
@@ -255,9 +255,9 @@ for host in $hosts; do
     [ -n "$remote_origin" ] || die "remote origin/main preflight record is missing: $host"
     case "$updates" in
         *" $host "*)
-            echo "NATIVE ssh $host verified-bundle-stdin+git-fetch+git-merge--ff-only+exact-unlink"
+            echo "NATIVE ssh -x $host verified-bundle-stdin+git-fetch+git-merge--ff-only+exact-unlink"
             remote_command="/bin/sh -c '$remote_apply' sh '$from' '$to' '$remote_origin' '$bundle_size' '$bundle_sha' '$filename'"
-            output=$(ssh -o BatchMode=yes -o ConnectTimeout=15 "$host" \
+            output=$(ssh -x -o BatchMode=yes -o ConnectTimeout=15 "$host" \
                 "$remote_command" <"$bundle") ||
                 die "remote fast-forward failed: $host"
             [ "$output" = "APPLIED head=$to origin=$to artifact=absent" ] ||
@@ -267,9 +267,9 @@ for host in $hosts; do
         *)
             case "$ref_repairs" in
                 *" $host "*)
-                    echo "NATIVE ssh $host git-update-ref-origin-main"
+                    echo "NATIVE ssh -x $host git-update-ref-origin-main"
                     remote_command="/bin/sh -c '$remote_ref_apply' sh '$to' '$remote_origin' '$filename'"
-                    output=$(ssh -o BatchMode=yes -o ConnectTimeout=15 "$host" \
+                    output=$(ssh -x -o BatchMode=yes -o ConnectTimeout=15 "$host" \
                         "$remote_command") || die "remote origin/main repair failed: $host"
                     [ "$output" = "REF_APPLIED origin=$to" ] ||
                         die "invalid remote origin/main repair output: $host"

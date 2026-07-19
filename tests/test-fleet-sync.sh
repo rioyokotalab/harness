@@ -92,6 +92,8 @@ run_sync --from "$old" --to "$new" --hosts n1,n2 --plan \
     fail "initial update plan"
 grep -F 'transport=ssh-stream' "$TEST_ROOT/plan.out" >/dev/null ||
     fail "transparent transport plan"
+grep -F 'NATIVE ssh -x n1 git-rev-parse+status+artifact-preflight' \
+    "$TEST_ROOT/plan.out" >/dev/null || fail "X11-disabled native transport plan"
 
 run_sync --from "$old" --to "$new" --hosts n1,n2 --apply \
     >"$TEST_ROOT/apply.out"
@@ -110,6 +112,8 @@ run_sync --from "$old" --to "$new" --hosts n1,n2 --plan \
     >"$TEST_ROOT/repeat.out"
 [ "$(grep -c '^KEEP host=' "$TEST_ROOT/repeat.out")" -eq 2 ] ||
     fail "idempotent keep plan"
+grep -F "KEEP host=n1 head=$new origin=$new" "$TEST_ROOT/repeat.out" >/dev/null ||
+    fail "idempotent keep ref evidence"
 
 git -C "$remote_root/n1/harness" update-ref refs/remotes/origin/main "$old" "$new"
 run_sync --from "$old" --to "$new" --hosts n1 --plan >"$TEST_ROOT/ref-plan.out"

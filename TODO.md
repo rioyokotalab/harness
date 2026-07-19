@@ -134,6 +134,17 @@ perform a ref-only compare-and-swap without touching the worktree. Add initial
 advance, idempotence, stale-ref repair, and divergence/refusal coverage before
 protected publication and guarded fleet repair.
 
+**Ref repair postflight / transport noise:** PR #94 passed protected phase-1
+and merged as `1b64b4a`. The guarded live plan proved all six stale refs were
+the same available ancestor; apply advanced each clean checkout and
+compare-and-swapped each `origin/main` to the target with bundle artifacts
+absent. Independent strict Git fsck, one-worktree, clean-status, and ref-
+equality checks passed on all seven managed environments; repeat plan is
+idempotent. RI/RC nevertheless emitted irrelevant X11-forwarding diagnostics
+because fleet-sync and agent-config-fleet omitted `ssh -x`. Add the explicit
+native flag to both controllers and their tests, and include verified origin
+identity in KEEP evidence; this changes no authentication or target state.
+
 ### T-271 — Comprehensive post-pilot update and cleanup
 
 **Phase/status:** `complete`. Reconciled stale public ledger/control-plane
