@@ -1468,6 +1468,31 @@ and published, no PR was created by this run, and neither T-268 nor T-269 apply
 ran. After merge, resume with a clean public fast-forward and the two authorized
 plans in order.
 
+**Tmux-validator publication and T-268 plan outcome (2026-07-19):** with the
+owner's narrow package authorization, Homebrew installed `gh` 2.96.0 and its
+automatic 30-day cleanup removed superseded formula versions, cached bottles,
+and old logs; it reported 54 outdated formulae but upgraded none of them.
+Authentication and other package intent were not changed. The now-available
+native CLI opened protected PR #71; required `portable-phase1` passed in 2m14s,
+and squash merge published the correction as
+`1d64949b86f98011936e164d2748c99c8a7d1efb`. The clean pilot checkout
+fast-forwarded to that exact `origin/main`. The authorized helper then reopened
+the two curation files, confirmed value-free that the private Bash fragment was
+empty, and closed without saving or changing either file. Its complete
+post-editor result was:
+
+```text
+MACOS_CONFIG_MIGRATE class=current private_layout=legacy action=migrate apply=not-requested activation=none
+END macos_config_migrate next=separate-apply-authority
+END macos_pilot_plan migration_apply=not-requested curation=owner-edited next=separate-migration-apply-authority
+```
+
+T-268 has therefore reached its required value-free migration plan. No
+migration, tmux link, private commit/push, rollback/reapply, or active-session
+reload ran. Exact next separately authorized apply command:
+`./bin/harness macos-config-migrate --host office --apply`. Do not run it
+without fresh owner authority.
+
 ### T-269 — Private cross-platform Codex and Claude configuration
 
 **Phase/status:** `executing`. Mirror deliberately selected Codex and Claude
@@ -1629,6 +1654,36 @@ T-268 public correction is separately authorized, published, caught up on a
 clean `office`, and its migration plan completes, the exact next T-269 command
 remains `./bin/harness agent-config-catch-up --host office --adopt --plan`.
 Do not apply.
+
+**Pilot adoption plan outcome (2026-07-19):** only after T-268 reached its
+migration-plan boundary, the corrected Darwin route ran
+`./bin/harness agent-config-catch-up --host office --adopt --plan` and exited
+zero with this complete value-free result:
+
+```text
+NATIVE git fetch --no-tags origin main
+NATIVE git fetch --no-tags origin main (private companion)
+MAC_AGENT_CONFIG_ROUTE public=none private=none compatibility=required migration=required
+MACOS_UPDATE mode=plan public=current private=current
+COMPAT engine_schema=2 private_schema=1
+MIGRATION state=initialize from=local-or-absent to=1
+END macos_update changes=not-applied fetch=explicit-separate-step
+AGENT_CONFIG_CATCH_UP mode=plan checkout=none target=current adopt=yes drill=no
+AGENT_CONFIG_PATH client=codex state=regular action=adopt
+AGENT_CONFIG_PATH client=claude state=regular action=adopt
+AGENT_CONFIG_PATH client=launcher state=symlink action=adopt
+AGENT_COMPONENTS declarations=0 action=none authorization=local
+AGENT_CONFIG mode=plan adopt=yes blocked=0 changes=3 activation=new-sessions
+END agent_config apply=not-requested
+END agent_config_catch_up changes=not-applied
+```
+
+T-269 has reached its required value-free adoption plan through `macos-update`.
+No live setting bytes were read, and no adoption, link mutation, component
+authorization, authentication, rollback/reapply, or session reload ran. Exact
+next separately authorized apply command:
+`./bin/harness agent-config-catch-up --host office --adopt --apply`. Do not run
+it without fresh owner authority, and retain T-268 migration apply precedence.
 
 ## Stable operational facts
 
