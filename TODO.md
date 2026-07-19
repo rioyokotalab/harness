@@ -1493,6 +1493,17 @@ reload ran. Exact next separately authorized apply command:
 `./bin/harness macos-config-migrate --host office --apply`. Do not run it
 without fresh owner authority.
 
+**T-268 pilot migration apply outcome (2026-07-19):** under fresh owner
+authority, the frozen migration apply completed from `class=current` and
+`private_layout=legacy`, reported `agreement=yes action=applied`, retained a
+private recoverable transaction, and advanced private history forward-only.
+Activation is limited to new managed shells and tmux servers. No active shell
+or tmux server was reloaded, and no rollback/reapply drill, package action, or
+unrelated private/public change ran. The private transaction identifier remains
+local and is deliberately omitted from public Git. Exact next owner action is
+to observe newly started managed Bash and tmux sessions. Any deliberate
+unchanged-only rollback/reapply drill remains a separate authority boundary.
+
 ### T-269 — Private cross-platform Codex and Claude configuration
 
 **Phase/status:** `executing`. Mirror deliberately selected Codex and Claude
@@ -1684,6 +1695,23 @@ authorization, authentication, rollback/reapply, or session reload ran. Exact
 next separately authorized apply command:
 `./bin/harness agent-config-catch-up --host office --adopt --apply`. Do not run
 it without fresh owner authority, and retain T-268 migration apply precedence.
+
+**T-269 pilot adoption apply outcome (2026-07-19):** after the successful
+T-268 migration apply, the owner ran the frozen Darwin catch-up apply. The
+coordinated `macos-update` route reported both checkouts current, compatible
+engine/private schemas, a complete local migration-state initialization, and
+`changes=applied package_actions=none`. Agent-config adopted the two regular
+client settings paths and existing launcher symlink as one complete recoverable
+transaction, then its immediate doctor reported all three paths current and
+`status=ready failures=0`. Component declarations remained zero and local
+authorization was untouched. Activation is limited to new sessions. No setting
+value, credential, component authorization, package, active-session reload, or
+rollback/reapply drill entered public evidence or changed outside the bounded
+apply. Private transaction identifiers remain local and are deliberately
+omitted from public Git. Exact next owner action is to start fresh Codex and
+Claude sessions on `office` and confirm the frozen ordinary-session behavior;
+any rollback/reapply drill or rollout beyond `office` requires its separately
+recorded authority.
 
 ## Stable operational facts
 
