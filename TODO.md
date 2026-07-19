@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-272.
+and compact historical pointers here. Next free ID: T-273.
 
 ## Current state
 
@@ -158,6 +158,19 @@ regular files. Declare those paths in the existing strict profile adapter,
 pass protected validation, synchronize clean nodes, and require noninteractive
 doctor to retain only the intentionally unavailable Docker/Podman warnings.
 The ripgrep transaction remains complete and rollback-capable locally.
+
+**Office Bash drift / implementation:** after the fleet reached `d3347ba`, a
+fresh value-free `office` doctor found one required failure and no warnings.
+The startup file remains an owner-controlled regular file with an exact managed
+prefix and one exact public suffix, but 124 bytes of owner content were appended
+after that suffix. The existing Bash-hook transaction safely refused this
+otherwise recoverable layout. Add a narrowly classified `relocatable` state
+that accepts only one exact prefix, one exact suffix, and newline-terminated
+owner content, byte-preserves that content in the local middle, restores the
+suffix at the end, and retains normal transaction rollback. Also make the
+focused test's guarded cleanup and fake BSD-stat shim native on Darwin. Publish
+through protected CI before running the value-free live plan/apply; do not read
+or emit the owner payload.
 
 ### T-271 — Comprehensive post-pilot update and cleanup
 
