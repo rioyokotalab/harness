@@ -593,12 +593,15 @@ def control_plane_paths(corpus: dict[str, Any], task: dict[str, Any]) -> set[str
         if not isinstance(value, str):
             fail(f"control-plane read must be a path: {task['id']}")
         relative = safe_relative(value)
-        if relative.parts[:2] != ("shared", "skills") or relative.name != "SKILL.md":
+        baseline_relative = relative
+        if relative.parts[:3] == ("evaluation", "control-plane", "shared"):
+            baseline_relative = Path(*relative.parts[2:])
+        if baseline_relative.parts[:2] != ("shared", "skills") or relative.name != "SKILL.md":
             fail(f"control-plane read is outside the skill boundary: {value}")
         live = ROOT / relative
         if not live.is_file() or live.is_symlink():
             fail(f"control-plane skill is unavailable: {live}")
-        frozen = git(["show", f"{corpus['baseline_revision']}:{relative.as_posix()}"]).encode()
+        frozen = git(["show", f"{corpus['baseline_revision']}:{baseline_relative.as_posix()}"]).encode()
         if live.read_bytes() != frozen:
             fail(f"control-plane skill differs from the frozen baseline: {relative}")
         paths.add(str(live))

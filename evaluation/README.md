@@ -6,6 +6,12 @@ experiment declaration; `evaluate.py` refuses undeclared tasks, dirty source
 state, changed baseline guidance, unsafe run roots, reused run IDs, malformed or
 unbounded event logs, and mismatched fixture/oracle digests.
 
+When a shared skill evolves after the frozen revision, its task may read an
+evaluation-local copy under `evaluation/control-plane/`. Validation maps that
+copy to the original shared-skill path and requires byte identity with the
+declared baseline revision, preserving historical instructions without
+preventing later control-plane maintenance.
+
 The selected experiment compares the unchanged harness baseline with one
 deterministic failure capsule. Both arms receive the same primary prompt and at
 most one fresh ephemeral retry. The baseline retry receives only a generic

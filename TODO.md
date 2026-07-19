@@ -1909,6 +1909,18 @@ the authoritative complete gate. No installer, package, deletion, live link,
 credential, component, or session changed. Exact next action: publish D12
 through protected CI before using the exception.
 
+**First protected D12 failure / frozen-evaluation correction:** PR #81 run
+`29685764237` stopped because T-181 correctly rejects a changed live control-
+plane skill relative to baseline `d5b82cd`. The policy semantics remain valid.
+The correction adds an evaluation-local byte-identical copy of the historical
+guarded-delete skill, points only the destructive-safety corpus task to it, and
+maps that declared path back to the original shared-skill path for baseline
+comparison. Direct byte comparison to the baseline revision, evaluator Python
+syntax, mapping validation, and diff checks pass. This preserves historical
+T-181 instructions while allowing the current shared skill to evolve. Retry is
+safe; no installer, package, deletion, live link, credential, component, or
+session changed.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
