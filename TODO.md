@@ -1100,11 +1100,13 @@ content was inspected. Portable shell syntax, warning-level ShellCheck, a
 direct empty-file validator probe, and `git diff --check` pass locally. The
 complete focused suite reaches its previously recorded Darwin fixture limit
 (`stat -c` is unavailable), so protected Linux CI remains authoritative. Exact
-next action: protected PR #48 passed the complete `portable-phase1` check in
-run `29667970217`, job `88141750148`, in 2m5s. Publish its ledger checkpoint,
-require the updated protected check, merge through the protected workflow,
-fast-forward the clean pilot checkout, and safely rerun `macos-pilot-plan`;
-seed apply and session reload remain unauthorized.
+Protected PR #48 passed its final required `portable-phase1` check in run
+`29668050198`, job `88141960274`, in 2m14s and squash-merged as published
+`main` `9043f38bf14a4b2de7d02206334c765a1c283f39`. The clean local checkout was
+fast-forwarded to that merge. Exact next action: publish this final handoff,
+synchronize only clean managed harness checkouts through guarded fleet-sync,
+then safely rerun `macos-pilot-plan` from the clean pilot; seed apply and
+session reload remain unauthorized.
 
 ## Stable operational facts
 
