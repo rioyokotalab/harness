@@ -1454,6 +1454,20 @@ Exact next action: commit and publish this correction through the protected PR
 workflow, then fast-forward clean `office` and retry the two authorized plans
 in order. Neither apply is authorized.
 
+**Publication transport handoff (2026-07-19):** correction commit `3bdb51d`
+was normally pushed as `origin/task/t268-tmux-short-socket` after a fresh fetch
+confirmed current `origin/main` remained `243d87f`. Automated PR creation then
+stopped because the native `gh` command and the standing owner helper
+`~/run_this.sh` are both absent on `office`. Authenticated Git push works, but
+hosting-service API access remains a separate unavailable capability; no
+package, authentication, live setting, or external service configuration was
+changed. Exact owner action: open a task PR from
+`task/t268-tmux-short-socket` to `main`, require `portable-phase1`, and merge
+without force only after it passes. Retry is safe: the remote branch is clean
+and published, no PR was created by this run, and neither T-268 nor T-269 apply
+ran. After merge, resume with a clean public fast-forward and the two authorized
+plans in order.
+
 ### T-269 — Private cross-platform Codex and Claude configuration
 
 **Phase/status:** `executing`. Mirror deliberately selected Codex and Claude
