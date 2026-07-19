@@ -7,7 +7,8 @@ JOB=$ROOT/tests/smoke/jobs/affinity-readiness.sh
 LOCAL=$ROOT/tests/smoke/jobs/local-affinity.slurm
 LOCAL_EPYC=$ROOT/tests/smoke/jobs/local-affinity-epyc.slurm
 ROUTES=$ROOT/profiles/hpc-affinity-routes.tsv
-work=$(mktemp -d "${TMPDIR:-/tmp}/harness-affinity-test.XXXXXX")
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+work=$(mktemp -d "$TEMP_BASE/harness-affinity-test.XXXXXX")
 
 cleanup() {
     status=$?
@@ -23,12 +24,19 @@ cleanup() {
 trap cleanup EXIT HUP INT TERM
 
 bash -n "$JOB" "$LOCAL" "$LOCAL_EPYC"
-c++ -std=c++20 -O2 -pthread -Wall -Wextra -Werror "$SOURCE" -o "$work/affinity"
-"$work/affinity" 2 | grep -E '^affinity=pass allowed_cpus=[0-9]+ online_cpus=[0-9]+ physical_cores=[0-9]+ pinned_workers=2$' >/dev/null
-if "$work/affinity" 1 >/dev/null 2>&1; then
-    printf '%s\n' 'FAIL: affinity gate accepted fewer than two CPUs' >&2
-    exit 1
-fi
+case $(uname -s) in
+    Linux)
+        c++ -std=c++20 -O2 -pthread -Wall -Wextra -Werror "$SOURCE" -o "$work/affinity"
+        "$work/affinity" 2 | grep -E '^affinity=pass allowed_cpus=[0-9]+ online_cpus=[0-9]+ physical_cores=[0-9]+ pinned_workers=2$' >/dev/null
+        if "$work/affinity" 1 >/dev/null 2>&1; then
+            printf '%s\n' 'FAIL: affinity gate accepted fewer than two CPUs' >&2
+            exit 1
+        fi
+        ;;
+    *)
+        printf '%s\n' 'SKIP native affinity smoke: Linux sched_getaffinity is required'
+        ;;
+esac
 grep -Fx '#YBATCH -r thrp_1' "$LOCAL" >/dev/null
 grep -Fx '#SBATCH --cpus-per-task=2' "$LOCAL" >/dev/null
 grep -Fx '#YBATCH -r epyc-7502_1' "$LOCAL_EPYC" >/dev/null
