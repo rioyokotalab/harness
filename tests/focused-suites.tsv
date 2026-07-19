@@ -1,0 +1,51 @@
+# path|failure label
+tests/test-startup-normalize.sh|startup normalization focused suite
+tests/test-focused-runner.sh|parallel focused-suite runner
+tests/test-ssh-agent-profile.sh|SSH agent profile focused suite
+tests/test-remote-session.sh|remote-session focused suite
+tests/test-safety-guards.sh|interactive safety-guard focused suite
+tests/test-github-rulesets.sh|GitHub ruleset payload focused suite
+tests/test-repository-independence.sh|repository independence focused suite
+tests/test-claude-takeover.sh|Claude takeover focused suite
+tests/test-local-mpi-profile.sh|local MPI profile focused suite
+tests/test-personal-macos-profile.sh|personal macOS private-profile focused suite
+tests/test-personal-macos-inventory.sh|personal macOS inventory focused suite
+tests/test-personal-macos-plan-doctor.sh|personal macOS plan/doctor focused suite
+tests/test-personal-macos-control.sh|personal macOS control-plane focused suite
+tests/test-personal-macos-homebrew.sh|personal macOS Homebrew focused suite
+tests/test-personal-macos-bash.sh|personal macOS Bash focused suite
+tests/test-personal-macos-bash-hooks.sh|personal macOS Bash-hook focused suite
+tests/test-tmux-config.sh|shared tmux configuration focused suite
+tests/test-agent-config.sh|agent configuration focused suite
+tests/test-agent-config-fleet.sh|agent configuration fleet focused suite
+tests/test-personal-macos-update.sh|personal macOS long-gap update focused suite
+tests/test-personal-macos-ssh-sync.sh|personal macOS SSH-sync focused suite
+tests/test-personal-macos-config-sync.sh|personal macOS config-sync focused suite
+tests/test-personal-macos-config-migrate.sh|personal macOS config-migration focused suite
+tests/test-ssh-config-mirror.sh|fixed SSH-config mirror focused suite
+tests/test-restic-schedule.sh|Restic schedule focused suite
+tests/test-onboard-mirrored-node.sh|onboarding focused suite
+tests/test-evaluation.sh|evaluation focused suite
+tests/test-public-repo-audit.sh|public repository audit focused suite
+tests/test-fleet-readiness-audit.sh|fleet readiness audit focused suite
+tests/test-hpc-readiness.sh|HPC readiness job focused suite
+tests/test-hpc-multinode-mpi-routes.sh|multi-node MPI route focused suite
+tests/test-multinode-mpi-readiness.sh|multi-node MPI readiness focused suite
+tests/test-shared-executable-visibility.sh|shared executable visibility focused suite
+tests/test-hpc-result-hygiene.sh|HPC result hygiene focused suite
+tests/test-hpc-job-preflight.sh|HPC job preflight focused suite
+tests/test-hpc-topology-surface.sh|HPC topology surface focused suite
+tests/test-hpc-project-intake.sh|HPC project intake focused suite
+tests/test-hpc-project-intake-validator.sh|HPC project intake validator focused suite
+tests/test-llm-hpc-next-actions.sh|LLM/HPC next-action queue focused suite
+tests/test-pytorch-lock.sh|PyTorch dual-architecture lock focused suite
+tests/test-pytorch-readiness.sh|PyTorch single-device readiness focused suite
+tests/test-storage-readiness.sh|storage readiness focused suite
+tests/test-debugger-readiness.sh|debugger readiness focused suite
+tests/test-venv-readiness.sh|venv readiness focused suite
+tests/test-locked-venv-readiness.sh|locked venv readiness focused suite
+tests/test-scientific-library-readiness.sh|scientific library readiness focused suite
+tests/test-fleet-sync.sh|fleet sync focused suite
+tests/test-checkpoint-restart.sh|checkpoint restart focused suite
+tests/test-hpc-cpu-routes.sh|bounded CPU route focused suite
+tests/test-source-contract.sh|source contract focused suite
