@@ -236,6 +236,10 @@ Focused exact-content, mode, no-leftover, and injected recovery checks pass.
 Exact next action: publish after clean validation, fast-forward local, finish
 its rollback/reapply drill, then retry full fleet-sync before AB.
 
+The clean metadata-recovery run passed all 52 focused suites, guarded deletion,
+and compiler gates, explicitly skipped native MPI, and reached only the known
+Darwin doctor boundary; protected Ubuntu CI remains the publication gate.
+
 The clean cross-filesystem run passed all 52 focused suites, guarded deletion,
 and compiler gates, explicitly skipped native MPI, and reached only the known
 Darwin doctor boundary; protected Ubuntu CI remains the publication gate.
