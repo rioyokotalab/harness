@@ -36,6 +36,16 @@ def require_regular(path: Path, uid: int) -> os.stat_result:
     return info
 
 
+def optional_regular(path: Path, uid: int) -> os.stat_result | None:
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        return None
+    if not stat.S_ISREG(info.st_mode) or info.st_uid != uid or info.st_nlink != 1:
+        die(f"startup file has unsafe type, owner, or link count: {path.name}")
+    return info
+
+
 def read_public(path: Path) -> bytes:
     if not path.is_file() or path.is_symlink():
         die(f"public startup block is unavailable: {path}")
@@ -73,6 +83,8 @@ def prefix_for(host: str) -> bytes:
 
 def login_section(middle: bytes) -> bytes:
     payload = middle
+    if not payload:
+        payload = b"    :\n"
     if payload and not payload.endswith(b"\n"):
         payload += b"\n"
     return (
@@ -197,20 +209,30 @@ def rollback(root: Path, home: Path, transaction: str) -> None:
     for record in records:
         path = Path(record["path"])
         post = Path(record["post"])
-        backup = Path(record["backup"])
-        if path.parent != home or txroot not in backup.parents or txroot not in post.parents:
+        existed = record.get("existed", True)
+        backup_text = record.get("backup")
+        backup = Path(backup_text) if backup_text else None
+        if path.parent != home or txroot not in post.parents or \
+                (backup is not None and txroot not in backup.parents):
             die("Bash startup rollback path is unsafe")
         require_regular(path, uid)
         require_regular(post, uid)
-        require_regular(backup, uid)
+        if not isinstance(existed, bool) or existed != (backup is not None):
+            die("Bash startup transaction manifest is malformed")
+        if backup is not None:
+            require_regular(backup, uid)
         if not exact_equal(path, post):
             die(f"Bash startup rollback blocked by changed file: {path.name}")
     for record in records:
         path = Path(record["path"])
-        backup = Path(record["backup"])
-        candidate = txroot / f".{transaction}.{path.name}.rollback"
-        copy_metadata(backup, candidate)
-        os.replace(candidate, path)
+        backup_text = record.get("backup")
+        if backup_text:
+            backup = Path(backup_text)
+            candidate = txroot / f".{transaction}.{path.name}.rollback"
+            copy_metadata(backup, candidate)
+            os.replace(candidate, path)
+        else:
+            path.unlink()
     status_path.write_text("rolled-back\n", encoding="ascii")
     os.chmod(status_path, 0o600)
     print(f"BASH_STARTUP_UNIFY action=rolled-back transaction={transaction} activation=new-shells")
@@ -258,7 +280,7 @@ def main() -> int:
     bashrc = home / ".bashrc"
     profile = home / ".bash_profile"
     bashrc_info = require_regular(bashrc, uid)
-    profile_info = require_regular(profile, uid)
+    profile_info = optional_regular(profile, uid)
     prefix = prefix_for(args.host)
     bashrc_block = root / "shell" / f"bashrc.{args.host}.block"
     profile_block = root / "shell" / f"bash_profile.{args.host}.block"
@@ -269,10 +291,10 @@ def main() -> int:
     bashrc_suffix = read_public(bashrc_block)
     profile_suffix = read_public(profile_block)
     bashrc_data = bashrc.read_bytes()
-    profile_data = profile.read_bytes()
+    profile_data = profile.read_bytes() if profile_info is not None else b""
 
     thin_profile = read_public(root / "shell" / "bash_profile.canonical")
-    current = profile_data == thin_profile and bashrc_data.startswith(prefix) and \
+    current = profile_info is not None and profile_data == thin_profile and bashrc_data.startswith(prefix) and \
         bashrc_data.endswith(bashrc_suffix) and \
         bashrc_data.count(b"# >>> harness login-only local >>>") == 1 and \
         bashrc_data.count(b"# <<< harness login-only local <<<") == 1
@@ -282,12 +304,14 @@ def main() -> int:
         return 0
 
     bashrc_middle = split_managed(bashrc_data, prefix, bashrc_suffix, ".bashrc")
-    profile_middle = split_managed(profile_data, prefix, profile_suffix, ".bash_profile")
+    profile_middle = split_managed(profile_data, prefix, profile_suffix, ".bash_profile") \
+        if profile_info is not None else b""
     migrated_profile_middle, redundant_loaders = remove_redundant_bashrc_loaders(profile_middle)
     new_bashrc = prefix + login_section(migrated_profile_middle) + bashrc_middle + bashrc_suffix
     print(
         f"BASH_STARTUP_UNIFY mode={mode} host={args.host} state=merge "
         f"profile_local_bytes={len(profile_middle)} bashrc_local_bytes={len(bashrc_middle)} "
+        f"profile_prestate={'present' if profile_info is not None else 'absent'} "
         f"redundant_profile_loaders={redundant_loaders} "
         "action=canonical-bashrc+thin-profile"
     )
@@ -305,16 +329,20 @@ def main() -> int:
         (bashrc, bashrc_info, new_bashrc),
         (profile, profile_info, thin_profile),
     ):
-        backup = txroot / f"{transaction}.{path.name}.backup"
+        backup = txroot / f"{transaction}.{path.name}.backup" if info is not None else None
         post = txroot / f"{transaction}.{path.name}.post"
         candidate = txroot / f".{transaction}.{path.name}.candidate"
-        copy_metadata(path, backup)
-        os.chmod(backup, 0o600)
-        write_candidate(path, post, payload)
+        metadata_source = path if info is not None else bashrc
+        if backup is not None:
+            copy_metadata(path, backup)
+            os.chmod(backup, 0o600)
+        write_candidate(metadata_source, post, payload)
         os.chmod(post, 0o600)
-        write_candidate(path, candidate, payload)
+        write_candidate(metadata_source, candidate, payload)
         bash_syntax(candidate)
-        records.append({"path": str(path), "backup": str(backup), "post": str(post), "mode": stat.S_IMODE(info.st_mode)})
+        records.append({"path": str(path), "backup": str(backup) if backup else None,
+                        "post": str(post), "existed": info is not None,
+                        "mode": stat.S_IMODE(info.st_mode) if info is not None else None})
         candidates.append((path, candidate, post, backup))
     manifest = {"schema": 1, "operation": "bash-startup-unify", "host": args.host, "files": records}
     manifest_path.write_text(json.dumps(manifest, sort_keys=True) + "\n", encoding="utf-8")
@@ -333,10 +361,15 @@ def main() -> int:
                 raise RuntimeError("injected startup replacement failure")
     except Exception as error:
         for index in reversed(replaced):
-            path, _candidate, _post, backup = candidates[index]
-            recovery = txroot / f".{transaction}.{path.name}.recovery"
-            copy_metadata(backup, recovery)
-            os.replace(recovery, path)
+            path, _candidate, post, backup = candidates[index]
+            if backup is not None:
+                recovery = txroot / f".{transaction}.{path.name}.recovery"
+                copy_metadata(backup, recovery)
+                os.replace(recovery, path)
+            elif exact_equal(path, post):
+                path.unlink()
+            else:
+                raise RuntimeError("cannot remove changed newly-created startup file")
         status_path.write_text("failed\n", encoding="ascii")
         os.chmod(status_path, 0o600)
         die(f"Bash startup apply failed and prior files were restored: {error}")

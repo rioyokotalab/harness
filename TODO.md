@@ -183,6 +183,19 @@ The clean run passed all 52 focused suites, guarded deletion, and compiler
 gates, explicitly skipped native MPI, and reached only the known Darwin doctor
 boundary. Protected Ubuntu CI is the remaining publication gate.
 
+After PR #115 merged and synchronized at `af4408b`, `office` passed plan,
+apply, fresh login/interactive/non-login checks, exact rollback, baseline shell
+checks, reapply as transaction `20260719T225604Z-32395`, doctor, and idempotent
+plan. The first `local` plan then stopped without mutation because its valid
+Linux layout has no `.bash_profile` (the same declared state is expected on
+`ri`). The adapter follow-up creates the canonical thin profile from safe
+`.bashrc` metadata when absent, records absence transactionally, exact-unlinks
+only its unchanged postimage on rollback/failure recovery, and uses `:` for an
+otherwise empty login-only guard. Existing profiles retain exact backups and
+metadata. Synthetic absent apply/rollback/injected-failure tests pass. Exact
+next action: clean-commit, run phase one, publish through protected CI,
+fleet-sync, then resume at the untouched `local` plan.
+
 **Onboarding-skill checkpoint:** `skill-creator` initialized
 `shared/skills/onboard-personal-mac` with Codex UI metadata. The implemented
 skill requires one host, repository/TODO reconstruction, value-free discovery,
