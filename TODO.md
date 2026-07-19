@@ -213,6 +213,24 @@ apply. The clean run passed all 52 focused suites, guarded deletion, and
 compiler gates, explicitly skipped native MPI, and reached only the known
 Darwin doctor boundary; protected Ubuntu CI remains the publication gate.
 
+PR #119 merged at `87262a3`; local completed exact rollback, restored profile
+absence, baseline checks, reapply as `20260719T233812Z-582208`, doctor,
+idempotence, fresh shell, and a second explicit native MPI pass. Five reachable
+Linux nodes synchronized cleanly; AL twice rejected native public-key login and
+remains unchanged at `9ad4112`. AB's exact plan/doctor passed, but apply stopped
+before replacement because removing its conventional loader left only comments
+inside the new login guard. One unpublished adjacent candidate was exact-
+unlinked and verified absent. The follow-up unconditionally begins the guard
+with shell no-op `:` and removes unpublished candidate/post/backup artifacts if
+syntax validation fails. Focused validation passes. Exact next action: clean
+phase one, protected publication, sync the five reachable nodes, then retry AB;
+do not touch AL until native SSH authentication succeeds.
+
+The clean comment-only guard run passed all 52 focused suites, guarded
+deletion, and compiler gates, explicitly skipped native MPI, and reached only
+the known Darwin doctor boundary; protected Ubuntu CI remains the publication
+gate.
+
 PR #117 merged at `6604512`; local fast-forwarded, while the downstream
 fleet-sync stopped in preflight at a transient AL public-key rejection before
 any transfer. The resumed local apply then hit `EXDEV` on the first atomic

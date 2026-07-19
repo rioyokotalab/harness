@@ -82,9 +82,7 @@ def prefix_for(host: str) -> bytes:
 
 
 def login_section(middle: bytes) -> bytes:
-    payload = middle
-    if not payload:
-        payload = b"    :\n"
+    payload = b"    :\n" + middle
     if payload and not payload.endswith(b"\n"):
         payload += b"\n"
     return (
@@ -382,10 +380,17 @@ def main() -> int:
         if backup is not None:
             copy_metadata(path, backup)
             os.chmod(backup, 0o600)
-        write_candidate(metadata_source, post, payload)
-        os.chmod(post, 0o600)
-        write_candidate(metadata_source, candidate, payload)
-        bash_syntax(candidate)
+        try:
+            write_candidate(metadata_source, post, payload)
+            os.chmod(post, 0o600)
+            write_candidate(metadata_source, candidate, payload)
+            bash_syntax(candidate)
+        except BaseException:
+            candidate.unlink(missing_ok=True)
+            post.unlink(missing_ok=True)
+            if backup is not None:
+                backup.unlink(missing_ok=True)
+            raise
         records.append({"path": str(path), "backup": str(backup) if backup else None,
                         "post": str(post), "existed": info is not None,
                         "mode": stat.S_IMODE(info.st_mode) if info is not None else None})

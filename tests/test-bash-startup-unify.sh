@@ -77,6 +77,7 @@ fi
 grep -F -x '# >>> harness canonical bash profile >>>' "$home/.bash_profile" >/dev/null || fail 'thin profile marker'
 cmp -s "$home/.bash_profile" "$repo/shell/bash_profile.canonical" || fail 'exact thin profile'
 grep -F -x '# >>> harness login-only local >>>' "$home/.bashrc" >/dev/null || fail 'login-only marker'
+grep -F -x '    :' "$home/.bashrc" >/dev/null || fail 'login-only no-op command'
 grep -F -x 'export PROFILE_LOGIN_ONLY=kept' "$home/.bashrc" >/dev/null || fail 'profile middle preservation'
 grep -F -x 'export BASHRC_LOCAL=kept' "$home/.bashrc" >/dev/null || fail 'bashrc middle preservation'
 if grep -F '. "$HOME/.bashrc"' "$home/.bashrc" >/dev/null; then fail 'recursive profile loader retained'; fi
