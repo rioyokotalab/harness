@@ -2042,6 +2042,61 @@ public `main`, require a clean current checkout and native Codex, then run only
 `./bin/harness agent-config --adopt --plan`; review both value-free plans before
 separate apply authority.
 
+**`local` transport correction / branch stop:** the owner clarified that
+`office` reaches logical `local` through the exact `ssh login` transport. That
+connection and authenticated fetch succeeded, advancing only remote-tracking
+refs through current `origin/main` `038f2e7`. The rollout then stopped at the
+branch gate before fast-forward or either plan. A value-free recheck proved the
+checkout is clean but intentionally on `agent/explicit-skill-announcements`,
+two commits ahead and 46 behind current `origin/main`; the initial stop was not
+worktree dirt. Preserve this contributor branch and do not switch, merge,
+rebase, or make its checkout a live-link source without its owner's workflow.
+No tmux/agent-config plan, apply, drill, session, or live path ran. Exact next
+decision: finish/integrate that contributor branch through its normal protected
+workflow, or declare a separate persistent clean `main` checkout suitable as a
+long-lived live-link source; never use a disposable clone for live adoption.
+
+**Corrected `local` plan outcome / D14 required:** hosting evidence proved the
+clean retained branch belonged to already-merged PR #39, so its refs were
+preserved while the checkout switched to `main` and fast-forwarded from
+`5b4091b` to current `038f2e7`. Tmux plan then passed value-free as
+`state=absent action=link`. Agent-config stopped without mutation: native Codex
+was ready, Claude was a regular adoptable file, managed launcher absent, Codex
+config unsafe, and the launcher parent chain rejected the declared live
+`~/.local` symlink. Sanitized inspection reported no credential/private-
+endpoint markers; the private Codex file contains exactly the frozen approval/
+sandbox keys, opaque local `model` and `model_reasoning_effort` preferences,
+and 93 trust-only project tables matching the historical local baseline.
+
+Recommended D14 preserves both opaque local preferences and all trust records
+in the private rendered Codex file while public Git retains only the two frozen
+settings. Extend the private grammar to allow each optional model preference
+once as a TOML string without printing or publishing its value. Add a declared-
+layout parent adapter that permits only `~/.local` as a symlink when the local
+profile declares `.local` migration, its canonical target lies strictly below
+the declared persistent root, and target/descendant ownership and types pass;
+all other symlink parents remain blocked. Add synthetic escape, foreign-owner,
+undeclared-host, opaque-preference, 93-table-scale, transaction, and privacy
+coverage; publish through protected CI, fast-forward clean `local`, rerun only
+both plans, and require a separate apply review. No tmux/agent apply, drill,
+session, live path, or other node changed. Phase returns to `interviewing` for
+D14; the exact current `local` plans are not yet apply-authorized.
+
+**D14 implementation checkpoint:** `task/t269-local-layout-adapter` now keeps
+the two-line public Codex body as the exact private-file prefix, permits at
+most one opaque string each for `model` and `model_reasoning_effort` before
+trust tables, and admits only a declared owner-controlled `~/.local` symlink
+whose canonical target is strictly below the profile's persistent root.
+Focused synthetic assertions passed for both opaque preferences, 93 trust
+tables, duplicate rejection, declared layout acceptance, undeclared-host
+rejection, and target-escape rejection. The test script then returned nonzero
+only in its pre-existing macOS cleanup helper because BSD `realpath` lacks
+`-e`, after printing `agent configuration tests: PASS`; protected Linux CI
+remains the acceptance authority. No `local` live path changed. Next: run the
+full phase-1 gate, publish D14 through protected review, fast-forward clean
+`local`, and rerun the two read-only plans; a separate owner review is still
+required before either apply.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

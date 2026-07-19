@@ -190,10 +190,21 @@ grep -F 'status=ready failures=0' "$TEMP_DIR/doctor.out" >/dev/null ||
     fail "ready doctor"
 printf '%s\n' '' '[projects."/synthetic/private-project"]' \
     'trust_level = "trusted"' >>"$home/.codex/config.toml"
+sed -i.bak '2a\
+model = "opaque-private-model"\
+model_reasoning_effort = "opaque-private-effort"
+' "$home/.codex/config.toml"
+unlink "$home/.codex/config.toml.bak"
+project_number=1
+while [ "$project_number" -lt 93 ]; do
+    printf '\n[projects."/synthetic/private-project-%s"]\ntrust_level = "trusted"\n' \
+        "$project_number" >>"$home/.codex/config.toml"
+    project_number=$((project_number + 1))
+done
 run_config "$home" --doctor >"$TEMP_DIR/trust-suffix.doctor"
 grep -F 'status=ready failures=0' "$TEMP_DIR/trust-suffix.doctor" >/dev/null ||
-    fail "private trust suffix doctor"
-printf '%s\n' 'model = "private"' >>"$home/.codex/config.toml"
+    fail "private preferences and 93-table trust suffix doctor"
+printf '%s\n' 'model = "duplicate-private-model"' >>"$home/.codex/config.toml"
 if run_config "$home" --doctor >"$TEMP_DIR/invalid-suffix.doctor" 2>&1; then
     fail "invalid private suffix accepted"
 fi
@@ -275,6 +286,48 @@ grep -F -x '{"owner":true}' "$adopt_home/.claude/settings.json" >/dev/null ||
 [ -L "$adopt_home/.local/bin/harness-codex" ] &&
     [ "$(readlink "$adopt_home/.local/bin/harness-codex")" = /opt/owner/codex ] ||
     fail "launcher symlink preimage"
+
+layout_home=$TEMP_DIR/layout-home
+layout_root=$TEMP_DIR/layout-persistent
+mkdir -p "$layout_home" "$layout_root/local-state/bin"
+chmod 700 "$layout_home"
+cat >"$layout_root/local-state/bin/codex" <<'EOF'
+#!/bin/sh
+printf '%s\n' "$@"
+EOF
+chmod 755 "$layout_root/local-state/bin/codex"
+ln -s "$layout_root/local-state" "$layout_home/.local"
+layout_file=$TEMP_DIR/home-layout.tsv
+printf '%s\n' '# host|persistent-root|cache-root|move-large|move-fast|delete-after-backup|owner-action' \
+    "local-test|$layout_root|$layout_root/cache|.local|none|none|none" >"$layout_file"
+HOME="$layout_home" HARNESS_ROOT="$PUBLIC" HARNESS_TEST_ALLOW_NONMAIN=1 \
+    HARNESS_LOGICAL_HOST=local-test HARNESS_HOME_LAYOUT_FILE="$layout_file" \
+    "$PUBLIC/libexec/harness-agent-config" --plan >"$TEMP_DIR/layout.plan"
+[ "$(grep -c 'state=absent action=link' "$TEMP_DIR/layout.plan")" -eq 3 ] ||
+    fail "declared local symlink plan"
+if HOME="$layout_home" HARNESS_ROOT="$PUBLIC" HARNESS_TEST_ALLOW_NONMAIN=1 \
+    HARNESS_LOGICAL_HOST=undeclared HARNESS_HOME_LAYOUT_FILE="$layout_file" \
+    "$PUBLIC/libexec/harness-agent-config" --plan >"$TEMP_DIR/layout-undeclared.out" 2>&1; then
+    fail "undeclared local symlink accepted"
+fi
+grep -F 'agent configuration parent is unsafe' "$TEMP_DIR/layout-undeclared.out" >/dev/null ||
+    fail "undeclared local symlink refusal"
+escape_root=$TEMP_DIR/layout-escape
+mkdir -p "$escape_root/bin"
+cat >"$escape_root/bin/codex" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+chmod 755 "$escape_root/bin/codex"
+unlink "$layout_home/.local"
+ln -s "$escape_root" "$layout_home/.local"
+if HOME="$layout_home" HARNESS_ROOT="$PUBLIC" HARNESS_TEST_ALLOW_NONMAIN=1 \
+    HARNESS_LOGICAL_HOST=local-test HARNESS_HOME_LAYOUT_FILE="$layout_file" \
+    "$PUBLIC/libexec/harness-agent-config" --plan >"$TEMP_DIR/layout-escape.out" 2>&1; then
+    fail "escaping local symlink accepted"
+fi
+grep -F 'agent configuration parent is unsafe' "$TEMP_DIR/layout-escape.out" >/dev/null ||
+    fail "escaping local symlink refusal"
 
 drill_home=$(make_home drill)
 run_config "$drill_home" --apply --drill >"$TEMP_DIR/drill.out"
