@@ -2003,6 +2003,31 @@ native command, package, cleanup target, credential, component, or session
 changed. Exact next action: publish through protected CI before the frozen
 `office` migration.
 
+**D13 protected publication, migration, and cleanup outcome (2026-07-19):** PR
+#82 passed required `portable-phase1` in 2m21s and squash-merged as `d76575c`;
+clean `office` fast-forwarded to it. The value-free live plan reported only the
+canonical Codex symlink-to-private-regular migration and absent
+`harness-codex` link; Claude was current and native `codex` ready. The exact
+two-change apply completed as one recoverable transaction and doctor reported
+`status=ready failures=0`. Fresh explicit `harness-codex` and ordinary `codex`
+inside a new managed interactive Bash both reported `approval: never`,
+`sandbox: danger-full-access`, and their fixed readiness replies. Fresh Claude
+returned its fixed readiness reply. Subsequent doctor remained ready and public
+Git remained clean; native `codex` stayed installer-owned and no private trust
+path entered Git.
+
+Guarded cleanup then independently planned and applied two exact package-owned
+targets: the redundant alternate visible-entry directory (3 entries, 261 bytes)
+and the sole non-current `0.144.5` standalone release (12 entries, 311,617,441
+bytes). Both applies revalidated fresh manifests, deleted only their targets,
+and reported protected anchors unchanged. Both exact manifests were unlinked;
+targets and manifests are absent, the current native release and managed
+wrapper both execute, doctor is ready, and `main` is clean. Private transaction
+identity remains local. No rollback drill, component/authentication change,
+other node, or rollout beyond `office` ran. Exact next action after publishing
+this outcome is pilot observation during ordinary owner use; only then resume
+the separately authorized `local` and Linux rollout order.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
