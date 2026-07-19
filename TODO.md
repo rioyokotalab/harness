@@ -82,6 +82,45 @@ a delayed job. T-210 is complete and must not be repeated.
 
 ## Active tasks
 
+### T-272 — Seven-hour accessible-fleet maintenance
+
+**Phase/status:** `executing`. The owner authorized a seven-hour bounded
+maintenance run on `office`, `local`, `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`,
+excluding deployment to the three remaining Macs. This is not authority for
+credentials, account/administrator settings, packages, destructive cleanup,
+new scheduler jobs, retention, external services, or speculative changes.
+
+**Completed evidence-backed work:** recovered `local`'s private Codex body from
+the exact first weekly snapshot after the D16 rollback defect, fixed and tested
+that defect, completed guarded recovery cleanup, and finished protected agent/
+tmux rollout plus fresh acceptance on all accessible managed environments.
+All checkouts are clean and synchronized at `df181fe`; doctors, declared
+storage, and captured weekly successors are healthy. Transaction state is
+small (under 0.4 MB per node) and retained; one four-day-old failed `rc` status
+has no discoverable paired operation metadata, while current agent/tmux state
+is healthy, so no evidence was deleted.
+
+**Bounded diagnostics:** RI's only doctor warnings are absent optional
+`singularity` and `apptainer` login commands; do not invent a container stack
+without a project requirement. Claude is 2.1.207 everywhere. Linux Codex is
+the repository-pinned 0.144.4 on all six nodes, while `local` uses the official
+0.144.6 runtime. The current agent transaction supports first install, not a
+managed version replacement; design and test an explicit upgrade/rollback
+lifecycle before proposing parity, never bypass the checksum manifest.
+`local` contains 2,053 vendor arg0 temp directories: 1,940 empty and older than
+24 hours, 110 more recent empty, and three active helper directories with lock
+and helper entries while two Codex processes are live. Do not race vendor
+state or bulk-delete these paths; reassess only after all Codex processes exit
+and with an exact guarded lifecycle.
+
+**Next safe work:** continue read-only cross-node consistency, scheduler-chain,
+backup-readiness, transaction-integrity, and repository hygiene audits. Make a
+change only for a reproducible failure or measurable gap, publish through
+protected CI, and fleet-sync only clean managed checkouts. Preserve active
+jobs and owner sessions. At the seven-hour boundary, publish a final value-free
+checkpoint and leave unresolved package, Mac, container, vendor-cache, or
+agent-upgrade choices explicit.
+
 ### T-271 — Comprehensive post-pilot update and cleanup
 
 **Phase/status:** `complete`. Reconciled stale public ledger/control-plane
@@ -2205,8 +2244,9 @@ canonical status/bindings, fresh interactive Bash resolving managed Codex and
 Claude commands, native batch Codex unchanged, and clean Git. The earlier
 read-only audit also confirmed zero doctor failures, ready declared storage,
 and each exact weekly successor still present; no scheduler action ran. A
-Codex-version check on `local` emitted an upstream stale-arg0 cleanup warning,
-but bounded owner-temp inventory found no matching stale directory and no
+Codex-version check on `local` emitted an upstream stale-arg0 cleanup warning.
+Follow-up tracing located the vendor cache and classified 2,053 directories,
+including three locked active helpers while two Codex processes were live; no
 cleanup was attempted. Accessible-fleet T-268/T-269 rollout is complete; only
 the three independently gated Macs remain.
 
