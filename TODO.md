@@ -1158,27 +1158,32 @@ local `.bashrc` content. This is a confirmed requirement mismatch, not a failed
 pilot transaction; the accepted pilot remains internally converged and safe to
 leave running, but rollout to another Mac is paused.
 
-Read-only public-code discovery found that `harness-bash` starts Homebrew Bash
-as a login shell, the current installer appends the same v1 loader to both
-`.bash_profile` and `.bashrc`, and private engine 2 stores one `bashrc` payload.
-The recommended replacement is a versioned `.bashrc` pre block and post block
-that preserve all owner bytes between them, plus a login suffix that enters the
-guarded `.bashrc` path without double execution. The private bundle would split
-the synchronized Bash payload into `bashrc.pre` and `bashrc.post`; migration
-would place the existing private `bashrc` bytes in `bashrc.post` and seed an
-empty `bashrc.pre`, preserving current behavior before the owner deliberately
-reorders settings. The public engine must transactionally migrate the strict
-private schema, the pilot's managed startup blocks and local state, and all
-rollback images as one reviewed transition. It must refuse partial markers,
-changed startup files, incomplete private payloads, divergence, or a second
-execution path, and it must not read, print, or publish private configuration.
+Read-only public-code discovery found that the Linux pre hook is the exact
+`harness early managed` prefix sourcing tracked `shell/early-cache.sh`, and the
+post hook is the exact `harness managed` suffix sourcing tracked
+`shell/profile.sh`. Linux preserves the owner/site-local startup bytes between
+them. `harness-bash` starts Homebrew Bash as a login shell, while the current
+Mac installer instead appends the separate `personal-macos.bash` loader to both
+`.bash_profile` and `.bashrc`; private engine 2 also stores one `bashrc`
+payload.
 
-Phase is `interviewing`. Open decision B1: confirm two independently editable
-synchronized private Bash fragments, with the existing fragment migrated to
-post and pre initially empty. After B1, settle whether the two hooks apply only
-to `.bashrc` with `.bash_profile` delegating to it (recommended) or whether both
-startup files receive independent pre/post pairs. No code, private companion,
-live startup file, session reload, or Mac state has been changed.
+The owner rejected provisional B1's two new private pre/post fragments: the
+requirement is to reuse the existing public Linux hooks on the Macs, not create
+another synchronized Bash representation. The recommended correction is a
+Mac-specific transactional installer that places those same public hook blocks
+around untouched Mac-local bytes in both `.bashrc` and Bash's selected login
+startup file, using the strict private logical ID only in the live prefix. Any
+Darwin incompatibility must be fixed in the shared public hook or a narrow
+family adapter without changing Linux behavior. The existing private `bashrc`
+payload and state then appear obsolete and require an explicit migration rather
+than silent coexistence.
+
+Phase remains `interviewing`. Open decision B2: confirm that private Bash
+payload synchronization is removed, leaving Bash sharing entirely in the
+public pre/post hooks while SSH and complete tmux remain the atomic private
+bundle. If confirmed, freeze compatibility, migration, rollback, and pilot
+acceptance gates before a fresh `go`. No code, private companion, live startup
+file, session reload, or Mac state has been changed.
 
 ## Stable operational facts
 
