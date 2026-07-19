@@ -1871,6 +1871,29 @@ abandon managed ownership of the ordinary command. Phase returns to
 `interviewing`; no live directory, symlink, package, credential, component, or
 session changed during preflight.
 
+**Decision D12 selected / policy revision ready-for-go:** revise the canonical
+global guidance and `guarded-bulk-delete` skill to distinguish agent-directed
+deletion from cleanup internal to a reviewed trusted installer or package
+manager. Agent-authored recursive deletion, globs/loops, synchronization with
+deletion, cleanup scripts under agent control, and ambiguous third-party tools
+remain manifest-gated. The narrow exception requires an official vendor HTTPS
+artifact or already trusted package manager; download-before-execute rather
+than remote piping; syntax and destructive-target review of the exact bytes;
+non-interactive explicit destinations; deletion confined to declared package-
+owned release/cache/staging/temp roots; hard exclusion of account-home roots,
+repositories, workspaces, credentials, backups, and unrelated user data; exact-
+artifact execution; and post-install/residue verification. Any ambiguity falls
+back to guarded deletion. Implementation will update only
+`.codex/AGENTS.md`, `shared/skills/guarded-bulk-delete/SKILL.md`, focused
+instruction-discovery assertions where necessary, and this ledger. Validation
+requires skill `quick_validate.py`, installer/control-plane guidance tests,
+public privacy audit, `git diff --check`, and protected `portable-phase1`.
+After protected publication and clean `office` fast-forward, re-download and
+re-review the official Codex installer as exact bytes, execute it under D12,
+then resume the already-frozen D11 native-entry/adoption/fresh-session gates.
+Phase is `ready-for-go`; no policy, skill, installer, package, live link, or
+session changed while D12 was interviewed.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
