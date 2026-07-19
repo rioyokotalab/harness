@@ -64,8 +64,8 @@ Claude action-approval prompts in ordinary sessions: Codex uses `never` with
 `danger-full-access`, and Claude uses `bypassPermissions` with its dangerous-
 mode startup warning suppressed. Authentication, macOS privacy/TCC, OS
 administrator, and provider-enforced dialogs remain separate boundaries. Ask
-only decision C5: choose the prompt-free public desired-state breadth for hooks,
-plugins, marketplaces, and MCP. C2 is frozen: `harness` contains one tracked
+only decision C6: choose the Git review and dirty-checkout behavior for edits
+made through the live links. C2 is frozen: `harness` contains one tracked
 canonical settings body per client, and each live user settings path is a
 symbolic link to it; no private companion or generated live copy participates.
 C3 is frozen as every reviewed setting that is identical across macOS/Linux and
@@ -74,6 +74,9 @@ runtime state, and non-portable commands remain excluded.
 C4 is frozen as a tracked Bash launcher that resolves the current project root
 locally and passes it to Codex as a transient trusted override; it stores no
 path, while every project launched through it is trusted.
+C5 is frozen as prompt-free public declarative desired state for every reviewed
+portable hook, plugin, marketplace, and MCP component. Authorization stays
+local; forced-interaction declarations and non-managed Codex hooks are excluded.
 T-268 remains independently resumable from its pilot-plan failure handoff, and
 T-196 remains at 1/8 until the 2026-07-26 successors are eligible.
 
@@ -1415,17 +1418,21 @@ cross-platform and publicly safe preference, not only permission
 posture, while excluding machine-specific trust, private paths/endpoints,
 credential-bearing values, runtime state, and non-portable commands. C4 is
 frozen as a tracked Bash launcher that injects the locally resolved current
-root as transient Codex
-trust. No path is stored or published; every project launched through the
-ordinary wrapper may load its project-local Codex config, hooks, and exec
-policies. Ask C5 only: choose the public desired-state breadth for hooks,
-plugins, marketplaces, and MCP under the no-routine-prompt constraint. Current
+root as transient Codex trust. No path is stored or published; every project
+launched through the ordinary wrapper may load its project-local Codex config,
+hooks, and exec policies. C5 is frozen as the broad prompt-free public
+declarative choice.
+Reviewed Claude
+user-hook code and exact public plugin/marketplace/MCP identifiers synchronize;
+credentials and authorization remain local. Declarations that force interaction
+and non-managed Codex command hooks are excluded. Current
 Claude documentation confirms `bypassPermissions` retains hard-coded prompts
 for root/home recursive deletion and policy/component-forced interaction; the
-harness prohibits the former and C5 must reject the latter, but neither setting
-can truthfully disable the client circuit breaker. Checkpoint every answer; do
-not implement until C1–C7 are resolved and the owner gives a fresh explicit
-`go`.
+harness prohibits the former and C5 rejects the latter, but neither setting
+can truthfully disable the client circuit breaker. Ask C6 only: choose the Git
+review and dirty-checkout behavior for edits made through the linked canonical
+files. Checkpoint every answer; do not implement until C1–C7 are resolved and
+the owner gives a fresh explicit `go`.
 
 ## Stable operational facts
 

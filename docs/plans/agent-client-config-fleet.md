@@ -145,12 +145,15 @@ refuse ambiguous drift, support exact local rollback, and never interpret
    root locally and injects it as a transient trusted override, preserving one
    settings body and keeping the resolved path out of Git. It must preserve all
    arguments/subcommands and resolve the native Codex binary without recursion.
-5. Store portable hook implementation in a reviewed repository surface only if
-   selected. Hook references must be identical and portable on every target;
-   machine-path or host-specific commands cannot enter the canonical settings.
-6. Keep desired plugin, marketplace, and MCP declarations separate from
-   installed caches and authorization. If selected, resolve them through native
-   client CLIs and exact public identifiers; authentication remains local.
+5. Store reviewed portable Claude user-hook implementation in `harness`; hook
+   references must be identical on every target. Exclude non-managed Codex
+   command hooks because bypassing their hash review would also trust arbitrary
+   project/plugin hooks after C4. Machine-path or host-specific commands cannot
+   enter the canonical settings.
+6. Store reviewed public plugin, marketplace, and MCP declarations separately
+   from installed caches and authorization. Resolve them through native client
+   CLIs and exact public identifiers; authentication remains local. Reject any
+   declaration or organization policy that requires interactive approval.
 7. Every link apply records exact prior path type/content locally, validates
    the target and parents, replaces atomically, and activates only in a fresh
    session. Rollback is allowed only while the linked output remains unchanged.
@@ -170,9 +173,9 @@ refuse ambiguous drift, support exact local rollback, and never interpret
 5. Implement the frozen project-trust decision without adding raw paths or a
    second managed user-settings body; validate ordinary fresh-session startup
    as well as config loading.
-6. Implement hook/profile/plugin/marketplace/MCP adapters only for categories
-   selected during interview; separate declaration, installation, enablement,
-   and authorization.
+6. Implement the selected prompt-free Claude-hook and public plugin,
+   marketplace, and MCP adapters; separate declaration, installation,
+   enablement, and local authorization, and reject forced-interaction metadata.
 7. Add transaction, preimage, atomic replacement, native parse, idempotence,
    doctor, rollback, and old-schema direct-migration tests.
 8. Run focused privacy/config tests, ShellCheck, public-repository audit, and
@@ -292,26 +295,34 @@ refuse ambiguous drift, support exact local rollback, and never interpret
   emits no resolved path. Claude's separate workspace state remains local and
   unmirrored. No launcher or live client state changed during this checkpoint.
 
-### C5 — Hooks, plugins, marketplaces, and MCP (open; ask next)
+### C5 — Hooks, plugins, marketplaces, and MCP (selected)
 
-- **A — Prompt-free public declarative desired state (recommended):** synchronize
-  every reviewed public hook, plugin, marketplace, and MCP declaration that is
+- **Selected — Prompt-free public declarative desired state:** synchronize every
+  reviewed public hook, plugin, marketplace, and MCP declaration that is
   portable across the fleet and does not force interaction. Claude user-hook
   code lives in `harness`; native explicit catch-up reconciles exact public
   plugin/marketplace/MCP identifiers. Non-managed Codex command hooks are
-  excluded: its launch-time hook-trust bypass would also trust project hooks in
-  every project C4 trusts, not only reviewed user hooks. Credentials and
-  authorization remain local.
-- **B — Hooks only:** synchronize reviewed hooks and their prompt-free launcher
-  behavior, while leaving plugins, marketplaces, and MCP independent.
-- **C — Exclude all four:** synchronize scalar client preferences only.
+  excluded because its launch-time hook-trust bypass would also trust project
+  hooks in every project C4 trusts. Credentials and authorization remain local.
+- Explicit `ask`, organization-forced connector asks, MCP
+  `requiresUserInteraction`, embedded credentials, private endpoints, and
+  machine-specific commands fail validation. Installed caches and authorization
+  state are never payloads. No hook, plugin, marketplace, MCP, credential, or
+  live client state changed during this checkpoint.
 
-### C6 — Editing and drift model (constrained by C2; publication still open)
+### C6 — Editing and drift model (open; ask next)
 
-- C2 fixes the live path as a symlink to the Git-tracked canonical file, so an
-  edit through the live path is a local harness worktree edit. Automatic commit
-  or publication is not implied. C6 will freeze the review/publish and dirty-
-  checkout recovery behavior; a second live or managed overlay is excluded.
+- **A — Review-first Git workflow (recommended):** an edit through a live link
+  is an ordinary tracked `harness` worktree edit. Validation and public privacy
+  gates run before a normal commit and protected PR. Catch-up requires a clean
+  checkout and never auto-commits, auto-pushes, adopts, or overwrites an edit;
+  concurrent writers reconcile through normal non-force Git review.
+- **B — Automatic publish from live edits:** commit and push changes during
+  catch-up. This risks publishing secrets, partial UI writes, and unreviewed
+  fleet-wide behavior, and conflicts with the protected workflow.
+- **C — Forbid edits through live links:** require users to open the repository
+  path explicitly even though it is the same tracked inode. This reduces
+  accidental edits but defeats the intended direct-link convenience.
 
 ### C7 — Rollout order (open)
 
@@ -325,7 +336,7 @@ refuse ambiguous drift, support exact local rollback, and never interpret
 
 ## Exact next action
 
-Ask C5 only. After each answer, checkpoint the decision and ask the next open
+Ask C6 only. After each answer, checkpoint the decision and ask the next open
 item. Do not change any live client setting during the interview. After C7,
 audit for contradictions, set `ready-for-go`, and wait for a fresh explicit
 `go`.
