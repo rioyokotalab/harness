@@ -3,7 +3,8 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/harness-test.XXXXXX")
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 
 cleanup() {
@@ -11,8 +12,8 @@ cleanup() {
     trap - EXIT HUP INT TERM
     cleanup_failed=0
     if [ -d "$TEMP_DIR" ]; then
-        "$CLEANUP" "$HARNESS" "${TMPDIR:-/tmp}" "$TEMP_DIR" \
-            "${TMPDIR:-/tmp}" >/dev/null || cleanup_failed=1
+        "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEMP_DIR" \
+            "$TEMP_BASE" >/dev/null || cleanup_failed=1
     fi
     if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
         echo "FAIL: guarded phase-1 cleanup" >&2
@@ -36,6 +37,10 @@ file_mode() {
         Darwin) stat -f %Lp "$1" ;;
         *) stat -c %a "$1" ;;
     esac
+}
+
+sed_in_place() {
+    case $(uname -s) in Darwin) sed -i '' "$1" "$2" ;; *) sed -i "$1" "$2" ;; esac
 }
 
 for script in \
@@ -517,7 +522,11 @@ python3 "$ROOT/tests/smoke/llm_torch.py" --help \
 grep -- '--require-world-size' "$TEMP_DIR/llm-torch-help.out" >/dev/null ||
     fail "LLM PyTorch smoke world-size gate"
 
-cc -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer \
+case $(uname -s) in
+    Darwin) sanitizers=undefined ;;
+    *) sanitizers=address,undefined ;;
+esac
+cc -O1 -g -fsanitize="$sanitizers" -fno-omit-frame-pointer \
     "$ROOT/tests/smoke/sanitizer.c" -o "$TEMP_DIR/sanitizer"
 [ "$("$TEMP_DIR/sanitizer")" = sanitizer=pass ] ||
     fail "native sanitizer smoke"
@@ -966,7 +975,7 @@ for command_name in qsub qstat qdel nodestatus; do
     printf '%s\n' '#!/bin/sh' 'exit 0' >"$site_command_bin/$command_name"
     chmod 755 "$site_command_bin/$command_name"
 done
-sed -i "s|^command_paths=.*$|command_paths=$site_command_bin|" \
+sed_in_place "s|^command_paths=.*$|command_paths=$site_command_bin|" \
     "$test_repo/profiles/hosts/ab.conf"
 HOME="$test_home" PATH="/usr/bin:/bin" "$test_repo/bin/harness" \
     inventory --host ab >"$TEMP_DIR/site-command-inventory.out"
@@ -983,7 +992,7 @@ chmod 755 "$zip_fixture_dir/rclone"
 python3 -c 'import sys,zipfile; z=zipfile.ZipFile(sys.argv[1], "w", zipfile.ZIP_DEFLATED); z.write(sys.argv[2], sys.argv[3]); z.close()' \
     "$zip_fixture_archive" "$zip_fixture_dir/rclone" "$zip_fixture_member"
 zip_fixture_hash=$(sha256sum "$zip_fixture_archive" | awk '{print $1}')
-sed -i "s/dbee7ccd7a5d617e4ed4cd4555c16669b511abfe8d31164f61be35ac9e999bd2/$zip_fixture_hash/" \
+sed_in_place "s/dbee7ccd7a5d617e4ed4cd4555c16669b511abfe8d31164f61be35ac9e999bd2/$zip_fixture_hash/" \
     "$test_repo/tools/artifacts.tsv"
 restic_fixture=$TEMP_DIR/restic-fixture
 printf '%s\n' '#!/bin/sh' '[ "${1:-}" = version ] || exit 2' \
@@ -992,7 +1001,7 @@ printf '%s\n' '#!/bin/sh' '[ "${1:-}" = version ] || exit 2' \
 chmod 755 "$restic_fixture.binary"
 bzip2 -c "$restic_fixture.binary" >"$restic_fixture.bz2"
 restic_fixture_hash=$(sha256sum "$restic_fixture.bz2" | awk '{print $1}')
-sed -i "s/f415415624dcc452f2a02b8c33641791a8c6d6d3b65bbb3543fcf9a25151585c/$restic_fixture_hash/" \
+sed_in_place "s/f415415624dcc452f2a02b8c33641791a8c6d6d3b65bbb3543fcf9a25151585c/$restic_fixture_hash/" \
     "$test_repo/tools/artifacts.tsv"
 tectonic_fixture_dir=$TEMP_DIR/tectonic-fixture
 tectonic_fixture_archive=$TEMP_DIR/tectonic-fixture.tar.gz
@@ -1001,7 +1010,7 @@ printf '%s\n' '#!/bin/sh' 'echo "Tectonic 0.16.9"' >"$tectonic_fixture_dir/tecto
 chmod 755 "$tectonic_fixture_dir/tectonic"
 tar -czf "$tectonic_fixture_archive" -C "$tectonic_fixture_dir" tectonic
 tectonic_fixture_hash=$(sha256sum "$tectonic_fixture_archive" | awk '{print $1}')
-sed -i "s/60b13a0826ae7ad9ce34b4a2df06bff2cfcfa6dda8a915477c0cbb84e1a4a902/$tectonic_fixture_hash/" \
+sed_in_place "s/60b13a0826ae7ad9ce34b4a2df06bff2cfcfa6dda8a915477c0cbb84e1a4a902/$tectonic_fixture_hash/" \
     "$test_repo/tools/artifacts.tsv"
 shellcheck_fixture_dir=$TEMP_DIR/shellcheck-fixture/shellcheck-v0.11.0
 shellcheck_fixture_archive=$TEMP_DIR/shellcheck-fixture.tar.gz
@@ -1014,7 +1023,7 @@ chmod 755 "$shellcheck_fixture_dir/shellcheck"
 tar -czf "$shellcheck_fixture_archive" -C "$TEMP_DIR/shellcheck-fixture" \
     shellcheck-v0.11.0/shellcheck
 shellcheck_fixture_hash=$(sha256sum "$shellcheck_fixture_archive" | awk '{print $1}')
-sed -i "s/b7af85e41cc99489dcc21d66c6d5f3685138f06d34651e6d34b42ec6d54fe6f6/$shellcheck_fixture_hash/" \
+sed_in_place "s/b7af85e41cc99489dcc21d66c6d5f3685138f06d34651e6d34b42ec6d54fe6f6/$shellcheck_fixture_hash/" \
     "$test_repo/tools/artifacts.tsv"
 sqlite_fixture_dir=$TEMP_DIR/sqlite-fixture
 sqlite_fixture_root=$sqlite_fixture_dir/sqlite-amalgamation-3530300
@@ -1042,7 +1051,7 @@ with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.write(root / name, f"sqlite-amalgamation-3530300/{name}")
 PY
 sqlite_fixture_hash=$(sha256sum "$sqlite_fixture_archive" | awk '{print $1}')
-sed -i "s/646421e12aac110282ef8cc68f1a62d4bb15fc7b8f09da0b53e29ee690500431/$sqlite_fixture_hash/" \
+sed_in_place "s/646421e12aac110282ef8cc68f1a62d4bb15fc7b8f09da0b53e29ee690500431/$sqlite_fixture_hash/" \
     "$test_repo/tools/sources.tsv"
 tree_fixture_dir=$TEMP_DIR/tree-fixture
 tree_fixture_root=$tree_fixture_dir/tree-2.3.2
@@ -1075,7 +1084,7 @@ tar -czf "$tree_fixture_archive" -C "$tree_fixture_dir" \
     tree-2.3.2/util.c tree-2.3.2/xml.c tree-2.3.2/doc/tree.1 \
     tree-2.3.2/doc/xml.dtd tree-2.3.2/doc/global_info tree-2.3.2/.gitignore
 tree_fixture_hash=$(sha256sum "$tree_fixture_archive" | awk '{print $1}')
-sed -i "s/6b941dd6cbecfb4d3250700e4d08d8e0c251488981dd4868b90d744234300e21/$tree_fixture_hash/" \
+sed_in_place "s/6b941dd6cbecfb4d3250700e4d08d8e0c251488981dd4868b90d744234300e21/$tree_fixture_hash/" \
     "$test_repo/tools/sources.tsv"
 runtime_fixture_parent=$TEMP_DIR/runtime-fixture
 runtime_fixture_root=$runtime_fixture_parent/node-v24.16.0-linux-x64
@@ -1090,7 +1099,7 @@ done
 tar -czf "$runtime_fixture_archive" -C "$runtime_fixture_parent" \
     node-v24.16.0-linux-x64
 runtime_fixture_hash=$(sha256sum "$runtime_fixture_archive" | awk '{print $1}')
-sed -i "s/2faf6a387e9b62b888e21c54f01249fb27537ffecf1842f29f4c919d0a59a0ff/$runtime_fixture_hash/" \
+sed_in_place "s/2faf6a387e9b62b888e21c54f01249fb27537ffecf1842f29f4c919d0a59a0ff/$runtime_fixture_hash/" \
     "$test_repo/tools/runtimes.tsv"
 agent_launcher_parent=$TEMP_DIR/agent-launcher-fixture
 agent_launcher_root=$agent_launcher_parent/package
@@ -1111,9 +1120,9 @@ printf '%s\n' '{"name":"@openai/codex","version":"0.144.4-linux-x64"}' \
     >"$agent_native_root/package.json"
 tar -czf "$agent_native_archive" -C "$agent_native_parent" package
 agent_native_hash=$(sha256sum "$agent_native_archive" | awk '{print $1}')
-sed -i "s/613aadb30be4b6a6daa45cbd086f5d4a84636bcd8c036510c106464bd087f193/$agent_launcher_hash/g" \
+sed_in_place "s/613aadb30be4b6a6daa45cbd086f5d4a84636bcd8c036510c106464bd087f193/$agent_launcher_hash/g" \
     "$test_repo/tools/agents.tsv"
-sed -i "s/9a4a45314e80b53c4761b80067e3a68c2302f9a9026059b5f54f22dec8f34323/$agent_native_hash/" \
+sed_in_place "s/9a4a45314e80b53c4761b80067e3a68c2302f9a9026059b5f54f22dec8f34323/$agent_native_hash/" \
     "$test_repo/tools/agents.tsv"
 git -C "$test_repo" init -q
 git -C "$test_repo" config user.name harness-test
@@ -1276,7 +1285,7 @@ expected_cache=/mnt/nfs-03/fast/Users/rioyokota/home-cache/xdg
 [ "$(cat "$cache_home/bashrc-observed")" = "$expected_cache" ] ||
     fail "bashrc owner command ran before cache bootstrap"
 [ ! -e "$cache_home/.cache" ] || fail "cache bootstrap created a default cache directory"
-sed -i 's/^HARNESS_LOGICAL_HOST=local$/HARNESS_LOGICAL_HOST=changed/' \
+sed_in_place 's/^HARNESS_LOGICAL_HOST=local$/HARNESS_LOGICAL_HOST=changed/' \
     "$cache_home/.bashrc"
 if HOME="$cache_home" "$test_repo/bin/harness" rollback "$cache_transaction" \
     >"$TEMP_DIR/cache-bootstrap-refused-rollback.out" 2>&1; then
@@ -1286,7 +1295,7 @@ grep -F -x 'HARNESS_LOGICAL_HOST=changed' "$cache_home/.bashrc" >/dev/null ||
     fail "refused cache rollback damaged the changed prefix"
 grep -F '# >>> harness early managed >>>' "$cache_home/.bash_profile" >/dev/null ||
     fail "cache rollback mutated another file before validation completed"
-sed -i 's/^HARNESS_LOGICAL_HOST=changed$/HARNESS_LOGICAL_HOST=local/' \
+sed_in_place 's/^HARNESS_LOGICAL_HOST=changed$/HARNESS_LOGICAL_HOST=local/' \
     "$cache_home/.bashrc"
 printf '%s\n' '# later owner change' >>"$cache_home/.bashrc"
 printf '%s\n' '# later owner change' >>"$cache_home/.bash_profile"
@@ -1320,14 +1329,14 @@ grep -F -x '# harness: use prgenv for an interactive uenv' \
 if grep -R 'fake-secret-value' "$test_home/.local/state/harness" >/dev/null 2>&1; then
     fail "remediation transaction copied pre-existing content"
 fi
-sed -i 's/^# harness: use prgenv/# xarness: use prgenv/' "$test_home/.bashrc"
+sed_in_place 's/^# harness: use prgenv/# xarness: use prgenv/' "$test_home/.bashrc"
 if HOME="$test_home" "$test_repo/bin/harness" rollback "$remediation_transaction" \
     >"$TEMP_DIR/refused-remediation-rollback.out" 2>&1; then
     fail "remediation rollback accepted a changed patch"
 fi
 grep -F -x '# xarness: use prgenv for an interactive uenv' \
     "$test_home/.bashrc" >/dev/null || fail "remediation rollback damaged changed patch"
-sed -i 's/^# xarness: use prgenv/# harness: use prgenv/' "$test_home/.bashrc"
+sed_in_place 's/^# xarness: use prgenv/# harness: use prgenv/' "$test_home/.bashrc"
 HOME="$test_home" "$test_repo/bin/harness" rollback "$remediation_transaction" \
     >"$TEMP_DIR/remediation-rollback.out"
 cmp -s "$test_home/.bashrc" "$TEMP_DIR/original-remediation-bashrc" ||
@@ -1369,12 +1378,12 @@ HOME="$ab2_remediation_home" "$test_repo/bin/harness" remediate --host ab2 --pla
     >"$TEMP_DIR/ab2-remediation-idempotent.out"
 grep 'KEEP file=.bash_profile patch=reviewed-pyenv-block-disabled' \
     "$TEMP_DIR/ab2-remediation-idempotent.out" >/dev/null || fail "AB2 remediation idempotence"
-sed -i 's/^# off  $/# xff  /' "$ab2_remediation_home/.bash_profile"
+sed_in_place 's/^# off  $/# xff  /' "$ab2_remediation_home/.bash_profile"
 if HOME="$ab2_remediation_home" "$test_repo/bin/harness" rollback \
     "$ab2_remediation_transaction" >"$TEMP_DIR/refused-ab2-remediation.out" 2>&1; then
     fail "AB2 remediation rollback accepted a changed patch"
 fi
-sed -i 's/^# xff  $/# off  /' "$ab2_remediation_home/.bash_profile"
+sed_in_place 's/^# xff  $/# off  /' "$ab2_remediation_home/.bash_profile"
 HOME="$ab2_remediation_home" "$test_repo/bin/harness" rollback \
     "$ab2_remediation_transaction" >"$TEMP_DIR/ab2-remediation-rollback.out"
 cmp -s "$ab2_remediation_home/.bash_profile" \

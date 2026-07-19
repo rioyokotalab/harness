@@ -254,6 +254,47 @@ topology probes Linux-only. Native focused shared-executable, result-hygiene,
 job-preflight, intake-validator, topology-audit, and storage-readiness tests
 must pass before protected publication.
 
+PR #102 passed protected phase-1 and merged as `8d104e5`; `office`, `local`,
+and all six Linux checkouts are clean/equal-ref at that commit with transfer
+artifacts absent. Fresh doctors have zero failures everywhere, with only the
+accepted Docker/Podman warnings on `local` and Singularity/Apptainer warnings
+on RI. The first complete native macOS phase-1 run then reached the replica
+gate and exposed one production portability defect: strict generation
+validation used GNU-only `date -d`. Add a Darwin `date -j -f` adapter while
+retaining exact round-trip rejection of normalized impossible timestamps;
+require valid/invalid native probes, ShellCheck, clean-checkout native coverage
+through the declared Linux-host boundary, and protected Linux phase-1 before
+publication.
+
+The clean native rerun passed timestamp validation, then exposed two later
+replica-fixture gaps. Canonicalize the phase-1 temporary boundary so macOS's
+trailing-slash `TMPDIR` cannot synthesize a correctly rejected double slash.
+Replace GNU `find -printf`, `sort -z`, `xargs -r`, and `sha256sum` fingerprint
+assumptions with one deterministic Python traversal already supported by the
+declared runtime: reject symlinks, locks, and device crossings; count entries
+and bytes; and hash sorted byte paths, sizes, and streamed encrypted contents.
+Replica source/destination and drift comparisons remain fail-closed.
+
+That clean rerun passed the complete replica section. A later native smoke
+then proved Apple ASan itself spins indefinitely on this macOS/Xcode pairing:
+an isolated ASan-only binary timed out, UBSan-only passed immediately, and
+removing owner compiler paths made no difference. Retain ASan+UBSan in Linux
+CI, but use UBSan for the Darwin-native phase-1 smoke so the gate remains
+meaningful and bounded. The interrupted suite's exact fixture cleanup passed.
+
+The explicit `HARNESS_PORTABLE_CI=1` macOS run then passed those gates and the
+intentional undeclared-MPI skip before reaching GNU-only in-place `sed` forms
+in the monolithic fixture. Route all of that fixture's in-place substitutions
+through one Darwin/GNU adapter; production configuration parsing is unchanged.
+
+The clean rerun passed the adapter and stopped only when the later synthetic
+Linux `local` control-plane apply correctly failed its host doctor on Darwin.
+Do not weaken logical-host OS validation or pretend `office` is an HPC target;
+the protected Ubuntu phase-1 job remains the full aggregate gate. Native
+coverage has passed every newly changed behavior plus replica collision,
+corruption, source-drift, lock, symlink, fingerprint, sanitizer, and guarded-
+cleanup checks through that explicit platform boundary.
+
 ### T-271 — Comprehensive post-pilot update and cleanup
 
 **Phase/status:** `complete`. Reconciled stale public ledger/control-plane
