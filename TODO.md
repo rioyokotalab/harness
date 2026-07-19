@@ -1222,10 +1222,22 @@ paths on `local`, `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`. Every canonical
 six remote classifications after the first probe's newline formatting was
 ambiguous; AL authentication was available for this read-only check. No tmux
 bytes, hashes, commands, versions, private paths, or active-server state were
-read, and no node changed. The accepted pilot Mac has an empty canonical file,
-so the recommended T3 seed is an empty tracked config that preserves tmux
-defaults. Each remaining Mac must still classify its own paths independently
-and stop for owner curation if any existing config is nonempty before linking.
+read, and no node changed. The accepted pilot Mac has an empty canonical file.
+Each remaining Mac must still classify its own paths independently and stop for
+owner curation if any existing config is nonempty before linking.
+
+**Decision T3:** the owner supplied the exact public canonical payload. It sets
+status-left length 80 and displays the bold persistent session name; `N` and
+`P` switch to the next and previous sessions; `Space` opens
+`choose-tree -Zw`. The supplied comments and commands contain no machine value,
+credential, plugin, shell, network, include, or secondary-file behavior.
+Current value-free version discovery found tmux 3.4 on `local` and `ri`, 3.2a
+on `ab`, `ab2`, and `t4`, and managed 3.6b on `al` and `rc`. Parse-only
+validation on disposable isolated servers passed the exact payload on all
+seven Linux nodes, including the 3.2a floor; every candidate file, socket, and
+temporary directory was exactly removed. No active server was contacted or
+reloaded. T3 is selected subject to the same native parse gate on each Mac
+before linking.
 
 ## Stable operational facts
 
