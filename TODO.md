@@ -7,8 +7,9 @@ and compact historical pointers here. Next free ID: T-275.
 
 ## Current state
 
-- Repository: published `main` and all managed fleet checkouts are clean and
-  synchronized. The owner authorized frequent ordinary pushes for the
+- Repository: published `main`; `office`, `local`, `ab`, `ab2`, `ri`, `rc`,
+  and `t4` are clean at the current fleet resume point, while AL is temporarily
+  behind because native SSH public-key authentication is unavailable. The owner authorized frequent ordinary pushes for the
   now-public harness and website repositories; fetch before work and push,
   preserve contributor commits, and never force-push.
 - Managed environments: `local`, `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`.
@@ -230,6 +231,21 @@ The clean comment-only guard run passed all 52 focused suites, guarded
 deletion, and compiler gates, explicitly skipped native MPI, and reached only
 the known Darwin doctor boundary; protected Ubuntu CI remains the publication
 gate.
+
+PR #120 merged at `d046b0a`; `local`, `ab`, `ab2`, `ri`, `rc`, and `t4`
+synchronized cleanly with equal refs and absent transfer artifacts. AL remains
+clean at `9ad4112` after three identical native public-key rejections and was
+not mutated. AB completed apply, doctor/fresh-shell/native-route checks, exact
+rollback, baseline checks, and reapply as `20260719T235107Z-2646044`. AB2
+completed the same drill and remains canonical under
+`20260719T235154Z-2649562`. RI completed absent-profile creation, exact rollback
+to absence, baseline checks, and reapply as `20260719T235230Z-1314745`.
+`office` and `local` retain their previously accepted canonical state. Exact
+resume action: restore ordinary native SSH authentication to AL without key
+inspection or policy bypass; fleet-sync AL from `9ad4112` to current published
+main, then run AL plan/doctor and its one-host drill. Only afterward continue RC
+and T4. `.bash_common` orphan cleanup remains ordered after accepted onboarding
+and must follow T-273 host by host.
 
 PR #117 merged at `6604512`; local fast-forwarded, while the downstream
 fleet-sync stopped in preflight at a transient AL public-key rejection before
