@@ -2028,6 +2028,20 @@ other node, or rollout beyond `office` ran. Exact next action after publishing
 this outcome is pilot observation during ordinary owner use; only then resume
 the separately authorized `local` and Linux rollout order.
 
+**First post-pilot `local` rollout attempt (2026-07-19):** after owner `go`,
+`office` revalidated clean published `main` and a current-user-owned process SSH
+agent socket, then printed the exact read-only native SSH plan for `local`. The
+transport stopped before connection with `Could not resolve hostname local`.
+This is unknown target state, not absence or drift; no remote fetch, checkout,
+tmux plan, agent-config plan, apply, drill, session, or live path ran. Retry is
+safe only from an independently owner-started `local` session or a separately
+declared transport that resolves to it. Never guess the endpoint or inspect/
+publish private SSH configuration. Exact next action on `local`: fetch current
+public `main`, require a clean current checkout and native Codex, then run only
+`./bin/harness tmux-config --adopt --plan` and
+`./bin/harness agent-config --adopt --plan`; review both value-free plans before
+separate apply authority.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
