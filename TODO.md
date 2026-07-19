@@ -295,6 +295,18 @@ coverage has passed every newly changed behavior plus replica collision,
 corruption, source-drift, lock, symlink, fingerprint, sanitizer, and guarded-
 cleanup checks through that explicit platform boundary.
 
+**Post-publication audit:** PR #103 passed protected phase-1 and merged as
+`fbc3b9a`; all accessible checkouts are clean/equal-ref there. A fresh bounded
+fleet audit reports zero failures, 34/34 control links kept, clean result
+hygiene, seven passing primary repository checks, seven active exact future
+chains, seven verified-disabled smoke jobs, warning silence, and strict Git
+fsck everywhere. Transaction state remains current-user-owned, symlink-free,
+and below 0.3 MiB per node; retain the paired failed evidence on `local` and RC.
+The standalone affinity test then tried to compile its intentionally Linux-only
+`sched_getaffinity` smoke on Darwin. Keep all route/source/safety assertions
+cross-platform, canonicalize its temporary root, and run only that native
+compile/placement subgate on Linux.
+
 ### T-271 — Comprehensive post-pilot update and cleanup
 
 **Phase/status:** `complete`. Reconciled stale public ledger/control-plane
