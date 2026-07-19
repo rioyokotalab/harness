@@ -90,7 +90,9 @@ for script in \
     "$ROOT/tests/guarded-test-cleanup.sh" \
     "$ROOT/tests/test-github-rulesets.sh" \
     "$ROOT/tests/test-claude-takeover.sh" \
+    "$ROOT/tests/test-focused-runner.sh" \
     "$ROOT/tests/test-local-mpi-profile.sh" \
+    "$ROOT/tests/test-native-mpi.sh" \
     "$ROOT/tests/test-repository-independence.sh" \
     "$ROOT/tests/test-remote-session.sh" \
     "$ROOT/tests/test-safety-guards.sh" \
@@ -114,7 +116,10 @@ done
 
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harness-startup-normalize").read_text())' ||
     fail "Python syntax: harness-startup-normalize"
+python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/tools/run-focused-tests.py").read_text())' ||
+    fail "Python syntax: focused-suite runner"
 
+if [ "${HARNESS_TEST_JOBS:-4}" = legacy ]; then
 "$ROOT/tests/test-startup-normalize.sh" >/dev/null ||
     fail "startup normalization focused suite"
 "$ROOT/tests/test-ssh-agent-profile.sh" >/dev/null ||
@@ -214,6 +219,17 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "bounded CPU route focused suite"
 "$ROOT/tests/test-source-contract.sh" >/dev/null ||
     fail "source contract focused suite"
+else
+    case ${HARNESS_TEST_JOBS:-4} in
+        ''|*[!0-9]*) fail "HARNESS_TEST_JOBS must be legacy or an integer" ;;
+    esac
+    python3 "$ROOT/tools/run-focused-tests.py" \
+        --root "$ROOT" \
+        --manifest "$ROOT/tests/focused-suites.tsv" \
+        --log-dir "$TEMP_DIR/focused-logs" \
+        --jobs "${HARNESS_TEST_JOBS:-4}" ||
+        fail "parallel focused suites"
+fi
 
 # Direct non-interactive SSH can omit ~/.local/bin even when the managed
 # Restic installation is healthy. The harness route must find that exact
@@ -532,21 +548,7 @@ cc -O1 -g -fsanitize="$sanitizers" -fno-omit-frame-pointer \
     fail "native sanitizer smoke"
 c++ -std=c++20 -O2 "$ROOT/tests/smoke/cpp20.cpp" -o "$TEMP_DIR/cpp20"
 [ "$("$TEMP_DIR/cpp20")" = cpp20=pass ] || fail "native C++20 smoke"
-case ${HARNESS_PORTABLE_CI:-0} in
-    0)
-        mpicc -O2 "$ROOT/tests/smoke/mpi.c" -o "$TEMP_DIR/mpi"
-        [ "$("$TEMP_DIR/mpi" 1)" = "mpi=pass ranks=1" ] ||
-            fail "native MPI singleton smoke"
-        mpicc -O2 "$ROOT/tests/smoke/mpi-multinode.c" -o "$TEMP_DIR/mpi-multinode" ||
-            fail "native multi-node MPI source compile"
-        ;;
-    1)
-        printf '%s\n' 'SKIP native MPI singleton smoke: portable CI has no declared MPI toolchain'
-        ;;
-    *)
-        fail "HARNESS_PORTABLE_CI must be 0 or 1"
-        ;;
-esac
+printf '%s\n' 'SKIP native MPI smoke: run tests/test-native-mpi.sh in a declared MPI environment'
 
 "$HARNESS" inventory --host local >"$TEMP_DIR/local.facts"
 awk -F= '

@@ -13,15 +13,18 @@ shallow checkout may not contain that commit. Later live global-guidance
 maintenance does not alter the frozen baseline, corpus, or recorded reports.
 
 The unique required-check candidate is `portable-phase1`. It runs the complete
-phase-one integration suite except for two explicitly client/site-specific
-checks: the native MPI singleton compile/run and the Codex exec-policy smoke.
+phase-one integration suite except for explicitly client/site-specific native
+checks. Native MPI compile/run is a separate explicit
+`HARNESS_NATIVE_MPI=1 tests/test-native-mpi.sh` gate for a declared MPI
+environment and is not part of the portable default.
 GitHub's declared Ubuntu 24.04 image includes the required C/C++ compilers,
 ShellCheck, rsync, and archive tools but neither an MPI implementation nor the
-declared Codex client. The workflow sets `HARNESS_PORTABLE_CI=1`, which prints
-each explicit skip. An unset or zero value retains both mandatory native gates
-on the managed nodes, and any other value fails. This prevents generic CI from
-pretending to validate an HPC MPI stack or local agent policy while preserving
-all credential-free portable filesystem and integration regressions.
+declared Codex client. The workflow sets `HARNESS_PORTABLE_CI=1`, which skips
+that client smoke and other explicitly unavailable portable-runner surfaces;
+an unset or zero value retains the client smoke on a declared managed node.
+This prevents generic CI from pretending to validate an HPC MPI stack or local
+agent policy while preserving all credential-free portable filesystem and
+integration regressions.
 
 The security choices follow GitHub's official guidance to grant read-only
 default token access and pin actions to a full commit SHA:

@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-274.
+and compact historical pointers here. Next free ID: T-275.
 
 ## Current state
 
@@ -88,6 +88,104 @@ query only those recorded IDs after eligibility and do not replace or duplicate
 a delayed job. T-210 is complete and must not be repeated.
 
 ## Active tasks
+
+### T-274 — Unified Bash startup, faster tests, and Codex-driven Mac onboarding
+
+**Phase/status:** `executing`; owner gave the explicit accumulated-change `go`
+on 2026-07-20. Scope is: (1) make the portable phase-one route skip native MPI
+by default while retaining a separately invocable declared-native MPI test;
+(2) parallelize only independently isolated focused suites, retaining a serial
+integration tail and attributable logs; (3) alphabetize only declarative,
+order-independent shell entries; (4) make `.bashrc` the canonical owner Bash
+file and `.bash_profile` a recursion-safe thin loader on Macs and all seven
+managed environments; and (5) add a shared `onboard-personal-mac` skill so
+Codex performs one-Mac-at-a-time onboarding rather than asking the owner to run
+scripts. The previously merged shared `sudo` alias remains in scope. No
+credential, package, scheduler, account, administrator, active-session, or
+unavailable-Mac mutation is implied.
+
+**Frozen implementation order:**
+
+1. Refactor tests first. Add a portable-by-default runner, a separately named
+   native MPI gate that requires an explicit declared route, and a bounded
+   parallel focused-suite driver using independent temporary roots and
+   per-suite logs. Keep syntax, checkout/state-sensitive integration, cleanup,
+   and final source-contract gates serial. Prove failure attribution, stop/
+   cleanup behavior, deterministic status, and both serial and parallel modes.
+2. Add a transactional `bash-startup-unify` adapter and synthetic fixtures.
+   It must treat `.bashrc` as canonical, move the opaque machine-local middle
+   from `.bash_profile` under an explicit login-only guard without printing or
+   hashing it, replace `.bash_profile` with one public thin loader, preserve
+   type/owner/mode/ACL and exact preimages only in mode-0600 local state, parse
+   before mutation, atomically unwind partial failure, and provide unchanged-
+   only rollback. Recovery must use `/bin/bash --noprofile --norc` and absolute
+   paths. Reject symlinks, hard links, duplicate/ambiguous markers, dirty public
+   Git, and later-owner-change rollback.
+3. Preserve behavior across interactive login/non-login, noninteractive login,
+   direct SSH, tmux, explicit `.bashrc` source, scheduler `#!/bin/bash -l`,
+   AB/AB2/T4 module hooks, AL uenv, local MPI, SSH-agent, Codex routing, cache
+   ordering, and shell-local safeguards. Alphabetize only aliases and
+   independent declaration groups; never reorder execution-dependent code or
+   opaque owner bytes.
+4. Create `shared/skills/onboard-personal-mac` with concise Codex instructions,
+   UI metadata, and only necessary references. It must reconstruct Git/TODO,
+   perform value-free discovery, interview one material decision at a time,
+   wait for `go`, invoke recognizable native harness commands itself, stop at
+   passwords/TCC/reboots/physical prompts, validate rollback/reapply and fresh
+   sessions, and run post-acceptance `.bash_common` orphan cleanup exactly as
+   T-273 requires. Add discovery, structure, privacy, sequencing, and simulated
+   cold-onboarding tests; install links only through the repository installer.
+5. Run focused tests, ShellCheck/syntax, `git diff --check`, portable phase-one,
+   and protected CI. Publish small protected commits. Only afterward run live
+   value-free plans and sequential apply/rollback/reapply acceptance on
+   `office`, `local`, AB, AB2, RI, AL, RC, and T4. Stop on first host failure;
+   never batch live startup migrations. Each remaining Mac uses the new skill
+   after it comes online and retains its independent go gate.
+
+**Rollback and acceptance:** generic publication is reversible by normal Git;
+each live startup transaction must restore both exact prior files before any
+next host. Acceptance requires clean/equal refs, absent transfer artifacts,
+doctor readiness, unchanged scheduler/native routes, fresh shell matrix pass,
+and no owner-byte disclosure. The full `.bash_profile` is no longer owner-
+maintained after successful migration, but remains present as Bash's required
+thin entry point.
+
+**Stage-1 implementation checkpoint:** the task branch adds a bounded Python
+focused-suite runner, an explicit manifest with per-suite labels/logs, a
+parallelism/failure-attribution regression, and a separately gated native MPI
+test. The phase-one integration tail remains serial; `HARNESS_TEST_JOBS=legacy`
+retains the diagnostic serial front-end, while the default is four workers.
+Native MPI now requires `HARNESS_NATIVE_MPI=1` in a declared environment and
+is never inferred from `mpicc` discovery. Focused runner, startup-normalize,
+syntax, Python compilation, and diff checks pass. Exact next action: commit the
+clean stage-1 working set, measure the default complete phase-one run, repair
+any newly exposed isolation conflict, then publish this layer before beginning
+the startup adapter.
+
+The first four-worker run finished the focused group in 140.36 seconds and
+passed 48/50 suites. The Bash-hook and tmux suites refused because the runner's
+own `py_compile` created `tools/__pycache__`, dirtying the real checkout; tmux's
+dependent long-TMPDIR case consequently failed too. No live state changed.
+Guarded deletion removed only that generated tree (2 entries, 5,802 bytes),
+verified protected anchors unchanged, and the exact manifest was unlinked.
+Set `PYTHONDONTWRITEBYTECODE=1` on the syntax check and rerun from a clean commit;
+the failure is safe and reproducible, not permission to weaken clean-checkout
+gates.
+
+The second run reproduced the same 48/50 result in 138.61 seconds because
+`py_compile` writes its requested bytecode even when `PYTHONDONTWRITEBYTECODE`
+is set. Guarded deletion again removed only the two-entry cache with anchors
+unchanged and its manifest unlinked. Replace compilation with in-memory
+`ast.parse`; this is the exact retry and no other gate changes.
+
+The clean in-memory-parse rerun passed all 50 parallel focused suites in about
+140 seconds, including both previously blocked suites, then reached the
+pre-existing Darwin limitation in the serial integration tail: its synthetic
+`local` control-plane apply invokes the Linux `local` doctor on `office` and
+fails before mutation. Total time was 217.84 seconds. Native MPI was explicitly
+skipped as designed. The authoritative Ubuntu protected phase-one gate must
+pass before merge; do not weaken logical-host OS validation to make a Darwin
+controller impersonate `local`.
 
 ### T-273 — Resolve every intentionally deferred maintenance item
 
