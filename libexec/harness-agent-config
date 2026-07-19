@@ -1,0 +1,384 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+. "$SELF_DIR/harness-macos-common"
+
+usage() {
+    cat >&2 <<'EOF'
+Usage:
+  harness agent-config [--plan|--apply] [--adopt] [--drill]
+  harness agent-config --inventory|--doctor
+  harness agent-config --rollback TRANSACTION_ID
+EOF
+}
+
+mode=plan
+adopt=no
+rollback_id=
+drill=no
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        --adopt) adopt=yes; shift ;;
+        --drill) drill=yes; shift ;;
+        --inventory) mode=inventory; shift ;;
+        --doctor) mode=doctor; shift ;;
+        --rollback) [ "$#" -ge 2 ] || { usage; exit 2; }; mode=rollback; rollback_id=$2; shift 2 ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+
+current_uid=$(id -u)
+codex_source=$HARNESS_ROOT/config/agent-clients/codex.toml
+claude_source=$HARNESS_ROOT/config/agent-clients/claude.json
+launcher_source=$HARNESS_ROOT/bin/harness-codex
+components_source=$HARNESS_ROOT/config/agent-clients/components.tsv
+codex_live=$HOME/.codex/config.toml
+claude_live=$HOME/.claude/settings.json
+launcher_live=$HOME/.local/bin/codex
+
+require_home() {
+    case ${HOME:-} in /*) ;; *) die "agent configuration requires an absolute HOME" ;; esac
+    [ -d "$HOME" ] && [ ! -L "$HOME" ] || die "agent configuration HOME is unsafe"
+    [ "$(macos_stat_owner "$HOME")" = "$current_uid" ] ||
+        die "agent configuration HOME owner is unsafe"
+}
+
+validate_checkout() {
+    [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
+        die "agent configuration requires a Git harness checkout"
+    physical_root=$(CDPATH='' cd -- "$HARNESS_ROOT" && pwd -P)
+    [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" = "$physical_root" ] ||
+        die "agent configuration checkout root is ambiguous"
+    [ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
+        die "agent configuration requires a clean committed checkout"
+    if [ "${HARNESS_TEST_ALLOW_NONMAIN:-0}" != 1 ]; then
+        [ "$(git -C "$HARNESS_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null)" = main ] ||
+            die "agent configuration requires the main branch"
+    fi
+}
+
+validate_sources() {
+    for tracked in config/agent-clients/codex.toml \
+        config/agent-clients/claude.json config/agent-clients/components.tsv \
+        bin/harness-codex; do
+        [ "$(git -C "$HARNESS_ROOT" ls-files --error-unmatch "$tracked" 2>/dev/null)" = "$tracked" ] ||
+            die "agent configuration source is untracked"
+        [ -f "$HARNESS_ROOT/$tracked" ] && [ ! -L "$HARNESS_ROOT/$tracked" ] ||
+            die "agent configuration source has unsafe type"
+    done
+    awk '
+        NR == 1 { if ($0 != "approval_policy = \"never\"") bad = 1; next }
+        NR == 2 { if ($0 != "sandbox_mode = \"danger-full-access\"") bad = 1; next }
+        { bad = 1 }
+        END { exit NR == 2 && !bad ? 0 : 1 }
+    ' "$codex_source" >/dev/null 2>&1 || die "canonical Codex configuration is invalid"
+    command -v jq >/dev/null 2>&1 || die "Claude configuration validator requires jq"
+    jq -e '
+        type == "object" and
+        (keys | sort) == ["$schema", "permissions", "skipDangerousModePermissionPrompt"] and
+        .["$schema"] == "https://json.schemastore.org/claude-code-settings.json" and
+        .permissions == {"defaultMode":"bypassPermissions"} and
+        .skipDangerousModePermissionPrompt == true
+    ' "$claude_source" >/dev/null 2>&1 || die "canonical Claude configuration is invalid"
+    [ "$(sed -n '1p' "$components_source")" = schema=1 ] &&
+        [ "$(wc -l <"$components_source" | tr -d ' ')" = 1 ] ||
+        die "agent component declaration is invalid"
+    LC_ALL=C grep -E -i \
+        '(BEGIN ([A-Z0-9 ]+ )?PRIVATE KEY|token[[:space:]]*=|password[[:space:]]*=|secret[[:space:]]*=|api[_-]?key[[:space:]]*=|https?://(localhost|127\.0\.0\.1|[^/[:space:]]+@))' \
+        "$codex_source" "$claude_source" "$components_source" >/dev/null 2>&1 &&
+        die "agent configuration contains prohibited private or credential material"
+    return 0
+}
+
+label_destination() {
+    case "$1" in
+        codex) printf '%s\n' "$codex_live" ;;
+        claude) printf '%s\n' "$claude_live" ;;
+        launcher) printf '%s\n' "$launcher_live" ;;
+        *) die "agent configuration label is invalid" ;;
+    esac
+}
+
+label_source() {
+    case "$1" in
+        codex) printf '%s\n' "$codex_source" ;;
+        claude) printf '%s\n' "$claude_source" ;;
+        launcher) printf '%s\n' "$launcher_source" ;;
+        *) die "agent configuration label is invalid" ;;
+    esac
+}
+
+path_state() {
+    destination=$1
+    source=$2
+    if [ -L "$destination" ]; then
+        [ "$(readlink "$destination")" = "$source" ] && printf '%s\n' current || printf '%s\n' symlink
+    elif [ -f "$destination" ]; then
+        [ "$(macos_stat_owner "$destination")" = "$current_uid" ] &&
+            [ "$(macos_stat_links "$destination")" = 1 ] || {
+                printf '%s\n' unsafe
+                return
+            }
+        printf '%s\n' regular
+    elif [ -e "$destination" ]; then
+        printf '%s\n' unsafe
+    else
+        printf '%s\n' absent
+    fi
+}
+
+require_safe_parent_chain() {
+    parent=${1%/*}
+    while [ "$parent" != "$HOME" ]; do
+        case "$parent" in "$HOME"/*) ;; *) die "agent configuration parent is unsafe" ;; esac
+        if [ -e "$parent" ] || [ -L "$parent" ]; then
+            [ -d "$parent" ] && [ ! -L "$parent" ] || die "agent configuration parent is unsafe"
+            [ "$(macos_stat_owner "$parent")" = "$current_uid" ] ||
+                die "agent configuration parent owner is unsafe"
+        fi
+        parent=${parent%/*}
+    done
+}
+
+prepare_state() {
+    state_root=$HOME/.local/state/harness
+    transaction_root=$state_root/transactions
+    umask 077
+    for directory in "$HOME/.local" "$HOME/.local/state" "$state_root" "$transaction_root"; do
+        if [ -e "$directory" ] || [ -L "$directory" ]; then
+            [ -d "$directory" ] && [ ! -L "$directory" ] &&
+                [ "$(macos_stat_owner "$directory")" = "$current_uid" ] ||
+                die "agent configuration state path is unsafe"
+        else
+            mkdir "$directory"
+            chmod 700 "$directory"
+        fi
+    done
+    chmod 700 "$state_root" "$transaction_root"
+}
+
+restore_label() {
+    restore_label_name=$1
+    restore_prior=$2
+    restore_backup=$3
+    restore_mode=$4
+    restore_destination=$(label_destination "$restore_label_name")
+    restore_source=$(label_source "$restore_label_name")
+    if [ -L "$restore_destination" ] && [ "$(readlink "$restore_destination")" = "$restore_source" ]; then
+        unlink "$restore_destination"
+    fi
+    case "$restore_prior" in
+        absent) ;;
+        regular)
+            cp "$restore_backup" "$restore_destination"
+            chmod "$restore_mode" "$restore_destination"
+            ;;
+        symlink)
+            restore_target=$(sed -n '1p' "$restore_backup")
+            [ -n "$restore_target" ] || die "agent configuration symlink backup is invalid"
+            ln -s "$restore_target" "$restore_destination"
+            ;;
+        *) die "agent configuration transaction prior type is invalid" ;;
+    esac
+}
+
+rollback_transaction() {
+    rollback_name=$1
+    macos_private_id_is_safe "$rollback_name" || die "invalid agent configuration transaction"
+    prepare_state
+    manifest=$transaction_root/$rollback_name.agent-config.manifest
+    status_file=$transaction_root/$rollback_name.agent-config.status
+    macos_require_private_file "$manifest" "$current_uid"
+    macos_require_private_file "$status_file" "$current_uid"
+    [ "$(sed -n '1p' "$status_file")" = complete ] ||
+        die "agent configuration transaction is not complete"
+    [ "$(sed -n '1p' "$manifest")" = schema=1 ] &&
+        [ "$(sed -n '2p' "$manifest")" = operation=agent-config ] ||
+        die "agent configuration transaction manifest is malformed"
+    for label in codex claude launcher; do
+        destination=$(label_destination "$label")
+        source=$(label_source "$label")
+        [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ] ||
+            die "agent configuration rollback blocked by changed live path"
+        record=$(awk -F'|' -v label="$label" '$1 == "path" && $2 == label { print; count++ } END { if (count != 1) exit 1 }' "$manifest") ||
+            die "agent configuration transaction manifest is malformed"
+        old_ifs=$IFS; IFS='|'; set -- $record; IFS=$old_ifs
+        [ "$#" -eq 5 ] || die "agent configuration transaction manifest is malformed"
+        case "$3" in absent) [ "$4" = absent ] && [ "$5" = absent ] ;; regular|symlink)
+            case "$4" in "$transaction_root"/*) [ -f "$4" ] && [ ! -L "$4" ] ;; *) false ;; esac ;;
+            *) false ;;
+        esac || die "agent configuration transaction manifest is malformed"
+    done
+    awk -F'|' '$1 == "directory" { print $2 }' "$manifest" |
+        while IFS= read -r directory; do
+            case "$directory" in
+                "$HOME/.codex"|"$HOME/.claude"|"$HOME/.local/bin") ;;
+                *) die "agent configuration transaction directory is invalid" ;;
+            esac
+            [ -d "$directory" ] && [ ! -L "$directory" ] &&
+                [ "$(macos_stat_owner "$directory")" = "$current_uid" ] ||
+                die "agent configuration rollback blocked by changed directory"
+            find "$directory" -mindepth 1 -maxdepth 1 -print |
+                while IFS= read -r child; do
+                    case "$child" in
+                        "$codex_live"|"$claude_live"|"$launcher_live") ;;
+                        *) die "agent configuration rollback blocked by unexpected content" ;;
+                    esac
+                done
+        done
+    for label in launcher claude codex; do
+        record=$(awk -F'|' -v label="$label" '$1 == "path" && $2 == label { print }' "$manifest")
+        old_ifs=$IFS; IFS='|'; set -- $record; IFS=$old_ifs
+        restore_label "$2" "$3" "$4" "$5"
+    done
+    awk -F'|' '$1 == "directory" { value[++n]=$2 } END { for (i=n; i>=1; i--) print value[i] }' "$manifest" |
+        while IFS= read -r directory; do rmdir "$directory" 2>/dev/null || true; done
+    printf '%s\n' rolled-back >"$status_file"
+    printf 'AGENT_CONFIG action=rolled-back transaction=%s activation=unchanged\n' "$rollback_name"
+}
+
+require_home
+validate_checkout
+validate_sources
+[ "$mode" = apply ] || [ "$drill" = no ] || { usage; exit 2; }
+
+if [ "$mode" = rollback ]; then
+    [ -n "$rollback_id" ] && [ "$adopt" = no ] || { usage; exit 2; }
+    rollback_transaction "$rollback_id"
+    exit 0
+fi
+
+blocked=0
+changes=0
+for label in codex claude launcher; do
+    destination=$(label_destination "$label")
+    source=$(label_source "$label")
+    require_safe_parent_chain "$destination"
+    state=$(path_state "$destination" "$source")
+    case "$state:$adopt" in
+        current:*) action=none ;;
+        absent:*) action='link'; changes=$((changes + 1)) ;;
+        regular:yes|symlink:yes) action='adopt'; changes=$((changes + 1)) ;;
+        regular:no|symlink:no) action='adopt-required'; blocked=1 ;;
+        *) action='blocked'; blocked=1 ;;
+    esac
+    printf 'AGENT_CONFIG_PATH client=%s state=%s action=%s\n' "$label" "$state" "$action"
+done
+printf 'AGENT_COMPONENTS declarations=0 action=none authorization=local\n'
+
+if [ "$mode" = inventory ]; then
+    printf 'END agent_config_inventory privacy=value-free blocked=%s changes=%s\n' "$blocked" "$changes"
+    exit 0
+fi
+if [ "$mode" = doctor ]; then
+    if [ "$blocked" -eq 0 ] && [ "$changes" -eq 0 ]; then
+        echo 'END agent_config_doctor status=ready failures=0'
+        exit 0
+    fi
+    printf 'END agent_config_doctor status=not-ready failures=%s\n' "$((blocked + changes))"
+    exit 1
+fi
+printf 'AGENT_CONFIG mode=%s adopt=%s blocked=%s changes=%s activation=new-sessions\n' \
+    "$mode" "$adopt" "$blocked" "$changes"
+[ "$blocked" -eq 0 ] || die "agent configuration plan contains blocked paths"
+[ "$mode" = apply ] || { echo 'END agent_config apply=not-requested'; exit 0; }
+[ "$changes" -gt 0 ] || {
+    echo 'END agent_config action=none activation=unchanged'
+    [ "$drill" = no ] || echo 'AGENT_CONFIG_DRILL rollback=not-needed reapply=no-op'
+    exit 0
+}
+
+validate_checkout
+validate_sources
+prepare_state
+transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+manifest=$transaction_root/$transaction_id.agent-config.manifest
+status_file=$transaction_root/$transaction_id.agent-config.status
+umask 077
+printf 'schema=1\noperation=agent-config\nrevision=%s\n' \
+    "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" >"$manifest"
+chmod 600 "$manifest"
+printf '%s\n' prepared >"$status_file"
+chmod 600 "$status_file"
+
+for directory in "$HOME/.codex" "$HOME/.claude" "$HOME/.local/bin"; do
+    if [ ! -e "$directory" ] && [ ! -L "$directory" ]; then
+        mkdir "$directory"
+        chmod 700 "$directory"
+        printf 'directory|%s\n' "$directory" >>"$manifest"
+    fi
+done
+
+for label in codex claude launcher; do
+    destination=$(label_destination "$label")
+    source=$(label_source "$label")
+    prior=$(path_state "$destination" "$source")
+    backup=absent
+    prior_mode=absent
+    case "$prior" in
+        absent) ;;
+        regular)
+            backup=$transaction_root/$transaction_id.agent-config.$label.before
+            cp "$destination" "$backup"; chmod 600 "$backup"
+            prior_mode=$(macos_stat_mode "$destination")
+            ;;
+        symlink)
+            backup=$transaction_root/$transaction_id.agent-config.$label.before
+            readlink "$destination" >"$backup"; chmod 600 "$backup"
+            ;;
+        *) die "agent configuration changed before apply" ;;
+    esac
+    printf 'path|%s|%s|%s|%s\n' "$label" "$prior" "$backup" "$prior_mode" >>"$manifest"
+done
+
+complete=0
+cleanup_apply() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ "$complete" -eq 0 ]; then
+        for label in launcher claude codex; do
+            record=$(awk -F'|' -v label="$label" '$1 == "path" && $2 == label { print }' "$manifest")
+            [ -n "$record" ] || continue
+            old_ifs=$IFS; IFS='|'; set -- $record; IFS=$old_ifs
+            restore_label "$2" "$3" "$4" "$5" || true
+        done
+        awk -F'|' '$1 == "directory" { value[++n]=$2 } END { for (i=n; i>=1; i--) print value[i] }' "$manifest" |
+            while IFS= read -r directory; do rmdir "$directory" 2>/dev/null || true; done
+        printf '%s\n' failed >"$status_file"
+    fi
+    exit "$status"
+}
+trap cleanup_apply EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+for label in codex claude launcher; do
+    destination=$(label_destination "$label")
+    source=$(label_source "$label")
+    [ ! -e "$destination" ] && [ ! -L "$destination" ] || unlink "$destination"
+    ln -s "$source" "$destination"
+    [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ] ||
+        die "agent configuration link verification failed"
+done
+printf '%s\n' complete >"$status_file"
+complete=1
+trap - EXIT HUP INT TERM
+printf 'AGENT_CONFIG action=applied transaction=%s rollback=available activation=new-sessions\n' "$transaction_id"
+if [ "$drill" = yes ]; then
+    "$SELF_DIR/harness-agent-config" --rollback "$transaction_id"
+    if [ "$adopt" = yes ]; then
+        "$SELF_DIR/harness-agent-config" --apply --adopt
+    else
+        "$SELF_DIR/harness-agent-config" --apply
+    fi
+    printf 'AGENT_CONFIG_DRILL rollback=%s reapply=accepted\n' "$transaction_id"
+    "$SELF_DIR/harness-agent-config" --doctor
+fi

@@ -1,6 +1,6 @@
 # T-269 plan — private cross-platform Codex and Claude configuration
 
-**Phase:** ready-for-go
+**Phase:** validating
 
 ## Desired outcome
 
@@ -352,7 +352,8 @@ destructive-operation circuit breaker remain outside the configurable promise.
 C7 automates deterministic convergence only inside explicit owner-started runs
 and adds no background mutation or automatic publication.
 
-A fresh explicit `go` authorizes implementation of the generic public settings
+The owner gave the fresh explicit `go` on 2026-07-19. It authorizes
+implementation of the generic public settings
 bodies, validators, launcher, transaction/link/declaration engines, Mac catch-up
 command, Linux controller, synthetic tests, protected publication, and guarded
 clean-checkout distribution of generic code. It does not authorize reading or
@@ -363,6 +364,15 @@ remain separate recorded rollout gates.
 
 ## Exact next action
 
-Wait for the owner's fresh explicit `go`. On receipt, reconstruct this frozen
-plan from Git, set T-269 to `executing`, and begin with synthetic-first generic
-implementation. Do not change any live client setting during this gate.
+Implement the generic public engine synthetic-first, validate it in a clean
+checkout, and publish it through the protected workflow. Do not read or change
+any live client setting during this stage.
+
+Implementation passed the clean-checkout validation gate. The task branch
+contains the two minimal C1 bodies, strict empty component declaration,
+transient-trust launcher, transactional links and rollback, explicit local
+catch-up, sequential Linux controller, and focused synthetic coverage. No
+unspecified private preference or live state was inspected or adopted. The
+complete portable suite, focused tests, ShellCheck, diff check, and public
+privacy audit pass. Publish through the protected workflow, synchronize only
+clean managed checkouts, and stop before live rollout.

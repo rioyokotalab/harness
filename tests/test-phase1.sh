@@ -52,6 +52,9 @@ for script in \
     "$ROOT/libexec/harness-macos-bash" \
     "$ROOT/libexec/harness-macos-bash-hooks" \
     "$ROOT/libexec/harness-tmux-config" \
+    "$ROOT/libexec/harness-agent-config" \
+    "$ROOT/libexec/harness-agent-config-catch-up" \
+    "$ROOT/libexec/harness-agent-config-fleet" \
     "$ROOT/libexec/harness-storage-readiness" \
     "$ROOT/libexec/harness-replica" \
     "$ROOT/libexec/harness-repository-fingerprint" \
@@ -132,6 +135,10 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "personal macOS Bash-hook focused suite"
 "$ROOT/tests/test-tmux-config.sh" >/dev/null ||
     fail "shared tmux configuration focused suite"
+"$ROOT/tests/test-agent-config.sh" >/dev/null ||
+    fail "agent configuration focused suite"
+"$ROOT/tests/test-agent-config-fleet.sh" >/dev/null ||
+    fail "agent configuration fleet focused suite"
 "$ROOT/tests/test-personal-macos-update.sh" >/dev/null ||
     fail "personal macOS long-gap update focused suite"
 "$ROOT/tests/test-personal-macos-ssh-sync.sh" >/dev/null ||

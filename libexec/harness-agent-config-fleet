@@ -1,0 +1,74 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() {
+    echo "Usage: harness agent-config-fleet --from COMMIT --to COMMIT [--hosts CSV] [--plan|--apply] [--adopt] [--drill]" >&2
+}
+
+from=
+to=
+hosts_csv=ab,ab2,ri,al,rc,t4
+mode=plan
+adopt=no
+drill=no
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --from) [ "$#" -ge 2 ] || { usage; exit 2; }; from=$2; shift 2 ;;
+        --to) [ "$#" -ge 2 ] || { usage; exit 2; }; to=$2; shift 2 ;;
+        --hosts) [ "$#" -ge 2 ] || { usage; exit 2; }; hosts_csv=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        --adopt) adopt=yes; shift ;;
+        --drill) drill=yes; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+[ "$mode" = apply ] || [ "$drill" = no ] || { usage; exit 2; }
+case "$from:$to" in
+    *[!0-9a-f:]*|:*) die "agent configuration fleet commits are invalid" ;;
+esac
+[ "${#from}" -eq 40 ] && [ "${#to}" -eq 40 ] ||
+    die "agent configuration fleet commits are invalid"
+
+adopt_argument=
+[ "$adopt" = no ] || adopt_argument=--adopt
+drill_argument=
+[ "$drill" = no ] || drill_argument=--drill
+
+"$SELF_DIR/harness-fleet-sync" --from "$from" --to "$to" \
+    --hosts "$hosts_csv" "--$mode"
+
+run_local() {
+    if [ "$mode" = plan ]; then
+        "$SELF_DIR/harness-agent-config" --plan $adopt_argument
+    else
+        "$SELF_DIR/harness-agent-config" --apply $adopt_argument $drill_argument
+    fi
+}
+
+run_remote() {
+    host=$1
+    echo "NATIVE ssh $host harness-agent-config-$mode"
+    if [ "$mode" = plan ]; then
+        remote_command="\$HOME/harness/bin/harness agent-config --plan $adopt_argument"
+    else
+        remote_command="\$HOME/harness/bin/harness agent-config --apply $adopt_argument $drill_argument"
+    fi
+    ssh -o BatchMode=yes -o ConnectTimeout=15 "$host" "$remote_command"
+}
+
+echo "AGENT_CONFIG_FLEET mode=$mode order=local,$hosts_csv stop_on_failure=yes"
+run_local
+hosts=$(printf '%s\n' "$hosts_csv" | tr ',' '\n')
+for host in $hosts; do
+    require_safe_id "$host"
+    [ "$host" != local ] || die "local cannot be a remote agent configuration target"
+    run_remote "$host" || die "agent configuration fleet stopped at host: $host"
+done
+echo "END agent_config_fleet mode=$mode status=complete"

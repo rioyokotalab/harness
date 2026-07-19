@@ -1,9 +1,0 @@
-# The live ~/.codex/config.toml is intentionally not versioned by this repo.
-# Add only reviewed, non-secret settings here if a portable template becomes
-# useful. Keep credentials and private endpoints in environment variables or a
-# secret manager.
-
-# model = "<reviewed-model>"
-# model_reasoning_effort = "<reviewed-effort>"
-# approval_policy = "on-request"
-# sandbox_mode = "workspace-write"

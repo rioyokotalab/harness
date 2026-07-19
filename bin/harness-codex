@@ -1,0 +1,48 @@
+#!/bin/sh
+set -eu
+
+launcher_path=$0
+if [ -L "$launcher_path" ]; then
+    launcher_target=$(readlink "$launcher_path")
+    case "$launcher_target" in
+        /*) launcher_path=$launcher_target ;;
+        *) launcher_path=${launcher_path%/*}/$launcher_target ;;
+    esac
+fi
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$launcher_path")" 2>/dev/null && pwd -P)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." 2>/dev/null && pwd -P)}
+
+if project_root=$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null); then
+    project_root=$(CDPATH='' cd -- "$project_root" 2>/dev/null && pwd -P) || {
+        echo "harness-codex: current project root is unavailable" >&2
+        exit 2
+    }
+else
+    project_root=$(pwd -P)
+fi
+case "$project_root" in
+    *'"'*|*'\'*|*'
+'*) echo "harness-codex: current project root cannot be encoded safely" >&2; exit 2 ;;
+esac
+
+native_codex=
+old_ifs=$IFS
+IFS=:
+for path_entry in $PATH; do
+    [ -n "$path_entry" ] || path_entry=.
+    candidate=$path_entry/codex
+    [ -x "$candidate" ] || continue
+    case "$candidate" in
+        "$HOME/.local/bin/codex"|"$HARNESS_ROOT/bin/harness-codex") continue ;;
+    esac
+    native_codex=$candidate
+    break
+done
+IFS=$old_ifs
+[ -n "$native_codex" ] || {
+    echo "harness-codex: native codex command is unavailable outside the managed launcher" >&2
+    exit 2
+}
+
+override=projects.\"$project_root\".trust_level=\"trusted\"
+exec "$native_codex" -c "$override" "$@"

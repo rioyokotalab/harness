@@ -51,7 +51,8 @@ and compact historical pointers here. Next free ID: T-270.
 
 ## Next resume checkpoint
 
-Resume T-269 in `ready-for-go`. The current Linux node's value-free baseline
+Resume T-269 in `validating`. The owner gave the frozen-plan `go` after C1–C7
+passed their final audit. The current Linux node's value-free baseline
 proves that Codex uses `approval_policy=never` with
 `sandbox_mode=danger-full-access`, while Claude uses
 `permissions.defaultMode=bypassPermissions`; the public harness deliberately
@@ -87,11 +88,13 @@ validation, transactional link/declaration apply, doctor, and authorized
 rollback/reapply drills. Starting an offline Mac, reviewing/publishing edits,
 authentication/OAuth, OS dialogs, and observing a fresh interactive session
 remain manual; no background or login-time mutation is allowed. C1–C7 are
-internally consistent and no material design input remains. Wait for a fresh
-explicit `go` before implementing the frozen generic public engine. That go
-does not authorize adoption of live values, live settings/link mutation,
-plugin/MCP authorization, or any rollout apply/rollback drill; those remain
-later recorded rollout gates.
+internally consistent and no material design input remains. Generic public
+implementation, synthetic validation, protected publication, and clean-checkout
+distribution are authorized. Adoption of live values, live settings/link
+mutation, plugin/MCP authorization, and every rollout apply/rollback drill
+remain later recorded gates. Exact first step: add the two minimal frozen
+canonical settings bodies and synthetic-first validation/link transactions;
+do not inspect either existing live settings file.
 T-268 remains independently resumable from its pilot-plan failure handoff, and
 T-196 remains at 1/8 until the 2026-07-26 successors are eligible.
 
@@ -1402,7 +1405,7 @@ migration plan. It must not inspect private values or run
 
 ### T-269 — Private cross-platform Codex and Claude configuration
 
-**Phase/status:** `ready-for-go`. Mirror deliberately selected Codex and Claude
+**Phase/status:** `validating`. Mirror deliberately selected Codex and Claude
 user configuration across four pull-based Macs and seven managed Linux
 environments without copying authentication, credentials, sessions, histories,
 memories, caches, databases, client-generated state, private endpoints, or raw
@@ -1467,16 +1470,41 @@ circuit breaker remain truthful external boundaries. C7 automates only
 deterministic work inside an owner-started run and does not add background
 mutation or automatic publication.
 
-**Go boundary:** all required design input is collected. A fresh explicit
-`go` authorizes the generic public settings bodies, validators, launcher,
+**Execution authorization:** all required design input is collected. The owner
+gave the fresh explicit `go` on 2026-07-19, authorizing the generic public
+settings bodies, validators, launcher,
 transaction/link/declaration engines, Mac catch-up command, Linux controller,
 synthetic validation, protected publication, and clean-checkout distribution
 of that generic code. It does not authorize reading or adopting existing live
 configuration values, changing a live client setting or link, installing,
 enabling, or authorizing a plugin/MCP/connector, supplying authentication,
 running a live apply/rollback/reapply drill, or reloading an active session.
-Those remain the recorded sequential rollout gates. Exact next action: wait for
-the owner's fresh explicit `go`.
+Those remain the recorded sequential rollout gates. Exact first action: build
+the minimal frozen canonical bodies and synthetic-first cross-platform engine
+without reading either existing live settings file.
+
+**Generic implementation checkpoint (2026-07-19):** the isolated task branch
+now contains the singular public Codex and Claude settings bodies, an empty
+strict component declaration, the transient current-root trust launcher, one
+three-link transaction with exact regular/symlink preimages, unchanged-only
+rollback, value-free inventory/plan/doctor output, direct offline catch-up, and
+the sequential Linux controller. The initial bodies contain only the settings
+already frozen in C1; no private model/UI value was inspected or inferred.
+No hook, plugin, marketplace, or MCP identifier is declared because none has
+yet received exact public review, and the empty manifest cannot install or
+authorize one. Synthetic tests pass for absent apply, explicit regular/symlink
+adoption, idempotence, transient project trust, changed-link and hard-link
+refusal, injected partial-link restoration, automated rollback/reapply, direct
+old-to-current fast-forward, controller ordering, and stop-on-first-failure.
+Focused ShellCheck, Claude takeover, public-repository audit, and diff checks
+pass. Commit `6f87600` records the implementation. From that clean task
+checkout, `HARNESS_PORTABLE_CI=1 tests/test-phase1.sh` passed the complete
+portable suite, including all existing macOS, Linux/HPC, safety, privacy,
+ShellCheck, and new agent-config regressions. No live settings, link, client
+session, authentication, component, or remote node was read or changed. Exact
+next action: publish the clean task branch through a protected PR, require
+`portable-phase1`, merge without force, and guarded-fast-forward only clean
+managed checkouts. Stop before every live adoption or rollout gate.
 
 ## Stable operational facts
 
