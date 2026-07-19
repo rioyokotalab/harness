@@ -64,10 +64,10 @@ Claude action-approval prompts in ordinary sessions: Codex uses `never` with
 `danger-full-access`, and Claude uses `bypassPermissions` with its dangerous-
 mode startup warning suppressed. Authentication, macOS privacy/TCC, OS
 administrator, and provider-enforced dialogs remain separate boundaries. Ask
-only decision C6: choose the Git review and dirty-checkout behavior for edits
-made through the live links. C2 is frozen: `harness` contains one tracked
-canonical settings body per client, and each live user settings path is a
-symbolic link to it; no private companion or generated live copy participates.
+only decision C7: confirm the sequential rollout order. C2 is frozen: `harness`
+contains one tracked canonical settings body per client, and each live user
+settings path is a symbolic link to it; no private companion or generated live
+copy participates.
 C3 is frozen as every reviewed setting that is identical across macOS/Linux and
 safe to publish, while machine-specific trust, private values, credentials,
 runtime state, and non-portable commands remain excluded.
@@ -77,6 +77,10 @@ path, while every project launched through it is trusted.
 C5 is frozen as prompt-free public declarative desired state for every reviewed
 portable hook, plugin, marketplace, and MCP component. Authorization stays
 local; forced-interaction declarations and non-managed Codex hooks are excluded.
+C6 is frozen as review-first Git: edits through live links dirty the checkout,
+catch-up refuses dirt, and validation plus protected review precedes
+publication; no command automatically commits, pushes, adopts, or overwrites an
+edit.
 T-268 remains independently resumable from its pilot-plan failure handoff, and
 T-196 remains at 1/8 until the 2026-07-26 successors are eligible.
 
@@ -1421,18 +1425,19 @@ frozen as a tracked Bash launcher that injects the locally resolved current
 root as transient Codex trust. No path is stored or published; every project
 launched through the ordinary wrapper may load its project-local Codex config,
 hooks, and exec policies. C5 is frozen as the broad prompt-free public
-declarative choice.
-Reviewed Claude
-user-hook code and exact public plugin/marketplace/MCP identifiers synchronize;
+declarative choice. Reviewed Claude user-hook code and exact public
+plugin/marketplace/MCP identifiers synchronize;
 credentials and authorization remain local. Declarations that force interaction
 and non-managed Codex command hooks are excluded. Current
 Claude documentation confirms `bypassPermissions` retains hard-coded prompts
 for root/home recursive deletion and policy/component-forced interaction; the
 harness prohibits the former and C5 rejects the latter, but neither setting
-can truthfully disable the client circuit breaker. Ask C6 only: choose the Git
-review and dirty-checkout behavior for edits made through the linked canonical
-files. Checkpoint every answer; do not implement until C1–C7 are resolved and
-the owner gives a fresh explicit `go`.
+can truthfully disable the client circuit breaker. C6 is frozen as review-first
+Git: a live-link edit is a tracked worktree edit, dirty checkouts block catch-up,
+and only validated protected Git review publishes it. No automatic commit,
+push, adopt, or overwrite is allowed. Ask C7 only: confirm the sequential
+rollout order. Checkpoint every answer; do not implement until C1–C7 are
+resolved and the owner gives a fresh explicit `go`.
 
 ## Stable operational facts
 
