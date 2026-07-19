@@ -22,7 +22,7 @@ safe_id() {
 validate_checkout() {
     [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
         die "tmux configuration requires a Git harness checkout"
-    [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" =
+    [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" = \
         "$(CDPATH='' cd -- "$HARNESS_ROOT" && pwd -P)" ] ||
         die "tmux configuration checkout root is ambiguous"
     [ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
@@ -45,7 +45,7 @@ validate_source() {
     source_file=$HARNESS_ROOT/config/tmux/tmux.conf
     [ -f "$source_file" ] && [ ! -L "$source_file" ] ||
         die "canonical tmux configuration is unavailable"
-    [ "$(git -C "$HARNESS_ROOT" ls-files --error-unmatch config/tmux/tmux.conf 2>/dev/null)" =
+    [ "$(git -C "$HARNESS_ROOT" ls-files --error-unmatch config/tmux/tmux.conf 2>/dev/null)" = \
         config/tmux/tmux.conf ] || die "canonical tmux configuration is untracked"
     macos_validate_tmux_config "$source_file" "$(macos_stat_owner "$source_file")" \
         "$(macos_stat_mode "$source_file")"

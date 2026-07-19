@@ -37,7 +37,7 @@ validate_public() {
     [ "$(uname -s)" = Darwin ] || die "Mac configuration migration requires Darwin"
     [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
         die "Mac configuration migration requires a Git harness checkout"
-    [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" =
+    [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" = \
         "$(CDPATH='' cd -- "$HARNESS_ROOT" && pwd -P)" ] ||
         die "Mac configuration migration public checkout is ambiguous"
     [ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
@@ -52,7 +52,7 @@ validate_private() {
     macos_require_private_directory "$private_root" "$current_uid"
     macos_require_private_directory "$private_root/.git" "$current_uid"
     macos_require_private_directory "$private_root/hosts" "$current_uid"
-    [ "$(git -C "$private_root" rev-parse --show-toplevel 2>/dev/null)" =
+    [ "$(git -C "$private_root" rev-parse --show-toplevel 2>/dev/null)" = \
         "$(CDPATH='' cd -- "$private_root" && pwd -P)" ] ||
         die "Mac configuration migration private checkout is ambiguous"
     [ "$(git -C "$private_root" symbolic-ref --quiet --short HEAD 2>/dev/null)" = main ] ||
@@ -78,7 +78,7 @@ fetch_private() {
         unlink "$log"
         die "Mac configuration migration private fetch failed"
     fi
-    [ "$(git -C "$private_root" rev-parse HEAD)" =
+    [ "$(git -C "$private_root" rev-parse HEAD)" = \
         "$(git -C "$private_root" rev-parse refs/remotes/origin/main)" ] ||
         die "Mac configuration migration private checkout is not current"
 }

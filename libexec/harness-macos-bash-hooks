@@ -23,7 +23,7 @@ validate_checkout() {
     [ "$(uname -s)" = Darwin ] || die "Mac Bash hooks require Darwin"
     [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
         die "Mac Bash hooks require a Git harness checkout"
-    [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" =
+    [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" = \
         "$(CDPATH='' cd -- "$HARNESS_ROOT" && pwd -P)" ] ||
         die "Mac Bash hook checkout root is ambiguous"
     [ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
