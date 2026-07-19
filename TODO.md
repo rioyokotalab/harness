@@ -64,13 +64,16 @@ Claude action-approval prompts in ordinary sessions: Codex uses `never` with
 `danger-full-access`, and Claude uses `bypassPermissions` with its dangerous-
 mode startup warning suppressed. Authentication, macOS privacy/TCC, OS
 administrator, and provider-enforced dialogs remain separate boundaries. Ask
-only decision C4: choose how project/workspace trust avoids prompts without
-publishing absolute paths. C2 is frozen: `harness` contains one tracked
+only decision C5: choose the prompt-free public desired-state breadth for hooks,
+plugins, marketplaces, and MCP. C2 is frozen: `harness` contains one tracked
 canonical settings body per client, and each live user settings path is a
 symbolic link to it; no private companion or generated live copy participates.
 C3 is frozen as every reviewed setting that is identical across macOS/Linux and
 safe to publish, while machine-specific trust, private values, credentials,
 runtime state, and non-portable commands remain excluded.
+C4 is frozen as a tracked Bash launcher that resolves the current project root
+locally and passes it to Codex as a transient trusted override; it stores no
+path, while every project launched through it is trusted.
 T-268 remains independently resumable from its pilot-plan failure handoff, and
 T-196 remains at 1/8 until the 2026-07-26 successors are eligible.
 
@@ -1410,10 +1413,19 @@ companion, generated live copy, host overlay, or OS overlay for these settings.
 C3 is frozen as the broad portable choice: include every reviewed
 cross-platform and publicly safe preference, not only permission
 posture, while excluding machine-specific trust, private paths/endpoints,
-credential-bearing values, runtime state, and non-portable commands. Ask C4
-only: choose how project/workspace trust avoids prompts without persisting raw
-absolute paths in the linked public file. Checkpoint every answer; do not
-implement until C1–C7 are resolved and the owner gives a fresh explicit `go`.
+credential-bearing values, runtime state, and non-portable commands. C4 is
+frozen as a tracked Bash launcher that injects the locally resolved current
+root as transient Codex
+trust. No path is stored or published; every project launched through the
+ordinary wrapper may load its project-local Codex config, hooks, and exec
+policies. Ask C5 only: choose the public desired-state breadth for hooks,
+plugins, marketplaces, and MCP under the no-routine-prompt constraint. Current
+Claude documentation confirms `bypassPermissions` retains hard-coded prompts
+for root/home recursive deletion and policy/component-forced interaction; the
+harness prohibits the former and C5 must reject the latter, but neither setting
+can truthfully disable the client circuit breaker. Checkpoint every answer; do
+not implement until C1–C7 are resolved and the owner gives a fresh explicit
+`go`.
 
 ## Stable operational facts
 
