@@ -260,7 +260,10 @@ macos_validate_tmux_config() {
         die "tmux configuration validator is unavailable"
     (
         umask 077
-        macos_tmux_temp=$(mktemp -d "${TMPDIR:-/tmp}/harness-tmux-validate.XXXXXX") ||
+        # tmux's Unix socket path has a small platform limit.  Darwin's
+        # default TMPDIR is already long enough that adding tmux's uid and
+        # socket components can exceed it, so keep this isolated root short.
+        macos_tmux_temp=$(mktemp -d /tmp/harness-tmux-validate.XXXXXX) ||
             exit 1
         macos_tmux_socket=harness-validate-$$
         macos_tmux_socket_directory=$macos_tmux_temp/tmux-$(id -u)
