@@ -33,7 +33,10 @@ while IFS= read -r link; do
 		echo "FAIL: tracked symlink leaves the repository: $link" >&2
 		exit 1
 		;; esac
-	resolved=$(realpath -m -- "${link%/*}/$target")
+	case $(uname -s) in
+		Darwin) resolved=$(realpath "${link%/*}/$target") ;;
+		*) resolved=$(realpath -m -- "${link%/*}/$target") ;;
+	esac
 	case "$resolved" in "$ROOT"/*) ;;
 		*) echo "FAIL: tracked symlink leaves the repository: $link" >&2; exit 1 ;;
 	esac

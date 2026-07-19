@@ -327,7 +327,7 @@ mkdir -p "$fake_bin"
 cat >"$fake_bin/stat" <<'EOF'
 #!/bin/sh
 case "$1:$2" in
-    -c:%u) echo 999999 ;;
+    -c:%u|-f:%u) echo 999999 ;;
     *) exec /usr/bin/stat "$@" ;;
 esac
 EOF

@@ -3,7 +3,8 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/harness-safety-guards-test.XXXXXX")
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-safety-guards-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 
 cleanup() {
@@ -11,8 +12,8 @@ cleanup() {
     trap - EXIT HUP INT TERM
     cleanup_failed=0
     if [ -d "$TEMP_DIR" ]; then
-        "$CLEANUP" "$HARNESS" "${TMPDIR:-/tmp}" "$TEMP_DIR" \
-            "${TMPDIR:-/tmp}" >/dev/null || cleanup_failed=1
+        "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEMP_DIR" \
+            "$TEMP_BASE" >/dev/null || cleanup_failed=1
     fi
     if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
         printf '%s\n' 'FAIL: guarded safety-guard test cleanup' >&2
@@ -36,6 +37,7 @@ persistent=$TEMP_DIR/persistent
 fake_bin=$TEMP_DIR/bin
 command_log=$TEMP_DIR/commands.log
 mkdir -p "$home/harness/shell" "$persistent" "$fake_bin"
+ln -s "$home" "$TEMP_DIR/home-link"
 cp "$ROOT/shell/profile.sh" "$ROOT/shell/interactive.sh" \
     "$ROOT/shell/common-aliases.sh" "$ROOT/shell/safety-guards.sh" \
     "$home/harness/shell/"
@@ -69,6 +71,12 @@ if ! env -u HARNESS_INTERACTIVE_LOADED -u HARNESS_SAFETY_GUARDS_LOADED \
         [ "$(type -t rm)" = function ]
         [ "$(type -t qdel)" = function ]
         [ "$(bash --noprofile --norc -c "type -t rm")" = file ]
+        lexical_check=$(_harness_safety_lexical_path "$HOME/a/../safe")
+        [ "$lexical_check" = "$HOME/safe" ] ||
+            { echo lexical-normalization-failed >&2; exit 1; }
+        resolved_check=$(_harness_safety_resolved_path "$HOME/../home-link/.")
+        [ "$resolved_check" = "$HOME" ] ||
+            { echo nearest-ancestor-resolution-failed >&2; exit 1; }
         expect_refused() {
             set +e
             "$@"
@@ -83,6 +91,7 @@ if ! env -u HARNESS_INTERACTIVE_LOADED -u HARNESS_SAFETY_GUARDS_LOADED \
         expect_refused rm -rf "$HOME"
         expect_refused rm -Rf /
         expect_refused rm --recursive "$HARNESS_PERSISTENT_ROOT"
+        expect_refused rm -rf "$HOME/../home-link/."
         expect_refused rm -rf "$HOME/a" "$HOME/b" "$HOME/c" "$HOME/d" \
             "$HOME/e" "$HOME/f" "$HOME/g" "$HOME/h"
 
@@ -129,7 +138,7 @@ scancel|-s|TERM|457
 EOF
 cmp "$command_log" "$TEMP_DIR/expected.log" >/dev/null ||
     fail 'native pass-through or refusal log'
-[ "$(grep -c '^harness safety: refused ' "$TEMP_DIR/refusals.err")" -eq 12 ] ||
+[ "$(grep -c '^harness safety: refused ' "$TEMP_DIR/refusals.err")" -eq 13 ] ||
     fail 'refusal diagnostics'
 grep -F 'use harness guarded-delete' "$TEMP_DIR/refusals.err" >/dev/null ||
     fail 'safe deletion route diagnostic'
