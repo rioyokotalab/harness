@@ -1,5 +1,15 @@
 #!/bin/sh
 set -eu
+platform=$(uname -s)
+canonical_path() {
+    case "$platform" in Darwin) realpath "$1" ;; *) realpath -e -- "$1" ;; esac
+}
+file_sha256() {
+    case "$platform" in
+        Darwin) shasum -a 256 "$1" | awk '{ print $1 }' ;;
+        *) sha256sum "$1" | awk '{ print $1 }' ;;
+    esac
+}
 
 [ "$#" -eq 3 ] || {
     printf '%s\n' 'shared-executable-visibility: boundary, executable, and digest required' >&2
@@ -27,13 +37,13 @@ esac
     printf '%s\n' 'shared-executable-visibility: invalid executable' >&2
     exit 2
 }
-canonical_boundary=$(realpath -e -- "$boundary")
-canonical_executable=$(realpath -e -- "$executable")
+canonical_boundary=$(canonical_path "$boundary")
+canonical_executable=$(canonical_path "$executable")
 case $canonical_executable in
     "$canonical_boundary"/*) ;;
     *) printf '%s\n' 'shared-executable-visibility: executable outside boundary' >&2; exit 2 ;;
 esac
-actual=$(sha256sum "$executable" | awk '{ print $1 }')
+actual=$(file_sha256 "$executable")
 [ "$actual" = "$expected" ] || {
     printf '%s\n' 'shared-executable-visibility: digest mismatch' >&2
     exit 2

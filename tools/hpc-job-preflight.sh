@@ -1,5 +1,9 @@
 #!/bin/sh
 set -eu
+platform=$(uname -s)
+state_metadata() {
+    case "$platform" in Darwin) stat -f '%Lp %u' "$1" ;; *) stat -c '%a %u' -- "$1" ;; esac
+}
 
 case ${HARNESS_LOGICAL_HOST:-} in
     local|ab|ab2|ri|al|rc|t4) host=$HARNESS_LOGICAL_HOST ;;
@@ -33,7 +37,7 @@ if [ -e "$state" ] || [ -L "$state" ]; then
     }
     owner=$(id -u)
     IFS=' ' read -r mode state_owner <<EOF
-$(stat -c '%a %u' -- "$state")
+$(state_metadata "$state")
 EOF
     [ "$mode" = 700 ] && [ "$state_owner" = "$owner" ] || {
         printf '%s\n' 'hpc-job-preflight: unsafe state directory metadata' >&2

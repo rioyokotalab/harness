@@ -24,6 +24,7 @@ write_lscpu() {
 }
 
 sh -n "$PROBE"
+if [ "$(uname -s)" = Linux ]; then
 write_lscpu 'printf "%s\n" "# NODE" 0 0 1 1'
 output=$(PATH=$fake_bin:/usr/bin:/bin HARNESS_LOGICAL_HOST=local "$PROBE")
 printf '%s\n' "$output" | grep -E '^HPC_TOPOLOGY_SURFACE host=local .* login_numa_nodes=2 status=pass$' >/dev/null
@@ -41,6 +42,7 @@ if PATH=$fake_bin:/usr/bin:/bin HARNESS_LOGICAL_HOST=local "$PROBE" >"$TEST_ROOT
     exit 1
 fi
 grep -F 'malformed lscpu topology output' "$TEST_ROOT/malformed.out" >/dev/null
+fi
 
 python3 - "$AUDIT" <<'PY'
 import json

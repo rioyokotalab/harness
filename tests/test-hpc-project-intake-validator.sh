@@ -3,17 +3,22 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 VALIDATOR=$ROOT/tools/hpc-project-intake-validate.py
-TEST_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/hpc-project-intake-validator.XXXXXX")
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+TEST_ROOT=$(mktemp -d "$TEMP_BASE/hpc-project-intake-validator.XXXXXX")
 manifest=$TEST_ROOT/intake.json
 
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
     "$ROOT/tests/guarded-test-cleanup.sh" "$ROOT/bin/harness" \
-        "${TMPDIR:-/tmp}" "$TEST_ROOT" "${TMPDIR:-/tmp}" >/dev/null || status=1
+        "$TEMP_BASE" "$TEST_ROOT" "$TEMP_BASE" >/dev/null || status=1
     exit "$status"
 }
 trap cleanup EXIT HUP INT TERM
+
+sed_in_place() {
+    case $(uname -s) in Darwin) sed -i '' "$1" "$2" ;; *) sed -i "$1" "$2" ;; esac
+}
 
 write_valid() {
     phase=$1
@@ -79,16 +84,16 @@ write_valid draft
 expect_failure draft-not-ready "$VALIDATOR" --require-ready "$manifest"
 
 write_valid ready
-sed -i 's/"schema": 1,/"schema": 1, "unexpected": true,/' "$manifest"
+sed_in_place 's/"schema": 1,/"schema": 1, "unexpected": true,/' "$manifest"
 expect_failure unknown-field "$VALIDATOR" "$manifest"
 grep -F 'undeclared field is present' "$TEST_ROOT/unknown-field.out" >/dev/null
 
 write_valid ready
-sed -i 's/sha256:0000000000000000000000000000000000000000000000000000000000000000/sha256:bad/' "$manifest"
+sed_in_place 's/sha256:0000000000000000000000000000000000000000000000000000000000000000/sha256:bad/' "$manifest"
 expect_failure digest "$VALIDATOR" "$manifest"
 
 write_valid ready
-sed -i 's/runtime-registry/runtime\/registry/' "$manifest"
+sed_in_place 's/runtime-registry/runtime\/registry/' "$manifest"
 expect_failure credential-ref "$VALIDATOR" "$manifest"
 
 ln -s "$manifest" "$TEST_ROOT/link.json"

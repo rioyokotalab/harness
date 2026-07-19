@@ -1,5 +1,15 @@
 #!/bin/sh
 set -eu
+platform=$(uname -s)
+state_metadata() {
+    case "$platform" in Darwin) stat -f '%Lp %u' "$1" ;; *) stat -c '%a %u' -- "$1" ;; esac
+}
+result_metadata() {
+    case "$platform" in
+        Darwin) stat -f '%Lp %u %l %z' "$1" ;;
+        *) stat -c '%a %u %h %s' -- "$1" ;;
+    esac
+}
 
 case ${HARNESS_LOGICAL_HOST:-} in
     local|ab|ab2|ri|al|rc|t4) host=$HARNESS_LOGICAL_HOST ;;
@@ -18,7 +28,7 @@ fi
 
 owner=$(id -u)
 IFS=' ' read -r state_mode state_owner <<EOF
-$(stat -c '%a %u' -- "$state")
+$(state_metadata "$state")
 EOF
 if [ "$state_mode" = 700 ] && [ "$state_owner" = "$owner" ]; then state_ok=1; else state_ok=0; fi
 results=0
@@ -32,7 +42,7 @@ for path in "$state"/t[0-9][0-9][0-9]-*.out; do
         continue
     fi
     IFS=' ' read -r mode path_owner links bytes <<EOF
-$(stat -c '%a %u %h %s' -- "$path")
+$(result_metadata "$path")
 EOF
     if [ "$mode" != 600 ] || [ "$path_owner" != "$owner" ] || [ "$links" != 1 ] || [ "$bytes" -gt 1048576 ]; then
         invalid=$((invalid + 1))

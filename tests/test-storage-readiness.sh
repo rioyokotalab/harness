@@ -4,7 +4,8 @@ set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
-TEST_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/storage-readiness-test.XXXXXX")
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+TEST_ROOT=$(mktemp -d "$TEMP_BASE/storage-readiness-test.XXXXXX")
 
 fail() {
     printf 'FAIL: %s\n' "$*" >&2
@@ -16,8 +17,8 @@ cleanup() {
     trap - EXIT HUP INT TERM
     cleanup_failed=0
     if [ -d "$TEST_ROOT" ]; then
-        "$CLEANUP" "$HARNESS" "${TMPDIR:-/tmp}" "$TEST_ROOT" \
-            "${TMPDIR:-/tmp}" >/dev/null || cleanup_failed=1
+        "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEST_ROOT" \
+            "$TEMP_BASE" >/dev/null || cleanup_failed=1
     fi
     if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then status=1; fi
     exit "$status"
@@ -26,6 +27,37 @@ trap cleanup EXIT
 trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
+
+fake_bin=$TEST_ROOT/fake-bin
+mkdir "$fake_bin"
+cat >"$fake_bin/realpath" <<'EOF'
+#!/bin/sh
+if [ "${1:-}" = -e ]; then shift; [ "${1:-}" != -- ] || shift; fi
+exec /bin/realpath "$@"
+EOF
+cat >"$fake_bin/stat" <<'EOF'
+#!/bin/sh
+case "${1:-}:${2:-}" in
+    -f:-c) printf '%s\n' synthetic; exit 0 ;;
+    -c:%d:%i) format=%d:%i ;;
+    -c:%u) format=%u ;;
+    -c:%a) format=%a ;;
+    -c:%s) format=%s ;;
+    -c:%h) format=%h ;;
+    *) exec /usr/bin/stat "$@" ;;
+esac
+shift 2; [ "${1:-}" != -- ] || shift
+case $(/usr/bin/uname -s) in
+    Darwin)
+        case "$format" in %a) format=%Lp ;; %s) format=%z ;; %h) format=%l ;; esac
+        exec /usr/bin/stat -f "$format" "$@"
+        ;;
+    *) exec /usr/bin/stat -c "$format" -- "$@" ;;
+esac
+EOF
+chmod 755 "$fake_bin/realpath" "$fake_bin/stat"
+PATH=$fake_bin:$PATH
+export PATH
 
 home=$TEST_ROOT/home
 persistent=$TEST_ROOT/persistent
