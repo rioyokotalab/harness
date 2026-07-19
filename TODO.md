@@ -51,7 +51,7 @@ and compact historical pointers here. Next free ID: T-270.
 
 ## Next resume checkpoint
 
-Resume T-269 in `interviewing`. The current Linux node's value-free baseline
+Resume T-269 in `ready-for-go`. The current Linux node's value-free baseline
 proves that Codex uses `approval_policy=never` with
 `sandbox_mode=danger-full-access`, while Claude uses
 `permissions.defaultMode=bypassPermissions`; the public harness deliberately
@@ -63,8 +63,7 @@ into public evidence, and no live config changed. C1 is frozen as zero Codex or
 Claude action-approval prompts in ordinary sessions: Codex uses `never` with
 `danger-full-access`, and Claude uses `bypassPermissions` with its dangerous-
 mode startup warning suppressed. Authentication, macOS privacy/TCC, OS
-administrator, and provider-enforced dialogs remain separate boundaries. Ask
-only decision C7: confirm the automated, explicitly started sequential rollout.
+administrator, and provider-enforced dialogs remain separate boundaries.
 C2 is frozen: `harness` contains one tracked canonical settings body per client,
 and each live user settings path is a symbolic link to it; no private companion
 or generated live copy participates.
@@ -81,13 +80,18 @@ C6 is frozen as review-first Git: edits through live links dirty the checkout,
 catch-up refuses dirt, and validation plus protected review precedes
 publication; no command automatically commits, pushes, adopts, or overwrites an
 edit.
-The refined C7 recommendation automates every deterministic step within an
-explicit run: one local Mac catch-up command and one stop-on-first-failure Linux
-controller perform fetch, validation, transactional link/declaration apply,
-doctor, and authorized rollback/reapply drills. Starting an offline Mac,
-reviewing/publishing edits, authentication/OAuth, OS dialogs, and observing a
-fresh interactive session remain manual; no background or login-time mutation
-is proposed.
+The owner selected C7's explicit-start automated sequence: `office`, then
+`local` plus the six Linux remotes, then each remaining Mac. One local Mac
+catch-up command and one stop-on-first-failure Linux controller automate fetch,
+validation, transactional link/declaration apply, doctor, and authorized
+rollback/reapply drills. Starting an offline Mac, reviewing/publishing edits,
+authentication/OAuth, OS dialogs, and observing a fresh interactive session
+remain manual; no background or login-time mutation is allowed. C1–C7 are
+internally consistent and no material design input remains. Wait for a fresh
+explicit `go` before implementing the frozen generic public engine. That go
+does not authorize adoption of live values, live settings/link mutation,
+plugin/MCP authorization, or any rollout apply/rollback drill; those remain
+later recorded rollout gates.
 T-268 remains independently resumable from its pilot-plan failure handoff, and
 T-196 remains at 1/8 until the 2026-07-26 successors are eligible.
 
@@ -1398,13 +1402,13 @@ migration plan. It must not inspect private values or run
 
 ### T-269 — Private cross-platform Codex and Claude configuration
 
-**Phase/status:** `interviewing`. Mirror deliberately selected Codex and Claude
+**Phase/status:** `ready-for-go`. Mirror deliberately selected Codex and Claude
 user configuration across four pull-based Macs and seven managed Linux
 environments without copying authentication, credentials, sessions, histories,
 memories, caches, databases, client-generated state, private endpoints, or raw
 project paths. The public harness owns the reviewed portable settings bodies as
 well as the generic link engine, transactions, synthetic tests, and privacy
-gates. The exact safe configuration breadth remains an interview decision.
+gates. C1–C7 below freeze the exact safe configuration breadth and rollout.
 
 **Confirmed cause boundary:** on `local`, Codex's mode-0600 user config selects
 `never` plus `danger-full-access`, and Claude's mode-0600 settings select
@@ -1442,16 +1446,37 @@ harness prohibits the former and C5 rejects the latter, but neither setting
 can truthfully disable the client circuit breaker. C6 is frozen as review-first
 Git: a live-link edit is a tracked worktree edit, dirty checkouts block catch-up,
 and only validated protected Git review publishes it. No automatic commit,
-push, adopt, or overwrite is allowed. The refined C7 recommendation automates
-all deterministic work inside explicit user-started runs: one Mac-local
-catch-up command and one sequential Linux controller handle fetch, validation,
-transactional link/declaration apply, doctor, and authorized rollback/reapply
-drills.
-Offline-Mac startup, configuration review/publication, authentication/OAuth,
-OS dialogs, and fresh interactive-session observation remain manual; no
-background or login-time mutation is added. Ask C7 only: confirm this automated
-sequential boundary. Checkpoint every answer; do not implement until C1–C7 are
-resolved and the owner gives a fresh explicit `go`.
+push, adopt, or overwrite is allowed. C7 is frozen as the explicit-start
+automated order: `office`, then `local` plus the six Linux remotes, then each
+remaining Mac. One Mac-local catch-up command and one sequential Linux
+controller handle fetch, validation, transactional link/declaration apply,
+doctor, and authorized rollback/reapply drills. Offline-Mac startup,
+configuration review/publication, authentication/OAuth, OS dialogs, and fresh
+interactive-session observation remain manual; no background or login-time
+mutation is allowed.
+
+**Final decision audit:** C1–C7 are internally consistent. One public canonical
+settings body per client and direct live links coexist with review-first Git:
+an edit is preserved as checkout dirt and cannot be overwritten by catch-up.
+Transient current-root Codex trust stores no project path, while C5 excludes
+non-managed Codex hooks whose global trust bypass would be too broad.
+Prompt-free ordinary sessions are compatible with C5 only because declarations
+that force interaction are rejected; authentication, macOS privacy/TCC, OS
+administrator, provider policy, and Claude's hard-coded destructive-operation
+circuit breaker remain truthful external boundaries. C7 automates only
+deterministic work inside an owner-started run and does not add background
+mutation or automatic publication.
+
+**Go boundary:** all required design input is collected. A fresh explicit
+`go` authorizes the generic public settings bodies, validators, launcher,
+transaction/link/declaration engines, Mac catch-up command, Linux controller,
+synthetic validation, protected publication, and clean-checkout distribution
+of that generic code. It does not authorize reading or adopting existing live
+configuration values, changing a live client setting or link, installing,
+enabling, or authorizing a plugin/MCP/connector, supplying authentication,
+running a live apply/rollback/reapply drill, or reloading an active session.
+Those remain the recorded sequential rollout gates. Exact next action: wait for
+the owner's fresh explicit `go`.
 
 ## Stable operational facts
 
