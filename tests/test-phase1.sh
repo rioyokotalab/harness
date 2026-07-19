@@ -93,6 +93,7 @@ for script in \
     "$ROOT/tests/test-focused-runner.sh" \
     "$ROOT/tests/test-local-mpi-profile.sh" \
     "$ROOT/tests/test-native-mpi.sh" \
+    "$ROOT/tests/test-onboard-personal-mac-skill.sh" \
     "$ROOT/tests/test-repository-independence.sh" \
     "$ROOT/tests/test-remote-session.sh" \
     "$ROOT/tests/test-safety-guards.sh" \
