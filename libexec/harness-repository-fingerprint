@@ -24,33 +24,50 @@ done
     echo "repository structure is incomplete" >&2
     exit 2
 }
-if find "$root" -xdev -type l -print -quit | grep -q .; then
-    echo "repository contains a symlink" >&2
-    exit 2
-fi
-if find "$root/locks" -xdev -mindepth 1 -print -quit | grep -q .; then
-    echo "repository has an active or stale Restic lock" >&2
-    exit 2
-fi
-device_count=$(find "$root" -xdev -printf '%D\n' | LC_ALL=C sort -u | wc -l | tr -d ' ')
-[ "$device_count" -eq 1 ] || {
-    echo "repository contains a nested filesystem" >&2
-    exit 2
-}
+exec python3 - "$root" <<'PY'
+import hashlib
+import os
+import stat
+import sys
 
-entries=$(find "$root" -xdev -printf . | wc -c | tr -d ' ')
-bytes=$(find "$root" -xdev -type f -printf '%s\n' |
-    awk '{ total += $1 } END { printf "%.0f\n", total }')
-digest=$(
-    CDPATH='' cd -- "$root"
-    find . -xdev -type f -print0 | LC_ALL=C sort -z |
-        xargs -0 -r sha256sum | sha256sum | awk '{ print $1 }'
-)
-case "$entries:$bytes:$digest" in
-    *[!0-9a-f:]*) echo "repository fingerprint is malformed" >&2; exit 2 ;;
-esac
-[ "${#digest}" -eq 64 ] || {
-    echo "repository fingerprint digest is malformed" >&2
-    exit 2
-}
-printf 'entries=%s;bytes=%s;sha256=%s\n' "$entries" "$bytes" "$digest"
+root = os.fsencode(sys.argv[1])
+root_device = os.lstat(root).st_dev
+entries = 0
+total_bytes = 0
+files = []
+stack = [(root, b".")]
+
+while stack:
+    path, relative = stack.pop()
+    metadata = os.lstat(path)
+    if stat.S_ISLNK(metadata.st_mode):
+        raise SystemExit("repository contains a symlink")
+    if metadata.st_dev != root_device:
+        raise SystemExit("repository contains a nested filesystem")
+    entries += 1
+    if stat.S_ISREG(metadata.st_mode):
+        total_bytes += metadata.st_size
+        files.append((relative, path, metadata.st_size))
+    elif stat.S_ISDIR(metadata.st_mode):
+        children = []
+        with os.scandir(path) as directory:
+            for child in directory:
+                name = os.fsencode(child.name)
+                child_relative = name if relative == b"." else relative + b"/" + name
+                children.append((os.fsencode(child.path), child_relative))
+        stack.extend(children)
+
+if os.listdir(os.path.join(root, b"locks")):
+    raise SystemExit("repository has an active or stale Restic lock")
+
+digest = hashlib.sha256()
+for relative, path, size in sorted(files):
+    digest.update(len(relative).to_bytes(8, "big"))
+    digest.update(relative)
+    digest.update(size.to_bytes(8, "big"))
+    with open(path, "rb") as source:
+        for block in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(block)
+
+print(f"entries={entries};bytes={total_bytes};sha256={digest.hexdigest()}")
+PY
