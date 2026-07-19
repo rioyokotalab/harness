@@ -151,36 +151,35 @@ macos_file_contains_exact_block_once \
     "$HARNESS_ROOT/shell/personal-macos-startup.block" "$live_startup" ||
     die "pilot Bash startup file does not contain the exact managed loader"
 
-if [ -e "$live_bash" ] || [ -L "$live_bash" ]; then
-    [ -f "$live_bash" ] && [ ! -L "$live_bash" ] &&
-        [ "$(macos_stat_owner "$live_bash")" = "$current_uid" ] &&
-        [ "$(macos_stat_links "$live_bash")" = 1 ] ||
-        die "pilot private Bash fragment is unsafe"
-else
-    umask 077
-    : >"$live_bash"
-fi
-chmod 600 "$live_bash"
+[ -f "$live_bash" ] && [ ! -L "$live_bash" ] &&
+    [ "$(macos_stat_owner "$live_bash")" = "$current_uid" ] &&
+    [ "$(macos_stat_links "$live_bash")" = 1 ] ||
+    die "pilot private Bash fragment is unsafe or unavailable"
+[ "$(macos_stat_mode "$live_bash")" = 600 ] ||
+    die "pilot private Bash fragment has unsafe mode"
 
 if [ -e "$live_tmux" ] || [ -L "$live_tmux" ]; then
     [ -f "$live_tmux" ] && [ ! -L "$live_tmux" ] ||
         die "pilot tmux configuration has unsafe type"
-else
-    umask 077
-    : >"$live_tmux"
-    chmod 600 "$live_tmux"
-    echo 'PILOT_TMUX canonical=created-empty behavior=defaults-preserved'
 fi
+if [ -f "$live_tmux" ] && [ -s "$live_tmux" ]; then
+    die "pilot tmux configuration is nonempty; stop for owner curation"
+fi
+[ ! -e "$HOME/tmux.conf" ] && [ ! -L "$HOME/tmux.conf" ] &&
+    [ ! -e "$HOME/.config/tmux/tmux.conf" ] &&
+    [ ! -L "$HOME/.config/tmux/tmux.conf" ] ||
+    die "pilot has an alternate tmux configuration"
 
 command -v vim >/dev/null 2>&1 || die "Vim is unavailable for pilot curation"
 printf '%s\n' \
-    'PILOT_EDIT move only Bash settings shared by all four Macs' \
-    'PILOT_EDIT keep the managed loader and machine-local settings in .bashrc' \
-    'PILOT_EDIT do not place credentials or credential assignments in the shared fragment'
+    'PILOT_EDIT move every machine-local Bash setting from the private fragment into .bashrc' \
+    'PILOT_EDIT remove only settings already supplied by the public pre/post hooks' \
+    'PILOT_EDIT leave the private fragment empty; do not move credentials'
 vim -u NONE -U NONE -N -n -i NONE -O "$live_startup" "$live_bash"
 
-LC_ALL=C grep '[^[:space:]]' "$live_bash" >/dev/null 2>&1 ||
-    die "pilot private Bash fragment is empty"
+if LC_ALL=C grep '[^[:space:]]' "$live_bash" >/dev/null 2>&1; then
+    die "pilot private Bash fragment is not empty after curation"
+fi
 [ -f "$live_startup" ] && [ ! -L "$live_startup" ] &&
     [ "$(macos_stat_owner "$live_startup")" = "$current_uid" ] &&
     [ "$(macos_stat_links "$live_startup")" = 1 ] ||
@@ -193,7 +192,7 @@ bash --noprofile --norc -n "$live_startup" >/dev/null 2>&1 ||
     die "pilot Bash startup grammar is invalid"
 macos_validate_ssh_config "$live_ssh" "$current_uid" 600,644
 macos_validate_bash_config "$live_bash" "$current_uid" 600
-macos_validate_tmux_config "$live_tmux" "$current_uid" 600,644
+[ ! -e "$live_tmux" ] || macos_validate_tmux_config "$live_tmux" "$current_uid" 600,644
 
-"$SELF_DIR/harness-macos-config-sync" --host "$logical_host" --seed --plan
-echo 'END macos_pilot_plan bundle_apply=not-requested curation=owner-edited next=separate-seed-apply-authority'
+"$SELF_DIR/harness-macos-config-migrate" --host "$logical_host" --plan
+echo 'END macos_pilot_plan migration_apply=not-requested curation=owner-edited next=separate-migration-apply-authority'

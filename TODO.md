@@ -50,7 +50,8 @@ and compact historical pointers here. Next free ID: T-269.
 
 ## Next resume checkpoint
 
-Resume T-268 in `ready-for-go`. The corrective PIE decisions B2, B3, T1–T3,
+Resume T-268 in `executing`. The owner gave the fresh `go` for the corrective
+PIE decisions B2, B3, T1–T3,
 M1, and R1 are frozen: Macs reuse the existing public Linux Bash pre/post hooks
 around local startup bytes; the private Bash payload is retired through
 owner-guided lossless curation; all eleven environments use one reviewed public
@@ -1276,6 +1277,16 @@ generic implementation, synthetic validation, protected PR, and required
 clean-checkout fleet synchronization only. It does not authorize private
 companion access, owner curation, live hook/link mutation, rollback/reapply, or
 active-session reload; those remain the explicit R1 gates.
+
+**Execution authorization (2026-07-19):** the owner gave the fresh `go` after
+the corrective decision audit. Generic public hooks, canonical tmux config and
+link adapter, private-schema/state migration engine, old-Mac bridge, synthetic
+tests, documentation, protected publication, and clean-checkout control-plane
+synchronization are authorized. Private companion access, live Mac/Linux
+configuration mutation, owner curation, and active-session reload remain
+excluded. Exact first step: map the published engine-2 and Bash-v1 transaction
+contracts, then implement synthetic-first migrations without contacting a live
+config.
 
 ## Stable operational facts
 

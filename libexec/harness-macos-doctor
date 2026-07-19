@@ -110,29 +110,75 @@ for link_name in codex_guidance codex_rules claude_guidance bash_launcher; do
     fi
 done
 
-bash_loader_destination=$HOME/.config/harness/managed/personal-macos.bash
-bash_loader_source=$HARNESS_ROOT/shell/personal-macos.bash
-if [ -L "$bash_loader_destination" ] &&
-    [ "$(readlink "$bash_loader_destination")" = "$bash_loader_source" ]; then
-    echo 'PASS required=bash_loader state=symlink'
-else
-    echo 'FAIL required=bash_loader state=missing-or-wrong expected=symlink'
-    failures=$((failures + 1))
+private_root=$HOME/.config/harness/private
+ssh_payload_adopted=0
+config_bundle_adopted=0
+if git -C "$private_root" ls-files --error-unmatch ssh_config >/dev/null 2>&1; then
+    ssh_payload_adopted=1
 fi
-bash_startup_block=$HARNESS_ROOT/shell/personal-macos-startup.block
-for bash_startup_name in bash_profile bashrc; do
-    bash_startup_path=$HOME/.$bash_startup_name
-    if [ -f "$bash_startup_path" ] && [ ! -L "$bash_startup_path" ] &&
-        [ "$(macos_stat_owner "$bash_startup_path")" = "$current_uid" ] &&
-        [ "$(macos_stat_links "$bash_startup_path")" = 1 ] &&
-        macos_file_contains_exact_block_once \
-            "$bash_startup_block" "$bash_startup_path"; then
-        echo "PASS required=$bash_startup_name state=managed-block-v1"
+if [ "$ssh_payload_adopted" -eq 1 ] &&
+    git -C "$private_root" ls-files --error-unmatch bashrc >/dev/null 2>&1 &&
+    git -C "$private_root" ls-files --error-unmatch tmux.conf >/dev/null 2>&1; then
+    config_bundle_adopted=1
+fi
+
+bash_loader_destination=$HOME/.config/harness/managed/personal-macos.bash
+if [ "$config_bundle_adopted" -eq 1 ]; then
+    bash_loader_source=$HARNESS_ROOT/shell/personal-macos.bash
+    if [ -L "$bash_loader_destination" ] &&
+        [ "$(readlink "$bash_loader_destination")" = "$bash_loader_source" ]; then
+        echo 'PASS required=bash_loader state=symlink'
     else
-        echo "FAIL required=$bash_startup_name state=missing-or-wrong expected=managed-block-v1"
+        echo 'FAIL required=bash_loader state=missing-or-wrong expected=symlink'
         failures=$((failures + 1))
     fi
-done
+    bash_startup_block=$HARNESS_ROOT/shell/personal-macos-startup.block
+    for bash_startup_name in bash_profile bashrc; do
+        bash_startup_path=$HOME/.$bash_startup_name
+        if [ -f "$bash_startup_path" ] && [ ! -L "$bash_startup_path" ] &&
+            [ "$(macos_stat_owner "$bash_startup_path")" = "$current_uid" ] &&
+            [ "$(macos_stat_links "$bash_startup_path")" = 1 ] &&
+            macos_file_contains_exact_block_once "$bash_startup_block" "$bash_startup_path"; then
+            echo "PASS required=$bash_startup_name state=managed-block-v1"
+        else
+            echo "FAIL required=$bash_startup_name state=missing-or-wrong expected=managed-block-v1"
+            failures=$((failures + 1))
+        fi
+    done
+else
+    if [ ! -e "$bash_loader_destination" ] && [ ! -L "$bash_loader_destination" ]; then
+        echo 'PASS required=bash_loader state=retired'
+    else
+        echo 'FAIL required=bash_loader state=present expected=retired'
+        failures=$((failures + 1))
+    fi
+    if [ -e "$HOME/.bash_profile" ] || [ -L "$HOME/.bash_profile" ]; then
+        bash_login_name=bash_profile
+    elif [ -e "$HOME/.bash_login" ] || [ -L "$HOME/.bash_login" ]; then
+        bash_login_name=bash_login
+    else
+        bash_login_name=profile
+    fi
+    for bash_startup_name in "$bash_login_name" bashrc; do
+        bash_startup_path=$HOME/.$bash_startup_name
+        case "$bash_startup_name" in bashrc) bash_suffix=$HARNESS_ROOT/shell/bashrc.block ;; *) bash_suffix=$HARNESS_ROOT/shell/bash_profile.block ;; esac
+        if [ "$(macos_stat_owner "$bash_startup_path" 2>/dev/null || true)" = "$current_uid" ] &&
+            [ "$(macos_stat_links "$bash_startup_path" 2>/dev/null || true)" = 1 ] &&
+            macos_file_has_public_bash_layout "$bash_startup_path" "$logical_host" "$bash_suffix"; then
+            echo "PASS required=$bash_startup_name state=public-pre-local-public-post"
+        else
+            echo "FAIL required=$bash_startup_name state=missing-or-wrong expected=public-pre-local-public-post"
+            failures=$((failures + 1))
+        fi
+    done
+    tmux_source=$HARNESS_ROOT/config/tmux/tmux.conf
+    if [ -L "$HOME/.tmux.conf" ] && [ "$(readlink "$HOME/.tmux.conf")" = "$tmux_source" ]; then
+        echo 'PASS required=tmux_config state=public-symlink'
+    else
+        echo 'FAIL required=tmux_config state=missing-or-wrong expected=public-symlink'
+        failures=$((failures + 1))
+    fi
+fi
 
 public_formulae=$(macos_manifest_get "$public_profile" managed_formulae)
 public_missing=0
@@ -179,19 +225,6 @@ fi
 
 ssh_sync_state=$HOME/.local/state/harness/personal-macos/ssh-sync-status.conf
 config_sync_state=$HOME/.local/state/harness/personal-macos/config-sync-status.conf
-ssh_payload_adopted=0
-config_bundle_adopted=0
-if git -C "$HOME/.config/harness/private" ls-files --error-unmatch \
-    ssh_config >/dev/null 2>&1; then
-    ssh_payload_adopted=1
-fi
-if [ "$ssh_payload_adopted" -eq 1 ] &&
-    git -C "$HOME/.config/harness/private" ls-files --error-unmatch \
-        bashrc >/dev/null 2>&1 &&
-    git -C "$HOME/.config/harness/private" ls-files --error-unmatch \
-        tmux.conf >/dev/null 2>&1; then
-    config_bundle_adopted=1
-fi
 if [ "$config_bundle_adopted" -eq 1 ]; then
     if [ -f "$config_sync_state" ] && [ ! -L "$config_sync_state" ]; then
         macos_require_private_file "$config_sync_state" "$current_uid"
