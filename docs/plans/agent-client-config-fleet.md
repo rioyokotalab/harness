@@ -1,6 +1,6 @@
 # T-269 plan — private cross-platform Codex and Claude configuration
 
-**Phase:** interviewing
+**Phase:** ready-for-go
 
 ## Desired outcome
 
@@ -328,9 +328,9 @@ refuse ambiguous drift, support exact local rollback, and never interpret
   new reviewed Git change rather than destructive worktree replacement. No live
   file, Git worktree, or external state changed during this checkpoint.
 
-### C7 — Rollout automation and order (open; confirm refined recommendation)
+### C7 — Rollout automation and order (selected)
 
-- **A — Explicit-start automated sequence (recommended):** `office`, then
+- **Selected — Explicit-start automated sequence:** `office`, then
   `local` plus the six Linux remotes, then each remaining Mac. One Mac-local
   catch-up command and one Linux controller automate fetch, validation,
   transactional link/declaration apply, doctor, and authorized rollback/reapply
@@ -338,14 +338,31 @@ refuse ambiguous drift, support exact local rollback, and never interpret
   The owner only starts each offline Mac run, handles authentication/OAuth or
   OS dialogs that cannot be automated, and observes fresh interactive sessions.
   There is no daemon, login hook, scheduled job, or automatic config publish.
-- **B — Linux first:** quicker seven-node parity but leaves the original Mac
-  problem untested until late.
-- **C — all Macs first:** validates the pull-based family but defers the known
-  Linux canonical baseline.
+
+## Final decision audit and authority boundary
+
+C1–C7 are internally consistent and no material design decision remains. The
+singular public settings files and direct live links use C6's dirty-worktree
+preservation instead of automatic adoption. C4 stores no project path, and C5
+excludes the non-managed Codex hooks whose global bypass would be unsafe across
+all projects trusted by the launcher. C1's ordinary prompt-free posture is
+compatible with C5 because prompt-forcing declarations are rejected, while
+authentication, operating-system/provider dialogs, and Claude's hard-coded
+destructive-operation circuit breaker remain outside the configurable promise.
+C7 automates deterministic convergence only inside explicit owner-started runs
+and adds no background mutation or automatic publication.
+
+A fresh explicit `go` authorizes implementation of the generic public settings
+bodies, validators, launcher, transaction/link/declaration engines, Mac catch-up
+command, Linux controller, synthetic tests, protected publication, and guarded
+clean-checkout distribution of generic code. It does not authorize reading or
+adopting live values, changing live client settings or links, installing,
+enabling, or authorizing plugins/MCP/connectors, authentication changes, any
+live rollout apply/rollback/reapply drill, or active-session reload. Those
+remain separate recorded rollout gates.
 
 ## Exact next action
 
-Ask C7 only: confirm the explicit-start automated sequence. After the answer,
-checkpoint the decision, audit all decisions for contradictions, and either
-resolve a concrete gap or set `ready-for-go`. Do not change any live client
-setting during the interview; wait for a fresh explicit `go` before execution.
+Wait for the owner's fresh explicit `go`. On receipt, reconstruct this frozen
+plan from Git, set T-269 to `executing`, and begin with synthetic-first generic
+implementation. Do not change any live client setting during this gate.
