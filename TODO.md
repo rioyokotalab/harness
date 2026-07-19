@@ -2109,6 +2109,20 @@ exactly once in any order before the first trust table, so this existing file
 is recognized and never rewritten; duplicate, unknown, or post-section keys
 remain invalid. No apply, drill, session, or live-path mutation occurred.
 
+**D14.1 verified local plan / apply gate:** protected Linux phase-1 passed and
+PR #86 merged as `da4500c`; clean `office` and `local` are both on that public
+`main`. The fresh value-free plans over exact `ssh login`, with logical host
+`local`, completed without mutation. Tmux is `state=absent action=link`. Agent
+config reports native Codex `ready/none`, private Codex `current/none` (so its
+opaque preferences and 93 trust tables will not be rewritten), Claude
+`regular/adopt`, managed launcher `absent/link`, zero component declarations,
+`blocked=0`, and `changes=2`. Both plans ended `apply=not-requested`. Exact next
+action, only after separate owner authority: from clean `local` at `da4500c`,
+export `HARNESS_LOGICAL_HOST=local`, run tmux `--adopt --apply`, then agent
+config `--adopt --apply --drill`, verify both doctors/readiness and fresh-session
+resolution, and record transaction identifiers. No apply, drill, fresh tmux or
+agent session, or live-path mutation has yet occurred.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
