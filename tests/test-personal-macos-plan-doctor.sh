@@ -197,11 +197,23 @@ grep -F 'END macos_doctor status=not-ready' \
 ln -s "$ROOT/bin/harness-bash" "$home/.local/bin/harness-bash"
 mkdir -p "$home/.config/harness/managed"
 chmod 700 "$home/.config/harness/managed"
-ln -s "$ROOT/shell/personal-macos.bash" \
-    "$home/.config/harness/managed/personal-macos.bash"
-cp "$ROOT/shell/personal-macos-startup.block" "$home/.bash_profile"
-cp "$ROOT/shell/personal-macos-startup.block" "$home/.bashrc"
+for startup in bash_profile bashrc; do
+    {
+        printf '%s\n' \
+            '# >>> harness early managed >>>' \
+            'HARNESS_LOGICAL_HOST=mac-test-pilot' \
+            'export HARNESS_LOGICAL_HOST' \
+            'if [ -r "$HOME/harness/shell/early-cache.sh" ]; then' \
+            '    . "$HOME/harness/shell/early-cache.sh"' \
+            'fi' \
+            '# <<< harness early managed <<<' \
+            '' \
+            '# synthetic local middle'
+        cat "$ROOT/shell/$startup.block"
+    } >"$home/.$startup"
+done
 chmod 600 "$home/.bash_profile" "$home/.bashrc"
+ln -s "$ROOT/config/tmux/tmux.conf" "$home/.tmux.conf"
 ready_facts=$TEMP_DIR/ready-facts.conf
 HOME="$home" SHELL=/bin/zsh BREW_LOG="$TEMP_DIR/ready-inventory.log" \
     FAKE_TREE_PRESENT=1 PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
@@ -229,6 +241,11 @@ chmod 600 "$private/companion.conf" "$private/ssh_config" "$private/bashrc" \
     "$private/tmux.conf"
 git -C "$private" add companion.conf ssh_config bashrc tmux.conf
 git -C "$private" commit -q -m 'synthetic adopted config bundle'
+ln -s "$ROOT/shell/personal-macos.bash" \
+    "$home/.config/harness/managed/personal-macos.bash"
+cp "$ROOT/shell/personal-macos-startup.block" "$home/.bash_profile"
+cp "$ROOT/shell/personal-macos-startup.block" "$home/.bashrc"
+chmod 600 "$home/.bash_profile" "$home/.bashrc"
 config_state_directory=$home/.local/state/harness/personal-macos
 mkdir -p "$config_state_directory"
 chmod 700 "$home/.local" "$home/.local/state" \
