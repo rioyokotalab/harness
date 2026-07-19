@@ -50,21 +50,21 @@ and compact historical pointers here. Next free ID: T-269.
 
 ## Next resume checkpoint
 
-Resume T-268 in `executing`. The owner gave the fresh `go` for the corrective
-PIE decisions B2, B3, T1–T3,
+Resume T-268 at the separate pilot-plan authority gate. Corrective PIE
+decisions B2, B3, T1–T3,
 M1, and R1 are frozen: Macs reuse the existing public Linux Bash pre/post hooks
 around local startup bytes; the private Bash payload is retired through
 owner-guided lossless curation; all eleven environments use one reviewed public
 complete tmux config through `~/.tmux.conf`; and the pilot transition is one
 recoverable migration back to private SSH-only agreement. Generic implementation
-and portable phase-one validation are complete on task branch
-`agent/t268-macos-bash-order`; next fetch, publish the branch, open and merge the
-protected PR, then guarded-sync only clean managed checkouts. Generic publication
-authorizes no private/live access; pilot, Linux, and later-Mac applies retain the
-separate R1 gates. The five reachable remote checkouts `ab`, `ab2`, `ri`, `rc`,
-and `t4` are clean at published checkpoint `63af57f`, with transfer artifacts
-absent; AL was reachable for value-free tmux discovery but its harness checkout
-was not revalidated or advanced. The shared local checkout remains on another
+merged through protected PR #53 at `4209ee8` after required CI run
+`29671188197` passed. All six remote managed checkouts `ab`, `ab2`, `ri`, `al`,
+`rc`, and `t4` are clean at `4209ee8`, with transfer artifacts absent; AL proved
+a direct guarded fast-forward from old checkpoint `8b63df2`. No Bash/tmux live
+configuration has been applied. The next operation requires separate owner
+authority to run the pilot's owner-curation/migration plan only; pilot apply,
+rollback/reapply, local Linux tmux drill, remote Linux tmux rollout, and later
+Macs remain later R1 gates. The shared local checkout remains on another
 contributor's clean branch with `origin/main` fetched. Independently resume
 T-191 after the first Sunday eligibility. Fetch and prove a clean fleet, then
 query only the seven captured IDs below through their declared native scheduler
@@ -1326,6 +1326,19 @@ fixture identity. The focused migration test and the complete portable
 phase-one suite both pass with `GIT_CONFIG_GLOBAL=/dev/null`, matching the
 credential-free runner. Retry remains a normal fast-forward push with no live
 or private-state effect.
+
+**Generic publication outcome:** required run `29671188197` passed every stage,
+and protected squash PR #53 merged as `4209ee84408a0abf4fccdbeafcac62ad050d4ad0`.
+Guarded fleet synchronization advanced `ab`, `ab2`, `ri`, `rc`, and `t4` from
+`63af57f`; AL was clean at older ancestor `8b63df2` and advanced directly from
+that state. A final six-host plan reported `KEEP` at `4209ee8` for every host
+and no transfer artifact. The shared checkout was not changed. No command ran
+`macos-pilot-plan`, `macos-config-migrate`, `macos-bash-hooks`, or `tmux-config`
+against a live environment, and no active shell/tmux server was reloaded.
+Exact next action, only after separate owner authority: on the pilot Mac run
+`./bin/harness macos-pilot-plan --host office`; it may fetch/fast-forward the
+public checkout and open the two owner files for curation, but it must stop at
+the migration plan and must not apply.
 
 ## Stable operational facts
 
