@@ -67,9 +67,12 @@ activate only in fresh Codex and Claude sessions.
 ## Pull-based catch-up and Linux controller
 
 `agent-config-catch-up` is the explicit local route for a Mac that may have
-been offline. It refuses checkout dirt, fetches `origin/main` without prompting,
-requires a direct fast-forward, hands off to the target engine, reconciles the
-links, and runs doctor. It never runs at login, wake, or session start.
+been offline. It refuses dirt in both checkouts, fetches both `origin/main`
+targets without prompting, and delegates public/private compatibility,
+fast-forward, and local migration-state handling to `macos-update` before it
+hands off to the target agent-configuration engine. It never advances the
+public harness independently of its private companion, and it never runs at
+login, wake, or session start.
 
 The Linux controller takes an exact old and target public commit. It first uses
 the guarded verified-bundle fleet synchronizer, then processes `local`, `ab`,
@@ -77,8 +80,8 @@ the guarded verified-bundle fleet synchronizer, then processes `local`, `ab`,
 Both routes keep adoption and the rollback/reapply drill explicit:
 
 ```bash
-./bin/harness agent-config-catch-up --adopt --plan
-./bin/harness agent-config-catch-up --adopt --apply --drill
+./bin/harness agent-config-catch-up --host LOGICAL_ID --adopt --plan
+./bin/harness agent-config-catch-up --host LOGICAL_ID --adopt --apply --drill
 
 ./bin/harness agent-config-fleet --from OLD --to NEW --adopt --plan
 ./bin/harness agent-config-fleet --from OLD --to NEW --adopt --apply --drill
