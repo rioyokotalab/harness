@@ -1851,6 +1851,26 @@ requires only transaction-owned `~/.local/bin` and `~/.local/state` to remain
 absent after a blocked apply. Retry is safe; no live installer, package, link,
 credential, component, or session changed.
 
+**Live installer preflight stop / revised D11 required:** after PR #80 passed
+the corrected protected run in 1m54s and squash-merged as `caf6f4f`, clean
+`office` fast-forwarded to that target. The separately downloaded official
+installer passed shell syntax and honored `CODEX_INSTALL_DIR` plus non-
+interactive mode, but source review found multiple embedded raw recursive
+deletions for staging, installed-release replacement, and cleanup. The global
+guarded-delete rule forbids executing or hiding those dynamic `rm -rf` paths;
+they cannot be predeclared as one immutable manifest without rewriting the
+installer, and no installer command ran. Recommended revised D11 creates only
+the separate visible native symlink by resolving the pilot's existing verified
+native symlink target once and linking that same executable under the private
+mode-0700 native-entry directory. This preserves one installed package, makes
+no download or package change, and performs no recursive deletion. The tradeoff
+is that a later standalone package update must refresh this local visible link
+through a future reviewed transaction rather than relying on the installer to
+own `~/.local/bin/codex`. Alternative D11 is to leave the pilot rolled back and
+abandon managed ownership of the ordinary command. Phase returns to
+`interviewing`; no live directory, symlink, package, credential, component, or
+session changed during preflight.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
