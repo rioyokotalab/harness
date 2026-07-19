@@ -209,7 +209,9 @@ directory is below the declared real persistent root; never chmod that target.
 Rollback accepts `--host` when declaration lookup is needed. Synthetic declared
 apply/rollback and mismatched-target refusal pass. Exact next action: publish
 after clean phase-one validation, fleet-sync, and resume the untouched local
-apply.
+apply. The clean run passed all 52 focused suites, guarded deletion, and
+compiler gates, explicitly skipped native MPI, and reached only the known
+Darwin doctor boundary; protected Ubuntu CI remains the publication gate.
 
 **Onboarding-skill checkpoint:** `skill-creator` initialized
 `shared/skills/onboard-personal-mac` with Codex UI metadata. The implemented
