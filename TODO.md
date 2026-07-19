@@ -150,6 +150,27 @@ and no owner-byte disclosure. The full `.bash_profile` is no longer owner-
 maintained after successful migration, but remains present as Bash's required
 thin entry point.
 
+**Onboarding-skill checkpoint:** `skill-creator` initialized
+`shared/skills/onboard-personal-mac` with Codex UI metadata. The implemented
+skill requires one host, repository/TODO reconstruction, value-free discovery,
+one-question PIE planning, explicit go, Codex-executed native commands,
+password/TCC/physical-interaction pauses, transactional rollback/reapply,
+fresh-session acceptance, and post-acceptance T-273 `.bash_common` handling.
+Its stage reference routes current public control, Homebrew, Bash, tmux,
+SSH-only private configuration, agent adoption, and doctor commands without a
+convenience script. The upstream skill validator is presently blocked before
+reading the skill because none of the declared macOS Python runtimes provides
+its unlisted PyYAML dependency; do not install it implicitly. Repository-native
+structure, metadata, sequencing, discovery, privacy, and takeover tests remain
+the validation route, and the missing optional validator dependency is safe to
+retry in an already-declared environment.
+
+The clean skill commit passes all 51 parallel focused suites, including
+cross-client takeover and source contracts; the serial tail again reaches only
+the known Darwin-to-Linux `local` doctor refusal after guarded-delete and native
+compiler gates. The protected Ubuntu phase-one run is the remaining publication
+gate. No live discovery link or Mac state has been changed yet.
+
 **Stage-1 implementation checkpoint:** the task branch adds a bounded Python
 focused-suite runner, an explicit manifest with per-suite labels/logs, a
 parallelism/failure-attribution regression, and a separately gated native MPI
