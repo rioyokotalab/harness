@@ -27,7 +27,17 @@ cat >"$fake_bin/uname" <<'EOF'
 #!/bin/sh
 echo Darwin
 EOF
-chmod 755 "$fake_bin/uname"
+real_stat=$(command -v stat)
+cat >"$fake_bin/stat" <<'EOF'
+#!/bin/sh
+case "$1:$2" in
+    -f:%u) shift 2; exec "$MACOS_TEST_REAL_STAT" -c %u "$@" ;;
+    -f:%Lp) shift 2; exec "$MACOS_TEST_REAL_STAT" -c %a "$@" ;;
+    -f:%l) shift 2; exec "$MACOS_TEST_REAL_STAT" -c %h "$@" ;;
+    *) exec "$MACOS_TEST_REAL_STAT" "$@" ;;
+esac
+EOF
+chmod 755 "$fake_bin/uname" "$fake_bin/stat"
 printf '%s\n' 'export MAC_LOCAL=profile' >"$home/.bash_profile"
 printf '%s\n' 'export MAC_LOCAL=bashrc' >"$home/.bashrc"
 cat "$ROOT/shell/personal-macos-startup.block" >>"$home/.bashrc"
@@ -35,10 +45,10 @@ chmod 640 "$home/.bash_profile" "$home/.bashrc"
 cp "$home/.bash_profile" "$TEMP_DIR/profile.before"
 cp "$home/.bashrc" "$TEMP_DIR/bashrc.before"
 
-PATH="$fake_bin:$PATH" HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$home" \
+PATH="$fake_bin:$PATH" MACOS_TEST_REAL_STAT="$real_stat" HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$home" \
     "$ROOT/libexec/harness-macos-bash-hooks" --host office --plan >"$TEMP_DIR/plan.out"
 grep -F 'state=legacy action=wrap' "$TEMP_DIR/plan.out" >/dev/null || fail "legacy plan"
-PATH="$fake_bin:$PATH" HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$home" \
+PATH="$fake_bin:$PATH" MACOS_TEST_REAL_STAT="$real_stat" HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$home" \
     "$ROOT/libexec/harness-macos-bash-hooks" --host office --apply >"$TEMP_DIR/apply.out"
 for startup in .bash_profile .bashrc; do
     [ "$(sed -n '1p' "$home/$startup")" = '# >>> harness early managed >>>' ] || fail "$startup prefix"
@@ -50,7 +60,7 @@ if grep -F 'personal macOS Bash v1' "$home/.bashrc" >/dev/null; then fail "legac
 [ "$(stat -c %a "$home/.bashrc")" = 640 ] || fail "mode retained"
 transaction=$(sed -n 's/.*transaction=\([^ ]*\).*/\1/p' "$TEMP_DIR/apply.out")
 [ -n "$transaction" ] || fail "transaction identifier"
-PATH="$fake_bin:$PATH" HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$home" \
+PATH="$fake_bin:$PATH" MACOS_TEST_REAL_STAT="$real_stat" HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$home" \
     "$ROOT/libexec/harness-macos-bash-hooks" --rollback "$transaction" >"$TEMP_DIR/rollback.out"
 cmp -s "$home/.bash_profile" "$TEMP_DIR/profile.before" || fail "profile rollback"
 cmp -s "$home/.bashrc" "$TEMP_DIR/bashrc.before" || fail "bashrc rollback"
