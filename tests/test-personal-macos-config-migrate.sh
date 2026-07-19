@@ -55,6 +55,8 @@ git init -q --bare "$private_remote"
 mkdir -p "$home/.config/harness" "$home/.ssh" "$home/.local/state/harness/personal-macos"
 git clone -q "$private_remote" "$private"
 git -C "$private" switch -q -c main
+git -C "$private" config user.name Fixture
+git -C "$private" config user.email fixture.invalid
 mkdir "$private/hosts"
 cp "$ROOT/tests/fixtures/personal-macos/private-v2/companion.conf" "$private/companion.conf"
 cp "$ROOT/tests/fixtures/personal-macos/private-v1/ssh_config" "$private/ssh_config"
