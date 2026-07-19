@@ -1318,6 +1318,15 @@ isolated detached clone, and the complete portable phase-one suite passed again.
 Retry safety: push the normal fast-forward commit and wait for the replacement
 required check; no live or private state was involved.
 
+Replacement run `29671048945` passed the detached-HEAD point and then exposed
+the fixture's second ambient dependency: its synthetic private clone had no
+local commit identity and had inherited the developer's global Git identity in
+local runs. Commit `2c88749` gives only that synthetic repository an explicit
+fixture identity. The focused migration test and the complete portable
+phase-one suite both pass with `GIT_CONFIG_GLOBAL=/dev/null`, matching the
+credential-free runner. Retry remains a normal fast-forward push with no live
+or private-state effect.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
