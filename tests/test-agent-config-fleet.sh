@@ -38,10 +38,11 @@ echo 'END synthetic_agent_config status=ready'
 EOF
 cat >"$FAKE_BIN/ssh" <<'EOF'
 #!/bin/sh
-[ "$1" = -o ] && [ "$2" = BatchMode=yes ] || exit 90
-[ "$3" = -o ] && [ "$4" = ConnectTimeout=15 ] || exit 91
-host=$5
-shift 5
+[ "$1" = -x ] || exit 89
+[ "$2" = -o ] && [ "$3" = BatchMode=yes ] || exit 90
+[ "$4" = -o ] && [ "$5" = ConnectTimeout=15 ] || exit 91
+host=$6
+shift 6
 printf 'remote|%s|%s\n' "$host" "$*" >>"$AGENT_FLEET_TEST_LOG"
 [ "${AGENT_FLEET_FAIL_HOST:-}" != "$host" ] || exit 73
 echo 'END synthetic_remote status=ready'
@@ -66,6 +67,8 @@ sed -n '3p' "$LOG" | grep -F 'remote|n1|' >/dev/null || fail "first remote"
 sed -n '4p' "$LOG" | grep -F 'remote|n2|' >/dev/null || fail "second remote"
 grep -F 'status=complete' "$TEMP_DIR/apply.out" >/dev/null ||
     fail "controller completion"
+grep -F 'NATIVE ssh -x n1 harness-agent-config-apply' \
+    "$TEMP_DIR/apply.out" >/dev/null || fail "X11-disabled agent transport"
 
 : >"$LOG"
 if AGENT_FLEET_TEST_LOG=$LOG AGENT_FLEET_FAIL_HOST=n2 \

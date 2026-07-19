@@ -54,13 +54,13 @@ run_local() {
 
 run_remote() {
     host=$1
-    echo "NATIVE ssh $host harness-agent-config-$mode"
+    echo "NATIVE ssh -x $host harness-agent-config-$mode"
     if [ "$mode" = plan ]; then
         remote_command="\$HOME/harness/bin/harness agent-config --plan $adopt_argument"
     else
         remote_command="\$HOME/harness/bin/harness agent-config --apply $adopt_argument $drill_argument"
     fi
-    ssh -o BatchMode=yes -o ConnectTimeout=15 "$host" "$remote_command"
+    ssh -x -o BatchMode=yes -o ConnectTimeout=15 "$host" "$remote_command"
 }
 
 echo "AGENT_CONFIG_FLEET mode=$mode order=local,$hosts_csv stop_on_failure=yes"
