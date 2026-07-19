@@ -127,4 +127,28 @@ fi
 [ ! -e "$absent_home/.bash_profile" ] || fail 'absent profile injected recovery'
 cmp -s "$absent_home/.bashrc" "$TEMP_DIR/bashrc.before" || fail 'absent profile injected bashrc recovery'
 
+symlink_home=$TEMP_DIR/symlink-home
+persistent=$TEMP_DIR/persistent
+layout=$TEMP_DIR/home-layout.tsv
+mkdir -p "$symlink_home" "$persistent/.local"
+ln -s "$persistent/.local" "$symlink_home/.local"
+cp "$TEMP_DIR/bashrc.before" "$symlink_home/.bashrc"
+printf '%s\n' "local|$persistent|$TEMP_DIR/cache|.local|none|none|none" >"$layout"
+run_symlink() {
+    HOME="$symlink_home" HARNESS_ROOT="$repo" HARNESS_TEST_ALLOW_NONMAIN=1 \
+        HARNESS_HOME_LAYOUT_FILE="$layout" \
+        "$repo/bin/harness" bash-startup-unify "$@"
+}
+run_symlink --host local --apply >"$TEMP_DIR/symlink-apply.out"
+symlink_transaction=$(sed -n 's/^BASH_STARTUP_UNIFY action=applied transaction=\([^ ]*\).*/\1/p' "$TEMP_DIR/symlink-apply.out")
+run_symlink --host local --rollback "$symlink_transaction" >"$TEMP_DIR/symlink-rollback.out"
+[ ! -e "$symlink_home/.bash_profile" ] || fail 'declared symlink rollback profile removal'
+cmp -s "$symlink_home/.bashrc" "$TEMP_DIR/bashrc.before" || fail 'declared symlink rollback bashrc'
+
+printf '%s\n' "local|$TEMP_DIR/other|$TEMP_DIR/cache|.local|none|none|none" >"$layout"
+mkdir -p "$TEMP_DIR/other"
+if run_symlink --host local --apply >"$TEMP_DIR/symlink-refusal.out" 2>&1; then
+    fail 'undeclared local symlink target accepted'
+fi
+
 printf '%s\n' 'Bash startup unification tests: PASS'

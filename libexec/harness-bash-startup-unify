@@ -171,17 +171,55 @@ def validate_checkout(root: Path) -> None:
             die("Bash startup unification requires the main branch")
 
 
-def prepare_state(home: Path, uid: int) -> Path:
+def declared_local_symlink_is_safe(root: Path, home: Path, uid: int, host: str | None) -> bool:
+    local = home / ".local"
+    if not host or not safe_id(host) or not local.is_symlink():
+        return False
+    layout = Path(os.environ.get("HARNESS_HOME_LAYOUT_FILE", root / "profiles" / "home-layout.tsv"))
+    if not layout.is_file() or layout.is_symlink():
+        return False
+    rows = []
+    for line in layout.read_text(encoding="utf-8").splitlines():
+        fields = line.split("|")
+        if fields and fields[0] == host:
+            rows.append(fields)
+    if len(rows) != 1 or len(rows[0]) < 4 or ".local" not in rows[0][3].split(","):
+        return False
+    persistent = Path(rows[0][1])
+    try:
+        local_info = local.lstat()
+        persistent_info = persistent.lstat()
+        local_real = local.resolve(strict=True)
+        persistent_real = persistent.resolve(strict=True)
+        target_info = local_real.stat()
+    except (FileNotFoundError, OSError, RuntimeError):
+        return False
+    if local_info.st_uid != uid or not stat.S_ISDIR(persistent_info.st_mode) or \
+            persistent_info.st_uid != uid or not stat.S_ISDIR(target_info.st_mode) or \
+            target_info.st_uid != uid:
+        return False
+    try:
+        return os.path.commonpath((str(local_real), str(persistent_real))) == str(persistent_real) \
+            and local_real != persistent_real
+    except ValueError:
+        return False
+
+
+def prepare_state(root: Path, home: Path, uid: int, host: str | None = None) -> Path:
     current = home
     for part in (".local", "state", "harness", "transactions"):
         current /= part
         if current.exists() or current.is_symlink():
             info = current.lstat()
-            if not stat.S_ISDIR(info.st_mode) or info.st_uid != uid:
+            declared_symlink = part == ".local" and stat.S_ISLNK(info.st_mode) and \
+                declared_local_symlink_is_safe(root, home, uid, host)
+            if not declared_symlink and (not stat.S_ISDIR(info.st_mode) or info.st_uid != uid):
                 die("Bash startup transaction path is unsafe")
         else:
             current.mkdir(mode=0o700)
-        os.chmod(current, 0o700)
+            declared_symlink = False
+        if not declared_symlink:
+            os.chmod(current, 0o700)
     return current
 
 
@@ -189,11 +227,11 @@ def exact_equal(left: Path, right: Path) -> bool:
     return left.is_file() and not left.is_symlink() and filecmp.cmp(left, right, shallow=False)
 
 
-def rollback(root: Path, home: Path, transaction: str) -> None:
+def rollback(root: Path, home: Path, transaction: str, host: str | None) -> None:
     if not safe_id(transaction):
         die("invalid Bash startup transaction identifier")
     uid = os.getuid()
-    txroot = prepare_state(home, uid)
+    txroot = prepare_state(root, home, uid, host)
     manifest_path = txroot / f"{transaction}.bash-startup-unify.json"
     status_path = txroot / f"{transaction}.bash-startup-unify.status"
     require_regular(manifest_path, uid)
@@ -259,9 +297,9 @@ def main() -> int:
         die("Bash startup HOME is unsafe")
     validate_checkout(root)
     if args.rollback:
-        if args.host:
-            die("rollback does not accept --host")
-        rollback(root, home, args.rollback)
+        if args.host and not safe_id(args.host):
+            die("a safe logical host is required")
+        rollback(root, home, args.rollback, args.host)
         return 0
     if not args.host or not safe_id(args.host):
         die("a safe logical host is required")
@@ -319,7 +357,7 @@ def main() -> int:
         print("END bash_startup_unify changes=not-applied")
         return 0
 
-    txroot = prepare_state(home, uid)
+    txroot = prepare_state(root, home, uid, args.host)
     transaction = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()) + f"-{os.getpid()}"
     manifest_path = txroot / f"{transaction}.bash-startup-unify.json"
     status_path = txroot / f"{transaction}.bash-startup-unify.status"

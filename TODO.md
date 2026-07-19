@@ -199,6 +199,18 @@ fleet-sync, then resume at the untouched `local` plan. The clean run passed all
 native MPI, and reached only the known Darwin doctor boundary; protected Ubuntu
 CI remains the publication gate.
 
+PR #116 merged/synchronized at `9ad4112`; the resumed `local` plan was exact
+and doctor-ready, but apply stopped before startup replacement because the
+transaction path rejected local's owner-controlled `~/.local` symlink. The
+tracked home-layout declares `.local` moved under its persistent root. The
+follow-up applies the existing strict tmux rule: accept only an owner-owned
+`.local` symlink whose host row declares the move and whose resolved owner-owned
+directory is below the declared real persistent root; never chmod that target.
+Rollback accepts `--host` when declaration lookup is needed. Synthetic declared
+apply/rollback and mismatched-target refusal pass. Exact next action: publish
+after clean phase-one validation, fleet-sync, and resume the untouched local
+apply.
+
 **Onboarding-skill checkpoint:** `skill-creator` initialized
 `shared/skills/onboard-personal-mac` with Codex UI metadata. The implemented
 skill requires one host, repository/TODO reconstruction, value-free discovery,
