@@ -1178,12 +1178,24 @@ family adapter without changing Linux behavior. The existing private `bashrc`
 payload and state then appear obsolete and require an explicit migration rather
 than silent coexistence.
 
-Phase remains `interviewing`. Open decision B2: confirm that private Bash
-payload synchronization is removed, leaving Bash sharing entirely in the
-public pre/post hooks while SSH and complete tmux remain the atomic private
-bundle. If confirmed, freeze compatibility, migration, rollback, and pilot
-acceptance gates before a fresh `go`. No code, private companion, live startup
-file, session reload, or Mac state has been changed.
+**Decision B2:** selected removal of private Bash payload synchronization.
+Macs will use the same tracked `shell/early-cache.sh` pre hook and
+`shell/profile.sh` post hook as the managed Linux nodes, with untouched
+machine-local startup content between the exact managed blocks. The migration
+must return any retained pilot-only fragment bytes to owner-reviewed local
+content or deliberately classify them as already supplied by the public hooks;
+it may not silently discard or publish them.
+
+The owner simultaneously expanded tmux scope from the four Macs to all four
+Macs plus `local`, `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`. Public policy
+already calls for portable non-secret tmux configuration but no tracked tmux
+payload or Linux adapter exists; engine 2 currently stores the complete Mac
+`~/.tmux.conf` only in the private companion and explicitly excludes Linux.
+This invalidates D11–D13's population and atomic-bundle assumptions. Phase
+remains `interviewing`, and rollout stays paused. Open decision T1: select one
+cross-platform tmux source of truth and edit/convergence model before any live
+config is inspected. No code, private companion, tmux file, active server, or
+node state has been changed.
 
 ## Stable operational facts
 
