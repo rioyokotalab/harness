@@ -1842,6 +1842,15 @@ credential, component, or session changed. Exact next action: publish the
 generic correction through protected Linux CI before running the frozen
 official installer relocation on `office`.
 
+**First protected D11 failure:** PR #80 run `29684843290`, job `88187238704`,
+stopped in the focused agent-config suite with `FAIL: blocked apply mutated
+state`. The engine had not mutated the fixture; the old assertion required the
+entire synthetic `~/.local` tree to be absent, while D11 deliberately creates
+the precondition native entry there before every case. The narrow correction
+requires only transaction-owned `~/.local/bin` and `~/.local/state` to remain
+absent after a blocked apply. Retry is safe; no live installer, package, link,
+credential, component, or session changed.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

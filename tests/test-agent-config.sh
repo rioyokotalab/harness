@@ -288,7 +288,8 @@ if run_config "$unsafe_home" --apply >"$TEMP_DIR/unsafe.out" 2>&1; then
 fi
 grep -F 'state=unsafe action=blocked' "$TEMP_DIR/unsafe.out" >/dev/null ||
     fail "unsafe destination refusal"
-[ ! -e "$unsafe_home/.local" ] || fail "blocked apply mutated state"
+[ ! -e "$unsafe_home/.local/bin" ] && [ ! -e "$unsafe_home/.local/state" ] ||
+    fail "blocked apply mutated state"
 
 hardlink_home=$(make_home hardlink)
 mkdir -p "$hardlink_home/.codex"
