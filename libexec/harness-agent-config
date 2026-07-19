@@ -175,6 +175,7 @@ restore_label() {
         unlink "$restore_destination"
     fi
     case "$restore_prior" in
+        current) ;;
         absent) ;;
         regular)
             cp "$restore_backup" "$restore_destination"
@@ -211,7 +212,7 @@ rollback_transaction() {
             die "agent configuration transaction manifest is malformed"
         old_ifs=$IFS; IFS='|'; set -- $record; IFS=$old_ifs
         [ "$#" -eq 5 ] || die "agent configuration transaction manifest is malformed"
-        case "$3" in absent) [ "$4" = absent ] && [ "$5" = absent ] ;; regular|symlink)
+        case "$3" in current|absent) [ "$4" = absent ] && [ "$5" = absent ] ;; regular|symlink)
             case "$4" in "$transaction_root"/*) [ -f "$4" ] && [ ! -L "$4" ] ;; *) false ;; esac ;;
             *) false ;;
         esac || die "agent configuration transaction manifest is malformed"
@@ -323,6 +324,7 @@ for label in codex claude launcher; do
     backup=absent
     prior_mode=absent
     case "$prior" in
+        current) ;;
         absent) ;;
         regular)
             backup=$transaction_root/$transaction_id.agent-config.$label.before
@@ -363,6 +365,11 @@ trap 'exit 143' TERM
 for label in codex claude launcher; do
     destination=$(label_destination "$label")
     source=$(label_source "$label")
+    record=$(awk -F'|' -v label="$label" '$1 == "path" && $2 == label { print }' "$manifest")
+    old_ifs=$IFS; IFS='|'; set -- $record; IFS=$old_ifs
+    [ "$(path_state "$destination" "$source")" = "$3" ] ||
+        die "agent configuration changed before link"
+    [ "$3" = current ] && continue
     [ ! -e "$destination" ] && [ ! -L "$destination" ] || unlink "$destination"
     ln -s "$source" "$destination"
     [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ] ||

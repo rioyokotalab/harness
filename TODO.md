@@ -1737,6 +1737,25 @@ Claude sessions on `office` and confirm the frozen ordinary-session behavior;
 any rollback/reapply drill or rollout beyond `office` requires its separately
 recorded authority.
 
+**Fresh-session verification checkpoint (2026-07-19):** the owner authorized
+the non-mutating `office` verification. The previously dirty canonical Codex
+body was deliberately restored to its published two-setting form. Fresh Bash
+and an isolated fresh tmux server/session passed, but the value-free agent
+doctor found only the launcher as a different symlink. The reviewed one-change
+adoption plan was authorized; apply stopped before mutation with `agent
+configuration changed before apply`. Public-code diagnosis confirmed a partial-
+adoption defect: transaction preparation rejected paths already classified
+`current`, and the link loop would have rewritten all three paths. The focused
+correction records current paths as no-op preimages, revalidates every recorded
+state immediately before linking, and changes/restores only drifted paths. Its
+new partial-adopt/doctor/rollback/reapply regression passed before the existing
+macOS focused suite reached its known GNU `stat -c` fixture failure; portable
+syntax, warning-level ShellCheck, and diff checks pass. No live path changed
+during the failed apply. Exact next action: publish the correction through
+protected Linux CI, cleanly fast-forward `office`, rerun the already-authorized
+one-change adoption and doctor, then observe fresh Codex and Claude sessions.
+Stop before any drill or rollout beyond `office`.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
