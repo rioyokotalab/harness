@@ -1,0 +1,5 @@
+# >>> harness canonical bash profile >>>
+if [ -r "$HOME/.bashrc" ]; then
+    . "$HOME/.bashrc"
+fi
+# <<< harness canonical bash profile <<<

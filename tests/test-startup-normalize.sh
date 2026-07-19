@@ -170,5 +170,14 @@ alias_names=$(sed -n 's/^alias \([A-Za-z_][A-Za-z0-9_]*\)=.*/\1/p' \
 sudo_alias=$(bash -c '. "$1"; alias sudo' _ "$ROOT/shell/common-aliases.sh")
 [ "$sudo_alias" = "alias sudo='sudo '" ] ||
     fail 'common sudo alias lost trailing-space alias expansion'
+cache_names=$(sed -n 's/^    \([A-Za-z_][A-Za-z0-9_]*\)=.*/\1/p' \
+    "$ROOT/shell/cache.sh")
+[ "$cache_names" = "$(printf '%s\n' "$cache_names" | LC_ALL=C sort -f -u)" ] ||
+    fail 'cache declarations are not unique and alphabetic'
+for environment in "$ROOT"/shell/environments/*.sh; do
+    root_names=$(sed -n 's/^\(HARNESS_[A-Z_]*_ROOT\)=.*/\1/p' "$environment")
+    [ "$root_names" = "$(printf '%s\n' "$root_names" | LC_ALL=C sort -u)" ] ||
+        fail "environment roots are not unique and alphabetic: $environment"
+done
 
 echo 'PASS: startup normalization transaction'

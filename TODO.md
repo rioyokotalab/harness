@@ -171,6 +171,50 @@ the known Darwin-to-Linux `local` doctor refusal after guarded-delete and native
 compiler gates. The protected Ubuntu phase-one run is the remaining publication
 gate. No live discovery link or Mac state has been changed yet.
 
+**Stage-2 generic implementation:** the working branch adds
+`harness bash-startup-unify`. It accepts only two owner regular single-link
+files in the exact deployed public-pre/local/public-post layout, makes
+`.bashrc` canonical, moves `.bash_profile`'s opaque local middle verbatim under
+an explicit login-shell guard, and installs the tracked public thin profile.
+Candidates inherit metadata through native `cp -p`, parse with recovery Bash,
+replace atomically, retain exact mode-0600 private pre/post images without
+hashing or public output, unwind injected partial failure, and support exact
+unchanged-only two-file rollback. Synthetic plan/privacy, login/non-login,
+idempotence, mode, failure recovery, rollback, and changed-file refusal pass.
+Mac doctor accepts both the pre-migration and canonical profile layouts.
+Declarative cache/root/history/editor entries are alphabetized with focused
+ordering tests; execution-dependent code and opaque owner bytes are untouched.
+The onboarding skill now selects this published successor after establishing
+the legacy public hook layout. Exact next action: run the complete focused and
+portable gates, publish stage 2, then perform value-free plans before any live
+startup mutation.
+
+The first clean stage-2 phase-one invocation stopped before tests because the
+new Python adapter was mistakenly placed in the shell `sh -n` list. This is a
+safe validation classification error; no startup or external state changed.
+Move it to the existing in-memory Python AST gate and rerun from the preserved
+task commit. The commit also landed on local `main`; retain it on the task
+branch and realign local `main` to protected origin only after merge.
+
+The corrected run passed 51/52 parallel suites. The new focused fixture copied
+the now-clean committed repository, so its unconditional baseline commit found
+nothing to commit and returned nonzero before exercising the adapter; all
+existing suites passed. Make that synthetic baseline explicitly allow-empty and
+retry. This is isolated fixture setup only and no startup state changed.
+
+The allow-empty correction passes standalone and all 52 parallel focused
+suites from the clean stage-2 commit. The serial tail passes guarded deletion,
+native compiler gates, and the explicit MPI skip, then reaches only the known
+Darwin-to-Linux `local` doctor refusal. Protected Ubuntu phase-one is the
+remaining generic publication gate; no live startup plan or apply has run.
+
+Protected PR #112's first run failed only the new focused test on Ubuntu: its
+test-only mode helper tried BSD `stat -f` first, which GNU stat accepts with
+different filesystem output instead of failing into the fallback. The adapter
+itself preserved both modes; all other 51 suites passed. Select `stat` by
+`uname` like the established test helpers and rerun; no production behavior or
+live state changed.
+
 **Stage-1 implementation checkpoint:** the task branch adds a bounded Python
 focused-suite runner, an explicit manifest with per-suite labels/logs, a
 parallelism/failure-attribution regression, and a separately gated native MPI

@@ -90,6 +90,7 @@ for script in \
     "$ROOT/tests/guarded-test-cleanup.sh" \
     "$ROOT/tests/test-github-rulesets.sh" \
     "$ROOT/tests/test-claude-takeover.sh" \
+    "$ROOT/tests/test-bash-startup-unify.sh" \
     "$ROOT/tests/test-focused-runner.sh" \
     "$ROOT/tests/test-local-mpi-profile.sh" \
     "$ROOT/tests/test-native-mpi.sh" \
@@ -117,6 +118,8 @@ done
 
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harness-startup-normalize").read_text())' ||
     fail "Python syntax: harness-startup-normalize"
+python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harness-bash-startup-unify").read_text())' ||
+    fail "Python syntax: harness-bash-startup-unify"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/tools/run-focused-tests.py").read_text())' ||
     fail "Python syntax: focused-suite runner"
 
@@ -265,6 +268,8 @@ for script in "$ROOT"/shell/cache.sh "$ROOT"/shell/common-aliases.sh \
     "$ROOT"/shell/environments/*.sh; do
     sh -n "$script" || fail "shell configuration syntax: $script"
 done
+bash --noprofile --norc -n "$ROOT/shell/bash_profile.canonical" ||
+    fail "canonical Bash profile syntax"
 for script in "$ROOT"/shell/interactive.sh "$ROOT"/shell/remote-session.sh \
     "$ROOT"/shell/safety-guards.sh \
     "$ROOT"/shell/hosts/*.sh; do

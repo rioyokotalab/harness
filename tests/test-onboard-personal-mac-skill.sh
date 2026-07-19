@@ -20,6 +20,8 @@ grep -F '`.bash_common` orphan test' "$SKILL" >/dev/null || fail 'orphan cleanup
 grep -F 'rollback' "$SKILL" >/dev/null || fail 'rollback contract'
 grep -F 'macos-pilot-plan --host HOST' "$STAGES" >/dev/null || fail 'aggregate plan'
 grep -F 'macos-doctor --host HOST' "$STAGES" >/dev/null || fail 'doctor acceptance'
+grep -F 'bash-startup-unify --host HOST --plan|--apply' "$STAGES" >/dev/null ||
+    fail 'canonical Bash onboarding stage'
 grep -F 'Every command above is run by Codex' "$STAGES" >/dev/null ||
     fail 'no owner shell execution'
 grep -F '$onboard-personal-mac' "$OPENAI" >/dev/null || fail 'default prompt'

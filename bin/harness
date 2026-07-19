@@ -68,6 +68,7 @@ Transactional commands:
   macos-homebrew plan/apply bounded personal-Mac managed formula catch-up
   macos-bash     plan/apply/rollback personal-Mac Bash integration
   macos-bash-hooks  wrap Mac-local Bash bytes in shared public pre/post hooks
+  bash-startup-unify  make .bashrc canonical and .bash_profile a thin loader
   replica     plan or create one immutable encrypted-repository generation
   apply       plan or apply managed control-plane links
   remediate   plan or apply an exact reviewed host remediation
@@ -105,7 +106,7 @@ if [ "$#" -gt 0 ]; then
 fi
 
 case "$command_name" in
-    inventory|plan|doctor|macos-inventory|macos-plan|macos-doctor|macos-profile|macos-update|macos-ssh-sync|macos-config-sync|macos-config-migrate|macos-pilot-plan|macos-control|macos-homebrew|macos-bash|macos-bash-hooks|tmux-config|agent-config|agent-config-catch-up|agent-config-fleet|storage-readiness|replica|apply|remediate|shell|cache-bootstrap|startup-normalize|dotfiles|tool|runtime|python|agent|build-tool|rollback|restic|restic-primary|restic-schedule|fleet-sync|ssh-config-mirror)
+    inventory|plan|doctor|macos-inventory|macos-plan|macos-doctor|macos-profile|macos-update|macos-ssh-sync|macos-config-sync|macos-config-migrate|macos-pilot-plan|macos-control|macos-homebrew|macos-bash|macos-bash-hooks|bash-startup-unify|tmux-config|agent-config|agent-config-catch-up|agent-config-fleet|storage-readiness|replica|apply|remediate|shell|cache-bootstrap|startup-normalize|dotfiles|tool|runtime|python|agent|build-tool|rollback|restic|restic-primary|restic-schedule|fleet-sync|ssh-config-mirror)
         exec "$ROOT/libexec/harness-$command_name" "$@"
         ;;
     guarded-delete)
