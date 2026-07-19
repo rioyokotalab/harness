@@ -50,17 +50,21 @@ and compact historical pointers here. Next free ID: T-269.
 
 ## Next resume checkpoint
 
-Resume T-268 in `next-mac-plan-pending`. The first personal-Mac pilot completed
-the atomic SSH/Bash/tmux seed, unchanged-only rollback, explicit forward
-reapply, final no-op reconciliation, and value-free doctor acceptance with zero
-failures or warnings. No active shell or tmux session was reloaded. Next, plan
-stage 16 against one privately selected remaining Mac in its own owner-started
-session, independently revalidate its old state, and obtain separate authority
-before any apply; do not batch Macs or infer their state from the pilot. The
-post-publication Linux fleet catch-up is independent: `ab`, `ab2`, `ri`, `rc`,
-and `t4` are clean at published checkpoint `01971f1`, with transfer artifacts
-absent; revalidate `al` separately after its declared certificate
-authentication is available. The shared local checkout remains on another
+Resume T-268 in `executing`. The owner gave the fresh `go` for the corrective
+PIE decisions B2, B3, T1–T3,
+M1, and R1 are frozen: Macs reuse the existing public Linux Bash pre/post hooks
+around local startup bytes; the private Bash payload is retired through
+owner-guided lossless curation; all eleven environments use one reviewed public
+complete tmux config through `~/.tmux.conf`; and the pilot transition is one
+recoverable migration back to private SSH-only agreement. Generic implementation
+and portable phase-one validation are complete on task branch
+`agent/t268-macos-bash-order`; next fetch, publish the branch, open and merge the
+protected PR, then guarded-sync only clean managed checkouts. Generic publication
+authorizes no private/live access; pilot, Linux, and later-Mac applies retain the
+separate R1 gates. The five reachable remote checkouts `ab`, `ab2`, `ri`, `rc`,
+and `t4` are clean at published checkpoint `63af57f`, with transfer artifacts
+absent; AL was reachable for value-free tmux discovery but its harness checkout
+was not revalidated or advanced. The shared local checkout remains on another
 contributor's clean branch with `origin/main` fetched. Independently resume
 T-191 after the first Sunday eligibility. Fetch and prove a clean fleet, then
 query only the seven captured IDs below through their declared native scheduler
@@ -1146,6 +1150,182 @@ apply had completed after its client output ended. A final independent plan
 reported five `KEEP`s at `01971f1`, zero dirt, and every transfer artifact
 absent. `al` was not contacted and remains pending separate authentication
 revalidation. The shared local checkout's contributor branch was not changed.
+
+**Bash ordering correction PIE checkpoint (2026-07-19):** the owner clarified
+that the intended Mac behavior was the same ordering contract used on managed
+Linux startup files: a managed pre-hook, untouched machine-local content in the
+middle, and a managed post-hook. The published Mac implementation instead
+appends one loader and sources one synchronized private fragment only after all
+local `.bashrc` content. This is a confirmed requirement mismatch, not a failed
+pilot transaction; the accepted pilot remains internally converged and safe to
+leave running, but rollout to another Mac is paused.
+
+Read-only public-code discovery found that the Linux pre hook is the exact
+`harness early managed` prefix sourcing tracked `shell/early-cache.sh`, and the
+post hook is the exact `harness managed` suffix sourcing tracked
+`shell/profile.sh`. Linux preserves the owner/site-local startup bytes between
+them. `harness-bash` starts Homebrew Bash as a login shell, while the current
+Mac installer instead appends the separate `personal-macos.bash` loader to both
+`.bash_profile` and `.bashrc`; private engine 2 also stores one `bashrc`
+payload.
+
+The owner rejected provisional B1's two new private pre/post fragments: the
+requirement is to reuse the existing public Linux hooks on the Macs, not create
+another synchronized Bash representation. The recommended correction is a
+Mac-specific transactional installer that places those same public hook blocks
+around untouched Mac-local bytes in both `.bashrc` and Bash's selected login
+startup file, using the strict private logical ID only in the live prefix. Any
+Darwin incompatibility must be fixed in the shared public hook or a narrow
+family adapter without changing Linux behavior. The existing private `bashrc`
+payload and state then appear obsolete and require an explicit migration rather
+than silent coexistence.
+
+**Decision B2:** selected removal of private Bash payload synchronization.
+Macs will use the same tracked `shell/early-cache.sh` pre hook and
+`shell/profile.sh` post hook as the managed Linux nodes, with untouched
+machine-local startup content between the exact managed blocks. The migration
+must return any retained pilot-only fragment bytes to owner-reviewed local
+content or deliberately classify them as already supplied by the public hooks;
+it may not silently discard or publish them.
+
+The owner simultaneously expanded tmux scope from the four Macs to all four
+Macs plus `local`, `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`. Public policy
+already calls for portable non-secret tmux configuration but no tracked tmux
+payload or Linux adapter exists; engine 2 currently stores the complete Mac
+`~/.tmux.conf` only in the private companion and explicitly excludes Linux.
+This invalidates D11–D13's population and atomic-bundle assumptions. Phase
+remains `interviewing`, and rollout stays paused.
+
+**Decision T1:** selected one complete, deliberately non-sensitive
+cross-platform tmux configuration tracked in the public harness as the source
+of truth for all eleven environments. It will use the oldest supported common
+tmux grammar, contain no credentials or machine-private values, provide no
+second config or local override, and advance through the existing protected
+public-harness and per-machine catch-up workflows. The private Mac `tmux.conf`
+payload becomes obsolete and must be removed through an explicit compatible
+migration without losing the pilot's accepted prior image.
+
+**Decision T2:** selected one live symlink on every managed environment:
+`~/.tmux.conf` points to the complete tracked public canonical file under that
+environment's `~/harness` checkout. There is exactly one configuration body,
+no sourced loader, copied duplicate, or local override. Editing through the
+live path changes the tracked file and normal Git review publishes it. Apply
+must refuse ambiguous alternate paths and unsafe existing types, retain an
+exact prior image/type for rollback, replace atomically, and never reload a
+running tmux server. Open decision T3: select the owner-curated initial
+canonical content after value-free path-type discovery; no live content may be
+read or copied automatically. No code, private companion, tmux file, active
+server, or node state has been changed.
+
+Value-free read-only discovery then classified only the three candidate tmux
+paths on `local`, `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`. Every canonical
+`~/.tmux.conf`, home-plain `~/tmux.conf`, and XDG
+`~/.config/tmux/tmux.conf` path is absent. A second bounded probe confirmed all
+six remote classifications after the first probe's newline formatting was
+ambiguous; AL authentication was available for this read-only check. No tmux
+bytes, hashes, commands, versions, private paths, or active-server state were
+read, and no node changed. The accepted pilot Mac has an empty canonical file.
+Each remaining Mac must still classify its own paths independently and stop for
+owner curation if any existing config is nonempty before linking.
+
+**Decision T3:** the owner supplied the exact public canonical payload. It sets
+status-left length 80 and displays the bold persistent session name; `N` and
+`P` switch to the next and previous sessions; `Space` opens
+`choose-tree -Zw`. The supplied comments and commands contain no machine value,
+credential, plugin, shell, network, include, or secondary-file behavior.
+Current value-free version discovery found tmux 3.4 on `local` and `ri`, 3.2a
+on `ab`, `ab2`, and `t4`, and managed 3.6b on `al` and `rc`. Parse-only
+validation on disposable isolated servers passed the exact payload on all
+seven Linux nodes, including the 3.2a floor; every candidate file, socket, and
+temporary directory was exactly removed. No active server was contacted or
+reloaded. T3 is selected subject to the same native parse gate on each Mac
+before linking.
+
+**Decision B3:** selected owner-guided side-by-side migration of the accepted
+pilot's `.bashrc` and current private Bash fragment in isolated Vim. The owner
+moves genuinely Mac-local settings into the local middle, removes only settings
+already supplied by the shared public hooks, and leaves the private fragment
+empty. Validation must preserve the managed boundaries, reject credentials and
+invalid Bash, and prove the fragment empty before the private payload or state
+is removed. The engine may not infer, print, or automatically insert private
+bytes.
+
+**Decision M1:** selected one recoverable pilot migration. After owner curation
+and complete prevalidation, it converts `.bashrc` and Bash's selected login
+startup file to the shared public pre/post hooks, replaces the canonical tmux
+path with the public symlink, removes the obsolete private Bash/tmux payloads,
+and converts local bundle state back to SSH-only agreement. Any live-file or
+state failure restores every exact preimage. A normal-pushed private schema
+advance is never force-rewound; a post-push local failure remains a bounded
+forward retry. Deliberate unchanged-only rollback/reapply is required, and no
+active shell or tmux server is reloaded.
+
+**Decision R1:** selected generic implementation and protected publication
+first, with no live/private mutation; then an owner-started pilot plan and
+separately authorized apply/rollback/reapply; then a `local` Linux tmux
+plan/apply/rollback/reapply drill; then one reviewed authority bundle applied
+sequentially to the six remote Linux nodes with stop-on-first-failure; then one
+independently planned remaining Mac at a time. No apply reloads an active shell
+or tmux server.
+
+**Corrective decision audit:** B2/B3, T1–T3, M1, and R1 supersede D11–D13 and
+retain D14. They are consistent with D1–D10 and SSH S1–S10: Mac SSH remains the
+only private synchronized configuration; Bash and tmux advance through public
+harness catch-up; old Macs use a public-first migration bridge; the tmux file
+is complete and singular; private bytes never enter public evidence; all live
+replacements have exact unchanged-only rollback; and every later machine is
+independently validated. Phase is `ready-for-go`. A fresh `go` authorizes the
+generic implementation, synthetic validation, protected PR, and required
+clean-checkout fleet synchronization only. It does not authorize private
+companion access, owner curation, live hook/link mutation, rollback/reapply, or
+active-session reload; those remain the explicit R1 gates.
+
+**Execution authorization (2026-07-19):** the owner gave the fresh `go` after
+the corrective decision audit. Generic public hooks, canonical tmux config and
+link adapter, private-schema/state migration engine, old-Mac bridge, synthetic
+tests, documentation, protected publication, and clean-checkout control-plane
+synchronization are authorized. Private companion access, live Mac/Linux
+configuration mutation, owner curation, and active-session reload remain
+excluded. Exact first step: map the published engine-2 and Bash-v1 transaction
+contracts, then implement synthetic-first migrations without contacting a live
+config.
+
+**Generic implementation checkpoint (2026-07-19):** the task branch now adds
+the exact public `config/tmux/tmux.conf`, transactional cross-platform
+`tmux-config`, public pre/local/post `macos-bash-hooks`, the owner-curated
+forward-only `macos-config-migrate` bridge, migrated/legacy doctor coverage,
+the revised pilot planner, documentation, and synthetic apply/rollback tests.
+The migration fixture proved engine-2 to SSH-only publication, Bash local-byte
+preservation, the one canonical tmux link, exact local rollback, and no private
+Git rewind. Focused Mac/tmux/profile/update/privacy suites passed. ShellCheck
+passed for every affected script with only the repository-standard dynamic
+source/unreferenced-trap suppressions. `HARNESS_PORTABLE_CI=1
+tests/test-phase1.sh` passed; the unspecialized invocation reached the native
+MPI smoke and stopped because this session has no `mpicc`, so no native MPI
+result is claimed. No private companion, live startup file, tmux path, active
+session, or remote node was accessed or changed. Exact next action: fetch
+`origin`, push the task branch, open the protected PR, wait for required CI,
+merge without force, then run guarded clean-checkout fleet synchronization.
+
+**Protected-CI retry checkpoint:** PR #53 opened at
+`https://github.com/rioyokotalab/harness/pull/53`. Required run `29670914004`
+passed ShellCheck, scheduling, onboarding, evaluation, public-history privacy,
+and guarded-delete stages, then failed only because the new synthetic migration
+fixture tried to rename a branch in GitHub's detached-HEAD checkout. Commit
+`8fbd8f7` makes the fixture create `main` from detached HEAD while preserving
+the named-branch path. The migration suite passed both locally and from an
+isolated detached clone, and the complete portable phase-one suite passed again.
+Retry safety: push the normal fast-forward commit and wait for the replacement
+required check; no live or private state was involved.
+
+Replacement run `29671048945` passed the detached-HEAD point and then exposed
+the fixture's second ambient dependency: its synthetic private clone had no
+local commit identity and had inherited the developer's global Git identity in
+local runs. Commit `2c88749` gives only that synthetic repository an explicit
+fixture identity. The focused migration test and the complete portable
+phase-one suite both pass with `GIT_CONFIG_GLOBAL=/dev/null`, matching the
+credential-free runner. Retry remains a normal fast-forward push with no live
+or private-state effect.
 
 ## Stable operational facts
 

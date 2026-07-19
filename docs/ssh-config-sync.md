@@ -4,12 +4,13 @@ Two intentionally separate commands synchronize only complete OpenSSH config
 files. Neither is a general dotfile adapter, fleet action, scheduler, timer, or
 credential manager. Both run only when the owner invokes them.
 
-## Personal Macs: legacy SSH-only compatibility
+## Personal Macs: SSH-only desired state
 
-`harness macos-ssh-sync --host LOGICAL_ID` remains the engine-1 SSH-only
-compatibility route. New adoption uses the engine-2 atomic SSH/Bash/tmux bundle
+`harness macos-ssh-sync --host LOGICAL_ID` is the engine-1 SSH-only route. The
+engine-2 atomic SSH/Bash/tmux bundle is retained only as a sleeping-Mac
+migration source; Bash and tmux now use public shared configuration as
 documented in
-[`personal-macos-config-sync.md`](personal-macos-config-sync.md). The legacy private companion
+[`personal-macos-config-sync.md`](personal-macos-config-sync.md). The private companion
 stores the single root `ssh_config` payload; the live destination is fixed to
 `~/.ssh/config`. The current live file, fetched `origin/main` payload, and
 private mode-0600 last-applied base determine the result:

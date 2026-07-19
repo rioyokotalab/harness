@@ -1,0 +1,366 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+. "$SELF_DIR/harness-macos-common"
+
+usage() {
+    cat >&2 <<'EOF'
+Usage:
+  harness macos-config-migrate --host LOGICAL_ID [--plan|--apply]
+  harness macos-config-migrate --rollback TRANSACTION_ID
+EOF
+}
+
+prepare_state() {
+    state_root=$HOME/.local/state/harness
+    state_dir=$state_root/personal-macos
+    transaction_root=$state_root/transactions
+    umask 077
+    for path in "$HOME/.local" "$HOME/.local/state" "$state_root" "$state_dir" "$transaction_root"; do
+        if [ -e "$path" ] || [ -L "$path" ]; then
+            [ -d "$path" ] && [ ! -L "$path" ] &&
+                [ "$(macos_stat_owner "$path")" = "$current_uid" ] ||
+                die "Mac configuration migration state path is unsafe"
+        else
+            mkdir "$path"
+            chmod 700 "$path"
+        fi
+    done
+    chmod 700 "$state_root" "$state_dir" "$transaction_root"
+}
+
+validate_public() {
+    [ "$(uname -s)" = Darwin ] || die "Mac configuration migration requires Darwin"
+    [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
+        die "Mac configuration migration requires a Git harness checkout"
+    [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" = \
+        "$(CDPATH='' cd -- "$HARNESS_ROOT" && pwd -P)" ] ||
+        die "Mac configuration migration public checkout is ambiguous"
+    [ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
+        die "Mac configuration migration requires a clean public checkout"
+    if [ "${HARNESS_TEST_ALLOW_NONMAIN:-0}" != 1 ]; then
+        [ "$(git -C "$HARNESS_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null)" = main ] ||
+            die "Mac configuration migration requires public main"
+    fi
+}
+
+validate_private() {
+    macos_require_private_directory "$private_root" "$current_uid"
+    macos_require_private_directory "$private_root/.git" "$current_uid"
+    macos_require_private_directory "$private_root/hosts" "$current_uid"
+    [ "$(git -C "$private_root" rev-parse --show-toplevel 2>/dev/null)" = \
+        "$(CDPATH='' cd -- "$private_root" && pwd -P)" ] ||
+        die "Mac configuration migration private checkout is ambiguous"
+    [ "$(git -C "$private_root" symbolic-ref --quiet --short HEAD 2>/dev/null)" = main ] ||
+        die "Mac configuration migration requires private main"
+    [ "$(git -C "$private_root" remote)" = origin ] &&
+        [ "$(git -C "$private_root" config --get branch.main.remote 2>/dev/null)" = origin ] &&
+        [ "$(git -C "$private_root" config --get branch.main.merge 2>/dev/null)" = refs/heads/main ] ||
+        die "Mac configuration migration private tracking is ambiguous"
+    [ -z "$(git -C "$private_root" status --porcelain --untracked-files=normal)" ] ||
+        die "Mac configuration migration requires a clean private checkout"
+    "$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
+        die "Mac configuration migration private profile is invalid"
+}
+
+fetch_private() {
+    log=$transaction_root/.macos-config-migrate-fetch.$$
+    : >"$log"; chmod 600 "$log"
+    if GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/usr/bin/false SSH_ASKPASS=/usr/bin/false \
+        GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=15' \
+        git -C "$private_root" fetch -q origin main >"$log" 2>&1; then
+        unlink "$log"
+    else
+        unlink "$log"
+        die "Mac configuration migration private fetch failed"
+    fi
+    private_head=$(git -C "$private_root" rev-parse HEAD)
+    private_origin=$(git -C "$private_root" rev-parse refs/remotes/origin/main)
+    if [ "$private_head" != "$private_origin" ]; then
+        git -C "$private_root" merge-base --is-ancestor "$private_origin" "$private_head" >/dev/null 2>&1 &&
+            [ "$(git -C "$private_root" diff --name-only "$private_origin..$private_head")" = \
+                "$(printf 'bashrc\ncompanion.conf\ntmux.conf')" ] ||
+            die "Mac configuration migration private checkout is not a safe forward retry"
+        private_push_pending=yes
+    fi
+}
+
+private_layout() {
+    minimum=$(macos_manifest_get "$private_root/companion.conf" minimum_engine_schema)
+    bash_tracked=no
+    tmux_tracked=no
+    git -C "$private_root" ls-files --error-unmatch bashrc >/dev/null 2>&1 && bash_tracked=yes
+    git -C "$private_root" ls-files --error-unmatch tmux.conf >/dev/null 2>&1 && tmux_tracked=yes
+    case "$minimum:$bash_tracked:$tmux_tracked" in
+        2:yes:yes) printf '%s\n' legacy ;;
+        1:no:no) printf '%s\n' ssh-only ;;
+        *) die "Mac configuration migration private payload set is incompatible" ;;
+    esac
+}
+
+require_empty_fragment() {
+    if [ ! -e "$private_fragment" ] && [ ! -L "$private_fragment" ]; then return 0; fi
+    [ -f "$private_fragment" ] && [ ! -L "$private_fragment" ] &&
+        [ "$(macos_stat_owner "$private_fragment")" = "$current_uid" ] &&
+        [ "$(macos_stat_links "$private_fragment")" = 1 ] ||
+        die "Mac private Bash fragment has unsafe type"
+    if LC_ALL=C grep '[^[:space:]]' "$private_fragment" >/dev/null 2>&1; then
+        die "Mac private Bash fragment must be empty after owner curation"
+    fi
+    return 0
+}
+
+require_legacy_loader_or_absent() {
+    if [ ! -e "$old_loader" ] && [ ! -L "$old_loader" ]; then return 0; fi
+    [ -L "$old_loader" ] &&
+        [ "$(readlink "$old_loader")" = "$HARNESS_ROOT/shell/personal-macos.bash" ] ||
+        die "Mac legacy Bash loader is unsafe or unexpected"
+}
+
+require_ssh_agent_for_origin() {
+    origin_url=$(git -C "$private_root" config --get remote.origin.url)
+    case "$origin_url" in
+        git@*|ssh://*)
+            case ${SSH_AUTH_SOCK:-} in /*) ;; *) die "private push requires a current SSH agent socket" ;; esac
+            [ -S "$SSH_AUTH_SOCK" ] &&
+                [ "$(macos_stat_owner "$SSH_AUTH_SOCK")" = "$current_uid" ] ||
+                die "private push requires a current-user-owned SSH agent socket"
+            ;;
+    esac
+}
+
+migrate_private() {
+    if [ "$(private_layout)" = ssh-only ]; then
+        [ "$private_push_pending" = yes ] || return 0
+        require_ssh_agent_for_origin
+        retry_log=$transaction_root/.macos-config-migrate-push.$$
+        : >"$retry_log"; chmod 600 "$retry_log"
+        if ! GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/usr/bin/false SSH_ASKPASS=/usr/bin/false \
+            GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=15' \
+            git -C "$private_root" push -q origin HEAD:main >"$retry_log" 2>&1; then
+            unlink "$retry_log"
+            die "Mac configuration migration private push failed; retry is forward-only"
+        fi
+        unlink "$retry_log"
+        private_push_pending=no
+        return 0
+    fi
+    require_ssh_agent_for_origin
+    companion_stage=$private_root/.companion.conf.$$
+    printf 'schema=1\nminimum_engine_schema=1\n' >"$companion_stage"
+    chmod 600 "$companion_stage"
+    mv "$companion_stage" "$private_root/companion.conf"
+    git -C "$private_root" rm -q -- bashrc
+    git -C "$private_root" rm -q -- tmux.conf
+    git -C "$private_root" add -- companion.conf
+    log=$transaction_root/.macos-config-migrate-commit.$$
+    : >"$log"; chmod 600 "$log"
+    if ! git -C "$private_root" -c commit.gpgsign=false commit -q \
+        -m 'Retire private Bash and tmux payloads' -- companion.conf bashrc tmux.conf \
+        >"$log" 2>&1; then
+        unlink "$log"
+        git -C "$private_root" restore --staged --worktree -- companion.conf bashrc tmux.conf
+        die "Mac configuration migration private commit failed"
+    fi
+    unlink "$log"
+    log=$transaction_root/.macos-config-migrate-push.$$
+    : >"$log"; chmod 600 "$log"
+    if ! GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/usr/bin/false SSH_ASKPASS=/usr/bin/false \
+        GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=15' \
+        git -C "$private_root" push -q origin HEAD:main >"$log" 2>&1; then
+        unlink "$log"
+        die "Mac configuration migration private push failed; retry is forward-only"
+    fi
+    unlink "$log"
+    private_push_pending=no
+}
+
+child_transaction() {
+    sed -n 's/.*transaction=\([^ ]*\).*/\1/p' "$1" | tail -n 1
+}
+
+backup_optional() {
+    source=$1
+    backup=$2
+    if [ -f "$source" ] && [ ! -L "$source" ]; then
+        cp "$source" "$backup"; chmod 600 "$backup"; printf '%s\n' present
+    elif [ ! -e "$source" ] && [ ! -L "$source" ]; then
+        printf '%s\n' absent
+    else
+        die "Mac configuration migration local state has unsafe type"
+    fi
+}
+
+restore_optional() {
+    state=$1; backup=$2; destination=$3
+    [ ! -e "$destination" ] && [ ! -L "$destination" ] ||
+        die "Mac configuration migration rollback destination changed"
+    case "$state" in
+        absent) ;;
+        present) cp "$backup" "$destination"; chmod 600 "$destination" ;;
+        *) die "Mac configuration migration manifest is malformed" ;;
+    esac
+}
+
+rollback_composite() {
+    id=$1
+    macos_private_id_is_safe "$id" || die "invalid Mac configuration migration transaction"
+    prepare_state
+    manifest=$transaction_root/$id.macos-config-migrate.manifest
+    status_file=$transaction_root/$id.macos-config-migrate.status
+    macos_require_private_file "$manifest" "$current_uid"
+    macos_require_private_file "$status_file" "$current_uid"
+    [ "$(sed -n '1p' "$status_file")" = complete ] || die "Mac configuration migration is not complete"
+    macos_validate_manifest "$manifest" \
+        schema,operation,logical_host,ssh_transaction,bash_transaction,tmux_transaction,loader_before,fragment_before,fragment_backup,config_state_before,config_state_backup,config_status_before,config_status_backup \
+        schema,operation,logical_host,ssh_transaction,bash_transaction,tmux_transaction,loader_before,fragment_before,fragment_backup,config_state_before,config_state_backup,config_status_before,config_status_backup
+    schema=$(macos_manifest_get "$manifest" schema)
+    operation=$(macos_manifest_get "$manifest" operation)
+    ssh_transaction=$(macos_manifest_get "$manifest" ssh_transaction)
+    bash_transaction=$(macos_manifest_get "$manifest" bash_transaction)
+    tmux_transaction=$(macos_manifest_get "$manifest" tmux_transaction)
+    loader_before=$(macos_manifest_get "$manifest" loader_before)
+    fragment_before=$(macos_manifest_get "$manifest" fragment_before)
+    fragment_backup=$(macos_manifest_get "$manifest" fragment_backup)
+    config_state_before=$(macos_manifest_get "$manifest" config_state_before)
+    config_state_backup=$(macos_manifest_get "$manifest" config_state_backup)
+    config_status_before=$(macos_manifest_get "$manifest" config_status_before)
+    config_status_backup=$(macos_manifest_get "$manifest" config_status_backup)
+    [ "$schema" = 1 ] && [ "$operation" = macos-config-migrate ] ||
+        die "Mac configuration migration manifest is malformed"
+    "$SELF_DIR/harness-tmux-config" --rollback "$tmux_transaction" >/dev/null
+    "$SELF_DIR/harness-macos-bash-hooks" --rollback "$bash_transaction" >/dev/null
+    "$SELF_DIR/harness-macos-ssh-sync" --rollback "$ssh_transaction" >/dev/null
+    if [ "$loader_before" = present ]; then
+        [ ! -e "$old_loader" ] && [ ! -L "$old_loader" ] || die "legacy loader reappeared"
+        ln -s "$HARNESS_ROOT/shell/personal-macos.bash" "$old_loader"
+    fi
+    restore_optional "$fragment_before" "$fragment_backup" "$private_fragment"
+    restore_optional "$config_state_before" "$config_state_backup" "$config_state"
+    restore_optional "$config_status_before" "$config_status_backup" "$config_status"
+    printf '%s\n' rolled-back >"$status_file"
+    printf 'MACOS_CONFIG_MIGRATE action=rolled-back transaction=%s private_history=forward-only activation=unchanged\n' "$id"
+}
+
+logical_host=
+mode=plan
+rollback_id=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        --rollback) [ "$#" -ge 2 ] || { usage; exit 2; }; mode=rollback; rollback_id=$2; shift 2 ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+case ${HOME:-} in /*) ;; *) die "Mac configuration migration requires an absolute HOME" ;; esac
+current_uid=$(id -u)
+private_root=$HOME/.config/harness/private
+private_fragment=$HOME/.config/harness/managed/personal-macos-private.bash
+old_loader=$HOME/.config/harness/managed/personal-macos.bash
+config_state=$HOME/.local/state/harness/personal-macos/config-sync.conf
+config_status=$HOME/.local/state/harness/personal-macos/config-sync-status.conf
+validate_public
+prepare_state
+if [ "$mode" = rollback ]; then
+    [ -n "$rollback_id" ] && [ -z "$logical_host" ] || { usage; exit 2; }
+    rollback_composite "$rollback_id"
+    exit 0
+fi
+if [ -z "$logical_host" ] || ! macos_private_id_is_safe "$logical_host"; then usage; exit 2; fi
+validate_private
+private_push_pending=no
+fetch_private
+layout=$(private_layout)
+require_empty_fragment
+require_legacy_loader_or_absent
+"$SELF_DIR/harness-macos-bash-hooks" --host "$logical_host" --plan >/dev/null
+"$SELF_DIR/harness-tmux-config" --adopt --plan >/dev/null
+printf 'MACOS_CONFIG_MIGRATE class=current private_layout=%s action=%s apply=%s activation=none\n' \
+    "$layout" "$( [ "$layout" = legacy ] && echo migrate || echo reapply )" \
+    "$( [ "$mode" = apply ] && echo requested || echo not-requested )"
+[ "$mode" = apply ] || { echo 'END macos_config_migrate next=separate-apply-authority'; exit 0; }
+
+id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+manifest=$transaction_root/$id.macos-config-migrate.manifest
+status_file=$transaction_root/$id.macos-config-migrate.status
+fragment_backup=$transaction_root/$id.macos-config-migrate.fragment
+config_state_backup=$transaction_root/$id.macos-config-migrate.config-state
+config_status_backup=$transaction_root/$id.macos-config-migrate.config-status
+fragment_before=$(backup_optional "$private_fragment" "$fragment_backup")
+config_state_before=$(backup_optional "$config_state" "$config_state_backup")
+config_status_before=$(backup_optional "$config_status" "$config_status_backup")
+if [ -L "$old_loader" ]; then loader_before=present; else loader_before=absent; fi
+printf '%s\n' prepared >"$status_file"; chmod 600 "$status_file"
+
+migrate_private
+ssh_log=$transaction_root/$id.macos-config-migrate.ssh.log
+bash_log=$transaction_root/$id.macos-config-migrate.bash.log
+tmux_log=$transaction_root/$id.macos-config-migrate.tmux.log
+for log in "$ssh_log" "$bash_log" "$tmux_log"; do : >"$log"; chmod 600 "$log"; done
+ssh_transaction=
+bash_transaction=
+tmux_transaction=
+local_retired=0
+complete=0
+cleanup_apply() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    [ -z "$tmux_transaction" ] || "$SELF_DIR/harness-tmux-config" --rollback "$tmux_transaction" >/dev/null 2>&1 || true
+    [ -z "$bash_transaction" ] || "$SELF_DIR/harness-macos-bash-hooks" --rollback "$bash_transaction" >/dev/null 2>&1 || true
+    [ -z "$ssh_transaction" ] || "$SELF_DIR/harness-macos-ssh-sync" --rollback "$ssh_transaction" >/dev/null 2>&1 || true
+    if [ "$local_retired" -eq 1 ]; then
+        [ "$loader_before" != present ] || ln -s "$HARNESS_ROOT/shell/personal-macos.bash" "$old_loader"
+        restore_optional "$fragment_before" "$fragment_backup" "$private_fragment" || true
+        restore_optional "$config_state_before" "$config_state_backup" "$config_state" || true
+        restore_optional "$config_status_before" "$config_status_backup" "$config_status" || true
+    fi
+    for log in "$ssh_log" "$bash_log" "$tmux_log"; do [ ! -e "$log" ] || unlink "$log"; done
+    [ "$complete" -eq 1 ] || printf '%s\n' failed >"$status_file"
+    exit "$status"
+}
+trap cleanup_apply EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+"$SELF_DIR/harness-macos-ssh-sync" --host "$logical_host" --apply >"$ssh_log"
+ssh_transaction=$(child_transaction "$ssh_log")
+[ -n "$ssh_transaction" ] || die "Mac SSH migration emitted no transaction"
+"$SELF_DIR/harness-macos-bash-hooks" --host "$logical_host" --apply >"$bash_log"
+bash_transaction=$(child_transaction "$bash_log")
+[ -n "$bash_transaction" ] || die "Mac Bash migration emitted no transaction"
+"$SELF_DIR/harness-tmux-config" --adopt --apply >"$tmux_log"
+tmux_transaction=$(child_transaction "$tmux_log")
+[ -n "$tmux_transaction" ] || die "Mac tmux migration emitted no transaction"
+for log in "$ssh_log" "$bash_log" "$tmux_log"; do unlink "$log"; done
+[ ! -e "$private_fragment" ] || unlink "$private_fragment"
+[ ! -L "$old_loader" ] || unlink "$old_loader"
+[ ! -e "$config_state" ] || unlink "$config_state"
+[ ! -e "$config_status" ] || unlink "$config_status"
+local_retired=1
+cat >"$manifest" <<EOF
+schema=1
+operation=macos-config-migrate
+logical_host=$logical_host
+ssh_transaction=$ssh_transaction
+bash_transaction=$bash_transaction
+tmux_transaction=$tmux_transaction
+loader_before=$loader_before
+fragment_before=$fragment_before
+fragment_backup=$fragment_backup
+config_state_before=$config_state_before
+config_state_backup=$config_state_backup
+config_status_before=$config_status_before
+config_status_backup=$config_status_backup
+EOF
+chmod 600 "$manifest"
+printf '%s\n' complete >"$status_file"
+complete=1
+trap - EXIT HUP INT TERM
+printf 'MACOS_CONFIG_MIGRATE class=current agreement=yes action=applied transaction=%s rollback=available private_history=forward-only activation=new-sessions-and-servers\n' "$id"

@@ -1,0 +1,232 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+. "$SELF_DIR/harness-macos-common"
+
+usage() {
+    cat >&2 <<'EOF'
+Usage:
+  harness tmux-config [--plan|--apply] [--adopt]
+  harness tmux-config --rollback TRANSACTION_ID
+EOF
+}
+
+safe_id() {
+    case "$1" in ''|*[!A-Za-z0-9._-]*|.|..) return 1 ;; *) return 0 ;; esac
+}
+
+validate_checkout() {
+    [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
+        die "tmux configuration requires a Git harness checkout"
+    [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" = \
+        "$(CDPATH='' cd -- "$HARNESS_ROOT" && pwd -P)" ] ||
+        die "tmux configuration checkout root is ambiguous"
+    [ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
+        die "tmux configuration requires a clean committed checkout"
+    if [ "${HARNESS_TEST_ALLOW_NONMAIN:-0}" != 1 ]; then
+        [ "$(git -C "$HARNESS_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null)" = main ] ||
+            die "tmux configuration requires the main branch"
+    fi
+}
+
+require_home() {
+    case ${HOME:-} in /*) ;; *) die "tmux configuration requires an absolute HOME" ;; esac
+    [ -d "$HOME" ] && [ ! -L "$HOME" ] &&
+        [ "$(macos_stat_owner "$HOME")" = "$current_uid" ] &&
+        [ "$(CDPATH='' cd -- "$HOME" && pwd -P)" = "$HOME" ] ||
+        die "tmux configuration HOME is unsafe or ambiguous"
+}
+
+validate_source() {
+    source_file=$HARNESS_ROOT/config/tmux/tmux.conf
+    [ -f "$source_file" ] && [ ! -L "$source_file" ] ||
+        die "canonical tmux configuration is unavailable"
+    [ "$(git -C "$HARNESS_ROOT" ls-files --error-unmatch config/tmux/tmux.conf 2>/dev/null)" = \
+        config/tmux/tmux.conf ] || die "canonical tmux configuration is untracked"
+    macos_validate_tmux_config "$source_file" "$(macos_stat_owner "$source_file")" \
+        "$(macos_stat_mode "$source_file")"
+}
+
+validate_alternates() {
+    for alternate in "$HOME/tmux.conf" "$HOME/.config/tmux/tmux.conf"; do
+        [ ! -e "$alternate" ] && [ ! -L "$alternate" ] ||
+            die "alternate tmux configuration exists; keep only ~/.tmux.conf"
+    done
+}
+
+live_state() {
+    if [ -L "$live" ]; then
+        if [ "$(readlink "$live")" = "$source_file" ]; then
+            printf '%s\n' current
+        else
+            printf '%s\n' different-symlink
+        fi
+    elif [ -f "$live" ]; then
+        [ "$(macos_stat_owner "$live")" = "$current_uid" ] &&
+            [ "$(macos_stat_links "$live")" = 1 ] || {
+                printf '%s\n' unsafe-regular
+                return
+            }
+        printf '%s\n' regular
+    elif [ -e "$live" ]; then
+        printf '%s\n' unsafe-type
+    else
+        printf '%s\n' absent
+    fi
+}
+
+prepare_state_root() {
+    state_root=$HOME/.local/state/harness
+    transaction_root=$state_root/transactions
+    umask 077
+    for path in "$HOME/.local" "$HOME/.local/state" "$state_root" "$transaction_root"; do
+        if [ -e "$path" ] || [ -L "$path" ]; then
+            [ -d "$path" ] && [ ! -L "$path" ] &&
+                [ "$(macos_stat_owner "$path")" = "$current_uid" ] ||
+                die "tmux transaction state path is unsafe"
+        else
+            mkdir "$path"
+            chmod 700 "$path"
+        fi
+    done
+    chmod 700 "$state_root" "$transaction_root"
+}
+
+rollback() {
+    id=$1
+    safe_id "$id" || die "invalid tmux transaction identifier"
+    prepare_state_root
+    manifest=$transaction_root/$id.tmux-config.manifest
+    status_file=$transaction_root/$id.tmux-config.status
+    macos_require_private_file "$manifest" "$current_uid"
+    macos_require_private_file "$status_file" "$current_uid"
+    [ "$(sed -n '1p' "$status_file")" = complete ] ||
+        die "tmux transaction is not complete"
+    schema=$(sed -n '1p' "$manifest")
+    operation=$(sed -n '2p' "$manifest")
+    prior=$(sed -n '3s/^prior=//p' "$manifest")
+    expected=$(sed -n '4s/^expected=//p' "$manifest")
+    backup=$(sed -n '5s/^backup=//p' "$manifest")
+    pre_mode=$(sed -n '6s/^pre_mode=//p' "$manifest")
+    [ "$schema" = schema=1 ] && [ "$operation" = operation=tmux-config ] &&
+        [ "$expected" = "$source_file" ] || die "tmux transaction manifest is malformed"
+    [ -L "$live" ] && [ "$(readlink "$live")" = "$source_file" ] ||
+        die "tmux rollback blocked by changed live configuration"
+    unlink "$live"
+    case "$prior" in
+        absent)
+            [ "$backup" = absent ] && [ "$pre_mode" = absent ] ||
+                die "tmux transaction manifest is malformed"
+            ;;
+        regular)
+            case "$backup" in "$transaction_root"/*) ;; *)
+                die "tmux transaction backup path is unsafe" ;;
+            esac
+            [ -f "$backup" ] && [ ! -L "$backup" ] ||
+                die "tmux transaction backup is unavailable"
+            cp "$backup" "$live"
+            chmod "$pre_mode" "$live"
+            ;;
+        *) die "tmux transaction manifest is malformed" ;;
+    esac
+    printf '%s\n' rolled-back >"$status_file"
+    printf 'TMUX_CONFIG action=rolled-back transaction=%s activation=unchanged\n' "$id"
+}
+
+mode=plan
+adopt=no
+rollback_id=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        --adopt) adopt=yes; shift ;;
+        --rollback) [ "$#" -ge 2 ] || { usage; exit 2; }; mode=rollback; rollback_id=$2; shift 2 ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+current_uid=$(id -u)
+require_home
+validate_checkout
+source_file=$HARNESS_ROOT/config/tmux/tmux.conf
+live=$HOME/.tmux.conf
+validate_source
+validate_alternates
+if [ "$mode" = rollback ]; then
+    [ -n "$rollback_id" ] && [ "$adopt" = no ] || { usage; exit 2; }
+    rollback "$rollback_id"
+    exit 0
+fi
+
+state=$(live_state)
+case "$state" in
+    current) action=none ;;
+    absent) action='link' ;;
+    regular)
+        if [ "$adopt" = yes ]; then action='adopt'; else action='adopt-required'; fi
+        ;;
+    *) die "tmux configuration has unsafe or conflicting live type" ;;
+esac
+printf 'TMUX_CONFIG mode=%s state=%s action=%s activation=new-servers\n' \
+    "$mode" "$state" "$action"
+[ "$action" != adopt-required ] ||
+    die "regular ~/.tmux.conf requires reviewed --adopt authority"
+[ "$mode" = apply ] || { echo 'END tmux_config apply=not-requested'; exit 0; }
+[ "$action" != none ] || { echo 'END tmux_config action=none activation=unchanged'; exit 0; }
+
+validate_checkout
+validate_source
+validate_alternates
+[ "$(live_state)" = "$state" ] || die "tmux configuration changed before apply"
+prepare_state_root
+id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+manifest=$transaction_root/$id.tmux-config.manifest
+status_file=$transaction_root/$id.tmux-config.status
+backup=absent
+pre_mode=absent
+umask 077
+if [ "$state" = regular ]; then
+    backup=$transaction_root/$id.tmux-config.backup
+    cp "$live" "$backup"
+    chmod 600 "$backup"
+    pre_mode=$(macos_stat_mode "$live")
+fi
+printf 'schema=1\noperation=tmux-config\nprior=%s\nexpected=%s\nbackup=%s\npre_mode=%s\n' \
+    "$state" "$source_file" "$backup" "$pre_mode" >"$manifest"
+chmod 600 "$manifest"
+printf '%s\n' prepared >"$status_file"
+chmod 600 "$status_file"
+
+complete=0
+cleanup_apply() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ "$complete" -eq 0 ]; then
+        if [ -L "$live" ] && [ "$(readlink "$live")" = "$source_file" ]; then
+            unlink "$live"
+        fi
+        if [ "$state" = regular ] && [ ! -e "$live" ] && [ ! -L "$live" ]; then
+            cp "$backup" "$live"
+            chmod "$pre_mode" "$live"
+        fi
+        printf '%s\n' failed >"$status_file"
+    fi
+    exit "$status"
+}
+trap cleanup_apply EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+[ "$state" != regular ] || unlink "$live"
+ln -s "$source_file" "$live"
+[ -L "$live" ] && [ "$(readlink "$live")" = "$source_file" ] ||
+    die "tmux symlink verification failed"
+printf '%s\n' complete >"$status_file"
+complete=1
+trap - EXIT HUP INT TERM
+printf 'TMUX_CONFIG action=applied transaction=%s rollback=available activation=new-servers\n' "$id"

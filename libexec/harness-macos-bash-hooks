@@ -1,0 +1,306 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+. "$SELF_DIR/harness-macos-common"
+
+usage() {
+    cat >&2 <<'EOF'
+Usage:
+  harness macos-bash-hooks --host LOGICAL_ID [--plan|--apply]
+  harness macos-bash-hooks --rollback TRANSACTION_ID
+EOF
+}
+
+safe_id() {
+    case "$1" in ''|*[!A-Za-z0-9._-]*|.|..) return 1 ;; *) return 0 ;; esac
+}
+
+validate_checkout() {
+    [ "$(uname -s)" = Darwin ] || die "Mac Bash hooks require Darwin"
+    [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
+        die "Mac Bash hooks require a Git harness checkout"
+    [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" = \
+        "$(CDPATH='' cd -- "$HARNESS_ROOT" && pwd -P)" ] ||
+        die "Mac Bash hook checkout root is ambiguous"
+    [ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
+        die "Mac Bash hooks require a clean committed checkout"
+    if [ "${HARNESS_TEST_ALLOW_NONMAIN:-0}" != 1 ]; then
+        [ "$(git -C "$HARNESS_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null)" = main ] ||
+            die "Mac Bash hooks require the main branch"
+    fi
+}
+
+require_home() {
+    case ${HOME:-} in /*) ;; *) die "Mac Bash hooks require an absolute HOME" ;; esac
+    [ -d "$HOME" ] && [ ! -L "$HOME" ] &&
+        [ "$(macos_stat_owner "$HOME")" = "$current_uid" ] &&
+        [ "$(CDPATH='' cd -- "$HOME" && pwd -P)" = "$HOME" ] ||
+        die "Mac Bash hook HOME is unsafe or ambiguous"
+}
+
+prepare_state_root() {
+    state_root=$HOME/.local/state/harness
+    transaction_root=$state_root/transactions
+    umask 077
+    for path in "$HOME/.local" "$HOME/.local/state" "$state_root" "$transaction_root"; do
+        if [ -e "$path" ] || [ -L "$path" ]; then
+            [ -d "$path" ] && [ ! -L "$path" ] &&
+                [ "$(macos_stat_owner "$path")" = "$current_uid" ] ||
+                die "Mac Bash hook transaction path is unsafe"
+        else
+            mkdir "$path"
+            chmod 700 "$path"
+        fi
+    done
+    chmod 700 "$state_root" "$transaction_root"
+}
+
+select_login() {
+    if [ -e "$HOME/.bash_profile" ] || [ -L "$HOME/.bash_profile" ]; then
+        login=$HOME/.bash_profile
+    elif [ -e "$HOME/.bash_login" ] || [ -L "$HOME/.bash_login" ]; then
+        login=$HOME/.bash_login
+    else
+        login=$HOME/.profile
+    fi
+}
+
+make_prefix() {
+    destination=$1
+    cat >"$destination" <<EOF
+# >>> harness early managed >>>
+HARNESS_LOGICAL_HOST=$logical_host
+export HARNESS_LOGICAL_HOST
+if [ -r "\$HOME/harness/shell/early-cache.sh" ]; then
+    . "\$HOME/harness/shell/early-cache.sh"
+fi
+# <<< harness early managed <<<
+EOF
+}
+
+suffix_for() {
+    case "$1" in
+        "$HOME/.bashrc") printf '%s\n' "$HARNESS_ROOT/shell/bashrc.block" ;;
+        *) printf '%s\n' "$HARNESS_ROOT/shell/bash_profile.block" ;;
+    esac
+}
+
+strict_regular_or_absent() {
+    path=$1
+    if [ ! -e "$path" ] && [ ! -L "$path" ]; then return 0; fi
+    [ -f "$path" ] && [ ! -L "$path" ] &&
+        [ "$(macos_stat_owner "$path")" = "$current_uid" ] &&
+        [ "$(macos_stat_links "$path")" = 1 ] || return 1
+}
+
+classify() {
+    path=$1
+    suffix=$(suffix_for "$path")
+    if ! strict_regular_or_absent "$path"; then printf '%s\n' blocked-type; return; fi
+    if [ ! -e "$path" ]; then printf '%s\n' unmanaged; return; fi
+    prefix_bytes=$(wc -c <"$prefix" | tr -d ' ')
+    suffix_bytes=$(wc -c <"$suffix" | tr -d ' ')
+    size=$(wc -c <"$path" | tr -d ' ')
+    if [ "$size" -ge $((prefix_bytes + suffix_bytes + 1)) ] &&
+        head -c "$prefix_bytes" "$path" | cmp -s - "$prefix" &&
+        tail -c "$suffix_bytes" "$path" | cmp -s - "$suffix"; then
+        printf '%s\n' current
+        return
+    fi
+    early_begin=$(grep -F -x -c '# >>> harness early managed >>>' "$path" 2>/dev/null || true)
+    early_end=$(grep -F -x -c '# <<< harness early managed <<<' "$path" 2>/dev/null || true)
+    old_begin=$(grep -F -x -c '# >>> harness personal macOS Bash v1 >>>' "$path" 2>/dev/null || true)
+    old_end=$(grep -F -x -c '# <<< harness personal macOS Bash v1 <<<' "$path" 2>/dev/null || true)
+    if [ "$early_begin" -ne 0 ] || [ "$early_end" -ne 0 ]; then
+        printf '%s\n' blocked-marker
+    elif [ "$old_begin" -eq 0 ] && [ "$old_end" -eq 0 ]; then
+        printf '%s\n' unmanaged
+    elif [ "$old_begin" -eq 1 ] && [ "$old_end" -eq 1 ]; then
+        old_bytes=$(wc -c <"$old_block" | tr -d ' ')
+        [ "$size" -ge "$old_bytes" ] && tail -c "$old_bytes" "$path" | cmp -s - "$old_block" &&
+            printf '%s\n' legacy || printf '%s\n' blocked-marker
+    else
+        printf '%s\n' blocked-marker
+    fi
+}
+
+build_candidate() {
+    path=$1
+    output=$2
+    state=$3
+    suffix=$(suffix_for "$path")
+    cat "$prefix" >"$output"
+    if [ -e "$path" ]; then
+        if [ "$state" = legacy ]; then
+            size=$(wc -c <"$path" | tr -d ' ')
+            old_bytes=$(wc -c <"$old_block" | tr -d ' ')
+            keep=$((size - old_bytes))
+            [ "$keep" -eq 0 ] || head -c "$keep" "$path" >>"$output"
+        else
+            cat "$path" >>"$output"
+        fi
+    fi
+    size=$(wc -c <"$output" | tr -d ' ')
+    if [ "$size" -gt 0 ] && [ "$(tail -c 1 "$output" | wc -l | tr -d ' ')" -eq 0 ]; then
+        printf '\n' >>"$output"
+    fi
+    printf '\n' >>"$output"
+    cat "$suffix" >>"$output"
+    chmod 600 "$output"
+    bash --noprofile --norc -n "$output" >/dev/null 2>&1 ||
+        die "Mac Bash hook candidate grammar is invalid"
+}
+
+rollback() {
+    id=$1
+    safe_id "$id" || die "invalid Mac Bash hook transaction"
+    prepare_state_root
+    manifest=$transaction_root/$id.macos-bash-hooks.manifest
+    status_file=$transaction_root/$id.macos-bash-hooks.status
+    macos_require_private_file "$manifest" "$current_uid"
+    macos_require_private_file "$status_file" "$current_uid"
+    [ "$(sed -n '1p' "$status_file")" = complete ] ||
+        die "Mac Bash hook transaction is not complete"
+    [ "$(sed -n '1p' "$manifest")" = schema=1 ] &&
+        [ "$(sed -n '2p' "$manifest")" = operation=macos-bash-hooks ] ||
+        die "Mac Bash hook transaction manifest is malformed"
+    tail -n +3 "$manifest" | while IFS='|' read -r record path prior backup mode post_hash; do
+        [ "$record" = file ] || die "Mac Bash hook transaction manifest is malformed"
+        case "$path" in "$HOME"/*) ;; *) die "Mac Bash hook rollback path is unsafe" ;; esac
+        [ -f "$path" ] && [ ! -L "$path" ] &&
+            [ "$(macos_checksum_file "$path")" = "$post_hash" ] ||
+            die "Mac Bash hook rollback blocked by changed startup file"
+        unlink "$path"
+        case "$prior" in
+            absent) [ "$backup" = absent ] && [ "$mode" = absent ] ||
+                die "Mac Bash hook transaction manifest is malformed" ;;
+            regular)
+                case "$backup" in "$transaction_root"/*) ;; *)
+                    die "Mac Bash hook backup path is unsafe" ;;
+                esac
+                [ -f "$backup" ] && [ ! -L "$backup" ] ||
+                    die "Mac Bash hook backup is unavailable"
+                cp "$backup" "$path"
+                chmod "$mode" "$path"
+                ;;
+            *) die "Mac Bash hook transaction manifest is malformed" ;;
+        esac
+    done
+    printf '%s\n' rolled-back >"$status_file"
+    printf 'MACOS_BASH_HOOKS action=rolled-back transaction=%s activation=unchanged\n' "$id"
+}
+
+logical_host=
+mode=plan
+rollback_id=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        --rollback) [ "$#" -ge 2 ] || { usage; exit 2; }; mode=rollback; rollback_id=$2; shift 2 ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+current_uid=$(id -u)
+require_home
+validate_checkout
+if [ "$mode" = rollback ]; then
+    [ -n "$rollback_id" ] && [ -z "$logical_host" ] || { usage; exit 2; }
+    prefix=/dev/null
+    old_block=$HARNESS_ROOT/shell/personal-macos-startup.block
+    rollback "$rollback_id"
+    exit 0
+fi
+if [ -z "$logical_host" ] || ! safe_id "$logical_host"; then usage; exit 2; fi
+command -v bash >/dev/null 2>&1 || die "Bash validator is unavailable"
+select_login
+old_block=$HARNESS_ROOT/shell/personal-macos-startup.block
+[ -f "$old_block" ] && [ ! -L "$old_block" ] || die "legacy Mac Bash block is unavailable"
+prefix=$(mktemp "${TMPDIR:-/tmp}/harness-macos-bash-prefix.XXXXXX") ||
+    die "cannot allocate Mac Bash hook prefix"
+chmod 600 "$prefix"
+cleanup_prefix() { status=$?; trap - EXIT HUP INT TERM; [ ! -e "$prefix" ] || unlink "$prefix"; exit "$status"; }
+trap cleanup_prefix EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+make_prefix "$prefix"
+
+changes=0
+printf 'MACOS_BASH_HOOKS mode=%s host=%s layout=public-pre-local-public-post\n' "$mode" "$logical_host"
+for path in "$login" "$HOME/.bashrc"; do
+    state=$(classify "$path")
+    case "$state" in
+        current) action=keep ;;
+        legacy|unmanaged) action=wrap; changes=$((changes + 1)) ;;
+        *) die "Mac Bash startup has unsafe type or managed markers" ;;
+    esac
+    printf 'STARTUP file=%s state=%s action=%s preserves=local-middle\n' "${path#"$HOME"/}" "$state" "$action"
+done
+[ "$mode" = apply ] || { printf 'END macos_bash_hooks changes=%s apply=not-requested\n' "$changes"; exit 0; }
+[ "$changes" -gt 0 ] || { echo 'END macos_bash_hooks action=none activation=unchanged'; exit 0; }
+
+prepare_state_root
+id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+manifest=$transaction_root/$id.macos-bash-hooks.manifest
+status_file=$transaction_root/$id.macos-bash-hooks.status
+printf 'schema=1\noperation=macos-bash-hooks\n' >"$manifest"
+chmod 600 "$manifest"
+printf '%s\n' prepared >"$status_file"
+chmod 600 "$status_file"
+for path in "$login" "$HOME/.bashrc"; do
+    state=$(classify "$path")
+    [ "$state" != current ] || continue
+    name=$(basename "$path" | tr -c 'A-Za-z0-9._-' '_')
+    candidate=$transaction_root/$id.$name.candidate
+    backup=absent
+    prior=absent
+    pre_mode=absent
+    if [ -e "$path" ]; then
+        prior=regular
+        backup=$transaction_root/$id.$name.backup
+        cp "$path" "$backup"
+        chmod 600 "$backup"
+        pre_mode=$(macos_stat_mode "$path")
+    fi
+    build_candidate "$path" "$candidate" "$state"
+    post_hash=$(macos_checksum_file "$candidate")
+    printf 'file|%s|%s|%s|%s|%s\n' "$path" "$prior" "$backup" "$pre_mode" "$post_hash" >>"$manifest"
+done
+
+complete=0
+cleanup_apply() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ "$complete" -eq 0 ]; then
+        tail -n +3 "$manifest" | while IFS='|' read -r _record path prior backup mode post_hash; do
+            if [ -f "$path" ] && [ ! -L "$path" ] &&
+                [ "$(macos_checksum_file "$path")" = "$post_hash" ]; then unlink "$path"; fi
+            if [ "$prior" = regular ] && [ ! -e "$path" ]; then cp "$backup" "$path"; chmod "$mode" "$path"; fi
+        done
+        printf '%s\n' failed >"$status_file"
+    fi
+    exit "$status"
+}
+trap cleanup_apply EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+tail -n +3 "$manifest" | while IFS='|' read -r _record path _prior _backup mode post_hash; do
+    name=$(basename "$path" | tr -c 'A-Za-z0-9._-' '_')
+    candidate=$transaction_root/$id.$name.candidate
+    if [ -e "$path" ]; then chmod "$mode" "$candidate"; else chmod 600 "$candidate"; fi
+    mv "$candidate" "$path"
+    [ "$(macos_checksum_file "$path")" = "$post_hash" ] || die "Mac Bash hook apply verification failed"
+done
+printf '%s\n' complete >"$status_file"
+complete=1
+trap - EXIT HUP INT TERM
+[ ! -e "$prefix" ] || unlink "$prefix"
+printf 'MACOS_BASH_HOOKS action=applied transaction=%s rollback=available activation=new-sessions\n' "$id"

@@ -46,6 +46,27 @@ macos_file_contains_exact_block_once() {
     ' "$macos_exact_block" "$macos_exact_file" >/dev/null 2>&1
 }
 
+macos_file_has_public_bash_layout() {
+    macos_layout_file=$1
+    macos_layout_host=$2
+    macos_layout_suffix=$3
+    [ -f "$macos_layout_file" ] && [ ! -L "$macos_layout_file" ] || return 1
+    awk -v host="$macos_layout_host" '
+        NR == 1 && $0 != "# >>> harness early managed >>>" { bad = 1 }
+        NR == 2 && $0 != "HARNESS_LOGICAL_HOST=" host { bad = 1 }
+        NR == 3 && $0 != "export HARNESS_LOGICAL_HOST" { bad = 1 }
+        NR == 4 && $0 != "if [ -r \"$HOME/harness/shell/early-cache.sh\" ]; then" { bad = 1 }
+        NR == 5 && $0 != "    . \"$HOME/harness/shell/early-cache.sh\"" { bad = 1 }
+        NR == 6 && $0 != "fi" { bad = 1 }
+        NR == 7 && $0 != "# <<< harness early managed <<<" { bad = 1 }
+        END { exit NR >= 7 && !bad ? 0 : 1 }
+    ' "$macos_layout_file" >/dev/null 2>&1 || return 1
+    macos_layout_suffix_bytes=$(wc -c <"$macos_layout_suffix" | tr -d ' ')
+    [ "$(wc -c <"$macos_layout_file" | tr -d ' ')" -ge "$macos_layout_suffix_bytes" ] &&
+        tail -c "$macos_layout_suffix_bytes" "$macos_layout_file" |
+            cmp -s - "$macos_layout_suffix"
+}
+
 macos_require_private_directory() {
     macos_private_directory=$1
     macos_expected_uid=$2

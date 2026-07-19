@@ -45,10 +45,13 @@ for script in \
     "$ROOT/libexec/harness-macos-update" \
     "$ROOT/libexec/harness-macos-ssh-sync" \
     "$ROOT/libexec/harness-macos-config-sync" \
+    "$ROOT/libexec/harness-macos-config-migrate" \
     "$ROOT/libexec/harness-macos-pilot-plan" \
     "$ROOT/libexec/harness-macos-control" \
     "$ROOT/libexec/harness-macos-homebrew" \
     "$ROOT/libexec/harness-macos-bash" \
+    "$ROOT/libexec/harness-macos-bash-hooks" \
+    "$ROOT/libexec/harness-tmux-config" \
     "$ROOT/libexec/harness-storage-readiness" \
     "$ROOT/libexec/harness-replica" \
     "$ROOT/libexec/harness-repository-fingerprint" \
@@ -125,12 +128,18 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "personal macOS Homebrew focused suite"
 "$ROOT/tests/test-personal-macos-bash.sh" >/dev/null ||
     fail "personal macOS Bash focused suite"
+"$ROOT/tests/test-personal-macos-bash-hooks.sh" >/dev/null ||
+    fail "personal macOS Bash-hook focused suite"
+"$ROOT/tests/test-tmux-config.sh" >/dev/null ||
+    fail "shared tmux configuration focused suite"
 "$ROOT/tests/test-personal-macos-update.sh" >/dev/null ||
     fail "personal macOS long-gap update focused suite"
 "$ROOT/tests/test-personal-macos-ssh-sync.sh" >/dev/null ||
     fail "personal macOS SSH-sync focused suite"
 "$ROOT/tests/test-personal-macos-config-sync.sh" >/dev/null ||
     fail "personal macOS config-sync focused suite"
+"$ROOT/tests/test-personal-macos-config-migrate.sh" >/dev/null ||
+    fail "personal macOS config-migration focused suite"
 "$ROOT/tests/test-ssh-config-mirror.sh" >/dev/null ||
     fail "fixed SSH-config mirror focused suite"
 
