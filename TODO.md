@@ -1756,6 +1756,23 @@ protected Linux CI, cleanly fast-forward `office`, rerun the already-authorized
 one-change adoption and doctor, then observe fresh Codex and Claude sessions.
 Stop before any drill or rollout beyond `office`.
 
+**Protected fix and fresh-client outcome (2026-07-19):** PR #79 passed required
+`portable-phase1` in 2m22s and squash-merged the partial-adoption correction as
+`18aca73`. Clean `office` fast-forwarded to that target; the authorized one-
+change launcher adoption and immediate doctor then passed with all three paths
+current. Fresh Claude returned the fixed readiness response without an approval
+dialog. Fresh Codex instead stopped at launcher resolution because the adopted
+path had been the pilot's only native Codex command; the transaction's exact
+unchanged-only rollback restored that prior symlink while leaving both current
+settings links unchanged. The restored fresh Codex command completed without
+an approval prompt but reported `approval: never` with `sandbox: read-only`,
+not the frozen `danger-full-access`. No reapply drill or broader rollout ran.
+Exact next action: revise C4 for a Mac whose sole native Codex entry occupies
+the desired managed launcher path, and diagnose value-free configuration
+precedence before another apply. Do not adopt the launcher again or claim pilot
+acceptance until a protected correction preserves a separately callable native
+binary and fresh Codex reports both frozen values.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
