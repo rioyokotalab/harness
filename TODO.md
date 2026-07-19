@@ -64,13 +64,15 @@ Claude action-approval prompts in ordinary sessions: Codex uses `never` with
 `danger-full-access`, and Claude uses `bypassPermissions` with its dangerous-
 mode startup warning suppressed. Authentication, macOS privacy/TCC, OS
 administrator, and provider-enforced dialogs remain separate boundaries. Ask
-only decision C3: choose the safe cross-platform content breadth for the two
-public canonical client files. C2 is frozen: `harness` contains one tracked
+only decision C4: choose how project/workspace trust avoids prompts without
+publishing absolute paths. C2 is frozen: `harness` contains one tracked
 canonical settings body per client, and each live user settings path is a
 symbolic link to it; no private companion or generated live copy participates.
-T-268 remains
-independently resumable from its pilot-plan failure handoff, and T-196 remains
-at 1/8 until the 2026-07-26 successors are eligible.
+C3 is frozen as every reviewed setting that is identical across macOS/Linux and
+safe to publish, while machine-specific trust, private values, credentials,
+runtime state, and non-portable commands remain excluded.
+T-268 remains independently resumable from its pilot-plan failure handoff, and
+T-196 remains at 1/8 until the 2026-07-26 successors are eligible.
 
 Resume T-268 in `executing` with pilot curation/plan authorized on `office`.
 Corrective PIE decisions B2, B3, T1–T3,
@@ -1405,9 +1407,13 @@ dialogs. C2 is frozen by the owner as one
 tracked public canonical file per client under `harness`, with the live Codex
 and Claude settings paths linked directly to those files. There is no private
 companion, generated live copy, host overlay, or OS overlay for these settings.
-Ask C3 only: choose how broad the deliberately public, identical portable
-settings should be. Checkpoint every answer; do not implement until C1–C7 are
-resolved and the owner gives a fresh explicit `go`.
+C3 is frozen as the broad portable choice: include every reviewed
+cross-platform and publicly safe preference, not only permission
+posture, while excluding machine-specific trust, private paths/endpoints,
+credential-bearing values, runtime state, and non-portable commands. Ask C4
+only: choose how project/workspace trust avoids prompts without persisting raw
+absolute paths in the linked public file. Checkpoint every answer; do not
+implement until C1–C7 are resolved and the owner gives a fresh explicit `go`.
 
 ## Stable operational facts
 
