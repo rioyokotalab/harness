@@ -63,6 +63,7 @@ run() {
 
 run --host local --plan >"$TEMP_DIR/plan.out"
 grep -F 'state=merge' "$TEMP_DIR/plan.out" >/dev/null || fail 'merge plan'
+grep -F 'profile_prestate=present' "$TEMP_DIR/plan.out" >/dev/null || fail 'present profile classification'
 grep -F 'redundant_profile_loaders=1' "$TEMP_DIR/plan.out" >/dev/null || fail 'redundant loader classification'
 if grep -F 'PRIVATE_SENTINEL' "$TEMP_DIR/plan.out" >/dev/null; then fail 'plan leaked owner bytes'; fi
 run --host local --apply >"$TEMP_DIR/apply.out"
@@ -102,5 +103,28 @@ changed=$(sed -n 's/^BASH_STARTUP_UNIFY action=applied transaction=\([^ ]*\).*/\
 printf '%s\n' '# later owner edit' >>"$home/.bashrc"
 if run --rollback "$changed" >"$TEMP_DIR/changed.out" 2>&1; then fail 'rollback accepted changed canonical bashrc'; fi
 grep -F -x '# later owner edit' "$home/.bashrc" >/dev/null || fail 'changed rollback damaged owner edit'
+
+absent_home=$TEMP_DIR/absent-home
+mkdir -p "$absent_home"
+cp "$TEMP_DIR/bashrc.before" "$absent_home/.bashrc"
+run_absent() {
+    HOME="$absent_home" HARNESS_ROOT="$repo" HARNESS_TEST_ALLOW_NONMAIN=1 \
+        "$repo/bin/harness" bash-startup-unify "$@"
+}
+run_absent --host local --plan >"$TEMP_DIR/absent-plan.out"
+grep -F 'profile_prestate=absent' "$TEMP_DIR/absent-plan.out" >/dev/null || fail 'absent profile classification'
+run_absent --host local --apply >"$TEMP_DIR/absent-apply.out"
+absent_transaction=$(sed -n 's/^BASH_STARTUP_UNIFY action=applied transaction=\([^ ]*\).*/\1/p' "$TEMP_DIR/absent-apply.out")
+cmp -s "$absent_home/.bash_profile" "$repo/shell/bash_profile.canonical" || fail 'absent profile creation'
+run_absent --rollback "$absent_transaction" >"$TEMP_DIR/absent-rollback.out"
+[ ! -e "$absent_home/.bash_profile" ] || fail 'absent profile rollback removal'
+cmp -s "$absent_home/.bashrc" "$TEMP_DIR/bashrc.before" || fail 'absent profile bashrc rollback'
+
+if HOME="$absent_home" HARNESS_ROOT="$repo" HARNESS_TEST_ALLOW_NONMAIN=1 HARNESS_TEST_FAIL_AFTER=2 \
+    "$repo/bin/harness" bash-startup-unify --host local --apply >"$TEMP_DIR/absent-injected.out" 2>&1; then
+    fail 'absent profile injected failure accepted'
+fi
+[ ! -e "$absent_home/.bash_profile" ] || fail 'absent profile injected recovery'
+cmp -s "$absent_home/.bashrc" "$TEMP_DIR/bashrc.before" || fail 'absent profile injected bashrc recovery'
 
 printf '%s\n' 'Bash startup unification tests: PASS'
