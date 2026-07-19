@@ -1108,6 +1108,16 @@ synchronize only clean managed harness checkouts through guarded fleet-sync,
 then safely rerun `macos-pilot-plan` from the clean pilot; seed apply and
 session reload remain unauthorized.
 
+The post-merge guarded fleet-sync plan was attempted from the pilot Mac for
+`ab`, `ab2`, `ri`, `rc`, and `t4` from their recorded clean handoff
+`ad41fa3fc1601d14bd5526a22bb0b70e7b755b62` to `39c0609`, but stopped on the
+first read-only preflight because the private `ab` transport alias is not
+available in this local context. No remote checkout or transfer artifact was
+queried or changed, and all remote state is unknown rather than absent. Retry
+from the managed controller, separately planning AL from its recorded clean
+`8b63df2bdaf6ee8ff7db6f100faa78829da9aa8e` baseline after authentication is
+available. This fleet blocker does not affect the clean local pilot rerun.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
