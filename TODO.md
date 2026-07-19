@@ -215,6 +215,14 @@ itself preserved both modes; all other 51 suites passed. Select `stat` by
 `uname` like the established test helpers and rerun; no production behavior or
 live state changed.
 
+**Darwin profile stop:** after protected PR #112 merged as `83e4c57`, public
+checkouts synchronized but pre-plan review proved the first `office` startup
+plan could not start: the generic adapter required a public Linux host profile while personal
+Mac identities live only in the strict private companion. No startup command or
+mutation ran. Add a Darwin-only value-free delegation to the existing private
+Mac profile validator; Linux continues to require its public host declaration.
+Publish and re-sync before retrying any live plan.
+
 **Stage-1 implementation checkpoint:** the task branch adds a bounded Python
 focused-suite runner, an explicit manifest with per-suite labels/logs, a
 parallelism/failure-attribution regression, and a separately gated native MPI

@@ -22,6 +22,8 @@ grep -F 'macos-pilot-plan --host HOST' "$STAGES" >/dev/null || fail 'aggregate p
 grep -F 'macos-doctor --host HOST' "$STAGES" >/dev/null || fail 'doctor acceptance'
 grep -F 'bash-startup-unify --host HOST --plan|--apply' "$STAGES" >/dev/null ||
     fail 'canonical Bash onboarding stage'
+grep -F 'private Mac validator' "$SKILL" >/dev/null ||
+    fail 'private Mac profile validation guidance'
 grep -F 'Every command above is run by Codex' "$STAGES" >/dev/null ||
     fail 'no owner shell execution'
 grep -F '$onboard-personal-mac' "$OPENAI" >/dev/null || fail 'default prompt'

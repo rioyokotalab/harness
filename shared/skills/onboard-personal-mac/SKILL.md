@@ -22,6 +22,8 @@ source of truth; never infer its state from `office` or another Mac.
    SSH, macOS, and harness commands. Verify transport, logical identity,
    architecture, current-user ownership, public/private checkout cleanliness,
    native agent ownership, and absence of transaction/artifact collisions.
+   For a private Mac logical ID, require the repository's private Mac validator;
+   never substitute a fabricated public Linux host profile.
 5. Checkpoint a host-specific plan in `TODO.md` with confirmed facts,
    assumptions, exact stages, blockers, rollback, validation, and the next
    command. Ask one material decision at a time. Set `ready-for-go` only when

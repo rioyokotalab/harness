@@ -212,8 +212,17 @@ def main() -> int:
         return 0
     if not args.host or not safe_id(args.host):
         die("a safe logical host is required")
-    if not (root / "profiles" / "hosts" / f"{args.host}.conf").is_file():
-        die("unknown logical host profile")
+    public_profile = root / "profiles" / "hosts" / f"{args.host}.conf"
+    if not public_profile.is_file():
+        if os.uname().sysname != "Darwin":
+            die("unknown logical host profile")
+        private_check = subprocess.run(
+            [str(root / "libexec" / "harness-macos-profile"), "--host", args.host],
+            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL, check=False, env=os.environ.copy(),
+        )
+        if private_check.returncode != 0:
+            die("private Mac logical profile is not valid and current")
 
     bashrc = home / ".bashrc"
     profile = home / ".bash_profile"
