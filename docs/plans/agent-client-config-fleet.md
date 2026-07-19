@@ -1,6 +1,6 @@
 # T-269 plan — private cross-platform Codex and Claude configuration
 
-**Phase:** validating
+**Phase:** executing
 
 ## Desired outcome
 
@@ -364,15 +364,10 @@ remain separate recorded rollout gates.
 
 ## Exact next action
 
-Implement the generic public engine synthetic-first, validate it in a clean
-checkout, and publish it through the protected workflow. Do not read or change
-any live client setting during this stage.
-
-Implementation passed the clean-checkout validation gate. The task branch
-contains the two minimal C1 bodies, strict empty component declaration,
-transient-trust launcher, transactional links and rollback, explicit local
-catch-up, sequential Linux controller, and focused synthetic coverage. No
-unspecified private preference or live state was inspected or adopted. The
-complete portable suite, focused tests, ShellCheck, diff check, and public
-privacy audit pass. Publish through the protected workflow, synchronize only
-clean managed checkouts, and stop before live rollout.
+Protected PR #67 and its required portable check published the generic engine
+as `6a7e177d05742fbbde054a1af94e2c85810e3790`. All six remote managed Linux
+checkouts passed guarded clean fast-forward and final `KEEP` verification at
+that commit. No live config command ran. In an owner-started `office` session,
+fetch current `main`, reconstruct this plan, and obtain plan-only authority for
+`./bin/harness agent-config-catch-up --adopt --plan`. Live apply remains
+separately unauthorized.
