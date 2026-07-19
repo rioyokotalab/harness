@@ -179,6 +179,9 @@ The follow-up removes the complete wrapper as one redundant unit (or a truly
 standalone loader), preserves all other bytes, and extends the fixture to the
 deployed wrapper shape. Its focused test passes. Exact next action: clean-commit
 and run phase one, publish through protected CI, fleet-sync, then retry office.
+The clean run passed all 52 focused suites, guarded deletion, and compiler
+gates, explicitly skipped native MPI, and reached only the known Darwin doctor
+boundary. Protected Ubuntu CI is the remaining publication gate.
 
 **Onboarding-skill checkpoint:** `skill-creator` initialized
 `shared/skills/onboard-personal-mac` with Codex UI metadata. The implemented
