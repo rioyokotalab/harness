@@ -115,7 +115,17 @@ classify() {
     early_end=$(grep -F -x -c '# <<< harness early managed <<<' "$path" 2>/dev/null || true)
     old_begin=$(grep -F -x -c '# >>> harness personal macOS Bash v1 >>>' "$path" 2>/dev/null || true)
     old_end=$(grep -F -x -c '# <<< harness personal macOS Bash v1 <<<' "$path" 2>/dev/null || true)
-    if [ "$early_begin" -ne 0 ] || [ "$early_end" -ne 0 ]; then
+    managed_begin=$(grep -F -x -c '# >>> harness managed >>>' "$path" 2>/dev/null || true)
+    managed_end=$(grep -F -x -c '# <<< harness managed <<<' "$path" 2>/dev/null || true)
+    if [ "$early_begin" -eq 1 ] && [ "$early_end" -eq 1 ] &&
+        [ "$managed_begin" -eq 1 ] && [ "$managed_end" -eq 1 ] &&
+        head -c "$prefix_bytes" "$path" | cmp -s - "$prefix" &&
+        sed -n '/^# >>> harness managed >>>$/,/^# <<< harness managed <<<$/{p;}' "$path" |
+            cmp -s - "$suffix" &&
+        [ "$(tail -c 1 "$path" | wc -l | tr -d ' ')" -eq 1 ]; then
+        printf '%s\n' relocatable
+    elif [ "$early_begin" -ne 0 ] || [ "$early_end" -ne 0 ] ||
+        [ "$managed_begin" -ne 0 ] || [ "$managed_end" -ne 0 ]; then
         printf '%s\n' blocked-marker
     elif [ "$old_begin" -eq 0 ] && [ "$old_end" -eq 0 ]; then
         printf '%s\n' unmanaged
@@ -140,6 +150,12 @@ build_candidate() {
             old_bytes=$(wc -c <"$old_block" | tr -d ' ')
             keep=$((size - old_bytes))
             [ "$keep" -eq 0 ] || head -c "$keep" "$path" >>"$output"
+        elif [ "$state" = relocatable ]; then
+            prefix_bytes=$(wc -c <"$prefix" | tr -d ' ')
+            tail -c +$((prefix_bytes + 1)) "$path" |
+                awk '/^# >>> harness managed >>>$/ { managed=1; next }
+                     /^# <<< harness managed <<<$/{ managed=0; next }
+                     !managed { print }' >>"$output"
         else
             cat "$path" >>"$output"
         fi
@@ -239,6 +255,7 @@ for path in "$login" "$HOME/.bashrc"; do
     case "$state" in
         current) action=keep ;;
         legacy|unmanaged) action=wrap; changes=$((changes + 1)) ;;
+        relocatable) action=rewrap; changes=$((changes + 1)) ;;
         *) die "Mac Bash startup has unsafe type or managed markers" ;;
     esac
     printf 'STARTUP file=%s state=%s action=%s preserves=local-middle\n' "${path#"$HOME"/}" "$state" "$action"

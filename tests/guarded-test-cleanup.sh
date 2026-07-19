@@ -11,6 +11,21 @@ HARNESS=$1
 WITHIN=$2
 TARGET=$3
 STATE_DIR=$4
+platform=$(uname -s)
+
+canonical_path() {
+    case "$platform" in
+        Darwin) realpath "$1" ;;
+        *) realpath -e -- "$1" ;;
+    esac
+}
+
+path_owner() {
+    case "$platform" in
+        Darwin) stat -f '%u' "$1" ;;
+        *) stat -c '%u' -- "$1" ;;
+    esac
+}
 
 case "$HARNESS:$WITHIN:$TARGET:$STATE_DIR" in
     /*:/*:/*:/*) ;;
@@ -30,9 +45,9 @@ esac
     exit 2
 }
 
-WITHIN=$(realpath -e -- "$WITHIN")
-TARGET=$(realpath -e -- "$TARGET")
-STATE_DIR=$(realpath -e -- "$STATE_DIR")
+WITHIN=$(canonical_path "$WITHIN")
+TARGET=$(canonical_path "$TARGET")
+STATE_DIR=$(canonical_path "$STATE_DIR")
 prefix=$STATE_DIR/.guarded-test-cleanup.$$
 manifest=$prefix.manifest
 plan_output=$prefix.plan
@@ -45,11 +60,11 @@ remove_exact_file() {
         echo "refusing non-regular cleanup state: $path" >&2
         return 1
     }
-    [ "$(realpath -e -- "$path")" = "$path" ] || {
+    [ "$(canonical_path "$path")" = "$path" ] || {
         echo "refusing non-canonical cleanup state: $path" >&2
         return 1
     }
-    [ "$(stat -c '%u' -- "$path")" = "$(id -u)" ] || {
+    [ "$(path_owner "$path")" = "$(id -u)" ] || {
         echo "refusing cleanup state owned by another uid: $path" >&2
         return 1
     }
