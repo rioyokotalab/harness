@@ -217,7 +217,7 @@ if [ "$mode" = rollback ]; then
     rollback "$rollback_id"
     exit 0
 fi
-[ -n "$logical_host" ] && safe_id "$logical_host" || { usage; exit 2; }
+if [ -z "$logical_host" ] || ! safe_id "$logical_host"; then usage; exit 2; fi
 command -v bash >/dev/null 2>&1 || die "Bash validator is unavailable"
 select_login
 old_block=$HARNESS_ROOT/shell/personal-macos-startup.block

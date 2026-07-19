@@ -166,9 +166,9 @@ fi
 state=$(live_state)
 case "$state" in
     current) action=none ;;
-    absent) action=link ;;
+    absent) action='link' ;;
     regular)
-        if [ "$adopt" = yes ]; then action=adopt; else action=adopt-required; fi
+        if [ "$adopt" = yes ]; then action='adopt'; else action='adopt-required'; fi
         ;;
     *) die "tmux configuration has unsafe or conflicting live type" ;;
 esac

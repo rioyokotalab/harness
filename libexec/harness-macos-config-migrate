@@ -270,12 +270,10 @@ validate_public
 prepare_state
 if [ "$mode" = rollback ]; then
     [ -n "$rollback_id" ] && [ -z "$logical_host" ] || { usage; exit 2; }
-    source_file=$HARNESS_ROOT/config/tmux/tmux.conf
-    live=$HOME/.tmux.conf
     rollback_composite "$rollback_id"
     exit 0
 fi
-[ -n "$logical_host" ] && macos_private_id_is_safe "$logical_host" || { usage; exit 2; }
+if [ -z "$logical_host" ] || ! macos_private_id_is_safe "$logical_host"; then usage; exit 2; fi
 validate_private
 private_push_pending=no
 fetch_private
