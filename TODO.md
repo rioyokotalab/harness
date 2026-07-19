@@ -64,10 +64,10 @@ Claude action-approval prompts in ordinary sessions: Codex uses `never` with
 `danger-full-access`, and Claude uses `bypassPermissions` with its dangerous-
 mode startup warning suppressed. Authentication, macOS privacy/TCC, OS
 administrator, and provider-enforced dialogs remain separate boundaries. Ask
-only decision C7: confirm the sequential rollout order. C2 is frozen: `harness`
-contains one tracked canonical settings body per client, and each live user
-settings path is a symbolic link to it; no private companion or generated live
-copy participates.
+only decision C7: confirm the automated, explicitly started sequential rollout.
+C2 is frozen: `harness` contains one tracked canonical settings body per client,
+and each live user settings path is a symbolic link to it; no private companion
+or generated live copy participates.
 C3 is frozen as every reviewed setting that is identical across macOS/Linux and
 safe to publish, while machine-specific trust, private values, credentials,
 runtime state, and non-portable commands remain excluded.
@@ -81,6 +81,13 @@ C6 is frozen as review-first Git: edits through live links dirty the checkout,
 catch-up refuses dirt, and validation plus protected review precedes
 publication; no command automatically commits, pushes, adopts, or overwrites an
 edit.
+The refined C7 recommendation automates every deterministic step within an
+explicit run: one local Mac catch-up command and one stop-on-first-failure Linux
+controller perform fetch, validation, transactional link/declaration apply,
+doctor, and authorized rollback/reapply drills. Starting an offline Mac,
+reviewing/publishing edits, authentication/OAuth, OS dialogs, and observing a
+fresh interactive session remain manual; no background or login-time mutation
+is proposed.
 T-268 remains independently resumable from its pilot-plan failure handoff, and
 T-196 remains at 1/8 until the 2026-07-26 successors are eligible.
 
@@ -1426,17 +1433,24 @@ root as transient Codex trust. No path is stored or published; every project
 launched through the ordinary wrapper may load its project-local Codex config,
 hooks, and exec policies. C5 is frozen as the broad prompt-free public
 declarative choice. Reviewed Claude user-hook code and exact public
-plugin/marketplace/MCP identifiers synchronize;
-credentials and authorization remain local. Declarations that force interaction
-and non-managed Codex command hooks are excluded. Current
-Claude documentation confirms `bypassPermissions` retains hard-coded prompts
-for root/home recursive deletion and policy/component-forced interaction; the
+plugin/marketplace/MCP identifiers synchronize; credentials and authorization
+remain local. Declarations that force interaction and non-managed Codex command
+hooks are excluded. Current Claude documentation confirms `bypassPermissions`
+retains hard-coded prompts for root/home recursive deletion and
+policy/component-forced interaction; the
 harness prohibits the former and C5 rejects the latter, but neither setting
 can truthfully disable the client circuit breaker. C6 is frozen as review-first
 Git: a live-link edit is a tracked worktree edit, dirty checkouts block catch-up,
 and only validated protected Git review publishes it. No automatic commit,
-push, adopt, or overwrite is allowed. Ask C7 only: confirm the sequential
-rollout order. Checkpoint every answer; do not implement until C1–C7 are
+push, adopt, or overwrite is allowed. The refined C7 recommendation automates
+all deterministic work inside explicit user-started runs: one Mac-local
+catch-up command and one sequential Linux controller handle fetch, validation,
+transactional link/declaration apply, doctor, and authorized rollback/reapply
+drills.
+Offline-Mac startup, configuration review/publication, authentication/OAuth,
+OS dialogs, and fresh interactive-session observation remain manual; no
+background or login-time mutation is added. Ask C7 only: confirm this automated
+sequential boundary. Checkpoint every answer; do not implement until C1–C7 are
 resolved and the owner gives a fresh explicit `go`.
 
 ## Stable operational facts
