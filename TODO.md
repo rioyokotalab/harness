@@ -1756,6 +1756,101 @@ protected Linux CI, cleanly fast-forward `office`, rerun the already-authorized
 one-change adoption and doctor, then observe fresh Codex and Claude sessions.
 Stop before any drill or rollout beyond `office`.
 
+**Protected fix and fresh-client outcome (2026-07-19):** PR #79 passed required
+`portable-phase1` in 2m22s and squash-merged the partial-adoption correction as
+`18aca73`. Clean `office` fast-forwarded to that target; the authorized one-
+change launcher adoption and immediate doctor then passed with all three paths
+current. Fresh Claude returned the fixed readiness response without an approval
+dialog. Fresh Codex instead stopped at launcher resolution because the adopted
+path had been the pilot's only native Codex command; the transaction's exact
+unchanged-only rollback restored that prior symlink while leaving both current
+settings links unchanged. The restored fresh Codex command completed without
+an approval prompt but reported `approval: never` with `sandbox: read-only`,
+not the frozen `danger-full-access`. No reapply drill or broader rollout ran.
+Exact next action: revise C4 for a Mac whose sole native Codex entry occupies
+the desired managed launcher path, and diagnose value-free configuration
+precedence before another apply. Do not adopt the launcher again or claim pilot
+acceptance until a protected correction preserves a separately callable native
+binary and fresh Codex reports both frozen values.
+
+**Revised C4 planning checkpoint (2026-07-19):** current official Codex
+guidance confirms that the standalone installer's visible command defaults to
+`~/.local/bin/codex`, while its package cache remains under `CODEX_HOME`; the
+frozen managed launcher therefore collided with the supported native install
+surface on this pilot. Official precedence places CLI flags above project,
+profile, user, system, and built-in configuration, subject to managed
+requirements. Value-free probes found no project/system config or local system
+requirements, and an explicit `--sandbox danger-full-access` fresh run passed,
+so full access is allowed; implicit fresh runs nevertheless reported changing
+read-only/workspace-write modes and cannot satisfy C1. Phase returns to
+`interviewing` for one revised C4 decision. Recommended D11 is to relocate the
+visible native standalone command to a separate documented install directory,
+then let the reviewed launcher own `~/.local/bin/codex` and pass the frozen
+approval/sandbox settings explicitly alongside transient trust. This adds one
+separately authorized official installer/package action but keeps `codex` as
+the ordinary command and avoids a private cached-target dependency. Alternative
+D11 is to leave native `codex` untouched and expose only a separately named
+managed wrapper, weakening C4 because ordinary `codex` invocations can bypass
+transient trust and frozen flags. No implementation or live action is
+authorized until D11 is selected, the exact installer command/rollback is
+planned, and a fresh `go` follows.
+
+**Decision D11 selected / ready-for-go:** retain exactly one native Codex
+package installation. Use the official standalone installer's documented
+`CODEX_INSTALL_DIR` override to create its visible native entry under the
+private mode-0700 `~/.local/libexec/harness-codex-native` directory; the
+standalone package cache remains the single package under `CODEX_HOME`.
+Publicly correct `harness-codex` to resolve only that reviewed native entry and
+pass explicit `--ask-for-approval never --sandbox danger-full-access` flags
+plus transient current-root trust. Extend agent-config's transaction to verify
+the native entry is an executable non-managed path before adopting
+`~/.local/bin/codex`; never copy a binary or persist its resolved package-cache
+target. Synthetic tests must prove native-entry absence/refusal, recursion
+refusal, explicit frozen flags, partial adoption, rollback, and reapply.
+
+Execution order is frozen: (1) implement and validate only generic public code;
+(2) publish through protected CI and cleanly fast-forward `office`; (3) fetch
+the official installer from its documented HTTPS endpoint, validate the
+download/command boundary without printing it, and run it once with only
+`CODEX_INSTALL_DIR` changed and no credential input; (4) prove the relocated
+entry launches the same single installed package before any adoption; (5) run
+the value-free one-change plan/apply/doctor; (6) launch fresh Codex and require
+`approval: never`, `sandbox: danger-full-access`, and a fixed readiness reply;
+(7) launch fresh Claude and require its fixed readiness reply; (8) retain the
+apply transaction until acceptance, then record the outcome. Failure recovery
+before adoption unlinks only the exact newly created visible native entry if
+it is unchanged and empty parent removal is safe; after adoption, exact
+unchanged-only rollback restores the original native symlink before any such
+cleanup. No second package cache, package upgrade beyond what the official
+installer necessarily performs, credential/authentication change, component,
+active-session reload, drill, other node, or rollout is authorized. Phase is
+`ready-for-go`; exact first action after a fresh `go` is the public launcher and
+transaction implementation, not the live installer.
+
+**D11 implementation checkpoint (2026-07-19):** the public launcher now calls
+only the fixed relocated native entry, refuses missing execution, passes
+explicit frozen approval/sandbox flags plus transient trust, and never searches
+`PATH`. Agent-config reports a value-free native-entry state and blocks plan or
+apply unless its private directory is owner-controlled mode 0700, its entry is
+executable, and its resolved target is not the public launcher. Synthetic
+coverage now rejects missing and recursive native entries and proves explicit
+flag order together with the existing partial-adopt/doctor/rollback/reapply
+sequence. Portable syntax, warning-level ShellCheck, and diff checks pass; the
+focused Mac run passed every new assertion before reaching its separately
+recorded GNU `stat -c` fixture failure. No installer, package cache, live path,
+credential, component, or session changed. Exact next action: publish the
+generic correction through protected Linux CI before running the frozen
+official installer relocation on `office`.
+
+**First protected D11 failure:** PR #80 run `29684843290`, job `88187238704`,
+stopped in the focused agent-config suite with `FAIL: blocked apply mutated
+state`. The engine had not mutated the fixture; the old assertion required the
+entire synthetic `~/.local` tree to be absent, while D11 deliberately creates
+the precondition native entry there before every case. The narrow correction
+requires only transaction-owned `~/.local/bin` and `~/.local/state` to remain
+absent after a blocked apply. Retry is safe; no live installer, package, link,
+credential, component, or session changed.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

@@ -63,8 +63,13 @@ git -C "$PUBLISHER" push -q origin main
 
 make_home() {
     home=$TEMP_DIR/$1
-    mkdir "$home"
-    chmod 700 "$home"
+    mkdir -p "$home/.local/libexec/harness-codex-native"
+    chmod 700 "$home" "$home/.local/libexec/harness-codex-native"
+    cat >"$home/.local/libexec/harness-codex-native/codex" <<'EOF'
+#!/bin/sh
+printf '%s\n' "$@"
+EOF
+    chmod 755 "$home/.local/libexec/harness-codex-native/codex"
     printf '%s\n' "$home"
 }
 run_config() {
@@ -149,6 +154,22 @@ if [ "${HARNESS_AGENT_CONFIG_ROUTE_ONLY:-0}" = 1 ]; then
 fi
 
 home=$(make_home absent)
+missing_native_home=$(make_home missing-native)
+unlink "$missing_native_home/.local/libexec/harness-codex-native/codex"
+if run_config "$missing_native_home" --plan >"$TEMP_DIR/missing-native.out" 2>&1; then
+    fail "missing native Codex accepted"
+fi
+grep -F 'AGENT_CONFIG_NATIVE_CODEX state=absent action=relocate-required' \
+    "$TEMP_DIR/missing-native.out" >/dev/null || fail "missing native Codex state"
+recursive_native_home=$(make_home recursive-native)
+unlink "$recursive_native_home/.local/libexec/harness-codex-native/codex"
+ln -s "$PUBLIC/bin/harness-codex" \
+    "$recursive_native_home/.local/libexec/harness-codex-native/codex"
+if run_config "$recursive_native_home" --plan >"$TEMP_DIR/recursive-native.out" 2>&1; then
+    fail "recursive native Codex accepted"
+fi
+grep -F 'AGENT_CONFIG_NATIVE_CODEX state=recursive action=relocate-required' \
+    "$TEMP_DIR/recursive-native.out" >/dev/null || fail "recursive native Codex state"
 run_config "$home" --plan >"$TEMP_DIR/absent.plan"
 [ "$(grep -c 'state=absent action=link' "$TEMP_DIR/absent.plan")" -eq 3 ] ||
     fail "absent plan"
@@ -190,24 +211,26 @@ run_config "$home" --doctor >"$TEMP_DIR/partial.reapply.doctor"
 grep -F 'status=ready failures=0' "$TEMP_DIR/partial.reapply.doctor" >/dev/null ||
     fail "partial adoption reapply doctor"
 
-FAKE_BIN=$TEMP_DIR/fake-bin
 PROJECT=$TEMP_DIR/project
-mkdir "$FAKE_BIN" "$PROJECT"
+mkdir "$PROJECT"
 git -C "$PROJECT" init -q
-cat >"$FAKE_BIN/codex" <<'EOF'
-#!/bin/sh
-printf '%s\n' "$@"
-EOF
-chmod 755 "$FAKE_BIN/codex"
 launcher_output=$(cd "$PROJECT" && HOME="$home" \
-    PATH="$home/.local/bin:$FAKE_BIN:/usr/bin:/bin" codex exec --help)
+    PATH="$home/.local/bin:/usr/bin:/bin" codex exec --help)
 project_root=$(CDPATH='' cd -- "$PROJECT" && pwd -P)
-printf '%s\n' "$launcher_output" | sed -n '1p' | grep -F -x -- '-c' >/dev/null ||
+printf '%s\n' "$launcher_output" | sed -n '1p' |
+    grep -F -x -- '--ask-for-approval' >/dev/null || fail "launcher approval flag"
+printf '%s\n' "$launcher_output" | sed -n '2p' | grep -F -x never >/dev/null ||
+    fail "launcher approval value"
+printf '%s\n' "$launcher_output" | sed -n '3p' |
+    grep -F -x -- '--sandbox' >/dev/null || fail "launcher sandbox flag"
+printf '%s\n' "$launcher_output" | sed -n '4p' |
+    grep -F -x danger-full-access >/dev/null || fail "launcher sandbox value"
+printf '%s\n' "$launcher_output" | sed -n '5p' | grep -F -x -- '-c' >/dev/null ||
     fail "launcher config flag"
-printf '%s\n' "$launcher_output" | sed -n '2p' |
+printf '%s\n' "$launcher_output" | sed -n '6p' |
     grep -F -x "projects.\"$project_root\".trust_level=\"trusted\"" >/dev/null ||
     fail "launcher transient trust"
-printf '%s\n' "$launcher_output" | sed -n '3p' | grep -F -x exec >/dev/null ||
+printf '%s\n' "$launcher_output" | sed -n '7p' | grep -F -x exec >/dev/null ||
     fail "launcher arguments"
 
 printf '%s\n' changed >"$home/.codex/config.toml.changed"
@@ -265,7 +288,8 @@ if run_config "$unsafe_home" --apply >"$TEMP_DIR/unsafe.out" 2>&1; then
 fi
 grep -F 'state=unsafe action=blocked' "$TEMP_DIR/unsafe.out" >/dev/null ||
     fail "unsafe destination refusal"
-[ ! -e "$unsafe_home/.local" ] || fail "blocked apply mutated state"
+[ ! -e "$unsafe_home/.local/bin" ] && [ ! -e "$unsafe_home/.local/state" ] ||
+    fail "blocked apply mutated state"
 
 hardlink_home=$(make_home hardlink)
 mkdir -p "$hardlink_home/.codex"

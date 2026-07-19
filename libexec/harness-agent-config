@@ -42,6 +42,36 @@ components_source=$HARNESS_ROOT/config/agent-clients/components.tsv
 codex_live=$HOME/.codex/config.toml
 claude_live=$HOME/.claude/settings.json
 launcher_live=$HOME/.local/bin/codex
+native_codex_dir=$HOME/.local/libexec/harness-codex-native
+native_codex_live=$native_codex_dir/codex
+
+native_codex_state() {
+    [ -d "$native_codex_dir" ] && [ ! -L "$native_codex_dir" ] || {
+        printf '%s\n' absent
+        return
+    }
+    [ "$(macos_stat_owner "$native_codex_dir")" = "$current_uid" ] &&
+        [ "$(macos_stat_mode "$native_codex_dir")" = 700 ] || {
+            printf '%s\n' unsafe
+            return
+        }
+    [ -x "$native_codex_live" ] || {
+        printf '%s\n' absent
+        return
+    }
+    native_physical=$(realpath "$native_codex_live" 2>/dev/null) || {
+        printf '%s\n' unsafe
+        return
+    }
+    launcher_source_physical=$(realpath "$launcher_source" 2>/dev/null) || {
+        printf '%s\n' unsafe
+        return
+    }
+    case "$native_physical" in
+        "$launcher_source_physical") printf '%s\n' recursive ;;
+        *) printf '%s\n' ready ;;
+    esac
+}
 
 require_home() {
     case ${HOME:-} in /*) ;; *) die "agent configuration requires an absolute HOME" ;; esac
@@ -258,6 +288,10 @@ fi
 
 blocked=0
 changes=0
+native_state=$(native_codex_state)
+case "$native_state" in ready) ;; *) blocked=$((blocked + 1)) ;; esac
+printf 'AGENT_CONFIG_NATIVE_CODEX state=%s action=%s\n' "$native_state" \
+    "$(if [ "$native_state" = ready ]; then printf none; else printf relocate-required; fi)"
 for label in codex claude launcher; do
     destination=$(label_destination "$label")
     source=$(label_source "$label")
