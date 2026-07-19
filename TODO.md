@@ -56,9 +56,11 @@ M1, and R1 are frozen: Macs reuse the existing public Linux Bash pre/post hooks
 around local startup bytes; the private Bash payload is retired through
 owner-guided lossless curation; all eleven environments use one reviewed public
 complete tmux config through `~/.tmux.conf`; and the pilot transition is one
-recoverable migration back to private SSH-only agreement. Wait for a fresh
-explicit `go` before implementation. Generic implementation and publication
-authorize no private/live access; pilot, Linux, and later-Mac applies retain the
+recoverable migration back to private SSH-only agreement. Generic implementation
+and portable phase-one validation are complete on task branch
+`agent/t268-macos-bash-order`; next fetch, publish the branch, open and merge the
+protected PR, then guarded-sync only clean managed checkouts. Generic publication
+authorizes no private/live access; pilot, Linux, and later-Mac applies retain the
 separate R1 gates. The five reachable remote checkouts `ab`, `ab2`, `ri`, `rc`,
 and `t4` are clean at published checkpoint `63af57f`, with transfer artifacts
 absent; AL was reachable for value-free tmux discovery but its harness checkout
@@ -1287,6 +1289,23 @@ configuration mutation, owner curation, and active-session reload remain
 excluded. Exact first step: map the published engine-2 and Bash-v1 transaction
 contracts, then implement synthetic-first migrations without contacting a live
 config.
+
+**Generic implementation checkpoint (2026-07-19):** the task branch now adds
+the exact public `config/tmux/tmux.conf`, transactional cross-platform
+`tmux-config`, public pre/local/post `macos-bash-hooks`, the owner-curated
+forward-only `macos-config-migrate` bridge, migrated/legacy doctor coverage,
+the revised pilot planner, documentation, and synthetic apply/rollback tests.
+The migration fixture proved engine-2 to SSH-only publication, Bash local-byte
+preservation, the one canonical tmux link, exact local rollback, and no private
+Git rewind. Focused Mac/tmux/profile/update/privacy suites passed. ShellCheck
+passed for every affected script with only the repository-standard dynamic
+source/unreferenced-trap suppressions. `HARNESS_PORTABLE_CI=1
+tests/test-phase1.sh` passed; the unspecialized invocation reached the native
+MPI smoke and stopped because this session has no `mpicc`, so no native MPI
+result is claimed. No private companion, live startup file, tmux path, active
+session, or remote node was accessed or changed. Exact next action: fetch
+`origin`, push the task branch, open the protected PR, wait for required CI,
+merge without force, then run guarded clean-checkout fleet synchronization.
 
 ## Stable operational facts
 

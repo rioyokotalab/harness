@@ -1,6 +1,6 @@
 # T-268 plan — private personal macOS fleet
 
-**Phase:** generic correction executing — implementation complete, validation pending
+**Phase:** generic correction executing — implementation and portable validation complete
 
 **Updated:** 2026-07-19 JST
 
