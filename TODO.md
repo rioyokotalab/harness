@@ -50,27 +50,24 @@ and compact historical pointers here. Next free ID: T-269.
 
 ## Next resume checkpoint
 
-Resume T-268 in `pilot-plan-pending`. The generic atomic personal-Mac
-SSH/Bash/tmux configuration-bundle engine is published at `8b63df2`; all six
-remote managed Linux checkouts are clean at that revision, while the shared
-local checkout remains on another contributor's clean branch with
-`origin/main` fetched. The publication-handoff ledger was then synchronized to
-`ab`, `ab2`, `ri`, `rc`, and `t4`; `al` remains clean at the engine revision
-because two read-only SSH preflights failed with public-key authentication.
-The standing renewal script was unavailable or failed its strict no-credential
-contract, so no authentication command ran. This does not block the independent
-pilot plan. From the pilot's clean public harness root, run exactly:
-`git fetch origin main && git merge --ff-only refs/remotes/origin/main`, then
-`./bin/harness macos-pilot-plan --host LOGICAL_ID`. The helper performs the
-owner-guided Bash curation, validates all three live candidates, and runs seed
-plan only. Separate authority is required before seed apply, rollback/reapply,
-another Mac, or active-session reload. Independently resume T-191 after
-the first Sunday eligibility. Fetch and prove a clean fleet, then query only the seven
-captured IDs below through their declared native scheduler routes. Do not infer
-absence from a failed query, and do not cancel, replace, or duplicate a delayed
-job. T-196 remains blocked until T-191 reaches eight successful weekly chains,
-two verified restores per node, and a current verified independent generation.
-T-210 is complete and must not be repeated.
+Resume T-268 in `next-mac-plan-pending`. The first personal-Mac pilot completed
+the atomic SSH/Bash/tmux seed, unchanged-only rollback, explicit forward
+reapply, final no-op reconciliation, and value-free doctor acceptance with zero
+failures or warnings. No active shell or tmux session was reloaded. Next, plan
+stage 16 against one privately selected remaining Mac in its own owner-started
+session, independently revalidate its old state, and obtain separate authority
+before any apply; do not batch Macs or infer their state from the pilot. The
+post-publication Linux fleet catch-up is independent: retry `ab`, `ab2`, `ri`,
+`rc`, and `t4` only from the managed controller because the pilot lacks their
+private transport aliases, and revalidate `al` separately after its declared
+certificate authentication is available. The shared local checkout remains on
+another contributor's clean branch with `origin/main` fetched. Independently
+resume T-191 after the first Sunday eligibility. Fetch and prove a clean fleet,
+then query only the seven captured IDs below through their declared native
+scheduler routes. Do not infer absence from a failed query, and do not cancel,
+replace, or duplicate a delayed job. T-196 remains blocked until T-191 reaches
+eight successful weekly chains, two verified restores per node, and a current
+verified independent generation. T-210 is complete and must not be repeated.
 
 ## Active tasks
 
@@ -1117,6 +1114,25 @@ queried or changed, and all remote state is unknown rather than absent. Retry
 from the managed controller, separately planning AL from its recorded clean
 `8b63df2bdaf6ee8ff7db6f100faa78829da9aa8e` baseline after authentication is
 available. This fleet blocker does not affect the clean local pilot rerun.
+
+**Pilot bundle acceptance (2026-07-19):** after the empty-tmux portability fix
+was published, the owner-started pilot helper completed Bash curation and
+reported a valid three-payload seed plan. Under separate explicit authority,
+seed apply committed and normal-pushed the private bundle and transactionally
+converged all three live destinations. A separately authorized unchanged-only
+rollback restored the exact prior live files and absent bundle state; explicit
+adopt plan then reported the expected forward action, and accepted reapply
+created a new recoverable transaction. Final normal reconciliation reported
+`class=current agreement=yes action=none`, and the value-free Mac doctor passed
+architecture, Homebrew, Command Line Tools, private profile, public checkout,
+all managed links and Bash startup gates, all formula gates, and the three-file
+configuration agreement with `failures=0 warnings=0`. Active shell and tmux
+sessions were not reloaded. No private configuration value, identity, revision,
+transaction identifier, repository detail, credential, or diagnostic entered
+public Git. The pilot is accepted. Exact next T-268 action: choose one remaining
+Mac privately, start an independent local session there, fetch the current
+engine, and run plan-only discovery before requesting its separate apply
+authority. Do not batch the remaining Macs.
 
 ## Stable operational facts
 
