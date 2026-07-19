@@ -164,8 +164,11 @@ test passes; the first full run passed 50/52 suites and reached only the known
 dirty-checkout refusal in the Bash-hook and tmux suites. Exact next action:
 commit the adapter fix and ledger, rerun phase one from the required clean
 checkout, publish through protected CI, fleet-sync the fix, and retry `office`
-from a new plan. Do not migrate `local` or any Linux node before office passes
-apply/rollback/reapply and fresh-shell acceptance.
+from a new plan. The clean rerun passed all 52 focused suites, guarded deletion,
+and native compiler gates, explicitly skipped native MPI, and stopped only at
+the already-recorded Darwin-to-Linux `local` doctor refusal. Protected Ubuntu
+CI is the remaining publication gate. Do not migrate `local` or any Linux node
+before office passes apply/rollback/reapply and fresh-shell acceptance.
 
 **Onboarding-skill checkpoint:** `skill-creator` initialized
 `shared/skills/onboard-personal-mac` with Codex UI metadata. The implemented
