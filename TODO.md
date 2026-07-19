@@ -150,6 +150,26 @@ and no owner-byte disclosure. The full `.bash_profile` is no longer owner-
 maintained after successful migration, but remains present as Bash's required
 thin entry point.
 
+**Live rollout checkpoint:** the new onboarding skill discovery links are
+installed and KEEP-only on `office`, `local`, `ab`, `ab2`, `ri`, `al`, `rc`,
+and `t4`. The first `office` startup transaction
+`20260719T223337Z-46234` passed doctor/idempotence checks but a fresh Homebrew
+Bash login shell then crashed with SIGSEGV. Exact rollback restored both legacy
+layouts, and the restored login/interactive baseline passes. Value-free
+classification found exactly one conventional profile-to-`.bashrc` loader;
+moving that loader into `.bashrc` caused recursive self-sourcing. The task
+branch removes only standalone redundant loader lines during migration,
+reports their count without content, and adds a regression fixture. The focused
+test passes; the first full run passed 50/52 suites and reached only the known
+dirty-checkout refusal in the Bash-hook and tmux suites. Exact next action:
+commit the adapter fix and ledger, rerun phase one from the required clean
+checkout, publish through protected CI, fleet-sync the fix, and retry `office`
+from a new plan. The clean rerun passed all 52 focused suites, guarded deletion,
+and native compiler gates, explicitly skipped native MPI, and stopped only at
+the already-recorded Darwin-to-Linux `local` doctor refusal. Protected Ubuntu
+CI is the remaining publication gate. Do not migrate `local` or any Linux node
+before office passes apply/rollback/reapply and fresh-shell acceptance.
+
 **Onboarding-skill checkpoint:** `skill-creator` initialized
 `shared/skills/onboard-personal-mac` with Codex UI metadata. The implemented
 skill requires one host, repository/TODO reconstruction, value-free discovery,

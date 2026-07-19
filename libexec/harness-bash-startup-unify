@@ -8,6 +8,7 @@ import filecmp
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import stat
 import subprocess
@@ -80,6 +81,22 @@ def login_section(middle: bytes) -> bytes:
         b"fi\n"
         b"# <<< harness login-only local <<<\n"
     )
+
+
+def remove_redundant_bashrc_loaders(middle: bytes) -> tuple[bytes, int]:
+    """Drop only standalone profile lines that source the now-canonical .bashrc."""
+    loader = re.compile(
+        rb'^[ \t]*(?:source|\.)[ \t]+(?:"?\$HOME/\.bashrc"?|"?~/\.bashrc"?)'
+        rb'[ \t]*(?:#[^\r\n]*)?(?:\r?\n)?$'
+    )
+    kept = []
+    removed = 0
+    for line in middle.splitlines(keepends=True):
+        if loader.match(line):
+            removed += 1
+        else:
+            kept.append(line)
+    return b"".join(kept), removed
 
 
 def bash_syntax(path: Path) -> None:
@@ -252,10 +269,12 @@ def main() -> int:
 
     bashrc_middle = split_managed(bashrc_data, prefix, bashrc_suffix, ".bashrc")
     profile_middle = split_managed(profile_data, prefix, profile_suffix, ".bash_profile")
-    new_bashrc = prefix + login_section(profile_middle) + bashrc_middle + bashrc_suffix
+    migrated_profile_middle, redundant_loaders = remove_redundant_bashrc_loaders(profile_middle)
+    new_bashrc = prefix + login_section(migrated_profile_middle) + bashrc_middle + bashrc_suffix
     print(
         f"BASH_STARTUP_UNIFY mode={mode} host={args.host} state=merge "
         f"profile_local_bytes={len(profile_middle)} bashrc_local_bytes={len(bashrc_middle)} "
+        f"redundant_profile_loaders={redundant_loaders} "
         "action=canonical-bashrc+thin-profile"
     )
     if args.plan:
