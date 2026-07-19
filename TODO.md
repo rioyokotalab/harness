@@ -50,13 +50,15 @@ and compact historical pointers here. Next free ID: T-269.
 
 ## Next resume checkpoint
 
-Resume T-268 in `next-mac-plan-pending`. The first personal-Mac pilot completed
+Resume T-268 in `bash-order-interviewing`. The first personal-Mac pilot completed
 the atomic SSH/Bash/tmux seed, unchanged-only rollback, explicit forward
 reapply, final no-op reconciliation, and value-free doctor acceptance with zero
-failures or warnings. No active shell or tmux session was reloaded. Next, plan
-stage 16 against one privately selected remaining Mac in its own owner-started
-session, independently revalidate its old state, and obtain separate authority
-before any apply; do not batch Macs or infer their state from the pilot. The
+failures or warnings. No active shell or tmux session was reloaded. The owner
+then clarified that Mac `.bashrc` ordering must mirror the Linux managed-prefix,
+machine-local-middle, managed-suffix model; the published Mac loader currently
+has only a managed suffix and does not satisfy that intent. Pause stage 16 and
+do not change another Mac until the replacement representation, migration, and
+rollback gates are frozen through PIE and published. The
 post-publication Linux fleet catch-up is independent: `ab`, `ab2`, `ri`, `rc`,
 and `t4` are clean at published checkpoint `01971f1`, with transfer artifacts
 absent; revalidate `al` separately after its declared certificate
@@ -1146,6 +1148,37 @@ apply had completed after its client output ended. A final independent plan
 reported five `KEEP`s at `01971f1`, zero dirt, and every transfer artifact
 absent. `al` was not contacted and remains pending separate authentication
 revalidation. The shared local checkout's contributor branch was not changed.
+
+**Bash ordering correction PIE checkpoint (2026-07-19):** the owner clarified
+that the intended Mac behavior was the same ordering contract used on managed
+Linux startup files: a managed pre-hook, untouched machine-local content in the
+middle, and a managed post-hook. The published Mac implementation instead
+appends one loader and sources one synchronized private fragment only after all
+local `.bashrc` content. This is a confirmed requirement mismatch, not a failed
+pilot transaction; the accepted pilot remains internally converged and safe to
+leave running, but rollout to another Mac is paused.
+
+Read-only public-code discovery found that `harness-bash` starts Homebrew Bash
+as a login shell, the current installer appends the same v1 loader to both
+`.bash_profile` and `.bashrc`, and private engine 2 stores one `bashrc` payload.
+The recommended replacement is a versioned `.bashrc` pre block and post block
+that preserve all owner bytes between them, plus a login suffix that enters the
+guarded `.bashrc` path without double execution. The private bundle would split
+the synchronized Bash payload into `bashrc.pre` and `bashrc.post`; migration
+would place the existing private `bashrc` bytes in `bashrc.post` and seed an
+empty `bashrc.pre`, preserving current behavior before the owner deliberately
+reorders settings. The public engine must transactionally migrate the strict
+private schema, the pilot's managed startup blocks and local state, and all
+rollback images as one reviewed transition. It must refuse partial markers,
+changed startup files, incomplete private payloads, divergence, or a second
+execution path, and it must not read, print, or publish private configuration.
+
+Phase is `interviewing`. Open decision B1: confirm two independently editable
+synchronized private Bash fragments, with the existing fragment migrated to
+post and pre initially empty. After B1, settle whether the two hooks apply only
+to `.bashrc` with `.bash_profile` delegating to it (recommended) or whether both
+startup files receive independent pre/post pairs. No code, private companion,
+live startup file, session reload, or Mac state has been changed.
 
 ## Stable operational facts
 
