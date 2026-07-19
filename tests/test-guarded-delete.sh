@@ -51,6 +51,64 @@ sh -n "$ROOT/shared/skills/guarded-bulk-delete/scripts/guarded-delete" ||
     fail "guarded-delete shell syntax"
 sh -n "$CLEANUP" || fail "guarded test cleanup shell syntax"
 
+# Exercise the Darwin adapter shapes on Linux CI without weakening production
+# platform detection.  These fakes translate BSD command forms back to the
+# GNU fixture tools while preserving the guard's plan/apply behavior.
+if [ "$(uname -s)" != Darwin ]; then
+darwin_bin=$TEST_ROOT/darwin-bin
+mkdir -p "$darwin_bin" "$TEST_ROOT/root/darwin-target/nested"
+printf '%s\n' delete >"$TEST_ROOT/root/darwin-target/nested/file"
+cat >"$darwin_bin/uname" <<'EOF'
+#!/bin/sh
+printf '%s\n' Darwin
+EOF
+cat >"$darwin_bin/dscacheutil" <<'EOF'
+#!/bin/sh
+printf 'dir: %s\n' "$HOME"
+EOF
+cat >"$darwin_bin/realpath" <<'EOF'
+#!/bin/sh
+exec /usr/bin/realpath -e -- "$1"
+EOF
+cat >"$darwin_bin/stat" <<'EOF'
+#!/bin/sh
+[ "$1" = -f ] || exit 2
+format=$2
+path=$3
+case "$format" in
+    %d:%i) exec /usr/bin/stat -Lc '%d:%i' -- "$path" ;;
+    %u) exec /usr/bin/stat -c '%u' -- "$path" ;;
+    %Lp) exec /usr/bin/stat -c '%a' -- "$path" ;;
+    %z) exec /usr/bin/stat -c '%s' -- "$path" ;;
+    *) exit 2 ;;
+esac
+EOF
+cat >"$darwin_bin/find" <<'EOF'
+#!/bin/sh
+[ "$1" = -x ] || exit 2
+target=$2
+shift 2
+case "$*" in
+    '-exec stat -f %z {} +') exec /usr/bin/find "$target" -xdev -printf '%s\n' ;;
+    '-depth -delete') exec /usr/bin/find "$target" -xdev -depth -delete ;;
+    *) exit 2 ;;
+esac
+EOF
+chmod 700 "$darwin_bin"/*
+darwin_manifest=$TEST_ROOT/darwin.manifest
+env PATH="$darwin_bin:$PATH" "$HARNESS" guarded-delete plan \
+    --within "$TEST_ROOT/root" --manifest "$darwin_manifest" -- \
+    "$TEST_ROOT/root/darwin-target" >"$TEST_ROOT/darwin.plan"
+darwin_token=$(token_from "$TEST_ROOT/darwin.plan")
+[ -n "$darwin_token" ] || fail "Darwin plan token"
+env PATH="$darwin_bin:$PATH" "$HARNESS" guarded-delete apply \
+    --manifest "$darwin_manifest" --token "$darwin_token" \
+    >"$TEST_ROOT/darwin.apply"
+[ ! -e "$TEST_ROOT/root/darwin-target" ] || fail "Darwin target remains"
+grep 'VERIFIED protected_anchors=unchanged targets=absent' \
+    "$TEST_ROOT/darwin.apply" >/dev/null || fail "Darwin verification marker"
+fi
+
 mkdir -p "$TEST_ROOT/internal/fake-home/delete-me/nested" "$TEST_ROOT/internal/state"
 printf '%s\n' delete >"$TEST_ROOT/internal/fake-home/delete-me/nested/file"
 env HOME="$TEST_ROOT/internal/fake-home" HARNESS_ROOT="$ROOT" sh -c '

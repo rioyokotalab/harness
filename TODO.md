@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-271.
+and compact historical pointers here. Next free ID: T-272.
 
 ## Current state
 
@@ -51,89 +51,180 @@ and compact historical pointers here. Next free ID: T-271.
 
 ## Next resume checkpoint
 
-Resume T-268 and T-269 in one coordinated `executing` pilot-Mac run while
-keeping both task records separate. Publish the corrected T-269 Darwin route,
-cleanly catch up `office`, run T-268's authorized pilot migration plan first,
-then run T-269's corrected value-free adoption plan. Neither apply is
-authorized. T-269 otherwise retains the frozen-plan `go` after C1–C7
-passed their final audit. The current Linux node's value-free baseline
-proves that Codex uses `approval_policy=never` with
-`sandbox_mode=danger-full-access`, while Claude uses
-`permissions.defaultMode=bypassPermissions`; the public harness deliberately
-does not synchronize either live user settings file, which explains the likely
-pilot mismatch. Product docs and repository ownership are reconciled in
-`docs/plans/agent-client-config-fleet.md`. No credential, non-whitelisted config
-value, hook command, project path, endpoint, or authentication state was read
-into public evidence, and no live config changed. C1 is frozen as zero Codex or
-Claude action-approval prompts in ordinary sessions: Codex uses `never` with
-`danger-full-access`, and Claude uses `bypassPermissions` with its dangerous-
-mode startup warning suppressed. Authentication, macOS privacy/TCC, OS
-administrator, and provider-enforced dialogs remain separate boundaries.
-C2 is frozen: `harness` contains one tracked canonical settings body per client,
-and each live user settings path is a symbolic link to it; no private companion
-or generated live copy participates.
-C3 is frozen as every reviewed setting that is identical across macOS/Linux and
-safe to publish, while machine-specific trust, private values, credentials,
-runtime state, and non-portable commands remain excluded.
-C4 is frozen as a tracked Bash launcher that resolves the current project root
-locally and passes it to Codex as a transient trusted override; it stores no
-path, while every project launched through it is trusted.
-C5 is frozen as prompt-free public declarative desired state for every reviewed
-portable hook, plugin, marketplace, and MCP component. Authorization stays
-local; forced-interaction declarations and non-managed Codex hooks are excluded.
-C6 is frozen as review-first Git: edits through live links dirty the checkout,
-catch-up refuses dirt, and validation plus protected review precedes
-publication; no command automatically commits, pushes, adopts, or overwrites an
-edit.
-The owner selected C7's explicit-start automated sequence: `office`, then
-`local` plus the six Linux remotes, then each remaining Mac. One local Mac
-catch-up command and one stop-on-first-failure Linux controller automate fetch,
-validation, transactional link/declaration apply, doctor, and authorized
-rollback/reapply drills. Starting an offline Mac, reviewing/publishing edits,
-authentication/OAuth, OS dialogs, and observing a fresh interactive session
-remain manual; no background or login-time mutation is allowed. C1–C7 are
-internally consistent and no material design input remains. Generic public
-implementation, synthetic validation, protected publication, and clean-checkout
-distribution are complete. Adoption of live values, live settings/link
-mutation, plugin/MCP authorization, and every rollout apply/rollback drill
-remain later recorded gates. Exact next action after corrected publication and
-the T-268 plan: run only `./bin/harness agent-config-catch-up --host office
---adopt --plan`. Do not apply. T-268 remains separately resumable from its
-pilot-plan failure handoff, and
-T-196 remains at 1/8 until the 2026-07-26 successors are eligible.
+T-268 and T-269 remain separate `executing` rollout tasks. The `office` pilot
+has completed both ordered live applies. T-268 migrated the private companion
+to SSH-only desired state, installed the public Bash pre/local/post ordering,
+and linked the one public tmux configuration with a recoverable local
+transaction. T-269 adopted the public Codex and Claude settings plus launcher;
+its immediate doctor reported `status=ready failures=0`, with zero component
+declarations and no package action. Neither apply reloaded an active shell,
+tmux server, Codex session, or Claude session, and private transaction
+identifiers remain local.
 
-Resume T-268 in `executing` with pilot curation/plan authorized on `office`.
-Corrective PIE decisions B2, B3, T1–T3,
-M1, and R1 are frozen: Macs reuse the existing public Linux Bash pre/post hooks
-around local startup bytes; the private Bash payload is retired through
-owner-guided lossless curation; all eleven environments use one reviewed public
-complete tmux config through `~/.tmux.conf`; and the pilot transition is one
-recoverable migration back to private SSH-only agreement. Generic implementation
-merged through protected PR #53 at `4209ee8` after required CI run
-`29671188197` passed. Pilot-plan authority was recorded through protected PR
-#55 at `908b44d`, and its cold-restart failure handoff through PR #56 at
-`2816e1a`; all six remote managed checkouts `ab`, `ab2`, `ri`, `al`, `rc`, and
-`t4` are clean at `2816e1a`, with transfer artifacts absent; AL proved
-a direct guarded fast-forward from old checkpoint `8b63df2`. No Bash/tmux live
-transaction or tmux link has been applied. The first owner-started pilot plan
-stopped safely after Vim because the private Bash fragment was not empty; the
-owner's curation edits may remain in the two local files, but no private values
-were inspected or captured. The owner authorized the pilot's
-owner-curation/migration plan only on 2026-07-19; diagnosis and a plan-stage
-retry remain within that boundary, while pilot apply,
-rollback/reapply, local Linux tmux drill, remote Linux tmux rollout, and later
-Macs remain later R1 gates. The shared local checkout remains on another
-contributor's clean branch with `origin/main` fetched. T-191 first-run
-acceptance is complete; exact scheduler, snapshot, successor, state, and silent-
-warning evidence is in
-`docs/audits/restic-first-weekly-2026-07-19.md`. T-196 now has one of eight
-required successful weekly runs on every node and remains blocked until all
-eight runs, two verified restores per node, and a current verified independent
-generation pass. Query only each chain state's captured successor after its
-eligibility; do not infer absence from a failed query or cancel, replace, or
-duplicate a delayed job. T-210 is complete and must not be repeated.
+Exact next owner action on `office`: start fresh managed Bash and tmux sessions
+and fresh Codex and Claude sessions, then confirm the frozen behavior. Any
+unchanged-only rollback/reapply drill remains separately authorized. After
+pilot observation, resume the explicit rollout order: independently revalidate
+`local`, run separately authorized local tmux and agent-config plans/applies/
+doctors/drills, then plan the six Linux remotes and obtain one reviewed
+stop-on-first-failure authority bundle before sequential apply to `ab`, `ab2`,
+`ri`, `al`, `rc`, and `t4`. The one-way `local`-to-`t4` SSH mirror remains a
+separate explicit Linux command and authority gate. Only after Linux acceptance
+should each remaining Mac be brought online and planned/applied independently;
+never batch Macs or infer their state from `office`.
+
+Before every rollout step, fetch and revalidate the current published target,
+clean checkout, transport/authentication, private schema where applicable, and
+absence of transfer-artifact collisions. No background/login-time mutation,
+automatic publication, credential synchronization, plugin/MCP authorization,
+package upgrade, active-session reload, or unrecorded rollback is allowed.
+T-196 remains at 1/8 until the captured 2026-07-26 successors are eligible;
+query only those recorded IDs after eligibility and do not replace or duplicate
+a delayed job. T-210 is complete and must not be repeated.
 
 ## Active tasks
+
+### T-271 — Comprehensive post-pilot update and cleanup
+
+**Phase/status:** `executing`. Reconcile stale public ledger/control-plane
+state after the completed `office` pilot, then perform only the owner-selected
+bounded update and cleanup surfaces with independent safety and authority gates.
+
+**Read-only inventory (2026-07-19):** public `main` is clean and current at
+`0406a8b67a631d97df693d69ff4f70bdd37897cf`, with one worktree, no local or
+remote task branch, no open PR, and no Git garbage. The top `TODO.md` resume
+checkpoint is materially stale: it still describes the already-completed
+T-268/T-269 pilot plans and applies as future unauthorized work, while the task
+records correctly contain their successful apply outcomes and remaining fresh-
+session/rollback/rollout gates. Homebrew reports 54 outdated formulae, no
+outdated casks, and six cleanup candidates totaling about 189.2 MB. The known
+disposable stage-14 temporary tree remains present. No file contents, private
+transaction, credential, live config value, active session, remote checkout,
+package, or scheduler state was changed or inspected.
+
+**Recommended plan:** treat “everything” as bounded housekeeping, not implicit
+rollout or software upgrade authority. First replace the stale top checkpoint
+with the exact current T-268/T-269 state and next ordered actions; compact any
+newly superseded duplicate ledger prose; validate and publish that documentation
+through protected review. Recheck Git refs/worktrees/objects and perform only
+non-destructive native maintenance if evidence warrants it. If the owner wants
+the known disposable tree removed, invoke `guarded-bulk-delete` and require its
+canonical-boundary, manifest, revalidation, and post-delete gates. Keep Homebrew
+cleanup, 54 formula upgrades, Linux fleet synchronization/config rollout,
+remaining-Mac rollout, rollback/reapply drills, and fresh-session mutation as
+separate opt-in decisions. Never inspect private payloads or credentials.
+
+**Execution/validation order:** (1) freeze scope decisions; (2) wait for an
+explicit `go`; (3) checkpoint `executing`; (4) update only selected public
+ledger/docs and validate pointers plus `git diff --check`; (5) run selected Git
+maintenance with before/after object evidence; (6) use the guarded deletion
+workflow for any selected disposable tree; (7) perform separately authorized
+package or fleet work only if explicitly selected and planned; (8) independently
+verify clean `main`, one worktree, branch/PR state, excluded surfaces unchanged,
+and publish the durable handoff. Stop on dirt, ambiguous ownership/boundary,
+private-output risk, authentication failure, package-scope drift, or any live
+state inconsistent with the frozen plan.
+
+**Decision H1:** selected repository ledger/Git housekeeping plus guarded
+removal of the one known disposable temporary tree. Homebrew cleanup/upgrades,
+Linux fleet synchronization/config rollout, remaining-Mac rollout,
+rollback/reapply drills, and live-session changes are excluded. Git object
+maintenance will run only if refreshed evidence shows garbage or material
+reclaimable state; the current inventory does not. The deletion boundary is the
+retained canonical `/private/tmp`, the sole target is the existing exact
+`/private/tmp/harness-gh-stage14.DACMP6`, and the manifest will be a new exact
+mode-0600 file directly under `/private/tmp`; the deterministic plan must confirm
+those canonical identities before apply. The explicit owner `go` was received,
+and the stale top resume checkpoint was replaced with the published pilot-apply
+state and remaining ordered observation/rollout gates without changing either
+task's separate record. `git diff --check` passes, and refreshed Git evidence
+still warrants no object maintenance.
+
+**Guarded-delete failure checkpoint:** the required plan stopped before
+manifest creation with the exact value-free result `guarded-delete: required
+command is unavailable: getent`. The sole target remains present and the exact
+manifest path remains absent; no deletion or fallback remover ran. Retry is safe
+only after a public macOS-capable guarded-delete correction passes focused and
+protected validation. **Decision H2:** either separately authorize that narrow
+public portability correction and then resume the same exact guarded plan
+(recommended), or leave the known disposable tree present and publish only the
+completed ledger/Git housekeeping.
+
+**Decision H2 package-route checkpoint:** the owner selected installation of
+`getent` rather than a guard correction. The exact bounded command disabled
+Homebrew auto-update and install cleanup, but stopped before installation with
+`Error: No formulae or casks found for "/^getent$/".` Homebrew exposes no such
+formula on this pilot; `getent` remains absent, and no package, cleanup,
+manifest, or target changed. H2 is unresolved again: authorize the narrow
+public macOS guarded-delete correction, or retain the disposable tree.
+
+**Decision H2 selected / portability discovery:** the owner selected the public
+guard correction. Public-code and command-presence inspection then proved this
+is not a one-command fallback: the implementation also hard-codes GNU
+`realpath -e`, `stat -Lc`/`stat -c`, and `find -printf` in its plan/apply
+revalidation path. macOS provides `dscacheutil`, `dscl`, BSD `realpath`, BSD
+`stat`, BSD `find`, `shasum`, and an existing `sha256sum`, but no `getent` or
+GNU-prefixed path/metadata/find commands. A correct change must add explicit
+platform adapters for authoritative-home lookup, canonicalization, identity,
+owner/mode/size, and tree entry/byte facts; preserve the manifest schema and all
+protected-anchor/revalidation invariants; add synthetic Darwin-command-shape,
+HOME-mismatch, alias/canonical drift, manifest integrity, and real native plan
+coverage; then pass the focused suite and protected `portable-phase1`. It must
+not install GNU packages or weaken Linux behavior.
+
+**Decision H3:** this broader-but-bounded full macOS portability correction is
+recommended because adapting only `getent` would immediately fail at the next
+GNU-only gate. Alternatively, leave the disposable tree present and publish the
+completed ledger-only cleanup. No public implementation or deletion may begin
+until H3 is selected and a fresh explicit `go` follows the revised audit.
+
+**H3 package-availability evidence:** the current official Homebrew index
+offers bottled `coreutils` 9.11 and `findutils` 4.11.0 for macOS. `coreutils`
+would supply GNU `realpath` and `stat` under prefixed command names and includes
+GNU hashing utilities; `findutils` supplies prefixed GNU `find`. Neither formula
+provides `getent`, and an exact Homebrew search returns no `getent` formula or
+cask. Rust `uutils-coreutils`/`uutils-findutils` alternatives also exist with
+their own prefixes but still do not resolve authoritative account-home lookup.
+The pilot already has native `dscacheutil`/`dscl`, BSD path/metadata/find tools,
+`shasum`, and a `sha256sum`. Installing GNU packages would therefore add two
+new package dependencies yet still require a macOS home-database adapter. The
+recommended H3 remains a self-contained platform-adapter correction with no new
+package requirement.
+
+**Decision H3 selected / revised final audit:** implement the complete native
+macOS adapter correction with no new GNU package dependency. Preserve the
+manifest schema, freshness/token/identity/count/byte revalidation, protected
+lexical and canonical home anchors, Linux command behavior, and exact emitted
+native actions. Add focused synthetic Linux/Darwin routes plus a real native
+plan that must publish a mode-0600 manifest for only the frozen target; require
+focused tests, ShellCheck, `git diff --check`, public privacy audit, and
+protected `portable-phase1`. Publish and cleanly fast-forward `office` before
+creating a fresh guarded plan; inspect its `PLAN`, sole `TARGET`, and exact
+`NEXT`, then apply only that emitted command and verify both target and manifest
+absent. Finally publish the updated ledger checkpoint and leave clean `main`.
+No package, fleet, live-config/session, rollback/reapply, or broader cleanup is
+authorized. All required decisions are frozen and internally consistent, and
+the fresh owner `go` was received. Exact first action: implement and test the
+platform adapters without contacting the deletion target.
+
+**Mac guard implementation checkpoint:** the public manifest-backed CLI now
+selects native adapters for authoritative-home lookup, canonical paths,
+identity/owner/mode/size metadata, tree entry/byte facts, hashing, file
+persistence, and filesystem-bounded deletion while leaving the GNU/Linux route
+and manifest v2 schema unchanged. A real disposable macOS plan/apply cycle
+under `/private/tmp` published a mode-0600 manifest, revalidated one target with
+three entries, deleted only that target through BSD `find -x ... -delete`,
+reported protected anchors unchanged, and left both synthetic target and exact
+manifest absent. A Linux-CI fixture translates every Darwin command shape back
+to GNU fixture tools and requires the same verified plan/apply result. Portable
+syntax, warning-level ShellCheck, and `git diff --check` pass. The complete
+focused suite on this Mac still reaches the separate pre-existing GNU-only
+`guarded_delete_tree` test helper before its Linux assertions; protected Linux
+CI remains authoritative for that existing route and the new synthetic Darwin
+route. No selected live cleanup target, package, private value, fleet node, or
+active session changed. Exact next action: publish the public correction and
+ledger update through protected review, fast-forward clean `office`, then run
+the frozen real guarded plan against only the known stage-14 tree.
 
 ### T-196 — Backup lifecycle phase 2
 
