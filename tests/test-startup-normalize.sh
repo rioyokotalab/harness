@@ -167,5 +167,8 @@ alias_names=$(sed -n 's/^alias \([A-Za-z_][A-Za-z0-9_]*\)=.*/\1/p' \
     "$ROOT/shell/common-aliases.sh")
 [ "$alias_names" = "$(printf '%s\n' "$alias_names" | LC_ALL=C sort -u)" ] ||
     fail 'common aliases are not unique and alphabetic'
+sudo_alias=$(bash -c '. "$1"; alias sudo' _ "$ROOT/shell/common-aliases.sh")
+[ "$sudo_alias" = "alias sudo='sudo '" ] ||
+    fail 'common sudo alias lost trailing-space alias expansion'
 
 echo 'PASS: startup normalization transaction'
