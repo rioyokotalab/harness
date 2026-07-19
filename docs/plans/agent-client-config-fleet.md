@@ -71,6 +71,14 @@ refuse ambiguous drift, support exact local rollback, and never interpret
   [permissions](https://code.claude.com/docs/en/permissions),
   [hooks](https://code.claude.com/docs/en/hooks), and
   [permission modes](https://code.claude.com/docs/en/permission-modes).
+- Claude documents that `bypassPermissions` still prompts for explicit `ask`
+  rules, organization-forced connector asks, MCP tools marked
+  `requiresUserInteraction`, and root/home recursive deletion as a hard-coded
+  circuit breaker. `dontAsk` denies rather than prompts but does not provide the
+  selected full-autonomy behavior. T-269 therefore rejects prompt-forcing
+  declarations and relies on the existing prohibition against root/home bulk
+  deletion; it cannot claim that the client circuit breaker is configurable.
+  Source: [Claude permissions](https://code.claude.com/docs/en/permissions.md).
 - The current Codex TUI shows its directory-trust screen whenever the active
   project has no explicit trust level. Project trust keys are normalized exact
   absolute directory/project/repository roots; parent or wildcard trust is not
@@ -78,6 +86,11 @@ refuse ambiguous drift, support exact local rollback, and never interpret
   decision, so a tracked launcher can inject the locally resolved current root
   transiently without storing it. Sources: [Codex config loader](https://github.com/openai/codex/blob/0fb559f0f6e231a88ac02ea002d3ecd248e2b515/codex-rs/config/src/loader/mod.rs),
   [Codex TUI trust gate](https://github.com/openai/codex/blob/0fb559f0f6e231a88ac02ea002d3ecd248e2b515/codex-rs/tui/src/lib.rs).
+- Codex requires review of every non-managed command hook and records trust by
+  exact hook-definition hash. Its `--dangerously-bypass-hook-trust` launcher
+  flag applies to enabled hooks generally, including project and plugin hooks;
+  it cannot safely mean "only this reviewed user hook" after C4 trusts every
+  current project. Source: [Codex hooks](https://learn.chatgpt.com/docs/hooks).
 
 ## Scope
 
@@ -128,9 +141,10 @@ refuse ambiguous drift, support exact local rollback, and never interpret
    endpoints, unsafe commands, and non-portable behavior stop before mutation
    or publication.
 4. Do not place the current 93 absolute Linux trust records in the canonical
-   Codex file. The C4 decision may instead use a tracked launcher to resolve the
-   current project locally and inject a transient trust override, preserving one
-   settings body and keeping the resolved path out of Git.
+   Codex file. A tracked Bash launcher resolves the canonical current project
+   root locally and injects it as a transient trusted override, preserving one
+   settings body and keeping the resolved path out of Git. It must preserve all
+   arguments/subcommands and resolve the native Codex binary without recursion.
 5. Store portable hook implementation in a reviewed repository surface only if
    selected. Hook references must be identical and portable on every target;
    machine-path or host-specific commands cannot enter the canonical settings.
@@ -191,6 +205,10 @@ refuse ambiguous drift, support exact local rollback, and never interpret
 - A hook or plugin can execute code on every prompt/tool event. Each executable
   source and native install/enable action must be reviewed, versioned, and
   independently disableable through rollback.
+- Claude's hard-coded destructive-command circuit breaker cannot be disabled by
+  `bypassPermissions`. Explicit `ask` rules, organization-forced connectors,
+  and MCP tools that require user interaction are incompatible with the frozen
+  ordinary no-prompt posture and must be rejected or left unmanaged.
 - A long-offline node fast-forwards the one public source directly to current
   before link validation. There is no second repository compatibility axis.
 
@@ -229,7 +247,9 @@ refuse ambiguous drift, support exact local rollback, and never interpret
   recommendation.
 - This decision does not suppress authentication, macOS privacy/TCC, OS
   administrator, workspace/provider policy, or other non-agent system dialogs.
-  No target configuration changed during the interview checkpoint.
+  Current Claude also retains a hard-coded root/home recursive-deletion circuit
+  breaker; harness policy prohibits reaching it, but T-269 cannot configure it
+  away. No target configuration changed during the interview checkpoint.
 
 ### C2 — Canonical storage (selected)
 
@@ -258,28 +278,32 @@ refuse ambiguous drift, support exact local rollback, and never interpret
   value enters public Git. No live settings file or link changed during this
   interview checkpoint.
 
-### C4 — Project/workspace trust (open; ask next)
+### C4 — Project/workspace trust (selected)
 
-- **A — Transient current-root trust through a tracked launcher (recommended):**
-  the ordinary Codex launcher resolves the current canonical project root and
-  injects that exact path as a runtime `trusted` override. No absolute path is
-  stored or published, and the startup trust screen is suppressed. Every
-  project launched through this route is consequently trusted and may load its
+- **Selected — Transient current-root trust through a tracked launcher:** the
+  ordinary Bash launcher resolves the current canonical project root and
+  injects that exact path as a runtime Codex `trusted` override. No absolute
+  path is stored or published, and the startup trust screen is suppressed.
+  Every project launched through this route is trusted and may load its
   project-local Codex config, hooks, and exec policies; bypassing the launcher
   may restore the trust screen.
-- **B — Exclude project trust:** preserve direct client launch with no transient
-  override, accepting Codex's trust screen for undecided roots and disabled
-  project-local configuration. This conflicts with C1's no-prompt intent.
-- **C — Store a union of absolute trust entries:** rejected because it publishes
-  machine-specific paths, cannot represent arbitrary future roots portably, and
-  contradicts C2/C3.
+- The launcher is public and cross-platform, preserves arbitrary Codex
+  arguments/subcommands, resolves the native client without recursion, and
+  emits no resolved path. Claude's separate workspace state remains local and
+  unmirrored. No launcher or live client state changed during this checkpoint.
 
-### C5 — Hooks, plugins, marketplaces, and MCP (open)
+### C5 — Hooks, plugins, marketplaces, and MCP (open; ask next)
 
-- **A — Public declarative desired state (recommended):** sync reviewed public
-  declarations and repository-owned hook code; native plan/apply installs or
-  enables exact components; credentials and authorization remain local.
-- **B — Hooks only:** sync current automation but leave plugins/MCP independent.
+- **A — Prompt-free public declarative desired state (recommended):** synchronize
+  every reviewed public hook, plugin, marketplace, and MCP declaration that is
+  portable across the fleet and does not force interaction. Claude user-hook
+  code lives in `harness`; native explicit catch-up reconciles exact public
+  plugin/marketplace/MCP identifiers. Non-managed Codex command hooks are
+  excluded: its launch-time hook-trust bypass would also trust project hooks in
+  every project C4 trusts, not only reviewed user hooks. Credentials and
+  authorization remain local.
+- **B — Hooks only:** synchronize reviewed hooks and their prompt-free launcher
+  behavior, while leaving plugins, marketplaces, and MCP independent.
 - **C — Exclude all four:** synchronize scalar client preferences only.
 
 ### C6 — Editing and drift model (constrained by C2; publication still open)
@@ -301,7 +325,7 @@ refuse ambiguous drift, support exact local rollback, and never interpret
 
 ## Exact next action
 
-Ask C4 only. After each answer, checkpoint the decision and ask the next open
+Ask C5 only. After each answer, checkpoint the decision and ask the next open
 item. Do not change any live client setting during the interview. After C7,
 audit for contradictions, set `ready-for-go`, and wait for a fresh explicit
 `go`.
