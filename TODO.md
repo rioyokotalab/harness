@@ -145,6 +145,20 @@ because fleet-sync and agent-config-fleet omitted `ssh -x`. Add the explicit
 native flag to both controllers and their tests, and include verified origin
 identity in KEEP evidence; this changes no authentication or target state.
 
+**Local command-path profile gap:** after PR #95 passed protected phase-1,
+merged as `4824c82`, and synchronized quietly to all clean/equal-ref nodes, a
+fresh readiness recheck remained no-change with zero failures everywhere.
+`local` doctor had seven optional warnings after the exact checksum-pinned
+ripgrep 15.1.0 transaction reduced its selected-tool warnings by one. Five of
+the remaining warnings were false noninteractive negatives: fresh login Bash
+resolved `yrun`, `ybatch`, `cuda-gdb`, `nsys`, and `ncu` from two stable site
+directories while `local.conf` declared `command_paths=none`. Both directories
+are real canonical directories and all five exact commands are executable
+regular files. Declare those paths in the existing strict profile adapter,
+pass protected validation, synchronize clean nodes, and require noninteractive
+doctor to retain only the intentionally unavailable Docker/Podman warnings.
+The ripgrep transaction remains complete and rollback-capable locally.
+
 ### T-271 — Comprehensive post-pilot update and cleanup
 
 **Phase/status:** `complete`. Reconciled stale public ledger/control-plane
