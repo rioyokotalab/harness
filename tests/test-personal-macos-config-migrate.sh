@@ -90,12 +90,18 @@ cp "$home/.bashrc" "$TEMP_DIR/bashrc.before"
 
 env PATH="$fake_bin:$PATH" MACOS_TEST_REAL_STAT="$real_stat" HOME="$home" \
     HARNESS_ROOT="$public" "$public/libexec/harness-macos-config-migrate" \
-    --host office --plan >"$TEMP_DIR/plan.out"
+    --host office --plan >"$TEMP_DIR/plan.out" 2>&1 || {
+        sed -n '1,80p' "$TEMP_DIR/plan.out" >&2
+        fail "legacy migration plan command"
+    }
 grep -F 'private_layout=legacy action=migrate apply=not-requested' "$TEMP_DIR/plan.out" >/dev/null ||
     fail "legacy migration plan"
 env PATH="$fake_bin:$PATH" MACOS_TEST_REAL_STAT="$real_stat" HOME="$home" \
     HARNESS_ROOT="$public" "$public/libexec/harness-macos-config-migrate" \
-    --host office --apply >"$TEMP_DIR/apply.out"
+    --host office --apply >"$TEMP_DIR/apply.out" 2>&1 || {
+        sed -n '1,80p' "$TEMP_DIR/apply.out" >&2
+        fail "legacy migration apply command"
+    }
 transaction=$(sed -n 's/.*transaction=\([^ ]*\).*/\1/p' "$TEMP_DIR/apply.out")
 [ -n "$transaction" ] || fail "migration transaction"
 [ -L "$home/.tmux.conf" ] && [ "$(readlink "$home/.tmux.conf")" = "$public/config/tmux/tmux.conf" ] ||
