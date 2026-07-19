@@ -71,6 +71,13 @@ refuse ambiguous drift, support exact local rollback, and never interpret
   [permissions](https://code.claude.com/docs/en/permissions),
   [hooks](https://code.claude.com/docs/en/hooks), and
   [permission modes](https://code.claude.com/docs/en/permission-modes).
+- The current Codex TUI shows its directory-trust screen whenever the active
+  project has no explicit trust level. Project trust keys are normalized exact
+  absolute directory/project/repository roots; parent or wildcard trust is not
+  documented or implemented. CLI `--config` overrides participate before that
+  decision, so a tracked launcher can inject the locally resolved current root
+  transiently without storing it. Sources: [Codex config loader](https://github.com/openai/codex/blob/0fb559f0f6e231a88ac02ea002d3ecd248e2b515/codex-rs/config/src/loader/mod.rs),
+  [Codex TUI trust gate](https://github.com/openai/codex/blob/0fb559f0f6e231a88ac02ea002d3ecd248e2b515/codex-rs/tui/src/lib.rs).
 
 ## Scope
 
@@ -121,8 +128,9 @@ refuse ambiguous drift, support exact local rollback, and never interpret
    endpoints, unsafe commands, and non-portable behavior stop before mutation
    or publication.
 4. Do not place the current 93 absolute Linux trust records in the canonical
-   Codex file. Project-specific trust/configuration needs a later portable
-   decision that does not create a second user-settings body.
+   Codex file. The C4 decision may instead use a tracked launcher to resolve the
+   current project locally and inject a transient trust override, preserving one
+   settings body and keeping the resolved path out of Git.
 5. Store portable hook implementation in a reviewed repository surface only if
    selected. Hook references must be identical and portable on every target;
    machine-path or host-specific commands cannot enter the canonical settings.
@@ -146,7 +154,8 @@ refuse ambiguous drift, support exact local rollback, and never interpret
 4. Implement strict complete-file validation and direct collision-refusing
    links for Codex TOML and Claude JSON; do not create rendered copies.
 5. Implement the frozen project-trust decision without adding raw paths or a
-   second managed user-settings body.
+   second managed user-settings body; validate ordinary fresh-session startup
+   as well as config loading.
 6. Implement hook/profile/plugin/marketplace/MCP adapters only for categories
    selected during interview; separate declaration, installation, enablement,
    and authorization.
@@ -236,31 +245,34 @@ refuse ambiguous drift, support exact local rollback, and never interpret
   values remain local outside these linked settings files. No live link or
   settings file changed during this interview checkpoint.
 
-### C3 — Public canonical content breadth (open; ask next)
+### C3 — Public canonical content breadth (selected)
 
-- **A — Broad portable settings (recommended):** the linked whole files contain
-  every reviewed key that is identical on macOS and Linux and safe to publish,
+- **Selected — Broad portable settings:** the linked whole files contain every
+  reviewed key that is identical on macOS and Linux and safe to publish,
   including the frozen permission posture and portable UI/model preferences.
   Machine-specific trust, private paths/endpoints, credential-bearing values,
-  runtime state, and non-portable commands are excluded entirely.
-- **B — Permission posture only:** the linked files contain only the settings
-  needed to eliminate client action-approval prompts; all other preferences
-  remain outside managed user settings.
-- **C — Attempt the current complete Linux files:** rejected by the design
-  because they contain raw project paths and other values that are not portable
-  or suitable for a public repository.
+  runtime state, non-portable commands, and categories still open under C5 are
+  excluded unless their own later decision selects a safe public form.
+- This deliberately does not copy the complete current Linux files. Adoption
+  classifies only allowlisted behavior and requires owner review before any
+  value enters public Git. No live settings file or link changed during this
+  interview checkpoint.
 
-### C4 — Project trust (open)
+### C4 — Project/workspace trust (open; ask next)
 
-- **A — Exclude path-specific trust (recommended):** one identical public user
-  file cannot safely carry machine-specific absolute roots. Codex project trust
-  remains outside this user-settings mirror, and Claude's separate local trust
-  state remains untouched.
-- **B — Require identical public checkout paths:** only reviewed common paths
-  could enter the canonical file, but this constrains every Mac/Linux layout
-  and deliberately publishes those paths.
-- **C — Mirror the current raw trust map:** rejected because absolute Linux
-  paths do not port to Macs and local trust must not be inferred.
+- **A — Transient current-root trust through a tracked launcher (recommended):**
+  the ordinary Codex launcher resolves the current canonical project root and
+  injects that exact path as a runtime `trusted` override. No absolute path is
+  stored or published, and the startup trust screen is suppressed. Every
+  project launched through this route is consequently trusted and may load its
+  project-local Codex config, hooks, and exec policies; bypassing the launcher
+  may restore the trust screen.
+- **B — Exclude project trust:** preserve direct client launch with no transient
+  override, accepting Codex's trust screen for undecided roots and disabled
+  project-local configuration. This conflicts with C1's no-prompt intent.
+- **C — Store a union of absolute trust entries:** rejected because it publishes
+  machine-specific paths, cannot represent arbitrary future roots portably, and
+  contradicts C2/C3.
 
 ### C5 — Hooks, plugins, marketplaces, and MCP (open)
 
@@ -289,7 +301,7 @@ refuse ambiguous drift, support exact local rollback, and never interpret
 
 ## Exact next action
 
-Ask C3 only. After each answer, checkpoint the decision and ask the next open
+Ask C4 only. After each answer, checkpoint the decision and ask the next open
 item. Do not change any live client setting during the interview. After C7,
 audit for contradictions, set `ready-for-go`, and wait for a fresh explicit
 `go`.
