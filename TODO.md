@@ -57,16 +57,16 @@ failures or warnings. No active shell or tmux session was reloaded. Next, plan
 stage 16 against one privately selected remaining Mac in its own owner-started
 session, independently revalidate its old state, and obtain separate authority
 before any apply; do not batch Macs or infer their state from the pilot. The
-post-publication Linux fleet catch-up is independent: retry `ab`, `ab2`, `ri`,
-`rc`, and `t4` only from the managed controller because the pilot lacks their
-private transport aliases, and revalidate `al` separately after its declared
-certificate authentication is available. The shared local checkout remains on
-another contributor's clean branch with `origin/main` fetched. Independently
-resume T-191 after the first Sunday eligibility. Fetch and prove a clean fleet,
-then query only the seven captured IDs below through their declared native
-scheduler routes. Do not infer absence from a failed query, and do not cancel,
-replace, or duplicate a delayed job. T-196 remains blocked until T-191 reaches
-eight successful weekly chains, two verified restores per node, and a current
+post-publication Linux fleet catch-up is independent: `ab`, `ab2`, `ri`, `rc`,
+and `t4` are clean at published checkpoint `01971f1`, with transfer artifacts
+absent; revalidate `al` separately after its declared certificate
+authentication is available. The shared local checkout remains on another
+contributor's clean branch with `origin/main` fetched. Independently resume
+T-191 after the first Sunday eligibility. Fetch and prove a clean fleet, then
+query only the seven captured IDs below through their declared native scheduler
+routes. Do not infer absence from a failed query, and do not cancel, replace, or
+duplicate a delayed job. T-196 remains blocked until T-191 reaches eight
+successful weekly chains, two verified restores per node, and a current
 verified independent generation. T-210 is complete and must not be repeated.
 
 ## Active tasks
@@ -1133,6 +1133,19 @@ public Git. The pilot is accepted. Exact next T-268 action: choose one remaining
 Mac privately, start an independent local session there, fetch the current
 engine, and run plan-only discovery before requesting its separate apply
 authority. Do not batch the remaining Macs.
+
+Protected PR #51 passed required `portable-phase1` run `29668744829`, job
+`88143825603`, in 2m8s and squash-merged the value-free pilot checkpoint as
+published `main` `01971f1756ee140e32615cb658b932757b1ee90b`. Guarded fleet
+preflight then found `ab`, `ab2`, `ri`, `rc`, and `t4` clean at `ca3ace7`, with
+no transfer artifact. The first apply client's output ended after its first
+preflight; an immediate read-only plan still saw all five old clean heads, so a
+retry remained safe. The retried guarded command subsequently found all five
+already at the target and performed only `KEEP` actions, showing the first
+apply had completed after its client output ended. A final independent plan
+reported five `KEEP`s at `01971f1`, zero dirt, and every transfer artifact
+absent. `al` was not contacted and remains pending separate authentication
+revalidation. The shared local checkout's contributor branch was not changed.
 
 ## Stable operational facts
 
