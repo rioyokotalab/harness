@@ -60,7 +60,7 @@ grep -F 'Claude auto-memory are optional context only' "$ROOT/.codex/AGENTS.md" 
 [ "$(wc -l <"$ROOT/.codex/AGENTS.md" | tr -d ' ')" -le 200 ] ||
     fail "shared global guidance exceeds the reviewed Claude size bound"
 
-python3 - "$ROOT/.claude/settings.example.json" <<'PY'
+python3 - "$ROOT/config/agent-clients/claude.json" <<'PY'
 import json
 import pathlib
 import sys
@@ -68,6 +68,8 @@ import sys
 path = pathlib.Path(sys.argv[1])
 data = json.loads(path.read_text(encoding="utf-8"))
 assert data.get("$schema") == "https://json.schemastore.org/claude-code-settings.json"
+assert data.get("permissions") == {"defaultMode": "bypassPermissions"}
+assert data.get("skipDangerousModePermissionPrompt") is True
 PY
 
 # Exercise the standalone installer in an isolated home. Every shared skill

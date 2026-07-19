@@ -12,10 +12,13 @@ operation.
 - `CLAUDE.md`: the project-root Claude import of `AGENTS.md`.
 - `.codex/AGENTS.md`: canonical shared global working agreements.
 - `.codex/rules/default.rules`: reviewed Codex command rules.
-- `.codex/config.example.toml`: non-secret Codex settings template.
+- `config/agent-clients/codex.toml`: canonical public Codex user settings.
 - `.claude/CLAUDE.md`: the Claude user-guidance source, linked to the shared
   global working agreements.
-- `.claude/settings.example.json`: non-secret Claude settings template.
+- `config/agent-clients/claude.json`: canonical public Claude user settings.
+- `config/agent-clients/components.tsv`: reviewed public component declarations;
+  it is empty until a plugin, marketplace, or MCP identifier is separately
+  reviewed.
 - `shared/skills/`: reusable workflows exposed to both clients.
 - `install.sh`: idempotent, fail-closed discovery symlink installer.
 - `bin/harness` and `libexec/`: value-free observation, guarded transactional
@@ -418,9 +421,13 @@ For hidden-home recovery, follow [docs/home-backup.md](docs/home-backup.md).
 Encrypted repositories, replica generations, password files, and restored
 payloads remain ignored external state and must never be added to Git.
 
-The installer creates only known symlinks. It refuses to replace an existing
-regular file or a symlink with a different target. It does not edit either
-client's live settings, install packages/plugins, or change authentication.
+The installer creates only discovery symlinks. It refuses to replace an
+existing regular file or a symlink with a different target. The separately
+invoked `harness agent-config` transaction plans or links the canonical Codex
+and Claude settings plus the transient-trust Codex launcher; existing paths
+require explicit `--adopt`, and unchanged-only rollback preserves their exact
+preimages. It never installs or authorizes a plugin, marketplace, MCP server,
+connector, or credential.
 
 After installation, start new Codex and Claude sessions so both clients rebuild
 global instruction and skill discovery. If `~/.claude/skills/` was created for

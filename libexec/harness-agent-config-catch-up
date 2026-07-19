@@ -1,0 +1,78 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() {
+    echo "Usage: harness agent-config-catch-up [--plan|--apply] [--adopt] [--drill]" >&2
+}
+
+mode=plan
+adopt=no
+drill=no
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        --adopt) adopt=yes; shift ;;
+        --drill) drill=yes; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+[ "$mode" = apply ] || [ "$drill" = no ] || { usage; exit 2; }
+
+[ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
+    die "agent configuration catch-up requires a Git harness checkout"
+physical_root=$(CDPATH='' cd -- "$HARNESS_ROOT" && pwd -P)
+[ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" = "$physical_root" ] ||
+    die "agent configuration catch-up checkout root is ambiguous"
+[ "$(git -C "$HARNESS_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null)" = main ] ||
+    die "agent configuration catch-up requires the main branch"
+[ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
+    die "agent configuration catch-up preserves a dirty checkout"
+[ "$(git -C "$HARNESS_ROOT" remote | wc -l | tr -d ' ')" = 1 ] &&
+    [ "$(git -C "$HARNESS_ROOT" remote)" = origin ] ||
+    die "agent configuration catch-up requires exactly one origin"
+
+echo 'NATIVE git fetch --no-tags origin main'
+GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=15' \
+    git -C "$HARNESS_ROOT" fetch --no-tags origin main >/dev/null 2>&1 ||
+    die "agent configuration catch-up fetch failed"
+head=$(git -C "$HARNESS_ROOT" rev-parse HEAD)
+target=$(git -C "$HARNESS_ROOT" rev-parse origin/main)
+git -C "$HARNESS_ROOT" merge-base --is-ancestor "$head" "$target" ||
+    die "agent configuration catch-up is not a clean fast-forward"
+if [ "$head" = "$target" ]; then checkout_action=none; else checkout_action=fast-forward; fi
+printf 'AGENT_CONFIG_CATCH_UP mode=%s checkout=%s target=current adopt=%s drill=%s\n' \
+    "$mode" "$checkout_action" "$adopt" "$drill"
+
+adopt_argument=
+[ "$adopt" = no ] || adopt_argument=--adopt
+if [ "$mode" = plan ]; then
+    if [ "$checkout_action" = none ]; then
+        "$SELF_DIR/harness-agent-config" --plan $adopt_argument
+    else
+        echo 'AGENT_CONFIG post_update_plan=required apply=not-requested'
+    fi
+    echo 'END agent_config_catch_up changes=not-applied'
+    exit 0
+fi
+
+if [ "$checkout_action" = fast-forward ]; then
+    echo 'NATIVE git merge --ff-only origin/main'
+    git -C "$HARNESS_ROOT" merge --ff-only origin/main >/dev/null 2>&1 ||
+        die "agent configuration catch-up fast-forward failed"
+fi
+[ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
+    die "agent configuration checkout changed after catch-up"
+
+drill_argument=
+[ "$drill" = no ] || drill_argument=--drill
+"$HARNESS_ROOT/libexec/harness-agent-config" --apply \
+    $adopt_argument $drill_argument
+"$HARNESS_ROOT/libexec/harness-agent-config" --doctor
+echo 'END agent_config_catch_up status=ready activation=new-sessions'
