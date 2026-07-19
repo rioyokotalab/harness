@@ -24,9 +24,10 @@ and compact historical pointers here. Next free ID: T-269.
   and was not performed. Reports are under `evaluation/results/`; frozen
   evidence is commit `ee96853`, evaluator hardening is `d26c5a3`, and the
   private run root and cleanup manifest are absent.
-- Exactly one native weekly primary job is seeded on each managed node. No
-  login-node cron, user timer, retention deletion, or automatic replica job
-  exists. T-191 remains verification-pending until all seven first runs pass.
+- Exactly one future native weekly primary job is present on each managed node.
+  T-191's seven first runs passed scheduler, snapshot, successor, private-state,
+  and warning-silence acceptance on 2026-07-19. No login-node cron, user timer,
+  retention deletion, or automatic replica job exists.
 - All managed checkouts are kept clean and synchronized through guarded
   fleet-sync; current published `main` is the fleet resume point. Fresh
   interactive Bash shells load shell-local destructive-command safeguards;
@@ -59,8 +60,9 @@ complete tmux config through `~/.tmux.conf`; and the pilot transition is one
 recoverable migration back to private SSH-only agreement. Generic implementation
 merged through protected PR #53 at `4209ee8` after required CI run
 `29671188197` passed. Pilot-plan authority was recorded through protected PR
-#55 at `908b44d`; all six remote managed checkouts `ab`, `ab2`, `ri`, `al`,
-`rc`, and `t4` are clean at `908b44d`, with transfer artifacts absent; AL proved
+#55 at `908b44d`, and its cold-restart failure handoff through PR #56 at
+`2816e1a`; all six remote managed checkouts `ab`, `ab2`, `ri`, `al`, `rc`, and
+`t4` are clean at `2816e1a`, with transfer artifacts absent; AL proved
 a direct guarded fast-forward from old checkpoint `8b63df2`. No Bash/tmux live
 transaction or tmux link has been applied. The first owner-started pilot plan
 stopped safely after Vim because the private Bash fragment was not empty; the
@@ -70,56 +72,17 @@ owner-curation/migration plan only on 2026-07-19; diagnosis and a plan-stage
 retry remain within that boundary, while pilot apply,
 rollback/reapply, local Linux tmux drill, remote Linux tmux rollout, and later
 Macs remain later R1 gates. The shared local checkout remains on another
-contributor's clean branch with `origin/main` fetched. Independently resume
-T-191 after the first Sunday eligibility. Fetch and prove a clean fleet, then
-query only the seven captured IDs below through their declared native scheduler
-routes. Do not infer absence from a failed query, and do not cancel, replace, or
-duplicate a delayed job. T-196 remains blocked until T-191 reaches eight
-successful weekly chains, two verified restores per node, and a current
-verified independent generation. T-210 is complete and must not be repeated.
+contributor's clean branch with `origin/main` fetched. T-191 first-run
+acceptance is complete; exact scheduler, snapshot, successor, state, and silent-
+warning evidence is in
+`docs/audits/restic-first-weekly-2026-07-19.md`. T-196 now has one of eight
+required successful weekly runs on every node and remains blocked until all
+eight runs, two verified restores per node, and a current verified independent
+generation pass. Query only each chain state's captured successor after its
+eligibility; do not infer absence from a failed query or cancel, replace, or
+duplicate a delayed job. T-210 is complete and must not be repeated.
 
 ## Active tasks
-
-### T-191 — Scheduler-native weekly primary snapshots
-
-**Status:** verification-pending. All seven bounded smokes passed and exactly
-one production job per node was seeded for Sunday 2026-07-19. The last
-read-only continuity audit on 2026-07-18 found every captured job present with
-the expected owner/name and future eligibility. Local, RI, AL, and RC report
-native Slurm `PENDING`/`BeginTime`; AB and AB2 report PBS `W`; T4's AGE record
-is present. Every private mode-0600 chain state remains `active` with
-`last_result=seeded` and `snapshot_id=none`. No job was submitted, replaced,
-canceled, resized, or reprioritized.
-
-| Host | Captured production ID | First eligibility |
-|---|---:|---|
-| `local` | `90939` | 00:30 JST |
-| `ab` | `2044027.pbs1` | 01:00 JST |
-| `ab2` | `2044028.pbs1` | 01:30 JST |
-| `ri` | `6862` | 02:00 JST |
-| `rc` | `210816` | 02:30 JST |
-| `t4` | `8175651` | 03:00 JST |
-| `al` | `4221054` | 01:00 Europe/Zurich |
-
-**Frozen invariants:** each node independently maintains exactly one future
-native-scheduler job. A delayed pending/held job is healthy and must never be
-duplicated. When admitted, the job validates its identity, persists exactly one
-strictly future successor, then takes one incremental snapshot tagged
-`harness-hidden-home-weekly`; it never backfills missed weeks. Keep all
-snapshots. No `forget`, `prune`, retention deletion, automatic replica,
-login-node cron/timer, or scheduled full-data check is authorized. RI's
-site-forced one-GB200 allocation is owner-accepted.
-
-**Resume/acceptance:** after the first eligibility, fetch and prove a clean
-fleet, then query only the seven IDs above with each site's declared native
-scheduler route. A failed query is unknown state, not absence. After admission,
-require scheduler and snapshot success, one owner/name-matched successor at the
-next strictly future Sunday, consistent private state, and healthy interactive-
-login silence. T-191 remains open until all seven first snapshots and
-successors pass. Canonical commands and resource/timezone declarations are in
-`profiles/restic-schedules.tsv`, `libexec/harness-restic-schedule`, and
-`docs/home-backup.md`; full implementation and failure chronology is retained
-at `d910a40:TODO.md`.
 
 ### T-196 — Backup lifecycle phase 2
 
@@ -131,6 +94,14 @@ monthly sampled restores, and monthly manual independent generations retaining
 the latest two verified copies. No live retention, `forget`, `prune`, recurring
 check/restore, or replica automation is authorized yet. The eventual actions
 remain behind their later exact-command authority boundaries.
+
+**Production checkpoint:** the 2026-07-19 first weekly run passed on all seven
+nodes, so every chain is at 1/8. The captured 2026-07-26 successors are
+`local` `91840`, `ab` `2048464.pbs1`, `ab2` `2048468.pbs1`, `ri` `7242`,
+`rc` `212389`, `t4` `8194556`, and `al` `4238363`. They were identity-matched
+and future-pending/waiting at the T-191 close. Treat delay as healthy and query
+only the captured ID after eligibility. Full acceptance evidence is in
+`docs/audits/restic-first-weekly-2026-07-19.md`.
 
 **Outcome:** `docs/backup-lifecycle-phase2.md` records official Restic 0.19.1
 semantics, recommended generous retention, separate forget/prune transactions,
@@ -1454,6 +1425,7 @@ aggregate counts, hashes, or failure chronology is required.
 | T-188 | NFS-independent local replica at T4 passed full check/restore (`56c15a7`). |
 | T-189 | Ledger-backed PIE skill created and validated at `dfaea9e`. |
 | T-190 | Automated guarded mirrored-node onboarding skill completed, installed, tested, and published at `b5bb171`. No live node was onboarded. |
+| T-191 | Seven scheduler-native first weekly snapshots, successor continuity, private-state consistency, and warning silence passed; evidence is in `docs/audits/restic-first-weekly-2026-07-19.md`. |
 | T-192 | AB2 quota deferral, primary, replica, restore, migration, and cleanup completed at `1c2050a` and `303938f`. |
 | T-193–T-195 | Public-repository audit, contributor CI/ruleset preparation, and seven-node drift audit completed or superseded; full detail is at `d910a40:TODO.md`. |
 | T-197–T-209 | Evaluation decision and portable environment/HPC capability foundations completed; full detail is at `d910a40:TODO.md`. |
