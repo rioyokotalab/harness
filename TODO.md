@@ -135,46 +135,6 @@ duplicate a delayed job. T-210 is complete and must not be repeated.
 
 ## Active tasks
 
-### T-270 — Post-pilot landmark housekeeping
-
-**Phase/status:** `validating`. Perform a bounded housekeeping pass after the
-successful T-268/T-269 `office` pilot applies while preserving their separate
-resume boundaries, all owner/private state, and Git history.
-
-**Read-only inventory (2026-07-19):** the public checkout is clean on `main` at
-current `origin/main` `561805feaa340bca732fb33fb68a1c49fa62a93d`. There is
-one worktree, no local or remote task branch after fetched-ref pruning, and no
-open pull request. Homebrew's dry-run reports approximately 189.2 MB of obsolete
-portable-Ruby payloads, but package-manager cleanup would remove multiple files
-and is excluded unless the owner explicitly expands scope. No private config,
-credential, live client setting, active session, or transaction payload was
-inspected.
-
-**Recommended plan:** keep this repository-only. Compact superseded T-268 and
-T-269 failure/publication chronology in `TODO.md` only where Git and the final
-published checkpoints retain the facts; preserve active rollout, observation,
-rollback/reapply, and authority boundaries verbatim. Recheck branch/worktree/PR
-state, `git diff --check`, relevant ledger pointers, and protected publication
-of the documentation-only result. Do not delete files, clean Homebrew, remove
-private transactions, prune live rollback evidence, change packages/settings,
-reload sessions, or advance either rollout.
-
-**Decision H1:** selected repository-only ledger/Git housekeeping. Homebrew
-cleanup, package changes, file deletion, private transaction cleanup, live
-configuration/session changes, and rollout execution are excluded. The frozen
-execution order is: compact only superseded T-268/T-269 chronology while
-preserving their active boundaries; verify ledger pointers, clean branch and
-single-worktree state, no open PRs, and `git diff --check`; publish the
-documentation-only result through protected review; then leave clean `main` as
-the resume point. All required input is collected and the explicit owner `go`
-was received. The candidate removes only superseded pilot failure and authority
-handoffs retained in Git, while preserving the published correction, successful
-plans, final applies, fresh-session observation, and separate rollback/rollout
-boundaries. `git diff --check`, ledger-pointer review, one-worktree state, no
-merged task branches, and no open PRs pass. Exact next action: publish this
-documentation-only candidate through protected review, then independently
-verify clean `main` before marking T-270 complete.
-
 ### T-196 — Backup lifecycle phase 2
 
 **Phase/status:** `policy resolved`, execution-gated on eight successful weekly
@@ -1761,3 +1721,4 @@ aggregate counts, hashes, or failure chronology is required.
 | T-265 | Made Codex-to-Claude takeover repository-complete: added root project instructions and Claude import, explicit cross-client handoff policy, collision-before-mutation installer preflight, and focused plus transactional tests for Claude guidance/settings/skills. Live seven-environment preflight passed Claude 2.1.207, canonical guidance, 10/10 shared skills, and 34/34 managed links with no planned changes. |
 | T-266 | Corrected local MPI discovery: fresh interactive shells preserve an existing toolchain or load the reviewed Open MPI 5.0.8 module, tracked local batch jobs select the same module explicitly, and focused regression coverage protects both boundaries. |
 | T-267 | Ran three independent Claude Code cold-takeover tasks with bounded tools: ledger reconstruction and the MPI audit passed, Claude added a correct cross-host MPI isolation regression, exact permissions denied one extra history query and two spelling-variant test attempts, and primary review plus the complete portable suite passed. Durable evaluation: `docs/audits/claude-live-takeover-2026-07-18.md`. |
+| T-270 | Post-pilot repository housekeeping compacted superseded T-268/T-269 handoffs while preserving final applies and active authority boundaries; protected PR #74 passed `portable-phase1` and merged as `4e3f4ed`. One clean worktree, no open PRs, and no merged task branches remained; Homebrew, private transactions, live settings/sessions, and rollout state were untouched. |
