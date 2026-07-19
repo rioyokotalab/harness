@@ -1,6 +1,6 @@
 # T-268 plan — private personal macOS fleet
 
-**Phase:** pilot plan pending — generic configuration-bundle engine published
+**Phase:** generic correction executing — implementation complete, validation pending
 
 **Updated:** 2026-07-19 JST
 
@@ -45,8 +45,8 @@ ledgers.
   escrow, Apple Account/iCloud management, or OS update enforcement;
 - copying other complete dotfiles, `~/Library`, application preferences,
   browser state, histories, caches, keys, Keychain contents, or installed-app
-  inventories; S1–S10 and D11–D14 add only the atomic private SSH, Bash-fragment,
-  and complete-tmux payload set described below;
+  inventories; the current private exception is only the complete SSH config,
+  while the historical Bash/tmux bundle exists solely as a migration source;
 - public host profiles containing Mac names, serial numbers, hardware UUIDs,
   usernames, network addresses, location, personal app lists, or local paths;
 - `brew bundle dump`, `brew bundle cleanup`, unmanaged-formula or cask removal,
@@ -559,14 +559,14 @@ server.
 
 ## Next action
 
-The correction is `ready-for-go`. After a fresh explicit `go`, implement only
-generic public code and synthetic migrations first: shared Mac pre/post hook
-installation, the exact canonical tmux file, the cross-platform tmux symlink
-transaction, the private SSH-only migration bridge, long-gap compatibility,
-doctor coverage, documentation, and tests. Publish through protected CI and
-guarded-sync only clean harness checkouts. Do not inspect or mutate the private
-companion, a live startup file, a tmux path, or an active session during generic
-implementation.
+The owner gave the fresh `go`. Generic public code and synthetic migrations are
+implemented on the task branch: shared Mac pre/post hook installation, the
+exact canonical tmux file, the cross-platform tmux symlink transaction, the
+private SSH-only migration bridge, long-gap compatibility, doctor coverage,
+documentation, and tests. Complete focused and full validation, publish
+through protected CI, and guarded-sync only clean harness checkouts. Do not
+inspect or mutate the private companion, a live startup file, a tmux path, or
+an active session during generic implementation.
 
 After publication, retain separate authority for each live stage: pilot Mac
 curation and migration plan, pilot apply plus deliberate rollback/reapply,

@@ -1,175 +1,130 @@
-# Atomic personal-Mac configuration synchronization
+# Personal Mac Bash, tmux, and private-state migration
 
-`harness macos-config-sync` is an explicit, owner-started equal-writer
-reconciler for the four personal Macs. It is pull-based and has no login hook,
-timer, `launchd` job, remote controller, or automatic active-session reload.
-The public engine contains only validators and transaction logic; all desired
-bytes remain in the private companion and owner-only local state.
+The current design keeps only SSH desired state in the private companion.
+Bash policy and tmux configuration are public, reviewed harness assets shared
+with the Linux fleet. The older engine-2 SSH/Bash/tmux bundle remains readable
+only so an occasionally used Mac can fast-forward directly through this
+migration; it is not the target representation.
 
-## Payload and live-file contract
+## Current representation
 
-Engine-schema-2 adoption requires exactly one private revision containing all
-three ordinary mode-100644 Git blobs:
+- The private companion tracks `ssh_config`, `companion.conf`, and opaque host
+  declarations. `minimum_engine_schema=1` is the current SSH-only layout.
+- Bash's selected login startup file and `.bashrc` begin with the exact public
+  `harness early managed` hook, retain owner-local bytes in the middle, and end
+  with the exact public `harness managed` hook. There is no private Bash
+  fragment or public thin-loader link after migration.
+- [`config/tmux/tmux.conf`](../config/tmux/tmux.conf) is one complete,
+  deliberately non-sensitive tmux configuration. The only live file is
+  `~/.tmux.conf`, a symlink to that tracked file. `~/tmux.conf` and
+  `~/.config/tmux/tmux.conf` must be absent.
+- No apply sources an active shell or reloads a running tmux server. Bash
+  changes activate in new Bash processes and tmux changes in new servers.
 
-| Private payload | Live destination | Runtime behavior |
-| --- | --- | --- |
-| `ssh_config` | `~/.ssh/config` | Complete OpenSSH config; no other SSH file is touched |
-| `bashrc` | `~/.config/harness/managed/personal-macos-private.bash` | Private fragment sourced by the existing thin `.bashrc` loader in a new managed interactive Bash |
-| `tmux.conf` | `~/.tmux.conf` | The one complete live tmux config; there is no loader or second runtime config |
+The canonical tmux file contains only the reviewed session-name status,
+next/previous-session bindings, and full hierarchy browser binding selected in
+T-268. Validation starts a disposable isolated server and uses parse-only
+`source-file -n`; it never sends the configuration to an active server.
 
-The companion must set `minimum_engine_schema=2`. No partial payload set is
-valid. The engine-1 absent and SSH-only layouts remain readable for backward
-compatibility. Migrating an SSH-only layout requires `--seed` and exact
-agreement between its SSH payload and the current live SSH config before the
-Bash and tmux candidates may join it.
+## Pilot owner curation
 
-Each payload is at most 1 MiB, current-user-owned, regular, single-linked, and
-mode 0600 in the private checkout. Private-key markers and credential-like
-assignments are rejected. OpenSSH validation disables hostname
-canonicalization and rejects `Include` and `Match exec`. Bash uses
-`bash --noprofile --norc -n`, which reads syntax without executing the file.
-
-Tmux validation starts a disposable isolated server with `/bin/sleep` as its
-fixed inert pane command, then uses `source-file -n`. Tmux documents that `-n`
-parses a file without executing any commands, so `run-shell`, plugins, nested
-sources, formats, and network-capable commands in the candidate are not run by
-validation. The server, socket, and private temporary directory are removed
-immediately. This behavior is present in the official tmux 3.1c manual and in
-the current upstream configuration guide:
-
-- <https://raw.githubusercontent.com/tmux/tmux/3.1c/tmux.1>
-- <https://github.com/tmux/tmux/wiki/Advanced-Use#checking-configuration-files>
-
-The managed Homebrew baseline is newer than that validator floor. Synthetic
-coverage also exercises the local tmux 3.4 parser, including an inert
-`run-shell` sentinel and an invalid-command refusal. The private payload is not
-shared with Linux/HPC nodes; their site-local tmux and Bash contracts remain
-unchanged.
-
-## Reconciliation states
-
-The private mode-0600 base records the last applied private revision and one
-identity for each payload. After a prompt-free fetch, the command compares the
-complete live set, recorded base, and fetched set:
-
-| Live set | Fetched set | Result |
-| --- | --- | --- |
-| equal to base | equal to base | no-op; destination modes are normalized only on apply |
-| changed | equal to base | validate, commit all desired live bytes, and normal-push |
-| equal to base | changed | fast-forward private Git and apply the fetched set |
-| equal to fetched | changed | same-content convergence |
-| changed differently | changed | `diverged`; preserve both and stop |
-
-Changes to different payloads on two Macs are still a concurrent bundle
-advance and stop for an explicit private merge. The engine never guesses by
-timestamp or host, automatically merges, rebases, resets, force-pushes, or
-prints configuration content, identities, revisions, URLs, or private paths.
-Failed prompt-free fetch/push is `auth-failed` and preserves the live set and
-recorded base. A local candidate commit left by a failed push is recognized
-and can be pushed by an ordinary retry.
-
-## Adoption and operation
-
-Before publishing or adopting the first bundle, fast-forward the public
-harness checkout on each available Mac to engine 2. A sleeping Mac that later
-returns on engine 1 uses the public-only fast-forward bootstrap documented in
-[`personal-macos.md`](personal-macos.md), then runs the current updater. This
-preserves direct catch-up from an old public state even after the private
-companion requires engine 2.
-
-The pilot first prepares and reviews all three live candidates. The Bash
-candidate is a deliberately curated private fragment; the engine never copies
-or tries to infer common commands from the rest of `.bashrc`.
-
-The first pilot can perform the complete safe preparation and seed-plan stage
-with one interactive command from the public harness root:
+Start from a clean, current public `main` checkout on the pilot Mac:
 
 ```bash
 ./bin/harness macos-pilot-plan --host LOGICAL_ID
 ```
 
-The helper promptlessly fetches and clean-fast-forwards public `main`, then
-hands off to the fetched helper. It requires the private companion already
-clean and current; it fetches but never merges private Git. It opens `.bashrc`
-and the private shared fragment side-by-side in an isolated Vim without user
-plugins, swap, or history. The owner moves only settings shared by all four
-Macs, preserving the exact managed loader and machine-local settings in
-`.bashrc`. The helper then validates the complete SSH, Bash, and tmux live set
-and runs `--seed --plan`. It has no apply option and never commits, pushes, or
-applies the private bundle. Bash curation itself changes the two owner files
-and affects only subsequently started managed Bash processes.
+The helper fetches both repositories, fast-forwards only public `main`, and
+requires private `main` to be current and clean. It opens `.bashrc` and the
+private Bash fragment side by side in isolated Vim. Move every machine-local
+setting back into `.bashrc`, remove only settings already supplied by the
+public hooks, and leave the private fragment empty. Credentials must not be
+moved into either synchronized surface. Saving a nonempty fragment stops the
+plan.
 
-If the canonical `~/.tmux.conf` is absent, the helper creates exactly that one
-regular mode-0600 file empty. An empty tmux configuration preserves default
-runtime behavior while establishing the single future synchronization target.
-The validator accepts that empty defaults payload after its normal file,
-ownership, mode, size, and prohibited-content gates; it does not pass the
-commandless file to `source-file -n`, whose empty-input status varies between
-tmux releases. Nonempty payloads retain isolated parse-only validation.
-The helper never creates `~/tmux.conf`, `~/.config/tmux/tmux.conf`, a loader,
-or an override. Any existing symlink or non-regular canonical path still stops
-before seed planning.
+The helper does not apply the migration. It refuses a nonempty existing tmux
+file for separate owner curation and refuses either alternate tmux path. After
+curation it runs only:
 
 ```bash
-harness macos-config-sync --host LOGICAL_ID --plan
-harness macos-config-sync --host LOGICAL_ID --seed --plan
-harness macos-config-sync --host LOGICAL_ID --seed --apply
+./bin/harness macos-config-migrate --host LOGICAL_ID --plan
 ```
 
-Plan performs fetch, layout, metadata, privacy, syntax, ancestry, and
-divergence checks but does not change private Git or a live configuration. Seed
-apply raises `minimum_engine_schema`, commits and normal-pushes the complete
-bundle, then applies it transactionally. Private companion writes have their
-own preimages and unwind fully if a staged replacement fails.
-
-A Mac without bundle state never overwrites its local files implicitly. It
-reports `adopt-required`; after private review, adoption is explicit:
+Apply remains a distinct authority boundary:
 
 ```bash
-harness macos-config-sync --host LOGICAL_ID --adopt --plan
-harness macos-config-sync --host LOGICAL_ID --adopt --apply
+./bin/harness macos-config-migrate --host LOGICAL_ID --apply
 ```
 
-Normal later operation omits both flags:
+## Recoverable bridge
+
+The bridge validates the empty-fragment gate, the exact legacy loader, both
+clean checkouts, private tracking, SSH syntax, public Bash candidates, and the
+tmux candidate before mutation. It then:
+
+1. normally commits and pushes the private companion forward from the
+   engine-2 bundle to the engine-1 SSH-only layout;
+2. adopts the unchanged live SSH file into the SSH-only state machine;
+3. wraps the selected login file and `.bashrc` with public pre/post hooks while
+   retaining the local middle;
+4. replaces the reviewed regular/absent `~/.tmux.conf` with the canonical
+   public symlink;
+5. retires the empty private fragment, legacy loader link, and bundle state.
+
+Every local child operation has a mode-0600 transaction and unchanged-only
+rollback. A composite failure rolls completed local children back in reverse
+order. A completed bridge reports one composite transaction:
 
 ```bash
-harness macos-config-sync --host LOGICAL_ID --plan
-harness macos-config-sync --host LOGICAL_ID --apply
+./bin/harness macos-config-migrate --rollback TRANSACTION_ID
 ```
 
-## Transaction, rollback, and activation
+Rollback restores the prior startup files, prior regular/absent tmux state,
+empty fragment, legacy loader, and bundle state only if their expected
+post-images are unchanged. It never rewinds or force-pushes private Git. A
+subsequent apply catches forward from the already-published SSH-only revision.
+A failed private push likewise leaves a clean forward-only commit that the
+next run may identify and retry; no force push is used.
 
-Apply validates all three candidates and every destination immediately before
-mutation. It stages each new mode-0600 file in its destination filesystem,
-records exact prior images and state, and replaces SSH, Bash, tmux, then state.
-An injected failure at any replacement restores every earlier file and the
-prior state before returning failure. A complete transaction exposes one
-identifier without exposing private values.
+Fetch/push logs are private mode-0600 temporary files and are exact-unlinked.
+An SSH private origin requires `SSH_AUTH_SOCK` to name a current-user-owned Unix
+socket. No command lists keys, requests passphrases, or prints private payload
+bytes, hashes, paths, or revisions.
 
-Rollback prevalidates all three unchanged applied images, all prior images,
-and the current state before restoring any file:
+## Shared tmux adapter
+
+All Macs and Linux nodes use the same command:
 
 ```bash
-harness macos-config-sync --rollback TRANSACTION_ID
+./bin/harness tmux-config --plan
+./bin/harness tmux-config --apply
+./bin/harness tmux-config --rollback TRANSACTION_ID
 ```
 
-A changed file or state refuses rollback without partial restoration. Rollback
-does not rewind private Git; the next apply catches forward to its current
-revision.
+An existing strict regular `~/.tmux.conf` is classified but not replaced
+without reviewed adoption:
 
-Catch-up apply does not source the Bash fragment or run `tmux source-file` on a
-live server. A new managed interactive Bash reads the updated fragment. Tmux
-reads `~/.tmux.conf` only when a new server starts. Reloading an existing shell
-or tmux server is a separate explicit owner action.
+```bash
+./bin/harness tmux-config --adopt --plan
+./bin/harness tmux-config --adopt --apply
+```
 
-## Privacy and stop conditions
+Plan/apply require a clean committed checkout; production apply also requires
+`main`. Unsafe types, foreign ownership, hard links, different symlinks, and
+alternate config paths stop. Rollback validates the unchanged canonical link
+before restoring the exact absent or regular preimage and its mode.
 
-Public output contains only bounded state/action classes, agreement, payload
-count, and transaction availability. Short-lived Git diagnostics are private
-mode 0600 and exactly unlinked. Public tests use only synthetic values.
+## Staged rollout
 
-Stop before mutation on unsafe parents, owners, types, modes, or link counts;
-unknown or incomplete private paths; dirty or non-fast-forward Git; unavailable
-authentication; incompatible engine requirements; invalid grammar; credential
-markers; divergence; changed transaction targets; or any failure to prove that
-all three files can converge as one set.
+Generic publication precedes every live operation. Then validate in this
+order, retaining separate authority at each gate:
+
+1. pilot curation and migration plan;
+2. pilot apply, explicit rollback, reapply, no-op plan, and doctor;
+3. local Linux tmux plan/apply/rollback/reapply plus disposable-server check;
+4. read-only plans for the six remote Linux nodes, one reviewed authority
+   bundle, and sequential apply stopping at the first failure;
+5. each remaining Mac independently, stopping for owner curation if its tmux
+   file is nonempty.
+
+Never reload an active shell or tmux server automatically.

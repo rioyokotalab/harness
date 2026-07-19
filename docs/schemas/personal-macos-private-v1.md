@@ -20,7 +20,8 @@ schema=1
 minimum_engine_schema=1
 ```
 
-or, after atomic configuration-bundle adoption:
+or, only while an older Mac is awaiting migration from the historical atomic
+configuration bundle:
 
 ```text
 schema=1
@@ -58,11 +59,12 @@ local harness state and are reconstructed when not recoverable from the
 owner's existing backup.
 
 Engine 1 permits one deliberate optional repository-root file named
-`ssh_config`. This legacy SSH-only layout remains valid for compatibility, but
-it cannot contain Bash or tmux payloads. Engine 2 permits either no payloads or
-exactly the atomic set `ssh_config`, `bashrc`, and `tmux.conf`; partial sets are
-invalid. The payloads are desired-state copies, not runtime files. Git must
-represent each as one ordinary non-executable blob.
+`ssh_config`. This is the current layout and cannot contain Bash or tmux
+payloads. Engine 2 permits either no payloads or exactly the historical atomic
+set `ssh_config`, `bashrc`, and `tmux.conf`; partial sets are invalid. Engine 2
+is retained only so a sleeping Mac can public-first fast-forward into the
+migration bridge. Git must represent every payload as one ordinary
+non-executable blob.
 
 The SSH payload may contain the private host,
 account, network, and path values required by OpenSSH, but it must contain only
@@ -74,28 +76,26 @@ command. It is limited to 1 MiB and must pass a canonicalization-disabled
 task ledgers, and CI artifacts never contain its bytes, path values, content
 hash, or revision; public tests use only the synthetic fixture.
 
-The `bashrc` payload is the private shared Bash fragment, not a replacement for
+In the historical engine-2 layout, the `bashrc` payload is the private shared Bash fragment, not a replacement for
 the live `.bashrc`. It is limited to 1 MiB, rejects credential-like assignments
 and private-key material, and passes `bash --noprofile --norc -n` without
 executing commands. Apply copies it to the owner-only runtime fragment
 `~/.config/harness/managed/personal-macos-private.bash`; the existing public
 thin loader sources it only in a newly started managed interactive Bash.
 
-The `tmux.conf` payload is the complete desired `~/.tmux.conf`, not a loader or
+In the historical engine-2 layout, the `tmux.conf` payload is the complete desired `~/.tmux.conf`, not a loader or
 second runtime fragment. It has the same size and credential-material gates.
 Validation uses an isolated tmux server and `source-file -n`, which parses the
 complete file but executes none of its commands. Apply replaces only the live
 `~/.tmux.conf`; a running tmux server is never reloaded automatically.
 
-Legacy SSH-only adoption remains available through `harness macos-ssh-sync`.
-Atomic bundle adoption uses
-`harness macos-config-sync --host LOGICAL_ID --seed`; it requires all three
-reviewed local candidates and changes
-`minimum_engine_schema` to 2 in the same private commit. Once adopted, the
-three payloads are one desired-state set and every Mac is an equal writer under
-the fail-closed fast-forward protocol. A later Mac requires explicit `--adopt`
-before replacing absent or different live files. Keys, `known_hosts`, and every
-other `~/.ssh` entry remain outside the companion.
+SSH-only adoption uses `harness macos-ssh-sync`. An older engine-2 companion
+migrates through `harness macos-config-migrate`, which deletes only the tracked
+`bashrc` and `tmux.conf` blobs, changes `minimum_engine_schema` to 1, and
+normally pushes the private commit forward. Bash then uses the public Linux
+pre/local/post layout and tmux uses the public canonical symlink. Private Git
+is never force-rewound by local rollback. Keys, `known_hosts`, and every other
+`~/.ssh` entry remain outside the companion.
 
 The tracked example under
 `profiles/personal-macos/private-companion.example/` is synthetic and
