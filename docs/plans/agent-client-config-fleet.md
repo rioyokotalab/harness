@@ -157,9 +157,12 @@ refuse ambiguous drift, support exact local rollback, and never interpret
 7. Every link apply records exact prior path type/content locally, validates
    the target and parents, replaces atomically, and activates only in a fresh
    session. Rollback is allowed only while the linked output remains unchanged.
-8. Macs pull the public harness and apply locally. Linux adopts on `local`
-   first, then advances the six clean remote nodes sequentially with stop on
-   first failure. No login/session hook performs network or config mutation.
+8. Macs use one explicit local catch-up command that automates fetch,
+   validation, transactional link/declaration apply, doctor, and authorized
+   rollback/reapply drills. Linux uses one explicit controller that applies the
+   same gates to `local` and then the six clean remotes sequentially with stop
+   on first failure. No login/session hook or background service performs
+   network or config mutation.
 
 ## Execution sequence after `go`
 
@@ -181,14 +184,17 @@ refuse ambiguous drift, support exact local rollback, and never interpret
 8. Run focused privacy/config tests, ShellCheck, public-repository audit, and
    the complete portable phase-one suite; publish through protected CI.
 9. On `office`, run value-free discovery and an owner-reviewed adoption plan.
-   Apply, validate a fresh client session, rollback unchanged outputs, verify
-   the prior image, then reapply only under separate pilot authority.
-10. On `local`, adopt/plan/apply/rollback/reapply with the same gates and prove
-    that the selected behavior matches `office` while OS-specific entries do
-    not leak across platforms.
-11. Roll out one clean Linux remote at a time, then one remaining pull-based Mac
-    at a time. Each node independently validates effective config and stops on
-    any unexpected prompt, policy, path, or plugin state.
+   After the frozen execution authority is active, one explicit pilot command
+   automates apply, doctor, unchanged-only rollback, prior-image verification,
+   and accepted reapply. The owner separately observes fresh interactive Codex
+   and Claude sessions; no active session is reloaded.
+10. On `local`, one explicit Linux controller automates local
+    plan/apply/doctor/rollback/reapply, then processes the six clean remotes one
+    at a time with the same gates and stop-on-first-failure behavior.
+11. Each remaining pull-based Mac is brought online and starts the same local
+    catch-up command independently. The command performs every deterministic
+    convergence check; the owner supplies only unavailable authentication/OS
+    interaction and observes the fresh-session result.
 
 ## Risks and recovery
 
@@ -322,11 +328,16 @@ refuse ambiguous drift, support exact local rollback, and never interpret
   new reviewed Git change rather than destructive worktree replacement. No live
   file, Git worktree, or external state changed during this checkpoint.
 
-### C7 — Rollout order (open)
+### C7 — Rollout automation and order (open; confirm refined recommendation)
 
-- **A — `office`, `local`, six Linux remotes, remaining Macs (recommended):**
-  prove both OS families and rollback before broad rollout; stop on first
-  failure and never reload active sessions.
+- **A — Explicit-start automated sequence (recommended):** `office`, then
+  `local` plus the six Linux remotes, then each remaining Mac. One Mac-local
+  catch-up command and one Linux controller automate fetch, validation,
+  transactional link/declaration apply, doctor, and authorized rollback/reapply
+  drills, always stopping on first failure and never reloading active sessions.
+  The owner only starts each offline Mac run, handles authentication/OAuth or
+  OS dialogs that cannot be automated, and observes fresh interactive sessions.
+  There is no daemon, login hook, scheduled job, or automatic config publish.
 - **B — Linux first:** quicker seven-node parity but leaves the original Mac
   problem untested until late.
 - **C — all Macs first:** validates the pull-based family but defers the known
@@ -334,7 +345,7 @@ refuse ambiguous drift, support exact local rollback, and never interpret
 
 ## Exact next action
 
-Ask C7 only. After each answer, checkpoint the decision and ask the next open
-item. Do not change any live client setting during the interview. After C7,
-audit for contradictions, set `ready-for-go`, and wait for a fresh explicit
-`go`.
+Ask C7 only: confirm the explicit-start automated sequence. After the answer,
+checkpoint the decision, audit all decisions for contradictions, and either
+resolve a concrete gap or set `ready-for-go`. Do not change any live client
+setting during the interview; wait for a fresh explicit `go` before execution.
