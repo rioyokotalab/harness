@@ -3,6 +3,7 @@ set -eu
 
 PROGRAM=guarded-delete
 TAB=$(printf '\t')
+platform=$(uname -s)
 manifest_temp=
 manifest_source=
 target_list=
@@ -25,15 +26,72 @@ die() {
 }
 
 cleanup() {
-    [ -z "$manifest_temp" ] || rm -f -- "$manifest_temp"
-    [ -z "$manifest_source" ] || rm -f -- "$manifest_source"
-    [ -z "$target_list" ] || rm -f -- "$target_list"
+    [ -z "$manifest_temp" ] || remove_file "$manifest_temp"
+    [ -z "$manifest_source" ] || remove_file "$manifest_source"
+    [ -z "$target_list" ] || remove_file "$target_list"
 }
 
 trap cleanup EXIT HUP INT TERM
 
 require_command() {
     command -v "$1" >/dev/null 2>&1 || die "required command is unavailable: $1"
+}
+
+remove_file() {
+    case "$platform" in
+        Darwin) rm -f "$1" ;;
+        *) rm -f -- "$1" ;;
+    esac
+}
+
+canonical_path() {
+    case "$platform" in
+        Darwin) realpath "$1" ;;
+        *) realpath -e -- "$1" ;;
+    esac
+}
+
+path_owner() {
+    case "$platform" in
+        Darwin) stat -f '%u' "$1" ;;
+        *) stat -c '%u' -- "$1" ;;
+    esac
+}
+
+path_mode() {
+    case "$platform" in
+        Darwin) stat -f '%Lp' "$1" ;;
+        *) stat -c '%a' -- "$1" ;;
+    esac
+}
+
+path_size() {
+    case "$platform" in
+        Darwin) stat -f '%z' "$1" ;;
+        *) stat -c '%s' -- "$1" ;;
+    esac
+}
+
+file_sha256() {
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$1" | awk '{ print $1 }'
+    else
+        shasum -a 256 "$1" | awk '{ print $1 }'
+    fi
+}
+
+copy_file() {
+    case "$platform" in
+        Darwin) cp "$1" "$2" ;;
+        *) cp -- "$1" "$2" ;;
+    esac
+}
+
+hard_link() {
+    case "$platform" in
+        Darwin) ln "$1" "$2" ;;
+        *) ln -- "$1" "$2" ;;
+    esac
 }
 
 reject_control_characters() {
@@ -48,11 +106,14 @@ canonical_existing_directory() {
     value=$1
     [ -d "$value" ] || die "directory does not exist: $value"
     [ ! -L "$value" ] || die "symlink directories are not recursive-delete targets: $value"
-    realpath -e -- "$value"
+    canonical_path "$value"
 }
 
 path_id() {
-    stat -Lc '%d:%i' -- "$1"
+    case "$platform" in
+        Darwin) stat -f '%d:%i' "$1" ;;
+        *) stat -Lc '%d:%i' -- "$1" ;;
+    esac
 }
 
 is_same_or_descendant() {
@@ -74,9 +135,17 @@ tree_facts() (
     target=$1
     facts_file=$(mktemp "${TMPDIR:-/tmp}/guarded-delete-facts.XXXXXX") ||
         die "cannot create tree inventory"
-    trap 'rm -f -- "$facts_file"' EXIT HUP INT TERM
-    find "$target" -xdev -printf '%s\n' >"$facts_file" ||
-        die "cannot inventory every target entry: $target"
+    trap 'remove_file "$facts_file"' EXIT HUP INT TERM
+    case "$platform" in
+        Darwin)
+            find -x "$target" -exec stat -f '%z' {} + >"$facts_file" ||
+                die "cannot inventory every target entry: $target"
+            ;;
+        *)
+            find "$target" -xdev -printf '%s\n' >"$facts_file" ||
+                die "cannot inventory every target entry: $target"
+            ;;
+    esac
     awk '{ bytes += $1; entries++ } END {
         printf "%d\t%.0f\n", entries + 0, bytes + 0
     }' "$facts_file"
@@ -84,10 +153,20 @@ tree_facts() (
 
 authoritative_home() {
     uid=$1
-    getent passwd "$uid" | awk -F: -v uid="$uid" '
-        $3 == uid { print $6; found++ }
-        END { if (found != 1) exit 1 }
-    '
+    case "$platform" in
+        Darwin)
+            dscacheutil -q user -a uid "$uid" | awk '
+                $1 == "dir:" { print $2; found++ }
+                END { if (found != 1) exit 1 }
+            '
+            ;;
+        *)
+            getent passwd "$uid" | awk -F: -v uid="$uid" '
+                $3 == uid { print $6; found++ }
+                END { if (found != 1) exit 1 }
+            '
+            ;;
+    esac
 }
 
 consistent_home_facts() {
@@ -103,7 +182,7 @@ consistent_home_facts() {
     [ "$HOME" = "$account_home" ] ||
         die "HOME differs from the account database; refuse environment-dependent deletion"
     [ -d "$account_home" ] || die "account home is unavailable: $account_home"
-    canonical_home=$(realpath -e -- "$account_home") ||
+    canonical_home=$(canonical_path "$account_home") ||
         die "cannot resolve canonical account home: $account_home"
     [ -d "$canonical_home" ] && [ ! -L "$canonical_home" ] ||
         die "canonical account home is not a real directory: $canonical_home"
@@ -281,28 +360,28 @@ plan() {
     [ "$planned_target_count" -gt 0 ] &&
         [ "$source_target_count" -eq "$planned_target_count" ] ||
         die "independent manifest source is incomplete"
-    expected_size=$(stat -c '%s' -- "$manifest_source")
+    expected_size=$(path_size "$manifest_source")
     [ "$expected_size" -gt 0 ] || die "independent manifest source is empty"
-    expected_token=$(sha256sum "$manifest_source" | awk '{ print $1 }')
+    expected_token=$(file_sha256 "$manifest_source")
 
     manifest_temp=$(mktemp "$manifest_parent/.guarded-delete-manifest.XXXXXX") ||
         die "cannot create manifest beside destination"
     chmod 600 "$manifest_temp"
-    cp -- "$manifest_source" "$manifest_temp" ||
+    copy_file "$manifest_source" "$manifest_temp" ||
         die "cannot persist manifest beside destination"
-    persisted_size=$(stat -c '%s' -- "$manifest_temp")
-    persisted_token=$(sha256sum "$manifest_temp" | awk '{ print $1 }')
+    persisted_size=$(path_size "$manifest_temp")
+    persisted_token=$(file_sha256 "$manifest_temp")
     [ "$persisted_size" -eq "$expected_size" ] &&
         [ "$persisted_token" = "$expected_token" ] ||
         die "persisted manifest differs from planned content"
-    ln -- "$manifest_temp" "$manifest" ||
+    hard_link "$manifest_temp" "$manifest" ||
         die "manifest destination appeared during plan: $manifest"
-    [ "$(stat -c '%s' -- "$manifest")" -eq "$expected_size" ] &&
-        [ "$(sha256sum "$manifest" | awk '{ print $1 }')" = "$expected_token" ] ||
+    [ "$(path_size "$manifest")" -eq "$expected_size" ] &&
+        [ "$(file_sha256 "$manifest")" = "$expected_token" ] ||
         die "published manifest differs from planned content"
-    rm -f -- "$manifest_temp"
+    remove_file "$manifest_temp"
     manifest_temp=
-    rm -f -- "$manifest_source"
+    remove_file "$manifest_source"
     manifest_source=
     token=$expected_token
 
@@ -320,7 +399,7 @@ validate_anchor() {
     path=$2
     expected_id=$3
     [ -d "$path" ] && [ ! -L "$path" ] || die "$label anchor changed type: $path"
-    [ "$(realpath -e -- "$path")" = "$path" ] || die "$label anchor is no longer canonical: $path"
+    [ "$(canonical_path "$path")" = "$path" ] || die "$label anchor is no longer canonical: $path"
     [ "$(path_id "$path")" = "$expected_id" ] || die "$label anchor identity changed: $path"
 }
 
@@ -329,7 +408,7 @@ validate_home_alias() {
     canonical=$2
     expected_id=$3
     [ -d "$lexical" ] || die "lexical home anchor changed type: $lexical"
-    [ "$(realpath -e -- "$lexical")" = "$canonical" ] ||
+    [ "$(canonical_path "$lexical")" = "$canonical" ] ||
         die "canonical account home changed: $lexical"
     [ "$(path_id "$lexical")" = "$expected_id" ] ||
         die "lexical home anchor identity changed: $lexical"
@@ -361,10 +440,10 @@ apply_manifest() {
     esac
     [ "${#supplied_token}" -eq 64 ] || die "token must contain 64 hexadecimal characters"
     [ -f "$manifest" ] && [ ! -L "$manifest" ] || die "manifest must be a regular file"
-    [ "$(realpath -e -- "$manifest")" = "$manifest" ] || die "manifest path must be canonical"
-    [ "$(stat -c '%u' -- "$manifest")" = "$(id -u)" ] || die "manifest owner differs from current uid"
-    [ "$(stat -c '%a' -- "$manifest")" = 600 ] || die "manifest mode must be 600"
-    actual_token=$(sha256sum "$manifest" | awk '{ print $1 }')
+    [ "$(canonical_path "$manifest")" = "$manifest" ] || die "manifest path must be canonical"
+    [ "$(path_owner "$manifest")" = "$(id -u)" ] || die "manifest owner differs from current uid"
+    [ "$(path_mode "$manifest")" = 600 ] || die "manifest mode must be 600"
+    actual_token=$(file_sha256 "$manifest")
     [ "$actual_token" = "$supplied_token" ] || die "manifest token mismatch; re-plan"
 
     schema=$(field_value schema "$manifest") || die "manifest schema field is invalid"
@@ -420,7 +499,7 @@ apply_manifest() {
         [ "$kind" = target ] || continue
         reject_control_characters "$target"
         [ -d "$target" ] && [ ! -L "$target" ] || die "target changed type or disappeared: $target"
-        [ "$(realpath -e -- "$target")" = "$target" ] || die "target is no longer canonical: $target"
+        [ "$(canonical_path "$target")" = "$target" ] || die "target is no longer canonical: $target"
         is_strict_descendant "$target" "$root" || die "target escaped --within: $target"
         reject_protected_target "$target" "$home_lexical" "$home_canonical" "$cwd" "$repo"
         [ "$(path_id "$target")" = "$target_id" ] || die "target identity changed: $target"
@@ -440,7 +519,10 @@ apply_manifest() {
         [ "$kind" = target ] || continue
         [ "$(path_id "$parent")" = "$parent_id" ] || die "target parent changed before delete: $parent"
         [ "$(path_id "$target")" = "$target_id" ] || die "target changed before delete: $target"
-        rm -rf --one-file-system -- "$target"
+        case "$platform" in
+            Darwin) find -x "$target" -depth -delete ;;
+            *) rm -rf --one-file-system -- "$target" ;;
+        esac
         [ ! -e "$target" ] && [ ! -L "$target" ] || die "target remains after delete: $target"
         printf 'DELETED path=%s\n' "$target"
     done <"$manifest"
@@ -457,11 +539,21 @@ apply_manifest() {
     printf 'VERIFIED protected_anchors=unchanged targets=absent\n'
 }
 
-for required in awk cp date find getent git id ln mktemp realpath rm sed sha256sum stat; do
+for required in awk cp date find git id ln mktemp realpath rm sed stat uname; do
     require_command "$required"
 done
-rm --help 2>/dev/null | grep -- '--one-file-system' >/dev/null ||
-    die "rm lacks required --one-file-system support"
+case "$platform" in
+    Darwin)
+        require_command dscacheutil
+        command -v sha256sum >/dev/null 2>&1 || require_command shasum
+        ;;
+    *)
+        require_command getent
+        require_command sha256sum
+        rm --help 2>/dev/null | grep -- '--one-file-system' >/dev/null ||
+            die "rm lacks required --one-file-system support"
+        ;;
+esac
 
 action=${1:-}
 case "$action" in
