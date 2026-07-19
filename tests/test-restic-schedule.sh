@@ -4,7 +4,8 @@ set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
-TEST_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/restic-schedule-test.XXXXXX")
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+TEST_ROOT=$(mktemp -d "$TEMP_BASE/restic-schedule-test.XXXXXX")
 
 fail() {
     echo "FAIL: $*" >&2
@@ -27,8 +28,8 @@ cleanup() {
     trap - EXIT HUP INT TERM
     cleanup_failed=0
     if [ -d "$TEST_ROOT" ]; then
-        "$CLEANUP" "$HARNESS" "${TMPDIR:-/tmp}" "$TEST_ROOT" \
-            "${TMPDIR:-/tmp}" >/dev/null || cleanup_failed=1
+        "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEST_ROOT" \
+            "$TEMP_BASE" >/dev/null || cleanup_failed=1
     fi
     if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
         status=1
@@ -57,6 +58,60 @@ grep '^ri|slurm|Asia/Tokyo|Sun|02:00|rkp00015|none|' "$schedule_map" >/dev/null 
 fake_bin=$TEST_ROOT/fake-bin
 fake_sched=$TEST_ROOT/fake-scheduler
 mkdir -p "$fake_bin" "$fake_sched"
+RESTIC_TEST_PYTHON=$(command -v python3) || fail "python3 unavailable"
+export RESTIC_TEST_PYTHON
+cat >"$fake_bin/date" <<'EOF'
+#!/bin/sh
+exec "$RESTIC_TEST_PYTHON" "$0.py" "$@"
+EOF
+cat >"$fake_bin/date.py" <<'EOF'
+import datetime
+import os
+import re
+import sys
+from zoneinfo import ZoneInfo
+
+args = sys.argv[1:]
+if len(args) != 3 or args[0] != "-d" or not args[2].startswith("+"):
+    raise SystemExit(2)
+spec, output = args[1], args[2][1:]
+zone = ZoneInfo(os.environ.get("TZ", "UTC"))
+if spec.startswith("@"):
+    value = datetime.datetime.fromtimestamp(int(spec[1:]), zone)
+else:
+    if spec.endswith("Z") and "T" in spec:
+        value = datetime.datetime.fromisoformat(spec[:-1] + "+00:00")
+    else:
+        match = re.fullmatch(
+            r"(\d{4}-\d{2}-\d{2})(?: \+(\d+) days)?(?: (\d{2}:\d{2}:\d{2}))?",
+            spec,
+        )
+        if not match:
+            raise SystemExit(2)
+        day = datetime.date.fromisoformat(match.group(1))
+        day += datetime.timedelta(days=int(match.group(2) or 0))
+        clock = datetime.time.fromisoformat(match.group(3) or "00:00:00")
+        value = datetime.datetime.combine(day, clock, zone)
+if output == "%s":
+    print(int(value.timestamp()))
+else:
+    print(value.strftime(output))
+EOF
+cat >"$fake_bin/stat" <<'EOF'
+#!/bin/sh
+case "$1:$2" in -c:%u) format=%u ;; -c:%a) format=%a ;; *) exec /usr/bin/stat "$@" ;; esac
+shift 2; [ "${1:-}" != -- ] || shift
+case $(/usr/bin/uname -s) in
+    Darwin)
+        [ "$format" != %a ] || format=%Lp
+        exec /usr/bin/stat -f "$format" "$@"
+        ;;
+    *) exec /usr/bin/stat -c "$format" -- "$@" ;;
+esac
+EOF
+chmod 755 "$fake_bin/date" "$fake_bin/date.py" "$fake_bin/stat"
+real_jq=$(command -v jq) || fail "jq unavailable"
+ln -s "$real_jq" "$fake_bin/jq"
 printf '%s\n' 100 >"$fake_sched/counter"
 : >"$fake_sched/jobs"
 
@@ -219,7 +274,7 @@ for declaration in 'local ybatch' 'ri slurm' 'ab pbs' 't4 age'; do
     mkdir -p "$home"
     : >"$fake_sched/jobs"
     run_schedule "$host" "$family" "$home" seed >"$TEST_ROOT/$host.seed" 2>&1 ||
-        fail "$host seed"
+        { sed -n '1,80p' "$TEST_ROOT/$host.seed" >&2; fail "$host seed"; }
     grep "RESTIC_SCHEDULE_SEED host=$host" "$TEST_ROOT/$host.seed" >/dev/null ||
         fail "$host seed output"
     if [ "$host" = ri ]; then
@@ -257,14 +312,14 @@ printf '%s\n' "$next_output" | grep 'local=2026-07-19T00:30:00+0900' >/dev/null 
 
 al_home=$TEST_ROOT/al-time-home
 mkdir -p "$al_home"
-before_dst=$(date -d '2026-10-23T00:00:00Z' +%s)
+before_dst=$($fake_bin/date -d '2026-10-23T00:00:00Z' +%s)
 next_output=$(env HOME="$al_home" PATH="$fake_bin:/usr/bin:/bin" \
     HARNESS_TESTING=1 HARNESS_LOGICAL_HOST=al HARNESS_NOW_EPOCH="$before_dst" \
     FAKE_SCHED_DIR="$fake_sched" FAKE_FAMILY=slurm \
     "$HARNESS" restic-schedule next --host al)
 printf '%s\n' "$next_output" | grep 'local=2026-10-25T01:00:00+0200' >/dev/null ||
     fail "Europe/Zurich DST eligibility"
-exact_epoch=$(TZ=Europe/Zurich date -d '2026-10-25 01:00:00' +%s)
+exact_epoch=$(TZ=Europe/Zurich $fake_bin/date -d '2026-10-25 01:00:00' +%s)
 next_output=$(env HOME="$al_home" PATH="$fake_bin:/usr/bin:/bin" \
     HARNESS_TESTING=1 HARNESS_LOGICAL_HOST=al HARNESS_NOW_EPOCH="$exact_epoch" \
     FAKE_SCHED_DIR="$fake_sched" FAKE_FAMILY=slurm \
@@ -369,10 +424,15 @@ for argument in "$@"; do
 done
 if [ "$mode" = backup ]; then
     [ -f "$manifest" ] || exit 2
-    tr '\000' '\n' <"$manifest" | grep -F "$EXPECT_HOME/.alpha" >/dev/null
-    if [ -n "${EXPECT_TARGET:-}" ]; then
-        tr '\000' '\n' <"$manifest" | grep -F "$EXPECT_TARGET" >/dev/null
-    fi
+    "$RESTIC_TEST_PYTHON" - "$manifest" "$EXPECT_HOME/.alpha" \
+        "${EXPECT_TARGET:-}" <<'PY'
+import pathlib
+import sys
+entries = pathlib.Path(sys.argv[1]).read_bytes().split(b"\0")
+for expected in sys.argv[2:]:
+    if expected and expected.encode() not in entries:
+        raise SystemExit(1)
+PY
     if [ -n "${EXPECT_JOB_COUNT:-}" ]; then
         [ "$(wc -l <"$FAKE_SCHED_DIR/jobs" | tr -d ' ')" -eq "$EXPECT_JOB_COUNT" ]
     fi

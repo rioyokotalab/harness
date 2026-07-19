@@ -323,7 +323,12 @@ def ensure_tmp_path(path: Path, *, may_not_exist: bool) -> Path:
     if not path.is_absolute():
         fail("run root must be absolute")
     lexical = Path(os.path.normpath(str(path)))
+    tmp_lexical = Path("/tmp")
     tmp = Path("/tmp").resolve(strict=True)
+    try:
+        lexical = tmp / lexical.relative_to(tmp_lexical)
+    except ValueError:
+        pass
     parent = lexical.parent.resolve(strict=True)
     if parent != tmp and tmp not in parent.parents:
         fail("run root must be a strict descendant of /tmp")
@@ -516,6 +521,17 @@ def prepare_pair(root: Path, stage: str, task_id: str, repeat: int) -> Path:
                 encoding="utf-8",
             )
             helper.chmod(0o755)
+            dscache_helper = helper_dir / "dscacheutil"
+            dscache_helper.write_text(
+                "#!/bin/sh\n"
+                "if [ \"$#\" -eq 5 ] && [ \"$1:$2:$3:$4\" = \"-q:user:-a:uid\" ]; then\n"
+                "    printf 'dir: %s\\n' \"$HOME\"\n"
+                "else\n"
+                "    exec /usr/bin/dscacheutil \"$@\"\n"
+                "fi\n",
+                encoding="utf-8",
+            )
+            dscache_helper.chmod(0o755)
         fixed_env = dict(os.environ)
         fixed_env.update(
             {
