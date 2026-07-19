@@ -44,7 +44,11 @@ EOF
 chmod 755 "$fake_bin/uname" "$fake_bin/stat"
 
 git clone -q "$ROOT" "$public"
-git -C "$public" branch -m main
+if git -C "$public" symbolic-ref --quiet HEAD >/dev/null 2>&1; then
+    git -C "$public" branch -m main
+else
+    git -C "$public" switch -q -c main
+fi
 git -C "$public" config branch.main.remote origin
 git -C "$public" config branch.main.merge refs/heads/main
 git init -q --bare "$private_remote"
