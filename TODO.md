@@ -1956,6 +1956,38 @@ apply, rollback, cleanup, package action, other-node change, or rollout is
 authorized until D13 is selected, its migration/rollback is frozen, and a fresh
 `go` follows.
 
+**Decision D13 selected / ready-for-go:** the official installer/runtime remains
+sole owner of `~/.local/bin/codex` and the standalone package cache. The harness
+owns `~/.local/bin/harness-codex`; fresh managed interactive Bash resolves the
+ordinary `codex` command through a shell-local function to that wrapper, while
+non-interactive/batch environments retain native command resolution. The
+wrapper calls the absolute native `~/.local/bin/codex`, passes explicit frozen
+approval/sandbox flags, and supplies no project-trust override. Codex's live
+config becomes an owner-only regular file. Its managed prefix is the exact two
+public settings; its optional private suffix is accepted only as repeated
+Codex-written project tables containing one `trust_level = "trusted"` value,
+passes current native strict-config parsing, and is never printed, copied to
+Git, or included in public evidence. Claude remains a direct public link.
+
+Implementation order is frozen: (1) refactor public launcher, Bash routing,
+agent-config inventory/plan/apply/doctor/rollback, docs, and synthetic privacy/
+failure tests without reading the live private suffix; (2) pass focused,
+ShellCheck, diff, privacy, frozen-evaluation, and protected `portable-phase1`;
+(3) publish and cleanly fast-forward `office`; (4) value-free plan the exact
+live migration and stop on any suffix outside the trust-only grammar; (5) apply
+one recoverable transaction and run doctor; (6) launch fresh managed Bash,
+`harness-codex`, ordinary interactive `codex`, and Claude, requiring prompt-free
+readiness, frozen Codex values, preserved native ownership, and clean public
+Git; (7) retain the transaction through acceptance; (8) identify the current
+standalone release without printing its private path, then use guarded-delete
+plan/apply for only the redundant alternate visible-entry directory and the
+one non-current release, with package/cache and account anchors verified; (9)
+publish the value-free outcome. Any grammar ambiguity, native/runtime drift,
+dirty Git, doctor failure, changed rollback target, more than one obsolete
+release, or cleanup-boundary mismatch stops. Phase is `ready-for-go`; no new
+implementation, apply, rollback, cleanup, package, session, or rollout action
+has run under D13.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
