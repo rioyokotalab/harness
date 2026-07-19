@@ -310,19 +310,17 @@ refuse ambiguous drift, support exact local rollback, and never interpret
   state are never payloads. No hook, plugin, marketplace, MCP, credential, or
   live client state changed during this checkpoint.
 
-### C6 — Editing and drift model (open; ask next)
+### C6 — Editing and drift model (selected)
 
-- **A — Review-first Git workflow (recommended):** an edit through a live link
-  is an ordinary tracked `harness` worktree edit. Validation and public privacy
-  gates run before a normal commit and protected PR. Catch-up requires a clean
+- **Selected — Review-first Git workflow:** an edit through a live link is an
+  ordinary tracked `harness` worktree edit. Validation and public privacy gates
+  run before a normal commit and protected PR. Catch-up requires a clean
   checkout and never auto-commits, auto-pushes, adopts, or overwrites an edit;
   concurrent writers reconcile through normal non-force Git review.
-- **B — Automatic publish from live edits:** commit and push changes during
-  catch-up. This risks publishing secrets, partial UI writes, and unreviewed
-  fleet-wide behavior, and conflicts with the protected workflow.
-- **C — Forbid edits through live links:** require users to open the repository
-  path explicitly even though it is the same tracked inode. This reduces
-  accidental edits but defeats the intended direct-link convenience.
+- Dirty state is preservation, not an error to repair automatically. Doctor
+  reports it without values, and rollback of a published configuration is a
+  new reviewed Git change rather than destructive worktree replacement. No live
+  file, Git worktree, or external state changed during this checkpoint.
 
 ### C7 — Rollout order (open)
 
@@ -336,7 +334,7 @@ refuse ambiguous drift, support exact local rollback, and never interpret
 
 ## Exact next action
 
-Ask C6 only. After each answer, checkpoint the decision and ask the next open
+Ask C7 only. After each answer, checkpoint the decision and ask the next open
 item. Do not change any live client setting during the interview. After C7,
 audit for contradictions, set `ready-for-go`, and wait for a fresh explicit
 `go`.
