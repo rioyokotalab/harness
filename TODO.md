@@ -143,6 +143,25 @@ only after its own proportional validation and durable checkpoint.
    or an active project, respect unmanaged-dependent refusal, and plan/apply
    through the existing transactional adapter. No blanket upgrade, cleanup,
    cask, service, tap, or package-manager mutation is implied.
+9. **Orphaned `.bash_common` files — onboarding-ordered fleet cleanup.** T-248
+   removed the obsolete startup references, but a value-free 2026-07-20 check
+   found an owner regular `~/.bash_common` still present on `office`; neither
+   `.bashrc` nor `.bash_profile` references it and `macos-doctor` is ready with
+   zero failures or warnings. Do not inspect or copy its contents. On `office`
+   and every Linux managed environment (`local`, `ab`, `ab2`, `ri`, `al`, `rc`,
+   and `t4`), first inventory only type/owner/mode/size, exact reference counts
+   in the declared Bash startup paths and tracked startup sources, open-file
+   state, and fresh login/noninteractive/interactive behavior. Quarantine each
+   exact regular file recoverably, repeat doctor and fresh-shell acceptance,
+   restore it immediately on any regression, and remove it only after the
+   unchanged acceptance proves it orphaned. Revalidate identity immediately,
+   then use one exact non-recursive unlink for that host's quarantined regular
+   file and verify both original and quarantine paths absent; never use a loop,
+   glob, recursive command, or cross-host batch. For each of the three remaining
+   Macs, run this sequence only after that Mac's independent
+   T-268/T-269 onboarding, rollback/reapply drill, doctor, and fresh-session
+   acceptance have passed; never include `.bash_common` cleanup inside the
+   onboarding transaction or batch Macs together.
 
 **Explicit dispositions:** plugin/MCP/connector authorization, accounts,
 administrator settings, automatic publication, background/login mutation, and
