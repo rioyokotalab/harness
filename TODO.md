@@ -1921,6 +1921,88 @@ T-181 instructions while allowing the current shared skill to evolve. Retry is
 safe; no installer, package, deletion, live link, credential, component, or
 session changed.
 
+**D12 publication / reviewed install / fresh-session stop (2026-07-19):** the
+corrected PR #81 run passed `portable-phase1` in 2m24s and squash-merged D12 as
+`7c74f1d`; clean `office` fast-forwarded to it. Exact official installer bytes
+with SHA-256 `1154e9da...a7a5d` passed syntax and destructive-target review.
+Non-interactive execution used an explicit alternate visible-command directory,
+kept profile mutation disabled through command-scoped `PATH`, reused the same
+single standalone package, and left no review artifact. The native entry and
+fresh Bash/tmux/Claude checks passed. Agent-config's pre-apply plan unexpectedly
+found a regular Codex file, absent Claude file, and the old native launcher
+symlink; the authorized adopt transaction preserved those preimages, linked all
+three public targets, and its doctor passed. Fresh Codex then reported the
+frozen approval/sandbox values and returned readiness, but final consistency
+found two independent current-client conflicts. First, Codex appended one
+redacted project section with only `trust_level` to the directly linked public
+body; a sanitized reproduction proved that the purported transient trust
+override is persisted. Second, the standalone runtime reclaimed
+`~/.local/bin/codex`, so the doctor now reports only the launcher as a different
+symlink. The public canonical body was restored after each reproduction and no
+private path/value entered Git. The cache contains two release directories;
+no obsolete release was deleted.
+
+Phase returns to `interviewing` for revised C2/C4. Recommended D13 leaves the
+official installer/runtime as sole owner of `codex`, installs the public wrapper
+under `~/.local/bin/harness-codex`, routes fresh managed interactive shells to
+that wrapper, and changes the live Codex config from a direct public link to a
+private local rendered file containing the canonical public settings plus
+client-persisted private trust records. Public Git never stores or reads those
+records; reconciliation validates only the canonical managed prefix and
+preserves an allowlisted local project-trust suffix transactionally. Claude
+remains a direct public link. Alternative D13 abandons wrapper/trust management
+and leaves native Codex plus its local config entirely owner-managed. No new
+apply, rollback, cleanup, package action, other-node change, or rollout is
+authorized until D13 is selected, its migration/rollback is frozen, and a fresh
+`go` follows.
+
+**Decision D13 selected / ready-for-go:** the official installer/runtime remains
+sole owner of `~/.local/bin/codex` and the standalone package cache. The harness
+owns `~/.local/bin/harness-codex`; fresh managed interactive Bash resolves the
+ordinary `codex` command through a shell-local function to that wrapper, while
+non-interactive/batch environments retain native command resolution. The
+wrapper calls the absolute native `~/.local/bin/codex`, passes explicit frozen
+approval/sandbox flags, and supplies no project-trust override. Codex's live
+config becomes an owner-only regular file. Its managed prefix is the exact two
+public settings; its optional private suffix is accepted only as repeated
+Codex-written project tables containing one `trust_level = "trusted"` value,
+passes current native strict-config parsing, and is never printed, copied to
+Git, or included in public evidence. Claude remains a direct public link.
+
+Implementation order is frozen: (1) refactor public launcher, Bash routing,
+agent-config inventory/plan/apply/doctor/rollback, docs, and synthetic privacy/
+failure tests without reading the live private suffix; (2) pass focused,
+ShellCheck, diff, privacy, frozen-evaluation, and protected `portable-phase1`;
+(3) publish and cleanly fast-forward `office`; (4) value-free plan the exact
+live migration and stop on any suffix outside the trust-only grammar; (5) apply
+one recoverable transaction and run doctor; (6) launch fresh managed Bash,
+`harness-codex`, ordinary interactive `codex`, and Claude, requiring prompt-free
+readiness, frozen Codex values, preserved native ownership, and clean public
+Git; (7) retain the transaction through acceptance; (8) identify the current
+standalone release without printing its private path, then use guarded-delete
+plan/apply for only the redundant alternate visible-entry directory and the
+one non-current release, with package/cache and account anchors verified; (9)
+publish the value-free outcome. Any grammar ambiguity, native/runtime drift,
+dirty Git, doctor failure, changed rollback target, more than one obsolete
+release, or cleanup-boundary mismatch stops. Phase is `ready-for-go`; no new
+implementation, apply, rollback, cleanup, package, session, or rollout action
+has run under D13.
+
+**D13 implementation checkpoint (2026-07-19):** generic public code now leaves
+the installer-owned native `codex` path untouched, manages only
+`harness-codex`, routes interactive Bash through a shell-local function, passes
+the frozen flags without a project override, and treats the live Codex config
+as an owner-only regular file. Doctor accepts only the exact public two-line
+prefix plus repeated trust-only project tables; invalid suffix content blocks
+without printing it. Apply renders the initial regular file, while Claude stays
+linked. Synthetic coverage passes native absence/recursion, private trust
+acceptance and invalid-suffix refusal, launcher flags, partial adoption,
+rollback/reapply, and injected failure recovery. Portable syntax, warning-level
+ShellCheck, focused agent-config, and diff checks pass. No live config, wrapper,
+native command, package, cleanup target, credential, component, or session
+changed. Exact next action: publish through protected CI before the frozen
+`office` migration.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
