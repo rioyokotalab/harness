@@ -1237,10 +1237,19 @@ validation on disposable isolated servers passed the exact payload on all
 seven Linux nodes, including the 3.2a floor; every candidate file, socket, and
 temporary directory was exactly removed. No active server was contacted or
 reloaded. T3 is selected subject to the same native parse gate on each Mac
-before linking. Open decision B3: choose owner-guided side-by-side curation
-(recommended) or an automatic byte-preserving insertion for retiring the
-pilot's private Bash fragment. The migration must prove no retained private
-line is lost before removing that payload from the companion and local state.
+before linking.
+
+**Decision B3:** selected owner-guided side-by-side migration of the accepted
+pilot's `.bashrc` and current private Bash fragment in isolated Vim. The owner
+moves genuinely Mac-local settings into the local middle, removes only settings
+already supplied by the shared public hooks, and leaves the private fragment
+empty. Validation must preserve the managed boundaries, reject credentials and
+invalid Bash, and prove the fragment empty before the private payload or state
+is removed. The engine may not infer, print, or automatically insert private
+bytes. Open decision M1: decide whether Bash-hook conversion, public tmux
+linking, private Bash/tmux payload retirement, and local state migration must
+be one recoverable pilot transaction (recommended) or separately applied
+stages.
 
 ## Stable operational facts
 
