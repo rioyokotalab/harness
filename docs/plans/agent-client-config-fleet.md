@@ -1,6 +1,6 @@
 # T-269 plan — private cross-platform Codex and Claude configuration
 
-**Phase:** executing
+**Phase:** validating
 
 ## Desired outcome
 
@@ -368,10 +368,11 @@ Implement the generic public engine synthetic-first, validate it in a clean
 checkout, and publish it through the protected workflow. Do not read or change
 any live client setting during this stage.
 
-Implementation is now at the clean-checkout validation gate. The task branch
+Implementation passed the clean-checkout validation gate. The task branch
 contains the two minimal C1 bodies, strict empty component declaration,
 transient-trust launcher, transactional links and rollback, explicit local
 catch-up, sequential Linux controller, and focused synthetic coverage. No
-unspecified private preference or live state was inspected or adopted. Run the
-complete portable suite, inspect the committed diff and privacy audit, then use
-the protected publication workflow if every gate passes.
+unspecified private preference or live state was inspected or adopted. The
+complete portable suite, focused tests, ShellCheck, diff check, and public
+privacy audit pass. Publish through the protected workflow, synchronize only
+clean managed checkouts, and stop before live rollout.

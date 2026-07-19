@@ -51,7 +51,7 @@ and compact historical pointers here. Next free ID: T-270.
 
 ## Next resume checkpoint
 
-Resume T-269 in `executing`. The owner gave the frozen-plan `go` after C1–C7
+Resume T-269 in `validating`. The owner gave the frozen-plan `go` after C1–C7
 passed their final audit. The current Linux node's value-free baseline
 proves that Codex uses `approval_policy=never` with
 `sandbox_mode=danger-full-access`, while Claude uses
@@ -1405,7 +1405,7 @@ migration plan. It must not inspect private values or run
 
 ### T-269 — Private cross-platform Codex and Claude configuration
 
-**Phase/status:** `executing`. Mirror deliberately selected Codex and Claude
+**Phase/status:** `validating`. Mirror deliberately selected Codex and Claude
 user configuration across four pull-based Macs and seven managed Linux
 environments without copying authentication, credentials, sessions, histories,
 memories, caches, databases, client-generated state, private endpoints, or raw
@@ -1497,9 +1497,14 @@ adoption, idempotence, transient project trust, changed-link and hard-link
 refusal, injected partial-link restoration, automated rollback/reapply, direct
 old-to-current fast-forward, controller ordering, and stop-on-first-failure.
 Focused ShellCheck, Claude takeover, public-repository audit, and diff checks
-pass. No live settings, link, client session, authentication, component, or
-remote node was read or changed. Exact next action: commit this checkpoint and
-run the complete portable phase-one suite from the clean task checkout.
+pass. Commit `6f87600` records the implementation. From that clean task
+checkout, `HARNESS_PORTABLE_CI=1 tests/test-phase1.sh` passed the complete
+portable suite, including all existing macOS, Linux/HPC, safety, privacy,
+ShellCheck, and new agent-config regressions. No live settings, link, client
+session, authentication, component, or remote node was read or changed. Exact
+next action: publish the clean task branch through a protected PR, require
+`portable-phase1`, merge without force, and guarded-fast-forward only clean
+managed checkouts. Stop before every live adoption or rollout gate.
 
 ## Stable operational facts
 
