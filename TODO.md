@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-273.
+and compact historical pointers here. Next free ID: T-274.
 
 ## Current state
 
@@ -51,6 +51,13 @@ and compact historical pointers here. Next free ID: T-273.
 
 ## Next resume checkpoint
 
+T-273 is the ordered closure task for every known item deliberately deferred by
+T-268, T-269, and T-272. Do not treat the earlier maintenance completion as a
+reason to leave those items indefinitely implicit. Work the ready, value-free
+transaction review first; then implement and test the checksum-pinned agent
+upgrade/rollback lifecycle. The other workstreams retain their recorded time,
+availability, project-requirement, or explicit-authority gates.
+
 T-268 and T-269 have completed the accessible rollout on `office`, `local`,
 `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`. All eight checkouts are clean on
 published `main`. The seven managed compute environments have current public
@@ -81,6 +88,81 @@ query only those recorded IDs after eligibility and do not replace or duplicate
 a delayed job. T-210 is complete and must not be repeated.
 
 ## Active tasks
+
+### T-273 — Resolve every intentionally deferred maintenance item
+
+**Phase/status:** `planned`; scope reconciled on 2026-07-20. This task owns the
+closure or explicit evidence-backed disposition of every known item that
+T-268, T-269, and T-272 intentionally left alone. It does not weaken the
+credential, destructive-cleanup, package, scheduler, external-service, active-
+session, or owner-configuration authority boundaries. Each workstream closes
+only after its own proportional validation and durable checkpoint.
+
+**Major workstreams and gates:**
+
+1. **Retained failed-transaction evidence — ready now.** Perform a value-free
+   inventory of the one retained record on `local` and the one on RC; correlate
+   only public operation type/status and current healthy state, without reading
+   private payloads. Define and test a deterministic retention/archive/removal
+   rule. Preserve evidence unless that rule proves it redundant; route any
+   multi-path removal through guarded bulk deletion and verify current agent,
+   tmux, and repository readiness afterward.
+2. **Checksum-pinned agent upgrades — ready engineering work.** Design focused
+   first-class version replacement, rollback, interrupted-apply recovery, and
+   idempotence coverage before changing the repository-pinned Linux Codex or
+   proposing parity with the official macOS runtime. Continue to require the
+   checksum manifest; never replace a live runtime with an unverified download.
+3. **Three remaining Macs — availability-gated.** Bring up and plan/apply one
+   Mac at a time under T-268/T-269. Revalidate public/private cleanliness,
+   identity, native ownership, transport, and a value-free plan independently;
+   never infer one Mac's state from another or batch the applies.
+4. **Backup lifecycle successors — time-gated.** On or after 2026-07-26, query
+   only T-196's seven captured successor IDs. Record terminal identity, success,
+   snapshot succession, warning silence, and chain count; do not replace or
+   duplicate a delayed job. T-196 remains keep-all at 1/8 until verified.
+5. **Vendor arg0 temporary directories — process-gated.** Re-inventory
+   `local` only after all Codex processes have exited. Distinguish active,
+   locked, recent, nonempty, and old-empty directories without inspecting
+   payloads. If the vendor lifecycle or measured evidence proves a set stale,
+   use the guarded-bulk-delete workflow with an exact canonical boundary,
+   immutable manifest, revalidation, and post-delete checks; otherwise record a
+   justified retention decision. Never race a running Codex process.
+6. **Container capability — requirement-gated.** Resolve the intentionally
+   absent Docker/Podman capability on `local` and the previously observed
+   Singularity/Apptainer capability on RI against a concrete project need.
+   Either implement the smallest native, tested environment for that need or
+   record that no project requires it and close the warnings as intentional;
+   do not invent or install a generic container stack merely for warning parity.
+7. **One-way `local`-to-`t4` SSH mirror — explicit-authority-gated.** Revalidate
+   the frozen plan and execute only after the owner separately authorizes that
+   exact external mutation. It is not implied by Mac rollout or this ledger
+   update.
+8. **Package-maintenance inventory — freshness and selection-gated.** Recheck
+   the stale 2026-07-19 Homebrew inventory instead of assuming its 54 outdated
+   formulae still exist. Select only packages required by the declared harness
+   or an active project, respect unmanaged-dependent refusal, and plan/apply
+   through the existing transactional adapter. No blanket upgrade, cleanup,
+   cask, service, tap, or package-manager mutation is implied.
+
+**Explicit dispositions:** plugin/MCP/connector authorization, accounts,
+administrator settings, automatic publication, background/login mutation, and
+active-session reload have no identified harness defect or requested outcome;
+they are closed non-goals, not hidden backlog. Unknown profiles and the retired
+`sshservice-cli` lost in the 2026-07-15 incident remain non-reconstructable
+without evidence and must not be guessed back into existence.
+
+**Repository-hygiene follow-up:** on 2026-07-20 the owner authorized removal of
+all obsolete Git branches. The GitHub repository, `office`, `local`, and the six
+Linux managed clones were independently verified clean on `main` with no other
+local or remote branch retained: 32 remote branches, 30 `office` local branches,
+and 12 `local` local branches were removed; the Linux clones already retained
+only `main`. No force-push or worktree overwrite occurred.
+
+**Exact next action:** perform workstream 1's value-free failed-transaction
+classification on `local` and RC and checkpoint the evidence and retention
+decision here. If evidence must remain, that is a resolved disposition rather
+than permission to delete it. Then start workstream 2 on a protected task
+branch with focused replacement/rollback tests before any live version change.
 
 ### T-272 — Seven-hour accessible-fleet maintenance
 
