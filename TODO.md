@@ -1553,6 +1553,16 @@ Exact next action: publish through protected CI, cleanly fast-forward `office`,
 complete T-268's migration plan, then run only
 `./bin/harness agent-config-catch-up --host office --adopt --plan`.
 
+The correction is committed as `f50f3b2` on
+`task/t268-t269-coordinated-mac-catch-up` and normally pushed to `origin` after
+a fresh `origin/main` fetch confirmed it remained a direct descendant. PR
+creation then stopped because this pilot environment has no `gh` executable;
+authenticated Git push does not imply hosting-API authority, so no alternate
+credential or API route was attempted. Retry is safe: create the task PR from
+the pushed branch, require protected `portable-phase1`, merge without force,
+then resume the clean `office` catch-up and the two plan-only commands in the
+recorded order. No pilot plan has run in this resumed session.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
