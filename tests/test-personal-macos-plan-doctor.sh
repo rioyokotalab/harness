@@ -243,6 +243,18 @@ case "$doctor_output" in
         ;;
 esac
 
+cp "$ROOT/shell/bash_profile.canonical" "$home/.bash_profile"
+chmod 600 "$home/.bash_profile"
+canonical_doctor_output=$(HOME="$home" BREW_LOG="$TEMP_DIR/doctor-canonical.log" \
+    FAKE_TREE_PRESENT=1 PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
+    "$DOCTOR" --host mac-test-pilot --facts "$ready_facts")
+printf '%s\n' "$canonical_doctor_output" | grep -F -x \
+    'PASS required=bash_profile state=canonical-thin-loader' >/dev/null ||
+    fail "canonical thin-profile doctor status"
+printf '%s\n' "$canonical_doctor_output" | grep -F -x \
+    'END macos_doctor status=ready failures=0 warnings=0' >/dev/null ||
+    fail "canonical thin-profile doctor result"
+
 cp "$ROOT/tests/fixtures/personal-macos/private-v2/companion.conf" \
     "$private/companion.conf"
 cp "$ROOT/tests/fixtures/personal-macos/private-v1/ssh_config" \

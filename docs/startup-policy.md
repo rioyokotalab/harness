@@ -7,6 +7,29 @@ history, the prompt, and the sorted aliases in `shell/common-aliases.sh`.
 Its duplicate-source sentinel is shell-local rather than exported, so every
 new child or tmux-window shell can load its own interactive policy.
 
+## Canonical owner startup file
+
+The target converged layout keeps `.bashrc` as the only owner-maintained Bash
+startup file. `.bash_profile` remains present because Bash selects that name for
+login shells, but contains only a public loader that sources `.bashrc`.
+Machine-local bytes formerly in `.bash_profile` live inside an explicit
+login-shell guard in `.bashrc`; existing `.bashrc` local bytes retain their
+order. The migration is explicit and transactional:
+
+```bash
+harness bash-startup-unify --host HOST --plan
+harness bash-startup-unify --host HOST --apply
+harness bash-startup-unify --rollback TRANSACTION_ID
+```
+
+The adapter accepts only the exact current pre/local/post layouts, preserves
+file metadata and private preimages in local mode-0600 transaction state, emits
+only byte counts, parses both candidates with recovery Bash, and restores both
+prior files after any partial failure. Rollback validates exact private
+postimages without publishing or hashing owner bytes. Changes activate only in
+new shells. Recovery never depends on startup files: use `/bin/bash --noprofile
+--norc` and the absolute harness command.
+
 AB, AB2, and T4 deliberately source `shell/module-stack.sh` from `.bashrc`
 without an interactive-shell guard. Existing job scripts sometimes source
 `.bashrc`, so this compatibility behavior remains until those jobs migrate to

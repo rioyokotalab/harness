@@ -1,5 +1,6 @@
 # path|failure label
 tests/test-startup-normalize.sh|startup normalization focused suite
+tests/test-bash-startup-unify.sh|canonical Bash startup transaction
 tests/test-focused-runner.sh|parallel focused-suite runner
 tests/test-ssh-agent-profile.sh|SSH agent profile focused suite
 tests/test-remote-session.sh|remote-session focused suite

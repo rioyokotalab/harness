@@ -24,8 +24,11 @@ not create a convenience script that hides these commands.
    - Formula-only allowlist; no casks, services, taps, cleanup, removal, blanket
      upgrade, or implicit metadata refresh.
 5. **Bash startup**
-   - Use the current published Mac startup adapter (`macos-bash-hooks` or its
-     documented successor) in plan/apply mode.
+   - Establish the public pre/local/post layout with `macos-bash-hooks` when
+     onboarding starts from an older Mac layout.
+   - Converge the current layout with
+     `bash-startup-unify --host HOST --plan|--apply`: `.bashrc` becomes the
+     canonical owner file and `.bash_profile` the public thin loader.
    - Preserve opaque local bytes and validate login, non-login, nested, and
      noninteractive scope. Never change the native account shell.
 6. **Shared tmux**

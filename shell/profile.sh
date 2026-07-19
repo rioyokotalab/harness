@@ -20,8 +20,8 @@ PATH=$harness_user_bin${harness_path:+:$harness_path}
 unset harness_user_bin harness_path harness_prefix harness_suffix
 export PATH
 export EDITOR=vim
-export VISUAL=vim
 export PAGER=cat
+export VISUAL=vim
 
 if [ -r "$HOME/harness/shell/early-cache.sh" ]; then
     . "$HOME/harness/shell/early-cache.sh"

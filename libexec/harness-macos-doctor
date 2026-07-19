@@ -162,7 +162,12 @@ else
     for bash_startup_name in "$bash_login_name" bashrc; do
         bash_startup_path=$HOME/.$bash_startup_name
         case "$bash_startup_name" in bashrc) bash_suffix=$HARNESS_ROOT/shell/bashrc.block ;; *) bash_suffix=$HARNESS_ROOT/shell/bash_profile.block ;; esac
-        if [ "$(macos_stat_owner "$bash_startup_path" 2>/dev/null || true)" = "$current_uid" ] &&
+        if [ "$bash_startup_name" = bash_profile ] &&
+            [ "$(macos_stat_owner "$bash_startup_path" 2>/dev/null || true)" = "$current_uid" ] &&
+            [ "$(macos_stat_links "$bash_startup_path" 2>/dev/null || true)" = 1 ] &&
+            cmp -s "$bash_startup_path" "$HARNESS_ROOT/shell/bash_profile.canonical"; then
+            echo "PASS required=$bash_startup_name state=canonical-thin-loader"
+        elif [ "$(macos_stat_owner "$bash_startup_path" 2>/dev/null || true)" = "$current_uid" ] &&
             [ "$(macos_stat_links "$bash_startup_path" 2>/dev/null || true)" = 1 ] &&
             macos_file_has_public_bash_layout "$bash_startup_path" "$logical_host" "$bash_suffix"; then
             echo "PASS required=$bash_startup_name state=public-pre-local-public-post"
