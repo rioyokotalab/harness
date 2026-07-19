@@ -2123,6 +2123,16 @@ config `--adopt --apply --drill`, verify both doctors/readiness and fresh-sessio
 resolution, and record transaction identifiers. No apply, drill, fresh tmux or
 agent session, or live-path mutation has yet occurred.
 
+**D15 pre-apply safety stop:** after the owner authorized the frozen apply,
+source revalidation proved tmux's transaction-state initializer still rejects
+the declared `~/.local` symlink even though its read-only plan does not enter
+that code path. A known-to-fail apply was not attempted, so `local` remains
+unchanged. D15 extends the same strict logical-host/profile, canonical-target-
+below-persistent-root, current-owner adapter to tmux transaction state, with
+declared apply/rollback and escaping-target no-mutation coverage. Publish and
+pass protected phase-1, fast-forward clean `local`, rerun both plans, and only
+then resume the already-authorized apply sequence if the plans are unchanged.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
