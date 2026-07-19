@@ -86,7 +86,7 @@ a delayed job. T-210 is complete and must not be repeated.
 
 ### T-271 — Comprehensive post-pilot update and cleanup
 
-**Phase/status:** `executing`. Reconcile stale public ledger/control-plane
+**Phase/status:** `validating`. Reconcile stale public ledger/control-plane
 state after the completed `office` pilot, then perform only the owner-selected
 bounded update and cleanup surfaces with independent safety and authority gates.
 
@@ -225,6 +225,23 @@ route. No selected live cleanup target, package, private value, fleet node, or
 active session changed. Exact next action: publish the public correction and
 ledger update through protected review, fast-forward clean `office`, then run
 the frozen real guarded plan against only the known stage-14 tree.
+
+**Protected publication and cleanup outcome:** protected PR #76 passed required
+`portable-phase1` in 2m28s and squash-merged the native guard plus corrected
+resume checkpoint as `2e278a6fde209fceebcc9ec5722124f0a47556ac`.
+Clean `office` fast-forwarded to that exact `origin/main`. The fresh guarded
+plan confirmed retained boundary `/private/tmp`, one exact target with 239
+entries and 53,144,497 bytes, and a new mode-0600 manifest. Its exact emitted
+apply revalidated the 13-second-old token, every identity/count/byte fact, and
+all protected anchors; it deleted only
+`/private/tmp/harness-gh-stage14.DACMP6` and reported
+`VERIFIED protected_anchors=unchanged targets=absent`. The single exact
+manifest was then unlinked and both target and manifest were independently
+verified absent. No fallback remover, package, Homebrew cleanup/upgrade, Git
+object rewrite, fleet/live config change, drill, or session reload ran. Final
+validation now requires `git diff --check`, clean one-worktree/branch/PR state,
+protected publication of this outcome, and exclusion-state review before T-271
+can close.
 
 ### T-196 — Backup lifecycle phase 2
 
