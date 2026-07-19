@@ -5,7 +5,8 @@ ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 EVALUATE=$ROOT/evaluation/evaluate.py
 HARNESS=$ROOT/bin/harness
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
-TEST_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/evaluation-test.XXXXXX")
+TEMP_BASE=$(CDPATH='' cd -- /tmp && pwd -P)
+TEST_ROOT=$(mktemp -d "/tmp/evaluation-test.XXXXXX")
 
 fail() {
     printf 'FAIL: %s\n' "$*" >&2
@@ -17,8 +18,8 @@ cleanup() {
     trap - EXIT HUP INT TERM
     cleanup_failed=0
     if [ -d "$TEST_ROOT" ]; then
-        "$CLEANUP" "$HARNESS" "${TMPDIR:-/tmp}" "$TEST_ROOT" \
-            "${TMPDIR:-/tmp}" >/dev/null || cleanup_failed=1
+        "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEST_ROOT" "$TEMP_BASE" \
+            >/dev/null || cleanup_failed=1
     fi
     if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
         printf '%s\n' 'FAIL: guarded evaluation-test cleanup' >&2

@@ -228,6 +228,20 @@ checks without changing its protected targets, manifest, apply revalidation,
 or post-delete exact-unlink behavior. The full guarded-delete suite must pass
 natively on Darwin and in protected Linux CI before rollout.
 
+PR #100 passed protected phase-1 and merged as `d15a167`; the portable guarded
+wrapper and all affected adversarial tests passed natively before publication.
+`local` and the six Linux checkouts advanced cleanly, bundle artifacts are
+absent, and split repeat plans show equal `HEAD`/`origin/main` everywhere.
+
+**Canonical `/tmp` evaluation gap:** the evaluator resolved `/tmp` to
+`/private/tmp` on Darwin but retained a lexical `/tmp/...` run root, causing a
+`Path.relative_to` exception. Canonicalize only the system `/tmp` alias before
+strict-descendant validation and add a synthetic `dscacheutil` account-home
+adapter beside the existing `getent` helper. Keep arbitrary run-path symlinks
+rejected. The full evaluation selftest passes natively afterward. Also isolate
+the Restic scheduler fixture from BSD `date`/`stat`/`tr` and Homebrew-only `jq`
+locations; production scheduling remains Linux-native and unchanged.
+
 ### T-271 — Comprehensive post-pilot update and cleanup
 
 **Phase/status:** `complete`. Reconciled stale public ledger/control-plane
