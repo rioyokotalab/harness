@@ -47,6 +47,7 @@ make_remote() {
     mkdir -p "$remote_root/$host"
     git clone -q --no-hardlinks "$source_repo" "$remote_root/$host/harness"
     git -C "$remote_root/$host/harness" checkout -q --detach "$old"
+    git -C "$remote_root/$host/harness" update-ref refs/remotes/origin/main "$old"
     mkdir -p "$remote_root/$host/.local/state/harness"
     chmod 700 "$remote_root/$host/.local/state/harness"
 }
@@ -97,6 +98,8 @@ run_sync --from "$old" --to "$new" --hosts n1,n2 --apply \
 for host in n1 n2; do
     [ "$(git -C "$remote_root/$host/harness" rev-parse HEAD)" = "$new" ] ||
         fail "remote did not fast-forward: $host"
+    [ "$(git -C "$remote_root/$host/harness" rev-parse origin/main)" = "$new" ] ||
+        fail "remote origin/main did not advance: $host"
     [ -z "$(git -C "$remote_root/$host/harness" status --porcelain=v1)" ] ||
         fail "remote became dirty: $host"
     artifact=$remote_root/$host/.local/state/harness/harness-transfer-$(printf '%s' "$old" | cut -c1-12)-$(printf '%s' "$new" | cut -c1-12).bundle
@@ -107,6 +110,27 @@ run_sync --from "$old" --to "$new" --hosts n1,n2 --plan \
     >"$TEST_ROOT/repeat.out"
 [ "$(grep -c '^KEEP host=' "$TEST_ROOT/repeat.out")" -eq 2 ] ||
     fail "idempotent keep plan"
+
+git -C "$remote_root/n1/harness" update-ref refs/remotes/origin/main "$old" "$new"
+run_sync --from "$old" --to "$new" --hosts n1 --plan >"$TEST_ROOT/ref-plan.out"
+grep -F "REF_UPDATE host=n1 from=$old to=$new" "$TEST_ROOT/ref-plan.out" >/dev/null ||
+    fail "stale origin/main repair plan"
+run_sync --from "$old" --to "$new" --hosts n1 --apply >"$TEST_ROOT/ref-apply.out"
+[ "$(git -C "$remote_root/n1/harness" rev-parse HEAD)" = "$new" ] &&
+    [ "$(git -C "$remote_root/n1/harness" rev-parse origin/main)" = "$new" ] ||
+    fail "stale origin/main repair apply"
+
+other=$(printf '%s\n' other |
+    git -C "$source_repo" commit-tree "$(git -C "$source_repo" rev-parse "$old^{tree}")" -p "$old")
+git -C "$remote_root/n1/harness" fetch -q "$source_repo" "$other"
+git -C "$remote_root/n1/harness" update-ref refs/remotes/origin/main "$other" "$new"
+if run_sync --from "$old" --to "$new" --hosts n1 --plan \
+    >"$TEST_ROOT/ref-divergent.out" 2>&1; then
+    fail "divergent origin/main was accepted"
+fi
+grep -F 'remote origin/main is not an ancestor of target: n1' \
+    "$TEST_ROOT/ref-divergent.out" >/dev/null || fail "origin/main divergence refusal"
+git -C "$remote_root/n1/harness" update-ref refs/remotes/origin/main "$new" "$other"
 
 printf '%s\n' dirty >"$remote_root/n1/harness/dirty"
 if run_sync --from "$old" --to "$new" --hosts n1 --plan \

@@ -76,12 +76,15 @@ test -d "$repo/.git"
 test ! -L "$repo/.git"
 cd "$repo"
 head=$(git rev-parse --verify HEAD)
+origin=$(git rev-parse --verify refs/remotes/origin/main)
 dirty=$(git status --porcelain=v1 | wc -l | tr -d " ")
 if test -e "$bundle" || test -L "$bundle"; then artifact=present; else artifact=absent; fi
-printf "REMOTE head=%s dirty=%s artifact=%s\n" "$head" "$dirty" "$artifact"'
+printf "REMOTE head=%s dirty=%s artifact=%s origin=%s\n" "$head" "$dirty" "$artifact" "$origin"'
 
 updates=' '
 keeps=' '
+origins=' '
+ref_repairs=' '
 echo "FLEET_SYNC mode=$mode from=$from to=$to transport=ssh-stream"
 for host in $hosts; do
     echo "NATIVE ssh $host git-rev-parse+status+artifact-preflight"
@@ -90,13 +93,24 @@ for host in $hosts; do
         "$remote_command") ||
         die "remote preflight failed: $host"
     set -- $output
-    [ "$#" -eq 4 ] && [ "$1" = REMOTE ] || die "invalid remote preflight output: $host"
+    [ "$#" -eq 5 ] && [ "$1" = REMOTE ] || die "invalid remote preflight output: $host"
     remote_head=${2#head=}
     remote_dirty=${3#dirty=}
     remote_artifact=${4#artifact=}
+    remote_origin=${5#origin=}
     case "$remote_dirty" in ''|*[!0-9]*) die "invalid remote dirty count: $host" ;; esac
     [ "$remote_dirty" -eq 0 ] || die "remote worktree is dirty: $host"
     [ "$remote_artifact" = absent ] || die "remote transfer artifact already exists: $host"
+    require_commit "$remote_origin"
+    git -C "$HARNESS_ROOT" cat-file -e "$remote_origin^{commit}" 2>/dev/null ||
+        die "remote origin/main commit is unavailable locally: $host"
+    git -C "$HARNESS_ROOT" merge-base --is-ancestor "$remote_origin" "$to" ||
+        die "remote origin/main is not an ancestor of target: $host"
+    origins="$origins$host=$remote_origin "
+    if [ "$remote_origin" != "$to" ]; then
+        ref_repairs="$ref_repairs$host "
+        echo "REF_UPDATE host=$host from=$remote_origin to=$to"
+    fi
     if [ "$remote_head" = "$to" ]; then
         keeps="$keeps$host "
         echo "KEEP host=$host head=$remote_head"
@@ -162,9 +176,10 @@ case "$bundle_sha" in *[!0-9a-f]*|'') die "invalid local bundle digest" ;; esac
 remote_apply='set -eu
 old=$1
 new=$2
-expected_size=$3
-expected_sha=$4
-filename=$5
+expected_origin=$3
+expected_size=$4
+expected_sha=$5
+filename=$6
 repo=$HOME/harness
 state=$HOME/.local/state/harness
 bundle=$state/$filename
@@ -172,6 +187,7 @@ test -d "$repo/.git"
 test ! -L "$repo/.git"
 cd "$repo"
 test "$(git rev-parse --verify HEAD)" = "$old"
+test "$(git rev-parse --verify refs/remotes/origin/main)" = "$expected_origin"
 test -z "$(git status --porcelain=v1)"
 test ! -e "$bundle"
 test ! -L "$bundle"
@@ -203,27 +219,65 @@ test "$observed_sha" = "$expected_sha"
 git bundle verify "$bundle" >/dev/null 2>&1
 git fetch -q "$bundle" HEAD
 test "$(git rev-parse FETCH_HEAD)" = "$new"
+git merge-base --is-ancestor "$expected_origin" "$new"
 git merge --ff-only -q FETCH_HEAD
 test "$(git rev-parse --verify HEAD)" = "$new"
+git update-ref refs/remotes/origin/main "$new" "$expected_origin"
+test "$(git rev-parse --verify refs/remotes/origin/main)" = "$new"
 test -z "$(git status --porcelain=v1)"
 unlink -- "$bundle"
 created=0
 test ! -e "$bundle"
-printf "APPLIED head=%s artifact=absent\n" "$new"'
+printf "APPLIED head=%s origin=%s artifact=absent\n" "$new" "$new"'
+
+remote_ref_apply='set -eu
+new=$1
+expected_origin=$2
+filename=$3
+repo=$HOME/harness
+bundle=$HOME/.local/state/harness/$filename
+cd "$repo"
+test "$(git rev-parse --verify HEAD)" = "$new"
+test -z "$(git status --porcelain=v1)"
+test ! -e "$bundle"
+test ! -L "$bundle"
+test "$(git rev-parse --verify refs/remotes/origin/main)" = "$expected_origin"
+git merge-base --is-ancestor "$expected_origin" "$new"
+git update-ref refs/remotes/origin/main "$new" "$expected_origin"
+test "$(git rev-parse --verify refs/remotes/origin/main)" = "$new"
+printf "REF_APPLIED origin=%s\n" "$new"'
 
 for host in $hosts; do
+    remote_origin=
+    for origin_record in $origins; do
+        case "$origin_record" in "$host="*) remote_origin=${origin_record#*=} ;; esac
+    done
+    [ -n "$remote_origin" ] || die "remote origin/main preflight record is missing: $host"
     case "$updates" in
         *" $host "*)
             echo "NATIVE ssh $host verified-bundle-stdin+git-fetch+git-merge--ff-only+exact-unlink"
-            remote_command="/bin/sh -c '$remote_apply' sh '$from' '$to' '$bundle_size' '$bundle_sha' '$filename'"
+            remote_command="/bin/sh -c '$remote_apply' sh '$from' '$to' '$remote_origin' '$bundle_size' '$bundle_sha' '$filename'"
             output=$(ssh -o BatchMode=yes -o ConnectTimeout=15 "$host" \
                 "$remote_command" <"$bundle") ||
                 die "remote fast-forward failed: $host"
-            [ "$output" = "APPLIED head=$to artifact=absent" ] ||
+            [ "$output" = "APPLIED head=$to origin=$to artifact=absent" ] ||
                 die "invalid remote apply output: $host"
-            echo "APPLIED host=$host head=$to artifact=absent"
+            echo "APPLIED host=$host head=$to origin=$to artifact=absent"
             ;;
-        *) echo "KEPT host=$host head=$to" ;;
+        *)
+            case "$ref_repairs" in
+                *" $host "*)
+                    echo "NATIVE ssh $host git-update-ref-origin-main"
+                    remote_command="/bin/sh -c '$remote_ref_apply' sh '$to' '$remote_origin' '$filename'"
+                    output=$(ssh -o BatchMode=yes -o ConnectTimeout=15 "$host" \
+                        "$remote_command") || die "remote origin/main repair failed: $host"
+                    [ "$output" = "REF_APPLIED origin=$to" ] ||
+                        die "invalid remote origin/main repair output: $host"
+                    echo "KEPT host=$host head=$to origin=$to"
+                    ;;
+                *) echo "KEPT host=$host head=$to origin=$to" ;;
+            esac
+            ;;
     esac
 done
 
