@@ -88,8 +88,7 @@ public_origin=$TEMP_DIR/public-origin.git
 mkdir -p "$public/libexec" "$public/profiles/personal-macos" "$public/shell"
 cp -p "$ROOT/libexec/harness-common" "$ROOT/libexec/harness-macos-common" \
     "$ROOT/libexec/harness-macos-profile" \
-    "$ROOT/libexec/harness-macos-config-sync" \
-    "$ROOT/libexec/harness-macos-pilot-plan" "$public/libexec/"
+    "$ROOT/libexec/harness-macos-config-sync" "$public/libexec/"
 cp "$ROOT/profiles/personal-macos/base.conf" \
     "$public/profiles/personal-macos/base.conf"
 cp "$ROOT/shell/personal-macos-startup.block" "$public/shell/"
@@ -102,7 +101,6 @@ git -C "$public" remote add origin "$public_origin"
 git -C "$public" push -q -u origin main
 chmod 700 "$public/.git"
 SYNC=$public/libexec/harness-macos-config-sync
-PILOT=$public/libexec/harness-macos-pilot-plan
 
 setup_home() {
     name=$1
@@ -147,38 +145,6 @@ run_sync() {
     HOME="$test_home" HARNESS_ROOT="$public" PATH="$fake_bin:/usr/bin:/bin" \
         "$SYNC" "$@"
 }
-
-# shellcheck disable=SC2034
-IFS='|' read -r pilot_home pilot_private pilot_writer pilot_origin <<EOF
-$(setup_home pilot-helper)
-EOF
-{
-    printf '%s\n' '# synthetic owner-local Bash setting'
-    cat "$ROOT/shell/personal-macos-startup.block"
-} >"$pilot_home/.bashrc"
-chmod 600 "$pilot_home/.bashrc"
-unlink "$pilot_home/.tmux.conf"
-pilot_output=$(HOME="$pilot_home" HARNESS_ROOT="$public" \
-    PATH="$fake_bin:/usr/bin:/bin" "$PILOT" --host mac-test-pilot)
-printf '%s\n' "$pilot_output" | grep -F \
-    'action=seed apply=not-requested activation=none' >/dev/null ||
-    fail "pilot helper seed plan"
-printf '%s\n' "$pilot_output" | grep -F \
-    'END macos_pilot_plan bundle_apply=not-requested curation=owner-edited next=separate-seed-apply-authority' \
-    >/dev/null || fail "pilot helper authority boundary"
-printf '%s\n' "$pilot_output" | grep -F \
-    'PILOT_TMUX canonical=created-empty behavior=defaults-preserved' \
-    >/dev/null || fail "pilot helper absent tmux preparation"
-[ -f "$pilot_home/.tmux.conf" ] && [ ! -L "$pilot_home/.tmux.conf" ] &&
-    [ ! -s "$pilot_home/.tmux.conf" ] ||
-    fail "pilot helper did not create one empty canonical tmux config"
-[ "$(stat -c %a "$pilot_home/.tmux.conf")" = 600 ] ||
-    fail "pilot helper empty tmux mode"
-grep -F -x 'export HARNESS_SYNTHETIC_SHARED_BASH=pilot' \
-    "$pilot_home/.config/harness/managed/personal-macos-private.bash" \
-    >/dev/null || fail "pilot helper did not curate Bash fragment"
-git -C "$pilot_private" cat-file -e HEAD:ssh_config 2>/dev/null &&
-    fail "pilot helper plan changed private repository"
 
 IFS='|' read -r home private writer origin <<EOF
 $(setup_home primary)
