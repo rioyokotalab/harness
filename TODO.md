@@ -1201,10 +1201,19 @@ tmux grammar, contain no credentials or machine-private values, provide no
 second config or local override, and advance through the existing protected
 public-harness and per-machine catch-up workflows. The private Mac `tmux.conf`
 payload becomes obsolete and must be removed through an explicit compatible
-migration without losing the pilot's accepted prior image. Open decision T2:
-choose a single symlinked live file (recommended) or transactional copied
-materialization. No code, private companion, tmux file, active server, or node
-state has been changed.
+migration without losing the pilot's accepted prior image.
+
+**Decision T2:** selected one live symlink on every managed environment:
+`~/.tmux.conf` points to the complete tracked public canonical file under that
+environment's `~/harness` checkout. There is exactly one configuration body,
+no sourced loader, copied duplicate, or local override. Editing through the
+live path changes the tracked file and normal Git review publishes it. Apply
+must refuse ambiguous alternate paths and unsafe existing types, retain an
+exact prior image/type for rollback, replace atomically, and never reload a
+running tmux server. Open decision T3: select the owner-curated initial
+canonical content after value-free path-type discovery; no live content may be
+read or copied automatically. No code, private companion, tmux file, active
+server, or node state has been changed.
 
 ## Stable operational facts
 
