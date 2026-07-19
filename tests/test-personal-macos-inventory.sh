@@ -68,8 +68,15 @@ if [ "$1" = -f ]; then
     format=$2
     shift 3
     case "$format" in
-        %u) exec /usr/bin/stat -c %u -- "$1" ;;
-        %Lp) exec /usr/bin/stat -c %a -- "$1" ;;
+        %u) native_format=%u ;;
+        %Lp) native_format=%a ;;
+    esac
+    case $(/usr/bin/uname -s) in
+        Darwin)
+            [ "$native_format" != %a ] || native_format=%Lp
+            exec /usr/bin/stat -f "$native_format" "$1"
+            ;;
+        *) exec /usr/bin/stat -c "$native_format" -- "$1" ;;
     esac
 fi
 exec /usr/bin/stat "$@"
@@ -169,7 +176,9 @@ printf '%s\n' "$unusable_output" | grep -F -x \
 no_brew_bin=$TEMP_DIR/no-brew-bin
 mkdir -p "$no_brew_bin"
 cp "$fake_bin/uname" "$fake_bin/stat" "$no_brew_bin/"
-chmod 755 "$no_brew_bin/uname" "$no_brew_bin/stat"
+printf '%s\n' '#!/bin/sh' 'exit 1' >"$no_brew_bin/xcode-select"
+chmod 755 "$no_brew_bin/uname" "$no_brew_bin/stat" \
+    "$no_brew_bin/xcode-select"
 chmod 755 "$private"
 absent_output=$(HOME="$home" SHELL=/bin/other \
     PATH="$no_brew_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
@@ -183,7 +192,11 @@ do
         fail "missing-tool fact: $expected"
 done
 
-if HOME="$home" SHELL=/bin/bash PATH=/usr/bin:/bin HARNESS_ROOT="$ROOT" \
+linux_bin=$TEMP_DIR/linux-bin
+mkdir "$linux_bin"
+printf '%s\n' '#!/bin/sh' 'echo Linux' >"$linux_bin/uname"
+chmod 755 "$linux_bin/uname"
+if HOME="$home" SHELL=/bin/bash PATH="$linux_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
     "$INVENTORY" --host mac-test-pilot >"$TEMP_DIR/linux.out" 2>&1; then
     fail "macOS inventory accepted Linux"
 fi

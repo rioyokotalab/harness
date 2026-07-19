@@ -30,6 +30,13 @@ fail() {
     exit 1
 }
 
+file_mode() {
+    case $(uname -s) in
+        Darwin) stat -f %Lp "$1" ;;
+        *) stat -c %a "$1" ;;
+    esac
+}
+
 repo=$TEMP_DIR/repo
 home=$TEMP_DIR/home
 mkdir -p "$repo/bin" "$repo/libexec" "$home/.ssh"
@@ -121,8 +128,8 @@ HOME="$home" "$repo/bin/harness" startup-normalize --host local --apply \
     >"$TEMP_DIR/apply.out"
 transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\) .*/\1/p' "$TEMP_DIR/apply.out")
 [ -n "$transaction" ] || fail 'transaction id'
-[ "$(stat -c %a "$home/.bashrc")" = 664 ] || fail 'Bash mode preservation'
-[ "$(stat -c %a "$home/.ssh/config")" = 600 ] || fail 'SSH mode preservation'
+[ "$(file_mode "$home/.bashrc")" = 664 ] || fail 'Bash mode preservation'
+[ "$(file_mode "$home/.ssh/config")" = 600 ] || fail 'SSH mode preservation'
 grep -F "alias al='PRIVATE-SENTINEL-MUST-STAY-LOCAL'" "$home/.bashrc" >/dev/null ||
     fail 'local-only alias preservation'
 if grep -R -F 'PRIVATE-SENTINEL-MUST-STAY-LOCAL' \
@@ -147,7 +154,10 @@ cmp "$TEMP_DIR/ssh.before" "$home/.ssh/config" >/dev/null || fail 'SSH rollback'
 HOME="$home" "$repo/bin/harness" startup-normalize --host local --apply \
     >"$TEMP_DIR/reapply.out"
 transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\) .*/\1/p' "$TEMP_DIR/reapply.out")
-sed -i '0,/ForwardAgent yes/s//ForwardAgent no/' "$home/.ssh/config"
+case $(uname -s) in
+    Darwin) sed -i '' '1,/ForwardAgent yes/s/ForwardAgent yes/ForwardAgent no/' "$home/.ssh/config" ;;
+    *) sed -i '0,/ForwardAgent yes/s//ForwardAgent no/' "$home/.ssh/config" ;;
+esac
 if HOME="$home" "$repo/bin/harness" startup-normalize --rollback "$transaction" \
     >"$TEMP_DIR/refused.out" 2>&1; then
     fail 'rollback accepted changed managed block'

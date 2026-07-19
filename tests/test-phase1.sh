@@ -31,6 +31,13 @@ fail() {
     exit 1
 }
 
+file_mode() {
+    case $(uname -s) in
+        Darwin) stat -f %Lp "$1" ;;
+        *) stat -c %a "$1" ;;
+    esac
+}
+
 for script in \
     "$ROOT/bin/harness" \
     "$ROOT/libexec/harness-common" \
@@ -1400,7 +1407,7 @@ grep -F -x 'export TEST_TOKEN=fake-secret-value' "$bash_common_home/.bashrc" >/d
     fail "bash-common remediation damaged preceding owner content"
 grep -F -x '# later owner line' "$bash_common_home/.bashrc" >/dev/null ||
     fail "bash-common remediation damaged following owner content"
-[ "$(stat -c %a "$bash_common_home/.bashrc")" = 640 ] ||
+[ "$(file_mode "$bash_common_home/.bashrc")" = 640 ] ||
     fail "bash-common remediation changed file mode"
 [ -f "$bash_common_home/.bash_common" ] ||
     fail "bash-common reference remediation removed the separately managed file"

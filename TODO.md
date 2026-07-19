@@ -172,6 +172,29 @@ focused test's guarded cleanup and fake BSD-stat shim native on Darwin. Publish
 through protected CI before running the value-free live plan/apply; do not read
 or emit the owner payload.
 
+PR #97 passed protected phase-1 and merged as `b0a1500`. The exact live plan
+classified only `.bash_profile` as relocatable; its transactional apply kept
+the owner bytes, restored the public suffix, and retained rollback. The
+immediate macOS doctor is ready with zero failures/warnings and a fresh login
+Bash resolves the expected identity and Codex route. `local` fast-forwarded
+cleanly through the declared `login` hop; guarded fleet-sync advanced all six
+Linux checkouts, exact-unlinked every bundle, and the repeat plan reports six
+clean/equal-ref KEEP results. All seven managed doctors have zero failures;
+only the already accepted two optional warnings on `local` and RI remain.
+Strict Git fsck plus clean/equal-ref checks pass everywhere.
+
+**Native office validation gap:** the required suite then exposed GNU-only
+test assumptions and a live macOS safeguard defect. The startup-normalization
+fixture used GNU mode and in-place-sed forms, and repository-independence used
+GNU `realpath -m`. More importantly, interactive safety guards used GNU
+`realpath -m/-s`; macOS therefore conservatively refused even safe recursive
+subtrees. Replace those calls with Bash-native lexical normalization and
+nearest-existing-ancestor resolution while retaining lexical/canonical root,
+symlink-alias, persistent-root, current-directory, and broad-child refusal
+tests. Make only the encountered focused fixtures Darwin-portable, then require
+their focused tests and the complete phase-1 suite locally and in protected CI
+before publication or rollout.
+
 ### T-271 — Comprehensive post-pilot update and cleanup
 
 **Phase/status:** `complete`. Reconciled stale public ledger/control-plane

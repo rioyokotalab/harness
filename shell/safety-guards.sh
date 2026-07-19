@@ -32,13 +32,54 @@ _harness_safety_same_or_descendant() {
     return 1
 }
 
+_harness_safety_lexical_path() {
+    local value=$1 part
+    local -a input=() output=()
+
+    [[ $value = /* ]] || value=$(command pwd -L)/$value
+    IFS=/ read -r -a input <<<"$value"
+    for part in "${input[@]}"; do
+        case $part in
+            ''|.) ;;
+            ..)
+                [ "${#output[@]}" -eq 0 ] || unset "output[${#output[@]}-1]"
+                ;;
+            *) output+=("$part") ;;
+        esac
+    done
+    if [ "${#output[@]}" -eq 0 ]; then
+        printf '/\n'
+    else
+        printf '/%s' "${output[0]}"
+        for part in "${output[@]:1}"; do printf '/%s' "$part"; done
+        printf '\n'
+    fi
+}
+
+_harness_safety_resolved_path() {
+    local value probe base part
+    local -a suffix=()
+
+    value=$(_harness_safety_lexical_path "$1") || return 1
+    probe=$value
+    while [ ! -e "$probe" ] && [ ! -L "$probe" ]; do
+        [ "$probe" != / ] || return 1
+        suffix=("${probe##*/}" "${suffix[@]}")
+        probe=${probe%/*}
+        [ -n "$probe" ] || probe=/
+    done
+    base=$(command realpath "$probe" 2>/dev/null) || return 1
+    for part in "${suffix[@]}"; do base=$base/$part; done
+    _harness_safety_lexical_path "$base"
+}
+
 _harness_safety_add_root() {
     local value=${1:-}
     local lexical resolved
 
     [ -n "$value" ] || return 0
-    lexical=$(command realpath -ms -- "$value" 2>/dev/null) || return 1
-    resolved=$(command realpath -m -- "$value" 2>/dev/null) || return 1
+    lexical=$(_harness_safety_lexical_path "$value") || return 1
+    resolved=$(_harness_safety_resolved_path "$value") || return 1
     _harness_safety_roots_lexical+=("$lexical")
     _harness_safety_roots_resolved+=("$resolved")
 }
@@ -71,11 +112,11 @@ _harness_safety_any_path_dangerous() {
     fi
 
     for target in "$@"; do
-        target_lexical=$(command realpath -ms -- "$target" 2>/dev/null) || return 0
+        target_lexical=$(_harness_safety_lexical_path "$target") || return 0
         if [ -L "$target" ]; then
             target_resolved=$target_lexical
         else
-            target_resolved=$(command realpath -m -- "$target" 2>/dev/null) || return 0
+            target_resolved=$(_harness_safety_resolved_path "$target") || return 0
         fi
         target_lexicals+=("$target_lexical")
         target_resolveds+=("$target_resolved")

@@ -74,7 +74,6 @@ cat >"$fake_bin/cat" <<'EOF'
 set -eu
 if [ "${FAKE_CAT_INTERRUPT:-0}" = 1 ]; then
     /bin/cat
-    kill -TERM "$PPID"
     exit 143
 fi
 exec /bin/cat "$@"
