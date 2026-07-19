@@ -1246,10 +1246,18 @@ already supplied by the shared public hooks, and leaves the private fragment
 empty. Validation must preserve the managed boundaries, reject credentials and
 invalid Bash, and prove the fragment empty before the private payload or state
 is removed. The engine may not infer, print, or automatically insert private
-bytes. Open decision M1: decide whether Bash-hook conversion, public tmux
-linking, private Bash/tmux payload retirement, and local state migration must
-be one recoverable pilot transaction (recommended) or separately applied
-stages.
+bytes.
+
+**Decision M1:** selected one recoverable pilot migration. After owner curation
+and complete prevalidation, it converts `.bashrc` and Bash's selected login
+startup file to the shared public pre/post hooks, replaces the canonical tmux
+path with the public symlink, removes the obsolete private Bash/tmux payloads,
+and converts local bundle state back to SSH-only agreement. Any live-file or
+state failure restores every exact preimage. A normal-pushed private schema
+advance is never force-rewound; a post-push local failure remains a bounded
+forward retry. Deliberate unchanged-only rollback/reapply is required, and no
+active shell or tmux server is reloaded. Open decision R1: freeze the sequential
+live rollout and separate authority gates after generic publication.
 
 ## Stable operational facts
 
