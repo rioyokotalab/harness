@@ -41,6 +41,25 @@ require_home() {
         die "tmux configuration HOME is unsafe or ambiguous"
 }
 
+declared_local_symlink_is_safe() {
+    [ "$1" = "$HOME/.local" ] && [ -L "$1" ] || return 1
+    logical_host=${HARNESS_LOGICAL_HOST:-}
+    case "$logical_host" in ''|*[!A-Za-z0-9._-]*) return 1 ;; esac
+    home_layout_file=${HARNESS_HOME_LAYOUT_FILE:-$HARNESS_ROOT/profiles/home-layout.tsv}
+    [ -f "$home_layout_file" ] && [ ! -L "$home_layout_file" ] || return 1
+    record=$(awk -F'|' -v host="$logical_host" '$1 == host { print; count++ } END { if (count != 1) exit 1 }' "$home_layout_file") || return 1
+    old_ifs=$IFS; IFS='|'; set -- $record; IFS=$old_ifs
+    [ "$#" -ge 4 ] || return 1
+    persistent_root=$2
+    moved_items=$4
+    case ",$moved_items," in *,.local,*) ;; *) return 1 ;; esac
+    persistent_physical=$(realpath "$persistent_root" 2>/dev/null) || return 1
+    local_physical=$(realpath "$HOME/.local" 2>/dev/null) || return 1
+    case "$local_physical" in "$persistent_physical"/*) ;; *) return 1 ;; esac
+    [ -d "$HOME/.local" ] &&
+        [ "$(macos_stat_owner "$HOME/.local")" = "$current_uid" ]
+}
+
 validate_source() {
     source_file=$HARNESS_ROOT/config/tmux/tmux.conf
     [ -f "$source_file" ] && [ ! -L "$source_file" ] ||
@@ -85,9 +104,14 @@ prepare_state_root() {
     umask 077
     for path in "$HOME/.local" "$HOME/.local/state" "$state_root" "$transaction_root"; do
         if [ -e "$path" ] || [ -L "$path" ]; then
-            [ -d "$path" ] && [ ! -L "$path" ] &&
-                [ "$(macos_stat_owner "$path")" = "$current_uid" ] ||
-                die "tmux transaction state path is unsafe"
+            if [ -L "$path" ]; then
+                declared_local_symlink_is_safe "$path" ||
+                    die "tmux transaction state path is unsafe"
+            else
+                [ -d "$path" ] &&
+                    [ "$(macos_stat_owner "$path")" = "$current_uid" ] ||
+                    die "tmux transaction state path is unsafe"
+            fi
         else
             mkdir "$path"
             chmod 700 "$path"
