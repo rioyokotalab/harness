@@ -1,6 +1,6 @@
 # T-268 plan — private personal macOS fleet
 
-**Phase:** generic correction published — awaiting separate pilot-plan authority
+**Phase:** pilot curation/plan authorized on office — apply remains gated
 
 **Updated:** 2026-07-19 JST
 

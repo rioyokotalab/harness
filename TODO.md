@@ -50,8 +50,8 @@ and compact historical pointers here. Next free ID: T-269.
 
 ## Next resume checkpoint
 
-Resume T-268 at the separate pilot-plan authority gate. Corrective PIE
-decisions B2, B3, T1–T3,
+Resume T-268 in `executing` with pilot curation/plan authorized on `office`.
+Corrective PIE decisions B2, B3, T1–T3,
 M1, and R1 are frozen: Macs reuse the existing public Linux Bash pre/post hooks
 around local startup bytes; the private Bash payload is retired through
 owner-guided lossless curation; all eleven environments use one reviewed public
@@ -61,8 +61,8 @@ merged through protected PR #53 at `4209ee8` after required CI run
 `29671188197` passed. All six remote managed checkouts `ab`, `ab2`, `ri`, `al`,
 `rc`, and `t4` are clean at `4209ee8`, with transfer artifacts absent; AL proved
 a direct guarded fast-forward from old checkpoint `8b63df2`. No Bash/tmux live
-configuration has been applied. The next operation requires separate owner
-authority to run the pilot's owner-curation/migration plan only; pilot apply,
+configuration has been applied. The owner authorized the pilot's
+owner-curation/migration plan only on 2026-07-19; pilot apply,
 rollback/reapply, local Linux tmux drill, remote Linux tmux rollout, and later
 Macs remain later R1 gates. The shared local checkout remains on another
 contributor's clean branch with `origin/main` fetched. Independently resume
@@ -1335,10 +1335,25 @@ that state. A final six-host plan reported `KEEP` at `4209ee8` for every host
 and no transfer artifact. The shared checkout was not changed. No command ran
 `macos-pilot-plan`, `macos-config-migrate`, `macos-bash-hooks`, or `tmux-config`
 against a live environment, and no active shell/tmux server was reloaded.
-Exact next action, only after separate owner authority: on the pilot Mac run
+The now-authorized exact next action is to run on the pilot Mac
 `./bin/harness macos-pilot-plan --host office`; it may fetch/fast-forward the
 public checkout and open the two owner files for curation, but it must stop at
 the migration plan and must not apply.
+
+**Pilot-plan authority (2026-07-19):** the owner explicitly authorized pilot
+curation and migration plan on opaque logical host `office`. This authorizes
+only the owner-started local command
+`./bin/harness macos-pilot-plan --host office`: value-free public/private
+preflight and fetch, a clean public fast-forward if available, isolated Vim
+curation of `.bashrc` beside the private Bash fragment, the enforced empty
+fragment gate, native parse validation, and `macos-config-migrate --plan`.
+Owner edits made deliberately in that Vim session are within this plan-stage
+authority. It does not authorize `macos-config-migrate --apply`, any private
+commit/push, rollback/reapply, `tmux-config --apply`, Linux rollout, package
+changes, or active shell/tmux reload. Exact next action: run the command locally
+on `office`, preserve its complete value-free output, and stop after
+`END macos_pilot_plan migration_apply=not-requested curation=owner-edited
+next=separate-migration-apply-authority` for review.
 
 ## Stable operational facts
 
