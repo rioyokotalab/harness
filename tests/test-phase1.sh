@@ -674,13 +674,15 @@ if "$HARNESS" doctor --host excluded-host >"$TEMP_DIR/excluded.out" 2>&1; then
     fail "doctor accepted an unknown host"
 fi
 
-"$HARNESS" tool --host ab2 --name ripgrep --facts "$ROOT/tests/fixtures/ab2.facts" \
+mkdir -p "$TEMP_DIR/tool-plan-home"
+HOME="$TEMP_DIR/tool-plan-home" "$HARNESS" tool --host ab2 --name ripgrep \
+    --facts "$ROOT/tests/fixtures/ab2.facts" \
     --plan >"$TEMP_DIR/tool-plan.out"
 grep 'INSTALL artifact=.*ripgrep/15.1.0/linux-x86_64' \
     "$TEMP_DIR/tool-plan.out" >/dev/null || fail "tool artifact plan"
 grep 'sha256=1c9297be4a084eea7ecaedf93eb03d058d6faae29bbc57ecdaf5063921491599' \
     "$TEMP_DIR/tool-plan.out" >/dev/null || fail "tool checksum plan"
-if "$HARNESS" tool --host ab2 --name unsupported \
+if HOME="$TEMP_DIR/tool-plan-home" "$HARNESS" tool --host ab2 --name unsupported \
     --facts "$ROOT/tests/fixtures/ab2.facts" --plan \
     >"$TEMP_DIR/unsupported-tool.out" 2>&1; then
     fail "tool plan accepted an unsupported artifact"

@@ -307,6 +307,15 @@ The standalone affinity test then tried to compile its intentionally Linux-only
 cross-platform, canonicalize its temporary root, and run only that native
 compile/placement subgate on Linux.
 
+PR #104 passed the expanded protected gate and merged as `d2f7d92`; Darwin,
+`local`, AB, AB2, RI, RC, and T4 pass the standalone affinity test, while AL
+passes through its declared native `uenv run prgenv-gnu/25.11:v1
+--view=default` route. A complete deployed-`local` phase-1 probe then exposed
+one real fixture-isolation defect before any mutation: the early AB2 ripgrep
+artifact plan inherited `local`'s managed HOME, so the safety preflight blocked
+the synthetic target. Give that supported/unsupported plan pair one isolated
+fixture HOME; do not weaken collision checks or change live tools.
+
 ### T-271 — Comprehensive post-pilot update and cleanup
 
 **Phase/status:** `complete`. Reconciled stale public ledger/control-plane
