@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-269.
+and compact historical pointers here. Next free ID: T-270.
 
 ## Current state
 
@@ -50,6 +50,19 @@ and compact historical pointers here. Next free ID: T-269.
   auto-memory are non-authoritative.
 
 ## Next resume checkpoint
+
+Resume T-269 in `interviewing`. The current Linux node's value-free baseline
+proves that Codex uses `approval_policy=never` with
+`sandbox_mode=danger-full-access`, while Claude uses
+`permissions.defaultMode=bypassPermissions`; the public harness deliberately
+does not synchronize either live user settings file, which explains the likely
+pilot mismatch. Product docs and repository ownership are reconciled in
+`docs/plans/agent-client-config-fleet.md`. No credential, non-whitelisted config
+value, hook command, project path, endpoint, or authentication state was read
+into public evidence, and no live config changed. Ask only decision C1: choose
+the fleet's default permission posture. T-268 remains independently resumable
+from its pilot-plan failure handoff, and T-196 remains at 1/8 until the 2026-07-26
+successors are eligible.
 
 Resume T-268 in `executing` with pilot curation/plan authorized on `office`.
 Corrective PIE decisions B2, B3, T1–T3,
@@ -1355,6 +1368,30 @@ inspection. It may correct the planning workflow and rerun
 `./bin/harness macos-pilot-plan --host office`, but it must stop at the
 migration plan. It must not inspect private values or run
 `macos-config-migrate --apply`.
+
+### T-269 — Private cross-platform Codex and Claude configuration
+
+**Phase/status:** `interviewing`. Mirror deliberately selected Codex and Claude
+user configuration across four pull-based Macs and seven managed Linux
+environments without copying authentication, credentials, sessions, histories,
+memories, caches, databases, client-generated state, private endpoints, or raw
+project paths. The public harness owns only the generic engine, schema,
+transactions, synthetic tests, and privacy gates; private desired-state storage
+and the exact permission/configuration breadth remain interview decisions.
+
+**Confirmed cause boundary:** on `local`, Codex's mode-0600 user config selects
+`never` plus `danger-full-access`, and Claude's mode-0600 settings select
+`bypassPermissions`. The harness currently excludes these live files, so those
+defaults never reached `office`. Pilot launch/profile/project/system precedence
+still requires value-free local confirmation before claiming this is the only
+cause. No live client setting changed.
+
+**Plan/next action:** the complete architecture, risks, seven-decision register,
+execution order, rollback, and acceptance gates are in
+`docs/plans/agent-client-config-fleet.md`. Ask C1 only: choose two-tier
+autonomy (recommended), exact global Linux parity, or interactive defaults.
+Checkpoint every answer; do not implement until C1–C7 are resolved and the
+owner gives a fresh explicit `go`.
 
 ## Stable operational facts
 
