@@ -4,7 +4,8 @@ umask 077
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 MIRROR=$ROOT/libexec/harness-ssh-config-mirror
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/harness-ssh-mirror-test.XXXXXX")
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-ssh-mirror-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 socket_pid=
 
@@ -17,8 +18,8 @@ cleanup() {
     fi
     cleanup_failed=0
     if [ -d "$TEMP_DIR" ]; then
-        "$CLEANUP" "$ROOT/bin/harness" "${TMPDIR:-/tmp}" "$TEMP_DIR" \
-            "${TMPDIR:-/tmp}" >/dev/null || cleanup_failed=1
+        "$CLEANUP" "$ROOT/bin/harness" "$TEMP_BASE" "$TEMP_DIR" \
+            "$TEMP_BASE" >/dev/null || cleanup_failed=1
     fi
     if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
         echo "FAIL: guarded SSH mirror cleanup" >&2
@@ -32,11 +33,47 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
+file_mode() {
+    case $(/usr/bin/uname -s) in Darwin) stat -f %Lp "$1" ;; *) stat -c %a "$1" ;; esac
+}
 
 local_home=$TEMP_DIR/local-home
 remote_home=$TEMP_DIR/remote-home
 fake_bin=$TEMP_DIR/fake-bin
 mkdir -p "$local_home/.ssh" "$remote_home/.ssh" "$fake_bin"
+printf '%s\n' '#!/bin/sh' 'echo Linux' >"$fake_bin/uname"
+cat >"$fake_bin/stat" <<'EOF'
+#!/bin/sh
+case "$1:$2" in
+    -c:%u) format=%u ;;
+    -c:%a) format=%a ;;
+    -c:%h) format=%h ;;
+    -c:%s) format=%s ;;
+    -c:%d:%i:%u:%a) format=%d:%i:%u:%a ;;
+    *) exec /usr/bin/stat "$@" ;;
+esac
+shift 2; [ "${1:-}" != -- ] || shift
+case $(/usr/bin/uname -s) in
+    Darwin)
+        case "$format" in
+            %a) format=%Lp ;;
+            %h) format=%l ;;
+            %s) format=%z ;;
+            %d:%i:%u:%a) format=%d:%i:%u:%Lp ;;
+        esac
+        exec /usr/bin/stat -f "$format" "$@"
+        ;;
+    *) exec /usr/bin/stat -c "$format" -- "$@" ;;
+esac
+EOF
+cat >"$fake_bin/sha256sum" <<'EOF'
+#!/bin/sh
+case $(/usr/bin/uname -s) in
+    Darwin) exec /usr/bin/shasum -a 256 "$@" ;;
+    *) exec /usr/bin/sha256sum "$@" ;;
+esac
+EOF
+chmod 755 "$fake_bin/uname" "$fake_bin/stat" "$fake_bin/sha256sum"
 chmod 700 "$local_home" "$local_home/.ssh" "$remote_home" "$remote_home/.ssh"
 printf '%s\n' 'Host synthetic-source.invalid' '    HostName 192.0.2.71' \
     '    User synthetic-source' >"$local_home/.ssh/config"
@@ -93,7 +130,7 @@ if [ -n "${MIRROR_TEST_FAIL_REMOTE_DEST:-}" ] &&
     : >"$MIRROR_TEST_FAIL_MARKER"
     exit 42
 fi
-exec /usr/bin/mv "$@"
+exec /bin/mv "$@"
 EOF
 chmod 755 "$fake_bin/ssh" "$fake_bin/mv"
 real_ssh=$(command -v ssh)
@@ -128,7 +165,7 @@ apply_output=$(run_mirror --apply)
     fail "fixed mirror apply"
 cmp -s "$local_home/.ssh/config" "$remote_home/.ssh/config" ||
     fail "mirror content mismatch"
-[ "$(stat -c %a "$remote_home/.ssh/config")" = 600 ] ||
+[ "$(file_mode "$remote_home/.ssh/config")" = 600 ] ||
     fail "mirror destination mode"
 cmp -s "$remote_home/.local/state/harness/ssh-config-mirror/previous" \
     "$TEMP_DIR/original-remote" || fail "single prior rollback image"

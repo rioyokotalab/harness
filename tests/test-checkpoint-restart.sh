@@ -8,16 +8,23 @@ LOCAL_JOB=$ROOT/tests/smoke/jobs/local-checkpoint-restart.slurm
 EPYC_JOB=$ROOT/tests/smoke/jobs/local-checkpoint-restart-epyc.slurm
 FORMAT_DOC=$ROOT/docs/checkpoint-restart-format.md
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
-TEST_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/checkpoint-restart-test.XXXXXX")
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+TEST_ROOT=$(mktemp -d "$TEMP_BASE/checkpoint-restart-test.XXXXXX")
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
+file_mode() {
+    case $(uname -s) in Darwin) stat -f %Lp "$1" ;; *) stat -c %a "$1" ;; esac
+}
+file_size() {
+    case $(uname -s) in Darwin) stat -f %z "$1" ;; *) stat -c %s "$1" ;; esac
+}
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
     cleanup_failed=0
     if [ -d "$TEST_ROOT" ]; then
-        "$CLEANUP" "$ROOT/bin/harness" "${TMPDIR:-/tmp}" "$TEST_ROOT" \
-            "${TMPDIR:-/tmp}" >/dev/null || cleanup_failed=1
+        "$CLEANUP" "$ROOT/bin/harness" "$TEMP_BASE" "$TEST_ROOT" \
+            "$TEMP_BASE" >/dev/null || cleanup_failed=1
     fi
     if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then status=1; fi
     exit "$status"
@@ -42,12 +49,14 @@ grep -F 'tests/smoke/jobs/source-contract.sh' "$EPYC_JOB" >/dev/null ||
 if grep -E '^#SBATCH --(partition|resource)=' "$LOCAL_JOB" >/dev/null; then
     fail "local resource was expressed as a Slurm option"
 fi
-c++ -std=c++20 -O2 -Wall -Wextra -Werror "$SOURCE" -o "$TEST_ROOT/checkpoint_restart"
+env -u LIBRARY_PATH -u CPATH -u CPLUS_INCLUDE_PATH \
+    c++ -std=c++20 -O2 -Wall -Wextra -Werror "$SOURCE" \
+    -o "$TEST_ROOT/checkpoint_restart"
 reference=$("$TEST_ROOT/checkpoint_restart" reference 1000)
 checkpoint=$TEST_ROOT/state.chk
 "$TEST_ROOT/checkpoint_restart" checkpoint "$checkpoint" 400 >/dev/null
-[ "$(stat -c %a "$checkpoint")" = 600 ] || fail "checkpoint mode"
-[ "$(stat -c %s "$checkpoint")" = 40 ] || fail "checkpoint size"
+[ "$(file_mode "$checkpoint")" = 600 ] || fail "checkpoint mode"
+[ "$(file_size "$checkpoint")" = 40 ] || fail "checkpoint size"
 resumed=$("$TEST_ROOT/checkpoint_restart" resume "$checkpoint" 400 1000)
 [ "$reference" = "$resumed" ] || fail "restart equivalence"
 original_sha=$(sha256sum "$checkpoint" | cut -d' ' -f1)
@@ -91,7 +100,7 @@ elif [ "$race_500_status" -eq 0 ] && [ "$race_400_status" -ne 0 ]; then
 else
     fail "checkpoint race did not produce exactly one writer"
 fi
-[ "$(stat -c %a "$race")" = 600 ] && [ "$(stat -c %s "$race")" = 40 ] ||
+[ "$(file_mode "$race")" = 600 ] && [ "$(file_size "$race")" = 40 ] ||
     fail "checkpoint race file identity"
 "$TEST_ROOT/checkpoint_restart" resume "$race" "$race_step" 1000 >/dev/null ||
     fail "checkpoint race winner is invalid"

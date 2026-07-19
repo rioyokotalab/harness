@@ -76,16 +76,53 @@ guarded_delete_tree() (
     boundary=$1
     target=$2
     state_parent=$3
+    platform=$(uname -s)
+    canonical_path() {
+        case "$platform" in Darwin) realpath "$1" ;; *) realpath -e -- "$1" ;; esac
+    }
+    path_owner() {
+        case "$platform" in Darwin) stat -f '%u' "$1" ;; *) stat -c '%u' -- "$1" ;; esac
+    }
+    path_mode() {
+        case "$platform" in Darwin) stat -f '%Lp' "$1" ;; *) stat -c '%a' -- "$1" ;; esac
+    }
+    path_id() {
+        case "$platform" in Darwin) stat -f '%d:%i' "$1" ;; *) stat -Lc '%d:%i' -- "$1" ;; esac
+    }
+    authoritative_home() {
+        case "$platform" in
+            Darwin)
+                dscacheutil -q user -a uid "$uid" | awk '
+                    $1 == "dir:" { value=$2; count++ }
+                    END { if (count != 1 || value == "") exit 1; print value }
+                '
+                ;;
+            *)
+                getent passwd "$uid" | awk -F: -v uid="$uid" '
+                    $3 == uid { value=$6; count++ }
+                    END { if (count != 1 || value == "") exit 1; print value }
+                '
+                ;;
+        esac
+    }
     case "$boundary:$target:$state_parent" in
         /*:/*:/*) ;;
         *) echo "harness: guarded_delete_tree paths must be absolute" >&2; exit 2 ;;
     esac
-    for required in getent id mktemp realpath rmdir sed stat unlink; do
+    for required in awk id mktemp realpath rmdir sed stat uname unlink; do
         command -v "$required" >/dev/null 2>&1 || {
             echo "harness: guarded_delete_tree requires command: $required" >&2
             exit 2
         }
     done
+    case "$platform" in
+        Darwin) required=dscacheutil ;;
+        *) required=getent ;;
+    esac
+    command -v "$required" >/dev/null 2>&1 || {
+        echo "harness: guarded_delete_tree requires command: $required" >&2
+        exit 2
+    }
     [ -d "$boundary" ] && [ ! -L "$boundary" ] || {
         echo "harness: guarded deletion boundary changed type: $boundary" >&2
         exit 2
@@ -98,10 +135,10 @@ guarded_delete_tree() (
         echo "harness: guarded deletion state parent changed type: $state_parent" >&2
         exit 2
     }
-    boundary=$(realpath -e -- "$boundary")
-    target=$(realpath -e -- "$target")
-    state_parent=$(realpath -e -- "$state_parent")
-    current_home=$(realpath -e -- "$HOME") || {
+    boundary=$(canonical_path "$boundary")
+    target=$(canonical_path "$target")
+    state_parent=$(canonical_path "$state_parent")
+    current_home=$(canonical_path "$HOME") || {
         echo "harness: current HOME is not a canonical directory" >&2
         exit 2
     }
@@ -113,16 +150,14 @@ guarded_delete_tree() (
     esac
 
     uid=$(id -u)
-    account_home=$(getent passwd "$uid" | awk -F: -v uid="$uid" '
-        $3 == uid { value=$6; count++ }
-        END { if (count != 1 || value == "") exit 1; print value }
-    ') || { echo "harness: cannot resolve authoritative account HOME" >&2; exit 2; }
-    canonical_account_home=$(realpath -e -- "$account_home") || {
+    account_home=$(authoritative_home) || {
+        echo "harness: cannot resolve authoritative account HOME" >&2; exit 2;
+    }
+    canonical_account_home=$(canonical_path "$account_home") || {
         echo "harness: authoritative account HOME is unavailable" >&2
         exit 2
     }
-    [ "$(stat -Lc '%d:%i' -- "$account_home")" = \
-        "$(stat -Lc '%d:%i' -- "$canonical_account_home")" ] || {
+    [ "$(path_id "$account_home")" = "$(path_id "$canonical_account_home")" ] || {
         echo "harness: lexical and canonical account HOME identities differ" >&2
         exit 2
     }
@@ -163,9 +198,9 @@ guarded_delete_tree() (
     [ "${#token}" -eq 64 ] || { echo "harness: guarded deletion token length is invalid" >&2; exit 2; }
     HOME="$account_home" "$guard" apply --manifest "$manifest" --token "$token"
     [ -f "$manifest" ] && [ ! -L "$manifest" ] &&
-        [ "$(realpath -e -- "$manifest")" = "$manifest" ] &&
-        [ "$(stat -c '%u' -- "$manifest")" = "$uid" ] &&
-        [ "$(stat -c '%a' -- "$manifest")" = 600 ] || {
+        [ "$(canonical_path "$manifest")" = "$manifest" ] &&
+        [ "$(path_owner "$manifest")" = "$uid" ] &&
+        [ "$(path_mode "$manifest")" = 600 ] || {
             echo "harness: guarded deletion manifest changed after apply" >&2
             exit 2
         }

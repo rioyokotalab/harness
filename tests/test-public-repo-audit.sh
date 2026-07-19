@@ -5,11 +5,15 @@ ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 AUDIT=$ROOT/tools/public-repo-audit.py
 HARNESS=$ROOT/bin/harness
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
-TEST_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/public-repo-audit-test.XXXXXX")
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+TEST_ROOT=$(mktemp -d "$TEMP_BASE/public-repo-audit-test.XXXXXX")
 
 fail() {
     printf 'FAIL: %s\n' "$*" >&2
     exit 1
+}
+file_mode() {
+    case $(uname -s) in Darwin) stat -f %Lp "$1" ;; *) stat -c %a "$1" ;; esac
 }
 
 cleanup() {
@@ -17,8 +21,8 @@ cleanup() {
     trap - EXIT HUP INT TERM
     cleanup_failed=0
     if [ -d "$TEST_ROOT" ]; then
-        "$CLEANUP" "$HARNESS" "${TMPDIR:-/tmp}" "$TEST_ROOT" \
-            "${TMPDIR:-/tmp}" >/dev/null || cleanup_failed=1
+        "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEST_ROOT" \
+            "$TEMP_BASE" >/dev/null || cleanup_failed=1
     fi
     if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
         status=1
@@ -55,7 +59,7 @@ python3 "$AUDIT" --repo "$repo" --name fixture --output "$report" \
     >"$stdout" 2>"$stderr" || fail "fixture audit"
 
 [ -f "$report" ] && [ ! -L "$report" ] || fail "report metadata"
-[ "$(stat -c '%a' "$report")" = 644 ] || fail "report mode"
+[ "$(file_mode "$report")" = 644 ] || fail "report mode"
 if grep -F "$fake_value" "$stdout" "$stderr" "$report" >/dev/null; then
     fail "matched value escaped redaction"
 fi
