@@ -213,6 +213,18 @@ apply. The clean run passed all 52 focused suites, guarded deletion, and
 compiler gates, explicitly skipped native MPI, and reached only the known
 Darwin doctor boundary; protected Ubuntu CI remains the publication gate.
 
+PR #117 merged at `6604512`; local fast-forwarded, while the downstream
+fleet-sync stopped in preflight at a transient AL public-key rejection before
+any transfer. The resumed local apply then hit `EXDEV` on the first atomic
+rename because declared `~/.local` transaction state is on a different
+filesystem from `$HOME`; neither startup file changed. The follow-up retains
+mode-0600 durable backups/postimages in state but creates collision-resistant
+candidate, rollback, and recovery temporaries beside each target so
+`os.replace` stays atomic on the target filesystem. Focused apply, rollback,
+failure recovery, and no-leftover checks pass. Exact next action: publish after
+clean phase-one validation, fast-forward local, retry local, and separately
+retry full fleet-sync before AB.
+
 **Onboarding-skill checkpoint:** `skill-creator` initialized
 `shared/skills/onboard-personal-mac` with Codex UI metadata. The implemented
 skill requires one host, repository/TODO reconstruction, value-free discovery,

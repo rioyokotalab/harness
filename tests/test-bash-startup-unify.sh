@@ -71,6 +71,9 @@ transaction=$(sed -n 's/^BASH_STARTUP_UNIFY action=applied transaction=\([^ ]*\)
 [ -n "$transaction" ] || fail 'transaction id'
 [ "$(file_mode "$home/.bashrc")" = 640 ] || fail 'bashrc mode preservation'
 [ "$(file_mode "$home/.bash_profile")" = 600 ] || fail 'profile mode preservation'
+if find "$home" -maxdepth 1 -name '.*.harness-*-candidate-*' -print | grep . >/dev/null; then
+    fail 'adjacent candidate retained after apply'
+fi
 grep -F -x '# >>> harness canonical bash profile >>>' "$home/.bash_profile" >/dev/null || fail 'thin profile marker'
 cmp -s "$home/.bash_profile" "$repo/shell/bash_profile.canonical" || fail 'exact thin profile'
 grep -F -x '# >>> harness login-only local >>>' "$home/.bashrc" >/dev/null || fail 'login-only marker'
@@ -90,6 +93,9 @@ grep -F 'state=current action=none' "$TEMP_DIR/current.out" >/dev/null || fail '
 run --rollback "$transaction" >"$TEMP_DIR/rollback.out"
 cmp -s "$home/.bashrc" "$TEMP_DIR/bashrc.before" || fail 'bashrc rollback'
 cmp -s "$home/.bash_profile" "$TEMP_DIR/profile.before" || fail 'profile rollback'
+if find "$home" -maxdepth 1 -name '.*.harness-*-rollback-*' -print | grep . >/dev/null; then
+    fail 'adjacent rollback temporary retained'
+fi
 
 if HOME="$home" HARNESS_ROOT="$repo" HARNESS_TEST_ALLOW_NONMAIN=1 HARNESS_TEST_FAIL_AFTER=1 \
     "$repo/bin/harness" bash-startup-unify --host local --apply >"$TEMP_DIR/injected.out" 2>&1; then
@@ -97,6 +103,9 @@ if HOME="$home" HARNESS_ROOT="$repo" HARNESS_TEST_ALLOW_NONMAIN=1 HARNESS_TEST_F
 fi
 cmp -s "$home/.bashrc" "$TEMP_DIR/bashrc.before" || fail 'injected bashrc recovery'
 cmp -s "$home/.bash_profile" "$TEMP_DIR/profile.before" || fail 'injected profile recovery'
+if find "$home" -maxdepth 1 -name '.*.harness-*-recovery-*' -print | grep . >/dev/null; then
+    fail 'adjacent recovery temporary retained'
+fi
 
 run --host local --apply >"$TEMP_DIR/reapply.out"
 changed=$(sed -n 's/^BASH_STARTUP_UNIFY action=applied transaction=\([^ ]*\).*/\1/p' "$TEMP_DIR/reapply.out")

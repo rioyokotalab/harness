@@ -153,6 +153,14 @@ def write_candidate(source: Path, destination: Path, payload: bytes) -> None:
         os.fsync(stream.fileno())
 
 
+def adjacent_temporary(path: Path, transaction: str, label: str) -> Path:
+    fd, name = tempfile.mkstemp(
+        prefix=f".{path.name}.harness-{transaction}-{label}-", dir=path.parent
+    )
+    os.close(fd)
+    return Path(name)
+
+
 def validate_checkout(root: Path) -> None:
     if not (root / ".git").is_dir() or (root / ".git").is_symlink():
         die("Bash startup unification requires a Git harness checkout")
@@ -266,7 +274,7 @@ def rollback(root: Path, home: Path, transaction: str, host: str | None) -> None
         backup_text = record.get("backup")
         if backup_text:
             backup = Path(backup_text)
-            candidate = txroot / f".{transaction}.{path.name}.rollback"
+            candidate = adjacent_temporary(path, transaction, "rollback")
             copy_metadata(backup, candidate)
             os.replace(candidate, path)
         else:
@@ -369,7 +377,7 @@ def main() -> int:
     ):
         backup = txroot / f"{transaction}.{path.name}.backup" if info is not None else None
         post = txroot / f"{transaction}.{path.name}.post"
-        candidate = txroot / f".{transaction}.{path.name}.candidate"
+        candidate = adjacent_temporary(path, transaction, "candidate")
         metadata_source = path if info is not None else bashrc
         if backup is not None:
             copy_metadata(path, backup)
@@ -401,7 +409,7 @@ def main() -> int:
         for index in reversed(replaced):
             path, _candidate, post, backup = candidates[index]
             if backup is not None:
-                recovery = txroot / f".{transaction}.{path.name}.recovery"
+                recovery = adjacent_temporary(path, transaction, "recovery")
                 copy_metadata(backup, recovery)
                 os.replace(recovery, path)
             elif exact_equal(path, post):
