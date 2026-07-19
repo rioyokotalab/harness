@@ -3,15 +3,16 @@ set -eu
 umask 077
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/harness-macos-config-sync-test.XXXXXX")
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-macos-config-sync-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
     cleanup_failed=0
     if [ -d "$TEMP_DIR" ]; then
-        "$CLEANUP" "$ROOT/bin/harness" "${TMPDIR:-/tmp}" "$TEMP_DIR" \
-            "${TMPDIR:-/tmp}" >/dev/null || cleanup_failed=1
+        "$CLEANUP" "$ROOT/bin/harness" "$TEMP_BASE" "$TEMP_DIR" \
+            "$TEMP_BASE" >/dev/null || cleanup_failed=1
     fi
     if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
         echo "FAIL: guarded Mac config-sync cleanup" >&2
@@ -40,7 +41,13 @@ if [ "$1" = -f ]; then
     case "$2" in %u) format=%u ;; %Lp) format=%a ;; %l) format=%h ;; *) exit 2 ;; esac
     shift 2
     [ "${1:-}" != -- ] || shift
-    exec /usr/bin/stat -c "$format" -- "$1"
+    case $(/usr/bin/uname -s) in
+        Darwin)
+            case "$format" in %a) format=%Lp ;; %h) format=%l ;; esac
+            exec /usr/bin/stat -f "$format" "$1"
+            ;;
+        *) exec /usr/bin/stat -c "$format" -- "$1" ;;
+    esac
 fi
 exec /usr/bin/stat "$@"
 EOF
@@ -53,7 +60,7 @@ if [ -n "${MACOS_TEST_FAIL_DEST:-}" ] && [ "$last" = "$MACOS_TEST_FAIL_DEST" ] &
     : >"$MACOS_TEST_FAIL_MARKER"
     exit 42
 fi
-exec /usr/bin/mv "$@"
+exec /bin/mv "$@"
 EOF
 cat >"$fake_bin/vim" <<'EOF'
 #!/bin/sh

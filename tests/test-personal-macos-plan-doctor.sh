@@ -5,7 +5,8 @@ ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 INVENTORY=$ROOT/libexec/harness-macos-inventory
 PLAN=$ROOT/libexec/harness-macos-plan
 DOCTOR=$ROOT/libexec/harness-macos-doctor
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/harness-macos-plan-test.XXXXXX")
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-macos-plan-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 
 cleanup() {
@@ -13,8 +14,8 @@ cleanup() {
     trap - EXIT HUP INT TERM
     cleanup_failed=0
     if [ -d "$TEMP_DIR" ]; then
-        "$CLEANUP" "$ROOT/bin/harness" "${TMPDIR:-/tmp}" "$TEMP_DIR" \
-            "${TMPDIR:-/tmp}" >/dev/null || cleanup_failed=1
+        "$CLEANUP" "$ROOT/bin/harness" "$TEMP_BASE" "$TEMP_DIR" \
+            "$TEMP_BASE" >/dev/null || cleanup_failed=1
     fi
     if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
         echo "FAIL: guarded personal-Mac plan cleanup" >&2
@@ -66,9 +67,16 @@ if [ "$1" = -f ]; then
     format=$2
     shift 3
     case "$format" in
-        %u) exec /usr/bin/stat -c %u -- "$1" ;;
-        %Lp) exec /usr/bin/stat -c %a -- "$1" ;;
-        %l) exec /usr/bin/stat -c %h -- "$1" ;;
+        %u) native_format=%u ;;
+        %Lp) native_format=%a ;;
+        %l) native_format=%h ;;
+    esac
+    case $(/usr/bin/uname -s) in
+        Darwin)
+            case "$native_format" in %a) native_format=%Lp ;; %h) native_format=%l ;; esac
+            exec /usr/bin/stat -f "$native_format" "$1"
+            ;;
+        *) exec /usr/bin/stat -c "$native_format" -- "$1" ;;
     esac
 fi
 exec /usr/bin/stat "$@"
@@ -77,6 +85,10 @@ cat >"$fake_bin/xcode-select" <<'EOF'
 #!/bin/sh
 [ "$1" = -p ] || exit 2
 echo /synthetic/command-line-tools
+EOF
+cat >"$fake_bin/tmux" <<'EOF'
+#!/bin/sh
+exit 0
 EOF
 cat >"$fake_bin/brew" <<'EOF'
 #!/bin/sh
@@ -104,7 +116,7 @@ case "$1" in
 esac
 EOF
 chmod 755 "$fake_bin/uname" "$fake_bin/stat" "$fake_bin/xcode-select" \
-    "$fake_bin/brew"
+    "$fake_bin/tmux" "$fake_bin/brew"
 
 brew_log=$TEMP_DIR/brew.log
 facts=$TEMP_DIR/facts.conf

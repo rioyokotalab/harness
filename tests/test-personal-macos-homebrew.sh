@@ -5,7 +5,8 @@ ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
 HOMEBREW=$ROOT/libexec/harness-macos-homebrew
 FIXTURE=$ROOT/tests/fixtures/personal-macos/private-v1
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/harness-macos-homebrew-test.XXXXXX")
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-macos-homebrew-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 
 cleanup() {
@@ -13,8 +14,8 @@ cleanup() {
     trap - EXIT HUP INT TERM
     cleanup_failed=0
     if [ -d "$TEMP_DIR" ]; then
-        "$CLEANUP" "$HARNESS" "${TMPDIR:-/tmp}" "$TEMP_DIR" \
-            "${TMPDIR:-/tmp}" >/dev/null || cleanup_failed=1
+        "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEMP_DIR" \
+            "$TEMP_BASE" >/dev/null || cleanup_failed=1
     fi
     if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
         echo "FAIL: guarded personal-Mac Homebrew cleanup" >&2
@@ -31,6 +32,13 @@ trap 'exit 143' TERM
 fail() {
     echo "FAIL: $*" >&2
     exit 1
+}
+
+file_mode() {
+    case $(uname -s) in
+        Darwin) /usr/bin/stat -f '%Lp' "$1" ;;
+        *) /usr/bin/stat -c '%a' -- "$1" ;;
+    esac
 }
 
 PUBLIC=$TEMP_DIR/public
@@ -53,9 +61,17 @@ EOF
 cat >"$FAKE_BIN/stat" <<'EOF'
 #!/bin/sh
 case "${1:-}:${2:-}" in
-    -f:%u) shift 2; [ "${1:-}" = -- ] && shift; exec /usr/bin/stat -c '%u' -- "$@" ;;
-    -f:%Lp) shift 2; [ "${1:-}" = -- ] && shift; exec /usr/bin/stat -c '%a' -- "$@" ;;
+    -f:%u) native_format=%u ;;
+    -f:%Lp) native_format=%a ;;
     *) exec /usr/bin/stat "$@" ;;
+esac
+shift 2; [ "${1:-}" = -- ] && shift
+case $(/usr/bin/uname -s) in
+    Darwin)
+        [ "$native_format" != %a ] || native_format=%Lp
+        exec /usr/bin/stat -f "$native_format" "$@"
+        ;;
+    *) exec /usr/bin/stat -c "$native_format" -- "$@" ;;
 esac
 EOF
 cat >"$FAKE_PREFIX/bin/brew" <<'EOF'
@@ -231,7 +247,7 @@ delta_file=$transaction_root/$transaction_id.macos-homebrew.delta.diff
 local_apply_log=$transaction_root/$transaction_id.macos-homebrew.apply.log
 for private_file in "$status_file" "$pre_file" "$post_file" \
     "$delta_file" "$local_apply_log"; do
-    [ "$(/usr/bin/stat -c '%a' "$private_file")" = 600 ] ||
+    [ "$(file_mode "$private_file")" = 600 ] ||
         fail "Homebrew transaction evidence mode"
 done
 [ "$(sed -n '1p' "$status_file")" = complete ] ||
@@ -262,7 +278,9 @@ grep -F -x 'END macos_homebrew changes=none metadata_refresh=separate' \
 
 dependent_home=$(make_home dependent)
 dependent_state=$(make_brew_state dependent)
-if FAKE_UNMANAGED_DEPENDENT=1 run_homebrew "$dependent_home" "$dependent_state" \
+if FAKE_UNMANAGED_DEPENDENT=1 FAKE_UNMANAGED_DEPENDENCY_USER=0 \
+    FAKE_PROHIBITED_DRY_RUN=0 FAKE_APPLY_FAILURE=0 \
+    run_homebrew "$dependent_home" "$dependent_state" \
     "$TEMP_DIR/dependent.log" --host mac-test-pilot --plan \
     >"$TEMP_DIR/dependent.out" 2>&1; then
     fail "Homebrew plan accepted an unmanaged selected-root dependent"
@@ -276,7 +294,9 @@ grep -F -x 'BLOCK macos_homebrew reason=selected-root-has-unmanaged-dependent' \
 
 shared_home=$(make_home shared-dependent)
 shared_state=$(make_brew_state shared-dependent)
-if ! FAKE_UNMANAGED_DEPENDENCY_USER=1 run_homebrew "$shared_home" "$shared_state" \
+if ! FAKE_UNMANAGED_DEPENDENT=0 FAKE_UNMANAGED_DEPENDENCY_USER=1 \
+    FAKE_PROHIBITED_DRY_RUN=0 FAKE_APPLY_FAILURE=0 \
+    run_homebrew "$shared_home" "$shared_state" \
     "$TEMP_DIR/shared.log" --host mac-test-pilot --plan \
     >"$TEMP_DIR/shared.out" 2>&1; then
     fail "Homebrew plan rejected an unmanaged shared-dependency user"
@@ -290,7 +310,9 @@ fi
 
 dry_home=$(make_home prohibited-dry-run)
 dry_state=$(make_brew_state prohibited-dry-run)
-if FAKE_PROHIBITED_DRY_RUN=1 run_homebrew "$dry_home" "$dry_state" \
+if FAKE_UNMANAGED_DEPENDENT=0 FAKE_UNMANAGED_DEPENDENCY_USER=0 \
+    FAKE_PROHIBITED_DRY_RUN=1 FAKE_APPLY_FAILURE=0 \
+    run_homebrew "$dry_home" "$dry_state" \
     "$TEMP_DIR/dry.log" --host mac-test-pilot --plan \
     >"$TEMP_DIR/dry.out" 2>&1; then
     fail "Homebrew plan accepted prohibited dry-run scope"
@@ -301,7 +323,9 @@ grep -F 'dry-run reported prohibited scope' "$TEMP_DIR/dry.out" >/dev/null ||
 
 failure_home=$(make_home apply-failure)
 failure_state=$(make_brew_state apply-failure)
-if FAKE_APPLY_FAILURE=1 run_homebrew "$failure_home" "$failure_state" \
+if FAKE_UNMANAGED_DEPENDENT=0 FAKE_UNMANAGED_DEPENDENCY_USER=0 \
+    FAKE_PROHIBITED_DRY_RUN=0 FAKE_APPLY_FAILURE=1 \
+    run_homebrew "$failure_home" "$failure_state" \
     "$TEMP_DIR/failure.log" --host mac-test-pilot --apply \
     >"$TEMP_DIR/failure.out" 2>&1; then
     fail "injected Homebrew apply failure succeeded"

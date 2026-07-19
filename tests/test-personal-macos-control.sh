@@ -5,7 +5,8 @@ ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
 CONTROL=$ROOT/libexec/harness-macos-control
 FIXTURE=$ROOT/tests/fixtures/personal-macos/private-v1
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/harness-macos-control-test.XXXXXX")
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-macos-control-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 
 cleanup() {
@@ -13,8 +14,8 @@ cleanup() {
     trap - EXIT HUP INT TERM
     cleanup_failed=0
     if [ -d "$TEMP_DIR" ]; then
-        "$CLEANUP" "$HARNESS" "${TMPDIR:-/tmp}" "$TEMP_DIR" \
-            "${TMPDIR:-/tmp}" >/dev/null || cleanup_failed=1
+        "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEMP_DIR" \
+            "$TEMP_BASE" >/dev/null || cleanup_failed=1
     fi
     if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
         echo "FAIL: guarded personal-Mac control cleanup" >&2
@@ -31,6 +32,13 @@ trap 'exit 143' TERM
 fail() {
     echo "FAIL: $*" >&2
     exit 1
+}
+
+file_mode() {
+    case $(uname -s) in
+        Darwin) /usr/bin/stat -f '%Lp' "$1" ;;
+        *) /usr/bin/stat -c '%a' -- "$1" ;;
+    esac
 }
 
 PUBLIC=$TEMP_DIR/public
@@ -61,9 +69,17 @@ EOF
 cat >"$FAKE_BIN/stat" <<'EOF'
 #!/bin/sh
 case "${1:-}:${2:-}" in
-    -f:%u) shift 2; [ "${1:-}" = -- ] && shift; exec /usr/bin/stat -c '%u' -- "$@" ;;
-    -f:%Lp) shift 2; [ "${1:-}" = -- ] && shift; exec /usr/bin/stat -c '%a' -- "$@" ;;
+    -f:%u) native_format=%u ;;
+    -f:%Lp) native_format=%a ;;
     *) exec /usr/bin/stat "$@" ;;
+esac
+shift 2; [ "${1:-}" = -- ] && shift
+case $(/usr/bin/uname -s) in
+    Darwin)
+        [ "$native_format" != %a ] || native_format=%Lp
+        exec /usr/bin/stat -f "$native_format" "$@"
+        ;;
+    *) exec /usr/bin/stat -c "$native_format" -- "$@" ;;
 esac
 EOF
 cat >"$FAKE_BIN/ln" <<'EOF'
@@ -125,11 +141,11 @@ basic_tx=$(transaction_id "$TEMP_DIR/basic.apply")
 [ -n "$basic_tx" ] || fail "apply emitted no transaction identifier"
 basic_manifest=$basic_home/.local/state/harness/transactions/$basic_tx.macos-control.manifest
 basic_status=$basic_home/.local/state/harness/transactions/$basic_tx.macos-control.status
-[ "$(/usr/bin/stat -c '%a' "$basic_manifest")" = 600 ] ||
+[ "$(file_mode "$basic_manifest")" = 600 ] ||
     fail "transaction manifest mode"
-[ "$(/usr/bin/stat -c '%a' "$basic_status")" = 600 ] ||
+[ "$(file_mode "$basic_status")" = 600 ] ||
     fail "transaction status mode"
-[ "$(/usr/bin/stat -c '%a' "$basic_home/.local/state/harness")" = 700 ] ||
+[ "$(file_mode "$basic_home/.local/state/harness")" = 700 ] ||
     fail "transaction state mode"
 [ -L "$basic_home/.local/bin/harness" ] &&
     [ "$(readlink "$basic_home/.local/bin/harness")" = "$PUBLIC/bin/harness" ] ||
@@ -179,8 +195,8 @@ keep_manifest=$keep_home/.local/state/harness/transactions/$keep_tx.macos-contro
 if grep -F "link|$keep_home/.codex/AGENTS.md|" "$keep_manifest" >/dev/null; then
     fail "transaction claimed a pre-existing correct link"
 fi
-[ "$(/usr/bin/stat -c '%a' "$keep_home/.local")" = 755 ] &&
-    [ "$(/usr/bin/stat -c '%a' "$keep_home/.local/state")" = 755 ] ||
+[ "$(file_mode "$keep_home/.local")" = 755 ] &&
+    [ "$(file_mode "$keep_home/.local/state")" = 755 ] ||
     fail "apply changed pre-existing personal directory modes"
 run_control "$keep_home" --rollback "$keep_tx" >"$TEMP_DIR/keep.rollback"
 [ -L "$keep_home/.codex/AGENTS.md" ] &&

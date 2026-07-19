@@ -3,7 +3,8 @@ set -eu
 umask 077
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/harness-macos-ssh-sync-test.XXXXXX")
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-macos-ssh-sync-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 
 cleanup() {
@@ -11,8 +12,8 @@ cleanup() {
     trap - EXIT HUP INT TERM
     cleanup_failed=0
     if [ -d "$TEMP_DIR" ]; then
-        "$CLEANUP" "$ROOT/bin/harness" "${TMPDIR:-/tmp}" "$TEMP_DIR" \
-            "${TMPDIR:-/tmp}" >/dev/null || cleanup_failed=1
+        "$CLEANUP" "$ROOT/bin/harness" "$TEMP_BASE" "$TEMP_DIR" \
+            "$TEMP_BASE" >/dev/null || cleanup_failed=1
     fi
     if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
         echo "FAIL: guarded Mac SSH-sync cleanup" >&2
@@ -26,6 +27,9 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
+file_mode() {
+    case $(uname -s) in Darwin) /usr/bin/stat -f %Lp "$1" ;; *) /usr/bin/stat -c %a "$1" ;; esac
+}
 
 fake_bin=$TEMP_DIR/fake-bin
 mkdir "$fake_bin"
@@ -44,7 +48,13 @@ if [ "$1" = -f ]; then
     esac
     shift 2
     [ "${1:-}" != -- ] || shift
-    exec /usr/bin/stat -c "$format" -- "$1"
+    case $(/usr/bin/uname -s) in
+        Darwin)
+            case "$format" in %a) format=%Lp ;; %h) format=%l ;; esac
+            exec /usr/bin/stat -f "$format" "$1"
+            ;;
+        *) exec /usr/bin/stat -c "$format" -- "$1" ;;
+    esac
 fi
 exec /usr/bin/stat "$@"
 EOF
@@ -58,7 +68,7 @@ if [ -n "${MACOS_TEST_FAIL_DEST:-}" ] &&
     : >"$MACOS_TEST_FAIL_MARKER"
     exit 42
 fi
-exec /usr/bin/mv "$@"
+exec /bin/mv "$@"
 EOF
 chmod 755 "$fake_bin/uname" "$fake_bin/stat" "$fake_bin/mv"
 
@@ -139,7 +149,7 @@ git -C "$private" cat-file -e HEAD:ssh_config 2>/dev/null &&
 seed_apply=$(run_sync "$home" --host mac-test-pilot --seed --apply)
 printf '%s\n' "$seed_apply" | grep -F \
     'class=current agreement=yes action=applied' >/dev/null || fail "first seed apply"
-[ "$(/usr/bin/stat -c %a "$home/.ssh/config")" = 600 ] ||
+[ "$(file_mode "$home/.ssh/config")" = 600 ] ||
     fail "first seed did not normalize destination mode"
 cmp -s "$home/.ssh/config" "$private/ssh_config" || fail "seed content agreement"
 [ -f "$home/.local/state/harness/personal-macos/ssh-sync.conf" ] ||

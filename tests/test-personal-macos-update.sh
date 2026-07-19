@@ -3,7 +3,8 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 UPDATE=$ROOT/libexec/harness-macos-update
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/harness-macos-update-test.XXXXXX")
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-macos-update-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 
 cleanup() {
@@ -11,8 +12,8 @@ cleanup() {
     trap - EXIT HUP INT TERM
     cleanup_failed=0
     if [ -d "$TEMP_DIR" ]; then
-        "$CLEANUP" "$ROOT/bin/harness" "${TMPDIR:-/tmp}" "$TEMP_DIR" \
-            "${TMPDIR:-/tmp}" >/dev/null || cleanup_failed=1
+        "$CLEANUP" "$ROOT/bin/harness" "$TEMP_BASE" "$TEMP_DIR" \
+            "$TEMP_BASE" >/dev/null || cleanup_failed=1
     fi
     if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
         echo "FAIL: guarded personal-Mac update cleanup" >&2
@@ -29,6 +30,13 @@ trap 'exit 143' TERM
 fail() {
     echo "FAIL: $*" >&2
     exit 1
+}
+
+file_mode() {
+    case $(uname -s) in
+        Darwin) stat -f %Lp "$1" ;;
+        *) stat -c %a "$1" ;;
+    esac
 }
 
 # Engine-1 deployments validate this exact public contract before they can
@@ -175,7 +183,7 @@ transaction=$(printf '%s\n' "$apply_output" |
     fail "private checkout did not fast-forward"
 state_file=$primary_home/.local/state/harness/personal-macos/state.conf
 [ -f "$state_file" ] && [ ! -L "$state_file" ] || fail "missing v1 state"
-[ "$(stat -c %a "$state_file")" = 600 ] || fail "unsafe v1 state mode"
+[ "$(file_mode "$state_file")" = 600 ] || fail "unsafe v1 state mode"
 grep -F "public_revision=$primary_public_target" "$state_file" >/dev/null ||
     fail "state missing public target"
 grep -F "private_revision=$primary_private_target" "$state_file" >/dev/null ||
