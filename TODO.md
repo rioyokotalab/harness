@@ -225,6 +225,10 @@ failure recovery, and no-leftover checks pass. Exact next action: publish after
 clean phase-one validation, fast-forward local, retry local, and separately
 retry full fleet-sync before AB.
 
+The clean cross-filesystem run passed all 52 focused suites, guarded deletion,
+and compiler gates, explicitly skipped native MPI, and reached only the known
+Darwin doctor boundary; protected Ubuntu CI remains the publication gate.
+
 **Onboarding-skill checkpoint:** `skill-creator` initialized
 `shared/skills/onboard-personal-mac` with Codex UI metadata. The implemented
 skill requires one host, repository/TODO reconstruction, value-free discovery,
