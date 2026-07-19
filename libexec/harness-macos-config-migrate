@@ -108,8 +108,10 @@ require_empty_fragment() {
         [ "$(macos_stat_owner "$private_fragment")" = "$current_uid" ] &&
         [ "$(macos_stat_links "$private_fragment")" = 1 ] ||
         die "Mac private Bash fragment has unsafe type"
-    LC_ALL=C grep '[^[:space:]]' "$private_fragment" >/dev/null 2>&1 &&
+    if LC_ALL=C grep '[^[:space:]]' "$private_fragment" >/dev/null 2>&1; then
         die "Mac private Bash fragment must be empty after owner curation"
+    fi
+    return 0
 }
 
 require_legacy_loader_or_absent() {
