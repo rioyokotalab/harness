@@ -24,6 +24,9 @@ trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 fail() { echo "FAIL: $*" >&2; exit 1; }
+MACOS_TEST_REAL_TMUX=$(command -v tmux) ||
+    fail "tmux is unavailable for config-sync tests"
+export MACOS_TEST_REAL_TMUX
 
 fake_bin=$TEMP_DIR/fake-bin
 mkdir "$fake_bin"
@@ -58,8 +61,22 @@ last=
 for argument do last=$argument; done
 printf '%s\n' 'export HARNESS_SYNTHETIC_SHARED_BASH=pilot' >"$last"
 EOF
+cat >"$fake_bin/tmux" <<'EOF'
+#!/bin/sh
+last=
+source_file=0
+for argument do
+    [ "$argument" = source-file ] && source_file=1
+    last=$argument
+done
+if [ "$source_file" -eq 1 ] && [ ! -s "$last" ]; then
+    echo 'synthetic tmux rejects an empty source-file' >&2
+    exit 1
+fi
+exec "$MACOS_TEST_REAL_TMUX" "$@"
+EOF
 chmod 755 "$fake_bin/uname" "$fake_bin/stat" "$fake_bin/mv" \
-    "$fake_bin/vim"
+    "$fake_bin/vim" "$fake_bin/tmux"
 
 configure_identity() {
     git -C "$1" config user.name mac-test

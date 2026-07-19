@@ -231,6 +231,10 @@ macos_validate_tmux_config() {
     macos_tmux_modes=$3
     macos_validate_private_config_file tmux "$macos_tmux_file" \
         "$macos_tmux_uid" "$macos_tmux_modes"
+    # An empty file is the canonical explicit "use tmux defaults" payload.
+    # Some tmux releases reject source-file -n when it parses no commands,
+    # even though an empty ~/.tmux.conf is valid at normal server startup.
+    [ -s "$macos_tmux_file" ] || return 0
     command -v tmux >/dev/null 2>&1 ||
         die "tmux configuration validator is unavailable"
     (
