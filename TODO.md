@@ -170,6 +170,16 @@ the already-recorded Darwin-to-Linux `local` doctor refusal. Protected Ubuntu
 CI is the remaining publication gate. Do not migrate `local` or any Linux node
 before office passes apply/rollback/reapply and fresh-shell acceptance.
 
+The published single-line omission fix reached every clean managed checkout,
+but the fresh `office` retry stopped safely during candidate syntax validation:
+the one loader is inside an exact conventional three-line existence guard, so
+removing only its body left invalid empty `then` syntax. No startup file was
+replaced. Value-free classification confirmed one loader and one exact wrapper.
+The follow-up removes the complete wrapper as one redundant unit (or a truly
+standalone loader), preserves all other bytes, and extends the fixture to the
+deployed wrapper shape. Its focused test passes. Exact next action: clean-commit
+and run phase one, publish through protected CI, fleet-sync, then retry office.
+
 **Onboarding-skill checkpoint:** `skill-creator` initialized
 `shared/skills/onboard-personal-mac` with Codex UI metadata. The implemented
 skill requires one host, repository/TODO reconstruction, value-free discovery,
