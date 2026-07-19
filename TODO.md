@@ -2097,6 +2097,18 @@ full phase-1 gate, publish D14 through protected review, fast-forward clean
 `local`, and rerun the two read-only plans; a separate owner review is still
 required before either apply.
 
+**D14 post-merge plan correction:** protected Linux phase-1 passed and PR #85
+merged as `bf4a5e2`; both `office` and clean `local` fast-forwarded to it.
+The read-only `local` tmux plan remained `state=absent action=link`, but the
+agent-config plan still blocked only Codex as unsafe (Claude regular/adopt,
+launcher absent/link, native ready). Value-free structural inspection found
+the two opaque preferences at lines 1-2, the exact frozen keys at lines 3-4,
+and 93 trust tables afterward. D14 had incorrectly required the public keys as
+the first two lines. D14.1 must accept each of the four approved top-level keys
+exactly once in any order before the first trust table, so this existing file
+is recognized and never rewritten; duplicate, unknown, or post-section keys
+remain invalid. No apply, drill, session, or live-path mutation occurred.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

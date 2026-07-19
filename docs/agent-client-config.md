@@ -6,9 +6,10 @@ The harness owns exactly one public user-settings body for each client:
 - `config/agent-clients/claude.json`
 
 Claude's live path is a direct link. Codex's live path is an owner-only regular
-file whose exact managed prefix is the public body. Its optional local body may
-add one opaque `model` string and one opaque
-`model_reasoning_effort` string before client-written trusted-project tables.
+file containing each key from the public body exactly once. Its optional local
+body may add one opaque `model` string and one opaque
+`model_reasoning_effort` string; all four top-level keys must precede
+client-written trusted-project tables.
 Their values remain private and are never inventoried or copied into Git.
 Authentication,
 credentials, sessions, histories, memories, caches, databases, private

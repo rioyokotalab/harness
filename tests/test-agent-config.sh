@@ -190,11 +190,12 @@ grep -F 'status=ready failures=0' "$TEMP_DIR/doctor.out" >/dev/null ||
     fail "ready doctor"
 printf '%s\n' '' '[projects."/synthetic/private-project"]' \
     'trust_level = "trusted"' >>"$home/.codex/config.toml"
-sed -i.bak '2a\
-model = "opaque-private-model"\
-model_reasoning_effort = "opaque-private-effort"
-' "$home/.codex/config.toml"
-unlink "$home/.codex/config.toml.bak"
+private_config=$TEMP_DIR/private-config
+printf '%s\n' 'model = "opaque-private-model"' \
+    'model_reasoning_effort = "opaque-private-effort"' >"$private_config"
+cat "$home/.codex/config.toml" >>"$private_config"
+mv "$private_config" "$home/.codex/config.toml"
+chmod 600 "$home/.codex/config.toml"
 project_number=1
 while [ "$project_number" -lt 93 ]; do
     printf '\n[projects."/synthetic/private-project-%s"]\ntrust_level = "trusted"\n' \
