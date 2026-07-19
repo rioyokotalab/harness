@@ -6,11 +6,11 @@
 
 Give all four personal Macs and all seven managed Linux environments one
 reviewed, pull-compatible Codex/Claude configuration system. Routine agent
-behavior, permission posture, hooks, profiles, plugin declarations, and other
-deliberately selected user configuration should converge after a long offline
-period without placing personal configuration or machine identity in the public
-harness. Authentication, credentials, sessions, transcripts, histories,
-memories, caches, and other runtime state must remain local.
+behavior, permission posture, and other deliberately selected portable user
+configuration should converge after a long offline period from one public
+canonical settings body per client in `harness`. Authentication, credentials,
+sessions, transcripts, histories, memories, caches, machine identity, private
+paths/endpoints, and other runtime state must remain local.
 
 The system must explain effective behavior from configuration precedence,
 refuse ambiguous drift, support exact local rollback, and never interpret
@@ -74,14 +74,15 @@ refuse ambiguous drift, support exact local rollback, and never interpret
 
 ## Scope
 
-- Add a generic public engine for value-free inventory, strict schema
-  validation, plan, transactional apply, doctor, unchanged-only rollback, and
-  direct old-schema catch-up.
-- Extend the private companion contract to carry curated portable client
-  intent, common and OS-class variants, opaque logical host selections, and an
-  explicit desired plugin/marketplace/MCP inventory if selected in interview.
-- Cover user-level Codex config/profile files and Claude settings plus selected
-  user-level config directories only through an explicit allowlist.
+- Add one reviewed public canonical Codex TOML body and one reviewed public
+  canonical Claude JSON body, plus value-free inventory, strict validation,
+  transactional symlink apply, doctor, unchanged-only rollback, and direct
+  old-state catch-up.
+- Link `~/.codex/config.toml` and `~/.claude/settings.json` directly to their
+  respective tracked canonical files. Do not generate, copy, or privately
+  overlay either live settings file.
+- Cover additional user-level configuration only when a later frozen decision
+  gives it an equally singular, public, portable representation.
 - Diagnose effective permission behavior from the user config, project layer,
   profile/launch overrides, system/managed policy presence, and declared client
   version without printing private values.
@@ -97,7 +98,7 @@ refuse ambiguous drift, support exact local rollback, and never interpret
   user/local MCP credentials.
 - Never copy raw project trust maps, absolute paths, observed local settings,
   environment values, private endpoints, hook output, or credential-helper
-  results into the public repository or public evidence.
+  results into the canonical public files or public evidence.
 - Do not manage macOS TCC, Accessibility, Screen Recording, Keychain, system
   preferences, MDM profiles, or system-managed client policy.
 - Do not reload a running Codex/Claude session. Acceptance is in fresh sessions.
@@ -107,48 +108,45 @@ refuse ambiguous drift, support exact local rollback, and never interpret
 
 ## Recommended architecture
 
-1. Keep generic schemas, validators, transactions, synthetic fixtures, and
-   privacy-negative tests public. Keep curated personal desired configuration
-   in the existing private Git companion.
-2. Extend the companion from Mac-only host declarations to a client-config
-   policy consumed by both Mac and Linux adapters. Use common policy plus
-   `darwin`/`linux` variants and opaque host selectors only where behavior truly
-   differs.
-3. Treat live client files as generated transactional products, not Git
-   worktrees. A strict allowlist composes a complete mode-0600 Codex TOML and
-   Claude JSON from private desired intent. Unknown keys, inline credential
-   values, unsafe commands, unresolved paths, and schema drift stop before
-   mutation.
-4. Keep path-specific trust as logical project declarations resolved locally.
-   Never transplant the current 93 absolute Linux paths to a Mac. A trust
-   declaration must name a reviewed local project root class and validate that
-   the corresponding checkout exists before generating a client entry.
-5. Store portable hook implementation in a reviewed repository surface and
-   generate settings that reference stable harness/private-companion paths.
-   Commands with machine paths require an explicit OS/host variant. Hooks may
-   never embed secret values or emit environment/config dumps.
-6. Store desired plugin, marketplace, and MCP declarations separately from
-   installed caches and authorization. Resolve them through native client CLIs,
-   exact identifiers, and per-client plan/apply gates. Authentication remains a
-   local owner action.
-7. Every apply records exact preimages locally, writes atomically, validates
-   native parsing, and activates only in a fresh session. Rollback is allowed
-   only while the managed outputs remain unchanged.
-8. Macs pull both repositories and apply locally. Linux adopts on `local`
+1. Keep each reviewed, portable settings body beside the generic validators,
+   transactions, synthetic fixtures, and privacy-negative tests in the public
+   harness. The private companion is not a source or overlay for client
+   settings.
+2. Treat the tracked files as the only managed settings bodies. There are no
+   generated copies, common/OS/host composition layers, or per-node managed
+   overlays. A change made through a live symlink changes the local Git
+   worktree and must pass normal review before publication.
+3. Validate the complete tracked Codex TOML and Claude JSON before linking.
+   Unknown or unsupported keys, credential-like values, private paths or
+   endpoints, unsafe commands, and non-portable behavior stop before mutation
+   or publication.
+4. Do not place the current 93 absolute Linux trust records in the canonical
+   Codex file. Project-specific trust/configuration needs a later portable
+   decision that does not create a second user-settings body.
+5. Store portable hook implementation in a reviewed repository surface only if
+   selected. Hook references must be identical and portable on every target;
+   machine-path or host-specific commands cannot enter the canonical settings.
+6. Keep desired plugin, marketplace, and MCP declarations separate from
+   installed caches and authorization. If selected, resolve them through native
+   client CLIs and exact public identifiers; authentication remains local.
+7. Every link apply records exact prior path type/content locally, validates
+   the target and parents, replaces atomically, and activates only in a fresh
+   session. Rollback is allowed only while the linked output remains unchanged.
+8. Macs pull the public harness and apply locally. Linux adopts on `local`
    first, then advances the six clean remote nodes sequentially with stop on
    first failure. No login/session hook performs network or config mutation.
 
 ## Execution sequence after `go`
 
 1. Freeze all interview decisions and mark the plan `ready-for-go`.
-2. Add public versioned schemas and synthetic public/private fixtures covering
+2. Add the two public canonical settings files plus synthetic fixtures covering
    every selected client-config category and prohibited payload.
 3. Implement value-free inventory of config path kind/mode, selected behavior
    keys, section counts, override sources, client versions, and declared drift.
-4. Implement strict private composition for Codex TOML and Claude JSON,
-   including portable/common, OS-class, and host overlays.
-5. Implement trust-path resolution from logical declarations without recording
-   observed paths in public output.
+4. Implement strict complete-file validation and direct collision-refusing
+   links for Codex TOML and Claude JSON; do not create rendered copies.
+5. Implement the frozen project-trust decision without adding raw paths or a
+   second managed user-settings body.
 6. Implement hook/profile/plugin/marketplace/MCP adapters only for categories
    selected during interview; separate declaration, installation, enablement,
    and authorization.
@@ -171,20 +169,21 @@ refuse ambiguous drift, support exact local rollback, and never interpret
 - Global full-access/bypass defaults materially expand blast radius. Permission
   posture is therefore a separate owner decision rather than an inferred copy
   of the current Linux node.
-- Copying complete live files can import credentials, private endpoints,
-  machine paths, obsolete keys, or project trust. The recommended allowlisted
-  composition rejects exact-file mirroring.
+- Because the tracked files are public and linked live, an accidental edit can
+  expose credentials, private endpoints, machine paths, obsolete keys, hook
+  commands, or project trust in Git. Pre-commit/public-history privacy gates
+  and strict complete-file validation must reject such content; clean-checkout
+  catch-up stops on any unpublished local edit.
 - Client versions may accept different keys. The plan pins a supported version
   floor, validates with each native client, and migrates schema before apply.
-- Client UI/CLI edits can drift from the private source. Doctor reports drift
-  without overwriting it; an explicit owner-reviewed `adopt` transaction is the
-  only path back to the canonical desired source.
+- A client or owner edit through a live symlink dirties the harness checkout.
+  Doctor reports that state, and fleet catch-up refuses to overwrite it; normal
+  Git review is the only publication path.
 - A hook or plugin can execute code on every prompt/tool event. Each executable
   source and native install/enable action must be reviewed, versioned, and
   independently disableable through rollback.
-- A private-repository fast-forward may succeed while public update fails (or
-  vice versa). Compatibility is resolved after both updates and before any
-  config plan; partial repository advancement is harmless and retryable.
+- A long-offline node fast-forwards the one public source directly to current
+  before link validation. There is no second repository compatibility axis.
 
 ## Validation and acceptance
 
@@ -197,9 +196,9 @@ refuse ambiguous drift, support exact local rollback, and never interpret
 - Existing Linux and T-268 Mac behavior remains unchanged until an explicit
   client-config apply. Unselected files and directories remain byte-for-byte
   untouched.
-- A long-offline synthetic Mac and Linux node advance directly from schema 1 to
-  current, produce the same portable effective config, retain required OS
-  differences, and converge to a second-run no-op.
+- A long-offline synthetic Mac and Linux node advance directly from an old
+  public state to current, link the same portable settings bodies, and converge
+  to a second-run no-op.
 - Pilot and local apply/rollback/reapply preserve exact preimages and activate
   only in fresh sessions. Effective permission behavior matches the frozen
   decision without unplanned prompts or silent privilege expansion.
@@ -223,53 +222,60 @@ refuse ambiguous drift, support exact local rollback, and never interpret
   administrator, workspace/provider policy, or other non-agent system dialogs.
   No target configuration changed during the interview checkpoint.
 
-### C2 — Canonical storage (open)
+### C2 — Canonical storage (selected)
 
-- **A — Existing private companion (recommended):** generic engine public;
-  curated client intent private; both repositories remain independently
-  testable and fast-forwarded.
-- **B — Public portable subset plus private overlay:** easier Linux distribution
-  but deliberately exposes some personal preference/configuration publicly.
-- **C — Separate second private repository:** stronger conceptual separation at
-  the cost of a third checkout and compatibility axis on every node.
+- **Selected — One public canonical file per client with direct live links:**
+  the owner requires "only one copy in the harness and a symbolic link to it
+  for local files." `harness` therefore contains one tracked Codex TOML body
+  and one tracked Claude JSON body, while `~/.codex/config.toml` and
+  `~/.claude/settings.json` are direct symbolic links to them on every target.
+- There is no private companion, generated live copy, OS/host overlay, or
+  machine-local managed overlay for these two files. Their selected contents
+  must be identical across the fleet and safe to publish. Credentials,
+  authentication, private paths/endpoints, runtime state, and machine-specific
+  values remain local outside these linked settings files. No live link or
+  settings file changed during this interview checkpoint.
 
-### C3 — Managed configuration breadth (open)
+### C3 — Public canonical content breadth (open; ask next)
 
-- **A — Allowlisted broad configuration (recommended):** manage every reviewed
-  portable key/category while excluding runtime/credential state and composing
-  OS/host variants.
-- **B — Exact whole-file mirroring:** simplest mental model but unsafe for trust,
-  paths, credentials, and client-generated state.
-- **C — Permission keys only:** solves the immediate prompt mismatch but does
-  not meet the stated broader mirroring goal.
+- **A — Broad portable settings (recommended):** the linked whole files contain
+  every reviewed key that is identical on macOS and Linux and safe to publish,
+  including the frozen permission posture and portable UI/model preferences.
+  Machine-specific trust, private paths/endpoints, credential-bearing values,
+  runtime state, and non-portable commands are excluded entirely.
+- **B — Permission posture only:** the linked files contain only the settings
+  needed to eliminate client action-approval prompts; all other preferences
+  remain outside managed user settings.
+- **C — Attempt the current complete Linux files:** rejected by the design
+  because they contain raw project paths and other values that are not portable
+  or suitable for a public repository.
 
 ### C4 — Project trust (open)
 
-- **A — Logical project declarations (recommended):** private desired state
-  names reviewed project classes; each node resolves its own path and generates
-  trust only for existing expected checkouts.
-- **B — Do not synchronize trust:** every node retains independent prompts and
-  trust state.
-- **C — Mirror raw trust maps:** rejected by the recommended design because
-  absolute Linux paths do not port to Macs and trust must not be inferred.
+- **A — Exclude path-specific trust (recommended):** one identical public user
+  file cannot safely carry machine-specific absolute roots. Codex project trust
+  remains outside this user-settings mirror, and Claude's separate local trust
+  state remains untouched.
+- **B — Require identical public checkout paths:** only reviewed common paths
+  could enter the canonical file, but this constrains every Mac/Linux layout
+  and deliberately publishes those paths.
+- **C — Mirror the current raw trust map:** rejected because absolute Linux
+  paths do not port to Macs and local trust must not be inferred.
 
 ### C5 — Hooks, plugins, marketplaces, and MCP (open)
 
-- **A — Declarative desired state (recommended):** sync reviewed declarations
-  and repository-owned hook code; native plan/apply installs or enables exact
-  components; credentials and authorization remain local.
+- **A — Public declarative desired state (recommended):** sync reviewed public
+  declarations and repository-owned hook code; native plan/apply installs or
+  enables exact components; credentials and authorization remain local.
 - **B — Hooks only:** sync current automation but leave plugins/MCP independent.
 - **C — Exclude all four:** synchronize scalar client preferences only.
 
-### C6 — Editing and drift model (open)
+### C6 — Editing and drift model (constrained by C2; publication still open)
 
-- **A — Private source with explicit adopt (recommended):** normal UI/CLI edits
-  become detected drift; an owner-reviewed adopt transaction updates private
-  desired state, and normal apply never overwrites unexplained drift.
-- **B — Live file is source:** automatically publish local changes, which risks
-  secrets, partial edits, and unintended cross-node rollout.
-- **C — Per-node unmanaged overlay:** preserves ad hoc edits but prevents exact
-  cross-node agreement and complicates precedence.
+- C2 fixes the live path as a symlink to the Git-tracked canonical file, so an
+  edit through the live path is a local harness worktree edit. Automatic commit
+  or publication is not implied. C6 will freeze the review/publish and dirty-
+  checkout recovery behavior; a second live or managed overlay is excluded.
 
 ### C7 — Rollout order (open)
 
@@ -283,7 +289,7 @@ refuse ambiguous drift, support exact local rollback, and never interpret
 
 ## Exact next action
 
-Ask C2 only. After each answer, checkpoint the decision and ask the next open
+Ask C3 only. After each answer, checkpoint the decision and ask the next open
 item. Do not change any live client setting during the interview. After C7,
 audit for contradictions, set `ready-for-go`, and wait for a fresh explicit
 `go`.

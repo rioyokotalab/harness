@@ -64,7 +64,11 @@ Claude action-approval prompts in ordinary sessions: Codex uses `never` with
 `danger-full-access`, and Claude uses `bypassPermissions` with its dangerous-
 mode startup warning suppressed. Authentication, macOS privacy/TCC, OS
 administrator, and provider-enforced dialogs remain separate boundaries. Ask
-only decision C2: confirm the canonical desired-state storage. T-268 remains
+only decision C3: choose the safe cross-platform content breadth for the two
+public canonical client files. C2 is frozen: `harness` contains one tracked
+canonical settings body per client, and each live user settings path is a
+symbolic link to it; no private companion or generated live copy participates.
+T-268 remains
 independently resumable from its pilot-plan failure handoff, and T-196 remains
 at 1/8 until the 2026-07-26 successors are eligible.
 
@@ -1379,9 +1383,9 @@ migration plan. It must not inspect private values or run
 user configuration across four pull-based Macs and seven managed Linux
 environments without copying authentication, credentials, sessions, histories,
 memories, caches, databases, client-generated state, private endpoints, or raw
-project paths. The public harness owns only the generic engine, schema,
-transactions, synthetic tests, and privacy gates; private desired-state storage
-and the exact permission/configuration breadth remain interview decisions.
+project paths. The public harness owns the reviewed portable settings bodies as
+well as the generic link engine, transactions, synthetic tests, and privacy
+gates. The exact safe configuration breadth remains an interview decision.
 
 **Confirmed cause boundary:** on `local`, Codex's mode-0600 user config selects
 `never` plus `danger-full-access`, and Claude's mode-0600 settings select
@@ -1397,9 +1401,13 @@ action-approval prompts in ordinary sessions, implemented by global Linux
 parity (`never` plus `danger-full-access` for Codex; `bypassPermissions` plus a
 suppressed dangerous-mode startup warning for Claude). This does not suppress
 authentication, macOS privacy/TCC, OS administrator, or provider-enforced
-dialogs. Ask C2 only: confirm the existing private companion as canonical
-desired-state storage (recommended). Checkpoint every answer; do not implement
-until C1–C7 are resolved and the owner gives a fresh explicit `go`.
+dialogs. C2 is frozen by the owner as one
+tracked public canonical file per client under `harness`, with the live Codex
+and Claude settings paths linked directly to those files. There is no private
+companion, generated live copy, host overlay, or OS overlay for these settings.
+Ask C3 only: choose how broad the deliberately public, identical portable
+settings should be. Checkpoint every answer; do not implement until C1–C7 are
+resolved and the owner gives a fresh explicit `go`.
 
 ## Stable operational facts
 
