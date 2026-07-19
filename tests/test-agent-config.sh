@@ -234,6 +234,23 @@ run_config "$home" --doctor >"$TEMP_DIR/partial.reapply.doctor"
 grep -F 'status=ready failures=0' "$TEMP_DIR/partial.reapply.doctor" >/dev/null ||
     fail "partial adoption reapply doctor"
 
+printf '%s\n' 'model = "rollback-private-model"' \
+    'model_reasoning_effort = "rollback-private-effort"' \
+    'approval_policy = "never"' \
+    'sandbox_mode = "danger-full-access"' '' \
+    '[projects."/synthetic/rollback-private-project"]' \
+    'trust_level = "trusted"' >"$home/.codex/config.toml"
+chmod 600 "$home/.codex/config.toml"
+cp "$home/.codex/config.toml" "$TEMP_DIR/current-codex-before"
+unlink "$home/.local/bin/harness-codex"
+ln -s /opt/owner/codex "$home/.local/bin/harness-codex"
+run_config "$home" --adopt --apply --drill >"$TEMP_DIR/current-codex-drill.out"
+cmp -s "$home/.codex/config.toml" "$TEMP_DIR/current-codex-before" ||
+    fail "current private Codex changed by rollback drill"
+run_config "$home" --doctor >"$TEMP_DIR/current-codex-drill.doctor"
+grep -F 'status=ready failures=0' "$TEMP_DIR/current-codex-drill.doctor" >/dev/null ||
+    fail "current private Codex drill doctor"
+
 PROJECT=$TEMP_DIR/project
 mkdir "$PROJECT"
 git -C "$PROJECT" init -q

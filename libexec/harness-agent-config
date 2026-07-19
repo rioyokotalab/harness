@@ -251,13 +251,13 @@ restore_label() {
     restore_mode=$4
     restore_destination=$(label_destination "$restore_label_name")
     restore_source=$(label_source "$restore_label_name")
+    [ "$restore_prior" != current ] || return 0
     if [ -L "$restore_destination" ] && [ "$(readlink "$restore_destination")" = "$restore_source" ]; then
         unlink "$restore_destination"
     elif [ "$restore_label_name" = codex ] && codex_config_is_managed; then
         unlink "$restore_destination"
     fi
     case "$restore_prior" in
-        current) ;;
         absent) ;;
         regular)
             cp "$restore_backup" "$restore_destination"
