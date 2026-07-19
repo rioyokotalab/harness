@@ -58,11 +58,16 @@ owner-guided lossless curation; all eleven environments use one reviewed public
 complete tmux config through `~/.tmux.conf`; and the pilot transition is one
 recoverable migration back to private SSH-only agreement. Generic implementation
 merged through protected PR #53 at `4209ee8` after required CI run
-`29671188197` passed. All six remote managed checkouts `ab`, `ab2`, `ri`, `al`,
-`rc`, and `t4` are clean at `4209ee8`, with transfer artifacts absent; AL proved
+`29671188197` passed. Pilot-plan authority was recorded through protected PR
+#55 at `908b44d`; all six remote managed checkouts `ab`, `ab2`, `ri`, `al`,
+`rc`, and `t4` are clean at `908b44d`, with transfer artifacts absent; AL proved
 a direct guarded fast-forward from old checkpoint `8b63df2`. No Bash/tmux live
-configuration has been applied. The owner authorized the pilot's
-owner-curation/migration plan only on 2026-07-19; pilot apply,
+transaction or tmux link has been applied. The first owner-started pilot plan
+stopped safely after Vim because the private Bash fragment was not empty; the
+owner's curation edits may remain in the two local files, but no private values
+were inspected or captured. The owner authorized the pilot's
+owner-curation/migration plan only on 2026-07-19; diagnosis and a plan-stage
+retry remain within that boundary, while pilot apply,
 rollback/reapply, local Linux tmux drill, remote Linux tmux rollout, and later
 Macs remain later R1 gates. The shared local checkout remains on another
 contributor's clean branch with `origin/main` fetched. Independently resume
@@ -1354,6 +1359,31 @@ changes, or active shell/tmux reload. Exact next action: run the command locally
 on `office`, preserve its complete value-free output, and stop after
 `END macos_pilot_plan migration_apply=not-requested curation=owner-edited
 next=separate-migration-apply-authority` for review.
+
+**Pilot-plan failure handoff (2026-07-19):** the owner ran the authorized
+command on `office`. It opened the two curation files, then stopped at the
+enforced post-editor gate with this complete value-free result:
+
+```text
+PILOT_EDIT move every machine-local Bash setting from the private fragment into .bashrc
+PILOT_EDIT remove only settings already supplied by the public pre/post hooks
+PILOT_EDIT leave the private fragment empty; do not move credentials
+2 files to edit
+harness: pilot private Bash fragment is not empty after curation
+```
+
+The stop occurred before `macos-config-migrate --plan` and before any migration
+apply, tmux link, private commit/push, or active-session reload. Owner edits
+made in Vim may persist locally, so a retry must preserve both files and must
+not assume their pre-attempt bytes. No private file content or credential was
+inspected, printed, copied, or recorded. Retry is safe only at the existing
+plan-stage boundary. Exact cold-start action: on `office`, start an agent from
+`~/harness`; fetch `main`, read `AGENTS.md` and this T-268 ledger, and diagnose
+the empty-fragment failure with value-free metadata and synthetic/public code
+inspection. It may correct the planning workflow and rerun
+`./bin/harness macos-pilot-plan --host office`, but it must stop at the
+migration plan. It must not inspect private values or run
+`macos-config-migrate --apply`.
 
 ## Stable operational facts
 
