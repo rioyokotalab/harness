@@ -1215,6 +1215,18 @@ canonical content after value-free path-type discovery; no live content may be
 read or copied automatically. No code, private companion, tmux file, active
 server, or node state has been changed.
 
+Value-free read-only discovery then classified only the three candidate tmux
+paths on `local`, `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`. Every canonical
+`~/.tmux.conf`, home-plain `~/tmux.conf`, and XDG
+`~/.config/tmux/tmux.conf` path is absent. A second bounded probe confirmed all
+six remote classifications after the first probe's newline formatting was
+ambiguous; AL authentication was available for this read-only check. No tmux
+bytes, hashes, commands, versions, private paths, or active-server state were
+read, and no node changed. The accepted pilot Mac has an empty canonical file,
+so the recommended T3 seed is an empty tracked config that preserves tmux
+defaults. Each remaining Mac must still classify its own paths independently
+and stop for owner curation if any existing config is nonempty before linking.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
