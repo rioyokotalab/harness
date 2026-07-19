@@ -226,6 +226,11 @@ syntax validation fails. Focused validation passes. Exact next action: clean
 phase one, protected publication, sync the five reachable nodes, then retry AB;
 do not touch AL until native SSH authentication succeeds.
 
+The clean comment-only guard run passed all 52 focused suites, guarded
+deletion, and compiler gates, explicitly skipped native MPI, and reached only
+the known Darwin doctor boundary; protected Ubuntu CI remains the publication
+gate.
+
 PR #117 merged at `6604512`; local fast-forwarded, while the downstream
 fleet-sync stopped in preflight at a transient AL public-key rejection before
 any transfer. The resumed local apply then hit `EXDEV` on the first atomic
