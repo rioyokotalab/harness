@@ -91,7 +91,7 @@ cp "$home/.bashrc" "$TEMP_DIR/bashrc.before"
 env PATH="$fake_bin:$PATH" MACOS_TEST_REAL_STAT="$real_stat" HOME="$home" \
     HARNESS_ROOT="$public" sh -x "$public/libexec/harness-macos-config-migrate" \
     --host office --plan >"$TEMP_DIR/plan.out" 2>&1 || {
-        sed -n '1,80p' "$TEMP_DIR/plan.out" >&2
+        sed -n '1,220p' "$TEMP_DIR/plan.out" >&2
         fail "legacy migration plan command"
     }
 grep -F 'private_layout=legacy action=migrate apply=not-requested' "$TEMP_DIR/plan.out" >/dev/null ||
