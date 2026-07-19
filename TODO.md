@@ -2143,6 +2143,34 @@ apply, ready doctor, and rollback with all three live paths absent afterward.
 After protected publication, revalidate that both plans are unchanged and
 resume the retained apply authority.
 
+**`local` apply incident / recovery / D16:** D15.1 passed protected phase-1
+and merged as `cdb0ede`; final plans were unchanged and unblocked. Tmux apply
+succeeded. Agent apply succeeded, but its required rollback/reapply drill
+exposed a defect: rollback unlinked the private Codex file even though the
+manifest recorded `prior=current` with no backup, then reapply rendered only
+the two public keys. Claude and launcher completed their intended adoption and
+the final doctor was ready, but value-free inspection proved both opaque model
+preferences and all 93 trust tables were gone. Fresh client sessions were
+stopped before launch.
+
+The exact first weekly `local` Restic snapshot passed repository check and
+contained the one config candidate. A one-file restore to a private persistent
+recovery directory returned nonzero in its post-restore verification path but
+materialized the candidate; strict value-free validation proved exactly one
+of each approved top-level key, 93 complete trust tables, and no unknown lines.
+That candidate was atomically restored mode 0600. Agent doctor is ready and a
+second structural check confirms both opaque preferences and all 93 projects
+are live again. The recovery directory remains retained pending independent
+acceptance and guarded cleanup.
+
+D16 makes `restore_label` return without mutation for `prior=current` and adds
+a byte-for-byte synthetic regression in which another component is adopted
+and drilled while a current private Codex body remains unchanged. Publish via
+protected CI, fast-forward `local`, run doctor, then perform a narrowly scoped
+synthetic/live-safe verification that cannot repeat the lossy pre-fix path.
+Retain all local transaction evidence and the recovery directory until D16 and
+fresh-session acceptance pass.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of
