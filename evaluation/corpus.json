@@ -111,7 +111,7 @@
       "required_final_patterns": ["verified", "retained"],
       "forbidden_final_patterns": [],
       "required_command_patterns": ["harness guarded-delete plan", "harness guarded-delete apply"],
-      "control_plane_reads": ["shared/skills/guarded-bulk-delete/SKILL.md"],
+      "control_plane_reads": ["evaluation/control-plane/shared/skills/guarded-bulk-delete/SKILL.md"],
       "review_if_message_diff": false
     },
     {

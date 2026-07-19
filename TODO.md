@@ -1851,6 +1851,76 @@ requires only transaction-owned `~/.local/bin` and `~/.local/state` to remain
 absent after a blocked apply. Retry is safe; no live installer, package, link,
 credential, component, or session changed.
 
+**Live installer preflight stop / revised D11 required:** after PR #80 passed
+the corrected protected run in 1m54s and squash-merged as `caf6f4f`, clean
+`office` fast-forwarded to that target. The separately downloaded official
+installer passed shell syntax and honored `CODEX_INSTALL_DIR` plus non-
+interactive mode, but source review found multiple embedded raw recursive
+deletions for staging, installed-release replacement, and cleanup. The global
+guarded-delete rule forbids executing or hiding those dynamic `rm -rf` paths;
+they cannot be predeclared as one immutable manifest without rewriting the
+installer, and no installer command ran. Recommended revised D11 creates only
+the separate visible native symlink by resolving the pilot's existing verified
+native symlink target once and linking that same executable under the private
+mode-0700 native-entry directory. This preserves one installed package, makes
+no download or package change, and performs no recursive deletion. The tradeoff
+is that a later standalone package update must refresh this local visible link
+through a future reviewed transaction rather than relying on the installer to
+own `~/.local/bin/codex`. Alternative D11 is to leave the pilot rolled back and
+abandon managed ownership of the ordinary command. Phase returns to
+`interviewing`; no live directory, symlink, package, credential, component, or
+session changed during preflight.
+
+**Decision D12 selected / policy revision ready-for-go:** revise the canonical
+global guidance and `guarded-bulk-delete` skill to distinguish agent-directed
+deletion from cleanup internal to a reviewed trusted installer or package
+manager. Agent-authored recursive deletion, globs/loops, synchronization with
+deletion, cleanup scripts under agent control, and ambiguous third-party tools
+remain manifest-gated. The narrow exception requires an official vendor HTTPS
+artifact or already trusted package manager; download-before-execute rather
+than remote piping; syntax and destructive-target review of the exact bytes;
+non-interactive explicit destinations; deletion confined to declared package-
+owned release/cache/staging/temp roots; hard exclusion of account-home roots,
+repositories, workspaces, credentials, backups, and unrelated user data; exact-
+artifact execution; and post-install/residue verification. Any ambiguity falls
+back to guarded deletion. Implementation will update only
+`.codex/AGENTS.md`, `shared/skills/guarded-bulk-delete/SKILL.md`, focused
+instruction-discovery assertions where necessary, and this ledger. Validation
+requires skill `quick_validate.py`, installer/control-plane guidance tests,
+public privacy audit, `git diff --check`, and protected `portable-phase1`.
+After protected publication and clean `office` fast-forward, re-download and
+re-review the official Codex installer as exact bytes, execute it under D12,
+then resume the already-frozen D11 native-entry/adoption/fresh-session gates.
+Phase is `ready-for-go`; no policy, skill, installer, package, live link, or
+session changed while D12 was interviewed.
+
+**D12 implementation checkpoint (2026-07-19):** canonical global guidance now
+prohibits agent-directed raw/bulk deletion while defining the frozen eight-gate
+reviewed-installer exception and stating that owner approval alone is
+insufficient. The shared guarded-delete skill applies the same classifier and
+leaves its manifest workflow unchanged. Focused discovery assertions protect
+the provenance and approval boundaries; the guidance remains below its 200-line
+limit, frontmatter shape, portable shell syntax, and `git diff --check` pass.
+The skill-creator `quick_validate.py` could not start because its own environment
+lacks the `yaml` module; no package was installed. Repository-native focused
+tests reached their existing macOS GNU `realpath -e`/`stat -c` cleanup fixtures
+after the new assertions passed, so protected Linux `portable-phase1` remains
+the authoritative complete gate. No installer, package, deletion, live link,
+credential, component, or session changed. Exact next action: publish D12
+through protected CI before using the exception.
+
+**First protected D12 failure / frozen-evaluation correction:** PR #81 run
+`29685764237` stopped because T-181 correctly rejects a changed live control-
+plane skill relative to baseline `d5b82cd`. The policy semantics remain valid.
+The correction adds an evaluation-local byte-identical copy of the historical
+guarded-delete skill, points only the destructive-safety corpus task to it, and
+maps that declared path back to the original shared-skill path for baseline
+comparison. Direct byte comparison to the baseline revision, evaluator Python
+syntax, mapping validation, and diff checks pass. This preserves historical
+T-181 instructions while allowing the current shared skill to evolve. Retry is
+safe; no installer, package, deletion, live link, credential, component, or
+session changed.
+
 ## Stable operational facts
 
 - The 2026-07-15 accident was an agent-issued raw recursive deletion of

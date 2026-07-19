@@ -1,6 +1,6 @@
 ---
 name: guarded-bulk-delete
-description: Plan, execute, and verify autonomous deletion of directory trees with protected-root rejection, explicit canonical boundaries, immutable short-lived manifests, identity and size revalidation, and post-delete checks. Use whenever Codex or Claude would otherwise run recursive rm, find -delete, wildcard cleanup, synchronization with deletion, or any command that can remove multiple files or directories, including to classify whether reviewed installer or package-manager internal cleanup qualifies for the narrow exception.
+description: Plan, execute, and verify autonomous deletion of directory trees with protected-root rejection, explicit canonical boundaries, immutable short-lived manifests, identity and size revalidation, and post-delete checks. Use whenever Codex or Claude would otherwise run recursive rm, find -delete, wildcard cleanup, synchronization with deletion, or any command that can remove multiple files or directories.
 ---
 
 # Guarded bulk delete
@@ -9,30 +9,6 @@ Use the deterministic `harness guarded-delete` workflow for bulk deletion.
 Do not issue raw recursive deletion commands or hide deletion in a shell script.
 This workflow does not request approval; plan and apply may proceed autonomously
 when every check passes.
-
-## Reviewed installer exception
-
-Do not use the manifest workflow for cleanup internal to a vendor installer or
-trusted package manager only when every gate below passes:
-
-1. Obtain the artifact from the vendor's official HTTPS endpoint, or use an
-   already trusted system package manager. Download remote scripts to a private
-   temporary file; never pipe them directly to a shell.
-2. Syntax-check and review the exact executable bytes. Identify every recursive
-   or multi-path deletion primitive and prove how each target is derived.
-3. Run non-interactively with explicit install and state destinations. Confine
-   deletion to declared package-owned release, cache, staging, or temporary
-   roots.
-4. Reject any target that is an account-home root, repository, workspace,
-   credential or authentication store, backup, or unrelated user-data path.
-5. Execute the exact reviewed artifact without a second download or mutation.
-   Verify the installed state, expected obsolete-package cleanup, and absence
-   of unexpected residue afterward.
-
-Owner approval alone is insufficient. If provenance, bytes, target derivation,
-ownership, or scope is ambiguous, use guarded deletion or stop. Agent-authored
-installers, repository cleanup scripts, wrappers that hide deletion, and any
-deletion outside package-owned roots never qualify.
 
 ## Plan
 
@@ -73,10 +49,10 @@ a new plan only when retrying remains in scope. Do not bypass the tool with raw
 
 ## Scope boundary
 
-Single, exact, non-recursive file removal and qualifying reviewed-installer
-internal cleanup are outside the manifest workflow. Prefer patch-based deletion
-for tracked repository files. Treat uncertain globs, generated file lists,
-loops, and non-qualifying installer cleanup as bulk deletion.
+Single, exact, non-recursive file removal is outside this workflow when the
+path is already verified and the command cannot expand to multiple paths.
+Prefer patch-based deletion for tracked repository files. Treat uncertain
+globs, generated file lists, and loops as bulk deletion.
 
 After apply, record the manifest path, deleted targets, verification result,
 and any retry safety in the active repository ledger or handoff.
