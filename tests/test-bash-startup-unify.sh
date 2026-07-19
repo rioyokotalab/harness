@@ -93,6 +93,8 @@ grep -F 'state=current action=none' "$TEMP_DIR/current.out" >/dev/null || fail '
 run --rollback "$transaction" >"$TEMP_DIR/rollback.out"
 cmp -s "$home/.bashrc" "$TEMP_DIR/bashrc.before" || fail 'bashrc rollback'
 cmp -s "$home/.bash_profile" "$TEMP_DIR/profile.before" || fail 'profile rollback'
+[ "$(file_mode "$home/.bashrc")" = 640 ] || fail 'bashrc rollback mode'
+[ "$(file_mode "$home/.bash_profile")" = 600 ] || fail 'profile rollback mode'
 if find "$home" -maxdepth 1 -name '.*.harness-*-rollback-*' -print | grep . >/dev/null; then
     fail 'adjacent rollback temporary retained'
 fi
@@ -103,6 +105,8 @@ if HOME="$home" HARNESS_ROOT="$repo" HARNESS_TEST_ALLOW_NONMAIN=1 HARNESS_TEST_F
 fi
 cmp -s "$home/.bashrc" "$TEMP_DIR/bashrc.before" || fail 'injected bashrc recovery'
 cmp -s "$home/.bash_profile" "$TEMP_DIR/profile.before" || fail 'injected profile recovery'
+[ "$(file_mode "$home/.bashrc")" = 640 ] || fail 'injected bashrc recovery mode'
+[ "$(file_mode "$home/.bash_profile")" = 600 ] || fail 'injected profile recovery mode'
 if find "$home" -maxdepth 1 -name '.*.harness-*-recovery-*' -print | grep . >/dev/null; then
     fail 'adjacent recovery temporary retained'
 fi
