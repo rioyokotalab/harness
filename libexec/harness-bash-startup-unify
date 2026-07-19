@@ -275,7 +275,7 @@ def rollback(root: Path, home: Path, transaction: str, host: str | None) -> None
         if backup_text:
             backup = Path(backup_text)
             candidate = adjacent_temporary(path, transaction, "rollback")
-            copy_metadata(backup, candidate)
+            write_candidate(path, candidate, backup.read_bytes())
             os.replace(candidate, path)
         else:
             path.unlink()
@@ -410,7 +410,7 @@ def main() -> int:
             path, _candidate, post, backup = candidates[index]
             if backup is not None:
                 recovery = adjacent_temporary(path, transaction, "recovery")
-                copy_metadata(backup, recovery)
+                write_candidate(path, recovery, backup.read_bytes())
                 os.replace(recovery, path)
             elif exact_equal(path, post):
                 path.unlink()

@@ -225,6 +225,17 @@ failure recovery, and no-leftover checks pass. Exact next action: publish after
 clean phase-one validation, fast-forward local, retry local, and separately
 retry full fleet-sync before AB.
 
+PR #118 merged at `9ed0920`; local apply succeeded as transaction
+`20260719T232744Z-553139`, then doctor, fresh shell, scheduler/module/alias, and
+explicit native MPI checks passed. The rollback drill stopped unchanged because
+copying the mode-0600 durable backup's metadata to an adjacent HOME temporary
+failed and would also restore the wrong mode for a 0640 source. The follow-up
+creates adjacent rollback/recovery files with metadata from the unchanged
+canonical target and writes only exact backup bytes before atomic replacement.
+Focused exact-content, mode, no-leftover, and injected recovery checks pass.
+Exact next action: publish after clean validation, fast-forward local, finish
+its rollback/reapply drill, then retry full fleet-sync before AB.
+
 The clean cross-filesystem run passed all 52 focused suites, guarded deletion,
 and compiler gates, explicitly skipped native MPI, and reached only the known
 Darwin doctor boundary; protected Ubuntu CI remains the publication gate.
