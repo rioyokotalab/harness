@@ -84,7 +84,7 @@ a delayed job. T-210 is complete and must not be repeated.
 
 ### T-272 — Seven-hour accessible-fleet maintenance
 
-**Phase/status:** `executing`. The owner authorized a seven-hour bounded
+**Phase/status:** `complete`. The owner authorized a seven-hour bounded
 maintenance run on `office`, `local`, `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`,
 excluding deployment to the three remaining Macs. This is not authority for
 credentials, account/administrator settings, packages, destructive cleanup,
@@ -315,6 +315,26 @@ one real fixture-isolation defect before any mutation: the early AB2 ripgrep
 artifact plan inherited `local`'s managed HOME, so the safety preflight blocked
 the synthetic target. Give that supported/unsupported plan pair one isolated
 fixture HOME; do not weaken collision checks or change live tools.
+
+PR #105 passed protected phase-1 and merged as `0ebdcb0`; the deployed
+`local` portable phase-1 suite then passed end to end. All eight accessible
+checkouts are clean at that published commit; the six remote Linux checkouts
+also have equal `origin/main` and absent fleet artifacts. Fresh final audits
+report zero required doctor failures, 34/34 control links kept per Linux node,
+ready agent configuration, no-change tmux plans, clean HPC-result hygiene,
+seven passing primary-repository queries, one active captured future chain per
+managed node, verified-disabled smoke jobs, warning silence, strict Git fsck,
+no open PR, and no `harness-*` test residue. A 50-cycle 55-second `office`
+soak followed by a 20-cycle final watch detected no dirty state or ref drift.
+
+No package, credential, account, administrator setting, plugin, connector,
+external service, scheduler job, backup snapshot, retention action, active
+owner session, or unavailable Mac was changed. Preserve the small paired
+failed-transaction evidence on `local` and RC. Remaining explicit boundaries
+are deployment to the three offline Macs, T-196 successor queries only after
+2026-07-26 eligibility, any container/project environment choice, vendor arg0
+cleanup after Codex exits, and a designed checksum-pinned agent upgrade/
+rollback lifecycle; none is implied by this completed maintenance run.
 
 ### T-271 — Comprehensive post-pilot update and cleanup
 
