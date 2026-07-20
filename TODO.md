@@ -534,6 +534,30 @@ pyenv root, exact unlink of Aist's unchanged `.bash_common`, then termination of
 only the revalidated redundant user-started SSH agents while preserving each
 Mac's exact native launchd agent.
 
+The irreversible tail is complete. Its first Aist pyenv staging preflight
+stopped before the move after incorrectly applying a single-link invariant to
+a directory; only the empty mode-0700 retained boundary was created, and a
+read-only retry proved the original root remained in place with target and
+manifest absent. The corrected preflight required the exact current-user-owned
+Git-checkout directory, same-filesystem boundary, absent target/manifest, and
+preserved inode across the atomic rename. Guarded plan then recorded exactly
+one canonical target beneath
+`/Users/rioyokota/.local/state/harness/retired-t281`: 22,682 entries and
+549,370,977 bytes, with mode-0600 manifest
+`/Users/rioyokota/.local/state/harness/transactions/t281-pyenv.guarded-delete.manifest`.
+Its exact emitted token was applied within 10 seconds; guarded verification
+reported the target absent and all protected anchors unchanged. The retained
+boundary and manifest remain, while both original and staged pyenv roots are
+absent. Aist's `.bash_common` then passed exact-path regular-file,
+current-owner, and single-link checks before one content-blind `unlink`; it is
+absent and its contents were never read or copied. Fresh launchd/process
+classification on every Mac now finds exactly one current-user native
+`/usr/bin/ssh-agent -l`, zero redundant exact `ssh-agent -s` processes, and
+zero unknown agent classes, so no process signal was necessary. Exact next
+action: run the frozen final shell/tool/doctor/no-op/Git validation gates, then
+revoke the temporary `.bashrc` read permission and publish this rollout ledger
+through protected main.
+
 ### T-280 — Onboard one additional personal Mac
 
 **Phase/status:** `complete`; exactly one owner-operated Mac was in scope. Its
