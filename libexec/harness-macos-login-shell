@@ -10,8 +10,8 @@ export HARNESS_ROOT
 usage() {
     cat >&2 <<'EOF'
 Usage:
-  harness macos-login-shell --host LOGICAL_ID [--plan|--apply]
-  harness macos-login-shell --rollback TRANSACTION_ID
+  harness macos-login-shell --host LOGICAL_ID [--plan|--apply] [--allow-sudo-prompt]
+  harness macos-login-shell --rollback TRANSACTION_ID [--allow-sudo-prompt]
 EOF
 }
 
@@ -126,21 +126,39 @@ inspect_shells() {
 
 sudo_preflight() {
     command -v sudo >/dev/null 2>&1 || die "noninteractive administrator route is unavailable"
-    sudo -n /usr/bin/true </dev/null >/dev/null 2>&1 ||
-        die "noninteractive administrator route is unavailable"
+    if [ "$allow_sudo_prompt" -eq 1 ]; then
+        if [ "${HARNESS_TEST_ALLOW_NONMAIN:-0}" != 1 ]; then
+            [ -t 0 ] || die "interactive administrator route requires a terminal"
+        fi
+        sudo /usr/bin/true || die "interactive administrator route failed"
+    else
+        sudo -n /usr/bin/true </dev/null >/dev/null 2>&1 ||
+            die "noninteractive administrator route is unavailable"
+    fi
 }
 
 install_shells_file() {
     source_file=$1
-    sudo -n /usr/bin/install -o 0 -g "$shells_gid" -m 644 \
-        "$source_file" "$shells_file" </dev/null ||
-        die "administrator /etc/shells replacement failed"
+    if [ "$allow_sudo_prompt" -eq 1 ]; then
+        sudo /usr/bin/install -o 0 -g "$shells_gid" -m 644 \
+            "$source_file" "$shells_file" ||
+            die "administrator /etc/shells replacement failed"
+    else
+        sudo -n /usr/bin/install -o 0 -g "$shells_gid" -m 644 \
+            "$source_file" "$shells_file" </dev/null ||
+            die "administrator /etc/shells replacement failed"
+    fi
 }
 
 set_account_shell() {
     new_shell=$1
-    sudo -n /usr/bin/chsh -s "$new_shell" "$current_user" </dev/null ||
-        die "administrator account-shell change failed"
+    if [ "$allow_sudo_prompt" -eq 1 ]; then
+        sudo /usr/bin/chsh -s "$new_shell" "$current_user" ||
+            die "administrator account-shell change failed"
+    else
+        sudo -n /usr/bin/chsh -s "$new_shell" "$current_user" </dev/null ||
+            die "administrator account-shell change failed"
+    fi
 }
 
 rollback() {
@@ -235,16 +253,20 @@ rollback() {
 logical_host=
 mode=plan
 rollback_id=
+allow_sudo_prompt=0
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
         --plan) mode=plan; shift ;;
         --apply) mode=apply; shift ;;
         --rollback) [ "$#" -ge 2 ] || { usage; exit 2; }; mode=rollback; rollback_id=$2; shift 2 ;;
+        --allow-sudo-prompt) allow_sudo_prompt=1; shift ;;
         -h|--help) usage; exit 0 ;;
         *) usage; exit 2 ;;
     esac
 done
+
+[ "$allow_sudo_prompt" -eq 0 ] || [ "$mode" != plan ] || { usage; exit 2; }
 
 current_uid=$(id -u)
 current_user=$(id -un)

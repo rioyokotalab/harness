@@ -228,8 +228,12 @@ and leaves the selected safe login file byte-for-byte unchanged.
 one exact Homebrew Bash entry in `/etc/shells` and the current account's shell.
 It requires the default architecture-specific Homebrew prefix, an installed
 physical Bash formula target, strict `/etc/shells` metadata, a clean public
-`main`, and a valid private profile. Apply refuses to prompt: `sudo -n` must
-already succeed, otherwise it stops before mutation. A private transaction
+`main`, and a valid private profile. Apply refuses to prompt by default:
+`sudo -n` must already succeed, otherwise it stops before mutation. An owner
+running the command directly in a local terminal may explicitly add
+`--allow-sudo-prompt` to apply or rollback; this opt-in route requires a
+terminal and permits native `sudo` to prompt. Agents and remote unattended
+routes must retain the default. A private transaction
 captures the complete registry preimage and prior account shell; unchanged-only
 rollback restores both. Zsh files, Terminal preferences, Keychain, login items,
 and running sessions remain untouched.

@@ -444,6 +444,52 @@ scope does not cross the reverse-SSH session, stop again and have the owner run
 the same native harness apply/rollback/reapply commands in that authenticated
 local terminal rather than passing any credential to an agent.
 
+The owner established those local timestamps and reported readiness. Exact
+remote `sudo -n /usr/bin/true` rechecks still fail on all three Macs, confirming
+that the timestamp is terminal-scoped and cannot authorize the reverse-SSH
+sessions. This is an expected external boundary, not evidence of account-shell
+failure; no system or harness state changed. Exact next action: in each already
+authenticated local Mac terminal, run the native `macos-login-shell` apply,
+extract its transaction, run unchanged-only rollback, reapply, and finish with
+a no-op plan. Return only those value-free command results. If any command
+fails, stop on that Mac and preserve its transaction evidence; do not proceed
+to the irreversible tail.
+
+The first owner-local Aist attempt stopped before harness mutation because a
+copied line-continuation backslash retained trailing whitespace: the command
+received no arguments, printed usage, and the following `--host` token was
+treated as a separate missing command. No transaction exists and retry is safe.
+Use a paste-safe function containing no continuation backslashes for all three
+owner-local drills.
+
+The owner requested a simpler native handoff. Exact absent-path preflight now
+passes and a host-specific, Bash-syntax-checked, current-user-owned regular
+`~/run_this.sh` at mode 0700 exists on each Mac. The scripts contain no
+credential or credential assignment; each runs local `sudo -v`, then the
+frozen login-shell apply/rollback/reapply/no-op-plan sequence and stops on the
+first failure. The first attempted Aist staging method failed before creation
+because BSD `install` rejects `/dev/stdin`; the destination remained absent.
+The successful route copied patch-created exact bytes to an absent staging
+path, validated them, and atomically renamed them; all local temporary sources
+are removed. Exact next action: the owner runs `~/run_this.sh` locally on Aist
+first and returns its value-free output. Do not run the other two after an Aist
+failure. After each successful drill, revalidate remotely and exact-unlink only
+that unchanged helper.
+
+The first Aist helper run authenticated its local `sudo -v`, then stopped
+before mutation because the child harness process intentionally attempted only
+`sudo -n`; macOS did not make the parent process's timestamp available to that
+child. No transaction exists and retry is safe. The narrow correction adds an
+explicit `--allow-sudo-prompt` route for apply and rollback, requires a real
+local terminal, and leaves noninteractive `sudo -n` as the default for agents
+and unattended use. Focused syntax, ShellCheck, diff, interactive/default sudo
+routing, apply/rollback, and changed-state tests pass on committed correction
+`964bcaf`; the complete `tests/test-phase1.sh` suite also passes from its clean
+committed tree. Its first pre-commit run had only the expected live-checkout
+tmux refusal while the tree was dirty; every other focused suite passed. Exact
+next action: publish the correction, fast-forward the three Macs, atomically
+replace the unchanged helpers to use the explicit route, and retry Aist first.
+
 ### T-280 — Onboard one additional personal Mac
 
 **Phase/status:** `complete`; exactly one owner-operated Mac was in scope. Its
