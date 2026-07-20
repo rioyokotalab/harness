@@ -227,6 +227,17 @@ syntax validation fails. Focused validation passes. Exact next action: clean
 phase one, protected publication, sync the five reachable nodes, then retry AB;
 do not touch AL until native SSH authentication succeeds.
 
+Owner authentication restored on 2026-07-20. Process-socket SSH and Git fetch
+passed; AL was clean/equal at `9ad4112` and synchronized transactionally to
+`b51afcb` with the transfer artifact absent. Its first startup plan stopped
+before output or mutation because AL's native Python 3.6 cannot parse the
+adapter's newer annotation syntax. The follow-up removes Python-3.7+/3.9-only
+syntax and APIs while retaining behavior, adds a Python 3.6 grammar/API focused
+gate, and passes the transaction suite. Streaming the exact public candidate to
+AL's native `python3` compiler over stdin passed without writing it. Exact next
+action: clean phase one, protected publication, synchronize the fleet, then
+resume AL plan/doctor; RC and T4 remain untouched by startup unification.
+
 The clean comment-only guard run passed all 52 focused suites, guarded
 deletion, and compiler gates, explicitly skipped native MPI, and reached only
 the known Darwin doctor boundary; protected Ubuntu CI remains the publication
