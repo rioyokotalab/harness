@@ -92,10 +92,9 @@ a delayed job. T-210 is complete and must not be repeated.
 
 ### T-278 — Add PyYAML to personal-Mac onboarding tools
 
-**Phase/status:** `validating`; the owner requested installation on the current
-Mac and inclusion in future personal-Mac onboarding. The live prerequisite is
-installed as pinned `PyYAML` in a dedicated harness-owned virtual environment,
-leaving Homebrew Python's externally managed site-packages untouched.
+**Phase/status:** `complete`; PR #137 merged as `6ab8001`. The current Mac has
+pinned `PyYAML` in a dedicated harness-owned virtual environment, leaving
+Homebrew Python's externally managed site-packages untouched.
 
 **Scope and design:** teach `macos-codex-bootstrap` to require Homebrew Python
 with `tomllib`, create the dedicated Python-tools environment only when absent,
@@ -112,8 +111,10 @@ present/ready environment states. Complete portable phase-one validation
 passed every suite before the documented synthetic-host doctor boundary
 (`exit 2`); protected Ubuntu CI remains authoritative.
 
-**Exact next action:** fetch and integrate current `origin/main`, push the task
-branch, and publish through protected CI.
+**Result:** protected `portable-phase1` passed. Future personal-Mac bootstrap
+runs install the absent pinned environment, refuse an unexpected collision,
+validate imports, and launch Codex with the environment first on `PATH`. No
+further action remains for T-278.
 
 ### T-277 — Make personal-Mac onboarding defaults reusable
 
