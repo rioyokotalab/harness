@@ -44,6 +44,22 @@ it does not enumerate or hash prompt content. The current helper has no status
 subcommand. A driver can call `check`, hash files, inspect candidate size, and
 probe a background PID separately, but must mentally combine those outputs.
 
+The first native Claude call used default model/effort and the reviewed
+`Bash,Read,Glob,Grep,Write,Edit` tool set. It remained reachable for 10 minutes
+8 seconds but wrote no output or sandbox file, so the driver interrupted it at
+the historical wall. Redirection then contained only `Execution error` (15
+bytes). Target Git, sandbox Git, protected digests, `stage.json`, and the
+external seal were unchanged; no receipt exists and import would reject the
+candidate headings. This is a retry-safe client failure. The retry narrows work
+to source inspection, the focused suite, at most one timing, and five minutes,
+and selects Claude Sonnet at medium effort explicitly.
+
+Read-only GitHub run evidence for PR #161 showed `portable-phase1` took 138
+seconds. ShellCheck took 22s; the five duplicated named test steps took 15s;
+affinity took 9s; and the umbrella gate took 86s. Thus removing only work
+repeated inside the umbrella gate has a measured upper-bound saving of about
+37s on that run while retaining the 9s independent affinity test.
+
 ## Critique
 
 The plan's concurrency hypothesis is supported only by one 4-versus-8
