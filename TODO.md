@@ -276,8 +276,13 @@ PID, revalidate every candidate's owner/executable/arguments, send `TERM` only
 to exact non-native shell-style agents, never enumerate identities or keys,
 and verify one native agent remains. Existing shells using retired sockets may
 need replacement sessions; no active environment will be rewritten. D13 color
-environment is next. Exact next action: perform only value-free D13 behavior
-discovery, then ask D13. No execution authority exists yet.
+environment is next. D13 value-free discovery confirms every Mac resolves
+`ls` to the native Apple command, none has Homebrew coreutils, and that native
+command accepts the shared `--color=auto` behavior. The non-empty
+`CLICOLOR=xterm-color` entry is therefore redundant and its value is not the
+conventional boolean spelling. Exact next action: ask only D13 whether to
+remove it with no replacement, then audit the full decision register. No
+execution authority exists yet.
 
 ### T-280 — Onboard one additional personal Mac
 
