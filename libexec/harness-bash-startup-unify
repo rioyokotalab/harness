@@ -146,6 +146,24 @@ def remove_redundant_bashrc_loaders(middle: bytes):
     return b"".join(kept), removed
 
 
+def remove_bash_common_reference(middle: bytes):
+    """Remove one reviewed four-line guarded .bash_common source block."""
+    path = rb'(?:(?:"?\$HOME/\.bash_common"?)|(?:"?~/\.bash_common"?))'
+    block = re.compile(
+        rb'(?m)^[ \t]*\#[^\r\n]*\.bash_common[^\r\n]*(?:\r?\n)'
+        rb'^[ \t]*if[ \t]+\[[ \t]+-[erf][ \t]+' + path +
+        rb'[ \t]+\][ \t]*;?[ \t]*then[ \t]*(?:\r?\n)'
+        rb'^[ \t]*(?:source|\.)[ \t]+' + path + rb'[ \t]*(?:\r?\n)'
+        rb'^[ \t]*fi[ \t]*(?:\r?\n)'
+    )
+    matches = list(block.finditer(middle))
+    references = middle.count(b".bash_common")
+    if len(matches) != 1 or references != 3:
+        die(".bashrc bash-common reference is missing, duplicate, or ambiguous")
+    match = matches[0]
+    return middle[:match.start()] + middle[match.end():], match.end() - match.start()
+
+
 def bash_syntax(path: Path) -> None:
     result = subprocess.run(
         ["/bin/bash", "--noprofile", "--norc", "-n", str(path)],
@@ -320,9 +338,13 @@ def main() -> int:
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--rollback")
     parser.add_argument("--merge-distinct-profile", action="store_true")
+    parser.add_argument("--merge-thin-profile-tail", action="store_true")
+    parser.add_argument("--remove-bash-common-reference", action="store_true")
     args = parser.parse_args()
     if sum(bool(value) for value in (args.plan, args.apply, args.rollback)) != 1:
         die("select exactly one of --plan, --apply, or --rollback")
+    if args.merge_distinct_profile and args.merge_thin_profile_tail:
+        die("choose exactly one profile merge route")
 
     root = Path(os.environ.get("HARNESS_ROOT", Path(__file__).resolve().parent.parent))
     home_text = os.environ.get("HOME", "")
@@ -335,8 +357,9 @@ def main() -> int:
         die("Bash startup HOME is unsafe")
     validate_checkout(root)
     if args.rollback:
-        if args.merge_distinct_profile:
-            die("distinct profile merge is invalid during rollback")
+        if args.merge_distinct_profile or args.merge_thin_profile_tail or \
+                args.remove_bash_common_reference:
+            die("merge/removal flags are invalid during rollback")
         if args.host and not safe_id(args.host):
             die("a safe logical host is required")
         rollback(root, home, args.rollback, args.host)
@@ -377,12 +400,29 @@ def main() -> int:
         bashrc_data.count(b"# >>> harness login-only local >>>") == 1 and \
         bashrc_data.count(b"# <<< harness login-only local <<<") == 1
     mode = "apply" if args.apply else "plan"
-    if current:
+    if current and not args.remove_bash_common_reference:
+        if args.merge_thin_profile_tail:
+            die("thin profile tail merge is not required")
         print(f"BASH_STARTUP_UNIFY mode={mode} host={args.host} state=current action=none")
         return 0
 
-    profile_middle = split_managed(profile_data, prefix, profile_suffix, ".bash_profile") \
-        if profile_info is not None else b""
+    thin_profile_tail = False
+    if profile_info is None:
+        profile_middle = b""
+    elif profile_data == thin_profile:
+        if args.merge_thin_profile_tail:
+            die("thin profile tail merge is not required")
+        profile_middle = b""
+    elif profile_data.startswith(thin_profile):
+        if not args.merge_thin_profile_tail:
+            die("thin profile has opaque appended bytes requiring explicit merge authority")
+        profile_middle = profile_data[len(thin_profile):]
+        reject_ambiguous_middle(profile_middle, ".bash_profile")
+        thin_profile_tail = True
+    else:
+        if args.merge_thin_profile_tail:
+            die("thin profile tail merge is not applicable")
+        profile_middle = split_managed(profile_data, prefix, profile_suffix, ".bash_profile")
     migrated_profile_middle, redundant_loaders = remove_redundant_bashrc_loaders(profile_middle)
     canonical_parts = split_canonical_bashrc(
         bashrc_data, prefix, bashrc_suffix, ".bashrc"
@@ -391,7 +431,20 @@ def main() -> int:
     merge_distinct = False
     if profile_info is not None and canonical_parts is not None:
         prior_login_middle, bashrc_middle = canonical_parts
-        if migrated_profile_middle == prior_login_middle:
+        if thin_profile_tail:
+            merged_login_middle = prior_login_middle
+            if merged_login_middle and migrated_profile_middle and \
+                    not merged_login_middle.endswith(b"\n"):
+                merged_login_middle += b"\n"
+            merged_login_middle += migrated_profile_middle
+            new_bashrc = prefix + login_section(merged_login_middle) + \
+                bashrc_middle + bashrc_suffix
+        elif profile_data == thin_profile:
+            if args.merge_distinct_profile:
+                die("distinct profile merge is not required")
+            new_bashrc = bashrc_data
+            profile_only = True
+        elif migrated_profile_middle == prior_login_middle:
             if args.merge_distinct_profile:
                 die("distinct profile merge is not required")
             profile_only = True
@@ -408,21 +461,33 @@ def main() -> int:
             die("distinct profile local bytes require explicit merge authority")
     elif args.merge_distinct_profile:
         die("distinct profile merge is not applicable")
+    elif args.merge_thin_profile_tail:
+        die("thin profile tail merge is not applicable")
 
     if profile_only:
         new_bashrc = bashrc_data
-    elif not merge_distinct:
+    elif not merge_distinct and not thin_profile_tail:
         bashrc_middle = split_managed(bashrc_data, prefix, bashrc_suffix, ".bashrc")
         new_bashrc = prefix + login_section(migrated_profile_middle) + \
             bashrc_middle + bashrc_suffix
-    state = "merge-distinct-profile" if merge_distinct else \
-        ("profile-only" if profile_only else "merge")
+    bash_common_bytes = 0
+    if args.remove_bash_common_reference:
+        canonical_new = split_canonical_bashrc(new_bashrc, prefix, bashrc_suffix, ".bashrc")
+        if canonical_new is None:
+            die("combined Bash startup candidate is not canonical")
+        new_login_middle, new_bashrc_middle = canonical_new
+        new_bashrc_middle, bash_common_bytes = remove_bash_common_reference(new_bashrc_middle)
+        new_bashrc = prefix + login_section(new_login_middle) + new_bashrc_middle + bashrc_suffix
+    state = "merge-thin-profile-tail" if thin_profile_tail else \
+        ("merge-distinct-profile" if merge_distinct else
+         ("profile-only" if profile_only else "merge"))
     print(
         f"BASH_STARTUP_UNIFY mode={mode} host={args.host} "
         f"state={state} "
         f"profile_local_bytes={len(profile_middle)} bashrc_local_bytes={len(bashrc_middle)} "
         f"profile_prestate={'present' if profile_info is not None else 'absent'} "
         f"redundant_profile_loaders={redundant_loaders} "
+        f"bash_common_reference_bytes={bash_common_bytes} "
         "action=canonical-bashrc+thin-profile"
     )
     if args.plan:

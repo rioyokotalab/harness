@@ -163,6 +163,54 @@ run_partial --host local --plan >"$TEMP_DIR/partial.current"
 grep -F 'state=current action=none' "$TEMP_DIR/partial.current" >/dev/null ||
     fail 'partial-current reapply'
 
+retire_home=$TEMP_DIR/retire-home
+mkdir -p "$retire_home"
+cp "$partial_home/.bashrc" "$retire_home/.bashrc"
+cp "$partial_home/.bash_profile" "$retire_home/.bash_profile"
+awk '$0 == "# >>> harness managed >>>" && !inserted {
+        print "# Source .bash_common"
+        print "if [ -r \"$HOME/.bash_common\" ]; then"
+        print "    source \"$HOME/.bash_common\""
+        print "fi"
+        inserted=1
+    }
+    { print }' "$retire_home/.bashrc" >"$TEMP_DIR/retire-bashrc"
+mv "$TEMP_DIR/retire-bashrc" "$retire_home/.bashrc"
+printf '%s\n' 'export THIN_TAIL_LOGIN_ONLY=kept' >>"$retire_home/.bash_profile"
+cp "$retire_home/.bashrc" "$TEMP_DIR/retire-bashrc.before"
+cp "$retire_home/.bash_profile" "$TEMP_DIR/retire-profile.before"
+run_retire() {
+    HOME="$retire_home" HARNESS_ROOT="$repo" HARNESS_TEST_ALLOW_NONMAIN=1 \
+        "$repo/bin/harness" bash-startup-unify "$@"
+}
+run_retire --host local --plan --merge-thin-profile-tail \
+    --remove-bash-common-reference >"$TEMP_DIR/retire.plan"
+grep -F 'state=merge-thin-profile-tail' "$TEMP_DIR/retire.plan" >/dev/null ||
+    fail 'thin profile tail plan'
+grep -E 'bash_common_reference_bytes=[1-9][0-9]*' "$TEMP_DIR/retire.plan" >/dev/null ||
+    fail 'bash-common reference removal plan'
+run_retire --host local --apply --merge-thin-profile-tail \
+    --remove-bash-common-reference >"$TEMP_DIR/retire.apply"
+retire_transaction=$(sed -n 's/^BASH_STARTUP_UNIFY action=applied transaction=\([^ ]*\).*/\1/p' "$TEMP_DIR/retire.apply")
+[ -n "$retire_transaction" ] || fail 'thin tail retirement transaction'
+cmp -s "$retire_home/.bash_profile" "$repo/shell/bash_profile.canonical" ||
+    fail 'thin tail profile convergence'
+grep -F -x 'export THIN_TAIL_LOGIN_ONLY=kept' "$retire_home/.bashrc" >/dev/null ||
+    fail 'thin tail preservation'
+if grep -F '.bash_common' "$retire_home/.bashrc" >/dev/null; then
+    fail 'bash-common reference retained'
+fi
+run_retire --rollback "$retire_transaction" >"$TEMP_DIR/retire.rollback"
+cmp -s "$retire_home/.bashrc" "$TEMP_DIR/retire-bashrc.before" ||
+    fail 'bash-common reference rollback'
+cmp -s "$retire_home/.bash_profile" "$TEMP_DIR/retire-profile.before" ||
+    fail 'thin profile tail rollback'
+run_retire --host local --apply --merge-thin-profile-tail \
+    --remove-bash-common-reference >"$TEMP_DIR/retire.reapply"
+run_retire --host local --plan >"$TEMP_DIR/retire.current"
+grep -F 'state=current action=none' "$TEMP_DIR/retire.current" >/dev/null ||
+    fail 'thin tail retirement reapply'
+
 run --rollback "$transaction" >"$TEMP_DIR/rollback.out"
 cmp -s "$home/.bashrc" "$TEMP_DIR/bashrc.before" || fail 'bashrc rollback'
 cmp -s "$home/.bash_profile" "$TEMP_DIR/profile.before" || fail 'profile rollback'
