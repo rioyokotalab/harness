@@ -52,17 +52,18 @@ and compact historical pointers here. Next free ID: T-280.
 
 ## Next resume checkpoint
 
-T-273 is the ordered closure task for every known item deliberately deferred by
-T-268, T-269, and T-272. Workstream 1's value-free failed-transaction review is
-resolved as evidence retention: three failed groups remain private because no
-published operation-specific cleanup contract can prove them redundant. Exact
-next work is workstream 2, now `executing` after the owner's explicit `go`.
-D1-D3 freeze exact restoration
-after interruption, forward-only replacement with downgrade only by rollback,
-and one retained immediate predecessor while a replacement is active. Generic
-implementation, synthetic validation, protected publication, and clean-
-checkout synchronization are authorized; no live version change is included.
-The other workstreams retain their recorded time, availability, project-
+T-280 is the active one-Mac onboarding task. The owner supplied one opaque
+logical identifier outside this public ledger. Planning must resume only from
+an owner-started local session on that Mac; this Linux login node must not push
+or infer its state. No target discovery or mutation has run, and no `go` has
+been given. The exact next fact is whether Codex is already runnable locally;
+that selects either the published Codex-first bootstrap entry or a direct local
+Codex session before value-free discovery and the host-specific PIE plan.
+
+T-273 remains the ordered closure task for every known item deliberately
+deferred by T-268, T-269, and T-272. Workstreams 1 and 2 are complete by
+retained evidence and published checksum-pinned replacement capability. The
+other workstreams retain their recorded time, availability, project-
 requirement, or explicit-authority gates.
 
 T-268 and T-269 have completed the accessible rollout on `office`, `local`,
@@ -76,7 +77,7 @@ private transaction identifiers remain local. `local` additionally recovered
 its opaque Codex preferences and 93 trust tables after the D16 rollback defect,
 and the verified recovery tree plus deletion manifest are absent.
 
-Exact next deployment boundary: bring each of the three remaining Macs online
+Exact next deployment boundary: bring each of the two remaining Macs online
 and plan/apply it independently; never batch Macs or infer their state from
 `office`. Revalidate public/private clean state, transport, logical identity,
 native agent ownership, and value-free plans before each Mac. The one-way
@@ -95,6 +96,70 @@ query only those recorded IDs after eligibility and do not replace or duplicate
 a delayed job. T-210 is complete and must not be repeated.
 
 ## Active tasks
+
+### T-280 — Onboard one additional personal Mac
+
+**Phase/status:** `planning`; exactly one owner-operated Mac is in scope. Its
+logical identity was supplied privately and is intentionally omitted here.
+This public checkpoint was reconstructed on the Linux login node from clean,
+current published `main`; the target Mac has not been contacted, inventoried,
+or changed. The owner has not yet given the task's explicit pre-mutation `go`.
+
+**Desired outcome:** independently bring this Mac to the current pull-based
+personal-Mac baseline: clean compatible public/private repositories, the
+bounded managed Homebrew allowlist, public control links, canonical Bash and
+tmux layouts, SSH-only private agreement, prompt-free public agent policy with
+official native Codex ownership, ready doctors, fresh-session acceptance, and
+successful unchanged-only rollback/reapply drills. Long-offline state must
+fast-forward directly through the current compatibility/migration engine; no
+missed rollout is replayed.
+
+**Frozen defaults and sequence:** use `onboard-personal-mac` with the settled
+T-277 defaults. From an owner-started local Codex session, reconstruct Git and
+this ledger; verify native identity, Darwin/architecture, current-user
+ownership, agent socket, official Codex ownership, public/private cleanliness
+and ancestry, private schema, and absence of transaction/artifact collisions.
+Restore an absent private companion from its declared locator, create only a
+baseline-only missing host declaration, install only missing declared
+bootstrap prerequisites, prefer validated SSH Git transport, and use the
+reviewed remote-to-local route for first private SSH agreement. Then run the
+aggregate value-free plan and only its applicable ordered stages: public
+control, bounded Homebrew, Bash hooks/startup unification, shared tmux, private
+SSH reconciliation, and agent configuration. Revalidate immediately before
+each apply; exercise exact rollback, prior-baseline acceptance, accepted
+reapply, no-op plans, doctors, fresh managed/native shells, isolated tmux, Git
+agreement, and artifact absence. Only after full onboarding acceptance run
+T-273's value-free `.bash_common` reference/open-handle test; retain an active
+file, or quarantine/retest/exact-unlink only a proven orphan.
+
+**Safety and non-goals:** preserve all machine-local startup bytes and
+unrelated owner settings. Stop for dirty/divergent Git, unsafe types, ambiguous
+private state, unexpected dependency/dependent scope, authentication, password,
+TCC, administrator, reboot, or physical-interaction boundaries. Do not inspect
+credentials; change the account shell, Terminal settings, zsh, Keychain,
+plugins/connectors, casks, services, taps, login/background jobs, unmanaged
+packages, active sessions, another Mac, or any Linux/HPC state. Homebrew
+package recovery is separately reviewed; file/link rollback is transactionally
+bounded. Never reload the current shell or tmux server automatically.
+
+**Acceptance and interruption:** private values, paths, revisions, facts, and
+transaction identifiers stay local. Public evidence is value-free. On any
+stop, record the last verified state and resume from the first unverified stage
+without repeating a successful mutation. Completion requires both repositories
+clean/equal, Mac and agent doctors ready, official native Codex retained,
+managed interactive and native batch routing correct, fresh Bash/tmux behavior,
+SSH-only agreement, no transfer residue, and every applicable rollback/reapply
+drill passed.
+
+**Exact next action:** determine locally whether Codex is already runnable on
+the selected Mac. If it is, start Codex from that Mac's clean public harness
+checkout and resume T-280. If it is absent, use the published
+`macos-codex-bootstrap` plan/apply entry from the verified checkout; that single
+entry installs only declared missing prerequisites and launches Codex with the
+complete onboarding assignment. The local agent must perform value-free
+discovery, checkpoint the concrete plan, resolve any genuinely new material
+choice one at a time, set `ready-for-go`, and wait for a fresh explicit `go`
+before onboarding mutation.
 
 ### T-279 — Repair home Bash drift and retire `.bash_common`
 
@@ -786,7 +851,8 @@ only after its own proportional validation and durable checkpoint.
    idempotence coverage before changing the repository-pinned Linux Codex or
    proposing parity with the official macOS runtime. Continue to require the
    checksum manifest; never replace a live runtime with an unverified download.
-3. **Three remaining Macs — availability-gated.** Bring up and plan/apply one
+3. **Remaining Macs — availability-gated.** After the independently completed
+   `home` onboarding, bring up and plan/apply each of the two remaining Macs one
    Mac at a time under T-268/T-269. Revalidate public/private cleanliness,
    identity, native ownership, transport, and a value-free plan independently;
    never infer one Mac's state from another or batch the applies.
