@@ -71,6 +71,10 @@ schema-1 receipts without weakening new schema-2 writes.
   separate audit/recovery action.
 - The helper enforces its own phase transitions but cannot stop arbitrary editor
   writes. Phase ordering remains an audited process invariant.
+- Round 8 removed a narrower receipt-provenance TOCTOU: seal file properties,
+  parsed JSON, and `seal_sha256` now come from one opened file description.
+  Same-UID replacement before that open and parent-path reachability remain the
+  documented confinement residuals.
 - Round 6 recorded, rather than concealed, one raw recursive cleanup of an
   already-disposable smoke directory and one target edit made before the
   `executing` transition. Neither affected credentials, user evidence, or the

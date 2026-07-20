@@ -35,3 +35,13 @@ preserved until guarded cleanup.
   avoids a production pause/test hook and probabilistic race.
 - One invalid first Claude response is retained as a retry-safe process event;
   only the substantive retry was imported.
+
+## Cleanup
+
+After completion, guarded-delete token `5160b26e…` deleted the three exact
+round-8 `/tmp` roots (1,222 entries; 6,588,839 bytes), including Claude's labeled
+scratch. Separate token `b6f1d5e2…` deleted only the two detached-worktree admin
+records (16 entries; 108,275 bytes). Both applies revalidated targets and
+verified protected anchors unchanged and targets absent. The spent manifests
+were exact-unlinked; `git worktree list`, `git fsck --no-dangling`, and clean
+branch status passed. Tracked evidence remains recoverable in Git.

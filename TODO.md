@@ -346,8 +346,12 @@ before-open same-UID residual without schema/CLI/confinement expansion. The
 first Claude call returned only a skill token and was not imported; one recorded
 retry was safe and succeeded. AST, shell syntax, focused cowork, and whitespace
 checks pass. Checkpoint `66b80b7` then passed clean full Phase 1 in every suite
-(only the declared native-MPI environment skip). Next action: complete and
-guarded-clean round-8 scratch.
+(only the declared native-MPI environment skip). Round 8 is complete.
+Guarded-delete tokens `5160b26e…` and `b6f1d5e2…` removed respectively the
+three exact scratch roots (1,222 entries; 6,588,839 bytes) and two detached-
+worktree admin records (16 entries; 108,275 bytes), with protected anchors
+unchanged and targets absent. Spent manifests were unlinked; worktree list, Git
+fsck, and clean status passed.
 
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
 and Claude. Its role contract must be client-neutral: the active client is the
