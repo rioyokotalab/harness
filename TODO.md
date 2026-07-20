@@ -60,10 +60,14 @@ a supported Apple-silicon Darwin target with Command Line Tools and functional
 Homebrew at its supported current-user-owned prefix; Homebrew is merely absent
 from the remote shell's initial `PATH`. Codex, the public checkout, and a usable
 native target-side agent socket are absent, while a command-scoped forwarded
-agent socket is safe. No target mutation has run. Resume by publishing this
-checkpoint, then bootstrap the missing public checkout and prerequisites
-through native remote commands while preserving every authentication and
-unsafe-state stop gate.
+agent socket is safe. The public checkout was cloned clean/equal from published
+`main`. The bootstrap plan selected only the declared missing prerequisites,
+but its first Homebrew dry-run stopped before package mutation because the
+existing Homebrew engine is too old for the current OS. Its current-user-owned
+repository is clean on a supported branch with the official origin and no lock
+collision. Retry is safe. Resume by publishing this checkpoint, run a native
+Homebrew engine update, revalidate it, then repeat the exact bootstrap plan and
+apply while preserving every authentication and unsafe-state stop gate.
 
 T-273 remains the ordered closure task for every known item deliberately
 deferred by T-268, T-269, and T-272. Workstreams 1 and 2 are complete by
@@ -113,9 +117,13 @@ permission prompts. Value-free read-only discovery confirms a supported
 Apple-silicon Darwin target, non-root execution, Command Line Tools present,
 functional Homebrew at its supported current-user-owned prefix but outside the
 remote shell's initial `PATH`, a safe command-scoped forwarded agent socket,
-and Codex, the public checkout, and a usable native target-side agent socket
-absent. No target mutation has run. The Codex-first bootstrap remains the
-required entry route after establishing the missing clean public checkout.
+and Codex and a usable native target-side agent socket absent. The public
+checkout is now clean/equal on published `main`. The exact Codex bootstrap plan
+selected only the declared missing formulae and Python-tools environment, but
+its first Homebrew dry-run stopped before package mutation because the existing
+Homebrew engine does not recognize the current OS. The Homebrew repository is
+current-user-owned, clean on a supported branch, uses the official origin, and
+has no lock collision. Retry is safe after its native engine catch-up.
 
 **Desired outcome:** independently bring this Mac to the current pull-based
 personal-Mac baseline: clean compatible public/private repositories, the
@@ -163,15 +171,16 @@ managed interactive and native batch routing correct, fresh Bash/tmux behavior,
 SSH-only agreement, no transfer residue, and every applicable rollback/reapply
 drill passed.
 
-**Exact next action:** publish this value-free execution checkpoint through the
-protected workflow. Through the owner-supplied ephemeral route, clone the
-public harness into its canonical absent destination from published `main`,
-verify clean/equal state, then run
-`./bin/harness macos-codex-bootstrap --host LOGICAL_ID --plan`. Revalidate and
-apply only the exact no-block bootstrap plan under the owner's current
-authority. Continue the frozen onboarding sequence autonomously, checkpointing
-each accepted stage and stopping only at an authentication, physical-action,
-unsafe/divergent-state, or genuinely new material-choice boundary.
+**Exact next action:** publish this value-free failure checkpoint through the
+protected workflow. Through the owner-supplied ephemeral route, revalidate the
+clean official Homebrew repository and run the native `brew update` catch-up;
+do not broaden it to formula upgrades, cleanup, taps, services, or casks.
+Require the updated engine to recognize the OS and keep its repository clean.
+Then rerun the exact Codex bootstrap plan and apply only its no-block result
+under the owner's current authority. Continue the frozen onboarding sequence
+autonomously, checkpointing each accepted stage and stopping only at an
+authentication, physical-action, unsafe/divergent-state, or genuinely new
+material-choice boundary.
 
 ### T-279 — Repair home Bash drift and retire `.bash_common`
 
