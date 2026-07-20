@@ -112,8 +112,12 @@ printf 'UserShell: %s\n' "$(sed -n '1p' "$TEST_ACCOUNT_STATE")"
 EOF
 cat >"$fake_bin/sudo" <<'EOF'
 #!/bin/sh
-[ "$1" = -n ] || exit 2
-shift
+sudo_mode=interactive
+if [ "$1" = -n ]; then
+    sudo_mode=noninteractive
+    shift
+fi
+printf '%s|%s\n' "$sudo_mode" "$*" >>"$TEST_SUDO_LOG"
 case "$1" in
     /usr/bin/true) exit 0 ;;
     /usr/bin/install)
@@ -134,10 +138,13 @@ chmod 755 "$fake_prefix/bin/brew" "$cellar_prefix/bin/bash" \
 
 shells_file=$TEMP_DIR/shells
 account_state=$TEMP_DIR/account-shell
+sudo_log=$TEMP_DIR/sudo.log
 printf '%s\n' /bin/bash /bin/zsh >"$shells_file"
 chmod 644 "$shells_file"
 printf '%s\n' /bin/bash >"$account_state"
 chmod 600 "$account_state"
+: >"$sudo_log"
+chmod 600 "$sudo_log"
 cp "$shells_file" "$TEMP_DIR/shells.before"
 real_stat=$(command -v stat)
 real_platform=$(uname -s)
@@ -147,6 +154,7 @@ run_command() {
         HARNESS_TEST_SHELLS_FILE="$shells_file" TEST_SHELLS_FILE="$shells_file" \
         TEST_ACCOUNT_STATE="$account_state" FAKE_BREW_PREFIX="$fake_prefix" \
         FAKE_BASH_PREFIX="$formula_prefix" REAL_STAT="$real_stat" \
+        TEST_SUDO_LOG="$sudo_log" \
         REAL_PLATFORM="$real_platform" PATH="$fake_prefix/bin:$fake_bin:/usr/bin:/bin" \
         "$COMMAND" "$@"
 }
@@ -173,9 +181,18 @@ run_command --rollback "$transaction" >"$TEMP_DIR/rollback.out"
 cmp -s "$shells_file" "$TEMP_DIR/shells.before" || fail "shell registry rollback"
 [ "$(sed -n '1p' "$account_state")" = /bin/bash ] || fail "account shell rollback"
 
-run_command --host mac-test-pilot --apply >"$TEMP_DIR/reapply.out"
+run_command --host mac-test-pilot --apply --allow-sudo-prompt \
+    >"$TEMP_DIR/reapply.out"
 reapply_transaction=$(sed -n 's/.*transaction=\([^ ]*\).*/\1/p' "$TEMP_DIR/reapply.out")
 [ -n "$reapply_transaction" ] || fail "login-shell reapply transaction"
+grep -F -x 'interactive|/usr/bin/true' "$sudo_log" >/dev/null ||
+    fail "interactive sudo preflight"
+grep -F 'interactive|/usr/bin/install -o 0 -g 0 -m 644 ' "$sudo_log" >/dev/null ||
+    fail "interactive sudo registry install"
+grep -F -x "interactive|/usr/bin/chsh -s $fake_prefix/bin/bash $(id -un)" \
+    "$sudo_log" >/dev/null || fail "interactive sudo account-shell change"
+grep -F -x 'noninteractive|/usr/bin/true' "$sudo_log" >/dev/null ||
+    fail "noninteractive sudo default"
 printf '%s\n' '# owner drift' >>"$shells_file"
 cp "$shells_file" "$TEMP_DIR/shells.drifted"
 if run_command --rollback "$reapply_transaction" >"$TEMP_DIR/drift.out" 2>&1; then

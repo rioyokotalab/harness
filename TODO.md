@@ -476,6 +476,16 @@ first and returns its value-free output. Do not run the other two after an Aist
 failure. After each successful drill, revalidate remotely and exact-unlink only
 that unchanged helper.
 
+The first Aist helper run authenticated its local `sudo -v`, then stopped
+before mutation because the child harness process intentionally attempted only
+`sudo -n`; macOS did not make the parent process's timestamp available to that
+child. No transaction exists and retry is safe. The narrow correction adds an
+explicit `--allow-sudo-prompt` route for apply and rollback, requires a real
+local terminal, and leaves noninteractive `sudo -n` as the default for agents
+and unattended use. Exact next action: validate and publish that correction,
+fast-forward the three Macs, atomically replace the unchanged helpers to use
+the explicit route, and retry Aist first.
+
 ### T-280 — Onboard one additional personal Mac
 
 **Phase/status:** `complete`; exactly one owner-operated Mac was in scope. Its
