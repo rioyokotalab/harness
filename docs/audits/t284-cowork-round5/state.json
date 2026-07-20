@@ -3,7 +3,7 @@
   "created_at": "2026-07-20T23:06:15+00:00",
   "driver": "codex",
   "exchange_mode": "staged",
-  "phase": "executing",
+  "phase": "validating",
   "predecessor": {
     "driver": "codex",
     "path": "/home/rioyokota/harness/docs/audits/t284-cowork-round4",
@@ -11,5 +11,5 @@
     "state_sha256": "29536c73cf53fb38b91da1e92649d53310f16a71c080a5b5a976953fea119c4c"
   },
   "schema_version": 2,
-  "updated_at": "2026-07-20T23:21:08+00:00"
+  "updated_at": "2026-07-20T23:23:25+00:00"
 }
