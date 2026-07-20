@@ -128,9 +128,13 @@ commit `c630866` the clean-checkout `tests/test-phase1.sh` rerun passed every
 focused suite, guarded-delete, and the umbrella gate (native MPI correctly
 skipped); the round-2 session is `complete` and validates. Next action: perform
 the deferred guarded cleanup of the two round-1 and two round-2 sandboxes plus
-the throwaway probe trees. No settings, credentials, packages, remotes, or
-external systems changed; the four round sandboxes are retained for that guarded
-cleanup and this work has not been pushed.
+the throwaway probe trees. That exact seven-directory cleanup subsequently
+passed manifest planning, identity/size revalidation, deletion, and protected-
+anchor verification under `/tmp`; the tracked exchange evidence remains. Next
+action: run a third paired round to test whether staged file exchange can remove
+the session-wide co-pilot write grant instead of only detecting misuse. No
+settings, credentials, packages, remotes, or external systems changed, and this
+work has not been pushed.
 
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
 and Claude. Its role contract must be client-neutral: the active client is the
