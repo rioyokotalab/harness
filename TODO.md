@@ -92,7 +92,8 @@ a delayed job. T-210 is complete and must not be repeated.
 
 ### T-279 — Repair home Bash drift and retire `.bash_common`
 
-**Phase/status:** `validating`; a current value-free audit found every accepted
+**Phase/status:** `complete`; PR #139 merged as `3e51d77`. A value-free audit
+had found every accepted
 `home` component ready except `.bash_profile`, which is a canonical thin loader
 with an opaque appended tail. The owner gave explicit `go`: preserve that tail
 as login-only behavior, remove the exact `.bash_common` loader from canonical
@@ -120,8 +121,15 @@ and verified absent; its manifest was exact-unlinked. Complete portable
 phase-one validation passed every suite before the documented synthetic-host
 doctor boundary (`exit 2`); protected Ubuntu CI remains authoritative.
 
-**Exact next action:** publish through protected CI, then run the frozen live
-transaction and ordered exact-file retirement.
+**Completion:** the live plan applied the narrow tail-preserving/reference-
+removal transaction, passed fresh-shell and doctor acceptance, rolled back to
+both exact preimages, reapplied, and passed acceptance again. The now-
+unreferenced owner-regular single-link `.bash_common` had zero open handles; a
+recoverable quarantine, acceptance, restoration drill, second quarantine, and
+repeat acceptance all passed before its unchanged quarantine was exact-
+unlinked. The original and quarantine paths are absent. Final Bash plan is a
+no-op; Mac and agent doctors are ready; tmux and private SSH agreement are
+current; public Git is clean/equal. No further action remains for T-279.
 
 ### T-278 — Add PyYAML to personal-Mac onboarding tools
 
