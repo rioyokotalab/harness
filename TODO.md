@@ -318,8 +318,13 @@ arbitrary editors. Focused cowork, source-contract, Claude-takeover,
 public-repository audit, discovery-link identity, live session/receipt checks,
 and `git diff --check` pass. The audit was checkpointed at `e4ec379`; clean full
 Phase 1 then passed every suite (with only the declared native-MPI environment
-skip). Next action: complete the session and guarded-clean the six exact scratch
-trees plus one marker file.
+skip). Round 7 is `complete`. Guarded-delete tokens `9f1b36d…` and `005ec24e…`
+removed respectively the six exact `/tmp` roots (1,337 entries; 6,731,067
+bytes) and two exact detached-worktree admin records (16 entries; 104,851
+bytes), verifying protected anchors unchanged and targets absent. The exact
+scratch marker and spent manifests were unlinked; `git worktree list`, `git
+fsck --no-dangling`, and clean status passed. Next action: final branch and
+six-hour acceptance review; do not add speculative release-candidate changes.
 
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
 and Claude. Its role contract must be client-neutral: the active client is the

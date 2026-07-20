@@ -45,3 +45,16 @@ retained only until separately guarded cleanup.
   and audited as process evidence.
 - Claude left exact scratch roots under `/tmp` for guarded cleanup after final
   acceptance; no raw recursive deletion was used in round 7.
+
+## Cleanup
+
+After the session reached `complete`, guarded-delete token
+`9f1b36d691408ca605984d04a15a13659375e7c041d913baa58db1270fe5258a`
+revalidated and deleted the six declared `/tmp` roots (1,337 entries;
+6,731,067 bytes). A separate canonical-boundary manifest with token
+`005ec24e54aa573e78d5093f202d9bd6fa25ce190e788e0bd4764f16976c7549`
+deleted only the two corresponding detached-worktree administrative records
+(16 entries; 104,851 bytes). Both applies verified protected anchors unchanged
+and targets absent. The exact Claude scratch marker and both spent manifests
+were unlinked afterward. `git worktree list --porcelain`, `git fsck
+--no-dangling`, and clean branch status passed; tracked evidence is retained.
