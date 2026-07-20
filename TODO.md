@@ -991,16 +991,17 @@ synthetic initial install, checksum-failure recovery from prepared state,
 forward replacement, idempotence, immediate-predecessor rollback, injected
 post-promotion and post-link-switch interruption/recovery, changed-new-tree,
 changed-old-tree, and changed-link refusal, ordinary downgrade refusal, and
-unmanaged-link refusal. Portable syntax and `git diff --check` pass. A first
-full phase-one run correctly included the new focused suite, which passed, but
-two unrelated focused suites rejected the intentionally dirty implementation
-checkout; rerun from a clean implementation commit before interpreting the
-complete-suite result.
+unmanaged-link refusal. Implementation commit `3a7932d` passed portable syntax,
+`git diff --check`, ShellCheck warning/error severity, the focused public-repo
+and source-contract audits, and the complete clean-checkout phase-one suite:
+all 54 registered focused suites, guarded-delete regression, and the serial
+integration tail passed. Native MPI skipped exactly as designed outside a
+declared MPI environment. No live agent plan or apply ran.
 
-**Exact next action:** review the replacement transaction and focused fixture,
-commit the generic implementation so clean-checkout tests can run, then run
-ShellCheck warning/error, source/privacy, every focused suite, and the full
-phase-one gate. Stop before any live agent plan or apply.
+**Exact next action:** publish the generic implementation through the protected
+`main` workflow, require authoritative CI, then guarded-plan/apply fleet-sync
+only for clean managed checkouts. Do not change `tools/agents.tsv` or run a live
+agent plan/apply; a future version-pin proposal remains separate.
 
 ### T-272 — Seven-hour accessible-fleet maintenance
 
