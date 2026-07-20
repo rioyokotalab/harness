@@ -17,8 +17,12 @@ After cloning the public harness on a Mac that does not yet have Codex, run:
 
 Apply first uses the already-installed Homebrew to install only missing `gh`,
 `tmux`, and `python` prerequisites; Python is required to import its standard
-`tomllib`. Automatic metadata update, cleanup, analytics, and environment hints
-are disabled. It then downloads the pinned official OpenAI installer to a
+`tomllib`. It also creates an absent harness-owned Python-tools virtual
+environment and installs pinned binary `PyYAML` there. An unexpected existing
+environment is preserved and blocks rather than being replaced; Homebrew
+Python's externally managed site-packages remain untouched. Automatic metadata
+update, cleanup, analytics, and environment hints are disabled. It then
+downloads the pinned official OpenAI installer to a
 private temporary file, verifies its reviewed byte count, SHA-256 digest, and
 shell syntax, and executes those exact bytes with explicit state and Homebrew
 bin paths. Installing the visible command in Homebrew's already-active bin
@@ -32,7 +36,8 @@ no access; normal GitHub SSH authentication remains mandatory. The command
 refuses another Codex owner, verifies official standalone ownership, and opens
 Codex with the complete one-Mac onboarding task and companion locator. It
 launches Codex with approval prompts disabled and full machine access so the
-agent can run the native harness and Git commands itself. The assignment also
+agent can run the native harness and Git commands itself, with the validated
+Python-tools environment first on `PATH`. The assignment also
 applies the owner's settled onboarding choices automatically: restore the
 declared companion, use a baseline-only missing host profile, install only
 declared missing prerequisites, prefer SSH Git transport when HTTPS is not

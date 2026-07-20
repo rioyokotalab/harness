@@ -21,7 +21,8 @@ trap cleanup EXIT HUP INT TERM
 
 fake_commands=$TEST_ROOT/commands
 fake_prefix=$TEST_ROOT/homebrew
-mkdir -p "$fake_commands" "$fake_prefix/bin"
+fake_home=$TEST_ROOT/home
+mkdir -p "$fake_commands" "$fake_prefix/bin" "$fake_home"
 printf '%s\n' '#!/bin/sh' 'exit 0' >"$fake_prefix/bin/codex"
 chmod 755 "$fake_prefix/bin/codex"
 cat >"$fake_commands/brew" <<'EOF'
@@ -33,7 +34,7 @@ EOF
 chmod 755 "$fake_commands/brew"
 out=$TEST_ROOT/out
 
-HARNESS_BOOTSTRAP_TESTING=1 HARNESS_TEST_BREW_PREFIX=$fake_prefix \
+HOME=$fake_home HARNESS_BOOTSTRAP_TESTING=1 HARNESS_TEST_BREW_PREFIX=$fake_prefix \
     PATH="$fake_commands:$fake_prefix/bin:$PATH" "$ROOT/bin/harness" \
     macos-codex-bootstrap --host mac-test-home --plan >"$out"
 grep -F 'INSTALLER_URL=https://chatgpt.com/codex/install.sh' "$out" >/dev/null || fail 'official URL'
@@ -42,6 +43,8 @@ grep -F 'CODEX_HOME=' "$out" >/dev/null || fail 'explicit state path'
 grep -F 'CODEX_APPROVAL_POLICY=never' "$out" >/dev/null || fail 'zero-prompt approval plan'
 grep -F 'CODEX_SANDBOX_MODE=danger-full-access' "$out" >/dev/null || fail 'full-access sandbox plan'
 grep -F 'PREREQUISITE_FORMULAE=' "$out" >/dev/null || fail 'prerequisite plan'
+grep -F 'PYTHON_TOOLS_ACTION=install' "$out" >/dev/null || fail 'PyYAML environment plan'
+grep -F 'PYYAML_VERSION=6.0.3' "$out" >/dev/null || fail 'pinned PyYAML plan'
 if grep -F 'harness-mac.git' "$out" >/dev/null; then fail 'companion locator leaked in plan output'; fi
 formulae=$(awk -F= '$1=="PREREQUISITE_FORMULAE" {print $2}' "$out")
 case " $formulae " in
@@ -50,6 +53,16 @@ esac
 for formula in $formulae; do
     case "$formula" in none|gh|python|tmux) ;; *) fail 'unbounded prerequisite formula' ;; esac
 done
+mkdir -p "$fake_home/.local/share/harness/python-tools/bin"
+cat >"$fake_home/.local/share/harness/python-tools/bin/python3" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+chmod 755 "$fake_home/.local/share/harness/python-tools/bin/python3"
+HOME=$fake_home HARNESS_BOOTSTRAP_TESTING=1 HARNESS_TEST_BREW_PREFIX=$fake_prefix \
+    PATH="$fake_commands:$fake_prefix/bin:$PATH" "$ROOT/bin/harness" \
+    macos-codex-bootstrap --host mac-test-home --plan >"$out"
+grep -F 'PYTHON_TOOLS_ACTION=ready' "$out" >/dev/null || fail 'ready PyYAML environment plan'
 grep -F 'CODEX_NON_INTERACTIVE=1' "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'noninteractive installer'
 # shellcheck disable=SC2016
 grep -F 'PATH="$install_dir:$PATH"' "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'profile-edit prevention'
@@ -62,6 +75,10 @@ grep -F 'preserve both distinct valid Bash local bodies' "$ROOT/libexec/harness-
 grep -F -- '--ask-for-approval never --sandbox danger-full-access' "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'zero-prompt launch flags'
 grep -F 'HOMEBREW_NO_INSTALL_CLEANUP=1' "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'Homebrew cleanup suppression'
 grep -F -- "-c 'import tomllib'" "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'tomllib requirement'
+grep -F -- '--only-binary=:all:' "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'binary PyYAML install'
+grep -F 'PyYAML==$pyyaml_version' "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'pinned PyYAML install'
+# shellcheck disable=SC2016
+grep -F 'PATH="$python_tools/bin:$PATH" exec' "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'Python tools launch path'
 grep -F 'private_companion_url=git@github.com:' "$ROOT/config/codex-standalone-installer.conf" >/dev/null || fail 'credential-free companion locator'
 grep -F 'LEGACY_CODEX_LINK=removed' "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'legacy link convergence'
 /bin/sh -n "$ROOT/libexec/harness-macos-codex-bootstrap" || fail 'shell syntax'

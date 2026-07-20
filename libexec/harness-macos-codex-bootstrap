@@ -52,6 +52,8 @@ case "$brew_prefix" in /opt/homebrew|/usr/local) ;; *) [ "${HARNESS_BOOTSTRAP_TE
 
 missing_formulae=
 command -v gh >/dev/null 2>&1 || missing_formulae="$missing_formulae gh"
+pyyaml_version=6.0.3
+python_tools=$HOME/.local/share/harness/python-tools
 python_command=
 for candidate in "$brew_prefix/bin/python3" "$(command -v python3 2>/dev/null || true)"; do
     [ -n "$candidate" ] && [ -x "$candidate" ] || continue
@@ -60,6 +62,15 @@ done
 [ -n "$python_command" ] || missing_formulae="$missing_formulae python"
 command -v tmux >/dev/null 2>&1 || missing_formulae="$missing_formulae tmux"
 missing_formulae=${missing_formulae# }
+python_tools_action=install
+if [ -e "$python_tools" ] || [ -L "$python_tools" ]; then
+    [ -d "$python_tools" ] && [ ! -L "$python_tools" ] || die 'harness Python tools have unsafe type'
+    [ "$(macos_stat_owner "$python_tools")" = "$(id -u)" ] || die 'harness Python tools have unsafe owner'
+    [ -x "$python_tools/bin/python3" ] || die 'harness Python tools are incomplete'
+    "$python_tools/bin/python3" -c 'import sys, tomllib, yaml; sys.exit(0 if yaml.__version__ == sys.argv[1] else 1)' "$pyyaml_version" >/dev/null 2>&1 ||
+        die 'harness Python tools have an unsupported PyYAML version'
+    python_tools_action=ready
+fi
 
 install_dir=$brew_prefix/bin
 codex_home=$HOME/.codex
@@ -69,6 +80,7 @@ existing=$(command -v codex 2>/dev/null || true)
 [ -z "$existing" ] || [ "$existing" = "$visible" ] || [ "$existing" = "$legacy_visible" ] || die 'another Codex command is already active; resolve it before bootstrap'
 printf 'MODE=%s\nHOST=%s\nINSTALLER_URL=%s\nREVIEWED_AT=%s\nINSTALL_DIR=%s\nCODEX_HOME=%s\nCODEX_APPROVAL_POLICY=never\nCODEX_SANDBOX_MODE=danger-full-access\n' "$mode" "$host" "$installer_url" "$reviewed_at" "$install_dir" "$codex_home"
 if [ -n "$missing_formulae" ]; then printf 'PREREQUISITE_FORMULAE=%s\n' "$missing_formulae"; else printf '%s\n' 'PREREQUISITE_FORMULAE=none'; fi
+printf 'PYTHON_TOOLS_ACTION=%s\nPYYAML_VERSION=%s\n' "$python_tools_action" "$pyyaml_version"
 [ "$mode" = apply ] || exit 0
 
 if [ -n "$missing_formulae" ]; then
@@ -95,6 +107,27 @@ for candidate in "$brew_prefix/bin/python3" "$(command -v python3 2>/dev/null ||
 done
 [ -n "$python_command" ] || die 'Python tomllib prerequisite is unavailable after install'
 
+if [ "$python_tools_action" = install ]; then
+    python_tools_parent=$HOME/.local/share/harness
+    for directory in "$HOME/.local" "$HOME/.local/share" "$python_tools_parent"; do
+        if [ -e "$directory" ] || [ -L "$directory" ]; then
+            [ -d "$directory" ] && [ ! -L "$directory" ] || die 'harness Python tools parent has unsafe type'
+            [ "$(macos_stat_owner "$directory")" = "$(id -u)" ] || die 'harness Python tools parent has unsafe owner'
+        else
+            mkdir "$directory"
+            chmod 700 "$directory"
+        fi
+    done
+    printf 'NATIVE %s -m venv %s\n' "$python_command" "$python_tools"
+    umask 077
+    "$python_command" -m venv "$python_tools"
+    printf 'NATIVE %s -m pip install --only-binary=:all: PyYAML==%s\n' "$python_tools/bin/python3" "$pyyaml_version"
+    "$python_tools/bin/python3" -m pip install --disable-pip-version-check --no-input \
+        --only-binary=:all: "PyYAML==$pyyaml_version"
+fi
+"$python_tools/bin/python3" -c 'import sys, tomllib, yaml; sys.exit(0 if yaml.__version__ == sys.argv[1] else 1)' "$pyyaml_version" ||
+    die 'PyYAML prerequisite is unavailable after install'
+
 installer=$(mktemp "${TMPDIR:-/tmp}/harness-codex-installer.XXXXXX") || die 'cannot create installer file'
 chmod 600 "$installer"
 cleanup() { [ ! -e "$installer" ] || unlink "$installer"; }
@@ -115,7 +148,7 @@ unlink "$installer"; trap - EXIT HUP INT TERM
 
 [ -x "$visible" ] || die 'official installer did not create the expected Codex command'
 command -v python3 >/dev/null 2>&1 || die 'Python 3 is required to verify the installed command'
-resolved=$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$visible")
+resolved=$($python_command -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$visible")
 case "$resolved" in "$codex_home"/packages/standalone/*) ;; *) die 'Codex is not owned by the official standalone installation' ;; esac
 if [ -L "$legacy_visible" ] && [ "$legacy_visible" != "$visible" ]; then
     legacy_resolved=$($python_command -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$legacy_visible")
@@ -129,5 +162,5 @@ fi
 "$visible" --version
 prompt="Onboard this personal Mac with logical host '$host'. The credential-free private companion clone URL is '$private_url'; use it without asking me for the repository locator, but never expose credentials or private contents. Work autonomously from this repository. First read AGENTS.md, TODO.md, shared/skills/onboard-personal-mac/SKILL.md completely, and every reference that skill requires. Apply that skill faithfully, including its settled owner defaults: restore the declared companion, use a baseline-only missing host profile, install only declared missing prerequisites, prefer SSH Git transport when HTTPS lacks credentials, adopt an existing first-agreement private SSH payload onto the Mac, preserve strict Codex local settings, preserve both distinct valid Bash local bodies, and retain any live-referenced .bash_common file. Do not ask about those choices again. Reconstruct current Git and ledger state, use value-free discovery, create the one-host plan, and ask only unresolved material questions one at a time. Wait for my explicit go before machine mutations. After go, run every native harness and Git command yourself; do not ask me to execute shell scripts. Pause only for unavoidable authentication, password, TCC, reboot, or physical interaction. Complete transactional apply, rollback, reapply, fresh-session acceptance, and the ordered post-onboarding .bash_common orphan check. Keep identities, private values, and transaction details out of public Git and TODO.md."
 printf '%s\n' 'LAUNCH=official Codex interactive onboarding session'
-exec "$visible" --ask-for-approval never --sandbox danger-full-access \
+PATH="$python_tools/bin:$PATH" exec "$visible" --ask-for-approval never --sandbox danger-full-access \
     -C "$ROOT" "$prompt"
