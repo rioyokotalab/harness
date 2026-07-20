@@ -150,8 +150,13 @@ unwrapped Claude. The frozen v4 implementation adds deterministic independent/
 reciprocal `stage` and failure-atomic `import-copilot`, makes staged exchange the
 default native mapping, keeps direct session write as a sealed fallback, and
 documents hashes as detection plus the need for recoverable preimages. The
-canonical validator and expanded focused test pass; next action is full
-validation, evidence checkpoint, and guarded round-3 scratch cleanup.
+canonical validator and expanded focused test pass. Checkpoint `8c53888` made
+the tree clean, after which `tests/test-phase1.sh` passed every runnable suite
+(native MPI correctly skipped); the session is `complete` and validates. Next
+action: guard-clean round-3 sandboxes and scratch, then run the reverse staged
+direction with Claude driving Codex. That round must specifically test whether
+copying raw `state.json` unnecessarily discloses predecessor paths and whether
+predecessor provenance accepts a structurally valid but phase-invalid session.
 
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
 and Claude. Its role contract must be client-neutral: the active client is the
