@@ -266,8 +266,18 @@ D12 value-free discovery finds no inherited or launchd-exported socket in the
 reverse-SSH command context, but finds multiple current-user `ssh-agent`
 processes on every Mac (between two and six), consistent with the startup
 block's process-leak risk. Their identities and loaded keys were not inspected.
-Exact next action: ask only D12 whether to remove the startup block without a
-replacement or terminating existing agents. No execution authority exists yet.
+D12 is selected: remove the per-shell startup block with no replacement and
+preserve inherited native or forwarded sockets. The owner also selected
+post-`go` process convergence. Launchd value-free classification finds exactly
+one running native `com.openssh.ssh-agent` on each Mac plus respectively two,
+five, and one current-user shell-style `ssh-agent -s` processes, with no other
+agent class. Execution must re-resolve and preserve the then-current launchd
+PID, revalidate every candidate's owner/executable/arguments, send `TERM` only
+to exact non-native shell-style agents, never enumerate identities or keys,
+and verify one native agent remains. Existing shells using retired sockets may
+need replacement sessions; no active environment will be rewritten. D13 color
+environment is next. Exact next action: perform only value-free D13 behavior
+discovery, then ask D13. No execution authority exists yet.
 
 ### T-280 — Onboard one additional personal Mac
 
