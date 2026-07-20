@@ -6,6 +6,58 @@ HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
 export HARNESS_ROOT
 . "$SELF_DIR/harness-common"
 
+agent_tree_hash() {
+    tree=$1
+    archive=$(mktemp "${TMPDIR:-/tmp}/harness-agent-tree.XXXXXX") ||
+        die "cannot allocate agent tree digest staging"
+    tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
+        -cf "$archive" -C "$tree" . || {
+        unlink "$archive"
+        die "cannot archive managed agent tree"
+    }
+    hash=$(sha256sum "$archive" | awk '{print $1}')
+    unlink "$archive"
+    printf '%s\n' "$hash"
+}
+
+normalized_semver() {
+    awk -v version="$1" 'BEGIN {
+        if (version !~ /^[0-9]+\.[0-9]+\.[0-9]+$/) exit 1
+        count = split(version, part, ".")
+        if (count != 3) exit 1
+        for (i = 1; i <= 3; i++) {
+            if (part[i] !~ /^(0|[1-9][0-9]*)$/) exit 1
+        }
+    }'
+}
+
+semver_compare() {
+    awk -v left="$1" -v right="$2" 'BEGIN {
+        split(left, a, "."); split(right, b, ".")
+        for (i = 1; i <= 3; i++) {
+            if (length(a[i]) < length(b[i])) { print -1; exit }
+            if (length(a[i]) > length(b[i])) { print 1; exit }
+            if (("x" a[i]) < ("x" b[i])) { print -1; exit }
+            if (("x" a[i]) > ("x" b[i])) { print 1; exit }
+        }
+        print 0
+    }'
+}
+
+atomic_agent_link() {
+    aal_destination=$1
+    aal_source=$2
+    aal_candidate=$3
+    [ ! -e "$aal_candidate" ] && [ ! -L "$aal_candidate" ] ||
+        die "agent link candidate collision"
+    ln -s "$aal_source" "$aal_candidate"
+    [ -L "$aal_candidate" ] && [ "$(readlink "$aal_candidate")" = "$aal_source" ] ||
+        die "agent link candidate verification failed"
+    mv -T "$aal_candidate" "$aal_destination"
+    [ -L "$aal_destination" ] && [ "$(readlink "$aal_destination")" = "$aal_source" ] ||
+        die "agent link replacement verification failed"
+}
+
 usage() {
     echo "Usage: harness agent --host LOGICAL_ID --name AGENT [--facts FILE] [--plan|--apply]" >&2
 }
@@ -44,6 +96,7 @@ EOF
 [ "$record_agent:$agent_os:$agent_arch" = "$agent_name:linux:$arch" ] ||
     die "agent manifest mismatch"
 for value in "$version" "$agent_arch"; do require_safe_id "$value"; done
+normalized_semver "$version" || die "agent version must be normalized semantic version"
 for url in "$launcher_url" "$native_url"; do case "$url" in https://*) ;; *) die "agent URL must use HTTPS" ;; esac; done
 for checksum in "$launcher_checksum" "$native_checksum"; do
     case "$checksum" in *[!0-9a-f]*) die "invalid agent checksum" ;; esac
@@ -59,9 +112,216 @@ esac
 install_dir=$HOME/.local/opt/agents/$agent_name/$version/$agent_os-$agent_arch
 installed_command=$install_dir/$command_relative
 stable_link=$HOME/.local/bin/$agent_name
+transaction_root=$HOME/.local/state/harness/transactions
+
+managed_tree_hash_from_evidence() {
+    evidence_tree=$1
+    evidence_hash=
+    evidence_found=0
+    [ -d "$transaction_root" ] && [ ! -L "$transaction_root" ] || return 1
+    for evidence_manifest in "$transaction_root"/*.manifest; do
+        [ -f "$evidence_manifest" ] && [ ! -L "$evidence_manifest" ] || continue
+        evidence_status=$evidence_manifest.status
+        [ -f "$evidence_status" ] && [ ! -L "$evidence_status" ] || continue
+        [ "$(sed -n '1p' "$evidence_status")" = complete ] || continue
+        [ -z "$(sed -n '2p' "$evidence_status")" ] || continue
+        candidate_hash=$(awk -F'|' -v tree="$evidence_tree" '
+            ($1 == "agent" || $1 == "agent-replaced") && $2 == tree {
+                print $3
+            }
+        ' "$evidence_manifest")
+        candidate_count=$(printf '%s\n' "$candidate_hash" |
+            awk 'NF { count++ } END { print count + 0 }')
+        [ "$candidate_count" -le 1 ] || return 1
+        [ "$candidate_count" -eq 1 ] || continue
+        case "$candidate_hash" in
+            *[!0-9a-f]*|'') return 1 ;;
+        esac
+        [ "${#candidate_hash}" -eq 64 ] || return 1
+        if [ "$evidence_found" -eq 0 ]; then
+            evidence_hash=$candidate_hash
+        elif [ "$evidence_hash" != "$candidate_hash" ]; then
+            return 1
+        fi
+        evidence_found=$((evidence_found + 1))
+    done
+    [ "$evidence_found" -gt 0 ] || return 1
+    printf '%s\n' "$evidence_hash"
+}
+
+pending_replacement_manifest() {
+    pending=
+    [ -d "$transaction_root" ] && [ ! -L "$transaction_root" ] || return 0
+    for pending_status in "$transaction_root"/*.manifest.status; do
+        [ -f "$pending_status" ] && [ ! -L "$pending_status" ] || continue
+        pending_state=$(sed -n '1p' "$pending_status")
+        [ -z "$(sed -n '2p' "$pending_status")" ] || continue
+        case "$pending_state" in prepared|promoted|activated) ;; *) continue ;; esac
+        pending_candidate=${pending_status%.status}
+        [ -f "$pending_candidate" ] && [ ! -L "$pending_candidate" ] ||
+            die "pending agent replacement manifest is unsafe"
+        [ "$(config_get "$pending_candidate" operation)" = agent-replace ] || continue
+        [ "$(config_get "$pending_candidate" host)" = "$logical_host" ] || continue
+        [ "$(config_get "$pending_candidate" agent_name)" = "$agent_name" ] || continue
+        [ -z "$pending" ] || die "multiple pending agent replacement transactions"
+        pending=$pending_candidate
+    done
+    [ -z "$pending" ] || printf '%s\n' "$pending"
+}
+
+validate_replacement_manifest() {
+    replacement_manifest=$1
+    [ "$(config_get "$replacement_manifest" schema)" = 2 ] &&
+        [ "$(config_get "$replacement_manifest" operation)" = agent-replace ] &&
+        [ "$(config_get "$replacement_manifest" host)" = "$logical_host" ] &&
+        [ "$(config_get "$replacement_manifest" agent_name)" = "$agent_name" ] ||
+        die "pending agent replacement manifest is incompatible"
+    recovery_old_tree=$(config_get "$replacement_manifest" old_tree)
+    recovery_old_hash=$(config_get "$replacement_manifest" old_hash)
+    recovery_old_command=$(config_get "$replacement_manifest" old_command)
+    recovery_new_tree=$(config_get "$replacement_manifest" new_tree)
+    recovery_new_command=$(config_get "$replacement_manifest" new_command)
+    recovery_stable_link=$(config_get "$replacement_manifest" stable_link)
+    recovery_stage=$(config_get "$replacement_manifest" stage)
+    recovery_launcher=$(config_get "$replacement_manifest" launcher_archive)
+    recovery_native=$(config_get "$replacement_manifest" native_archive)
+    recovery_candidate=$(config_get "$replacement_manifest" link_candidate)
+    recovery_new_hash=$(config_get "$replacement_manifest" new_hash)
+    recovery_tree_prefix=$HOME/.local/opt/agents/$agent_name/
+    for recovery_tree in "$recovery_old_tree" "$recovery_new_tree"; do
+        case "$recovery_tree" in "$recovery_tree_prefix"*) ;; *)
+            die "pending agent replacement tree path is unsafe" ;; esac
+        recovery_tree_relative=${recovery_tree#"$recovery_tree_prefix"}
+        recovery_tree_version=${recovery_tree_relative%%/*}
+        recovery_tree_target=${recovery_tree_relative#*/}
+        normalized_semver "$recovery_tree_version" &&
+            [ "$recovery_tree_target" = "$agent_os-$agent_arch" ] ||
+            die "pending agent replacement tree layout is unsafe"
+    done
+    [ "$recovery_old_tree" != "$recovery_new_tree" ] ||
+        die "pending agent replacement trees are ambiguous"
+    case "$recovery_old_command" in "$recovery_old_tree"/*) ;; *)
+        die "pending prior agent command path is unsafe" ;; esac
+    case "$recovery_new_command" in "$recovery_new_tree"/*) ;; *)
+        die "pending proposed agent command path is unsafe" ;; esac
+    [ "$recovery_stable_link" = "$HOME/.local/bin/$agent_name" ] ||
+        die "pending agent stable link is unsafe"
+    [ "$recovery_stage" = "${recovery_new_tree%/*}/.agent-replace-${replacement_manifest##*/}.staging" ] ||
+        die "pending agent staging path is unsafe"
+    [ "$recovery_launcher" = "$transaction_root/${replacement_manifest##*/}.launcher" ] &&
+        [ "$recovery_native" = "$transaction_root/${replacement_manifest##*/}.native" ] ||
+        die "pending agent archive path is unsafe"
+    [ "$recovery_candidate" = "$HOME/.local/bin/.$agent_name.${replacement_manifest##*/}.candidate" ] ||
+        die "pending agent link candidate is unsafe"
+    for recovery_hash in "$recovery_old_hash" ${recovery_new_hash:+"$recovery_new_hash"}; do
+        case "$recovery_hash" in *[!0-9a-f]*|'')
+            die "pending agent tree digest is invalid" ;; esac
+        [ "${#recovery_hash}" -eq 64 ] || die "pending agent tree digest length is invalid"
+    done
+}
+
+validate_replacement_file() {
+    validation_file=$1
+    if [ -L "$validation_file" ] ||
+        { [ -e "$validation_file" ] && [ ! -f "$validation_file" ]; }; then
+        die "pending agent temporary file is unsafe"
+    fi
+}
+
+recover_replacement() {
+    recovery_manifest=$1
+    recovery_status=$recovery_manifest.status
+    validate_replacement_manifest "$recovery_manifest"
+    [ -d "$recovery_old_tree" ] && [ ! -L "$recovery_old_tree" ] ||
+        die "pending prior agent tree is unavailable"
+    [ "$(agent_tree_hash "$recovery_old_tree")" = "$recovery_old_hash" ] ||
+        die "pending prior agent tree changed"
+    [ -x "$recovery_old_command" ] || die "pending prior agent command is unavailable"
+    if [ -e "$recovery_new_tree" ] || [ -L "$recovery_new_tree" ]; then
+        [ -d "$recovery_new_tree" ] && [ ! -L "$recovery_new_tree" ] ||
+            die "pending proposed agent tree changed type"
+        [ -n "$recovery_new_hash" ] || die "pending proposed agent digest is absent"
+        [ "$(agent_tree_hash "$recovery_new_tree")" = "$recovery_new_hash" ] ||
+            die "pending proposed agent tree changed"
+    fi
+    if [ -e "$recovery_stage" ] || [ -L "$recovery_stage" ]; then
+        [ -d "$recovery_stage" ] && [ ! -L "$recovery_stage" ] ||
+            die "pending agent staging changed type"
+    fi
+    recovery_new_parent=${recovery_new_tree%/*}
+    if [ -e "$recovery_new_parent" ] || [ -L "$recovery_new_parent" ]; then
+        [ -d "$recovery_new_parent" ] && [ ! -L "$recovery_new_parent" ] ||
+            die "pending proposed agent version directory changed type"
+        [ -z "$(find "$recovery_new_parent" -mindepth 1 -maxdepth 1 \
+            ! -path "$recovery_new_tree" ! -path "$recovery_stage" -print -quit)" ] ||
+            die "pending proposed agent version directory changed"
+    fi
+    validate_replacement_file "$recovery_launcher"
+    validate_replacement_file "$recovery_native"
+    if [ -e "$recovery_candidate" ] || [ -L "$recovery_candidate" ]; then
+        [ -L "$recovery_candidate" ] &&
+            { [ "$(readlink "$recovery_candidate")" = "$recovery_old_command" ] ||
+                [ "$(readlink "$recovery_candidate")" = "$recovery_new_command" ]; } ||
+            die "pending agent link candidate changed"
+    fi
+    [ -L "$recovery_stable_link" ] || die "pending agent stable link changed type"
+    recovery_link_target=$(readlink "$recovery_stable_link")
+    case "$recovery_link_target" in
+        "$recovery_old_command") ;;
+        "$recovery_new_command")
+            [ ! -L "$recovery_candidate" ] || unlink "$recovery_candidate"
+            atomic_agent_link "$recovery_stable_link" "$recovery_old_command" \
+                "$recovery_candidate"
+            ;;
+        *) die "pending agent stable link changed" ;;
+    esac
+    if [ -d "$recovery_new_tree" ]; then
+        guarded_delete_tree "${recovery_new_tree%/*}" "$recovery_new_tree" \
+            "$transaction_root" || die "pending proposed agent cleanup failed"
+    fi
+    if [ -d "$recovery_stage" ]; then
+        guarded_delete_tree "${recovery_stage%/*}" "$recovery_stage" \
+            "$transaction_root" || die "pending agent staging cleanup failed"
+    fi
+    if [ -d "$recovery_new_parent" ] && [ ! -L "$recovery_new_parent" ]; then
+        rmdir "$recovery_new_parent" 2>/dev/null ||
+            die "pending proposed agent version directory is not empty"
+    elif [ -e "$recovery_new_parent" ] || [ -L "$recovery_new_parent" ]; then
+        die "pending proposed agent version directory changed type"
+    fi
+    [ ! -f "$recovery_launcher" ] || unlink "$recovery_launcher"
+    [ ! -f "$recovery_native" ] || unlink "$recovery_native"
+    if [ -L "$recovery_candidate" ]; then
+        unlink "$recovery_candidate"
+    fi
+    printf '%s\n' failed >"$recovery_status"
+    chmod 600 "$recovery_status"
+    echo "AGENT_RECOVERY action=restored-prior evidence=retained"
+    echo "END agent host=$logical_host changes=recovered retry=fresh-apply"
+}
+
+pending_manifest=$(pending_replacement_manifest)
+if [ -n "$pending_manifest" ]; then
+    pending_status=$(sed -n '1p' "$pending_manifest.status")
+    echo "AGENT_RECOVERY status=$pending_status action=restore-prior"
+    if [ "$mode" = plan ]; then
+        echo "END agent host=$logical_host changes=not-applied recovery=required"
+    else
+        [ -z "$(git -C "$HARNESS_ROOT" status --porcelain)" ] ||
+            die "agent recovery requires clean harness"
+        recover_replacement "$pending_manifest"
+    fi
+    exit 0
+fi
+
 action=BLOCK
 source=unknown
 blocked=0
+block_reason=partial-unmanaged-or-invalid-state
+old_version=
+old_install_dir=
+old_installed_command=
+old_tree_hash=
 if [ -L "$stable_link" ] && [ "$(readlink "$stable_link")" = "$installed_command" ]; then
     if [ -d "$install_dir" ] && [ -x "$installed_command" ] &&
         [ "$(PATH="$HOME/.local/bin:/usr/bin:/bin" "$installed_command" --version 2>/dev/null)" = "$version_line" ]; then
@@ -70,7 +330,52 @@ if [ -L "$stable_link" ] && [ "$(readlink "$stable_link")" = "$installed_command
     else
         blocked=1
     fi
-elif [ -e "$install_dir" ] || [ -L "$install_dir" ]; then
+elif [ -L "$stable_link" ]; then
+    current_link=$(readlink "$stable_link")
+    managed_root=$HOME/.local/opt/agents/$agent_name
+    if [ -e "$install_dir" ] || [ -L "$install_dir" ]; then
+        blocked=1
+        block_reason=proposed-version-collision
+    else
+        case "$current_link" in
+            "$managed_root"/*/"$agent_os-$agent_arch/$command_relative")
+                old_relative=${current_link#"$managed_root/"}
+                old_version=${old_relative%%/*}
+                old_install_dir=$managed_root/$old_version/$agent_os-$agent_arch
+                old_installed_command=$old_install_dir/$command_relative
+                case "$old_version" in ''|*[!A-Za-z0-9._-]*) old_version_safe=0 ;; *) old_version_safe=1 ;; esac
+                if [ "$current_link" != "$old_installed_command" ] ||
+                    [ "$old_version_safe" -ne 1 ] ||
+                    ! normalized_semver "$old_version" ||
+                    [ "$(semver_compare "$old_version" "$version")" -ge 0 ]; then
+                    blocked=1
+                    block_reason=managed-version-not-forward
+                elif [ ! -d "$old_install_dir" ] || [ -L "$old_install_dir" ] ||
+                    [ ! -x "$old_installed_command" ] ||
+                    [ "$(PATH="$HOME/.local/bin:/usr/bin:/bin" \
+                        "$old_installed_command" --version 2>/dev/null)" != \
+                        "codex-cli $old_version" ]; then
+                    blocked=1
+                    block_reason=managed-predecessor-invalid
+                elif ! old_tree_hash=$(managed_tree_hash_from_evidence \
+                    "$old_install_dir"); then
+                    blocked=1
+                    block_reason=managed-predecessor-unverified
+                elif [ "$(agent_tree_hash "$old_install_dir")" != "$old_tree_hash" ]; then
+                    blocked=1
+                    block_reason=managed-predecessor-changed
+                else
+                    action=REPLACE
+                    source=managed-agent
+                fi
+                ;;
+            *)
+                blocked=1
+                ;;
+        esac
+    fi
+elif [ -e "$install_dir" ] || [ -L "$install_dir" ] ||
+    [ -e "$stable_link" ]; then
     blocked=1
 elif [ -n "$fact_file" ]; then
     fact_host=$(fact_get "$fact_file" logical_host)
@@ -93,6 +398,13 @@ fi
 echo "AGENT_PLAN host=$logical_host agent=$agent_name version=$version arch=$arch mode=$mode"
 case "$action" in
     KEEP) echo "KEEP agent=$agent_name source=$source" ;;
+    REPLACE)
+        echo "REPLACE agent=$agent_name from=$old_version to=$version"
+        echo "RETAIN predecessor=$old_install_dir rollback=immediate"
+        echo "FETCH role=launcher url=$launcher_url sha256=$launcher_checksum"
+        echo "FETCH role=native url=$native_url sha256=$native_checksum"
+        echo "EXTRACT layout=node_modules command=$command_relative"
+        ;;
     INSTALL)
         echo "INSTALL agent_tree=$install_dir"
         echo "CREATE link=$stable_link source=$installed_command"
@@ -100,11 +412,11 @@ case "$action" in
         echo "FETCH role=native url=$native_url sha256=$native_checksum"
         echo "EXTRACT layout=node_modules command=$command_relative"
         ;;
-    BLOCK) echo "BLOCK agent=$agent_name reason=partial-unmanaged-or-invalid-state" ;;
+    BLOCK) echo "BLOCK agent=$agent_name reason=$block_reason" ;;
 esac
 [ "$blocked" -eq 0 ] || die "agent plan contains blocked paths"
 [ "$mode" = apply ] || { echo "END agent host=$logical_host changes=not-applied"; exit 0; }
-[ "$action" = INSTALL ] || { echo "END agent host=$logical_host changes=none"; exit 0; }
+[ "$action" != KEEP ] || { echo "END agent host=$logical_host changes=none"; exit 0; }
 
 [ -z "$(git -C "$HARNESS_ROOT" status --porcelain)" ] || die "agent apply requires clean harness"
 "$HARNESS_ROOT/libexec/harness-doctor" --host "$logical_host" >/dev/null ||
@@ -113,6 +425,130 @@ for required in curl sha256sum tar find readlink node; do
     command -v "$required" >/dev/null 2>&1 || die "agent apply requires command: $required"
 done
 [ "$(node --version)" = "v$node_version" ] || die "agent requires Node $node_version"
+
+if [ "$action" = REPLACE ]; then
+    mkdir -p "$transaction_root"
+    chmod 700 "$HOME/.local/state/harness" "$transaction_root"
+    [ "$(agent_tree_hash "$old_install_dir")" = "$old_tree_hash" ] ||
+        die "managed predecessor changed before replacement"
+    [ -L "$stable_link" ] &&
+        [ "$(readlink "$stable_link")" = "$old_installed_command" ] ||
+        die "managed predecessor link changed before replacement"
+    [ ! -e "$install_dir" ] && [ ! -L "$install_dir" ] ||
+        die "proposed agent version appeared before replacement"
+
+    transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+    manifest=$transaction_root/$transaction_id.manifest
+    status_file=$manifest.status
+    manifest_name=${manifest##*/}
+    install_parent=${install_dir%/*}
+    stage=$install_parent/.agent-replace-$manifest_name.staging
+    launcher_archive=$transaction_root/$manifest_name.launcher
+    native_archive=$transaction_root/$manifest_name.native
+    link_candidate=$HOME/.local/bin/.$agent_name.$manifest_name.candidate
+    for reserved in "$manifest" "$status_file" "$stage" "$launcher_archive" \
+        "$native_archive" "$link_candidate"; do
+        [ ! -e "$reserved" ] && [ ! -L "$reserved" ] ||
+            die "agent replacement transaction collision"
+    done
+    mkdir -p "$install_parent"
+    umask 077
+    printf 'schema=2\noperation=agent-replace\nhost=%s\nagent_name=%s\nrevision=%s\nold_tree=%s\nold_hash=%s\nold_command=%s\nnew_tree=%s\nnew_command=%s\nstable_link=%s\nstage=%s\nlauncher_archive=%s\nnative_archive=%s\nlink_candidate=%s\n' \
+        "$logical_host" "$agent_name" "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" \
+        "$old_install_dir" "$old_tree_hash" "$old_installed_command" \
+        "$install_dir" "$installed_command" "$stable_link" "$stage" \
+        "$launcher_archive" "$native_archive" "$link_candidate" >"$manifest"
+    chmod 600 "$manifest"
+    printf '%s\n' prepared >"$status_file"
+    chmod 600 "$status_file"
+
+    replacement_complete=0
+    replacement_cleanup() {
+        replacement_status=$?
+        trap - EXIT HUP INT TERM
+        if [ "$replacement_complete" -eq 0 ]; then
+            if ! (recover_replacement "$manifest"); then
+                echo "harness: automatic agent replacement restoration failed; evidence retained" >&2
+                replacement_status=2
+            fi
+        fi
+        exit "$replacement_status"
+    }
+    trap replacement_cleanup EXIT
+    trap 'exit 129' HUP
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+
+    echo "NATIVE curl --proto =https --tlsv1.2 -fL --retry 2 $launcher_url -o LAUNCHER_STAGING"
+    curl --proto '=https' --tlsv1.2 -fL --retry 2 "$launcher_url" \
+        -o "$launcher_archive"
+    printf '%s  %s\n' "$launcher_checksum" "$launcher_archive" |
+        sha256sum -c - >/dev/null
+    echo "NATIVE curl --proto =https --tlsv1.2 -fL --retry 2 $native_url -o NATIVE_STAGING"
+    curl --proto '=https' --tlsv1.2 -fL --retry 2 "$native_url" \
+        -o "$native_archive"
+    printf '%s  %s\n' "$native_checksum" "$native_archive" |
+        sha256sum -c - >/dev/null
+    for archive in "$launcher_archive" "$native_archive"; do
+        tar -tzf "$archive" | awk '
+            index($0, "package/") != 1 || $0 ~ /(^|\/)\.\.($|\/)/ { bad=1 }
+            END { exit bad }
+        ' || die "agent archive contains an unsafe path"
+        tar -tvzf "$archive" | awk '
+            substr($1, 1, 1) != "-" && substr($1, 1, 1) != "d" { bad=1 }
+            END { exit bad }
+        ' || die "agent archive contains unsupported entry types"
+    done
+
+    mkdir "$stage"
+    launcher_dir=$stage/node_modules/@openai/codex
+    native_dir=$stage/node_modules/$native_directory
+    mkdir -p "$launcher_dir" "$native_dir"
+    echo "NATIVE tar -xzf LAUNCHER_STAGING -C LAUNCHER_TREE --strip-components=1"
+    tar -xzf "$launcher_archive" -C "$launcher_dir" --strip-components=1
+    echo "NATIVE tar -xzf NATIVE_STAGING -C NATIVE_TREE --strip-components=1"
+    tar -xzf "$native_archive" -C "$native_dir" --strip-components=1
+    [ -x "$stage/$command_relative" ] && [ ! -L "$stage/$command_relative" ] ||
+        die "agent launcher missing or invalid"
+    [ "$(find "$stage" -type l | wc -l | tr -d ' ')" -eq 0 ] ||
+        die "agent archives created unexpected links"
+    [ "$(PATH="$HOME/.local/bin:/usr/bin:/bin" \
+        "$stage/$command_relative" --version 2>/dev/null)" = "$version_line" ] ||
+        die "agent version verification failed"
+    new_tree_hash=$(agent_tree_hash "$stage")
+    printf 'new_hash=%s\nagent-replaced|%s|%s|%s|%s|%s|%s|%s\n' \
+        "$new_tree_hash" "$install_dir" "$new_tree_hash" "$stable_link" \
+        "$installed_command" "$old_install_dir" "$old_tree_hash" \
+        "$old_installed_command" >>"$manifest"
+    mv -T "$stage" "$install_dir"
+    printf '%s\n' promoted >"$status_file"
+    if [ "${HARNESS_TEST_AGENT_INTERRUPT:-}" = after-promote ]; then
+        trap - EXIT HUP INT TERM
+        exit 97
+    fi
+    case ${HARNESS_TEST_AGENT_INTERRUPT:-} in
+        ''|after-switch) ;;
+        *) die "invalid agent interruption test point" ;;
+    esac
+    [ -L "$stable_link" ] &&
+        [ "$(readlink "$stable_link")" = "$old_installed_command" ] ||
+        die "managed predecessor link changed before activation"
+    atomic_agent_link "$stable_link" "$installed_command" "$link_candidate"
+    printf '%s\n' activated >"$status_file"
+    if [ "${HARNESS_TEST_AGENT_INTERRUPT:-}" = after-switch ]; then
+        trap - EXIT HUP INT TERM
+        exit 98
+    fi
+    unlink "$launcher_archive"
+    unlink "$native_archive"
+    printf '%s\n' complete >"$status_file"
+    replacement_complete=1
+    trap - EXIT HUP INT TERM
+    echo "CALLER native='hash -r' reason=refresh-command-path-cache"
+    echo "TRANSACTION id=$transaction_id status=complete operation=agent-replace"
+    echo "END agent host=$logical_host changes=replaced predecessor=retained"
+    exit 0
+fi
 
 state_root=$HOME/.local/state/harness/transactions
 mkdir -p "$state_root"; chmod 700 "$HOME/.local/state/harness" "$state_root"

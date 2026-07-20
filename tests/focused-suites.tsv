@@ -18,6 +18,7 @@ tests/test-personal-macos-bash.sh|personal macOS Bash focused suite
 tests/test-personal-macos-bash-hooks.sh|personal macOS Bash-hook focused suite
 tests/test-tmux-config.sh|shared tmux configuration focused suite
 tests/test-agent-config.sh|agent configuration focused suite
+tests/test-agent-upgrade.sh|agent replacement and recovery
 tests/test-agent-config-fleet.sh|agent configuration fleet focused suite
 tests/test-personal-macos-update.sh|personal macOS long-gap update focused suite
 tests/test-personal-macos-ssh-sync.sh|personal macOS SSH-sync focused suite
