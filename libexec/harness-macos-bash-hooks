@@ -286,6 +286,13 @@ fi
 changes=0
 printf 'MACOS_BASH_HOOKS mode=%s host=%s layout=public-pre-local-public-post\n' "$mode" "$logical_host"
 for path in "$login" "$HOME/.bashrc"; do
+    if [ "$empty_local" -eq 1 ] && [ "$path" != "$HOME/.bashrc" ]; then
+        strict_regular_or_absent "$path" ||
+            die "Mac Bash login startup has unsafe type"
+        printf 'STARTUP file=%s state=preserved action=keep preserves=unchanged-login-file\n' \
+            "${path#"$HOME"/}"
+        continue
+    fi
     state=$(classify "$path")
     if [ "$empty_local" -eq 1 ] && [ "$path" = "$HOME/.bashrc" ] &&
         [ "$state" != current ]; then
@@ -323,6 +330,11 @@ chmod 600 "$manifest"
 printf '%s\n' prepared >"$status_file"
 chmod 600 "$status_file"
 for path in "$login" "$HOME/.bashrc"; do
+    if [ "$empty_local" -eq 1 ] && [ "$path" != "$HOME/.bashrc" ]; then
+        strict_regular_or_absent "$path" ||
+            die "Mac Bash login startup preimage changed before apply"
+        continue
+    fi
     state=$(classify "$path")
     if [ "$empty_local" -eq 1 ] && [ "$path" = "$HOME/.bashrc" ] &&
         [ "$state" != current ]; then

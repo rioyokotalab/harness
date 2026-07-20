@@ -389,10 +389,30 @@ recorded here. The first fetch attempt lacked forwarding and failed before any
 change, then the bounded retry succeeded.
 Working files are the public policy, macOS common/inventory/plan/doctor/profile/
 Homebrew/update/Bash-hook/login-shell adapters, shared profile/interactive
-hooks, focused tests/manifests, and personal-Mac documentation. Exact next
-action: commit this ledger checkpoint, fetch/reconcile the public branch, push
-the validated head, and publish it through protected main before any live Mac
-mutation.
+hooks, focused tests/manifests, and personal-Mac documentation. Protected CI
+passed and PR 153 published squash `4213a94`. All three clean public/private
+checkouts then converged through `macos-update`; Homebrew metadata and bounded
+managed policy converged on all three, and office's separately authorized exact
+GCC retirement verified absent. Aist's first package transaction failed but
+retained evidence; a bounded retry converged without broadening scope.
+
+The first live Aist empty-local Bash apply then exposed a focused implementation
+gap before any account-shell or irreversible step: its safe selected login file
+is intentionally unmanaged, so the general wrapper changed it along with the
+authorized `.bashrc` curation. The unchanged-only transaction rollback itself
+succeeded and restored both startup preimages; the recovery wrapper reported a
+failure only because its additional expectation that `.bash_profile` equal the
+repository thin-loader image was false. A subsequent value-free plan confirms
+the restored state: the login file is unmanaged/would-wrap and `.bashrc` is
+current/would-curate. No startup mutation remains. Correction branch
+`task/t281-preserve-mac-login-profile` changes `--empty-local` to preserve any
+safe selected login file byte-for-byte and modify only canonical `.bashrc`;
+the focused fixture now supplies an opaque login file and requires exact
+preservation. Focused syntax, ShellCheck, diff, apply/rollback, and exact-byte
+tests pass, as does the complete parallel focused matrix and
+`tests/test-phase1.sh` on committed correction `8c00d00`. Exact next action:
+publish and deploy this correction, then repeat `.bashrc`
+apply/rollback/reapply sequentially before account-shell work.
 
 ### T-280 — Onboard one additional personal Mac
 
