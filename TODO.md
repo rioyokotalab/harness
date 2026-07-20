@@ -92,7 +92,7 @@ a delayed job. T-210 is complete and must not be repeated.
 
 ### T-277 — Make personal-Mac onboarding defaults reusable
 
-**Phase/status:** `validating`; the owner requested that the completed one-Mac
+**Phase/status:** `complete`; PR #135 merged as `859ca47`. The completed one-Mac
 lessons and PR #127 bootstrap corrections become the default skill and command
 behavior. Scope is limited to the public `onboard-personal-mac` workflow,
 `macos-codex-bootstrap` assignment/launch flags, focused tests, and supporting
@@ -120,8 +120,10 @@ remains authoritative. The generic skill metadata tools could not run because
 their system Python lacks their `PyYAML` dependency; the dedicated skill
 contract passes.
 
-**Exact next action:** fetch and integrate current `origin/main`, push the task
-branch, open a pull request, and publish through protected CI.
+**Result:** protected `portable-phase1` passed before merge. Future personal-Mac
+onboarding sessions apply the frozen defaults automatically while preserving
+the explicit `go` and unavoidable-interaction/unsafe-state stop boundaries.
+No further action remains for T-277.
 
 ### T-276 — Onboard one remaining personal Mac
 
