@@ -206,6 +206,43 @@ HOME="$darwin_native_home" HARNESS_ROOT="$PUBLIC" HARNESS_TEST_ALLOW_NONMAIN=1 \
 grep -F 'AGENT_CONFIG_NATIVE_CODEX state=ready action=none' \
     "$TEMP_DIR/darwin-native.out" >/dev/null ||
     fail "Darwin Homebrew-bin native Codex ownership"
+trust_only_home=$(make_home trust-only)
+mkdir -p "$trust_only_home/.codex"
+printf '%s\n' '[projects."/synthetic/project-one"]' \
+    'trust_level = "trusted"' '' \
+    '[projects."/synthetic/project-two"]' \
+    'trust_level = "trusted"' >"$trust_only_home/.codex/config.toml"
+chmod 600 "$trust_only_home/.codex/config.toml"
+cp "$trust_only_home/.codex/config.toml" "$TEMP_DIR/trust-only.before"
+if run_config "$trust_only_home" --plan >"$TEMP_DIR/trust-only.refuse" 2>&1; then
+    fail "trust-only Codex adoption accepted without authority"
+fi
+grep -F 'client=codex state=regular action=adopt-required' \
+    "$TEMP_DIR/trust-only.refuse" >/dev/null ||
+    fail "trust-only Codex preservation state"
+run_config "$trust_only_home" --adopt --apply >"$TEMP_DIR/trust-only.apply"
+trust_only_tx=$(transaction "$TEMP_DIR/trust-only.apply")
+[ -n "$trust_only_tx" ] || fail "trust-only Codex transaction"
+grep -F -x 'approval_policy = "never"' \
+    "$trust_only_home/.codex/config.toml" >/dev/null ||
+    fail "trust-only Codex canonical approval"
+grep -F -x 'sandbox_mode = "danger-full-access"' \
+    "$trust_only_home/.codex/config.toml" >/dev/null ||
+    fail "trust-only Codex canonical sandbox"
+[ "$(grep -c '^\[projects\.' "$trust_only_home/.codex/config.toml")" -eq 2 ] ||
+    fail "trust-only Codex project preservation"
+run_config "$trust_only_home" --doctor >"$TEMP_DIR/trust-only.doctor"
+grep -F 'status=ready failures=0' "$TEMP_DIR/trust-only.doctor" >/dev/null ||
+    fail "trust-only Codex doctor"
+run_config "$trust_only_home" --rollback "$trust_only_tx" \
+    >"$TEMP_DIR/trust-only.rollback"
+cmp -s "$trust_only_home/.codex/config.toml" "$TEMP_DIR/trust-only.before" ||
+    fail "trust-only Codex exact rollback"
+run_config "$trust_only_home" --adopt --apply >"$TEMP_DIR/trust-only.reapply"
+run_config "$trust_only_home" --doctor >"$TEMP_DIR/trust-only.reapply.doctor"
+grep -F 'status=ready failures=0' \
+    "$TEMP_DIR/trust-only.reapply.doctor" >/dev/null ||
+    fail "trust-only Codex reapply doctor"
 run_config "$home" --plan >"$TEMP_DIR/absent.plan"
 [ "$(grep -c 'state=absent action=link' "$TEMP_DIR/absent.plan")" -eq 3 ] ||
     fail "absent plan"
