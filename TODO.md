@@ -505,6 +505,15 @@ the owner runs `~/run_this.sh` locally on Aist and returns its value-free output
 Do not run Home or Office after an Aist failure. After each successful drill,
 revalidate remotely and exact-unlink only that unchanged helper.
 
+The owner-local Aist drill succeeded end to end: initial apply transaction
+`20260720T133039Z-13109`, unchanged-only rollback, and final apply transaction
+`20260720T133046Z-13793` all completed, followed by a no-op plan with registry
+and account state both kept. Independent remote revalidation returned the same
+no-op plan. The generated helper still matched its exact expected bytes and
+strict metadata, so it was exact-unlinked and is now absent. Exact next action:
+run the unchanged generated helper locally on Home; stop before Office on any
+Home failure.
+
 ### T-280 — Onboard one additional personal Mac
 
 **Phase/status:** `complete`; exactly one owner-operated Mac was in scope. Its
