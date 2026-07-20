@@ -28,6 +28,7 @@ COPILOT_OWNED = "copilot-evidence.md"
 COPILOT_CANDIDATE = "candidate-copilot-evidence.md"
 COPILOT_PROMPT = "copilot-prompt.md"
 RECEIPTS_DIR = "receipts"
+ARTIFACTS_KEEP = ".gitkeep"
 RECEIPT_NAMES = {
     "independent": "independent.json",
     "reciprocal": "reciprocal.json",
@@ -1073,6 +1074,7 @@ def init(args: argparse.Namespace) -> None:
     for name, content in TEMPLATES.items():
         (root / name).write_text(content, encoding="utf-8")
     (root / "artifacts").mkdir(mode=0o700)
+    (root / "artifacts" / ARTIFACTS_KEEP).touch(mode=0o600, exist_ok=False)
     (root / RECEIPTS_DIR).mkdir(mode=0o700)
     message = f"initialized {root} with {args.driver} driving {copilot}"
     if predecessor is not None:

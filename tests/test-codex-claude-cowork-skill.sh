@@ -123,6 +123,9 @@ codex_session=$TEMP_DIR/codex-driver
 "$SESSION" init "$codex_session" --driver codex --exchange-mode direct >/dev/null
 [ -d "$codex_session/artifacts" ] && [ ! -L "$codex_session/artifacts" ] ||
     fail 'real artifacts directory'
+[ -f "$codex_session/artifacts/.gitkeep" ] &&
+    [ ! -s "$codex_session/artifacts/.gitkeep" ] ||
+    fail 'empty tracked artifacts placeholder'
 python3 - "$codex_session/state.json" <<'PY'
 import json
 import pathlib

@@ -29,7 +29,7 @@ The exchange directory contains:
 | `reconciliation.md` | driver | accepted evidence, disagreements, frozen plan, gates |
 | `execution.md` | driver | target steps/results and deviations |
 | `validation.md` | driver | final checks, outcome, residual risks |
-| `artifacts/` | shared, bounded | task prompts and public-safe raw logs named in evidence |
+| `artifacts/` | shared, bounded | tracked `.gitkeep`, task prompts, and public-safe raw logs named in evidence |
 | `receipts/` | driver/validator | schema-2 staged import receipts; closed independent/reciprocal set |
 
 The validator rejects missing headings, untouched standalone template `TODO`
@@ -43,6 +43,11 @@ prove factual correctness, client
 authorship, or confinement of content below `artifacts/`, and it cannot by
 itself detect a same-user overwrite of an already-valid file; both agents must
 inspect those independently and the driver must seal digests (below).
+
+`init` places an empty `artifacts/.gitkeep` in new sessions so the required
+directory survives Git commits, clone-based sandboxes, and cross-client
+takeover even when the session has no retained artifact. Keep that placeholder
+in committed session ledgers; it is protocol structure, not evidence.
 
 ## Sandbox contract
 

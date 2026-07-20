@@ -101,6 +101,36 @@ Next action: checkpoint this round-1 candidate, run clean full phase one, then
 start the required Claude-driver/Codex-co-pilot round before freezing any
 further speed change.
 
+Round 2 reversed roles: Claude drove Codex from matched baseline `ca87538` in
+disposable clones, with durable evidence under
+`docs/audits/t284-cowork-round2/`. The first reconciliation call hit its
+four-minute hard limit without a write; a decision-complete retry returned in
+about 82 seconds. Codex independently confirmed the status partial-read risk,
+driver-only full monitoring, unsafe focused-log reuse, and inconclusive worker
+benchmarks. Its reciprocal pass also read the live skill checkout despite the
+stage-only prompt, proving `workspace-write` constrains writes rather than
+reads; reconciliation rejects strict read-blinding and confinement-equivalence
+claims. Claude executed the frozen plan in its disposable target: `status` now
+groups candidate/freshness facts in an explicitly advisory, non-authorizing
+`mechanical_import_preconditions` object; the runbook assigns full monitoring
+to the driver; and a pre-existing focused-runner log directory now refuses
+reuse with concise exit 2 instead of a traceback. The focused cowork and runner
+tests passed, and clean full phase one passed 57/57 in 80 seconds. Five
+Claude-driver commits were replayed onto this branch as `a09ff87` through
+`c80cd25`.
+
+Canonical replay then exposed a Git-transfer defect masked by the original
+clone: an empty required `artifacts/` directory is not versioned, so the
+completed round-2 session initially failed takeover validation. The helper now
+creates an empty `artifacts/.gitkeep`; focused coverage asserts it; the protocol
+explains that the placeholder is durable structure rather than evidence; and
+both round-1 and round-2 ledgers carry it. Both completed sessions and
+reciprocal receipts now validate from the canonical checkout, the expanded
+focused cowork suite passes in 11.94 seconds, and `git diff --check` passes.
+Next action: checkpoint this durability fix, clone that checkpoint and prove a
+fresh Git transfer validates without inherited empty directories, then continue
+the bounded turnaround/monitoring refinement window.
+
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 
 **Phase/status:** `complete`; owner requested on 2026-07-20 that Codex drive a
