@@ -286,6 +286,9 @@ COPILOT_NATIVE_COMMAND ... &
 COPILOT_PID=$!
 scripts/cowork-session status SESSION_DIR --stage STAGE_DIR \
   --seal EXTERNAL_SEAL_FILE --pid "$COPILOT_PID"
+scripts/cowork-session wait-copilot SESSION_DIR --stage STAGE_DIR \
+  --seal EXTERNAL_SEAL_FILE --pid "$COPILOT_PID" \
+  --timeout-seconds CLIENT_BUDGET_SECONDS
 wait "$COPILOT_PID"
 ```
 
@@ -310,6 +313,19 @@ has since changed. It covers only candidate/freshness bytes — not seal
 validation, stage mode/receipt sequencing, process exit, protected digests,
 semantic review, or `import-copilot`/`verify-receipts` success. Only
 `import-copilot` is the authoritative mechanical gate.
+
+`wait-copilot` reuses that same snapshot on a monotonic, explicitly bounded
+poll loop (`0 < --timeout-seconds <= 1800`, `1 <= --poll-seconds <= 60`) and
+prints exactly one final JSON object. It returns `ready`/0 only for the full
+three-fact conjunction, `not-importable`/2 only after an observed process loss
+and one immediate final snapshot, or `timeout`/4. Without `--pid`, only ready
+or timeout can terminate the wait. Empty or structurally invalid bytes can be
+a transient editor write and do not terminate while the PID is reachable. A
+ready-but-stale candidate never returns ready. `wait_observation` always says
+`advisory: true`, `authorization: "none"`, and
+`pid_identity_authenticated: false`; PID reachability is vulnerable to reuse.
+The waiter never imports or writes. Inspect semantics, native process exit,
+protected digests, and receipts separately.
 
 The driver, which retains the live-session and external-seal paths, runs
 `status` during and after the native co-pilot window. The blinded co-pilot

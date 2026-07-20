@@ -49,6 +49,29 @@ python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
 [ "$(grep -c '^PASS suite=' "$TEMP_DIR/pass.out")" -eq 2 ] ||
     fail 'parallel result count'
 
+python3 - "$ROOT/tools/run-focused-tests.py" <<'PY'
+import importlib.util
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+spec = importlib.util.spec_from_file_location("focused_runner", path)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+assert module.default_jobs(1) == 4
+assert module.default_jobs(7) == 4
+assert module.default_jobs(8) == 8
+assert module.default_jobs(64) == 8
+PY
+python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
+    --manifest "$fake/pass.tsv" --log-dir "$fake/auto-logs" --jobs auto \
+    >"$TEMP_DIR/auto.out" 2>"$TEMP_DIR/auto.err" || fail 'auto jobs pass'
+[ ! -s "$TEMP_DIR/auto.err" ] || fail 'auto jobs emitted stderr'
+grep -E '^focused-tests: jobs=(4|8) visible_cpus=[0-9]+ mode=auto$' \
+    "$TEMP_DIR/auto.out" >/dev/null || fail 'missing auto jobs selection'
+[ "$(grep -c '^PASS suite=' "$TEMP_DIR/auto.out")" -eq 2 ] ||
+    fail 'auto jobs result count'
+
 cat >"$fake/tests/fail.sh" <<'EOF'
 #!/bin/sh
 printf '%s\n' 'intentional focused failure'

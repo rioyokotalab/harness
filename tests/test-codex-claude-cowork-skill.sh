@@ -98,6 +98,7 @@ source = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
 load_seal = source.split("def load_seal(", 1)[1].split("\ndef ", 1)[0]
 read_prompt = source.split("def read_owned_bounded_file(", 1)[1].split("\ndef ", 1)[0]
 import_copilot = source.split("def import_copilot(", 1)[1].split("\ndef ", 1)[0]
+wait_copilot = source.split("def wait_copilot(", 1)[1].split("\ndef ", 1)[0]
 assert "os.O_NOFOLLOW" in load_seal, load_seal
 assert "os.fstat(descriptor)" in load_seal, load_seal
 assert "raw = handle.read()" in load_seal, load_seal
@@ -107,6 +108,9 @@ assert "session_path(args.seal).read_bytes()" not in import_copilot, import_copi
 assert "os.O_NOFOLLOW" in read_prompt, read_prompt
 assert "os.O_NONBLOCK" in read_prompt, read_prompt
 assert "os.fstat(descriptor)" in read_prompt, read_prompt
+assert "status_snapshot(args)" in wait_copilot, wait_copilot
+assert "import_copilot" not in wait_copilot, wait_copilot
+assert "write_" not in wait_copilot, wait_copilot
 PY
 grep -F 'stage_manifest_sha256' "$PROTOCOL" >/dev/null ||
     fail 'protocol missing sealed manifest binding'
@@ -1155,6 +1159,47 @@ PY
 # A structurally-ready candidate against a stale live input is advisory only
 # (mechanical_import_preconditions), not an authoritative import gate.
 fill "$r9_stage/candidate-copilot-evidence.md"
+"$SESSION" digests "$r9_session" >"$TEMP_DIR/r9-wait-session-before"
+sha256sum "$r9_stage/stage.json" "$r9_stage/candidate-copilot-evidence.md" \
+    "$r9_seal" >"$TEMP_DIR/r9-wait-stage-before"
+"$SESSION" wait-copilot "$r9_session" --stage "$r9_stage" --seal "$r9_seal" \
+    --timeout-seconds 2 --poll-seconds 1 >"$TEMP_DIR/r9-wait-ready.json"
+"$SESSION" digests "$r9_session" >"$TEMP_DIR/r9-wait-session-after"
+sha256sum "$r9_stage/stage.json" "$r9_stage/candidate-copilot-evidence.md" \
+    "$r9_seal" >"$TEMP_DIR/r9-wait-stage-after"
+cmp -s "$TEMP_DIR/r9-wait-session-before" "$TEMP_DIR/r9-wait-session-after" ||
+    fail 'ready waiter mutated the session'
+cmp -s "$TEMP_DIR/r9-wait-stage-before" "$TEMP_DIR/r9-wait-stage-after" ||
+    fail 'ready waiter mutated the stage or seal'
+python3 - "$TEMP_DIR/r9-wait-ready.json" <<'PY'
+import json, pathlib, sys
+value = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+observation = value["wait_observation"]
+assert observation["outcome"] == "ready", value
+assert observation["process_loss_observed"] is False, value
+assert observation["pid_identity_authenticated"] is False, value
+assert observation["advisory"] is True, value
+assert observation["authorization"] == "none", value
+assert value["stage"]["mechanical_import_preconditions"]["all_satisfied"] is True
+PY
+
+# A partial editor write is not terminal while the observed process is alive.
+cp "$r9_stage/candidate-copilot-evidence.md" "$TEMP_DIR/r9-valid-candidate.md"
+: >"$r9_stage/candidate-copilot-evidence.md"
+( sleep 1.2; cp "$TEMP_DIR/r9-valid-candidate.md" \
+    "$r9_stage/candidate-copilot-evidence.md" ) &
+r9_writer=$!
+"$SESSION" wait-copilot "$r9_session" --stage "$r9_stage" --seal "$r9_seal" \
+    --pid $$ --timeout-seconds 4 --poll-seconds 1 \
+    >"$TEMP_DIR/r9-wait-transient.json"
+wait "$r9_writer"
+python3 - "$TEMP_DIR/r9-wait-transient.json" <<'PY'
+import json, pathlib, sys
+value = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert value["wait_observation"]["outcome"] == "ready", value
+assert value["stage"]["candidate_state"] == "ready", value
+PY
+
 cp "$r9_session/charter.md" "$TEMP_DIR/r9-charter-orig.md"
 printf '%s\n' 'live drift' >>"$r9_session/charter.md"
 "$SESSION" status "$r9_session" --stage "$r9_stage" --seal "$r9_seal" \
@@ -1171,6 +1216,40 @@ assert mip["all_satisfied"] is False, value
 assert mip["advisory"] is True, value
 assert mip["authorization"] == "none", value
 PY
+
+# Process loss gets one final snapshot; stale bytes are never reported ready.
+if "$SESSION" wait-copilot "$r9_session" --stage "$r9_stage" --seal "$r9_seal" \
+    --pid 2147483647 --timeout-seconds 2 --poll-seconds 1 \
+    >"$TEMP_DIR/r9-wait-stale.json"; then
+    fail 'waiter accepted stale candidate after process loss'
+else
+    r9_wait_status=$?
+fi
+[ "$r9_wait_status" -eq 2 ] || fail 'wrong not-importable wait status'
+python3 - "$TEMP_DIR/r9-wait-stale.json" <<'PY'
+import json, pathlib, sys
+value = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+observation = value["wait_observation"]
+assert observation["outcome"] == "not-importable", value
+assert observation["process_loss_observed"] is True, value
+assert observation["authorization"] == "none", value
+assert value["stage"]["mechanical_import_preconditions"]["all_satisfied"] is False
+PY
+if "$SESSION" wait-copilot "$r9_session" --stage "$r9_stage" --seal "$r9_seal" \
+    --timeout-seconds 1 --poll-seconds 1 >"$TEMP_DIR/r9-wait-timeout.json"; then
+    fail 'waiter accepted stale no-pid candidate'
+else
+    r9_wait_status=$?
+fi
+[ "$r9_wait_status" -eq 4 ] || fail 'wrong timeout wait status'
+grep -F '"outcome": "timeout"' "$TEMP_DIR/r9-wait-timeout.json" >/dev/null ||
+    fail 'missing timeout wait outcome'
+if "$SESSION" wait-copilot "$r9_session" --stage "$r9_stage" --seal "$r9_seal" \
+    --timeout-seconds 1801 --poll-seconds 1 >"$TEMP_DIR/r9-wait-bounds.out" 2>&1; then
+    fail 'waiter accepted an excessive timeout'
+fi
+grep -F 'at most 1800' "$TEMP_DIR/r9-wait-bounds.out" >/dev/null ||
+    fail 'missing wait timeout bound refusal'
 cp "$TEMP_DIR/r9-charter-orig.md" "$r9_session/charter.md"
 
 # Prompt drift is visible before any import mutation.

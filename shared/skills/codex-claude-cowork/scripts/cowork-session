@@ -12,6 +12,7 @@ import re
 import stat
 import sys
 import tempfile
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -1140,8 +1141,8 @@ def next_action(state: dict, receipts: dict[str, dict]) -> str:
     return "session complete"
 
 
-def status(args: argparse.Namespace) -> None:
-    """Print one deterministic, read-only session/stage monitoring snapshot."""
+def status_snapshot(args: argparse.Namespace) -> dict:
+    """Build one deterministic, read-only session/stage monitoring snapshot."""
     root = session_path(args.session_dir)
     state = load_state(root)
     validate_files(root, state["phase"])
@@ -1245,7 +1246,62 @@ def status(args: argparse.Namespace) -> None:
             "state": process_state,
             "advisory": True,
         }
+    return snapshot
+
+
+def status(args: argparse.Namespace) -> None:
+    """Print one deterministic, read-only session/stage monitoring snapshot."""
+    print(json.dumps(status_snapshot(args), indent=2, sort_keys=True))
+
+
+def wait_copilot(args: argparse.Namespace) -> None:
+    """Wait boundedly for advisory co-pilot observations without importing."""
+    if args.timeout_seconds <= 0 or args.timeout_seconds > 1800:
+        fail("wait-copilot --timeout-seconds must be greater than 0 and at most 1800")
+    if args.poll_seconds < 1 or args.poll_seconds > 60:
+        fail("wait-copilot --poll-seconds must be between 1 and 60")
+    if args.pid is not None and args.pid < 1:
+        fail("wait-copilot --pid must be a positive integer")
+
+    started = time.monotonic()
+    deadline = started + args.timeout_seconds
+    process_loss_observed = False
+    outcome = "timeout"
+    exit_code = 4
+    while True:
+        snapshot = status_snapshot(args)
+        preconditions = snapshot["stage"]["mechanical_import_preconditions"]
+        if preconditions["all_satisfied"]:
+            outcome = "ready"
+            exit_code = 0
+            break
+        process = snapshot["process"]
+        if process is not None and process["state"] == "not-reachable":
+            process_loss_observed = True
+            snapshot = status_snapshot(args)
+            preconditions = snapshot["stage"]["mechanical_import_preconditions"]
+            if preconditions["all_satisfied"]:
+                outcome = "ready"
+                exit_code = 0
+            else:
+                outcome = "not-importable"
+                exit_code = 2
+            break
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
+        time.sleep(min(args.poll_seconds, remaining))
+
+    snapshot["wait_observation"] = {
+        "outcome": outcome,
+        "elapsed_seconds": round(time.monotonic() - started, 3),
+        "process_loss_observed": process_loss_observed,
+        "pid_identity_authenticated": False,
+        "advisory": True,
+        "authorization": "none",
+    }
     print(json.dumps(snapshot, indent=2, sort_keys=True))
+    raise SystemExit(exit_code)
 
 
 def digests(args: argparse.Namespace) -> None:
@@ -1332,6 +1388,17 @@ def parser() -> argparse.ArgumentParser:
     status_parser.add_argument("--seal")
     status_parser.add_argument("--pid", type=int)
     status_parser.set_defaults(handler=status)
+    wait_parser = commands.add_parser(
+        "wait-copilot",
+        help="wait boundedly for advisory co-pilot observations without importing",
+    )
+    wait_parser.add_argument("session_dir")
+    wait_parser.add_argument("--stage", dest="stage_dir", required=True)
+    wait_parser.add_argument("--seal", required=True)
+    wait_parser.add_argument("--pid", type=int)
+    wait_parser.add_argument("--timeout-seconds", required=True, type=float)
+    wait_parser.add_argument("--poll-seconds", default=1.0, type=float)
+    wait_parser.set_defaults(handler=wait_copilot)
     digests_parser = commands.add_parser(
         "digests", help="print sha256 of the protected (non-co-pilot) entries"
     )

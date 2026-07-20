@@ -99,6 +99,15 @@ scripts/cowork-session advance SESSION_DIR discussing
      --seal EXTERNAL_SEAL_FILE --pid COPILOT_PID
    ```
 
+   Prefer one bounded driver-side wait over repeated manual polls when the
+   client window is asynchronous:
+
+   ```text
+   scripts/cowork-session wait-copilot SESSION_DIR --stage STAGE_DIR \
+     --seal EXTERNAL_SEAL_FILE --pid COPILOT_PID \
+     --timeout-seconds CLIENT_BUDGET_SECONDS
+   ```
+
    Treat PID reachability and candidate state as advisory observations, not
    authorship, semantic progress, or success. `status` never waits or writes.
    With `--stage`, it also reports an advisory
@@ -109,7 +118,11 @@ scripts/cowork-session advance SESSION_DIR discussing
    authoritative mechanical gate. The driver, which retains the live-session
    and external-seal paths, runs full `status` during and after the native
    co-pilot window; the blinded co-pilot reports only stage-local
-   observations. Neither candidate state nor PID reachability authorizes
+   observations. `wait-copilot` is also read-only: it returns one final JSON
+   snapshot as `ready`, `not-importable`, or `timeout`, tolerates transient
+   partial candidate writes while the process is reachable, and takes one
+   final snapshot after observed process loss. Every outcome is advisory and
+   non-authorizing. Neither candidate state nor PID reachability authorizes
    import.
 3. Store the printed `stage_sha256` outside the stage, session, and co-pilot
    sandbox before invocation. Do not write any driver-owned live file during
