@@ -278,8 +278,9 @@ one narrower defensively-framed retry with unchanged workspace-write/approval
 succeeded. Both live imports were run by the pre-change helper, so the round-6
 session itself is the schema-1→2 receipt-read compatibility fixture. Working
 files: `shared/skills/codex-claude-cowork/{SKILL.md,references/protocol.md,scripts/cowork-session}`,
-`tests/test-codex-claude-cowork-skill.sh`, and the round-6 exchange. The session
-is `validating` with changes uncommitted for supervising Codex review. Cleanup
+`tests/test-codex-claude-cowork-skill.sh`, and the round-6 exchange. The changes
+were checkpointed at `4ed439d`; the supervising clean-tree
+`tests/test-phase1.sh` passed every suite. Cleanup
 state: round-6 sandboxes `/tmp/harness-t283-round6-{claude,codex}` (including
 Codex `stage-*`/`scratch-round6*` and driver `exp/` scratch) and seals under
 `/tmp/harness-t283-round6-seals` all remain for guarded cleanup. Process
@@ -291,9 +292,8 @@ only after those edits. The plan/scope were frozen, but phase ordering was not,
 so round 6 explicitly fails that process invariant even if code validation
 passes. The already-deleted throwaway pathname was not recorded, another part
 of the cleanup deviation.
-Next action: the supervising Codex reviewer runs the clean-checkout full
-`tests/test-phase1.sh`, advances round 6 to `complete`, and guard-cleans round-6
-scratch. Next adversarial target after this round: an optional integrated
+Next action: advance round 6 to `complete` and guard-clean its scratch. Next
+adversarial target after this round: an optional integrated
 retained-seal comparison in `verify-receipts`, or a descriptor-bound seal reader.
 
 **Outcome and scope:** add one shared personal skill discoverable by both Codex

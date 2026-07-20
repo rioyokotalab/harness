@@ -22,11 +22,13 @@ edits (helper, SKILL, protocol, focused test, TODO):
 - `tests/test-source-contract.sh` — PASS.
 - `tests/test-claude-takeover.sh` — PASS.
 - `tests/test-public-repo-audit.sh` — PASS.
-- Full `tests/test-phase1.sh` — every suite PASS except `test-tmux-config.sh`,
-  which fails only because it "requires a clean committed checkout" and the tree
-  carries the uncommitted round-6 edits; `test-codex-claude-cowork-skill.sh`
-  passes inside the run. The full clean-commit Phase 1 is reserved for the
-  supervising Codex reviewer after checkpoint, per the frozen plan.
+- Driver pre-check of full `tests/test-phase1.sh` — every suite PASS except
+  `test-tmux-config.sh`, which correctly required a clean committed checkout;
+  the focused cowork suite passed inside that run.
+- Supervising Codex clean-checkpoint run of `tests/test-phase1.sh` at
+  `4ed439dcac47c8a0a1b44dc2eed3a5938623dddf` — PASS in full, including
+  `test-tmux-config.sh`, the focused cowork suite, takeover, source-contract,
+  public-repository audit, and guarded-delete tests.
 
 ## Outcome
 
@@ -37,7 +39,9 @@ and binds `seal_sha256` into a schema-2 receipt while the reader still accepts
 schema-1 receipts. The reproduced crash-then-relaunder route now fails closed
 with no receipt. No absolute path appears in any seal or receipt. Schema-1 legacy
 sessions/predecessors and schema-2 direct sessions keep their prior behavior.
-The session is left at `validating`, changes uncommitted, scratch preserved.
+The implementation was checkpointed at `4ed439d`; the supervising clean-tree
+Phase 1 gate passed. The session can now advance from `validating` to `complete`;
+scratch remains preserved until the separately guarded cleanup.
 
 ## Residual risks
 
