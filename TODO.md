@@ -136,6 +136,23 @@ the session-wide co-pilot write grant instead of only detecting misuse. No
 settings, credentials, packages, remotes, or external systems changed, and this
 work has not been pushed.
 
+Round 3 uses successor baseline `eb36df2` with Codex driving and Claude as a
+blinded staged co-pilot; evidence is under
+`docs/audits/t283-cowork-round3/`. Both independently showed that copied inputs
+plus a sandbox-local candidate preserve file-mediated critique without the
+normal live-session grant, and that v3 digests detect but cannot restore lost
+uncommitted bytes. Claude's prototype refused eight stale/linked/malformed cases
+without live changes and exposed the cross-filesystem `os.replace` trap. In
+reciprocal critique it withdrew an overclaim after proving Claude Bash can write
+outside its checkout without `--add-dir`: staging is mechanically confined for
+Codex workspace-write, but only reduces explicit/accidental authority for
+unwrapped Claude. The frozen v4 implementation adds deterministic independent/
+reciprocal `stage` and failure-atomic `import-copilot`, makes staged exchange the
+default native mapping, keeps direct session write as a sealed fallback, and
+documents hashes as detection plus the need for recoverable preimages. The
+canonical validator and expanded focused test pass; next action is full
+validation, evidence checkpoint, and guarded round-3 scratch cleanup.
+
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
 and Claude. Its role contract must be client-neutral: the active client is the
 driver and the other client is the co-pilot. Both must reconstruct repository

@@ -39,7 +39,8 @@ done
 
 grep -Fx 'name: codex-claude-cowork' "$SKILL" >/dev/null || fail 'skill name'
 grep -F 'as driver and the other as co-pilot' "$SKILL" >/dev/null || fail 'driver rule'
-grep -F 'Neither may overwrite the other' "$SKILL" >/dev/null || fail 'file ownership'
+grep -F 'the content of `copilot-evidence.md`' "$SKILL" >/dev/null ||
+    fail 'co-pilot content ownership'
 grep -F 'prose-only review is insufficient' "$SKILL" >/dev/null || fail 'experiment gate'
 grep -F 'Let only the driver mutate the target' "$SKILL" >/dev/null || fail 'execution role'
 grep -F 'Do not grant either' "$SKILL" >/dev/null || fail 'role symmetry'
@@ -61,6 +62,16 @@ grep -F 'digests SESSION_DIR' "$SKILL" >/dev/null ||
     fail 'skill missing digest-seal guidance'
 grep -F 'advisory tripwire' "$SKILL" >/dev/null ||
     fail 'skill missing read-only advisory note'
+grep -F 'stage SESSION_DIR STAGE_DIR --mode independent' "$SKILL" >/dev/null ||
+    fail 'skill missing independent staged exchange'
+grep -F 'import-copilot' "$SKILL" >/dev/null ||
+    fail 'skill missing staged import'
+grep -F '> STAGE_DIR/candidate-copilot-evidence.md' "$PROTOCOL" >/dev/null ||
+    fail 'Claude mapping does not return a staged candidate'
+grep -F -- '--output-last-message STAGE_DIR/candidate-copilot-evidence.md' \
+    "$PROTOCOL" >/dev/null || fail 'Codex mapping does not return a staged candidate'
+grep -F 'not an OS filesystem sandbox' "$PROTOCOL" >/dev/null ||
+    fail 'protocol missing Claude enforcement boundary'
 
 fill() {
     file=$1
@@ -267,5 +278,147 @@ if "$SESSION" init "$succ" --driver codex >"$TEMP_DIR/reinit.out" 2>&1; then
 fi
 grep -F 'already exists' "$TEMP_DIR/reinit.out" >/dev/null ||
     fail 'missing existing-path refusal'
+
+# --- round 3: staged exchange and failure-atomic co-pilot import ---
+
+r3_session=$TEMP_DIR/r3-session
+"$SESSION" init "$r3_session" --driver codex >/dev/null
+fill "$r3_session/charter.md"
+fill "$r3_session/plan.md"
+"$SESSION" advance "$r3_session" discussing >/dev/null
+
+r3_independent=$TEMP_DIR/r3-independent
+r3_independent_2=$TEMP_DIR/r3-independent-2
+"$SESSION" stage "$r3_session" "$r3_independent" --mode independent >/dev/null
+"$SESSION" stage "$r3_session" "$r3_independent_2" --mode independent >/dev/null
+cmp -s "$r3_independent/stage.json" "$r3_independent_2/stage.json" ||
+    fail 'independent stage manifest is not deterministic'
+[ ! -e "$r3_independent/driver-evidence.md" ] ||
+    fail 'independent stage leaked driver evidence'
+[ -d "$r3_independent/artifacts" ] && [ ! -L "$r3_independent/artifacts" ] ||
+    fail 'stage artifacts directory identity'
+python3 - "$r3_independent/stage.json" <<'PY'
+import json
+import pathlib
+import stat
+import sys
+
+stage_path = pathlib.Path(sys.argv[1])
+stage = json.loads(stage_path.read_text(encoding="utf-8"))
+assert stage["mode"] == "independent"
+assert stage["driver"] == "codex"
+assert stage["copilot"] == "claude"
+assert stage["phase"] == "discussing"
+assert sorted(stage["inputs"]) == ["charter.md", "plan.md", "state.json"]
+assert "path" not in stage
+assert stat.S_IMODE(stage_path.parent.stat().st_mode) == 0o700
+assert stat.S_IMODE((stage_path.parent / "artifacts").stat().st_mode) == 0o700
+for path in stage_path.parent.iterdir():
+    if path.is_file():
+        assert stat.S_IMODE(path.stat().st_mode) == 0o600, (path, oct(path.stat().st_mode))
+PY
+
+fill "$r3_independent/candidate-copilot-evidence.md"
+"$SESSION" digests "$r3_session" >"$TEMP_DIR/r3-before-import"
+"$SESSION" import-copilot "$r3_session" "$r3_independent" >/dev/null
+"$SESSION" digests "$r3_session" >"$TEMP_DIR/r3-after-import"
+cmp -s "$TEMP_DIR/r3-before-import" "$TEMP_DIR/r3-after-import" ||
+    fail 'staged import changed a protected entry'
+cmp -s "$r3_independent/candidate-copilot-evidence.md" \
+    "$r3_session/copilot-evidence.md" || fail 'staged candidate import bytes'
+python3 - "$r3_session/copilot-evidence.md" <<'PY'
+import pathlib
+import stat
+import sys
+
+mode = stat.S_IMODE(pathlib.Path(sys.argv[1]).stat().st_mode)
+assert mode == 0o600, oct(mode)
+PY
+
+fill "$r3_session/driver-evidence.md"
+r3_reciprocal=$TEMP_DIR/r3-reciprocal
+"$SESSION" stage "$r3_session" "$r3_reciprocal" --mode reciprocal >/dev/null
+[ -f "$r3_reciprocal/driver-evidence.md" ] || fail 'reciprocal stage driver evidence'
+[ -f "$r3_reciprocal/copilot-evidence.md" ] || fail 'reciprocal stage co-pilot evidence'
+cmp -s "$r3_session/copilot-evidence.md" \
+    "$r3_reciprocal/candidate-copilot-evidence.md" ||
+    fail 'reciprocal candidate did not preserve prior evidence'
+
+if "$SESSION" stage "$r3_session" "$r3_session/artifacts/inside-stage" \
+    --mode independent >"$TEMP_DIR/inside-stage.out" 2>&1; then
+    fail 'accepted a stage inside the live session'
+fi
+grep -F 'outside the live session' "$TEMP_DIR/inside-stage.out" >/dev/null ||
+    fail 'missing inside-session stage refusal'
+
+expect_import_refusal() {
+    stage_dir=$1
+    label=$2
+    sha256sum "$r3_session/copilot-evidence.md" >"$TEMP_DIR/$label.before"
+    if "$SESSION" import-copilot "$r3_session" "$stage_dir" \
+        >"$TEMP_DIR/$label.out" 2>&1; then
+        fail "accepted invalid staged import: $label"
+    fi
+    sha256sum "$r3_session/copilot-evidence.md" >"$TEMP_DIR/$label.after"
+    cmp -s "$TEMP_DIR/$label.before" "$TEMP_DIR/$label.after" ||
+        fail "failed import changed live evidence: $label"
+    if find "$r3_session" -maxdepth 1 -name '.copilot-evidence.md.*.tmp' \
+        -print -quit | grep . >/dev/null; then
+        fail "failed import left a session temp file: $label"
+    fi
+}
+
+r3_bad=$TEMP_DIR/r3-bad
+"$SESSION" stage "$r3_session" "$r3_bad" --mode independent >/dev/null
+fill "$r3_bad/candidate-copilot-evidence.md"
+cp "$r3_bad/candidate-copilot-evidence.md" "$TEMP_DIR/r3-valid-candidate"
+
+touch "$r3_bad/unexpected.txt"
+expect_import_refusal "$r3_bad" unexpected-stage
+unlink "$r3_bad/unexpected.txt"
+
+cp "$r3_bad/plan.md" "$TEMP_DIR/r3-stage-plan"
+printf '\nstage tamper\n' >>"$r3_bad/plan.md"
+expect_import_refusal "$r3_bad" staged-input-tamper
+cp "$TEMP_DIR/r3-stage-plan" "$r3_bad/plan.md"
+
+cp "$r3_session/plan.md" "$TEMP_DIR/r3-live-plan"
+printf '\nlive drift\n' >>"$r3_session/plan.md"
+expect_import_refusal "$r3_bad" stale-live-input
+cp "$TEMP_DIR/r3-live-plan" "$r3_session/plan.md"
+
+mv "$r3_bad/candidate-copilot-evidence.md" "$TEMP_DIR/r3-candidate-real"
+ln -s "$TEMP_DIR/r3-candidate-real" "$r3_bad/candidate-copilot-evidence.md"
+expect_import_refusal "$r3_bad" symlink-candidate
+unlink "$r3_bad/candidate-copilot-evidence.md"
+mv "$TEMP_DIR/r3-candidate-real" "$r3_bad/candidate-copilot-evidence.md"
+
+cp "$r3_bad/candidate-copilot-evidence.md" "$TEMP_DIR/r3-hardlink-source"
+ln -f "$TEMP_DIR/r3-hardlink-source" "$r3_bad/candidate-copilot-evidence.md"
+expect_import_refusal "$r3_bad" hardlink-candidate
+unlink "$r3_bad/candidate-copilot-evidence.md"
+cp "$TEMP_DIR/r3-valid-candidate" "$r3_bad/candidate-copilot-evidence.md"
+
+sed '/^## Critique$/d' "$TEMP_DIR/r3-valid-candidate" \
+    >"$r3_bad/candidate-copilot-evidence.md"
+expect_import_refusal "$r3_bad" missing-heading
+printf '%s\n' '# Co-pilot evidence' '## Commands and results' 'verified' \
+    '## Sandbox and baseline' 'verified' '## Critique' 'verified' \
+    '## Proposed plan changes' 'verified' \
+    >"$r3_bad/candidate-copilot-evidence.md"
+expect_import_refusal "$r3_bad" out-of-order-heading
+cp "$TEMP_DIR/r3-valid-candidate" "$r3_bad/candidate-copilot-evidence.md"
+printf '\nTODO\n' >>"$r3_bad/candidate-copilot-evidence.md"
+expect_import_refusal "$r3_bad" unresolved-todo
+
+dd if=/dev/zero of="$r3_bad/candidate-copilot-evidence.md" \
+    bs=65537 count=1 2>/dev/null
+expect_import_refusal "$r3_bad" oversized-candidate
+printf '\377\n' >"$r3_bad/candidate-copilot-evidence.md"
+expect_import_refusal "$r3_bad" non-utf8-candidate
+
+cp "$TEMP_DIR/r3-valid-candidate" "$r3_bad/candidate-copilot-evidence.md"
+"$SESSION" import-copilot "$r3_session" "$r3_bad" >/dev/null
+"$SESSION" check "$r3_session" >/dev/null
 
 echo 'Codex-Claude cowork skill tests passed'

@@ -36,7 +36,9 @@ boundaries controlling throughout.
    sandbox construction, acceptance gates, and cleanup policy. The driver owns
    `charter.md`, `plan.md`, `driver-evidence.md`, `reconciliation.md`,
    `execution.md`, and `validation.md`; the co-pilot owns
-   `copilot-evidence.md`. Neither may overwrite the other's evidence.
+   the content of `copilot-evidence.md`. By default the co-pilot writes a staged
+   candidate inside its sandbox and the driver validates/imports those exact
+   bytes; neither client receives a live-session write grant during discussion.
 
 ## Phase 1: Plan
 
@@ -55,21 +57,32 @@ scripts/cowork-session advance SESSION_DIR discussing
 
 1. Give both agents the same charter, plan, baseline, and acceptance gates.
    Withhold the other agent's conclusions until both independent passes finish.
-2. Have each agent actually exercise the relevant plan steps in its own
+   Create the blinded co-pilot bundle inside its sandbox:
+
+   ```text
+   scripts/cowork-session stage SESSION_DIR STAGE_DIR --mode independent
+   ```
+
+2. Invoke the co-pilot only against `STAGE_DIR`; do not disclose or grant
+   `SESSION_DIR`. Have each agent actually exercise the relevant plan steps in its own
    sandbox. Each evidence file must identify the sandbox and baseline, list
    commands or tool actions and observed results, distinguish observations from
    inferences, criticize concrete plan claims, and propose exact plan changes.
    A prose-only review is insufficient when an experiment is safe and feasible.
-3. Reveal both evidence files. Require a reciprocal critique pass: each agent
-   tests or traces the strongest conflicting claim and appends what it accepts,
-   rejects, or still cannot resolve. Critique evidence and reasoning, never the
-   other agent's motives or ability.
-4. Have the driver write `reconciliation.md`. Preserve material disagreements
+3. Inspect the candidate, then run `scripts/cowork-session import-copilot
+   SESSION_DIR STAGE_DIR`. Import only when it reports fresh, valid evidence.
+   Record the candidate hash and retain the stage for recovery.
+4. Reveal both evidence files. Create a fresh `--mode reciprocal` stage and
+   require the co-pilot to return its complete evidence with a reciprocal
+   critique. Validate/import it the same way. Each agent tests or traces the
+   strongest conflicting claim and states what it accepts, rejects, or cannot
+   resolve. Critique evidence and reasoning, never motives or ability.
+5. Have the driver write `reconciliation.md`. Preserve material disagreements
    and uncertainty; do not choose a client by brand. Prefer reproducible
    evidence, matched baselines, narrower claims, and safer reversible changes.
    The frozen plan must state which proposals were accepted or rejected and
    why.
-5. Advance to `ready-for-execution`. If required evidence is missing,
+6. Advance to `ready-for-execution`. If required evidence is missing,
    contradictory, unsafe, or non-reproducible, remain in discussion or ask the
    owner one material question. Do not execute by majority vote.
 
@@ -104,11 +117,13 @@ scripts/cowork-session advance SESSION_DIR ready-for-execution
   hide collaboration behind an opaque wrapper.
 - Grant the co-pilot only the sandbox and exchange-file access required by the
   frozen experiment. Never use a bypass flag merely to make automation pass.
-- Because granting the co-pilot session-directory write also lets it overwrite
-  driver-owned files, seal integrity around each co-pilot invocation: run
-  `scripts/cowork-session digests SESSION_DIR` beforehand, store the manifest
-  outside `SESSION_DIR`, and after the client returns re-run it and stop on any
-  change to a protected entry. Read-only mode is only an advisory tripwire.
+- Use staged exchange without `--add-dir SESSION_DIR` by default. Codex
+  workspace-write enforces that smaller writable set; Claude without a separate
+  OS/container sandbox does not, so around Claude also run
+  `scripts/cowork-session digests SESSION_DIR`, keep the result outside the
+  session, and retain a recoverable preimage. Hashes detect change;
+  they do not prevent it or restore bytes. Direct-session write is an exceptional
+  sealed fallback, and read-only mode is only an advisory tripwire.
 - Use separate sandboxes and one immutable baseline to prevent accidental
   target mutation and result contamination. Record deviations between
   environments before comparing results.

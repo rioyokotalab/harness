@@ -45,11 +45,10 @@ systems.
 
 Permit network, package installation, schedulers, remote writes, or external
 messages only if the owner's frozen task independently authorizes them and the
-experiment cannot be made local. Otherwise deny them. Keep target checkout and
-exchange ownership separate: the co-pilot writes only its sandbox and
-`copilot-evidence.md` (plus an explicitly named public-safe raw log below the
-real `artifacts/` directory if required). Do not place auxiliary content at the
-session top level.
+experiment cannot be made local. Otherwise deny them. Keep target checkout,
+live exchange, and co-pilot stage separate. The co-pilot writes only inside its
+sandbox; the driver imports its validated candidate into
+`copilot-evidence.md`. Do not place auxiliary content at the session top level.
 
 If sandbox cleanup can remove a tree or multiple paths, use the applicable
 guarded-deletion workflow. Do not place raw recursive cleanup in prompts,
@@ -67,17 +66,55 @@ owned evidence path. Require it to:
 5. propose a concrete edit to the plan for every confirmed flaw; and
 6. leave the target and the other evidence file unchanged.
 
-After both independent passes, expose both evidence files and request one
-reciprocal critique. Ask each client to address the strongest contrary result,
-not to restate its first answer. When results differ, rerun a matched test or
-record the discrepancy unresolved.
+After both independent passes, expose both evidence files through a fresh
+reciprocal stage and request one reciprocal critique. Ask each client to address
+the strongest contrary result, not to restate its first answer. The co-pilot
+returns its complete evidence file, not a patch. When results differ, rerun a
+matched test or record the discrepancy unresolved.
+
+## Staged exchange
+
+Create each stage inside the co-pilot sandbox and outside the live session:
+
+```text
+scripts/cowork-session stage SESSION_DIR STAGE_DIR --mode independent
+scripts/cowork-session stage SESSION_DIR STAGE_DIR --mode reciprocal
+```
+
+An independent stage contains copies of `state.json`, `charter.md`, and
+`plan.md`; a reciprocal stage also contains both evidence files. `stage.json`
+records the mode, roles, phase, and SHA-256 of every copied input without
+disclosing the live-session path. The stage also contains a real `artifacts/`
+directory and `candidate-copilot-evidence.md`. Put the task-specific prompt and
+bounded terminal output below the staged `artifacts/` directory.
+
+The driver tells the co-pilot only the sandbox and stage paths. After return,
+the driver inspects the complete candidate and then runs:
+
+```text
+scripts/cowork-session import-copilot SESSION_DIR STAGE_DIR
+```
+
+Import refuses a stale or altered input, unexpected stage entry, linked or
+foreign-owned file, candidate larger than 64 KiB, invalid UTF-8, missing or
+out-of-order heading, or standalone TODO. It writes a temporary file inside the
+live session filesystem, atomically replaces only `copilot-evidence.md`, and
+revalidates the discussing session. Retain the stage through reconciliation so
+the copied input and candidate bytes remain recoverable and reviewable.
+
+The hashes prove byte equality and freshness at import; they do not prove that
+the driver supplied honest inputs or that model prose was generated from those
+inputs. Record the staged input hashes, candidate hash, resolved command,
+blinding condition, and import result rather than claiming cryptographic
+authorship.
 
 ## Native client mapping
 
-The driver must construct a task-specific prompt file that names the sandbox,
-exchange directory, owned evidence file, allowed actions, forbidden targets,
-baseline, and required return format. Avoid interpolating untrusted task text
-into a shell command; pass it on standard input.
+The driver must construct a task-specific prompt below staged `artifacts/` that
+names the sandbox, stage, candidate file, allowed actions, forbidden targets,
+baseline, and required return format. Do not disclose the live session. Avoid
+interpolating untrusted task text into a shell command; pass it on standard
+input.
 
 When Codex drives Claude, run Claude from the Claude sandbox with noninteractive
 print mode. Build the narrowest reviewed `--allowedTools` list from the frozen
@@ -87,18 +124,19 @@ experiment and use a non-prompting permission mode. Do not use
 ```text
 claude --print --permission-mode dontAsk \
   --allowedTools REVIEWED_TOOL_LIST \
-  --add-dir SESSION_DIR < COPILOT_PROMPT_FILE
+  < STAGE_DIR/artifacts/copilot-prompt.md \
+  > STAGE_DIR/candidate-copilot-evidence.md
 ```
 
 When Claude drives Codex, run ephemeral Codex in the Codex sandbox. Use
-workspace-write confinement, no interactive approvals, and only the exchange
-directory as an additional writable path:
+workspace-write confinement and no interactive approvals. Keep the stage below
+that sandbox so no additional writable path is needed:
 
 ```text
 codex --ask-for-approval never exec --ephemeral --sandbox workspace-write \
-  --cd CODEX_SANDBOX --add-dir SESSION_DIR \
-  --output-last-message CODEX_LAST_MESSAGE_FILE \
-  - < COPILOT_PROMPT_FILE
+  --cd CODEX_SANDBOX \
+  --output-last-message STAGE_DIR/candidate-copilot-evidence.md \
+  - < STAGE_DIR/artifacts/copilot-prompt.md
 ```
 
 Add `--skip-git-repo-check` only for an intentionally non-Git synthetic
@@ -106,29 +144,35 @@ sandbox. If the installed client rejects a documented option, capture its
 version and error, inspect current `--help`, and revise the mapping explicitly;
 never silently fall back to an unconfined invocation.
 
-These templates do not supersede closer command policy. For example, an
-environment may require an OS/container sandbox around Claude or disallow a
-tool that the plan requested. Record the limitation and adapt the experiment,
-not the safety boundary.
+These templates do not supersede closer command policy. Codex workspace-write
+provides an OS-enforced writable-root boundary. Claude Code's `--add-dir` and
+tool permissions are not an OS filesystem sandbox: with Bash allowed, a
+same-user process may discover and write other writable paths. For Claude,
+staging removes explicit disclosure and the routine live write channel but
+remains behavioral authority reduction unless an available platform sandbox is
+applied. Record that residual or use the required environment-native wrapper;
+never invent a non-portable command or claim equal enforcement.
 
 ## Protecting driver-owned files across a co-pilot window
 
-`--add-dir SESSION_DIR` grants the co-pilot workspace-write over the entire
-exchange directory, so as the same user it can overwrite any driver-owned file;
-file ownership and mode `0600` do not establish authorship or integrity, and a
-co-pilot can re-`chmod` a read-only file before writing it. Setting driver-owned
-files read-only before an invocation is therefore only an advisory
-accidental-write tripwire, not a guarantee.
+Staging is the default and removes the normal reason to grant live-session
+write. A direct `--add-dir SESSION_DIR` grants the co-pilot write over the entire
+exchange directory, so as the same user it can overwrite any driver-owned file.
+Use it only when a recorded experiment cannot use staging. File ownership and
+mode `0600` do not establish authorship or integrity, and a co-pilot can
+re-`chmod` a read-only file before writing it. Read-only mode is therefore only
+an advisory accidental-write tripwire.
 
-The real guarantee is a driver-held digest seal. Immediately before granting the
-co-pilot write, the driver runs `scripts/cowork-session digests SESSION_DIR` and
-stores the manifest **outside** `SESSION_DIR` (an in-session seal could be
-rewritten together with its inputs). `digests` covers the protected set — every
-top-level entry the co-pilot does not own: `state.json` and the driver Markdown,
-excluding `copilot-evidence.md` and the shared `artifacts/` directory. After the
-native client returns, the driver re-runs `digests` and diffs it against the
-external manifest; any change to a protected entry is a stop condition that
-returns the session to owner review, never a silent accept.
+Before every Claude co-pilot window—and as defense in depth for Codex—the driver
+runs `scripts/cowork-session digests SESSION_DIR` and stores the manifest
+**outside** both `SESSION_DIR` and the co-pilot sandbox. `digests` covers
+`state.json` and the driver Markdown, excluding `copilot-evidence.md` and shared
+artifacts. Preserve a recoverable preimage too, such as a reviewed commit or an
+external protected-file copy; hashes detect change but cannot restore bytes.
+After the client returns, re-run and compare digests before candidate import.
+Any protected change is a stop condition that returns the session to owner
+review. Apply the same seal plus recoverable preimage around an exceptional
+direct-session fallback.
 
 ## Reconciliation rules
 
