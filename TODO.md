@@ -326,6 +326,13 @@ scratch marker and spent manifests were unlinked; `git worktree list`, `git
 fsck --no-dangling`, and clean status passed. Next action: final branch and
 six-hour acceptance review; do not add speculative release-candidate changes.
 
+Final acceptance index: `docs/audits/t283-cowork-acceptance.md`. All seven
+sessions validate complete under the final helper; both schema-2 receipt chains
+validate, all three discovery surfaces resolve to the canonical skill, and the
+fetched clean branch is 0 behind / 21 ahead of `origin/main`. The index records
+the alternating product-direction matrix, clean full-suite evidence, residuals,
+round-6 deviations, cleanup, and recovery surface. No push was performed.
+
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
 and Claude. Its role contract must be client-neutral: the active client is the
 driver and the other client is the co-pilot. Both must reconstruct repository
