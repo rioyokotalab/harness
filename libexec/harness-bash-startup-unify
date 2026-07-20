@@ -50,10 +50,7 @@ def read_public(path: Path) -> bytes:
     return path.read_bytes()
 
 
-def split_managed(data: bytes, prefix: bytes, suffix: bytes, name: str) -> bytes:
-    if not data.startswith(prefix) or not data.endswith(suffix):
-        die(f"{name} is not the exact managed pre/local/post layout")
-    middle = data[len(prefix):len(data) - len(suffix)]
+def reject_ambiguous_middle(middle: bytes, name: str) -> None:
     forbidden = (
         b"# >>> harness early managed >>>",
         b"# <<< harness early managed <<<",
@@ -64,6 +61,13 @@ def split_managed(data: bytes, prefix: bytes, suffix: bytes, name: str) -> bytes
     )
     if any(marker in middle for marker in forbidden):
         die(f"{name} contains ambiguous managed markers")
+
+
+def split_managed(data: bytes, prefix: bytes, suffix: bytes, name: str) -> bytes:
+    if not data.startswith(prefix) or not data.endswith(suffix):
+        die(f"{name} is not the exact managed pre/local/post layout")
+    middle = data[len(prefix):len(data) - len(suffix)]
+    reject_ambiguous_middle(middle, name)
     return middle
 
 
@@ -353,13 +357,23 @@ def main() -> int:
         print(f"BASH_STARTUP_UNIFY mode={mode} host={args.host} state=current action=none")
         return 0
 
-    bashrc_middle = split_managed(bashrc_data, prefix, bashrc_suffix, ".bashrc")
     profile_middle = split_managed(profile_data, prefix, profile_suffix, ".bash_profile") \
         if profile_info is not None else b""
     migrated_profile_middle, redundant_loaders = remove_redundant_bashrc_loaders(profile_middle)
-    new_bashrc = prefix + login_section(migrated_profile_middle) + bashrc_middle + bashrc_suffix
+    existing_login = login_section(migrated_profile_middle)
+    bashrc_core = bashrc_data[len(prefix):len(bashrc_data) - len(bashrc_suffix)] \
+        if bashrc_data.startswith(prefix) and bashrc_data.endswith(bashrc_suffix) else b""
+    profile_only = profile_info is not None and bashrc_core.startswith(existing_login)
+    if profile_only:
+        bashrc_middle = bashrc_core[len(existing_login):]
+        reject_ambiguous_middle(bashrc_middle, ".bashrc")
+        new_bashrc = bashrc_data
+    else:
+        bashrc_middle = split_managed(bashrc_data, prefix, bashrc_suffix, ".bashrc")
+        new_bashrc = prefix + existing_login + bashrc_middle + bashrc_suffix
     print(
-        f"BASH_STARTUP_UNIFY mode={mode} host={args.host} state=merge "
+        f"BASH_STARTUP_UNIFY mode={mode} host={args.host} "
+        f"state={'profile-only' if profile_only else 'merge'} "
         f"profile_local_bytes={len(profile_middle)} bashrc_local_bytes={len(bashrc_middle)} "
         f"profile_prestate={'present' if profile_info is not None else 'absent'} "
         f"redundant_profile_loaders={redundant_loaders} "

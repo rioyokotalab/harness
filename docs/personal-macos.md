@@ -199,6 +199,11 @@ rollback restores the complete prior images. The account shell, zsh files,
 Terminal preferences, `/etc/shells`, `chsh`, Keychain, and login items remain
 untouched.
 
+`bash-startup-unify` also accepts the narrow partial-current case where
+`.bashrc` is already canonical and the reviewed login-file local middle exactly
+matches its existing login-only section. It then changes only the login file to
+the thin loader; any byte mismatch or additional managed marker still blocks.
+
 ## Explicit private configuration synchronization
 
 Engine schema 2 was the historical atomic private configuration bundle. It is
