@@ -326,12 +326,30 @@ scratch marker and spent manifests were unlinked; `git worktree list`, `git
 fsck --no-dangling`, and clean status passed. Next action: final branch and
 six-hour acceptance review; do not add speculative release-candidate changes.
 
-Final acceptance index: `docs/audits/t283-cowork-acceptance.md`. All seven
-sessions validate complete under the final helper; both schema-2 receipt chains
+Final acceptance index: `docs/audits/t283-cowork-acceptance.md`. All eight
+sessions validate complete under the final helper; all three schema-2 receipt chains
 validate, all three discovery surfaces resolve to the canonical skill, and the
-fetched clean branch is 0 behind / 21 ahead of `origin/main`. The index records
+fetched clean branch is 0 behind / 26 ahead of `origin/main`. The index records
 the alternating product-direction matrix, clean full-suite evidence, residuals,
 round-6 deviations, cleanup, and recovery surface. No push was performed.
+Final descriptor sweep also proved a FIFO seal leaf returns immediately and is
+rejected under `O_NONBLOCK`/`fstat`; helper source contains no subprocess,
+shell-eval, or recursive-deletion primitive. The probe FIFO was exact-unlinked,
+and guarded token `0ef1da4b…` removed its 2-entry, 51,663-byte Python cache with
+protected anchors unchanged before unlinking the spent manifest.
+Claude 2.1.207's final read-only review of `66b80b7` found no acceptance defect
+after checking descriptor lifetime, platform flags, diagnostics, schema/CLI
+compatibility, exact-byte binding, regression assertions, and doc limits. Its
+only informational note was a pre-existing rare regular-file read-error
+traceback path, not introduced by this change; no repair is justified.
+Final `/tmp` residue review found and exact-unlinked four spent mode-0600
+manifests from rounds 3–5 after confirming their targets were already gone and
+tracked cleanup evidence remained. The repeated task-name residue scan is empty.
+A broader case-insensitive scan then found 22 superseded early-round prompt/
+output files. Explicit exact paths were moved without globbing into one fresh
+bounded directory; guarded token `8b08d7fa…` deleted it (23 entries; 23,775
+bytes) with protected anchors unchanged. The spent manifest was unlinked and
+the final top-level `/tmp` scan for any `t283` name is empty.
 
 Round 8 targets the remaining descriptor-bound seal-reader residual at baseline
 `0620d3e`, with Codex driving and Claude co-piloting. Both agents traced three

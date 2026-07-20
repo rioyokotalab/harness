@@ -1,6 +1,7 @@
 # T-283 Codex–Claude cowork acceptance
 
-Accepted on 2026-07-20 from branch `task/t-283-codex-claude-cowork`. This
+Work began on 2026-07-20 and was accepted on 2026-07-21 from branch
+`task/t-283-codex-claude-cowork`. This
 document is an index; each linked round directory remains the authoritative raw
 plan, evidence, reconciliation, execution, validation, and cleanup record.
 
@@ -52,9 +53,19 @@ schema-1 receipts without weakening new schema-2 writes.
 - Focused cowork, Claude takeover, source-contract, public-repository audit,
   syntax, whitespace, discovery-link identity, Git worktree integrity, and
   protected-anchor cleanup checks passed.
+- A final exact FIFO-leaf probe returned immediately under a five-second guard
+  and was rejected as a non-real protocol file, confirming `O_NONBLOCK` avoids
+  the special-file hang introduced by open-before-`fstat`. Static source scan
+  found no subprocess, shell-eval, or recursive-deletion primitive in the helper.
+- Claude 2.1.207 then performed a final read-only post-validation inspection of
+  `66b80b7` and returned **no acceptance defect** after tracing descriptor
+  lifetime/double-close paths, Linux/macOS flags, diagnostics, compatibility,
+  exact-byte binding, focused assertions, and documentation scope. Its sole
+  informational note—an uncaught rare regular-file read `OSError`—is unchanged
+  from the prior path-based reader and is not a regression.
 - Codex, Claude, and Agents discovery links resolve to the same canonical
   repository skill directory.
-- The branch is clean, fetched, `0` commits behind and `21` commits ahead of
+- The branch is clean, fetched, `0` commits behind and `26` commits ahead of
   `origin/main` at acceptance. Nothing was pushed.
 
 ## Known limits and deviations
@@ -84,6 +95,19 @@ schema-1 receipts without weakening new schema-2 writes.
 All preserved round scratch was removed through guarded manifests with protected
 anchors unchanged; exact prompt/marker/manifest files were separately unlinked.
 Tracked session evidence and Git commits are the recovery surface.
+The FIFO probe's generated Python cache was also guard-cleaned under token
+`0ef1da4b…` (2 entries; 51,663 bytes) with protected anchors unchanged; the
+spent manifest and exact FIFO were unlinked.
+A final `/tmp` residue sweep found four spent mode-0600 manifests from rounds
+3–5 (including the round-4 Python-cache manifest); their guarded targets were
+already absent and cleanup evidence was tracked, so each exact file was unlinked
+non-recursively. The subsequent task-name residue scan was empty.
+A broader case-insensitive sweep then found 22 early-round prompt/output files
+that were superseded by tracked audit artifacts. They were moved by explicit
+exact paths (no glob) into one fresh bounded directory; guarded token
+`8b08d7fa…` revalidated and deleted that directory (23 entries; 23,775 bytes)
+with protected anchors unchanged. The spent manifest was exact-unlinked, and a
+final top-level `/tmp` scan for every `t283` spelling returned empty.
 
 ## Handoff
 
