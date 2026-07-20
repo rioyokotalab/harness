@@ -63,11 +63,18 @@ scripts/cowork-session advance SESSION_DIR discussing
    Withhold the other agent's conclusions until both independent passes finish.
    Have the driver finish `driver-evidence.md` from its sandbox before opening
    the co-pilot client window, then freeze a protected digest manifest. Create
-   the blinded co-pilot bundle inside its sandbox:
+   the blinded co-pilot bundle inside its sandbox, writing a mandatory external
+   seal outside both the live session and the stage-parent sandbox:
 
    ```text
-   scripts/cowork-session stage SESSION_DIR STAGE_DIR --mode independent
+   scripts/cowork-session stage SESSION_DIR STAGE_DIR --mode independent \
+     --seal EXTERNAL_SEAL_FILE
    ```
+
+   For a schema-2 staged session `--seal` is required. It writes a real,
+   mode-0600, path-free seal committing the exact `stage.json` SHA-256; refuse a
+   seal path inside the session or stage-parent tree. Keep each stage a direct
+   child of the co-pilot sandbox so that parent is the true sandbox root.
 
 2. Invoke the co-pilot only against `STAGE_DIR`; do not disclose or grant
    `SESSION_DIR`. Have each agent actually exercise the relevant plan steps in its own
@@ -79,12 +86,16 @@ scripts/cowork-session advance SESSION_DIR discussing
    sandbox before invocation. Do not write any driver-owned live file during
    the client window. Compare protected and stage-manifest seals after return.
    Inspect the candidate, then run `scripts/cowork-session import-copilot
-   SESSION_DIR STAGE_DIR`. Import only when it reports fresh, valid evidence and
-   a receipt path. Run `scripts/cowork-session verify-receipts SESSION_DIR`.
+   SESSION_DIR STAGE_DIR --seal EXTERNAL_SEAL_FILE`. For a schema-2 staged
+   session the seal is required: import refuses a seal inside the session or
+   stage-parent tree and, before any target write, requires exact owner, single
+   link count, non-symlink, schema, roles, mode, phase, destination-before, and
+   `stage.json` SHA-256 match. Import only when it reports fresh, valid evidence
+   and a receipt path. Run `scripts/cowork-session verify-receipts SESSION_DIR`.
    Retain the stage and external seals for recovery.
-4. Reveal both evidence files. Create a fresh `--mode reciprocal` stage and
-   require the co-pilot to return its complete evidence with a reciprocal
-   critique. Seal, validate, import, and verify it the same way. Each agent tests or traces the
+4. Reveal both evidence files. Create a fresh `--mode reciprocal` stage with its
+   own `--seal` and require the co-pilot to return its complete evidence with a
+   reciprocal critique. Seal, validate, import, and verify it the same way. Each agent tests or traces the
    strongest conflicting claim and states what it accepts, rejects, or cannot
    resolve. Critique evidence and reasoning, never motives or ability.
 5. Have the driver write `reconciliation.md`. Preserve material disagreements
@@ -142,11 +153,22 @@ scripts/cowork-session advance SESSION_DIR ready-for-execution
   advisory tripwire.
 - Schema-2 staged sessions create a closed, driver-owned `receipts/` chain. The
   independent and reciprocal receipts bind projected inputs, full live state,
-  exact stage metadata, destination-before bytes, and accepted candidate without
-  storing paths. Ready and later phases require both receipts and live-evidence
-  verification. `digests` protects existing receipts. Receipt hashes prove byte
-  relationships, not authorship, and ordinary rollback is not cross-file crash
-  atomicity. Strict schema-1 predecessor sessions remain valid without receipts.
+  exact stage metadata, destination-before bytes, the external seal SHA-256, and
+  the accepted candidate without storing paths. Ready and later phases require
+  both receipts and live-evidence verification. `digests` protects existing
+  receipts. Receipt hashes prove byte relationships, not authorship, and ordinary
+  rollback is not cross-file crash atomicity. New receipts are schema 2; the
+  reader still accepts schema-1 receipts already written into a schema-2 session,
+  and strict schema-1 predecessor sessions remain valid without receipts.
+- The external seal is the anchor that makes the co-pilot-writable `stage.json`
+  trustworthy: `stage --seal` commits its exact SHA-256 to a path-free mode-0600
+  file the driver holds outside every co-pilot-writable tree, and `import --seal`
+  refuses any mismatch before mutation, closing the crash-then-relaunder path. The
+  seal binds stage *content*, not identity or location: two byte-identical stages
+  share a valid seal, harmlessly. It does not prove authorship, create OS
+  confinement, protect a seal placed where the co-pilot can write, or make
+  stage+seal or evidence+receipt writes crash-atomic; `verify-receipts` checks the
+  stored seal hash and chain but does not reopen the external seal bytes.
 - Use separate sandboxes and one immutable baseline to prevent accidental
   target mutation and result contamination. Record deviations between
   environments before comparing results.

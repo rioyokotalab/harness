@@ -88,11 +88,14 @@ matched test or record the discrepancy unresolved.
 
 ## Staged exchange
 
-Create each stage inside the co-pilot sandbox and outside the live session:
+Create each stage as a direct child of the co-pilot sandbox and outside the live
+session, with a mandatory external seal:
 
 ```text
-scripts/cowork-session stage SESSION_DIR STAGE_DIR --mode independent
-scripts/cowork-session stage SESSION_DIR STAGE_DIR --mode reciprocal
+scripts/cowork-session stage SESSION_DIR STAGE_DIR --mode independent \
+  --seal EXTERNAL_SEAL_FILE
+scripts/cowork-session stage SESSION_DIR STAGE_DIR --mode reciprocal \
+  --seal EXTERNAL_SEAL_FILE
 ```
 
 An independent stage contains `charter.md`, `plan.md`, and a fail-closed
@@ -120,14 +123,47 @@ driver seal unless the external pre-window value also matches. When reporting a
 seal deviation for reciprocal review, copy the bounded before/after manifests
 into the reciprocal stage artifacts.
 
+For a schema-2 staged session `--seal` is required and turns that advisory hash
+into an enforced anchor. `stage` resolves and pre-checks the seal path *before*
+minting any stage bytes — refusing a seal resolved inside the live session or the
+stage-parent sandbox, or an already-present seal path, so a bad seal leaves no
+partial stage — then writes a real, mode-0600, path-free seal with exactly these
+seven keys: `schema_version`, `driver`, `copilot`, `mode`, `phase`,
+`destination_before_sha256`, and `stage_manifest_sha256` (the exact `stage.json`
+SHA-256). The manifest hash transitively commits the stage schema, roles, mode,
+phase, destination-before, and every staged input hash, because those all live in
+`stage.json`; the duplicated role/mode/phase/destination fields are explicit
+consistency checks, not extra commitments. The seal binds stage *content*, not
+identity or location: two byte-identical stages share one valid seal, which is
+harmless. Writing the seal is a second file after `stage.json`: it is fail-closed
+(a failed seal write leaves a sealless, import-refused stage) but not cross-file
+atomic; retry with a fresh stage and seal after exact inspection. The
+stage-parent refusal identifies the co-pilot sandbox only under the documented
+precondition that `STAGE_DIR` is a direct child of that sandbox; a nested stage
+would make the immediate parent too narrow, so keep stages direct children (or,
+if a caller cannot, extend the helper with an explicit co-pilot-root argument).
+Store the seal outside every co-pilot-writable tree; a path check is not OS
+confinement and mode 0600 does not stop a same-UID process that can reach the
+seal.
+
 The driver tells the co-pilot only the sandbox and stage paths. After return,
 the driver inspects the complete candidate and then runs:
 
 ```text
-scripts/cowork-session import-copilot SESSION_DIR STAGE_DIR
+scripts/cowork-session import-copilot SESSION_DIR STAGE_DIR --seal EXTERNAL_SEAL_FILE
 ```
 
-Import refuses a stale or altered input, unexpected stage entry, linked or
+For a schema-2 staged session `--seal` is required. Before any target write,
+import refuses a seal resolved inside the session or stage-parent tree; requires a
+real, current-user-owned, single-link, non-symlink file; parses UTF-8 JSON with
+exactly the seven seal keys and supported schema; and requires the seal `driver`,
+`copilot`, `mode`, `phase`, and `destination_before_sha256` to match the stage
+and the seal `stage_manifest_sha256` to equal the exact SHA-256 of the stage's
+current `stage.json`. This closes the crash-then-relaunder path: because a
+co-pilot can rewrite the stage's own `stage.json` (including
+`destination_before_sha256`) after a crash-shaped evidence overwrite, only an
+external seal the co-pilot cannot reach can detect that rewrite. Import also
+refuses a stale or altered input, unexpected stage entry, linked or
 foreign-owned file, candidate larger than 64 KiB, invalid UTF-8, missing or
 out-of-order heading, or standalone TODO. It writes a temporary file inside the
 live session filesystem, atomically replaces only `copilot-evidence.md`, and
@@ -150,8 +186,15 @@ exceptional `--exchange-mode direct`. A schema-2 stage binds the live
 before mutation. A successful staged import creates exactly one closed receipt
 for its mode under `receipts/`. Receipt fields bind roles, phase, projected input
 hashes, full raw-state hash, exact stage-manifest hash, destination-before hash,
-candidate hash, and import time, with no filesystem paths. Independent must
-precede reciprocal. Run `verify-receipts SESSION_DIR` after each import.
+the external seal SHA-256, candidate hash, and import time, with no filesystem
+paths. New receipts are written at receipt schema 2 (with the seal hash); the
+reader also accepts schema-1 receipts, because a schema-2 staged session created
+by a pre-seal helper may already hold schema-1 receipts, and rejecting them would
+break an otherwise valid session. `verify-receipts SESSION_DIR` validates the
+stored seal hash and the receipt/evidence chain, but does not reopen or re-hash
+the external seal file; comparing retained seal bytes is a separate step.
+Independent must precede reciprocal. Run `verify-receipts SESSION_DIR` after each
+import.
 
 Receipt creation writes and fsyncs a temporary on the session filesystem, then
 atomically links the complete bytes to a no-overwrite final name and removes the

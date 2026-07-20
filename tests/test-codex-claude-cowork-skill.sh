@@ -80,6 +80,14 @@ grep -F 'stage_sha256' "$PROTOCOL" >/dev/null ||
     fail 'protocol missing external stage-manifest seal'
 grep -F 'not cross-file crash' "$SKILL" >/dev/null ||
     fail 'skill overstates receipt atomicity'
+grep -F -- '--seal EXTERNAL_SEAL_FILE' "$SKILL" >/dev/null ||
+    fail 'skill missing mandatory seal command'
+grep -F -- '--seal EXTERNAL_SEAL_FILE' "$PROTOCOL" >/dev/null ||
+    fail 'protocol missing mandatory seal command'
+grep -F 'stage_manifest_sha256' "$PROTOCOL" >/dev/null ||
+    fail 'protocol missing sealed manifest binding'
+grep -F 'does not reopen' "$PROTOCOL" >/dev/null ||
+    fail 'protocol overstates verify-receipts seal coverage'
 
 fill() {
     file=$1
@@ -287,6 +295,14 @@ fi
 grep -F 'already exists' "$TEMP_DIR/reinit.out" >/dev/null ||
     fail 'missing existing-path refusal'
 
+# Staged rounds place every stage as a direct child of one co-pilot sandbox box
+# and keep the mandatory external seals in a separate vault outside that box and
+# outside every session, matching the schema-2 seal location contract.
+BOX=$TEMP_DIR/copilot-box
+mkdir -p "$BOX"
+SEALS=$TEMP_DIR/seal-vault
+mkdir -p "$SEALS"
+
 # --- round 3: staged exchange and failure-atomic co-pilot import ---
 
 r3_session=$TEMP_DIR/r3-session
@@ -295,10 +311,12 @@ fill "$r3_session/charter.md"
 fill "$r3_session/plan.md"
 "$SESSION" advance "$r3_session" discussing >/dev/null
 
-r3_independent=$TEMP_DIR/r3-independent
-r3_independent_2=$TEMP_DIR/r3-independent-2
-"$SESSION" stage "$r3_session" "$r3_independent" --mode independent >/dev/null
-"$SESSION" stage "$r3_session" "$r3_independent_2" --mode independent >/dev/null
+r3_independent=$BOX/r3-independent
+r3_independent_2=$BOX/r3-independent-2
+"$SESSION" stage "$r3_session" "$r3_independent" --mode independent \
+    --seal "$SEALS/r3-ind.json" >/dev/null
+"$SESSION" stage "$r3_session" "$r3_independent_2" --mode independent \
+    --seal "$SEALS/r3-ind2.json" >/dev/null
 cmp -s "$r3_independent/stage.json" "$r3_independent_2/stage.json" ||
     fail 'independent stage manifest is not deterministic'
 [ ! -e "$r3_independent/driver-evidence.md" ] ||
@@ -328,7 +346,8 @@ PY
 
 fill "$r3_independent/candidate-copilot-evidence.md"
 "$SESSION" digests "$r3_session" >"$TEMP_DIR/r3-before-import"
-"$SESSION" import-copilot "$r3_session" "$r3_independent" >/dev/null
+"$SESSION" import-copilot "$r3_session" "$r3_independent" \
+    --seal "$SEALS/r3-ind.json" >/dev/null
 "$SESSION" digests "$r3_session" >"$TEMP_DIR/r3-after-import"
 sed '/  receipts\//d' "$TEMP_DIR/r3-after-import" >"$TEMP_DIR/r3-after-core"
 cmp -s "$TEMP_DIR/r3-before-import" "$TEMP_DIR/r3-after-core" ||
@@ -347,8 +366,9 @@ assert mode == 0o600, oct(mode)
 PY
 
 fill "$r3_session/driver-evidence.md"
-r3_reciprocal=$TEMP_DIR/r3-reciprocal
-"$SESSION" stage "$r3_session" "$r3_reciprocal" --mode reciprocal >/dev/null
+r3_reciprocal=$BOX/r3-reciprocal
+"$SESSION" stage "$r3_session" "$r3_reciprocal" --mode reciprocal \
+    --seal "$SEALS/r3-recip.json" >/dev/null
 [ -f "$r3_reciprocal/driver-evidence.md" ] || fail 'reciprocal stage driver evidence'
 [ -f "$r3_reciprocal/copilot-evidence.md" ] || fail 'reciprocal stage co-pilot evidence'
 cmp -s "$r3_session/copilot-evidence.md" \
@@ -374,7 +394,7 @@ expect_import_refusal() {
     label=$2
     sha256sum "$r3_invalid_session/copilot-evidence.md" >"$TEMP_DIR/$label.before"
     if "$SESSION" import-copilot "$r3_invalid_session" "$stage_dir" \
-        >"$TEMP_DIR/$label.out" 2>&1; then
+        --seal "$R3_BAD_SEAL" >"$TEMP_DIR/$label.out" 2>&1; then
         fail "accepted invalid staged import: $label"
     fi
     sha256sum "$r3_invalid_session/copilot-evidence.md" >"$TEMP_DIR/$label.after"
@@ -386,8 +406,10 @@ expect_import_refusal() {
     fi
 }
 
-r3_bad=$TEMP_DIR/r3-bad
-"$SESSION" stage "$r3_invalid_session" "$r3_bad" --mode independent >/dev/null
+r3_bad=$BOX/r3-bad
+R3_BAD_SEAL=$SEALS/r3-bad.json
+"$SESSION" stage "$r3_invalid_session" "$r3_bad" --mode independent \
+    --seal "$R3_BAD_SEAL" >/dev/null
 fill "$r3_bad/candidate-copilot-evidence.md"
 cp "$r3_bad/candidate-copilot-evidence.md" "$TEMP_DIR/r3-valid-candidate"
 
@@ -436,7 +458,8 @@ printf '\377\n' >"$r3_bad/candidate-copilot-evidence.md"
 expect_import_refusal "$r3_bad" non-utf8-candidate
 
 cp "$TEMP_DIR/r3-valid-candidate" "$r3_bad/candidate-copilot-evidence.md"
-"$SESSION" import-copilot "$r3_invalid_session" "$r3_bad" >/dev/null
+"$SESSION" import-copilot "$r3_invalid_session" "$r3_bad" \
+    --seal "$R3_BAD_SEAL" >/dev/null
 "$SESSION" check "$r3_invalid_session" >/dev/null
 
 # --- round 4: path-free state projection and predecessor content validation ---
@@ -454,8 +477,9 @@ fill "$r4_session/charter.md"
 fill "$r4_session/plan.md"
 "$SESSION" advance "$r4_session" discussing >/dev/null
 
-r4_stage=$TEMP_DIR/r4-stage
-"$SESSION" stage "$r4_session" "$r4_stage" --mode independent >/dev/null
+r4_stage=$BOX/r4-stage
+"$SESSION" stage "$r4_session" "$r4_stage" --mode independent \
+    --seal "$SEALS/r4.json" >/dev/null
 python3 - "$r4_pred" "$r4_session/state.json" "$r4_stage/state.json" <<'PY'
 import json
 import pathlib
@@ -482,7 +506,8 @@ fi
 # projected round trip imports and leaves every protected entry unchanged
 fill "$r4_stage/candidate-copilot-evidence.md"
 "$SESSION" digests "$r4_session" >"$TEMP_DIR/r4-before"
-"$SESSION" import-copilot "$r4_session" "$r4_stage" >/dev/null
+"$SESSION" import-copilot "$r4_session" "$r4_stage" \
+    --seal "$SEALS/r4.json" >/dev/null
 "$SESSION" digests "$r4_session" >"$TEMP_DIR/r4-after"
 sed '/  receipts\//d' "$TEMP_DIR/r4-after" >"$TEMP_DIR/r4-after-core"
 cmp -s "$TEMP_DIR/r4-before" "$TEMP_DIR/r4-after-core" ||
@@ -547,8 +572,9 @@ r4_fresh=$TEMP_DIR/r4-fresh
 fill "$r4_fresh/charter.md"
 fill "$r4_fresh/plan.md"
 "$SESSION" advance "$r4_fresh" discussing >/dev/null
-r4_fresh_stage=$TEMP_DIR/r4-fresh-stage
-"$SESSION" stage "$r4_fresh" "$r4_fresh_stage" --mode independent >/dev/null
+r4_fresh_stage=$BOX/r4-fresh-stage
+"$SESSION" stage "$r4_fresh" "$r4_fresh_stage" --mode independent \
+    --seal "$SEALS/r4-fresh.json" >/dev/null
 fill "$r4_fresh_stage/candidate-copilot-evidence.md"
 "$SESSION" digests "$r4_fresh" >"$TEMP_DIR/r4-fresh-before"
 python3 - "$r4_fresh/state.json" <<'PY'
@@ -565,7 +591,8 @@ PY
 if cmp -s "$TEMP_DIR/r4-fresh-before" "$TEMP_DIR/r4-fresh-after"; then
     fail 'external seal did not detect a withheld-field change'
 fi
-"$SESSION" import-copilot "$r4_fresh" "$r4_fresh_stage" >/dev/null ||
+"$SESSION" import-copilot "$r4_fresh" "$r4_fresh_stage" \
+    --seal "$SEALS/r4-fresh.json" >/dev/null ||
     fail 'projected import rejected a withheld-field-only change'
 
 # a retained-field live change is stale-rejected with the destination unchanged
@@ -574,8 +601,9 @@ r4_stale=$TEMP_DIR/r4-stale
 fill "$r4_stale/charter.md"
 fill "$r4_stale/plan.md"
 "$SESSION" advance "$r4_stale" discussing >/dev/null
-r4_stale_stage=$TEMP_DIR/r4-stale-stage
-"$SESSION" stage "$r4_stale" "$r4_stale_stage" --mode independent >/dev/null
+r4_stale_stage=$BOX/r4-stale-stage
+"$SESSION" stage "$r4_stale" "$r4_stale_stage" --mode independent \
+    --seal "$SEALS/r4-stale.json" >/dev/null
 fill "$r4_stale_stage/candidate-copilot-evidence.md"
 sha256sum "$r4_stale/copilot-evidence.md" >"$TEMP_DIR/r4-stale.before"
 python3 - "$r4_stale/state.json" <<'PY'
@@ -589,7 +617,7 @@ state["updated_at"] = "2000-01-01T00:00:00+00:00"
 path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 PY
 if "$SESSION" import-copilot "$r4_stale" "$r4_stale_stage" \
-    >"$TEMP_DIR/r4-stale.out" 2>&1; then
+    --seal "$SEALS/r4-stale.json" >"$TEMP_DIR/r4-stale.out" 2>&1; then
     fail 'accepted a stale retained-field import'
 fi
 grep -F 'stale relative to the live session: state.json' "$TEMP_DIR/r4-stale.out" \
@@ -718,11 +746,12 @@ fi
 grep -F 'requires independent and reciprocal receipts' \
     "$TEMP_DIR/r5-no-receipts.out" >/dev/null || fail 'missing ready receipt gate'
 
-r5_ind=$TEMP_DIR/r5-independent
+r5_ind=$BOX/r5-independent
 "$SESSION" stage "$r5_session" "$r5_ind" --mode independent \
-    >"$TEMP_DIR/r5-stage.out"
-grep -E 'stage_sha256=[0-9a-f]{64}$' "$TEMP_DIR/r5-stage.out" >/dev/null ||
-    fail 'stage command omitted external manifest hash'
+    --seal "$SEALS/r5-ind.json" >"$TEMP_DIR/r5-stage.out"
+grep -E 'stage_sha256=[0-9a-f]{64} seal_sha256=[0-9a-f]{64}$' \
+    "$TEMP_DIR/r5-stage.out" >/dev/null ||
+    fail 'stage command omitted external manifest or seal hash'
 python3 - "$r5_session/copilot-evidence.md" "$r5_ind/stage.json" <<'PY'
 import hashlib
 import json
@@ -736,7 +765,7 @@ assert stage["destination_before_sha256"] == hashlib.sha256(live).hexdigest(), s
 PY
 fill "$r5_ind/candidate-copilot-evidence.md"
 "$SESSION" import-copilot "$r5_session" "$r5_ind" \
-    >"$TEMP_DIR/r5-import-ind.out"
+    --seal "$SEALS/r5-ind.json" >"$TEMP_DIR/r5-import-ind.out"
 grep -F 'receipt=receipts/independent.json' "$TEMP_DIR/r5-import-ind.out" >/dev/null ||
     fail 'independent import omitted receipt path'
 "$SESSION" verify-receipts "$r5_session" >/dev/null
@@ -751,16 +780,18 @@ printf '\npost-import stage drift\n' >>"$r5_ind/candidate-copilot-evidence.md"
 "$SESSION" verify-receipts "$r5_session" >/dev/null ||
     fail 'stage candidate drift invalidated live receipt'
 if "$SESSION" import-copilot "$r5_session" "$r5_ind" \
-    >"$TEMP_DIR/r5-replay.out" 2>&1; then
+    --seal "$SEALS/r5-ind.json" >"$TEMP_DIR/r5-replay.out" 2>&1; then
     fail 'replayed an already-receipted independent import'
 fi
 grep -F 'replay refused' "$TEMP_DIR/r5-replay.out" >/dev/null ||
     fail 'missing receipt replay refusal'
 
-r5_recip=$TEMP_DIR/r5-reciprocal
-"$SESSION" stage "$r5_session" "$r5_recip" --mode reciprocal >/dev/null
+r5_recip=$BOX/r5-reciprocal
+"$SESSION" stage "$r5_session" "$r5_recip" --mode reciprocal \
+    --seal "$SEALS/r5-recip.json" >/dev/null
 printf '\nreciprocal revision\n' >>"$r5_recip/candidate-copilot-evidence.md"
-"$SESSION" import-copilot "$r5_session" "$r5_recip" >/dev/null
+"$SESSION" import-copilot "$r5_session" "$r5_recip" \
+    --seal "$SEALS/r5-recip.json" >/dev/null
 "$SESSION" verify-receipts "$r5_session" \
     | grep -F 'valid reciprocal receipt' >/dev/null || fail 'reciprocal verification'
 python3 - "$r5_session/receipts/independent.json" \
@@ -772,11 +803,14 @@ import sys
 ind = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
 rec = json.loads(pathlib.Path(sys.argv[2]).read_text(encoding="utf-8"))
 assert rec["destination_before_sha256"] == ind["candidate_sha256"], (ind, rec)
+assert ind["schema_version"] == 2 and rec["schema_version"] == 2, (ind, rec)
 assert set(rec) == {
     "schema_version", "mode", "driver", "copilot", "phase", "inputs",
     "raw_state_sha256", "stage_manifest_sha256", "candidate_sha256",
-    "destination_before_sha256", "imported_at",
+    "destination_before_sha256", "seal_sha256", "imported_at",
 }, rec
+import re as _re
+assert _re.fullmatch(r"[0-9a-f]{64}", rec["seal_sha256"]), rec
 PY
 "$SESSION" advance "$r5_session" ready-for-execution >/dev/null
 
@@ -797,12 +831,13 @@ r5_drift=$TEMP_DIR/r5-drift
 fill "$r5_drift/charter.md"
 fill "$r5_drift/plan.md"
 "$SESSION" advance "$r5_drift" discussing >/dev/null
-r5_drift_stage=$TEMP_DIR/r5-drift-stage
-"$SESSION" stage "$r5_drift" "$r5_drift_stage" --mode independent >/dev/null
+r5_drift_stage=$BOX/r5-drift-stage
+"$SESSION" stage "$r5_drift" "$r5_drift_stage" --mode independent \
+    --seal "$SEALS/r5-drift.json" >/dev/null
 fill "$r5_drift_stage/candidate-copilot-evidence.md"
 fill "$r5_drift/copilot-evidence.md"
 if "$SESSION" import-copilot "$r5_drift" "$r5_drift_stage" \
-    >"$TEMP_DIR/r5-drift.out" 2>&1; then
+    --seal "$SEALS/r5-drift.json" >"$TEMP_DIR/r5-drift.out" 2>&1; then
     fail 'accepted drifted pre-import destination'
 fi
 grep -F 'destination-before hash' "$TEMP_DIR/r5-drift.out" >/dev/null ||
@@ -816,13 +851,14 @@ r5_fail=$TEMP_DIR/r5-fail
 fill "$r5_fail/charter.md"
 fill "$r5_fail/plan.md"
 "$SESSION" advance "$r5_fail" discussing >/dev/null
-r5_fail_stage=$TEMP_DIR/r5-fail-stage
-"$SESSION" stage "$r5_fail" "$r5_fail_stage" --mode independent >/dev/null
+r5_fail_stage=$BOX/r5-fail-stage
+"$SESSION" stage "$r5_fail" "$r5_fail_stage" --mode independent \
+    --seal "$SEALS/r5-fail.json" >/dev/null
 fill "$r5_fail_stage/candidate-copilot-evidence.md"
 sha256sum "$r5_fail/copilot-evidence.md" >"$TEMP_DIR/r5-fail-before"
 chmod 0500 "$r5_fail/receipts"
 if "$SESSION" import-copilot "$r5_fail" "$r5_fail_stage" \
-    >"$TEMP_DIR/r5-fail.out" 2>&1; then
+    --seal "$SEALS/r5-fail.json" >"$TEMP_DIR/r5-fail.out" 2>&1; then
     fail 'receipt write unexpectedly succeeded in unwritable directory'
 fi
 chmod 0700 "$r5_fail/receipts"
@@ -835,7 +871,8 @@ if find "$r5_fail" -maxdepth 1 -name '.receipt-*.tmp' -print -quit \
     | grep . >/dev/null; then
     fail 'receipt failure left temporary residue'
 fi
-"$SESSION" import-copilot "$r5_fail" "$r5_fail_stage" >/dev/null
+"$SESSION" import-copilot "$r5_fail" "$r5_fail_stage" \
+    --seal "$SEALS/r5-fail.json" >/dev/null
 
 # receipt aliases and crash-shaped root residue are detected, not auto-repaired
 cp "$r5_fail/receipts/independent.json" "$TEMP_DIR/r5-receipt-hardlink"
@@ -854,5 +891,187 @@ fi
 grep -F 'unexpected top-level protocol entries' "$TEMP_DIR/r5-residue.out" >/dev/null ||
     fail 'missing crash-residue layout refusal'
 unlink "$r5_fail/.receipt-independent.crash.tmp"
+
+# --- round 6: mandatory external seal binding the co-pilot-writable stage.json ---
+
+r6_new_session() {
+    _dir=$1
+    "$SESSION" init "$_dir" --driver claude >/dev/null
+    fill "$_dir/charter.md"
+    fill "$_dir/plan.md"
+    "$SESSION" advance "$_dir" discussing >/dev/null
+}
+
+# schema-2 staged staging requires --seal
+r6_a=$TEMP_DIR/r6-a
+r6_new_session "$r6_a"
+if "$SESSION" stage "$r6_a" "$BOX/r6-a" --mode independent \
+    >"$TEMP_DIR/r6-a.out" 2>&1; then
+    fail 'schema-2 staging accepted a missing seal'
+fi
+grep -F 'requires --seal' "$TEMP_DIR/r6-a.out" >/dev/null ||
+    fail 'missing seal-required stage refusal'
+[ ! -e "$BOX/r6-a" ] || fail 'seal-less stage minted a partial stage'
+
+# a seal resolved inside the live session or the stage-parent tree is refused,
+# before any stage bytes are created
+if "$SESSION" stage "$r6_a" "$BOX/r6-a" --mode independent \
+    --seal "$r6_a/inside.json" >"$TEMP_DIR/r6-a-sess.out" 2>&1; then
+    fail 'accepted a seal inside the live session'
+fi
+grep -F 'outside the live session and stage-parent sandbox' \
+    "$TEMP_DIR/r6-a-sess.out" >/dev/null || fail 'missing in-session seal refusal'
+if "$SESSION" stage "$r6_a" "$BOX/r6-a" --mode independent \
+    --seal "$BOX/r6-a-cotree.json" >"$TEMP_DIR/r6-a-box.out" 2>&1; then
+    fail 'accepted a seal inside the co-pilot sandbox tree'
+fi
+grep -F 'outside the live session and stage-parent sandbox' \
+    "$TEMP_DIR/r6-a-box.out" >/dev/null || fail 'missing co-pilot-tree seal refusal'
+[ ! -e "$BOX/r6-a" ] || fail 'refused seal minted a partial stage'
+
+# an already-present seal path is refused before minting the stage
+: >"$SEALS/r6-a-taken.json"
+if "$SESSION" stage "$r6_a" "$BOX/r6-a" --mode independent \
+    --seal "$SEALS/r6-a-taken.json" >"$TEMP_DIR/r6-a-taken.out" 2>&1; then
+    fail 'accepted an already-present seal path'
+fi
+grep -F 'seal path already exists' "$TEMP_DIR/r6-a-taken.out" >/dev/null ||
+    fail 'missing pre-existing seal refusal'
+[ ! -e "$BOX/r6-a" ] || fail 'pre-existing seal minted a partial stage'
+
+# the laundering route the seal closes: a co-pilot rewrite of stage.json after a
+# crash-shaped evidence overwrite is refused before any mutation and mints no receipt
+r6_l=$TEMP_DIR/r6-laundering
+r6_new_session "$r6_l"
+"$SESSION" stage "$r6_l" "$BOX/r6-l" --mode independent \
+    --seal "$SEALS/r6-l.json" >/dev/null
+fill "$BOX/r6-l/candidate-copilot-evidence.md"
+cp "$BOX/r6-l/candidate-copilot-evidence.md" "$r6_l/copilot-evidence.md"
+python3 - "$BOX/r6-l/stage.json" "$r6_l/copilot-evidence.md" <<'PY'
+import hashlib, json, pathlib, sys
+stage_path = pathlib.Path(sys.argv[1])
+stage = json.loads(stage_path.read_text(encoding="utf-8"))
+stage["destination_before_sha256"] = hashlib.sha256(
+    pathlib.Path(sys.argv[2]).read_bytes()
+).hexdigest()
+stage_path.write_text(json.dumps(stage, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+if "$SESSION" import-copilot "$r6_l" "$BOX/r6-l" --seal "$SEALS/r6-l.json" \
+    >"$TEMP_DIR/r6-l.out" 2>&1; then
+    fail 'sealed import accepted a laundered stage.json'
+fi
+grep -F 'seal destination-before does not match the stage' "$TEMP_DIR/r6-l.out" \
+    >/dev/null || fail 'missing laundering refusal'
+[ ! -e "$r6_l/receipts/independent.json" ] || fail 'laundered import minted a receipt'
+
+# a stage.json tamper that preserves destination-before is caught by the manifest anchor
+r6_m=$TEMP_DIR/r6-manifest
+r6_new_session "$r6_m"
+"$SESSION" stage "$r6_m" "$BOX/r6-m" --mode independent \
+    --seal "$SEALS/r6-m.json" >/dev/null
+fill "$BOX/r6-m/candidate-copilot-evidence.md"
+python3 - "$BOX/r6-m/stage.json" <<'PY'
+import json, pathlib, sys
+p = pathlib.Path(sys.argv[1])
+stage = json.loads(p.read_text(encoding="utf-8"))
+key = sorted(stage["inputs"])[0]
+stage["inputs"][key] = "1" * 64
+p.write_text(json.dumps(stage, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+if "$SESSION" import-copilot "$r6_m" "$BOX/r6-m" --seal "$SEALS/r6-m.json" \
+    >"$TEMP_DIR/r6-m.out" 2>&1; then
+    fail 'sealed import accepted a tampered manifest'
+fi
+grep -F 'stage.json does not match the sealed manifest hash' "$TEMP_DIR/r6-m.out" \
+    >/dev/null || fail 'missing manifest-anchor refusal'
+[ ! -e "$r6_m/receipts/independent.json" ] || fail 'manifest tamper minted a receipt'
+
+# structural seal edge cases: each refuses before mutation and mints no receipt
+r6_e=$TEMP_DIR/r6-edge
+r6_new_session "$r6_e"
+"$SESSION" stage "$r6_e" "$BOX/r6-e" --mode independent \
+    --seal "$SEALS/r6-e.json" >/dev/null
+fill "$BOX/r6-e/candidate-copilot-evidence.md"
+# a second, different-content stage yields a non-matching wrong-stage seal
+r6_e2=$TEMP_DIR/r6-edge2
+r6_new_session "$r6_e2"
+printf '\nmakes this session distinct\n' >>"$r6_e2/charter.md"
+"$SESSION" stage "$r6_e2" "$BOX/r6-e2" --mode independent \
+    --seal "$SEALS/r6-e2.json" >/dev/null
+
+r6_seal_refused() {
+    _label=$1
+    shift
+    sha256sum "$r6_e/copilot-evidence.md" >"$TEMP_DIR/$_label.before"
+    if "$SESSION" import-copilot "$r6_e" "$BOX/r6-e" "$@" \
+        >"$TEMP_DIR/$_label.out" 2>&1; then
+        fail "sealed import accepted $_label"
+    fi
+    sha256sum "$r6_e/copilot-evidence.md" >"$TEMP_DIR/$_label.after"
+    cmp -s "$TEMP_DIR/$_label.before" "$TEMP_DIR/$_label.after" ||
+        fail "$_label mutated live evidence"
+    [ ! -e "$r6_e/receipts/independent.json" ] || fail "$_label minted a receipt"
+}
+
+r6_seal_refused missing-seal
+cp "$SEALS/r6-e.json" "$SEALS/r6-e-altered.json"
+python3 - "$SEALS/r6-e-altered.json" <<'PY'
+import json, pathlib, sys
+p = pathlib.Path(sys.argv[1])
+seal = json.loads(p.read_text(encoding="utf-8"))
+seal["stage_manifest_sha256"] = "0" * 64
+p.write_text(json.dumps(seal, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+r6_seal_refused altered-seal --seal "$SEALS/r6-e-altered.json"
+cp "$SEALS/r6-e.json" "$SEALS/r6-e-extra.json"
+python3 - "$SEALS/r6-e-extra.json" <<'PY'
+import json, pathlib, sys
+p = pathlib.Path(sys.argv[1])
+seal = json.loads(p.read_text(encoding="utf-8"))
+seal["extra"] = "x"
+p.write_text(json.dumps(seal, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+r6_seal_refused extra-key-seal --seal "$SEALS/r6-e-extra.json"
+printf '\377\376bad' >"$SEALS/r6-e-nonutf8.json"
+r6_seal_refused non-utf8-seal --seal "$SEALS/r6-e-nonutf8.json"
+ln -s "$SEALS/r6-e.json" "$SEALS/r6-e-symlink.json"
+r6_seal_refused symlink-seal --seal "$SEALS/r6-e-symlink.json"
+cp "$SEALS/r6-e.json" "$SEALS/r6-e-hardlink.json"
+ln -f "$SEALS/r6-e-hardlink.json" "$SEALS/r6-e-hardlink-alias.json"
+r6_seal_refused hardlink-seal --seal "$SEALS/r6-e-hardlink.json"
+unlink "$SEALS/r6-e-hardlink-alias.json"
+cp "$SEALS/r6-e.json" "$BOX/r6-e-cotree-seal.json"
+r6_seal_refused cotree-seal --seal "$BOX/r6-e-cotree-seal.json"
+r6_seal_refused wrong-stage-seal --seal "$SEALS/r6-e2.json"
+
+# the valid seal imports, binds seal_sha256 into a schema-2 receipt, and replays refuse
+"$SESSION" import-copilot "$r6_e" "$BOX/r6-e" --seal "$SEALS/r6-e.json" >/dev/null
+"$SESSION" verify-receipts "$r6_e" >/dev/null
+python3 - "$SEALS/r6-e.json" "$r6_e/receipts/independent.json" <<'PY'
+import hashlib, json, pathlib, sys
+seal_bytes = pathlib.Path(sys.argv[1]).read_bytes()
+receipt = json.loads(pathlib.Path(sys.argv[2]).read_text(encoding="utf-8"))
+assert receipt["schema_version"] == 2, receipt
+assert receipt["seal_sha256"] == hashlib.sha256(seal_bytes).hexdigest(), receipt
+PY
+if "$SESSION" import-copilot "$r6_e" "$BOX/r6-e" --seal "$SEALS/r6-e.json" \
+    >"$TEMP_DIR/r6-e-replay.out" 2>&1; then
+    fail 'replayed a sealed independent import'
+fi
+grep -F 'replay refused' "$TEMP_DIR/r6-e-replay.out" >/dev/null ||
+    fail 'missing sealed replay refusal'
+
+# a schema-2 session holding a pre-seal schema-1 receipt stays readable
+python3 - "$r6_e/receipts/independent.json" <<'PY'
+import json, pathlib, sys
+p = pathlib.Path(sys.argv[1])
+receipt = json.loads(p.read_text(encoding="utf-8"))
+receipt.pop("seal_sha256")
+receipt["schema_version"] = 1
+p.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+"$SESSION" check "$r6_e" >/dev/null || fail 'schema-2 session rejected a schema-1 receipt'
+"$SESSION" verify-receipts "$r6_e" >/dev/null ||
+    fail 'schema-1 receipt failed verification in a schema-2 session'
 
 echo 'Codex-Claude cowork skill tests passed'

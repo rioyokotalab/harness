@@ -1,0 +1,9 @@
+== post-refinement confirmation ==
+-- happy independent + verify --
+staged independent exchange: CBX/stg stage_sha256=edbfdc3d47452a2b245cc57869c80e00524fd8fc3623fb54aca1e1e5660036cf seal_sha256=1f1bc1d9f31edc1b8f30853b47f4a5f70a57235cbbeca3806c30faae1733c9dd
+imported independent co-pilot evidence sha256=b8fa2f4fcd8106a41369ab9e57e03ae2db1e92e83d4408b38e5f7152d19e405f receipt=receipts/independent.json
+valid independent receipt for live co-pilot evidence sha256=b8fa2f4fcd8106a41369ab9e57e03ae2db1e92e83d4408b38e5f7152d19e405f
+-- laundering attack still fails closed --
+cowork-session: seal destination-before does not match the stage
+REFUSED (expected)
+receipt minted? no-good
