@@ -431,6 +431,19 @@ focused matrix and `tests/test-phase1.sh` on committed correction `a514cf5`.
 Exact next action: publish this narrow resolver correction before repeating
 read-only login-shell plans.
 
+Protected CI passed, PR 155 published `618d0cf`, and all three Macs
+fast-forwarded cleanly to that exact public head. The corrected login-shell
+plan now passes read-only on every Mac and selects one registry addition plus
+one current-account shell change. The subsequent explicit `sudo -n
+/usr/bin/true` preflight is unavailable on all three, so the frozen stop rule
+applies: no `/etc/shells`, `chsh`, account-shell transaction, or irreversible
+tail action has begun. Exact next action requires the owner to establish a
+normal short-lived administrator timestamp locally on each Mac with `sudo -v`
+and report readiness. Recheck `sudo -n` remotely; if the platform's timestamp
+scope does not cross the reverse-SSH session, stop again and have the owner run
+the same native harness apply/rollback/reapply commands in that authenticated
+local terminal rather than passing any credential to an agent.
+
 ### T-280 — Onboard one additional personal Mac
 
 **Phase/status:** `complete`; exactly one owner-operated Mac was in scope. Its
