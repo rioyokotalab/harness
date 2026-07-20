@@ -215,9 +215,23 @@ final audit. D9 Bash deprecation-warning suppression is next. D10 global
 compiler selection, D11 locale, D12 per-shell SSH-agent startup, and D13 color
 environment remain pending and will be asked one at a time. D9 value-free
 discovery confirms all three accounts still use Apple `/bin/bash` as their
-login shell, even though Homebrew Bash is installed; suppression therefore has
-a current effect, and changing account shells remains out of scope. Exact next
-action: ask only D9. No execution authority exists yet.
+login shell. Broader owner-requested review confirms Apple Bash is 3.2.57 and
+the already managed Homebrew Bash is 5.3.15 on all three. Home currently retains
+both an old 5.2.15 cellar version and Bash-completion 1.3; office has
+Bash-completion 2.18; aist has no completion formula. The current Homebrew Bash
+formula is 5.3.15 and supports the current Apple-silicon macOS releases
+(<https://formulae.brew.sh/formula/bash>); Homebrew states its completion 1.x
+formula is mainly for Bash 3 and recommends `bash-completion@2` for Homebrew
+Bash (<https://formulae.brew.sh/formula/bash-completion>). Apple supports using
+a complete alternate-shell path while macOS itself defaults to zsh
+(<https://support.apple.com/guide/terminal/trml113/mac>). The repository already
+manages the `bash` formula and a safe explicit `harness-bash` launcher but, by
+prior design, does not mutate `/etc/shells` or the account shell. D9 is now a
+broader pending choice: retain Apple Bash plus suppression, or explicitly
+authorize a one-time account-shell migration to Homebrew Bash, remove the
+suppression, and reopen D2 to converge all three on managed
+`bash-completion@2`. D10-D13 remain pending. Exact next action: ask only this
+broader D9 choice. No execution authority exists yet.
 
 ### T-280 — Onboard one additional personal Mac
 
