@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import re
+import stat
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -139,6 +140,8 @@ TODO
 """,
 }
 
+ALLOWED_TOP_LEVEL = set(TEMPLATES) | {"state.json", "artifacts"}
+
 REQUIRED_BY_PHASE = {
     "planning": (),
     "discussing": ("charter.md", "plan.md"),
@@ -171,7 +174,7 @@ def now() -> str:
 
 
 def session_path(raw: str) -> Path:
-    path = Path(raw).expanduser().resolve()
+    path = Path(os.path.abspath(os.path.expanduser(raw)))
     if path == Path(path.anchor):
         fail("refusing a filesystem root as the session directory")
     return path
@@ -183,7 +186,35 @@ def write_json_atomic(path: Path, value: dict) -> None:
     os.replace(temporary, path)
 
 
+def require_owned_kind(path: Path, kind: str) -> None:
+    try:
+        metadata = path.lstat()
+    except FileNotFoundError:
+        fail(f"missing protocol entry: {path}")
+    expected = stat.S_ISDIR if kind == "directory" else stat.S_ISREG
+    if not expected(metadata.st_mode):
+        fail(f"protocol {kind} must be real and not a symlink: {path}")
+    if metadata.st_uid != os.getuid():
+        fail(f"protocol {kind} is owned by another uid: {path}")
+
+
+def validate_layout(root: Path) -> None:
+    require_owned_kind(root, "directory")
+    names = {entry.name for entry in root.iterdir()}
+    missing = sorted(ALLOWED_TOP_LEVEL - names)
+    unexpected = sorted(names - ALLOWED_TOP_LEVEL)
+    if missing:
+        fail(f"missing top-level protocol entries: {', '.join(missing)}")
+    if unexpected:
+        fail(f"unexpected top-level protocol entries: {', '.join(unexpected)}")
+    require_owned_kind(root / "artifacts", "directory")
+    require_owned_kind(root / "state.json", "file")
+    for name in TEMPLATES:
+        require_owned_kind(root / name, "file")
+
+
 def load_state(root: Path) -> dict:
+    validate_layout(root)
     state_path = root / "state.json"
     try:
         value = json.loads(state_path.read_text(encoding="utf-8"))
@@ -203,7 +234,7 @@ def load_state(root: Path) -> dict:
 
 
 def has_todo(text: str) -> bool:
-    return re.search(r"(?m)^\s*TODO(?:\s|$)", text) is not None
+    return re.search(r"(?m)^\s*TODO\s*$", text) is not None
 
 
 def validate_files(root: Path, phase: str) -> None:
@@ -238,6 +269,7 @@ def init(args: argparse.Namespace) -> None:
     write_json_atomic(root / "state.json", state)
     for name, content in TEMPLATES.items():
         (root / name).write_text(content, encoding="utf-8")
+    (root / "artifacts").mkdir(mode=0o700)
     print(f"initialized {root} with {args.driver} driving {copilot}")
 
 

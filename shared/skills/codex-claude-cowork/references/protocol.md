@@ -23,11 +23,14 @@ The exchange directory contains:
 | `reconciliation.md` | driver | accepted evidence, disagreements, frozen plan, gates |
 | `execution.md` | driver | target steps/results and deviations |
 | `validation.md` | driver | final checks, outcome, residual risks |
+| `artifacts/` | shared, bounded | task prompts and public-safe raw logs named in evidence |
 
-The validator rejects missing headings, untouched `TODO` markers, role mismatch,
-skipped phases, backward transitions, and unsupported files at completion. It
-does not prove factual correctness or filesystem confinement; both agents must
-inspect those independently.
+The validator rejects missing headings, untouched standalone template `TODO`
+markers, role mismatch, skipped or backward phases, symlinked or foreign-owned
+protocol entries, and any missing or unexpected top-level entry. It requires
+`artifacts/` to be a real current-user-owned directory. It does not prove factual
+correctness, client authorship, or confinement of content below `artifacts/`;
+both agents must inspect those independently.
 
 ## Sandbox contract
 
@@ -41,7 +44,9 @@ Permit network, package installation, schedulers, remote writes, or external
 messages only if the owner's frozen task independently authorizes them and the
 experiment cannot be made local. Otherwise deny them. Keep target checkout and
 exchange ownership separate: the co-pilot writes only its sandbox and
-`copilot-evidence.md` (plus an explicitly named raw log if required).
+`copilot-evidence.md` (plus an explicitly named public-safe raw log below the
+real `artifacts/` directory if required). Do not place auxiliary content at the
+session top level.
 
 If sandbox cleanup can remove a tree or multiple paths, use the applicable
 guarded-deletion workflow. Do not place raw recursive cleanup in prompts,
@@ -87,7 +92,7 @@ workspace-write confinement, no interactive approvals, and only the exchange
 directory as an additional writable path:
 
 ```text
-codex exec --ephemeral --sandbox workspace-write --ask-for-approval never \
+codex --ask-for-approval never exec --ephemeral --sandbox workspace-write \
   --cd CODEX_SANDBOX --add-dir SESSION_DIR \
   --output-last-message CODEX_LAST_MESSAGE_FILE \
   - < COPILOT_PROMPT_FILE

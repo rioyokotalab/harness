@@ -69,6 +69,22 @@ the new shared skill directory, `tests/test-codex-claude-cowork-skill.sh`,
 `tests/focused-suites.tsv`, and this ledger. Next action: install the new
 discovery links, then begin the Codex-driver/Claude-co-pilot sandbox round.
 
+Round 1 used commit `35ed1db` as a matched baseline in two no-hardlink detached
+sandboxes; its complete exchange evidence is under
+`docs/audits/t283-cowork-round1/`. Codex and Claude independently reproduced
+acceptance of extra and symlinked protocol entries. Claude found the distinct
+reverse-mapping defect: Codex 0.144.6 rejects `--ask-for-approval` after `exec`.
+Both agents reproduced the corrected global-before-subcommand form and, after
+reciprocal tests, agreed on a closed top-level set with a real `artifacts/`
+directory. A failed ready transition additionally proved that the v1 TODO regex
+false-positives on ordinary wrapped evidence; Claude repaired its owned file and
+both sides froze an exact-standalone matcher. Driver execution implemented only
+those changes. Canonical skill, focused cowork, Claude takeover, source,
+public-audit, and diff checks pass. The first full phase-1 run passed 52/53 and
+failed only the tmux suite's intentional clean-committed-checkout prerequisite;
+retry is safe after checkpointing this reviewed round. No settings, credentials,
+packages, remotes, or external systems changed.
+
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
 and Claude. Its role contract must be client-neutral: the active client is the
 driver and the other client is the co-pilot. Both must reconstruct repository

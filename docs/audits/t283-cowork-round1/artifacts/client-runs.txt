@@ -1,0 +1,10 @@
+Round 1 public-safe client status
+
+- Claude independent pass: exit 0; owned evidence written.
+- Claude reciprocal pass: exit 0; owned evidence appended.
+- Claude ownership-preserving evidence reflow: exit 0.
+- Codex invalid reverse mapping probe: exit 2 as expected.
+- Codex corrected reverse mapping probe: exit 0.
+
+Raw client stdout remained in mode-0600 temporary files and is not required to
+reproduce the findings; exact commands and bounded outputs are in the evidence.
