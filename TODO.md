@@ -183,12 +183,16 @@ Git-checkout `~/.pyenv`, with one managed Python-version directory and two
 reported virtualenv entries supplied through a checkout-local plugin. The
 other two have no pyenv root or formula. Therefore uninstalling the formula
 alone would leave the active checkout and its managed data, while deleting the
-root would remove those environments. D4 local compiler/library paths, D5
-obsolete Codex paths, D6 `.bash_common`, D7 aliases, and D8 final
-formatting/mode normalization remain pending and will be asked one at a time.
-Exact next action: ask only whether the managed `~/.pyenv` root and its Python
-environments should be deleted or preserved after deactivation. No execution
-authority exists yet.
+root would remove those environments. The owner explicitly selected permanent
+deletion of that complete managed root and its Python/virtualenv contents. At
+execution, the exact unchanged root must be moved beneath a narrow retained
+private staging boundary and removed only through `harness guarded-delete`
+plan/apply with manifest revalidation; raw recursive deletion remains
+forbidden. D3 is therefore closed. D4 local compiler/library paths is the next
+open question. D5 obsolete Codex paths, D6 `.bash_common`, D7 aliases, and D8
+final formatting/mode normalization remain pending and will be asked one at a
+time. Exact next action: ask only D4 using completed value-free path discovery.
+No execution authority exists yet.
 
 ### T-280 — Onboard one additional personal Mac
 
