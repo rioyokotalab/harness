@@ -44,6 +44,26 @@ codex_live=$HOME/.codex/config.toml
 claude_live=$HOME/.claude/settings.json
 launcher_live=$HOME/.local/bin/harness-codex
 native_codex_live=$HOME/.local/bin/codex
+if [ "$(uname -s)" = Darwin ] && command -v brew >/dev/null 2>&1; then
+    native_brew_prefix=$(brew --prefix 2>/dev/null || true)
+    case "$native_brew_prefix" in
+        /opt/homebrew|/usr/local)
+            native_brew_codex=$native_brew_prefix/bin/codex
+            ;;
+        *)
+            if [ "${HARNESS_TEST_ALLOW_NONMAIN:-0}" = 1 ] &&
+                [ -x "$native_brew_prefix/bin/codex" ]; then
+                native_brew_codex=$native_brew_prefix/bin/codex
+            fi
+            ;;
+    esac
+    if [ -n "${native_brew_codex:-}" ] && [ -x "$native_brew_codex" ]; then
+        native_brew_physical=$(realpath "$native_brew_codex" 2>/dev/null || true)
+        case "$native_brew_physical" in
+            "$HOME/.codex/packages/standalone/"*) native_codex_live=$native_brew_codex ;;
+        esac
+    fi
+fi
 
 native_codex_state() {
     [ -x "$native_codex_live" ] || {

@@ -10,7 +10,7 @@ export HARNESS_ROOT
 usage() {
     cat >&2 <<'EOF'
 Usage:
-  harness macos-ssh-sync --host LOGICAL_ID [--seed] [--plan|--apply]
+  harness macos-ssh-sync --host LOGICAL_ID [--seed|--adopt-remote] [--plan|--apply]
   harness macos-ssh-sync --rollback TRANSACTION_ID
 EOF
 }
@@ -329,11 +329,13 @@ apply_local_transaction() (
 logical_host=
 mode=plan
 seed=0
+adopt_remote=0
 rollback_id=
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
         --seed) seed=1; shift ;;
+        --adopt-remote) adopt_remote=1; shift ;;
         --plan) mode=plan; shift ;;
         --apply) mode=apply; shift ;;
         --rollback)
@@ -359,7 +361,8 @@ status_file=$state_directory/ssh-sync-status.conf
 transaction_root=$state_root/transactions
 
 if [ "$mode" = rollback ]; then
-    [ -n "$rollback_id" ] && [ -z "$logical_host" ] && [ "$seed" -eq 0 ] ||
+    [ -n "$rollback_id" ] && [ -z "$logical_host" ] && [ "$seed" -eq 0 ] &&
+        [ "$adopt_remote" -eq 0 ] ||
         { usage; exit 2; }
     [ "$(uname -s)" = Darwin ] || die "Mac SSH sync requires Darwin"
     [ -d "$HOME" ] && [ ! -L "$HOME" ] &&
@@ -373,6 +376,7 @@ if [ "$mode" = rollback ]; then
 fi
 
 [ -n "$logical_host" ] || { usage; exit 2; }
+[ "$seed" -eq 0 ] || [ "$adopt_remote" -eq 0 ] || { usage; exit 2; }
 macos_private_id_is_safe "$logical_host" || die "invalid private logical identifier"
 [ -d "$HOME" ] && [ ! -L "$HOME" ] &&
     [ "$(macos_stat_owner "$HOME")" = "$current_uid" ] ||
@@ -426,6 +430,7 @@ action=
 target_revision=
 if [ "$state_present" -eq 0 ]; then
     if [ "$origin_has_payload" -eq 0 ]; then
+        [ "$adopt_remote" -eq 0 ] || stop_class invalid no
         if [ "$seed" -eq 0 ]; then
             write_status current no
             echo "MACOS_SSH_SYNC class=current agreement=no action=seed-required"
@@ -448,13 +453,16 @@ if [ "$state_present" -eq 0 ]; then
     else
         [ "$seed" -eq 0 ] || stop_class invalid no
         remote_identity=$(macos_checksum_file "$candidate")
-        [ "$local_identity" = "$remote_identity" ] || stop_class diverged no
+        if [ "$local_identity" != "$remote_identity" ]; then
+            [ "$adopt_remote" -eq 1 ] || stop_class diverged no
+        fi
         git -C "$private_root" merge-base --is-ancestor "$head_revision" \
             "$origin_revision" >/dev/null 2>&1 || stop_class diverged no
         action=adopt
         target_revision=$origin_revision
     fi
 else
+    [ "$adopt_remote" -eq 0 ] || stop_class invalid no
     [ "$origin_has_payload" -eq 1 ] || stop_class invalid no
     git -C "$private_root" cat-file -e "$state_revision^{commit}" 2>/dev/null ||
         stop_class invalid no

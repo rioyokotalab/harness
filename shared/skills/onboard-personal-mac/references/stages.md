@@ -47,8 +47,8 @@ Thereafter always invoke `./bin/harness` from the verified public checkout.
      server automatically.
 7. **Private SSH-only configuration**
    - Existing agreement: `macos-ssh-sync --host HOST --plan|--apply`.
-   - First seed: use only the documented `--seed` plan/apply route after its
-     separate reviewed decision.
+   - First agreement: use only the separately reviewed `--seed` local-to-remote
+     route or `--adopt-remote` private-to-local route.
    - Legacy schema: use `macos-config-migrate` only when the current ledger and
      private profile select the migration path.
 8. **Codex and Claude configuration**

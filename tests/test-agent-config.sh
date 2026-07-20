@@ -170,6 +170,42 @@ if run_config "$recursive_native_home" --plan >"$TEMP_DIR/recursive-native.out" 
 fi
 grep -F 'AGENT_CONFIG_NATIVE_CODEX state=recursive action=relocate-required' \
     "$TEMP_DIR/recursive-native.out" >/dev/null || fail "recursive native Codex state"
+darwin_native_home=$(make_home darwin-native)
+darwin_native_home=$(CDPATH='' cd -- "$darwin_native_home" && pwd -P)
+darwin_fake_bin=$TEMP_DIR/darwin-native-bin
+darwin_brew_prefix=$TEMP_DIR/darwin-brew-prefix
+darwin_native_package=$darwin_native_home/.codex/packages/standalone/synthetic
+mkdir -p "$darwin_fake_bin" "$darwin_brew_prefix/bin" "$darwin_native_package"
+cat >"$darwin_fake_bin/uname" <<'EOF'
+#!/bin/sh
+if [ ! -e "$DARWIN_UNAME_FIRST_CALL" ]; then
+    : >"$DARWIN_UNAME_FIRST_CALL"
+    printf '%s\n' Darwin
+else
+    /usr/bin/uname "$@"
+fi
+EOF
+cat >"$darwin_fake_bin/brew" <<EOF
+#!/bin/sh
+[ "\${1:-}" = --prefix ] || exit 2
+printf '%s\n' '$darwin_brew_prefix'
+EOF
+cat >"$darwin_native_package/codex" <<'EOF'
+#!/bin/sh
+printf '%s\n' "$@"
+EOF
+chmod 755 "$darwin_fake_bin/uname" "$darwin_fake_bin/brew" \
+    "$darwin_native_package/codex"
+ln -s "$darwin_native_package/codex" "$darwin_brew_prefix/bin/codex"
+unlink "$darwin_native_home/.local/bin/codex"
+HOME="$darwin_native_home" HARNESS_ROOT="$PUBLIC" HARNESS_TEST_ALLOW_NONMAIN=1 \
+    DARWIN_UNAME_FIRST_CALL="$TEMP_DIR/darwin-uname-first-call" \
+    PATH="$darwin_fake_bin:/usr/bin:/bin" \
+    "$PUBLIC/libexec/harness-agent-config" --plan \
+    >"$TEMP_DIR/darwin-native.out"
+grep -F 'AGENT_CONFIG_NATIVE_CODEX state=ready action=none' \
+    "$TEMP_DIR/darwin-native.out" >/dev/null ||
+    fail "Darwin Homebrew-bin native Codex ownership"
 run_config "$home" --plan >"$TEMP_DIR/absent.plan"
 [ "$(grep -c 'state=absent action=link' "$TEMP_DIR/absent.plan")" -eq 3 ] ||
     fail "absent plan"

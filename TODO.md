@@ -160,6 +160,29 @@ Continue through the frozen sequence only if it is decision-complete and
 block-free; otherwise checkpoint value-free status and ask the one newly
 material question before any further mutation.
 
+**Execution checkpoint:** bootstrap prerequisites and official Codex visibility
+are accepted; the strict private companion and baseline-only host declaration
+validate and remain clean/current; public control-plane, Bash-hook, canonical
+Bash-startup, and tmux apply/rollback/reapply drills pass with fresh shell and
+isolated-server checks. The bounded eight-formula baseline converged with zero
+unmanaged dependents; package evidence and all transaction identifiers remain
+private. The aggregate legacy-pilot helper refused before editing because this
+fresh Mac correctly lacks the retired managed-fragment layout, so direct stages
+were used.
+
+First SSH agreement found unequal live and existing private payloads. The owner
+selected private-to-local adoption, preserving the exact live preimage for
+rollback. The published adapter exposes only local-to-private `--seed`, so live
+SSH mutation is blocked pending a tested explicit `--adopt-remote` plan/apply
+route. Agent adoption also correctly remained unapplied after the newly
+published Homebrew-bin Codex bootstrap exposed an older fixed `~/.local/bin`
+native-ownership assumption. The focused correction adds directional remote
+adoption with exact rollback/reapply coverage, accepts the fixed Homebrew-bin
+native Codex on Darwin, and corrects the stale tmux stage spelling. Exact next
+action: pass focused, privacy, ShellCheck, diff, and portable phase-one gates;
+publish through protected CI; then resume SSH plan/apply/rollback/reapply before
+agent adoption and final acceptance. No live SSH or agent configuration changed.
+
 ### T-275 — One-command Codex bootstrap for remaining Macs
 
 **Phase/status:** published; ready for one-host use. The owner authorized a local,
