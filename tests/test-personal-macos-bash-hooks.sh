@@ -113,11 +113,13 @@ PATH="$fake_bin:$PATH" MACOS_TEST_REAL_STAT="$real_stat" MACOS_TEST_REAL_PLATFOR
     "$ROOT/libexec/harness-macos-bash-hooks" --rollback "$relocate_transaction" >"$TEMP_DIR/relocate-rollback.out"
 cmp -s "$home/.bash_profile" "$TEMP_DIR/profile.drifted" || fail "relocatable rollback"
 
-# Once both files are canonical, the explicit owner-curation mode replaces
-# only .bashrc's local middle with the frozen empty login-only section and
-# normalizes that file to mode 0600. Rollback restores bytes and mode.
+# The explicit owner-curation mode replaces only .bashrc's local middle with
+# the frozen empty login-only section and normalizes that file to mode 0600.
+# It leaves even an opaque safe login profile byte-for-byte unchanged.
 PATH="$fake_bin:$PATH" MACOS_TEST_REAL_STAT="$real_stat" MACOS_TEST_REAL_PLATFORM="$real_platform" HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$home" \
     "$ROOT/libexec/harness-macos-bash-hooks" --host office --apply >"$TEMP_DIR/canonicalize.out"
+printf '%s\n' 'export SYNTHETIC_LOGIN_PROFILE=unchanged' >"$home/.bash_profile"
+chmod 640 "$home/.bash_profile"
 cp "$home/.bash_profile" "$TEMP_DIR/profile.before-empty"
 cp "$home/.bashrc" "$TEMP_DIR/bashrc.before-empty"
 case "$real_platform" in
@@ -128,6 +130,8 @@ PATH="$fake_bin:$PATH" MACOS_TEST_REAL_STAT="$real_stat" MACOS_TEST_REAL_PLATFOR
     "$ROOT/libexec/harness-macos-bash-hooks" --host office --empty-local --plan >"$TEMP_DIR/empty-plan.out"
 grep -F -x 'STARTUP file=.bashrc state=current action=curate preserves=selected-empty-local' \
     "$TEMP_DIR/empty-plan.out" >/dev/null || fail "empty-local plan"
+grep -F -x 'STARTUP file=.bash_profile state=preserved action=keep preserves=unchanged-login-file' \
+    "$TEMP_DIR/empty-plan.out" >/dev/null || fail "empty-local login preservation plan"
 PATH="$fake_bin:$PATH" MACOS_TEST_REAL_STAT="$real_stat" MACOS_TEST_REAL_PLATFORM="$real_platform" HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$home" \
     "$ROOT/libexec/harness-macos-bash-hooks" --host office --empty-local --apply >"$TEMP_DIR/empty-apply.out"
 empty_transaction=$(sed -n 's/.*transaction=\([^ ]*\).*/\1/p' "$TEMP_DIR/empty-apply.out")

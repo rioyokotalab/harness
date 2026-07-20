@@ -221,7 +221,8 @@ exact public early hook, untouched machine-local bytes, and the exact public
 post hook. Transactional apply preserves local bytes and mode; unchanged-only
 rollback restores the complete prior images. The explicit `--empty-local`
 curation mode is accepted only for an already canonical `.bashrc`; it replaces
-only its local middle with an empty login-only section and normalizes mode 0600.
+only its local middle with an empty login-only section, normalizes mode 0600,
+and leaves the selected safe login file byte-for-byte unchanged.
 
 `harness macos-login-shell --host LOGICAL_ID --plan|--apply` separately manages
 one exact Homebrew Bash entry in `/etc/shells` and the current account's shell.
