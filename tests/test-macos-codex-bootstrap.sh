@@ -22,6 +22,8 @@ trap cleanup EXIT HUP INT TERM
 fake_commands=$TEST_ROOT/commands
 fake_prefix=$TEST_ROOT/homebrew
 mkdir -p "$fake_commands" "$fake_prefix/bin"
+printf '%s\n' '#!/bin/sh' 'exit 0' >"$fake_prefix/bin/codex"
+chmod 755 "$fake_prefix/bin/codex"
 cat >"$fake_commands/brew" <<'EOF'
 #!/bin/sh
 set -eu
@@ -32,7 +34,7 @@ chmod 755 "$fake_commands/brew"
 out=$TEST_ROOT/out
 
 HARNESS_BOOTSTRAP_TESTING=1 HARNESS_TEST_BREW_PREFIX=$fake_prefix \
-    PATH="$fake_commands:$PATH" "$ROOT/bin/harness" \
+    PATH="$fake_commands:$fake_prefix/bin:$PATH" "$ROOT/bin/harness" \
     macos-codex-bootstrap --host mac-test-home --plan >"$out"
 grep -F 'INSTALLER_URL=https://chatgpt.com/codex/install.sh' "$out" >/dev/null || fail 'official URL'
 grep -F 'INSTALL_DIR=' "$out" >/dev/null || fail 'explicit install path'

@@ -23,8 +23,12 @@ private mode-0600 last-applied base determine the result:
 | changed to the fetched bytes | advanced | converge to the agreeing revision |
 | changed differently | advanced | `diverged`; preserve both for manual private merge |
 
-First adoption is the separately visible `--seed` action. A failed push leaves
-the clean local candidate commit available for an ordinary retry. No route
+First agreement is separately visible and directional. `--seed` publishes the
+validated live file only when the private payload is absent. `--adopt-remote`
+atomically replaces a differing live file only when the fetched private payload
+exists and no local agreement state exists; its normal transaction preserves
+the exact prior live file and state for unchanged-only rollback. A failed seed
+push leaves the clean local candidate commit available for an ordinary retry. No route
 rebases, resets, force-pushes, guesses a winner, or prints content, hashes,
 revisions, remote URLs, endpoints, account names, or private paths. Output and
 the local status surface use only `current`, `diverged`, `invalid`, `offline`,

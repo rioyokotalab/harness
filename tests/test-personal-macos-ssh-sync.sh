@@ -221,6 +221,47 @@ grep -F 'class=diverged agreement=no' "$TEMP_DIR/diverged.out" >/dev/null ||
 grep -F 'local-conflict.invalid' "$home/.ssh/config" >/dev/null ||
     fail "divergence changed local configuration"
 
+# A new Mac may explicitly adopt an existing shared private payload without
+# publishing or requiring its unequal local file to match first.
+IFS='|' read -r adopt_home _adopt_private adopt_writer _adopt_origin <<EOF
+$(setup_home adopt-remote)
+EOF
+cp "$adopt_home/.ssh/config" "$TEMP_DIR/adopt-prior"
+printf '%s\n' 'Host shared-remote.invalid' '    HostName 192.0.2.51' \
+    >"$adopt_writer/ssh_config"
+chmod 600 "$adopt_writer/ssh_config"
+git -C "$adopt_writer" add ssh_config
+git -C "$adopt_writer" commit -q -m 'synthetic shared payload'
+git -C "$adopt_writer" push -q origin main
+if run_sync "$adopt_home" --host mac-test-pilot --plan \
+    >"$TEMP_DIR/adopt-default.out" 2>&1; then
+    fail "unequal first agreement was accepted without direction"
+fi
+grep -F 'class=diverged agreement=no' "$TEMP_DIR/adopt-default.out" >/dev/null ||
+    fail "unequal first agreement classification"
+adopt_plan=$(run_sync "$adopt_home" --host mac-test-pilot --adopt-remote --plan)
+printf '%s\n' "$adopt_plan" | grep -F \
+    'class=current agreement=no action=adopt apply=not-requested' >/dev/null ||
+    fail "remote-adoption plan"
+cmp -s "$adopt_home/.ssh/config" "$TEMP_DIR/adopt-prior" ||
+    fail "remote-adoption plan changed live config"
+adopt_apply=$(run_sync "$adopt_home" --host mac-test-pilot --adopt-remote --apply)
+printf '%s\n' "$adopt_apply" | grep -F 'action=applied' >/dev/null ||
+    fail "remote-adoption apply"
+cmp -s "$adopt_home/.ssh/config" "$adopt_writer/ssh_config" ||
+    fail "remote-adoption payload mismatch"
+adopt_transaction=$(printf '%s\n' "$adopt_apply" |
+    sed -n 's/.* transaction=\([^ ]*\).*/\1/p')
+[ -n "$adopt_transaction" ] || fail "remote-adoption transaction identifier"
+run_sync "$adopt_home" --rollback "$adopt_transaction" >/dev/null ||
+    fail "remote-adoption rollback"
+cmp -s "$adopt_home/.ssh/config" "$TEMP_DIR/adopt-prior" ||
+    fail "remote-adoption rollback did not restore prior config"
+run_sync "$adopt_home" --host mac-test-pilot --adopt-remote --apply >/dev/null ||
+    fail "remote-adoption reapply"
+cmp -s "$adopt_home/.ssh/config" "$adopt_writer/ssh_config" ||
+    fail "remote-adoption reapply mismatch"
+
 # shellcheck disable=SC2034
 IFS='|' read -r invalid_home invalid_private invalid_writer invalid_origin <<EOF
 $(setup_home invalid)
