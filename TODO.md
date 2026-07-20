@@ -32,21 +32,20 @@ Next free ID: T-283.
 
 ## Next resume checkpoint
 
-1. Complete T-282 repository housekeeping and publish this compact ledger.
-2. When the remaining Mac is online, resume T-268/T-269 through the one-host
+1. When the remaining Mac is online, resume T-268/T-269 through the one-host
    onboarding workflow. Do not infer its state from another Mac or batch it.
-3. On or after 2026-07-26, query only T-196's seven recorded successor job IDs.
-4. Choose another independently eligible T-273 workstream only after fresh
+2. On or after 2026-07-26, query only T-196's seven recorded successor job IDs.
+3. Choose another independently eligible T-273 workstream only after fresh
    reconstruction of its gate and authority.
 
 ## Active tasks
 
 ### T-282 — Compact the ledger and remove proven-obsolete repository residue
 
-**Phase/status:** `validating`; the owner authorized repository housekeeping on
-2026-07-20. The compact ledger and exact ref cleanup are complete; protected
-publication and post-merge one-branch verification remain. Scope is the public
-harness repository and the now-eligible
+**Phase/status:** `complete`; the owner authorized repository housekeeping on
+2026-07-20. The compact ledger, exact ref cleanup, protected publication, and
+post-merge one-branch verification are complete. Scope was the public harness
+repository and the now-eligible
 T-273 `.bash_common` check on the three reachable Macs. It excludes backup
 payloads, retained transaction evidence, credentials, caches outside the
 repository, live configuration beyond the exact check, package/scheduler
@@ -94,9 +93,13 @@ also deleted. Current local refs are `main` plus active T-282; remote refs are
 `main` plus active T-282; there are no open PRs except the forthcoming T-282
 publication. No repository file, ignored backup, tracked fixture, transaction
 evidence, Mac configuration, package, process, or scheduler state was removed
-or changed by housekeeping. Exact next action: rerun focused validation,
-publish T-282 through protected CI, delete the merged task branch, verify only
-clean `main` remains locally/remotely, then record completion.
+or changed by housekeeping. Focused validation passed before publication.
+
+PR #159 passed protected `portable-phase1` and merged as `5a060e9`. Its task
+branch was deleted. Post-merge verification found one worktree, exactly local
+`main` and remote `origin/main`, zero open PRs, and a clean/equal checkout.
+T-282 is complete; the excluded backup data, tracked fixtures, transaction
+evidence, and external machine state remain unchanged.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
@@ -204,6 +207,8 @@ another host.
 
 ## Completed anchors
 
+- T-282 compacted the active ledger and removed verified-obsolete refs: PR #159,
+  published `5a060e9`.
 - T-281 three-Mac environment convergence: PR #158, published `d797d86`.
 - T-280 independently onboarded Home; T-279 repaired its Bash drift.
 - T-274 unified Bash startup and published the Mac onboarding skill.
