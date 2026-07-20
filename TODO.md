@@ -482,9 +482,13 @@ before mutation because the child harness process intentionally attempted only
 child. No transaction exists and retry is safe. The narrow correction adds an
 explicit `--allow-sudo-prompt` route for apply and rollback, requires a real
 local terminal, and leaves noninteractive `sudo -n` as the default for agents
-and unattended use. Exact next action: validate and publish that correction,
-fast-forward the three Macs, atomically replace the unchanged helpers to use
-the explicit route, and retry Aist first.
+and unattended use. Focused syntax, ShellCheck, diff, interactive/default sudo
+routing, apply/rollback, and changed-state tests pass on committed correction
+`964bcaf`; the complete `tests/test-phase1.sh` suite also passes from its clean
+committed tree. Its first pre-commit run had only the expected live-checkout
+tmux refusal while the tree was dirty; every other focused suite passed. Exact
+next action: publish the correction, fast-forward the three Macs, atomically
+replace the unchanged helpers to use the explicit route, and retry Aist first.
 
 ### T-280 — Onboard one additional personal Mac
 
