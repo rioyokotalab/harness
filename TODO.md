@@ -65,9 +65,15 @@ agent socket is safe. The public checkout was cloned clean/equal from published
 but its first Homebrew dry-run stopped before package mutation because the
 existing Homebrew engine is too old for the current OS. Its current-user-owned
 repository is clean on a supported branch with the official origin and no lock
-collision. Retry is safe. Resume by publishing this checkpoint, run a native
-Homebrew engine update, revalidate it, then repeat the exact bootstrap plan and
-apply while preserving every authentication and unsafe-state stop gate.
+collision. Its native update advanced the engine and then exited nonzero on a
+retired legacy tap branch. Vendor-managed migration performed one required
+OS-compatibility reinstall, removed only obsolete tap metadata, and retained
+the old installed formula. Read-only revalidation now finds an OS-compatible
+engine, clean official repository, no legacy tap checkout or registration, and
+a ready bootstrap plan; temporary outputs are absent. Resume by publishing this
+checkpoint, repeat `brew update` once for exit-zero/no-op acceptance, then
+repeat the exact bootstrap plan and apply while preserving every authentication
+and unsafe-state stop gate.
 
 T-273 remains the ordered closure task for every known item deliberately
 deferred by T-268, T-269, and T-272. Workstreams 1 and 2 are complete by
@@ -123,7 +129,13 @@ selected only the declared missing formulae and Python-tools environment, but
 its first Homebrew dry-run stopped before package mutation because the existing
 Homebrew engine does not recognize the current OS. The Homebrew repository is
 current-user-owned, clean on a supported branch, uses the official origin, and
-has no lock collision. Retry is safe after its native engine catch-up.
+has no lock collision. Its first native update advanced the engine and then
+exited nonzero while retiring a legacy tap that referenced a removed branch.
+Homebrew performed one OS-compatibility reinstall, fully removed only the
+obsolete tap metadata, and retained the old installed formula. Revalidation
+finds the engine OS-compatible, its official repository clean, the legacy tap
+absent, the bootstrap plan ready, and temporary outputs absent. One repeated
+engine update remains before accepting this recovery.
 
 **Desired outcome:** independently bring this Mac to the current pull-based
 personal-Mac baseline: clean compatible public/private repositories, the
@@ -171,11 +183,11 @@ managed interactive and native batch routing correct, fresh Bash/tmux behavior,
 SSH-only agreement, no transfer residue, and every applicable rollback/reapply
 drill passed.
 
-**Exact next action:** publish this value-free failure checkpoint through the
-protected workflow. Through the owner-supplied ephemeral route, revalidate the
-clean official Homebrew repository and run the native `brew update` catch-up;
-do not broaden it to formula upgrades, cleanup, taps, services, or casks.
-Require the updated engine to recognize the OS and keep its repository clean.
+**Exact next action:** publish this value-free partial-success checkpoint
+through the protected workflow. Through the owner-supplied ephemeral route,
+revalidate the clean official Homebrew repository and run native `brew update`
+once more. Require exit zero, an OS-compatible engine, a clean repository, and
+no legacy tap; do not add formula upgrades, cleanup, taps, services, or casks.
 Then rerun the exact Codex bootstrap plan and apply only its no-block result
 under the owner's current authority. Continue the frozen onboarding sequence
 autonomously, checkpointing each accepted stage and stopping only at an
