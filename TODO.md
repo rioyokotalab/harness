@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-280.
+and compact historical pointers here. Next free ID: T-282.
 
 ## Current state
 
@@ -52,30 +52,15 @@ and compact historical pointers here. Next free ID: T-280.
 
 ## Next resume checkpoint
 
-T-280 is the active one-Mac onboarding task. The owner supplied one opaque
-logical identifier and an ephemeral reverse-SSH execution route outside this
-public ledger, explicitly authorized full installation through that route, and
-requires no further ordinary permission prompts. Value-free discovery confirms
-a supported Apple-silicon Darwin target with Command Line Tools and functional
-Homebrew at its supported current-user-owned prefix; Homebrew is merely absent
-from the remote shell's initial `PATH`. Codex, the public checkout, and a usable
-native target-side agent socket are absent, while a command-scoped forwarded
-agent socket is safe. The public checkout was cloned clean/equal from published
-`main`. The bootstrap plan selected only the declared missing prerequisites,
-but its first Homebrew dry-run stopped before package mutation because the
-existing Homebrew engine is too old for the current OS. Its current-user-owned
-repository is clean on a supported branch with the official origin and no lock
-collision. Its native update advanced the engine and then exited nonzero on a
-retired legacy tap branch. Vendor-managed migration performed one required
-OS-compatibility reinstall, removed only obsolete tap metadata, and retained
-the old installed formula. Read-only revalidation now finds an OS-compatible
-engine, clean official repository, no legacy tap checkout or registration, and
-a ready bootstrap plan; temporary outputs are absent. The published recovery
-checkpoint was followed by one accepted `brew update` retry: it exited zero as
-an exact no-op, and revalidation retained the OS-compatible engine, clean
-repository, and absent legacy tap. Resume by publishing this acceptance, then
-repeat the exact bootstrap plan and apply while preserving every authentication
-and unsafe-state stop gate.
+T-281 is the active three-Mac Bash-local reconciliation task. The three
+currently reachable owner-operated Macs passed authenticated read-only access;
+their identities and routes remain outside this public ledger. The owner grants
+task-scoped permission to read only their current `.bashrc` files and confirms
+that those files presently contain no sensitive value. The task is
+`interviewing`: compare only the owner-local middles, resolve one semantic
+difference at a time, checkpoint every choice, and make no live or public-hook
+change until the decision audit is complete and the owner gives a fresh `go`.
+The complete plan and first open decision are recorded under T-281 below.
 
 T-273 remains the ordered closure task for every known item deliberately
 deferred by T-268, T-269, and T-272. Workstreams 1 and 2 are complete by
@@ -113,6 +98,75 @@ query only those recorded IDs after eligibility and do not replace or duplicate
 a delayed job. T-210 is complete and must not be repeated.
 
 ## Active tasks
+
+### T-281 — Reconcile three personal-Mac `.bashrc` local bodies
+
+**Phase/status:** `interviewing`. Scope is exactly the three currently reachable
+owner-operated personal Macs. Their private identities, SSH routes, usernames,
+complete startup bytes, and any later transaction identifiers remain outside
+public Git. For this task only, the owner explicitly permits reading the three
+current `.bashrc` files and confirms that they contain no sensitive value. That
+permission does not extend to credentials, `.bash_common` contents, other owner
+configuration, or a later task, and expires when T-281 completes.
+
+**Confirmed read-only state:** every `.bashrc` is a current-user-owned regular
+single-link file with valid Homebrew-Bash syntax. Two have mode 0644 and one has
+mode 0600. All three contain the exact canonical public early and post hooks;
+the only managed difference is the required private logical-host assignment,
+and each canonical-startup plan is current/no-op. Differences are confined to
+the owner-local middle. They fall into eight decision groups: Homebrew
+environment setup, Bash completion, Python environment tooling, local compiler
+and library paths, obsolete Codex-installer paths, one retained
+`.bash_common` reference, aliases, and final formatting/file-mode
+normalization. Shared public policy already owns `~/.local/bin` precedence and
+the recursive `sudo` alias. Value-free command/path checks find one live pyenv
+installation, two uv/venv environments, uneven completion installations, no
+live legacy Codex directory, no live local include/library/pkg-config
+directories, one present `.bash_common`, and the native locate updater on all
+three. No package, startup file, active shell, agent, or repository state was
+changed by discovery.
+
+**Desired outcome and non-goals:** review the eight groups exactly one at a
+time, retaining a setting only where its demonstrated purpose still applies,
+promoting stable non-sensitive cross-Mac behavior to the smallest public hook
+when appropriate, and leaving true machine-local behavior local. Do not force
+byte identity at the expense of intentional tool differences. Do not inspect
+`.bash_common`, install/remove packages, change the account shell, edit
+`.bash_profile`, zsh, SSH, Keychain, Terminal, Codex/Claude settings, or reload
+an active shell/tmux server.
+
+**Frozen working plan:** (1) checkpoint each owner decision and its rationale;
+(2) audit the final register for contradictions and present one exact proposed
+state per Mac; (3) wait for a fresh explicit `go`; (4) implement any reusable
+public behavior with focused tests, ShellCheck, `git diff --check`, complete
+portable phase one, and protected publication before live use; (5) revalidate
+each exact live preimage/type/owner/mode and stage mode-0600 same-directory
+candidates without execution; (6) preserve exact local rollback images,
+syntax-check every candidate, atomically replace only the three `.bashrc`
+files, and stop/unwind on the first changed preimage or failure; (7) validate
+canonical plans/doctors, fresh login/interactive/noninteractive behavior, and
+every selected tool route; (8) deliberately exercise unchanged-only rollback,
+prove the prior behavior, reapply the accepted candidates, and finish with
+mode-0600 files, no-op plans, clean/equal Git, and no active-session reload.
+
+**Risks and recovery:** PATH ordering can select the wrong tool; completion
+loaders and Python initializers can fail or slow login; compiler/library
+variables can contaminate builds; per-shell agent startup can leak processes;
+and removing an apparently stale reference can discard behavior. Discovery
+therefore precedes every decision, public hooks change only after protected
+validation, live candidates must parse before replacement, and exact private
+preimages remain available for unchanged-only rollback until final acceptance.
+Any new sensitive value, changed live preimage, syntax/doctor/fresh-shell
+failure, package requirement, or ambiguous `.bash_common` dependency stops.
+
+**Decision register:** D1 Homebrew environment setup is open and is the next
+question. D2 Bash completion, D3 Python tooling, D4 local compiler/library
+paths, D5 obsolete Codex paths, D6 `.bash_common`, D7 aliases, and D8 final
+formatting/mode normalization remain pending and will be asked one at a time.
+The recommended D1 default is one shared Apple-silicon Homebrew initialization
+that prepends the supported prefix consistently rather than preserving three
+different PATH behaviors. Exact next action: ask only D1; after the answer,
+checkpoint it before asking D2. No execution authority exists yet.
 
 ### T-280 — Onboard one additional personal Mac
 
