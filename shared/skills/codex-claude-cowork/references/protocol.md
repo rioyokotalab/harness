@@ -11,6 +11,12 @@ absolute, shell-safe paths resolved for the active repository.
 planning -> discussing -> ready-for-execution -> executing -> validating -> complete
 ```
 
+`init` writes session schema 2. Its default `exchange_mode=staged` uses the
+receipt-backed workflow below. `init --exchange-mode direct` declares the
+exceptional sealed live-session fallback up front and forbids staged commands
+and receipts. The validator continues to read strict schema-1 predecessor
+sessions under their original receipt-free layout.
+
 The exchange directory contains:
 
 | File | Owner | Required content |
@@ -24,13 +30,16 @@ The exchange directory contains:
 | `execution.md` | driver | target steps/results and deviations |
 | `validation.md` | driver | final checks, outcome, residual risks |
 | `artifacts/` | shared, bounded | task prompts and public-safe raw logs named in evidence |
+| `receipts/` | driver/validator | schema-2 staged import receipts; closed independent/reciprocal set |
 
 The validator rejects missing headings, untouched standalone template `TODO`
 markers, role mismatch, skipped or backward phases, symlinked or foreign-owned
 protocol entries, hard-linked protocol files (any regular protocol file with a
 link count other than one, which would alias content outside the session), and
-any missing or unexpected top-level entry. It requires `artifacts/` to be a real
-current-user-owned directory. It does not prove factual correctness, client
+any missing or unexpected top-level entry. New schema-2 sessions require real
+current-user-owned `artifacts/` and `receipts/` directories; strict legacy
+schema-1 sessions retain their old layout and forbid `receipts/`. It does not
+prove factual correctness, client
 authorship, or confinement of content below `artifacts/`, and it cannot by
 itself detect a same-user overwrite of an already-valid file; both agents must
 inspect those independently and the driver must seal digests (below).
@@ -66,7 +75,12 @@ owned evidence path. Require it to:
 5. propose a concrete edit to the plan for every confirmed flaw; and
 6. leave the target and the other evidence file unchanged.
 
-After both independent passes, expose both evidence files through a fresh
+Finish and freeze the driver's independent evidence before opening the co-pilot
+client window. Take the protected digest seal, and make no driver-owned live
+write until its post-window comparison. This preserves blinding because an
+independent stage does not contain driver evidence while keeping attribution
+checkable. After both independent passes, expose both evidence files through a
+fresh
 reciprocal stage and request one reciprocal critique. Ask each client to address
 the strongest contrary result, not to restate its first answer. The co-pilot
 returns its complete evidence file, not a patch. When results differ, rerun a
@@ -84,18 +98,27 @@ scripts/cowork-session stage SESSION_DIR STAGE_DIR --mode reciprocal
 An independent stage contains `charter.md`, `plan.md`, and a fail-closed
 path-free projection of `state.json`; a reciprocal stage also contains both
 evidence files. The staged `state.json` is not the raw file: `stage` whitelists
-exactly the schema-1 fields, drops `predecessor.path` (a local absolute path a
+exactly the supported schema fields, drops `predecessor.path` (a local absolute path a
 blinded co-pilot does not need), and refuses any unknown or missing key, so a
 future field that might carry an absolute path cannot be exported silently and a
 new field cannot silently drop out of the staleness comparison. Projection runs
 before the stage directory is created, so a fail-closed refusal leaves no
 partial stage; a legitimate additive state field cannot stage until the
 projection classifies it, tied to `schema_version`. `stage.json` records the
-mode, roles, phase, and SHA-256 of every copied input (the projected bytes for
-state) without disclosing the live-session path. The stage also contains a real
+mode, roles, phase, destination-before SHA-256, and SHA-256 of every copied input
+(the projected bytes for state) without disclosing the live-session path. The
+stage also contains a real
 `artifacts/` directory and `candidate-copilot-evidence.md`. Put the
 task-specific prompt and bounded terminal output below the staged `artifacts/`
 directory.
+
+`stage` also prints `stage_sha256=...`. Before invoking the co-pilot, store that
+exact hash outside the stage, live session, and co-pilot sandbox next to the
+protected live manifest. Compare both after return. A stage is co-pilot-writable;
+the hash recorded later in an import receipt binds bytes but is not an authentic
+driver seal unless the external pre-window value also matches. When reporting a
+seal deviation for reciprocal review, copy the bounded before/after manifests
+into the reciprocal stage artifacts.
 
 The driver tells the co-pilot only the sandbox and stage paths. After return,
 the driver inspects the complete candidate and then runs:
@@ -120,6 +143,27 @@ plus a recoverable preimage remains the control for those, and detects rather
 than prevents or restores. Changes to any retained field (phase, timestamps,
 roles, retained predecessor fields) are still stale-rejected with the live
 `copilot-evidence.md` byte-identical.
+
+New sessions use schema 2 and `exchange_mode=staged` unless initialized with the
+exceptional `--exchange-mode direct`. A schema-2 stage binds the live
+`copilot-evidence.md` hash as `destination_before_sha256`; import refuses drift
+before mutation. A successful staged import creates exactly one closed receipt
+for its mode under `receipts/`. Receipt fields bind roles, phase, projected input
+hashes, full raw-state hash, exact stage-manifest hash, destination-before hash,
+candidate hash, and import time, with no filesystem paths. Independent must
+precede reciprocal. Run `verify-receipts SESSION_DIR` after each import.
+
+Receipt creation writes and fsyncs a temporary on the session filesystem, then
+atomically links the complete bytes to a no-overwrite final name and removes the
+temporary. Ordinary exceptions remove only a receipt created by that invocation
+and restore prior evidence. This is not cross-file crash atomicity: a crash
+between evidence replacement and receipt creation leaves ambiguous live bytes,
+but destination-before binding makes automatic retry fail closed. A crash can
+also leave a detectable exact temporary or complete hard-linked receipt; stop
+for reviewed exact cleanup rather than sweeping. `digests` enumerates existing
+receipt files, and staged ready/later phases require both receipts plus a live
+candidate match. Schema-2 direct sessions have no receipts; strict schema-1
+sessions and predecessors retain legacy receipt-free rules.
 
 The hashes prove byte equality and freshness at import; they do not prove that
 the driver supplied honest inputs or that model prose was generated from those
@@ -186,12 +230,19 @@ Before every Claude co-pilot window—and as defense in depth for Codex—the dr
 runs `scripts/cowork-session digests SESSION_DIR` and stores the manifest
 **outside** both `SESSION_DIR` and the co-pilot sandbox. `digests` covers
 `state.json` and the driver Markdown, excluding `copilot-evidence.md` and shared
-artifacts. Preserve a recoverable preimage too, such as a reviewed commit or an
+artifacts; schema-2 receipt files are included when present. Preserve a
+recoverable preimage too, such as a reviewed commit or an
 external protected-file copy; hashes detect change but cannot restore bytes.
 After the client returns, re-run and compare digests before candidate import.
 Any protected change is a stop condition that returns the session to owner
 review. Apply the same seal plus recoverable preimage around an exceptional
 direct-session fallback.
+
+Freeze `driver-evidence.md` before taking the pre-window seal. Do not edit any
+driver-owned live file while the co-pilot process runs. Seal the freshly created
+`stage.json` separately as described above. A known driver write still makes the
+window comparison noisy and must be recorded as a deviation, not rationalized
+as an unchanged co-pilot window.
 
 ## Reconciliation rules
 

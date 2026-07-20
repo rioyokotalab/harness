@@ -72,6 +72,14 @@ grep -F -- '--output-last-message STAGE_DIR/candidate-copilot-evidence.md' \
     "$PROTOCOL" >/dev/null || fail 'Codex mapping does not return a staged candidate'
 grep -F 'not an OS filesystem sandbox' "$PROTOCOL" >/dev/null ||
     fail 'protocol missing Claude enforcement boundary'
+grep -F -- '--exchange-mode direct' "$SKILL" >/dev/null ||
+    fail 'skill missing explicit direct fallback declaration'
+grep -F 'verify-receipts SESSION_DIR' "$SKILL" >/dev/null ||
+    fail 'skill missing receipt verification step'
+grep -F 'stage_sha256' "$PROTOCOL" >/dev/null ||
+    fail 'protocol missing external stage-manifest seal'
+grep -F 'not cross-file crash' "$SKILL" >/dev/null ||
+    fail 'skill overstates receipt atomicity'
 
 fill() {
     file=$1
@@ -80,7 +88,7 @@ fill() {
 }
 
 codex_session=$TEMP_DIR/codex-driver
-"$SESSION" init "$codex_session" --driver codex >/dev/null
+"$SESSION" init "$codex_session" --driver codex --exchange-mode direct >/dev/null
 [ -d "$codex_session/artifacts" ] && [ ! -L "$codex_session/artifacts" ] ||
     fail 'real artifacts directory'
 python3 - "$codex_session/state.json" <<'PY'
@@ -322,8 +330,11 @@ fill "$r3_independent/candidate-copilot-evidence.md"
 "$SESSION" digests "$r3_session" >"$TEMP_DIR/r3-before-import"
 "$SESSION" import-copilot "$r3_session" "$r3_independent" >/dev/null
 "$SESSION" digests "$r3_session" >"$TEMP_DIR/r3-after-import"
-cmp -s "$TEMP_DIR/r3-before-import" "$TEMP_DIR/r3-after-import" ||
-    fail 'staged import changed a protected entry'
+sed '/  receipts\//d' "$TEMP_DIR/r3-after-import" >"$TEMP_DIR/r3-after-core"
+cmp -s "$TEMP_DIR/r3-before-import" "$TEMP_DIR/r3-after-core" ||
+    fail 'staged import changed a pre-existing protected entry'
+grep -F '  receipts/independent.json' "$TEMP_DIR/r3-after-import" >/dev/null ||
+    fail 'independent receipt missing from protected digests'
 cmp -s "$r3_independent/candidate-copilot-evidence.md" \
     "$r3_session/copilot-evidence.md" || fail 'staged candidate import bytes'
 python3 - "$r3_session/copilot-evidence.md" <<'PY'
@@ -344,7 +355,14 @@ cmp -s "$r3_session/copilot-evidence.md" \
     "$r3_reciprocal/candidate-copilot-evidence.md" ||
     fail 'reciprocal candidate did not preserve prior evidence'
 
-if "$SESSION" stage "$r3_session" "$r3_session/artifacts/inside-stage" \
+r3_invalid_session=$TEMP_DIR/r3-invalid-session
+"$SESSION" init "$r3_invalid_session" --driver codex >/dev/null
+fill "$r3_invalid_session/charter.md"
+fill "$r3_invalid_session/plan.md"
+"$SESSION" advance "$r3_invalid_session" discussing >/dev/null
+
+if "$SESSION" stage "$r3_invalid_session" \
+    "$r3_invalid_session/artifacts/inside-stage" \
     --mode independent >"$TEMP_DIR/inside-stage.out" 2>&1; then
     fail 'accepted a stage inside the live session'
 fi
@@ -354,22 +372,22 @@ grep -F 'outside the live session' "$TEMP_DIR/inside-stage.out" >/dev/null ||
 expect_import_refusal() {
     stage_dir=$1
     label=$2
-    sha256sum "$r3_session/copilot-evidence.md" >"$TEMP_DIR/$label.before"
-    if "$SESSION" import-copilot "$r3_session" "$stage_dir" \
+    sha256sum "$r3_invalid_session/copilot-evidence.md" >"$TEMP_DIR/$label.before"
+    if "$SESSION" import-copilot "$r3_invalid_session" "$stage_dir" \
         >"$TEMP_DIR/$label.out" 2>&1; then
         fail "accepted invalid staged import: $label"
     fi
-    sha256sum "$r3_session/copilot-evidence.md" >"$TEMP_DIR/$label.after"
+    sha256sum "$r3_invalid_session/copilot-evidence.md" >"$TEMP_DIR/$label.after"
     cmp -s "$TEMP_DIR/$label.before" "$TEMP_DIR/$label.after" ||
         fail "failed import changed live evidence: $label"
-    if find "$r3_session" -maxdepth 1 -name '.copilot-evidence.md.*.tmp' \
+    if find "$r3_invalid_session" -maxdepth 1 -name '.copilot-evidence.md.*.tmp' \
         -print -quit | grep . >/dev/null; then
         fail "failed import left a session temp file: $label"
     fi
 }
 
 r3_bad=$TEMP_DIR/r3-bad
-"$SESSION" stage "$r3_session" "$r3_bad" --mode independent >/dev/null
+"$SESSION" stage "$r3_invalid_session" "$r3_bad" --mode independent >/dev/null
 fill "$r3_bad/candidate-copilot-evidence.md"
 cp "$r3_bad/candidate-copilot-evidence.md" "$TEMP_DIR/r3-valid-candidate"
 
@@ -382,10 +400,10 @@ printf '\nstage tamper\n' >>"$r3_bad/plan.md"
 expect_import_refusal "$r3_bad" staged-input-tamper
 cp "$TEMP_DIR/r3-stage-plan" "$r3_bad/plan.md"
 
-cp "$r3_session/plan.md" "$TEMP_DIR/r3-live-plan"
-printf '\nlive drift\n' >>"$r3_session/plan.md"
+cp "$r3_invalid_session/plan.md" "$TEMP_DIR/r3-live-plan"
+printf '\nlive drift\n' >>"$r3_invalid_session/plan.md"
 expect_import_refusal "$r3_bad" stale-live-input
-cp "$TEMP_DIR/r3-live-plan" "$r3_session/plan.md"
+cp "$TEMP_DIR/r3-live-plan" "$r3_invalid_session/plan.md"
 
 mv "$r3_bad/candidate-copilot-evidence.md" "$TEMP_DIR/r3-candidate-real"
 ln -s "$TEMP_DIR/r3-candidate-real" "$r3_bad/candidate-copilot-evidence.md"
@@ -418,8 +436,8 @@ printf '\377\n' >"$r3_bad/candidate-copilot-evidence.md"
 expect_import_refusal "$r3_bad" non-utf8-candidate
 
 cp "$TEMP_DIR/r3-valid-candidate" "$r3_bad/candidate-copilot-evidence.md"
-"$SESSION" import-copilot "$r3_session" "$r3_bad" >/dev/null
-"$SESSION" check "$r3_session" >/dev/null
+"$SESSION" import-copilot "$r3_invalid_session" "$r3_bad" >/dev/null
+"$SESSION" check "$r3_invalid_session" >/dev/null
 
 # --- round 4: path-free state projection and predecessor content validation ---
 
@@ -466,8 +484,9 @@ fill "$r4_stage/candidate-copilot-evidence.md"
 "$SESSION" digests "$r4_session" >"$TEMP_DIR/r4-before"
 "$SESSION" import-copilot "$r4_session" "$r4_stage" >/dev/null
 "$SESSION" digests "$r4_session" >"$TEMP_DIR/r4-after"
-cmp -s "$TEMP_DIR/r4-before" "$TEMP_DIR/r4-after" ||
-    fail 'projected import changed a protected entry'
+sed '/  receipts\//d' "$TEMP_DIR/r4-after" >"$TEMP_DIR/r4-after-core"
+cmp -s "$TEMP_DIR/r4-before" "$TEMP_DIR/r4-after-core" ||
+    fail 'projected import changed a pre-existing protected entry'
 
 # an unknown top-level state field fails closed before any stage is created
 r4_unknown=$TEMP_DIR/r4-unknown
@@ -489,7 +508,7 @@ if "$SESSION" stage "$r4_unknown" "$TEMP_DIR/r4-unknown-stage" \
     --mode independent >"$TEMP_DIR/r4-unknown.out" 2>&1; then
     fail 'accepted staging of state with an unknown field'
 fi
-grep -F 'unexpected or missing keys for staging' "$TEMP_DIR/r4-unknown.out" >/dev/null ||
+grep -F 'unexpected or missing keys' "$TEMP_DIR/r4-unknown.out" >/dev/null ||
     fail 'missing fail-closed staging refusal'
 [ ! -e "$TEMP_DIR/r4-unknown-stage" ] ||
     fail 'fail-closed staging left a partial stage directory'
@@ -581,7 +600,7 @@ cmp -s "$TEMP_DIR/r4-stale.before" "$TEMP_DIR/r4-stale.after" ||
 
 # init --predecessor validates the predecessor's phase-required content
 r4_incons=$TEMP_DIR/r4-incons-pred
-"$SESSION" init "$r4_incons" --driver codex >/dev/null
+"$SESSION" init "$r4_incons" --driver codex --exchange-mode direct >/dev/null
 python3 - "$r4_incons/state.json" <<'PY'
 import json
 import pathlib
@@ -603,7 +622,7 @@ grep -F 'unresolved TODO marker' "$TEMP_DIR/r4-incons.out" >/dev/null ||
 
 # a genuinely completed predecessor is still accepted
 r4_valid=$TEMP_DIR/r4-valid-pred
-"$SESSION" init "$r4_valid" --driver codex >/dev/null
+"$SESSION" init "$r4_valid" --driver codex --exchange-mode direct >/dev/null
 for name in charter plan driver-evidence copilot-evidence reconciliation \
     execution validation; do
     fill "$r4_valid/$name.md"
@@ -622,5 +641,218 @@ state = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
 assert state["phase"] == "planning", state["phase"]
 assert state["predecessor"]["phase"] == "complete", state["predecessor"]
 PY
+
+# --- round 5: schema-compatible import receipts and crash-safe retry guards ---
+
+# strict schema-1 sessions remain valid and forbid the schema-2 receipts layout
+r5_legacy=$TEMP_DIR/r5-legacy
+"$SESSION" init "$r5_legacy" --driver codex --exchange-mode direct >/dev/null
+python3 - "$r5_legacy/state.json" <<'PY'
+import json
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+state = json.loads(path.read_text(encoding="utf-8"))
+state["schema_version"] = 1
+state.pop("exchange_mode")
+path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+rmdir "$r5_legacy/receipts"
+"$SESSION" check "$r5_legacy" >/dev/null
+mkdir "$r5_legacy/receipts"
+if "$SESSION" check "$r5_legacy" >"$TEMP_DIR/r5-legacy-layout.out" 2>&1; then
+    fail 'schema-1 session accepted receipts directory'
+fi
+grep -F 'schema-1 session must not contain receipts' \
+    "$TEMP_DIR/r5-legacy-layout.out" >/dev/null || fail 'missing legacy layout refusal'
+rmdir "$r5_legacy/receipts"
+for name in charter plan driver-evidence copilot-evidence reconciliation \
+    execution validation; do
+    fill "$r5_legacy/$name.md"
+done
+for phase in discussing ready-for-execution executing validating complete; do
+    "$SESSION" advance "$r5_legacy" "$phase" >/dev/null
+done
+"$SESSION" init "$TEMP_DIR/r5-v2-after-v1" --driver claude \
+    --predecessor "$r5_legacy" >/dev/null
+python3 - "$TEMP_DIR/r5-v2-after-v1/state.json" <<'PY'
+import json
+import pathlib
+import sys
+
+state = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert state["schema_version"] == 2, state
+assert state["exchange_mode"] == "staged", state
+assert state["predecessor"]["phase"] == "complete", state
+PY
+
+# an explicit direct fallback is receipt-free and cannot use staged commands
+r5_direct=$TEMP_DIR/r5-direct
+"$SESSION" init "$r5_direct" --driver claude --exchange-mode direct >/dev/null
+fill "$r5_direct/charter.md"
+fill "$r5_direct/plan.md"
+"$SESSION" advance "$r5_direct" discussing >/dev/null
+if "$SESSION" stage "$r5_direct" "$TEMP_DIR/r5-direct-stage" \
+    --mode independent >"$TEMP_DIR/r5-direct-stage.out" 2>&1; then
+    fail 'direct exchange accepted staged command'
+fi
+grep -F 'staged exchange-mode session' "$TEMP_DIR/r5-direct-stage.out" >/dev/null ||
+    fail 'missing direct-mode staging refusal'
+
+# default schema-2 staged flow creates an ordered, protected receipt chain
+r5_session=$TEMP_DIR/r5-session
+"$SESSION" init "$r5_session" --driver codex >/dev/null
+[ -d "$r5_session/receipts" ] && [ ! -L "$r5_session/receipts" ] ||
+    fail 'schema-2 receipts directory identity'
+fill "$r5_session/charter.md"
+fill "$r5_session/plan.md"
+"$SESSION" advance "$r5_session" discussing >/dev/null
+fill "$r5_session/driver-evidence.md"
+fill "$r5_session/copilot-evidence.md"
+fill "$r5_session/reconciliation.md"
+if "$SESSION" advance "$r5_session" ready-for-execution \
+    >"$TEMP_DIR/r5-no-receipts.out" 2>&1; then
+    fail 'staged ready phase accepted no receipts'
+fi
+grep -F 'requires independent and reciprocal receipts' \
+    "$TEMP_DIR/r5-no-receipts.out" >/dev/null || fail 'missing ready receipt gate'
+
+r5_ind=$TEMP_DIR/r5-independent
+"$SESSION" stage "$r5_session" "$r5_ind" --mode independent \
+    >"$TEMP_DIR/r5-stage.out"
+grep -E 'stage_sha256=[0-9a-f]{64}$' "$TEMP_DIR/r5-stage.out" >/dev/null ||
+    fail 'stage command omitted external manifest hash'
+python3 - "$r5_session/copilot-evidence.md" "$r5_ind/stage.json" <<'PY'
+import hashlib
+import json
+import pathlib
+import sys
+
+live = pathlib.Path(sys.argv[1]).read_bytes()
+stage = json.loads(pathlib.Path(sys.argv[2]).read_text(encoding="utf-8"))
+assert stage["schema_version"] == 2, stage
+assert stage["destination_before_sha256"] == hashlib.sha256(live).hexdigest(), stage
+PY
+fill "$r5_ind/candidate-copilot-evidence.md"
+"$SESSION" import-copilot "$r5_session" "$r5_ind" \
+    >"$TEMP_DIR/r5-import-ind.out"
+grep -F 'receipt=receipts/independent.json' "$TEMP_DIR/r5-import-ind.out" >/dev/null ||
+    fail 'independent import omitted receipt path'
+"$SESSION" verify-receipts "$r5_session" >/dev/null
+"$SESSION" digests "$r5_session" >"$TEMP_DIR/r5-digests-one"
+grep -F '  receipts/independent.json' "$TEMP_DIR/r5-digests-one" >/dev/null ||
+    fail 'digests omitted independent receipt'
+if grep -E '/home|/tmp|/Users|/root' "$r5_session/receipts/independent.json" \
+    >/dev/null; then
+    fail 'receipt leaked an absolute path'
+fi
+printf '\npost-import stage drift\n' >>"$r5_ind/candidate-copilot-evidence.md"
+"$SESSION" verify-receipts "$r5_session" >/dev/null ||
+    fail 'stage candidate drift invalidated live receipt'
+if "$SESSION" import-copilot "$r5_session" "$r5_ind" \
+    >"$TEMP_DIR/r5-replay.out" 2>&1; then
+    fail 'replayed an already-receipted independent import'
+fi
+grep -F 'replay refused' "$TEMP_DIR/r5-replay.out" >/dev/null ||
+    fail 'missing receipt replay refusal'
+
+r5_recip=$TEMP_DIR/r5-reciprocal
+"$SESSION" stage "$r5_session" "$r5_recip" --mode reciprocal >/dev/null
+printf '\nreciprocal revision\n' >>"$r5_recip/candidate-copilot-evidence.md"
+"$SESSION" import-copilot "$r5_session" "$r5_recip" >/dev/null
+"$SESSION" verify-receipts "$r5_session" \
+    | grep -F 'valid reciprocal receipt' >/dev/null || fail 'reciprocal verification'
+python3 - "$r5_session/receipts/independent.json" \
+    "$r5_session/receipts/reciprocal.json" <<'PY'
+import json
+import pathlib
+import sys
+
+ind = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+rec = json.loads(pathlib.Path(sys.argv[2]).read_text(encoding="utf-8"))
+assert rec["destination_before_sha256"] == ind["candidate_sha256"], (ind, rec)
+assert set(rec) == {
+    "schema_version", "mode", "driver", "copilot", "phase", "inputs",
+    "raw_state_sha256", "stage_manifest_sha256", "candidate_sha256",
+    "destination_before_sha256", "imported_at",
+}, rec
+PY
+"$SESSION" advance "$r5_session" ready-for-execution >/dev/null
+
+# semantically harmless receipt-byte drift is visible to the external manifest
+"$SESSION" digests "$r5_session" >"$TEMP_DIR/r5-receipt-before"
+cp "$r5_session/receipts/reciprocal.json" "$TEMP_DIR/r5-recip-receipt"
+printf ' ' >>"$r5_session/receipts/reciprocal.json"
+"$SESSION" check "$r5_session" >/dev/null
+"$SESSION" digests "$r5_session" >"$TEMP_DIR/r5-receipt-after"
+if cmp -s "$TEMP_DIR/r5-receipt-before" "$TEMP_DIR/r5-receipt-after"; then
+    fail 'receipt-byte drift escaped external digests'
+fi
+cp "$TEMP_DIR/r5-recip-receipt" "$r5_session/receipts/reciprocal.json"
+
+# destination drift is refused before first import and leaves no receipt
+r5_drift=$TEMP_DIR/r5-drift
+"$SESSION" init "$r5_drift" --driver claude >/dev/null
+fill "$r5_drift/charter.md"
+fill "$r5_drift/plan.md"
+"$SESSION" advance "$r5_drift" discussing >/dev/null
+r5_drift_stage=$TEMP_DIR/r5-drift-stage
+"$SESSION" stage "$r5_drift" "$r5_drift_stage" --mode independent >/dev/null
+fill "$r5_drift_stage/candidate-copilot-evidence.md"
+fill "$r5_drift/copilot-evidence.md"
+if "$SESSION" import-copilot "$r5_drift" "$r5_drift_stage" \
+    >"$TEMP_DIR/r5-drift.out" 2>&1; then
+    fail 'accepted drifted pre-import destination'
+fi
+grep -F 'destination-before hash' "$TEMP_DIR/r5-drift.out" >/dev/null ||
+    fail 'missing destination-before refusal'
+[ ! -e "$r5_drift/receipts/independent.json" ] ||
+    fail 'destination drift created a receipt'
+
+# ordinary receipt-write failure rolls back evidence and leaves no temp/final
+r5_fail=$TEMP_DIR/r5-fail
+"$SESSION" init "$r5_fail" --driver codex >/dev/null
+fill "$r5_fail/charter.md"
+fill "$r5_fail/plan.md"
+"$SESSION" advance "$r5_fail" discussing >/dev/null
+r5_fail_stage=$TEMP_DIR/r5-fail-stage
+"$SESSION" stage "$r5_fail" "$r5_fail_stage" --mode independent >/dev/null
+fill "$r5_fail_stage/candidate-copilot-evidence.md"
+sha256sum "$r5_fail/copilot-evidence.md" >"$TEMP_DIR/r5-fail-before"
+chmod 0500 "$r5_fail/receipts"
+if "$SESSION" import-copilot "$r5_fail" "$r5_fail_stage" \
+    >"$TEMP_DIR/r5-fail.out" 2>&1; then
+    fail 'receipt write unexpectedly succeeded in unwritable directory'
+fi
+chmod 0700 "$r5_fail/receipts"
+sha256sum "$r5_fail/copilot-evidence.md" >"$TEMP_DIR/r5-fail-after"
+cmp -s "$TEMP_DIR/r5-fail-before" "$TEMP_DIR/r5-fail-after" ||
+    fail 'receipt failure did not restore live evidence'
+[ ! -e "$r5_fail/receipts/independent.json" ] ||
+    fail 'receipt failure left final receipt'
+if find "$r5_fail" -maxdepth 1 -name '.receipt-*.tmp' -print -quit \
+    | grep . >/dev/null; then
+    fail 'receipt failure left temporary residue'
+fi
+"$SESSION" import-copilot "$r5_fail" "$r5_fail_stage" >/dev/null
+
+# receipt aliases and crash-shaped root residue are detected, not auto-repaired
+cp "$r5_fail/receipts/independent.json" "$TEMP_DIR/r5-receipt-hardlink"
+ln -f "$TEMP_DIR/r5-receipt-hardlink" "$r5_fail/receipts/independent.json"
+if "$SESSION" check "$r5_fail" >"$TEMP_DIR/r5-receipt-link.out" 2>&1; then
+    fail 'accepted hard-linked receipt'
+fi
+grep -F 'must not be a hard link' "$TEMP_DIR/r5-receipt-link.out" >/dev/null ||
+    fail 'missing receipt hard-link refusal'
+unlink "$r5_fail/receipts/independent.json"
+cp "$TEMP_DIR/r5-receipt-hardlink" "$r5_fail/receipts/independent.json"
+touch "$r5_fail/.receipt-independent.crash.tmp"
+if "$SESSION" check "$r5_fail" >"$TEMP_DIR/r5-residue.out" 2>&1; then
+    fail 'accepted crash-shaped receipt temporary residue'
+fi
+grep -F 'unexpected top-level protocol entries' "$TEMP_DIR/r5-residue.out" >/dev/null ||
+    fail 'missing crash-residue layout refusal'
+unlink "$r5_fail/.receipt-independent.crash.tmp"
 
 echo 'Codex-Claude cowork skill tests passed'

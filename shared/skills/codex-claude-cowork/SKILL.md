@@ -32,6 +32,10 @@ boundaries controlling throughout.
    scripts/cowork-session init SESSION_DIR --driver claude
    ```
 
+   New sessions use staged exchange by default. Use `--exchange-mode direct`
+   only for the exceptional sealed direct-session fallback; direct sessions do
+   not create staged import receipts.
+
 5. Fill `charter.md` with the task, scope, non-goals, authority, baseline,
    sandbox construction, acceptance gates, and cleanup policy. The driver owns
    `charter.md`, `plan.md`, `driver-evidence.md`, `reconciliation.md`,
@@ -57,7 +61,9 @@ scripts/cowork-session advance SESSION_DIR discussing
 
 1. Give both agents the same charter, plan, baseline, and acceptance gates.
    Withhold the other agent's conclusions until both independent passes finish.
-   Create the blinded co-pilot bundle inside its sandbox:
+   Have the driver finish `driver-evidence.md` from its sandbox before opening
+   the co-pilot client window, then freeze a protected digest manifest. Create
+   the blinded co-pilot bundle inside its sandbox:
 
    ```text
    scripts/cowork-session stage SESSION_DIR STAGE_DIR --mode independent
@@ -69,12 +75,16 @@ scripts/cowork-session advance SESSION_DIR discussing
    commands or tool actions and observed results, distinguish observations from
    inferences, criticize concrete plan claims, and propose exact plan changes.
    A prose-only review is insufficient when an experiment is safe and feasible.
-3. Inspect the candidate, then run `scripts/cowork-session import-copilot
-   SESSION_DIR STAGE_DIR`. Import only when it reports fresh, valid evidence.
-   Record the candidate hash and retain the stage for recovery.
+3. Store the printed `stage_sha256` outside the stage, session, and co-pilot
+   sandbox before invocation. Do not write any driver-owned live file during
+   the client window. Compare protected and stage-manifest seals after return.
+   Inspect the candidate, then run `scripts/cowork-session import-copilot
+   SESSION_DIR STAGE_DIR`. Import only when it reports fresh, valid evidence and
+   a receipt path. Run `scripts/cowork-session verify-receipts SESSION_DIR`.
+   Retain the stage and external seals for recovery.
 4. Reveal both evidence files. Create a fresh `--mode reciprocal` stage and
    require the co-pilot to return its complete evidence with a reciprocal
-   critique. Validate/import it the same way. Each agent tests or traces the
+   critique. Seal, validate, import, and verify it the same way. Each agent tests or traces the
    strongest conflicting claim and states what it accepts, rejects, or cannot
    resolve. Critique evidence and reasoning, never motives or ability.
 5. Have the driver write `reconciliation.md`. Preserve material disagreements
@@ -130,6 +140,13 @@ scripts/cowork-session advance SESSION_DIR ready-for-execution
   Hashes detect change; they do not prevent it or restore bytes. Direct-session
   write is an exceptional sealed fallback, and read-only mode is only an
   advisory tripwire.
+- Schema-2 staged sessions create a closed, driver-owned `receipts/` chain. The
+  independent and reciprocal receipts bind projected inputs, full live state,
+  exact stage metadata, destination-before bytes, and accepted candidate without
+  storing paths. Ready and later phases require both receipts and live-evidence
+  verification. `digests` protects existing receipts. Receipt hashes prove byte
+  relationships, not authorship, and ordinary rollback is not cross-file crash
+  atomicity. Strict schema-1 predecessor sessions remain valid without receipts.
 - Use separate sandboxes and one immutable baseline to prevent accidental
   target mutation and result contamination. Record deviations between
   environments before comparing results.

@@ -218,6 +218,28 @@ prompt was exact-unlinked separately and tracked evidence remains. Next action:
 run round 5 with Codex driving Claude to prototype an import receipt that does
 not depend on mutable stage bytes.
 
+Round 5 uses baseline `f87b019` with Codex driving and Claude as a blinded
+staged co-pilot; evidence is under `docs/audits/t283-cowork-round5/`. Both agents
+reproduced that v4 leaves no durable import binding and excludes artifacts from
+protected digests. Claude's first top-level receipt prototype passed drift,
+replay, path, chain, and permission-failure rollback probes but ignored legacy
+layout. Reciprocal evidence withdrew that schema-1 proposal after the real
+helper rejected it, proved a hard-crash-shaped independent retry mints an
+ambiguous receipt without destination binding, and supported a strict schema-2
+layout with schema-1 predecessor compatibility. The frozen implementation adds
+schema-2 staged/direct modes, a closed independent/reciprocal receipt chain,
+destination-before and full-state/stage commitments, atomic-complete receipt
+creation with ordinary-error rollback, receipt verification/digests, and ready
+phase enforcement. The independent client-window seal was noisy because the
+driver wrote its evidence during the window; only that protected line changed,
+and the import-only and fully frozen reciprocal seals compared clean. This
+deviation is tracked and the workflow now freezes driver evidence first. The
+canonical validator, expanded focused suite, takeover, source, public-audit,
+syntax, and diff checks pass; the session is `validating`. Next action: reviewed
+checkpoint, clean full Phase 1, completion, and guarded round-5 cleanup. The
+strongest next adversarial target is enforcing the currently prose-only external
+`stage.json` seal at import.
+
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
 and Claude. Its role contract must be client-neutral: the active client is the
 driver and the other client is the co-pilot. Both must reconstruct repository

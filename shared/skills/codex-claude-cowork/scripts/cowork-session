@@ -14,11 +14,19 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-SCHEMA_VERSION = 1
-STAGE_SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
+SUPPORTED_SCHEMA_VERSIONS = {1, 2}
+STAGE_SCHEMA_VERSION = 2
+RECEIPT_SCHEMA_VERSION = 1
 CLIENTS = {"codex", "claude"}
+EXCHANGE_MODES = {"staged", "direct"}
 COPILOT_OWNED = "copilot-evidence.md"
 COPILOT_CANDIDATE = "candidate-copilot-evidence.md"
+RECEIPTS_DIR = "receipts"
+RECEIPT_NAMES = {
+    "independent": "independent.json",
+    "reciprocal": "reciprocal.json",
+}
 MAX_CANDIDATE_BYTES = 64 * 1024
 PHASES = (
     "planning",
@@ -146,7 +154,8 @@ TODO
 """,
 }
 
-ALLOWED_TOP_LEVEL = set(TEMPLATES) | {"state.json", "artifacts"}
+LEGACY_TOP_LEVEL = set(TEMPLATES) | {"state.json", "artifacts"}
+ALLOWED_TOP_LEVEL = LEGACY_TOP_LEVEL | {RECEIPTS_DIR}
 
 # The protected set is every top-level entry the co-pilot does not own: the
 # driver-owned Markdown plus state.json. `copilot-evidence.md` and the shared,
@@ -215,7 +224,7 @@ def sha256_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
 
-STATE_TOP_LEVEL_KEYS = (
+STATE_V1_KEYS = (
     "schema_version",
     "driver",
     "copilot",
@@ -223,6 +232,7 @@ STATE_TOP_LEVEL_KEYS = (
     "created_at",
     "updated_at",
 )
+STATE_V2_KEYS = STATE_V1_KEYS + ("exchange_mode",)
 STATE_PREDECESSOR_KEYS = ("driver", "path", "phase", "state_sha256")
 
 
@@ -240,10 +250,14 @@ def project_stage_state(raw: bytes) -> bytes:
     value = json.loads(raw.decode("utf-8"))
     if not isinstance(value, dict):
         fail("state is not a JSON object")
-    allowed = set(STATE_TOP_LEVEL_KEYS) | {"predecessor"}
-    if not set(STATE_TOP_LEVEL_KEYS) <= set(value) or not set(value) <= allowed:
+    schema_version = value.get("schema_version")
+    keys = STATE_V1_KEYS if schema_version == 1 else STATE_V2_KEYS
+    if schema_version not in SUPPORTED_SCHEMA_VERSIONS:
+        fail("unsupported schema version")
+    allowed = set(keys) | {"predecessor"}
+    if not set(keys) <= set(value) or not set(value) <= allowed:
         fail("state has unexpected or missing keys for staging")
-    projected = {name: value[name] for name in STATE_TOP_LEVEL_KEYS}
+    projected = {name: value[name] for name in keys}
     if "predecessor" in value:
         predecessor = value["predecessor"]
         if not isinstance(predecessor, dict) or set(predecessor) != set(
@@ -293,7 +307,7 @@ def require_owned_kind(path: Path, kind: str) -> None:
 def validate_layout(root: Path) -> None:
     require_owned_kind(root, "directory")
     names = {entry.name for entry in root.iterdir()}
-    missing = sorted(ALLOWED_TOP_LEVEL - names)
+    missing = sorted(LEGACY_TOP_LEVEL - names)
     unexpected = sorted(names - ALLOWED_TOP_LEVEL)
     if missing:
         fail(f"missing top-level protocol entries: {', '.join(missing)}")
@@ -303,6 +317,8 @@ def validate_layout(root: Path) -> None:
     require_owned_kind(root / "state.json", "file")
     for name in TEMPLATES:
         require_owned_kind(root / name, "file")
+    if (root / RECEIPTS_DIR).exists() or (root / RECEIPTS_DIR).is_symlink():
+        require_owned_kind(root / RECEIPTS_DIR, "directory")
 
 
 def load_state(root: Path) -> dict:
@@ -314,14 +330,32 @@ def load_state(root: Path) -> dict:
         fail(f"missing state file: {state_path}")
     except json.JSONDecodeError as exc:
         fail(f"invalid state JSON: {exc}")
-    if value.get("schema_version") != SCHEMA_VERSION:
+    if not isinstance(value, dict):
+        fail("state is not a JSON object")
+    schema_version = value.get("schema_version")
+    if schema_version not in SUPPORTED_SCHEMA_VERSIONS:
         fail("unsupported schema version")
+    expected_state_keys = set(
+        STATE_V1_KEYS if schema_version == 1 else STATE_V2_KEYS
+    )
+    allowed_state_keys = expected_state_keys | {"predecessor"}
+    if not expected_state_keys <= set(value) or not set(value) <= allowed_state_keys:
+        fail("state has unexpected or missing keys")
+    receipts_path = root / RECEIPTS_DIR
+    if schema_version == 1:
+        if receipts_path.exists() or receipts_path.is_symlink():
+            fail("schema-1 session must not contain receipts")
+    else:
+        require_owned_kind(receipts_path, "directory")
+        if value.get("exchange_mode") not in EXCHANGE_MODES:
+            fail("schema-2 state has an invalid exchange mode")
     driver = value.get("driver")
     copilot = value.get("copilot")
     if driver not in CLIENTS or copilot not in CLIENTS or driver == copilot:
         fail("state must name different codex and claude roles")
     if value.get("phase") not in PHASES:
         fail("state has an unknown phase")
+    validate_receipts(root, value, value["phase"])
     return value
 
 
@@ -350,6 +384,107 @@ def validate_files(root: Path, phase: str) -> None:
         except FileNotFoundError:
             fail(f"{phase} requires {name}")
         validate_named_text(name, text)
+
+
+def is_sha256(value: object) -> bool:
+    return isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value) is not None
+
+
+RECEIPT_KEYS = {
+    "schema_version",
+    "mode",
+    "driver",
+    "copilot",
+    "phase",
+    "inputs",
+    "raw_state_sha256",
+    "stage_manifest_sha256",
+    "candidate_sha256",
+    "destination_before_sha256",
+    "imported_at",
+}
+
+
+def load_receipt(root: Path, state: dict, mode: str) -> dict:
+    path = root / RECEIPTS_DIR / RECEIPT_NAMES[mode]
+    require_owned_kind(path, "file")
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        fail(f"invalid {mode} receipt JSON: {exc}")
+    if not isinstance(value, dict) or set(value) != RECEIPT_KEYS:
+        fail(f"{mode} receipt has unexpected or missing keys")
+    if value["schema_version"] != RECEIPT_SCHEMA_VERSION:
+        fail(f"unsupported {mode} receipt schema version")
+    if value["mode"] != mode:
+        fail(f"{mode} receipt has the wrong mode")
+    if value["driver"] != state["driver"] or value["copilot"] != state["copilot"]:
+        fail(f"{mode} receipt roles do not match the session")
+    if value["phase"] != "discussing":
+        fail(f"{mode} receipt was not created during discussion")
+    inputs = value["inputs"]
+    if not isinstance(inputs, dict) or set(inputs) != set(STAGE_INPUTS[mode]):
+        fail(f"{mode} receipt has unexpected or missing input hashes")
+    for name, digest in inputs.items():
+        if not is_sha256(digest):
+            fail(f"{mode} receipt has an invalid input hash: {name}")
+    for name in (
+        "raw_state_sha256",
+        "stage_manifest_sha256",
+        "candidate_sha256",
+        "destination_before_sha256",
+    ):
+        if not is_sha256(value[name]):
+            fail(f"{mode} receipt has an invalid hash: {name}")
+    if not isinstance(value["imported_at"], str) or not value["imported_at"]:
+        fail(f"{mode} receipt has an invalid import timestamp")
+    return value
+
+
+def validate_receipts(root: Path, state: dict, phase: str) -> dict[str, dict]:
+    if state.get("schema_version") == 1:
+        return {}
+    receipts_root = root / RECEIPTS_DIR
+    require_owned_kind(receipts_root, "directory")
+    names = {entry.name for entry in receipts_root.iterdir()}
+    allowed = set(RECEIPT_NAMES.values())
+    unexpected = sorted(names - allowed)
+    if unexpected:
+        fail(f"unexpected receipt entries: {', '.join(unexpected)}")
+    if (
+        RECEIPT_NAMES["reciprocal"] in names
+        and RECEIPT_NAMES["independent"] not in names
+    ):
+        fail("reciprocal receipt requires an independent receipt")
+    receipts = {
+        mode: load_receipt(root, state, mode)
+        for mode, filename in RECEIPT_NAMES.items()
+        if filename in names
+    }
+    exchange_mode = state["exchange_mode"]
+    if exchange_mode == "direct" and receipts:
+        fail("direct exchange session must not contain staged import receipts")
+    if phase == "planning" and receipts:
+        fail("planning session must not contain import receipts")
+    if exchange_mode == "staged" and PHASES.index(phase) >= PHASES.index(
+        "ready-for-execution"
+    ):
+        if set(receipts) != set(RECEIPT_NAMES):
+            fail("staged ready phase requires independent and reciprocal receipts")
+    if receipts:
+        latest = receipts.get("reciprocal", receipts.get("independent"))
+        if (
+            sha256_bytes((root / COPILOT_OWNED).read_bytes())
+            != latest["candidate_sha256"]
+        ):
+            fail("live co-pilot evidence does not match the latest receipt")
+    if "reciprocal" in receipts:
+        if (
+            receipts["reciprocal"]["destination_before_sha256"]
+            != receipts["independent"]["candidate_sha256"]
+        ):
+            fail("reciprocal receipt does not chain from independent evidence")
+    return receipts
 
 
 def predecessor_record(raw: str) -> dict:
@@ -388,11 +523,19 @@ def stage_session(args: argparse.Namespace) -> None:
     state = load_state(root)
     if state["phase"] != "discussing":
         fail("staging requires a discussing session")
+    if state["schema_version"] == 2 and state["exchange_mode"] != "staged":
+        fail("staging requires a staged exchange-mode session")
     validate_files(root, "discussing")
     inputs = STAGE_INPUTS[args.mode]
     if args.mode == "reciprocal":
         for name in ("driver-evidence.md", COPILOT_OWNED):
             validate_named_text(name, (root / name).read_text(encoding="utf-8"))
+    receipts = validate_receipts(root, state, "discussing")
+    if state["schema_version"] == 2:
+        if args.mode == "independent" and receipts:
+            fail("independent stage requires no existing receipts")
+        if args.mode == "reciprocal" and set(receipts) != {"independent"}:
+            fail("reciprocal stage requires exactly the independent receipt")
 
     # Project state.json before creating the stage so a fail-closed refusal
     # (unknown/missing key) leaves no partial stage directory.
@@ -420,12 +563,19 @@ def stage_session(args: argparse.Namespace) -> None:
         "copilot": state["copilot"],
         "phase": state["phase"],
         "inputs": input_hashes,
+        "destination_before_sha256": sha256_bytes(
+            (root / COPILOT_OWNED).read_bytes()
+        ),
     }
     write_new_file(
         stage_root / "stage.json",
         (json.dumps(stage_state, indent=2, sort_keys=True) + "\n").encode("utf-8"),
     )
-    print(f"staged {args.mode} exchange: {stage_root}")
+    stage_digest = sha256_bytes((stage_root / "stage.json").read_bytes())
+    print(
+        f"staged {args.mode} exchange: {stage_root} "
+        f"stage_sha256={stage_digest}"
+    )
 
 
 def load_stage(stage_root: Path) -> dict:
@@ -440,12 +590,22 @@ def load_stage(stage_root: Path) -> dict:
     mode = stage_state.get("mode")
     if mode not in STAGE_INPUTS:
         fail("stage has an unknown mode")
-    expected_keys = {"schema_version", "mode", "driver", "copilot", "phase", "inputs"}
+    expected_keys = {
+        "schema_version",
+        "mode",
+        "driver",
+        "copilot",
+        "phase",
+        "inputs",
+        "destination_before_sha256",
+    }
     if set(stage_state) != expected_keys:
         fail("stage metadata has unexpected or missing keys")
     inputs = STAGE_INPUTS[mode]
     if set(stage_state.get("inputs", {})) != set(inputs):
         fail("stage metadata has unexpected or missing input hashes")
+    if not is_sha256(stage_state.get("destination_before_sha256")):
+        fail("stage metadata has an invalid destination-before hash")
     expected_entries = set(inputs) | {
         "stage.json",
         "artifacts",
@@ -497,11 +657,58 @@ def atomic_replace_bytes(path: Path, value: bytes) -> None:
             temporary.unlink()
 
 
+def atomic_create_bytes(path: Path, value: bytes) -> None:
+    """Create a complete file without overwrite; clean normal-path residue.
+
+    The temporary lives in the session root, outside the closed receipts
+    directory but on the same filesystem. A process crash can leave an exact
+    leading-dot temporary or a complete hard-linked final file; layout/link
+    validation detects either state for manual exact cleanup.
+    """
+    session_root = path.parent.parent
+    descriptor, temporary_raw = tempfile.mkstemp(
+        prefix=f".receipt-{path.stem}.", suffix=".tmp", dir=session_root
+    )
+    temporary = Path(temporary_raw)
+    final_created = False
+    try:
+        os.fchmod(descriptor, 0o600)
+        with os.fdopen(descriptor, "wb") as handle:
+            descriptor = -1
+            handle.write(value)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.link(temporary, path)
+        final_created = True
+        directory_descriptor = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(directory_descriptor)
+        finally:
+            os.close(directory_descriptor)
+        temporary.unlink()
+        root_descriptor = os.open(session_root, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(root_descriptor)
+        finally:
+            os.close(root_descriptor)
+    except BaseException:
+        if final_created and path.exists() and path.read_bytes() == value:
+            path.unlink()
+        raise
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+        if temporary.exists() or temporary.is_symlink():
+            temporary.unlink()
+
+
 def import_copilot(args: argparse.Namespace) -> None:
     root = session_path(args.session_dir)
     state = load_state(root)
     if state["phase"] != "discussing":
         fail("co-pilot import requires a discussing session")
+    if state["schema_version"] == 2 and state["exchange_mode"] != "staged":
+        fail("co-pilot import requires a staged exchange-mode session")
     validate_files(root, "discussing")
     stage_root = session_path(args.stage_dir)
     root_real = root.resolve()
@@ -517,6 +724,25 @@ def import_copilot(args: argparse.Namespace) -> None:
         fail("stage roles no longer match the live session")
     if stage_state["phase"] != "discussing":
         fail("stage phase is not discussing")
+
+    destination = root / COPILOT_OWNED
+    previous = destination.read_bytes()
+    previous_sha256 = sha256_bytes(previous)
+
+    receipt_path = None
+    receipt_bytes = None
+    receipts = validate_receipts(root, state, "discussing")
+    if state["schema_version"] == 2:
+        mode = stage_state["mode"]
+        receipt_path = root / RECEIPTS_DIR / RECEIPT_NAMES[mode]
+        if receipt_path.exists() or receipt_path.is_symlink():
+            fail(f"receipt already exists for mode {mode}: replay refused")
+        if mode == "independent" and receipts:
+            fail("independent import requires no existing receipts")
+        if mode == "reciprocal" and set(receipts) != {"independent"}:
+            fail("reciprocal import requires exactly the independent receipt")
+    if previous_sha256 != stage_state["destination_before_sha256"]:
+        fail("live co-pilot evidence drifted from the staged destination-before hash")
 
     for name in STAGE_INPUTS[stage_state["mode"]]:
         staged = (stage_root / name).read_bytes()
@@ -539,19 +765,52 @@ def import_copilot(args: argparse.Namespace) -> None:
         fail("co-pilot candidate is not valid UTF-8")
     validate_named_text(COPILOT_OWNED, candidate_text)
 
-    destination = root / COPILOT_OWNED
-    previous = destination.read_bytes()
+    if state["schema_version"] == 2:
+        receipt = {
+            "schema_version": RECEIPT_SCHEMA_VERSION,
+            "mode": stage_state["mode"],
+            "driver": state["driver"],
+            "copilot": state["copilot"],
+            "phase": state["phase"],
+            "inputs": stage_state["inputs"],
+            "raw_state_sha256": sha256_bytes((root / "state.json").read_bytes()),
+            "stage_manifest_sha256": sha256_bytes(
+                (stage_root / "stage.json").read_bytes()
+            ),
+            "candidate_sha256": sha256_bytes(candidate),
+            "destination_before_sha256": previous_sha256,
+            "imported_at": now(),
+        }
+        receipt_bytes = (
+            json.dumps(receipt, indent=2, sort_keys=True) + "\n"
+        ).encode("utf-8")
+    receipt_created = False
     try:
         atomic_replace_bytes(destination, candidate)
         require_owned_kind(destination, "file")
         validate_files(root, "discussing")
+        if receipt_path is not None and receipt_bytes is not None:
+            atomic_create_bytes(receipt_path, receipt_bytes)
+            receipt_created = True
+            validate_receipts(root, state, "discussing")
     except BaseException:
+        if (
+            receipt_created
+            and receipt_path is not None
+            and receipt_bytes is not None
+            and receipt_path.exists()
+            and receipt_path.read_bytes() == receipt_bytes
+        ):
+            receipt_path.unlink()
         if destination.read_bytes() != previous:
             atomic_replace_bytes(destination, previous)
         raise
+    receipt_message = ""
+    if receipt_path is not None:
+        receipt_message = f" receipt={RECEIPTS_DIR}/{receipt_path.name}"
     print(
         f"imported {stage_state['mode']} co-pilot evidence "
-        f"sha256={sha256_bytes(candidate)}"
+        f"sha256={sha256_bytes(candidate)}{receipt_message}"
     )
 
 
@@ -570,6 +829,7 @@ def init(args: argparse.Namespace) -> None:
         "phase": "planning",
         "created_at": timestamp,
         "updated_at": timestamp,
+        "exchange_mode": args.exchange_mode,
     }
     if predecessor is not None:
         state["predecessor"] = predecessor
@@ -577,6 +837,7 @@ def init(args: argparse.Namespace) -> None:
     for name, content in TEMPLATES.items():
         (root / name).write_text(content, encoding="utf-8")
     (root / "artifacts").mkdir(mode=0o700)
+    (root / RECEIPTS_DIR).mkdir(mode=0o700)
     message = f"initialized {root} with {args.driver} driving {copilot}"
     if predecessor is not None:
         message += (
@@ -592,6 +853,7 @@ def check(args: argparse.Namespace) -> None:
     if phase not in PHASES:
         fail(f"unknown phase: {phase}")
     validate_files(root, phase)
+    validate_receipts(root, state, phase)
     print(f"valid {phase} session: {root}")
 
 
@@ -601,6 +863,33 @@ def digests(args: argparse.Namespace) -> None:
     for name in PROTECTED_ENTRIES:
         data = (root / name).read_bytes()
         print(f"{hashlib.sha256(data).hexdigest()}  {name}")
+    receipts_root = root / RECEIPTS_DIR
+    if receipts_root.is_dir() and not receipts_root.is_symlink():
+        for name in sorted(RECEIPT_NAMES.values()):
+            path = receipts_root / name
+            if path.exists() or path.is_symlink():
+                require_owned_kind(path, "file")
+                print(f"{sha256_bytes(path.read_bytes())}  {RECEIPTS_DIR}/{name}")
+
+
+def verify_receipts(args: argparse.Namespace) -> None:
+    root = session_path(args.session_dir)
+    state = load_state(root)
+    receipts = validate_receipts(root, state, state["phase"])
+    if state["schema_version"] == 1:
+        fail("schema-1 session has no import receipts")
+    if state["exchange_mode"] == "direct":
+        if receipts:
+            fail("direct exchange unexpectedly contains import receipts")
+        print(f"valid direct exchange without staged receipts: {root}")
+        return
+    if not receipts:
+        fail("staged exchange has no import receipts")
+    latest_mode = "reciprocal" if "reciprocal" in receipts else "independent"
+    print(
+        f"valid {latest_mode} receipt for live co-pilot evidence "
+        f"sha256={receipts[latest_mode]['candidate_sha256']}"
+    )
 
 
 def advance(args: argparse.Namespace) -> None:
@@ -610,11 +899,13 @@ def advance(args: argparse.Namespace) -> None:
     target_index = PHASES.index(args.phase)
     if target_index == current_index:
         validate_files(root, args.phase)
+        validate_receipts(root, state, args.phase)
         print(f"already at valid phase {args.phase}: {root}")
         return
     if target_index != current_index + 1:
         fail(f"invalid transition {state['phase']} -> {args.phase}")
     validate_files(root, args.phase)
+    validate_receipts(root, state, args.phase)
     state["phase"] = args.phase
     state["updated_at"] = now()
     write_json_atomic(root / "state.json", state)
@@ -627,6 +918,12 @@ def parser() -> argparse.ArgumentParser:
     init_parser = commands.add_parser("init", help="create a new exchange directory")
     init_parser.add_argument("session_dir")
     init_parser.add_argument("--driver", required=True, choices=sorted(CLIENTS))
+    init_parser.add_argument(
+        "--exchange-mode",
+        choices=sorted(EXCHANGE_MODES),
+        default="staged",
+        help="use staged imports by default; direct is the exceptional sealed fallback",
+    )
     init_parser.add_argument(
         "--predecessor",
         help="record a prior session's provenance for a cross-product takeover",
@@ -641,6 +938,11 @@ def parser() -> argparse.ArgumentParser:
     )
     digests_parser.add_argument("session_dir")
     digests_parser.set_defaults(handler=digests)
+    verify_parser = commands.add_parser(
+        "verify-receipts", help="validate receipt chain against live co-pilot evidence"
+    )
+    verify_parser.add_argument("session_dir")
+    verify_parser.set_defaults(handler=verify_receipts)
     stage_parser = commands.add_parser(
         "stage", help="copy bounded session inputs into a fresh co-pilot stage"
     )
