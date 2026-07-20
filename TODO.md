@@ -126,8 +126,9 @@ directories, one present `.bash_common`, and the native locate updater on all
 three. No package, startup file, active shell, agent, or repository state was
 changed by discovery.
 
-**Desired outcome and non-goals:** review the eight groups exactly one at a
-time, retaining a setting only where its demonstrated purpose still applies,
+**Desired outcome and non-goals:** review each difference and common-entry
+group exactly one at a time, retaining a setting only where its demonstrated
+purpose still applies,
 promoting stable non-sensitive cross-Mac behavior to the smallest public hook
 when appropriate, and leaving true machine-local behavior local. Do not force
 byte identity at the expense of intentional tool differences. Do not inspect
@@ -206,9 +207,15 @@ follow or broaden an unexpected target. This is one exact non-recursive file
 removal, not a guarded bulk deletion. D7 aliases is selected: remove both the
 aist-local `sudo` and `updatedb` aliases, add no new portable alias, and leave
 the existing public `sudo` alias unchanged. Thus `updatedb` will have no custom
-Mac alias. D8 final formatting/mode normalization is the last open question.
-Exact next action: ask only D8, then audit the complete register for an exact
-per-Mac proposal. No execution authority exists yet.
+Mac alias. D8 final formatting/mode normalization is selected: all three files
+will use mode `0600` and identical ordering, comments, whitespace, and local
+settings; only the canonical managed logical-host value may differ. The owner
+then expanded the interview to reconsider common local entries before the
+final audit. D9 Bash deprecation-warning suppression is next. D10 global
+compiler selection, D11 locale, D12 per-shell SSH-agent startup, and D13 color
+environment remain pending and will be asked one at a time. Exact next action:
+perform only value-free D9 relevance discovery, then ask D9. No execution
+authority exists yet.
 
 ### T-280 — Onboard one additional personal Mac
 
