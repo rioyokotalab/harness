@@ -238,6 +238,11 @@ AL's native `python3` compiler over stdin passed without writing it. Exact next
 action: clean phase one, protected publication, synchronize the fleet, then
 resume AL plan/doctor; RC and T4 remain untouched by startup unification.
 
+The clean Python 3.6 compatibility run passed all 52 focused suites, guarded
+deletion, and compiler gates, explicitly skipped native MPI, and reached only
+the known Darwin doctor boundary; protected Ubuntu CI remains the publication
+gate.
+
 The clean comment-only guard run passed all 52 focused suites, guarded
 deletion, and compiler gates, explicitly skipped native MPI, and reached only
 the known Darwin doctor boundary; protected Ubuntu CI remains the publication
