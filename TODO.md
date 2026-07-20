@@ -131,6 +131,29 @@ Next action: checkpoint this durability fix, clone that checkpoint and prove a
 fresh Git transfer validates without inherited empty directories, then continue
 the bounded turnaround/monitoring refinement window.
 
+Round 3 used Codex driving Claude from baseline `a9dd994`; evidence is under
+`docs/audits/t284-cowork-round3/`. A fresh no-hardlink clone first proved both
+earlier completed sessions and receipts survive Git handoff. Six strictly
+sequential, passing focused-runner samples then measured jobs 4 at
+29.82/29.67/29.69 seconds and jobs 8 at 25.35/25.39/25.25 seconds: a 14.62%
+median reduction with non-overlapping arms. Claude independently rejected a
+universal fixed eight and, after reciprocal access to the actual samples,
+accepted an affinity-aware default: eight only at eight or more visible CPUs,
+four below, with explicit/legacy overrides unchanged.
+
+Both agents also froze a read-only `wait-copilot` command that reuses the exact
+status snapshot, has a monotonic explicit timeout, tolerates partial editor
+writes, takes a final snapshot after observed process loss, and emits only one
+advisory/non-authorizing JSON result (`ready`, `not-importable`, or `timeout`).
+Focused tests cover ready/no-mutation, transient invalid-to-ready, stale final
+bytes, process loss, timeout, bounds, and source separation from import. The
+first full auto run selected eight and exposed one new test-isolation bug: the
+unit import created `tools/__pycache__` concurrently, so tmux correctly failed
+the dirty checkout. `PYTHONDONTWRITEBYTECODE=1` fixed it; the clean retry passed
+57/57 and all umbrella gates in 77.09 seconds. Next action: complete and
+checkpoint round 3, then dogfood `wait-copilot` against a real native client
+window and run a fresh-clone acceptance pass before final cleanup/handoff.
+
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 
 **Phase/status:** `complete`; owner requested on 2026-07-20 that Codex drive a
