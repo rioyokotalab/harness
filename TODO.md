@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-278.
+and compact historical pointers here. Next free ID: T-279.
 
 ## Current state
 
@@ -89,6 +89,31 @@ query only those recorded IDs after eligibility and do not replace or duplicate
 a delayed job. T-210 is complete and must not be repeated.
 
 ## Active tasks
+
+### T-278 — Add PyYAML to personal-Mac onboarding tools
+
+**Phase/status:** `validating`; the owner requested installation on the current
+Mac and inclusion in future personal-Mac onboarding. The live prerequisite is
+installed as pinned `PyYAML` in a dedicated harness-owned virtual environment,
+leaving Homebrew Python's externally managed site-packages untouched.
+
+**Scope and design:** teach `macos-codex-bootstrap` to require Homebrew Python
+with `tomllib`, create the dedicated Python-tools environment only when absent,
+install pinned binary `PyYAML`, validate its exact version, and launch Codex
+with that environment first on `PATH`. Update the onboarding skill, stage
+reference, operator documentation, and focused contracts. Preserve collision
+refusal and do not replace an unexpected existing environment.
+
+**Verified:** the live harness Python-tools environment imports `tomllib` and
+pinned `PyYAML`; the generic skill validator now reports the onboarding skill
+valid. Focused bootstrap/skill/source/privacy tests, shell syntax, ShellCheck,
+and diff validation pass. Synthetic plans cover both absent/install and
+present/ready environment states. Complete portable phase-one validation
+passed every suite before the documented synthetic-host doctor boundary
+(`exit 2`); protected Ubuntu CI remains authoritative.
+
+**Exact next action:** fetch and integrate current `origin/main`, push the task
+branch, and publish through protected CI.
 
 ### T-277 — Make personal-Mac onboarding defaults reusable
 

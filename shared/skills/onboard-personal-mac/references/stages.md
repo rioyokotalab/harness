@@ -8,11 +8,14 @@ select it. On a Mac without Codex, start from the verified public checkout:
 ./bin/harness macos-codex-bootstrap --host HOST --apply
 ```
 
-This installs missing `gh`, `tmux`, and Python-with-`tomllib` prerequisites,
+This installs missing `gh`, `tmux`, Python-with-`tomllib`, and pinned `PyYAML`
+in a dedicated harness-owned virtual environment,
 places the checksum-pinned official standalone client in Homebrew's visible
 bin without editing shell profiles, supplies the declared credential-free
 private companion locator, and opens Codex with the complete onboarding
 assignment under `approval_policy=never` and `danger-full-access`.
+Codex receives that virtual environment first on `PATH`, so skill utilities can
+import `yaml` without modifying Homebrew Python's externally managed packages.
 Thereafter always invoke `./bin/harness` from the verified public checkout.
 
 1. **Transport and Git preflight**

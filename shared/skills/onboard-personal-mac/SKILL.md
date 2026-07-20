@@ -38,8 +38,11 @@ them automatically after `go`, while retaining every normal plan/refusal gate:
   locator. If its host declaration is absent, create the baseline-only profile
   (`macos-cli-v1`, no capability groups, no extra formulae), validate it, and
   commit/push only in the private companion without printing its revision.
-- Install only missing declared bootstrap prerequisites (`gh`, `tmux`, and a
-  Homebrew Python providing `tomllib`) through the bounded dry-run/apply path.
+- Install only missing declared bootstrap prerequisites (`gh`, `tmux`, a
+  Homebrew Python providing `tomllib`, and pinned `PyYAML` in the dedicated
+  harness Python-tools virtual environment) through the bounded
+  dry-run/apply path. Preserve Homebrew Python's externally managed
+  site-packages and refuse an unexpected existing Python-tools environment.
   If GitHub API authentication is needed, run the native `gh` login flow and
   pause only for the unavoidable owner device/browser step. Prefer the already
   validated SSH Git transport when HTTPS has no credential helper.
