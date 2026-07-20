@@ -131,9 +131,11 @@ time, retaining a setting only where its demonstrated purpose still applies,
 promoting stable non-sensitive cross-Mac behavior to the smallest public hook
 when appropriate, and leaving true machine-local behavior local. Do not force
 byte identity at the expense of intentional tool differences. Do not inspect
-`.bash_common`, install/remove packages, change the account shell, edit
-`.bash_profile`, zsh, SSH, Keychain, Terminal, Codex/Claude settings, or reload
-an active shell/tmux server.
+`.bash_common`, change the account shell, edit `.bash_profile`, zsh, SSH,
+Keychain, Terminal, Codex/Claude settings, or reload an active shell/tmux
+server. Package changes remain forbidden before the final explicit `go`; D3
+now puts narrowly scoped Homebrew `uv` install/upgrade and pyenv removal within
+the later execution scope after its destructive-data boundary is resolved.
 
 **Frozen working plan:** (1) checkpoint each owner decision and its rationale;
 (2) audit the final register for contradictions and present one exact proposed
@@ -168,10 +170,18 @@ changing packages. D2 Bash completion is selected: all three will conditionally
 source the same Homebrew profile loader when readable. The currently installed
 older/newer completion variants both provide that path, while its absence on
 the third Mac remains a safe no-op; no package is added. D3 Python tooling is
-the next open question. D4 local compiler/library paths, D5 obsolete Codex
+selected in direction: all three will standardize on the latest Homebrew `uv`;
+the currently missing installation will be added, existing installations
+upgraded, and pyenv startup configuration removed everywhere. Pyenv itself
+will be removed where present. Before this decision can close, value-free
+discovery must distinguish package ownership and whether removal would also
+delete managed Python versions or environments; no pyenv data tree may be
+deleted without a separately frozen boundary and the guarded bulk-delete
+workflow where applicable. D4 local compiler/library paths, D5 obsolete Codex
 paths, D6 `.bash_common`, D7 aliases, and D8 final formatting/mode
 normalization remain pending and will be asked one at a time. Exact next action:
-ask only D3 using the completed value-free tool/path discovery. No execution
+checkpoint this D3 direction, then perform only read-only ownership/data-shape
+discovery and ask the remaining D3 removal boundary if necessary. No execution
 authority exists yet.
 
 ### T-280 — Onboard one additional personal Mac
