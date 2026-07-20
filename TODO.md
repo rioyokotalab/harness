@@ -157,6 +157,11 @@ action: guard-clean round-3 sandboxes and scratch, then run the reverse staged
 direction with Claude driving Codex. That round must specifically test whether
 copying raw `state.json` unnecessarily discloses predecessor paths and whether
 predecessor provenance accepts a structurally valid but phase-invalid session.
+The guarded cleanup subsequently deleted the five exact round-3 sandbox/scratch
+trees after manifest revalidation and verified protected anchors unchanged; the
+single exact prototype file was unlinked separately and all tracked evidence
+remains. Next action is the recorded reverse staged round from this clean
+cleanup checkpoint.
 
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
 and Claude. Its role contract must be client-neutral: the active client is the
