@@ -178,7 +178,12 @@ darwin_native_package=$darwin_native_home/.codex/packages/standalone/synthetic
 mkdir -p "$darwin_fake_bin" "$darwin_brew_prefix/bin" "$darwin_native_package"
 cat >"$darwin_fake_bin/uname" <<'EOF'
 #!/bin/sh
-printf '%s\n' Darwin
+if [ ! -e "$DARWIN_UNAME_FIRST_CALL" ]; then
+    : >"$DARWIN_UNAME_FIRST_CALL"
+    printf '%s\n' Darwin
+else
+    /usr/bin/uname "$@"
+fi
 EOF
 cat >"$darwin_fake_bin/brew" <<EOF
 #!/bin/sh
@@ -194,6 +199,7 @@ chmod 755 "$darwin_fake_bin/uname" "$darwin_fake_bin/brew" \
 ln -s "$darwin_native_package/codex" "$darwin_brew_prefix/bin/codex"
 unlink "$darwin_native_home/.local/bin/codex"
 HOME="$darwin_native_home" HARNESS_ROOT="$PUBLIC" HARNESS_TEST_ALLOW_NONMAIN=1 \
+    DARWIN_UNAME_FIRST_CALL="$TEMP_DIR/darwin-uname-first-call" \
     PATH="$darwin_fake_bin:/usr/bin:/bin" \
     "$PUBLIC/libexec/harness-agent-config" --plan \
     >"$TEMP_DIR/darwin-native.out"
