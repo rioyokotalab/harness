@@ -455,6 +455,13 @@ a no-op plan. Return only those value-free command results. If any command
 fails, stop on that Mac and preserve its transaction evidence; do not proceed
 to the irreversible tail.
 
+The first owner-local Aist attempt stopped before harness mutation because a
+copied line-continuation backslash retained trailing whitespace: the command
+received no arguments, printed usage, and the following `--host` token was
+treated as a separate missing command. No transaction exists and retry is safe.
+Use a paste-safe function containing no continuation backslashes for all three
+owner-local drills.
+
 ### T-280 — Onboard one additional personal Mac
 
 **Phase/status:** `complete`; exactly one owner-operated Mac was in scope. Its
