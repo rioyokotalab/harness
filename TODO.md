@@ -70,8 +70,10 @@ retired legacy tap branch. Vendor-managed migration performed one required
 OS-compatibility reinstall, removed only obsolete tap metadata, and retained
 the old installed formula. Read-only revalidation now finds an OS-compatible
 engine, clean official repository, no legacy tap checkout or registration, and
-a ready bootstrap plan; temporary outputs are absent. Resume by publishing this
-checkpoint, repeat `brew update` once for exit-zero/no-op acceptance, then
+a ready bootstrap plan; temporary outputs are absent. The published recovery
+checkpoint was followed by one accepted `brew update` retry: it exited zero as
+an exact no-op, and revalidation retained the OS-compatible engine, clean
+repository, and absent legacy tap. Resume by publishing this acceptance, then
 repeat the exact bootstrap plan and apply while preserving every authentication
 and unsafe-state stop gate.
 
@@ -135,7 +137,9 @@ Homebrew performed one OS-compatibility reinstall, fully removed only the
 obsolete tap metadata, and retained the old installed formula. Revalidation
 finds the engine OS-compatible, its official repository clean, the legacy tap
 absent, the bootstrap plan ready, and temporary outputs absent. One repeated
-engine update remains before accepting this recovery.
+engine update then exited zero as an exact no-op; the OS-compatible engine,
+clean repository, and absent legacy tap remain accepted. Homebrew recovery is
+complete and must not be repeated.
 
 **Desired outcome:** independently bring this Mac to the current pull-based
 personal-Mac baseline: clean compatible public/private repositories, the
@@ -183,13 +187,11 @@ managed interactive and native batch routing correct, fresh Bash/tmux behavior,
 SSH-only agreement, no transfer residue, and every applicable rollback/reapply
 drill passed.
 
-**Exact next action:** publish this value-free partial-success checkpoint
-through the protected workflow. Through the owner-supplied ephemeral route,
-revalidate the clean official Homebrew repository and run native `brew update`
-once more. Require exit zero, an OS-compatible engine, a clean repository, and
-no legacy tap; do not add formula upgrades, cleanup, taps, services, or casks.
-Then rerun the exact Codex bootstrap plan and apply only its no-block result
-under the owner's current authority. Continue the frozen onboarding sequence
+**Exact next action:** publish this value-free Homebrew acceptance through the
+protected workflow. Through the owner-supplied ephemeral route, fast-forward
+the clean public checkout, rerun the exact Codex bootstrap plan, and apply only
+its no-block result under the owner's current authority. Do not repeat the
+accepted Homebrew engine recovery. Continue the frozen onboarding sequence
 autonomously, checkpointing each accepted stage and stopping only at an
 authentication, physical-action, unsafe/divergent-state, or genuinely new
 material-choice boundary.
