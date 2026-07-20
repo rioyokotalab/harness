@@ -486,9 +486,24 @@ and unattended use. Focused syntax, ShellCheck, diff, interactive/default sudo
 routing, apply/rollback, and changed-state tests pass on committed correction
 `964bcaf`; the complete `tests/test-phase1.sh` suite also passes from its clean
 committed tree. Its first pre-commit run had only the expected live-checkout
-tmux refusal while the tree was dirty; every other focused suite passed. Exact
-next action: publish the correction, fast-forward the three Macs, atomically
-replace the unchanged helpers to use the explicit route, and retry Aist first.
+tmux refusal while the tree was dirty; every other focused suite passed.
+Protected CI passed and PR 157 published squash `7136ed8`. The three clean Mac
+public checkouts fast-forwarded to that exact head through `macos-update`; all
+private checkouts were already current, and the updater's local state migration
+completed transactionally. Each unchanged generated helper passed its exact
+metadata, syntax, host, old-route, and credential-assignment checks before an
+atomic replacement. All three helpers are now current-user-owned regular
+single-link files at mode 0700, contain exactly the three explicit interactive
+sudo routes, and no longer use the ineffective outer `sudo -v`. The first Aist
+agent-forwarding preflight stopped before fetch because no target-side socket
+was inherited; the bounded retry used an explicitly forwarded, current-user-
+owned socket only for the two intended fetches and succeeded. An initial
+value-free helper-preflight report also failed only while formatting an unset
+report argument after all read-only checks; its corrected retry passed on all
+three and no file changed during either preflight failure. Exact next action:
+the owner runs `~/run_this.sh` locally on Aist and returns its value-free output.
+Do not run Home or Office after an Aist failure. After each successful drill,
+revalidate remotely and exact-unlink only that unchanged helper.
 
 ### T-280 — Onboard one additional personal Mac
 
