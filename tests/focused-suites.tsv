@@ -27,6 +27,7 @@ tests/test-ssh-config-mirror.sh|fixed SSH-config mirror focused suite
 tests/test-restic-schedule.sh|Restic schedule focused suite
 tests/test-onboard-mirrored-node.sh|onboarding focused suite
 tests/test-onboard-personal-mac-skill.sh|personal Mac onboarding skill
+tests/test-macos-codex-bootstrap.sh|personal Mac Codex bootstrap
 tests/test-evaluation.sh|evaluation focused suite
 tests/test-public-repo-audit.sh|public repository audit focused suite
 tests/test-fleet-readiness-audit.sh|fleet readiness audit focused suite
