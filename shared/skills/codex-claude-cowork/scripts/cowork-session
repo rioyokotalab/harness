@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import hashlib
 import json
 import os
@@ -569,14 +570,47 @@ def seal_location_ok(session_root: Path, stage_parent: Path, seal_raw: str) -> P
     return seal_path
 
 
-def load_seal(seal_raw: str, session_root: Path, stage_root: Path) -> dict:
-    """Read and structurally validate an external seal before any target mutation."""
+def load_seal(
+    seal_raw: str, session_root: Path, stage_root: Path
+) -> tuple[dict, str]:
+    """Validate and hash one descriptor-bound seal before target mutation."""
     seal_path = seal_location_ok(session_root, stage_root.parent, seal_raw)
-    require_owned_kind(seal_path, "file")
+    descriptor = -1
     try:
-        value = json.loads(seal_path.read_text(encoding="utf-8"))
+        descriptor = os.open(
+            seal_path,
+            os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW | os.O_NONBLOCK,
+        )
+    except FileNotFoundError:
+        fail(f"missing protocol entry: {seal_path}")
+    except OSError as exc:
+        if exc.errno in {errno.ELOOP, errno.EMLINK}:
+            fail(f"protocol file must be real and not a symlink: {seal_path}")
+        fail(f"cannot open seal file: {seal_path}: {exc}")
+    try:
+        metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(metadata.st_mode):
+            fail(f"protocol file must be real and not a symlink: {seal_path}")
+        if metadata.st_uid != os.getuid():
+            fail(f"protocol file is owned by another uid: {seal_path}")
+        if metadata.st_nlink != 1:
+            fail(
+                f"protocol file must not be a hard link: {seal_path} "
+                f"(link count {metadata.st_nlink})"
+            )
+        handle = os.fdopen(descriptor, "rb")
+        descriptor = -1
+        with handle:
+            raw = handle.read()
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+    try:
+        text = raw.decode("utf-8")
     except UnicodeDecodeError as exc:
         fail(f"seal is not valid UTF-8: {exc}")
+    try:
+        value = json.loads(text)
     except json.JSONDecodeError as exc:
         fail(f"invalid seal JSON: {exc}")
     if not isinstance(value, dict) or set(value) != SEAL_KEYS:
@@ -587,7 +621,7 @@ def load_seal(seal_raw: str, session_root: Path, stage_root: Path) -> dict:
         value.get("destination_before_sha256")
     ):
         fail("seal has an invalid hash")
-    return value
+    return value, sha256_bytes(raw)
 
 
 def stage_session(args: argparse.Namespace) -> None:
@@ -847,7 +881,7 @@ def import_copilot(args: argparse.Namespace) -> None:
     if state["schema_version"] == 2:
         if not args.seal:
             fail("schema-2 staged import requires --seal EXTERNAL_FILE")
-        seal = load_seal(args.seal, root, stage_root)
+        seal, seal_sha256 = load_seal(args.seal, root, stage_root)
         if seal["driver"] != state["driver"] or seal["copilot"] != state["copilot"]:
             fail("seal roles do not match the live session")
         if seal["mode"] != stage_state["mode"]:
@@ -859,7 +893,6 @@ def import_copilot(args: argparse.Namespace) -> None:
         actual_stage_manifest = sha256_bytes((stage_root / "stage.json").read_bytes())
         if seal["stage_manifest_sha256"] != actual_stage_manifest:
             fail("stage.json does not match the sealed manifest hash")
-        seal_sha256 = sha256_bytes(session_path(args.seal).read_bytes())
 
     for name in STAGE_INPUTS[stage_state["mode"]]:
         staged = (stage_root / name).read_bytes()

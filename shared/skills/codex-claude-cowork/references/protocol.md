@@ -159,7 +159,11 @@ real, current-user-owned, single-link, non-symlink file; parses UTF-8 JSON with
 exactly the seven seal keys and supported schema; and requires the seal `driver`,
 `copilot`, `mode`, `phase`, and `destination_before_sha256` to match the stage
 and the seal `stage_manifest_sha256` to equal the exact SHA-256 of the stage's
-current `stage.json`. This closes the crash-then-relaunder path: because a
+current `stage.json`. The regular-file, owner, link, content, and digest checks
+use one opened file description, so `seal_sha256` binds the exact seal bytes
+parsed by that import even if the leaf path is replaced afterward. Replacement
+before open and reachable same-UID paths remain outside this byte-identity
+guarantee. This closes the crash-then-relaunder path: because a
 co-pilot can rewrite the stage's own `stage.json` (including
 `destination_before_sha256`) after a crash-shaped evidence overwrite, only an
 external seal the co-pilot cannot reach can detect that rewrite. Import also

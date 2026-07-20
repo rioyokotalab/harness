@@ -84,6 +84,18 @@ grep -F -- '--seal EXTERNAL_SEAL_FILE' "$SKILL" >/dev/null ||
     fail 'skill missing mandatory seal command'
 grep -F -- '--seal EXTERNAL_SEAL_FILE' "$PROTOCOL" >/dev/null ||
     fail 'protocol missing mandatory seal command'
+python3 - "$SESSION" <<'PY'
+import pathlib, sys
+source = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
+load_seal = source.split("def load_seal(", 1)[1].split("\ndef ", 1)[0]
+import_copilot = source.split("def import_copilot(", 1)[1].split("\ndef ", 1)[0]
+assert "os.O_NOFOLLOW" in load_seal, load_seal
+assert "os.fstat(descriptor)" in load_seal, load_seal
+assert "raw = handle.read()" in load_seal, load_seal
+assert "return value, sha256_bytes(raw)" in load_seal, load_seal
+assert "seal, seal_sha256 = load_seal" in import_copilot, import_copilot
+assert "session_path(args.seal).read_bytes()" not in import_copilot, import_copilot
+PY
 grep -F 'stage_manifest_sha256' "$PROTOCOL" >/dev/null ||
     fail 'protocol missing sealed manifest binding'
 grep -F 'does not reopen' "$PROTOCOL" >/dev/null ||

@@ -333,6 +333,21 @@ fetched clean branch is 0 behind / 21 ahead of `origin/main`. The index records
 the alternating product-direction matrix, clean full-suite evidence, residuals,
 round-6 deviations, cleanup, and recovery surface. No push was performed.
 
+Round 8 targets the remaining descriptor-bound seal-reader residual at baseline
+`0620d3e`, with Codex driving and Claude co-piloting. Both agents traced three
+independent leaf lookups (`lstat`, JSON read, receipt digest read); Claude's
+disposable atomic-replacement reproducer proved a receipt can hash bytes other
+than the seal JSON that authorized import. This is receipt provenance, not an
+import bypass. Reciprocal evidence accepted one descriptor with `O_NOFOLLOW`,
+`O_NONBLOCK`, `fstat`, same-descriptor read/parse/digest; it withdrew a size cap
+and rejected a production race hook. The live execution implements exactly that
+tuple return/reuse, adds structural focused assertions, and clarifies the
+before-open same-UID residual without schema/CLI/confinement expansion. The
+first Claude call returned only a skill token and was not imported; one recorded
+retry was safe and succeeded. AST, shell syntax, focused cowork, and whitespace
+checks pass. Next action: validating-phase repository gates, checkpoint, clean
+full Phase 1, complete, and guarded cleanup.
+
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
 and Claude. Its role contract must be client-neutral: the active client is the
 driver and the other client is the co-pilot. Both must reconstruct repository

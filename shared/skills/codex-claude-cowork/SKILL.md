@@ -167,7 +167,10 @@ scripts/cowork-session advance SESSION_DIR ready-for-execution
   seal binds stage *content*, not identity or location: two byte-identical stages
   share a valid seal, harmlessly. It does not prove authorship, create OS
   confinement, protect a seal placed where the co-pilot can write, or make
-  stage+seal or evidence+receipt writes crash-atomic; `verify-receipts` checks the
+  stage+seal or evidence+receipt writes crash-atomic. Import validates one opened
+  seal file description and binds `seal_sha256` to those exact parsed bytes, so
+  leaf replacement after open cannot change the receipt digest; same-UID
+  replacement before open remains outside that guarantee. `verify-receipts` checks the
   stored seal hash and chain but does not reopen the external seal bytes.
 - Use separate sandboxes and one immutable baseline to prevent accidental
   target mutation and result contamination. Record deviations between
