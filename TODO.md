@@ -177,11 +177,17 @@ will be removed where present. Before this decision can close, value-free
 discovery must distinguish package ownership and whether removal would also
 delete managed Python versions or environments; no pyenv data tree may be
 deleted without a separately frozen boundary and the guarded bulk-delete
-workflow where applicable. D4 local compiler/library paths, D5 obsolete Codex
-paths, D6 `.bash_common`, D7 aliases, and D8 final formatting/mode
-normalization remain pending and will be asked one at a time. Exact next action:
-checkpoint this D3 direction, then perform only read-only ownership/data-shape
-discovery and ask the remaining D3 removal boundary if necessary. No execution
+workflow where applicable. That read-only discovery is now complete: only one
+reachable Mac has pyenv; it has both the Homebrew formula and an executable
+Git-checkout `~/.pyenv`, with one managed Python-version directory and two
+reported virtualenv entries supplied through a checkout-local plugin. The
+other two have no pyenv root or formula. Therefore uninstalling the formula
+alone would leave the active checkout and its managed data, while deleting the
+root would remove those environments. D4 local compiler/library paths, D5
+obsolete Codex paths, D6 `.bash_common`, D7 aliases, and D8 final
+formatting/mode normalization remain pending and will be asked one at a time.
+Exact next action: ask only whether the managed `~/.pyenv` root and its Python
+environments should be deleted or preserved after deactivation. No execution
 authority exists yet.
 
 ### T-280 — Onboard one additional personal Mac
