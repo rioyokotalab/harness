@@ -244,6 +244,10 @@ Checkpoint `25841aa` made the receipt implementation clean; full
 skipped), and round 5 is `complete` and validates. Next action is guarded
 scratch cleanup followed by a schema-2 round that tries to tamper stage metadata
 and requires a driver-held seal at import.
+The exact three-directory round-5 cleanup passed manifest identity/size
+revalidation, deletion, and protected-anchor verification; tracked evidence is
+unchanged. Next action is that schema-2 external-seal round from a clean
+checkpoint.
 
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
 and Claude. Its role contract must be client-neutral: the active client is the
