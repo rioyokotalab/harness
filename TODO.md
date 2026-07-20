@@ -213,9 +213,11 @@ settings; only the canonical managed logical-host value may differ. The owner
 then expanded the interview to reconsider common local entries before the
 final audit. D9 Bash deprecation-warning suppression is next. D10 global
 compiler selection, D11 locale, D12 per-shell SSH-agent startup, and D13 color
-environment remain pending and will be asked one at a time. Exact next action:
-perform only value-free D9 relevance discovery, then ask D9. No execution
-authority exists yet.
+environment remain pending and will be asked one at a time. D9 value-free
+discovery confirms all three accounts still use Apple `/bin/bash` as their
+login shell, even though Homebrew Bash is installed; suppression therefore has
+a current effect, and changing account shells remains out of scope. Exact next
+action: ask only D9. No execution authority exists yet.
 
 ### T-280 — Onboard one additional personal Mac
 
