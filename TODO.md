@@ -164,12 +164,15 @@ Macs will use the same `brew shellenv` initialization and suppress Homebrew
 environment hints, replacing append-only, prepend-only, and already-canonical
 variants with one portable Apple-silicon behavior. This gives Homebrew tools
 consistent precedence and defines its related prefix environment without
-changing packages. D2 Bash completion is the next open question. D3 Python
-tooling, D4 local compiler/library paths, D5 obsolete Codex paths, D6
-`.bash_common`, D7 aliases, and D8 final formatting/mode normalization remain
-pending and will be asked one at a time. Exact next action: perform only
-read-only D2 installation/path discovery, then ask D2. No execution authority
-exists yet.
+changing packages. D2 Bash completion is selected: all three will conditionally
+source the same Homebrew profile loader when readable. The currently installed
+older/newer completion variants both provide that path, while its absence on
+the third Mac remains a safe no-op; no package is added. D3 Python tooling is
+the next open question. D4 local compiler/library paths, D5 obsolete Codex
+paths, D6 `.bash_common`, D7 aliases, and D8 final formatting/mode
+normalization remain pending and will be asked one at a time. Exact next action:
+ask only D3 using the completed value-free tool/path discovery. No execution
+authority exists yet.
 
 ### T-280 — Onboard one additional personal Mac
 
