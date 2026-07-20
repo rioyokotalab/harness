@@ -522,6 +522,18 @@ no-op plan. The generated helper still matched its exact expected bytes and
 strict metadata, so it was exact-unlinked and is now absent. Exact next action:
 run the unchanged generated helper locally on Office.
 
+The owner-local Office drill likewise succeeded end to end: initial apply
+transaction `20260720T133559Z-85657`, unchanged-only rollback, and final apply
+transaction `20260720T133606Z-86287` completed, followed by a no-op plan with
+registry and account state both kept. Independent remote revalidation returned
+the same no-op plan. The generated helper still matched its exact expected
+bytes and strict metadata, so it was exact-unlinked and is now absent. All three
+Mac account-shell drills are complete. Exact next action: execute the already
+authorized irreversible tail in frozen order—guarded removal of Aist's unchanged
+pyenv root, exact unlink of Aist's unchanged `.bash_common`, then termination of
+only the revalidated redundant user-started SSH agents while preserving each
+Mac's exact native launchd agent.
+
 ### T-280 — Onboard one additional personal Mac
 
 **Phase/status:** `complete`; exactly one owner-operated Mac was in scope. Its
