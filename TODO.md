@@ -7,9 +7,9 @@ and compact historical pointers here. Next free ID: T-275.
 
 ## Current state
 
-- Repository: published `main`; `office`, `local`, `ab`, `ab2`, `ri`, `rc`,
-  and `t4` are clean at the current fleet resume point, while AL is temporarily
-  behind because native SSH public-key authentication is unavailable. The owner authorized frequent ordinary pushes for the
+- Repository: published `main`; `office`, `local`, `ab`, `ab2`, `ri`, `al`,
+  `rc`, and `t4` are clean and synchronized at the current fleet resume point.
+  The owner authorized frequent ordinary pushes for the
   now-public harness and website repositories; fetch before work and push,
   preserve contributor commits, and never force-push.
 - Managed environments: `local`, `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`.
@@ -92,7 +92,7 @@ a delayed job. T-210 is complete and must not be repeated.
 
 ### T-274 — Unified Bash startup, faster tests, and Codex-driven Mac onboarding
 
-**Phase/status:** `executing`; owner gave the explicit accumulated-change `go`
+**Phase/status:** `complete-accessible-fleet`; owner gave the explicit accumulated-change `go`
 on 2026-07-20. Scope is: (1) make the portable phase-one route skip native MPI
 by default while retaining a separately invocable declared-native MPI test;
 (2) parallelize only independently isolated focused suites, retaining a serial
@@ -242,6 +242,19 @@ The clean Python 3.6 compatibility run passed all 52 focused suites, guarded
 deletion, and compiler gates, explicitly skipped native MPI, and reached only
 the known Darwin doctor boundary; protected Ubuntu CI remains the publication
 gate.
+
+**Accessible-fleet acceptance:** PR #122 passed protected CI and merged at
+`3f4a1e4`. All seven managed Linux checkouts synchronized with equal refs and
+absent transfer artifacts. AL then passed exact plan/doctor, apply, fresh
+login/interactive/non-login scheduler/module/uenv checks, exact rollback,
+baseline checks, and reapply as `20260720T011303Z-272083`. RC passed the same
+drill and remains canonical under `20260720T011359Z-628502`; T4 passed under
+`20260720T011457Z-1751262`. Together with the previously accepted `office`,
+`local`, AB, AB2, and RI transactions, every accessible environment now uses
+canonical `.bashrc` plus the thin `.bash_profile`, with current doctor and fresh
+shell acceptance. The three unavailable Macs retain their independent
+availability/go gates and use `onboard-personal-mac`; no inference or mutation
+was made for them.
 
 The clean comment-only guard run passed all 52 focused suites, guarded
 deletion, and compiler gates, explicitly skipped native MPI, and reached only
@@ -477,6 +490,15 @@ only after its own proportional validation and durable checkpoint.
    T-268/T-269 onboarding, rollback/reapply drill, doctor, and fresh-session
    acceptance have passed; never include `.bash_common` cleanup inside the
    onboarding transaction or batch Macs together.
+
+   **Accessible-fleet result:** office's owner regular mode-0644, 367-byte file
+   had zero live startup references, zero tracked source commands, zero open
+   handles, and passing fresh shells. It was quarantined recoverably, passed
+   macOS doctor and fresh-shell retest, retained exact identity, then was
+   exact-unlinked; original and quarantine paths are absent. `local`, `ab`,
+   `ab2`, `ri`, `al`, `rc`, and `t4` were already absent and each passed fresh
+   login/interactive/non-login checks. Repeat this sequence for each remaining
+   Mac only after its independent onboarding acceptance.
 
 **Explicit dispositions:** plugin/MCP/connector authorization, accounts,
 administrator settings, automatic publication, background/login mutation, and
