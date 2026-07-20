@@ -16,6 +16,8 @@ tests/test-personal-macos-control.sh|personal macOS control-plane focused suite
 tests/test-personal-macos-homebrew.sh|personal macOS Homebrew focused suite
 tests/test-personal-macos-bash.sh|personal macOS Bash focused suite
 tests/test-personal-macos-bash-hooks.sh|personal macOS Bash-hook focused suite
+tests/test-personal-macos-shell.sh|personal macOS shell focused suite
+tests/test-personal-macos-login-shell.sh|personal macOS login-shell focused suite
 tests/test-tmux-config.sh|shared tmux configuration focused suite
 tests/test-agent-config.sh|agent configuration focused suite
 tests/test-agent-upgrade.sh|agent replacement and recovery

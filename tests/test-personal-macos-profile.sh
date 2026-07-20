@@ -59,7 +59,7 @@ valid_output=$(HOME="$valid_home" "$HARNESS" macos-profile \
     --host mac-test-pilot)
 expected_output='MACOS_PRIVATE_PROFILE status=valid schema=1 engine_schema=2
 SELECTION baseline=macos-cli-v1 capability_groups=2 extra_formulae=2
-PUBLIC_FORMULAE count=8
+PUBLIC_FORMULAE count=10
 SSH_PAYLOAD state=present values=not-emitted
 BASH_PAYLOAD state=absent values=not-emitted
 TMUX_PAYLOAD state=absent values=not-emitted
@@ -70,6 +70,25 @@ case "$valid_output" in
         fail "valid output exposed private profile values"
         ;;
 esac
+
+for overlap_formula in uv pyenv; do
+    overlap_home=$(make_profile "overlap-$overlap_formula")
+    overlap_private=$overlap_home/.config/harness/private
+    sed "s/extra_formulae=sqlite,ninja/extra_formulae=$overlap_formula/" \
+        "$overlap_private/hosts/mac-test-pilot.conf" >"$TEMP_DIR/overlap.conf"
+    mv "$TEMP_DIR/overlap.conf" \
+        "$overlap_private/hosts/mac-test-pilot.conf"
+    chmod 600 "$overlap_private/hosts/mac-test-pilot.conf"
+    git -C "$overlap_private" add hosts/mac-test-pilot.conf
+    git -C "$overlap_private" commit -q -m 'synthetic public-policy overlap'
+    if HOME="$overlap_home" "$HARNESS" macos-profile --host mac-test-pilot \
+        >"$TEMP_DIR/overlap-$overlap_formula.out" 2>&1; then
+        fail "private formula overlap accepted: $overlap_formula"
+    fi
+    grep -F 'private formula selection overlaps public policy' \
+        "$TEMP_DIR/overlap-$overlap_formula.out" >/dev/null ||
+        fail "private formula overlap refusal: $overlap_formula"
+done
 
 absent_home=$(make_profile payload-absent)
 git -C "$absent_home/.config/harness/private" rm -q ssh_config

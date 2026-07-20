@@ -1,0 +1,357 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+. "$SELF_DIR/harness-macos-common"
+
+usage() {
+    cat >&2 <<'EOF'
+Usage:
+  harness macos-login-shell --host LOGICAL_ID [--plan|--apply]
+  harness macos-login-shell --rollback TRANSACTION_ID
+EOF
+}
+
+safe_id() {
+    case "$1" in ''|*[!A-Za-z0-9._-]*|.|..) return 1 ;; *) return 0 ;; esac
+}
+
+validate_checkout() {
+    [ "$(uname -s)" = Darwin ] || die "Mac login-shell management requires Darwin"
+    [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
+        die "Mac login-shell management requires a Git harness checkout"
+    [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" = \
+        "$(CDPATH='' cd -- "$HARNESS_ROOT" && pwd -P)" ] ||
+        die "Mac login-shell checkout root is ambiguous"
+    [ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
+        die "Mac login-shell management requires a clean committed checkout"
+    if [ "${HARNESS_TEST_ALLOW_NONMAIN:-0}" != 1 ]; then
+        [ "$(git -C "$HARNESS_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null)" = main ] ||
+            die "Mac login-shell management requires the main branch"
+    fi
+}
+
+require_home() {
+    case ${HOME:-} in /*) ;; *) die "Mac login-shell management requires an absolute HOME" ;; esac
+    [ -d "$HOME" ] && [ ! -L "$HOME" ] &&
+        [ "$(macos_stat_owner "$HOME")" = "$current_uid" ] &&
+        [ "$(CDPATH='' cd -- "$HOME" && pwd -P)" = "$HOME" ] ||
+        die "Mac login-shell HOME is unsafe or ambiguous"
+}
+
+prepare_state_root() {
+    state_root=$HOME/.local/state/harness
+    transaction_root=$state_root/transactions
+    umask 077
+    for state_path in "$HOME/.local" "$HOME/.local/state" \
+        "$state_root" "$transaction_root"; do
+        if [ -e "$state_path" ] || [ -L "$state_path" ]; then
+            [ -d "$state_path" ] && [ ! -L "$state_path" ] &&
+                [ "$(macos_stat_owner "$state_path")" = "$current_uid" ] ||
+                die "Mac login-shell transaction path is unsafe"
+        else
+            mkdir "$state_path"
+            chmod 700 "$state_path"
+        fi
+    done
+    chmod 700 "$state_root" "$transaction_root"
+}
+
+resolve_bash() {
+    brew_command=$(command -v brew 2>/dev/null || true)
+    [ -n "$brew_command" ] && [ -x "$brew_command" ] && [ ! -L "$brew_command" ] ||
+        die "managed Homebrew is unavailable for login-shell management"
+    brew_prefix=$(HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ANALYTICS=1 \
+        HOMEBREW_NO_ENV_HINTS=1 "$brew_command" --prefix 2>/dev/null) ||
+        die "managed Homebrew prefix query failed"
+    [ "$brew_command" = "$brew_prefix/bin/brew" ] ||
+        die "active Homebrew executable does not match its prefix"
+    case "$(uname -m):$brew_prefix" in
+        arm64:/opt/homebrew|x86_64:/usr/local) ;;
+        *)
+            [ "${HARNESS_TEST_ALLOW_NONMAIN:-0}" = 1 ] ||
+                die "managed Homebrew prefix is unsupported for account-shell use"
+            ;;
+    esac
+    HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ANALYTICS=1 \
+        HOMEBREW_NO_ENV_HINTS=1 "$brew_command" list --formula --versions bash \
+        >/dev/null 2>&1 || die "managed Homebrew Bash is not installed"
+    bash_prefix=$(HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ANALYTICS=1 \
+        HOMEBREW_NO_ENV_HINTS=1 "$brew_command" --prefix bash 2>/dev/null) ||
+        die "managed Homebrew Bash prefix query failed"
+    desired_shell=$brew_prefix/bin/bash
+    [ -x "$desired_shell" ] || die "managed Homebrew Bash link is unavailable"
+    desired_physical=$(CDPATH='' cd -- "${desired_shell%/*}" && \
+        printf '%s/%s\n' "$(pwd -P)" "$(basename "$desired_shell")")
+    desired_resolved=$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' \
+        "$desired_shell") || die "managed Homebrew Bash link cannot be resolved"
+    case "$desired_resolved" in "$bash_prefix"/bin/bash) ;; *)
+        die "managed Homebrew Bash link resolves outside its formula"
+    esac
+    case "$desired_physical" in "$brew_prefix"/bin/bash) ;; *)
+        die "managed Homebrew Bash link parent is unsafe"
+    esac
+}
+
+read_account_shell() {
+    account_output=$(dscl . -read "/Users/$current_user" UserShell 2>/dev/null) ||
+        die "account shell query failed"
+    account_shell=$(printf '%s\n' "$account_output" |
+        awk 'NR == 1 && $1 == "UserShell:" && NF == 2 { print $2; ok = 1 }
+            END { exit NR == 1 && ok ? 0 : 1 }') ||
+        die "account shell query is malformed"
+    case "$account_shell" in /*) ;; *) die "account shell path is unsafe" ;; esac
+}
+
+inspect_shells() {
+    [ -f "$shells_file" ] && [ ! -L "$shells_file" ] &&
+        [ "$(macos_stat_owner "$shells_file")" = 0 ] &&
+        [ "$(macos_stat_links "$shells_file")" = 1 ] &&
+        [ "$(macos_stat_mode "$shells_file")" = 644 ] ||
+        die "/etc/shells has unsafe metadata"
+    shells_gid=$(stat -f '%g' -- "$shells_file")
+    case "$shells_gid" in ''|*[!0-9]*) die "/etc/shells group is unsafe" ;; esac
+    shells_hash=$(macos_checksum_file "$shells_file")
+    shell_entry_count=$(grep -F -x -c "$desired_shell" "$shells_file" 2>/dev/null || true)
+    case "$shell_entry_count" in 0|1) ;; *) die "managed Bash has duplicate /etc/shells entries" ;; esac
+}
+
+sudo_preflight() {
+    command -v sudo >/dev/null 2>&1 || die "noninteractive administrator route is unavailable"
+    sudo -n /usr/bin/true </dev/null >/dev/null 2>&1 ||
+        die "noninteractive administrator route is unavailable"
+}
+
+install_shells_file() {
+    source_file=$1
+    sudo -n /usr/bin/install -o 0 -g "$shells_gid" -m 644 \
+        "$source_file" "$shells_file" </dev/null ||
+        die "administrator /etc/shells replacement failed"
+}
+
+set_account_shell() {
+    new_shell=$1
+    sudo -n /usr/bin/chsh -s "$new_shell" "$current_user" </dev/null ||
+        die "administrator account-shell change failed"
+}
+
+rollback() {
+    id=$1
+    safe_id "$id" || die "invalid Mac login-shell transaction"
+    prepare_state_root
+    manifest=$transaction_root/$id.macos-login-shell.manifest
+    status_file=$transaction_root/$id.macos-login-shell.status
+    backup=$transaction_root/$id.shells.backup
+    macos_require_private_file "$manifest" "$current_uid"
+    macos_require_private_file "$status_file" "$current_uid"
+    macos_require_private_file "$backup" "$current_uid"
+    macos_validate_manifest "$manifest" \
+        schema,operation,user,old_shell,new_shell,shells_gid,pre_hash,post_hash \
+        schema,operation,user,old_shell,new_shell,shells_gid,pre_hash,post_hash
+    [ "$(macos_manifest_get "$manifest" schema)" = 1 ] &&
+        [ "$(macos_manifest_get "$manifest" operation)" = macos-login-shell ] &&
+        [ "$(macos_manifest_get "$manifest" user)" = "$current_user" ] ||
+        die "Mac login-shell transaction manifest is malformed"
+    [ "$(sed -n '1p' "$status_file")" = complete ] ||
+        die "Mac login-shell transaction is not complete"
+    desired_shell=$(macos_manifest_get "$manifest" new_shell)
+    old_shell=$(macos_manifest_get "$manifest" old_shell)
+    recorded_shells_gid=$(macos_manifest_get "$manifest" shells_gid)
+    pre_hash=$(macos_manifest_get "$manifest" pre_hash)
+    post_hash=$(macos_manifest_get "$manifest" post_hash)
+    case "$desired_shell:$old_shell" in
+        /*:/*) ;;
+        *) die "Mac login-shell transaction manifest is malformed" ;;
+    esac
+    case "$recorded_shells_gid" in ''|*[!0-9]*)
+        die "Mac login-shell transaction manifest is malformed" ;;
+    esac
+    case "$pre_hash:$post_hash" in *[!0-9a-f:]*|:*)
+        die "Mac login-shell transaction manifest is malformed" ;;
+    esac
+    [ "${#pre_hash}" -eq 64 ] && [ "${#post_hash}" -eq 64 ] ||
+        die "Mac login-shell transaction manifest is malformed"
+    [ "$(macos_checksum_file "$backup")" = "$pre_hash" ] ||
+        die "Mac login-shell backup is inconsistent"
+    read_account_shell
+    inspect_shells
+    [ "$shells_gid" = "$recorded_shells_gid" ] ||
+        die "Mac login-shell rollback blocked by changed registry group"
+    [ "$account_shell" = "$desired_shell" ] &&
+        [ "$shells_hash" = "$post_hash" ] ||
+        die "Mac login-shell rollback blocked by changed state"
+    sudo_preflight
+    rollback_post=$transaction_root/$id.shells.rollback-post
+    [ ! -e "$rollback_post" ] && [ ! -L "$rollback_post" ] ||
+        die "Mac login-shell rollback workspace already exists"
+    cp "$shells_file" "$rollback_post"
+    chmod 600 "$rollback_post"
+    [ "$(macos_checksum_file "$rollback_post")" = "$post_hash" ] ||
+        die "Mac login-shell rollback workspace is inconsistent"
+    rollback_complete=0
+    cleanup_rollback() {
+        status=$?
+        trap - EXIT HUP INT TERM
+        if [ "$rollback_complete" -eq 0 ]; then
+            recovered=0
+            install_shells_file "$rollback_post" >/dev/null 2>&1 &&
+                set_account_shell "$desired_shell" >/dev/null 2>&1 &&
+                read_account_shell >/dev/null 2>&1 &&
+                inspect_shells >/dev/null 2>&1 &&
+                [ "$account_shell" = "$desired_shell" ] &&
+                [ "$shells_hash" = "$post_hash" ] && recovered=1
+            [ "$recovered" -eq 1 ] ||
+                printf '%s\n' recovery-failed >"$status_file"
+        fi
+        [ ! -e "$rollback_post" ] || unlink "$rollback_post"
+        exit "$status"
+    }
+    trap cleanup_rollback EXIT
+    trap 'exit 129' HUP
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+    install_shells_file "$backup"
+    set_account_shell "$old_shell"
+    read_account_shell
+    inspect_shells
+    [ "$account_shell" = "$old_shell" ] &&
+        [ "$shells_hash" = "$pre_hash" ] ||
+        die "Mac login-shell rollback verification failed"
+    printf '%s\n' rolled-back >"$status_file"
+    rollback_complete=1
+    trap - EXIT HUP INT TERM
+    unlink "$rollback_post"
+    printf 'MACOS_LOGIN_SHELL action=rolled-back transaction=%s activation=new-sessions\n' "$id"
+}
+
+logical_host=
+mode=plan
+rollback_id=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        --rollback) [ "$#" -ge 2 ] || { usage; exit 2; }; mode=rollback; rollback_id=$2; shift 2 ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+
+current_uid=$(id -u)
+current_user=$(id -un)
+shells_file=/etc/shells
+if [ "${HARNESS_TEST_ALLOW_NONMAIN:-0}" = 1 ] &&
+    [ -n "${HARNESS_TEST_SHELLS_FILE:-}" ]; then
+    case $HARNESS_TEST_SHELLS_FILE in /*) shells_file=$HARNESS_TEST_SHELLS_FILE ;; *)
+        die "test shells path is unsafe" ;;
+    esac
+fi
+require_home
+validate_checkout
+if [ "$mode" = rollback ]; then
+    [ -n "$rollback_id" ] && [ -z "$logical_host" ] || { usage; exit 2; }
+    rollback "$rollback_id"
+    exit 0
+fi
+if [ -z "$logical_host" ] || ! safe_id "$logical_host"; then usage; exit 2; fi
+"$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
+    die "private profile is not ready for login-shell management"
+resolve_bash
+read_account_shell
+inspect_shells
+
+registry_action=keep
+[ "$shell_entry_count" -eq 1 ] || registry_action=add
+account_action=keep
+[ "$account_shell" = "$desired_shell" ] || account_action=change
+printf 'MACOS_LOGIN_SHELL mode=%s registry=%s account=%s target=managed-homebrew-bash\n' \
+    "$mode" "$registry_action" "$account_action"
+[ "$mode" = apply ] || {
+    echo 'END macos_login_shell apply=not-requested activation=none'
+    exit 0
+}
+[ "$registry_action" != keep ] || [ "$account_action" != keep ] || {
+    echo 'END macos_login_shell action=none activation=unchanged'
+    exit 0
+}
+
+sudo_preflight
+prepare_state_root
+id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+manifest=$transaction_root/$id.macos-login-shell.manifest
+status_file=$transaction_root/$id.macos-login-shell.status
+backup=$transaction_root/$id.shells.backup
+candidate=$transaction_root/$id.shells.candidate
+for path in "$manifest" "$status_file" "$backup" "$candidate"; do
+    [ ! -e "$path" ] && [ ! -L "$path" ] ||
+        die "Mac login-shell transaction identifier collision"
+done
+cp "$shells_file" "$backup"
+chmod 600 "$backup"
+cp "$backup" "$candidate"
+if [ "$shell_entry_count" -eq 0 ]; then
+    if [ -s "$candidate" ] && [ "$(tail -c 1 "$candidate" | wc -l | tr -d ' ')" -eq 0 ]; then
+        printf '\n' >>"$candidate"
+    fi
+    printf '%s\n' "$desired_shell" >>"$candidate"
+fi
+chmod 600 "$candidate"
+[ "$(grep -F -x -c "$desired_shell" "$candidate" 2>/dev/null || true)" -eq 1 ] ||
+    die "Mac login-shell candidate is invalid"
+post_hash=$(macos_checksum_file "$candidate")
+printf '%s\n' \
+    'schema=1' \
+    'operation=macos-login-shell' \
+    "user=$current_user" \
+    "old_shell=$account_shell" \
+    "new_shell=$desired_shell" \
+    "shells_gid=$shells_gid" \
+    "pre_hash=$shells_hash" \
+    "post_hash=$post_hash" >"$manifest"
+chmod 600 "$manifest"
+printf '%s\n' prepared >"$status_file"
+chmod 600 "$status_file"
+
+complete=0
+cleanup_apply() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ "$complete" -eq 0 ]; then
+        if [ "$(macos_checksum_file "$shells_file" 2>/dev/null || true)" = "$post_hash" ]; then
+            install_shells_file "$backup" >/dev/null 2>&1 || true
+        fi
+        read_account_shell >/dev/null 2>&1 || account_shell=
+        if [ "$account_shell" = "$desired_shell" ]; then
+            set_account_shell "$(macos_manifest_get "$manifest" old_shell)" \
+                >/dev/null 2>&1 || true
+        fi
+        printf '%s\n' failed >"$status_file"
+    fi
+    exit "$status"
+}
+trap cleanup_apply EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+read_account_shell
+inspect_shells
+[ "$account_shell" = "$(macos_manifest_get "$manifest" old_shell)" ] &&
+    [ "$shells_hash" = "$(macos_manifest_get "$manifest" pre_hash)" ] ||
+    die "Mac login-shell preimage changed before apply"
+if [ "$registry_action" = add ]; then install_shells_file "$candidate"; fi
+if [ "$account_action" = change ]; then set_account_shell "$desired_shell"; fi
+read_account_shell
+inspect_shells
+[ "$account_shell" = "$desired_shell" ] &&
+    [ "$shell_entry_count" -eq 1 ] && [ "$shells_hash" = "$post_hash" ] ||
+    die "Mac login-shell apply verification failed"
+printf '%s\n' complete >"$status_file"
+complete=1
+trap - EXIT HUP INT TERM
+unlink "$candidate"
+printf 'MACOS_LOGIN_SHELL action=applied transaction=%s rollback=available activation=new-sessions\n' "$id"

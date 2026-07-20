@@ -368,23 +368,31 @@ checkout_preflight "$private_checkout" "$private_target" private
 
 target_public_file=$(mktemp "${TMPDIR:-/tmp}/harness-macos-public.XXXXXX") ||
     die "cannot allocate public target validation file"
+target_formula_policy=$(mktemp "${TMPDIR:-/tmp}/harness-macos-formula-policy.XXXXXX") || {
+    unlink "$target_public_file"
+    die "cannot allocate formula-policy target validation file"
+}
 target_companion_file=$(mktemp "${TMPDIR:-/tmp}/harness-macos-companion.XXXXXX") || {
     unlink "$target_public_file"
+    unlink "$target_formula_policy"
     die "cannot allocate private target validation file"
 }
 target_host_file=$(mktemp "${TMPDIR:-/tmp}/harness-macos-host.XXXXXX") || {
     unlink "$target_public_file"
+    unlink "$target_formula_policy"
     unlink "$target_companion_file"
     die "cannot allocate host target validation file"
 }
 target_ssh_file=$(mktemp "${TMPDIR:-/tmp}/harness-macos-ssh.XXXXXX") || {
     unlink "$target_public_file"
+    unlink "$target_formula_policy"
     unlink "$target_companion_file"
     unlink "$target_host_file"
     die "cannot allocate SSH target validation file"
 }
 target_bash_file=$(mktemp "${TMPDIR:-/tmp}/harness-macos-bash-config.XXXXXX") || {
     unlink "$target_public_file"
+    unlink "$target_formula_policy"
     unlink "$target_companion_file"
     unlink "$target_host_file"
     unlink "$target_ssh_file"
@@ -392,6 +400,7 @@ target_bash_file=$(mktemp "${TMPDIR:-/tmp}/harness-macos-bash-config.XXXXXX") ||
 }
 target_tmux_file=$(mktemp "${TMPDIR:-/tmp}/harness-macos-tmux-config.XXXXXX") || {
     unlink "$target_public_file"
+    unlink "$target_formula_policy"
     unlink "$target_companion_file"
     unlink "$target_host_file"
     unlink "$target_ssh_file"
@@ -402,6 +411,7 @@ cleanup_target_files() {
     status=$?
     trap - EXIT HUP INT TERM
     [ ! -e "$target_public_file" ] || unlink "$target_public_file"
+    [ ! -e "$target_formula_policy" ] || unlink "$target_formula_policy"
     [ ! -e "$target_companion_file" ] || unlink "$target_companion_file"
     [ ! -e "$target_host_file" ] || unlink "$target_host_file"
     [ ! -e "$target_ssh_file" ] || unlink "$target_ssh_file"
@@ -417,6 +427,9 @@ trap 'exit 143' TERM
 export_commit_file "$public_checkout" "$public_target" \
     profiles/personal-macos/base.conf "$target_public_file"
 macos_validate_public_profile "$target_public_file"
+export_commit_file "$public_checkout" "$public_target" \
+    profiles/personal-macos/formula-policy-v2.conf "$target_formula_policy"
+macos_validate_formula_policy "$target_formula_policy"
 target_engine_schema=2
 target_private_min=$(macos_manifest_get "$target_public_file" private_schema_min)
 target_private_max=$(macos_manifest_get "$target_public_file" private_schema_max)

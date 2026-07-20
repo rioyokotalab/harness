@@ -87,6 +87,8 @@ setup_pair() {
         "$public_source/libexec"
     cp "$ROOT/profiles/personal-macos/base.conf" \
         "$public_source/profiles/personal-macos/base.conf"
+    cp "$ROOT/profiles/personal-macos/formula-policy-v2.conf" \
+        "$public_source/profiles/personal-macos/formula-policy-v2.conf"
     cp -p "$ROOT/libexec/harness-common" \
         "$ROOT/libexec/harness-macos-common" \
         "$ROOT/libexec/harness-macos-profile" \

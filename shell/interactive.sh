@@ -12,6 +12,39 @@ if [ -n "${BASH_VERSION:-}" ]; then
 fi
 PS1='\u@\h:\W\$ '
 
+if [ "$(uname -s)" = Darwin ]; then
+    if { [ "${BASH_VERSINFO[0]:-0}" -gt 4 ] ||
+        { [ "${BASH_VERSINFO[0]:-0}" -eq 4 ] &&
+            [ "${BASH_VERSINFO[1]:-0}" -ge 2 ]; }; } &&
+        [ -n "${HOMEBREW_PREFIX:-}" ] &&
+        [ -r "$HOMEBREW_PREFIX/etc/profile.d/bash_completion.sh" ]; then
+        # shellcheck source=/dev/null
+        . "$HOMEBREW_PREFIX/etc/profile.d/bash_completion.sh"
+    fi
+
+    activate() {
+        if [ "$#" -ne 1 ]; then
+            printf '%s\n' 'usage: activate NAME' >&2
+            return 2
+        fi
+        case $1 in
+            ''|.|..|*[!A-Za-z0-9._-]*)
+                printf '%s\n' 'activate: environment name is invalid' >&2
+                return 2
+                ;;
+        esac
+        harness_activate_file=$UV_VENV_ROOT/$1/bin/activate
+        if [ ! -r "$harness_activate_file" ]; then
+            printf 'activate: environment is unavailable: %s\n' "$1" >&2
+            unset harness_activate_file
+            return 1
+        fi
+        # shellcheck source=/dev/null
+        . "$harness_activate_file"
+        unset harness_activate_file
+    }
+fi
+
 if [ -r "$HOME/harness/shell/common-aliases.sh" ]; then
     . "$HOME/harness/shell/common-aliases.sh"
 fi

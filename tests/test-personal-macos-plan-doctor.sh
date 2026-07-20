@@ -90,6 +90,15 @@ cat >"$fake_bin/tmux" <<'EOF'
 #!/bin/sh
 exit 0
 EOF
+cat >"$fake_bin/grep" <<'EOF'
+#!/bin/sh
+if [ "$#" -eq 5 ] && [ "$1:$2:$3" = -F:-x:-c ] &&
+    [ "$4" = /opt/homebrew/bin/bash ] && [ "$5" = /etc/shells ]; then
+    echo 1
+    exit 0
+fi
+exec /usr/bin/grep "$@"
+EOF
 cat >"$fake_bin/brew" <<'EOF'
 #!/bin/sh
 printf '%s\n' "$*" >>"$BREW_LOG"
@@ -98,9 +107,10 @@ case "$1" in
     --prefix) echo /opt/homebrew ;;
     list)
         [ "$2:$3" = --formula:--versions ] || exit 2
-        if [ "$4" = tree ] && [ "${FAKE_TREE_PRESENT:-0}" != 1 ]; then
-            exit 1
-        fi
+        case "$4" in
+            tree) [ "${FAKE_TREE_PRESENT:-0}" = 1 ] || exit 1 ;;
+            bash-completion|pyenv) exit 1 ;;
+        esac
         ;;
     outdated)
         [ "$2:$3" = --formula:--quiet ] || exit 2
@@ -116,7 +126,7 @@ case "$1" in
 esac
 EOF
 chmod 755 "$fake_bin/uname" "$fake_bin/stat" "$fake_bin/xcode-select" \
-    "$fake_bin/tmux" "$fake_bin/brew"
+    "$fake_bin/tmux" "$fake_bin/grep" "$fake_bin/brew"
 
 brew_log=$TEMP_DIR/brew.log
 facts=$TEMP_DIR/facts.conf
@@ -227,7 +237,7 @@ done
 chmod 600 "$home/.bash_profile" "$home/.bashrc"
 ln -s "$ROOT/config/tmux/tmux.conf" "$home/.tmux.conf"
 ready_facts=$TEMP_DIR/ready-facts.conf
-HOME="$home" SHELL=/bin/zsh BREW_LOG="$TEMP_DIR/ready-inventory.log" \
+HOME="$home" SHELL=/opt/homebrew/bin/bash BREW_LOG="$TEMP_DIR/ready-inventory.log" \
     FAKE_TREE_PRESENT=1 PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
     "$INVENTORY" --host mac-test-pilot >"$ready_facts"
 chmod 600 "$ready_facts"
@@ -287,14 +297,14 @@ printf '%s\n' "$bundle_doctor_output" | grep -F -x \
     'END macos_doctor status=ready failures=0 warnings=0' >/dev/null ||
     fail "config bundle ready doctor result"
 
-implicit_plan=$(HOME="$home" SHELL=/bin/zsh TMPDIR="$TEMP_DIR" \
+implicit_plan=$(HOME="$home" SHELL=/opt/homebrew/bin/bash TMPDIR="$TEMP_DIR" \
     BREW_LOG="$TEMP_DIR/implicit-plan.log" FAKE_TREE_PRESENT=1 \
     PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
     "$PLAN" --host mac-test-pilot)
 printf '%s\n' "$implicit_plan" | grep -F -x \
     'END macos_plan blocked=0 package_changes=not-applied network=none' \
     >/dev/null || fail "implicit inventory plan"
-HOME="$home" SHELL=/bin/zsh TMPDIR="$TEMP_DIR" \
+HOME="$home" SHELL=/opt/homebrew/bin/bash TMPDIR="$TEMP_DIR" \
     BREW_LOG="$TEMP_DIR/implicit-doctor.log" FAKE_TREE_PRESENT=1 \
     PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
     "$DOCTOR" --host mac-test-pilot >/dev/null || fail "implicit inventory doctor"

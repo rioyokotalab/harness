@@ -28,6 +28,10 @@ case ${HOME:-} in /*) ;; *) die "macOS doctor requires an absolute HOME" ;; esac
 current_uid=$(id -u)
 public_profile=$HARNESS_ROOT/profiles/personal-macos/base.conf
 macos_validate_public_profile "$public_profile"
+formula_policy=$HARNESS_ROOT/profiles/personal-macos/formula-policy-v2.conf
+[ -f "$formula_policy" ] && [ ! -L "$formula_policy" ] ||
+    die "public personal-Mac formula policy is unavailable"
+macos_validate_formula_policy "$formula_policy"
 
 if [ -z "$fact_file" ]; then
     owned_fact=$(mktemp "${TMPDIR:-/tmp}/harness-macos-doctor-facts.XXXXXX") ||
@@ -51,7 +55,7 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 macos_require_private_file "$fact_file" "$current_uid"
-macos_validate_fact_file "$fact_file" "$public_profile"
+macos_validate_fact_file "$fact_file" "$formula_policy"
 [ "$(macos_manifest_get "$fact_file" logical_id)" = "$logical_host" ] ||
     die "personal-Mac fact identity mismatch"
 
@@ -80,6 +84,21 @@ case $(macos_manifest_get "$fact_file" homebrew_prefix_class) in
     apple-silicon-default|intel-default) ;;
     *) echo 'WARN optional=homebrew_prefix state=nondefault-or-unknown'; warnings=$((warnings + 1)) ;;
 esac
+
+account_shell=$(macos_manifest_get "$fact_file" account_shell)
+account_shell_registry=$(macos_manifest_get "$fact_file" account_shell_registry)
+if [ "$account_shell" = homebrew-bash ]; then
+    echo 'PASS required=account_shell state=homebrew-bash'
+else
+    echo "FAIL required=account_shell state=$account_shell expected=homebrew-bash"
+    failures=$((failures + 1))
+fi
+if [ "$account_shell_registry" = present ]; then
+    echo 'PASS required=account_shell_registry state=present'
+else
+    echo "FAIL required=account_shell_registry state=$account_shell_registry expected=present"
+    failures=$((failures + 1))
+fi
 
 for link_name in codex_guidance codex_rules claude_guidance bash_launcher; do
     value=$(macos_manifest_get "$fact_file" "link_$link_name")
@@ -185,17 +204,33 @@ else
     fi
 fi
 
-public_formulae=$(macos_manifest_get "$public_profile" managed_formulae)
+public_formulae=$(macos_manifest_get "$formula_policy" managed_formulae)
+retired_formulae=$(macos_manifest_get "$formula_policy" retired_formulae)
 public_missing=0
 for formula in $(printf '%s\n' "$public_formulae" | tr ',' ' '); do
     state=$(macos_manifest_get "$fact_file" \
         "formula_$(macos_formula_key "$formula")")
     [ "$state" = present ] || public_missing=$((public_missing + 1))
 done
+public_total=$(macos_token_count "$public_formulae")
 if [ "$public_missing" -eq 0 ]; then
-    echo 'PASS required=public_formulae missing=0 total=8'
+    echo "PASS required=public_formulae missing=0 total=$public_total"
 else
-    echo "FAIL required=public_formulae missing=$public_missing total=8"
+    echo "FAIL required=public_formulae missing=$public_missing total=$public_total"
+    failures=$((failures + 1))
+fi
+
+retired_present=0
+for formula in $(printf '%s\n' "$retired_formulae" | tr ',' ' '); do
+    state=$(macos_manifest_get "$fact_file" \
+        "formula_$(macos_formula_key "$formula")")
+    [ "$state" = absent ] || retired_present=$((retired_present + 1))
+done
+retired_total=$(macos_token_count "$retired_formulae")
+if [ "$retired_present" -eq 0 ]; then
+    echo "PASS required=retired_formulae present=0 total=$retired_total"
+else
+    echo "FAIL required=retired_formulae present=$retired_present total=$retired_total"
     failures=$((failures + 1))
 fi
 

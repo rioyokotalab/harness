@@ -116,6 +116,7 @@ for expected in \
     'logical_id=mac-test-pilot' \
     'architecture=arm64' \
     'account_shell=zsh' \
+    'account_shell_registry=absent' \
     'homebrew=present' \
     'homebrew_prefix_class=apple-silicon-default' \
     'command_line_tools=present' \
@@ -126,13 +127,17 @@ for expected in \
     'link_claude_guidance=symlink' \
     'link_bash_launcher=absent' \
     'formula_bash=present' \
+    'formula_bash_completion_2=present' \
     'formula_git=present' \
     'formula_git_lfs=present' \
     'formula_tmux=present' \
     'formula_ripgrep=present' \
     'formula_jq=present' \
     'formula_tree=absent' \
-    'formula_shellcheck=present'
+    'formula_shellcheck=present' \
+    'formula_uv=present' \
+    'formula_bash_completion=present' \
+    'formula_pyenv=present'
 do
     printf '%s\n' "$output" | grep -F -x "$expected" >/dev/null ||
         fail "missing value-minimized fact: $expected"
@@ -148,7 +153,7 @@ if grep -E '(^| )(update|upgrade|install|cleanup|services|tap|bundle)( |$)' \
     "$brew_log" >/dev/null; then
     fail "inventory invoked a mutating or broad Homebrew command"
 fi
-[ "$(grep -c '^list --formula --versions ' "$brew_log")" -eq 8 ] ||
+[ "$(grep -c '^list --formula --versions ' "$brew_log")" -eq 12 ] ||
     fail "inventory did not query exactly the public formula allowlist"
 
 x86_output=$(HOME="$home" SHELL=/bin/bash BREW_LOG="$TEMP_DIR/brew-x86.log" \
@@ -160,8 +165,8 @@ printf '%s\n' "$x86_output" | grep -F -x 'architecture=x86_64' >/dev/null ||
 printf '%s\n' "$x86_output" | grep -F -x \
     'homebrew_prefix_class=intel-default' >/dev/null ||
     fail "Intel Homebrew prefix class"
-printf '%s\n' "$x86_output" | grep -F -x 'account_shell=bash' >/dev/null ||
-    fail "Bash account-shell class"
+printf '%s\n' "$x86_output" | grep -F -x 'account_shell=apple-bash' >/dev/null ||
+    fail "Apple Bash account-shell class"
 
 unusable_output=$(HOME="$home" SHELL=/bin/zsh \
     BREW_LOG="$TEMP_DIR/brew-unusable.log" FAKE_BREW_FAIL=1 \

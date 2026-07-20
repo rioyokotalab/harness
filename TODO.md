@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-280.
+and compact historical pointers here. Next free ID: T-282.
 
 ## Current state
 
@@ -52,30 +52,15 @@ and compact historical pointers here. Next free ID: T-280.
 
 ## Next resume checkpoint
 
-T-280 is the active one-Mac onboarding task. The owner supplied one opaque
-logical identifier and an ephemeral reverse-SSH execution route outside this
-public ledger, explicitly authorized full installation through that route, and
-requires no further ordinary permission prompts. Value-free discovery confirms
-a supported Apple-silicon Darwin target with Command Line Tools and functional
-Homebrew at its supported current-user-owned prefix; Homebrew is merely absent
-from the remote shell's initial `PATH`. Codex, the public checkout, and a usable
-native target-side agent socket are absent, while a command-scoped forwarded
-agent socket is safe. The public checkout was cloned clean/equal from published
-`main`. The bootstrap plan selected only the declared missing prerequisites,
-but its first Homebrew dry-run stopped before package mutation because the
-existing Homebrew engine is too old for the current OS. Its current-user-owned
-repository is clean on a supported branch with the official origin and no lock
-collision. Its native update advanced the engine and then exited nonzero on a
-retired legacy tap branch. Vendor-managed migration performed one required
-OS-compatibility reinstall, removed only obsolete tap metadata, and retained
-the old installed formula. Read-only revalidation now finds an OS-compatible
-engine, clean official repository, no legacy tap checkout or registration, and
-a ready bootstrap plan; temporary outputs are absent. The published recovery
-checkpoint was followed by one accepted `brew update` retry: it exited zero as
-an exact no-op, and revalidation retained the OS-compatible engine, clean
-repository, and absent legacy tap. Resume by publishing this acceptance, then
-repeat the exact bootstrap plan and apply while preserving every authentication
-and unsafe-state stop gate.
+T-281 is the active three-Mac Bash-local reconciliation task. The three
+currently reachable owner-operated Macs passed authenticated read-only access;
+their identities and routes remain outside this public ledger. The owner grants
+task-scoped permission to read only their current `.bashrc` files and confirms
+that those files presently contain no sensitive value. The task is
+`interviewing`: compare only the owner-local middles, resolve one semantic
+difference at a time, checkpoint every choice, and make no live or public-hook
+change until the decision audit is complete and the owner gives a fresh `go`.
+The complete plan and first open decision are recorded under T-281 below.
 
 T-273 remains the ordered closure task for every known item deliberately
 deferred by T-268, T-269, and T-272. Workstreams 1 and 2 are complete by
@@ -113,6 +98,301 @@ query only those recorded IDs after eligibility and do not replace or duplicate
 a delayed job. T-210 is complete and must not be repeated.
 
 ## Active tasks
+
+### T-281 — Reconcile three personal-Mac `.bashrc` local bodies
+
+**Phase/status:** `executing-public`; the owner supplied the explicit `go`, and
+the public implementation/validation stage is in progress. No Mac, private
+companion, package, startup file, account shell, agent process, `.bash_common`,
+or pyenv tree has been mutated yet. Scope is exactly the three currently reachable
+owner-operated personal Macs. Their private identities, SSH routes, usernames,
+complete startup bytes, and any later transaction identifiers remain outside
+public Git. For this task only, the owner explicitly permits reading the three
+current `.bashrc` files and confirms that they contain no sensitive value. That
+permission does not extend to credentials, `.bash_common` contents, other owner
+configuration, or a later task, and expires when T-281 completes.
+
+**Confirmed read-only state:** every `.bashrc` is a current-user-owned regular
+single-link file with valid Homebrew-Bash syntax. Two have mode 0644 and one has
+mode 0600. All three contain the exact canonical public early and post hooks;
+the only managed difference is the required private logical-host assignment,
+and each canonical-startup plan is current/no-op. Differences are confined to
+the owner-local middle. They fall into eight decision groups: Homebrew
+environment setup, Bash completion, Python environment tooling, local compiler
+and library paths, obsolete Codex-installer paths, one retained
+`.bash_common` reference, aliases, and final formatting/file-mode
+normalization. Shared public policy already owns `~/.local/bin` precedence and
+the recursive `sudo` alias. Value-free command/path checks find one live pyenv
+installation, two uv/venv environments, uneven completion installations, no
+live legacy Codex directory, no live local include/library/pkg-config
+directories, one present `.bash_common`, and the native locate updater on all
+three. No package, startup file, active shell, agent, or repository state was
+changed by discovery.
+
+**Desired outcome and non-goals:** review each difference and common-entry
+group exactly one at a time, retaining a setting only where its demonstrated
+purpose still applies,
+promoting stable non-sensitive cross-Mac behavior to the smallest public hook
+when appropriate, and leaving true machine-local behavior local. Do not force
+byte identity at the expense of intentional tool differences. Do not inspect
+`.bash_common`, edit `.bash_profile`, zsh, SSH, Keychain, Terminal,
+Codex/Claude settings, or reload an active shell/tmux server. Package and
+account-shell changes remain forbidden before the final explicit `go`; after
+it, only the exact selected formula, `/etc/shells`, `chsh`, agent-process,
+`.bash_common`, and pyenv-root changes below are in scope.
+
+**Frozen working plan:** (1) checkpoint each owner decision and its rationale;
+(2) audit the final register for contradictions and present one exact proposed
+state per Mac; (3) wait for a fresh explicit `go`; (4) implement any reusable
+public behavior with focused tests, ShellCheck, `git diff --check`, complete
+portable phase one, and protected publication before live use; (5) revalidate
+each exact live preimage/type/owner/mode and stage mode-0600 same-directory
+candidates without execution; (6) preserve exact local rollback images,
+syntax-check every candidate, atomically replace only the three `.bashrc`
+files, and stop/unwind on the first changed preimage or failure; (7) perform
+the separately bounded private-formula promotion, Homebrew transitions,
+account-shell transaction, guarded deletion, exact unlink, and agent
+convergence described below; (8) validate canonical plans/doctors, fresh
+login/interactive/noninteractive behavior, and every selected tool route;
+(9) deliberately exercise unchanged-only rollback for reversible startup and
+account-shell changes, prove the prior behavior, reapply the accepted state,
+and finish with mode-0600 files, no-op plans, clean/equal Git, and no
+active-session reload.
+
+**Risks and recovery:** PATH ordering can select the wrong tool; completion
+loaders and Python initializers can fail or slow login; compiler/library
+variables can contaminate builds; per-shell agent startup can leak processes;
+and removing an apparently stale reference can discard behavior. Discovery
+therefore precedes every decision, public hooks change only after protected
+validation, live candidates must parse before replacement, and exact private
+preimages remain available for unchanged-only rollback until final acceptance.
+Any new sensitive value, changed live preimage, syntax/doctor/fresh-shell
+failure, unexpected package/dependent scope, unavailable exact administrator
+route, or ambiguous `.bash_common` target stops.
+
+**Decision register:** D1 Homebrew environment setup is selected. All three
+Macs will use the same `brew shellenv` initialization and suppress Homebrew
+environment hints, replacing append-only, prepend-only, and already-canonical
+variants with one portable Apple-silicon behavior. This gives Homebrew tools
+consistent precedence and defines its related prefix environment without
+changing packages. D2 Bash completion is selected: all three will conditionally
+source the same Homebrew profile loader when readable. The currently installed
+older/newer completion variants both provide that path, while its absence on
+the third Mac remains a safe no-op; no package is added. D3 Python tooling is
+selected in direction: all three will standardize on the latest Homebrew `uv`;
+the currently missing installation will be added, existing installations
+upgraded, and pyenv startup configuration removed everywhere. Pyenv itself
+will be removed where present. Before this decision can close, value-free
+discovery must distinguish package ownership and whether removal would also
+delete managed Python versions or environments; no pyenv data tree may be
+deleted without a separately frozen boundary and the guarded bulk-delete
+workflow where applicable. That read-only discovery is now complete: only one
+reachable Mac has pyenv; it has both the Homebrew formula and an executable
+Git-checkout `~/.pyenv`, with one managed Python-version directory and two
+reported virtualenv entries supplied through a checkout-local plugin. The
+other two have no pyenv root or formula. Therefore uninstalling the formula
+alone would leave the active checkout and its managed data, while deleting the
+root would remove those environments. The owner explicitly selected permanent
+deletion of that complete managed root and its Python/virtualenv contents. At
+execution, the exact unchanged root must be moved beneath a narrow retained
+private staging boundary and removed only through `harness guarded-delete`
+plan/apply with manifest revalidation; raw recursive deletion remains
+forbidden. D3 is therefore closed. D4 is selected: remove the office-only
+`.local/include`, `.local/lib`, dynamic-library, compiler-header, and
+`pkg-config` exports because every referenced directory is absent, and remove
+its duplicate explicit
+`.local/bin` insertion because the canonical public profile hook already owns
+that path. No directory or installed tool is removed by D4. D5 obsolete Codex
+paths is selected: remove the home-only Codex-labeled `.local/bin` insertion
+because the canonical public profile already supplies it, and remove the
+office-only `.local/libexec/harness-codex-native` insertion because that path is
+absent on every reachable Mac. The shared profile remains the sole owner of
+`.local/bin`; no installed Codex component is removed. D6 `.bash_common` is
+selected: remove the aist-only source entry from `.bashrc` and permanently
+exact-unlink `~/.bash_common` itself. Its contents remain uninspected and must
+not be copied into a rollback artifact; execution must first revalidate only
+its exact path, type, owner, and single-link boundary and must stop rather than
+follow or broaden an unexpected target. This is one exact non-recursive file
+removal, not a guarded bulk deletion. D7 aliases is selected: remove both the
+aist-local `sudo` and `updatedb` aliases, add no new portable alias, and leave
+the existing public `sudo` alias unchanged. Thus `updatedb` will have no custom
+Mac alias. D8 final formatting/mode normalization is selected: all three files
+will use mode `0600` and identical ordering, comments, whitespace, and local
+settings; only the canonical managed logical-host value may differ. The owner
+then expanded the interview to reconsider common local entries before the
+final audit. D9 Bash deprecation-warning suppression is next. D10 global
+compiler selection, D11 locale, D12 per-shell SSH-agent startup, and D13 color
+environment remain pending and will be asked one at a time. D9 value-free
+discovery confirms all three accounts still use Apple `/bin/bash` as their
+login shell. Broader owner-requested review confirms Apple Bash is 3.2.57 and
+the already managed Homebrew Bash is 5.3.15 on all three. Home currently retains
+both an old 5.2.15 cellar version and Bash-completion 1.3; office has
+Bash-completion 2.18; aist has no completion formula. The current Homebrew Bash
+formula is 5.3.15 and supports the current Apple-silicon macOS releases
+(<https://formulae.brew.sh/formula/bash>); Homebrew states its completion 1.x
+formula is mainly for Bash 3 and recommends `bash-completion@2` for Homebrew
+Bash (<https://formulae.brew.sh/formula/bash-completion>). Apple supports using
+a complete alternate-shell path while macOS itself defaults to zsh
+(<https://support.apple.com/guide/terminal/trml113/mac>). The repository already
+manages the `bash` formula and a safe explicit `harness-bash` launcher but, by
+prior design, does not mutate `/etc/shells` or the account shell. D9 is now a
+broader selected migration: all Macs will use the managed Homebrew Bash as
+their account login shell, and the obsolete Apple-Bash warning suppression will
+be removed. This extends the later execution scope to an idempotent exact
+addition of `/opt/homebrew/bin/bash` to `/etc/shells` when absent and an exact
+per-account `chsh`, with the prior shell captured and unchanged-only rollback
+validated; no mutation occurs before the final `go`. D2 is amended accordingly:
+`bash-completion@2` becomes a managed public formula on every Mac, the old
+conflicting completion 1.x formula is removed where present, and all three use
+the previously selected conditional profile loader. Public and private shell
+code must remain compatible with the oldest supported Linux Bash despite the
+newer Mac interactive shell. D10 global compiler selection is next. D11 locale,
+D12 per-shell SSH-agent startup, and D13 color environment remain pending.
+D10 value-free discovery confirms the common `CC=gcc` and `CXX=g++` entries do
+not produce common behavior: two Macs resolve those names to Apple's Clang
+wrappers and have no Homebrew GCC/LLVM formula, while one resolves them to its
+installed Homebrew GCC. All three otherwise resolve the default `cc` to Apple
+Clang. D10 is selected: remove both global compiler overrides from every Mac,
+leave compiler selection to each project, and uninstall exactly the Homebrew
+`gcc` formula from office after the final `go`. A value-free preflight finds no
+installed formula depending on `gcc`, and the private companion does not select
+it, so managed catch-up will not reinstall it. The exact Homebrew uninstall
+must use the trusted-package-manager boundary, name only `gcc`, perform no
+cleanup/autoremove, and verify Apple Clang becomes the default afterward. D11
+locale is next. D12 per-shell SSH-agent startup and D13 color environment
+remain pending. D11 value-free discovery confirms `en_US.UTF-8` is supported
+on every Mac, while the GUI launch environment supplies neither `LANG` nor
+`LC_CTYPE`; the public hooks also supply no locale. Removing the common entry
+would therefore make UTF-8 behavior depend on each terminal or SSH client. D11
+is selected: preserve `LANG=en_US.UTF-8` through the smallest Darwin-specific
+public hook and remove it from every local `.bashrc`; Linux behavior remains
+unchanged. D12 per-shell SSH-agent startup is next. D13 color environment
+remains pending. Public policy already prohibits per-shell agents: Linux uses
+one packaged fixed-socket service, forwarded sessions preserve their inherited
+socket, and macOS agent/Keychain ownership remains native and owner-controlled.
+D12 value-free discovery finds no inherited or launchd-exported socket in the
+reverse-SSH command context, but finds multiple current-user `ssh-agent`
+processes on every Mac (between two and six), consistent with the startup
+block's process-leak risk. Their identities and loaded keys were not inspected.
+D12 is selected: remove the per-shell startup block with no replacement and
+preserve inherited native or forwarded sockets. The owner also selected
+post-`go` process convergence. Launchd value-free classification finds exactly
+one running native `com.openssh.ssh-agent` on each Mac plus respectively two,
+five, and one current-user shell-style `ssh-agent -s` processes, with no other
+agent class. Execution must re-resolve and preserve the then-current launchd
+PID, revalidate every candidate's owner/executable/arguments, send `TERM` only
+to exact non-native shell-style agents, never enumerate identities or keys,
+and verify one native agent remains. Existing shells using retired sockets may
+need replacement sessions; no active environment will be rewritten. D13 color
+environment is next. D13 value-free discovery confirms every Mac resolves
+`ls` to the native Apple command, none has Homebrew coreutils, and that native
+command accepts the shared `--color=auto` behavior. The non-empty
+`CLICOLOR=xterm-color` entry is therefore redundant and its value is not the
+conventional boolean spelling. D13 is selected: remove it from every local
+`.bashrc` with no replacement. All interview groups are now closed. Exact next
+action: audit the complete register against current repository mechanisms and
+unchanged live preimages, record the exact public and per-Mac proposed state,
+set the task ready-for-go only if contradiction-free, and wait for a fresh
+explicit `go`. No execution authority exists yet.
+
+**Ready-for-go audit:** a fresh permitted reread confirms the three `.bashrc`
+files remain valid canonical public-pre/local/public-post layouts. The aist
+preimage no longer contains the originally inventoried `.bash_common` source
+or local aliases; their selected `.bashrc` removals are already satisfied, so
+execution must not expect or recreate them. Its unreferenced `.bash_common` is
+still one current-user-owned regular single-link file and remains selected for
+content-blind exact unlink. The other selected local entries remain present.
+All account shells remain Apple Bash, and `/etc/shells` contains zero Homebrew
+Bash entries on every Mac. No private profile selects `uv`, completion 1.x,
+pyenv, or GCC. One private profile does select `bash-completion@2`; before its
+public promotion, execution must fetch a clean current private companion,
+remove only that exact token without emitting other values, validate, commit,
+and push the private change. Pyenv and completion 1.x have zero installed
+formula dependents; GCC's zero-dependent result was already recorded.
+
+The exact public target is: add `uv` and `bash-completion@2` to the managed Mac
+baseline; declare completion 1.x and pyenv retired so sleeping Macs can safely
+converge from old states; extend inventory, plan, doctor, update, documentation,
+and focused tests accordingly; and leave Linux package selection unchanged.
+The shared profile will perform guarded Darwin-only Homebrew `shellenv`, export
+`HOMEBREW_NO_ENV_HINTS=1`, `LANG=en_US.UTF-8`, and
+`UV_VENV_ROOT=$HOME/.venv`, then restore canonical `~/.local/bin` precedence.
+The shared interactive hook will load the readable Homebrew completion profile
+only under a compatible Bash and provide the existing named-venv `activate`
+function. Linux branches remain byte-behavior compatible with their oldest
+supported Bash. A reusable transactional Mac startup curation route will
+replace only a canonical local middle with the exact empty login section below,
+normalize mode 0600, and support unchanged-only rollback. A separate bounded
+login-shell route will plan/apply/rollback exactly one `/etc/shells` entry and
+the current account's shell, refusing an unavailable noninteractive
+administrator path rather than prompting or broadening scope.
+
+For each Mac, the exact `.bashrc` target is its unchanged seven-line canonical
+early block and logical-host value, followed by:
+
+```bash
+# >>> harness login-only local >>>
+if shopt -q login_shell; then
+    :
+fi
+# <<< harness login-only local <<<
+```
+
+and then the unchanged canonical public post block. Thus the files are
+identical except for the managed logical-host assignment and all have mode
+0600; `.bash_profile` stays the canonical thin loader. Each Mac ends with the
+refreshed latest selected Homebrew Bash, `bash-completion@2`, and `uv`, exactly
+one `/opt/homebrew/bin/bash` entry in `/etc/shells`, that account shell, and
+exactly one launchd-native SSH agent. Aist additionally ends without the pyenv
+formula, its permanently authorized `~/.pyenv` tree, or `.bash_common`; home
+ends without completion 1.x; office ends without Homebrew GCC. No cleanup,
+autoremove, force, ignored-dependency, key enumeration, active-shell reload, or
+unselected package change is permitted.
+
+Execution order is frozen: implement and fully validate the public behavior on
+this branch; migrate the one exact private formula token; publish through the
+protected-main workflow; guarded-sync only clean Mac checkouts; refresh
+Homebrew metadata and revalidate exact formula/dependent scope; retire the
+three selected old formulae and install/upgrade selected public formulae;
+transactionally curate, validate, rollback, and reapply each `.bashrc`;
+transactionally migrate, validate, rollback, and reapply each account shell;
+then perform the irreversible tail—move the unchanged pyenv root under a
+private retained state boundary and run the exact guarded-delete plan/apply,
+exact-unlink `.bash_common`, and terminate only revalidated non-native
+shell-style agents. Final gates are fresh Homebrew-Bash login, interactive and
+noninteractive shells; Homebrew precedence; completion; `uv` and activation;
+locale; default Apple Clang with no global compiler overrides; one native agent;
+canonical no-op plans and ready doctors; clean/equal public and private Git;
+and explicit revocation of the temporary `.bashrc` read permission. The only
+expected possible owner interaction is administrator authentication if no safe
+noninteractive route exists for `/etc/shells`/`chsh`; that condition must pause
+without mutation.
+
+**Execution checkpoint (2026-07-20):** implementation now has a separate
+schema-2 formula-policy overlay managing `bash-completion@2` and `uv` and
+retiring completion 1.x and pyenv; the byte-frozen eight-formula `base.conf`
+was deliberately restored after focused long-gap testing exposed that changing
+it would strand engine-1 Macs. Inventory, plan, doctor, private-overlap checks,
+bounded Homebrew retirement, Darwin profile/interactive behavior, canonical
+empty-local Bash curation, and transactional login-shell plan/apply/rollback
+are implemented with synthetic focused coverage. The current updater validates
+the target overlay while old engines can still cross the frozen base contract.
+The formula, login-shell, shell-behavior, plan/doctor, inventory, and direct
+old-to-current update suites pass; shell syntax and `git diff --check` pass.
+The complete parallel focused matrix, ShellCheck warning gate, guarded-delete
+tests, and `tests/test-phase1.sh` also pass on committed public head `eb633e8`.
+Office's private companion was then fetched through the validated forwarded
+agent route, fast-forwarded, changed by exactly the approved one-formula token,
+validated with both the candidate manifest and full clean companion resolver,
+committed, pushed, and verified clean/equal; no private value or revision is
+recorded here. The first fetch attempt lacked forwarding and failed before any
+change, then the bounded retry succeeded.
+Working files are the public policy, macOS common/inventory/plan/doctor/profile/
+Homebrew/update/Bash-hook/login-shell adapters, shared profile/interactive
+hooks, focused tests/manifests, and personal-Mac documentation. Exact next
+action: commit this ledger checkpoint, fetch/reconcile the public branch, push
+the validated head, and publish it through protected main before any live Mac
+mutation.
 
 ### T-280 — Onboard one additional personal Mac
 
