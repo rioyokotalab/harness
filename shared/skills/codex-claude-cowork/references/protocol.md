@@ -326,6 +326,10 @@ ready-but-stale candidate never returns ready. `wait_observation` always says
 `pid_identity_authenticated: false`; PID reachability is vulnerable to reuse.
 The waiter never imports or writes. Inspect semantics, native process exit,
 protected digests, and receipts separately.
+Each completed snapshot is classified against the monotonic deadline before
+ready or not-importable can be returned. The timeout does not preempt a
+synchronous filesystem read already in progress, so it bounds polling
+classification rather than guaranteeing a hard wall-clock interrupt.
 
 The driver, which retains the live-session and external-seal paths, runs
 `status` during and after the native co-pilot window. The blinded co-pilot

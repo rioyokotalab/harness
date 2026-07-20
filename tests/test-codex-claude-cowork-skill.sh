@@ -112,6 +112,65 @@ assert "status_snapshot(args)" in wait_copilot, wait_copilot
 assert "import_copilot" not in wait_copilot, wait_copilot
 assert "write_" not in wait_copilot, wait_copilot
 PY
+PYTHONDONTWRITEBYTECODE=1 python3 - "$SESSION" <<'PY'
+import contextlib
+import importlib.machinery
+import importlib.util
+import io
+import json
+import sys
+from types import SimpleNamespace
+
+loader = importlib.machinery.SourceFileLoader("cowork_session_deadline_test", sys.argv[1])
+spec = importlib.util.spec_from_loader(loader.name, loader)
+module = importlib.util.module_from_spec(spec)
+loader.exec_module(module)
+
+def snapshot(satisfied, process):
+    return {
+        "stage": {"mechanical_import_preconditions": {"all_satisfied": satisfied}},
+        "process": process,
+    }
+
+def run(clocks, snapshots):
+    clock = iter(clocks)
+    values = iter(snapshots)
+    module.time.monotonic = lambda: next(clock)
+    module.time.sleep = lambda _: (_ for _ in ()).throw(AssertionError("slept"))
+    module.status_snapshot = lambda _: next(values)
+    output = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(output):
+            module.wait_copilot(
+                SimpleNamespace(timeout_seconds=1.0, poll_seconds=1.0, pid=None)
+            )
+    except SystemExit as exc:
+        return exc.code, json.loads(output.getvalue())
+    raise AssertionError("wait_copilot returned without SystemExit")
+
+code, value = run([0.0, 1.1, 1.15], [snapshot(True, None)])
+assert code == 4, value
+assert value["wait_observation"]["outcome"] == "timeout", value
+assert value["wait_observation"]["elapsed_seconds"] == 1.15, value
+
+not_reachable = {"state": "not-reachable", "advisory": True, "pid": 42}
+code, value = run(
+    [0.0, 0.4, 1.2, 1.25],
+    [snapshot(False, not_reachable), snapshot(True, not_reachable)],
+)
+assert code == 4, value
+assert value["wait_observation"]["outcome"] == "timeout", value
+assert value["wait_observation"]["process_loss_observed"] is True, value
+assert value["wait_observation"]["elapsed_seconds"] == 1.25, value
+
+code, value = run(
+    [0.0, 0.4, 0.9, 0.95],
+    [snapshot(False, not_reachable), snapshot(True, not_reachable)],
+)
+assert code == 0, value
+assert value["wait_observation"]["outcome"] == "ready", value
+assert value["wait_observation"]["elapsed_seconds"] == 0.95, value
+PY
 grep -F 'stage_manifest_sha256' "$PROTOCOL" >/dev/null ||
     fail 'protocol missing sealed manifest binding'
 grep -F 'does not reopen' "$PROTOCOL" >/dev/null ||

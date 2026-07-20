@@ -1270,8 +1270,9 @@ def wait_copilot(args: argparse.Namespace) -> None:
     exit_code = 4
     while True:
         snapshot = status_snapshot(args)
+        observed_at = time.monotonic()
         preconditions = snapshot["stage"]["mechanical_import_preconditions"]
-        if preconditions["all_satisfied"]:
+        if observed_at < deadline and preconditions["all_satisfied"]:
             outcome = "ready"
             exit_code = 0
             break
@@ -1279,15 +1280,19 @@ def wait_copilot(args: argparse.Namespace) -> None:
         if process is not None and process["state"] == "not-reachable":
             process_loss_observed = True
             snapshot = status_snapshot(args)
+            observed_at = time.monotonic()
             preconditions = snapshot["stage"]["mechanical_import_preconditions"]
-            if preconditions["all_satisfied"]:
+            if observed_at >= deadline:
+                outcome = "timeout"
+                exit_code = 4
+            elif preconditions["all_satisfied"]:
                 outcome = "ready"
                 exit_code = 0
             else:
                 outcome = "not-importable"
                 exit_code = 2
             break
-        remaining = deadline - time.monotonic()
+        remaining = deadline - observed_at
         if remaining <= 0:
             break
         time.sleep(min(args.poll_seconds, remaining))
