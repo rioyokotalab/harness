@@ -379,13 +379,20 @@ are implemented with synthetic focused coverage. The current updater validates
 the target overlay while old engines can still cross the frozen base contract.
 The formula, login-shell, shell-behavior, plan/doctor, inventory, and direct
 old-to-current update suites pass; shell syntax and `git diff --check` pass.
+The complete parallel focused matrix, ShellCheck warning gate, guarded-delete
+tests, and `tests/test-phase1.sh` also pass on committed public head `eb633e8`.
+Office's private companion was then fetched through the validated forwarded
+agent route, fast-forwarded, changed by exactly the approved one-formula token,
+validated with both the candidate manifest and full clean companion resolver,
+committed, pushed, and verified clean/equal; no private value or revision is
+recorded here. The first fetch attempt lacked forwarding and failed before any
+change, then the bounded retry succeeded.
 Working files are the public policy, macOS common/inventory/plan/doctor/profile/
 Homebrew/update/Bash-hook/login-shell adapters, shared profile/interactive
 hooks, focused tests/manifests, and personal-Mac documentation. Exact next
-action: finish review and documentation checks, create a small public
-implementation commit so the clean-checkout Bash-hook fixture can run, run all
-focused and complete phase-one validation, then fetch/reconcile and publish
-through protected main before any private or live Mac mutation.
+action: commit this ledger checkpoint, fetch/reconcile the public branch, push
+the validated head, and publish it through protected main before any live Mac
+mutation.
 
 ### T-280 — Onboard one additional personal Mac
 
