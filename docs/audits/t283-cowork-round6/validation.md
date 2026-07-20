@@ -43,6 +43,13 @@ The implementation was checkpointed at `4ed439d`; the supervising clean-tree
 Phase 1 gate passed. The session can now advance from `validating` to `complete`;
 scratch remains preserved until the separately guarded cleanup.
 
+After completion, guarded-delete manifest token
+`aa6041920a1a104f17f88d3cd98cfb8f0f4387e698c673aa7b6a6dfa1a71670b`
+revalidated and deleted exactly the three declared round-6 roots under `/tmp`
+(9,576 entries; 68,763,338 bytes), then verified protected anchors unchanged and
+all targets absent. The exact driver-prompt file and spent mode-0600 manifest
+were unlinked afterward. Durable evidence remains in this tracked session.
+
 ## Residual risks
 
 - The co-pilot-sandbox boundary is approximated by the stage's parent and is

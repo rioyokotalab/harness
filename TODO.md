@@ -292,9 +292,13 @@ only after those edits. The plan/scope were frozen, but phase ordering was not,
 so round 6 explicitly fails that process invariant even if code validation
 passes. The already-deleted throwaway pathname was not recorded, another part
 of the cleanup deviation.
-Next action: advance round 6 to `complete` and guard-clean its scratch. Next
-adversarial target after this round: an optional integrated
-retained-seal comparison in `verify-receipts`, or a descriptor-bound seal reader.
+Round 6 is now `complete`. Guarded-delete token
+`aa6041920a1a104f17f88d3cd98cfb8f0f4387e698c673aa7b6a6dfa1a71670b`
+deleted the three declared round-6 scratch/seal roots (9,576 entries;
+68,763,338 bytes) and verified protected anchors unchanged and targets absent;
+the exact prompt and spent manifest were unlinked afterward. Next adversarial
+target: an optional integrated retained-seal comparison in `verify-receipts`,
+or a descriptor-bound seal reader.
 
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
 and Claude. Its role contract must be client-neutral: the active client is the
