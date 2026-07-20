@@ -1,0 +1,60 @@
+# Validation
+
+## Checks
+
+- Live `cowork-session check` at `validating` — PASS.
+- Live `cowork-session verify-receipts` — PASS; reciprocal receipt matches live
+  co-pilot evidence SHA-256
+  `82742111d863bdd7ad38422f22363e310bb3ba43983447104e3e2982e887df03`.
+- Pre/post protected manifests and independent/reciprocal `stage.json` and seal
+  hashes — exact matches; both Claude processes exited 0.
+- `tests/test-codex-claude-cowork-skill.sh` — PASS.
+- `tests/test-source-contract.sh` — PASS.
+- `tests/test-claude-takeover.sh` — PASS.
+- `tests/test-public-repo-audit.sh` — PASS.
+- `git diff --check` — PASS.
+- Codex, Claude, and Agents discovery links all resolve to the same canonical
+  repository `shared/skills/codex-claude-cowork` directory — PASS.
+- Clean full `tests/test-phase1.sh` at checkpoint
+  `e4ec379cccdde0047162cf0d10f8a3eb06dcf93e` — PASS, including every listed
+  suite, the clean-checkout tmux gate, cowork, takeover, source-contract,
+  public-repository audit, and guarded-delete tests. Native MPI smoke was the
+  suite's expected environment-declared skip, not a failure.
+
+## Outcome
+
+The seventh self-hosted audit supports a no-code release-candidate outcome.
+Both agents independently and reciprocally agree that no helper, protocol, or
+test change adds justified enforcement now. The staged seal flow works in both
+driver directions, while its Claude behavioral-confinement boundary, nested
+stage precondition, retained-seal comparison, and arbitrary-editor phase limit
+remain explicit rather than overstated. The clean full gate passed at
+`e4ec379`; the session can advance from validating to complete. Scratch remains
+retained only until separately guarded cleanup.
+
+## Residual risks
+
+- Claude co-pilot permissions are not an OS filesystem sandbox. A same-UID seal
+  that Claude can discover/reach is protected by placement and behavior; this
+  run demonstrates compliance, not authorship or confinement.
+- The stage-parent boundary is sound only for the mandated direct-child layout.
+- Receipt verification cannot locate or reopen a path-free external seal after
+  import; retained-byte comparison remains a separate operator audit action.
+- A generic session helper cannot prevent arbitrary repository editors from
+  writing before `executing`; phase ordering is validated for helper transitions
+  and audited as process evidence.
+- Claude left exact scratch roots under `/tmp` for guarded cleanup after final
+  acceptance; no raw recursive deletion was used in round 7.
+
+## Cleanup
+
+After the session reached `complete`, guarded-delete token
+`9f1b36d691408ca605984d04a15a13659375e7c041d913baa58db1270fe5258a`
+revalidated and deleted the six declared `/tmp` roots (1,337 entries;
+6,731,067 bytes). A separate canonical-boundary manifest with token
+`005ec24e54aa573e78d5093f202d9bd6fa25ce190e788e0bd4764f16976c7549`
+deleted only the two corresponding detached-worktree administrative records
+(16 entries; 104,851 bytes). Both applies verified protected anchors unchanged
+and targets absent. The exact Claude scratch marker and both spent manifests
+were unlinked afterward. `git worktree list --porcelain`, `git fsck
+--no-dangling`, and clean branch status passed; tracked evidence is retained.

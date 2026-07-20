@@ -1,0 +1,13 @@
+Round 3 public-safe staged client status
+
+- Claude independent staged pass: exit 0; no live path or `--add-dir`; live
+  protected digests unchanged; candidate SHA-256
+  `47b0f40cc57e847ffbd453333a2d5bdcee307b44cfa23049569e0b3b60292ebc`.
+- Claude reciprocal staged pass: exit 0; no live path or `--add-dir`; live
+  protected digests unchanged; candidate SHA-256
+  `7de7fd73b6a219f592305939bc4011b73ddec03623ac34a3a6391f9460843c3c`.
+- Both candidates passed driver-side identity, single-link, size, UTF-8,
+  headings, TODO, copied-input freshness, and exact-byte import checks.
+
+Native stdout and disposable stage bundles remain outside the repository until
+the round passes acceptance and guarded cleanup.

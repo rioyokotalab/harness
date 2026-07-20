@@ -1,0 +1,181 @@
+--- base-cowork-session	2026-07-21 03:22:54.624430552 +0900
++++ proto-cowork-session	2026-07-21 03:28:28.000780123 +0900
+@@ -17,7 +17,8 @@
+ SCHEMA_VERSION = 2
+ SUPPORTED_SCHEMA_VERSIONS = {1, 2}
+ STAGE_SCHEMA_VERSION = 2
+-RECEIPT_SCHEMA_VERSION = 1
++RECEIPT_SCHEMA_VERSION = 2
++SEAL_SCHEMA_VERSION = 1
+ CLIENTS = {"codex", "claude"}
+ EXCHANGE_MODES = {"staged", "direct"}
+ COPILOT_OWNED = "copilot-evidence.md"
+@@ -401,6 +402,7 @@
+     "stage_manifest_sha256",
+     "candidate_sha256",
+     "destination_before_sha256",
++    "seal_sha256",
+     "imported_at",
+ }
+
+@@ -433,6 +435,7 @@
+         "stage_manifest_sha256",
+         "candidate_sha256",
+         "destination_before_sha256",
++        "seal_sha256",
+     ):
+         if not is_sha256(value[name]):
+             fail(f"{mode} receipt has an invalid hash: {name}")
+@@ -518,6 +521,60 @@
+     fail("stage directory must be outside the live session")
+
+
++
++SEAL_KEYS = {
++    "schema_version",
++    "mode",
++    "driver",
++    "copilot",
++    "phase",
++    "stage_manifest_sha256",
++    "destination_before_sha256",
++}
++
++
++def seal_location_ok(session_root: Path, stage_parent: Path, seal_raw: str) -> Path:
++    """Resolve a seal path and refuse the live session or co-pilot sandbox tree.
++
++    A seal that anchors co-pilot-writable ``stage.json`` must itself sit outside
++    every co-pilot-writable tree. We approximate the co-pilot sandbox as the
++    stage's parent directory (the protocol places each stage directly inside that
++    sandbox) and also refuse the live session. This cannot know arbitrary other
++    writable paths a same-user process might reach, so callers must place the seal
++    in a directory outside any co-pilot-writable tree; that residual is documented,
++    not silently assumed safe.
++    """
++    seal_path = session_path(seal_raw)
++    resolved = seal_path.parent.resolve() / seal_path.name
++    for forbidden in (session_root.resolve(), stage_parent.resolve()):
++        try:
++            resolved.relative_to(forbidden)
++        except ValueError:
++            continue
++        fail("seal must be outside the live session and stage-parent sandbox")
++    return seal_path
++
++
++def load_seal(seal_raw: str, session_root: Path, stage_root: Path) -> dict:
++    seal_path = seal_location_ok(session_root, stage_root.parent, seal_raw)
++    require_owned_kind(seal_path, "file")
++    try:
++        value = json.loads(seal_path.read_text(encoding="utf-8"))
++    except (FileNotFoundError, UnicodeDecodeError) as exc:
++        fail(f"unreadable seal: {exc}")
++    except json.JSONDecodeError as exc:
++        fail(f"invalid seal JSON: {exc}")
++    if not isinstance(value, dict) or set(value) != SEAL_KEYS:
++        fail("seal has unexpected or missing keys")
++    if value["schema_version"] != SEAL_SCHEMA_VERSION:
++        fail("unsupported seal schema version")
++    if not is_sha256(value.get("stage_manifest_sha256")) or not is_sha256(
++        value.get("destination_before_sha256")
++    ):
++        fail("seal has an invalid hash")
++    return value
++
++
+ def stage_session(args: argparse.Namespace) -> None:
+     root = session_path(args.session_dir)
+     state = load_state(root)
+@@ -541,6 +598,16 @@
+     # (unknown/missing key) leaves no partial stage directory.
+     projected_state = project_stage_state((root / "state.json").read_bytes())
+     stage_root = stage_path_outside_session(root, args.stage_dir)
++    # Resolve and pre-check the external seal before minting any stage bytes so a
++    # bad seal path (inside a co-pilot tree, or already present) leaves no partial
++    # stage. Seal write itself is still a second file, not atomic with the stage.
++    seal_target = None
++    if state["schema_version"] == 2:
++        if not args.seal:
++            fail("schema-2 staged staging requires --seal EXTERNAL_FILE")
++        seal_target = seal_location_ok(root, stage_root.parent, args.seal)
++        if seal_target.exists() or seal_target.is_symlink():
++            fail(f"seal path already exists: {seal_target}")
+     stage_root.mkdir(mode=0o700)
+     stage_root.chmod(0o700)
+     (stage_root / "artifacts").mkdir(mode=0o700)
+@@ -572,9 +639,25 @@
+         (json.dumps(stage_state, indent=2, sort_keys=True) + "\n").encode("utf-8"),
+     )
+     stage_digest = sha256_bytes((stage_root / "stage.json").read_bytes())
++    seal_message = ""
++    if seal_target is not None:
++        seal = {
++            "schema_version": SEAL_SCHEMA_VERSION,
++            "mode": args.mode,
++            "driver": state["driver"],
++            "copilot": state["copilot"],
++            "phase": state["phase"],
++            "stage_manifest_sha256": stage_digest,
++            "destination_before_sha256": stage_state["destination_before_sha256"],
++        }
++        write_new_file(
++            seal_target,
++            (json.dumps(seal, indent=2, sort_keys=True) + "\n").encode("utf-8"),
++        )
++        seal_message = f" seal_sha256={sha256_bytes(seal_target.read_bytes())}"
+     print(
+         f"staged {args.mode} exchange: {stage_root} "
+-        f"stage_sha256={stage_digest}"
++        f"stage_sha256={stage_digest}{seal_message}"
+     )
+
+
+@@ -744,6 +827,24 @@
+     if previous_sha256 != stage_state["destination_before_sha256"]:
+         fail("live co-pilot evidence drifted from the staged destination-before hash")
+
++    seal_sha256 = None
++    if state["schema_version"] == 2:
++        if not args.seal:
++            fail("schema-2 staged import requires --seal EXTERNAL_FILE")
++        seal = load_seal(args.seal, root, stage_root)
++        if seal["driver"] != state["driver"] or seal["copilot"] != state["copilot"]:
++            fail("seal roles do not match the live session")
++        if seal["mode"] != stage_state["mode"]:
++            fail("seal mode does not match the stage")
++        if seal["phase"] != "discussing":
++            fail("seal was not created during discussion")
++        if seal["destination_before_sha256"] != stage_state["destination_before_sha256"]:
++            fail("seal destination-before does not match the stage")
++        actual_stage_manifest = sha256_bytes((stage_root / "stage.json").read_bytes())
++        if seal["stage_manifest_sha256"] != actual_stage_manifest:
++            fail("stage.json does not match the sealed manifest hash")
++        seal_sha256 = sha256_bytes(session_path(args.seal).read_bytes())
++
+     for name in STAGE_INPUTS[stage_state["mode"]]:
+         staged = (stage_root / name).read_bytes()
+         expected = stage_state["inputs"][name]
+@@ -779,6 +880,7 @@
+             ),
+             "candidate_sha256": sha256_bytes(candidate),
+             "destination_before_sha256": previous_sha256,
++            "seal_sha256": seal_sha256,
+             "imported_at": now(),
+         }
+         receipt_bytes = (
+@@ -949,12 +1051,14 @@
+     stage_parser.add_argument("session_dir")
+     stage_parser.add_argument("stage_dir")
+     stage_parser.add_argument("--mode", required=True, choices=sorted(STAGE_INPUTS))
++    stage_parser.add_argument("--seal", help="external path-free seal for schema-2 staged exchange")
+     stage_parser.set_defaults(handler=stage_session)
+     import_parser = commands.add_parser(
+         "import-copilot", help="validate and atomically import staged co-pilot evidence"
+     )
+     import_parser.add_argument("session_dir")
+     import_parser.add_argument("stage_dir")
++    import_parser.add_argument("--seal", help="external path-free seal for schema-2 staged exchange")
+     import_parser.set_defaults(handler=import_copilot)
+     advance_parser = commands.add_parser("advance", help="validate and advance one phase")
+     advance_parser.add_argument("session_dir")

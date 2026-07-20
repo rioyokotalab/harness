@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex–Claude Cowork"
+  short_description: "Pair Codex and Claude with evidence gates"
+  default_prompt: "Use $codex-claude-cowork to have the active client drive a sandboxed, evidence-based plan with the other client as co-pilot."

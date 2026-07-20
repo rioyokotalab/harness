@@ -8,6 +8,7 @@ tests/test-safety-guards.sh|interactive safety-guard focused suite
 tests/test-github-rulesets.sh|GitHub ruleset payload focused suite
 tests/test-repository-independence.sh|repository independence focused suite
 tests/test-claude-takeover.sh|Claude takeover focused suite
+tests/test-codex-claude-cowork-skill.sh|Codex-Claude cowork skill protocol
 tests/test-local-mpi-profile.sh|local MPI profile focused suite
 tests/test-personal-macos-profile.sh|personal macOS private-profile focused suite
 tests/test-personal-macos-inventory.sh|personal macOS inventory focused suite
