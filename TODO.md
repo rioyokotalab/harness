@@ -193,10 +193,14 @@ forbidden. D3 is therefore closed. D4 is selected: remove the office-only `.loca
 every referenced directory is absent, and remove its duplicate explicit
 `.local/bin` insertion because the canonical public profile hook already owns
 that path. No directory or installed tool is removed by D4. D5 obsolete Codex
-paths is the next open question. D6 `.bash_common`, D7 aliases, and D8 final
-formatting/mode normalization remain pending and will be asked one at a time.
-Exact next action: ask only D5 using completed value-free path discovery. No
-execution authority exists yet.
+paths is selected: remove the home-only Codex-labeled `.local/bin` insertion
+because the canonical public profile already supplies it, and remove the
+office-only `.local/libexec/harness-codex-native` insertion because that path is
+absent on every reachable Mac. The shared profile remains the sole owner of
+`.local/bin`; no installed Codex component is removed. D6 `.bash_common` is the
+next open question. D7 aliases and D8 final formatting/mode normalization
+remain pending and will be asked one at a time. Exact next action: ask only D6
+without inspecting `.bash_common`. No execution authority exists yet.
 
 ### T-280 — Onboard one additional personal Mac
 
