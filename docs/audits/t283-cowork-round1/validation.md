@@ -11,15 +11,16 @@ checkout.
 
 ## Outcome
 
-Validation remains in progress. The failure is attributable to running the
+Validation passed. The initial failure was attributable to running the
 clean-checkout acceptance test before checkpointing this reviewed round; its log
 reported `harness: tmux configuration requires a clean committed checkout` and
-no product behavior failure. The retry condition is a clean commit containing
-the complete round-1 evidence and implementation.
+no product behavior failure. After commit `9325af8`, the clean retry passed all
+focused suites, guarded-delete checks, and the phase-1 harness gate. Native MPI
+was correctly skipped because this was not a declared MPI environment.
 
 ## Residual risks
 
-The full suite must be rerun from that clean commit. The session must not advance
-to `complete` until all 53 suites pass. Filesystem authorship and nested artifact
-confinement remain review obligations by design; the validator now states this
-limit rather than claiming enforcement.
+Filesystem authorship and nested artifact confinement remain review obligations
+by design; the validator now states this limit rather than claiming enforcement.
+The reverse-role Claude-driver round remains a separate acceptance stage for the
+overall T-283 task, not a blocker for this Codex-driver session.

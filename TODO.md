@@ -85,6 +85,12 @@ failed only the tmux suite's intentional clean-committed-checkout prerequisite;
 retry is safe after checkpointing this reviewed round. No settings, credentials,
 packages, remotes, or external systems changed.
 
+Checkpoint commit `9325af8` made the validation checkout clean; the subsequent
+full `tests/test-phase1.sh` retry passed every focused suite and the umbrella
+gate (native MPI correctly skipped outside a declared MPI environment). Round 1
+is ready to close. Next action: advance its session to complete, checkpoint the
+result, then run the required reverse-role round with Claude driving Codex.
+
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
 and Claude. Its role contract must be client-neutral: the active client is the
 driver and the other client is the co-pilot. Both must reconstruct repository
