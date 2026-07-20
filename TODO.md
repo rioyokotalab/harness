@@ -202,6 +202,10 @@ an ancestor of the clean task branch. No push or protected CI run was
 performed; publishing this completed local branch is a separate next action if
 the owner requests it.
 
+The final explicit `HARNESS_TEST_JOBS=legacy` compatibility run also passed the
+clean full gate in 149.69 seconds; auto-eight's 77.18 seconds is 48.44% lower on
+this host while legacy remains available as an override.
+
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 
 **Phase/status:** `complete`; owner requested on 2026-07-20 that Codex drive a

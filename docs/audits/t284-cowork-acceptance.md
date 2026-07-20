@@ -72,6 +72,10 @@ named suites already covered inside phase one.
   CPUs, passed the same 57 suites and umbrella checks, and took 77.22 seconds.
   This validates the production fallback path and shows that the non-focused
   tail dominates the current whole-suite wall time.
+- An explicit `HARNESS_TEST_JOBS=legacy` clean compatibility run passed the
+  sequential path and umbrella gate in 149.69 seconds. Auto-eight's 77.18
+  seconds is 48.44% lower wall time than legacy on this host; legacy remains an
+  available override, not a default candidate.
 - Historical protected PR job: 138 seconds with 37 seconds attributable to
   standalone ShellCheck and five duplicated named suites. The duplicate steps
   are removed; a new protected run has not yet measured the resulting CI time.
@@ -88,6 +92,7 @@ shell syntax, CI YAML parse, `git diff --check`, fresh-clone sessions/receipts,
 and Codex/Claude discovery links pass. ShellCheck reports only existing
 intentional SC2016 informational diagnostics in quoted fixture text; phase one
 remains authoritative and passed.
+The explicit legacy and real four-CPU-fallback full gates also pass.
 
 The timeout classifies each completed snapshot but cannot preempt a blocked
 synchronous filesystem read. PID identity remains unauthenticated and vulnerable
