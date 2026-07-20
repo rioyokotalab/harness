@@ -159,14 +159,17 @@ preimages remain available for unchanged-only rollback until final acceptance.
 Any new sensitive value, changed live preimage, syntax/doctor/fresh-shell
 failure, package requirement, or ambiguous `.bash_common` dependency stops.
 
-**Decision register:** D1 Homebrew environment setup is open and is the next
-question. D2 Bash completion, D3 Python tooling, D4 local compiler/library
-paths, D5 obsolete Codex paths, D6 `.bash_common`, D7 aliases, and D8 final
-formatting/mode normalization remain pending and will be asked one at a time.
-The recommended D1 default is one shared Apple-silicon Homebrew initialization
-that prepends the supported prefix consistently rather than preserving three
-different PATH behaviors. Exact next action: ask only D1; after the answer,
-checkpoint it before asking D2. No execution authority exists yet.
+**Decision register:** D1 Homebrew environment setup is selected. All three
+Macs will use the same `brew shellenv` initialization and suppress Homebrew
+environment hints, replacing append-only, prepend-only, and already-canonical
+variants with one portable Apple-silicon behavior. This gives Homebrew tools
+consistent precedence and defines its related prefix environment without
+changing packages. D2 Bash completion is the next open question. D3 Python
+tooling, D4 local compiler/library paths, D5 obsolete Codex paths, D6
+`.bash_common`, D7 aliases, and D8 final formatting/mode normalization remain
+pending and will be asked one at a time. Exact next action: perform only
+read-only D2 installation/path discovery, then ask D2. No execution authority
+exists yet.
 
 ### T-280 — Onboard one additional personal Mac
 
