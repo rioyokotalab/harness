@@ -116,7 +116,7 @@ a delayed job. T-210 is complete and must not be repeated.
 
 ### T-280 — Onboard one additional personal Mac
 
-**Phase/status:** `executing`; exactly one owner-operated Mac is in scope. Its
+**Phase/status:** `ready-for-go`; exactly one owner-operated Mac is in scope. Its
 logical identity was supplied privately and is intentionally omitted here.
 This public checkpoint was reconstructed on the Linux login node from clean,
 current published `main`. The owner supplied an ephemeral reverse-SSH route and
@@ -140,6 +140,48 @@ absent, the bootstrap plan ready, and temporary outputs absent. One repeated
 engine update then exited zero as an exact no-op; the OS-compatible engine,
 clean repository, and absent legacy tap remain accepted. Homebrew recovery is
 complete and must not be repeated.
+
+**Fresh local pre-go reconstruction (2026-07-20):** the owner restarted this
+task from the target Mac and supplied its opaque logical identity plus the
+already-declared credential-free companion locator outside this public ledger.
+The public checkout is current-user-owned, clean on `main`, and exactly equal
+to freshly fetched `origin/main`; it has one worktree and no transfer-artifact
+collision. Value-free native discovery confirms supported Apple-silicon
+Darwin, Bash as the account-shell class, Command Line Tools, functional
+Homebrew at the supported prefix, a current-user-owned agent socket, the
+official standalone Codex owner, and the ready pinned Python-tools environment.
+The declared companion locator agrees with the supplied locator and its SSH
+transport is reachable without prompting. The strict companion root and local
+transaction root are absent, and no top-level onboarding artifact collides.
+All bootstrap prerequisites are already present, so bootstrap selects no
+package installation. The public baseline remains unconverged: fixed control
+links are absent and seven of eight baseline formulae are missing. No private
+clone/profile, package, link, startup, tmux, SSH, agent configuration, or
+transaction mutation ran during this reconstruction.
+
+**Current one-host plan:** after a fresh immediate revalidation, restore the
+absent strict companion from its declared SSH locator, validate its complete
+clean/current schema, and add only an absent baseline-only host declaration in
+the private companion with normal commit/push. Rerun value-free inventory and
+the aggregate plan, then execute only its block-free applicable stages in
+order: public control links; the bounded missing Homebrew baseline with no
+cask, service, tap, cleanup, removal, blanket upgrade, or implicit metadata
+refresh; public Bash hooks and canonical startup using the settled
+preserve-distinct-bodies route when selected; shared tmux; first SSH agreement
+using remote-to-local adoption when the existing payload differs; and strict
+agent configuration adoption while retaining official native Codex ownership.
+Every file/link/configuration stage gets an immediate pre-apply plan,
+fresh-session acceptance, unchanged-only exact rollback, prior-baseline proof,
+accepted reapply, and final no-op plan. Homebrew is separately bounded and not
+automatically reversible. Final acceptance requires clean/equal public and
+private Git, ready Mac and agent doctors, managed interactive and native batch
+routing, fresh Bash and isolated tmux behavior, SSH-only agreement, and absent
+transfer residue. Only afterward run T-273's ordered value-free
+`.bash_common` reference/open-handle test; retain an active file, otherwise use
+recoverable quarantine, acceptance retest, restoration drill, and exact unlink
+only for a proven unchanged orphan. Stop only for authentication, password,
+TCC, administrator, reboot, physical interaction, dirty/divergent/ambiguous
+state, unexpected package scope, or a genuinely new material choice.
 
 **Desired outcome:** independently bring this Mac to the current pull-based
 personal-Mac baseline: clean compatible public/private repositories, the
@@ -187,14 +229,12 @@ managed interactive and native batch routing correct, fresh Bash/tmux behavior,
 SSH-only agreement, no transfer residue, and every applicable rollback/reapply
 drill passed.
 
-**Exact next action:** publish this value-free Homebrew acceptance through the
-protected workflow. Through the owner-supplied ephemeral route, fast-forward
-the clean public checkout, rerun the exact Codex bootstrap plan, and apply only
-its no-block result under the owner's current authority. Do not repeat the
-accepted Homebrew engine recovery. Continue the frozen onboarding sequence
-autonomously, checkpointing each accepted stage and stopping only at an
-authentication, physical-action, unsafe/divergent-state, or genuinely new
-material-choice boundary.
+**Exact next action:** wait for the owner's fresh explicit `go`. After `go`,
+revalidate the clean/equal public checkout, current-user-owned agent socket,
+declared SSH transport, absent companion destination, and collision classes;
+then clone the companion without printing private output and continue the
+current one-host plan. Do not repeat the accepted Homebrew engine recovery or
+install already-ready bootstrap prerequisites.
 
 ### T-279 — Repair home Bash drift and retire `.bash_common`
 
