@@ -56,12 +56,11 @@ T-273 is the ordered closure task for every known item deliberately deferred by
 T-268, T-269, and T-272. Workstream 1's value-free failed-transaction review is
 resolved as evidence retention: three failed groups remain private because no
 published operation-specific cleanup contract can prove them redundant. Exact
-next work is workstream 2's PIE interview. D1 is frozen as exact automatic
-restoration to the last verified working version after interruption, and D2 is
-frozen as forward-only replacement with downgrade only by exact rollback. D3's
-prior-version retention policy is the final open decision. No implementation or live version
-change is authorized before the register is complete and the owner gives a
-fresh `go`.
+next work is workstream 2, now `ready-for-go`. D1-D3 freeze exact restoration
+after interruption, forward-only replacement with downgrade only by rollback,
+and one retained immediate predecessor while a replacement is active. Generic
+implementation remains blocked until the owner gives a fresh explicit `go`;
+no live version change is included in that execution authority.
 The other workstreams retain their recorded time, availability, project-
 requirement, or explicit-authority gates.
 
@@ -763,7 +762,7 @@ controller impersonate `local`.
 
 ### T-273 — Resolve every intentionally deferred maintenance item
 
-**Phase/status:** `interviewing` for workstream 2; scope reconciled on
+**Phase/status:** `ready-for-go` for workstream 2; scope reconciled on
 2026-07-20 and workstream 1 is resolved by retained evidence. This task owns the
 closure or explicit evidence-backed disposition of every known item that
 T-268, T-269, and T-272 intentionally left alone. It does not weaken the
@@ -949,14 +948,31 @@ and any later separately authorized live plan.
   accepted the recommendation. Planning must compare normalized versions before
   mutation, reject equal versions as replacement, and reject a lower declared
   target instead of treating it as an ordinary managed transition.
-- **D3 — prior-version retention (open):** recommended retain exactly the
-  rollback predecessor and its evidence while the replacement is active;
-  retirement of older generations remains a separate guarded cleanup decision.
+- **D3 — prior-version retention (selected):** guarantee rollback only to the
+  immediate predecessor and retain that exact tree plus its transaction
+  evidence while the replacement is active. The owner accepted the
+  recommendation. No apply automatically removes older generations; their
+  inventory and retirement remain a separate owner-authorized guarded cleanup.
 
-**Exact next action:** ask D3 only. After each owner answer, checkpoint it and
-ask the next unresolved decision. When D1-D3 are coherent, audit the plan, set
-`ready-for-go`, and wait for an explicit fresh `go`; do not implement or change
-any live agent before then.
+**Final decision audit:** D1-D3 are complete and internally consistent. A
+replacement may start only from one exact healthy older managed tree and a
+higher checksum-pinned declared version. It stages and verifies the full new
+tree before an atomic link switch, retains the immediate predecessor, and on
+any interrupted or ambiguous state restores that predecessor rather than
+resuming forward. Ordinary rollback verifies both trees and the unchanged link,
+atomically restores the predecessor, and guarded-removes only the unchanged new
+tree. The transaction promises no downgrade other than rollback and performs no
+automatic old-generation cleanup. Unmanaged/host-provided, partial, changed,
+equal-version, lower-version, checksum, collision, and stale-state cases remain
+fail-closed. Synthetic failure injection, recovery, rollback, idempotence,
+privacy/source checks, the portable suite, and protected CI gate publication.
+
+**Exact next action:** wait for an explicit fresh `go`. That `go` authorizes
+only generic public implementation, synthetic tests, validation, protected
+publication, and guarded synchronization of clean checkouts. It does not
+authorize changing `tools/agents.tsv`, applying a live agent replacement,
+removing any retained version or transaction, changing macOS installation,
+supplying authentication, or reloading an active session.
 
 ### T-272 — Seven-hour accessible-fleet maintenance
 
