@@ -189,16 +189,17 @@ deletion of that complete managed root and its Python/virtualenv contents. At
 execution, the exact unchanged root must be moved beneath a narrow retained
 private staging boundary and removed only through `harness guarded-delete`
 plan/apply with manifest revalidation; raw recursive deletion remains
-forbidden. D3 is therefore closed. D4 is selected: remove the office-only `.local/include`,
-`.local/lib`, dynamic-library, compiler-header, and `pkg-config` exports because
-every referenced directory is absent, and remove its duplicate explicit
+forbidden. D3 is therefore closed. D4 is selected: remove the office-only
+`.local/include`, `.local/lib`, dynamic-library, compiler-header, and
+`pkg-config` exports because every referenced directory is absent, and remove
+its duplicate explicit
 `.local/bin` insertion because the canonical public profile hook already owns
 that path. No directory or installed tool is removed by D4. D5 obsolete Codex
 paths is selected: remove the home-only Codex-labeled `.local/bin` insertion
 because the canonical public profile already supplies it, and remove the
 office-only `.local/libexec/harness-codex-native` insertion because that path is
 absent on every reachable Mac. The shared profile remains the sole owner of
-`.local/bin`; no installed Codex component is removed. D6 `.bash_common` is the
+`.local/bin`; no installed Codex component is removed. D6 `.bash_common` is
 selected: remove the aist-only source entry from `.bashrc` and permanently
 exact-unlink `~/.bash_common` itself. Its contents remain uninspected and must
 not be copied into a rollback artifact; execution must first revalidate only
@@ -239,8 +240,12 @@ the previously selected conditional profile loader. Public and private shell
 code must remain compatible with the oldest supported Linux Bash despite the
 newer Mac interactive shell. D10 global compiler selection is next. D11 locale,
 D12 per-shell SSH-agent startup, and D13 color environment remain pending.
-Exact next action: perform only value-free D10 compiler-resolution discovery,
-then ask D10. No execution authority exists yet.
+D10 value-free discovery confirms the common `CC=gcc` and `CXX=g++` entries do
+not produce common behavior: two Macs resolve those names to Apple's Clang
+wrappers and have no Homebrew GCC/LLVM formula, while one resolves them to its
+installed Homebrew GCC. All three otherwise resolve the default `cc` to Apple
+Clang. Exact next action: ask only D10 whether to remove the global overrides
+and leave compiler choice to each project. No execution authority exists yet.
 
 ### T-280 — Onboard one additional personal Mac
 
