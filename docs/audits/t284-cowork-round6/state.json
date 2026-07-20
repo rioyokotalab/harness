@@ -1,0 +1,9 @@
+{
+  "copilot": "claude",
+  "created_at": "2026-07-20T23:45:14+00:00",
+  "driver": "codex",
+  "exchange_mode": "staged",
+  "phase": "validating",
+  "schema_version": 2,
+  "updated_at": "2026-07-20T23:53:16+00:00"
+}

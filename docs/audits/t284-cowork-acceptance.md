@@ -9,7 +9,7 @@ better co-pilot monitoring, and faster local/protected checks. Work ran on
 `f7d5bf0d403bdc07079bb4c5e420a2aa9fbb4a02`. No client settings, credentials,
 packages, services, remotes, deployments, or external messages changed.
 
-Five complete staged cowork sessions preserve exact plans, independent and
+Six complete staged cowork sessions preserve exact plans, independent and
 reciprocal evidence, reconciliation, execution, validation, and receipts:
 
 - `t284-cowork-round1`: Codex drove Claude; prompt binding, status, and CI
@@ -21,8 +21,10 @@ reciprocal evidence, reconciliation, execution, validation, and receipts:
 - `t284-cowork-round4`: real native-client waiter dogfood and live process-loss
   coverage.
 - `t284-cowork-round5`: deadline-precedence reproduction and correction.
+- `t284-cowork-round6`: non-finite waiter-argument reproduction and fail-fast
+  correction.
 
-All five sessions are `complete`, validate from Git, and have valid independent
+All six sessions are `complete`, validate from Git, and have valid independent
 and reciprocal receipt chains.
 
 ## Accepted behavior
@@ -41,6 +43,8 @@ Monitoring now provides:
   preventing consumers from reading attractive `candidate_state=ready` alone;
 - a monotonic bounded `wait-copilot` that prints one final JSON object and
   returns `ready`/0, process-loss-final `not-importable`/2, or `timeout`/4;
+- fail-fast finite-number validation for timeout and poll arguments, so NaN
+  cannot create an unbounded wait or an unhandled sleep error;
 - tolerance for transient editor writes, one final read after observed process
   loss, unauthenticated/advisory PID labels, and deadline precedence at every
   completed snapshot; and

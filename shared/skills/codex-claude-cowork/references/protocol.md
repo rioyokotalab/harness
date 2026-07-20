@@ -315,7 +315,8 @@ semantic review, or `import-copilot`/`verify-receipts` success. Only
 `import-copilot` is the authoritative mechanical gate.
 
 `wait-copilot` reuses that same snapshot on a monotonic, explicitly bounded
-poll loop (`0 < --timeout-seconds <= 1800`, `1 <= --poll-seconds <= 60`) and
+poll loop (finite `0 < --timeout-seconds <= 1800`, finite
+`1 <= --poll-seconds <= 60`) and
 prints exactly one final JSON object. It returns `ready`/0 only for the full
 three-fact conjunction, `not-importable`/2 only after an observed process loss
 and one immediate final snapshot, or `timeout`/4. Without `--pid`, only ready

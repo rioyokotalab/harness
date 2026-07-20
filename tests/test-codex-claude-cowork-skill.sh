@@ -1312,6 +1312,32 @@ if "$SESSION" wait-copilot "$r9_session" --stage "$r9_stage" --seal "$r9_seal" \
 fi
 grep -F 'at most 1800' "$TEMP_DIR/r9-wait-bounds.out" >/dev/null ||
     fail 'missing wait timeout bound refusal'
+if timeout 2 "$SESSION" wait-copilot "$r9_session" --stage "$r9_stage" \
+    --seal "$r9_seal" --timeout-seconds nan --poll-seconds 1 \
+    >"$TEMP_DIR/r9-wait-nan-timeout.out" 2>&1; then
+    fail 'waiter accepted a non-finite timeout'
+else
+    r9_wait_status=$?
+fi
+[ "$r9_wait_status" -eq 1 ] || fail 'wrong non-finite timeout status'
+grep -F 'at most 1800' "$TEMP_DIR/r9-wait-nan-timeout.out" >/dev/null ||
+    fail 'missing non-finite timeout refusal'
+if grep -E 'Traceback|"wait_observation"' "$TEMP_DIR/r9-wait-nan-timeout.out" >/dev/null; then
+    fail 'non-finite timeout produced a traceback or JSON observation'
+fi
+if timeout 2 "$SESSION" wait-copilot "$r9_session" --stage "$r9_stage" \
+    --seal "$r9_seal" --timeout-seconds 1 --poll-seconds nan \
+    >"$TEMP_DIR/r9-wait-nan-poll.out" 2>&1; then
+    fail 'waiter accepted a non-finite poll interval'
+else
+    r9_wait_status=$?
+fi
+[ "$r9_wait_status" -eq 1 ] || fail 'wrong non-finite poll status'
+grep -F 'between 1 and 60' "$TEMP_DIR/r9-wait-nan-poll.out" >/dev/null ||
+    fail 'missing non-finite poll refusal'
+if grep -E 'Traceback|"wait_observation"' "$TEMP_DIR/r9-wait-nan-poll.out" >/dev/null; then
+    fail 'non-finite poll produced a traceback or JSON observation'
+fi
 cp "$TEMP_DIR/r9-charter-orig.md" "$r9_session/charter.md"
 
 # Prompt drift is visible before any import mutation.

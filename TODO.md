@@ -211,6 +211,16 @@ and the umbrella phase-one checks at auto-selected eight in 75.66 seconds. Its
 temporary tree was then removed through a revalidated guarded-delete manifest,
 with protected anchors unchanged.
 
+Round 6 found a final numeric edge: Python accepts NaN for the waiter's float
+arguments, letting a NaN timeout poll forever and a NaN poll interval reach an
+unhandled sleep error. Evidence is under `docs/audits/t284-cowork-round6/`.
+Claude's first pass falsely reported the exact helper absent and was rejected
+without import; an exact-path retry and reciprocal pass independently accepted
+finite-number guards for both arguments. The focused regression passes. The
+first full run passed 56/57 focused suites and failed only tmux's deliberate
+clean-committed-checkout prerequisite; checkpoint this round, rerun the clean
+full gate, complete its ledger/receipts, and guarded-clean the sandbox.
+
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 
 **Phase/status:** `complete`; owner requested on 2026-07-20 that Codex drive a

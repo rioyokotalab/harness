@@ -7,6 +7,7 @@ import argparse
 import errno
 import hashlib
 import json
+import math
 import os
 import re
 import stat
@@ -1256,9 +1257,17 @@ def status(args: argparse.Namespace) -> None:
 
 def wait_copilot(args: argparse.Namespace) -> None:
     """Wait boundedly for advisory co-pilot observations without importing."""
-    if args.timeout_seconds <= 0 or args.timeout_seconds > 1800:
+    if (
+        not math.isfinite(args.timeout_seconds)
+        or args.timeout_seconds <= 0
+        or args.timeout_seconds > 1800
+    ):
         fail("wait-copilot --timeout-seconds must be greater than 0 and at most 1800")
-    if args.poll_seconds < 1 or args.poll_seconds > 60:
+    if (
+        not math.isfinite(args.poll_seconds)
+        or args.poll_seconds < 1
+        or args.poll_seconds > 60
+    ):
         fail("wait-copilot --poll-seconds must be between 1 and 60")
     if args.pid is not None and args.pid < 1:
         fail("wait-copilot --pid must be a positive integer")
