@@ -56,8 +56,10 @@ T-273 is the ordered closure task for every known item deliberately deferred by
 T-268, T-269, and T-272. Workstream 1's value-free failed-transaction review is
 resolved as evidence retention: three failed groups remain private because no
 published operation-specific cleanup contract can prove them redundant. Exact
-next work is workstream 2's checksum-pinned agent upgrade/rollback lifecycle,
-starting with generic design and focused tests before any live version change.
+next work is workstream 2's PIE interview. The first open decision is whether
+an interrupted replacement must restore the exact prior version or may resume
+forward; no implementation or live version change is authorized before the
+decision register is complete and the owner gives a fresh `go`.
 The other workstreams retain their recorded time, availability, project-
 requirement, or explicit-authority gates.
 
@@ -759,8 +761,8 @@ controller impersonate `local`.
 
 ### T-273 — Resolve every intentionally deferred maintenance item
 
-**Phase/status:** `executing`; scope reconciled on 2026-07-20 and workstream 1
-is resolved by retained evidence. This task owns the
+**Phase/status:** `interviewing` for workstream 2; scope reconciled on
+2026-07-20 and workstream 1 is resolved by retained evidence. This task owns the
 closure or explicit evidence-backed disposition of every known item that
 T-268, T-269, and T-272 intentionally left alone. It does not weaken the
 credential, destructive-cleanup, package, scheduler, external-service, active-
@@ -882,10 +884,73 @@ are current/no-op. Nothing was removed, archived, mutated, or opened beyond the
 allowlisted status and structural metadata. Workstream 1 is closed by retained
 evidence, not deferred deletion.
 
-**Exact next action:** start workstream 2 on a protected task branch: design and
-test checksum-pinned agent version replacement, exact rollback, interrupted-
-apply recovery, and idempotence before proposing or performing any live runtime
-version change.
+**Workstream 2 PIE plan — checksum-pinned agent replacement:** the current
+Linux-only `harness agent` engine resolves one exact architecture row from
+`tools/agents.tsv`, verifies separate launcher/native HTTPS archive checksums,
+installs one versioned owned tree, links `~/.local/bin/codex`, validates the
+reported version and normalized tree digest, and can roll a first installation
+back to absence. It reports `BLOCK` when the stable link names an older managed
+version, does not atomically replace that link, does not preserve/validate an
+exact prior managed tree in its transaction, and has no durable classification
+for interruption between new-tree promotion and activation. The six managed
+Linux nodes retain pinned 0.144.4; `local` and personal Macs use the official
+installer-owned runtime and are outside this engine's live replacement scope.
+
+Desired outcome is a generic, synthetic-first managed-to-managed replacement
+transaction without changing any live version. Host-provided, unmanaged,
+partial, changed, or ambiguous layouts remain refusals. The public manifest
+continues to pin both artifacts and exact checksums; authentication,
+configuration, sessions, caches, logs, macOS installation, package managers,
+and automatic rollout remain non-goals. Working surfaces are
+`libexec/harness-agent`, `libexec/harness-rollback`, the agent fixture section
+of `tests/test-phase1.sh`, focused test registration if the fixture is split,
+operator documentation, and this ledger. `tools/agents.tsv` changes only in a
+later separately reviewed version-pin proposal, never to test replacement.
+
+Execution after a fresh `go` will: (1) classify only an exact healthy older
+managed tree/link as `REPLACE`; (2) create a mode-0600 schema-versioned
+transaction that names the exact old and proposed trees, link targets, and
+normalized digests without copying authentication or client state; (3) fetch,
+checksum, extract, and validate the proposed tree entirely in staging; (4)
+promote it beside the versioned target and atomically switch one adjacent
+stable-link candidate; (5) make every pre/post-switch interruption
+deterministically recoverable according to D1; (6) make ordinary rollback
+validate both current and prior trees plus the unchanged link before atomically
+restoring the old link and guarded-removing only the verified new tree; and
+(7) prove repeated plan/apply/recovery/rollback behavior with injected failures
+at every state boundary. Validation requires malformed/partial/unmanaged,
+checksum, changed-old-tree, changed-new-tree, changed-link, stale transaction,
+idempotence, forward replacement, rollback, and recovery cases; ShellCheck,
+source/privacy audits, the complete portable suite, and protected CI remain
+publication gates. No live apply or fleet rollout is included.
+
+Primary risks are losing the previously working command during link exchange,
+mistaking an unmanaged installation for a managed predecessor, removing a tree
+still needed for rollback, accepting a changed tree after interruption, and
+leaving an ambiguous prepared transaction that a later invocation guesses
+through. Adjacent atomic link replacement, exact digests, operation-specific
+state transitions, fail-closed collision handling, guarded tree cleanup, and
+synthetic kill/failure injection are mandatory gates. Checkpoint after every
+decision, generic implementation, focused validation, protected publication,
+and any later separately authorized live plan.
+
+**Workstream 2 decision register:**
+
+- **D1 — interrupted replacement outcome (open):** recommended exact automatic
+  restoration to the last verified working managed version. Alternative is a
+  validated forward resume to the proposed version. This choice determines
+  transaction state transitions and recovery tests.
+- **D2 — downgrade policy (pending D1):** recommended forward semantic-version
+  replacement only; downgrade occurs only through exact transaction rollback.
+  An explicit protected downgrade path would expand mutation and testing scope.
+- **D3 — prior-version retention (pending D1):** recommended retain exactly the
+  rollback predecessor and its evidence while the replacement is active;
+  retirement of older generations remains a separate guarded cleanup decision.
+
+**Exact next action:** ask D1 only. After each owner answer, checkpoint it and
+ask the next unresolved decision. When D1-D3 are coherent, audit the plan, set
+`ready-for-go`, and wait for an explicit fresh `go`; do not implement or change
+any live agent before then.
 
 ### T-272 — Seven-hour accessible-fleet maintenance
 
