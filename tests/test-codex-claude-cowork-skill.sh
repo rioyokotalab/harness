@@ -1218,13 +1218,16 @@ assert mip["authorization"] == "none", value
 PY
 
 # Process loss gets one final snapshot; stale bytes are never reported ready.
+sleep 0.5 &
+r9_short_pid=$!
 if "$SESSION" wait-copilot "$r9_session" --stage "$r9_stage" --seal "$r9_seal" \
-    --pid 2147483647 --timeout-seconds 2 --poll-seconds 1 \
+    --pid "$r9_short_pid" --timeout-seconds 3 --poll-seconds 1 \
     >"$TEMP_DIR/r9-wait-stale.json"; then
     fail 'waiter accepted stale candidate after process loss'
 else
     r9_wait_status=$?
 fi
+wait "$r9_short_pid"
 [ "$r9_wait_status" -eq 2 ] || fail 'wrong not-importable wait status'
 python3 - "$TEMP_DIR/r9-wait-stale.json" <<'PY'
 import json, pathlib, sys
