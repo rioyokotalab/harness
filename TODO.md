@@ -42,13 +42,13 @@ Next free ID: T-284.
 
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 
-**Phase/status:** `executing`; owner requested on 2026-07-20 that Codex drive a
+**Phase/status:** `complete`; owner requested on 2026-07-20 that Codex drive a
 six-hour, file-mediated collaboration with Claude to create
-`codex-claude-cowork`, then use the new skill to refine itself. The original
-request explicitly authorizes proceeding through planning, evidence discussion,
-and driver execution; no unresolved owner decision remains. Round 2 (2026-07-21)
-ran the reverse-role reload — Claude driver, Codex co-pilot — under the same
-standing authorization.
+`codex-claude-cowork`, then use the new skill to refine itself. Eight validated
+rounds exercised both native driver directions, and the accepted implementation,
+evidence, installation, and cleanup are complete. The owner separately said
+`go` on 2026-07-21 to publish this completed task through protected `main`; no
+unresolved owner decision remains.
 
 **Execution checkpoint:** the plan/interview audit found zero unresolved
 material choices. The owner's original instruction is the explicit go for the
@@ -350,6 +350,11 @@ output files. Explicit exact paths were moved without globbing into one fresh
 bounded directory; guarded token `8b08d7fa…` deleted it (23 entries; 23,775
 bytes) with protected anchors unchanged. The spent manifest was unlinked and
 the final top-level `/tmp` scan for any `t283` name is empty.
+Publication checkpoint: authenticated Git transport and GitHub API access both
+passed independently; the fetched task branch is clean and 0 behind
+`origin/main`. Next action is commit this ledger closure, rerun the protected
+merge gates from a clean checkpoint, push the task branch, create/merge its PR,
+and perform the required post-merge verification and clean-checkout fleet sync.
 
 Round 8 targets the remaining descriptor-bound seal-reader residual at baseline
 `0620d3e`, with Codex driving and Claude co-piloting. Both agents traced three
