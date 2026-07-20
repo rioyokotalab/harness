@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """Transactionally make .bashrc canonical and .bash_profile a thin loader."""
 
-from __future__ import annotations
-
 import argparse
 import filecmp
 import json
@@ -36,7 +34,7 @@ def require_regular(path: Path, uid: int) -> os.stat_result:
     return info
 
 
-def optional_regular(path: Path, uid: int) -> os.stat_result | None:
+def optional_regular(path: Path, uid: int):
     try:
         info = path.lstat()
     except FileNotFoundError:
@@ -93,7 +91,7 @@ def login_section(middle: bytes) -> bytes:
     )
 
 
-def remove_redundant_bashrc_loaders(middle: bytes) -> tuple[bytes, int]:
+def remove_redundant_bashrc_loaders(middle: bytes):
     """Drop conventional profile loaders for the now-canonical .bashrc."""
     loader = re.compile(
         rb'^[ \t]*(?:source|\.)[ \t]+(?:"?\$HOME/\.bashrc"?|"?~/\.bashrc"?)'
@@ -159,25 +157,33 @@ def adjacent_temporary(path: Path, transaction: str, label: str) -> Path:
     return Path(name)
 
 
+def unlink_if_present(path: Path) -> None:
+    try:
+        path.unlink()
+    except FileNotFoundError:
+        pass
+
+
 def validate_checkout(root: Path) -> None:
     if not (root / ".git").is_dir() or (root / ".git").is_symlink():
         die("Bash startup unification requires a Git harness checkout")
     status = subprocess.check_output(
         ["git", "-C", str(root), "status", "--porcelain", "--untracked-files=normal"],
-        text=True,
+        universal_newlines=True,
     )
     if status:
         die("Bash startup unification requires a clean committed checkout")
     if os.environ.get("HARNESS_TEST_ALLOW_NONMAIN", "0") != "1":
         branch = subprocess.run(
             ["git", "-C", str(root), "symbolic-ref", "--quiet", "--short", "HEAD"],
-            text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
+            universal_newlines=True, stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL, check=False,
         )
         if branch.returncode or branch.stdout.strip() != "main":
             die("Bash startup unification requires the main branch")
 
 
-def declared_local_symlink_is_safe(root: Path, home: Path, uid: int, host: str | None) -> bool:
+def declared_local_symlink_is_safe(root: Path, home: Path, uid: int, host) -> bool:
     local = home / ".local"
     if not host or not safe_id(host) or not local.is_symlink():
         return False
@@ -211,7 +217,7 @@ def declared_local_symlink_is_safe(root: Path, home: Path, uid: int, host: str |
         return False
 
 
-def prepare_state(root: Path, home: Path, uid: int, host: str | None = None) -> Path:
+def prepare_state(root: Path, home: Path, uid: int, host=None) -> Path:
     current = home
     for part in (".local", "state", "harness", "transactions"):
         current /= part
@@ -233,7 +239,7 @@ def exact_equal(left: Path, right: Path) -> bool:
     return left.is_file() and not left.is_symlink() and filecmp.cmp(left, right, shallow=False)
 
 
-def rollback(root: Path, home: Path, transaction: str, host: str | None) -> None:
+def rollback(root: Path, home: Path, transaction: str, host) -> None:
     if not safe_id(transaction):
         die("invalid Bash startup transaction identifier")
     uid = os.getuid()
@@ -386,10 +392,10 @@ def main() -> int:
             write_candidate(metadata_source, candidate, payload)
             bash_syntax(candidate)
         except BaseException:
-            candidate.unlink(missing_ok=True)
-            post.unlink(missing_ok=True)
+            unlink_if_present(candidate)
+            unlink_if_present(post)
             if backup is not None:
-                backup.unlink(missing_ok=True)
+                unlink_if_present(backup)
             raise
         records.append({"path": str(path), "backup": str(backup) if backup else None,
                         "post": str(post), "existed": info is not None,

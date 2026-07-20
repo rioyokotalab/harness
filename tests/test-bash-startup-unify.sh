@@ -35,6 +35,17 @@ git -C "$repo" config user.email harness-test.invalid
 git -C "$repo" add .
 git -C "$repo" commit -q --allow-empty -m baseline
 
+python3 - "$repo/libexec/harness-bash-startup-unify" <<'PY'
+import ast
+from pathlib import Path
+import sys
+
+source = Path(sys.argv[1]).read_text(encoding="utf-8")
+ast.parse(source, filename=sys.argv[1], feature_version=(3, 6))
+if "missing_ok=" in source or "text=True" in source:
+    raise SystemExit("Python 3.6-incompatible API retained")
+PY
+
 prefix=$TEMP_DIR/prefix
 cat >"$prefix" <<'EOF'
 # >>> harness early managed >>>
