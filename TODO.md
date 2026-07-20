@@ -255,8 +255,13 @@ locale is next. D12 per-shell SSH-agent startup and D13 color environment
 remain pending. D11 value-free discovery confirms `en_US.UTF-8` is supported
 on every Mac, while the GUI launch environment supplies neither `LANG` nor
 `LC_CTYPE`; the public hooks also supply no locale. Removing the common entry
-would therefore make UTF-8 behavior depend on each terminal or SSH client.
-Exact next action: ask only D11. No execution authority exists yet.
+would therefore make UTF-8 behavior depend on each terminal or SSH client. D11
+is selected: preserve `LANG=en_US.UTF-8` through the smallest Darwin-specific
+public hook and remove it from every local `.bashrc`; Linux behavior remains
+unchanged. D12 per-shell SSH-agent startup is next. D13 color environment
+remains pending. Exact next action: perform only value-free D12 agent discovery
+and inspect public agent policy, then ask D12. No execution authority exists
+yet.
 
 ### T-280 — Onboard one additional personal Mac
 
