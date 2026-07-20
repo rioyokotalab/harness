@@ -2,8 +2,15 @@
 
 Use this as an ordering checklist after reading the repository's current docs
 and task ledger. A stage is applicable only when the current profile and plan
-select it. Always invoke `./bin/harness` from the verified public checkout; do
-not create a convenience script that hides these commands.
+select it. On a Mac without Codex, start from the verified public checkout:
+
+```bash
+./bin/harness macos-codex-bootstrap --host HOST --apply
+```
+
+This installs the checksum-pinned official standalone client without editing
+shell profiles and opens Codex with the complete onboarding assignment.
+Thereafter always invoke `./bin/harness` from the verified public checkout.
 
 1. **Transport and Git preflight**
    - Resolve the exact declared SSH route and logical host.

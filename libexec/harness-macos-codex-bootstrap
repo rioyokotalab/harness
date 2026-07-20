@@ -1,0 +1,77 @@
+#!/bin/sh
+set -eu
+
+die() { printf 'BLOCK: %s\n' "$*" >&2; exit 2; }
+usage() { printf '%s\n' 'Usage: harness macos-codex-bootstrap --host HOST --plan|--apply'; }
+ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)}
+# shellcheck source=libexec/harness-macos-common
+. "$ROOT/libexec/harness-macos-common"
+
+host=
+mode=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || die '--host requires a value'; host=$2; shift 2 ;;
+        --plan|--apply) [ -z "$mode" ] || die 'choose exactly one mode'; mode=${1#--}; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) die "unknown option: $1" ;;
+    esac
+done
+[ -n "$host" ] || die 'logical host is unsafe'
+macos_private_id_is_safe "$host" || die 'logical host is unsafe'
+[ -n "$mode" ] || die 'choose --plan or --apply'
+[ "${HARNESS_BOOTSTRAP_TESTING:-0}" = 1 ] || [ "$(uname -s)" = Darwin ] || die 'this command runs only on macOS'
+[ -n "${HOME:-}" ] && [ "${HOME#/}" != "$HOME" ] && [ -d "$HOME" ] && [ ! -L "$HOME" ] || die 'HOME must be an absolute regular directory'
+
+branch=$(git -C "$ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null || true)
+[ "$branch" = main ] || die 'public harness checkout must be on main'
+if [ "${HARNESS_BOOTSTRAP_TESTING:-0}" != 1 ]; then
+    [ -z "$(git -C "$ROOT" status --porcelain --untracked-files=normal)" ] || die 'public harness checkout must be clean'
+fi
+
+conf=$ROOT/config/codex-standalone-installer.conf
+[ -f "$conf" ] || die 'installer declaration is absent'
+awk -F= '$0 !~ /^[a-z0-9_]+=[^=[:cntrl:]]+$/ {bad=1} {if (++seen[$1]!=1) bad=1} END {split("schema url sha256 bytes reviewed_at",r," "); for(i in r) if(!(r[i] in seen)) bad=1; exit bad?1:0}' "$conf" || die 'installer declaration is malformed'
+installer_url=$(awk -F= '$1=="url" {print substr($0,5)}' "$conf")
+installer_sha=$(awk -F= '$1=="sha256" {print $2}' "$conf")
+installer_bytes=$(awk -F= '$1=="bytes" {print $2}' "$conf")
+reviewed_at=$(awk -F= '$1=="reviewed_at" {print $2}' "$conf")
+[ "$(awk -F= '$1=="schema" {print $2}' "$conf")" = 1 ] || die 'unsupported installer declaration'
+case "$installer_sha" in *[!0-9a-f]*|'') die 'installer checksum is malformed' ;; esac
+[ "${#installer_sha}" -eq 64 ] || die 'installer checksum is malformed'
+case "$installer_bytes" in ''|*[!0-9]*) die 'installer byte count is malformed' ;; esac
+[ "$installer_url" = https://chatgpt.com/codex/install.sh ] || die 'installer URL is not approved'
+
+install_dir=$HOME/.local/bin codex_home=$HOME/.codex visible=$HOME/.local/bin/codex
+existing=$(command -v codex 2>/dev/null || true)
+[ -z "$existing" ] || [ "$existing" = "$visible" ] || die 'another Codex command is already active; resolve it before bootstrap'
+printf 'MODE=%s\nHOST=%s\nINSTALLER_URL=%s\nREVIEWED_AT=%s\nINSTALL_DIR=%s\nCODEX_HOME=%s\n' "$mode" "$host" "$installer_url" "$reviewed_at" "$install_dir" "$codex_home"
+[ "$mode" = apply ] || exit 0
+
+installer=$(mktemp "${TMPDIR:-/tmp}/harness-codex-installer.XXXXXX") || die 'cannot create installer file'
+chmod 600 "$installer"
+cleanup() { [ ! -e "$installer" ] || unlink "$installer"; }
+trap cleanup EXIT HUP INT TERM
+if [ "${HARNESS_BOOTSTRAP_TESTING:-0}" = 1 ] && [ -n "${HARNESS_BOOTSTRAP_INSTALLER_FILE:-}" ]; then
+    cp "$HARNESS_BOOTSTRAP_INSTALLER_FILE" "$installer"
+    installer_sha=${HARNESS_BOOTSTRAP_INSTALLER_SHA256:-$installer_sha}
+    installer_bytes=$(wc -c <"$installer" | tr -d ' ')
+else
+    command -v curl >/dev/null 2>&1 || die 'curl is unavailable'
+    curl --proto '=https' --proto-redir '=https' --tlsv1.2 -fL "$installer_url" -o "$installer"
+fi
+[ "$(wc -c <"$installer" | tr -d ' ')" = "$installer_bytes" ] || die 'installer byte count changed'
+[ "$(macos_checksum_file "$installer")" = "$installer_sha" ] || die 'installer checksum changed'
+/bin/sh -n "$installer" || die 'installer syntax validation failed'
+mkdir -p "$install_dir"
+PATH="$install_dir:$PATH" CODEX_INSTALL_DIR="$install_dir" CODEX_HOME="$codex_home" CODEX_NON_INTERACTIVE=1 /bin/sh "$installer"
+unlink "$installer"; trap - EXIT HUP INT TERM
+
+[ -x "$visible" ] || die 'official installer did not create the expected Codex command'
+command -v python3 >/dev/null 2>&1 || die 'Python 3 is required to verify the installed command'
+resolved=$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$visible")
+case "$resolved" in "$codex_home"/packages/standalone/*) ;; *) die 'Codex is not owned by the official standalone installation' ;; esac
+"$visible" --version
+prompt="Onboard this personal Mac with logical host '$host'. Work autonomously from this repository. First read AGENTS.md, TODO.md, shared/skills/onboard-personal-mac/SKILL.md completely, and every reference that skill requires. Apply that skill faithfully. Reconstruct current Git and ledger state, use value-free discovery, create the one-host plan, and ask only material questions one at a time. Wait for my explicit go before machine mutations. After go, run every native harness and Git command yourself; do not ask me to execute shell scripts. Pause only for unavoidable authentication, password, TCC, reboot, or physical interaction. Complete transactional apply, rollback, reapply, fresh-session acceptance, and the ordered post-onboarding .bash_common orphan check. Keep identities, private values, and transaction details out of public Git and TODO.md."
+printf '%s\n' 'LAUNCH=official Codex interactive onboarding session'
+exec "$visible" -C "$ROOT" "$prompt"

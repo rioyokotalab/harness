@@ -20,6 +20,7 @@ grep -F '`.bash_common` orphan test' "$SKILL" >/dev/null || fail 'orphan cleanup
 grep -F 'rollback' "$SKILL" >/dev/null || fail 'rollback contract'
 grep -F 'macos-pilot-plan --host HOST' "$STAGES" >/dev/null || fail 'aggregate plan'
 grep -F 'macos-doctor --host HOST' "$STAGES" >/dev/null || fail 'doctor acceptance'
+grep -F 'macos-codex-bootstrap --host HOST --apply' "$STAGES" >/dev/null || fail 'Codex bootstrap'
 grep -F 'bash-startup-unify --host HOST --plan|--apply' "$STAGES" >/dev/null ||
     fail 'canonical Bash onboarding stage'
 grep -F 'private Mac validator' "$SKILL" >/dev/null ||

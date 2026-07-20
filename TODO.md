@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-275.
+and compact historical pointers here. Next free ID: T-276.
 
 ## Current state
 
@@ -89,6 +89,37 @@ query only those recorded IDs after eligibility and do not replace or duplicate
 a delayed job. T-210 is complete and must not be repeated.
 
 ## Active tasks
+
+### T-275 — One-command Codex bootstrap for remaining Macs
+
+**Phase/status:** generic implementation and local validation complete. The owner authorized a local,
+one-command bridge for each remaining Mac so onboarding does not require a
+conversation relay through `office`. `harness macos-codex-bootstrap --host
+HOST --plan|--apply` operates only from clean public `main`, refuses a second
+unrelated Codex command, obtains the official OpenAI standalone installer as a
+private file, verifies its exact reviewed byte count, SHA-256, and syntax, and
+executes those same bytes with explicit `~/.local/bin` and `~/.codex` paths.
+Its process-local PATH prevents vendor profile edits. After standalone
+ownership verification it launches Codex with the complete
+`onboard-personal-mac` assignment.
+
+Authentication and physical macOS prompts remain owner-visible. The launched
+Codex reconstructs Git/TODO, plans one host, retains the explicit go gate,
+runs all native commands itself, and completes rollback/reapply, fresh-session,
+and ordered `.bash_common` acceptance. Focused/source/privacy contracts, the
+portable phase-one suite, and protected CI must pass before `home` or either
+other remaining Mac uses the command.
+
+The official installer reviewed on 2026-07-20 is pinned at 25,133 bytes and
+SHA-256 `1154e9daf713aacd1534efca8042bfd6665ad24bc1d1dfd86b8f439fe60a7a5d`.
+Review confirmed its cleanup is confined to explicit Codex standalone
+package/release, lock, staging, and temporary paths; noninteractive mode does
+not remove a conflicting package-manager installation. The wrapper downloads
+rather than pipes, verifies before execution, and pre-seeds PATH to suppress
+vendor profile edits. Bootstrap, onboarding-skill, source-contract, focused-
+runner, ShellCheck, diff, and complete portable phase-one validation pass.
+Exact next action is protected publication, then run the published plan/apply
+locally on `home`; no Mac installation has run from this task yet.
 
 ### T-274 — Unified Bash startup, faster tests, and Codex-driven Mac onboarding
 

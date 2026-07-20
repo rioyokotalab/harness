@@ -6,6 +6,24 @@ companion for curated desired intent. No Mac identity, observed inventory,
 configuration payload, transaction detail, or credential belongs in the
 public repository.
 
+## Codex-first bootstrap
+
+After cloning the public harness on a Mac that does not yet have Codex, run:
+
+```bash
+./bin/harness macos-codex-bootstrap --host LOGICAL_ID --plan
+./bin/harness macos-codex-bootstrap --host LOGICAL_ID --apply
+```
+
+Apply downloads the pinned official OpenAI installer to a private temporary
+file, verifies its reviewed byte count, SHA-256 digest, and shell syntax, and
+executes those exact bytes with explicit user-local install and state paths.
+Its process-local PATH prevents the vendor installer from editing `.zprofile`
+or `.bash_profile`. It refuses another active Codex path, verifies official
+standalone ownership afterward, and opens Codex with the complete one-Mac
+onboarding task. Authentication and physical prompts remain owner-visible;
+Codex runs all subsequent native commands itself.
+
 ## Private profile validation
 
 The v1 companion contract is defined in
