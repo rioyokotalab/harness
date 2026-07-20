@@ -11,6 +11,14 @@ grep -F 'INSTALLER_URL=https://chatgpt.com/codex/install.sh' "$out" >/dev/null |
 grep -F 'INSTALL_DIR=' "$out" >/dev/null || fail 'explicit install path'
 grep -F 'CODEX_HOME=' "$out" >/dev/null || fail 'explicit state path'
 grep -F 'PREREQUISITE_FORMULAE=' "$out" >/dev/null || fail 'prerequisite plan'
+if grep -F 'harness-mac.git' "$out" >/dev/null; then fail 'companion locator leaked in plan output'; fi
+formulae=$(awk -F= '$1=="PREREQUISITE_FORMULAE" {print $2}' "$out")
+case " $formulae " in
+    *'  '*|*[!A-Za-z0-9_@.+\ -]*) fail 'unsafe prerequisite plan' ;;
+esac
+for formula in $formulae; do
+    case "$formula" in none|gh|python|tmux) ;; *) fail 'unbounded prerequisite formula' ;; esac
+done
 grep -F 'CODEX_NON_INTERACTIVE=1' "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'noninteractive installer'
 # shellcheck disable=SC2016
 grep -F 'PATH="$install_dir:$PATH"' "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'profile-edit prevention'
