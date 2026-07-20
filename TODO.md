@@ -259,9 +259,15 @@ would therefore make UTF-8 behavior depend on each terminal or SSH client. D11
 is selected: preserve `LANG=en_US.UTF-8` through the smallest Darwin-specific
 public hook and remove it from every local `.bashrc`; Linux behavior remains
 unchanged. D12 per-shell SSH-agent startup is next. D13 color environment
-remains pending. Exact next action: perform only value-free D12 agent discovery
-and inspect public agent policy, then ask D12. No execution authority exists
-yet.
+remains pending. Public policy already prohibits per-shell agents: Linux uses
+one packaged fixed-socket service, forwarded sessions preserve their inherited
+socket, and macOS agent/Keychain ownership remains native and owner-controlled.
+D12 value-free discovery finds no inherited or launchd-exported socket in the
+reverse-SSH command context, but finds multiple current-user `ssh-agent`
+processes on every Mac (between two and six), consistent with the startup
+block's process-leak risk. Their identities and loaded keys were not inspected.
+Exact next action: ask only D12 whether to remove the startup block without a
+replacement or terminating existing agents. No execution authority exists yet.
 
 ### T-280 — Onboard one additional personal Mac
 
