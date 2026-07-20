@@ -24,8 +24,8 @@ macos_private_id_is_safe "$host" || die 'logical host is unsafe'
 [ -n "${HOME:-}" ] && [ "${HOME#/}" != "$HOME" ] && [ -d "$HOME" ] && [ ! -L "$HOME" ] || die 'HOME must be an absolute regular directory'
 
 branch=$(git -C "$ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null || true)
-[ "$branch" = main ] || die 'public harness checkout must be on main'
 if [ "${HARNESS_BOOTSTRAP_TESTING:-0}" != 1 ]; then
+    [ "$branch" = main ] || die 'public harness checkout must be on main'
     [ -z "$(git -C "$ROOT" status --porcelain --untracked-files=normal)" ] || die 'public harness checkout must be clean'
 fi
 
