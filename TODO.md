@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-279.
+and compact historical pointers here. Next free ID: T-280.
 
 ## Current state
 
@@ -89,6 +89,39 @@ query only those recorded IDs after eligibility and do not replace or duplicate
 a delayed job. T-210 is complete and must not be repeated.
 
 ## Active tasks
+
+### T-279 — Repair home Bash drift and retire `.bash_common`
+
+**Phase/status:** `validating`; a current value-free audit found every accepted
+`home` component ready except `.bash_profile`, which is a canonical thin loader
+with an opaque appended tail. The owner gave explicit `go`: preserve that tail
+as login-only behavior, remove the exact `.bash_common` loader from canonical
+`.bashrc`, and exact-delete `.bash_common` after acceptance because its aliases
+are already supplied by the harness.
+
+**Frozen route:** add one explicit, collision-refusing
+`bash-startup-unify` transaction for the narrow thin-profile-tail state and an
+exact reviewed `.bash_common` reference block. Preserve all other opaque bytes;
+plan/apply, validate fresh shell scope, rollback to both preimages, reapply, and
+repeat doctors/fresh shells. Only then prove the remaining file is owner-owned,
+regular, single-link, unchanged, unreferenced, and unopened; quarantine it
+recoverably, repeat acceptance, restore on regression, then exact-unlink the
+unchanged quarantine. Keep local transaction identifiers and bytes out of this
+ledger.
+
+**Verified:** the live profile is the exact canonical loader plus one opaque
+tail, and canonical `.bashrc` contains exactly one structurally reviewed
+four-line guarded `.bash_common` source block with no additional references.
+Synthetic plan/apply/rollback/reapply covers byte-preserving tail migration,
+exact reference removal, ambiguity refusal, and final no-op. Focused Bash,
+Mac-doctor, skill, source, privacy, ShellCheck, and diff checks pass. One
+generated `__pycache__` was removed through a validated guarded-delete manifest
+and verified absent; its manifest was exact-unlinked. Complete portable
+phase-one validation passed every suite before the documented synthetic-host
+doctor boundary (`exit 2`); protected Ubuntu CI remains authoritative.
+
+**Exact next action:** publish through protected CI, then run the frozen live
+transaction and ordered exact-file retirement.
 
 ### T-278 — Add PyYAML to personal-Mac onboarding tools
 

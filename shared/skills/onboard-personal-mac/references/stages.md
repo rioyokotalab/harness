@@ -47,6 +47,10 @@ Thereafter always invoke `./bin/harness` from the verified public checkout.
      canonical owner file and `.bash_profile` the public thin loader.
    - For a valid partial-current mismatch, preserve both local bodies with
      `bash-startup-unify --host HOST --merge-distinct-profile --plan|--apply`.
+   - For an exact canonical thin profile with an opaque appended tail, use only
+     the explicit `--merge-thin-profile-tail` route. Combine the separately
+     authorized `--remove-bash-common-reference` only when the exact guarded
+     loader and redundant file retirement have been frozen by the owner.
    - Preserve opaque local bytes and validate login, non-login, nested, and
      noninteractive scope. Never change the native account shell.
 6. **Shared tmux**

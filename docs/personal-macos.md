@@ -222,6 +222,18 @@ and appends the login-file body after removing only a redundant `.bashrc`
 loader. The flag is accepted only for that partial-current mismatch and remains
 invalid during rollback.
 
+For the narrower post-convergence drift where `.bash_profile` begins with the
+exact canonical thin loader but has an opaque appended tail, the explicit
+`--merge-thin-profile-tail` route moves only that tail into `.bashrc`'s
+login-only section and restores the exact thin loader. It refuses any other
+profile shape. When the owner has separately declared `.bash_common`
+redundant, `--remove-bash-common-reference` may be combined with that route to
+remove exactly one reviewed four-line guarded source block from the local
+`.bashrc` body. Missing, duplicate, malformed, or additional references block;
+both startup files remain one unchanged-only rollback transaction. Retirement
+of the now-unreferenced `.bash_common` file remains a later recoverable
+quarantine, acceptance retest, and exact-unlink step.
+
 ## Explicit private configuration synchronization
 
 Engine schema 2 was the historical atomic private configuration bundle. It is

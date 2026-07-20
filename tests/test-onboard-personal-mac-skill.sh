@@ -31,6 +31,8 @@ grep -F 'macos-codex-bootstrap --host HOST --apply' "$STAGES" >/dev/null || fail
 grep -F 'bash-startup-unify --host HOST --plan|--apply' "$STAGES" >/dev/null ||
     fail 'canonical Bash onboarding stage'
 grep -F 'approval_policy=never' "$STAGES" >/dev/null || fail 'zero-prompt bootstrap stage'
+grep -F -- '--merge-thin-profile-tail' "$STAGES" >/dev/null || fail 'thin profile tail route'
+grep -F -- '--remove-bash-common-reference' "$STAGES" >/dev/null || fail 'bash-common retirement route'
 grep -F 'private Mac validator' "$SKILL" >/dev/null ||
     fail 'private Mac profile validation guidance'
 grep -F 'Every command above is run by Codex' "$STAGES" >/dev/null ||
