@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-276.
+and compact historical pointers here. Next free ID: T-277.
 
 ## Current state
 
@@ -90,6 +90,76 @@ a delayed job. T-210 is complete and must not be repeated.
 
 ## Active tasks
 
+### T-276 — Onboard one remaining personal Mac
+
+**Phase/status:** `ready-for-go`; value-free local discovery began on
+2026-07-20 after a clean fetch proved public `main` equal to its collaborative
+remote. This task is limited to the current owner-operated Mac. Its logical
+identity, private companion identity and revisions, local paths, captured
+facts, and transaction identifiers remain outside public Git and this ledger.
+
+**Confirmed value-free facts:** the target is a supported Apple-silicon Darwin
+host; the public checkout is current-user-owned, clean on `main`, and equal to
+the fetched public target; the active SSH agent endpoint has the required
+current-user-owned socket shape; Homebrew and Command Line Tools are available;
+the official standalone Codex runtime is active; the fixed discovery links and
+public baseline formulae are not yet converged; no declared onboarding
+transaction category or top-level transfer artifact collides. The strict
+private companion root is absent, so private-profile validation, independent
+private fetch, value-free aggregate planning, and every apply correctly remain
+blocked. A failed profile query is not evidence about private desired values.
+
+**Frozen one-host sequence:** (1) resolve the existing private companion's
+restore/clone route without recording its identity publicly; (2) create only
+the strict owner-private companion checkout after explicit `go`, then validate
+its complete schema, logical identity, clean `main`, single origin/tracking,
+and independent fetched target; (3) rerun value-minimized inventory and
+`macos-pilot-plan`, stopping on any block, curation boundary, prompt, or drift;
+(4) plan and apply only the stages selected by that aggregate plan, in order:
+public control plane, bounded formula allowlist, legacy Bash hooks if required,
+canonical Bash startup, shared tmux, SSH-only private agreement or separately
+reviewed first seed, and agent configuration adoption; (5) run doctor and fresh
+managed-login, interactive, noninteractive/native, isolated-tmux, discovery,
+Git, private-agreement, and artifact checks; (6) unchanged-only roll back every
+new transactional component in reverse order, prove the prior baseline, rerun
+the identical plans and accepted applies, and repeat fresh-session acceptance;
+(7) only after full onboarding acceptance, perform T-273's value-free
+`.bash_common` inventory, recoverable quarantine, doctor/fresh-shell retest,
+restore on regression, and one exact non-recursive unlink only if proven
+orphaned.
+
+**Safety/rollback:** no machine mutation occurs before explicit `go`. Every
+apply is preceded by a fresh identity, clean-checkout, transport, schema,
+collision, and exact-plan revalidation. File/link/configuration changes use
+local mode-0600 transaction state and unchanged-only rollback. Homebrew changes
+remain separately bounded and are not automatically reversible; any changed
+dependency/dependent scope, metadata refresh, package recovery, prompt, TCC,
+password, authentication, reboot, or physical interaction stops at its existing
+authority boundary. No cask, service, tap, cleanup, removal, blanket upgrade,
+account-shell change, Terminal setting, plugin/connector authorization,
+background job, active-session reload, credential access, or other Mac is in
+scope.
+
+**Acceptance and checkpointing:** completion requires clean/equal public and
+private checkouts, a ready Mac doctor, correct discovery links, official native
+Codex ownership, managed interactive and native batch routing, fresh shell and
+isolated tmux behavior, SSH-only private agreement, absent transfer artifacts,
+successful apply/rollback/reapply drills, and the ordered post-onboarding orphan
+check. Private facts and transaction evidence stay in owner-private local state;
+this ledger records only value-free outcomes after every material stage.
+
+**Decision / exact next action:** the owner selected restoration from the
+already established private companion remote and supplied its private SSH clone
+locator outside the ledger. The exact destination is the required absent
+companion root; transport uses the already validated current-user-owned agent
+socket. The clone remains a machine mutation and therefore waits for explicit
+`go`. After `go`, revalidate public Git, agent transport, destination absence,
+and collisions; clone without printing private output; validate the complete
+companion and independently fetch it; then run the aggregate read-only plan.
+Continue through the frozen sequence only if it is decision-complete and
+block-free; otherwise checkpoint value-free status and ask the one newly
+material question before any further mutation.
+
 ### T-275 — One-command Codex bootstrap for remaining Macs
 
 **Phase/status:** published; ready for one-host use. The owner authorized a local,
@@ -124,6 +194,34 @@ next action is to clone public `main` locally on `home` and run the published
 apply there. No Mac installation has run from this task yet. If OpenAI changes
 the installer bytes, checksum refusal is the intended safe stop and requires a
 fresh official-source review plus pin update, never an override.
+
+**Post-bootstrap correction:** the first live `home` attempt found four
+bootstrap gaps before any onboarding apply: the official command was installed
+under `~/.local/bin` but not visible after terminal restart; the onboarding
+agent had to ask for the private companion locator; and `gh`, `tmux`, plus an
+active Python providing standard-library `tomllib` were absent. The owner
+authorized one combined correction. Install the visible Codex link in the
+already-active Homebrew bin, exact-unlink the legacy link only after both
+resolve to the same official standalone payload, carry the credential-free
+private repository SSH locator as public bootstrap metadata, and use Homebrew
+to install only missing `gh`, `tmux`, and `python` after an exact dry-run with
+automatic update/cleanup/analytics/hints disabled. Authentication remains
+separate. The fresh official installer review still matches the pinned bytes
+and deletion targets. Publish and have the live Codex fast-forward/re-run the
+bootstrap before resuming T-276; no onboarding component apply has occurred.
+Focused bootstrap/onboarding, source-contract, focused-runner, public-repository
+audit, ShellCheck, diff, and complete portable phase-one validation pass on the
+combined correction. Protected publication remains the sole implementation
+gate.
+
+The first PR #127 protected run eventually started and failed only because its
+Linux runner has no Homebrew while the bootstrap plan test inherited the live
+host environment. Production code was not implicated. The focused test now
+uses an isolated fake Homebrew command/prefix and guarded cleanup, so both
+macOS and Linux exercise the same value-free plan contract without requiring a
+package manager. ShellCheck, focused runner/source contracts, diff check, and
+the complete local phase-one rerun pass; retry through the normal PR push is
+safe.
 
 ### T-274 — Unified Bash startup, faster tests, and Codex-driven Mac onboarding
 

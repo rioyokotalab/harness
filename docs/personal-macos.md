@@ -15,14 +15,24 @@ After cloning the public harness on a Mac that does not yet have Codex, run:
 ./bin/harness macos-codex-bootstrap --host LOGICAL_ID --apply
 ```
 
-Apply downloads the pinned official OpenAI installer to a private temporary
-file, verifies its reviewed byte count, SHA-256 digest, and shell syntax, and
-executes those exact bytes with explicit user-local install and state paths.
-Its process-local PATH prevents the vendor installer from editing `.zprofile`
-or `.bash_profile`. It refuses another active Codex path, verifies official
-standalone ownership afterward, and opens Codex with the complete one-Mac
-onboarding task. Authentication and physical prompts remain owner-visible;
-Codex runs all subsequent native commands itself.
+Apply first uses the already-installed Homebrew to install only missing `gh`,
+`tmux`, and `python` prerequisites; Python is required to import its standard
+`tomllib`. Automatic metadata update, cleanup, analytics, and environment hints
+are disabled. It then downloads the pinned official OpenAI installer to a
+private temporary file, verifies its reviewed byte count, SHA-256 digest, and
+shell syntax, and executes those exact bytes with explicit state and Homebrew
+bin paths. Installing the visible command in Homebrew's already-active bin
+makes `codex` survive a terminal restart without editing `.zprofile` or
+`.bash_profile`. An older official `~/.local/bin/codex` link is exact-unlinked
+only after both links resolve to the same standalone command.
+
+The public bootstrap declaration also carries the credential-free private
+companion SSH clone locator selected by the owner. Repository knowledge grants
+no access; normal GitHub SSH authentication remains mandatory. The command
+refuses another Codex owner, verifies official standalone ownership, and opens
+Codex with the complete one-Mac onboarding task and companion locator.
+Authentication and physical prompts remain owner-visible; Codex runs all
+subsequent native commands itself.
 
 ## Private profile validation
 
