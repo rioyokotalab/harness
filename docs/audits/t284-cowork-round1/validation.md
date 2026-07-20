@@ -11,15 +11,18 @@ Static tracing reconfirmed that every removed standalone CI assertion remains in
 the phase-one script/manifest. The final helper also produced a valid read-only
 snapshot of the retained stage-schema-2 reciprocal exchange.
 
-Pending after a clean checkpoint: full `tests/test-phase1.sh`, reverse-role
-Claude-driver/Codex-co-pilot audit, and any matched worker-count samples frozen
-by that round.
+After clean checkpoint `c1c322b`, `HARNESS_TEST_JOBS=4 tests/test-phase1.sh`
+passed every runnable suite in 118.16s with only the declared native-MPI skip.
+The run was slower than the initial 88.18s baseline because fleet-sync alone
+took 41.515s, demonstrating substantial suite/runtime variance and reinforcing
+the decision not to infer a default-worker change from one sample. Reverse-role
+Claude-driver/Codex-co-pilot audit and matched worker-count samples remain for
+the supervising T-284 task, not for round-1 completion.
 
 ## Outcome
 
-Round-1 implementation passes all incremental gates and is ready for a clean
-checkpoint plus full regression. The session remains at `validating`; it is not
-yet complete.
+Round-1 implementation passes every frozen incremental and full regression
+gate. Both receipts validate and the session is ready to advance complete.
 
 ## Residual risks
 
