@@ -84,11 +84,10 @@ native_codex_state() {
     esac
 }
 
-codex_config_is_managed() {
-    [ -f "$codex_live" ] && [ ! -L "$codex_live" ] || return 1
-    [ "$(macos_stat_owner "$codex_live")" = "$current_uid" ] &&
-        [ "$(macos_stat_links "$codex_live")" = 1 ] || return 1
-    awk '
+codex_config_file_has_safe_grammar() {
+    codex_grammar_file=$1
+    codex_require_policy=$2
+    awk -v require_policy="$codex_require_policy" '
         $0 == "approval_policy = \"never\"" { if (++approval != 1 || section) bad=1; next }
         $0 == "sandbox_mode = \"danger-full-access\"" { if (++sandbox != 1 || section) bad=1; next }
         $0 ~ /^model = "([^"\\]|\\.)*"$/ { if (++model != 1 || section) bad=1; next }
@@ -99,8 +98,39 @@ codex_config_is_managed() {
             if (expect && $0 == "trust_level = \"trusted\"") { expect=0; next }
             bad=1
         }
-        END { exit approval == 1 && sandbox == 1 && !bad && !expect ? 0 : 1 }
-    ' "$codex_live" >/dev/null 2>&1
+        END {
+            if (require_policy && (approval != 1 || sandbox != 1)) bad=1
+            exit !bad && !expect ? 0 : 1
+        }
+    ' "$codex_grammar_file" >/dev/null 2>&1
+}
+
+codex_config_is_strict_regular() {
+    [ -f "$codex_live" ] && [ ! -L "$codex_live" ] || return 1
+    [ "$(macos_stat_owner "$codex_live")" = "$current_uid" ] &&
+        [ "$(macos_stat_links "$codex_live")" = 1 ]
+}
+
+codex_config_is_managed() {
+    codex_config_is_strict_regular || return 1
+    codex_config_file_has_safe_grammar "$codex_live" 1
+}
+
+codex_config_is_preservable() {
+    codex_config_is_strict_regular || return 1
+    codex_config_file_has_safe_grammar "$codex_live" 0
+}
+
+render_codex_config() {
+    local_body=$1
+    rendered_destination=$2
+    cp "$codex_source" "$rendered_destination"
+    awk '
+        /^model = "([^"\\]|\\.)*"$/ ||
+        /^model_reasoning_effort = "([^"\\]|\\.)*"$/ { print; next }
+        /^\[projects\."([^"\\]|\\.)+"\]$/ { print ""; print; project=1; next }
+        project && $0 == "trust_level = \"trusted\"" { print; project=0; next }
+    ' "$local_body" >>"$rendered_destination"
 }
 
 declared_local_symlink_is_safe() {
@@ -216,6 +246,7 @@ label_state() {
     if [ "$1" = codex ]; then
         if codex_config_is_managed; then printf '%s\n' current
         elif [ -L "$codex_live" ]; then printf '%s\n' symlink
+        elif codex_config_is_preservable; then printf '%s\n' regular
         elif [ -e "$codex_live" ]; then printf '%s\n' unsafe
         else printf '%s\n' absent
         fi
@@ -482,7 +513,11 @@ for label in codex claude launcher; do
     [ "$3" = current ] && continue
     [ ! -e "$destination" ] && [ ! -L "$destination" ] || unlink "$destination"
     if [ "$label" = codex ]; then
-        cp "$source" "$destination"
+        if [ "$3" = regular ]; then
+            render_codex_config "$4" "$destination"
+        else
+            cp "$source" "$destination"
+        fi
         chmod 600 "$destination"
         codex_config_is_managed || die "agent configuration file verification failed"
     else

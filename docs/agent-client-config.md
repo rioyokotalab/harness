@@ -55,11 +55,14 @@ Read-only commands are value-free:
 ./bin/harness agent-config --doctor
 ```
 
-An existing regular file or different symlink is preservation state and blocks
-the normal plan. After separately reviewing its ownership and deciding that the
-public canonical body should replace it, plan with `--adopt`. Apply records a
-mode-0600 local manifest and exact regular-file or symlink preimages before
-atomically rendering Codex and linking Claude plus the managed launcher:
+An existing strict regular Codex file containing only the optional local model
+keys and client-written trusted-project tables is preservation state and blocks
+the normal plan. After separately reviewing its ownership and choosing
+`--adopt`, apply adds the canonical policy keys while retaining that validated
+local body. Other regular files and different symlinks remain replacement
+state. Apply records a mode-0600 local manifest and exact regular-file or
+symlink preimages before rendering Codex and linking Claude plus the managed
+launcher:
 
 ```bash
 ./bin/harness agent-config --adopt --plan

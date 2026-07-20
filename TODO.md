@@ -183,6 +183,16 @@ action: pass focused, privacy, ShellCheck, diff, and portable phase-one gates;
 publish through protected CI; then resume SSH plan/apply/rollback/reapply before
 agent adoption and final acceptance. No live SSH or agent configuration changed.
 
+The protected correction is now published. SSH private-to-local adoption then
+passed plan/apply, current agreement, exact rollback to the prior divergent
+baseline, explicit re-plan/reapply, and final no-op agreement; identifiers stay
+private. Agent catch-up now accepts official native ownership but found a strict
+regular Codex file containing only valid project-trust tables and no canonical
+policy prefix. A focused follow-up preserves that validated local body while
+adding the canonical prefix, with exact rollback/reapply coverage. Exact next
+action: publish that correction through protected CI, then run the agent drill
+and complete fresh-session, doctor, Git, artifact, and ordered orphan gates.
+
 ### T-275 — One-command Codex bootstrap for remaining Macs
 
 **Phase/status:** published; ready for one-host use. The owner authorized a local,
