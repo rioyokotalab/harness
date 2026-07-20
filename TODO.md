@@ -214,6 +214,15 @@ audit, ShellCheck, diff, and complete portable phase-one validation pass on the
 combined correction. Protected publication remains the sole implementation
 gate.
 
+The first PR #127 protected run eventually started and failed only because its
+Linux runner has no Homebrew while the bootstrap plan test inherited the live
+host environment. Production code was not implicated. The focused test now
+uses an isolated fake Homebrew command/prefix and guarded cleanup, so both
+macOS and Linux exercise the same value-free plan contract without requiring a
+package manager. ShellCheck, focused runner/source contracts, diff check, and
+the complete local phase-one rerun pass; retry through the normal PR push is
+safe.
+
 ### T-274 — Unified Bash startup, faster tests, and Codex-driven Mac onboarding
 
 **Phase/status:** `complete-accessible-fleet`; owner gave the explicit accumulated-change `go`

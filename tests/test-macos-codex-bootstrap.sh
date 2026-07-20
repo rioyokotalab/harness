@@ -3,10 +3,37 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
-out=$(mktemp "${TMPDIR:-/tmp}/harness-bootstrap-test.XXXXXX")
-trap 'unlink "$out"' EXIT HUP INT TERM
+HARNESS=$ROOT/bin/harness
+CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
+TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
+TEST_ROOT=$(mktemp -d "$TEMP_BASE/harness-bootstrap-test.XXXXXX")
+cleanup() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    cleanup_failed=0
+    if [ -d "$TEST_ROOT" ]; then
+        "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEST_ROOT" "$TEMP_BASE" >/dev/null || cleanup_failed=1
+    fi
+    if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then status=1; fi
+    exit "$status"
+}
+trap cleanup EXIT HUP INT TERM
 
-HARNESS_BOOTSTRAP_TESTING=1 "$ROOT/bin/harness" macos-codex-bootstrap --host mac-test-home --plan >"$out"
+fake_commands=$TEST_ROOT/commands
+fake_prefix=$TEST_ROOT/homebrew
+mkdir -p "$fake_commands" "$fake_prefix/bin"
+cat >"$fake_commands/brew" <<'EOF'
+#!/bin/sh
+set -eu
+[ "${1:-}" = --prefix ] || exit 2
+printf '%s\n' "$HARNESS_TEST_BREW_PREFIX"
+EOF
+chmod 755 "$fake_commands/brew"
+out=$TEST_ROOT/out
+
+HARNESS_BOOTSTRAP_TESTING=1 HARNESS_TEST_BREW_PREFIX=$fake_prefix \
+    PATH="$fake_commands:$PATH" "$ROOT/bin/harness" \
+    macos-codex-bootstrap --host mac-test-home --plan >"$out"
 grep -F 'INSTALLER_URL=https://chatgpt.com/codex/install.sh' "$out" >/dev/null || fail 'official URL'
 grep -F 'INSTALL_DIR=' "$out" >/dev/null || fail 'explicit install path'
 grep -F 'CODEX_HOME=' "$out" >/dev/null || fail 'explicit state path'
