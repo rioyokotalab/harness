@@ -12,7 +12,8 @@
 - `tests/test-claude-takeover.sh` — PASS.
 - `tests/test-public-repo-audit.sh` — PASS.
 - `git diff --check` — PASS.
-- Clean full `tests/test-phase1.sh` — pending clean checkpoint.
+- Clean full `tests/test-phase1.sh` at checkpoint `66b80b7` — PASS in every
+  listed suite, with only the declared environment-only native MPI smoke skip.
 
 ## Outcome
 
@@ -20,7 +21,8 @@ The accepted fix mechanically binds `receipt.seal_sha256` to the exact bytes
 whose JSON passed seal validation in that import. It also removes the prior
 lstat-to-following-read leaf-symlink window. Schema, CLI, receipt format,
 location checks, historical receipts, and staged/direct behavior are unchanged.
-The session is validating with scratch preserved.
+The clean full gate passed; the session can advance to complete with scratch
+preserved until guarded cleanup.
 
 ## Residual risks
 

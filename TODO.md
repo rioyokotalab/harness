@@ -345,8 +345,9 @@ tuple return/reuse, adds structural focused assertions, and clarifies the
 before-open same-UID residual without schema/CLI/confinement expansion. The
 first Claude call returned only a skill token and was not imported; one recorded
 retry was safe and succeeded. AST, shell syntax, focused cowork, and whitespace
-checks pass. Next action: validating-phase repository gates, checkpoint, clean
-full Phase 1, complete, and guarded cleanup.
+checks pass. Checkpoint `66b80b7` then passed clean full Phase 1 in every suite
+(only the declared native-MPI environment skip). Next action: complete and
+guarded-clean round-8 scratch.
 
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
 and Claude. Its role contract must be client-neutral: the active client is the

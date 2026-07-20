@@ -15,6 +15,7 @@ plan, evidence, reconciliation, execution, validation, and cleanup record.
 | [5](t283-cowork-round5/) | Codex | Claude | Can imports leave a durable, replay-resistant chain? | Destination-before binding, independent/reciprocal receipts, direct-mode isolation |
 | [6](t283-cowork-round6/) | Claude | Codex | Can a co-pilot rewrite stage metadata after a crash-shaped evidence overwrite? | External stage-manifest seals and receipt schema 2; two process deviations recorded |
 | [7](t283-cowork-round7/) | Codex | Claude | Is the release candidate symmetric and usable without speculative hardening? | Matched no-code acceptance; retained residuals classified explicitly |
+| [8](t283-cowork-round8/) | Codex | Claude | Does a receipt hash the exact seal bytes that authorized import? | One descriptor now supplies file validation, JSON bytes, and receipt digest |
 
 Both native directions were therefore exercised repeatedly, not simulated by a
 same-product subagent. Rounds alternate the driver through round 6; round 7 also
@@ -42,7 +43,7 @@ schema-1 receipts without weakening new schema-2 writes.
 
 ## Acceptance evidence
 
-- All seven tracked sessions validate as `complete` under the final helper.
+- All eight tracked sessions validate as `complete` under the final helper.
 - Both schema-2 sessions validate their full reciprocal receipt chains; rounds
   1–5 remain strict legacy fixtures.
 - Clean `tests/test-phase1.sh` passed after the round-6 enforcement checkpoint
