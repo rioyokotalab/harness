@@ -206,6 +206,11 @@ The final explicit `HARNESS_TEST_JOBS=legacy` compatibility run also passed the
 clean full gate in 149.69 seconds; auto-eight's 77.18 seconds is 48.44% lower on
 this host while legacy remains available as an override.
 
+A final no-hardlink clone of the completed branch passed all 57 focused suites
+and the umbrella phase-one checks at auto-selected eight in 75.66 seconds. Its
+temporary tree was then removed through a revalidated guarded-delete manifest,
+with protected anchors unchanged.
+
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 
 **Phase/status:** `complete`; owner requested on 2026-07-20 that Codex drive a

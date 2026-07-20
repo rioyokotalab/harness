@@ -93,6 +93,9 @@ and Codex/Claude discovery links pass. ShellCheck reports only existing
 intentional SC2016 informational diagnostics in quoted fixture text; phase one
 remains authoritative and passed.
 The explicit legacy and real four-CPU-fallback full gates also pass.
+A final no-hardlink clone of the completed branch independently passed all 57
+focused suites and the umbrella phase-one checks at auto-selected eight in
+75.66 seconds, then was removed through a revalidated guarded-delete manifest.
 
 The timeout classifies each completed snapshot but cannot preempt a blocked
 synchronous filesystem read. PID identity remains unauthenticated and vulnerable
