@@ -244,8 +244,16 @@ D10 value-free discovery confirms the common `CC=gcc` and `CXX=g++` entries do
 not produce common behavior: two Macs resolve those names to Apple's Clang
 wrappers and have no Homebrew GCC/LLVM formula, while one resolves them to its
 installed Homebrew GCC. All three otherwise resolve the default `cc` to Apple
-Clang. Exact next action: ask only D10 whether to remove the global overrides
-and leave compiler choice to each project. No execution authority exists yet.
+Clang. D10 is selected: remove both global compiler overrides from every Mac,
+leave compiler selection to each project, and uninstall exactly the Homebrew
+`gcc` formula from office after the final `go`. A value-free preflight finds no
+installed formula depending on `gcc`, and the private companion does not select
+it, so managed catch-up will not reinstall it. The exact Homebrew uninstall
+must use the trusted-package-manager boundary, name only `gcc`, perform no
+cleanup/autoremove, and verify Apple Clang becomes the default afterward. D11
+locale is next. D12 per-shell SSH-agent startup and D13 color environment
+remain pending. Exact next action: perform only value-free D11 locale
+discovery, then ask D11. No execution authority exists yet.
 
 ### T-280 — Onboard one additional personal Mac
 
