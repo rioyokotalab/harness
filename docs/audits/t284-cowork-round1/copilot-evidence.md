@@ -2,16 +2,27 @@
 
 ## Sandbox and baseline
 
-TODO
+Sandbox: `/tmp/harness-t284-r1-claude`, confirmed at commit `f7d5bf0d403bdc07079bb4c5e420a2aa9fbb4a02` (`git rev-parse HEAD`), matching the charter's declared immutable baseline. `git status --porcelain` returned empty (clean tree). Read-only inspection was performed against `stage-independent/` (charter.md, plan.md, stage.json, state.json) and the published skill at `shared/skills/codex-claude-cowork/`. No target checkout (`/home/rioyokota/harness`) was touched from this sandbox; no session directory outside `stage-independent`/its stage was discovered or accessed.
 
 ## Commands and results
 
-TODO
+- `git rev-parse HEAD` → `f7d5bf0d403bdc07079bb4c5e420a2aa9fbb4a02`; `git status --porcelain` → empty. Fact: baseline and cleanliness confirmed.
+- `time tests/test-codex-claude-cowork-skill.sh` → passed, `real 0m9.967s` (user 7.623s, sys 2.314s). Fact: closely matches the plan's stated 10.12s focused-suite baseline; small delta is environment variance, not a regression signal.
+- Read `shared/skills/codex-claude-cowork/scripts/cowork-session` in full (1132 lines). Fact: confirms plan's claim — subcommands are exactly `init`, `check`, `digests`, `verify-receipts`, `stage`, `import-copilot`, `advance`; there is no dedicated concise status/wait subcommand.
+- Ran `cowork-session check` pointed at the stage directory (`stage-independent`, which is actually a session, not a stage — I do not have a real stage tree in this sandbox to test against, so I pointed `check` at the live session path as a proxy for "read a stage-shaped directory"): it failed with `missing top-level protocol entries: copilot-evidence.md, driver-evidence.md, execution.md, reconciliation.md, validation.md`, exit non-zero, `real 0m0.052s`. Fact: `check`'s `validate_layout` hard-requires the full `LEGACY_TOP_LEVEL` set (all seven driver/co-pilot Markdown files + state.json + artifacts). A stage directory (`state.json`, `charter.md`, `plan.md`, `stage.json`, candidate file, `artifacts/`) does not satisfy that set. **Inference**: any "one-shot stage-status" surface the plan proposes (step 2) cannot reuse `check` unmodified against a stage tree; it needs either a new stage-aware validator path or must run against the live session only. This directly narrows plan step 2's feasibility as stated.
+- `grep -n "test-restic-schedule\|test-onboard-mirrored-node\|test-evaluation\|test-public-repo-audit\|test-guarded-delete\|test-affinity-readiness\|test-codex-claude-cowork" tests/test-phase1.sh` → matches at lines 180 (`test-restic-schedule.sh`), 182 (`test-onboard-mirrored-node.sh`), 184 (`test-evaluation.sh`), 186 (`test-public-repo-audit.sh`), 398 (`test-guarded-delete.sh`). Cross-checked against `.github/workflows/ci.yml`, which runs those same five suites as standalone steps and then runs `tests/test-phase1.sh` (the umbrella gate) again. **Fact, not inference**: CI currently executes these five suites twice per run — once standalone, once nested inside the phase-one gate. `test-codex-claude-cowork-skill.sh` was not found duplicated inside `test-phase1.sh`, so that suite runs once via CI's direct portable-gate step only.
+- Did not run a full four- or eight-worker phase-one gate (out of bounded scope per task instructions); did not attempt a sealed-prompt or reciprocal-addendum prototype beyond source reading, given the 5-minute bound. These remain untested by me and are reported as open, not resolved.
 
 ## Critique
 
-TODO
+- The plan's assumption that "a read-only stage/status snapshot can replace ad hoc polling" (evidence questions) is only partially supported: the existing `check` command cannot serve that role against a stage directory without code changes, since stage layout and session layout diverge. Any accepted change must specify a new validator branch, not reuse of `check`.
+- The CI-duplication claim in the plan ("CI runs several suites individually and then runs the umbrella gate, which repeats them") is confirmed as fact for five of six candidate suites, not all of them — `test-codex-claude-cowork-skill.sh` is not duplicated. A topology fix should be scoped to the five confirmed-duplicated suites (restic-schedule, onboard-mirrored-node, evaluation, public-repo-audit, guarded-delete) rather than assumed uniform across all standalone CI steps.
+- My focused-suite timing (9.967s) essentially reproduces the charter's baseline (10.12s) in an independent sandbox, which is useful corroboration but is a single run in one environment — not sufficient alone to certify any proposed concurrency or topology change against variance.
+- I could not test the sealed-prompt or reciprocal-addendum proposals empirically within the bounded window; treating them as validated would overstate my evidence. This is an explicit uncertainty, not a rejection.
 
 ## Proposed plan changes
 
-TODO
+1. Narrow plan step 2 (stage-status prototype): require it to add a **new** stage-layout-aware check path (or a separate `stage-check` subcommand) rather than assuming reuse of the existing `check` validator, since `check` demonstrably rejects a stage tree's smaller top-level set.
+2. Narrow plan step 4 (CI duplication) to the five confirmed-duplicated suites (`test-restic-schedule.sh`, `test-onboard-mirrored-node.sh`, `test-evaluation.sh`, `test-public-repo-audit.sh`, `test-guarded-delete.sh`); explicitly note `test-codex-claude-cowork-skill.sh` and `test-affinity-readiness.sh` are not duplicated and should not be included in any "remove the repeat, keep coverage" change.
+3. Add an explicit acceptance item that any stage-status or sealed-prompt prototype must be evidenced by an actual runnable prototype (not source-reading alone) before `reconciliation.md` accepts it — my pass here was source/behavior-based only for those two proposals and should not be treated as a positive result.
+4. Record that independent single-run timings (mine: 9.967s vs charter's 10.12s) are consistent but each is one sample per sandbox; reconciliation should not treat a single-digit-percent delta as a regression or improvement signal without repeated runs.
