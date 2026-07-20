@@ -72,4 +72,16 @@ if python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
     fail 'runner accepted zero jobs'
 fi
 
+if python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
+    --manifest "$fake/pass.tsv" --log-dir "$fake/pass-logs" --jobs 2 \
+    >"$TEMP_DIR/exists.out" 2>"$TEMP_DIR/exists.err"; then
+    fail 'runner accepted an already-populated --log-dir'
+fi
+[ "$(cat "$TEMP_DIR/exists.out")" = "" ] || fail 'log-dir-exists run executed a suite'
+grep -F "focused-tests: --log-dir already exists: $fake/pass-logs" \
+    "$TEMP_DIR/exists.err" >/dev/null || fail 'missing log-dir-exists diagnostic'
+if grep -F 'Traceback' "$TEMP_DIR/exists.err" >/dev/null; then
+    fail 'log-dir-exists run printed a traceback'
+fi
+
 printf '%s\n' 'focused runner tests: PASS'

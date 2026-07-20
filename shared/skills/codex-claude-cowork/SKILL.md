@@ -101,6 +101,16 @@ scripts/cowork-session advance SESSION_DIR discussing
 
    Treat PID reachability and candidate state as advisory observations, not
    authorship, semantic progress, or success. `status` never waits or writes.
+   With `--stage`, it also reports an advisory
+   `stage.mechanical_import_preconditions` object (candidate structural
+   readiness, input freshness, destination freshness, and their conjunction as
+   `all_satisfied`, with `advisory: true` and `authorization: "none"`); never
+   read or name it `import_ready` — `import-copilot` remains the sole
+   authoritative mechanical gate. The driver, which retains the live-session
+   and external-seal paths, runs full `status` during and after the native
+   co-pilot window; the blinded co-pilot reports only stage-local
+   observations. Neither candidate state nor PID reachability authorizes
+   import.
 3. Store the printed `stage_sha256` outside the stage, session, and co-pilot
    sandbox before invocation. Do not write any driver-owned live file during
    the client window. Compare protected and stage-manifest seals after return.
@@ -163,8 +173,10 @@ scripts/cowork-session advance SESSION_DIR ready-for-execution
   reaches a blinded co-pilot. Import compares the same projection, so its
   freshness check covers the projected co-pilot-visible state, not withheld
   fields or representation-only reserialization. Codex workspace-write enforces
-  that smaller writable set; Claude without a separate OS/container sandbox does
-  not, so around Claude also run `scripts/cowork-session digests SESSION_DIR`,
+  that smaller writable set; it limits writes, not reads, and makes no
+  Claude/Codex confinement-equivalence claim. Claude without a separate
+  OS/container sandbox does not enforce that boundary at all, so around Claude
+  also run `scripts/cowork-session digests SESSION_DIR`,
   keep the result outside the session, and retain a recoverable preimage. The
   full-state seal is the control for a change confined to a withheld field.
   Hashes detect change; they do not prevent it or restore bytes. Direct-session

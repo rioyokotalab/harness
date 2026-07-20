@@ -1215,6 +1215,19 @@ def status(args: argparse.Namespace) -> None:
             "candidate_bytes": candidate_bytes,
             "candidate_sha256": candidate_sha256,
         }
+        candidate_structurally_ready = current_candidate_state == "ready"
+        snapshot["stage"]["mechanical_import_preconditions"] = {
+            "candidate_structurally_ready": candidate_structurally_ready,
+            "inputs_fresh": inputs_fresh,
+            "destination_fresh": snapshot["stage"]["destination_fresh"],
+            "all_satisfied": (
+                candidate_structurally_ready
+                and inputs_fresh
+                and snapshot["stage"]["destination_fresh"]
+            ),
+            "advisory": True,
+            "authorization": "none",
+        }
     if args.pid is not None:
         if args.pid < 1:
             fail("status --pid must be a positive integer")

@@ -292,14 +292,36 @@ is vulnerable to reuse. Neither signal proves authorship, semantic progress,
 correctness, or success. Always inspect the final candidate and compare the
 protected manifests before import.
 
+When `--stage` is given, `status` also emits an advisory
+`stage.mechanical_import_preconditions` object:
+`candidate_structurally_ready` (true iff `candidate_state == "ready"`),
+`inputs_fresh`, `destination_fresh`, their conjunction as `all_satisfied`,
+`advisory: true`, and `authorization: "none"`. It summarizes the three
+existing byte/freshness observations already present as sibling fields and
+adds no new information; it must never be read as, or renamed to,
+`import_ready`. It closes the risk of a caller reading `candidate_state:
+ready` alone and importing a candidate staged against live inputs the driver
+has since changed. It covers only candidate/freshness bytes — not seal
+validation, stage mode/receipt sequencing, process exit, protected digests,
+semantic review, or `import-copilot`/`verify-receipts` success. Only
+`import-copilot` is the authoritative mechanical gate.
+
+The driver, which retains the live-session and external-seal paths, runs
+`status` during and after the native co-pilot window. The blinded co-pilot
+reports only stage-local observations. Neither candidate state nor PID
+reachability authorizes import.
+
 These templates do not supersede closer command policy. Codex workspace-write
-provides an OS-enforced writable-root boundary. Claude Code's `--add-dir` and
-tool permissions are not an OS filesystem sandbox: with Bash allowed, a
-same-user process may discover and write other writable paths. For Claude,
-staging removes explicit disclosure and the routine live write channel but
-remains behavioral authority reduction unless an available platform sandbox is
-applied. Record that residual or use the required environment-native wrapper;
-never invent a non-portable command or claim equal enforcement.
+provides an OS-enforced writable-root boundary; it limits writes, not reads,
+so it does not by itself prevent a confined process from reading outside that
+root. Claude Code's `--add-dir` and tool permissions are not an OS filesystem sandbox:
+with Bash allowed, a same-user process may discover and write other writable
+paths. For Claude, staging removes explicit disclosure and the routine live
+write channel but remains behavioral authority reduction unless an available
+platform sandbox is applied. Record that residual or use the required
+environment-native wrapper; never invent a non-portable command or claim equal
+enforcement. No claim of equivalent Claude/Codex confinement is made anywhere
+in this reference.
 
 ## Protecting driver-owned files across a co-pilot window
 

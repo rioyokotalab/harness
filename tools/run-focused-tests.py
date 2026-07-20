@@ -58,7 +58,11 @@ def main() -> int:
     root = Path(args.root).resolve(strict=True)
     manifest = Path(args.manifest).resolve(strict=True)
     log_dir = Path(args.log_dir)
-    log_dir.mkdir(mode=0o700, parents=False, exist_ok=False)
+    try:
+        log_dir.mkdir(mode=0o700, parents=False, exist_ok=False)
+    except FileExistsError:
+        print(f"focused-tests: --log-dir already exists: {log_dir}", file=sys.stderr)
+        return 2
     try:
         suites = load_manifest(root, manifest)
     except ValueError as error:

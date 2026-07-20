@@ -1149,6 +1149,27 @@ assert value["process"]["advisory"] is True, value
 assert "independent" in value["next_action"], value
 PY
 
+# A structurally-ready candidate against a stale live input is advisory only
+# (mechanical_import_preconditions), not an authoritative import gate.
+fill "$r9_stage/candidate-copilot-evidence.md"
+cp "$r9_session/charter.md" "$TEMP_DIR/r9-charter-orig.md"
+printf '%s\n' 'live drift' >>"$r9_session/charter.md"
+"$SESSION" status "$r9_session" --stage "$r9_stage" --seal "$r9_seal" \
+    >"$TEMP_DIR/r9-status-precond.json"
+python3 - "$TEMP_DIR/r9-status-precond.json" <<'PY'
+import json, pathlib, sys
+value = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert value["stage"]["candidate_state"] == "ready", value
+assert value["stage"]["inputs_fresh"] is False, value
+mip = value["stage"]["mechanical_import_preconditions"]
+assert mip["candidate_structurally_ready"] is True, value
+assert mip["inputs_fresh"] is False, value
+assert mip["all_satisfied"] is False, value
+assert mip["advisory"] is True, value
+assert mip["authorization"] == "none", value
+PY
+cp "$TEMP_DIR/r9-charter-orig.md" "$r9_session/charter.md"
+
 # Prompt drift is visible before any import mutation.
 sha256sum "$r9_session/copilot-evidence.md" >"$TEMP_DIR/r9-live-before"
 printf '%s\n' 'drift' >>"$r9_stage/artifacts/copilot-prompt.md"
@@ -1180,6 +1201,7 @@ value = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
 assert value["receipt_modes"] == ["independent"], value
 assert value["stage"]["candidate_state"] == "ready", value
 assert value["stage"]["destination_fresh"] is False, value
+assert value["stage"]["mechanical_import_preconditions"]["all_satisfied"] is False, value
 assert value["process"]["state"] == "not-reachable", value
 assert "reciprocal" in value["next_action"], value
 PY
