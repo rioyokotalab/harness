@@ -132,9 +132,31 @@ awk '!inserted && $0 == "# >>> harness managed >>>" {
     }
     { print }' "$partial_home/.bash_profile" >"$TEMP_DIR/partial-profile.mismatch"
 mv "$TEMP_DIR/partial-profile.mismatch" "$partial_home/.bash_profile"
+cp "$partial_home/.bash_profile" "$TEMP_DIR/partial-profile.mismatch-before"
 if run_partial --host local --plan >"$TEMP_DIR/partial.mismatch" 2>&1; then
     fail 'partial-current accepted mismatched profile middle'
 fi
+grep -F 'distinct profile local bytes require explicit merge authority' \
+    "$TEMP_DIR/partial.mismatch" >/dev/null ||
+    fail 'partial-current mismatch refusal'
+run_partial --host local --plan --merge-distinct-profile \
+    >"$TEMP_DIR/partial.merge-plan"
+grep -F 'state=merge-distinct-profile' "$TEMP_DIR/partial.merge-plan" >/dev/null ||
+    fail 'partial-current explicit merge plan'
+run_partial --host local --apply --merge-distinct-profile \
+    >"$TEMP_DIR/partial.merge-apply"
+partial_merge_transaction=$(sed -n 's/^BASH_STARTUP_UNIFY action=applied transaction=\([^ ]*\).*/\1/p' "$TEMP_DIR/partial.merge-apply")
+[ -n "$partial_merge_transaction" ] || fail 'partial-current merge transaction'
+grep -F -x 'export PROFILE_LOGIN_ONLY=kept' "$partial_home/.bashrc" >/dev/null ||
+    fail 'partial-current prior login body preservation'
+grep -F -x 'export PROFILE_MISMATCH=yes' "$partial_home/.bashrc" >/dev/null ||
+    fail 'partial-current distinct profile preservation'
+run_partial --rollback "$partial_merge_transaction" \
+    >"$TEMP_DIR/partial.merge-rollback"
+cmp -s "$partial_home/.bash_profile" "$TEMP_DIR/partial-profile.mismatch-before" ||
+    fail 'partial-current distinct profile rollback'
+cmp -s "$partial_home/.bashrc" "$TEMP_DIR/partial-bashrc.before" ||
+    fail 'partial-current distinct bashrc rollback'
 cp "$TEMP_DIR/partial-profile.before" "$partial_home/.bash_profile"
 run_partial --host local --apply >"$TEMP_DIR/partial.reapply"
 run_partial --host local --plan >"$TEMP_DIR/partial.current"

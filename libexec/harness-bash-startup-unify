@@ -95,6 +95,27 @@ def login_section(middle: bytes) -> bytes:
     )
 
 
+def split_canonical_bashrc(data: bytes, prefix: bytes, suffix: bytes, name: str):
+    if not data.startswith(prefix) or not data.endswith(suffix):
+        return None
+    core = data[len(prefix):len(data) - len(suffix)]
+    head = (
+        b"# >>> harness login-only local >>>\n"
+        b"if shopt -q login_shell; then\n"
+        b"    :\n"
+    )
+    tail = b"fi\n# <<< harness login-only local <<<\n"
+    if not core.startswith(head):
+        return None
+    tail_at = core.find(tail, len(head))
+    if tail_at < 0:
+        return None
+    login_middle = core[len(head):tail_at]
+    bashrc_middle = core[tail_at + len(tail):]
+    reject_ambiguous_middle(bashrc_middle, name)
+    return login_middle, bashrc_middle
+
+
 def remove_redundant_bashrc_loaders(middle: bytes):
     """Drop conventional profile loaders for the now-canonical .bashrc."""
     loader = re.compile(
@@ -298,6 +319,7 @@ def main() -> int:
     parser.add_argument("--plan", action="store_true")
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--rollback")
+    parser.add_argument("--merge-distinct-profile", action="store_true")
     args = parser.parse_args()
     if sum(bool(value) for value in (args.plan, args.apply, args.rollback)) != 1:
         die("select exactly one of --plan, --apply, or --rollback")
@@ -313,6 +335,8 @@ def main() -> int:
         die("Bash startup HOME is unsafe")
     validate_checkout(root)
     if args.rollback:
+        if args.merge_distinct_profile:
+            die("distinct profile merge is invalid during rollback")
         if args.host and not safe_id(args.host):
             die("a safe logical host is required")
         rollback(root, home, args.rollback, args.host)
@@ -360,20 +384,42 @@ def main() -> int:
     profile_middle = split_managed(profile_data, prefix, profile_suffix, ".bash_profile") \
         if profile_info is not None else b""
     migrated_profile_middle, redundant_loaders = remove_redundant_bashrc_loaders(profile_middle)
-    existing_login = login_section(migrated_profile_middle)
-    bashrc_core = bashrc_data[len(prefix):len(bashrc_data) - len(bashrc_suffix)] \
-        if bashrc_data.startswith(prefix) and bashrc_data.endswith(bashrc_suffix) else b""
-    profile_only = profile_info is not None and bashrc_core.startswith(existing_login)
+    canonical_parts = split_canonical_bashrc(
+        bashrc_data, prefix, bashrc_suffix, ".bashrc"
+    )
+    profile_only = False
+    merge_distinct = False
+    if profile_info is not None and canonical_parts is not None:
+        prior_login_middle, bashrc_middle = canonical_parts
+        if migrated_profile_middle == prior_login_middle:
+            if args.merge_distinct_profile:
+                die("distinct profile merge is not required")
+            profile_only = True
+        elif args.merge_distinct_profile:
+            merged_login_middle = prior_login_middle
+            if merged_login_middle and migrated_profile_middle and \
+                    not merged_login_middle.endswith(b"\n"):
+                merged_login_middle += b"\n"
+            merged_login_middle += migrated_profile_middle
+            new_bashrc = prefix + login_section(merged_login_middle) + \
+                bashrc_middle + bashrc_suffix
+            merge_distinct = True
+        else:
+            die("distinct profile local bytes require explicit merge authority")
+    elif args.merge_distinct_profile:
+        die("distinct profile merge is not applicable")
+
     if profile_only:
-        bashrc_middle = bashrc_core[len(existing_login):]
-        reject_ambiguous_middle(bashrc_middle, ".bashrc")
         new_bashrc = bashrc_data
-    else:
+    elif not merge_distinct:
         bashrc_middle = split_managed(bashrc_data, prefix, bashrc_suffix, ".bashrc")
-        new_bashrc = prefix + existing_login + bashrc_middle + bashrc_suffix
+        new_bashrc = prefix + login_section(migrated_profile_middle) + \
+            bashrc_middle + bashrc_suffix
+    state = "merge-distinct-profile" if merge_distinct else \
+        ("profile-only" if profile_only else "merge")
     print(
         f"BASH_STARTUP_UNIFY mode={mode} host={args.host} "
-        f"state={'profile-only' if profile_only else 'merge'} "
+        f"state={state} "
         f"profile_local_bytes={len(profile_middle)} bashrc_local_bytes={len(bashrc_middle)} "
         f"profile_prestate={'present' if profile_info is not None else 'absent'} "
         f"redundant_profile_loaders={redundant_loaders} "
