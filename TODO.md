@@ -5,7 +5,7 @@ harness. Keep only active decisions, blockers, exact next actions, and compact
 completion pointers here. Full pre-housekeeping chronology remains available at
 published commit `d797d8658ea249f40f1acef1e84fcbbd83b0d6ff`.
 
-Next free ID: T-283.
+Next free ID: T-284.
 
 ## Current state
 
@@ -39,6 +39,85 @@ Next free ID: T-283.
    reconstruction of its gate and authority.
 
 ## Active tasks
+
+### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
+
+**Phase/status:** `executing`; owner requested on 2026-07-20 that Codex drive a
+six-hour, file-mediated collaboration with Claude to create
+`codex-claude-cowork`, then use the new skill to refine itself. The original
+request explicitly authorizes proceeding through planning, evidence discussion,
+and driver execution; no unresolved owner decision remains.
+
+**Execution checkpoint:** the plan/interview audit found zero unresolved
+material choices. The owner's original instruction is the explicit go for the
+frozen scope. First executable step: create the task branch and initialize the
+shared skill skeleton without changing live client settings.
+
+The canonical initializer's direct invocation failed with exit 126 because its
+installed file is not executable (`Permission denied`); it created no skill
+directory and changed no target state. Retrying the same reviewed Python source
+through `python3` is safe.
+
+Initialization through `python3` succeeded. The first focused test exposed and
+then corrected two test-only defects: an over-specific wording assertion and an
+incorrect guarded-cleanup call. Its leaked empty temporary directory and the
+compiler-created skill `__pycache__` were each removed through verified guarded
+deletion; the source trees and protected anchors were unchanged. The canonical
+quick validator, cowork focused test, Claude takeover test, source-contract
+test, public-repository audit, and `git diff --check` now pass. Working files are
+the new shared skill directory, `tests/test-codex-claude-cowork-skill.sh`,
+`tests/focused-suites.tsv`, and this ledger. Next action: install the new
+discovery links, then begin the Codex-driver/Claude-co-pilot sandbox round.
+
+**Outcome and scope:** add one shared personal skill discoverable by both Codex
+and Claude. Its role contract must be client-neutral: the active client is the
+driver and the other client is the co-pilot. Both must reconstruct repository
+state, exchange bounded public-safe artifacts through a declared session
+directory, independently exercise the proposed plan in disposable sandboxes,
+criticize evidence rather than personalities, reconcile disagreements into a
+frozen plan, and permit only the driver to execute that plan against the target.
+Include deterministic protocol checks, focused tests, product-neutral core
+instructions, and only the small client-specific invocation mapping needed for
+Codex-driving-Claude and Claude-driving-Codex.
+
+**Confirmed inventory:** `main` was clean/equal to `origin/main` at
+`d44a99e3ac671beae4bc8b99a6b5bc874151dd38` after a fresh authenticated fetch.
+Claude Code 2.1.207 and Codex CLI 0.144.6 are installed. `install.sh` already
+links every `shared/skills/*` directory into Codex, Agent Skills, and Claude
+discovery locations. The repository has no existing cowork protocol. The
+canonical skill initializer and validator are available under the installed
+`skill-creator` skill.
+
+**Plan and ordering:** (1) freeze the role/state/file protocol and sandbox
+boundaries; (2) initialize the skill with `SKILL.md`, OpenAI UI metadata, a
+single protocol reference, and the smallest deterministic session validator;
+(3) add a focused shell test for structure, state transitions, role symmetry,
+owned-file boundaries, and both native client invocation mappings; (4) run
+skill validation and focused tests; (5) install the discovery links; (6) use
+Codex as driver with Claude as co-pilot on a synthetic sandbox refinement;
+(7) reverse roles so Claude drives and invokes Codex on another synthetic
+sandbox refinement; (8) reconcile evidence, revise the skill, repeat bounded
+adversarial rounds during the requested work window, and independently rerun
+all acceptance checks; (9) checkpoint evidence and the exact next action here,
+commit only intended files, but do not push without explicit authorization.
+
+**Safety, recovery, and non-goals:** co-pilots may write only inside disposable
+sandboxes and the declared exchange directory; they may not mutate the target,
+Git refs, credentials, settings, services, packages, remote systems, or external
+messages. Follow the closest repository authority and deletion policy; retain a
+failed sandbox until it can be removed safely. Preserve unrelated work. A
+client timeout or denial is retry-safe after inspecting its exchange files.
+This task does not alter live client configuration, authentication, plugins,
+connectors, MCP servers, or remotes and does not publish the harness.
+
+**Acceptance:** the skill passes the canonical quick validator, its focused
+test, `tests/test-claude-takeover.sh`, `tests/test-source-contract.sh`,
+`tests/test-public-repo-audit.sh`, `git diff --check`, and
+`tests/test-phase1.sh`; isolated installation exposes one identical skill to
+all three discovery roots; both driver directions produce schema-valid file
+artifacts and sandbox evidence; the final diff and ledger contain no private
+data; and a clean reviewer can reconstruct the last verified step and next
+action from Git plus this entry.
 
 ### T-282 — Compact the ledger and remove proven-obsolete repository residue
 

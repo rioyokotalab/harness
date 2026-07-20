@@ -1,0 +1,117 @@
+#!/bin/sh
+set -eu
+
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+HARNESS=$ROOT/bin/harness
+CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
+SKILL=$ROOT/shared/skills/codex-claude-cowork/SKILL.md
+PROTOCOL=$ROOT/shared/skills/codex-claude-cowork/references/protocol.md
+SESSION=$ROOT/shared/skills/codex-claude-cowork/scripts/cowork-session
+OPENAI=$ROOT/shared/skills/codex-claude-cowork/agents/openai.yaml
+TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/harness-cowork-test.XXXXXX")
+
+cleanup() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    cleanup_failed=0
+    if [ -d "$TEMP_DIR" ]; then
+        "$CLEANUP" "$HARNESS" "${TMPDIR:-/tmp}" "$TEMP_DIR" \
+            "${TMPDIR:-/tmp}" >/dev/null || cleanup_failed=1
+    fi
+    if [ "$status" -eq 0 ] && [ "$cleanup_failed" -ne 0 ]; then
+        echo 'FAIL: guarded cowork skill test cleanup' >&2
+        status=1
+    fi
+    exit "$status"
+}
+
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
+
+for path in "$SKILL" "$PROTOCOL" "$SESSION" "$OPENAI"; do
+    [ -f "$path" ] && [ ! -L "$path" ] || fail "missing regular file: $path"
+done
+[ -x "$SESSION" ] || fail 'session validator is not executable'
+
+grep -Fx 'name: codex-claude-cowork' "$SKILL" >/dev/null || fail 'skill name'
+grep -F 'as driver and the other as co-pilot' "$SKILL" >/dev/null || fail 'driver rule'
+grep -F 'Neither may overwrite the other' "$SKILL" >/dev/null || fail 'file ownership'
+grep -F 'prose-only review is insufficient' "$SKILL" >/dev/null || fail 'experiment gate'
+grep -F 'Let only the driver mutate the target' "$SKILL" >/dev/null || fail 'execution role'
+grep -F 'Do not grant either' "$SKILL" >/dev/null || fail 'role symmetry'
+grep -F 'claude --print --permission-mode dontAsk' "$PROTOCOL" >/dev/null ||
+    fail 'Codex-driver native Claude mapping'
+grep -F 'codex exec --ephemeral --sandbox workspace-write' "$PROTOCOL" >/dev/null ||
+    fail 'Claude-driver native Codex mapping'
+grep -F -- '`--dangerously-skip-permissions`' "$PROTOCOL" >/dev/null ||
+    fail 'Claude bypass refusal'
+
+fill() {
+    file=$1
+    sed 's/^TODO$/verified synthetic evidence/' "$file" >"$file.next"
+    mv "$file.next" "$file"
+}
+
+codex_session=$TEMP_DIR/codex-driver
+"$SESSION" init "$codex_session" --driver codex >/dev/null
+python3 - "$codex_session/state.json" <<'PY'
+import json
+import pathlib
+import sys
+
+state = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert state["driver"] == "codex"
+assert state["copilot"] == "claude"
+assert state["phase"] == "planning"
+PY
+
+if "$SESSION" advance "$codex_session" discussing >"$TEMP_DIR/early.out" 2>&1; then
+    fail 'advanced with unfinished planning files'
+fi
+grep -F 'unresolved TODO marker' "$TEMP_DIR/early.out" >/dev/null ||
+    fail 'missing unfinished-file refusal'
+fill "$codex_session/charter.md"
+fill "$codex_session/plan.md"
+"$SESSION" advance "$codex_session" discussing >/dev/null
+
+if "$SESSION" advance "$codex_session" executing >"$TEMP_DIR/skip.out" 2>&1; then
+    fail 'skipped ready-for-execution phase'
+fi
+grep -F 'invalid transition' "$TEMP_DIR/skip.out" >/dev/null ||
+    fail 'missing skipped-phase refusal'
+
+fill "$codex_session/driver-evidence.md"
+fill "$codex_session/copilot-evidence.md"
+fill "$codex_session/reconciliation.md"
+"$SESSION" advance "$codex_session" ready-for-execution >/dev/null
+"$SESSION" advance "$codex_session" executing >/dev/null
+fill "$codex_session/execution.md"
+"$SESSION" advance "$codex_session" validating >/dev/null
+fill "$codex_session/validation.md"
+"$SESSION" advance "$codex_session" complete >/dev/null
+"$SESSION" check "$codex_session" >/dev/null
+
+claude_session=$TEMP_DIR/claude-driver
+"$SESSION" init "$claude_session" --driver claude >/dev/null
+python3 - "$claude_session/state.json" <<'PY'
+import json
+import pathlib
+import sys
+
+state = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert state["driver"] == "claude"
+assert state["copilot"] == "codex"
+assert state["phase"] == "planning"
+PY
+
+if "$SESSION" advance "$claude_session" complete >"$TEMP_DIR/backward.out" 2>&1; then
+    fail 'accepted a multi-phase transition'
+fi
+grep -F 'invalid transition' "$TEMP_DIR/backward.out" >/dev/null ||
+    fail 'missing transition refusal'
+
+echo 'Codex-Claude cowork skill tests passed'
