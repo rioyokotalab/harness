@@ -56,11 +56,12 @@ T-273 is the ordered closure task for every known item deliberately deferred by
 T-268, T-269, and T-272. Workstream 1's value-free failed-transaction review is
 resolved as evidence retention: three failed groups remain private because no
 published operation-specific cleanup contract can prove them redundant. Exact
-next work is workstream 2, now `ready-for-go`. D1-D3 freeze exact restoration
+next work is workstream 2, now `executing` after the owner's explicit `go`.
+D1-D3 freeze exact restoration
 after interruption, forward-only replacement with downgrade only by rollback,
 and one retained immediate predecessor while a replacement is active. Generic
-implementation remains blocked until the owner gives a fresh explicit `go`;
-no live version change is included in that execution authority.
+implementation, synthetic validation, protected publication, and clean-
+checkout synchronization are authorized; no live version change is included.
 The other workstreams retain their recorded time, availability, project-
 requirement, or explicit-authority gates.
 
@@ -762,8 +763,9 @@ controller impersonate `local`.
 
 ### T-273 — Resolve every intentionally deferred maintenance item
 
-**Phase/status:** `ready-for-go` for workstream 2; scope reconciled on
-2026-07-20 and workstream 1 is resolved by retained evidence. This task owns the
+**Phase/status:** `executing` for workstream 2 after the owner's explicit `go`;
+scope reconciled on 2026-07-20 and workstream 1 is resolved by retained
+evidence. This task owns the
 closure or explicit evidence-backed disposition of every known item that
 T-268, T-269, and T-272 intentionally left alone. It does not weaken the
 credential, destructive-cleanup, package, scheduler, external-service, active-
@@ -967,12 +969,16 @@ equal-version, lower-version, checksum, collision, and stale-state cases remain
 fail-closed. Synthetic failure injection, recovery, rollback, idempotence,
 privacy/source checks, the portable suite, and protected CI gate publication.
 
-**Exact next action:** wait for an explicit fresh `go`. That `go` authorizes
+**Execution authority:** the owner gave the explicit fresh `go`. It authorizes
 only generic public implementation, synthetic tests, validation, protected
 publication, and guarded synchronization of clean checkouts. It does not
 authorize changing `tools/agents.tsv`, applying a live agent replacement,
 removing any retained version or transaction, changing macOS installation,
 supplying authentication, or reloading an active session.
+
+**Exact next action:** extend the synthetic agent fixture first, then implement
+the smallest replacement/recovery/rollback engine that satisfies D1-D3. Stop
+before any live plan or apply.
 
 ### T-272 — Seven-hour accessible-fleet maintenance
 
