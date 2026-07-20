@@ -53,12 +53,14 @@ and compact historical pointers here. Next free ID: T-280.
 ## Next resume checkpoint
 
 T-280 is the active one-Mac onboarding task. The owner supplied one opaque
-logical identifier outside this public ledger. Planning must resume only from
-an owner-started local session on that Mac; this Linux login node must not push
-or infer its state. No target discovery or mutation has run, and no `go` has
-been given. The exact next fact is whether Codex is already runnable locally;
-that selects either the published Codex-first bootstrap entry or a direct local
-Codex session before value-free discovery and the host-specific PIE plan.
+logical identifier and an ephemeral reverse-SSH execution route outside this
+public ledger, explicitly authorized full installation through that route, and
+requires no further ordinary permission prompts. Value-free discovery confirms
+a supported Apple-silicon Darwin target with Command Line Tools present and
+Homebrew, Codex, the public checkout, and a usable target-side agent socket
+absent. No target mutation has run. Resume by publishing this checkpoint, then
+bootstrap the missing public checkout and prerequisites through native remote
+commands while preserving every authentication and unsafe-state stop gate.
 
 T-273 remains the ordered closure task for every known item deliberately
 deferred by T-268, T-269, and T-272. Workstreams 1 and 2 are complete by
@@ -99,15 +101,16 @@ a delayed job. T-210 is complete and must not be repeated.
 
 ### T-280 — Onboard one additional personal Mac
 
-**Phase/status:** `planning`; exactly one owner-operated Mac is in scope. Its
+**Phase/status:** `executing`; exactly one owner-operated Mac is in scope. Its
 logical identity was supplied privately and is intentionally omitted here.
 This public checkpoint was reconstructed on the Linux login node from clean,
-current published `main`; the target Mac has not been contacted, inventoried,
-or changed. The owner has not yet given the task's explicit pre-mutation `go`.
-The owner confirms Codex is not yet runnable on the selected Mac, so the
-published Codex-first bootstrap is the required local entry route. Public
-checkout state and bootstrap prerequisite state remain unknown until its
-read-only plan runs locally.
+current published `main`. The owner supplied an ephemeral reverse-SSH route and
+explicitly authorized the complete installation without further ordinary
+permission prompts. Value-free read-only discovery confirms a supported
+Apple-silicon Darwin target, non-root execution, Command Line Tools present,
+and Homebrew, Codex, the public checkout, and a usable target-side agent socket
+absent. No target mutation has run. The Codex-first bootstrap remains the
+required entry route after establishing the missing clean public checkout.
 
 **Desired outcome:** independently bring this Mac to the current pull-based
 personal-Mac baseline: clean compatible public/private repositories, the
@@ -155,17 +158,15 @@ managed interactive and native batch routing correct, fresh Bash/tmux behavior,
 SSH-only agreement, no transfer residue, and every applicable rollback/reapply
 drill passed.
 
-**Exact next action:** from the selected Mac's public harness checkout, first
-fetch and clean-fast-forward published `main` if and only if the checkout is on
-clean tracked `main`, then run only
-`./bin/harness macos-codex-bootstrap --host LOGICAL_ID --plan`. Return its
-complete value-free output for review. Do not run bootstrap apply yet. After
-the reviewed plan receives explicit authority, its single apply installs only
-declared missing prerequisites and launches Codex with the complete onboarding
-assignment. The local agent must then perform value-free discovery, checkpoint
-the concrete host plan, resolve any genuinely new material choice one at a
-time, set `ready-for-go`, and wait for a fresh explicit `go` before onboarding
-mutation.
+**Exact next action:** publish this value-free execution checkpoint through the
+protected workflow. Through the owner-supplied ephemeral route, clone the
+public harness into its canonical absent destination from published `main`,
+verify clean/equal state, then run
+`./bin/harness macos-codex-bootstrap --host LOGICAL_ID --plan`. Revalidate and
+apply only the exact no-block bootstrap plan under the owner's current
+authority. Continue the frozen onboarding sequence autonomously, checkpointing
+each accepted stage and stopping only at an authentication, physical-action,
+unsafe/divergent-state, or genuinely new material-choice boundary.
 
 ### T-279 — Repair home Bash drift and retire `.bash_common`
 
