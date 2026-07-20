@@ -218,8 +218,10 @@ Claude's first pass falsely reported the exact helper absent and was rejected
 without import; an exact-path retry and reciprocal pass independently accepted
 finite-number guards for both arguments. The focused regression passes. The
 first full run passed 56/57 focused suites and failed only tmux's deliberate
-clean-committed-checkout prerequisite; checkpoint this round, rerun the clean
-full gate, complete its ledger/receipts, and guarded-clean the sandbox.
+clean-committed-checkout prerequisite; after checkpointing, the clean retry
+passed all 57 suites and umbrella checks in 77.22 seconds. Round 6 is complete
+and receipt-valid; its exact sandbox was guarded-cleaned with protected anchors
+unchanged.
 
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 

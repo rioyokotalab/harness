@@ -100,6 +100,8 @@ The explicit legacy and real four-CPU-fallback full gates also pass.
 A final no-hardlink clone of the completed branch independently passed all 57
 focused suites and the umbrella phase-one checks at auto-selected eight in
 75.66 seconds, then was removed through a revalidated guarded-delete manifest.
+After the round-6 finite-argument correction, a clean canonical full gate again
+passed all 57 suites and umbrella checks at auto-selected eight in 77.22 seconds.
 
 The timeout classifies each completed snapshot but cannot preempt a blocked
 synchronous filesystem read. PID identity remains unauthenticated and vulnerable

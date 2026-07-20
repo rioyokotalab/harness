@@ -11,12 +11,15 @@ failure. A clean-commit retry is required.
 
 ## Outcome
 
-Pending the clean-commit full phase-one retry, current behavior is accepted by
-both receipt-valid agent passes and the focused regression only.
+After checkpointing the reviewed change, the clean auto-eight retry passed all
+57 focused suites and the complete umbrella phase-one gate in 77.22 seconds.
+Both direct NaN cases exit 1 before any snapshot with their existing concise
+range messages, no traceback, and no JSON. Python AST and diff checks pass.
 
 ## Residual risks
 
-The standard waiter still cannot preempt a synchronous filesystem read. The
+Accepted. The standard waiter still cannot preempt a synchronous filesystem read. The
 first Claude candidate was factually invalid and intentionally remains outside
 the receipt chain; the accepted retry shows narrow prompts with exact paths are
-important even for short audits.
+important even for short audits. The exact round-6 sandbox was removed through
+a revalidated guarded-delete manifest with protected anchors unchanged.
