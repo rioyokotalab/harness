@@ -208,6 +208,10 @@ independent import, but v4 does not pin the final candidate after import. After
 round 4 closes, test whether a driver-held import receipt can bind the candidate
 hash, source-stage input hashes, and import result without treating the
 co-pilot-writable stage as immutable.
+The reviewer checkpointed the round-4 implementation at `4eac82a`; clean-
+checkout `tests/test-phase1.sh` passed every runnable suite (native MPI correctly
+skipped), and the session is now `complete` and validates. Next action is exact
+guarded cleanup followed by the candidate-receipt experiment.
 
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
 and Claude. Its role contract must be client-neutral: the active client is the

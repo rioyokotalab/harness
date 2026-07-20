@@ -26,8 +26,11 @@ frozen skill surfaces only: `shared/skills/codex-claude-cowork/SKILL.md`,
 `tests/test-codex-claude-cowork-skill.sh`; the sole untracked path is this
 round-4 exchange directory. No settings, credentials, packages, remotes, or
 external systems were touched, and only the Claude driver edited the target. The
-clean-checkout full `tests/test-phase1.sh` and advance to `complete` are left to
-the supervising Codex reviewer per the charter.
+The supervising Codex reviewer checkpointed the reviewed diff at `4eac82a` and
+ran clean-checkout `tests/test-phase1.sh`; every runnable suite passed, including
+the expanded cowork suite and guarded-delete integration. Native MPI was
+correctly skipped outside a declared MPI environment. The session then advanced
+to `complete` and passes `cowork-session check`.
 
 ## Residual risks
 
