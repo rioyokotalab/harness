@@ -43,8 +43,10 @@ Next free ID: T-283.
 
 ### T-282 — Compact the ledger and remove proven-obsolete repository residue
 
-**Phase/status:** `executing`; the owner authorized repository housekeeping on
-2026-07-20. Scope is the public harness repository and the now-eligible
+**Phase/status:** `validating`; the owner authorized repository housekeeping on
+2026-07-20. The compact ledger and exact ref cleanup are complete; protected
+publication and post-merge one-branch verification remain. Scope is the public
+harness repository and the now-eligible
 T-273 `.bash_common` check on the three reachable Macs. It excludes backup
 payloads, retained transaction evidence, credentials, caches outside the
 repository, live configuration beyond the exact check, package/scheduler
@@ -77,6 +79,24 @@ ledger/source/privacy checks and `git diff --check`; publish through protected
 CI; then verify one worktree, only `main`, no stale remote task branches, clean
 Git, and unchanged excluded files/data. Any open, unmatched, or ambiguous ref
 must be retained.
+
+**Execution checkpoint:** the ledger is now 196 lines and retains every active
+gate, all seven successor job IDs, the remaining-Mac boundary, and the full
+history pointer. Diff, source-contract, public-repository, and repository-
+independence checks pass. PR #126 was revalidated as open, planning-only, and
+limited to stale `TODO.md`; it was closed and its remote branch removed. A
+concurrent cleanup removed 39 already-reviewed remote refs before the planned
+push, so the exact-count safety check stopped without issuing that push. Fresh
+reconstruction then found 18 remaining merged-PR refs plus the T-281 checkpoint
+proven ancestral to merged PR #157; those 19 refs were deleted explicitly.
+Nine local refs tied to merged PRs and the same verified checkpoint ref were
+also deleted. Current local refs are `main` plus active T-282; remote refs are
+`main` plus active T-282; there are no open PRs except the forthcoming T-282
+publication. No repository file, ignored backup, tracked fixture, transaction
+evidence, Mac configuration, package, process, or scheduler state was removed
+or changed by housekeeping. Exact next action: rerun focused validation,
+publish T-282 through protected CI, delete the merged task branch, verify only
+clean `main` remains locally/remotely, then record completion.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
