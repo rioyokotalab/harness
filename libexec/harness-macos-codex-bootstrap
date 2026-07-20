@@ -67,7 +67,7 @@ visible=$install_dir/codex
 legacy_visible=$HOME/.local/bin/codex
 existing=$(command -v codex 2>/dev/null || true)
 [ -z "$existing" ] || [ "$existing" = "$visible" ] || [ "$existing" = "$legacy_visible" ] || die 'another Codex command is already active; resolve it before bootstrap'
-printf 'MODE=%s\nHOST=%s\nINSTALLER_URL=%s\nREVIEWED_AT=%s\nINSTALL_DIR=%s\nCODEX_HOME=%s\n' "$mode" "$host" "$installer_url" "$reviewed_at" "$install_dir" "$codex_home"
+printf 'MODE=%s\nHOST=%s\nINSTALLER_URL=%s\nREVIEWED_AT=%s\nINSTALL_DIR=%s\nCODEX_HOME=%s\nCODEX_APPROVAL_POLICY=never\nCODEX_SANDBOX_MODE=danger-full-access\n' "$mode" "$host" "$installer_url" "$reviewed_at" "$install_dir" "$codex_home"
 if [ -n "$missing_formulae" ]; then printf 'PREREQUISITE_FORMULAE=%s\n' "$missing_formulae"; else printf '%s\n' 'PREREQUISITE_FORMULAE=none'; fi
 [ "$mode" = apply ] || exit 0
 
@@ -127,6 +127,7 @@ if [ -L "$legacy_visible" ] && [ "$legacy_visible" != "$visible" ]; then
     fi
 fi
 "$visible" --version
-prompt="Onboard this personal Mac with logical host '$host'. The credential-free private companion clone URL is '$private_url'; use it without asking me for the repository locator, but never expose credentials or private contents. Work autonomously from this repository. First read AGENTS.md, TODO.md, shared/skills/onboard-personal-mac/SKILL.md completely, and every reference that skill requires. Apply that skill faithfully. Reconstruct current Git and ledger state, use value-free discovery, create the one-host plan, and ask only material questions one at a time. Wait for my explicit go before machine mutations. After go, run every native harness and Git command yourself; do not ask me to execute shell scripts. Pause only for unavoidable authentication, password, TCC, reboot, or physical interaction. Complete transactional apply, rollback, reapply, fresh-session acceptance, and the ordered post-onboarding .bash_common orphan check. Keep identities, private values, and transaction details out of public Git and TODO.md."
+prompt="Onboard this personal Mac with logical host '$host'. The credential-free private companion clone URL is '$private_url'; use it without asking me for the repository locator, but never expose credentials or private contents. Work autonomously from this repository. First read AGENTS.md, TODO.md, shared/skills/onboard-personal-mac/SKILL.md completely, and every reference that skill requires. Apply that skill faithfully, including its settled owner defaults: restore the declared companion, use a baseline-only missing host profile, install only declared missing prerequisites, prefer SSH Git transport when HTTPS lacks credentials, adopt an existing first-agreement private SSH payload onto the Mac, preserve strict Codex local settings, preserve both distinct valid Bash local bodies, and retain any live-referenced .bash_common file. Do not ask about those choices again. Reconstruct current Git and ledger state, use value-free discovery, create the one-host plan, and ask only unresolved material questions one at a time. Wait for my explicit go before machine mutations. After go, run every native harness and Git command yourself; do not ask me to execute shell scripts. Pause only for unavoidable authentication, password, TCC, reboot, or physical interaction. Complete transactional apply, rollback, reapply, fresh-session acceptance, and the ordered post-onboarding .bash_common orphan check. Keep identities, private values, and transaction details out of public Git and TODO.md."
 printf '%s\n' 'LAUNCH=official Codex interactive onboarding session'
-exec "$visible" -C "$ROOT" "$prompt"
+exec "$visible" --ask-for-approval never --sandbox danger-full-access \
+    -C "$ROOT" "$prompt"

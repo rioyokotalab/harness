@@ -29,6 +29,38 @@ source of truth; never infer its state from `office` or another Mac.
    command. Ask one material decision at a time. Set `ready-for-go` only when
    no decision remains, then wait for the owner's explicit `go`.
 
+## Apply settled owner defaults
+
+Do not ask about these choices again. Freeze them in the one-host plan and use
+them automatically after `go`, while retaining every normal plan/refusal gate:
+
+- Restore an absent strict private companion from the repository-declared SSH
+  locator. If its host declaration is absent, create the baseline-only profile
+  (`macos-cli-v1`, no capability groups, no extra formulae), validate it, and
+  commit/push only in the private companion without printing its revision.
+- Install only missing declared bootstrap prerequisites (`gh`, `tmux`, and a
+  Homebrew Python providing `tomllib`) through the bounded dry-run/apply path.
+  If GitHub API authentication is needed, run the native `gh` login flow and
+  pause only for the unavoidable owner device/browser step. Prefer the already
+  validated SSH Git transport when HTTPS has no credential helper.
+- On first SSH agreement, when a fetched private payload exists and differs
+  from the live file, use `--adopt-remote`; preserve the live preimage and run
+  exact rollback/reapply. This preference does not resolve a later two-sided
+  divergence.
+- Adopt a strict Codex local body by preserving its allowed model, reasoning,
+  and project-trust entries while adding the canonical public policy.
+- When canonical `.bashrc` and a reviewed managed login file contain distinct
+  valid local bodies, preserve both with `--merge-distinct-profile`: retain the
+  existing login-only body first and append the login-file body after removing
+  only its redundant `.bashrc` loader.
+- After acceptance, retain `.bash_common` without another question whenever
+  any live startup reference or open handle proves it active. Quarantine and
+  exact-unlink only a zero-reference, zero-handle file that passes the full
+  orphan test.
+
+Ask one question only for a new material choice outside these defaults or for
+state that a transactional adapter classifies unsafe, ambiguous, or divergent.
+
 ## Execute through Codex
 
 After `go`, run every command with Codex's terminal tools. Do not tell the

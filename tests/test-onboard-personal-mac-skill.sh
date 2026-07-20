@@ -16,6 +16,11 @@ grep -F 'Codex must run the native commands itself' "$SKILL" >/dev/null ||
     fail 'Codex execution contract'
 grep -F 'wait for the owner' "$SKILL" >/dev/null || fail 'go gate'
 grep -F 'one material decision at a time' "$SKILL" >/dev/null || fail 'interview gate'
+grep -F 'Do not ask about these choices again' "$SKILL" >/dev/null || fail 'settled owner defaults'
+grep -F 'baseline-only profile' "$SKILL" >/dev/null || fail 'baseline-only default'
+grep -F '`--adopt-remote`' "$SKILL" >/dev/null || fail 'remote SSH adoption default'
+grep -F '`--merge-distinct-profile`' "$SKILL" >/dev/null || fail 'preserve-both Bash default'
+grep -F 'live startup reference or open handle' "$SKILL" >/dev/null || fail 'active Bash common retention'
 grep -F '`.bash_common` orphan test' "$SKILL" >/dev/null || fail 'orphan cleanup order'
 grep -F 'rollback' "$SKILL" >/dev/null || fail 'rollback contract'
 grep -F 'macos-pilot-plan --host HOST' "$STAGES" >/dev/null || fail 'aggregate plan'
@@ -23,6 +28,7 @@ grep -F 'macos-doctor --host HOST' "$STAGES" >/dev/null || fail 'doctor acceptan
 grep -F 'macos-codex-bootstrap --host HOST --apply' "$STAGES" >/dev/null || fail 'Codex bootstrap'
 grep -F 'bash-startup-unify --host HOST --plan|--apply' "$STAGES" >/dev/null ||
     fail 'canonical Bash onboarding stage'
+grep -F 'approval_policy=never' "$STAGES" >/dev/null || fail 'zero-prompt bootstrap stage'
 grep -F 'private Mac validator' "$SKILL" >/dev/null ||
     fail 'private Mac profile validation guidance'
 grep -F 'Every command above is run by Codex' "$STAGES" >/dev/null ||

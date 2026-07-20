@@ -30,9 +30,17 @@ The public bootstrap declaration also carries the credential-free private
 companion SSH clone locator selected by the owner. Repository knowledge grants
 no access; normal GitHub SSH authentication remains mandatory. The command
 refuses another Codex owner, verifies official standalone ownership, and opens
-Codex with the complete one-Mac onboarding task and companion locator.
-Authentication and physical prompts remain owner-visible; Codex runs all
-subsequent native commands itself.
+Codex with the complete one-Mac onboarding task and companion locator. It
+launches Codex with approval prompts disabled and full machine access so the
+agent can run the native harness and Git commands itself. The assignment also
+applies the owner's settled onboarding choices automatically: restore the
+declared companion, use a baseline-only missing host profile, install only
+declared missing prerequisites, prefer SSH Git transport when HTTPS is not
+authenticated, adopt an existing first-agreement private SSH payload, preserve
+strict Codex settings and both valid Bash local bodies, and retain a
+live-referenced `.bash_common`. The explicit pre-mutation `go` gate remains;
+authentication, password, TCC, reboot, physical interaction, and newly unsafe,
+ambiguous, or divergent state remain owner-visible stop boundaries.
 
 ## Private profile validation
 

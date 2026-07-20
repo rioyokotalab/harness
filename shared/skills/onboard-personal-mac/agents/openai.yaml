@@ -1,4 +1,4 @@
 interface:
   display_name: "Onboard Personal Mac"
-  short_description: "Safely onboard one personal Mac through Codex"
-  default_prompt: "Use $onboard-personal-mac to plan and onboard one personal Mac through Codex."
+  short_description: "Onboard one Mac with settled safe defaults"
+  default_prompt: "Use $onboard-personal-mac to safely onboard one personal Mac and apply my settled defaults automatically."
