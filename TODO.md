@@ -42,7 +42,7 @@ Next free ID: T-285.
 
 ### T-284 — Accelerate and instrument Codex–Claude cowork
 
-**Phase/status:** `planning`; the owner requested on 2026-07-21 that Codex spend
+**Phase/status:** `executing`; the owner requested on 2026-07-21 that Codex spend
 three hours refining the published `codex-claude-cowork` skill for faster
 turnaround, higher-quality driver/co-pilot information exchange, better
 co-pilot state monitoring, and faster local checking and protected CI. The
@@ -78,9 +78,28 @@ the reconstructed baseline. Durable paired evidence will live below
 recorded before use and retained until their evidence is checkpointed. Any
 timeout, denial, or partial candidate is evidence and is retry-safe only after
 inspection. Cleanup that can remove trees or multiple paths must use guarded
-deletion. Next executable action: profile the current focused runner and helper
-operations, then initialize the first Codex-driver session without mutating the
-skill implementation before its plan is reconciled.
+deletion.
+
+Round 1 used Codex driving Claude from matched baseline `f7d5bf0`; durable
+evidence is under `docs/audits/t284-cowork-round1/`. The first broad default
+Claude pass exceeded 10 minutes and was interrupted retry-safely with no
+protected/stage/seal/target drift; a bounded Sonnet/medium retry returned in
+about 70 seconds and reciprocal critique in about 170 seconds. Both sides
+accepted a descriptor-read `stage --prompt` whose schema-3 manifest and
+existing seal/receipt chain bind the exact prompt, plus a read-only JSON
+`status` snapshot for phase, receipts, next action, stage/input/prompt/seal
+freshness, candidate state, and advisory PID reachability. Existing stage
+schema 2 remains readable. Reciprocal addenda were rejected as needless receipt
+complexity. CI evidence showed the required PR #161 job took 138 seconds, 37 of
+which was standalone ShellCheck and five named suites repeated inside phase
+one; those duplicate steps are removed while affinity and the complete umbrella
+gate remain. One eight-worker full run passed in 76.39 seconds versus an
+initial four-worker 88.18 seconds, but the default remains four pending matched
+reverse-round samples. Canonical skill, expanded focused cowork, takeover,
+focused-runner, source, public-audit, CI YAML parse, AST, and diff checks pass.
+Next action: checkpoint this round-1 candidate, run clean full phase one, then
+start the required Claude-driver/Codex-co-pilot round before freezing any
+further speed change.
 
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 

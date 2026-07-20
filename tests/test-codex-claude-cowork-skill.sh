@@ -84,10 +84,19 @@ grep -F -- '--seal EXTERNAL_SEAL_FILE' "$SKILL" >/dev/null ||
     fail 'skill missing mandatory seal command'
 grep -F -- '--seal EXTERNAL_SEAL_FILE' "$PROTOCOL" >/dev/null ||
     fail 'protocol missing mandatory seal command'
+grep -F -- '--prompt DRIVER_PROMPT_FILE' "$SKILL" >/dev/null ||
+    fail 'skill missing sealed prompt command'
+grep -F -- '--prompt DRIVER_PROMPT_FILE' "$PROTOCOL" >/dev/null ||
+    fail 'protocol missing sealed prompt command'
+grep -F 'status SESSION_DIR --stage STAGE_DIR' "$SKILL" >/dev/null ||
+    fail 'skill missing co-pilot status surface'
+grep -F 'status SESSION_DIR --stage STAGE_DIR' "$PROTOCOL" >/dev/null ||
+    fail 'protocol missing co-pilot status surface'
 python3 - "$SESSION" <<'PY'
 import pathlib, sys
 source = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
 load_seal = source.split("def load_seal(", 1)[1].split("\ndef ", 1)[0]
+read_prompt = source.split("def read_owned_bounded_file(", 1)[1].split("\ndef ", 1)[0]
 import_copilot = source.split("def import_copilot(", 1)[1].split("\ndef ", 1)[0]
 assert "os.O_NOFOLLOW" in load_seal, load_seal
 assert "os.fstat(descriptor)" in load_seal, load_seal
@@ -95,6 +104,9 @@ assert "raw = handle.read()" in load_seal, load_seal
 assert "return value, sha256_bytes(raw)" in load_seal, load_seal
 assert "seal, seal_sha256 = load_seal" in import_copilot, import_copilot
 assert "session_path(args.seal).read_bytes()" not in import_copilot, import_copilot
+assert "os.O_NOFOLLOW" in read_prompt, read_prompt
+assert "os.O_NONBLOCK" in read_prompt, read_prompt
+assert "os.fstat(descriptor)" in read_prompt, read_prompt
 PY
 grep -F 'stage_manifest_sha256' "$PROTOCOL" >/dev/null ||
     fail 'protocol missing sealed manifest binding'
@@ -772,7 +784,8 @@ import sys
 
 live = pathlib.Path(sys.argv[1]).read_bytes()
 stage = json.loads(pathlib.Path(sys.argv[2]).read_text(encoding="utf-8"))
-assert stage["schema_version"] == 2, stage
+assert stage["schema_version"] == 3, stage
+assert stage["prompt_sha256"] is None, stage
 assert stage["destination_before_sha256"] == hashlib.sha256(live).hexdigest(), stage
 PY
 fill "$r5_ind/candidate-copilot-evidence.md"
@@ -1085,5 +1098,134 @@ PY
 "$SESSION" check "$r6_e" >/dev/null || fail 'schema-2 session rejected a schema-1 receipt'
 "$SESSION" verify-receipts "$r6_e" >/dev/null ||
     fail 'schema-1 receipt failed verification in a schema-2 session'
+
+# --- round 9: sealed prompt input and read-only stage-aware status ---
+r9_session=$TEMP_DIR/r9-session
+r9_stage=$BOX/r9-stage
+r9_prompt=$TEMP_DIR/r9-prompt.md
+r9_seal=$SEALS/r9.json
+"$SESSION" init "$r9_session" --driver codex >/dev/null
+fill "$r9_session/charter.md"
+fill "$r9_session/plan.md"
+"$SESSION" advance "$r9_session" discussing >/dev/null
+printf '%s\n' 'bounded co-pilot prompt' >"$r9_prompt"
+"$SESSION" stage "$r9_session" "$r9_stage" --mode independent \
+    --prompt "$r9_prompt" --seal "$r9_seal" >/dev/null
+cmp -s "$r9_prompt" "$r9_stage/artifacts/copilot-prompt.md" ||
+    fail 'staged prompt bytes changed'
+python3 - "$r9_prompt" "$r9_stage/stage.json" "$r9_seal" <<'PY'
+import hashlib, json, pathlib, sys
+prompt = pathlib.Path(sys.argv[1]).read_bytes()
+stage_path = pathlib.Path(sys.argv[2])
+stage = json.loads(stage_path.read_text(encoding="utf-8"))
+seal = json.loads(pathlib.Path(sys.argv[3]).read_text(encoding="utf-8"))
+assert stage["schema_version"] == 3, stage
+assert stage["prompt_sha256"] == hashlib.sha256(prompt).hexdigest(), stage
+assert seal["stage_manifest_sha256"] == hashlib.sha256(stage_path.read_bytes()).hexdigest(), seal
+PY
+"$SESSION" digests "$r9_session" >"$TEMP_DIR/r9-status-session-before"
+sha256sum "$r9_stage/stage.json" "$r9_stage/artifacts/copilot-prompt.md" \
+    "$r9_seal" >"$TEMP_DIR/r9-status-stage-before"
+"$SESSION" status "$r9_session" --stage "$r9_stage" --seal "$r9_seal" \
+    --pid $$ >"$TEMP_DIR/r9-status.json"
+"$SESSION" digests "$r9_session" >"$TEMP_DIR/r9-status-session-after"
+sha256sum "$r9_stage/stage.json" "$r9_stage/artifacts/copilot-prompt.md" \
+    "$r9_seal" >"$TEMP_DIR/r9-status-stage-after"
+cmp -s "$TEMP_DIR/r9-status-session-before" "$TEMP_DIR/r9-status-session-after" ||
+    fail 'status mutated the session'
+cmp -s "$TEMP_DIR/r9-status-stage-before" "$TEMP_DIR/r9-status-stage-after" ||
+    fail 'status mutated the stage or seal'
+python3 - "$TEMP_DIR/r9-status.json" <<'PY'
+import json, pathlib, sys
+value = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert value["phase"] == "discussing", value
+assert value["receipt_modes"] == [], value
+assert value["stage"]["schema_version"] == 3, value
+assert value["stage"]["candidate_state"] == "unchanged", value
+assert value["stage"]["inputs_fresh"] is True, value
+assert value["stage"]["destination_fresh"] is True, value
+assert value["process"]["state"] == "reachable", value
+assert value["process"]["advisory"] is True, value
+assert "independent" in value["next_action"], value
+PY
+
+# Prompt drift is visible before any import mutation.
+sha256sum "$r9_session/copilot-evidence.md" >"$TEMP_DIR/r9-live-before"
+printf '%s\n' 'drift' >>"$r9_stage/artifacts/copilot-prompt.md"
+if "$SESSION" status "$r9_session" --stage "$r9_stage" --seal "$r9_seal" \
+    >"$TEMP_DIR/r9-status-drift.out" 2>&1; then
+    fail 'status accepted prompt drift'
+fi
+grep -F 'prompt digest mismatch' "$TEMP_DIR/r9-status-drift.out" >/dev/null ||
+    fail 'missing status prompt-drift refusal'
+fill "$r9_stage/candidate-copilot-evidence.md"
+if "$SESSION" import-copilot "$r9_session" "$r9_stage" --seal "$r9_seal" \
+    >"$TEMP_DIR/r9-import-drift.out" 2>&1; then
+    fail 'import accepted prompt drift'
+fi
+grep -F 'prompt digest mismatch' "$TEMP_DIR/r9-import-drift.out" >/dev/null ||
+    fail 'missing import prompt-drift refusal'
+sha256sum "$r9_session/copilot-evidence.md" >"$TEMP_DIR/r9-live-after"
+cmp -s "$TEMP_DIR/r9-live-before" "$TEMP_DIR/r9-live-after" ||
+    fail 'prompt-drift refusal changed live evidence'
+[ ! -e "$r9_session/receipts/independent.json" ] ||
+    fail 'prompt drift created a receipt'
+cp "$r9_prompt" "$r9_stage/artifacts/copilot-prompt.md"
+"$SESSION" import-copilot "$r9_session" "$r9_stage" --seal "$r9_seal" >/dev/null
+"$SESSION" status "$r9_session" --stage "$r9_stage" --seal "$r9_seal" \
+    --pid 2147483647 >"$TEMP_DIR/r9-status-imported.json"
+python3 - "$TEMP_DIR/r9-status-imported.json" <<'PY'
+import json, pathlib, sys
+value = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert value["receipt_modes"] == ["independent"], value
+assert value["stage"]["candidate_state"] == "ready", value
+assert value["stage"]["destination_fresh"] is False, value
+assert value["process"]["state"] == "not-reachable", value
+assert "reciprocal" in value["next_action"], value
+PY
+
+# Prompt-source failures happen before either stage or seal is created.
+r9_bad_session=$TEMP_DIR/r9-bad-session
+"$SESSION" init "$r9_bad_session" --driver claude >/dev/null
+fill "$r9_bad_session/charter.md"
+fill "$r9_bad_session/plan.md"
+"$SESSION" advance "$r9_bad_session" discussing >/dev/null
+ln -s "$r9_prompt" "$TEMP_DIR/r9-prompt-link"
+if "$SESSION" stage "$r9_bad_session" "$BOX/r9-bad-stage" --mode independent \
+    --prompt "$TEMP_DIR/r9-prompt-link" --seal "$SEALS/r9-bad.json" \
+    >"$TEMP_DIR/r9-bad.out" 2>&1; then
+    fail 'stage accepted a symlinked prompt'
+fi
+grep -F 'must be real and not a symlink' "$TEMP_DIR/r9-bad.out" >/dev/null ||
+    fail 'missing symlinked-prompt refusal'
+[ ! -e "$BOX/r9-bad-stage" ] && [ ! -e "$SEALS/r9-bad.json" ] ||
+    fail 'bad prompt minted stage or seal residue'
+
+# The stage-2 reader remains available for already-created staged exchanges.
+r9_compat=$TEMP_DIR/r9-compat-session
+r9_compat_stage=$BOX/r9-compat-stage
+r9_compat_seal=$SEALS/r9-compat.json
+"$SESSION" init "$r9_compat" --driver claude >/dev/null
+fill "$r9_compat/charter.md"
+fill "$r9_compat/plan.md"
+"$SESSION" advance "$r9_compat" discussing >/dev/null
+"$SESSION" stage "$r9_compat" "$r9_compat_stage" --mode independent \
+    --seal "$r9_compat_seal" >/dev/null
+python3 - "$r9_compat_stage/stage.json" "$r9_compat_seal" <<'PY'
+import hashlib, json, pathlib, sys
+stage_path, seal_path = map(pathlib.Path, sys.argv[1:])
+stage = json.loads(stage_path.read_text(encoding="utf-8"))
+stage["schema_version"] = 2
+stage.pop("prompt_sha256")
+stage_path.write_text(json.dumps(stage, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+seal = json.loads(seal_path.read_text(encoding="utf-8"))
+seal["stage_manifest_sha256"] = hashlib.sha256(stage_path.read_bytes()).hexdigest()
+seal_path.write_text(json.dumps(seal, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+"$SESSION" status "$r9_compat" --stage "$r9_compat_stage" \
+    --seal "$r9_compat_seal" >/dev/null || fail 'status rejected stage schema 2'
+fill "$r9_compat_stage/candidate-copilot-evidence.md"
+"$SESSION" import-copilot "$r9_compat" "$r9_compat_stage" \
+    --seal "$r9_compat_seal" >/dev/null || fail 'import rejected stage schema 2'
 
 echo 'Codex-Claude cowork skill tests passed'

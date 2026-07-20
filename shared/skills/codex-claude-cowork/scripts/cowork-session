@@ -17,7 +17,8 @@ from pathlib import Path
 
 SCHEMA_VERSION = 2
 SUPPORTED_SCHEMA_VERSIONS = {1, 2}
-STAGE_SCHEMA_VERSION = 2
+STAGE_SCHEMA_VERSION = 3
+SUPPORTED_STAGE_SCHEMA_VERSIONS = {2, 3}
 RECEIPT_SCHEMA_VERSION = 2
 SUPPORTED_RECEIPT_SCHEMA_VERSIONS = {1, 2}
 SEAL_SCHEMA_VERSION = 1
@@ -25,12 +26,14 @@ CLIENTS = {"codex", "claude"}
 EXCHANGE_MODES = {"staged", "direct"}
 COPILOT_OWNED = "copilot-evidence.md"
 COPILOT_CANDIDATE = "candidate-copilot-evidence.md"
+COPILOT_PROMPT = "copilot-prompt.md"
 RECEIPTS_DIR = "receipts"
 RECEIPT_NAMES = {
     "independent": "independent.json",
     "reciprocal": "reciprocal.json",
 }
 MAX_CANDIDATE_BYTES = 64 * 1024
+MAX_PROMPT_BYTES = 32 * 1024
 PHASES = (
     "planning",
     "discussing",
@@ -288,6 +291,49 @@ def write_new_file(path: Path, value: bytes, mode: int = 0o600) -> None:
     finally:
         if descriptor >= 0:
             os.close(descriptor)
+
+
+def read_owned_bounded_file(path: Path, label: str, maximum: int) -> bytes:
+    """Read one strict regular file through the descriptor that was checked."""
+    descriptor = -1
+    try:
+        descriptor = os.open(
+            path,
+            os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW | os.O_NONBLOCK,
+        )
+    except FileNotFoundError:
+        fail(f"missing {label}: {path}")
+    except OSError as exc:
+        if exc.errno in {errno.ELOOP, errno.EMLINK}:
+            fail(f"{label} must be real and not a symlink: {path}")
+        fail(f"cannot open {label}: {path}: {exc}")
+    try:
+        metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(metadata.st_mode):
+            fail(f"{label} must be a real regular file: {path}")
+        if metadata.st_uid != os.getuid():
+            fail(f"{label} is owned by another uid: {path}")
+        if metadata.st_nlink != 1:
+            fail(
+                f"{label} must not be a hard link: {path} "
+                f"(link count {metadata.st_nlink})"
+            )
+        if metadata.st_size > maximum:
+            fail(f"{label} exceeds {maximum} bytes")
+        handle = os.fdopen(descriptor, "rb")
+        descriptor = -1
+        with handle:
+            raw = handle.read(maximum + 1)
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+    if len(raw) > maximum:
+        fail(f"{label} exceeds {maximum} bytes")
+    try:
+        raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        fail(f"{label} is not valid UTF-8: {exc}")
+    return raw
 
 
 def require_owned_kind(path: Path, kind: str) -> None:
@@ -646,6 +692,12 @@ def stage_session(args: argparse.Namespace) -> None:
     # Project state.json before creating the stage so a fail-closed refusal
     # (unknown/missing key) leaves no partial stage directory.
     projected_state = project_stage_state((root / "state.json").read_bytes())
+    prompt = None
+    if args.prompt:
+        prompt_path = Path(os.path.abspath(os.path.expanduser(args.prompt)))
+        prompt = read_owned_bounded_file(
+            prompt_path, "co-pilot prompt", MAX_PROMPT_BYTES
+        )
     stage_root = stage_path_outside_session(root, args.stage_dir)
     # Resolve and pre-check the external seal before minting any stage bytes so a
     # bad seal path (inside a co-pilot tree/live session, or already present)
@@ -662,6 +714,8 @@ def stage_session(args: argparse.Namespace) -> None:
     stage_root.chmod(0o700)
     (stage_root / "artifacts").mkdir(mode=0o700)
     (stage_root / "artifacts").chmod(0o700)
+    if prompt is not None:
+        write_new_file(stage_root / "artifacts" / COPILOT_PROMPT, prompt)
     input_hashes = {}
     for name in inputs:
         data = projected_state if name == "state.json" else (root / name).read_bytes()
@@ -680,6 +734,7 @@ def stage_session(args: argparse.Namespace) -> None:
         "copilot": state["copilot"],
         "phase": state["phase"],
         "inputs": input_hashes,
+        "prompt_sha256": sha256_bytes(prompt) if prompt is not None else None,
         "destination_before_sha256": sha256_bytes(
             (root / COPILOT_OWNED).read_bytes()
         ),
@@ -718,7 +773,8 @@ def load_stage(stage_root: Path) -> dict:
         stage_state = json.loads((stage_root / "stage.json").read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         fail(f"invalid stage JSON: {exc}")
-    if stage_state.get("schema_version") != STAGE_SCHEMA_VERSION:
+    stage_schema = stage_state.get("schema_version")
+    if stage_schema not in SUPPORTED_STAGE_SCHEMA_VERSIONS:
         fail("unsupported stage schema version")
     mode = stage_state.get("mode")
     if mode not in STAGE_INPUTS:
@@ -732,6 +788,8 @@ def load_stage(stage_root: Path) -> dict:
         "inputs",
         "destination_before_sha256",
     }
+    if stage_schema >= 3:
+        expected_keys.add("prompt_sha256")
     if set(stage_state) != expected_keys:
         fail("stage metadata has unexpected or missing keys")
     inputs = STAGE_INPUTS[mode]
@@ -739,6 +797,14 @@ def load_stage(stage_root: Path) -> dict:
         fail("stage metadata has unexpected or missing input hashes")
     if not is_sha256(stage_state.get("destination_before_sha256")):
         fail("stage metadata has an invalid destination-before hash")
+    prompt_sha256 = stage_state.get("prompt_sha256")
+    if stage_schema >= 3 and prompt_sha256 is not None and not is_sha256(
+        prompt_sha256
+    ):
+        fail("stage metadata has an invalid prompt hash")
+    for name, digest in stage_state["inputs"].items():
+        if not is_sha256(digest):
+            fail(f"stage metadata has an invalid input hash: {name}")
     expected_entries = set(inputs) | {
         "stage.json",
         "artifacts",
@@ -758,6 +824,16 @@ def load_stage(stage_root: Path) -> dict:
     require_owned_kind(stage_root / COPILOT_CANDIDATE, "file")
     for name in inputs:
         require_owned_kind(stage_root / name, "file")
+    prompt_path = stage_root / "artifacts" / COPILOT_PROMPT
+    if stage_schema >= 3 and prompt_sha256 is None:
+        if prompt_path.exists() or prompt_path.is_symlink():
+            fail("stage contains an unsealed co-pilot prompt")
+    elif stage_schema >= 3:
+        prompt = read_owned_bounded_file(
+            prompt_path, "staged co-pilot prompt", MAX_PROMPT_BYTES
+        )
+        if sha256_bytes(prompt) != prompt_sha256:
+            fail("staged co-pilot prompt digest mismatch")
     return stage_state
 
 
@@ -905,6 +981,15 @@ def import_copilot(args: argparse.Namespace) -> None:
         if live != staged or sha256_bytes(live) != expected:
             fail(f"staged input is stale relative to the live session: {name}")
 
+    if stage_state["schema_version"] >= 3 and stage_state["prompt_sha256"]:
+        prompt = read_owned_bounded_file(
+            stage_root / "artifacts" / COPILOT_PROMPT,
+            "staged co-pilot prompt",
+            MAX_PROMPT_BYTES,
+        )
+        if sha256_bytes(prompt) != stage_state["prompt_sha256"]:
+            fail("staged co-pilot prompt digest mismatch")
+
     candidate_path = stage_root / COPILOT_CANDIDATE
     if candidate_path.stat().st_size > MAX_CANDIDATE_BYTES:
         fail(f"co-pilot candidate exceeds {MAX_CANDIDATE_BYTES} bytes")
@@ -1008,6 +1093,146 @@ def check(args: argparse.Namespace) -> None:
     print(f"valid {phase} session: {root}")
 
 
+def candidate_state(stage_root: Path, stage_state: dict) -> tuple[str, int, str]:
+    candidate = (stage_root / COPILOT_CANDIDATE).read_bytes()
+    digest = sha256_bytes(candidate)
+    if not candidate:
+        return "empty", 0, digest
+    if len(candidate) > MAX_CANDIDATE_BYTES:
+        return "invalid", len(candidate), digest
+    if digest == stage_state["destination_before_sha256"]:
+        return "unchanged", len(candidate), digest
+    try:
+        text = candidate.decode("utf-8")
+    except UnicodeDecodeError:
+        return "invalid", len(candidate), digest
+    if has_todo(text):
+        return "invalid", len(candidate), digest
+    position = -1
+    for heading in re.findall(r"(?m)^##? .+$", TEMPLATES[COPILOT_OWNED]):
+        match = re.search(rf"(?m)^{re.escape(heading)}$", text)
+        if match is None or match.start() <= position:
+            return "invalid", len(candidate), digest
+        position = match.start()
+    return "ready", len(candidate), digest
+
+
+def next_action(state: dict, receipts: dict[str, dict]) -> str:
+    phase = state["phase"]
+    if phase == "planning":
+        return "complete charter and plan, then advance discussing"
+    if phase == "discussing":
+        if state.get("exchange_mode") == "direct":
+            return "complete reciprocal evidence and reconciliation"
+        if "independent" not in receipts:
+            return "stage and import independent co-pilot evidence"
+        if "reciprocal" not in receipts:
+            return "stage and import reciprocal co-pilot evidence"
+        return "complete reconciliation, then advance ready-for-execution"
+    if phase == "ready-for-execution":
+        return "revalidate owner go and target, then advance executing"
+    if phase == "executing":
+        return "record driver execution, then advance validating"
+    if phase == "validating":
+        return "record acceptance checks, then advance complete"
+    return "session complete"
+
+
+def status(args: argparse.Namespace) -> None:
+    """Print one deterministic, read-only session/stage monitoring snapshot."""
+    root = session_path(args.session_dir)
+    state = load_state(root)
+    validate_files(root, state["phase"])
+    receipts = validate_receipts(root, state, state["phase"])
+    snapshot = {
+        "schema_version": 1,
+        "driver": state["driver"],
+        "copilot": state["copilot"],
+        "phase": state["phase"],
+        "exchange_mode": state.get("exchange_mode", "direct"),
+        "receipt_modes": sorted(receipts),
+        "next_action": next_action(state, receipts),
+        "stage": None,
+        "process": None,
+    }
+    if args.seal and not args.stage_dir:
+        fail("status --seal requires --stage")
+    if args.stage_dir:
+        stage_root = session_path(args.stage_dir)
+        try:
+            stage_root.resolve().relative_to(root.resolve())
+        except ValueError:
+            pass
+        else:
+            fail("stage directory must be outside the live session")
+        stage_state = load_stage(stage_root)
+        if (
+            stage_state["driver"] != state["driver"]
+            or stage_state["copilot"] != state["copilot"]
+        ):
+            fail("stage roles do not match the live session")
+        inputs_fresh = True
+        for name in STAGE_INPUTS[stage_state["mode"]]:
+            staged = (stage_root / name).read_bytes()
+            if sha256_bytes(staged) != stage_state["inputs"][name]:
+                inputs_fresh = False
+            live = (root / name).read_bytes()
+            if name == "state.json":
+                live = project_stage_state(live)
+            if live != staged:
+                inputs_fresh = False
+        current_candidate_state, candidate_bytes, candidate_sha256 = (
+            candidate_state(stage_root, stage_state)
+        )
+        seal_sha256 = None
+        if args.seal:
+            seal, seal_sha256 = load_seal(args.seal, root, stage_root)
+            if (
+                seal["driver"] != stage_state["driver"]
+                or seal["copilot"] != stage_state["copilot"]
+                or seal["mode"] != stage_state["mode"]
+                or seal["phase"] != stage_state["phase"]
+                or seal["destination_before_sha256"]
+                != stage_state["destination_before_sha256"]
+                or seal["stage_manifest_sha256"]
+                != sha256_bytes((stage_root / "stage.json").read_bytes())
+            ):
+                fail("seal does not match the stage")
+        snapshot["stage"] = {
+            "schema_version": stage_state["schema_version"],
+            "mode": stage_state["mode"],
+            "manifest_sha256": sha256_bytes(
+                (stage_root / "stage.json").read_bytes()
+            ),
+            "prompt_sha256": stage_state.get("prompt_sha256"),
+            "seal_sha256": seal_sha256,
+            "inputs_fresh": inputs_fresh,
+            "destination_fresh": (
+                sha256_bytes((root / COPILOT_OWNED).read_bytes())
+                == stage_state["destination_before_sha256"]
+            ),
+            "candidate_state": current_candidate_state,
+            "candidate_bytes": candidate_bytes,
+            "candidate_sha256": candidate_sha256,
+        }
+    if args.pid is not None:
+        if args.pid < 1:
+            fail("status --pid must be a positive integer")
+        try:
+            os.kill(args.pid, 0)
+            process_state = "reachable"
+        except ProcessLookupError:
+            process_state = "not-reachable"
+        except PermissionError:
+            process_state = "unknown"
+        snapshot["process"] = {
+            "pid": args.pid,
+            "state": process_state,
+            "advisory": True,
+        }
+    print(json.dumps(snapshot, indent=2, sort_keys=True))
+
+
 def digests(args: argparse.Namespace) -> None:
     root = session_path(args.session_dir)
     validate_layout(root)
@@ -1084,6 +1309,14 @@ def parser() -> argparse.ArgumentParser:
     check_parser.add_argument("session_dir")
     check_parser.add_argument("--phase", choices=PHASES)
     check_parser.set_defaults(handler=check)
+    status_parser = commands.add_parser(
+        "status", help="print one read-only JSON session/stage snapshot"
+    )
+    status_parser.add_argument("session_dir")
+    status_parser.add_argument("--stage", dest="stage_dir")
+    status_parser.add_argument("--seal")
+    status_parser.add_argument("--pid", type=int)
+    status_parser.set_defaults(handler=status)
     digests_parser = commands.add_parser(
         "digests", help="print sha256 of the protected (non-co-pilot) entries"
     )
@@ -1100,6 +1333,13 @@ def parser() -> argparse.ArgumentParser:
     stage_parser.add_argument("session_dir")
     stage_parser.add_argument("stage_dir")
     stage_parser.add_argument("--mode", required=True, choices=sorted(STAGE_INPUTS))
+    stage_parser.add_argument(
+        "--prompt",
+        help=(
+            "copy and seal a bounded UTF-8 prompt as "
+            "artifacts/copilot-prompt.md"
+        ),
+    )
     stage_parser.add_argument(
         "--seal",
         help="external path-free seal file (required for schema-2 staged sessions)",
