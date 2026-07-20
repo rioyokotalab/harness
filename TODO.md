@@ -56,11 +56,14 @@ T-280 is the active one-Mac onboarding task. The owner supplied one opaque
 logical identifier and an ephemeral reverse-SSH execution route outside this
 public ledger, explicitly authorized full installation through that route, and
 requires no further ordinary permission prompts. Value-free discovery confirms
-a supported Apple-silicon Darwin target with Command Line Tools present and
-Homebrew, Codex, the public checkout, and a usable target-side agent socket
-absent. No target mutation has run. Resume by publishing this checkpoint, then
-bootstrap the missing public checkout and prerequisites through native remote
-commands while preserving every authentication and unsafe-state stop gate.
+a supported Apple-silicon Darwin target with Command Line Tools and functional
+Homebrew at its supported current-user-owned prefix; Homebrew is merely absent
+from the remote shell's initial `PATH`. Codex, the public checkout, and a usable
+native target-side agent socket are absent, while a command-scoped forwarded
+agent socket is safe. No target mutation has run. Resume by publishing this
+checkpoint, then bootstrap the missing public checkout and prerequisites
+through native remote commands while preserving every authentication and
+unsafe-state stop gate.
 
 T-273 remains the ordered closure task for every known item deliberately
 deferred by T-268, T-269, and T-272. Workstreams 1 and 2 are complete by
@@ -108,7 +111,9 @@ current published `main`. The owner supplied an ephemeral reverse-SSH route and
 explicitly authorized the complete installation without further ordinary
 permission prompts. Value-free read-only discovery confirms a supported
 Apple-silicon Darwin target, non-root execution, Command Line Tools present,
-and Homebrew, Codex, the public checkout, and a usable target-side agent socket
+functional Homebrew at its supported current-user-owned prefix but outside the
+remote shell's initial `PATH`, a safe command-scoped forwarded agent socket,
+and Codex, the public checkout, and a usable native target-side agent socket
 absent. No target mutation has run. The Codex-first bootstrap remains the
 required entry route after establishing the missing clean public checkout.
 
