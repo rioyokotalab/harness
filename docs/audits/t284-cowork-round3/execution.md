@@ -41,3 +41,13 @@ were already frozen—but the administrative phase transition should have
 preceded the first edit. I recorded the ordering error rather than rewriting
 history, advanced exactly one phase, and revalidated executing state and the
 unchanged reciprocal receipt. No other deviation occurred.
+
+The first clean committed full phase-one run resolved auto to eight and ran all
+57 suites, but failed only `test-tmux-config.sh` in 26.67 seconds. The new
+focused-runner unit imported `tools/run-focused-tests.py` while suites were
+parallel, Python created `tools/__pycache__/run-focused-tests.cpython-312.pyc`,
+and tmux correctly observed a dirty checkout. This is an in-scope test-isolation
+defect, not worker oversubscription. I changed that one import invocation to
+`PYTHONDONTWRITEBYTECODE=1`, exact-unlinked the generated `.pyc`, removed its
+empty directory, reran the focused-runner test, and verified it left no cache.
+The full clean retry remains required.

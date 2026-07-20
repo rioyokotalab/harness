@@ -49,7 +49,7 @@ python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
 [ "$(grep -c '^PASS suite=' "$TEMP_DIR/pass.out")" -eq 2 ] ||
     fail 'parallel result count'
 
-python3 - "$ROOT/tools/run-focused-tests.py" <<'PY'
+PYTHONDONTWRITEBYTECODE=1 python3 - "$ROOT/tools/run-focused-tests.py" <<'PY'
 import importlib.util
 import pathlib
 import sys
