@@ -206,6 +206,17 @@ HOME="$darwin_native_home" HARNESS_ROOT="$PUBLIC" HARNESS_TEST_ALLOW_NONMAIN=1 \
 grep -F 'AGENT_CONFIG_NATIVE_CODEX state=ready action=none' \
     "$TEMP_DIR/darwin-native.out" >/dev/null ||
     fail "Darwin Homebrew-bin native Codex ownership"
+unlink "$TEMP_DIR/darwin-uname-first-call"
+HOME="$darwin_native_home" HARNESS_TEST_ALLOW_NONMAIN=1 \
+    DARWIN_UNAME_FIRST_CALL="$TEMP_DIR/darwin-uname-first-call" \
+    PATH="$darwin_fake_bin:/usr/bin:/bin" \
+    "$PUBLIC/bin/harness-codex" exec --help >"$TEMP_DIR/darwin-launcher.out"
+grep -F -x -- '--ask-for-approval' "$TEMP_DIR/darwin-launcher.out" >/dev/null ||
+    fail "Darwin managed launcher approval flag"
+grep -F -x -- '--sandbox' "$TEMP_DIR/darwin-launcher.out" >/dev/null ||
+    fail "Darwin managed launcher sandbox flag"
+grep -F -x exec "$TEMP_DIR/darwin-launcher.out" >/dev/null ||
+    fail "Darwin managed launcher native execution"
 trust_only_home=$(make_home trust-only)
 mkdir -p "$trust_only_home/.codex"
 printf '%s\n' '[projects."/synthetic/project-one"]' \
