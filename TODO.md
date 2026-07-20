@@ -462,6 +462,20 @@ treated as a separate missing command. No transaction exists and retry is safe.
 Use a paste-safe function containing no continuation backslashes for all three
 owner-local drills.
 
+The owner requested a simpler native handoff. Exact absent-path preflight now
+passes and a host-specific, Bash-syntax-checked, current-user-owned regular
+`~/run_this.sh` at mode 0700 exists on each Mac. The scripts contain no
+credential or credential assignment; each runs local `sudo -v`, then the
+frozen login-shell apply/rollback/reapply/no-op-plan sequence and stops on the
+first failure. The first attempted Aist staging method failed before creation
+because BSD `install` rejects `/dev/stdin`; the destination remained absent.
+The successful route copied patch-created exact bytes to an absent staging
+path, validated them, and atomically renamed them; all local temporary sources
+are removed. Exact next action: the owner runs `~/run_this.sh` locally on Aist
+first and returns its value-free output. Do not run the other two after an Aist
+failure. After each successful drill, revalidate remotely and exact-unlink only
+that unchanged helper.
+
 ### T-280 — Onboard one additional personal Mac
 
 **Phase/status:** `complete`; exactly one owner-operated Mac was in scope. Its
