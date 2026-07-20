@@ -998,10 +998,26 @@ all 54 registered focused suites, guarded-delete regression, and the serial
 integration tail passed. Native MPI skipped exactly as designed outside a
 declared MPI environment. No live agent plan or apply ran.
 
-**Exact next action:** publish the generic implementation through the protected
+**Publication gate:** publish the generic implementation through the protected
 `main` workflow, require authoritative CI, then guarded-plan/apply fleet-sync
-only for clean managed checkouts. Do not change `tools/agents.tsv` or run a live
-agent plan/apply; a future version-pin proposal remains separate.
+only for clean managed checkouts. The checkpoint below records this gate as
+satisfied. Do not change `tools/agents.tsv` or run a live agent plan/apply; a
+future version-pin proposal remains separate.
+
+**Workstream 2 publication checkpoint:** PR #143 passed the protected
+`portable-phase1` gate and merged as
+`1ed9712bc8c3fd4896df2654b2a3379412e5984d`. Guarded fleet-sync from
+`e14602b3e300659a1a509936190acadb2361d114` then preflighted and fast-forwarded
+`ab`, `ab2`, `ri`, `al`, `rc`, and `t4`; the post-apply verification plan found
+every checkout clean with both `HEAD` and `origin/main` at the merge commit and
+every transfer artifact absent. `local` is clean on the same published main.
+The repository pin remains unchanged and no live agent plan/apply, version
+replacement, retained-version cleanup, macOS mutation, or session reload ran.
+Workstream 2 is complete as generic, published, fleet-synchronized capability.
+
+**Next T-273 boundary:** choose the next independently eligible workstream from
+the gates above after a fresh state reconstruction. Workstream 2 grants no
+authority for a version-pin proposal or live replacement.
 
 ### T-272 — Seven-hour accessible-fleet maintenance
 
