@@ -123,11 +123,14 @@ still starting at `planning`; and the focused test gained hard-link, digest,
 tamper-detection, predecessor, and doc-string coverage. Canonical validator,
 focused cowork, Claude takeover, source, public-audit, and `git diff --check`
 pass; the first full `tests/test-phase1.sh` passed every suite except the tmux
-suite's intentional clean-committed-checkout prerequisite. Next action:
-checkpoint the reviewed round-2 files, rerun phase-1 from the clean commit,
-advance the session to `complete`, and make the final evidence commit. No
-settings, credentials, packages, remotes, or external systems changed; all four
-round sandboxes are retained for later guarded cleanup.
+suite's intentional clean-committed-checkout prerequisite. After checkpoint
+commit `c630866` the clean-checkout `tests/test-phase1.sh` rerun passed every
+focused suite, guarded-delete, and the umbrella gate (native MPI correctly
+skipped); the round-2 session is `complete` and validates. Next action: perform
+the deferred guarded cleanup of the two round-1 and two round-2 sandboxes plus
+the throwaway probe trees. No settings, credentials, packages, remotes, or
+external systems changed; the four round sandboxes are retained for that guarded
+cleanup and this work has not been pushed.
 
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
 and Claude. Its role contract must be client-neutral: the active client is the

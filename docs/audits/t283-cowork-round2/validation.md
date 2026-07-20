@@ -19,13 +19,14 @@ intentional prerequisite, not a product-behavior failure.
 
 ## Outcome
 
-The individual acceptance gates pass and no safety boundary was weakened. The
-umbrella `tests/test-phase1.sh` gate is confirmed from the clean checkpoint
-commit that contains only the reviewed round-2 files; that clean rerun result is
-recorded in the final evidence commit before the session is advanced to
-`complete`. The co-pilot's content-filter refusal and 10-minute timeout were
-handled as evidence, with no state change on the timeout and a clean partial
-write on the refusal.
+The individual acceptance gates pass and no safety boundary was weakened. From
+the clean checkpoint commit `c630866` the full `tests/test-phase1.sh` then passed
+every focused suite — including `test-tmux-config.sh`, the revised cowork suite,
+and the guarded-delete checks — with the umbrella `phase-1 harness tests passed`
+and native MPI correctly skipped outside a declared MPI environment (exit 0, no
+FAIL lines). Validation passed. The co-pilot's content-filter refusal and
+10-minute timeout were handled as evidence, with no state change on the timeout
+and a clean partial write on the refusal.
 
 ## Residual risks
 
