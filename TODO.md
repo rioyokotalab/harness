@@ -198,9 +198,15 @@ because the canonical public profile already supplies it, and remove the
 office-only `.local/libexec/harness-codex-native` insertion because that path is
 absent on every reachable Mac. The shared profile remains the sole owner of
 `.local/bin`; no installed Codex component is removed. D6 `.bash_common` is the
-next open question. D7 aliases and D8 final formatting/mode normalization
-remain pending and will be asked one at a time. Exact next action: ask only D6
-without inspecting `.bash_common`. No execution authority exists yet.
+selected: remove the aist-only source entry from `.bashrc` and permanently
+exact-unlink `~/.bash_common` itself. Its contents remain uninspected and must
+not be copied into a rollback artifact; execution must first revalidate only
+its exact path, type, owner, and single-link boundary and must stop rather than
+follow or broaden an unexpected target. This is one exact non-recursive file
+removal, not a guarded bulk deletion. D7 aliases is the next open question. D8
+final formatting/mode normalization remains pending. Exact next action: inspect
+only the public alias routing and ask D7 without reading private files. No
+execution authority exists yet.
 
 ### T-280 — Onboard one additional personal Mac
 
