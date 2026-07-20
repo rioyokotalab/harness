@@ -188,11 +188,15 @@ deletion of that complete managed root and its Python/virtualenv contents. At
 execution, the exact unchanged root must be moved beneath a narrow retained
 private staging boundary and removed only through `harness guarded-delete`
 plan/apply with manifest revalidation; raw recursive deletion remains
-forbidden. D3 is therefore closed. D4 local compiler/library paths is the next
-open question. D5 obsolete Codex paths, D6 `.bash_common`, D7 aliases, and D8
-final formatting/mode normalization remain pending and will be asked one at a
-time. Exact next action: ask only D4 using completed value-free path discovery.
-No execution authority exists yet.
+forbidden. D3 is therefore closed. D4 is selected: remove the office-only `.local/include`,
+`.local/lib`, dynamic-library, compiler-header, and `pkg-config` exports because
+every referenced directory is absent, and remove its duplicate explicit
+`.local/bin` insertion because the canonical public profile hook already owns
+that path. No directory or installed tool is removed by D4. D5 obsolete Codex
+paths is the next open question. D6 `.bash_common`, D7 aliases, and D8 final
+formatting/mode normalization remain pending and will be asked one at a time.
+Exact next action: ask only D5 using completed value-free path discovery. No
+execution authority exists yet.
 
 ### T-280 — Onboard one additional personal Mac
 
