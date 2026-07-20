@@ -80,13 +80,21 @@ Remaining steps (this pass adds them to the plan; it does not execute them):
     strongest claims among the five numbered conflicts, stating for each
     which it accepts, rejects, or cannot resolve with its own evidence.
     Import and verify the reciprocal candidate the same way as step 10.
-12. Write `reconciliation.md`: preserve material disagreement, resolve or
-    explicitly leave open each of the five conflicts, and state exactly which
-    plan changes are accepted or rejected and why. Do not select a side by
-    client brand; prefer reproducible, matched-baseline evidence.
-13. Advance to `ready-for-execution` only if reconciliation leaves no unsafe
-    or contradictory required evidence; otherwise stay in `discussing` or ask
-    the owner one material question.
+12. **Done.** Wrote `reconciliation.md`: all five numbered conflicts resolved
+    (advisory `mechanical_import_preconditions` object; driver-only
+    monitoring; log-dir `FileExistsError` → concise exit 2; `HARNESS_TEST_JOBS=4`
+    retained with no further benchmarking this round; current CI-topology
+    trace accepted narrowly, no unsupported historical claim). Recorded the
+    reciprocal stage's scope contamination (it read the live skill checkout,
+    not only the sealed stage bundle, per the supervisor's independent
+    observation) — its strict read-blind claim is rejected, while it is
+    accepted that it did not access the live session or mutate live files;
+    only recommendations independently corroborated or supported by staged
+    bytes are accepted. Recorded that `workspace-write` limits writes, not
+    reads, with no Claude/Codex confinement-equivalence claim.
+13. **Done.** Advanced to `ready-for-execution` via `cowork-session advance`;
+    no unsafe or contradictory required evidence remained after
+    reconciliation.
 14. On an explicit owner go scoped to the frozen plan, re-read `state.json`,
     the charter, and the frozen plan from disk, revalidate baseline
     cleanliness and rollback, then advance to `executing`. Claude Code is the

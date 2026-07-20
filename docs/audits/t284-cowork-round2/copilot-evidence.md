@@ -2,223 +2,219 @@
 
 ## Sandbox and baseline
 
-Observation: all work was confined to `/tmp/harness-t284-r2-codex` and its sealed direct-child stage, `/tmp/harness-t284-r2-codex/stage-independent`. No live Claude session, Claude sandbox, remote, service, credential, package, or external seal was accessed.
+This reciprocal review was confined to `/tmp/harness-t284-r2-codex` and its sealed direct-child stage, `/tmp/harness-t284-r2-codex/stage-reciprocal`. I did not access the live Claude session or sandbox, main checkout, settings, credentials, packages, services, remotes, external seals, or other external systems.
 
-Baseline verification:
-
-```text
-$ pwd
-/tmp/harness-t284-r2-codex
-
-$ git rev-parse HEAD
-ca875387c232e0da51fdf602a5aa21369720965f
-
-$ git status --porcelain=v1
-<empty>
-```
-
-The staged state identifies Claude as driver, Codex as co-pilot, phase `discussing`, and staged exchange mode. The stage is schema 3, mode `independent`, with the same roles and phase.
-
-The staged prompt SHA-256 matches `stage.json`:
+Current baseline:
 
 ```text
-4233c93796b2ed04b0aaea878aee868acc8ab50f8f62bcddc9a963ee3dbb7626
+git_commit=ca875387c232e0da51fdf602a5aa21369720965f
+git_status=<clean>
+stage_schema=3
+stage_mode=reciprocal
+driver=claude
+copilot=codex
+phase=discussing
+exchange_mode=staged
 ```
 
-At startup, the real stage candidate was:
+The reciprocal stage binds the imported independent evidence and prompt:
 
 ```text
-candidate_state=unchanged
-candidate_bytes=133
-candidate_sha256=da32107e44a02377b76bf9e79cea08250357c548157a4adc8125295031c5a4b6
+prompt_sha256=052a2a0b1b13fd4d9e895b3d4a2c37971f75c05bdada315816d5bf6436f68e36
+stage_manifest_sha256=8e56c007a8871077ca04188303ed1295af12f5dc7c66e862b2fe025432cf3cc5
+imported_copilot_evidence_sha256=d1e3f63c3e999f81e6de88eb79c4261a5256ff830f7195d07a3ffd3b14ce9d00
+destination_before_sha256=d1e3f63c3e999f81e6de88eb79c4261a5256ff830f7195d07a3ffd3b14ce9d00
 ```
 
-That digest equals `destination_before_sha256`. The candidate remained unchanged during the evidence pass because the native Codex output-last-message mechanism, not this process, owns the final candidate write.
+The prompt hash matches the staged prompt bytes, and the imported evidence hash matches `destination_before_sha256`.
 
-One source import generated an untracked bytecode file:
-
-```text
-shared/skills/codex-claude-cowork/scripts/__pycache__/cowork-sessioncpython-312.pyc
-```
-
-I stopped further experiments, exact-unlinked that single generated file, removed its empty directory non-recursively, and revalidated the baseline. Final status was clean:
-
-```text
-$ git status --porcelain=v1
-<empty>
-
-$ git rev-parse HEAD
-ca875387c232e0da51fdf602a5aa21369720965f
-```
+The independent pass had verified the same Git baseline and a clean final worktree. Its focused cowork suite passed in 11.55 seconds. That is useful functional evidence, but it is only one timing sample and does not establish a clean performance comparison.
 
 ## Commands and results
 
-The current cowork skill, complete protocol reference, helper source, staged charter, staged plan, staged state, manifest, and sealed prompt were read from this checkout/stage.
-
-Focused cowork suite:
+No new full, focused-suite, or concurrency test was run during this reciprocal pass. I read and traced:
 
 ```text
-$ /usr/bin/time tests/test-codex-claude-cowork-skill.sh
-Codex-Claude cowork skill tests passed
-wall_seconds=11.55 exit_status=0
+stage-reciprocal/charter.md
+stage-reciprocal/plan.md
+stage-reciprocal/driver-evidence.md
+stage-reciprocal/copilot-evidence.md
+stage-reciprocal/state.json
+stage-reciprocal/stage.json
+stage-reciprocal/artifacts/copilot-prompt.md
+shared/skills/codex-claude-cowork/scripts/cowork-session
+shared/skills/codex-claude-cowork/SKILL.md
+shared/skills/codex-claude-cowork/references/protocol.md
+tools/run-focused-tests.py
+tests/test-focused-runner.sh
+tests/test-codex-claude-cowork-skill.sh
+tests/test-phase1.sh
+tests/focused-suites.tsv
+.github/workflows/ci.yml
 ```
 
-This exercises both role assignments, schema-3 prompt binding, external-seal validation, stage-parent rejection, status immutability and candidate states, import refusal paths, receipts, and schema-2 stage compatibility.
+Status and import readiness:
 
-The six required focused-runner invocations were made exactly three times per worker count in requested alternating labels `4,8,4,8,4,8`. Every invocation used a fresh, initially nonexistent directory under `stage-independent/artifacts/runner-logs/`. Git remained clean after the generated ignored artifacts.
+- Claude observed `candidate_state="ready"` together with stale inputs. The existing helper permits that combination because `candidate_state` validates only candidate bytes and required headings; it does not incorporate live-input freshness.
+- The existing focused cowork test also establishes the analogous partial state after import: `candidate_state="ready"` while `destination_fresh=false`.
+- `status` currently emits `candidate_state`, `inputs_fresh`, and `destination_fresh` as independent sibling fields. The protocol warns that candidate state is advisory, but a machine or hurried operator can still consume the attractive `ready` label alone.
+- `import-copilot` remains the authoritative mechanical gate and repeats stronger descriptor, schema, role, receipt-order, prompt, seal, input, destination, and candidate checks before mutation.
+- Semantic inspection, native process success, protected-digest comparison, and retained pre-window seal comparison are outside what `status` can establish.
 
-| Run | Jobs | Wall time | Result | Failed suites |
-|---|---:|---:|---:|---:|
-| `run1-j4` | 4 | 23.52s | exit 1 | 7/57 |
-| `run2-j8` | 8 | 18.91s | exit 1 | 7/57 |
-| `run3-j4` | 4 | 34.81s | exit 1 | 7/57 |
-| `run4-j8` | 8 | 25.62s | exit 1 | 7/57 |
-| `run5-j4` | 4 | 24.94s | exit 1 | 7/57 |
-| `run6-j8` | 8 | 18.96s | exit 1 | 7/57 |
+A documentation clarification is necessary but not sufficient. The observed hazardous combination is part of the machine interface, so `status` should also expose a structured, explicitly non-authorizing summary. The smallest safe shape is:
 
-Summary:
-
-- Jobs 4: median 24.94s; range 23.52–34.81s.
-- Jobs 8: median 18.96s; range 18.91–25.62s.
-- Raw medians favor jobs 8 by 5.98s, approximately 24%.
-- Runs 3 and 4 overlapped after the command runner reported their containing sequences drained prematurely. Those two measurements are not matched clean evidence.
-- All six runs failed the same seven suites, so none is a clean acceptance run.
-
-Repeated failures:
-
-```text
-test-personal-macos-profile.sh
-test-tmux-config.sh
-test-personal-macos-update.sh
-test-personal-macos-config-sync.sh
-test-personal-macos-config-migrate.sh
-test-ssh-config-mirror.sh
-test-fleet-sync.sh
+```json
+"mechanical_import_preconditions": {
+  "candidate_structurally_ready": true,
+  "inputs_fresh": false,
+  "destination_fresh": true,
+  "all_satisfied": false,
+  "advisory": true,
+  "authorization": "none"
+}
 ```
 
-Representative causes were `tmux configuration grammar is invalid`, a sandbox-denied synthetic agent socket, and a read-only home-state path in the fleet-sync test. Because some failures are plainly confinement-related while the repeated tmux grammar failure may have another cause, attribution remains unresolved.
+This object should summarize only the three existing byte/freshness observations. It must not be called `import_ready`, must not include semantic approval, and must always state that it grants no authorization. Seal validation, expected stage mode and receipt order, protected digests, process exit, semantic review, import success, and receipt verification remain separate gates.
 
-Top suite durations:
+Monitoring ownership:
 
-| Run | Three longest suites |
-|---|---|
-| `run1-j4` | cowork 11.270s; personal-macos-ssh-sync 11.190s; restic-schedule 9.574s |
-| `run2-j8` | cowork 13.826s; personal-macos-ssh-sync 12.903s; restic-schedule 10.373s |
-| `run3-j4` | cowork 18.040s; personal-macos-ssh-sync 13.980s; personal-macos-homebrew 12.825s |
-| `run4-j8` | cowork 18.655s; personal-macos-ssh-sync 17.737s; personal-macos-update 13.863s |
-| `run5-j4` | cowork 12.041s; personal-macos-ssh-sync 11.315s; restic-schedule 9.724s |
-| `run6-j8` | cowork 13.819s; personal-macos-ssh-sync 12.977s; restic-schedule 10.352s |
+- A blinded co-pilot cannot run the complete real-stage `status` command because the required live-session path is withheld.
+- It also cannot authenticate the external seal because that seal is deliberately outside every co-pilot-writable and disclosed tree.
+- This is the intended confinement model, not a missing co-pilot capability. Real-window monitoring therefore belongs to the driver in both role assignments.
 
-Status findings:
+The smallest symmetric prompt/runbook wording is:
 
-- The complete `status` command cannot be invoked by a blinded co-pilot using only this stage: its required first argument is the withheld live session. The external seal is also intentionally unavailable.
-- The helper’s stage reader and candidate-state logic verified the real stage’s startup `unchanged` state without writing it.
-- The focused cowork suite independently passed its synthetic transition from `unchanged` with fresh inputs/destination to a post-import state where `candidate_state` remains `ready` but `destination_fresh` is false.
-- The final real-stage transition cannot be sampled before this response because output-last-message writes the candidate after generation. The driver must perform that final status observation.
-- `status` is read-only by source trace: it loads and validates state, receipts, stage, prompt, seal, candidate, and optional PID reachability, then prints JSON. Its PID check uses signal zero and is explicitly advisory.
+> The driver, which retains the live-session and external-seal paths, runs `status` during and after the native co-pilot window. The blinded co-pilot reports only stage-local observations. Neither candidate state nor PID reachability authorizes import.
 
-Import-readiness trace:
+Worker evidence:
 
-- `candidate_state=ready` only establishes bounded UTF-8 content with the required headings and no standalone unresolved marker.
-- `inputs_fresh=true` establishes staged input hash and live projected-input equality.
-- `destination_fresh=true` establishes that live co-pilot evidence still equals the staged destination-before digest.
-- Successful sealed status also establishes stage layout, prompt digest, roles, and external-seal consistency.
-- `next_action` and stage `mode` must agree with receipt sequencing.
-- Before import, the driver must additionally compare protected digests and the retained pre-window stage-manifest seal, inspect the complete candidate semantically, and confirm the process result.
-- `import-copilot` remains authoritative: it repeats descriptor, ownership, link-count, schema, roles, phase, receipt order, seal, prompt, input, destination, and candidate checks before mutation.
+Claude’s four dirty-tree samples and the independent pass’s six workspace-confined samples point in the same raw direction:
 
-Seal-parent reasoning:
+- Claude: jobs 8 was faster in both pairs, but every run failed `test-tmux-config.sh` because the checkout was dirty.
+- Independent pass: jobs 8 had a roughly 24% lower raw median, but all six runs failed the same seven suites and the middle jobs-4/jobs-8 pair overlapped.
+- Neither set satisfies acceptance. Failed workloads, dirty-tree failures, sandbox-specific denials, overlapping measurements, and small samples cannot select a new production default.
+- The frozen default should remain `HARNESS_TEST_JOBS=4`.
+- No more concurrency benchmarking belongs in this round. The failure causes and environment must first be corrected; a later, separately bounded benchmark may use strictly sequential alternating samples with every suite passing.
 
-```text
-stage       = /tmp/harness-t284-r2-codex/stage-independent
-stage.parent= /tmp/harness-t284-r2-codex
+Pre-existing log-directory behavior:
+
+`tools/run-focused-tests.py` currently executes:
+
+```python
+log_dir.mkdir(mode=0o700, parents=False, exist_ok=False)
 ```
 
-`seal_location_ok` rejects any resolved seal path relative to either the live session or `stage_root.parent`. Therefore both of these are rejected:
+outside an exception handler. A pre-existing directory therefore produces a Python traceback. Idempotent reuse is unsafe because old and new logs could be mixed and attribution weakened. Documentation alone would preserve an unnecessarily poor CLI failure.
 
-```text
-/tmp/harness-t284-r2-codex/seal.json
-/tmp/harness-t284-r2-codex/stage-independent/seal.json
+The smallest implementation is to retain refusal but catch `FileExistsError`:
+
+```python
+try:
+    log_dir.mkdir(mode=0o700, parents=False, exist_ok=False)
+except FileExistsError:
+    print(
+        f"focused-tests: --log-dir already exists: {log_dir}",
+        file=sys.stderr,
+    )
+    return 2
 ```
 
-A seal outside `/tmp/harness-t284-r2-codex` is not relative to the stage parent and satisfies that path condition, subject to the separate session-tree and same-UID reachability requirements. No stage or seal was created to reproduce this rule.
+The smallest focused regression belongs in `tests/test-focused-runner.sh`: invoke the runner a second time with the already-created successful `pass-logs` directory, capture its status and stderr, require exact status 2, require the concise `focused-tests: --log-dir already exists:` diagnostic, and reject `Traceback`. No suite should start during that invocation. Existing behavior for a missing parent is outside this exact change.
 
-Symmetry findings:
+Stage-parent seal wording:
 
-- `init` derives the co-pilot as the other member of `{codex, claude}`; stage, status, import, receipts, and phase transitions use recorded roles without a driver-brand branch.
-- The focused suite creates and validates both Codex-driver/Claude-co-pilot and Claude-driver/Codex-co-pilot sessions.
-- Functional protocol symmetry is supported.
-- Enforcement is intentionally not identical: Codex workspace-write supplies an OS-enforced writable boundary, while the documented Claude CLI permissions are behavioral unless an external platform sandbox is applied. The plan should call this role-neutral protocol symmetry, not identical client confinement.
+- The helper rejects seals inside either the live session or `stage_root.parent`.
+- This represents the full co-pilot sandbox only when each stage is a direct child of that sandbox.
+- The charter, skill, and protocol now state that direct-child precondition and require prompts and external seals outside the entire stage-parent sandbox.
+- That wording is sufficient. If nested stages are later required, the helper needs an explicit validated co-pilot-root argument; weakening the current check is not appropriate.
+- The path check does not establish general same-UID confinement. The driver must still choose an actually withheld external location.
 
-CI/source trace:
+Current CI coverage:
 
-- The current workflow runs the affinity test and then `tests/test-phase1.sh`.
-- `test-phase1.sh` invokes the focused manifest once through `tools/run-focused-tests.py`.
-- The manifest includes the cowork suite and 56 other focused suites.
-- `test-phase1.sh` retains the conditional ShellCheck gate.
-- Current source therefore retains focused-suite and ShellCheck coverage without another visible workflow-level duplicate. I did not independently reconstruct every historical removed CI step, so the stronger claim that each formerly duplicated step maps exactly once remains source-supported but not exhaustively history-proven in this pass.
+- The workflow records capabilities, runs `tests/test-affinity-readiness.sh`, and runs `tests/test-phase1.sh`.
+- The affinity test is not in `tests/focused-suites.tsv`, so the visible standalone affinity step is not duplicated by the focused manifest.
+- `test-phase1.sh` invokes `tools/run-focused-tests.py` once in its normal parallel path.
+- The manifest contains the focused runner and cowork suites and has 57 active suite entries.
+- `test-phase1.sh` retains the conditional ShellCheck warning/error gate. The workflow’s `shellcheck --version` command records capability; it is not a duplicate lint run.
 
-Pre-existing log-directory behavior was established by source trace without a seventh runner invocation. `log_dir.mkdir(..., exist_ok=False)` is outside the existing `try/except ValueError`, so `FileExistsError` escapes as a Python traceback. That is an implementation detail rather than a clean command-line diagnostic.
+This confirms the current coverage shape without visible duplicate suite or ShellCheck execution. It does not independently prove the stronger historical claim that every step removed in round 1 maps exactly once; that would require the historical diff or removal manifest.
 
 ## Critique
 
-The raw timing direction favors eight workers, but it does not support changing the default. Every run failed, two central samples overlapped, and the longest suites slowed substantially under the contaminated pair. Retaining jobs 4 is the conservative decision until both arms pass in a genuinely sequential, matched environment.
+Claude’s stale-input observation strengthens the independent critique. Documentation already says `candidate_state` is advisory, but the machine surface still presents `ready` independently from freshness. A full prose checklist alone is too easy for machine consumers to bypass accidentally. The structured object should be added, but it must remain visibly advisory and non-authorizing; an `import_ready` Boolean would overclaim.
 
-The status fields are individually honest, and the protocol text explicitly warns that candidate and PID states do not authorize import. Nevertheless, the machine surface makes a hazardous partial reading easy: `candidate_state=ready` can coexist with `destination_fresh=false`, as the focused suite deliberately demonstrates. There is no aggregate `import_preconditions` or `import_ready` field.
+The independent proposal to “prefer documentation first” is therefore rejected. Documentation and the structured object should land together. The object reduces partial reads, while the runbook records the gates that cannot be represented by status.
 
-Adding a simple `import_ready` Boolean would risk overstating what status can prove because semantic review, protected digest comparison, process success, and import-time descriptor checks remain outside it. A named structured field such as `mechanical_import_preconditions` would be safer if the interface is changed. Documentation alone can also be adequate if it presents the required conjunction next to the example command.
+Both evidence passes agree that driver-owned monitoring is required. Requiring a blinded co-pilot to monitor the real session would either be impossible or would disclose precisely the paths the staged protocol withholds. Symmetry means the same driver/co-pilot responsibility rule applies whichever product occupies each role; it does not mean both roles receive identical information.
 
-The blinded co-pilot cannot exercise the complete real-stage status surface because `status` requires the withheld live-session path. This is consistent with keeping the session secret, but conflicts with a literal requirement that the co-pilot itself monitor real `inputs_fresh` and `destination_fresh`. Monitoring belongs to the driver unless a separately sealed, path-free stage-only status mode is designed.
+The raw worker results consistently favor eight, but neither evidence set is acceptable benchmark evidence. Claude’s claim that the identical dirty-tree failure “does not undermine” the wall-time comparison is too strong: the failed suite is short and balanced, so the direction remains diagnostically interesting, but a failed gate can alter scheduling and critical-path behavior and cannot support a default change. The independent results are more contaminated still because seven suites failed and one pair overlapped. No clean timing conclusion should be drawn.
 
-Prompt binding is supported by the real stage’s matching prompt digest and by the passing focused suite. The independent pass cannot authenticate the external seal because withholding it is part of the confinement model; the driver must perform that comparison.
+The focused cowork timings—roughly 9.97, 10.12, 11.55, and 12.10 seconds across different passes—are unmatched single samples. Describing their differences as “expected variance” is an inference, not measured evidence. They support “no gross slowdown observed,” not performance equivalence or regression absence.
 
-The direct-child seal rule is sound only under its documented precondition. If callers ever permit nested stages, `stage_root.parent` becomes too narrow and no longer represents the whole co-pilot sandbox. The existing charter correctly requires direct children.
+Functional protocol symmetry is supported by role-neutral state handling and tests for both driver assignments. Claims of identical client confinement must be rejected: Codex workspace-write provides an enforced writable-root boundary in this workflow, while Claude tool permissions are behavioral unless an additional platform sandbox is present. Role symmetry, helper symmetry, and confinement equivalence are distinct claims.
 
-The runner’s pre-existing-directory traceback is poor CLI behavior. Refusing reuse is correct because it preserves attributable logs; the refusal should be deliberate and concise rather than a traceback. Making the directory idempotent would weaken run isolation and is not recommended.
+The pre-existing log-directory traceback is a real CLI defect, not merely a documentation gap. Idempotent reuse would weaken attributable logs; concise exit-2 refusal is the smallest safe correction.
 
-The repeated seven-suite failures also show that worker-count benchmarking needs an explicit clean-run gate. Timing failed workloads can inform diagnostics, but it should not select a production default.
+The direct-child seal rule and current documentation are aligned. The remaining limitation is accurately documented: treating the immediate stage parent as the co-pilot root is valid only under the direct-child precondition, and path checks do not prove the seal is unreachable to every same-UID process.
+
+Current CI source supports the claimed present topology. It does not provide exhaustive historical proof for every removed duplicate, so reconciliation should avoid upgrading that narrower source trace into a historical certainty.
 
 ## Proposed plan changes
 
-1. Retain `HARNESS_TEST_JOBS=4`. Do not accept a default change from this pass. Require a new matched experiment in which all focused suites pass, runs are strictly sequential, neither arm overlaps other benchmark work, and at least three alternating samples per arm complete under the same confinement and host conditions.
+1. Add `stage.mechanical_import_preconditions` to `status`, containing:
 
-2. Mark the present concurrency evidence as inconclusive despite the raw jobs-8 median advantage. Preserve the six logs and record the exact contamination: all runs failed the same seven suites, and runs 3/4 overlapped.
+   - `candidate_structurally_ready`;
+   - `inputs_fresh`;
+   - `destination_fresh`;
+   - their conjunction as `all_satisfied`;
+   - `advisory: true`; and
+   - `authorization: "none"`.
 
-3. Diagnose the seven repeated failures before any new concurrency benchmark. Separate sandbox-caused failures (`PermissionError`, read-only home-state path) from the unresolved tmux grammar failures. Do not expand this bounded pass into that diagnosis.
+   Do not add `import_ready`.
 
-4. Freeze an explicit pre-import checklist requiring all of:
+2. Update the status runbook beside the example command to say that the structured object covers only observed candidate structure and freshness. Explicitly require driver review of expected mode/receipt sequencing, native process exit, protected digests, retained stage and external seals, candidate semantics, `import-copilot` success, and receipt verification.
 
-   - successful sealed `status`;
-   - expected `next_action` and stage mode;
-   - `candidate_state=ready`;
-   - `inputs_fresh=true`;
-   - `destination_fresh=true`;
-   - unchanged protected live-session digests;
-   - retained pre-window stage-manifest and external-seal match;
-   - successful native co-pilot process exit;
-   - semantic inspection of the complete candidate;
-   - final `import-copilot` success followed by receipt verification.
+3. Add a focused cowork regression that creates a structurally ready candidate, changes a staged live input, and verifies:
 
-   State that PID reachability and candidate state never authorize import.
+```text
+candidate_state=ready
+inputs_fresh=false
+mechanical_import_preconditions.candidate_structurally_ready=true
+mechanical_import_preconditions.inputs_fresh=false
+mechanical_import_preconditions.all_satisfied=false
+mechanical_import_preconditions.advisory=true
+mechanical_import_preconditions.authorization=none
+```
 
-5. Prefer a documentation/runbook clarification first. If a machine-readable improvement is desired, add a structured `mechanical_import_preconditions` object rather than an unqualified `import_ready` Boolean, and state which non-mechanical gates remain external.
+Restore the changed fixture input before continuing existing import tests. Also extend the existing post-import assertion so `destination_fresh=false` yields `all_satisfied=false`.
 
-6. Assign real-stage status monitoring to the driver. After output-last-message writes this evidence, the driver should sample status and require `candidate_state=ready`, `inputs_fresh=true`, and `destination_fresh=true` before import. Record that the blinded co-pilot could verify only the stage-local initial state.
+4. Freeze this symmetric monitoring rule:
 
-7. Preserve role symmetry wording but qualify it: the protocol and helper are symmetric with respect to driver identity; client confinement mechanisms are not identical. Keep Claude-driver and Codex-driver tests in the focused suite.
+> The driver, which retains the live-session and external-seal paths, runs `status` during and after the native co-pilot window. The blinded co-pilot reports only stage-local observations. Neither candidate state nor PID reachability authorizes import.
 
-8. Keep every stage a direct child of the declared co-pilot sandbox. Keep every prompt source and external seal outside the live session and the entire stage-parent sandbox. If nested stages are ever required, add an explicit validated co-pilot-root argument rather than relying on the immediate parent.
+5. Retain `HARNESS_TEST_JOBS=4`. Mark both timing datasets inconclusive and perform no additional concurrency benchmark in this round.
 
-9. Keep prompt binding unchanged. Require the driver to compare the retained external seal and pre-window stage-manifest digest after this client window because the co-pilot intentionally cannot authenticate the withheld seal.
+6. Before any later worker-default experiment, diagnose the repeated suite failures and obtain an environment where all focused suites pass. Then use at least three strictly sequential alternating samples per arm under matched host and confinement conditions, with no overlapping benchmark work.
 
-10. Change `tools/run-focused-tests.py` so a pre-existing `--log-dir` produces a concise `focused-tests:` diagnostic and exit status 2. Catch the directory-creation error explicitly before starting suites. Continue refusing reuse; do not make an existing log directory idempotent.
+7. Change the focused runner to catch `FileExistsError`, emit:
 
-11. Retain the current CI shape unless historical inspection finds a missing removed step. Record the independently confirmed current mapping: CI invokes phase one, phase one invokes the focused manifest once, the manifest includes the cowork suite, and phase one retains the ShellCheck gate.
+```text
+focused-tests: --log-dir already exists: PATH
+```
 
-12. Before reconciliation, record as unresolved:
+and return status 2. Continue refusing reuse.
 
-   - the root cause of the repeated tmux-related failures;
-   - a valid clean jobs-4/jobs-8 comparison;
-   - the driver’s final real-stage status after candidate emission;
-   - external-seal and protected-digest comparison;
-   - exhaustive historical proof for every removed duplicate CI step.
+8. Add one `tests/test-focused-runner.sh` case that reuses `pass-logs`, requires exit 2 and the concise diagnostic, rejects a traceback, and confirms the refusal occurs before suite execution.
+
+9. Keep the direct-child stage rule and current seal wording unchanged: every stage is a direct child of the declared co-pilot sandbox, and every prompt source and external seal is outside the live session and the entire stage-parent sandbox. Add an explicit co-pilot-root parameter only if nested stages become a real requirement.
+
+10. Retain the current CI topology. Record only the proven present mapping: affinity remains a separate non-manifest test, phase one invokes the focused manifest once, and phase one retains the conditional ShellCheck gate. Do not claim exhaustive historical one-to-one coverage without the removal diff.
+
+11. In reconciliation, distinguish:
+
+   - role-neutral protocol/helper behavior, which is supported;
+   - identical client confinement, which is false without an additional Claude sandbox;
+   - clean timing or performance equivalence, which neither pass established;
+   - raw jobs-8 direction, which is diagnostically consistent but not acceptance evidence.
+
+12. Keep unresolved for a later bounded task: the tmux failure cause, the workspace-confined suite failures, a passing matched worker benchmark, the driver’s final real-stage status and process result, and the driver-only protected-digest/external-seal comparisons.
