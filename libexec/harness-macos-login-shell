@@ -84,11 +84,16 @@ resolve_bash() {
         die "managed Homebrew Bash prefix query failed"
     desired_shell=$brew_prefix/bin/bash
     [ -x "$desired_shell" ] || die "managed Homebrew Bash link is unavailable"
+    bash_physical_dir=$(CDPATH='' cd -- "$bash_prefix/bin" && pwd -P) ||
+        die "managed Homebrew Bash formula path is ambiguous"
+    case "$bash_physical_dir" in "$brew_prefix"/Cellar/bash/*/bin) ;; *)
+        die "managed Homebrew Bash formula resolves outside its cellar"
+    esac
     desired_physical=$(CDPATH='' cd -- "${desired_shell%/*}" && \
         printf '%s/%s\n' "$(pwd -P)" "$(basename "$desired_shell")")
     desired_resolved=$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' \
         "$desired_shell") || die "managed Homebrew Bash link cannot be resolved"
-    case "$desired_resolved" in "$bash_prefix"/bin/bash) ;; *)
+    case "$desired_resolved" in "$bash_physical_dir"/bash) ;; *)
         die "managed Homebrew Bash link resolves outside its formula"
     esac
     case "$desired_physical" in "$brew_prefix"/bin/bash) ;; *)

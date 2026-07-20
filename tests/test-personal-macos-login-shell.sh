@@ -59,7 +59,9 @@ chmod 700 "$private/.git"
 fake_bin=$TEMP_DIR/fake-bin
 fake_prefix=$TEMP_DIR/homebrew
 formula_prefix=$fake_prefix/opt/bash
-mkdir -p "$fake_bin" "$fake_prefix/bin" "$formula_prefix/bin"
+cellar_prefix=$fake_prefix/Cellar/bash/5.3.0
+mkdir -p "$fake_bin" "$fake_prefix/bin" "$fake_prefix/opt" \
+    "$cellar_prefix/bin"
 cat >"$fake_prefix/bin/brew" <<'EOF'
 #!/bin/sh
 case "$1:${2:-}" in
@@ -72,10 +74,11 @@ case "$1:${2:-}" in
     *) exit 2 ;;
 esac
 EOF
-cat >"$formula_prefix/bin/bash" <<'EOF'
+cat >"$cellar_prefix/bin/bash" <<'EOF'
 #!/bin/sh
 exit 0
 EOF
+ln -s "$cellar_prefix" "$formula_prefix"
 ln -s "$formula_prefix/bin/bash" "$fake_prefix/bin/bash"
 cat >"$fake_bin/uname" <<'EOF'
 #!/bin/sh
@@ -126,7 +129,7 @@ case "$1" in
     *) exit 2 ;;
 esac
 EOF
-chmod 755 "$fake_prefix/bin/brew" "$formula_prefix/bin/bash" \
+chmod 755 "$fake_prefix/bin/brew" "$cellar_prefix/bin/bash" \
     "$fake_bin/uname" "$fake_bin/stat" "$fake_bin/dscl" "$fake_bin/sudo"
 
 shells_file=$TEMP_DIR/shells

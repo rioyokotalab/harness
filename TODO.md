@@ -414,6 +414,23 @@ tests pass, as does the complete parallel focused matrix and
 publish and deploy this correction, then repeat `.bashrc`
 apply/rollback/reapply sequentially before account-shell work.
 
+Protected CI passed, PR 154 published `ba5822c`, every Mac fast-forwarded to it,
+and all three `.bashrc` apply/rollback/reapply drills now pass with mode 0600
+and an unchanged selected login file. The first subsequent login-shell plans
+stopped read-only on all three: `brew --prefix bash` returns Homebrew's stable
+`opt/bash` symlink, while the validator incorrectly compared the real Bash
+binary to that unresolved symlink pathname. No administrator preflight,
+`/etc/shells`, or `chsh` action occurred. Correction branch
+`task/t281-homebrew-bash-cellar` adopts the already-proven launcher invariant:
+resolve the formula `bin` directory physically beneath
+`$HOMEBREW_PREFIX/Cellar/bash/*/bin`, then require the stable public Bash link
+to resolve to that exact executable. The focused fixture now models the real
+`opt`-to-Cellar link chain. Focused syntax, ShellCheck, diff, physical-link,
+apply/rollback, and changed-state tests pass, as does the complete parallel
+focused matrix and `tests/test-phase1.sh` on committed correction `a514cf5`.
+Exact next action: publish this narrow resolver correction before repeating
+read-only login-shell plans.
+
 ### T-280 — Onboard one additional personal Mac
 
 **Phase/status:** `complete`; exactly one owner-operated Mac was in scope. Its
