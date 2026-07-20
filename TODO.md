@@ -300,6 +300,26 @@ the exact prompt and spent manifest were unlinked afterward. Next adversarial
 target: an optional integrated retained-seal comparison in `verify-receipts`,
 or a descriptor-bound seal reader.
 
+Round 7 is a final self-hosted release-candidate audit at baseline `4c3602d`,
+with Codex driving and Claude 2.1.207 co-piloting through independent and
+reciprocal schema-2 sealed stages. Evidence is under
+`docs/audits/t283-cowork-round7/`. Both agents ran the focused suite and concrete
+seal/phase/compatibility traces; Claude additionally exercised complete sealed
+sessions in both driver directions. Protected, stage-manifest, and external-seal
+hashes matched before/after both client windows, both receipts validate, and no
+skill/runtime file changed. The independent pass proposed a co-pilot-root flag
+or wording fix and a receipt-output caveat; reciprocal review rejected both:
+the protocol explicitly recommends a future extension rather than claiming an
+existing option, and the receipt caveat is already documented while output
+churn adds no enforcement. Frozen outcome is deliberately no-code. Named
+residuals remain the non-OS-confined Claude boundary, mandatory direct-child
+stage layout, separate retained-seal comparison, and inability to govern
+arbitrary editors. Focused cowork, source-contract, Claude-takeover,
+public-repository audit, discovery-link identity, live session/receipt checks,
+and `git diff --check` pass. Next action: checkpoint the round-7 audit, run clean
+full Phase 1, complete the session, and guarded-clean the six exact scratch
+trees plus one marker file.
+
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
 and Claude. Its role contract must be client-neutral: the active client is the
 driver and the other client is the co-pilot. Both must reconstruct repository
