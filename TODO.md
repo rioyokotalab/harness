@@ -350,11 +350,16 @@ output files. Explicit exact paths were moved without globbing into one fresh
 bounded directory; guarded token `8b08d7fa…` deleted it (23 entries; 23,775
 bytes) with protected anchors unchanged. The spent manifest was unlinked and
 the final top-level `/tmp` scan for any `t283` name is empty.
-Publication checkpoint: authenticated Git transport and GitHub API access both
-passed independently; the fetched task branch is clean and 0 behind
-`origin/main`. Next action is commit this ledger closure, rerun the protected
-merge gates from a clean checkpoint, push the task branch, create/merge its PR,
-and perform the required post-merge verification and clean-checkout fleet sync.
+Publication result: authenticated Git transport and GitHub API access passed
+independently. PR #161 passed protected `portable-phase1` and squash-merged as
+`535a492`; its exact task branch was deleted. The first fleet-sync plan stopped
+without mutation because all six clean Linux checkouts shared the older
+published baseline `1762d2a`, not the assumed immediate predecessor. Fresh
+value-free reconstruction established that common ancestor, after which guarded
+plan/apply fast-forwarded `ab`, `ab2`, `ri`, `al`, `rc`, and `t4` to `535a492`,
+updated each `origin/main` by expected old value, and removed every transfer
+artifact. A post-apply plan reported `KEEP` for all six. Local `main` is
+clean/equal with only local/remote `main`; T-283 has no remaining action.
 
 Round 8 targets the remaining descriptor-bound seal-reader residual at baseline
 `0620d3e`, with Codex driving and Claude co-piloting. Both agents traced three
@@ -593,6 +598,8 @@ another host.
 
 ## Completed anchors
 
+- T-283 published the symmetric Codex–Claude cowork skill: PR #161, merged
+  `535a492`; all six clean managed Linux checkouts synchronized and verified.
 - T-282 compacted the active ledger and removed verified-obsolete refs: PR #159,
   published `5a060e9`.
 - T-281 three-Mac environment convergence: PR #158, published `d797d86`.
