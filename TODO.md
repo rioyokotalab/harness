@@ -101,16 +101,13 @@ a delayed job. T-210 is complete and must not be repeated.
 
 ### T-281 — Reconcile three personal-Mac `.bashrc` local bodies
 
-**Phase/status:** `executing-public`; the owner supplied the explicit `go`, and
-the public implementation/validation stage is in progress. No Mac, private
-companion, package, startup file, account shell, agent process, `.bash_common`,
-or pyenv tree has been mutated yet. Scope is exactly the three currently reachable
-owner-operated personal Macs. Their private identities, SSH routes, usernames,
-complete startup bytes, and any later transaction identifiers remain outside
-public Git. For this task only, the owner explicitly permits reading the three
-current `.bashrc` files and confirms that they contain no sensitive value. That
-permission does not extend to credentials, `.bash_common` contents, other owner
-configuration, or a later task, and expires when T-281 completes.
+**Phase/status:** `complete`; the owner supplied the explicit `go`, and all
+three reachable owner-operated personal Macs passed the frozen implementation,
+transactional rollback/reapply, irreversible cleanup, and final acceptance
+gates. Private companion values, complete startup bytes, credentials, and
+private revisions remain outside public Git. The task-scoped permission to read
+the three `.bashrc` files is explicitly revoked at completion and does not
+extend to any later task.
 
 **Confirmed read-only state:** every `.bashrc` is a current-user-owned regular
 single-link file with valid Homebrew-Bash syntax. Two have mode 0644 and one has
@@ -486,9 +483,114 @@ and unattended use. Focused syntax, ShellCheck, diff, interactive/default sudo
 routing, apply/rollback, and changed-state tests pass on committed correction
 `964bcaf`; the complete `tests/test-phase1.sh` suite also passes from its clean
 committed tree. Its first pre-commit run had only the expected live-checkout
-tmux refusal while the tree was dirty; every other focused suite passed. Exact
-next action: publish the correction, fast-forward the three Macs, atomically
-replace the unchanged helpers to use the explicit route, and retry Aist first.
+tmux refusal while the tree was dirty; every other focused suite passed.
+Protected CI passed and PR 157 published squash `7136ed8`. The three clean Mac
+public checkouts fast-forwarded to that exact head through `macos-update`; all
+private checkouts were already current, and the updater's local state migration
+completed transactionally. Each unchanged generated helper passed its exact
+metadata, syntax, host, old-route, and credential-assignment checks before an
+atomic replacement. All three helpers are now current-user-owned regular
+single-link files at mode 0700, contain exactly the three explicit interactive
+sudo routes, and no longer use the ineffective outer `sudo -v`. The first Aist
+agent-forwarding preflight stopped before fetch because no target-side socket
+was inherited; the bounded retry used an explicitly forwarded, current-user-
+owned socket only for the two intended fetches and succeeded. An initial
+value-free helper-preflight report also failed only while formatting an unset
+report argument after all read-only checks; its corrected retry passed on all
+three and no file changed during either preflight failure. Exact next action:
+the owner runs `~/run_this.sh` locally on Aist and returns its value-free output.
+Do not run Home or Office after an Aist failure. After each successful drill,
+revalidate remotely and exact-unlink only that unchanged helper.
+
+The owner-local Aist drill succeeded end to end: initial apply transaction
+`20260720T133039Z-13109`, unchanged-only rollback, and final apply transaction
+`20260720T133046Z-13793` all completed, followed by a no-op plan with registry
+and account state both kept. Independent remote revalidation returned the same
+no-op plan. The generated helper still matched its exact expected bytes and
+strict metadata, so it was exact-unlinked and is now absent. Exact next action:
+run the unchanged generated helper locally on Home; stop before Office on any
+Home failure.
+
+The owner-local Home drill also succeeded end to end: initial apply transaction
+`20260720T133442Z-43393`, unchanged-only rollback, and final apply transaction
+`20260720T133447Z-44022` completed, followed by a no-op plan with registry and
+account state both kept. Independent remote revalidation returned the same
+no-op plan. The generated helper still matched its exact expected bytes and
+strict metadata, so it was exact-unlinked and is now absent. Exact next action:
+run the unchanged generated helper locally on Office.
+
+The owner-local Office drill likewise succeeded end to end: initial apply
+transaction `20260720T133559Z-85657`, unchanged-only rollback, and final apply
+transaction `20260720T133606Z-86287` completed, followed by a no-op plan with
+registry and account state both kept. Independent remote revalidation returned
+the same no-op plan. The generated helper still matched its exact expected
+bytes and strict metadata, so it was exact-unlinked and is now absent. All three
+Mac account-shell drills are complete. Exact next action: execute the already
+authorized irreversible tail in frozen order—guarded removal of Aist's unchanged
+pyenv root, exact unlink of Aist's unchanged `.bash_common`, then termination of
+only the revalidated redundant user-started SSH agents while preserving each
+Mac's exact native launchd agent.
+
+The irreversible tail is complete. Its first Aist pyenv staging preflight
+stopped before the move after incorrectly applying a single-link invariant to
+a directory; only the empty mode-0700 retained boundary was created, and a
+read-only retry proved the original root remained in place with target and
+manifest absent. The corrected preflight required the exact current-user-owned
+Git-checkout directory, same-filesystem boundary, absent target/manifest, and
+preserved inode across the atomic rename. Guarded plan then recorded exactly
+one canonical target beneath
+`/Users/rioyokota/.local/state/harness/retired-t281`: 22,682 entries and
+549,370,977 bytes, with mode-0600 manifest
+`/Users/rioyokota/.local/state/harness/transactions/t281-pyenv.guarded-delete.manifest`.
+Its exact emitted token was applied within 10 seconds; guarded verification
+reported the target absent and all protected anchors unchanged. The retained
+boundary and manifest remain, while both original and staged pyenv roots are
+absent. Aist's `.bash_common` then passed exact-path regular-file,
+current-owner, and single-link checks before one content-blind `unlink`; it is
+absent and its contents were never read or copied. Fresh launchd/process
+classification on every Mac now finds exactly one current-user native
+`/usr/bin/ssh-agent -l`, zero redundant exact `ssh-agent -s` processes, and
+zero unknown agent classes, so no process signal was necessary. Exact next
+action: run the frozen final shell/tool/doctor/no-op/Git validation gates, then
+revoke the temporary `.bashrc` read permission and publish this rollout ledger
+through protected main.
+
+**Completion (2026-07-20):** the first final matrix used the retired three-
+payload `macos-config-sync` route and correctly stopped read-only on Aist's
+absent legacy managed-Bash parent. Diagnosis confirmed that the SSH-only
+`macos-config-migrate --plan` route is the current gate; it then passed on all
+three without a code change. Aist's first current doctor next exposed the
+known split between `--empty-local` preserving a safe login file and the doctor
+requiring the final canonical thin loader. Value-free classification found
+Office already canonical while Aist and Home each had a canonical-loader tail
+of 101 and 99 bytes. The supported preservation plans found no recognized
+redundant loader. A content-private exact structural check emitted only that
+each tail consisted of the already-selected redundant `.local/bin` PATH form
+plus comments/whitespace; both isolated login shells failed only the PATH gate,
+while Office passed.
+
+The existing transactional route then losslessly moved each tail into the
+login-only `.bashrc` section before the separately authorized empty-local
+curation removed it. Aist passed ready doctor, reverse-order rollback to both
+exact preimages, prior-state plan, reapply, no-op plans, and ready doctor under
+accepted transactions `20260720T135008Z-30539` and
+`20260720T135008Z-30769`. Home passed the identical drill under accepted
+transactions `20260720T135047Z-53316` and `20260720T135047Z-53547`. All three
+now have the canonical thin `.bash_profile`, the exact empty-local public
+`.bashrc` layout at mode 0600, and only the required logical-host difference.
+
+Final isolated login and interactive matrices pass on every Mac: managed
+Homebrew Bash, Homebrew and `~/.local/bin` precedence, `uv`, completion,
+`activate`, UTF-8 locale, Apple Clang defaults, and absence of global compiler,
+color, and pyenv overrides. Freshly fetched public/private repositories are on
+`main`, clean, and equal to their respective origins. Homebrew, startup,
+account-shell, SSH-only migration, and tmux plans are all no-op; Mac doctors
+finish ready with zero failures/warnings, and agent-config doctors finish ready
+with zero failures. Each host has exactly one revalidated launchd-native agent,
+zero redundant agents, and no generated helper/staging residue. The Aist pyenv
+guarded-delete manifest remains as durable evidence; the target, original root,
+and `.bash_common` are absent. The temporary `.bashrc` read permission is now
+revoked. No active shell or tmux server was reloaded.
 
 ### T-280 — Onboard one additional personal Mac
 
