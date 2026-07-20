@@ -42,7 +42,7 @@ Next free ID: T-285.
 
 ### T-284 — Accelerate and instrument Codex–Claude cowork
 
-**Phase/status:** `executing`; the owner requested on 2026-07-21 that Codex spend
+**Phase/status:** `complete`; the owner requested on 2026-07-21 that Codex spend
 three hours refining the published `codex-claude-cowork` skill for faster
 turnaround, higher-quality driver/co-pilot information exchange, better
 co-pilot state monitoring, and faster local checking and protected CI. The
@@ -190,6 +190,15 @@ full phase one passed 57/57 at auto-selected eight in 77.18 seconds; fresh-clone
 session/receipt/focused validation passed in 16.45 seconds. Next action: close
 round 5, guarded-clean its exact scratch root, run the final canonical diff and
 instruction-discovery audit, and finish the requested three-hour handoff.
+
+Final acceptance is indexed at `docs/audits/t284-cowork-acceptance.md`. All five
+sessions are complete and receipt-valid; final clean phase one passed in 77.18
+seconds, fresh-clone/discovery/public/source/takeover/syntax/diff gates pass,
+and every recorded T-284 temporary tree was guarded-deleted with protected
+anchors unchanged. The fresh `origin/main` remains the original baseline and is
+an ancestor of the 28-commit clean task branch. No push or protected CI run was
+performed; publishing this completed local branch is a separate next action if
+the owner requests it.
 
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 
