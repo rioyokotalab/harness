@@ -203,6 +203,16 @@ only the public Bash launcher to the transactional Mac link set. Exact next
 action: publish it through protected CI, drill that one link and the login-file
 wrap/unify transactions, then repeat all final acceptance and orphan gates.
 
+The public Bash launcher drill passes. The login-file hook wrap also passes
+apply, syntax, exact rollback, restored-baseline, reapply, and no-op checks.
+Startup unification then identified a narrow partial-current state: `.bashrc`
+already contains the prior canonical login-only migration while the login file
+is again in reviewed pre/local/post form. A focused equality-gated correction
+allows profile-only convergence only when those local bytes match exactly;
+mismatch and additional-marker cases remain refusals. Exact next action:
+publish through protected CI, drill profile-only unification, then repeat final
+acceptance and the ordered orphan check.
+
 ### T-275 — One-command Codex bootstrap for remaining Macs
 
 **Phase/status:** published; ready for one-host use. The owner authorized a local,

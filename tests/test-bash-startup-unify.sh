@@ -102,6 +102,45 @@ login=$(HOME="$home" /bin/bash --noprofile --norc -l -c '. "$HOME/.bashrc"; prin
 run --host local --plan >"$TEMP_DIR/current.out"
 grep -F 'state=current action=none' "$TEMP_DIR/current.out" >/dev/null || fail 'idempotent plan'
 
+partial_home=$TEMP_DIR/partial-home
+mkdir -p "$partial_home"
+cp "$home/.bashrc" "$partial_home/.bashrc"
+cp "$TEMP_DIR/profile.before" "$partial_home/.bash_profile"
+cp "$partial_home/.bashrc" "$TEMP_DIR/partial-bashrc.before"
+cp "$partial_home/.bash_profile" "$TEMP_DIR/partial-profile.before"
+run_partial() {
+    HOME="$partial_home" HARNESS_ROOT="$repo" HARNESS_TEST_ALLOW_NONMAIN=1 \
+        "$repo/bin/harness" bash-startup-unify "$@"
+}
+run_partial --host local --plan >"$TEMP_DIR/partial.plan"
+grep -F 'state=profile-only' "$TEMP_DIR/partial.plan" >/dev/null ||
+    fail 'partial-current plan'
+run_partial --host local --apply >"$TEMP_DIR/partial.apply"
+partial_transaction=$(sed -n 's/^BASH_STARTUP_UNIFY action=applied transaction=\([^ ]*\).*/\1/p' "$TEMP_DIR/partial.apply")
+[ -n "$partial_transaction" ] || fail 'partial-current transaction'
+cmp -s "$partial_home/.bashrc" "$TEMP_DIR/partial-bashrc.before" ||
+    fail 'partial-current changed canonical bashrc'
+cmp -s "$partial_home/.bash_profile" "$repo/shell/bash_profile.canonical" ||
+    fail 'partial-current thin profile'
+run_partial --rollback "$partial_transaction" >"$TEMP_DIR/partial.rollback"
+cmp -s "$partial_home/.bashrc" "$TEMP_DIR/partial-bashrc.before" ||
+    fail 'partial-current bashrc rollback'
+cmp -s "$partial_home/.bash_profile" "$TEMP_DIR/partial-profile.before" ||
+    fail 'partial-current profile rollback'
+awk '!inserted && $0 == "# >>> harness managed >>>" {
+        print "export PROFILE_MISMATCH=yes"; inserted=1
+    }
+    { print }' "$partial_home/.bash_profile" >"$TEMP_DIR/partial-profile.mismatch"
+mv "$TEMP_DIR/partial-profile.mismatch" "$partial_home/.bash_profile"
+if run_partial --host local --plan >"$TEMP_DIR/partial.mismatch" 2>&1; then
+    fail 'partial-current accepted mismatched profile middle'
+fi
+cp "$TEMP_DIR/partial-profile.before" "$partial_home/.bash_profile"
+run_partial --host local --apply >"$TEMP_DIR/partial.reapply"
+run_partial --host local --plan >"$TEMP_DIR/partial.current"
+grep -F 'state=current action=none' "$TEMP_DIR/partial.current" >/dev/null ||
+    fail 'partial-current reapply'
+
 run --rollback "$transaction" >"$TEMP_DIR/rollback.out"
 cmp -s "$home/.bashrc" "$TEMP_DIR/bashrc.before" || fail 'bashrc rollback'
 cmp -s "$home/.bash_profile" "$TEMP_DIR/profile.before" || fail 'profile rollback'
