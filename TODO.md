@@ -171,6 +171,26 @@ in 16.24 seconds with a clean tree. Next action: close round 4, run final
 canonical acceptance, guarded-clean all recorded temporary roots, and complete
 the three-hour ledger handoff.
 
+Round 5 is a successor deadline-precedence audit under
+`docs/audits/t284-cowork-round5/`. Codex deterministically reproduced a 1.0-
+second waiter returning ready/0 from a snapshot completed at 1.1 seconds;
+Claude independently confirmed ordinary and process-loss-final paths both
+classified content before deadline exhaustion. A first reciprocal call timed
+out unchanged; its retry wrote the wrong staged file and made inputs stale, so
+the waiter returned not-importable and import refused. A fresh exact-output
+stage produced valid evidence (the native wrapper later timed out after the
+candidate was complete), which passed fresh status, inspection, import, and
+receipt checks. The accepted fix records one monotonic time per completed
+snapshot, makes `>= deadline` win before ready/not-importable, reuses that time
+for remaining sleep, and retains a fresh final elapsed read. Deterministic
+no-sleep cases cover late ordinary ready, late process-loss final ready, and an
+on-time control. Protocol text now distinguishes classification bounds from
+unpreemptable synchronous reads. Focused cowork passed in 16.66 seconds; clean
+full phase one passed 57/57 at auto-selected eight in 77.18 seconds; fresh-clone
+session/receipt/focused validation passed in 16.45 seconds. Next action: close
+round 5, guarded-clean its exact scratch root, run the final canonical diff and
+instruction-discovery audit, and finish the requested three-hour handoff.
+
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 
 **Phase/status:** `complete`; owner requested on 2026-07-20 that Codex drive a
