@@ -104,6 +104,10 @@ logical identity was supplied privately and is intentionally omitted here.
 This public checkpoint was reconstructed on the Linux login node from clean,
 current published `main`; the target Mac has not been contacted, inventoried,
 or changed. The owner has not yet given the task's explicit pre-mutation `go`.
+The owner confirms Codex is not yet runnable on the selected Mac, so the
+published Codex-first bootstrap is the required local entry route. Public
+checkout state and bootstrap prerequisite state remain unknown until its
+read-only plan runs locally.
 
 **Desired outcome:** independently bring this Mac to the current pull-based
 personal-Mac baseline: clean compatible public/private repositories, the
@@ -151,15 +155,17 @@ managed interactive and native batch routing correct, fresh Bash/tmux behavior,
 SSH-only agreement, no transfer residue, and every applicable rollback/reapply
 drill passed.
 
-**Exact next action:** determine locally whether Codex is already runnable on
-the selected Mac. If it is, start Codex from that Mac's clean public harness
-checkout and resume T-280. If it is absent, use the published
-`macos-codex-bootstrap` plan/apply entry from the verified checkout; that single
-entry installs only declared missing prerequisites and launches Codex with the
-complete onboarding assignment. The local agent must perform value-free
-discovery, checkpoint the concrete plan, resolve any genuinely new material
-choice one at a time, set `ready-for-go`, and wait for a fresh explicit `go`
-before onboarding mutation.
+**Exact next action:** from the selected Mac's public harness checkout, first
+fetch and clean-fast-forward published `main` if and only if the checkout is on
+clean tracked `main`, then run only
+`./bin/harness macos-codex-bootstrap --host LOGICAL_ID --plan`. Return its
+complete value-free output for review. Do not run bootstrap apply yet. After
+the reviewed plan receives explicit authority, its single apply installs only
+declared missing prerequisites and launches Codex with the complete onboarding
+assignment. The local agent must then perform value-free discovery, checkpoint
+the concrete host plan, resolve any genuinely new material choice one at a
+time, set `ready-for-go`, and wait for a fresh explicit `go` before onboarding
+mutation.
 
 ### T-279 — Repair home Bash drift and retire `.bash_common`
 
