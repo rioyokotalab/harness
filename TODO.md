@@ -227,11 +227,20 @@ a complete alternate-shell path while macOS itself defaults to zsh
 (<https://support.apple.com/guide/terminal/trml113/mac>). The repository already
 manages the `bash` formula and a safe explicit `harness-bash` launcher but, by
 prior design, does not mutate `/etc/shells` or the account shell. D9 is now a
-broader pending choice: retain Apple Bash plus suppression, or explicitly
-authorize a one-time account-shell migration to Homebrew Bash, remove the
-suppression, and reopen D2 to converge all three on managed
-`bash-completion@2`. D10-D13 remain pending. Exact next action: ask only this
-broader D9 choice. No execution authority exists yet.
+broader selected migration: all Macs will use the managed Homebrew Bash as
+their account login shell, and the obsolete Apple-Bash warning suppression will
+be removed. This extends the later execution scope to an idempotent exact
+addition of `/opt/homebrew/bin/bash` to `/etc/shells` when absent and an exact
+per-account `chsh`, with the prior shell captured and unchanged-only rollback
+validated; no mutation occurs before the final `go`. D2 is amended accordingly:
+`bash-completion@2` becomes a managed public formula on every Mac, the old
+conflicting completion 1.x formula is removed where present, and all three use
+the previously selected conditional profile loader. Public and private shell
+code must remain compatible with the oldest supported Linux Bash despite the
+newer Mac interactive shell. D10 global compiler selection is next. D11 locale,
+D12 per-shell SSH-agent startup, and D13 color environment remain pending.
+Exact next action: perform only value-free D10 compiler-resolution discovery,
+then ask D10. No execution authority exists yet.
 
 ### T-280 — Onboard one additional personal Mac
 
