@@ -101,16 +101,13 @@ a delayed job. T-210 is complete and must not be repeated.
 
 ### T-281 — Reconcile three personal-Mac `.bashrc` local bodies
 
-**Phase/status:** `executing-public`; the owner supplied the explicit `go`, and
-the public implementation/validation stage is in progress. No Mac, private
-companion, package, startup file, account shell, agent process, `.bash_common`,
-or pyenv tree has been mutated yet. Scope is exactly the three currently reachable
-owner-operated personal Macs. Their private identities, SSH routes, usernames,
-complete startup bytes, and any later transaction identifiers remain outside
-public Git. For this task only, the owner explicitly permits reading the three
-current `.bashrc` files and confirms that they contain no sensitive value. That
-permission does not extend to credentials, `.bash_common` contents, other owner
-configuration, or a later task, and expires when T-281 completes.
+**Phase/status:** `complete`; the owner supplied the explicit `go`, and all
+three reachable owner-operated personal Macs passed the frozen implementation,
+transactional rollback/reapply, irreversible cleanup, and final acceptance
+gates. Private companion values, complete startup bytes, credentials, and
+private revisions remain outside public Git. The task-scoped permission to read
+the three `.bashrc` files is explicitly revoked at completion and does not
+extend to any later task.
 
 **Confirmed read-only state:** every `.bashrc` is a current-user-owned regular
 single-link file with valid Homebrew-Bash syntax. Two have mode 0644 and one has
@@ -557,6 +554,43 @@ zero unknown agent classes, so no process signal was necessary. Exact next
 action: run the frozen final shell/tool/doctor/no-op/Git validation gates, then
 revoke the temporary `.bashrc` read permission and publish this rollout ledger
 through protected main.
+
+**Completion (2026-07-20):** the first final matrix used the retired three-
+payload `macos-config-sync` route and correctly stopped read-only on Aist's
+absent legacy managed-Bash parent. Diagnosis confirmed that the SSH-only
+`macos-config-migrate --plan` route is the current gate; it then passed on all
+three without a code change. Aist's first current doctor next exposed the
+known split between `--empty-local` preserving a safe login file and the doctor
+requiring the final canonical thin loader. Value-free classification found
+Office already canonical while Aist and Home each had a canonical-loader tail
+of 101 and 99 bytes. The supported preservation plans found no recognized
+redundant loader. A content-private exact structural check emitted only that
+each tail consisted of the already-selected redundant `.local/bin` PATH form
+plus comments/whitespace; both isolated login shells failed only the PATH gate,
+while Office passed.
+
+The existing transactional route then losslessly moved each tail into the
+login-only `.bashrc` section before the separately authorized empty-local
+curation removed it. Aist passed ready doctor, reverse-order rollback to both
+exact preimages, prior-state plan, reapply, no-op plans, and ready doctor under
+accepted transactions `20260720T135008Z-30539` and
+`20260720T135008Z-30769`. Home passed the identical drill under accepted
+transactions `20260720T135047Z-53316` and `20260720T135047Z-53547`. All three
+now have the canonical thin `.bash_profile`, the exact empty-local public
+`.bashrc` layout at mode 0600, and only the required logical-host difference.
+
+Final isolated login and interactive matrices pass on every Mac: managed
+Homebrew Bash, Homebrew and `~/.local/bin` precedence, `uv`, completion,
+`activate`, UTF-8 locale, Apple Clang defaults, and absence of global compiler,
+color, and pyenv overrides. Freshly fetched public/private repositories are on
+`main`, clean, and equal to their respective origins. Homebrew, startup,
+account-shell, SSH-only migration, and tmux plans are all no-op; Mac doctors
+finish ready with zero failures/warnings, and agent-config doctors finish ready
+with zero failures. Each host has exactly one revalidated launchd-native agent,
+zero redundant agents, and no generated helper/staging residue. The Aist pyenv
+guarded-delete manifest remains as durable evidence; the target, original root,
+and `.bash_common` are absent. The temporary `.bashrc` read permission is now
+revoked. No active shell or tmux server was reloaded.
 
 ### T-280 — Onboard one additional personal Mac
 
