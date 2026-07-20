@@ -360,6 +360,19 @@ whole-tree digest. Rollback fails closed if any launcher, binary, or bundled
 resource changed. Authentication, configuration, sessions, caches, and logs are
 not read or copied.
 
+When the manifest later declares a higher normalized semantic version and the
+stable link names one exact healthy managed predecessor, plan reports
+`REPLACE`. Apply verifies the new tree completely before promotion, retains the
+immediate predecessor and its digest evidence, then atomically switches the
+stable link. An interrupted replacement is never resumed forward: the next
+apply validates the recorded state, restores the predecessor, removes only the
+unchanged proposed tree through guarded cleanup, and retains failed transaction
+evidence. `harness rollback TRANSACTION_ID` likewise verifies both trees and
+the unchanged link before restoring the predecessor. Equal-version
+replacement, ordinary downgrade, unmanaged or partial layouts, changed trees,
+and changed links fail closed. Older generations are never removed
+automatically; their retirement is a separate guarded maintenance decision.
+
 The Git LFS artifact installs only the `git-lfs` command. The harness does not
 run `git lfs install`, write global Git filters or hooks, or contact an LFS
 remote. Enable it per project with an explicit native `git lfs install --local`

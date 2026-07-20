@@ -10,6 +10,32 @@ usage() {
     echo "Usage: harness rollback TRANSACTION_ID" >&2
 }
 
+agent_tree_hash() {
+    rollback_tree=$1
+    rollback_archive=$(mktemp "${TMPDIR:-/tmp}/harness-agent-tree.XXXXXX")
+    tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
+        -cf "$rollback_archive" -C "$rollback_tree" .
+    rollback_hash=$(sha256sum "$rollback_archive" | awk '{print $1}')
+    unlink "$rollback_archive"
+    printf '%s\n' "$rollback_hash"
+}
+
+valid_codex_tree_path() {
+    validation_tree=$1
+    validation_prefix=$HOME/.local/opt/agents/codex/
+    case "$validation_tree" in "$validation_prefix"*) ;; *) return 1 ;; esac
+    validation_relative=${validation_tree#"$validation_prefix"}
+    validation_version=${validation_relative%%/*}
+    validation_target=${validation_relative#*/}
+    case "$validation_target" in linux-x86_64|linux-aarch64) ;; *) return 1 ;; esac
+    awk -v version="$validation_version" 'BEGIN {
+        if (version !~ /^[0-9]+\.[0-9]+\.[0-9]+$/) exit 1
+        if (split(version, part, ".") != 3) exit 1
+        for (i = 1; i <= 3; i++)
+            if (part[i] !~ /^(0|[1-9][0-9]*)$/) exit 1
+    }'
+}
+
 [ "$#" -eq 1 ] || { usage; exit 2; }
 transaction_id=$1
 require_safe_id "$transaction_id"
@@ -18,11 +44,11 @@ manifest=$HOME/.local/state/harness/transactions/$transaction_id.manifest
 
 records=$(mktemp "${TMPDIR:-/tmp}/harness-rollback.XXXXXX")
 trap 'rm -f "$records"' EXIT HUP INT TERM
-awk -F'|' '$1 == "link" || $1 == "managed-link-new" || $1 == "managed-link-replaced" || $1 == "shell" || $1 == "shell-new" || $1 == "shell-prefix" || $1 == "patch" || $1 == "artifact" || $1 == "runtime" || $1 == "python" || $1 == "agent" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+awk -F'|' '$1 == "link" || $1 == "managed-link-new" || $1 == "managed-link-replaced" || $1 == "shell" || $1 == "shell-new" || $1 == "shell-prefix" || $1 == "patch" || $1 == "artifact" || $1 == "runtime" || $1 == "python" || $1 == "agent" || $1 == "agent-replaced" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
     "$manifest" >"$records"
 
 # Validate every path before mutating any path.
-while IFS='|' read -r record destination field3 field4 field5 field6 field7; do
+while IFS='|' read -r record destination field3 field4 field5 field6 field7 field8; do
     case "$destination" in "$HOME"/*) ;; *) die "unsafe transaction path" ;; esac
     if [ "$record" = managed-link-new ]; then
         source=$field3
@@ -119,6 +145,54 @@ while IFS='|' read -r record destination field3 field4 field5 field6 field7; do
         rm "$tree_archive"
         [ "$observed_hash" = "$expected_hash" ] ||
             die "rollback blocked: Python tree changed: $destination expected=$expected_hash observed=$observed_hash"
+    elif [ "$record" = agent-replaced ]; then
+        new_tree=$destination; new_hash=$field3; stable_link=$field4
+        new_command=$field5; old_tree=$field6; old_hash=$field7
+        old_command=$field8
+        valid_codex_tree_path "$new_tree" && valid_codex_tree_path "$old_tree" ||
+            die "rollback blocked: unsafe replaced agent tree path"
+        [ "$new_tree" != "$old_tree" ] ||
+            die "rollback blocked: ambiguous replaced agent trees"
+        [ "$stable_link" = "$HOME/.local/bin/codex" ] &&
+            [ "$new_command" = "$new_tree/node_modules/@openai/codex/bin/codex.js" ] &&
+            [ "$old_command" = "$old_tree/node_modules/@openai/codex/bin/codex.js" ] ||
+            die "rollback blocked: unsafe replaced agent link declaration"
+        for expected_hash in "$new_hash" "$old_hash"; do
+            case "$expected_hash" in *[!0-9a-f]*|'')
+                die "rollback blocked: invalid replaced agent digest" ;; esac
+            [ "${#expected_hash}" -eq 64 ] ||
+                die "rollback blocked: invalid replaced agent digest length"
+        done
+        [ -d "$old_tree" ] && [ ! -L "$old_tree" ] &&
+            [ -x "$old_command" ] ||
+            die "rollback blocked: predecessor agent tree is unavailable"
+        [ "$(agent_tree_hash "$old_tree")" = "$old_hash" ] ||
+            die "rollback blocked: predecessor agent tree changed"
+        new_parent=${new_tree%/*}
+        if [ -e "$new_tree" ] || [ -L "$new_tree" ]; then
+            [ -d "$new_tree" ] && [ ! -L "$new_tree" ] &&
+                [ -x "$new_command" ] ||
+                die "rollback blocked: replacement agent tree changed type"
+            [ "$(agent_tree_hash "$new_tree")" = "$new_hash" ] ||
+                die "rollback blocked: replacement agent tree changed"
+            [ -d "$new_parent" ] && [ ! -L "$new_parent" ] &&
+                [ "$(find "$new_parent" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')" -eq 1 ] ||
+                die "rollback blocked: replacement version directory changed"
+        elif [ -e "$new_parent" ] || [ -L "$new_parent" ]; then
+            die "rollback blocked: replacement version directory remains"
+        fi
+        [ -L "$stable_link" ] ||
+            die "rollback blocked: replaced agent link changed type"
+        rollback_link_target=$(readlink "$stable_link")
+        [ "$rollback_link_target" = "$new_command" ] ||
+            [ "$rollback_link_target" = "$old_command" ] ||
+            die "rollback blocked: replaced agent link changed"
+        rollback_candidate=${stable_link%/*}/.${stable_link##*/}.rollback-$transaction_id
+        if [ -e "$rollback_candidate" ] || [ -L "$rollback_candidate" ]; then
+            [ -L "$rollback_candidate" ] &&
+                [ "$(readlink "$rollback_candidate")" = "$old_command" ] ||
+                die "rollback blocked: replaced agent rollback candidate changed"
+        fi
     elif [ "$record" = agent ]; then
         expected_hash=$field3
         case "$destination" in "$HOME/.local/opt/agents/"*) ;; *) die "unsafe agent path" ;; esac
@@ -127,11 +201,7 @@ while IFS='|' read -r record destination field3 field4 field5 field6 field7; do
         fi
         [ -d "$destination" ] && [ ! -L "$destination" ] ||
             die "rollback blocked: agent tree changed type: $destination"
-        tree_archive=$(mktemp "${TMPDIR:-/tmp}/harness-agent-tree.XXXXXX")
-        tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
-            -cf "$tree_archive" -C "$destination" .
-        observed_hash=$(sha256sum "$tree_archive" | awk '{print $1}')
-        rm "$tree_archive"
+        observed_hash=$(agent_tree_hash "$destination")
         [ "$observed_hash" = "$expected_hash" ] ||
             die "rollback blocked: agent tree changed: $destination"
     elif [ "$record" = runtime ]; then
@@ -172,7 +242,7 @@ while IFS='|' read -r record destination field3 field4 field5 field6 field7; do
     fi
 done <"$records"
 
-while IFS='|' read -r record destination field3 field4 field5 field6 field7; do
+while IFS='|' read -r record destination field3 field4 field5 field6 field7 field8; do
         case "$destination" in "$HOME"/*) ;; *) die "unsafe transaction path" ;; esac
         if [ "$record" = managed-link-new ]; then
             if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
@@ -243,6 +313,33 @@ EOF
                 guarded_delete_tree "${destination%/*}" "$destination" \
                     "$HOME/.local/state/harness/transactions" ||
                     die "guarded Python rollback cleanup failed"
+            fi
+        elif [ "$record" = agent-replaced ]; then
+            new_tree=$destination; stable_link=$field4
+            new_command=$field5; old_tree=$field6; old_command=$field8
+            rollback_candidate=${stable_link%/*}/.${stable_link##*/}.rollback-$transaction_id
+            if [ "$(readlink "$stable_link")" = "$new_command" ]; then
+                echo "RESTORE agent-link=$stable_link source=$old_command"
+                if [ ! -L "$rollback_candidate" ]; then
+                    ln -s "$old_command" "$rollback_candidate"
+                fi
+                mv -T "$rollback_candidate" "$stable_link"
+                [ -L "$stable_link" ] &&
+                    [ "$(readlink "$stable_link")" = "$old_command" ] ||
+                    die "replaced agent link rollback verification failed"
+            else
+                echo "KEEP agent-link=$stable_link state=already-rolled-back"
+                [ ! -L "$rollback_candidate" ] || unlink "$rollback_candidate"
+            fi
+            if [ -d "$new_tree" ]; then
+                echo "REMOVE agent=$new_tree predecessor=$old_tree"
+                guarded_delete_tree "${new_tree%/*}" "$new_tree" \
+                    "$HOME/.local/state/harness/transactions" ||
+                    die "guarded replaced-agent rollback cleanup failed"
+                rmdir "${new_tree%/*}" ||
+                    die "replaced-agent version directory cleanup failed"
+            else
+                echo "KEEP agent=$new_tree state=already-absent"
             fi
         elif [ "$record" = agent ]; then
             if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then

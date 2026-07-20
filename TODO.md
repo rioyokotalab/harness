@@ -976,9 +976,31 @@ authorize changing `tools/agents.tsv`, applying a live agent replacement,
 removing any retained version or transaction, changing macOS installation,
 supplying authentication, or reloading an active session.
 
-**Exact next action:** extend the synthetic agent fixture first, then implement
-the smallest replacement/recovery/rollback engine that satisfies D1-D3. Stop
-before any live plan or apply.
+**Implementation checkpoint (2026-07-20):** the generic Linux engine now
+classifies only a verified healthy older managed version as a forward
+`REPLACE`, stages and checksum-validates the proposed two-archive tree, records
+a mode-0600 schema-2 replacement transaction, retains the immediate
+predecessor, and changes the stable link through an adjacent atomic candidate.
+Prepared, promoted, and activated states recover only by restoring the exact
+predecessor; ordinary rollback validates both recorded tree digests and the
+unchanged link before guarded-removing only the proposed tree and its now-empty
+version directory. No declared or live version changed.
+
+`tests/test-agent-upgrade.sh` is registered as a focused suite and passes
+synthetic initial install, checksum-failure recovery from prepared state,
+forward replacement, idempotence, immediate-predecessor rollback, injected
+post-promotion and post-link-switch interruption/recovery, changed-new-tree,
+changed-old-tree, and changed-link refusal, ordinary downgrade refusal, and
+unmanaged-link refusal. Portable syntax and `git diff --check` pass. A first
+full phase-one run correctly included the new focused suite, which passed, but
+two unrelated focused suites rejected the intentionally dirty implementation
+checkout; rerun from a clean implementation commit before interpreting the
+complete-suite result.
+
+**Exact next action:** review the replacement transaction and focused fixture,
+commit the generic implementation so clean-checkout tests can run, then run
+ShellCheck warning/error, source/privacy, every focused suite, and the full
+phase-one gate. Stop before any live agent plan or apply.
 
 ### T-272 — Seven-hour accessible-fleet maintenance
 
