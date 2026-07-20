@@ -92,7 +92,7 @@ a delayed job. T-210 is complete and must not be repeated.
 
 ### T-275 — One-command Codex bootstrap for remaining Macs
 
-**Phase/status:** generic implementation and local validation complete. The owner authorized a local,
+**Phase/status:** published; ready for one-host use. The owner authorized a local,
 one-command bridge for each remaining Mac so onboarding does not require a
 conversation relay through `office`. `harness macos-codex-bootstrap --host
 HOST --plan|--apply` operates only from clean public `main`, refuses a second
@@ -118,8 +118,12 @@ not remove a conflicting package-manager installation. The wrapper downloads
 rather than pipes, verifies before execution, and pre-seeds PATH to suppress
 vendor profile edits. Bootstrap, onboarding-skill, source-contract, focused-
 runner, ShellCheck, diff, and complete portable phase-one validation pass.
-Exact next action is protected publication, then run the published plan/apply
-locally on `home`; no Mac installation has run from this task yet.
+PR #124 passed protected `portable-phase1` and merged as `cbd6c9b`; its task
+branch was removed and `office` is clean/current on published `main`. Exact
+next action is to clone public `main` locally on `home` and run the published
+apply there. No Mac installation has run from this task yet. If OpenAI changes
+the installer bytes, checksum refusal is the intended safe stop and requires a
+fresh official-source review plus pin update, never an override.
 
 ### T-274 — Unified Bash startup, faster tests, and Codex-driven Mac onboarding
 
