@@ -212,6 +212,11 @@ The reviewer checkpointed the round-4 implementation at `4eac82a`; clean-
 checkout `tests/test-phase1.sh` passed every runnable suite (native MPI correctly
 skipped), and the session is now `complete` and validates. Next action is exact
 guarded cleanup followed by the candidate-receipt experiment.
+The exact four-directory round-4 cleanup passed manifest planning, identity and
+size revalidation, deletion, and protected-anchor verification; the one driver
+prompt was exact-unlinked separately and tracked evidence remains. Next action:
+run round 5 with Codex driving Claude to prototype an import receipt that does
+not depend on mutable stage bytes.
 
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
 and Claude. Its role contract must be client-neutral: the active client is the
