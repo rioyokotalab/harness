@@ -39,6 +39,8 @@ HARNESS_BOOTSTRAP_TESTING=1 HARNESS_TEST_BREW_PREFIX=$fake_prefix \
 grep -F 'INSTALLER_URL=https://chatgpt.com/codex/install.sh' "$out" >/dev/null || fail 'official URL'
 grep -F 'INSTALL_DIR=' "$out" >/dev/null || fail 'explicit install path'
 grep -F 'CODEX_HOME=' "$out" >/dev/null || fail 'explicit state path'
+grep -F 'CODEX_APPROVAL_POLICY=never' "$out" >/dev/null || fail 'zero-prompt approval plan'
+grep -F 'CODEX_SANDBOX_MODE=danger-full-access' "$out" >/dev/null || fail 'full-access sandbox plan'
 grep -F 'PREREQUISITE_FORMULAE=' "$out" >/dev/null || fail 'prerequisite plan'
 if grep -F 'harness-mac.git' "$out" >/dev/null; then fail 'companion locator leaked in plan output'; fi
 formulae=$(awk -F= '$1=="PREREQUISITE_FORMULAE" {print $2}' "$out")
@@ -53,6 +55,11 @@ grep -F 'CODEX_NON_INTERACTIVE=1' "$ROOT/libexec/harness-macos-codex-bootstrap" 
 grep -F 'PATH="$install_dir:$PATH"' "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'profile-edit prevention'
 grep -F 'packages/standalone' "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'standalone ownership check'
 grep -F 'do not ask me to execute shell scripts' "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'autonomous prompt'
+grep -F 'Do not ask about those choices again' "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'settled-default prompt'
+grep -F 'baseline-only missing host profile' "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'baseline-only prompt'
+grep -F 'adopt an existing first-agreement private SSH payload' "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'remote-adoption prompt'
+grep -F 'preserve both distinct valid Bash local bodies' "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'preserve-both prompt'
+grep -F -- '--ask-for-approval never --sandbox danger-full-access' "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'zero-prompt launch flags'
 grep -F 'HOMEBREW_NO_INSTALL_CLEANUP=1' "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'Homebrew cleanup suppression'
 grep -F -- "-c 'import tomllib'" "$ROOT/libexec/harness-macos-codex-bootstrap" >/dev/null || fail 'tomllib requirement'
 grep -F 'private_companion_url=git@github.com:' "$ROOT/config/codex-standalone-installer.conf" >/dev/null || fail 'credential-free companion locator'

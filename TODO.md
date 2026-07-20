@@ -3,7 +3,7 @@
 This is the authoritative resume point for the portable Codex and Claude
 harness. Git retains superseded chronology and command-level evidence. Keep
 only active decisions, verified prerequisites, blockers, exact next actions,
-and compact historical pointers here. Next free ID: T-277.
+and compact historical pointers here. Next free ID: T-278.
 
 ## Current state
 
@@ -89,6 +89,39 @@ query only those recorded IDs after eligibility and do not replace or duplicate
 a delayed job. T-210 is complete and must not be repeated.
 
 ## Active tasks
+
+### T-277 — Make personal-Mac onboarding defaults reusable
+
+**Phase/status:** `validating`; the owner requested that the completed one-Mac
+lessons and PR #127 bootstrap corrections become the default skill and command
+behavior. Scope is limited to the public `onboard-personal-mac` workflow,
+`macos-codex-bootstrap` assignment/launch flags, focused tests, and supporting
+documentation. No live Mac configuration, package, private companion, or
+transaction state is changed by this task.
+
+**Frozen owner defaults:** after the existing explicit `go`, restore the
+declared private companion without another locator question; create a missing
+host declaration as baseline-only; install only the declared missing bootstrap
+prerequisites; prefer authenticated SSH Git transport when HTTPS lacks a
+credential helper; adopt an existing first-agreement private SSH payload onto
+the Mac; preserve strict Codex local trust/preferences; preserve both distinct
+valid Bash local bodies; retain `.bash_common` whenever live references prove
+it active; and never ask again about these settled choices. Authentication,
+password, TCC, reboot, physical interaction, unsafe/divergent state, and any
+new scope choice remain stop boundaries.
+
+**Verified:** the skill, stage reference, UI prompt, operator documentation,
+bootstrap assignment, and zero-prompt launch flags encode the frozen defaults.
+Focused skill/bootstrap/source/privacy checks, ShellCheck, and diff validation
+pass. Complete `HARNESS_PORTABLE_CI=1 ./tests/test-phase1.sh` from the required
+clean committed checkout passed every portable/focused suite, then reached the
+documented synthetic-host doctor boundary (`exit 2`); protected Ubuntu CI
+remains authoritative. The generic skill metadata tools could not run because
+their system Python lacks their `PyYAML` dependency; the dedicated skill
+contract passes.
+
+**Exact next action:** fetch and integrate current `origin/main`, push the task
+branch, open a pull request, and publish through protected CI.
 
 ### T-276 — Onboard one remaining personal Mac
 
