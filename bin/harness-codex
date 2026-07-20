@@ -26,6 +26,23 @@ case "$project_root" in
 esac
 
 native_codex=$HOME/.local/bin/codex
+if [ "$(uname -s)" = Darwin ] && command -v brew >/dev/null 2>&1; then
+    brew_prefix=$(brew --prefix 2>/dev/null || true)
+    case "$brew_prefix" in
+        /opt/homebrew|/usr/local) brew_codex=$brew_prefix/bin/codex ;;
+        *)
+            if [ "${HARNESS_TEST_ALLOW_NONMAIN:-0}" = 1 ]; then
+                brew_codex=$brew_prefix/bin/codex
+            fi
+            ;;
+    esac
+    if [ -n "${brew_codex:-}" ] && [ -x "$brew_codex" ]; then
+        brew_codex_physical=$(realpath "$brew_codex" 2>/dev/null || true)
+        case "$brew_codex_physical" in
+            "$HOME/.codex/packages/standalone/"*) native_codex=$brew_codex ;;
+        esac
+    fi
+fi
 [ -x "$native_codex" ] || {
     echo "harness-codex: relocated native codex command is unavailable" >&2
     exit 2

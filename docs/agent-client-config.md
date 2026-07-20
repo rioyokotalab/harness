@@ -24,10 +24,12 @@ recursive-deletion circuit-breaker prompts.
 
 ## Project trust launcher
 
-`bin/harness-codex` calls the installer-owned native
-`~/.local/bin/codex` and passes the frozen `never` approval and
-`danger-full-access` sandbox settings as
-explicit CLI flags, which take precedence over ordinary configuration layers.
+`bin/harness-codex` calls the installer-owned native command and passes the
+frozen `never` approval and `danger-full-access` sandbox settings as explicit
+CLI flags, which take precedence over ordinary configuration layers. Linux
+uses `~/.local/bin/codex`. Darwin accepts Homebrew's fixed bin only when it
+resolves inside the current user's official standalone Codex package; the
+older local-bin path remains only as a compatible fallback.
 The managed live launcher is `~/.local/bin/harness-codex`. Fresh managed
 interactive Bash shells define a shell-local `codex` function that calls it;
 non-interactive and batch shells retain native resolution. The wrapper uses an

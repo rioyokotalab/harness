@@ -231,6 +231,15 @@ the flag and flag use outside this narrow partial-current state refuse. Exact
 next action: pass focused and aggregate gates, publish through protected CI,
 then run the selected live merge drill and complete acceptance.
 
+The selected preserve-both Bash apply/rollback/reapply and fresh-shell matrix
+passes, and Mac plus agent doctors are ready. Final routing inspection then
+found the managed interactive Codex wrapper still assumed the retired local-bin
+native command even though the approved Mac bootstrap exposes the same official
+standalone package through Homebrew. A focused correction applies the already
+reviewed strict ownership rule to the wrapper while retaining Linux behavior.
+Exact next action: pass protected CI, validate fresh managed and native routes,
+then finish Git/artifact acceptance and the ordered orphan check.
+
 ### T-275 — One-command Codex bootstrap for remaining Macs
 
 **Phase/status:** published; ready for one-host use. The owner authorized a local,
