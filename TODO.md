@@ -198,7 +198,7 @@ selected four and passed in 77.22 seconds. Fresh-clone/discovery/public/source/
 takeover/syntax/diff gates pass,
 and every recorded T-284 temporary tree was guarded-deleted with protected
 anchors unchanged. The fresh `origin/main` remains the original baseline and is
-an ancestor of the 28-commit clean task branch. No push or protected CI run was
+an ancestor of the clean task branch. No push or protected CI run was
 performed; publishing this completed local branch is a separate next action if
 the owner requests it.
 
