@@ -53,11 +53,13 @@ and compact historical pointers here. Next free ID: T-280.
 ## Next resume checkpoint
 
 T-273 is the ordered closure task for every known item deliberately deferred by
-T-268, T-269, and T-272. Do not treat the earlier maintenance completion as a
-reason to leave those items indefinitely implicit. Work the ready, value-free
-transaction review first; then implement and test the checksum-pinned agent
-upgrade/rollback lifecycle. The other workstreams retain their recorded time,
-availability, project-requirement, or explicit-authority gates.
+T-268, T-269, and T-272. Workstream 1's value-free failed-transaction review is
+resolved as evidence retention: three failed groups remain private because no
+published operation-specific cleanup contract can prove them redundant. Exact
+next work is workstream 2's checksum-pinned agent upgrade/rollback lifecycle,
+starting with generic design and focused tests before any live version change.
+The other workstreams retain their recorded time, availability, project-
+requirement, or explicit-authority gates.
 
 T-268 and T-269 have completed the accessible rollout on `office`, `local`,
 `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`. All eight checkouts are clean on
@@ -757,7 +759,8 @@ controller impersonate `local`.
 
 ### T-273 — Resolve every intentionally deferred maintenance item
 
-**Phase/status:** `planned`; scope reconciled on 2026-07-20. This task owns the
+**Phase/status:** `executing`; scope reconciled on 2026-07-20 and workstream 1
+is resolved by retained evidence. This task owns the
 closure or explicit evidence-backed disposition of every known item that
 T-268, T-269, and T-272 intentionally left alone. It does not weaken the
 credential, destructive-cleanup, package, scheduler, external-service, active-
@@ -852,11 +855,37 @@ local or remote branch retained: 32 remote branches, 30 `office` local branches,
 and 12 `local` local branches were removed; the Linux clones already retained
 only `main`. No force-push or worktree overwrite occurred.
 
-**Exact next action:** perform workstream 1's value-free failed-transaction
-classification on `local` and RC and checkpoint the evidence and retention
-decision here. If evidence must remain, that is a resolved disposition rather
-than permission to delete it. Then start workstream 2 on a protected task
-branch with focused replacement/rollback tests before any live version change.
+**Failed-transaction disposition (2026-07-20):** a fresh value-free audit found
+both transaction roots owner-owned mode 0700, symlink-free, and small. `local`
+has 67 regular files totaling 27,725 bytes and 23 status records: 18 complete,
+three rolled back, and two failed. One five-day-old failed status has a paired
+owner mode-0600 manifest but no allowlisted public operation discriminator; the
+other is a seven-hour-old `bash-startup-unify` set with its owner mode-0600 JSON
+manifest, consistent with the recorded T-274 failure period. RC has 71 regular
+files totaling 33,008 bytes and 27 status records: 23 complete, three rolled
+back, and one failed. Its five-day-old failed status likewise has a paired owner
+mode-0600 manifest but no allowlisted public operation discriminator. No
+transaction identifier, manifest payload, backup, credential, private path, or
+owner configuration value was read or emitted.
+
+The deterministic rule is fail-closed retention. A failed group remains unless
+an operation-specific public cleanup contract can enumerate its exact closed
+file set without payload inspection, validate its schema and current healthy
+replacement, prove that no unique recovery preimage remains necessary, and
+execute any multi-path removal through guarded deletion after a separately
+recorded cleanup authority. Age, small size, a paired manifest, and present
+readiness never prove redundancy by themselves; unknown-operation or incomplete
+metadata always retains. Applying the rule classified all three groups
+`RETAIN`, zero eligible for archive/removal. `local` and RC are both clean on
+`main` with `HEAD=origin/main`; host and agent doctors are ready, and tmux plans
+are current/no-op. Nothing was removed, archived, mutated, or opened beyond the
+allowlisted status and structural metadata. Workstream 1 is closed by retained
+evidence, not deferred deletion.
+
+**Exact next action:** start workstream 2 on a protected task branch: design and
+test checksum-pinned agent version replacement, exact rollback, interrupted-
+apply recovery, and idempotence before proposing or performing any live runtime
+version change.
 
 ### T-272 — Seven-hour accessible-fleet maintenance
 
