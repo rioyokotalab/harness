@@ -154,6 +154,23 @@ the dirty checkout. `PYTHONDONTWRITEBYTECODE=1` fixed it; the clean retry passed
 checkpoint round 3, then dogfood `wait-copilot` against a real native client
 window and run a fresh-clone acceptance pass before final cleanup/handoff.
 
+Round 4 is a successor dogfood session under
+`docs/audits/t284-cowork-round4/`. Independent and reciprocal Claude windows
+used exactly one `wait-copilot` each and no manual status calls. The waiters
+returned one ready/0 JSON after 131.745 and 103.768 internal seconds while the
+native PIDs remained honestly reachable/advisory/unauthenticated; the native
+commands exited 0 another 6.280 and 7.683 seconds later, before all digest/seal
+checks, imports, and valid receipts. Claude found no production defect and
+confirmed the runbook's separate native-wait ordering. Its reciprocal critique
+caught an omitted start offset and incorrect timing delta in driver evidence;
+the record now uses common nanosecond origins. The only target change replaces
+a fixed absent PID in the stale-candidate test with a real short-lived process,
+exercising a reachable-to-not-reachable transition. Canonical focused cowork
+passed in 16.62 seconds; fresh-clone session/receipt/focused validation passed
+in 16.24 seconds with a clean tree. Next action: close round 4, run final
+canonical acceptance, guarded-clean all recorded temporary roots, and complete
+the three-hour ledger handoff.
+
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 
 **Phase/status:** `complete`; owner requested on 2026-07-20 that Codex drive a

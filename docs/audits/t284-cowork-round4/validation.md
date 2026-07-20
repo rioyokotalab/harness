@@ -23,4 +23,6 @@ The two client timings are same-host observations and do not establish model
 speed. PID reuse remains explicitly unauthenticated. Full phase one was not
 repeated because round 4 changes only one focused test; the unchanged production
 implementation already passed clean full phase one in round 3. Fresh-clone
-session/receipt and focused validation remain before completion.
+session/receipt and focused validation passed at commit `15134d8`: the fresh
+clone validated this session and reciprocal receipt, passed the focused cowork
+suite in 16.24 seconds, and remained clean/equal to its local origin.
