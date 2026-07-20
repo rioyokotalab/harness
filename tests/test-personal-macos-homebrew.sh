@@ -45,6 +45,8 @@ PUBLIC=$TEMP_DIR/public
 mkdir -p "$PUBLIC/profiles/personal-macos"
 cp "$ROOT/profiles/personal-macos/base.conf" \
     "$PUBLIC/profiles/personal-macos/base.conf"
+cp "$ROOT/profiles/personal-macos/formula-policy-v2.conf" \
+    "$PUBLIC/profiles/personal-macos/formula-policy-v2.conf"
 git -C "$PUBLIC" init -q -b main
 git -C "$PUBLIC" config user.name mac-test
 git -C "$PUBLIC" config user.email mac-test.invalid
@@ -116,8 +118,11 @@ case "$1" in
             [ "$5" = openssl@3 ]; then
             printf '%s\n' personal-tool
         fi
+        if [ "${FAKE_RETIRED_DEPENDENT:-0}" = 1 ] && [ "$5" = pyenv ]; then
+            printf '%s\n' personal-tool
+        fi
         ;;
-    install|upgrade)
+    install|upgrade|uninstall)
         [ "${HOMEBREW_ASK+x}" != x ] || exit 95
         action=$1
         shift
@@ -144,6 +149,14 @@ case "$1" in
             echo 'injected Homebrew apply failure' >&2
             exit 73
         }
+        if [ "$action" = uninstall ]; then
+            for formula in $formulae; do
+                remove_formula "$BREW_STATE/installed" "$formula"
+                remove_formula "$BREW_STATE/outdated" "$formula"
+            done
+            printf '%s complete\n' "$action"
+            exit 0
+        fi
         for formula in $formulae; do
             remove_formula "$BREW_STATE/installed" "$formula"
             remove_formula "$BREW_STATE/outdated" "$formula"
@@ -185,7 +198,8 @@ make_brew_state() {
     name=$1
     state=$TEMP_DIR/$name-state
     mkdir -p "$state"
-    for formula in bash git git-lfs tmux ripgrep jq shellcheck sqlite ninja; do
+    for formula in bash bash-completion@2 git git-lfs tmux ripgrep jq \
+        shellcheck uv sqlite ninja; do
         printf '%s 1.0\n' "$formula"
     done >"$state/installed"
     printf '%s 3.0\n' openssl@3 >>"$state/installed"
@@ -212,9 +226,11 @@ for expected in \
     'MACOS_HOMEBREW mode=plan privacy=local-details prefix=other' \
     "INSTALL count=1 formulae='tree'" \
     "UPGRADE count=2 formulae='git sqlite'" \
+    "RETIRE count=0 formulae=''" \
     'DEPENDENCIES count=1 scope=validated shared_users=preserved' \
     "UNMANAGED_DEPENDENTS count=0 formulae=''" \
-    'DRY_RUN status=validated install=1 upgrade=2' \
+    "RETIRED_DEPENDENTS count=0 formulae=''" \
+    'DRY_RUN status=validated install=1 upgrade=2 retire=package-manager-no-dry-run' \
     'END macos_homebrew applied=no metadata_refresh=separate'
 do
     grep -F -x "$expected" "$TEMP_DIR/plan.out" >/dev/null ||
@@ -230,6 +246,41 @@ grep -F -x 'install --formula --dry-run tree' "$plan_log" >/dev/null ||
     fail "scoped install dry-run"
 grep -F -x 'upgrade --formula --dry-run git sqlite' \
     "$plan_log" >/dev/null || fail "scoped upgrade dry-run"
+
+retire_home=$(make_home retire)
+retire_state=$(make_brew_state retire)
+printf '%s\n' 'bash-completion 1.3' 'pyenv 2.6.0' >>"$retire_state/installed"
+run_homebrew "$retire_home" "$retire_state" "$TEMP_DIR/retire-plan.log" \
+    --host mac-test-pilot --plan >"$TEMP_DIR/retire-plan.out"
+grep -F -x "RETIRE count=2 formulae='bash-completion pyenv'" \
+    "$TEMP_DIR/retire-plan.out" >/dev/null || fail "retirement plan"
+if grep -F -x 'uninstall --formula bash-completion pyenv' \
+    "$TEMP_DIR/retire-plan.log" >/dev/null; then
+    fail "retirement plan mutated Homebrew"
+fi
+run_homebrew "$retire_home" "$retire_state" "$TEMP_DIR/retire-apply.log" \
+    --host mac-test-pilot --apply >"$TEMP_DIR/retire-apply.out"
+grep -F -x 'uninstall --formula bash-completion pyenv' \
+    "$TEMP_DIR/retire-apply.log" >/dev/null || fail "bounded retirement apply"
+grep -F ' status=complete install=1 upgrade=2 retire=2' \
+    "$TEMP_DIR/retire-apply.out" >/dev/null || fail "retirement transaction summary"
+if awk '$1 == "bash-completion" || $1 == "pyenv" { found = 1 }
+    END { exit found ? 0 : 1 }' "$retire_state/installed"; then
+    fail "retired formula remained installed"
+fi
+
+retired_dependent_home=$(make_home retired-dependent)
+retired_dependent_state=$(make_brew_state retired-dependent)
+printf '%s\n' 'pyenv 2.6.0' >>"$retired_dependent_state/installed"
+if FAKE_RETIRED_DEPENDENT=1 run_homebrew "$retired_dependent_home" \
+    "$retired_dependent_state" "$TEMP_DIR/retired-dependent.log" \
+    --host mac-test-pilot --plan >"$TEMP_DIR/retired-dependent.out" 2>&1; then
+    fail "retirement plan accepted an installed dependent"
+fi
+grep -F -x "RETIRED_DEPENDENTS count=1 formulae='personal-tool'" \
+    "$TEMP_DIR/retired-dependent.out" >/dev/null || fail "retired-dependent plan"
+grep -F -x 'BLOCK macos_homebrew reason=retired-formula-has-installed-dependent' \
+    "$TEMP_DIR/retired-dependent.out" >/dev/null || fail "retired-dependent refusal"
 
 apply_home=$(make_home apply)
 apply_state=$(make_brew_state apply)

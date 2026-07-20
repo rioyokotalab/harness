@@ -100,8 +100,10 @@ discover_scope() {
     missing_formulae=
     installed_formulae=
     outdated_formulae=
+    installed_retired_formulae=
     dependencies=
     unmanaged_dependents=
+    retired_dependents=
 
     for formula in $managed_formulae; do
         if version_output=$(brew_read list --formula --versions "$formula" 2>/dev/null); then
@@ -109,6 +111,22 @@ discover_scope() {
             installed_formulae=$(append_unique_formula "$installed_formulae" "$formula")
         else
             missing_formulae=$(append_unique_formula "$missing_formulae" "$formula")
+        fi
+    done
+
+    for formula in $retired_formulae; do
+        if version_output=$(brew_read list --formula --versions "$formula" 2>/dev/null); then
+            validate_version_output "$formula" "$version_output"
+            installed_retired_formulae=$(append_unique_formula \
+                "$installed_retired_formulae" "$formula")
+            dependent_output=$(brew_read uses --installed --recursive --formula \
+                "$formula" 2>/dev/null) ||
+                die "scoped Homebrew retired dependent query failed"
+            validate_formula_output "$dependent_output"
+            for dependent in $dependent_output; do
+                retired_dependents=$(append_unique_formula \
+                    "$retired_dependents" "$dependent")
+            done
         fi
     done
 
@@ -245,10 +263,11 @@ capture_evidence() {
     chmod 600 "$evidence_file"
     printf 'schema=1\nphase=%s\nprefix=%s\n' \
         "$evidence_phase" "$brew_prefix" >>"$evidence_file"
-    for evidence_kind in selected dependency; do
+    for evidence_kind in selected dependency retired; do
         case "$evidence_kind" in
             selected) evidence_formulae=$managed_formulae ;;
             dependency) evidence_formulae=$dependencies ;;
+            retired) evidence_formulae=$retired_formulae ;;
         esac
         for formula in $evidence_formulae; do
             if version_output=$(brew_read list --formula --versions \
@@ -289,9 +308,11 @@ safe_path_field "$HARNESS_ROOT" || die "managed Homebrew path is unsafe"
 validate_public_checkout
 "$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
     die "private profile is not ready for managed Homebrew catch-up"
-public_profile=$HARNESS_ROOT/profiles/personal-macos/base.conf
+formula_policy=$HARNESS_ROOT/profiles/personal-macos/formula-policy-v2.conf
+macos_validate_formula_policy "$formula_policy"
 host_manifest=$HOME/.config/harness/private/hosts/$logical_host.conf
-public_formulae=$(macos_manifest_get "$public_profile" managed_formulae)
+public_formulae=$(macos_manifest_get "$formula_policy" managed_formulae)
+retired_csv=$(macos_manifest_get "$formula_policy" retired_formulae)
 extra_formulae=$(macos_manifest_get "$host_manifest" extra_formulae)
 all_formulae=$public_formulae
 [ "$extra_formulae" = none ] || all_formulae=$all_formulae,$extra_formulae
@@ -299,6 +320,11 @@ printf '%s\n' "$all_formulae" | tr ',' '\n' |
     awk '/\// || seen[$0]++ { exit 1 }' ||
     die "managed Homebrew selection contains a tap or duplicate"
 managed_formulae=$(printf '%s\n' "$all_formulae" | tr ',' ' ')
+retired_formulae=$(printf '%s\n' "$retired_csv" | tr ',' ' ')
+for formula in $retired_formulae; do
+    formula_in_list "$managed_formulae" "$formula" &&
+        die "managed Homebrew selection includes a retired formula"
+done
 
 resolve_brew
 initial_prefix=$brew_prefix
@@ -324,11 +350,16 @@ printf "INSTALL count=%s formulae='%s'\n" \
     "$(formula_count "$missing_formulae")" "$missing_formulae"
 printf "UPGRADE count=%s formulae='%s'\n" \
     "$(formula_count "$outdated_formulae")" "$outdated_formulae"
+printf "RETIRE count=%s formulae='%s'\n" \
+    "$(formula_count "$installed_retired_formulae")" \
+    "$installed_retired_formulae"
 printf 'DEPENDENCIES count=%s scope=validated shared_users=preserved\n' \
     "$(formula_count "$dependencies")"
 printf "UNMANAGED_DEPENDENTS count=%s formulae='%s'\n" \
     "$(formula_count "$unmanaged_dependents")" "$unmanaged_dependents"
-printf 'DRY_RUN status=validated install=%s upgrade=%s\n' \
+printf "RETIRED_DEPENDENTS count=%s formulae='%s'\n" \
+    "$(formula_count "$retired_dependents")" "$retired_dependents"
+printf 'DRY_RUN status=validated install=%s upgrade=%s retire=package-manager-no-dry-run\n' \
     "$(formula_count "$missing_formulae")" \
     "$(formula_count "$outdated_formulae")"
 
@@ -337,12 +368,17 @@ printf 'DRY_RUN status=validated install=%s upgrade=%s\n' \
     echo 'END macos_homebrew applied=no blocked=1 metadata_refresh=separate'
     exit 2
 }
+[ -z "$retired_dependents" ] || {
+    echo 'BLOCK macos_homebrew reason=retired-formula-has-installed-dependent'
+    echo 'END macos_homebrew applied=no blocked=1 metadata_refresh=separate'
+    exit 2
+}
 
 [ "$mode" = apply ] || {
     echo 'END macos_homebrew applied=no metadata_refresh=separate'
     exit 0
 }
-[ -n "$missing_formulae$outdated_formulae" ] || {
+[ -n "$missing_formulae$outdated_formulae$installed_retired_formulae" ] || {
     echo 'END macos_homebrew changes=none metadata_refresh=separate'
     exit 0
 }
@@ -351,6 +387,7 @@ printf 'DRY_RUN status=validated install=%s upgrade=%s\n' \
 # immediately before the irreversible package-manager stage.
 planned_missing=$missing_formulae
 planned_outdated=$outdated_formulae
+planned_retired=$installed_retired_formulae
 planned_dependencies=$dependencies
 validate_public_checkout
 "$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
@@ -361,8 +398,11 @@ resolve_brew
 discover_scope
 [ -z "$unmanaged_dependents" ] ||
     die "managed Homebrew selected root gained an unmanaged dependent"
+[ -z "$retired_dependents" ] ||
+    die "managed Homebrew retired root gained an installed dependent"
 [ "$missing_formulae" = "$planned_missing" ] &&
     [ "$outdated_formulae" = "$planned_outdated" ] &&
+    [ "$installed_retired_formulae" = "$planned_retired" ] &&
     [ "$dependencies" = "$planned_dependencies" ] ||
     die "managed Homebrew plan changed before apply"
 run_dry_runs
@@ -385,6 +425,7 @@ printf 'schema=1\noperation=macos-homebrew\nrevision=%s\nlogical_id=%s\nprefix=%
     "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" "$logical_host" \
     "$brew_prefix" >"$manifest"
 for formula in $managed_formulae; do printf 'formula=%s\n' "$formula" >>"$manifest"; done
+for formula in $retired_formulae; do printf 'retired=%s\n' "$formula" >>"$manifest"; done
 chmod 600 "$manifest"
 printf '%s\n' prepared >"$status_file"
 chmod 600 "$status_file"
@@ -418,6 +459,24 @@ trap 'exit 143' TERM
 
 capture_evidence "$pre_file" pre
 
+if [ -n "$installed_retired_formulae" ]; then
+    printf 'stage=retire count=%s\n' \
+        "$(formula_count "$installed_retired_formulae")" >>"$apply_log"
+    # Homebrew has no uninstall dry-run. Scope is the exact validated public
+    # retirement list, and installed dependents were proven absent twice.
+    # shellcheck disable=SC2086
+    set -- $installed_retired_formulae
+    env -u HOMEBREW_ASK HOMEBREW_NO_AUTO_UPDATE=1 \
+        HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 \
+        HOMEBREW_NO_ENV_HINTS=1 NONINTERACTIVE=1 \
+        "$brew_command" uninstall --formula "$@" \
+        >>"$apply_log" 2>&1 </dev/null ||
+        die "managed Homebrew retirement failed; automatic rollback is unavailable"
+fi
+resolve_brew
+[ "$brew_prefix" = "$initial_prefix" ] ||
+    die "managed Homebrew prefix changed after retirement"
+
 if [ -n "$missing_formulae" ]; then
     printf 'stage=install count=%s\n' "$(formula_count "$missing_formulae")" \
         >>"$apply_log"
@@ -449,12 +508,14 @@ resolve_brew
 [ "$brew_prefix" = "$initial_prefix" ] ||
     die "managed Homebrew prefix changed after apply"
 discover_scope
-[ -z "$missing_formulae$outdated_formulae" ] ||
+[ -z "$missing_formulae$outdated_formulae$installed_retired_formulae" ] ||
     die "managed Homebrew post-state did not converge"
 [ "$dependencies" = "$planned_dependencies" ] ||
     die "managed Homebrew dependency scope changed during apply"
 [ -z "$unmanaged_dependents" ] ||
     die "managed Homebrew selected root gained an unmanaged dependent after apply"
+[ -z "$retired_dependents" ] ||
+    die "managed Homebrew retired root gained an installed dependent after apply"
 capture_evidence "$post_file" post
 if diff -u "$pre_file" "$post_file" >"$delta_file"; then :; else
     [ "$?" -eq 1 ] || die "managed Homebrew evidence diff failed"
@@ -464,7 +525,8 @@ printf '%s\n' complete >"$status_file"
 apply_complete=1
 trap - EXIT HUP INT TERM
 unlink "$dry_run_log"
-printf 'TRANSACTION id=%s status=complete install=%s upgrade=%s\n' \
+printf 'TRANSACTION id=%s status=complete install=%s upgrade=%s retire=%s\n' \
     "$transaction_id" "$(formula_count "$planned_missing")" \
-    "$(formula_count "$planned_outdated")"
+    "$(formula_count "$planned_outdated")" \
+    "$(formula_count "$planned_retired")"
 echo 'END macos_homebrew applied=yes rollback=manual-review-only metadata_refresh=separate'

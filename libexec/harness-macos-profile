@@ -41,13 +41,18 @@ public_profile=$HARNESS_ROOT/profiles/personal-macos/base.conf
 [ -f "$public_profile" ] && [ ! -L "$public_profile" ] ||
     die "public personal-Mac baseline is unavailable"
 macos_validate_public_profile "$public_profile"
+formula_policy=$HARNESS_ROOT/profiles/personal-macos/formula-policy-v2.conf
+[ -f "$formula_policy" ] && [ ! -L "$formula_policy" ] ||
+    die "public personal-Mac formula policy is unavailable"
+macos_validate_formula_policy "$formula_policy"
 
 engine_schema=2
 family=$(macos_manifest_get "$public_profile" family)
 private_schema_min=$(macos_manifest_get "$public_profile" private_schema_min)
 private_schema_max=$(macos_manifest_get "$public_profile" private_schema_max)
 public_baseline=$(macos_manifest_get "$public_profile" baseline)
-managed_formulae=$(macos_manifest_get "$public_profile" managed_formulae)
+managed_formulae=$(macos_manifest_get "$formula_policy" managed_formulae)
+retired_formulae=$(macos_manifest_get "$formula_policy" retired_formulae)
 [ "$family" = personal-macos ] || die "public personal-Mac baseline is incompatible"
 
 private_root=$HOME/.config/harness/private
@@ -137,6 +142,11 @@ macos_validate_host_manifest "$host_manifest" "$logical_host" \
     "$private_schema" "$public_baseline"
 capability_groups=$(macos_manifest_get "$host_manifest" capability_groups)
 extra_formulae=$(macos_manifest_get "$host_manifest" extra_formulae)
+if [ "$extra_formulae" != none ]; then
+    printf '%s\n' "$managed_formulae,$retired_formulae,$extra_formulae" |
+        tr ',' '\n' | awk 'seen[$0]++ { exit 1 }' ||
+        die "private formula selection overlaps public policy"
+fi
 
 printf '%s\n' \
     "MACOS_PRIVATE_PROFILE status=valid schema=$private_schema engine_schema=$engine_schema" \

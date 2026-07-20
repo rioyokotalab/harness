@@ -34,12 +34,6 @@ case $(uname -m) in
     *) architecture=other ;;
 esac
 
-case ${SHELL##*/} in
-    zsh) shell_class=zsh ;;
-    bash) shell_class=bash ;;
-    *) shell_class=other ;;
-esac
-
 if command -v xcode-select >/dev/null 2>&1 &&
     xcode-select -p >/dev/null 2>&1; then
     command_line_tools=present
@@ -50,6 +44,7 @@ fi
 brew_command=$(command -v brew 2>/dev/null || true)
 homebrew=absent
 homebrew_prefix_class=none
+brew_prefix=
 if [ -n "$brew_command" ]; then
     if "$brew_command" --version >/dev/null 2>&1 &&
         brew_prefix=$("$brew_command" --prefix 2>/dev/null); then
@@ -65,11 +60,45 @@ if [ -n "$brew_command" ]; then
     fi
 fi
 
+account_shell_path=${SHELL:-}
+if command -v dscl >/dev/null 2>&1; then
+    account_output=$(dscl . -read "/Users/$(id -un)" UserShell 2>/dev/null || true)
+    account_candidate=$(printf '%s\n' "$account_output" |
+        awk 'NR == 1 && $1 == "UserShell:" && NF == 2 { print $2; ok = 1 }
+            END { exit NR == 1 && ok ? 0 : 1 }' || true)
+    case $account_candidate in /*) account_shell_path=$account_candidate ;; esac
+fi
+case $account_shell_path in
+    "$brew_prefix/bin/bash")
+        if [ "$homebrew" = present ]; then shell_class='homebrew-bash'
+        else shell_class=other
+        fi
+        ;;
+    /bin/bash) shell_class=apple-bash ;;
+    */zsh) shell_class=zsh ;;
+    *) shell_class=other ;;
+esac
+unset account_output account_candidate
+account_shell_registry=unknown
+if [ "$homebrew" = present ] && [ -f /etc/shells ] && [ ! -L /etc/shells ]; then
+    shell_entry_count=$(grep -F -x -c "$brew_prefix/bin/bash" /etc/shells 2>/dev/null || true)
+    case "$shell_entry_count" in
+        0) account_shell_registry=absent ;;
+        1) account_shell_registry=present ;;
+        *) account_shell_registry=duplicate ;;
+    esac
+fi
+
 public_profile=$HARNESS_ROOT/profiles/personal-macos/base.conf
 [ -f "$public_profile" ] && [ ! -L "$public_profile" ] ||
     die "public personal-Mac baseline is unavailable"
 macos_validate_public_profile "$public_profile"
-managed_formulae=$(macos_manifest_get "$public_profile" managed_formulae)
+formula_policy=$HARNESS_ROOT/profiles/personal-macos/formula-policy-v2.conf
+[ -f "$formula_policy" ] && [ ! -L "$formula_policy" ] ||
+    die "public personal-Mac formula policy is unavailable"
+macos_validate_formula_policy "$formula_policy"
+managed_formulae=$(macos_manifest_get "$formula_policy" managed_formulae)
+retired_formulae=$(macos_manifest_get "$formula_policy" retired_formulae)
 
 private_root=$HOME/.config/harness/private
 if [ ! -e "$private_root" ] && [ ! -L "$private_root" ]; then
@@ -93,6 +122,7 @@ printf '%s\n' \
     "logical_id=$logical_host" \
     "architecture=$architecture" \
     "account_shell=$shell_class" \
+    "account_shell_registry=$account_shell_registry" \
     "homebrew=$homebrew" \
     "homebrew_prefix_class=$homebrew_prefix_class" \
     "command_line_tools=$command_line_tools" \
@@ -103,7 +133,8 @@ printf '%s\n' \
     "link_claude_guidance=$(path_kind "$HOME/.claude/CLAUDE.md")" \
     "link_bash_launcher=$(path_kind "$HOME/.local/bin/harness-bash")"
 
-printf '%s\n' "$managed_formulae" | tr ',' '\n' |
+printf '%s\n' "$managed_formulae,$retired_formulae" | tr ',' '\n' |
+    awk '!seen[$0]++' |
     while IFS= read -r formula; do
         formula_key=$(printf '%s' "$formula" | sed 's/+/p/g; s/[-@.]/_/g')
         formula_state=unknown

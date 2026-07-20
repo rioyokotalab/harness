@@ -101,8 +101,10 @@ a delayed job. T-210 is complete and must not be repeated.
 
 ### T-281 — Reconcile three personal-Mac `.bashrc` local bodies
 
-**Phase/status:** `ready-for-go`; the interview and contradiction audit are
-complete, and no execution authority exists yet. Scope is exactly the three currently reachable
+**Phase/status:** `executing-public`; the owner supplied the explicit `go`, and
+the public implementation/validation stage is in progress. No Mac, private
+companion, package, startup file, account shell, agent process, `.bash_common`,
+or pyenv tree has been mutated yet. Scope is exactly the three currently reachable
 owner-operated personal Macs. Their private identities, SSH routes, usernames,
 complete startup bytes, and any later transaction identifiers remain outside
 public Git. For this task only, the owner explicitly permits reading the three
@@ -364,7 +366,26 @@ canonical no-op plans and ready doctors; clean/equal public and private Git;
 and explicit revocation of the temporary `.bashrc` read permission. The only
 expected possible owner interaction is administrator authentication if no safe
 noninteractive route exists for `/etc/shells`/`chsh`; that condition must pause
-without mutation. Exact next action: wait for the owner's fresh `go`.
+without mutation.
+
+**Execution checkpoint (2026-07-20):** implementation now has a separate
+schema-2 formula-policy overlay managing `bash-completion@2` and `uv` and
+retiring completion 1.x and pyenv; the byte-frozen eight-formula `base.conf`
+was deliberately restored after focused long-gap testing exposed that changing
+it would strand engine-1 Macs. Inventory, plan, doctor, private-overlap checks,
+bounded Homebrew retirement, Darwin profile/interactive behavior, canonical
+empty-local Bash curation, and transactional login-shell plan/apply/rollback
+are implemented with synthetic focused coverage. The current updater validates
+the target overlay while old engines can still cross the frozen base contract.
+The formula, login-shell, shell-behavior, plan/doctor, inventory, and direct
+old-to-current update suites pass; shell syntax and `git diff --check` pass.
+Working files are the public policy, macOS common/inventory/plan/doctor/profile/
+Homebrew/update/Bash-hook/login-shell adapters, shared profile/interactive
+hooks, focused tests/manifests, and personal-Mac documentation. Exact next
+action: finish review and documentation checks, create a small public
+implementation commit so the clean-checkout Bash-hook fixture can run, run all
+focused and complete phase-one validation, then fetch/reconcile and publish
+through protected main before any private or live Mac mutation.
 
 ### T-280 — Onboard one additional personal Mac
 

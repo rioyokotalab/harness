@@ -73,7 +73,8 @@ absent before explicit first adoption and is never printed by the resolver.
 reports only the OS family, architecture class, native account-shell class,
 Homebrew availability and prefix class, Command Line Tools availability,
 strict private-profile status, public-checkout status, fixed discovery-link
-kinds, and presence of the eight public baseline formulae. It does not print
+kinds, and presence of the ten managed and two retired public-policy formulae.
+It does not print
 Homebrew or OS versions, actual prefixes, developer-tool paths, private group
 or formula selections, other installed packages, hardware identifiers,
 networks, user names, or file contents.
@@ -84,6 +85,9 @@ performs no update, install, upgrade, cleanup, service, tap, bundle, network,
 or mutation operation. Private profile failures collapse to `invalid`; their
 paths, values, and detailed errors remain suppressed. A live capture must be
 written under `umask 077` to the private local harness state, never committed.
+When directory-service lookup is available, account-shell classification uses
+the current account's recorded `UserShell`; it falls back to the inherited
+`SHELL` only when that value-minimized lookup is unavailable.
 
 ## Read-only plan and doctor
 
@@ -105,8 +109,9 @@ dry-run scope and stop if an unmanaged dependent would change.
 
 `harness macos-doctor --host LOGICAL_ID [--facts FILE]` emits a value-free
 ready/not-ready result. It requires a supported architecture, usable Homebrew,
-Command Line Tools, a valid private profile, the public checkout, exact managed
-link targets, all eight public formulae, and all selected private formulae.
+Command Line Tools, a valid private profile, the public checkout, the managed
+Homebrew Bash account shell and one registry entry, exact managed link targets,
+all ten public-policy formulae, no retired formulae, and all selected private formulae.
 Private formula and capability names are reported only as counts.
 
 Command behavior was frozen against the official Homebrew manpage and FAQ on
@@ -150,8 +155,10 @@ private repository's contents.
 ## Bounded Homebrew catch-up
 
 Private `capability_groups` are classification labels and are never converted
-into guessed package names. The exact Homebrew allowlist is the eight-formula
-public baseline plus the selected private `extra_formulae`. Phase 1 refuses
+into guessed package names. The frozen eight-formula `base.conf` remains
+byte-compatible with the oldest engine-1 updater. Current desired state is the
+separate schema-2 `formula-policy-v2.conf`: ten managed formulae, two retired
+formulae, plus selected private `extra_formulae`. Phase 1 refuses
 tapped formula names and tapped dependencies; support for a private tap would
 need its own trust, update, and rollback design.
 
@@ -177,10 +184,14 @@ or incomplete dry-run evidence and output that indicates a cask, service,
 remains the separately displayed `brew update` authority; this command does not
 run it implicitly.
 
-Apply repeats the checkout, private profile, prefix, selected action set,
+Apply repeats the checkout, private profile, prefix, selected and retirement action sets,
 dependency closure, installed-dependent, and dry-run gates immediately before
-mutation. It then installs only missing selected formulae and upgrades only
-outdated selected formulae. Homebrew may update their dependency closure, but
+mutation. It first uninstalls only installed formulae on the public retirement
+list after proving they have no installed dependents. Homebrew has no uninstall
+dry-run, so this exact reviewed allowlist is reported separately and no cleanup,
+autoremove, force, or ignored-dependent option is used. It then installs only
+missing selected formulae and upgrades only outdated selected formulae.
+Homebrew may update their dependency closure, but
 the command does not disable installed-dependent linkage checks because the
 official guidance warns that doing so can leave broken linkage. It uses no
 cleanup, removal, cask, service, tap, bundle, or whole-machine upgrade command.
@@ -208,9 +219,26 @@ historical private bundle. Current Macs use the public Linux hook layout
 through `macos-bash-hooks`: Bash's selected login file and `.bashrc` contain the
 exact public early hook, untouched machine-local bytes, and the exact public
 post hook. Transactional apply preserves local bytes and mode; unchanged-only
-rollback restores the complete prior images. The account shell, zsh files,
-Terminal preferences, `/etc/shells`, `chsh`, Keychain, and login items remain
-untouched.
+rollback restores the complete prior images. The explicit `--empty-local`
+curation mode is accepted only for an already canonical `.bashrc`; it replaces
+only its local middle with an empty login-only section and normalizes mode 0600.
+
+`harness macos-login-shell --host LOGICAL_ID --plan|--apply` separately manages
+one exact Homebrew Bash entry in `/etc/shells` and the current account's shell.
+It requires the default architecture-specific Homebrew prefix, an installed
+physical Bash formula target, strict `/etc/shells` metadata, a clean public
+`main`, and a valid private profile. Apply refuses to prompt: `sudo -n` must
+already succeed, otherwise it stops before mutation. A private transaction
+captures the complete registry preimage and prior account shell; unchanged-only
+rollback restores both. Zsh files, Terminal preferences, Keychain, login items,
+and running sessions remain untouched.
+
+On Darwin, the shared profile evaluates the fixed-prefix Homebrew `shellenv`,
+suppresses environment hints, selects `LANG=en_US.UTF-8`, and defines
+`UV_VENV_ROOT=~/.venv` before restoring canonical `~/.local/bin` precedence.
+The interactive hook loads `bash-completion@2` only for compatible Bash and
+provides `activate NAME` for a validated environment name. Linux behavior is
+unchanged.
 
 `bash-startup-unify` also accepts the narrow partial-current case where
 `.bashrc` is already canonical and the reviewed login-file local middle exactly

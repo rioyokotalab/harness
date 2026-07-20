@@ -63,6 +63,7 @@ for script in \
     "$ROOT/libexec/harness-macos-homebrew" \
     "$ROOT/libexec/harness-macos-bash" \
     "$ROOT/libexec/harness-macos-bash-hooks" \
+    "$ROOT/libexec/harness-macos-login-shell" \
     "$ROOT/libexec/harness-tmux-config" \
     "$ROOT/libexec/harness-agent-config" \
     "$ROOT/libexec/harness-agent-config-catch-up" \
@@ -155,6 +156,10 @@ if [ "${HARNESS_TEST_JOBS:-4}" = legacy ]; then
     fail "personal macOS Bash focused suite"
 "$ROOT/tests/test-personal-macos-bash-hooks.sh" >/dev/null ||
     fail "personal macOS Bash-hook focused suite"
+"$ROOT/tests/test-personal-macos-shell.sh" >/dev/null ||
+    fail "personal macOS shell focused suite"
+"$ROOT/tests/test-personal-macos-login-shell.sh" >/dev/null ||
+    fail "personal macOS login-shell focused suite"
 "$ROOT/tests/test-tmux-config.sh" >/dev/null ||
     fail "shared tmux configuration focused suite"
 "$ROOT/tests/test-agent-config.sh" >/dev/null ||

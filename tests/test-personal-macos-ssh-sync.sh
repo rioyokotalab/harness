@@ -84,6 +84,8 @@ cp -p "$ROOT/libexec/harness-common" "$ROOT/libexec/harness-macos-common" \
     "$ROOT/libexec/harness-macos-ssh-sync" "$public/libexec/"
 cp "$ROOT/profiles/personal-macos/base.conf" \
     "$public/profiles/personal-macos/base.conf"
+cp "$ROOT/profiles/personal-macos/formula-policy-v2.conf" \
+    "$public/profiles/personal-macos/formula-policy-v2.conf"
 git -C "$public" init -q -b main
 configure_identity "$public"
 git -C "$public" add libexec profiles

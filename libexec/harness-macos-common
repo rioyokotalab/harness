@@ -304,6 +304,31 @@ macos_validate_public_profile() {
         "$(macos_manifest_get "$macos_public_profile" managed_formulae)" formula
 }
 
+macos_validate_formula_policy() {
+    macos_formula_policy=$1
+    macos_validate_manifest "$macos_formula_policy" \
+        schema,family,managed_formulae,retired_formulae \
+        schema,family,managed_formulae,retired_formulae
+    [ "$(macos_manifest_get "$macos_formula_policy" schema)" = 2 ] &&
+        [ "$(macos_manifest_get "$macos_formula_policy" family)" = personal-macos ] &&
+        [ "$(macos_manifest_get "$macos_formula_policy" managed_formulae)" = \
+            bash,bash-completion@2,git,git-lfs,tmux,ripgrep,jq,tree,shellcheck,uv ] &&
+        [ "$(macos_manifest_get "$macos_formula_policy" retired_formulae)" = \
+            bash-completion,pyenv ] ||
+        die "public personal-Mac formula policy is incompatible"
+    macos_validate_token_csv \
+        "$(macos_manifest_get "$macos_formula_policy" managed_formulae)" formula
+    macos_validate_token_csv \
+        "$(macos_manifest_get "$macos_formula_policy" retired_formulae)" formula
+    macos_public_selected=$(macos_manifest_get \
+        "$macos_formula_policy" managed_formulae)
+    macos_public_retired=$(macos_manifest_get \
+        "$macos_formula_policy" retired_formulae)
+    printf '%s\n' "$macos_public_selected,$macos_public_retired" | tr ',' '\n' |
+        awk 'seen[$0]++ { exit 1 }' ||
+        die "public personal-Mac formula policy overlaps"
+}
+
 macos_validate_companion_manifest() {
     macos_companion_manifest=$1
     macos_engine_schema=$2
@@ -359,9 +384,9 @@ macos_value_is_one_of() {
 
 macos_validate_fact_file() {
     macos_fact_file=$1
-    macos_fact_profile=$2
-    macos_fact_keys=schema,family,logical_id,architecture,account_shell,homebrew,homebrew_prefix_class,command_line_tools,private_profile,harness_checkout,link_codex_guidance,link_codex_rules,link_claude_guidance,link_bash_launcher,formula_bash,formula_git,formula_git_lfs,formula_tmux,formula_ripgrep,formula_jq,formula_tree,formula_shellcheck
-    macos_fact_formulae=$(macos_manifest_get "$macos_fact_profile" managed_formulae)
+    macos_fact_policy=$2
+    macos_fact_keys=schema,family,logical_id,architecture,account_shell,account_shell_registry,homebrew,homebrew_prefix_class,command_line_tools,private_profile,harness_checkout,link_codex_guidance,link_codex_rules,link_claude_guidance,link_bash_launcher,formula_bash,formula_bash_completion_2,formula_git,formula_git_lfs,formula_tmux,formula_ripgrep,formula_jq,formula_tree,formula_shellcheck,formula_uv,formula_bash_completion,formula_pyenv
+    macos_fact_formulae=$(macos_manifest_get "$macos_fact_policy" managed_formulae),$(macos_manifest_get "$macos_fact_policy" retired_formulae)
     macos_validate_manifest "$macos_fact_file" "$macos_fact_keys" "$macos_fact_keys"
     [ "$(macos_manifest_get "$macos_fact_file" schema)" = 1 ] &&
         [ "$(macos_manifest_get "$macos_fact_file" family)" = personal-macos ] ||
@@ -374,7 +399,11 @@ macos_validate_fact_file() {
         arm64 x86_64 other || die "personal-Mac architecture fact is malformed"
     macos_value_is_one_of \
         "$(macos_manifest_get "$macos_fact_file" account_shell)" \
-        zsh bash other || die "personal-Mac shell fact is malformed"
+        homebrew-bash apple-bash zsh other || die "personal-Mac shell fact is malformed"
+    macos_value_is_one_of \
+        "$(macos_manifest_get "$macos_fact_file" account_shell_registry)" \
+        present absent duplicate unknown ||
+        die "personal-Mac shell-registry fact is malformed"
     macos_value_is_one_of "$(macos_manifest_get "$macos_fact_file" homebrew)" \
         present absent unusable || die "personal-Mac Homebrew fact is malformed"
     macos_value_is_one_of \

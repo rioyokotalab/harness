@@ -48,7 +48,8 @@ does not infer package names from them. Every privately selected Homebrew
 formula must therefore be named explicitly in `extra_formulae`. Phase 1
 catch-up further refuses tapped formula names even though the general token
 grammar reserves `/` for a future separately designed tap contract. Installed
-state is never used to populate either field.
+state is never used to populate either field. A private formula may not overlap
+either the current public managed set or the public retirement set.
 
 Only curated desired intent belongs in the manifests. Hostnames, user names,
 serial or hardware identifiers, network details, local paths, copied
