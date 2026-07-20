@@ -57,8 +57,9 @@ T-268, T-269, and T-272. Workstream 1's value-free failed-transaction review is
 resolved as evidence retention: three failed groups remain private because no
 published operation-specific cleanup contract can prove them redundant. Exact
 next work is workstream 2's PIE interview. D1 is frozen as exact automatic
-restoration to the last verified working version after interruption; D2's
-downgrade policy is the next open decision. No implementation or live version
+restoration to the last verified working version after interruption, and D2 is
+frozen as forward-only replacement with downgrade only by exact rollback. D3's
+prior-version retention policy is the final open decision. No implementation or live version
 change is authorized before the register is complete and the owner gives a
 fresh `go`.
 The other workstreams retain their recorded time, availability, project-
@@ -943,14 +944,16 @@ and any later separately authorized live plan.
   resume forward; recovery must validate the prior tree/link, atomically restore
   that link, guarded-remove only an unchanged proposed tree, retain failed
   evidence, and leave a fresh later apply to begin from a clean old state.
-- **D2 — downgrade policy (open):** recommended forward semantic-version
-  replacement only; downgrade occurs only through exact transaction rollback.
-  An explicit protected downgrade path would expand mutation and testing scope.
-- **D3 — prior-version retention (pending D2):** recommended retain exactly the
+- **D2 — downgrade policy (selected):** forward semantic-version replacement
+  only; downgrade occurs only through exact transaction rollback. The owner
+  accepted the recommendation. Planning must compare normalized versions before
+  mutation, reject equal versions as replacement, and reject a lower declared
+  target instead of treating it as an ordinary managed transition.
+- **D3 — prior-version retention (open):** recommended retain exactly the
   rollback predecessor and its evidence while the replacement is active;
   retirement of older generations remains a separate guarded cleanup decision.
 
-**Exact next action:** ask D2 only. After each owner answer, checkpoint it and
+**Exact next action:** ask D3 only. After each owner answer, checkpoint it and
 ask the next unresolved decision. When D1-D3 are coherent, audit the plan, set
 `ready-for-go`, and wait for an explicit fresh `go`; do not implement or change
 any live agent before then.
