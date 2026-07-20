@@ -8,8 +8,11 @@ select it. On a Mac without Codex, start from the verified public checkout:
 ./bin/harness macos-codex-bootstrap --host HOST --apply
 ```
 
-This installs the checksum-pinned official standalone client without editing
-shell profiles and opens Codex with the complete onboarding assignment.
+This installs missing `gh`, `tmux`, and Python-with-`tomllib` prerequisites,
+places the checksum-pinned official standalone client in Homebrew's visible
+bin without editing shell profiles, supplies the declared credential-free
+private companion locator, and opens Codex with the complete onboarding
+assignment.
 Thereafter always invoke `./bin/harness` from the verified public checkout.
 
 1. **Transport and Git preflight**

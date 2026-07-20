@@ -31,22 +31,69 @@ fi
 
 conf=$ROOT/config/codex-standalone-installer.conf
 [ -f "$conf" ] || die 'installer declaration is absent'
-awk -F= '$0 !~ /^[a-z0-9_]+=[^=[:cntrl:]]+$/ {bad=1} {if (++seen[$1]!=1) bad=1} END {split("schema url sha256 bytes reviewed_at",r," "); for(i in r) if(!(r[i] in seen)) bad=1; exit bad?1:0}' "$conf" || die 'installer declaration is malformed'
+awk -F= '$0 !~ /^[a-z0-9_]+=[^=[:cntrl:]]+$/ {bad=1} {if (++seen[$1]!=1) bad=1} END {split("schema url sha256 bytes reviewed_at private_companion_url",r," "); for(i in r) if(!(r[i] in seen)) bad=1; exit bad?1:0}' "$conf" || die 'installer declaration is malformed'
 installer_url=$(awk -F= '$1=="url" {print substr($0,5)}' "$conf")
 installer_sha=$(awk -F= '$1=="sha256" {print $2}' "$conf")
 installer_bytes=$(awk -F= '$1=="bytes" {print $2}' "$conf")
 reviewed_at=$(awk -F= '$1=="reviewed_at" {print $2}' "$conf")
+private_url=$(awk -F= '$1=="private_companion_url" {print substr($0, length($1)+2)}' "$conf")
 [ "$(awk -F= '$1=="schema" {print $2}' "$conf")" = 1 ] || die 'unsupported installer declaration'
 case "$installer_sha" in *[!0-9a-f]*|'') die 'installer checksum is malformed' ;; esac
 [ "${#installer_sha}" -eq 64 ] || die 'installer checksum is malformed'
 case "$installer_bytes" in ''|*[!0-9]*) die 'installer byte count is malformed' ;; esac
 [ "$installer_url" = https://chatgpt.com/codex/install.sh ] || die 'installer URL is not approved'
+case "$private_url" in git@github.com:[A-Za-z0-9._-]*/*[A-Za-z0-9._-].git) ;; *) die 'private companion URL is unsafe' ;; esac
 
-install_dir=$HOME/.local/bin codex_home=$HOME/.codex visible=$HOME/.local/bin/codex
+command -v brew >/dev/null 2>&1 || die 'Homebrew is required before bootstrap prerequisites can be installed'
+brew_command=$(command -v brew)
+brew_prefix=$($brew_command --prefix)
+case "$brew_prefix" in /opt/homebrew|/usr/local) ;; *) [ "${HARNESS_BOOTSTRAP_TESTING:-0}" = 1 ] || die 'Homebrew prefix is unsupported' ;; esac
+[ -d "$brew_prefix/bin" ] && [ -w "$brew_prefix/bin" ] || die 'Homebrew bin directory is unavailable or not owner-writable'
+
+missing_formulae=
+command -v gh >/dev/null 2>&1 || missing_formulae="$missing_formulae gh"
+python_command=
+for candidate in "$brew_prefix/bin/python3" "$(command -v python3 2>/dev/null || true)"; do
+    [ -n "$candidate" ] && [ -x "$candidate" ] || continue
+    if "$candidate" -c 'import tomllib' >/dev/null 2>&1; then python_command=$candidate; break; fi
+done
+[ -n "$python_command" ] || missing_formulae="$missing_formulae python"
+command -v tmux >/dev/null 2>&1 || missing_formulae="$missing_formulae tmux"
+missing_formulae=${missing_formulae# }
+
+install_dir=$brew_prefix/bin
+codex_home=$HOME/.codex
+visible=$install_dir/codex
+legacy_visible=$HOME/.local/bin/codex
 existing=$(command -v codex 2>/dev/null || true)
-[ -z "$existing" ] || [ "$existing" = "$visible" ] || die 'another Codex command is already active; resolve it before bootstrap'
+[ -z "$existing" ] || [ "$existing" = "$visible" ] || [ "$existing" = "$legacy_visible" ] || die 'another Codex command is already active; resolve it before bootstrap'
 printf 'MODE=%s\nHOST=%s\nINSTALLER_URL=%s\nREVIEWED_AT=%s\nINSTALL_DIR=%s\nCODEX_HOME=%s\n' "$mode" "$host" "$installer_url" "$reviewed_at" "$install_dir" "$codex_home"
+if [ -n "$missing_formulae" ]; then printf 'PREREQUISITE_FORMULAE=%s\n' "$missing_formulae"; else printf '%s\n' 'PREREQUISITE_FORMULAE=none'; fi
 [ "$mode" = apply ] || exit 0
+
+if [ -n "$missing_formulae" ]; then
+    # The value is assembled only from the fixed tokens gh, python, and tmux.
+    # shellcheck disable=SC2086
+    set -- $missing_formulae
+    printf 'NATIVE %s install --formula --dry-run' "$brew_command"
+    printf ' %s' "$@"
+    printf '\n'
+    HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ENV_HINTS=1 \
+        "$brew_command" install --formula --dry-run "$@"
+    printf 'NATIVE %s install --formula' "$brew_command"
+    printf ' %s' "$@"
+    printf '\n'
+    HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ENV_HINTS=1 \
+        "$brew_command" install --formula "$@"
+fi
+command -v gh >/dev/null 2>&1 || [ -x "$brew_prefix/bin/gh" ] || die 'GitHub CLI prerequisite is unavailable after install'
+[ -x "$brew_prefix/bin/tmux" ] || command -v tmux >/dev/null 2>&1 || die 'tmux prerequisite is unavailable after install'
+python_command=
+for candidate in "$brew_prefix/bin/python3" "$(command -v python3 2>/dev/null || true)"; do
+    [ -n "$candidate" ] && [ -x "$candidate" ] || continue
+    if "$candidate" -c 'import tomllib' >/dev/null 2>&1; then python_command=$candidate; break; fi
+done
+[ -n "$python_command" ] || die 'Python tomllib prerequisite is unavailable after install'
 
 installer=$(mktemp "${TMPDIR:-/tmp}/harness-codex-installer.XXXXXX") || die 'cannot create installer file'
 chmod 600 "$installer"
@@ -63,7 +110,6 @@ fi
 [ "$(wc -c <"$installer" | tr -d ' ')" = "$installer_bytes" ] || die 'installer byte count changed'
 [ "$(macos_checksum_file "$installer")" = "$installer_sha" ] || die 'installer checksum changed'
 /bin/sh -n "$installer" || die 'installer syntax validation failed'
-mkdir -p "$install_dir"
 PATH="$install_dir:$PATH" CODEX_INSTALL_DIR="$install_dir" CODEX_HOME="$codex_home" CODEX_NON_INTERACTIVE=1 /bin/sh "$installer"
 unlink "$installer"; trap - EXIT HUP INT TERM
 
@@ -71,7 +117,16 @@ unlink "$installer"; trap - EXIT HUP INT TERM
 command -v python3 >/dev/null 2>&1 || die 'Python 3 is required to verify the installed command'
 resolved=$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$visible")
 case "$resolved" in "$codex_home"/packages/standalone/*) ;; *) die 'Codex is not owned by the official standalone installation' ;; esac
+if [ -L "$legacy_visible" ] && [ "$legacy_visible" != "$visible" ]; then
+    legacy_resolved=$($python_command -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$legacy_visible")
+    if [ "$legacy_resolved" = "$resolved" ]; then
+        unlink "$legacy_visible"
+        printf '%s\n' 'LEGACY_CODEX_LINK=removed'
+    else
+        die 'legacy Codex link has different ownership; it was preserved'
+    fi
+fi
 "$visible" --version
-prompt="Onboard this personal Mac with logical host '$host'. Work autonomously from this repository. First read AGENTS.md, TODO.md, shared/skills/onboard-personal-mac/SKILL.md completely, and every reference that skill requires. Apply that skill faithfully. Reconstruct current Git and ledger state, use value-free discovery, create the one-host plan, and ask only material questions one at a time. Wait for my explicit go before machine mutations. After go, run every native harness and Git command yourself; do not ask me to execute shell scripts. Pause only for unavoidable authentication, password, TCC, reboot, or physical interaction. Complete transactional apply, rollback, reapply, fresh-session acceptance, and the ordered post-onboarding .bash_common orphan check. Keep identities, private values, and transaction details out of public Git and TODO.md."
+prompt="Onboard this personal Mac with logical host '$host'. The credential-free private companion clone URL is '$private_url'; use it without asking me for the repository locator, but never expose credentials or private contents. Work autonomously from this repository. First read AGENTS.md, TODO.md, shared/skills/onboard-personal-mac/SKILL.md completely, and every reference that skill requires. Apply that skill faithfully. Reconstruct current Git and ledger state, use value-free discovery, create the one-host plan, and ask only material questions one at a time. Wait for my explicit go before machine mutations. After go, run every native harness and Git command yourself; do not ask me to execute shell scripts. Pause only for unavoidable authentication, password, TCC, reboot, or physical interaction. Complete transactional apply, rollback, reapply, fresh-session acceptance, and the ordered post-onboarding .bash_common orphan check. Keep identities, private values, and transaction details out of public Git and TODO.md."
 printf '%s\n' 'LAUNCH=official Codex interactive onboarding session'
 exec "$visible" -C "$ROOT" "$prompt"

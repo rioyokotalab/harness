@@ -195,6 +195,25 @@ apply there. No Mac installation has run from this task yet. If OpenAI changes
 the installer bytes, checksum refusal is the intended safe stop and requires a
 fresh official-source review plus pin update, never an override.
 
+**Post-bootstrap correction:** the first live `home` attempt found four
+bootstrap gaps before any onboarding apply: the official command was installed
+under `~/.local/bin` but not visible after terminal restart; the onboarding
+agent had to ask for the private companion locator; and `gh`, `tmux`, plus an
+active Python providing standard-library `tomllib` were absent. The owner
+authorized one combined correction. Install the visible Codex link in the
+already-active Homebrew bin, exact-unlink the legacy link only after both
+resolve to the same official standalone payload, carry the credential-free
+private repository SSH locator as public bootstrap metadata, and use Homebrew
+to install only missing `gh`, `tmux`, and `python` after an exact dry-run with
+automatic update/cleanup/analytics/hints disabled. Authentication remains
+separate. The fresh official installer review still matches the pinned bytes
+and deletion targets. Publish and have the live Codex fast-forward/re-run the
+bootstrap before resuming T-276; no onboarding component apply has occurred.
+Focused bootstrap/onboarding, source-contract, focused-runner, public-repository
+audit, ShellCheck, diff, and complete portable phase-one validation pass on the
+combined correction. Protected publication remains the sole implementation
+gate.
+
 ### T-274 — Unified Bash startup, faster tests, and Codex-driven Mac onboarding
 
 **Phase/status:** `complete-accessible-fleet`; owner gave the explicit accumulated-change `go`
