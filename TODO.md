@@ -239,6 +239,11 @@ syntax, and diff checks pass; the session is `validating`. Next action: reviewed
 checkpoint, clean full Phase 1, completion, and guarded round-5 cleanup. The
 strongest next adversarial target is enforcing the currently prose-only external
 `stage.json` seal at import.
+Checkpoint `25841aa` made the receipt implementation clean; full
+`tests/test-phase1.sh` passed every runnable suite (native MPI correctly
+skipped), and round 5 is `complete` and validates. Next action is guarded
+scratch cleanup followed by a schema-2 round that tries to tamper stage metadata
+and requires a driver-held seal at import.
 
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
 and Claude. Its role contract must be client-neutral: the active client is the

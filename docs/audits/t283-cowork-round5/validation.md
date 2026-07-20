@@ -10,14 +10,16 @@ retry, aliases, and crash residue in addition to every round-1–4 case. Python
 source compiles in-memory without cache output and the shell test parses.
 
 `tests/test-claude-takeover.sh`, `tests/test-source-contract.sh`,
-`tests/test-public-repo-audit.sh`, and `git diff --check` pass. The current
-legacy round-5 session validates at `validating` under the new dual-schema
-helper. A clean-commit full `tests/test-phase1.sh` remains after the reviewed
-checkpoint because its tmux path intentionally requires a clean checkout.
+`tests/test-public-repo-audit.sh`, and `git diff --check` pass. Checkpoint
+`25841aa` made the tree clean; `tests/test-phase1.sh` then passed every runnable
+suite, including the expanded cowork suite and guarded-delete integration.
+Native MPI was correctly skipped outside a declared MPI environment. The legacy
+round-5 session advanced to `complete` and validates under the dual-schema
+helper.
 
 ## Outcome
 
-All driver-scoped gates pass. The implementation changes only the cowork skill,
+All acceptance gates pass. The implementation changes only the cowork skill,
 its focused test, the task ledger, and this round's public-safe evidence. It does
 not change settings, credentials, packages, remotes, services, external
 messages, or unrelated repository content. No sandbox has been deleted yet.
