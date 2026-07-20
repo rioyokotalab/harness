@@ -1,0 +1,1 @@
+Appended the reciprocal critique, including the read-only bypass experiment and verdicts on all four proposed changes.

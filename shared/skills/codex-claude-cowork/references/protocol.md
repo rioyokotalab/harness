@@ -27,10 +27,13 @@ The exchange directory contains:
 
 The validator rejects missing headings, untouched standalone template `TODO`
 markers, role mismatch, skipped or backward phases, symlinked or foreign-owned
-protocol entries, and any missing or unexpected top-level entry. It requires
-`artifacts/` to be a real current-user-owned directory. It does not prove factual
-correctness, client authorship, or confinement of content below `artifacts/`;
-both agents must inspect those independently.
+protocol entries, hard-linked protocol files (any regular protocol file with a
+link count other than one, which would alias content outside the session), and
+any missing or unexpected top-level entry. It requires `artifacts/` to be a real
+current-user-owned directory. It does not prove factual correctness, client
+authorship, or confinement of content below `artifacts/`, and it cannot by
+itself detect a same-user overwrite of an already-valid file; both agents must
+inspect those independently and the driver must seal digests (below).
 
 ## Sandbox contract
 
@@ -108,6 +111,25 @@ environment may require an OS/container sandbox around Claude or disallow a
 tool that the plan requested. Record the limitation and adapt the experiment,
 not the safety boundary.
 
+## Protecting driver-owned files across a co-pilot window
+
+`--add-dir SESSION_DIR` grants the co-pilot workspace-write over the entire
+exchange directory, so as the same user it can overwrite any driver-owned file;
+file ownership and mode `0600` do not establish authorship or integrity, and a
+co-pilot can re-`chmod` a read-only file before writing it. Setting driver-owned
+files read-only before an invocation is therefore only an advisory
+accidental-write tripwire, not a guarantee.
+
+The real guarantee is a driver-held digest seal. Immediately before granting the
+co-pilot write, the driver runs `scripts/cowork-session digests SESSION_DIR` and
+stores the manifest **outside** `SESSION_DIR` (an in-session seal could be
+rewritten together with its inputs). `digests` covers the protected set — every
+top-level entry the co-pilot does not own: `state.json` and the driver Markdown,
+excluding `copilot-evidence.md` and the shared `artifacts/` directory. After the
+native client returns, the driver re-runs `digests` and diffs it against the
+external manifest; any change to a protected entry is a stop condition that
+returns the session to owner review, never a silent accept.
+
 ## Reconciliation rules
 
 Rank support in this order: reproducible observed result on a matched baseline;
@@ -130,10 +152,18 @@ the owner before target execution.
 
 ## Takeover and failure
 
-On interruption, a new driver of either product reads the target ledger and all
-exchange files, validates the recorded current phase, and resumes the first
-unverified action. Role transfer requires an explicit owner instruction and a
-new session because file ownership and execution authority change.
+Distinguish two interruption cases. In **same-role process recovery** — the same
+client resumes its own driver session — a new process reads the target ledger and
+all exchange files, validates the recorded current phase, and resumes the first
+unverified action in place. In **cross-product role transfer** — the other
+client becomes driver — file ownership and execution authority change, so it
+requires an explicit owner instruction and a *new* session that starts at
+`planning`; it cannot resume the predecessor's recorded phase. The helper offers
+no in-place takeover operation by design. To keep provenance without inheriting
+authority, initialize the new session with
+`scripts/cowork-session init NEW_DIR --driver ROLE --predecessor OLD_DIR`, which
+records the predecessor's path, driver, phase, and validated state digest under a
+`predecessor` block while still beginning at `planning`.
 
 A client failure is retry-safe only when its sandbox and owned files show no
 ambiguous partial action. Record the exact error, files touched, and retry

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -14,6 +15,7 @@ from pathlib import Path
 
 SCHEMA_VERSION = 1
 CLIENTS = {"codex", "claude"}
+COPILOT_OWNED = "copilot-evidence.md"
 PHASES = (
     "planning",
     "discussing",
@@ -142,6 +144,15 @@ TODO
 
 ALLOWED_TOP_LEVEL = set(TEMPLATES) | {"state.json", "artifacts"}
 
+# The protected set is every top-level entry the co-pilot does not own: the
+# driver-owned Markdown plus state.json. `copilot-evidence.md` and the shared,
+# bounded `artifacts/` directory are intentionally excluded because the co-pilot
+# legitimately writes them. The driver seals digests of this set outside the
+# session directory before granting the co-pilot write and re-checks afterward.
+PROTECTED_ENTRIES = tuple(
+    sorted(["state.json"] + [name for name in TEMPLATES if name != COPILOT_OWNED])
+)
+
 REQUIRED_BY_PHASE = {
     "planning": (),
     "discussing": ("charter.md", "plan.md"),
@@ -196,6 +207,11 @@ def require_owned_kind(path: Path, kind: str) -> None:
         fail(f"protocol {kind} must be real and not a symlink: {path}")
     if metadata.st_uid != os.getuid():
         fail(f"protocol {kind} is owned by another uid: {path}")
+    if kind != "directory" and metadata.st_nlink != 1:
+        fail(
+            f"protocol file must not be a hard link: {path} "
+            f"(link count {metadata.st_nlink})"
+        )
 
 
 def validate_layout(root: Path) -> None:
@@ -251,11 +267,25 @@ def validate_files(root: Path, phase: str) -> None:
                 fail(f"{name} is missing required heading: {heading}")
 
 
+def predecessor_record(raw: str) -> dict:
+    """Snapshot a prior session's provenance without inheriting its authority."""
+    pred_root = session_path(raw)
+    pred_state = load_state(pred_root)
+    pred_bytes = (pred_root / "state.json").read_bytes()
+    return {
+        "path": str(pred_root),
+        "driver": pred_state["driver"],
+        "phase": pred_state["phase"],
+        "state_sha256": hashlib.sha256(pred_bytes).hexdigest(),
+    }
+
+
 def init(args: argparse.Namespace) -> None:
     root = session_path(args.session_dir)
     if root.exists():
         fail(f"session path already exists: {root}")
     copilot = (CLIENTS - {args.driver}).pop()
+    predecessor = predecessor_record(args.predecessor) if args.predecessor else None
     root.mkdir(parents=True, mode=0o700)
     timestamp = now()
     state = {
@@ -266,11 +296,18 @@ def init(args: argparse.Namespace) -> None:
         "created_at": timestamp,
         "updated_at": timestamp,
     }
+    if predecessor is not None:
+        state["predecessor"] = predecessor
     write_json_atomic(root / "state.json", state)
     for name, content in TEMPLATES.items():
         (root / name).write_text(content, encoding="utf-8")
     (root / "artifacts").mkdir(mode=0o700)
-    print(f"initialized {root} with {args.driver} driving {copilot}")
+    message = f"initialized {root} with {args.driver} driving {copilot}"
+    if predecessor is not None:
+        message += (
+            f" (predecessor {predecessor['driver']} at {predecessor['phase']})"
+        )
+    print(message)
 
 
 def check(args: argparse.Namespace) -> None:
@@ -281,6 +318,14 @@ def check(args: argparse.Namespace) -> None:
         fail(f"unknown phase: {phase}")
     validate_files(root, phase)
     print(f"valid {phase} session: {root}")
+
+
+def digests(args: argparse.Namespace) -> None:
+    root = session_path(args.session_dir)
+    validate_layout(root)
+    for name in PROTECTED_ENTRIES:
+        data = (root / name).read_bytes()
+        print(f"{hashlib.sha256(data).hexdigest()}  {name}")
 
 
 def advance(args: argparse.Namespace) -> None:
@@ -307,11 +352,20 @@ def parser() -> argparse.ArgumentParser:
     init_parser = commands.add_parser("init", help="create a new exchange directory")
     init_parser.add_argument("session_dir")
     init_parser.add_argument("--driver", required=True, choices=sorted(CLIENTS))
+    init_parser.add_argument(
+        "--predecessor",
+        help="record a prior session's provenance for a cross-product takeover",
+    )
     init_parser.set_defaults(handler=init)
     check_parser = commands.add_parser("check", help="validate current or named phase")
     check_parser.add_argument("session_dir")
     check_parser.add_argument("--phase", choices=PHASES)
     check_parser.set_defaults(handler=check)
+    digests_parser = commands.add_parser(
+        "digests", help="print sha256 of the protected (non-co-pilot) entries"
+    )
+    digests_parser.add_argument("session_dir")
+    digests_parser.set_defaults(handler=digests)
     advance_parser = commands.add_parser("advance", help="validate and advance one phase")
     advance_parser.add_argument("session_dir")
     advance_parser.add_argument("phase", choices=PHASES[1:])

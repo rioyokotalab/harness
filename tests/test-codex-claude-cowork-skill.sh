@@ -49,6 +49,18 @@ grep -F 'codex --ask-for-approval never exec --ephemeral' "$PROTOCOL" >/dev/null
     fail 'Claude-driver native Codex mapping'
 grep -F -- '`--dangerously-skip-permissions`' "$PROTOCOL" >/dev/null ||
     fail 'Claude bypass refusal'
+grep -F 'digests SESSION_DIR' "$PROTOCOL" >/dev/null ||
+    fail 'protocol missing digest-seal instruction'
+grep -F 'outside' "$PROTOCOL" | grep -F 'SESSION_DIR' >/dev/null ||
+    fail 'protocol missing external-manifest requirement'
+grep -F 'link count' "$PROTOCOL" >/dev/null ||
+    fail 'protocol missing hard-link description'
+grep -F -- '--predecessor' "$PROTOCOL" >/dev/null ||
+    fail 'protocol missing predecessor takeover mapping'
+grep -F 'digests SESSION_DIR' "$SKILL" >/dev/null ||
+    fail 'skill missing digest-seal guidance'
+grep -F 'advisory tripwire' "$SKILL" >/dev/null ||
+    fail 'skill missing read-only advisory note'
 
 fill() {
     file=$1
@@ -185,5 +197,75 @@ if command -v claude >/dev/null 2>&1; then
     grep -F 'dontAsk' "$TEMP_DIR/claude-help.out" >/dev/null ||
         fail 'installed Claude lacks dontAsk permission mode'
 fi
+
+# --- round 2: hard-link rejection, digest seal, and takeover provenance ---
+
+hlink=$TEMP_DIR/r2-hardlink
+"$SESSION" init "$hlink" --driver claude >/dev/null
+echo synthetic-outside >"$TEMP_DIR/r2-outside.txt"
+ln -f "$TEMP_DIR/r2-outside.txt" "$hlink/plan.md"
+if "$SESSION" check "$hlink" >"$TEMP_DIR/hardlink.out" 2>&1; then
+    fail 'accepted a hard-linked protocol file'
+fi
+grep -F 'must not be a hard link' "$TEMP_DIR/hardlink.out" >/dev/null ||
+    fail 'missing hard-link refusal'
+
+seal=$TEMP_DIR/r2-seal
+"$SESSION" init "$seal" --driver claude >/dev/null
+"$SESSION" digests "$seal" >"$TEMP_DIR/seal-a"
+"$SESSION" digests "$seal" >"$TEMP_DIR/seal-b"
+cmp -s "$TEMP_DIR/seal-a" "$TEMP_DIR/seal-b" || fail 'digests are not deterministic'
+if grep -F 'copilot-evidence.md' "$TEMP_DIR/seal-a" >/dev/null; then
+    fail 'protected manifest must exclude copilot-evidence.md'
+fi
+grep -F 'state.json' "$TEMP_DIR/seal-a" >/dev/null ||
+    fail 'protected manifest must include state.json'
+
+# a protected-file overwrite is caught by the out-of-session manifest even after
+# the writer re-chmods a read-only file
+chmod 0400 "$seal/reconciliation.md"
+chmod 0600 "$seal/reconciliation.md"
+printf 'TAMPERED\n' >"$seal/reconciliation.md"
+"$SESSION" digests "$seal" >"$TEMP_DIR/seal-after"
+if cmp -s "$TEMP_DIR/seal-a" "$TEMP_DIR/seal-after"; then
+    fail 'external digest manifest did not detect a protected-file overwrite'
+fi
+
+# co-pilot-owned evidence is excluded from the protected set and stays writable
+"$SESSION" digests "$seal" >"$TEMP_DIR/seal-c"
+printf 'co-pilot wrote this\n' >"$seal/copilot-evidence.md"
+"$SESSION" digests "$seal" >"$TEMP_DIR/seal-d"
+cmp -s "$TEMP_DIR/seal-c" "$TEMP_DIR/seal-d" ||
+    fail 'co-pilot evidence must not affect the protected manifest'
+
+# cross-product takeover starts at planning with recorded predecessor provenance
+pred=$TEMP_DIR/r2-pred
+"$SESSION" init "$pred" --driver claude >/dev/null
+fill "$pred/charter.md"
+fill "$pred/plan.md"
+"$SESSION" advance "$pred" discussing >/dev/null
+succ=$TEMP_DIR/r2-succ
+"$SESSION" init "$succ" --driver codex --predecessor "$pred" >/dev/null
+python3 - "$succ/state.json" <<'PY'
+import json
+import pathlib
+import sys
+
+state = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert state["phase"] == "planning", state["phase"]
+assert state["driver"] == "codex"
+assert state["copilot"] == "claude"
+predecessor = state["predecessor"]
+assert predecessor["driver"] == "claude", predecessor
+assert predecessor["phase"] == "discussing", predecessor
+assert len(predecessor["state_sha256"]) == 64
+PY
+
+# same-role re-init on an existing path is refused
+if "$SESSION" init "$succ" --driver codex >"$TEMP_DIR/reinit.out" 2>&1; then
+    fail 'accepted re-init on an existing session path'
+fi
+grep -F 'already exists' "$TEMP_DIR/reinit.out" >/dev/null ||
+    fail 'missing existing-path refusal'
 
 echo 'Codex-Claude cowork skill tests passed'

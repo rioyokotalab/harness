@@ -104,6 +104,11 @@ scripts/cowork-session advance SESSION_DIR ready-for-execution
   hide collaboration behind an opaque wrapper.
 - Grant the co-pilot only the sandbox and exchange-file access required by the
   frozen experiment. Never use a bypass flag merely to make automation pass.
+- Because granting the co-pilot session-directory write also lets it overwrite
+  driver-owned files, seal integrity around each co-pilot invocation: run
+  `scripts/cowork-session digests SESSION_DIR` beforehand, store the manifest
+  outside `SESSION_DIR`, and after the client returns re-run it and stop on any
+  change to a protected entry. Read-only mode is only an advisory tripwire.
 - Use separate sandboxes and one immutable baseline to prevent accidental
   target mutation and result contamination. Record deviations between
   environments before comparing results.

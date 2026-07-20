@@ -1,0 +1,1 @@
+Updated `copilot-evidence.md`; both placeholders are complete and no standalone `TODO` remains.
