@@ -444,6 +444,17 @@ scope does not cross the reverse-SSH session, stop again and have the owner run
 the same native harness apply/rollback/reapply commands in that authenticated
 local terminal rather than passing any credential to an agent.
 
+The owner established those local timestamps and reported readiness. Exact
+remote `sudo -n /usr/bin/true` rechecks still fail on all three Macs, confirming
+that the timestamp is terminal-scoped and cannot authorize the reverse-SSH
+sessions. This is an expected external boundary, not evidence of account-shell
+failure; no system or harness state changed. Exact next action: in each already
+authenticated local Mac terminal, run the native `macos-login-shell` apply,
+extract its transaction, run unchanged-only rollback, reapply, and finish with
+a no-op plan. Return only those value-free command results. If any command
+fails, stop on that Mac and preserve its transaction evidence; do not proceed
+to the irreversible tail.
+
 ### T-280 — Onboard one additional personal Mac
 
 **Phase/status:** `complete`; exactly one owner-operated Mac was in scope. Its
