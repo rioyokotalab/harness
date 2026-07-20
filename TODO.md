@@ -280,9 +280,12 @@ environment is next. D13 value-free discovery confirms every Mac resolves
 `ls` to the native Apple command, none has Homebrew coreutils, and that native
 command accepts the shared `--color=auto` behavior. The non-empty
 `CLICOLOR=xterm-color` entry is therefore redundant and its value is not the
-conventional boolean spelling. Exact next action: ask only D13 whether to
-remove it with no replacement, then audit the full decision register. No
-execution authority exists yet.
+conventional boolean spelling. D13 is selected: remove it from every local
+`.bashrc` with no replacement. All interview groups are now closed. Exact next
+action: audit the complete register against current repository mechanisms and
+unchanged live preimages, record the exact public and per-Mac proposed state,
+set the task ready-for-go only if contradiction-free, and wait for a fresh
+explicit `go`. No execution authority exists yet.
 
 ### T-280 — Onboard one additional personal Mac
 
