@@ -92,7 +92,7 @@ a delayed job. T-210 is complete and must not be repeated.
 
 ### T-276 — Onboard one remaining personal Mac
 
-**Phase/status:** `ready-for-go`; value-free local discovery began on
+**Phase/status:** `complete`; value-free local discovery began on
 2026-07-20 after a clean fetch proved public `main` equal to its collaborative
 remote. This task is limited to the current owner-operated Mac. Its logical
 identity, private companion identity and revisions, local paths, captured
@@ -239,6 +239,23 @@ standalone package through Homebrew. A focused correction applies the already
 reviewed strict ownership rule to the wrapper while retaining Linux behavior.
 Exact next action: pass protected CI, validate fresh managed and native routes,
 then finish Git/artifact acceptance and the ordered orphan check.
+
+**Completion:** the one-Mac onboarding is accepted. Public control, the bounded
+formula baseline, Bash hooks and canonical startup, tmux, private SSH agreement,
+and agent configuration each passed their applicable plan/apply, exact rollback,
+reapply, no-op, and fresh-session gates. The final Mac and agent doctors are
+ready; public and private Git are clean/equal; discovery links, official native
+Codex ownership, managed interactive and native batch routing, isolated tmux,
+SSH agreement, and artifact absence all pass. Identifiers and private values
+remain only in local private state.
+
+The ordered post-acceptance `.bash_common` check found an owner regular file
+with zero open handles and passing fresh shells, but its live `.bashrc` reference
+count is nonzero after the owner's explicit preserve-both startup decision.
+No tracked public shell startup payload references it. It is therefore retained
+as active owner state: quarantine and unlink were correctly not attempted. The
+next deployment boundary is a different remaining Mac with its own discovery,
+plan, explicit go, transactions, and post-acceptance orphan check.
 
 ### T-275 — One-command Codex bootstrap for remaining Macs
 
