@@ -421,4 +421,206 @@ cp "$TEMP_DIR/r3-valid-candidate" "$r3_bad/candidate-copilot-evidence.md"
 "$SESSION" import-copilot "$r3_session" "$r3_bad" >/dev/null
 "$SESSION" check "$r3_session" >/dev/null
 
+# --- round 4: path-free state projection and predecessor content validation ---
+
+# a predecessor-backed session stages a fail-closed, path-free state projection
+r4_pred=$TEMP_DIR/r4-pred
+"$SESSION" init "$r4_pred" --driver codex >/dev/null
+fill "$r4_pred/charter.md"
+fill "$r4_pred/plan.md"
+"$SESSION" advance "$r4_pred" discussing >/dev/null
+
+r4_session=$TEMP_DIR/r4-session
+"$SESSION" init "$r4_session" --driver claude --predecessor "$r4_pred" >/dev/null
+fill "$r4_session/charter.md"
+fill "$r4_session/plan.md"
+"$SESSION" advance "$r4_session" discussing >/dev/null
+
+r4_stage=$TEMP_DIR/r4-stage
+"$SESSION" stage "$r4_session" "$r4_stage" --mode independent >/dev/null
+python3 - "$r4_pred" "$r4_session/state.json" "$r4_stage/state.json" <<'PY'
+import json
+import pathlib
+import sys
+
+pred_dir = sys.argv[1]
+live = json.loads(pathlib.Path(sys.argv[2]).read_text(encoding="utf-8"))
+staged = json.loads(pathlib.Path(sys.argv[3]).read_text(encoding="utf-8"))
+assert live["predecessor"]["path"] == pred_dir, live["predecessor"]
+assert "predecessor" in staged, staged
+assert set(staged["predecessor"]) == {"driver", "phase", "state_sha256"}, staged[
+    "predecessor"
+]
+for key in ("schema_version", "driver", "copilot", "phase", "created_at", "updated_at"):
+    assert staged[key] == live[key], key
+PY
+if grep -F "$r4_pred" "$r4_stage/state.json" >/dev/null; then
+    fail 'staged state.json leaked the predecessor path'
+fi
+if grep -F "$r4_pred" "$r4_stage/stage.json" >/dev/null; then
+    fail 'stage manifest leaked the predecessor path'
+fi
+
+# projected round trip imports and leaves every protected entry unchanged
+fill "$r4_stage/candidate-copilot-evidence.md"
+"$SESSION" digests "$r4_session" >"$TEMP_DIR/r4-before"
+"$SESSION" import-copilot "$r4_session" "$r4_stage" >/dev/null
+"$SESSION" digests "$r4_session" >"$TEMP_DIR/r4-after"
+cmp -s "$TEMP_DIR/r4-before" "$TEMP_DIR/r4-after" ||
+    fail 'projected import changed a protected entry'
+
+# an unknown top-level state field fails closed before any stage is created
+r4_unknown=$TEMP_DIR/r4-unknown
+"$SESSION" init "$r4_unknown" --driver codex >/dev/null
+fill "$r4_unknown/charter.md"
+fill "$r4_unknown/plan.md"
+"$SESSION" advance "$r4_unknown" discussing >/dev/null
+python3 - "$r4_unknown/state.json" <<'PY'
+import json
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+state = json.loads(path.read_text(encoding="utf-8"))
+state["audit_path"] = "/private/future/live/session"
+path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+if "$SESSION" stage "$r4_unknown" "$TEMP_DIR/r4-unknown-stage" \
+    --mode independent >"$TEMP_DIR/r4-unknown.out" 2>&1; then
+    fail 'accepted staging of state with an unknown field'
+fi
+grep -F 'unexpected or missing keys for staging' "$TEMP_DIR/r4-unknown.out" >/dev/null ||
+    fail 'missing fail-closed staging refusal'
+[ ! -e "$TEMP_DIR/r4-unknown-stage" ] ||
+    fail 'fail-closed staging left a partial stage directory'
+
+# an unknown predecessor field also fails closed
+r4_predkey_pred=$TEMP_DIR/r4-predkey-pred
+r4_predkey=$TEMP_DIR/r4-predkey
+"$SESSION" init "$r4_predkey_pred" --driver codex >/dev/null
+"$SESSION" init "$r4_predkey" --driver claude --predecessor "$r4_predkey_pred" >/dev/null
+fill "$r4_predkey/charter.md"
+fill "$r4_predkey/plan.md"
+"$SESSION" advance "$r4_predkey" discussing >/dev/null
+python3 - "$r4_predkey/state.json" <<'PY'
+import json
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+state = json.loads(path.read_text(encoding="utf-8"))
+state["predecessor"]["extra"] = "x"
+path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+if "$SESSION" stage "$r4_predkey" "$TEMP_DIR/r4-predkey-stage" \
+    --mode independent >"$TEMP_DIR/r4-predkey.out" 2>&1; then
+    fail 'accepted staging with an unknown predecessor field'
+fi
+grep -F 'predecessor has unexpected or missing keys for staging' \
+    "$TEMP_DIR/r4-predkey.out" >/dev/null || fail 'missing predecessor fail-closed refusal'
+
+# a withheld-field-only live change is invisible to projected import but caught
+# by the external full-state seal
+r4_fresh_pred=$TEMP_DIR/r4-fresh-pred
+r4_fresh=$TEMP_DIR/r4-fresh
+"$SESSION" init "$r4_fresh_pred" --driver codex >/dev/null
+"$SESSION" init "$r4_fresh" --driver claude --predecessor "$r4_fresh_pred" >/dev/null
+fill "$r4_fresh/charter.md"
+fill "$r4_fresh/plan.md"
+"$SESSION" advance "$r4_fresh" discussing >/dev/null
+r4_fresh_stage=$TEMP_DIR/r4-fresh-stage
+"$SESSION" stage "$r4_fresh" "$r4_fresh_stage" --mode independent >/dev/null
+fill "$r4_fresh_stage/candidate-copilot-evidence.md"
+"$SESSION" digests "$r4_fresh" >"$TEMP_DIR/r4-fresh-before"
+python3 - "$r4_fresh/state.json" <<'PY'
+import json
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+state = json.loads(path.read_text(encoding="utf-8"))
+state["predecessor"]["path"] = "/private/withheld/relocated"
+path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+"$SESSION" digests "$r4_fresh" >"$TEMP_DIR/r4-fresh-after"
+if cmp -s "$TEMP_DIR/r4-fresh-before" "$TEMP_DIR/r4-fresh-after"; then
+    fail 'external seal did not detect a withheld-field change'
+fi
+"$SESSION" import-copilot "$r4_fresh" "$r4_fresh_stage" >/dev/null ||
+    fail 'projected import rejected a withheld-field-only change'
+
+# a retained-field live change is stale-rejected with the destination unchanged
+r4_stale=$TEMP_DIR/r4-stale
+"$SESSION" init "$r4_stale" --driver codex >/dev/null
+fill "$r4_stale/charter.md"
+fill "$r4_stale/plan.md"
+"$SESSION" advance "$r4_stale" discussing >/dev/null
+r4_stale_stage=$TEMP_DIR/r4-stale-stage
+"$SESSION" stage "$r4_stale" "$r4_stale_stage" --mode independent >/dev/null
+fill "$r4_stale_stage/candidate-copilot-evidence.md"
+sha256sum "$r4_stale/copilot-evidence.md" >"$TEMP_DIR/r4-stale.before"
+python3 - "$r4_stale/state.json" <<'PY'
+import json
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+state = json.loads(path.read_text(encoding="utf-8"))
+state["updated_at"] = "2000-01-01T00:00:00+00:00"
+path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+if "$SESSION" import-copilot "$r4_stale" "$r4_stale_stage" \
+    >"$TEMP_DIR/r4-stale.out" 2>&1; then
+    fail 'accepted a stale retained-field import'
+fi
+grep -F 'stale relative to the live session: state.json' "$TEMP_DIR/r4-stale.out" \
+    >/dev/null || fail 'missing retained-field stale refusal'
+sha256sum "$r4_stale/copilot-evidence.md" >"$TEMP_DIR/r4-stale.after"
+cmp -s "$TEMP_DIR/r4-stale.before" "$TEMP_DIR/r4-stale.after" ||
+    fail 'stale import changed live evidence'
+
+# init --predecessor validates the predecessor's phase-required content
+r4_incons=$TEMP_DIR/r4-incons-pred
+"$SESSION" init "$r4_incons" --driver codex >/dev/null
+python3 - "$r4_incons/state.json" <<'PY'
+import json
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+state = json.loads(path.read_text(encoding="utf-8"))
+state["phase"] = "complete"
+path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+if "$SESSION" init "$TEMP_DIR/r4-incons-succ" --driver claude \
+    --predecessor "$r4_incons" >"$TEMP_DIR/r4-incons.out" 2>&1; then
+    fail 'accepted a phase/content-inconsistent predecessor'
+fi
+grep -F 'unresolved TODO marker' "$TEMP_DIR/r4-incons.out" >/dev/null ||
+    fail 'missing predecessor content refusal'
+[ ! -e "$TEMP_DIR/r4-incons-succ" ] ||
+    fail 'inconsistent predecessor left a partial successor'
+
+# a genuinely completed predecessor is still accepted
+r4_valid=$TEMP_DIR/r4-valid-pred
+"$SESSION" init "$r4_valid" --driver codex >/dev/null
+for name in charter plan driver-evidence copilot-evidence reconciliation \
+    execution validation; do
+    fill "$r4_valid/$name.md"
+done
+for phase in discussing ready-for-execution executing validating complete; do
+    "$SESSION" advance "$r4_valid" "$phase" >/dev/null
+done
+"$SESSION" init "$TEMP_DIR/r4-valid-succ" --driver claude \
+    --predecessor "$r4_valid" >/dev/null
+python3 - "$TEMP_DIR/r4-valid-succ/state.json" <<'PY'
+import json
+import pathlib
+import sys
+
+state = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert state["phase"] == "planning", state["phase"]
+assert state["predecessor"]["phase"] == "complete", state["predecessor"]
+PY
+
 echo 'Codex-Claude cowork skill tests passed'

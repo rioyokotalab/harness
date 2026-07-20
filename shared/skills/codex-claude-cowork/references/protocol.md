@@ -81,12 +81,21 @@ scripts/cowork-session stage SESSION_DIR STAGE_DIR --mode independent
 scripts/cowork-session stage SESSION_DIR STAGE_DIR --mode reciprocal
 ```
 
-An independent stage contains copies of `state.json`, `charter.md`, and
-`plan.md`; a reciprocal stage also contains both evidence files. `stage.json`
-records the mode, roles, phase, and SHA-256 of every copied input without
-disclosing the live-session path. The stage also contains a real `artifacts/`
-directory and `candidate-copilot-evidence.md`. Put the task-specific prompt and
-bounded terminal output below the staged `artifacts/` directory.
+An independent stage contains `charter.md`, `plan.md`, and a fail-closed
+path-free projection of `state.json`; a reciprocal stage also contains both
+evidence files. The staged `state.json` is not the raw file: `stage` whitelists
+exactly the schema-1 fields, drops `predecessor.path` (a local absolute path a
+blinded co-pilot does not need), and refuses any unknown or missing key, so a
+future field that might carry an absolute path cannot be exported silently and a
+new field cannot silently drop out of the staleness comparison. Projection runs
+before the stage directory is created, so a fail-closed refusal leaves no
+partial stage; a legitimate additive state field cannot stage until the
+projection classifies it, tied to `schema_version`. `stage.json` records the
+mode, roles, phase, and SHA-256 of every copied input (the projected bytes for
+state) without disclosing the live-session path. The stage also contains a real
+`artifacts/` directory and `candidate-copilot-evidence.md`. Put the
+task-specific prompt and bounded terminal output below the staged `artifacts/`
+directory.
 
 The driver tells the co-pilot only the sandbox and stage paths. After return,
 the driver inspects the complete candidate and then runs:
@@ -101,6 +110,16 @@ out-of-order heading, or standalone TODO. It writes a temporary file inside the
 live session filesystem, atomically replaces only `copilot-evidence.md`, and
 revalidates the discussing session. Retain the stage through reconciliation so
 the copied input and candidate bytes remain recoverable and reviewable.
+
+Import applies the same `state.json` projection to the live session before its
+freshness comparison, so freshness is equality of the projected, co-pilot-visible
+state, not of the raw bytes. Import therefore does not detect a change confined
+to a withheld field (such as `predecessor.path`) or a representation-only
+reserialization; the out-of-session `digests` seal over full raw `state.json`
+plus a recoverable preimage remains the control for those, and detects rather
+than prevents or restores. Changes to any retained field (phase, timestamps,
+roles, retained predecessor fields) are still stale-rejected with the live
+`copilot-evidence.md` byte-identical.
 
 The hashes prove byte equality and freshness at import; they do not prove that
 the driver supplied honest inputs or that model prose was generated from those
@@ -207,7 +226,12 @@ no in-place takeover operation by design. To keep provenance without inheriting
 authority, initialize the new session with
 `scripts/cowork-session init NEW_DIR --driver ROLE --predecessor OLD_DIR`, which
 records the predecessor's path, driver, phase, and validated state digest under a
-`predecessor` block while still beginning at `planning`.
+`predecessor` block while still beginning at `planning`. `init --predecessor`
+validates the predecessor's phase-required Markdown before snapshotting it and
+before creating the new session, so a recorded phase cannot describe a
+predecessor whose content never satisfied it; the check is refused atomically
+with no partial successor. This asserts present protocol completeness, not
+historical authorship or a transactional multi-file snapshot.
 
 A client failure is retry-safe only when its sandbox and owned files show no
 ambiguous partial action. Record the exact error, files touched, and retry

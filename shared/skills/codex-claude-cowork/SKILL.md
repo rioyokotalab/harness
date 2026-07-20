@@ -117,13 +117,19 @@ scripts/cowork-session advance SESSION_DIR ready-for-execution
   hide collaboration behind an opaque wrapper.
 - Grant the co-pilot only the sandbox and exchange-file access required by the
   frozen experiment. Never use a bypass flag merely to make automation pass.
-- Use staged exchange without `--add-dir SESSION_DIR` by default. Codex
-  workspace-write enforces that smaller writable set; Claude without a separate
-  OS/container sandbox does not, so around Claude also run
-  `scripts/cowork-session digests SESSION_DIR`, keep the result outside the
-  session, and retain a recoverable preimage. Hashes detect change;
-  they do not prevent it or restore bytes. Direct-session write is an exceptional
-  sealed fallback, and read-only mode is only an advisory tripwire.
+- Use staged exchange without `--add-dir SESSION_DIR` by default. The staged
+  `state.json` is a fail-closed path-free projection: it drops
+  `predecessor.path` and refuses any unknown or missing key, so no absolute path
+  reaches a blinded co-pilot. Import compares the same projection, so its
+  freshness check covers the projected co-pilot-visible state, not withheld
+  fields or representation-only reserialization. Codex workspace-write enforces
+  that smaller writable set; Claude without a separate OS/container sandbox does
+  not, so around Claude also run `scripts/cowork-session digests SESSION_DIR`,
+  keep the result outside the session, and retain a recoverable preimage. The
+  full-state seal is the control for a change confined to a withheld field.
+  Hashes detect change; they do not prevent it or restore bytes. Direct-session
+  write is an exceptional sealed fallback, and read-only mode is only an
+  advisory tripwire.
 - Use separate sandboxes and one immutable baseline to prevent accidental
   target mutation and result contamination. Record deviations between
   environments before comparing results.

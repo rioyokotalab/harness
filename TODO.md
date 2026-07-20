@@ -163,6 +163,52 @@ single exact prototype file was unlinked separately and all tracked evidence
 remains. Next action is the recorded reverse staged round from this clean
 cleanup checkpoint.
 
+Round 4 uses baseline `9fed369` with Claude driving and Codex as a blinded
+staged co-pilot; evidence is under `docs/audits/t283-cowork-round4/`. It
+reproduced the two round-3 follow-ups. (1) `cowork-session stage` copied raw
+`state.json`, so a `--predecessor` session disclosed the absolute
+`predecessor.path` in the staged `state.json` (only there; `stage.json` carries
+just its SHA-256 — the driver's initial "both files" claim was an overclaim
+Codex corrected). (2) `init --predecessor` snapshotted a predecessor's phase
+without validating that phase's Markdown, accepting a `complete` predecessor
+whose `charter.md` still held a template `TODO`. Codex's reciprocal pass
+upgraded the disclosure fix from the driver's `predecessor.path`-only blacklist
+to a whitelist-fail-closed projection after reproducing that the blacklist would
+still export a future `audit_path` field; it empirically showed the whitelist
+round-trips the full current schema with and without a predecessor in both stage
+modes. Accepted and frozen: a shared `project_stage_state` used by `stage` and
+`import` that whitelists the schema-1 fields, drops `predecessor.path`, and
+refuses unknown/missing keys before any stage is created; projecting live state
+identically at import so freshness is projected-semantic (withheld and
+representation-only changes are outside import and covered by the external
+`digests` seal plus preimage); and `validate_files` inside `predecessor_record`
+so `init --predecessor` refuses a phase/content-inconsistent predecessor
+atomically while still accepting a valid one. Rejected: the blacklist, a silent
+whitelist that would blind staleness, a second in-stage full-state commitment,
+removing the predecessor block, and any transactional-provenance claim.
+Working files: `shared/skills/codex-claude-cowork/{SKILL.md,references/protocol.md,scripts/cowork-session}`,
+`tests/test-codex-claude-cowork-skill.sh` (new round-4 block), and the round-4
+exchange. Validation run by the driver: canonical `cowork-session check`,
+expanded cowork focused test, Claude takeover, source-contract, public-repo
+audit, and `git diff --check` all pass; the session is at `validating`. The
+first Codex independent call timed out at 10 min (high effort, candidate
+unchanged, retry-safe); a single narrower retry at medium effort with identical
+sandbox/approval confinement returned valid evidence. Cleanup state: round-4
+sandboxes `/tmp/harness-t283-round4-{claude,codex}` (including Codex
+`scratch-*`/`probe-*` and driver `proto*`/`h1work`/`h2work` scratch), stages
+`/tmp/harness-t283-round4-codex/stage-{independent,reciprocal}`, seals under
+`/tmp/harness-t283-round4-seals`, and `/tmp/harness-cowork-smoke.*` all remain
+for guarded cleanup until this evidence is committed. Next action: the
+supervising Codex reviewer runs the clean-checkout full `tests/test-phase1.sh`
+and advances the round-4 session to `complete`, then guard-cleans round-4
+scratch. Reviewer inspection additionally found that both retained candidates
+later lost only their trailing newline while imported/live evidence and
+protected seals stayed intact. The reciprocal input manifest pins the exact
+independent import, but v4 does not pin the final candidate after import. After
+round 4 closes, test whether a driver-held import receipt can bind the candidate
+hash, source-stage input hashes, and import result without treating the
+co-pilot-writable stage as immutable.
+
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
 and Claude. Its role contract must be client-neutral: the active client is the
 driver and the other client is the co-pilot. Both must reconstruct repository

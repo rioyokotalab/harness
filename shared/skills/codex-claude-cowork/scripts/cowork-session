@@ -215,6 +215,49 @@ def sha256_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
 
+STATE_TOP_LEVEL_KEYS = (
+    "schema_version",
+    "driver",
+    "copilot",
+    "phase",
+    "created_at",
+    "updated_at",
+)
+STATE_PREDECESSOR_KEYS = ("driver", "path", "phase", "state_sha256")
+
+
+def project_stage_state(raw: bytes) -> bytes:
+    """Project state.json for staging: a fail-closed, path-free view.
+
+    A blinded co-pilot needs the roles, phase, timestamps, and schema version
+    but never an absolute path. `predecessor.path` is a local filesystem path
+    (and a future field could add another), so whitelist exactly the schema-1
+    fields, drop `predecessor.path`, and refuse any unknown or missing key. This
+    is fail-closed by design: a legitimate additive state field cannot stage
+    until this projection classifies it, which prevents silently exporting a new
+    path and prevents silently dropping a field from the staleness comparison.
+    """
+    value = json.loads(raw.decode("utf-8"))
+    if not isinstance(value, dict):
+        fail("state is not a JSON object")
+    allowed = set(STATE_TOP_LEVEL_KEYS) | {"predecessor"}
+    if not set(STATE_TOP_LEVEL_KEYS) <= set(value) or not set(value) <= allowed:
+        fail("state has unexpected or missing keys for staging")
+    projected = {name: value[name] for name in STATE_TOP_LEVEL_KEYS}
+    if "predecessor" in value:
+        predecessor = value["predecessor"]
+        if not isinstance(predecessor, dict) or set(predecessor) != set(
+            STATE_PREDECESSOR_KEYS
+        ):
+            fail("predecessor has unexpected or missing keys for staging")
+        projected["predecessor"] = {
+            name: predecessor[name]
+            for name in STATE_PREDECESSOR_KEYS
+            if name != "path"
+        }
+    return (json.dumps(projected, indent=2, sort_keys=True) + "\n").encode("utf-8")
+
+
 def write_new_file(path: Path, value: bytes, mode: int = 0o600) -> None:
     descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, mode)
     try:
@@ -313,6 +356,10 @@ def predecessor_record(raw: str) -> dict:
     """Snapshot a prior session's provenance without inheriting its authority."""
     pred_root = session_path(raw)
     pred_state = load_state(pred_root)
+    # Validate the predecessor's phase-required content before snapshotting its
+    # provenance, so a recorded phase cannot describe a session whose Markdown
+    # never satisfied it. This runs before any successor directory is created.
+    validate_files(pred_root, pred_state["phase"])
     pred_bytes = (pred_root / "state.json").read_bytes()
     return {
         "path": str(pred_root),
@@ -347,6 +394,9 @@ def stage_session(args: argparse.Namespace) -> None:
         for name in ("driver-evidence.md", COPILOT_OWNED):
             validate_named_text(name, (root / name).read_text(encoding="utf-8"))
 
+    # Project state.json before creating the stage so a fail-closed refusal
+    # (unknown/missing key) leaves no partial stage directory.
+    projected_state = project_stage_state((root / "state.json").read_bytes())
     stage_root = stage_path_outside_session(root, args.stage_dir)
     stage_root.mkdir(mode=0o700)
     stage_root.chmod(0o700)
@@ -354,7 +404,7 @@ def stage_session(args: argparse.Namespace) -> None:
     (stage_root / "artifacts").chmod(0o700)
     input_hashes = {}
     for name in inputs:
-        data = (root / name).read_bytes()
+        data = projected_state if name == "state.json" else (root / name).read_bytes()
         write_new_file(stage_root / name, data)
         input_hashes[name] = sha256_bytes(data)
     candidate = (
@@ -474,6 +524,8 @@ def import_copilot(args: argparse.Namespace) -> None:
         if sha256_bytes(staged) != expected:
             fail(f"staged input digest mismatch: {name}")
         live = (root / name).read_bytes()
+        if name == "state.json":
+            live = project_stage_state(live)
         if live != staged or sha256_bytes(live) != expected:
             fail(f"staged input is stale relative to the live session: {name}")
 

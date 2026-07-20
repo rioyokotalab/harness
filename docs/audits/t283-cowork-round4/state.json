@@ -1,0 +1,14 @@
+{
+  "copilot": "codex",
+  "created_at": "2026-07-20T16:35:03+00:00",
+  "driver": "claude",
+  "phase": "validating",
+  "predecessor": {
+    "driver": "codex",
+    "path": "/home/rioyokota/harness/docs/audits/t283-cowork-round3",
+    "phase": "complete",
+    "state_sha256": "e99fd693b35614d1256820cf11f1920604821e927c71723f76fb82144b687fb5"
+  },
+  "schema_version": 1,
+  "updated_at": "2026-07-20T17:14:33+00:00"
+}
