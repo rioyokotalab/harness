@@ -193,7 +193,9 @@ instruction-discovery audit, and finish the requested three-hour handoff.
 
 Final acceptance is indexed at `docs/audits/t284-cowork-acceptance.md`. All five
 sessions are complete and receipt-valid; final clean phase one passed in 77.18
-seconds, fresh-clone/discovery/public/source/takeover/syntax/diff gates pass,
+seconds at auto-selected eight, and a real four-CPU-affinity fallback run
+selected four and passed in 77.22 seconds. Fresh-clone/discovery/public/source/
+takeover/syntax/diff gates pass,
 and every recorded T-284 temporary tree was guarded-deleted with protected
 anchors unchanged. The fresh `origin/main` remains the original baseline and is
 an ancestor of the 28-commit clean task branch. No push or protected CI run was

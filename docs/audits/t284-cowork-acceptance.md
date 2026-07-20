@@ -68,6 +68,10 @@ named suites already covered inside phase one.
 - Original clean full phase one: 88.18 seconds. Final clean auto-selected-eight
   phase one: 77.18 seconds, all 57 focused suites plus umbrella checks passing.
   Shared-host/non-focused-tail variance limits the whole-suite speed claim.
+- A final real `taskset -c 0-3` acceptance run resolved auto to four visible
+  CPUs, passed the same 57 suites and umbrella checks, and took 77.22 seconds.
+  This validates the production fallback path and shows that the non-focused
+  tail dominates the current whole-suite wall time.
 - Historical protected PR job: 138 seconds with 37 seconds attributable to
   standalone ShellCheck and five duplicated named suites. The duplicate steps
   are removed; a new protected run has not yet measured the resulting CI time.
@@ -87,10 +91,10 @@ remains authoritative and passed.
 
 The timeout classifies each completed snapshot but cannot preempt a blocked
 synchronous filesystem read. PID identity remains unauthenticated and vulnerable
-to reuse. Adaptive worker evidence is specific to an eight-CPU visible affinity;
-smaller affinities deterministically retain four. Protected CI wall time remains
-unmeasured until publication. The branch has 28 local task commits and has not
-been pushed.
+to reuse. Adaptive speed evidence is specific to an eight-CPU visible affinity;
+a real four-CPU constrained run validates fallback correctness but is not a
+second physical-host speed study. Protected CI wall time remains unmeasured
+until publication. The branch remains local and has not been pushed.
 
 All recorded T-284 clone, stage, seal, log, and handoff trees were removed with
 tokenized guarded-delete manifests; exact scalar `/tmp` files and manifests were
