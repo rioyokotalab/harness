@@ -203,6 +203,11 @@ untouched.
 `.bashrc` is already canonical and the reviewed login-file local middle exactly
 matches its existing login-only section. It then changes only the login file to
 the thin loader; any byte mismatch or additional managed marker still blocks.
+When both distinct local bodies must be retained, the separately reviewed
+`--merge-distinct-profile` plan preserves the existing login-only body first
+and appends the login-file body after removing only a redundant `.bashrc`
+loader. The flag is accepted only for that partial-current mismatch and remains
+invalid during rollback.
 
 ## Explicit private configuration synchronization
 

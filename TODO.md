@@ -213,6 +213,24 @@ mismatch and additional-marker cases remain refusals. Exact next action:
 publish through protected CI, drill profile-only unification, then repeat final
 acceptance and the ordered orphan check.
 
+The partial-current correction is published, but its live equality gate
+correctly refused: the canonical login-only body and the newly wrapped login
+file contain distinct nonempty local settings, beyond whitespace or a redundant
+`.bashrc` loader. Neither body was printed or changed. The task is back in
+`interviewing` for one preservation decision: retain both reviewed local bodies,
+prefer the existing canonical login-only body, or prefer the current login-file
+body. After that choice, implement only the selected transactional merge,
+publish it through protected CI, and resume rollback/reapply acceptance.
+
+The owner selected retention of both local bodies. The implementation remains
+explicit rather than changing default behavior: `--merge-distinct-profile`
+keeps the existing canonical login-only body first, appends the distinct
+login-file local body after removing only its redundant `.bashrc` loader, and
+thins the login file. Exact rollback restores both preimages; mismatch without
+the flag and flag use outside this narrow partial-current state refuse. Exact
+next action: pass focused and aggregate gates, publish through protected CI,
+then run the selected live merge drill and complete acceptance.
+
 ### T-275 — One-command Codex bootstrap for remaining Macs
 
 **Phase/status:** published; ready for one-host use. The owner authorized a local,
