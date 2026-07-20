@@ -15,8 +15,11 @@
 - `git diff --check` — PASS.
 - Codex, Claude, and Agents discovery links all resolve to the same canonical
   repository `shared/skills/codex-claude-cowork` directory — PASS.
-- Clean full `tests/test-phase1.sh` — pending the audit checkpoint because its
-  clean-checkout suite correctly rejects the current untracked session.
+- Clean full `tests/test-phase1.sh` at checkpoint
+  `e4ec379cccdde0047162cf0d10f8a3eb06dcf93e` — PASS, including every listed
+  suite, the clean-checkout tmux gate, cowork, takeover, source-contract,
+  public-repository audit, and guarded-delete tests. Native MPI smoke was the
+  suite's expected environment-declared skip, not a failure.
 
 ## Outcome
 
@@ -25,8 +28,9 @@ Both agents independently and reciprocally agree that no helper, protocol, or
 test change adds justified enforcement now. The staged seal flow works in both
 driver directions, while its Claude behavioral-confinement boundary, nested
 stage precondition, retained-seal comparison, and arbitrary-editor phase limit
-remain explicit rather than overstated. The session is validating; scratch is
-retained until the clean full gate and completion checkpoint.
+remain explicit rather than overstated. The clean full gate passed at
+`e4ec379`; the session can advance from validating to complete. Scratch remains
+retained only until separately guarded cleanup.
 
 ## Residual risks
 

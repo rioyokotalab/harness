@@ -316,8 +316,9 @@ residuals remain the non-OS-confined Claude boundary, mandatory direct-child
 stage layout, separate retained-seal comparison, and inability to govern
 arbitrary editors. Focused cowork, source-contract, Claude-takeover,
 public-repository audit, discovery-link identity, live session/receipt checks,
-and `git diff --check` pass. Next action: checkpoint the round-7 audit, run clean
-full Phase 1, complete the session, and guarded-clean the six exact scratch
+and `git diff --check` pass. The audit was checkpointed at `e4ec379`; clean full
+Phase 1 then passed every suite (with only the declared native-MPI environment
+skip). Next action: complete the session and guarded-clean the six exact scratch
 trees plus one marker file.
 
 **Outcome and scope:** add one shared personal skill discoverable by both Codex
