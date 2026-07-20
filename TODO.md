@@ -116,7 +116,7 @@ a delayed job. T-210 is complete and must not be repeated.
 
 ### T-280 — Onboard one additional personal Mac
 
-**Phase/status:** `ready-for-go`; exactly one owner-operated Mac is in scope. Its
+**Phase/status:** `complete`; exactly one owner-operated Mac was in scope. Its
 logical identity was supplied privately and is intentionally omitted here.
 This public checkpoint was reconstructed on the Linux login node from clean,
 current published `main`. The owner supplied an ephemeral reverse-SSH route and
@@ -229,12 +229,30 @@ managed interactive and native batch routing correct, fresh Bash/tmux behavior,
 SSH-only agreement, no transfer residue, and every applicable rollback/reapply
 drill passed.
 
-**Exact next action:** wait for the owner's fresh explicit `go`. After `go`,
-revalidate the clean/equal public checkout, current-user-owned agent socket,
-declared SSH transport, absent companion destination, and collision classes;
-then clone the companion without printing private output and continue the
-current one-host plan. Do not repeat the accepted Homebrew engine recovery or
-install already-ready bootstrap prerequisites.
+**Completion (2026-07-20):** the owner gave the fresh `go`, and the independently
+validated one-host onboarding is accepted. The absent strict companion was
+restored through its declared SSH transport; its baseline-only host declaration
+was privately committed/pushed, and both repositories finish clean/equal.
+Bootstrap prerequisites were already ready and were not reinstalled. Public
+control, the bounded seven-formula baseline, Bash hooks and canonical startup,
+tmux, first private SSH agreement, and strict agent configuration all passed
+their applicable immediate plans, applies, exact rollback/prior-baseline
+checks, accepted reapplies, final no-op plans, and fresh-session gates.
+Homebrew retained its separately bounded private package evidence and converged
+without metadata refresh, cask, service, tap, cleanup, removal, blanket
+upgrade, or unmanaged-dependent scope. Final Mac and agent doctors are ready;
+official native Codex ownership, managed interactive and native batch routing,
+fresh login/interactive/noninteractive Bash, isolated tmux, SSH-only agreement,
+and transfer-artifact absence all pass. Private values, revisions, paths,
+transaction identifiers, and payloads remain outside public Git.
+
+The ordered post-acceptance `.bash_common` check classified an owner regular
+single-link file with zero open handles and passing fresh shells, but nonzero
+live startup references. It was therefore retained unchanged as active owner
+state; quarantine and unlink were not attempted. No authentication was added
+to this Mac's GitHub CLI. The next deployment boundary is a different Mac or
+another independently authorized T-273 workstream; T-280 has no remaining
+machine action.
 
 ### T-279 — Repair home Bash drift and retire `.bash_common`
 
