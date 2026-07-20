@@ -5,7 +5,7 @@ harness. Keep only active decisions, blockers, exact next actions, and compact
 completion pointers here. Full pre-housekeeping chronology remains available at
 published commit `d797d8658ea249f40f1acef1e84fcbbd83b0d6ff`.
 
-Next free ID: T-284.
+Next free ID: T-285.
 
 ## Current state
 
@@ -39,6 +39,48 @@ Next free ID: T-284.
    reconstruction of its gate and authority.
 
 ## Active tasks
+
+### T-284 — Accelerate and instrument Codex–Claude cowork
+
+**Phase/status:** `planning`; the owner requested on 2026-07-21 that Codex spend
+three hours refining the published `codex-claude-cowork` skill for faster
+turnaround, higher-quality driver/co-pilot information exchange, better
+co-pilot state monitoring, and faster local checking and protected CI. The
+request explicitly authorizes execution of the eventually frozen in-repository
+plan, but does not broaden authority to client settings, credentials, packages,
+external services, deployments, or unrelated repository work.
+
+**Reconstructed baseline:** local `main` was clean/equal to fetched
+`origin/main` at `f7d5bf0d403bdc07079bb4c5e420a2aa9fbb4a02`; the published skill is
+`535a49218d766ce917ee28bc4b9d89fa0f650434`. Claude Code 2.1.207 and Codex CLI
+0.144.6 are present. On this host the unchanged focused cowork suite passed in
+10.12 seconds and clean `HARNESS_TEST_JOBS=4 tests/test-phase1.sh` passed in
+88.18 seconds. The helper has no concise status/await interface, the co-pilot
+returns a complete evidence file twice, and CI currently repeats several suites
+as named steps before the full phase-one gate.
+
+**Frozen planning target:** (1) measure the local and client-window critical
+paths; (2) run a sealed Codex-driver/Claude-co-pilot round that tests compact
+exchange and observable progress designs in matched disposable sandboxes; (3)
+reconcile and implement only evidence-supported helper, protocol, and focused-
+test changes; (4) run the reverse Claude-driver/Codex-co-pilot direction to
+challenge symmetry and test a faster checking/CI topology; (5) repeat bounded
+measure/change/validate rounds for the requested work window; and (6) finish
+with clean focused, skill, source, public-audit, diff, and full phase-one gates.
+Preserve receipt/seal integrity, blinded independence, driver-only target
+mutation, native recognizable client commands, bounded public-safe artifacts,
+and failure-atomic imports. Faster must mean lower measured wall time or fewer
+manual polling/context steps without weakening those invariants.
+
+**Working and recovery state:** task branch `task/t-284-cowork-speed` starts at
+the reconstructed baseline. Durable paired evidence will live below
+`docs/audits/t284-cowork-*`; disposable sandboxes and external seals will be
+recorded before use and retained until their evidence is checkpointed. Any
+timeout, denial, or partial candidate is evidence and is retry-safe only after
+inspection. Cleanup that can remove trees or multiple paths must use guarded
+deletion. Next executable action: profile the current focused runner and helper
+operations, then initialize the first Codex-driver session without mutating the
+skill implementation before its plan is reconciled.
 
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 
