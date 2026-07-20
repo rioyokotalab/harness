@@ -45,7 +45,7 @@ PUBLIC=$TEMP_DIR/public
 mkdir -p "$PUBLIC/bin" "$PUBLIC/.codex/rules" "$PUBLIC/.claude" \
     "$PUBLIC/shared/skills/mac-test-skill" \
     "$PUBLIC/profiles/personal-macos"
-cp "$ROOT/bin/harness" "$PUBLIC/bin/harness"
+cp "$ROOT/bin/harness" "$ROOT/bin/harness-bash" "$PUBLIC/bin/"
 cp "$ROOT/.codex/AGENTS.md" "$PUBLIC/.codex/AGENTS.md"
 cp "$ROOT/.codex/rules/default.rules" "$PUBLIC/.codex/rules/default.rules"
 cp -L "$ROOT/.claude/CLAUDE.md" "$PUBLIC/.claude/CLAUDE.md"
@@ -126,12 +126,12 @@ transaction_id() {
     sed -n 's/^TRANSACTION id=\([^ ]*\) status=complete.*/\1/p' "$1"
 }
 
-link_count=7
+link_count=8
 basic_home=$(make_home basic)
 run_control "$basic_home" --host mac-test-pilot --plan >"$TEMP_DIR/basic.plan"
 [ "$(grep -c '^CREATE link=' "$TEMP_DIR/basic.plan")" -eq "$link_count" ] ||
     fail "plan did not report the exact managed link set"
-grep -F 'END macos_control blocked=0 changes=7 applied=no' \
+grep -F 'END macos_control blocked=0 changes=8 applied=no' \
     "$TEMP_DIR/basic.plan" >/dev/null || fail "plan completion summary"
 [ ! -e "$basic_home/.local" ] && [ ! -L "$basic_home/.local" ] ||
     fail "plan mutated local state"
@@ -150,6 +150,9 @@ basic_status=$basic_home/.local/state/harness/transactions/$basic_tx.macos-contr
 [ -L "$basic_home/.local/bin/harness" ] &&
     [ "$(readlink "$basic_home/.local/bin/harness")" = "$PUBLIC/bin/harness" ] ||
     fail "harness discovery link"
+[ -L "$basic_home/.local/bin/harness-bash" ] &&
+    [ "$(readlink "$basic_home/.local/bin/harness-bash")" = \
+        "$PUBLIC/bin/harness-bash" ] || fail "managed Bash launcher link"
 [ -L "$basic_home/.codex/skills/mac-test-skill" ] &&
     [ "$(readlink "$basic_home/.codex/skills/mac-test-skill")" = \
         "$PUBLIC/shared/skills/mac-test-skill" ] || fail "Codex skill link"

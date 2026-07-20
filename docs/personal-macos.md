@@ -107,10 +107,12 @@ Command behavior was frozen against the official Homebrew manpage and FAQ on
 
 `harness macos-control --host LOGICAL_ID --plan` validates a canonical clean
 public `main` checkout and the strict private profile, then reports only fixed
-home-relative discovery-link actions. It manages the harness launcher, Codex
-and Claude guidance, Codex rules, and each public shared skill's Codex, Agents,
-and Claude discovery links. It does not replace regular files, directories,
-different symlinks, symlinked parents, or paths owned by another account.
+home-relative discovery-link actions. It manages the harness and Homebrew Bash
+launchers, Codex and Claude guidance, Codex rules, and each public shared
+skill's Codex, Agents, and Claude discovery links. The Bash launcher link does
+not install the retired private Bash loader or edit startup files. It does not
+replace regular files, directories, different symlinks, symlinked parents, or
+paths owned by another account.
 
 `harness macos-control --host LOGICAL_ID --apply` repeats every preflight,
 creates only missing owner-private parent directories and absent links, and

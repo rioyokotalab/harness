@@ -29,6 +29,12 @@ require_safe_field() {
     esac
 }
 
+macos_control_links() {
+    managed_links
+    printf '%s|%s\n' "$HARNESS_ROOT/bin/harness-bash" \
+        "$HOME/.local/bin/harness-bash"
+}
+
 require_safe_parent_chain() {
     parent=${1%/*}
     while [ "$parent" != "$HOME" ]; do
@@ -246,7 +252,7 @@ while IFS='|' read -r source destination; do
         record_missing_parents "$destination"
     fi
 done <<EOF
-$(managed_links)
+$(macos_control_links)
 EOF
 printf 'PREFLIGHT macos_control blocked=%s changes=%s\n' "$blocked" "$changes"
 [ "$blocked" -eq 0 ] || die "Mac control plan contains blocked paths"
@@ -269,7 +275,7 @@ while IFS='|' read -r source destination; do
         die "Mac control destination changed before apply"
     fi
 done <<EOF
-$(managed_links)
+$(macos_control_links)
 EOF
 
 prepare_transaction_root
@@ -345,7 +351,7 @@ while IFS='|' read -r source destination; do
         printf 'link|%s|%s\n' "$destination" "$source" >>"$manifest"
     }
 done <<EOF
-$(managed_links)
+$(macos_control_links)
 EOF
 
 printf '%s\n' complete >"$status_file"

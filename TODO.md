@@ -193,6 +193,16 @@ adding the canonical prefix, with exact rollback/reapply coverage. Exact next
 action: publish that correction through protected CI, then run the agent drill
 and complete fresh-session, doctor, Git, artifact, and ordered orphan gates.
 
+The trust-preserving correction is published and the agent apply/rollback/
+reapply drill passes with a final ready agent doctor. Full Mac doctor then found
+two remaining Bash convergence items: an unmanaged login file and an absent
+public Bash launcher; `.bashrc` remains current. The current SSH-only path must
+not use the legacy Bash adapter because that would reintroduce the retired
+private loader and old startup blocks. A focused control-plane correction adds
+only the public Bash launcher to the transactional Mac link set. Exact next
+action: publish it through protected CI, drill that one link and the login-file
+wrap/unify transactions, then repeat all final acceptance and orphan gates.
+
 ### T-275 — One-command Codex bootstrap for remaining Macs
 
 **Phase/status:** published; ready for one-host use. The owner authorized a local,
