@@ -132,6 +132,12 @@ repeat acceptance all passed before its unchanged quarantine was exact-
 unlinked. The original and quarantine paths are absent. Final Bash plan is a
 no-op; Mac and agent doctors are ready; tmux and private SSH agreement are
 current; public Git is clean/equal. No further action remains for T-279.
+At the owner's subsequent cleanup request, the completed onboarding's private
+local transaction-history tree was removed through a validated guarded-delete
+manifest; protected anchors were unchanged, the target and manifest are
+absent, active personal-Mac agreement state was retained, and both doctors
+remain ready. Historical rollback through those retired records is no longer
+available.
 
 ### T-278 — Add PyYAML to personal-Mac onboarding tools
 
