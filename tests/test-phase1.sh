@@ -1562,6 +1562,7 @@ mkdir -p "$dotfile_home/.ssh"
 printf '%s\n' 'set number' >"$dotfile_home/.vimrc"
 printf '%s\n' 'Host node-only' '    HostName node.invalid' \
     >"$dotfile_home/.ssh/config"
+chmod 600 "$dotfile_home/.ssh/config"
 cp "$dotfile_home/.vimrc" "$TEMP_DIR/original-vimrc"
 cp "$dotfile_home/.ssh/config" "$TEMP_DIR/original-ssh-config"
 HOME="$dotfile_home" "$test_repo/bin/harness" dotfiles --host local --plan \
