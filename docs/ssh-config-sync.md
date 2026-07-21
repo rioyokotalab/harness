@@ -34,12 +34,17 @@ fragment symlinks.
 
 The shared fragment places an exact `Host login login2` exception before the
 global defaults and sets `ControlMaster no`, `ControlPath none`, and
-`ControlPersist no`. OpenSSH uses the first obtained value for each option, so
-this ordering prevents the two failover aliases from reusing or creating a
-multiplexed connection. GitHub and ordinary targets continue to use the global
-`ControlMaster auto`, configured control path, and persistent master. Applying
-the fragment does not terminate an already-running master; the exception takes
-effect for new clients.
+`ControlPersist no`. It also sets `ExitOnForwardFailure yes`, so a dedicated
+failover connection exits when any requested local, remote, dynamic, or tunnel
+forward cannot be established instead of appearing healthy without its route.
+OpenSSH uses the first obtained value for each option, so this ordering prevents
+the two aliases from reusing or creating a multiplexed connection. GitHub and
+ordinary targets continue to use the global `ControlMaster auto`, configured
+control path, persistent master, and default non-failing forward policy.
+Applying the fragment does not terminate an already-running master; the
+exception takes effect for new clients. `ExitOnForwardFailure` covers initial
+forward setup only: it does not prove that the ultimate forwarding destination
+is reachable or detect a forward that fails later.
 
 ## Personal Macs: SSH-only desired state
 
