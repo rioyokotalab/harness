@@ -19,10 +19,11 @@ Next free ID: T-292.
   scope.
 - PRs #172 through #176 published the transactional SSH layout, rollback
   hardening, layout-only private-history bridge, global-context trailer, and
-  narrow historical-input bridge; public main is `05e9882`. Local plus all six
-  remote Linux nodes, riken, and Home are clean/current with the strict live
-  trailer and effective GitHub/default resolution. Aist and Office await route
-  recovery and revalidation; do not infer their state from interrupted SSH.
+  narrow historical-input bridge, and stale-state refresh; public main is
+  `340caba`. Local, all six remote Linux nodes, Aist, riken, and Home are
+  clean/current with the strict live trailer and effective GitHub/default
+  resolution. Office awaits route recovery and revalidation; do not infer its
+  state from interrupted SSH.
 - Home, Office, and riken accepted clean public/private main after PR #170,
   updater/startup no-op state, both doctors, zero formula-policy residue,
   absent .bash_common/run_this.sh, and only local main. Aist is now caught up
@@ -376,6 +377,13 @@ instead of a pull/state refresh. The active regression and fix cover that exact
 historical-layout rollback path; Aist is safely left with clean/current strict
 private Git and the rolled-back prior sync state until the fix is published.
 
+PR #177 merged the stale-state refresh as `340caba`; guarded fleet-sync advanced
+all six remote Linux checkouts, and Aist, riken, and Home advanced cleanly.
+Aist's reapply then planned the expected pull, refreshed agreement at final sync
+transaction `20260721T084828Z-59527`, and passed strict profile, effective SSH
+resolution, clean/current public and private Git, and a ready Mac doctor. Office
+is the sole remaining live-layout target and both routes are currently down.
+
 **Execution sequence:**
 
 1. Revalidate Aist through both routes. Extract its existing root `Host github`
@@ -447,10 +455,10 @@ copies on all systems rather than the current Linux symlinks. D4 (settled by
 evidence) tracks the canonical bytes publicly because the extracted option set
 and comments pass the existing non-secret boundary.
 
-**Next executable action:** publish the byte-identical stale-state refresh fix,
-update Aist, and complete its pull-based sync reapply. When either Office route
-returns, update its public checkout and apply/rollback/reapply the live layout;
-retain its recorded private divergence. Then ask the owner whether to design a
+**Next executable action:** when either Office route returns, revalidate its
+public/private checkouts and live files, update public Git from `b72b366` to
+`340caba`, and apply/rollback/reapply the live layout; retain its recorded
+private divergence. Then ask the owner whether to design a
 per-Mac private SSH payload migration that preserves each distinct non-shared
 configuration, select one complete Mac payload as the whole-file winner, or
 leave the private divergence recorded and close T-291's completed local layout
