@@ -55,8 +55,8 @@ Next free ID: T-293.
 
 ### T-292 — Isolate SSH failover aliases from connection multiplexing
 
-**Phase/status:** executing after explicit owner authorization. Aist's separate
-local Codex restored `aist`/`aist2` by setting `ControlMaster no` and
+**Phase/status:** complete. Aist's separate local Codex restored
+`aist`/`aist2` by setting `ControlMaster no` and
 `ControlPath none` in the private `Host login` and `Host login2` blocks. The
 owner selected the safer shared form: add one exact `Host login login2`
 exception before the canonical `Host *` defaults, retaining multiplexing for
@@ -152,10 +152,50 @@ Clean implementation commit `cd9cfc2` passes the complete
 `tests/test-phase1.sh`; every focused suite and guarded-delete test passed, and
 native MPI was the declared environment-only skip.
 
-**Next executable action:** validate and publish the fail-fast refinement,
-guarded-refresh the clean public checkouts and managed fragments, then complete
-the existing Aist updater/layout gap after the owner restores at least one
-route. Use private-output-safe fetch logs and the same value-minimized audit.
+**Fail-fast publication/rollout:** PR #183 passed protected
+`portable-phase1` and squash-merged as `f5ae449`. Guarded fleet-sync
+fast-forwarded all six clean Linux mirrors from `10679a4` to that commit and
+removed every transfer artifact. Local exercised exact rollback/reapply; all
+six remote Linux layouts apply/current. Office, riken, and Home fetched clean
+public/private targets through private-output-safe logs, applied the schema-3
+updater with private=current and package actions none, and now have current
+managed fragments. A combined Mac command ended after riken's completed apply
+without returning the remaining output; independent read-only checks proved
+riken and Home clean at `f5ae449` with layout state current, so no result was
+inferred across the output loss.
+
+Value-minimized end-to-end checks pass on local, all six Linux nodes, Office,
+riken, and Home: installed fragments equal the canonical source;
+`login`/`login2` resolve to disabled multiplexing and
+`ExitOnForwardFailure yes`; GitHub and an ordinary host retain automatic
+persistent multiplexing and `ExitOnForwardFailure no`. Existing sessions were
+not terminated. Aist/Aist2 remained down in the 20:05 JST monitor cycle and
+both direct probes; no Aist state changed.
+
+**Aist continuation:** the owner restored `aist2`. It exposed clean public and
+private `main`, and private-output-safe fetch plus schema-3 updater plan/apply
+fast-forwarded both to compatible current targets with package actions none.
+SSH layout plan/apply installed the fail-fast fragment at transaction
+`20260721T111342Z-87185`; the plan is now current. A value-minimized audit proves
+canonical fragment bytes, the exact failover and ordinary-host classes, and
+clean/current public and private Git.
+
+Immediate monitor-style recovery of `aist` through `aist2` exited instead of
+creating a false-success connection. A mode-0600 diagnostic log classified the
+nested `ssh login` failure as authentication, not forward setup or transport,
+then was exactly unlinked. `aist2` remained ready and no live config was
+rolled back. The controller's forwarded authentication context therefore
+cannot restore the primary, while the owner may still be able to do so from an
+existing native Aist terminal.
+
+**Closure:** the owner's native `ssh login` succeeded under the installed
+fail-fast configuration. Independent non-multiplexed probes through `aist` and
+`aist2` both passed, resolved to the same host, and proved clean public
+`f5ae449` plus layout state current. All eleven managed hosts therefore have
+the canonical fragment and accepted effective option classes; all eight Mac
+routes are healthy. T-292 requires no further machine change. Its final ledger
+checkpoint must pass protected publication and be guarded-synchronized to
+clean public checkouts without replaying any live SSH transaction.
 
 ### T-288 — Finish post-onboarding fleet housekeeping
 
