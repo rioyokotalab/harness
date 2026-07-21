@@ -5,6 +5,9 @@ ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 UPDATE=$ROOT/libexec/harness-macos-update
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-macos-update-test.XXXXXX")
+UPDATE_TMP=$TEMP_DIR/update-tmp
+mkdir "$UPDATE_TMP"
+chmod 700 "$UPDATE_TMP"
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 
 cleanup() {
@@ -30,6 +33,10 @@ trap 'exit 143' TERM
 fail() {
     echo "FAIL: $*" >&2
     exit 1
+}
+
+run_update() {
+    TMPDIR=$UPDATE_TMP "$@"
 }
 
 file_mode() {
@@ -154,7 +161,7 @@ $(setup_pair primary)
 EOF
 
 plan_output=$(HOME="$primary_home" HARNESS_ROOT="$primary_public" \
-    "$UPDATE" --host mac-test-pilot \
+    run_update "$UPDATE" --host mac-test-pilot \
     --public-target "$primary_public_target" \
     --private-target "$primary_private_target" --plan)
 printf '%s\n' "$plan_output" | grep -F \
@@ -173,7 +180,7 @@ printf '%s\n' "$plan_output" | grep -F \
     fail "plan created local state"
 
 apply_output=$(HOME="$primary_home" HARNESS_ROOT="$primary_public" \
-    "$UPDATE" --host mac-test-pilot \
+    run_update "$UPDATE" --host mac-test-pilot \
     --public-target "$primary_public_target" \
     --private-target "$primary_private_target" --apply)
 transaction=$(printf '%s\n' "$apply_output" |
@@ -192,7 +199,8 @@ grep -F "private_revision=$primary_private_target" "$state_file" >/dev/null ||
     fail "state missing private target"
 
 second_plan=$(HOME="$primary_home" HARNESS_ROOT="$primary_public" \
-    "$primary_public/libexec/harness-macos-update" --host mac-test-pilot \
+    run_update "$primary_public/libexec/harness-macos-update" \
+    --host mac-test-pilot \
     --public-target "$primary_public_target" \
     --private-target "$primary_private_target" --plan)
 printf '%s\n' "$second_plan" | grep -F \
@@ -201,14 +209,16 @@ printf '%s\n' "$second_plan" | grep -F \
 printf '%s\n' "$second_plan" | grep -F 'MIGRATION state=current' >/dev/null ||
     fail "idempotent state plan"
 second_apply=$(HOME="$primary_home" HARNESS_ROOT="$primary_public" \
-    "$primary_public/libexec/harness-macos-update" --host mac-test-pilot \
+    run_update "$primary_public/libexec/harness-macos-update" \
+    --host mac-test-pilot \
     --public-target "$primary_public_target" \
     --private-target "$primary_private_target" --apply)
 printf '%s\n' "$second_apply" | grep -F 'END macos_update changes=none' \
     >/dev/null || fail "idempotent second apply"
 
 rollback_output=$(HOME="$primary_home" HARNESS_ROOT="$primary_public" \
-    "$primary_public/libexec/harness-macos-update" --rollback "$transaction")
+    run_update "$primary_public/libexec/harness-macos-update" \
+    --rollback "$transaction")
 printf '%s\n' "$rollback_output" | grep -F \
     "TRANSACTION id=$transaction status=rolled-back repositories=current" \
     >/dev/null || fail "state rollback result"
@@ -218,7 +228,8 @@ printf '%s\n' "$rollback_output" | grep -F \
         "$primary_private_target" ] || fail "state rollback rewound a checkout"
 
 reapply_output=$(HOME="$primary_home" HARNESS_ROOT="$primary_public" \
-    "$primary_public/libexec/harness-macos-update" --host mac-test-pilot \
+    run_update "$primary_public/libexec/harness-macos-update" \
+    --host mac-test-pilot \
     --public-target "$primary_public_target" \
     --private-target "$primary_private_target" --apply)
 printf '%s\n' "$reapply_output" | grep -F 'END macos_update changes=applied' \
@@ -243,13 +254,15 @@ later_private_target=$(git -C "$primary_private" \
     rev-parse refs/remotes/origin/main)
 
 later_plan=$(HOME="$primary_home" HARNESS_ROOT="$primary_public" \
-    "$primary_public/libexec/harness-macos-update" --host mac-test-pilot \
+    run_update "$primary_public/libexec/harness-macos-update" \
+    --host mac-test-pilot \
     --public-target "$later_public_target" \
     --private-target "$later_private_target" --plan)
 printf '%s\n' "$later_plan" | grep -F 'MIGRATION state=migrate-v1' \
     >/dev/null || fail "existing v1 migration plan"
 later_apply=$(HOME="$primary_home" HARNESS_ROOT="$primary_public" \
-    "$primary_public/libexec/harness-macos-update" --host mac-test-pilot \
+    run_update "$primary_public/libexec/harness-macos-update" \
+    --host mac-test-pilot \
     --public-target "$later_public_target" \
     --private-target "$later_private_target" --apply)
 later_transaction=$(printf '%s\n' "$later_apply" |
@@ -258,7 +271,7 @@ later_transaction=$(printf '%s\n' "$later_apply" |
 cp "$state_file" "$TEMP_DIR/later-state.saved"
 printf '%s\n' 'changed=after-apply' >>"$state_file"
 if HOME="$primary_home" HARNESS_ROOT="$primary_public" \
-    "$primary_public/libexec/harness-macos-update" \
+    run_update "$primary_public/libexec/harness-macos-update" \
     --rollback "$later_transaction" >"$TEMP_DIR/changed-state.out" 2>&1; then
     fail "rollback accepted changed local state"
 fi
@@ -267,7 +280,7 @@ grep -F 'Mac update rollback blocked by changed state' \
 mv "$TEMP_DIR/later-state.saved" "$state_file"
 chmod 600 "$state_file"
 HOME="$primary_home" HARNESS_ROOT="$primary_public" \
-    "$primary_public/libexec/harness-macos-update" \
+    run_update "$primary_public/libexec/harness-macos-update" \
     --rollback "$later_transaction" >/dev/null
 if ! grep -F "public_revision=$primary_public_target" \
     "$state_file" >/dev/null ||
@@ -300,7 +313,8 @@ chmod 755 "$fake_bin/git"
 real_git=$(command -v git)
 if HOME="$partial_home" HARNESS_ROOT="$partial_public" \
     FAIL_PRIVATE_CHECKOUT="$partial_private" REAL_GIT="$real_git" \
-    PATH="$fake_bin:/usr/bin:/bin" "$UPDATE" --host mac-test-pilot \
+    PATH="$fake_bin:/usr/bin:/bin" run_update "$UPDATE" \
+    --host mac-test-pilot \
     --public-target "$partial_public_target" \
     --private-target "$partial_private_target" --apply \
     >"$TEMP_DIR/partial-failure.out" 2>&1; then
@@ -317,7 +331,8 @@ grep -F 'private checkout fast-forward failed after public update; retry is safe
     fail "partial-update failure changed local state"
 
 retry_output=$(HOME="$partial_home" HARNESS_ROOT="$partial_public" \
-    "$partial_public/libexec/harness-macos-update" --host mac-test-pilot \
+    run_update "$partial_public/libexec/harness-macos-update" \
+    --host mac-test-pilot \
     --public-target "$partial_public_target" \
     --private-target "$partial_private_target" --apply)
 printf '%s\n' "$retry_output" | grep -F 'END macos_update changes=applied' \
@@ -347,7 +362,7 @@ git -C "$incompatible_private" fetch -q origin
 incompatible_private_target=$(git -C "$incompatible_private" \
     rev-parse refs/remotes/origin/main)
 if HOME="$incompatible_home" HARNESS_ROOT="$incompatible_public" \
-    "$UPDATE" --host mac-test-pilot \
+    run_update "$UPDATE" --host mac-test-pilot \
     --public-target "$incompatible_public_target" \
     --private-target "$incompatible_private_target" --plan \
     >"$TEMP_DIR/incompatible.out" 2>&1; then
@@ -377,7 +392,8 @@ git -C "$layout_private" fetch -q origin
 layout_private_target=$(git -C "$layout_private" \
     rev-parse refs/remotes/origin/main)
 if HOME="$layout_home" HARNESS_ROOT="$layout_public" \
-    "$UPDATE" --host mac-test-pilot --public-target "$layout_public_target" \
+    run_update "$UPDATE" --host mac-test-pilot \
+    --public-target "$layout_public_target" \
     --private-target "$layout_private_target" --plan \
     >"$TEMP_DIR/target-layout.out" 2>&1; then
     fail "prohibited private target layout accepted"
@@ -415,7 +431,8 @@ git -C "$bundle_private" fetch -q origin
 bundle_private_target=$(git -C "$bundle_private" \
     rev-parse refs/remotes/origin/main)
 bundle_plan=$(HOME="$bundle_home" HARNESS_ROOT="$bundle_public" \
-    "$UPDATE" --host mac-test-pilot --public-target "$bundle_public_target" \
+    run_update "$UPDATE" --host mac-test-pilot \
+    --public-target "$bundle_public_target" \
     --private-target "$bundle_private_target" --plan)
 printf '%s\n' "$bundle_plan" | grep -F \
     'COMPAT engine_schema=2 private_schema=1' >/dev/null ||
@@ -440,7 +457,7 @@ git -C "$incomplete_private" fetch -q origin
 incomplete_private_target=$(git -C "$incomplete_private" \
     rev-parse refs/remotes/origin/main)
 if HOME="$incomplete_home" HARNESS_ROOT="$incomplete_public" \
-    "$UPDATE" --host mac-test-pilot \
+    run_update "$UPDATE" --host mac-test-pilot \
     --public-target "$incomplete_public_target" \
     --private-target "$incomplete_private_target" --plan \
     >"$TEMP_DIR/incomplete-target.out" 2>&1; then
@@ -449,5 +466,10 @@ fi
 grep -F 'payload set is incomplete or incompatible' \
     "$TEMP_DIR/incomplete-target.out" >/dev/null ||
     fail "incomplete engine-2 target refusal"
+
+for path in "$UPDATE_TMP"/harness-macos-*; do
+    [ ! -e "$path" ] && [ ! -L "$path" ] ||
+        fail "Mac update leaked a target-validation temporary"
+done
 
 echo "personal macOS long-gap update tests passed"
