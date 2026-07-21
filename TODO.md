@@ -177,20 +177,39 @@ clean/equal. `riken` and `riken2` are proven to reach the same host, user, and
 repository with valid forwarded agents. Final checks find only local `main`,
 zero formula-policy residue, and absent `.bash_common` and `run_this.sh`.
 
-**Connectivity policy and remaining host:** during active work, probe both
-declared transports for Aist, Office, and riken with SSH server-alive settings;
-on a drop, use the surviving route only after reconstructing the last durable
-step. Do not install a background keepalive service or infer completion across
-a disconnect. The latest paired probe found both Office routes and both riken
-routes ready, while both Aist routes had dropped after acceptance. Home remains
-unavailable and is the sole Mac catch-up checkpoint.
+**Connectivity policy:** during active work, probe both declared transports for
+each Mac with SSH server-alive settings; on a drop, use the surviving route only
+after reconstructing the last durable step. Do not install a background
+keepalive service or infer completion across a disconnect. Current probes find
+both Office, riken, and Home routes ready. Primary `aist` is ready while
+`aist2` currently times out; Aist has no pending mutation.
+
+**Home repository checkpoint:** the owner restored and interactively confirmed
+`home` and `home2`; a dual-route comparison proves the same host, user,
+repository, and current-user-owned forwarded agent. Native update successfully
+fast-forwarded clean public/private `main` to current remote targets, including
+public protected main `21fde49`. Reconstruction after the command omitted its
+final line proves both Git checkouts current/clean, updater post-plan
+current/current, migration current, and agent doctor ready. Formula-policy
+residue is zero, `.bash_common` and `run_this.sh` are absent.
+
+Home is not yet accepted: Mac doctor reports exactly one required failure,
+`bash_profile state=missing-or-wrong expected=public-pre-local-public-post`.
+No startup bytes were changed because the owner's request was to verify and
+push repository state, not silently repair shell configuration. Public Git also
+retains ten local T-276 task refs in addition to `main`: seven have exactly one
+patch-equivalent commit and no unique patch, two retain one or two unique
+patches, and one points to an ancestor with zero ahead commits. None has a
+remote ref. Retain all until exact hosting/task provenance proves which are
+superseded; do not blanket-delete them.
 
 **Frozen execution order:**
 
-1. Reprobe Home; when reachable, independently run its clean-main fetch,
-   ancestry, native update plan/apply/post-plan, doctors, and exact residue
-   gates. Otherwise retain the checkpoint without alternate routing.
-2. Publish this closeout checkpoint through protected CI only after reconciling
+1. Diagnose Home's exact `.bash_profile` structural drift without exposing
+   private bytes; freeze a native repair/rollback plan before changing it.
+2. Review each exact Home T-276 ref against merged/closed PR state and task
+   provenance; delete only proven-superseded refs.
+3. Publish this closeout checkpoint through protected CI only after reconciling
    fresh contributor main, then remove only proven-superseded T-288 refs.
 
 **Safety and recovery:** do not inspect credential or private payload bytes,
@@ -206,9 +225,10 @@ implicit.
 **Published implementation files:** `libexec/harness-macos-update` and
 `tests/test-personal-macos-update.sh`. Current checkpoint file: `TODO.md`.
 
-**Next executable action:** reprobe Home when its declared route is restored;
-it is the only remaining Mac catch-up. Until then, keep this branch as the
-durable checkpoint and do not perform the deferred Homebrew/package task.
+**Next executable action:** diagnose but do not yet repair Home's
+`.bash_profile`, and review its exact T-276 ref provenance. The active branch
+contains current protected main and is pushed after this checkpoint. Do not
+perform the deferred Homebrew/package task.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
