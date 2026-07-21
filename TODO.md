@@ -522,8 +522,18 @@ Home/Home2 were both-route unavailable during this checkpoint, while the
 five-minute failover monitor remained running. No per-host payload has been
 created and the fleet-wide engine gate remains closed.
 
-**Next executable action:** when either route recovers, apply the same
-public-only engine catch-up to Office and Home and validate both aliases. Stop a
+The final handoff probe found riken/riken2 still ready but Aist/Aist2 had since
+dropped together; its already verified engine update is durable and must not be
+repeated merely because transport changed. Office/Office2 and Home/Home2 remain
+down together. The monitor is running, but no peer-side reconnect is possible
+for a pair with both routes down. Managed Linux local, ri, al, rc, and t4 were
+ready; ab, ab2, and transport-only abci_login were down while transport-only
+alps_login was ready. These route results are connectivity state, not evidence
+of repository drift.
+
+**Next executable action:** after either route in each unavailable pair
+recovers, revalidate Aist without repeating its completed update, then apply the
+same public-only engine catch-up to Office and Home and validate both aliases. Stop a
 host on route, authentication, dirty-tree, divergence, or compatibility
 failure; do not migrate any private payload until all four Macs pass.
 
