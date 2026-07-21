@@ -257,3 +257,26 @@ external=0` for each alias, and complete validation took 6 seconds. No manual
 or sibling-mediated recovery ran. This passes the bounded dual-loss gate; Aist
 still requires the frozen sequential active rollback/reapply drill and a
 meaningful soak before fleet rollout.
+
+## Aist active rollback and reapply
+
+Managed `login` deactivated correctly, but the historical tmux server had
+already exited, so `%5` could not be respawned. A newly named temporary session
+running plain `ssh login` produced an external process but no usable route after
+its creating session ended, independently reproducing session-bound
+authentication. The driver replaced only that session with the same dedicated,
+agent-disabled SSH invocation as the managed service; `aist` recovered while
+managed `aist2` remained ready. `login2` then deactivated and a symmetric named
+dedicated predecessor restored it. Both routes were usable with zero managed
+and one external process per alias.
+
+Transaction `20260721T213306Z-85543` then rolled back exactly. Aist advanced
+through updater transaction `20260721T214844Z-4393`; new supervisor transaction
+`20260721T214904Z-6974` staged two inactive services. The driver removed each
+named temporary predecessor only while its sibling was fresh and reactivated
+`login`, then `login2`. Both reached `loaded=yes running=yes managed=1
+external=0`, and one post-reapply kick per alias passed. No temporary rollback
+session remains. Aist now passes inactive and active rollback/reapply, repeated
+single-route restart, unexpected-exit recovery, and observed dual-route
+recovery gates. It enters soak while Office, riken, and Home remain unchanged
+pending owner-managed dedicated identities and per-host rollout classification.

@@ -327,6 +327,24 @@ rollback/reapply drill using the preserved `%5`/`%6` tmux panes, followed by a
 meaningful soak. Other Macs remain rollout-prohibited until Aist's exact active
 rollback/reapply is verified.
 
+The active rollback/reapply gate passed. Managed `login` deactivated cleanly,
+but the historical tmux server had already exited, so preserved pane `%5` was
+unavailable. A newly named temporary `ssh login` predecessor remained unusable
+after its creating control session ended, further confirming session-bound
+authentication; replacing only that session with the dedicated, agent-disabled
+SSH invocation restored `aist`. `login2` then deactivated and was restored by
+the symmetric dedicated temporary predecessor. Transaction
+`20260721T213306Z-85543` rolled back exactly with both external routes healthy.
+Aist advanced through updater transaction `20260721T214844Z-4393`, new
+supervisor transaction `20260721T214904Z-6974` staged, and both temporary
+sessions were removed one at a time before successful reactivation. Final
+status is `loaded=yes running=yes managed=1 external=0` for both aliases; one
+post-reapply kick per alias also passed. Aist has now passed staged and active
+rollback/reapply, repeated single-route restarts, unexpected exits, and observed
+dual-route loss/recovery. Begin the meaningful Aist soak. The next fleet gate
+is owner provisioning of one dedicated identity on each of Office, riken, and
+Home before per-host classification and sequential rollout.
+
 ### T-273 — Resolve intentionally deferred maintenance
 
 **Phase/status:** executing. Workstreams 1, 2, 3, and 9 are complete. Each
