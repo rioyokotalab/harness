@@ -138,52 +138,55 @@ boundary. Final Office residue count is zero.
 
 The owner authorized `office2` as a failover transport to the same Mac. SSH
 configuration resolves `office` and `office2` through distinct transports.
-The primary currently reaches the accepted host with a valid forwarded agent;
-the first `office2` probe failed host-key verification before a remote shell,
-so same-host identity has not yet been proven through the alternate. Do not
-accept an unknown key noninteractively or use `office2` for state changes until
-the owner confirms the route interactively and one successful dual-route
-comparison confirms identical host, user, and repository markers. After any
-later failover, revalidate the exact durable step rather than assuming
-completion.
+After the owner confirmed the alternate host key interactively, a dual-route
+comparison proved identical host, user, repository, and current-user-owned
+forwarded-agent markers. `office2` is accepted as failover. After any later
+route switch, still revalidate the exact durable step rather than assuming an
+interrupted command completed.
 
-**Current connectivity checkpoint:** two direct Aist update attempts and a
-fresh four-alias probe timed out during SSH banner exchange at its declared
-`::1:2222` route, including after the owner reported reconnecting it. The
-remote shell never started, so neither attempt changed Aist. Home, `riken`, and
-the two Aist routes are unavailable; Office remains reachable and `al` is now
-accepted at current main. On restored Aist access,
-resume by validating `ssh -A aist` exposes a current-user-owned agent socket,
-then repeat clean-main fetch, ancestry, native updater plan/apply/post-plan,
-doctor, exact residue, and T-280 local-ref provenance gates. On Home or `riken`,
-repeat the same update/acceptance gates without the Aist-only ref review.
+**Aist acceptance:** the owner confirmed `aist2` interactively and authorized
+it as failover. Primary `aist` remained unavailable, but the alternate matched
+the recorded Aist profile, clean public/private `main` checkouts, one private
+branch, the two distinctive T-280 public refs, and a current-user-owned
+forwarded agent. The public remote URL spelling differed only by SSH alias and
+was correctly rejected as a host-identity criterion. Through `aist2`, both
+checkouts fetched and fast-forwarded to their current remote targets; the public
+target was protected main `21fde49`. Post-plan reports both current with current
+migration state, Mac and agent doctors are ready with zero failures/warnings,
+and both checkouts are clean/equal.
 
-The owner subsequently authorized `aist2` as a second transport to the same Mac
-and authorized failover through whichever declared route remains live. SSH
-configuration resolves the aliases through distinct transports. Two rounds
-found both timing out before banner exchange, including forwarded-agent probes;
-therefore no identity comparison or remote command was possible. At resume,
-try `aist`, then `aist2`; after any route switch, independently revalidate the
-host marker, current-user-owned forwarded socket, clean Git, target ancestry,
-and the exact last durable step. Never infer success for a command interrupted
-by transport loss. The latest classification finds primary `aist` refusing the
-connection and `aist2` blocked by host-key verification. The owner must confirm
-the alternate interactively; never bypass that gate with automatic key
-acceptance.
+The two stale T-280 refs each had zero unique patches, exactly one
+patch-equivalent commit on current main, no remote ref, and a merged exact PR
+(#151 and #152). Both exact local refs were deleted; only `main` remains. Final
+formula-policy inventory is zero, so no guarded deletion was needed. A paired
+keepalive probe after acceptance found both `aist` and `aist2` unavailable, but
+all update, doctor, Git, ref, and residue checks completed before the drop and
+no Aist mutation remains pending. At reconnection, revalidate rather than
+repeating the completed update.
+
+**Riken acceptance:** restored primary access exposed a valid forwarded agent,
+clean public/private `main`, and safe ancestry. Native update fast-forwarded
+public Git to `21fde49` while private Git was already current. Post-plan is
+current/current, both doctors are ready with zero failures/warnings, and Git is
+clean/equal. `riken` and `riken2` are proven to reach the same host, user, and
+repository with valid forwarded agents. Final checks find only local `main`,
+zero formula-policy residue, and absent `.bash_common` and `run_this.sh`.
+
+**Connectivity policy and remaining host:** during active work, probe both
+declared transports for Aist, Office, and riken with SSH server-alive settings;
+on a drop, use the surviving route only after reconstructing the last durable
+step. Do not install a background keepalive service or infer completion across
+a disconnect. The latest paired probe found both Office routes and both riken
+routes ready, while both Aist routes had dropped after acceptance. Home remains
+unavailable and is the sole Mac catch-up checkpoint.
 
 **Frozen execution order:**
 
-1. On Aist, validate a forwarded current-user agent socket, fetch clean
-   public/private `main`, run native `macos-update` plan/apply, require no-op
-   post-plan and ready doctors, and guarded-delete only revalidated exact
-   formula-policy residue after the fixed engine is active.
-2. On Aist, delete either exact T-280 local ref only if current-main
-   patch/task-provenance and hosting state prove it superseded; otherwise retain
-   with the reason.
-3. Reprobe Home and `riken`; execute only their recorded independent catch-up
-   gates when reachable and otherwise retain this checkpoint.
-4. Validate `office2` against the primary route when it becomes reachable; no
-   Office state change is otherwise pending.
+1. Reprobe Home; when reachable, independently run its clean-main fetch,
+   ancestry, native update plan/apply/post-plan, doctors, and exact residue
+   gates. Otherwise retain the checkpoint without alternate routing.
+2. Publish this closeout checkpoint through protected CI only after reconciling
+   fresh contributor main, then remove only proven-superseded T-288 refs.
 
 **Safety and recovery:** do not inspect credential or private payload bytes,
 transaction preimages, backups, or temporary contents. Do not remove
@@ -198,11 +201,9 @@ implicit.
 **Published implementation files:** `libexec/harness-macos-update` and
 `tests/test-personal-macos-update.sh`. Current checkpoint file: `TODO.md`.
 
-**Next executable action:** retry `ssh -A aist`, failing over to `ssh -A aist2`
-only if needed, after at least one declared route is live; then execute the Aist
-gates above. In parallel-independent resume turns, reprobe Home and `riken`
-without alternate routing and validate `office2` when reachable. Do not perform
-the deferred Homebrew/package task.
+**Next executable action:** reprobe Home when its declared route is restored;
+it is the only remaining Mac catch-up. Until then, keep this branch as the
+durable checkpoint and do not perform the deferred Homebrew/package task.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
