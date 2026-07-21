@@ -244,8 +244,11 @@ gate at `f66e26eb1a5f56bc29173805acdf45d067284875`; local full phase one and
 protected `portable-phase1` passed. Aist advanced cleanly through updater
 transaction `20260721T205722Z-66505`. The reviewed mode-0700 helper is now at
 Aist `~/run_this.sh` with SHA-256
-`f036deb678b70823f9e68de06b8ed05cc16b0c2e964e7f105d857de36925dab3`;
-the driver did not execute it and removed its local transfer source. The owner
+`8c48372f1e428057dc7507779702435d51bfd3d1c2c0cb9a9cb3c651253fda7c`;
+its authorization combines `restrict,port-forwarding` with forced
+`/usr/bin/true`, preventing general command use while retaining the required
+forward and probe. The driver did not execute it and removed its local transfer
+source. The owner
 next runs `~/run_this.sh --plan`, then `~/run_this.sh --apply` and types the
 script's exact confirmation. After the owner reports completion, the local
 driver must freshly revalidate both routes and the value-free supervisor plan
