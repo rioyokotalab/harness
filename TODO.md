@@ -5,7 +5,7 @@ harness. Keep only active decisions, blockers, exact next actions, and compact
 completion pointers here. Full pre-housekeeping chronology remains available at
 published commit `d797d8658ea249f40f1acef1e84fcbbd83b0d6ff`.
 
-Next free ID: T-286.
+Next free ID: T-287.
 
 ## Current state
 
@@ -41,6 +41,91 @@ Next free ID: T-286.
    reconstruction of its gate and authority.
 
 ## Active tasks
+
+### T-286 — Onboard the remaining personal Mac independently
+
+**Phase/status:** `ready-for-go`; on 2026-07-21 the owner started the current
+one-host workflow from the remaining Mac, supplied its existing opaque logical
+ID and the repository-declared credential-free companion locator, selected all
+settled onboarding defaults, and explicitly required a fresh pre-mutation go.
+The older T-285 go is stale for this newly reconstructed execution context.
+This checkpoint authorizes planning and value-free discovery only; it does not
+authorize a machine, package, private-repository, startup, SSH, agent-setting,
+or external-service mutation.
+
+**Reconstructed public baseline:** fetched local `main` was clean/equal to
+`origin/main` at published onboarding checkpoint `f254295`; the task continues
+on `task/t-286-remaining-mac-onboard`. The owner-named logical ID passed the
+safe-ID boundary. The Mac is supported Apple Silicon with a current-user-owned
+home, expected-prefix usable Homebrew, Command Line Tools, system Git, a
+Homebrew Python with `tomllib`, `gh`, `tmux`, and the pinned harness Python-tools
+environment. The public checkout is clean/equal. Codex resolves to the official
+standalone installation. The current SSH socket is a listening,
+current-user-owned fixed socket, but private Git SSH read and GitHub API
+authentication are unavailable; HTTPS public read succeeds and no HTTPS Git
+credential helper is configured. No discovery command listed keys or read a
+credential.
+
+**Value-free live shape:** the strict private companion and its parent are
+absent, so the private profile, aggregate Mac plan, and downstream private
+validators correctly remain unavailable. The declared Bash startup pair,
+`.bash_common`, SSH configuration, and strict Codex local configuration are
+current-user-owned single-link regular files. Both alternate tmux paths and the
+canonical tmux path are absent. Managed discovery links are absent. There are
+no visible transfer-artifact collisions or onboarding transaction records.
+The account remains on Apple Bash and its managed Homebrew Bash registry entry
+is absent. Value-minimized inventory reports the public baseline as partially
+installed; only the private profile may select any additional formulae. The
+bootstrap plan is no-op for prerequisite formulae, accepts the existing pinned
+Python-tools environment, and preserves strict Codex ownership. No private
+contents, revisions, paths, identities, or transaction identifiers are stored
+here.
+
+**Frozen one-host plan after fresh `go`:** (1) repeat the public Git, ownership,
+socket, collision, prerequisite, official-Codex, and credential-free transport
+preflight; (2) at the known authentication boundary, run the native GitHub
+authentication interaction without inspecting or soliciting keys, tokens, or
+passphrases, then prefer validated SSH transport and restore the declared
+companion at its strict fixed path; (3) if its selected host declaration is
+absent, create only the baseline `macos-cli-v1` declaration with no capability
+groups or extra formulae, validate the entire private tree, and commit/push only
+that private change without printing its revision; (4) fetch both repositories
+independently and allow only clean `main` equality or explicit fast-forward
+ancestry; (5) run strict profile validation, value-minimized inventory, and
+`macos-pilot-plan`, stopping on every `BLOCK`, prompt, collision, schema error,
+or drift; (6) run each applicable plan immediately before its apply in the
+published order: control links, selected formula-only Homebrew convergence,
+Bash hooks and startup unification, tmux link, first SSH-only agreement, and
+strict agent configuration; (7) use the settled defaults automatically:
+install only declared missing prerequisites, adopt an existing first-agreement
+remote SSH payload, preserve allowed strict Codex model/reasoning/trust entries,
+and preserve both distinct valid Bash local bodies with
+`--merge-distinct-profile`; (8) never change the account shell, Terminal,
+Keychain, zsh, login items, active shell/tmux sessions, plugins, connectors, or
+unselected packages.
+
+**Rollback and acceptance:** retain every local transaction identifier only in
+mode-restricted local state. For every newly adopted transactional component,
+apply the exact no-block plan, run focused and fresh-session checks, roll back
+unchanged-only, prove the preimage and fresh-session behavior, reapply the
+identical reviewed plan, and repeat acceptance. Final acceptance requires a
+ready Mac doctor and agent doctor, clean/equal public and private Git, correct
+Codex/Claude/skill links, official native Codex ownership, managed interactive
+and native batch routing, isolated tmux parse/session behavior, SSH-only private
+agreement, one accepted native agent route, and no transfer artifacts. Only
+then run T-273's ordered value-free `.bash_common` reference/open-handle test:
+retain it immediately if live-referenced; otherwise quarantine recoverably,
+repeat doctor and fresh shells, restore on regression, and exact-unlink only a
+proven zero-reference, zero-handle orphan.
+
+**Stop/recovery gates and next action:** stop on authentication, password, TCC,
+reboot, physical interaction, unsupported local bodies, two-sided SSH
+divergence, unmanaged Homebrew dependents, unexpected package scope, dirty Git,
+or changed transaction preimages. A failed query remains unknown state. Leave
+the Mac at its last verified state and record only value-free results here.
+There is no unresolved material decision: wait for the owner's fresh explicit
+`go`; then print and run the first native revalidation command from this exact
+checkout.
 
 ### T-284 — Accelerate and instrument Codex–Claude cowork
 
