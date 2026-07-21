@@ -178,15 +178,19 @@ trees.
 **Decision register:** driver location is resolved as Codex on `local`.
 Cowork/Claude is explicitly excluded. The failed Aist attempt supplies no
 evidence and creates no predecessor. The owner supplied the frozen plan's
-explicit `go` on 2026-07-22; no unresolved owner decision remains.
+explicit `go` on 2026-07-22. One new execution boundary is unresolved:
+unattended SSH authentication must be provisioned by the owner because agents
+must not create, inspect, copy, load, or authorize credentials.
 
-**Execution checkpoint:** branch `task/t-293-self-healing`; working files are
+**Execution checkpoint:** protected PR #191 published the control plane and
+audit at 4777c7fcf2ef299a26aa08d0cf6fa478c2158e38. All six clean Linux
+mirrors were guarded-synchronized to that commit. Aist's clean public/private
+checkouts advanced through updater transaction `20260721T203627Z-61158`; no
+package or live SSH action occurred. The prior implementation working files are
 `TODO.md`, `bin/harness`, `libexec/harness-macos-ssh-supervisor`,
 `libexec/harness-connection-monitor`, their focused tests, the focused-suite
 registry/phase-one runner, `docs/personal-macos.md`, and
-`docs/audits/t293-connection-self-healing-2026-07-22.md`. Git was clean/equal
-at 6700baf2c5aa246b26f3e99c09d8247774781627 with no open pull request before
-the branch was created. No live target mutation has occurred.
+`docs/audits/t293-connection-self-healing-2026-07-22.md`.
 
 Read-only reconstruction confirmed Aist has two independent alias-specific SSH
 processes under distinct tmux retry loops, no matching launch agent, a valid
@@ -197,7 +201,10 @@ that loop. Both Aist aliases failed authentication from a launchd-like minimal
 environment even though the active session path authenticated; the GUI launchd
 domain exported no usable agent socket. Thus unattended local authentication
 is a confirmed precondition failure. Creating/loading/authorizing a key remains
-an ungranted credential boundary, so Aist mutation is prohibited.
+an ungranted credential boundary, so live Aist supervision mutation is
+prohibited. The published read-only plan confirmed both aliases blocked for
+`unattended-auth`, with two external predecessor processes, zero staged files,
+and zero loaded managed services.
 
 The local implementation now stages two exact current-user launch agents,
 revalidates unattended authentication, migrates one alias at a time, refuses
@@ -216,13 +223,20 @@ raced Git's automatic background packing while an existing fixture copied the
 object store; `git fsck` passed, packing became idle, and an unchanged retry
 passed the full gate.
 
-**Next executable action:** publish the validated control plane and audit
-through protected `main`,
-guarded-sync clean Linux mirrors, and run Aist's published read-only supervisor
-plan. Continue route observation and Linux/other-Mac classification while the
-credential gate is unresolved. Before any live Aist stage or activation, obtain
-either owner-provisioned unattended authentication or explicit authority for
-one exact credential plan. Do not initialize or resume cowork.
+Value-free comparison on Office, riken, and Home also found zero of two aliases
+capable of launchd-like authentication and no managed supervisor service. Office
+and Home each exposed two external predecessor processes; riken exposed one
+alias-ending predecessor despite both routes probing healthy, so its distinct
+launcher topology requires separate classification after the Aist gate. The
+authentication prerequisite is therefore fleet-wide, not Aist-only.
+
+**Next executable action:** checkpoint these published/live results, then wait
+for the owner to provision one dedicated unattended identity per Mac for both
+of that Mac's `login`/`login2` aliases, or to select another owner-managed
+unattended authentication design. Retry Aist's read-only supervisor plan; only
+if it reports both aliases ready may staging and one-route-at-a-time pilot
+activation begin. Continue the existing observer meanwhile. Do not initialize
+or resume cowork.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
