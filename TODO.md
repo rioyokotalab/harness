@@ -4,18 +4,17 @@ This is the authoritative resume point for the portable Codex and Claude
 harness. Keep only active decisions, blockers, exact next actions, and compact
 completion pointers here. Full pre-housekeeping chronology is available at
 published commit 90451d49ac96; detailed T-288 execution through Home Git
-catch-up is preserved at 378df00159d59e8abee645f2bdaebd20cf467cc2, and the
-final T-288 through T-291 execution record is commit 11dac08.
+catch-up is preserved at 378df00159d59e8abee645f2bdaebd20cf467cc2. Final
+T-288 through T-292 execution is in
+`docs/audits/macos-ssh-finalization-2026-07-21.md`.
 
 Next free ID: T-293.
 
 ## Current state
 
-- Protected public `main` is 936a54f, including the schema-3 per-Mac SSH
-  engine and failover isolation. Active branch
-  `task/t-291-finalize-per-mac-ssh` contains only the final closeout and this
-  ledger compaction; superseded T-288/T-291/T-292 branches are absent locally
-  and remotely.
+- Protected public `main` includes PR #185's functional closeout at b59ce7b,
+  the schema-3 per-Mac SSH engine, and failover isolation. Superseded
+  T-288/T-291/T-292 branches are absent locally and remotely.
 - Managed Linux nodes are local, ab, ab2, ri, al, rc, and t4.
   abci_login and alps_login are transports, not targets; retired si is out of
   scope.
@@ -44,8 +43,9 @@ Next free ID: T-293.
 
 ## Next resume checkpoint
 
-1. Publish this closeout through protected `main`, then guarded-synchronize
-   only clean managed checkouts and revalidate the four Mac checkouts.
+1. If the final audit-reference follow-up is not yet on protected `main`,
+   publish it; otherwise guarded-synchronize only clean managed checkouts and
+   revalidate the four Mac checkouts.
 2. On or after 2026-07-26, query only T-196 recorded successor job IDs.
 3. Select another independently eligible T-273 workstream only after fresh
    reconstruction of its gate and authority.
@@ -110,13 +110,13 @@ docs/audits/restic-first-weekly-2026-07-19.md.
 - T-291 converged the canonical SSH fragment on all eleven managed systems,
   published four distinct per-Mac payloads, finalized private schema 3, and
   preserved all live non-shared SSH bytes. Detailed execution and transaction
-  identifiers are in 11dac08.
+  identifiers are in `docs/audits/macos-ssh-finalization-2026-07-21.md`.
 - T-290 diagnosed Aist route oscillation followed by the keepalive window. Its
   unpublished raw local checkpoint was compacted value-free and the sole
   preservation ref exact-deleted; no process/network details were published.
 - T-288 completed post-onboarding Git, startup, doctor, and exact-residue
   housekeeping on all four Macs. The generic fix shipped in PR #170 and the
-  final evidence is in 11dac08.
+  final evidence is in `docs/audits/macos-ssh-finalization-2026-07-21.md`.
 - T-289 published sourced harness-evolution artifacts in PR #168 at f2ffdd99685d;
   protected CI and clean phase-one passed.
 - T-287 converged the fourth Mac startup files and published PR #166 at
