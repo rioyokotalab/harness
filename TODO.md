@@ -5,7 +5,7 @@ harness. Keep only active decisions, blockers, exact next actions, and compact
 completion pointers here. Full pre-housekeeping chronology remains available at
 published commit `d797d8658ea249f40f1acef1e84fcbbd83b0d6ff`.
 
-Next free ID: T-286.
+Next free ID: T-287.
 
 ## Current state
 
@@ -14,11 +14,9 @@ Next free ID: T-286.
 - Managed Linux environments are `local`, `ab`, `ab2`, `ri`, `al`, `rc`, and
   `t4`. `abci_login` and `alps_login` are transports; retired `si` is not a
   target.
-- Three currently reachable personal Macs have completed public/private Git,
-  Homebrew, Bash, tmux, SSH, and agent convergence. Their repositories are
-  clean/equal, Mac and agent doctors are ready, and each has one native SSH
-  agent. One owner-operated Mac remains availability-gated and must be handled
-  independently.
+- All four personal Macs have completed public/private Git, Homebrew, Bash,
+  tmux, SSH, and agent convergence independently. Their repositories are
+  clean/equal and their Mac and agent doctors are ready.
 - Exactly one future native weekly primary backup job exists on each managed
   Linux node. The first run passed on all seven nodes on 2026-07-19. No login-
   node cron, user timer, retention deletion, or automatic replica job exists.
@@ -32,15 +30,174 @@ Next free ID: T-286.
 
 ## Next resume checkpoint
 
-1. When the remaining Mac is online, resume T-285/T-268/T-269 through the
-   owner-started one-host onboarding workflow. The only current input is its
-   existing opaque logical ID; do not infer it from another Mac or enumerate
-   private profiles.
-2. On or after 2026-07-26, query only T-196's seven recorded successor job IDs.
-3. Choose another independently eligible T-273 workstream only after fresh
+1. On or after 2026-07-26, query only T-196's seven recorded successor job IDs.
+2. Choose another independently eligible T-273 workstream only after fresh
    reconstruction of its gate and authority.
 
 ## Active tasks
+
+### T-286 — Onboard the remaining personal Mac independently
+
+**Phase/status:** `complete`; on 2026-07-21 the owner started the current
+one-host workflow from the remaining Mac, supplied its existing opaque logical
+ID and the repository-declared credential-free companion locator, selected all
+settled onboarding defaults, and explicitly required a fresh pre-mutation go.
+The older T-285 go was stale for that newly reconstructed execution context.
+The initial checkpoint authorized planning and value-free discovery only; later
+execution proceeded through the fresh go and recorded authority gates below.
+
+**Reconstructed public baseline:** fetched local `main` was clean/equal to
+`origin/main` at published onboarding checkpoint `f254295`; the task continues
+on `task/t-286-remaining-mac-onboard`. The owner-named logical ID passed the
+safe-ID boundary. The Mac is supported Apple Silicon with a current-user-owned
+home, expected-prefix usable Homebrew, Command Line Tools, system Git, a
+Homebrew Python with `tomllib`, `gh`, `tmux`, and the pinned harness Python-tools
+environment. The public checkout is clean/equal. Codex resolves to the official
+standalone installation. The current SSH socket is a listening,
+current-user-owned fixed socket, but private Git SSH read and GitHub API
+authentication are unavailable; HTTPS public read succeeds and no HTTPS Git
+credential helper is configured. No discovery command listed keys or read a
+credential.
+
+**Value-free live shape:** the strict private companion and its parent are
+absent, so the private profile, aggregate Mac plan, and downstream private
+validators correctly remain unavailable. The declared Bash startup pair,
+`.bash_common`, SSH configuration, and strict Codex local configuration are
+current-user-owned single-link regular files. Both alternate tmux paths and the
+canonical tmux path are absent. Managed discovery links are absent. There are
+no visible transfer-artifact collisions or onboarding transaction records.
+The account remains on Apple Bash and its managed Homebrew Bash registry entry
+is absent. Value-minimized inventory reports the public baseline as partially
+installed; only the private profile may select any additional formulae. The
+bootstrap plan is no-op for prerequisite formulae, accepts the existing pinned
+Python-tools environment, and preserves strict Codex ownership. No private
+contents, revisions, paths, identities, or transaction identifiers are stored
+here.
+
+**Frozen one-host plan after fresh `go`:** (1) repeat the public Git, ownership,
+socket, collision, prerequisite, official-Codex, and credential-free transport
+preflight; (2) at the known authentication boundary, run the native GitHub
+authentication interaction without inspecting or soliciting keys, tokens, or
+passphrases, then prefer validated SSH transport and restore the declared
+companion at its strict fixed path; (3) if its selected host declaration is
+absent, create only the baseline `macos-cli-v1` declaration with no capability
+groups or extra formulae, validate the entire private tree, and commit/push only
+that private change without printing its revision; (4) fetch both repositories
+independently and allow only clean `main` equality or explicit fast-forward
+ancestry; (5) run strict profile validation, value-minimized inventory, and
+`macos-pilot-plan`, stopping on every `BLOCK`, prompt, collision, schema error,
+or drift; (6) run each applicable plan immediately before its apply in the
+published order: control links, selected formula-only Homebrew convergence,
+Bash hooks and startup unification, tmux link, first SSH-only agreement, and
+strict agent configuration; (7) use the settled defaults automatically:
+install only declared missing prerequisites, adopt an existing first-agreement
+remote SSH payload, preserve allowed strict Codex model/reasoning/trust entries,
+and preserve both distinct valid Bash local bodies with
+`--merge-distinct-profile`; (8) never change the account shell, Terminal,
+Keychain, zsh, login items, active shell/tmux sessions, plugins, connectors, or
+unselected packages.
+
+**Rollback and acceptance:** retain every local transaction identifier only in
+mode-restricted local state. For every newly adopted transactional component,
+apply the exact no-block plan, run focused and fresh-session checks, roll back
+unchanged-only, prove the preimage and fresh-session behavior, reapply the
+identical reviewed plan, and repeat acceptance. Final acceptance requires a
+ready Mac doctor and agent doctor, clean/equal public and private Git, correct
+Codex/Claude/skill links, official native Codex ownership, managed interactive
+and native batch routing, isolated tmux parse/session behavior, SSH-only private
+agreement, one accepted native agent route, and no transfer artifacts. Only
+then run T-273's ordered value-free `.bash_common` reference/open-handle test:
+retain it immediately if live-referenced; otherwise quarantine recoverably,
+repeat doctor and fresh shells, restore on regression, and exact-unlink only a
+proven zero-reference, zero-handle orphan.
+
+**Execution checkpoint:** the fresh go was received. Revalidation exposed and
+corrected a branch-context refusal by retaining this ledger on its task branch
+and executing live adapters only from clean published `main`. Native GitHub
+authentication completed through the owner-approved browser boundary. SSH Git
+remained unauthenticated, so the now-authenticated HTTPS fallback restored the
+declared companion under strict modes. Its selected declaration was absent;
+the baseline-only profile was validated, committed, and pushed only in the
+private companion with its revision withheld. Public/private fetch and strict
+profile checks pass. The historical pilot migration planner was non-applicable
+because its legacy managed-Bash precondition is absent; it changed nothing.
+
+Control links, the selected Homebrew baseline, Bash hooks, Bash startup
+unification, canonical tmux, and first SSH-only agreement are applied. Control,
+Bash hooks, Bash unification, tmux, and SSH each passed exact plan/apply,
+fresh or isolated checks, unchanged-only rollback, and accepted reapply.
+Homebrew installed five and upgraded three public-policy formulae after a
+validated dry-run with zero unmanaged dependents; its post-plan is empty and
+package rollback remains manual-review-only by contract. The distinct valid
+Bash bodies were preserved through the adapter's older two-file `merge` route;
+the partial-current `--merge-distinct-profile` flag correctly refused as
+non-applicable. No active shell or tmux server was reloaded.
+
+Agent catch-up is the first unverified step. Its plan validated native Codex,
+classified Claude as safely adoptable and the launcher as absent, but blocked
+the existing Codex file as unsafe. A value-free grammar classification found
+one complete trusted-project table and two unsupported nonblank lines, with no
+canonical policy, model, or reasoning entries. No agent configuration changed
+and no live values were printed. This is a new unsupported-body decision
+outside the settled preservation default.
+
+The owner authorized removal of exactly those two unsupported lines. An exact
+owner-only mode-0600 preimage was retained locally; count- and sequence-level
+checks prove only the two approved nonblank lines were removed and the complete
+trusted-project table plus original whitespace were preserved. Native agent
+catch-up then passed its built-in adopt/apply/rollback/reapply drill with all
+transaction output withheld and its temporary log exact-unlinked. Agent doctor
+is ready, both Git checkouts are clean/equal, and Mac doctor passes architecture,
+Homebrew, Command Line Tools, private profile, checkout, every control link,
+Bash layout, canonical tmux, all selected/retired formula checks, and SSH-only
+agreement.
+
+Final Mac doctor is blocked only by two coupled login-shell requirements: the
+account still uses Apple Bash and the Homebrew Bash registry entry is absent.
+Satisfying them requires the separately transactional `macos-login-shell`
+stage and may require a native administrator-password interaction. The current
+onboarding skill explicitly forbids changing the account shell, so no such plan
+or mutation was run. Fresh routing acceptance and the ordered post-onboarding
+`.bash_common` check remain gated until this scope conflict is resolved.
+
+The owner then required the published prompt-free agent/remote policy and
+authorized read-only classification only. From clean published `main`, native
+`macos-login-shell --plan` passed and selected exactly the coupled registry-add
+and account-change actions, but value-free `sudo -n true` exited nonzero.
+Therefore login-shell apply is unavailable on this agent route and no password
+prompt was attempted. No login-shell state changed.
+
+Every other safe read-only final check passes: fresh managed interactive Bash
+routes Codex through the harness launcher; a fresh no-profile batch Bash routes
+the official native Codex command; agent doctor is ready; SSH agreement is
+current; control and tmux plans are no-ops; an isolated tmux server parses and
+loads the canonical configuration; both Git checkouts are clean/equal; no
+transfer artifact is present; and the current SSH socket is a listening,
+current-user-owned route. The ordered `.bash_common` orphan check remains
+correctly gated because Mac doctor is not yet ready.
+
+**Stop/recovery gates and next action:** stop on authentication, password, TCC,
+reboot, physical interaction, unsupported local bodies, two-sided SSH
+divergence, unmanaged Homebrew dependents, unexpected package scope, dirty Git,
+or changed transaction preimages. A failed query remains unknown state. Leave
+the Mac at its last verified state and record only value-free results here.
+The prompt-free agent route stopped without applying the login-shell stage.
+The owner later completed that stage interactively, preserving the policy that
+an agent or remote route must never request or trigger an administrator-password
+prompt.
+
+**Completion:** the owner-interactive prompt-capable login-shell apply,
+unchanged-only rollback, and identical reapply completed outside the agent
+route. Independent non-privileged verification found the login-shell post-plan
+at keep/keep, ready Mac and agent doctors with zero failures or warnings, fresh
+managed interactive and native batch routing, isolated tmux parse/session
+behavior, current SSH-only agreement, clean/equal public and private Git, and
+no transfer residue. The ordered T-273 check then found the owner regular
+`.bash_common` with zero open handles and passing fresh login, noninteractive,
+and interactive shells, but a nonzero live startup reference count. No tracked
+public startup source references it. It is therefore retained as active owner
+state; quarantine and unlink were correctly not attempted. All private values,
+identifiers, revisions, preimages, and transaction details remain local.
 
 ### T-284 — Accelerate and instrument Codex–Claude cowork
 
@@ -235,100 +392,11 @@ path. T-284 has no remaining action.
 
 ### T-285 — Prepare independent onboarding of the remaining personal Mac
 
-**Phase/status:** `executing`; direct value-free preflight is complete. On
-2026-07-21 the owner requested repository housekeeping and preparation to
-resume the fourth Mac. The owner then supplied its opaque logical ID privately
-and authorized direct SSH discovery. This does not yet authorize changing the
-Mac, private companion, package, startup file, agent setting, account,
-credential, or external service.
-
-**Housekeeping and baseline:** T-284 is published on `main` at `bb11854` and its
-exact task branches and scratch residue are gone. Preparation remains isolated
-on `task/t-285-remaining-mac-prep`, rebased onto that freshly fetched published
-baseline; no unpublished T-284 commit is mixed into the Mac work. Only this
-value-free ledger changed: no private state or external host was mutated. The
-current published command surface
-contains `macos-codex-bootstrap`, profile/inventory/plan/doctor/update/control/
-Homebrew/Bash/SSH/config migration, tmux, and agent catch-up adapters. All 15
-personal-Mac/onboarding focused suites plus agent configuration, tmux, Claude
-takeover, and source-contract checks pass on this baseline.
-
-**Confirmed scope and boundaries:** operate exactly one owner-named logical
-host through the owner-authorized direct session. Do not infer its state
-from the three accepted Macs, enumerate private profiles, inspect SSH keys or
-credential contents, enable inbound access, change Terminal/Keychain/zsh,
-reload active shell/tmux sessions, install unselected packages, or combine the
-post-acceptance `.bash_common` test with an onboarding transaction. Public
-evidence remains value-free; host identity, private paths/revisions, live facts,
-and transaction identifiers remain local/private.
-
-The owner explicitly authorized changes to `.bashrc`, `.bash_profile`, and
-`.ssh/config` within this one-host onboarding scope. That supplies file-change
-authority but does not waive repository safety: Bash and SSH changes still use
-the applicable transactional adapters, preserved preimages, collision checks,
-and unchanged-only rollback. A shape the adapters classify unsafe, ambiguous,
-or divergent remains a stop condition rather than a raw overwrite.
-
-**Value-free live preflight:** direct BatchMode SSH reaches a supported Darwin
-architecture and the remote home is current-user-owned. The declared
-`~/harness` checkout and fixed-path Codex command are absent. Homebrew is usable
-at the architecture-expected prefix and its bin is writable; Command Line Tools,
-system Git, and Homebrew Python with `tomllib` are present. The fixed bootstrap
-prerequisites `gh` and `tmux` and the dedicated harness Python-tools environment
-are absent. Public HTTPS Git read transport succeeds; GitHub SSH authentication
-does not, and no current-user-owned launchd-native agent socket is visible. No
-file, package, repository, profile, credential, agent, or remote ref changed.
-Remote commands explicitly disable the alias's harmless failed X11-forwarding
-attempt.
-
-**Prepared sequence:**
-
-1. After go, revalidate that `~/harness` remains absent, Homebrew retains the
-   expected prefix/ownership, and public HTTPS still resolves published `main`.
-   Clone only the public harness to the declared path over HTTPS, require clean
-   `main`, one exact `origin`, and head equality with fetched `origin/main`.
-   Retain a partially created checkout for reviewed recovery rather than
-   deleting it recursively.
-2. Run the published `macos-codex-bootstrap --host HOST --plan` from that exact
-   checkout with the fixed Homebrew bin on `PATH`. Accept only the presently
-   predicted scope: install missing `gh` and `tmux`, create the absent dedicated
-   Python-tools environment with pinned PyYAML, install official standalone
-   Codex, and launch the one-Mac assignment. Any extra formula, prompt, owner,
-   path collision, installer-byte drift, or changed prerequisite stops.
-3. Apply that exact bootstrap plan. Homebrew package changes are not
-   transactionally reversible; file/client installation remains bounded by the
-   checksum-pinned reviewed installer. GitHub SSH/private-companion access is a
-   known authentication pause: use the native `gh`/browser flow if required,
-   never inspect or solicit keys, tokens, passphrases, or credential contents.
-4. Fetch public/private `main` independently and resolve explicit targets. Use
-   only clean fast-forward ancestry. If an old engine cannot validate the
-   current private schema, use the documented public-first fast-forward handoff;
-   never reset, rebase, force-update, autostash, or clean either checkout.
-5. Run the strict profile validator, value-minimized inventory, and aggregate
-   Mac plan for that host. Freeze only applicable stages, exact rollback,
-   validation, blockers, and the first native command in this ledger without
-   recording private values.
-6. Execute one stage at a time through native harness commands:
-   repository catch-up, control links, selected Homebrew baseline, Bash hooks/
-   unification, tmux, SSH-only agreement, and agent configuration. Revalidate
-   immediately before every apply and stop on password, TCC, reboot, physical
-   interaction, divergence, prompt, unmanaged dependency, or scope drift.
-7. Require plan/apply, fresh-session acceptance, unchanged-only rollback, and
-   identical reapply for each new transactional component; require ready Mac
-   and agent doctors, clean/equal Git, native/batch routing, isolated tmux,
-   SSH-only private agreement, and no transfer artifacts. Only afterward run
-   T-273's ordered `.bash_common` orphan test on this one Mac.
-
-**Decision audit and next executable action:** the settled onboarding defaults
-resolve package, first-agreement, Bash, agent-policy, and orphan-file choices.
-The known GitHub authentication pause is physical/credential interaction, not
-an unresolved design decision. The supplied `HOST` value remains outside this
-public ledger. The owner gave the fresh explicit `go` on 2026-07-21 and also
-authorized the three live Bash/SSH files within the transactional boundaries
-above. First publish this value-free go checkpoint through protected `main` so
-the Mac-local bootstrap can recover from the repository alone. Then revalidate
-the step-1 predicates and clone the public checkout; stop before any broader
-apply on drift or authentication ambiguity.
+**Phase/status:** `complete/superseded-by-T-286`. T-285 published the generic
+remaining-Mac preparation through protected PR #164 at `f254295`. A fresh
+Mac-local reconstruction and go then continued as T-286, which records the
+completed onboarding, rollback/reapply evidence, acceptance checks, and the
+final T-273 `.bash_common` decision. T-285 has no remaining action.
 
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 
@@ -799,10 +867,9 @@ process, requirement, freshness, or explicit-authority gate.
    guarded proposed-tree removal, downgrade refusal, and idempotence pass. The
    repository version pin remains unchanged; no live replacement or old-tree
    cleanup is authorized.
-3. **Remaining Mac — availability-gated.** Onboard the one remaining Mac under
-   T-268/T-269, one host at a time. Revalidate identity, transport, native agent
-   ownership, public/private cleanliness and compatibility, and value-free
-   plans before any apply.
+3. **Remaining Mac — complete.** The fourth Mac completed independent
+   T-268/T-269 onboarding, rollback/reapply, doctors, fresh-session acceptance,
+   and its ordered post-acceptance orphan check under T-286.
 4. **Backup successors — time-gated.** On or after 2026-07-26, query only the
    seven T-196 successor IDs. Do not replace or duplicate a delayed job.
 5. **Vendor arg0 temporary directories — process-gated.** Re-inventory `local`
@@ -818,11 +885,12 @@ process, requirement, freshness, or explicit-authority gate.
    select only harness- or active-project-required packages. No blanket
    upgrade, cleanup, cask, service, tap, autoremove, or unmanaged-dependent
    mutation is implied.
-9. **Orphaned `.bash_common` — accessible hosts complete.** Office completed
+9. **Orphaned `.bash_common` — complete.** Office completed
    quarantine/retest/restoration/exact-unlink previously. Aist completed its
    content-blind exact unlink during T-281. Fresh 2026-07-20 classification now
-   confirms Aist, Home, and Office all absent. Repeat the ordered check only on
-   the remaining Mac after its independent onboarding acceptance.
+   confirms Aist, Home, and Office all absent. The fourth Mac's ordered check
+   proved a nonzero live startup reference count and zero open handles, so its
+   owner regular file is retained as active state without quarantine.
 
 **Closed non-goals:** plugin/MCP/connector authorization, accounts,
 administrator settings, automatic publication, background/login mutation, and
@@ -858,11 +926,10 @@ is authorized. Policy and evidence remain in
 
 ### T-268/T-269 — Finish the private personal-Mac fleet
 
-**Phase/status:** `availability-gated`; three reachable Macs are accepted and
-one owner-operated Mac remains. Generic public engines and private-companion
-schemas are published. The remaining host must use the current
-`onboard-personal-mac` workflow from an owner-started local session, with
-pull-based long-gap catch-up and no dependency on another repository.
+**Phase/status:** `complete`; all four Macs are independently accepted. Generic
+public engines and private-companion schemas are published, and the fourth host
+completed the current `onboard-personal-mac` workflow from an owner-started
+local session with pull-based catch-up and no dependency on another repository.
 
 For the remaining Mac, fetch current public/private `main`, perform value-free
 identity/architecture/Homebrew/Command-Line-Tools/Git/native-agent discovery,
