@@ -152,10 +152,31 @@ Clean implementation commit `cd9cfc2` passes the complete
 `tests/test-phase1.sh`; every focused suite and guarded-delete test passed, and
 native MPI was the declared environment-only skip.
 
-**Next executable action:** validate and publish the fail-fast refinement,
-guarded-refresh the clean public checkouts and managed fragments, then complete
-the existing Aist updater/layout gap after the owner restores at least one
-route. Use private-output-safe fetch logs and the same value-minimized audit.
+**Fail-fast publication/rollout:** PR #183 passed protected
+`portable-phase1` and squash-merged as `f5ae449`. Guarded fleet-sync
+fast-forwarded all six clean Linux mirrors from `10679a4` to that commit and
+removed every transfer artifact. Local exercised exact rollback/reapply; all
+six remote Linux layouts apply/current. Office, riken, and Home fetched clean
+public/private targets through private-output-safe logs, applied the schema-3
+updater with private=current and package actions none, and now have current
+managed fragments. A combined Mac command ended after riken's completed apply
+without returning the remaining output; independent read-only checks proved
+riken and Home clean at `f5ae449` with layout state current, so no result was
+inferred across the output loss.
+
+Value-minimized end-to-end checks pass on local, all six Linux nodes, Office,
+riken, and Home: installed fragments equal the canonical source;
+`login`/`login2` resolve to disabled multiplexing and
+`ExitOnForwardFailure yes`; GitHub and an ordinary host retain automatic
+persistent multiplexing and `ExitOnForwardFailure no`. Existing sessions were
+not terminated. Aist/Aist2 remained down in the 20:05 JST monitor cycle and
+both direct probes; no Aist state changed.
+
+**Next executable action:** after the owner restores at least one Aist route,
+fetch its clean public/private targets through a mode-0600 disposable log, run
+the schema-3 updater plan/apply, then layout plan/apply and the same
+value-minimized effective audit. Close T-292 only after both fresh Aist routes
+are healthy under the new fail-fast policy.
 
 ### T-288 — Finish post-onboarding fleet housekeeping
 
