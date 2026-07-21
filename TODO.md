@@ -97,8 +97,12 @@ committed checkout. The SSH layout, Mac SSH sync, source-contract, and public
 privacy audit suites passed. This is a retry-safe repository-state gate, not a
 product failure; rerun the same full suite after the intended commit.
 
-**Next executable action:** run the clean phase-one suite and privacy/source
-checks, then publish through protected CI before any live fragment rollout.
+Commit `88d9bdc` contains the implementation. From that clean commit,
+`tests/test-phase1.sh` passed in full; the only reported skip was the suite's
+expected native-MPI environment smoke test, which is unrelated to SSH config.
+
+**Next executable action:** fetch again, publish through protected CI, then
+perform the transactional live fragment rollout and effective-class checks.
 
 ### T-288 — Finish post-onboarding fleet housekeeping
 
