@@ -347,10 +347,10 @@ shared stanzas are normalized. Do not begin deferred Homebrew/package work.
 
 ### T-291 — Converge shared SSH fragment across the managed fleet
 
-**Phase/status:** externally blocked and handed off at three of four per-Mac
-payloads; local layout is already complete on all eleven nodes. The owner
-selected preservation of each Mac's distinct non-shared bytes and gave the
-explicit `go`. The desired state
+**Phase/status:** executing after explicit owner resume from the three-of-four
+per-Mac payload handoff; local layout is already complete on all eleven nodes.
+The owner selected preservation of each Mac's distinct non-shared bytes and
+gave the explicit `go`. The desired state
 copies Aist's existing
 root `Host github` and `Host *` blocks intact into regular
 `~/.ssh/config.d/harness.conf` files on every managed system, then sources that
@@ -703,10 +703,25 @@ be merged as a checkpoint and removed, leaving clean public `main`. T-291 is
 not technically complete: the forward-only private transition safely remains
 at three of four payloads with the legacy root and minimum engine 1 intact.
 
-**Next executable action:** wait for the owner's separate Aist repair commit and
-push. On a later explicit resume, fetch first, reconstruct and validate that
-external commit without rewriting it, then revalidate Aist's completed engine
-update, migrate its absent payload with exact rollback/reapply, verify the
+**Resume and housekeeping checkpoint:** protected T-292 completion left every
+public checkout clean/current at `936a54f`; Aist's compatible public/private
+updater fast-forward had already integrated the owner's external repair without
+rewriting it. Three stale local/remote branches were removed only after their
+complete trees matched the squash results of merged PRs #172, #173, and #174
+and each exact head had no open PR. Local now has only `main` plus this active
+T-291 branch; origin had only `main` before this branch is published.
+
+Fresh read-only migration plans show Office and riken at `class=current` with
+an unrelated-revision state pull available, while Home is current with
+agreement and no action. No plan applied. Aist and Aist2 then both timed out
+during banner exchange before its migration plan; no private Git, live SSH, or
+state file changed. The five-minute monitor remains active, but cannot recover
+a pair while both routes are down.
+
+**Next executable action:** when either Aist route returns, revalidate clean
+public/private main and run `--migrate-per-host --plan` for logical host Aist.
+Only an absent selected payload with the expected forward-only plan may apply;
+then prove unchanged live SSH bytes, perform exact rollback/reapply, verify the
 four-payload transition, and only then run the separate finalizer and refresh
 all four selected states. Do not finalize while Aist remains unreachable or
 absent.
