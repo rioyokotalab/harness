@@ -401,10 +401,40 @@ helper at its recorded hash, absent dedicated identity, absent supervisor
 state, two external predecessors, and exactly two plan blockers both classified
 `dedicated-identity`.
 
-**Next executable action:** the owner runs Home's reviewed
-`~/run_this.sh --plan`, then `~/run_this.sh --apply` and types
-`provision-home`. The local driver must independently revalidate Home before
-staging or interrupting either tunnel.
+Home rollout is complete. The owner provisioned the reviewed dedicated
+identity; metadata-only validation and isolated unattended authentication
+passed. Home advanced cleanly to protected
+`47b354b70f60b62c9a14156b950718f2306c51df` through updater transaction
+`20260721T232905Z-8341`. Inactive staging/rollback, sequential migration,
+three confirmed kicks and one unexpected exit per alias, listener-observed
+dual-route loss/recovery, exact active rollback/reapply, and final post-reapply
+kicks all passed. The first migration attempt exposed another misleading legacy
+topology and dropped both routes; the Home-side Codex restored two independent
+tmux predecessors without changing supervisor state, after which unchanged
+migration succeeded. Transaction `20260721T234337Z-26177` is current; both
+aliases report `loaded=yes running=yes managed=1 external=0`; both routes and
+clean/current public/private Git passed; no temporary session remains; and the
+spent helper was hash-revalidated and exact-unlinked. Full evidence is in
+`docs/audits/t293-connection-self-healing-2026-07-22.md`.
+
+Final pre-publication fleet validation passed. A separate 30-second observer
+recorded 11 cycles from 08:47:05 through 08:52:45 JST: all 44 Mac-pair samples
+were healthy with no recovery action. The persistent five-minute monitor was
+identity-matched and respawned with the protected state/action-aware command;
+its first two cycles were also fully healthy. All four Macs report exactly one
+managed process and zero external duplicates per alias with clean public/private
+checkouts. Local and all six remote Linux nodes passed fresh agent-backed,
+non-multiplexed SSH with bounded keepalives; every remote checkout is clean on
+`main`. Focused supervisor, monitor, public-audit, and diff checks pass. The
+first full phase-one run passed 58 of 59 suites; only the tmux suite rejected
+the intentionally dirty documentation checkpoint. The exact clean-commit retry
+then passed all 59 focused suites and guarded-delete; native MPI remained the
+declared environment-only skip.
+
+**Next executable action:** publish this Home/fleet checkpoint, pass protected
+CI, guarded-sync the six clean Linux mirrors, advance all four clean Macs
+through their updater, and repeat final route/supervisor/Git acceptance before
+closing T-293.
 
 ### T-273 — Resolve intentionally deferred maintenance
 

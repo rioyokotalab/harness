@@ -408,3 +408,81 @@ The supervisor plan reported exactly two blocked aliases, both solely because
 the dedicated identity has not yet been owner-provisioned. Home is ready for
 the same reviewed owner helper and independent post-provisioning validation
 used for Office and riken.
+
+## Home rollout
+
+The owner completed the reviewed Home helper. Independent metadata-only
+validation confirmed the dedicated identity's required type, ownership,
+single-link status, and mode without reading it, and both aliases passed
+isolated unattended authentication. Home advanced cleanly to protected
+`47b354b70f60b62c9a14156b950718f2306c51df` through updater transaction
+`20260721T232905Z-8341`; packages and tunnel processes were unchanged.
+
+Supervisor transaction `20260721T232913Z-10344` staged two inactive plists and
+rolled back exactly. Reapply transaction `20260721T232932Z-12522` staged with
+zero services. Initial classification found live tmux pane `%6` directly owned
+the external `login2`, while the visible `login` process belonged to a separate
+interactive session and historical pane `%0` was dead. Exact termination of
+only `%6` unexpectedly removed both routes before activation could run. Neither
+route recovered during ten fresh observations over 20 seconds, so the driver
+stopped without inferring unreachable state.
+
+The owner asked a separate Home-side Codex to restart the connections. Fresh
+inspection showed it restored direct tmux pane `%0` for `login` and pane `%8`
+for `login2`, without changing the staged transaction or loading either
+service. Both exact processes and both routes remained unchanged through ten
+two-second observations. Through external `home2`, the driver then replaced
+only `%0` with managed `login`; its route and generation held for 20 seconds.
+Through that proven managed sibling, the driver replaced only `%8` with
+managed `login2`, which passed the same gate. One local quoting error prevented
+a combined observation but mutated nothing; the exact retry passed.
+
+Each alias passed three confirmed generation-changing kicks with route recovery
+in 1–2 seconds and one independent native `SIGTERM` recovery in 2 seconds.
+One immediate PID comparison raced the third restart on each alias and was
+rejected; unchanged retries with bounded generation polling passed. The
+high-frequency dual-route drill then observed both listeners ready at 1 ms,
+both down at 2035 ms, and both ready at 2381 ms. Full SSH, changed generations,
+and exclusive managed ownership passed afterward without owner, sibling, or
+controller-monitor recovery.
+
+Active rollback replaced each managed service, one at a time through its
+healthy sibling, with a short-lived agent-disabled predecessor referencing the
+dedicated identity by path. Transaction `20260721T232932Z-12522` rolled back
+exactly with both external routes healthy. Fresh transaction
+`20260721T234337Z-26177` staged and reactivated both aliases one at a time;
+each route returned in one second and passed a final generation-changing kick
+in one second.
+
+Final status is `loaded=yes running=yes managed=1 external=0` for both aliases.
+Public/private Git are clean/current, both temporary sessions are absent, and
+the hash-revalidated spent Home helper was exact-unlinked. All four Macs now
+use the same managed current-user supervisor design and have independently
+passed rollback, single-route failure, simultaneous-route failure, and
+post-reapply acceptance gates.
+
+## Final pre-publication fleet validation
+
+The driver identity-matched the persistent `harness-connection-monitor` tmux
+pane and respawned only that pane with the already protected monitor command.
+The new process emits explicit `host`, `state`, and `action` fields; its first
+cycles at 08:46 and 08:51 JST classified all four Mac pairs healthy with no
+action. A separate current-code observer sampled every 30 seconds for 11 cycles
+from 08:47:05 through 08:52:45 JST. All 44 pair observations were healthy and
+none invoked recovery.
+
+Fresh status on Aist, Office, riken, and Home reported
+`loaded=yes running=yes managed=1 external=0` for both aliases. Both routes on
+every Mac passed full SSH, and each public/private checkout was clean. Fresh
+agent-backed connections to ab, ab2, ri, al, rc, and t4 explicitly disabled
+multiplexing and control paths, retained the bounded keepalive settings, and
+passed; every remote Linux checkout was clean on `main`. This validates the
+direct-route design without imposing the Mac reverse-tunnel supervisor on
+Linux targets or depending on any possibly stale shared control socket.
+
+Focused supervisor, connection-monitor, public-repository audit, and diff
+checks passed. The initial full phase-one run passed 58 of 59 focused suites;
+only the tmux configuration fixture intentionally rejected the uncommitted
+documentation checkpoint. It changed no target state. The exact clean-commit
+retry then passed all 59 focused suites and guarded-delete; native MPI remained
+the declared environment-only skip.
