@@ -6,7 +6,7 @@ completion pointers here. Full pre-housekeeping chronology is available at
 published commit 90451d49ac96; detailed T-288 execution through Home Git
 catch-up is preserved at 378df00159d59e8abee645f2bdaebd20cf467cc2.
 
-Next free ID: T-290.
+Next free ID: T-292.
 
 ## Current state
 
@@ -38,10 +38,11 @@ Next free ID: T-290.
 
 ## Next resume checkpoint
 
-1. Resolve Aist's two-sided SSH-config divergence after the owner selects the
-   authoritative side, then repeat post-shell acceptance and close T-288.
-2. On or after 2026-07-26, query only T-196 recorded successor job IDs.
-3. Select another independently eligible T-273 workstream only after fresh
+1. Complete T-291 planning after either Aist route returns, freeze the managed
+   fragment representation, and wait for the explicit execution `go`.
+2. Resolve and close T-288 through T-291's canonical SSH-layout migration.
+3. On or after 2026-07-26, query only T-196 recorded successor job IDs.
+4. Select another independently eligible T-273 workstream only after fresh
    reconstruction of its gate and authority.
 
 ## Active tasks
@@ -195,6 +196,116 @@ current, updater rollback/reapply passed, the strict Codex tooltip state is
 accepted without editing, the duplicate official Codex link is removed, and
 fresh wrapper/login shells leave startup files unchanged. Do not begin deferred
 Homebrew/package work.
+
+### T-291 — Converge shared SSH fragment across the managed fleet
+
+**Phase/status:** planning. The owner's desired state is one canonical,
+non-secret `~/.ssh/config.d/harness.conf` sourced at the end of every managed
+root SSH config. Aist's fragment is authoritative. Exact `Host github` and
+`Host *` stanzas are removed from every root config so OpenSSH first-value
+precedence cannot shadow the fragment. Managed targets are local, ab, ab2, ri,
+al, rc, t4, Aist, Office, riken, and Home; transport-only aliases are excluded.
+
+**Scope and non-goals:** manage only the two public shared stanzas, their one
+terminal include, and the fragment link/file needed to supply them. Preserve
+all other SSH bytes, ordering, file modes, keys, `known_hosts`, agent state,
+control sockets, connection processes, and private companion values. Do not
+print or commit private SSH payloads, reload sessions, alter tunnels, change
+packages, or broaden Linux SSH mirroring.
+
+**Confirmed value-free inventory:** all seven Linux roots already end with one
+managed include and all seven fragments are symlinks to the tracked public
+fragment; combined grammar is valid. local and al duplicate both shared
+stanzas, ab and ab2 duplicate GitHub only, t4 duplicates both, and ri/rc have
+no root duplicate. Office, riken, and Home each have one GitHub and one
+`Host *` root stanza but no fragment/include. Their configs are regular,
+current-user-owned, single-link, mode 0600. Both Aist routes dropped before its
+fragment and current root could be revalidated. Earlier T-288 evidence proves
+its private/live roots are unequal and no automatic winner is permitted.
+
+**Working set:** `config/ssh/harness.conf`, a new or extended transactional SSH
+layout adapter and command dispatch, the Mac SSH validator/sync contract,
+focused synthetic tests, `docs/ssh-config-sync.md`, relevant Mac documentation,
+and this ledger. The private companion and live SSH files change only after
+generic publication.
+
+**Execution sequence:**
+
+1. Revalidate Aist through both routes. Accept its fragment as source only if
+   it is a bounded current-user-owned regular file or the exact managed link,
+   contains exactly one `Host github` and one `Host *` stanza, contains no
+   credential material or external include, and passes isolated OpenSSH
+   grammar. Compare or adopt it without printing bytes or a content identity.
+2. Implement a cross-platform transactional layout plan that parses complete
+   top-level SSH stanzas, refuses `Match`/multi-pattern/duplicate ambiguity,
+   removes only the two selected stanza blocks, and installs exactly one
+   terminal `Include ~/.ssh/config.d/harness.conf`. Preserve every other byte
+   and the root file's existing safe mode.
+3. Manage the fragment through the repository-owned canonical source. Extend
+   the Mac private-payload validator to allow only that exact single terminal
+   include while continuing to reject every other `Include`, `Match exec`,
+   credential-like material, unsafe metadata, and external reads during
+   validation.
+4. Add synthetic Linux/Darwin tests for all observed combinations, ambiguous
+   refusal, byte preservation, idempotence, injected failure, exact
+   unchanged-only rollback/reapply, private divergence convergence, and
+   privacy-negative output. Run focused tests, ShellCheck, `git diff --check`,
+   public audit, and all 57 phase-one suites.
+5. Publish through protected CI, merge without force, then guarded-sync only
+   clean Linux checkouts and update each clean Mac public checkout.
+6. On Aist, transform the live root and private payload through the reviewed
+   transaction so removing shared stanzas resolves rather than guesses the
+   current divergence. Publish the forward-only private commit, exercise exact
+   local rollback, and reapply. Stop if non-shared bytes remain unequal.
+7. Sequentially pull/apply the private root plus managed fragment on Office,
+   riken, and Home, with per-host plan, rollback/reapply, fresh-route checks,
+   `ssh -G` validation, SSH agreement, and Mac doctor acceptance.
+8. Sequentially plan/apply the same root-stanza removal on the seven Linux
+   nodes, stopping at the first drift. Recheck effective GitHub/default
+   resolution without printing values, clean Git, and absence of transaction
+   residue.
+9. Compact T-290's retained connection evidence, close T-288/T-291, merge the
+   final ledger through protected CI, perform the final guarded fleet catch-up,
+   and report compact fleet health.
+
+**Safety and rollback:** every live plan must bind to the exact preimage type,
+owner, link count, mode, size, and content identity without emitting private
+values. Apply stores mode-0600 complete preimages in private transaction state,
+atomically replaces only the root config and fragment representation, and
+supports unchanged-only rollback. Private Git is forward-only; no reset,
+force-push, timestamp winner, or automatic three-way payload merge is allowed.
+Existing SSH sessions are not proof of new-config acceptance; both fresh route
+aliases must pass after apply.
+
+**Acceptance:** eleven roots have zero GitHub/default stanza blocks and exactly
+one terminal managed include; eleven fragments resolve to the Aist-approved
+canonical public bytes; all files retain safe ownership/types/modes; OpenSSH
+grammar and effective resolution pass; all four Macs report SSH agreement and
+ready doctors; all Git checkouts are clean/current; rollback/reapply evidence
+exists per changed host; no credential, private value, fragment hash, or raw
+payload enters public output or Git.
+
+**Decision register:** D1 (settled) covers all eleven managed systems and
+excludes proxy aliases. D2 (settled) intentionally discards complete root
+GitHub/`Host *` blocks in favor of Aist's canonical fragment, even if their
+options differ. D3 (open; recommended) represents the fragment everywhere as
+a symlink to tracked `config/ssh/harness.conf`, matching all seven Linux nodes;
+the alternative is eleven private copies with greater drift and rollback
+surface.
+
+**Next executable action:** when either Aist route returns, complete step 1 and
+then ask only D3. After D3 is recorded, set `ready-for-go` and wait for an
+explicit `go`; make no live SSH change during planning/interviewing.
+
+### T-290 — Diagnose termination of Aist reverse SSH forwards
+
+**Phase/status:** diagnosed; publication deferred. Detailed local evidence was
+preserved exactly on Aist commit `5f03af3` and controller ref
+`refs/preserve/t-290-aist-forward-diagnosis`. It indicates route oscillation
+followed by the configured keepalive failure window, not authentication or a
+local SSH-port refusal. The raw checkpoint contains local process/network
+details and must be compacted before any public push. T-291 changes no tunnel
+or keepalive setting.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
