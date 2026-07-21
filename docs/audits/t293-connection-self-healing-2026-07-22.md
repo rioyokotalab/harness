@@ -179,3 +179,25 @@ the owner's standing single-route reconnect path, native
 passed the second three-second probe. The sibling stayed ready throughout.
 This bounded incident supplies live evidence of the manual launcher's hanging
 failure mode and changed no Aist or credential state.
+
+## First owner-helper attempt
+
+The owner's `--plan` completed with every preflight ready. The first `--apply`
+created and authorized the dedicated identity, but its final read-only
+supervisor plan found that effective `login` had zero remote forwards and
+failed the exact-one-forward contract. The helper reported a complete rollback;
+subsequent metadata checks confirmed both local identity paths absent. No
+managed service or supervisor transaction was created.
+
+The owner then disclosed that they had temporarily disabled forwarding for the
+first check. A value-free live/canonical diff classified exactly four changed
+lines: live-commented and canonical-active `LocalForward` and `RemoteForward`
+directives. Canonical `login` and `login2` each produced one remote forward.
+Because ordinary `macos-ssh-sync` correctly classified the live-only edit as
+`action=publish`, the driver did not apply it. Under the owner's standing SSH
+config authority, the driver restored the exact canonical per-host payload in
+mode-0600 transaction `20260721T212129Z-73841`, retaining its unchanged-only
+backup and manifest. Both aliases then resolved to one remote forward and
+authenticated with forwards cleared; `macos-ssh-sync` returned
+`agreement=yes action=none`. The credential state remains absent, and retrying
+the owner helper is safe.
