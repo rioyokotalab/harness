@@ -269,12 +269,18 @@ cp "$ROOT/tests/fixtures/personal-macos/private-v2/companion.conf" \
     "$private/companion.conf"
 cp "$ROOT/tests/fixtures/personal-macos/private-v1/ssh_config" \
     "$private/ssh_config"
+printf '%s\n' 'Include ~/.ssh/config.d/harness.conf' >>"$private/ssh_config"
 cp "$ROOT/tests/fixtures/personal-macos/private-v2/bashrc" "$private/bashrc"
 cp "$ROOT/tests/fixtures/personal-macos/private-v2/tmux.conf" "$private/tmux.conf"
 chmod 600 "$private/companion.conf" "$private/ssh_config" "$private/bashrc" \
     "$private/tmux.conf"
 git -C "$private" add companion.conf ssh_config bashrc tmux.conf
 git -C "$private" commit -q -m 'synthetic adopted config bundle'
+mkdir -p "$home/.ssh/config.d"
+cp "$private/ssh_config" "$home/.ssh/config"
+cp "$ROOT/config/ssh/harness.conf" "$home/.ssh/config.d/harness.conf"
+chmod 700 "$home/.ssh" "$home/.ssh/config.d"
+chmod 600 "$home/.ssh/config" "$home/.ssh/config.d/harness.conf"
 ln -s "$ROOT/shell/personal-macos.bash" \
     "$home/.config/harness/managed/personal-macos.bash"
 cp "$ROOT/shell/personal-macos-startup.block" "$home/.bash_profile"
@@ -294,8 +300,24 @@ printf '%s\n' "$bundle_doctor_output" | grep -F -x \
     'PASS required=config_sync class=current agreement=yes payloads=3' \
     >/dev/null || fail "config bundle doctor status"
 printf '%s\n' "$bundle_doctor_output" | grep -F -x \
+    'PASS required=ssh_layout state=terminal-include+canonical-regular-fragment' \
+    >/dev/null || fail "SSH layout doctor status"
+printf '%s\n' "$bundle_doctor_output" | grep -F -x \
     'END macos_doctor status=ready failures=0 warnings=0' >/dev/null ||
     fail "config bundle ready doctor result"
+
+printf '%s\n' '# drifted managed fragment' >>"$home/.ssh/config.d/harness.conf"
+if HOME="$home" BREW_LOG="$TEMP_DIR/doctor-ssh-layout-drift.log" \
+    FAKE_TREE_PRESENT=1 PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
+    "$DOCTOR" --host mac-test-pilot --facts "$ready_facts" \
+    >"$TEMP_DIR/doctor-ssh-layout-drift.out" 2>&1; then
+    fail "doctor accepted drifted managed SSH fragment"
+fi
+grep -F -x \
+    'FAIL required=ssh_layout state=missing-or-wrong expected=terminal-include+canonical-regular-fragment' \
+    "$TEMP_DIR/doctor-ssh-layout-drift.out" >/dev/null || fail "SSH layout drift refusal"
+cp "$ROOT/config/ssh/harness.conf" "$home/.ssh/config.d/harness.conf"
+chmod 600 "$home/.ssh/config.d/harness.conf"
 
 implicit_plan=$(HOME="$home" SHELL=/opt/homebrew/bin/bash TMPDIR="$TEMP_DIR" \
     BREW_LOG="$TEMP_DIR/implicit-plan.log" FAKE_TREE_PRESENT=1 \

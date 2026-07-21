@@ -70,9 +70,11 @@ non-executable blob.
 The SSH payload may contain the private host,
 account, network, and path values required by OpenSSH, but it must contain only
 SSH configuration—not private-key bytes, passwords, tokens, agent state,
-`known_hosts`, runtime facts, or transaction data. `Include` and `Match exec`
-are rejected so validation cannot read or execute another private file or
-command. It is limited to 1 MiB and must pass a canonicalization-disabled
+`known_hosts`, runtime facts, or transaction data. One exact terminal
+`Include ~/.ssh/config.d/harness.conf` is allowed; every other `Include` and
+every `Match exec` are rejected. Validation removes the permitted line through
+stdin before parsing, so it cannot read or execute another private file or
+command. The payload is limited to 1 MiB and must pass a canonicalization-disabled
 `ssh -G` validation before publication or apply. Public logs, tests, commits,
 task ledgers, and CI artifacts never contain its bytes, path values, content
 hash, or revision; public tests use only the synthetic fixture.

@@ -6,22 +6,23 @@ completion pointers here. Full pre-housekeeping chronology is available at
 published commit 90451d49ac96; detailed T-288 execution through Home Git
 catch-up is preserved at 378df00159d59e8abee645f2bdaebd20cf467cc2.
 
-Next free ID: T-290.
+Next free ID: T-292.
 
 ## Current state
 
-- Protected public main is 3e4ad6705ad1310560601e079169d1ab7c52037d.
-  PR #170 merged the T-288 generic fixes; its exact task branch is absent
-  locally and remotely. This ledger-only closeout branch records post-merge
-  fleet evidence while Aist catch-up remains blocked on transport.
+- Protected public main includes PR #170's T-288 generic fix and PR #171's
+  post-merge evidence checkpoint. Their exact task branches are absent locally
+  and remotely. Active branch `task/t-288-aist-catchup` records the remaining
+  blocked host action without requiring chat history.
 - Managed Linux nodes are local, ab, ab2, ri, al, rc, and t4.
   abci_login and alps_login are transports, not targets; retired si is out of
   scope.
 - Home, Office, and riken accepted clean public/private main after PR #170,
   updater/startup no-op state, both doctors, zero formula-policy residue,
-  absent .bash_common/run_this.sh, and only local main. Aist last accepted the
-  prior public/private main and is now behind protected main because both
-  routes are unavailable; no live Aist config was changed.
+  absent .bash_common/run_this.sh, and only local main. Aist is now caught up
+  and its client/startup checks pass, but final doctor correctly refuses a
+  newly observed two-sided private SSH-config divergence. No live SSH config
+  was changed.
 - The tmux session harness-connection-monitor probes Aist/Aist2,
   Office/Office2, riken/riken2, and Home/Home2 every 300 seconds. It reconnects
   a dropped primary through its secondary with ssh login, or a dropped
@@ -37,19 +38,21 @@ Next free ID: T-290.
 
 ## Next resume checkpoint
 
-1. When either Aist route returns, apply PR #170 through the native Mac updater
-   and run the frozen post-shell acceptance. This is T-288's only remaining
-   host action.
-2. On or after 2026-07-26, query only T-196 recorded successor job IDs.
-3. Select another independently eligible T-273 workstream only after fresh
+1. T-291 implementation and focused validation are complete; commit the
+   intended public changes, rerun phase one from the required clean checkout,
+   and publish through protected CI before any live SSH change.
+2. Resolve and close T-288 through T-291's canonical SSH-layout migration.
+3. On or after 2026-07-26, query only T-196 recorded successor job IDs.
+4. Select another independently eligible T-273 workstream only after fresh
    reconstruction of its gate and authority.
 
 ## Active tasks
 
 ### T-288 — Finish post-onboarding fleet housekeeping
 
-**Phase/status:** executing; blocked only on both Aist routes being unavailable.
-Scope is harness-owned Git, state, startup, and
+**Phase/status:** executing; its SSH blocker is resolved by T-291's frozen
+structure-aware migration and awaits that plan's execution. Scope is
+harness-owned Git, state, startup, and
 exact updater residue. Homebrew/package maintenance is explicitly deferred.
 Backups, transaction/failure evidence, credentials, active sessions,
 package/cache data, unknown residue, and private payloads are retained or
@@ -68,16 +71,18 @@ removed the empty staging boundary. No other temporary class was selected.
 rc, and t4 clean at intermediate commit 5c6e4c9 and al clean at 21fde49. Two
 source-specific transactions fast-forwarded all six to 3e4ad67. Independent
 checks proved clean HEAD and origin/main equality and zero transfer artifacts
-on every node; local is also current and clean. T-196 remains time-gated.
+on every node. After PR #171, one final guarded transaction fast-forwarded all
+six from 3e4ad67 to that evidence checkpoint and again removed every transfer
+artifact. local is also current and clean. T-196 remains time-gated.
 
 **Mac acceptance:**
 
 | Mac | Git/update | Doctors | Refs/residue | Routes |
 | --- | --- | --- | --- | --- |
-| Aist | clean at pre-#170 main; catch-up pending | Mac ready before merge; agent fix pending | only main; zero residue | both routes unavailable |
-| Office | public 3e4ad67; private current; both clean | Mac/agent ready after fresh wrapper | only main; zero residue | both identities accepted |
-| riken | public 3e4ad67; private current; both clean | Mac/agent ready after cleanup | only main; zero residue | both identities accepted |
-| Home | public 3e4ad67; private current; both clean | Mac/agent ready after fresh shells | only main; zero residue | both identities accepted |
+| Aist | public at PR #171; private current; both clean | agent/startup ready; Mac doctor blocked only by SSH divergence | main plus retained local T-290 evidence branch; zero residue | both routes accepted |
+| Office | public at PR #171; private current; both clean | Mac/agent ready after fresh wrapper | only main; zero residue | both identities accepted |
+| riken | public at PR #171; private current; both clean | Mac/agent ready after cleanup | only main; zero residue | both identities accepted |
+| Home | public at PR #171; private current; both clean | Mac/agent ready after fresh shells | only main; zero residue | both identities accepted |
 
 Aist stale T-280 refs were deleted only after each showed zero unique patches,
 one patch-equivalent commit on main, no remote ref, and merged PR #151 or #152.
@@ -140,7 +145,13 @@ the same official standalone package, exact-unlinked only the duplicate local
 link, and applied the frozen preservation transaction. Noninteractive and
 interactive managed login shells both passed; a subsequent startup plan and
 both doctors remained ready, the profile stayed canonical, and no duplicate
-link or formula residue recurred.
+link or formula residue recurred during that acceptance. The identical
+installer tail and duplicate link later recurred together once more before the
+PR #171 catch-up. Their equal modification time and the frozen 99-byte plan
+revalidated the same cause. The duplicate was exact-unlinked, the frozen
+transaction was replayed, and wrapper plus noninteractive and interactive
+login-shell checks left the profile unchanged. Both doctors, startup no-op,
+and zero-residue checks pass again.
 
 Office updated to 3e4ad67 and retained its sole official local-bin Codex link
 because no Homebrew-bin duplicate exists. Its fresh wrapper, login shell,
@@ -164,14 +175,14 @@ transport investigation until after the independent Home work.
 
 **Frozen remaining order:**
 
-1. Retry both Aist routes without inferring state across disconnects.
-2. When one route is stable, revalidate identity, forwarded-agent transport,
-   clean Git, and last durable markers; fetch and apply 3e4ad67 through
-   `macos-update`.
-3. Confirm the strict live tooltip table is accepted without editing it,
-   classify the native Codex path, run fresh wrapper/login-shell acceptance,
-   and remove only separately proven residue through guarded deletion.
-4. Record final Aist and compact fleet health, then close T-288.
+1. Obtain the owner's explicit winner for Aist's unequal live and private
+   SSH-config changes; do not infer priority from timestamps or connectivity.
+2. Apply only the selected `macos-ssh-sync` reconciliation route, preserving
+   its unchanged-only rollback transaction.
+3. Repeat fresh wrapper/login-shell acceptance, SSH agreement, both doctors,
+   updater/startup no-op plans, and zero-residue checks.
+4. Compact the retained T-290 connection evidence before any public push,
+   record final fleet health, and close T-288.
 
 **Safety/recovery:** no raw recursive or multi-path deletion. Eligible tree
 cleanup uses a fresh guarded manifest and token. Authentication failure,
@@ -179,11 +190,167 @@ divergent/dirty Git, unsafe metadata, open handles, prompts, or loss of both
 routes stops only that host. Do not reload active shells, change packages, or
 touch backup/transaction state.
 
-**Next executable action:** keep the five-minute monitor active and retry Aist.
-Both `aist` and `aist2` currently refuse their local forwarded ports, so peer
-recovery is impossible until either route returns. Then execute the four frozen
-steps above. Do not edit live client/startup files or begin deferred
-Homebrew/package work.
+**Next executable action:** execute T-291 after the explicit `go`. Its
+disposable three-way classification proved the private side's non-shared bytes
+still equal the recorded base, while Aist alone changed non-shared bytes; the
+apparent two-sided conflict is therefore resolved without guessing once the
+shared stanzas are normalized. Do not begin deferred Homebrew/package work.
+
+### T-291 — Converge shared SSH fragment across the managed fleet
+
+**Phase/status:** executing; implementation complete and awaiting clean-checkout
+phase-one validation/publication. The owner gave the explicit `go`. The desired state
+copies Aist's existing
+root `Host github` and `Host *` blocks intact into regular
+`~/.ssh/config.d/harness.conf` files on every managed system, then sources that
+file at the end of each root SSH config. Only after the fragment is installed
+and validated are those two blocks removed from every root config. Managed
+targets are local, ab, ab2, ri, al, rc, t4, Aist, Office, riken, and Home;
+transport-only aliases are excluded.
+
+**Scope and non-goals:** manage only the two selected shared stanzas, their one
+terminal include, and the regular fragment copy needed to supply them. Preserve
+all other SSH bytes, ordering, file modes, keys, `known_hosts`, agent state,
+control sockets, connection processes, and private companion values. Do not
+print or commit private SSH payloads, reload sessions, alter tunnels, change
+packages, or broaden Linux SSH mirroring.
+
+**Confirmed value-free inventory:** all seven Linux roots already end with one
+managed include and all seven fragments are symlinks to the tracked public
+fragment; combined grammar is valid. local and al duplicate both shared
+stanzas, ab and ab2 duplicate GitHub only, t4 duplicates both, and ri/rc have
+no root duplicate. Office, riken, and Home each have one GitHub and one
+`Host *` root stanza but no fragment/include. Their configs are regular,
+current-user-owned, single-link, mode 0600. Both Aist routes resolve to the same
+Mac. Its safe regular mode-0600 root contains exactly one single-pattern
+GitHub block and one `Host *` block, no include, and no existing fragment.
+
+**Working set:** `config/ssh/harness.conf` if Aist's selected blocks pass the
+public non-secret gate, a new or extended transactional SSH
+layout adapter and command dispatch, the Mac SSH validator/sync contract,
+focused synthetic tests, `docs/ssh-config-sync.md`, relevant Mac documentation,
+and this ledger. The private companion and live SSH files change only after
+generic publication.
+
+**Canonical-source evidence:** disposable mode-private extraction found only
+generic public-safe option classes: GitHub host/user selection, forwarding and
+agent defaults, keepalive, and control-master/path/persistence settings. The
+comments also pass the public boundary. Grammar is valid, credential and
+external-include gates are clear, and the bytes differ from the current public
+fragment. No value or content identity was emitted. A structure-aware
+three-way simulation found the transformed private payload equal to its
+recorded base, the transformed Aist live root locally changed, and the two
+transformed results unequal. Thus normalization converts the current apparent
+two-sided conflict into a valid local-only publish; non-shared remote changes
+are not being discarded.
+
+**Implementation checkpoint (2026-07-21):** both Aist routes were revalidated,
+and the exact selected blocks passed the repeated public-safe option/comment,
+credential, ambiguity, and isolated grammar gates before replacing the tracked
+canonical source; no live SSH file changed. New `harness ssh-config-layout`
+plan/apply/rollback support installs the regular fragment first, preserves all
+non-shared root bytes and safe mode, refuses ambiguous patterns/`Match`/foreign
+includes, validates combined grammar, recovers an injected first-replacement
+failure, and performs unchanged-only two-file rollback. `harness dotfiles`
+now delegates SSH work to this transaction instead of recreating symlinks.
+The Mac validator permits only the one exact terminal include and strips it
+through stdin before grammar validation; the Mac doctor requires the final
+layout after payload adoption. The Aist-shaped private-base/live-normalized
+regression selects ordinary local-only publication.
+
+Focused layout, private-profile, Mac plan/doctor, SSH-sync, and config-sync
+tests pass, as do `git diff --check`, Python/shell syntax, ShellCheck for the
+changed shell files, the public audit, all 57 focused suites, and the complete
+clean-checkout `tests/test-phase1.sh`. Native MPI was the declared
+environment-only skip. Two integrated-fixture corrections made its synthetic
+root mode explicit and used the existing non-main test bypass; production
+still requires a clean committed `main`. No live host was mutated.
+
+**Execution sequence:**
+
+1. Revalidate Aist through both routes. Extract its existing root `Host github`
+   and `Host *` blocks as the canonical source only if each is an unambiguous
+   top-level single-pattern stanza, the root is a bounded safe regular file,
+   and the extracted two-block candidate contains no credential material or
+   external include and passes isolated OpenSSH grammar. Never print the bytes
+   or a content identity.
+2. Implement a cross-platform transactional layout plan that parses complete
+   top-level SSH stanzas, refuses `Match`/multi-pattern/duplicate ambiguity,
+   first writes the canonical two-block candidate to a mode-0600 regular
+   `~/.ssh/config.d/harness.conf`, then removes only the two selected root
+   blocks and installs exactly one terminal
+   `Include ~/.ssh/config.d/harness.conf`. Preserve every other root byte and
+   its existing safe mode.
+3. Update the repository canonical source to Aist's verified public-safe exact
+   bytes and use transactional copies rather than symlinks on all systems.
+   Continue to prohibit path, account, network, or credential-derived values
+   in public Git. Extend
+   the Mac private-payload validator to allow only that exact single terminal
+   include while continuing to reject every other `Include`, `Match exec`,
+   credential-like material, unsafe metadata, and external reads during
+   validation.
+4. Add synthetic Linux/Darwin tests for all observed combinations, ambiguous
+   refusal, byte preservation, idempotence, injected failure, exact
+   unchanged-only rollback/reapply, private divergence convergence, and
+   privacy-negative output. Run focused tests, ShellCheck, `git diff --check`,
+   public audit, and all 57 phase-one suites.
+5. Publish through protected CI, merge without force, then guarded-sync only
+   clean Linux checkouts and update each clean Mac public checkout.
+6. On Aist, copy the canonical root blocks into the fragment before removing
+   them from the live root, then transform the private payload through the
+   reviewed transaction so the layout migration resolves rather than guesses
+   the current divergence. Publish the forward-only private commit, exercise
+   exact local rollback, and reapply. Stop if non-shared bytes remain unequal.
+7. Sequentially pull/apply the private root plus regular fragment copy on Office,
+   riken, and Home, with per-host plan, rollback/reapply, fresh-route checks,
+   `ssh -G` validation, SSH agreement, and Mac doctor acceptance.
+8. Sequentially plan/apply the same root-stanza removal on the seven Linux
+   nodes, stopping at the first drift. Recheck effective GitHub/default
+   resolution without printing values, clean Git, and absence of transaction
+   residue.
+9. Compact T-290's retained connection evidence, close T-288/T-291, merge the
+   final ledger through protected CI, perform the final guarded fleet catch-up,
+   and report compact fleet health.
+
+**Safety and rollback:** every live plan must bind to the exact preimage type,
+owner, link count, mode, size, and content identity without emitting private
+values. Apply stores mode-0600 complete preimages in private transaction state,
+atomically replaces only the root config and fragment representation, and
+supports unchanged-only rollback. Private Git is forward-only; no reset,
+force-push, timestamp winner, or automatic three-way payload merge is allowed.
+Existing SSH sessions are not proof of new-config acceptance; both fresh route
+aliases must pass after apply.
+
+**Acceptance:** eleven roots have zero GitHub/default stanza blocks and exactly
+one terminal managed include; eleven regular fragments contain the exact
+Aist-root canonical blocks; all files retain safe ownership/types/modes; OpenSSH
+grammar and effective resolution pass; all four Macs report SSH agreement and
+ready doctors; all Git checkouts are clean/current; rollback/reapply evidence
+exists per changed host; no credential, private value, fragment hash, or raw
+payload enters public output or Git.
+
+**Decision register:** D1 (settled) covers all eleven managed systems and
+excludes proxy aliases. D2 (settled) copies Aist's complete root GitHub/`Host
+*` blocks intact before removing those blocks everywhere, even if other
+systems' options differ. D3 (settled by owner correction) uses regular fragment
+copies on all systems rather than the current Linux symlinks. D4 (settled by
+evidence) tracks the canonical bytes publicly because the extracted option set
+and comments pass the existing non-secret boundary.
+
+**Next executable action:** fetch/rebase/push the validated commits and publish
+through protected CI. Only after merge, update Aist's public checkout and run the
+staged Aist layout/private-publish rollback/reapply. Revalidate both Aist routes
+before every Aist stage.
+
+### T-290 — Diagnose termination of Aist reverse SSH forwards
+
+**Phase/status:** diagnosed; publication deferred. Detailed local evidence was
+preserved exactly on Aist commit `5f03af3` and controller ref
+`refs/preserve/t-290-aist-forward-diagnosis`. It indicates route oscillation
+followed by the configured keepalive failure window, not authentication or a
+local SSH-port refusal. The raw checkpoint contains local process/network
+details and must be compacted before any public push. T-291 changes no tunnel
+or keepalive setting.
 
 ### T-273 — Resolve intentionally deferred maintenance
 

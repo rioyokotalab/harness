@@ -1,0 +1,509 @@
+#!/usr/bin/env python3
+"""Transactionally move shared SSH stanzas into the managed fragment."""
+
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import stat
+import subprocess
+import sys
+import tempfile
+import time
+
+
+INCLUDE = b"Include ~/.ssh/config.d/harness.conf"
+MAX_CONFIG = 1024 * 1024
+
+
+def die(message):
+    print("harness: " + message, file=sys.stderr)
+    raise SystemExit(2)
+
+
+def safe_id(value):
+    return bool(value) and all(c.isalnum() or c in "._-" for c in value)
+
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def read_bounded(path, label):
+    data = path.read_bytes()
+    if not data or len(data) > MAX_CONFIG or b"\x00" in data:
+        die(label + " has an invalid size or encoding")
+    return data
+
+
+def require_regular(path, uid, modes, label):
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        die(label + " is absent")
+    if not stat.S_ISREG(info.st_mode) or info.st_uid != uid or info.st_nlink != 1:
+        die(label + " has an unsafe type, owner, or link count")
+    if stat.S_IMODE(info.st_mode) not in modes:
+        die(label + " has an unsafe mode")
+    return info
+
+
+def require_directory(path, uid, label):
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        die(label + " is absent")
+    if not stat.S_ISDIR(info.st_mode) or info.st_uid != uid:
+        die(label + " has an unsafe type or owner")
+    return info
+
+
+def option_header(line):
+    match = re.match(
+        rb"^[ \t]*(Host|Match)[ \t]+([^#\r\n]+?)[ \t]*(?:#[^\r\n]*)?(?:\r?\n)?$",
+        line,
+        re.IGNORECASE,
+    )
+    if not match:
+        return None
+    return match.group(1).lower(), match.group(2).strip().split()
+
+
+def transform_root(data):
+    """Return the root postimage and value-free structural counts."""
+    lines = data.splitlines(True)
+    starts = []
+    for index, line in enumerate(lines):
+        header = option_header(line)
+        if header:
+            starts.append((index, header[0], header[1]))
+
+    targets = []
+    counts = {b"github": 0, b"*": 0}
+    for number, (start, kind, patterns) in enumerate(starts):
+        if kind == b"match":
+            die("root SSH configuration contains Match and cannot be safely normalized")
+        for token in (b"github", b"*"):
+            if token in patterns and patterns != [token]:
+                die("root SSH configuration has an ambiguous shared Host pattern")
+        if patterns in ([b"github"], [b"*"]):
+            token = patterns[0]
+            counts[token] += 1
+            end = starts[number + 1][0] if number + 1 < len(starts) else len(lines)
+            targets.append((start, end))
+    if counts[b"github"] > 1 or counts[b"*"] > 1:
+        die("root SSH configuration has duplicate shared Host stanzas")
+
+    removed = set()
+    for start, end in targets:
+        removed.update(range(start, end))
+    kept = [line for index, line in enumerate(lines) if index not in removed]
+
+    include_count = 0
+    normalized = []
+    include_re = re.compile(
+        rb"^[ \t]*Include[ \t]+~/\.ssh/config\.d/harness\.conf[ \t]*(?:\r?\n)?$",
+        re.IGNORECASE,
+    )
+    any_include_re = re.compile(rb"^[ \t]*Include(?:[ \t]|$)", re.IGNORECASE)
+    for line in kept:
+        if include_re.match(line):
+            include_count += 1
+            continue
+        if any_include_re.match(line):
+            die("root SSH configuration contains an unmanaged Include")
+        normalized.append(line)
+    if include_count > 1:
+        die("root SSH configuration has duplicate managed Includes")
+
+    result = b"".join(normalized)
+    if result and not result.endswith(b"\n"):
+        result += b"\n"
+    result += INCLUDE + b"\n"
+    return result, counts, include_count
+
+
+def validate_canonical(data):
+    post, counts, include_count = transform_root(data)
+    if counts[b"github"] != 1 or counts[b"*"] != 1 or include_count != 0:
+        die("canonical SSH fragment does not contain exactly the shared stanzas")
+    if post != INCLUDE + b"\n":
+        die("canonical SSH fragment contains bytes outside the shared stanzas")
+
+
+def ssh_grammar(data, directory, label):
+    fd, name = tempfile.mkstemp(prefix=".harness-ssh-grammar-", dir=str(directory))
+    path = Path(name)
+    try:
+        with os.fdopen(fd, "wb") as stream:
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.chmod(str(path), 0o600)
+        result = subprocess.run(
+            ["ssh", "-o", "CanonicalizeHostname=no", "-G", "-F", str(path),
+             "harness-validation.invalid"],
+            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL, check=False,
+        )
+        if result.returncode:
+            die(label + " has invalid OpenSSH grammar")
+    finally:
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def validate_checkout(root):
+    if not (root / ".git").is_dir() or (root / ".git").is_symlink():
+        die("SSH layout migration requires a Git harness checkout")
+    status = subprocess.check_output(
+        ["git", "-C", str(root), "status", "--porcelain", "--untracked-files=normal"],
+        universal_newlines=True,
+    )
+    if status:
+        die("SSH layout migration requires a clean committed checkout")
+    if os.environ.get("HARNESS_TEST_ALLOW_NONMAIN", "0") != "1":
+        branch = subprocess.run(
+            ["git", "-C", str(root), "symbolic-ref", "--quiet", "--short", "HEAD"],
+            universal_newlines=True, stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL, check=False,
+        )
+        if branch.returncode or branch.stdout.strip() != "main":
+            die("SSH layout migration requires the main branch")
+
+
+def validate_host(root, host):
+    if os.environ.get("HARNESS_TESTING", "0") == "1":
+        return
+    if (root / "profiles" / "hosts" / (host + ".conf")).is_file():
+        return
+    if os.uname().sysname == "Darwin":
+        result = subprocess.run(
+            [str(root / "libexec" / "harness-macos-profile"), "--host", host],
+            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL, check=False,
+        )
+        if result.returncode == 0:
+            return
+    die("unknown or invalid logical host profile")
+
+
+def declared_local_symlink_is_safe(root, home, uid, host):
+    local = home / ".local"
+    if not host or not safe_id(host) or not local.is_symlink():
+        return False
+    layout = Path(os.environ.get("HARNESS_HOME_LAYOUT_FILE", root / "profiles" / "home-layout.tsv"))
+    if not layout.is_file() or layout.is_symlink():
+        return False
+    rows = []
+    for line in layout.read_text(encoding="utf-8").splitlines():
+        fields = line.split("|")
+        if fields and fields[0] == host:
+            rows.append(fields)
+    if len(rows) != 1 or len(rows[0]) < 4 or ".local" not in rows[0][3].split(","):
+        return False
+    persistent = Path(rows[0][1])
+    try:
+        local_info = local.lstat()
+        persistent_info = persistent.lstat()
+        local_real = local.resolve(strict=True)
+        persistent_real = persistent.resolve(strict=True)
+        target_info = local_real.stat()
+    except (FileNotFoundError, OSError, RuntimeError):
+        return False
+    if local_info.st_uid != uid or not stat.S_ISDIR(persistent_info.st_mode) or \
+            persistent_info.st_uid != uid or not stat.S_ISDIR(target_info.st_mode) or \
+            target_info.st_uid != uid:
+        return False
+    try:
+        return os.path.commonpath((str(local_real), str(persistent_real))) == \
+            str(persistent_real) and local_real != persistent_real
+    except ValueError:
+        return False
+
+
+def prepare_state(root, home, uid, host):
+    current = home
+    for part in (".local", "state", "harness", "transactions"):
+        current /= part
+        if current.exists() or current.is_symlink():
+            info = current.lstat()
+            declared = part == ".local" and stat.S_ISLNK(info.st_mode) and \
+                declared_local_symlink_is_safe(root, home, uid, host)
+            if not declared and (not stat.S_ISDIR(info.st_mode) or info.st_uid != uid):
+                die("SSH layout transaction path is unsafe")
+        else:
+            current.mkdir(mode=0o700)
+            declared = False
+        if not declared:
+            os.chmod(str(current), 0o700)
+    return current
+
+
+def adjacent(path, transaction, label):
+    fd, name = tempfile.mkstemp(
+        prefix="." + path.name + ".harness-" + transaction + "-" + label + "-",
+        dir=str(path.parent),
+    )
+    os.close(fd)
+    return Path(name)
+
+
+def write_file(path, data, mode):
+    with path.open("wb") as stream:
+        stream.write(data)
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.chmod(str(path), mode)
+
+
+def file_hash(path):
+    return digest(path.read_bytes())
+
+
+def classify_fragment(path, canonical, source, uid):
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        return {"kind": "absent"}
+    if stat.S_ISLNK(info.st_mode):
+        target = os.readlink(str(path))
+        if target != str(source):
+            die("managed SSH fragment is an unexpected symlink")
+        return {"kind": "symlink", "target": target}
+    if not stat.S_ISREG(info.st_mode) or info.st_uid != uid or info.st_nlink != 1:
+        die("managed SSH fragment has an unsafe type, owner, or link count")
+    mode = stat.S_IMODE(info.st_mode)
+    if mode not in (0o600, 0o640, 0o644):
+        die("managed SSH fragment has an unsafe mode")
+    data = read_bounded(path, "managed SSH fragment")
+    return {"kind": "regular", "mode": mode, "data": data,
+            "current": data == canonical and mode == 0o600}
+
+
+def snapshot_regular(path, backup):
+    shutil.copy2(str(path), str(backup))
+    os.chmod(str(backup), 0o600)
+
+
+def restore(record, current, transaction, uid):
+    kind = record["before_kind"]
+    if kind == "regular":
+        backup = Path(record["backup"])
+        require_regular(backup, uid, (0o600,), "SSH layout backup")
+        stage = adjacent(current, transaction, "restore")
+        try:
+            write_file(stage, backup.read_bytes(), int(record["before_mode"]))
+            os.replace(str(stage), str(current))
+        finally:
+            try:
+                stage.unlink()
+            except FileNotFoundError:
+                pass
+    elif kind == "symlink":
+        stage = current.parent / ("." + current.name + ".harness-" + transaction + "-restore-link")
+        try:
+            os.symlink(record["before_target"], str(stage))
+            os.replace(str(stage), str(current))
+        finally:
+            try:
+                stage.unlink()
+            except FileNotFoundError:
+                pass
+    elif kind == "absent":
+        current.unlink()
+    else:
+        die("SSH layout transaction manifest is malformed")
+
+
+def rollback(root, home, transaction, host):
+    if not safe_id(transaction):
+        die("invalid SSH layout transaction identifier")
+    uid = os.getuid()
+    state = prepare_state(root, home, uid, host)
+    manifest_path = state / (transaction + ".ssh-config-layout.json")
+    status_path = state / (transaction + ".ssh-config-layout.status")
+    require_regular(manifest_path, uid, (0o600,), "SSH layout manifest")
+    require_regular(status_path, uid, (0o600,), "SSH layout status")
+    if status_path.read_text(encoding="ascii").strip() != "complete":
+        die("SSH layout transaction is not complete")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("schema") != 1 or manifest.get("operation") != "ssh-config-layout":
+        die("SSH layout transaction manifest is malformed")
+    records = manifest.get("files")
+    if not isinstance(records, list) or len(records) != 2:
+        die("SSH layout transaction manifest is malformed")
+    expected = [home / ".ssh" / "config", home / ".ssh" / "config.d" / "harness.conf"]
+    for record, path in zip(records, expected):
+        if record.get("path") != str(path):
+            die("SSH layout rollback path is unsafe")
+        require_regular(path, uid, (int(record["post_mode"]),), "SSH layout postimage")
+        if file_hash(path) != record.get("post_hash"):
+            die("SSH layout rollback is blocked by a changed postimage")
+    for record, path in reversed(list(zip(records, expected))):
+        restore(record, path, transaction, uid)
+    status_path.write_text("rolled-back\n", encoding="ascii")
+    os.chmod(str(status_path), 0o600)
+    print("SSH_CONFIG_LAYOUT action=rolled-back transaction=" + transaction)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--host")
+    parser.add_argument("--plan", action="store_true")
+    parser.add_argument("--apply", action="store_true")
+    parser.add_argument("--rollback")
+    args = parser.parse_args()
+    if sum(bool(value) for value in (args.plan, args.apply, args.rollback)) != 1:
+        die("select exactly one of --plan, --apply, or --rollback")
+    if not args.host or not safe_id(args.host):
+        die("a safe logical host is required")
+
+    root = Path(os.environ.get("HARNESS_ROOT", Path(__file__).resolve().parent.parent))
+    home_text = os.environ.get("HOME", "")
+    if not home_text.startswith("/"):
+        die("SSH layout migration requires an absolute HOME")
+    home = Path(home_text)
+    uid = os.getuid()
+    require_directory(home, uid, "SSH layout HOME")
+    validate_host(root, args.host)
+    if args.rollback:
+        rollback(root, home, args.rollback, args.host)
+        return 0
+
+    source = root / "config" / "ssh" / "harness.conf"
+    source_info = require_regular(source, uid, (0o600, 0o640, 0o644, 0o664),
+                                  "canonical SSH fragment")
+    del source_info
+    canonical = read_bounded(source, "canonical SSH fragment")
+    validate_canonical(canonical)
+    ssh_grammar(canonical, source.parent, "canonical SSH fragment")
+
+    ssh_dir = home / ".ssh"
+    if ssh_dir.exists() or ssh_dir.is_symlink():
+        require_directory(ssh_dir, uid, "SSH directory")
+    config_dir = ssh_dir / "config.d"
+    if config_dir.exists() or config_dir.is_symlink():
+        require_directory(config_dir, uid, "SSH fragment directory")
+    root_config = ssh_dir / "config"
+    if root_config.exists() or root_config.is_symlink():
+        root_info = require_regular(root_config, uid, (0o600, 0o640, 0o644),
+                                    "root SSH configuration")
+        root_data = read_bounded(root_config, "root SSH configuration")
+    else:
+        root_info = None
+        root_data = b""
+    root_post, counts, include_count = transform_root(root_data)
+    combined = root_post[:-len(INCLUDE + b"\n")] + canonical
+    grammar_dir = ssh_dir if ssh_dir.exists() else home
+    ssh_grammar(combined, grammar_dir, "combined SSH configuration candidate")
+
+    fragment = config_dir / "harness.conf"
+    fragment_state = classify_fragment(fragment, canonical, source, uid)
+    current = root_data == root_post and fragment_state.get("current", False)
+    mode = "apply" if args.apply else "plan"
+    print(
+        "SSH_CONFIG_LAYOUT mode={} host={} state={} github_blocks={} default_blocks={} "
+        "managed_includes={} fragment={} action={}".format(
+            mode, args.host, "current" if current else "migrate",
+            counts[b"github"], counts[b"*"], include_count,
+            fragment_state["kind"], "none" if current else "normalize",
+        )
+    )
+    if args.plan or current:
+        print("END ssh_config_layout changes={}".format(
+            "none" if current else "not-applied"))
+        return 0
+
+    validate_checkout(root)
+    if not ssh_dir.exists():
+        ssh_dir.mkdir(mode=0o700)
+    require_directory(ssh_dir, uid, "SSH directory")
+    os.chmod(str(ssh_dir), 0o700)
+    if not config_dir.exists():
+        config_dir.mkdir(mode=0o700)
+    require_directory(config_dir, uid, "SSH fragment directory")
+    os.chmod(str(config_dir), 0o700)
+    state = prepare_state(root, home, uid, args.host)
+    transaction = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()) + "-" + str(os.getpid())
+    manifest_path = state / (transaction + ".ssh-config-layout.json")
+    status_path = state / (transaction + ".ssh-config-layout.status")
+    root_backup = state / (transaction + ".ssh-config.backup")
+    fragment_backup = state / (transaction + ".ssh-fragment.backup")
+    root_post_copy = state / (transaction + ".ssh-config.post")
+    fragment_post_copy = state / (transaction + ".ssh-fragment.post")
+    if root_info is not None:
+        snapshot_regular(root_config, root_backup)
+    write_file(root_post_copy, root_post, 0o600)
+    write_file(fragment_post_copy, canonical, 0o600)
+    root_record = {
+        "path": str(root_config),
+        "before_kind": "regular" if root_info is not None else "absent",
+        "post_mode": stat.S_IMODE(root_info.st_mode) if root_info is not None else 0o600,
+        "post_hash": digest(root_post),
+    }
+    if root_info is not None:
+        root_record.update({"before_mode": stat.S_IMODE(root_info.st_mode),
+                            "backup": str(root_backup)})
+    fragment_record = {
+        "path": str(fragment), "before_kind": fragment_state["kind"],
+        "post_mode": 0o600, "post_hash": digest(canonical),
+    }
+    if fragment_state["kind"] == "regular":
+        snapshot_regular(fragment, fragment_backup)
+        fragment_record.update({"before_mode": fragment_state["mode"],
+                                "backup": str(fragment_backup)})
+    elif fragment_state["kind"] == "symlink":
+        fragment_record["before_target"] = fragment_state["target"]
+    manifest = {"schema": 1, "operation": "ssh-config-layout", "host": args.host,
+                "files": [root_record, fragment_record]}
+    manifest_path.write_text(json.dumps(manifest, sort_keys=True) + "\n", encoding="utf-8")
+    status_path.write_text("prepared\n", encoding="ascii")
+    os.chmod(str(manifest_path), 0o600)
+    os.chmod(str(status_path), 0o600)
+
+    root_stage = adjacent(root_config, transaction, "candidate")
+    fragment_stage = adjacent(fragment, transaction, "candidate")
+    write_file(root_stage, root_post, root_record["post_mode"])
+    write_file(fragment_stage, canonical, 0o600)
+    replaced = []
+    try:
+        os.replace(str(fragment_stage), str(fragment))
+        replaced.append((fragment_record, fragment))
+        require_regular(fragment, uid, (0o600,), "managed SSH fragment postimage")
+        if file_hash(fragment) != fragment_record["post_hash"]:
+            raise RuntimeError("fragment postimage verification failed")
+        if os.environ.get("HARNESS_TEST_SSH_LAYOUT_FAIL_AFTER_FRAGMENT") == "1":
+            raise RuntimeError("injected fragment replacement failure")
+        ssh_grammar(root_post, ssh_dir, "root SSH configuration postimage")
+        os.replace(str(root_stage), str(root_config))
+        replaced.append((root_record, root_config))
+        require_regular(root_config, uid, (root_record["post_mode"],),
+                        "root SSH configuration postimage")
+        if file_hash(root_config) != root_record["post_hash"]:
+            raise RuntimeError("root postimage verification failed")
+    except Exception as error:
+        for record, path in reversed(replaced):
+            restore(record, path, transaction, uid)
+        status_path.write_text("failed\n", encoding="ascii")
+        os.chmod(str(status_path), 0o600)
+        die("SSH layout apply failed and prior files were restored: " + str(error))
+    finally:
+        for stage in (root_stage, fragment_stage):
+            try:
+                stage.unlink()
+            except FileNotFoundError:
+                pass
+    status_path.write_text("complete\n", encoding="ascii")
+    os.chmod(str(status_path), 0o600)
+    print("SSH_CONFIG_LAYOUT action=applied transaction={} rollback=available".format(transaction))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -141,6 +141,26 @@ if [ "$ssh_payload_adopted" -eq 1 ] &&
     config_bundle_adopted=1
 fi
 
+if [ "$ssh_payload_adopted" -eq 1 ]; then
+    live_ssh=$HOME/.ssh/config
+    managed_ssh_fragment=$HOME/.ssh/config.d/harness.conf
+    canonical_ssh_fragment=$HARNESS_ROOT/config/ssh/harness.conf
+    if (macos_validate_ssh_config "$live_ssh" "$current_uid" 600,644) \
+            >/dev/null 2>&1 &&
+        [ "$(tail -n 1 "$live_ssh" 2>/dev/null || true)" = \
+            'Include ~/.ssh/config.d/harness.conf' ] &&
+        [ -f "$managed_ssh_fragment" ] && [ ! -L "$managed_ssh_fragment" ] &&
+        [ "$(macos_stat_owner "$managed_ssh_fragment")" = "$current_uid" ] &&
+        [ "$(macos_stat_links "$managed_ssh_fragment")" = 1 ] &&
+        [ "$(macos_stat_mode "$managed_ssh_fragment")" = 600 ] &&
+        cmp -s "$managed_ssh_fragment" "$canonical_ssh_fragment"; then
+        echo 'PASS required=ssh_layout state=terminal-include+canonical-regular-fragment'
+    else
+        echo 'FAIL required=ssh_layout state=missing-or-wrong expected=terminal-include+canonical-regular-fragment'
+        failures=$((failures + 1))
+    fi
+fi
+
 bash_loader_destination=$HOME/.config/harness/managed/personal-macos.bash
 if [ "$config_bundle_adopted" -eq 1 ]; then
     bash_loader_source=$HARNESS_ROOT/shell/personal-macos.bash

@@ -1,8 +1,33 @@
 # Explicit whole-file SSH configuration synchronization
 
 Two intentionally separate commands synchronize only complete OpenSSH config
-files. Neither is a general dotfile adapter, fleet action, scheduler, timer, or
-credential manager. Both run only when the owner invokes them.
+files. A third command transactionally enforces the shared-fragment layout on
+the current host. None is a fleet action, scheduler, timer, or credential
+manager. They run only when the owner invokes them.
+
+## Shared fragment layout on Linux and macOS
+
+```bash
+harness ssh-config-layout --host LOGICAL_ID --plan
+harness ssh-config-layout --host LOGICAL_ID --apply
+harness ssh-config-layout --host LOGICAL_ID --rollback TRANSACTION_ID
+```
+
+The canonical public source is `config/ssh/harness.conf`. The adapter accepts
+only unambiguous top-level single-pattern `Host github` and `Host *` stanzas;
+duplicate or multi-pattern forms, `Match`, and unmanaged `Include` directives
+fail closed. It preserves every other root byte and the root's safe mode,
+installs a regular current-user mode-0600
+`~/.ssh/config.d/harness.conf` first, validates the combined OpenSSH grammar,
+then atomically installs a root with exactly one terminal
+`Include ~/.ssh/config.d/harness.conf` and no selected shared stanza.
+
+Apply requires a clean committed harness checkout on `main`. Its private
+transaction stores complete preimages and postimage identities for both files.
+An interrupted second replacement restores the first, and rollback refuses if
+either installed postimage changed. Existing SSH sessions are not restarted.
+`harness dotfiles` routes SSH work through this same adapter instead of making
+fragment symlinks.
 
 ## Personal Macs: SSH-only desired state
 
@@ -70,9 +95,11 @@ or contacts another Linux node.
 Invalid grammar, unsafe owner/type/mode/link count, dirty or divergent private
 Git, non-fast-forward transport, unavailable authentication, offline targets,
 and changed rollback destinations stop before overwriting a valid live file.
-`Include` and `Match exec` are invalid for these payloads so grammar validation
-cannot inspect another SSH file or execute an owner command; hostname
-canonicalization is disabled during validation.
+The whole-file Mac payload may end in one exact managed-fragment include;
+validation strips that line through stdin before parsing it. Every other
+`Include` and every `Match exec` remain invalid, so grammar validation cannot
+inspect another SSH file or execute an owner command; hostname canonicalization
+is disabled during validation.
 Potentially private Git and SSH diagnostics are captured only in short-lived
 mode-0600 local files and exactly unlinked; public output contains no raw
 diagnostic or configuration-derived value. Private keys, `known_hosts`, loaded

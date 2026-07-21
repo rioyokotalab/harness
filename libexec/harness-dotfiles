@@ -21,14 +21,10 @@ done
 profile_for "$logical_host" >/dev/null
 
 vim_source=$HARNESS_ROOT/config/vim/vimrc
-ssh_source=$HARNESS_ROOT/config/ssh/harness.conf
-for source in "$vim_source" "$ssh_source"; do
-    [ -f "$source" ] && [ ! -L "$source" ] || die "missing canonical dotfile: $source"
-done
+[ -f "$vim_source" ] && [ ! -L "$vim_source" ] ||
+    die "missing canonical dotfile: $vim_source"
 
-links=$(printf '%s|%s\n%s|%s\n' \
-    "$vim_source" "$HOME/.vimrc" \
-    "$ssh_source" "$HOME/.ssh/config.d/harness.conf")
+links=$(printf '%s|%s\n' "$vim_source" "$HOME/.vimrc")
 blocked=0
 changes=0
 echo "DOTFILE_PLAN host=$logical_host mode=$mode contents=canonical-nonsecret-only"
@@ -67,28 +63,12 @@ done <<EOF
 $links
 EOF
 
-include_line='Include ~/.ssh/config.d/harness.conf'
-ssh_config=$HOME/.ssh/config
-if [ -L "$ssh_config" ] || { [ -e "$ssh_config" ] && [ ! -f "$ssh_config" ]; }; then
-    echo "BLOCK file=$ssh_config reason=unsupported-existing-type"
-    blocked=1
-elif [ ! -e "$ssh_config" ]; then
-    echo "CREATE file=$ssh_config contents=single-managed-include"
-    changes=1
-else
-    include_count=$(grep -E -c '^[[:space:]]*Include[[:space:]]+~/\.ssh/config\.d/harness\.conf[[:space:]]*$' \
-        "$ssh_config" || true)
-    if [ "$include_count" -eq 0 ]; then
-        echo "APPEND file=$ssh_config contents=single-managed-include"
-        changes=1
-    elif [ "$include_count" -eq 1 ]; then
-        echo "KEEP file=$ssh_config include=harness"
-    else
-        echo "BLOCK file=$ssh_config reason=duplicate-managed-include"
-        blocked=1
-    fi
-fi
 [ "$blocked" -eq 0 ] || die "dotfile plan contains blocked paths"
+layout_plan=$("$SELF_DIR/harness-ssh-config-layout" --host "$logical_host" --plan)
+printf '%s\n' "$layout_plan"
+if printf '%s\n' "$layout_plan" | grep -F 'action=normalize' >/dev/null 2>&1; then
+    changes=1
+fi
 [ "$mode" = apply ] || { echo "END dotfiles host=$logical_host changes=not-applied"; exit 0; }
 [ -z "$(git -C "$HARNESS_ROOT" status --porcelain)" ] ||
     die "dotfile apply requires clean harness"
@@ -133,21 +113,25 @@ rollback_partial() {
     done
 }
 complete=0
+layout_transaction=
 cleanup() {
     status=$?
     if [ "$complete" -eq 0 ]; then
         rollback_partial
+        if [ -n "$layout_transaction" ]; then
+            "$SELF_DIR/harness-ssh-config-layout" --host "$logical_host" \
+                --rollback "$layout_transaction" >/dev/null || true
+        fi
         echo failed >"$manifest.status"; chmod 600 "$manifest.status"
     fi
     exit "$status"
 }
 trap cleanup EXIT HUP INT TERM
 
-mkdir -p "$HOME/.ssh/config.d"
-[ -d "$HOME/.ssh" ] && [ ! -L "$HOME/.ssh" ] &&
-    [ -d "$HOME/.ssh/config.d" ] && [ ! -L "$HOME/.ssh/config.d" ] ||
-    die "SSH configuration directory changed type"
-chmod 700 "$HOME/.ssh" "$HOME/.ssh/config.d"
+layout_apply=$("$SELF_DIR/harness-ssh-config-layout" --host "$logical_host" --apply)
+printf '%s\n' "$layout_apply"
+layout_transaction=$(printf '%s\n' "$layout_apply" |
+    sed -n 's/.*action=applied transaction=\([^ ]*\).*/\1/p')
 while IFS='|' read -r source destination; do
     if [ -L "$destination" ]; then
         continue
@@ -167,24 +151,6 @@ while IFS='|' read -r source destination; do
 done <<EOF
 $links
 EOF
-
-payload=$state_root/$transaction_id.ssh-include.payload
-if [ ! -e "$ssh_config" ]; then
-    printf '%s\n' "$include_line" >"$payload"; chmod 600 "$payload"
-    cp "$payload" "$ssh_config"; chmod 600 "$ssh_config"
-    bytes=$(wc -c <"$payload" | tr -d ' ')
-    printf 'shell-new|%s|0|%s|%s\n' "$ssh_config" "$bytes" "$payload" >>"$manifest"
-else
-    include_count=$(grep -E -c '^[[:space:]]*Include[[:space:]]+~/\.ssh/config\.d/harness\.conf[[:space:]]*$' \
-        "$ssh_config" || true)
-    if [ "$include_count" -eq 0 ]; then
-        printf '\n%s\n' "$include_line" >"$payload"; chmod 600 "$payload"
-        original=$(wc -c <"$ssh_config" | tr -d ' ')
-        bytes=$(wc -c <"$payload" | tr -d ' ')
-        cat "$payload" >>"$ssh_config"
-        printf 'shell|%s|%s|%s|%s\n' "$ssh_config" "$original" "$bytes" "$payload" >>"$manifest"
-    fi
-fi
 
 echo complete >"$manifest.status"; chmod 600 "$manifest.status"
 complete=1

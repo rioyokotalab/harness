@@ -190,15 +190,33 @@ macos_validate_ssh_config() {
         "$macos_ssh_file" >/dev/null 2>&1; then
         die "SSH configuration contains prohibited credential material"
     fi
+    macos_ssh_all_includes=$(LC_ALL=C grep -E -i -c \
+        '^[[:space:]]*Include([[:space:]]|$)' "$macos_ssh_file" || true)
+    macos_ssh_managed_includes=$(LC_ALL=C grep -E -c \
+        '^Include ~/\.ssh/config\.d/harness\.conf$' "$macos_ssh_file" || true)
+    case "$macos_ssh_all_includes:$macos_ssh_managed_includes" in
+        0:0) macos_ssh_has_managed_include=0 ;;
+        1:1)
+            [ "$(tail -n 1 "$macos_ssh_file")" = \
+                'Include ~/.ssh/config.d/harness.conf' ] ||
+                die "SSH configuration contains a nonterminal managed Include"
+            macos_ssh_has_managed_include=1
+            ;;
+        *) die "SSH configuration contains a prohibited or duplicate Include" ;;
+    esac
     if LC_ALL=C grep -E -i \
-        '^[[:space:]]*Include[[:space:]]|^[[:space:]]*Match[[:space:]].*([[:space:]]|^)exec([[:space:]]|$)|(^|[^[:alnum:]_])(token|password)[[:space:]=:]' \
+        '^[[:space:]]*Match[[:space:]].*([[:space:]]|^)exec([[:space:]]|$)|(^|[^[:alnum:]_])(token|password)[[:space:]=:]' \
         "$macos_ssh_file" >/dev/null 2>&1; then
         die "SSH configuration contains prohibited external or credential material"
     fi
     command -v ssh >/dev/null 2>&1 || die "SSH configuration validator is unavailable"
-    ssh -o CanonicalizeHostname=no -G -F "$macos_ssh_file" \
-        harness-validation.invalid \
-        >/dev/null 2>&1 || die "SSH configuration grammar is invalid"
+    if [ "$macos_ssh_has_managed_include" -eq 1 ]; then
+        sed '$d' "$macos_ssh_file"
+    else
+        cat "$macos_ssh_file"
+    fi | ssh -o CanonicalizeHostname=no -G -F /dev/stdin \
+        harness-validation.invalid >/dev/null 2>&1 ||
+        die "SSH configuration grammar is invalid"
 }
 
 macos_validate_private_config_file() {
