@@ -1,7 +1,7 @@
 # 日本語5枚版 presentation verification
 
 Verified on 2026-07-21 against source snapshot
-`7c592af6a9778ce24fe36b093c3bcdccb877da61`.
+`90451d49ac96a31ca5f42044ce2f4735b8908698`.
 
 ## Artifact checks
 
@@ -12,19 +12,30 @@ Verified on 2026-07-21 against source snapshot
   `speaker-notes-ja-5slides.md`にも保存した。
 - PPTX CRC、全XML/relationship、5 slide parts、5 notes parts、16:9 dimensions、
   `Yu Gothic` font declarationを検証した。
-- 5枚すべてを1920×1080で個別に確認した。初回の4件の小さなtext overflowを
-  修正し、final renderer warningは0。
+- 5枚すべてを1920×1080で個別に確認した。Slides 1/3/4/5の構造改訂後に
+  未対応glyph 1件を修正し、final renderer warningは0。
 - `contact-sheet-ja-5slides.png`をfinal renderの一覧として保存した。
+- owner指定どおりSlide 2を固定し、改訂前後でrender PNG、slide XML、notes XMLの
+  SHA-256がそれぞれ完全一致することを検証した。
+- clean treeで`tests/test-phase1.sh`を実行し、57 focused suites、guarded-delete、
+  syntax、portable gatesがpassした。native MPI smokeはdeclared MPI environment
+  専用のため想定どおりskipした。
 
 ## Evidence checks
 
-- source HEAD `7c592af`は543 total / 543 first-parent commitsとして解決した。
+- source HEAD `90451d4`は544 total / 544 first-parent commitsとして解決した。
 - storyboard、speaker notes、source mapがすべてSlide 1–5をcoverすることを確認した。
+- Slide 1の7 Linux / 4 accepted Mac / 2 client topology、repository tree、skill
+  invocationはcurrent profiles、installer、policy、skill inventoryと照合した。
+- Slide 3のsafeguard sequenceと57 focused suiteからprotected CIまでのtest pathは
+  policy、transaction/guard tests、focused runner、phase-1、CI workflowと照合した。
+- Slide 4のsymmetric roles、durable `.md` session、staged exchange、restart/takeover
+  semanticsはcowork SKILL、protocol、helper、focused testsと照合した。
 - `rm -rf` incidentは一次記録`e5200fd`、consolidated recovery `d726f0d`、
   guarded-delete response `238f022`を分離して照合した。
 - incidentのfact、architecture interpretation、forensic/recovery limitationsを
   slide上で異なるvisual encodingにした。
-- current-state claimはfresh fetch後の`7c592af`へ更新し、4台のMac acceptanceを反映した。
+- current-state claimはfresh fetch/rebase後の`90451d4`へ更新し、4台のMac acceptanceを反映した。
 
 Reproduction:
 

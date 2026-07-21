@@ -1,16 +1,21 @@
 # Harness Evolution — 日本語5枚版 sources
 
-Source snapshot: `7c592af6a9778ce24fe36b093c3bcdccb877da61`,
+Source snapshot: `90451d49ac96a31ca5f42044ce2f4735b8908698`,
 2026-07-21. No repository tags or merge commits existed through this snapshot.
 
 ## Slide 1
 
-- Initial implementation: `7f969317c4b597b9adaae629c05cf6723785aff2`,
-  historical `README.md`, `install.sh`, `AGENTS.md`, and `skills/`.
-- Dual-client discovery: `805db485d9b591f399e9025b28dc8397b27286b3`.
-- Current source snapshot: `7c592af6a9778ce24fe36b093c3bcdccb877da61`,
-  current `README.md`, `bin/harness`, and `TODO.md`.
-- Chronology: `presentation/evidence/timeline.csv` and `milestones.md`.
+- Managed topology: `90451d49ac96a31ca5f42044ce2f4735b8908698`,
+  `TODO.md`, `profiles/hosts/*.conf`, `docs/environment-portability.md`, and
+  personal-Mac public/private architecture documentation.
+- Repository structure: current Git tree, `README.md`, `bin/harness`,
+  `libexec/`, `profiles/`, `shared/skills/`, `tests/focused-suites.tsv`,
+  `docs/audits/`, and `evaluation/`.
+- Discovery and invocation: `install.sh`, `.codex/AGENTS.md`,
+  `.codex/rules/default.rules`, `.claude/CLAUDE.md`, and every
+  `shared/skills/*/SKILL.md`.
+- Discovery validation: `tests/test-phase1.sh`,
+  `tests/test-source-contract.sh`, and installer checks.
 
 ## Slide 2
 
@@ -26,35 +31,38 @@ Source snapshot: `7c592af6a9778ce24fe36b093c3bcdccb877da61`,
 
 ## Slide 3
 
-- Value-free observation:
-  `fb417282588f446f580e2f1de7b4c9b3341c18c5`, inventory/plan/doctor,
-  profiles, fixtures, and phase-1 tests.
-- Transaction pivot: `07351a40f40d3609d3924c3e440a30523e72fa04`,
-  apply/rollback implementation and tests.
-- Recovery/backup: `4f34299ac2b0202a92be9e4978b6e5d5630b7ce5`,
-  `docs/home-backup.md` and Restic implementation.
-- Personal Mac engine: `a0b74a4a6936c591684325226c872f1ba02f327e`;
-  public Bash/tmux migration: `4209ee84408a0abf4fccdbeafcac62ad050d4ad0`;
-  client configuration: `6a7e177d05742fbbde054a1af94e2c85810e3790`.
-- Symmetric cowork: `535a49218d766ce917ee28bc4b9d89fa0f650434`.
+- Authority and policy: `.codex/AGENTS.md` and
+  `.codex/rules/default.rules` at the source snapshot.
+- Transaction/revalidation: `libexec/harness-{apply,rollback,remediate}`, the
+  guarded-delete skill/script, and their focused tests.
+- Focused execution: `tests/focused-suites.tsv` and
+  `tools/run-focused-tests.py`.
+- Complete portable gate: `tests/test-phase1.sh` and
+  `tests/guarded-test-cleanup.sh`.
+- Protected CI: `.github/workflows/ci.yml`, including non-persisted checkout
+  credentials, affinity readiness, and the credential-free phase-one gate.
 
 ## Slide 4
 
-- Evaluation engine/results:
-  `05932762e5ab9be8113da4b7620de4642200d5ae` and
-  `ee9685313cf9ed7b4d3ed1b5cb75bda744d4dd8a`, under `evaluation/` and
-  `docs/evaluation-follow-up.md`.
-- HPC acceptance: `25efb7b489c8a660695694af39643889187b9021`
-  and `40b40da3b5a7abd637929f1714eb8b46f4dbec00`, checked-in audit JSON and
-  `docs/hpc-readiness.md`.
-- Cowork timing: `bb11854f59ec54907920c7cb3e9883ea94ab317e`,
-  `docs/audits/t284-cowork-acceptance.md`.
-- Four accepted Macs: `7c592af6a9778ce24fe36b093c3bcdccb877da61`,
-  `TODO.md` current-state section.
+- Symmetric cowork implementation:
+  `535a49218d766ce917ee28bc4b9d89fa0f650434`,
+  `shared/skills/codex-claude-cowork/SKILL.md`,
+  `references/protocol.md`, and `scripts/cowork-session`.
+- Protocol and takeover validation:
+  `tests/test-codex-claude-cowork-skill.sh` and
+  `tests/test-claude-takeover.sh`.
+- Acceptance evidence: `docs/audits/t283-cowork-acceptance.md` and
+  `docs/audits/t284-cowork-acceptance.md` at
+  `bb11854f59ec54907920c7cb3e9883ea94ab317e`.
 
 ## Slide 5
 
-- Current surface: source snapshot `7c592af`, `shared/skills/`, `bin/harness`,
+- Complete chronology: `presentation/evidence/timeline.csv` and
+  `milestones.md`, root `7f969317c4b597b9adaae629c05cf6723785aff2`
+  through source snapshot `90451d49ac96a31ca5f42044ce2f4735b8908698`.
+- Checked-in metrics: `presentation/evidence/metrics.csv`, HPC audit JSON,
+  evaluation results/review, backup acceptance, and T-284 matched samples.
+- Current surface: source snapshot `90451d4`, `shared/skills/`, `bin/harness`,
   `tests/focused-suites.tsv`, and `profiles/hosts/`.
 - Explicit Git operations replaced automatic hooks:
   `e52a3d01d11be2f2b3895e1e49dc8e670e3954a1`.
