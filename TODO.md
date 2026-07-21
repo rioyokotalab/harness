@@ -118,14 +118,47 @@ retain it immediately if live-referenced; otherwise quarantine recoverably,
 repeat doctor and fresh shells, restore on regression, and exact-unlink only a
 proven zero-reference, zero-handle orphan.
 
+**Execution checkpoint:** the fresh go was received. Revalidation exposed and
+corrected a branch-context refusal by retaining this ledger on its task branch
+and executing live adapters only from clean published `main`. Native GitHub
+authentication completed through the owner-approved browser boundary. SSH Git
+remained unauthenticated, so the now-authenticated HTTPS fallback restored the
+declared companion under strict modes. Its selected declaration was absent;
+the baseline-only profile was validated, committed, and pushed only in the
+private companion with its revision withheld. Public/private fetch and strict
+profile checks pass. The historical pilot migration planner was non-applicable
+because its legacy managed-Bash precondition is absent; it changed nothing.
+
+Control links, the selected Homebrew baseline, Bash hooks, Bash startup
+unification, canonical tmux, and first SSH-only agreement are applied. Control,
+Bash hooks, Bash unification, tmux, and SSH each passed exact plan/apply,
+fresh or isolated checks, unchanged-only rollback, and accepted reapply.
+Homebrew installed five and upgraded three public-policy formulae after a
+validated dry-run with zero unmanaged dependents; its post-plan is empty and
+package rollback remains manual-review-only by contract. The distinct valid
+Bash bodies were preserved through the adapter's older two-file `merge` route;
+the partial-current `--merge-distinct-profile` flag correctly refused as
+non-applicable. No active shell or tmux server was reloaded.
+
+Agent catch-up is the first unverified step. Its plan validated native Codex,
+classified Claude as safely adoptable and the launcher as absent, but blocked
+the existing Codex file as unsafe. A value-free grammar classification found
+one complete trusted-project table and two unsupported nonblank lines, with no
+canonical policy, model, or reasoning entries. No agent configuration changed
+and no live values were printed. This is a new unsupported-body decision
+outside the settled preservation default.
+
 **Stop/recovery gates and next action:** stop on authentication, password, TCC,
 reboot, physical interaction, unsupported local bodies, two-sided SSH
 divergence, unmanaged Homebrew dependents, unexpected package scope, dirty Git,
 or changed transaction preimages. A failed query remains unknown state. Leave
 the Mac at its last verified state and record only value-free results here.
-There is no unresolved material decision: wait for the owner's fresh explicit
-`go`; then print and run the first native revalidation command from this exact
-checkout.
+The next action is to obtain one owner decision for the unsupported Codex
+lines. If removal is authorized, preserve the valid trust table, adopt the
+canonical policy, and resume the transactional agent drill; otherwise retain
+the file and leave agent configuration blocked. After that, complete doctors,
+fresh-session routing, Git/artifact checks, and only then T-273's ordered
+`.bash_common` test.
 
 ### T-284 — Accelerate and instrument Codex–Claude cowork
 
