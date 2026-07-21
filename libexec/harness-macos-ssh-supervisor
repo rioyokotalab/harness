@@ -51,6 +51,12 @@ render_plist() {
     <string>-o</string>
     <string>BatchMode=yes</string>
     <string>-o</string>
+    <string>IdentitiesOnly=yes</string>
+    <string>-o</string>
+    <string>IdentityAgent=none</string>
+    <string>-o</string>
+    <string>IdentityFile=~/.ssh/harness-reverse</string>
+    <string>-o</string>
     <string>ConnectTimeout=10</string>
     <string>-o</string>
     <string>ConnectionAttempts=1</string>
@@ -114,6 +120,13 @@ require_safe_directory() {
         die "Mac SSH supervisor directory is unsafe"
     [ "$(macos_stat_owner "$supervised_directory")" = "$current_uid" ] ||
         die "Mac SSH supervisor directory owner is unsafe"
+}
+
+dedicated_identity_ready() {
+    [ -f "$identity_file" ] && [ ! -L "$identity_file" ] &&
+        [ "$(macos_stat_owner "$identity_file")" = "$current_uid" ] &&
+        [ "$(macos_stat_links "$identity_file")" = 1 ] &&
+        [ "$(macos_stat_mode "$identity_file")" = 600 ]
 }
 
 prepare_state_tree() {
@@ -181,27 +194,16 @@ require_ssh_contract() {
 
 unattended_auth_ready() {
     supervised_alias=$1
-    launch_agent_socket=$(launchctl getenv SSH_AUTH_SOCK 2>/dev/null || true)
-    if [ -n "$launch_agent_socket" ]; then
-        [ -S "$launch_agent_socket" ] &&
-            [ "$(macos_stat_owner "$launch_agent_socket")" = "$current_uid" ] || return 1
-    fi
+    dedicated_identity_ready || return 1
     ssh_command=$(command -v ssh) || return 1
-    if [ -n "$launch_agent_socket" ]; then
-        env -i HOME="$HOME" USER="$(id -un)" LOGNAME="$(id -un)" \
-            PATH=/usr/bin:/bin SSH_AUTH_SOCK="$launch_agent_socket" \
-            "$ssh_command" -x -F "$HOME/.ssh/config" -o ClearAllForwardings=yes \
-            -o BatchMode=yes -o ConnectTimeout=8 -o ConnectionAttempts=1 \
-            -o ControlMaster=no -o ControlPath=none "$supervised_alias" true \
-            >/dev/null 2>&1
-    else
-        env -i HOME="$HOME" USER="$(id -un)" LOGNAME="$(id -un)" \
-            PATH=/usr/bin:/bin \
-            "$ssh_command" -x -F "$HOME/.ssh/config" -o ClearAllForwardings=yes \
-            -o BatchMode=yes -o ConnectTimeout=8 -o ConnectionAttempts=1 \
-            -o ControlMaster=no -o ControlPath=none "$supervised_alias" true \
-            >/dev/null 2>&1
-    fi
+    env -i HOME="$HOME" USER="$(id -un)" LOGNAME="$(id -un)" \
+        PATH=/usr/bin:/bin \
+        "$ssh_command" -x -F "$HOME/.ssh/config" -o ClearAllForwardings=yes \
+        -o BatchMode=yes -o IdentitiesOnly=yes -o IdentityAgent=none \
+        -o "IdentityFile=$identity_file" \
+        -o ConnectTimeout=8 -o ConnectionAttempts=1 \
+        -o ControlMaster=no -o ControlPath=none "$supervised_alias" true \
+        >/dev/null 2>&1
 }
 
 validate_plist_file() {
@@ -293,6 +295,7 @@ launch_agents=$HOME/Library/LaunchAgents
 state_root=$HOME/.local/state/harness
 transaction_root=$state_root/transactions
 supervisor_root=$state_root/macos-ssh-supervisor
+identity_file=$HOME/.ssh/harness-reverse
 
 case "$mode" in
     activate|deactivate)
@@ -445,6 +448,10 @@ for plan_alias in login login2; do
     destination=$(plist_for "$plan_alias")
     if [ -e "$destination" ] || [ -L "$destination" ]; then
         printf 'ALIAS name=%s stage=blocked reason=existing-path\n' "$plan_alias"
+        blocked=$((blocked + 1))
+    elif ! dedicated_identity_ready; then
+        printf 'ALIAS name=%s stage=blocked reason=dedicated-identity external=%s\n' \
+            "$plan_alias" "$(external_process_count "$plan_alias")"
         blocked=$((blocked + 1))
     elif unattended_auth_ready "$plan_alias"; then
         printf 'ALIAS name=%s stage=create unattended_auth=ready external=%s\n' \

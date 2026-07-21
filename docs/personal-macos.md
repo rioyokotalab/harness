@@ -356,10 +356,12 @@ in unbounded log files.
 
 Plan validates the clean public checkout, strict private profile, live SSH
 configuration, exactly one remote forward per alias, absent managed plist
-destinations, and an authentication attempt from a launchd-like minimal
-environment with forwarding disabled. A session-forwarded agent is not treated
-as unattended authentication. Failure of either isolated authentication test
-blocks before creating transaction state or launch agents.
+destinations, a safe current-user mode-0600 `~/.ssh/harness-reverse` regular
+file with one link, and an authentication attempt from a launchd-like minimal
+environment with forwarding disabled. Both the probe and the generated service
+select only that dedicated identity; neither inherits a session agent or edits
+managed SSH configuration. Failure of the identity gate or either isolated
+authentication test blocks before creating transaction state or launch agents.
 
 ```bash
 harness macos-ssh-supervisor --host LOGICAL_ID --plan
