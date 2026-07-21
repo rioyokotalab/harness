@@ -345,6 +345,25 @@ dual-route loss/recovery. Begin the meaningful Aist soak. The next fleet gate
 is owner provisioning of one dedicated identity on each of Office, riken, and
 Home before per-host classification and sequential rollout.
 
+Office, riken, and Home each passed clean public/private Git, canonical
+`macos-ssh-sync agreement=yes action=none`, absent identity/helper paths, and
+exactly one remote forward per alias. They advanced to protected
+`88e6c4419efabfec0dbc1f7ef1fd7d10579f64d0` through updater transactions
+`20260721T215509Z-6673`, `20260721T215523Z-37906`, and
+`20260721T215527Z-94774`, respectively; packages and tunnel processes were
+unchanged. The driver hardened the owner helper to check the one-forward
+contract before key creation, validated three host-pinned variants with Bash
+syntax and ShellCheck, atomically placed them mode 0700 at each Mac's
+`~/run_this.sh`, did not execute them, and exact-unlinked all local transfer
+sources. SHA-256 values are Office
+`b5b8589c57525f3d043e35d921bfa43cba94071936c7a12e90c1131f2a89e197`, riken
+`ac1298ca42e6213f0d0929826a630d25a3fc398629eceec9b12b1cc5bc2f7789`, and Home
+`d0d10b6e43fb2d9a3cf7688e1bdacae3300ac773d2a4d22d885cd5b6390ffb6b`.
+The owner next runs `~/run_this.sh --plan` and `~/run_this.sh --apply` locally
+on each Mac, typing `provision-office`, `provision-riken`, or `provision-home`.
+No other Mac supervisor may be staged until its helper completes and the local
+driver independently revalidates that host.
+
 ### T-273 — Resolve intentionally deferred maintenance
 
 **Phase/status:** executing. Workstreams 1, 2, 3, and 9 are complete. Each
