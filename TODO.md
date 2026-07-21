@@ -148,17 +148,36 @@ canonical policy, model, or reasoning entries. No agent configuration changed
 and no live values were printed. This is a new unsupported-body decision
 outside the settled preservation default.
 
+The owner authorized removal of exactly those two unsupported lines. An exact
+owner-only mode-0600 preimage was retained locally; count- and sequence-level
+checks prove only the two approved nonblank lines were removed and the complete
+trusted-project table plus original whitespace were preserved. Native agent
+catch-up then passed its built-in adopt/apply/rollback/reapply drill with all
+transaction output withheld and its temporary log exact-unlinked. Agent doctor
+is ready, both Git checkouts are clean/equal, and Mac doctor passes architecture,
+Homebrew, Command Line Tools, private profile, checkout, every control link,
+Bash layout, canonical tmux, all selected/retired formula checks, and SSH-only
+agreement.
+
+Final Mac doctor is blocked only by two coupled login-shell requirements: the
+account still uses Apple Bash and the Homebrew Bash registry entry is absent.
+Satisfying them requires the separately transactional `macos-login-shell`
+stage and may require a native administrator-password interaction. The current
+onboarding skill explicitly forbids changing the account shell, so no such plan
+or mutation was run. Fresh routing acceptance and the ordered post-onboarding
+`.bash_common` check remain gated until this scope conflict is resolved.
+
 **Stop/recovery gates and next action:** stop on authentication, password, TCC,
 reboot, physical interaction, unsupported local bodies, two-sided SSH
 divergence, unmanaged Homebrew dependents, unexpected package scope, dirty Git,
 or changed transaction preimages. A failed query remains unknown state. Leave
 the Mac at its last verified state and record only value-free results here.
-The next action is to obtain one owner decision for the unsupported Codex
-lines. If removal is authorized, preserve the valid trust table, adopt the
-canonical policy, and resume the transactional agent drill; otherwise retain
-the file and leave agent configuration blocked. After that, complete doctors,
-fresh-session routing, Git/artifact checks, and only then T-273's ordered
-`.bash_common` test.
+The next action is one owner decision: either explicitly expand this one-host
+scope to the transactional Homebrew Bash login-shell stage, including its
+password boundary if needed, or retain Apple Bash and accept that the current
+Mac doctor cannot reach ready. If expanded, run plan/apply, fresh acceptance,
+unchanged-only rollback, reapply, and doctor before completing routing,
+Git/artifact checks, and only then T-273's ordered `.bash_common` test.
 
 ### T-284 — Accelerate and instrument Codex–Claude cowork
 
