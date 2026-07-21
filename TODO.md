@@ -366,6 +366,16 @@ parallel check confirmed all nine layouts, fragments, effective fields, and
 public checkouts current. Aist's public fetch lost its route before a result;
 the local stuck transport was terminated without assuming remote success.
 
+Aist later recovered clean and untouched, advanced to `05e9882`, and passed
+live layout apply, rollback, and reapply at final transaction
+`20260721T084044Z-52889`. Its strict private payload publish succeeded at sync
+transaction `20260721T084120Z-54230`. The required sync rollback then exposed
+one final narrow planner gap: when live and remote are already byte-identical
+but only the recorded revision is stale, it selected a redundant publish
+instead of a pull/state refresh. The active regression and fix cover that exact
+historical-layout rollback path; Aist is safely left with clean/current strict
+private Git and the rolled-back prior sync state until the fix is published.
+
 **Execution sequence:**
 
 1. Revalidate Aist through both routes. Extract its existing root `Host github`
@@ -437,12 +447,10 @@ copies on all systems rather than the current Linux symlinks. D4 (settled by
 evidence) tracks the canonical bytes publicly because the extracted option set
 and comments pass the existing non-secret boundary.
 
-**Next executable action:** when either Aist route returns, revalidate the
-interrupted public fetch before retrying, then apply/rollback/reapply its live
-layout and publish the strict private payload through Mac SSH sync. When either
-Office route returns, update its public checkout and apply/rollback/reapply the
-live layout; retain its recorded private divergence. Then ask the owner whether
-to design a
+**Next executable action:** publish the byte-identical stale-state refresh fix,
+update Aist, and complete its pull-based sync reapply. When either Office route
+returns, update its public checkout and apply/rollback/reapply the live layout;
+retain its recorded private divergence. Then ask the owner whether to design a
 per-Mac private SSH payload migration that preserves each distinct non-shared
 configuration, select one complete Mac payload as the whole-file winner, or
 leave the private divergence recorded and close T-291's completed local layout
