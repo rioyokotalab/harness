@@ -243,11 +243,11 @@ Mac, private companion, package, startup file, agent setting, account,
 credential, or external service.
 
 **Housekeeping and baseline:** T-284 is published on `main` at `bb11854` and its
-exact task branches and scratch residue are gone. Preparation remains isolated
-on `task/t-285-remaining-mac-prep`, rebased onto that freshly fetched published
-baseline; no unpublished T-284 commit is mixed into the Mac work. Only this
-value-free ledger changed: no private state or external host was mutated. The
-current published command surface
+exact task branches and scratch residue are gone. The T-285 preparation passed
+protected CI and was squash-merged as `f254295`; its exact local and remote prep
+branches are gone. Execution continues from that published tree on
+`task/t-285-remaining-mac-execution`, with no unpublished T-284 commit mixed
+into the Mac work. The current published command surface
 contains `macos-codex-bootstrap`, profile/inventory/plan/doctor/update/control/
 Homebrew/Bash/SSH/config migration, tmux, and agent catch-up adapters. All 15
 personal-Mac/onboarding focused suites plus agent configuration, tmux, Claude
@@ -325,10 +325,15 @@ The known GitHub authentication pause is physical/credential interaction, not
 an unresolved design decision. The supplied `HOST` value remains outside this
 public ledger. The owner gave the fresh explicit `go` on 2026-07-21 and also
 authorized the three live Bash/SSH files within the transactional boundaries
-above. First publish this value-free go checkpoint through protected `main` so
-the Mac-local bootstrap can recover from the repository alone. Then revalidate
-the step-1 predicates and clone the public checkout; stop before any broader
-apply on drift or authentication ambiguity.
+above. The published go checkpoint is now the exact Mac-local baseline.
+Value-free revalidation passed without drift; the public checkout was cloned
+over HTTPS and is clean on the sole `origin` at exact published `main`. Bootstrap
+plan mode reported exactly the anticipated missing `gh` and `tmux`, absent
+dedicated Python-tools environment with pinned PyYAML, and reviewed official
+Codex install—no extra formula, prompt, path collision, or scope. No package,
+client, private repository, profile, credential, agent, or startup file has yet
+changed. Next action: checkpoint this evidence, then apply that exact bootstrap
+plan and stop at any authentication or physical-interaction boundary.
 
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 
