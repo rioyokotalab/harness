@@ -377,17 +377,26 @@ the Bash startup files and SSH config remain regular files, while `.tmux.conf`
 is the canonical managed symlink. No private value, revision, path, transaction
 identifier, or authentication material was recorded here.
 
-Execution is paused at the agent-configuration adoption boundary. The live
-Codex configuration has one valid trusted-project table plus a two-line TOML
-construct outside the adapter's strict preservation grammar. The worker has
-not edited it. Continuing requires separate owner authority to remove exactly
-those two unsupported lines, preserve the validated trusted-project table, and
-then run the native transactional agent-config adoption drill. This does not
-change authentication, sessions, histories, or credentials. The proposed
-recovery is an owner-only exact preimage retained locally at mode 0600 until
-agent doctor, rollback, identical reapply, and fresh-client routing checks pass.
-After that approval, resume the waiting client at this gate; do not repeat any
-completed onboarding stage.
+The owner authorized the separate agent-configuration curation. The worker
+retained an exact owner-only mode-0600 preimage, removed only the two lines
+outside the adapter's strict preservation grammar, preserved the validated
+trusted-project table, and completed the native adoption drill. Its private
+transaction records show one rolled-back and one complete application with no
+failure or other state. Agent doctor is ready with the native Codex command and
+all three managed paths current; both repositories remain clean.
+
+The only remaining Mac-doctor failures are the selected account-shell stage:
+the account still uses Apple Bash and the managed Homebrew Bash path is absent
+from the shell registry. The native read-only plan predicts exactly one registry
+addition and one account-shell change. Prompt-free `sudo -n` is unavailable,
+so the agent/SSH route correctly refused to apply or solicit a password. The
+Mac-local worker preserved its clean three-commit, TODO-only task branch and
+returned the live checkout to clean `main`; no branch was pushed or deleted.
+Next action requires an owner-interactive local terminal: authorize the native
+transactional `macos-login-shell` apply with its explicit password-prompt flag,
+then let the agent perform rollback, identical reapply, Mac doctor, fresh-shell
+routing, isolated-tmux, repository-equality, and T-273 orphan acceptance. Do
+not repeat any already completed component drill.
 
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 
