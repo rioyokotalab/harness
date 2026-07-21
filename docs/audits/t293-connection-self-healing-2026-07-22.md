@@ -170,3 +170,12 @@ forced `/usr/bin/true` command to `restrict,port-forwarding`, preventing general
 command use while retaining forwarding and the `true` authentication probe.
 Credential creation and authorization remain pending the owner's local
 `--apply` invocation.
+
+At 06:08 JST, the final managed-fleet probe caught Home's primary route down
+with `home2` healthy. Its existing tmux `%0` process was an `ssh login` command
+that had restarted but remained stuck for more than 30 seconds. The driver used
+the owner's standing single-route reconnect path, native
+`tmux respawn-pane -k -t %0 'ssh login'`, through `home2`; the primary route
+passed the second three-second probe. The sibling stayed ready throughout.
+This bounded incident supplies live evidence of the manual launcher's hanging
+failure mode and changed no Aist or credential state.
