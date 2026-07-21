@@ -38,7 +38,7 @@ Next free ID: T-288.
 
 ### T-287 — Converge the remaining Mac's `.bashrc` with the accepted Macs
 
-**Phase/status:** `validating`; the owner asked on 2026-07-21 to compare the
+**Phase/status:** `complete`; the owner asked on 2026-07-21 to compare the
 remaining Mac's `.bashrc` with the other Macs and remove the obsolete local
 configuration so its behavior is consistent with the accepted fleet. Planning
 and value-free discovery completed without a live change. The owner then
@@ -146,9 +146,12 @@ no-ops, and target public Git is clean/equal. The temporary T-287 transaction
 pointer was exact-unlinked after verifying the accepted transaction complete;
 normal private rollback evidence is retained.
 
-**Next executable action:** run the focused Bash-hook test, diff/source/privacy
-checks, and clean full phase-one suite; then publish this value-free ledger
-through protected `main` and remove only the task branch after merge.
+Focused Bash-hook, source-contract, public-repository, and diff checks pass.
+The clean full phase-one gate passed all 57 focused suites plus its umbrella
+checks at auto-selected eight jobs. PR #166's first protected
+`portable-phase1` run passed in 1m37s; its final ledger-only closure commit must
+repeat that protected check before squash merge. After the protected merge and
+exact task-branch removal, T-287 has no remaining action.
 
 ### T-286 — Onboard the remaining personal Mac independently
 
