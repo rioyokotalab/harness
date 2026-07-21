@@ -203,8 +203,8 @@ shared stanzas are normalized. Do not begin deferred Homebrew/package work.
 
 ### T-291 — Converge shared SSH fragment across the managed fleet
 
-**Phase/status:** executing the owner-selected per-Mac private payload
-migration; local layout is already complete on all eleven nodes. The owner
+**Phase/status:** externally blocked and handed off at three of four per-Mac
+payloads; local layout is already complete on all eleven nodes. The owner
 selected preservation of each Mac's distinct non-shared bytes and gave the
 explicit `go`. The desired state
 copies Aist's existing
@@ -551,11 +551,21 @@ and reapplied forward. Final transactions are Office
 Aist/Aist2 remain down together. No finalization, legacy-root removal, or
 minimum-engine change has occurred.
 
-**Next executable action:** when either Aist route recovers, revalidate its
-completed engine update, migrate its previously absent payload with exact
-rollback/reapply, and verify the four-payload transition. Only then plan/apply
-the separate finalizer, refresh every Mac's selected state, and prove schema-3
-agreement. Do not finalize while Aist remains unreachable or absent.
+**External-commit handoff:** the owner is repairing Aist connectivity in a
+separate commit and explicitly closed this rollout work unit so the external
+commit can land independently. Do not amend, absorb, or duplicate that change,
+and do not attempt more Aist recovery from this task. The rollout branch is to
+be merged as a checkpoint and removed, leaving clean public `main`. T-291 is
+not technically complete: the forward-only private transition safely remains
+at three of four payloads with the legacy root and minimum engine 1 intact.
+
+**Next executable action:** wait for the owner's separate Aist repair commit and
+push. On a later explicit resume, fetch first, reconstruct and validate that
+external commit without rewriting it, then revalidate Aist's completed engine
+update, migrate its absent payload with exact rollback/reapply, verify the
+four-payload transition, and only then run the separate finalizer and refresh
+all four selected states. Do not finalize while Aist remains unreachable or
+absent.
 
 ### T-290 — Diagnose termination of Aist reverse SSH forwards
 
