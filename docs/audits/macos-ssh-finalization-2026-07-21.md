@@ -88,3 +88,5 @@ The focused `tests/test-personal-macos-ssh-sync.sh` and
 `tests/test-phase1.sh` gate passed; native MPI was the declared environment-only
 skip. Protected `portable-phase1` passed, and PR #185 squash-merged the
 functional closeout as `b59ce7bc04f0ad4dbe8596684770c216e113b771`.
+PR #186 then protected and published this durable audit as
+`4d9b2ad0370bc6804233f978191b47dacdf58590`.

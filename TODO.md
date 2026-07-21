@@ -12,9 +12,9 @@ Next free ID: T-293.
 
 ## Current state
 
-- Protected public `main` includes PR #185's functional closeout at b59ce7b,
-  the schema-3 per-Mac SSH engine, and failover isolation. Superseded
-  T-288/T-291/T-292 branches are absent locally and remotely.
+- Protected public `main` includes PR #185's functional closeout and PR #186's
+  durable audit, the schema-3 per-Mac SSH engine, and failover isolation.
+  Superseded T-288/T-291/T-292 branches are absent locally and remotely.
 - Managed Linux nodes are local, ab, ab2, ri, al, rc, and t4.
   abci_login and alps_login are transports, not targets; retired si is out of
   scope.
@@ -28,6 +28,9 @@ Next free ID: T-293.
   zero formula-policy residue. Home's recurring known Codex-installer tail and
   duplicate link were remediated through the established exact transaction;
   no package or unknown state changed.
+- Guarded fleet synchronization advanced all six clean Linux mirrors, and the
+  schema-3 updater advanced all four clean Mac public checkouts without a live
+  SSH transaction. Private Mac checkouts remained clean/current.
 - The tmux session `harness-connection-monitor` probes Aist/Aist2,
   Office/Office2, riken/riken2, and Home/Home2 every 300 seconds. It reconnects
   a dropped primary through its secondary with `ssh login`, or a dropped
@@ -43,11 +46,8 @@ Next free ID: T-293.
 
 ## Next resume checkpoint
 
-1. If the final audit-reference follow-up is not yet on protected `main`,
-   publish it; otherwise guarded-synchronize only clean managed checkouts and
-   revalidate the four Mac checkouts.
-2. On or after 2026-07-26, query only T-196 recorded successor job IDs.
-3. Select another independently eligible T-273 workstream only after fresh
+1. On or after 2026-07-26, query only T-196 recorded successor job IDs.
+2. Select another independently eligible T-273 workstream only after fresh
    reconstruction of its gate and authority.
 
 ## Active tasks
