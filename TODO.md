@@ -106,9 +106,28 @@ unsafe metadata, a plan other than exactly one `.bashrc` curation, syntax or
 fresh-shell regression, password/TCC prompt, a nonzero post-change reference or
 open-handle count, or any quarantine/restoration mismatch.
 
-**Next executable action:** apply the already-revalidated exact
-`macos-bash-hooks --host riken --empty-local` transaction and mode-only profile
-change; stop unless every frozen gate still matches immediately beforehand.
+**Execution checkpoint:** the exact plan was revalidated from clean/equal
+published `main` and applied. The command completed, but the controller's
+private transaction parser expected the older output suffix and stopped before
+the profile-mode step; its BSD cleanup trap also passed two leaves to `unlink`,
+which safely refused and left both private temporary logs in place. Live
+reconstruction proved `.bashrc` already converged, `.bash_profile` unchanged,
+and exactly one private apply log. The corrected parser bound that completed
+transaction to a mode-0600 local pointer, exact-unlinked both logs one at a
+time, and changed only `.bash_profile` mode from 0644 to 0600.
+
+The first converged acceptance passes: `.bashrc` is the exact 18-line
+empty-local image at mode 0600; `.bash_profile` is byte-identical to the public
+canonical thin loader at mode 0600; known Bash startup files have zero
+`.bash_common` reference lines; noninteractive and fresh login-interactive
+checks preserve public Homebrew, locale, `~/.local/bin`, completion, `activate`,
+and common aliases while leaving compiler, color, pyenv, and retired aliases
+unset. Mac doctor and agent doctor are ready with zero failures or warnings,
+and both startup plans are no-ops. `.bash_common` remains in place and unread.
+
+**Next executable action:** reverse the two completed changes in order, prove
+the exact preimage and pre-change classification, then reapply the identical
+plan and repeat acceptance before beginning the orphan-file drill.
 
 ### T-286 — Onboard the remaining personal Mac independently
 
