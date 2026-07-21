@@ -125,9 +125,19 @@ and common aliases while leaving compiler, color, pyenv, and retired aliases
 unset. Mac doctor and agent doctor are ready with zero failures or warnings,
 and both startup plans are no-ops. `.bash_common` remains in place and unread.
 
-**Next executable action:** reverse the two completed changes in order, prove
-the exact preimage and pre-change classification, then reapply the identical
-plan and repeat acceptance before beginning the orphan-file drill.
+The deliberate reverse-order rollback then restored `.bash_profile` mode 0644
+and the exact transaction-backed 66-line `.bashrc` preimage at mode 0644. Its
+three guarded `.bash_common` reference lines and fresh login behavior returned,
+and the original one-change plan reappeared. The identical plan was reapplied,
+the profile mode returned to 0600, and the full exact-image, fresh-shell,
+zero-reference/zero-handle, ready-doctor, no-op-plan, clean/equal-Git, and
+temporary-residue acceptance matrix passed again. Transaction identifiers and
+preimages remain only in private target state; `.bash_common` is still unread.
+
+**Next executable action:** perform the authorized content-blind quarantine,
+acceptance, restoration drill, second quarantine, final acceptance, and single
+exact unlink of `.bash_common`; stop on any identity, reference, handle, or
+behavioral mismatch.
 
 ### T-286 — Onboard the remaining personal Mac independently
 
