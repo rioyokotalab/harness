@@ -213,3 +213,31 @@ external=1` for each alias. Thus credential provisioning is complete while
 live process ownership is unchanged. The next safe mutation is stage-only
 supervisor apply from current protected `main`, followed by transaction
 verification before any one-route migration.
+
+## Aist single-route pilot
+
+PR #198 merged the credential checkpoint at
+`925761ff743cd6c1c188f6716b039ea10058c293`, and Aist advanced through updater
+transaction `20260721T213111Z-78719` without package or live-tunnel changes. A
+combined plan/apply invocation returned no output; the driver did not infer an
+outcome. Fresh checks found both routes ready, both predecessors external, and
+no supervisor transaction, plist, or service, proving a no-op. A standalone
+retry staged transaction `20260721T213202Z-82311` with zero services, then
+passed exact inactive rollback. Current reapply transaction
+`20260721T213306Z-85543` again staged two services before migration.
+
+Through fresh `aist2`, the driver mapped tmux pane `%5` to `login`, replaced
+only that predecessor, and activated the managed service. Ownership became one
+managed and zero external processes while `login2` stayed externally owned.
+Three native supervisor kicks restored the route in 4, 15, and 4 seconds. A
+native `launchctl kill SIGTERM` then simulated unexpected process exit; launchd
+restored one process and the usable route in 5 seconds without a manual kick.
+
+With managed `aist` fresh, the driver mapped `%6` to `login2`, replaced only
+that predecessor, and activated the second service. Both aliases reached
+`loaded=yes running=yes managed=1 external=0`. Three `login2` kicks restored
+both fresh routes in 4, 14, and 14 seconds. Its unexpected `SIGTERM` recovered
+in 2 seconds. Every drill preserved the sibling route and returned exact
+single-process ownership with no external duplicate. These results satisfy the
+frozen precondition for a bounded dual-route drill; fleet rollout remains
+prohibited until that drill and its post-state checks pass.
