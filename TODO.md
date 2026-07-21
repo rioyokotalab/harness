@@ -335,7 +335,11 @@ was immediately repaired with the exact `Match all` global-context reset before
 the terminal include, restoring verified GitHub hostname/user resolution and
 authenticated fetch. The active correction updates the transaction, effective-
 resolution regression, documentation, and all roots; publication and fleet
-reapply are required before T-291 can close.
+reapply are required before T-291 can close. Commit `54aa87c` implements the
+exact two-line trailer, refuses a managed include without its context reset in
+Mac private payloads, and adds an include-only upgrade regression. All 57
+focused suites and complete clean-checkout phase one pass; native MPI remains
+the declared environment-only skip.
 
 **Execution sequence:**
 
@@ -349,16 +353,16 @@ reapply are required before T-291 can close.
    top-level SSH stanzas, refuses `Match`/multi-pattern/duplicate ambiguity,
    first writes the canonical two-block candidate to a mode-0600 regular
    `~/.ssh/config.d/harness.conf`, then removes only the two selected root
-   blocks and installs exactly one terminal
+   blocks and installs exactly one terminal `Match all` followed by
    `Include ~/.ssh/config.d/harness.conf`. Preserve every other root byte and
    its existing safe mode.
 3. Update the repository canonical source to Aist's verified public-safe exact
    bytes and use transactional copies rather than symlinks on all systems.
    Continue to prohibit path, account, network, or credential-derived values
    in public Git. Extend
-   the Mac private-payload validator to allow only that exact single terminal
-   include while continuing to reject every other `Include`, `Match exec`,
-   credential-like material, unsafe metadata, and external reads during
+   the Mac private-payload validator to allow only that exact global-context
+   terminal trailer while continuing to reject every other `Include`, `Match
+   exec`, credential-like material, unsafe metadata, and external reads during
    validation.
 4. Add synthetic Linux/Darwin tests for all observed combinations, ambiguous
    refusal, byte preservation, idempotence, injected failure, exact
@@ -393,12 +397,12 @@ Existing SSH sessions are not proof of new-config acceptance; both fresh route
 aliases must pass after apply.
 
 **Acceptance:** eleven roots have zero GitHub/default stanza blocks and exactly
-one terminal managed include; eleven regular fragments contain the exact
-Aist-root canonical blocks; all files retain safe ownership/types/modes; OpenSSH
-grammar and effective resolution pass; all four Macs report SSH agreement and
-ready doctors; all Git checkouts are clean/current; rollback/reapply evidence
-exists per changed host; no credential, private value, fragment hash, or raw
-payload enters public output or Git.
+one terminal global-context managed-include trailer; eleven regular fragments
+contain the exact Aist-root canonical blocks; all files retain safe
+ownership/types/modes; OpenSSH grammar and effective resolution pass; all four
+Macs report SSH agreement and ready doctors; all Git checkouts are
+clean/current; rollback/reapply evidence exists per changed host; no credential,
+private value, fragment hash, or raw payload enters public output or Git.
 
 **Decision register:** D1 (settled) covers all eleven managed systems and
 excludes proxy aliases. D2 (settled) copies Aist's complete root GitHub/`Host
