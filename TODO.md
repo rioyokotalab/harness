@@ -199,15 +199,16 @@ Homebrew/package work.
 
 ### T-291 — Converge shared SSH fragment across the managed fleet
 
-**Phase/status:** planning. The owner's desired state is one canonical,
-non-secret `~/.ssh/config.d/harness.conf` sourced at the end of every managed
-root SSH config. Aist's fragment is authoritative. Exact `Host github` and
-`Host *` stanzas are removed from every root config so OpenSSH first-value
-precedence cannot shadow the fragment. Managed targets are local, ab, ab2, ri,
-al, rc, t4, Aist, Office, riken, and Home; transport-only aliases are excluded.
+**Phase/status:** planning. The owner's desired state copies Aist's existing
+root `Host github` and `Host *` blocks intact into regular
+`~/.ssh/config.d/harness.conf` files on every managed system, then sources that
+file at the end of each root SSH config. Only after the fragment is installed
+and validated are those two blocks removed from every root config. Managed
+targets are local, ab, ab2, ri, al, rc, t4, Aist, Office, riken, and Home;
+transport-only aliases are excluded.
 
-**Scope and non-goals:** manage only the two public shared stanzas, their one
-terminal include, and the fragment link/file needed to supply them. Preserve
+**Scope and non-goals:** manage only the two selected shared stanzas, their one
+terminal include, and the regular fragment copy needed to supply them. Preserve
 all other SSH bytes, ordering, file modes, keys, `known_hosts`, agent state,
 control sockets, connection processes, and private companion values. Do not
 print or commit private SSH payloads, reload sessions, alter tunnels, change
@@ -223,7 +224,8 @@ current-user-owned, single-link, mode 0600. Both Aist routes dropped before its
 fragment and current root could be revalidated. Earlier T-288 evidence proves
 its private/live roots are unequal and no automatic winner is permitted.
 
-**Working set:** `config/ssh/harness.conf`, a new or extended transactional SSH
+**Working set:** `config/ssh/harness.conf` if Aist's selected blocks pass the
+public non-secret gate, a new or extended transactional SSH
 layout adapter and command dispatch, the Mac SSH validator/sync contract,
 focused synthetic tests, `docs/ssh-config-sync.md`, relevant Mac documentation,
 and this ledger. The private companion and live SSH files change only after
@@ -231,17 +233,24 @@ generic publication.
 
 **Execution sequence:**
 
-1. Revalidate Aist through both routes. Accept its fragment as source only if
-   it is a bounded current-user-owned regular file or the exact managed link,
-   contains exactly one `Host github` and one `Host *` stanza, contains no
-   credential material or external include, and passes isolated OpenSSH
-   grammar. Compare or adopt it without printing bytes or a content identity.
+1. Revalidate Aist through both routes. Extract its existing root `Host github`
+   and `Host *` blocks as the canonical source only if each is an unambiguous
+   top-level single-pattern stanza, the root is a bounded safe regular file,
+   and the extracted two-block candidate contains no credential material or
+   external include and passes isolated OpenSSH grammar. Never print the bytes
+   or a content identity.
 2. Implement a cross-platform transactional layout plan that parses complete
    top-level SSH stanzas, refuses `Match`/multi-pattern/duplicate ambiguity,
-   removes only the two selected stanza blocks, and installs exactly one
-   terminal `Include ~/.ssh/config.d/harness.conf`. Preserve every other byte
-   and the root file's existing safe mode.
-3. Manage the fragment through the repository-owned canonical source. Extend
+   first writes the canonical two-block candidate to a mode-0600 regular
+   `~/.ssh/config.d/harness.conf`, then removes only the two selected root
+   blocks and installs exactly one terminal
+   `Include ~/.ssh/config.d/harness.conf`. Preserve every other root byte and
+   its existing safe mode.
+3. If Aist's canonical blocks contain only public-safe shared options, update
+   the repository canonical source to those exact bytes and use transactional
+   copies rather than symlinks on all systems. Otherwise stop for a separate
+   private distribution design; do not put path, account, network, or
+   credential-derived values in public Git. Extend
    the Mac private-payload validator to allow only that exact single terminal
    include while continuing to reject every other `Include`, `Match exec`,
    credential-like material, unsafe metadata, and external reads during
@@ -253,11 +262,12 @@ generic publication.
    public audit, and all 57 phase-one suites.
 5. Publish through protected CI, merge without force, then guarded-sync only
    clean Linux checkouts and update each clean Mac public checkout.
-6. On Aist, transform the live root and private payload through the reviewed
-   transaction so removing shared stanzas resolves rather than guesses the
-   current divergence. Publish the forward-only private commit, exercise exact
-   local rollback, and reapply. Stop if non-shared bytes remain unequal.
-7. Sequentially pull/apply the private root plus managed fragment on Office,
+6. On Aist, copy the canonical root blocks into the fragment before removing
+   them from the live root, then transform the private payload through the
+   reviewed transaction so the layout migration resolves rather than guesses
+   the current divergence. Publish the forward-only private commit, exercise
+   exact local rollback, and reapply. Stop if non-shared bytes remain unequal.
+7. Sequentially pull/apply the private root plus regular fragment copy on Office,
    riken, and Home, with per-host plan, rollback/reapply, fresh-route checks,
    `ssh -G` validation, SSH agreement, and Mac doctor acceptance.
 8. Sequentially plan/apply the same root-stanza removal on the seven Linux
@@ -278,24 +288,25 @@ Existing SSH sessions are not proof of new-config acceptance; both fresh route
 aliases must pass after apply.
 
 **Acceptance:** eleven roots have zero GitHub/default stanza blocks and exactly
-one terminal managed include; eleven fragments resolve to the Aist-approved
-canonical public bytes; all files retain safe ownership/types/modes; OpenSSH
+one terminal managed include; eleven regular fragments contain the exact
+Aist-root canonical blocks; all files retain safe ownership/types/modes; OpenSSH
 grammar and effective resolution pass; all four Macs report SSH agreement and
 ready doctors; all Git checkouts are clean/current; rollback/reapply evidence
 exists per changed host; no credential, private value, fragment hash, or raw
 payload enters public output or Git.
 
 **Decision register:** D1 (settled) covers all eleven managed systems and
-excludes proxy aliases. D2 (settled) intentionally discards complete root
-GitHub/`Host *` blocks in favor of Aist's canonical fragment, even if their
-options differ. D3 (open; recommended) represents the fragment everywhere as
-a symlink to tracked `config/ssh/harness.conf`, matching all seven Linux nodes;
-the alternative is eleven private copies with greater drift and rollback
-surface.
+excludes proxy aliases. D2 (settled) copies Aist's complete root GitHub/`Host
+*` blocks intact before removing those blocks everywhere, even if other
+systems' options differ. D3 (settled by owner correction) uses regular fragment
+copies on all systems rather than the current Linux symlinks. D4 is conditional:
+track the canonical bytes publicly only if the extracted option set passes the
+existing non-secret public-fragment boundary; otherwise stop for an explicit
+private distribution decision.
 
 **Next executable action:** when either Aist route returns, complete step 1 and
-then ask only D3. After D3 is recorded, set `ready-for-go` and wait for an
-explicit `go`; make no live SSH change during planning/interviewing.
+resolve the evidence-gated D4 representation. Then set `ready-for-go` and wait
+for an explicit `go`; make no live SSH change during planning/interviewing.
 
 ### T-290 — Diagnose termination of Aist reverse SSH forwards
 
