@@ -292,6 +292,28 @@ next action is to advance Aist's clean public checkout to protected `main`,
 repeat the plan, and run stage-only supervisor apply; do not stop either
 predecessor until that transaction is verified and the sibling route is fresh.
 
+Protected PR #198 merged the credential checkpoint at
+`925761ff743cd6c1c188f6716b039ea10058c293`; Aist advanced cleanly through
+updater transaction `20260721T213111Z-78719`. An initial combined plan/apply
+invocation returned no output, so the driver treated state as unknown; fresh
+inspection proved both routes healthy with no transaction, plist, or loaded
+service. Standalone stage transaction `20260721T213202Z-82311` then created two
+plists and zero services, passed exact inactive rollback, and left both tmux
+predecessors healthy. Reapply transaction `20260721T213306Z-85543` is current.
+
+The driver migrated `login` through healthy `aist2`, replacing only tmux pane
+`%5`; activation yielded `managed=1 external=0` while `login2` remained its
+external predecessor. Three native kick restarts recovered in 4, 15, and 4
+seconds. One unexpected `launchctl kill SIGTERM` recovered automatically in 5
+seconds. The driver then migrated `login2` through managed `aist`, replacing
+only tmux pane `%6`; both aliases reached `loaded=yes running=yes managed=1
+external=0`. Three `login2` kick restarts recovered in 4, 14, and 14 seconds,
+and an unexpected `SIGTERM` recovered in 2 seconds. Each drill retained a fresh
+sibling route and exact single-process ownership. The Aist pilot now satisfies
+the frozen gate for a bounded dual-route failure/recovery drill observed from
+`local`; do not roll out to another Mac before that drill and its post-state
+checks are durably recorded.
+
 ### T-273 — Resolve intentionally deferred maintenance
 
 **Phase/status:** executing. Workstreams 1, 2, 3, and 9 are complete. Each
