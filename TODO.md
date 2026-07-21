@@ -393,12 +393,18 @@ including the stale multiplexed predecessor, owner-assisted route restoration,
 and retry-loop interference with the first rollback attempt, is in
 `docs/audits/t293-connection-self-healing-2026-07-22.md`.
 
-**Next executable action:** independently revalidate Home's reviewed helper,
-clean/current public/private Git, absent dedicated identity, and supervisor
-plan. If those gates still pass, ask the owner to run `~/run_this.sh --plan`
-and `~/run_this.sh --apply` locally on Home and type `provision-home`. Do not
-stage Home's supervisor until helper completion and fresh local-driver
-validation.
+Home advanced cleanly to protected
+`d83eee0a0ff63f61351c9125734b4d0401c9843c` through updater transaction
+`20260721T232259Z-2338`; packages and tunnel processes were unchanged. Fresh
+preflight passed clean/current public/private Git, the reviewed mode-0700
+helper at its recorded hash, absent dedicated identity, absent supervisor
+state, two external predecessors, and exactly two plan blockers both classified
+`dedicated-identity`.
+
+**Next executable action:** the owner runs Home's reviewed
+`~/run_this.sh --plan`, then `~/run_this.sh --apply` and types
+`provision-home`. The local driver must independently revalidate Home before
+staging or interrupting either tunnel.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
