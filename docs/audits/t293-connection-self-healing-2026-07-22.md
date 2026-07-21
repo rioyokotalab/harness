@@ -301,3 +301,40 @@ verified SHA-256 values are Office
 local transfer sources were exact-unlinked. Owner execution and credential
 creation remain pending independently on each Mac; no supervisor rollout may
 begin on a host until its helper succeeds and the driver revalidates it.
+
+## Office rollout
+
+The owner completed the reviewed Office helper. Independent metadata-only
+validation confirmed the dedicated identity's required type, ownership,
+single-link status, and mode without reading it. Both aliases passed isolated
+unattended authentication. Office advanced cleanly to protected
+`ef97b55cf8170508c40eae2c52c339296eba0e12` through updater transaction
+`20260721T221819Z-14095`; packages and tunnel processes were unchanged.
+
+Supervisor transaction `20260721T221839Z-16624` staged two inactive plists and
+passed exact inactive rollback. Reapply transaction
+`20260721T221945Z-19326` replaced only tmux panes `%0`/PID `8694` and `%3`/PID
+`8701`, one alias at a time through a fresh sibling. Each route was usable on
+the first one-second observation. Each alias passed three kick generations
+with observed recovery of 1, 2, and 1 seconds; independent native `SIGTERM`
+recovery took 2 seconds per alias.
+
+The first dual-route observation was rejected as inconclusive: one-second full
+SSH probes alternated false negatives and never captured simultaneous loss,
+although both process generations changed and fresh post-state was healthy.
+The unchanged two-`SIGTERM` injection was repeated with a high-frequency local
+listener probe. It observed both routes ready at 9 ms, both down at 2144 ms,
+and both ready at 2462 ms. Full SSH, new generations, and exclusive managed
+ownership then passed for both aliases without sibling or manual recovery.
+
+Active rollback deactivated each service through its healthy sibling and used
+only short-lived, agent-disabled temporary predecessors referencing the
+dedicated identity by path. Transaction `20260721T221945Z-19326` rolled back
+exactly with both external routes healthy. Fresh transaction
+`20260721T223035Z-31774` staged and reactivated both aliases one at a time;
+each returned in one second and passed a final generation-changing kick in one
+second. Final status is `loaded=yes running=yes managed=1 external=0` for both
+aliases. Public/private Git are clean/current, temporary sessions are absent,
+and the hash-revalidated spent Office helper was exact-unlinked. Riken and Home
+remain unchanged pending their independent owner provisioning and host-specific
+classification.

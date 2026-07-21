@@ -364,6 +364,26 @@ on each Mac, typing `provision-office`, `provision-riken`, or `provision-home`.
 No other Mac supervisor may be staged until its helper completes and the local
 driver independently revalidates that host.
 
+Office rollout is complete. The owner provisioned the reviewed dedicated
+identity; metadata-only validation and isolated unattended authentication
+passed. Office advanced cleanly to protected
+`ef97b55cf8170508c40eae2c52c339296eba0e12` through updater transaction
+`20260721T221819Z-14095`. Inactive staging/rollback, sequential migration,
+three kicks and one unexpected exit per alias, listener-observed dual-route
+loss/recovery, exact active rollback/reapply, and final post-reapply kicks all
+passed. Transaction `20260721T223035Z-31774` is current; both aliases report
+`loaded=yes running=yes managed=1 external=0`; both routes and clean/current
+public/private Git passed; no temporary session remains; and the spent helper
+was hash-revalidated and exact-unlinked. Full evidence, including one rejected
+slow-observer drill and its unchanged high-frequency retry, is in
+`docs/audits/t293-connection-self-healing-2026-07-22.md`.
+
+**Next executable action:** the owner runs riken's reviewed
+`~/run_this.sh --plan`, then `~/run_this.sh --apply` and types
+`provision-riken`. The local driver must independently revalidate riken before
+staging or interrupting either tunnel. Home remains unchanged and independently
+owner-gated after riken.
+
 ### T-273 — Resolve intentionally deferred maintenance
 
 **Phase/status:** executing. Workstreams 1, 2, 3, and 9 are complete. Each
