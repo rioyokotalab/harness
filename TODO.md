@@ -38,7 +38,7 @@ Next free ID: T-288.
 
 ### T-287 — Converge the remaining Mac's `.bashrc` with the accepted Macs
 
-**Phase/status:** `executing`; the owner asked on 2026-07-21 to compare the
+**Phase/status:** `validating`; the owner asked on 2026-07-21 to compare the
 remaining Mac's `.bashrc` with the other Macs and remove the obsolete local
 configuration so its behavior is consistent with the accepted fleet. Planning
 and value-free discovery completed without a live change. The owner then
@@ -134,10 +134,21 @@ zero-reference/zero-handle, ready-doctor, no-op-plan, clean/equal-Git, and
 temporary-residue acceptance matrix passed again. Transaction identifiers and
 preimages remain only in private target state; `.bash_common` is still unread.
 
-**Next executable action:** perform the authorized content-blind quarantine,
-acceptance, restoration drill, second quarantine, final acceptance, and single
-exact unlink of `.bash_common`; stop on any identity, reference, handle, or
-behavioral mismatch.
+The authorized orphan drill then passed content-blind same-filesystem identity
+checks, first quarantine acceptance, exact-inode restoration and acceptance,
+second quarantine acceptance, and a final zero-reference/zero-handle check.
+The single quarantined `.bash_common` file was exact-unlinked and its empty
+temporary quarantine directory removed nonrecursively. Its contents were never
+read, printed, copied, or hashed. Final fresh shells pass, both startup files
+remain exact canonical mode-0600 images, `.bash_common` and temporary residue
+are absent, Mac and agent doctors remain ready, Bash and login-shell plans are
+no-ops, and target public Git is clean/equal. The temporary T-287 transaction
+pointer was exact-unlinked after verifying the accepted transaction complete;
+normal private rollback evidence is retained.
+
+**Next executable action:** run the focused Bash-hook test, diff/source/privacy
+checks, and clean full phase-one suite; then publish this value-free ledger
+through protected `main` and remove only the task branch after merge.
 
 ### T-286 — Onboard the remaining personal Mac independently
 
