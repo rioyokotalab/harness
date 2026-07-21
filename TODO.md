@@ -38,11 +38,12 @@ Next free ID: T-288.
 
 ### T-287 — Converge the remaining Mac's `.bashrc` with the accepted Macs
 
-**Phase/status:** `ready-for-go`; the owner asked on 2026-07-21 to compare the
+**Phase/status:** `executing`; the owner asked on 2026-07-21 to compare the
 remaining Mac's `.bashrc` with the other Macs and remove the obsolete local
 configuration so its behavior is consistent with the accepted fleet. Planning
-and value-free discovery are complete; no live file has changed. A fresh
-explicit `go` is required before the first mutation.
+and value-free discovery completed without a live change. The owner then
+explicitly instructed execution, required `.bashrc` and `.bash_profile` to
+match the other Macs, and separately authorized removal of `.bash_common`.
 
 **Confirmed evidence:** local `main` was clean/equal to freshly fetched
 `origin/main` at `7c592af6a9778ce24fe36b093c3bcdccb877da61`, and the work is
@@ -69,31 +70,45 @@ one `.bashrc` curation while preserving `.bash_profile` unchanged:
 ./bin/harness macos-bash-hooks --host riken --empty-local --plan
 ```
 
-**Frozen execution and recovery:** after `go`, revalidate the current-user SSH
+**Frozen execution and recovery:** revalidation passed for the current-user SSH
 socket, clean/equal target public checkout, strict startup-file metadata, and
-the identical one-change plan. Run the matching `--apply` from published
-`main`, keep its transaction identifier only in private local state/output,
-and do not source or reload any running shell. The adapter replaces only the
-canonical `.bashrc` local middle, normalizes it to mode 0600, and leaves the
-selected login file byte-for-byte unchanged. It records the complete preimage
-for unchanged-only rollback. `~/.bash_common` itself remains untouched; its
-possible later retirement is a separate task.
+the identical one-change plan. `bash-startup-unify --plan` reports the target
+`.bash_profile` content current, so its bytes require no replacement; its mode
+is 0644 while Office's accepted canonical file is 0600. Run the matching
+`--apply` from published `main`, keep its transaction identifier only in
+private local state/output, and do not source or reload any running shell. The
+adapter replaces only the canonical `.bashrc` local middle, normalizes it to
+mode 0600, and leaves the selected login file byte-for-byte unchanged. Apply an
+exact mode-only 0600 change to `.bash_profile`, retaining 0644 as its rollback
+preimage. The adapter records the complete `.bashrc` preimage for
+unchanged-only rollback.
+
+The current `.bash_common` is a current-user-owned regular single-link file
+with zero open handles. Its three startup-reference lines are the one guarded
+block selected for removal with the `.bashrc` local middle. After Bash
+acceptance, require zero references and zero handles, atomically quarantine
+the unchanged inode under private harness state, repeat fresh-shell and doctor
+checks, restore it once to prove recovery, repeat the checks, quarantine it a
+second time, repeat acceptance, and exact-unlink only that single file. Never
+read, print, copy, hash, or otherwise inspect its contents.
 
 Validate Bash syntax, exact empty-local structure, absent local compiler/color/
 legacy-loader/extra-alias definitions, fresh login/interactive/noninteractive
 scope, public Homebrew/locale/`~/.local/bin`/completion/`activate` behavior,
 Apple Clang defaults, startup no-op plans, and ready Mac/agent doctors. Then
-roll back unchanged-only, prove the exact prior bytes and mode were restored,
-repeat the pre-change behavioral classification, reapply the identical frozen
-plan, and repeat the full acceptance matrix. Stop without broadening scope on
+roll back unchanged-only, restore `.bash_profile` mode 0644, prove the exact
+prior `.bashrc` bytes/mode and profile bytes/mode were restored, repeat the
+pre-change behavioral classification, reapply the identical frozen plan plus
+profile mode 0600, and repeat the full acceptance matrix before the authorized
+orphan-file drill. Stop without broadening scope on
 SSH/authentication failure, dirty or divergent Git, changed startup bytes,
 unsafe metadata, a plan other than exactly one `.bashrc` curation, syntax or
-fresh-shell regression, password/TCC prompt, or any request to delete the
-now-unreferenced `.bash_common` file.
+fresh-shell regression, password/TCC prompt, a nonzero post-change reference or
+open-handle count, or any quarantine/restoration mismatch.
 
-**Next executable action after `go`:** rerun the value-free preflight and exact
-`macos-bash-hooks --host riken --empty-local --plan`; apply only if every frozen
-gate still matches.
+**Next executable action:** apply the already-revalidated exact
+`macos-bash-hooks --host riken --empty-local` transaction and mode-only profile
+change; stop unless every frozen gate still matches immediately beforehand.
 
 ### T-286 — Onboard the remaining personal Mac independently
 
