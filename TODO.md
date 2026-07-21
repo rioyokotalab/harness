@@ -5,7 +5,7 @@ harness. Keep only active decisions, blockers, exact next actions, and compact
 completion pointers here. Full pre-housekeeping chronology remains available at
 published commit `d797d8658ea249f40f1acef1e84fcbbd83b0d6ff`.
 
-Next free ID: T-285.
+Next free ID: T-286.
 
 ## Current state
 
@@ -32,8 +32,10 @@ Next free ID: T-285.
 
 ## Next resume checkpoint
 
-1. When the remaining Mac is online, resume T-268/T-269 through the one-host
-   onboarding workflow. Do not infer its state from another Mac or batch it.
+1. When the remaining Mac is online, resume T-285/T-268/T-269 through the
+   owner-started one-host onboarding workflow. The only current input is its
+   existing opaque logical ID; do not infer it from another Mac or enumerate
+   private profiles.
 2. On or after 2026-07-26, query only T-196's seven recorded successor job IDs.
 3. Choose another independently eligible T-273 workstream only after fresh
    reconstruction of its gate and authority.
@@ -42,7 +44,7 @@ Next free ID: T-285.
 
 ### T-284 — Accelerate and instrument Codex–Claude cowork
 
-**Phase/status:** `publishing`; the owner requested on 2026-07-21 that Codex spend
+**Phase/status:** `complete/published`; the owner requested on 2026-07-21 that Codex spend
 three hours refining the published `codex-claude-cowork` skill for faster
 turnaround, higher-quality driver/co-pilot information exchange, better
 co-pilot state monitoring, and faster local checking and protected CI. The
@@ -223,14 +225,110 @@ passed all 57 suites and umbrella checks in 77.22 seconds. Round 6 is complete
 and receipt-valid; its exact sandbox was guarded-cleaned with protected anchors
 unchanged.
 
-**Publication checkpoint:** the owner explicitly authorized pushing T-284,
-removing its task branch, and cleaning its remaining temporary residue. A fresh
-fetch still finds `origin/main` at the reconstructed baseline and ancestral to
-the clean task branch. Current-user-owned SSH-agent transport and GitHub API
-access pass independently. Next action: checkpoint this authority, rerun the
-clean full phase-one gate, push the exact branch, open a protected PR, wait for
-its required check, squash-merge, verify tree equality, then delete only the
-exact T-284 remote/local branches and any verified T-284 scratch residue.
+**Publication result:** current-user-owned SSH-agent transport and GitHub API
+access passed independently. The final local full phase-one gate passed in
+76.58 seconds; PR #163 passed protected `portable-phase1` in 1m36s and
+squash-merged as `bb11854`. The merged tree was byte-identical to the reviewed
+task head. The exact remote and local T-284 branches were deleted, the sole
+worktree is clean, and a bounded top-level residue scan found no T-284 scratch
+path. T-284 has no remaining action.
+
+### T-285 — Prepare independent onboarding of the remaining personal Mac
+
+**Phase/status:** `executing`; direct value-free preflight is complete. On
+2026-07-21 the owner requested repository housekeeping and preparation to
+resume the fourth Mac. The owner then supplied its opaque logical ID privately
+and authorized direct SSH discovery. This does not yet authorize changing the
+Mac, private companion, package, startup file, agent setting, account,
+credential, or external service.
+
+**Housekeeping and baseline:** T-284 is published on `main` at `bb11854` and its
+exact task branches and scratch residue are gone. Preparation remains isolated
+on `task/t-285-remaining-mac-prep`, rebased onto that freshly fetched published
+baseline; no unpublished T-284 commit is mixed into the Mac work. Only this
+value-free ledger changed: no private state or external host was mutated. The
+current published command surface
+contains `macos-codex-bootstrap`, profile/inventory/plan/doctor/update/control/
+Homebrew/Bash/SSH/config migration, tmux, and agent catch-up adapters. All 15
+personal-Mac/onboarding focused suites plus agent configuration, tmux, Claude
+takeover, and source-contract checks pass on this baseline.
+
+**Confirmed scope and boundaries:** operate exactly one owner-named logical
+host through the owner-authorized direct session. Do not infer its state
+from the three accepted Macs, enumerate private profiles, inspect SSH keys or
+credential contents, enable inbound access, change Terminal/Keychain/zsh,
+reload active shell/tmux sessions, install unselected packages, or combine the
+post-acceptance `.bash_common` test with an onboarding transaction. Public
+evidence remains value-free; host identity, private paths/revisions, live facts,
+and transaction identifiers remain local/private.
+
+The owner explicitly authorized changes to `.bashrc`, `.bash_profile`, and
+`.ssh/config` within this one-host onboarding scope. That supplies file-change
+authority but does not waive repository safety: Bash and SSH changes still use
+the applicable transactional adapters, preserved preimages, collision checks,
+and unchanged-only rollback. A shape the adapters classify unsafe, ambiguous,
+or divergent remains a stop condition rather than a raw overwrite.
+
+**Value-free live preflight:** direct BatchMode SSH reaches a supported Darwin
+architecture and the remote home is current-user-owned. The declared
+`~/harness` checkout and fixed-path Codex command are absent. Homebrew is usable
+at the architecture-expected prefix and its bin is writable; Command Line Tools,
+system Git, and Homebrew Python with `tomllib` are present. The fixed bootstrap
+prerequisites `gh` and `tmux` and the dedicated harness Python-tools environment
+are absent. Public HTTPS Git read transport succeeds; GitHub SSH authentication
+does not, and no current-user-owned launchd-native agent socket is visible. No
+file, package, repository, profile, credential, agent, or remote ref changed.
+Remote commands explicitly disable the alias's harmless failed X11-forwarding
+attempt.
+
+**Prepared sequence:**
+
+1. After go, revalidate that `~/harness` remains absent, Homebrew retains the
+   expected prefix/ownership, and public HTTPS still resolves published `main`.
+   Clone only the public harness to the declared path over HTTPS, require clean
+   `main`, one exact `origin`, and head equality with fetched `origin/main`.
+   Retain a partially created checkout for reviewed recovery rather than
+   deleting it recursively.
+2. Run the published `macos-codex-bootstrap --host HOST --plan` from that exact
+   checkout with the fixed Homebrew bin on `PATH`. Accept only the presently
+   predicted scope: install missing `gh` and `tmux`, create the absent dedicated
+   Python-tools environment with pinned PyYAML, install official standalone
+   Codex, and launch the one-Mac assignment. Any extra formula, prompt, owner,
+   path collision, installer-byte drift, or changed prerequisite stops.
+3. Apply that exact bootstrap plan. Homebrew package changes are not
+   transactionally reversible; file/client installation remains bounded by the
+   checksum-pinned reviewed installer. GitHub SSH/private-companion access is a
+   known authentication pause: use the native `gh`/browser flow if required,
+   never inspect or solicit keys, tokens, passphrases, or credential contents.
+4. Fetch public/private `main` independently and resolve explicit targets. Use
+   only clean fast-forward ancestry. If an old engine cannot validate the
+   current private schema, use the documented public-first fast-forward handoff;
+   never reset, rebase, force-update, autostash, or clean either checkout.
+5. Run the strict profile validator, value-minimized inventory, and aggregate
+   Mac plan for that host. Freeze only applicable stages, exact rollback,
+   validation, blockers, and the first native command in this ledger without
+   recording private values.
+6. Execute one stage at a time through native harness commands:
+   repository catch-up, control links, selected Homebrew baseline, Bash hooks/
+   unification, tmux, SSH-only agreement, and agent configuration. Revalidate
+   immediately before every apply and stop on password, TCC, reboot, physical
+   interaction, divergence, prompt, unmanaged dependency, or scope drift.
+7. Require plan/apply, fresh-session acceptance, unchanged-only rollback, and
+   identical reapply for each new transactional component; require ready Mac
+   and agent doctors, clean/equal Git, native/batch routing, isolated tmux,
+   SSH-only private agreement, and no transfer artifacts. Only afterward run
+   T-273's ordered `.bash_common` orphan test on this one Mac.
+
+**Decision audit and next executable action:** the settled onboarding defaults
+resolve package, first-agreement, Bash, agent-policy, and orphan-file choices.
+The known GitHub authentication pause is physical/credential interaction, not
+an unresolved design decision. The supplied `HOST` value remains outside this
+public ledger. The owner gave the fresh explicit `go` on 2026-07-21 and also
+authorized the three live Bash/SSH files within the transactional boundaries
+above. First publish this value-free go checkpoint through protected `main` so
+the Mac-local bootstrap can recover from the repository alone. Then revalidate
+the step-1 predicates and clone the public checkout; stop before any broader
+apply on drift or authentication ambiguity.
 
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 
