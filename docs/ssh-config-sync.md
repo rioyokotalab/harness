@@ -32,6 +32,15 @@ either installed postimage changed. Existing SSH sessions are not restarted.
 `harness dotfiles` routes SSH work through this same adapter instead of making
 fragment symlinks.
 
+The shared fragment places an exact `Host login login2` exception before the
+global defaults and sets `ControlMaster no`, `ControlPath none`, and
+`ControlPersist no`. OpenSSH uses the first obtained value for each option, so
+this ordering prevents the two failover aliases from reusing or creating a
+multiplexed connection. GitHub and ordinary targets continue to use the global
+`ControlMaster auto`, configured control path, and persistent master. Applying
+the fragment does not terminate an already-running master; the exception takes
+effect for new clients.
+
 ## Personal Macs: SSH-only desired state
 
 `harness macos-ssh-sync --host LOGICAL_ID` supports the engine-1 legacy and
