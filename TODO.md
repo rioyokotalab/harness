@@ -5,7 +5,7 @@ harness. Keep only active decisions, blockers, exact next actions, and compact
 completion pointers here. Full pre-housekeeping chronology remains available at
 published commit `d797d8658ea249f40f1acef1e84fcbbd83b0d6ff`.
 
-Next free ID: T-287.
+Next free ID: T-288.
 
 ## Current state
 
@@ -35,6 +35,123 @@ Next free ID: T-287.
    reconstruction of its gate and authority.
 
 ## Active tasks
+
+### T-287 — Converge the remaining Mac's `.bashrc` with the accepted Macs
+
+**Phase/status:** `complete`; the owner asked on 2026-07-21 to compare the
+remaining Mac's `.bashrc` with the other Macs and remove the obsolete local
+configuration so its behavior is consistent with the accepted fleet. Planning
+and value-free discovery completed without a live change. The owner then
+explicitly instructed execution, required `.bashrc` and `.bash_profile` to
+match the other Macs, and separately authorized removal of `.bash_common`.
+
+**Confirmed evidence:** local `main` was clean/equal to freshly fetched
+`origin/main` at `7c592af6a9778ce24fe36b093c3bcdccb877da61`, and the work is
+checkpointed on `task/t-287-riken-bashrc-consistency`. Of the known Mac SSH
+aliases, only Office and the target are currently reachable from this
+controller; unavailable aliases were not guessed or traversed. Office's live
+file is the accepted canonical 18-line empty-local layout at mode 0600. The
+published T-281 acceptance independently records that Aist, Home, and Office
+all have that same layout, differing only in logical host, with no global
+compiler, color, or pyenv overrides.
+
+The target is a current-user-owned, single-link regular `.bashrc` with all six
+canonical managed markers, but it is 66 lines at mode 0644. A redacted
+statement inventory exposed names and categories only: its local body repeats
+the public Homebrew environment, locale, Python-environment helper/completion,
+and related shell setup; adds global `CC`/`CXX` and color overrides; retains the
+old guarded `.bash_common` loader; and defines four aliases, one of which is
+already public. No assignment values, source paths other than the already-known
+`.bash_common` class, credential contents, or private payload bytes were
+printed or recorded. The native transactional plan passes and selects exactly
+one `.bashrc` curation while preserving `.bash_profile` unchanged:
+
+```text
+./bin/harness macos-bash-hooks --host riken --empty-local --plan
+```
+
+**Frozen execution and recovery:** revalidation passed for the current-user SSH
+socket, clean/equal target public checkout, strict startup-file metadata, and
+the identical one-change plan. `bash-startup-unify --plan` reports the target
+`.bash_profile` content current, so its bytes require no replacement; its mode
+is 0644 while Office's accepted canonical file is 0600. Run the matching
+`--apply` from published `main`, keep its transaction identifier only in
+private local state/output, and do not source or reload any running shell. The
+adapter replaces only the canonical `.bashrc` local middle, normalizes it to
+mode 0600, and leaves the selected login file byte-for-byte unchanged. Apply an
+exact mode-only 0600 change to `.bash_profile`, retaining 0644 as its rollback
+preimage. The adapter records the complete `.bashrc` preimage for
+unchanged-only rollback.
+
+The current `.bash_common` is a current-user-owned regular single-link file
+with zero open handles. Its three startup-reference lines are the one guarded
+block selected for removal with the `.bashrc` local middle. After Bash
+acceptance, require zero references and zero handles, atomically quarantine
+the unchanged inode under private harness state, repeat fresh-shell and doctor
+checks, restore it once to prove recovery, repeat the checks, quarantine it a
+second time, repeat acceptance, and exact-unlink only that single file. Never
+read, print, copy, hash, or otherwise inspect its contents.
+
+Validate Bash syntax, exact empty-local structure, absent local compiler/color/
+legacy-loader/extra-alias definitions, fresh login/interactive/noninteractive
+scope, public Homebrew/locale/`~/.local/bin`/completion/`activate` behavior,
+Apple Clang defaults, startup no-op plans, and ready Mac/agent doctors. Then
+roll back unchanged-only, restore `.bash_profile` mode 0644, prove the exact
+prior `.bashrc` bytes/mode and profile bytes/mode were restored, repeat the
+pre-change behavioral classification, reapply the identical frozen plan plus
+profile mode 0600, and repeat the full acceptance matrix before the authorized
+orphan-file drill. Stop without broadening scope on
+SSH/authentication failure, dirty or divergent Git, changed startup bytes,
+unsafe metadata, a plan other than exactly one `.bashrc` curation, syntax or
+fresh-shell regression, password/TCC prompt, a nonzero post-change reference or
+open-handle count, or any quarantine/restoration mismatch.
+
+**Execution checkpoint:** the exact plan was revalidated from clean/equal
+published `main` and applied. The command completed, but the controller's
+private transaction parser expected the older output suffix and stopped before
+the profile-mode step; its BSD cleanup trap also passed two leaves to `unlink`,
+which safely refused and left both private temporary logs in place. Live
+reconstruction proved `.bashrc` already converged, `.bash_profile` unchanged,
+and exactly one private apply log. The corrected parser bound that completed
+transaction to a mode-0600 local pointer, exact-unlinked both logs one at a
+time, and changed only `.bash_profile` mode from 0644 to 0600.
+
+The first converged acceptance passes: `.bashrc` is the exact 18-line
+empty-local image at mode 0600; `.bash_profile` is byte-identical to the public
+canonical thin loader at mode 0600; known Bash startup files have zero
+`.bash_common` reference lines; noninteractive and fresh login-interactive
+checks preserve public Homebrew, locale, `~/.local/bin`, completion, `activate`,
+and common aliases while leaving compiler, color, pyenv, and retired aliases
+unset. Mac doctor and agent doctor are ready with zero failures or warnings,
+and both startup plans are no-ops. `.bash_common` remains in place and unread.
+
+The deliberate reverse-order rollback then restored `.bash_profile` mode 0644
+and the exact transaction-backed 66-line `.bashrc` preimage at mode 0644. Its
+three guarded `.bash_common` reference lines and fresh login behavior returned,
+and the original one-change plan reappeared. The identical plan was reapplied,
+the profile mode returned to 0600, and the full exact-image, fresh-shell,
+zero-reference/zero-handle, ready-doctor, no-op-plan, clean/equal-Git, and
+temporary-residue acceptance matrix passed again. Transaction identifiers and
+preimages remain only in private target state; `.bash_common` is still unread.
+
+The authorized orphan drill then passed content-blind same-filesystem identity
+checks, first quarantine acceptance, exact-inode restoration and acceptance,
+second quarantine acceptance, and a final zero-reference/zero-handle check.
+The single quarantined `.bash_common` file was exact-unlinked and its empty
+temporary quarantine directory removed nonrecursively. Its contents were never
+read, printed, copied, or hashed. Final fresh shells pass, both startup files
+remain exact canonical mode-0600 images, `.bash_common` and temporary residue
+are absent, Mac and agent doctors remain ready, Bash and login-shell plans are
+no-ops, and target public Git is clean/equal. The temporary T-287 transaction
+pointer was exact-unlinked after verifying the accepted transaction complete;
+normal private rollback evidence is retained.
+
+Focused Bash-hook, source-contract, public-repository, and diff checks pass.
+The clean full phase-one gate passed all 57 focused suites plus its umbrella
+checks at auto-selected eight jobs. PR #166's first protected
+`portable-phase1` run passed in 1m37s; its final ledger-only closure commit must
+repeat that protected check before squash merge. After the protected merge and
+exact task-branch removal, T-287 has no remaining action.
 
 ### T-286 — Onboard the remaining personal Mac independently
 
