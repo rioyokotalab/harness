@@ -103,6 +103,9 @@ Guarded-delete manifest revalidation accepted one target with six entries and
 mode-0600 bookkeeping files and empty boundary were exact-unlinked. A fresh
 updater plan created no new residue; final count is zero.
 
+Clean checkpoint `a3616bf` passed the complete `tests/test-phase1.sh` suite
+after Home acceptance; no focused suite failed.
+
 **Connection monitoring:** initial monitor recovery restored aist2 through live
 aist with ssh login2. The symmetric mapping is active: secondary to ssh login
 restores a primary; primary to ssh login2 restores a secondary. After any route
