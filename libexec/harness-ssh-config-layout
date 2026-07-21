@@ -195,10 +195,12 @@ def validate_host(root, host):
     if (root / "profiles" / "hosts" / (host + ".conf")).is_file():
         return
     if os.uname().sysname == "Darwin":
+        environment = os.environ.copy()
+        environment["HARNESS_ALLOW_LEGACY_SSH_LAYOUT"] = "1"
         result = subprocess.run(
             [str(root / "libexec" / "harness-macos-profile"), "--host", host],
             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL, check=False,
+            stderr=subprocess.DEVNULL, check=False, env=environment,
         )
         if result.returncode == 0:
             return
