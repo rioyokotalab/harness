@@ -139,11 +139,13 @@ boundary. Final Office residue count is zero.
 The owner authorized `office2` as a failover transport to the same Mac. SSH
 configuration resolves `office` and `office2` through distinct transports.
 The primary currently reaches the accepted host with a valid forwarded agent;
-the first `office2` probe failed before a remote shell, so same-host identity
-has not yet been proven through the alternate. Do not use `office2` for state
-changes until one successful dual-route comparison confirms identical host,
-user, and repository markers; after any later failover, revalidate the exact
-durable step rather than assuming completion.
+the first `office2` probe failed host-key verification before a remote shell,
+so same-host identity has not yet been proven through the alternate. Do not
+accept an unknown key noninteractively or use `office2` for state changes until
+the owner confirms the route interactively and one successful dual-route
+comparison confirms identical host, user, and repository markers. After any
+later failover, revalidate the exact durable step rather than assuming
+completion.
 
 **Current connectivity checkpoint:** two direct Aist update attempts and a
 fresh four-alias probe timed out during SSH banner exchange at its declared
@@ -164,7 +166,10 @@ therefore no identity comparison or remote command was possible. At resume,
 try `aist`, then `aist2`; after any route switch, independently revalidate the
 host marker, current-user-owned forwarded socket, clean Git, target ancestry,
 and the exact last durable step. Never infer success for a command interrupted
-by transport loss.
+by transport loss. The latest classification finds primary `aist` refusing the
+connection and `aist2` blocked by host-key verification. The owner must confirm
+the alternate interactively; never bypass that gate with automatic key
+acceptance.
 
 **Frozen execution order:**
 
