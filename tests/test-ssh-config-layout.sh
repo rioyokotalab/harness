@@ -86,7 +86,10 @@ cmp -s "$home/.ssh/config.d/harness.conf" "$test_repo/config/ssh/harness.conf" |
     fail "managed include is not terminal"
 [ "$(tail -n 2 "$home/.ssh/config" | head -n 1)" = 'Match all' ] ||
     fail "managed global context reset is absent"
-ssh -o CanonicalizeHostname=no -G -F "$home/.ssh/config" github 2>/dev/null |
+sed "s|^Include ~/.ssh/config.d/harness.conf$|Include $home/.ssh/config.d/harness.conf|" \
+    "$home/.ssh/config" >"$TEMP_DIR/effective-config"
+ssh -o CanonicalizeHostname=no -G -F "$TEMP_DIR/effective-config" \
+    github 2>/dev/null |
     awk '$1 == "hostname" { h=$2 } $1 == "user" { u=$2 }
         $1 == "serveraliveinterval" { s=$2 }
         END { exit h == "github.com" && u == "git" && s == 15 ? 0 : 1 }' ||
