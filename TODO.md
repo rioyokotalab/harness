@@ -378,11 +378,27 @@ was hash-revalidated and exact-unlinked. Full evidence, including one rejected
 slow-observer drill and its unchanged high-frequency retry, is in
 `docs/audits/t293-connection-self-healing-2026-07-22.md`.
 
-**Next executable action:** the owner runs riken's reviewed
-`~/run_this.sh --plan`, then `~/run_this.sh --apply` and types
-`provision-riken`. The local driver must independently revalidate riken before
-staging or interrupting either tunnel. Home remains unchanged and independently
-owner-gated after riken.
+Riken rollout is complete. The owner provisioned the reviewed dedicated
+identity; metadata-only validation and isolated unattended authentication
+passed. Riken advanced cleanly to protected
+`860d99808f0c09f72acb3f23a223de1d2b897acb` through updater transaction
+`20260721T224851Z-46598`. Inactive staging/rollback, sequential migration,
+three kicks and one unexpected exit per alias, listener-observed dual-route
+loss/recovery, exact active rollback/reapply, and final post-reapply kicks all
+passed. Transaction `20260721T231434Z-66963` is current; both aliases report
+`loaded=yes running=yes managed=1 external=0`; both routes and clean/current
+public/private Git passed; no temporary session or recovery loop remains; and
+the spent helper was hash-revalidated and exact-unlinked. Full evidence,
+including the stale multiplexed predecessor, owner-assisted route restoration,
+and retry-loop interference with the first rollback attempt, is in
+`docs/audits/t293-connection-self-healing-2026-07-22.md`.
+
+**Next executable action:** independently revalidate Home's reviewed helper,
+clean/current public/private Git, absent dedicated identity, and supervisor
+plan. If those gates still pass, ask the owner to run `~/run_this.sh --plan`
+and `~/run_this.sh --apply` locally on Home and type `provision-home`. Do not
+stage Home's supervisor until helper completion and fresh local-driver
+validation.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
