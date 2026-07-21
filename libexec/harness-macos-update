@@ -88,6 +88,25 @@ validate_private_target() {
                     "$target_path" "$target_ssh_file"
                 macos_validate_ssh_config "$target_ssh_file" "$current_uid" 600
                 ;;
+            ssh/*.conf)
+                [ "$target_minimum_engine" -ne 2 ] ||
+                    die "private target tracked layout is invalid"
+                target_name=${target_path#ssh/}
+                target_id=${target_name%.conf}
+                if [ "$target_name" != "$target_id.conf" ] ||
+                    ! macos_private_id_is_safe "$target_id" ||
+                    ! printf '%s\n' "$target_paths" |
+                        grep -F -x "hosts/$target_id.conf" >/dev/null; then
+                    die "private target tracked layout is invalid"
+                fi
+                target_mode=$(git -C "$private_checkout" ls-tree \
+                    "$private_target" -- "$target_path" | awk '{ print $1 ":" $2 }')
+                [ "$target_mode" = 100644:blob ] ||
+                    die "private target tracked layout is invalid"
+                export_commit_file "$private_checkout" "$private_target" \
+                    "$target_path" "$target_ssh_file"
+                macos_validate_ssh_config "$target_ssh_file" "$current_uid" 600
+                ;;
             bashrc)
                 [ "$target_minimum_engine" -ge 2 ] ||
                     die "private target tracked layout is invalid"
@@ -137,17 +156,34 @@ validate_private_target() {
     target_ssh_state=absent
     target_bash_state=absent
     target_tmux_state=absent
+    target_per_host_any=absent
     printf '%s\n' "$target_paths" | grep -F -x ssh_config >/dev/null &&
         target_ssh_state=present
     printf '%s\n' "$target_paths" | grep -F -x bashrc >/dev/null &&
         target_bash_state=present
     printf '%s\n' "$target_paths" | grep -F -x tmux.conf >/dev/null &&
         target_tmux_state=present
+    printf '%s\n' "$target_paths" | grep '^ssh/[^/]*\.conf$' >/dev/null &&
+        target_per_host_any=present
     case "$target_minimum_engine:$target_ssh_state:$target_bash_state:$target_tmux_state" in
         1:absent:absent:absent|1:present:absent:absent) ;;
         2:absent:absent:absent|2:present:present:present) ;;
+        3:absent:absent:absent) ;;
         *) die "private target payload set is incomplete or incompatible" ;;
     esac
+    if [ "$target_minimum_engine" -eq 1 ] &&
+        [ "$target_per_host_any" = present ] &&
+        [ "$target_ssh_state" != present ]; then
+        die "private target payload set is incomplete or incompatible"
+    fi
+    if [ "$target_minimum_engine" -eq 3 ]; then
+        target_host_ids=$(printf '%s\n' "$target_paths" |
+            sed -n 's#^hosts/\(.*\)\.conf$#\1#p' | LC_ALL=C sort)
+        target_ssh_ids=$(printf '%s\n' "$target_paths" |
+            sed -n 's#^ssh/\(.*\)\.conf$#\1#p' | LC_ALL=C sort)
+        [ -n "$target_host_ids" ] && [ "$target_host_ids" = "$target_ssh_ids" ] ||
+            die "private target payload set is incomplete or incompatible"
+    fi
 }
 
 validate_state_file() {
@@ -430,7 +466,7 @@ macos_validate_public_profile "$target_public_file"
 export_commit_file "$public_checkout" "$public_target" \
     profiles/personal-macos/formula-policy-v2.conf "$target_formula_policy"
 macos_validate_formula_policy "$target_formula_policy"
-target_engine_schema=2
+target_engine_schema=3
 target_private_min=$(macos_manifest_get "$target_public_file" private_schema_min)
 target_private_max=$(macos_manifest_get "$target_public_file" private_schema_max)
 target_baseline=$(macos_manifest_get "$target_public_file" baseline)

@@ -57,7 +57,7 @@ make_profile() {
 valid_home=$(make_profile valid)
 valid_output=$(HOME="$valid_home" "$HARNESS" macos-profile \
     --host mac-test-pilot)
-expected_output='MACOS_PRIVATE_PROFILE status=valid schema=1 engine_schema=2
+expected_output='MACOS_PRIVATE_PROFILE status=valid schema=1 engine_schema=3
 SELECTION baseline=macos-cli-v1 capability_groups=2 extra_formulae=2
 PUBLIC_FORMULAE count=10
 SSH_PAYLOAD state=present values=not-emitted
@@ -99,6 +99,97 @@ absent_output=$(HOME="$absent_home" "$HARNESS" macos-profile \
 printf '%s\n' "$absent_output" | grep -F \
     'SSH_PAYLOAD state=absent values=not-emitted' >/dev/null ||
     fail "pre-adoption payload absence"
+
+transition_home=$(make_profile per-host-transition)
+transition_private=$transition_home/.config/harness/private
+mkdir "$transition_private/ssh"
+chmod 700 "$transition_private/ssh"
+cp "$transition_private/ssh_config" \
+    "$transition_private/ssh/mac-test-pilot.conf"
+chmod 600 "$transition_private/ssh/mac-test-pilot.conf"
+git -C "$transition_private" add ssh/mac-test-pilot.conf
+git -C "$transition_private" commit -q -m 'synthetic per-host transition'
+transition_output=$(HOME="$transition_home" "$HARNESS" macos-profile \
+    --host mac-test-pilot)
+printf '%s\n' "$transition_output" | grep -F \
+    'SSH_PAYLOAD state=present values=not-emitted' >/dev/null ||
+    fail "transition per-host payload selection"
+git -C "$transition_private" rm -q ssh_config
+git -C "$transition_private" commit -q -m 'synthetic incomplete transition'
+if HOME="$transition_home" "$HARNESS" macos-profile --host mac-test-pilot \
+    >"$TEMP_DIR/incomplete-transition.out" 2>&1; then
+    fail "engine-1 per-host transition without legacy root accepted"
+fi
+grep -F 'payload set is incomplete or incompatible' \
+    "$TEMP_DIR/incomplete-transition.out" >/dev/null ||
+    fail "incomplete transition refusal"
+
+schema3_home=$(make_profile per-host-final)
+schema3_private=$schema3_home/.config/harness/private
+mkdir "$schema3_private/ssh"
+chmod 700 "$schema3_private/ssh"
+cp "$schema3_private/ssh_config" "$schema3_private/ssh/mac-test-pilot.conf"
+chmod 600 "$schema3_private/ssh/mac-test-pilot.conf"
+printf 'schema=1\nminimum_engine_schema=3\n' >"$schema3_private/companion.conf"
+chmod 600 "$schema3_private/companion.conf"
+git -C "$schema3_private" rm -q ssh_config
+git -C "$schema3_private" add companion.conf ssh/mac-test-pilot.conf
+git -C "$schema3_private" commit -q -m 'synthetic per-host final layout'
+schema3_output=$(HOME="$schema3_home" "$HARNESS" macos-profile \
+    --host mac-test-pilot)
+printf '%s\n' "$schema3_output" | grep -F \
+    'engine_schema=3' >/dev/null || fail "schema-3 per-host layout"
+
+schema3_root_home=$(make_profile per-host-final-with-root)
+schema3_root_private=$schema3_root_home/.config/harness/private
+mkdir "$schema3_root_private/ssh"
+chmod 700 "$schema3_root_private/ssh"
+cp "$schema3_root_private/ssh_config" \
+    "$schema3_root_private/ssh/mac-test-pilot.conf"
+chmod 600 "$schema3_root_private/ssh/mac-test-pilot.conf"
+printf 'schema=1\nminimum_engine_schema=3\n' \
+    >"$schema3_root_private/companion.conf"
+chmod 600 "$schema3_root_private/companion.conf"
+git -C "$schema3_root_private" add companion.conf ssh/mac-test-pilot.conf
+git -C "$schema3_root_private" commit -q -m 'synthetic invalid schema-3 root'
+if HOME="$schema3_root_home" "$HARNESS" macos-profile --host mac-test-pilot \
+    >"$TEMP_DIR/schema3-root.out" 2>&1; then
+    fail "schema-3 legacy root accepted"
+fi
+grep -F 'payload set is incomplete or incompatible' \
+    "$TEMP_DIR/schema3-root.out" >/dev/null || fail "schema-3 root refusal"
+
+schema3_missing_home=$(make_profile per-host-final-missing)
+schema3_missing_private=$schema3_missing_home/.config/harness/private
+printf 'schema=1\nminimum_engine_schema=3\n' \
+    >"$schema3_missing_private/companion.conf"
+chmod 600 "$schema3_missing_private/companion.conf"
+git -C "$schema3_missing_private" rm -q ssh_config
+git -C "$schema3_missing_private" add companion.conf
+git -C "$schema3_missing_private" commit -q -m 'synthetic missing per-host payload'
+if HOME="$schema3_missing_home" "$HARNESS" macos-profile --host mac-test-pilot \
+    >"$TEMP_DIR/schema3-missing.out" 2>&1; then
+    fail "schema-3 missing per-host payload accepted"
+fi
+grep -F 'payload set is incomplete or incompatible' \
+    "$TEMP_DIR/schema3-missing.out" >/dev/null || fail "schema-3 bijection refusal"
+
+transition_mode_home=$(make_profile per-host-directory-mode)
+transition_mode_private=$transition_mode_home/.config/harness/private
+mkdir "$transition_mode_private/ssh"
+cp "$transition_mode_private/ssh_config" \
+    "$transition_mode_private/ssh/mac-test-pilot.conf"
+chmod 755 "$transition_mode_private/ssh"
+chmod 600 "$transition_mode_private/ssh/mac-test-pilot.conf"
+git -C "$transition_mode_private" add ssh/mac-test-pilot.conf
+git -C "$transition_mode_private" commit -q -m 'synthetic unsafe per-host directory'
+if HOME="$transition_mode_home" "$HARNESS" macos-profile --host mac-test-pilot \
+    >"$TEMP_DIR/per-host-directory-mode.out" 2>&1; then
+    fail "unsafe per-host SSH directory accepted"
+fi
+grep -F 'private companion directory has unsafe mode' \
+    "$TEMP_DIR/per-host-directory-mode.out" >/dev/null ||
+    fail "per-host SSH directory mode refusal"
 
 bundle_home=$(make_profile payload-bundle)
 bundle_private=$bundle_home/.config/harness/private

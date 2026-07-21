@@ -8,8 +8,10 @@ migration; it is not the target representation.
 
 ## Current representation
 
-- The private companion tracks `ssh_config`, `companion.conf`, and opaque host
-  declarations. `minimum_engine_schema=1` is the current SSH-only layout.
+- The private companion tracks `companion.conf`, opaque host declarations, and
+  one `ssh/LOGICAL_ID.conf` per declared Mac. `minimum_engine_schema=3` is the
+  finalized SSH-only layout; the root `ssh_config` and engine 1 remain only as
+  the ordered migration bridge.
 - Bash's selected login startup file and `.bashrc` begin with the exact public
   `harness early managed` hook, retain owner-local bytes in the middle, and end
   with the exact public `harness managed` hook. There is no private Bash

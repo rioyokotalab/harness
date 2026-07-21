@@ -1,5 +1,9 @@
 # T-268 plan — private personal macOS fleet
 
+> Historical execution plan. T-291's schema-3 per-Mac SSH payload contract in
+> `docs/schemas/personal-macos-private-v1.md` supersedes this plan's original
+> single shared `ssh_config` representation.
+
 **Phase:** pilot curation/plan authorized on office — apply remains gated
 
 **Updated:** 2026-07-19 JST

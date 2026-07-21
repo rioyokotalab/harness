@@ -2,8 +2,8 @@
 
 The public harness resolves desired state from the fixed local checkout
 `~/.config/harness/private`. This path is intentionally outside the public
-repository. The checkout root, `.git`, and `hosts` directories must be owned by
-the current user, mode 0700, and not symlinks. `companion.conf`, the selected
+repository. The checkout root, `.git`, `hosts`, and adopted `ssh` directories
+must be owned by the current user, mode 0700, and not symlinks. `companion.conf`, the selected
 `hosts/LOGICAL_ID.conf`, and every adopted configuration payload must be owned
 by the current user, mode 0600, regular, single-linked files and not symlinks.
 Clone or create the future private repository under `umask 077`.
@@ -26,6 +26,13 @@ configuration bundle:
 ```text
 schema=1
 minimum_engine_schema=2
+```
+
+or, after every declared Mac has an independent SSH payload:
+
+```text
+schema=1
+minimum_engine_schema=3
 ```
 
 The selected host file contains exactly these keys:
@@ -59,13 +66,17 @@ manifests, including in comments. Runtime facts and rollback evidence stay under
 local harness state and are reconstructed when not recoverable from the
 owner's existing backup.
 
-Engine 1 permits one deliberate optional repository-root file named
-`ssh_config`. This is the current layout and cannot contain Bash or tmux
-payloads. Engine 2 permits either no payloads or exactly the historical atomic
+Engine 1 permits one deliberate optional legacy repository-root file named
+`ssh_config` and, during the ordered engine-3 rollout, a partial set of
+`ssh/LOGICAL_ID.conf` files whose identifiers must already exist under
+`hosts/`. It cannot contain Bash or tmux payloads. Engine 2 permits either no
+payloads or exactly the historical atomic
 set `ssh_config`, `bashrc`, and `tmux.conf`; partial sets are invalid. Engine 2
 is retained only so a sleeping Mac can public-first fast-forward into the
-migration bridge. Git must represent every payload as one ordinary
-non-executable blob.
+migration bridge. Engine 3 requires exactly one `ssh/LOGICAL_ID.conf` for every
+`hosts/LOGICAL_ID.conf`, prohibits the legacy root payload and Bash/tmux
+payloads, and selects only the current Mac's file. Git must represent every
+payload as one ordinary non-executable blob.
 
 The SSH payload may contain the private host,
 account, network, and path values required by OpenSSH, but it must contain only
@@ -100,7 +111,13 @@ Validation uses an isolated tmux server and `source-file -n`, which parses the
 complete file but executes none of its commands. Apply replaces only the live
 `~/.tmux.conf`; a running tmux server is never reloaded automatically.
 
-SSH-only adoption uses `harness macos-ssh-sync`. An older engine-2 companion
+SSH-only adoption uses `harness macos-ssh-sync`. The explicit
+`--migrate-per-host` route creates only the selected Mac's previously absent
+payload from its strictly validated live root. It leaves the legacy root in
+place. After all declared hosts have matching payloads,
+`--finalize-per-host` separately validates the exact bijection, removes the
+legacy root, and raises `minimum_engine_schema` to 3. Neither route changes a
+live SSH byte merely to reconcile another Mac. An older engine-2 companion
 migrates through `harness macos-config-migrate`, which deletes only the tracked
 `bashrc` and `tmux.conf` blobs, changes `minimum_engine_schema` to 1, and
 normally pushes the private commit forward. Bash then uses the public Linux

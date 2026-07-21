@@ -11,6 +11,8 @@ usage() {
     cat >&2 <<'EOF'
 Usage:
   harness macos-ssh-sync --host LOGICAL_ID [--seed|--adopt-remote] [--plan|--apply]
+  harness macos-ssh-sync --host LOGICAL_ID --migrate-per-host [--plan|--apply]
+  harness macos-ssh-sync --host LOGICAL_ID --finalize-per-host [--plan|--apply]
   harness macos-ssh-sync --rollback TRANSACTION_ID
 EOF
 }
@@ -113,10 +115,24 @@ validate_state() {
         die "Mac SSH sync state identity is invalid"
 }
 
+payload_path_for_revision() {
+    path_revision=$1
+    if git -C "$private_root" cat-file -e \
+        "$path_revision:ssh/$logical_host.conf" 2>/dev/null; then
+        printf '%s\n' "ssh/$logical_host.conf"
+    elif git -C "$private_root" cat-file -e \
+        "$path_revision:ssh_config" 2>/dev/null; then
+        printf '%s\n' ssh_config
+    else
+        return 1
+    fi
+}
+
 export_payload() {
     export_revision=$1
     export_file=$2
-    git -C "$private_root" show "$export_revision:ssh_config" \
+    export_path=$(payload_path_for_revision "$export_revision") || return 1
+    git -C "$private_root" show "$export_revision:$export_path" \
         >"$export_file" 2>/dev/null || return 1
     chmod 600 "$export_file"
     macos_validate_ssh_config "$export_file" "$current_uid" 600 \
@@ -160,19 +176,79 @@ push_private() {
 }
 
 commit_private() {
+    commit_message=$1
+    shift
     commit_log=$state_directory/.ssh-sync-commit.$$
     [ ! -e "$commit_log" ] && [ ! -L "$commit_log" ] ||
         die "Mac SSH sync commit log collision"
     : >"$commit_log"
     chmod 600 "$commit_log"
     if git -C "$private_root" -c commit.gpgsign=false commit -q \
-        -m 'Update shared Mac SSH configuration' -- ssh_config \
+        -m "$commit_message" -- "$@" \
         >"$commit_log" 2>&1; then
         unlink "$commit_log"
         return 0
     fi
     unlink "$commit_log"
     return 1
+}
+
+ensure_private_ssh_directory() {
+    private_ssh=$private_root/ssh
+    if [ ! -e "$private_ssh" ] && [ ! -L "$private_ssh" ]; then
+        mkdir "$private_ssh"
+        chmod 700 "$private_ssh"
+    fi
+    macos_require_private_directory "$private_ssh" "$current_uid"
+}
+
+validate_per_host_tree() {
+    tree_revision=$1
+    tree_phase=$2
+    tree_scratch=$3
+    tree_paths=$(git -C "$private_root" ls-tree -r --name-only \
+        "$tree_revision" 2>/dev/null) || return 1
+    printf '%s\n' "$tree_paths" | while IFS= read -r tree_path; do
+        case "$tree_path" in
+            companion.conf|ssh_config|hosts/*.conf|ssh/*.conf) ;;
+            *) exit 1 ;;
+        esac
+        [ "$(git -C "$private_root" ls-tree "$tree_revision" -- "$tree_path" |
+            awk '{ print $1 ":" $2 }')" = 100644:blob ] || exit 1
+    done || return 1
+    tree_host_ids=$(printf '%s\n' "$tree_paths" |
+        sed -n 's#^hosts/\(.*\)\.conf$#\1#p' | LC_ALL=C sort)
+    tree_ssh_ids=$(printf '%s\n' "$tree_paths" |
+        sed -n 's#^ssh/\(.*\)\.conf$#\1#p' | LC_ALL=C sort)
+    [ -n "$tree_host_ids" ] && [ "$tree_host_ids" = "$tree_ssh_ids" ] || return 1
+    git -C "$private_root" show "$tree_revision:companion.conf" \
+        >"$tree_scratch" 2>/dev/null || return 1
+    chmod 600 "$tree_scratch"
+    macos_validate_companion_manifest "$tree_scratch" 3 1 1 || return 1
+    tree_minimum=$(macos_manifest_get "$tree_scratch" minimum_engine_schema)
+    case "$tree_phase:$tree_minimum" in
+        transition:1)
+            printf '%s\n' "$tree_paths" | grep -F -x ssh_config >/dev/null || return 1
+            ;;
+        final:3)
+            ! printf '%s\n' "$tree_paths" | grep -F -x ssh_config >/dev/null || return 1
+            ;;
+        *) return 1 ;;
+    esac
+    tree_baseline=$(macos_manifest_get \
+        "$HARNESS_ROOT/profiles/personal-macos/base.conf" baseline)
+    for tree_id in $tree_host_ids; do
+        macos_private_id_is_safe "$tree_id" || return 1
+        git -C "$private_root" show \
+            "$tree_revision:hosts/$tree_id.conf" >"$tree_scratch" 2>/dev/null || return 1
+        chmod 600 "$tree_scratch"
+        macos_validate_host_manifest "$tree_scratch" "$tree_id" 1 \
+            "$tree_baseline" || return 1
+        git -C "$private_root" show \
+            "$tree_revision:ssh/$tree_id.conf" >"$tree_scratch" 2>/dev/null || return 1
+        chmod 600 "$tree_scratch"
+        macos_validate_ssh_config "$tree_scratch" "$current_uid" 600 || return 1
+    done
 }
 
 validate_transaction_manifest() {
@@ -331,12 +407,16 @@ logical_host=
 mode=plan
 seed=0
 adopt_remote=0
+migrate_per_host=0
+finalize_per_host=0
 rollback_id=
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
         --seed) seed=1; shift ;;
         --adopt-remote) adopt_remote=1; shift ;;
+        --migrate-per-host) migrate_per_host=1; shift ;;
+        --finalize-per-host) finalize_per_host=1; shift ;;
         --plan) mode=plan; shift ;;
         --apply) mode=apply; shift ;;
         --rollback)
@@ -363,7 +443,8 @@ transaction_root=$state_root/transactions
 
 if [ "$mode" = rollback ]; then
     [ -n "$rollback_id" ] && [ -z "$logical_host" ] && [ "$seed" -eq 0 ] &&
-        [ "$adopt_remote" -eq 0 ] ||
+        [ "$adopt_remote" -eq 0 ] && [ "$migrate_per_host" -eq 0 ] &&
+        [ "$finalize_per_host" -eq 0 ] ||
         { usage; exit 2; }
     [ "$(uname -s)" = Darwin ] || die "Mac SSH sync requires Darwin"
     [ -d "$HOME" ] && [ ! -L "$HOME" ] &&
@@ -378,6 +459,8 @@ fi
 
 [ -n "$logical_host" ] || { usage; exit 2; }
 [ "$seed" -eq 0 ] || [ "$adopt_remote" -eq 0 ] || { usage; exit 2; }
+[ $((seed + adopt_remote + migrate_per_host + finalize_per_host)) -le 1 ] ||
+    { usage; exit 2; }
 macos_private_id_is_safe "$logical_host" || die "invalid private logical identifier"
 [ -d "$HOME" ] && [ ! -L "$HOME" ] &&
     [ "$(macos_stat_owner "$HOME")" = "$current_uid" ] ||
@@ -428,10 +511,142 @@ trap 'exit 143' TERM
 fetch_private || stop_class auth-failed no
 origin_revision=$(git -C "$private_root" rev-parse --verify refs/remotes/origin/main)
 head_revision=$(git -C "$private_root" rev-parse --verify HEAD)
+selected_payload_path=ssh/$logical_host.conf
+
+if [ "$finalize_per_host" -eq 1 ]; then
+    git -C "$private_root" show "$origin_revision:companion.conf" \
+        >"$candidate" 2>/dev/null || stop_class invalid no
+    chmod 600 "$candidate"
+    origin_minimum=$(macos_manifest_get "$candidate" minimum_engine_schema)
+    finalize_action=
+    if [ "$origin_minimum" = 3 ]; then
+        validate_per_host_tree "$origin_revision" final "$candidate" ||
+            stop_class invalid no
+        git -C "$private_root" merge-base --is-ancestor "$head_revision" \
+            "$origin_revision" >/dev/null 2>&1 || stop_class diverged no
+        finalize_action=finalized
+    else
+        validate_per_host_tree "$origin_revision" transition "$candidate" ||
+            stop_class invalid no
+        if [ "$head_revision" = "$origin_revision" ] ||
+            git -C "$private_root" merge-base --is-ancestor "$head_revision" \
+                "$origin_revision" >/dev/null 2>&1; then
+            finalize_action=finalize-per-host
+        elif git -C "$private_root" merge-base --is-ancestor "$origin_revision" \
+                "$head_revision" >/dev/null 2>&1 &&
+            [ "$(git -C "$private_root" diff --name-only \
+                "$origin_revision..$head_revision" | LC_ALL=C sort)" = \
+                "$(printf '%s\n' companion.conf ssh_config | LC_ALL=C sort)" ]; then
+            validate_per_host_tree "$head_revision" final "$candidate" ||
+                stop_class invalid no
+            finalize_action=retry-finalize
+        else
+            stop_class diverged no
+        fi
+    fi
+    if [ "$mode" = plan ]; then
+        printf 'MACOS_SSH_SYNC class=current agreement=yes action=%s apply=not-requested\n' \
+            "$finalize_action"
+        exit 0
+    fi
+    case "$finalize_action" in
+        finalized)
+            [ "$head_revision" = "$origin_revision" ] ||
+                git -C "$private_root" merge --ff-only -q "$origin_revision" ||
+                    stop_class diverged no
+            ;;
+        retry-finalize)
+            push_private || stop_class auth-failed no
+            ;;
+        finalize-per-host)
+            [ "$head_revision" = "$origin_revision" ] ||
+                git -C "$private_root" merge --ff-only -q "$origin_revision" ||
+                    stop_class diverged no
+            companion_stage=$private_root/.companion.$$
+            [ ! -e "$companion_stage" ] && [ ! -L "$companion_stage" ] ||
+                stop_class invalid no
+            printf 'schema=1\nminimum_engine_schema=3\n' >"$companion_stage"
+            chmod 600 "$companion_stage"
+            mv "$companion_stage" "$private_root/companion.conf"
+            git -C "$private_root" rm -q -- ssh_config || stop_class invalid no
+            git -C "$private_root" add -- companion.conf
+            commit_private 'Finalize per-Mac SSH payloads' \
+                companion.conf ssh_config || stop_class invalid no
+            "$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
+                stop_class invalid no
+            push_private || stop_class auth-failed no
+            ;;
+        *) stop_class invalid no ;;
+    esac
+    write_status current yes
+    echo 'MACOS_SSH_SYNC class=current agreement=yes action=finalized'
+    exit 0
+fi
+
+origin_has_per_host=0
+if git -C "$private_root" cat-file -e \
+    "$origin_revision:$selected_payload_path" 2>/dev/null; then
+    origin_has_per_host=1
+fi
+
+if [ "$migrate_per_host" -eq 1 ] && [ "$origin_has_per_host" -eq 0 ]; then
+    git -C "$private_root" cat-file -e "$origin_revision:ssh_config" 2>/dev/null ||
+        stop_class invalid no
+    migration_action=
+    if [ "$head_revision" = "$origin_revision" ] ||
+        git -C "$private_root" merge-base --is-ancestor "$head_revision" \
+            "$origin_revision" >/dev/null 2>&1; then
+        migration_action=migrate-per-host
+    elif git -C "$private_root" merge-base --is-ancestor "$origin_revision" \
+            "$head_revision" >/dev/null 2>&1 &&
+        [ "$(git -C "$private_root" diff --name-only \
+            "$origin_revision..$head_revision")" = "$selected_payload_path" ]; then
+        export_payload "$head_revision" "$candidate" || stop_class invalid no
+        [ "$(macos_checksum_file "$candidate")" = \
+            "$(macos_checksum_file "$live_config")" ] || stop_class diverged no
+        migration_action=retry-migrate-per-host
+    else
+        stop_class diverged no
+    fi
+    if [ "$mode" = plan ]; then
+        write_status current no
+        printf 'MACOS_SSH_SYNC class=current agreement=no action=%s apply=not-requested\n' \
+            "$migration_action"
+        exit 0
+    fi
+    case "$migration_action" in
+        migrate-per-host)
+            [ "$head_revision" = "$origin_revision" ] ||
+                git -C "$private_root" merge --ff-only -q "$origin_revision" ||
+                    stop_class diverged no
+            ensure_private_ssh_directory
+            payload_stage=$private_root/ssh/.$logical_host.$$
+            [ ! -e "$payload_stage" ] && [ ! -L "$payload_stage" ] ||
+                stop_class invalid no
+            cp "$live_config" "$payload_stage"
+            chmod 600 "$payload_stage"
+            macos_validate_ssh_config "$payload_stage" "$current_uid" 600
+            mv "$payload_stage" "$private_root/$selected_payload_path"
+            git -C "$private_root" add -- "$selected_payload_path"
+            commit_private "Add per-Mac SSH configuration" \
+                "$selected_payload_path" || stop_class invalid no
+            ;;
+        retry-migrate-per-host) ;;
+        *) stop_class invalid no ;;
+    esac
+    target_revision=$(git -C "$private_root" rev-parse HEAD)
+    push_private || stop_class auth-failed no
+    export_payload "$target_revision" "$candidate" || stop_class invalid no
+    apply_local_transaction "$candidate" "$target_revision"
+    exit 0
+fi
+
 origin_has_payload=0
 if export_payload "$origin_revision" "$candidate"; then
     origin_has_payload=1
 fi
+origin_payload_path=$(payload_path_for_revision "$origin_revision" 2>/dev/null ||
+    printf '%s\n' ssh_config)
 local_identity=$(macos_checksum_file "$live_config")
 
 state_present=0
@@ -517,12 +732,14 @@ else
         remote_layout_only=1
     fi
     if [ "$remote_layout_only" -eq 0 ]; then
-        [ "$origin_revision" = "$state_revision" ] || remote_changed=1
+        [ "$remote_identity" = "$state_identity" ] || remote_changed=1
     fi
 
     if [ "$local_identity" = "$remote_identity" ] &&
-        [ "$head_revision" = "$origin_revision" ] &&
-        [ "$state_revision" != "$origin_revision" ]; then
+        { [ "$state_revision" != "$origin_revision" ] ||
+            [ "$head_revision" != "$origin_revision" ]; } &&
+        git -C "$private_root" merge-base --is-ancestor "$head_revision" \
+            "$origin_revision" >/dev/null 2>&1; then
         action=pull
         target_revision=$origin_revision
     elif [ "$local_changed" -eq 1 ] && [ "$remote_changed" -eq 1 ] &&
@@ -531,14 +748,13 @@ else
     elif [ "$local_changed" -eq 1 ] && [ "$remote_changed" -eq 0 ]; then
         if [ "$head_revision" = "$origin_revision" ]; then
             action=publish
-        elif [ "$remote_layout_only" -eq 1 ] &&
-            git -C "$private_root" merge-base --is-ancestor "$head_revision" \
-                "$origin_revision" >/dev/null 2>&1; then
+        elif git -C "$private_root" merge-base --is-ancestor "$head_revision" \
+            "$origin_revision" >/dev/null 2>&1; then
             action=publish
         elif git -C "$private_root" merge-base --is-ancestor "$origin_revision" \
             "$head_revision" >/dev/null 2>&1 &&
             [ "$(git -C "$private_root" diff --name-only "$origin_revision..$head_revision")" = \
-                ssh_config ]; then
+                "$origin_payload_path" ]; then
             export_payload "$head_revision" "$candidate" || stop_class invalid no
             [ "$(macos_checksum_file "$candidate")" = "$local_identity" ] ||
                 stop_class diverged no
@@ -588,20 +804,25 @@ fi
 
 case "$action" in
     seed|publish)
-        if [ "$action" = publish ] && [ "${remote_layout_only:-0}" -eq 1 ] &&
-            [ "$head_revision" != "$origin_revision" ]; then
+        if [ "$action" = publish ] && [ "$head_revision" != "$origin_revision" ]; then
             git -C "$private_root" merge --ff-only -q "$origin_revision" ||
                 stop_class diverged no
         fi
-        payload_stage=$private_root/.ssh_config.$$
+        if [ "$origin_payload_path" = ssh_config ]; then
+            payload_stage=$private_root/.ssh_config.$$
+        else
+            ensure_private_ssh_directory
+            payload_stage=$private_root/ssh/.$logical_host.$$
+        fi
         [ ! -e "$payload_stage" ] && [ ! -L "$payload_stage" ] ||
             stop_class invalid no
         cp "$candidate" "$payload_stage"
         chmod 600 "$payload_stage"
         macos_validate_ssh_config "$payload_stage" "$current_uid" 600
-        mv "$payload_stage" "$private_root/ssh_config"
-        git -C "$private_root" add -- ssh_config
-        if ! commit_private; then
+        mv "$payload_stage" "$private_root/$origin_payload_path"
+        git -C "$private_root" add -- "$origin_payload_path"
+        if ! commit_private 'Update Mac SSH configuration' \
+            "$origin_payload_path"; then
             stop_class invalid no
         fi
         target_revision=$(git -C "$private_root" rev-parse HEAD)

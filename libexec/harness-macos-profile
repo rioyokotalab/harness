@@ -46,7 +46,7 @@ formula_policy=$HARNESS_ROOT/profiles/personal-macos/formula-policy-v2.conf
     die "public personal-Mac formula policy is unavailable"
 macos_validate_formula_policy "$formula_policy"
 
-engine_schema=2
+engine_schema=3
 family=$(macos_manifest_get "$public_profile" family)
 private_schema_min=$(macos_manifest_get "$public_profile" private_schema_min)
 private_schema_max=$(macos_manifest_get "$public_profile" private_schema_max)
@@ -58,9 +58,10 @@ retired_formulae=$(macos_manifest_get "$formula_policy" retired_formulae)
 private_root=$HOME/.config/harness/private
 private_git=$private_root/.git
 private_hosts=$private_root/hosts
+private_ssh=$private_root/ssh
 companion_manifest=$private_root/companion.conf
 host_manifest=$private_hosts/$logical_host.conf
-ssh_payload=$private_root/ssh_config
+legacy_ssh_payload=$private_root/ssh_config
 current_uid=$(id -u)
 case ${HARNESS_ALLOW_LEGACY_SSH_LAYOUT:-0} in
     0) ssh_layout_validation=strict ;;
@@ -90,14 +91,32 @@ git -C "$private_root" rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
     die "private companion Git root is ambiguous"
 
 ssh_payload_state=absent
+legacy_ssh_state=absent
+per_host_ssh_state=absent
+per_host_ssh_any=absent
 bash_payload_state=absent
 tmux_payload_state=absent
 git -C "$private_root" ls-files | while IFS= read -r tracked_path; do
     case "$tracked_path" in
         companion.conf) ;;
         ssh_config)
-            macos_validate_ssh_config "$ssh_payload" "$current_uid" 600 \
+            macos_validate_ssh_config "$legacy_ssh_payload" "$current_uid" 600 \
                 "$ssh_layout_validation"
+            ;;
+        ssh/*.conf)
+            [ "$minimum_engine_schema" -ne 2 ] ||
+                die "private companion tracked layout is invalid"
+            tracked_name=${tracked_path#ssh/}
+            tracked_id=${tracked_name%.conf}
+            if [ "$tracked_name" != "$tracked_id.conf" ] ||
+                ! macos_private_id_is_safe "$tracked_id" ||
+                ! git -C "$private_root" ls-files --error-unmatch \
+                    "hosts/$tracked_id.conf" >/dev/null 2>&1; then
+                die "private companion tracked layout is invalid"
+            fi
+            macos_require_private_directory "$private_ssh" "$current_uid"
+            macos_validate_ssh_config "$private_root/$tracked_path" \
+                "$current_uid" 600 "$ssh_layout_validation"
             ;;
         bashrc)
             [ "$minimum_engine_schema" -ge 2 ] ||
@@ -126,6 +145,16 @@ git -C "$private_root" ls-files | while IFS= read -r tracked_path; do
 done
 if git -C "$private_root" ls-files --error-unmatch ssh_config \
     >/dev/null 2>&1; then
+    legacy_ssh_state=present
+fi
+if git -C "$private_root" ls-files --error-unmatch \
+    "ssh/$logical_host.conf" >/dev/null 2>&1; then
+    per_host_ssh_state=present
+fi
+if [ -n "$(git -C "$private_root" ls-files 'ssh/*.conf')" ]; then
+    per_host_ssh_any=present
+fi
+if [ "$per_host_ssh_state" = present ] || [ "$legacy_ssh_state" = present ]; then
     ssh_payload_state=present
 fi
 if git -C "$private_root" ls-files --error-unmatch bashrc \
@@ -136,11 +165,24 @@ if git -C "$private_root" ls-files --error-unmatch tmux.conf \
     >/dev/null 2>&1; then
     tmux_payload_state=present
 fi
-case "$minimum_engine_schema:$ssh_payload_state:$bash_payload_state:$tmux_payload_state" in
+case "$minimum_engine_schema:$legacy_ssh_state:$bash_payload_state:$tmux_payload_state" in
     1:absent:absent:absent|1:present:absent:absent) ;;
     2:absent:absent:absent|2:present:present:present) ;;
+    3:absent:absent:absent) ;;
     *) die "private companion payload set is incomplete or incompatible" ;;
 esac
+if [ "$minimum_engine_schema" -eq 1 ] &&
+    [ "$per_host_ssh_any" = present ] && [ "$legacy_ssh_state" != present ]; then
+    die "private companion payload set is incomplete or incompatible"
+fi
+if [ "$minimum_engine_schema" -eq 3 ]; then
+    tracked_host_ids=$(git -C "$private_root" ls-files 'hosts/*.conf' |
+        sed -n 's#^hosts/\(.*\)\.conf$#\1#p' | LC_ALL=C sort)
+    tracked_ssh_ids=$(git -C "$private_root" ls-files 'ssh/*.conf' |
+        sed -n 's#^ssh/\(.*\)\.conf$#\1#p' | LC_ALL=C sort)
+    [ -n "$tracked_host_ids" ] && [ "$tracked_host_ids" = "$tracked_ssh_ids" ] ||
+        die "private companion payload set is incomplete or incompatible"
+fi
 [ -z "$(git -C "$private_root" status --porcelain --untracked-files=normal)" ] ||
     die "private companion checkout is not clean"
 
