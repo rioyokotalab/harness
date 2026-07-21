@@ -115,8 +115,14 @@ immediate predecessor. Exact reconstruction found `ab`, `ab2`, `ri`, `rc`, and
 `t4` clean at that shared ancestor; `al` was unavailable. A host-bounded guarded
 plan/apply then advanced those five to the merge revision, verified remote and
 local refs equal, and removed every transfer artifact. Controller `local` was
-already clean at the merge revision. `al` remains an unavailable fleet-sync
-checkpoint; no alternate route was guessed.
+already clean at the merge revision. Protected main later advanced through the
+independent T-289 presentation work to
+`21fde49259193a0ba2df2259e192b5a8c36bc75d`. After the owner authenticated
+`al`, fresh reconstruction found its `main` clean at the same `535a492`
+ancestor. An `al`-only guarded plan/apply advanced both refs directly to
+`21fde49`, verified equality, and removed the transfer artifact. No other `al`
+task is currently eligible; its doctor passes with zero failures or warnings,
+and its T-196 successor remains time-gated until 2026-07-26.
 
 **Office acceptance:** a validated forwarded current-user agent socket fetched
 both clean `main` checkouts. The native updater plan selected public/private
@@ -130,17 +136,25 @@ under canonical `/private/tmp` guarded-deleted exactly that empty target,
 verified protected anchors unchanged, and exact-removed its list/manifest and
 boundary. Final Office residue count is zero.
 
+The owner authorized `office2` as a failover transport to the same Mac. SSH
+configuration resolves `office` and `office2` through distinct transports.
+The primary currently reaches the accepted host with a valid forwarded agent;
+the first `office2` probe failed before a remote shell, so same-host identity
+has not yet been proven through the alternate. Do not use `office2` for state
+changes until one successful dual-route comparison confirms identical host,
+user, and repository markers; after any later failover, revalidate the exact
+durable step rather than assuming completion.
+
 **Current connectivity checkpoint:** two direct Aist update attempts and a
 fresh four-alias probe timed out during SSH banner exchange at its declared
 `::1:2222` route, including after the owner reported reconnecting it. The
 remote shell never started, so neither attempt changed Aist. Home, `riken`, and
-`al` are also unavailable; Office remains reachable. On restored Aist access,
+the two Aist routes are unavailable; Office remains reachable and `al` is now
+accepted at current main. On restored Aist access,
 resume by validating `ssh -A aist` exposes a current-user-owned agent socket,
 then repeat clean-main fetch, ancestry, native updater plan/apply/post-plan,
 doctor, exact residue, and T-280 local-ref provenance gates. On Home or `riken`,
-repeat the same update/acceptance gates without the Aist-only ref review. On
-`al`, guarded fleet-sync from its freshly proven clean ancestor to current
-published main; never assume it is still at the earlier five-host revision.
+repeat the same update/acceptance gates without the Aist-only ref review.
 
 The owner subsequently authorized `aist2` as a second transport to the same Mac
 and authorized failover through whichever declared route remains live. SSH
@@ -161,8 +175,10 @@ by transport loss.
 2. On Aist, delete either exact T-280 local ref only if current-main
    patch/task-provenance and hosting state prove it superseded; otherwise retain
    with the reason.
-3. Reprobe Home, `riken`, and `al`; execute only their recorded independent
-   catch-up gates when reachable and otherwise retain this checkpoint.
+3. Reprobe Home and `riken`; execute only their recorded independent catch-up
+   gates when reachable and otherwise retain this checkpoint.
+4. Validate `office2` against the primary route when it becomes reachable; no
+   Office state change is otherwise pending.
 
 **Safety and recovery:** do not inspect credential or private payload bytes,
 transaction preimages, backups, or temporary contents. Do not remove
@@ -179,9 +195,9 @@ implicit.
 
 **Next executable action:** retry `ssh -A aist`, failing over to `ssh -A aist2`
 only if needed, after at least one declared route is live; then execute the Aist
-gates above. In parallel-independent resume turns, reprobe `al`, Home, and
-`riken` without alternate routing. Do not perform the deferred
-Homebrew/package task.
+gates above. In parallel-independent resume turns, reprobe Home and `riken`
+without alternate routing and validate `office2` when reachable. Do not perform
+the deferred Homebrew/package task.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
