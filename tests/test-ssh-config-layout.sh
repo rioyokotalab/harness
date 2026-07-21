@@ -153,6 +153,11 @@ assert_refused multipattern 'Host github other
 assert_refused match 'Match host *.invalid
     ForwardAgent no'
 assert_refused include 'Include ~/.ssh/owner.conf'
+assert_refused hiddeninclude 'Host github
+    HostName github.com
+    Include ~/.ssh/owner.conf
+Host *
+    ForwardAgent no'
 assert_refused duplicateinclude 'Include ~/.ssh/config.d/harness.conf
 Include ~/.ssh/config.d/harness.conf'
 

@@ -17,6 +17,11 @@ Next free ID: T-292.
 - Managed Linux nodes are local, ab, ab2, ri, al, rc, and t4.
   abci_login and alps_login are transports, not targets; retired si is out of
   scope.
+- PR #172 published the transactional SSH layout as public main `cfb1da2`.
+  All seven Linux checkouts and the reachable Office, riken, and Home public
+  checkouts are clean/current there; their SSH layout plans match the frozen
+  inventory, but no live SSH config has changed. Aist/Aist2 are currently
+  unreachable and remain first in the apply order.
 - Home, Office, and riken accepted clean public/private main after PR #170,
   updater/startup no-op state, both doctors, zero formula-policy residue,
   absent .bash_common/run_this.sh, and only local main. Aist is now caught up
@@ -38,9 +43,9 @@ Next free ID: T-292.
 
 ## Next resume checkpoint
 
-1. T-291 implementation and focused validation are complete; commit the
-   intended public changes, rerun phase one from the required clean checkout,
-   and publish through protected CI before any live SSH change.
+1. Publish T-291's narrow include-preflight/rollback-order follow-up through
+   protected CI, then resume the Aist-first live rollout when either route is
+   reachable.
 2. Resolve and close T-288 through T-291's canonical SSH-layout migration.
 3. On or after 2026-07-26, query only T-196 recorded successor job IDs.
 4. Select another independently eligible T-273 workstream only after fresh
@@ -198,8 +203,9 @@ shared stanzas are normalized. Do not begin deferred Homebrew/package work.
 
 ### T-291 — Converge shared SSH fragment across the managed fleet
 
-**Phase/status:** executing; implementation complete and awaiting clean-checkout
-phase-one validation/publication. The owner gave the explicit `go`. The desired state
+**Phase/status:** executing; PR #172 is published and the staged rollout is
+waiting on Aist reachability plus one narrow pre-live safety follow-up. The
+owner gave the explicit `go`. The desired state
 copies Aist's existing
 root `Host github` and `Host *` blocks intact into regular
 `~/.ssh/config.d/harness.conf` files on every managed system, then sources that
@@ -265,6 +271,17 @@ clean-checkout `tests/test-phase1.sh`. Native MPI was the declared
 environment-only skip. Two integrated-fixture corrections made its synthetic
 root mode explicit and used the existing non-main test bypass; production
 still requires a clean committed `main`. No live host was mutated.
+
+**Publication/rollout checkpoint:** PR #172 passed protected CI and squash-
+merged as `cfb1da2`. Guarded fleet-sync updated all six remote Linux checkouts;
+Office, riken, and Home then accepted public-only Mac updater transactions with
+private=current and package_actions=none. Read-only layout plans pass on those
+ten reachable nodes with exactly the previously inventoried stanza/fragment
+classes. Aist/Aist2 remain down. Pre-live review added a focused follow-up that
+preflights every Include before block removal (so a foreign include cannot hide
+inside a selected stanza) and restores the self-contained root before the
+prior fragment during rollback; its focused test passes and full validation is
+pending on the clean follow-up commit.
 
 **Execution sequence:**
 
@@ -337,8 +354,8 @@ copies on all systems rather than the current Linux symlinks. D4 (settled by
 evidence) tracks the canonical bytes publicly because the extracted option set
 and comments pass the existing non-secret boundary.
 
-**Next executable action:** fetch/rebase/push the validated commits and publish
-through protected CI. Only after merge, update Aist's public checkout and run the
+**Next executable action:** publish the narrow safety follow-up through
+protected CI. Only after merge and Aist route recovery, update Aist's public checkout and run the
 staged Aist layout/private-publish rollback/reapply. Revalidate both Aist routes
 before every Aist stage.
 

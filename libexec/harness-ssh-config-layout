@@ -75,6 +75,20 @@ def option_header(line):
 def transform_root(data):
     """Return the root postimage and value-free structural counts."""
     lines = data.splitlines(True)
+    include_re = re.compile(
+        rb"^[ \t]*Include[ \t]+~/\.ssh/config\.d/harness\.conf[ \t]*(?:\r?\n)?$",
+        re.IGNORECASE,
+    )
+    any_include_re = re.compile(rb"^[ \t]*Include(?:[ \t]|$)", re.IGNORECASE)
+    include_count = 0
+    for line in lines:
+        if include_re.match(line):
+            include_count += 1
+        elif any_include_re.match(line):
+            die("root SSH configuration contains an unmanaged Include")
+    if include_count > 1:
+        die("root SSH configuration has duplicate managed Includes")
+
     starts = []
     for index, line in enumerate(lines):
         header = option_header(line)
@@ -102,22 +116,11 @@ def transform_root(data):
         removed.update(range(start, end))
     kept = [line for index, line in enumerate(lines) if index not in removed]
 
-    include_count = 0
     normalized = []
-    include_re = re.compile(
-        rb"^[ \t]*Include[ \t]+~/\.ssh/config\.d/harness\.conf[ \t]*(?:\r?\n)?$",
-        re.IGNORECASE,
-    )
-    any_include_re = re.compile(rb"^[ \t]*Include(?:[ \t]|$)", re.IGNORECASE)
     for line in kept:
         if include_re.match(line):
-            include_count += 1
             continue
-        if any_include_re.match(line):
-            die("root SSH configuration contains an unmanaged Include")
         normalized.append(line)
-    if include_count > 1:
-        die("root SSH configuration has duplicate managed Includes")
 
     result = b"".join(normalized)
     if result and not result.endswith(b"\n"):
@@ -345,7 +348,9 @@ def rollback(root, home, transaction, host):
         require_regular(path, uid, (int(record["post_mode"]),), "SSH layout postimage")
         if file_hash(path) != record.get("post_hash"):
             die("SSH layout rollback is blocked by a changed postimage")
-    for record, path in reversed(list(zip(records, expected))):
+    # Restore the root first so an old self-contained root is active before a
+    # prior absent or different fragment replaces the installed fragment.
+    for record, path in zip(records, expected):
         restore(record, path, transaction, uid)
     status_path.write_text("rolled-back\n", encoding="ascii")
     os.chmod(str(status_path), 0o600)
