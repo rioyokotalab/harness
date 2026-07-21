@@ -254,6 +254,15 @@ script's exact confirmation. After the owner reports completion, the local
 driver must freshly revalidate both routes and the value-free supervisor plan
 before staging or stopping either predecessor tunnel.
 
+A final fleet probe at 06:08 JST found only Home's primary route down while
+`home2` remained ready. Value-free inspection showed its existing tmux `%0`
+`ssh login` process had restarted but remained stuck for more than 30 seconds.
+Under the standing single-route reconnect authority, the driver used native
+`tmux respawn-pane -k -t %0 'ssh login'`; `home` recovered on the second
+three-second probe and `home2` was never interrupted. This is additional live
+evidence for replacing the unbounded manual launcher, not an Aist helper state
+change.
+
 ### T-273 — Resolve intentionally deferred maintenance
 
 **Phase/status:** executing. Workstreams 1, 2, 3, and 9 are complete. Each
