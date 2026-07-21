@@ -531,11 +531,22 @@ ready; ab, ab2, and transport-only abci_login were down while transport-only
 alps_login was ready. These route results are connectivity state, not evidence
 of repository drift.
 
-**Next executable action:** after either route in each unavailable pair
-recovers, revalidate Aist without repeating its completed update, then apply the
-same public-only engine catch-up to Office and Home and validate both aliases. Stop a
-host on route, authentication, dirty-tree, divergence, or compatibility
-failure; do not migrate any private payload until all four Macs pass.
+Office and Home then recovered through both aliases and accepted the same
+public-only engine catch-up with package actions none. Their transactions are
+Office `20260721T094521Z-20014` and Home `20260721T094544Z-70559`; both aliases
+on each host prove clean public `2de6a49` and valid schema-1 private profiles.
+riken/riken2 reconfirmed the same state. Aist's already accepted engine-3 state
+remains durable, but Aist/Aist2 dropped together again before a fresh probe.
+The four-engine prerequisite is therefore satisfied by verified transactions;
+the isolated migration gate is open for reachable Macs, but finalization stays
+closed until Aist is reachable and its own payload exists.
+
+**Next executable action:** sequentially migrate Office, riken, and Home to
+their own previously absent payloads with plan/apply, exact rollback/reapply,
+selected-path agreement, and clean/current private Git checks. When either Aist
+route recovers, revalidate its completed engine update and migrate its payload.
+Do not finalize or remove the legacy root until all four per-host payloads are
+present and strictly valid.
 
 ### T-290 — Diagnose termination of Aist reverse SSH forwards
 
