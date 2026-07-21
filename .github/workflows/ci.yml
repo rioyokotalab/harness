@@ -33,33 +33,6 @@ jobs:
           cc --version | sed -n '1p'
           c++ --version | sed -n '1p'
           shellcheck --version | sed -n '2p'
-      - name: Run ShellCheck warning gate
-        run: |
-          set -euo pipefail
-          git grep -Il -z '^#!.*\(sh\|bash\)' -- . \
-            ':(exclude)tests/fixtures/**' |
-            xargs -0 shellcheck --severity=warning
-      - name: Test Restic scheduling
-        env:
-          PYTHONDONTWRITEBYTECODE: "1"
-        run: tests/test-restic-schedule.sh
-      - name: Test mirrored-node onboarding
-        env:
-          PYTHONDONTWRITEBYTECODE: "1"
-        run: tests/test-onboard-mirrored-node.sh
-      - name: Test evaluation harness
-        env:
-          PYTHONDONTWRITEBYTECODE: "1"
-        run: tests/test-evaluation.sh
-      - name: Test redacted public-history audit
-        env:
-          PYTHONDONTWRITEBYTECODE: "1"
-        run: tests/test-public-repo-audit.sh
-      - name: Test guarded bulk deletion
-        env:
-          HARNESS_PORTABLE_CI: "1"
-          PYTHONDONTWRITEBYTECODE: "1"
-        run: tests/test-guarded-delete.sh
       - name: Test Linux affinity readiness contract
         run: tests/test-affinity-readiness.sh
       - name: Run credential-free portable phase-one gate

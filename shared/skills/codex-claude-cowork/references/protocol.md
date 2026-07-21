@@ -29,7 +29,7 @@ The exchange directory contains:
 | `reconciliation.md` | driver | accepted evidence, disagreements, frozen plan, gates |
 | `execution.md` | driver | target steps/results and deviations |
 | `validation.md` | driver | final checks, outcome, residual risks |
-| `artifacts/` | shared, bounded | task prompts and public-safe raw logs named in evidence |
+| `artifacts/` | shared, bounded | tracked `.gitkeep`, task prompts, and public-safe raw logs named in evidence |
 | `receipts/` | driver/validator | schema-2 staged import receipts; closed independent/reciprocal set |
 
 The validator rejects missing headings, untouched standalone template `TODO`
@@ -43,6 +43,11 @@ prove factual correctness, client
 authorship, or confinement of content below `artifacts/`, and it cannot by
 itself detect a same-user overwrite of an already-valid file; both agents must
 inspect those independently and the driver must seal digests (below).
+
+`init` places an empty `artifacts/.gitkeep` in new sessions so the required
+directory survives Git commits, clone-based sandboxes, and cross-client
+takeover even when the session has no retained artifact. Keep that placeholder
+in committed session ledgers; it is protocol structure, not evidence.
 
 ## Sandbox contract
 
@@ -93,8 +98,10 @@ session, with a mandatory external seal:
 
 ```text
 scripts/cowork-session stage SESSION_DIR STAGE_DIR --mode independent \
+  --prompt DRIVER_PROMPT_FILE \
   --seal EXTERNAL_SEAL_FILE
 scripts/cowork-session stage SESSION_DIR STAGE_DIR --mode reciprocal \
+  --prompt DRIVER_PROMPT_FILE \
   --seal EXTERNAL_SEAL_FILE
 ```
 
@@ -112,8 +119,19 @@ mode, roles, phase, destination-before SHA-256, and SHA-256 of every copied inpu
 (the projected bytes for state) without disclosing the live-session path. The
 stage also contains a real
 `artifacts/` directory and `candidate-copilot-evidence.md`. Put the
-task-specific prompt and bounded terminal output below the staged `artifacts/`
-directory.
+sealed task-specific prompt at the fixed
+`artifacts/copilot-prompt.md` path and bounded terminal output elsewhere below
+the staged `artifacts/` directory. Prepare the prompt in a driver-only path and
+pass it through `stage --prompt`; do not add or replace it after sealing.
+
+New stages use stage schema 3. `--prompt` descriptor-checks a current-user-owned,
+single-link regular file, caps it at 32 KiB, requires UTF-8, and completes those
+checks before creating the stage. It copies the exact bytes to the fixed prompt
+path and records `prompt_sha256` in `stage.json`; the external seal commits that
+manifest hash and import reopens and rechecks the prompt before any live write.
+The reader retains stage-schema-2 compatibility. Schema 3 permits a null prompt
+only for promptless synthetic stages and rejects a fixed-path prompt added later
+without a hash.
 
 `stage` also prints `stage_sha256=...`. Before invoking the co-pilot, store that
 exact hash outside the stage, live session, and co-pilot sandbox next to the
@@ -131,8 +149,9 @@ partial stage — then writes a real, mode-0600, path-free seal with exactly the
 seven keys: `schema_version`, `driver`, `copilot`, `mode`, `phase`,
 `destination_before_sha256`, and `stage_manifest_sha256` (the exact `stage.json`
 SHA-256). The manifest hash transitively commits the stage schema, roles, mode,
-phase, destination-before, and every staged input hash, because those all live in
-`stage.json`; the duplicated role/mode/phase/destination fields are explicit
+phase, destination-before, every staged input hash, and the optional sealed
+prompt hash, because those all live in `stage.json`; the duplicated
+role/mode/phase/destination fields are explicit
 consistency checks, not extra commitments. The seal binds stage *content*, not
 identity or location: two byte-identical stages share one valid seal, which is
 harmless. Writing the seal is a second file after `stage.json`: it is fail-closed
@@ -220,16 +239,20 @@ authorship.
 
 ## Native client mapping
 
-The driver must construct a task-specific prompt below staged `artifacts/` that
+The driver must construct a bounded task-specific prompt in a driver-only path
+before staging it with `--prompt`. The sealed copy below staged `artifacts/`
 names the sandbox, stage, candidate file, allowed actions, forbidden targets,
-baseline, and required return format. Do not disclose the live session. Avoid
+baseline, experiment/time budget, strongest open questions, and required return
+format. Do not disclose the live session. Avoid
 interpolating untrusted task text into a shell command; pass it on standard
 input.
 
 When Codex drives Claude, run Claude from the Claude sandbox with noninteractive
 print mode. Build the narrowest reviewed `--allowedTools` list from the frozen
 experiment and use a non-prompting permission mode. Do not use
-`--dangerously-skip-permissions`:
+`--dangerously-skip-permissions`. For routine bounded critique, select explicit
+model/effort options only after confirming them in the installed `--help`, and
+record them; escalate only for an unresolved material claim:
 
 ```text
 claude --print --permission-mode dontAsk \
@@ -254,14 +277,77 @@ sandbox. If the installed client rejects a documented option, capture its
 version and error, inspect current `--help`, and revise the mapping explicitly;
 never silently fall back to an unconfined invocation.
 
+For a long client window, keep the command recognizable, launch it in the
+background, and sample the driver-only read surface rather than manually
+combining process, candidate, stage, seal, and receipt checks:
+
+```text
+COPILOT_NATIVE_COMMAND ... &
+COPILOT_PID=$!
+scripts/cowork-session status SESSION_DIR --stage STAGE_DIR \
+  --seal EXTERNAL_SEAL_FILE --pid "$COPILOT_PID"
+scripts/cowork-session wait-copilot SESSION_DIR --stage STAGE_DIR \
+  --seal EXTERNAL_SEAL_FILE --pid "$COPILOT_PID" \
+  --timeout-seconds CLIENT_BUDGET_SECONDS
+wait "$COPILOT_PID"
+```
+
+`status` emits deterministic JSON with roles, phase, receipts, next action,
+stage/input freshness, prompt/stage/seal hashes, candidate bytes and state, and
+optional PID reachability. It never writes or waits. `empty`, `unchanged`,
+`invalid`, or `ready` describes only observed candidate bytes; PID reachability
+is vulnerable to reuse. Neither signal proves authorship, semantic progress,
+correctness, or success. Always inspect the final candidate and compare the
+protected manifests before import.
+
+When `--stage` is given, `status` also emits an advisory
+`stage.mechanical_import_preconditions` object:
+`candidate_structurally_ready` (true iff `candidate_state == "ready"`),
+`inputs_fresh`, `destination_fresh`, their conjunction as `all_satisfied`,
+`advisory: true`, and `authorization: "none"`. It summarizes the three
+existing byte/freshness observations already present as sibling fields and
+adds no new information; it must never be read as, or renamed to,
+`import_ready`. It closes the risk of a caller reading `candidate_state:
+ready` alone and importing a candidate staged against live inputs the driver
+has since changed. It covers only candidate/freshness bytes — not seal
+validation, stage mode/receipt sequencing, process exit, protected digests,
+semantic review, or `import-copilot`/`verify-receipts` success. Only
+`import-copilot` is the authoritative mechanical gate.
+
+`wait-copilot` reuses that same snapshot on a monotonic, explicitly bounded
+poll loop (finite `0 < --timeout-seconds <= 1800`, finite
+`1 <= --poll-seconds <= 60`) and
+prints exactly one final JSON object. It returns `ready`/0 only for the full
+three-fact conjunction, `not-importable`/2 only after an observed process loss
+and one immediate final snapshot, or `timeout`/4. Without `--pid`, only ready
+or timeout can terminate the wait. Empty or structurally invalid bytes can be
+a transient editor write and do not terminate while the PID is reachable. A
+ready-but-stale candidate never returns ready. `wait_observation` always says
+`advisory: true`, `authorization: "none"`, and
+`pid_identity_authenticated: false`; PID reachability is vulnerable to reuse.
+The waiter never imports or writes. Inspect semantics, native process exit,
+protected digests, and receipts separately.
+Each completed snapshot is classified against the monotonic deadline before
+ready or not-importable can be returned. The timeout does not preempt a
+synchronous filesystem read already in progress, so it bounds polling
+classification rather than guaranteeing a hard wall-clock interrupt.
+
+The driver, which retains the live-session and external-seal paths, runs
+`status` during and after the native co-pilot window. The blinded co-pilot
+reports only stage-local observations. Neither candidate state nor PID
+reachability authorizes import.
+
 These templates do not supersede closer command policy. Codex workspace-write
-provides an OS-enforced writable-root boundary. Claude Code's `--add-dir` and
-tool permissions are not an OS filesystem sandbox: with Bash allowed, a
-same-user process may discover and write other writable paths. For Claude,
-staging removes explicit disclosure and the routine live write channel but
-remains behavioral authority reduction unless an available platform sandbox is
-applied. Record that residual or use the required environment-native wrapper;
-never invent a non-portable command or claim equal enforcement.
+provides an OS-enforced writable-root boundary; it limits writes, not reads,
+so it does not by itself prevent a confined process from reading outside that
+root. Claude Code's `--add-dir` and tool permissions are not an OS filesystem sandbox:
+with Bash allowed, a same-user process may discover and write other writable
+paths. For Claude, staging removes explicit disclosure and the routine live
+write channel but remains behavioral authority reduction unless an available
+platform sandbox is applied. Record that residual or use the required
+environment-native wrapper; never invent a non-portable command or claim equal
+enforcement. No claim of equivalent Claude/Codex confinement is made anywhere
+in this reference.
 
 ## Protecting driver-owned files across a co-pilot window
 

@@ -17,8 +17,28 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--root", required=True)
     parser.add_argument("--manifest", required=True)
     parser.add_argument("--log-dir", required=True)
-    parser.add_argument("--jobs", required=True, type=int)
+    parser.add_argument("--jobs", required=True)
     return parser.parse_args()
+
+
+def visible_cpu_count() -> int:
+    if hasattr(os, "sched_getaffinity"):
+        return len(os.sched_getaffinity(0))
+    return os.cpu_count() or 1
+
+
+def default_jobs(visible_cpus: int) -> int:
+    return 8 if visible_cpus >= 8 else 4
+
+
+def resolve_jobs(raw: str) -> tuple[int, int | None]:
+    if raw == "auto":
+        visible_cpus = visible_cpu_count()
+        return default_jobs(visible_cpus), visible_cpus
+    try:
+        return int(raw), None
+    except ValueError:
+        return 0, None
 
 
 def load_manifest(root: Path, manifest: Path) -> list[tuple[Path, str]]:
@@ -52,21 +72,32 @@ def run_one(index: int, path: Path, label: str, root: Path, log_dir: Path) -> tu
 
 def main() -> int:
     args = parse_args()
-    if args.jobs < 1 or args.jobs > 16:
-        print("focused-tests: --jobs must be between 1 and 16", file=sys.stderr)
+    jobs, visible_cpus = resolve_jobs(args.jobs)
+    if jobs < 1 or jobs > 16:
+        print(
+            "focused-tests: --jobs must be auto or an integer between 1 and 16",
+            file=sys.stderr,
+        )
         return 2
     root = Path(args.root).resolve(strict=True)
     manifest = Path(args.manifest).resolve(strict=True)
     log_dir = Path(args.log_dir)
-    log_dir.mkdir(mode=0o700, parents=False, exist_ok=False)
+    try:
+        log_dir.mkdir(mode=0o700, parents=False, exist_ok=False)
+    except FileExistsError:
+        print(f"focused-tests: --log-dir already exists: {log_dir}", file=sys.stderr)
+        return 2
     try:
         suites = load_manifest(root, manifest)
     except ValueError as error:
         print(f"focused-tests: {error}", file=sys.stderr)
         return 2
 
+    if visible_cpus is not None:
+        print(f"focused-tests: jobs={jobs} visible_cpus={visible_cpus} mode=auto")
+
     results = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=args.jobs) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as executor:
         futures = [
             executor.submit(run_one, i, path, label, root, log_dir)
             for i, (path, label) in enumerate(suites, 1)

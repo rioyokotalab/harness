@@ -125,7 +125,7 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/tools/run-focused-tests.py").read_text())' ||
     fail "Python syntax: focused-suite runner"
 
-if [ "${HARNESS_TEST_JOBS:-4}" = legacy ]; then
+if [ "${HARNESS_TEST_JOBS:-auto}" = legacy ]; then
 "$ROOT/tests/test-startup-normalize.sh" >/dev/null ||
     fail "startup normalization focused suite"
 "$ROOT/tests/test-ssh-agent-profile.sh" >/dev/null ||
@@ -230,14 +230,15 @@ if [ "${HARNESS_TEST_JOBS:-4}" = legacy ]; then
 "$ROOT/tests/test-source-contract.sh" >/dev/null ||
     fail "source contract focused suite"
 else
-    case ${HARNESS_TEST_JOBS:-4} in
-        ''|*[!0-9]*) fail "HARNESS_TEST_JOBS must be legacy or an integer" ;;
+    case ${HARNESS_TEST_JOBS:-auto} in
+        auto) ;;
+        ''|*[!0-9]*) fail "HARNESS_TEST_JOBS must be auto, legacy, or an integer" ;;
     esac
     python3 "$ROOT/tools/run-focused-tests.py" \
         --root "$ROOT" \
         --manifest "$ROOT/tests/focused-suites.tsv" \
         --log-dir "$TEMP_DIR/focused-logs" \
-        --jobs "${HARNESS_TEST_JOBS:-4}" ||
+        --jobs "${HARNESS_TEST_JOBS:-auto}" ||
         fail "parallel focused suites"
 fi
 

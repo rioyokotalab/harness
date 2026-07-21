@@ -43,6 +43,10 @@ boundaries controlling throughout.
    the content of `copilot-evidence.md`. By default the co-pilot writes a staged
    candidate inside its sandbox and the driver validates/imports those exact
    bytes; neither client receives a live-session write grant during discussion.
+   Prepare each bounded task-specific co-pilot prompt in a driver-only path
+   outside the co-pilot sandbox before staging it. Put the experiment budget,
+   strongest evidence questions, exact sandbox/stage paths, and required return
+   headings in that prompt; do not make the co-pilot rediscover its contract.
 
 ## Phase 1: Plan
 
@@ -68,6 +72,7 @@ scripts/cowork-session advance SESSION_DIR discussing
 
    ```text
    scripts/cowork-session stage SESSION_DIR STAGE_DIR --mode independent \
+     --prompt DRIVER_PROMPT_FILE \
      --seal EXTERNAL_SEAL_FILE
    ```
 
@@ -82,6 +87,43 @@ scripts/cowork-session advance SESSION_DIR discussing
    commands or tool actions and observed results, distinguish observations from
    inferences, criticize concrete plan claims, and propose exact plan changes.
    A prose-only review is insufficient when an experiment is safe and feasible.
+   Use the sealed copy at `STAGE_DIR/artifacts/copilot-prompt.md` as standard
+   input. Give routine passes an explicit time/experiment budget and use a
+   reviewed model/effort option supported by the installed native CLI; escalate
+   only when a material disagreement remains. Record the resolved options.
+   When a client window is long enough to monitor, run the recognizable native
+   command in the background and sample the read-only status surface:
+
+   ```text
+   scripts/cowork-session status SESSION_DIR --stage STAGE_DIR \
+     --seal EXTERNAL_SEAL_FILE --pid COPILOT_PID
+   ```
+
+   Prefer one bounded driver-side wait over repeated manual polls when the
+   client window is asynchronous:
+
+   ```text
+   scripts/cowork-session wait-copilot SESSION_DIR --stage STAGE_DIR \
+     --seal EXTERNAL_SEAL_FILE --pid COPILOT_PID \
+     --timeout-seconds CLIENT_BUDGET_SECONDS
+   ```
+
+   Treat PID reachability and candidate state as advisory observations, not
+   authorship, semantic progress, or success. `status` never waits or writes.
+   With `--stage`, it also reports an advisory
+   `stage.mechanical_import_preconditions` object (candidate structural
+   readiness, input freshness, destination freshness, and their conjunction as
+   `all_satisfied`, with `advisory: true` and `authorization: "none"`); never
+   read or name it `import_ready` — `import-copilot` remains the sole
+   authoritative mechanical gate. The driver, which retains the live-session
+   and external-seal paths, runs full `status` during and after the native
+   co-pilot window; the blinded co-pilot reports only stage-local
+   observations. `wait-copilot` is also read-only: it returns one final JSON
+   snapshot as `ready`, `not-importable`, or `timeout`, tolerates transient
+   partial candidate writes while the process is reachable, and takes one
+   final snapshot after observed process loss. Every outcome is advisory and
+   non-authorizing. Neither candidate state nor PID reachability authorizes
+   import.
 3. Store the printed `stage_sha256` outside the stage, session, and co-pilot
    sandbox before invocation. Do not write any driver-owned live file during
    the client window. Compare protected and stage-manifest seals after return.
@@ -94,7 +136,7 @@ scripts/cowork-session advance SESSION_DIR discussing
    and a receipt path. Run `scripts/cowork-session verify-receipts SESSION_DIR`.
    Retain the stage and external seals for recovery.
 4. Reveal both evidence files. Create a fresh `--mode reciprocal` stage with its
-   own `--seal` and require the co-pilot to return its complete evidence with a
+   own driver-only prompt and `--seal`, and require the co-pilot to return its complete evidence with a
    reciprocal critique. Seal, validate, import, and verify it the same way. Each agent tests or traces the
    strongest conflicting claim and states what it accepts, rejects, or cannot
    resolve. Critique evidence and reasoning, never motives or ability.
@@ -144,8 +186,10 @@ scripts/cowork-session advance SESSION_DIR ready-for-execution
   reaches a blinded co-pilot. Import compares the same projection, so its
   freshness check covers the projected co-pilot-visible state, not withheld
   fields or representation-only reserialization. Codex workspace-write enforces
-  that smaller writable set; Claude without a separate OS/container sandbox does
-  not, so around Claude also run `scripts/cowork-session digests SESSION_DIR`,
+  that smaller writable set; it limits writes, not reads, and makes no
+  Claude/Codex confinement-equivalence claim. Claude without a separate
+  OS/container sandbox does not enforce that boundary at all, so around Claude
+  also run `scripts/cowork-session digests SESSION_DIR`,
   keep the result outside the session, and retain a recoverable preimage. The
   full-state seal is the control for a change confined to a withheld field.
   Hashes detect change; they do not prevent it or restore bytes. Direct-session
@@ -160,6 +204,13 @@ scripts/cowork-session advance SESSION_DIR ready-for-execution
   rollback is not cross-file crash atomicity. New receipts are schema 2; the
   reader still accepts schema-1 receipts already written into a schema-2 session,
   and strict schema-1 predecessor sessions remain valid without receipts.
+- New stage schema 3 optionally binds one bounded UTF-8 prompt copied to the
+  fixed `artifacts/copilot-prompt.md` path. Its `prompt_sha256` is committed by
+  `stage.json`, the external seal, and the receipt's stage-manifest hash, and
+  import rechecks the copied bytes before mutation. The reader accepts existing
+  stage schema 2. A promptless schema-3 stage is supported for synthetic tests,
+  but adding the fixed prompt afterward is refused as unsealed; real client
+  windows should always use `stage --prompt`.
 - The external seal is the anchor that makes the co-pilot-writable `stage.json`
   trustworthy: `stage --seal` commits its exact SHA-256 to a path-free mode-0600
   file the driver holds outside every co-pilot-writable tree, and `import --seal`

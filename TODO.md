@@ -5,7 +5,7 @@ harness. Keep only active decisions, blockers, exact next actions, and compact
 completion pointers here. Full pre-housekeeping chronology remains available at
 published commit `d797d8658ea249f40f1acef1e84fcbbd83b0d6ff`.
 
-Next free ID: T-284.
+Next free ID: T-285.
 
 ## Current state
 
@@ -39,6 +39,198 @@ Next free ID: T-284.
    reconstruction of its gate and authority.
 
 ## Active tasks
+
+### T-284 — Accelerate and instrument Codex–Claude cowork
+
+**Phase/status:** `publishing`; the owner requested on 2026-07-21 that Codex spend
+three hours refining the published `codex-claude-cowork` skill for faster
+turnaround, higher-quality driver/co-pilot information exchange, better
+co-pilot state monitoring, and faster local checking and protected CI. The
+request explicitly authorizes execution of the eventually frozen in-repository
+plan, but does not broaden authority to client settings, credentials, packages,
+external services, deployments, or unrelated repository work.
+
+**Reconstructed baseline:** local `main` was clean/equal to fetched
+`origin/main` at `f7d5bf0d403bdc07079bb4c5e420a2aa9fbb4a02`; the published skill is
+`535a49218d766ce917ee28bc4b9d89fa0f650434`. Claude Code 2.1.207 and Codex CLI
+0.144.6 are present. On this host the unchanged focused cowork suite passed in
+10.12 seconds and clean `HARNESS_TEST_JOBS=4 tests/test-phase1.sh` passed in
+88.18 seconds. The helper has no concise status/await interface, the co-pilot
+returns a complete evidence file twice, and CI currently repeats several suites
+as named steps before the full phase-one gate.
+
+**Frozen planning target:** (1) measure the local and client-window critical
+paths; (2) run a sealed Codex-driver/Claude-co-pilot round that tests compact
+exchange and observable progress designs in matched disposable sandboxes; (3)
+reconcile and implement only evidence-supported helper, protocol, and focused-
+test changes; (4) run the reverse Claude-driver/Codex-co-pilot direction to
+challenge symmetry and test a faster checking/CI topology; (5) repeat bounded
+measure/change/validate rounds for the requested work window; and (6) finish
+with clean focused, skill, source, public-audit, diff, and full phase-one gates.
+Preserve receipt/seal integrity, blinded independence, driver-only target
+mutation, native recognizable client commands, bounded public-safe artifacts,
+and failure-atomic imports. Faster must mean lower measured wall time or fewer
+manual polling/context steps without weakening those invariants.
+
+**Working and recovery state:** task branch `task/t-284-cowork-speed` starts at
+the reconstructed baseline. Durable paired evidence will live below
+`docs/audits/t284-cowork-*`; disposable sandboxes and external seals will be
+recorded before use and retained until their evidence is checkpointed. Any
+timeout, denial, or partial candidate is evidence and is retry-safe only after
+inspection. Cleanup that can remove trees or multiple paths must use guarded
+deletion.
+
+Round 1 used Codex driving Claude from matched baseline `f7d5bf0`; durable
+evidence is under `docs/audits/t284-cowork-round1/`. The first broad default
+Claude pass exceeded 10 minutes and was interrupted retry-safely with no
+protected/stage/seal/target drift; a bounded Sonnet/medium retry returned in
+about 70 seconds and reciprocal critique in about 170 seconds. Both sides
+accepted a descriptor-read `stage --prompt` whose schema-3 manifest and
+existing seal/receipt chain bind the exact prompt, plus a read-only JSON
+`status` snapshot for phase, receipts, next action, stage/input/prompt/seal
+freshness, candidate state, and advisory PID reachability. Existing stage
+schema 2 remains readable. Reciprocal addenda were rejected as needless receipt
+complexity. CI evidence showed the required PR #161 job took 138 seconds, 37 of
+which was standalone ShellCheck and five named suites repeated inside phase
+one; those duplicate steps are removed while affinity and the complete umbrella
+gate remain. One eight-worker full run passed in 76.39 seconds versus an
+initial four-worker 88.18 seconds, but the default remains four pending matched
+reverse-round samples. Canonical skill, expanded focused cowork, takeover,
+focused-runner, source, public-audit, CI YAML parse, AST, and diff checks pass.
+Next action: checkpoint this round-1 candidate, run clean full phase one, then
+start the required Claude-driver/Codex-co-pilot round before freezing any
+further speed change.
+
+Round 2 reversed roles: Claude drove Codex from matched baseline `ca87538` in
+disposable clones, with durable evidence under
+`docs/audits/t284-cowork-round2/`. The first reconciliation call hit its
+four-minute hard limit without a write; a decision-complete retry returned in
+about 82 seconds. Codex independently confirmed the status partial-read risk,
+driver-only full monitoring, unsafe focused-log reuse, and inconclusive worker
+benchmarks. Its reciprocal pass also read the live skill checkout despite the
+stage-only prompt, proving `workspace-write` constrains writes rather than
+reads; reconciliation rejects strict read-blinding and confinement-equivalence
+claims. Claude executed the frozen plan in its disposable target: `status` now
+groups candidate/freshness facts in an explicitly advisory, non-authorizing
+`mechanical_import_preconditions` object; the runbook assigns full monitoring
+to the driver; and a pre-existing focused-runner log directory now refuses
+reuse with concise exit 2 instead of a traceback. The focused cowork and runner
+tests passed, and clean full phase one passed 57/57 in 80 seconds. Five
+Claude-driver commits were replayed onto this branch as `a09ff87` through
+`c80cd25`.
+
+Canonical replay then exposed a Git-transfer defect masked by the original
+clone: an empty required `artifacts/` directory is not versioned, so the
+completed round-2 session initially failed takeover validation. The helper now
+creates an empty `artifacts/.gitkeep`; focused coverage asserts it; the protocol
+explains that the placeholder is durable structure rather than evidence; and
+both round-1 and round-2 ledgers carry it. Both completed sessions and
+reciprocal receipts now validate from the canonical checkout, the expanded
+focused cowork suite passes in 11.94 seconds, and `git diff --check` passes.
+Next action: checkpoint this durability fix, clone that checkpoint and prove a
+fresh Git transfer validates without inherited empty directories, then continue
+the bounded turnaround/monitoring refinement window.
+
+Round 3 used Codex driving Claude from baseline `a9dd994`; evidence is under
+`docs/audits/t284-cowork-round3/`. A fresh no-hardlink clone first proved both
+earlier completed sessions and receipts survive Git handoff. Six strictly
+sequential, passing focused-runner samples then measured jobs 4 at
+29.82/29.67/29.69 seconds and jobs 8 at 25.35/25.39/25.25 seconds: a 14.62%
+median reduction with non-overlapping arms. Claude independently rejected a
+universal fixed eight and, after reciprocal access to the actual samples,
+accepted an affinity-aware default: eight only at eight or more visible CPUs,
+four below, with explicit/legacy overrides unchanged.
+
+Both agents also froze a read-only `wait-copilot` command that reuses the exact
+status snapshot, has a monotonic explicit timeout, tolerates partial editor
+writes, takes a final snapshot after observed process loss, and emits only one
+advisory/non-authorizing JSON result (`ready`, `not-importable`, or `timeout`).
+Focused tests cover ready/no-mutation, transient invalid-to-ready, stale final
+bytes, process loss, timeout, bounds, and source separation from import. The
+first full auto run selected eight and exposed one new test-isolation bug: the
+unit import created `tools/__pycache__` concurrently, so tmux correctly failed
+the dirty checkout. `PYTHONDONTWRITEBYTECODE=1` fixed it; the clean retry passed
+57/57 and all umbrella gates in 77.09 seconds. Next action: complete and
+checkpoint round 3, then dogfood `wait-copilot` against a real native client
+window and run a fresh-clone acceptance pass before final cleanup/handoff.
+
+Round 4 is a successor dogfood session under
+`docs/audits/t284-cowork-round4/`. Independent and reciprocal Claude windows
+used exactly one `wait-copilot` each and no manual status calls. The waiters
+returned one ready/0 JSON after 131.745 and 103.768 internal seconds while the
+native PIDs remained honestly reachable/advisory/unauthenticated; the native
+commands exited 0 another 6.280 and 7.683 seconds later, before all digest/seal
+checks, imports, and valid receipts. Claude found no production defect and
+confirmed the runbook's separate native-wait ordering. Its reciprocal critique
+caught an omitted start offset and incorrect timing delta in driver evidence;
+the record now uses common nanosecond origins. The only target change replaces
+a fixed absent PID in the stale-candidate test with a real short-lived process,
+exercising a reachable-to-not-reachable transition. Canonical focused cowork
+passed in 16.62 seconds; fresh-clone session/receipt/focused validation passed
+in 16.24 seconds with a clean tree. Next action: close round 4, run final
+canonical acceptance, guarded-clean all recorded temporary roots, and complete
+the three-hour ledger handoff.
+
+Round 5 is a successor deadline-precedence audit under
+`docs/audits/t284-cowork-round5/`. Codex deterministically reproduced a 1.0-
+second waiter returning ready/0 from a snapshot completed at 1.1 seconds;
+Claude independently confirmed ordinary and process-loss-final paths both
+classified content before deadline exhaustion. A first reciprocal call timed
+out unchanged; its retry wrote the wrong staged file and made inputs stale, so
+the waiter returned not-importable and import refused. A fresh exact-output
+stage produced valid evidence (the native wrapper later timed out after the
+candidate was complete), which passed fresh status, inspection, import, and
+receipt checks. The accepted fix records one monotonic time per completed
+snapshot, makes `>= deadline` win before ready/not-importable, reuses that time
+for remaining sleep, and retains a fresh final elapsed read. Deterministic
+no-sleep cases cover late ordinary ready, late process-loss final ready, and an
+on-time control. Protocol text now distinguishes classification bounds from
+unpreemptable synchronous reads. Focused cowork passed in 16.66 seconds; clean
+full phase one passed 57/57 at auto-selected eight in 77.18 seconds; fresh-clone
+session/receipt/focused validation passed in 16.45 seconds. Next action: close
+round 5, guarded-clean its exact scratch root, run the final canonical diff and
+instruction-discovery audit, and finish the requested three-hour handoff.
+
+Final acceptance is indexed at `docs/audits/t284-cowork-acceptance.md`. All five
+sessions are complete and receipt-valid; final clean phase one passed in 77.18
+seconds at auto-selected eight, and a real four-CPU-affinity fallback run
+selected four and passed in 77.22 seconds. Fresh-clone/discovery/public/source/
+takeover/syntax/diff gates pass,
+and every recorded T-284 temporary tree was guarded-deleted with protected
+anchors unchanged. The fresh `origin/main` remains the original baseline and is
+an ancestor of the clean task branch. No push or protected CI run was
+performed; publishing this completed local branch is a separate next action if
+the owner requests it.
+
+The final explicit `HARNESS_TEST_JOBS=legacy` compatibility run also passed the
+clean full gate in 149.69 seconds; auto-eight's 77.18 seconds is 48.44% lower on
+this host while legacy remains available as an override.
+
+A final no-hardlink clone of the completed branch passed all 57 focused suites
+and the umbrella phase-one checks at auto-selected eight in 75.66 seconds. Its
+temporary tree was then removed through a revalidated guarded-delete manifest,
+with protected anchors unchanged.
+
+Round 6 found a final numeric edge: Python accepts NaN for the waiter's float
+arguments, letting a NaN timeout poll forever and a NaN poll interval reach an
+unhandled sleep error. Evidence is under `docs/audits/t284-cowork-round6/`.
+Claude's first pass falsely reported the exact helper absent and was rejected
+without import; an exact-path retry and reciprocal pass independently accepted
+finite-number guards for both arguments. The focused regression passes. The
+first full run passed 56/57 focused suites and failed only tmux's deliberate
+clean-committed-checkout prerequisite; after checkpointing, the clean retry
+passed all 57 suites and umbrella checks in 77.22 seconds. Round 6 is complete
+and receipt-valid; its exact sandbox was guarded-cleaned with protected anchors
+unchanged.
+
+**Publication checkpoint:** the owner explicitly authorized pushing T-284,
+removing its task branch, and cleaning its remaining temporary residue. A fresh
+fetch still finds `origin/main` at the reconstructed baseline and ancestral to
+the clean task branch. Current-user-owned SSH-agent transport and GitHub API
+access pass independently. Next action: checkpoint this authority, rerun the
+clean full phase-one gate, push the exact branch, open a protected PR, wait for
+its required check, squash-merge, verify tree equality, then delete only the
+exact T-284 remote/local branches and any verified T-284 scratch residue.
 
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 
