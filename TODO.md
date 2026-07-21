@@ -279,6 +279,19 @@ remote forward and pass current authentication with forwarding cleared;
 `macos-ssh-sync` reports `agreement=yes action=none`. Credential state remains
 absent, so the owner may safely rerun the helper plan and apply.
 
+The owner's second `~/run_this.sh --apply` completed successfully after the
+canonical SSH-config restore. It created the dedicated identity, authorized it
+on both routes, passed isolated agentless authentication, and ended with the
+supervisor plan reporting both aliases `stage=create`,
+`unattended_auth=ready`, `external=1`, and `blocked=0`. Independent metadata
+revalidation confirmed a regular, non-symlink, single-link, current-user-owned
+mode-0600 identity without reading its contents. Both existing tmux predecessors
+remain present; managed status is `loaded=no running=no managed=0 external=1`
+for each alias. No supervisor plist or transaction has been staged yet. The
+next action is to advance Aist's clean public checkout to protected `main`,
+repeat the plan, and run stage-only supervisor apply; do not stop either
+predecessor until that transaction is verified and the sibling route is fresh.
+
 ### T-273 — Resolve intentionally deferred maintenance
 
 **Phase/status:** executing. Workstreams 1, 2, 3, and 9 are complete. Each
