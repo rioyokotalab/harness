@@ -172,11 +172,27 @@ persistent multiplexing and `ExitOnForwardFailure no`. Existing sessions were
 not terminated. Aist/Aist2 remained down in the 20:05 JST monitor cycle and
 both direct probes; no Aist state changed.
 
-**Next executable action:** after the owner restores at least one Aist route,
-fetch its clean public/private targets through a mode-0600 disposable log, run
-the schema-3 updater plan/apply, then layout plan/apply and the same
-value-minimized effective audit. Close T-292 only after both fresh Aist routes
-are healthy under the new fail-fast policy.
+**Aist continuation:** the owner restored `aist2`. It exposed clean public and
+private `main`, and private-output-safe fetch plus schema-3 updater plan/apply
+fast-forwarded both to compatible current targets with package actions none.
+SSH layout plan/apply installed the fail-fast fragment at transaction
+`20260721T111342Z-87185`; the plan is now current. A value-minimized audit proves
+canonical fragment bytes, the exact failover and ordinary-host classes, and
+clean/current public and private Git.
+
+Immediate monitor-style recovery of `aist` through `aist2` exited instead of
+creating a false-success connection. A mode-0600 diagnostic log classified the
+nested `ssh login` failure as authentication, not forward setup or transport,
+then was exactly unlinked. `aist2` remained ready and no live config was
+rolled back. The controller's forwarded authentication context therefore
+cannot restore the primary, while the owner may still be able to do so from an
+existing native Aist terminal.
+
+**Next executable action:** owner runs `ssh login` from Aist using the native
+authenticated session. Then verify both fresh routes, exercise one successful
+monitor recovery under `ExitOnForwardFailure yes`, close T-292, and publish
+this final checkpoint. Do not weaken fail-fast forwarding to work around an
+authentication failure.
 
 ### T-288 — Finish post-onboarding fleet housekeeping
 
