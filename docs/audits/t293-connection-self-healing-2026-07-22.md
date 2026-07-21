@@ -103,12 +103,10 @@ implementation, fixture validation, Linux auditing, or observation.
   deactivation, exact rollback, destination collision, healthy/degraded/dual
   loss classification, sibling recovery, and missing-agent refusal.
 
-## Current checkpoint
+## Published checkpoint
 
-No live Mac launcher, process, SSH configuration, credential, or system state
-has been changed by this run. The public implementation is local on
-`task/t-293-self-healing`; focused supervisor, monitor, source-contract, shell
-syntax, ShellCheck, and diff checks pass. The first full phase-one invocation
+Focused supervisor, monitor, source-contract, shell syntax, ShellCheck, and
+diff checks passed. The first full phase-one invocation
 passed 59 focused suites but the existing tmux fixture rejected the deliberately
 uncommitted task checkout; it made no target mutation and is safe to retry from
 the required clean commit. The clean-commit retry passed every phase-one suite;
@@ -116,8 +114,25 @@ native MPI remained the declared environment-only skip. A subsequent
 post-amend rerun briefly raced Git's automatic background packing while an
 existing Bash fixture copied `.git/objects`; only that fixture failed, full
 `git fsck` passed, packing became idle, and the unchanged safe retry passed.
-Next: publish through
-protected `main`, synchronize clean
-managed checkouts, then run Aist's new read-only supervisor plan. Its expected
-safe result is an unattended-authentication refusal unless external credential
-state changes first.
+
+Protected `portable-phase1` passed and PR #191 squash-merged the control plane
+at 4777c7fcf2ef299a26aa08d0cf6fa478c2158e38. Guarded fleet synchronization
+advanced all six clean Linux mirrors. Aist's clean public/private checkouts then
+advanced through updater transaction `20260721T203627Z-61158`; package and live
+SSH state were unchanged.
+
+The published Aist supervisor plan failed closed with both aliases classified
+`reason=unattended-auth`, two external predecessors, zero created managed paths,
+and zero loaded managed services. Value-free probes on Office, riken, and Home
+also found zero of two launchd-like authentication successes and no managed
+service. Office and Home each had two alias-ending external predecessors;
+riken had one despite two healthy externally observed routes, so its launcher
+topology remains a later per-host classification task.
+
+The credential precondition is fleet-wide. Agents must not create, inspect,
+copy, load, or authorize credentials, so the next step requires owner-managed
+provisioning. The recommended design is one dedicated unattended identity per
+Mac, authorized only for that Mac's two reverse-forward aliases; after the
+owner reports provisioning complete, rerun Aist plan and proceed only if both
+isolated authentication checks pass. Until then the prior tmux launchers and
+existing observer remain unchanged.
