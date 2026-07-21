@@ -350,6 +350,21 @@ verify login status without displaying account data, then rerun bootstrap
 plan/apply; it should report no missing prerequisite formula or Python-tools
 action and proceed directly through the already verified client installation.
 
+The owner completed Codex authentication; exit-status-only verification passed
+without displaying account data, and the temporary login session exited. A
+fresh bootstrap plan reported no missing formula and a ready Python-tools
+environment. Idempotent apply reverified the official client and launched the
+Mac-local assignment. The verified public checkout's one-time project-trust
+choice was accepted under the frozen strict Codex policy. Mac-local planning
+then completed with no public/private checkout or transaction-state mutation,
+reported `ready-for-go`, and received the owner's already-recorded go. Its first
+execution step reached the expected native GitHub device-authorization boundary
+before the private companion was created. The live client is waiting there; no
+authorization material is recorded in Git. Next action: after the owner approves
+that native flow and reports completion, verify GitHub authentication by exit
+status only, resume the waiting client, and revalidate checkout/state shape
+before accepting any subsequent mutation.
+
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 
 **Phase/status:** `complete`; owner requested on 2026-07-20 that Codex drive a
