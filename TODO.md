@@ -203,8 +203,8 @@ shared stanzas are normalized. Do not begin deferred Homebrew/package work.
 
 ### T-291 — Converge shared SSH fragment across the managed fleet
 
-**Phase/status:** executing the owner-selected per-Mac private payload
-migration; local layout is already complete on all eleven nodes. The owner
+**Phase/status:** externally blocked and handed off at three of four per-Mac
+payloads; local layout is already complete on all eleven nodes. The owner
 selected preservation of each Mac's distinct non-shared bytes and gave the
 explicit `go`. The desired state
 copies Aist's existing
@@ -506,9 +506,66 @@ payload. Finalization requires all four exact host/payload pairs and a clean
 private checkout. Private Git remains forward-only; rollback restores only
 unchanged live/state preimages, while reapply catches up to published history.
 
-**Next executable action:** publish the reviewed implementation through
-protected CI. Do not begin live migration until the protected public change is
-merged and all four Mac public checkouts are updated.
+PR #180 passed protected portable CI and squash-merged the schema-3 engine as
+`2de6a49`; its exact implementation branch is absent locally and remotely.
+Rollout continuation branch `task/t-291-per-mac-private-rollout` starts from
+that clean main. The next gate is public-only engine catch-up and schema-1
+compatibility validation on all four Macs; no per-host private payload may be
+published until all four pass.
+
+Aist and riken fetched both origins with validated current-user agent sockets,
+accepted public-only long-gap updater transactions with package actions none,
+and now have clean public `2de6a49` plus valid schema-1 private profiles through
+both route aliases. Their update transactions are Aist
+`20260721T093205Z-78916` and riken `20260721T093235Z-54332`. Office/Office2 and
+Home/Home2 were both-route unavailable during this checkpoint, while the
+five-minute failover monitor remained running. No per-host payload has been
+created and the fleet-wide engine gate remains closed.
+
+The final handoff probe found riken/riken2 still ready but Aist/Aist2 had since
+dropped together; its already verified engine update is durable and must not be
+repeated merely because transport changed. Office/Office2 and Home/Home2 remain
+down together. The monitor is running, but no peer-side reconnect is possible
+for a pair with both routes down. Managed Linux local, ri, al, rc, and t4 were
+ready; ab, ab2, and transport-only abci_login were down while transport-only
+alps_login was ready. These route results are connectivity state, not evidence
+of repository drift.
+
+Office and Home then recovered through both aliases and accepted the same
+public-only engine catch-up with package actions none. Their transactions are
+Office `20260721T094521Z-20014` and Home `20260721T094544Z-70559`; both aliases
+on each host prove clean public `2de6a49` and valid schema-1 private profiles.
+riken/riken2 reconfirmed the same state. Aist's already accepted engine-3 state
+remains durable, but Aist/Aist2 dropped together again before a fresh probe.
+The four-engine prerequisite is therefore satisfied by verified transactions;
+the isolated migration gate is open for reachable Macs, but finalization stays
+closed until Aist is reachable and its own payload exists.
+
+Office, riken, and Home each planned and published only their previously absent
+per-host payload, retained the legacy root, and left the exact live SSH root
+unchanged. Every host passed selected-path profile/agreement and clean/current
+private Git checks, then rolled back its first local sync transaction exactly
+and reapplied forward. Final transactions are Office
+`20260721T094814Z-23169`, riken `20260721T094855Z-58479`, and Home
+`20260721T094926Z-73862`. The private transition now has three of four payloads;
+Aist/Aist2 remain down together. No finalization, legacy-root removal, or
+minimum-engine change has occurred.
+
+**External-commit handoff:** the owner is repairing Aist connectivity in a
+separate commit and explicitly closed this rollout work unit so the external
+commit can land independently. Do not amend, absorb, or duplicate that change,
+and do not attempt more Aist recovery from this task. The rollout branch is to
+be merged as a checkpoint and removed, leaving clean public `main`. T-291 is
+not technically complete: the forward-only private transition safely remains
+at three of four payloads with the legacy root and minimum engine 1 intact.
+
+**Next executable action:** wait for the owner's separate Aist repair commit and
+push. On a later explicit resume, fetch first, reconstruct and validate that
+external commit without rewriting it, then revalidate Aist's completed engine
+update, migrate its absent payload with exact rollback/reapply, verify the
+four-payload transition, and only then run the separate finalizer and refresh
+all four selected states. Do not finalize while Aist remains unreachable or
+absent.
 
 ### T-290 — Diagnose termination of Aist reverse SSH forwards
 
