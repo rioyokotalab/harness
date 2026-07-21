@@ -4,6 +4,7 @@ tests/test-bash-startup-unify.sh|canonical Bash startup transaction
 tests/test-focused-runner.sh|parallel focused-suite runner
 tests/test-ssh-agent-profile.sh|SSH agent profile focused suite
 tests/test-remote-session.sh|remote-session focused suite
+tests/test-connection-monitor.sh|managed Mac connection monitor focused suite
 tests/test-safety-guards.sh|interactive safety-guard focused suite
 tests/test-github-rulesets.sh|GitHub ruleset payload focused suite
 tests/test-repository-independence.sh|repository independence focused suite
@@ -24,6 +25,7 @@ tests/test-agent-config.sh|agent configuration focused suite
 tests/test-agent-upgrade.sh|agent replacement and recovery
 tests/test-agent-config-fleet.sh|agent configuration fleet focused suite
 tests/test-personal-macos-update.sh|personal macOS long-gap update focused suite
+tests/test-personal-macos-ssh-supervisor.sh|personal macOS SSH supervisor focused suite
 tests/test-personal-macos-ssh-sync.sh|personal macOS SSH-sync focused suite
 tests/test-personal-macos-config-sync.sh|personal macOS config-sync focused suite
 tests/test-personal-macos-config-migrate.sh|personal macOS config-migration focused suite

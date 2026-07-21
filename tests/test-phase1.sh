@@ -55,6 +55,7 @@ for script in \
     "$ROOT/libexec/harness-macos-doctor" \
     "$ROOT/libexec/harness-macos-profile" \
     "$ROOT/libexec/harness-macos-update" \
+    "$ROOT/libexec/harness-macos-ssh-supervisor" \
     "$ROOT/libexec/harness-macos-ssh-sync" \
     "$ROOT/libexec/harness-macos-config-sync" \
     "$ROOT/libexec/harness-macos-config-migrate" \
@@ -75,6 +76,7 @@ for script in \
     "$ROOT/libexec/harness-restic-primary" \
     "$ROOT/libexec/harness-restic-schedule" \
     "$ROOT/libexec/harness-fleet-sync" \
+    "$ROOT/libexec/harness-connection-monitor" \
     "$ROOT/libexec/harness-ssh-config-mirror" \
     "$ROOT/libexec/harness-apply" \
     "$ROOT/libexec/harness-remediate" \
@@ -170,6 +172,8 @@ if [ "${HARNESS_TEST_JOBS:-auto}" = legacy ]; then
     fail "agent configuration fleet focused suite"
 "$ROOT/tests/test-personal-macos-update.sh" >/dev/null ||
     fail "personal macOS long-gap update focused suite"
+"$ROOT/tests/test-personal-macos-ssh-supervisor.sh" >/dev/null ||
+    fail "personal macOS SSH supervisor focused suite"
 "$ROOT/tests/test-personal-macos-ssh-sync.sh" >/dev/null ||
     fail "personal macOS SSH-sync focused suite"
 "$ROOT/tests/test-personal-macos-config-sync.sh" >/dev/null ||
@@ -227,6 +231,8 @@ if [ "${HARNESS_TEST_JOBS:-auto}" = legacy ]; then
     fail "scientific library readiness focused suite"
 "$ROOT/tests/test-fleet-sync.sh" >/dev/null ||
     fail "fleet sync focused suite"
+"$ROOT/tests/test-connection-monitor.sh" >/dev/null ||
+    fail "managed Mac connection monitor focused suite"
 "$ROOT/tests/test-checkpoint-restart.sh" >/dev/null ||
     fail "checkpoint restart focused suite"
 "$ROOT/tests/test-hpc-cpu-routes.sh" >/dev/null ||
