@@ -148,6 +148,10 @@ deterministic regression instead verifies OpenSSH's resolved fail-fast value,
 while existing synthetic transaction tests retain byte, rollback, and failure
 coverage.
 
+Clean implementation commit `cd9cfc2` passes the complete
+`tests/test-phase1.sh`; every focused suite and guarded-delete test passed, and
+native MPI was the declared environment-only skip.
+
 **Next executable action:** validate and publish the fail-fast refinement,
 guarded-refresh the clean public checkouts and managed fragments, then complete
 the existing Aist updater/layout gap after the owner restores at least one
