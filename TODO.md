@@ -55,8 +55,8 @@ Next free ID: T-293.
 
 ### T-292 — Isolate SSH failover aliases from connection multiplexing
 
-**Phase/status:** executing after explicit owner authorization. Aist's separate
-local Codex restored `aist`/`aist2` by setting `ControlMaster no` and
+**Phase/status:** complete. Aist's separate local Codex restored
+`aist`/`aist2` by setting `ControlMaster no` and
 `ControlPath none` in the private `Host login` and `Host login2` blocks. The
 owner selected the safer shared form: add one exact `Host login login2`
 exception before the canonical `Host *` defaults, retaining multiplexing for
@@ -188,11 +188,14 @@ rolled back. The controller's forwarded authentication context therefore
 cannot restore the primary, while the owner may still be able to do so from an
 existing native Aist terminal.
 
-**Next executable action:** owner runs `ssh login` from Aist using the native
-authenticated session. Then verify both fresh routes, exercise one successful
-monitor recovery under `ExitOnForwardFailure yes`, close T-292, and publish
-this final checkpoint. Do not weaken fail-fast forwarding to work around an
-authentication failure.
+**Closure:** the owner's native `ssh login` succeeded under the installed
+fail-fast configuration. Independent non-multiplexed probes through `aist` and
+`aist2` both passed, resolved to the same host, and proved clean public
+`f5ae449` plus layout state current. All eleven managed hosts therefore have
+the canonical fragment and accepted effective option classes; all eight Mac
+routes are healthy. T-292 requires no further machine change. Its final ledger
+checkpoint must pass protected publication and be guarded-synchronized to
+clean public checkouts without replaying any live SSH transaction.
 
 ### T-288 — Finish post-onboarding fleet housekeeping
 
