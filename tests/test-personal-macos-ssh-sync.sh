@@ -191,7 +191,8 @@ git -C "$layout_writer" push -q origin main
 sed 's/synthetic-user/synthetic-layout-local/' \
     "$ROOT/tests/fixtures/personal-macos/private-v1/ssh_config" \
     >"$layout_home/.ssh/config"
-printf '%s\n' 'Include ~/.ssh/config.d/harness.conf' >>"$layout_home/.ssh/config"
+printf '%s\n' 'Match all' 'Include ~/.ssh/config.d/harness.conf' \
+    >>"$layout_home/.ssh/config"
 chmod 600 "$layout_home/.ssh/config"
 mkdir "$layout_home/.ssh/config.d"
 cp "$public/config/ssh/harness.conf" "$layout_home/.ssh/config.d/harness.conf"

@@ -1589,6 +1589,8 @@ cmp -s "$dotfile_home/.ssh/config.d/harness.conf" \
     "$test_repo/config/ssh/harness.conf" || fail "shared SSH fragment bytes"
 [ "$(grep -c '^Include ~/.ssh/config.d/harness.conf$' \
     "$dotfile_home/.ssh/config")" -eq 1 ] || fail "single SSH include"
+[ "$(tail -n 2 "$dotfile_home/.ssh/config" | head -n 1)" = 'Match all' ] ||
+    fail "SSH include global context reset"
 HOME="$dotfile_home" "$test_repo/bin/harness" rollback "$dotfile_transaction" \
     >"$TEMP_DIR/dotfile-rollback.out"
 HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$dotfile_home" \

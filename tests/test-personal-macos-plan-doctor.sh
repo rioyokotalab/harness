@@ -269,7 +269,8 @@ cp "$ROOT/tests/fixtures/personal-macos/private-v2/companion.conf" \
     "$private/companion.conf"
 cp "$ROOT/tests/fixtures/personal-macos/private-v1/ssh_config" \
     "$private/ssh_config"
-printf '%s\n' 'Include ~/.ssh/config.d/harness.conf' >>"$private/ssh_config"
+printf '%s\n' 'Match all' 'Include ~/.ssh/config.d/harness.conf' \
+    >>"$private/ssh_config"
 cp "$ROOT/tests/fixtures/personal-macos/private-v2/bashrc" "$private/bashrc"
 cp "$ROOT/tests/fixtures/personal-macos/private-v2/tmux.conf" "$private/tmux.conf"
 chmod 600 "$private/companion.conf" "$private/ssh_config" "$private/bashrc" \

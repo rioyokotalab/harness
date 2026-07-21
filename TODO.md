@@ -329,6 +329,14 @@ validated, rolled back, and reapplied. A final parallel check proved all eleven
 layouts current, all public checkouts clean at `322fe1f`, and both GitHub and
 default grammar resolution valid without emitting values.
 
+The first final Git fetch exposed that a terminal Include alone remains under
+the preceding OpenSSH Host context and can therefore skip the fragment. Local
+was immediately repaired with the exact `Match all` global-context reset before
+the terminal include, restoring verified GitHub hostname/user resolution and
+authenticated fetch. The active correction updates the transaction, effective-
+resolution regression, documentation, and all roots; publication and fleet
+reapply are required before T-291 can close.
+
 **Execution sequence:**
 
 1. Revalidate Aist through both routes. Extract its existing root `Host github`
@@ -400,7 +408,9 @@ copies on all systems rather than the current Linux symlinks. D4 (settled by
 evidence) tracks the canonical bytes publicly because the extracted option set
 and comments pass the existing non-secret boundary.
 
-**Next executable action:** ask the owner whether to (recommended) design a
+**Next executable action:** validate and publish the exact `Match all` trailer
+correction, reapply it across all eleven roots, and verify effective GitHub
+resolution rather than grammar alone. Then ask the owner whether to design a
 per-Mac private SSH payload migration that preserves each distinct non-shared
 configuration, select one complete Mac payload as the whole-file winner, or
 leave the private divergence recorded and close T-291's completed local layout

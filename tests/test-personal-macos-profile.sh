@@ -207,7 +207,7 @@ grep -F 'SSH configuration contains a prohibited or duplicate Include' \
 
 payload_managed_include_home=$(make_profile payload-managed-include)
 payload_managed_include_private=$payload_managed_include_home/.config/harness/private
-printf '%s\n' 'Include ~/.ssh/config.d/harness.conf' >> \
+printf '%s\n' 'Match all' 'Include ~/.ssh/config.d/harness.conf' >> \
     "$payload_managed_include_private/ssh_config"
 git -C "$payload_managed_include_private" add ssh_config
 git -C "$payload_managed_include_private" commit -q -m 'synthetic terminal managed include'
@@ -217,6 +217,7 @@ HOME="$payload_managed_include_home" "$HARNESS" macos-profile \
 payload_nonterminal_home=$(make_profile payload-nonterminal-include)
 payload_nonterminal_private=$payload_nonterminal_home/.config/harness/private
 {
+    printf '%s\n' 'Match all'
     printf '%s\n' 'Include ~/.ssh/config.d/harness.conf'
     cat "$FIXTURE/ssh_config"
 } >"$payload_nonterminal_private/ssh_config"
@@ -229,6 +230,19 @@ if HOME="$payload_nonterminal_home" "$HARNESS" macos-profile --host mac-test-pil
 fi
 grep -F 'SSH configuration contains a nonterminal managed Include' \
     "$TEMP_DIR/payload-nonterminal.out" >/dev/null || fail "nonterminal include refusal"
+
+payload_context_home=$(make_profile payload-missing-include-context)
+payload_context_private=$payload_context_home/.config/harness/private
+printf '%s\n' 'Include ~/.ssh/config.d/harness.conf' >> \
+    "$payload_context_private/ssh_config"
+git -C "$payload_context_private" add ssh_config
+git -C "$payload_context_private" commit -q -m 'synthetic missing include context'
+if HOME="$payload_context_home" "$HARNESS" macos-profile --host mac-test-pilot \
+    >"$TEMP_DIR/payload-context.out" 2>&1; then
+    fail "managed include without global context accepted"
+fi
+grep -F 'SSH configuration has a managed Include without a global context reset' \
+    "$TEMP_DIR/payload-context.out" >/dev/null || fail "missing include context refusal"
 
 payload_duplicate_include_home=$(make_profile payload-duplicate-include)
 payload_duplicate_include_private=$payload_duplicate_include_home/.config/harness/private

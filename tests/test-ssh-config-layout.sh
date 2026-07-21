@@ -84,6 +84,13 @@ cmp -s "$home/.ssh/config.d/harness.conf" "$test_repo/config/ssh/harness.conf" |
     fail "one managed include"
 [ "$(tail -n 1 "$home/.ssh/config")" = 'Include ~/.ssh/config.d/harness.conf' ] ||
     fail "managed include is not terminal"
+[ "$(tail -n 2 "$home/.ssh/config" | head -n 1)" = 'Match all' ] ||
+    fail "managed global context reset is absent"
+ssh -o CanonicalizeHostname=no -G -F "$home/.ssh/config" github 2>/dev/null |
+    awk '$1 == "hostname" { h=$2 } $1 == "user" { u=$2 }
+        $1 == "serveraliveinterval" { s=$2 }
+        END { exit h == "github.com" && u == "git" && s == 15 ? 0 : 1 }' ||
+    fail "terminal include did not resolve GitHub and defaults globally"
 grep -E '^[[:space:]]*Host[[:space:]]+(github|\*)[[:space:]]*$' \
     "$home/.ssh/config" >/dev/null && fail "shared stanza remained in root"
 grep -F T291_PRIVATE_SENTINEL "$home/.ssh/config" >/dev/null || fail "private root bytes lost"
@@ -161,6 +168,21 @@ Host *
 assert_refused duplicateinclude 'Include ~/.ssh/config.d/harness.conf
 Include ~/.ssh/config.d/harness.conf'
 
+include_only_home=$TEMP_DIR/include-only-home
+make_home "$include_only_home"
+printf '%s\n' 'Host node-only' '    HostName node.invalid' \
+    'Include ~/.ssh/config.d/harness.conf' >"$include_only_home/.ssh/config"
+cp "$ROOT/config/ssh/harness.conf" \
+    "$include_only_home/.ssh/config.d/harness.conf"
+chmod 600 "$include_only_home/.ssh/config" \
+    "$include_only_home/.ssh/config.d/harness.conf"
+run_layout "$include_only_home" --plan >"$TEMP_DIR/include-only-plan.out"
+grep -F 'state=migrate github_blocks=0 default_blocks=0 managed_includes=1' \
+    "$TEMP_DIR/include-only-plan.out" >/dev/null || fail "include-only upgrade plan"
+run_layout "$include_only_home" --apply >/dev/null
+[ "$(tail -n 2 "$include_only_home/.ssh/config" | head -n 1)" = 'Match all' ] ||
+    fail "include-only upgrade context reset"
+
 wrong_link_home=$TEMP_DIR/wrong-link-home
 make_home "$wrong_link_home"
 printf '%s\n' 'Host node-only' '    HostName node.invalid' >"$wrong_link_home/.ssh/config"
@@ -173,7 +195,8 @@ absent_home=$TEMP_DIR/absent-home
 mkdir "$absent_home"
 run_layout "$absent_home" --apply >"$TEMP_DIR/absent-apply.out"
 absent_tx=$(sed -n 's/.*transaction=\([^ ]*\).*/\1/p' "$TEMP_DIR/absent-apply.out")
-[ "$(cat "$absent_home/.ssh/config")" = 'Include ~/.ssh/config.d/harness.conf' ] ||
+[ "$(cat "$absent_home/.ssh/config")" = 'Match all
+Include ~/.ssh/config.d/harness.conf' ] ||
     fail "absent root creation"
 [ "$(file_mode "$absent_home/.ssh/config")" = 600 ] || fail "absent root mode"
 run_layout "$absent_home" --rollback "$absent_tx" >/dev/null
