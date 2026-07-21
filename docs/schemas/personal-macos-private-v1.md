@@ -81,6 +81,12 @@ another private file or command. The payload is limited to 1 MiB and must pass a
 task ledgers, and CI artifacts never contain its bytes, path values, content
 hash, or revision; public tests use only the synthetic fixture.
 
+The layout and SSH-sync migration adapters may recognize the previously
+published exact terminal include without `Match all` as a historical input.
+That compatibility path still rejects every other include and prohibited
+material, and it is not used to validate a live or newly published candidate;
+the candidate must contain the strict two-line trailer.
+
 In the historical engine-2 layout, the `bashrc` payload is the private shared Bash fragment, not a replacement for
 the live `.bashrc`. It is limited to 1 MiB, rejects credential-like assignments
 and private-key material, and passes `bash --noprofile --norc -n` without

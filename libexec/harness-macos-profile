@@ -62,6 +62,11 @@ companion_manifest=$private_root/companion.conf
 host_manifest=$private_hosts/$logical_host.conf
 ssh_payload=$private_root/ssh_config
 current_uid=$(id -u)
+case ${HARNESS_ALLOW_LEGACY_SSH_LAYOUT:-0} in
+    0) ssh_layout_validation=strict ;;
+    1) ssh_layout_validation=legacy-terminal-include ;;
+    *) die "private profile SSH layout compatibility mode is invalid" ;;
+esac
 
 macos_require_private_directory "$private_root" "$current_uid"
 macos_require_private_directory "$private_git" "$current_uid"
@@ -91,7 +96,8 @@ git -C "$private_root" ls-files | while IFS= read -r tracked_path; do
     case "$tracked_path" in
         companion.conf) ;;
         ssh_config)
-            macos_validate_ssh_config "$ssh_payload" "$current_uid" 600
+            macos_validate_ssh_config "$ssh_payload" "$current_uid" 600 \
+                "$ssh_layout_validation"
             ;;
         bashrc)
             [ "$minimum_engine_schema" -ge 2 ] ||

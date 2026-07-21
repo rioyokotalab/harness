@@ -171,6 +171,11 @@ macos_validate_ssh_config() {
     macos_ssh_file=$1
     macos_ssh_uid=$2
     macos_ssh_modes=$3
+    macos_ssh_layout_mode=${4:-strict}
+    case "$macos_ssh_layout_mode" in
+        strict|legacy-terminal-include) ;;
+        *) die "SSH configuration validation mode is invalid" ;;
+    esac
     [ -f "$macos_ssh_file" ] && [ ! -L "$macos_ssh_file" ] ||
         die "SSH configuration has unsafe type"
     [ "$(macos_stat_owner "$macos_ssh_file")" = "$macos_ssh_uid" ] ||
@@ -195,13 +200,21 @@ macos_validate_ssh_config() {
     macos_ssh_managed_includes=$(LC_ALL=C grep -E -c \
         '^Include ~/\.ssh/config\.d/harness\.conf$' "$macos_ssh_file" || true)
     case "$macos_ssh_all_includes:$macos_ssh_managed_includes" in
-        0:0) macos_ssh_has_managed_include=0 ;;
+        0:0)
+            macos_ssh_has_managed_include=0
+            macos_ssh_strip_lines=0
+            ;;
         1:1)
             [ "$(tail -n 1 "$macos_ssh_file")" = \
                 'Include ~/.ssh/config.d/harness.conf' ] ||
                 die "SSH configuration contains a nonterminal managed Include"
-            [ "$(tail -n 2 "$macos_ssh_file" | head -n 1)" = 'Match all' ] ||
+            if [ "$(tail -n 2 "$macos_ssh_file" | head -n 1)" = 'Match all' ]; then
+                macos_ssh_strip_lines=2
+            elif [ "$macos_ssh_layout_mode" = legacy-terminal-include ]; then
+                macos_ssh_strip_lines=1
+            else
                 die "SSH configuration has a managed Include without a global context reset"
+            fi
             macos_ssh_has_managed_include=1
             ;;
         *) die "SSH configuration contains a prohibited or duplicate Include" ;;
@@ -213,7 +226,11 @@ macos_validate_ssh_config() {
     fi
     command -v ssh >/dev/null 2>&1 || die "SSH configuration validator is unavailable"
     if [ "$macos_ssh_has_managed_include" -eq 1 ]; then
-        sed '$d' "$macos_ssh_file" | sed '$d'
+        if [ "$macos_ssh_strip_lines" -eq 2 ]; then
+            sed '$d' "$macos_ssh_file" | sed '$d'
+        else
+            sed '$d' "$macos_ssh_file"
+        fi
     else
         cat "$macos_ssh_file"
     fi | ssh -o CanonicalizeHostname=no -G -F /dev/stdin \

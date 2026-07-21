@@ -243,6 +243,9 @@ if HOME="$payload_context_home" "$HARNESS" macos-profile --host mac-test-pilot \
 fi
 grep -F 'SSH configuration has a managed Include without a global context reset' \
     "$TEMP_DIR/payload-context.out" >/dev/null || fail "missing include context refusal"
+HOME="$payload_context_home" HARNESS_ALLOW_LEGACY_SSH_LAYOUT=1 \
+    "$HARNESS" macos-profile --host mac-test-pilot >/dev/null ||
+    fail "explicit legacy include migration input refused"
 
 payload_duplicate_include_home=$(make_profile payload-duplicate-include)
 payload_duplicate_include_private=$payload_duplicate_include_home/.config/harness/private

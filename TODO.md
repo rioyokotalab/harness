@@ -341,6 +341,17 @@ Mac private payloads, and adds an include-only upgrade regression. All 57
 focused suites and complete clean-checkout phase one pass; native MPI remains
 the declared environment-only skip.
 
+PR #175 merged the correction as `b72b366`; guarded fleet-sync advanced all
+six remote Linux public checkouts. Aist, riken, and Home public checkouts also
+advanced through the direct public GitHub URL because their old terminal
+include could not resolve the `github` alias. riken and Home now plan the live
+trailer upgrade. Aist instead exposed a migration-order gap: its private
+payload contains the previously published exact include-only layout, so strict
+profile validation blocks the transaction that would upgrade it. The active
+bridge permits that one historical form only as layout/SSH-sync migration
+input; live and publication candidates remain strict. Office is unchanged
+because both routes are presently down.
+
 **Execution sequence:**
 
 1. Revalidate Aist through both routes. Extract its existing root `Host github`
@@ -412,9 +423,10 @@ copies on all systems rather than the current Linux symlinks. D4 (settled by
 evidence) tracks the canonical bytes publicly because the extracted option set
 and comments pass the existing non-secret boundary.
 
-**Next executable action:** validate and publish the exact `Match all` trailer
-correction, reapply it across all eleven roots, and verify effective GitHub
-resolution rather than grammar alone. Then ask the owner whether to design a
+**Next executable action:** validate and publish the narrow historical-input
+bridge, upgrade Aist/riken/Home and every Linux root, then update Office when a
+route returns. Verify effective GitHub resolution rather than grammar alone.
+Then ask the owner whether to design a
 per-Mac private SSH payload migration that preserves each distinct non-shared
 configuration, select one complete Mac payload as the whole-file winner, or
 leave the private divergence recorded and close T-291's completed local layout

@@ -119,7 +119,8 @@ export_payload() {
     git -C "$private_root" show "$export_revision:ssh_config" \
         >"$export_file" 2>/dev/null || return 1
     chmod 600 "$export_file"
-    macos_validate_ssh_config "$export_file" "$current_uid" 600
+    macos_validate_ssh_config "$export_file" "$current_uid" 600 \
+        legacy-terminal-include
 }
 
 fetch_private() {
@@ -387,7 +388,8 @@ macos_private_id_is_safe "$logical_host" || die "invalid private logical identif
 macos_validate_ssh_config "$live_config" "$current_uid" 600,644
 validate_public_checkout
 validate_private_checkout
-"$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
+HARNESS_ALLOW_LEGACY_SSH_LAYOUT=1 \
+    "$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
     die "private profile is not ready for Mac SSH sync"
 prepare_state
 

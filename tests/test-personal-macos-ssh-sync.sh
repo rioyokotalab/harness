@@ -181,12 +181,14 @@ Host *
 EOF
 run_sync "$layout_home" --host mac-test-pilot --seed --apply >/dev/null
 git -C "$layout_writer" pull -q --ff-only
-sed 's/ServerAliveInterval 15/ServerAliveInterval 45/' \
-    "$layout_writer/ssh_config" >"$TEMP_DIR/layout-remote"
+cp "$ROOT/tests/fixtures/personal-macos/private-v1/ssh_config" \
+    "$TEMP_DIR/layout-remote"
+printf '%s\n' '' 'Include ~/.ssh/config.d/harness.conf' \
+    >>"$TEMP_DIR/layout-remote"
 mv "$TEMP_DIR/layout-remote" "$layout_writer/ssh_config"
 chmod 600 "$layout_writer/ssh_config"
 git -C "$layout_writer" add ssh_config
-git -C "$layout_writer" commit -q -m 'synthetic shared-stanza-only advance'
+git -C "$layout_writer" commit -q -m 'synthetic historical include-only advance'
 git -C "$layout_writer" push -q origin main
 sed 's/synthetic-user/synthetic-layout-local/' \
     "$ROOT/tests/fixtures/personal-macos/private-v1/ssh_config" \
