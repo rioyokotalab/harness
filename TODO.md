@@ -6,7 +6,7 @@ completion pointers here. Full pre-housekeeping chronology is available at
 published commit 90451d49ac96; detailed T-288 execution through Home Git
 catch-up is preserved at 378df00159d59e8abee645f2bdaebd20cf467cc2.
 
-Next free ID: T-292.
+Next free ID: T-293.
 
 ## Current state
 
@@ -52,6 +52,53 @@ Next free ID: T-292.
    reconstruction of its gate and authority.
 
 ## Active tasks
+
+### T-292 — Isolate SSH failover aliases from connection multiplexing
+
+**Phase/status:** executing after explicit owner authorization. Aist's separate
+local Codex restored `aist`/`aist2` by setting `ControlMaster no` and
+`ControlPath none` in the private `Host login` and `Host login2` blocks. The
+owner selected the safer shared form: add one exact `Host login login2`
+exception before the canonical `Host *` defaults, retaining multiplexing for
+every other destination. `ControlPersist no` makes the exception complete but
+is otherwise inert once `ControlPath none` disables sharing.
+
+**Evidence and scope:** upstream OpenSSH uses the first obtained value, so a
+later override would be ineffective. The tracked fragment currently gives all
+hosts `ControlMaster auto`, a configured path, and persistent masters. A global
+replacement would add handshakes and authentication to Git, SCP, interactive,
+and fleet operations; it is rejected. Change only the public canonical
+fragment, its exact-source validator, effective-resolution regression, focused
+documentation, and this ledger. Preserve all private root bytes, endpoints,
+credentials, existing sessions, and the owner-managed Aist repair commit.
+
+**Execution/acceptance:** prove `login` and `login2` resolve to disabled control
+sharing while GitHub and an ordinary target retain auto/configured/persistent
+multiplexing; retain canonical exactness, grammar, transactional
+rollback/reapply, public privacy audit, all focused suites, and protected CI.
+After merge, transactionally update only clean/current managed fragments and
+verify effective classes without emitting paths. Existing masters are not
+terminated; the change governs new clients. Stop on dirty Git, layout drift,
+route loss, ambiguous private state, or an independently advanced public main.
+
+**Implementation checkpoint:** branch `task/t-292-login-control-isolation` adds
+the exact three-option exception before `Host *`, teaches the canonical
+validator that one exact non-shared block is mandatory, documents first-value
+ordering and existing-master behavior, and tests effective failover and
+ordinary-host resolution. `tests/test-ssh-config-layout.sh`, the Python syntax
+check, ShellCheck, and `git diff --check` pass. On this OpenSSH, a disabled
+`ControlPath none` is represented by the absence of a `controlpath` line in
+`ssh -G`; the regression checks that normalized behavior without exposing a
+path.
+
+The first `tests/test-phase1.sh` attempt ran every focused suite: all passed
+except `test-tmux-config.sh`, whose long-TMPDIR case correctly requires a clean
+committed checkout. The SSH layout, Mac SSH sync, source-contract, and public
+privacy audit suites passed. This is a retry-safe repository-state gate, not a
+product failure; rerun the same full suite after the intended commit.
+
+**Next executable action:** run the clean phase-one suite and privacy/source
+checks, then publish through protected CI before any live fragment rollout.
 
 ### T-288 — Finish post-onboarding fleet housekeeping
 
