@@ -513,11 +513,19 @@ that clean main. The next gate is public-only engine catch-up and schema-1
 compatibility validation on all four Macs; no per-host private payload may be
 published until all four pass.
 
-**Next executable action:** fetch both checkouts on each Mac, run a public-main
-`macos-update` plan/apply with its current fetched private target, then prove
-clean public `2de6a49` and a valid schema-1 private profile on all four. Stop a
+Aist and riken fetched both origins with validated current-user agent sockets,
+accepted public-only long-gap updater transactions with package actions none,
+and now have clean public `2de6a49` plus valid schema-1 private profiles through
+both route aliases. Their update transactions are Aist
+`20260721T093205Z-78916` and riken `20260721T093235Z-54332`. Office/Office2 and
+Home/Home2 were both-route unavailable during this checkpoint, while the
+five-minute failover monitor remained running. No per-host payload has been
+created and the fleet-wide engine gate remains closed.
+
+**Next executable action:** when either route recovers, apply the same
+public-only engine catch-up to Office and Home and validate both aliases. Stop a
 host on route, authentication, dirty-tree, divergence, or compatibility
-failure; do not migrate any private payload until every host passes.
+failure; do not migrate any private payload until all four Macs pass.
 
 ### T-290 — Diagnose termination of Aist reverse SSH forwards
 
