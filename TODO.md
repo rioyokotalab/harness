@@ -230,13 +230,14 @@ alias-ending predecessor despite both routes probing healthy, so its distinct
 launcher topology requires separate classification after the Aist gate. The
 authentication prerequisite is therefore fleet-wide, not Aist-only.
 
-**Next executable action:** checkpoint these published/live results, then wait
-for the owner to provision one dedicated unattended identity per Mac for both
-of that Mac's `login`/`login2` aliases, or to select another owner-managed
-unattended authentication design. Retry Aist's read-only supervisor plan; only
-if it reports both aliases ready may staging and one-route-at-a-time pilot
-activation begin. Continue the existing observer meanwhile. Do not initialize
-or resume cowork.
+**Next executable action:** publish and synchronize the dedicated-identity
+supervisor revision. Then the local driver may place the reviewed, plan-first
+Aist-local `~/run_this.sh`, but must not run it or inspect its generated key.
+The owner runs its plan and explicit apply to provision one dedicated identity
+for both of Aist's `login`/`login2` aliases. Retry Aist's read-only supervisor
+plan; only if it reports both aliases ready may staging and one-route-at-a-time
+pilot activation begin. Continue the existing observer meanwhile. Do not
+initialize or resume cowork.
 
 ### T-273 — Resolve intentionally deferred maintenance
 

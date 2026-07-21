@@ -136,3 +136,25 @@ Mac, authorized only for that Mac's two reverse-forward aliases; after the
 owner reports provisioning complete, rerun Aist plan and proceed only if both
 isolated authentication checks pass. Until then the prior tmux launchers and
 existing observer remain unchanged.
+
+## Owner provisioning handoff
+
+The supervisor now fail-closes on one fixed local identity path,
+`~/.ssh/harness-reverse`. Its value-free safety check requires a regular,
+non-symlink, current-user-owned, single-link mode-0600 file. Both the isolated
+probe and generated launch agents set `IdentitiesOnly=yes` and select that path,
+so authorization does not depend on a session agent and no private SSH config
+bytes need to change. The owner requested a reviewable Aist-local helper. The
+driver may place `~/run_this.sh` on Aist after this revision reaches protected
+`main`, but must not execute it or inspect any key it generates. The helper
+must default to a non-mutating plan, require an explicit interactive apply,
+restrict the new authorization while re-enabling port forwarding, validate both
+aliases using only the new identity, run the value-free supervisor plan, and
+attempt exact rollback of its own additions on failure.
+
+This design follows the upstream OpenSSH contracts: `IdentityFile` accepts
+tilde paths and works with `IdentitiesOnly`, `IdentityAgent=none` disables agent
+use, and the `restrict,port-forwarding` authorized-key combination retains the
+forwarding capability while disabling the other restricted capabilities. See
+the OpenBSD [`ssh_config(5)`](https://man.openbsd.org/ssh_config) and
+[`sshd(8)`](https://man.openbsd.org/sshd) manuals.

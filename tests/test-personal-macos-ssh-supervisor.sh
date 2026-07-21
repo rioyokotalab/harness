@@ -73,13 +73,21 @@ esac
 EOF
 cat >"$FAKE_BIN/ssh" <<'EOF'
 #!/bin/sh
+identity_only=no
+identity_agent=no
+identity_file=no
 for argument do
     if [ "$argument" = -G ]; then
         printf '%s\n' 'hostname synthetic.invalid'
         printf '%s\n' 'remoteforward 10022 localhost:22'
         exit 0
     fi
+    [ "$argument" != 'IdentitiesOnly=yes' ] || identity_only=yes
+    [ "$argument" != 'IdentityAgent=none' ] || identity_agent=yes
+    [ "$argument" != "IdentityFile=$HOME/.ssh/harness-reverse" ] || identity_file=yes
 done
+[ "$identity_only" = yes ] && [ "$identity_agent" = yes ] &&
+    [ "$identity_file" = yes ] || exit 1
 [ ! -e "$HOME/.fake-auth-fail" ]
 EOF
 cat >"$FAKE_BIN/launchctl" <<'EOF'
@@ -147,11 +155,13 @@ make_home() {
     cp "$FIXTURE/companion.conf" "$private/companion.conf"
     cp "$FIXTURE/hosts/mac-test-pilot.conf" "$private/hosts/mac-test-pilot.conf"
     cp "$FIXTURE/ssh_config" "$home/.ssh/config"
+    : >"$home/.ssh/harness-reverse"
     chmod 700 "$home" "$home/Library" "$home/Library/LaunchAgents" \
         "$home/.ssh" "$home/.config" "$home/.config/harness" "$private" \
         "$private/hosts" "$home/.local/state/harness" \
         "$home/.local/state/harness/transactions"
-    chmod 600 "$home/.ssh/config" "$private/companion.conf" \
+    chmod 600 "$home/.ssh/config" "$home/.ssh/harness-reverse" \
+        "$private/companion.conf" \
         "$private/hosts/mac-test-pilot.conf"
     git -C "$private" init -q -b main
     git -C "$private" config user.name mac-test
@@ -182,6 +192,24 @@ grep -F 'PREFLIGHT macos_ssh_supervisor blocked=0' "$TEMP_DIR/plan.out" >/dev/nu
 [ ! -e "$plan_home/.local/state/harness/macos-ssh-supervisor" ] ||
     fail "plan created supervisor state"
 
+missing_identity_home=$(make_home missing-identity)
+unlink "$missing_identity_home/.ssh/harness-reverse"
+if run_supervisor "$missing_identity_home" --host mac-test-pilot --plan \
+    >"$TEMP_DIR/missing-identity.out" 2>&1; then
+    fail "plan accepted a missing dedicated identity"
+fi
+[ "$(grep -c 'reason=dedicated-identity' "$TEMP_DIR/missing-identity.out")" -eq 2 ] ||
+    fail "missing dedicated identity refusal count"
+
+unsafe_identity_home=$(make_home unsafe-identity)
+chmod 644 "$unsafe_identity_home/.ssh/harness-reverse"
+if run_supervisor "$unsafe_identity_home" --host mac-test-pilot --plan \
+    >"$TEMP_DIR/unsafe-identity.out" 2>&1; then
+    fail "plan accepted an unsafe dedicated identity"
+fi
+[ "$(grep -c 'reason=dedicated-identity' "$TEMP_DIR/unsafe-identity.out")" -eq 2 ] ||
+    fail "unsafe dedicated identity refusal count"
+
 touch "$plan_home/.fake-auth-fail"
 if run_supervisor "$plan_home" --host mac-test-pilot --plan \
     >"$TEMP_DIR/auth-fail.out" 2>&1; then
@@ -198,6 +226,12 @@ tx=$(transaction_id "$TEMP_DIR/apply.out")
 for alias in login login2; do
     plist=$apply_home/Library/LaunchAgents/org.rioyokota.harness.ssh.$alias.plist
     [ -f "$plist" ] && [ ! -L "$plist" ] || fail "missing staged $alias plist"
+    grep -F '<string>IdentitiesOnly=yes</string>' "$plist" >/dev/null ||
+        fail "$alias plist does not isolate its identity"
+    grep -F '<string>IdentityAgent=none</string>' "$plist" >/dev/null ||
+        fail "$alias plist does not disable agent use"
+    grep -F '<string>IdentityFile=~/.ssh/harness-reverse</string>' "$plist" >/dev/null ||
+        fail "$alias plist does not select the dedicated identity"
     [ ! -e "$apply_home/.fake-launch-state/$alias" ] || fail "stage loaded $alias"
 done
 [ "$(sed -n '1p' "$apply_home/.local/state/harness/transactions/$tx.macos-ssh-supervisor.status")" = staged ] ||
