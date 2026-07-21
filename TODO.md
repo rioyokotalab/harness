@@ -57,107 +57,133 @@ Next free ID: T-294.
 
 ### T-293 — Make managed fleet connections durably self-healing
 
-**Phase/status:** planning; owner-selected Aist Codex driver has not yet
-initialized the cowork session. The owner explicitly requested a seven-hour
-unattended `codex-claude-cowork` run and selected Aist as the driver location
-because ChatGPT Remote Control has remained available there when both reverse
-SSH routes disappeared. Claude Code on Aist is the required co-pilot. The
-owner will be unavailable during the run, so durable files and conservative
-stop conditions must replace chat-dependent recovery.
+**Phase/status:** planning with Codex on `local` as the owner-selected driver;
+target execution awaits a new explicit `go`. The attempted Aist-hosted run
+never entered cowork because Claude Code was absent. The owner reports that all
+attempted live state was rolled back. Protected Git contains no Aist-attempt
+branch, pull request, or artifact. There is therefore no predecessor cowork
+session, no co-pilot evidence to import, and no prior result to trust. Before
+any mutation, the local driver must independently revalidate Aist's live,
+private, process, and launch state.
 
 **Outcome:** remove owner-dependent reconnection from the managed fleet. First
-diagnose and solve Aist's repeated simultaneous `aist`/`aist2` loss. After the
-Aist pilot passes, audit and, only where evidence requires it, converge the
+diagnose and solve Aist's repeated simultaneous `aist`/`aist2` loss. After
+the Aist pilot passes, audit and, only where evidence requires it, converge the
 Office, riken, and Home reverse-route pairs and the managed Linux routes local,
 ab, ab2, ri, al, rc, and t4. “Gone forever” is an engineering objective, not a
 claim that a finite soak can prove: acceptance requires persistent supervision,
 automatic recovery from tested expected failures, bounded observability, exact
 rollback, and no routine owner intervention; record any external-provider,
-power, sleep, or network failure that remains outside those guarantees.
+power, sleep, or network failure outside those guarantees.
 
-**Required workflow:** the Aist Codex driver must read repository instructions,
-this ledger, `codex-claude-cowork`, `plan-interview-execute`,
-`long-running-task-ledger`, and the complete cowork protocol. Use the default
-staged/sealed cowork exchange, one immutable baseline, independent Codex and
-Claude sandbox experiments, blinded evidence, reciprocal critique,
-reconciliation, a frozen plan, driver-only target mutation, and final
-co-pilot challenge. Checkpoint all facts, failures, retry safety, commands,
-working files, and next actions. Use native clients; do not substitute a
-same-product subagent. ChatGPT Remote Control is Aist's out-of-band control
-path, not a third cowork agent.
+**Required workflow:** use Codex only, driven from `local`. Apply
+`plan-interview-execute` and `long-running-task-ledger`; do not use
+`codex-claude-cowork`, invoke Claude, or substitute a same-product co-pilot.
+Keep Git and this ledger authoritative. Separate confirmed facts from
+inferences, perform safe read-only discovery before freezing the plan, execute
+only after the owner says `go`, checkpoint every material result or failure,
+and retain bounded value-free evidence in a tracked audit. ChatGPT Remote
+Control is an owner-operated emergency path, not an API available to the local
+driver and not an execution dependency.
 
-**Ordered scope:**
+**Local-driver continuity:** losing both Aist routes must pause only Aist live
+mutation, not the task. While Aist is unreachable, continue repository
+experiments, supervisor/watchdog fixture development, monitor-state modeling,
+Office/riken/Home classification, Linux route auditing, tests, documentation,
+and review. Never infer Aist state across a disconnect. Resume Aist from the
+last durable checkpoint only after a fresh route, identity, Git, process, and
+rollback preflight.
 
-1. Revalidate clean public/private Git, Aist identity, Codex/Claude versions,
-   Remote Control continuity, current SSH/monitor state, and the exact source
-   of the tunnel processes without printing endpoints or private values.
-2. Diagnose why each process exits, remains falsely alive, or fails to recover.
-   Preserve bounded value-free timing, exit-status, launch ownership, duplicate,
-   bind-conflict, keepalive, and local-versus-observer evidence. Distinguish
-   confirmed cause from inference.
-3. In matched sandboxes compare current manual operation, user-level `launchd`
-   supervision, and supervision plus an active health watchdog. Prefer the
-   smallest native design that detects both dead processes and unusable
-   forwards; do not keep Codex itself running as the production watchdog.
-4. Freeze the evidence-selected Aist plan with installation, unload, rollback,
-   log bounds, retry/backoff, duplicate exclusion, and failure-injection gates.
-   The original seven-hour request is the go for that frozen scope only.
-5. Execute the reversible Aist pilot, then repeatedly terminate each tunnel
-   separately and both together. Prove bounded automatic recovery, both routes
-   observable from local, no duplicate process or forward, no bind collision,
-   and unchanged unrelated SSH, Codex, shell, Git, and session state.
-6. Only after Aist passes, classify Office, riken, and Home against the same
-   failure model. Roll out only the generic evidence-supported mechanism,
-   sequentially and with per-host preflight/rollback; preserve distinct private
-   SSH bytes. A healthy host may remain unchanged when its design already meets
-   the frozen acceptance gates.
-7. Audit local and all six remote Linux SSH routes for clean/current Git,
-   fresh non-multiplexed reachability, stale-control-socket behavior, bounded
-   keepalive failure, and monitor false positives. Do not force a Mac reverse
-   tunnel design onto direct Linux routes. Change Linux behavior only for a
+**Ordered plan:**
+
+1. From `local`, reconstruct current Git, monitor history, fresh route state,
+   and all existing public contracts without reading private payload values.
+   When Aist is reachable, collect bounded value-free facts for process
+   ownership, exit status, launch source, duplicate instances, bind conflicts,
+   keepalive timing, and local-versus-controller observations.
+2. Diagnose why each reverse connection exits, remains falsely alive, or fails
+   to recover. Preserve exact timing and status classes while excluding
+   endpoints, account values, credentials, keys, raw configuration, and
+   unrelated process detail. Distinguish confirmed cause from inference.
+3. Build disposable matched fixtures on `local` for current manual operation,
+   current-user `launchd` supervision, and supervision plus an active health
+   watchdog. Prefer the smallest native design that detects both a dead SSH
+   process and an unusable forward; Codex itself must not be the production
+   watchdog.
+4. Freeze a reversible Aist pilot plan covering installation, unload, exact
+   rollback, bounded logs, retry/backoff, duplicate exclusion, stale listeners,
+   connection throttling, process ownership, and failure-injection gates.
+   Implementation must travel through reviewed repository code and focused
+   tests rather than opaque one-off shell state.
+5. Revalidate Aist clean public/private Git and the owner's rollback before
+   applying anything. Install only the frozen current-user pilot, first prove
+   ordinary start/restart and exact rollback/reapply, then test each tunnel
+   separately.
+6. Do not intentionally drop both Aist routes until single-route recovery has
+   passed repeatedly and Aist has a prevalidated local automatic
+   recovery/rollback path that does not depend on either reverse route. If that
+   gate is not met, keep the dual-failure drill pending rather than gambling
+   the only agent-access path. After the gate passes, prove bounded dual-route
+   recovery as observed from `local`, with no duplicate process, forward, or
+   bind collision and no unrelated state change.
+7. Only after Aist passes, classify Office, riken, and Home against the same
+   failure model. Roll out only generic evidence-supported behavior,
+   sequentially with per-host preflight and rollback, preserving each Mac's
+   distinct private SSH bytes. A healthy host remains unchanged when it already
+   satisfies the frozen acceptance gates.
+8. Audit local and all six remote Linux SSH routes for clean/current Git, fresh
+   non-multiplexed reachability, stale-control-socket behavior, bounded
+   keepalive failure, and monitor false positives. Do not impose the Mac reverse
+   tunnel design on direct Linux routes. Change Linux behavior only for a
    reproduced shared defect and validate it independently.
-8. Use the remaining unattended window for five-minute observation of all
-   managed targets. Record exact soak duration, every transition and automatic
-   recovery, rather than extrapolating permanence from silence. Finish with
-   rollback drills, focused tests, full phase-one tests, protected CI, guarded
-   fleet synchronization of clean checkouts, and fresh managed-fleet health.
+9. Run five-minute managed-fleet observation for the longest practical window.
+   Record exact duration, every transition, and automatic recovery rather than
+   extrapolating permanence from silence. Finish with rollback drills, focused
+   tests, full phase-one tests, protected CI, guarded fleet synchronization of
+   clean checkouts, final Mac updater acceptance where applicable, and fresh
+   managed-fleet health.
 
-**Owner-authorized live pilot bundle:** when the owner starts the Aist driver
-with an explicit instruction to execute T-293, that instruction authorizes
-creation, loading, testing, and rollback of narrowly scoped current-user
-`launchd` state on the managed Macs; bounded intentional termination/restart of
-only the `login`/`login2` tunnel processes; ordinary in-scope Git publication;
-and sequential rollout after the Aist gate. It does not authorize `sudo`,
-package installation/removal, credentials or key access, Remote Control or
-account changes, system daemons, reboot/sleep, destructive cleanup, unrelated
-process interruption, private-value publication, or mutation of unmanaged
-systems. A new authority boundary stops only the affected action; continue
-other safe evidence and validation work.
+**Owner-authorized live pilot bundle:** a future explicit local-driver `go`
+authorizes creation, loading, testing, and rollback of narrowly scoped
+current-user `launchd` state on managed Macs; bounded intentional
+termination/restart of only the `login`/`login2` tunnel processes; ordinary
+in-scope Git publication; and sequential rollout after the Aist gate. It does
+not authorize `sudo`, package installation/removal, credentials or key access,
+Remote Control or account changes, system daemons, reboot/sleep, destructive
+cleanup, unrelated process interruption, private-value publication, or
+mutation of unmanaged systems. A new authority boundary stops only the
+affected action while other safe work continues.
 
-**Stop/recovery:** never depend on either reverse route as the sole rollback
-channel before the Aist supervisor and local rollback path are proven. If a
-failure drill does not recover within its frozen bound, preserve the exact
-local state through Remote Control, roll back unchanged-only where safe, and
-remain on Aist rather than transferring driver authority. Never claim a route
-healthy from process existence alone. Loss of GitHub, Claude, or Remote Control
-stops target mutation but leaves the durable session resumable.
+**Stop/recovery:** target identity mismatch, dirty/divergent Git, private-state
+ambiguity, an unclassified existing launcher, missing rollback, duplicate
+process ownership, or loss of the last Aist route before the automatic recovery
+gate stops Aist mutation. A route process existing is not proof of a usable
+forward. If a drill exceeds its frozen recovery bound, stop further injection,
+preserve bounded facts, use only a still-available verified route for
+unchanged-only rollback, and continue safe local work. Do not ask the owner to
+manually restart routine connections as part of the accepted design.
 
-**Acceptance:** Aist must pass the full cowork validator, cause-specific tests,
-single- and dual-tunnel forced failures, bounded recovery, local observation,
-rollback/reapply, and a meaningful recorded soak. Each other Mac must pass both
-fresh routes, supervision/rollback classification, and clean current
-public/private state. Local and six Linux nodes must pass fresh route and
-clean/current checks appropriate to direct SSH. The monitor must distinguish
-healthy, degraded, recovering, and unrecoverable states without requiring the
-owner. Full tests and protected CI remain authoritative. Preserve the final
-value-minimized evidence in a tracked audit and leave only main branches and no
-unguarded temporary trees.
+**Acceptance:** Aist must pass cause-specific tests, repeated single-tunnel
+failures, safely gated dual-tunnel failure, bounded recovery observed from
+`local`, exact rollback/reapply, no duplicate/bind conflict, and a meaningful
+recorded soak. Each other Mac must pass both fresh routes,
+supervision/rollback classification, and clean/current public/private state.
+Local and six Linux nodes must pass direct-SSH-appropriate fresh route and
+clean/current checks. The monitor must distinguish healthy, degraded,
+recovering, and unrecoverable states without routine owner help. Focused and
+full tests plus protected CI remain authoritative. Preserve a final
+value-minimized audit and leave only main branches and no unguarded temporary
+trees.
 
-**Next executable action:** from the ChatGPT Remote session on Aist, fetch
-protected public `main`, verify clean/equal public and private checkouts, create
-the T-293 staged cowork session with Codex as driver and Claude as co-pilot,
-and begin independent read-only diagnosis. Do not create a competing T-293
-session on local.
+**Decision register:** driver location is resolved as Codex on `local`.
+Cowork/Claude is explicitly excluded. The failed Aist attempt supplies no
+evidence and creates no predecessor. The only remaining gate is the owner's
+explicit `go` after this revised plan is published.
+
+**Next executable action:** publish this revised ledger through protected
+`main`. After the owner says `go`, create a fresh local task branch,
+checkpoint T-293 as executing, and begin step 1 read-only reconstruction. Do
+not initialize or resume a cowork session.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
