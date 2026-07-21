@@ -23,6 +23,7 @@ FAILOVER_EXCEPTION = (
     b"\tControlMaster no\n"
     b"\tControlPath none\n"
     b"\tControlPersist no\n"
+    b"\tExitOnForwardFailure yes\n"
     b"\n# Defaults\n\n"
 )
 MAX_CONFIG = 1024 * 1024

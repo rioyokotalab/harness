@@ -61,7 +61,10 @@ local Codex restored `aist`/`aist2` by setting `ControlMaster no` and
 owner selected the safer shared form: add one exact `Host login login2`
 exception before the canonical `Host *` defaults, retaining multiplexing for
 every other destination. `ControlPersist no` makes the exception complete but
-is otherwise inert once `ControlPath none` disables sharing.
+is otherwise inert once `ControlPath none` disables sharing. After reviewing
+the initial rollout, the owner explicitly approved `ExitOnForwardFailure yes`
+in the same exact block so a connection cannot report success when any of its
+requested forwards failed to initialize.
 
 **Evidence and scope:** upstream OpenSSH uses the first obtained value, so a
 later override would be ineffective. The tracked fragment currently gives all
@@ -124,11 +127,31 @@ the 19:39 JST monitor cycle independently reported both down. No Aist Git,
 private state, or live configuration changed, so retry is safe. Existing SSH
 sessions and control masters on every host were left intact.
 
-**Next executable action:** after the owner restores at least one Aist route,
-fetch both clean checkouts through a private-output-safe log, run the schema-3
-updater plan/apply, then run SSH layout plan/apply and the same value-minimized
-effective-class audit. Publish this rollout checkpoint only after revalidating
-public main.
+**Fail-fast refinement:** value-minimized inspection on Office, riken, and Home
+proved that `login` requests one local and one remote forward, `login2` requests
+one remote forward, and both previously resolved the default
+`ExitOnForwardFailure no`. OpenSSH documents that `yes` exits when any requested
+forward cannot be established, but does not test the ultimate destination or a
+later failure. This is adopted for the two dedicated aliases only; a legitimate
+bind collision will fail the new connection, which is the intended observable
+result rather than a route-less shell. The exact canonical validator and
+effective regression must require `yes` for both aliases and retain the default
+`no` for ordinary targets.
+
+The exact-source and effective-resolution change passes
+`test-ssh-config-layout.sh`, both relevant Mac profile/SSH-sync suites, the
+public repository audit, source-contract test, Python syntax, ShellCheck, and
+`git diff --check`. The controller has no authenticated localhost SSH service,
+so a disposable real bind-collision experiment is unavailable without adding
+test-only authentication infrastructure; no live tunnel was disturbed. The
+deterministic regression instead verifies OpenSSH's resolved fail-fast value,
+while existing synthetic transaction tests retain byte, rollback, and failure
+coverage.
+
+**Next executable action:** validate and publish the fail-fast refinement,
+guarded-refresh the clean public checkouts and managed fragments, then complete
+the existing Aist updater/layout gap after the owner restores at least one
+route. Use private-output-safe fetch logs and the same value-minimized audit.
 
 ### T-288 — Finish post-onboarding fleet housekeeping
 

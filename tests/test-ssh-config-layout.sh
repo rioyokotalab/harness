@@ -99,15 +99,17 @@ for failover_alias in login login2; do
         "$failover_alias" 2>/dev/null |
         awk '$1 == "controlmaster" { m=$2 } $1 == "controlpath" { p=$2 }
             $1 == "controlpersist" { x=$2 }
-            END { exit m == "false" && p == "" && x == "no" ? 0 : 1 }' ||
-        fail "failover alias retained connection multiplexing"
+            $1 == "exitonforwardfailure" { e=$2 }
+            END { exit m == "false" && p == "" && x == "no" && e == "yes" ? 0 : 1 }' ||
+        fail "failover alias retained multiplexing or non-failing forwards"
 done
 ssh -o CanonicalizeHostname=no -G -F "$TEMP_DIR/effective-config" \
     node-only 2>/dev/null |
     awk '$1 == "controlmaster" { m=$2 } $1 == "controlpath" { p=$2 }
         $1 == "controlpersist" { x=$2 }
-        END { exit m == "auto" && p != "none" && x == "yes" ? 0 : 1 }' ||
-    fail "ordinary target lost connection multiplexing"
+        $1 == "exitonforwardfailure" { e=$2 }
+        END { exit m == "auto" && p != "none" && x == "yes" && e == "no" ? 0 : 1 }' ||
+    fail "ordinary target lost multiplexing or inherited fail-fast forwarding"
 grep -E '^[[:space:]]*Host[[:space:]]+(github|\*)[[:space:]]*$' \
     "$home/.ssh/config" >/dev/null && fail "shared stanza remained in root"
 grep -F T291_PRIVATE_SENTINEL "$home/.ssh/config" >/dev/null || fail "private root bytes lost"
