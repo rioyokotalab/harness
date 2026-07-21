@@ -235,7 +235,7 @@ path. T-284 has no remaining action.
 
 ### T-285 — Prepare independent onboarding of the remaining personal Mac
 
-**Phase/status:** `ready-for-go`; direct value-free preflight is complete. On
+**Phase/status:** `executing`; direct value-free preflight is complete. On
 2026-07-21 the owner requested repository housekeeping and preparation to
 resume the fourth Mac. The owner then supplied its opaque logical ID privately
 and authorized direct SSH discovery. This does not yet authorize changing the
@@ -323,9 +323,12 @@ attempt.
 resolve package, first-agreement, Bash, agent-policy, and orphan-file choices.
 The known GitHub authentication pause is physical/credential interaction, not
 an unresolved design decision. The supplied `HOST` value remains outside this
-public ledger. The plan is frozen and ready for a fresh explicit `go`; its first
-command will revalidate the step-1 predicates before cloning the public
-checkout. No Mac mutation is authorized before that go.
+public ledger. The owner gave the fresh explicit `go` on 2026-07-21 and also
+authorized the three live Bash/SSH files within the transactional boundaries
+above. First publish this value-free go checkpoint through protected `main` so
+the Mac-local bootstrap can recover from the repository alone. Then revalidate
+the step-1 predicates and clone the public checkout; stop before any broader
+apply on drift or authentication ambiguity.
 
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 
