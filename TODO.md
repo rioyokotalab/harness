@@ -16,10 +16,10 @@ Next free ID: T-290.
 - Managed Linux nodes are local, ab, ab2, ri, al, rc, and t4.
   abci_login and alps_login are transports, not targets; retired si is out of
   scope.
-- All four Macs have current clean public/private main, updater no-op state,
-  ready agent doctors, zero formula-policy residue, and absent
-  .bash_common/run_this.sh. Aist, Office, and riken have ready Mac doctors;
-  Home retains one Bash-profile failure recorded under T-288.
+- All four Macs last accepted current clean public/private main, updater no-op
+  state, ready Mac/agent doctors, zero formula-policy residue, absent
+  .bash_common/run_this.sh, and only local main. Aist's two routes are currently
+  unavailable; do not infer fresh host state until one returns.
 - The tmux session harness-connection-monitor probes Aist/Aist2,
   Office/Office2, riken/riken2, and Home/Home2 every 300 seconds. It reconnects
   a dropped primary through its secondary with ssh login, or a dropped
@@ -73,39 +73,35 @@ time-gated.
 | Aist | public/private current and clean | Mac/agent ready | only main; zero residue | both identities accepted |
 | Office | public/private current and clean | Mac/agent ready | only main; zero residue | both identities accepted |
 | riken | public/private current and clean | Mac/agent ready | only main; zero residue | both identities accepted |
-| Home | public/private current and clean | agent ready; Mac not ready | ten T-276 refs; zero residue | both identities accepted |
+| Home | public/private current and clean | Mac/agent ready | only main; zero residue | both identities accepted |
 
 Aist stale T-280 refs were deleted only after each showed zero unique patches,
 one patch-equivalent commit on main, no remote ref, and merged PR #151 or #152.
 The first T-288 closeout branch was similarly removed after v2 proved both
 patches preserved and zero open PRs.
 
-**Home blockers:** Mac doctor reports exactly:
-bash_profile state=missing-or-wrong expected=public-pre-local-public-post.
-Default native planning classifies an exact canonical thin profile with an
-opaque 99-byte appended tail and correctly refuses without explicit authority.
-The documented preservation plan passes with
---merge-thin-profile-tail: state=merge-thin-profile-tail,
-profile_local_bytes=99, bashrc_local_bytes=1, redundant_profile_loaders=0,
-bash_common_reference_bytes=0, and action=canonical-bashrc+thin-profile. Apply
-must move only that unread tail into .bashrc login-only state, restore the exact
-thin profile, record a private unchanged-only transaction, then undergo
-rollback/reapply and fresh-shell acceptance. No startup bytes have yet changed.
-Home also retains
-ten local T-276 task refs with no corresponding remote refs:
+**Home completion:** the explicit `--merge-thin-profile-tail` transaction moved
+only the unread 99-byte appended profile tail into `.bashrc` login-only state
+and restored the exact canonical thin profile. Syntax, fresh non-login/login
+shells, the managed Bash launcher, no-op startup/update plans, and both doctors
+passed. Unchanged-only rollback restored the exact prior drift and one expected
+doctor failure; an identical reapply then passed the full acceptance again.
+Transaction identifiers and startup bytes remain private.
 
-- Patch-equivalent, zero unique patches:
-  task/t276-bash-final-acceptance, task/t276-bash-local-decision,
-  task/t276-bash-partial-current, task/t276-home-adoption-fixes,
-  task/t276-home-completion-ledger, task/t276-homebrew-codex-launcher, and
-  task/t276-preserve-trust-only.
-- Unique relative to current main:
-  task/t276-home-adoption-ci-fix (two patches) and
-  task/t276-mac-onboarding-ledger (one patch).
-- Zero commits ahead: task/t276-mac-onboarding-ledger-v2.
+After authenticated prune proved every corresponding remote ref absent, all
+ten exact local T-276 refs were deleted. Seven had zero unique patches, one
+pointed at main, the two apparently unique CI-fix commits were the exact commits
+recorded in merged PR #128, and the obsolete ledger commit was closed PR #126,
+superseded by merged PR #127 and completed through #134. Home now has only
+local `main`.
 
-Retain every ref until exact PR/task provenance proves it superseded. Never
-blanket-delete branches or copy private startup bytes.
+Final inventory found five old unopened, current-owner, regular, single-link
+formula-policy temporaries aged about 38 minutes to 16 hours. They were moved
+content-blind with per-file identity checks into one fresh mode-0700 target.
+Guarded-delete manifest revalidation accepted one target with six entries and
+1,009 bytes, deleted it, and verified protected anchors unchanged. The two
+mode-0600 bookkeeping files and empty boundary were exact-unlinked. A fresh
+updater plan created no new residue; final count is zero.
 
 **Connection monitoring:** initial monitor recovery restored aist2 through live
 aist with ssh login2. The symmetric mapping is active: secondary to ssh login
@@ -114,19 +110,17 @@ switch, revalidate host, forwarded-agent, Git, and last durable-step markers.
 Never infer completion across a disconnect. Use
 tmux capture-pane -p -t harness-connection-monitor:monitor for recent
 value-free status. No automatic recovery is possible if both routes to one Mac
-are simultaneously down.
+are simultaneously down. Both Home routes recovered and accepted the completed
+work. Aist and aist2 are both currently unavailable; the owner deferred that
+transport investigation until after the independent Home work.
 
 **Frozen remaining order:**
 
-1. Diagnose Home .bash_profile structural drift without exposing private bytes;
-   freeze the native repair and unchanged-only rollback route before change.
-2. Resolve each exact Home T-276 ref against merged/closed PR state and task
-   provenance; delete only proven-superseded refs.
-3. Run Home syntax/fresh-shell/no-op-plan/doctor acceptance and confirm clean,
-   equal Git and zero exact residue on all four Macs.
-4. Reconcile fresh contributor main, validate the compact ledger, publish the
+1. Investigate and restore at least one Aist route, then reconstruct both route
+   and host state; do not repeat accepted Home work.
+2. Reconcile fresh contributor main, validate the compact ledger, publish the
    closeout through protected CI, and remove only proven T-288 refs.
-5. Apply required post-merge guarded Linux sync and native Mac update catch-up;
+3. Apply required post-merge guarded Linux sync and native Mac update catch-up;
    finish with a full fleet health report.
 
 **Safety/recovery:** no raw recursive or multi-path deletion. Eligible tree
@@ -135,10 +129,9 @@ divergent/dirty Git, unsafe metadata, open handles, prompts, or loss of both
 routes stops only that host. Do not reload active shells, change packages, or
 touch backup/transaction state.
 
-**Next executable action:** revalidate and apply the exact Home
---merge-thin-profile-tail plan, complete rollback/reapply acceptance, then
-review exact T-276 hosting/task provenance. Do not begin deferred
-Homebrew/package work.
+**Next executable action:** checkpoint and push the verified Home completion.
+Then restore/reconstruct Aist when its transport investigation resumes. Do not
+repeat Home work or begin deferred Homebrew/package work.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
