@@ -164,6 +164,9 @@ PR #193 passed protected `portable-phase1` and merged at
 advanced through updater transaction `20260721T205722Z-66505`; private Git and
 live tunnel state were unchanged. The driver atomically placed the reviewed
 mode-0700 helper at Aist `~/run_this.sh`, verified SHA-256
-`f036deb678b70823f9e68de06b8ed05cc16b0c2e964e7f105d857de36925dab3`, did not
-execute it, and exact-unlinked the local transfer source. Credential creation
-and authorization remain pending the owner's local `--apply` invocation.
+`8c48372f1e428057dc7507779702435d51bfd3d1c2c0cb9a9cb3c651253fda7c`, did not
+execute it, and exact-unlinked the local transfer source. Final review added a
+forced `/usr/bin/true` command to `restrict,port-forwarding`, preventing general
+command use while retaining forwarding and the `true` authentication probe.
+Credential creation and authorization remain pending the owner's local
+`--apply` invocation.
