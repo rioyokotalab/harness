@@ -17,12 +17,12 @@ Next free ID: T-292.
 - Managed Linux nodes are local, ab, ab2, ri, al, rc, and t4.
   abci_login and alps_login are transports, not targets; retired si is out of
   scope.
-- PRs #172 through #174 published the transactional SSH layout, rollback
-  hardening, and narrow layout-only private-history bridge; public main is
-  `322fe1f`. All eleven managed checkouts are clean/current there and all
-  eleven live SSH roots now have zero selected shared stanzas, one terminal
-  include, and an exact regular mode-0600 canonical fragment. Every changed
-  host passed grammar, plan-current, exact rollback, and reapply checks.
+- PRs #172 through #176 published the transactional SSH layout, rollback
+  hardening, layout-only private-history bridge, global-context trailer, and
+  narrow historical-input bridge; public main is `05e9882`. Local plus all six
+  remote Linux nodes, riken, and Home are clean/current with the strict live
+  trailer and effective GitHub/default resolution. Aist and Office await route
+  recovery and revalidation; do not infer their state from interrupted SSH.
 - Home, Office, and riken accepted clean public/private main after PR #170,
   updater/startup no-op state, both doctors, zero formula-policy residue,
   absent .bash_common/run_this.sh, and only local main. Aist is now caught up
@@ -352,6 +352,20 @@ bridge permits that one historical form only as layout/SSH-sync migration
 input; live and publication candidates remain strict. Office is unchanged
 because both routes are presently down.
 
+PR #176 merged the historical-input bridge as `05e9882`, with all 57 focused
+suites and protected portable CI passing. Guarded fleet-sync advanced all six
+remote Linux checkouts again. Local, ab, ab2, ri, al, rc, t4, riken, and Home
+then applied the strict trailer, proved effective GitHub hostname/user and
+default keepalive resolution, rolled back exactly, and reapplied. Final
+transactions are local `20260721T083458Z-1811408`, ab
+`20260721T083543Z-1444112`, ab2 `20260721T083543Z-3212074`, ri
+`20260721T083543Z-3593946`, al `20260721T083545Z-90376`, rc
+`20260721T083543Z-240525`, t4 `20260721T083544Z-2207201`, riken
+`20260721T083709Z-38034`, and Home `20260721T083705Z-46261`. An independent
+parallel check confirmed all nine layouts, fragments, effective fields, and
+public checkouts current. Aist's public fetch lost its route before a result;
+the local stuck transport was terminated without assuming remote success.
+
 **Execution sequence:**
 
 1. Revalidate Aist through both routes. Extract its existing root `Host github`
@@ -423,10 +437,12 @@ copies on all systems rather than the current Linux symlinks. D4 (settled by
 evidence) tracks the canonical bytes publicly because the extracted option set
 and comments pass the existing non-secret boundary.
 
-**Next executable action:** validate and publish the narrow historical-input
-bridge, upgrade Aist/riken/Home and every Linux root, then update Office when a
-route returns. Verify effective GitHub resolution rather than grammar alone.
-Then ask the owner whether to design a
+**Next executable action:** when either Aist route returns, revalidate the
+interrupted public fetch before retrying, then apply/rollback/reapply its live
+layout and publish the strict private payload through Mac SSH sync. When either
+Office route returns, update its public checkout and apply/rollback/reapply the
+live layout; retain its recorded private divergence. Then ask the owner whether
+to design a
 per-Mac private SSH payload migration that preserves each distinct non-shared
 configuration, select one complete Mac payload as the whole-file winner, or
 leave the private divergence recorded and close T-291's completed local layout
