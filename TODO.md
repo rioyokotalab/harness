@@ -47,8 +47,8 @@ Next free ID: T-294.
 
 ## Next resume checkpoint
 
-1. Start T-293 from the ChatGPT-paired Codex driver on Aist and execute its
-   owner-authorized seven-hour cowork scope.
+1. After the owner says `go`, start T-293 from Codex on `local` using the
+   revised Codex-only plan below; do not initialize or resume cowork.
 2. On or after 2026-07-26, query only T-196 recorded successor job IDs.
 3. Select another independently eligible T-273 workstream only after fresh
    reconstruction of its gate and authority.
