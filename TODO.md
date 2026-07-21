@@ -259,12 +259,12 @@ layout after payload adoption. The Aist-shaped private-base/live-normalized
 regression selects ordinary local-only publication.
 
 Focused layout, private-profile, Mac plan/doctor, SSH-sync, and config-sync
-tests pass, as do `git diff --check`, Python/shell syntax, and ShellCheck for
-the changed shell files. The parallel phase-one run passed 56 of 57 suites;
-only the pre-existing tmux suite refused because full phase one was correctly
-started from this dirty implementation checkout. Retry the complete suite
-after the intended commit makes the checkout clean; this is retry-safe and no
-live host was mutated.
+tests pass, as do `git diff --check`, Python/shell syntax, ShellCheck for the
+changed shell files, the public audit, all 57 focused suites, and the complete
+clean-checkout `tests/test-phase1.sh`. Native MPI was the declared
+environment-only skip. Two integrated-fixture corrections made its synthetic
+root mode explicit and used the existing non-main test bypass; production
+still requires a clean committed `main`. No live host was mutated.
 
 **Execution sequence:**
 
@@ -337,9 +337,8 @@ copies on all systems rather than the current Linux symlinks. D4 (settled by
 evidence) tracks the canonical bytes publicly because the extracted option set
 and comments pass the existing non-secret boundary.
 
-**Next executable action:** commit the intended implementation, rerun all
-phase-one suites from the clean branch, fetch/rebase/push, and publish through
-protected CI. Only after merge, update Aist's public checkout and run the
+**Next executable action:** fetch/rebase/push the validated commits and publish
+through protected CI. Only after merge, update Aist's public checkout and run the
 staged Aist layout/private-publish rollback/reapply. Revalidate both Aist routes
 before every Aist stage.
 
