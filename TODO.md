@@ -14,11 +14,9 @@ Next free ID: T-287.
 - Managed Linux environments are `local`, `ab`, `ab2`, `ri`, `al`, `rc`, and
   `t4`. `abci_login` and `alps_login` are transports; retired `si` is not a
   target.
-- Three currently reachable personal Macs have completed public/private Git,
-  Homebrew, Bash, tmux, SSH, and agent convergence. Their repositories are
-  clean/equal, Mac and agent doctors are ready, and each has one native SSH
-  agent. One owner-operated Mac remains availability-gated and must be handled
-  independently.
+- All four personal Macs have completed public/private Git, Homebrew, Bash,
+  tmux, SSH, and agent convergence independently. Their repositories are
+  clean/equal and their Mac and agent doctors are ready.
 - Exactly one future native weekly primary backup job exists on each managed
   Linux node. The first run passed on all seven nodes on 2026-07-19. No login-
   node cron, user timer, retention deletion, or automatic replica job exists.
@@ -32,26 +30,21 @@ Next free ID: T-287.
 
 ## Next resume checkpoint
 
-1. When the remaining Mac is online, resume T-285/T-268/T-269 through the
-   owner-started one-host onboarding workflow. The only current input is its
-   existing opaque logical ID; do not infer it from another Mac or enumerate
-   private profiles.
-2. On or after 2026-07-26, query only T-196's seven recorded successor job IDs.
-3. Choose another independently eligible T-273 workstream only after fresh
+1. On or after 2026-07-26, query only T-196's seven recorded successor job IDs.
+2. Choose another independently eligible T-273 workstream only after fresh
    reconstruction of its gate and authority.
 
 ## Active tasks
 
 ### T-286 — Onboard the remaining personal Mac independently
 
-**Phase/status:** `ready-for-go`; on 2026-07-21 the owner started the current
+**Phase/status:** `complete`; on 2026-07-21 the owner started the current
 one-host workflow from the remaining Mac, supplied its existing opaque logical
 ID and the repository-declared credential-free companion locator, selected all
 settled onboarding defaults, and explicitly required a fresh pre-mutation go.
-The older T-285 go is stale for this newly reconstructed execution context.
-This checkpoint authorizes planning and value-free discovery only; it does not
-authorize a machine, package, private-repository, startup, SSH, agent-setting,
-or external-service mutation.
+The older T-285 go was stale for that newly reconstructed execution context.
+The initial checkpoint authorized planning and value-free discovery only; later
+execution proceeded through the fresh go and recorded authority gates below.
 
 **Reconstructed public baseline:** fetched local `main` was clean/equal to
 `origin/main` at published onboarding checkpoint `f254295`; the task continues
@@ -188,13 +181,23 @@ reboot, physical interaction, unsupported local bodies, two-sided SSH
 divergence, unmanaged Homebrew dependents, unexpected package scope, dirty Git,
 or changed transaction preimages. A failed query remains unknown state. Leave
 the Mac at its last verified state and record only value-free results here.
-The next executable action is unavailable until prompt-free sudo becomes valid
-through an owner-controlled native session or policy changes separately. Then
-revalidate the same login-shell plan and `sudo -n` gate before any apply. If it
-passes, run transactional apply, fresh acceptance, unchanged-only rollback,
-reapply, Mac doctor, and only then T-273's ordered `.bash_common` test. Do not
-request or trigger an administrator-password prompt from an agent or remote
-route.
+The prompt-free agent route stopped without applying the login-shell stage.
+The owner later completed that stage interactively, preserving the policy that
+an agent or remote route must never request or trigger an administrator-password
+prompt.
+
+**Completion:** the owner-interactive prompt-capable login-shell apply,
+unchanged-only rollback, and identical reapply completed outside the agent
+route. Independent non-privileged verification found the login-shell post-plan
+at keep/keep, ready Mac and agent doctors with zero failures or warnings, fresh
+managed interactive and native batch routing, isolated tmux parse/session
+behavior, current SSH-only agreement, clean/equal public and private Git, and
+no transfer residue. The ordered T-273 check then found the owner regular
+`.bash_common` with zero open handles and passing fresh login, noninteractive,
+and interactive shells, but a nonzero live startup reference count. No tracked
+public startup source references it. It is therefore retained as active owner
+state; quarantine and unlink were correctly not attempted. All private values,
+identifiers, revisions, preimages, and transaction details remain local.
 
 ### T-284 — Accelerate and instrument Codex–Claude cowork
 
@@ -389,7 +392,8 @@ path. T-284 has no remaining action.
 
 ### T-285 — Prepare independent onboarding of the remaining personal Mac
 
-**Phase/status:** `executing`; direct value-free preflight is complete. On
+**Phase/status:** `complete/superseded-by-T-286`; direct value-free preflight
+prepared the independently completed T-286 workflow. On
 2026-07-21 the owner requested repository housekeeping and preparation to
 resume the fourth Mac. The owner then supplied its opaque logical ID privately
 and authorized direct SSH discovery. This does not yet authorize changing the
@@ -953,10 +957,9 @@ process, requirement, freshness, or explicit-authority gate.
    guarded proposed-tree removal, downgrade refusal, and idempotence pass. The
    repository version pin remains unchanged; no live replacement or old-tree
    cleanup is authorized.
-3. **Remaining Mac — availability-gated.** Onboard the one remaining Mac under
-   T-268/T-269, one host at a time. Revalidate identity, transport, native agent
-   ownership, public/private cleanliness and compatibility, and value-free
-   plans before any apply.
+3. **Remaining Mac — complete.** The fourth Mac completed independent
+   T-268/T-269 onboarding, rollback/reapply, doctors, fresh-session acceptance,
+   and its ordered post-acceptance orphan check under T-286.
 4. **Backup successors — time-gated.** On or after 2026-07-26, query only the
    seven T-196 successor IDs. Do not replace or duplicate a delayed job.
 5. **Vendor arg0 temporary directories — process-gated.** Re-inventory `local`
@@ -972,11 +975,12 @@ process, requirement, freshness, or explicit-authority gate.
    select only harness- or active-project-required packages. No blanket
    upgrade, cleanup, cask, service, tap, autoremove, or unmanaged-dependent
    mutation is implied.
-9. **Orphaned `.bash_common` — accessible hosts complete.** Office completed
+9. **Orphaned `.bash_common` — complete.** Office completed
    quarantine/retest/restoration/exact-unlink previously. Aist completed its
    content-blind exact unlink during T-281. Fresh 2026-07-20 classification now
-   confirms Aist, Home, and Office all absent. Repeat the ordered check only on
-   the remaining Mac after its independent onboarding acceptance.
+   confirms Aist, Home, and Office all absent. The fourth Mac's ordered check
+   proved a nonzero live startup reference count and zero open handles, so its
+   owner regular file is retained as active state without quarantine.
 
 **Closed non-goals:** plugin/MCP/connector authorization, accounts,
 administrator settings, automatic publication, background/login mutation, and
@@ -1012,11 +1016,10 @@ is authorized. Policy and evidence remain in
 
 ### T-268/T-269 — Finish the private personal-Mac fleet
 
-**Phase/status:** `availability-gated`; three reachable Macs are accepted and
-one owner-operated Mac remains. Generic public engines and private-companion
-schemas are published. The remaining host must use the current
-`onboard-personal-mac` workflow from an owner-started local session, with
-pull-based long-gap catch-up and no dependency on another repository.
+**Phase/status:** `complete`; all four Macs are independently accepted. Generic
+public engines and private-companion schemas are published, and the fourth host
+completed the current `onboard-personal-mac` workflow from an owner-started
+local session with pull-based catch-up and no dependency on another repository.
 
 For the remaining Mac, fetch current public/private `main`, perform value-free
 identity/architecture/Homebrew/Command-Line-Tools/Git/native-agent discovery,
