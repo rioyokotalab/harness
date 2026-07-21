@@ -395,3 +395,16 @@ Public/private Git are clean/current, both temporary sessions and both retry
 loops are absent, and the hash-revalidated spent riken helper was
 exact-unlinked. Home remains unchanged pending its independent owner
 provisioning and host-specific rollout.
+
+## Home preflight
+
+Home advanced cleanly to protected
+`d83eee0a0ff63f61351c9125734b4d0401c9843c` through updater transaction
+`20260721T232259Z-2338`; the private checkout remained current, and package and
+tunnel processes were unchanged. Fresh validation passed clean/current
+public/private Git, the reviewed mode-0700 helper at its recorded hash, absent
+dedicated identity, absent supervisor state, and both external predecessors.
+The supervisor plan reported exactly two blocked aliases, both solely because
+the dedicated identity has not yet been owner-provisioned. Home is ready for
+the same reviewed owner helper and independent post-provisioning validation
+used for Office and riken.
