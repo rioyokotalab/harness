@@ -17,9 +17,11 @@ Next free ID: T-290.
   abci_login and alps_login are transports, not targets; retired si is out of
   scope.
 - All four Macs last accepted current clean public/private main, updater no-op
-  state, ready Mac/agent doctors, zero formula-policy residue, absent
-  .bash_common/run_this.sh, and only local main. Aist's two routes are currently
-  unavailable; do not infer fresh host state until one returns.
+  state, zero formula-policy residue, absent .bash_common/run_this.sh, and only
+  local main. Office and riken remain ready. Aist's routes are intermittent and
+  its agent doctor has one newly classified Codex-config failure. Home has one
+  recurring Bash-profile failure; current live state supersedes the earlier
+  accepted snapshot below.
 - The tmux session harness-connection-monitor probes Aist/Aist2,
   Office/Office2, riken/riken2, and Home/Home2 every 300 seconds. It reconnects
   a dropped primary through its secondary with ssh login, or a dropped
@@ -35,8 +37,9 @@ Next free ID: T-290.
 
 ## Next resume checkpoint
 
-1. Complete T-288 Home Bash/ref review, final acceptance, protected publication,
-   post-merge fleet catch-up, and exact task-ref cleanup.
+1. Complete T-288's Aist client-config compatibility fix, Home recurrence
+   diagnosis, protected publication, post-merge fleet catch-up, and exact
+   task-ref cleanup.
 2. On or after 2026-07-26, query only T-196 recorded successor job IDs.
 3. Select another independently eligible T-273 workstream only after fresh
    reconstruction of its gate and authority.
@@ -70,10 +73,10 @@ time-gated.
 
 | Mac | Git/update | Doctors | Refs/residue | Routes |
 | --- | --- | --- | --- | --- |
-| Aist | public/private current and clean | Mac/agent ready | only main; zero residue | both identities accepted |
+| Aist | public/private current and clean | Mac ready; agent not ready | only main; zero residue | intermittent; both identities reaccepted |
 | Office | public/private current and clean | Mac/agent ready | only main; zero residue | both identities accepted |
 | riken | public/private current and clean | Mac/agent ready | only main; zero residue | both identities accepted |
-| Home | public/private current and clean | Mac/agent ready | only main; zero residue | both identities accepted |
+| Home | public/private current and clean | agent ready; Mac not ready | only main; zero residue | both identities accepted |
 
 Aist stale T-280 refs were deleted only after each showed zero unique patches,
 one patch-equivalent commit on main, no remote ref, and merged PR #151 or #152.
@@ -106,6 +109,32 @@ updater plan created no new residue; final count is zero.
 Clean checkpoint `a3616bf` passed the complete `tests/test-phase1.sh` suite
 after Home acceptance; no focused suite failed.
 
+**Fresh resumed drift:** both Aist routes briefly returned and resolved to the
+same host. Authenticated fetch proved clean/equal public/private `main`, updater
+and Bash plans were current, Mac doctor was ready, and residue remained zero.
+Agent doctor alone failed because Codex had added one strict
+`[tui.model_availability_nux]` entry. The current official Codex manual defines
+that nested table as internal tooltip state usually managed by Codex. The
+public adapter must preserve only its quoted safe model-slug/nonnegative-integer
+shape and continue rejecting arbitrary TUI settings. Both routes then dropped
+together; no live config was changed.
+
+Home's exact 99-byte thin-profile tail recurred at 14:05:11, 17 minutes after
+the latest Bash transaction. A write-restricted macOS sandbox ran the managed
+login shell against private disposable copies: it returned zero, changed
+neither startup copy, and left the live profile unchanged, disproving direct
+login-shell causality. The tail contains the Codex-installer marker and local-bin
+PATH entry; standalone-package state, the new local-bin Codex link, and the
+profile share the exact 14:05:11 modification time. That link and Homebrew's
+link resolve to the same official package, while local-bin currently wins PATH.
+The reviewed installer edits a profile unless its destination is already on
+PATH. The generic Darwin launcher must export the Homebrew bin as
+`CODEX_INSTALL_DIR` and prepend it to PATH so installer-based updates inherit
+the reviewed destination. Default startup planning still refuses and the
+explicit preservation plan remains identical. After publication, exact-unlink
+the duplicate link only after revalidation, repair through the frozen
+transaction, and repeat no-op plan/doctor after a fresh launcher run.
+
 **Connection monitoring:** initial monitor recovery restored aist2 through live
 aist with ssh login2. The symmetric mapping is active: secondary to ssh login
 restores a primary; primary to ssh login2 restores a secondary. After any route
@@ -119,12 +148,15 @@ transport investigation until after the independent Home work.
 
 **Frozen remaining order:**
 
-1. Investigate and restore at least one Aist route, then reconstruct both route
-   and host state; do not repeat accepted Home work.
-2. Reconcile fresh contributor main, validate the compact ledger, publish the
-   closeout through protected CI, and remove only proven T-288 refs.
-3. Apply required post-merge guarded Linux sync and native Mac update catch-up;
-   finish with a full fleet health report.
+1. Add strict preservation for Codex-managed TUI tooltip state, pass the
+   reviewed Darwin installer destination through the managed launcher, add
+   focused tests, and enforce the post-login-shell acceptance gate.
+2. Publish the generic fix through protected CI, then catch up and reaccept
+   Aist when either route is available.
+3. Reproduce Home's recurrence safely, repair only through the frozen
+   transaction, and require post-shell no-op plan plus doctor acceptance.
+4. Apply required post-merge guarded Linux sync and native Mac update catch-up;
+   remove only proven T-288 refs and finish with full fleet health.
 
 **Safety/recovery:** no raw recursive or multi-path deletion. Eligible tree
 cleanup uses a fresh guarded manifest and token. Authentication failure,
@@ -132,9 +164,10 @@ divergent/dirty Git, unsafe metadata, open handles, prompts, or loss of both
 routes stops only that host. Do not reload active shells, change packages, or
 touch backup/transaction state.
 
-**Next executable action:** checkpoint and push the verified Home completion.
-Then restore/reconstruct Aist when its transport investigation resumes. Do not
-repeat Home work or begin deferred Homebrew/package work.
+**Next executable action:** validate and publish the strict Codex-managed TUI
+state preservation, Darwin installer-destination inheritance, and
+post-login-shell acceptance regression. Do not edit live client/startup files
+or begin deferred Homebrew/package work before the generic fix is published.
 
 ### T-273 — Resolve intentionally deferred maintenance
 

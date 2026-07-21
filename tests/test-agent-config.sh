@@ -192,6 +192,8 @@ printf '%s\n' '$darwin_brew_prefix'
 EOF
 cat >"$darwin_native_package/codex" <<'EOF'
 #!/bin/sh
+printf 'CODEX_INSTALL_DIR=%s\n' "${CODEX_INSTALL_DIR-unset}"
+printf 'PATH=%s\n' "$PATH"
 printf '%s\n' "$@"
 EOF
 chmod 755 "$darwin_fake_bin/uname" "$darwin_fake_bin/brew" \
@@ -211,6 +213,12 @@ HOME="$darwin_native_home" HARNESS_TEST_ALLOW_NONMAIN=1 \
     DARWIN_UNAME_FIRST_CALL="$TEMP_DIR/darwin-uname-first-call" \
     PATH="$darwin_fake_bin:/usr/bin:/bin" \
     "$PUBLIC/bin/harness-codex" exec --help >"$TEMP_DIR/darwin-launcher.out"
+grep -F -x "CODEX_INSTALL_DIR=$darwin_brew_prefix/bin" \
+    "$TEMP_DIR/darwin-launcher.out" >/dev/null ||
+    fail "Darwin managed installer destination"
+grep -F "PATH=$darwin_brew_prefix/bin:" \
+    "$TEMP_DIR/darwin-launcher.out" >/dev/null ||
+    fail "Darwin managed installer PATH precedence"
 grep -F -x -- '--ask-for-approval' "$TEMP_DIR/darwin-launcher.out" >/dev/null ||
     fail "Darwin managed launcher approval flag"
 grep -F -x -- '--sandbox' "$TEMP_DIR/darwin-launcher.out" >/dev/null ||
@@ -254,6 +262,53 @@ run_config "$trust_only_home" --doctor >"$TEMP_DIR/trust-only.reapply.doctor"
 grep -F 'status=ready failures=0' \
     "$TEMP_DIR/trust-only.reapply.doctor" >/dev/null ||
     fail "trust-only Codex reapply doctor"
+
+# Codex persists internal model-tooltip state in one documented nested TUI
+# table. Preserve only its strict quoted model-slug/nonnegative-integer shape;
+# arbitrary TUI preferences remain outside the adoption contract.
+nux_home=$(make_home tui-nux)
+mkdir -p "$nux_home/.codex"
+printf '%s\n' 'model = "opaque-private-model"' '' \
+    '[tui.model_availability_nux]' \
+    '"gpt-synthetic-1" = 1' \
+    '"gpt-synthetic-2" = 0' >"$nux_home/.codex/config.toml"
+chmod 600 "$nux_home/.codex/config.toml"
+cp "$nux_home/.codex/config.toml" "$TEMP_DIR/tui-nux.before"
+if run_config "$nux_home" --plan >"$TEMP_DIR/tui-nux.refuse" 2>&1; then
+    fail "TUI tooltip-state adoption accepted without authority"
+fi
+grep -F 'client=codex state=regular action=adopt-required' \
+    "$TEMP_DIR/tui-nux.refuse" >/dev/null ||
+    fail "TUI tooltip-state preservation classification"
+run_config "$nux_home" --adopt --apply >"$TEMP_DIR/tui-nux.apply"
+nux_tx=$(transaction "$TEMP_DIR/tui-nux.apply")
+[ -n "$nux_tx" ] || fail "TUI tooltip-state transaction"
+grep -F -x '[tui.model_availability_nux]' \
+    "$nux_home/.codex/config.toml" >/dev/null ||
+    fail "TUI tooltip-state table preservation"
+[ "$(grep -c '^"gpt-synthetic-[12]" = [01]$' \
+    "$nux_home/.codex/config.toml")" -eq 2 ] ||
+    fail "TUI tooltip-state entry preservation"
+run_config "$nux_home" --doctor >"$TEMP_DIR/tui-nux.doctor"
+grep -F 'status=ready failures=0' "$TEMP_DIR/tui-nux.doctor" >/dev/null ||
+    fail "TUI tooltip-state doctor"
+run_config "$nux_home" --rollback "$nux_tx" >"$TEMP_DIR/tui-nux.rollback"
+cmp -s "$nux_home/.codex/config.toml" "$TEMP_DIR/tui-nux.before" ||
+    fail "TUI tooltip-state exact rollback"
+printf '%s\n' 'approval_policy = "never"' \
+    'sandbox_mode = "danger-full-access"' '' \
+    '[tui.model_availability_nux]' \
+    'gpt-synthetic-unquoted = 1' >"$nux_home/.codex/config.toml"
+if run_config "$nux_home" --doctor >"$TEMP_DIR/tui-nux.invalid" 2>&1; then
+    fail "unquoted TUI tooltip-state key accepted"
+fi
+printf '%s\n' 'approval_policy = "never"' \
+    'sandbox_mode = "danger-full-access"' '' \
+    '[tui]' \
+    'notifications = false' >"$nux_home/.codex/config.toml"
+if run_config "$nux_home" --doctor >"$TEMP_DIR/tui-arbitrary.invalid" 2>&1; then
+    fail "arbitrary TUI setting accepted"
+fi
 run_config "$home" --plan >"$TEMP_DIR/absent.plan"
 [ "$(grep -c 'state=absent action=link' "$TEMP_DIR/absent.plan")" -eq 3 ] ||
     fail "absent plan"

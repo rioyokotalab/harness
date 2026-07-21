@@ -39,7 +39,12 @@ if [ "$(uname -s)" = Darwin ] && command -v brew >/dev/null 2>&1; then
     if [ -n "${brew_codex:-}" ] && [ -x "$brew_codex" ]; then
         brew_codex_physical=$(realpath "$brew_codex" 2>/dev/null || true)
         case "$brew_codex_physical" in
-            "$HOME/.codex/packages/standalone/"*) native_codex=$brew_codex ;;
+            "$HOME/.codex/packages/standalone/"*)
+                native_codex=$brew_codex
+                CODEX_INSTALL_DIR=$brew_prefix/bin
+                PATH=$CODEX_INSTALL_DIR:$PATH
+                export CODEX_INSTALL_DIR PATH
+                ;;
         esac
     fi
 fi

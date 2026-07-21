@@ -94,12 +94,27 @@ codex_config_file_has_safe_grammar() {
         $0 ~ /^model_reasoning_effort = "([^"\\]|\\.)*"$/ { if (++effort != 1 || section) bad=1; next }
         {
             if ($0 == "") next
-            if ($0 ~ /^\[projects\.\"([^\"\\]|\\.)+\"\]$/) { if (expect) bad=1; expect=1; section=1; next }
-            if (expect && $0 == "trust_level = \"trusted\"") { expect=0; next }
+            if ($0 ~ /^\[projects\.\"([^\"\\]|\\.)+\"\]$/) {
+                if (expect) bad=1
+                expect=1; section="project"; next
+            }
+            if (section == "project" && expect &&
+                $0 == "trust_level = \"trusted\"") { expect=0; next }
+            if ($0 == "[tui.model_availability_nux]") {
+                if (expect || ++tui_table != 1) bad=1
+                section="tui-nux"; next
+            }
+            if (section == "tui-nux" &&
+                $0 ~ /^"[A-Za-z0-9._-]+" = [0-9]+$/) {
+                key=$0; sub(/ = [0-9]+$/, "", key)
+                if (++tui_key[key] != 1) bad=1
+                tui_entries++; next
+            }
             bad=1
         }
         END {
             if (require_policy && (approval != 1 || sandbox != 1)) bad=1
+            if (tui_table && !tui_entries) bad=1
             exit !bad && !expect ? 0 : 1
         }
     ' "$codex_grammar_file" >/dev/null 2>&1
@@ -128,8 +143,14 @@ render_codex_config() {
     awk '
         /^model = "([^"\\]|\\.)*"$/ ||
         /^model_reasoning_effort = "([^"\\]|\\.)*"$/ { print; next }
-        /^\[projects\."([^"\\]|\\.)+"\]$/ { print ""; print; project=1; next }
+        /^\[projects\."([^"\\]|\\.)+"\]$/ {
+            print ""; print; project=1; tui_nux=0; next
+        }
         project && $0 == "trust_level = \"trusted\"" { print; project=0; next }
+        $0 == "[tui.model_availability_nux]" {
+            print ""; print; project=0; tui_nux=1; next
+        }
+        tui_nux && $0 ~ /^"[A-Za-z0-9._-]+" = [0-9]+$/ { print; next }
     ' "$local_body" >>"$rendered_destination"
 }
 
