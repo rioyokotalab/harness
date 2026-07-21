@@ -80,34 +80,41 @@ focused gates, and the focused test pass. The first full phase-one run passed
 every suite except `test-tmux-config.sh`, whose intentional clean-committed-
 checkout guard rejected this uncommitted task tree. Its diagnostic explicitly
 reports that gate; no behavioral test failed. Commit these intended files and
-rerun the full suite from the required clean checkout.
+rerun the full suite from the required clean checkout was the recorded recovery
+path. Commit `7bb2c56` is that checkpoint, and the clean rerun passed every
+phase-one suite.
 
 The first regression attempt used a process-wide `TMPDIR`, which placed the
 guarded test-cleanup tool's own working files inside its deletion target.
 Entry-count revalidation correctly refused cleanup; no live Mac or production
 state changed. The override is now updater-child-only. The exact synthetic
-target `/tmp/harness-macos-update-test.rfAtYv` remains for fresh guarded
-cleanup with controller residue. Retry is safe after exact identity and
-boundary revalidation.
+target `/tmp/harness-macos-update-test.rfAtYv` was retained for fresh guarded
+cleanup with controller residue. Retry was safe after exact identity and
+boundary revalidation, and the acceptance below records its removal.
+
+**Controller cleanup acceptance:** final re-inventory found 192 exact current-
+user, regular, single-link formula-policy leaves and no open handle, plus the
+one unchanged owner synthetic test tree. They were content-blind moved into a
+new mode-0700 retained boundary with per-file pre/post-move identity checks.
+Guarded-delete manifest revalidation accepted exactly one target containing
+2,828 entries and 6,652,804 bytes, deleted it at age six seconds, and verified
+all protected anchors unchanged. The two exact mode-0600 manifest/list files
+were then exact-unlinked and the empty retained boundary removed. Final checks
+find the original synthetic target, staging boundary, and every top-level
+formula-policy leaf absent; no other `/tmp` class was selected.
 
 **Frozen execution order:**
 
-1. Run remaining focused source/privacy checks and clean
-   `tests/test-phase1.sh`; checkpoint the code/test/ledger change.
-2. Re-inventory controller's exact formula-policy set and the one synthetic
-   refused target. Reject changed, open, foreign, linked, or ambiguous entries;
-   content-blind stage exact proven files into a fresh bounded target; use only
-   fresh `harness guarded-delete` plan/apply and verify protected anchors.
-3. Fetch again, publish through protected CI, then guarded `fleet-sync` only
+1. Fetch again, publish through protected CI, then guarded `fleet-sync` only
    clean managed Linux checkouts as repository policy requires.
-4. On Aist, then Office: validate a forwarded current-user agent socket, fetch
+2. On Aist, then Office: validate a forwarded current-user agent socket, fetch
    clean public/private `main`, run native `macos-update` plan/apply, require
    no-op post-plan and ready doctors, and guarded-delete only revalidated exact
    formula-policy residue after the fixed engine is active.
-5. On Aist, delete either exact T-280 local ref only if current-main
+3. On Aist, delete either exact T-280 local ref only if current-main
    patch/task-provenance and hosting state prove it superseded; otherwise retain
    with the reason.
-6. Reprobe Home and `riken`. If unavailable, record revision-independent
+4. Reprobe Home and `riken`. If unavailable, record revision-independent
    native resume commands and checks rather than inferring success.
 
 **Safety and recovery:** do not inspect credential or private payload bytes,
@@ -123,9 +130,9 @@ implicit.
 **Working files:** `libexec/harness-macos-update`,
 `tests/test-personal-macos-update.sh`, and `TODO.md`.
 
-**Next executable action:** commit the intended code/test/ledger checkpoint and
-rerun clean full phase-one validation. Do not delete residue or touch a Mac
-before it passes.
+**Next executable action:** checkpoint controller cleanup, fetch again, and
+publish through the protected workflow before fleet synchronization or Mac
+catch-up.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
