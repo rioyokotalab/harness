@@ -167,17 +167,34 @@ onboarding skill explicitly forbids changing the account shell, so no such plan
 or mutation was run. Fresh routing acceptance and the ordered post-onboarding
 `.bash_common` check remain gated until this scope conflict is resolved.
 
+The owner then required the published prompt-free agent/remote policy and
+authorized read-only classification only. From clean published `main`, native
+`macos-login-shell --plan` passed and selected exactly the coupled registry-add
+and account-change actions, but value-free `sudo -n true` exited nonzero.
+Therefore login-shell apply is unavailable on this agent route and no password
+prompt was attempted. No login-shell state changed.
+
+Every other safe read-only final check passes: fresh managed interactive Bash
+routes Codex through the harness launcher; a fresh no-profile batch Bash routes
+the official native Codex command; agent doctor is ready; SSH agreement is
+current; control and tmux plans are no-ops; an isolated tmux server parses and
+loads the canonical configuration; both Git checkouts are clean/equal; no
+transfer artifact is present; and the current SSH socket is a listening,
+current-user-owned route. The ordered `.bash_common` orphan check remains
+correctly gated because Mac doctor is not yet ready.
+
 **Stop/recovery gates and next action:** stop on authentication, password, TCC,
 reboot, physical interaction, unsupported local bodies, two-sided SSH
 divergence, unmanaged Homebrew dependents, unexpected package scope, dirty Git,
 or changed transaction preimages. A failed query remains unknown state. Leave
 the Mac at its last verified state and record only value-free results here.
-The next action is one owner decision: either explicitly expand this one-host
-scope to the transactional Homebrew Bash login-shell stage, including its
-password boundary if needed, or retain Apple Bash and accept that the current
-Mac doctor cannot reach ready. If expanded, run plan/apply, fresh acceptance,
-unchanged-only rollback, reapply, and doctor before completing routing,
-Git/artifact checks, and only then T-273's ordered `.bash_common` test.
+The next executable action is unavailable until prompt-free sudo becomes valid
+through an owner-controlled native session or policy changes separately. Then
+revalidate the same login-shell plan and `sudo -n` gate before any apply. If it
+passes, run transactional apply, fresh acceptance, unchanged-only rollback,
+reapply, Mac doctor, and only then T-273's ordered `.bash_common` test. Do not
+request or trigger an administrator-password prompt from an agent or remote
+route.
 
 ### T-284 — Accelerate and instrument Codex–Claude cowork
 
