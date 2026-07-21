@@ -9,7 +9,10 @@ Claude's live path is a direct link. Codex's live path is an owner-only regular
 file containing each key from the public body exactly once. Its optional local
 body may add one opaque `model` string and one opaque
 `model_reasoning_effort` string; all four top-level keys must precede
-client-written trusted-project tables.
+client-written trusted-project tables. Codex may also persist its documented
+internal model-tooltip state in one `[tui.model_availability_nux]` table. The
+harness preserves only quoted safe model slugs mapped to nonnegative integers;
+arbitrary TUI settings and malformed or duplicate state remain blocked.
 Their values remain private and are never inventoried or copied into Git.
 Authentication,
 credentials, sessions, histories, memories, caches, databases, private
@@ -30,6 +33,10 @@ CLI flags, which take precedence over ordinary configuration layers. Linux
 uses `~/.local/bin/codex`. Darwin accepts Homebrew's fixed bin only when it
 resolves inside the current user's official standalone Codex package; the
 older local-bin path remains only as a compatible fallback.
+The managed Darwin route also exports that fixed Homebrew bin as
+`CODEX_INSTALL_DIR` and places it first on `PATH` before native execution.
+An installer-based update launched by Codex therefore inherits the reviewed
+destination and does not add its default local-bin block to a shell profile.
 The managed live launcher is `~/.local/bin/harness-codex`. Fresh managed
 interactive Bash shells define a shell-local `codex` function that calls it;
 non-interactive and batch shells retain native resolution. The wrapper uses an
@@ -58,13 +65,13 @@ Read-only commands are value-free:
 ```
 
 An existing strict regular Codex file containing only the optional local model
-keys and client-written trusted-project tables is preservation state and blocks
-the normal plan. After separately reviewing its ownership and choosing
-`--adopt`, apply adds the canonical policy keys while retaining that validated
-local body. Other regular files and different symlinks remain replacement
-state. Apply records a mode-0600 local manifest and exact regular-file or
-symlink preimages before rendering Codex and linking Claude plus the managed
-launcher:
+keys, client-written trusted-project tables, and the bounded internal tooltip
+table is preservation state and blocks the normal plan. After separately
+reviewing its ownership and choosing `--adopt`, apply adds the canonical policy
+keys while retaining that validated local body. Other regular files and
+different symlinks remain replacement state. Apply records a mode-0600 local
+manifest and exact regular-file or symlink preimages before rendering Codex and
+linking Claude plus the managed launcher:
 
 ```bash
 ./bin/harness agent-config --adopt --plan

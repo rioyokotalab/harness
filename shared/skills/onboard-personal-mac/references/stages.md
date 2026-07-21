@@ -75,6 +75,9 @@ Thereafter always invoke `./bin/harness` from the verified public checkout.
 9. **Acceptance and drills**
    - Run `macos-doctor --host HOST`, fresh managed Bash, native/batch command
      resolution, fresh isolated tmux, and private-agreement checks.
+   - After every fresh managed login-shell check, repeat the component no-op
+     plan and `macos-doctor`; startup-local commands may mutate a file only
+     when executed, so pre-shell acceptance alone is insufficient.
    - Roll back each new transaction unchanged-only, repeat acceptance, reapply
      the identical plan, and repeat acceptance.
 10. **Post-onboarding orphan cleanup**
