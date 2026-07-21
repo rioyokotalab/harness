@@ -158,3 +158,12 @@ use, and the `restrict,port-forwarding` authorized-key combination retains the
 forwarding capability while disabling the other restricted capabilities. See
 the OpenBSD [`ssh_config(5)`](https://man.openbsd.org/ssh_config) and
 [`sshd(8)`](https://man.openbsd.org/sshd) manuals.
+
+PR #193 passed protected `portable-phase1` and merged at
+`f66e26eb1a5f56bc29173805acdf45d067284875`. Aist's clean public checkout
+advanced through updater transaction `20260721T205722Z-66505`; private Git and
+live tunnel state were unchanged. The driver atomically placed the reviewed
+mode-0700 helper at Aist `~/run_this.sh`, verified SHA-256
+`f036deb678b70823f9e68de06b8ed05cc16b0c2e964e7f105d857de36925dab3`, did not
+execute it, and exact-unlinked the local transfer source. Credential creation
+and authorization remain pending the owner's local `--apply` invocation.

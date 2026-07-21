@@ -239,6 +239,18 @@ plan; only if it reports both aliases ready may staging and one-route-at-a-time
 pilot activation begin. Continue the existing observer meanwhile. Do not
 initialize or resume cowork.
 
+**Owner helper checkpoint:** protected PR #193 merged the dedicated-identity
+gate at `f66e26eb1a5f56bc29173805acdf45d067284875`; local full phase one and
+protected `portable-phase1` passed. Aist advanced cleanly through updater
+transaction `20260721T205722Z-66505`. The reviewed mode-0700 helper is now at
+Aist `~/run_this.sh` with SHA-256
+`f036deb678b70823f9e68de06b8ed05cc16b0c2e964e7f105d857de36925dab3`;
+the driver did not execute it and removed its local transfer source. The owner
+next runs `~/run_this.sh --plan`, then `~/run_this.sh --apply` and types the
+script's exact confirmation. After the owner reports completion, the local
+driver must freshly revalidate both routes and the value-free supervisor plan
+before staging or stopping either predecessor tunnel.
+
 ### T-273 — Resolve intentionally deferred maintenance
 
 **Phase/status:** executing. Workstreams 1, 2, 3, and 9 are complete. Each
