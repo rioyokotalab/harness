@@ -463,6 +463,7 @@ git -C "$public_checkout" merge --ff-only "$public_target" >/dev/null 2>&1 ||
 if [ "$public_action" = fast-forward ] &&
     [ "${HARNESS_MACOS_UPDATE_RESUMED:-0}" != 1 ]; then
     [ ! -e "$target_public_file" ] || unlink "$target_public_file"
+    [ ! -e "$target_formula_policy" ] || unlink "$target_formula_policy"
     [ ! -e "$target_companion_file" ] || unlink "$target_companion_file"
     [ ! -e "$target_host_file" ] || unlink "$target_host_file"
     [ ! -e "$target_ssh_file" ] || unlink "$target_ssh_file"
