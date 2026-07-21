@@ -101,8 +101,34 @@ Commit `88d9bdc` contains the implementation. From that clean commit,
 `tests/test-phase1.sh` passed in full; the only reported skip was the suite's
 expected native-MPI environment smoke test, which is unrelated to SSH config.
 
-**Next executable action:** fetch again, publish through protected CI, then
-perform the transactional live fragment rollout and effective-class checks.
+**Publication and rollout checkpoint:** PR #182 passed protected
+`portable-phase1` and squash-merged as `10679a4`. Guarded fleet-sync found all
+six Linux mirrors clean at their common older prerequisite `2d39f82`, then
+fast-forwarded their `HEAD` and `origin/main` to the published commit. Local
+and all six Linux layouts apply/current, and a representative local exact
+rollback/reapply passed. An initial rollback command omitted `--host local` and
+was rejected before mutation; the unchanged transaction then rolled back and
+reapplied normally.
+
+Office, riken, and Home fetched clean public/private targets and passed the
+schema-3 updater plan/apply. That integrated the independently published Aist
+repair where behind without exposing or modifying private payload bytes. Their
+managed fragments now apply/current. Across local, all six Linux nodes, and
+these three Macs, value-minimized effective checks prove canonical fragment
+bytes, disabled multiplexing for `login`/`login2`, and retained automatic
+persistent multiplexing for GitHub and an ordinary target.
+
+Aist remains the sole rollout gap. Both `aist` and `aist2` fresh connections
+timed out during banner exchange, including explicit non-multiplexed attempts;
+the 19:39 JST monitor cycle independently reported both down. No Aist Git,
+private state, or live configuration changed, so retry is safe. Existing SSH
+sessions and control masters on every host were left intact.
+
+**Next executable action:** after the owner restores at least one Aist route,
+fetch both clean checkouts through a private-output-safe log, run the schema-3
+updater plan/apply, then run SSH layout plan/apply and the same value-minimized
+effective-class audit. Publish this rollout checkpoint only after revalidating
+public main.
 
 ### T-288 — Finish post-onboarding fleet housekeeping
 
