@@ -78,17 +78,19 @@ configure_identity() {
 }
 
 public=$TEMP_DIR/public
-mkdir -p "$public/libexec" "$public/profiles/personal-macos"
+mkdir -p "$public/libexec" "$public/profiles/personal-macos" "$public/config/ssh"
 cp -p "$ROOT/libexec/harness-common" "$ROOT/libexec/harness-macos-common" \
     "$ROOT/libexec/harness-macos-profile" \
-    "$ROOT/libexec/harness-macos-ssh-sync" "$public/libexec/"
+    "$ROOT/libexec/harness-macos-ssh-sync" \
+    "$ROOT/libexec/harness-ssh-config-layout" "$public/libexec/"
+cp "$ROOT/config/ssh/harness.conf" "$public/config/ssh/harness.conf"
 cp "$ROOT/profiles/personal-macos/base.conf" \
     "$public/profiles/personal-macos/base.conf"
 cp "$ROOT/profiles/personal-macos/formula-policy-v2.conf" \
     "$public/profiles/personal-macos/formula-policy-v2.conf"
 git -C "$public" init -q -b main
 configure_identity "$public"
-git -C "$public" add libexec profiles
+git -C "$public" add libexec profiles config
 git -C "$public" commit -q -m 'synthetic public SSH sync engine'
 chmod 700 "$public/.git"
 SYNC=$public/libexec/harness-macos-ssh-sync
@@ -129,7 +131,7 @@ setup_home() {
 run_sync() {
     test_home=$1
     shift
-    HOME="$test_home" HARNESS_ROOT="$public" \
+    HOME="$test_home" HARNESS_ROOT="$public" HARNESS_TESTING=1 \
         PATH="$fake_bin:/usr/bin:/bin" "$SYNC" "$@"
 }
 
@@ -178,10 +180,23 @@ Host *
     ServerAliveInterval 15
 EOF
 run_sync "$layout_home" --host mac-test-pilot --seed --apply >/dev/null
-cp "$ROOT/tests/fixtures/personal-macos/private-v1/ssh_config" \
-    "$layout_home/.ssh/config"
+git -C "$layout_writer" pull -q --ff-only
+sed 's/ServerAliveInterval 15/ServerAliveInterval 45/' \
+    "$layout_writer/ssh_config" >"$TEMP_DIR/layout-remote"
+mv "$TEMP_DIR/layout-remote" "$layout_writer/ssh_config"
+chmod 600 "$layout_writer/ssh_config"
+git -C "$layout_writer" add ssh_config
+git -C "$layout_writer" commit -q -m 'synthetic shared-stanza-only advance'
+git -C "$layout_writer" push -q origin main
+sed 's/synthetic-user/synthetic-layout-local/' \
+    "$ROOT/tests/fixtures/personal-macos/private-v1/ssh_config" \
+    >"$layout_home/.ssh/config"
 printf '%s\n' 'Include ~/.ssh/config.d/harness.conf' >>"$layout_home/.ssh/config"
 chmod 600 "$layout_home/.ssh/config"
+mkdir "$layout_home/.ssh/config.d"
+cp "$public/config/ssh/harness.conf" "$layout_home/.ssh/config.d/harness.conf"
+chmod 700 "$layout_home/.ssh/config.d"
+chmod 600 "$layout_home/.ssh/config.d/harness.conf"
 layout_plan=$(run_sync "$layout_home" --host mac-test-pilot --plan)
 printf '%s\n' "$layout_plan" | grep -F 'class=current agreement=no action=publish' \
     >/dev/null || fail "layout migration was not classified local-only"
@@ -189,6 +204,24 @@ run_sync "$layout_home" --host mac-test-pilot --apply >/dev/null
 git -C "$layout_writer" pull -q --ff-only
 cmp -s "$layout_home/.ssh/config" "$layout_writer/ssh_config" ||
     fail "layout migration payload was not published"
+
+sed 's/synthetic-layout-local/synthetic-layout-live-conflict/' \
+    "$layout_home/.ssh/config" >"$TEMP_DIR/layout-live-conflict"
+mv "$TEMP_DIR/layout-live-conflict" "$layout_home/.ssh/config"
+chmod 600 "$layout_home/.ssh/config"
+sed 's/synthetic-layout-local/synthetic-layout-remote-conflict/' \
+    "$layout_writer/ssh_config" >"$TEMP_DIR/layout-remote-conflict"
+mv "$TEMP_DIR/layout-remote-conflict" "$layout_writer/ssh_config"
+chmod 600 "$layout_writer/ssh_config"
+git -C "$layout_writer" add ssh_config
+git -C "$layout_writer" commit -q -m 'synthetic non-shared layout conflict'
+git -C "$layout_writer" push -q origin main
+if run_sync "$layout_home" --host mac-test-pilot --plan \
+    >"$TEMP_DIR/layout-conflict.out" 2>&1; then
+    fail "non-shared layout conflict accepted"
+fi
+grep -F 'class=diverged agreement=no' "$TEMP_DIR/layout-conflict.out" >/dev/null ||
+    fail "non-shared layout conflict classification"
 
 local_sentinel=PRIVATE_LOCAL_ONLY_SENTINEL
 printf '%s\n' 'Host local-edit.invalid' \

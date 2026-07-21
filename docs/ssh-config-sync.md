@@ -64,6 +64,16 @@ Every replacement has an exact private prior-file image and prior state image.
 then atomically restores both. Private Git remains current, so the next apply
 reconciles forward again.
 
+During the one-time shared-fragment migration, the sync engine recognizes a
+narrow layout-only history advance. The bridge is active only when
+`ssh-config-layout --plan` proves the live root and installed fragment are
+already canonical. It deterministically removes only the selected shared
+stanzas and managed include from the fetched and recorded-base payloads. If
+those normalized bytes are equal, a clean behind private checkout may
+fast-forward and publish the canonical live payload on top. Any normalized
+remote difference, local-ahead history, or non-fast-forward still follows the
+ordinary divergence refusal; the bridge never merges private SSH bytes.
+
 ## Linux: fixed one-way `local` to `t4`
 
 Run only from a shell declaring `HARNESS_LOGICAL_HOST=local`:

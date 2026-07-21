@@ -284,6 +284,25 @@ prior fragment during rollback. Its focused test, public audit, all 57 focused
 suites, and the complete clean-checkout phase-one suite pass; native MPI was
 again the declared environment-only skip.
 
+PR #173 then published that hardening as `a6c9ac6`; Linux and the reachable
+Office, riken, and Home public checkouts are clean/current there. The owner
+restored `aist`; `aist2` remained down. Aist updated cleanly to `a6c9ac6`, its
+canonical root-to-source comparison passed, and layout apply, validation,
+exact rollback, and reapply all passed. The subsequent private sync stopped
+without commit/push because its raw private revision had advanced through a
+shared-stanza-only representation change even though normalized non-shared
+remote bytes equal the recorded base. The second layout transaction was rolled
+back exactly, leaving the original root and absent fragment.
+
+The active bridge change is narrowly gated on a current canonical live layout:
+it normalizes only the fetched and recorded-base comparison files; when those
+are equal, it permits a clean private fast-forward followed by ordinary live
+publication. Any normalized remote difference, local-ahead history, or non-
+fast-forward still stops. Synthetic layout-only fast-forward/publication and
+non-shared divergence-refusal tests pass. The public audit, all 57 focused
+suites, and complete clean-checkout phase one pass; native MPI was the declared
+environment-only skip. Protected publication remains.
+
 **Execution sequence:**
 
 1. Revalidate Aist through both routes. Extract its existing root `Host github`
@@ -355,10 +374,10 @@ copies on all systems rather than the current Linux symlinks. D4 (settled by
 evidence) tracks the canonical bytes publicly because the extracted option set
 and comments pass the existing non-secret boundary.
 
-**Next executable action:** publish the narrow safety follow-up through
-protected CI. Only after merge and Aist route recovery, update Aist's public checkout and run the
-staged Aist layout/private-publish rollback/reapply. Revalidate both Aist routes
-before every Aist stage.
+**Next executable action:** validate and publish the narrow private-sync layout
+bridge through protected CI. Then, while Aist is reachable, rerun the staged
+Aist layout/private-publish rollback/reapply. Revalidate both Aist routes before
+every Aist stage.
 
 ### T-290 — Diagnose termination of Aist reverse SSH forwards
 

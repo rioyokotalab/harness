@@ -399,11 +399,23 @@ base_candidate=$(mktemp "${TMPDIR:-/tmp}/harness-macos-ssh-base.XXXXXX") || {
     die "cannot allocate Mac SSH base validation file"
 }
 chmod 600 "$base_candidate"
+normalized_remote=$(mktemp "${TMPDIR:-/tmp}/harness-macos-ssh-remote-normalized.XXXXXX") || {
+    unlink "$candidate"; unlink "$base_candidate"
+    die "cannot allocate Mac SSH comparison file"
+}
+chmod 600 "$normalized_remote"
+normalized_base=$(mktemp "${TMPDIR:-/tmp}/harness-macos-ssh-base-normalized.XXXXXX") || {
+    unlink "$candidate"; unlink "$base_candidate"; unlink "$normalized_remote"
+    die "cannot allocate Mac SSH comparison file"
+}
+chmod 600 "$normalized_base"
 cleanup_candidates() {
     cleanup_status=$?
     trap - EXIT HUP INT TERM
     [ ! -e "$candidate" ] || unlink "$candidate"
     [ ! -e "$base_candidate" ] || unlink "$base_candidate"
+    [ ! -e "$normalized_remote" ] || unlink "$normalized_remote"
+    [ ! -e "$normalized_base" ] || unlink "$normalized_base"
     exit "$cleanup_status"
 }
 trap cleanup_candidates EXIT
@@ -475,13 +487,46 @@ else
     local_changed=0
     remote_changed=0
     [ "$local_identity" = "$state_identity" ] || local_changed=1
-    [ "$origin_revision" = "$state_revision" ] || remote_changed=1
+    remote_layout_only=0
+    layout_plan=$("$SELF_DIR/harness-ssh-config-layout" \
+        --host "$logical_host" --plan 2>/dev/null || true)
+    layout_current=0
+    remote_normalized=0
+    base_normalized=0
+    normalized_equal=0
+    if printf '%s\n' "$layout_plan" | grep -F 'state=current' >/dev/null 2>&1; then
+        layout_current=1
+    fi
+    if [ "$layout_current" -eq 1 ] &&
+        "$SELF_DIR/harness-ssh-config-layout" --normalize-input "$candidate" \
+            --normalize-output "$normalized_remote" >/dev/null 2>&1; then
+        remote_normalized=1
+    fi
+    if [ "$layout_current" -eq 1 ] &&
+        "$SELF_DIR/harness-ssh-config-layout" --normalize-input "$base_candidate" \
+            --normalize-output "$normalized_base" >/dev/null 2>&1; then
+        base_normalized=1
+    fi
+    if [ "$remote_normalized" -eq 1 ] && [ "$base_normalized" -eq 1 ] &&
+        cmp -s "$normalized_remote" "$normalized_base"; then
+        normalized_equal=1
+    fi
+    if [ "$normalized_equal" -eq 1 ]; then
+        remote_layout_only=1
+    fi
+    if [ "$remote_layout_only" -eq 0 ]; then
+        [ "$origin_revision" = "$state_revision" ] || remote_changed=1
+    fi
 
     if [ "$local_changed" -eq 1 ] && [ "$remote_changed" -eq 1 ] &&
         [ "$local_identity" != "$remote_identity" ]; then
         stop_class diverged no
     elif [ "$local_changed" -eq 1 ] && [ "$remote_changed" -eq 0 ]; then
         if [ "$head_revision" = "$origin_revision" ]; then
+            action=publish
+        elif [ "$remote_layout_only" -eq 1 ] &&
+            git -C "$private_root" merge-base --is-ancestor "$head_revision" \
+                "$origin_revision" >/dev/null 2>&1; then
             action=publish
         elif git -C "$private_root" merge-base --is-ancestor "$origin_revision" \
             "$head_revision" >/dev/null 2>&1 &&
@@ -536,6 +581,11 @@ fi
 
 case "$action" in
     seed|publish)
+        if [ "$action" = publish ] && [ "${remote_layout_only:-0}" -eq 1 ] &&
+            [ "$head_revision" != "$origin_revision" ]; then
+            git -C "$private_root" merge --ff-only -q "$origin_revision" ||
+                stop_class diverged no
+        fi
         payload_stage=$private_root/.ssh_config.$$
         [ ! -e "$payload_stage" ] && [ ! -L "$payload_stage" ] ||
             stop_class invalid no
