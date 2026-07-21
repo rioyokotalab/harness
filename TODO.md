@@ -19,9 +19,10 @@ Next free ID: T-290.
   scope.
 - Home, Office, and riken accepted clean public/private main after PR #170,
   updater/startup no-op state, both doctors, zero formula-policy residue,
-  absent .bash_common/run_this.sh, and only local main. Aist last accepted the
-  prior public/private main and is now behind protected main because both
-  routes are unavailable; no live Aist config was changed.
+  absent .bash_common/run_this.sh, and only local main. Aist is now caught up
+  and its client/startup checks pass, but final doctor correctly refuses a
+  newly observed two-sided private SSH-config divergence. No live SSH config
+  was changed.
 - The tmux session harness-connection-monitor probes Aist/Aist2,
   Office/Office2, riken/riken2, and Home/Home2 every 300 seconds. It reconnects
   a dropped primary through its secondary with ssh login, or a dropped
@@ -37,9 +38,8 @@ Next free ID: T-290.
 
 ## Next resume checkpoint
 
-1. When either Aist route returns, apply PR #170 through the native Mac updater
-   and run the frozen post-shell acceptance. This is T-288's only remaining
-   host action.
+1. Resolve Aist's two-sided SSH-config divergence after the owner selects the
+   authoritative side, then repeat post-shell acceptance and close T-288.
 2. On or after 2026-07-26, query only T-196 recorded successor job IDs.
 3. Select another independently eligible T-273 workstream only after fresh
    reconstruction of its gate and authority.
@@ -48,8 +48,8 @@ Next free ID: T-290.
 
 ### T-288 — Finish post-onboarding fleet housekeeping
 
-**Phase/status:** executing; blocked only on both Aist routes being unavailable.
-Scope is harness-owned Git, state, startup, and
+**Phase/status:** executing; blocked on the owner's choice for a genuine Aist
+SSH-config divergence. Scope is harness-owned Git, state, startup, and
 exact updater residue. Homebrew/package maintenance is explicitly deferred.
 Backups, transaction/failure evidence, credentials, active sessions,
 package/cache data, unknown residue, and private payloads are retained or
@@ -76,7 +76,7 @@ artifact. local is also current and clean. T-196 remains time-gated.
 
 | Mac | Git/update | Doctors | Refs/residue | Routes |
 | --- | --- | --- | --- | --- |
-| Aist | clean at pre-#170 main; catch-up pending | Mac ready before merge; agent fix pending | only main; zero residue | both routes unavailable |
+| Aist | public at PR #171; private current; both clean | agent/startup ready; Mac doctor blocked only by SSH divergence | main plus retained local T-290 evidence branch; zero residue | both routes accepted |
 | Office | public at PR #171; private current; both clean | Mac/agent ready after fresh wrapper | only main; zero residue | both identities accepted |
 | riken | public at PR #171; private current; both clean | Mac/agent ready after cleanup | only main; zero residue | both identities accepted |
 | Home | public at PR #171; private current; both clean | Mac/agent ready after fresh shells | only main; zero residue | both identities accepted |
@@ -172,14 +172,14 @@ transport investigation until after the independent Home work.
 
 **Frozen remaining order:**
 
-1. Retry both Aist routes without inferring state across disconnects.
-2. When one route is stable, revalidate identity, forwarded-agent transport,
-   clean Git, and last durable markers; fetch and apply 3e4ad67 through
-   `macos-update`.
-3. Confirm the strict live tooltip table is accepted without editing it,
-   classify the native Codex path, run fresh wrapper/login-shell acceptance,
-   and remove only separately proven residue through guarded deletion.
-4. Record final Aist and compact fleet health, then close T-288.
+1. Obtain the owner's explicit winner for Aist's unequal live and private
+   SSH-config changes; do not infer priority from timestamps or connectivity.
+2. Apply only the selected `macos-ssh-sync` reconciliation route, preserving
+   its unchanged-only rollback transaction.
+3. Repeat fresh wrapper/login-shell acceptance, SSH agreement, both doctors,
+   updater/startup no-op plans, and zero-residue checks.
+4. Compact the retained T-290 connection evidence before any public push,
+   record final fleet health, and close T-288.
 
 **Safety/recovery:** no raw recursive or multi-path deletion. Eligible tree
 cleanup uses a fresh guarded manifest and token. Authentication failure,
@@ -187,10 +187,13 @@ divergent/dirty Git, unsafe metadata, open handles, prompts, or loss of both
 routes stops only that host. Do not reload active shells, change packages, or
 touch backup/transaction state.
 
-**Next executable action:** keep the five-minute monitor active and retry Aist.
-Both `aist` and `aist2` currently refuse their local forwarded ports, so peer
-recovery is impossible until either route returns. Then execute the four frozen
-steps above. Do not edit live client/startup files or begin deferred
+**Next executable action:** ask whether Aist's current live `.ssh/config` or the
+private companion's current payload is authoritative. `macos-ssh-sync` reports
+`class=diverged agreement=no`; the later-divergence gate forbids automatic
+adoption. Both routes are live, the public/private repositories are clean and
+current, updater rollback/reapply passed, the strict Codex tooltip state is
+accepted without editing, the duplicate official Codex link is removed, and
+fresh wrapper/login shells leave startup files unchanged. Do not begin deferred
 Homebrew/package work.
 
 ### T-273 — Resolve intentionally deferred maintenance
