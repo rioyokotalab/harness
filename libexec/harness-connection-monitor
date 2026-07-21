@@ -1,0 +1,152 @@
+#!/bin/sh
+set -eu
+
+die() {
+    echo "harness: $*" >&2
+    exit 2
+}
+
+usage() {
+    cat >&2 <<'EOF'
+Usage:
+  harness connection-monitor --once [--recover]
+  harness connection-monitor --interval SECONDS [--recover]
+EOF
+}
+
+socket_owner() {
+    case $(uname -s) in
+        Darwin) stat -f '%u' -- "$1" ;;
+        *) stat -c '%u' -- "$1" ;;
+    esac
+}
+
+safe_agent_socket() {
+    [ -n "$1" ] && [ -S "$1" ] && [ "$(socket_owner "$1")" = "$(id -u)" ]
+}
+
+resolve_agent_socket() {
+    if safe_agent_socket "${SSH_AUTH_SOCK:-}"; then
+        printf '%s\n' "$SSH_AUTH_SOCK"
+        return
+    fi
+    if [ -n "${TMUX_PANE:-}" ] && command -v tmux >/dev/null 2>&1; then
+        monitor_tmux_value=$(tmux show-environment -t "$TMUX_PANE" SSH_AUTH_SOCK 2>/dev/null || true)
+        case "$monitor_tmux_value" in
+            SSH_AUTH_SOCK=*) monitor_tmux_value=${monitor_tmux_value#SSH_AUTH_SOCK=} ;;
+            *) monitor_tmux_value= ;;
+        esac
+        if safe_agent_socket "$monitor_tmux_value"; then
+            printf '%s\n' "$monitor_tmux_value"
+            return
+        fi
+    fi
+    if [ "${HARNESS_LOGICAL_HOST:-}" = local ] && [ -n "${XDG_RUNTIME_DIR:-}" ]; then
+        monitor_fixed_socket=$XDG_RUNTIME_DIR/openssh_agent
+        if safe_agent_socket "$monitor_fixed_socket"; then
+            printf '%s\n' "$monitor_fixed_socket"
+            return
+        fi
+    fi
+    return 1
+}
+
+probe_route() {
+    SSH_AUTH_SOCK=$agent_socket ssh -x -o BatchMode=yes -o ConnectTimeout=8 \
+        -o ConnectionAttempts=1 -o ControlMaster=no -o ControlPath=none \
+        -o ServerAliveInterval=15 -o ServerAliveCountMax=3 "$1" true \
+        >/dev/null 2>&1
+}
+
+recover_route() {
+    recover_target=$1
+    recover_via=$2
+    recover_host=$3
+    recover_alias=$4
+    SSH_AUTH_SOCK=$agent_socket ssh -x -o BatchMode=yes -o ConnectTimeout=8 \
+        -o ConnectionAttempts=1 -o ControlMaster=no -o ControlPath=none \
+        "$recover_via" "\$HOME/harness/bin/harness macos-ssh-supervisor --host $recover_host --kick $recover_alias" \
+        >/dev/null 2>&1 || return 1
+    recover_attempt=0
+    while [ "$recover_attempt" -lt 15 ]; do
+        probe_route "$recover_target" && return 0
+        recover_attempt=$((recover_attempt + 1))
+        sleep 1
+    done
+    return 1
+}
+
+check_pair() {
+    monitor_host=$1
+    primary=$2
+    secondary=$3
+    if probe_route "$primary"; then primary_state=ready; else primary_state=down; fi
+    if probe_route "$secondary"; then secondary_state=ready; else secondary_state=down; fi
+    pair_state=healthy
+    pair_action=none
+    if [ "$primary_state" = down ] && [ "$secondary_state" = down ]; then
+        pair_state=unrecoverable
+        pair_action=await-supervisor
+    elif [ "$primary_state" = down ]; then
+        pair_state=degraded
+        if [ "$recover" -eq 1 ]; then
+            if recover_route "$primary" "$secondary" "$monitor_host" login; then
+                primary_state=ready
+                pair_state=healthy
+                pair_action=recovered-primary
+            else
+                pair_action=recovery-failed-primary
+            fi
+        else
+            pair_action=recovery-disabled
+        fi
+    elif [ "$secondary_state" = down ]; then
+        pair_state=degraded
+        if [ "$recover" -eq 1 ]; then
+            if recover_route "$secondary" "$primary" "$monitor_host" login2; then
+                secondary_state=ready
+                pair_state=healthy
+                pair_action=recovered-secondary
+            else
+                pair_action=recovery-failed-secondary
+            fi
+        else
+            pair_action=recovery-disabled
+        fi
+    fi
+    printf '%s pair=%s/%s host=%s primary=%s secondary=%s state=%s action=%s\n' \
+        "$(date +%Y-%m-%dT%H:%M:%S%z)" "$primary" "$secondary" \
+        "$monitor_host" "$primary_state" "$secondary_state" "$pair_state" "$pair_action"
+}
+
+mode=
+interval=
+recover=0
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --once) [ -z "$mode" ] || { usage; exit 2; }; mode=once; shift ;;
+        --interval)
+            [ -z "$mode" ] && [ "$#" -ge 2 ] || { usage; exit 2; }
+            mode=interval; interval=$2; shift 2
+            ;;
+        --recover) recover=1; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+[ -n "$mode" ] || { usage; exit 2; }
+if [ "$mode" = interval ]; then
+    case "$interval" in ''|*[!0-9]*) usage; exit 2 ;; esac
+    [ "$interval" -ge 30 ] && [ "$interval" -le 3600 ] ||
+        die "connection monitor interval must be between 30 and 3600 seconds"
+fi
+agent_socket=$(resolve_agent_socket) || die "connection monitor has no safe SSH agent socket"
+
+while :; do
+    check_pair aist aist aist2
+    check_pair office office office2
+    check_pair riken riken riken2
+    check_pair home home home2
+    [ "$mode" = interval ] || break
+    sleep "$interval"
+done

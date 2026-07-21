@@ -344,6 +344,60 @@ harness macos-update --host LOGICAL_ID \
   --public-target PUBLIC_COMMIT --private-target PRIVATE_COMMIT --plan
 ```
 
+## Staged reverse-SSH supervision
+
+`harness macos-ssh-supervisor` manages two current-user launch agents for the
+existing private `login` and `login2` reverse-forward aliases. It never embeds
+or emits a host name, port, identity path, key, or other private SSH value. The
+agents invoke the platform `/usr/bin/ssh` with batch mode, a bounded connection
+attempt, isolated multiplexing, fail-fast forwarding, encrypted server
+keepalives, and launchd throttling. Output is discarded rather than accumulated
+in unbounded log files.
+
+Plan validates the clean public checkout, strict private profile, live SSH
+configuration, exactly one remote forward per alias, absent managed plist
+destinations, and an authentication attempt from a launchd-like minimal
+environment with forwarding disabled. A session-forwarded agent is not treated
+as unattended authentication. Failure of either isolated authentication test
+blocks before creating transaction state or launch agents.
+
+```bash
+harness macos-ssh-supervisor --host LOGICAL_ID --plan
+harness macos-ssh-supervisor --host LOGICAL_ID --apply
+```
+
+Apply only stages two mode-0600 plists and a private transaction; it loads no
+service and leaves existing tunnel processes unchanged. Migration activates one
+alias at a time, only after its predecessor process is separately stopped while
+the sibling route remains healthy:
+
+```bash
+harness macos-ssh-supervisor --activate TRANSACTION_ID --alias login
+harness macos-ssh-supervisor --activate TRANSACTION_ID --alias login2
+harness macos-ssh-supervisor --host LOGICAL_ID --status
+```
+
+Activation revalidates unattended authentication, refuses any non-launchd
+process for that alias, bootstraps only its exact transaction plist, and
+requires the service to remain running. `--kick login|login2` performs a
+launchd-native forced restart for an already active transaction. Rollback is
+deliberately staged: deactivate each service while its sibling or predecessor
+route remains available, then remove only unchanged transaction-owned files.
+
+```bash
+harness macos-ssh-supervisor --deactivate TRANSACTION_ID --alias login
+harness macos-ssh-supervisor --deactivate TRANSACTION_ID --alias login2
+harness macos-ssh-supervisor --rollback TRANSACTION_ID
+```
+
+From the declared `local` controller, `harness connection-monitor --once`
+classifies each Mac pair as `healthy`, `degraded`, or `unrecoverable` using
+fresh non-multiplexed probes. `--recover` asks the healthy sibling route to
+kick only the failed alias's active supervisor. When both routes are down it
+records `await-supervisor`; it never invents a third path or starts an
+untracked SSH process. `--interval 300 --recover` supplies the persistent loop
+used by the existing tmux monitor session.
+
 The updater requires the expected `main` branch, exactly one `origin`, normal
 `origin/main` tracking, a clean worktree, an explicit full target equal to the
 fetched `origin/main`, and ancestry from the current revision. It validates the

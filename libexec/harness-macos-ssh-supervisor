@@ -1,0 +1,538 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+# shellcheck source=libexec/harness-common
+. "$SELF_DIR/harness-common"
+# shellcheck source=libexec/harness-macos-common
+. "$SELF_DIR/harness-macos-common"
+
+usage() {
+    cat >&2 <<'EOF'
+Usage:
+  harness macos-ssh-supervisor --host LOGICAL_ID [--plan|--apply|--status]
+  harness macos-ssh-supervisor --activate TRANSACTION_ID --alias login|login2
+  harness macos-ssh-supervisor --deactivate TRANSACTION_ID --alias login|login2
+  harness macos-ssh-supervisor --host LOGICAL_ID --kick login|login2
+  harness macos-ssh-supervisor --rollback TRANSACTION_ID
+EOF
+}
+
+require_alias() {
+    case "$1" in login|login2) ;; *) die "invalid supervised SSH alias" ;; esac
+}
+
+label_for() {
+    printf 'org.rioyokota.harness.ssh.%s\n' "$1"
+}
+
+plist_for() {
+    printf '%s/Library/LaunchAgents/%s.plist\n' "$HOME" "$(label_for "$1")"
+}
+
+render_plist() {
+    supervised_alias=$1
+    supervised_label=$(label_for "$supervised_alias")
+    cat <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>$supervised_label</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/ssh</string>
+    <string>-N</string>
+    <string>-T</string>
+    <string>-x</string>
+    <string>-o</string>
+    <string>BatchMode=yes</string>
+    <string>-o</string>
+    <string>ConnectTimeout=10</string>
+    <string>-o</string>
+    <string>ConnectionAttempts=1</string>
+    <string>-o</string>
+    <string>ControlMaster=no</string>
+    <string>-o</string>
+    <string>ControlPath=none</string>
+    <string>-o</string>
+    <string>ExitOnForwardFailure=yes</string>
+    <string>-o</string>
+    <string>ServerAliveInterval=15</string>
+    <string>-o</string>
+    <string>ServerAliveCountMax=3</string>
+    <string>-o</string>
+    <string>TCPKeepAlive=yes</string>
+    <string>$supervised_alias</string>
+  </array>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>15</integer>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>Umask</key>
+  <string>077</string>
+  <key>StandardOutPath</key>
+  <string>/dev/null</string>
+  <key>StandardErrorPath</key>
+  <string>/dev/null</string>
+</dict>
+</plist>
+EOF
+}
+
+validate_public_checkout() {
+    [ "$(uname -s)" = Darwin ] || die "Mac SSH supervisor requires Darwin"
+    [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
+        die "Mac SSH supervisor requires a Git harness checkout"
+    [ "$(CDPATH='' cd -- "$HARNESS_ROOT" && pwd -P)" = "$HARNESS_ROOT" ] &&
+        [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" = \
+            "$HARNESS_ROOT" ] || die "Mac SSH supervisor checkout root is ambiguous"
+    [ "$(git -C "$HARNESS_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null)" = main ] ||
+        die "Mac SSH supervisor requires the main branch"
+    [ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
+        die "Mac SSH supervisor requires a clean committed harness checkout"
+}
+
+require_safe_home() {
+    case ${HOME:-} in /*) ;; *) die "Mac SSH supervisor requires an absolute HOME" ;; esac
+    current_uid=$(id -u)
+    [ -d "$HOME" ] && [ ! -L "$HOME" ] &&
+        [ "$(macos_stat_owner "$HOME")" = "$current_uid" ] ||
+        die "Mac SSH supervisor HOME is unsafe"
+    [ "$(CDPATH='' cd -- "$HOME" && pwd -P)" = "$HOME" ] ||
+        die "Mac SSH supervisor HOME is ambiguous"
+}
+
+require_safe_directory() {
+    supervised_directory=$1
+    [ -d "$supervised_directory" ] && [ ! -L "$supervised_directory" ] ||
+        die "Mac SSH supervisor directory is unsafe"
+    [ "$(macos_stat_owner "$supervised_directory")" = "$current_uid" ] ||
+        die "Mac SSH supervisor directory owner is unsafe"
+}
+
+prepare_state_tree() {
+    for supervised_directory in "$HOME/.local" "$HOME/.local/state" \
+        "$state_root" "$transaction_root"; do
+        require_safe_directory "$supervised_directory"
+    done
+    for supervised_directory in "$state_root" "$transaction_root"; do
+        [ "$(macos_stat_mode "$supervised_directory")" = 700 ] ||
+            die "Mac SSH supervisor private directory mode is unsafe"
+    done
+    supervisor_root_before=present
+    if [ ! -e "$supervisor_root" ] && [ ! -L "$supervisor_root" ]; then
+        supervisor_root_before=absent
+        mkdir "$supervisor_root"
+        chmod 700 "$supervisor_root"
+    fi
+    require_safe_directory "$supervisor_root"
+    [ "$(macos_stat_mode "$supervisor_root")" = 700 ] ||
+        die "Mac SSH supervisor private directory mode is unsafe"
+}
+
+service_loaded() {
+    launchctl print "gui/$current_uid/$(label_for "$1")" >/dev/null 2>&1
+}
+
+service_running() {
+    launchctl print "gui/$current_uid/$(label_for "$1")" 2>/dev/null |
+        grep -F 'state = running' >/dev/null 2>&1
+}
+
+external_process_count() {
+    supervised_alias=$1
+    ps -axo ppid=,comm=,args= | awk -v wanted="$supervised_alias" '
+        {
+            parent=$1; command=$2
+            line=$0
+            if (command ~ /(^|\/)ssh$/ &&
+                line ~ ("[[:space:]]" wanted "[[:space:]]*$") && parent != 1) count++
+        }
+        END { print count + 0 }
+    '
+}
+
+managed_process_count() {
+    supervised_alias=$1
+    ps -axo ppid=,comm=,args= | awk -v wanted="$supervised_alias" '
+        {
+            parent=$1; command=$2
+            line=$0
+            if (command ~ /(^|\/)ssh$/ &&
+                line ~ ("[[:space:]]" wanted "[[:space:]]*$") && parent == 1) count++
+        }
+        END { print count + 0 }
+    '
+}
+
+require_ssh_contract() {
+    supervised_alias=$1
+    ssh -G "$supervised_alias" 2>/dev/null | awk '
+        $1 == "remoteforward" { forwards++ }
+        END { exit forwards == 1 ? 0 : 1 }
+    ' || die "supervised SSH alias must define exactly one remote forward"
+}
+
+unattended_auth_ready() {
+    supervised_alias=$1
+    launch_agent_socket=$(launchctl getenv SSH_AUTH_SOCK 2>/dev/null || true)
+    if [ -n "$launch_agent_socket" ]; then
+        [ -S "$launch_agent_socket" ] &&
+            [ "$(macos_stat_owner "$launch_agent_socket")" = "$current_uid" ] || return 1
+    fi
+    ssh_command=$(command -v ssh) || return 1
+    if [ -n "$launch_agent_socket" ]; then
+        env -i HOME="$HOME" USER="$(id -un)" LOGNAME="$(id -un)" \
+            PATH=/usr/bin:/bin SSH_AUTH_SOCK="$launch_agent_socket" \
+            "$ssh_command" -x -F "$HOME/.ssh/config" -o ClearAllForwardings=yes \
+            -o BatchMode=yes -o ConnectTimeout=8 -o ConnectionAttempts=1 \
+            -o ControlMaster=no -o ControlPath=none "$supervised_alias" true \
+            >/dev/null 2>&1
+    else
+        env -i HOME="$HOME" USER="$(id -un)" LOGNAME="$(id -un)" \
+            PATH=/usr/bin:/bin \
+            "$ssh_command" -x -F "$HOME/.ssh/config" -o ClearAllForwardings=yes \
+            -o BatchMode=yes -o ConnectTimeout=8 -o ConnectionAttempts=1 \
+            -o ControlMaster=no -o ControlPath=none "$supervised_alias" true \
+            >/dev/null 2>&1
+    fi
+}
+
+validate_plist_file() {
+    supervised_plist=$1
+    [ -f "$supervised_plist" ] && [ ! -L "$supervised_plist" ] ||
+        die "Mac SSH supervisor plist has unsafe type"
+    [ "$(macos_stat_owner "$supervised_plist")" = "$current_uid" ] ||
+        die "Mac SSH supervisor plist has unsafe owner"
+    [ "$(macos_stat_mode "$supervised_plist")" = 600 ] ||
+        die "Mac SSH supervisor plist has unsafe mode"
+    plutil -lint "$supervised_plist" >/dev/null 2>&1 ||
+        die "Mac SSH supervisor plist is malformed"
+}
+
+validate_transaction() {
+    transaction_id=$1
+    macos_private_id_is_safe "$transaction_id" || die "invalid Mac SSH supervisor transaction"
+    manifest=$transaction_root/$transaction_id.macos-ssh-supervisor.manifest
+    status_file=$transaction_root/$transaction_id.macos-ssh-supervisor.status
+    state_file=$supervisor_root/current
+    login_marker=$transaction_root/$transaction_id.macos-ssh-supervisor.login.active
+    login2_marker=$transaction_root/$transaction_id.macos-ssh-supervisor.login2.active
+    macos_require_private_directory "$transaction_root" "$current_uid"
+    macos_require_private_directory "$supervisor_root" "$current_uid"
+    macos_require_private_file "$manifest" "$current_uid"
+    macos_require_private_file "$status_file" "$current_uid"
+    macos_require_private_file "$state_file" "$current_uid"
+    [ "$(sed -n '1p' "$state_file")" = "$transaction_id" ] ||
+        die "Mac SSH supervisor transaction is not current"
+    awk -F= '
+        NR==1 && $0=="schema=1" {next}
+        NR==2 && $0=="operation=macos-ssh-supervisor" {next}
+        NR==3 && $0 ~ /^logical_id=[A-Za-z0-9._-]+$/ {next}
+        NR==4 && $0 ~ /^revision=[0-9a-f]{40}$/ {next}
+        NR==5 && $0 ~ /^login_hash=[0-9a-f]{64}$/ {next}
+        NR==6 && $0 ~ /^login2_hash=[0-9a-f]{64}$/ {next}
+        NR==7 && $0 ~ /^supervisor_root_before=(absent|present)$/ {next}
+        {bad=1}
+        END {exit NR==7 && !bad ? 0 : 1}
+    ' "$manifest" >/dev/null 2>&1 || die "Mac SSH supervisor manifest is malformed"
+    [ "$(wc -l <"$state_file" | tr -d ' ')" -eq 1 ] ||
+        die "Mac SSH supervisor state is malformed"
+    [ "$(sed -n '1p' "$status_file")" = staged ] ||
+        die "Mac SSH supervisor transaction is not staged"
+    logical_host=$(sed -n 's/^logical_id=//p' "$manifest")
+    macos_private_id_is_safe "$logical_host" || die "Mac SSH supervisor identity is invalid"
+    for validation_alias in login login2; do
+        validation_plist=$(plist_for "$validation_alias")
+        validate_plist_file "$validation_plist"
+        recorded_hash=$(sed -n "s/^${validation_alias}_hash=//p" "$manifest")
+        [ "$(macos_checksum_file "$validation_plist")" = "$recorded_hash" ] ||
+            die "Mac SSH supervisor plist changed"
+    done
+}
+
+wait_for_running() {
+    supervised_alias=$1
+    attempts=0
+    while [ "$attempts" -lt 10 ]; do
+        service_running "$supervised_alias" && return 0
+        attempts=$((attempts + 1))
+        sleep 1
+    done
+    return 1
+}
+
+mode=plan
+logical_host=
+transaction_id=
+supervised_alias=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        --status) mode=status; shift ;;
+        --activate) [ "$#" -ge 2 ] || { usage; exit 2; }; mode=activate; transaction_id=$2; shift 2 ;;
+        --deactivate) [ "$#" -ge 2 ] || { usage; exit 2; }; mode=deactivate; transaction_id=$2; shift 2 ;;
+        --kick) [ "$#" -ge 2 ] || { usage; exit 2; }; mode=kick; supervised_alias=$2; shift 2 ;;
+        --alias) [ "$#" -ge 2 ] || { usage; exit 2; }; supervised_alias=$2; shift 2 ;;
+        --rollback) [ "$#" -ge 2 ] || { usage; exit 2; }; mode=rollback; transaction_id=$2; shift 2 ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+
+require_safe_home
+launch_agents=$HOME/Library/LaunchAgents
+state_root=$HOME/.local/state/harness
+transaction_root=$state_root/transactions
+supervisor_root=$state_root/macos-ssh-supervisor
+
+case "$mode" in
+    activate|deactivate)
+        [ -n "$transaction_id" ] && [ -z "$logical_host" ] || { usage; exit 2; }
+        require_alias "$supervised_alias"
+        validate_transaction "$transaction_id"
+        marker=$transaction_root/$transaction_id.macos-ssh-supervisor.$supervised_alias.active
+        target="gui/$current_uid/$(label_for "$supervised_alias")"
+        if [ "$mode" = activate ]; then
+            validate_public_checkout
+            "$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
+                die "private profile is not ready for Mac SSH supervision"
+            macos_validate_ssh_config "$HOME/.ssh/config" "$current_uid" 600
+            require_ssh_contract "$supervised_alias"
+            [ ! -e "$marker" ] && [ ! -L "$marker" ] ||
+                die "Mac SSH supervisor alias is already active"
+            [ "$(external_process_count "$supervised_alias")" -eq 0 ] ||
+                die "external SSH tunnel process blocks activation"
+            service_loaded "$supervised_alias" &&
+                die "untracked launch service blocks activation"
+            unattended_auth_ready "$supervised_alias" ||
+                die "unattended SSH authentication is not ready"
+            launchctl bootstrap "gui/$current_uid" "$(plist_for "$supervised_alias")" >/dev/null ||
+                die "Mac SSH supervisor bootstrap failed"
+            if ! wait_for_running "$supervised_alias"; then
+                launchctl bootout "$target" >/dev/null 2>&1 || true
+                die "Mac SSH supervisor did not remain running"
+            fi
+            if [ "$(managed_process_count "$supervised_alias")" -ne 1 ] ||
+                [ "$(external_process_count "$supervised_alias")" -ne 0 ]; then
+                launchctl bootout "$target" >/dev/null 2>&1 || true
+                die "Mac SSH supervisor process ownership is invalid"
+            fi
+            printf '%s\n' active >"$marker"
+            chmod 600 "$marker"
+            printf 'MACOS_SSH_SUPERVISOR alias=%s action=activate status=running\n' "$supervised_alias"
+        else
+            macos_require_private_file "$marker" "$current_uid"
+            [ "$(sed -n '1p' "$marker")" = active ] ||
+                die "Mac SSH supervisor active marker is malformed"
+            service_loaded "$supervised_alias" ||
+                die "Mac SSH supervisor service is unexpectedly absent"
+            launchctl bootout "$target" >/dev/null ||
+                die "Mac SSH supervisor bootout failed"
+            service_loaded "$supervised_alias" &&
+                die "Mac SSH supervisor service remained loaded"
+            unlink "$marker"
+            printf 'MACOS_SSH_SUPERVISOR alias=%s action=deactivate status=staged\n' "$supervised_alias"
+        fi
+        exit 0
+        ;;
+    rollback)
+        [ -n "$transaction_id" ] && [ -z "$logical_host" ] &&
+            [ -z "$supervised_alias" ] || { usage; exit 2; }
+        validate_transaction "$transaction_id"
+        for marker in "$login_marker" "$login2_marker"; do
+            [ ! -e "$marker" ] && [ ! -L "$marker" ] ||
+                die "deactivate both Mac SSH supervisor services before rollback"
+        done
+        for rollback_alias in login login2; do
+            service_loaded "$rollback_alias" &&
+                die "loaded Mac SSH supervisor service blocks rollback"
+        done
+        if [ "$(sed -n 's/^supervisor_root_before=//p' "$manifest")" = absent ]; then
+            supervisor_contents=$(find "$supervisor_root" -mindepth 1 -maxdepth 1 -print)
+            [ "$supervisor_contents" = "$state_file" ] ||
+                die "Mac SSH supervisor rollback blocked by unexpected state content"
+        fi
+        for rollback_alias in login login2; do
+            unlink "$(plist_for "$rollback_alias")"
+        done
+        unlink "$state_file"
+        if [ "$(sed -n 's/^supervisor_root_before=//p' "$manifest")" = absent ]; then
+            rmdir "$supervisor_root" ||
+                die "Mac SSH supervisor state directory changed before rollback"
+        fi
+        printf '%s\n' rolled-back >"$status_file"
+        printf 'TRANSACTION id=%s status=rolled-back\n' "$transaction_id"
+        exit 0
+        ;;
+esac
+
+if [ -z "$logical_host" ] || ! macos_private_id_is_safe "$logical_host"; then
+    usage
+    exit 2
+fi
+validate_public_checkout
+"$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
+    die "private profile is not ready for Mac SSH supervision"
+require_safe_directory "$HOME/Library"
+require_safe_directory "$launch_agents"
+macos_validate_ssh_config "$HOME/.ssh/config" "$current_uid" 600
+
+if [ "$mode" = kick ]; then
+    require_alias "$supervised_alias"
+    [ -e "$supervisor_root/current" ] && [ ! -L "$supervisor_root/current" ] ||
+        die "Mac SSH supervisor is not staged"
+    transaction_id=$(sed -n '1p' "$supervisor_root/current")
+    validate_transaction "$transaction_id"
+    marker=$transaction_root/$transaction_id.macos-ssh-supervisor.$supervised_alias.active
+    macos_require_private_file "$marker" "$current_uid"
+    [ "$(managed_process_count "$supervised_alias")" -eq 1 ] &&
+        [ "$(external_process_count "$supervised_alias")" -eq 0 ] ||
+        die "Mac SSH supervisor process ownership is invalid"
+    service_loaded "$supervised_alias" || die "Mac SSH supervisor service is not loaded"
+    launchctl kickstart -k "gui/$current_uid/$(label_for "$supervised_alias")" >/dev/null ||
+        die "Mac SSH supervisor kickstart failed"
+    wait_for_running "$supervised_alias" || die "Mac SSH supervisor did not recover"
+    printf 'MACOS_SSH_SUPERVISOR alias=%s action=kick status=running\n' "$supervised_alias"
+    exit 0
+fi
+
+if [ "$mode" = status ]; then
+    printf 'MACOS_SSH_SUPERVISOR mode=status host=%s privacy=value-free\n' "$logical_host"
+    for status_alias in login login2; do
+        if service_loaded "$status_alias"; then loaded=yes; else loaded=no; fi
+        if service_running "$status_alias"; then running=yes; else running=no; fi
+        printf 'ALIAS name=%s loaded=%s running=%s managed=%s external=%s\n' \
+            "$status_alias" "$loaded" "$running" \
+            "$(managed_process_count "$status_alias")" \
+            "$(external_process_count "$status_alias")"
+    done
+    exit 0
+fi
+
+[ "$mode" = plan ] || [ "$mode" = apply ] || { usage; exit 2; }
+temp_root=$(mktemp -d "${TMPDIR:-/tmp}/harness-macos-ssh-supervisor.XXXXXX") ||
+    die "cannot create Mac SSH supervisor temporary directory"
+chmod 700 "$temp_root"
+cleanup_temp() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    for cleanup_alias in login login2; do
+        cleanup_file=$temp_root/$cleanup_alias.plist
+        [ ! -e "$cleanup_file" ] && [ ! -L "$cleanup_file" ] || unlink "$cleanup_file"
+    done
+    rmdir "$temp_root"
+    exit "$status"
+}
+trap cleanup_temp EXIT HUP INT TERM
+
+blocked=0
+printf 'MACOS_SSH_SUPERVISOR mode=%s host=%s privacy=value-free\n' "$mode" "$logical_host"
+for plan_alias in login login2; do
+    require_ssh_contract "$plan_alias"
+    desired=$temp_root/$plan_alias.plist
+    render_plist "$plan_alias" >"$desired"
+    chmod 600 "$desired"
+    plutil -lint "$desired" >/dev/null 2>&1 || die "generated launch agent is malformed"
+    destination=$(plist_for "$plan_alias")
+    if [ -e "$destination" ] || [ -L "$destination" ]; then
+        printf 'ALIAS name=%s stage=blocked reason=existing-path\n' "$plan_alias"
+        blocked=$((blocked + 1))
+    elif unattended_auth_ready "$plan_alias"; then
+        printf 'ALIAS name=%s stage=create unattended_auth=ready external=%s\n' \
+            "$plan_alias" "$(external_process_count "$plan_alias")"
+    else
+        printf 'ALIAS name=%s stage=blocked reason=unattended-auth external=%s\n' \
+            "$plan_alias" "$(external_process_count "$plan_alias")"
+        blocked=$((blocked + 1))
+    fi
+done
+printf 'PREFLIGHT macos_ssh_supervisor blocked=%s\n' "$blocked"
+[ "$blocked" -eq 0 ] || die "Mac SSH supervisor plan contains blocked aliases"
+[ "$mode" = apply ] || { printf '%s\n' 'END macos_ssh_supervisor applied=no'; exit 0; }
+
+# Repeat target and authentication gates immediately before staging files.
+validate_public_checkout
+"$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
+    die "private profile changed before Mac SSH supervisor apply"
+macos_validate_ssh_config "$HOME/.ssh/config" "$current_uid" 600
+for apply_alias in login login2; do
+    require_ssh_contract "$apply_alias"
+    apply_destination=$(plist_for "$apply_alias")
+    [ ! -e "$apply_destination" ] && [ ! -L "$apply_destination" ] ||
+        die "Mac SSH supervisor destination changed before apply"
+    unattended_auth_ready "$apply_alias" ||
+        die "unattended SSH authentication changed before apply"
+done
+[ ! -e "$supervisor_root/current" ] && [ ! -L "$supervisor_root/current" ] ||
+    die "a Mac SSH supervisor transaction is already current"
+prepare_state_tree
+transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+manifest=$transaction_root/$transaction_id.macos-ssh-supervisor.manifest
+status_file=$transaction_root/$transaction_id.macos-ssh-supervisor.status
+state_file=$supervisor_root/current
+for reserved in "$manifest" "$status_file" "$state_file"; do
+    [ ! -e "$reserved" ] && [ ! -L "$reserved" ] ||
+        die "Mac SSH supervisor transaction identifier collision"
+done
+login_hash=$(macos_checksum_file "$temp_root/login.plist")
+login2_hash=$(macos_checksum_file "$temp_root/login2.plist")
+printf 'schema=1\noperation=macos-ssh-supervisor\nlogical_id=%s\nrevision=%s\nlogin_hash=%s\nlogin2_hash=%s\nsupervisor_root_before=%s\n' \
+    "$logical_host" "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" \
+    "$login_hash" "$login2_hash" "$supervisor_root_before" >"$manifest"
+chmod 600 "$manifest"
+printf '%s\n' prepared >"$status_file"
+chmod 600 "$status_file"
+
+apply_complete=0
+cleanup_apply() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ "$apply_complete" -eq 0 ]; then
+        for cleanup_alias in login login2; do
+            cleanup_target=$(plist_for "$cleanup_alias")
+            cleanup_hash=$(sed -n "s/^${cleanup_alias}_hash=//p" "$manifest")
+            if [ -f "$cleanup_target" ] && [ ! -L "$cleanup_target" ] &&
+                [ "$(macos_checksum_file "$cleanup_target")" = "$cleanup_hash" ]; then
+                unlink "$cleanup_target"
+            fi
+            cleanup_staging=$launch_agents/.harness-ssh-$cleanup_alias.$transaction_id.new
+            if [ -f "$cleanup_staging" ] && [ ! -L "$cleanup_staging" ] &&
+                [ "$(macos_checksum_file "$cleanup_staging")" = "$cleanup_hash" ]; then
+                unlink "$cleanup_staging"
+            fi
+        done
+        [ ! -e "$state_file" ] && [ ! -L "$state_file" ] || unlink "$state_file"
+        if [ "$supervisor_root_before" = absent ]; then
+            rmdir "$supervisor_root" 2>/dev/null || true
+        fi
+        printf '%s\n' failed >"$status_file"
+    fi
+    cleanup_temp
+}
+trap cleanup_apply EXIT HUP INT TERM
+
+for apply_alias in login login2; do
+    destination=$(plist_for "$apply_alias")
+    staging=$launch_agents/.harness-ssh-$apply_alias.$transaction_id.new
+    [ ! -e "$staging" ] && [ ! -L "$staging" ] ||
+        die "Mac SSH supervisor staging collision"
+    cp "$temp_root/$apply_alias.plist" "$staging"
+    chmod 600 "$staging"
+    mv "$staging" "$destination"
+done
+printf '%s\n' "$transaction_id" >"$state_file"
+chmod 600 "$state_file"
+printf '%s\n' staged >"$status_file"
+apply_complete=1
+trap cleanup_temp EXIT HUP INT TERM
+printf 'TRANSACTION id=%s status=staged services=0\n' "$transaction_id"
+printf '%s\n' 'END macos_ssh_supervisor applied=staged'

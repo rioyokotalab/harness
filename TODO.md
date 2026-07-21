@@ -47,8 +47,8 @@ Next free ID: T-294.
 
 ## Next resume checkpoint
 
-1. After the owner says `go`, start T-293 from Codex on `local` using the
-   revised Codex-only plan below; do not initialize or resume cowork.
+1. Resume executing T-293 from Codex on `local` at the exact checkpoint below;
+   do not initialize or resume cowork.
 2. On or after 2026-07-26, query only T-196 recorded successor job IDs.
 3. Select another independently eligible T-273 workstream only after fresh
    reconstruction of its gate and authority.
@@ -57,8 +57,8 @@ Next free ID: T-294.
 
 ### T-293 — Make managed fleet connections durably self-healing
 
-**Phase/status:** planning with Codex on `local` as the owner-selected driver;
-target execution awaits a new explicit `go`. The attempted Aist-hosted run
+**Phase/status:** executing with Codex on `local` as the owner-selected driver;
+the owner supplied the required `go` on 2026-07-22. The attempted Aist-hosted run
 never entered cowork because Claude Code was absent. The owner reports that all
 attempted live state was rolled back. Protected Git contains no Aist-attempt
 branch, pull request, or artifact. There is therefore no predecessor cowork
@@ -177,13 +177,52 @@ trees.
 
 **Decision register:** driver location is resolved as Codex on `local`.
 Cowork/Claude is explicitly excluded. The failed Aist attempt supplies no
-evidence and creates no predecessor. The only remaining gate is the owner's
-explicit `go` after this revised plan is published.
+evidence and creates no predecessor. The owner supplied the frozen plan's
+explicit `go` on 2026-07-22; no unresolved owner decision remains.
 
-**Next executable action:** publish this revised ledger through protected
-`main`. After the owner says `go`, create a fresh local task branch,
-checkpoint T-293 as executing, and begin step 1 read-only reconstruction. Do
-not initialize or resume a cowork session.
+**Execution checkpoint:** branch `task/t-293-self-healing`; working files are
+`TODO.md`, `bin/harness`, `libexec/harness-macos-ssh-supervisor`,
+`libexec/harness-connection-monitor`, their focused tests, the focused-suite
+registry/phase-one runner, `docs/personal-macos.md`, and
+`docs/audits/t293-connection-self-healing-2026-07-22.md`. Git was clean/equal
+at 6700baf2c5aa246b26f3e99c09d8247774781627 with no open pull request before
+the branch was created. No live target mutation has occurred.
+
+Read-only reconstruction confirmed Aist has two independent alias-specific SSH
+processes under distinct tmux retry loops, no matching launch agent, a valid
+engine-3 private profile, and a clean but behind public `main`. The retained
+local monitor history contained 182 Aist samples: 64 dual-ready, 22 degraded,
+96 dual-down, and 62 state transitions. The other Mac pairs remained stable in
+that loop. Both Aist aliases failed authentication from a launchd-like minimal
+environment even though the active session path authenticated; the GUI launchd
+domain exported no usable agent socket. Thus unattended local authentication
+is a confirmed precondition failure. Creating/loading/authorizing a key remains
+an ungranted credential boundary, so Aist mutation is prohibited.
+
+The local implementation now stages two exact current-user launch agents,
+revalidates unattended authentication, migrates one alias at a time, refuses
+external duplicate ownership, provides launchd-native kick/deactivate/status
+and exact inactive rollback, and adds a value-free local monitor that reports
+healthy/degraded/unrecoverable states and uses only a healthy sibling for
+supervisor recovery. Focused supervisor and monitor fixtures, source-contract,
+shell syntax, ShellCheck, and diff checks pass. One initial combined Aist probe
+failed on local quoting after the value-free profile check; it mutated nothing
+and the literal-stdin retry passed. The first full phase-one run passed 59
+focused suites; the existing tmux fixture alone rejected the intentionally
+uncommitted checkout. It changed no target state and is safe to retry after the
+working set is committed. The clean-commit retry passed the complete phase-one
+gate; native MPI remained the declared environment-only skip. A later rerun
+raced Git's automatic background packing while an existing fixture copied the
+object store; `git fsck` passed, packing became idle, and an unchanged retry
+passed the full gate.
+
+**Next executable action:** publish the validated control plane and audit
+through protected `main`,
+guarded-sync clean Linux mirrors, and run Aist's published read-only supervisor
+plan. Continue route observation and Linux/other-Mac classification while the
+credential gate is unresolved. Before any live Aist stage or activation, obtain
+either owner-provisioned unattended authentication or explicit authority for
+one exact credential plan. Do not initialize or resume cowork.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
