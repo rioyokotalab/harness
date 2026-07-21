@@ -201,3 +201,15 @@ backup and manifest. Both aliases then resolved to one remote forward and
 authenticated with forwards cleared; `macos-ssh-sync` returned
 `agreement=yes action=none`. The credential state remains absent, and retrying
 the owner helper is safe.
+
+The owner's second `~/run_this.sh --apply` completed successfully. The helper
+created and authorized the dedicated identity, proved both aliases with the
+agent disabled, and ran a value-free supervisor plan in which each alias was
+`stage=create unattended_auth=ready external=1`; the blocked count was zero.
+Independent metadata-only revalidation confirmed the identity is a regular,
+non-symlink, single-link, current-user-owned mode-0600 file; its contents were
+not read. Supervisor status remained `loaded=no running=no managed=0
+external=1` for each alias. Thus credential provisioning is complete while
+live process ownership is unchanged. The next safe mutation is stage-only
+supervisor apply from current protected `main`, followed by transaction
+verification before any one-route migration.
