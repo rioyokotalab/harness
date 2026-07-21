@@ -365,6 +365,30 @@ that native flow and reports completion, verify GitHub authentication by exit
 status only, resume the waiting client, and revalidate checkout/state shape
 before accepting any subsequent mutation.
 
+GitHub authentication subsequently passed an exit-status-only check and the
+waiting client resumed. The private companion is now present on clean `main`
+with one remote, and both public and private checkouts are clean. Control links,
+Bash hooks, canonical tmux, and SSH-only synchronization each completed an
+unchanged-only rollback/reapply drill: their private local transaction records
+show exactly one rolled-back and one complete application with no failed or
+other status. The selected Homebrew stage has one complete record and its
+post-apply plan is converged. Managed control and guidance links are present;
+the Bash startup files and SSH config remain regular files, while `.tmux.conf`
+is the canonical managed symlink. No private value, revision, path, transaction
+identifier, or authentication material was recorded here.
+
+Execution is paused at the agent-configuration adoption boundary. The live
+Codex configuration has one valid trusted-project table plus a two-line TOML
+construct outside the adapter's strict preservation grammar. The worker has
+not edited it. Continuing requires separate owner authority to remove exactly
+those two unsupported lines, preserve the validated trusted-project table, and
+then run the native transactional agent-config adoption drill. This does not
+change authentication, sessions, histories, or credentials. The proposed
+recovery is an owner-only exact preimage retained locally at mode 0600 until
+agent doctor, rollback, identical reapply, and fresh-client routing checks pass.
+After that approval, resume the waiting client at this gate; do not repeat any
+completed onboarding stage.
+
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 
 **Phase/status:** `complete`; owner requested on 2026-07-20 that Codex drive a
