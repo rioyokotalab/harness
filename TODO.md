@@ -335,6 +335,21 @@ client, private repository, profile, credential, agent, or startup file has yet
 changed. Next action: checkpoint this evidence, then apply that exact bootstrap
 plan and stop at any authentication or physical-interaction boundary.
 
+Bootstrap apply completed its nontransactional prerequisite portion: native
+Homebrew dry-run and install added exactly the declared `gh` and `tmux`
+formulae and their package-manager-resolved dependencies; the dedicated
+owner-only Python-tools environment validates pinned PyYAML; and the
+checksum/byte-count/syntax-verified official installer placed Codex 0.144.6 at
+the declared architecture-fixed command path. The public checkout remains
+clean. The launched client reached its first sign-in screen without changing a
+profile, private repository, startup file, SSH configuration, agent, or public
+Git state, and was exited cleanly without viewing authentication material. An
+attachable native tmux login session is now waiting for the owner's unavoidable
+authentication interaction. Retry is safe after that session exits: first
+verify login status without displaying account data, then rerun bootstrap
+plan/apply; it should report no missing prerequisite formula or Python-tools
+action and proceed directly through the already verified client installation.
+
 ### T-283 — Create and self-refine symmetric Codex–Claude cowork skill
 
 **Phase/status:** `complete`; owner requested on 2026-07-20 that Codex drive a
