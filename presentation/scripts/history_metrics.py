@@ -15,22 +15,27 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+SOURCE_REV = "f25429546bf8114b3309f26e3d3242feae191a30"
 
 
 def run(*args: str) -> str:
     return subprocess.check_output(args, cwd=ROOT, text=True).strip()
 
 
-def count_noncomment(path: Path) -> int:
+def at_source(path: str) -> str:
+    return run("git", "show", f"{SOURCE_REV}:{path}")
+
+
+def count_noncomment(source: str) -> int:
     return sum(
         1
-        for line in path.read_text(encoding="utf-8").splitlines()
+        for line in source.splitlines()
         if line.strip() and not line.lstrip().startswith("#")
     )
 
 
 def dispatcher_commands() -> list[str]:
-    source = (ROOT / "bin/harness").read_text(encoding="utf-8")
+    source = at_source("bin/harness")
     match = re.search(
         r'case "\$command_name" in\n\s+([^\n]+)\)\n\s+exec ', source
     )
@@ -47,38 +52,46 @@ def main() -> int:
     parser.add_argument("--check", action="store_true", help="assert evidence-pack values")
     args = parser.parse_args()
 
-    cpu = json.loads(
-        (ROOT / "docs/audits/hpc-cpu-readiness-2026-07-16.json").read_text()
-    )["summary"]
+    cpu = json.loads(at_source("docs/audits/hpc-cpu-readiness-2026-07-16.json"))["summary"]
     accelerator = json.loads(
-        (ROOT / "docs/audits/hpc-accelerator-readiness-2026-07-17.json").read_text()
+        at_source("docs/audits/hpc-accelerator-readiness-2026-07-17.json")
     )["summary"]
-    mpi = json.loads(
-        (ROOT / "docs/audits/hpc-mpi-readiness-2026-07-17.json").read_text()
-    )["summary"]
+    mpi = json.loads(at_source("docs/audits/hpc-mpi-readiness-2026-07-17.json"))["summary"]
     evaluation = json.loads(
-        (ROOT / "evaluation/results/t181-failure-capsule-v1-full.json").read_text()
+        at_source("evaluation/results/t181-failure-capsule-v1-full.json")
     )["totals"]
 
     metrics = {
-        "commits": int(run("git", "rev-list", "--count", "HEAD")),
+        "commits": int(run("git", "rev-list", "--count", SOURCE_REV)),
         "first_parent_commits": int(
-            run("git", "rev-list", "--first-parent", "--count", "HEAD")
+            run("git", "rev-list", "--first-parent", "--count", SOURCE_REV)
         ),
         "tags": len(run("git", "tag").splitlines()) if run("git", "tag") else 0,
         "root_files": len(
             run("git", "ls-tree", "-r", "--name-only", "7f969317").splitlines()
         ),
-        "head_files": len(run("git", "ls-tree", "-r", "--name-only", "HEAD").splitlines()),
+        "head_files": len(
+            run("git", "ls-tree", "-r", "--name-only", SOURCE_REV).splitlines()
+        ),
         "root_skills": len(
             run("git", "ls-tree", "-d", "--name-only", "7f969317:skills").splitlines()
         ),
-        "head_skills": sum(
-            1 for path in (ROOT / "shared/skills").iterdir() if path.is_dir()
+        "head_skills": len(
+            run(
+                "git", "ls-tree", "-d", "--name-only", f"{SOURCE_REV}:shared/skills"
+            ).splitlines()
         ),
         "user_commands": len(dispatcher_commands()),
-        "focused_suites": count_noncomment(ROOT / "tests/focused-suites.tsv"),
-        "linux_hosts": len(list((ROOT / "profiles/hosts").glob("*.conf"))),
+        "focused_suites": count_noncomment(at_source("tests/focused-suites.tsv")),
+        "linux_hosts": len(
+            [
+                path
+                for path in run(
+                    "git", "ls-tree", "-r", "--name-only", f"{SOURCE_REV}:profiles/hosts"
+                ).splitlines()
+                if path.endswith(".conf")
+            ]
+        ),
         "cpu_nodes_passed": cpu["nodes_passed"],
         "accelerator_driver_runtime_passed": accelerator["driver_runtime_passed"],
         "cuda_kernel_passed": accelerator["cuda_kernel_passed"],
