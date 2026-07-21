@@ -20,10 +20,9 @@ Next free ID: T-292.
 - PRs #172 through #176 published the transactional SSH layout, rollback
   hardening, layout-only private-history bridge, global-context trailer, and
   narrow historical-input bridge, and stale-state refresh; public main is
-  `340caba`. Local, all six remote Linux nodes, Aist, riken, and Home are
+  `c17c68a`. Local, all six remote Linux nodes, and all four Macs are
   clean/current with the strict live trailer and effective GitHub/default
-  resolution. Office is likewise current after final rollout; all eleven live
-  layouts now satisfy the strict invariant.
+  resolution; all eleven live layouts satisfy the strict invariant.
 - Home, Office, and riken accepted clean public/private main after PR #170,
   updater/startup no-op state, both doctors, zero formula-policy residue,
   absent .bash_common/run_this.sh, and only local main. Aist is now caught up
@@ -387,6 +386,17 @@ live layout apply, rollback, and reapply at final transaction
 `20260721T085251Z-186`. Its private planner still stops at the previously proven
 three-way non-shared divergence; its Mac doctor has exactly that one failure,
 matching the deliberate retained state on riken and Home.
+
+PR #178 published the final rollout checkpoint as `c17c68a`; guarded fleet-sync
+and clean Mac fast-forwards advanced every public checkout. An independent
+eleven-target check confirmed clean/current public Git, zero selected root
+stanzas, the exact global-context trailer, canonical regular mode-0600
+fragments, plan-current layout, and effective GitHub hostname/user plus default
+keepalive resolution. Aist's doctor is ready. Office, riken, and Home each have
+exactly one doctor failure: the deliberately retained private SSH divergence.
+During that final check, Home's known 99-byte thin-profile tail had recurred;
+the existing explicit merge route restored it with rollback/reapply and final
+transaction `20260721T085840Z-56943`, leaving only the expected SSH divergence.
 
 **Execution sequence:**
 
