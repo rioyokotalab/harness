@@ -7,13 +7,13 @@
 対象：技術リーダー／研究基盤運用者。想定時間：8–10分。既存18枚版の
 主要内容を5枚に圧縮し、詳細はspeaker notesとsource mapへ退避する。
 
-## Slide 1 — 「設定を配る仕組み」から「証拠で制御する仕組み」へ
+## Slide 1 — 1つのrepositoryが7 Linux・4 Mac・2 clientsを明示的に統御する
 
-- **目的：** 全体の結論と7段階の進化を一枚で提示する。
-- **証拠：** root `7f969317`、最新source HEAD `7c592af`、complete first-parent history。
-- **visual：** 左に中心命題、下に Protect→Observe→Transact→Recover→Measure→Expand→Collaborate のnative timeline、右に初期/現在の対比。
-- **notes：** 543 commitsは活動量であり品質指標ではない。物語は意味のあるarchitectural pivotsだけを採用する。
-- **sources：** `README.md`、`bin/harness`、`docs/environment-portability.md`、timeline.csv。
+- **目的：** 管理対象node topology、repository tree、skill invocationを一枚のcontrol pathとして示す。
+- **証拠：** `90451d4:TODO.md`、7 host profiles、4 Mac acceptance、`install.sh`、repository tree、12 SKILL.md。
+- **visual：** 左上に7 Linux＋transport hops＋4 opaque Macs、右上にsimplified repository tree、下にTask→client→discovery link→SKILL.md/references→dispatcher/native command→nodeの呼出しsequence。
+- **notes：** transport aliasはmanaged environmentではない。Mac identity/private intentは公開しない。skillはruntime dependencyではなくagentのworking methodを指示する。
+- **sources：** current TODO、profiles、README/install.sh、`.codex/AGENTS.md`、source-contract tests。
 
 ## Slide 2 — `rm -rf` 事故が「自律性＝再検証可能な権限」へ設計を変えた
 
@@ -23,26 +23,26 @@
 - **notes：** 影響一覧は非網羅。credentialは読んでいない。回復不能なstateは推測復元しなかった。
 - **sources：** incident-rm-rf.md、historical TODO、guarded-delete skill/script/tests、client rules。
 
-## Slide 3 — transaction loop が異種環境を統一せずに統御可能にした
+## Slide 3 — safeguardと57 focused suitesが実行をfail closedにする
 
-- **目的：** 初期と現在のarchitectureを比較し、七段階を一枚のsystem modelへ統合する。
-- **証拠：** `7f969317`、`fb417282`、`07351a40`、backup/fleet/Mac/cowork commits、current dispatcher。
-- **visual：** 左25%に初期linear chain、右75%に Sources/Profiles/Manifests→Observe/Plan/Apply/Verify→Linux/HPC・Mac/private・Backup/Fleet・Clients/Cowork。外周に非所有境界。
-- **notes：** 標準化したのはschedulerやmachineではなくcontrol grammar。private intentとsite substrateは外側に残る。
-- **sources：** environment-portability、personal-macos、hpc-readiness、home-backup、cowork acceptance。
+- **目的：** production control pathとtest/CI feedbackを一体として説明する。
+- **証拠：** AGENTS/rules、transaction engines、guarded-delete、57-suite manifest、parallel runner、phase1、CI。
+- **visual：** 中央にAuthority→Observe/Plan→Apply→Revalidate→Verify/Receipt、failureをSTOP/retain/re-planへ戻すloop。上下にpolicy guardとadversarial tests、右にfocused→phase1→protected CIのtest pyramid。
+- **notes：** approval promptではなく対象・authority・bytesを再検証する。各focused suiteはisolated process/logで帰属可能。CIはcredentialをpersistしない。
+- **sources：** `.codex/AGENTS.md`、default.rules、run-focused-tests.py、test-phase1.sh、ci.yml、guard tests。
 
-## Slide 4 — 評価・readiness・restore が「改善」を測定可能な主張に限定した
+## Slide 4 — durable `.md` protocol がCodex–Claude協働をchat contextから分離する
 
-- **目的：** repositoryから再現できる成果を一枚に集約し、限界も同時に表示する。
-- **証拠：** HPC JSON、T-181 JSON/review、backup acceptance、T-284 matched samples、最新Mac ledger。
-- **visual：** 5 metric cards + compact readiness matrix + host-specific timing bar。各cardにscope label。
-- **notes：** readiness≠performance、69/70 deterministicと70/70 substantive reviewを混同しない、timingは単一host、Mac 4/4は2026-07-21のsnapshot。
-- **sources：** metrics.csv、audit JSON、evaluation results、T-284 acceptance、`7c592af:TODO.md`。
+- **目的：** driver/co-pilot、exchange `.md` files、staged import/receipt、state machine、resume/takeoverを一枚で示す。
+- **証拠：** cowork `SKILL.md`、422-line protocol、helper、focused test、T-283/T-284 acceptance。
+- **visual：** 左にCodex/Claude symmetric roles、中央にphaseごとの`.md` stack、右にsandbox→sealed stage→candidate→validated import→receipt。下に「resume from files, not chat」とtakeover rule。
+- **notes：** independent passは互いの結論をblind、reconciliationでfrozen plan、target mutationはdriver only。hash/receiptはbyte関係を証明するがauthorship/honestyは証明しない。
+- **sources：** cowork skill/protocol/helper/tests、acceptance audits。
 
-## Slide 5 — 現在の広さより、境界を縮め続ける能力が次の成熟を決める
+## Slide 5 — 残りの進化史は「測定・回復・撤回」で現在の境界に収束した
 
-- **目的：** current harness、重要なreversal、open questions、evidence limitsを結論としてまとめる。
-- **証拠：** 12 skills / 43 commands / 57 suites / 7 Linux profiles、reversal commits、current open backup/HPC limits。
-- **visual：** 左にcurrent command grammar、中央に「追加」対「撤回」の二軸、右に次段階と未主張領域。
-- **notes：** automatic Git、website ownership、private duplication、native Codex ownershipを撤回した。次はhuman coordinationを減らすが、authority/provenance/native transparencyを弱めない。
-- **sources：** dispatcher、focused suites、reversal diffs、TODO、source-map-ja-5slides.md。
+- **目的：** 旧Slide 1/3/4/5の残余を一枚に圧縮し、全体史・測定結果・reversal・limitsを失わない。
+- **証拠：** 544-commit linear history、7 stages、HPC/evaluation/backup/cowork metrics、reversal commits、current limits。
+- **visual：** 上に7-stage timeline、左下にcompact evidence scoreboard、中央下に4 reversals、右下にcurrent surface＋not-claimed領域。
+- **notes：** metricsはreadiness/corpus/host-specific。breadthはqualityではない。次段階はcoordination削減だがauthority/provenance/native transparencyを維持する。
+- **sources：** timeline.csv、metrics.csv、audits/evaluation、reversal diffs、`90451d4:TODO.md`。

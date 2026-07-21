@@ -51,29 +51,33 @@ def metric(slide: bd.Slide, x: float, y: float, w: float, h: float, value: str, 
 
 def notes() -> dict[int, str]:
     return {
-        1: """2026年7月14日のrootは、非機密なworking agreements、rules、skillsを既知のsymlinkでCodexへ届ける18-fileのportable layerだった。翌commitでClaudeも加わったが、machine stateは意図的に外に置かれていた。
+        1: """managed Linux environmentはlocal, ab, ab2, ri, al, rc, t4の7つ。abci_loginはab/ab2へのtransport、alps_loginはalへのtransportであり、managed nodeとして数えない。4台のpersonal Macは個別acceptance済みだが、logical identityとprivate desired stateはpublic repositoryに置かない。
 
-7月21日のsource HEADでは、観測、比較、transaction、recovery、evaluation、Mac、coworkまでが一つのcontrol grammarでつながる。中心命題は、harnessが「差を消した」のではなく、権限・状態・環境差を明示して扱えるようになった、という点である。543 commitsは完全履歴の範囲を示すだけで品質の尺度ではない。""",
+repositoryは.codexのpolicy/rules、bin/harness dispatcher、libexec engines、host/Mac profiles、12 shared skills、57 focused suites、docs/audits/evaluationに分かれる。install.shは全skill directoryにSKILL.mdがあることと全destination collisionを先に検査し、同じsource skillをCodex、shared-agent、Claudeの3 discovery surfaceへlinkする。
+
+invocationはtaskから始まる。clientはmatching skillを選び、SKILL.mdを完全に読み、必要なreferenceだけを追加で読み、harness dispatcherまたは明示されたnative commandへ降りる。skillsはnodeを隠すruntime abstractionではなく、agentのworking methodを規定する。""",
         2: """2026年7月15日01:41頃、temporary HOMEを用いたplan commandのcleanupでassignmentが先に失効し、実HOMEに対する rm -rf が起動した。これはharness transactionではなくagent errorと一次記録に明記されている。最初のtool cancellationではchild processが残り、後続auditで発見して明示的に停止した。
 
 harnessは検証済みbundleから、websiteのtracked pathsはHEADから復元した。一方、未commitのShellCheck workなどは失われ、一部構成は回復不能として推測復元しなかった。credential contentsは調査していない。
 
 238f022はraw recursive rmのpolicy拒否とguarded-deleteを追加した。retained boundary、absolute targets、mode-0600 manifest、token、15-minute freshness、identity/count/size再検証、postcheckが自律性を対象に束縛された短命な権限へ変えた。""",
-        3: """初期architectureはrepository→installer→known symlinks→client discoveryのlinear chainだった。inventoryもdesired-vs-observed comparisonもmutation verificationもなかった。
+        3: """実行経路はauthority/policyから始まり、value-free observationとread-only plan、explicit apply gate、target/state revalidation、native execution、doctor/receipt/unchanged-only rollbackへ進む。collision、scope drift、identity mismatch、unsupported environmentがあればSTOPし、evidenceを保持してre-planへ戻る。approval promptに依存して安全を作るのではない。
 
-fb417282でvalue-free inventory/plan/doctorとlogical profilesが入り、07351a40以降でplan/apply/rollbackがtransactionになった。その後、guarded deletion、backup/restore、fleet fast-forward、public/private Mac、agent replacement、symmetric coworkが同じ文法へ拡張された。
+guarded-deleteはcanonical boundary、absolute targets、manifest/token/freshness、identity/count/size、postcheckをapply直前と直後に検証する。transaction enginesもpreimageとmanaged bytesを記録し、対象が後から編集されていればrollbackを拒否する。
 
-Slurm/PBS/AGE/modules/uenvなどのnative semantics、credential、site substrate、project runtimes、private Mac intentは外側に残る。標準化したのはmachineではなく、観測・判断・実行・証拠化の手順である。""",
-        4: """HPC auditはCPU readiness 7/7、accelerator driver/runtime 7/7、CUDA kernel 5、single-node MPI route 5を示す。これはcorrectness/readiness evidenceでありperformance/scalingではない。
+57 focused suitesはmanifestからisolated subprocessとして実行され、各suiteに個別logとstatus/timeを帰属させる。visible CPUに応じて4または8 workersを使う。test-phase1.shがsyntax、focused suites、portable contracts、guarded cleanupを束ね、protected CIはcredentialをpersistしないUbuntu runnerでaffinity contractと完全gateを実行する。""",
+        4: """owner requestを受けたclientがdriver、他方がco-pilotになるrole-neutral protocolであり、Codex/Claudeのどちらも固定の上位役ではない。state machineはplanning→discussing→ready-for-execution→executing→validating→completeの前進のみ。
 
-T-181は70 primary runs中69 deterministic pass、safety failure 0。targeted reviewの70/70 substantive acceptanceとは別の尺度である。Backupは7 primaryと7 independent generationでcheck/restoreを通過。Cowork refinementは単一8-CPU-visible hostのmatched medianで29.69秒から25.35秒、14.62%減。最新HEADでは4台のMacが個別acceptance済み。
+charter.mdがscope/authority/baseline、plan.mdがinitial plan、driver-evidence.mdとcopilot-evidence.mdがindependent experiment、reconciliation.mdがaccepted/rejected evidenceとfrozen plan、execution.mdとvalidation.mdがdriver-only target workとacceptanceを保持する。raw logsはbounded artifactsへ置く。
 
-数字はscopeと限界を伴う。一般的な優越性ではなく、何をどこまで証明したかを示す。""",
-        5: """current surfaceは12 shared skills、43 user commands、57 focused suites、7 Linux profiles。観測、transaction、recovery、distribution、collaborationをplan-by-defaultとexplicit live gateで扱う。surface countは品質指標ではない。
+co-pilotにはlive sessionではなくpath-free projected state、charter、plan、sealed promptを含むstageだけを渡す。candidateはexternal seal、freshness、structureを検証してimportし、receipt chainへbindする。独立passの後にreciprocal critiqueを行い、driverがreconciliationを凍結してからowner goのもとtargetを一人だけが変更する。
 
-成熟を示すのは追加だけではない。automatic Git hook、website固有ownership、private Bash/tmux duplication、harness-owned native Codexを撤回した。境界を狭める判断がcontrol planeを安全にした。
+同じroleのprocess recoveryはdisk上のstateとMarkdownを再読して最初の未検証actionから再開する。cross-product takeoverは新sessionをplanningから開始し、predecessor digestだけを引き継ぐ。hash/receiptはbyte relationshipであり、authorshipやmodel honestyを証明しない。""",
+        5: """complete historyは544 total / 544 first-parent commits、tag 0、merge commit 0。意味のある変化はProtect、Observe、Transact、Recover、Measure、Expand、Collaborateの7段階に圧縮できる。current surfaceは12 skills、43 commands、57 focused suites、7 Linux profilesだが、countは品質指標ではない。
 
-次段階はhuman coordinationを減らすこと。ただしauthority、provenance、native-system transparencyを弱めない。このdeckはHPC scaling、universal agent quality、完全な事故forensics、model authorship/honesty、read confidentiality、retention deletion authority、future external stateを主張しない。""",
+checked-in evidenceはCPU readiness 7/7、accelerator driver/runtime 7/7、CUDA kernel 5、single-node MPI routes 5、T-181 deterministic 69/70かつsafety failure 0、backup/restore 7 primary + 7 independent generation、cowork matched median 29.69s→25.35sを示す。readinessはperformanceではなく、corpus/host-specific limitsを伴う。
+
+成熟を示すのは追加だけではない。automatic login Git、website ownership、private Bash/tmux duplication、harness-owned native Codexを撤回した。次段階はhuman coordinationを減らすことだが、authority、provenance、native transparencyを維持する。このdeckはHPC scaling、universal agent quality、完全な事故forensics、authorship/honesty、read confidentiality、retention deletion authority、future external stateを主張しない。""",
     }
 
 
@@ -83,35 +87,69 @@ def build_slides() -> list[bd.Slide]:
 
     # Slide 1
     s = bd.Slide(
-        "「設定を配る仕組み」から「証拠で制御する仕組み」へ",
-        "7f969317 → 7c592af • timeline.csv • source-map-ja-5slides.md",
+        "1つのrepositoryが7 Linux・4 Mac・2 clientsを明示的に統御する",
+        "90451d4:TODO.md • profiles/ • install.sh • shared/skills/ • repository tree",
         notes=n[1],
-        dark=True,
     )
-    s.rect(0, 0, bd.W_IN, bd.H_IN, fill="navy", line="navy")
-    s.text(0.78, 0.58, 7.25, 1.32, "「設定を配る仕組み」から\n「証拠で制御する仕組み」へ", size=28, bold=True, color="white", min_size=24)
-    s.text(0.80, 2.15, 6.85, 0.98, "権限・状態・環境差を明示し、\n短命な証拠に束縛し、実行前後で再検証する", size=16.2, color="gray2")
-    s.rect(8.10, 0.68, 4.42, 2.78, fill="navy2", line="cyan", radius=0.18)
-    label(s, 8.38, 0.94, 1.15, "SOURCE HEAD", "cyan")
-    s.text(8.42, 1.46, 3.80, 0.55, "7日間の進化", size=24, bold=True, color="white", align="center")
-    s.text(8.42, 2.20, 3.80, 0.66, "543 commits = 543 first-parent\n0 tags • 0 merge commits", size=11.6, color="gray2", align="center")
-    s.text(8.42, 3.01, 3.80, 0.18, "履歴範囲であり、品質指標ではない", size=7.5, color="cyan", align="center")
-    s.line(0.94, 4.10, 12.30, 4.10, color="gray2", width=1.2)
-    stages = [
-        ("守る", "Policy", "blue"), ("観る", "Inventory", "cyan"),
-        ("動かす", "Transaction", "teal"), ("戻す", "Recovery", "amber"),
-        ("測る", "Evidence", "violet"), ("広げる", "Mac/Fleet", "magenta"),
-        ("協働", "Cowork", "green"),
+    s.rect(0, 0, bd.W_IN, bd.H_IN, fill="light", line="light")
+    title(s, "node topology × repository tree × skill invocation")
+    # Managed topology
+    s.rect(0.52, 1.38, 6.05, 3.93, fill="white", line="blue", radius=0.15)
+    label(s, 0.78, 1.62, 1.62, "MANAGED TOPOLOGY", "blue")
+    s.ellipse(2.80, 2.02, 1.38, 0.76, fill="navy", line="navy")
+    s.text(2.94, 2.24, 1.10, 0.19, "local", size=12.5, bold=True, color="white", align="center")
+    s.text(2.94, 2.48, 1.10, 0.14, "controller + node", size=6.7, color="gray2", align="center")
+    groups = [
+        (0.78, 2.10, 1.62, 0.82, "ABCI", "ab • ab2", "blue"),
+        (0.78, 3.18, 1.62, 0.72, "RIKEN", "ri", "cyan"),
+        (2.66, 3.18, 1.62, 0.72, "CSCS", "al", "teal"),
+        (4.54, 2.10, 1.62, 0.82, "R-CCS", "rc", "violet"),
+        (4.54, 3.18, 1.62, 0.72, "T4", "t4", "amber"),
     ]
-    for i, (jp, en, c) in enumerate(stages):
-        x = 0.78 + i * 1.78
-        s.ellipse(x + 0.61, 3.92, 0.26, 0.26, fill=c, line=c)
-        s.rect(x, 4.43, 1.48, 0.92, fill=bd.tint(c, 0.84), line=c, radius=0.13)
-        s.text(x + 0.08, 4.60, 1.32, 0.24, jp, size=12.4, bold=True, color=c, align="center")
-        s.text(x + 0.08, 4.98, 1.32, 0.16, en, size=7.4, color="darkgray", align="center")
-    s.rect(0.78, 5.82, 11.88, 0.72, fill="navy2", line="teal", radius=0.14)
-    s.text(1.06, 6.02, 11.32, 0.30, "中心命題：差を消したのではない。差を説明し、権限を限定し、結果を証拠化できるようにした。", size=11.4, bold=True, color="white", align="center")
-    footer(s, 1, "7f969317 → 7c592af • README.md • bin/harness • complete linear history")
+    for x, y, w, h, head, body, c in groups:
+        s.rect(x, y, w, h, fill=bd.tint(c, 0.90), line=c, radius=0.11)
+        s.text(x + 0.10, y + 0.13, w - 0.20, 0.18, head, size=9.2, bold=True, color=c, align="center")
+        s.text(x + 0.10, y + 0.43, w - 0.20, 0.16, body, size=8.4, color="ink", align="center")
+        s.line(3.49, 2.80, x + w / 2, y - 0.03 if y > 2.9 else y + h + 0.03, color="gray2", width=0.8)
+    s.text(0.87, 2.88, 1.44, 0.15, "via abci_login (transport)", size=6.4, color="muted", align="center")
+    s.text(2.74, 3.95, 1.46, 0.15, "via alps_login (transport)", size=6.4, color="muted", align="center")
+    s.rect(1.36, 4.27, 4.32, 0.70, fill=bd.tint("magenta", 0.91), line="magenta", radius=0.12)
+    s.text(1.56, 4.43, 3.92, 0.21, "Personal Mac × 4 — individually accepted", size=9.4, bold=True, color="magenta", align="center")
+    s.text(1.56, 4.72, 3.92, 0.13, "opaque identity • private intent outside public Git", size=6.6, color="muted", align="center")
+    # Repository tree
+    s.rect(6.78, 1.38, 6.03, 3.93, fill="white", line="teal", radius=0.15)
+    label(s, 7.04, 1.62, 1.54, "REPOSITORY TREE", "teal")
+    s.text(7.06, 2.05, 1.35, 0.22, "harness/", size=12.5, bold=True, color="ink")
+    tree_rows = [
+        (".codex/", "policy • rules", "blue"),
+        ("bin/ → libexec/", "dispatcher • engines", "teal"),
+        ("profiles/", "7 Linux • public Mac schema", "cyan"),
+        ("shared/skills/", "12 × SKILL.md + refs/scripts", "violet"),
+        ("tests/", "57 focused • phase1 • CI", "green"),
+        ("docs/audits + evaluation/", "evidence • results • limits", "amber"),
+    ]
+    for i, (path, role, c) in enumerate(tree_rows):
+        y = 2.40 + i * 0.43
+        s.line(7.16, y + 0.10, 7.45, y + 0.10, color="gray2", width=0.9)
+        s.text(7.54, y, 2.25, 0.20, path, size=8.6, bold=True, color=c)
+        s.text(9.78, y, 2.66, 0.20, role, size=7.7, color="muted")
+    s.rect(7.08, 4.98, 5.39, 0.20, fill="gray", line="gray2", radius=0.07, dash=True)
+    s.text(7.24, 5.02, 5.07, 0.11, "secrets • live state • site substrate are not repository payload", size=6.2, color="muted", align="center")
+    # Invocation flow
+    label(s, 0.58, 5.57, 1.34, "SKILL INVOCATION", "violet")
+    invoke = [
+        ("Owner task", "blue"), ("Codex / Claude", "cyan"),
+        ("discovery links", "teal"), ("match + read\nSKILL.md / refs", "violet"),
+        ("harness /\nnative command", "amber"), ("exact node", "green"),
+    ]
+    for i, (text_value, c) in enumerate(invoke):
+        x = 0.58 + i * 2.08
+        s.rect(x, 6.00, 1.73, 0.56, fill=bd.tint(c, 0.89), line=c, radius=0.11)
+        s.text(x + 0.08, 6.14, 1.57, 0.24, text_value, size=8.0, bold=True, color=c, align="center")
+        if i < 5:
+            s.line(x + 1.75, 6.28, x + 2.03, 6.28, color="darkgray", width=1.1, arrow="end")
+    s.text(3.04, 6.70, 7.24, 0.15, "install.sh: preflight all collisions → link each skill to .codex / .agents / .claude", size=7.1, color="muted", align="center")
+    footer(s, 1, "90451d4:TODO.md • profiles/hosts • install.sh • .codex/AGENTS.md • shared/skills • focused-suites.tsv")
     slides.append(s)
 
     # Slide 2
@@ -160,114 +198,180 @@ def build_slides() -> list[bd.Slide]:
 
     # Slide 3
     s = bd.Slide(
-        "transaction loop が異種環境を統一せずに統御可能にした",
-        "初期 architecture と current control plane の比較",
+        "safeguardと57 focused suitesが実行をfail closedにする",
+        "policy → plan → transaction → revalidation → evidence → protected CI",
         notes=n[3],
     )
     s.rect(0, 0, bd.W_IN, bd.H_IN, fill="light", line="light")
-    title(s, "標準化したのはmachineではなく、観測・判断・実行・証拠化の文法")
-    s.rect(0.62, 1.42, 3.08, 4.82, fill="white", line="blue", radius=0.16)
-    label(s, 0.88, 1.69, 1.42, "14 JUL 2026", "blue")
-    s.text(0.88, 2.22, 2.56, 0.34, "Portable discovery", size=17, bold=True, color="ink", align="center")
-    initial = [("Repository", "blue"), ("Installer", "teal"), ("Known symlink", "cyan"), ("Client discovery", "violet")]
-    for i, (t, c) in enumerate(initial):
-        y = 2.92 + i * 0.68
-        s.rect(1.02, y, 2.28, 0.48, fill=bd.tint(c, 0.88), line=c, radius=0.10)
-        s.text(1.16, y + 0.13, 2.00, 0.18, t, size=9.4, bold=True, color=c, align="center")
-        if i < 3:
-            s.line(2.16, y + 0.49, 2.16, y + 0.66, color="gray2", width=1.1, arrow="end")
-    s.text(0.98, 5.72, 2.36, 0.22, "inventory / comparison / verification なし", size=7.5, color="muted", align="center")
-    s.rect(3.95, 1.42, 8.75, 4.82, fill="white", line="green", radius=0.16)
-    label(s, 4.22, 1.69, 1.10, "HEAD", "green")
-    s.text(4.25, 2.18, 8.02, 0.34, "Transactional evidence loop", size=17, bold=True, color="ink", align="center")
-    sources = [("Policy / Source", "blue"), ("Profile / Fact", "cyan"), ("Manifest / Receipt", "teal")]
-    for i, (t, c) in enumerate(sources):
-        x = 4.30 + i * 2.08
-        s.rect(x, 2.82, 1.82, 0.58, fill=bd.tint(c, 0.88), line=c, radius=0.11)
-        s.text(x + 0.08, 2.99, 1.66, 0.18, t, size=8.4, bold=True, color=c, align="center")
-        s.line(x + 0.91, 3.42, 7.30, 3.77, color="gray2", width=0.8)
-    s.ellipse(6.08, 3.60, 2.48, 1.02, fill="navy", line="navy")
-    s.text(6.31, 3.94, 2.02, 0.20, "OBSERVE • PLAN • APPLY • VERIFY", size=8.4, bold=True, color="white", align="center")
-    outputs = [("Linux / HPC", "violet"), ("Mac + private", "magenta"), ("Backup / Fleet", "amber"), ("Clients / Cowork", "green")]
-    for i, (t, c) in enumerate(outputs):
-        x = 4.20 + i * 2.04
-        s.rect(x, 5.00, 1.78, 0.56, fill=bd.tint(c, 0.88), line=c, radius=0.11)
-        s.text(x + 0.08, 5.16, 1.62, 0.18, t, size=8.2, bold=True, color=c, align="center")
-        s.line(7.31, 4.64, x + 0.89, 4.98, color="gray2", width=0.8, arrow="end")
-    s.rect(4.22, 5.78, 8.12, 0.27, fill="gray", line="gray2", radius=0.08, dash=True)
-    s.text(4.40, 5.85, 7.76, 0.14, "外側：credentials • site substrate • project runtimes • private intent", size=7.4, color="muted", align="center")
-    stage_text = [("守", "blue"), ("観", "cyan"), ("動", "teal"), ("復", "amber"), ("測", "violet"), ("拡", "magenta"), ("協", "green")]
-    for i, (t, c) in enumerate(stage_text):
-        x = 1.26 + i * 1.62
-        s.ellipse(x, 6.48, 0.34, 0.34, fill=c, line=c)
-        s.text(x + 0.02, 6.57, 0.30, 0.13, t, size=7.2, bold=True, color="white", align="center")
-        if i < 6:
-            s.line(x + 0.35, 6.65, x + 1.56, 6.65, color="gray2", width=0.8)
-    footer(s, 3, "7f969317 • fb417282 • 07351a40 • docs/environment-portability.md • current dispatcher")
+    title(s, "failureはSTOPし、evidenceを残し、同じscopeをre-planする")
+    # Policy guard
+    s.rect(0.62, 1.42, 8.34, 0.62, fill="navy", line="navy", radius=0.12)
+    label(s, 0.84, 1.58, 1.18, "POLICY", "blue")
+    s.text(2.20, 1.62, 6.46, 0.18, "AGENTS authority • exec rules • skill-specific boundaries • no silent fallback", size=8.6, bold=True, color="white", align="center")
+    # Runtime flow
+    flow = [
+        ("AUTHORITY", "scope / owner go", "blue"),
+        ("OBSERVE + PLAN", "value-free / no write", "cyan"),
+        ("APPLY", "explicit live gate", "teal"),
+        ("REVALIDATE", "identity / bytes / drift", "amber"),
+        ("VERIFY", "doctor / receipt / rollback", "green"),
+    ]
+    for i, (head, body, c) in enumerate(flow):
+        x = 0.62 + i * 1.73
+        s.rect(x, 2.36, 1.48, 1.06, fill=bd.tint(c, 0.90), line=c, radius=0.12)
+        s.text(x + 0.08, 2.57, 1.32, 0.20, head, size=8.4, bold=True, color=c, align="center")
+        s.text(x + 0.08, 2.94, 1.32, 0.24, body, size=6.8, color="muted", align="center")
+        if i < 4:
+            s.line(x + 1.50, 2.89, x + 1.69, 2.89, color="darkgray", width=1.1, arrow="end")
+    guard_chips = [
+        ("collision refusal", "blue"), ("preimage + checksum", "teal"),
+        ("manifest + token", "amber"), ("unchanged-only rollback", "violet"),
+    ]
+    for i, (text_value, c) in enumerate(guard_chips):
+        x = 0.78 + i * 2.02
+        s.rect(x, 3.70, 1.76, 0.48, fill=bd.tint(c, 0.91), line=c, radius=0.10)
+        s.text(x + 0.08, 3.83, 1.60, 0.16, text_value, size=7.4, bold=True, color=c, align="center")
+    # Failure loop
+    s.rect(0.62, 4.52, 8.34, 0.88, fill=bd.tint("red", 0.95), line="red", radius=0.13)
+    label(s, 0.86, 4.79, 0.94, "FAIL", "red")
+    s.text(2.00, 4.73, 6.54, 0.24, "STOP • preserve exact error/log/state • classify retry safety • re-plan", size=9.5, bold=True, color="red", align="center")
+    s.line(4.82, 4.50, 4.82, 4.20, color="red", width=1.2, arrow="end")
+    s.rect(0.62, 5.72, 8.34, 0.76, fill="white", line="violet", radius=0.12, dash=True)
+    s.text(0.88, 5.90, 7.82, 0.18, "Adversarial cases: protected root • symlink/hardlink • token mismatch • target drift • partial inventory • source leakage", size=7.7, color="violet", align="center")
+    s.text(0.88, 6.20, 7.82, 0.14, "tests use isolated temporary state and guarded cleanup; a failure is attributable to one suite log", size=6.6, color="muted", align="center")
+    # Test pyramid
+    s.rect(9.24, 1.42, 3.48, 5.06, fill="white", line="green", radius=0.15)
+    label(s, 9.50, 1.68, 1.22, "TEST PATH", "green")
+    tests = [
+        ("57 focused suites", "isolated subprocess + log", "cyan", 2.25, 2.92),
+        ("parallel runner", "4 / 8 workers by visible CPU", "teal", 3.21, 2.62),
+        ("test-phase1.sh", "syntax + focused + portable + cleanup", "violet", 4.17, 2.32),
+        ("protected CI", "Ubuntu • no persisted credentials", "green", 5.13, 2.02),
+    ]
+    for head, body, c, y, w in tests:
+        x = 10.98 - w / 2
+        s.rect(x, y, w, 0.68, fill=bd.tint(c, 0.90), line=c, radius=0.11)
+        s.text(x + 0.08, y + 0.12, w - 0.16, 0.18, head, size=8.8, bold=True, color=c, align="center")
+        s.text(x + 0.08, y + 0.39, w - 0.16, 0.14, body, size=6.4, color="muted", align="center")
+        if y < 5.0:
+            s.line(10.98, y + 0.69, 10.98, y + 0.94, color="gray2", width=1.0, arrow="end")
+    s.text(9.64, 6.04, 2.68, 0.18, "PASS = same contract at every layer", size=7.4, bold=True, color="green", align="center")
+    footer(s, 3, ".codex/AGENTS.md • default.rules • transaction/guard tests • focused-suites.tsv • run-focused-tests.py • phase1 • ci.yml")
     slides.append(s)
 
     # Slide 4
     s = bd.Slide(
-        "評価・readiness・restore が「改善」を測定可能な主張に限定した",
-        "数値には必ずscopeを付ける：readiness ≠ performance、corpus ≠ universal quality",
+        "durable `.md` protocol がCodex–Claude協働をchat contextから分離する",
+        "symmetric roles • blinded evidence • sealed stage • frozen plan • driver-only execution",
         notes=n[4],
     )
     s.rect(0, 0, bd.W_IN, bd.H_IN, fill="light", line="light")
-    title(s, "checked-in evidence のscoreboard — 一般化できない範囲も同時に表示")
-    metric(s, 0.62, 1.48, 2.25, 1.48, "7 / 7", "CPU readiness", "7 Linux nodes", "cyan")
-    metric(s, 3.02, 1.48, 2.25, 1.48, "7 / 7", "accelerator driver/runtime", "readiness only", "teal")
-    metric(s, 5.42, 1.48, 2.25, 1.48, "5", "CUDA kernel pass", "2 toolkit skips", "violet")
-    metric(s, 7.82, 1.48, 2.25, 1.48, "5", "single-node MPI routes", "2 no-route nodes", "amber")
-    metric(s, 10.22, 1.48, 2.25, 1.48, "4 / 4", "personal Mac accepted", "snapshot: 7c592af", "magenta")
-    s.rect(0.62, 3.24, 4.05, 2.02, fill=bd.tint("violet", 0.94), line="violet", radius=0.15)
-    label(s, 0.88, 3.49, 1.20, "T-181", "violet")
-    s.text(0.92, 3.92, 1.66, 0.54, "69 / 70", size=25, bold=True, color="violet", align="center")
-    s.text(2.56, 3.90, 1.75, 0.46, "deterministic pass\n0 safety failures", size=10.3, bold=True, color="ink", align="center")
-    s.text(0.92, 4.72, 3.40, 0.20, "targeted review 70/70 は別尺度 • candidate不採用", size=7.4, color="muted", align="center")
-    s.rect(4.88, 3.24, 3.20, 2.02, fill=bd.tint("green", 0.94), line="green", radius=0.15)
-    label(s, 5.14, 3.49, 1.26, "RECOVERY", "green")
-    s.text(5.24, 3.94, 2.48, 0.46, "7 + 7", size=25, bold=True, color="green", align="center")
-    s.text(5.24, 4.54, 2.48, 0.40, "primary + independent generation\nfull check / verified restore", size=8.6, color="ink", align="center")
-    s.rect(8.30, 3.24, 4.18, 2.02, fill="white", line="blue", radius=0.15)
-    label(s, 8.56, 3.49, 1.50, "HOST-SPECIFIC", "blue")
-    s.text(8.62, 3.96, 1.02, 0.30, "29.69s", size=13.2, bold=True, color="muted", align="right")
-    s.rect(9.78, 4.02, 2.12, 0.20, fill="gray2", line="gray2", radius=0.06)
-    s.text(8.62, 4.48, 1.02, 0.30, "25.35s", size=13.2, bold=True, color="blue", align="right")
-    s.rect(9.78, 4.54, 1.81, 0.20, fill="blue", line="blue", radius=0.06)
-    s.text(11.60, 4.42, 0.70, 0.34, "−14.62%", size=8.2, bold=True, color="blue", align="center")
-    s.text(8.62, 4.96, 3.54, 0.16, "cowork focused suite • one 8-CPU-visible host", size=7.1, color="muted", align="center")
-    s.rect(0.62, 5.62, 11.86, 0.96, fill="navy", line="navy", radius=0.14)
-    claims = [("支持", "readiness", "cyan"), ("支持", "corpus score", "violet"), ("支持", "restore", "green"), ("未主張", "performance / scaling", "red"), ("未主張", "universal agent quality", "red")]
-    for i, (tag, text_value, c) in enumerate(claims):
-        x = 0.88 + i * 2.30
-        s.text(x, 5.83, 0.62, 0.18, tag, size=7.5, bold=True, color=c, align="center")
-        s.text(x + 0.64, 5.83, 1.38, 0.18, text_value, size=7.7, color="white", align="left")
-    s.text(0.96, 6.24, 11.18, 0.16, "改善の意味は「数字が大きい」ではなく、主張・scope・反証条件を追跡できること。", size=8.3, bold=True, color="white", align="center")
-    footer(s, 4, "HPC audit JSON • T-181 results/review • backup acceptance • T-284 matched samples • 7c592af:TODO.md")
+    title(s, "会話はtransport、Markdownとstateがdurable source of truth")
+    # Symmetric clients
+    s.rect(0.55, 1.42, 2.34, 4.73, fill="white", line="blue", radius=0.15)
+    label(s, 0.80, 1.68, 1.28, "SYMMETRIC", "blue")
+    s.rect(0.84, 2.20, 1.76, 0.82, fill=bd.tint("blue", 0.88), line="blue", radius=0.12)
+    s.text(0.98, 2.40, 1.48, 0.22, "Codex", size=13.2, bold=True, color="blue", align="center")
+    s.text(0.98, 2.70, 1.48, 0.14, "driver ↔ co-pilot", size=6.8, color="muted", align="center")
+    s.line(1.72, 3.06, 1.72, 3.35, color="darkgray", width=1.1, arrow="both")
+    s.rect(0.84, 3.39, 1.76, 0.82, fill=bd.tint("violet", 0.88), line="violet", radius=0.12)
+    s.text(0.98, 3.59, 1.48, 0.22, "Claude", size=13.2, bold=True, color="violet", align="center")
+    s.text(0.98, 3.89, 1.48, 0.14, "co-pilot ↔ driver", size=6.8, color="muted", align="center")
+    s.text(0.82, 4.65, 1.80, 0.46, "同一baseline\n別sandbox\n独立passは相互blind", size=8.0, color="ink", align="center")
+    s.rect(0.82, 5.40, 1.80, 0.44, fill=bd.tint("red", 0.94), line="red", radius=0.09)
+    s.text(0.92, 5.53, 1.60, 0.15, "target write = driver only", size=7.0, bold=True, color="red", align="center")
+    # Durable file protocol
+    s.rect(3.10, 1.42, 5.66, 4.73, fill="white", line="teal", radius=0.15)
+    label(s, 3.36, 1.68, 1.56, "DURABLE SESSION", "teal")
+    s.rect(7.18, 1.67, 1.24, 0.34, fill=bd.tint("teal", 0.88), line="teal", radius=0.08)
+    s.text(7.26, 1.76, 1.08, 0.14, "state.json", size=7.3, bold=True, color="teal", align="center")
+    phases = [
+        ("PLAN", "charter.md", "plan.md", "blue"),
+        ("DISCUSS", "driver-evidence.md", "copilot-evidence.md", "violet"),
+        ("FREEZE", "reconciliation.md", "accepted / rejected + gates", "teal"),
+        ("EXECUTE", "execution.md", "driver-only target steps", "amber"),
+        ("VALIDATE", "validation.md", "outcome + residual risks", "green"),
+    ]
+    for i, (phase, file1, file2, c) in enumerate(phases):
+        y = 2.18 + i * 0.70
+        s.rect(3.38, y, 1.06, 0.48, fill=bd.tint(c, 0.86), line=c, radius=0.09)
+        s.text(3.46, y + 0.14, 0.90, 0.16, phase, size=7.4, bold=True, color=c, align="center")
+        s.rect(4.65, y, 1.75, 0.48, fill="light", line=c, radius=0.09)
+        s.text(4.73, y + 0.14, 1.59, 0.16, file1, size=7.2, bold=True, color="ink", align="center")
+        s.rect(6.61, y, 1.83, 0.48, fill="light", line="gray2", radius=0.09)
+        s.text(6.69, y + 0.11, 1.67, 0.22, file2, size=6.6, color="muted", align="center")
+        if i < 4:
+            s.line(3.91, y + 0.49, 3.91, y + 0.68, color="gray2", width=0.9, arrow="end")
+    s.text(3.46, 5.81, 4.84, 0.16, "raw bulky logs → bounded artifacts/ • decisions stay concise in Markdown", size=6.8, color="muted", align="center")
+    # Staged exchange
+    s.rect(8.98, 1.42, 3.80, 4.73, fill="white", line="magenta", radius=0.15)
+    label(s, 9.24, 1.68, 1.42, "STAGED EXCHANGE", "magenta")
+    stage_steps = [
+        ("driver-only prompt", "blue"),
+        ("path-free state + inputs", "cyan"),
+        ("external seal", "amber"),
+        ("candidate evidence", "violet"),
+        ("validate + import", "teal"),
+        ("receipt chain", "green"),
+    ]
+    for i, (text_value, c) in enumerate(stage_steps):
+        y = 2.16 + i * 0.57
+        s.rect(9.46, y, 2.82, 0.40, fill=bd.tint(c, 0.90), line=c, radius=0.09)
+        s.text(9.56, y + 0.11, 2.62, 0.15, text_value, size=7.3, bold=True, color=c, align="center")
+        if i < 5:
+            s.line(10.87, y + 0.41, 10.87, y + 0.55, color="gray2", width=0.8, arrow="end")
+    s.text(9.30, 5.72, 3.16, 0.20, "no live-session write grant during discussion", size=6.8, color="red", align="center")
+    # Context-independent recovery band
+    s.rect(0.55, 6.36, 12.23, 0.50, fill="navy", line="navy", radius=0.11)
+    s.text(0.82, 6.49, 3.54, 0.18, "same-role restart → state + .md を再読してresume", size=7.5, color="white", align="center")
+    s.text(4.50, 6.49, 4.00, 0.18, "CHAT ≠ SOURCE OF TRUTH", size=8.7, bold=True, color="cyan", align="center")
+    s.text(8.62, 6.49, 3.88, 0.18, "cross-product takeover → NEW session + predecessor", size=7.5, color="white", align="center")
+    footer(s, 4, "codex-claude-cowork/SKILL.md • references/protocol.md • cowork-session helper • T-283/T-284 • focused tests")
     slides.append(s)
 
     # Slide 5
     s = bd.Slide(
-        "現在の広さより、境界を縮め続ける能力が次の成熟を決める",
-        "current surface、重要なreversal、次段階、evidence limits",
+        "残りの進化史は「測定・回復・撤回」で現在の境界に収束した",
+        "7 stages • checked-in evidence • reversals • current surface • limits",
         notes=n[5],
     )
     s.rect(0, 0, bd.W_IN, bd.H_IN, fill="light", line="light")
-    title(s, "機能追加だけでなく、誤ったownershipを撤回できるcontrol plane")
-    s.rect(0.62, 1.42, 3.08, 4.92, fill="white", line="teal", radius=0.15)
-    label(s, 0.88, 1.68, 1.42, "CURRENT GRAMMAR", "teal")
-    grammar = [("OBSERVE", "inventory • status • doctor"), ("PLAN", "diff • preflight • explicit scope"), ("APPLY", "transaction • live gate"), ("VERIFY", "receipt • rollback • acceptance")]
-    for i, (head, body) in enumerate(grammar):
-        y = 2.22 + i * 0.78
-        s.rect(0.94, y, 2.42, 0.57, fill=bd.tint("teal", 0.91), line="teal", radius=0.10)
-        s.text(1.06, y + 0.10, 0.78, 0.18, head, size=8.6, bold=True, color="teal")
-        s.text(1.84, y + 0.10, 1.40, 0.28, body, size=7.0, color="muted")
-        if i < 3:
-            s.line(2.15, y + 0.58, 2.15, y + 0.76, color="gray2", width=1.0, arrow="end")
-    s.text(0.96, 5.54, 2.38, 0.32, "12 skills • 43 commands\n57 suites • 7 Linux profiles", size=10.2, bold=True, color="ink", align="center")
-    s.text(0.96, 6.02, 2.38, 0.16, "breadth ≠ quality", size=7.4, color="muted", align="center")
-    s.rect(3.95, 1.42, 4.84, 4.92, fill="white", line="violet", radius=0.15)
-    label(s, 4.21, 1.68, 1.40, "REVERSALS", "violet")
+    title(s, "追加した機能より、何を証明し、何を戻し、何を所有しないか")
+    # Seven-stage history
+    s.line(0.72, 1.86, 12.56, 1.86, color="gray2", width=1.0)
+    stage_data = [
+        ("守る", "Policy", "blue"), ("観る", "Observe", "cyan"),
+        ("動かす", "Transact", "teal"), ("戻す", "Recover", "amber"),
+        ("測る", "Measure", "violet"), ("広げる", "Expand", "magenta"),
+        ("協働", "Cowork", "green"),
+    ]
+    for i, (jp, en, c) in enumerate(stage_data):
+        x = 0.58 + i * 1.70
+        s.ellipse(x + 0.58, 1.72, 0.26, 0.26, fill=c, line=c)
+        s.rect(x, 2.08, 1.42, 0.62, fill=bd.tint(c, 0.88), line=c, radius=0.10)
+        s.text(x + 0.07, 2.21, 1.28, 0.18, jp, size=9.2, bold=True, color=c, align="center")
+        s.text(x + 0.07, 2.46, 1.28, 0.12, en, size=6.2, color="muted", align="center")
+    s.text(10.62, 1.42, 1.92, 0.18, "544 / 544 first-parent", size=7.1, bold=True, color="ink", align="right")
+    s.text(10.62, 1.62, 1.92, 0.14, "0 tags • 0 merges", size=6.4, color="muted", align="right")
+    # Evidence scoreboard
+    s.rect(0.55, 2.98, 4.12, 3.46, fill="white", line="teal", radius=0.15)
+    label(s, 0.80, 3.20, 1.46, "EVIDENCE", "teal")
+    evidence = [
+        ("7/7", "CPU", "cyan"), ("7/7", "Accel drv/runtime", "teal"),
+        ("5", "CUDA kernel", "violet"), ("5", "MPI routes", "amber"),
+        ("69/70", "T-181 deterministic", "violet"), ("0", "safety failures", "green"),
+        ("7+7", "verified restore", "green"), ("−14.62%", "cowork median", "blue"),
+    ]
+    for i, (value, caption, c) in enumerate(evidence):
+        x = 0.80 + (i % 2) * 1.86
+        y = 3.72 + (i // 2) * 0.61
+        s.rect(x, y, 1.68, 0.48, fill=bd.tint(c, 0.92), line=c, radius=0.08)
+        s.text(x + 0.07, y + 0.10, 0.58, 0.18, value, size=8.4, bold=True, color=c, align="center")
+        s.text(x + 0.66, y + 0.10, 0.94, 0.20, caption, size=6.4, color="muted", align="center")
+    s.text(0.82, 6.20, 3.58, 0.14, "readiness / corpus / host-specific — not universal performance", size=6.3, color="muted", align="center")
+    # Reversals
+    s.rect(4.88, 2.98, 4.04, 3.46, fill="white", line="violet", radius=0.15)
+    label(s, 5.14, 3.20, 1.34, "REVERSALS", "violet")
     reversals = [
         ("login fetch / exit publish", "explicit Git operations", "e52a3d0"),
         ("website ownership", "repository independence", "f1b095c"),
@@ -275,24 +379,30 @@ def build_slides() -> list[bd.Slide]:
         ("harness-owned Codex", "local native client + wrapper", "d76575c"),
     ]
     for i, (before, after, sha) in enumerate(reversals):
-        y = 2.20 + i * 0.83
-        s.text(4.22, y, 1.74, 0.29, before, size=7.7, bold=True, color="red", align="right")
-        s.line(6.08, y + 0.15, 6.48, y + 0.15, color="gray2", width=1.1, arrow="end")
-        s.text(6.62, y, 1.56, 0.29, after, size=7.7, bold=True, color="green")
-        s.text(8.20, y + 0.04, 0.48, 0.14, sha, size=5.5, color="muted", align="right")
-    s.rect(4.26, 5.72, 4.20, 0.40, fill=bd.tint("violet", 0.92), line="violet", radius=0.10)
-    s.text(4.46, 5.83, 3.80, 0.16, "成熟 = 追加 + 縮小 + 拒否", size=9.4, bold=True, color="violet", align="center")
-    s.rect(9.04, 1.42, 3.66, 4.92, fill="white", line="amber", radius=0.15)
-    label(s, 9.30, 1.68, 1.40, "NEXT / LIMITS", "amber")
-    s.text(9.35, 2.22, 3.02, 0.46, "次段階", size=11.4, bold=True, color="ink", align="center")
-    s.text(9.35, 2.78, 3.02, 0.62, "human coordinationを減らす\nauthority / provenance / native transparencyは維持", size=8.8, color="ink", align="center")
-    s.line(9.42, 3.60, 12.30, 3.60, color="line", width=1.0)
-    s.text(9.35, 3.82, 3.02, 0.30, "このdeckが主張しないこと", size=10.0, bold=True, color="red", align="center")
-    limits = "HPC performance / scaling\nuniversal agent quality\n完全な事故forensics\nmodel authorship / honesty\nread confidentiality\nretention deletion authority\nfuture external state"
-    s.text(9.52, 4.30, 2.68, 1.40, limits, size=8.0, color="muted", align="center")
-    s.rect(0.62, 6.53, 12.08, 0.37, fill="navy", line="navy", radius=0.10)
-    s.text(0.88, 6.63, 11.56, 0.16, "結論：強い自律性は、広い権限ではなく、狭く説明可能で再検証される権限から生まれる。", size=9.2, bold=True, color="white", align="center")
-    footer(s, 5, "7c592af current surface • reversal commits • source-map-ja-5slides.md • evidence limitations")
+        y = 3.76 + i * 0.55
+        s.text(5.12, y, 1.24, 0.22, before, size=6.6, bold=True, color="red", align="right")
+        s.line(6.45, y + 0.11, 6.72, y + 0.11, color="gray2", width=0.9, arrow="end")
+        s.text(6.82, y, 1.48, 0.22, after, size=6.6, bold=True, color="green")
+        s.text(8.32, y + 0.03, 0.38, 0.12, sha, size=4.9, color="muted", align="right")
+    s.rect(5.18, 6.02, 3.44, 0.26, fill=bd.tint("violet", 0.92), line="violet", radius=0.07)
+    s.text(5.36, 6.09, 3.08, 0.12, "成熟 = 追加 + 回復 + 縮小 + 拒否", size=7.4, bold=True, color="violet", align="center")
+    # Current boundary and limits
+    s.rect(9.13, 2.98, 3.65, 3.46, fill="white", line="amber", radius=0.15)
+    label(s, 9.39, 3.20, 1.46, "CURRENT / LIMITS", "amber")
+    counts = [("12", "skills", "violet"), ("43", "commands", "teal"), ("57", "suites", "green"), ("7", "Linux profiles", "cyan")]
+    for i, (value, caption, c) in enumerate(counts):
+        x = 9.42 + (i % 2) * 1.50
+        y = 3.70 + (i // 2) * 0.66
+        s.rect(x, y, 1.30, 0.52, fill=bd.tint(c, 0.92), line=c, radius=0.09)
+        s.text(x + 0.08, y + 0.10, 0.42, 0.20, value, size=9.8, bold=True, color=c, align="center")
+        s.text(x + 0.52, y + 0.12, 0.70, 0.16, caption, size=6.4, color="muted", align="center")
+    s.text(9.44, 5.02, 3.02, 0.34, "NEXT: coordination ↓\nauthority / provenance / native transparency = keep", size=6.2, bold=True, color="ink", align="center")
+    s.line(9.48, 5.44, 12.44, 5.44, color="line", width=0.9)
+    s.text(9.44, 5.62, 3.02, 0.16, "NOT CLAIMED", size=7.2, bold=True, color="red", align="center")
+    s.text(9.48, 5.88, 2.94, 0.32, "HPC scaling • universal quality • full forensics\nauthorship/honesty • confidentiality • future state", size=6.2, color="muted", align="center")
+    s.rect(0.55, 6.60, 12.23, 0.28, fill="navy", line="navy", radius=0.08)
+    s.text(0.82, 6.67, 11.69, 0.13, "結論：強い自律性は、広い権限ではなく、狭く説明可能で再検証される権限から生まれる。", size=7.8, bold=True, color="white", align="center")
+    footer(s, 5, "timeline.csv • metrics.csv • audit/evaluation results • reversal commits • 90451d4:TODO.md • evidence limits")
     slides.append(s)
     return slides
 
