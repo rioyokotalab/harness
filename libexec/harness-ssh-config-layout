@@ -16,6 +16,8 @@ import time
 
 
 INCLUDE = b"Include ~/.ssh/config.d/harness.conf"
+MATCH_ALL = b"Match all"
+TRAILER = MATCH_ALL + b"\n" + INCLUDE + b"\n"
 MAX_CONFIG = 1024 * 1024
 
 
@@ -88,6 +90,13 @@ def transform_root(data):
             die("root SSH configuration contains an unmanaged Include")
     if include_count > 1:
         die("root SSH configuration has duplicate managed Includes")
+    match_all_re = re.compile(
+        rb"^[ \t]*Match[ \t]+all[ \t]*(?:\r?\n)?$", re.IGNORECASE
+    )
+    managed_match = None
+    if (len(lines) >= 2 and match_all_re.match(lines[-2])
+            and include_re.match(lines[-1])):
+        managed_match = len(lines) - 2
 
     starts = []
     for index, line in enumerate(lines):
@@ -99,7 +108,9 @@ def transform_root(data):
     counts = {b"github": 0, b"*": 0}
     for number, (start, kind, patterns) in enumerate(starts):
         if kind == b"match":
-            die("root SSH configuration contains Match and cannot be safely normalized")
+            if start == managed_match and patterns == [b"all"]:
+                continue
+            die("root SSH configuration contains unmanaged Match")
         for token in (b"github", b"*"):
             if token in patterns and patterns != [token]:
                 die("root SSH configuration has an ambiguous shared Host pattern")
@@ -114,18 +125,16 @@ def transform_root(data):
     removed = set()
     for start, end in targets:
         removed.update(range(start, end))
-    kept = [line for index, line in enumerate(lines) if index not in removed]
-
     normalized = []
-    for line in kept:
-        if include_re.match(line):
+    for index, line in enumerate(lines):
+        if index in removed or include_re.match(line) or index == managed_match:
             continue
         normalized.append(line)
 
     result = b"".join(normalized)
     if result and not result.endswith(b"\n"):
         result += b"\n"
-    result += INCLUDE + b"\n"
+    result += TRAILER
     return result, counts, include_count
 
 
@@ -133,7 +142,7 @@ def validate_canonical(data):
     post, counts, include_count = transform_root(data)
     if counts[b"github"] != 1 or counts[b"*"] != 1 or include_count != 0:
         die("canonical SSH fragment does not contain exactly the shared stanzas")
-    if post != INCLUDE + b"\n":
+    if post != TRAILER:
         die("canonical SSH fragment contains bytes outside the shared stanzas")
 
 
@@ -421,7 +430,7 @@ def main():
         root_info = None
         root_data = b""
     root_post, counts, include_count = transform_root(root_data)
-    combined = root_post[:-len(INCLUDE + b"\n")] + canonical
+    combined = root_post[:-len(TRAILER)] + canonical
     grammar_dir = ssh_dir if ssh_dir.exists() else home
     ssh_grammar(combined, grammar_dir, "combined SSH configuration candidate")
 

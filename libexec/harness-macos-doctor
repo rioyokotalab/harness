@@ -149,6 +149,8 @@ if [ "$ssh_payload_adopted" -eq 1 ]; then
             >/dev/null 2>&1 &&
         [ "$(tail -n 1 "$live_ssh" 2>/dev/null || true)" = \
             'Include ~/.ssh/config.d/harness.conf' ] &&
+        [ "$(tail -n 2 "$live_ssh" 2>/dev/null | head -n 1 || true)" = \
+            'Match all' ] &&
         [ -f "$managed_ssh_fragment" ] && [ ! -L "$managed_ssh_fragment" ] &&
         [ "$(macos_stat_owner "$managed_ssh_fragment")" = "$current_uid" ] &&
         [ "$(macos_stat_links "$managed_ssh_fragment")" = 1 ] &&

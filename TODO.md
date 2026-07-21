@@ -17,11 +17,12 @@ Next free ID: T-292.
 - Managed Linux nodes are local, ab, ab2, ri, al, rc, and t4.
   abci_login and alps_login are transports, not targets; retired si is out of
   scope.
-- PR #172 published the transactional SSH layout as public main `cfb1da2`.
-  All seven Linux checkouts and the reachable Office, riken, and Home public
-  checkouts are clean/current there; their SSH layout plans match the frozen
-  inventory, but no live SSH config has changed. Aist/Aist2 are currently
-  unreachable and remain first in the apply order.
+- PRs #172 through #174 published the transactional SSH layout, rollback
+  hardening, and narrow layout-only private-history bridge; public main is
+  `322fe1f`. All eleven managed checkouts are clean/current there and all
+  eleven live SSH roots now have zero selected shared stanzas, one terminal
+  include, and an exact regular mode-0600 canonical fragment. Every changed
+  host passed grammar, plan-current, exact rollback, and reapply checks.
 - Home, Office, and riken accepted clean public/private main after PR #170,
   updater/startup no-op state, both doctors, zero formula-policy residue,
   absent .bash_common/run_this.sh, and only local main. Aist is now caught up
@@ -43,9 +44,10 @@ Next free ID: T-292.
 
 ## Next resume checkpoint
 
-1. Publish T-291's narrow include-preflight/rollback-order follow-up through
-   protected CI, then resume the Aist-first live rollout when either route is
-   reachable.
+1. Obtain the owner's decision for the legacy Mac whole-file private SSH model:
+   preserve distinct non-shared bytes with a per-Mac payload migration,
+   nominate one complete winner, or accept recorded private divergence while
+   closing the completed local layout migration.
 2. Resolve and close T-288 through T-291's canonical SSH-layout migration.
 3. On or after 2026-07-26, query only T-196 recorded successor job IDs.
 4. Select another independently eligible T-273 workstream only after fresh
@@ -203,8 +205,8 @@ shared stanzas are normalized. Do not begin deferred Homebrew/package work.
 
 ### T-291 — Converge shared SSH fragment across the managed fleet
 
-**Phase/status:** executing; PR #172 is published and the staged rollout is
-waiting on Aist reachability plus one narrow pre-live safety follow-up. The
+**Phase/status:** local layout complete on all eleven nodes; one explicit owner
+decision remains for the separate legacy whole-file private-sync model. The
 owner gave the explicit `go`. The desired state
 copies Aist's existing
 root `Host github` and `Host *` blocks intact into regular
@@ -301,7 +303,43 @@ publication. Any normalized remote difference, local-ahead history, or non-
 fast-forward still stops. Synthetic layout-only fast-forward/publication and
 non-shared divergence-refusal tests pass. The public audit, all 57 focused
 suites, and complete clean-checkout phase one pass; native MPI was the declared
-environment-only skip. Protected publication remains.
+environment-only skip.
+
+PR #174 published the bridge as `322fe1f`. Aist then repeated layout apply,
+classified private sync as ordinary publish, fast-forwarded the clean private
+checkout, committed/pushed forward, and passed exact private rollback/reapply.
+Its layout, private agreement, fresh shells, and Mac doctor are ready. A
+recurring 101-byte thin-profile tail was preserved through the reviewed
+login-only merge with exact rollback/reapply.
+
+Office, riken, and Home each normalized live/base/remote comparison to three
+unequal non-shared payloads. Therefore no automatic private winner was chosen.
+Each host instead ran the requested local-only layout apply, grammar checks,
+exact rollback, and reapply, preserving every non-shared byte. Their layout
+doctor invariant passes, but the legacy single whole-file private payload now
+reports divergence. Home's recurring 99-byte thin-profile tail was likewise
+preserved through its reviewed rollback/reapply route; its only doctor failure
+is now private SSH divergence, matching Office and riken.
+
+All seven Linux nodes converted their prior managed fragment symlinks to exact
+regular mode-0600 copies, removed any selected root stanzas, and passed current
+plan, combined grammar, rollback, and reapply. t4's first apply completed while
+the output connection ended; exactly one complete transaction was found,
+validated, rolled back, and reapplied. A final parallel check proved all eleven
+layouts current, all public checkouts clean at `322fe1f`, and both GitHub and
+default grammar resolution valid without emitting values.
+
+The first final Git fetch exposed that a terminal Include alone remains under
+the preceding OpenSSH Host context and can therefore skip the fragment. Local
+was immediately repaired with the exact `Match all` global-context reset before
+the terminal include, restoring verified GitHub hostname/user resolution and
+authenticated fetch. The active correction updates the transaction, effective-
+resolution regression, documentation, and all roots; publication and fleet
+reapply are required before T-291 can close. Commit `54aa87c` implements the
+exact two-line trailer, refuses a managed include without its context reset in
+Mac private payloads, and adds an include-only upgrade regression. All 57
+focused suites and complete clean-checkout phase one pass; native MPI remains
+the declared environment-only skip.
 
 **Execution sequence:**
 
@@ -315,16 +353,16 @@ environment-only skip. Protected publication remains.
    top-level SSH stanzas, refuses `Match`/multi-pattern/duplicate ambiguity,
    first writes the canonical two-block candidate to a mode-0600 regular
    `~/.ssh/config.d/harness.conf`, then removes only the two selected root
-   blocks and installs exactly one terminal
+   blocks and installs exactly one terminal `Match all` followed by
    `Include ~/.ssh/config.d/harness.conf`. Preserve every other root byte and
    its existing safe mode.
 3. Update the repository canonical source to Aist's verified public-safe exact
    bytes and use transactional copies rather than symlinks on all systems.
    Continue to prohibit path, account, network, or credential-derived values
    in public Git. Extend
-   the Mac private-payload validator to allow only that exact single terminal
-   include while continuing to reject every other `Include`, `Match exec`,
-   credential-like material, unsafe metadata, and external reads during
+   the Mac private-payload validator to allow only that exact global-context
+   terminal trailer while continuing to reject every other `Include`, `Match
+   exec`, credential-like material, unsafe metadata, and external reads during
    validation.
 4. Add synthetic Linux/Darwin tests for all observed combinations, ambiguous
    refusal, byte preservation, idempotence, injected failure, exact
@@ -359,12 +397,12 @@ Existing SSH sessions are not proof of new-config acceptance; both fresh route
 aliases must pass after apply.
 
 **Acceptance:** eleven roots have zero GitHub/default stanza blocks and exactly
-one terminal managed include; eleven regular fragments contain the exact
-Aist-root canonical blocks; all files retain safe ownership/types/modes; OpenSSH
-grammar and effective resolution pass; all four Macs report SSH agreement and
-ready doctors; all Git checkouts are clean/current; rollback/reapply evidence
-exists per changed host; no credential, private value, fragment hash, or raw
-payload enters public output or Git.
+one terminal global-context managed-include trailer; eleven regular fragments
+contain the exact Aist-root canonical blocks; all files retain safe
+ownership/types/modes; OpenSSH grammar and effective resolution pass; all four
+Macs report SSH agreement and ready doctors; all Git checkouts are
+clean/current; rollback/reapply evidence exists per changed host; no credential,
+private value, fragment hash, or raw payload enters public output or Git.
 
 **Decision register:** D1 (settled) covers all eleven managed systems and
 excludes proxy aliases. D2 (settled) copies Aist's complete root GitHub/`Host
@@ -374,10 +412,13 @@ copies on all systems rather than the current Linux symlinks. D4 (settled by
 evidence) tracks the canonical bytes publicly because the extracted option set
 and comments pass the existing non-secret boundary.
 
-**Next executable action:** validate and publish the narrow private-sync layout
-bridge through protected CI. Then, while Aist is reachable, rerun the staged
-Aist layout/private-publish rollback/reapply. Revalidate both Aist routes before
-every Aist stage.
+**Next executable action:** validate and publish the exact `Match all` trailer
+correction, reapply it across all eleven roots, and verify effective GitHub
+resolution rather than grammar alone. Then ask the owner whether to design a
+per-Mac private SSH payload migration that preserves each distinct non-shared
+configuration, select one complete Mac payload as the whole-file winner, or
+leave the private divergence recorded and close T-291's completed local layout
+scope. Do not overwrite any non-shared SSH bytes without that decision.
 
 ### T-290 — Diagnose termination of Aist reverse SSH forwards
 

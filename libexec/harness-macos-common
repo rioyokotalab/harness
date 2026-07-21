@@ -200,6 +200,8 @@ macos_validate_ssh_config() {
             [ "$(tail -n 1 "$macos_ssh_file")" = \
                 'Include ~/.ssh/config.d/harness.conf' ] ||
                 die "SSH configuration contains a nonterminal managed Include"
+            [ "$(tail -n 2 "$macos_ssh_file" | head -n 1)" = 'Match all' ] ||
+                die "SSH configuration has a managed Include without a global context reset"
             macos_ssh_has_managed_include=1
             ;;
         *) die "SSH configuration contains a prohibited or duplicate Include" ;;
@@ -211,7 +213,7 @@ macos_validate_ssh_config() {
     fi
     command -v ssh >/dev/null 2>&1 || die "SSH configuration validator is unavailable"
     if [ "$macos_ssh_has_managed_include" -eq 1 ]; then
-        sed '$d' "$macos_ssh_file"
+        sed '$d' "$macos_ssh_file" | sed '$d'
     else
         cat "$macos_ssh_file"
     fi | ssh -o CanonicalizeHostname=no -G -F /dev/stdin \

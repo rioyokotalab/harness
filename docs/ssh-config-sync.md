@@ -15,12 +15,15 @@ harness ssh-config-layout --host LOGICAL_ID --rollback TRANSACTION_ID
 
 The canonical public source is `config/ssh/harness.conf`. The adapter accepts
 only unambiguous top-level single-pattern `Host github` and `Host *` stanzas;
-duplicate or multi-pattern forms, `Match`, and unmanaged `Include` directives
-fail closed. It preserves every other root byte and the root's safe mode,
+duplicate or multi-pattern forms, unmanaged `Match`, and unmanaged `Include`
+directives fail closed. It preserves every other root byte and the root's safe
+mode,
 installs a regular current-user mode-0600
 `~/.ssh/config.d/harness.conf` first, validates the combined OpenSSH grammar,
-then atomically installs a root with exactly one terminal
-`Include ~/.ssh/config.d/harness.conf` and no selected shared stanza.
+then atomically installs a root ending in the exact global-context trailer
+`Match all` followed by `Include ~/.ssh/config.d/harness.conf`, with no selected
+shared stanza. The context reset is required because a terminal include would
+otherwise remain conditional on the preceding `Host` block.
 
 Apply requires a clean committed harness checkout on `main`. Its private
 transaction stores complete preimages and postimage identities for both files.
