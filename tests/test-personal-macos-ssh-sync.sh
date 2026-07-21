@@ -424,4 +424,149 @@ cmp -s "$push_home/.ssh/config" "$TEMP_DIR/atomic-source" ||
 run_sync "$push_home" --host mac-test-pilot --apply >/dev/null ||
     fail "retry after atomic replacement failure"
 
+# Schema 3 preserves each Mac's distinct live root in an independent payload.
+# Per-host migration is explicit, leaves the legacy root during transition,
+# ignores unrelated-host payload advances, and finalizes only at exact
+# host/payload bijection.
+IFS='|' read -r per_host_home per_host_private per_host_writer per_host_origin <<EOF
+$(setup_home per-host)
+EOF
+run_sync "$per_host_home" --host mac-test-pilot --seed --apply >/dev/null
+git -C "$per_host_writer" pull -q --ff-only
+sed 's/logical_id=mac-test-pilot/logical_id=mac-test-other/' \
+    "$per_host_writer/hosts/mac-test-pilot.conf" \
+    >"$per_host_writer/hosts/mac-test-other.conf"
+chmod 600 "$per_host_writer/hosts/mac-test-other.conf"
+git -C "$per_host_writer" add hosts/mac-test-other.conf
+git -C "$per_host_writer" commit -q -m 'synthetic second Mac declaration'
+git -C "$per_host_writer" push -q origin main
+printf '%s\n' 'Host per-host.invalid' '    HostName 192.0.2.71' \
+    '    User PRIVATE_PER_HOST_SENTINEL' >"$per_host_home/.ssh/config"
+chmod 600 "$per_host_home/.ssh/config"
+cp "$per_host_home/.ssh/config" "$TEMP_DIR/per-host-live-before"
+per_host_plan=$(run_sync "$per_host_home" --host mac-test-pilot \
+    --migrate-per-host --plan)
+printf '%s\n' "$per_host_plan" | grep -F \
+    'action=migrate-per-host apply=not-requested' >/dev/null ||
+    fail "per-host migration plan"
+if printf '%s\n' "$per_host_plan" | grep -F PRIVATE_PER_HOST_SENTINEL >/dev/null; then
+    fail "per-host migration plan exposed private content"
+fi
+[ ! -e "$per_host_private/ssh/mac-test-pilot.conf" ] ||
+    fail "per-host migration plan changed private repository"
+cp "$per_host_home/.local/state/harness/personal-macos/ssh-sync.conf" \
+    "$TEMP_DIR/per-host-state-before"
+printf '%s\n' '#!/bin/sh' 'exit 1' >"$per_host_origin/hooks/pre-receive"
+chmod 755 "$per_host_origin/hooks/pre-receive"
+if run_sync "$per_host_home" --host mac-test-pilot \
+    --migrate-per-host --apply >"$TEMP_DIR/per-host-push-failure.out" 2>&1; then
+    fail "injected per-host migration push failure succeeded"
+fi
+grep -F 'class=auth-failed agreement=no' \
+    "$TEMP_DIR/per-host-push-failure.out" >/dev/null ||
+    fail "per-host migration push failure classification"
+cmp -s "$per_host_home/.local/state/harness/personal-macos/ssh-sync.conf" \
+    "$TEMP_DIR/per-host-state-before" ||
+    fail "per-host migration push failure changed state"
+cmp -s "$per_host_home/.ssh/config" "$TEMP_DIR/per-host-live-before" ||
+    fail "per-host migration push failure changed live SSH bytes"
+unlink "$per_host_origin/hooks/pre-receive"
+per_host_apply=$(run_sync "$per_host_home" --host mac-test-pilot \
+    --migrate-per-host --apply)
+printf '%s\n' "$per_host_apply" | grep -F 'action=applied' >/dev/null ||
+    fail "per-host migration apply"
+[ -f "$per_host_private/ssh_config" ] ||
+    fail "per-host migration removed legacy payload early"
+cmp -s "$per_host_home/.ssh/config" \
+    "$per_host_private/ssh/mac-test-pilot.conf" ||
+    fail "per-host migration payload mismatch"
+cmp -s "$per_host_home/.ssh/config" "$TEMP_DIR/per-host-live-before" ||
+    fail "per-host migration changed live SSH bytes"
+
+git -C "$per_host_writer" pull -q --ff-only
+mkdir -p "$per_host_writer/ssh"
+cp "$ROOT/tests/fixtures/personal-macos/private-v1/ssh_config" \
+    "$per_host_writer/ssh/mac-test-other.conf"
+chmod 600 "$per_host_writer/ssh/mac-test-other.conf"
+git -C "$per_host_writer" add ssh/mac-test-other.conf
+git -C "$per_host_writer" commit -q -m 'synthetic unrelated Mac payload'
+git -C "$per_host_writer" push -q origin main
+unrelated_plan=$(run_sync "$per_host_home" --host mac-test-pilot --plan)
+printf '%s\n' "$unrelated_plan" | grep -F 'action=pull' >/dev/null ||
+    fail "unrelated per-host advance was not a state refresh"
+run_sync "$per_host_home" --host mac-test-pilot --apply >/dev/null
+cmp -s "$per_host_home/.ssh/config" "$TEMP_DIR/per-host-live-before" ||
+    fail "unrelated per-host advance changed selected live SSH bytes"
+
+finalize_plan=$(run_sync "$per_host_home" --host mac-test-pilot \
+    --finalize-per-host --plan)
+printf '%s\n' "$finalize_plan" | grep -F \
+    'action=finalize-per-host apply=not-requested' >/dev/null ||
+    fail "per-host finalization plan"
+printf '%s\n' '#!/bin/sh' 'exit 1' >"$per_host_origin/hooks/pre-receive"
+chmod 755 "$per_host_origin/hooks/pre-receive"
+if run_sync "$per_host_home" --host mac-test-pilot \
+    --finalize-per-host --apply >"$TEMP_DIR/finalize-push-failure.out" 2>&1; then
+    fail "injected per-host finalization push failure succeeded"
+fi
+grep -F 'class=auth-failed agreement=no' \
+    "$TEMP_DIR/finalize-push-failure.out" >/dev/null ||
+    fail "per-host finalization push failure classification"
+cmp -s "$per_host_home/.ssh/config" "$TEMP_DIR/per-host-live-before" ||
+    fail "per-host finalization push failure changed live SSH bytes"
+unlink "$per_host_origin/hooks/pre-receive"
+run_sync "$per_host_home" --host mac-test-pilot \
+    --finalize-per-host --apply >/dev/null || fail "per-host finalization retry"
+[ ! -e "$per_host_private/ssh_config" ] ||
+    fail "per-host finalization retained legacy payload"
+grep -F -x 'minimum_engine_schema=3' \
+    "$per_host_private/companion.conf" >/dev/null ||
+    fail "per-host finalization did not raise engine contract"
+HOME="$per_host_home" HARNESS_ROOT="$public" \
+    "$public/libexec/harness-macos-profile" --host mac-test-pilot >/dev/null ||
+    fail "final per-host profile validation"
+run_sync "$per_host_home" --host mac-test-pilot --apply >/dev/null ||
+    fail "selected state refresh after finalization"
+[ "$(run_sync "$per_host_home" --host mac-test-pilot --plan)" = \
+    'MACOS_SSH_SYNC class=current agreement=yes action=none' ] ||
+    fail "final per-host no-op"
+cmp -s "$per_host_home/.ssh/config" "$TEMP_DIR/per-host-live-before" ||
+    fail "per-host finalization changed live SSH bytes"
+
+printf '%s\n' 'Host per-host-local.invalid' '    HostName 192.0.2.81' \
+    >"$per_host_home/.ssh/config"
+chmod 600 "$per_host_home/.ssh/config"
+per_host_publish=$(run_sync "$per_host_home" --host mac-test-pilot --apply)
+printf '%s\n' "$per_host_publish" | grep -F 'action=applied' >/dev/null ||
+    fail "final per-host local publication"
+git -C "$per_host_writer" pull -q --ff-only
+cmp -s "$per_host_home/.ssh/config" \
+    "$per_host_writer/ssh/mac-test-pilot.conf" ||
+    fail "final per-host selected publication mismatch"
+[ ! -e "$per_host_writer/ssh_config" ] ||
+    fail "final per-host publication recreated legacy payload"
+printf '%s\n' 'Host per-host-remote.invalid' '    HostName 192.0.2.82' \
+    >"$per_host_writer/ssh/mac-test-pilot.conf"
+chmod 600 "$per_host_writer/ssh/mac-test-pilot.conf"
+git -C "$per_host_writer" add ssh/mac-test-pilot.conf
+git -C "$per_host_writer" commit -q -m 'synthetic selected per-host advance'
+git -C "$per_host_writer" push -q origin main
+run_sync "$per_host_home" --host mac-test-pilot --apply >/dev/null ||
+    fail "final per-host remote application"
+cmp -s "$per_host_home/.ssh/config" \
+    "$per_host_writer/ssh/mac-test-pilot.conf" ||
+    fail "final per-host selected remote mismatch"
+
+# shellcheck disable=SC2034
+IFS='|' read -r incomplete_final_home _incomplete_private _incomplete_writer _incomplete_origin <<EOF
+$(setup_home incomplete-final)
+EOF
+run_sync "$incomplete_final_home" --host mac-test-pilot --seed --apply >/dev/null
+if run_sync "$incomplete_final_home" --host mac-test-pilot \
+    --finalize-per-host --plan >"$TEMP_DIR/incomplete-final.out" 2>&1; then
+    fail "incomplete per-host finalization accepted"
+fi
+grep -F 'class=invalid agreement=no' "$TEMP_DIR/incomplete-final.out" >/dev/null ||
+    fail "incomplete per-host finalization classification"
+
 echo "personal macOS SSH-sync tests passed"

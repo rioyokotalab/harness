@@ -132,10 +132,12 @@ done
 private_root=$HOME/.config/harness/private
 ssh_payload_adopted=0
 config_bundle_adopted=0
-if git -C "$private_root" ls-files --error-unmatch ssh_config >/dev/null 2>&1; then
+if git -C "$private_root" ls-files --error-unmatch \
+        "ssh/$logical_host.conf" >/dev/null 2>&1 ||
+    git -C "$private_root" ls-files --error-unmatch ssh_config >/dev/null 2>&1; then
     ssh_payload_adopted=1
 fi
-if [ "$ssh_payload_adopted" -eq 1 ] &&
+if git -C "$private_root" ls-files --error-unmatch ssh_config >/dev/null 2>&1 &&
     git -C "$private_root" ls-files --error-unmatch bashrc >/dev/null 2>&1 &&
     git -C "$private_root" ls-files --error-unmatch tmux.conf >/dev/null 2>&1; then
     config_bundle_adopted=1

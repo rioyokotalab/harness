@@ -1,4 +1,4 @@
-# Explicit whole-file SSH configuration synchronization
+# Explicit SSH configuration synchronization
 
 Two intentionally separate commands synchronize only complete OpenSSH config
 files. A third command transactionally enforces the shared-fragment layout on
@@ -34,13 +34,17 @@ fragment symlinks.
 
 ## Personal Macs: SSH-only desired state
 
-`harness macos-ssh-sync --host LOGICAL_ID` is the engine-1 SSH-only route. The
+`harness macos-ssh-sync --host LOGICAL_ID` supports the engine-1 legacy and
+engine-3 per-Mac SSH-only routes. The
 engine-2 atomic SSH/Bash/tmux bundle is retained only as a sleeping-Mac
 migration source; Bash and tmux now use public shared configuration as
 documented in
 [`personal-macos-config-sync.md`](personal-macos-config-sync.md). The private companion
-stores the single root `ssh_config` payload; the live destination is fixed to
-`~/.ssh/config`. The current live file, fetched `origin/main` payload, and
+stores one `ssh/LOGICAL_ID.conf` payload per Mac; a root `ssh_config` remains
+only during transition. The live destination is fixed to `~/.ssh/config`.
+Only the selected Mac's payload participates in three-way comparison, so a
+commit that changes another Mac's file is a safe Git/state refresh rather than
+an SSH change. The current live file, fetched selected payload, and
 private mode-0600 last-applied base determine the result:
 
 | Local vs base | Remote vs base | Result |
@@ -66,6 +70,23 @@ Every replacement has an exact private prior-file image and prior state image.
 `--rollback TRANSACTION_ID` first verifies the unchanged applied file and state,
 then atomically restores both. Private Git remains current, so the next apply
 reconciles forward again.
+
+The one-time schema-3 cutover is deliberately split:
+
+```bash
+harness macos-ssh-sync --host LOGICAL_ID --migrate-per-host --plan
+harness macos-ssh-sync --host LOGICAL_ID --migrate-per-host --apply
+harness macos-ssh-sync --host LOGICAL_ID --finalize-per-host --plan
+harness macos-ssh-sync --host LOGICAL_ID --finalize-per-host --apply
+```
+
+Migration requires the selected per-host path to be absent from fetched main,
+then publishes the strictly validated live root only to that path. It never
+overwrites another host. Finalization is a separate repository-wide gate that
+requires exact `hosts/*.conf`/`ssh/*.conf` bijection, removes only the legacy
+root payload, and raises the minimum engine to 3. Private history is
+forward-only; interrupted pushes are retried from the narrow clean local
+commit.
 
 During the one-time shared-fragment migration, the sync engine recognizes a
 narrow layout-only history advance. The bridge is active only when

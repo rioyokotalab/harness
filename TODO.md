@@ -44,10 +44,8 @@ Next free ID: T-292.
 
 ## Next resume checkpoint
 
-1. Obtain the owner's decision for the legacy Mac whole-file private SSH model:
-   preserve distinct non-shared bytes with a per-Mac payload migration,
-   nominate one complete winner, or accept recorded private divergence while
-   closing the completed local layout migration.
+1. Execute T-291's owner-selected per-Mac private SSH payload migration without
+   changing any live SSH bytes.
 2. Resolve and close T-288 through T-291's canonical SSH-layout migration.
 3. On or after 2026-07-26, query only T-196 recorded successor job IDs.
 4. Select another independently eligible T-273 workstream only after fresh
@@ -205,9 +203,10 @@ shared stanzas are normalized. Do not begin deferred Homebrew/package work.
 
 ### T-291 — Converge shared SSH fragment across the managed fleet
 
-**Phase/status:** local layout complete on all eleven nodes; one explicit owner
-decision remains for the separate legacy whole-file private-sync model. The
-owner gave the explicit `go`. The desired state
+**Phase/status:** executing the owner-selected per-Mac private payload
+migration; local layout is already complete on all eleven nodes. The owner
+selected preservation of each Mac's distinct non-shared bytes and gave the
+explicit `go`. The desired state
 copies Aist's existing
 root `Host github` and `Host *` blocks intact into regular
 `~/.ssh/config.d/harness.conf` files on every managed system, then sources that
@@ -469,11 +468,45 @@ copies on all systems rather than the current Linux symlinks. D4 (settled by
 evidence) tracks the canonical bytes publicly because the extracted option set
 and comments pass the existing non-secret boundary.
 
-**Next executable action:** ask the owner whether to design a per-Mac private
-SSH payload migration that preserves each distinct non-shared configuration,
-select one complete Mac payload as the whole-file winner, or leave the private
-divergence recorded and close T-291's completed local layout scope. Do not
-overwrite any non-shared SSH bytes without that decision.
+D5 (settled by owner, option 1) replaces the legacy shared root `ssh_config`
+with one mode-0600 tracked payload at `ssh/LOGICAL_ID.conf` for every declared
+Mac. Public engine schema 3 selects only the current host's payload. During the
+ordered migration, schema-1 companions may contain the legacy payload plus a
+partial set of per-host payloads so all four Macs can receive the new engine
+before private history changes. Schema 3 requires an exact bijection between
+`hosts/*.conf` and `ssh/*.conf`, prohibits the legacy root payload and the old
+Bash/tmux bundle, and keeps every live root unchanged. Migration is split into
+two explicit forward-only operations: `--migrate-per-host` creates only the
+selected host's previously absent payload from its strictly validated live
+root; after all four exist, `--finalize-per-host` removes only the legacy root
+payload and raises `minimum_engine_schema` to 3. This split prevents one host
+from implicitly finalizing repository-wide compatibility. Ordinary sync
+compares and commits only the selected payload, so unrelated-host commits
+refresh Git state instead of appearing as SSH divergence.
+
+**Per-Mac execution checkpoint:** branch
+`task/t-291-per-mac-private-ssh` is based on clean public main `2d39f82`.
+The engine now validates safe per-host payload directories, schema-1 transition
+sets, schema-3 exact host/payload bijection, and schema-3 long-gap targets.
+SSH sync selects the current host's path before the legacy fallback; unrelated
+host commits become safe state refreshes, while ordinary local/remote/retry
+paths commit only the selected file. Explicit migration and finalization are
+idempotent and recover cleanly from injected push failures. Synthetic tests
+prove transition/final schemas, unsafe and incomplete refusal, per-host
+publication/pull, unrelated-host advances, live-byte preservation, separate
+finalization, forward-only retry, and privacy-negative output. All thirteen
+Mac-focused suites, the public-audit test and live public audit, shell syntax,
+targeted ShellCheck, and `git diff --check` pass. No live or private repository
+was touched. Only after every Mac public checkout has engine 3 may Aist,
+Office, riken, and Home sequentially publish their own previously absent
+payload. Finalization requires all four exact host/payload pairs and a clean
+private checkout. Private Git remains forward-only; rollback restores only
+unchanged live/state preimages, while reapply catches up to published history.
+
+**Next executable action:** commit the reviewed public implementation, run the
+complete clean-checkout phase-one suite, and publish through protected CI. Do
+not begin live migration until the protected public change is merged and all
+four Mac public checkouts are updated.
 
 ### T-290 — Diagnose termination of Aist reverse SSH forwards
 

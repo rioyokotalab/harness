@@ -168,7 +168,7 @@ printf '%s\n' "$plan_output" | grep -F \
     'MACOS_UPDATE mode=plan public=fast-forward private=fast-forward' \
     >/dev/null || fail "direct long-gap plan"
 printf '%s\n' "$plan_output" | grep -F \
-    'COMPAT engine_schema=2 private_schema=1' >/dev/null ||
+    'COMPAT engine_schema=3 private_schema=1' >/dev/null ||
     fail "engine/private compatibility plan"
 printf '%s\n' "$plan_output" | grep -F \
     'MIGRATION state=initialize' >/dev/null || fail "v1 initialization plan"
@@ -435,7 +435,7 @@ bundle_plan=$(HOME="$bundle_home" HARNESS_ROOT="$bundle_public" \
     --public-target "$bundle_public_target" \
     --private-target "$bundle_private_target" --plan)
 printf '%s\n' "$bundle_plan" | grep -F \
-    'COMPAT engine_schema=2 private_schema=1' >/dev/null ||
+    'COMPAT engine_schema=3 private_schema=1' >/dev/null ||
     fail "engine-2 config bundle target"
 
 # shellcheck disable=SC2034
@@ -466,6 +466,33 @@ fi
 grep -F 'payload set is incomplete or incompatible' \
     "$TEMP_DIR/incomplete-target.out" >/dev/null ||
     fail "incomplete engine-2 target refusal"
+
+# shellcheck disable=SC2034
+IFS='|' read -r per_host_home per_host_public per_host_private \
+    per_host_public_old per_host_public_target per_host_private_old \
+    per_host_private_target <<EOF
+$(setup_pair per-host-target)
+EOF
+per_host_source=$TEMP_DIR/per-host-target-private-source
+mkdir "$per_host_source/ssh"
+cp "$per_host_source/ssh_config" "$per_host_source/ssh/mac-test-pilot.conf"
+chmod 600 "$per_host_source/ssh/mac-test-pilot.conf"
+printf 'schema=1\nminimum_engine_schema=3\n' >"$per_host_source/companion.conf"
+chmod 600 "$per_host_source/companion.conf"
+git -C "$per_host_source" rm -q ssh_config
+git -C "$per_host_source" add companion.conf ssh/mac-test-pilot.conf
+git -C "$per_host_source" commit -q -m 'synthetic schema-3 per-host target'
+git -C "$per_host_source" push -q origin main
+git -C "$per_host_private" fetch -q origin
+per_host_private_target=$(git -C "$per_host_private" \
+    rev-parse refs/remotes/origin/main)
+per_host_plan=$(HOME="$per_host_home" HARNESS_ROOT="$per_host_public" \
+    run_update "$UPDATE" --host mac-test-pilot \
+    --public-target "$per_host_public_target" \
+    --private-target "$per_host_private_target" --plan)
+printf '%s\n' "$per_host_plan" | grep -F \
+    'COMPAT engine_schema=3 private_schema=1' >/dev/null ||
+    fail "schema-3 per-host update target"
 
 for path in "$UPDATE_TMP"/harness-macos-*; do
     [ ! -e "$path" ] && [ ! -L "$path" ] ||

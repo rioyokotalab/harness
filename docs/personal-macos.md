@@ -58,8 +58,10 @@ harness macos-profile --host LOGICAL_ID
 ```
 
 The private checkout must be clean, owner-controlled, mode-restricted, and
-contain only `companion.conf`, strict `hosts/*.conf` manifests, and the one
-optional whole-file `ssh_config` payload. The
+contain only `companion.conf`, strict `hosts/*.conf` manifests, and the payload
+set allowed by the selected engine contract. The current contract has one
+`ssh/LOGICAL_ID.conf` per declared Mac; the legacy root `ssh_config` is allowed
+only during migration. The
 resolver validates every tracked host manifest, not only the selected one, and
 refuses untracked or modified content.
 
@@ -300,8 +302,9 @@ harness macos-ssh-sync --host LOGICAL_ID --apply
 
 The first Mac instead uses `--seed --plan` and `--seed --apply` after reviewing
 its current config. The reconciler fetches the private companion with prompts
-disabled, compares the live file and fetched payload to the private recorded
-base, and takes only a clean no-op, local-only publish, remote-only pull, or
+disabled, compares the live file and fetched selected-host payload to the
+private recorded base, and takes only a clean no-op, local-only publish,
+remote-only pull, or
 same-content convergence. A simultaneous unequal local edit and remote advance
 is `diverged`; no timestamp, machine priority, force-push, reset, or automatic
 merge chooses a winner. Fetch or push authentication failure leaves both the
@@ -323,6 +326,14 @@ keys, `known_hosts`, agent state, credentials, or another `~/.ssh` entry, and
 it installs no `launchd` task or other background job. Detailed protocol and
 the separate fixed Linux mirror are documented in
 [`ssh-config-sync.md`](ssh-config-sync.md).
+
+To preserve distinct Mac roots while replacing the historical shared payload,
+first update every Mac to engine 3. Then run `--migrate-per-host` for each Mac;
+the command adds only that logical ID's absent file and keeps the legacy root.
+After all declared Macs are present, run `--finalize-per-host` to validate the
+exact host/payload pairing, remove the legacy root, and raise the private
+minimum engine to 3. Ordinary apply on each Mac then refreshes its recorded
+revision without changing equal live bytes.
 
 Fetching is a separate, explicit step. After fetching `origin/main` in both
 clean checkouts, resolve each target to its full commit ID locally and review a
