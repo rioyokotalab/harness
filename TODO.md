@@ -541,12 +541,21 @@ The four-engine prerequisite is therefore satisfied by verified transactions;
 the isolated migration gate is open for reachable Macs, but finalization stays
 closed until Aist is reachable and its own payload exists.
 
-**Next executable action:** sequentially migrate Office, riken, and Home to
-their own previously absent payloads with plan/apply, exact rollback/reapply,
-selected-path agreement, and clean/current private Git checks. When either Aist
-route recovers, revalidate its completed engine update and migrate its payload.
-Do not finalize or remove the legacy root until all four per-host payloads are
-present and strictly valid.
+Office, riken, and Home each planned and published only their previously absent
+per-host payload, retained the legacy root, and left the exact live SSH root
+unchanged. Every host passed selected-path profile/agreement and clean/current
+private Git checks, then rolled back its first local sync transaction exactly
+and reapplied forward. Final transactions are Office
+`20260721T094814Z-23169`, riken `20260721T094855Z-58479`, and Home
+`20260721T094926Z-73862`. The private transition now has three of four payloads;
+Aist/Aist2 remain down together. No finalization, legacy-root removal, or
+minimum-engine change has occurred.
+
+**Next executable action:** when either Aist route recovers, revalidate its
+completed engine update, migrate its previously absent payload with exact
+rollback/reapply, and verify the four-payload transition. Only then plan/apply
+the separate finalizer, refresh every Mac's selected state, and prove schema-3
+agreement. Do not finalize while Aist remains unreachable or absent.
 
 ### T-290 — Diagnose termination of Aist reverse SSH forwards
 
