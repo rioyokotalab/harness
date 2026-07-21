@@ -506,9 +506,18 @@ payload. Finalization requires all four exact host/payload pairs and a clean
 private checkout. Private Git remains forward-only; rollback restores only
 unchanged live/state preimages, while reapply catches up to published history.
 
-**Next executable action:** publish the reviewed implementation through
-protected CI. Do not begin live migration until the protected public change is
-merged and all four Mac public checkouts are updated.
+PR #180 passed protected portable CI and squash-merged the schema-3 engine as
+`2de6a49`; its exact implementation branch is absent locally and remotely.
+Rollout continuation branch `task/t-291-per-mac-private-rollout` starts from
+that clean main. The next gate is public-only engine catch-up and schema-1
+compatibility validation on all four Macs; no per-host private payload may be
+published until all four pass.
+
+**Next executable action:** fetch both checkouts on each Mac, run a public-main
+`macos-update` plan/apply with its current fetched private target, then prove
+clean public `2de6a49` and a valid schema-1 private profile on all four. Stop a
+host on route, authentication, dirty-tree, divergence, or compatibility
+failure; do not migrate any private payload until every host passes.
 
 ### T-290 — Diagnose termination of Aist reverse SSH forwards
 
