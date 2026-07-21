@@ -299,8 +299,9 @@ it normalizes only the fetched and recorded-base comparison files; when those
 are equal, it permits a clean private fast-forward followed by ordinary live
 publication. Any normalized remote difference, local-ahead history, or non-
 fast-forward still stops. Synthetic layout-only fast-forward/publication and
-non-shared divergence-refusal tests pass; complete validation and protected
-publication remain.
+non-shared divergence-refusal tests pass. The public audit, all 57 focused
+suites, and complete clean-checkout phase one pass; native MPI was the declared
+environment-only skip. Protected publication remains.
 
 **Execution sequence:**
 
