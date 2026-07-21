@@ -363,7 +363,24 @@ def main():
     parser.add_argument("--plan", action="store_true")
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--rollback")
+    parser.add_argument("--normalize-input")
+    parser.add_argument("--normalize-output")
     args = parser.parse_args()
+    if args.normalize_input or args.normalize_output:
+        if not args.normalize_input or not args.normalize_output or args.host or \
+                args.plan or args.apply or args.rollback:
+            die("internal SSH normalization requires exactly an input and output")
+        uid = os.getuid()
+        source = Path(args.normalize_input)
+        destination = Path(args.normalize_output)
+        require_regular(source, uid, (0o600, 0o640, 0o644),
+                        "SSH normalization input")
+        require_regular(destination, uid, (0o600,), "SSH normalization output")
+        normalized, _counts, _includes = transform_root(
+            read_bounded(source, "SSH normalization input")
+        )
+        write_file(destination, normalized, 0o600)
+        return 0
     if sum(bool(value) for value in (args.plan, args.apply, args.rollback)) != 1:
         die("select exactly one of --plan, --apply, or --rollback")
     if not args.host or not safe_id(args.host):
