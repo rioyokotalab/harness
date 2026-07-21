@@ -48,11 +48,12 @@ Aist access, reported Home unavailable, and instructed execution. Each live Mac
 operation remains sequential and independently gated.
 
 **Repository and host reconstruction:** authenticated fetch found protected
-`main` at `90451d49ac96`; the task branch began from a clean/equal,
+`main` at `90451d49ac96`; the first task branch began from a clean/equal,
 single-worktree checkout with zero open PRs or untracked files. The sole ignored
-top-level path is intentionally retained `node-backups/`. Fresh post-go probes
-reach Aist and Office; Home and `riken` are unavailable and must receive exact
-resumable checkpoints unless they return before closeout. All observed Macs
+top-level path is intentionally retained `node-backups/`. Initial post-go
+probes reached Aist and Office; later probes reach only Office. Home, `riken`,
+and Aist are currently unavailable and must receive exact resumable checkpoints
+unless they return before closeout. All observed Macs
 have clean public/private `main`, ready Mac and agent doctors, strict private
 state metadata, and absent `.bash_common`, `run_this.sh`, startup backups,
 and quarantine residue. Aist and Office are behind both remote mains. Planning-
@@ -103,19 +104,55 @@ were then exact-unlinked and the empty retained boundary removed. Final checks
 find the original synthetic target, staging boundary, and every top-level
 formula-policy leaf absent; no other `/tmp` class was selected.
 
+**Publication and Linux synchronization:** PR #167 passed required
+`portable-phase1`, rebased and merged at
+`5c6e4c9c2f9a789463e97473f357d2a11ee5b083`, and GitHub removed its task ref;
+the immediate post-merge controller was clean/equal on `main` with only
+local/remote `main` before this closeout checkpoint branch. The
+default fleet plan safely stopped because five reachable clean Linux checkouts
+were at published `535a49218d766ce917ee28bc4b9d89fa0f650434`, not the assumed
+immediate predecessor. Exact reconstruction found `ab`, `ab2`, `ri`, `rc`, and
+`t4` clean at that shared ancestor; `al` was unavailable. A host-bounded guarded
+plan/apply then advanced those five to the merge revision, verified remote and
+local refs equal, and removed every transfer artifact. Controller `local` was
+already clean at the merge revision. `al` remains an unavailable fleet-sync
+checkpoint; no alternate route was guessed.
+
+**Office acceptance:** a validated forwarded current-user agent socket fetched
+both clean `main` checkouts. The native updater plan selected public/private
+fast-forward, apply completed, and the post-plan reports both current with
+current migration state. Mac and agent doctors are ready with zero failures or
+warnings; public/private Git is clean/equal at its freshly fetched targets.
+The four planning-time formula-policy leaves were already absent before the
+cleanup snapshot, so no payload was staged. The initially created empty target
+was retained when the first plan used non-canonical macOS `/tmp`; replanning
+under canonical `/private/tmp` guarded-deleted exactly that empty target,
+verified protected anchors unchanged, and exact-removed its list/manifest and
+boundary. Final Office residue count is zero.
+
+**Current connectivity checkpoint:** two direct Aist update attempts and a
+fresh four-alias probe timed out during SSH banner exchange at its declared
+`::1:2222` route, including after the owner reported reconnecting it. The
+remote shell never started, so neither attempt changed Aist. Home, `riken`, and
+`al` are also unavailable; Office remains reachable. On restored Aist access,
+resume by validating `ssh -A aist` exposes a current-user-owned agent socket,
+then repeat clean-main fetch, ancestry, native updater plan/apply/post-plan,
+doctor, exact residue, and T-280 local-ref provenance gates. On Home or `riken`,
+repeat the same update/acceptance gates without the Aist-only ref review. On
+`al`, guarded fleet-sync from its freshly proven clean ancestor to current
+published main; never assume it is still at the earlier five-host revision.
+
 **Frozen execution order:**
 
-1. Fetch again, publish through protected CI, then guarded `fleet-sync` only
-   clean managed Linux checkouts as repository policy requires.
-2. On Aist, then Office: validate a forwarded current-user agent socket, fetch
-   clean public/private `main`, run native `macos-update` plan/apply, require
-   no-op post-plan and ready doctors, and guarded-delete only revalidated exact
+1. On Aist, validate a forwarded current-user agent socket, fetch clean
+   public/private `main`, run native `macos-update` plan/apply, require no-op
+   post-plan and ready doctors, and guarded-delete only revalidated exact
    formula-policy residue after the fixed engine is active.
-3. On Aist, delete either exact T-280 local ref only if current-main
+2. On Aist, delete either exact T-280 local ref only if current-main
    patch/task-provenance and hosting state prove it superseded; otherwise retain
    with the reason.
-4. Reprobe Home and `riken`. If unavailable, record revision-independent
-   native resume commands and checks rather than inferring success.
+3. Reprobe Home, `riken`, and `al`; execute only their recorded independent
+   catch-up gates when reachable and otherwise retain this checkpoint.
 
 **Safety and recovery:** do not inspect credential or private payload bytes,
 transaction preimages, backups, or temporary contents. Do not remove
@@ -127,12 +164,13 @@ authentication failure, prompts, or an unreachable Mac stop only that host.
 No active shell reload, account/system setting, package, or backup mutation is
 implicit.
 
-**Working files:** `libexec/harness-macos-update`,
-`tests/test-personal-macos-update.sh`, and `TODO.md`.
+**Published implementation files:** `libexec/harness-macos-update` and
+`tests/test-personal-macos-update.sh`. Current checkpoint file: `TODO.md`.
 
-**Next executable action:** checkpoint controller cleanup, fetch again, and
-publish through the protected workflow before fleet synchronization or Mac
-catch-up.
+**Next executable action:** retry direct `ssh -A aist` only after its declared
+route is live; then execute the Aist gates above. In parallel-independent
+resume turns, reprobe `al`, Home, and `riken` without alternate routing. Do not
+perform the deferred Homebrew/package task.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
