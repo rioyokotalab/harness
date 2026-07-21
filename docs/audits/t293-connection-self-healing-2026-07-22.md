@@ -338,3 +338,60 @@ aliases. Public/private Git are clean/current, temporary sessions are absent,
 and the hash-revalidated spent Office helper was exact-unlinked. Riken and Home
 remain unchanged pending their independent owner provisioning and host-specific
 classification.
+
+## Riken rollout
+
+The owner completed the reviewed riken helper. Independent metadata-only
+validation confirmed the dedicated identity's required type, ownership,
+single-link status, and mode without reading it, and both aliases passed
+isolated unattended authentication. Riken advanced cleanly to protected
+`860d99808f0c09f72acb3f23a223de1d2b897acb` through updater transaction
+`20260721T224851Z-46598`; packages and tunnel processes were unchanged.
+
+Supervisor transaction `20260721T224916Z-49105` staged two inactive plists and
+rolled back exactly. Reapply transaction `20260721T225003Z-51286` initially
+encountered a legacy topology unlike the visible process list: a PID-1-orphaned
+pre-isolation SSH ControlMaster owned both effective reverse forwards, while
+the visible tmux-era `ssh login` process was multiplexed through it. Exact
+termination of the stale master therefore dropped both routes. Neither route
+returned during ten fresh observations over 30 seconds, confirming that the
+controller-side monitor cannot recover a simultaneously unreachable pair.
+
+The owner asked a separate riken-side Codex to restore the connections. It
+created two bounded retry loops: the primary established forwarding, while the
+secondary used `ClearAllForwardings=yes` and could not restore its listener.
+After fresh process classification, the driver removed only the secondary
+child and activated managed `login2`, which held one generation with full SSH
+at every two-second sample through 20 seconds. Through that proven sibling,
+the driver removed only the external primary child and activated managed
+`login`, which passed the same stability gate. Both aliases then reported
+exclusive managed ownership.
+
+Each alias passed three generation-changing kicks with route recovery in 1–2
+seconds and one independent native `SIGTERM` recovery in 2 seconds. The
+high-frequency dual-route drill observed both listeners ready at 7 ms, both
+down at 2138 ms, and both ready at 2350 ms. Full SSH, changed generations, and
+exclusive managed ownership passed afterward without manual or sibling
+recovery.
+
+The first active-rollback attempt exposed the still-running riken-side parent
+retry loops: they respawned the external clients and interfered with temporary
+predecessor ownership. The driver stopped, identified each exact Bash parent
+and its sole child, removed the secondary loop before restoring managed
+`login2`, then removed the primary loop through that healthy sibling and
+restored managed `login`. No broad process cleanup was used.
+
+The repeated active rollback then passed. Each service was deactivated through
+its healthy sibling and replaced by a short-lived, agent-disabled temporary
+predecessor referencing the dedicated identity by path. Transaction
+`20260721T225003Z-51286` rolled back exactly with both external routes healthy.
+Fresh transaction `20260721T231434Z-66963` staged and reactivated both aliases
+one at a time; each route returned on the first one-second observation. One
+final kick per alias changed its process generation and recovered in one
+second.
+
+Final status is `loaded=yes running=yes managed=1 external=0` for both aliases.
+Public/private Git are clean/current, both temporary sessions and both retry
+loops are absent, and the hash-revalidated spent riken helper was
+exact-unlinked. Home remains unchanged pending its independent owner
+provisioning and host-specific rollout.
