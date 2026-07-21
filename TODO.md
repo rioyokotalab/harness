@@ -5,7 +5,7 @@ harness. Keep only active decisions, blockers, exact next actions, and compact
 completion pointers here. Full pre-housekeeping chronology remains available at
 published commit `d797d8658ea249f40f1acef1e84fcbbd83b0d6ff`.
 
-Next free ID: T-287.
+Next free ID: T-288.
 
 ## Current state
 
@@ -35,6 +35,65 @@ Next free ID: T-287.
    reconstruction of its gate and authority.
 
 ## Active tasks
+
+### T-287 — Converge the remaining Mac's `.bashrc` with the accepted Macs
+
+**Phase/status:** `ready-for-go`; the owner asked on 2026-07-21 to compare the
+remaining Mac's `.bashrc` with the other Macs and remove the obsolete local
+configuration so its behavior is consistent with the accepted fleet. Planning
+and value-free discovery are complete; no live file has changed. A fresh
+explicit `go` is required before the first mutation.
+
+**Confirmed evidence:** local `main` was clean/equal to freshly fetched
+`origin/main` at `7c592af6a9778ce24fe36b093c3bcdccb877da61`, and the work is
+checkpointed on `task/t-287-riken-bashrc-consistency`. Of the known Mac SSH
+aliases, only Office and the target are currently reachable from this
+controller; unavailable aliases were not guessed or traversed. Office's live
+file is the accepted canonical 18-line empty-local layout at mode 0600. The
+published T-281 acceptance independently records that Aist, Home, and Office
+all have that same layout, differing only in logical host, with no global
+compiler, color, or pyenv overrides.
+
+The target is a current-user-owned, single-link regular `.bashrc` with all six
+canonical managed markers, but it is 66 lines at mode 0644. A redacted
+statement inventory exposed names and categories only: its local body repeats
+the public Homebrew environment, locale, Python-environment helper/completion,
+and related shell setup; adds global `CC`/`CXX` and color overrides; retains the
+old guarded `.bash_common` loader; and defines four aliases, one of which is
+already public. No assignment values, source paths other than the already-known
+`.bash_common` class, credential contents, or private payload bytes were
+printed or recorded. The native transactional plan passes and selects exactly
+one `.bashrc` curation while preserving `.bash_profile` unchanged:
+
+```text
+./bin/harness macos-bash-hooks --host riken --empty-local --plan
+```
+
+**Frozen execution and recovery:** after `go`, revalidate the current-user SSH
+socket, clean/equal target public checkout, strict startup-file metadata, and
+the identical one-change plan. Run the matching `--apply` from published
+`main`, keep its transaction identifier only in private local state/output,
+and do not source or reload any running shell. The adapter replaces only the
+canonical `.bashrc` local middle, normalizes it to mode 0600, and leaves the
+selected login file byte-for-byte unchanged. It records the complete preimage
+for unchanged-only rollback. `~/.bash_common` itself remains untouched; its
+possible later retirement is a separate task.
+
+Validate Bash syntax, exact empty-local structure, absent local compiler/color/
+legacy-loader/extra-alias definitions, fresh login/interactive/noninteractive
+scope, public Homebrew/locale/`~/.local/bin`/completion/`activate` behavior,
+Apple Clang defaults, startup no-op plans, and ready Mac/agent doctors. Then
+roll back unchanged-only, prove the exact prior bytes and mode were restored,
+repeat the pre-change behavioral classification, reapply the identical frozen
+plan, and repeat the full acceptance matrix. Stop without broadening scope on
+SSH/authentication failure, dirty or divergent Git, changed startup bytes,
+unsafe metadata, a plan other than exactly one `.bashrc` curation, syntax or
+fresh-shell regression, password/TCC prompt, or any request to delete the
+now-unreferenced `.bash_common` file.
+
+**Next executable action after `go`:** rerun the value-free preflight and exact
+`macos-bash-hooks --host riken --empty-local --plan`; apply only if every frozen
+gate still matches.
 
 ### T-286 — Onboard the remaining personal Mac independently
 
