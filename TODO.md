@@ -82,7 +82,16 @@ patches preserved and zero open PRs.
 
 **Home blockers:** Mac doctor reports exactly:
 bash_profile state=missing-or-wrong expected=public-pre-local-public-post.
-No startup bytes have been changed during this checkpoint. Home also retains
+Default native planning classifies an exact canonical thin profile with an
+opaque 99-byte appended tail and correctly refuses without explicit authority.
+The documented preservation plan passes with
+--merge-thin-profile-tail: state=merge-thin-profile-tail,
+profile_local_bytes=99, bashrc_local_bytes=1, redundant_profile_loaders=0,
+bash_common_reference_bytes=0, and action=canonical-bashrc+thin-profile. Apply
+must move only that unread tail into .bashrc login-only state, restore the exact
+thin profile, record a private unchanged-only transaction, then undergo
+rollback/reapply and fresh-shell acceptance. No startup bytes have yet changed.
+Home also retains
 ten local T-276 task refs with no corresponding remote refs:
 
 - Patch-equivalent, zero unique patches:
@@ -126,8 +135,9 @@ divergent/dirty Git, unsafe metadata, open handles, prompts, or loss of both
 routes stops only that host. Do not reload active shells, change packages, or
 touch backup/transaction state.
 
-**Next executable action:** diagnose but do not yet repair Home .bash_profile,
-then review exact T-276 hosting/task provenance. Do not begin deferred
+**Next executable action:** revalidate and apply the exact Home
+--merge-thin-profile-tail plan, complete rollback/reapply acceptance, then
+review exact T-276 hosting/task provenance. Do not begin deferred
 Homebrew/package work.
 
 ### T-273 — Resolve intentionally deferred maintenance
