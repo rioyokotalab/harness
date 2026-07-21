@@ -10,25 +10,23 @@ Next free ID: T-293.
 
 ## Current state
 
-- Protected public main includes PR #170's T-288 generic fix and PR #171's
-  post-merge evidence checkpoint. Their exact task branches are absent locally
-  and remotely. Active branch `task/t-288-aist-catchup` records the remaining
-  blocked host action without requiring chat history.
+- Protected public main is `936a54f`, including T-288's generic fix and T-291's
+  schema-3 SSH engine plus T-292's failover isolation. Superseded T-288/T-291
+  task branches are absent locally and remotely. Active branch
+  `task/t-291-finalize-per-mac-ssh` contains only the final durable closeout.
 - Managed Linux nodes are local, ab, ab2, ri, al, rc, and t4.
   abci_login and alps_login are transports, not targets; retired si is out of
   scope.
-- PRs #172 through #176 published the transactional SSH layout, rollback
-  hardening, layout-only private-history bridge, global-context trailer, and
-  narrow historical-input bridge, and stale-state refresh; public main is
-  `c17c68a`. Local, all six remote Linux nodes, and all four Macs are
-  clean/current with the strict live trailer and effective GitHub/default
-  resolution; all eleven live layouts satisfy the strict invariant.
-- Home, Office, and riken accepted clean public/private main after PR #170,
-  updater/startup no-op state, both doctors, zero formula-policy residue,
-  absent .bash_common/run_this.sh, and only local main. Aist is now caught up
-  and its client/startup checks pass, but final doctor correctly refuses a
-  newly observed two-sided private SSH-config divergence. No live SSH config
-  was changed.
+- PRs #172 through #184 published and rolled out the transactional SSH layout,
+  four per-Mac private payloads, schema-3 finalization, and failover isolation.
+  Local, all six remote Linux nodes, and all four Macs are clean/current with
+  strict live trailers and effective GitHub/default resolution; all eleven
+  live layouts satisfy the strict invariant.
+- T-288 through T-292 are functionally complete. All four Macs accepted clean
+  public/private main, updater/startup no-op state, managed non-login/login
+  shells, both doctors, zero formula-policy residue, and canonical SSH state.
+  Detailed final evidence remains below until this closeout reaches protected
+  main.
 - The tmux session harness-connection-monitor probes Aist/Aist2,
   Office/Office2, riken/riken2, and Home/Home2 every 300 seconds. It reconnects
   a dropped primary through its secondary with ssh login, or a dropped
@@ -44,11 +42,10 @@ Next free ID: T-293.
 
 ## Next resume checkpoint
 
-1. Execute T-291's owner-selected per-Mac private SSH payload migration without
-   changing any live SSH bytes.
-2. Resolve and close T-288 through T-291's canonical SSH-layout migration.
-3. On or after 2026-07-26, query only T-196 recorded successor job IDs.
-4. Select another independently eligible T-273 workstream only after fresh
+1. Publish this T-288 through T-291 closeout through protected main, then
+   guarded-synchronize only clean managed checkouts.
+2. On or after 2026-07-26, query only T-196 recorded successor job IDs.
+3. Select another independently eligible T-273 workstream only after fresh
    reconstruction of its gate and authority.
 
 ## Active tasks
@@ -199,8 +196,8 @@ clean public checkouts without replaying any live SSH transaction.
 
 ### T-288 — Finish post-onboarding fleet housekeeping
 
-**Phase/status:** executing; its SSH blocker is resolved by T-291's frozen
-structure-aware migration and awaits that plan's execution. Scope is
+**Phase/status:** complete; its SSH blocker was resolved by T-291's frozen
+structure-aware migration and final schema-3 acceptance. Scope was
 harness-owned Git, state, startup, and
 exact updater residue. Homebrew/package maintenance is explicitly deferred.
 Backups, transaction/failure evidence, credentials, active sessions,
@@ -322,16 +319,36 @@ are simultaneously down. Both Home routes recovered and accepted the completed
 work. Aist and aist2 are both currently unavailable; the owner deferred that
 transport investigation until after the independent Home work.
 
-**Frozen remaining order:**
+**Final closeout:** T-291 preserved Aist's selected live non-shared bytes,
+published all four per-host payloads, removed the legacy payload, and proved
+schema-3 agreement without changing any live SSH bytes. Aist then passed
+current updater/startup plans, managed non-login/login shells, both doctors,
+and clean/current public/private Git. Its sole remaining residue was five old,
+unopened, current-owner regular single-link formula-policy temporaries totaling
+785 bytes. They were moved content-blind into fresh target
+`formula-policy.N5SijR`; guarded-delete revalidated six entries and 1,009 bytes,
+deleted the target, and proved protected anchors unchanged. The mode-0600
+manifest was exact-unlinked and the verified-empty staging boundary removed.
+Final residue is zero. The first guarded planner call used the wrong working
+directory and failed before manifest creation or deletion; retry with the
+absolute harness path was safe and successful.
 
-1. Obtain the owner's explicit winner for Aist's unequal live and private
-   SSH-config changes; do not infer priority from timestamps or connectivity.
-2. Apply only the selected `macos-ssh-sync` reconciliation route, preserving
-   its unchanged-only rollback transaction.
-3. Repeat fresh wrapper/login-shell acceptance, SSH agreement, both doctors,
-   updater/startup no-op plans, and zero-residue checks.
-4. Compact the retained T-290 connection evidence before any public push,
-   record final fleet health, and close T-288.
+Office and riken each passed a fresh end-to-end closeout: clean/current public
+and private Git, current updater/startup/SSH plans, managed non-login/login
+shells, both doctors, and zero residue. An initial value-minimized wrapper used
+display-case logical IDs for Aist, Office, and Home; profile validation rejected
+them before mutation. The corrected lowercase-ID run passed normally.
+
+Home reproduced the exact known 99-byte Codex-installer profile tail and
+duplicate local Codex symlink during final acceptance. The explicit plan again
+classified `profile_local_bytes=99`, `bashrc_local_bytes=1`, and zero
+`.bash_common` bytes. The duplicate link and managed executable had equal bytes
+and versions; only the current-owner duplicate link was exact-unlinked. The
+established preservation transaction reapplied as
+`20260721T120836Z-38540`, after which startup was current, both managed shell
+modes and doctors passed, the duplicate remained absent, and residue was zero.
+No package, credential, active session, backup, private payload, or unknown
+residue changed.
 
 **Safety/recovery:** no raw recursive or multi-path deletion. Eligible tree
 cleanup uses a fresh guarded manifest and token. Authentication failure,
@@ -339,16 +356,13 @@ divergent/dirty Git, unsafe metadata, open handles, prompts, or loss of both
 routes stops only that host. Do not reload active shells, change packages, or
 touch backup/transaction state.
 
-**Next executable action:** execute T-291 after the explicit `go`. Its
-disposable three-way classification proved the private side's non-shared bytes
-still equal the recorded base, while Aist alone changed non-shared bytes; the
-apparent two-sided conflict is therefore resolved without guessing once the
-shared stanzas are normalized. Do not begin deferred Homebrew/package work.
+**Next executable action:** none for T-288. Do not begin deferred
+Homebrew/package work under this completed task.
 
 ### T-291 — Converge shared SSH fragment across the managed fleet
 
-**Phase/status:** executing after explicit owner resume from the three-of-four
-per-Mac payload handoff; local layout is already complete on all eleven nodes.
+**Phase/status:** complete after explicit owner resume from the three-of-four
+per-Mac payload handoff; local layout is complete on all eleven nodes.
 The owner selected preservation of each Mac's distinct non-shared bytes and
 gave the explicit `go`. The desired state
 copies Aist's existing
@@ -718,23 +732,47 @@ during banner exchange before its migration plan; no private Git, live SSH, or
 state file changed. The five-minute monitor remains active, but cannot recover
 a pair while both routes are down.
 
-**Next executable action:** when either Aist route returns, revalidate clean
-public/private main and run `--migrate-per-host --plan` for logical host Aist.
-Only an absent selected payload with the expected forward-only plan may apply;
-then prove unchanged live SSH bytes, perform exact rollback/reapply, verify the
-four-payload transition, and only then run the separate finalizer and refresh
-all four selected states. Do not finalize while Aist remains unreachable or
-absent.
+**Final migration/finalization:** after the owner restored both Aist routes,
+fresh non-multiplexed probes proved one clean host and the isolated plan
+reported exactly `action=migrate-per-host`. A mode-0600 comparison preimage
+proved that publication left live SSH bytes unchanged. The wrapper's first
+transaction parser expected an obsolete output prefix and stopped only after
+the successful transaction `20260721T114617Z-97647`; exact rollback then
+passed, ordinary reapply selected `action=pull`, and final transaction
+`20260721T114643Z-99628` again preserved live bytes.
+
+The separate four-payload gate then reported exactly
+`action=finalize-per-host`. Its forward-only apply removed only the legacy
+private payload, raised the minimum engine to 3, preserved Aist's live bytes,
+and passed the strict profile. Aist, Office, riken, and Home each refreshed
+their selected agreement state without live-byte changes at transactions
+`20260721T114744Z-6555`, `20260721T114802Z-42746`,
+`20260721T114829Z-77750`, and `20260721T114842Z-98002` respectively.
+
+Final value-minimized acceptance on all four Macs proves schema 3, exactly four
+per-host payloads, absent legacy payload, `agreement=yes action=none`, current
+canonical layouts, ready Mac and agent doctors, and clean/current public and
+private Git. Home alone exposed the already documented 99-byte thin-profile
+tail recurrence; its exact `--merge-thin-profile-tail` plan had no
+`.bash_common` reference and passed rollback/reapply at final transaction
+`20260721T115521Z-29330`, after which both doctors were ready. All eight fresh
+Mac routes passed. No credential, private value, payload identity, endpoint,
+or raw configuration entered public output.
+
+**Next executable action:** none for T-291. Retain the forward-only private
+schema-3 history and do not recreate the legacy payload. T-288 may now close
+after its separate final housekeeping acceptance.
 
 ### T-290 — Diagnose termination of Aist reverse SSH forwards
 
-**Phase/status:** diagnosed; publication deferred. Detailed local evidence was
-preserved exactly on Aist commit `5f03af3` and controller ref
-`refs/preserve/t-290-aist-forward-diagnosis`. It indicates route oscillation
-followed by the configured keepalive failure window, not authentication or a
-local SSH-port refusal. The raw checkpoint contains local process/network
-details and must be compacted before any public push. T-291 changes no tunnel
-or keepalive setting.
+**Phase/status:** complete and compacted. The value-free conclusion remains:
+route oscillation was followed by the configured keepalive failure window, not
+authentication or a local SSH-port refusal. The raw 76-line checkpoint changed
+only `TODO.md`, was absent from public main, and was reachable only from exact
+controller ref `refs/preserve/t-290-aist-forward-diagnosis`. After T-291's
+fail-fast configuration and eight-route acceptance superseded its diagnostic
+value, that exact ref was deleted without reading or copying its process or
+network details. No T-290 raw evidence is selected for publication.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
