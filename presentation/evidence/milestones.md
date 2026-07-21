@@ -92,11 +92,20 @@ credentials, and project runtimes remained outside the owned layer.
 paths, but recursive cleanup, hidden-home recovery, recurrence, and fleet Git
 distribution still lacked common gates.
 
+The transition was forced by a concrete failure. At approximately 01:41 JST on
+2026-07-15, a temporary-`HOME` plan command allowed cleanup to resolve to the
+real account home and launched `rm -rf /home/rioyokota`. The first cancellation
+did not kill the child process. The incident caused partial account-home loss,
+required bundle/HEAD-based restoration, and left some uncommitted or
+non-reconstructable state intentionally unrecovered. See
+`presentation/evidence/incident-rm-rf.md` and commit `e5200fd`.
+
 **Problem or limitation.** Broad deletion could outgrow a reviewed target;
 backup success without full-data checks and restore evidence was insufficient;
 and copying a dirty tree across nodes could create untraceable divergence.
 
-**What changed.** `238f022` introduced manifest/token/revalidation guarded
+**What changed.** In direct response, `238f022` introduced
+manifest/token/revalidation guarded
 deletion. `4f34299` added encrypted Restic backup, full-data check, restore, and
 independent encrypted-generation gates. `852b84b` added scheduler-native
 exactly-one-successor weekly jobs without login cron or retention deletion.
