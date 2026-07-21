@@ -6,7 +6,7 @@ completion pointers here. Full pre-housekeeping chronology remains available at
 published commit `90451d49ac96`; T-288 planning and execution checkpoints are
 commits `d57041d` and `9ddd2bf`.
 
-Next free ID: T-289.
+Next free ID: T-290.
 
 ## Current state
 
@@ -133,6 +133,28 @@ implicit.
 **Next executable action:** checkpoint controller cleanup, fetch again, and
 publish through the protected workflow before fleet synchronization or Mac
 catch-up.
+
+### T-289 — Publish the sourced harness-evolution presentation
+
+**Phase/status:** `ready-for-pr`. The owner reduced the Japanese final
+deliverable to the former last summary slide and asked to merge the presentation
+into the harness repository. The editable one-slide 16:9 PowerPoint, native
+diagram source, embedded/external speaker notes, storyboard, source map,
+reproducible evidence pack, render, contact sheet, and verification scripts are
+under `presentation/`. The slide's evidence remains explicitly frozen to source
+snapshot `90451d49ac96`; the presentation branch is rebased onto current
+`origin/main` at `5c6e4c9` without importing the superseded presentation task
+number or weakening T-288's housekeeping record.
+
+**Verified on the rebased branch:** the Japanese verifier resolved one slide, one notes
+part, one source-map section, valid 16:9 OOXML, Yu Gothic declarations, one
+render, and zero renderer warnings. The 1920×1080 render was inspected at
+original resolution; the independent English reference-deck verifier also
+passed. The clean phase-one gate passed all 57 focused suites,
+guarded-delete, syntax, and portable checks; native MPI was the declared
+environment-specific skip. No production harness code changed. Remaining:
+fetch once more, push the rebased task branch, and publish through protected CI
+without force-push.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
