@@ -280,3 +280,24 @@ session remains. Aist now passes inactive and active rollback/reapply, repeated
 single-route restart, unexpected-exit recovery, and observed dual-route
 recovery gates. It enters soak while Office, riken, and Home remain unchanged
 pending owner-managed dedicated identities and per-host rollout classification.
+
+## Remaining-Mac owner handoff
+
+Office, riken, and Home each passed clean public/private Git, canonical
+`macos-ssh-sync agreement=yes action=none`, absent identity/helper paths, and
+exactly one effective remote forward per alias. They advanced to protected
+`88e6c4419efabfec0dbc1f7ef1fd7d10579f64d0` through updater transactions
+`20260721T215509Z-6673`, `20260721T215523Z-37906`, and
+`20260721T215527Z-94774`, respectively, without package or tunnel-process
+changes.
+
+The driver added a pre-credential exact-one-forward check to the owner helper,
+validated three host-pinned variants with Bash syntax and ShellCheck, and
+atomically placed each mode-0700 `~/run_this.sh` without executing it. The
+verified SHA-256 values are Office
+`b5b8589c57525f3d043e35d921bfa43cba94071936c7a12e90c1131f2a89e197`, riken
+`ac1298ca42e6213f0d0929826a630d25a3fc398629eceec9b12b1cc5bc2f7789`, and Home
+`d0d10b6e43fb2d9a3cf7688e1bdacae3300ac773d2a4d22d885cd5b6390ffb6b`. All
+local transfer sources were exact-unlinked. Owner execution and credential
+creation remain pending independently on each Mac; no supervisor rollout may
+begin on a host until its helper succeeds and the driver revalidates it.
