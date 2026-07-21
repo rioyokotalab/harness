@@ -280,8 +280,9 @@ ten reachable nodes with exactly the previously inventoried stanza/fragment
 classes. Aist/Aist2 remain down. Pre-live review added a focused follow-up that
 preflights every Include before block removal (so a foreign include cannot hide
 inside a selected stanza) and restores the self-contained root before the
-prior fragment during rollback; its focused test passes and full validation is
-pending on the clean follow-up commit.
+prior fragment during rollback. Its focused test, public audit, all 57 focused
+suites, and the complete clean-checkout phase-one suite pass; native MPI was
+again the declared environment-only skip.
 
 **Execution sequence:**
 
