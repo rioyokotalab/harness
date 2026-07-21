@@ -5,7 +5,7 @@ harness. Keep only active decisions, blockers, exact next actions, and compact
 completion pointers here. Full pre-housekeeping chronology remains available at
 published commit `d797d8658ea249f40f1acef1e84fcbbd83b0d6ff`.
 
-Next free ID: T-288.
+Next free ID: T-289.
 
 ## Current state
 
@@ -35,6 +35,97 @@ Next free ID: T-288.
    reconstruction of its gate and authority.
 
 ## Active tasks
+
+### T-288 — Complete post-onboarding Mac and repository housekeeping
+
+**Phase/status:** `interviewing`; the owner requested thorough housekeeping
+after all four personal Macs completed onboarding. Planning is cross-fleet but
+every live Mac operation remains sequential and independently gated. No cleanup
+or live configuration mutation has begun.
+
+**Confirmed repository state:** authenticated fetch found clean/equal protected
+`main` at `90451d49ac96`, one worktree, one local branch, one remote branch,
+zero open PRs, zero untracked files, and no top-level scratch/staging/quarantine
+directory. The sole ignored top-level path is the intentionally retained
+`node-backups/` data. T-282's prior ref cleanup remains intact. The 1,088-line
+ledger again contains long completed T-283/T-284/T-286/T-287 narratives even
+though its contract calls for compact completion pointers; published Git
+history preserves those details.
+
+**Confirmed temporary-file defect:** value-free top-level `/tmp` discovery
+found 189 current-user regular files, all exactly the
+`harness-macos-formula-policy.*` class, aged about 0.1–15 hours. None is open and
+no active Codex process has a `/tmp` working directory. Source inspection
+locates the deterministic leak in `harness-macos-update`: its ordinary cleanup
+trap includes the formula-policy temporary, but the public-fast-forward re-exec
+path explicitly unlinks the other six target-validation temporaries and omits
+this one before disabling the trap. The focused update test does not confine or
+assert the updater's own temporary leaves, so repeated synthetic fast-forwards
+created the controller residue. This is a code-and-test defect, not evidence
+that arbitrary temporary files are disposable.
+
+**Confirmed Mac state:** only Office and `riken` are currently reachable from
+the known aliases; Aist and Home are unavailable and were not guessed through
+another route. Both reachable Macs have ready Mac and agent doctors, absent
+`.bash_common`, `run_this.sh`, startup backups, and quarantine residue; strict
+mode-0700 private state containing only owner mode-0600 single-link files; and
+clean `main` public/private checkouts with one local branch each. Office is
+behind both remote mains when queried through a validated forwarded
+current-user agent socket; `riken` is behind public main and equal to private
+main. Office has four unopened formula-policy temporary files; `riken` has
+none. Office retains 33 small transaction statuses (including two failed
+Homebrew records and one prepared agent record) using about 67 KB; `riken`
+retains 18 statuses using about 47 KB. These strict records include rollback
+preimages and failure evidence and have no operation-specific retirement
+contract, so they are retained. Remote revisions, private paths, payloads, and
+credential material were not emitted.
+
+**Proposed scope and order:** (1) fix the updater's fast-forward cleanup list
+and add a focused regression that confines updater temporaries and proves the
+class absent after plan/apply/re-exec/failure routes; (2) compact completed
+ledger narratives to Git-backed pointers while preserving T-196 and every
+still-gated T-273 action, and correct T-273 to record `.bash_common` absent on
+all four Macs after T-287; (3) rerun focused, source/privacy, diff, and clean
+full phase-one validation; (4) re-inventory the exact controller leak set,
+reject open/changed/foreign/ambiguous entries, stage only the immutable reviewed
+files into one fresh bounded directory, and use `harness guarded-delete`
+plan/apply with protected-anchor verification; (5) publish through protected
+CI and guarded-sync only clean managed Linux checkouts as required by repository
+policy; (6) catch up each available Mac's clean public/private `main` through
+the native `macos-update` plan/apply route, stopping on divergence or auth; (7)
+after the fixed engine is active, perform the same exact identity/open-handle
+staging plus guarded deletion for only the formula-policy leaks on that Mac;
+and (8) require clean/equal Git, no-op update/config plans, ready doctors, zero
+generated helper/quarantine/transfer/temp residue, and one accepted native SSH
+agent route per Mac. Repeat one Mac at a time for Aist and Home when reachable.
+
+**Safety, recovery, and retained boundaries:** never inspect credentials,
+private payload values, transaction preimages, backup contents, or temporary
+payload bytes. Do not remove `node-backups/`, transaction/failure evidence,
+generated state required for rollback, active processes/sessions, package
+caches, unmanaged files, test fixtures, or unknown `/tmp` entries. No raw
+recursive/multi-path deletion is allowed; exact reviewed files are first moved
+without content access into a new bounded target, then deleted only through a
+fresh guarded manifest and emitted token. A failed move or guarded revalidation
+retains the staged target for reconstruction. Public/private divergence,
+unsafe metadata, open handles, authentication failure, prompts, or an
+unreachable Mac stop only that host and do not authorize inference from another
+Mac. No active shell/tmux reload, account/system setting, credential, package,
+or backup mutation is implicit.
+
+**Decision register:** transaction evidence, backups, active sessions,
+credentials, and unknown residue are confirmed retain/exclude. Package
+maintenance remains one unresolved scope choice: the recommended default is
+housekeeping of harness-owned Git/state/temp surfaces only, with no Homebrew
+upgrade, cleanup, autoremove, dependency removal, cask/service/tap action, or
+unmanaged package change. After that choice, the remaining availability choice
+is whether to pause for Aist and Home so this task closes all four together, or
+finish controller/Office/`riken` first and leave an exact resumable checkpoint
+for the offline Macs.
+
+**Next executable action after the interview and fresh `go`:** implement the
+one-line updater cleanup correction plus its isolated focused regression; do
+not delete existing residue or touch a Mac before that fix passes.
 
 ### T-287 — Converge the remaining Mac's `.bashrc` with the accepted Macs
 
