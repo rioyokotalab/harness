@@ -203,10 +203,22 @@ chmod 600 "$layout_home/.ssh/config.d/harness.conf"
 layout_plan=$(run_sync "$layout_home" --host mac-test-pilot --plan)
 printf '%s\n' "$layout_plan" | grep -F 'class=current agreement=no action=publish' \
     >/dev/null || fail "layout migration was not classified local-only"
-run_sync "$layout_home" --host mac-test-pilot --apply >/dev/null
+layout_apply=$(run_sync "$layout_home" --host mac-test-pilot --apply)
+layout_transaction=$(printf '%s\n' "$layout_apply" |
+    sed -n 's/.* transaction=\([^ ]*\).*/\1/p')
+[ -n "$layout_transaction" ] || fail "layout migration transaction identifier"
 git -C "$layout_writer" pull -q --ff-only
 cmp -s "$layout_home/.ssh/config" "$layout_writer/ssh_config" ||
     fail "layout migration payload was not published"
+run_sync "$layout_home" --rollback "$layout_transaction" >/dev/null ||
+    fail "layout migration rollback"
+layout_rollback_plan=$(run_sync "$layout_home" --host mac-test-pilot --plan)
+printf '%s\n' "$layout_rollback_plan" | grep -F 'agreement=no action=pull' \
+    >/dev/null || fail "layout migration rollback refresh plan"
+run_sync "$layout_home" --host mac-test-pilot --apply >/dev/null ||
+    fail "layout migration rollback reapply"
+cmp -s "$layout_home/.ssh/config" "$layout_writer/ssh_config" ||
+    fail "layout migration rollback reapply mismatch"
 
 sed 's/synthetic-layout-local/synthetic-layout-live-conflict/' \
     "$layout_home/.ssh/config" >"$TEMP_DIR/layout-live-conflict"

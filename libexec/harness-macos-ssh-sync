@@ -520,7 +520,12 @@ else
         [ "$origin_revision" = "$state_revision" ] || remote_changed=1
     fi
 
-    if [ "$local_changed" -eq 1 ] && [ "$remote_changed" -eq 1 ] &&
+    if [ "$local_identity" = "$remote_identity" ] &&
+        [ "$head_revision" = "$origin_revision" ] &&
+        [ "$state_revision" != "$origin_revision" ]; then
+        action=pull
+        target_revision=$origin_revision
+    elif [ "$local_changed" -eq 1 ] && [ "$remote_changed" -eq 1 ] &&
         [ "$local_identity" != "$remote_identity" ]; then
         stop_class diverged no
     elif [ "$local_changed" -eq 1 ] && [ "$remote_changed" -eq 0 ]; then
