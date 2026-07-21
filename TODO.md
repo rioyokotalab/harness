@@ -10,10 +10,10 @@ Next free ID: T-290.
 
 ## Current state
 
-- Protected public main is 3e4ad6705ad1310560601e079169d1ab7c52037d.
-  PR #170 merged the T-288 generic fixes; its exact task branch is absent
-  locally and remotely. This ledger-only closeout branch records post-merge
-  fleet evidence while Aist catch-up remains blocked on transport.
+- Protected public main includes PR #170's T-288 generic fix and PR #171's
+  post-merge evidence checkpoint. Their exact task branches are absent locally
+  and remotely. Active branch `task/t-288-aist-catchup` records the remaining
+  blocked host action without requiring chat history.
 - Managed Linux nodes are local, ab, ab2, ri, al, rc, and t4.
   abci_login and alps_login are transports, not targets; retired si is out of
   scope.
@@ -68,16 +68,18 @@ removed the empty staging boundary. No other temporary class was selected.
 rc, and t4 clean at intermediate commit 5c6e4c9 and al clean at 21fde49. Two
 source-specific transactions fast-forwarded all six to 3e4ad67. Independent
 checks proved clean HEAD and origin/main equality and zero transfer artifacts
-on every node; local is also current and clean. T-196 remains time-gated.
+on every node. After PR #171, one final guarded transaction fast-forwarded all
+six from 3e4ad67 to that evidence checkpoint and again removed every transfer
+artifact. local is also current and clean. T-196 remains time-gated.
 
 **Mac acceptance:**
 
 | Mac | Git/update | Doctors | Refs/residue | Routes |
 | --- | --- | --- | --- | --- |
 | Aist | clean at pre-#170 main; catch-up pending | Mac ready before merge; agent fix pending | only main; zero residue | both routes unavailable |
-| Office | public 3e4ad67; private current; both clean | Mac/agent ready after fresh wrapper | only main; zero residue | both identities accepted |
-| riken | public 3e4ad67; private current; both clean | Mac/agent ready after cleanup | only main; zero residue | both identities accepted |
-| Home | public 3e4ad67; private current; both clean | Mac/agent ready after fresh shells | only main; zero residue | both identities accepted |
+| Office | public at PR #171; private current; both clean | Mac/agent ready after fresh wrapper | only main; zero residue | both identities accepted |
+| riken | public at PR #171; private current; both clean | Mac/agent ready after cleanup | only main; zero residue | both identities accepted |
+| Home | public at PR #171; private current; both clean | Mac/agent ready after fresh shells | only main; zero residue | both identities accepted |
 
 Aist stale T-280 refs were deleted only after each showed zero unique patches,
 one patch-equivalent commit on main, no remote ref, and merged PR #151 or #152.
@@ -140,7 +142,13 @@ the same official standalone package, exact-unlinked only the duplicate local
 link, and applied the frozen preservation transaction. Noninteractive and
 interactive managed login shells both passed; a subsequent startup plan and
 both doctors remained ready, the profile stayed canonical, and no duplicate
-link or formula residue recurred.
+link or formula residue recurred during that acceptance. The identical
+installer tail and duplicate link later recurred together once more before the
+PR #171 catch-up. Their equal modification time and the frozen 99-byte plan
+revalidated the same cause. The duplicate was exact-unlinked, the frozen
+transaction was replayed, and wrapper plus noninteractive and interactive
+login-shell checks left the profile unchanged. Both doctors, startup no-op,
+and zero-residue checks pass again.
 
 Office updated to 3e4ad67 and retained its sole official local-bin Codex link
 because no Homebrew-bin duplicate exists. Its fresh wrapper, login shell,
