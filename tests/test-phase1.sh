@@ -122,6 +122,8 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "Python syntax: harness-startup-normalize"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harness-bash-startup-unify").read_text())' ||
     fail "Python syntax: harness-bash-startup-unify"
+python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harness-ssh-config-layout").read_text())' ||
+    fail "Python syntax: harness-ssh-config-layout"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/tools/run-focused-tests.py").read_text())' ||
     fail "Python syntax: focused-suite runner"
 
@@ -176,6 +178,8 @@ if [ "${HARNESS_TEST_JOBS:-auto}" = legacy ]; then
     fail "personal macOS config-migration focused suite"
 "$ROOT/tests/test-ssh-config-mirror.sh" >/dev/null ||
     fail "fixed SSH-config mirror focused suite"
+"$ROOT/tests/test-ssh-config-layout.sh" >/dev/null ||
+    fail "SSH configuration layout focused suite"
 
 "$ROOT/tests/test-restic-schedule.sh" >/dev/null ||
     fail "Restic schedule focused suite"
@@ -1564,20 +1568,28 @@ HOME="$dotfile_home" "$test_repo/bin/harness" dotfiles --host local --plan \
     >"$TEMP_DIR/dotfile-plan.out"
 grep 'REPLACE file=.*\.vimrc reason=owner-approved-canonical-version' \
     "$TEMP_DIR/dotfile-plan.out" >/dev/null || fail "canonical Vim plan"
-grep 'APPEND file=.*\.ssh/config contents=single-managed-include' \
-    "$TEMP_DIR/dotfile-plan.out" >/dev/null || fail "SSH include plan"
+grep -F 'SSH_CONFIG_LAYOUT mode=plan host=local state=migrate' \
+    "$TEMP_DIR/dotfile-plan.out" >/dev/null || fail "SSH layout plan"
 HOME="$dotfile_home" "$test_repo/bin/harness" dotfiles --host local --apply \
     >"$TEMP_DIR/dotfile-apply.out"
 dotfile_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
     "$TEMP_DIR/dotfile-apply.out")
+dotfile_ssh_transaction=$(sed -n \
+    's/^SSH_CONFIG_LAYOUT action=applied transaction=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/dotfile-apply.out")
 [ "$(readlink "$dotfile_home/.vimrc")" = "$test_repo/config/vim/vimrc" ] ||
     fail "canonical Vim link"
-[ "$(readlink "$dotfile_home/.ssh/config.d/harness.conf")" = \
-    "$test_repo/config/ssh/harness.conf" ] || fail "shared SSH fragment link"
+[ -f "$dotfile_home/.ssh/config.d/harness.conf" ] &&
+    [ ! -L "$dotfile_home/.ssh/config.d/harness.conf" ] ||
+    fail "shared SSH fragment regular file"
+cmp -s "$dotfile_home/.ssh/config.d/harness.conf" \
+    "$test_repo/config/ssh/harness.conf" || fail "shared SSH fragment bytes"
 [ "$(grep -c '^Include ~/.ssh/config.d/harness.conf$' \
     "$dotfile_home/.ssh/config")" -eq 1 ] || fail "single SSH include"
 HOME="$dotfile_home" "$test_repo/bin/harness" rollback "$dotfile_transaction" \
     >"$TEMP_DIR/dotfile-rollback.out"
+HOME="$dotfile_home" "$test_repo/bin/harness" ssh-config-layout --host local \
+    --rollback "$dotfile_ssh_transaction" >"$TEMP_DIR/dotfile-ssh-rollback.out"
 cmp -s "$dotfile_home/.vimrc" "$TEMP_DIR/original-vimrc" ||
     fail "Vim rollback"
 cmp -s "$dotfile_home/.ssh/config" "$TEMP_DIR/original-ssh-config" ||

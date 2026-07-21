@@ -161,6 +161,35 @@ equal_output=$(run_sync "$home" --host mac-test-pilot --plan)
 [ "$equal_output" = 'MACOS_SSH_SYNC class=current agreement=yes action=none' ] ||
     fail "equal no-op"
 
+# The layout adapter changes only the live root while the private payload still
+# equals the recorded base. This must remain an ordinary local-only publish,
+# not a three-way divergence requiring an arbitrary winner.
+# shellcheck disable=SC2034
+IFS='|' read -r layout_home layout_private layout_writer _layout_origin <<EOF
+$(setup_home layout-migration)
+EOF
+cat >>"$layout_home/.ssh/config" <<'EOF'
+
+Host github
+    HostName github.com
+    User git
+
+Host *
+    ServerAliveInterval 15
+EOF
+run_sync "$layout_home" --host mac-test-pilot --seed --apply >/dev/null
+cp "$ROOT/tests/fixtures/personal-macos/private-v1/ssh_config" \
+    "$layout_home/.ssh/config"
+printf '%s\n' 'Include ~/.ssh/config.d/harness.conf' >>"$layout_home/.ssh/config"
+chmod 600 "$layout_home/.ssh/config"
+layout_plan=$(run_sync "$layout_home" --host mac-test-pilot --plan)
+printf '%s\n' "$layout_plan" | grep -F 'class=current agreement=no action=publish' \
+    >/dev/null || fail "layout migration was not classified local-only"
+run_sync "$layout_home" --host mac-test-pilot --apply >/dev/null
+git -C "$layout_writer" pull -q --ff-only
+cmp -s "$layout_home/.ssh/config" "$layout_writer/ssh_config" ||
+    fail "layout migration payload was not published"
+
 local_sentinel=PRIVATE_LOCAL_ONLY_SENTINEL
 printf '%s\n' 'Host local-edit.invalid' \
     '    HostName 192.0.2.21' "    User $local_sentinel" >"$home/.ssh/config"

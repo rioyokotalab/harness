@@ -38,7 +38,9 @@ Next free ID: T-292.
 
 ## Next resume checkpoint
 
-1. T-291 is `ready-for-go`; wait for the owner's explicit execution `go`.
+1. T-291 implementation and focused validation are complete; commit the
+   intended public changes, rerun phase one from the required clean checkout,
+   and publish through protected CI before any live SSH change.
 2. Resolve and close T-288 through T-291's canonical SSH-layout migration.
 3. On or after 2026-07-26, query only T-196 recorded successor job IDs.
 4. Select another independently eligible T-273 workstream only after fresh
@@ -196,7 +198,9 @@ shared stanzas are normalized. Do not begin deferred Homebrew/package work.
 
 ### T-291 — Converge shared SSH fragment across the managed fleet
 
-**Phase/status:** ready-for-go. The owner's desired state copies Aist's existing
+**Phase/status:** executing; implementation complete and awaiting clean-checkout
+phase-one validation/publication. The owner gave the explicit `go`. The desired state
+copies Aist's existing
 root `Host github` and `Host *` blocks intact into regular
 `~/.ssh/config.d/harness.conf` files on every managed system, then sources that
 file at the end of each root SSH config. Only after the fragment is installed
@@ -239,6 +243,28 @@ recorded base, the transformed Aist live root locally changed, and the two
 transformed results unequal. Thus normalization converts the current apparent
 two-sided conflict into a valid local-only publish; non-shared remote changes
 are not being discarded.
+
+**Implementation checkpoint (2026-07-21):** both Aist routes were revalidated,
+and the exact selected blocks passed the repeated public-safe option/comment,
+credential, ambiguity, and isolated grammar gates before replacing the tracked
+canonical source; no live SSH file changed. New `harness ssh-config-layout`
+plan/apply/rollback support installs the regular fragment first, preserves all
+non-shared root bytes and safe mode, refuses ambiguous patterns/`Match`/foreign
+includes, validates combined grammar, recovers an injected first-replacement
+failure, and performs unchanged-only two-file rollback. `harness dotfiles`
+now delegates SSH work to this transaction instead of recreating symlinks.
+The Mac validator permits only the one exact terminal include and strips it
+through stdin before grammar validation; the Mac doctor requires the final
+layout after payload adoption. The Aist-shaped private-base/live-normalized
+regression selects ordinary local-only publication.
+
+Focused layout, private-profile, Mac plan/doctor, SSH-sync, and config-sync
+tests pass, as do `git diff --check`, Python/shell syntax, and ShellCheck for
+the changed shell files. The parallel phase-one run passed 56 of 57 suites;
+only the pre-existing tmux suite refused because full phase one was correctly
+started from this dirty implementation checkout. Retry the complete suite
+after the intended commit makes the checkout clean; this is retry-safe and no
+live host was mutated.
 
 **Execution sequence:**
 
@@ -311,11 +337,11 @@ copies on all systems rather than the current Linux symlinks. D4 (settled by
 evidence) tracks the canonical bytes publicly because the extracted option set
 and comments pass the existing non-secret boundary.
 
-**Next executable action:** wait for the owner's explicit `go`. Then set the
-phase to `executing`, implement and validate generic code without touching live
-SSH files, publish through protected CI, and continue with the frozen staged
-rollout. Both Aist routes were live at the final planning probe; revalidate
-them before every Aist stage.
+**Next executable action:** commit the intended implementation, rerun all
+phase-one suites from the clean branch, fetch/rebase/push, and publish through
+protected CI. Only after merge, update Aist's public checkout and run the
+staged Aist layout/private-publish rollback/reapply. Revalidate both Aist routes
+before every Aist stage.
 
 ### T-290 — Diagnose termination of Aist reverse SSH forwards
 

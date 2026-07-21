@@ -202,8 +202,46 @@ if HOME="$payload_include_home" "$HARNESS" macos-profile --host mac-test-pilot \
     >"$TEMP_DIR/payload-include.out" 2>&1; then
     fail "external SSH include accepted"
 fi
-grep -F 'SSH configuration contains prohibited external or credential material' \
+grep -F 'SSH configuration contains a prohibited or duplicate Include' \
     "$TEMP_DIR/payload-include.out" >/dev/null || fail "SSH include refusal"
+
+payload_managed_include_home=$(make_profile payload-managed-include)
+payload_managed_include_private=$payload_managed_include_home/.config/harness/private
+printf '%s\n' 'Include ~/.ssh/config.d/harness.conf' >> \
+    "$payload_managed_include_private/ssh_config"
+git -C "$payload_managed_include_private" add ssh_config
+git -C "$payload_managed_include_private" commit -q -m 'synthetic terminal managed include'
+HOME="$payload_managed_include_home" "$HARNESS" macos-profile \
+    --host mac-test-pilot >/dev/null || fail "terminal managed include refused"
+
+payload_nonterminal_home=$(make_profile payload-nonterminal-include)
+payload_nonterminal_private=$payload_nonterminal_home/.config/harness/private
+{
+    printf '%s\n' 'Include ~/.ssh/config.d/harness.conf'
+    cat "$FIXTURE/ssh_config"
+} >"$payload_nonterminal_private/ssh_config"
+chmod 600 "$payload_nonterminal_private/ssh_config"
+git -C "$payload_nonterminal_private" add ssh_config
+git -C "$payload_nonterminal_private" commit -q -m 'synthetic nonterminal managed include'
+if HOME="$payload_nonterminal_home" "$HARNESS" macos-profile --host mac-test-pilot \
+    >"$TEMP_DIR/payload-nonterminal.out" 2>&1; then
+    fail "nonterminal managed include accepted"
+fi
+grep -F 'SSH configuration contains a nonterminal managed Include' \
+    "$TEMP_DIR/payload-nonterminal.out" >/dev/null || fail "nonterminal include refusal"
+
+payload_duplicate_include_home=$(make_profile payload-duplicate-include)
+payload_duplicate_include_private=$payload_duplicate_include_home/.config/harness/private
+printf '%s\n' 'Include ~/.ssh/config.d/harness.conf' \
+    'Include ~/.ssh/config.d/harness.conf' >>"$payload_duplicate_include_private/ssh_config"
+git -C "$payload_duplicate_include_private" add ssh_config
+git -C "$payload_duplicate_include_private" commit -q -m 'synthetic duplicate managed include'
+if HOME="$payload_duplicate_include_home" "$HARNESS" macos-profile --host mac-test-pilot \
+    >"$TEMP_DIR/payload-duplicate-include.out" 2>&1; then
+    fail "duplicate managed include accepted"
+fi
+grep -F 'SSH configuration contains a prohibited or duplicate Include' \
+    "$TEMP_DIR/payload-duplicate-include.out" >/dev/null || fail "duplicate include refusal"
 
 wrong_mode_home=$(make_profile wrong-mode)
 chmod 755 "$wrong_mode_home/.config/harness/private"
