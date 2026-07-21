@@ -1565,13 +1565,15 @@ printf '%s\n' 'Host node-only' '    HostName node.invalid' \
 chmod 600 "$dotfile_home/.ssh/config"
 cp "$dotfile_home/.vimrc" "$TEMP_DIR/original-vimrc"
 cp "$dotfile_home/.ssh/config" "$TEMP_DIR/original-ssh-config"
-HOME="$dotfile_home" "$test_repo/bin/harness" dotfiles --host local --plan \
+HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$dotfile_home" \
+    "$test_repo/bin/harness" dotfiles --host local --plan \
     >"$TEMP_DIR/dotfile-plan.out"
 grep 'REPLACE file=.*\.vimrc reason=owner-approved-canonical-version' \
     "$TEMP_DIR/dotfile-plan.out" >/dev/null || fail "canonical Vim plan"
 grep -F 'SSH_CONFIG_LAYOUT mode=plan host=local state=migrate' \
     "$TEMP_DIR/dotfile-plan.out" >/dev/null || fail "SSH layout plan"
-HOME="$dotfile_home" "$test_repo/bin/harness" dotfiles --host local --apply \
+HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$dotfile_home" \
+    "$test_repo/bin/harness" dotfiles --host local --apply \
     >"$TEMP_DIR/dotfile-apply.out"
 dotfile_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
     "$TEMP_DIR/dotfile-apply.out")
@@ -1589,7 +1591,8 @@ cmp -s "$dotfile_home/.ssh/config.d/harness.conf" \
     "$dotfile_home/.ssh/config")" -eq 1 ] || fail "single SSH include"
 HOME="$dotfile_home" "$test_repo/bin/harness" rollback "$dotfile_transaction" \
     >"$TEMP_DIR/dotfile-rollback.out"
-HOME="$dotfile_home" "$test_repo/bin/harness" ssh-config-layout --host local \
+HARNESS_TEST_ALLOW_NONMAIN=1 HOME="$dotfile_home" \
+    "$test_repo/bin/harness" ssh-config-layout --host local \
     --rollback "$dotfile_ssh_transaction" >"$TEMP_DIR/dotfile-ssh-rollback.out"
 cmp -s "$dotfile_home/.vimrc" "$TEMP_DIR/original-vimrc" ||
     fail "Vim rollback"
