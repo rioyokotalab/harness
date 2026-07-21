@@ -263,6 +263,22 @@ three-second probe and `home2` was never interrupted. This is additional live
 evidence for replacing the unbounded manual launcher, not an Aist helper state
 change.
 
+The owner's first Aist helper plan passed. During `--apply`, key creation and
+both authorization steps completed, but the final supervisor plan refused
+`login` because its effective configuration had zero remote forwards; the
+helper then reported `ROLLBACK status=complete`. Value-free verification
+confirmed both local identity paths were absent. The owner explained that they
+had temporarily disabled forwarding for the first check. A value-free diff
+proved the only live/canonical differences were commented `LocalForward` and
+`RemoteForward` directives for `login`; canonical `login` and `login2` each
+resolved to exactly one remote forward. The driver deliberately rejected
+`macos-ssh-sync`'s initial `action=publish`, restored the exact canonical
+per-host file through private transaction `20260721T212129Z-73841`, and
+retained unchanged-only rollback evidence. Both aliases now resolve to one
+remote forward and pass current authentication with forwarding cleared;
+`macos-ssh-sync` reports `agreement=yes action=none`. Credential state remains
+absent, so the owner may safely rerun the helper plan and apply.
+
 ### T-273 — Resolve intentionally deferred maintenance
 
 **Phase/status:** executing. Workstreams 1, 2, 3, and 9 are complete. Each
