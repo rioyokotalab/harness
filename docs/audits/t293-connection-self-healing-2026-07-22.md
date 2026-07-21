@@ -241,3 +241,19 @@ in 2 seconds. Every drill preserved the sibling route and returned exact
 single-process ownership with no external duplicate. These results satisfy the
 frozen precondition for a bounded dual-route drill; fleet rollout remains
 prohibited until that drill and its post-state checks pass.
+
+## Aist dual-route drill
+
+PR #199 merged the single-route checkpoint at
+`5b858a8bc6161c4053f7480eeab57457bb33f5f9`, and updater transaction
+`20260721T214154Z-97235` made Aist clean/current without affecting its services.
+The driver captured both managed process generations without publishing their
+values, then dispatched two delayed, self-terminating native
+`launchctl kill SIGTERM` actions locally on Aist. From `local`, fresh parallel
+probes observed both routes ready at 1 second, both down at 3 seconds, and both
+ready at 4 seconds. Both post-recovery generations differed from their
+pre-drill values. Final status was `loaded=yes running=yes managed=1
+external=0` for each alias, and complete validation took 6 seconds. No manual
+or sibling-mediated recovery ran. This passes the bounded dual-loss gate; Aist
+still requires the frozen sequential active rollback/reapply drill and a
+meaningful soak before fleet rollout.
