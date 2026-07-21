@@ -38,10 +38,12 @@ Next free ID: T-289.
 
 ### T-288 — Complete post-onboarding Mac and repository housekeeping
 
-**Phase/status:** `interviewing`; the owner requested thorough housekeeping
+**Phase/status:** `executing`; the owner requested thorough housekeeping
 after all four personal Macs completed onboarding. Planning is cross-fleet but
 every live Mac operation remains sequential and independently gated. No cleanup
-or live configuration mutation has begun.
+or live configuration mutation occurred during planning. The owner accepted the
+recommended harness-only scope, explicitly deferred all Homebrew/package work,
+restored Aist access, reported Home unavailable, and instructed execution.
 
 **Confirmed repository state:** authenticated fetch found clean/equal protected
 `main` at `90451d49ac96`, one worktree, one local branch, one remote branch,
@@ -64,18 +66,25 @@ assert the updater's own temporary leaves, so repeated synthetic fast-forwards
 created the controller residue. This is a code-and-test defect, not evidence
 that arbitrary temporary files are disposable.
 
-**Confirmed Mac state:** only Office and `riken` are currently reachable from
-the known aliases; Aist and Home are unavailable and were not guessed through
-another route. Both reachable Macs have ready Mac and agent doctors, absent
+**Confirmed Mac state:** initial discovery reached Office and `riken`; fresh
+post-go discovery reaches Aist and Office while Home and `riken` are currently
+unavailable. Unavailable hosts were not guessed through another route. Every
+observed Mac has ready Mac and agent doctors, absent
 `.bash_common`, `run_this.sh`, startup backups, and quarantine residue; strict
 mode-0700 private state containing only owner mode-0600 single-link files; and
-clean `main` public/private checkouts with one local branch each. Office is
+clean `main` public/private checkouts. Office is
 behind both remote mains when queried through a validated forwarded
 current-user agent socket; `riken` is behind public main and equal to private
-main. Office has four unopened formula-policy temporary files; `riken` has
-none. Office retains 33 small transaction statuses (including two failed
+main. Aist is behind both remote mains and has four unopened formula-policy
+temporaries; Office has four; `riken` has none. Aist's public checkout retains
+two local T-280 task refs in addition to `main`; each has one commit not merged
+by raw ancestry into its stale local main, so both remain pending post-fetch
+patch/task-provenance review rather than being assumed obsolete. Aist's private
+checkout has only `main`. Office and `riken` each have one local branch per
+checkout. Office retains 33 small transaction statuses (including two failed
 Homebrew records and one prepared agent record) using about 67 KB; `riken`
-retains 18 statuses using about 47 KB. These strict records include rollback
+retains 18 using about 47 KB; Aist retains 29 complete/rolled-back statuses
+using about 50 KB. These strict records include rollback
 preimages and failure evidence and have no operation-specific retirement
 contract, so they are retained. Remote revisions, private paths, payloads, and
 credential material were not emitted.
@@ -114,16 +123,16 @@ Mac. No active shell/tmux reload, account/system setting, credential, package,
 or backup mutation is implicit.
 
 **Decision register:** transaction evidence, backups, active sessions,
-credentials, and unknown residue are confirmed retain/exclude. Package
-maintenance remains one unresolved scope choice: the recommended default is
-housekeeping of harness-owned Git/state/temp surfaces only, with no Homebrew
-upgrade, cleanup, autoremove, dependency removal, cask/service/tap action, or
-unmanaged package change. After that choice, the remaining availability choice
-is whether to pause for Aist and Home so this task closes all four together, or
-finish controller/Office/`riken` first and leave an exact resumable checkpoint
-for the offline Macs.
+credentials, and unknown residue are confirmed retain/exclude. The selected
+scope is housekeeping of harness-owned Git/state/temp surfaces only: no
+Homebrew upgrade, cleanup, autoremove, dependency removal, cache deletion,
+cask/service/tap action, or unmanaged package change. Execute the controller,
+Aist, and Office now. Treat Home and `riken` as unavailable per the latest
+probe and leave exact resumable catch-up checkpoints; revalidate either if it
+returns before closeout. Package/Homebrew maintenance is a later separately
+planned task.
 
-**Next executable action after the interview and fresh `go`:** implement the
+**Next executable action:** implement the
 one-line updater cleanup correction plus its isolated focused regression; do
 not delete existing residue or touch a Mac before that fix passes.
 
