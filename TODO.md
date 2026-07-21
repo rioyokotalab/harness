@@ -124,6 +124,11 @@ ancestor. An `al`-only guarded plan/apply advanced both refs directly to
 task is currently eligible; its doctor passes with zero failures or warnings,
 and its T-196 successor remains time-gated until 2026-07-26.
 
+The first closeout branch was later proven fully superseded by v2: zero unique
+patches, both patches preserved, and zero open PRs. Its exact local and remote
+refs were deleted after a fresh fetch; the active durable checkpoint is only
+`task/t-288-housekeeping-closeout-v2`.
+
 **Office acceptance:** a validated forwarded current-user agent socket fetched
 both clean `main` checkouts. The native updater plan selected public/private
 fast-forward, apply completed, and the post-plan reports both current with
