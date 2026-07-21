@@ -497,16 +497,18 @@ publication/pull, unrelated-host advances, live-byte preservation, separate
 finalization, forward-only retry, and privacy-negative output. All thirteen
 Mac-focused suites, the public-audit test and live public audit, shell syntax,
 targeted ShellCheck, and `git diff --check` pass. No live or private repository
-was touched. Only after every Mac public checkout has engine 3 may Aist,
+was touched. Clean commit `daa05b2` also passes the complete
+`tests/test-phase1.sh`; all 58 focused suites passed and native MPI was the
+declared environment-only skip. Only after every Mac public checkout has
+engine 3 may Aist,
 Office, riken, and Home sequentially publish their own previously absent
 payload. Finalization requires all four exact host/payload pairs and a clean
 private checkout. Private Git remains forward-only; rollback restores only
 unchanged live/state preimages, while reapply catches up to published history.
 
-**Next executable action:** commit the reviewed public implementation, run the
-complete clean-checkout phase-one suite, and publish through protected CI. Do
-not begin live migration until the protected public change is merged and all
-four Mac public checkouts are updated.
+**Next executable action:** publish the reviewed implementation through
+protected CI. Do not begin live migration until the protected public change is
+merged and all four Mac public checkouts are updated.
 
 ### T-290 — Diagnose termination of Aist reverse SSH forwards
 
