@@ -314,6 +314,19 @@ the frozen gate for a bounded dual-route failure/recovery drill observed from
 `local`; do not roll out to another Mac before that drill and its post-state
 checks are durably recorded.
 
+Protected PR #199 merged the single-route pilot checkpoint at
+`5b858a8bc6161c4053f7480eeab57457bb33f5f9`; Aist advanced through updater
+transaction `20260721T214154Z-97235`. The bounded dual-route drill dispatched
+two delayed, self-terminating native `launchctl kill SIGTERM` actions locally
+on Aist. The `local` observer saw both routes ready at 1 second, both down at 3
+seconds, and both ready at 4 seconds. Post-recovery checks proved both process
+generations changed and each alias returned to `loaded=yes running=yes
+managed=1 external=0`; the complete drill validation took 6 seconds. No manual
+or sibling-mediated recovery was used. The next gate is the sequential active
+rollback/reapply drill using the preserved `%5`/`%6` tmux panes, followed by a
+meaningful soak. Other Macs remain rollout-prohibited until Aist's exact active
+rollback/reapply is verified.
+
 ### T-273 — Resolve intentionally deferred maintenance
 
 **Phase/status:** executing. Workstreams 1, 2, 3, and 9 are complete. Each
