@@ -142,6 +142,16 @@ repeat the same update/acceptance gates without the Aist-only ref review. On
 `al`, guarded fleet-sync from its freshly proven clean ancestor to current
 published main; never assume it is still at the earlier five-host revision.
 
+The owner subsequently authorized `aist2` as a second transport to the same Mac
+and authorized failover through whichever declared route remains live. SSH
+configuration resolves the aliases through distinct transports. Two rounds
+found both timing out before banner exchange, including forwarded-agent probes;
+therefore no identity comparison or remote command was possible. At resume,
+try `aist`, then `aist2`; after any route switch, independently revalidate the
+host marker, current-user-owned forwarded socket, clean Git, target ancestry,
+and the exact last durable step. Never infer success for a command interrupted
+by transport loss.
+
 **Frozen execution order:**
 
 1. On Aist, validate a forwarded current-user agent socket, fetch clean
@@ -167,10 +177,11 @@ implicit.
 **Published implementation files:** `libexec/harness-macos-update` and
 `tests/test-personal-macos-update.sh`. Current checkpoint file: `TODO.md`.
 
-**Next executable action:** retry direct `ssh -A aist` only after its declared
-route is live; then execute the Aist gates above. In parallel-independent
-resume turns, reprobe `al`, Home, and `riken` without alternate routing. Do not
-perform the deferred Homebrew/package task.
+**Next executable action:** retry `ssh -A aist`, failing over to `ssh -A aist2`
+only if needed, after at least one declared route is live; then execute the Aist
+gates above. In parallel-independent resume turns, reprobe `al`, Home, and
+`riken` without alternate routing. Do not perform the deferred
+Homebrew/package task.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
