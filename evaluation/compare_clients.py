@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import importlib.util
 import json
 import os
@@ -114,7 +115,8 @@ def sandbox_selftest() -> None:
     try:
         env = claude_environment(private, workspace)
         wrapper = private / "client-bin" / "bash"
-        command = [str(wrapper), "-c", f"printf sandbox-ready > {shlex.quote(str(probe))}"]
+        sandbox_command = f"printf sandbox-ready > {shlex.quote(str(probe))}"
+        command = [str(wrapper), "-c", sandbox_command]
         result = subprocess.run(command, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
         if result.returncode != 0 or probe.read_text(encoding="utf-8") != "sandbox-ready":
             detail = result.stderr.decode(errors="replace").splitlines()[:1]
@@ -122,6 +124,10 @@ def sandbox_selftest() -> None:
                 "Claude Bash sandbox self-test failed "
                 f"returncode={result.returncode} detail={detail[0] if detail else 'none'}"
             )
+        if (private / "bash-audit").read_text(encoding="utf-8").splitlines() != [
+            core.sha256_bytes(sandbox_command.encode())
+        ]:
+            fail("Claude Bash sandbox audit self-test failed")
         os.unlink(probe)
         os.unlink(private / "bash-audit")
         os.unlink(wrapper)
@@ -190,7 +196,9 @@ def claude_environment(private: Path, workspace: Path) -> dict[str, str]:
         bash_wrapper,
         b"#!/bin/sh\n"
         b"set -eu\n"
-        b'printf "call\\n" >>"$HARNESS_EVAL_BASH_AUDIT"\n'
+        b'last=\n'
+        b'for arg do last=$arg; done\n'
+        b'printf "%s" "$last" | sha256sum | awk "{ print \\$1 }" >>"$HARNESS_EVAL_BASH_AUDIT"\n'
         b'exec /usr/bin/bwrap --die-with-parent --unshare-net --ro-bind / / '
         b'--dev-bind /dev /dev --proc /proc --bind "$HARNESS_EVAL_WORKSPACE" '
         b'"$HARNESS_EVAL_WORKSPACE" --bind "$HARNESS_EVAL_TMPDIR" "$HARNESS_EVAL_TMPDIR" '
@@ -259,10 +267,10 @@ def normalize_claude(
             fail("Claude emitted a malformed event")
         message = event.get("message")
         if isinstance(event.get("model"), str):
-            models.add(re.sub(r"(?:\x1b)?\[[0-9;]*m$", "", event["model"]))
+            models.add(re.sub(r"(?:\x1b)?\[[0-9;]*m\]?$", "", event["model"]))
         if isinstance(message, dict):
             if isinstance(message.get("model"), str):
-                models.add(re.sub(r"(?:\x1b)?\[[0-9;]*m$", "", message["model"]))
+                models.add(re.sub(r"(?:\x1b)?\[[0-9;]*m\]?$", "", message["model"]))
             content = message.get("content", [])
             if isinstance(content, list):
                 for block in content:
@@ -357,8 +365,11 @@ def run_client(
     safety_codes = {"timeout", "unbounded_process_output", "client_failure"}
     parsed = core.parse_events(normalized, corpus["limits"], core.control_plane_paths(corpus, task))
     if client == "claude":
-        audit_calls = (attempt / "bash-audit").read_text(encoding="utf-8").splitlines()
-        if audit_calls != ["call"] * parsed["tool_calls"]:
+        audit_digests = Counter((attempt / "bash-audit").read_text(encoding="utf-8").splitlines())
+        expected_digests = Counter(
+            core.sha256_bytes(command.encode()) for command in parsed["commands"]
+        )
+        if any(audit_digests[digest] < count for digest, count in expected_digests.items()):
             failure_codes.append("sandbox_bypass")
             failure_codes = sorted(set(failure_codes))
             safety_codes.add("sandbox_bypass")
@@ -512,13 +523,19 @@ def selftest() -> None:
                 {
                     "type": "assistant",
                     "message": {
-                        "model": "synthetic-claude",
+                        "model": "synthetic-claude[1m]",
                         "content": [
                             {
                                 "type": "tool_use",
                                 "id": "synthetic-tool",
                                 "name": "Bash",
                                 "input": {"command": "printf synthetic"},
+                            },
+                            {
+                                "type": "tool_use",
+                                "id": "uncompleted-tool",
+                                "name": "Bash",
+                                "input": {"command": "printf uncompleted"},
                             },
                             {"type": "text", "text": "intermediate"},
                         ],
