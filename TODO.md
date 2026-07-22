@@ -433,9 +433,17 @@ Execution checkpoint 2026-07-22:
   bootstrapping the unchanged transaction plist, cleans up a failed bootstrap,
   and still preserves loaded processes when authentication fails. Focused
   supervisor and monitor regressions pass. Owner-side reauthorization of the
-  four existing dedicated keys is the only remaining external action. Then one
+  four existing dedicated keys was the only remaining external action. Then one
   recovery cycle can restore all services, advance Aist and Home, run their
   final doctors, and return the monitor to bounded recovery.
+- Office has since passed fresh dedicated authentication on both aliases and a
+  live sibling-preserving restart of `tunnel` followed by `tunnel2`; both routes
+  were ready after each replacement. The monitor is back in bounded recovery
+  mode because the published authentication preflight now makes it safe. A
+  deliberate Riken kick with its still-invalid fresh authentication refused
+  before launchd, preserved both managed processes, and left both routes ready.
+  Only Aist, Home, and Riken still require owner-side key reauthorization;
+  Aist/Home route restoration and catch-up remain the exact next action.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
