@@ -82,8 +82,8 @@ entry_state() {
         [ "$(stat_owner "$terminfo_root")" = "$uid" ] ||
         die "user terminfo root is unsafe"
     if observed=$(LC_ALL=C infocmp -A "$terminfo_root" -x -1 \
-        tmux-256color 2>/dev/null | sed '/^#/d'); then
-        expected=$(LC_ALL=C sed '/^#/d' "$source_file")
+        tmux-256color 2>/dev/null | sed -e '/^#/d' -e 's/\\:/:/g'); then
+        expected=$(LC_ALL=C sed -e '/^#/d' -e 's/\\:/:/g' "$source_file")
         [ "$observed" = "$expected" ] ||
             die "existing tmux-256color entry differs from canonical source"
         printf 'current\n'

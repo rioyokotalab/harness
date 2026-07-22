@@ -173,6 +173,14 @@ Execution checkpoint 2026-07-22:
   profile-declared `.local` symlink. The follow-up slice adds the same strict
   declaration/owner/containment validation used by established adapters plus
   declared and undeclared symlink tests; retry is safe after publication.
+- Protected PR #216 passed `portable-phase1` and squash-merged the symlink
+  repair as `0172cd5`; guarded fleet sync advanced all remote Linux mirrors.
+  AL apply then installed the canonical entry in transaction
+  `20260722T053338Z-243285`, guarded-deleted its compiler stage, and passed
+  `infocmp` plus `tput`. Follow-up plan exposed one ncurses-version-only
+  normalized spelling difference (`\:` versus `:`), with no capability
+  difference. The current slice canonicalizes that escape equivalence and adds
+  a regression before completing real-PTY acceptance; rollback remains intact.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
