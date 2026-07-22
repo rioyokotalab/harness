@@ -9,7 +9,7 @@ T-288 through T-292 execution is in
 `docs/audits/macos-ssh-finalization-2026-07-21.md`. Full T-295 execution before
 compaction is preserved at `5d551883648760fcc373973a575a403b18637f44`.
 
-Next free ID: T-296.
+Next free ID: T-297.
 
 ## Current state
 
@@ -34,9 +34,9 @@ Next free ID: T-296.
   zero formula-policy residue. Home's recurring known Codex-installer tail and
   duplicate link were remediated through the established exact transaction;
   no package or unknown state changed.
-- Post-closeout synchronization left local, all seven remote Linux checkouts,
-  and all four Macs clean/current at `5d55188`; private Mac checkouts remained
-  clean/current.
+- Post-housekeeping synchronization left local, all seven remote Linux
+  checkouts, and all four Macs clean/current at `b0f4548`; private Mac
+  checkouts remained clean/current.
 - Routine post-T-295 housekeeping guarded-deleted six released local arg0
   entries and one on each Mac without stopping Codex. Every post-plan reports
   `live=3 eligible=0 young=0 unexpected=0`; exact manifests, targets, and
@@ -50,6 +50,12 @@ Next free ID: T-296.
   through `launchd` without controller or owner intervention for tested
   process/network failures; power, sleep, and external-provider loss remain
   outside that guarantee.
+- Aist alone has since shown repeated simultaneous `0/2` intervals after fresh
+  dedicated-authentication and supervisor acceptance. One bounded observation
+  recovered both routes locally after roughly twelve minutes; another during
+  post-T-295 synchronization recovered both after roughly four and a half
+  minutes while the other Mac pairs remained healthy. T-296 owns diagnosis of
+  that variable recovery latency.
 - Exactly one future native weekly primary backup job exists on each managed
   Linux node. First runs passed on 2026-07-19; keep-all remains effective.
 - Global safety and collaboration invariants in `.codex/AGENTS.md` remain
@@ -61,12 +67,44 @@ Next free ID: T-296.
 
 ## Next resume checkpoint
 
-1. No T-273 workstream is independently eligible: the remaining items require
-   the backup date gate, a demonstrated container requirement, or a fresh
-   package-maintenance selection. Start the owner's next task as T-296.
+1. Resume T-296 with read-only, value-free evidence collection as soon as one
+   Aist route recovers. Freeze a plan before changing service or network state.
 2. On or after 2026-07-26, query only T-196 recorded successor job IDs.
 
 ## Active tasks
+
+### T-296 — Diagnose recurrent Aist dual-route recovery latency
+
+**Phase/status:** ready for diagnosis; no corrective mutation has started.
+T-295 proved Aist's existing dedicated identity, both tunnel aliases, exclusive
+launchd ownership, current clean checkout, and zero-warning doctor immediately
+before repeated later `0/2` intervals. Home, Office, and Riken remained healthy,
+so the new evidence is Aist-specific and does not reopen T-295.
+
+**Observed evidence:** Aist first returned from a simultaneous outage after a
+roughly twelve-minute controller-side observation, with both routes and both
+managed services healthy. It later dropped both routes again while Local was
+attempting the documentation-only `b0f4548` Mac update, then returned both
+unattended after roughly four and a half minutes. The pending update transaction
+`20260722T151504Z-26956` then completed; its follow-up plan was current, both
+services reported `loaded=yes running=yes managed=1 external=0`, and the doctor
+had zero failures and warnings. Local cannot inspect or kick either service
+while both reverse routes are absent. No credential, SSH configuration, or
+service mutation was performed during either outage.
+
+**Next action:** after either route recovers, collect bounded value-free
+launchd, supervisor, process-ownership, timing, sleep/wake, and transport
+evidence on Aist and compare it with one healthy Mac. Preserve potentially
+private native logs unread in mode-0600 temporary files and exact-unlink them
+after extracting only nonprivate classifications. Use PIE before any corrective
+mutation. Do not use `codex-claude-cowork` unless the owner explicitly reverses
+the prior exclusion for this connection work.
+
+**Acceptance:** identify a reproducible cause or a precisely bounded external
+failure class; prove unattended recovery under matched primary, secondary, and
+simultaneous-loss drills; set a justified recovery bound; retain two
+launchd-managed routes with `managed=1 external=0`; and verify all four Mac
+pairs remain healthy without credential or unrelated SSH changes.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
