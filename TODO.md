@@ -50,12 +50,9 @@ Next free ID: T-295.
 
 ## Next resume checkpoint
 
-1. Publish T-294's locally validated wrapper through protected main, then
-   install and run the recorded live validation without stopping existing
-   Codex processes.
-2. Select another independently eligible T-273 workstream only after fresh
+1. Select another independently eligible T-273 workstream only after fresh
    reconstruction of its gate and authority.
-3. On or after 2026-07-26, query only T-196 recorded successor job IDs.
+2. On or after 2026-07-26, query only T-196 recorded successor job IDs.
 
 ## Active tasks
 
@@ -72,9 +69,8 @@ remaining item keeps its independent gate.
 3. **Fourth Mac — complete.** T-268/T-269/T-286 acceptance passed.
 4. **Backup successors — time-gated.** On or after 2026-07-26, query only the
    seven T-196 IDs; never duplicate a delayed job.
-5. **Vendor arg0 directories — diagnosed; durable fix separated as T-294.**
-   The old process-wide gate was overly broad: held per-directory locks protect
-   live sessions, while unlocked residue can be isolated and guarded-deleted.
+5. **Vendor arg0 directories — complete/live-managed.** T-294 installed the
+   version-scoped NFS wrapper and added lock-aware guarded routine housekeeping.
 6. **Container capability — requirement-gated.** Install nothing merely for
    warning parity.
 7. **One-way local-to-t4 SSH mirror — separate authority.** Execute only after
@@ -87,77 +83,6 @@ remaining item keeps its independent gate.
 Closed non-goals remain plugins/connectors/accounts, administrator settings,
 automatic publication, background login mutation, active-session reload, and
 guessing lost unknown configuration.
-
-### T-294 — Eliminate Codex arg0 cleanup failures on local NFS home
-
-**Phase/status:** executing. The owner authorized a version-scoped local
-launcher wrapper on 2026-07-22. Implementation and focused validation are
-complete locally; publication, live installation, and acceptance remain.
-
-- Local Codex CLI 0.145.0 stores its arg0 helper directories on the NFSv3
-  account home. The mounted filesystem reports `local_lock=none`.
-- Lock-aware inventory found 3,157 empty no-lock remnants, one unlocked stale
-  helper directory, and three held-lock live directories. The live directories
-  were preserved with unchanged identities and working helper paths.
-- The stale set was atomically quarantined, then removed through guarded-delete
-  manifest `/home/rioyokota/.codex/tmp/arg0-cleanup-20260722.manifest`:
-  one target containing 3,158 child directories and 3,164 total entries. The
-  manifest was exact-unlinked after its verified result was recorded here.
-- Two controlled `codex --version` probes reproduced the lifecycle exactly.
-  The first exited without warning but left one unlocked nonempty helper
-  directory. The second emitted `Directory not empty (os error 39)`, converted
-  the first residue to an empty no-lock directory, and left a new unlocked
-  nonempty helper directory. Both probe residues were quarantined and removed
-  through `/home/rioyokota/.codex/tmp/arg0-probe-cleanup-20260722.manifest`;
-  that manifest was also exact-unlinked after verification.
-- This matches the upstream janitor's lock lifetime: it keeps the acquired
-  `.lock` file open while recursively deleting its directory. On this NFS
-  filesystem the open file prevents the final directory removal. This is a
-  confirmed local mechanism, not merely an accumulation symptom.
-- Shared Codex/Claude guidance now makes this inventory part of every routine
-  housekeeping request: held locks are live, eligible directories must pass
-  owner/type/age/layout checks, candidates move to same-filesystem quarantine
-  while locked, and only the quarantine goes through guarded-delete. This
-  procedural rule does not modify the official launcher.
-- Shared-instruction discovery passed its focused Claude takeover test, and the
-  clean-checkout `tests/test-phase1.sh` gate passed every focused suite plus the
-  guarded-delete regression suite on 2026-07-22.
-- The smallest deterministic workaround that preserves current processes is a
-  version-scoped launcher wrapper: retain the exact official binary, move only
-  unlocked prior-session directories to a private quarantine while holding
-  their locks, invoke the official binary, then guarded-delete the quarantine.
-  The owner explicitly authorized installing and testing this mutation. An
-  official upgrade may replace it safely but requires revalidation if the
-  upstream defect remains.
-- Working files are `libexec/harness-codex-arg0-housekeeping`,
-  `libexec/harness-codex-arg0-wrapper`,
-  `libexec/codex-arg0-launcher-wrapper`, and
-  `tests/test-codex-arg0-wrapper.sh`, with dispatch, focused-suite, shared
-  instruction, and client-documentation updates.
-- The focused suite proves held-lock preservation, old empty and unlocked
-  expected-layout cleanup, observed-exit cleanup without a grace delay,
-  unexpected-layout retention, guarded quarantine deletion, official output
-  and exit-status preservation, exact binary rollback, and automatic recovery
-  at each injected installation failure point. The live plan resolves only the
-  current official 0.145.0 Linux standalone release and reports no process
-  action.
-- Local commit `0a2ff82` contains the implementation. Its clean-checkout
-  `tests/test-phase1.sh` run passed all 61 focused suites, including the new
-  wrapper suite, followed by the guarded-delete regression suite. Native MPI
-  remained the expected environment-gated skip. The owner subsequently
-  authorized this branch push and removed the global harness-specific
-  explicit-push requirement; the prohibition on changing remotes remains.
-- Post-test routine housekeeping preserved three held-lock live directories,
-  removed two eligible empty directories through guarded-delete manifest
-  `/home/rioyokota/.codex/tmp/.harness-delete.xvoLBZ/manifest`, retained seven
-  younger-than-grace empty directories, and found zero unexpected entries. The
-  helper exact-unlinked the manifest and its empty private state directory
-  after protected anchors and target absence verified.
-
-**Next exact action:** push the local branch and complete protected review. After
-merge, apply from clean current main, verify two warning-free short invocations,
-a nonzero-exit fixture result, remote-control status, held-lock identities,
-residue counts, doctor, and exact rollback plan.
 
 ### T-196 — Backup lifecycle phase 2
 
@@ -183,6 +108,19 @@ Evidence remains in docs/backup-lifecycle-phase2.md, docs/home-backup.md, and
 docs/audits/restic-first-weekly-2026-07-19.md.
 
 ## Completed anchors
+
+- T-294 diagnosed the Codex 0.145.0 NFS arg0 lock/delete failure, removed 3,158
+  stale directories without stopping Codex, and published shared housekeeping
+  in PR #208. PR #209 at `f7cdacd` added guarded lock-aware cleanup and a
+  transactional version-scoped launcher, restored ordinary harness push
+  authority while retaining the remote-change prohibition, and passed all 61
+  focused suites plus protected CI. Live install, exact binary-hash rollback,
+  and reapply passed; two short calls and a deliberate nonzero exit were
+  warning-free, remote-control help was ready, all three original held-lock
+  identities survived, and final arg0 state was three live, one young empty,
+  and zero unexpected. Current rollback is
+  `harness codex-arg0-wrapper --rollback`; an official Codex upgrade supersedes
+  the version-scoped wrapper and requires fresh diagnosis before reinstallation.
 
 - T-293 published and rolled out independent managed Mac reverse-route
   supervision, state-aware monitoring, bounded single/dual-failure recovery,
