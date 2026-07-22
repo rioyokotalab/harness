@@ -335,6 +335,23 @@ passes. The next action is the owner's interactive Local `--apply`; expect Home
 and any still-temporary Aist route to be classified `handover-required`, not
 accepted as managed resilience.
 
+The owner then clarified that `rioyokota` has no Local sudo authority; the
+separate Local account `user` does. The privilege handoff is split without
+cross-account credential or agent sharing. `/tmp/t296-local-admin.sh` is a
+current-user-owned mode-0755 no-credential wrapper that prompts for the frozen
+phrase, uses `user`'s sudo only to copy the reviewed mode-0700 helper into an
+unpredictable root-owned `/run` file, validates that root copy, installs all
+four restricted entries and the Match fragment, runs privileged `sshd -t` and
+`sshd -T -C`, reloads rather than restarts `ssh.service`, and exact-unlinks the
+root copy. The root helper validates the staged entries against the target
+`rioyokota` UID, not the invoking admin UID. Afterward this `rioyokota` Codex
+runs `~/run_this.sh --validate` with only its own approved agent socket; it
+requires fresh dedicated authentication on all four Macs and separately
+reports managed handovers. Both helpers pass Bash syntax and ShellCheck; wrong
+confirmation and premature validation fail closed with no mutation. The next
+owner action is to run the admin wrapper from a `user` login and report its
+fixed output.
+
 Do not drill or install on any Mac until the owner restores the restricted
 authorizations and all eight fresh checks pass. Then roll out/drill those Macs
 one at a time. Preserve potentially private native logs unread in mode-0600
