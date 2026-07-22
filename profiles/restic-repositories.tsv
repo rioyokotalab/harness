@@ -2,6 +2,7 @@
 local|/mnt/nfs-03/safe/Users/rioyokota/restic/home-control|/gs/bs/jh250019/yokota/restic-replicas/local|~/.config/restic/home-control.password|t4
 ab|/groups/gag51395/yokota/restic/home-control|/mnt/nfs-03/safe/Users/rioyokota/restic-replicas/ab|~/.config/restic/home-control.password|local
 ab2|/groups/gah51624/yokota/restic/home-control|/mnt/nfs-03/safe/Users/rioyokota/restic-replicas/ab2|~/.config/restic/home-control.password|local
+abq|/groups/qgai50157/yokota/restic/home-control|/mnt/nfs-03/safe/Users/rioyokota/restic-replicas/abq|~/.config/restic/home-control.password|local
 ri|/data1/rkp00015/rku00075/restic/home-control|/mnt/nfs-03/safe/Users/rioyokota/restic-replicas/ri|~/.config/restic/home-control.password|local
 al|/capstor/store/cscs/director2/g177/ryokota/restic/home-control|/mnt/nfs-03/safe/Users/rioyokota/restic-replicas/al|~/.config/restic/home-control.password|local
 rc|/lvs0/rccs-asfm/rio.yokota/restic/home-control|/mnt/nfs-03/safe/Users/rioyokota/restic-replicas/rc|~/.config/restic/home-control.password|local

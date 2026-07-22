@@ -300,6 +300,21 @@ Execution checkpoint 2026-07-22:
 - Current slice: pin uv 0.11.31 across the fleet, add fail-closed forward
   replacement for the managed Linux artifact, and expose non-default CPython
   3.11.15 plus 3.12.13 without shadowing site `python`/`python3`.
+- Protected PR #229 passed and squash-merged the uv replacement as `ad322fc`;
+  all seven pre-ABQ Linux nodes now run checksum-pinned uv 0.11.31 with the
+  prior managed release retained for rollback. Protected PR #230 passed and
+  squash-merged non-default Python 3.11/3.12 control as `70b955e`. All seven
+  Linux nodes expose the accepted versions without shadowing `python3`;
+  Home, Office, and Riken expose 3.11.15 and 3.12.13 with their default
+  interpreters preserved. Aist recovered after the initial rollout window and
+  remains to be caught up.
+- The documented ABQ route was corrected from the access server alone to two
+  independently verified `ab|ab2 -> qas -> qes` chains. Value-free inventory
+  confirms RHEL 9.4 x86_64, PBS commands, modules, Singularity, Git, Bash, and
+  the accepted group root as creatable. The current slice stages the strict
+  `abq` declarations and fixture at `70b955e`; after protected publication it
+  will bootstrap that exact clean revision before any hidden-state or backup
+  mutation.
 
 ### T-273 — Resolve intentionally deferred maintenance
 

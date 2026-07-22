@@ -21,20 +21,21 @@ The 2026-07-14 read-only inventory found the following login environments.
 Versions are observations, not requirements.
 
 The complete unification target set is the current node plus `ab`, `ab2`,
-`ri`, `al`, `rc`, and `t4`. The aliases `si`, `web`, and `github` are out of
-scope. `abci_login` and `alps_login` are transport-only proxy nodes, not
-deployment targets.
+`abq`, `ri`, `al`, `rc`, and `t4`. The aliases `si`, `web`, and `github` are
+out of scope. `abci_login`, `alps_login`, and ABCI-Q's `qas` access server are
+transport-only proxy nodes, not deployment targets.
 
 | Logical host | Substrate | Shell/architecture | Site runtime | Harness |
 | --- | --- | --- | --- | --- |
 | current | Ubuntu 24.04 | Bash, x86_64 | modules, Docker/Podman, CUDA, local Slurm/`yrun` commands | installed |
 | `ab`, `ab2` | RHEL 9.4 | Bash, x86_64 | modules, PBS Pro, Singularity CE, Podman, CUDA | installed |
+| `abq` | RHEL 9.4 | Bash, x86_64 | modules, PBS Pro, Singularity CE | onboarding |
 | `ri` | Ubuntu 24.04 | Bash, aarch64 | Slurm, NVIDIA GPU exposure | installed |
 | `al` | SLES 15 SP6 | Bash, aarch64 | uenv/`ml`, Slurm, Docker/Podman, NVIDIA GH200 | installed |
 | `rc` | Rocky 9.8 | Bash, x86_64 | modules, Singularity CE, Slurm | installed |
 | `t4` | RHEL 9.4 | Bash, x86_64 | modules, AGE, Apptainer, CUDA command | installed |
 
-All six in-scope cluster shells have Git, Bash, and Python 3. None had `uv`,
+All seven in-scope cluster shells have Git, Bash, and Python 3. None had `uv`,
 Node, Nix, Home Manager, or mise in its initial probed login environment. The
 portable layer has since installed checksum-pinned `uv` and ripgrep artifacts
 on every cluster target. POSIX shell plus Git remains the practical bootstrap
