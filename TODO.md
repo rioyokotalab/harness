@@ -410,6 +410,24 @@ Execution checkpoint 2026-07-22:
   reducing 121 sequential Homebrew subprocesses to one bounded read-only query.
   Focused inventory and plan/doctor regressions pass, including explicit
   `icu4c@78=present` with `icu4c=absent` evidence.
+- Protected PR #247 passed and squash-merged fail-closed restart authentication
+  as `ee10361`; all Linux and Mac checkouts reached that safety revision before
+  Home's final surviving session ended. Protected PR #248 passed and
+  squash-merged exact single-query Homebrew inventory as `b2d54f9`. All eight
+  Linux checkouts plus Aist, Office, and Riken are clean/current there; those
+  three Macs now pass zero-warning doctors in roughly one inventory call rather
+  than the prior multi-minute alias sequence. Home is unreachable on both
+  routes and remains clean at `ee10361` until owner-side reauthorization.
+- The persistent five-minute monitor is deliberately observation-only while
+  credentials are invalid. Its current state is Aist 2/2, Office 2/2, Riken
+  2/2, Home 0/2, and ABQ 2/2. The active final repair lets `--kick` recover an
+  active transaction whose launchd service is unloaded: it requires zero
+  managed/external processes and fresh unattended authentication before
+  bootstrapping the unchanged transaction plist, cleans up a failed bootstrap,
+  and still preserves loaded processes when authentication fails. Focused
+  supervisor and monitor regressions pass. After publication, owner-side key
+  reauthorization is the only remaining external action; then one recovery
+  cycle can restore all services and return the monitor to bounded recovery.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
