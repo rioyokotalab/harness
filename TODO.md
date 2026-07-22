@@ -8,7 +8,7 @@ catch-up is preserved at 378df00159d59e8abee645f2bdaebd20cf467cc2. Final
 T-288 through T-292 execution is in
 `docs/audits/macos-ssh-finalization-2026-07-21.md`.
 
-Next free ID: T-295.
+Next free ID: T-296.
 
 ## Current state
 
@@ -55,6 +55,47 @@ Next free ID: T-295.
 2. On or after 2026-07-26, query only T-196 recorded successor job IDs.
 
 ## Active tasks
+
+### T-295 — Fleet convergence, ABQ onboarding, and external-user bootstrap
+
+**Phase/status:** interviewing. The owner requested one upfront PIE plan for
+thirteen coupled workstreams and explicitly requested that all material
+questions be bundled before execution. Read-only discovery and the complete
+decision register are recorded in
+`docs/plans/t295-fleet-convergence.md`. No target mutation has started.
+
+Confirmed planning facts:
+
+- All seven currently managed Linux nodes and all four Mac primaries respond;
+  all eight Mac reverse routes are healthy. `abq` is not currently resolvable
+  from local, while `web` rejected the available noninteractive
+  authentication.
+- Every Mac's interactive `login` and `login2` alias requests one fixed remote
+  forward in addition to the launchd-owned connection. Dedicated tunnel-only
+  aliases are required to eliminate bind conflicts without weakening
+  fail-fast supervision.
+- Global `ForwardX11 yes` explains irrelevant X11 rejection warnings. AL also
+  lacks the `tmux-256color` terminfo entry while its `screen-256color` and
+  `xterm-256color` entries are healthy.
+- All four Macs run Codex 0.145.0, the current published npm version observed
+  on 2026-07-22, with two Codex processes and three live arg0 locks each.
+  Their clean `main` checkouts are at `c182bf4`, behind current public main.
+- The ten-formula managed Homebrew policy is satisfied everywhere, but
+  unmanaged leaves differ. `.sync_get.sh` is absent on the seven Linux nodes
+  and is a regular file on each Mac.
+- Linux already provides the selected Python 3.12 interface everywhere; five
+  remotes use managed 3.12.12, while local and RI retain host 3.12.3. Macs
+  expose Python 3.13 or 3.14 and do not expose `python3.12`.
+- The existing local-to-t4 SSH mirror plan fails before contacting t4 because
+  it rejects the harness-managed `~/.local` symlink. This is a code defect, not
+  evidence of t4 divergence.
+- The README defines a Codex-only frozen acceptance evaluator, not a current
+  paired Codex/Claude benchmark. A new matched experiment must preserve the
+  historical T-181 results rather than overwrite them.
+
+**Next action:** receive the complete owner decision bundle, checkpoint the
+answers, audit the plan, move to `ready-for-go`, and request the final explicit
+execution go required by PIE.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
