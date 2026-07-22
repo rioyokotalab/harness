@@ -4,6 +4,7 @@ set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 
 python3 "$ROOT/evaluation/compare_clients.py" validate >/dev/null
+python3 "$ROOT/evaluation/compare_clients.py" selftest >/dev/null
 pilot=$(python3 "$ROOT/evaluation/compare_clients.py" plan --stage pilot)
 full=$(python3 "$ROOT/evaluation/compare_clients.py" plan --stage full)
 

@@ -12,6 +12,7 @@ import shlex
 import stat
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -115,10 +116,6 @@ def ensure_root(root: Path, declarations: dict[str, dict[str, Any]]) -> Path:
         "frozen_runner_digest": core.sha256_bytes((EVAL_ROOT / "evaluate.py").read_bytes()),
         "corpus_digest": core.sha256_bytes((EVAL_ROOT / "corpus.json").read_bytes()),
         "clients": declarations,
-        "observed_models": {
-            name: sorted({model for result in results for model in result["observed_models"]})
-            for name, results in by_client.items()
-        },
     }
     if state_path.exists():
         if core.read_private_json(state_path) != state:
@@ -374,6 +371,10 @@ def build_report(
             "source_revision": core.git(["rev-parse", "HEAD"]).strip(),
         },
         "clients": declarations,
+        "observed_models": {
+            name: sorted({model for result in results for model in result["observed_models"]})
+            for name, results in by_client.items()
+        },
         "totals": {
             "runs": len(all_results),
             "passed": sum(int(result["passed"]) for result in all_results),
@@ -438,10 +439,60 @@ def publish(root: Path, stage: str, output: Path) -> None:
         stream.write(json.dumps(report, sort_keys=True, indent=2).encode() + b"\n")
 
 
+def selftest() -> None:
+    corpus, declarations = validate_environment(check_clients=False)
+    root = Path(tempfile.mkdtemp(prefix="harness-client-comparison-selftest.", dir="/tmp"))
+    os.chmod(root, 0o700)
+    try:
+        ensure_root(root, declarations)
+        raw = root / "raw.jsonl"
+        normalized = root / "normalized.jsonl"
+        core.private_write(
+            raw,
+            core.canonical_json(
+                {
+                    "type": "assistant",
+                    "message": {
+                        "model": "synthetic-claude",
+                        "content": [
+                            {"type": "tool_use", "name": "Read", "input": {"file_path": "/tmp/work/item"}},
+                            {"type": "text", "text": "intermediate"},
+                        ],
+                    },
+                }
+            )
+            + core.canonical_json(
+                {
+                    "type": "result",
+                    "result": "final evidence",
+                    "usage": {"input_tokens": 7, "output_tokens": 3, "cache_read_input_tokens": 2},
+                }
+            ),
+        )
+        models, usage = normalize_claude(raw, normalized, corpus["limits"])
+        parsed = core.parse_events(normalized, corpus["limits"])
+        if models != ["synthetic-claude"] or usage["input_tokens"] != 7 or usage["output_tokens"] != 3:
+            fail("Claude normalizer identity or usage self-test failed")
+        if parsed["final"] != "final evidence" or parsed["tool_calls"] != 1:
+            fail("Claude normalizer event self-test failed")
+        os.unlink(normalized)
+        os.unlink(raw)
+        os.unlink(root / "client-experiment.json")
+        os.rmdir(root)
+    except BaseException:
+        for path in (root / "normalized.jsonl", root / "raw.jsonl", root / "client-experiment.json"):
+            if path.is_file() and not path.is_symlink():
+                os.unlink(path)
+        if root.is_dir() and not root.is_symlink() and not any(root.iterdir()):
+            os.rmdir(root)
+        raise
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("validate")
+    sub.add_parser("selftest")
     plan = sub.add_parser("plan")
     plan.add_argument("--stage", choices=("pilot", "full"), required=True)
     run = sub.add_parser("run-stage")
@@ -455,6 +506,9 @@ def main() -> int:
     if args.command == "validate":
         validate_environment(check_clients=False)
         print("client comparison declaration valid")
+    elif args.command == "selftest":
+        selftest()
+        print("client comparison selftests passed")
     elif args.command == "plan":
         corpus, declarations = validate_environment(check_clients=False)
         rows = core.stage_rows(corpus, args.stage)
