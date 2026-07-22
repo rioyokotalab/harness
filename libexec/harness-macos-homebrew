@@ -60,22 +60,16 @@ validate_version_output() {
     ' >/dev/null 2>&1 || die "Homebrew returned malformed managed version evidence"
 }
 
-brew_scope_versions() {
-    scope_versions_formulae=$*
-    scope_versions_status=0
-    scope_versions_output=$(brew_read list --formula --versions "$@" 2>/dev/null) ||
-        scope_versions_status=$?
-    case "$scope_versions_status" in 0|1) ;; *)
-        die "scoped Homebrew version query failed" ;;
-    esac
-    printf '%s\n' "$scope_versions_output" | awk \
-        -v wanted=" $scope_versions_formulae " '
+brew_inventory_versions() {
+    inventory_versions_output=$(brew_read list --formula --versions 2>/dev/null) ||
+        die "Homebrew installed-formula inventory failed"
+    printf '%s\n' "$inventory_versions_output" | awk '
         NF == 0 { next }
-        NF < 2 || /[|[:cntrl:]]/ || index(wanted, " " $1 " ") == 0 ||
-            seen[$1]++ { bad = 1 }
+        NF < 2 || /[|[:cntrl:]]/ ||
+            $1 !~ /^[A-Za-z0-9][A-Za-z0-9@+._-]*$/ || seen[$1]++ { bad = 1 }
         END { exit bad ? 1 : 0 }
-    ' >/dev/null 2>&1 || die "Homebrew returned malformed scoped version evidence"
-    printf '%s\n' "$scope_versions_output" | sed -n '/./p'
+    ' >/dev/null 2>&1 || die "Homebrew returned malformed installed-formula evidence"
+    printf '%s\n' "$inventory_versions_output" | sed -n '/./p'
 }
 
 brew_read() {
@@ -121,15 +115,15 @@ discover_scope() {
     installed_retired_formulae=
     dependencies=
     unmanaged_dependents=
+    unmanaged_installed_formulae=
     retired_dependents=
     retirement_upgrade_dependents=
 
-    # One bounded query covers only the selected and reviewed retirement sets.
-    # Homebrew returns status 1 when at least one requested formula is absent;
-    # brew_scope_versions validates every returned line against this scope.
-    # shellcheck disable=SC2086
-    set -- $managed_formulae $retired_formulae
-    installed_version_inventory=$(brew_scope_versions "$@")
+    # Exact convergence requires one unambiguous installed-formula inventory.
+    # In particular, querying old and current versioned names together can make
+    # Homebrew emit the current canonical name twice. The no-argument formula
+    # inventory preserves the actual installed keg names and excludes casks.
+    installed_version_inventory=$(brew_inventory_versions)
     installed_scope=
     while IFS= read -r installed_line; do
         [ -n "$installed_line" ] || continue
@@ -197,6 +191,12 @@ EOF
     done
     allowed_formulae=$managed_formulae
     [ -z "$dependencies" ] || allowed_formulae="$allowed_formulae $dependencies"
+    for formula in $installed_scope; do
+        formula_in_list "$allowed_formulae" "$formula" ||
+            formula_in_list "$retired_formulae" "$formula" ||
+            unmanaged_installed_formulae=$(append_unique_formula \
+                "$unmanaged_installed_formulae" "$formula")
+    done
 
     # Homebrew may check and upgrade installed dependents of selected roots.
     # Shared dependency users remain outside managed intent; Homebrew's normal
@@ -310,9 +310,7 @@ capture_evidence() {
     chmod 600 "$evidence_file"
     printf 'schema=1\nphase=%s\nprefix=%s\n' \
         "$evidence_phase" "$brew_prefix" >>"$evidence_file"
-    # shellcheck disable=SC2086
-    set -- $managed_formulae $dependencies $retired_formulae
-    evidence_inventory=$(brew_scope_versions "$@")
+    evidence_inventory=$(brew_inventory_versions)
     for evidence_kind in selected dependency retired; do
         case "$evidence_kind" in
             selected) evidence_formulae=$managed_formulae ;;
@@ -408,6 +406,9 @@ printf 'DEPENDENCIES count=%s scope=validated shared_users=preserved\n' \
     "$(formula_count "$dependencies")"
 printf "UNMANAGED_DEPENDENTS count=%s formulae='%s'\n" \
     "$(formula_count "$unmanaged_dependents")" "$unmanaged_dependents"
+printf "UNMANAGED_INSTALLED count=%s formulae='%s'\n" \
+    "$(formula_count "$unmanaged_installed_formulae")" \
+    "$unmanaged_installed_formulae"
 printf "RETIRED_DEPENDENTS count=%s formulae='%s'\n" \
     "$(formula_count "$retired_dependents")" "$retired_dependents"
 printf "MIGRATION_DEPENDENTS count=%s formulae='%s' resolution=upgrade-before-retire\n" \
@@ -419,6 +420,11 @@ printf 'DRY_RUN status=validated install=%s upgrade=%s retire=package-manager-no
 
 [ -z "$unmanaged_dependents" ] || {
     echo 'BLOCK macos_homebrew reason=selected-root-has-unmanaged-dependent'
+    echo 'END macos_homebrew applied=no blocked=1 metadata_refresh=separate'
+    exit 2
+}
+[ -z "$unmanaged_installed_formulae" ] || {
+    echo 'BLOCK macos_homebrew reason=installed-formula-outside-exact-policy'
     echo 'END macos_homebrew applied=no blocked=1 metadata_refresh=separate'
     exit 2
 }
@@ -453,6 +459,8 @@ resolve_brew
 discover_scope
 [ -z "$unmanaged_dependents" ] ||
     die "managed Homebrew selected root gained an unmanaged dependent"
+[ -z "$unmanaged_installed_formulae" ] ||
+    die "managed Homebrew gained an installed formula outside exact policy"
 [ -z "$retired_dependents" ] ||
     die "managed Homebrew retired root gained an installed dependent"
 [ "$missing_formulae" = "$planned_missing" ] &&
@@ -555,6 +563,8 @@ discover_scope
     die "managed Homebrew dependency scope changed during apply"
 [ -z "$unmanaged_dependents" ] ||
     die "managed Homebrew selected root gained an unmanaged dependent after apply"
+[ -z "$unmanaged_installed_formulae" ] ||
+    die "managed Homebrew gained an installed formula outside exact policy after apply"
 [ -z "$retired_dependents" ] ||
     die "managed Homebrew retired root retained an installed dependent after upgrade"
 [ -z "$retirement_upgrade_dependents" ] ||
@@ -583,7 +593,7 @@ discover_scope
     die "managed Homebrew post-state did not converge"
 [ "$dependencies" = "$planned_dependencies" ] ||
     die "managed Homebrew dependency scope changed after retirement"
-[ -z "$unmanaged_dependents$retired_dependents$retirement_upgrade_dependents" ] ||
+[ -z "$unmanaged_dependents$unmanaged_installed_formulae$retired_dependents$retirement_upgrade_dependents" ] ||
     die "managed Homebrew dependent scope changed after retirement"
 capture_evidence "$post_file" post
 if diff -u "$pre_file" "$post_file" >"$delta_file"; then :; else

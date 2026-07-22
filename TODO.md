@@ -230,6 +230,14 @@ Execution checkpoint 2026-07-22:
   selected upgrades must precede retirement. The active slice implements that
   post-upgrade fail-closed checkpoint and replaces per-formula version probes
   with one bounded scoped query; focused migration-order coverage passes.
+- Protected PR #221 passed and squash-merged the migration-order repair as
+  `551bbb8`; all Linux mirrors and all four Macs are synchronized to it. Aist,
+  Home, and Riken plans now pass and explicitly schedule `node` migration before
+  retirement. Office exposed Homebrew canonicalizing `icu4c@76` to
+  `icu4c@78` only when both are passed as query arguments. The active slice
+  replaces that ambiguous query with one formula-only installed inventory and
+  blocks every name outside the exact policy; no casks or package changes are
+  involved in discovery.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
