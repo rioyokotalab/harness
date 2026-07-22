@@ -75,6 +75,7 @@ def validate_environment(*, check_clients: bool) -> tuple[dict[str, Any], dict[s
             fail("bubblewrap is required for the matched Claude sandbox")
         if platform.system() != "Linux":
             fail("the matched client experiment is declared for Linux")
+        sandbox_selftest()
     core.validate_closed_object(
         {
             "schema": 1,
@@ -99,6 +100,45 @@ def validate_environment(*, check_clients: bool) -> tuple[dict[str, Any], dict[s
         SCHEMA,
     )
     return corpus, declarations
+
+
+def sandbox_selftest() -> None:
+    root = Path(tempfile.mkdtemp(prefix="harness-client-sandbox-selftest.", dir="/tmp"))
+    os.chmod(root, 0o700)
+    workspace = root / "workspace"
+    private = root / "private"
+    workspace.mkdir(mode=0o700)
+    private.mkdir(mode=0o700)
+    probe = workspace / "probe"
+    try:
+        env = claude_environment(private, workspace)
+        wrapper = private / "client-bin" / "bash"
+        command = [
+            "/usr/bin/bwrap", "--die-with-parent", "--ro-bind", "/", "/",
+            "--dev-bind", "/dev", "/dev", "--proc", "/proc",
+            "--bind", str(workspace), str(workspace), "--bind", str(private), str(private),
+            "--ro-bind", str(private / "client-bin"), str(private / "client-bin"),
+            "--ro-bind", str(wrapper), "/bin/bash",
+            "/bin/bash", "-c", f"printf sandbox-ready > {shlex.quote(str(probe))}",
+        ]
+        result = subprocess.run(command, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+        if result.returncode != 0 or probe.read_text(encoding="utf-8") != "sandbox-ready":
+            fail("Claude nested Bash sandbox self-test failed")
+        os.unlink(probe)
+        os.unlink(wrapper)
+        os.rmdir(private / "client-bin")
+        os.rmdir(private / "tmp")
+        os.rmdir(private)
+        os.rmdir(workspace)
+        os.rmdir(root)
+    except BaseException:
+        for path in (probe, private / "client-bin" / "bash"):
+            if path.is_file() and not path.is_symlink():
+                os.unlink(path)
+        for path in (private / "client-bin", private / "tmp", private, workspace, root):
+            if path.is_dir() and not path.is_symlink() and not any(path.iterdir()):
+                os.rmdir(path)
+        raise
 
 
 def ensure_root(root: Path, declarations: dict[str, dict[str, Any]]) -> Path:
@@ -144,6 +184,18 @@ def claude_environment(private: Path, workspace: Path) -> dict[str, str]:
         fail("account HOME is unavailable for Claude authentication")
     tmp = private / "tmp"
     tmp.mkdir(mode=0o700)
+    wrapper_dir = private / "client-bin"
+    wrapper_dir.mkdir(mode=0o755)
+    bash_wrapper = wrapper_dir / "bash"
+    core.private_write(
+        bash_wrapper,
+        b"#!/bin/sh\n"
+        b"set -eu\n"
+        b'exec /usr/bin/bwrap --die-with-parent --unshare-net --ro-bind / / '
+        b'--dev-bind /dev /dev --proc /proc --bind "$HARNESS_EVAL_WORKSPACE" '
+        b'"$HARNESS_EVAL_WORKSPACE" /usr/bin/bash "$@"\n',
+    )
+    bash_wrapper.chmod(0o555)
     env.update(
         {
             "HOME": str(real_home),
@@ -151,8 +203,10 @@ def claude_environment(private: Path, workspace: Path) -> dict[str, str]:
             "NO_COLOR": "1",
             "PYTHONDONTWRITEBYTECODE": "1",
             "PYTEST_ADDOPTS": "-p no:cacheprovider",
+            "HARNESS_EVAL_WORKSPACE": str(workspace),
         }
     )
+    env["PATH"] = f"{wrapper_dir}:{env.get('PATH', '/usr/bin:/bin')}"
     helper = workspace / ".eval-bin"
     if helper.is_dir() and not helper.is_symlink():
         env["PATH"] = f"{helper}:{env.get('PATH', '/usr/bin:/bin')}"
@@ -168,9 +222,11 @@ def claude_command(workspace: Path, private: Path, prompt: str) -> list[str]:
     if not executable.startswith("/"):
         fail("Claude executable path is unavailable")
     return [
-        "/usr/bin/bwrap", "--die-with-parent", "--unshare-net", "--ro-bind", "/", "/",
+        "/usr/bin/bwrap", "--die-with-parent", "--ro-bind", "/", "/",
         "--dev-bind", "/dev", "/dev", "--proc", "/proc",
         "--bind", str(workspace), str(workspace), "--bind", str(private), str(private),
+        "--ro-bind", str(private / "client-bin"), str(private / "client-bin"),
+        "--ro-bind", str(private / "client-bin" / "bash"), "/bin/bash",
         executable, "--print", "--output-format", "stream-json", "--verbose",
         "--no-session-persistence", "--safe-mode", "--permission-mode", "dontAsk",
         "--tools", "Bash,Read,Write,Edit,Glob,Grep", "--effort", "medium",
