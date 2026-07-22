@@ -196,6 +196,42 @@ load_current_watchdog_transaction() {
         die "Mac tunnel watchdog state is malformed"
 }
 
+validate_watchdog_receipt() {
+    macos_require_private_file "$watchdog_receipt" "$current_uid"
+    awk -F= '
+        NR==1 && $0=="schema=1" {next}
+        NR==2 && $0 ~ /^logical_id=[A-Za-z0-9._-]+$/ {next}
+        NR==3 && $0 ~ /^outcome=(success|failure)$/ {next}
+        NR==4 && $0 ~ /^classification=(healthy|deferred-busy|deferred-state-changed|recovered-single|recovered-dual|authorization-blocked|drain-timeout|invariant-failed)$/ {next}
+        NR==5 && $0 ~ /^attempts=(none|[0-9]+)$/ {next}
+        NR==6 && $0 ~ /^completed_at=[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]T[0-9][0-9][0-9][0-9][0-9][0-9]Z$/ {next}
+        {bad=1}
+        END {exit NR==6 && !bad ? 0 : 1}
+    ' "$watchdog_receipt" >/dev/null 2>&1 ||
+        die "Mac tunnel watchdog receipt is malformed"
+    [ "$(sed -n 's/^logical_id=//p' "$watchdog_receipt")" = "$logical_host" ] ||
+        die "Mac tunnel watchdog receipt host differs"
+}
+
+record_watchdog_run() {
+    watchdog_outcome=$1
+    watchdog_classification=$2
+    watchdog_attempts=$3
+    watchdog_receipt_staging=$(mktemp "$watchdog_root/.last-run.XXXXXX") ||
+        die "cannot create Mac tunnel watchdog receipt"
+    chmod 600 "$watchdog_receipt_staging"
+    printf 'schema=1\nlogical_id=%s\noutcome=%s\nclassification=%s\nattempts=%s\ncompleted_at=%s\n' \
+        "$logical_host" "$watchdog_outcome" "$watchdog_classification" \
+        "$watchdog_attempts" "$(date -u +%Y%m%dT%H%M%SZ)" \
+        >"$watchdog_receipt_staging"
+    if [ -e "$watchdog_receipt" ] || [ -L "$watchdog_receipt" ]; then
+        validate_watchdog_receipt
+    fi
+    mv "$watchdog_receipt_staging" "$watchdog_receipt"
+    watchdog_receipt_staging=
+    validate_watchdog_receipt
+}
+
 mode=plan
 logical_host=
 transaction_id=
@@ -218,6 +254,7 @@ state_root=$HOME/.local/state/harness
 transaction_root=$state_root/transactions
 watchdog_root=$state_root/macos-tunnel-watchdog
 watchdog_plist=$launch_agents/$label.plist
+watchdog_receipt=$watchdog_root/last-run
 require_safe_directory "$HOME/Library"
 require_safe_directory "$launch_agents"
 require_safe_directory "$HOME/.local"
@@ -245,6 +282,10 @@ if [ "$mode" = rollback ]; then
         launchctl bootout "gui/$current_uid/$label" >/dev/null ||
             die "Mac tunnel watchdog bootout failed"
     fi
+    if [ -e "$watchdog_receipt" ] || [ -L "$watchdog_receipt" ]; then
+        validate_watchdog_receipt
+        unlink "$watchdog_receipt"
+    fi
     unlink "$watchdog_plist"
     unlink "$watchdog_root/current"
     if [ "$(sed -n 's/^watchdog_root_before=//p' "$watchdog_manifest")" = absent ]; then
@@ -269,7 +310,79 @@ validate_supervisor_contract
 if [ "$mode" = run-once ]; then
     load_current_watchdog_transaction
     validate_watchdog_transaction "$transaction_id"
-    exec "$SELF_DIR/harness-macos-tunnel-supervisor" --host "$logical_host" --recover-pair
+    watchdog_run_output=$(mktemp "$watchdog_root/.run-output.XXXXXX") ||
+        die "cannot create Mac tunnel watchdog run output"
+    chmod 600 "$watchdog_run_output"
+    watchdog_receipt_staging=
+    # shellcheck disable=SC2329 # invoked by the traps installed immediately below
+    cleanup_watchdog_run() {
+        status=$?
+        trap - EXIT HUP INT TERM
+        if [ -n "$watchdog_receipt_staging" ] &&
+            { [ -e "$watchdog_receipt_staging" ] || [ -L "$watchdog_receipt_staging" ]; }; then
+            unlink "$watchdog_receipt_staging"
+        fi
+        if [ -e "$watchdog_run_output" ] || [ -L "$watchdog_run_output" ]; then
+            unlink "$watchdog_run_output"
+        fi
+        exit "$status"
+    }
+    trap cleanup_watchdog_run EXIT HUP INT TERM
+    if "$SELF_DIR/harness-macos-tunnel-supervisor" --host "$logical_host" --recover-pair \
+        >"$watchdog_run_output" 2>&1; then
+        watchdog_run_status=0
+        watchdog_outcome=success
+        if grep -F 'action=none reason=route-running' "$watchdog_run_output" >/dev/null; then
+            watchdog_classification=healthy
+            watchdog_attempts=none
+        elif grep -F 'action=defer reason=busy' "$watchdog_run_output" >/dev/null; then
+            watchdog_classification=deferred-busy
+            watchdog_attempts=none
+        elif grep -F 'action=defer reason=state-changed' "$watchdog_run_output" >/dev/null; then
+            watchdog_classification=deferred-state-changed
+            watchdog_attempts=none
+        elif grep -F 'action=restore scope=single status=complete' \
+            "$watchdog_run_output" >/dev/null; then
+            watchdog_classification=recovered-single
+            watchdog_attempts=$(sed -n \
+                's/.*action=restore scope=single status=complete attempts=\([0-9][0-9]*\)$/\1/p' \
+                "$watchdog_run_output")
+        elif grep -F 'action=restore scope=dual status=complete' \
+            "$watchdog_run_output" >/dev/null; then
+            watchdog_classification=recovered-dual
+            watchdog_attempts=$(sed -n \
+                's/.*action=restore scope=dual status=complete attempts=\([0-9][0-9]*\)$/\1/p' \
+                "$watchdog_run_output")
+        else
+            watchdog_run_status=2
+            watchdog_outcome=failure
+            watchdog_classification=invariant-failed
+            watchdog_attempts=none
+        fi
+    else
+        watchdog_run_status=$?
+        watchdog_outcome=failure
+        watchdog_attempts=none
+        if grep -F 'authentication is not ready' "$watchdog_run_output" >/dev/null; then
+            watchdog_classification=authorization-blocked
+        elif grep -F 'stale-listener drain timed out' "$watchdog_run_output" >/dev/null; then
+            watchdog_classification=drain-timeout
+        else
+            watchdog_classification=invariant-failed
+        fi
+    fi
+    case $watchdog_attempts in ''|*[!0-9]*)
+        [ "$watchdog_attempts" = none ] || {
+            watchdog_run_status=2
+            watchdog_outcome=failure
+            watchdog_classification=invariant-failed
+            watchdog_attempts=none
+        }
+    esac
+    record_watchdog_run "$watchdog_outcome" "$watchdog_classification" \
+        "$watchdog_attempts"
+    cat "$watchdog_run_output"
+    exit "$watchdog_run_status"
 fi
 
 if [ "$mode" = status ]; then
@@ -283,6 +396,16 @@ if [ "$mode" = status ]; then
     if watchdog_loaded; then loaded=yes; else loaded=no; fi
     printf 'MACOS_TUNNEL_WATCHDOG mode=status host=%s installed=%s loaded=%s\n' \
         "$logical_host" "$installed" "$loaded"
+    if [ -e "$watchdog_receipt" ] || [ -L "$watchdog_receipt" ]; then
+        validate_watchdog_receipt
+        printf 'LAST_RUN outcome=%s classification=%s attempts=%s completed_at=%s\n' \
+            "$(sed -n 's/^outcome=//p' "$watchdog_receipt")" \
+            "$(sed -n 's/^classification=//p' "$watchdog_receipt")" \
+            "$(sed -n 's/^attempts=//p' "$watchdog_receipt")" \
+            "$(sed -n 's/^completed_at=//p' "$watchdog_receipt")"
+    else
+        printf '%s\n' 'LAST_RUN outcome=none classification=none attempts=none completed_at=none'
+    fi
     exit 0
 fi
 
@@ -307,6 +430,7 @@ plutil -lint "$temp_plist" >/dev/null 2>&1 ||
 blocked=0
 [ ! -e "$watchdog_plist" ] && [ ! -L "$watchdog_plist" ] || blocked=1
 [ ! -e "$watchdog_root/current" ] && [ ! -L "$watchdog_root/current" ] || blocked=1
+[ ! -e "$watchdog_receipt" ] && [ ! -L "$watchdog_receipt" ] || blocked=1
 watchdog_loaded && blocked=1
 printf 'MACOS_TUNNEL_WATCHDOG mode=%s host=%s privacy=value-free\n' "$mode" "$logical_host"
 printf 'WATCHDOG stage=%s interval=30 recovery=bounded-drain blocked=%s\n' \

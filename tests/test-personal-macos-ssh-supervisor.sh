@@ -445,11 +445,34 @@ run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --status \
     >"$TEMP_DIR/watchdog-status.out"
 grep -F 'installed=yes loaded=yes' "$TEMP_DIR/watchdog-status.out" >/dev/null ||
     fail "watchdog installed status"
+grep -F 'LAST_RUN outcome=none classification=none attempts=none completed_at=none' \
+    "$TEMP_DIR/watchdog-status.out" >/dev/null || fail "watchdog empty run receipt"
 
 run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
     >"$TEMP_DIR/watchdog-healthy.out"
 grep -F 'action=none reason=route-running' "$TEMP_DIR/watchdog-healthy.out" >/dev/null ||
     fail "watchdog healthy no-op"
+watchdog_receipt=$watchdog_home/.local/state/harness/macos-tunnel-watchdog/last-run
+[ -f "$watchdog_receipt" ] && [ ! -L "$watchdog_receipt" ] ||
+    fail "watchdog healthy run created no receipt"
+[ "$(stat -c %a -- "$watchdog_receipt")" = 600 ] ||
+    fail "watchdog receipt mode"
+grep -F 'outcome=success' "$watchdog_receipt" >/dev/null ||
+    fail "watchdog healthy receipt outcome"
+grep -F 'classification=healthy' "$watchdog_receipt" >/dev/null ||
+    fail "watchdog healthy receipt classification"
+cp "$watchdog_receipt" "$TEMP_DIR/watchdog-receipt.valid"
+printf '%s\n' malformed >"$watchdog_receipt"
+chmod 600 "$watchdog_receipt"
+if run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --status \
+    >"$TEMP_DIR/watchdog-receipt-malformed.out" 2>&1; then
+    fail "watchdog status accepted a malformed receipt"
+fi
+grep -F 'Mac tunnel watchdog receipt is malformed' \
+    "$TEMP_DIR/watchdog-receipt-malformed.out" >/dev/null ||
+    fail "watchdog malformed receipt refusal"
+mv "$TEMP_DIR/watchdog-receipt.valid" "$watchdog_receipt"
+chmod 600 "$watchdog_receipt"
 
 touch "$watchdog_home/.fake-dead-tunnel2"
 run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
@@ -458,6 +481,10 @@ grep -F 'action=drain scope=single status=started' \
     "$TEMP_DIR/watchdog-single.out" >/dev/null || fail "watchdog single drain"
 grep -F 'action=restore scope=single status=complete' \
     "$TEMP_DIR/watchdog-single.out" >/dev/null || fail "watchdog single restore"
+grep -F 'classification=recovered-single' "$watchdog_receipt" >/dev/null ||
+    fail "watchdog single receipt classification"
+grep -E '^attempts=[0-9]+$' "$watchdog_receipt" >/dev/null ||
+    fail "watchdog single receipt attempts"
 [ -e "$watchdog_home/.fake-launch-state/tunnel" ] &&
     [ -e "$watchdog_home/.fake-launch-state/tunnel2" ] ||
     fail "watchdog single recovery changed healthy sibling"
@@ -469,6 +496,8 @@ grep -F 'action=drain scope=dual status=started' "$TEMP_DIR/watchdog-dual.out" >
     fail "watchdog dual drain"
 grep -F 'action=restore scope=dual status=complete' "$TEMP_DIR/watchdog-dual.out" >/dev/null ||
     fail "watchdog dual restore"
+grep -F 'classification=recovered-dual' "$watchdog_receipt" >/dev/null ||
+    fail "watchdog dual receipt classification"
 for alias in tunnel tunnel2; do
     [ -e "$watchdog_home/.fake-launch-state/$alias" ] ||
         fail "watchdog did not reload $alias"
@@ -485,6 +514,8 @@ run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
     >"$TEMP_DIR/watchdog-busy.out"
 grep -F 'action=defer reason=busy' "$TEMP_DIR/watchdog-busy.out" >/dev/null ||
     fail "watchdog lock contention"
+grep -F 'classification=deferred-busy' "$watchdog_receipt" >/dev/null ||
+    fail "watchdog busy receipt classification"
 unlink "$recovery_lock"
 
 printf '%s\n' 'pid=999999999' 'start=stale-process' >"$recovery_lock"
@@ -503,6 +534,10 @@ if run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
 fi
 grep -F 'authentication is not ready for route recovery' \
     "$TEMP_DIR/watchdog-auth-fail.out" >/dev/null || fail "watchdog authentication refusal"
+grep -F 'outcome=failure' "$watchdog_receipt" >/dev/null ||
+    fail "watchdog authentication receipt outcome"
+grep -F 'classification=authorization-blocked' "$watchdog_receipt" >/dev/null ||
+    fail "watchdog authentication receipt classification"
 [ -e "$watchdog_home/.fake-launch-state/tunnel" ] &&
     [ -e "$watchdog_home/.fake-launch-state/tunnel2" ] ||
     fail "authentication failure changed service baseline"
@@ -516,6 +551,8 @@ if HARNESS_TEST_RECOVERY_ATTEMPTS=1 run_tunnel_watchdog "$watchdog_home" \
 fi
 grep -F 'stale-listener drain timed out' "$TEMP_DIR/watchdog-timeout.out" >/dev/null ||
     fail "watchdog timeout classification"
+grep -F 'classification=drain-timeout' "$watchdog_receipt" >/dev/null ||
+    fail "watchdog timeout receipt classification"
 [ -e "$watchdog_home/.fake-launch-state/tunnel" ] &&
     [ -e "$watchdog_home/.fake-launch-state/tunnel2" ] ||
     fail "watchdog timeout did not restore loaded baseline"
@@ -527,6 +564,8 @@ run_tunnel_watchdog "$watchdog_home" --rollback "$watchdog_tx" \
     >"$TEMP_DIR/watchdog-rollback.out"
 [ ! -e "$watchdog_home/Library/LaunchAgents/org.rioyokota.harness.ssh.tunnel-watchdog.plist" ] ||
     fail "watchdog rollback retained plist"
+[ ! -e "$watchdog_receipt" ] && [ ! -L "$watchdog_receipt" ] ||
+    fail "watchdog rollback retained receipt"
 run_tunnel_supervisor "$watchdog_home" --deactivate "$watchdog_tunnel_tx" --alias tunnel \
     >"$TEMP_DIR/watchdog-tunnel-deactivate.out"
 run_tunnel_supervisor "$watchdog_home" --deactivate "$watchdog_tunnel_tx" --alias tunnel2 \
