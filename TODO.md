@@ -76,11 +76,13 @@ Next free ID: T-297.
 
 ### T-296 — Diagnose recurrent Aist dual-route recovery latency
 
-**Phase/status:** plan frozen and executing under the owner's explicit five-hour
-nightly authorization. The durable plan is
-`docs/plans/t296-mac-connectivity-resilience.md`. A separate observe-only
-30-second monitor is active in tmux session `t296-night-watch`; the existing
-five-minute recovering monitor remains unchanged.
+**Phase/status:** the five-hour nightly implementation and observation window
+is complete; T-296 remains open at the owner credential/admin acceptance gate.
+The durable plan is
+`docs/plans/t296-mac-connectivity-resilience.md`; the evidence handoff is
+`docs/audits/t296-mac-connectivity-resilience-2026-07-23.md`. The temporary
+observe-only monitor and its mode-0600 log were removed after the endpoint; the
+existing five-minute recovering monitor remains active and unchanged.
 T-295 proved Aist's existing dedicated identity, both tunnel aliases, exclusive
 launchd ownership, current clean checkout, and zero-warning doctor immediately
 before repeated later `0/2` intervals. Home, Office, and Riken remained healthy,
@@ -108,8 +110,11 @@ remained occupied on Local. Listener ownership cannot be tied safely to an
 exact process from the unprivileged Local account, so a controller-side kill
 is rejected.
 
-The 30-second watch measured that recurrence returning unattended at 00:47
-JST, roughly twelve minutes after first detection. A value-free two-hour power
+The 30-second watch measured that recurrence returning at 00:47 JST, roughly
+twelve minutes after first detection. Because the owner-launched Codex process
+on Aist remained active and did not acknowledge an observe-only request, this
+sample and later live recoveries prove convergence but cannot be attributed
+solely to the watchdog. No Codex process was killed. A value-free two-hour power
 comparison found no Aist or Home sleep/wake event around the sample. Both Aist
 services were again `managed=1 external=0`; Home's launchd history showed that
 the same exit-255 retry mechanism has occurred there even though its pair stayed
@@ -133,6 +138,14 @@ watchdog drained them without controller access, restored the primary first,
 then converged both services to `managed=1 external=0` with last exit 0 after
 roughly seven minutes.
 
+Protected PRs #258 through #260 subsequently published independent single-route
+drain, controller use of the same state machine, fresh-auth auditing, and
+explicit authorization-blocked recovery outcomes. Their protected commits are
+`55693c581556446bb374fe2b32d64e700eae7aca`,
+`d91857b2ff11eaaf464136915bf23cfa089bba93`, and
+`2ca91146021989014ed9b5108e99dfc8e67a0528`; all managed checkouts were then
+clean and current at that commit.
+
 The live soak also caught Home2 down while Home stayed healthy. Unlike Aist's
 stale-listener sample, Home2's Local listener was absent and a fresh dedicated
 authentication probe from Home failed before restart. The published watchdog
@@ -153,16 +166,63 @@ credential repair was attempted. A third focused follow-up adds public
 old pair with blocked replacement authentication as
 `state=at-risk action=authorization-blocked`. Synthetic ready/blocked and
 monitor classifications pass. Permanent repair requires owner-managed
-reauthorization; a dedicated sshd `AuthorizedKeysFile` for restricted harness
-tunnel entries is the recommended isolation so unrelated ordinary-key changes
-cannot remove them again.
+reauthorization; a root-owned secondary sshd `AuthorizedKeysFile` for
+restricted harness tunnel entries is the recommended isolation so unrelated
+ordinary-key changes cannot remove them again.
 
-**Next action:** publish and sync the value-free authorization-drift alert.
-Continue the Aist soak, but do not drill or install on Home, Office, or Riken
-until the owner restores both restricted authorizations and all six fresh
-checks pass. Then roll out/drill those Macs one at a time. Preserve potentially
-private native logs unread in mode-0600 temporary files and exact-unlink them
-after extracting only nonprivate classifications. Do not use
+At 01:36:28 JST the observer recorded another Aist `0/2` interval and both
+routes were ready by 01:37:07, a 39-second observer bound. The watchdog again
+exited 0, but the active Aist Codex makes sole attribution unavailable. PR
+#261 (`c0772af617fe9ddf884c104b7be54a63daf09d27`) then added private atomic
+last-run receipts so future recovery can be attributed without retaining raw
+SSH output.
+
+At 02:05:44 Aist entered a new `0/2` interval. Both Local listeners were still
+occupied at 02:15 and absent by 02:23, but neither route rebound. The deployed
+retry-count limit omitted SSH probe duration and could stretch its nominal
+20-minute bound to roughly 41 minutes. PR #262
+(`972988297d01a0c79d9df26a6796a059087abaa1`) now enforces 1,200 elapsed seconds
+and distinguishes mid-drain authorization loss from a bind timeout while
+restoring the exact launchd baseline in either failure case. The owner-only
+credential gate prevented deployment on Aist before this outage.
+
+The at-risk warning also predicted subsequent loss: Office's last old route
+ended at 02:37:09 and Home's at 02:37:46. Current Mac state is Aist `0/2`, Home
+`0/2`, Office `0/2`, and Riken `2/2`; Riken is still fresh-auth blocked. Local,
+the managed Linux checkouts, and Riken are clean/current at `2375ec0`; the
+other Macs remain at `2ca9114` because guarded sync preflight could not reach
+them and made no change.
+
+PR #264 (`2375ec049aee107ac1501f5306aeed9237d4b144`) also removed a latent
+shared-checkout failure: watchdog recovery no longer requires unrelated work
+to be clean on branch `main`. It now runs directly and permits unrelated
+feature branches or dirty files only while every runtime-critical input exactly
+matches the local `main` ref. This defect is confirmed synthetically but cannot
+be attributed to the live Aist outage without Aist-side checkout evidence.
+
+The five-hour job ended at 05:23:12 JST. Its dedicated observer covered
+00:40:09--05:23:10, 4h43m01s, with 431 value-free samples per node. Aist had
+eight changes after its initial state, Home and Office had two each, and Riken
+and ABQ had none. At the endpoint Aist had remained `0/2` for at least 3h17m28s,
+Office for 2h46m03s, and Home for 2h45m26s; Riken and ABQ remained `2/2` for
+the full observer window. The temporary observer stopped and its private log
+was exact-unlinked; `harness-connection-monitor` remains alive. Routine arg0
+housekeeping preserved three live invocations, removed six eligible residues,
+and ended with zero eligible or unexpected candidates.
+
+**Next action:** the owner must verify the four exact restricted authorizations
+and restore every missing Aist, Home, Office, or Riken entry before their
+missing routes can recover or their watchdog drills can run. Then perform the
+one-time root-owned authorization/liveness hardening, upgrade and drill each
+Mac one at a time, and run the post-hardening acceptance soak. The admin
+sequence and actual Local sshd layout are recorded in the audit; credentials
+and sshd policy remain outside agent authority.
+
+Do not drill or install on any Mac until the owner restores the restricted
+authorizations and all eight fresh checks pass. Then roll out/drill those Macs
+one at a time. Preserve potentially private native logs unread in mode-0600
+temporary files and exact-unlink them after extracting only nonprivate
+classifications. Do not use
 `codex-claude-cowork` unless the owner explicitly reverses the prior exclusion
 for this connection work.
 
