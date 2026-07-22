@@ -86,8 +86,8 @@ cp -p "$ROOT/libexec/harness-common" "$ROOT/libexec/harness-macos-common" \
 cp "$ROOT/config/ssh/harness.conf" "$public/config/ssh/harness.conf"
 cp "$ROOT/profiles/personal-macos/base.conf" \
     "$public/profiles/personal-macos/base.conf"
-cp "$ROOT/profiles/personal-macos/formula-policy-v2.conf" \
-    "$public/profiles/personal-macos/formula-policy-v2.conf"
+cp "$ROOT/profiles/personal-macos/formula-policy-v3.conf" \
+    "$public/profiles/personal-macos/formula-policy-v3.conf"
 git -C "$public" init -q -b main
 configure_identity "$public"
 git -C "$public" add libexec profiles config

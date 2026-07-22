@@ -31,8 +31,8 @@ PUBLIC=$TEMP_DIR/public
 mkdir -p "$PUBLIC/profiles/personal-macos"
 cp "$ROOT/profiles/personal-macos/base.conf" \
     "$PUBLIC/profiles/personal-macos/base.conf"
-cp "$ROOT/profiles/personal-macos/formula-policy-v2.conf" \
-    "$PUBLIC/profiles/personal-macos/formula-policy-v2.conf"
+cp "$ROOT/profiles/personal-macos/formula-policy-v3.conf" \
+    "$PUBLIC/profiles/personal-macos/formula-policy-v3.conf"
 git -C "$PUBLIC" init -q -b main
 git -C "$PUBLIC" config user.name mac-test
 git -C "$PUBLIC" config user.email mac-test.invalid

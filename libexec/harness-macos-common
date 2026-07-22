@@ -346,7 +346,7 @@ macos_validate_formula_policy() {
     macos_validate_manifest "$macos_formula_policy" \
         schema,family,managed_formulae,retired_formulae \
         schema,family,managed_formulae,retired_formulae
-    [ "$(macos_manifest_get "$macos_formula_policy" schema)" = 2 ] &&
+    [ "$(macos_manifest_get "$macos_formula_policy" schema)" = 3 ] &&
         [ "$(macos_manifest_get "$macos_formula_policy" family)" = personal-macos ] &&
         [ "$(macos_manifest_get "$macos_formula_policy" managed_formulae)" = \
             ada-url,bash,bash-completion@2,bash-git-prompt,brotli,c-ares,ca-certificates,fmt,gettext,gh,git,git-lfs,gmp,hdrhistogram_c,icu4c@78,jq,json-c,libevent,libffi,libidn2,libnghttp2,libnghttp3,libngtcp2,libpsl,libunistring,libuv,llhttp,lz4,merve,mpdecimal,mpfr,nbytes,ncurses,node,oniguruma,openssl@3,pcre2,readline,ripgrep,shellcheck,simdjson,simdutf,sqlite,tmux,tree,utf8proc,uv,uvwasi,wget,xz,zstd ] &&

@@ -213,6 +213,14 @@ Execution checkpoint 2026-07-22:
   reviewed retirement set can be removed together while external dependents
   still block; focused regression coverage passes. Next: publish, synchronize,
   run all four live plans, and converge one Mac at a time.
+- Protected PR #219 passed after its inventory privacy/count fixture was made
+  policy-derived and squash-merged as `54e64f0`; all Linux mirrors are at that
+  revision. Mac update plans then correctly failed before mutation because
+  older updater code treats schema-2 `formula-policy-v2.conf` as a frozen
+  compatibility surface. The active corrective slice restores v2 byte-for-byte,
+  moves the expanded exact set to schema-3 `formula-policy-v3.conf`, and adds a
+  frozen v2 regression. All affected focused Mac suites pass; next publish this
+  compatibility repair and retry the four Mac plans.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
