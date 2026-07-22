@@ -299,7 +299,13 @@ contracts, emits one or two exact `permitopen` restrictions plus both exact
 ControlMaster only as a transport while suppressing new forwards. Office,
 Home, and Riken have been restaged with full restrictions and exact helper
 cleanup. Aist remains `0/2`, and its old listener-only staged entry is the sole
-remaining blocker; restage Aist before Local plan/apply.
+remaining blocker; restage Aist before Local plan/apply. The owner briefly
+restored Aist and Local transferred the reviewed revision, but the inbound
+route died during remote execution. The Local inbox remained on Aist's old
+entry and no authorization or privileged file changed. A retry through another
+ephemeral inbound route is unsafe because its controlling SSH session can HUP
+the helper; execute the retry from the owner's persistent Aist-local terminal
+or Codex session instead.
 
 Do not drill or install on any Mac until the owner restores the restricted
 authorizations and all eight fresh checks pass. Then roll out/drill those Macs
