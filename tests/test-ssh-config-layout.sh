@@ -192,6 +192,12 @@ assert_refused multipattern 'Host github other
     HostName github.com'
 assert_refused match 'Match host *.invalid
     ForwardAgent no'
+assert_refused unrelatedmatchall 'Host private
+    HostName private.invalid
+# Github
+Match all
+Host other
+    HostName other.invalid'
 assert_refused include 'Include ~/.ssh/owner.conf'
 assert_refused hiddeninclude 'Host github
     HostName github.com
@@ -215,6 +221,38 @@ grep -F 'state=migrate github_blocks=0 default_blocks=0 managed_includes=1' \
 run_layout "$include_only_home" --apply >/dev/null
 [ "$(tail -n 2 "$include_only_home/.ssh/config" | head -n 1)" = 'Match all' ] ||
     fail "include-only upgrade context reset"
+
+redundant_home=$TEMP_DIR/redundant-home
+make_home "$redundant_home"
+printf '%s\n' 'Host private' '    HostName private.invalid' \
+    '# Github' 'Match all' 'Host tunnel' '    HostName tunnel.invalid' \
+    '' 'Match all' 'Include ~/.ssh/config.d/harness.conf' \
+    >"$redundant_home/.ssh/config"
+cp "$ROOT/config/ssh/harness.conf" \
+    "$redundant_home/.ssh/config.d/harness.conf"
+chmod 600 "$redundant_home/.ssh/config" \
+    "$redundant_home/.ssh/config.d/harness.conf"
+cp "$redundant_home/.ssh/config" "$TEMP_DIR/redundant.before"
+run_layout "$redundant_home" --plan >"$TEMP_DIR/redundant-plan.out"
+grep -F 'state=migrate' "$TEMP_DIR/redundant-plan.out" >/dev/null ||
+    fail "redundant Match plan state"
+grep -F 'action=normalize redundant_matches=1' \
+    "$TEMP_DIR/redundant-plan.out" >/dev/null || fail "redundant Match plan count"
+run_layout "$redundant_home" --apply >"$TEMP_DIR/redundant-apply.out"
+redundant_tx=$(sed -n 's/.*transaction=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/redundant-apply.out")
+[ "$(grep -c '^Match all$' "$redundant_home/.ssh/config")" -eq 1 ] ||
+    fail "redundant Match retained"
+grep -F -x '# SSH remote forward tunnels' \
+    "$redundant_home/.ssh/config" >/dev/null || fail "tunnel comment not normalized"
+! grep -F -x '# Github' "$redundant_home/.ssh/config" >/dev/null ||
+    fail "misleading GitHub comment retained"
+run_layout "$redundant_home" --plan >"$TEMP_DIR/redundant-current.out"
+grep -F 'state=current' "$TEMP_DIR/redundant-current.out" >/dev/null ||
+    fail "redundant Match cleanup not idempotent"
+run_layout "$redundant_home" --rollback "$redundant_tx" >/dev/null
+cmp -s "$redundant_home/.ssh/config" "$TEMP_DIR/redundant.before" ||
+    fail "redundant Match rollback bytes"
 
 wrong_link_home=$TEMP_DIR/wrong-link-home
 make_home "$wrong_link_home"

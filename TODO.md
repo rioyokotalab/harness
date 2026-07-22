@@ -411,6 +411,36 @@ doctor/config-plan, repository, and residue checks on every Mac.
 Office, Riken, and Local, then classify every deviation against the published
 T-296 supervisor/watchdog contract before making a cleanup change.
 
+**Checkpoint:** core SSH state is healthy on all four Macs: eight fresh routes,
+`auth_blocked=0`, two `managed=1 external=0` tunnels, one loaded healthy
+watchdog, exactly three current-user mode-0600 launchd plists, safe config and
+dedicated-identity metadata, no launchd staging, and clean/current public Git.
+All agent/sshd sockets found under `~/.ssh/agent` had a live holder; no key or
+authorization content was read. Transaction counts are consistent with the
+retained rollback history, not abandoned work.
+
+Three exact attempt residues were removed. Home and Office each had an idle
+ordinary `login` ControlMaster created during rescue; both had zero multiplex
+clients and no command-line forward, exited through their current-user control
+socket, and left both managed routes healthy. Aist's
+`harness-aist-tunnels-agent` tmux session contained exactly two dead panes and
+was removed without touching `harness-codex-resume`. Four empty mode-0700 Local
+directories created by a failed audit-wrapper quoting attempt were deleted by
+guarded manifest `/tmp/harness-t297-planner-cleanup.manifest`; protected anchors
+were unchanged, and the manifest was exact-unlinked. The failed wrapper ran no
+planner and left no Mac residue.
+
+The remaining SSH-layout deviation is reproducible: Home, Office, and Riken
+retain the exact historical `# Github` + redundant `Match all` pair immediately
+before `Host tunnel`; Aist already has the intended tunnel comment and no
+redundant reset, but its private SSH snapshot still has the old pair. A narrow
+transactional adapter change and synthetic rollback test are in progress. It
+accepts only this proven legacy shape and continues to reject every other
+unmanaged `Match`. After protected publication, apply it on the three affected
+Macs and publish all four cleaned payloads through `macos-ssh-sync`. Unrelated
+`macos-config-sync` Bash-parent/private-layout refusals are outside this
+SSH-attempt cleanup and remain untouched.
+
 ### T-273 — Resolve intentionally deferred maintenance
 
 **Phase/status:** executing. Workstreams 1, 2, 3, 5, 7, and 9 are complete.
