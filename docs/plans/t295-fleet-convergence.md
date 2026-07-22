@@ -146,6 +146,9 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
   `tunnel`, `tunnel2`, `aist`, `aist2`, `home`, `home2`, `office`, `office2`,
   `riken`, `riken2`, and `web`. Retain X11 forwarding on `login` and every
   other node.
+- D4 — **accepted:** after the Mac Codex restart, select the globally most
+  recent session with `codex resume --last --all`, not the most recent session
+  filtered to `~/harness`.
 
 1. **Fleet scope and publication — answered/accepted.** Define the existing 11-node
    maintenance/Python/package scope as local, ab, ab2, al, rc, ri, t4, aist,
@@ -158,13 +161,13 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
    `tunnel2` exclusively for the primary and secondary launchd reverse routes.
    **X11 boundary — answered/accepted:** disable it only for D3's exact alias
    list, not for `login` or other nodes.
-3. **Mac Codex restart.** Recommended: run the supported updater even though
+3. **Mac Codex restart — resume scope answered/accepted.** Run the supported updater even though
    0.145.0 is already current, stop all exact Codex processes, use a new
    Darwin lock-aware arg0 implementation to quarantine/delete only released
    entries, restart remote control, and start one named tmux TUI with
    `codex resume --last --all` so selection is global rather than restricted to
-   `~/harness`. Confirm global-most-recent plus remote-control restart, or
-   request per-directory-most-recent and/or no remote-control restart.
+   `~/harness`. Whether to restart remote control remains a separate pending
+   decision.
 4. **Homebrew convergence.** Recommended: refresh Homebrew metadata, converge
    only the ten-formula managed policy and their available versions, and
    preserve every Mac-specific extra. Strict equality would require installing
