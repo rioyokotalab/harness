@@ -93,6 +93,64 @@ kill "$locker"
 wait "$locker" 2>/dev/null || true
 locker=
 
+darwin_bin=$TEMP_DIR/darwin-bin
+darwin_root=$TEMP_DIR/darwin-codex/tmp/arg0
+mkdir -p "$darwin_bin" "$darwin_root"
+cat >"$darwin_bin/uname" <<'EOF'
+#!/bin/sh
+[ "${1:-}" = -s ] && { printf 'Darwin\n'; exit 0; }
+exec /usr/bin/uname "$@"
+EOF
+cat >"$darwin_bin/stat" <<'EOF'
+#!/bin/sh
+if [ "${1:-}" != -f ]; then exec /usr/bin/stat "$@"; fi
+case "$2" in
+    %u) format=%u ;;
+    %Lp) format=%a ;;
+    %l) format=%h ;;
+    %d:%i) format=%d:%i ;;
+    %m) format=%Y ;;
+    *) exit 2 ;;
+esac
+shift 2
+exec /usr/bin/stat -c "$format" -- "$@"
+EOF
+chmod 755 "$darwin_bin/uname" "$darwin_bin/stat"
+make_darwin_expected() {
+    directory=$1
+    mkdir "$directory"
+    : >"$directory/.lock"
+    for helper in apply_patch applypatch codex-execve-wrapper; do
+        ln -s /bin/true "$directory/$helper"
+    done
+}
+darwin_live=$darwin_root/codex-arg0LIVE02
+darwin_stale=$darwin_root/codex-arg0OLD002
+make_darwin_expected "$darwin_live"
+make_darwin_expected "$darwin_stale"
+touch -d '10 minutes ago' "$darwin_stale"
+darwin_ready=$TEMP_DIR/darwin-lock-ready
+# A lock held by Linux flock must also be visible to Darwin's Perl flock path.
+# shellcheck disable=SC2016
+flock "$darwin_live/.lock" sh -c 'printf ready >"$1"; sleep 30' sh \
+    "$darwin_ready" &
+locker=$!
+attempt=0
+while [ ! -f "$darwin_ready" ] && [ "$attempt" -lt 50 ]; do
+    sleep 0.1
+    attempt=$((attempt + 1))
+done
+[ -f "$darwin_ready" ] || fail "Darwin synthetic lock did not start"
+HARNESS_TESTING=1 CODEX_HOME="$TEMP_DIR/darwin-codex" \
+    PATH="$darwin_bin:/usr/bin:/bin" \
+    "$HARNESS" codex-arg0-housekeeping --plan --root "$darwin_root" \
+    --grace-seconds 120 >"$TEMP_DIR/darwin-plan.out"
+grep -F 'live=1 eligible=1 young=0 unexpected=0 removed=0' \
+    "$TEMP_DIR/darwin-plan.out" >/dev/null || fail "Darwin housekeeping classification"
+kill "$locker"
+wait "$locker" 2>/dev/null || true
+locker=
+
 fake_home=$TEMP_DIR/fake-home
 release=$fake_home/.codex/packages/standalone/releases/0.145.0-test/bin
 mkdir -p "$release" "$fake_home/.local/bin" "$fake_home/.codex/packages/standalone"

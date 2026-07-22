@@ -181,6 +181,22 @@ Execution checkpoint 2026-07-22:
   normalized spelling difference (`\:` versus `:`), with no capability
   difference. The current slice canonicalizes that escape equivalence and adds
   a regression before completing real-PTY acceptance; rollback remains intact.
+- Protected PR #217 passed `portable-phase1` and squash-merged the ncurses
+  normalization as `7b3f034`; guarded fleet sync advanced all remote Linux
+  mirrors. AL now reports `state=current action=none`, with `infocmp`, 256
+  colors, clean/configured Vim alternate-screen entry and restoration, and tty
+  preservation all passing in a real PTY. All four Macs then cleanly advanced
+  public Git to `7b3f034` and retained private Git at `a93fa1f`; their update
+  transactions are `20260722T054112Z-50342`, `20260722T054128Z-59824`,
+  `20260722T054158Z-63319`, and `20260722T054221Z-7321` for Aist, Home, Office,
+  and Riken respectively. Canonical SSH-fragment transactions
+  `20260722T054235Z-53170`, `20260722T054243Z-62667`,
+  `20260722T054253Z-66128`, and `20260722T054302Z-10115` applied D3; every
+  selected alias resolves `ForwardX11 no` and `login` plus an unlisted node
+  resolve `yes` on every Mac.
+- Current slice: extend lock-aware Codex arg0 housekeeping to macOS's native
+  metadata, Perl advisory locks, and four-helper layout before the frozen
+  update/stop/cleanup/resume sequence.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
