@@ -39,6 +39,23 @@ stops only failed exact services, polls real forward binds, and restores each
 route independently. It leaves a healthy sibling untouched and restores the
 launchd baseline on timeout or failure.
 
+## Final scheme and honest bounds
+
+| Failure class | Detection and recovery | Security boundary | Expected bound after full rollout |
+| --- | --- | --- | --- |
+| One tunnel client exits or one upstream route fails | launchd plus the 30-second Mac watchdog restores only the failed route; the healthy sibling remains loaded | Existing dedicated identity, exact fixed listener, and zero external processes | Usually one watchdog interval plus connection and 20-second stabilization time |
+| Both clients exit while old Local listeners are free | Mac watchdog serializes, probes both real binds, and restores primary then secondary | Same two restricted identities and listeners; no alternate port or identity | One watchdog interval plus sequential stabilization |
+| Both clients disappear while Local retains half-open sessions | Server `15/3` encrypted-channel liveness releases listeners; Mac watchdog performs bounded drain and sequential restore | No sshd process kill and no broad `permitlisten` | Target under two minutes after matched live validation; without server liveness, the new hard bound is 1,200 elapsed seconds plus one watchdog interval |
+| Account-level ordinary authorization file is rewritten | Root-owned secondary `AuthorizedKeysFile` preserves the four exact tunnel entries | User agents cannot modify the root-owned file; ordinary keys remain separately managed | No outage from ordinary-file rewrite after admin rollout |
+| Controller and watchdog overlap | Shared private lease permits one recovery owner; private last-run receipt identifies the watchdog result | Current-user mode-0700/0600 state with PID/start identity and exact schema | Immediate defer to the active owner, then next scheduled invocation |
+| Mac is powered off, both upstream networks fail, Local or sshd is unavailable, or root-owned authorization is damaged | No SSH-only recovery path exists | Must not bypass authentication or create an unreviewed third party | Explicit external failure requiring power, network, controller, or admin repair |
+
+The target bounds in this table are design targets until the server hardening
+and all four matched live drills pass. “Never unreachable” cannot be an honest
+absolute for power, network, controller, or root-policy loss; the implemented
+goal is zero owner intervention for every recoverable client and stale-session
+failure while retaining the current least-privilege boundary.
+
 ## Published control plane
 
 | PR | Protected commit | Result |
