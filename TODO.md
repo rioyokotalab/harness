@@ -262,6 +262,13 @@ Execution checkpoint 2026-07-22:
   the declared current command target. The active fix validates both mapping
   sides explicitly: legacy source path in evidence and current target in the
   scoped cleanup command.
+- Protected PR #225 passed and squash-merged that mapping fix as `f314c69`; all
+  checkouts are synchronized and all four plans pass. Exact retirements then
+  completed, leaving no retired or outside-policy formulae. The final checkpoint
+  correctly caught Homebrew removing selected `mpdecimal` (plus `mpfr` on
+  Riken) and leaving Office's `mpdecimal` outdated. The active slice adds a new
+  exact dry-run and scoped install/upgrade repair after retirement, followed by
+  the full final acceptance inventory.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
