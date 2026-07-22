@@ -1,0 +1,47 @@
+#!/bin/sh
+# harness-codex-arg0-wrapper-v1
+set -u
+
+self_path=$(readlink -f -- "$0" 2>/dev/null || true)
+[ -n "$self_path" ] || { echo 'codex wrapper: cannot resolve launcher path' >&2; exit 126; }
+self_dir=${self_path%/*}
+real_codex=$self_dir/codex.real
+harness=$HOME/.local/bin/harness
+codex_home=${CODEX_HOME:-$HOME/.codex}
+
+warn() {
+    printf 'WARNING: Codex arg0 housekeeping %s; continuing with the official binary\n' "$1" >&2
+}
+
+[ -x "$real_codex" ] && [ -f "$real_codex" ] && [ ! -L "$real_codex" ] || {
+    echo 'codex wrapper: preserved official binary is unavailable' >&2
+    exit 126
+}
+
+baseline=
+if [ -x "$harness" ] && [ -d "$codex_home/tmp/arg0" ]; then
+    "$harness" codex-arg0-housekeeping --apply --grace-seconds 120 \
+        >/dev/null 2>&1 || warn 'preflight failed'
+    baseline=$(mktemp "$codex_home/tmp/.arg0-wrapper-baseline.XXXXXX" 2>/dev/null || true)
+    if [ -n "$baseline" ]; then
+        chmod 600 "$baseline"
+        find "$codex_home/tmp/arg0" -mindepth 1 -maxdepth 1 -type d \
+            -printf '%f\n' >"$baseline" 2>/dev/null || {
+                unlink "$baseline"
+                baseline=
+                warn 'baseline failed'
+            }
+    else
+        warn 'baseline allocation failed'
+    fi
+fi
+
+"$real_codex" "$@"
+status=$?
+
+if [ -n "$baseline" ]; then
+    "$harness" codex-arg0-housekeeping --apply --grace-seconds 120 \
+        --baseline "$baseline" >/dev/null 2>&1 || warn 'postflight failed'
+    [ ! -e "$baseline" ] || unlink "$baseline"
+fi
+exit "$status"

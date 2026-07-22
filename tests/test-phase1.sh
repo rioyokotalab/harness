@@ -69,6 +69,9 @@ for script in \
     "$ROOT/libexec/harness-agent-config" \
     "$ROOT/libexec/harness-agent-config-catch-up" \
     "$ROOT/libexec/harness-agent-config-fleet" \
+    "$ROOT/libexec/harness-codex-arg0-housekeeping" \
+    "$ROOT/libexec/harness-codex-arg0-wrapper" \
+    "$ROOT/libexec/codex-arg0-launcher-wrapper" \
     "$ROOT/libexec/harness-storage-readiness" \
     "$ROOT/libexec/harness-replica" \
     "$ROOT/libexec/harness-repository-fingerprint" \

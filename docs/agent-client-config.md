@@ -44,6 +44,32 @@ absolute native path, preventing recursion or silent fallback, and preserves
 all arguments and subcommands. Client-persisted project trust stays only in the
 private live regular file and never dirties public Git.
 
+## Linux NFS arg0 wrapper
+
+On Linux hosts where the official standalone Codex home resides on NFS,
+`codex-arg0-housekeeping` classifies immediate helper directories without
+stopping Codex. Held locks are live. Old empty directories and expected-layout
+directories with acquirable locks move atomically to a same-filesystem private
+quarantine, and only that quarantine is removed through guarded-delete. A
+mode-0600 baseline lets the launcher identify residue from an invocation whose
+exit it directly observed without weakening protection for concurrent sessions.
+
+The separately authorized version-scoped wrapper retains the exact official
+binary as `codex.real` in the same standalone release, installs a small launcher
+at the original release path, and preserves arguments and exit status. It runs
+bounded housekeeping before and after the official binary. Apply and rollback
+do not signal or reload existing Codex processes. An official upgrade changes
+the `current` release link and therefore supersedes the old version's wrapper;
+the new release must be re-diagnosed before another installation.
+
+```bash
+./bin/harness codex-arg0-housekeeping --plan
+./bin/harness codex-arg0-wrapper --plan
+./bin/harness codex-arg0-wrapper --apply
+./bin/harness codex-arg0-wrapper --doctor
+./bin/harness codex-arg0-wrapper --rollback
+```
+
 ## Declarative components
 
 `config/agent-clients/components.tsv` is the single public declaration surface
