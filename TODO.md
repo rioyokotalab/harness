@@ -269,6 +269,16 @@ Execution checkpoint 2026-07-22:
   Riken) and leaving Office's `mpdecimal` outdated. The active slice adds a new
   exact dry-run and scoped install/upgrade repair after retirement, followed by
   the full final acceptance inventory.
+- Protected PR #226 passed and squash-merged post-retirement repair as
+  `ccc1764`; all checkouts are synchronized. Repair transactions completed on
+  Aist (`20260722T074653Z-4698`), Home (`20260722T074601Z-73734`), Office
+  (`20260722T074610Z-20940`), and Riken (`20260722T074607Z-31431`). All four now
+  have the identical 51-name set (SHA-256
+  `dbd8547528d603da7e79f3c8a6942283c3933b0fa942d224b8fdcff91aeeff23`)
+  and zero casks. Version hashes still differ only because historical kegs
+  remain. The active slice detects multi-version managed formulae, requires a
+  formula-scoped cleanup dry-run, cleans only those reviewed Cellars, and then
+  repeats exact acceptance.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
