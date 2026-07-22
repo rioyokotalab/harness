@@ -278,6 +278,29 @@ auth=blocked managed=0` and leaves zero temporary residue. Bash syntax and
 ShellCheck pass. After apply, replace Home's two ControlMaster forwards one at
 a time while preserving the sibling route, then require `routes=2 managed=2`.
 
+Office independently performed a transactional temporary repair in Local's
+JumpCloud-managed user authorization file. It replaced only Office's existing
+identity entry with the exact `permitopen` destination and both `permitlisten`
+bindings, then proved `auth_blocked=0`, both non-multiplexed inbound routes, and
+both services `loaded=yes running=yes managed=1 external=0`; all helper,
+preimage, expected-postimage, log, and transaction residue was exact-unlinked.
+The root-owned file and sshd fragment remain absent, so this supersedes the
+Office outage evidence but not the permanent hardening requirement. Office
+also reported a pre-existing extra `Match all` in `~/.ssh/config` that makes
+`ssh-config-layout --plan` fail closed; effective tunnel settings work, and the
+unrelated configuration was left unchanged.
+
+That report also exposed that the first four staged canonical entries retained
+the two listeners but omitted the exact `permitopen` destination present in the
+proven restricted authorization. Apply remained blocked and no privileged file
+existed. The helper now derives the complete effective reverse-forward
+contracts, emits one or two exact `permitopen` restrictions plus both exact
+`permitlisten` restrictions, and can use a validated surviving `login`
+ControlMaster only as a transport while suppressing new forwards. Office,
+Home, and Riken have been restaged with full restrictions and exact helper
+cleanup. Aist remains `0/2`, and its old listener-only staged entry is the sole
+remaining blocker; restage Aist before Local plan/apply.
+
 Do not drill or install on any Mac until the owner restores the restricted
 authorizations and all eight fresh checks pass. Then roll out/drill those Macs
 one at a time. Preserve potentially private native logs unread in mode-0600

@@ -215,6 +215,24 @@ restore dedicated authorization, then cancel and replace one exact temporary
 forward at a time while preserving its sibling; the ordinary ControlMaster
 must not be terminated merely to remove the forwards.
 
+Office later used its surviving ordinary `login` ControlMaster to repair only
+its existing restricted entry in Local's user-level authorization file. The
+transaction preserved unrelated lines, used the existing identity and complete
+effective forwarding contracts, and retained exact `permitopen` and
+`permitlisten` restrictions. A first portable-validation attempt stopped
+before remote mutation; its corrected successor completed and exact-unlinked
+its private preimage, expected postimage, logs, helper, and transaction state.
+Fresh dedicated authentication then returned `auth_blocked=0`; both independent
+inbound probes passed and both launchd services reported
+`loaded=yes running=yes managed=1 external=0`. This supersedes Office's `0/2`
+endpoint but remains temporary because JumpCloud can reconcile the user-level
+file again; the root-owned secondary file is still required.
+
+Office also has an additional pre-existing `Match all` before its private
+tunnel stanzas. Effective tunnel settings work, but the public layout planner
+correctly rejects the unmanaged Match. It was not changed during authorization
+recovery and remains a separate cleanup item after durable reachability.
+
 An established SSH session surviving removal of its authorization explains why
 ordinary route probes had previously looked healthy. The new audit prevents
 that false assurance, but software cannot repair missing credential state.

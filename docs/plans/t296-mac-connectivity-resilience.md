@@ -117,8 +117,10 @@ opens authorized-key files under the target user's UID, so root-only read
 permission would silently make the second file unusable. The keys are public;
 the security boundary is root-only write access and the root-owned `/etc/ssh`
 parent. Each exact restricted entry is derived once on its owning Mac from the
-existing dedicated identity and exact `ssh -G` listener contracts, transferred
-without display, and added transactionally. No identity is generated.
+existing dedicated identity and complete effective `ssh -G` reverse-forward
+contracts: exact `permitopen` destinations and exact `permitlisten` bindings.
+It is transferred without display and added transactionally. No identity is
+generated.
 
 ## Watchdog state machine
 
