@@ -152,15 +152,14 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
 - D5 — **accepted:** restart `codex remote-control` on all four Macs after the
   updater, process stop, and arg0 cleanup, preserving the existing device
   pairings.
-- D6 — **partially resolved:** reject managed-baseline-only Homebrew
+- D6 — **accepted:** reject managed-baseline-only Homebrew
   convergence and require complete package-set equality across all four Macs.
   A read-only inventory found 107 unique installed formulae, 19 unique leaves,
   and one cask. Retain every formula already installed on all four Macs;
   promote `json-c`, `wget`, `bash-git-prompt`, and `mpfr` to all four; remove
   every other non-universal formula; remove Aist's `claude-code` cask; and
-  install the dependency closure of the retained set. The owner's `openssl`
-  exception remains ambiguous between already-universal `openssl@3` and
-  non-universal legacy `openssl@1.1`, so that one formula decision is pending.
+  install the dependency closure of the retained set. Retain universal
+  `openssl@3` and remove legacy non-universal `openssl@1.1` from Aist and Home.
 
 1. **Fleet scope and publication — answered/accepted.** Define the existing 11-node
    maintenance/Python/package scope as local, ab, ab2, al, rc, ri, t4, aist,
