@@ -106,7 +106,12 @@ case "${1:-}" in
             *) exit 1 ;;
         esac
         [ -e "$marker" ] || exit 1
-        printf '%s\n' 'state = running'
+        alias_name=${target##*.}
+        if [ -e "$HOME/.fake-dead-$alias_name" ]; then
+            printf '%s\n' 'state = exited'
+        else
+            printf '%s\n' 'state = running'
+        fi
         ;;
     bootstrap)
         plist=${3:-}
@@ -123,23 +128,24 @@ case "${1:-}" in
     kickstart)
         target=${3:-}
         marker=$state/${target##*.}
-        [ -e "$marker" ]
+        [ -e "$marker" ] || exit 1
+        unlink "$HOME/.fake-dead-${target##*.}" 2>/dev/null || true
         ;;
     *) exit 2 ;;
 esac
 EOF
 cat >"$FAKE_BIN/ps" <<'EOF'
 #!/bin/sh
-if [ -f "$HOME/.fake-launch-state/login" ]; then
+if [ -f "$HOME/.fake-launch-state/login" ] && [ ! -f "$HOME/.fake-dead-login" ]; then
     printf '%s\n' '1 /usr/bin/ssh /usr/bin/ssh -N -T login'
 fi
-if [ -f "$HOME/.fake-launch-state/login2" ]; then
+if [ -f "$HOME/.fake-launch-state/login2" ] && [ ! -f "$HOME/.fake-dead-login2" ]; then
     printf '%s\n' '1 /usr/bin/ssh /usr/bin/ssh -N -T login2'
 fi
-if [ -f "$HOME/.fake-launch-state/tunnel" ]; then
+if [ -f "$HOME/.fake-launch-state/tunnel" ] && [ ! -f "$HOME/.fake-dead-tunnel" ]; then
     printf '%s\n' '1 /usr/bin/ssh /usr/bin/ssh -N -T tunnel'
 fi
-if [ -f "$HOME/.fake-launch-state/tunnel2" ]; then
+if [ -f "$HOME/.fake-launch-state/tunnel2" ] && [ ! -f "$HOME/.fake-dead-tunnel2" ]; then
     printf '%s\n' '1 /usr/bin/ssh /usr/bin/ssh -N -T tunnel2'
 fi
 if [ -f "$HOME/.fake-external" ]; then
@@ -338,6 +344,14 @@ run_tunnel_supervisor "$tunnel_home" --activate "$tunnel_tx" --alias tunnel \
     >"$TEMP_DIR/tunnel-activate.out"
 run_tunnel_supervisor "$tunnel_home" --host mac-test-pilot --kick tunnel \
     >"$TEMP_DIR/tunnel-kick.out"
+touch "$tunnel_home/.fake-dead-tunnel"
+run_tunnel_supervisor "$tunnel_home" --host mac-test-pilot --status \
+    >"$TEMP_DIR/tunnel-dead-status.out"
+grep -F 'ALIAS name=tunnel loaded=yes running=no managed=0 external=0' \
+    "$TEMP_DIR/tunnel-dead-status.out" >/dev/null || fail "dead tunnel status"
+run_tunnel_supervisor "$tunnel_home" --host mac-test-pilot --kick tunnel \
+    >"$TEMP_DIR/tunnel-dead-kick.out"
+[ ! -e "$tunnel_home/.fake-dead-tunnel" ] || fail "dead tunnel was not restarted"
 run_tunnel_supervisor "$tunnel_home" --deactivate "$tunnel_tx" --alias tunnel \
     >"$TEMP_DIR/tunnel-deactivate.out"
 run_tunnel_supervisor "$tunnel_home" --rollback "$tunnel_tx" \

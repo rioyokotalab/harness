@@ -413,13 +413,17 @@ if [ "$mode" = kick ]; then
     validate_transaction "$transaction_id"
     marker=$transaction_root/$transaction_id.macos-ssh-supervisor.$supervised_alias.active
     macos_require_private_file "$marker" "$current_uid"
-    [ "$(managed_process_count "$supervised_alias")" -eq 1 ] &&
+    service_loaded "$supervised_alias" || die "Mac SSH supervisor service is not loaded"
+    managed_before=$(managed_process_count "$supervised_alias")
+    [ "$managed_before" -le 1 ] &&
         [ "$(external_process_count "$supervised_alias")" -eq 0 ] ||
         die "Mac SSH supervisor process ownership is invalid"
-    service_loaded "$supervised_alias" || die "Mac SSH supervisor service is not loaded"
     launchctl kickstart -k "gui/$current_uid/$(label_for "$supervised_alias")" >/dev/null ||
         die "Mac SSH supervisor kickstart failed"
     wait_for_running "$supervised_alias" || die "Mac SSH supervisor did not recover"
+    [ "$(managed_process_count "$supervised_alias")" -eq 1 ] &&
+        [ "$(external_process_count "$supervised_alias")" -eq 0 ] ||
+        die "Mac SSH supervisor process ownership is invalid after kick"
     printf 'MACOS_SSH_SUPERVISOR alias=%s action=kick status=running\n' "$supervised_alias"
     exit 0
 fi
