@@ -96,7 +96,9 @@ Confirmed planning facts:
   evidence of t4 divergence.
 - The README defines a Codex-only frozen acceptance evaluator, not a current
   paired Codex/Claude benchmark. A new matched experiment must preserve the
-  historical T-181 results rather than overwrite them.
+  historical T-181 results rather than overwrite them. The accepted design
+  uses current CLI/default-model identities and matched budgets, with a
+  9-run-per-client pilot gating a 35-run-per-client full stage.
 - ABQ's group disk now has a verified 1,024 GiB quota. Its accepted persistent
   and cache roots are `/groups/qgai50157/yokota` and
   `/groups/qgai50157/yokota/cache`; they remain uncreated until the final go.

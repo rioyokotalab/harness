@@ -202,6 +202,11 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
   site's module or pinned container before uv creates the environment against
   that interpreter. Keep caches platform-local and record the resolved Python,
   uv, accelerator, compiler, MPI, and container versions with experiments.
+- D14 — **accepted symmetric benchmark design:** preserve historical T-181 and
+  add a new dated Codex-versus-Claude experiment over the existing seven task
+  families. Record current CLI/default-model identities, match sandbox,
+  reasoning, and run budgets, run a 9-run pilot per client, and proceed to the
+  35-run full stage per client only when the pilot gates pass.
 
 1. **Fleet scope and publication — answered/accepted.** Define the existing 11-node
    maintenance/Python/package scope as local, ab, ab2, al, rc, ri, t4, aist,
@@ -238,13 +243,9 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
    and the unversioned `python`/`python3` commands; standardize the tested uv
    version and project contract rather than forcing one exact Python patch onto
    every workload and platform.
-8. **Codex/Claude benchmark interpretation.** Recommended: create a new
-   symmetric experiment using the existing seven synthetic task families,
-   current Codex and Claude CLIs/default models, matched sandbox/reasoning/run
-   budgets, a 9-run-per-client pilot, and—only if the pilot gates pass—a
-   35-run-per-client full stage. Publish a new scoped result table in README
-   while retaining T-181. Confirm this interpretation or identify the other
-   README benchmark you meant.
+8. **Codex/Claude benchmark interpretation — answered/accepted.** Implement
+   D14's new dated, symmetric experiment and README result table without
+   replacing the historical T-181 results.
 9. **External-user skill.** Recommended name and scope:
    `onboard-external-user`, for a local-first clone/install/preflight on Linux
    or macOS with missing-prerequisite detection, no assumed hidden files,
