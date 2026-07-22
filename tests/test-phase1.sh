@@ -187,6 +187,8 @@ if [ "${HARNESS_TEST_JOBS:-auto}" = legacy ]; then
     fail "fixed SSH-config mirror focused suite"
 "$ROOT/tests/test-ssh-config-layout.sh" >/dev/null ||
     fail "SSH configuration layout focused suite"
+"$ROOT/tests/test-fleet-inventory.sh" >/dev/null ||
+    fail "fleet inventory focused suite"
 
 "$ROOT/tests/test-restic-schedule.sh" >/dev/null ||
     fail "Restic schedule focused suite"

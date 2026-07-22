@@ -58,12 +58,12 @@ Next free ID: T-296.
 
 ### T-295 — Fleet convergence, ABQ onboarding, and external-user bootstrap
 
-**Phase/status:** ready-for-go. The owner requested one upfront PIE plan for
+**Phase/status:** executing. The owner requested one upfront PIE plan for
 thirteen coupled workstreams, then selected PIE's normal one-question-at-a-time
 interview. Read-only discovery, decisions D1–D17, the frozen execution order,
 rollback, and acceptance gates are recorded in
 `docs/plans/t295-fleet-convergence.md`. No agent target mutation has started;
-execution awaits the final explicit PIE go.
+the owner supplied the final explicit PIE go on 2026-07-22.
 
 Confirmed planning facts:
 
@@ -127,9 +127,22 @@ Confirmed planning facts:
   `web-o3.noc.titech.ac.jp` as Rocky Linux 8 on x86_64; an official Tokyo Tech
   technical document independently corroborates the same fact.
 
-**Next action:** receive the owner's final explicit PIE `go`, then execute the
-frozen plan autonomously and defer only genuinely new decision or approval
-blockers to the final bundle.
+**Next action:** validate and publish each implementation slice, synchronize
+clean checkouts, and execute the frozen rollout; defer only genuinely new
+decision or approval blockers to the final bundle.
+
+Execution checkpoint 2026-07-22:
+
+- Protected PR #212 passed `portable-phase1` and squash-merged the frozen plan
+  as `bf322ad`; the planning branch was removed.
+- On `task/t-295-ssh-doc-contract`, the first implementation slice adds the
+  cold-start fleet table and AGENTS pointer, documents the supported managed
+  fragment workflow, moves fail-fast/nonmultiplexed behavior from
+  `login`/`login2` to `tunnel`/`tunnel2`, and applies D3's exact X11 boundary.
+- `tests/test-fleet-inventory.sh` and `tests/test-ssh-config-layout.sh` pass.
+  The first Phase 1 run passed every other focused suite but
+  `test-tmux-config.sh` correctly refused the dirty checkout. After commit
+  `ecc945d`, the full `tests/test-phase1.sh` rerun passed from a clean tree.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
