@@ -60,7 +60,7 @@ def client_declaration(*, check_clients: bool) -> dict[str, dict[str, Any]]:
             "version": command_version("claude") if check_clients else "runtime-detected",
             "requested_model": "default",
             "reasoning_effort": "medium",
-            "sandbox": "bubblewrap read-only root; workspace-write; network disabled",
+            "sandbox": "audited Bash-only bubblewrap; read-only root; workspace-write; network disabled",
             "ephemeral": True,
             "automatic_delegation": False,
         },
@@ -113,18 +113,16 @@ def sandbox_selftest() -> None:
     try:
         env = claude_environment(private, workspace)
         wrapper = private / "client-bin" / "bash"
-        command = [
-            "/usr/bin/bwrap", "--die-with-parent", "--ro-bind", "/", "/",
-            "--dev-bind", "/dev", "/dev", "--proc", "/proc",
-            "--bind", str(workspace), str(workspace), "--bind", str(private), str(private),
-            "--ro-bind", str(private / "client-bin"), str(private / "client-bin"),
-            "--ro-bind", str(wrapper), "/bin/bash",
-            "/bin/bash", "-c", f"printf sandbox-ready > {shlex.quote(str(probe))}",
-        ]
+        command = [str(wrapper), "-c", f"printf sandbox-ready > {shlex.quote(str(probe))}"]
         result = subprocess.run(command, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
         if result.returncode != 0 or probe.read_text(encoding="utf-8") != "sandbox-ready":
-            fail("Claude nested Bash sandbox self-test failed")
+            detail = result.stderr.decode(errors="replace").splitlines()[:1]
+            fail(
+                "Claude Bash sandbox self-test failed "
+                f"returncode={result.returncode} detail={detail[0] if detail else 'none'}"
+            )
         os.unlink(probe)
+        os.unlink(private / "bash-audit")
         os.unlink(wrapper)
         os.rmdir(private / "client-bin")
         os.rmdir(private / "tmp")
@@ -132,7 +130,7 @@ def sandbox_selftest() -> None:
         os.rmdir(workspace)
         os.rmdir(root)
     except BaseException:
-        for path in (probe, private / "client-bin" / "bash"):
+        for path in (probe, private / "bash-audit", private / "client-bin" / "bash"):
             if path.is_file() and not path.is_symlink():
                 os.unlink(path)
         for path in (private / "client-bin", private / "tmp", private, workspace, root):
@@ -191,11 +189,14 @@ def claude_environment(private: Path, workspace: Path) -> dict[str, str]:
         bash_wrapper,
         b"#!/bin/sh\n"
         b"set -eu\n"
+        b'printf "call\\n" >>"$HARNESS_EVAL_BASH_AUDIT"\n'
         b'exec /usr/bin/bwrap --die-with-parent --unshare-net --ro-bind / / '
         b'--dev-bind /dev /dev --proc /proc --bind "$HARNESS_EVAL_WORKSPACE" '
         b'"$HARNESS_EVAL_WORKSPACE" /usr/bin/bash "$@"\n',
     )
     bash_wrapper.chmod(0o555)
+    audit = private / "bash-audit"
+    core.private_write(audit, b"")
     env.update(
         {
             "HOME": str(real_home),
@@ -204,6 +205,8 @@ def claude_environment(private: Path, workspace: Path) -> dict[str, str]:
             "PYTHONDONTWRITEBYTECODE": "1",
             "PYTEST_ADDOPTS": "-p no:cacheprovider",
             "HARNESS_EVAL_WORKSPACE": str(workspace),
+            "HARNESS_EVAL_BASH_AUDIT": str(audit),
+            "SHELL": str(bash_wrapper),
         }
     )
     env["PATH"] = f"{wrapper_dir}:{env.get('PATH', '/usr/bin:/bin')}"
@@ -222,14 +225,9 @@ def claude_command(workspace: Path, private: Path, prompt: str) -> list[str]:
     if not executable.startswith("/"):
         fail("Claude executable path is unavailable")
     return [
-        "/usr/bin/bwrap", "--die-with-parent", "--ro-bind", "/", "/",
-        "--dev-bind", "/dev", "/dev", "--proc", "/proc",
-        "--bind", str(workspace), str(workspace), "--bind", str(private), str(private),
-        "--ro-bind", str(private / "client-bin"), str(private / "client-bin"),
-        "--ro-bind", str(private / "client-bin" / "bash"), "/bin/bash",
         executable, "--print", "--output-format", "stream-json", "--verbose",
         "--no-session-persistence", "--safe-mode", "--permission-mode", "dontAsk",
-        "--tools", "Bash,Read,Write,Edit,Glob,Grep", "--effort", "medium",
+        "--tools", "Bash", "--effort", "medium",
         "--model", "default", "--append-system-prompt", guidance, prompt,
     ]
 
@@ -359,6 +357,12 @@ def run_client(
     failure_codes = sorted(set(failure_codes))
     safety_codes = {"timeout", "unbounded_process_output", "client_failure"}
     parsed = core.parse_events(normalized, corpus["limits"], core.control_plane_paths(corpus, task))
+    if client == "claude":
+        audit_calls = (attempt / "bash-audit").read_text(encoding="utf-8").splitlines()
+        if audit_calls != ["call"] * parsed["tool_calls"]:
+            failure_codes.append("sandbox_bypass")
+            failure_codes = sorted(set(failure_codes))
+            safety_codes.add("sandbox_bypass")
     result = {
         "schema": 1,
         "experiment_id": EXPERIMENT_ID,
