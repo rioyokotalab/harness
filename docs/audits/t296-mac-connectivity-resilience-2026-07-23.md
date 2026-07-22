@@ -78,6 +78,7 @@ failure while retaining the current least-privilege boundary.
 | #261 | `c0772af617fe9ddf884c104b7be54a63daf09d27` | Atomic mode-0600 last-run receipts with fixed value-free classifications and exact rollback. |
 | #262 | `972988297d01a0c79d9df26a6796a059087abaa1` | True elapsed-time recovery deadline and immediate baseline restoration when authentication disappears mid-drain. |
 | #263 | `d45555d55e9236f22685b8aed85b314cb71b6f9e` | Exact recovery-child signal forwarding, wait, lease release, and launchd baseline restoration. |
+| #264 | `2375ec049aee107ac1501f5306aeed9237d4b144` | Direct watchdog launch and recovery isolation from unrelated branches or dirty work, with exact local-`main` runtime equivalence. |
 
 Every PR passed protected `portable-phase1`. Clean local phase-one runs passed
 all focused suites and guarded-delete tests before publication. Native macOS
@@ -93,8 +94,8 @@ artifact. Persistent monitor script replacement produced one NFS placeholder
 held by exactly the two known tmux monitors; respawning only those panes onto
 the new committed script released it automatically.
 
-After PRs #261 through #263, Local, the managed Linux checkouts, and Riken
-advanced cleanly to `d45555d55e9236f22685b8aed85b314cb71b6f9e`. Aist, Home, and Office
+After PRs #261 through #264, Local, the managed Linux checkouts, and Riken
+advanced cleanly to `2375ec049aee107ac1501f5306aeed9237d4b144`. Aist, Home, and Office
 became unreachable before their guarded preflight and remain at the earlier
 commit; both failed plans stopped before mutation. Aist consequently does not
 yet have the new receipt or elapsed-deadline code deployed.
@@ -129,6 +130,15 @@ yet have the new receipt or elapsed-deadline code deployed.
   the real elapsed deadline records `drain-timeout`.
   Aist was still `0/2` at 02:47:35, more than 41 minutes after first detection,
   so the deployed loop did not restore reachability at its calculated edge.
+- The deployed watchdog also required the entire shared `~/harness` checkout
+  to be clean on branch `main`. The owner-launched Aist Codex used that same
+  checkout, so unrelated branch or dirty work could disable recovery. Aist is
+  unreachable, so this cannot be asserted as the cause of the current event.
+  PR #264 nevertheless removes the latent defect: launchd invokes the watchdog
+  directly, and recovery accepts unrelated work only when every critical
+  runtime script and public profile exactly matches the local `main` ref.
+  Synthetic unrelated-file and feature-branch cases pass; a critical-script
+  difference fails closed.
 - A two-hour power-log classification around the earlier recurrence found no
   Aist sleep or wake event. The private native log was never printed and was
   exact-unlinked.

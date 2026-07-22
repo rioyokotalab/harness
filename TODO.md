@@ -188,9 +188,16 @@ credential gate prevented deployment on Aist before this outage.
 The at-risk warning also predicted subsequent loss: Office's last old route
 ended at 02:37:09 and Home's at 02:37:46. Current Mac state is Aist `0/2`, Home
 `0/2`, Office `0/2`, and Riken `2/2`; Riken is still fresh-auth blocked. Local,
-the managed Linux checkouts, and Riken are clean/current at `d45555d`; the
+the managed Linux checkouts, and Riken are clean/current at `2375ec0`; the
 other Macs remain at `2ca9114` because guarded sync preflight could not reach
 them and made no change.
+
+PR #264 (`2375ec049aee107ac1501f5306aeed9237d4b144`) also removed a latent
+shared-checkout failure: watchdog recovery no longer requires unrelated work
+to be clean on branch `main`. It now runs directly and permits unrelated
+feature branches or dirty files only while every runtime-critical input exactly
+matches the local `main` ref. This defect is confirmed synthetically but cannot
+be attributed to the live Aist outage without Aist-side checkout evidence.
 
 **Next action:** continue the five-hour observe-only soak, publish its final
 event counts and bounds, then stop only `t296-night-watch`. The owner must
