@@ -44,16 +44,16 @@ cat >"$FAKE_BIN/ssh" <<'EOF'
 #!/bin/sh
 all=" $* "
 case "$all" in
-    *' macos-ssh-supervisor '*)
+    *' macos-tunnel-supervisor '*)
         case "$all" in
-            *' --host aist --kick login '*) target=aist; via=aist2 ;;
-            *' --host aist --kick login2 '*) target=aist2; via=aist ;;
-            *' --host office --kick login '*) target=office; via=office2 ;;
-            *' --host office --kick login2 '*) target=office2; via=office ;;
-            *' --host riken --kick login '*) target=riken; via=riken2 ;;
-            *' --host riken --kick login2 '*) target=riken2; via=riken ;;
-            *' --host home --kick login '*) target=home; via=home2 ;;
-            *' --host home --kick login2 '*) target=home2; via=home ;;
+            *' --host aist --kick tunnel '*) target=aist; via=aist2 ;;
+            *' --host aist --kick tunnel2 '*) target=aist2; via=aist ;;
+            *' --host office --kick tunnel '*) target=office; via=office2 ;;
+            *' --host office --kick tunnel2 '*) target=office2; via=office ;;
+            *' --host riken --kick tunnel '*) target=riken; via=riken2 ;;
+            *' --host riken --kick tunnel2 '*) target=riken2; via=riken ;;
+            *' --host home --kick tunnel '*) target=home; via=home2 ;;
+            *' --host home --kick tunnel2 '*) target=home2; via=home ;;
             *) exit 1 ;;
         esac
         [ -e "$HARNESS_MONITOR_STATE/$via.up" ] || exit 1

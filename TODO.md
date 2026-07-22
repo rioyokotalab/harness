@@ -127,9 +127,10 @@ Confirmed planning facts:
   `web-o3.noc.titech.ac.jp` as Rocky Linux 8 on x86_64; an official Tokyo Tech
   technical document independently corroborates the same fact.
 
-**Next action:** validate and publish each implementation slice, synchronize
-clean checkouts, and execute the frozen rollout; defer only genuinely new
-decision or approval blockers to the final bundle.
+**Next action:** publish and roll out the independently staged
+`tunnel`/`tunnel2` supervisor, cut over one route at a time, validate concurrent
+interactive `login` sessions, then continue Python and ABQ convergence; defer
+only genuinely new decision or approval blockers to the final bundle.
 
 Execution checkpoint 2026-07-22:
 
@@ -279,6 +280,20 @@ Execution checkpoint 2026-07-22:
   remain. The active slice detects multi-version managed formulae, requires a
   formula-scoped cleanup dry-run, cleans only those reviewed Cellars, and then
   repeats exact acceptance.
+- Protected PR #227 passed and squash-merged old-version cleanup as `f9f4c8b`;
+  all Linux and Mac checkouts are synchronized. Cleanup transactions removed
+  only reviewed historical managed kegs. Independent acceptance on all four
+  Macs reports exactly 51 formulae, zero casks, zero multi-version formulae,
+  identical name hash
+  `dbd8547528d603da7e79f3c8a6942283c3933b0fa942d224b8fdcff91aeeff23`, and
+  identical name/version hash
+  `8b654cad1b559750e9e5c3d3661e192118dc617dc155a8131054332065b334ff`.
+  Complete Homebrew convergence is finished.
+- Current slice: retain the legacy `login`/`login2` supervisor solely for
+  rollback and introduce an independent `tunnel`/`tunnel2` supervisor. This
+  permits a route-by-route cutover with the sibling route continuously
+  available and leaves the old agent immediately recoverable until inbound
+  health passes.
 
 ### T-273 — Resolve intentionally deferred maintenance
 

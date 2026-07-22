@@ -10,18 +10,19 @@ export HARNESS_ROOT
 . "$SELF_DIR/harness-macos-common"
 
 usage() {
-    cat >&2 <<'EOF'
+    cat >&2 <<EOF
 Usage:
   harness macos-ssh-supervisor --host LOGICAL_ID [--plan|--apply|--status]
-  harness macos-ssh-supervisor --activate TRANSACTION_ID --alias login|login2
-  harness macos-ssh-supervisor --deactivate TRANSACTION_ID --alias login|login2
-  harness macos-ssh-supervisor --host LOGICAL_ID --kick login|login2
+  harness macos-ssh-supervisor --activate TRANSACTION_ID --alias $primary_alias|$secondary_alias
+  harness macos-ssh-supervisor --deactivate TRANSACTION_ID --alias $primary_alias|$secondary_alias
+  harness macos-ssh-supervisor --host LOGICAL_ID --kick $primary_alias|$secondary_alias
   harness macos-ssh-supervisor --rollback TRANSACTION_ID
 EOF
 }
 
 require_alias() {
-    case "$1" in login|login2) ;; *) die "invalid supervised SSH alias" ;; esac
+    [ "$1" = "$primary_alias" ] || [ "$1" = "$secondary_alias" ] ||
+        die "invalid supervised SSH alias"
 }
 
 label_for() {
@@ -224,8 +225,8 @@ validate_transaction() {
     manifest=$transaction_root/$transaction_id.macos-ssh-supervisor.manifest
     status_file=$transaction_root/$transaction_id.macos-ssh-supervisor.status
     state_file=$supervisor_root/current
-    login_marker=$transaction_root/$transaction_id.macos-ssh-supervisor.login.active
-    login2_marker=$transaction_root/$transaction_id.macos-ssh-supervisor.login2.active
+    login_marker=$transaction_root/$transaction_id.macos-ssh-supervisor.$primary_alias.active
+    login2_marker=$transaction_root/$transaction_id.macos-ssh-supervisor.$secondary_alias.active
     macos_require_private_directory "$transaction_root" "$current_uid"
     macos_require_private_directory "$supervisor_root" "$current_uid"
     macos_require_private_file "$manifest" "$current_uid"
@@ -250,10 +251,14 @@ validate_transaction() {
         die "Mac SSH supervisor transaction is not staged"
     logical_host=$(sed -n 's/^logical_id=//p' "$manifest")
     macos_private_id_is_safe "$logical_host" || die "Mac SSH supervisor identity is invalid"
-    for validation_alias in login login2; do
+    for validation_alias in "$primary_alias" "$secondary_alias"; do
         validation_plist=$(plist_for "$validation_alias")
         validate_plist_file "$validation_plist"
-        recorded_hash=$(sed -n "s/^${validation_alias}_hash=//p" "$manifest")
+        if [ "$validation_alias" = "$primary_alias" ]; then
+            recorded_hash=$(sed -n 's/^login_hash=//p' "$manifest")
+        else
+            recorded_hash=$(sed -n 's/^login2_hash=//p' "$manifest")
+        fi
         [ "$(macos_checksum_file "$validation_plist")" = "$recorded_hash" ] ||
             die "Mac SSH supervisor plist changed"
     done
@@ -269,6 +274,17 @@ wait_for_running() {
     done
     return 1
 }
+
+primary_alias=${HARNESS_SSH_SUPERVISOR_PRIMARY_ALIAS:-login}
+secondary_alias=${HARNESS_SSH_SUPERVISOR_SECONDARY_ALIAS:-login2}
+supervisor_root_name=${HARNESS_SSH_SUPERVISOR_STATE_ROOT:-macos-ssh-supervisor}
+if ! macos_private_id_is_safe "$primary_alias" ||
+    ! macos_private_id_is_safe "$secondary_alias" ||
+    ! macos_private_id_is_safe "$supervisor_root_name"; then
+    die "invalid Mac SSH supervisor configuration"
+fi
+[ "$primary_alias" != "$secondary_alias" ] ||
+    die "Mac SSH supervisor aliases must be distinct"
 
 mode=plan
 logical_host=
@@ -294,7 +310,7 @@ require_safe_home
 launch_agents=$HOME/Library/LaunchAgents
 state_root=$HOME/.local/state/harness
 transaction_root=$state_root/transactions
-supervisor_root=$state_root/macos-ssh-supervisor
+supervisor_root=$state_root/$supervisor_root_name
 identity_file=$HOME/.ssh/harness-reverse
 
 case "$mode" in
@@ -355,7 +371,7 @@ case "$mode" in
             [ ! -e "$marker" ] && [ ! -L "$marker" ] ||
                 die "deactivate both Mac SSH supervisor services before rollback"
         done
-        for rollback_alias in login login2; do
+        for rollback_alias in "$primary_alias" "$secondary_alias"; do
             service_loaded "$rollback_alias" &&
                 die "loaded Mac SSH supervisor service blocks rollback"
         done
@@ -364,7 +380,7 @@ case "$mode" in
             [ "$supervisor_contents" = "$state_file" ] ||
                 die "Mac SSH supervisor rollback blocked by unexpected state content"
         fi
-        for rollback_alias in login login2; do
+        for rollback_alias in "$primary_alias" "$secondary_alias"; do
             unlink "$(plist_for "$rollback_alias")"
         done
         unlink "$state_file"
@@ -410,7 +426,7 @@ fi
 
 if [ "$mode" = status ]; then
     printf 'MACOS_SSH_SUPERVISOR mode=status host=%s privacy=value-free\n' "$logical_host"
-    for status_alias in login login2; do
+    for status_alias in "$primary_alias" "$secondary_alias"; do
         if service_loaded "$status_alias"; then loaded=yes; else loaded=no; fi
         if service_running "$status_alias"; then running=yes; else running=no; fi
         printf 'ALIAS name=%s loaded=%s running=%s managed=%s external=%s\n' \
@@ -428,7 +444,7 @@ chmod 700 "$temp_root"
 cleanup_temp() {
     status=$?
     trap - EXIT HUP INT TERM
-    for cleanup_alias in login login2; do
+    for cleanup_alias in "$primary_alias" "$secondary_alias"; do
         cleanup_file=$temp_root/$cleanup_alias.plist
         [ ! -e "$cleanup_file" ] && [ ! -L "$cleanup_file" ] || unlink "$cleanup_file"
     done
@@ -439,7 +455,7 @@ trap cleanup_temp EXIT HUP INT TERM
 
 blocked=0
 printf 'MACOS_SSH_SUPERVISOR mode=%s host=%s privacy=value-free\n' "$mode" "$logical_host"
-for plan_alias in login login2; do
+for plan_alias in "$primary_alias" "$secondary_alias"; do
     require_ssh_contract "$plan_alias"
     desired=$temp_root/$plan_alias.plist
     render_plist "$plan_alias" >"$desired"
@@ -471,7 +487,7 @@ validate_public_checkout
 "$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
     die "private profile changed before Mac SSH supervisor apply"
 macos_validate_ssh_config "$HOME/.ssh/config" "$current_uid" 600
-for apply_alias in login login2; do
+for apply_alias in "$primary_alias" "$secondary_alias"; do
     require_ssh_contract "$apply_alias"
     apply_destination=$(plist_for "$apply_alias")
     [ ! -e "$apply_destination" ] && [ ! -L "$apply_destination" ] ||
@@ -490,8 +506,8 @@ for reserved in "$manifest" "$status_file" "$state_file"; do
     [ ! -e "$reserved" ] && [ ! -L "$reserved" ] ||
         die "Mac SSH supervisor transaction identifier collision"
 done
-login_hash=$(macos_checksum_file "$temp_root/login.plist")
-login2_hash=$(macos_checksum_file "$temp_root/login2.plist")
+login_hash=$(macos_checksum_file "$temp_root/$primary_alias.plist")
+login2_hash=$(macos_checksum_file "$temp_root/$secondary_alias.plist")
 printf 'schema=1\noperation=macos-ssh-supervisor\nlogical_id=%s\nrevision=%s\nlogin_hash=%s\nlogin2_hash=%s\nsupervisor_root_before=%s\n' \
     "$logical_host" "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" \
     "$login_hash" "$login2_hash" "$supervisor_root_before" >"$manifest"
@@ -504,9 +520,13 @@ cleanup_apply() {
     status=$?
     trap - EXIT HUP INT TERM
     if [ "$apply_complete" -eq 0 ]; then
-        for cleanup_alias in login login2; do
+        for cleanup_alias in "$primary_alias" "$secondary_alias"; do
             cleanup_target=$(plist_for "$cleanup_alias")
-            cleanup_hash=$(sed -n "s/^${cleanup_alias}_hash=//p" "$manifest")
+            if [ "$cleanup_alias" = "$primary_alias" ]; then
+                cleanup_hash=$(sed -n 's/^login_hash=//p' "$manifest")
+            else
+                cleanup_hash=$(sed -n 's/^login2_hash=//p' "$manifest")
+            fi
             if [ -f "$cleanup_target" ] && [ ! -L "$cleanup_target" ] &&
                 [ "$(macos_checksum_file "$cleanup_target")" = "$cleanup_hash" ]; then
                 unlink "$cleanup_target"
@@ -527,7 +547,7 @@ cleanup_apply() {
 }
 trap cleanup_apply EXIT HUP INT TERM
 
-for apply_alias in login login2; do
+for apply_alias in "$primary_alias" "$secondary_alias"; do
     destination=$(plist_for "$apply_alias")
     staging=$launch_agents/.harness-ssh-$apply_alias.$transaction_id.new
     [ ! -e "$staging" ] && [ ! -L "$staging" ] ||
