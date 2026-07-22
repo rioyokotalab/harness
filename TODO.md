@@ -74,9 +74,13 @@ Confirmed planning facts:
   forward in addition to the launchd-owned connection. Dedicated tunnel-only
   aliases are required to eliminate bind conflicts without weakening
   fail-fast supervision.
-- Global `ForwardX11 yes` explains irrelevant X11 rejection warnings. AL also
-  lacks the `tmux-256color` terminfo entry while its `screen-256color` and
-  `xterm-256color` entries are healthy.
+- Global `ForwardX11 yes` explains irrelevant X11 rejection warnings. A
+  controlled AL Vim test reproduced its broken-prompt symptom only when the
+  missing `tmux-256color` entry forced Vim to ANSI fallback without alternate-
+  screen restoration; clean and tracked Vim configs behaved identically,
+  `xterm-256color` restored correctly, and tty modes remained intact. AL's
+  ncurses accepts the canonical entry in check-only mode for user-local
+  installation.
 - All four Macs run Codex 0.145.0, the current published npm version observed
   on 2026-07-22, with two Codex processes and three live arg0 locks each.
   Their clean `main` checkouts are at `c182bf4`, behind current public main.

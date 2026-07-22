@@ -93,6 +93,21 @@ secondary route requires the planned configuration change.
 - AL receives `TERM=tmux-256color`, has no matching terminfo entry, and fails
   `tput`; its `screen-256color` and `xterm-256color` entries are present. The
   complete harness doctor still passes with zero warnings.
+- A forced-PTY Vim A/B test at a fixed 80x24 geometry reproduced the visible
+  corruption with both `vim -Nu NONE` and the normal tracked Vim config when
+  `TERM=tmux-256color`. Vim reported `E558`, fell back to builtin ANSI, cleared
+  the screen, and emitted no alternate-screen restore. The same binaries and
+  configs entered and restored the alternate screen correctly with
+  `TERM=xterm-256color`; tty state was identical before and after both cases.
+  Thus the apparent broken prompt is erased/mispositioned display state, not a
+  damaged shell tty mode or Vim configuration.
+- AL's `/usr/local/bin/bash` login-shell path is absent from `/etc/shells`, but
+  resolves to the same `/usr/bin/bash` as `/bin/bash`; its interactive prompt
+  is the plain Bash default. The tracked Vim and tmux configs exactly match
+  local, so neither observation explains the TERM-dependent A/B result.
+- AL has no user terminfo tree. Its ncurses 6.1 `tic -c -x` accepts local's
+  canonical `tmux-256color` source without errors, demonstrating that a
+  user-local compiled entry is compatible without a system change.
 - `harness ssh-config-mirror --plan` stops locally with `SSH mirror local state
   has unsafe type` because `~/.local` is a managed symlink. Newer harness
   adapters already validate this declared layout safely.
@@ -255,12 +270,12 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
 9. **External-user skill — answered/accepted.** Implement D15's local-first,
    prerequisite-aware scope and keep remote-node onboarding as an explicit
    follow-on workflow.
-10. **Unresolved observations.** AL's measured defect is specifically missing
-    `tmux-256color`; the proposed fix installs the exact public terminfo entry
-    in the user tree without changing the site default. Confirm that matches
-    the terminal problem, or describe any additional symptom now. For `web`,
-    either provide an already-authorized route for an OS probe or accept an
-    explicit `unknown (SFTP authentication unavailable)` OS cell.
+10. **Unresolved observations.** AL's deeper controlled A/B diagnosis isolates
+    the broken-prompt symptom to missing `tmux-256color`; the proposed fix
+    installs the canonical entry in the user tree, validates Vim alternate-
+    screen restoration, and leaves site defaults unchanged. Confirm this fix.
+    For `web`, either provide an already-authorized route for an OS probe or
+    accept an explicit `unknown (SFTP authentication unavailable)` OS cell.
 
 ## Frozen execution order after decisions and final go
 
