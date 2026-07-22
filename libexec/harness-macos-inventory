@@ -45,10 +45,15 @@ brew_command=$(command -v brew 2>/dev/null || true)
 homebrew=absent
 homebrew_prefix_class=none
 brew_prefix=
+installed_formulae=
 if [ -n "$brew_command" ]; then
     if "$brew_command" --version >/dev/null 2>&1 &&
-        brew_prefix=$("$brew_command" --prefix 2>/dev/null); then
+        brew_prefix=$("$brew_command" --prefix 2>/dev/null) &&
+        installed_formula_versions=$("$brew_command" list --formula --versions 2>/dev/null); then
         homebrew=present
+        installed_formulae=$(printf '%s\n' "$installed_formula_versions" |
+            awk 'NF { print $1 }')
+        unset installed_formula_versions
         case "$brew_prefix" in
             /opt/homebrew) homebrew_prefix_class=apple-silicon-default ;;
             /usr/local) homebrew_prefix_class=intel-default ;;
@@ -139,8 +144,8 @@ printf '%s\n' "$managed_formulae,$retired_formulae" | tr ',' '\n' |
         formula_key=$(printf '%s' "$formula" | sed 's/+/p/g; s/[-@.]/_/g')
         formula_state=unknown
         if [ "$homebrew" = present ]; then
-            if "$brew_command" list --formula --versions "$formula" \
-                >/dev/null 2>&1; then
+            if printf '%s\n' "$installed_formulae" |
+                grep -F -x "$formula" >/dev/null 2>&1; then
                 formula_state=present
             else
                 formula_state=absent

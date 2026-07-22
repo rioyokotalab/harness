@@ -402,6 +402,14 @@ Execution checkpoint 2026-07-22:
   Guarded-delete manifest `/tmp/harness-t295-eval-delete.manifest` validated and
   removed the 1,368-entry private raw evaluation root, verified protected
   anchors unchanged and the target absent, and was then exact-unlinked.
+- Aist's final doctor exposed a diagnostic alias bug rather than package drift:
+  Homebrew resolves retired alias `icu4c` to the selected `icu4c@78`, while the
+  bounded convergence adapter reports zero retirements, unmanaged formulae,
+  upgrades, or installs. The active repair inventories installed formula names
+  once and matches exact names locally, eliminating the false retired alias and
+  reducing 121 sequential Homebrew subprocesses to one bounded read-only query.
+  Focused inventory and plan/doctor regressions pass, including explicit
+  `icu4c@78=present` with `icu4c=absent` evidence.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
