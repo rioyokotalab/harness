@@ -28,6 +28,7 @@ tests/test-agent-upgrade.sh|agent replacement and recovery
 tests/test-agent-config-fleet.sh|agent configuration fleet focused suite
 tests/test-personal-macos-update.sh|personal macOS long-gap update focused suite
 tests/test-personal-macos-ssh-supervisor.sh|personal macOS SSH supervisor focused suite
+tests/test-personal-macos-python.sh|personal macOS Python focused suite
 tests/test-personal-macos-ssh-sync.sh|personal macOS SSH-sync focused suite
 tests/test-personal-macos-config-sync.sh|personal macOS config-sync focused suite
 tests/test-personal-macos-config-migrate.sh|personal macOS config-migration focused suite

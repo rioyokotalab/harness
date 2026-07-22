@@ -1,5 +1,7 @@
 # minor|patch|uv-version|os|arch|implementation
 3.11|3.11.15|0.11.31|linux|x86_64|cpython
 3.11|3.11.15|0.11.31|linux|aarch64|cpython
-3.12|3.12.13|0.11.31|linux|x86_64|cpython
-3.12|3.12.13|0.11.31|linux|aarch64|cpython
+3.12|3.12.12|0.11.31|linux|x86_64|cpython
+3.12|3.12.12|0.11.31|linux|aarch64|cpython
+3.11|3.11.15|0.11.31|darwin|aarch64|cpython
+3.12|3.12.13|0.11.31|darwin|aarch64|cpython

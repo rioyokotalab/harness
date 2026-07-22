@@ -44,7 +44,7 @@ manifest=$HOME/.local/state/harness/transactions/$transaction_id.manifest
 
 records=$(mktemp "${TMPDIR:-/tmp}/harness-rollback.XXXXXX")
 trap 'rm -f "$records"' EXIT HUP INT TERM
-awk -F'|' '$1 == "link" || $1 == "managed-link-new" || $1 == "managed-link-replaced" || $1 == "shell" || $1 == "shell-new" || $1 == "shell-prefix" || $1 == "patch" || $1 == "artifact" || $1 == "artifact-replaced" || $1 == "runtime" || $1 == "python" || $1 == "agent" || $1 == "agent-replaced" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+awk -F'|' '$1 == "link" || $1 == "managed-link-new" || $1 == "managed-link-replaced" || $1 == "shell" || $1 == "shell-new" || $1 == "shell-prefix" || $1 == "patch" || $1 == "artifact" || $1 == "artifact-replaced" || $1 == "runtime" || $1 == "python" || $1 == "python-portable" || $1 == "agent" || $1 == "agent-replaced" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
     "$manifest" >"$records"
 
 # Validate every path before mutating any path.
@@ -154,6 +154,25 @@ while IFS='|' read -r record destination field3 field4 field5 field6 field7 fiel
         dd if="$destination" bs=1 skip="$offset" count="$bytes" 2>/dev/null |
             cmp -s - "$applied_payload" ||
             die "rollback blocked: reviewed patch changed after apply: $destination"
+    elif [ "$record" = python-portable ]; then
+        expected_hash=$field3
+        case "$destination" in "$HOME/.local/opt/python/"*) ;; *) die "unsafe portable Python path" ;; esac
+        if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
+            continue
+        fi
+        [ -d "$destination" ] && [ ! -L "$destination" ] ||
+            die "rollback blocked: portable Python changed type"
+        tree_archive=$(mktemp "${TMPDIR:-/tmp}/harness-python-tree.XXXXXX")
+        tar --exclude='*/__pycache__' --exclude='*.pyc' --exclude='*.pyo' \
+            -cf "$tree_archive" -C "$destination" .
+        if command -v shasum >/dev/null 2>&1; then
+            observed_hash=$(shasum -a 256 "$tree_archive" | awk '{print $1}')
+        else
+            observed_hash=$(sha256sum "$tree_archive" | awk '{print $1}')
+        fi
+        unlink "$tree_archive"
+        [ "$observed_hash" = "$expected_hash" ] ||
+            die "rollback blocked: portable Python tree changed"
     elif [ "$record" = python ]; then
         expected_hash=$field3
         case "$destination" in "$HOME/.local/opt/python/"*) ;; *) die "unsafe Python path" ;; esac
@@ -346,6 +365,15 @@ EOF
                 echo "RESTORE file=$destination patch=reviewed-exact-bytes"
                 dd if="$original_payload" of="$destination" bs=1 seek="$offset" \
                     conv=notrunc 2>/dev/null
+            fi
+        elif [ "$record" = python-portable ]; then
+            if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
+                echo "KEEP python=$destination state=already-absent"
+            else
+                echo "REMOVE python=$destination"
+                guarded_delete_tree "${destination%/*}" "$destination" \
+                    "$HOME/.local/state/harness/transactions" ||
+                    die "guarded portable Python rollback cleanup failed"
             fi
         elif [ "$record" = python ]; then
             if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
