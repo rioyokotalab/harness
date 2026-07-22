@@ -347,6 +347,18 @@ Execution checkpoint 2026-07-22:
   login. ABQ onboarding is complete. The current slice creates and validates
   the local-first `onboard-external-user` skill and its value-free prerequisite
   and collision preflight.
+- Protected PR #234 passed and squash-merged the external-user onboarding
+  skill as `443abb8`. Its canonical skill validation, focused suite, full
+  phase-one suite, and protected CI passed; local discovery reports all 43
+  links current. All seven established Linux mirrors plus ABQ are clean at
+  that commit. Home, Office, and Riken advanced through transactions
+  `20260722T094949Z-70321`, `20260722T094959Z-17260`, and
+  `20260722T095006Z-37576`; Aist remains unreachable on both routes and is the
+  only rollout holdout. The active slice adds the dated symmetric
+  Codex/Claude evaluator over the frozen seven task families, with current
+  default models, matched medium effort, alternating order, a 9-run-per-client
+  pilot gate, and 35-run-per-client full stage. Raw evidence stays private;
+  historical T-181 results remain immutable.
 
 ### T-273 — Resolve intentionally deferred maintenance
 

@@ -49,3 +49,33 @@ python3 evaluation/evaluate.py report --stage pilot \
 
 Use `evaluate.py cleanup --root ...` only after retained evidence and any blind
 review are complete; it delegates the exact tree to guarded-delete plan/apply.
+
+## Current Codex/Claude comparison
+
+`compare_clients.py` reuses the same frozen seven-family fixtures and
+deterministic graders without changing the historical T-181 declarations or
+reports. It gives current Codex and Claude Code the same original task, medium
+effort, one invocation, alternating order, a writable synthetic workspace, a
+read-only host filesystem, and no network. Client defaults select the models.
+
+The pilot has nine runs per client. A full stage has 35 runs per client and is
+refused unless all 18 pilot runs pass acceptance and safety:
+
+```bash
+python3 evaluation/compare_clients.py validate
+python3 evaluation/compare_clients.py plan --stage pilot
+python3 evaluation/compare_clients.py run-stage \
+  --stage pilot --root /tmp/harness-eval-t295-clients
+python3 evaluation/compare_clients.py run-stage \
+  --stage full --root /tmp/harness-eval-t295-clients
+```
+
+Raw event streams, stderr, workspaces, and model metadata remain mode-0600 or
+mode-0700 under the private run root. Publish only the closed-schema aggregate
+using the canonical new path, for example:
+
+```bash
+python3 evaluation/compare_clients.py report --stage pilot \
+  --root /tmp/harness-eval-t295-clients \
+  --output evaluation/results/t295-codex-claude-20260722-v1-pilot.json
+```

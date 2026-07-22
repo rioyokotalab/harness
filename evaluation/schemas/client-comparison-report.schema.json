@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "experiment_id", "stage", "environment", "clients", "observed_models", "totals", "client_metrics", "paired", "task_families", "flagged_pairs", "scope_note"],
+  "properties": {
+    "schema": {"const": 1},
+    "experiment_id": {"const": "t295-codex-claude-20260722-v1"},
+    "stage": {"enum": ["pilot", "full"]},
+    "environment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["os", "arch", "kernel", "logical_cpus", "source_revision"],
+      "properties": {
+        "os": {"const": "linux"}, "arch": {"type": "string"}, "kernel": {"type": "string"},
+        "logical_cpus": {"type": "integer", "minimum": 1},
+        "source_revision": {"type": "string", "pattern": "[0-9a-f]{40}"}
+      }
+    },
+    "clients": {
+      "type": "object", "additionalProperties": false, "required": ["codex", "claude"],
+      "properties": {"codex": {"$ref": "#/$defs/client"}, "claude": {"$ref": "#/$defs/client"}}
+    },
+    "observed_models": {
+      "type": "object", "additionalProperties": false, "required": ["codex", "claude"],
+      "properties": {
+        "codex": {"type": "array", "items": {"type": "string"}},
+        "claude": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "totals": {
+      "type": "object", "additionalProperties": false, "required": ["runs", "passed", "safety_failures", "duration_ms"],
+      "properties": {
+        "runs": {"type": "integer", "minimum": 0}, "passed": {"type": "integer", "minimum": 0},
+        "safety_failures": {"type": "integer", "minimum": 0}, "duration_ms": {"type": "integer", "minimum": 0}
+      }
+    },
+    "client_metrics": {
+      "type": "object", "additionalProperties": false, "required": ["codex", "claude"],
+      "properties": {"codex": {"$ref": "#/$defs/metrics"}, "claude": {"$ref": "#/$defs/metrics"}}
+    },
+    "paired": {"$ref": "#/$defs/paired"},
+    "task_families": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["task_id", "codex", "claude", "paired"],
+        "properties": {
+          "task_id": {"type": "string"}, "codex": {"$ref": "#/$defs/metrics"},
+          "claude": {"$ref": "#/$defs/metrics"}, "paired": {"$ref": "#/$defs/paired"}
+        }
+      }
+    },
+    "flagged_pairs": {"type": "integer", "minimum": 0},
+    "scope_note": {"type": "string"}
+  },
+  "$defs": {
+    "client": {
+      "type": "object", "additionalProperties": false,
+      "required": ["command", "version", "requested_model", "reasoning_effort", "sandbox", "ephemeral", "automatic_delegation"],
+      "properties": {
+        "command": {"type": "string"}, "version": {"type": "string"}, "requested_model": {"type": "string"},
+        "reasoning_effort": {"type": "string"}, "sandbox": {"type": "string"},
+        "ephemeral": {"type": "boolean"}, "automatic_delegation": {"type": "boolean"}
+      }
+    },
+    "metrics": {
+      "type": "object", "additionalProperties": false,
+      "required": ["runs", "passed", "pass_rate", "pass_rate_wilson_95", "model_invocations", "duration_ms", "input_tokens", "input_tokens_known_runs", "output_tokens", "output_tokens_known_runs"],
+      "properties": {
+        "runs": {"type": "integer", "minimum": 0}, "passed": {"type": "integer", "minimum": 0},
+        "pass_rate": {"type": ["number", "null"]},
+        "pass_rate_wilson_95": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": ["number", "null"]}},
+        "model_invocations": {"type": "integer", "minimum": 0}, "duration_ms": {"type": "integer", "minimum": 0},
+        "input_tokens": {"type": ["integer", "null"], "minimum": 0}, "input_tokens_known_runs": {"type": "integer", "minimum": 0},
+        "output_tokens": {"type": ["integer", "null"], "minimum": 0}, "output_tokens_known_runs": {"type": "integer", "minimum": 0}
+      }
+    },
+    "paired": {
+      "type": "object", "additionalProperties": false,
+      "required": ["pairs", "candidate_minus_baseline_pass_rate", "distribution_free_95_interval", "interval_method", "candidate_only_passes", "baseline_only_passes", "ties"],
+      "properties": {
+        "pairs": {"type": "integer", "minimum": 0}, "candidate_minus_baseline_pass_rate": {"type": "number"},
+        "distribution_free_95_interval": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}},
+        "interval_method": {"type": "string"}, "candidate_only_passes": {"type": "integer", "minimum": 0},
+        "baseline_only_passes": {"type": "integer", "minimum": 0}, "ties": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}
