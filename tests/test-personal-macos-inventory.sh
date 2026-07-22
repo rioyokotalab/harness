@@ -155,7 +155,7 @@ if grep -E '(^| )(update|upgrade|install|cleanup|services|tap|bundle)( |$)' \
 fi
 expected_query_count=$(sed -n \
     -e 's/^managed_formulae=//p' -e 's/^retired_formulae=//p' \
-    "$ROOT/profiles/personal-macos/formula-policy-v2.conf" | tr ',' '\n' |
+    "$ROOT/profiles/personal-macos/formula-policy-v3.conf" | tr ',' '\n' |
     awk '!seen[$0]++ { count++ } END { print count + 0 }')
 [ "$(grep -c '^list --formula --versions ' "$brew_log")" -eq \
     "$expected_query_count" ] ||

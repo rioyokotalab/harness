@@ -60,6 +60,16 @@ managed_formulae=bash,git,git-lfs,tmux,ripgrep,jq,tree,shellcheck
 EOF
 cmp -s "$legacy_public_profile" "$ROOT/profiles/personal-macos/base.conf" ||
     fail "public baseline no longer passes the frozen engine-1 contract"
+legacy_formula_policy=$TEMP_DIR/legacy-formula-policy-v2.conf
+cat >"$legacy_formula_policy" <<'EOF'
+schema=2
+family=personal-macos
+managed_formulae=bash,bash-completion@2,git,git-lfs,tmux,ripgrep,jq,tree,shellcheck,uv
+retired_formulae=bash-completion,pyenv
+EOF
+cmp -s "$legacy_formula_policy" \
+    "$ROOT/profiles/personal-macos/formula-policy-v2.conf" ||
+    fail "formula policy v2 no longer passes the frozen updater contract"
 
 configure_identity() {
     git -C "$1" config user.name mac-test
@@ -96,6 +106,8 @@ setup_pair() {
         "$public_source/profiles/personal-macos/base.conf"
     cp "$ROOT/profiles/personal-macos/formula-policy-v2.conf" \
         "$public_source/profiles/personal-macos/formula-policy-v2.conf"
+    cp "$ROOT/profiles/personal-macos/formula-policy-v3.conf" \
+        "$public_source/profiles/personal-macos/formula-policy-v3.conf"
     cp -p "$ROOT/libexec/harness-common" \
         "$ROOT/libexec/harness-macos-common" \
         "$ROOT/libexec/harness-macos-profile" \

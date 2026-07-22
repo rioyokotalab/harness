@@ -157,9 +157,9 @@ private repository's contents.
 ## Bounded Homebrew catch-up
 
 Private `capability_groups` are classification labels and are never converted
-into guessed package names. The frozen eight-formula `base.conf` remains
-byte-compatible with the oldest engine-1 updater. Current desired state is the
-separate schema-2 `formula-policy-v2.conf`: the complete reviewed cross-Mac
+into guessed package names. The frozen eight-formula `base.conf` and schema-2
+formula policy remain byte-compatible with older updaters. Current desired state is the
+separate schema-3 `formula-policy-v3.conf`: the complete reviewed cross-Mac
 formula set, its full dependency closure, the reviewed retirement set, and any
 selected private `extra_formulae`. The public selection is intentionally exact:
 after a converged rollout, every personal Mac has the same public formula set.
