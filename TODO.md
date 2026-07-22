@@ -153,6 +153,19 @@ Execution checkpoint 2026-07-22:
   tests pass. Next: commit from the verified tree, run clean Phase 1, publish,
   synchronize, install the fragment layout on local and t4, then execute the
   separately authorized mirror plan/apply.
+- Protected PR #214 passed `portable-phase1` and squash-merged that repair as
+  `71cc888`; guarded fleet sync advanced all six clean Linux mirrors to the
+  exact merge. Local and t4 canonical layout transactions
+  `20260722T051216Z-401698` and `20260722T051229Z-2297395` completed, the
+  separately authorized local-to-t4 mirror applied with rollback available,
+  and its follow-up plan reports `agreement=yes action=none`.
+- Each Mac's exact current-user-owned, single-link regular `~/.sync_get.sh`
+  was independently revalidated and exact-unlinked. A subsequent inventory
+  reports the path absent on local, all six remote Linux nodes, and all four
+  Macs. No wildcard, looped deletion, or recursive deletion was used.
+- Current slice: implement and validate AL's user-local canonical
+  `tmux-256color` deployment, then publish and roll it out with controlled PTY
+  acceptance.
 
 ### T-273 — Resolve intentionally deferred maintenance
 

@@ -1,0 +1,227 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() {
+    echo "Usage: harness terminfo --host al [--plan|--apply|--rollback TRANSACTION_ID]" >&2
+}
+
+logical_host=
+mode=plan
+rollback_id=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        --rollback)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            mode=rollback; rollback_id=$2; shift 2
+            ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+
+[ "$logical_host" = al ] || die "terminfo deployment is restricted to al"
+[ "${HARNESS_LOGICAL_HOST:-$logical_host}" = "$logical_host" ] ||
+    die "logical host does not match this environment"
+[ "$(uname -s)" = Linux ] || die "terminfo deployment requires Linux"
+case ${HOME:-} in /*) ;; *) die "terminfo deployment requires an absolute HOME" ;; esac
+uid=$(id -u)
+source_file=$HARNESS_ROOT/config/terminfo/tmux-256color.src
+terminfo_root=$HOME/.terminfo
+state_root=$HOME/.local/state/harness/transactions
+
+stat_owner() { stat -c '%u' -- "$1"; }
+stat_mode() { stat -c '%a' -- "$1"; }
+file_hash() { sha256sum "$1" | awk '{ print $1 }'; }
+
+validate_source() {
+    [ -f "$source_file" ] && [ ! -L "$source_file" ] ||
+        die "canonical terminfo source is unavailable"
+    LC_ALL=C tic -c -x "$source_file" >/dev/null 2>&1 ||
+        die "canonical terminfo source is incompatible"
+}
+
+entry_state() {
+    if [ ! -e "$terminfo_root" ] && [ ! -L "$terminfo_root" ]; then
+        printf 'missing\n'
+        return
+    fi
+    [ -d "$terminfo_root" ] && [ ! -L "$terminfo_root" ] &&
+        [ "$(stat_owner "$terminfo_root")" = "$uid" ] ||
+        die "user terminfo root is unsafe"
+    if observed=$(LC_ALL=C infocmp -A "$terminfo_root" -x -1 \
+        tmux-256color 2>/dev/null | sed '/^#/d'); then
+        expected=$(LC_ALL=C sed '/^#/d' "$source_file")
+        [ "$observed" = "$expected" ] ||
+            die "existing tmux-256color entry differs from canonical source"
+        printf 'current\n'
+    else
+        printf 'missing\n'
+    fi
+}
+
+ensure_state_root() {
+    umask 077
+    for directory in "$HOME/.local" "$HOME/.local/state" \
+        "$HOME/.local/state/harness" "$state_root"; do
+        if [ -e "$directory" ] || [ -L "$directory" ]; then
+            [ -d "$directory" ] && [ ! -L "$directory" ] ||
+                die "terminfo transaction state is unsafe"
+            [ "$(stat_owner "$directory")" = "$uid" ] ||
+                die "terminfo transaction state owner mismatch"
+        else
+            mkdir "$directory"
+        fi
+    done
+    chmod 700 "$HOME/.local/state/harness" "$state_root"
+}
+
+validate_source
+if [ "$mode" != rollback ]; then
+    state=$(entry_state)
+    action=install
+    [ "$state" != current ] || action=none
+    echo "TERMINFO mode=$mode host=al entry=tmux-256color state=$state action=$action"
+    if [ "$mode" = plan ]; then
+        echo "END terminfo changes=not-applied"
+        exit 0
+    fi
+    [ "$action" = install ] || {
+        echo "END terminfo changes=none"
+        exit 0
+    }
+    [ -z "$(git -C "$HARNESS_ROOT" status --porcelain=v1)" ] ||
+        die "terminfo apply requires a clean harness checkout"
+    for command_name in tic infocmp tput sha256sum find realpath; do
+        command -v "$command_name" >/dev/null 2>&1 ||
+            die "terminfo apply requires command: $command_name"
+    done
+    ensure_state_root
+    transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+    stage=$state_root/.terminfo-stage.$transaction_id
+    manifest=$state_root/$transaction_id.terminfo.manifest
+    status_file=$state_root/$transaction_id.terminfo.status
+    [ ! -e "$stage" ] && [ ! -L "$stage" ] || die "terminfo stage collision"
+    [ ! -e "$manifest" ] && [ ! -L "$manifest" ] || die "terminfo manifest collision"
+    mkdir "$stage"
+    chmod 700 "$stage"
+    cleanup_stage=1
+    cleanup() {
+        result=$?
+        trap - EXIT HUP INT TERM
+        if [ "$cleanup_stage" -eq 1 ] && [ -d "$stage" ] && [ ! -L "$stage" ]; then
+            guarded_delete_tree "$state_root" "$stage" "$state_root" || result=2
+        fi
+        exit "$result"
+    }
+    trap cleanup EXIT
+    trap 'exit 129' HUP
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+    LC_ALL=C tic -x -o "$stage" "$source_file"
+    compiled=$(find "$stage" -mindepth 2 -maxdepth 2 -type f \
+        -name tmux-256color -print)
+    [ "$(printf '%s\n' "$compiled" | awk 'NF { n++ } END { print n + 0 }')" -eq 1 ] ||
+        die "terminfo compiler produced an unexpected layout"
+    relative=${compiled#"$stage"/}
+    case "$relative" in
+        [A-Za-z0-9]/tmux-256color|[0-9A-Fa-f][0-9A-Fa-f]/tmux-256color) ;;
+        *) die "terminfo compiler produced an unsafe destination" ;;
+    esac
+    destination=$terminfo_root/$relative
+    destination_parent=${destination%/*}
+    created_root=no
+    created_parent=no
+    if [ ! -e "$terminfo_root" ] && [ ! -L "$terminfo_root" ]; then
+        mkdir "$terminfo_root"
+        chmod 700 "$terminfo_root"
+        created_root=yes
+    fi
+    [ -d "$terminfo_root" ] && [ ! -L "$terminfo_root" ] &&
+        [ "$(stat_owner "$terminfo_root")" = "$uid" ] ||
+        die "user terminfo root became unsafe"
+    if [ ! -e "$destination_parent" ] && [ ! -L "$destination_parent" ]; then
+        mkdir "$destination_parent"
+        chmod 700 "$destination_parent"
+        created_parent=yes
+    fi
+    [ -d "$destination_parent" ] && [ ! -L "$destination_parent" ] &&
+        [ "$(stat_owner "$destination_parent")" = "$uid" ] ||
+        die "terminfo destination parent is unsafe"
+    [ ! -e "$destination" ] && [ ! -L "$destination" ] ||
+        die "terminfo destination appeared during apply"
+    destination_new=$destination_parent/.tmux-256color.$$
+    [ ! -e "$destination_new" ] && [ ! -L "$destination_new" ] ||
+        die "terminfo destination stage collision"
+    cp "$compiled" "$destination_new"
+    chmod 600 "$destination_new"
+    after_hash=$(file_hash "$destination_new")
+    printf 'schema=1\nhost=al\ndestination=%s\nafter_hash=%s\ncreated_root=%s\ncreated_parent=%s\n' \
+        "$destination" "$after_hash" "$created_root" "$created_parent" >"$manifest"
+    chmod 600 "$manifest"
+    mv "$destination_new" "$destination"
+    printf 'complete\n' >"$status_file"
+    chmod 600 "$status_file"
+    guarded_delete_tree "$state_root" "$stage" "$state_root"
+    cleanup_stage=0
+    LC_ALL=C infocmp -A "$terminfo_root" -x tmux-256color >/dev/null
+    TERM=tmux-256color TERMINFO="$terminfo_root" tput colors >/dev/null
+    trap - EXIT HUP INT TERM
+    echo "TERMINFO action=applied transaction=$transaction_id rollback=available"
+    exit 0
+fi
+
+case "$rollback_id" in ''|*[!A-Za-z0-9._-]*) die "invalid terminfo transaction ID" ;; esac
+ensure_state_root
+manifest=$state_root/$rollback_id.terminfo.manifest
+status_file=$state_root/$rollback_id.terminfo.status
+for private_file in "$manifest" "$status_file"; do
+    [ -f "$private_file" ] && [ ! -L "$private_file" ] &&
+        [ "$(stat_owner "$private_file")" = "$uid" ] &&
+        [ "$(stat_mode "$private_file")" = 600 ] ||
+        die "terminfo rollback state is unsafe"
+done
+[ "$(sed -n '1p' "$status_file")" = complete ] ||
+    die "terminfo transaction is not complete"
+schema=$(sed -n 's/^schema=//p' "$manifest")
+manifest_host=$(sed -n 's/^host=//p' "$manifest")
+destination=$(sed -n 's/^destination=//p' "$manifest")
+after_hash=$(sed -n 's/^after_hash=//p' "$manifest")
+created_root=$(sed -n 's/^created_root=//p' "$manifest")
+created_parent=$(sed -n 's/^created_parent=//p' "$manifest")
+[ "$schema" = 1 ] && [ "$manifest_host" = al ] ||
+    die "terminfo rollback manifest is invalid"
+case "$destination" in "$terminfo_root"/*/tmux-256color) ;; *) die "terminfo rollback destination is invalid" ;; esac
+[ "${#after_hash}" -eq 64 ] || die "terminfo rollback hash is invalid"
+case "$created_root:$created_parent" in yes:yes|no:yes|no:no) ;; *) die "terminfo rollback directory state is invalid" ;; esac
+[ -f "$destination" ] && [ ! -L "$destination" ] &&
+    [ "$(stat_owner "$destination")" = "$uid" ] &&
+    [ "$(file_hash "$destination")" = "$after_hash" ] ||
+    die "installed terminfo entry changed; rollback refused"
+destination_parent=${destination%/*}
+if [ "$created_parent" = yes ]; then
+    [ -d "$destination_parent" ] && [ ! -L "$destination_parent" ] ||
+        die "created terminfo parent changed; rollback refused"
+    parent_entries=$(find "$destination_parent" -mindepth 1 -maxdepth 1 -print |
+        wc -l | tr -d ' ')
+    [ "$parent_entries" -eq 1 ] ||
+        die "created terminfo parent is no longer exclusive; rollback refused"
+fi
+if [ "$created_root" = yes ]; then
+    root_entries=$(find "$terminfo_root" -mindepth 1 -maxdepth 1 -print |
+        wc -l | tr -d ' ')
+    [ "$root_entries" -eq 1 ] ||
+        die "created terminfo root is no longer exclusive; rollback refused"
+fi
+unlink "$destination"
+[ "$created_parent" != yes ] || rmdir "$destination_parent"
+[ "$created_root" != yes ] || rmdir "$terminfo_root"
+printf 'rolled-back\n' >"$status_file"
+echo "TERMINFO action=rolled-back transaction=$rollback_id"
