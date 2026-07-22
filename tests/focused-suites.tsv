@@ -37,6 +37,7 @@ tests/test-terminfo.sh|AL user-local terminfo focused suite
 tests/test-ssh-config-layout.sh|transactional shared SSH layout migration
 tests/test-restic-schedule.sh|Restic schedule focused suite
 tests/test-onboard-mirrored-node.sh|onboarding focused suite
+tests/test-onboard-external-user.sh|external user onboarding focused suite
 tests/test-onboard-personal-mac-skill.sh|personal Mac onboarding skill
 tests/test-macos-codex-bootstrap.sh|personal Mac Codex bootstrap
 tests/test-evaluation.sh|evaluation focused suite

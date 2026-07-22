@@ -60,7 +60,7 @@ node, with zero planned control-plane changes.
 
 ## Current deployed state
 
-The managed fleet comprises `local`, `ab`, `ab2`, `ri`, `al`, `rc`, and `t4`.
+The managed fleet comprises `local`, `ab`, `ab2`, `abq`, `ri`, `al`, `rc`, and `t4`.
 Each environment has a clean harness checkout synchronized to published
 `main`. The `abci_login` and `alps_login` aliases are transport-only, and the
 retired `si` environment is not a target. Exact host capabilities and native
@@ -149,6 +149,23 @@ First-run acceptance includes portable control-plane parity, approved storage
 migration, primary backup/check/restore, and an independently restored
 encrypted generation. Scheduler recurrence is deliberately separate and can be
 considered only after the manual restore evidence is stable.
+
+## External-user local onboarding
+
+The shared `onboard-external-user` skill provides a local-first Linux/macOS
+clone, prerequisite, install, and validation workflow for accounts that have
+none of this owner's hidden files, credentials, remote nodes, storage roots,
+or backups. Its deterministic preflight reports only platform classes,
+required-command presence, checkout cleanliness, and aggregate discovery-link
+states:
+
+```bash
+shared/skills/onboard-external-user/scripts/preflight --repo "$PWD"
+```
+
+It refuses dirty checkouts and existing-path collisions before installation.
+Missing system prerequisites, client installation/authentication, collision
+adoption, and every remote-node action remain separate owner decisions.
 
 Run the phase-1 validation suite with:
 

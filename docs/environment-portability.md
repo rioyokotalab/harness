@@ -29,7 +29,7 @@ transport-only proxy nodes, not deployment targets.
 | --- | --- | --- | --- | --- |
 | current | Ubuntu 24.04 | Bash, x86_64 | modules, Docker/Podman, CUDA, local Slurm/`yrun` commands | installed |
 | `ab`, `ab2` | RHEL 9.4 | Bash, x86_64 | modules, PBS Pro, Singularity CE, Podman, CUDA | installed |
-| `abq` | RHEL 9.4 | Bash, x86_64 | modules, PBS Pro, Singularity CE | onboarding |
+| `abq` | RHEL 9.4 | Bash, x86_64 | modules, PBS Pro, Singularity CE | installed |
 | `ri` | Ubuntu 24.04 | Bash, aarch64 | Slurm, NVIDIA GPU exposure | installed |
 | `al` | SLES 15 SP6 | Bash, aarch64 | uenv/`ml`, Slurm, Docker/Podman, NVIDIA GH200 | installed |
 | `rc` | Rocky 9.8 | Bash, x86_64 | modules, Singularity CE, Slurm | installed |
