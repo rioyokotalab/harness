@@ -1,0 +1,173 @@
+# T-296 Mac connectivity resilience audit
+
+## Status
+
+T-296 is partially converged and remains open at the owner-credential gate.
+Aist has the published Mac-local watchdog and recovered during controlled and
+natural dual-route losses while that watchdog was active. The owner-launched
+Aist Codex also remained active, however, so those live results establish
+convergence rather than sole watchdog causation. Home, Office, and Riken retain live established routes but
+their dedicated identities cannot create fresh sessions, so rollout and drills
+on those Macs are correctly blocked. No agent inspected or changed a key,
+`authorized_keys`, SSH configuration, or sshd configuration.
+
+The frozen design and acceptance gates are in
+[`docs/plans/t296-mac-connectivity-resilience.md`](../plans/t296-mac-connectivity-resilience.md).
+
+## Root cause and rejected alternatives
+
+Aist's repeated simultaneous outages preserve dedicated authentication while
+both launchd jobs stop with exit 255 and both fixed reverse-listener ports stay
+occupied on Local. Real forward-bind probes fail until the server releases the
+old half-open SSH sessions. The former 15-second launchd retry loop repeatedly
+attempted the same occupied ports and provided no bounded drain phase.
+
+The controller can observe those root-owned sshd listeners but cannot map them
+unambiguously to one Mac. Killing a server process was therefore rejected.
+Additive TCP and Unix-socket reverse-listener probes were also rejected after
+the existing restricted authorization refused them. The task did not broaden
+`permitlisten`, add a key, weaken key restrictions, change server policy, or
+introduce an external connectivity service.
+
+The implemented recovery instead runs on the Mac, where it remains reachable
+even when both inbound routes disappear. A transaction-owned launchd watchdog
+serializes with controller recovery through a crash-recoverable private lease,
+stops only failed exact services, polls real forward binds, and restores each
+route independently. It leaves a healthy sibling untouched and restores the
+launchd baseline on timeout or failure.
+
+## Published control plane
+
+| PR | Protected commit | Result |
+| --- | --- | --- |
+| #257 | `d188c3e9d0c045c185e6312cf43cddbc5b563064` | Transactional Mac-local watchdog, dual drain, stale-safe lease, documentation and synthetic rollback coverage. |
+| #258 | `55693c581556446bb374fe2b32d64e700eae7aca` | Independent single-route drain and controller routing through the same recovery state machine. |
+| #259 | `d91857b2ff11eaaf464136915bf23cfa089bba93` | Value-free fresh-auth status and healthy-but-at-risk classification. |
+| #260 | `2ca91146021989014ed9b5108e99dfc8e67a0528` | Explicit primary/secondary authorization-blocked classification after a failed recovery. |
+
+Every PR passed protected `portable-phase1`. Clean local phase-one runs passed
+all focused suites and guarded-delete tests before publication. Native macOS
+probes on all four Macs proved the recovery lock's atomic noclobber behavior,
+owner/mode/link gates, and stable PID/start identity. All temporary lock and
+power-log probes were exact-cleaned.
+
+Guarded fleet-sync advanced local, all seven managed remote Linux checkouts,
+and all four Macs to `2ca91146021989014ed9b5108e99dfc8e67a0528`. One
+overlapping fleet-sync retry observed an already-applied first target; the
+subsequent all-host plan found every target clean/current and no transfer
+artifact. Persistent monitor script replacement produced one NFS placeholder
+held by exactly the two known tmux monitors; respawning only those panes onto
+the new committed script released it automatically.
+
+## Aist pilot evidence
+
+- Watchdog transaction: `20260722T160219Z-66174`.
+- Healthy install: both routes stayed reachable, both tunnel services remained
+  `managed=1 external=0`, and the watchdog's first run exited 0.
+- Single-route unloads: both primary and secondary returned without owner
+  interaction. The measured secondary recovery was 23 seconds. The active
+  Aist Codex means the live actor cannot be attributed exclusively.
+- Controlled simultaneous unload: both Local routes disappeared and both
+  stale listener ports remained occupied. Both routes returned without a
+  controller route, with the primary first and both routes in roughly seven
+  minutes. Final ownership was exactly one managed process per route, zero
+  external processes, and watchdog exit 0; the concurrently active Aist Codex
+  prevents assigning that recovery solely to the watchdog.
+- Natural soak recurrence at 01:36 JST: the 30-second observer recorded Aist
+  `0/2`; both routes were independently ready again by 01:37:32, bounding that
+  no-owner-interaction recovery sample to at most 64 seconds. Final supervisor status
+  again showed `managed=1 external=0` for both routes and watchdog exit 0.
+- A two-hour power-log classification around the earlier recurrence found no
+  Aist sleep or wake event. The private native log was never printed and was
+  exact-unlinked.
+
+The watchdog rollback is intentionally retained and removes only its unchanged
+transaction-owned launch agent and private current pointer:
+
+```bash
+harness macos-tunnel-watchdog --rollback 20260722T160219Z-66174
+```
+
+Rollback is not indicated while the Aist soak remains healthy.
+
+## Authorization drift discovered by soak
+
+Fresh isolated dedicated-authentication checks produced this value-free state:
+
+| Mac | Fresh primary | Fresh secondary | Established inbound state at discovery |
+| --- | --- | --- | --- |
+| Aist | ready | ready | `2/2` |
+| Home | blocked | blocked | primary ready, secondary down |
+| Office | blocked | blocked | initially `2/2`; primary later down |
+| Riken | blocked | blocked | `2/2` |
+
+Home's unread mode-0600 SSH trace classified both attempts as authorization
+rejection, not DNS, TCP, route, or host-key failure, and was exact-unlinked.
+The Local listener for Home2 was absent, distinguishing it from Aist's stale
+listener failure. The new five-minute monitor now reports:
+
+- Aist: `healthy action=none`.
+- Office: `at-risk action=authorization-blocked-primary`.
+- Riken: `at-risk action=authorization-blocked` while both old routes live.
+- Home: `at-risk action=authorization-blocked-secondary`.
+
+An established SSH session surviving removal of its authorization explains why
+ordinary route probes had previously looked healthy. The new audit prevents
+that false assurance, but software cannot repair missing credential state.
+
+## Owner-only permanent hardening proposal
+
+The least-intervention security-preserving server design is one root-owned
+secondary `AuthorizedKeysFile` dedicated to the four restricted tunnel
+entries. Keep the account's current ordinary key file in sshd's effective list
+and add an absolute root-owned harness file. This isolates tunnel authorization
+from ordinary user-level `authorized_keys` rewrites. Preserve the exact prior
+per-Mac restrictions and listener bounds; do not reconstruct or broaden them.
+
+Scope server-side liveness to this account with `ClientAliveInterval 15` and
+`ClientAliveCountMax 3`, symmetric with the managed clients. Responsive idle
+sessions remain connected, while a Mac that disappears without a TCP close is
+disconnected by sshd after roughly 45 seconds, releasing its listeners before
+the watchdog reconnects. The tradeoff
+is that any genuinely unresponsive SSH session for this account is discarded
+sooner. Validate the effective `Match User` configuration with `sshd -T -C`,
+validate syntax with `sshd -t`, and reload rather than restart sshd so current
+sessions remain available.
+
+OpenSSH documents that `AuthorizedKeysFile` accepts multiple whitespace-
+separated files and that server client-alive messages are sent through the
+encrypted channel. Primary references:
+
+- [OpenBSD `sshd_config(5)`](https://man.openbsd.org/sshd_config)
+- [OpenBSD `sshd(8)`](https://man.openbsd.org/sshd.8)
+
+This proposal requires owner/admin handling because it changes system sshd
+policy and credential authorization. The agent must not create the root file,
+read/copy the entries, or edit either authorization source.
+
+## Remaining acceptance sequence
+
+1. Owner restores the exact restricted Home, Office, and Riken entries and
+   optionally moves all four entries into the root-owned secondary file.
+2. Require `auth_blocked=0` on Home, Office, and Riken and retain Aist `0`; then
+   restore Home2 and Office primary through the published bounded recovery.
+3. Install the watchdog transaction on Home, Office, and Riken one at a time.
+4. After each install, run primary-only, secondary-only, and simultaneous-loss
+   drills, retaining a healthy sibling whenever possible and validating both
+   inbound routes plus `managed=1 external=0`.
+5. Complete the nightly soak, publish final event counts/recovery bounds, stop
+   the temporary 30-second observer, retain the five-minute recovery monitor,
+   and close T-296 only after all four Macs pass.
+
+## Current runtime state
+
+- `harness-connection-monitor`: five-minute recovery and fresh-auth audit.
+- `t296-night-watch`: temporary 30-second route-only observer; no recovery, so
+  it cannot race the watchdog.
+- The owner-launched Codex process remained present on Aist during the early
+  drills, so watchdog exit 0 does not by itself exclude concurrent Codex
+  intervention. Its two historical tunnel tmux panes were both dead. Local
+  queued an explicit observe-only coordination request to the live Codex pane;
+  an independent post-acknowledgement recovery sample remains required for
+  sole-attribution evidence.
+- Credential and SSH configuration bytes remain outside repository evidence.
