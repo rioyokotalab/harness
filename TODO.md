@@ -78,7 +78,9 @@ shared-ControlMaster rescue forwards were replaced one at a time by its two
 managed services. Aist's pilot watchdog was upgraded, Home/Office/Riken received
 fresh watchdog transactions, and primary-only, secondary-only, and
 simultaneous-loss drills passed on all four Macs. The final manual monitor
-sample reported every Mac pair and ABQ healthy with no action.
+sample reported every Mac pair and ABQ healthy with no action. The closeout
+passed `git diff --check`, the public-repository audit, and the complete
+`tests/test-phase1.sh` gate.
 The durable plan is
 `docs/plans/t296-mac-connectivity-resilience.md`; the evidence handoff is
 `docs/audits/t296-mac-connectivity-resilience-2026-07-23.md`. The temporary

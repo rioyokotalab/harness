@@ -380,6 +380,8 @@ The permanent five-minute monitor remained active. Post-hardening samples after
 the drills reported every Mac pair and ABQ healthy with no recovery action.
 This completes the acceptance sequence; future outages remain observable
 through the monitor and each Mac's atomic watchdog receipt.
+The closeout passed `git diff --check`, the public-repository audit, and the
+complete `tests/test-phase1.sh` gate from a clean checkpoint commit.
 
 ## Final runtime state
 
