@@ -425,9 +425,7 @@ Execution checkpoint 2026-07-22:
   `1e95fbd`. All eight Linux checkouts plus Office and Riken are clean/current
   there; Aist is clean at `b2d54f9` and Home is clean at `ee10361`. Their final
   catch-up is retry-safe after route recovery.
-- The persistent five-minute monitor is deliberately observation-only while
-  credentials are invalid. A fresh explicit cycle reports Aist 0/2, Office
-  2/2, Riken 2/2, Home 0/2, and ABQ 2/2. The published final repair lets `--kick` recover an
+- The published final repair lets `--kick` recover an
   active transaction whose launchd service is unloaded: it requires zero
   managed/external processes and fresh unattended authentication before
   bootstrapping the unchanged transaction plist, cleans up a failed bootstrap,
@@ -442,8 +440,15 @@ Execution checkpoint 2026-07-22:
   mode because the published authentication preflight now makes it safe. A
   deliberate Riken kick with its still-invalid fresh authentication refused
   before launchd, preserved both managed processes, and left both routes ready.
-  Only Aist, Home, and Riken still require owner-side key reauthorization;
-  Aist/Home route restoration and catch-up remain the exact next action.
+  Aist has now passed fresh agent-disabled dedicated authentication on both
+  aliases; both launchd-managed routes are running, and its clean public
+  checkout is current at `ea9db4e`. Home remains down on both routes. Its
+  process and current-pane agent variables are stale non-sockets, no Mac fixed
+  agent socket is declared, and agentless Apple SSH authentication through the
+  existing config/Keychain fails for both aliases. Local recovery is therefore
+  exhausted without credential mutation. Home and Riken still require
+  owner-side key reauthorization; after Home reauthorization, recover its two
+  routes, advance its clean checkout from `ee10361`, and run final acceptance.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
