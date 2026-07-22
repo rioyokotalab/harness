@@ -188,6 +188,10 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
   `/groups/qgai50157/yokota/restic/home-control` and maintain its independent
   replica on local at
   `/mnt/nfs-03/safe/Users/rioyokota/restic-replicas/abq`.
+- D12 — **credential prerequisite satisfied:** the owner provisioned ABQ's
+  existing Restic password file. A value-free check verified it is a
+  current-user-owned regular file with mode `0600`; no credential content was
+  inspected.
 
 1. **Fleet scope and publication — answered/accepted.** Define the existing 11-node
    maintenance/Python/package scope as local, ab, ab2, al, rc, ri, t4, aist,
@@ -216,7 +220,7 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
    tunnel. Confirm this route design or provide another priority.
 6. **ABQ storage, hidden-home policy, and backup topology — answered/accepted.**
    Use D9's roots, D10's hidden-home policy, and D11's two-location backup
-   topology after the final go. The Restic credential remains an owner-only
+   topology after the final go. D12 satisfies the owner-only Restic credential
    prerequisite. Missing packages remain limited to declared checksum-pinned
    user-space tools, never system packages.
 7. **Python policy.** Recommended: manage exact CPython 3.12.12 on all 11

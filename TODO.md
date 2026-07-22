@@ -103,7 +103,8 @@ Confirmed planning facts:
   `/groups/qgai50157/yokota/restic/home-control` as the primary Restic
   repository and local's
   `/mnt/nfs-03/safe/Users/rioyokota/restic-replicas/abq` as its independent
-  replica. The absent Restic password remains an owner-only prerequisite.
+  replica. The owner provisioned the Restic password on ABQ; a value-free
+  check verified a current-user-owned regular file with mode `0600`.
 
 **Next action:** receive the complete owner decision bundle, checkpoint the
 answers, audit the plan, move to `ready-for-go`, and request the final explicit
