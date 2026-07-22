@@ -98,6 +98,8 @@ yet have the new receipt or elapsed-deadline code deployed.
   after every failed bind probe. A lost authorization now restores the exact
   launchd baseline immediately and records `authorization-blocked`; otherwise
   the real elapsed deadline records `drain-timeout`.
+  Aist was still `0/2` at 02:47:35, more than 41 minutes after first detection,
+  so the deployed loop did not restore reachability at its calculated edge.
 - A two-hour power-log classification around the earlier recurrence found no
   Aist sleep or wake event. The private native log was never printed and was
   exact-unlinked.
@@ -172,6 +174,41 @@ encrypted channel. Primary references:
 This proposal requires owner/admin handling because it changes system sshd
 policy and credential authorization. The agent must not create the root file,
 read/copy the entries, or edit either authorization source.
+
+### One-time owner/admin sequence
+
+Perform this on Local from a separately preserved administrative session. The
+exact filesystem locations and reload command must follow Local's installed
+OpenSSH service; do not paste guessed paths into production.
+
+1. Preserve the current sshd configuration and authorization files with
+   root-only owner, mode, and rollback metadata. Obtain the exact four prior
+   restricted tunnel entries from the owner's trusted source. Do not derive a
+   new entry, remove unrelated authorizations, or broaden any key option.
+2. Create a root-owned mode-0600 secondary authorization file outside the
+   account-writable `.ssh` tree and place only those four exact entries in it.
+3. At the effective first-value position for this account, set
+   `AuthorizedKeysFile` to both the existing ordinary authorization path and
+   the new root-owned tunnel file. Scope `ClientAliveInterval 15` and
+   `ClientAliveCountMax 3` to `Match User rioyokota`; terminate conditional
+   scope explicitly with `Match all` where the installed include layout
+   requires it.
+4. Use `sshd -T -C user=rioyokota,host=localhost,addr=127.0.0.1` to prove the
+   effective authorization-file list and `15/3` liveness values. Use `sshd -t`
+   for full syntax validation. Any mismatch aborts and restores the preserved
+   files.
+5. Reload—not restart—the native sshd service and keep the administrative
+   session open. Re-run the effective query, then require both fresh dedicated
+   auth probes from every Mac. The expected aggregate is `auth_blocked=0` on
+   Aist, Home, Office, and Riken.
+6. Let the already-loaded supervisors reconnect. Verify all eight inbound
+   routes, exact `managed=1 external=0` ownership, and zero external tunnel
+   processes before closing the administrative session.
+
+This is one bundled intervention. Once complete, ordinary user-level rewrites
+of `.ssh/authorized_keys` cannot remove the restricted tunnel entries, and
+server liveness releases abandoned listener sockets on a short, documented
+bound.
 
 ## Remaining acceptance sequence
 
