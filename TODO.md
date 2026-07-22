@@ -237,6 +237,14 @@ Mac one at a time and run the post-hardening acceptance soak. Do not put these
 tunnel entries only in `.jcorig`, modify JumpCloud's global
 `AuthorizedKeysFile`, or propagate the Local-only Match block to another node.
 
+The first Aist staging attempt stopped before transfer because the helper's
+public-output validator assumed a narrower algorithm and two-field shape than
+the installed `ssh-keygen -y` emitted. Its private temporary files were
+exact-unlinked and no Local inbox entry or authorization change was made. The
+helper now accepts the installed tool's single public-key line, validates a
+generic algorithm token and base64 field, discards any source comment, and
+constructs the same fixed restricted entry. Retrying Aist is safe.
+
 Do not drill or install on any Mac until the owner restores the restricted
 authorizations and all eight fresh checks pass. Then roll out/drill those Macs
 one at a time. Preserve potentially private native logs unread in mode-0600
