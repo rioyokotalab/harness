@@ -118,6 +118,9 @@ complete; durable launcher change awaits an explicit owner choice.
   owner/type/age/layout checks, candidates move to same-filesystem quarantine
   while locked, and only the quarantine goes through guarded-delete. This
   procedural rule does not modify the official launcher.
+- Shared-instruction discovery passed its focused Claude takeover test, and the
+  clean-checkout `tests/test-phase1.sh` gate passed every focused suite plus the
+  guarded-delete regression suite on 2026-07-22.
 - The smallest deterministic workaround that preserves current processes is a
   version-scoped launcher wrapper: retain the exact official binary, move only
   unlocked prior-session directories to a private quarantine while holding
