@@ -352,6 +352,14 @@ confirmation and premature validation fail closed with no mutation. The next
 owner action is to run the admin wrapper from a `user` login and report its
 fixed output.
 
+The first `user`-account admin attempt created and validated its root-owned
+copy, then stopped before apply because Local mounts `/run` with `noexec` and
+direct execution returned `Permission denied`. Its exit trap exact-unlinked
+the root copy; both target system files remain absent. The wrapper now invokes
+that same validated root-owned copy explicitly through `/bin/bash`, retaining
+the ownership/immutability gate without depending on executable mount policy.
+Retry is safe.
+
 Do not drill or install on any Mac until the owner restores the restricted
 authorizations and all eight fresh checks pass. Then roll out/drill those Macs
 one at a time. Preserve potentially private native logs unread in mode-0600
