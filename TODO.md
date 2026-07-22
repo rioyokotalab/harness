@@ -314,6 +314,17 @@ ended before the launch could be confirmed. The inbox was still unchanged and
 no authorization or service changed. Do not spend another ephemeral route on
 this operation: Aist-local execution is the required next action.
 
+The Aist-local retry then failed at its initial `scp login:run_this.sh` with
+`Permission denied (publickey)` and retained `~/run_this.sh`. This made no
+remote or Local change. Because Local had already transferred the reviewed
+full-restriction revision before the rescue route ended, the safe retry is to
+validate that retained helper by fixed non-secret markers and metadata, recover
+only a current-user-owned process or current-tmux-session agent socket, prove a
+fresh forwarding-disabled `login` authentication, and run the retained helper
+with that socket bound only to the command. Do not enumerate identities, search
+arbitrary sockets, mutate agent state, or retry staging when the approved
+socket/authentication gate is unavailable.
+
 Do not drill or install on any Mac until the owner restores the restricted
 authorizations and all eight fresh checks pass. Then roll out/drill those Macs
 one at a time. Preserve potentially private native logs unread in mode-0600
