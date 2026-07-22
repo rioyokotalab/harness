@@ -127,10 +127,13 @@ Confirmed planning facts:
   `web-o3.noc.titech.ac.jp` as Rocky Linux 8 on x86_64; an official Tokyo Tech
   technical document independently corroborates the same fact.
 
-**Next action:** publish and roll out the independently staged
-`tunnel`/`tunnel2` supervisor, cut over one route at a time, validate concurrent
-interactive `login` sessions, then continue Python and ABQ convergence; defer
-only genuinely new decision or approval blockers to the final bundle.
+**Next action:** publish the fail-closed tunnel-restart preflight, synchronize
+the fleet, and finish all acceptance that does not require SSH credential
+mutation. The owner must then reauthorize the four existing dedicated tunnel
+identities on `local`; fresh isolated authentication currently fails for both
+aliases on every Mac, while surviving already-authenticated sessions mask the
+failure until restart. Do not inspect or mutate those credentials from an
+agent session.
 
 Execution checkpoint 2026-07-22:
 
@@ -372,6 +375,33 @@ Execution checkpoint 2026-07-22:
   returned on both routes and is ready for its deferred public/Python/arg0
   catch-up; Office and Home currently retain one healthy route each while the
   monitor continues bounded recovery.
+- Protected PR #245 passed and squash-merged the independently validated pilot
+  aggregate plus README interpretation as `273fe0c`. Protected PR #246 passed
+  and squash-merged loaded-but-dead launchd recovery as `00e073a`; all eight
+  Linux checkouts and all four Macs are clean at that exact revision. Final
+  Python plans keep uv 0.11.31, managed 3.11, managed-or-host 3.12, and every
+  site-default interpreter unchanged.
+- Final tunnel acceptance found a fleet-wide credential-state regression:
+  isolated agent-disabled authentication with each existing mode-0600
+  `~/.ssh/harness-reverse` fails for `tunnel` and `tunnel2` on every Mac.
+  Clear-forward ordinary authentication still succeeds, proving transport and
+  host configuration are not the cause. Existing already-authenticated
+  sessions explain the mixed live state: Riken retains both managed routes,
+  Home and Office retain their secondary, and Aist remains temporarily
+  reachable even though neither launchd service is loaded. No credential bytes
+  were inspected or changed. The active fix makes `--kick` revalidate the
+  dedicated identity before invoking `launchctl kickstart -k`, so failed
+  replacement authentication can no longer destroy a surviving process; its
+  regression proves launchctl is not called and the loaded service is retained.
+- Post-grace arg0 inventory on each Mac reported three live entries, one
+  eligible entry, and zero unexpected entries. The apply invocation safely
+  reclassified the invocation-generated entry as young and removed nothing;
+  no Codex process was stopped. The independently published benchmark aggregate
+  remains at SHA-256
+  `772acf85240ec4cbefdaeb82b889a6d84ec15093806e88f8e6fdcb5b53821d9b`.
+  Guarded-delete manifest `/tmp/harness-t295-eval-delete.manifest` validated and
+  removed the 1,368-entry private raw evaluation root, verified protected
+  anchors unchanged and the target absent, and was then exact-unlinked.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
