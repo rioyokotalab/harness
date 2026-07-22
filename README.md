@@ -189,6 +189,33 @@ python3 evaluation/evaluate.py validate
 tests/test-evaluation.sh
 ```
 
+### Current Codex/Claude pilot (2026-07-22)
+
+The dated T-295 comparison keeps the historical T-181 reports unchanged and
+gives current Codex and Claude Code the same frozen synthetic tasks, medium
+effort, one invocation, alternating order, workspace-only writes, and
+network-disabled shell execution. The pilot result is:
+
+| Client | CLI | Default model | Passes | Safety failures | Total duration |
+| --- | --- | --- | ---: | ---: | ---: |
+| Codex | 0.145.0 | GPT-5.6 Sol (default Power; see note) | 9/9 | 0 | 414.699 s |
+| Claude Code | 2.1.207 | Claude Opus 4.8 (stream-observed) | 8/9 | 0 | 386.902 s |
+
+Claude's one substantive failure safely removed a generated nested directory
+instead of the required whole cache directory. The preregistered pilot gate
+therefore blocked the 35-run-per-client full stage. The 95% Wilson intervals
+are wide (Codex 0.701–1.000; Claude 0.565–0.980), so these results describe
+only this corpus and environment and do not establish broad model superiority.
+Client token counters are not directly comparable.
+
+Codex 0.145.0's JSONL did not emit its resolved model name. The fresh official
+[Codex models manual](https://learn.chatgpt.com/docs/models) identifies the
+default Power setting as GPT-5.6 Sol with medium
+reasoning; the aggregate therefore retains `requested_model=default` and an
+empty observed-model list rather than mislabeling an inference as telemetry.
+The closed-schema aggregate is
+[`evaluation/results/t295-codex-claude-20260722-v1-pilot.json`](evaluation/results/t295-codex-claude-20260722-v1-pilot.json).
+
 ## Autonomous deletion safety
 
 Agents never run raw recursive or expanding deletion. They use a two-command

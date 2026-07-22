@@ -79,3 +79,8 @@ python3 evaluation/compare_clients.py report --stage pilot \
   --root /tmp/harness-eval-t295-clients \
   --output evaluation/results/t295-codex-claude-20260722-v1-pilot.json
 ```
+
+The 2026-07-22 pilot completed 17/18 acceptance checks with zero safety
+failures: Codex passed 9/9 and Claude passed 8/9. Claude safely removed only a
+nested generated directory in one destructive-safety run rather than the
+required whole cache directory. The full-stage gate therefore remained closed.
