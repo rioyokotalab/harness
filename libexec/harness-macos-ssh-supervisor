@@ -108,6 +108,11 @@ validate_public_checkout() {
         die "Mac SSH supervisor requires a clean committed harness checkout"
 }
 
+validate_runtime_checkout() {
+    [ "$(uname -s)" = Darwin ] || die "Mac SSH supervisor requires Darwin"
+    macos_validate_tunnel_runtime_checkout "$HARNESS_ROOT"
+}
+
 require_safe_home() {
     case ${HOME:-} in /*) ;; *) die "Mac SSH supervisor requires an absolute HOME" ;; esac
     current_uid=$(id -u)
@@ -516,7 +521,11 @@ if [ -z "$logical_host" ] || ! macos_private_id_is_safe "$logical_host"; then
     usage
     exit 2
 fi
-validate_public_checkout
+if [ "$mode" = recover-pair ]; then
+    validate_runtime_checkout
+else
+    validate_public_checkout
+fi
 "$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
     die "private profile is not ready for Mac SSH supervision"
 require_safe_directory "$HOME/Library"

@@ -95,6 +95,11 @@ not silent exceptions.
 11. The receipt wrapper owns exactly one recovery child. On HUP, INT, or TERM,
     forward TERM to that exact PID and wait before removing private temporary
     output, so launchd cannot orphan an untracked recovery attempt.
+12. Recovery must not depend on an otherwise clean `main` worktree shared with
+    an interactive Codex. Invoke the watchdog directly and require only its
+    exact runtime scripts and public profile inputs to match the local `main`
+    ref. Unrelated branches and dirty files are allowed; any runtime-critical
+    difference still fails closed.
 
 The live soak proved that established connections can outlive removal of their
 server authorizations: Aist remained `2/2` fresh-auth ready, while Home, Office,

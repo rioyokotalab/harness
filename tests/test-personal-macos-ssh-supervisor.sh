@@ -453,6 +453,12 @@ run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --apply \
 watchdog_tx=$(sed -n 's/^TRANSACTION id=\([^ ]*\) status=complete.*/\1/p' \
     "$TEMP_DIR/watchdog-apply.out")
 [ -n "$watchdog_tx" ] || fail "watchdog apply emitted no transaction"
+watchdog_plist=$watchdog_home/Library/LaunchAgents/org.rioyokota.harness.ssh.tunnel-watchdog.plist
+grep -F "<string>$PUBLIC/libexec/harness-macos-tunnel-watchdog</string>" \
+    "$watchdog_plist" >/dev/null || fail "watchdog plist does not use direct runtime"
+if grep -F '<string>macos-tunnel-watchdog</string>' "$watchdog_plist" >/dev/null; then
+    fail "watchdog plist retained mutable harness dispatch"
+fi
 run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --status \
     >"$TEMP_DIR/watchdog-status.out"
 grep -F 'installed=yes loaded=yes' "$TEMP_DIR/watchdog-status.out" >/dev/null ||
@@ -473,6 +479,38 @@ grep -F 'outcome=success' "$watchdog_receipt" >/dev/null ||
     fail "watchdog healthy receipt outcome"
 grep -F 'classification=healthy' "$watchdog_receipt" >/dev/null ||
     fail "watchdog healthy receipt classification"
+
+touch "$PUBLIC/unrelated-work"
+run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
+    >"$TEMP_DIR/watchdog-unrelated-work.out"
+grep -F 'action=none reason=route-running' \
+    "$TEMP_DIR/watchdog-unrelated-work.out" >/dev/null ||
+    fail "watchdog rejected unrelated checkout work"
+unlink "$PUBLIC/unrelated-work"
+
+git -C "$PUBLIC" switch -q -c unrelated-runtime-branch
+printf '%s\n' unrelated >"$PUBLIC/runtime-note"
+git -C "$PUBLIC" add runtime-note
+git -C "$PUBLIC" commit -q -m 'synthetic unrelated runtime branch'
+run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
+    >"$TEMP_DIR/watchdog-unrelated-branch.out"
+grep -F 'action=none reason=route-running' \
+    "$TEMP_DIR/watchdog-unrelated-branch.out" >/dev/null ||
+    fail "watchdog rejected an unrelated feature branch"
+git -C "$PUBLIC" switch -q main
+
+printf '%s\n' '# changed runtime' >>"$PUBLIC/libexec/harness-macos-ssh-supervisor"
+if run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
+    >"$TEMP_DIR/watchdog-runtime-change.out" 2>&1; then
+    fail "watchdog accepted changed runtime code"
+fi
+grep -F 'Mac tunnel runtime differs from local main' \
+    "$TEMP_DIR/watchdog-runtime-change.out" >/dev/null ||
+    fail "watchdog changed runtime refusal"
+cp "$SUPERVISOR" "$PUBLIC/libexec/harness-macos-ssh-supervisor"
+chmod 755 "$PUBLIC/libexec/harness-macos-ssh-supervisor"
+[ -z "$(git -C "$PUBLIC" status --porcelain --untracked-files=normal)" ] ||
+    fail "watchdog runtime checkout test did not restore main"
 cp "$watchdog_receipt" "$TEMP_DIR/watchdog-receipt.valid"
 printf '%s\n' malformed >"$watchdog_receipt"
 chmod 600 "$watchdog_receipt"
