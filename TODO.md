@@ -35,9 +35,8 @@ Next free ID: T-297.
   duplicate link were remediated through the established exact transaction;
   no package or unknown state changed.
 - Post-housekeeping synchronization left local, all seven remote Linux
-  checkouts, Home, Office, and Riken clean/current at `b0f4548`; Aist remains
-  clean at `5d55188` until either route returns for the retry-safe update.
-  Private Mac checkouts remained clean/current.
+  checkouts, and all four Macs clean/current at `b0f4548`; private Mac
+  checkouts remained clean/current.
 - Routine post-T-295 housekeeping guarded-deleted six released local arg0
   entries and one on each Mac without stopping Codex. Every post-plan reports
   `live=3 eligible=0 young=0 unexpected=0`; exact manifests, targets, and
@@ -53,9 +52,10 @@ Next free ID: T-297.
   outside that guarantee.
 - Aist alone has since shown repeated simultaneous `0/2` intervals after fresh
   dedicated-authentication and supervisor acceptance. One bounded observation
-  recovered both routes locally after roughly twelve minutes; another began
-  during post-T-295 synchronization on 2026-07-23 while the other Mac pairs
-  remained healthy. T-296 owns diagnosis of that recovery latency.
+  recovered both routes locally after roughly twelve minutes; another during
+  post-T-295 synchronization recovered both after roughly four and a half
+  minutes while the other Mac pairs remained healthy. T-296 owns diagnosis of
+  that variable recovery latency.
 - Exactly one future native weekly primary backup job exists on each managed
   Linux node. First runs passed on 2026-07-19; keep-all remains effective.
 - Global safety and collaboration invariants in `.codex/AGENTS.md` remain
@@ -84,10 +84,13 @@ so the new evidence is Aist-specific and does not reopen T-295.
 **Observed evidence:** Aist first returned from a simultaneous outage after a
 roughly twelve-minute controller-side observation, with both routes and both
 managed services healthy. It later dropped both routes again while Local was
-attempting the documentation-only `b0f4548` Mac update. Local cannot inspect or
-kick either service while both reverse routes are absent; retry is safe after
-either route returns. No credential, SSH configuration, or service mutation was
-performed during either observed outage.
+attempting the documentation-only `b0f4548` Mac update, then returned both
+unattended after roughly four and a half minutes. The pending update transaction
+`20260722T151504Z-26956` then completed; its follow-up plan was current, both
+services reported `loaded=yes running=yes managed=1 external=0`, and the doctor
+had zero failures and warnings. Local cannot inspect or kick either service
+while both reverse routes are absent. No credential, SSH configuration, or
+service mutation was performed during either outage.
 
 **Next action:** after either route recovers, collect bounded value-free
 launchd, supervisor, process-ownership, timing, sleep/wake, and transport
