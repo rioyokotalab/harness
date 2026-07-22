@@ -50,9 +50,9 @@ Next free ID: T-295.
 
 ## Next resume checkpoint
 
-1. Publish T-294's locally validated wrapper through protected main only after
-   the owner separately authorizes a harness push; then install and run the
-   recorded live validation without stopping existing Codex processes.
+1. Publish T-294's locally validated wrapper through protected main, then
+   install and run the recorded live validation without stopping existing
+   Codex processes.
 2. Select another independently eligible T-273 workstream only after fresh
    reconstruction of its gate and authority.
 3. On or after 2026-07-26, query only T-196 recorded successor job IDs.
@@ -144,9 +144,9 @@ complete locally; publication, live installation, and acceptance remain.
 - Local commit `0a2ff82` contains the implementation. Its clean-checkout
   `tests/test-phase1.sh` run passed all 61 focused suites, including the new
   wrapper suite, followed by the guarded-delete regression suite. Native MPI
-  remained the expected environment-gated skip. No branch or commit has been
-  pushed because the current global policy requires distinct explicit push
-  authority.
+  remained the expected environment-gated skip. The owner subsequently
+  authorized this branch push and removed the global harness-specific
+  explicit-push requirement; the prohibition on changing remotes remains.
 - Post-test routine housekeeping preserved three held-lock live directories,
   removed two eligible empty directories through guarded-delete manifest
   `/home/rioyokota/.codex/tmp/.harness-delete.xvoLBZ/manifest`, retained seven
@@ -154,11 +154,10 @@ complete locally; publication, live installation, and acceptance remain.
   helper exact-unlinked the manifest and its empty private state directory
   after protected anchors and target absence verified.
 
-**Next exact action:** commit the local implementation, pass the clean-checkout
-phase-one suite, then request the distinct push authority required by global
-policy. After protected merge, apply from clean current main, verify two
-warning-free short invocations, a nonzero-exit fixture result, remote-control
-status, held-lock identities, residue counts, doctor, and exact rollback plan.
+**Next exact action:** push the local branch and complete protected review. After
+merge, apply from clean current main, verify two warning-free short invocations,
+a nonzero-exit fixture result, remote-control status, held-lock identities,
+residue counts, doctor, and exact rollback plan.
 
 ### T-196 — Backup lifecycle phase 2
 

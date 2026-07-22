@@ -177,8 +177,7 @@ are unambiguously satisfied. Preserve unrelated content, validate skill
 structure and instruction discovery in affected clients, and report the
 promotion and its rationale in the active project's ledger or final handoff.
 After a promotion passes validation, commit only the intended files in
-`~/harness` with a concise local Git commit. Do not change remotes or push the
-harness without explicit authorization.
+`~/harness` with a concise local Git commit. Do not change remotes.
 
 Do not automatically change `~/.codex/config.toml`,
 `~/.claude/settings.json`, profiles, hooks, MCP servers, plugins, connectors,
