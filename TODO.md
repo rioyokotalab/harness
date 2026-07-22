@@ -80,9 +80,10 @@ Confirmed planning facts:
 - All four Macs run Codex 0.145.0, the current published npm version observed
   on 2026-07-22, with two Codex processes and three live arg0 locks each.
   Their clean `main` checkouts are at `c182bf4`, behind current public main.
-- The ten-formula managed Homebrew policy is satisfied everywhere, but
-  unmanaged leaves differ. `.sync_get.sh` is absent on the seven Linux nodes
-  and is a regular file on each Mac.
+- The existing managed Homebrew baseline is satisfied everywhere, and the
+  owner has now selected a strict cross-Mac package set from the complete
+  union inventory. `.sync_get.sh` is absent on the seven Linux nodes and is a
+  regular file on each Mac.
 - Linux already provides the selected Python 3.12 interface everywhere; five
   remotes use managed 3.12.12, while local and RI retain host 3.12.3. Macs
   expose Python 3.13 or 3.14 and do not expose `python3.12`.
@@ -92,6 +93,9 @@ Confirmed planning facts:
 - The README defines a Codex-only frozen acceptance evaluator, not a current
   paired Codex/Claude benchmark. A new matched experiment must preserve the
   historical T-181 results rather than overwrite them.
+- ABQ's group disk now has a verified 1,024 GiB quota. Its accepted persistent
+  and cache roots are `/groups/qgai50157/yokota` and
+  `/groups/qgai50157/yokota/cache`; they remain uncreated until the final go.
 
 **Next action:** receive the complete owner decision bundle, checkpoint the
 answers, audit the plan, move to `ready-for-go`, and request the final explicit

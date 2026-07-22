@@ -172,10 +172,15 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
   Read-only preflight then proved primary `ab` and emergency Aist access,
   RHEL 9.4/x86-64, PBS/Git/bootstrap readiness, and outbound official HTTPS.
   The approved `ab2` secondary alias is not configured yet. `show_quota`
-  reports a permission-writable group root with a 0 GiB limit, and the required
-  Restic password file is absent. Ordinary user-level ABQ actions need no later
-  permission request; the remaining storage/account and credential boundaries
-  are decisions or owner actions, not repeated permission gates.
+  initially reported a permission-writable group root with a 0 GiB limit. The
+  required Restic password file is absent. Ordinary user-level ABQ actions need
+  no later permission request; the remaining declarations and credential
+  boundary are decisions or owner actions, not repeated permission gates.
+- D9 — **accepted storage roots and verified allocation:** use
+  `/groups/qgai50157/yokota` as ABQ's persistent root and
+  `/groups/qgai50157/yokota/cache` as its cache root. After the owner added
+  storage, `show_quota` verified a 1,024 GiB group-disk limit with 1 GiB used.
+  Create and probe these paths transactionally only after the final PIE go.
 
 1. **Fleet scope and publication — answered/accepted.** Define the existing 11-node
    maintenance/Python/package scope as local, ab, ab2, al, rc, ri, t4, aist,
@@ -194,17 +199,17 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
    entries, restart remote control, and start one named tmux TUI with
    `codex resume --last --all` so selection is global rather than restricted to
    `~/harness`, and restart remote control on all four Macs.
-4. **Homebrew convergence — strict equality selected; removal set pending.**
+4. **Homebrew convergence — answered/accepted.**
    Refresh metadata and converge the complete selected formula/cask roots plus
-   package-manager-derived dependencies across all four Macs. Do not infer
-   removal permission from absence on another Mac; use the owner's forthcoming
+   package-manager-derived dependencies across all four Macs using D6's exact
    retained/removal decision.
 5. **ABQ routes — answered/accepted.** Add `abq` through `ProxyJump ab`, add `abq2`
    through `ProxyJump ab2` as a health/failover route, and reserve aist as an
    emergency third path rather than making health depend on a Mac reverse
    tunnel. Confirm this route design or provide another priority.
-6. **ABQ storage and backup declarations.** Provide exact absolute persistent
-   and cache roots if known. Recommended hidden-home policy is
+6. **ABQ storage roots — answered/accepted.** Use the D9 persistent and cache
+   roots after the final go. **Hidden-home and backup declarations remain.**
+   Recommended hidden-home policy is
    `move-large=.local`, `move-fast=none`, `delete-after-backup=none`, and
    `owner-action=none`; primary Restic lives below the selected persistent root
    and the independent replica uses local's existing safe storage. If roots
