@@ -11,11 +11,38 @@ usage() {
 }
 
 stat_owner() { stat -c '%u' -- "$1"; }
+stat_target_owner() { stat -Lc '%u' -- "$1"; }
 stat_mode() { stat -c '%a' -- "$1"; }
 stat_links() { stat -c '%h' -- "$1"; }
 
 checksum_file() {
     sha256sum "$1" | awk '{ print $1 }'
+}
+
+declared_local_symlink_is_safe() {
+    local_path=$1
+    [ "$local_path" = "$HOME/.local" ] && [ -L "$local_path" ] || return 1
+    logical_host=${HARNESS_LOGICAL_HOST:-}
+    case "$logical_host" in ''|*[!A-Za-z0-9._-]*) return 1 ;; esac
+    home_layout_file=${HARNESS_HOME_LAYOUT_FILE:-$HARNESS_ROOT/profiles/home-layout.tsv}
+    [ -f "$home_layout_file" ] && [ ! -L "$home_layout_file" ] || return 1
+    record=$(awk -F'|' -v host="$logical_host" '
+        $1 == host { print; count++ }
+        END { if (count != 1) exit 1 }
+    ' "$home_layout_file") || return 1
+    field_count=$(printf '%s\n' "$record" | awk -F'|' '{ print NF }')
+    [ "$field_count" -ge 4 ] || return 1
+    persistent_root=$(printf '%s\n' "$record" | awk -F'|' '{ print $2 }')
+    moved_items=$(printf '%s\n' "$record" | awk -F'|' '{ print $4 }')
+    case ",$moved_items," in *,.local,*) ;; *) return 1 ;; esac
+    [ -d "$persistent_root" ] && [ ! -L "$persistent_root" ] || return 1
+    [ "$(stat_owner "$persistent_root")" = "$current_uid" ] || return 1
+    [ "$(stat_owner "$local_path")" = "$current_uid" ] || return 1
+    [ -d "$local_path" ] &&
+        [ "$(stat_target_owner "$local_path")" = "$current_uid" ] || return 1
+    persistent_physical=$(realpath -e -- "$persistent_root") || return 1
+    local_physical=$(realpath -e -- "$local_path") || return 1
+    case "$local_physical" in "$persistent_physical"/*) ;; *) return 1 ;; esac
 }
 
 validate_source() {
@@ -36,14 +63,40 @@ validate_source() {
         "$source_config" >/dev/null 2>&1; then
         die "SSH mirror source contains prohibited credential material"
     fi
+    include_count=$(LC_ALL=C grep -E -c \
+        '^[[:space:]]*Include[[:space:]]+~/\.ssh/config\.d/harness\.conf[[:space:]]*$' \
+        "$source_config" || true)
+    [ "$include_count" -eq 1 ] ||
+        die "SSH mirror source lacks one managed fragment Include"
+    [ "$(tail -n 2 "$source_config" | sed -n '1p')" = 'Match all' ] &&
+        [ "$(tail -n 1 "$source_config")" = \
+            'Include ~/.ssh/config.d/harness.conf' ] ||
+        die "SSH mirror source managed Include is not terminal"
     if LC_ALL=C grep -E -i \
-        '^[[:space:]]*Include[[:space:]]|^[[:space:]]*Match[[:space:]].*([[:space:]]|^)exec([[:space:]]|$)|(^|[^[:alnum:]_])(token|password)[[:space:]=:]' \
+        '^[[:space:]]*Include[[:space:]]' "$source_config" |
+        grep -E -v \
+            '^[[:space:]]*Include[[:space:]]+~/\.ssh/config\.d/harness\.conf[[:space:]]*$' \
+            >/dev/null 2>&1; then
+        die "SSH mirror source contains prohibited external material"
+    fi
+    if LC_ALL=C grep -E -i \
+        '^[[:space:]]*Match[[:space:]].*([[:space:]]|^)exec([[:space:]]|$)|(^|[^[:alnum:]_])(token|password)[[:space:]=:]' \
         "$source_config" >/dev/null 2>&1; then
         die "SSH mirror source contains prohibited external or credential material"
     fi
-    ssh -o CanonicalizeHostname=no -G -F "$source_config" \
+    sed '$d' "$source_config" | sed '$d' |
+        ssh -o CanonicalizeHostname=no -G -F /dev/stdin \
         harness-validation.invalid \
         >/dev/null 2>&1 || die "SSH mirror source grammar is invalid"
+
+    [ -f "$source_fragment" ] && [ ! -L "$source_fragment" ] ||
+        die "SSH mirror source fragment has unsafe type"
+    [ "$(stat_owner "$source_fragment")" = "$current_uid" ] &&
+        [ "$(stat_links "$source_fragment")" = 1 ] &&
+        [ "$(stat_mode "$source_fragment")" = 600 ] ||
+        die "SSH mirror source fragment has unsafe metadata"
+    cmp -s "$source_fragment" "$canonical_fragment" ||
+        die "SSH mirror source fragment is not canonical"
 }
 
 safe_agent_socket() {
@@ -82,10 +135,15 @@ prepare_state() {
     for local_state_path in "$HOME/.local" "$HOME/.local/state" \
         "$state_root" "$state_directory"; do
         if [ -e "$local_state_path" ] || [ -L "$local_state_path" ]; then
-            [ -d "$local_state_path" ] && [ ! -L "$local_state_path" ] ||
-                die "SSH mirror local state has unsafe type"
-            [ "$(stat_owner "$local_state_path")" = "$current_uid" ] ||
-                die "SSH mirror local state has unsafe owner"
+            if [ -L "$local_state_path" ]; then
+                declared_local_symlink_is_safe "$local_state_path" ||
+                    die "SSH mirror local state has unsafe type"
+            else
+                [ -d "$local_state_path" ] ||
+                    die "SSH mirror local state has unsafe type"
+                [ "$(stat_owner "$local_state_path")" = "$current_uid" ] ||
+                    die "SSH mirror local state has unsafe owner"
+            fi
             case "$local_state_path" in
                 "$state_root"|"$state_directory")
                     [ "$(stat_mode "$local_state_path")" = 700 ] ||
@@ -124,7 +182,7 @@ run_remote() {
         die "SSH mirror remote log collision"
     : >"$remote_log"
     chmod 600 "$remote_log"
-    remote_command="/bin/sh -c '$remote_body' sh '$source_identity'"
+    remote_command="/bin/sh -c '$remote_body' sh '$source_identity' '$fragment_identity' '$remote_persistent_root'"
     if [ "$remote_input" = config ]; then
         if remote_output=$(SSH_AUTH_SOCK="$agent_socket" ssh -o BatchMode=yes \
             -o ConnectTimeout=15 t4 "$remote_command" \
@@ -148,15 +206,31 @@ run_remote() {
 
 remote_plan='set -eu
 expected=$1
+expected_fragment=$2
 config=$HOME/.ssh/config
+fragment=$HOME/.ssh/config.d/harness.conf
 invalid() { printf "RESULT class=invalid agreement=no action=stopped\n"; exit 0; }
+managed_root_valid() {
+    candidate=$1
+    test "$(grep -E -c "^[[:space:]]*Include[[:space:]]+~/.ssh/config.d/harness.conf[[:space:]]*$" "$candidate" || true)" = 1 || return 1
+    test "$(tail -n 2 "$candidate" | sed -n "1p")" = "Match all" || return 1
+    test "$(tail -n 1 "$candidate")" = "Include ~/.ssh/config.d/harness.conf" || return 1
+    grep -E "^[[:space:]]*Include[[:space:]]" "$candidate" | grep -E -v "^[[:space:]]*Include[[:space:]]+~/.ssh/config.d/harness.conf[[:space:]]*$" >/dev/null 2>&1 && return 1
+    grep -E -i "^[[:space:]]*Match[[:space:]].*([[:space:]]|^)exec([[:space:]]|$)|(^|[^[:alnum:]_])(token|password)[[:space:]=:]" "$candidate" >/dev/null 2>&1 && return 1
+    head -n -2 "$candidate" | ssh -o CanonicalizeHostname=no -G -F /dev/stdin harness-validation.invalid >/dev/null 2>&1
+}
 test -f "$config" && test ! -L "$config" || invalid
 test "$(stat -c %u -- "$config")" = "$(id -u)" || invalid
 test "$(stat -c %h -- "$config")" = 1 || invalid
 mode=$(stat -c %a -- "$config")
 test "$mode" = 600 || test "$mode" = 644 || invalid
-grep -E -i "^[[:space:]]*Include[[:space:]]|^[[:space:]]*Match[[:space:]].*([[:space:]]|^)exec([[:space:]]|$)|(^|[^[:alnum:]_])(token|password)[[:space:]=:]" "$config" >/dev/null 2>&1 && invalid
-ssh -o CanonicalizeHostname=no -G -F "$config" harness-validation.invalid >/dev/null 2>&1 || invalid
+managed_root_valid "$config" || invalid
+test -f "$fragment" && test ! -L "$fragment" || invalid
+test "$(stat -c %u -- "$fragment")" = "$(id -u)" || invalid
+test "$(stat -c %h -- "$fragment")" = 1 || invalid
+test "$(stat -c %a -- "$fragment")" = 600 || invalid
+fragment_hash=$(sha256sum "$fragment"); fragment_hash=${fragment_hash%% *}
+test "$fragment_hash" = "$expected_fragment" || invalid
 observed=$(sha256sum "$config")
 observed=${observed%% *}
 if test "$observed" = "$expected" && test "$mode" = 600; then
@@ -167,17 +241,52 @@ fi'
 
 remote_apply='set -eu
 expected=$1
+expected_fragment=$2
+declared_persistent=$3
 uid=$(id -u)
 ssh_dir=$HOME/.ssh
 config=$ssh_dir/config
+fragment=$ssh_dir/config.d/harness.conf
 stage=$ssh_dir/.harness-config-stage.$$
 state=$HOME/.local/state/harness/ssh-config-mirror
 previous=$state/previous
 manifest=$state/latest.conf
 status=$state/status
 invalid() { printf "RESULT class=invalid agreement=no action=stopped\n"; exit 0; }
+managed_root_valid() {
+    candidate=$1
+    test "$(grep -E -c "^[[:space:]]*Include[[:space:]]+~/.ssh/config.d/harness.conf[[:space:]]*$" "$candidate" || true)" = 1 || return 1
+    test "$(tail -n 2 "$candidate" | sed -n "1p")" = "Match all" || return 1
+    test "$(tail -n 1 "$candidate")" = "Include ~/.ssh/config.d/harness.conf" || return 1
+    grep -E "^[[:space:]]*Include[[:space:]]" "$candidate" | grep -E -v "^[[:space:]]*Include[[:space:]]+~/.ssh/config.d/harness.conf[[:space:]]*$" >/dev/null 2>&1 && return 1
+    grep -E -i "^[[:space:]]*Match[[:space:]].*([[:space:]]|^)exec([[:space:]]|$)|(^|[^[:alnum:]_])(token|password)[[:space:]=:]" "$candidate" >/dev/null 2>&1 && return 1
+    head -n -2 "$candidate" | ssh -o CanonicalizeHostname=no -G -F /dev/stdin harness-validation.invalid >/dev/null 2>&1
+}
+fragment_valid() {
+    test -f "$fragment" && test ! -L "$fragment" || return 1
+    test "$(stat -c %u -- "$fragment")" = "$uid" || return 1
+    test "$(stat -c %h -- "$fragment")" = 1 || return 1
+    test "$(stat -c %a -- "$fragment")" = 600 || return 1
+    value=$(sha256sum "$fragment"); value=${value%% *}
+    test "$value" = "$expected_fragment"
+}
+local_state_parent_valid() {
+    parent=$1
+    if test -L "$parent"; then
+        test "$parent" = "$HOME/.local" || return 1
+        test -d "$declared_persistent" && test ! -L "$declared_persistent" || return 1
+        test "$(stat -c %u -- "$parent")" = "$uid" || return 1
+        test "$(stat -Lc %u -- "$parent")" = "$uid" || return 1
+        test "$(stat -c %u -- "$declared_persistent")" = "$uid" || return 1
+        persistent_real=$(realpath -e -- "$declared_persistent") || return 1
+        local_real=$(realpath -e -- "$parent") || return 1
+        case "$local_real" in "$persistent_real"/*) return 0 ;; *) return 1 ;; esac
+    fi
+    test -d "$parent" && test "$(stat -c %u -- "$parent")" = "$uid"
+}
 test -d "$ssh_dir" && test ! -L "$ssh_dir" || invalid
 test "$(stat -c %u -- "$ssh_dir")" = "$uid" || invalid
+fragment_valid || invalid
 test ! -e "$stage" && test ! -L "$stage" || invalid
 umask 077
 : >"$stage"
@@ -203,15 +312,13 @@ test "$(stat -c %h -- "$stage")" = 1 || invalid
 observed=$(sha256sum "$stage")
 observed=${observed%% *}
 test "$observed" = "$expected" || invalid
-grep -E -i "^[[:space:]]*Include[[:space:]]|^[[:space:]]*Match[[:space:]].*([[:space:]]|^)exec([[:space:]]|$)|(^|[^[:alnum:]_])(token|password)[[:space:]=:]" "$stage" >/dev/null 2>&1 && invalid
-ssh -o CanonicalizeHostname=no -G -F "$stage" harness-validation.invalid >/dev/null 2>&1 || invalid
+managed_root_valid "$stage" || invalid
 test -f "$config" && test ! -L "$config" || invalid
 test "$(stat -c %u -- "$config")" = "$uid" || invalid
 test "$(stat -c %h -- "$config")" = 1 || invalid
 mode=$(stat -c %a -- "$config")
 test "$mode" = 600 || test "$mode" = 644 || invalid
-grep -E -i "^[[:space:]]*Include[[:space:]]|^[[:space:]]*Match[[:space:]].*([[:space:]]|^)exec([[:space:]]|$)|(^|[^[:alnum:]_])(token|password)[[:space:]=:]" "$config" >/dev/null 2>&1 && invalid
-ssh -o CanonicalizeHostname=no -G -F "$config" harness-validation.invalid >/dev/null 2>&1 || invalid
+managed_root_valid "$config" || invalid
 before=$(sha256sum "$config")
 before=${before%% *}
 if test "$before" = "$expected" && test "$mode" = 600; then
@@ -221,8 +328,7 @@ if test "$before" = "$expected" && test "$mode" = 600; then
 fi
 for parent in "$HOME/.local" "$HOME/.local/state" "$HOME/.local/state/harness" "$state"; do
     if test -e "$parent" || test -L "$parent"; then
-        test -d "$parent" && test ! -L "$parent" || invalid
-        test "$(stat -c %u -- "$parent")" = "$uid" || invalid
+        local_state_parent_valid "$parent" || invalid
         case "$parent" in
             "$HOME/.local/state/harness"|"$state") test "$(stat -c %a -- "$parent")" = 700 || invalid ;;
         esac
@@ -238,7 +344,7 @@ test ! -e "$manifest_new" && test ! -L "$manifest_new" || invalid
 cp "$config" "$previous_new"
 chmod 600 "$previous_new"
 test "$(sha256sum "$previous_new" | cut -d " " -f 1)" = "$before" || invalid
-printf "schema=1\nbefore_hash=%s\nafter_hash=%s\n" "$before" "$expected" >"$manifest_new"
+printf "schema=2\nbefore_hash=%s\nafter_hash=%s\nfragment_hash=%s\n" "$before" "$expected" "$expected_fragment" >"$manifest_new"
 chmod 600 "$manifest_new"
 mv "$previous_new" "$previous"
 mv "$manifest_new" "$manifest"
@@ -252,11 +358,21 @@ unused=$1
 uid=$(id -u)
 ssh_dir=$HOME/.ssh
 config=$ssh_dir/config
+fragment=$ssh_dir/config.d/harness.conf
 state=$HOME/.local/state/harness/ssh-config-mirror
 previous=$state/previous
 manifest=$state/latest.conf
 status=$state/status
 invalid() { printf "RESULT class=invalid agreement=no action=stopped\n"; exit 0; }
+managed_root_valid() {
+    candidate=$1
+    test "$(grep -E -c "^[[:space:]]*Include[[:space:]]+~/.ssh/config.d/harness.conf[[:space:]]*$" "$candidate" || true)" = 1 || return 1
+    test "$(tail -n 2 "$candidate" | sed -n "1p")" = "Match all" || return 1
+    test "$(tail -n 1 "$candidate")" = "Include ~/.ssh/config.d/harness.conf" || return 1
+    grep -E "^[[:space:]]*Include[[:space:]]" "$candidate" | grep -E -v "^[[:space:]]*Include[[:space:]]+~/.ssh/config.d/harness.conf[[:space:]]*$" >/dev/null 2>&1 && return 1
+    grep -E -i "^[[:space:]]*Match[[:space:]].*([[:space:]]|^)exec([[:space:]]|$)|(^|[^[:alnum:]_])(token|password)[[:space:]=:]" "$candidate" >/dev/null 2>&1 && return 1
+    head -n -2 "$candidate" | ssh -o CanonicalizeHostname=no -G -F /dev/stdin harness-validation.invalid >/dev/null 2>&1
+}
 test -d "$state" && test ! -L "$state" || invalid
 test "$(stat -c %u -- "$state")" = "$uid" || invalid
 test "$(stat -c %a -- "$state")" = 700 || invalid
@@ -270,24 +386,32 @@ test "$(sed -n 1p "$status")" = complete || invalid
 schema=
 before_hash=
 after_hash=
+fragment_hash=
 while IFS="=" read -r key value; do
     case "$key" in
         schema) test -z "$schema" || invalid; schema=$value ;;
         before_hash) test -z "$before_hash" || invalid; before_hash=$value ;;
         after_hash) test -z "$after_hash" || invalid; after_hash=$value ;;
+        fragment_hash) test -z "$fragment_hash" || invalid; fragment_hash=$value ;;
         *) invalid ;;
     esac
 done <"$manifest"
-test "$schema" = 1 || invalid
-test "${#before_hash}" = 64 && test "${#after_hash}" = 64 || invalid
+test "$schema" = 2 || invalid
+test "${#before_hash}" = 64 && test "${#after_hash}" = 64 && test "${#fragment_hash}" = 64 || invalid
+test -f "$fragment" && test ! -L "$fragment" || invalid
+test "$(stat -c %u -- "$fragment")" = "$uid" || invalid
+test "$(stat -c %h -- "$fragment")" = 1 || invalid
+test "$(stat -c %a -- "$fragment")" = 600 || invalid
+observed_fragment=$(sha256sum "$fragment"); observed_fragment=${observed_fragment%% *}
+test "$observed_fragment" = "$fragment_hash" || invalid
 current=$(sha256sum "$config")
 current=${current%% *}
 prior=$(sha256sum "$previous")
 prior=${prior%% *}
 test "$current" = "$after_hash" || invalid
 test "$prior" = "$before_hash" || invalid
-grep -E -i "^[[:space:]]*Include[[:space:]]|^[[:space:]]*Match[[:space:]].*([[:space:]]|^)exec([[:space:]]|$)|(^|[^[:alnum:]_])(token|password)[[:space:]=:]" "$previous" >/dev/null 2>&1 && invalid
-ssh -o CanonicalizeHostname=no -G -F "$previous" harness-validation.invalid >/dev/null 2>&1 || invalid
+managed_root_valid "$config" || invalid
+managed_root_valid "$previous" || invalid
 stage=$ssh_dir/.harness-config-rollback.$$
 test ! -e "$stage" && test ! -L "$stage" || invalid
 cp "$previous" "$stage"
@@ -312,9 +436,22 @@ done
 [ "$(uname -s)" = Linux ] || die "SSH config mirror requires Linux"
 case ${HOME:-} in /*) ;; *) die "SSH config mirror requires an absolute HOME" ;; esac
 current_uid=$(id -u)
+t4_profile=$(profile_for t4)
+remote_persistent_root=$(config_get "$t4_profile" persistent_root)
+case "$remote_persistent_root" in
+    /*) ;;
+    *) die "SSH mirror t4 persistent root is invalid" ;;
+esac
+case "$remote_persistent_root" in *[!A-Za-z0-9._/-]*)
+    die "SSH mirror t4 persistent root is invalid" ;;
+esac
 [ -d "$HOME" ] && [ ! -L "$HOME" ] && [ "$(stat_owner "$HOME")" = "$current_uid" ] ||
     die "SSH config mirror HOME is unsafe"
 source_config=$HOME/.ssh/config
+source_fragment=$HOME/.ssh/config.d/harness.conf
+canonical_fragment=$HARNESS_ROOT/config/ssh/harness.conf
+[ -f "$canonical_fragment" ] && [ ! -L "$canonical_fragment" ] ||
+    die "SSH mirror canonical fragment is unavailable"
 state_root=$HOME/.local/state/harness
 state_directory=$state_root/ssh-config-mirror
 status_file=$state_directory/status.conf
@@ -323,8 +460,10 @@ prepare_state
 if [ "$mode" != rollback ]; then
     validate_source
     source_identity=$(checksum_file "$source_config")
+    fragment_identity=$(checksum_file "$source_fragment")
 else
     source_identity=rollback
+    fragment_identity=rollback
 fi
 agent_socket=$(resolve_agent_socket) || {
     write_status auth-failed no

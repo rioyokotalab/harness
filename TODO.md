@@ -143,6 +143,16 @@ Execution checkpoint 2026-07-22:
   The first Phase 1 run passed every other focused suite but
   `test-tmux-config.sh` correctly refused the dirty checkout. After commit
   `ecc945d`, the full `tests/test-phase1.sh` rerun passed from a clean tree.
+- Protected PR #213 passed `portable-phase1` and squash-merged the fleet SSH
+  and inventory contract as `db8a5b7`; guarded fleet sync advanced all six
+  clean remote Linux checkouts to that exact revision.
+- The next slice on `task/t-295-mirror-symlink` repairs the one-way mirror's
+  declared `.local` symlink handling and makes the installed canonical SSH
+  fragment part of plan/apply/rollback validation without transporting it.
+  Focused syntax, fragment-drift, atomicity, privacy, rollback, and symlink
+  tests pass. Next: commit from the verified tree, run clean Phase 1, publish,
+  synchronize, install the fragment layout on local and t4, then execute the
+  separately authorized mirror plan/apply.
 
 ### T-273 — Resolve intentionally deferred maintenance
 

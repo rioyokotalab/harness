@@ -155,7 +155,16 @@ There is no target option. The source is fixed to local `~/.ssh/config`, the
 SSH alias is fixed to `t4`, and the remote destination is fixed to
 `~/.ssh/config`. `ab`, `ab2`, `ri`, `al`, and `rc` are never candidates. The
 adapter accepts only a regular current-user-owned, single-link, bounded,
-syntax-valid source. It uses `BatchMode=yes`, a bounded connection timeout,
+syntax-valid source whose final two lines are the exact managed `Match all`
+and `Include ~/.ssh/config.d/harness.conf` trailer. Both hosts must already
+have the regular, current-user-owned, mode-0600 managed fragment installed,
+and its bytes must equal `config/ssh/harness.conf`. The mirror transports only
+the private root file; it verifies but does not copy or replace the public
+fragment. Install the fragment layout on both hosts before mirroring.
+
+The local state path may traverse the exact `.local` symlink declared for that
+host in `profiles/home-layout.tsv`; arbitrary symlinked state paths remain
+invalid. It uses `BatchMode=yes`, a bounded connection timeout,
 and only a current-user-owned Unix agent socket. Socket recovery checks the
 process value, the current tmux session value, and then the host-declared fixed
 runtime socket; it never reads tmux global state or lists agent identities.
@@ -164,8 +173,9 @@ Apply streams the source to a mode-0600 remote staging file, verifies its
 content identity and OpenSSH grammar on `t4`, preserves exactly one mode-0600
 prior image, and atomically replaces the destination only when different.
 Rollback verifies the current and prior identities before atomically restoring
-that one image. No operation pulls a `t4` edit back, touches another SSH file,
-or contacts another Linux node.
+that one image, and also verifies the fragment identity recorded with the
+transaction before changing the root. No operation pulls a `t4` edit back,
+touches another SSH file, or contacts another Linux node.
 
 ## Failure and privacy contract
 
