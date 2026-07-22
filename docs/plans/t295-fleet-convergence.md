@@ -149,6 +149,9 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
 - D4 — **accepted:** after the Mac Codex restart, select the globally most
   recent session with `codex resume --last --all`, not the most recent session
   filtered to `~/harness`.
+- D5 — **accepted:** restart `codex remote-control` on all four Macs after the
+  updater, process stop, and arg0 cleanup, preserving the existing device
+  pairings.
 
 1. **Fleet scope and publication — answered/accepted.** Define the existing 11-node
    maintenance/Python/package scope as local, ab, ab2, al, rc, ri, t4, aist,
@@ -166,8 +169,7 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
    Darwin lock-aware arg0 implementation to quarantine/delete only released
    entries, restart remote control, and start one named tmux TUI with
    `codex resume --last --all` so selection is global rather than restricted to
-   `~/harness`. Whether to restart remote control remains a separate pending
-   decision.
+   `~/harness`, and restart remote control on all four Macs.
 4. **Homebrew convergence.** Recommended: refresh Homebrew metadata, converge
    only the ten-formula managed policy and their available versions, and
    preserve every Mac-specific extra. Strict equality would require installing
