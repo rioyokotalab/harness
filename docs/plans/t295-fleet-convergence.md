@@ -228,6 +228,11 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
   credentials, private repository, remote nodes, storage, or backups. Remote
   node onboarding remains an explicit follow-on through
   `onboard-mirrored-node`.
+- D16 — **accepted AL terminal fix:** compile the canonical
+  `tmux-256color` entry into AL's user terminfo tree without changing site
+  defaults. Validate discovery and capabilities with `infocmp` and `tput`,
+  then verify clean Vim, tracked-config Vim, tty preservation, and alternate-
+  screen restoration under a controlled PTY.
 
 1. **Fleet scope and publication — answered/accepted.** Define the existing 11-node
    maintenance/Python/package scope as local, ab, ab2, al, rc, ri, t4, aist,
@@ -270,12 +275,11 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
 9. **External-user skill — answered/accepted.** Implement D15's local-first,
    prerequisite-aware scope and keep remote-node onboarding as an explicit
    follow-on workflow.
-10. **Unresolved observations.** AL's deeper controlled A/B diagnosis isolates
-    the broken-prompt symptom to missing `tmux-256color`; the proposed fix
-    installs the canonical entry in the user tree, validates Vim alternate-
-    screen restoration, and leaves site defaults unchanged. Confirm this fix.
-    For `web`, either provide an already-authorized route for an OS probe or
-    accept an explicit `unknown (SFTP authentication unavailable)` OS cell.
+10. **AL terminal — answered/accepted.** Apply D16's user-local terminfo fix
+    and controlled validation.
+11. **Web OS remains unresolved.** Either provide an already-authorized route
+    for an OS probe or accept an explicit
+    `unknown (SFTP authentication unavailable)` OS cell.
 
 ## Frozen execution order after decisions and final go
 

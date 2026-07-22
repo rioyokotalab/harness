@@ -80,7 +80,9 @@ Confirmed planning facts:
   screen restoration; clean and tracked Vim configs behaved identically,
   `xterm-256color` restored correctly, and tty modes remained intact. AL's
   ncurses accepts the canonical entry in check-only mode for user-local
-  installation.
+  installation. The accepted fix installs it only in the user terminfo tree
+  and validates capabilities, tty preservation, clean/configured Vim, and
+  alternate-screen restoration.
 - All four Macs run Codex 0.145.0, the current published npm version observed
   on 2026-07-22, with two Codex processes and three live arg0 locks each.
   Their clean `main` checkouts are at `c182bf4`, behind current public main.
