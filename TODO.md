@@ -221,6 +221,15 @@ Execution checkpoint 2026-07-22:
   moves the expanded exact set to schema-3 `formula-policy-v3.conf`, and adds a
   frozen v2 regression. All affected focused Mac suites pass; next publish this
   compatibility repair and retry the four Mac plans.
+- Protected PR #220 passed and squash-merged the v2/v3 compatibility repair as
+  `81dcf50`; all Linux mirrors and all four clean Mac checkouts now hold that
+  exact revision. Mac update transactions are
+  `20260722T062642Z-61901`, `20260722T062646Z-70665`,
+  `20260722T062655Z-74291`, and Riken's completed current-state migration.
+  Aist's first live Homebrew plan then exposed old installed-linkage ordering:
+  selected upgrades must precede retirement. The active slice implements that
+  post-upgrade fail-closed checkpoint and replaces per-formula version probes
+  with one bounded scoped query; focused migration-order coverage passes.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
