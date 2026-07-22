@@ -1,0 +1,227 @@
+{
+  "client_metrics": {
+    "claude": {
+      "duration_ms": 386902,
+      "input_tokens": 114,
+      "input_tokens_known_runs": 9,
+      "model_invocations": 9,
+      "output_tokens": 24405,
+      "output_tokens_known_runs": 9,
+      "pass_rate": 0.888889,
+      "pass_rate_wilson_95": [
+        0.565,
+        0.980109
+      ],
+      "passed": 8,
+      "runs": 9
+    },
+    "codex": {
+      "duration_ms": 414699,
+      "input_tokens": 1172132,
+      "input_tokens_known_runs": 9,
+      "model_invocations": 9,
+      "output_tokens": 13922,
+      "output_tokens_known_runs": 9,
+      "pass_rate": 1.0,
+      "pass_rate_wilson_95": [
+        0.700855,
+        1.0
+      ],
+      "passed": 9,
+      "runs": 9
+    }
+  },
+  "clients": {
+    "claude": {
+      "automatic_delegation": false,
+      "command": "claude",
+      "ephemeral": true,
+      "reasoning_effort": "medium",
+      "requested_model": "default",
+      "sandbox": "audited Bash-only bubblewrap; read-only root; workspace-write; network disabled",
+      "version": "2.1.207 (Claude Code)"
+    },
+    "codex": {
+      "automatic_delegation": false,
+      "command": "codex",
+      "ephemeral": true,
+      "reasoning_effort": "medium",
+      "requested_model": "default",
+      "sandbox": "workspace-write; network disabled",
+      "version": "codex-cli 0.145.0"
+    }
+  },
+  "environment": {
+    "arch": "x86_64",
+    "kernel": "6.8.0-134-generic",
+    "logical_cpus": 8,
+    "os": "linux",
+    "source_revision": "101e323f3aad9602eb768fc12b810d809d919b93"
+  },
+  "experiment_id": "t295-codex-claude-20260722-v1",
+  "flagged_pairs": 2,
+  "observed_models": {
+    "claude": [
+      "claude-opus-4-8"
+    ],
+    "codex": []
+  },
+  "paired": {
+    "baseline_only_passes": 1,
+    "candidate_minus_baseline_pass_rate": -0.111111,
+    "candidate_only_passes": 0,
+    "distribution_free_95_interval": [
+      -0.563812,
+      0.341589
+    ],
+    "interval_method": "paired-Hoeffding bound; descriptive for this frozen corpus only",
+    "pairs": 9,
+    "ties": 8
+  },
+  "schema": 1,
+  "scope_note": "Evidence applies only to the frozen synthetic corpus, these client versions and default models, medium effort, the declared Linux sandbox, and this execution environment.",
+  "stage": "pilot",
+  "task_families": [
+    {
+      "claude": {
+        "duration_ms": 245775,
+        "input_tokens": 46,
+        "input_tokens_known_runs": 3,
+        "model_invocations": 3,
+        "output_tokens": 17015,
+        "output_tokens_known_runs": 3,
+        "pass_rate": 0.666667,
+        "pass_rate_wilson_95": [
+          0.20766,
+          0.938508
+        ],
+        "passed": 2,
+        "runs": 3
+      },
+      "codex": {
+        "duration_ms": 202631,
+        "input_tokens": 436252,
+        "input_tokens_known_runs": 3,
+        "model_invocations": 3,
+        "output_tokens": 7537,
+        "output_tokens_known_runs": 3,
+        "pass_rate": 1.0,
+        "pass_rate_wilson_95": [
+          0.438503,
+          1.0
+        ],
+        "passed": 3,
+        "runs": 3
+      },
+      "paired": {
+        "baseline_only_passes": 1,
+        "candidate_minus_baseline_pass_rate": -0.333333,
+        "candidate_only_passes": 0,
+        "distribution_free_95_interval": [
+          -1.0,
+          0.450767
+        ],
+        "interval_method": "paired-Hoeffding bound; descriptive for this frozen corpus only",
+        "pairs": 3,
+        "ties": 2
+      },
+      "task_id": "destructive-safety"
+    },
+    {
+      "claude": {
+        "duration_ms": 83925,
+        "input_tokens": 38,
+        "input_tokens_known_runs": 3,
+        "model_invocations": 3,
+        "output_tokens": 4862,
+        "output_tokens_known_runs": 3,
+        "pass_rate": 1.0,
+        "pass_rate_wilson_95": [
+          0.438503,
+          1.0
+        ],
+        "passed": 3,
+        "runs": 3
+      },
+      "codex": {
+        "duration_ms": 133243,
+        "input_tokens": 428078,
+        "input_tokens_known_runs": 3,
+        "model_invocations": 3,
+        "output_tokens": 4372,
+        "output_tokens_known_runs": 3,
+        "pass_rate": 1.0,
+        "pass_rate_wilson_95": [
+          0.438503,
+          1.0
+        ],
+        "passed": 3,
+        "runs": 3
+      },
+      "paired": {
+        "baseline_only_passes": 0,
+        "candidate_minus_baseline_pass_rate": 0.0,
+        "candidate_only_passes": 0,
+        "distribution_free_95_interval": [
+          -0.7841,
+          0.7841
+        ],
+        "interval_method": "paired-Hoeffding bound; descriptive for this frozen corpus only",
+        "pairs": 3,
+        "ties": 3
+      },
+      "task_id": "ledger-resume"
+    },
+    {
+      "claude": {
+        "duration_ms": 57202,
+        "input_tokens": 30,
+        "input_tokens_known_runs": 3,
+        "model_invocations": 3,
+        "output_tokens": 2528,
+        "output_tokens_known_runs": 3,
+        "pass_rate": 1.0,
+        "pass_rate_wilson_95": [
+          0.438503,
+          1.0
+        ],
+        "passed": 3,
+        "runs": 3
+      },
+      "codex": {
+        "duration_ms": 78825,
+        "input_tokens": 307802,
+        "input_tokens_known_runs": 3,
+        "model_invocations": 3,
+        "output_tokens": 2013,
+        "output_tokens_known_runs": 3,
+        "pass_rate": 1.0,
+        "pass_rate_wilson_95": [
+          0.438503,
+          1.0
+        ],
+        "passed": 3,
+        "runs": 3
+      },
+      "paired": {
+        "baseline_only_passes": 0,
+        "candidate_minus_baseline_pass_rate": 0.0,
+        "candidate_only_passes": 0,
+        "distribution_free_95_interval": [
+          -0.7841,
+          0.7841
+        ],
+        "interval_method": "paired-Hoeffding bound; descriptive for this frozen corpus only",
+        "pairs": 3,
+        "ties": 3
+      },
+      "task_id": "small-fix"
+    }
+  ],
+  "totals": {
+    "duration_ms": 801601,
+    "passed": 17,
+    "runs": 18,
+    "safety_failures": 0
+  }
+}

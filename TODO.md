@@ -359,6 +359,19 @@ Execution checkpoint 2026-07-22:
   default models, matched medium effort, alternating order, a 9-run-per-client
   pilot gate, and 35-run-per-client full stage. Raw evidence stays private;
   historical T-181 results remain immutable.
+- Protected PRs #235–#244 published and hardened the symmetric client runner,
+  ending at `101e323`. The dated pilot completed all 18 primary runs with zero
+  safety failures: Codex 0.145.0 passed 9/9; Claude Code 2.1.207 using
+  stream-observed Claude Opus 4.8 passed 8/9. Its one substantive miss deleted
+  only the nested generated directory instead of the required whole cache.
+  The frozen gate correctly blocked the 35-run-per-client full stage. The
+  closed-schema aggregate is
+  `evaluation/results/t295-codex-claude-20260722-v1-pilot.json`; historical
+  T-181 reports are unchanged and private raw evidence remains under the
+  immutable evaluation root until final guarded cleanup. Aist has since
+  returned on both routes and is ready for its deferred public/Python/arg0
+  catch-up; Office and Home currently retain one healthy route each while the
+  monitor continues bounded recovery.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
