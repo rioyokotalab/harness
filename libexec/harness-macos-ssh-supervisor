@@ -1,5 +1,6 @@
 #!/bin/sh
 set -eu
+umask 077
 
 SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
@@ -16,6 +17,7 @@ Usage:
   harness macos-ssh-supervisor --activate TRANSACTION_ID --alias $primary_alias|$secondary_alias
   harness macos-ssh-supervisor --deactivate TRANSACTION_ID --alias $primary_alias|$secondary_alias
   harness macos-ssh-supervisor --host LOGICAL_ID --kick $primary_alias|$secondary_alias
+  harness macos-ssh-supervisor --host LOGICAL_ID --recover-pair
   harness macos-ssh-supervisor --rollback TRANSACTION_ID
 EOF
 }
@@ -207,6 +209,21 @@ unattended_auth_ready() {
         >/dev/null 2>&1
 }
 
+forward_bind_ready() {
+    supervised_alias=$1
+    dedicated_identity_ready || return 1
+    ssh_command=$(command -v ssh) || return 1
+    env -i HOME="$HOME" USER="$(id -un)" LOGNAME="$(id -un)" \
+        PATH=/usr/bin:/bin \
+        "$ssh_command" -T -x -F "$HOME/.ssh/config" \
+        -o BatchMode=yes -o IdentitiesOnly=yes -o IdentityAgent=none \
+        -o "IdentityFile=$identity_file" \
+        -o ConnectTimeout=8 -o ConnectionAttempts=1 \
+        -o ControlMaster=no -o ControlPath=none \
+        -o ExitOnForwardFailure=yes "$supervised_alias" true \
+        >/dev/null 2>&1
+}
+
 validate_plist_file() {
     supervised_plist=$1
     [ -f "$supervised_plist" ] && [ ! -L "$supervised_plist" ] ||
@@ -275,6 +292,103 @@ wait_for_running() {
     return 1
 }
 
+recovery_lock_held=0
+process_start_for_pid() {
+    /bin/ps -p "$1" -o lstart= 2>/dev/null | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
+}
+
+validate_recovery_lock_file() {
+    [ -f "$recovery_lock" ] && [ ! -L "$recovery_lock" ] &&
+        [ "$(macos_stat_owner "$recovery_lock")" = "$current_uid" ] &&
+        [ "$(macos_stat_mode "$recovery_lock")" = 600 ] &&
+        [ "$(macos_stat_links "$recovery_lock")" = 1 ] ||
+        die "Mac SSH supervisor recovery lock is unsafe"
+    awk '
+        NR==1 && $0 ~ /^pid=[0-9]+$/ {next}
+        NR==2 && $0 ~ /^start=[[:print:]]+$/ {next}
+        {bad=1}
+        END {exit NR==2 && !bad ? 0 : 1}
+    ' "$recovery_lock" >/dev/null 2>&1 ||
+        die "Mac SSH supervisor recovery lock is malformed"
+}
+
+acquire_recovery_lock() {
+    recovery_self_start=$(process_start_for_pid "$$")
+    [ -n "$recovery_self_start" ] || die "cannot identify recovery process"
+    recovery_lock_attempt=0
+    while [ "$recovery_lock_attempt" -lt 2 ]; do
+        recovery_lock_attempt=$((recovery_lock_attempt + 1))
+        if (set -C; printf 'pid=%s\nstart=%s\n' "$$" "$recovery_self_start" >"$recovery_lock") \
+            2>/dev/null; then
+            chmod 600 "$recovery_lock"
+            validate_recovery_lock_file
+            recovery_lock_held=1
+            return 0
+        fi
+        validate_recovery_lock_file
+        recovery_owner_pid=$(sed -n 's/^pid=//p' "$recovery_lock")
+        recovery_owner_start=$(sed -n 's/^start=//p' "$recovery_lock")
+        recovery_live_start=$(process_start_for_pid "$recovery_owner_pid")
+        if [ -n "$recovery_live_start" ] &&
+            [ "$recovery_live_start" = "$recovery_owner_start" ]; then
+            return 1
+        fi
+        unlink "$recovery_lock" || die "stale recovery lock removal failed"
+    done
+    return 1
+}
+
+release_recovery_lock() {
+    [ "$recovery_lock_held" -eq 1 ] || return 0
+    validate_recovery_lock_file
+    [ "$(sed -n 's/^pid=//p' "$recovery_lock")" = "$$" ] &&
+        [ "$(sed -n 's/^start=//p' "$recovery_lock")" = \
+            "$(process_start_for_pid "$$")" ] ||
+        die "Mac SSH supervisor recovery lock changed"
+    unlink "$recovery_lock" || die "Mac SSH supervisor recovery lock release failed"
+    recovery_lock_held=0
+}
+
+restore_loaded_baseline() {
+    restore_failed=0
+    recovery_transaction_unchanged || return 1
+    for restore_alias in "$primary_alias" "$secondary_alias"; do
+        if ! service_loaded "$restore_alias"; then
+            launchctl bootstrap "gui/$current_uid" "$(plist_for "$restore_alias")" \
+                >/dev/null 2>&1 || restore_failed=1
+        fi
+    done
+    return "$restore_failed"
+}
+
+recovery_transaction_unchanged() {
+    [ -f "$supervisor_root/current" ] && [ ! -L "$supervisor_root/current" ] &&
+        [ "$(macos_stat_owner "$supervisor_root/current")" = "$current_uid" ] &&
+        [ "$(macos_stat_mode "$supervisor_root/current")" = 600 ] &&
+        [ "$(sed -n '1p' "$supervisor_root/current")" = "$transaction_id" ] &&
+        [ "$(wc -l <"$supervisor_root/current" | tr -d ' ')" -eq 1 ] || return 1
+    for recovery_check_alias in "$primary_alias" "$secondary_alias"; do
+        recovery_check_marker=$transaction_root/$transaction_id.macos-ssh-supervisor.$recovery_check_alias.active
+        [ -f "$recovery_check_marker" ] && [ ! -L "$recovery_check_marker" ] &&
+            [ "$(macos_stat_owner "$recovery_check_marker")" = "$current_uid" ] &&
+            [ "$(macos_stat_mode "$recovery_check_marker")" = 600 ] &&
+            [ "$(sed -n '1p' "$recovery_check_marker")" = active ] || return 1
+        recovery_check_plist=$(plist_for "$recovery_check_alias")
+        [ -f "$recovery_check_plist" ] && [ ! -L "$recovery_check_plist" ] &&
+            [ "$(macos_stat_owner "$recovery_check_plist")" = "$current_uid" ] &&
+            [ "$(macos_stat_mode "$recovery_check_plist")" = 600 ] &&
+            [ "$(macos_stat_links "$recovery_check_plist")" = 1 ] &&
+            plutil -lint "$recovery_check_plist" >/dev/null 2>&1 || return 1
+        if [ "$recovery_check_alias" = "$primary_alias" ]; then
+            recovery_check_hash=$(sed -n 's/^login_hash=//p' "$manifest")
+        else
+            recovery_check_hash=$(sed -n 's/^login2_hash=//p' "$manifest")
+        fi
+        [ "$(macos_checksum_file "$recovery_check_plist")" = "$recovery_check_hash" ] ||
+            return 1
+    done
+}
+
 primary_alias=${HARNESS_SSH_SUPERVISOR_PRIMARY_ALIAS:-login}
 secondary_alias=${HARNESS_SSH_SUPERVISOR_SECONDARY_ALIAS:-login2}
 supervisor_root_name=${HARNESS_SSH_SUPERVISOR_STATE_ROOT:-macos-ssh-supervisor}
@@ -299,6 +413,7 @@ while [ "$#" -gt 0 ]; do
         --activate) [ "$#" -ge 2 ] || { usage; exit 2; }; mode=activate; transaction_id=$2; shift 2 ;;
         --deactivate) [ "$#" -ge 2 ] || { usage; exit 2; }; mode=deactivate; transaction_id=$2; shift 2 ;;
         --kick) [ "$#" -ge 2 ] || { usage; exit 2; }; mode=kick; supervised_alias=$2; shift 2 ;;
+        --recover-pair) mode=recover-pair; shift ;;
         --alias) [ "$#" -ge 2 ] || { usage; exit 2; }; supervised_alias=$2; shift 2 ;;
         --rollback) [ "$#" -ge 2 ] || { usage; exit 2; }; mode=rollback; transaction_id=$2; shift 2 ;;
         -h|--help) usage; exit 0 ;;
@@ -312,6 +427,7 @@ state_root=$HOME/.local/state/harness
 transaction_root=$state_root/transactions
 supervisor_root=$state_root/$supervisor_root_name
 identity_file=$HOME/.ssh/harness-reverse
+recovery_lock=$supervisor_root/recovery.lock
 
 case "$mode" in
     activate|deactivate)
@@ -413,6 +529,14 @@ if [ "$mode" = kick ]; then
     validate_transaction "$transaction_id"
     marker=$transaction_root/$transaction_id.macos-ssh-supervisor.$supervised_alias.active
     macos_require_private_file "$marker" "$current_uid"
+    acquire_recovery_lock || die "Mac SSH supervisor recovery is busy"
+    cleanup_kick_lock() {
+        status=$?
+        trap - EXIT HUP INT TERM
+        release_recovery_lock
+        exit "$status"
+    }
+    trap cleanup_kick_lock EXIT HUP INT TERM
     recovery_action=kick
     if ! service_loaded "$supervised_alias"; then
         recovery_action=bootstrap
@@ -443,6 +567,166 @@ if [ "$mode" = kick ]; then
         die "Mac SSH supervisor process ownership is invalid after kick"
     printf 'MACOS_SSH_SUPERVISOR alias=%s action=%s status=running\n' \
         "$supervised_alias" "$recovery_action"
+    release_recovery_lock
+    trap - EXIT HUP INT TERM
+    exit 0
+fi
+
+if [ "$mode" = recover-pair ]; then
+    [ -z "$supervised_alias" ] || { usage; exit 2; }
+    [ -e "$supervisor_root/current" ] && [ ! -L "$supervisor_root/current" ] ||
+        die "Mac SSH supervisor is not staged"
+    transaction_id=$(sed -n '1p' "$supervisor_root/current")
+    validate_transaction "$transaction_id"
+    for recovery_alias in "$primary_alias" "$secondary_alias"; do
+        recovery_marker=$transaction_root/$transaction_id.macos-ssh-supervisor.$recovery_alias.active
+        macos_require_private_file "$recovery_marker" "$current_uid"
+        [ "$(sed -n '1p' "$recovery_marker")" = active ] ||
+            die "Mac SSH supervisor active marker is malformed"
+        require_ssh_contract "$recovery_alias"
+    done
+    if ! acquire_recovery_lock; then
+        printf 'MACOS_SSH_SUPERVISOR mode=recover-pair host=%s action=defer reason=busy\n' \
+            "$logical_host"
+        exit 0
+    fi
+    recovery_in_progress=0
+    cleanup_pair_recovery() {
+        status=$?
+        trap - EXIT HUP INT TERM
+        if [ "$recovery_in_progress" -eq 1 ]; then
+            restore_loaded_baseline || status=2
+        fi
+        release_recovery_lock
+        exit "$status"
+    }
+    trap cleanup_pair_recovery EXIT HUP INT TERM
+
+    for recovery_alias in "$primary_alias" "$secondary_alias"; do
+        recovery_managed=$(managed_process_count "$recovery_alias")
+        recovery_external=$(external_process_count "$recovery_alias")
+        [ "$recovery_managed" -le 1 ] && [ "$recovery_external" -eq 0 ] ||
+            die "Mac SSH supervisor process ownership is invalid"
+        if service_loaded "$recovery_alias"; then
+            if service_running "$recovery_alias"; then
+                [ "$recovery_managed" -eq 1 ] ||
+                    die "Mac SSH supervisor running state is inconsistent"
+            else
+                [ "$recovery_managed" -eq 0 ] ||
+                    die "Mac SSH supervisor stopped state is inconsistent"
+            fi
+        else
+            [ "$recovery_managed" -eq 0 ] ||
+                die "unloaded Mac SSH supervisor has a managed process"
+            unattended_auth_ready "$recovery_alias" ||
+                die "unattended SSH authentication is not ready for baseline recovery"
+            launchctl bootstrap "gui/$current_uid" "$(plist_for "$recovery_alias")" \
+                >/dev/null || die "Mac SSH supervisor baseline bootstrap failed"
+            printf 'MACOS_SSH_SUPERVISOR alias=%s action=bootstrap-baseline status=loaded\n' \
+                "$recovery_alias"
+        fi
+    done
+
+    if service_running "$primary_alias" || service_running "$secondary_alias"; then
+        printf 'MACOS_SSH_SUPERVISOR mode=recover-pair host=%s action=none reason=route-running\n' \
+            "$logical_host"
+        release_recovery_lock
+        trap - EXIT HUP INT TERM
+        exit 0
+    fi
+    [ "$(managed_process_count "$primary_alias")" -eq 0 ] &&
+        [ "$(managed_process_count "$secondary_alias")" -eq 0 ] ||
+        die "Mac SSH supervisor dual-dead state is inconsistent"
+
+    recovery_confirm_seconds=5
+    recovery_poll_seconds=15
+    recovery_release_seconds=2
+    recovery_stable_seconds=20
+    recovery_attempt_limit=80
+    if [ "${HARNESS_TEST_MODE:-0}" = 1 ]; then
+        recovery_confirm_seconds=${HARNESS_TEST_RECOVERY_CONFIRM_SECONDS:-0}
+        recovery_poll_seconds=${HARNESS_TEST_RECOVERY_POLL_SECONDS:-0}
+        recovery_release_seconds=${HARNESS_TEST_RECOVERY_RELEASE_SECONDS:-0}
+        recovery_stable_seconds=${HARNESS_TEST_RECOVERY_STABLE_SECONDS:-0}
+        recovery_attempt_limit=${HARNESS_TEST_RECOVERY_ATTEMPTS:-3}
+    fi
+    for recovery_number in "$recovery_confirm_seconds" "$recovery_poll_seconds" \
+        "$recovery_release_seconds" "$recovery_stable_seconds" "$recovery_attempt_limit"; do
+        case "$recovery_number" in ''|*[!0-9]*) die "invalid recovery timing" ;; esac
+    done
+    [ "$recovery_attempt_limit" -ge 1 ] || die "invalid recovery attempt limit"
+
+    sleep "$recovery_confirm_seconds"
+    if service_running "$primary_alias" || service_running "$secondary_alias"; then
+        printf 'MACOS_SSH_SUPERVISOR mode=recover-pair host=%s action=defer reason=state-changed\n' \
+            "$logical_host"
+        release_recovery_lock
+        trap - EXIT HUP INT TERM
+        exit 0
+    fi
+    for recovery_alias in "$primary_alias" "$secondary_alias"; do
+        [ "$(managed_process_count "$recovery_alias")" -eq 0 ] &&
+            [ "$(external_process_count "$recovery_alias")" -eq 0 ] ||
+            die "Mac SSH supervisor dual-dead ownership changed"
+        unattended_auth_ready "$recovery_alias" ||
+            die "unattended SSH authentication is not ready for pair recovery"
+    done
+
+    recovery_in_progress=1
+    for recovery_alias in "$primary_alias" "$secondary_alias"; do
+        launchctl bootout "gui/$current_uid/$(label_for "$recovery_alias")" \
+            >/dev/null || die "Mac SSH supervisor pair bootout failed"
+        service_loaded "$recovery_alias" &&
+            die "Mac SSH supervisor service remained loaded during drain"
+    done
+    printf 'MACOS_SSH_SUPERVISOR mode=recover-pair host=%s action=drain status=started\n' \
+        "$logical_host"
+
+    primary_pending=1
+    secondary_pending=1
+    recovery_attempt=0
+    while [ "$recovery_attempt" -lt "$recovery_attempt_limit" ]; do
+        recovery_attempt=$((recovery_attempt + 1))
+        for recovery_alias in "$primary_alias" "$secondary_alias"; do
+            if [ "$recovery_alias" = "$primary_alias" ]; then
+                recovery_pending=$primary_pending
+            else
+                recovery_pending=$secondary_pending
+            fi
+            [ "$recovery_pending" -eq 1 ] || continue
+            if forward_bind_ready "$recovery_alias"; then
+                sleep "$recovery_release_seconds"
+                recovery_transaction_unchanged ||
+                    die "Mac SSH supervisor transaction changed during recovery"
+                launchctl bootstrap "gui/$current_uid" "$(plist_for "$recovery_alias")" \
+                    >/dev/null || die "Mac SSH supervisor recovery bootstrap failed"
+                wait_for_running "$recovery_alias" ||
+                    die "Mac SSH supervisor recovered service did not run"
+                sleep "$recovery_stable_seconds"
+                service_running "$recovery_alias" &&
+                    [ "$(managed_process_count "$recovery_alias")" -eq 1 ] &&
+                    [ "$(external_process_count "$recovery_alias")" -eq 0 ] ||
+                    die "Mac SSH supervisor recovered service did not stabilize"
+                if [ "$recovery_alias" = "$primary_alias" ]; then
+                    primary_pending=0
+                else
+                    secondary_pending=0
+                fi
+                printf 'MACOS_SSH_SUPERVISOR alias=%s action=restore status=running attempt=%s\n' \
+                    "$recovery_alias" "$recovery_attempt"
+            fi
+        done
+        [ "$primary_pending" -eq 1 ] || [ "$secondary_pending" -eq 1 ] || break
+        sleep "$recovery_poll_seconds"
+    done
+    if [ "$primary_pending" -eq 1 ] || [ "$secondary_pending" -eq 1 ]; then
+        die "Mac SSH supervisor stale-listener drain timed out"
+    fi
+    recovery_in_progress=0
+    printf 'MACOS_SSH_SUPERVISOR mode=recover-pair host=%s action=restore status=complete attempts=%s\n' \
+        "$logical_host" "$recovery_attempt"
+    release_recovery_lock
+    trap - EXIT HUP INT TERM
     exit 0
 fi
 

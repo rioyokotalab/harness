@@ -1,0 +1,377 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+# shellcheck source=libexec/harness-common
+. "$SELF_DIR/harness-common"
+# shellcheck source=libexec/harness-macos-common
+. "$SELF_DIR/harness-macos-common"
+
+usage() {
+    cat >&2 <<'EOF'
+Usage:
+  harness macos-tunnel-watchdog --host LOGICAL_ID [--plan|--apply|--status|--run-once]
+  harness macos-tunnel-watchdog --rollback TRANSACTION_ID
+EOF
+}
+
+label=org.rioyokota.harness.ssh.tunnel-watchdog
+
+require_safe_home() {
+    case ${HOME:-} in /*) ;; *) die "Mac tunnel watchdog requires an absolute HOME" ;; esac
+    current_uid=$(id -u)
+    [ -d "$HOME" ] && [ ! -L "$HOME" ] &&
+        [ "$(macos_stat_owner "$HOME")" = "$current_uid" ] ||
+        die "Mac tunnel watchdog HOME is unsafe"
+    [ "$(CDPATH='' cd -- "$HOME" && pwd -P)" = "$HOME" ] ||
+        die "Mac tunnel watchdog HOME is ambiguous"
+}
+
+require_safe_directory() {
+    watchdog_directory=$1
+    [ -d "$watchdog_directory" ] && [ ! -L "$watchdog_directory" ] &&
+        [ "$(macos_stat_owner "$watchdog_directory")" = "$current_uid" ] ||
+        die "Mac tunnel watchdog directory is unsafe"
+}
+
+validate_public_checkout() {
+    [ "$(uname -s)" = Darwin ] || die "Mac tunnel watchdog requires Darwin"
+    [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
+        die "Mac tunnel watchdog requires a Git harness checkout"
+    [ "$(CDPATH='' cd -- "$HARNESS_ROOT" && pwd -P)" = "$HARNESS_ROOT" ] &&
+        [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" = \
+            "$HARNESS_ROOT" ] || die "Mac tunnel watchdog checkout root is ambiguous"
+    [ "$(git -C "$HARNESS_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null)" = main ] ||
+        die "Mac tunnel watchdog requires the main branch"
+    [ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
+        die "Mac tunnel watchdog requires a clean committed harness checkout"
+}
+
+xml_escape() {
+    printf '%s' "$1" | sed \
+        -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' \
+        -e 's/"/\&quot;/g' -e "s/'/\\\&apos;/g"
+}
+
+render_plist() {
+    watchdog_command=$(xml_escape "$HARNESS_ROOT/bin/harness")
+    watchdog_host=$(xml_escape "$logical_host")
+    cat <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>$label</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>$watchdog_command</string>
+    <string>macos-tunnel-watchdog</string>
+    <string>--host</string>
+    <string>$watchdog_host</string>
+    <string>--run-once</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StartInterval</key>
+  <integer>30</integer>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>Umask</key>
+  <integer>63</integer>
+  <key>StandardOutPath</key>
+  <string>/dev/null</string>
+  <key>StandardErrorPath</key>
+  <string>/dev/null</string>
+</dict>
+</plist>
+EOF
+}
+
+validate_plist_file() {
+    watchdog_plist_file=$1
+    [ -f "$watchdog_plist_file" ] && [ ! -L "$watchdog_plist_file" ] &&
+        [ "$(macos_stat_owner "$watchdog_plist_file")" = "$current_uid" ] &&
+        [ "$(macos_stat_mode "$watchdog_plist_file")" = 600 ] ||
+        die "Mac tunnel watchdog plist is unsafe"
+    plutil -lint "$watchdog_plist_file" >/dev/null 2>&1 ||
+        die "Mac tunnel watchdog plist is malformed"
+}
+
+watchdog_loaded() {
+    launchctl print "gui/$current_uid/$label" >/dev/null 2>&1
+}
+
+validate_supervisor_contract() {
+    supervisor_root=$state_root/macos-tunnel-supervisor
+    supervisor_state=$supervisor_root/current
+    macos_require_private_directory "$supervisor_root" "$current_uid"
+    macos_require_private_file "$supervisor_state" "$current_uid"
+    supervisor_tx=$(sed -n '1p' "$supervisor_state")
+    macos_private_id_is_safe "$supervisor_tx" ||
+        die "Mac tunnel supervisor transaction identifier is invalid"
+    [ "$(wc -l <"$supervisor_state" | tr -d ' ')" -eq 1 ] ||
+        die "Mac tunnel supervisor state is malformed"
+    supervisor_manifest=$transaction_root/$supervisor_tx.macos-ssh-supervisor.manifest
+    supervisor_status=$transaction_root/$supervisor_tx.macos-ssh-supervisor.status
+    macos_require_private_file "$supervisor_manifest" "$current_uid"
+    macos_require_private_file "$supervisor_status" "$current_uid"
+    [ "$(sed -n '1p' "$supervisor_status")" = staged ] ||
+        die "Mac tunnel supervisor transaction is not staged"
+    awk -F= '
+        NR==1 && $0=="schema=1" {next}
+        NR==2 && $0=="operation=macos-ssh-supervisor" {next}
+        NR==3 && $0 ~ /^logical_id=[A-Za-z0-9._-]+$/ {next}
+        NR==4 && $0 ~ /^revision=[0-9a-f]{40}$/ {next}
+        NR==5 && $0 ~ /^login_hash=[0-9a-f]{64}$/ {next}
+        NR==6 && $0 ~ /^login2_hash=[0-9a-f]{64}$/ {next}
+        NR==7 && $0 ~ /^supervisor_root_before=(absent|present)$/ {next}
+        {bad=1}
+        END {exit NR==7 && !bad ? 0 : 1}
+    ' "$supervisor_manifest" >/dev/null 2>&1 ||
+        die "Mac tunnel supervisor manifest is malformed"
+    [ "$(sed -n 's/^logical_id=//p' "$supervisor_manifest")" = "$logical_host" ] ||
+        die "Mac tunnel supervisor logical host differs"
+    for supervisor_alias in tunnel tunnel2; do
+        supervisor_marker=$transaction_root/$supervisor_tx.macos-ssh-supervisor.$supervisor_alias.active
+        supervisor_plist=$launch_agents/org.rioyokota.harness.ssh.$supervisor_alias.plist
+        macos_require_private_file "$supervisor_marker" "$current_uid"
+        [ "$(sed -n '1p' "$supervisor_marker")" = active ] ||
+            die "Mac tunnel supervisor active marker is malformed"
+        validate_plist_file "$supervisor_plist"
+        if [ "$supervisor_alias" = tunnel ]; then
+            supervisor_hash=$(sed -n 's/^login_hash=//p' "$supervisor_manifest")
+        else
+            supervisor_hash=$(sed -n 's/^login2_hash=//p' "$supervisor_manifest")
+        fi
+        [ "$(macos_checksum_file "$supervisor_plist")" = "$supervisor_hash" ] ||
+            die "Mac tunnel supervisor plist changed"
+    done
+}
+
+validate_watchdog_transaction() {
+    watchdog_tx=$1
+    macos_private_id_is_safe "$watchdog_tx" ||
+        die "invalid Mac tunnel watchdog transaction"
+    watchdog_manifest=$transaction_root/$watchdog_tx.macos-tunnel-watchdog.manifest
+    watchdog_status=$transaction_root/$watchdog_tx.macos-tunnel-watchdog.status
+    watchdog_state=$watchdog_root/current
+    macos_require_private_directory "$watchdog_root" "$current_uid"
+    macos_require_private_file "$watchdog_manifest" "$current_uid"
+    macos_require_private_file "$watchdog_status" "$current_uid"
+    macos_require_private_file "$watchdog_state" "$current_uid"
+    [ "$(sed -n '1p' "$watchdog_state")" = "$watchdog_tx" ] &&
+        [ "$(wc -l <"$watchdog_state" | tr -d ' ')" -eq 1 ] ||
+        die "Mac tunnel watchdog state is malformed"
+    awk -F= '
+        NR==1 && $0=="schema=1" {next}
+        NR==2 && $0=="operation=macos-tunnel-watchdog" {next}
+        NR==3 && $0 ~ /^logical_id=[A-Za-z0-9._-]+$/ {next}
+        NR==4 && $0 ~ /^revision=[0-9a-f]{40}$/ {next}
+        NR==5 && $0 ~ /^plist_hash=[0-9a-f]{64}$/ {next}
+        NR==6 && $0 ~ /^watchdog_root_before=(absent|present)$/ {next}
+        {bad=1}
+        END {exit NR==6 && !bad ? 0 : 1}
+    ' "$watchdog_manifest" >/dev/null 2>&1 ||
+        die "Mac tunnel watchdog manifest is malformed"
+    [ "$(sed -n 's/^logical_id=//p' "$watchdog_manifest")" = "$logical_host" ] ||
+        die "Mac tunnel watchdog logical host differs"
+    [ "$(sed -n '1p' "$watchdog_status")" = complete ] ||
+        die "Mac tunnel watchdog transaction is not complete"
+    validate_plist_file "$watchdog_plist"
+    [ "$(macos_checksum_file "$watchdog_plist")" = \
+        "$(sed -n 's/^plist_hash=//p' "$watchdog_manifest")" ] ||
+        die "Mac tunnel watchdog plist changed"
+}
+
+load_current_watchdog_transaction() {
+    macos_require_private_directory "$watchdog_root" "$current_uid"
+    macos_require_private_file "$watchdog_root/current" "$current_uid"
+    transaction_id=$(sed -n '1p' "$watchdog_root/current")
+    macos_private_id_is_safe "$transaction_id" ||
+        die "invalid current Mac tunnel watchdog transaction"
+    [ "$(wc -l <"$watchdog_root/current" | tr -d ' ')" -eq 1 ] ||
+        die "Mac tunnel watchdog state is malformed"
+}
+
+mode=plan
+logical_host=
+transaction_id=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        --status) mode=status; shift ;;
+        --run-once) mode=run-once; shift ;;
+        --rollback) [ "$#" -ge 2 ] || { usage; exit 2; }; mode=rollback; transaction_id=$2; shift 2 ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+
+require_safe_home
+launch_agents=$HOME/Library/LaunchAgents
+state_root=$HOME/.local/state/harness
+transaction_root=$state_root/transactions
+watchdog_root=$state_root/macos-tunnel-watchdog
+watchdog_plist=$launch_agents/$label.plist
+require_safe_directory "$HOME/Library"
+require_safe_directory "$launch_agents"
+require_safe_directory "$HOME/.local"
+require_safe_directory "$HOME/.local/state"
+require_safe_directory "$state_root"
+require_safe_directory "$transaction_root"
+[ "$(macos_stat_mode "$state_root")" = 700 ] &&
+    [ "$(macos_stat_mode "$transaction_root")" = 700 ] ||
+    die "Mac tunnel watchdog private state mode is unsafe"
+
+if [ "$mode" = rollback ]; then
+    [ -n "$transaction_id" ] && [ -z "$logical_host" ] || { usage; exit 2; }
+    macos_private_id_is_safe "$transaction_id" ||
+        die "invalid Mac tunnel watchdog transaction"
+    [ -d "$watchdog_root" ] && [ ! -L "$watchdog_root" ] ||
+        die "Mac tunnel watchdog is not installed"
+    macos_require_private_file \
+        "$transaction_root/$transaction_id.macos-tunnel-watchdog.manifest" "$current_uid"
+    logical_host=$(sed -n 's/^logical_id=//p' \
+        "$transaction_root/$transaction_id.macos-tunnel-watchdog.manifest")
+    macos_private_id_is_safe "$logical_host" || die "invalid Mac tunnel watchdog host"
+    validate_public_checkout
+    validate_watchdog_transaction "$transaction_id"
+    if watchdog_loaded; then
+        launchctl bootout "gui/$current_uid/$label" >/dev/null ||
+            die "Mac tunnel watchdog bootout failed"
+    fi
+    unlink "$watchdog_plist"
+    unlink "$watchdog_root/current"
+    if [ "$(sed -n 's/^watchdog_root_before=//p' "$watchdog_manifest")" = absent ]; then
+        rmdir "$watchdog_root" || die "Mac tunnel watchdog rollback state changed"
+    fi
+    printf '%s\n' rolled-back >"$watchdog_status"
+    printf 'TRANSACTION id=%s status=rolled-back\n' "$transaction_id"
+    exit 0
+fi
+
+if [ -z "$logical_host" ] || ! macos_private_id_is_safe "$logical_host"; then
+    usage
+    exit 2
+fi
+validate_public_checkout
+"$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
+    die "private profile is not ready for Mac tunnel watchdog"
+validate_supervisor_contract
+[ ! -e "$watchdog_root" ] && [ ! -L "$watchdog_root" ] ||
+    macos_require_private_directory "$watchdog_root" "$current_uid"
+
+if [ "$mode" = run-once ]; then
+    load_current_watchdog_transaction
+    validate_watchdog_transaction "$transaction_id"
+    exec "$SELF_DIR/harness-macos-tunnel-supervisor" --host "$logical_host" --recover-pair
+fi
+
+if [ "$mode" = status ]; then
+    if [ -e "$watchdog_root/current" ] && [ ! -L "$watchdog_root/current" ]; then
+        load_current_watchdog_transaction
+        validate_watchdog_transaction "$transaction_id"
+        installed=yes
+    else
+        installed=no
+    fi
+    if watchdog_loaded; then loaded=yes; else loaded=no; fi
+    printf 'MACOS_TUNNEL_WATCHDOG mode=status host=%s installed=%s loaded=%s\n' \
+        "$logical_host" "$installed" "$loaded"
+    exit 0
+fi
+
+[ "$mode" = plan ] || [ "$mode" = apply ] || { usage; exit 2; }
+temp_root=$(mktemp -d "${TMPDIR:-/tmp}/harness-macos-tunnel-watchdog.XXXXXX") ||
+    die "cannot create Mac tunnel watchdog temporary directory"
+chmod 700 "$temp_root"
+temp_plist=$temp_root/watchdog.plist
+cleanup_temp() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    [ ! -e "$temp_plist" ] && [ ! -L "$temp_plist" ] || unlink "$temp_plist"
+    rmdir "$temp_root"
+    exit "$status"
+}
+trap cleanup_temp EXIT HUP INT TERM
+render_plist >"$temp_plist"
+chmod 600 "$temp_plist"
+plutil -lint "$temp_plist" >/dev/null 2>&1 ||
+    die "generated Mac tunnel watchdog plist is malformed"
+
+blocked=0
+[ ! -e "$watchdog_plist" ] && [ ! -L "$watchdog_plist" ] || blocked=1
+[ ! -e "$watchdog_root/current" ] && [ ! -L "$watchdog_root/current" ] || blocked=1
+watchdog_loaded && blocked=1
+printf 'MACOS_TUNNEL_WATCHDOG mode=%s host=%s privacy=value-free\n' "$mode" "$logical_host"
+printf 'WATCHDOG stage=%s interval=30 recovery=bounded-drain blocked=%s\n' \
+    "$([ "$blocked" -eq 0 ] && printf create || printf blocked)" "$blocked"
+[ "$blocked" -eq 0 ] || die "Mac tunnel watchdog plan is blocked"
+[ "$mode" = apply ] || { printf '%s\n' 'END macos_tunnel_watchdog applied=no'; exit 0; }
+
+validate_public_checkout
+validate_supervisor_contract
+watchdog_root_before=present
+if [ ! -e "$watchdog_root" ] && [ ! -L "$watchdog_root" ]; then
+    watchdog_root_before=absent
+    mkdir "$watchdog_root"
+    chmod 700 "$watchdog_root"
+fi
+macos_require_private_directory "$watchdog_root" "$current_uid"
+transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+watchdog_manifest=$transaction_root/$transaction_id.macos-tunnel-watchdog.manifest
+watchdog_status=$transaction_root/$transaction_id.macos-tunnel-watchdog.status
+watchdog_state=$watchdog_root/current
+for reserved in "$watchdog_manifest" "$watchdog_status" "$watchdog_state" "$watchdog_plist"; do
+    [ ! -e "$reserved" ] && [ ! -L "$reserved" ] ||
+        die "Mac tunnel watchdog transaction collision"
+done
+plist_hash=$(macos_checksum_file "$temp_plist")
+printf 'schema=1\noperation=macos-tunnel-watchdog\nlogical_id=%s\nrevision=%s\nplist_hash=%s\nwatchdog_root_before=%s\n' \
+    "$logical_host" "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" "$plist_hash" \
+    "$watchdog_root_before" >"$watchdog_manifest"
+chmod 600 "$watchdog_manifest"
+printf '%s\n' prepared >"$watchdog_status"
+chmod 600 "$watchdog_status"
+
+apply_complete=0
+cleanup_apply() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ "$apply_complete" -eq 0 ]; then
+        watchdog_loaded && launchctl bootout "gui/$current_uid/$label" >/dev/null 2>&1 || true
+        if [ -f "$watchdog_plist" ] && [ ! -L "$watchdog_plist" ] &&
+            [ "$(macos_checksum_file "$watchdog_plist")" = "$plist_hash" ]; then
+            unlink "$watchdog_plist"
+        fi
+        [ ! -e "$watchdog_state" ] && [ ! -L "$watchdog_state" ] || unlink "$watchdog_state"
+        if [ "$watchdog_root_before" = absent ]; then
+            rmdir "$watchdog_root" 2>/dev/null || true
+        fi
+        printf '%s\n' failed >"$watchdog_status"
+    fi
+    cleanup_temp
+}
+trap cleanup_apply EXIT HUP INT TERM
+
+staging=$launch_agents/.harness-tunnel-watchdog.$transaction_id.new
+[ ! -e "$staging" ] && [ ! -L "$staging" ] ||
+    die "Mac tunnel watchdog staging collision"
+cp "$temp_plist" "$staging"
+chmod 600 "$staging"
+mv "$staging" "$watchdog_plist"
+printf '%s\n' "$transaction_id" >"$watchdog_state"
+chmod 600 "$watchdog_state"
+printf '%s\n' complete >"$watchdog_status"
+launchctl bootstrap "gui/$current_uid" "$watchdog_plist" >/dev/null ||
+    die "Mac tunnel watchdog bootstrap failed"
+watchdog_loaded || die "Mac tunnel watchdog did not load"
+apply_complete=1
+trap cleanup_temp EXIT HUP INT TERM
+printf 'TRANSACTION id=%s status=complete watchdog=loaded\n' "$transaction_id"
+printf '%s\n' 'END macos_tunnel_watchdog applied=yes'

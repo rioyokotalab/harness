@@ -55,6 +55,7 @@ Read-only phase-1 commands:
   macos-update  plan/apply clean public and private Mac fast-forwards
   macos-ssh-supervisor  manage legacy Mac SSH launch agents
   macos-tunnel-supervisor stage/activate/inspect dedicated Mac tunnel agents
+  macos-tunnel-watchdog  recover dual tunnel loss locally on a managed Mac
   macos-python          install versioned non-default Python on a Mac
   macos-codex-bootstrap  install/launch Codex for one Mac onboarding
   macos-ssh-sync  reconcile one private whole-file Mac SSH configuration
@@ -116,7 +117,7 @@ if [ "$#" -gt 0 ]; then
 fi
 
 case "$command_name" in
-    inventory|plan|doctor|macos-inventory|macos-plan|macos-doctor|macos-profile|macos-update|macos-ssh-supervisor|macos-tunnel-supervisor|macos-python|macos-codex-bootstrap|macos-ssh-sync|macos-config-sync|macos-config-migrate|macos-pilot-plan|macos-control|macos-homebrew|macos-login-shell|macos-bash|macos-bash-hooks|bash-startup-unify|tmux-config|agent-config|agent-config-catch-up|agent-config-fleet|codex-arg0-housekeeping|codex-arg0-wrapper|storage-readiness|replica|apply|remediate|shell|cache-bootstrap|startup-normalize|dotfiles|ssh-config-layout|tool|runtime|python|agent|build-tool|rollback|restic|restic-primary|restic-schedule|fleet-sync|connection-monitor|ssh-config-mirror|terminfo)
+    inventory|plan|doctor|macos-inventory|macos-plan|macos-doctor|macos-profile|macos-update|macos-ssh-supervisor|macos-tunnel-supervisor|macos-tunnel-watchdog|macos-python|macos-codex-bootstrap|macos-ssh-sync|macos-config-sync|macos-config-migrate|macos-pilot-plan|macos-control|macos-homebrew|macos-login-shell|macos-bash|macos-bash-hooks|bash-startup-unify|tmux-config|agent-config|agent-config-catch-up|agent-config-fleet|codex-arg0-housekeeping|codex-arg0-wrapper|storage-readiness|replica|apply|remediate|shell|cache-bootstrap|startup-normalize|dotfiles|ssh-config-layout|tool|runtime|python|agent|build-tool|rollback|restic|restic-primary|restic-schedule|fleet-sync|connection-monitor|ssh-config-mirror|terminfo)
         exec "$ROOT/libexec/harness-$command_name" "$@"
         ;;
     guarded-delete)
