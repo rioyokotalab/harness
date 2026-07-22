@@ -166,6 +166,13 @@ Execution checkpoint 2026-07-22:
 - Current slice: implement and validate AL's user-local canonical
   `tmux-256color` deployment, then publish and roll it out with controlled PTY
   acceptance.
+- Protected PR #215 passed `portable-phase1` and squash-merged the AL adapter
+  as `a1b4973`; guarded fleet sync advanced all six clean Linux mirrors. AL's
+  live plan reported the expected missing entry, but apply stopped before any
+  entry or transaction because the first implementation rejected AL's
+  profile-declared `.local` symlink. The follow-up slice adds the same strict
+  declaration/owner/containment validation used by established adapters plus
+  declared and undeclared symlink tests; retry is safe after publication.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
