@@ -173,13 +173,14 @@ harness macos-homebrew --host LOGICAL_ID --apply
 
 Both modes require Darwin, a canonical clean committed public `main`, a valid
 private profile, and one active regular `brew` executable matching its reported
-prefix. The command queries versions only for selected formulae, resolves only
+prefix. One bounded version query names only the selected and reviewed retired
+formulae; it never inventories unrelated formulae. The command resolves only
 their dependency closure, and checks installed dependents of every explicitly
 selected root. An installed dependent outside the selected roots is displayed
-locally and blocks plan acceptance and apply. Packages that merely share a
-dependency remain unmanaged; Homebrew's installed-dependent linkage checks
-stay enabled to protect them. It never lists or dumps the whole installed
-package set.
+locally and blocks plan acceptance and apply unless that dependent is itself in
+the reviewed retirement set. Packages that merely share a dependency remain
+unmanaged; Homebrew's installed-dependent linkage checks stay enabled to
+protect them. It never lists or dumps the whole installed package set.
 
 Plan runs exact formula-only install and upgrade dry-runs with automatic update,
 cleanup, analytics, prompts, and environment hints disabled. It refuses empty
@@ -190,14 +191,15 @@ run it implicitly.
 
 Apply repeats the checkout, private profile, prefix, selected and retirement
 action sets, dependency closure, installed-dependent, and dry-run gates
-immediately before mutation. It first uninstalls only installed formulae on the
-public retirement list after proving they have no installed dependents outside
-that same reviewed retirement set. This permits one bounded operation to retire
-an interdependent package family while still protecting every unreviewed
-installed dependent. Homebrew has no uninstall dry-run, so this exact reviewed
-allowlist is reported separately and no cleanup, autoremove, force, or
-ignored-dependent option is used. It then installs only missing selected
-formulae and upgrades only outdated selected formulae.
+immediately before mutation. It installs missing selected formulae and upgrades
+outdated selected formulae first. A second linkage checkpoint must then prove
+that every selected formula is current and no dependent remains outside the
+reviewed retirement set. Only then does it uninstall installed formulae on the
+public retirement list. This ordering migrates old linkage before removal and
+permits one bounded operation to retire an interdependent package family while
+still protecting every unreviewed installed dependent. Homebrew has no
+uninstall dry-run, so this exact reviewed allowlist is reported separately and
+no cleanup, autoremove, force, or ignored-dependent option is used.
 Homebrew may update their dependency closure, but
 the command does not disable installed-dependent linkage checks because the
 official guidance warns that doing so can leave broken linkage. It uses no

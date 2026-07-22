@@ -94,9 +94,17 @@ case "$1" in
         ;;
     list)
         [ "$2:$3" = --formula:--versions ] || exit 91
-        awk -v name="$4" '$1 == name { print }' "$BREW_STATE/installed"
-        [ "$(awk -v name="$4" '$1 == name { count++ } END { print count + 0 }' \
-            "$BREW_STATE/installed")" -gt 0 ]
+        shift 3
+        list_status=0
+        for list_name in "$@"; do
+            if awk -v name="$list_name" '$1 == name { print; found = 1 }
+                END { exit found ? 0 : 1 }' "$BREW_STATE/installed"; then
+                :
+            else
+                list_status=1
+            fi
+        done
+        exit "$list_status"
         ;;
     outdated)
         [ "$2:$3" = --formula:--quiet ] || exit 92
@@ -121,6 +129,11 @@ case "$1" in
         if [ "${FAKE_RETIRED_INTERNAL_DEPENDENT:-0}" = 1 ] && \
             [ "$5" = bash-completion ]; then
             printf '%s\n' pyenv
+        fi
+        if [ "${FAKE_RETIRED_UPGRADE_DEPENDENT:-0}" = 1 ] && \
+            [ "$5" = pyenv ] && grep -F -x node "$BREW_STATE/outdated" \
+                >/dev/null 2>&1; then
+            printf '%s\n' node
         fi
         if [ "${FAKE_RETIRED_DEPENDENT:-0}" = 1 ] && [ "$5" = pyenv ]; then
             printf '%s\n' personal-tool
@@ -239,6 +252,7 @@ for expected in \
     'DEPENDENCIES count=1 scope=validated shared_users=preserved' \
     "UNMANAGED_DEPENDENTS count=0 formulae=''" \
     "RETIRED_DEPENDENTS count=0 formulae=''" \
+    "MIGRATION_DEPENDENTS count=0 formulae='' resolution=upgrade-before-retire" \
     'DRY_RUN status=validated install=1 upgrade=2 retire=package-manager-no-dry-run' \
     'END macos_homebrew applied=no metadata_refresh=separate'
 do
@@ -279,6 +293,27 @@ if awk '$1 == "bash-completion" || $1 == "pyenv" { found = 1 }
     END { exit found ? 0 : 1 }' "$retire_state/installed"; then
     fail "retired formula remained installed"
 fi
+
+migration_home=$(make_home retirement-migration)
+migration_state=$(make_brew_state retirement-migration)
+printf '%s\n' 'pyenv 2.6.0' >>"$migration_state/installed"
+printf '%s\n' node >>"$migration_state/outdated"
+FAKE_RETIRED_UPGRADE_DEPENDENT=1 run_homebrew "$migration_home" \
+    "$migration_state" "$TEMP_DIR/migration-plan.log" \
+    --host mac-test-pilot --plan >"$TEMP_DIR/migration-plan.out"
+grep -F -x \
+    "MIGRATION_DEPENDENTS count=1 formulae='node' resolution=upgrade-before-retire" \
+    "$TEMP_DIR/migration-plan.out" >/dev/null || fail "retirement migration plan"
+FAKE_RETIRED_UPGRADE_DEPENDENT=1 run_homebrew "$migration_home" \
+    "$migration_state" "$TEMP_DIR/migration-apply.log" \
+    --host mac-test-pilot --apply >"$TEMP_DIR/migration-apply.out"
+upgrade_line=$(grep -n -F -x 'upgrade --formula git sqlite node' \
+    "$TEMP_DIR/migration-apply.log" | cut -d: -f1)
+retire_line=$(grep -n -F -x 'uninstall --formula pyenv' \
+    "$TEMP_DIR/migration-apply.log" | cut -d: -f1)
+[ -n "$upgrade_line" ] && [ -n "$retire_line" ] && \
+    [ "$upgrade_line" -lt "$retire_line" ] ||
+    fail "retirement ran before dependency migration upgrade"
 
 retired_dependent_home=$(make_home retired-dependent)
 retired_dependent_state=$(make_brew_state retired-dependent)
