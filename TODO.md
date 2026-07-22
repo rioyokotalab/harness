@@ -170,18 +170,33 @@ restricted harness tunnel entries is the recommended isolation so unrelated
 ordinary-key changes cannot remove them again.
 
 At 01:36:28 JST the observer recorded another Aist `0/2` interval and both
-routes were independently ready by 01:37:32, a recovery bound of at most 64
-seconds. The watchdog again exited 0, but the active Aist Codex makes sole
-attribution unavailable. At 01:54 JST Aist remained `2/2`; Home was
-primary-only, Office secondary-only, and Riken `2/2`. Fresh authorization was
-ready only for Aist, leaving every apparently live Home, Office, and Riken
-route at risk of being irrecoverable after its current session ends.
+routes were ready by 01:37:07, a 39-second observer bound. The watchdog again
+exited 0, but the active Aist Codex makes sole attribution unavailable. PR
+#261 (`c0772af617fe9ddf884c104b7be54a63daf09d27`) then added private atomic
+last-run receipts so future recovery can be attributed without retaining raw
+SSH output.
+
+At 02:05:44 Aist entered a new `0/2` interval. Both Local listeners were still
+occupied at 02:15 and absent by 02:23, but neither route rebound. The deployed
+retry-count limit omitted SSH probe duration and could stretch its nominal
+20-minute bound to roughly 41 minutes. PR #262
+(`972988297d01a0c79d9df26a6796a059087abaa1`) now enforces 1,200 elapsed seconds
+and distinguishes mid-drain authorization loss from a bind timeout while
+restoring the exact launchd baseline in either failure case. The owner-only
+credential gate prevented deployment on Aist before this outage.
+
+The at-risk warning also predicted subsequent loss: Office's last old route
+ended at 02:37:09 and Home's at 02:37:46. Current Mac state is Aist `0/2`, Home
+`0/2`, Office `0/2`, and Riken `2/2`; Riken is still fresh-auth blocked. Local,
+the managed Linux checkouts, and Riken are clean/current at `9729882`; the
+other Macs remain at `2ca9114` because guarded sync preflight could not reach
+them and made no change.
 
 **Next action:** continue the five-hour observe-only soak, publish its final
 event counts and bounds, then stop only `t296-night-watch`. The owner must
-restore the exact previously restricted Home, Office, and Riken tunnel
-authorizations before their missing routes can recover or their watchdog drills
-can run. The recommended one-time admin hardening is recorded in the audit;
+verify the four exact restricted authorizations and restore every missing Aist,
+Home, Office, or Riken entry before their missing routes can recover or their
+watchdog drills can run. The recommended one-time admin hardening is recorded in the audit;
 credentials and sshd policy remain outside agent authority.
 
 Continue the Aist soak, but do not drill or install on Home, Office, or Riken

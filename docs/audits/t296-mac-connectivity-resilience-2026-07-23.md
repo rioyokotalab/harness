@@ -3,13 +3,16 @@
 ## Status
 
 T-296 is partially converged and remains open at the owner-credential gate.
-Aist has the published Mac-local watchdog and recovered during controlled and
-natural dual-route losses while that watchdog was active. The owner-launched
-Aist Codex also remained active, however, so those live results establish
-convergence rather than sole watchdog causation. Home, Office, and Riken retain live established routes but
-their dedicated identities cannot create fresh sessions, so rollout and drills
-on those Macs are correctly blocked. No agent inspected or changed a key,
-`authorized_keys`, SSH configuration, or sshd configuration.
+Aist has the published Mac-local watchdog and recovered during several
+controlled and natural dual-route losses while that watchdog was active. The
+owner-launched Aist Codex also remained active, however, so those early live
+results establish convergence rather than sole watchdog causation. A later
+Aist outage exposed a real elapsed-time-bound defect and remained unresolved
+after its stale listeners drained. Home and Office subsequently lost their last
+established sessions; Riken retains two established routes but cannot create a
+fresh one. Rollout and drills are therefore correctly blocked. No agent
+inspected or changed a key, `authorized_keys`, SSH configuration, or sshd
+configuration.
 
 The frozen design and acceptance gates are in
 [`docs/plans/t296-mac-connectivity-resilience.md`](../plans/t296-mac-connectivity-resilience.md).
@@ -44,6 +47,8 @@ launchd baseline on timeout or failure.
 | #258 | `55693c581556446bb374fe2b32d64e700eae7aca` | Independent single-route drain and controller routing through the same recovery state machine. |
 | #259 | `d91857b2ff11eaaf464136915bf23cfa089bba93` | Value-free fresh-auth status and healthy-but-at-risk classification. |
 | #260 | `2ca91146021989014ed9b5108e99dfc8e67a0528` | Explicit primary/secondary authorization-blocked classification after a failed recovery. |
+| #261 | `c0772af617fe9ddf884c104b7be54a63daf09d27` | Atomic mode-0600 last-run receipts with fixed value-free classifications and exact rollback. |
+| #262 | `972988297d01a0c79d9df26a6796a059087abaa1` | True elapsed-time recovery deadline and immediate baseline restoration when authentication disappears mid-drain. |
 
 Every PR passed protected `portable-phase1`. Clean local phase-one runs passed
 all focused suites and guarded-delete tests before publication. Native macOS
@@ -51,13 +56,19 @@ probes on all four Macs proved the recovery lock's atomic noclobber behavior,
 owner/mode/link gates, and stable PID/start identity. All temporary lock and
 power-log probes were exact-cleaned.
 
-Guarded fleet-sync advanced local, all seven managed remote Linux checkouts,
-and all four Macs to `2ca91146021989014ed9b5108e99dfc8e67a0528`. One
+Guarded fleet-sync advanced local, all managed remote Linux checkouts, and all
+four Macs to `2ca91146021989014ed9b5108e99dfc8e67a0528`. One
 overlapping fleet-sync retry observed an already-applied first target; the
 subsequent all-host plan found every target clean/current and no transfer
 artifact. Persistent monitor script replacement produced one NFS placeholder
 held by exactly the two known tmux monitors; respawning only those panes onto
 the new committed script released it automatically.
+
+After PRs #261 and #262, Local, the managed Linux checkouts, and Riken advanced
+cleanly to `972988297d01a0c79d9df26a6796a059087abaa1`. Aist, Home, and Office
+became unreachable before their guarded preflight and remain at the earlier
+commit; both failed plans stopped before mutation. Aist consequently does not
+yet have the new receipt or elapsed-deadline code deployed.
 
 ## Aist pilot evidence
 
@@ -74,9 +85,19 @@ the new committed script released it automatically.
   external processes, and watchdog exit 0; the concurrently active Aist Codex
   prevents assigning that recovery solely to the watchdog.
 - Natural soak recurrence at 01:36 JST: the 30-second observer recorded Aist
-  `0/2`; both routes were independently ready again by 01:37:32, bounding that
-  no-owner-interaction recovery sample to at most 64 seconds. Final supervisor status
+  `0/2` at 01:36:28; both routes were ready at 01:37:07, bounding that
+  no-owner-interaction recovery sample to 39 seconds at observer resolution. Final supervisor status
   again showed `managed=1 external=0` for both routes and watchdog exit 0.
+- Natural soak recurrence at 02:05:44: Aist entered `0/2` and stayed there.
+  Both Local listeners were confirmed occupied at 02:15 and absent at 02:23,
+  but neither route rebound. This separates successful stale-session drainage
+  from failed post-drain reconnection. The deployed retry-count bound ignored
+  up to two sequential SSH probe timeouts per iteration, so its nominal
+  `80 * 15 seconds` bound could extend to roughly 41 minutes. PR #262 replaces
+  that with a 1,200-second elapsed deadline and checks auth without a forward
+  after every failed bind probe. A lost authorization now restores the exact
+  launchd baseline immediately and records `authorization-blocked`; otherwise
+  the real elapsed deadline records `drain-timeout`.
 - A two-hour power-log classification around the earlier recurrence found no
   Aist sleep or wake event. The private native log was never printed and was
   exact-unlinked.
@@ -110,6 +131,13 @@ listener failure. The new five-minute monitor now reports:
 - Office: `at-risk action=authorization-blocked-primary`.
 - Riken: `at-risk action=authorization-blocked` while both old routes live.
 - Home: `at-risk action=authorization-blocked-secondary`.
+
+The warning became predictive during the same soak. Office's last established
+route ended at 02:37:09 and Home's at 02:37:46; neither could replace its
+session because both dedicated authorizations were already blocked. The live
+state then became Aist `0/2`, Home `0/2`, Office `0/2`, and Riken `2/2` with
+Riken still at risk. This is not repairable from Local without credential
+handling or an already-live Mac route.
 
 An established SSH session surviving removal of its authorization explains why
 ordinary route probes had previously looked healthy. The new audit prevents
@@ -147,10 +175,11 @@ read/copy the entries, or edit either authorization source.
 
 ## Remaining acceptance sequence
 
-1. Owner restores the exact restricted Home, Office, and Riken entries and
-   optionally moves all four entries into the root-owned secondary file.
-2. Require `auth_blocked=0` on Home, Office, and Riken and retain Aist `0`; then
-   restore Home2 and Office primary through the published bounded recovery.
+1. Owner verifies all four exact restricted entries and restores any missing
+   Aist, Home, Office, or Riken entry; optionally move all four entries into the
+   root-owned secondary file.
+2. Require `auth_blocked=0` on all four Macs; then restore all missing routes
+   through the published bounded recovery.
 3. Install the watchdog transaction on Home, Office, and Riken one at a time.
 4. After each install, run primary-only, secondary-only, and simultaneous-loss
    drills, retaining a healthy sibling whenever possible and validating both
@@ -171,3 +200,6 @@ read/copy the entries, or edit either authorization source.
   an independent post-acknowledgement recovery sample remains required for
   sole-attribution evidence.
 - Credential and SSH configuration bytes remain outside repository evidence.
+- At the latest checkpoint, only Riken's two Mac routes remained reachable;
+  the other three Mac pairs were `0/2`. The recovering five-minute monitor and
+  30-second observer both remained alive on Local.
