@@ -181,9 +181,10 @@ canonical output when old and current versioned formula names are queried
 together. The command resolves only the selected dependency closure and checks
 installed dependents of every explicitly selected root. An installed dependent
 outside the selected roots blocks plan acceptance and apply unless that
-dependent is itself in the reviewed retirement set. Packages that merely share
-a dependency remain unmanaged; Homebrew's installed-dependent linkage checks
-stay enabled to protect them.
+dependent is itself in the reviewed retirement set or a policy-declared legacy
+name resolves to a selected replacement. Packages that merely share a dependency
+remain unmanaged; Homebrew's installed-dependent linkage checks stay enabled to
+protect them.
 
 Plan runs exact formula-only install and upgrade dry-runs with automatic update,
 cleanup, analytics, prompts, and environment hints disabled. It refuses empty
@@ -198,11 +199,16 @@ immediately before mutation. It installs missing selected formulae and upgrades
 outdated selected formulae first. A second linkage checkpoint must then prove
 that every selected formula is current and no dependent remains outside the
 reviewed retirement set. Only then does it uninstall installed formulae on the
-public retirement list. This ordering migrates old linkage before removal and
+public retirement list. Ordinary retirements use exact formula-only forced
+uninstall only after the independent dependent check, because non-forced
+Homebrew uninstall leaves older installed kegs behind. The declared legacy
+`icu4c` name shares its Cellar with selected `icu4c@78`, so it instead requires
+a scoped cleanup dry-run that proves an old keg exists, followed by cleanup of
+that one selected formula. This ordering migrates old linkage before removal and
 permits one bounded operation to retire an interdependent package family while
 still protecting every unreviewed installed dependent. Homebrew has no
 uninstall dry-run, so this exact reviewed allowlist is reported separately and
-no cleanup, autoremove, force, or ignored-dependent option is used.
+no broad cleanup, autoremove, or ignored-dependent option is used.
 Homebrew may update their dependency closure, but
 the command does not disable installed-dependent linkage checks because the
 official guidance warns that doing so can leave broken linkage. It uses no

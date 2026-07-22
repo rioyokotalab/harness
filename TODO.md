@@ -238,6 +238,17 @@ Execution checkpoint 2026-07-22:
   replaces that ambiguous query with one formula-only installed inventory and
   blocks every name outside the exact policy; no casks or package changes are
   involved in discovery.
+- Protected PR #222 passed and squash-merged exact installed-formula discovery
+  as `417c471`; every checkout is synchronized. All four retry plans passed.
+  Apply then safely stopped after selected-package migration on Aist and Home
+  because Homebrew reports managed users for legacy aliases, and on Office
+  because upgrading the retirement-bound graphics stack introduced
+  `libdatrie` and `libthai`. Riken retired the newest reviewed kegs but retained
+  older versions, as non-forced uninstall documents. No unreviewed removal
+  occurred. The active slice declares the two alias mappings, uses scoped
+  cleanup for the shared `icu4c` Cellar, exact forced uninstall for independently
+  dependency-checked retirements, and adds the two newly observed packages to
+  the retirement set.
 
 ### T-273 — Resolve intentionally deferred maintenance
 

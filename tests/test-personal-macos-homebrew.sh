@@ -152,7 +152,7 @@ case "$1" in
         while [ "$#" -gt 0 ]; do
             case "$1" in
                 --dry-run) dry=1 ;;
-                --formula) ;;
+                --formula|--force) ;;
                 *) formulae="$formulae $1" ;;
             esac
             shift
@@ -188,6 +188,26 @@ case "$1" in
             printf '%s %s\n' "$formula" "$version" >>"$BREW_STATE/installed"
         done
         printf '%s complete\n' "$action"
+        ;;
+    cleanup)
+        shift
+        cleanup_dry=0
+        cleanup_target=
+        while [ "$#" -gt 0 ]; do
+            case "$1" in
+                --dry-run) cleanup_dry=1 ;;
+                *) cleanup_target=$1 ;;
+            esac
+            shift
+        done
+        [ "$cleanup_target" = icu4c@78 ] || exit 96
+        if [ "$cleanup_dry" -eq 1 ]; then
+            printf 'Would remove: %s/Cellar/icu4c@78/legacy\n' \
+                "$FAKE_BREW_PREFIX"
+        else
+            remove_formula "$BREW_STATE/installed" icu4c
+            printf '%s\n' 'cleanup complete'
+        fi
         ;;
     *) exit 99 ;;
 esac
@@ -253,6 +273,7 @@ for expected in \
     "INSTALL count=1 formulae='tree'" \
     "UPGRADE count=2 formulae='git sqlite'" \
     "RETIRE count=0 formulae=''" \
+    "RETIRE_CLEANUP count=0 aliases='' targets=''" \
     'DEPENDENCIES count=1 scope=validated shared_users=preserved' \
     "UNMANAGED_DEPENDENTS count=0 formulae=''" \
     "UNMANAGED_INSTALLED count=0 formulae=''" \
@@ -283,14 +304,14 @@ FAKE_RETIRED_INTERNAL_DEPENDENT=1 run_homebrew "$retire_home" \
     --host mac-test-pilot --plan >"$TEMP_DIR/retire-plan.out"
 grep -F -x "RETIRE count=2 formulae='bash-completion pyenv'" \
     "$TEMP_DIR/retire-plan.out" >/dev/null || fail "retirement plan"
-if grep -F -x 'uninstall --formula bash-completion pyenv' \
+if grep -F -x 'uninstall --force --formula bash-completion pyenv' \
     "$TEMP_DIR/retire-plan.log" >/dev/null; then
     fail "retirement plan mutated Homebrew"
 fi
 FAKE_RETIRED_INTERNAL_DEPENDENT=1 run_homebrew "$retire_home" \
     "$retire_state" "$TEMP_DIR/retire-apply.log" \
     --host mac-test-pilot --apply >"$TEMP_DIR/retire-apply.out"
-grep -F -x 'uninstall --formula bash-completion pyenv' \
+grep -F -x 'uninstall --force --formula bash-completion pyenv' \
     "$TEMP_DIR/retire-apply.log" >/dev/null || fail "bounded retirement apply"
 grep -F ' status=complete install=1 upgrade=2 retire=2' \
     "$TEMP_DIR/retire-apply.out" >/dev/null || fail "retirement transaction summary"
@@ -314,11 +335,30 @@ FAKE_RETIRED_UPGRADE_DEPENDENT=1 run_homebrew "$migration_home" \
     --host mac-test-pilot --apply >"$TEMP_DIR/migration-apply.out"
 upgrade_line=$(grep -n -F -x 'upgrade --formula git sqlite node' \
     "$TEMP_DIR/migration-apply.log" | cut -d: -f1)
-retire_line=$(grep -n -F -x 'uninstall --formula pyenv' \
+retire_line=$(grep -n -F -x 'uninstall --force --formula pyenv' \
     "$TEMP_DIR/migration-apply.log" | cut -d: -f1)
 [ -n "$upgrade_line" ] && [ -n "$retire_line" ] && \
     [ "$upgrade_line" -lt "$retire_line" ] ||
     fail "retirement ran before dependency migration upgrade"
+
+cleanup_home=$(make_home legacy-cleanup)
+cleanup_state=$(make_brew_state legacy-cleanup)
+printf '%s\n' 'icu4c 69.1' >>"$cleanup_state/installed"
+run_homebrew "$cleanup_home" "$cleanup_state" \
+    "$TEMP_DIR/cleanup-plan.log" --host mac-test-pilot --plan \
+    >"$TEMP_DIR/cleanup-plan.out"
+grep -F -x \
+    "RETIRE_CLEANUP count=1 aliases='icu4c' targets='icu4c@78'" \
+    "$TEMP_DIR/cleanup-plan.out" >/dev/null || fail "legacy cleanup plan"
+run_homebrew "$cleanup_home" "$cleanup_state" \
+    "$TEMP_DIR/cleanup-apply.log" --host mac-test-pilot --apply \
+    >"$TEMP_DIR/cleanup-apply.out"
+grep -F -x 'cleanup icu4c@78' "$TEMP_DIR/cleanup-apply.log" >/dev/null ||
+    fail "legacy cleanup apply"
+if awk '$1 == "icu4c" { found = 1 } END { exit found ? 0 : 1 }' \
+    "$cleanup_state/installed"; then
+    fail "legacy cleanup formula remained installed"
+fi
 
 retired_dependent_home=$(make_home retired-dependent)
 retired_dependent_state=$(make_brew_state retired-dependent)
