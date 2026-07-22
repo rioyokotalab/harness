@@ -107,7 +107,7 @@ case "$1" in
         [ "$2:$3:$4:$5" = --union:--full-name:--formula:bash ] || {
             [ "$2:$3:$4" = --union:--full-name:--formula ] || exit 93
         }
-        printf '%s\n' openssl@3
+        printf '%s\n' dependency-lib
         ;;
     uses)
         [ "$2:$3:$4" = --installed:--recursive:--formula ] || exit 94
@@ -115,8 +115,12 @@ case "$1" in
             printf '%s\n' personal-tool
         fi
         if [ "${FAKE_UNMANAGED_DEPENDENCY_USER:-0}" = 1 ] && \
-            [ "$5" = openssl@3 ]; then
+            [ "$5" = dependency-lib ]; then
             printf '%s\n' personal-tool
+        fi
+        if [ "${FAKE_RETIRED_INTERNAL_DEPENDENT:-0}" = 1 ] && \
+            [ "$5" = bash-completion ]; then
+            printf '%s\n' pyenv
         fi
         if [ "${FAKE_RETIRED_DEPENDENT:-0}" = 1 ] && [ "$5" = pyenv ]; then
             printf '%s\n' personal-tool
@@ -181,6 +185,9 @@ make_home() {
     cp "$FIXTURE/companion.conf" "$private/companion.conf"
     cp "$FIXTURE/hosts/mac-test-pilot.conf" \
         "$private/hosts/mac-test-pilot.conf"
+    sed 's/^extra_formulae=.*/extra_formulae=ninja/' \
+        "$private/hosts/mac-test-pilot.conf" >"$TEMP_DIR/$name-host.conf"
+    mv "$TEMP_DIR/$name-host.conf" "$private/hosts/mac-test-pilot.conf"
     chmod 700 "$home" "$home/.config" "$home/.config/harness" \
         "$private" "$private/hosts"
     chmod 600 "$private/companion.conf" \
@@ -198,11 +205,13 @@ make_brew_state() {
     name=$1
     state=$TEMP_DIR/$name-state
     mkdir -p "$state"
-    for formula in bash bash-completion@2 git git-lfs tmux ripgrep jq \
-        shellcheck uv sqlite ninja; do
-        printf '%s 1.0\n' "$formula"
-    done >"$state/installed"
-    printf '%s 3.0\n' openssl@3 >>"$state/installed"
+    selected=$(sed -n 's/^managed_formulae=//p' \
+        "$PUBLIC/profiles/personal-macos/formula-policy-v2.conf" | tr ',' ' ')
+    : >"$state/installed"
+    for formula in $selected ninja; do
+        [ "$formula" = tree ] || printf '%s 1.0\n' "$formula"
+    done >>"$state/installed"
+    printf '%s 3.0\n' dependency-lib >>"$state/installed"
     printf '%s\n' git sqlite >"$state/outdated"
     printf '%s\n' "$state"
 }
@@ -250,7 +259,8 @@ grep -F -x 'upgrade --formula --dry-run git sqlite' \
 retire_home=$(make_home retire)
 retire_state=$(make_brew_state retire)
 printf '%s\n' 'bash-completion 1.3' 'pyenv 2.6.0' >>"$retire_state/installed"
-run_homebrew "$retire_home" "$retire_state" "$TEMP_DIR/retire-plan.log" \
+FAKE_RETIRED_INTERNAL_DEPENDENT=1 run_homebrew "$retire_home" \
+    "$retire_state" "$TEMP_DIR/retire-plan.log" \
     --host mac-test-pilot --plan >"$TEMP_DIR/retire-plan.out"
 grep -F -x "RETIRE count=2 formulae='bash-completion pyenv'" \
     "$TEMP_DIR/retire-plan.out" >/dev/null || fail "retirement plan"
@@ -258,7 +268,8 @@ if grep -F -x 'uninstall --formula bash-completion pyenv' \
     "$TEMP_DIR/retire-plan.log" >/dev/null; then
     fail "retirement plan mutated Homebrew"
 fi
-run_homebrew "$retire_home" "$retire_state" "$TEMP_DIR/retire-apply.log" \
+FAKE_RETIRED_INTERNAL_DEPENDENT=1 run_homebrew "$retire_home" \
+    "$retire_state" "$TEMP_DIR/retire-apply.log" \
     --host mac-test-pilot --apply >"$TEMP_DIR/retire-apply.out"
 grep -F -x 'uninstall --formula bash-completion pyenv' \
     "$TEMP_DIR/retire-apply.log" >/dev/null || fail "bounded retirement apply"
@@ -307,7 +318,7 @@ grep -F -x 'selected|tree|absent' "$pre_file" >/dev/null ||
     fail "missing-formula pre-state evidence"
 grep -F -x 'selected|tree|1.0' "$post_file" >/dev/null ||
     fail "installed-formula post-state evidence"
-grep -F -x 'dependency|openssl@3|3.0' "$post_file" >/dev/null ||
+grep -F -x 'dependency|dependency-lib|3.0' "$post_file" >/dev/null ||
     fail "dependency post-state evidence"
 grep -F 'selected|git|1.0' "$delta_file" >/dev/null ||
     fail "version delta evidence"
@@ -354,7 +365,7 @@ if ! FAKE_UNMANAGED_DEPENDENT=0 FAKE_UNMANAGED_DEPENDENCY_USER=1 \
 fi
 grep -F -x "UNMANAGED_DEPENDENTS count=0 formulae=''" \
     "$TEMP_DIR/shared.out" >/dev/null || fail "shared-dependency user preservation"
-if grep -F -x 'uses --installed --recursive --formula openssl@3' \
+if grep -F -x 'uses --installed --recursive --formula dependency-lib' \
     "$TEMP_DIR/shared.log" >/dev/null; then
     fail "Homebrew plan treated a shared dependency as a selected root"
 fi
@@ -394,7 +405,7 @@ failure_delta=${failure_status%.status}.delta.diff
 
 tapped_home=$(make_home tapped-selection)
 tapped_private=$tapped_home/.config/harness/private
-sed 's/extra_formulae=sqlite,ninja/extra_formulae=owner\/tap\/formula/' \
+sed 's/extra_formulae=ninja/extra_formulae=owner\/tap\/formula/' \
     "$tapped_private/hosts/mac-test-pilot.conf" >"$TEMP_DIR/tapped.conf"
 mv "$TEMP_DIR/tapped.conf" "$tapped_private/hosts/mac-test-pilot.conf"
 chmod 600 "$tapped_private/hosts/mac-test-pilot.conf"

@@ -124,8 +124,9 @@ discover_scope() {
                 die "scoped Homebrew retired dependent query failed"
             validate_formula_output "$dependent_output"
             for dependent in $dependent_output; do
-                retired_dependents=$(append_unique_formula \
-                    "$retired_dependents" "$dependent")
+                formula_in_list "$retired_formulae" "$dependent" ||
+                    retired_dependents=$(append_unique_formula \
+                        "$retired_dependents" "$dependent")
             done
         fi
     done

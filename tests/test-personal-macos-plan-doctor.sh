@@ -107,9 +107,9 @@ case "$1" in
     --prefix) echo /opt/homebrew ;;
     list)
         [ "$2:$3" = --formula:--versions ] || exit 2
+        case ",$FAKE_RETIRED_FORMULAE," in *,$4,*) exit 1 ;; esac
         case "$4" in
             tree) [ "${FAKE_TREE_PRESENT:-0}" = 1 ] || exit 1 ;;
-            bash-completion|pyenv) exit 1 ;;
         esac
         ;;
     outdated)
@@ -130,6 +130,9 @@ chmod 755 "$fake_bin/uname" "$fake_bin/stat" "$fake_bin/xcode-select" \
 
 brew_log=$TEMP_DIR/brew.log
 facts=$TEMP_DIR/facts.conf
+FAKE_RETIRED_FORMULAE=$(sed -n 's/^retired_formulae=//p' \
+    "$ROOT/profiles/personal-macos/formula-policy-v2.conf")
+export FAKE_RETIRED_FORMULAE
 HOME="$home" SHELL=/bin/zsh BREW_LOG="$brew_log" \
     PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
     "$INVENTORY" --host mac-test-pilot >"$facts"
@@ -140,7 +143,7 @@ plan_output=$(HOME="$home" SHELL=/bin/zsh BREW_LOG="$brew_log" \
     "$PLAN" --host mac-test-pilot --facts "$facts")
 for expected in \
     'MACOS_PLAN mode=read-only privacy=local-details' \
-    'PRIVATE capability_groups=2 extra_formulae=2 values=not-emitted' \
+    'PRIVATE capability_groups=2 extra_formulae=1 values=not-emitted' \
     'CREATE link=bash_launcher collision_check=required' \
     "HOMEBREW_METADATA authority=separate command='env HOMEBREW_NO_ANALYTICS=1 brew update'" \
     "HOMEBREW_DRY_RUN stage=install count=1 command='env -u HOMEBREW_ASK HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 brew install --formula --dry-run tree'" \
