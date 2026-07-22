@@ -142,6 +142,10 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
   ordinary interactive Mac-to-local access, remove the interactive `login2`
   alias, and move the primary and secondary supervised reverse forwards to
   launchd-only aliases named `tunnel` and `tunnel2` respectively.
+- D3 — **accepted with explicit alias boundary:** set `ForwardX11 no` for
+  `tunnel`, `tunnel2`, `aist`, `aist2`, `home`, `home2`, `office`, `office2`,
+  `riken`, `riken2`, and `web`. Retain X11 forwarding on `login` and every
+  other node.
 
 1. **Fleet scope and publication — answered/accepted.** Define the existing 11-node
    maintenance/Python/package scope as local, ab, ab2, al, rc, ri, t4, aist,
@@ -152,7 +156,8 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
 2. **SSH role split — answered/accepted with corrected names.** Use `login`
    only for ordinary interactive access, remove `login2`, and use `tunnel` and
    `tunnel2` exclusively for the primary and secondary launchd reverse routes.
-   The X11 default remains a separate pending decision.
+   **X11 boundary — answered/accepted:** disable it only for D3's exact alias
+   list, not for `login` or other nodes.
 3. **Mac Codex restart.** Recommended: run the supported updater even though
    0.145.0 is already current, stop all exact Codex processes, use a new
    Darwin lock-aware arg0 implementation to quarantine/delete only released
@@ -210,7 +215,7 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
 1. Checkpoint answers, convert assumptions to decisions, audit dependencies,
    acceptance criteria, authority, and rollback, then mark `ready-for-go`.
 2. Implement and test public control-plane changes on the task branch:
-   `tunnel`/`tunnel2` supervision migration, default X11 opt-out, Darwin arg0
+   `tunnel`/`tunnel2` supervision migration, scoped X11 opt-out, Darwin arg0
    housekeeping, local-to-t4 managed-symlink support, terminfo deployment,
    fleet table/AGENTS pointer, ABQ declarations/health route, cross-platform
    Python declaration, symmetric evaluator, and external-user skill.
@@ -224,7 +229,8 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
    switch and validate supervisors one Mac/route at a time, then strip forwards
    from interactive aliases. Recheck dual-route health and multiple concurrent
    ordinary logins.
-6. Deploy X11 and AL terminfo changes; prove warning-free ordinary SSH and
+6. Deploy X11 and AL terminfo changes; prove warning-free connections on D3's
+   selected aliases, unchanged X11 resolution on `login`/other nodes, and
    working `tput` under `tmux-256color`.
 7. Repair, plan, apply, and verify the one-way local-to-t4 SSH mirror. Preserve
    its prior image and rollback transaction.
@@ -259,8 +265,8 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
 - **Tunnel cutover:** retain old route until its replacement is running and
   inbound health passes; each supervisor and private SSH apply keeps an exact
   unchanged-only rollback.
-- **X11:** opt-out is reversible by the tracked fragment transaction; explicit
-  per-alias opt-ins avoid global warning regressions.
+- **X11:** the exact per-alias opt-out is reversible by the tracked fragment
+  transaction and leaves `login` plus every unlisted node unchanged.
 - **Codex:** updater is verified before process shutdown; session state is not
   deleted. Arg0 cleanup never removes a held or malformed entry. If restart
   fails, retain evidence and start the prior verified Codex command.
@@ -282,8 +288,9 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
 - Two launchd tunnel routes per Mac remain healthy, two simultaneous ordinary
   Mac-to-local logins do not request or conflict over reverse forwards, and
   recovery drills still pass.
-- No ordinary SSH connection requests X11 unless explicitly selected; AL
-  recognizes `tmux-256color` and `tput` succeeds in a real PTY.
+- D3's exact aliases do not request X11, `login` and unlisted nodes retain the
+  existing setting, and AL recognizes `tmux-256color` with successful `tput`
+  in a real PTY.
 - All four Macs report the selected current Codex version, zero removable arg0
   residue, expected live process topology, and a resumable most-recent session.
 - The supported harness-fragment edit/deploy/rollback workflow is documented.
