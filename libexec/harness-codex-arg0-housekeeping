@@ -1,0 +1,209 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+# shellcheck source=libexec/harness-common
+# shellcheck disable=SC1091
+. "$SELF_DIR/harness-common"
+
+usage() {
+    cat >&2 <<'EOF'
+Usage:
+  harness codex-arg0-housekeeping [--plan|--apply] [--grace-seconds N]
+      [--baseline ABSOLUTE_MODE_600_FILE]
+EOF
+}
+
+mode=plan
+grace_seconds=120
+baseline=
+arg_root_override=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        --grace-seconds)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            grace_seconds=$2; shift 2
+            ;;
+        --baseline)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            baseline=$2; shift 2
+            ;;
+        --root)
+            [ "${HARNESS_TESTING:-0}" = 1 ] && [ "$#" -ge 2 ] || {
+                usage; exit 2;
+            }
+            arg_root_override=$2; shift 2
+            ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+
+case "$grace_seconds" in ''|*[!0-9]*) die "arg0 grace must be a nonnegative integer" ;; esac
+[ "$(uname -s)" = Linux ] || die "arg0 housekeeping is supported only on Linux"
+for required in awk date find flock grep id mkdir mktemp mv realpath rmdir stat unlink wc; do
+    command -v "$required" >/dev/null 2>&1 || die "arg0 housekeeping requires command: $required"
+done
+
+current_uid=$(id -u)
+codex_home=${CODEX_HOME:-$HOME/.codex}
+case "$codex_home" in /*) ;; *) die "Codex home must be absolute" ;; esac
+if [ -n "$arg_root_override" ]; then
+    arg_root=$arg_root_override
+else
+    arg_root=$codex_home/tmp/arg0
+fi
+case "$arg_root" in /*) ;; *) die "arg0 root must be absolute" ;; esac
+
+if [ ! -e "$arg_root" ] && [ ! -L "$arg_root" ]; then
+    printf 'CODEX_ARG0_HOUSEKEEPING mode=%s status=absent live=0 eligible=0 young=0 unexpected=0 removed=0\n' "$mode"
+    exit 0
+fi
+[ -d "$arg_root" ] && [ ! -L "$arg_root" ] || die "arg0 root is not a real directory"
+arg_root=$(realpath -e -- "$arg_root")
+[ "$(stat -Lc '%u' -- "$arg_root")" = "$current_uid" ] || die "arg0 root owner differs"
+tmp_root=${arg_root%/*}
+[ -d "$tmp_root" ] && [ ! -L "$tmp_root" ] || die "arg0 parent is not a real directory"
+[ "$(stat -Lc '%u' -- "$tmp_root")" = "$current_uid" ] || die "arg0 parent owner differs"
+
+if [ -n "$baseline" ]; then
+    case "$baseline" in /*) ;; *) die "arg0 baseline must be absolute" ;; esac
+    [ -f "$baseline" ] && [ ! -L "$baseline" ] || die "arg0 baseline is not a regular file"
+    [ "$(stat -Lc '%u' -- "$baseline")" = "$current_uid" ] || die "arg0 baseline owner differs"
+    [ "$(stat -Lc '%a' -- "$baseline")" = 600 ] || die "arg0 baseline mode must be 600"
+    [ "$(stat -Lc '%h' -- "$baseline")" = 1 ] || die "arg0 baseline must have one link"
+fi
+
+inventory=$(mktemp "$tmp_root/.arg0-inventory.XXXXXX") || die "cannot allocate arg0 inventory"
+chmod 600 "$inventory"
+quarantine=
+cleanup_state() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ -f "$inventory" ] && [ ! -L "$inventory" ]; then unlink "$inventory"; fi
+    if [ -n "$quarantine" ] && [ -d "$quarantine" ]; then
+        rmdir "$quarantine" 2>/dev/null ||
+            printf 'harness: preserved arg0 quarantine after failure: %s\n' "$quarantine" >&2
+    fi
+    exit "$status"
+}
+trap cleanup_state EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+find "$arg_root" -mindepth 1 -maxdepth 1 -print >"$inventory" || die "cannot inventory arg0 root"
+
+expected_layout() {
+    directory=$1
+    [ -f "$directory/.lock" ] && [ ! -L "$directory/.lock" ] || return 1
+    for helper in apply_patch applypatch codex-execve-wrapper codex-linux-sandbox; do
+        [ -L "$directory/$helper" ] || return 1
+    done
+    [ "$(find "$directory" -mindepth 1 -maxdepth 1 -print | wc -l | tr -d ' ')" -eq 5 ]
+}
+
+is_observed_completion() {
+    name=$1
+    [ -n "$baseline" ] || return 1
+    ! grep -F -x -- "$name" "$baseline" >/dev/null 2>&1
+}
+
+make_quarantine() {
+    [ -z "$quarantine" ] || return 0
+    quarantine=$tmp_root/arg0-quarantine-$(date -u +%Y%m%dT%H%M%SZ)-$$
+    [ ! -e "$quarantine" ] && [ ! -L "$quarantine" ] || die "arg0 quarantine collision"
+    mkdir -m 700 "$quarantine"
+}
+
+live=0
+eligible=0
+young=0
+unexpected=0
+moved=0
+now=$(date +%s)
+while IFS= read -r candidate; do
+    [ -n "$candidate" ] || continue
+    name=${candidate##*/}
+    case "$name" in
+        codex-arg0[[:alnum:]][[:alnum:]][[:alnum:]][[:alnum:]][[:alnum:]][[:alnum:]]) ;;
+        *) unexpected=$((unexpected + 1)); continue ;;
+    esac
+    [ -d "$candidate" ] && [ ! -L "$candidate" ] || {
+        unexpected=$((unexpected + 1)); continue;
+    }
+    [ "$(stat -Lc '%u' -- "$candidate")" = "$current_uid" ] || {
+        unexpected=$((unexpected + 1)); continue;
+    }
+    identity=$(stat -Lc '%d:%i' -- "$candidate")
+    modified=$(stat -Lc '%Y' -- "$candidate")
+    age=$((now - modified))
+    [ "$age" -ge 0 ] || { unexpected=$((unexpected + 1)); continue; }
+    observed=no
+    if is_observed_completion "$name"; then observed=yes; fi
+
+    kind=
+    if expected_layout "$candidate"; then
+        if flock -n "$candidate/.lock" -c true 2>/dev/null; then
+            if [ "$age" -ge "$grace_seconds" ] || [ "$observed" = yes ]; then
+                kind=locked
+            else
+                young=$((young + 1)); continue
+            fi
+        else
+            live=$((live + 1)); continue
+        fi
+    elif [ ! -e "$candidate/.lock" ] &&
+        [ -z "$(find "$candidate" -mindepth 1 -maxdepth 1 -print -quit)" ]; then
+        if [ "$age" -ge "$grace_seconds" ]; then
+            kind=empty
+        else
+            young=$((young + 1)); continue
+        fi
+    else
+        unexpected=$((unexpected + 1)); continue
+    fi
+
+    eligible=$((eligible + 1))
+    [ "$mode" = apply ] || continue
+    make_quarantine
+    destination=$quarantine/$name
+    [ ! -e "$destination" ] && [ ! -L "$destination" ] || die "arg0 quarantine target collision"
+    if [ "$kind" = locked ]; then
+        # shellcheck disable=SC2016
+        if flock -n "$candidate/.lock" sh -c '
+            set -eu
+            [ -d "$1" ] && [ ! -L "$1" ]
+            [ "$(stat -Lc "%d:%i" -- "$1")" = "$3" ]
+            [ "$(stat -Lc "%u" -- "$1")" = "$4" ]
+            [ -f "$1/.lock" ] && [ ! -L "$1/.lock" ]
+            [ ! -e "$2" ] && [ ! -L "$2" ]
+            mv -- "$1" "$2"
+        ' sh "$candidate" "$destination" "$identity" "$current_uid"; then
+            moved=$((moved + 1))
+        else
+            live=$((live + 1))
+        fi
+    else
+        [ "$(stat -Lc '%d:%i' -- "$candidate")" = "$identity" ] &&
+            [ ! -e "$candidate/.lock" ] &&
+            [ -z "$(find "$candidate" -mindepth 1 -maxdepth 1 -print -quit)" ] ||
+            die "empty arg0 candidate changed before quarantine"
+        mv -- "$candidate" "$destination"
+        moved=$((moved + 1))
+    fi
+done <"$inventory"
+
+if [ "$mode" = apply ] && [ "$moved" -gt 0 ]; then
+    guarded_delete_tree "$tmp_root" "$quarantine" "$tmp_root"
+    quarantine=
+elif [ -n "$quarantine" ]; then
+    rmdir "$quarantine"
+    quarantine=
+fi
+
+printf 'CODEX_ARG0_HOUSEKEEPING mode=%s status=ready live=%s eligible=%s young=%s unexpected=%s removed=%s\n' \
+    "$mode" "$live" "$eligible" "$young" "$unexpected" "$moved"

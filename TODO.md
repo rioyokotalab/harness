@@ -50,9 +50,9 @@ Next free ID: T-295.
 
 ## Next resume checkpoint
 
-1. Resolve T-294's local launcher-workaround authority boundary. Do not remove
-   or replace the official standalone launcher without the owner's explicit
-   choice.
+1. Publish T-294's locally validated wrapper through protected main, then
+   install and run the recorded live validation without stopping existing
+   Codex processes.
 2. Select another independently eligible T-273 workstream only after fresh
    reconstruction of its gate and authority.
 3. On or after 2026-07-26, query only T-196 recorded successor job IDs.
@@ -90,8 +90,9 @@ guessing lost unknown configuration.
 
 ### T-294 — Eliminate Codex arg0 cleanup failures on local NFS home
 
-**Phase/status:** diagnosed; one-time cleanup and routine-housekeeping policy
-complete; durable launcher change awaits an explicit owner choice.
+**Phase/status:** executing. The owner authorized a version-scoped local
+launcher wrapper on 2026-07-22. Implementation and focused validation are
+complete locally; publication, live installation, and acceptance remain.
 
 - Local Codex CLI 0.145.0 stores its arg0 helper directories on the NFSv3
   account home. The mounted filesystem reports `local_lock=none`.
@@ -125,14 +126,38 @@ complete; durable launcher change awaits an explicit owner choice.
   version-scoped launcher wrapper: retain the exact official binary, move only
   unlocked prior-session directories to a private quarantine while holding
   their locks, invoke the official binary, then guarded-delete the quarantine.
-  Installing that wrapper mutates vendor-managed launcher bytes and must not
-  proceed without the owner's explicit choice. An official upgrade may replace
-  it safely but would require revalidation if the upstream defect remains.
+  The owner explicitly authorized installing and testing this mutation. An
+  official upgrade may replace it safely but requires revalidation if the
+  upstream defect remains.
+- Working files are `libexec/harness-codex-arg0-housekeeping`,
+  `libexec/harness-codex-arg0-wrapper`,
+  `libexec/codex-arg0-launcher-wrapper`, and
+  `tests/test-codex-arg0-wrapper.sh`, with dispatch, focused-suite, shared
+  instruction, and client-documentation updates.
+- The focused suite proves held-lock preservation, old empty and unlocked
+  expected-layout cleanup, observed-exit cleanup without a grace delay,
+  unexpected-layout retention, guarded quarantine deletion, official output
+  and exit-status preservation, exact binary rollback, and automatic recovery
+  at each injected installation failure point. The live plan resolves only the
+  current official 0.145.0 Linux standalone release and reports no process
+  action.
+- Local commit `0a2ff82` contains the implementation. Its clean-checkout
+  `tests/test-phase1.sh` run passed all 61 focused suites, including the new
+  wrapper suite, followed by the guarded-delete regression suite. Native MPI
+  remained the expected environment-gated skip. The owner subsequently
+  authorized this branch push and removed the global harness-specific
+  explicit-push requirement; the prohibition on changing remotes remains.
+- Post-test routine housekeeping preserved three held-lock live directories,
+  removed two eligible empty directories through guarded-delete manifest
+  `/home/rioyokota/.codex/tmp/.harness-delete.xvoLBZ/manifest`, retained seven
+  younger-than-grace empty directories, and found zero unexpected entries. The
+  helper exact-unlinked the manifest and its empty private state directory
+  after protected anchors and target absence verified.
 
-**Next exact action:** after owner authorization, design the wrapper and its
-rollback first, add focused concurrency/NFS-simulation tests, run the phase-one
-suite, and only then install it locally without stopping any running Codex
-process.
+**Next exact action:** push the local branch and complete protected review. After
+merge, apply from clean current main, verify two warning-free short invocations,
+a nonzero-exit fixture result, remote-control status, held-lock identities,
+residue counts, doctor, and exact rollback plan.
 
 ### T-196 — Backup lifecycle phase 2
 

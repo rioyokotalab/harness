@@ -1,0 +1,198 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+# shellcheck source=libexec/harness-common
+# shellcheck disable=SC1091
+. "$SELF_DIR/harness-common"
+
+usage() {
+    echo 'Usage: harness codex-arg0-wrapper --plan|--apply|--doctor|--rollback' >&2
+}
+
+mode=plan
+[ "$#" -le 1 ] || { usage; exit 2; }
+if [ "$#" -eq 1 ]; then
+    case "$1" in
+        --plan) mode=plan ;;
+        --apply) mode=apply ;;
+        --doctor) mode=doctor ;;
+        --rollback) mode=rollback ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+fi
+
+[ "$(uname -s)" = Linux ] || die "Codex arg0 wrapper is supported only on Linux"
+case ${HOME:-} in /*) ;; *) die "Codex arg0 wrapper requires an absolute HOME" ;; esac
+current_uid=$(id -u)
+stable=$HOME/.local/bin/codex
+template=$HARNESS_ROOT/libexec/codex-arg0-launcher-wrapper
+[ -L "$stable" ] || die "official standalone Codex launcher link is unavailable"
+launcher=$(realpath -e -- "$stable") || die "cannot resolve official Codex launcher"
+case "$launcher" in
+    "$HOME/.codex/packages/standalone/releases/"*/bin/codex) ;;
+    *) die "Codex launcher is outside the official standalone release tree" ;;
+esac
+release_bin=${launcher%/*}
+release_root=${release_bin%/bin}
+release=${release_root##*/}
+real_codex=$release_bin/codex.real
+state_file=$release_bin/.harness-arg0-wrapper.state
+
+is_wrapper() {
+    [ -f "$launcher" ] && [ ! -L "$launcher" ] &&
+        sed -n '2p' "$launcher" | grep -F -x '# harness-codex-arg0-wrapper-v1' >/dev/null 2>&1
+}
+
+require_private_state() {
+    [ -f "$state_file" ] && [ ! -L "$state_file" ] || die "arg0 wrapper state is unavailable"
+    [ "$(stat -Lc '%u' -- "$state_file")" = "$current_uid" ] || die "arg0 wrapper state owner differs"
+    [ "$(stat -Lc '%a' -- "$state_file")" = 600 ] || die "arg0 wrapper state mode differs"
+    [ "$(stat -Lc '%h' -- "$state_file")" = 1 ] || die "arg0 wrapper state must have one link"
+}
+
+field() {
+    key=$1
+    value=$(sed -n "s/^${key}=//p" "$state_file")
+    [ "$(printf '%s\n' "$value" | awk 'NF { n++ } END { print n + 0 }')" -eq 1 ] ||
+        die "arg0 wrapper state field is invalid: $key"
+    printf '%s\n' "$value"
+}
+
+validate_installed() {
+    is_wrapper || die "installed arg0 wrapper bytes changed"
+    [ -f "$real_codex" ] && [ ! -L "$real_codex" ] && [ -x "$real_codex" ] ||
+        die "preserved official Codex binary is unavailable"
+    require_private_state
+    [ "$(field schema)" = 1 ] && [ "$(field operation)" = codex-arg0-wrapper ] ||
+        die "arg0 wrapper state schema is invalid"
+    official_hash=$(field official_sha256)
+    wrapper_hash=$(field wrapper_sha256)
+    [ "$(sha256sum "$real_codex" | awk '{print $1}')" = "$official_hash" ] ||
+        die "preserved official Codex binary changed"
+    [ "$(sha256sum "$launcher" | awk '{print $1}')" = "$wrapper_hash" ] ||
+        die "installed arg0 wrapper changed"
+}
+
+if is_wrapper; then
+    state=installed
+elif [ -f "$launcher" ] && [ ! -L "$launcher" ] && [ -x "$launcher" ] &&
+    [ ! -e "$real_codex" ] && [ ! -L "$real_codex" ] &&
+    [ ! -e "$state_file" ] && [ ! -L "$state_file" ]; then
+    state=unwrapped
+else
+    state=ambiguous
+fi
+
+if [ "$mode" = doctor ]; then
+    [ "$state" = installed ] || die "Codex arg0 wrapper is not installed cleanly"
+    validate_installed
+    printf 'CODEX_ARG0_WRAPPER mode=doctor status=ready release=%s\n' "$release"
+    exit 0
+fi
+
+if [ "$mode" = plan ]; then
+    case "$state" in
+        unwrapped) action=install ;;
+        installed) validate_installed; action=none ;;
+        *) action=blocked ;;
+    esac
+    printf 'CODEX_ARG0_WRAPPER mode=plan state=%s action=%s release=%s running_processes=unchanged\n' \
+        "$state" "$action" "$release"
+    [ "$action" != blocked ] || die "Codex arg0 wrapper state is ambiguous"
+    exit 0
+fi
+
+if [ "$mode" = apply ]; then
+    [ "$state" != ambiguous ] || die "Codex arg0 wrapper state is ambiguous"
+    if [ "$state" = installed ]; then
+        validate_installed
+        printf 'CODEX_ARG0_WRAPPER mode=apply status=ready action=none release=%s\n' "$release"
+        exit 0
+    fi
+    [ "${HARNESS_TESTING:-0}" = 1 ] || {
+        [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
+            die "Codex arg0 wrapper requires a Git harness checkout"
+        [ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
+            die "Codex arg0 wrapper requires a clean committed checkout"
+        [ "$(git -C "$HARNESS_ROOT" symbolic-ref --quiet --short HEAD)" = main ] ||
+            die "Codex arg0 wrapper requires the main branch"
+    }
+    [ -f "$template" ] && [ ! -L "$template" ] && [ -x "$template" ] ||
+        die "canonical arg0 wrapper template is unavailable"
+    sh -n "$template" || die "canonical arg0 wrapper syntax is invalid"
+    [ "$(stat -Lc '%u' -- "$launcher")" = "$current_uid" ] || die "official Codex binary owner differs"
+    official_hash=$(sha256sum "$launcher" | awk '{print $1}')
+    wrapper_hash=$(sha256sum "$template" | awk '{print $1}')
+    wrapper_temp=$(mktemp "$release_bin/.codex-wrapper.XXXXXX") || die "cannot stage arg0 wrapper"
+    state_temp=$(mktemp "$release_bin/.codex-wrapper-state.XXXXXX") || {
+        unlink "$wrapper_temp"; die "cannot stage arg0 wrapper state";
+    }
+    # shellcheck disable=SC2329
+    cleanup_apply() {
+        status=$?
+        trap - EXIT HUP INT TERM
+        [ ! -e "$wrapper_temp" ] || unlink "$wrapper_temp"
+        [ ! -e "$state_temp" ] || unlink "$state_temp"
+        if [ "$status" -ne 0 ] && [ -f "$real_codex" ] && [ ! -L "$real_codex" ]; then
+            if [ -f "$launcher" ] && [ ! -L "$launcher" ] &&
+                [ "$(sha256sum "$launcher" | awk '{print $1}')" = "$wrapper_hash" ]; then
+                unlink "$launcher"
+            fi
+            if [ ! -e "$launcher" ] && [ ! -L "$launcher" ]; then
+                mv -- "$real_codex" "$launcher"
+            fi
+            if [ -f "$state_file" ] && [ ! -L "$state_file" ] &&
+                [ "$(stat -Lc '%u' -- "$state_file")" = "$current_uid" ]; then
+                unlink "$state_file"
+            fi
+        fi
+        exit "$status"
+    }
+    trap cleanup_apply EXIT HUP INT TERM
+    cp -- "$template" "$wrapper_temp"
+    chmod 755 "$wrapper_temp"
+    umask 077
+    {
+        echo 'schema=1'
+        echo 'operation=codex-arg0-wrapper'
+        printf 'official_sha256=%s\n' "$official_hash"
+        printf 'wrapper_sha256=%s\n' "$wrapper_hash"
+    } >"$state_temp"
+    chmod 600 "$state_temp"
+    mv -- "$launcher" "$real_codex"
+    if [ "${HARNESS_TESTING:-0}:${HARNESS_ARG0_FAIL_AFTER:-}" = 1:official-move ]; then
+        die "injected arg0 wrapper failure after official move"
+    fi
+    mv -- "$wrapper_temp" "$launcher"
+    wrapper_temp=
+    if [ "${HARNESS_TESTING:-0}:${HARNESS_ARG0_FAIL_AFTER:-}" = 1:wrapper-move ]; then
+        die "injected arg0 wrapper failure after wrapper move"
+    fi
+    mv -- "$state_temp" "$state_file"
+    state_temp=
+    if [ "${HARNESS_TESTING:-0}:${HARNESS_ARG0_FAIL_AFTER:-}" = 1:state-move ]; then
+        die "injected arg0 wrapper failure after state move"
+    fi
+    validate_installed
+    trap - EXIT HUP INT TERM
+    printf 'CODEX_ARG0_WRAPPER mode=apply status=ready action=installed release=%s running_processes=unchanged\n' "$release"
+    exit 0
+fi
+
+[ "$mode" = rollback ] || { usage; exit 2; }
+[ "$state" = installed ] || die "Codex arg0 wrapper is not installed"
+validate_installed
+rollback_temp=$release_bin/.codex-wrapper-rollback-$$
+[ ! -e "$rollback_temp" ] && [ ! -L "$rollback_temp" ] || die "arg0 rollback path collision"
+mv -- "$launcher" "$rollback_temp"
+if ! mv -- "$real_codex" "$launcher"; then
+    mv -- "$rollback_temp" "$launcher"
+    die "cannot restore official Codex binary"
+fi
+unlink "$rollback_temp"
+unlink "$state_file"
+printf 'CODEX_ARG0_WRAPPER mode=rollback status=ready action=restored release=%s running_processes=unchanged\n' "$release"
