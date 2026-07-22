@@ -464,7 +464,7 @@ export_commit_file "$public_checkout" "$public_target" \
     profiles/personal-macos/base.conf "$target_public_file"
 macos_validate_public_profile "$target_public_file"
 export_commit_file "$public_checkout" "$public_target" \
-    profiles/personal-macos/formula-policy-v3.conf "$target_formula_policy"
+    profiles/personal-macos/formula-policy-v4.conf "$target_formula_policy"
 macos_validate_formula_policy "$target_formula_policy"
 target_engine_schema=3
 target_private_min=$(macos_manifest_get "$target_public_file" private_schema_min)

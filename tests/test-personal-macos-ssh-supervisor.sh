@@ -39,7 +39,7 @@ cp "$ROOT/bin/harness" "$PUBLIC/bin/harness"
 cp "$ROOT/libexec/harness-common" "$ROOT/libexec/harness-macos-common" \
     "$ROOT/libexec/harness-macos-profile" "$SUPERVISOR" "$PUBLIC/libexec/"
 cp "$ROOT/profiles/personal-macos/base.conf" \
-    "$ROOT/profiles/personal-macos/formula-policy-v3.conf" \
+    "$ROOT/profiles/personal-macos/formula-policy-v4.conf" \
     "$PUBLIC/profiles/personal-macos/"
 git -C "$PUBLIC" init -q -b main
 git -C "$PUBLIC" config user.name mac-test

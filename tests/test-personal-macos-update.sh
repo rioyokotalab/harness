@@ -70,6 +70,9 @@ EOF
 cmp -s "$legacy_formula_policy" \
     "$ROOT/profiles/personal-macos/formula-policy-v2.conf" ||
     fail "formula policy v2 no longer passes the frozen updater contract"
+[ "$(git hash-object "$ROOT/profiles/personal-macos/formula-policy-v3.conf")" = \
+    37c7c2ba1865bdef51fa84f65f3d1ccaca30f8e9 ] ||
+    fail "formula policy v3 no longer passes the frozen updater contract"
 
 configure_identity() {
     git -C "$1" config user.name mac-test
@@ -108,6 +111,8 @@ setup_pair() {
         "$public_source/profiles/personal-macos/formula-policy-v2.conf"
     cp "$ROOT/profiles/personal-macos/formula-policy-v3.conf" \
         "$public_source/profiles/personal-macos/formula-policy-v3.conf"
+    cp "$ROOT/profiles/personal-macos/formula-policy-v4.conf" \
+        "$public_source/profiles/personal-macos/formula-policy-v4.conf"
     cp -p "$ROOT/libexec/harness-common" \
         "$ROOT/libexec/harness-macos-common" \
         "$ROOT/libexec/harness-macos-profile" \

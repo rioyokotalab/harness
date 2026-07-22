@@ -41,7 +41,7 @@ public_profile=$HARNESS_ROOT/profiles/personal-macos/base.conf
 [ -f "$public_profile" ] && [ ! -L "$public_profile" ] ||
     die "public personal-Mac baseline is unavailable"
 macos_validate_public_profile "$public_profile"
-formula_policy=$HARNESS_ROOT/profiles/personal-macos/formula-policy-v3.conf
+formula_policy=$HARNESS_ROOT/profiles/personal-macos/formula-policy-v4.conf
 [ -f "$formula_policy" ] && [ ! -L "$formula_policy" ] ||
     die "public personal-Mac formula policy is unavailable"
 macos_validate_formula_policy "$formula_policy"

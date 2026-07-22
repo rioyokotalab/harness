@@ -98,8 +98,8 @@ cp -p "$ROOT/libexec/harness-common" "$ROOT/libexec/harness-macos-common" \
     "$ROOT/libexec/harness-macos-config-sync" "$public/libexec/"
 cp "$ROOT/profiles/personal-macos/base.conf" \
     "$public/profiles/personal-macos/base.conf"
-cp "$ROOT/profiles/personal-macos/formula-policy-v3.conf" \
-    "$public/profiles/personal-macos/formula-policy-v3.conf"
+cp "$ROOT/profiles/personal-macos/formula-policy-v4.conf" \
+    "$public/profiles/personal-macos/formula-policy-v4.conf"
 cp "$ROOT/shell/personal-macos-startup.block" "$public/shell/"
 git -C "$public" init -q -b main
 configure_identity "$public"

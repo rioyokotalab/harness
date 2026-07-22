@@ -249,6 +249,12 @@ Execution checkpoint 2026-07-22:
   cleanup for the shared `icu4c` Cellar, exact forced uninstall for independently
   dependency-checked retirements, and adds the two newly observed packages to
   the retirement set.
+- Protected PR #223 passed and squash-merged those legacy-keg rules as
+  `cb410dd`; Linux mirrors advanced, but all Mac updater preflights refused the
+  target before mutation because deployed schema 3 is now itself a frozen
+  compatibility surface. The active repair restores v3 exactly, introduces
+  schema-4 `formula-policy-v4.conf`, routes current adapters to v4, and pins the
+  v3 Git object ID in long-gap update coverage.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
