@@ -8,7 +8,7 @@ catch-up is preserved at 378df00159d59e8abee645f2bdaebd20cf467cc2. Final
 T-288 through T-292 execution is in
 `docs/audits/macos-ssh-finalization-2026-07-21.md`.
 
-Next free ID: T-295.
+Next free ID: T-296.
 
 ## Current state
 
@@ -55,6 +55,81 @@ Next free ID: T-295.
 2. On or after 2026-07-26, query only T-196 recorded successor job IDs.
 
 ## Active tasks
+
+### T-295 — Fleet convergence, ABQ onboarding, and external-user bootstrap
+
+**Phase/status:** ready-for-go. The owner requested one upfront PIE plan for
+thirteen coupled workstreams, then selected PIE's normal one-question-at-a-time
+interview. Read-only discovery, decisions D1–D17, the frozen execution order,
+rollback, and acceptance gates are recorded in
+`docs/plans/t295-fleet-convergence.md`. No agent target mutation has started;
+execution awaits the final explicit PIE go.
+
+Confirmed planning facts:
+
+- All seven currently managed Linux nodes and all four Mac primaries respond;
+  all eight Mac reverse routes are healthy. ABQ is reachable as a RHEL 9.4
+  x86-64 interactive node through the existing nested `ab` route and through
+  Aist for emergency access; its planned `ab2` secondary route is not yet
+  configured. `web` rejected the available noninteractive authentication.
+- Every Mac's interactive `login` and `login2` alias requests one fixed remote
+  forward in addition to the launchd-owned connection. Dedicated tunnel-only
+  aliases are required to eliminate bind conflicts without weakening
+  fail-fast supervision.
+- Global `ForwardX11 yes` explains irrelevant X11 rejection warnings. A
+  controlled AL Vim test reproduced its broken-prompt symptom only when the
+  missing `tmux-256color` entry forced Vim to ANSI fallback without alternate-
+  screen restoration; clean and tracked Vim configs behaved identically,
+  `xterm-256color` restored correctly, and tty modes remained intact. AL's
+  ncurses accepts the canonical entry in check-only mode for user-local
+  installation. The accepted fix installs it only in the user terminfo tree
+  and validates capabilities, tty preservation, clean/configured Vim, and
+  alternate-screen restoration.
+- All four Macs run Codex 0.145.0, the current published npm version observed
+  on 2026-07-22, with two Codex processes and three live arg0 locks each.
+  Their clean `main` checkouts are at `c182bf4`, behind current public main.
+- The existing managed Homebrew baseline is satisfied everywhere, and the
+  owner has now selected a strict cross-Mac package set from the complete
+  union inventory. `.sync_get.sh` is absent on the seven Linux nodes and is a
+  regular file on each Mac.
+- Linux already provides a Python 3.12 interface everywhere; five remotes use
+  managed 3.12.12, while local and RI retain host 3.12.3. Macs expose Python
+  3.13 or 3.14 and do not expose `python3.12`. The accepted replacement policy
+  pins one tested uv version, supplies non-default 3.11 and 3.12 runtimes where
+  practical, defaults new projects to 3.12, and lets each project select its
+  interpreter, accelerator/site toolchain, lockfile, and local virtual
+  environment.
+- The existing local-to-t4 SSH mirror plan fails before contacting t4 because
+  it rejects the harness-managed `~/.local` symlink. This is a code defect, not
+  evidence of t4 divergence.
+- The README defines a Codex-only frozen acceptance evaluator, not a current
+  paired Codex/Claude benchmark. A new matched experiment must preserve the
+  historical T-181 results rather than overwrite them. The accepted design
+  uses current CLI/default-model identities and matched budgets, with a
+  9-run-per-client pilot gating a 35-run-per-client full stage.
+- ABQ's group disk now has a verified 1,024 GiB quota. Its accepted persistent
+  and cache roots are `/groups/qgai50157/yokota` and
+  `/groups/qgai50157/yokota/cache`; they remain uncreated until the final go.
+  Its accepted hidden-home policy moves large `.local` data only, moves no
+  latency-sensitive path, deletes no source after backup, and requires no
+  owner-only migration step.
+- ABQ's accepted backup topology uses
+  `/groups/qgai50157/yokota/restic/home-control` as the primary Restic
+  repository and local's
+  `/mnt/nfs-03/safe/Users/rioyokota/restic-replicas/abq` as its independent
+  replica. The owner provisioned the Restic password on ABQ; a value-free
+  check verified a current-user-owned regular file with mode `0600`.
+- The accepted `onboard-external-user` skill is local-first for Linux and
+  macOS, detects missing prerequisites, assumes no private state or remote
+  infrastructure, and delegates any later remote-node work explicitly to
+  `onboard-mirrored-node`.
+- The official service specification identifies service-only
+  `web-o3.noc.titech.ac.jp` as Rocky Linux 8 on x86_64; an official Tokyo Tech
+  technical document independently corroborates the same fact.
+
+**Next action:** receive the owner's final explicit PIE `go`, then execute the
+frozen plan autonomously and defer only genuinely new decision or approval
+blockers to the final bundle.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
