@@ -49,6 +49,11 @@ validate_public_checkout() {
         die "Mac tunnel watchdog requires a clean committed harness checkout"
 }
 
+validate_runtime_checkout() {
+    [ "$(uname -s)" = Darwin ] || die "Mac tunnel watchdog requires Darwin"
+    macos_validate_tunnel_runtime_checkout "$HARNESS_ROOT"
+}
+
 xml_escape() {
     printf '%s' "$1" | sed \
         -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' \
@@ -56,7 +61,7 @@ xml_escape() {
 }
 
 render_plist() {
-    watchdog_command=$(xml_escape "$HARNESS_ROOT/bin/harness")
+    watchdog_command=$(xml_escape "$HARNESS_ROOT/libexec/harness-macos-tunnel-watchdog")
     watchdog_host=$(xml_escape "$logical_host")
     cat <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -68,7 +73,6 @@ render_plist() {
   <key>ProgramArguments</key>
   <array>
     <string>$watchdog_command</string>
-    <string>macos-tunnel-watchdog</string>
     <string>--host</string>
     <string>$watchdog_host</string>
     <string>--run-once</string>
@@ -300,7 +304,11 @@ if [ -z "$logical_host" ] || ! macos_private_id_is_safe "$logical_host"; then
     usage
     exit 2
 fi
-validate_public_checkout
+if [ "$mode" = run-once ]; then
+    validate_runtime_checkout
+else
+    validate_public_checkout
+fi
 "$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
     die "private profile is not ready for Mac tunnel watchdog"
 validate_supervisor_contract
@@ -314,10 +322,16 @@ if [ "$mode" = run-once ]; then
         die "cannot create Mac tunnel watchdog run output"
     chmod 600 "$watchdog_run_output"
     watchdog_receipt_staging=
+    watchdog_child_pid=
     # shellcheck disable=SC2329 # invoked by the traps installed immediately below
     cleanup_watchdog_run() {
         status=$?
         trap - EXIT HUP INT TERM
+        if [ -n "$watchdog_child_pid" ]; then
+            kill -TERM "$watchdog_child_pid" 2>/dev/null || true
+            wait "$watchdog_child_pid" 2>/dev/null || true
+            watchdog_child_pid=
+        fi
         if [ -n "$watchdog_receipt_staging" ] &&
             { [ -e "$watchdog_receipt_staging" ] || [ -L "$watchdog_receipt_staging" ]; }; then
             unlink "$watchdog_receipt_staging"
@@ -327,9 +341,14 @@ if [ "$mode" = run-once ]; then
         fi
         exit "$status"
     }
-    trap cleanup_watchdog_run EXIT HUP INT TERM
-    if "$SELF_DIR/harness-macos-tunnel-supervisor" --host "$logical_host" --recover-pair \
-        >"$watchdog_run_output" 2>&1; then
+    trap cleanup_watchdog_run EXIT
+    trap 'exit 129' HUP
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+    "$SELF_DIR/harness-macos-tunnel-supervisor" --host "$logical_host" --recover-pair \
+        >"$watchdog_run_output" 2>&1 &
+    watchdog_child_pid=$!
+    if wait "$watchdog_child_pid"; then
         watchdog_run_status=0
         watchdog_outcome=success
         if grep -F 'action=none reason=route-running' "$watchdog_run_output" >/dev/null; then
@@ -371,6 +390,7 @@ if [ "$mode" = run-once ]; then
             watchdog_classification=invariant-failed
         fi
     fi
+    watchdog_child_pid=
     case $watchdog_attempts in ''|*[!0-9]*)
         [ "$watchdog_attempts" = none ] || {
             watchdog_run_status=2

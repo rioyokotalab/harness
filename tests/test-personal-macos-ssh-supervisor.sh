@@ -103,6 +103,10 @@ if [ "$clear_forwardings" = yes ] && [ -n "$alias_name" ] &&
     exit 1
 fi
 if [ "$clear_forwardings" = no ] && [ -n "$alias_name" ]; then
+    if [ -e "$HOME/.fake-bind-hang-$alias_name" ]; then
+        sleep 2
+        exit 1
+    fi
     if [ -e "$HOME/.fake-bind-fail-$alias_name" ]; then
         : >"$HOME/.fake-bind-probed-$alias_name"
         exit 1
@@ -449,6 +453,12 @@ run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --apply \
 watchdog_tx=$(sed -n 's/^TRANSACTION id=\([^ ]*\) status=complete.*/\1/p' \
     "$TEMP_DIR/watchdog-apply.out")
 [ -n "$watchdog_tx" ] || fail "watchdog apply emitted no transaction"
+watchdog_plist=$watchdog_home/Library/LaunchAgents/org.rioyokota.harness.ssh.tunnel-watchdog.plist
+grep -F "<string>$PUBLIC/libexec/harness-macos-tunnel-watchdog</string>" \
+    "$watchdog_plist" >/dev/null || fail "watchdog plist does not use direct runtime"
+if grep -F '<string>macos-tunnel-watchdog</string>' "$watchdog_plist" >/dev/null; then
+    fail "watchdog plist retained mutable harness dispatch"
+fi
 run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --status \
     >"$TEMP_DIR/watchdog-status.out"
 grep -F 'installed=yes loaded=yes' "$TEMP_DIR/watchdog-status.out" >/dev/null ||
@@ -469,6 +479,38 @@ grep -F 'outcome=success' "$watchdog_receipt" >/dev/null ||
     fail "watchdog healthy receipt outcome"
 grep -F 'classification=healthy' "$watchdog_receipt" >/dev/null ||
     fail "watchdog healthy receipt classification"
+
+touch "$PUBLIC/unrelated-work"
+run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
+    >"$TEMP_DIR/watchdog-unrelated-work.out"
+grep -F 'action=none reason=route-running' \
+    "$TEMP_DIR/watchdog-unrelated-work.out" >/dev/null ||
+    fail "watchdog rejected unrelated checkout work"
+unlink "$PUBLIC/unrelated-work"
+
+git -C "$PUBLIC" switch -q -c unrelated-runtime-branch
+printf '%s\n' unrelated >"$PUBLIC/runtime-note"
+git -C "$PUBLIC" add runtime-note
+git -C "$PUBLIC" commit -q -m 'synthetic unrelated runtime branch'
+run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
+    >"$TEMP_DIR/watchdog-unrelated-branch.out"
+grep -F 'action=none reason=route-running' \
+    "$TEMP_DIR/watchdog-unrelated-branch.out" >/dev/null ||
+    fail "watchdog rejected an unrelated feature branch"
+git -C "$PUBLIC" switch -q main
+
+printf '%s\n' '# changed runtime' >>"$PUBLIC/libexec/harness-macos-ssh-supervisor"
+if run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
+    >"$TEMP_DIR/watchdog-runtime-change.out" 2>&1; then
+    fail "watchdog accepted changed runtime code"
+fi
+grep -F 'Mac tunnel runtime differs from local main' \
+    "$TEMP_DIR/watchdog-runtime-change.out" >/dev/null ||
+    fail "watchdog changed runtime refusal"
+cp "$SUPERVISOR" "$PUBLIC/libexec/harness-macos-ssh-supervisor"
+chmod 755 "$PUBLIC/libexec/harness-macos-ssh-supervisor"
+[ -z "$(git -C "$PUBLIC" status --porcelain --untracked-files=normal)" ] ||
+    fail "watchdog runtime checkout test did not restore main"
 cp "$watchdog_receipt" "$TEMP_DIR/watchdog-receipt.valid"
 printf '%s\n' malformed >"$watchdog_receipt"
 chmod 600 "$watchdog_receipt"
@@ -607,6 +649,35 @@ grep -F 'classification=drain-timeout' "$watchdog_receipt" >/dev/null ||
     fail "watchdog elapsed deadline did not restore loaded baseline"
 unlink "$watchdog_home/.fake-bind-fail-tunnel"
 unlink "$watchdog_home/.fake-bind-fail-tunnel2"
+
+touch "$watchdog_home/.fake-dead-tunnel" "$watchdog_home/.fake-dead-tunnel2" \
+    "$watchdog_home/.fake-bind-hang-tunnel" "$watchdog_home/.fake-bind-hang-tunnel2"
+HOME="$watchdog_home" HARNESS_ROOT="$PUBLIC" HARNESS_TEST_MODE=1 \
+    HARNESS_TEST_RECOVERY_ATTEMPTS=999 PATH="$FAKE_BIN:/usr/bin:/bin" \
+    "$TUNNEL_WATCHDOG" --host mac-test-pilot --run-once \
+    >"$TEMP_DIR/watchdog-signal.out" 2>&1 &
+watchdog_signal_pid=$!
+watchdog_signal_wait=0
+while [ ! -e "$recovery_lock" ] && [ "$watchdog_signal_wait" -lt 50 ]; do
+    sleep 0.1
+    watchdog_signal_wait=$((watchdog_signal_wait + 1))
+done
+[ -e "$recovery_lock" ] || fail "watchdog signal test never entered recovery"
+kill -TERM "$watchdog_signal_pid"
+if wait "$watchdog_signal_pid"; then
+    fail "watchdog accepted termination during recovery"
+fi
+watchdog_signal_wait=0
+while [ -e "$recovery_lock" ] && [ "$watchdog_signal_wait" -lt 50 ]; do
+    sleep 0.1
+    watchdog_signal_wait=$((watchdog_signal_wait + 1))
+done
+[ ! -e "$recovery_lock" ] || fail "watchdog signal retained recovery child or lock"
+[ -e "$watchdog_home/.fake-launch-state/tunnel" ] &&
+    [ -e "$watchdog_home/.fake-launch-state/tunnel2" ] ||
+    fail "watchdog signal did not restore loaded baseline"
+unlink "$watchdog_home/.fake-bind-hang-tunnel"
+unlink "$watchdog_home/.fake-bind-hang-tunnel2"
 
 run_tunnel_watchdog "$watchdog_home" --rollback "$watchdog_tx" \
     >"$TEMP_DIR/watchdog-rollback.out"
