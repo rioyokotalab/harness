@@ -58,8 +58,8 @@ valid_home=$(make_profile valid)
 valid_output=$(HOME="$valid_home" "$HARNESS" macos-profile \
     --host mac-test-pilot)
 expected_output='MACOS_PRIVATE_PROFILE status=valid schema=1 engine_schema=3
-SELECTION baseline=macos-cli-v1 capability_groups=2 extra_formulae=2
-PUBLIC_FORMULAE count=10
+SELECTION baseline=macos-cli-v1 capability_groups=2 extra_formulae=1
+PUBLIC_FORMULAE count=51
 SSH_PAYLOAD state=present values=not-emitted
 BASH_PAYLOAD state=absent values=not-emitted
 TMUX_PAYLOAD state=absent values=not-emitted
@@ -74,7 +74,7 @@ esac
 for overlap_formula in uv pyenv; do
     overlap_home=$(make_profile "overlap-$overlap_formula")
     overlap_private=$overlap_home/.config/harness/private
-    sed "s/extra_formulae=sqlite,ninja/extra_formulae=$overlap_formula/" \
+    sed "s/extra_formulae=ninja/extra_formulae=$overlap_formula/" \
         "$overlap_private/hosts/mac-test-pilot.conf" >"$TEMP_DIR/overlap.conf"
     mv "$TEMP_DIR/overlap.conf" \
         "$overlap_private/hosts/mac-test-pilot.conf"
@@ -470,7 +470,7 @@ grep -F 'private companion schema is incompatible' \
 
 token_home=$(make_profile token)
 private_path_sentinel=/private/owner/path
-sed "s|extra_formulae=sqlite,ninja|extra_formulae=$private_path_sentinel|" \
+sed "s|extra_formulae=ninja|extra_formulae=$private_path_sentinel|" \
     "$token_home/.config/harness/private/hosts/mac-test-pilot.conf" \
     >"$TEMP_DIR/token.new"
 mv "$TEMP_DIR/token.new" \

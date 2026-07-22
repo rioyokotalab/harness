@@ -349,9 +349,9 @@ macos_validate_formula_policy() {
     [ "$(macos_manifest_get "$macos_formula_policy" schema)" = 2 ] &&
         [ "$(macos_manifest_get "$macos_formula_policy" family)" = personal-macos ] &&
         [ "$(macos_manifest_get "$macos_formula_policy" managed_formulae)" = \
-            bash,bash-completion@2,git,git-lfs,tmux,ripgrep,jq,tree,shellcheck,uv ] &&
+            ada-url,bash,bash-completion@2,bash-git-prompt,brotli,c-ares,ca-certificates,fmt,gettext,gh,git,git-lfs,gmp,hdrhistogram_c,icu4c@78,jq,json-c,libevent,libffi,libidn2,libnghttp2,libnghttp3,libngtcp2,libpsl,libunistring,libuv,llhttp,lz4,merve,mpdecimal,mpfr,nbytes,ncurses,node,oniguruma,openssl@3,pcre2,readline,ripgrep,shellcheck,simdjson,simdutf,sqlite,tmux,tree,utf8proc,uv,uvwasi,wget,xz,zstd ] &&
         [ "$(macos_manifest_get "$macos_formula_policy" retired_formulae)" = \
-            bash-completion,pyenv ] ||
+            aom,bash-completion,cairo,expat,fontconfig,freetype,fribidi,gcc,gdk-pixbuf,gemini-cli,giflib,glib,go,graphite2,harfbuzz,highway,icu4c,icu4c@76,icu4c@77,imagemagick,imath,isl,jasper,jemalloc,jpeg-turbo,jpeg-xl,libde265,libdeflate,libev,libheif,liblqr,libmpc,libomp,libpng,libraw,librsvg,libtiff,libtommath,libtool,libultrahdr,libvmaf,libx11,libxau,libxcb,libxdmcp,libxext,libxrender,libzip,little-cms2,lzo,m4,nghttp2,openexr,openjpeg,openjph,openssl@1.1,pango,pixman,pyenv,python-tk@3.13,python@3.13,python@3.14,shared-mime-info,tcl-tk,webp,x265,xorgproto,zbar ] ||
         die "public personal-Mac formula policy is incompatible"
     macos_validate_token_csv \
         "$(macos_manifest_get "$macos_formula_policy" managed_formulae)" formula
@@ -422,8 +422,17 @@ macos_value_is_one_of() {
 macos_validate_fact_file() {
     macos_fact_file=$1
     macos_fact_policy=$2
-    macos_fact_keys=schema,family,logical_id,architecture,account_shell,account_shell_registry,homebrew,homebrew_prefix_class,command_line_tools,private_profile,harness_checkout,link_codex_guidance,link_codex_rules,link_claude_guidance,link_bash_launcher,formula_bash,formula_bash_completion_2,formula_git,formula_git_lfs,formula_tmux,formula_ripgrep,formula_jq,formula_tree,formula_shellcheck,formula_uv,formula_bash_completion,formula_pyenv
+    macos_fact_keys=schema,family,logical_id,architecture,account_shell,account_shell_registry,homebrew,homebrew_prefix_class,command_line_tools,private_profile,harness_checkout,link_codex_guidance,link_codex_rules,link_claude_guidance,link_bash_launcher
     macos_fact_formulae=$(macos_manifest_get "$macos_fact_policy" managed_formulae),$(macos_manifest_get "$macos_fact_policy" retired_formulae)
+    for macos_fact_formula in $(printf '%s\n' "$macos_fact_formulae" | tr ',' ' '); do
+        macos_fact_formula_key=formula_$(macos_formula_key "$macos_fact_formula")
+        case ,$macos_fact_keys, in
+            *,$macos_fact_formula_key,*)
+                die "public personal-Mac formula policy has a fact-key collision"
+                ;;
+        esac
+        macos_fact_keys=$macos_fact_keys,$macos_fact_formula_key
+    done
     macos_validate_manifest "$macos_fact_file" "$macos_fact_keys" "$macos_fact_keys"
     [ "$(macos_manifest_get "$macos_fact_file" schema)" = 1 ] &&
         [ "$(macos_manifest_get "$macos_fact_file" family)" = personal-macos ] ||

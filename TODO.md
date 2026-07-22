@@ -197,6 +197,22 @@ Execution checkpoint 2026-07-22:
 - Current slice: extend lock-aware Codex arg0 housekeeping to macOS's native
   metadata, Perl advisory locks, and four-helper layout before the frozen
   update/stop/cleanup/resume sequence.
+- Protected PR #218 passed `portable-phase1` and squash-merged Darwin arg0
+  support as `59856f9`; guarded fleet sync advanced all Linux mirrors and all
+  four Macs advanced clean public checkouts to that revision. The official
+  Codex 0.145.0 installer was byte-frozen and reviewed before use. Each Mac now
+  runs the resumed most-recent Codex session and remote-control app server;
+  post-grace arg0 housekeeping remains in final acceptance. Aist's
+  `claude-code` cask was removed, and Riken's installer-added startup tail and
+  duplicate Codex symlink were removed without affecting its canonical
+  launcher.
+- Homebrew metadata was refreshed independently on all four Macs. The complete
+  allowed selection plus dependency closure is identical at 51 formulae, and
+  the observed non-universal union is frozen as the public retirement set.
+  The current slice updates the bounded adapter so dependents inside that
+  reviewed retirement set can be removed together while external dependents
+  still block; focused regression coverage passes. Next: publish, synchronize,
+  run all four live plans, and converge one Mac at a time.
 
 ### T-273 — Resolve intentionally deferred maintenance
 

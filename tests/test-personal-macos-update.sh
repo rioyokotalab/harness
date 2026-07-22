@@ -133,7 +133,7 @@ setup_pair() {
     git clone -q "$private_origin" "$private_work"
 
     write_private_host "$private_source/hosts/mac-test-pilot.conf" \
-        language,agents sqlite,ninja
+        language,agents ninja,cmake
     cp "$ROOT/tests/fixtures/personal-macos/private-v1/ssh_config" \
         "$private_source/ssh_config"
     chmod 600 "$private_source/ssh_config"
@@ -245,7 +245,7 @@ git -C "$primary_public" fetch -q origin
 later_public_target=$(git -C "$primary_public" \
     rev-parse refs/remotes/origin/main)
 write_private_host "$primary_private_source/hosts/mac-test-pilot.conf" \
-    language,agents data-tools sqlite,ninja,wget
+    language,agents data-tools ninja,cmake
 git -C "$primary_private_source" add hosts/mac-test-pilot.conf
 git -C "$primary_private_source" commit -q -m 'synthetic later private v1'
 git -C "$primary_private_source" push -q origin main

@@ -145,7 +145,7 @@ done
 
 case "$output" in
     *"$home"*|*/opt/homebrew*|*/synthetic/command-line-tools*|*Homebrew\ synthetic*|\
-    *language*|*agents*|*sqlite*|*ninja*)
+    *language*|*agents*|*ninja*)
         fail "inventory exposed a private path, version, or selection"
         ;;
 esac
@@ -153,7 +153,12 @@ if grep -E '(^| )(update|upgrade|install|cleanup|services|tap|bundle)( |$)' \
     "$brew_log" >/dev/null; then
     fail "inventory invoked a mutating or broad Homebrew command"
 fi
-[ "$(grep -c '^list --formula --versions ' "$brew_log")" -eq 12 ] ||
+expected_query_count=$(sed -n \
+    -e 's/^managed_formulae=//p' -e 's/^retired_formulae=//p' \
+    "$ROOT/profiles/personal-macos/formula-policy-v2.conf" | tr ',' '\n' |
+    awk '!seen[$0]++ { count++ } END { print count + 0 }')
+[ "$(grep -c '^list --formula --versions ' "$brew_log")" -eq \
+    "$expected_query_count" ] ||
     fail "inventory did not query exactly the public formula allowlist"
 
 x86_output=$(HOME="$home" SHELL=/bin/bash BREW_LOG="$TEMP_DIR/brew-x86.log" \

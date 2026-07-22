@@ -159,10 +159,12 @@ private repository's contents.
 Private `capability_groups` are classification labels and are never converted
 into guessed package names. The frozen eight-formula `base.conf` remains
 byte-compatible with the oldest engine-1 updater. Current desired state is the
-separate schema-2 `formula-policy-v2.conf`: ten managed formulae, two retired
-formulae, plus selected private `extra_formulae`. Phase 1 refuses
-tapped formula names and tapped dependencies; support for a private tap would
-need its own trust, update, and rollback design.
+separate schema-2 `formula-policy-v2.conf`: the complete reviewed cross-Mac
+formula set, its full dependency closure, the reviewed retirement set, and any
+selected private `extra_formulae`. The public selection is intentionally exact:
+after a converged rollout, every personal Mac has the same public formula set.
+Phase 1 refuses tapped formula names and tapped dependencies; support for a
+private tap would need its own trust, update, and rollback design.
 
 ```bash
 harness macos-homebrew --host LOGICAL_ID --plan
@@ -186,13 +188,16 @@ or incomplete dry-run evidence and output that indicates a cask, service,
 remains the separately displayed `brew update` authority; this command does not
 run it implicitly.
 
-Apply repeats the checkout, private profile, prefix, selected and retirement action sets,
-dependency closure, installed-dependent, and dry-run gates immediately before
-mutation. It first uninstalls only installed formulae on the public retirement
-list after proving they have no installed dependents. Homebrew has no uninstall
-dry-run, so this exact reviewed allowlist is reported separately and no cleanup,
-autoremove, force, or ignored-dependent option is used. It then installs only
-missing selected formulae and upgrades only outdated selected formulae.
+Apply repeats the checkout, private profile, prefix, selected and retirement
+action sets, dependency closure, installed-dependent, and dry-run gates
+immediately before mutation. It first uninstalls only installed formulae on the
+public retirement list after proving they have no installed dependents outside
+that same reviewed retirement set. This permits one bounded operation to retire
+an interdependent package family while still protecting every unreviewed
+installed dependent. Homebrew has no uninstall dry-run, so this exact reviewed
+allowlist is reported separately and no cleanup, autoremove, force, or
+ignored-dependent option is used. It then installs only missing selected
+formulae and upgrades only outdated selected formulae.
 Homebrew may update their dependency closure, but
 the command does not disable installed-dependent linkage checks because the
 official guidance warns that doing so can leave broken linkage. It uses no
