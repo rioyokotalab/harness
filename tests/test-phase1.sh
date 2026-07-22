@@ -1981,7 +1981,7 @@ printf '%s\n' \
 chmod 755 "$fake_python"
 printf '%s\n' \
     '#!/bin/sh' \
-    'if [ "${1:-}" = --version ]; then echo "uv 0.11.31"; exit 0; fi' \
+    'if [ "${1:-}" = --version ]; then echo "uv 0.11.31 (x86_64-unknown-linux-gnu)"; exit 0; fi' \
     'install_dir=' \
     'while [ "$#" -gt 0 ]; do' \
     '  case "$1" in --install-dir) install_dir=$2; shift 2 ;; *) shift ;; esac' \

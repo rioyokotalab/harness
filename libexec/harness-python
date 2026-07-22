@@ -77,7 +77,8 @@ esac
 for required in uv tar sha256sum find readlink; do
     command -v "$required" >/dev/null 2>&1 || die "Python apply requires command: $required"
 done
-[ "$(uv --version)" = "uv $uv_version" ] || die "managed Python requires uv $uv_version"
+[ "$(uv --version 2>/dev/null | awk '{ print $1, $2 }')" = "uv $uv_version" ] ||
+    die "managed Python requires uv $uv_version"
 
 state_root=$HOME/.local/state/harness/transactions
 mkdir -p "$state_root"; chmod 700 "$HOME/.local/state/harness" "$state_root"
