@@ -107,10 +107,18 @@ case "$1" in
     --prefix) echo /opt/homebrew ;;
     list)
         [ "$2:$3" = --formula:--versions ] || exit 2
-        case ",$FAKE_RETIRED_FORMULAE," in *,$4,*) exit 1 ;; esac
-        case "$4" in
-            tree) [ "${FAKE_TREE_PRESENT:-0}" = 1 ] || exit 1 ;;
-        esac
+        if [ "$#" -eq 3 ]; then
+            printf '%s\n' "$FAKE_MANAGED_FORMULAE" | tr ',' '\n' |
+                awk -v tree="${FAKE_TREE_PRESENT:-0}" '
+                    NF && ($0 != "tree" || tree == 1) { print $0, "1.0" }
+                '
+            printf '%s\n' 'ninja 1.0'
+        elif [ "$#" -eq 4 ]; then
+            case ",$FAKE_MANAGED_FORMULAE,ninja," in *,$4,*) ;; *) exit 1 ;; esac
+            [ "$4" != tree ] || [ "${FAKE_TREE_PRESENT:-0}" = 1 ]
+        else
+            exit 2
+        fi
         ;;
     outdated)
         [ "$2:$3" = --formula:--quiet ] || exit 2
@@ -130,9 +138,9 @@ chmod 755 "$fake_bin/uname" "$fake_bin/stat" "$fake_bin/xcode-select" \
 
 brew_log=$TEMP_DIR/brew.log
 facts=$TEMP_DIR/facts.conf
-FAKE_RETIRED_FORMULAE=$(sed -n 's/^retired_formulae=//p' \
+FAKE_MANAGED_FORMULAE=$(sed -n 's/^managed_formulae=//p' \
     "$ROOT/profiles/personal-macos/formula-policy-v4.conf")
-export FAKE_RETIRED_FORMULAE
+export FAKE_MANAGED_FORMULAE
 HOME="$home" SHELL=/bin/zsh BREW_LOG="$brew_log" \
     PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
     "$INVENTORY" --host mac-test-pilot >"$facts"

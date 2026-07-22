@@ -98,7 +98,20 @@ case "$1" in
     --prefix) echo "${FAKE_BREW_PREFIX:-/opt/homebrew}"; exit 0 ;;
     list)
         [ "$2:$3" = --formula:--versions ] || exit 2
-        [ "$4" != tree ]
+        [ "$#" -eq 3 ] || exit 2
+        printf '%s\n' \
+            'bash 5.3' \
+            'bash-completion@2 2.16' \
+            'git 2.0' \
+            'git-lfs 3.0' \
+            'icu4c@78 78.2' \
+            'jq 1.8' \
+            'ripgrep 15.0' \
+            'shellcheck 0.11' \
+            'tmux 3.5' \
+            'uv 0.11' \
+            'bash-completion 1.3' \
+            'pyenv 2.6'
         ;;
     *) exit 99 ;;
 esac
@@ -136,6 +149,8 @@ for expected in \
     'formula_tree=absent' \
     'formula_shellcheck=present' \
     'formula_uv=present' \
+    'formula_icu4c_78=present' \
+    'formula_icu4c=absent' \
     'formula_bash_completion=present' \
     'formula_pyenv=present'
 do
@@ -153,13 +168,8 @@ if grep -E '(^| )(update|upgrade|install|cleanup|services|tap|bundle)( |$)' \
     "$brew_log" >/dev/null; then
     fail "inventory invoked a mutating or broad Homebrew command"
 fi
-expected_query_count=$(sed -n \
-    -e 's/^managed_formulae=//p' -e 's/^retired_formulae=//p' \
-    "$ROOT/profiles/personal-macos/formula-policy-v4.conf" | tr ',' '\n' |
-    awk '!seen[$0]++ { count++ } END { print count + 0 }')
-[ "$(grep -c '^list --formula --versions ' "$brew_log")" -eq \
-    "$expected_query_count" ] ||
-    fail "inventory did not query exactly the public formula allowlist"
+[ "$(grep -c '^list --formula --versions$' "$brew_log")" -eq 1 ] ||
+    fail "inventory did not use one exact installed-formula query"
 
 x86_output=$(HOME="$home" SHELL=/bin/bash BREW_LOG="$TEMP_DIR/brew-x86.log" \
     FAKE_ARCH=x86_64 FAKE_BREW_PREFIX=/usr/local \
