@@ -339,6 +339,14 @@ Execution checkpoint 2026-07-22:
   deletion manifest are absent. The active slice adds `abq/abq2` to routine
   five-minute health as an observed failover pair without unsafe supervisor
   recovery.
+- Protected PR #233 passed and squash-merged ABQ health integration as
+  `19a2da3`; all seven Linux mirrors and ABQ are clean/current. The persistent
+  monitor was recreated from that revision and its first cycle included a
+  healthy `abq/abq2` pair. ABQ passed silent batch access on both routes, two
+  zero-warning doctors, clean/current control and Bash plans, Vim, and a PTY
+  login. ABQ onboarding is complete. The current slice creates and validates
+  the local-first `onboard-external-user` skill and its value-free prerequisite
+  and collision preflight.
 
 ### T-273 — Resolve intentionally deferred maintenance
 

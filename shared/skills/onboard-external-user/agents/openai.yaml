@@ -1,0 +1,4 @@
+interface:
+  display_name: "Onboard External User"
+  short_description: "Set up a clean local Codex/Claude harness"
+  default_prompt: "Use $onboard-external-user to set up this local machine from a clean Linux or macOS account."

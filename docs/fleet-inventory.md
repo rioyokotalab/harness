@@ -21,8 +21,8 @@ site-selected login node and may vary between connections.
 | `office` | `office`, `office2` | `yokotar` | `localhost` | `office` | macOS 26.5.2, arm64 |
 | `riken` | `riken`, `riken2` | `yokotar` | `localhost` | `riken2` | macOS 26.5.2, arm64 |
 
-The current managed control-plane scope is the original 11 nodes plus `abq`
-after its onboarding completes. `web` remains a service-only alias and is not
+The current managed control-plane scope is the original 11 nodes plus `abq`.
+`web` remains a service-only alias and is not
 a command, deployment, health-monitor, package, Python, or synchronization
 target. The `web` OS is documented by the
 [Science Tokyo NOC service specification](https://www.noc.cii.isct.ac.jp/srv/wwwsrv/)

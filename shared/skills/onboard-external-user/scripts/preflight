@@ -1,0 +1,68 @@
+#!/bin/sh
+set -eu
+
+usage() { echo 'Usage: preflight --repo ABSOLUTE_CHECKOUT' >&2; }
+repo=
+while [ "$#" -gt 0 ]; do
+    case $1 in
+        --repo) [ "$#" -ge 2 ] || { usage; exit 2; }; repo=$2; shift 2 ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+case $repo in /*) ;; *) usage; exit 2 ;; esac
+
+missing=0
+for command_name in sh git mkdir ln readlink; do
+    command -v "$command_name" >/dev/null 2>&1 || missing=$((missing + 1))
+done
+case $(uname -s 2>/dev/null || echo unknown) in Linux) os=linux ;; Darwin) os=darwin ;; *) os=unsupported ;; esac
+case $(uname -m 2>/dev/null || echo unknown) in x86_64|amd64) arch=x86_64 ;; arm64|aarch64) arch=aarch64 ;; *) arch=unsupported ;; esac
+
+repo_state=invalid
+if [ -d "$repo" ] && [ ! -L "$repo" ] && [ -d "$repo/.git" ] &&
+    [ ! -L "$repo/.git" ] && [ -f "$repo/install.sh" ] && [ ! -L "$repo/install.sh" ]; then
+    if [ -z "$(git -C "$repo" status --porcelain --untracked-files=normal 2>/dev/null)" ]; then repo_state=clean; else repo_state=dirty; fi
+fi
+
+case ${HOME:-} in /*) ;; *) echo 'EXTERNAL_PREFLIGHT schema=1 status=blocked reason=unsafe-home'; exit 2 ;; esac
+codex_home=${CODEX_HOME:-$HOME/.codex}
+claude_home=${CLAUDE_HOME:-$HOME/.claude}
+user_skills=$HOME/.agents/skills
+user_bin=$HOME/.local/bin
+total=0; current=0; absent=0; collisions=0
+classify_link() {
+    source=$1; destination=$2; legacy=${3:-}; total=$((total + 1))
+    if [ -L "$destination" ]; then
+        observed=$(readlink "$destination")
+        if [ "$observed" = "$source" ] || { [ -n "$legacy" ] && [ "$observed" = "$legacy" ]; }; then
+            current=$((current + 1))
+        else
+            collisions=$((collisions + 1))
+        fi
+    elif [ -e "$destination" ]; then collisions=$((collisions + 1))
+    else absent=$((absent + 1)); fi
+}
+
+if [ "$repo_state" = clean ]; then
+    classify_link "$repo/.codex/AGENTS.md" "$codex_home/AGENTS.md" "$repo/codex/AGENTS.md"
+    classify_link "$repo/.codex/rules/default.rules" "$codex_home/rules/default.rules" "$repo/codex/rules/default.rules"
+    classify_link "$repo/.claude/CLAUDE.md" "$claude_home/CLAUDE.md" "$repo/claude/CLAUDE.md"
+    classify_link "$repo/bin/harness" "$user_bin/harness"
+    for skill_path in "$repo"/shared/skills/*; do
+        [ -d "$skill_path" ] || continue
+        if [ ! -f "$skill_path/SKILL.md" ] || [ -L "$skill_path/SKILL.md" ]; then collisions=$((collisions + 1)); continue; fi
+        name=${skill_path##*/}
+        classify_link "$skill_path" "$codex_home/skills/$name"
+        classify_link "$skill_path" "$user_skills/$name"
+        classify_link "$skill_path" "$claude_home/skills/$name"
+    done
+fi
+if command -v codex >/dev/null 2>&1; then codex=present; else codex=absent; fi
+if command -v claude >/dev/null 2>&1; then claude=present; else claude=absent; fi
+status=ready
+[ "$missing" -eq 0 ] && [ "$os" != unsupported ] && [ "$arch" != unsupported ] &&
+    [ "$repo_state" = clean ] && [ "$collisions" -eq 0 ] || status=blocked
+printf 'EXTERNAL_PREFLIGHT schema=1 status=%s os=%s arch=%s required_missing=%s repo=%s links_total=%s links_current=%s links_absent=%s collisions=%s codex=%s claude=%s\n' \
+    "$status" "$os" "$arch" "$missing" "$repo_state" "$total" "$current" "$absent" "$collisions" "$codex" "$claude"
+[ "$status" = ready ]
