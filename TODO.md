@@ -81,6 +81,15 @@ simultaneous-loss drills passed on all four Macs. The final manual monitor
 sample reported every Mac pair and ABQ healthy with no action. The closeout
 passed `git diff --check`, the public-repository audit, and the complete
 `tests/test-phase1.sh` gate.
+
+A later live Aist `0/2` interval during final fleet synchronization recovered
+without a controller kick: `aist2` returned first, then `aist`, and both ended
+at `managed=1 external=0`. Its atomic watchdog receipt recorded
+`classification=recovered-single attempts=21` at `20260722T231136Z`, providing
+post-hardening stale-listener evidence in addition to the matched bootout
+drills. Final guarded arg0 housekeeping preserved three live invocations on
+Local and each Mac, removed six eligible Local residues and one per Mac, and
+found zero unexpected entries.
 The durable plan is
 `docs/plans/t296-mac-connectivity-resilience.md`; the evidence handoff is
 `docs/audits/t296-mac-connectivity-resilience-2026-07-23.md`. The temporary

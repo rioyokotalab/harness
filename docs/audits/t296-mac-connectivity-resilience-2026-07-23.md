@@ -383,6 +383,21 @@ through the monitor and each Mac's atomic watchdog receipt.
 The closeout passed `git diff --check`, the public-repository audit, and the
 complete `tests/test-phase1.sh` gate from a clean checkpoint commit.
 
+During the final protected-commit synchronization, Local subsequently observed
+a fresh Aist `0/2` interval. No controller kick or owner action was taken. The
+Mac-local recovery child remained active, restored `aist2` first, preserved it
+while the primary listener drained, and then restored `aist`. Both endpoints
+finished reachable with `managed=1 external=0`; the atomic receipt recorded
+`outcome=success classification=recovered-single attempts=21` at
+`20260722T231136Z`. This roughly six-minute live recovery is within the bounded
+state machine and supplies the post-hardening stale-listener evidence that the
+short bootout drills did not exercise.
+
+Final routine arg0 housekeeping used the guarded workflow without stopping a
+Codex process. It preserved three live invocations on Local and on each Mac,
+removed six eligible Local residues and one on each Mac, and encountered zero
+unexpected entries.
+
 ## Final runtime state
 
 - `harness-connection-monitor`: five-minute recovery and fresh-auth audit,
