@@ -289,11 +289,17 @@ Execution checkpoint 2026-07-22:
   identical name/version hash
   `8b654cad1b559750e9e5c3d3661e192118dc617dc155a8131054332065b334ff`.
   Complete Homebrew convergence is finished.
-- Current slice: retain the legacy `login`/`login2` supervisor solely for
-  rollback and introduce an independent `tunnel`/`tunnel2` supervisor. This
-  permits a route-by-route cutover with the sibling route continuously
-  available and leaves the old agent immediately recoverable until inbound
-  health passes.
+- Protected PR #228 passed and squash-merged the independent tunnel supervisor
+  as `7c0cb00`; every clean checkout is synchronized. Private revision
+  `5432d41` now gives `login` zero forwards, removes `login2`, and reserves
+  `tunnel`/`tunnel2` for the two reverse routes. Each Mac reports two running
+  launchd-owned tunnel processes, two concurrent ordinary `login` sessions
+  pass, both routes pass controlled restart recovery, and the legacy agents
+  and plists are retired. The five-minute monitor now recovers the dedicated
+  aliases.
+- Current slice: pin uv 0.11.31 across the fleet, add fail-closed forward
+  replacement for the managed Linux artifact, and expose non-default CPython
+  3.11.15 plus 3.12.13 without shadowing site `python`/`python3`.
 
 ### T-273 — Resolve intentionally deferred maintenance
 

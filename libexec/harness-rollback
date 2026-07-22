@@ -44,7 +44,7 @@ manifest=$HOME/.local/state/harness/transactions/$transaction_id.manifest
 
 records=$(mktemp "${TMPDIR:-/tmp}/harness-rollback.XXXXXX")
 trap 'rm -f "$records"' EXIT HUP INT TERM
-awk -F'|' '$1 == "link" || $1 == "managed-link-new" || $1 == "managed-link-replaced" || $1 == "shell" || $1 == "shell-new" || $1 == "shell-prefix" || $1 == "patch" || $1 == "artifact" || $1 == "runtime" || $1 == "python" || $1 == "agent" || $1 == "agent-replaced" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
+awk -F'|' '$1 == "link" || $1 == "managed-link-new" || $1 == "managed-link-replaced" || $1 == "shell" || $1 == "shell-new" || $1 == "shell-prefix" || $1 == "patch" || $1 == "artifact" || $1 == "artifact-replaced" || $1 == "runtime" || $1 == "python" || $1 == "agent" || $1 == "agent-replaced" { line[NR] = $0 } END { for (i = NR; i >= 1; i--) if (line[i] != "") print line[i] }' \
     "$manifest" >"$records"
 
 # Validate every path before mutating any path.
@@ -69,6 +69,31 @@ while IFS='|' read -r record destination field3 field4 field5 field6 field7 fiel
         fi
         [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ] ||
             die "rollback blocked: replaced managed link changed: $destination"
+    elif [ "$record" = artifact-replaced ]; then
+        binary=$field3; expected_hash=$field4; stable=$field5
+        new_target=$field6; old_target=$field7; old_hash=$field8
+        candidate=$destination/$binary
+        [ "$candidate" = "$new_target" ] ||
+            die "rollback blocked: replaced artifact declaration is inconsistent"
+        case "$stable:$old_target" in "$HOME"/*:"$HOME"/*) ;; *)
+            die "rollback blocked: unsafe replaced artifact link" ;;
+        esac
+        [ -f "$old_target" ] && [ ! -L "$old_target" ] &&
+            [ "$(sha256sum "$old_target" | awk '{print $1}')" = "$old_hash" ] ||
+            die "rollback blocked: replaced artifact predecessor changed"
+        [ -L "$stable" ] || die "rollback blocked: replaced artifact link changed"
+        stable_target=$(readlink "$stable")
+        if [ "$stable_target" = "$old_target" ] &&
+            [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
+            continue
+        fi
+        [ "$stable_target" = "$new_target" ] ||
+            die "rollback blocked: replaced artifact link changed"
+        if [ ! -f "$candidate" ] || [ -L "$candidate" ] ||
+            [ "$(sha256sum "$candidate" | awk '{print $1}')" != "$expected_hash" ] ||
+            [ "$(find "$destination" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')" -ne 1 ]; then
+            die "rollback blocked: replaced artifact changed"
+        fi
     elif [ "$record" = shell-new ]; then
         bytes=$field4; payload=$field5
         case "$payload" in "$HOME/.local/state/harness/transactions/"*) ;; *) die "rollback blocked: unsafe new-shell payload path" ;; esac
@@ -262,6 +287,23 @@ while IFS='|' read -r record destination field3 field4 field5 field6 field7 fiel
                 cp "$backup" "$destination"
                 chmod "$original_mode" "$destination"
             fi
+        elif [ "$record" = artifact-replaced ]; then
+            binary=$field3; stable=$field5; new_target=$field6; old_target=$field7
+            if [ "$(readlink "$stable")" = "$old_target" ] &&
+                [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
+                echo "KEEP artifact=$destination state=already-rolled-back"
+                continue
+            fi
+            if [ "$(readlink "$stable")" = "$new_target" ]; then
+                echo "RESTORE link=$stable source=$old_target"
+                unlink "$stable"
+                ln -s "$old_target" "$stable"
+            else
+                echo "KEEP link=$stable state=already-rolled-back"
+            fi
+            echo "REMOVE artifact=$destination"
+            unlink "$destination/$binary"
+            rmdir "$destination"
         elif [ "$record" = shell-new ]; then
             if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
                 echo "KEEP file=$destination state=already-rolled-back"
