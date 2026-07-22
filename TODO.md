@@ -142,13 +142,27 @@ sibling and makes the controller request that state machine instead of a blind
 kick. Its supervisor and monitor focused suites pass; Home2's distinct
 authentication/upstream failure remains a value-free diagnosis item.
 
-**Next action:** publish and sync the single-route bounded-drain follow-up, then
-diagnose Home2's dedicated-authentication/upstream failure without weakening or
-changing credentials. Revalidate the Aist transaction, then roll out/drill
-Home, Office, and Riken one at a time only when both of each host's outbound
-routes authenticate. Preserve potentially private native logs unread in
-mode-0600 temporary files and exact-unlink them after extracting only
-nonprivate classifications. Do not use
+Fresh isolated checks then proved Aist `2/2` authentication-ready but Home,
+Office, and Riken `0/2` authentication-ready despite their established routes.
+Home's private trace classified both failures as authorization rejection; the
+mode-0600 trace was exact-unlinked without exposing endpoint or key data. This
+is server authorization drift, not a tunnel client failure. Agent policy
+categorically prohibits reading or modifying `authorized_keys`, so no
+credential repair was attempted. A third focused follow-up adds public
+`--auth-status` and makes the five-minute recovering monitor classify a healthy
+old pair with blocked replacement authentication as
+`state=at-risk action=authorization-blocked`. Synthetic ready/blocked and
+monitor classifications pass. Permanent repair requires owner-managed
+reauthorization; a dedicated sshd `AuthorizedKeysFile` for restricted harness
+tunnel entries is the recommended isolation so unrelated ordinary-key changes
+cannot remove them again.
+
+**Next action:** publish and sync the value-free authorization-drift alert.
+Continue the Aist soak, but do not drill or install on Home, Office, or Riken
+until the owner restores both restricted authorizations and all six fresh
+checks pass. Then roll out/drill those Macs one at a time. Preserve potentially
+private native logs unread in mode-0600 temporary files and exact-unlink them
+after extracting only nonprivate classifications. Do not use
 `codex-claude-cowork` unless the owner explicitly reverses the prior exclusion
 for this connection work.
 

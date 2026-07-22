@@ -414,6 +414,13 @@ bind. A private lease lock serializes watchdog recovery with `--kick`; a
 crashed holder is recognized by PID and process-start identity and does not
 strand later recovery.
 
+The five-minute recovering controller monitor also requests a value-free fresh
+authentication check from each healthy Mac pair. It reports
+`state=at-risk action=authorization-blocked` when established tunnels still
+work but the dedicated identity can no longer create a replacement session.
+That alert never reads or repairs server authorization; it prevents a healthy
+old connection from being mistaken for recoverability.
+
 Installation and rollback are transactional and do not stop a healthy tunnel:
 
 ```bash

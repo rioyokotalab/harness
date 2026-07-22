@@ -231,6 +231,11 @@ grep -F 'PREFLIGHT macos_ssh_supervisor blocked=0' "$TEMP_DIR/plan.out" >/dev/nu
 [ ! -e "$plan_home/.local/state/harness/macos-ssh-supervisor" ] ||
     fail "plan created supervisor state"
 
+run_supervisor "$plan_home" --host mac-test-pilot --auth-status \
+    >"$TEMP_DIR/auth-status-ready.out"
+grep -F 'END macos_ssh_supervisor auth_blocked=0' \
+    "$TEMP_DIR/auth-status-ready.out" >/dev/null || fail "ready authentication status"
+
 missing_identity_home=$(make_home missing-identity)
 unlink "$missing_identity_home/.ssh/harness-reverse"
 if run_supervisor "$missing_identity_home" --host mac-test-pilot --plan \
@@ -250,6 +255,12 @@ fi
     fail "unsafe dedicated identity refusal count"
 
 touch "$plan_home/.fake-auth-fail"
+if run_supervisor "$plan_home" --host mac-test-pilot --auth-status \
+    >"$TEMP_DIR/auth-status-blocked.out" 2>&1; then
+    fail "authentication status accepted blocked aliases"
+fi
+[ "$(grep -c 'unattended_auth=blocked' "$TEMP_DIR/auth-status-blocked.out")" -eq 2 ] ||
+    fail "blocked authentication status count"
 if run_supervisor "$plan_home" --host mac-test-pilot --plan \
     >"$TEMP_DIR/auth-fail.out" 2>&1; then
     fail "plan accepted unavailable unattended authentication"

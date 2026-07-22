@@ -84,6 +84,19 @@ not silent exceptions.
 8. Keep the existing five-minute recovering Local monitor. During the nightly
    work, add a separate 30-second observe-only monitor so measurement cannot
    race recovery.
+9. Make the recovering monitor verify fresh dedicated authentication through
+   a healthy route and classify authorization drift as `at-risk`. Detection is
+   value-free and non-mutating; credential repair remains outside agent
+   authority.
+
+The live soak proved that established connections can outlive removal of their
+server authorizations: Aist remained `2/2` fresh-auth ready, while Home, Office,
+and Riken were `0/2` despite several live old routes. Software recovery cannot
+repair that credential state. The preferred owner-managed hardening is a
+separate sshd `AuthorizedKeysFile` containing only the four Macs' restricted
+tunnel entries, isolated from ordinary account-key maintenance. That one-time
+server change requires owner/admin review and credential handling and is not
+part of autonomous execution.
 
 ## Watchdog state machine
 
