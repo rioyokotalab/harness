@@ -43,11 +43,11 @@ def command_version(command: str) -> str:
     return result.stdout.strip().splitlines()[0]
 
 
-def client_declaration() -> dict[str, dict[str, Any]]:
+def client_declaration(*, check_clients: bool) -> dict[str, dict[str, Any]]:
     return {
         "codex": {
             "command": "codex",
-            "version": command_version("codex"),
+            "version": command_version("codex") if check_clients else "runtime-detected",
             "requested_model": "default",
             "reasoning_effort": "medium",
             "sandbox": "workspace-write; network disabled",
@@ -56,7 +56,7 @@ def client_declaration() -> dict[str, dict[str, Any]]:
         },
         "claude": {
             "command": "claude",
-            "version": command_version("claude"),
+            "version": command_version("claude") if check_clients else "runtime-detected",
             "requested_model": "default",
             "reasoning_effort": "medium",
             "sandbox": "bubblewrap read-only root; workspace-write; network disabled",
@@ -66,13 +66,14 @@ def client_declaration() -> dict[str, dict[str, Any]]:
     }
 
 
-def validate_environment() -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
+def validate_environment(*, check_clients: bool) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
     corpus = core.validate_corpus(check_client=False)
-    declarations = client_declaration()
-    if not Path("/usr/bin/bwrap").is_file():
-        fail("bubblewrap is required for the matched Claude sandbox")
-    if platform.system() != "Linux":
-        fail("the matched client experiment is declared for Linux")
+    declarations = client_declaration(check_clients=check_clients)
+    if check_clients:
+        if not Path("/usr/bin/bwrap").is_file():
+            fail("bubblewrap is required for the matched Claude sandbox")
+        if platform.system() != "Linux":
+            fail("the matched client experiment is declared for Linux")
     core.validate_closed_object(
         {
             "schema": 1,
@@ -401,7 +402,7 @@ def build_report(
 
 
 def run_stage(root: Path, stage: str) -> int:
-    corpus, declarations = validate_environment()
+    corpus, declarations = validate_environment(check_clients=True)
     if core.git(["status", "--porcelain"]).strip():
         fail("harness source must be clean before a model stage")
     root = ensure_root(root, declarations)
@@ -425,7 +426,7 @@ def run_stage(root: Path, stage: str) -> int:
 
 
 def publish(root: Path, stage: str, output: Path) -> None:
-    corpus, declarations = validate_environment()
+    corpus, declarations = validate_environment(check_clients=True)
     root = ensure_root(root, declarations)
     report = build_report(root, stage, corpus, declarations)
     expected = EVAL_ROOT / "results" / f"{EXPERIMENT_ID}-{stage}.json"
@@ -452,10 +453,10 @@ def main() -> int:
     report.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.command == "validate":
-        validate_environment()
+        validate_environment(check_clients=False)
         print("client comparison declaration valid")
     elif args.command == "plan":
-        corpus, declarations = validate_environment()
+        corpus, declarations = validate_environment(check_clients=False)
         rows = core.stage_rows(corpus, args.stage)
         print(f"CLIENT_COMPARISON stage={args.stage} runs_per_client={len(rows)} total_runs={len(rows) * 2}")
         print(f"CLIENT codex version={declarations['codex']['version']} model=default effort=medium")
