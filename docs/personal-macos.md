@@ -213,6 +213,10 @@ Because Homebrew retirement can remove or expose an outdated selected
 dependency, apply then recomputes exact state. Any missing or outdated selected
 formula receives a new exact dry-run and scoped install or upgrade before the
 final inventory/dependency/dependent acceptance check.
+Finally, a selected formula with multiple installed keg versions receives its
+own scoped cleanup dry-run and cleanup command. The last acceptance pass
+requires one version per selected formula, so equality covers both package names
+and versions rather than merely the current linked keg.
 Homebrew may update their dependency closure, but
 the command does not disable installed-dependent linkage checks because the
 official guidance warns that doing so can leave broken linkage. It uses no

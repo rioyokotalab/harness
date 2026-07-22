@@ -204,11 +204,24 @@ case "$1" in
             shift
         done
         [ "$cleanup_target" = icu4c@78 ] || exit 96
+        cleanup_path=$cleanup_target
+        if [ "$cleanup_target" = icu4c@78 ] &&
+            awk '$1 == "icu4c" { found = 1 } END { exit found ? 0 : 1 }' \
+                "$BREW_STATE/installed"; then
+            cleanup_path=icu4c
+        fi
         if [ "$cleanup_dry" -eq 1 ]; then
-            printf 'Would remove: %s/Cellar/icu4c/legacy\n' \
-                "$FAKE_BREW_PREFIX"
+            printf 'Would remove: %s/Cellar/%s/legacy\n' \
+                "$FAKE_BREW_PREFIX" "$cleanup_path"
         else
-            remove_formula "$BREW_STATE/installed" icu4c
+            if [ "$cleanup_path" = icu4c ]; then
+                remove_formula "$BREW_STATE/installed" icu4c
+            else
+                awk -v name="$cleanup_target" \
+                    '$1 == name { print $1, $2; next } { print }' \
+                    "$BREW_STATE/installed" >"$BREW_STATE/installed.new"
+                mv "$BREW_STATE/installed.new" "$BREW_STATE/installed"
+            fi
             printf '%s\n' 'cleanup complete'
         fi
         ;;
@@ -277,6 +290,7 @@ for expected in \
     "UPGRADE count=2 formulae='git sqlite'" \
     "RETIRE count=0 formulae=''" \
     "RETIRE_CLEANUP count=0 aliases='' targets=''" \
+    "CLEANUP_OLD count=0 formulae=''" \
     'DEPENDENCIES count=1 scope=validated shared_users=preserved' \
     "UNMANAGED_DEPENDENTS count=0 formulae=''" \
     "UNMANAGED_INSTALLED count=0 formulae=''" \
@@ -378,6 +392,22 @@ repair_line=$(grep -n -F -x 'install --formula mpdecimal' \
 [ -n "$retire_line" ] && [ -n "$repair_line" ] && \
     [ "$retire_line" -lt "$repair_line" ] ||
     fail "post-retirement repair ordering"
+
+old_home=$(make_home old-versions)
+old_state=$(make_brew_state old-versions)
+awk '$1 == "icu4c@78" { print $1, $2, "legacy"; next } { print }' \
+    "$old_state/installed" >"$old_state/installed.new"
+mv "$old_state/installed.new" "$old_state/installed"
+run_homebrew "$old_home" "$old_state" "$TEMP_DIR/old-plan.log" \
+    --host mac-test-pilot --plan >"$TEMP_DIR/old-plan.out"
+grep -F -x "CLEANUP_OLD count=1 formulae='icu4c@78'" \
+    "$TEMP_DIR/old-plan.out" >/dev/null || fail "old-version cleanup plan"
+run_homebrew "$old_home" "$old_state" "$TEMP_DIR/old-apply.log" \
+    --host mac-test-pilot --apply >"$TEMP_DIR/old-apply.out"
+grep -F -x 'CLEANUP old_versions=1' "$TEMP_DIR/old-apply.out" >/dev/null ||
+    fail "old-version cleanup summary"
+[ "$(awk '$1 == "icu4c@78" { print NF }' "$old_state/installed")" -eq 2 ] ||
+    fail "old managed version remained installed"
 
 retired_dependent_home=$(make_home retired-dependent)
 retired_dependent_state=$(make_brew_state retired-dependent)

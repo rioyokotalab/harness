@@ -128,6 +128,7 @@ discover_scope() {
     retirement_upgrade_dependents=
     cleanup_retired_formulae=
     cleanup_retired_targets=
+    managed_old_version_formulae=
 
     # Exact convergence requires one unambiguous installed-formula inventory.
     # In particular, querying old and current versioned names together can make
@@ -139,6 +140,15 @@ discover_scope() {
         [ -n "$installed_line" ] || continue
         installed_name=${installed_line%% *}
         installed_scope=$(append_unique_formula "$installed_scope" "$installed_name")
+        # brew list --versions emits one field per installed keg version.
+        # Formula plus more than one version means scoped cleanup is required.
+        # shellcheck disable=SC2086
+        set -- $installed_line
+        if [ "$#" -gt 2 ] &&
+            formula_in_list "$managed_formulae" "$installed_name"; then
+            managed_old_version_formulae=$(append_unique_formula \
+                "$managed_old_version_formulae" "$installed_name")
+        fi
     done <<EOF
 $installed_version_inventory
 EOF
@@ -323,6 +333,29 @@ run_cleanup_dry_runs() {
     done
 }
 
+run_managed_cleanup_dry_runs() {
+    for cleanup_formula in $managed_old_version_formulae; do
+        cleanup_log=$(mktemp "${TMPDIR:-/tmp}/harness-macos-homebrew-managed-cleanup.XXXXXX") ||
+            die "cannot allocate managed Homebrew old-version dry-run log"
+        chmod 600 "$cleanup_log"
+        if ! env -u HOMEBREW_ASK HOMEBREW_NO_AUTO_UPDATE=1 \
+            HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 \
+            HOMEBREW_NO_ENV_HINTS=1 NONINTERACTIVE=1 \
+            "$brew_command" cleanup --dry-run "$cleanup_formula" \
+            >"$cleanup_log" 2>&1 </dev/null; then
+            unlink "$cleanup_log"
+            die "managed Homebrew old-version dry-run failed"
+        fi
+        [ -s "$cleanup_log" ] &&
+            grep -F "$brew_prefix/Cellar/$cleanup_formula/" "$cleanup_log" \
+                >/dev/null 2>&1 || {
+            unlink "$cleanup_log"
+            die "managed Homebrew old-version dry-run omitted its Cellar"
+        }
+        unlink "$cleanup_log"
+    done
+}
+
 prepare_transaction_root() {
     state_root=$HOME/.local/state/harness
     transaction_root=$state_root/transactions
@@ -444,6 +477,7 @@ trap 'exit 143' TERM
 discover_scope
 run_dry_runs
 run_cleanup_dry_runs
+run_managed_cleanup_dry_runs
 printf 'MACOS_HOMEBREW mode=%s privacy=local-details prefix=%s\n' \
     "$mode" "$prefix_class"
 printf "INSTALL count=%s formulae='%s'\n" \
@@ -456,6 +490,9 @@ printf "RETIRE count=%s formulae='%s'\n" \
 printf "RETIRE_CLEANUP count=%s aliases='%s' targets='%s'\n" \
     "$(formula_count "$cleanup_retired_formulae")" \
     "$cleanup_retired_formulae" "$cleanup_retired_targets"
+printf "CLEANUP_OLD count=%s formulae='%s'\n" \
+    "$(formula_count "$managed_old_version_formulae")" \
+    "$managed_old_version_formulae"
 printf 'DEPENDENCIES count=%s scope=validated shared_users=preserved\n' \
     "$(formula_count "$dependencies")"
 printf "UNMANAGED_DEPENDENTS count=%s formulae='%s'\n" \
@@ -492,7 +529,7 @@ printf 'DRY_RUN status=validated install=%s upgrade=%s retire=package-manager-no
     echo 'END macos_homebrew applied=no metadata_refresh=separate'
     exit 0
 }
-[ -n "$missing_formulae$outdated_formulae$installed_retired_formulae" ] || {
+[ -n "$missing_formulae$outdated_formulae$installed_retired_formulae$managed_old_version_formulae" ] || {
     echo 'END macos_homebrew changes=none metadata_refresh=separate'
     exit 0
 }
@@ -506,6 +543,7 @@ planned_dependencies=$dependencies
 planned_retirement_upgrade_dependents=$retirement_upgrade_dependents
 planned_cleanup_retired_formulae=$cleanup_retired_formulae
 planned_cleanup_retired_targets=$cleanup_retired_targets
+planned_managed_old_version_formulae=$managed_old_version_formulae
 validate_public_checkout
 "$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
     die "private profile changed before managed Homebrew apply"
@@ -526,10 +564,13 @@ discover_scope
     [ "$retirement_upgrade_dependents" = \
         "$planned_retirement_upgrade_dependents" ] &&
     [ "$cleanup_retired_formulae" = "$planned_cleanup_retired_formulae" ] &&
-    [ "$cleanup_retired_targets" = "$planned_cleanup_retired_targets" ] ||
+    [ "$cleanup_retired_targets" = "$planned_cleanup_retired_targets" ] &&
+    [ "$managed_old_version_formulae" = \
+        "$planned_managed_old_version_formulae" ] ||
     die "managed Homebrew plan changed before apply"
 run_dry_runs
 run_cleanup_dry_runs
+run_managed_cleanup_dry_runs
 
 prepare_transaction_root
 transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
@@ -706,8 +747,29 @@ if [ -n "$repair_missing$repair_outdated" ]; then
         die "managed Homebrew prefix changed after post-retirement repair"
     discover_scope
 fi
+[ -z "$installed_retired_formulae" ] ||
+    die "managed Homebrew retirement reappeared before old-version cleanup"
+cleanup_old_formulae=$managed_old_version_formulae
+if [ -n "$cleanup_old_formulae" ]; then
+    run_managed_cleanup_dry_runs
+    printf 'stage=cleanup-old count=%s\n' \
+        "$(formula_count "$cleanup_old_formulae")" >>"$apply_log"
+    for cleanup_formula in $cleanup_old_formulae; do
+        env -u HOMEBREW_ASK HOMEBREW_NO_AUTO_UPDATE=1 \
+            HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_ENV_HINTS=1 \
+            NONINTERACTIVE=1 "$brew_command" cleanup "$cleanup_formula" \
+            >>"$apply_log" 2>&1 </dev/null ||
+            die "managed Homebrew old-version cleanup failed; automatic rollback is unavailable"
+    done
+    resolve_brew
+    [ "$brew_prefix" = "$initial_prefix" ] ||
+        die "managed Homebrew prefix changed after old-version cleanup"
+    discover_scope
+fi
 [ -z "$missing_formulae$outdated_formulae$installed_retired_formulae" ] ||
     die "managed Homebrew post-state did not converge"
+[ -z "$managed_old_version_formulae" ] ||
+    die "managed Homebrew old versions remained after cleanup"
 [ "$dependencies" = "$planned_dependencies" ] ||
     die "managed Homebrew dependency scope changed after post-retirement repair"
 [ -z "$unmanaged_dependents$unmanaged_installed_formulae$retired_dependents$retirement_upgrade_dependents" ] ||
@@ -727,4 +789,5 @@ printf 'TRANSACTION id=%s status=complete install=%s upgrade=%s retire=%s\n' \
     "$(formula_count "$planned_retired")"
 printf 'REPAIR install=%s upgrade=%s\n' \
     "$(formula_count "$repair_missing")" "$(formula_count "$repair_outdated")"
+printf 'CLEANUP old_versions=%s\n' "$(formula_count "$cleanup_old_formulae")"
 echo 'END macos_homebrew applied=yes rollback=manual-review-only metadata_refresh=separate'
