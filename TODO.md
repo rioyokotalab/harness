@@ -251,7 +251,16 @@ and Aist exact-unlinked `~/run_this.sh`. No entry content was read or printed.
 After the owner restored one Home route, Local performed the same reviewed
 operation there. Home staging is also complete with the same value-free file
 metadata and exact helper cleanup. No entry content was read or printed.
-Office is the next staging target.
+Office then returned on both routes, and Local staged it identically. Riken was
+already reachable and was staged last. All four Local inbox entries are now
+current-user-owned mode-0600 regular one-link files with one line; each Mac
+exact-unlinked its helper, and no entry content was read or printed. Local
+`~/run_this.sh --plan` passes with four distinct existing identities, restricted
+entries, the Local-only JumpCloud Match strategy, root:root mode-0644 durable
+file, `15/3` liveness, reload-only activation, and per-entry rollback. The next
+action is the owner's interactive Local `--apply` for its exact phrase and sudo
+authentication; the helper then validates Aist, Home, Office, and Riken in
+that order.
 
 Do not drill or install on any Mac until the owner restores the restricted
 authorizations and all eight fresh checks pass. Then roll out/drill those Macs
