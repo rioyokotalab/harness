@@ -25,6 +25,12 @@ then atomically installs a root ending in the exact global-context trailer
 shared stanza. The context reset is required because a terminal include would
 otherwise remain conditional on the preceding `Host` block.
 
+One historical Mac layout placed the exact pair `# Github` and `Match all`
+immediately before the private `Host tunnel` stanza. The layout transaction
+recognizes only that redundant legacy shape, replaces the misleading comment
+with `# SSH remote forward tunnels`, and retains every private stanza byte.
+Every other unmanaged `Match` still fails closed.
+
 Apply requires a clean committed harness checkout on `main`. Its private
 transaction stores complete preimages and postimage identities for both files.
 An interrupted second replacement restores the first, and rollback refuses if

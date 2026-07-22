@@ -9,7 +9,7 @@ T-288 through T-292 execution is in
 `docs/audits/macos-ssh-finalization-2026-07-21.md`. Full T-295 execution before
 compaction is preserved at `5d551883648760fcc373973a575a403b18637f44`.
 
-Next free ID: T-297.
+Next free ID: T-298.
 
 ## Current state
 
@@ -394,6 +394,52 @@ launchd-managed routes with `managed=1 external=0`; and verify all four Mac
 pairs remain healthy without credential or unrelated SSH changes.
 
 ## Active tasks
+
+### T-297 — Audit and clean Mac SSH recovery residue
+
+**Phase/status:** executing a value-free four-Mac and Local hygiene audit after
+T-296. Inventory SSH configuration structure and metadata, managed tunnel and
+watchdog ownership, launchd artifacts, current-user SSH processes and control
+sockets, tmux sessions, transaction state, known helper/rollback patterns, and
+Local controller residue. Never read, print, hash, copy, or modify key or
+authorization contents. Remove only exact, unambiguous attempt residue that is
+not live and does not belong to an active Codex or user session; preserve and
+report ambiguous state. Finish by re-running fresh authentication, route,
+doctor/config-plan, repository, and residue checks on every Mac.
+
+**Next action:** collect the initial read-only inventory from Aist, Home,
+Office, Riken, and Local, then classify every deviation against the published
+T-296 supervisor/watchdog contract before making a cleanup change.
+
+**Checkpoint:** core SSH state is healthy on all four Macs: eight fresh routes,
+`auth_blocked=0`, two `managed=1 external=0` tunnels, one loaded healthy
+watchdog, exactly three current-user mode-0600 launchd plists, safe config and
+dedicated-identity metadata, no launchd staging, and clean/current public Git.
+All agent/sshd sockets found under `~/.ssh/agent` had a live holder; no key or
+authorization content was read. Transaction counts are consistent with the
+retained rollback history, not abandoned work.
+
+Three exact attempt residues were removed. Home and Office each had an idle
+ordinary `login` ControlMaster created during rescue; both had zero multiplex
+clients and no command-line forward, exited through their current-user control
+socket, and left both managed routes healthy. Aist's
+`harness-aist-tunnels-agent` tmux session contained exactly two dead panes and
+was removed without touching `harness-codex-resume`. Four empty mode-0700 Local
+directories created by a failed audit-wrapper quoting attempt were deleted by
+guarded manifest `/tmp/harness-t297-planner-cleanup.manifest`; protected anchors
+were unchanged, and the manifest was exact-unlinked. The failed wrapper ran no
+planner and left no Mac residue.
+
+The remaining SSH-layout deviation is reproducible: Home, Office, and Riken
+retain the exact historical `# Github` + redundant `Match all` pair immediately
+before `Host tunnel`; Aist already has the intended tunnel comment and no
+redundant reset, but its private SSH snapshot still has the old pair. A narrow
+transactional adapter change and synthetic rollback test are in progress. It
+accepts only this proven legacy shape and continues to reject every other
+unmanaged `Match`. After protected publication, apply it on the three affected
+Macs and publish all four cleaned payloads through `macos-ssh-sync`. Unrelated
+`macos-config-sync` Bash-parent/private-layout refusals are outside this
+SSH-attempt cleanup and remain untouched.
 
 ### T-273 — Resolve intentionally deferred maintenance
 

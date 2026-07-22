@@ -117,10 +117,23 @@ def transform_root(data):
             starts.append((index, header[0], header[1]))
 
     targets = []
-    counts = {b"github": 0, b"*": 0}
+    redundant_matches = set()
+    comment_replacements = {}
+    counts = {b"github": 0, b"*": 0, b"redundant_match": 0}
     for number, (start, kind, patterns) in enumerate(starts):
         if kind == b"match":
             if start == managed_match and patterns == [b"all"]:
+                continue
+            previous = starts[number - 1] if number > 0 else None
+            following = starts[number + 1] if number + 1 < len(starts) else None
+            if patterns == [b"all"] and match_all_re.match(lines[start]) and \
+                    previous is not None and previous[1] == b"host" and \
+                    following is not None and following[1] == b"host" and \
+                    following[2] == [b"tunnel"] and start > 0 and \
+                    lines[start - 1].strip().lower() == b"# github":
+                redundant_matches.add(start)
+                comment_replacements[start - 1] = b"# SSH remote forward tunnels\n"
+                counts[b"redundant_match"] += 1
                 continue
             die("root SSH configuration contains unmanaged Match")
         for token in (b"github", b"*"):
@@ -139,9 +152,10 @@ def transform_root(data):
         removed.update(range(start, end))
     normalized = []
     for index, line in enumerate(lines):
-        if index in removed or include_re.match(line) or index == managed_match:
+        if index in removed or include_re.match(line) or index == managed_match or \
+                index in redundant_matches:
             continue
-        normalized.append(line)
+        normalized.append(comment_replacements.get(index, line))
 
     result = b"".join(normalized)
     if result and not result.endswith(b"\n"):
@@ -454,10 +468,11 @@ def main():
     mode = "apply" if args.apply else "plan"
     print(
         "SSH_CONFIG_LAYOUT mode={} host={} state={} github_blocks={} default_blocks={} "
-        "managed_includes={} fragment={} action={}".format(
+        "managed_includes={} fragment={} action={} redundant_matches={}".format(
             mode, args.host, "current" if current else "migrate",
             counts[b"github"], counts[b"*"], include_count,
             fragment_state["kind"], "none" if current else "normalize",
+            counts[b"redundant_match"],
         )
     )
     if args.plan or current:
