@@ -220,6 +220,15 @@ This proposal requires owner/admin handling because it changes system sshd
 policy and credential authorization. The agent must not create the root file,
 read/copy the entries, or edit either authorization source.
 
+Local is Ubuntu 24.04 with `ssh.service` active. Its current
+`/etc/ssh/sshd_config` sets `AuthorizedKeysFile .ssh/authorized_keys` at line
+3, before `Include /etc/ssh/sshd_config.d/*.conf` at line 19; a later drop-in
+must therefore not be assumed to replace the first effective value. An
+unprivileged `sshd -T -C` refuses to run because the account cannot access a
+host key. The owner/admin must modify the effective first-value position and
+perform both effective-configuration checks below with the installed service
+privileges. No system file was changed during this audit.
+
 ### One-time owner/admin sequence
 
 Perform this on Local from a separately preserved administrative session. The
