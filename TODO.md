@@ -76,12 +76,13 @@ Next free ID: T-297.
 
 ### T-296 — Diagnose recurrent Aist dual-route recovery latency
 
-**Phase/status:** plan frozen and executing under the owner's explicit five-hour
-nightly authorization. The durable plan is
+**Phase/status:** the five-hour nightly implementation and observation window
+is complete; T-296 remains open at the owner credential/admin acceptance gate.
+The durable plan is
 `docs/plans/t296-mac-connectivity-resilience.md`; the evidence handoff is
-`docs/audits/t296-mac-connectivity-resilience-2026-07-23.md`. A separate observe-only
-30-second monitor is active in tmux session `t296-night-watch`; the existing
-five-minute recovering monitor remains unchanged.
+`docs/audits/t296-mac-connectivity-resilience-2026-07-23.md`. The temporary
+observe-only monitor and its mode-0600 log were removed after the endpoint; the
+existing five-minute recovering monitor remains active and unchanged.
 T-295 proved Aist's existing dedicated identity, both tunnel aliases, exclusive
 launchd ownership, current clean checkout, and zero-warning doctor immediately
 before repeated later `0/2` intervals. Home, Office, and Riken remained healthy,
@@ -199,18 +200,29 @@ feature branches or dirty files only while every runtime-critical input exactly
 matches the local `main` ref. This defect is confirmed synthetically but cannot
 be attributed to the live Aist outage without Aist-side checkout evidence.
 
-**Next action:** continue the five-hour observe-only soak, publish its final
-event counts and bounds, then stop only `t296-night-watch`. The owner must
-verify the four exact restricted authorizations and restore every missing Aist,
-Home, Office, or Riken entry before their missing routes can recover or their
-watchdog drills can run. The recommended one-time admin hardening is recorded
-in the audit; credentials and sshd policy remain outside agent authority.
+The five-hour job ended at 05:23:12 JST. Its dedicated observer covered
+00:40:09--05:23:10, 4h43m01s, with 431 value-free samples per node. Aist had
+eight changes after its initial state, Home and Office had two each, and Riken
+and ABQ had none. At the endpoint Aist had remained `0/2` for at least 3h17m28s,
+Office for 2h46m03s, and Home for 2h45m26s; Riken and ABQ remained `2/2` for
+the full observer window. The temporary observer stopped and its private log
+was exact-unlinked; `harness-connection-monitor` remains alive. Routine arg0
+housekeeping preserved three live invocations, removed six eligible residues,
+and ended with zero eligible or unexpected candidates.
 
-Continue the Aist soak, but do not drill or install on Home, Office, or Riken
-until the owner restores both restricted authorizations and all six fresh
-checks pass. Then roll out/drill those Macs one at a time. Preserve potentially
-private native logs unread in mode-0600 temporary files and exact-unlink them
-after extracting only nonprivate classifications. Do not use
+**Next action:** the owner must verify the four exact restricted authorizations
+and restore every missing Aist, Home, Office, or Riken entry before their
+missing routes can recover or their watchdog drills can run. Then perform the
+one-time root-owned authorization/liveness hardening, upgrade and drill each
+Mac one at a time, and run the post-hardening acceptance soak. The admin
+sequence and actual Local sshd layout are recorded in the audit; credentials
+and sshd policy remain outside agent authority.
+
+Do not drill or install on any Mac until the owner restores the restricted
+authorizations and all eight fresh checks pass. Then roll out/drill those Macs
+one at a time. Preserve potentially private native logs unread in mode-0600
+temporary files and exact-unlink them after extracting only nonprivate
+classifications. Do not use
 `codex-claude-cowork` unless the owner explicitly reverses the prior exclusion
 for this connection work.
 

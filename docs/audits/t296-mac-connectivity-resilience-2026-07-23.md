@@ -2,7 +2,8 @@
 
 ## Status
 
-T-296 is partially converged and remains open at the owner-credential gate.
+T-296's five-hour nightly implementation and observation window is complete,
+but the task remains open at the owner credential/admin gate.
 Aist has the published Mac-local watchdog and recovered during several
 controlled and natural dual-route losses while that watchdog was active. The
 owner-launched Aist Codex also remained active, however, so those early live
@@ -11,8 +12,19 @@ Aist outage exposed a real elapsed-time-bound defect and remained unresolved
 after its stale listeners drained. Home and Office subsequently lost their last
 established sessions; Riken retains two established routes but cannot create a
 fresh one. Rollout and drills are therefore correctly blocked. No agent
-inspected or changed a key, `authorized_keys`, SSH configuration, or sshd
-configuration.
+inspected or changed a key or `authorized_keys`, and no SSH or sshd
+configuration was changed. The audit read only non-credential sshd directives
+needed to establish the Local include layout.
+
+The job ended at 05:23:12 JST. Its dedicated observer ran from 00:40:09 through
+05:23:10, 4h43m01s, and retained 431 value-free samples per node. Aist had nine
+observed state epochs, or eight changes after its initial sample; Home and
+Office each had three epochs, or two changes; Riken and ABQ each stayed in one
+`ready/ready` epoch. At the endpoint Aist had remained `down/down` for at least
+3h17m28s, Office for 2h46m03s, and Home for 2h45m26s. Riken and ABQ remained
+`ready/ready` for the complete observer window. The temporary observer stopped
+and its private mode-0600 log was exact-unlinked after these aggregates were
+recorded; the permanent five-minute monitor remains alive.
 
 The frozen design and acceptance gates are in
 [`docs/plans/t296-mac-connectivity-resilience.md`](../plans/t296-mac-connectivity-resilience.md).
@@ -143,6 +155,12 @@ yet have the new receipt or elapsed-deadline code deployed.
   runtime script and public profile exactly matches the local `main` ref.
   Synthetic unrelated-file and feature-branch cases pass; a critical-script
   difference fails closed.
+- After the audit branch integrated current `main`, its first parallel phase-1
+  run saw one load-sensitive signal-test miss. The same focused suite then
+  passed once in isolation, four concurrent runs, the next complete phase-1
+  run, and six further concurrent runs: twelve subsequent passes with no
+  retained child or lock. Protected CI also passed. Because no cleanup defect
+  reproduced, production behavior was not weakened to mask the single miss.
 - A two-hour power-log classification around the earlier recurrence found no
   Aist sleep or wake event. The private native log was never printed and was
   exact-unlinked.
@@ -276,15 +294,14 @@ bound.
 4. After each install, run primary-only, secondary-only, and simultaneous-loss
    drills, retaining a healthy sibling whenever possible and validating both
    inbound routes plus `managed=1 external=0`.
-5. Complete the nightly soak, publish final event counts/recovery bounds, stop
-   the temporary 30-second observer, retain the five-minute recovery monitor,
-   and close T-296 only after all four Macs pass.
+5. Run a post-hardening acceptance soak with all four Macs, retain the
+   five-minute recovery monitor, and close T-296 only after all four pass.
 
 ## Current runtime state
 
 - `harness-connection-monitor`: five-minute recovery and fresh-auth audit.
-- `t296-night-watch`: temporary 30-second route-only observer; no recovery, so
-  it cannot race the watchdog.
+- `t296-night-watch`: stopped after the five-hour endpoint; its private log was
+  summarized value-free and exact-unlinked.
 - The owner-launched Codex process remained present on Aist during the early
   drills, so watchdog exit 0 does not by itself exclude concurrent Codex
   intervention. Its two historical tunnel tmux panes were both dead. Local
@@ -295,6 +312,9 @@ bound.
   post-acknowledgement recovery sample remains required for sole-attribution
   evidence.
 - Credential and SSH configuration bytes remain outside repository evidence.
-- At the latest checkpoint, only Riken's two Mac routes remained reachable;
-  the other three Mac pairs were `0/2`. The recovering five-minute monitor and
-  30-second observer both remained alive on Local.
+- At the final endpoint, only Riken's two Mac routes remained reachable; the
+  other three Mac pairs were `0/2`. ABQ remained `2/2`. The recovering
+  five-minute monitor remains alive on Local.
+- Routine arg0 housekeeping preserved three live invocations, removed six
+  eligible residues through guarded deletion, and ended with zero eligible or
+  unexpected candidates.
