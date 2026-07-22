@@ -2,19 +2,29 @@
 
 ## Status
 
-T-296's five-hour nightly implementation and observation window is complete,
-but the task remains open at the owner credential/admin gate.
-Aist has the published Mac-local watchdog and recovered during several
-controlled and natural dual-route losses while that watchdog was active. The
-owner-launched Aist Codex also remained active, however, so those early live
-results establish convergence rather than sole watchdog causation. A later
-Aist outage exposed a real elapsed-time-bound defect and remained unresolved
-after its stale listeners drained. Home and Office subsequently lost their last
-established sessions; Riken retains two established routes but cannot create a
-fresh one. Rollout and drills are therefore correctly blocked. No agent
-inspected or changed a key or `authorized_keys`, and no SSH or sshd
-configuration was changed. The audit read only non-credential sshd directives
-needed to establish the Local include layout.
+T-296 is functionally complete. The five-hour implementation and observation
+window found two independent failure classes: stale Local reverse listeners
+and JumpCloud reconciliation of Local's account-level authorization file. The
+published Mac-local watchdog handles the first without controller access. A
+Local-only root-owned secondary authorization file and account-scoped sshd
+liveness now isolate the four restricted tunnel authorizations from JumpCloud
+rewrites and release unresponsive server sessions after roughly 45 seconds.
+
+The owner ran the reviewed administrative handoff from Local's separate `user`
+account. It installed `/etc/ssh/harness_tunnel_authorized_keys` and
+`/etc/ssh/sshd_config.d/99-harness-tunnel-auth.conf` as root:root, mode 0644,
+proved the effective two-file authorization and `15/3` liveness contract,
+validated sshd syntax, and reloaded rather than restarted `ssh.service`.
+Fresh dedicated authentication then passed for Aist, Home, Office, and Riken.
+No identity was generated, replaced, displayed, logged, or hashed.
+
+Home's two rescue forwards had shared one ordinary `login` ControlMaster.
+They were replaced transactionally one at a time: `home2` was preserved while
+managed `tunnel` returned, then managed `home` was preserved while `tunnel2`
+returned. All eight Mac routes now have exactly one launchd-managed process and
+zero external tunnel processes. The temporary Local staging files,
+`~/run_this.sh`, and `/tmp/t296-local-admin.sh` were exact-unlinked after
+validation.
 
 The job ended at 05:23:12 JST. Its dedicated observer ran from 00:40:09 through
 05:23:10, 4h43m01s, and retained 431 value-free samples per node. Aist had nine
@@ -204,11 +214,64 @@ state then became Aist `0/2`, Home `0/2`, Office `0/2`, and Riken `2/2` with
 Riken still at risk. This is not repairable from Local without credential
 handling or an already-live Mac route.
 
+Home later recovered temporary inbound reachability without changing an
+authorization. One surviving current-user `login` ControlMaster accepted both
+configured reverse-forward requests through multiplex control operations, so
+`home` and `home2` both appeared reachable but shared the primary transport.
+Both launchd services remained loaded and stopped with `managed=0 external=0`,
+and fresh dedicated authentication remained blocked. This is useful rescue
+access, not independent-route acceptance. The permanent handover must first
+restore dedicated authorization, then cancel and replace one exact temporary
+forward at a time while preserving its sibling; the ordinary ControlMaster
+must not be terminated merely to remove the forwards.
+
+Office later used its surviving ordinary `login` ControlMaster to repair only
+its existing restricted entry in Local's user-level authorization file. The
+transaction preserved unrelated lines, used the existing identity and complete
+effective forwarding contracts, and retained exact `permitopen` and
+`permitlisten` restrictions. A first portable-validation attempt stopped
+before remote mutation; its corrected successor completed and exact-unlinked
+its private preimage, expected postimage, logs, helper, and transaction state.
+Fresh dedicated authentication then returned `auth_blocked=0`; both independent
+inbound probes passed and both launchd services reported
+`loaded=yes running=yes managed=1 external=0`. This supersedes Office's `0/2`
+endpoint but remains temporary because JumpCloud can reconcile the user-level
+file again; the root-owned secondary file is still required.
+
+Office also has an additional pre-existing `Match all` before its private
+tunnel stanzas. Effective tunnel settings work, but the public layout planner
+correctly rejects the unmanaged Match. It was not changed during authorization
+recovery and remains a separate cleanup item after durable reachability.
+
+Aist later used the same rescue pattern from a newly created ordinary `login`
+ControlMaster: it attached both exact reverse-forward requests and Local proved
+both inbound aliases, but the routes shared one transport. Both launchd
+services remained loaded and stopped with `managed=0 external=0`, fresh
+dedicated authentication remained blocked, and the installed watchdog's latest
+receipt remained `authorization-blocked`. The ordinary master then ended and
+both routes disappeared before Local could confirm a detached full-restriction
+restage. No authorization, service, or repository state changed. Aist's
+canonical staging helper must therefore run from its persistent local terminal
+or Codex session, not through the rescue forward whose lifetime it is trying to
+outlive.
+
 An established SSH session surviving removal of its authorization explains why
 ordinary route probes had previously looked healthy. The new audit prevents
 that false assurance, but software cannot repair missing credential state.
 
-## Owner-only permanent hardening proposal
+## JumpCloud-aware permanent hardening
+
+The owner confirmed that Local is the only JumpCloud-managed node. On Local,
+`jcagent.service` and `ssh.service` are active, the managed global directive is
+`AuthorizedKeysFile .ssh/authorized_keys`, and neither that live file nor the
+empty `.ssh/authorized_keys.jcorig` contains any of the four restricted tunnel
+entries. This reconciles the earlier apparently spontaneous authorization
+loss: JumpCloud's management of the account-level file is the probable drift
+source. The `.jcorig` behavior is not used as a security boundary because it is
+empty here and is not isolated from account-level maintenance.
+[JumpCloud's SSH configuration guidance](https://jumpcloud.com/support/configure-ssh-settings)
+documents that its agent ignores settings inside a conditional `Match` block;
+that documented exception is the persistence mechanism used below.
 
 The least-intervention security-preserving server design is one root-owned
 secondary `AuthorizedKeysFile` dedicated to the four restricted tunnel
@@ -234,18 +297,21 @@ encrypted channel. Primary references:
 - [OpenBSD `sshd_config(5)`](https://man.openbsd.org/sshd_config)
 - [OpenBSD `sshd(8)`](https://man.openbsd.org/sshd.8)
 
-This proposal requires owner/admin handling because it changes system sshd
-policy and credential authorization. The agent must not create the root file,
-read/copy the entries, or edit either authorization source.
+This change requires owner/admin handling because it changes system sshd policy
+and credential authorization. The owner explicitly authorized a reviewed
+value-free helper that passes each existing identity only by its file path and
+executes the privileged Local changes after an exact confirmation. The helper
+does not display, log, hash, generate, or alter an identity.
 
 Local is Ubuntu 24.04 with `ssh.service` active. Its current
 `/etc/ssh/sshd_config` sets `AuthorizedKeysFile .ssh/authorized_keys` at line
-3, before `Include /etc/ssh/sshd_config.d/*.conf` at line 19; a later drop-in
-must therefore not be assumed to replace the first effective value. An
-unprivileged `sshd -T -C` refuses to run because the account cannot access a
-host key. The owner/admin must modify the effective first-value position and
-perform both effective-configuration checks below with the installed service
-privileges. No system file was changed during this audit.
+3, before `Include /etc/ssh/sshd_config.d/*.conf` at line 19. OpenSSH's server
+configuration schema marks `AuthorizedKeysFile` for Match-time copying, so a
+matching later block can safely replace that global value for this user. The
+privileged helper still treats this as a runtime assertion: it must prove the
+two-path value using `sshd -T -C` before and after reload or roll back. An
+unprivileged query cannot access a host key, so both checks use the installed
+service privileges.
 
 ### One-time owner/admin sequence
 
@@ -253,18 +319,22 @@ Perform this on Local from a separately preserved administrative session. The
 exact filesystem locations and reload command must follow Local's installed
 OpenSSH service; do not paste guessed paths into production.
 
-1. Preserve the current sshd configuration and authorization files with
-   root-only owner, mode, and rollback metadata. Obtain the exact four prior
-   restricted tunnel entries from the owner's trusted source. Do not derive a
-   new entry, remove unrelated authorizations, or broaden any key option.
-2. Create a root-owned mode-0600 secondary authorization file outside the
-   account-writable `.ssh` tree and place only those four exact entries in it.
-3. At the effective first-value position for this account, set
-   `AuthorizedKeysFile` to both the existing ordinary authorization path and
-   the new root-owned tunnel file. Scope `ClientAliveInterval 15` and
-   `ClientAliveCountMax 3` to `Match User rioyokota`; terminate conditional
-   scope explicitly with `Match all` where the installed include layout
-   requires it.
+1. Stage one entry from each owning Mac. Use its existing dedicated identity
+   and effective `tunnel` / `tunnel2` listener contracts; do not generate an
+   identity, display any key material, remove unrelated authorizations, or
+   broaden any key option.
+2. Create `/etc/ssh/harness_tunnel_authorized_keys` as root:root mode 0644 and
+   place only those four exact entries in it. Mode 0644 is required because
+   OpenSSH temporarily uses the target user's UID when opening authorized-key
+   files. The entries are public keys; root ownership and the root-owned parent
+   prevent account-level modification.
+3. Add a Local-only drop-in containing `Match User rioyokota`, both
+   `.ssh/authorized_keys` and the root-owned tunnel path, and
+   `ClientAliveInterval 15` / `ClientAliveCountMax 3`, followed by `Match all`.
+   OpenSSH explicitly reprocesses and copies `AuthorizedKeysFile` from a
+   matching block, so this overrides the earlier JumpCloud-managed global
+   value without editing it. JumpCloud's documented exception for settings in
+   a conditional Match block prevents its agent from removing this scope.
 4. Use `sshd -T -C user=rioyokota,host=localhost,addr=127.0.0.1` to prove the
    effective authorization-file list and `15/3` liveness values. Use `sshd -t`
    for full syntax validation. Any mismatch aborts and restores the preserved
@@ -277,44 +347,56 @@ OpenSSH service; do not paste guessed paths into production.
    routes, exact `managed=1 external=0` ownership, and zero external tunnel
    processes before closing the administrative session.
 
-This is one bundled intervention. Once complete, ordinary user-level rewrites
-of `.ssh/authorized_keys` cannot remove the restricted tunnel entries, and
-server liveness releases abandoned listener sockets on a short, documented
-bound.
+This is one bundled intervention on Local only. Once complete, ordinary
+user-level rewrites of `.ssh/authorized_keys` cannot remove the restricted
+tunnel entries, and server liveness releases abandoned listener sockets on a
+short, documented bound.
 
-## Remaining acceptance sequence
+## Final rollout and matched drills
 
-1. Owner verifies all four exact restricted entries and restores any missing
-   Aist, Home, Office, or Riken entry; optionally move all four entries into the
-   root-owned secondary file.
-2. Require `auth_blocked=0` on all four Macs; then restore all missing routes
-   through the published bounded recovery.
-3. Upgrade Aist to the current direct-launch watchdog transaction, then install
-   the watchdog on Home, Office, and Riken one at a time.
-4. After each install, run primary-only, secondary-only, and simultaneous-loss
-   drills, retaining a healthy sibling whenever possible and validating both
-   inbound routes plus `managed=1 external=0`.
-5. Run a post-hardening acceptance soak with all four Macs, retain the
-   five-minute recovery monitor, and close T-296 only after all four pass.
+The owner/admin gate and all acceptance steps completed on 2026-07-23. Aist's
+original pilot transaction `20260722T160219Z-66174` rolled back cleanly and was
+replaced from the current public checkout. The final watchdog transactions are:
 
-## Current runtime state
+| Mac | Watchdog transaction | Primary-only | Secondary-only | Simultaneous loss |
+| --- | --- | --- | --- | --- |
+| Aist | `20260722T225249Z-46153` | observed down, ready by 4s | observed down, ready within 45s | `0/2` observed, then `2/2` within 25s |
+| Home | `20260722T224359Z-46764` | ready by the first 18s sample | observed down, ready by 30s | `0/2` at 9s, `2/2` at 12s |
+| Office | `20260722T224728Z-66616` | observed down, ready by 8s | observed down, ready by 24s | `0/2` at 8s, `2/2` at 17s |
+| Riken | `20260722T225008Z-97535` | observed down, ready within 45s | observed down, ready by 14s | `0/2` at 9s, `2/2` at 17s |
 
-- `harness-connection-monitor`: five-minute recovery and fresh-auth audit.
+Each single-route drill booted out only the selected launchd job through its
+healthy sibling. Each simultaneous drill scheduled both exact bootouts on the
+Mac before either inbound route disappeared; Local observed `0/2` directly and
+did not participate in recovery. Every final check required both fresh inbound
+routes, `loaded=yes running=yes managed=1 external=0` for both tunnel services,
+and an installed, loaded watchdog with a valid healthy receipt. The short
+bootout drills mostly exercised the watchdog's baseline-bootstrap path before
+a stale-listener drain became necessary. The earlier Aist stale-listener drill
+and synthetic state-machine suite retain the complementary bounded-drain
+evidence.
+
+The permanent five-minute monitor remained active. Post-hardening samples after
+the drills reported every Mac pair and ABQ healthy with no recovery action.
+This completes the acceptance sequence; future outages remain observable
+through the monitor and each Mac's atomic watchdog receipt.
+The closeout passed `git diff --check`, the public-repository audit, and the
+complete `tests/test-phase1.sh` gate from a clean checkpoint commit.
+
+## Final runtime state
+
+- `harness-connection-monitor`: five-minute recovery and fresh-auth audit,
+  retained after completion.
 - `t296-night-watch`: stopped after the five-hour endpoint; its private log was
   summarized value-free and exact-unlinked.
-- The owner-launched Codex process remained present on Aist during the early
-  drills, so watchdog exit 0 does not by itself exclude concurrent Codex
-  intervention. Its two historical tunnel tmux panes were both dead. Local
-  queued an explicit observe-only coordination request to the live Codex pane
-  and interrupted one active TUI turn with Ctrl-C while trying to deliver it.
-  The Codex process was not killed, but no acknowledgement arrived and the
-  interruption may have stopped its separate monitoring turn. An independent
-  post-acknowledgement recovery sample remains required for sole-attribution
-  evidence.
+- The owner-launched Codex process on Aist complicated attribution of the early
+  pilot. The final simultaneous drills avoid that ambiguity: both exact jobs
+  were detached locally on each Mac, Local directly observed `0/2`, and each
+  independent launchd watchdog remained the installed recovery authority.
 - Credential and SSH configuration bytes remain outside repository evidence.
-- At the final endpoint, only Riken's two Mac routes remained reachable; the
-  other three Mac pairs were `0/2`. ABQ remained `2/2`. The recovering
-  five-minute monitor remains alive on Local.
+- At the final endpoint Aist, Home, Office, Riken, and ABQ were each `2/2`.
+  All eight Mac tunnel services were launchd-managed with zero external owners,
+  and all four dedicated authentication checks returned `auth_blocked=0`.
 - Routine arg0 housekeeping preserved three live invocations, removed six
   eligible residues through guarded deletion, and ended with zero eligible or
   unexpected candidates.
