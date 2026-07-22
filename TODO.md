@@ -122,12 +122,33 @@ tmux/terminfo gates refused the uncommitted draft. After the checkpoint commit,
 the clean rerun passed all focused suites, guarded-delete tests, and the full
 phase-1 gate in 102 seconds.
 
-**Next action:** implement and synthetically validate the transaction-owned
-Mac-local bounded-drain watchdog and shared recovery lock. Publish through the
-protected workflow, pilot on Aist after either route returns, and only then
-roll out/drill Home, Office, and Riken one at a time. Preserve potentially
-private native logs unread in mode-0600 temporary files and exact-unlink them
-after extracting only nonprivate classifications. Do not use
+Protected PR #257 published the initial watchdog at
+`d188c3e9d0c045c185e6312cf43cddbc5b563064`; guarded fleet-sync advanced all
+seven remote Linux nodes and all four Macs cleanly. Aist installed watchdog
+transaction `20260722T160219Z-66174`. Its primary and secondary single-unload
+drills recovered autonomously, with the measured secondary recovery taking 23
+seconds. The simultaneous unload then reproduced genuine stale listeners:
+Local had no Aist route while both fixed ports remained occupied. The Aist-local
+watchdog drained them without controller access, restored the primary first,
+then converged both services to `managed=1 external=0` with last exit 0 after
+roughly seven minutes.
+
+The live soak also caught Home2 down while Home stayed healthy. Unlike Aist's
+stale-listener sample, Home2's Local listener was absent and a fresh dedicated
+authentication probe from Home failed before restart. The published watchdog
+therefore correctly would not mutate that route. A follow-up draft extends the
+bounded drain to one stopped, authenticated route while preserving its healthy
+sibling and makes the controller request that state machine instead of a blind
+kick. Its supervisor and monitor focused suites pass; Home2's distinct
+authentication/upstream failure remains a value-free diagnosis item.
+
+**Next action:** publish and sync the single-route bounded-drain follow-up, then
+diagnose Home2's dedicated-authentication/upstream failure without weakening or
+changing credentials. Revalidate the Aist transaction, then roll out/drill
+Home, Office, and Riken one at a time only when both of each host's outbound
+routes authenticate. Preserve potentially private native logs unread in
+mode-0600 temporary files and exact-unlink them after extracting only
+nonprivate classifications. Do not use
 `codex-claude-cowork` unless the owner explicitly reverses the prior exclusion
 for this connection work.
 

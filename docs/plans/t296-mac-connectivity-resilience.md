@@ -70,10 +70,11 @@ not silent exceptions.
    It changes only the two transaction-owned launchd services after validating
    checkout, transaction, plist hashes, identity metadata, SSH contracts, and
    exclusive process ownership.
-5. A single-route failure remains the existing launchd/controller fast path.
-   A confirmed dual failure enters bounded drain recovery: stop both exact
-   launchd jobs, wait and perform real value-free forward-bind probes, then
-   bootstrap and stabilize each route as soon as its listener becomes free.
+5. A confirmed single-route failure enters bounded drain recovery for only the
+   failed job while its healthy sibling remains untouched. A confirmed dual
+   failure applies the same state machine to both exact jobs. In either case,
+   wait and perform real value-free forward-bind probes, then bootstrap and
+   stabilize each route as soon as its listener becomes free.
 6. Never kill an sshd or arbitrary SSH process, edit sshd policy, weaken
    authorization restrictions, add a third identity, or depend on the owner's
    Codex clients.
@@ -91,11 +92,11 @@ not silent exceptions.
    transaction, both plist hashes and active markers, dedicated identity
    metadata, exactly one remote forward per alias, and zero external tunnel
    processes.
-3. Sample both launchd services twice. If either is stably running, take no
-   dual-route action; existing launchd and controller recovery retain
-   ownership.
-4. If both are loaded, stopped, have zero managed/external processes, and both
-   dedicated authentication probes pass, boot out only the two exact labels.
+3. Sample both launchd services twice. If both are stably running, take no
+   action. Classify each stopped route independently and preserve every healthy
+   sibling.
+4. For each loaded, stopped route with zero managed/external processes and a
+   passing dedicated authentication probe, boot out only its exact label.
 5. Poll real forward-bind probes for both aliases on a bounded schedule. A
    successful short probe must exit cleanly; bootstrap that alias only after
    its probe releases. Require one managed process, no external process, and a
@@ -116,7 +117,8 @@ not silent exceptions.
    timeout, lock contention, interrupted recovery, exact rollback, and output
    privacy.
 3. Implement the public watchdog command and transactional launchd lifecycle;
-   add lock coordination to the existing kick path.
+   add lock coordination to the existing kick path and route controller
+   recovery through the bounded state machine.
 4. Run `git diff --check`, all focused suites, and `tests/test-phase1.sh`.
 5. Publish through protected `main`, guarded-sync clean managed checkouts, and
    install the watchdog on Aist without disturbing the existing two tunnels.

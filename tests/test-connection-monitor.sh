@@ -46,18 +46,19 @@ all=" $* "
 case "$all" in
     *' macos-tunnel-supervisor '*)
         case "$all" in
-            *' --host aist --kick tunnel '*) target=aist; via=aist2 ;;
-            *' --host aist --kick tunnel2 '*) target=aist2; via=aist ;;
-            *' --host office --kick tunnel '*) target=office; via=office2 ;;
-            *' --host office --kick tunnel2 '*) target=office2; via=office ;;
-            *' --host riken --kick tunnel '*) target=riken; via=riken2 ;;
-            *' --host riken --kick tunnel2 '*) target=riken2; via=riken ;;
-            *' --host home --kick tunnel '*) target=home; via=home2 ;;
-            *' --host home --kick tunnel2 '*) target=home2; via=home ;;
+            *' --host aist --recover-pair '*) primary=aist; secondary=aist2 ;;
+            *' --host office --recover-pair '*) primary=office; secondary=office2 ;;
+            *' --host riken --recover-pair '*) primary=riken; secondary=riken2 ;;
+            *' --host home --recover-pair '*) primary=home; secondary=home2 ;;
             *) exit 1 ;;
         esac
-        [ -e "$HARNESS_MONITOR_STATE/$via.up" ] || exit 1
-        : >"$HARNESS_MONITOR_STATE/$target.up"
+        if [ -e "$HARNESS_MONITOR_STATE/$primary.up" ]; then
+            : >"$HARNESS_MONITOR_STATE/$secondary.up"
+        elif [ -e "$HARNESS_MONITOR_STATE/$secondary.up" ]; then
+            : >"$HARNESS_MONITOR_STATE/$primary.up"
+        else
+            exit 1
+        fi
         exit 0
         ;;
 esac
