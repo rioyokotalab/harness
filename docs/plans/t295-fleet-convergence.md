@@ -155,9 +155,12 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
 - D6 — **partially resolved:** reject managed-baseline-only Homebrew
   convergence and require complete package-set equality across all four Macs.
   A read-only inventory found 107 unique installed formulae, 19 unique leaves,
-  and one cask. The exact retained/removal set remains pending owner selection;
-  dependencies will be derived from retained roots rather than independently
-  guessed.
+  and one cask. Retain every formula already installed on all four Macs;
+  promote `json-c`, `wget`, `bash-git-prompt`, and `mpfr` to all four; remove
+  every other non-universal formula; remove Aist's `claude-code` cask; and
+  install the dependency closure of the retained set. The owner's `openssl`
+  exception remains ambiguous between already-universal `openssl@3` and
+  non-universal legacy `openssl@1.1`, so that one formula decision is pending.
 
 1. **Fleet scope and publication — answered/accepted.** Define the existing 11-node
    maintenance/Python/package scope as local, ab, ab2, al, rc, ri, t4, aist,
