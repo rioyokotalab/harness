@@ -63,7 +63,7 @@ case "$action" in
     INSTALL)
         echo "INSTALL python_tree=$install_dir"
         echo "CREATE link=$stable_link source=$install_dir/IMPLEMENTATION/bin/python$minor"
-        echo "NATIVE uv python install --install-dir STAGING --no-bin --no-cache --no-progress $minor"
+        echo "NATIVE uv python install --install-dir STAGING --no-bin --no-cache --no-progress $patch"
         ;;
     BLOCK) echo "BLOCK python=$minor reason=partial-or-unmanaged-state" ;;
 esac
@@ -122,8 +122,8 @@ trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-echo "NATIVE uv python install --install-dir STAGING --no-bin --no-cache --no-progress $minor"
-UV_NO_CONFIG=1 uv python install --install-dir "$stage" --no-bin --no-cache --no-progress "$minor"
+echo "NATIVE uv python install --install-dir STAGING --no-bin --no-cache --no-progress $patch"
+UV_NO_CONFIG=1 uv python install --install-dir "$stage" --no-bin --no-cache --no-progress "$patch"
 implementation_dir=$(find "$stage" -mindepth 1 -maxdepth 1 -type d -name 'cpython-*' -print)
 [ "$(printf '%s\n' "$implementation_dir" | awk 'NF { n++ } END { print n + 0 }')" -eq 1 ] ||
     die "uv created an unexpected Python installation layout"

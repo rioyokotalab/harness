@@ -79,12 +79,14 @@ EOF
 cat >"$FAKE_BIN/uv" <<'EOF'
 #!/bin/sh
 if [ "${1:-}" = --version ]; then echo 'uv 0.11.31 (Homebrew fixture)'; exit 0; fi
+printf '%s\n' "$@" >"$UV_ARGS_LOG"
 install_dir=
 minor=
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --install-dir) install_dir=$2; shift 2 ;;
-        3.11|3.12) minor=$1; shift ;;
+        3.11.15) minor=3.11; shift ;;
+        3.12.13) minor=3.12; shift ;;
         *) shift ;;
     esac
 done
@@ -99,6 +101,7 @@ chmod 755 "$FAKE_BIN"/* "$FAKE_PYTHON"
 
 run_python() {
     HOME="$HOME_DIR" HARNESS_ROOT="$PUBLIC" FIXTURE_PYTHON="$FAKE_PYTHON" \
+        UV_ARGS_LOG="$TEMP_DIR/macos-python-uv-args.log" \
         PATH="$FAKE_BIN:/usr/bin:/bin" "$PUBLIC/bin/harness" macos-python \
         --host mac-test-pilot "$@"
 }
@@ -106,6 +109,8 @@ run_python() {
 run_python --minor 3.11 --plan >"$TEMP_DIR/plan.out"
 grep 'INSTALL python_tree=' "$TEMP_DIR/plan.out" >/dev/null || fail "Mac Python plan"
 run_python --minor 3.11 --apply >"$TEMP_DIR/apply.out"
+grep -Fx '3.11.15' "$TEMP_DIR/macos-python-uv-args.log" >/dev/null ||
+    fail "Mac Python apply did not request the exact declared patch"
 transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' "$TEMP_DIR/apply.out")
 [ -n "$transaction" ] || fail "Mac Python transaction"
 [ "$("$HOME_DIR/.local/bin/python3.11" -c 'import platform; print(platform.python_version())')" = 3.11.15 ] ||
