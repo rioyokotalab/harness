@@ -272,9 +272,12 @@ bound.
 - The owner-launched Codex process remained present on Aist during the early
   drills, so watchdog exit 0 does not by itself exclude concurrent Codex
   intervention. Its two historical tunnel tmux panes were both dead. Local
-  queued an explicit observe-only coordination request to the live Codex pane;
-  an independent post-acknowledgement recovery sample remains required for
-  sole-attribution evidence.
+  queued an explicit observe-only coordination request to the live Codex pane
+  and interrupted one active TUI turn with Ctrl-C while trying to deliver it.
+  The Codex process was not killed, but no acknowledgement arrived and the
+  interruption may have stopped its separate monitoring turn. An independent
+  post-acknowledgement recovery sample remains required for sole-attribution
+  evidence.
 - Credential and SSH configuration bytes remain outside repository evidence.
 - At the latest checkpoint, only Riken's two Mac routes remained reachable;
   the other three Mac pairs were `0/2`. The recovering five-minute monitor and
