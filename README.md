@@ -290,7 +290,7 @@ hash and refuses any modified artifact before removing the link and directory.
 Apply reports the caller-side native `hash -r` command because a long-lived Bash
 process may have cached an earlier system command path; a new shell resolves the
 managed link without this refresh.
-The manifest covers ripgrep 15.1.0, uv 0.9.18, rclone 1.74.3, Ninja 1.13.2,
+The manifest covers ripgrep 15.1.0, uv 0.11.31, rclone 1.74.3, Ninja 1.13.2,
 ShellCheck 0.11.0, and the native Claude Code 2.1.207 binary on Linux x86-64
 and AArch64. Tar and ZIP transactions extract only the declared
 binary member. A host tool is retained only when its native `--version` health
@@ -339,11 +339,12 @@ harness python --host HOST --minor 3.12 --plan
 harness python --host HOST --minor 3.12 --apply
 ```
 
-The transaction installs CPython 3.12.12 into a harness-specific directory
-with uv 0.9.18, disables project configuration discovery and cache retention,
-and creates only `python3.12`. It does not modify uv's default Python directory
-or shadow site `python`/`python3`. Rollback checks all non-cache entries and
-ignores only generated `__pycache__`, `.pyc`, and `.pyo` files.
+The transactions install CPython 3.11.15 and 3.12.13 into harness-specific
+directories with uv 0.11.31, disable project configuration discovery and cache
+retention, and create only `python3.11` and `python3.12`. They do not modify
+uv's default Python directory or shadow site `python`/`python3`. New projects
+select 3.12; 3.11 is the compatibility runtime. Rollback checks all non-cache
+entries and ignores only generated `__pycache__`, `.pyc`, and `.pyo` files.
 
 Codex uses a separate two-archive agent transaction:
 

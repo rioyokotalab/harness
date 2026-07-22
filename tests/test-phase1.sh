@@ -721,9 +721,9 @@ fi
 mkdir -p "$TEMP_DIR/uv-plan-home"
 HOME="$TEMP_DIR/uv-plan-home" "$HARNESS" tool --host al --name uv \
     --facts "$ROOT/tests/fixtures/al.facts" --plan >"$TEMP_DIR/uv-plan.out"
-grep 'INSTALL artifact=.*uv/0.9.18/linux-aarch64' "$TEMP_DIR/uv-plan.out" \
+grep 'INSTALL artifact=.*uv/0.11.31/linux-aarch64' "$TEMP_DIR/uv-plan.out" \
     >/dev/null || fail "uv AArch64 artifact plan"
-grep 'sha256=f8e23ec786b18660ade6b033b6191b7e9c283c872eeb8c4531d56a873decf160' \
+grep 'sha256=d74f23949fd07be4970f293d06ca99d87cd2a78a341c3d7b7fc0df7bc2d8a145' \
     "$TEMP_DIR/uv-plan.out" >/dev/null || fail "uv AArch64 checksum plan"
 
 mkdir -p "$TEMP_DIR/shellcheck-plan-home"
@@ -1057,6 +1057,17 @@ tar -czf "$shellcheck_fixture_archive" -C "$TEMP_DIR/shellcheck-fixture" \
     shellcheck-v0.11.0/shellcheck
 shellcheck_fixture_hash=$(sha256sum "$shellcheck_fixture_archive" | awk '{print $1}')
 sed_in_place "s/b7af85e41cc99489dcc21d66c6d5f3685138f06d34651e6d34b42ec6d54fe6f6/$shellcheck_fixture_hash/" \
+    "$test_repo/tools/artifacts.tsv"
+uv_fixture_parent=$TEMP_DIR/uv-fixture
+uv_fixture_root=$uv_fixture_parent/uv-x86_64-unknown-linux-gnu
+uv_fixture_archive=$TEMP_DIR/uv-fixture.tar.gz
+mkdir -p "$uv_fixture_root"
+printf '%s\n' '#!/bin/sh' 'echo "uv 0.11.31"' >"$uv_fixture_root/uv"
+chmod 755 "$uv_fixture_root/uv"
+tar -czf "$uv_fixture_archive" -C "$uv_fixture_parent" \
+    uv-x86_64-unknown-linux-gnu/uv
+uv_fixture_hash=$(sha256sum "$uv_fixture_archive" | awk '{print $1}')
+sed_in_place "s/8cc1cd82d434ec565376f98bd938d4b715b5791a80ff2d3aa78821cf85091b4b/$uv_fixture_hash/" \
     "$test_repo/tools/artifacts.tsv"
 sqlite_fixture_dir=$TEMP_DIR/sqlite-fixture
 sqlite_fixture_root=$sqlite_fixture_dir/sqlite-amalgamation-3530300
@@ -1673,6 +1684,35 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$zip_tool_transaction" \
 [ ! -e "$test_home/.local/opt/rclone/1.74.3/linux-x86_64" ] ||
     fail "ZIP rollback left artifact directory"
 
+# Exercise exact forward replacement of a managed uv artifact and rollback.
+uv_home=$TEMP_DIR/uv-upgrade-home
+uv_old_dir=$uv_home/.local/opt/uv/0.9.18/linux-x86_64
+mkdir -p "$uv_old_dir" "$uv_home/.local/bin"
+printf '%s\n' '#!/bin/sh' 'echo "uv 0.9.18"' >"$uv_old_dir/uv"
+chmod 755 "$uv_old_dir/uv"
+ln -s "$uv_old_dir/uv" "$uv_home/.local/bin/uv"
+HOME="$uv_home" PATH="$fake_bin:/usr/bin:/bin" \
+    "$test_repo/bin/harness" tool --host local --name uv --plan \
+    >"$TEMP_DIR/uv-upgrade-plan.out"
+grep 'REPLACE command=uv from=0.9.18 to=0.11.31 predecessor=retained' \
+    "$TEMP_DIR/uv-upgrade-plan.out" >/dev/null || fail "uv replacement plan"
+HOME="$uv_home" PATH="$fake_bin:/usr/bin:/bin" FIXTURE_ARCHIVE="$uv_fixture_archive" \
+    "$test_repo/bin/harness" tool --host local --name uv --apply \
+    >"$TEMP_DIR/uv-upgrade-apply.out"
+uv_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/uv-upgrade-apply.out")
+[ -n "$uv_transaction" ] || fail "missing uv replacement transaction"
+[ "$("$uv_home/.local/bin/uv" --version)" = 'uv 0.11.31' ] ||
+    fail "uv replacement version"
+[ -f "$uv_old_dir/uv" ] || fail "uv replacement removed predecessor"
+HOME="$uv_home" "$test_repo/bin/harness" rollback "$uv_transaction" \
+    >"$TEMP_DIR/uv-upgrade-rollback.out"
+[ "$(readlink "$uv_home/.local/bin/uv")" = "$uv_old_dir/uv" ] &&
+    [ "$("$uv_home/.local/bin/uv" --version)" = 'uv 0.9.18' ] ||
+    fail "uv replacement rollback"
+[ ! -e "$uv_home/.local/opt/uv/0.11.31/linux-x86_64" ] ||
+    fail "uv rollback retained replacement"
+
 # Exercise the single-binary bzip2 release format used by Restic.
 HOME="$test_home" PATH="$fake_bin:/usr/bin:/bin" \
     FIXTURE_ARCHIVE="$restic_fixture.bz2" \
@@ -1931,7 +1971,7 @@ fake_python=$TEMP_DIR/python3.12
 printf '%s\n' \
     '#!/bin/sh' \
     'case "${2:-}" in' \
-    '  *platform.python_version*) echo 3.12.12 ;;' \
+    '  *platform.python_version*) echo 3.12.13 ;;' \
     '  *platform.machine*) echo x86_64 ;;' \
     '  *) exit 0 ;;' \
     'esac' \
@@ -1939,13 +1979,13 @@ printf '%s\n' \
 chmod 755 "$fake_python"
 printf '%s\n' \
     '#!/bin/sh' \
-    'if [ "${1:-}" = --version ]; then echo "uv 0.9.18"; exit 0; fi' \
+    'if [ "${1:-}" = --version ]; then echo "uv 0.11.31"; exit 0; fi' \
     'install_dir=' \
     'while [ "$#" -gt 0 ]; do' \
     '  case "$1" in --install-dir) install_dir=$2; shift 2 ;; *) shift ;; esac' \
     'done' \
     '[ -n "$install_dir" ]' \
-    'target=$install_dir/cpython-3.12.12-linux-x86_64-gnu/bin' \
+    'target=$install_dir/cpython-3.12.13-linux-x86_64-gnu/bin' \
     'mkdir -p "$target"' \
     'cp "$FIXTURE_PYTHON" "$target/python3.12"' >"$python_bin/uv"
 chmod 755 "$python_bin/uv"

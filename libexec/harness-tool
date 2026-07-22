@@ -107,15 +107,46 @@ host_command_healthy() {
                 exit 0
             }'
             ;;
-        shellcheck|restic) tool_version_matches "$binary" ;;
+        shellcheck|restic|uv) tool_version_matches "$binary" ;;
         *) "$binary" --version >/dev/null 2>&1 ;;
     esac
 }
 
 managed_exact=0
+managed_predecessor=0
+old_installed_binary=
+old_binary_hash=
 if [ -L "$stable_link" ] && [ "$(readlink "$stable_link")" = "$installed_binary" ] &&
     [ -f "$installed_binary" ] && [ ! -L "$installed_binary" ] && [ -x "$installed_binary" ]; then
     managed_exact=1
+fi
+if [ "$managed_exact" -eq 0 ] && [ "$tool_name" = uv ] && [ -L "$stable_link" ]; then
+    old_installed_binary=$(readlink "$stable_link")
+    case "$old_installed_binary" in
+        "$HOME/.local/opt/$tool_name/"*"/$artifact_os-$artifact_arch/$binary")
+            old_relative=${old_installed_binary#"$HOME/.local/opt/$tool_name/"}
+            old_version=${old_relative%%/*}
+            old_install_dir=$HOME/.local/opt/$tool_name/$old_version/$artifact_os-$artifact_arch
+            if [ "$old_installed_binary" = "$old_install_dir/$binary" ] &&
+                [ -d "$old_install_dir" ] && [ ! -L "$old_install_dir" ] &&
+                [ -f "$old_installed_binary" ] && [ ! -L "$old_installed_binary" ] &&
+                [ -x "$old_installed_binary" ] &&
+                [ "$(find "$old_install_dir" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')" -eq 1 ] &&
+                [ "$("$old_installed_binary" --version 2>/dev/null | sed -n '1p')" = "uv $old_version" ] &&
+                awk -v old="$old_version" -v new="$version" 'BEGIN {
+                    if (split(old, a, ".") != 3 || split(new, b, ".") != 3) exit 1
+                    for (i = 1; i <= 3; i++) {
+                        if (a[i] !~ /^[0-9]+$/ || b[i] !~ /^[0-9]+$/) exit 1
+                        if ((a[i] + 0) < (b[i] + 0)) exit 0
+                        if ((a[i] + 0) > (b[i] + 0)) exit 1
+                    }
+                    exit 1
+                }' && [ ! -e "$install_dir" ] && [ ! -L "$install_dir" ]; then
+                managed_predecessor=1
+                old_binary_hash=$(sha256sum "$old_installed_binary" | awk '{print $1}')
+            fi
+            ;;
+    esac
 fi
 if [ -n "$fact_file" ]; then
     fact_host=$(fact_get "$fact_file" logical_host)
@@ -130,6 +161,8 @@ elif [ "$managed_exact" -eq 1 ]; then
     else
         command_state=invalid-managed
     fi
+elif [ "$managed_predecessor" -eq 1 ]; then
+    command_state=managed-predecessor
 elif command -v "$binary" >/dev/null 2>&1; then
     if host_command_healthy; then
         command_state=present
@@ -139,7 +172,7 @@ elif command -v "$binary" >/dev/null 2>&1; then
 else
     command_state=absent
 fi
-case "$command_state" in present|absent|unusable|invalid-managed) ;;
+case "$command_state" in present|absent|unusable|invalid-managed|managed-predecessor) ;;
     *) die "unknown command state: $command_state" ;;
 esac
 command_source=host-provided
@@ -156,6 +189,9 @@ if [ "$command_state" = invalid-managed ]; then
     link_action=BLOCK
 elif [ "$command_state" = present ]; then
     :
+elif [ "$command_state" = managed-predecessor ]; then
+    artifact_action=INSTALL
+    link_action=REPLACE
 elif [ -e "$install_dir" ] || [ -L "$install_dir" ]; then
     blocked=1
     artifact_action=BLOCK
@@ -163,7 +199,7 @@ else
     artifact_action=INSTALL
 fi
 
-if [ "$command_state" != present ]; then
+if [ "$command_state" != present ] && [ "$command_state" != managed-predecessor ]; then
     if [ -L "$stable_link" ]; then
         if [ "$(readlink "$stable_link")" = "$installed_binary" ]; then
             link_action=KEEP
@@ -185,6 +221,9 @@ if [ "$command_state" = invalid-managed ]; then
 elif [ "$command_state" = present ]; then
     echo "KEEP command=$binary source=$command_source"
 else
+    if [ "$command_state" = managed-predecessor ]; then
+        echo "REPLACE command=$binary from=$old_version to=$version predecessor=retained"
+    fi
     if [ "$command_state" = unusable ]; then
         echo "SHADOW command=$binary reason=host-command-unusable strategy=user-path"
     fi
@@ -195,6 +234,7 @@ else
     esac
     case "$link_action" in
         CREATE) echo "CREATE link=$stable_link source=$installed_binary" ;;
+        REPLACE) echo "REPLACE link=$stable_link source=$installed_binary" ;;
         KEEP) echo "KEEP link=$stable_link" ;;
         BLOCK) echo "BLOCK link=$stable_link reason=existing-unmanaged-path" ;;
     esac
@@ -205,6 +245,7 @@ fi
 [ "$mode" = apply ] || { echo "END tool host=$logical_host changes=not-applied"; exit 0; }
 [ "$command_state" != present ] || { echo "END tool host=$logical_host changes=none"; exit 0; }
 [ "$artifact_action" = INSTALL ] || [ "$link_action" = CREATE ] ||
+    [ "$link_action" = REPLACE ] ||
     { echo "END tool host=$logical_host changes=none"; exit 0; }
 
 [ -z "$(git -C "$HARNESS_ROOT" status --porcelain)" ] ||
@@ -235,6 +276,7 @@ archive=$(mktemp "$state_root/$transaction_id.download.XXXXXX")
 stage=
 install_parent=
 complete=0
+replacement_switched=0
 cleanup() {
     status=$?
     cleanup_failed=0
@@ -244,13 +286,21 @@ cleanup() {
             cleanup_failed=1
     fi
     if [ "$complete" -eq 0 ]; then
+        if [ "$replacement_switched" -eq 1 ]; then
+            [ -L "$stable_link" ] && [ "$(readlink "$stable_link")" = "$installed_binary" ] ||
+                cleanup_failed=1
+            if [ "$cleanup_failed" -eq 0 ]; then
+                unlink "$stable_link" || cleanup_failed=1
+                ln -s "$old_installed_binary" "$stable_link" || cleanup_failed=1
+            fi
+        fi
         awk -F'|' '$1 == "link" { print $2 "|" $3 }' "$transaction_manifest" |
             while IFS='|' read -r destination source; do
                 if [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ]; then
                     rm "$destination"
                 fi
             done
-        awk -F'|' '$1 == "artifact" { print $2 "|" $3 "|" $4 }' "$transaction_manifest" |
+        awk -F'|' '$1 == "artifact" || $1 == "artifact-replaced" { print $2 "|" $3 "|" $4 }' "$transaction_manifest" |
             while IFS='|' read -r directory relative expected_hash; do
                 candidate=$directory/$relative
                 if [ -f "$candidate" ] && [ ! -L "$candidate" ] &&
@@ -302,8 +352,15 @@ if [ "$artifact_action" = INSTALL ]; then
     tool_version_matches "$stage/$binary" ||
         die "installed tool version verification failed"
     binary_hash=$(sha256sum "$stage/$binary" | awk '{print $1}')
-    printf 'artifact|%s|%s|%s\n' "$install_dir" "$binary" "$binary_hash" \
-        >>"$transaction_manifest"
+    if [ "$link_action" = REPLACE ]; then
+        printf 'artifact-replaced|%s|%s|%s|%s|%s|%s|%s\n' \
+            "$install_dir" "$binary" "$binary_hash" "$stable_link" \
+            "$installed_binary" "$old_installed_binary" "$old_binary_hash" \
+            >>"$transaction_manifest"
+    else
+        printf 'artifact|%s|%s|%s\n' "$install_dir" "$binary" "$binary_hash" \
+            >>"$transaction_manifest"
+    fi
     mv -T "$stage" "$install_dir"
     stage=
 fi
@@ -312,6 +369,16 @@ if [ "$link_action" = CREATE ]; then
     mkdir -p "${stable_link%/*}"
     printf 'link|%s|%s\n' "$stable_link" "$installed_binary" >>"$transaction_manifest"
     ln -s "$installed_binary" "$stable_link"
+    echo "CALLER native='hash -r' reason=refresh-command-path-cache"
+elif [ "$link_action" = REPLACE ]; then
+    [ -L "$stable_link" ] && [ "$(readlink "$stable_link")" = "$old_installed_binary" ] ||
+        die "managed predecessor link changed before replacement"
+    link_candidate=${stable_link%/*}/.$binary.$transaction_id.candidate
+    [ ! -e "$link_candidate" ] && [ ! -L "$link_candidate" ] ||
+        die "replacement link candidate collision"
+    ln -s "$installed_binary" "$link_candidate"
+    mv -Tf "$link_candidate" "$stable_link"
+    replacement_switched=1
     echo "CALLER native='hash -r' reason=refresh-command-path-cache"
 fi
 

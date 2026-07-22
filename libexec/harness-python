@@ -20,7 +20,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 [ -n "$logical_host" ] && [ -n "$minor" ] || { usage; exit 2; }
-[ "$minor" = 3.12 ] || die "unsupported managed Python minor: $minor"
+case "$minor" in 3.11|3.12) ;; *) die "unsupported managed Python minor: $minor" ;; esac
 profile=$(profile_for "$logical_host")
 arch=$(config_get "$profile" arch)
 records=$(awk -F'|' -v minor="$minor" -v arch="$arch" '
