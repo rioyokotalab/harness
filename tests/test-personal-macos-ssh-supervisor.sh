@@ -5,6 +5,7 @@ ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
 SUPERVISOR=$ROOT/libexec/harness-macos-ssh-supervisor
 TUNNEL_SUPERVISOR=$ROOT/libexec/harness-macos-tunnel-supervisor
+TUNNEL_WATCHDOG=$ROOT/libexec/harness-macos-tunnel-watchdog
 FIXTURE=$ROOT/tests/fixtures/personal-macos/private-v1
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-macos-ssh-supervisor-test.XXXXXX")
@@ -39,6 +40,7 @@ mkdir -p "$PUBLIC/bin" "$PUBLIC/libexec" "$PUBLIC/profiles/personal-macos"
 cp "$ROOT/bin/harness" "$PUBLIC/bin/harness"
     cp "$ROOT/libexec/harness-common" "$ROOT/libexec/harness-macos-common" \
     "$ROOT/libexec/harness-macos-profile" "$SUPERVISOR" "$TUNNEL_SUPERVISOR" \
+    "$TUNNEL_WATCHDOG" \
     "$PUBLIC/libexec/"
 cp "$ROOT/profiles/personal-macos/base.conf" \
     "$ROOT/profiles/personal-macos/formula-policy-v4.conf" \
@@ -78,6 +80,8 @@ cat >"$FAKE_BIN/ssh" <<'EOF'
 identity_only=no
 identity_agent=no
 identity_file=no
+clear_forwardings=no
+alias_name=
 for argument do
     if [ "$argument" = -G ]; then
         printf '%s\n' 'hostname synthetic.invalid'
@@ -87,10 +91,15 @@ for argument do
     [ "$argument" != 'IdentitiesOnly=yes' ] || identity_only=yes
     [ "$argument" != 'IdentityAgent=none' ] || identity_agent=yes
     [ "$argument" != "IdentityFile=$HOME/.ssh/harness-reverse" ] || identity_file=yes
+    [ "$argument" != 'ClearAllForwardings=yes' ] || clear_forwardings=yes
+    case "$argument" in tunnel|tunnel2) alias_name=$argument ;; esac
 done
 [ "$identity_only" = yes ] && [ "$identity_agent" = yes ] &&
     [ "$identity_file" = yes ] || exit 1
-[ ! -e "$HOME/.fake-auth-fail" ]
+[ ! -e "$HOME/.fake-auth-fail" ] || exit 1
+if [ "$clear_forwardings" = no ] && [ -n "$alias_name" ]; then
+    [ ! -e "$HOME/.fake-bind-fail-$alias_name" ] || exit 1
+fi
 EOF
 cat >"$FAKE_BIN/launchctl" <<'EOF'
 #!/bin/sh
@@ -119,6 +128,7 @@ case "${1:-}" in
         [ ! -e "$HOME/.fake-bootstrap-fail" ] || exit 1
         printf '%s\n' "$name" >>"$HOME/.fake-bootstrap-calls"
         : >"$marker"
+        [ ! -e "$HOME/.fake-dead-$name" ] || unlink "$HOME/.fake-dead-$name"
         ;;
     bootout)
         target=${2:-}
@@ -199,6 +209,13 @@ run_tunnel_supervisor() {
     shift
     HOME="$supervisor_home" HARNESS_ROOT="$PUBLIC" \
         PATH="$FAKE_BIN:/usr/bin:/bin" "$TUNNEL_SUPERVISOR" "$@"
+}
+
+run_tunnel_watchdog() {
+    supervisor_home=$1
+    shift
+    HOME="$supervisor_home" HARNESS_ROOT="$PUBLIC" HARNESS_TEST_MODE=1 \
+        PATH="$FAKE_BIN:/usr/bin:/bin" "$TUNNEL_WATCHDOG" "$@"
 }
 
 transaction_id() {
@@ -391,5 +408,108 @@ run_tunnel_supervisor "$tunnel_home" --deactivate "$tunnel_tx" --alias tunnel \
     >"$TEMP_DIR/tunnel-deactivate.out"
 run_tunnel_supervisor "$tunnel_home" --rollback "$tunnel_tx" \
     >"$TEMP_DIR/tunnel-rollback.out"
+
+watchdog_home=$(make_home watchdog)
+run_tunnel_supervisor "$watchdog_home" --host mac-test-pilot --apply \
+    >"$TEMP_DIR/watchdog-tunnel-apply.out"
+watchdog_tunnel_tx=$(transaction_id "$TEMP_DIR/watchdog-tunnel-apply.out")
+run_tunnel_supervisor "$watchdog_home" --activate "$watchdog_tunnel_tx" --alias tunnel \
+    >"$TEMP_DIR/watchdog-tunnel-activate.out"
+run_tunnel_supervisor "$watchdog_home" --activate "$watchdog_tunnel_tx" --alias tunnel2 \
+    >>"$TEMP_DIR/watchdog-tunnel-activate.out"
+
+run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --plan \
+    >"$TEMP_DIR/watchdog-plan.out"
+grep -F 'WATCHDOG stage=create interval=30 recovery=bounded-drain blocked=0' \
+    "$TEMP_DIR/watchdog-plan.out" >/dev/null || fail "watchdog ready plan"
+[ ! -e "$watchdog_home/Library/LaunchAgents/org.rioyokota.harness.ssh.tunnel-watchdog.plist" ] ||
+    fail "watchdog plan created a launch agent"
+
+run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --apply \
+    >"$TEMP_DIR/watchdog-apply.out"
+watchdog_tx=$(sed -n 's/^TRANSACTION id=\([^ ]*\) status=complete.*/\1/p' \
+    "$TEMP_DIR/watchdog-apply.out")
+[ -n "$watchdog_tx" ] || fail "watchdog apply emitted no transaction"
+run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --status \
+    >"$TEMP_DIR/watchdog-status.out"
+grep -F 'installed=yes loaded=yes' "$TEMP_DIR/watchdog-status.out" >/dev/null ||
+    fail "watchdog installed status"
+
+run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
+    >"$TEMP_DIR/watchdog-healthy.out"
+grep -F 'action=none reason=route-running' "$TEMP_DIR/watchdog-healthy.out" >/dev/null ||
+    fail "watchdog healthy no-op"
+
+touch "$watchdog_home/.fake-dead-tunnel" "$watchdog_home/.fake-dead-tunnel2"
+run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
+    >"$TEMP_DIR/watchdog-dual.out"
+grep -F 'action=drain status=started' "$TEMP_DIR/watchdog-dual.out" >/dev/null ||
+    fail "watchdog dual drain"
+grep -F 'action=restore status=complete' "$TEMP_DIR/watchdog-dual.out" >/dev/null ||
+    fail "watchdog dual restore"
+for alias in tunnel tunnel2; do
+    [ -e "$watchdog_home/.fake-launch-state/$alias" ] ||
+        fail "watchdog did not reload $alias"
+    [ ! -e "$watchdog_home/.fake-dead-$alias" ] ||
+        fail "watchdog did not restart $alias"
+done
+
+recovery_lock=$watchdog_home/.local/state/harness/macos-tunnel-supervisor/recovery.lock
+printf 'pid=%s\nstart=%s\n' "$$" \
+    "$(/bin/ps -p "$$" -o lstart= | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')" \
+    >"$recovery_lock"
+chmod 600 "$recovery_lock"
+run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
+    >"$TEMP_DIR/watchdog-busy.out"
+grep -F 'action=defer reason=busy' "$TEMP_DIR/watchdog-busy.out" >/dev/null ||
+    fail "watchdog lock contention"
+unlink "$recovery_lock"
+
+printf '%s\n' 'pid=999999999' 'start=stale-process' >"$recovery_lock"
+chmod 600 "$recovery_lock"
+run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
+    >"$TEMP_DIR/watchdog-stale-lock.out"
+grep -F 'action=none reason=route-running' "$TEMP_DIR/watchdog-stale-lock.out" >/dev/null ||
+    fail "watchdog stale lock recovery"
+[ ! -e "$recovery_lock" ] || fail "watchdog retained stale recovery lock"
+
+touch "$watchdog_home/.fake-dead-tunnel" "$watchdog_home/.fake-dead-tunnel2" \
+    "$watchdog_home/.fake-auth-fail"
+if run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
+    >"$TEMP_DIR/watchdog-auth-fail.out" 2>&1; then
+    fail "watchdog accepted authentication failure"
+fi
+grep -F 'authentication is not ready for pair recovery' \
+    "$TEMP_DIR/watchdog-auth-fail.out" >/dev/null || fail "watchdog authentication refusal"
+[ -e "$watchdog_home/.fake-launch-state/tunnel" ] &&
+    [ -e "$watchdog_home/.fake-launch-state/tunnel2" ] ||
+    fail "authentication failure changed service baseline"
+[ ! -e "$recovery_lock" ] || fail "authentication failure retained recovery lock"
+unlink "$watchdog_home/.fake-auth-fail"
+
+touch "$watchdog_home/.fake-bind-fail-tunnel" "$watchdog_home/.fake-bind-fail-tunnel2"
+if HARNESS_TEST_RECOVERY_ATTEMPTS=1 run_tunnel_watchdog "$watchdog_home" \
+    --host mac-test-pilot --run-once >"$TEMP_DIR/watchdog-timeout.out" 2>&1; then
+    fail "watchdog accepted stale-listener timeout"
+fi
+grep -F 'stale-listener drain timed out' "$TEMP_DIR/watchdog-timeout.out" >/dev/null ||
+    fail "watchdog timeout classification"
+[ -e "$watchdog_home/.fake-launch-state/tunnel" ] &&
+    [ -e "$watchdog_home/.fake-launch-state/tunnel2" ] ||
+    fail "watchdog timeout did not restore loaded baseline"
+[ ! -e "$recovery_lock" ] || fail "watchdog timeout retained recovery lock"
+unlink "$watchdog_home/.fake-bind-fail-tunnel"
+unlink "$watchdog_home/.fake-bind-fail-tunnel2"
+
+run_tunnel_watchdog "$watchdog_home" --rollback "$watchdog_tx" \
+    >"$TEMP_DIR/watchdog-rollback.out"
+[ ! -e "$watchdog_home/Library/LaunchAgents/org.rioyokota.harness.ssh.tunnel-watchdog.plist" ] ||
+    fail "watchdog rollback retained plist"
+run_tunnel_supervisor "$watchdog_home" --deactivate "$watchdog_tunnel_tx" --alias tunnel \
+    >"$TEMP_DIR/watchdog-tunnel-deactivate.out"
+run_tunnel_supervisor "$watchdog_home" --deactivate "$watchdog_tunnel_tx" --alias tunnel2 \
+    >>"$TEMP_DIR/watchdog-tunnel-deactivate.out"
+run_tunnel_supervisor "$watchdog_home" --rollback "$watchdog_tunnel_tx" \
+    >"$TEMP_DIR/watchdog-tunnel-rollback.out"
 
 echo "personal macOS SSH supervisor tests: PASS"

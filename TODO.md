@@ -67,15 +67,20 @@ Next free ID: T-297.
 
 ## Next resume checkpoint
 
-1. Resume T-296 with read-only, value-free evidence collection as soon as one
-   Aist route recovers. Freeze a plan before changing service or network state.
+1. Execute the frozen T-296 Mac-local watchdog plan, beginning with synthetic
+   tests and an Aist-only reversible pilot. The 30-second observe-only night
+   watch is active alongside the existing five-minute recovery monitor.
 2. On or after 2026-07-26, query only T-196 recorded successor job IDs.
 
 ## Active tasks
 
 ### T-296 — Diagnose recurrent Aist dual-route recovery latency
 
-**Phase/status:** ready for diagnosis; no corrective mutation has started.
+**Phase/status:** plan frozen and executing under the owner's explicit five-hour
+nightly authorization. The durable plan is
+`docs/plans/t296-mac-connectivity-resilience.md`. A separate observe-only
+30-second monitor is active in tmux session `t296-night-watch`; the existing
+five-minute recovering monitor remains unchanged.
 T-295 proved Aist's existing dedicated identity, both tunnel aliases, exclusive
 launchd ownership, current clean checkout, and zero-warning doctor immediately
 before repeated later `0/2` intervals. Home, Office, and Riken remained healthy,
@@ -92,13 +97,38 @@ had zero failures and warnings. Local cannot inspect or kick either service
 while both reverse routes are absent. No credential, SSH configuration, or
 service mutation was performed during either outage.
 
-**Next action:** after either route recovers, collect bounded value-free
-launchd, supervisor, process-ownership, timing, sleep/wake, and transport
-evidence on Aist and compare it with one healthy Mac. Preserve potentially
+The owner's Aist-side report then isolated the repeatable failure: dedicated
+authentication remains ready, but both real reverse-forward binds fail while
+stale fixed TCP listeners remain on Local. Immediate launchd retries exit 255
+and keep repeating. Unloading the two exact services, waiting for the Local
+listeners to drain, probing real binds, and bootstrapping sequentially restored
+both routes. A fresh live recurrence at 00:35 JST again left Aist at `0/2`
+while the other three Mac pairs stayed `2/2` and both Aist listener ports
+remained occupied on Local. Listener ownership cannot be tied safely to an
+exact process from the unprivileged Local account, so a controller-side kill
+is rejected.
+
+The 30-second watch measured that recurrence returning unattended at 00:47
+JST, roughly twelve minutes after first detection. A value-free two-hour power
+comparison found no Aist or Home sleep/wake event around the sample. Both Aist
+services were again `managed=1 external=0`; Home's launchd history showed that
+the same exit-255 retry mechanism has occurred there even though its pair stayed
+reachable. The frozen implementation now has synthetic coverage for healthy
+no-op, dual drain/restore, live and stale recovery locks, authentication
+refusal, bounded timeout with baseline restoration, and exact rollback. Its
+focused supervisor, connection-monitor, and public-audit suites pass. The first
+full phase-1 run reached every suite; only the two intentionally clean-checkout
+tmux/terminfo gates refused the uncommitted draft, so the complete gate must be
+rerun immediately after the local checkpoint commit.
+
+**Next action:** implement and synthetically validate the transaction-owned
+Mac-local bounded-drain watchdog and shared recovery lock. Publish through the
+protected workflow, pilot on Aist after either route returns, and only then
+roll out/drill Home, Office, and Riken one at a time. Preserve potentially
 private native logs unread in mode-0600 temporary files and exact-unlink them
-after extracting only nonprivate classifications. Use PIE before any corrective
-mutation. Do not use `codex-claude-cowork` unless the owner explicitly reverses
-the prior exclusion for this connection work.
+after extracting only nonprivate classifications. Do not use
+`codex-claude-cowork` unless the owner explicitly reverses the prior exclusion
+for this connection work.
 
 **Acceptance:** identify a reproducible cause or a precisely bounded external
 failure class; prove unattended recovery under matched primary, secondary, and

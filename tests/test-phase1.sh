@@ -56,6 +56,7 @@ for script in \
     "$ROOT/libexec/harness-macos-profile" \
     "$ROOT/libexec/harness-macos-update" \
     "$ROOT/libexec/harness-macos-ssh-supervisor" \
+    "$ROOT/libexec/harness-macos-tunnel-watchdog" \
     "$ROOT/libexec/harness-macos-ssh-sync" \
     "$ROOT/libexec/harness-macos-config-sync" \
     "$ROOT/libexec/harness-macos-config-migrate" \

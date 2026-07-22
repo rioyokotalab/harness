@@ -393,6 +393,41 @@ harness macos-tunnel-supervisor --activate TRANSACTION_ID --alias tunnel2
 harness macos-tunnel-supervisor --host LOGICAL_ID --status
 ```
 
+### Dual-route recovery watchdog
+
+`harness macos-tunnel-watchdog` adds a third, independent current-user launch
+agent after both tunnel services are active. It holds no listener and uses no
+new identity, port, authorization, SSH setting, or external service. Every 30
+seconds it validates the existing supervisor transaction and takes no action
+while either route is running.
+
+If both launchd services are loaded but stopped, exclusive, and freshly able
+to authenticate, the watchdog stops only those two exact jobs. This pauses the
+otherwise continuous failed-bind retry loop while stale fixed-port listeners
+drain on the server. It probes each configured reverse forward for a real bind,
+then restores and stabilizes each service independently as soon as its listener
+is released. The controller monitor remains the independent end-to-end inbound
+check. A private lease lock serializes watchdog recovery with `--kick`; a
+crashed holder is recognized by PID and process-start identity and does not
+strand later recovery.
+
+Installation and rollback are transactional and do not stop a healthy tunnel:
+
+```bash
+harness macos-tunnel-watchdog --host LOGICAL_ID --plan
+harness macos-tunnel-watchdog --host LOGICAL_ID --apply
+harness macos-tunnel-watchdog --host LOGICAL_ID --status
+harness macos-tunnel-watchdog --rollback TRANSACTION_ID
+```
+
+The drain is bounded to 80 attempts at 15-second intervals. On ambiguity,
+authentication failure, changed ownership, or timeout, the command fails
+closed and restores the two launchd jobs where safe so normal retry behavior
+remains available. This removes owner/controller intervention for recoverable
+client and stale-listener failures; it cannot create reachability while the
+Mac is powered off, both upstream networks are unavailable, or Local's SSH
+service is unavailable.
+
 ## Legacy reverse-SSH supervision
 
 `harness macos-ssh-supervisor` manages two current-user launch agents for the
