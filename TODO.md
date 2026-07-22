@@ -141,6 +141,12 @@ complete locally; publication, live installation, and acceptance remain.
   at each injected installation failure point. The live plan resolves only the
   current official 0.145.0 Linux standalone release and reports no process
   action.
+- Local commit `0a2ff82` contains the implementation. Its clean-checkout
+  `tests/test-phase1.sh` run passed all 61 focused suites, including the new
+  wrapper suite, followed by the guarded-delete regression suite. Native MPI
+  remained the expected environment-gated skip. No branch or commit has been
+  pushed because the current global policy requires distinct explicit push
+  authority.
 
 **Next exact action:** commit the local implementation, pass the clean-checkout
 phase-one suite, then request the distinct push authority required by global
