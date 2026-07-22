@@ -132,7 +132,14 @@ unknown remote state, not evidence that ABQ is absent.
 
 Ask these decisions one at a time and checkpoint each answer before advancing.
 
-1. **Fleet scope and publication.** Recommended: define the existing 11-node
+### Decision register
+
+- D1 — **accepted:** publish the supplied fleet usernames, hostnames, and
+  verified OS facts in the public harness repository and link the table from
+  project `AGENTS.md`. The existing 11 systems are the current managed scope,
+  ABQ becomes node 12 after onboarding, and `web` remains service-only.
+
+1. **Fleet scope and publication — answered/accepted.** Define the existing 11-node
    maintenance/Python/package scope as local, ab, ab2, al, rc, ri, t4, aist,
    home, office, and riken; ABQ becomes node 12 after onboarding; keep `web`
    service-only. Publish the supplied usernames and global hostnames plus
