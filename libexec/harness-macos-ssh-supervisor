@@ -418,6 +418,8 @@ if [ "$mode" = kick ]; then
     [ "$managed_before" -le 1 ] &&
         [ "$(external_process_count "$supervised_alias")" -eq 0 ] ||
         die "Mac SSH supervisor process ownership is invalid"
+    unattended_auth_ready "$supervised_alias" ||
+        die "unattended SSH authentication is not ready for restart"
     launchctl kickstart -k "gui/$current_uid/$(label_for "$supervised_alias")" >/dev/null ||
         die "Mac SSH supervisor kickstart failed"
     wait_for_running "$supervised_alias" || die "Mac SSH supervisor did not recover"

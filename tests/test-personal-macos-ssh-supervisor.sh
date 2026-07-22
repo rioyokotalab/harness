@@ -129,6 +129,7 @@ case "${1:-}" in
         target=${3:-}
         marker=$state/${target##*.}
         [ -e "$marker" ] || exit 1
+        printf '%s\n' "$target" >>"$HOME/.fake-kick-calls"
         unlink "$HOME/.fake-dead-${target##*.}" 2>/dev/null || true
         ;;
     *) exit 2 ;;
@@ -291,7 +292,21 @@ run_supervisor "$apply_home" --activate "$tx" --alias login >"$TEMP_DIR/activate
 run_supervisor "$apply_home" --host mac-test-pilot --status >"$TEMP_DIR/status.out"
 grep -F 'ALIAS name=login loaded=yes running=yes' "$TEMP_DIR/status.out" >/dev/null ||
     fail "active login status"
+touch "$apply_home/.fake-auth-fail"
+if run_supervisor "$apply_home" --host mac-test-pilot --kick login \
+    >"$TEMP_DIR/kick-auth-fail.out" 2>&1; then
+    fail "kick accepted authentication drift"
+fi
+grep -F 'unattended SSH authentication is not ready for restart' \
+    "$TEMP_DIR/kick-auth-fail.out" >/dev/null || fail "kick authentication refusal"
+[ ! -e "$apply_home/.fake-kick-calls" ] ||
+    fail "authentication failure reached launchctl kickstart"
+[ -e "$apply_home/.fake-launch-state/login" ] ||
+    fail "authentication failure unloaded the existing service"
+unlink "$apply_home/.fake-auth-fail"
 run_supervisor "$apply_home" --host mac-test-pilot --kick login >"$TEMP_DIR/kick.out"
+[ "$(wc -l <"$apply_home/.fake-kick-calls" | tr -d ' ')" -eq 1 ] ||
+    fail "successful kick did not call launchctl exactly once"
 
 if run_supervisor "$apply_home" --rollback "$tx" >"$TEMP_DIR/active-rollback.out" 2>&1; then
     fail "rollback accepted an active service"
