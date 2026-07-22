@@ -450,6 +450,12 @@ records `await-supervisor`; it never invents a third path or starts an
 untracked SSH process. `--interval 300 --recover` supplies the persistent loop
 used by the existing tmux monitor session.
 
+The same loop also probes the independent `abq` and `abq2` routes. Because
+those are nested cluster paths rather than launchd-supervised Mac tunnels, a
+single-route failure reports `use-primary` or `use-secondary` and a dual loss
+reports `routes-unavailable`; `--recover` never sends a supervisor command for
+ABQ.
+
 The updater requires the expected `main` branch, exactly one `origin`, normal
 `origin/main` tracking, a clean worktree, an explicit full target equal to the
 fetched `origin/main`, and ancestry from the current revision. It validates the
