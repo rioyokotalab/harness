@@ -8,6 +8,7 @@ import importlib.util
 import json
 import os
 import platform
+import re
 import shlex
 import stat
 import subprocess
@@ -192,7 +193,7 @@ def claude_environment(private: Path, workspace: Path) -> dict[str, str]:
         b'printf "call\\n" >>"$HARNESS_EVAL_BASH_AUDIT"\n'
         b'exec /usr/bin/bwrap --die-with-parent --unshare-net --ro-bind / / '
         b'--dev-bind /dev /dev --proc /proc --bind "$HARNESS_EVAL_WORKSPACE" '
-        b'"$HARNESS_EVAL_WORKSPACE" /usr/bin/bash "$@"\n',
+        b'"$HARNESS_EVAL_WORKSPACE" --chdir "$HARNESS_EVAL_WORKSPACE" /usr/bin/bash "$@"\n',
     )
     bash_wrapper.chmod(0o555)
     audit = private / "bash-audit"
@@ -237,6 +238,8 @@ def normalize_claude(
 ) -> tuple[list[str], dict[str, int | None]]:
     events: list[dict[str, Any]] = []
     models: set[str] = set()
+    tool_commands: dict[str, str] = {}
+    completed_tools: set[str] = set()
     usage = core.unknown_usage()
     final = ""
     try:
@@ -254,10 +257,10 @@ def normalize_claude(
             fail("Claude emitted a malformed event")
         message = event.get("message")
         if isinstance(event.get("model"), str):
-            models.add(event["model"])
+            models.add(re.sub(r"\x1b\[[0-9;]*m", "", event["model"]))
         if isinstance(message, dict):
             if isinstance(message.get("model"), str):
-                models.add(message["model"])
+                models.add(re.sub(r"\x1b\[[0-9;]*m", "", message["model"]))
             content = message.get("content", [])
             if isinstance(content, list):
                 for block in content:
@@ -265,22 +268,13 @@ def normalize_claude(
                         continue
                     if block.get("type") == "tool_use":
                         name = block.get("name")
+                        tool_id = block.get("id")
                         payload = block.get("input", {})
                         command = payload.get("command", "") if isinstance(payload, dict) else ""
-                        if name == "Bash" and isinstance(command, str):
-                            events.append({"type": "item.completed", "item": {"type": "command_execution", "command": command}})
-                        elif isinstance(name, str) and isinstance(payload, dict):
-                            path = payload.get("file_path", payload.get("path", ""))
-                            if isinstance(path, str):
-                                events.append(
-                                    {
-                                        "type": "item.completed",
-                                        "item": {
-                                            "type": "command_execution",
-                                            "command": f"CLAUDE_TOOL={name} PATH={path}",
-                                        },
-                                    }
-                                )
+                        if name == "Bash" and isinstance(tool_id, str) and isinstance(command, str):
+                            tool_commands[tool_id] = command
+                    elif block.get("type") == "tool_result" and isinstance(block.get("tool_use_id"), str):
+                        completed_tools.add(block["tool_use_id"])
                     elif block.get("type") == "text" and isinstance(block.get("text"), str):
                         final = block["text"]
         if event.get("type") == "result" and isinstance(event.get("result"), str):
@@ -296,6 +290,9 @@ def normalize_claude(
                     if isinstance((value := raw_usage.get(key)), int) and value >= 0
                 )
                 usage["cached_input_tokens"] = cached
+    for tool_id, command in tool_commands.items():
+        if tool_id in completed_tools:
+            events.append({"type": "item.completed", "item": {"type": "command_execution", "command": command}})
     events.append({"type": "item.completed", "item": {"type": "agent_message", "text": final}})
     events.append({"type": "turn.completed", "usage": usage})
     core.private_write(normalized_path, b"".join(core.canonical_json(event) for event in events))
@@ -515,9 +512,24 @@ def selftest() -> None:
                     "message": {
                         "model": "synthetic-claude",
                         "content": [
-                            {"type": "tool_use", "name": "Read", "input": {"file_path": "/tmp/work/item"}},
+                            {
+                                "type": "tool_use",
+                                "id": "synthetic-tool",
+                                "name": "Bash",
+                                "input": {"command": "printf synthetic"},
+                            },
                             {"type": "text", "text": "intermediate"},
                         ],
+                    },
+                }
+            )
+            + core.canonical_json(
+                {
+                    "type": "user",
+                    "message": {
+                        "content": [
+                            {"type": "tool_result", "tool_use_id": "synthetic-tool"}
+                        ]
                     },
                 }
             )
