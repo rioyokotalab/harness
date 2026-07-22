@@ -394,9 +394,10 @@ Execution checkpoint 2026-07-22:
   replacement authentication can no longer destroy a surviving process; its
   regression proves launchctl is not called and the loaded service is retained.
 - Post-grace arg0 inventory on each Mac reported three live entries, one
-  eligible entry, and zero unexpected entries. The apply invocation safely
-  reclassified the invocation-generated entry as young and removed nothing;
-  no Codex process was stopped. The independently published benchmark aggregate
+  eligible entry, and zero unexpected entries. A stable retry independently
+  quarantined and guarded-deleted exactly one eligible directory per Mac;
+  post-apply plans report three live, zero eligible/young/unexpected, and no
+  Codex process was stopped. The independently published benchmark aggregate
   remains at SHA-256
   `772acf85240ec4cbefdaeb82b889a6d84ec15093806e88f8e6fdcb5b53821d9b`.
   Guarded-delete manifest `/tmp/harness-t295-eval-delete.manifest` validated and
@@ -418,16 +419,21 @@ Execution checkpoint 2026-07-22:
   three Macs now pass zero-warning doctors in roughly one inventory call rather
   than the prior multi-minute alias sequence. Home is unreachable on both
   routes and remains clean at `ee10361` until owner-side reauthorization.
+- Protected PR #249 passed and squash-merged unloaded-service recovery as
+  `1e95fbd`. All eight Linux checkouts plus Office and Riken are clean/current
+  there; Aist is clean at `b2d54f9` and Home is clean at `ee10361`. Their final
+  catch-up is retry-safe after route recovery.
 - The persistent five-minute monitor is deliberately observation-only while
-  credentials are invalid. Its current state is Aist 2/2, Office 2/2, Riken
-  2/2, Home 0/2, and ABQ 2/2. The active final repair lets `--kick` recover an
+  credentials are invalid. A fresh explicit cycle reports Aist 0/2, Office
+  2/2, Riken 2/2, Home 0/2, and ABQ 2/2. The published final repair lets `--kick` recover an
   active transaction whose launchd service is unloaded: it requires zero
   managed/external processes and fresh unattended authentication before
   bootstrapping the unchanged transaction plist, cleans up a failed bootstrap,
   and still preserves loaded processes when authentication fails. Focused
-  supervisor and monitor regressions pass. After publication, owner-side key
-  reauthorization is the only remaining external action; then one recovery
-  cycle can restore all services and return the monitor to bounded recovery.
+  supervisor and monitor regressions pass. Owner-side reauthorization of the
+  four existing dedicated keys is the only remaining external action. Then one
+  recovery cycle can restore all services, advance Aist and Home, run their
+  final doctors, and return the monitor to bounded recovery.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
