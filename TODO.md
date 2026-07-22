@@ -8,7 +8,7 @@ catch-up is preserved at 378df00159d59e8abee645f2bdaebd20cf467cc2. Final
 T-288 through T-292 execution is in
 `docs/audits/macos-ssh-finalization-2026-07-21.md`.
 
-Next free ID: T-294.
+Next free ID: T-295.
 
 ## Current state
 
@@ -50,9 +50,12 @@ Next free ID: T-294.
 
 ## Next resume checkpoint
 
-1. Select another independently eligible T-273 workstream only after fresh
+1. Resolve T-294's local launcher-workaround authority boundary. Do not remove
+   or replace the official standalone launcher without the owner's explicit
+   choice.
+2. Select another independently eligible T-273 workstream only after fresh
    reconstruction of its gate and authority.
-2. On or after 2026-07-26, query only T-196 recorded successor job IDs.
+3. On or after 2026-07-26, query only T-196 recorded successor job IDs.
 
 ## Active tasks
 
@@ -69,8 +72,9 @@ remaining item keeps its independent gate.
 3. **Fourth Mac — complete.** T-268/T-269/T-286 acceptance passed.
 4. **Backup successors — time-gated.** On or after 2026-07-26, query only the
    seven T-196 IDs; never duplicate a delayed job.
-5. **Vendor arg0 directories — process-gated.** Re-inventory local only after
-   every Codex process exits; use guarded-delete if eligible.
+5. **Vendor arg0 directories — diagnosed; durable fix separated as T-294.**
+   The old process-wide gate was overly broad: held per-directory locks protect
+   live sessions, while unlocked residue can be isolated and guarded-deleted.
 6. **Container capability — requirement-gated.** Install nothing merely for
    warning parity.
 7. **One-way local-to-t4 SSH mirror — separate authority.** Execute only after
@@ -83,6 +87,44 @@ remaining item keeps its independent gate.
 Closed non-goals remain plugins/connectors/accounts, administrator settings,
 automatic publication, background login mutation, active-session reload, and
 guessing lost unknown configuration.
+
+### T-294 — Eliminate Codex arg0 cleanup failures on local NFS home
+
+**Phase/status:** diagnosed; one-time cleanup complete; durable launcher change
+awaits an explicit owner choice.
+
+- Local Codex CLI 0.145.0 stores its arg0 helper directories on the NFSv3
+  account home. The mounted filesystem reports `local_lock=none`.
+- Lock-aware inventory found 3,157 empty no-lock remnants, one unlocked stale
+  helper directory, and three held-lock live directories. The live directories
+  were preserved with unchanged identities and working helper paths.
+- The stale set was atomically quarantined, then removed through guarded-delete
+  manifest `/home/rioyokota/.codex/tmp/arg0-cleanup-20260722.manifest`:
+  one target containing 3,158 child directories and 3,164 total entries. The
+  manifest was exact-unlinked after its verified result was recorded here.
+- Two controlled `codex --version` probes reproduced the lifecycle exactly.
+  The first exited without warning but left one unlocked nonempty helper
+  directory. The second emitted `Directory not empty (os error 39)`, converted
+  the first residue to an empty no-lock directory, and left a new unlocked
+  nonempty helper directory. Both probe residues were quarantined and removed
+  through `/home/rioyokota/.codex/tmp/arg0-probe-cleanup-20260722.manifest`;
+  that manifest was also exact-unlinked after verification.
+- This matches the upstream janitor's lock lifetime: it keeps the acquired
+  `.lock` file open while recursively deleting its directory. On this NFS
+  filesystem the open file prevents the final directory removal. This is a
+  confirmed local mechanism, not merely an accumulation symptom.
+- The smallest deterministic workaround that preserves current processes is a
+  version-scoped launcher wrapper: retain the exact official binary, move only
+  unlocked prior-session directories to a private quarantine while holding
+  their locks, invoke the official binary, then guarded-delete the quarantine.
+  Installing that wrapper mutates vendor-managed launcher bytes and must not
+  proceed without the owner's explicit choice. An official upgrade may replace
+  it safely but would require revalidation if the upstream defect remains.
+
+**Next exact action:** after owner authorization, design the wrapper and its
+rollback first, add focused concurrency/NFS-simulation tests, run the phase-one
+suite, and only then install it locally without stopping any running Codex
+process.
 
 ### T-196 — Backup lifecycle phase 2
 
