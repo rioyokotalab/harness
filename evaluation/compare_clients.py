@@ -193,7 +193,8 @@ def claude_environment(private: Path, workspace: Path) -> dict[str, str]:
         b'printf "call\\n" >>"$HARNESS_EVAL_BASH_AUDIT"\n'
         b'exec /usr/bin/bwrap --die-with-parent --unshare-net --ro-bind / / '
         b'--dev-bind /dev /dev --proc /proc --bind "$HARNESS_EVAL_WORKSPACE" '
-        b'"$HARNESS_EVAL_WORKSPACE" --chdir "$HARNESS_EVAL_WORKSPACE" /usr/bin/bash "$@"\n',
+        b'"$HARNESS_EVAL_WORKSPACE" --bind "$HARNESS_EVAL_TMPDIR" "$HARNESS_EVAL_TMPDIR" '
+        b'--chdir "$HARNESS_EVAL_WORKSPACE" /usr/bin/bash "$@"\n',
     )
     bash_wrapper.chmod(0o555)
     audit = private / "bash-audit"
@@ -207,6 +208,7 @@ def claude_environment(private: Path, workspace: Path) -> dict[str, str]:
             "PYTEST_ADDOPTS": "-p no:cacheprovider",
             "HARNESS_EVAL_WORKSPACE": str(workspace),
             "HARNESS_EVAL_BASH_AUDIT": str(audit),
+            "HARNESS_EVAL_TMPDIR": str(tmp),
             "SHELL": str(bash_wrapper),
         }
     )
@@ -228,7 +230,7 @@ def claude_command(workspace: Path, private: Path, prompt: str) -> list[str]:
     return [
         executable, "--print", "--output-format", "stream-json", "--verbose",
         "--no-session-persistence", "--safe-mode", "--permission-mode", "dontAsk",
-        "--tools", "Bash", "--effort", "medium",
+        "--tools", "Bash", "--allowedTools", "Bash", "--effort", "medium",
         "--model", "default", "--append-system-prompt", guidance, prompt,
     ]
 
@@ -257,10 +259,10 @@ def normalize_claude(
             fail("Claude emitted a malformed event")
         message = event.get("message")
         if isinstance(event.get("model"), str):
-            models.add(re.sub(r"\x1b\[[0-9;]*m", "", event["model"]))
+            models.add(re.sub(r"(?:\x1b)?\[[0-9;]*m$", "", event["model"]))
         if isinstance(message, dict):
             if isinstance(message.get("model"), str):
-                models.add(re.sub(r"\x1b\[[0-9;]*m", "", message["model"]))
+                models.add(re.sub(r"(?:\x1b)?\[[0-9;]*m$", "", message["model"]))
             content = message.get("content", [])
             if isinstance(content, list):
                 for block in content:
