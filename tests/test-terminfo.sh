@@ -77,4 +77,39 @@ rollback=$(HOME="$home" HARNESS_LOGICAL_HOST=al \
 [ ! -e "$home/.terminfo" ] && [ ! -L "$home/.terminfo" ] ||
     fail "rollback directory restoration"
 
+symlink_home=$TEST_ROOT/symlink-home
+symlink_persistent=$TEST_ROOT/symlink-persistent
+symlink_layout=$TEST_ROOT/home-layout.tsv
+mkdir "$symlink_home" "$symlink_persistent"
+mkdir "$symlink_persistent/.local"
+chmod 700 "$symlink_home" "$symlink_persistent" "$symlink_persistent/.local"
+ln -s "$symlink_persistent/.local" "$symlink_home/.local"
+printf 'al|%s|%s|.local|none|none|none\n' "$symlink_persistent" \
+    "$symlink_persistent/cache" >"$symlink_layout"
+symlink_apply=$(HOME="$symlink_home" HARNESS_LOGICAL_HOST=al \
+    HARNESS_HOME_LAYOUT_FILE="$symlink_layout" \
+    "$HARNESS" terminfo --host al --apply)
+symlink_transaction=$(printf '%s\n' "$symlink_apply" |
+    sed -n 's/^TERMINFO action=applied transaction=\([^ ]*\) rollback=available$/\1/p')
+[ -n "$symlink_transaction" ] || fail "declared symlink apply"
+[ -d "$symlink_persistent/.local/state/harness/transactions" ] ||
+    fail "declared symlink state location"
+HOME="$symlink_home" HARNESS_LOGICAL_HOST=al \
+    HARNESS_HOME_LAYOUT_FILE="$symlink_layout" \
+    "$HARNESS" terminfo --host al --rollback "$symlink_transaction" >/dev/null ||
+    fail "declared symlink rollback"
+
+unsafe_home=$TEST_ROOT/unsafe-home
+unsafe_target=$TEST_ROOT/unsafe-target
+mkdir "$unsafe_home" "$unsafe_target"
+chmod 700 "$unsafe_home" "$unsafe_target"
+ln -s "$unsafe_target" "$unsafe_home/.local"
+if HOME="$unsafe_home" HARNESS_LOGICAL_HOST=al \
+    HARNESS_HOME_LAYOUT_FILE="$symlink_layout" \
+    "$HARNESS" terminfo --host al --apply >"$TEST_ROOT/unsafe.out" 2>&1; then
+    fail "undeclared state symlink accepted"
+fi
+grep -F 'terminfo transaction state is unsafe' "$TEST_ROOT/unsafe.out" >/dev/null ||
+    fail "undeclared state symlink refusal"
+
 echo "terminfo tests passed"
