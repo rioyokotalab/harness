@@ -59,6 +59,8 @@ grep -F 'Claude auto-memory are optional context only' "$ROOT/.codex/AGENTS.md" 
     >/dev/null || fail "global cross-client handoff policy"
 grep -F 'Owner approval alone never creates an exception.' "$ROOT/.codex/AGENTS.md" \
     >/dev/null || fail "global reviewed-installer deletion boundary"
+grep -F 'include a read-only inventory' "$ROOT/.codex/AGENTS.md" \
+    >/dev/null || fail "global routine arg0 housekeeping policy"
 [ "$(wc -l <"$ROOT/.codex/AGENTS.md" | tr -d ' ')" -le 200 ] ||
     fail "shared global guidance exceeds the reviewed Claude size bound"
 

@@ -90,8 +90,8 @@ guessing lost unknown configuration.
 
 ### T-294 — Eliminate Codex arg0 cleanup failures on local NFS home
 
-**Phase/status:** diagnosed; one-time cleanup complete; durable launcher change
-awaits an explicit owner choice.
+**Phase/status:** diagnosed; one-time cleanup and routine-housekeeping policy
+complete; durable launcher change awaits an explicit owner choice.
 
 - Local Codex CLI 0.145.0 stores its arg0 helper directories on the NFSv3
   account home. The mounted filesystem reports `local_lock=none`.
@@ -113,6 +113,11 @@ awaits an explicit owner choice.
   `.lock` file open while recursively deleting its directory. On this NFS
   filesystem the open file prevents the final directory removal. This is a
   confirmed local mechanism, not merely an accumulation symptom.
+- Shared Codex/Claude guidance now makes this inventory part of every routine
+  housekeeping request: held locks are live, eligible directories must pass
+  owner/type/age/layout checks, candidates move to same-filesystem quarantine
+  while locked, and only the quarantine goes through guarded-delete. This
+  procedural rule does not modify the official launcher.
 - The smallest deterministic workaround that preserves current processes is a
   version-scoped launcher wrapper: retain the exact official binary, move only
   unlocked prior-session directories to a private quarantine while holding

@@ -78,6 +78,18 @@ gates; follow those more specific rules.
   actually ran. Keep portability mapping in the workflow and report the
   resolved native command.
 
+## Routine housekeeping
+
+- When the owner requests routine housekeeping, include a read-only inventory
+  of `$CODEX_HOME/tmp/arg0` when present. A held `.lock` is live; never remove
+  the whole root or require every Codex process to exit.
+- Candidates must be current-user-owned real directories older than a grace
+  period, and either empty without a lock or expected-layout with an acquirable
+  lock. Hold that lock through same-filesystem quarantine, then guarded-delete.
+- Report live, eligible, removed, and unexpected counts. If fresh invocations
+  recreate residue, separate housekeeping from any vendor-launcher fix, which
+  always requires explicit authority.
+
 ## Reusable workflows
 
 At every task start, actively compare the request and repository guidance
