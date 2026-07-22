@@ -103,6 +103,10 @@ if [ "$clear_forwardings" = yes ] && [ -n "$alias_name" ] &&
     exit 1
 fi
 if [ "$clear_forwardings" = no ] && [ -n "$alias_name" ]; then
+    if [ -e "$HOME/.fake-bind-hang-$alias_name" ]; then
+        sleep 2
+        exit 1
+    fi
     if [ -e "$HOME/.fake-bind-fail-$alias_name" ]; then
         : >"$HOME/.fake-bind-probed-$alias_name"
         exit 1
@@ -607,6 +611,35 @@ grep -F 'classification=drain-timeout' "$watchdog_receipt" >/dev/null ||
     fail "watchdog elapsed deadline did not restore loaded baseline"
 unlink "$watchdog_home/.fake-bind-fail-tunnel"
 unlink "$watchdog_home/.fake-bind-fail-tunnel2"
+
+touch "$watchdog_home/.fake-dead-tunnel" "$watchdog_home/.fake-dead-tunnel2" \
+    "$watchdog_home/.fake-bind-hang-tunnel" "$watchdog_home/.fake-bind-hang-tunnel2"
+HOME="$watchdog_home" HARNESS_ROOT="$PUBLIC" HARNESS_TEST_MODE=1 \
+    HARNESS_TEST_RECOVERY_ATTEMPTS=999 PATH="$FAKE_BIN:/usr/bin:/bin" \
+    "$TUNNEL_WATCHDOG" --host mac-test-pilot --run-once \
+    >"$TEMP_DIR/watchdog-signal.out" 2>&1 &
+watchdog_signal_pid=$!
+watchdog_signal_wait=0
+while [ ! -e "$recovery_lock" ] && [ "$watchdog_signal_wait" -lt 50 ]; do
+    sleep 0.1
+    watchdog_signal_wait=$((watchdog_signal_wait + 1))
+done
+[ -e "$recovery_lock" ] || fail "watchdog signal test never entered recovery"
+kill -TERM "$watchdog_signal_pid"
+if wait "$watchdog_signal_pid"; then
+    fail "watchdog accepted termination during recovery"
+fi
+watchdog_signal_wait=0
+while [ -e "$recovery_lock" ] && [ "$watchdog_signal_wait" -lt 50 ]; do
+    sleep 0.1
+    watchdog_signal_wait=$((watchdog_signal_wait + 1))
+done
+[ ! -e "$recovery_lock" ] || fail "watchdog signal retained recovery child or lock"
+[ -e "$watchdog_home/.fake-launch-state/tunnel" ] &&
+    [ -e "$watchdog_home/.fake-launch-state/tunnel2" ] ||
+    fail "watchdog signal did not restore loaded baseline"
+unlink "$watchdog_home/.fake-bind-hang-tunnel"
+unlink "$watchdog_home/.fake-bind-hang-tunnel2"
 
 run_tunnel_watchdog "$watchdog_home" --rollback "$watchdog_tx" \
     >"$TEMP_DIR/watchdog-rollback.out"

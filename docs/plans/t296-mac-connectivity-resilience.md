@@ -92,6 +92,9 @@ not silent exceptions.
     directory. Record only a fixed outcome/classification, attempt count, and
     UTC completion time; never retain raw SSH or supervisor output. This makes
     a watchdog recovery distinguishable from concurrent human or agent action.
+11. The receipt wrapper owns exactly one recovery child. On HUP, INT, or TERM,
+    forward TERM to that exact PID and wait before removing private temporary
+    output, so launchd cannot orphan an untracked recovery attempt.
 
 The live soak proved that established connections can outlive removal of their
 server authorizations: Aist remained `2/2` fresh-auth ready, while Home, Office,
