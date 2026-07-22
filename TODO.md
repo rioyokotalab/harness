@@ -59,9 +59,8 @@ Next free ID: T-296.
 ### T-295 — Fleet convergence, ABQ onboarding, and external-user bootstrap
 
 **Phase/status:** interviewing. The owner requested one upfront PIE plan for
-thirteen coupled workstreams and explicitly requested that all material
-questions be bundled before execution. Read-only discovery and the complete
-decision register are recorded in
+thirteen coupled workstreams, then selected PIE's normal one-question-at-a-time
+interview. Read-only discovery and the complete decision register are recorded in
 `docs/plans/t295-fleet-convergence.md`. No target mutation has started.
 
 Confirmed planning facts:

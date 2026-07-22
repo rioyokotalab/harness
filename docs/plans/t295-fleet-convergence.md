@@ -6,8 +6,9 @@
 - Phase: interviewing
 - Planning date: 2026-07-22
 - Driver: Codex on `local`
-- Owner override: ask every material question in one bundle instead of the
-  PIE skill's normal one-at-a-time interview.
+- Interview method: ask one material question at a time, following the PIE
+  skill's normal interview after the owner superseded the earlier bundle
+  request.
 - Mutation gate: no target-system changes until decisions are checkpointed,
   the plan is audited and frozen, and the owner gives the final explicit go.
 
@@ -129,7 +130,7 @@ unknown remote state, not evidence that ABQ is absent.
 
 ## Proposed decisions and questions
 
-The owner can answer `accept all recommendations` and list only exceptions.
+Ask these decisions one at a time and checkpoint each answer before advancing.
 
 1. **Fleet scope and publication.** Recommended: define the existing 11-node
    maintenance/Python/package scope as local, ab, ab2, al, rc, ri, t4, aist,
