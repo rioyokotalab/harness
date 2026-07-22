@@ -104,11 +104,21 @@ not silent exceptions.
 The live soak proved that established connections can outlive removal of their
 server authorizations: Aist remained `2/2` fresh-auth ready, while Home, Office,
 and Riken were `0/2` despite several live old routes. Software recovery cannot
-repair that credential state. The preferred owner-managed hardening is a
-separate sshd `AuthorizedKeysFile` containing only the four Macs' restricted
-tunnel entries, isolated from ordinary account-key maintenance. That one-time
-server change requires owner/admin review and credential handling and is not
-part of autonomous execution.
+repair that credential state. Subsequent discovery confirmed that `local` is
+the only JumpCloud-managed fleet node, its live account authorization and
+empty `.jcorig` contain none of the four tunnel entries, and the JumpCloud and
+SSH services are active. The hardening therefore belongs only on Local: keep
+JumpCloud's global account file, override it for `rioyokota` in a preserved
+`Match` block with both the ordinary file and a separate root-owned tunnel
+file, and leave every other node's sshd policy unchanged.
+
+The tunnel authorization file is root-owned mode 0644, not mode 0600. OpenSSH
+opens authorized-key files under the target user's UID, so root-only read
+permission would silently make the second file unusable. The keys are public;
+the security boundary is root-only write access and the root-owned `/etc/ssh`
+parent. Each exact restricted entry is derived once on its owning Mac from the
+existing dedicated identity and exact `ssh -G` listener contracts, transferred
+without display, and added transactionally. No identity is generated.
 
 ## Watchdog state machine
 

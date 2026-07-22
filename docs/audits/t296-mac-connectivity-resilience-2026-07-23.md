@@ -208,7 +208,19 @@ An established SSH session surviving removal of its authorization explains why
 ordinary route probes had previously looked healthy. The new audit prevents
 that false assurance, but software cannot repair missing credential state.
 
-## Owner-only permanent hardening proposal
+## JumpCloud-aware permanent hardening
+
+The owner confirmed that Local is the only JumpCloud-managed node. On Local,
+`jcagent.service` and `ssh.service` are active, the managed global directive is
+`AuthorizedKeysFile .ssh/authorized_keys`, and neither that live file nor the
+empty `.ssh/authorized_keys.jcorig` contains any of the four restricted tunnel
+entries. This reconciles the earlier apparently spontaneous authorization
+loss: JumpCloud's management of the account-level file is the probable drift
+source. The `.jcorig` behavior is not used as a security boundary because it is
+empty here and is not isolated from account-level maintenance.
+[JumpCloud's SSH configuration guidance](https://jumpcloud.com/support/configure-ssh-settings)
+documents that its agent ignores settings inside a conditional `Match` block;
+that documented exception is the persistence mechanism used below.
 
 The least-intervention security-preserving server design is one root-owned
 secondary `AuthorizedKeysFile` dedicated to the four restricted tunnel
@@ -234,18 +246,21 @@ encrypted channel. Primary references:
 - [OpenBSD `sshd_config(5)`](https://man.openbsd.org/sshd_config)
 - [OpenBSD `sshd(8)`](https://man.openbsd.org/sshd.8)
 
-This proposal requires owner/admin handling because it changes system sshd
-policy and credential authorization. The agent must not create the root file,
-read/copy the entries, or edit either authorization source.
+This change requires owner/admin handling because it changes system sshd policy
+and credential authorization. The owner explicitly authorized a reviewed
+value-free helper that passes each existing identity only by its file path and
+executes the privileged Local changes after an exact confirmation. The helper
+does not display, log, hash, generate, or alter an identity.
 
 Local is Ubuntu 24.04 with `ssh.service` active. Its current
 `/etc/ssh/sshd_config` sets `AuthorizedKeysFile .ssh/authorized_keys` at line
-3, before `Include /etc/ssh/sshd_config.d/*.conf` at line 19; a later drop-in
-must therefore not be assumed to replace the first effective value. An
-unprivileged `sshd -T -C` refuses to run because the account cannot access a
-host key. The owner/admin must modify the effective first-value position and
-perform both effective-configuration checks below with the installed service
-privileges. No system file was changed during this audit.
+3, before `Include /etc/ssh/sshd_config.d/*.conf` at line 19. OpenSSH's server
+configuration schema marks `AuthorizedKeysFile` for Match-time copying, so a
+matching later block can safely replace that global value for this user. The
+privileged helper still treats this as a runtime assertion: it must prove the
+two-path value using `sshd -T -C` before and after reload or roll back. An
+unprivileged query cannot access a host key, so both checks use the installed
+service privileges.
 
 ### One-time owner/admin sequence
 
@@ -253,18 +268,22 @@ Perform this on Local from a separately preserved administrative session. The
 exact filesystem locations and reload command must follow Local's installed
 OpenSSH service; do not paste guessed paths into production.
 
-1. Preserve the current sshd configuration and authorization files with
-   root-only owner, mode, and rollback metadata. Obtain the exact four prior
-   restricted tunnel entries from the owner's trusted source. Do not derive a
-   new entry, remove unrelated authorizations, or broaden any key option.
-2. Create a root-owned mode-0600 secondary authorization file outside the
-   account-writable `.ssh` tree and place only those four exact entries in it.
-3. At the effective first-value position for this account, set
-   `AuthorizedKeysFile` to both the existing ordinary authorization path and
-   the new root-owned tunnel file. Scope `ClientAliveInterval 15` and
-   `ClientAliveCountMax 3` to `Match User rioyokota`; terminate conditional
-   scope explicitly with `Match all` where the installed include layout
-   requires it.
+1. Stage one entry from each owning Mac. Use its existing dedicated identity
+   and effective `tunnel` / `tunnel2` listener contracts; do not generate an
+   identity, display any key material, remove unrelated authorizations, or
+   broaden any key option.
+2. Create `/etc/ssh/harness_tunnel_authorized_keys` as root:root mode 0644 and
+   place only those four exact entries in it. Mode 0644 is required because
+   OpenSSH temporarily uses the target user's UID when opening authorized-key
+   files. The entries are public keys; root ownership and the root-owned parent
+   prevent account-level modification.
+3. Add a Local-only drop-in containing `Match User rioyokota`, both
+   `.ssh/authorized_keys` and the root-owned tunnel path, and
+   `ClientAliveInterval 15` / `ClientAliveCountMax 3`, followed by `Match all`.
+   OpenSSH explicitly reprocesses and copies `AuthorizedKeysFile` from a
+   matching block, so this overrides the earlier JumpCloud-managed global
+   value without editing it. JumpCloud's documented exception for settings in
+   a conditional Match block prevents its agent from removing this scope.
 4. Use `sshd -T -C user=rioyokota,host=localhost,addr=127.0.0.1` to prove the
    effective authorization-file list and `15/3` liveness values. Use `sshd -t`
    for full syntax validation. Any mismatch aborts and restores the preserved
@@ -277,10 +296,10 @@ OpenSSH service; do not paste guessed paths into production.
    routes, exact `managed=1 external=0` ownership, and zero external tunnel
    processes before closing the administrative session.
 
-This is one bundled intervention. Once complete, ordinary user-level rewrites
-of `.ssh/authorized_keys` cannot remove the restricted tunnel entries, and
-server liveness releases abandoned listener sockets on a short, documented
-bound.
+This is one bundled intervention on Local only. Once complete, ordinary
+user-level rewrites of `.ssh/authorized_keys` cannot remove the restricted
+tunnel entries, and server liveness releases abandoned listener sockets on a
+short, documented bound.
 
 ## Remaining acceptance sequence
 

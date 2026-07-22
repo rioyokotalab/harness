@@ -76,8 +76,14 @@ Next free ID: T-297.
 
 ### T-296 — Diagnose recurrent Aist dual-route recovery latency
 
-**Phase/status:** the five-hour nightly implementation and observation window
-is complete; T-296 remains open at the owner credential/admin acceptance gate.
+**Phase/status:** executing the one-time Local authorization hardening after
+the five-hour nightly implementation and observation window. The owner
+confirmed that `local` is the fleet's only JumpCloud-managed node and that
+neither its live `~/.ssh/authorized_keys` nor the empty
+`~/.ssh/authorized_keys.jcorig` contains any of the four restricted tunnel
+entries. `jcagent.service` and `ssh.service` are active. This makes JumpCloud
+reconciliation of the account-level authorization file the probable source of
+the drift; `.jcorig` is not being used as the durable tunnel boundary.
 The durable plan is
 `docs/plans/t296-mac-connectivity-resilience.md`; the evidence handoff is
 `docs/audits/t296-mac-connectivity-resilience-2026-07-23.md`. The temporary
@@ -210,13 +216,26 @@ was exact-unlinked; `harness-connection-monitor` remains alive. Routine arg0
 housekeeping preserved three live invocations, removed six eligible residues,
 and ended with zero eligible or unexpected candidates.
 
-**Next action:** the owner must verify the four exact restricted authorizations
-and restore every missing Aist, Home, Office, or Riken entry before their
-missing routes can recover or their watchdog drills can run. Then perform the
-one-time root-owned authorization/liveness hardening, upgrade and drill each
-Mac one at a time, and run the post-hardening acceptance soak. The admin
-sequence and actual Local sshd layout are recorded in the audit; credentials
-and sshd policy remain outside agent authority.
+**Current execution checkpoint:** a reviewed value-free `~/run_this.sh` is
+ready on Local. Each Mac runs `--stage LOGICAL_ID` to derive only the public
+half of its existing `~/.ssh/harness-reverse`, reconstruct its two exact
+listener restrictions from `ssh -G tunnel{,2}`, and transfer one mode-0600
+entry to Local without printing it. No identity is generated or changed. Once
+all four stages exist, Local `--plan` and `--apply` install a JumpCloud-
+preserved `Match User rioyokota` fragment and a root-owned mode-0644 secondary
+authorization file, validate `sshd -t` and `sshd -T -C`, reload rather than
+restart `ssh.service`, and add/validate one Mac at a time. A failed live check
+removes only that Mac's exact staged entry. Mode 0644 is intentional: OpenSSH
+opens an `AuthorizedKeysFile` under the target user's UID; root ownership and
+the root-owned `/etc/ssh` parent provide the integrity boundary, while the
+entries themselves are public keys.
+
+**Next action:** stage Aist, Home, Office, and Riken, then run the Local plan
+and apply. Require fresh dedicated authentication and both inbound routes for
+each Mac before proceeding. After all eight routes pass, upgrade and drill each
+Mac one at a time and run the post-hardening acceptance soak. Do not put these
+tunnel entries only in `.jcorig`, modify JumpCloud's global
+`AuthorizedKeysFile`, or propagate the Local-only Match block to another node.
 
 Do not drill or install on any Mac until the owner restores the restricted
 authorizations and all eight fresh checks pass. Then roll out/drill those Macs
