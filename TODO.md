@@ -66,9 +66,10 @@ interview. Read-only discovery and the complete decision register are recorded i
 Confirmed planning facts:
 
 - All seven currently managed Linux nodes and all four Mac primaries respond;
-  all eight Mac reverse routes are healthy. `abq` is not currently resolvable
-  from local, while `web` rejected the available noninteractive
-  authentication.
+  all eight Mac reverse routes are healthy. ABQ is reachable as a RHEL 9.4
+  x86-64 interactive node through the existing nested `ab` route and through
+  Aist for emergency access; its planned `ab2` secondary route is not yet
+  configured. `web` rejected the available noninteractive authentication.
 - Every Mac's interactive `login` and `login2` alias requests one fixed remote
   forward in addition to the launchd-owned connection. Dedicated tunnel-only
   aliases are required to eliminate bind conflicts without weakening

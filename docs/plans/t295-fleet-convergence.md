@@ -71,13 +71,15 @@ Read-only probes on 2026-07-22 confirmed:
 | home | `home` | macOS 26.5.2 | arm64 | ready |
 | office | `office` | macOS 26.5.2 | arm64 | ready |
 | riken | `riken2` | macOS 26.5.2 | arm64 | ready |
-| abq | unresolved | unresolved | unresolved | direct alias unresolved |
+| abq | `qes03` | Red Hat Enterprise Linux 9.4 | x86_64 | primary/emergency ready; secondary pending |
 | web | unresolved | unresolved | unresolved | authentication rejected |
 
-The value-free connection monitor reported every Mac pair healthy. ABQ's
-onboarding preflight accepted the token `abq`, but its single permitted direct
-inventory attempt failed because local cannot resolve that alias. This is
-unknown remote state, not evidence that ABQ is absent.
+The value-free connection monitor reported every Mac pair healthy. ABQ's first
+direct inventory failed because local had no alias. After the owner approved
+the route and established initial access-server trust, the existing nested
+route through `ab` completed inventory on `qes03`; the Aist emergency route
+also passed. The `ab2` node does not yet resolve `abq`, so its approved
+secondary route requires the planned configuration change.
 
 ### SSH and terminal
 
@@ -166,11 +168,14 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
 - D8 — **accepted authority:** the owner grants user-level authority for every
   operation their account can perform on ABQ. This does not authorize
   credential inspection, administrator actions, host-key bypass, or mutation
-  before the final PIE go. A post-authority read-only inventory and
-  `show_quota` attempt reached SSH verification through `ab` but stopped on an
-  untrusted host key. The official ABCI-Q guide documents the endpoint and
-  storage layout but publishes no host-key fingerprint; first trust remains a
-  pending owner/security decision.
+  before the final PIE go. The owner established initial access-server trust.
+  Read-only preflight then proved primary `ab` and emergency Aist access,
+  RHEL 9.4/x86-64, PBS/Git/bootstrap readiness, and outbound official HTTPS.
+  The approved `ab2` secondary alias is not configured yet. `show_quota`
+  reports a permission-writable group root with a 0 GiB limit, and the required
+  Restic password file is absent. Ordinary user-level ABQ actions need no later
+  permission request; the remaining storage/account and credential boundaries
+  are decisions or owner actions, not repeated permission gates.
 
 1. **Fleet scope and publication — answered/accepted.** Define the existing 11-node
    maintenance/Python/package scope as local, ab, ab2, al, rc, ri, t4, aist,
