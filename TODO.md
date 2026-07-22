@@ -325,6 +325,16 @@ with that socket bound only to the command. Do not enumerate identities, search
 arbitrary sockets, mutate agent state, or retry staging when the approved
 socket/authentication gate is unavailable.
 
+Aist's persistent local Codex validated the retained full-restriction helper,
+recovered an approved current-user agent socket without enumerating identities,
+proved a forwarding-disabled ordinary `login`, and completed staging. Local
+then verified all four entries as current-user mode-0600 regular one-link,
+one-line files containing both `permitopen` and `permitlisten` option classes;
+no key content was displayed or hashed. The four-entry Local `--plan` now
+passes. The next action is the owner's interactive Local `--apply`; expect Home
+and any still-temporary Aist route to be classified `handover-required`, not
+accepted as managed resilience.
+
 Do not drill or install on any Mac until the owner restores the restricted
 authorizations and all eight fresh checks pass. Then roll out/drill those Macs
 one at a time. Preserve potentially private native logs unread in mode-0600
