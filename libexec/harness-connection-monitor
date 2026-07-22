@@ -62,10 +62,9 @@ recover_route() {
     recover_target=$1
     recover_via=$2
     recover_host=$3
-    recover_alias=$4
     SSH_AUTH_SOCK=$agent_socket ssh -x -o BatchMode=yes -o ConnectTimeout=8 \
         -o ConnectionAttempts=1 -o ControlMaster=no -o ControlPath=none \
-        "$recover_via" "\$HOME/harness/bin/harness macos-tunnel-supervisor --host $recover_host --kick $recover_alias" \
+        "$recover_via" "\$HOME/harness/bin/harness macos-tunnel-supervisor --host $recover_host --recover-pair" \
         >/dev/null 2>&1 || return 1
     recover_attempt=0
     while [ "$recover_attempt" -lt 15 ]; do
@@ -90,7 +89,7 @@ check_pair() {
     elif [ "$primary_state" = down ]; then
         pair_state=degraded
         if [ "$recover" -eq 1 ]; then
-            if recover_route "$primary" "$secondary" "$monitor_host" tunnel; then
+            if recover_route "$primary" "$secondary" "$monitor_host"; then
                 primary_state=ready
                 pair_state=healthy
                 pair_action=recovered-primary
@@ -103,7 +102,7 @@ check_pair() {
     elif [ "$secondary_state" = down ]; then
         pair_state=degraded
         if [ "$recover" -eq 1 ]; then
-            if recover_route "$secondary" "$primary" "$monitor_host" tunnel2; then
+            if recover_route "$secondary" "$primary" "$monitor_host"; then
                 secondary_state=ready
                 pair_state=healthy
                 pair_action=recovered-secondary

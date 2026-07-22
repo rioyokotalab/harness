@@ -627,17 +627,13 @@ if [ "$mode" = recover-pair ]; then
         fi
     done
 
-    if service_running "$primary_alias" || service_running "$secondary_alias"; then
+    if service_running "$primary_alias" && service_running "$secondary_alias"; then
         printf 'MACOS_SSH_SUPERVISOR mode=recover-pair host=%s action=none reason=route-running\n' \
             "$logical_host"
         release_recovery_lock
         trap - EXIT HUP INT TERM
         exit 0
     fi
-    [ "$(managed_process_count "$primary_alias")" -eq 0 ] &&
-        [ "$(managed_process_count "$secondary_alias")" -eq 0 ] ||
-        die "Mac SSH supervisor dual-dead state is inconsistent"
-
     recovery_confirm_seconds=5
     recovery_poll_seconds=15
     recovery_release_seconds=2
@@ -657,33 +653,61 @@ if [ "$mode" = recover-pair ]; then
     [ "$recovery_attempt_limit" -ge 1 ] || die "invalid recovery attempt limit"
 
     sleep "$recovery_confirm_seconds"
-    if service_running "$primary_alias" || service_running "$secondary_alias"; then
+    primary_pending=0
+    secondary_pending=0
+    recovery_pending_count=0
+    for recovery_alias in "$primary_alias" "$secondary_alias"; do
+        service_loaded "$recovery_alias" ||
+            die "Mac SSH supervisor service unloaded during recovery confirmation"
+        recovery_managed=$(managed_process_count "$recovery_alias")
+        recovery_external=$(external_process_count "$recovery_alias")
+        [ "$recovery_external" -eq 0 ] ||
+            die "Mac SSH supervisor recovery ownership changed"
+        if service_running "$recovery_alias"; then
+            [ "$recovery_managed" -eq 1 ] ||
+                die "Mac SSH supervisor running state changed"
+        else
+            [ "$recovery_managed" -eq 0 ] ||
+                die "Mac SSH supervisor stopped state changed"
+            unattended_auth_ready "$recovery_alias" ||
+                die "unattended SSH authentication is not ready for route recovery"
+            recovery_pending_count=$((recovery_pending_count + 1))
+            if [ "$recovery_alias" = "$primary_alias" ]; then
+                primary_pending=1
+            else
+                secondary_pending=1
+            fi
+        fi
+    done
+    if [ "$recovery_pending_count" -eq 0 ]; then
         printf 'MACOS_SSH_SUPERVISOR mode=recover-pair host=%s action=defer reason=state-changed\n' \
             "$logical_host"
         release_recovery_lock
         trap - EXIT HUP INT TERM
         exit 0
     fi
-    for recovery_alias in "$primary_alias" "$secondary_alias"; do
-        [ "$(managed_process_count "$recovery_alias")" -eq 0 ] &&
-            [ "$(external_process_count "$recovery_alias")" -eq 0 ] ||
-            die "Mac SSH supervisor dual-dead ownership changed"
-        unattended_auth_ready "$recovery_alias" ||
-            die "unattended SSH authentication is not ready for pair recovery"
-    done
+    if [ "$recovery_pending_count" -eq 1 ]; then
+        recovery_scope=single
+    else
+        recovery_scope=dual
+    fi
 
     recovery_in_progress=1
     for recovery_alias in "$primary_alias" "$secondary_alias"; do
+        if [ "$recovery_alias" = "$primary_alias" ]; then
+            recovery_pending=$primary_pending
+        else
+            recovery_pending=$secondary_pending
+        fi
+        [ "$recovery_pending" -eq 1 ] || continue
         launchctl bootout "gui/$current_uid/$(label_for "$recovery_alias")" \
             >/dev/null || die "Mac SSH supervisor pair bootout failed"
         service_loaded "$recovery_alias" &&
             die "Mac SSH supervisor service remained loaded during drain"
     done
-    printf 'MACOS_SSH_SUPERVISOR mode=recover-pair host=%s action=drain status=started\n' \
-        "$logical_host"
+    printf 'MACOS_SSH_SUPERVISOR mode=recover-pair host=%s action=drain scope=%s status=started\n' \
+        "$logical_host" "$recovery_scope"
 
-    primary_pending=1
-    secondary_pending=1
     recovery_attempt=0
     while [ "$recovery_attempt" -lt "$recovery_attempt_limit" ]; do
         recovery_attempt=$((recovery_attempt + 1))
@@ -722,9 +746,15 @@ if [ "$mode" = recover-pair ]; then
     if [ "$primary_pending" -eq 1 ] || [ "$secondary_pending" -eq 1 ]; then
         die "Mac SSH supervisor stale-listener drain timed out"
     fi
+    for recovery_alias in "$primary_alias" "$secondary_alias"; do
+        service_running "$recovery_alias" &&
+            [ "$(managed_process_count "$recovery_alias")" -eq 1 ] &&
+            [ "$(external_process_count "$recovery_alias")" -eq 0 ] ||
+            die "Mac SSH supervisor pair did not converge"
+    done
     recovery_in_progress=0
-    printf 'MACOS_SSH_SUPERVISOR mode=recover-pair host=%s action=restore status=complete attempts=%s\n' \
-        "$logical_host" "$recovery_attempt"
+    printf 'MACOS_SSH_SUPERVISOR mode=recover-pair host=%s action=restore scope=%s status=complete attempts=%s\n' \
+        "$logical_host" "$recovery_scope" "$recovery_attempt"
     release_recovery_lock
     trap - EXIT HUP INT TERM
     exit 0

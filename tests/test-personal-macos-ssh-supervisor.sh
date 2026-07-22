@@ -440,12 +440,23 @@ run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
 grep -F 'action=none reason=route-running' "$TEMP_DIR/watchdog-healthy.out" >/dev/null ||
     fail "watchdog healthy no-op"
 
+touch "$watchdog_home/.fake-dead-tunnel2"
+run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
+    >"$TEMP_DIR/watchdog-single.out"
+grep -F 'action=drain scope=single status=started' \
+    "$TEMP_DIR/watchdog-single.out" >/dev/null || fail "watchdog single drain"
+grep -F 'action=restore scope=single status=complete' \
+    "$TEMP_DIR/watchdog-single.out" >/dev/null || fail "watchdog single restore"
+[ -e "$watchdog_home/.fake-launch-state/tunnel" ] &&
+    [ -e "$watchdog_home/.fake-launch-state/tunnel2" ] ||
+    fail "watchdog single recovery changed healthy sibling"
+
 touch "$watchdog_home/.fake-dead-tunnel" "$watchdog_home/.fake-dead-tunnel2"
 run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
     >"$TEMP_DIR/watchdog-dual.out"
-grep -F 'action=drain status=started' "$TEMP_DIR/watchdog-dual.out" >/dev/null ||
+grep -F 'action=drain scope=dual status=started' "$TEMP_DIR/watchdog-dual.out" >/dev/null ||
     fail "watchdog dual drain"
-grep -F 'action=restore status=complete' "$TEMP_DIR/watchdog-dual.out" >/dev/null ||
+grep -F 'action=restore scope=dual status=complete' "$TEMP_DIR/watchdog-dual.out" >/dev/null ||
     fail "watchdog dual restore"
 for alias in tunnel tunnel2; do
     [ -e "$watchdog_home/.fake-launch-state/$alias" ] ||
@@ -479,7 +490,7 @@ if run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
     >"$TEMP_DIR/watchdog-auth-fail.out" 2>&1; then
     fail "watchdog accepted authentication failure"
 fi
-grep -F 'authentication is not ready for pair recovery' \
+grep -F 'authentication is not ready for route recovery' \
     "$TEMP_DIR/watchdog-auth-fail.out" >/dev/null || fail "watchdog authentication refusal"
 [ -e "$watchdog_home/.fake-launch-state/tunnel" ] &&
     [ -e "$watchdog_home/.fake-launch-state/tunnel2" ] ||
