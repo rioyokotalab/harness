@@ -486,3 +486,31 @@ only the tmux configuration fixture intentionally rejected the uncommitted
 documentation checkpoint. It changed no target state. The exact clean-commit
 retry then passed all 59 focused suites and guarded-delete; native MPI remained
 the declared environment-only skip.
+
+## Publication and final convergence
+
+Protected PR #206 passed `portable-phase1` and squash-merged the Home/fleet
+checkpoint at `97162ef3c554a80a29c63a4b83d39d292ad4fb14`; its task branch was
+removed locally and remotely. The guarded bundle-transfer plan and apply then
+advanced the six clean Linux mirrors from
+`460bbca2cbac5f54f264d5e94001d77b17b2f4f5` to the protected commit. Each
+remote verified the bundle, updated `origin/main`, fast-forwarded, exact-unlinked
+the transfer artifact, and finished clean/current.
+
+All four Mac updater plans reported public fast-forward and private current.
+The applies completed with no package actions in transactions Aist
+`20260722T000131Z-17830`, Office `20260722T000135Z-41041`, riken
+`20260722T000132Z-74727`, and Home `20260722T000128Z-33115`. Final independent
+acceptance proved local plus all six remote Linux checkouts clean/current with
+fresh non-multiplexed routes; all four Mac public/private checkouts
+clean/current; all eight Mac routes ready; and every Mac alias
+`loaded=yes running=yes managed=1 external=0`.
+
+A final current-code monitor cycle from 09:02:07 through 09:02:10 JST
+classified all four pairs `state=healthy action=none`. T-293 therefore meets
+its finite engineering acceptance gates: persistent native supervision,
+automatic recovery for tested single- and simultaneous-route process failures,
+bounded state-aware observation, duplicate exclusion, exact rollback/reapply,
+clean fleet convergence, full local regression, and protected CI. This does
+not claim immunity from Mac power loss, sleep policies, local network loss, or
+external provider failure; those remain explicitly outside the guarantee.
