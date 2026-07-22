@@ -147,6 +147,12 @@ complete locally; publication, live installation, and acceptance remain.
   remained the expected environment-gated skip. No branch or commit has been
   pushed because the current global policy requires distinct explicit push
   authority.
+- Post-test routine housekeeping preserved three held-lock live directories,
+  removed two eligible empty directories through guarded-delete manifest
+  `/home/rioyokota/.codex/tmp/.harness-delete.xvoLBZ/manifest`, retained seven
+  younger-than-grace empty directories, and found zero unexpected entries. The
+  helper exact-unlinked the manifest and its empty private state directory
+  after protected anchors and target absence verified.
 
 **Next exact action:** commit the local implementation, pass the clean-checkout
 phase-one suite, then request the distinct push authority required by global
