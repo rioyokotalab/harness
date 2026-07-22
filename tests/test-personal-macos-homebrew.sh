@@ -45,8 +45,8 @@ PUBLIC=$TEMP_DIR/public
 mkdir -p "$PUBLIC/profiles/personal-macos"
 cp "$ROOT/profiles/personal-macos/base.conf" \
     "$PUBLIC/profiles/personal-macos/base.conf"
-cp "$ROOT/profiles/personal-macos/formula-policy-v3.conf" \
-    "$PUBLIC/profiles/personal-macos/formula-policy-v3.conf"
+cp "$ROOT/profiles/personal-macos/formula-policy-v4.conf" \
+    "$PUBLIC/profiles/personal-macos/formula-policy-v4.conf"
 git -C "$PUBLIC" init -q -b main
 git -C "$PUBLIC" config user.name mac-test
 git -C "$PUBLIC" config user.email mac-test.invalid
@@ -243,7 +243,7 @@ make_brew_state() {
     state=$TEMP_DIR/$name-state
     mkdir -p "$state"
     selected=$(sed -n 's/^managed_formulae=//p' \
-        "$PUBLIC/profiles/personal-macos/formula-policy-v3.conf" | tr ',' ' ')
+        "$PUBLIC/profiles/personal-macos/formula-policy-v4.conf" | tr ',' ' ')
     : >"$state/installed"
     for formula in $selected ninja; do
         [ "$formula" = tree ] || printf '%s 1.0\n' "$formula"

@@ -51,8 +51,8 @@ cp "$ROOT/.codex/rules/default.rules" "$PUBLIC/.codex/rules/default.rules"
 cp -L "$ROOT/.claude/CLAUDE.md" "$PUBLIC/.claude/CLAUDE.md"
 cp "$ROOT/profiles/personal-macos/base.conf" \
     "$PUBLIC/profiles/personal-macos/base.conf"
-cp "$ROOT/profiles/personal-macos/formula-policy-v3.conf" \
-    "$PUBLIC/profiles/personal-macos/formula-policy-v3.conf"
+cp "$ROOT/profiles/personal-macos/formula-policy-v4.conf" \
+    "$PUBLIC/profiles/personal-macos/formula-policy-v4.conf"
 printf '%s\n' 'synthetic control skill' > \
     "$PUBLIC/shared/skills/mac-test-skill/SKILL.md"
 git -C "$PUBLIC" init -q -b main

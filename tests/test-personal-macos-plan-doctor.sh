@@ -131,7 +131,7 @@ chmod 755 "$fake_bin/uname" "$fake_bin/stat" "$fake_bin/xcode-select" \
 brew_log=$TEMP_DIR/brew.log
 facts=$TEMP_DIR/facts.conf
 FAKE_RETIRED_FORMULAE=$(sed -n 's/^retired_formulae=//p' \
-    "$ROOT/profiles/personal-macos/formula-policy-v3.conf")
+    "$ROOT/profiles/personal-macos/formula-policy-v4.conf")
 export FAKE_RETIRED_FORMULAE
 HOME="$home" SHELL=/bin/zsh BREW_LOG="$brew_log" \
     PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
