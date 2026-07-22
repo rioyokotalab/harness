@@ -233,6 +233,18 @@ tunnel stanzas. Effective tunnel settings work, but the public layout planner
 correctly rejects the unmanaged Match. It was not changed during authorization
 recovery and remains a separate cleanup item after durable reachability.
 
+Aist later used the same rescue pattern from a newly created ordinary `login`
+ControlMaster: it attached both exact reverse-forward requests and Local proved
+both inbound aliases, but the routes shared one transport. Both launchd
+services remained loaded and stopped with `managed=0 external=0`, fresh
+dedicated authentication remained blocked, and the installed watchdog's latest
+receipt remained `authorization-blocked`. The ordinary master then ended and
+both routes disappeared before Local could confirm a detached full-restriction
+restage. No authorization, service, or repository state changed. Aist's
+canonical staging helper must therefore run from its persistent local terminal
+or Codex session, not through the rescue forward whose lifetime it is trying to
+outlive.
+
 An established SSH session surviving removal of its authorization explains why
 ordinary route probes had previously looked healthy. The new audit prevents
 that false assurance, but software cannot repair missing credential state.

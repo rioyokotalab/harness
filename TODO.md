@@ -305,7 +305,14 @@ route died during remote execution. The Local inbox remained on Aist's old
 entry and no authorization or privileged file changed. A retry through another
 ephemeral inbound route is unsafe because its controlling SSH session can HUP
 the helper; execute the retry from the owner's persistent Aist-local terminal
-or Codex session instead.
+or Codex session instead. Aist then created two temporary rescue forwards on a
+new ordinary `login` ControlMaster. Both routes shared that one transport;
+both managed services remained stopped with `managed=0`, dedicated auth stayed
+blocked, and the loaded watchdog retained `authorization-blocked`. Local again
+attempted a detached restage, but the rescue master and both inbound routes
+ended before the launch could be confirmed. The inbox was still unchanged and
+no authorization or service changed. Do not spend another ephemeral route on
+this operation: Aist-local execution is the required next action.
 
 Do not drill or install on any Mac until the owner restores the restricted
 authorizations and all eight fresh checks pass. Then roll out/drill those Macs
