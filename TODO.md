@@ -255,6 +255,13 @@ Execution checkpoint 2026-07-22:
   compatibility surface. The active repair restores v3 exactly, introduces
   schema-4 `formula-policy-v4.conf`, routes current adapters to v4, and pins the
   v3 Git object ID in long-gap update coverage.
+- Protected PR #224 passed and squash-merged the v4 compatibility repair as
+  `a3f46ba`; Linux and Mac checkouts are synchronized. Office and Riken v4
+  plans pass. Aist and Home stop before mutation because Homebrew's cleanup
+  dry-run reports the declared legacy Cellar path while the adapter expected
+  the declared current command target. The active fix validates both mapping
+  sides explicitly: legacy source path in evidence and current target in the
+  scoped cleanup command.
 
 ### T-273 — Resolve intentionally deferred maintenance
 

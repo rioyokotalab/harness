@@ -298,7 +298,10 @@ run_dry_runs() {
 }
 
 run_cleanup_dry_runs() {
-    for cleanup_target in $cleanup_retired_targets; do
+    for cleanup_formula in $cleanup_retired_formulae; do
+        cleanup_target=$(mapping_target "$cleanup_retirements_csv" \
+            "$cleanup_formula") ||
+            die "managed Homebrew cleanup mapping changed"
         cleanup_log=$(mktemp "${TMPDIR:-/tmp}/harness-macos-homebrew-cleanup.XXXXXX") ||
             die "cannot allocate managed Homebrew cleanup dry-run log"
         chmod 600 "$cleanup_log"
@@ -311,7 +314,7 @@ run_cleanup_dry_runs() {
             die "managed Homebrew cleanup dry-run failed"
         fi
         [ -s "$cleanup_log" ] &&
-            grep -F "$brew_prefix/Cellar/$cleanup_target/" "$cleanup_log" \
+            grep -F "$brew_prefix/Cellar/$cleanup_formula/" "$cleanup_log" \
                 >/dev/null 2>&1 || {
             unlink "$cleanup_log"
             die "managed Homebrew cleanup dry-run omitted the legacy keg"
