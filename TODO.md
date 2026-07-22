@@ -58,10 +58,12 @@ Next free ID: T-296.
 
 ### T-295 — Fleet convergence, ABQ onboarding, and external-user bootstrap
 
-**Phase/status:** interviewing. The owner requested one upfront PIE plan for
+**Phase/status:** ready-for-go. The owner requested one upfront PIE plan for
 thirteen coupled workstreams, then selected PIE's normal one-question-at-a-time
-interview. Read-only discovery and the complete decision register are recorded in
-`docs/plans/t295-fleet-convergence.md`. No target mutation has started.
+interview. Read-only discovery, decisions D1–D17, the frozen execution order,
+rollback, and acceptance gates are recorded in
+`docs/plans/t295-fleet-convergence.md`. No agent target mutation has started;
+execution awaits the final explicit PIE go.
 
 Confirmed planning facts:
 
@@ -121,10 +123,13 @@ Confirmed planning facts:
   macOS, detects missing prerequisites, assumes no private state or remote
   infrastructure, and delegates any later remote-node work explicitly to
   `onboard-mirrored-node`.
+- The official service specification identifies service-only
+  `web-o3.noc.titech.ac.jp` as Rocky Linux 8 on x86_64; an official Tokyo Tech
+  technical document independently corroborates the same fact.
 
-**Next action:** receive the complete owner decision bundle, checkpoint the
-answers, audit the plan, move to `ready-for-go`, and request the final explicit
-execution go required by PIE.
+**Next action:** receive the owner's final explicit PIE `go`, then execute the
+frozen plan autonomously and defer only genuinely new decision or approval
+blockers to the final bundle.
 
 ### T-273 — Resolve intentionally deferred maintenance
 

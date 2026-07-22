@@ -3,14 +3,14 @@
 ## Control state
 
 - Task: T-295
-- Phase: interviewing
+- Phase: ready-for-go
 - Planning date: 2026-07-22
 - Driver: Codex on `local`
 - Interview method: ask one material question at a time, following the PIE
   skill's normal interview after the owner superseded the earlier bundle
   request.
-- Mutation gate: no target-system changes until decisions are checkpointed,
-  the plan is audited and frozen, and the owner gives the final explicit go.
+- Mutation gate: decisions are checkpointed and the plan is audited and
+  frozen; target-system execution awaits the owner's final explicit go.
 
 ## Scope
 
@@ -32,7 +32,8 @@ Deliver these outcomes as one ordered program:
 8. Publish a cold-start-readable fleet alias table with verified OS facts.
 9. Converge the selected Homebrew policy across the four Macs.
 10. Onboard ABQ and add its supported route or routes to health monitoring.
-11. Freeze a cross-platform Python 3.12 policy and synchronization method.
+11. Freeze a project-owned dual-runtime Python policy and synchronization
+    method for heterogeneous LLM/HPC work.
 12. Run a new matched Codex/Claude acceptance experiment and update README
     without rewriting the frozen T-181 evidence.
 13. Create and validate an external-user onboarding skill that assumes neither
@@ -72,7 +73,7 @@ Read-only probes on 2026-07-22 confirmed:
 | office | `office` | macOS 26.5.2 | arm64 | ready |
 | riken | `riken2` | macOS 26.5.2 | arm64 | ready |
 | abq | `qes03` | Red Hat Enterprise Linux 9.4 | x86_64 | primary/emergency ready; secondary pending |
-| web | unresolved | unresolved | unresolved | authentication rejected |
+| web | `web-o3.noc.titech.ac.jp` | Rocky Linux 8 | x86_64 | service-only; documented |
 
 The value-free connection monitor reported every Mac pair healthy. ABQ's first
 direct inventory failed because local had no alias. After the owner approved
@@ -80,6 +81,12 @@ the route and established initial access-server trust, the existing nested
 route through `ab` completed inventory on `qes03`; the Aist emergency route
 also passed. The `ab2` node does not yet resolve `abq`, so its approved
 secondary route requires the planned configuration change.
+
+The owner supplied the official Science Tokyo NOC service specification for
+`web`; its Rocky Linux 8/x86_64 fact is independently corroborated by an
+official Tokyo Tech technical document:
+<https://www.noc.cii.isct.ac.jp/srv/wwwsrv/> and
+<https://www.titech.ac.jp/0/pdf/info-31935-3.pdf>.
 
 ### SSH and terminal
 
@@ -188,9 +195,8 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
   RHEL 9.4/x86-64, PBS/Git/bootstrap readiness, and outbound official HTTPS.
   The approved `ab2` secondary alias is not configured yet. `show_quota`
   initially reported a permission-writable group root with a 0 GiB limit. The
-  required Restic password file is absent. Ordinary user-level ABQ actions need
-  no later permission request; the remaining declarations and credential
-  boundary are decisions or owner actions, not repeated permission gates.
+  required Restic password file was initially absent and is now satisfied by
+  D12. Ordinary user-level ABQ actions need no later permission request.
 - D9 — **accepted storage roots and verified allocation:** use
   `/groups/qgai50157/yokota` as ABQ's persistent root and
   `/groups/qgai50157/yokota/cache` as its cache root. After the owner added
@@ -233,13 +239,18 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
   defaults. Validate discovery and capabilities with `infocmp` and `tput`,
   then verify clean Vim, tracked-config Vim, tty preservation, and alternate-
   screen restoration under a controlled PTY.
+- D17 — **accepted documented web OS:** record service-only
+  `web-o3.noc.titech.ac.jp` as Rocky Linux 8 on x86_64, sourced from the
+  owner's cited official Science Tokyo NOC specification and corroborating
+  official Tokyo Tech technical document. Do not make `web` a command or
+  deployment target.
 
 1. **Fleet scope and publication — answered/accepted.** Define the existing 11-node
    maintenance/Python/package scope as local, ab, ab2, al, rc, ri, t4, aist,
    home, office, and riken; ABQ becomes node 12 after onboarding; keep `web`
    service-only. Publish the supplied usernames and global hostnames plus
    verified OS data in the public repository and link it from project
-   `AGENTS.md` for cold starts. Confirm or change this scope/publication choice.
+   `AGENTS.md` for cold starts.
 2. **SSH role split — answered/accepted with corrected names.** Use `login`
    only for ordinary interactive access, remove `login2`, and use `tunnel` and
    `tunnel2` exclusively for the primary and secondary launchd reverse routes.
@@ -258,7 +269,7 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
 5. **ABQ routes — answered/accepted.** Add `abq` through `ProxyJump ab`, add `abq2`
    through `ProxyJump ab2` as a health/failover route, and reserve aist as an
    emergency third path rather than making health depend on a Mac reverse
-   tunnel. Confirm this route design or provide another priority.
+   tunnel.
 6. **ABQ storage, hidden-home policy, and backup topology — answered/accepted.**
    Use D9's roots, D10's hidden-home policy, and D11's two-location backup
    topology after the final go. D12 satisfies the owner-only Restic credential
@@ -277,9 +288,22 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
    follow-on workflow.
 10. **AL terminal — answered/accepted.** Apply D16's user-local terminfo fix
     and controlled validation.
-11. **Web OS remains unresolved.** Either provide an already-authorized route
-    for an OS probe or accept an explicit
-    `unknown (SFTP authentication unavailable)` OS cell.
+11. **Web OS — answered/accepted.** Publish D17's documented service OS and
+    retain `web` as service-only.
+
+## Frozen plan audit
+
+- All material scope, naming, publication, authority, topology, removal,
+  runtime, experiment, and validation choices are captured in D1–D17.
+- The implementation order respects code-before-rollout dependencies, the
+  protected-main publication gate, clean-checkout fleet synchronization, and
+  no-outage tunnel cutover.
+- Credential, administrator, host-key, external-service, destructive-cleanup,
+  and benchmark-cost boundaries remain explicit. No additional owner decision
+  is required to begin; any genuinely new execution-time decision is deferred
+  to the final blocker bundle as requested.
+- Rollback and acceptance gates cover every mutable workstream. The plan is
+  frozen and ready for the final PIE go.
 
 ## Frozen execution order after decisions and final go
 
@@ -369,13 +393,16 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
 - t4 agrees with local's SSH config after a verified mirror transaction.
 - The fleet table is complete or marks evidence-blocked fields explicitly and
   is linked from automatically loaded project guidance.
-- The selected Homebrew package/version policy passes on every Mac without
-  changing preserved extras.
+- Every Mac has D6's exact retained Homebrew formula set plus its dependency
+  closure, no rejected formula or cask, and current metadata-supported
+  versions; no tap or service state changes.
 - ABQ has coherent tracked declarations, control-plane parity, approved
   storage, manual backup/restore evidence, and health coverage, or its exact
   unavoidable owner/authentication blocker is the sole deferred item.
-- The selected Python interface and a locked sample environment validate on
-  all in-scope nodes without copying environments across architectures.
+- The pinned uv interface, available 3.11/3.12 runtimes where practical,
+  project-owned selection, and a locked sample environment validate on all
+  in-scope nodes without replacing site Python or copying environments across
+  architectures.
 - New Codex/Claude aggregates are schema-valid, matched, scoped, and published
   without changing T-181.
 - `onboard-external-user` passes canonical validation, discovery tests, and a
