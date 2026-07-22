@@ -9,7 +9,7 @@ T-288 through T-292 execution is in
 `docs/audits/macos-ssh-finalization-2026-07-21.md`. Full T-295 execution before
 compaction is preserved at `5d551883648760fcc373973a575a403b18637f44`.
 
-Next free ID: T-297.
+Next free ID: T-298.
 
 ## Current state
 
@@ -394,6 +394,22 @@ launchd-managed routes with `managed=1 external=0`; and verify all four Mac
 pairs remain healthy without credential or unrelated SSH changes.
 
 ## Active tasks
+
+### T-297 — Audit and clean Mac SSH recovery residue
+
+**Phase/status:** executing a value-free four-Mac and Local hygiene audit after
+T-296. Inventory SSH configuration structure and metadata, managed tunnel and
+watchdog ownership, launchd artifacts, current-user SSH processes and control
+sockets, tmux sessions, transaction state, known helper/rollback patterns, and
+Local controller residue. Never read, print, hash, copy, or modify key or
+authorization contents. Remove only exact, unambiguous attempt residue that is
+not live and does not belong to an active Codex or user session; preserve and
+report ambiguous state. Finish by re-running fresh authentication, route,
+doctor/config-plan, repository, and residue checks on every Mac.
+
+**Next action:** collect the initial read-only inventory from Aist, Home,
+Office, Riken, and Local, then classify every deviation against the published
+T-296 supervisor/watchdog contract before making a cleanup change.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
