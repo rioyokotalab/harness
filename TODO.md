@@ -141,8 +141,8 @@ Execution checkpoint 2026-07-22:
   `login`/`login2` to `tunnel`/`tunnel2`, and applies D3's exact X11 boundary.
 - `tests/test-fleet-inventory.sh` and `tests/test-ssh-config-layout.sh` pass.
   The first Phase 1 run passed every other focused suite but
-  `test-tmux-config.sh` correctly refused the dirty checkout; rerun from the
-  committed clean tree is the next action.
+  `test-tmux-config.sh` correctly refused the dirty checkout. After commit
+  `ecc945d`, the full `tests/test-phase1.sh` rerun passed from a clean tree.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
