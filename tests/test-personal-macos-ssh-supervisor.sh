@@ -117,6 +117,7 @@ case "${1:-}" in
         plist=${3:-}
         name=${plist##*.ssh.}; name=${name%.plist}; marker=$state/$name
         [ ! -e "$HOME/.fake-bootstrap-fail" ] || exit 1
+        printf '%s\n' "$name" >>"$HOME/.fake-bootstrap-calls"
         : >"$marker"
         ;;
     bootout)
@@ -307,6 +308,25 @@ unlink "$apply_home/.fake-auth-fail"
 run_supervisor "$apply_home" --host mac-test-pilot --kick login >"$TEMP_DIR/kick.out"
 [ "$(wc -l <"$apply_home/.fake-kick-calls" | tr -d ' ')" -eq 1 ] ||
     fail "successful kick did not call launchctl exactly once"
+
+bootstrap_before=$(wc -l <"$apply_home/.fake-bootstrap-calls" | tr -d ' ')
+unlink "$apply_home/.fake-launch-state/login"
+touch "$apply_home/.fake-auth-fail"
+if run_supervisor "$apply_home" --host mac-test-pilot --kick login \
+    >"$TEMP_DIR/unloaded-auth-fail.out" 2>&1; then
+    fail "unloaded recovery accepted authentication drift"
+fi
+[ "$(wc -l <"$apply_home/.fake-bootstrap-calls" | tr -d ' ')" -eq \
+    "$bootstrap_before" ] || fail "authentication failure reached bootstrap"
+[ ! -e "$apply_home/.fake-launch-state/login" ] ||
+    fail "failed unloaded recovery created a service"
+unlink "$apply_home/.fake-auth-fail"
+run_supervisor "$apply_home" --host mac-test-pilot --kick login \
+    >"$TEMP_DIR/unloaded-recovery.out"
+grep -F 'alias=login action=bootstrap status=running' \
+    "$TEMP_DIR/unloaded-recovery.out" >/dev/null || fail "unloaded bootstrap result"
+[ -e "$apply_home/.fake-launch-state/login" ] ||
+    fail "unloaded recovery did not bootstrap the service"
 
 if run_supervisor "$apply_home" --rollback "$tx" >"$TEMP_DIR/active-rollback.out" 2>&1; then
     fail "rollback accepted an active service"

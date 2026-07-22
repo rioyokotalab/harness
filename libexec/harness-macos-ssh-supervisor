@@ -413,20 +413,36 @@ if [ "$mode" = kick ]; then
     validate_transaction "$transaction_id"
     marker=$transaction_root/$transaction_id.macos-ssh-supervisor.$supervised_alias.active
     macos_require_private_file "$marker" "$current_uid"
-    service_loaded "$supervised_alias" || die "Mac SSH supervisor service is not loaded"
+    recovery_action=kick
+    if ! service_loaded "$supervised_alias"; then
+        recovery_action=bootstrap
+    fi
     managed_before=$(managed_process_count "$supervised_alias")
     [ "$managed_before" -le 1 ] &&
         [ "$(external_process_count "$supervised_alias")" -eq 0 ] ||
         die "Mac SSH supervisor process ownership is invalid"
+    [ "$recovery_action" != bootstrap ] || [ "$managed_before" -eq 0 ] ||
+        die "unloaded Mac SSH supervisor has a managed process"
     unattended_auth_ready "$supervised_alias" ||
         die "unattended SSH authentication is not ready for restart"
-    launchctl kickstart -k "gui/$current_uid/$(label_for "$supervised_alias")" >/dev/null ||
-        die "Mac SSH supervisor kickstart failed"
-    wait_for_running "$supervised_alias" || die "Mac SSH supervisor did not recover"
+    target="gui/$current_uid/$(label_for "$supervised_alias")"
+    if [ "$recovery_action" = kick ]; then
+        launchctl kickstart -k "$target" >/dev/null ||
+            die "Mac SSH supervisor kickstart failed"
+    else
+        launchctl bootstrap "gui/$current_uid" "$(plist_for "$supervised_alias")" >/dev/null ||
+            die "Mac SSH supervisor bootstrap recovery failed"
+    fi
+    if ! wait_for_running "$supervised_alias"; then
+        [ "$recovery_action" != bootstrap ] ||
+            launchctl bootout "$target" >/dev/null 2>&1 || true
+        die "Mac SSH supervisor did not recover"
+    fi
     [ "$(managed_process_count "$supervised_alias")" -eq 1 ] &&
         [ "$(external_process_count "$supervised_alias")" -eq 0 ] ||
         die "Mac SSH supervisor process ownership is invalid after kick"
-    printf 'MACOS_SSH_SUPERVISOR alias=%s action=kick status=running\n' "$supervised_alias"
+    printf 'MACOS_SSH_SUPERVISOR alias=%s action=%s status=running\n' \
+        "$supervised_alias" "$recovery_action"
     exit 0
 fi
 

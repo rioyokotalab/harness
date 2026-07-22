@@ -431,10 +431,14 @@ harness macos-ssh-supervisor --host LOGICAL_ID --status
 
 Activation revalidates unattended authentication, refuses any non-launchd
 process for that alias, bootstraps only its exact transaction plist, and
-requires the service to remain running. `--kick login|login2` performs a
-launchd-native forced restart for an already active transaction. Rollback is
-deliberately staged: deactivate each service while its sibling or predecessor
-route remains available, then remove only unchanged transaction-owned files.
+requires the service to remain running. `--kick login|login2` first proves
+fresh dedicated-identity authentication and exclusive process ownership. It
+then performs a launchd-native forced restart for a loaded service or
+bootstraps the unchanged transaction plist when an active transaction's
+service has become unloaded. A failed bootstrap is booted out before the
+command fails. Rollback is deliberately staged: deactivate each service while
+its sibling or predecessor route remains available, then remove only unchanged
+transaction-owned files.
 
 ```bash
 harness macos-ssh-supervisor --deactivate TRANSACTION_ID --alias login
