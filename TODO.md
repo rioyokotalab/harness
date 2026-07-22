@@ -142,8 +142,8 @@ drain, controller use of the same state machine, fresh-auth auditing, and
 explicit authorization-blocked recovery outcomes. Their protected commits are
 `55693c581556446bb374fe2b32d64e700eae7aca`,
 `d91857b2ff11eaaf464136915bf23cfa089bba93`, and
-`2ca91146021989014ed9b5108e99dfc8e67a0528`; all managed checkouts are clean and
-current at the last commit.
+`2ca91146021989014ed9b5108e99dfc8e67a0528`; all managed checkouts were then
+clean and current at that commit.
 
 The live soak also caught Home2 down while Home stayed healthy. Unlike Aist's
 stale-listener sample, Home2's Local listener was absent and a fresh dedicated
@@ -203,8 +203,8 @@ be attributed to the live Aist outage without Aist-side checkout evidence.
 event counts and bounds, then stop only `t296-night-watch`. The owner must
 verify the four exact restricted authorizations and restore every missing Aist,
 Home, Office, or Riken entry before their missing routes can recover or their
-watchdog drills can run. The recommended one-time admin hardening is recorded in the audit;
-credentials and sshd policy remain outside agent authority.
+watchdog drills can run. The recommended one-time admin hardening is recorded
+in the audit; credentials and sshd policy remain outside agent authority.
 
 Continue the Aist soak, but do not drill or install on Home, Office, or Riken
 until the owner restores both restricted authorizations and all six fresh

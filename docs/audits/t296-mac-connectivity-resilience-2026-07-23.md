@@ -45,7 +45,7 @@ launchd baseline on timeout or failure.
 | --- | --- | --- | --- |
 | One tunnel client exits or one upstream route fails | launchd plus the 30-second Mac watchdog restores only the failed route; the healthy sibling remains loaded | Existing dedicated identity, exact fixed listener, and zero external processes | Usually one watchdog interval plus connection and 20-second stabilization time |
 | Both clients exit while old Local listeners are free | Mac watchdog serializes, probes both real binds, and restores primary then secondary | Same two restricted identities and listeners; no alternate port or identity | One watchdog interval plus sequential stabilization |
-| Both clients disappear while Local retains half-open sessions | Server `15/3` encrypted-channel liveness releases listeners; Mac watchdog performs bounded drain and sequential restore | No sshd process kill and no broad `permitlisten` | Target under two minutes after matched live validation; without server liveness, the new hard bound is 1,200 elapsed seconds plus one watchdog interval |
+| Both clients disappear while Local retains half-open sessions | Server `15/3` encrypted-channel liveness releases listeners; Mac watchdog performs bounded drain and sequential restore | No sshd process kill and no broad `permitlisten` | Target under two minutes after matched live validation; without server liveness, stop starting probes at 1,200 elapsed seconds, then allow only the bounded in-flight probe/stabilization and one watchdog interval |
 | Account-level ordinary authorization file is rewritten | Root-owned secondary `AuthorizedKeysFile` preserves the four exact tunnel entries | User agents cannot modify the root-owned file; ordinary keys remain separately managed | No outage from ordinary-file rewrite after admin rollout |
 | Controller and watchdog overlap | Shared private lease permits one recovery owner; private last-run receipt identifies the watchdog result | Current-user mode-0700/0600 state with PID/start identity and exact schema | Immediate defer to the active owner, then next scheduled invocation |
 | Mac is powered off, both upstream networks fail, Local or sshd is unavailable, or root-owned authorization is damaged | No SSH-only recovery path exists | Must not bypass authentication or create an unreviewed third party | Explicit external failure requiring power, network, controller, or admin repair |
@@ -85,6 +85,10 @@ all focused suites and guarded-delete tests before publication. Native macOS
 probes on all four Macs proved the recovery lock's atomic noclobber behavior,
 owner/mode/link gates, and stable PID/start identity. All temporary lock and
 power-log probes were exact-cleaned.
+
+After PR #264, Riken provided the only reachable native Mac validation. A
+healthy `--recover-pair` invocation returned `action=none reason=route-running`;
+the following status retained both routes at `managed=1 external=0`.
 
 Guarded fleet-sync advanced local, all managed remote Linux checkouts, and all
 four Macs to `2ca91146021989014ed9b5108e99dfc8e67a0528`. One
@@ -150,7 +154,9 @@ transaction-owned launch agent and private current pointer:
 harness macos-tunnel-watchdog --rollback 20260722T160219Z-66174
 ```
 
-Rollback is not indicated while the Aist soak remains healthy.
+Rollback is not indicated while Aist is stranded: the transaction restores its
+launchd baseline on failure, and removing the only installed local recovery
+authority would not repair authorization or upstream connectivity.
 
 ## Authorization drift discovered by soak
 
@@ -256,7 +262,8 @@ bound.
    root-owned secondary file.
 2. Require `auth_blocked=0` on all four Macs; then restore all missing routes
    through the published bounded recovery.
-3. Install the watchdog transaction on Home, Office, and Riken one at a time.
+3. Upgrade Aist to the current direct-launch watchdog transaction, then install
+   the watchdog on Home, Office, and Riken one at a time.
 4. After each install, run primary-only, secondary-only, and simultaneous-loss
    drills, retaining a healthy sibling whenever possible and validating both
    inbound routes plus `managed=1 external=0`.
