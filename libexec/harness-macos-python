@@ -80,7 +80,7 @@ case "$action" in
     INSTALL)
         printf 'INSTALL python_tree=%s\n' "$install_dir"
         printf 'CREATE link=%s source=managed-tree\n' "$stable_link"
-        printf 'NATIVE uv python install --install-dir STAGING --no-bin --no-cache --no-progress %s\n' "$minor"
+        printf 'NATIVE uv python install --install-dir STAGING --no-bin --no-cache --no-progress %s\n' "$patch"
         ;;
     BLOCK) printf 'BLOCK python=%s reason=partial-or-unmanaged-state\n' "$minor" ;;
 esac
@@ -137,8 +137,8 @@ trap cleanup EXIT HUP INT TERM
 printf 'schema=1\nhost=%s\nrevision=%s\n' "$logical_host" \
     "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" >"$manifest"
 chmod 600 "$manifest"
-printf 'NATIVE uv python install --install-dir STAGING --no-bin --no-cache --no-progress %s\n' "$minor"
-UV_NO_CONFIG=1 uv python install --install-dir "$stage" --no-bin --no-cache --no-progress "$minor"
+printf 'NATIVE uv python install --install-dir STAGING --no-bin --no-cache --no-progress %s\n' "$patch"
+UV_NO_CONFIG=1 uv python install --install-dir "$stage" --no-bin --no-cache --no-progress "$patch"
 implementation_dir=$(find "$stage" -mindepth 1 -maxdepth 1 -type d -name 'cpython-*' -print)
 [ "$(printf '%s\n' "$implementation_dir" | awk 'NF { n++ } END { print n + 0 }')" -eq 1 ] ||
     die "uv created an unexpected Mac Python layout"

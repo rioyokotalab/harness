@@ -1982,6 +1982,7 @@ chmod 755 "$fake_python"
 printf '%s\n' \
     '#!/bin/sh' \
     'if [ "${1:-}" = --version ]; then echo "uv 0.11.31 (x86_64-unknown-linux-gnu)"; exit 0; fi' \
+    'printf "%s\n" "$@" >"$UV_ARGS_LOG"' \
     'install_dir=' \
     'while [ "$#" -gt 0 ]; do' \
     '  case "$1" in --install-dir) install_dir=$2; shift 2 ;; *) shift ;; esac' \
@@ -1992,8 +1993,11 @@ printf '%s\n' \
     'cp "$FIXTURE_PYTHON" "$target/python3.12"' >"$python_bin/uv"
 chmod 755 "$python_bin/uv"
 HOME="$python_home" PATH="$python_bin" FIXTURE_PYTHON="$fake_python" \
+    UV_ARGS_LOG="$TEMP_DIR/python-uv-args.log" \
     "$test_repo/bin/harness" python --host local --minor 3.12 --apply \
     >"$TEMP_DIR/python-apply.out"
+grep -Fx '3.12.12' "$TEMP_DIR/python-uv-args.log" >/dev/null ||
+    fail "managed Python apply did not request the exact declared patch"
 python_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
     "$TEMP_DIR/python-apply.out")
 [ -n "$python_transaction" ] || fail "missing Python transaction"

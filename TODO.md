@@ -315,6 +315,18 @@ Execution checkpoint 2026-07-22:
   `abq` declarations and fixture at `70b955e`; after protected publication it
   will bootstrap that exact clean revision before any hidden-state or backup
   mutation.
+- Protected PR #231 passed and squash-merged the ABQ declarations as
+  `e2a104d`. A SHA-256-verified mode-0600 Git bundle created the exact clean
+  ABQ checkout and was exact-unlinked on both ends. The 1 TiB Lustre roots
+  passed write/fsync and atomic-checkpoint probes; `.local` was initially
+  absent, so its persistent target and declared link were created without a
+  source move. Control-plane, shell, cache, Bash, Vim, and SSH-layout
+  transactions completed. Portable tools through Codex plus Python 3.11.15
+  installed successfully. Python 3.12 apply then caught uv resolving floating
+  `3.12` to 3.12.13 instead of the declared Linux patch 3.12.12 and
+  guarded-deleted the entire staging tree. The active corrective slice makes
+  Linux and macOS uv invocations request the exact declared patch and adds
+  command-level regressions before the safe ABQ retry.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
