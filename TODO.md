@@ -111,6 +111,10 @@ Confirmed planning facts:
   `/mnt/nfs-03/safe/Users/rioyokota/restic-replicas/abq` as its independent
   replica. The owner provisioned the Restic password on ABQ; a value-free
   check verified a current-user-owned regular file with mode `0600`.
+- The accepted `onboard-external-user` skill is local-first for Linux and
+  macOS, detects missing prerequisites, assumes no private state or remote
+  infrastructure, and delegates any later remote-node work explicitly to
+  `onboard-mirrored-node`.
 
 **Next action:** receive the complete owner decision bundle, checkpoint the
 answers, audit the plan, move to `ready-for-go`, and request the final explicit

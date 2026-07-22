@@ -207,6 +207,12 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
   families. Record current CLI/default-model identities, match sandbox,
   reasoning, and run budgets, run a 9-run pilot per client, and proceed to the
   35-run full stage per client only when the pilot gates pass.
+- D15 — **accepted external-user skill:** create `onboard-external-user` as a
+  local-first Linux/macOS clone, install, preflight, and validation workflow.
+  It detects and explains missing prerequisites and assumes no hidden files,
+  credentials, private repository, remote nodes, storage, or backups. Remote
+  node onboarding remains an explicit follow-on through
+  `onboard-mirrored-node`.
 
 1. **Fleet scope and publication — answered/accepted.** Define the existing 11-node
    maintenance/Python/package scope as local, ab, ab2, al, rc, ri, t4, aist,
@@ -246,12 +252,9 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
 8. **Codex/Claude benchmark interpretation — answered/accepted.** Implement
    D14's new dated, symmetric experiment and README result table without
    replacing the historical T-181 results.
-9. **External-user skill.** Recommended name and scope:
-   `onboard-external-user`, for a local-first clone/install/preflight on Linux
-   or macOS with missing-prerequisite detection, no assumed hidden files,
-   credentials, private companion, remote nodes, storage, or backups; adding a
-   remote node remains an explicit follow-on via `onboard-mirrored-node`.
-   Confirm or expand the intended trigger examples/scope.
+9. **External-user skill — answered/accepted.** Implement D15's local-first,
+   prerequisite-aware scope and keep remote-node onboarding as an explicit
+   follow-on workflow.
 10. **Unresolved observations.** AL's measured defect is specifically missing
     `tmux-256color`; the proposed fix installs the exact public terminfo entry
     in the user tree without changing the site default. Confirm that matches
