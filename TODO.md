@@ -23,6 +23,10 @@ Next free ID: T-296.
   fragment. All four private Mac profiles use schema 3 with exactly four
   per-host SSH payloads and no legacy payload. Final execution preserved every
   Mac's distinct non-shared SSH bytes.
+- T-295 is complete. Its thirteen frozen workstreams converged the SSH, X11,
+  terminal, Codex, arg0, package, Python, ABQ, benchmark, fleet-inventory, and
+  external-user onboarding contracts. Final owner-side reauthorization and
+  independent validation restored all eight launchd-managed Mac routes.
 - The final Mac acceptance proved clean/current public and private Git, current
   updater/startup/SSH plans, managed non-login/login shells, both doctors, and
   zero formula-policy residue. Home's recurring known Codex-installer tail and
@@ -58,12 +62,13 @@ Next free ID: T-296.
 
 ### T-295 — Fleet convergence, ABQ onboarding, and external-user bootstrap
 
-**Phase/status:** executing. The owner requested one upfront PIE plan for
-thirteen coupled workstreams, then selected PIE's normal one-question-at-a-time
-interview. Read-only discovery, decisions D1–D17, the frozen execution order,
+**Phase/status:** complete as of 2026-07-22. The owner requested one upfront
+PIE plan for thirteen coupled workstreams, then selected PIE's normal
+one-question-at-a-time interview. Decisions D1–D17, the frozen execution order,
 rollback, and acceptance gates are recorded in
-`docs/plans/t295-fleet-convergence.md`. No agent target mutation has started;
-the owner supplied the final explicit PIE go on 2026-07-22.
+`docs/plans/t295-fleet-convergence.md`; the owner supplied the final explicit
+PIE go on 2026-07-22 and every frozen workstream reached its defined terminal
+state.
 
 Confirmed planning facts:
 
@@ -127,13 +132,14 @@ Confirmed planning facts:
   `web-o3.noc.titech.ac.jp` as Rocky Linux 8 on x86_64; an official Tokyo Tech
   technical document independently corroborates the same fact.
 
-**Next action:** publish the fail-closed tunnel-restart preflight, synchronize
-the fleet, and finish all acceptance that does not require SSH credential
-mutation. The owner must then reauthorize the four existing dedicated tunnel
-identities on `local`; fresh isolated authentication currently fails for both
-aliases on every Mac, while surviving already-authenticated sessions mask the
-failure until restart. Do not inspect or mutate those credentials from an
-agent session.
+**Closure:** protected publication, fleet synchronization, and all noncredential
+acceptance completed. The owner then reauthorized the four existing dedicated
+tunnel identities without exposing credential values. Independent final checks
+proved fresh dedicated authentication, two inbound routes, exclusive
+launchd-managed ownership, clean current Git, and zero-warning Mac doctors on
+all four Macs. `web` remains an intentional service-only non-target. AL's later
+public-key access failure is external authentication state and does not reopen
+its completed user-local terminal acceptance.
 
 Execution checkpoint 2026-07-22:
 
@@ -449,6 +455,15 @@ Execution checkpoint 2026-07-22:
   exhausted without credential mutation. Home and Riken still require
   owner-side key reauthorization; after Home reauthorization, recover its two
   routes, advance its clean checkout from `ee10361`, and run final acceptance.
+- Final credential recovery completed transactionally for Home, Office, and
+  Riken, with Aist independently recovered by its local supervisor. Every Mac
+  passed fresh agent-disabled dedicated authentication for `tunnel` and
+  `tunnel2`; all eight inbound routes were ready; every service reported
+  `loaded=yes running=yes managed=1 external=0`; all four doctors had zero
+  failures and warnings; all public checkouts were clean/current at `70cf87e`;
+  helpers and temporary state were absent; and the owner exact-unlinked each
+  validated credential-bearing rollback snapshot. Local Git remained clean
+  and no SSH configuration was changed during this final recovery.
 
 ### T-273 — Resolve intentionally deferred maintenance
 

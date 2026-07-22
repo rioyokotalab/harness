@@ -3,14 +3,14 @@
 ## Control state
 
 - Task: T-295
-- Phase: ready-for-go
+- Phase: complete
 - Planning date: 2026-07-22
 - Driver: Codex on `local`
 - Interview method: ask one material question at a time, following the PIE
   skill's normal interview after the owner superseded the earlier bundle
   request.
-- Mutation gate: decisions are checkpointed and the plan is audited and
-  frozen; target-system execution awaits the owner's final explicit go.
+- Mutation gate: satisfied by the owner's final explicit go; execution and
+  acceptance completed on 2026-07-22.
 
 ## Scope
 
@@ -420,6 +420,5 @@ values.
 
 ## Next action
 
-Receive answers to questions 1–10, update this file's decision register, audit
-for unanswered material choices, mark the plan `ready-for-go`, summarize it,
-and request the final explicit execution go.
+None. T-295 is complete. Resume only an independently eligible task from
+`TODO.md`; do not repeat live convergence or credential recovery.
