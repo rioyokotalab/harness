@@ -117,10 +117,15 @@ part of autonomous execution.
 5. Poll real forward-bind probes for both aliases on a bounded schedule. A
    successful short probe must exit cleanly; bootstrap that alias only after
    its probe releases. Require one managed process, no external process, and a
-   stabilization interval before declaring the route restored.
+   stabilization interval before declaring the route restored. If a bind probe
+   fails, recheck authentication without the forward: continue draining only
+   when authentication still succeeds, otherwise restore the baseline and
+   classify authorization drift immediately.
 6. Continue independently for the other alias. On timeout or ambiguity,
    restore the exact launchd baseline where safe, emit only value-free state,
-   and retry on the next scheduled watchdog invocation. Never broaden scope.
+   and retry on the next scheduled watchdog invocation. Enforce the timeout by
+   elapsed wall time rather than retry count so SSH connection timeouts cannot
+   silently extend the recovery bound. Never broaden scope.
 7. The Local monitor supplies independent end-to-end inbound validation and
    recovery latency. The Mac watchdog never claims route reachability solely
    from process existence.
