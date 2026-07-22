@@ -44,10 +44,46 @@ while [ "$#" -gt 0 ]; do
 done
 
 case "$grace_seconds" in ''|*[!0-9]*) die "arg0 grace must be a nonnegative integer" ;; esac
-[ "$(uname -s)" = Linux ] || die "arg0 housekeeping is supported only on Linux"
-for required in awk date find flock grep id mkdir mktemp mv realpath rmdir stat unlink wc; do
+platform=$(uname -s)
+case "$platform" in Linux|Darwin) ;; *) die "arg0 housekeeping requires Linux or macOS" ;; esac
+for required in awk date find grep id mkdir mktemp mv realpath rmdir stat unlink wc; do
     command -v "$required" >/dev/null 2>&1 || die "arg0 housekeeping requires command: $required"
 done
+case "$platform" in
+    Linux) command -v flock >/dev/null 2>&1 || die "arg0 housekeeping requires command: flock" ;;
+    Darwin) command -v perl >/dev/null 2>&1 || die "arg0 housekeeping requires command: perl" ;;
+esac
+
+path_owner() {
+    case "$platform" in Darwin) stat -f '%u' "$1" ;; *) stat -Lc '%u' -- "$1" ;; esac
+}
+path_mode() {
+    case "$platform" in Darwin) stat -f '%Lp' "$1" ;; *) stat -Lc '%a' -- "$1" ;; esac
+}
+path_links() {
+    case "$platform" in Darwin) stat -f '%l' "$1" ;; *) stat -Lc '%h' -- "$1" ;; esac
+}
+path_identity() {
+    case "$platform" in Darwin) stat -f '%d:%i' "$1" ;; *) stat -Lc '%d:%i' -- "$1" ;; esac
+}
+path_modified() {
+    case "$platform" in Darwin) stat -f '%m' "$1" ;; *) stat -Lc '%Y' -- "$1" ;; esac
+}
+canonical_path() {
+    case "$platform" in Darwin) realpath "$1" ;; *) realpath -e -- "$1" ;; esac
+}
+lock_is_available() {
+    lock_file=$1
+    case "$platform" in
+        Linux) flock -n "$lock_file" -c true 2>/dev/null ;;
+        Darwin)
+            perl -MFcntl=:flock -e '
+                open(my $fh, "+<", $ARGV[0]) or exit 2;
+                flock($fh, LOCK_EX | LOCK_NB) or exit 3;
+            ' "$lock_file" 2>/dev/null
+            ;;
+    esac
+}
 
 current_uid=$(id -u)
 codex_home=${CODEX_HOME:-$HOME/.codex}
@@ -64,18 +100,18 @@ if [ ! -e "$arg_root" ] && [ ! -L "$arg_root" ]; then
     exit 0
 fi
 [ -d "$arg_root" ] && [ ! -L "$arg_root" ] || die "arg0 root is not a real directory"
-arg_root=$(realpath -e -- "$arg_root")
-[ "$(stat -Lc '%u' -- "$arg_root")" = "$current_uid" ] || die "arg0 root owner differs"
+arg_root=$(canonical_path "$arg_root")
+[ "$(path_owner "$arg_root")" = "$current_uid" ] || die "arg0 root owner differs"
 tmp_root=${arg_root%/*}
 [ -d "$tmp_root" ] && [ ! -L "$tmp_root" ] || die "arg0 parent is not a real directory"
-[ "$(stat -Lc '%u' -- "$tmp_root")" = "$current_uid" ] || die "arg0 parent owner differs"
+[ "$(path_owner "$tmp_root")" = "$current_uid" ] || die "arg0 parent owner differs"
 
 if [ -n "$baseline" ]; then
     case "$baseline" in /*) ;; *) die "arg0 baseline must be absolute" ;; esac
     [ -f "$baseline" ] && [ ! -L "$baseline" ] || die "arg0 baseline is not a regular file"
-    [ "$(stat -Lc '%u' -- "$baseline")" = "$current_uid" ] || die "arg0 baseline owner differs"
-    [ "$(stat -Lc '%a' -- "$baseline")" = 600 ] || die "arg0 baseline mode must be 600"
-    [ "$(stat -Lc '%h' -- "$baseline")" = 1 ] || die "arg0 baseline must have one link"
+    [ "$(path_owner "$baseline")" = "$current_uid" ] || die "arg0 baseline owner differs"
+    [ "$(path_mode "$baseline")" = 600 ] || die "arg0 baseline mode must be 600"
+    [ "$(path_links "$baseline")" = 1 ] || die "arg0 baseline must have one link"
 fi
 
 inventory=$(mktemp "$tmp_root/.arg0-inventory.XXXXXX") || die "cannot allocate arg0 inventory"
@@ -100,10 +136,13 @@ find "$arg_root" -mindepth 1 -maxdepth 1 -print >"$inventory" || die "cannot inv
 expected_layout() {
     directory=$1
     [ -f "$directory/.lock" ] && [ ! -L "$directory/.lock" ] || return 1
-    for helper in apply_patch applypatch codex-execve-wrapper codex-linux-sandbox; do
+    helpers='apply_patch applypatch codex-execve-wrapper'
+    [ "$platform" != Linux ] || helpers="$helpers codex-linux-sandbox"
+    for helper in $helpers; do
         [ -L "$directory/$helper" ] || return 1
     done
-    [ "$(find "$directory" -mindepth 1 -maxdepth 1 -print | wc -l | tr -d ' ')" -eq 5 ]
+    case "$platform" in Linux) expected_count=5 ;; Darwin) expected_count=4 ;; esac
+    [ "$(find "$directory" -mindepth 1 -maxdepth 1 -print | wc -l | tr -d ' ')" -eq "$expected_count" ]
 }
 
 is_observed_completion() {
@@ -135,11 +174,11 @@ while IFS= read -r candidate; do
     [ -d "$candidate" ] && [ ! -L "$candidate" ] || {
         unexpected=$((unexpected + 1)); continue;
     }
-    [ "$(stat -Lc '%u' -- "$candidate")" = "$current_uid" ] || {
+    [ "$(path_owner "$candidate")" = "$current_uid" ] || {
         unexpected=$((unexpected + 1)); continue;
     }
-    identity=$(stat -Lc '%d:%i' -- "$candidate")
-    modified=$(stat -Lc '%Y' -- "$candidate")
+    identity=$(path_identity "$candidate")
+    modified=$(path_modified "$candidate")
     age=$((now - modified))
     [ "$age" -ge 0 ] || { unexpected=$((unexpected + 1)); continue; }
     observed=no
@@ -147,7 +186,7 @@ while IFS= read -r candidate; do
 
     kind=
     if expected_layout "$candidate"; then
-        if flock -n "$candidate/.lock" -c true 2>/dev/null; then
+        if lock_is_available "$candidate/.lock"; then
             if [ "$age" -ge "$grace_seconds" ] || [ "$observed" = yes ]; then
                 kind=locked
             else
@@ -173,22 +212,52 @@ while IFS= read -r candidate; do
     destination=$quarantine/$name
     [ ! -e "$destination" ] && [ ! -L "$destination" ] || die "arg0 quarantine target collision"
     if [ "$kind" = locked ]; then
-        # shellcheck disable=SC2016
-        if flock -n "$candidate/.lock" sh -c '
-            set -eu
-            [ -d "$1" ] && [ ! -L "$1" ]
-            [ "$(stat -Lc "%d:%i" -- "$1")" = "$3" ]
-            [ "$(stat -Lc "%u" -- "$1")" = "$4" ]
-            [ -f "$1/.lock" ] && [ ! -L "$1/.lock" ]
-            [ ! -e "$2" ] && [ ! -L "$2" ]
-            mv -- "$1" "$2"
-        ' sh "$candidate" "$destination" "$identity" "$current_uid"; then
+        if [ "$platform" = Linux ]; then
+            # shellcheck disable=SC2016
+            lock_move='set -eu
+                [ -d "$1" ] && [ ! -L "$1" ]
+                [ "$(stat -Lc "%d:%i" -- "$1")" = "$3" ]
+                [ "$(stat -Lc "%u" -- "$1")" = "$4" ]
+                [ -f "$1/.lock" ] && [ ! -L "$1/.lock" ]
+                [ ! -e "$2" ] && [ ! -L "$2" ]
+                mv -- "$1" "$2"'
+            if flock -n "$candidate/.lock" sh -c "$lock_move" sh \
+                "$candidate" "$destination" "$identity" "$current_uid"; then
+                lock_moved=yes
+            else
+                lock_moved=no
+            fi
+        else
+            # Perl holds the advisory lock while the shell revalidates and
+            # renames the exact directory with BSD-native stat syntax.
+            # shellcheck disable=SC2016
+            lock_move='set -eu
+                [ -d "$1" ] && [ ! -L "$1" ]
+                [ "$(stat -f "%d:%i" "$1")" = "$3" ]
+                [ "$(stat -f "%u" "$1")" = "$4" ]
+                [ -f "$1/.lock" ] && [ ! -L "$1/.lock" ]
+                [ ! -e "$2" ] && [ ! -L "$2" ]
+                mv "$1" "$2"'
+            if perl -MFcntl=:flock -e '
+                my ($lock, @command) = @ARGV;
+                open(my $fh, "+<", $lock) or exit 2;
+                flock($fh, LOCK_EX | LOCK_NB) or exit 3;
+                system(@command);
+                exit($? == -1 ? 127 : $? >> 8);
+            ' "$candidate/.lock" sh -c "$lock_move" sh \
+                "$candidate" "$destination" "$identity" "$current_uid"; then
+                lock_moved=yes
+            else
+                lock_moved=no
+            fi
+        fi
+        if [ "$lock_moved" = yes ]; then
             moved=$((moved + 1))
         else
             live=$((live + 1))
         fi
     else
-        [ "$(stat -Lc '%d:%i' -- "$candidate")" = "$identity" ] &&
+        [ "$(path_identity "$candidate")" = "$identity" ] &&
             [ ! -e "$candidate/.lock" ] &&
             [ -z "$(find "$candidate" -mindepth 1 -maxdepth 1 -print -quit)" ] ||
             die "empty arg0 candidate changed before quarantine"

@@ -44,15 +44,16 @@ absolute native path, preventing recursion or silent fallback, and preserves
 all arguments and subcommands. Client-persisted project trust stays only in the
 private live regular file and never dirties public Git.
 
-## Linux NFS arg0 wrapper
+## Lock-aware arg0 housekeeping and the Linux NFS wrapper
 
-On Linux hosts where the official standalone Codex home resides on NFS,
-`codex-arg0-housekeeping` classifies immediate helper directories without
-stopping Codex. Held locks are live. Old empty directories and expected-layout
-directories with acquirable locks move atomically to a same-filesystem private
-quarantine, and only that quarantine is removed through guarded-delete. A
-mode-0600 baseline lets the launcher identify residue from an invocation whose
-exit it directly observed without weakening protection for concurrent sessions.
+On Linux and macOS, `codex-arg0-housekeeping` classifies immediate helper
+directories without stopping Codex. Held locks are live. Linux uses native
+`flock`; macOS uses Perl's nonblocking POSIX `flock` and its four-helper Darwin
+layout. Old empty directories and platform-expected directories with
+acquirable locks move atomically to a same-filesystem private quarantine, and
+only that quarantine is removed through guarded-delete. A mode-0600 baseline
+lets a launcher identify residue from an invocation whose exit it directly
+observed without weakening protection for concurrent sessions.
 
 The separately authorized version-scoped wrapper retains the exact official
 binary as `codex.real` in the same standalone release, installs a small launcher
