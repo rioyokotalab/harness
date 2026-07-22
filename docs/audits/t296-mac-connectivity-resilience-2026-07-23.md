@@ -56,6 +56,17 @@ absolute for power, network, controller, or root-policy loss; the implemented
 goal is zero owner intervention for every recoverable client and stale-session
 failure while retaining the current least-privilege boundary.
 
+### Alternatives rejected
+
+| Alternative | Why it is not the selected scheme |
+| --- | --- |
+| Add more fixed TCP reverse tunnels | They would share the same Mac, Local sshd, and authorization file, so they add no independence against the observed failures and create more stale-listener collisions. |
+| Replace launchd with `autossh` | It can restart a client but cannot release a listener retained by Local's old sshd session; it duplicates native launchd supervision without changing the root cause. |
+| Kill Local sshd children from the controller | The unprivileged account cannot attribute a root-owned listener safely to one Mac, so a kill could terminate unrelated sessions. |
+| Switch to Unix-socket reverse forwards | A live probe was refused by the existing restricted authorization; permitting it would require broadening or redesigning the exact listener restriction. |
+| Depend on phone remote control or a hosted overlay/VPN | This adds a separate service and trust/identity boundary. It may be useful as owner-operated out-of-band access, but it is not a security-equivalent replacement for the restricted harness tunnels. |
+| Keep a user-writable canonical copy of `authorized_keys` | It duplicates credentials inside the same write boundary and can drift or be overwritten with the original. A root-owned secondary source isolates the failure instead. |
+
 ## Published control plane
 
 | PR | Protected commit | Result |
@@ -66,6 +77,7 @@ failure while retaining the current least-privilege boundary.
 | #260 | `2ca91146021989014ed9b5108e99dfc8e67a0528` | Explicit primary/secondary authorization-blocked classification after a failed recovery. |
 | #261 | `c0772af617fe9ddf884c104b7be54a63daf09d27` | Atomic mode-0600 last-run receipts with fixed value-free classifications and exact rollback. |
 | #262 | `972988297d01a0c79d9df26a6796a059087abaa1` | True elapsed-time recovery deadline and immediate baseline restoration when authentication disappears mid-drain. |
+| #263 | `d45555d55e9236f22685b8aed85b314cb71b6f9e` | Exact recovery-child signal forwarding, wait, lease release, and launchd baseline restoration. |
 
 Every PR passed protected `portable-phase1`. Clean local phase-one runs passed
 all focused suites and guarded-delete tests before publication. Native macOS
@@ -81,8 +93,8 @@ artifact. Persistent monitor script replacement produced one NFS placeholder
 held by exactly the two known tmux monitors; respawning only those panes onto
 the new committed script released it automatically.
 
-After PRs #261 and #262, Local, the managed Linux checkouts, and Riken advanced
-cleanly to `972988297d01a0c79d9df26a6796a059087abaa1`. Aist, Home, and Office
+After PRs #261 through #263, Local, the managed Linux checkouts, and Riken
+advanced cleanly to `d45555d55e9236f22685b8aed85b314cb71b6f9e`. Aist, Home, and Office
 became unreachable before their guarded preflight and remain at the earlier
 commit; both failed plans stopped before mutation. Aist consequently does not
 yet have the new receipt or elapsed-deadline code deployed.

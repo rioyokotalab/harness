@@ -188,7 +188,7 @@ credential gate prevented deployment on Aist before this outage.
 The at-risk warning also predicted subsequent loss: Office's last old route
 ended at 02:37:09 and Home's at 02:37:46. Current Mac state is Aist `0/2`, Home
 `0/2`, Office `0/2`, and Riken `2/2`; Riken is still fresh-auth blocked. Local,
-the managed Linux checkouts, and Riken are clean/current at `9729882`; the
+the managed Linux checkouts, and Riken are clean/current at `d45555d`; the
 other Macs remain at `2ca9114` because guarded sync preflight could not reach
 them and made no change.
 
