@@ -175,6 +175,9 @@ case "$1" in
                 remove_formula "$BREW_STATE/installed" "$formula"
                 remove_formula "$BREW_STATE/outdated" "$formula"
             done
+            if [ "${FAKE_RETIRE_REMOVES_MANAGED:-0}" = 1 ]; then
+                remove_formula "$BREW_STATE/installed" mpdecimal
+            fi
             printf '%s complete\n' "$action"
             exit 0
         fi
@@ -359,6 +362,22 @@ if awk '$1 == "icu4c" { found = 1 } END { exit found ? 0 : 1 }' \
     "$cleanup_state/installed"; then
     fail "legacy cleanup formula remained installed"
 fi
+
+repair_home=$(make_home post-retire-repair)
+repair_state=$(make_brew_state post-retire-repair)
+printf '%s\n' 'pyenv 2.6.0' >>"$repair_state/installed"
+FAKE_RETIRE_REMOVES_MANAGED=1 run_homebrew "$repair_home" "$repair_state" \
+    "$TEMP_DIR/repair-apply.log" --host mac-test-pilot --apply \
+    >"$TEMP_DIR/repair-apply.out"
+grep -F -x 'REPAIR install=1 upgrade=0' "$TEMP_DIR/repair-apply.out" \
+    >/dev/null || fail "post-retirement repair summary"
+retire_line=$(grep -n -F -x 'uninstall --force --formula pyenv' \
+    "$TEMP_DIR/repair-apply.log" | cut -d: -f1)
+repair_line=$(grep -n -F -x 'install --formula mpdecimal' \
+    "$TEMP_DIR/repair-apply.log" | cut -d: -f1)
+[ -n "$retire_line" ] && [ -n "$repair_line" ] && \
+    [ "$retire_line" -lt "$repair_line" ] ||
+    fail "post-retirement repair ordering"
 
 retired_dependent_home=$(make_home retired-dependent)
 retired_dependent_state=$(make_brew_state retired-dependent)

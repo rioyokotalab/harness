@@ -667,12 +667,51 @@ resolve_brew
 [ "$brew_prefix" = "$initial_prefix" ] ||
     die "managed Homebrew prefix changed after retirement"
 discover_scope
-[ -z "$missing_formulae$outdated_formulae$installed_retired_formulae" ] ||
-    die "managed Homebrew post-state did not converge"
+[ -z "$installed_retired_formulae" ] ||
+    die "managed Homebrew retirement state did not converge"
 [ "$dependencies" = "$planned_dependencies" ] ||
     die "managed Homebrew dependency scope changed after retirement"
 [ -z "$unmanaged_dependents$unmanaged_installed_formulae$retired_dependents$retirement_upgrade_dependents" ] ||
     die "managed Homebrew dependent scope changed after retirement"
+repair_missing=$missing_formulae
+repair_outdated=$outdated_formulae
+if [ -n "$repair_missing$repair_outdated" ]; then
+    run_dry_runs
+    if [ -n "$repair_missing" ]; then
+        printf 'stage=repair-install count=%s\n' \
+            "$(formula_count "$repair_missing")" >>"$apply_log"
+        # shellcheck disable=SC2086
+        set -- $repair_missing
+        env -u HOMEBREW_ASK HOMEBREW_NO_AUTO_UPDATE=1 \
+            HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 \
+            HOMEBREW_NO_ENV_HINTS=1 NONINTERACTIVE=1 \
+            "$brew_command" install --formula "$@" \
+            >>"$apply_log" 2>&1 </dev/null ||
+            die "managed Homebrew post-retirement install failed; automatic rollback is unavailable"
+    fi
+    if [ -n "$repair_outdated" ]; then
+        printf 'stage=repair-upgrade count=%s\n' \
+            "$(formula_count "$repair_outdated")" >>"$apply_log"
+        # shellcheck disable=SC2086
+        set -- $repair_outdated
+        env -u HOMEBREW_ASK HOMEBREW_NO_AUTO_UPDATE=1 \
+            HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 \
+            HOMEBREW_NO_ENV_HINTS=1 NONINTERACTIVE=1 \
+            "$brew_command" upgrade --formula "$@" \
+            >>"$apply_log" 2>&1 </dev/null ||
+            die "managed Homebrew post-retirement upgrade failed; automatic rollback is unavailable"
+    fi
+    resolve_brew
+    [ "$brew_prefix" = "$initial_prefix" ] ||
+        die "managed Homebrew prefix changed after post-retirement repair"
+    discover_scope
+fi
+[ -z "$missing_formulae$outdated_formulae$installed_retired_formulae" ] ||
+    die "managed Homebrew post-state did not converge"
+[ "$dependencies" = "$planned_dependencies" ] ||
+    die "managed Homebrew dependency scope changed after post-retirement repair"
+[ -z "$unmanaged_dependents$unmanaged_installed_formulae$retired_dependents$retirement_upgrade_dependents" ] ||
+    die "managed Homebrew dependent scope changed after post-retirement repair"
 capture_evidence "$post_file" post
 if diff -u "$pre_file" "$post_file" >"$delta_file"; then :; else
     [ "$?" -eq 1 ] || die "managed Homebrew evidence diff failed"
@@ -686,4 +725,6 @@ printf 'TRANSACTION id=%s status=complete install=%s upgrade=%s retire=%s\n' \
     "$transaction_id" "$(formula_count "$planned_missing")" \
     "$(formula_count "$planned_outdated")" \
     "$(formula_count "$planned_retired")"
+printf 'REPAIR install=%s upgrade=%s\n' \
+    "$(formula_count "$repair_missing")" "$(formula_count "$repair_outdated")"
 echo 'END macos_homebrew applied=yes rollback=manual-review-only metadata_refresh=separate'

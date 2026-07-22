@@ -209,6 +209,10 @@ permits one bounded operation to retire an interdependent package family while
 still protecting every unreviewed installed dependent. Homebrew has no
 uninstall dry-run, so this exact reviewed allowlist is reported separately and
 no broad cleanup, autoremove, or ignored-dependent option is used.
+Because Homebrew retirement can remove or expose an outdated selected
+dependency, apply then recomputes exact state. Any missing or outdated selected
+formula receives a new exact dry-run and scoped install or upgrade before the
+final inventory/dependency/dependent acceptance check.
 Homebrew may update their dependency closure, but
 the command does not disable installed-dependent linkage checks because the
 official guidance warns that doing so can leave broken linkage. It uses no
