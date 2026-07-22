@@ -262,6 +262,22 @@ action is the owner's interactive Local `--apply` for its exact phrase and sudo
 authentication; the helper then validates Aist, Home, Office, and Riken in
 that order.
 
+Before apply, Home reported that its apparent `2/2` reachability is temporary:
+both forwards are attached to one surviving ordinary `login` ControlMaster,
+while both launchd services are loaded but stopped with `managed=0 external=0`
+and fresh dedicated authentication remains blocked. Local independently
+confirmed that value-free status. Office and Riken currently report both
+services `loaded=yes running=yes managed=1 external=0`; Aist is again `0/2`.
+The helper was therefore revised before any privileged change: after adding
+each exact entry it requires fresh dedicated authentication, but it separately
+counts inbound routes and managed services. Authentication failure removes
+only that entry and stops; a valid authorization with temporary or incomplete
+ownership is retained and reported as `handover-required`, never as full
+acceptance. A live pre-apply classification returns Home `routes=2
+auth=blocked managed=0` and leaves zero temporary residue. Bash syntax and
+ShellCheck pass. After apply, replace Home's two ControlMaster forwards one at
+a time while preserving the sibling route, then require `routes=2 managed=2`.
+
 Do not drill or install on any Mac until the owner restores the restricted
 authorizations and all eight fresh checks pass. Then roll out/drill those Macs
 one at a time. Preserve potentially private native logs unread in mode-0600

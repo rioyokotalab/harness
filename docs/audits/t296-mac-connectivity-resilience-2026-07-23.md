@@ -204,6 +204,17 @@ state then became Aist `0/2`, Home `0/2`, Office `0/2`, and Riken `2/2` with
 Riken still at risk. This is not repairable from Local without credential
 handling or an already-live Mac route.
 
+Home later recovered temporary inbound reachability without changing an
+authorization. One surviving current-user `login` ControlMaster accepted both
+configured reverse-forward requests through multiplex control operations, so
+`home` and `home2` both appeared reachable but shared the primary transport.
+Both launchd services remained loaded and stopped with `managed=0 external=0`,
+and fresh dedicated authentication remained blocked. This is useful rescue
+access, not independent-route acceptance. The permanent handover must first
+restore dedicated authorization, then cancel and replace one exact temporary
+forward at a time while preserving its sibling; the ordinary ControlMaster
+must not be terminated merely to remove the forwards.
+
 An established SSH session surviving removal of its authorization explains why
 ordinary route probes had previously looked healthy. The new audit prevents
 that false assurance, but software cannot repair missing credential state.
