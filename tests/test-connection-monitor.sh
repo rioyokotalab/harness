@@ -62,7 +62,7 @@ case "$all" in
         ;;
 esac
 route=
-for candidate in aist aist2 office office2 riken riken2 home home2; do
+for candidate in aist aist2 office office2 riken riken2 home home2 abq abq2; do
     case "$all" in *" $candidate "*) route=$candidate; break ;; esac
 done
 [ -n "$route" ] && [ -e "$HARNESS_MONITOR_STATE/$route.up" ] || exit 1
@@ -75,14 +75,37 @@ ssh-agent -a "$SSH_AUTH_SOCK" -s >"$TEMP_DIR/agent.env"
 AGENT_PID=$(sed -n 's/^SSH_AGENT_PID=\([0-9][0-9]*\);.*/\1/p' "$TEMP_DIR/agent.env")
 [ -n "$AGENT_PID" ] || fail "test SSH agent PID"
 
-for route in aist aist2 office office2 riken riken2 home home2; do
+for route in aist aist2 office office2 riken riken2 home home2 abq abq2; do
     : >"$STATE/$route.up"
 done
 
 PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_MONITOR_STATE="$STATE" \
     "$MONITOR" --once >"$TEMP_DIR/healthy.out"
-[ "$(grep -c 'state=healthy action=none' "$TEMP_DIR/healthy.out")" -eq 4 ] ||
+[ "$(grep -c 'state=healthy action=none' "$TEMP_DIR/healthy.out")" -eq 5 ] ||
     fail "healthy pair classification"
+
+unlink "$STATE/abq.up"
+PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_MONITOR_STATE="$STATE" \
+    "$MONITOR" --once --recover >"$TEMP_DIR/abq-failover.out"
+grep -F 'pair=abq/abq2' "$TEMP_DIR/abq-failover.out" |
+    grep -F 'state=degraded action=use-secondary' >/dev/null ||
+    fail "ABQ secondary failover classification"
+[ ! -e "$STATE/abq.up" ] || fail "ABQ observer attempted supervisor recovery"
+: >"$STATE/abq.up"
+unlink "$STATE/abq2.up"
+PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_MONITOR_STATE="$STATE" \
+    "$MONITOR" --once >"$TEMP_DIR/abq-primary.out"
+grep -F 'pair=abq/abq2' "$TEMP_DIR/abq-primary.out" |
+    grep -F 'state=degraded action=use-primary' >/dev/null ||
+    fail "ABQ primary failover classification"
+unlink "$STATE/abq.up"
+PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_MONITOR_STATE="$STATE" \
+    "$MONITOR" --once >"$TEMP_DIR/abq-unavailable.out"
+grep -F 'pair=abq/abq2' "$TEMP_DIR/abq-unavailable.out" |
+    grep -F 'state=unrecoverable action=routes-unavailable' >/dev/null ||
+    fail "ABQ dual-route loss classification"
+: >"$STATE/abq.up"
+: >"$STATE/abq2.up"
 
 unlink "$STATE/aist.up"
 PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_MONITOR_STATE="$STATE" \

@@ -327,6 +327,18 @@ Execution checkpoint 2026-07-22:
   guarded-deleted the entire staging tree. The active corrective slice makes
   Linux and macOS uv invocations request the exact declared patch and adds
   command-level regressions before the safe ABQ retry.
+- Protected PR #232 passed and squash-merged the exact-patch repair as
+  `57d2bf4`; all seven prior Linux mirrors plus ABQ advanced cleanly. ABQ now
+  exposes uv 0.11.31, Python 3.11.15, and Python 3.12.12 without shadowing the
+  site default. Primary snapshot `8eeebe2c` passed full read-data check and a
+  verified 16,238-entry restore. Independent encrypted generation
+  `20260722T092250Z` matches 291 repository files and 402,612,984 bytes, then
+  passed snapshot discovery, full read-data check, and an independently
+  verified 16,238-entry restore through credential-preserving one-shot Unix
+  socket relays. Both restore trees, every relay socket/log/helper, and every
+  deletion manifest are absent. The active slice adds `abq/abq2` to routine
+  five-minute health as an observed failover pair without unsafe supervisor
+  recovery.
 
 ### T-273 — Resolve intentionally deferred maintenance
 
