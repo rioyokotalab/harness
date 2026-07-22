@@ -27,6 +27,11 @@ These project rules supplement the shared global agreements in
 - Publish through the protected `main` workflow without force-push. After a
   merged control-plane change, use guarded `harness fleet-sync` plan/apply to
   synchronize only clean managed checkouts.
+- On a managed personal Mac, treat `~/harness` as the live tunnel-control
+  checkout: keep it on clean `main` and perform feature work in a separate Git
+  worktree. The watchdog tolerates unrelated branch/worktree state, but any
+  difference in its runtime-critical scripts or public Mac profile inputs must
+  continue to fail closed.
 
 ## Handoff
 
