@@ -163,6 +163,14 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
 - D7 — **accepted:** route `abq` through `ab` and `abq2` through `ab2` for
   routine health/failover. Retain Aist as an emergency-only ABQ path that does
   not participate in routine health.
+- D8 — **accepted authority:** the owner grants user-level authority for every
+  operation their account can perform on ABQ. This does not authorize
+  credential inspection, administrator actions, host-key bypass, or mutation
+  before the final PIE go. A post-authority read-only inventory and
+  `show_quota` attempt reached SSH verification through `ab` but stopped on an
+  untrusted host key. The official ABCI-Q guide documents the endpoint and
+  storage layout but publishes no host-key fingerprint; first trust remains a
+  pending owner/security decision.
 
 1. **Fleet scope and publication — answered/accepted.** Define the existing 11-node
    maintenance/Python/package scope as local, ab, ab2, al, rc, ri, t4, aist,
