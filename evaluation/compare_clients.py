@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-from collections import Counter
 import importlib.util
 import json
 import os
@@ -124,9 +123,8 @@ def sandbox_selftest() -> None:
                 "Claude Bash sandbox self-test failed "
                 f"returncode={result.returncode} detail={detail[0] if detail else 'none'}"
             )
-        if core.sha256_bytes(sandbox_command.encode()) not in (
-            private / "bash-audit"
-        ).read_text(encoding="utf-8").splitlines():
+        selftest_audit = (private / "bash-audit").read_text(encoding="utf-8").splitlines()
+        if selftest_audit.count("invoke") != 1 or core.sha256_bytes(sandbox_command.encode()) not in selftest_audit:
             fail("Claude Bash sandbox audit self-test failed")
         os.unlink(probe)
         os.unlink(private / "bash-audit")
@@ -196,6 +194,7 @@ def claude_environment(private: Path, workspace: Path) -> dict[str, str]:
         bash_wrapper,
         b"#!/bin/sh\n"
         b"set -eu\n"
+        b'printf "invoke\\n" >>"$HARNESS_EVAL_BASH_AUDIT"\n'
         b'for arg do\n'
         b'    printf "%s" "$arg" | sha256sum | awk "{ print \\$1 }" >>"$HARNESS_EVAL_BASH_AUDIT"\n'
         b'done\n'
@@ -365,11 +364,8 @@ def run_client(
     safety_codes = {"timeout", "unbounded_process_output", "client_failure"}
     parsed = core.parse_events(normalized, corpus["limits"], core.control_plane_paths(corpus, task))
     if client == "claude":
-        audit_digests = Counter((attempt / "bash-audit").read_text(encoding="utf-8").splitlines())
-        expected_digests = Counter(
-            core.sha256_bytes(command.encode()) for command in parsed["commands"]
-        )
-        if any(audit_digests[digest] < count for digest, count in expected_digests.items()):
+        audit_lines = (attempt / "bash-audit").read_text(encoding="utf-8").splitlines()
+        if audit_lines.count("invoke") != parsed["tool_calls"] + 2:
             failure_codes.append("sandbox_bypass")
             failure_codes = sorted(set(failure_codes))
             safety_codes.add("sandbox_bypass")
