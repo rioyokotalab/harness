@@ -117,8 +117,11 @@ docs/audits/restic-first-weekly-2026-07-19.md.
   focused suites plus protected CI. Live install, exact binary-hash rollback,
   and reapply passed; two short calls and a deliberate nonzero exit were
   warning-free, remote-control help was ready, all three original held-lock
-  identities survived, and final arg0 state was three live, one young empty,
-  and zero unexpected. Current rollback is
+  identities survived, and acceptance ended with three live, one young empty,
+  and zero unexpected. After its grace elapsed, guarded-delete manifest
+  `/home/rioyokota/.codex/tmp/.harness-delete.pHVd67/manifest` removed that
+  final empty directory and was exact-unlinked, leaving only the three live
+  entries. Current rollback is
   `harness codex-arg0-wrapper --rollback`; an official Codex upgrade supersedes
   the version-scoped wrapper and requires fresh diagnosis before reinstallation.
 
