@@ -40,6 +40,14 @@ formula_count() {
         awk '{ for (i = 1; i <= NF; i++) count++ } END { print count + 0 }'
 }
 
+mapping_target() {
+    mapping_csv=$1
+    mapping_source=$2
+    printf '%s\n' "$mapping_csv" | tr ',' '\n' |
+        awk -F: -v source="$mapping_source" \
+            '$1 == source { print $2; found = 1 } END { exit found ? 0 : 1 }'
+}
+
 validate_formula_output() {
     formula_output=$1
     printf '%s\n' "$formula_output" | awk '
@@ -118,6 +126,8 @@ discover_scope() {
     unmanaged_installed_formulae=
     retired_dependents=
     retirement_upgrade_dependents=
+    cleanup_retired_formulae=
+    cleanup_retired_targets=
 
     # Exact convergence requires one unambiguous installed-formula inventory.
     # In particular, querying old and current versioned names together can make
@@ -149,11 +159,23 @@ EOF
                 "$formula" 2>/dev/null) ||
                 die "scoped Homebrew retired dependent query failed"
             validate_formula_output "$dependent_output"
+            alias_target=$(mapping_target "$retirement_aliases_csv" \
+                "$formula" 2>/dev/null || true)
             for dependent in $dependent_output; do
                 formula_in_list "$retired_formulae" "$dependent" ||
+                    { [ -n "$alias_target" ] &&
+                        formula_in_list "$managed_formulae" "$dependent"; } ||
                     retired_dependents=$(append_unique_formula \
                         "$retired_dependents" "$dependent")
             done
+            cleanup_target=$(mapping_target "$cleanup_retirements_csv" \
+                "$formula" 2>/dev/null || true)
+            if [ -n "$cleanup_target" ]; then
+                cleanup_retired_formulae=$(append_unique_formula \
+                    "$cleanup_retired_formulae" "$formula")
+                cleanup_retired_targets=$(append_unique_formula \
+                    "$cleanup_retired_targets" "$cleanup_target")
+            fi
         fi
     done
 
@@ -275,6 +297,29 @@ run_dry_runs() {
     fi
 }
 
+run_cleanup_dry_runs() {
+    for cleanup_target in $cleanup_retired_targets; do
+        cleanup_log=$(mktemp "${TMPDIR:-/tmp}/harness-macos-homebrew-cleanup.XXXXXX") ||
+            die "cannot allocate managed Homebrew cleanup dry-run log"
+        chmod 600 "$cleanup_log"
+        if ! env -u HOMEBREW_ASK HOMEBREW_NO_AUTO_UPDATE=1 \
+            HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 \
+            HOMEBREW_NO_ENV_HINTS=1 NONINTERACTIVE=1 \
+            "$brew_command" cleanup --dry-run "$cleanup_target" \
+            >"$cleanup_log" 2>&1 </dev/null; then
+            unlink "$cleanup_log"
+            die "managed Homebrew cleanup dry-run failed"
+        fi
+        [ -s "$cleanup_log" ] &&
+            grep -F "$brew_prefix/Cellar/$cleanup_target/" "$cleanup_log" \
+                >/dev/null 2>&1 || {
+            unlink "$cleanup_log"
+            die "managed Homebrew cleanup dry-run omitted the legacy keg"
+        }
+        unlink "$cleanup_log"
+    done
+}
+
 prepare_transaction_root() {
     state_root=$HOME/.local/state/harness
     transaction_root=$state_root/transactions
@@ -362,6 +407,8 @@ macos_validate_formula_policy "$formula_policy"
 host_manifest=$HOME/.config/harness/private/hosts/$logical_host.conf
 public_formulae=$(macos_manifest_get "$formula_policy" managed_formulae)
 retired_csv=$(macos_manifest_get "$formula_policy" retired_formulae)
+retirement_aliases_csv=$(macos_manifest_get "$formula_policy" retirement_aliases)
+cleanup_retirements_csv=$(macos_manifest_get "$formula_policy" cleanup_retirements)
 extra_formulae=$(macos_manifest_get "$host_manifest" extra_formulae)
 all_formulae=$public_formulae
 [ "$extra_formulae" = none ] || all_formulae=$all_formulae,$extra_formulae
@@ -393,6 +440,7 @@ trap 'exit 143' TERM
 
 discover_scope
 run_dry_runs
+run_cleanup_dry_runs
 printf 'MACOS_HOMEBREW mode=%s privacy=local-details prefix=%s\n' \
     "$mode" "$prefix_class"
 printf "INSTALL count=%s formulae='%s'\n" \
@@ -402,6 +450,9 @@ printf "UPGRADE count=%s formulae='%s'\n" \
 printf "RETIRE count=%s formulae='%s'\n" \
     "$(formula_count "$installed_retired_formulae")" \
     "$installed_retired_formulae"
+printf "RETIRE_CLEANUP count=%s aliases='%s' targets='%s'\n" \
+    "$(formula_count "$cleanup_retired_formulae")" \
+    "$cleanup_retired_formulae" "$cleanup_retired_targets"
 printf 'DEPENDENCIES count=%s scope=validated shared_users=preserved\n' \
     "$(formula_count "$dependencies")"
 printf "UNMANAGED_DEPENDENTS count=%s formulae='%s'\n" \
@@ -450,6 +501,8 @@ planned_outdated=$outdated_formulae
 planned_retired=$installed_retired_formulae
 planned_dependencies=$dependencies
 planned_retirement_upgrade_dependents=$retirement_upgrade_dependents
+planned_cleanup_retired_formulae=$cleanup_retired_formulae
+planned_cleanup_retired_targets=$cleanup_retired_targets
 validate_public_checkout
 "$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
     die "private profile changed before managed Homebrew apply"
@@ -468,9 +521,12 @@ discover_scope
     [ "$installed_retired_formulae" = "$planned_retired" ] &&
     [ "$dependencies" = "$planned_dependencies" ] &&
     [ "$retirement_upgrade_dependents" = \
-        "$planned_retirement_upgrade_dependents" ] ||
+        "$planned_retirement_upgrade_dependents" ] &&
+    [ "$cleanup_retired_formulae" = "$planned_cleanup_retired_formulae" ] &&
+    [ "$cleanup_retired_targets" = "$planned_cleanup_retired_targets" ] ||
     die "managed Homebrew plan changed before apply"
 run_dry_runs
+run_cleanup_dry_runs
 
 prepare_transaction_root
 transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
@@ -491,6 +547,8 @@ printf 'schema=1\noperation=macos-homebrew\nrevision=%s\nlogical_id=%s\nprefix=%
     "$brew_prefix" >"$manifest"
 for formula in $managed_formulae; do printf 'formula=%s\n' "$formula" >>"$manifest"; done
 for formula in $retired_formulae; do printf 'retired=%s\n' "$formula" >>"$manifest"; done
+printf 'retirement_aliases=%s\ncleanup_retirements=%s\n' \
+    "$retirement_aliases_csv" "$cleanup_retirements_csv" >>"$manifest"
 chmod 600 "$manifest"
 printf '%s\n' prepared >"$status_file"
 chmod 600 "$status_file"
@@ -570,18 +628,35 @@ discover_scope
 [ -z "$retirement_upgrade_dependents" ] ||
     die "managed Homebrew retirement migration remained incomplete after upgrade"
 
-if [ -n "$installed_retired_formulae" ]; then
+if [ -n "$cleanup_retired_targets" ]; then
+    printf 'stage=cleanup-retire count=%s\n' \
+        "$(formula_count "$cleanup_retired_targets")" >>"$apply_log"
+    for cleanup_target in $cleanup_retired_targets; do
+        env -u HOMEBREW_ASK HOMEBREW_NO_AUTO_UPDATE=1 \
+            HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_ENV_HINTS=1 \
+            NONINTERACTIVE=1 "$brew_command" cleanup "$cleanup_target" \
+            >>"$apply_log" 2>&1 </dev/null ||
+            die "managed Homebrew legacy-keg cleanup failed; automatic rollback is unavailable"
+    done
+fi
+uninstall_retired_formulae=
+for formula in $installed_retired_formulae; do
+    formula_in_list "$cleanup_retired_formulae" "$formula" ||
+        uninstall_retired_formulae=$(append_unique_formula \
+            "$uninstall_retired_formulae" "$formula")
+done
+if [ -n "$uninstall_retired_formulae" ]; then
     printf 'stage=retire count=%s\n' \
-        "$(formula_count "$installed_retired_formulae")" >>"$apply_log"
+        "$(formula_count "$uninstall_retired_formulae")" >>"$apply_log"
     # Homebrew has no uninstall dry-run. Scope is the exact validated public
     # retirement list, and the post-upgrade checkpoint proved that no installed
     # dependent remains outside that same reviewed retirement set.
     # shellcheck disable=SC2086
-    set -- $installed_retired_formulae
+    set -- $uninstall_retired_formulae
     env -u HOMEBREW_ASK HOMEBREW_NO_AUTO_UPDATE=1 \
         HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ANALYTICS=1 \
         HOMEBREW_NO_ENV_HINTS=1 NONINTERACTIVE=1 \
-        "$brew_command" uninstall --formula "$@" \
+        "$brew_command" uninstall --force --formula "$@" \
         >>"$apply_log" 2>&1 </dev/null ||
         die "managed Homebrew retirement failed; automatic rollback is unavailable"
 fi
