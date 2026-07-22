@@ -49,6 +49,11 @@ validate_public_checkout() {
         die "Mac tunnel watchdog requires a clean committed harness checkout"
 }
 
+validate_runtime_checkout() {
+    [ "$(uname -s)" = Darwin ] || die "Mac tunnel watchdog requires Darwin"
+    macos_validate_tunnel_runtime_checkout "$HARNESS_ROOT"
+}
+
 xml_escape() {
     printf '%s' "$1" | sed \
         -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' \
@@ -56,7 +61,7 @@ xml_escape() {
 }
 
 render_plist() {
-    watchdog_command=$(xml_escape "$HARNESS_ROOT/bin/harness")
+    watchdog_command=$(xml_escape "$HARNESS_ROOT/libexec/harness-macos-tunnel-watchdog")
     watchdog_host=$(xml_escape "$logical_host")
     cat <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -68,7 +73,6 @@ render_plist() {
   <key>ProgramArguments</key>
   <array>
     <string>$watchdog_command</string>
-    <string>macos-tunnel-watchdog</string>
     <string>--host</string>
     <string>$watchdog_host</string>
     <string>--run-once</string>
@@ -300,7 +304,11 @@ if [ -z "$logical_host" ] || ! macos_private_id_is_safe "$logical_host"; then
     usage
     exit 2
 fi
-validate_public_checkout
+if [ "$mode" = run-once ]; then
+    validate_runtime_checkout
+else
+    validate_public_checkout
+fi
 "$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
     die "private profile is not ready for Mac tunnel watchdog"
 validate_supervisor_contract

@@ -485,3 +485,39 @@ macos_validate_fact_file() {
                 die "personal-Mac formula fact is malformed"
         done
 }
+
+macos_validate_tunnel_runtime_checkout() {
+    macos_runtime_root=$1
+    [ -d "$macos_runtime_root/.git" ] && [ ! -L "$macos_runtime_root/.git" ] ||
+        die "Mac tunnel runtime requires a Git harness checkout"
+    [ "$(CDPATH='' cd -- "$macos_runtime_root" && pwd -P)" = "$macos_runtime_root" ] &&
+        [ "$(git -C "$macos_runtime_root" rev-parse --show-toplevel 2>/dev/null)" = \
+            "$macos_runtime_root" ] || die "Mac tunnel runtime checkout root is ambiguous"
+    macos_runtime_main=$(git -C "$macos_runtime_root" rev-parse --verify \
+        'refs/heads/main^{commit}' 2>/dev/null) ||
+        die "Mac tunnel runtime has no local main commit"
+    for macos_runtime_path in \
+        libexec/harness-common \
+        libexec/harness-macos-common \
+        libexec/harness-macos-profile \
+        libexec/harness-macos-ssh-supervisor \
+        libexec/harness-macos-tunnel-supervisor \
+        libexec/harness-macos-tunnel-watchdog \
+        profiles/personal-macos/base.conf \
+        profiles/personal-macos/formula-policy-v4.conf; do
+        git -C "$macos_runtime_root" cat-file -e \
+            "$macos_runtime_main:$macos_runtime_path" 2>/dev/null ||
+            die "Mac tunnel runtime main commit is incomplete"
+    done
+    git -C "$macos_runtime_root" diff --quiet --no-ext-diff --no-textconv \
+        "$macos_runtime_main" -- \
+        libexec/harness-common \
+        libexec/harness-macos-common \
+        libexec/harness-macos-profile \
+        libexec/harness-macos-ssh-supervisor \
+        libexec/harness-macos-tunnel-supervisor \
+        libexec/harness-macos-tunnel-watchdog \
+        profiles/personal-macos/base.conf \
+        profiles/personal-macos/formula-policy-v4.conf ||
+        die "Mac tunnel runtime differs from local main"
+}
