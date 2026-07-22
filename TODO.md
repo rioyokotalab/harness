@@ -248,7 +248,10 @@ returned, Local transferred the reviewed revision and executed it there. Aist
 staging is complete: the Local entry is one current-user-owned mode-0600
 regular one-link file with one line, the private temporary files were removed,
 and Aist exact-unlinked `~/run_this.sh`. No entry content was read or printed.
-Home is the next staging target.
+After the owner restored one Home route, Local performed the same reviewed
+operation there. Home staging is also complete with the same value-free file
+metadata and exact helper cleanup. No entry content was read or printed.
+Office is the next staging target.
 
 Do not drill or install on any Mac until the owner restores the restricted
 authorizations and all eight fresh checks pass. Then roll out/drill those Macs
