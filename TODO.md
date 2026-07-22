@@ -84,9 +84,13 @@ Confirmed planning facts:
   owner has now selected a strict cross-Mac package set from the complete
   union inventory. `.sync_get.sh` is absent on the seven Linux nodes and is a
   regular file on each Mac.
-- Linux already provides the selected Python 3.12 interface everywhere; five
-  remotes use managed 3.12.12, while local and RI retain host 3.12.3. Macs
-  expose Python 3.13 or 3.14 and do not expose `python3.12`.
+- Linux already provides a Python 3.12 interface everywhere; five remotes use
+  managed 3.12.12, while local and RI retain host 3.12.3. Macs expose Python
+  3.13 or 3.14 and do not expose `python3.12`. The accepted replacement policy
+  pins one tested uv version, supplies non-default 3.11 and 3.12 runtimes where
+  practical, defaults new projects to 3.12, and lets each project select its
+  interpreter, accelerator/site toolchain, lockfile, and local virtual
+  environment.
 - The existing local-to-t4 SSH mirror plan fails before contacting t4 because
   it rejects the harness-managed `~/.local` symlink. This is a code defect, not
   evidence of t4 divergence.

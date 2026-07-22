@@ -192,6 +192,16 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
   existing Restic password file. A value-free check verified it is a
   current-user-owned regular file with mode `0600`; no credential content was
   inspected.
+- D13 — **accepted project-owned Python policy:** pin one tested `uv` version
+  fleet-wide and provide versioned, non-default CPython 3.11 and 3.12 runtimes
+  where practical. New projects default to 3.12; 3.11 is the compatibility
+  runtime. Each subproject owns `requires-python`, `.python-version`,
+  `pyproject.toml`, `uv.lock`, and its locally recreated virtual environment.
+  Never copy virtual environments across hosts or architectures. GPU projects
+  declare an accelerator backend, while ABI-coupled MPI/CUDA work loads the
+  site's module or pinned container before uv creates the environment against
+  that interpreter. Keep caches platform-local and record the resolved Python,
+  uv, accelerator, compiler, MPI, and container versions with experiments.
 
 1. **Fleet scope and publication — answered/accepted.** Define the existing 11-node
    maintenance/Python/package scope as local, ab, ab2, al, rc, ri, t4, aist,
@@ -223,12 +233,11 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
    topology after the final go. D12 satisfies the owner-only Restic credential
    prerequisite. Missing packages remain limited to declared checksum-pinned
    user-space tools, never system packages.
-7. **Python policy.** Recommended: manage exact CPython 3.12.12 on all 11
-   current nodes without replacing `python` or `python3`; expose only
-   `python3.12`; synchronize project dependency declarations and `uv.lock`,
-   then recreate rather than copy virtual environments per OS/architecture.
-   Apply the same declaration to ABQ after onboarding. Confirm this exact-patch
-   policy or select minor-only compatibility that retains local/RI 3.12.3.
+7. **Python policy — answered/accepted.** Apply D13's project-owned,
+   dual-runtime policy to the 11 current nodes and ABQ. Preserve site Python
+   and the unversioned `python`/`python3` commands; standardize the tested uv
+   version and project contract rather than forcing one exact Python patch onto
+   every workload and platform.
 8. **Codex/Claude benchmark interpretation.** Recommended: create a new
    symmetric experiment using the existing seven synthetic task families,
    current Codex and Claude CLIs/default models, matched sandbox/reasoning/run
