@@ -95,6 +95,10 @@ case "$1" in
     list)
         [ "$2:$3" = --formula:--versions ] || exit 91
         shift 3
+        if [ "$#" -eq 0 ]; then
+            sed -n '/./p' "$BREW_STATE/installed"
+            exit 0
+        fi
         list_status=0
         for list_name in "$@"; do
             if awk -v name="$list_name" '$1 == name { print; found = 1 }
@@ -251,6 +255,7 @@ for expected in \
     "RETIRE count=0 formulae=''" \
     'DEPENDENCIES count=1 scope=validated shared_users=preserved' \
     "UNMANAGED_DEPENDENTS count=0 formulae=''" \
+    "UNMANAGED_INSTALLED count=0 formulae=''" \
     "RETIRED_DEPENDENTS count=0 formulae=''" \
     "MIGRATION_DEPENDENTS count=0 formulae='' resolution=upgrade-before-retire" \
     'DRY_RUN status=validated install=1 upgrade=2 retire=package-manager-no-dry-run' \
@@ -388,6 +393,21 @@ grep -F -x 'BLOCK macos_homebrew reason=selected-root-has-unmanaged-dependent' \
     "$TEMP_DIR/dependent.out" >/dev/null || fail "unmanaged-dependent refusal"
 [ ! -e "$dependent_home/.local" ] ||
     fail "unmanaged-dependent refusal created transaction state"
+
+unmanaged_home=$(make_home unmanaged-installed)
+unmanaged_state=$(make_brew_state unmanaged-installed)
+printf '%s\n' 'personal-tool 1.0' >>"$unmanaged_state/installed"
+if run_homebrew "$unmanaged_home" "$unmanaged_state" \
+    "$TEMP_DIR/unmanaged-installed.log" --host mac-test-pilot --plan \
+    >"$TEMP_DIR/unmanaged-installed.out" 2>&1; then
+    fail "Homebrew plan accepted a formula outside exact policy"
+fi
+grep -F -x "UNMANAGED_INSTALLED count=1 formulae='personal-tool'" \
+    "$TEMP_DIR/unmanaged-installed.out" >/dev/null ||
+    fail "unmanaged installed formula evidence"
+grep -F -x 'BLOCK macos_homebrew reason=installed-formula-outside-exact-policy' \
+    "$TEMP_DIR/unmanaged-installed.out" >/dev/null ||
+    fail "unmanaged installed formula refusal"
 
 shared_home=$(make_home shared-dependent)
 shared_state=$(make_brew_state shared-dependent)

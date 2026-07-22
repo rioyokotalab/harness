@@ -173,14 +173,17 @@ harness macos-homebrew --host LOGICAL_ID --apply
 
 Both modes require Darwin, a canonical clean committed public `main`, a valid
 private profile, and one active regular `brew` executable matching its reported
-prefix. One bounded version query names only the selected and reviewed retired
-formulae; it never inventories unrelated formulae. The command resolves only
-their dependency closure, and checks installed dependents of every explicitly
-selected root. An installed dependent outside the selected roots is displayed
-locally and blocks plan acceptance and apply unless that dependent is itself in
-the reviewed retirement set. Packages that merely share a dependency remain
-unmanaged; Homebrew's installed-dependent linkage checks stay enabled to
-protect them. It never lists or dumps the whole installed package set.
+prefix. Because the policy requires exact cross-Mac equality, one local
+formula-only version inventory establishes the actual installed keg names and
+rejects anything outside the selected, dependency, private-extra, or reviewed
+retirement sets. It does not inventory casks. This avoids Homebrew's ambiguous
+canonical output when old and current versioned formula names are queried
+together. The command resolves only the selected dependency closure and checks
+installed dependents of every explicitly selected root. An installed dependent
+outside the selected roots blocks plan acceptance and apply unless that
+dependent is itself in the reviewed retirement set. Packages that merely share
+a dependency remain unmanaged; Homebrew's installed-dependent linkage checks
+stay enabled to protect them.
 
 Plan runs exact formula-only install and upgrade dry-runs with automatic update,
 cleanup, analytics, prompts, and environment hints disabled. It refuses empty
