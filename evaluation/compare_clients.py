@@ -124,9 +124,9 @@ def sandbox_selftest() -> None:
                 "Claude Bash sandbox self-test failed "
                 f"returncode={result.returncode} detail={detail[0] if detail else 'none'}"
             )
-        if (private / "bash-audit").read_text(encoding="utf-8").splitlines() != [
-            core.sha256_bytes(sandbox_command.encode())
-        ]:
+        if core.sha256_bytes(sandbox_command.encode()) not in (
+            private / "bash-audit"
+        ).read_text(encoding="utf-8").splitlines():
             fail("Claude Bash sandbox audit self-test failed")
         os.unlink(probe)
         os.unlink(private / "bash-audit")
@@ -196,9 +196,9 @@ def claude_environment(private: Path, workspace: Path) -> dict[str, str]:
         bash_wrapper,
         b"#!/bin/sh\n"
         b"set -eu\n"
-        b'last=\n'
-        b'for arg do last=$arg; done\n'
-        b'printf "%s" "$last" | sha256sum | awk "{ print \\$1 }" >>"$HARNESS_EVAL_BASH_AUDIT"\n'
+        b'for arg do\n'
+        b'    printf "%s" "$arg" | sha256sum | awk "{ print \\$1 }" >>"$HARNESS_EVAL_BASH_AUDIT"\n'
+        b'done\n'
         b'exec /usr/bin/bwrap --die-with-parent --unshare-net --ro-bind / / '
         b'--dev-bind /dev /dev --proc /proc --bind "$HARNESS_EVAL_WORKSPACE" '
         b'"$HARNESS_EVAL_WORKSPACE" --bind "$HARNESS_EVAL_TMPDIR" "$HARNESS_EVAL_TMPDIR" '
