@@ -46,6 +46,17 @@ all=" $* "
 case "$all" in
     *' macos-tunnel-supervisor '*)
         case "$all" in
+            *' --host aist --auth-status '*) auth_host=aist ;;
+            *' --host office --auth-status '*) auth_host=office ;;
+            *' --host riken --auth-status '*) auth_host=riken ;;
+            *' --host home --auth-status '*) auth_host=home ;;
+            *) auth_host= ;;
+        esac
+        if [ -n "$auth_host" ]; then
+            [ -e "$HARNESS_MONITOR_STATE/$auth_host.auth" ]
+            exit
+        fi
+        case "$all" in
             *' --host aist --recover-pair '*) primary=aist; secondary=aist2 ;;
             *' --host office --recover-pair '*) primary=office; secondary=office2 ;;
             *' --host riken --recover-pair '*) primary=riken; secondary=riken2 ;;
@@ -79,11 +90,22 @@ AGENT_PID=$(sed -n 's/^SSH_AGENT_PID=\([0-9][0-9]*\);.*/\1/p' "$TEMP_DIR/agent.e
 for route in aist aist2 office office2 riken riken2 home home2 abq abq2; do
     : >"$STATE/$route.up"
 done
+for auth_host in aist office riken home; do
+    : >"$STATE/$auth_host.auth"
+done
 
 PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_MONITOR_STATE="$STATE" \
     "$MONITOR" --once >"$TEMP_DIR/healthy.out"
 [ "$(grep -c 'state=healthy action=none' "$TEMP_DIR/healthy.out")" -eq 5 ] ||
     fail "healthy pair classification"
+
+unlink "$STATE/home.auth"
+PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_MONITOR_STATE="$STATE" \
+    "$MONITOR" --once --recover >"$TEMP_DIR/auth-drift.out"
+grep -F 'pair=home/home2' "$TEMP_DIR/auth-drift.out" |
+    grep -F 'state=at-risk action=authorization-blocked' >/dev/null ||
+    fail "authorization drift classification"
+: >"$STATE/home.auth"
 
 unlink "$STATE/abq.up"
 PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_MONITOR_STATE="$STATE" \

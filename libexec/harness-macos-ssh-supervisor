@@ -14,6 +14,7 @@ usage() {
     cat >&2 <<EOF
 Usage:
   harness macos-ssh-supervisor --host LOGICAL_ID [--plan|--apply|--status]
+  harness macos-ssh-supervisor --host LOGICAL_ID --auth-status
   harness macos-ssh-supervisor --activate TRANSACTION_ID --alias $primary_alias|$secondary_alias
   harness macos-ssh-supervisor --deactivate TRANSACTION_ID --alias $primary_alias|$secondary_alias
   harness macos-ssh-supervisor --host LOGICAL_ID --kick $primary_alias|$secondary_alias
@@ -410,6 +411,7 @@ while [ "$#" -gt 0 ]; do
         --plan) mode=plan; shift ;;
         --apply) mode=apply; shift ;;
         --status) mode=status; shift ;;
+        --auth-status) mode=auth-status; shift ;;
         --activate) [ "$#" -ge 2 ] || { usage; exit 2; }; mode=activate; transaction_id=$2; shift 2 ;;
         --deactivate) [ "$#" -ge 2 ] || { usage; exit 2; }; mode=deactivate; transaction_id=$2; shift 2 ;;
         --kick) [ "$#" -ge 2 ] || { usage; exit 2; }; mode=kick; supervised_alias=$2; shift 2 ;;
@@ -520,6 +522,25 @@ validate_public_checkout
 require_safe_directory "$HOME/Library"
 require_safe_directory "$launch_agents"
 macos_validate_ssh_config "$HOME/.ssh/config" "$current_uid" 600
+
+if [ "$mode" = auth-status ]; then
+    auth_blocked=0
+    printf 'MACOS_SSH_SUPERVISOR mode=auth-status host=%s privacy=value-free\n' \
+        "$logical_host"
+    for auth_alias in "$primary_alias" "$secondary_alias"; do
+        require_ssh_contract "$auth_alias"
+        if unattended_auth_ready "$auth_alias"; then
+            auth_state=ready
+        else
+            auth_state=blocked
+            auth_blocked=$((auth_blocked + 1))
+        fi
+        printf 'ALIAS name=%s unattended_auth=%s\n' "$auth_alias" "$auth_state"
+    done
+    printf 'END macos_ssh_supervisor auth_blocked=%s\n' "$auth_blocked"
+    [ "$auth_blocked" -eq 0 ]
+    exit
+fi
 
 if [ "$mode" = kick ]; then
     require_alias "$supervised_alias"

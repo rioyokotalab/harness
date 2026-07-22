@@ -75,6 +75,15 @@ recover_route() {
     return 1
 }
 
+verify_pair_auth() {
+    verify_via=$1
+    verify_host=$2
+    SSH_AUTH_SOCK=$agent_socket ssh -x -o BatchMode=yes -o ConnectTimeout=8 \
+        -o ConnectionAttempts=1 -o ControlMaster=no -o ControlPath=none \
+        "$verify_via" "\$HOME/harness/bin/harness macos-tunnel-supervisor --host $verify_host --auth-status" \
+        >/dev/null 2>&1
+}
+
 check_pair() {
     monitor_host=$1
     primary=$2
@@ -111,6 +120,13 @@ check_pair() {
             fi
         else
             pair_action=recovery-disabled
+        fi
+    fi
+    if [ "$primary_state" = ready ] && [ "$secondary_state" = ready ] &&
+        [ "$recover" -eq 1 ] && [ "$pair_action" = none ]; then
+        if ! verify_pair_auth "$primary" "$monitor_host"; then
+            pair_state=at-risk
+            pair_action=authorization-blocked
         fi
     fi
     printf '%s pair=%s/%s host=%s primary=%s secondary=%s state=%s action=%s\n' \
