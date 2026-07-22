@@ -418,6 +418,8 @@ The five-minute recovering controller monitor also requests a value-free fresh
 authentication check from each healthy Mac pair. It reports
 `state=at-risk action=authorization-blocked` when established tunnels still
 work but the dedicated identity can no longer create a replacement session.
+If one route is already down, the action names the affected primary or
+secondary route after the same value-free check.
 That alert never reads or repairs server authorization; it prevents a healthy
 old connection from being mistaken for recoverability.
 

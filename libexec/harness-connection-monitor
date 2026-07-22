@@ -102,6 +102,9 @@ check_pair() {
                 primary_state=ready
                 pair_state=healthy
                 pair_action=recovered-primary
+            elif ! verify_pair_auth "$secondary" "$monitor_host"; then
+                pair_state=at-risk
+                pair_action=authorization-blocked-primary
             else
                 pair_action=recovery-failed-primary
             fi
@@ -115,6 +118,9 @@ check_pair() {
                 secondary_state=ready
                 pair_state=healthy
                 pair_action=recovered-secondary
+            elif ! verify_pair_auth "$primary" "$monitor_host"; then
+                pair_state=at-risk
+                pair_action=authorization-blocked-secondary
             else
                 pair_action=recovery-failed-secondary
             fi

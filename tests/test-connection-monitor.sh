@@ -63,6 +63,7 @@ case "$all" in
             *' --host home --recover-pair '*) primary=home; secondary=home2 ;;
             *) exit 1 ;;
         esac
+        [ -e "$HARNESS_MONITOR_STATE/$primary.auth" ] || exit 1
         if [ -e "$HARNESS_MONITOR_STATE/$primary.up" ]; then
             : >"$HARNESS_MONITOR_STATE/$secondary.up"
         elif [ -e "$HARNESS_MONITOR_STATE/$secondary.up" ]; then
@@ -143,6 +144,17 @@ grep -F 'pair=aist/aist2' "$TEMP_DIR/recovered.out" |
     grep -F 'state=healthy action=recovered-primary' >/dev/null ||
     fail "supervised route recovery"
 [ -e "$STATE/aist.up" ] || fail "recovery did not restore primary route"
+
+unlink "$STATE/aist.up"
+unlink "$STATE/aist.auth"
+PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_MONITOR_STATE="$STATE" \
+    "$MONITOR" --once --recover >"$TEMP_DIR/degraded-auth-drift.out"
+grep -F 'pair=aist/aist2' "$TEMP_DIR/degraded-auth-drift.out" |
+    grep -F 'state=at-risk action=authorization-blocked-primary' >/dev/null ||
+    fail "degraded authorization drift classification"
+[ ! -e "$STATE/aist.up" ] || fail "blocked authentication invented recovery"
+: >"$STATE/aist.up"
+: >"$STATE/aist.auth"
 
 unlink "$STATE/aist.up"
 unlink "$STATE/aist2.up"
