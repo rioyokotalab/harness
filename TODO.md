@@ -42,20 +42,17 @@ Next free ID: T-297.
   `live=3 eligible=0 young=0 unexpected=0`; exact manifests, targets, and
   residue checks are recorded in
   `docs/audits/post-t295-housekeeping-2026-07-23.md`.
-- All four Macs run two independent current-user `launchd` supervisors using
-  dedicated restricted identities. The tmux session
-  `harness-connection-monitor` probes every pair at 300-second cadence,
-  classifies healthy/degraded/unrecoverable state, and uses only a healthy
-  sibling to kick one failed service. Simultaneous route loss recovers locally
-  through `launchd` without controller or owner intervention for tested
-  process/network failures; power, sleep, and external-provider loss remain
-  outside that guarantee.
-- Aist alone has since shown repeated simultaneous `0/2` intervals after fresh
-  dedicated-authentication and supervisor acceptance. One bounded observation
-  recovered both routes locally after roughly twelve minutes; another during
-  post-T-295 synchronization recovered both after roughly four and a half
-  minutes while the other Mac pairs remained healthy. T-296 owns diagnosis of
-  that variable recovery latency.
+- T-296 is complete. All four Macs run two independent current-user `launchd`
+  supervisors plus a 30-second Mac-local watchdog. Local's root-owned secondary
+  authorization file isolates their four exact restricted entries from
+  JumpCloud reconciliation, and account-scoped `15/3` sshd liveness releases
+  abandoned reverse listeners. Primary, secondary, and directly observed
+  simultaneous-loss drills passed on every Mac; all eight routes finished at
+  `managed=1 external=0`. The five-minute
+  `harness-connection-monitor` remains active. Power loss, loss of both upstream
+  networks, Local/sshd failure, and root-policy damage remain explicit external
+  bounds. Full evidence is in
+  `docs/audits/t296-mac-connectivity-resilience-2026-07-23.md`.
 - Exactly one future native weekly primary backup job exists on each managed
   Linux node. First runs passed on 2026-07-19; keep-all remains effective.
 - Global safety and collaboration invariants in `.codex/AGENTS.md` remain
@@ -67,23 +64,21 @@ Next free ID: T-297.
 
 ## Next resume checkpoint
 
-1. Execute the frozen T-296 Mac-local watchdog plan, beginning with synthetic
-   tests and an Aist-only reversible pilot. The 30-second observe-only night
-   watch is active alongside the existing five-minute recovery monitor.
-2. On or after 2026-07-26, query only T-196 recorded successor job IDs.
+1. On or after 2026-07-26, query only T-196 recorded successor job IDs.
 
-## Active tasks
+## Recently completed
 
 ### T-296 — Diagnose recurrent Aist dual-route recovery latency
 
-**Phase/status:** executing the one-time Local authorization hardening after
-the five-hour nightly implementation and observation window. The owner
-confirmed that `local` is the fleet's only JumpCloud-managed node and that
-neither its live `~/.ssh/authorized_keys` nor the empty
-`~/.ssh/authorized_keys.jcorig` contains any of the four restricted tunnel
-entries. `jcagent.service` and `ssh.service` are active. This makes JumpCloud
-reconciliation of the account-level authorization file the probable source of
-the drift; `.jcorig` is not being used as the durable tunnel boundary.
+**Phase/status:** complete. The owner/admin handoff installed the Local-only
+root-owned secondary authorization file and preserved Match block, validated
+effective sshd syntax and `15/3` liveness, and reloaded rather than restarted
+`ssh.service`. Fresh dedicated authentication passed for all four Macs. Home's
+shared-ControlMaster rescue forwards were replaced one at a time by its two
+managed services. Aist's pilot watchdog was upgraded, Home/Office/Riken received
+fresh watchdog transactions, and primary-only, secondary-only, and
+simultaneous-loss drills passed on all four Macs. The final manual monitor
+sample reported every Mac pair and ABQ healthy with no action.
 The durable plan is
 `docs/plans/t296-mac-connectivity-resilience.md`; the evidence handoff is
 `docs/audits/t296-mac-connectivity-resilience-2026-07-23.md`. The temporary
@@ -93,6 +88,19 @@ T-295 proved Aist's existing dedicated identity, both tunnel aliases, exclusive
 launchd ownership, current clean checkout, and zero-warning doctor immediately
 before repeated later `0/2` intervals. Home, Office, and Riken remained healthy,
 so the new evidence is Aist-specific and does not reopen T-295.
+
+**Completion identifiers:** Local system files are
+`/etc/ssh/harness_tunnel_authorized_keys` and
+`/etc/ssh/sshd_config.d/99-harness-tunnel-auth.conf`, both root:root mode 0644.
+Final watchdog transactions are Aist `20260722T225249Z-46153`, Home
+`20260722T224359Z-46764`, Office `20260722T224728Z-66616`, and Riken
+`20260722T225008Z-97535`. The obsolete Aist pilot transaction rolled back, and
+all staging helpers and private temporary state were exact-unlinked.
+
+**Historical execution record:** the evidence below explains the failures,
+design changes, interrupted recovery, and owner/admin gate that led to the
+completed state above. Any embedded “next action” describes its historical
+checkpoint and is superseded by the completion identifiers.
 
 **Observed evidence:** Aist first returned from a simultaneous outage after a
 roughly twelve-minute controller-side observation, with both routes and both
@@ -373,6 +381,8 @@ failure class; prove unattended recovery under matched primary, secondary, and
 simultaneous-loss drills; set a justified recovery bound; retain two
 launchd-managed routes with `managed=1 external=0`; and verify all four Mac
 pairs remain healthy without credential or unrelated SSH changes.
+
+## Active tasks
 
 ### T-273 — Resolve intentionally deferred maintenance
 

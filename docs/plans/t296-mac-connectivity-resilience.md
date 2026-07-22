@@ -3,8 +3,8 @@
 ## Control state
 
 - Task: T-296, extended by the owner's five-hour nightly instruction.
-- Phase: plan frozen; evidence collection and reversible implementation are
-  authorized.
+- Phase: complete; the frozen plan, Local hardening, four-Mac rollout, matched
+  drills, and post-hardening validation all passed on 2026-07-23.
 - Planning date: 2026-07-23.
 - Driver: Codex on `local`.
 - Mutation gate: satisfied by the owner's explicit instruction to establish a
@@ -177,6 +177,10 @@ generated.
    state, and publish a durable audit and TODO handoff.
 
 ## Acceptance
+
+Completed. The exact transaction identifiers, measured drill bounds, final
+fleet state, and explicit external failure limits are recorded in
+`docs/audits/t296-mac-connectivity-resilience-2026-07-23.md`.
 
 - Synthetic and full repository validation pass, followed by protected merge
   and clean fleet synchronization.

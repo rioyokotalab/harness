@@ -2,19 +2,29 @@
 
 ## Status
 
-T-296's five-hour nightly implementation and observation window is complete,
-but the task remains open at the owner credential/admin gate.
-Aist has the published Mac-local watchdog and recovered during several
-controlled and natural dual-route losses while that watchdog was active. The
-owner-launched Aist Codex also remained active, however, so those early live
-results establish convergence rather than sole watchdog causation. A later
-Aist outage exposed a real elapsed-time-bound defect and remained unresolved
-after its stale listeners drained. Home and Office subsequently lost their last
-established sessions; Riken retains two established routes but cannot create a
-fresh one. Rollout and drills are therefore correctly blocked. No agent
-inspected or changed a key or `authorized_keys`, and no SSH or sshd
-configuration was changed. The audit read only non-credential sshd directives
-needed to establish the Local include layout.
+T-296 is functionally complete. The five-hour implementation and observation
+window found two independent failure classes: stale Local reverse listeners
+and JumpCloud reconciliation of Local's account-level authorization file. The
+published Mac-local watchdog handles the first without controller access. A
+Local-only root-owned secondary authorization file and account-scoped sshd
+liveness now isolate the four restricted tunnel authorizations from JumpCloud
+rewrites and release unresponsive server sessions after roughly 45 seconds.
+
+The owner ran the reviewed administrative handoff from Local's separate `user`
+account. It installed `/etc/ssh/harness_tunnel_authorized_keys` and
+`/etc/ssh/sshd_config.d/99-harness-tunnel-auth.conf` as root:root, mode 0644,
+proved the effective two-file authorization and `15/3` liveness contract,
+validated sshd syntax, and reloaded rather than restarted `ssh.service`.
+Fresh dedicated authentication then passed for Aist, Home, Office, and Riken.
+No identity was generated, replaced, displayed, logged, or hashed.
+
+Home's two rescue forwards had shared one ordinary `login` ControlMaster.
+They were replaced transactionally one at a time: `home2` was preserved while
+managed `tunnel` returned, then managed `home` was preserved while `tunnel2`
+returned. All eight Mac routes now have exactly one launchd-managed process and
+zero external tunnel processes. The temporary Local staging files,
+`~/run_this.sh`, and `/tmp/t296-local-admin.sh` were exact-unlinked after
+validation.
 
 The job ended at 05:23:12 JST. Its dedicated observer ran from 00:40:09 through
 05:23:10, 4h43m01s, and retained 431 value-free samples per node. Aist had nine
@@ -342,39 +352,49 @@ user-level rewrites of `.ssh/authorized_keys` cannot remove the restricted
 tunnel entries, and server liveness releases abandoned listener sockets on a
 short, documented bound.
 
-## Remaining acceptance sequence
+## Final rollout and matched drills
 
-1. Owner verifies all four exact restricted entries and restores any missing
-   Aist, Home, Office, or Riken entry; optionally move all four entries into the
-   root-owned secondary file.
-2. Require `auth_blocked=0` on all four Macs; then restore all missing routes
-   through the published bounded recovery.
-3. Upgrade Aist to the current direct-launch watchdog transaction, then install
-   the watchdog on Home, Office, and Riken one at a time.
-4. After each install, run primary-only, secondary-only, and simultaneous-loss
-   drills, retaining a healthy sibling whenever possible and validating both
-   inbound routes plus `managed=1 external=0`.
-5. Run a post-hardening acceptance soak with all four Macs, retain the
-   five-minute recovery monitor, and close T-296 only after all four pass.
+The owner/admin gate and all acceptance steps completed on 2026-07-23. Aist's
+original pilot transaction `20260722T160219Z-66174` rolled back cleanly and was
+replaced from the current public checkout. The final watchdog transactions are:
 
-## Current runtime state
+| Mac | Watchdog transaction | Primary-only | Secondary-only | Simultaneous loss |
+| --- | --- | --- | --- | --- |
+| Aist | `20260722T225249Z-46153` | observed down, ready by 4s | observed down, ready within 45s | `0/2` observed, then `2/2` within 25s |
+| Home | `20260722T224359Z-46764` | ready by the first 18s sample | observed down, ready by 30s | `0/2` at 9s, `2/2` at 12s |
+| Office | `20260722T224728Z-66616` | observed down, ready by 8s | observed down, ready by 24s | `0/2` at 8s, `2/2` at 17s |
+| Riken | `20260722T225008Z-97535` | observed down, ready within 45s | observed down, ready by 14s | `0/2` at 9s, `2/2` at 17s |
 
-- `harness-connection-monitor`: five-minute recovery and fresh-auth audit.
+Each single-route drill booted out only the selected launchd job through its
+healthy sibling. Each simultaneous drill scheduled both exact bootouts on the
+Mac before either inbound route disappeared; Local observed `0/2` directly and
+did not participate in recovery. Every final check required both fresh inbound
+routes, `loaded=yes running=yes managed=1 external=0` for both tunnel services,
+and an installed, loaded watchdog with a valid healthy receipt. The short
+bootout drills mostly exercised the watchdog's baseline-bootstrap path before
+a stale-listener drain became necessary. The earlier Aist stale-listener drill
+and synthetic state-machine suite retain the complementary bounded-drain
+evidence.
+
+The permanent five-minute monitor remained active. Post-hardening samples after
+the drills reported every Mac pair and ABQ healthy with no recovery action.
+This completes the acceptance sequence; future outages remain observable
+through the monitor and each Mac's atomic watchdog receipt.
+
+## Final runtime state
+
+- `harness-connection-monitor`: five-minute recovery and fresh-auth audit,
+  retained after completion.
 - `t296-night-watch`: stopped after the five-hour endpoint; its private log was
   summarized value-free and exact-unlinked.
-- The owner-launched Codex process remained present on Aist during the early
-  drills, so watchdog exit 0 does not by itself exclude concurrent Codex
-  intervention. Its two historical tunnel tmux panes were both dead. Local
-  queued an explicit observe-only coordination request to the live Codex pane
-  and interrupted one active TUI turn with Ctrl-C while trying to deliver it.
-  The Codex process was not killed, but no acknowledgement arrived and the
-  interruption may have stopped its separate monitoring turn. An independent
-  post-acknowledgement recovery sample remains required for sole-attribution
-  evidence.
+- The owner-launched Codex process on Aist complicated attribution of the early
+  pilot. The final simultaneous drills avoid that ambiguity: both exact jobs
+  were detached locally on each Mac, Local directly observed `0/2`, and each
+  independent launchd watchdog remained the installed recovery authority.
 - Credential and SSH configuration bytes remain outside repository evidence.
-- At the final endpoint, only Riken's two Mac routes remained reachable; the
-  other three Mac pairs were `0/2`. ABQ remained `2/2`. The recovering
-  five-minute monitor remains alive on Local.
+- At the final endpoint Aist, Home, Office, Riken, and ABQ were each `2/2`.
+  All eight Mac tunnel services were launchd-managed with zero external owners,
+  and all four dedicated authentication checks returned `auth_blocked=0`.
 - Routine arg0 housekeeping preserved three live invocations, removed six
   eligible residues through guarded deletion, and ended with zero eligible or
   unexpected candidates.
