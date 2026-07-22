@@ -88,6 +88,10 @@ not silent exceptions.
    a healthy route and classify authorization drift as `at-risk`. Detection is
    value-free and non-mutating; credential repair remains outside agent
    authority.
+10. Retain one atomic, mode-0600 last-run receipt in the private watchdog state
+    directory. Record only a fixed outcome/classification, attempt count, and
+    UTC completion time; never retain raw SSH or supervisor output. This makes
+    a watchdog recovery distinguishable from concurrent human or agent action.
 
 The live soak proved that established connections can outlive removal of their
 server authorizations: Aist remained `2/2` fresh-auth ready, while Home, Office,
@@ -120,6 +124,9 @@ part of autonomous execution.
 7. The Local monitor supplies independent end-to-end inbound validation and
    recovery latency. The Mac watchdog never claims route reachability solely
    from process existence.
+8. Atomically replace the private last-run receipt after every invocation and
+   exact-unlink it during transaction rollback. A malformed or unexpectedly
+   typed receipt fails closed.
 
 ## Execution order
 
@@ -127,8 +134,8 @@ part of autonomous execution.
    watch.
 2. Add focused synthetic tests for healthy, single-dead, ambiguous ownership,
    authentication failure, dual-dead drain, staggered listener release,
-   timeout, lock contention, interrupted recovery, exact rollback, and output
-   privacy.
+   timeout, lock contention, interrupted recovery, private run receipts, exact
+   rollback, and output privacy.
 3. Implement the public watchdog command and transactional launchd lifecycle;
    add lock coordination to the existing kick path and route controller
    recovery through the bounded state machine.
