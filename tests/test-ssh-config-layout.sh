@@ -94,7 +94,7 @@ ssh -o CanonicalizeHostname=no -G -F "$TEMP_DIR/effective-config" \
         $1 == "serveraliveinterval" { s=$2 }
         END { exit h == "github.com" && u == "git" && s == 15 ? 0 : 1 }' ||
     fail "terminal include did not resolve GitHub and defaults globally"
-for failover_alias in login login2; do
+for failover_alias in tunnel tunnel2; do
     ssh -o CanonicalizeHostname=no -G -F "$TEMP_DIR/effective-config" \
         "$failover_alias" 2>/dev/null |
         awk '$1 == "controlmaster" { m=$2 } $1 == "controlpath" { p=$2 }
@@ -102,6 +102,20 @@ for failover_alias in login login2; do
             $1 == "exitonforwardfailure" { e=$2 }
             END { exit m == "false" && p == "" && x == "no" && e == "yes" ? 0 : 1 }' ||
         fail "failover alias retained multiplexing or non-failing forwards"
+done
+for no_x11_alias in tunnel tunnel2 aist aist2 home home2 office office2 riken riken2 web github; do
+    ssh -o CanonicalizeHostname=no -G -F "$TEMP_DIR/effective-config" \
+        "$no_x11_alias" 2>/dev/null |
+        awk '$1 == "forwardx11" { x=$2 }
+            END { exit x == "no" ? 0 : 1 }' ||
+        fail "managed X11 opt-out missing"
+done
+for x11_alias in login node-only; do
+    ssh -o CanonicalizeHostname=no -G -F "$TEMP_DIR/effective-config" \
+        "$x11_alias" 2>/dev/null |
+        awk '$1 == "forwardx11" { x=$2 } $1 == "forwardx11trusted" { t=$2 }
+            END { exit x == "yes" && t == "yes" ? 0 : 1 }' ||
+        fail "ordinary target lost X11 policy"
 done
 ssh -o CanonicalizeHostname=no -G -F "$TEMP_DIR/effective-config" \
     node-only 2>/dev/null |

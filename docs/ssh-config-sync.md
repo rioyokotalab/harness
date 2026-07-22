@@ -32,11 +32,12 @@ either installed postimage changed. Existing SSH sessions are not restarted.
 `harness dotfiles` routes SSH work through this same adapter instead of making
 fragment symlinks.
 
-The shared fragment places an exact `Host login login2` exception before the
+The shared fragment places an exact `Host tunnel tunnel2` exception before the
 global defaults and sets `ControlMaster no`, `ControlPath none`, and
 `ControlPersist no`. It also sets `ExitOnForwardFailure yes`, so a dedicated
-failover connection exits when any requested local, remote, dynamic, or tunnel
-forward cannot be established instead of appearing healthy without its route.
+supervised connection exits when any requested local, remote, dynamic, or
+tunnel forward cannot be established instead of appearing healthy without its
+route.
 OpenSSH uses the first obtained value for each option, so this ordering prevents
 the two aliases from reusing or creating a multiplexed connection. GitHub and
 ordinary targets continue to use the global `ControlMaster auto`, configured
@@ -45,6 +46,34 @@ Applying the fragment does not terminate an already-running master; the
 exception takes effect for new clients. `ExitOnForwardFailure` covers initial
 forward setup only: it does not prove that the ultimate forwarding destination
 is reachable or detect a forward that fails later.
+
+X11 forwarding is disabled only for `tunnel`, `tunnel2`, `aist`, `aist2`,
+`home`, `home2`, `office`, `office2`, `riken`, `riken2`, and `web`, plus the
+pre-existing GitHub exception. `login` and every other target retain the
+global `ForwardX11 yes` and `ForwardX11Trusted yes` policy.
+
+## Changing the managed shared fragment
+
+Do not edit `~/.ssh/config.d/harness.conf` directly. It is an installed
+mode-0600 copy and the next apply replaces it with the tracked canonical
+source. Make shared, non-secret changes through this workflow:
+
+1. Create a task branch in the harness checkout and edit
+   `config/ssh/harness.conf`.
+2. Update the structural expectations in `harness-ssh-config-layout` and its
+   focused test when adding or changing a managed exception.
+3. Run `tests/test-ssh-config-layout.sh`, `git diff --check`, and
+   `tests/test-phase1.sh`; publish through the protected `main` workflow.
+4. Synchronize only clean managed checkouts, then run
+   `harness ssh-config-layout --host LOGICAL_ID --plan` on each target.
+5. Apply only a clean plan with
+   `harness ssh-config-layout --host LOGICAL_ID --apply`, retain the emitted
+   transaction identifier, and verify `ssh -G` for affected and unaffected
+   aliases. Use `--rollback TRANSACTION_ID` if validation fails.
+
+Private hostnames, routes, usernames, and forwarding endpoints do not belong
+in the public fragment. Change those only in the private per-Mac payload and
+reconcile them through `harness macos-ssh-sync`.
 
 ## Personal Macs: SSH-only desired state
 

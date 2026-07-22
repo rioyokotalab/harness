@@ -14,6 +14,8 @@ These project rules supplement the shared global agreements in
 - Resume only the recorded task. Revalidate scheduler, hosting-service, and
   other mutable external state before acting; a failed query is unknown state,
   not evidence of absence.
+- Use `docs/fleet-inventory.md` as the cold-start reference for logical aliases,
+  SSH entries, usernames, hostnames, and operating systems.
 
 ## Change and validation
 

@@ -18,12 +18,16 @@ import time
 INCLUDE = b"Include ~/.ssh/config.d/harness.conf"
 MATCH_ALL = b"Match all"
 TRAILER = MATCH_ALL + b"\n" + INCLUDE + b"\n"
-FAILOVER_EXCEPTION = (
-    b"Host login login2\n"
+MANAGED_EXCEPTIONS = (
+    b"Host tunnel tunnel2\n"
     b"\tControlMaster no\n"
     b"\tControlPath none\n"
     b"\tControlPersist no\n"
     b"\tExitOnForwardFailure yes\n"
+    b"\tForwardX11 no\n"
+    b"\n"
+    b"Host aist aist2 home home2 office office2 riken riken2 web\n"
+    b"\tForwardX11 no\n"
     b"\n# Defaults\n\n"
 )
 MAX_CONFIG = 1024 * 1024
@@ -150,7 +154,7 @@ def validate_canonical(data):
     post, counts, include_count = transform_root(data)
     if counts[b"github"] != 1 or counts[b"*"] != 1 or include_count != 0:
         die("canonical SSH fragment does not contain exactly the shared stanzas")
-    if post != FAILOVER_EXCEPTION + TRAILER:
+    if post != MANAGED_EXCEPTIONS + TRAILER:
         die("canonical SSH fragment contains bytes outside the shared stanzas")
 
 
