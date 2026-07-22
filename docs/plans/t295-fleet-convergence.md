@@ -184,6 +184,10 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
 - D10 — **accepted hidden-home policy:** declare `move-large=.local`,
   `move-fast=none`, `delete-after-backup=none`, and `owner-action=none` for
   ABQ. Preserve source data until backup and migration validation complete.
+- D11 — **accepted backup topology:** place ABQ's primary Restic repository at
+  `/groups/qgai50157/yokota/restic/home-control` and maintain its independent
+  replica on local at
+  `/mnt/nfs-03/safe/Users/rioyokota/restic-replicas/abq`.
 
 1. **Fleet scope and publication — answered/accepted.** Define the existing 11-node
    maintenance/Python/package scope as local, ab, ab2, al, rc, ri, t4, aist,
@@ -210,12 +214,11 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
    through `ProxyJump ab2` as a health/failover route, and reserve aist as an
    emergency third path rather than making health depend on a Mac reverse
    tunnel. Confirm this route design or provide another priority.
-6. **ABQ storage and hidden-home policy — answered/accepted.** Use D9's roots
-   and D10's hidden-home policy after the final go. **Backup topology remains.**
-   Recommended: primary Restic below the selected persistent root and an
-   independent replica on local's existing safe storage. Missing packages
-   remain limited to declared checksum-pinned user-space tools, never system
-   packages.
+6. **ABQ storage, hidden-home policy, and backup topology — answered/accepted.**
+   Use D9's roots, D10's hidden-home policy, and D11's two-location backup
+   topology after the final go. The Restic credential remains an owner-only
+   prerequisite. Missing packages remain limited to declared checksum-pinned
+   user-space tools, never system packages.
 7. **Python policy.** Recommended: manage exact CPython 3.12.12 on all 11
    current nodes without replacing `python` or `python3`; expose only
    `python3.12`; synchronize project dependency declarations and `uv.lock`,

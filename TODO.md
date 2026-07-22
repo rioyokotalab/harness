@@ -99,6 +99,11 @@ Confirmed planning facts:
   Its accepted hidden-home policy moves large `.local` data only, moves no
   latency-sensitive path, deletes no source after backup, and requires no
   owner-only migration step.
+- ABQ's accepted backup topology uses
+  `/groups/qgai50157/yokota/restic/home-control` as the primary Restic
+  repository and local's
+  `/mnt/nfs-03/safe/Users/rioyokota/restic-replicas/abq` as its independent
+  replica. The absent Restic password remains an owner-only prerequisite.
 
 **Next action:** receive the complete owner decision bundle, checkpoint the
 answers, audit the plan, move to `ready-for-go`, and request the final explicit
