@@ -160,6 +160,9 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
   every other non-universal formula; remove Aist's `claude-code` cask; and
   install the dependency closure of the retained set. Retain universal
   `openssl@3` and remove legacy non-universal `openssl@1.1` from Aist and Home.
+- D7 — **accepted:** route `abq` through `ab` and `abq2` through `ab2` for
+  routine health/failover. Retain Aist as an emergency-only ABQ path that does
+  not participate in routine health.
 
 1. **Fleet scope and publication — answered/accepted.** Define the existing 11-node
    maintenance/Python/package scope as local, ab, ab2, al, rc, ri, t4, aist,
@@ -183,7 +186,7 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
    package-manager-derived dependencies across all four Macs. Do not infer
    removal permission from absence on another Mac; use the owner's forthcoming
    retained/removal decision.
-5. **ABQ routes.** Recommended: add `abq` through `ProxyJump ab`, add `abq2`
+5. **ABQ routes — answered/accepted.** Add `abq` through `ProxyJump ab`, add `abq2`
    through `ProxyJump ab2` as a health/failover route, and reserve aist as an
    emergency third path rather than making health depend on a Mac reverse
    tunnel. Confirm this route design or provide another priority.
