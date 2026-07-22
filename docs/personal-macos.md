@@ -368,10 +368,36 @@ harness macos-update --host LOGICAL_ID \
   --public-target PUBLIC_COMMIT --private-target PRIVATE_COMMIT --plan
 ```
 
-## Staged reverse-SSH supervision
+## Dedicated reverse-SSH supervision
+
+`harness macos-tunnel-supervisor` manages the current `tunnel` and `tunnel2`
+launch agents. These aliases are reserved for launchd and carry the reverse
+forwards; ordinary interactive `login` carries no forward and `login2` is not
+installed. Keeping the two roles separate prevents simultaneous interactive
+sessions from competing for fixed forwarding ports.
+
+The plan, apply, activate, status, kick, deactivate, and rollback interface is
+the same as the legacy command below, with `tunnel|tunnel2` as the aliases. It
+uses an independent state root, so a migration can stage both new agents while
+the legacy agents remain live. Cut over one route at a time: deactivate its
+legacy agent, activate its tunnel replacement, and verify inbound health before
+changing the sibling route. If validation fails, deactivate the replacement
+and reactivate the unchanged legacy agent. Retire the legacy transaction only
+after both new routes pass.
+
+```bash
+harness macos-tunnel-supervisor --host LOGICAL_ID --plan
+harness macos-tunnel-supervisor --host LOGICAL_ID --apply
+harness macos-tunnel-supervisor --activate TRANSACTION_ID --alias tunnel
+harness macos-tunnel-supervisor --activate TRANSACTION_ID --alias tunnel2
+harness macos-tunnel-supervisor --host LOGICAL_ID --status
+```
+
+## Legacy reverse-SSH supervision
 
 `harness macos-ssh-supervisor` manages two current-user launch agents for the
-existing private `login` and `login2` reverse-forward aliases. It never embeds
+historical private `login` and `login2` reverse-forward aliases during the
+bounded migration above. Do not use it for a new installation. It never embeds
 or emits a host name, port, identity path, key, or other private SSH value. The
 agents invoke the platform `/usr/bin/ssh` with batch mode, a bounded connection
 attempt, isolated multiplexing, fail-fast forwarding, encrypted server

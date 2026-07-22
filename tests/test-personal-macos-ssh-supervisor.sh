@@ -4,6 +4,7 @@ set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
 SUPERVISOR=$ROOT/libexec/harness-macos-ssh-supervisor
+TUNNEL_SUPERVISOR=$ROOT/libexec/harness-macos-tunnel-supervisor
 FIXTURE=$ROOT/tests/fixtures/personal-macos/private-v1
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-macos-ssh-supervisor-test.XXXXXX")
@@ -36,8 +37,9 @@ fail() {
 PUBLIC=$TEMP_DIR/public
 mkdir -p "$PUBLIC/bin" "$PUBLIC/libexec" "$PUBLIC/profiles/personal-macos"
 cp "$ROOT/bin/harness" "$PUBLIC/bin/harness"
-cp "$ROOT/libexec/harness-common" "$ROOT/libexec/harness-macos-common" \
-    "$ROOT/libexec/harness-macos-profile" "$SUPERVISOR" "$PUBLIC/libexec/"
+    cp "$ROOT/libexec/harness-common" "$ROOT/libexec/harness-macos-common" \
+    "$ROOT/libexec/harness-macos-profile" "$SUPERVISOR" "$TUNNEL_SUPERVISOR" \
+    "$PUBLIC/libexec/"
 cp "$ROOT/profiles/personal-macos/base.conf" \
     "$ROOT/profiles/personal-macos/formula-policy-v4.conf" \
     "$PUBLIC/profiles/personal-macos/"
@@ -99,8 +101,7 @@ case "${1:-}" in
     print)
         target=${2:-}
         case "$target" in
-            gui/*/org.rioyokota.harness.ssh.login2) marker=$state/login2 ;;
-            gui/*/org.rioyokota.harness.ssh.login) marker=$state/login ;;
+            gui/*/org.rioyokota.harness.ssh.*) marker=$state/${target##*.} ;;
             gui/*) exit 0 ;;
             *) exit 1 ;;
         esac
@@ -109,19 +110,19 @@ case "${1:-}" in
         ;;
     bootstrap)
         plist=${3:-}
-        case "$plist" in *login2.plist) marker=$state/login2 ;; *) marker=$state/login ;; esac
+        name=${plist##*.ssh.}; name=${name%.plist}; marker=$state/$name
         [ ! -e "$HOME/.fake-bootstrap-fail" ] || exit 1
         : >"$marker"
         ;;
     bootout)
         target=${2:-}
-        case "$target" in *login2) marker=$state/login2 ;; *) marker=$state/login ;; esac
+        marker=$state/${target##*.}
         [ -e "$marker" ] || exit 1
         unlink "$marker"
         ;;
     kickstart)
         target=${3:-}
-        case "$target" in *login2) marker=$state/login2 ;; *) marker=$state/login ;; esac
+        marker=$state/${target##*.}
         [ -e "$marker" ]
         ;;
     *) exit 2 ;;
@@ -134,6 +135,12 @@ if [ -f "$HOME/.fake-launch-state/login" ]; then
 fi
 if [ -f "$HOME/.fake-launch-state/login2" ]; then
     printf '%s\n' '1 /usr/bin/ssh /usr/bin/ssh -N -T login2'
+fi
+if [ -f "$HOME/.fake-launch-state/tunnel" ]; then
+    printf '%s\n' '1 /usr/bin/ssh /usr/bin/ssh -N -T tunnel'
+fi
+if [ -f "$HOME/.fake-launch-state/tunnel2" ]; then
+    printf '%s\n' '1 /usr/bin/ssh /usr/bin/ssh -N -T tunnel2'
 fi
 if [ -f "$HOME/.fake-external" ]; then
     alias=$(sed -n '1p' "$HOME/.fake-external")
@@ -177,6 +184,13 @@ run_supervisor() {
     shift
     HOME="$supervisor_home" HARNESS_ROOT="$PUBLIC" \
         PATH="$FAKE_BIN:/usr/bin:/bin" "$SUPERVISOR" "$@"
+}
+
+run_tunnel_supervisor() {
+    supervisor_home=$1
+    shift
+    HOME="$supervisor_home" HARNESS_ROOT="$PUBLIC" \
+        PATH="$FAKE_BIN:/usr/bin:/bin" "$TUNNEL_SUPERVISOR" "$@"
 }
 
 transaction_id() {
@@ -308,5 +322,25 @@ grep -F 'reason=existing-path' "$TEMP_DIR/collision.out" >/dev/null ||
     fail "existing launch agent refusal"
 [ ! -e "$collision_home/.local/state/harness/macos-ssh-supervisor" ] ||
     fail "blocked apply created supervisor state"
+
+tunnel_home=$(make_home tunnel)
+run_tunnel_supervisor "$tunnel_home" --host mac-test-pilot --apply \
+    >"$TEMP_DIR/tunnel-apply.out"
+tunnel_tx=$(transaction_id "$TEMP_DIR/tunnel-apply.out")
+[ -n "$tunnel_tx" ] || fail "tunnel apply emitted no staged transaction"
+for alias in tunnel tunnel2; do
+    [ -f "$tunnel_home/Library/LaunchAgents/org.rioyokota.harness.ssh.$alias.plist" ] ||
+        fail "missing staged $alias plist"
+done
+[ -f "$tunnel_home/.local/state/harness/macos-tunnel-supervisor/current" ] ||
+    fail "tunnel supervisor did not use independent state"
+run_tunnel_supervisor "$tunnel_home" --activate "$tunnel_tx" --alias tunnel \
+    >"$TEMP_DIR/tunnel-activate.out"
+run_tunnel_supervisor "$tunnel_home" --host mac-test-pilot --kick tunnel \
+    >"$TEMP_DIR/tunnel-kick.out"
+run_tunnel_supervisor "$tunnel_home" --deactivate "$tunnel_tx" --alias tunnel \
+    >"$TEMP_DIR/tunnel-deactivate.out"
+run_tunnel_supervisor "$tunnel_home" --rollback "$tunnel_tx" \
+    >"$TEMP_DIR/tunnel-rollback.out"
 
 echo "personal macOS SSH supervisor tests: PASS"

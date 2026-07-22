@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_SSH_SUPERVISOR_PRIMARY_ALIAS=tunnel
+HARNESS_SSH_SUPERVISOR_SECONDARY_ALIAS=tunnel2
+HARNESS_SSH_SUPERVISOR_STATE_ROOT=macos-tunnel-supervisor
+export HARNESS_SSH_SUPERVISOR_PRIMARY_ALIAS
+export HARNESS_SSH_SUPERVISOR_SECONDARY_ALIAS
+export HARNESS_SSH_SUPERVISOR_STATE_ROOT
+exec "$SELF_DIR/harness-macos-ssh-supervisor" "$@"
