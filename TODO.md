@@ -397,7 +397,9 @@ Execution checkpoint 2026-07-22:
   eligible entry, and zero unexpected entries. A stable retry independently
   quarantined and guarded-deleted exactly one eligible directory per Mac;
   post-apply plans report three live, zero eligible/young/unexpected, and no
-  Codex process was stopped. The independently published benchmark aggregate
+  Codex process was stopped. Final local housekeeping likewise guarded-deleted
+  six eligible entries and left three live with zero eligible, young, or
+  unexpected entries. The independently published benchmark aggregate
   remains at SHA-256
   `772acf85240ec4cbefdaeb82b889a6d84ec15093806e88f8e6fdcb5b53821d9b`.
   Guarded-delete manifest `/tmp/harness-t295-eval-delete.manifest` validated and
