@@ -1,0 +1,172 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+. "$SELF_DIR/harness-macos-common"
+
+usage() {
+    echo "Usage: harness macos-python --host LOGICAL_ID --minor 3.11|3.12 [--plan|--apply]" >&2
+}
+
+logical_host=
+minor=
+mode=plan
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --host) [ "$#" -ge 2 ] || { usage; exit 2; }; logical_host=$2; shift 2 ;;
+        --minor) [ "$#" -ge 2 ] || { usage; exit 2; }; minor=$2; shift 2 ;;
+        --plan) mode=plan; shift ;;
+        --apply) mode=apply; shift ;;
+        *) usage; exit 2 ;;
+    esac
+done
+macos_private_id_is_safe "$logical_host" || { usage; exit 2; }
+case "$minor" in 3.11|3.12) ;; *) usage; exit 2 ;; esac
+[ "$(uname -s)" = Darwin ] || die "Mac Python requires Darwin"
+[ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] &&
+    [ "$(git -C "$HARNESS_ROOT" symbolic-ref --quiet --short HEAD)" = main ] &&
+    [ -z "$(git -C "$HARNESS_ROOT" status --porcelain --untracked-files=normal)" ] ||
+    die "Mac Python requires a clean main checkout"
+"$SELF_DIR/harness-macos-profile" --host "$logical_host" >/dev/null ||
+    die "private profile is not ready for Mac Python"
+
+case $(uname -m) in arm64) arch=aarch64; native_arch=arm64 ;; *)
+    die "unsupported Mac Python architecture" ;;
+esac
+records=$(awk -F'|' -v minor="$minor" -v arch="$arch" '
+    $1 == minor && $4 == "darwin" && $5 == arch { print }
+' "$HARNESS_ROOT/tools/python.tsv")
+[ "$(printf '%s\n' "$records" | awk 'NF { n++ } END { print n + 0 }')" -eq 1 ] ||
+    die "no unique Mac Python declaration"
+IFS='|' read -r record_minor patch uv_version python_os python_arch implementation <<EOF
+$records
+EOF
+[ "$record_minor:$python_arch:$implementation" = "$minor:$arch:cpython" ] ||
+    die "Mac Python declaration mismatch"
+
+current_uid=$(id -u)
+case ${HOME:-} in /*) ;; *) die "Mac Python requires an absolute HOME" ;; esac
+[ -d "$HOME" ] && [ ! -L "$HOME" ] &&
+    [ "$(macos_stat_owner "$HOME")" = "$current_uid" ] || die "Mac Python HOME is unsafe"
+install_dir=$HOME/.local/opt/python/$minor/$python_os-$python_arch
+stable_link=$HOME/.local/bin/python$minor
+action=INSTALL
+source=uv-managed
+blocked=0
+if [ -L "$stable_link" ]; then
+    target=$(readlink "$stable_link")
+    case "$target" in "$install_dir"/*/bin/python"$minor")
+        [ -x "$target" ] && [ "$($target -c 'import platform; print(platform.python_version())')" = "$patch" ] &&
+            [ "$($target -c 'import platform; print(platform.machine())')" = "$native_arch" ] || blocked=1
+        [ "$blocked" -ne 0 ] || { action=KEEP; source=managed-python; }
+        ;;
+        *) blocked=1 ;;
+    esac
+elif [ -e "$stable_link" ] || [ -e "$install_dir" ] || [ -L "$install_dir" ]; then
+    blocked=1
+elif command -v "python$minor" >/dev/null 2>&1; then
+    observed=$("python$minor" -c 'import platform; print(platform.python_version())')
+    case "$observed" in "$minor".*) action=KEEP; source=host-provided ;; *) blocked=1 ;; esac
+fi
+[ "$blocked" -eq 0 ] || action=BLOCK
+
+printf 'MACOS_PYTHON mode=%s host=%s minor=%s patch=%s arch=%s\n' \
+    "$mode" "$logical_host" "$minor" "$patch" "$arch"
+case "$action" in
+    KEEP) printf 'KEEP python=%s source=%s\n' "$minor" "$source" ;;
+    INSTALL)
+        printf 'INSTALL python_tree=%s\n' "$install_dir"
+        printf 'CREATE link=%s source=managed-tree\n' "$stable_link"
+        printf 'NATIVE uv python install --install-dir STAGING --no-bin --no-cache --no-progress %s\n' "$minor"
+        ;;
+    BLOCK) printf 'BLOCK python=%s reason=partial-or-unmanaged-state\n' "$minor" ;;
+esac
+[ "$blocked" -eq 0 ] || die "Mac Python plan contains blocked paths"
+[ "$mode" = apply ] || { echo 'END macos_python changes=not-applied'; exit 0; }
+[ "$action" = INSTALL ] || { echo 'END macos_python changes=none'; exit 0; }
+[ "$(uv --version 2>/dev/null | awk '{ print $1, $2 }')" = "uv $uv_version" ] ||
+    die "Mac Python requires uv $uv_version"
+
+state_root=$HOME/.local/state/harness
+transaction_root=$state_root/transactions
+for directory in "$HOME/.local" "$HOME/.local/state" "$state_root" "$transaction_root" \
+    "$HOME/.local/opt" "$HOME/.local/opt/python" "$HOME/.local/opt/python/$minor" \
+    "$HOME/.local/bin"; do
+    if [ ! -e "$directory" ] && [ ! -L "$directory" ]; then
+        mkdir "$directory"
+    fi
+    [ -d "$directory" ] && [ ! -L "$directory" ] &&
+        [ "$(macos_stat_owner "$directory")" = "$current_uid" ] ||
+        die "Mac Python directory is unsafe"
+done
+chmod 700 "$state_root" "$transaction_root"
+transaction_id=$(date -u +%Y%m%dT%H%M%SZ)-$$
+manifest=$transaction_root/$transaction_id.manifest
+status_file=$manifest.status
+stage=$(mktemp -d "$HOME/.local/opt/python/$minor/.staging.XXXXXX")
+tree_archive=
+installed=0
+complete=0
+cleanup() {
+    status=$?
+    cleanup_failed=0
+    [ -z "$tree_archive" ] || unlink "$tree_archive" || cleanup_failed=1
+    if [ -n "$stage" ] && [ -d "$stage" ]; then
+        guarded_delete_tree "$HOME/.local/opt/python/$minor" "$stage" "$transaction_root" ||
+            cleanup_failed=1
+    fi
+    if [ "$complete" -eq 0 ]; then
+        if [ -L "$stable_link" ] && [ "$(readlink "$stable_link")" = "${target:-}" ]; then
+            unlink "$stable_link" || cleanup_failed=1
+        fi
+        if [ "$installed" -eq 1 ] && [ -d "$install_dir" ]; then
+            guarded_delete_tree "$HOME/.local/opt/python/$minor" "$install_dir" "$transaction_root" ||
+                cleanup_failed=1
+        fi
+        printf '%s\n' failed >"$status_file"
+        chmod 600 "$status_file"
+    fi
+    [ "$status" -ne 0 ] || [ "$cleanup_failed" -eq 0 ] || status=2
+    exit "$status"
+}
+trap cleanup EXIT HUP INT TERM
+
+printf 'schema=1\nhost=%s\nrevision=%s\n' "$logical_host" \
+    "$(git -C "$HARNESS_ROOT" rev-parse HEAD)" >"$manifest"
+chmod 600 "$manifest"
+printf 'NATIVE uv python install --install-dir STAGING --no-bin --no-cache --no-progress %s\n' "$minor"
+UV_NO_CONFIG=1 uv python install --install-dir "$stage" --no-bin --no-cache --no-progress "$minor"
+implementation_dir=$(find "$stage" -mindepth 1 -maxdepth 1 -type d -name 'cpython-*' -print)
+[ "$(printf '%s\n' "$implementation_dir" | awk 'NF { n++ } END { print n + 0 }')" -eq 1 ] ||
+    die "uv created an unexpected Mac Python layout"
+python_path=$implementation_dir/bin/python$minor
+[ -f "$python_path" ] && [ ! -L "$python_path" ] && [ -x "$python_path" ] ||
+    die "Mac Python executable is missing"
+[ "$($python_path -c 'import platform; print(platform.python_version())')" = "$patch" ] &&
+    [ "$($python_path -c 'import platform; print(platform.machine())')" = "$native_arch" ] ||
+    die "Mac Python identity verification failed"
+"$python_path" -c 'import ssl, sqlite3, sys; assert sys.prefix == sys.base_prefix; assert ssl.OPENSSL_VERSION; assert sqlite3.sqlite_version'
+relative=${implementation_dir#"$stage"/}
+mv "$stage" "$install_dir"
+stage=
+installed=1
+target=$install_dir/$relative/bin/python$minor
+tree_archive=$(mktemp "$transaction_root/$transaction_id.tree.XXXXXX")
+tar --exclude='*/__pycache__' --exclude='*.pyc' --exclude='*.pyo' \
+    -cf "$tree_archive" -C "$install_dir" .
+tree_hash=$(macos_checksum_file "$tree_archive")
+unlink "$tree_archive"
+tree_archive=
+printf 'python-portable|%s|%s\n' "$install_dir" "$tree_hash" >>"$manifest"
+printf 'link|%s|%s\n' "$stable_link" "$target" >>"$manifest"
+ln -s "$target" "$stable_link"
+printf '%s\n' complete >"$status_file"
+chmod 600 "$status_file"
+complete=1
+installed=0
+trap - EXIT HUP INT TERM
+printf 'TRANSACTION id=%s status=complete\n' "$transaction_id"
+echo 'END macos_python changes=applied'

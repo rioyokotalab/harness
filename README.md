@@ -339,8 +339,8 @@ harness python --host HOST --minor 3.12 --plan
 harness python --host HOST --minor 3.12 --apply
 ```
 
-The transactions install CPython 3.11.15 and 3.12.13 into harness-specific
-directories with uv 0.11.31, disable project configuration discovery and cache
+The transactions install CPython 3.11.15 and a current 3.12 patch into
+harness-specific directories with uv 0.11.31, disable project configuration discovery and cache
 retention, and create only `python3.11` and `python3.12`. They do not modify
 uv's default Python directory or shadow site `python`/`python3`. New projects
 select 3.12; 3.11 is the compatibility runtime. Rollback checks all non-cache

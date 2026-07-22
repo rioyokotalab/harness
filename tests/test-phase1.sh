@@ -178,6 +178,8 @@ if [ "${HARNESS_TEST_JOBS:-auto}" = legacy ]; then
     fail "personal macOS long-gap update focused suite"
 "$ROOT/tests/test-personal-macos-ssh-supervisor.sh" >/dev/null ||
     fail "personal macOS SSH supervisor focused suite"
+"$ROOT/tests/test-personal-macos-python.sh" >/dev/null ||
+    fail "personal macOS Python focused suite"
 "$ROOT/tests/test-personal-macos-ssh-sync.sh" >/dev/null ||
     fail "personal macOS SSH-sync focused suite"
 "$ROOT/tests/test-personal-macos-config-sync.sh" >/dev/null ||
@@ -1971,7 +1973,7 @@ fake_python=$TEMP_DIR/python3.12
 printf '%s\n' \
     '#!/bin/sh' \
     'case "${2:-}" in' \
-    '  *platform.python_version*) echo 3.12.13 ;;' \
+    '  *platform.python_version*) echo 3.12.12 ;;' \
     '  *platform.machine*) echo x86_64 ;;' \
     '  *) exit 0 ;;' \
     'esac' \
@@ -1979,13 +1981,13 @@ printf '%s\n' \
 chmod 755 "$fake_python"
 printf '%s\n' \
     '#!/bin/sh' \
-    'if [ "${1:-}" = --version ]; then echo "uv 0.11.31"; exit 0; fi' \
+    'if [ "${1:-}" = --version ]; then echo "uv 0.11.31 (x86_64-unknown-linux-gnu)"; exit 0; fi' \
     'install_dir=' \
     'while [ "$#" -gt 0 ]; do' \
     '  case "$1" in --install-dir) install_dir=$2; shift 2 ;; *) shift ;; esac' \
     'done' \
     '[ -n "$install_dir" ]' \
-    'target=$install_dir/cpython-3.12.13-linux-x86_64-gnu/bin' \
+    'target=$install_dir/cpython-3.12.12-linux-x86_64-gnu/bin' \
     'mkdir -p "$target"' \
     'cp "$FIXTURE_PYTHON" "$target/python3.12"' >"$python_bin/uv"
 chmod 755 "$python_bin/uv"
