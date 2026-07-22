@@ -138,6 +138,10 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
   verified OS facts in the public harness repository and link the table from
   project `AGENTS.md`. The existing 11 systems are the current managed scope,
   ABQ becomes node 12 after onboarding, and `web` remains service-only.
+- D2 — **accepted with owner naming correction:** retain only `login` for
+  ordinary interactive Mac-to-local access, remove the interactive `login2`
+  alias, and move the primary and secondary supervised reverse forwards to
+  launchd-only aliases named `tunnel` and `tunnel2` respectively.
 
 1. **Fleet scope and publication — answered/accepted.** Define the existing 11-node
    maintenance/Python/package scope as local, ab, ab2, al, rc, ri, t4, aist,
@@ -145,12 +149,10 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
    service-only. Publish the supplied usernames and global hostnames plus
    verified OS data in the public repository and link it from project
    `AGENTS.md` for cold starts. Confirm or change this scope/publication choice.
-2. **SSH and X11.** Recommended: introduce private `login-tunnel` and
-   `login2-tunnel` aliases owned only by launchd; keep `login`/`login2` for
-   ordinary interactive access with no remote forward and
-   `ClearAllForwardings yes`; set the public default to `ForwardX11 no` and
-   `ForwardX11Trusted no`. Name any aliases that must explicitly retain X11;
-   otherwise accept no opt-ins initially.
+2. **SSH role split — answered/accepted with corrected names.** Use `login`
+   only for ordinary interactive access, remove `login2`, and use `tunnel` and
+   `tunnel2` exclusively for the primary and secondary launchd reverse routes.
+   The X11 default remains a separate pending decision.
 3. **Mac Codex restart.** Recommended: run the supported updater even though
    0.145.0 is already current, stop all exact Codex processes, use a new
    Darwin lock-aware arg0 implementation to quarantine/delete only released
@@ -208,7 +210,7 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
 1. Checkpoint answers, convert assumptions to decisions, audit dependencies,
    acceptance criteria, authority, and rollback, then mark `ready-for-go`.
 2. Implement and test public control-plane changes on the task branch:
-   tunnel-alias supervision/migration, default X11 opt-out, Darwin arg0
+   `tunnel`/`tunnel2` supervision migration, default X11 opt-out, Darwin arg0
    housekeeping, local-to-t4 managed-symlink support, terminfo deployment,
    fleet table/AGENTS pointer, ABQ declarations/health route, cross-platform
    Python declaration, symmetric evaluator, and external-user skill.
@@ -218,7 +220,7 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
 4. Guardedly fast-forward clean managed Linux checkouts. Catch up all four Mac
    public/private checkouts through their native updater before invoking newly
    added commands.
-5. Roll out SSH tunnel aliases in a no-outage sequence: add tunnel-only aliases,
+5. Roll out `tunnel`/`tunnel2` in a no-outage sequence: add tunnel-only aliases,
    switch and validate supervisors one Mac/route at a time, then strip forwards
    from interactive aliases. Recheck dual-route health and multiple concurrent
    ordinary logins.
