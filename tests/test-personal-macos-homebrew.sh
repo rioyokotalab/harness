@@ -202,7 +202,7 @@ case "$1" in
         done
         [ "$cleanup_target" = icu4c@78 ] || exit 96
         if [ "$cleanup_dry" -eq 1 ]; then
-            printf 'Would remove: %s/Cellar/icu4c@78/legacy\n' \
+            printf 'Would remove: %s/Cellar/icu4c/legacy\n' \
                 "$FAKE_BREW_PREFIX"
         else
             remove_formula "$BREW_STATE/installed" icu4c
