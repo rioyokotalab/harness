@@ -96,6 +96,9 @@ Confirmed planning facts:
 - ABQ's group disk now has a verified 1,024 GiB quota. Its accepted persistent
   and cache roots are `/groups/qgai50157/yokota` and
   `/groups/qgai50157/yokota/cache`; they remain uncreated until the final go.
+  Its accepted hidden-home policy moves large `.local` data only, moves no
+  latency-sensitive path, deletes no source after backup, and requires no
+  owner-only migration step.
 
 **Next action:** receive the complete owner decision bundle, checkpoint the
 answers, audit the plan, move to `ready-for-go`, and request the final explicit

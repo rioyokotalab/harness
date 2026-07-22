@@ -181,6 +181,9 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
   `/groups/qgai50157/yokota/cache` as its cache root. After the owner added
   storage, `show_quota` verified a 1,024 GiB group-disk limit with 1 GiB used.
   Create and probe these paths transactionally only after the final PIE go.
+- D10 — **accepted hidden-home policy:** declare `move-large=.local`,
+  `move-fast=none`, `delete-after-backup=none`, and `owner-action=none` for
+  ABQ. Preserve source data until backup and migration validation complete.
 
 1. **Fleet scope and publication — answered/accepted.** Define the existing 11-node
    maintenance/Python/package scope as local, ab, ab2, al, rc, ri, t4, aist,
@@ -207,16 +210,12 @@ Ask these decisions one at a time and checkpoint each answer before advancing.
    through `ProxyJump ab2` as a health/failover route, and reserve aist as an
    emergency third path rather than making health depend on a Mac reverse
    tunnel. Confirm this route design or provide another priority.
-6. **ABQ storage roots — answered/accepted.** Use the D9 persistent and cache
-   roots after the final go. **Hidden-home and backup declarations remain.**
-   Recommended hidden-home policy is
-   `move-large=.local`, `move-fast=none`, `delete-after-backup=none`, and
-   `owner-action=none`; primary Restic lives below the selected persistent root
-   and the independent replica uses local's existing safe storage. If roots
-   are not known, authorize read-only candidate discovery and allow only an
-   unambiguous site-backed choice; otherwise storage/backup acceptance will be
-   deferred to the final decision list. Missing packages remain limited to
-   declared checksum-pinned user-space tools, never system packages.
+6. **ABQ storage and hidden-home policy — answered/accepted.** Use D9's roots
+   and D10's hidden-home policy after the final go. **Backup topology remains.**
+   Recommended: primary Restic below the selected persistent root and an
+   independent replica on local's existing safe storage. Missing packages
+   remain limited to declared checksum-pinned user-space tools, never system
+   packages.
 7. **Python policy.** Recommended: manage exact CPython 3.12.12 on all 11
    current nodes without replacing `python` or `python3`; expose only
    `python3.12`; synchronize project dependency declarations and `uv.lock`,
