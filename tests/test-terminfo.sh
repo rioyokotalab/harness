@@ -58,6 +58,19 @@ current=$(HOME="$home" HARNESS_LOGICAL_HOST=al \
 printf '%s\n' "$current" | grep -F 'state=current action=none' >/dev/null ||
     fail "current-entry plan"
 
+fake_bin=$TEST_ROOT/fake-bin
+mkdir "$fake_bin"
+real_infocmp=$(command -v infocmp)
+cat >"$fake_bin/infocmp" <<'EOF'
+#!/bin/sh
+"$REAL_INFOCMP" "$@" | sed 's/Smulx=\\E\[4:/Smulx=\\E[4\\:/'
+EOF
+chmod 755 "$fake_bin/infocmp"
+escaped_current=$(HOME="$home" HARNESS_LOGICAL_HOST=al REAL_INFOCMP="$real_infocmp" \
+    PATH="$fake_bin:/usr/bin:/bin" "$HARNESS" terminfo --host al --plan)
+printf '%s\n' "$escaped_current" | grep -F 'state=current action=none' >/dev/null ||
+    fail "ncurses colon-escape normalization"
+
 cp "$entry" "$TEST_ROOT/entry.backup"
 printf 'x' >>"$entry"
 if HOME="$home" HARNESS_LOGICAL_HOST=al \
