@@ -117,9 +117,10 @@ reachable. The frozen implementation now has synthetic coverage for healthy
 no-op, dual drain/restore, live and stale recovery locks, authentication
 refusal, bounded timeout with baseline restoration, and exact rollback. Its
 focused supervisor, connection-monitor, and public-audit suites pass. The first
-full phase-1 run reached every suite; only the two intentionally clean-checkout
-tmux/terminfo gates refused the uncommitted draft, so the complete gate must be
-rerun immediately after the local checkpoint commit.
+full phase-1 run reached every suite; its two intentionally clean-checkout
+tmux/terminfo gates refused the uncommitted draft. After the checkpoint commit,
+the clean rerun passed all focused suites, guarded-delete tests, and the full
+phase-1 gate in 102 seconds.
 
 **Next action:** implement and synthetically validate the transaction-owned
 Mac-local bounded-drain watchdog and shared recovery lock. Publish through the
