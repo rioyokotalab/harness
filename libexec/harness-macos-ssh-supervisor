@@ -660,15 +660,18 @@ if [ "$mode" = recover-pair ]; then
     recovery_release_seconds=2
     recovery_stable_seconds=20
     recovery_attempt_limit=80
+    recovery_timeout_seconds=1200
     if [ "${HARNESS_TEST_MODE:-0}" = 1 ]; then
         recovery_confirm_seconds=${HARNESS_TEST_RECOVERY_CONFIRM_SECONDS:-0}
         recovery_poll_seconds=${HARNESS_TEST_RECOVERY_POLL_SECONDS:-0}
         recovery_release_seconds=${HARNESS_TEST_RECOVERY_RELEASE_SECONDS:-0}
         recovery_stable_seconds=${HARNESS_TEST_RECOVERY_STABLE_SECONDS:-0}
         recovery_attempt_limit=${HARNESS_TEST_RECOVERY_ATTEMPTS:-3}
+        recovery_timeout_seconds=${HARNESS_TEST_RECOVERY_TIMEOUT_SECONDS:-1200}
     fi
     for recovery_number in "$recovery_confirm_seconds" "$recovery_poll_seconds" \
-        "$recovery_release_seconds" "$recovery_stable_seconds" "$recovery_attempt_limit"; do
+        "$recovery_release_seconds" "$recovery_stable_seconds" \
+        "$recovery_attempt_limit" "$recovery_timeout_seconds"; do
         case "$recovery_number" in ''|*[!0-9]*) die "invalid recovery timing" ;; esac
     done
     [ "$recovery_attempt_limit" -ge 1 ] || die "invalid recovery attempt limit"
@@ -726,11 +729,13 @@ if [ "$mode" = recover-pair ]; then
         service_loaded "$recovery_alias" &&
             die "Mac SSH supervisor service remained loaded during drain"
     done
-    printf 'MACOS_SSH_SUPERVISOR mode=recover-pair host=%s action=drain scope=%s status=started\n' \
-        "$logical_host" "$recovery_scope"
+    printf 'MACOS_SSH_SUPERVISOR mode=recover-pair host=%s action=drain scope=%s status=started timeout=%s\n' \
+        "$logical_host" "$recovery_scope" "$recovery_timeout_seconds"
 
     recovery_attempt=0
-    while [ "$recovery_attempt" -lt "$recovery_attempt_limit" ]; do
+    recovery_deadline=$(($(date +%s) + recovery_timeout_seconds))
+    while [ "$recovery_attempt" -lt "$recovery_attempt_limit" ] &&
+        [ "$(date +%s)" -lt "$recovery_deadline" ]; do
         recovery_attempt=$((recovery_attempt + 1))
         for recovery_alias in "$primary_alias" "$secondary_alias"; do
             if [ "$recovery_alias" = "$primary_alias" ]; then
@@ -739,6 +744,7 @@ if [ "$mode" = recover-pair ]; then
                 recovery_pending=$secondary_pending
             fi
             [ "$recovery_pending" -eq 1 ] || continue
+            [ "$(date +%s)" -lt "$recovery_deadline" ] || break
             if forward_bind_ready "$recovery_alias"; then
                 sleep "$recovery_release_seconds"
                 recovery_transaction_unchanged ||
@@ -759,10 +765,18 @@ if [ "$mode" = recover-pair ]; then
                 fi
                 printf 'MACOS_SSH_SUPERVISOR alias=%s action=restore status=running attempt=%s\n' \
                     "$recovery_alias" "$recovery_attempt"
+            elif ! unattended_auth_ready "$recovery_alias"; then
+                die "unattended SSH authentication is not ready during route recovery"
             fi
         done
         [ "$primary_pending" -eq 1 ] || [ "$secondary_pending" -eq 1 ] || break
-        sleep "$recovery_poll_seconds"
+        recovery_remaining=$((recovery_deadline - $(date +%s)))
+        [ "$recovery_remaining" -gt 0 ] || break
+        recovery_sleep=$recovery_poll_seconds
+        if [ "$recovery_sleep" -gt "$recovery_remaining" ]; then
+            recovery_sleep=$recovery_remaining
+        fi
+        sleep "$recovery_sleep"
     done
     if [ "$primary_pending" -eq 1 ] || [ "$secondary_pending" -eq 1 ]; then
         die "Mac SSH supervisor stale-listener drain timed out"

@@ -97,8 +97,16 @@ done
 [ "$identity_only" = yes ] && [ "$identity_agent" = yes ] &&
     [ "$identity_file" = yes ] || exit 1
 [ ! -e "$HOME/.fake-auth-fail" ] || exit 1
+if [ "$clear_forwardings" = yes ] && [ -n "$alias_name" ] &&
+    [ -e "$HOME/.fake-auth-drop-after-bind-$alias_name" ] &&
+    [ -e "$HOME/.fake-bind-probed-$alias_name" ]; then
+    exit 1
+fi
 if [ "$clear_forwardings" = no ] && [ -n "$alias_name" ]; then
-    [ ! -e "$HOME/.fake-bind-fail-$alias_name" ] || exit 1
+    if [ -e "$HOME/.fake-bind-fail-$alias_name" ]; then
+        : >"$HOME/.fake-bind-probed-$alias_name"
+        exit 1
+    fi
 fi
 EOF
 cat >"$FAKE_BIN/launchctl" <<'EOF'
@@ -544,7 +552,27 @@ grep -F 'classification=authorization-blocked' "$watchdog_receipt" >/dev/null ||
 [ ! -e "$recovery_lock" ] || fail "authentication failure retained recovery lock"
 unlink "$watchdog_home/.fake-auth-fail"
 
-touch "$watchdog_home/.fake-bind-fail-tunnel" "$watchdog_home/.fake-bind-fail-tunnel2"
+touch "$watchdog_home/.fake-dead-tunnel" "$watchdog_home/.fake-dead-tunnel2" \
+    "$watchdog_home/.fake-bind-fail-tunnel" \
+    "$watchdog_home/.fake-auth-drop-after-bind-tunnel"
+if run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
+    >"$TEMP_DIR/watchdog-auth-drop.out" 2>&1; then
+    fail "watchdog accepted authentication loss during drain"
+fi
+grep -F 'authentication is not ready during route recovery' \
+    "$TEMP_DIR/watchdog-auth-drop.out" >/dev/null ||
+    fail "watchdog mid-drain authentication refusal"
+grep -F 'classification=authorization-blocked' "$watchdog_receipt" >/dev/null ||
+    fail "watchdog mid-drain authentication receipt"
+[ -e "$watchdog_home/.fake-launch-state/tunnel" ] &&
+    [ -e "$watchdog_home/.fake-launch-state/tunnel2" ] ||
+    fail "watchdog mid-drain authentication loss did not restore baseline"
+unlink "$watchdog_home/.fake-bind-fail-tunnel"
+unlink "$watchdog_home/.fake-auth-drop-after-bind-tunnel"
+unlink "$watchdog_home/.fake-bind-probed-tunnel"
+
+touch "$watchdog_home/.fake-dead-tunnel" "$watchdog_home/.fake-dead-tunnel2" \
+    "$watchdog_home/.fake-bind-fail-tunnel" "$watchdog_home/.fake-bind-fail-tunnel2"
 if HARNESS_TEST_RECOVERY_ATTEMPTS=1 run_tunnel_watchdog "$watchdog_home" \
     --host mac-test-pilot --run-once >"$TEMP_DIR/watchdog-timeout.out" 2>&1; then
     fail "watchdog accepted stale-listener timeout"
@@ -557,6 +585,26 @@ grep -F 'classification=drain-timeout' "$watchdog_receipt" >/dev/null ||
     [ -e "$watchdog_home/.fake-launch-state/tunnel2" ] ||
     fail "watchdog timeout did not restore loaded baseline"
 [ ! -e "$recovery_lock" ] || fail "watchdog timeout retained recovery lock"
+unlink "$watchdog_home/.fake-bind-fail-tunnel"
+unlink "$watchdog_home/.fake-bind-fail-tunnel2"
+
+touch "$watchdog_home/.fake-dead-tunnel" "$watchdog_home/.fake-dead-tunnel2" \
+    "$watchdog_home/.fake-bind-fail-tunnel" "$watchdog_home/.fake-bind-fail-tunnel2"
+if HARNESS_TEST_RECOVERY_ATTEMPTS=999 HARNESS_TEST_RECOVERY_TIMEOUT_SECONDS=0 \
+    run_tunnel_watchdog "$watchdog_home" --host mac-test-pilot --run-once \
+    >"$TEMP_DIR/watchdog-deadline.out" 2>&1; then
+    fail "watchdog accepted elapsed recovery deadline"
+fi
+grep -F 'action=drain scope=dual status=started timeout=0' \
+    "$TEMP_DIR/watchdog-deadline.out" >/dev/null ||
+    fail "watchdog elapsed deadline announcement"
+grep -F 'stale-listener drain timed out' "$TEMP_DIR/watchdog-deadline.out" >/dev/null ||
+    fail "watchdog elapsed deadline classification"
+grep -F 'classification=drain-timeout' "$watchdog_receipt" >/dev/null ||
+    fail "watchdog elapsed deadline receipt"
+[ -e "$watchdog_home/.fake-launch-state/tunnel" ] &&
+    [ -e "$watchdog_home/.fake-launch-state/tunnel2" ] ||
+    fail "watchdog elapsed deadline did not restore loaded baseline"
 unlink "$watchdog_home/.fake-bind-fail-tunnel"
 unlink "$watchdog_home/.fake-bind-fail-tunnel2"
 
