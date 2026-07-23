@@ -40,6 +40,18 @@ case "$ssh_root_mode" in
     *[2367][0-7]|*[0-7][2367]) exit 78 ;;
 esac
 
+case ${XDG_RUNTIME_DIR:-} in
+    /*) runtime_root=$XDG_RUNTIME_DIR ;;
+    *) exit 78 ;;
+esac
+[ -d "$runtime_root" ] && [ ! -L "$runtime_root" ] &&
+    [ "$(stat_owner "$runtime_root")" = "$uid" ] || exit 78
+runtime_root_mode=$(stat_mode "$runtime_root")
+case "$runtime_root_mode" in
+    *[2367][0-7]|*[0-7][2367]) exit 78 ;;
+esac
+[ "$(stat -f -c '%T' -- "$runtime_root")" = tmpfs ] || exit 78
+
 control_path=$(
     "$ssh_command" -G al 2>/dev/null |
         awk '
@@ -116,7 +128,7 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 umask 077
-private_log=$(mktemp "$ssh_root/.harness-al-session.log.XXXXXX") || exit 78
+private_log=$(mktemp "$runtime_root/.harness-al-session.log.XXXXXX") || exit 78
 chmod 600 "$private_log" || exit 78
 exec 6<"$private_log" || exit 78
 exec 7<"$private_log" || exit 78

@@ -152,7 +152,9 @@ local configuration failure stops retries. `--status` reports `retrying`,
 permanent unit file or automatic authentication path is installed. After a
 hard SSH-process crash, the runner removes an unusable stale control socket
 only when its safe file properties, path, and per-unit marker match the
-protected managed receipt.
+protected managed receipt. Private diagnostic descriptors originate in the
+validated current-user runtime directory on tmpfs, not in an NFS-backed home,
+and their temporary pathname is unlinked before SSH starts.
 
 From a Mac-local shell, inspect its managed routes and watchdog with:
 

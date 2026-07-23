@@ -202,3 +202,21 @@ active generation at 2026-07-24 07:33:47 JST. Next commit this evidence, pass
 the documentation-only protected check, merge PR #281, guarded-sync the clean
 fleet checkouts, and schedule the certificate-boundary observation no earlier
 than 2026-07-25 07:35 JST without replacing the master.
+
+PR #281 merged as `0fa3949`. The merge replaced the live runner's NFS inode and
+exposed a value-free platform fact: unlinking an open file under the NFS-backed
+checkout or `~/.ssh` creates visible `.nfs…` placeholders. The managed session
+was stopped cleanly, releasing its repository and diagnostic placeholders;
+the repository is clean. Existing unrelated live `.ssh/.nfs…` placeholders
+were left untouched. A new failing fixture requires diagnostic descriptors to
+originate under the validated current-user runtime directory rather than the
+NFS-backed SSH directory. Implement this correction on
+`t302-al-session-runtime-log`, then repeat all validation and the live drill.
+
+The Local runtime directory is current-user-owned, mode 0700, and backed by
+tmpfs. The helper and runner now both require those properties, pass the exact
+runtime path to the transient unit, create the mode-0600 diagnostic there, and
+unlink its pathname before SSH starts. Focused fixtures prove the diagnostic
+descriptor's runtime origin and all exit classifications. Next commit, run the
+complete suite and protected CI, then perform one final hard-crash drill and
+confirm no runner-held `.nfs…` path before merging the correction.

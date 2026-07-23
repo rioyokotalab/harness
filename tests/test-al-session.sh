@@ -59,6 +59,18 @@ trap 'exit 143' TERM
 fake_bin=$TEST_ROOT/fake-bin
 mkdir "$fake_bin"
 
+cat >"$fake_bin/stat" <<'EOF'
+#!/bin/sh
+set -eu
+if [ "$#" -ge 4 ] && [ "$1" = -f ] && [ "$2" = -c ] &&
+    [ "$3" = '%T' ]; then
+    printf 'tmpfs\n'
+    exit 0
+fi
+exec /usr/bin/stat "$@"
+EOF
+chmod 755 "$fake_bin/stat"
+
 cat >"$TEST_ROOT/socket-daemon.py" <<'PY'
 import os
 import signal
@@ -323,6 +335,11 @@ case $(sed -n '1p' "$FAKE_SSH_MODE_FILE") in
         exit 255
         ;;
     anonymous)
+        diagnostic_target=$(readlink "/proc/$PPID/fd/6")
+        case "$diagnostic_target" in
+            "$XDG_RUNTIME_DIR"/.harness-al-session.log.*) ;;
+            *) exit 2 ;;
+        esac
         [ -z "$(find "$HOME/.ssh" -maxdepth 1 \
             -name '.harness-al-session.log.*' -print)" ]
         ;;
@@ -335,8 +352,8 @@ chmod 755 "$fake_bin/runner-ssh"
 new_home() {
     name=$1
     path=$TEST_ROOT/home-$name
-    mkdir -p "$path/.ssh"
-    chmod 700 "$path" "$path/.ssh"
+    mkdir -p "$path/.ssh" "$path/.runtime"
+    chmod 700 "$path" "$path/.ssh" "$path/.runtime"
     python3 "$TEST_ROOT/socket-daemon.py" "$path/.ssh/agent.sock" \
         >/dev/null 2>&1 &
     agent_pid=$!
@@ -354,6 +371,7 @@ run_harness() {
     home=$1
     shift
     HOME="$home" HARNESS_LOGICAL_HOST=local \
+        XDG_RUNTIME_DIR="$home/.runtime" \
         SSH_AUTH_SOCK="$home/.ssh/agent.sock" \
         FAKE_SSH_MODE_FILE="$TEST_ROOT/ssh-mode" \
         FAKE_SOCKET_DAEMON="$TEST_ROOT/socket-daemon.py" \
@@ -371,7 +389,9 @@ for runner_case in auth unavailable permanent anonymous success; do
         permanent) expected=78 ;;
     esac
     set +e
-    HOME="$runner_home" FAKE_SSH_MODE_FILE="$TEST_ROOT/ssh-mode" \
+    HOME="$runner_home" XDG_RUNTIME_DIR="$runner_home/.runtime" \
+        FAKE_SSH_MODE_FILE="$TEST_ROOT/ssh-mode" \
+        PATH="$fake_bin:/usr/bin:/bin" \
         "$RUNNER" "$fake_bin/runner-ssh" >/dev/null 2>&1
     actual=$?
     set -e
@@ -396,8 +416,10 @@ while [ ! -S "$runner_home/.ssh/cm-al" ] && [ "$attempts" -lt 50 ]; do
     attempts=$((attempts + 1))
 done
 printf '%s\n' success >"$TEST_ROOT/ssh-mode"
-HOME="$runner_home" FAKE_SSH_MODE_FILE="$TEST_ROOT/ssh-mode" \
+HOME="$runner_home" XDG_RUNTIME_DIR="$runner_home/.runtime" \
+    FAKE_SSH_MODE_FILE="$TEST_ROOT/ssh-mode" \
     HARNESS_AL_SESSION_MARKER=runner-stale \
+    PATH="$fake_bin:/usr/bin:/bin" \
     "$RUNNER" "$fake_bin/runner-ssh" >/dev/null 2>&1 ||
     fail "runner stale socket recovery"
 [ ! -e "$runner_home/.ssh/cm-al" ] &&
@@ -415,8 +437,10 @@ while [ ! -S "$runner_home/.ssh/cm-al" ] && [ "$attempts" -lt 50 ]; do
     attempts=$((attempts + 1))
 done
 set +e
-HOME="$runner_home" FAKE_SSH_MODE_FILE="$TEST_ROOT/ssh-mode" \
+HOME="$runner_home" XDG_RUNTIME_DIR="$runner_home/.runtime" \
+    FAKE_SSH_MODE_FILE="$TEST_ROOT/ssh-mode" \
     HARNESS_AL_SESSION_MARKER=other-marker \
+    PATH="$fake_bin:/usr/bin:/bin" \
     "$RUNNER" "$fake_bin/runner-ssh" >/dev/null 2>&1
 runner_collision_status=$?
 set -e
@@ -479,6 +503,9 @@ grep -F -- '--property=RestartPreventExitStatus=77 78' \
 grep -E -- '--setenv=HARNESS_AL_SESSION_MARKER=al-session-[A-Za-z0-9._-]+' \
     "$home/.ssh/systemd-run.args" >/dev/null ||
     fail "transient unit marker environment"
+grep -F -- "--setenv=XDG_RUNTIME_DIR=$home/.runtime" \
+    "$home/.ssh/systemd-run.args" >/dev/null ||
+    fail "transient unit private-runtime environment"
 grep -F -- '--property=StandardError=null' \
     "$home/.ssh/systemd-run.args" >/dev/null ||
     fail "transient unit private-output policy"
