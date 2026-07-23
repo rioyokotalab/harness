@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-300.
+Next free ID: T-301.
 
 ## Current state
 
@@ -13,8 +13,11 @@ Next free ID: T-300.
   clean/current after T-298; all four private Mac SSH payloads are also
   current.
 - The README now leads with owner-facing startup and daily operations, carries
-  the canonical 13-row public node reference, and separates logical nodes from
+  a pointer to the canonical fleet reference, and separates logical nodes from
   transport-only aliases and the service-only web endpoint.
+- `docs/fleet-inventory.md` is the sole node table and carries a verified user
+  guide for every Linux-facing entry; the private Hinadori link is identified
+  as private and no private guide content is stored here.
 - Managed Linux nodes are local, ab, ab2, ri, al, rc, t4, and abq; abq2 is a
   second route to the same ABQ node. Managed Macs are aist, home, office, and
   riken, each with two independent reverse routes. `abci_login` and
@@ -89,6 +92,11 @@ Evidence is in `docs/backup-lifecycle-phase2.md`, `docs/home-backup.md`, and
 
 ## Completed anchors
 
+- **T-300:** removed the duplicate README node table, made
+  `docs/fleet-inventory.md` the sole cold-start table, and added guide links for
+  all nine Linux-facing entries. Every public guide returned HTTP 200; existing
+  authenticated GitHub access reached the private Hinadori repository and wiki
+  remote. The focused inventory regression test and full phase-one suite pass.
 - **T-299:** refreshed and reprioritized the README around owner-facing use,
   added the canonical public fleet table, reconciled current tools, workflows,
   route resilience, and skill inventory, and added a regression check that
