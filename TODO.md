@@ -12,6 +12,9 @@ Next free ID: T-300.
 - Public `main`, Local, and all eleven remote managed checkouts were verified
   clean/current after T-298; all four private Mac SSH payloads are also
   current.
+- The README now leads with owner-facing startup and daily operations, carries
+  the canonical 13-row public node reference, and separates logical nodes from
+  transport-only aliases and the service-only web endpoint.
 - Managed Linux nodes are local, ab, ab2, ri, al, rc, t4, and abq; abq2 is a
   second route to the same ABQ node. Managed Macs are aist, home, office, and
   riken, each with two independent reverse routes. `abci_login` and
@@ -61,23 +64,6 @@ Next free ID: T-300.
 
 ## Active tasks
 
-### T-299 — Refresh and reprioritize README
-
-**Status:** executing. Verify the current fleet inventory, add the canonical
-node table to the README, and reorder the document around owner-facing quick
-start, fleet reference, routine operations, specialized workflows, and
-implementation detail. Preserve technical contracts and links while removing
-stale deployed-state claims. The value-free live OS/hostname inventory has
-been reconciled with `docs/fleet-inventory.md`; the README and its focused
-inventory regression test are updated. Focused inventory, takeover, public
-audit, evaluation, link, and whitespace checks pass. The first full phase-one
-run reached every suite but ran from the intentionally dirty documentation
-checkout: the tmux and terminfo clean-checkout gates refused it, and the
-parallel evaluation interrupt self-test raced before writing `child.pid` even
-though standalone evaluation passed both before and after that run. Retry is
-safe. Next: checkpoint the intended files, rerun full phase-one validation from
-the clean feature branch, then publish and synchronize the managed fleet.
-
 ### T-196 — Backup lifecycle phase 2
 
 **Status:** time-gated. Progress is 1/8 successful weekly chains everywhere.
@@ -103,6 +89,11 @@ Evidence is in `docs/backup-lifecycle-phase2.md`, `docs/home-backup.md`, and
 
 ## Completed anchors
 
+- **T-299:** refreshed and reprioritized the README around owner-facing use,
+  added the canonical public fleet table, reconciled current tools, workflows,
+  route resilience, and skill inventory, and added a regression check that
+  requires every README node row to match `docs/fleet-inventory.md`. Focused
+  checks and the full phase-one suite pass.
 - **T-298:** compacted this board to current state, the T-196 gate, durable
   guardrails, and completion pointers; superseded execution detail remains in
   Git and the linked audit documents.
