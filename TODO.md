@@ -5,13 +5,16 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-299.
+Next free ID: T-300.
 
 ## Current state
 
 - Public `main`, Local, and all eleven remote managed checkouts were verified
   clean/current after T-298; all four private Mac SSH payloads are also
   current.
+- The README now leads with owner-facing startup and daily operations, carries
+  the canonical 13-row public node reference, and separates logical nodes from
+  transport-only aliases and the service-only web endpoint.
 - Managed Linux nodes are local, ab, ab2, ri, al, rc, t4, and abq; abq2 is a
   second route to the same ABQ node. Managed Macs are aist, home, office, and
   riken, each with two independent reverse routes. `abci_login` and
@@ -86,6 +89,11 @@ Evidence is in `docs/backup-lifecycle-phase2.md`, `docs/home-backup.md`, and
 
 ## Completed anchors
 
+- **T-299:** refreshed and reprioritized the README around owner-facing use,
+  added the canonical public fleet table, reconciled current tools, workflows,
+  route resilience, and skill inventory, and added a regression check that
+  requires every README node row to match `docs/fleet-inventory.md`. Focused
+  checks and the full phase-one suite pass.
 - **T-298:** compacted this board to current state, the T-196 gate, durable
   guardrails, and completion pointers; superseded execution detail remains in
   Git and the linked audit documents.
