@@ -15,6 +15,9 @@ Next free ID: T-301.
 - The README now leads with owner-facing startup and daily operations, carries
   a pointer to the canonical fleet reference, and separates logical nodes from
   transport-only aliases and the service-only web endpoint.
+- `docs/fleet-inventory.md` is the sole node table and carries a verified user
+  guide for every Linux-facing entry; the private Hinadori link is identified
+  as private and no private guide content is stored here.
 - Managed Linux nodes are local, ab, ab2, ri, al, rc, t4, and abq; abq2 is a
   second route to the same ABQ node. Managed Macs are aist, home, office, and
   riken, each with two independent reverse routes. `abci_login` and
@@ -64,19 +67,6 @@ Next free ID: T-301.
 
 ## Active tasks
 
-### T-300 — Consolidate the fleet reference and add Linux user guides
-
-**Status:** executing. Remove the duplicate node table from `README.md`, retain
-`docs/fleet-inventory.md` as the single cold-start table, and add a verified
-official user-guide link for every Linux-facing entry. Official guides are
-resolved for ABCI (`ab`, `ab2`), ABCI-Q (`abq`), CSCS Alps (`al`), R-CCS Cloud
-(`rc`), RIKEN RIKYU (`ri`), TSUBAME4 (`t4`), and Science Tokyo managed WWW
-(`web`). The owner supplied the private Hinadori wiki for `local`; current
-GitHub authentication can reach its repository and wiki remote without any
-access change. The RIKYU guide returned HTTP 200 and identified itself as the
-RIKYU User Guide. The README, canonical table, and focused inventory test are
-updated. Next: run validation, then publish through protected main.
-
 ### T-196 — Backup lifecycle phase 2
 
 **Status:** time-gated. Progress is 1/8 successful weekly chains everywhere.
@@ -102,6 +92,11 @@ Evidence is in `docs/backup-lifecycle-phase2.md`, `docs/home-backup.md`, and
 
 ## Completed anchors
 
+- **T-300:** removed the duplicate README node table, made
+  `docs/fleet-inventory.md` the sole cold-start table, and added guide links for
+  all nine Linux-facing entries. Every public guide returned HTTP 200; existing
+  authenticated GitHub access reached the private Hinadori repository and wiki
+  remote. The focused inventory regression test and full phase-one suite pass.
 - **T-299:** refreshed and reprioritized the README around owner-facing use,
   added the canonical public fleet table, reconciled current tools, workflows,
   route resilience, and skill inventory, and added a regression check that
