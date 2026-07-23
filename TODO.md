@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-302.
+Next free ID: T-303.
 
 ## Current state
 
@@ -70,6 +70,24 @@ Next free ID: T-302.
 1. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
 
 ## Active tasks
+
+### T-302 — Reduce AL authentication intervention
+
+**Phase:** interviewing. CSCS requires personal SSH keys to be CSCS-signed and
+limits personal certificates to one day; `cscs-key 1.1.0` offers only `1d` and
+`1min`. Local currently has a valid agent socket, a fresh non-multiplexed
+`al` login passes, the Ela jump-host master is running, and no `al` master is
+running. Official CSCS guidance reserves API-key authentication for separate
+service accounts and explicitly warns against setting `CSCS_API_KEY` globally.
+
+No supported configuration can make fresh personal-account connections
+authenticate indefinitely. The security-preserving choices are to reuse a live
+personal `al` transport until it disconnects, or use a separate service account
+for unattended automation while retaining personal MFA for interactive work.
+The frozen boundaries, conditional decisions, validation experiment, and
+official sources are in `docs/plans/t302-al-authentication.md`. Next action:
+ask whether the required outcome is uninterrupted personal access or genuinely
+unattended Codex/automation access.
 
 ### T-196 — Backup lifecycle phase 2
 
