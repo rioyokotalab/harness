@@ -142,11 +142,17 @@ harness al-session --start
 
 `--start` makes one non-interactive attempt using the existing signed
 certificate. It never signs or renews credentials and reports
-`renewal-required` when owner authentication is needed. `--stop` gracefully
-stops only a master created by this helper; it refuses unrelated masters. On
-Local, the foreground master runs in a non-restarting transient user-systemd
-unit so it survives the command session that launched it. No permanent unit
-file or automatic authentication path is installed.
+`renewal-required` when owner authentication is needed. `--stop` stops only a
+receipt-matched managed unit; it refuses unrelated masters. On Local, the
+foreground master runs in a marked transient user-systemd unit so it survives
+the command session that launched it. A transport failure is retried every
+60 seconds while authentication remains usable; an authentication or permanent
+local configuration failure stops retries. `--status` reports `retrying`,
+`renewal-required`, or `repair-required` without exposing diagnostics. No
+permanent unit file or automatic authentication path is installed. After a
+hard SSH-process crash, the runner removes an unusable stale control socket
+only when its safe file properties, path, and per-unit marker match the
+protected managed receipt.
 
 From a Mac-local shell, inspect its managed routes and watchdog with:
 

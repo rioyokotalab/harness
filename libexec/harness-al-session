@@ -149,10 +149,14 @@ socket_is_safe() {
 }
 
 receipt_state=absent
+receipt_schema=
 receipt_socket_id=
+receipt_marker=
 inspect_receipt() {
     receipt_state=absent
+    receipt_schema=
     receipt_socket_id=
+    receipt_marker=
     if [ ! -e "$state_file" ] && [ ! -L "$state_file" ]; then
         return
     fi
@@ -161,46 +165,175 @@ inspect_receipt() {
         [ "$(stat_mode "$state_file")" = 600 ] &&
         [ "$(stat_links "$state_file")" = 1 ] ||
         die "AL session receipt is unsafe"
-    [ "$(wc -l <"$state_file" | tr -d ' ')" = 4 ] ||
-        die "AL session receipt is malformed"
-    [ "$(sed -n '1p' "$state_file")" = schema=1 ] &&
-        [ "$(sed -n '2p' "$state_file")" = alias=al ] &&
-        [ "$(sed -n '3p' "$state_file")" = "control_path=$control_path" ] &&
-        [ -n "$(sed -n '4p' "$state_file")" ] ||
-        die "AL session receipt is malformed"
-    receipt_socket_id=$(sed -n 's/^socket_id=//p' "$state_file")
-    case "$receipt_socket_id" in
-        ''|*[!0-9:]*|*:*:*) die "AL session receipt socket identity is malformed" ;;
+    receipt_schema=$(sed -n '1p' "$state_file")
+    case "$receipt_schema" in
+        schema=1)
+            [ "$(wc -l <"$state_file" | tr -d ' ')" = 4 ] &&
+                [ "$(sed -n '2p' "$state_file")" = alias=al ] &&
+                [ "$(sed -n '3p' "$state_file")" = "control_path=$control_path" ] &&
+                [ -n "$(sed -n '4p' "$state_file")" ] ||
+                die "AL session receipt is malformed"
+            receipt_socket_id=$(sed -n 's/^socket_id=//p' "$state_file")
+            case "$receipt_socket_id" in
+                ''|*[!0-9:]*|*:*:*)
+                    die "AL session receipt socket identity is malformed"
+                    ;;
+            esac
+            ;;
+        schema=2)
+            [ "$(wc -l <"$state_file" | tr -d ' ')" = 5 ] &&
+                [ "$(sed -n '2p' "$state_file")" = alias=al ] &&
+                [ "$(sed -n '3p' "$state_file")" = "control_path=$control_path" ] &&
+                [ "$(sed -n '4p' "$state_file")" = "unit=$unit_name" ] &&
+                [ -n "$(sed -n '5p' "$state_file")" ] ||
+                die "AL session receipt is malformed"
+            receipt_marker=$(sed -n 's/^marker=//p' "$state_file")
+            case "$receipt_marker" in
+                ''|*[!A-Za-z0-9._-]*)
+                    die "AL session receipt marker is malformed"
+                    ;;
+            esac
+            ;;
+        *) die "AL session receipt is malformed" ;;
     esac
     receipt_state=present
 }
 
+unit_property() {
+    property_name=$1
+    systemctl --user show --property="$property_name" --value \
+        "$unit_name" 2>/dev/null ||
+        die "AL session control cannot inspect the marked unit"
+}
+
 target_state=absent
 ownership=none
+managed_action=
 inspect_target() {
     inspect_receipt
+    managed_action=
     if master_ready al; then
         socket_is_safe || die "AL session master socket is unsafe"
-        current_socket_id=$(stat_identity "$control_path")
         target_state=ready
         if [ "$receipt_state" = absent ]; then
             ownership=external
-        elif [ "$receipt_socket_id" = "$current_socket_id" ]; then
-            ownership=managed
         else
-            die "AL session receipt does not match the live master"
+            case "$receipt_schema" in
+                schema=1)
+                    current_socket_id=$(stat_identity "$control_path")
+                    [ "$receipt_socket_id" = "$current_socket_id" ] ||
+                        die "AL session receipt does not match the live master"
+                    ;;
+                schema=2)
+                    unit_load=$(unit_property LoadState)
+                    [ "$unit_load" = loaded ] ||
+                        die "AL session marked unit is missing for the live master"
+                    [ "$(unit_property Description)" = \
+                        "Harness AL session $receipt_marker" ] ||
+                        die "AL session marked unit does not match the receipt"
+                    [ "$(unit_property ActiveState)" = active ] &&
+                        [ "$(unit_property SubState)" = running ] ||
+                        die "AL session marked unit is not running"
+                    ;;
+            esac
+            ownership=managed
         fi
         return
     fi
     if [ -e "$control_path" ] || [ -L "$control_path" ]; then
-        die "AL session control path exists without a usable master"
+        [ "$receipt_schema" = schema=2 ] &&
+            [ -S "$control_path" ] && [ ! -L "$control_path" ] &&
+            [ "$(stat_owner "$control_path")" = "$uid" ] ||
+            die "AL session control path exists without a usable master"
+        case $(stat_links "$control_path") in
+            1|2) ;;
+            *) die "AL session control path exists without a usable master" ;;
+        esac
     fi
-    target_state=absent
-    if [ "$receipt_state" = present ]; then
-        ownership=stale
-    else
+    if [ "$receipt_state" = absent ]; then
+        target_state=absent
         ownership=none
+        return
     fi
+    if [ "$receipt_schema" = schema=1 ]; then
+        target_state=absent
+        ownership=stale
+        return
+    fi
+
+    unit_load=$(unit_property LoadState)
+    case "$unit_load" in
+        ''|not-found)
+            target_state=absent
+            ownership=stale
+            return
+            ;;
+        loaded) ;;
+        *) die "AL session marked unit state is ambiguous" ;;
+    esac
+    [ "$(unit_property Description)" = \
+        "Harness AL session $receipt_marker" ] ||
+        die "AL session marked unit does not match the receipt"
+    ownership=managed
+    unit_active=$(unit_property ActiveState)
+    unit_sub=$(unit_property SubState)
+    unit_status=$(unit_property ExecMainStatus)
+    case "$unit_active:$unit_sub" in
+        activating:*|active:auto-restart|active:running)
+            target_state=recovering
+            managed_action=retrying
+            ;;
+        failed:*)
+            target_state=absent
+            case "$unit_status" in
+                77) managed_action=renewal-required ;;
+                78) managed_action=repair-required ;;
+                *) managed_action=unavailable ;;
+            esac
+            ;;
+        inactive:dead)
+            target_state=absent
+            ownership=stale
+            ;;
+        *) die "AL session marked unit state is ambiguous" ;;
+    esac
+}
+
+remove_marked_unit() {
+    [ "$receipt_schema" = schema=2 ] ||
+        die "AL session marked-unit cleanup requires a schema-2 receipt"
+    [ "$(unit_property LoadState)" = loaded ] || return 0
+    [ "$(unit_property Description)" = \
+        "Harness AL session $receipt_marker" ] ||
+        die "AL session marked unit does not match the receipt"
+    systemctl --user stop "$unit_name" >/dev/null 2>&1 ||
+        die "AL session marked unit refused stop"
+    systemctl --user reset-failed "$unit_name" >/dev/null 2>&1 || true
+    attempts=0
+    while [ "$attempts" -lt 20 ]; do
+        unit_load=$(unit_property LoadState)
+        case "$unit_load" in ''|not-found) return 0 ;; esac
+        sleep 0.1
+        attempts=$((attempts + 1))
+    done
+    die "AL session marked unit did not unload"
+}
+
+remove_receipt_stale_socket() {
+    if [ ! -e "$control_path" ] && [ ! -L "$control_path" ]; then
+        return
+    fi
+    master_ready al &&
+        die "AL session control path became usable during marked-unit stop"
+    [ -S "$control_path" ] && [ ! -L "$control_path" ] &&
+        [ "$(stat_owner "$control_path")" = "$uid" ] ||
+        die "AL session stale control path is unsafe"
+    case $(stat_links "$control_path") in
+        1|2) ;;
+        *) die "AL session stale control path link count is unsafe" ;;
+    esac
+    unlink "$control_path" ||
+        die "AL session stale control path refused removal"
 }
 
 jump_state() {
@@ -222,6 +355,8 @@ jump=$(jump_state)
 if [ "$mode" = status ]; then
     case "$target_state:$ownership" in
         ready:managed|ready:external) action=none ;;
+        recovering:managed) action=retrying ;;
+        absent:managed) action=$managed_action ;;
         absent:stale) action=clean-stale-then-start ;;
         absent:none) action=start ;;
         *) die "AL session status is inconsistent" ;;
@@ -234,6 +369,18 @@ fi
 if [ "$mode" = stop ]; then
     if [ "$target_state" = ready ] && [ "$ownership" = external ]; then
         die "refusing to stop an AL master not created by this helper"
+    fi
+    if [ "$receipt_schema" = schema=2 ] &&
+        { [ "$ownership" = managed ] || [ "$ownership" = stale ]; }; then
+        stopped_ownership=$ownership
+        remove_marked_unit
+        remove_receipt_stale_socket
+        [ ! -e "$control_path" ] && [ ! -L "$control_path" ] ||
+            die "AL session control path remained after marked-unit stop"
+        unlink "$state_file"
+        printf 'AL_SESSION mode=stop target=absent ownership=%s jump=%s action=stopped\n' \
+            "$stopped_ownership" "$jump"
+        exit 0
     fi
     if [ "$target_state" = absent ]; then
         if [ "$ownership" = stale ]; then
@@ -268,7 +415,20 @@ if [ "$target_state" = ready ]; then
         "$ownership" "$jump"
     exit 0
 fi
+if [ "$target_state" = recovering ]; then
+    printf 'AL_SESSION mode=start target=recovering ownership=managed jump=%s action=retrying\n' \
+        "$jump"
+    exit 0
+fi
+if [ "$ownership" = managed ]; then
+    printf 'AL_SESSION mode=start target=absent ownership=managed jump=%s action=%s\n' \
+        "$jump" "$managed_action"
+    exit 1
+fi
 if [ "$ownership" = stale ]; then
+    if [ "$receipt_schema" = schema=2 ]; then
+        remove_marked_unit
+    fi
     unlink "$state_file"
 fi
 
@@ -321,6 +481,10 @@ if ! ssh -o BatchMode=yes -o ConnectionAttempts=1 \
         'permission denied|authentication failed|no supported authentication|certificate.*(expired|invalid)' \
         "$private_log"; then
         result=renewal-required
+    elif grep -Eiq \
+        'bad configuration option|terminating, [0-9]+ bad configuration options|command-line line [0-9]+:|percent_expand:|controlpath too long|identity file .* not accessible|no such identity' \
+        "$private_log"; then
+        result=repair-required
     else
         result=unavailable
     fi
@@ -335,13 +499,25 @@ private_log=
 
 ssh_command=$(command -v ssh)
 case "$ssh_command" in /*) ;; *) die "AL session SSH command is not absolute" ;; esac
+runner=$SELF_DIR/harness-al-session-runner
+[ -x "$runner" ] || die "AL session runner is unavailable"
+temporary_file=$(mktemp "$ssh_root/.harness-al-session.marker.XXXXXX") ||
+    die "AL session control cannot allocate a unit marker"
+marker_suffix=${temporary_file##*.marker.}
+receipt_marker=al-session-$marker_suffix
+unlink "$temporary_file"
+temporary_file=
 rollback_unit=yes
-systemd-run --user --quiet --collect --unit="$unit_name" \
-    --property=Type=simple --property=Restart=no \
+systemd-run --user --quiet --unit="$unit_name" \
+    --description="Harness AL session $receipt_marker" \
+    --property=Type=simple --property=Restart=on-failure \
+    --property=RestartSec=60s \
+    --property="RestartPreventExitStatus=77 78" \
+    --property=StartLimitIntervalSec=0 \
     --property=StandardOutput=null --property=StandardError=null \
     --setenv="HOME=$HOME" --setenv="SSH_AUTH_SOCK=$SSH_AUTH_SOCK" \
-    -- "$ssh_command" -o BatchMode=yes -o ConnectionAttempts=1 \
-    -o ControlPersist=no -M -N al 9<&- ||
+    --setenv="HARNESS_AL_SESSION_MARKER=$receipt_marker" \
+    -- "$runner" "$ssh_command" 9<&- ||
     die "AL session transient unit failed to start"
 attempts=0
 while ! master_ready al && [ "$attempts" -lt 20 ]; do
@@ -351,13 +527,16 @@ done
 master_ready al || die "AL session transient unit started without a usable master"
 rollback_master=yes
 socket_is_safe || die "AL session start created an unsafe master socket"
-socket_id=$(stat_identity "$control_path")
+[ "$(unit_property Description)" = "Harness AL session $receipt_marker" ] &&
+    [ "$(unit_property ActiveState)" = active ] &&
+    [ "$(unit_property SubState)" = running ] ||
+    die "AL session transient unit identity is ambiguous"
 
 temporary_file=$(mktemp "$ssh_root/.harness-al-session.state.XXXXXX") ||
     die "AL session control cannot allocate a receipt"
 chmod 600 "$temporary_file"
-printf '%s\n' schema=1 alias=al "control_path=$control_path" \
-    "socket_id=$socket_id" >"$temporary_file"
+printf '%s\n' schema=2 alias=al "control_path=$control_path" \
+    "unit=$unit_name" "marker=$receipt_marker" >"$temporary_file"
 [ ! -e "$state_file" ] && [ ! -L "$state_file" ] ||
     die "AL session receipt appeared during start"
 ln "$temporary_file" "$state_file" ||

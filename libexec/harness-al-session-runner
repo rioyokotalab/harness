@@ -1,0 +1,155 @@
+#!/bin/sh
+set -eu
+
+usage() {
+    echo "Usage: harness-al-session-runner /absolute/path/to/ssh" >&2
+}
+
+[ "$#" -eq 1 ] || {
+    usage
+    exit 78
+}
+ssh_command=$1
+case "$ssh_command" in
+    /*) ;;
+    *) exit 78 ;;
+esac
+[ -x "$ssh_command" ] || exit 78
+case ${HOME:-} in
+    /*) ;;
+    *) exit 78 ;;
+esac
+
+for required in awk chmod flock grep id mktemp sed stat tr unlink wc; do
+    command -v "$required" >/dev/null 2>&1 || exit 78
+done
+
+uid=$(id -u)
+ssh_root=$HOME/.ssh
+stat_owner() { stat -Lc '%u' -- "$1"; }
+stat_mode() { stat -Lc '%a' -- "$1"; }
+stat_links() { stat -Lc '%h' -- "$1"; }
+stat_identity() { stat -Lc '%d:%i' -- "$1"; }
+
+[ -d "$HOME" ] && [ ! -L "$HOME" ] &&
+    [ "$(stat_owner "$HOME")" = "$uid" ] || exit 78
+[ -d "$ssh_root" ] && [ ! -L "$ssh_root" ] &&
+    [ "$(stat_owner "$ssh_root")" = "$uid" ] || exit 78
+ssh_root_mode=$(stat_mode "$ssh_root")
+case "$ssh_root_mode" in
+    *[2367][0-7]|*[0-7][2367]) exit 78 ;;
+esac
+
+control_path=$(
+    "$ssh_command" -G al 2>/dev/null |
+        awk '
+            $1 == "controlpath" { value=$2; count++ }
+            END {
+                if (count != 1 || value == "") exit 1
+                print value
+            }
+        '
+) || exit 78
+case "$control_path" in
+    "$ssh_root"/*) ;;
+    *) exit 78 ;;
+esac
+case "$control_path" in *'
+'*) exit 78 ;; esac
+
+if [ -e "$control_path" ] || [ -L "$control_path" ]; then
+    exec 9<"$ssh_root"
+    flock -x 9 || exit 78
+    if [ -e "$control_path" ] || [ -L "$control_path" ]; then
+        if "$ssh_command" -o BatchMode=yes -O check al >/dev/null 2>&1; then
+            exit 78
+        fi
+        [ -S "$control_path" ] && [ ! -L "$control_path" ] &&
+            [ "$(stat_owner "$control_path")" = "$uid" ] ||
+            exit 78
+        case $(stat_links "$control_path") in 1|2) ;; *) exit 78 ;; esac
+        socket_id=$(stat_identity "$control_path")
+
+        state_file=$ssh_root/.harness-al-session.state
+        [ -f "$state_file" ] && [ ! -L "$state_file" ] &&
+            [ "$(stat_owner "$state_file")" = "$uid" ] &&
+            [ "$(stat_mode "$state_file")" = 600 ] &&
+            [ "$(stat_links "$state_file")" = 1 ] ||
+            exit 78
+        [ "$(wc -l <"$state_file" | tr -d ' ')" = 5 ] &&
+            [ "$(sed -n '1p' "$state_file")" = schema=2 ] &&
+            [ "$(sed -n '2p' "$state_file")" = alias=al ] &&
+            [ "$(sed -n '3p' "$state_file")" = \
+                "control_path=$control_path" ] &&
+            [ "$(sed -n '4p' "$state_file")" = \
+                unit=harness-al-session.service ] ||
+            exit 78
+        receipt_marker=$(sed -n 's/^marker=//p' "$state_file")
+        case ${HARNESS_AL_SESSION_MARKER:-} in
+            ''|*[!A-Za-z0-9._-]*) exit 78 ;;
+        esac
+        [ "$receipt_marker" = "$HARNESS_AL_SESSION_MARKER" ] ||
+            exit 78
+        [ "$(stat_identity "$control_path")" = "$socket_id" ] ||
+            exit 78
+        unlink "$control_path" || exit 78
+    fi
+    flock -u 9 || exit 78
+    exec 9<&-
+fi
+
+private_log=
+cleanup() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ -n "$private_log" ] &&
+        [ -f "$private_log" ] && [ ! -L "$private_log" ] &&
+        [ "$(stat_owner "$private_log")" = "$uid" ] &&
+        [ "$(stat_links "$private_log")" = 1 ]; then
+        unlink "$private_log" || status=78
+    fi
+    exit "$status"
+}
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+umask 077
+private_log=$(mktemp "$ssh_root/.harness-al-session.log.XXXXXX") || exit 78
+chmod 600 "$private_log" || exit 78
+exec 6<"$private_log" || exit 78
+exec 7<"$private_log" || exit 78
+exec 8>"$private_log" || exit 78
+unlink "$private_log" || exit 78
+private_log=
+
+set +e
+"$ssh_command" -o BatchMode=yes -o ConnectionAttempts=1 \
+    -o ControlPersist=no -M -N al </dev/null >/dev/null 2>&8
+ssh_status=$?
+set -e
+exec 8>&-
+
+if [ "$ssh_status" -eq 0 ]; then
+    exec 6<&-
+    exec 7<&-
+    exit 0
+fi
+if grep -Eiq \
+    'permission denied|authentication failed|no supported authentication|certificate.*(expired|invalid)' \
+    <&6; then
+    exec 6<&-
+    exec 7<&-
+    exit 77
+fi
+if grep -Eiq \
+    'bad configuration option|terminating, [0-9]+ bad configuration options|command-line line [0-9]+:|percent_expand:|controlpath too long|identity file .* not accessible|no such identity' \
+    <&7; then
+    exec 6<&-
+    exec 7<&-
+    exit 78
+fi
+exec 6<&-
+exec 7<&-
+exit 75

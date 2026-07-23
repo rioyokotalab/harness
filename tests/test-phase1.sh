@@ -82,6 +82,7 @@ for script in \
     "$ROOT/libexec/harness-fleet-sync" \
     "$ROOT/libexec/harness-connection-monitor" \
     "$ROOT/libexec/harness-al-session" \
+    "$ROOT/libexec/harness-al-session-runner" \
     "$ROOT/libexec/harness-ssh-config-mirror" \
     "$ROOT/libexec/harness-terminfo" \
     "$ROOT/libexec/harness-apply" \
