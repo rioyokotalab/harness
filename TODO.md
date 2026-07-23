@@ -89,15 +89,18 @@ long-lived authenticated master where possible, reports
 `renewal-required` without retrying or automating MFA, and accepts owner
 reauthentication after a real transport loss. The bounded expiry experiment,
 rollback, acceptance gates, and official sources are in
-`docs/plans/t302-al-authentication.md`. Interview complete; next action:
-the explicit `go` was received. The new `harness al-session` helper and focused
+`docs/plans/t302-al-authentication.md`. The explicit `go` was received. The new
+`harness al-session` helper and focused
 fixture are implemented. It reports status, makes one non-interactive start
 attempt, distinguishes authentication-required from generic unavailability
 without exposing its private temporary log, records socket identity, and
 gracefully stops only its own master. ShellCheck, shell syntax, the focused
-test, live read-only status, and `git diff --check` pass. Next action: run
-public/source-contract checks and `tests/test-phase1.sh`, review the diff, then
-publish and run the live start/rollback drill.
+test, live read-only status, `git diff --check`, public repository audit,
+source contract, all 68 focused shards, and the complete phase-1 suite pass;
+only the suite's documented undeclared-environment native MPI smoke was
+skipped. Git transport and the hosting API are independently ready. Next
+action: publish through protected `main`, then run the live
+start/rollback/reapply drill and record the expiry-boundary checkpoint.
 
 ### T-196 — Backup lifecycle phase 2
 

@@ -216,6 +216,12 @@ Checkpoint:
   ShellCheck, shell syntax, the focused test, and `git diff --check` pass.
 - Live read-only status is
   `target=absent ownership=none jump=ready action=start`.
+- The public repository audit, source contract, and complete
+  `tests/test-phase1.sh` suite pass. The full suite ran 68 focused shards plus
+  its direct safety checks; only the documented undeclared-environment native
+  MPI smoke was skipped.
+- Git transport and the hosting API are independently available. The complete
+  branch diff passes `git diff --check`.
 
-Next: run the public/source-contract checks and `tests/test-phase1.sh`, review
-the complete diff, then publish and perform the live start/rollback drill.
+Next: publish through the protected-main pull-request workflow, then perform
+the live start/rollback/reapply drill and record the expiry-boundary checkpoint.
