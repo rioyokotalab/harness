@@ -104,6 +104,10 @@ mirror tests pass. No live SSH file has changed. Next: checkpoint the
 implementation, run full phase-one validation from a clean commit, then publish
 before touching any live SSH fragment.
 
+Implementation checkpoint `c368b60` passed the complete phase-one suite from a
+clean checkout. Next: publish through protected CI and guarded-sync the exact
+merge before any live SSH rollout.
+
 ### T-196 — Backup lifecycle phase 2
 
 **Status:** time-gated. Progress is 1/8 successful weekly chains everywhere.

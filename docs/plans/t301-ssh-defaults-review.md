@@ -198,3 +198,9 @@ effective default including the 40-hex `%C` expansion. `git diff --check`,
 layout, Mac SSH sync, Mac plan/doctor, and SSH mirror tests pass. No live SSH
 file has changed. Next action: checkpoint the implementation, run full phase-one
 validation from a clean commit, then publish before any live rollout.
+
+Implementation checkpoint `c368b60` passed the complete phase-one suite from a
+clean checkout, including startup normalization, layout, mirror, Mac profile,
+Mac SSH sync, supervisor, doctor, and fleet-sync coverage. Next action: publish
+through protected CI and synchronize the exact merged revision; live SSH files
+remain unchanged until that succeeds.
