@@ -69,7 +69,7 @@ Next free ID: T-302.
 
 ### T-301 — Review canonical SSH defaults
 
-**Phase:** interviewing. PR #274 published the reviewed default policy as
+**Phase:** ready-for-go. PR #274 published the reviewed default policy as
 `5897e24896e4f75fde6f75522e75d8879c899399`; full local and protected
 phase-one validation pass and all remote repositories are synchronized.
 Selected defaults retain global agent forwarding, global trusted X11 with the
@@ -84,9 +84,10 @@ The safer live sequence has applied and validated Local, `ab`, `ab2`, `ri`,
 remain untouched after the retry. `abq` timed out during proxy banner exchange
 before apply began, so it and all Macs remain unchanged. A 30-second override
 reached `abq` in 11 seconds and two subsequent probes passed on each ABQ route.
-D5 is reopened only for the timeout value. Recommended: global
-`ConnectTimeout 30`, retaining a bounded portable default without private
-exceptions. Execution is paused for this one owner decision.
+The owner selected global `ConnectTimeout 30` for D5, retaining a bounded
+portable default without private exceptions. The plan is refrozen with no
+unresolved decisions. Execution is paused for a fresh explicit `go` because
+this selection changes the previously authorized frozen plan.
 
 ### T-196 — Backup lifecycle phase 2
 

@@ -81,7 +81,7 @@ The current target, subject to the remaining decision register, is:
    the path transition; this stops new multiplex requests without terminating
    existing multiplexed sessions. New masters use collision-resistant `%C`
    paths and persist indefinitely.
-5. Add `ConnectTimeout 15`, `ServerAliveCountMax 3`, `HashKnownHosts yes`, and
+5. Add `ConnectTimeout 30`, `ServerAliveCountMax 3`, `HashKnownHosts yes`, and
    `UpdateHostKeys yes` explicitly. The first bounds interactive connection
    setup; the remaining lines make the already intended liveness, privacy, and
    authenticated host-key-update behavior independent of OS defaults. Do not
@@ -96,7 +96,7 @@ The refrozen default block is therefore:
 ```sshconfig
 Host *
 	AddKeysToAgent yes
-	ConnectTimeout 15
+	ConnectTimeout 30
 	ControlMaster auto
 	ControlPath ~/.ssh/cm-%C
 	ControlPersist yes
@@ -118,7 +118,7 @@ Host *
 | D3 | Automatic key addition | Owner selected current `yes`, retaining the agent's default lifetime for automatically added keys | An eight-hour lifetime, manual loading, and per-use confirmation were rejected in favor of minimum intervention | **selected: `yes`** |
 | D4 | Multiplex policy | Owner selected `ControlMaster auto`, `ControlPath ~/.ssh/cm-%C`, `ControlPersist yes`, and graceful old-master drain with `-O stop` | Ten-minute persistence was withdrawn; explicit/default `no` was rejected because the owner prefers indefinite reuse | **selected: `%C`, indefinite** |
 | D6 | Directive ordering | Sort directives alphabetically within every managed stanza while preserving stanza order | No semantic change; makes review and future additions predictable | **selected: alphabetical** |
-| D5 | Deterministic fail-fast/privacy defaults | The selected full bundle remains, but live nested-route evidence requires revisiting `ConnectTimeout 15`; recommended replacement is global `30` | Keep 15 and accept repeated nested-route failures, use private host exceptions, or remove the timeout | **reopened: timeout only** |
+| D5 | Deterministic fail-fast/privacy defaults | Owner selected the full bundle with global `ConnectTimeout 30`; matched live probes showed that 30 seconds accommodates the approved nested ABQ routes while remaining bounded | Keep 15 and accept repeated nested-route failures, use private host exceptions, or remove the timeout were rejected | **selected: global `30`** |
 
 The decision audit found no unresolved choices or contradictions. D1–D3 and D4
 retain the owner's low-intervention defaults while `%C` removes readable,
@@ -245,10 +245,12 @@ and old masters were not drained. Transactions then applied and validated on
 (`20260723T031143Z-2096912`). `abq` failed during proxy banner exchange before
 apply emitted a transaction, so it and all four Macs remain unchanged.
 
-This second bounded timeout reopens only D5's 15-second value. A 30-second
+This second bounded timeout reopened only D5's 15-second value. A 30-second
 command-line override reached `abq` in 11 seconds, then two matched probes on
 each of `abq` and `abq2` passed in 4/1 and 4/0 seconds. The recommended revision
-is global `ConnectTimeout 30`: it remains fail-fast but accommodates the
-approved nested routes without private per-host exceptions. Execution is
-paused for the owner's choice; already validated nodes remain on the published
-policy and retain exact rollback transactions.
+was global `ConnectTimeout 30`: it remains fail-fast but accommodates the
+approved nested routes without private per-host exceptions. The owner selected
+that revision. The plan is refrozen with no unresolved decisions; execution
+requires a fresh explicit `go` because D5 changed after the prior authorization.
+Already validated nodes remain on the published 15-second policy and retain
+exact rollback transactions.
