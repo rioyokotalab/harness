@@ -121,8 +121,13 @@ The helper now uses Local's ready user systemd manager to own foreground
 `ssh -M -N` in a collected, non-restarting transient unit with null output and
 no installed unit file. A cross-command live drill passed start, managed
 status, stop with complete unit unload, absent status, reapply, and final
-managed status. Next: run the complete suite and publish this correction,
-re-sync clean fleet checkouts, and record the 24-hour expiry checkpoint.
+managed status. ShellCheck, the focused regression, all 68 focused shards, and
+the complete phase-1 suite pass; only the documented undeclared native MPI
+smoke was skipped. A separate 2026-07-23 15:04 JST check still found the same
+managed master and active transient unit. Next: publish this correction
+through protected `main`, re-sync clean fleet checkouts, then run the
+certificate-boundary experiment no earlier than 2026-07-24 15:04 JST if this
+same receipt-matched master remains ready.
 
 ### T-196 — Backup lifecycle phase 2
 

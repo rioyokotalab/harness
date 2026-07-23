@@ -256,7 +256,13 @@ Checkpoint:
   launching command exited, exact managed stop with unit unload, absent
   status, reapply, and final managed status. The `al` and `alps_login` masters
   are currently ready.
+- ShellCheck, the focused regression, whitespace validation, all 68 focused
+  shards, and the complete phase-1 suite pass on the transient-service change;
+  only the documented undeclared native MPI smoke was skipped. At
+  2026-07-23 15:04 JST, a separate post-suite command still observed the same
+  managed master and active/running successful transient unit.
 
-Next: run complete validation and publish the transient-service correction,
-then re-sync clean fleet checkouts and record the 24-hour expiry-boundary
-checkpoint.
+Next: publish the transient-service correction through protected `main`, then
+re-sync clean fleet checkouts. If this same receipt-matched master remains
+ready, run the certificate-boundary experiment no earlier than
+2026-07-24 15:04 JST.
