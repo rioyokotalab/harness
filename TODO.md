@@ -101,9 +101,13 @@ agent, Codex/Claude authentication, history, cache, snapshot, and unrelated
 private state. The repository installer already supports a layered model:
 canonical non-secret guidance, rules, skills, scripts, and documentation can
 be shared from the harness checkout through service-owned discovery links,
-while credentials and mutable client/runtime state remain account-local. Next
-action: decide whether the service account receives read-only access to that
-canonical checkout or requires cross-identity writes to the same checkout.
+while credentials and mutable client/runtime state remain account-local. The
+owner requires the service identity to edit the existing checkout and prefers
+a service-owned dotfile/state tree linked into the personal account. Writable
+cross-identity checkout access is now selected and will require inherited ACLs
+and explicit Git locking/ownership validation. Next action: freeze whether
+Codex/Claude credentials remain account-local while exact non-secret
+configuration and concurrency-safe state paths are selected individually.
 
 ### T-196 — Backup lifecycle phase 2
 

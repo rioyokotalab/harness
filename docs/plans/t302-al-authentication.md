@@ -66,6 +66,12 @@ can survive host, network, process, or site-enforced disconnection.
   skills, and the `harness` command while resolving `.codex`, `.claude`,
   `.agents`, and `.local/bin` under the invoking account's own home. It does
   not require two identities to share their mutable client-state directories.
+- The owner requires the service identity to edit the existing
+  `$HOME/harness` checkout and prefers a service-owned canonical dotfile/state
+  tree linked into the personal account. This freezes writable cross-identity
+  repository access as a requirement, but not a blanket link of either
+  account's hidden directories. The exact shared paths and concurrency
+  contracts remain open.
 
 ## Evidence and interpretation
 
@@ -163,10 +169,11 @@ automatically preserve the personal home-based workflow.
 | D1 | Required outcome | Owner selected the hybrid: retain personal `al` for interactive work and add a service-account route for unattended Codex/automation | Personal transport reuse only reduces prompts until disconnect; accepting daily renewal makes no configuration change | **selected: hybrid** |
 | D2 | Service-account eligibility and base scope | Owner confirmed service-account eligibility and requires selected personal-home access in addition to project resources | Project-only access was rejected because the unattended workflow needs personal-home content | **selected: personal-home required** |
 | D2a | Exact personal-home subtree | Owner selected the existing `$HOME/harness` checkout; execute-only traversal on the home and no sibling access remain required | A dedicated checkout was recommended; other exact paths may be added later | **selected: existing harness** |
-| D2b | Dotfile/state sharing model | Share canonical non-secret harness configuration through service-owned discovery links, keep identity-bound and mutable state separate, and expose `$HOME/harness` read-only to the service identity by default | Writable cross-identity access to the same checkout requires an explicit Git ownership/locking design; exact mutable directories may be added later; blanket `$HOME/.*` remains rejected | **open** |
+| D2b | Harness checkout access | Owner requires the service identity to edit the existing `$HOME/harness` checkout | This requires inherited ACLs plus Git worktree/index locking and ownership validation; read-only access was rejected | **selected: writable** |
+| D2c | Symlinked dotfile/state scope | Use a service-owned canonical tree and link only exact non-secret configuration or explicitly concurrency-safe state paths into the personal account | Linking whole `.ssh`, `.codex`, `.claude`, `.config`, or `.local` trees would merge credentials, identity state, locks, caches, and unrelated private state and is rejected | **open** |
 | D3 | API-key secret surface | If a service account is selected, use an owner-approved non-repository secret mechanism and a path/value-pass contract that the agent never reads | Global environment or shell startup storage is rejected | **conditional** |
 
-Ask exactly one open decision at a time. Ask D2b next, then D3 after the exact
+Ask exactly one open decision at a time. Ask D2c next, then D3 after the exact
 home scope is frozen.
 
 ## Frozen execution sequence after interview and explicit go
@@ -227,6 +234,6 @@ Acceptance requires:
 
 ## Next action
 
-Ask D2b: whether the service identity should use the layered model with
-read-only access to canonical `$HOME/harness`, or must also write to that same
-checkout. Exact mutable shared directories can be reviewed later.
+Ask D2c: whether Codex/Claude credentials and authentication must remain
+account-local while non-secret configuration and selected session/workflow
+state are considered individually for service-owned canonical symlinks.
