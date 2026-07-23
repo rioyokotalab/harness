@@ -73,7 +73,8 @@ Next free ID: T-303.
 
 ### T-302 — Reduce AL authentication intervention
 
-**Phase:** validating (restart-resilience extension). CSCS requires personal
+**Phase:** monitoring/time-gated (restart-resilience extension). CSCS requires
+personal
 SSH keys to be CSCS-signed and limits personal certificates to one day. The
 owner rejected the higher-complexity service-account/ACL/shared-state design;
 none of it was applied. The selected personal-only design accepts
@@ -183,6 +184,20 @@ held only by deleted tmpfs descriptors. The unit is active/running with
 `NRestarts=1`. Commit/protect this evidence, merge PR #282 without replacing
 the live runner inode, guarded-sync the fleet, then observe the same master no
 earlier than 2026-07-25 07:50 JST.
+
+PR #282 merged as `b5c4c7854e1b291531928a8b77c14b27e6c3b126`.
+Local `main` was advanced only after exact tree-identity proof, avoiding live
+runner inode replacement. Guarded fleet sync advanced all 11 remote checkouts
+from `7965d4190e4cf3faa6f2f8ea685cef750207ff86` to `b5c4c78`; a second plan
+reported clean `KEEP`, aligned `origin/main`, and absent transfer artifacts for
+every target. The managed AL unit remains active/running with `NRestarts=1`,
+managed status, a usable AL command path, and no repository `.nfs…` residue.
+
+Implementation and rollout are complete. The only remaining T-302 action is
+time-gated: no earlier than 2026-07-25 07:50 JST, do not replace the master;
+verify the same marked unit remains managed, run multiplexed `ssh al true`, and
+run one private fresh non-multiplexed probe to distinguish continued reuse from
+renewal-required. Record the observation without inspecting credentials.
 
 ### T-196 — Backup lifecycle phase 2
 
