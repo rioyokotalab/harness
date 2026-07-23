@@ -204,3 +204,12 @@ clean checkout, including startup normalization, layout, mirror, Mac profile,
 Mac SSH sync, supervisor, doctor, and fleet-sync coverage. Next action: publish
 through protected CI and synchronize the exact merged revision; live SSH files
 remain unchanged until that succeeds.
+
+PR #274's first protected run `29975574360` failed in an unchanged watchdog
+signal-cleanup timing test: after waiting five seconds it still observed a
+recovery child or lock. Every T-301 layout/mirror/config test passed in that
+same run. The supervisor suite immediately passed standalone locally, and the
+complete local phase-one run had also passed it, so retry is safe and no live
+state was touched. This task will checkpoint the failure through normal Git and
+require a fresh protected run; a repeated failure would stop rollout and
+require separate diagnosis rather than being dismissed.

@@ -108,6 +108,13 @@ Implementation checkpoint `c368b60` passed the complete phase-one suite from a
 clean checkout. Next: publish through protected CI and guarded-sync the exact
 merge before any live SSH rollout.
 
+PR #274 protected run `29975574360` failed only in the unchanged Mac watchdog
+signal-cleanup timing test after its five-second wait; every T-301-focused
+surface passed. The supervisor suite immediately passed standalone and had
+passed in the complete local run. Retry is safe; no live state changed. Next:
+checkpoint this evidence to trigger a fresh protected run. Stop before rollout
+if the same failure repeats.
+
 ### T-196 — Backup lifecycle phase 2
 
 **Status:** time-gated. Progress is 1/8 successful weekly chains everywhere.
