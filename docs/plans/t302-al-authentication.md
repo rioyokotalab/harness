@@ -261,8 +261,37 @@ Checkpoint:
   only the documented undeclared native MPI smoke was skipped. At
   2026-07-23 15:04 JST, a separate post-suite command still observed the same
   managed master and active/running successful transient unit.
+- PR #279 passed protected CI and merged as
+  `0391eabf98aa9c275164a3e6b3faf7be3557674e`. A second guarded fleet sync
+  advanced all 11 managed remote checkouts from `b43e224` to that revision;
+  every target reported clean applied state and absent transfer residue.
+- At 2026-07-23 15:09 JST, the same receipt-matched `al` master and
+  `alps_login` master were ready, the transient unit was loaded,
+  active/running, and successful, all eight Linux targets passed fresh health
+  probes, and all five monitored route pairs were 2/2 healthy.
 
-Next: publish the transient-service correction through protected `main`, then
-re-sync clean fleet checkouts. If this same receipt-matched master remains
-ready, run the certificate-boundary experiment no earlier than
-2026-07-24 15:04 JST.
+## Time-gated expiry experiment
+
+Do not start, stop, or replace the managed `al` master merely to run this
+experiment.
+
+On or after 2026-07-24 15:10 JST:
+
+1. Run `harness al-session --status`. If it is not the same managed
+   receipt-matched master, record an availability failure and do not claim the
+   certificate-boundary result.
+2. Run one normal non-interactive `ssh al true`; it must reuse the master and
+   succeed.
+3. Without stopping that master, run one separately logged, non-multiplexed
+   `BatchMode=yes`, `ControlMaster=no`, `ControlPath=none` connection. Keep its
+   output in an unread mode-0600 temporary log, classify only the predefined
+   authentication/availability result, and exact-unlink the log.
+4. A successful multiplexed command plus an authentication-required fresh
+   connection proves reuse across the personal certificate boundary. A
+   successful fresh connection means the owner renewed or the boundary was not
+   reached; mark the experiment invalidated and reschedule rather than
+   inferring.
+
+Next: wait for the time gate above. No owner action is required unless the
+managed master is lost or the owner renews the personal certificate before the
+experiment.

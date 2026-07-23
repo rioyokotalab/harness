@@ -73,61 +73,37 @@ Next free ID: T-303.
 
 ### T-302 — Reduce AL authentication intervention
 
-**Phase:** executing. CSCS requires personal SSH keys to be CSCS-signed and
-limits personal certificates to one day; `cscs-key 1.1.0` offers only `1d` and
-`1min`. Local currently has a valid agent socket, a fresh non-multiplexed
-`al` login passes, the Ela jump-host master is running, and no `al` master is
-running. Official CSCS guidance reserves API-key authentication for separate
-service accounts and explicitly warns against setting `CSCS_API_KEY` globally.
+**Phase:** monitoring/time-gated. CSCS requires personal SSH keys to be
+CSCS-signed and limits personal certificates to one day. The owner rejected
+the higher-complexity service-account/ACL/shared-state design; none of it was
+applied. The selected personal-only design accepts reauthentication after a
+real transport loss and never signs, renews, lists, or exposes credentials.
 
-No supported configuration can make fresh personal-account connections
-authenticate indefinitely. The owner retired the proposed service-account,
-cross-account ACL, shared-checkout, and dotfile/state-sharing branch because
-its maintenance cost outweighed the convenience benefit; none of it was
-applied. The frozen design now keeps only the personal `al` account, reuses a
-long-lived authenticated master where possible, reports
-`renewal-required` without retrying or automating MFA, and accepts owner
-reauthentication after a real transport loss. The bounded expiry experiment,
-rollback, acceptance gates, and official sources are in
-`docs/plans/t302-al-authentication.md`. The explicit `go` was received. The new
-`harness al-session` helper and focused
-fixture are implemented. It reports status, makes one non-interactive start
-attempt, distinguishes authentication-required from generic unavailability
-without exposing its private temporary log, records socket identity, and
-gracefully stops only its own master. ShellCheck, shell syntax, the focused
-test, live read-only status, `git diff --check`, public repository audit,
-source contract, all 68 focused shards, and the complete phase-1 suite pass;
-only the suite's documented undeclared-environment native MPI smoke was
-skipped. Git transport and the hosting API are independently ready. Next
-action: PR #277 passed protected CI and merged as `30328e3`. The first live
-start failed safely because Local's valid OpenSSH socket has link count 2
-rather than the fixture's assumed 1; rollback removed the master, receipt, and
-private log. A follow-up now accepts only link count 1 or 2 while preserving
-all other socket and receipt identity checks, with a two-link regression case.
-The corrected live drill passed managed start, status, real multiplexed command
-reuse, receipt-matched stop, clean absent status, and reapply. The `al` and
-`alps_login` masters are now ready. The focused regression, ShellCheck,
-whitespace validation, and complete phase-1 suite pass on the correction;
-only the documented undeclared native MPI smoke was skipped. Next: publish the
-correction through protected `main`, synchronize clean fleet checkouts, and
-record the expiry-boundary checkpoint.
+`harness al-session` now provides value-free status, one non-interactive start
+attempt, authentication-vs-availability classification, socket-identity
+ownership, and managed-only graceful stop. The foreground master runs in a
+collected, non-restarting transient user-systemd unit with null output, so it
+survives the Codex command that launched it without installing a unit file.
+PRs #277–#279 passed protected CI; final implementation revision is
+`0391eab`. ShellCheck, focused/public/source-contract coverage, all 68 focused
+shards, the complete phase-1 suite, live start/stop/reapply, and cross-command
+reuse pass. Guarded fleet sync advanced all 11 managed remotes cleanly with no
+transfer residue.
 
-PR #278 passed protected CI and merged as `b43e224`; guarded fleet sync then
-advanced all 11 managed remotes cleanly with no transfer residue. Later
-observation proved that Codex's command runner reaps an `ssh -f` descendant
-when its launching command closes. Bare masters survived bounded 60- and
-120-second diagnostics, so this was not a deterministic CSCS idle timeout.
-The helper now uses Local's ready user systemd manager to own foreground
-`ssh -M -N` in a collected, non-restarting transient unit with null output and
-no installed unit file. A cross-command live drill passed start, managed
-status, stop with complete unit unload, absent status, reapply, and final
-managed status. ShellCheck, the focused regression, all 68 focused shards, and
-the complete phase-1 suite pass; only the documented undeclared native MPI
-smoke was skipped. A separate 2026-07-23 15:04 JST check still found the same
-managed master and active transient unit. Next: publish this correction
-through protected `main`, re-sync clean fleet checkouts, then run the
-certificate-boundary experiment no earlier than 2026-07-24 15:04 JST if this
-same receipt-matched master remains ready.
+At 2026-07-23 15:09 JST, the receipt-matched `al` and `alps_login` masters
+were ready, the transient unit was active/running, all eight Linux targets
+were healthy, and every monitored route pair was 2/2. Implementation and
+rollout are complete. Full evidence, rollback, and official sources are in
+`docs/plans/t302-al-authentication.md`.
+
+Next action is time-gated: on or after 2026-07-24 15:10 JST, do not replace the
+master; verify managed status, run one multiplexed `ssh al true`, then run one
+private-logged forced-fresh non-multiplexed probe. Multiplexed success plus
+fresh authentication-required proves reuse across the certificate boundary.
+If the master changed, record availability failure; if fresh access succeeds,
+the experiment was invalidated by renewal or timing and must be rescheduled.
+The exact privacy and classification procedure is in
+`docs/plans/t302-al-authentication.md`.
 
 ### T-196 — Backup lifecycle phase 2
 
