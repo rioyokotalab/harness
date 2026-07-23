@@ -1,8 +1,8 @@
 # T-302 AL session restart resilience
 
-**Phase:** executing
+**Phase:** validating
 **Driver:** Codex
-**Updated:** 2026-07-24 07:10 JST
+**Updated:** 2026-07-24 07:34 JST
 
 ## Outcome
 
@@ -185,3 +185,20 @@ pathname before launching SSH, while retaining post-exit classification. That
 anonymous-diagnostic behavior is now implemented, and all four exit classes
 plus pathname absence pass the focused suite. Revalidate locally and in
 protected CI before the final live drill.
+
+Commit `2b4bc9e` passed the complete phase-one suite and protected CI. The
+final live hard-crash drill passed at 2026-07-24 07:34 JST:
+
+- only the exact receipt- and parent-validated OpenSSH child received `KILL`;
+- the unusable stale-socket state was observed;
+- systemd reported one restart after the configured 60-second delay;
+- both the runner and SSH process generations changed;
+- the socket transitioned from unusable to a safe usable managed master;
+- `harness al-session --status` and `ssh al true` passed;
+- no named private diagnostic path existed before or after recovery.
+
+The recovered unit is active/running with `NRestarts=1` and entered its current
+active generation at 2026-07-24 07:33:47 JST. Next commit this evidence, pass
+the documentation-only protected check, merge PR #281, guarded-sync the clean
+fleet checkouts, and schedule the certificate-boundary observation no earlier
+than 2026-07-25 07:35 JST without replacing the master.

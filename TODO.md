@@ -73,7 +73,7 @@ Next free ID: T-303.
 
 ### T-302 — Reduce AL authentication intervention
 
-**Phase:** executing (restart-resilience extension). CSCS requires personal
+**Phase:** validating (restart-resilience extension). CSCS requires personal
 SSH keys to be CSCS-signed and limits personal certificates to one day. The
 owner rejected the higher-complexity service-account/ACL/shared-state design;
 none of it was applied. The selected personal-only design accepts
@@ -150,6 +150,15 @@ the mode-0600 pathname before launching SSH while retaining post-exit
 classification. This behavior is now implemented and the focused suite passes
 all four exit classes plus diagnostic-path absence. Full and protected
 validation remain before the final live drill.
+
+Commit `2b4bc9e` passed the complete phase-one suite and protected CI. The
+final identity-checked hard-crash drill passed at 2026-07-24 07:34 JST:
+systemd restarted once after 60 seconds, both process generations changed, the
+stale socket became a safe usable managed master, `ssh al true` passed, and no
+named diagnostic path existed. The recovered unit is active/running with
+`NRestarts=1`. Commit and protect this evidence, merge PR #281, guarded-sync
+the clean fleet, then observe the same master across the certificate boundary
+no earlier than 2026-07-25 07:35 JST.
 
 ### T-196 — Backup lifecycle phase 2
 
