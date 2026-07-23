@@ -15,18 +15,21 @@ grep -F 'docs/fleet-inventory.md' "$ROOT/AGENTS.md" >/dev/null ||
 for logical in local ab ab2 abq al rc ri t4 web aist home office riken; do
     count=$(grep -c "^| \`$logical\` |" "$DOC")
     [ "$count" -eq 1 ] || fail "fleet row count for $logical"
-    readme_count=$(grep -c "^| \`$logical\` |" "$README")
-    [ "$readme_count" -eq 1 ] || fail "README fleet row count for $logical"
-    row=$(grep "^| \`$logical\` |" "$DOC")
-    grep -F -x "$row" "$README" >/dev/null ||
-        fail "README fleet row differs for $logical"
+    readme_count=$(grep -c "^| \`$logical\` |" "$README" || true)
+    [ "$readme_count" -eq 0 ] || fail "duplicate README fleet row for $logical"
 done
 
-# shellcheck disable=SC2016
-grep -F '| `web` | `web` (SFTP only) | `gsic0017` | `web-o3.noc.titech.ac.jp` | `sftp` | Rocky Linux 8, x86_64 |' \
-    "$DOC" >/dev/null || fail "documented web service row"
-# shellcheck disable=SC2016
-grep -F '| `abq` | `abq`, `abq2` | `qai10412cx` | `qas.q.abci.ai` | `qes*` | Red Hat Enterprise Linux 9.4, x86_64 |' \
-    "$DOC" >/dev/null || fail "ABQ route row"
+for guide in \
+    'https://github.com/rioyokotalab/server-admin/wiki/How-to-use-hinadori-cluster' \
+    'https://docs.abci.ai/v3/en/' \
+    'https://g-quat-abciq.github.io/abciq-docs/ja/' \
+    'https://docs.cscs.ch/alps/' \
+    'https://portal.cloud.r-ccs.riken.jp/' \
+    'https://docs.r-ccs.riken.jp/rikyu/en/' \
+    'https://www.t4.cii.isct.ac.jp/docs/all/' \
+    'https://www.noc.cii.isct.ac.jp/en/server-hosting-service/'
+do
+    grep -F "$guide" "$DOC" >/dev/null || fail "missing Linux user guide: $guide"
+done
 
 echo "Fleet inventory tests passed"

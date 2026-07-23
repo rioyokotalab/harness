@@ -38,8 +38,8 @@ rollback preserves unchanged preimages.
 Current work and the exact resume checkpoint live in [TODO.md](TODO.md).
 Completed command-level evidence lives in Git history and
 [docs/audits/](docs/audits/). A cold-started agent should read the root
-`AGENTS.md` or `CLAUDE.md`, `TODO.md`, and the fleet table below before
-acting.
+`AGENTS.md` or `CLAUDE.md`, `TODO.md`, and the canonical
+[fleet inventory](docs/fleet-inventory.md) before acting.
 
 For a new account that does not share the owner's hidden files, credentials,
 remote nodes, or backup layout, use
@@ -48,34 +48,16 @@ fleet.
 
 ## Fleet reference
 
-This is the public cold-start reference for conversations about the owner's
-systems. A logical alias identifies one harness node; “SSH entry” is the name
-used from `local`. Login hostnames may vary within the shown pattern.
-Operating-system facts were rechecked directly on 2026-07-23, except for the
-documented service-only `web` node.
-
-| Alias | SSH entry | Username | Global hostname | Login/local hostname | Operating system |
-| --- | --- | --- | --- | --- | --- |
-| `local` | `login` | `rioyokota` | `login.rio.scrc.iir.isct.ac.jp` | `login-*` | Ubuntu 24.04.3 LTS, x86_64 |
-| `ab` | `ab` | `aca10017by` | `as.v3.abci.ai` | `login*` | Red Hat Enterprise Linux 9.4, x86_64 |
-| `ab2` | `ab2` | `aah17783cq` | `as.v3.abci.ai` | `login*` | Red Hat Enterprise Linux 9.4, x86_64 |
-| `abq` | `abq`, `abq2` | `qai10412cx` | `qas.q.abci.ai` | `qes*` | Red Hat Enterprise Linux 9.4, x86_64 |
-| `al` | `al` | `ryokota` | `daint.alps.cscs.ch` | `daint-*` | SUSE Linux Enterprise Server 15 SP6, aarch64 |
-| `rc` | `rc` | `rio.yokota` | `login.cloud.r-ccs.riken.jp` | `login*` | Rocky Linux 9.8, x86_64 |
-| `ri` | `ri` | `rku00075` | `login.rikyu.r-ccs.riken.jp` | `c00*` | Ubuntu 24.04.4 LTS, aarch64 |
-| `t4` | `t4` | `uq02038` | `login.t4.gsic.titech.ac.jp` | `login*` | Red Hat Enterprise Linux 9.4, x86_64 |
-| `web` | `web` (SFTP only) | `gsic0017` | `web-o3.noc.titech.ac.jp` | `sftp` | Rocky Linux 8, x86_64 |
-| `aist` | `aist`, `aist2` | `rioyokota` | `localhost` | `aist` | macOS 26.5.2, arm64 |
-| `home` | `home`, `home2` | `yokotar` | `localhost` | `home` | macOS 26.5.2, arm64 |
-| `office` | `office`, `office2` | `yokotar` | `localhost` | `office` | macOS 26.5.2, arm64 |
-| `riken` | `riken`, `riken2` | `yokotar` | `localhost` | `riken2` | macOS 26.5.2, arm64 |
+The canonical [fleet inventory](docs/fleet-inventory.md) is the cold-start
+reference for logical aliases, SSH entries, usernames, hostnames, operating
+systems, and Linux user guides. Keeping the table in one place prevents this
+overview from drifting from the operational reference.
 
 The managed control plane contains 12 logical nodes: 8 Linux systems and 4
 Macs. `web` is service-only and is not a deployment, health-monitor, package,
 Python, backup, or synchronization target. `abci_login` and `alps_login`
 are transports rather than targets; retired `si` remains out of scope. The
-canonical table and provenance are also kept in
-[docs/fleet-inventory.md](docs/fleet-inventory.md).
+canonical table and provenance live in that inventory.
 
 Each Mac has two independently supervised reverse routes. The route aliases
 are for Local-to-Mac access; the Mac-side launchd services use the separate

@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-300.
+Next free ID: T-301.
 
 ## Current state
 
@@ -13,7 +13,7 @@ Next free ID: T-300.
   clean/current after T-298; all four private Mac SSH payloads are also
   current.
 - The README now leads with owner-facing startup and daily operations, carries
-  the canonical 13-row public node reference, and separates logical nodes from
+  a pointer to the canonical fleet reference, and separates logical nodes from
   transport-only aliases and the service-only web endpoint.
 - Managed Linux nodes are local, ab, ab2, ri, al, rc, t4, and abq; abq2 is a
   second route to the same ABQ node. Managed Macs are aist, home, office, and
@@ -63,6 +63,19 @@ Next free ID: T-300.
 1. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
 
 ## Active tasks
+
+### T-300 — Consolidate the fleet reference and add Linux user guides
+
+**Status:** executing. Remove the duplicate node table from `README.md`, retain
+`docs/fleet-inventory.md` as the single cold-start table, and add a verified
+official user-guide link for every Linux-facing entry. Official guides are
+resolved for ABCI (`ab`, `ab2`), ABCI-Q (`abq`), CSCS Alps (`al`), R-CCS Cloud
+(`rc`), RIKEN RIKYU (`ri`), TSUBAME4 (`t4`), and Science Tokyo managed WWW
+(`web`). The owner supplied the private Hinadori wiki for `local`; current
+GitHub authentication can reach its repository and wiki remote without any
+access change. The RIKYU guide returned HTTP 200 and identified itself as the
+RIKYU User Guide. The README, canonical table, and focused inventory test are
+updated. Next: run validation, then publish through protected main.
 
 ### T-196 — Backup lifecycle phase 2
 
