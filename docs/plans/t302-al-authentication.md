@@ -47,6 +47,15 @@ can survive host, network, process, or site-enforced disconnection.
   and SSH key and not to set `CSCS_API_KEY` globally. A service account has
   project-resource access, not an assumed right to the owner's personal home or
   existing personal harness checkout.
+- The owner confirmed that a service account can be created in the relevant
+  Waldur project, but requires the unattended identity to reach selected
+  personal-home content.
+- Read-only AL metadata shows the personal home is a current-user-owned,
+  real mode-0700 directory with no named/default ACL. `$HOME/harness` is a
+  current-user-owned real directory with no named/default ACL, but its
+  mode-0755 bytes remain unreachable through the mode-0700 parent. The declared
+  `g177` project root already has named/default ACL policy; its entries were
+  counted but not exposed.
 
 ## Evidence and interpretation
 
@@ -56,6 +65,7 @@ Primary sources:
 - CSCS service-account guide:
   <https://docs.cscs.ch/access/service-accounts/>
 - CSCS MFA guide: <https://docs.cscs.ch/access/mfa/>
+- CSCS storage/ACL guide: <https://docs.cscs.ch/guides/storage/>
 - Local OpenSSH client behavior and `cscs-key sign --help`
 
 Adopt:
@@ -113,6 +123,12 @@ Use a hybrid design when the owner needs both interactive and unattended work:
 5. Keep the API key in an owner-approved external secret surface. Pass it only
    to `cscs-key` for the intended invocation and never expose it to shell
    startup, SSH configuration, logs, or repository state.
+6. If personal-home access is approved, grant only execute traversal on the
+   mode-0700 home and the minimum required permissions on one selected
+   automation subtree. Do not grant service-account access to `.ssh`, agent
+   state, shell history, client configuration, backup state, snapshots, or the
+   whole home. Prefer a separate automation checkout over concurrent writes to
+   the personal checkout.
 
 The personal helper improves convenience but cannot promise permanent access.
 The service-account route can remove routine human authentication for
@@ -124,12 +140,12 @@ automatically preserve the personal home-based workflow.
 | ID | Decision | Recommended choice | Alternatives and consequence | State |
 | --- | --- | --- | --- | --- |
 | D1 | Required outcome | Owner selected the hybrid: retain personal `al` for interactive work and add a service-account route for unattended Codex/automation | Personal transport reuse only reduces prompts until disconnect; accepting daily renewal makes no configuration change | **selected: hybrid** |
-| D2 | Service-account eligibility and scope | If D1 selects unattended access, confirm the owner can create a service account in the relevant Waldur project and that it may access the intended project storage | Without project authorization, stop at the personal helper | **conditional** |
+| D2 | Service-account eligibility and base scope | Owner confirmed service-account eligibility and requires selected personal-home access in addition to project resources | Project-only access was rejected because the unattended workflow needs personal-home content | **selected: personal-home required** |
+| D2a | Exact personal-home subtree | Prefer a dedicated automation checkout under the personal home, with execute-only traversal on the home and no access elsewhere | Share only the existing harness checkout, or name other exact subtrees; broad home access is rejected | **open** |
 | D3 | API-key secret surface | If a service account is selected, use an owner-approved non-repository secret mechanism and a path/value-pass contract that the agent never reads | Global environment or shell startup storage is rejected | **conditional** |
 
-Ask exactly one open decision at a time. D1 selected unattended access, so D2
-is next; ask D3 only after service-account eligibility and storage scope are
-confirmed.
+Ask exactly one open decision at a time. Ask D2a next, then D3 after the exact
+home scope is frozen.
 
 ## Frozen execution sequence after interview and explicit go
 
@@ -165,6 +181,10 @@ confirmed.
   propagation path stops execution.
 - Service-account permissions and filesystem identity may differ from the
   personal account; do not infer access from successful login.
+- Home ACLs can unintentionally expose unrelated personal data or cause
+  cross-identity Git ownership/lock conflicts. Require exact paths,
+  transactional ACL preimages, inheritance tests, and negative access checks
+  for excluded siblings.
 - Rollback removes only new public helper/config declarations and stops only a
   task-owned master with `ssh -O stop`. Existing sessions, keys, certificates,
   agents, and aliases remain untouched.
@@ -185,6 +205,6 @@ Acceptance requires:
 
 ## Next action
 
-Ask D2: whether the owner can create a service account in the relevant Waldur
-project and agrees that the service identity should operate only in declared
-shared project storage rather than the personal account home.
+Ask D2a: whether to create a dedicated automation checkout under the personal
+home, share only the existing `$HOME/harness` checkout, or identify other exact
+personal-home subtrees.

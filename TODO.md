@@ -85,9 +85,14 @@ authenticate indefinitely. The owner selected the hybrid design: reuse a live
 personal `al` transport where possible and add a separate service account for
 unattended automation while retaining personal MFA for interactive work. The
 frozen boundaries, conditional decisions, validation experiment, and official
-sources are in `docs/plans/t302-al-authentication.md`. Next action: confirm the
-owner can create the service account in the relevant Waldur project and limit
-it to declared shared project storage rather than the personal account home.
+sources are in `docs/plans/t302-al-authentication.md`.
+
+The owner confirmed service-account eligibility but requires selected
+personal-home access. Read-only AL metadata shows the home is mode 0700 and the
+existing harness checkout has no named ACL, so the service identity currently
+has no route into it. CSCS supports targeted ACLs. Broad home access is
+rejected; next action is to select a dedicated automation checkout, the
+existing harness checkout only, or other exact home subtrees.
 
 ### T-196 — Backup lifecycle phase 2
 
