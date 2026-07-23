@@ -1,434 +1,64 @@
 # Personal harness task board
 
 This is the authoritative resume point for the portable Codex and Claude
-harness. Keep only active decisions, blockers, exact next actions, and compact
-completion pointers here. Full pre-housekeeping chronology is available at
-published commit 90451d49ac96; detailed T-288 execution through Home Git
-catch-up is preserved at 378df00159d59e8abee645f2bdaebd20cf467cc2. Final
-T-288 through T-292 execution is in
-`docs/audits/macos-ssh-finalization-2026-07-21.md`. Full T-295 execution before
-compaction is preserved at `5d551883648760fcc373973a575a403b18637f44`.
+harness. Keep only current state, active decisions and gates, exact next
+actions, and compact completion pointers here. Git history and the linked audit
+documents retain completed execution detail.
 
-Next free ID: T-298.
+Next free ID: T-299.
 
 ## Current state
 
-- Protected public `main` includes PR #185's functional closeout and PR #186's
-  durable audit, the schema-3 per-Mac SSH engine, and failover isolation.
-  Superseded T-288/T-291/T-292 branches are absent locally and remotely.
-- Managed Linux nodes are local, ab, ab2, ri, al, rc, t4, and abq; abq2 is the
-  second route to the same ABQ node.
-  abci_login and alps_login are transports, not targets; retired si is out of
-  scope.
-- T-288 through T-292 are functionally complete. Local, all six remote Linux
-  nodes, and all four Macs have the canonical terminal SSH include and shared
-  fragment. All four private Mac profiles use schema 3 with exactly four
-  per-host SSH payloads and no legacy payload. Final execution preserved every
-  Mac's distinct non-shared SSH bytes.
-- T-295 is complete. Its thirteen frozen workstreams converged the SSH, X11,
-  terminal, Codex, arg0, package, Python, ABQ, benchmark, fleet-inventory, and
-  external-user onboarding contracts. Final owner-side reauthorization and
-  independent validation restored all eight launchd-managed Mac routes.
-- The final Mac acceptance proved clean/current public and private Git, current
-  updater/startup/SSH plans, managed non-login/login shells, both doctors, and
-  zero formula-policy residue. Home's recurring known Codex-installer tail and
-  duplicate link were remediated through the established exact transaction;
-  no package or unknown state changed.
-- Post-housekeeping synchronization left local, all seven remote Linux
-  checkouts, and all four Macs clean/current at `b0f4548`; private Mac
-  checkouts remained clean/current.
-- Routine post-T-295 housekeeping guarded-deleted six released local arg0
-  entries and one on each Mac without stopping Codex. Every post-plan reports
-  `live=3 eligible=0 young=0 unexpected=0`; exact manifests, targets, and
-  residue checks are recorded in
-  `docs/audits/post-t295-housekeeping-2026-07-23.md`.
-- T-296 is complete. All four Macs run two independent current-user `launchd`
-  supervisors plus a 30-second Mac-local watchdog. Local's root-owned secondary
-  authorization file isolates their four exact restricted entries from
-  JumpCloud reconciliation, and account-scoped `15/3` sshd liveness releases
-  abandoned reverse listeners. Primary, secondary, and directly observed
-  simultaneous-loss drills passed on every Mac; all eight routes finished at
-  `managed=1 external=0`. The five-minute
-  `harness-connection-monitor` remains active. Power loss, loss of both upstream
-  networks, Local/sshd failure, and root-policy damage remain explicit external
-  bounds. Full evidence is in
-  `docs/audits/t296-mac-connectivity-resilience-2026-07-23.md`.
+- Public `main` is clean at
+  `ff52d8d2a42d84c1ef9ed7c582a7aa99bdc843fe`. Local and all eleven remote
+  managed checkouts were verified clean/current at that revision after T-297;
+  all four private Mac SSH payloads are also current.
+- Managed Linux nodes are local, ab, ab2, ri, al, rc, t4, and abq; abq2 is a
+  second route to the same ABQ node. Managed Macs are aist, home, office, and
+  riken, each with two independent reverse routes. `abci_login` and
+  `alps_login` are transports, not health-report targets; retired si remains
+  out of scope.
+- All managed systems use the canonical terminal SSH include and fragment.
+  The four Mac private profiles use schema 3 with one distinct per-host SSH
+  payload and no legacy root payload.
+- Each Mac runs two current-user launchd tunnel supervisors and a 30-second
+  local watchdog. Local keeps their four restricted authorizations in the
+  root-owned secondary file
+  `/etc/ssh/harness_tunnel_authorized_keys`, selected by
+  `/etc/ssh/sshd_config.d/99-harness-tunnel-auth.conf`. The five-minute
+  `harness-connection-monitor` remains active.
+- T-296 acceptance passed primary, secondary, and simultaneous-loss drills on
+  all four Macs with `managed=1 external=0`. Power loss, loss of both upstream
+  networks, Local/sshd failure, and root-policy damage remain external bounds.
+- T-297 left zero orphaned Mac muxes, legacy keepalive agents, SSH/helper
+  staging candidates, or dead recovery panes. Expected managed tunnels,
+  watchdog state, active Codex sessions, live agent sockets, and rollback
+  transaction evidence remain.
+- The Codex 0.145.0 NFS arg0 launcher wrapper and lock-aware guarded
+  housekeeping remain installed. Its rollback is
+  `harness codex-arg0-wrapper --rollback`; an official Codex upgrade requires
+  fresh validation before reinstalling the version-scoped wrapper.
 - Exactly one future native weekly primary backup job exists on each managed
-  Linux node. First runs passed on 2026-07-19; keep-all remains effective.
-- Global safety and collaboration invariants in `.codex/AGENTS.md` remain
-  authoritative. Never inspect credentials or use raw recursive/bulk deletion.
-- Whenever owner input/approval is requested or a task is completed, report a
-  fresh health snapshot for all managed Linux nodes and all four Mac route
-  pairs. At the owner's standing request, omit `abci_login` and `alps_login`
-  from routine health reports unless a task specifically targets a transport.
+  Linux node. First runs passed on 2026-07-19 and keep-all remains effective.
+- Global safety and collaboration rules in `.codex/AGENTS.md` remain
+  authoritative. Never inspect credentials or use raw recursive/bulk
+  deletion.
+- Whenever owner input or approval is requested, or a task completes, report a
+  fresh compact health snapshot for every managed Linux node and all four Mac
+  route pairs. Omit `abci_login` and `alps_login` unless a task targets
+  those transports.
 
 ## Next resume checkpoint
 
-1. On or after 2026-07-26, query only T-196 recorded successor job IDs.
-
-## Recently completed
-
-### T-296 — Diagnose recurrent Aist dual-route recovery latency
-
-**Phase/status:** complete. The owner/admin handoff installed the Local-only
-root-owned secondary authorization file and preserved Match block, validated
-effective sshd syntax and `15/3` liveness, and reloaded rather than restarted
-`ssh.service`. Fresh dedicated authentication passed for all four Macs. Home's
-shared-ControlMaster rescue forwards were replaced one at a time by its two
-managed services. Aist's pilot watchdog was upgraded, Home/Office/Riken received
-fresh watchdog transactions, and primary-only, secondary-only, and
-simultaneous-loss drills passed on all four Macs. The final manual monitor
-sample reported every Mac pair and ABQ healthy with no action. The closeout
-passed `git diff --check`, the public-repository audit, and the complete
-`tests/test-phase1.sh` gate.
-
-A later live Aist `0/2` interval during final fleet synchronization recovered
-without a controller kick: `aist2` returned first, then `aist`, and both ended
-at `managed=1 external=0`. Its atomic watchdog receipt recorded
-`classification=recovered-single attempts=21` at `20260722T231136Z`, providing
-post-hardening stale-listener evidence in addition to the matched bootout
-drills. Final guarded arg0 housekeeping preserved three live invocations on
-Local and each Mac, removed six eligible Local residues and one per Mac, and
-found zero unexpected entries.
-The durable plan is
-`docs/plans/t296-mac-connectivity-resilience.md`; the evidence handoff is
-`docs/audits/t296-mac-connectivity-resilience-2026-07-23.md`. The temporary
-observe-only monitor and its mode-0600 log were removed after the endpoint; the
-existing five-minute recovering monitor remains active and unchanged.
-T-295 proved Aist's existing dedicated identity, both tunnel aliases, exclusive
-launchd ownership, current clean checkout, and zero-warning doctor immediately
-before repeated later `0/2` intervals. Home, Office, and Riken remained healthy,
-so the new evidence is Aist-specific and does not reopen T-295.
-
-**Completion identifiers:** Local system files are
-`/etc/ssh/harness_tunnel_authorized_keys` and
-`/etc/ssh/sshd_config.d/99-harness-tunnel-auth.conf`, both root:root mode 0644.
-Final watchdog transactions are Aist `20260722T225249Z-46153`, Home
-`20260722T224359Z-46764`, Office `20260722T224728Z-66616`, and Riken
-`20260722T225008Z-97535`. The obsolete Aist pilot transaction rolled back, and
-all staging helpers and private temporary state were exact-unlinked.
-
-**Historical execution record:** the evidence below explains the failures,
-design changes, interrupted recovery, and owner/admin gate that led to the
-completed state above. Any embedded “next action” describes its historical
-checkpoint and is superseded by the completion identifiers.
-
-**Observed evidence:** Aist first returned from a simultaneous outage after a
-roughly twelve-minute controller-side observation, with both routes and both
-managed services healthy. It later dropped both routes again while Local was
-attempting the documentation-only `b0f4548` Mac update, then returned both
-unattended after roughly four and a half minutes. The pending update transaction
-`20260722T151504Z-26956` then completed; its follow-up plan was current, both
-services reported `loaded=yes running=yes managed=1 external=0`, and the doctor
-had zero failures and warnings. Local cannot inspect or kick either service
-while both reverse routes are absent. No credential, SSH configuration, or
-service mutation was performed during either outage.
-
-The owner's Aist-side report then isolated the repeatable failure: dedicated
-authentication remains ready, but both real reverse-forward binds fail while
-stale fixed TCP listeners remain on Local. Immediate launchd retries exit 255
-and keep repeating. Unloading the two exact services, waiting for the Local
-listeners to drain, probing real binds, and bootstrapping sequentially restored
-both routes. A fresh live recurrence at 00:35 JST again left Aist at `0/2`
-while the other three Mac pairs stayed `2/2` and both Aist listener ports
-remained occupied on Local. Listener ownership cannot be tied safely to an
-exact process from the unprivileged Local account, so a controller-side kill
-is rejected.
-
-The 30-second watch measured that recurrence returning at 00:47 JST, roughly
-twelve minutes after first detection. Because the owner-launched Codex process
-on Aist remained active and did not acknowledge an observe-only request, this
-sample and later live recoveries prove convergence but cannot be attributed
-solely to the watchdog. No Codex process was killed. A value-free two-hour power
-comparison found no Aist or Home sleep/wake event around the sample. Both Aist
-services were again `managed=1 external=0`; Home's launchd history showed that
-the same exit-255 retry mechanism has occurred there even though its pair stayed
-reachable. The frozen implementation now has synthetic coverage for healthy
-no-op, dual drain/restore, live and stale recovery locks, authentication
-refusal, bounded timeout with baseline restoration, and exact rollback. Its
-focused supervisor, connection-monitor, and public-audit suites pass. The first
-full phase-1 run reached every suite; its two intentionally clean-checkout
-tmux/terminfo gates refused the uncommitted draft. After the checkpoint commit,
-the clean rerun passed all focused suites, guarded-delete tests, and the full
-phase-1 gate in 102 seconds.
-
-Protected PR #257 published the initial watchdog at
-`d188c3e9d0c045c185e6312cf43cddbc5b563064`; guarded fleet-sync advanced all
-seven remote Linux nodes and all four Macs cleanly. Aist installed watchdog
-transaction `20260722T160219Z-66174`. Its primary and secondary single-unload
-drills recovered autonomously, with the measured secondary recovery taking 23
-seconds. The simultaneous unload then reproduced genuine stale listeners:
-Local had no Aist route while both fixed ports remained occupied. The Aist-local
-watchdog drained them without controller access, restored the primary first,
-then converged both services to `managed=1 external=0` with last exit 0 after
-roughly seven minutes.
-
-Protected PRs #258 through #260 subsequently published independent single-route
-drain, controller use of the same state machine, fresh-auth auditing, and
-explicit authorization-blocked recovery outcomes. Their protected commits are
-`55693c581556446bb374fe2b32d64e700eae7aca`,
-`d91857b2ff11eaaf464136915bf23cfa089bba93`, and
-`2ca91146021989014ed9b5108e99dfc8e67a0528`; all managed checkouts were then
-clean and current at that commit.
-
-The live soak also caught Home2 down while Home stayed healthy. Unlike Aist's
-stale-listener sample, Home2's Local listener was absent and a fresh dedicated
-authentication probe from Home failed before restart. The published watchdog
-therefore correctly would not mutate that route. A follow-up draft extends the
-bounded drain to one stopped, authenticated route while preserving its healthy
-sibling and makes the controller request that state machine instead of a blind
-kick. Its supervisor and monitor focused suites pass; Home2's distinct
-authentication/upstream failure remains a value-free diagnosis item.
-
-Fresh isolated checks then proved Aist `2/2` authentication-ready but Home,
-Office, and Riken `0/2` authentication-ready despite their established routes.
-Home's private trace classified both failures as authorization rejection; the
-mode-0600 trace was exact-unlinked without exposing endpoint or key data. This
-is server authorization drift, not a tunnel client failure. Agent policy
-categorically prohibits reading or modifying `authorized_keys`, so no
-credential repair was attempted. A third focused follow-up adds public
-`--auth-status` and makes the five-minute recovering monitor classify a healthy
-old pair with blocked replacement authentication as
-`state=at-risk action=authorization-blocked`. Synthetic ready/blocked and
-monitor classifications pass. Permanent repair requires owner-managed
-reauthorization; a root-owned secondary sshd `AuthorizedKeysFile` for
-restricted harness tunnel entries is the recommended isolation so unrelated
-ordinary-key changes cannot remove them again.
-
-At 01:36:28 JST the observer recorded another Aist `0/2` interval and both
-routes were ready by 01:37:07, a 39-second observer bound. The watchdog again
-exited 0, but the active Aist Codex makes sole attribution unavailable. PR
-#261 (`c0772af617fe9ddf884c104b7be54a63daf09d27`) then added private atomic
-last-run receipts so future recovery can be attributed without retaining raw
-SSH output.
-
-At 02:05:44 Aist entered a new `0/2` interval. Both Local listeners were still
-occupied at 02:15 and absent by 02:23, but neither route rebound. The deployed
-retry-count limit omitted SSH probe duration and could stretch its nominal
-20-minute bound to roughly 41 minutes. PR #262
-(`972988297d01a0c79d9df26a6796a059087abaa1`) now enforces 1,200 elapsed seconds
-and distinguishes mid-drain authorization loss from a bind timeout while
-restoring the exact launchd baseline in either failure case. The owner-only
-credential gate prevented deployment on Aist before this outage.
-
-The at-risk warning also predicted subsequent loss: Office's last old route
-ended at 02:37:09 and Home's at 02:37:46. Current Mac state is Aist `0/2`, Home
-`0/2`, Office `0/2`, and Riken `2/2`; Riken is still fresh-auth blocked. Local,
-the managed Linux checkouts, and Riken are clean/current at `2375ec0`; the
-other Macs remain at `2ca9114` because guarded sync preflight could not reach
-them and made no change.
-
-PR #264 (`2375ec049aee107ac1501f5306aeed9237d4b144`) also removed a latent
-shared-checkout failure: watchdog recovery no longer requires unrelated work
-to be clean on branch `main`. It now runs directly and permits unrelated
-feature branches or dirty files only while every runtime-critical input exactly
-matches the local `main` ref. This defect is confirmed synthetically but cannot
-be attributed to the live Aist outage without Aist-side checkout evidence.
-
-The five-hour job ended at 05:23:12 JST. Its dedicated observer covered
-00:40:09--05:23:10, 4h43m01s, with 431 value-free samples per node. Aist had
-eight changes after its initial state, Home and Office had two each, and Riken
-and ABQ had none. At the endpoint Aist had remained `0/2` for at least 3h17m28s,
-Office for 2h46m03s, and Home for 2h45m26s; Riken and ABQ remained `2/2` for
-the full observer window. The temporary observer stopped and its private log
-was exact-unlinked; `harness-connection-monitor` remains alive. Routine arg0
-housekeeping preserved three live invocations, removed six eligible residues,
-and ended with zero eligible or unexpected candidates.
-
-**Current execution checkpoint:** a reviewed value-free `~/run_this.sh` is
-ready on Local. Each Mac runs `--stage LOGICAL_ID` to derive only the public
-half of its existing `~/.ssh/harness-reverse`, reconstruct its two exact
-listener restrictions from `ssh -G tunnel{,2}`, and transfer one mode-0600
-entry to Local without printing it. No identity is generated or changed. Once
-all four stages exist, Local `--plan` and `--apply` install a JumpCloud-
-preserved `Match User rioyokota` fragment and a root-owned mode-0644 secondary
-authorization file, validate `sshd -t` and `sshd -T -C`, reload rather than
-restart `ssh.service`, and add/validate one Mac at a time. A failed live check
-removes only that Mac's exact staged entry. Mode 0644 is intentional: OpenSSH
-opens an `AuthorizedKeysFile` under the target user's UID; root ownership and
-the root-owned `/etc/ssh` parent provide the integrity boundary, while the
-entries themselves are public keys.
-
-**Next action:** stage Aist, Home, Office, and Riken, then run the Local plan
-and apply. Require fresh dedicated authentication and both inbound routes for
-each Mac before proceeding. After all eight routes pass, upgrade and drill each
-Mac one at a time and run the post-hardening acceptance soak. Do not put these
-tunnel entries only in `.jcorig`, modify JumpCloud's global
-`AuthorizedKeysFile`, or propagate the Local-only Match block to another node.
-
-The first Aist staging attempt stopped before transfer because the helper's
-public-output validator assumed a narrower algorithm and two-field shape than
-the installed `ssh-keygen -y` emitted. Its private temporary files were
-exact-unlinked and no Local inbox entry or authorization change was made. The
-helper now accepts the installed tool's single public-key line, validates a
-generic algorithm token and base64 field, discards any source comment, and
-constructs the same fixed restricted entry. After Aist's primary inbound route
-returned, Local transferred the reviewed revision and executed it there. Aist
-staging is complete: the Local entry is one current-user-owned mode-0600
-regular one-link file with one line, the private temporary files were removed,
-and Aist exact-unlinked `~/run_this.sh`. No entry content was read or printed.
-After the owner restored one Home route, Local performed the same reviewed
-operation there. Home staging is also complete with the same value-free file
-metadata and exact helper cleanup. No entry content was read or printed.
-Office then returned on both routes, and Local staged it identically. Riken was
-already reachable and was staged last. All four Local inbox entries are now
-current-user-owned mode-0600 regular one-link files with one line; each Mac
-exact-unlinked its helper, and no entry content was read or printed. Local
-`~/run_this.sh --plan` passes with four distinct existing identities, restricted
-entries, the Local-only JumpCloud Match strategy, root:root mode-0644 durable
-file, `15/3` liveness, reload-only activation, and per-entry rollback. The next
-action is the owner's interactive Local `--apply` for its exact phrase and sudo
-authentication; the helper then validates Aist, Home, Office, and Riken in
-that order.
-
-Before apply, Home reported that its apparent `2/2` reachability is temporary:
-both forwards are attached to one surviving ordinary `login` ControlMaster,
-while both launchd services are loaded but stopped with `managed=0 external=0`
-and fresh dedicated authentication remains blocked. Local independently
-confirmed that value-free status. Office and Riken currently report both
-services `loaded=yes running=yes managed=1 external=0`; Aist is again `0/2`.
-The helper was therefore revised before any privileged change: after adding
-each exact entry it requires fresh dedicated authentication, but it separately
-counts inbound routes and managed services. Authentication failure removes
-only that entry and stops; a valid authorization with temporary or incomplete
-ownership is retained and reported as `handover-required`, never as full
-acceptance. A live pre-apply classification returns Home `routes=2
-auth=blocked managed=0` and leaves zero temporary residue. Bash syntax and
-ShellCheck pass. After apply, replace Home's two ControlMaster forwards one at
-a time while preserving the sibling route, then require `routes=2 managed=2`.
-
-Office independently performed a transactional temporary repair in Local's
-JumpCloud-managed user authorization file. It replaced only Office's existing
-identity entry with the exact `permitopen` destination and both `permitlisten`
-bindings, then proved `auth_blocked=0`, both non-multiplexed inbound routes, and
-both services `loaded=yes running=yes managed=1 external=0`; all helper,
-preimage, expected-postimage, log, and transaction residue was exact-unlinked.
-The root-owned file and sshd fragment remain absent, so this supersedes the
-Office outage evidence but not the permanent hardening requirement. Office
-also reported a pre-existing extra `Match all` in `~/.ssh/config` that makes
-`ssh-config-layout --plan` fail closed; effective tunnel settings work, and the
-unrelated configuration was left unchanged.
-
-That report also exposed that the first four staged canonical entries retained
-the two listeners but omitted the exact `permitopen` destination present in the
-proven restricted authorization. Apply remained blocked and no privileged file
-existed. The helper now derives the complete effective reverse-forward
-contracts, emits one or two exact `permitopen` restrictions plus both exact
-`permitlisten` restrictions, and can use a validated surviving `login`
-ControlMaster only as a transport while suppressing new forwards. Office,
-Home, and Riken have been restaged with full restrictions and exact helper
-cleanup. Aist remains `0/2`, and its old listener-only staged entry is the sole
-remaining blocker; restage Aist before Local plan/apply. The owner briefly
-restored Aist and Local transferred the reviewed revision, but the inbound
-route died during remote execution. The Local inbox remained on Aist's old
-entry and no authorization or privileged file changed. A retry through another
-ephemeral inbound route is unsafe because its controlling SSH session can HUP
-the helper; execute the retry from the owner's persistent Aist-local terminal
-or Codex session instead. Aist then created two temporary rescue forwards on a
-new ordinary `login` ControlMaster. Both routes shared that one transport;
-both managed services remained stopped with `managed=0`, dedicated auth stayed
-blocked, and the loaded watchdog retained `authorization-blocked`. Local again
-attempted a detached restage, but the rescue master and both inbound routes
-ended before the launch could be confirmed. The inbox was still unchanged and
-no authorization or service changed. Do not spend another ephemeral route on
-this operation: Aist-local execution is the required next action.
-
-The Aist-local retry then failed at its initial `scp login:run_this.sh` with
-`Permission denied (publickey)` and retained `~/run_this.sh`. This made no
-remote or Local change. Because Local had already transferred the reviewed
-full-restriction revision before the rescue route ended, the safe retry is to
-validate that retained helper by fixed non-secret markers and metadata, recover
-only a current-user-owned process or current-tmux-session agent socket, prove a
-fresh forwarding-disabled `login` authentication, and run the retained helper
-with that socket bound only to the command. Do not enumerate identities, search
-arbitrary sockets, mutate agent state, or retry staging when the approved
-socket/authentication gate is unavailable.
-
-Aist's persistent local Codex validated the retained full-restriction helper,
-recovered an approved current-user agent socket without enumerating identities,
-proved a forwarding-disabled ordinary `login`, and completed staging. Local
-then verified all four entries as current-user mode-0600 regular one-link,
-one-line files containing both `permitopen` and `permitlisten` option classes;
-no key content was displayed or hashed. The four-entry Local `--plan` now
-passes. The next action is the owner's interactive Local `--apply`; expect Home
-and any still-temporary Aist route to be classified `handover-required`, not
-accepted as managed resilience.
-
-The owner then clarified that `rioyokota` has no Local sudo authority; the
-separate Local account `user` does. The privilege handoff is split without
-cross-account credential or agent sharing. `/tmp/t296-local-admin.sh` is a
-current-user-owned mode-0755 no-credential wrapper that prompts for the frozen
-phrase, uses `user`'s sudo only to copy the reviewed mode-0700 helper into an
-unpredictable root-owned `/run` file, validates that root copy, installs all
-four restricted entries and the Match fragment, runs privileged `sshd -t` and
-`sshd -T -C`, reloads rather than restarts `ssh.service`, and exact-unlinks the
-root copy. The root helper validates the staged entries against the target
-`rioyokota` UID, not the invoking admin UID. Afterward this `rioyokota` Codex
-runs `~/run_this.sh --validate` with only its own approved agent socket; it
-requires fresh dedicated authentication on all four Macs and separately
-reports managed handovers. Both helpers pass Bash syntax and ShellCheck; wrong
-confirmation and premature validation fail closed with no mutation. The next
-owner action is to run the admin wrapper from a `user` login and report its
-fixed output.
-
-The first `user`-account admin attempt created and validated its root-owned
-copy, then stopped before apply because Local mounts `/run` with `noexec` and
-direct execution returned `Permission denied`. Its exit trap exact-unlinked
-the root copy; both target system files remain absent. The wrapper now invokes
-that same validated root-owned copy explicitly through `/bin/bash`, retaining
-the ownership/immutability gate without depending on executable mount policy.
-Retry is safe.
-
-Do not drill or install on any Mac until the owner restores the restricted
-authorizations and all eight fresh checks pass. Then roll out/drill those Macs
-one at a time. Preserve potentially private native logs unread in mode-0600
-temporary files and exact-unlink them after extracting only nonprivate
-classifications. Do not use
-`codex-claude-cowork` unless the owner explicitly reverses the prior exclusion
-for this connection work.
-
-**Acceptance:** identify a reproducible cause or a precisely bounded external
-failure class; prove unattended recovery under matched primary, secondary, and
-simultaneous-loss drills; set a justified recovery bound; retain two
-launchd-managed routes with `managed=1 external=0`; and verify all four Mac
-pairs remain healthy without credential or unrelated SSH changes.
+1. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
 
 ## Active tasks
 
-### T-273 — Resolve intentionally deferred maintenance
-
-**Phase/status:** executing. Workstreams 1, 2, 3, 5, 7, and 9 are complete.
-Each remaining item keeps its independent gate.
-
-1. **Failed transaction evidence — complete/retain.** Small paired recovery
-   preimages lack a cleanup contract.
-2. **Linux agent replacement — capability complete.** PR #143 published
-   1ed9712bc8c3fd4896df2654b2a3379412e5984b; no live replacement or old-tree
-   cleanup is authorized.
-3. **Fourth Mac — complete.** T-268/T-269/T-286 acceptance passed.
-4. **Backup successors — time-gated.** On or after 2026-07-26, query only the
-   seven T-196 IDs; never duplicate a delayed job.
-5. **Vendor arg0 directories — complete/live-managed.** T-294 installed the
-   version-scoped NFS wrapper and added lock-aware guarded routine housekeeping.
-6. **Container capability — requirement-gated.** Install nothing merely for
-   warning parity.
-7. **One-way local-to-t4 SSH mirror — complete.** T-295 repaired the declared
-   symlink handling, applied the separately authorized mirror transaction, and
-   verified `agreement=yes action=none` with rollback retained.
-8. **Package maintenance — freshness/selection-gated.** No blanket upgrade,
-   cleanup, autoremove, cask, service, tap, or unmanaged-dependent mutation.
-9. **Orphaned .bash_common — complete.** Absent on all four Macs; do not
-   recreate it.
-
-Closed non-goals remain plugins/connectors/accounts, administrator settings,
-automatic publication, background login mutation, active-session reload, and
-guessing lost unknown configuration.
-
 ### T-196 — Backup lifecycle phase 2
 
-**Phase/status:** policy-resolved; execution remains gated on eight successful
-weekly chains, two verified restores per node, and a current independent
-generation. Progress is 1/8 everywhere.
+**Status:** time-gated. Progress is 1/8 successful weekly chains everywhere.
+Execution requires eight successful chains, two verified restores per node,
+and a current independent generation.
 
 | Node | Recorded 2026-07-26 successor |
 | --- | --- |
@@ -444,113 +74,63 @@ On or after eligibility, identity-match and query only these IDs. Record
 terminal success, snapshot succession, warning silence, and chain count. Delay
 is healthy; do not replace a pending job. Keep-all remains effective. No
 forget, prune, recurring check/restore, or replica automation is authorized.
-Evidence remains in docs/backup-lifecycle-phase2.md, docs/home-backup.md, and
-docs/audits/restic-first-weekly-2026-07-19.md.
+Evidence is in `docs/backup-lifecycle-phase2.md`, `docs/home-backup.md`, and
+`docs/audits/restic-first-weekly-2026-07-19.md`.
+
+### T-273 — Requirement-gated maintenance
+
+**Status:** open only for requirements that have not materialized.
+
+- **Container capability:** install nothing merely for warning parity. Act only
+  when a workload requires a specific capability.
+- **Package maintenance:** no blanket upgrade, cleanup, autoremove, cask,
+  service, tap, or unmanaged-dependent mutation. Reassess only with current
+  freshness evidence and an explicit package selection.
+- **Backup successors:** tracked exclusively by T-196.
+
+Previously resolved under T-273: failed transaction evidence retention, Linux
+agent replacement capability, fourth-Mac onboarding, vendor arg0 management,
+the one-way Local-to-t4 SSH mirror, and removal of `.bash_common`. Closed
+non-goals remain plugins/connectors/accounts, administrator settings,
+automatic publication, background login mutation, active-session reload, and
+guessing lost unknown configuration.
 
 ## Completed anchors
 
-- T-297 completed the value-free Local/four-Mac SSH hygiene audit. PR #268 at
-  `42c971627b6ab67a7866a7d481c738eda269330a` added a narrow transactional
-  normalizer for only the proven legacy `# Github` + redundant `Match all`
-  shape; protected CI and the full phase-one suite passed, and all eleven
-  managed checkouts were guarded-synced to that revision. Home, Office, and
-  Riken normalized through layout transactions `20260722T234346Z-82701`,
-  `20260722T234406Z-83500`, and `20260722T234431Z-23476`. All four private SSH
-  payloads then converged with `agreement=yes action=none`; the final sync
-  transactions were Aist `20260722T234734Z-67984`, Home
-  `20260722T234738Z-94215`, Office `20260722T234744Z-94665`, and Riken
-  `20260722T234650Z-30600`.
+- **T-298:** compacted this board to current state, the T-196/T-273 gates, and
+  durable completion pointers; superseded execution detail remains in Git and
+  the linked audit documents.
+- **T-297:** completed Local/four-Mac SSH hygiene, canonical layout migration,
+  private payload convergence, legacy Office keepalive removal, mux cleanup,
+  and final fleet synchronization. Functional PR #268 is
+  `42c971627b6ab67a7866a7d481c738eda269330a`; closeout PR #269 is
+  `ff52d8d2a42d84c1ef9ed7c582a7aa99bdc843fe`. Full closeout detail is
+  preserved at the latter commit.
+- **T-296:** published and validated the Mac-local watchdog, JumpCloud-isolated
+  restricted authorization file, account-scoped sshd liveness, and matched
+  failure drills. The durable plan is
+  `docs/plans/t296-mac-connectivity-resilience.md`; evidence is in
+  `docs/audits/t296-mac-connectivity-resilience-2026-07-23.md`.
+- **T-295:** completed thirteen fleet-convergence workstreams in PRs #212
+  through #254, ending at `5d551883648760fcc373973a575a403b18637f44`.
+  The frozen plan is `docs/plans/t295-fleet-convergence.md`.
+- **T-294:** diagnosed the Codex NFS arg0 failure and published guarded,
+  lock-aware housekeeping plus the transactional version-scoped launcher in
+  PRs #208 and #209, ending at `f7cdacd`.
+- **T-293:** published independent Mac reverse-route supervision and recovery
+  in PRs #191 through #206, ending at
+  `97162ef3c554a80a29c63a4b83d39d292ad4fb14`. Evidence is in
+  `docs/audits/t293-connection-self-healing-2026-07-22.md`.
+- **T-288–T-292:** completed four-Mac onboarding cleanup, SSH configuration
+  convergence, login isolation, and final private schema-3 migration. Evidence
+  is in `docs/audits/macos-ssh-finalization-2026-07-21.md`.
+- **T-283–T-284:** published symmetric and accelerated Codex-Claude cowork in
+  PRs #161 and #163.
+- **Earlier anchors:** T-274 and T-279–T-287 completed Bash, Mac onboarding,
+  and ledger foundations; T-191 accepted the first native weekly backups;
+  T-181 finished at 69/70 with zero safety failures. T-210 is complete and
+  must not be repeated.
 
-  Exact cleanup removed the idle Home/Office rescue `login` masters, Aist's
-  two-dead-pane `harness-aist-tunnels-agent` session, and four empty Local
-  planner directories through guarded deletion. A metadata audit initially
-  treated four current-user mode-0600 control sockets as unheld because macOS
-  `lsof` did not report their OpenSSH mux owners; after exact unlink exposed
-  that false negative, process evidence identified and retired every orphaned
-  GitHub/login mux. Home's orphan was bounded-TERM'd, Aist's exited during
-  revalidation, and Office's reachable master was stopped through OpenSSH's
-  control protocol before three exact orphaned login masters and one GitHub
-  master were bounded-TERM'd. No attached command or child remained.
-
-  The source of Office recurrence was the otherwise fleet-unique loaded
-  `com.rioyokota.ssh-nat-keepalive` agent, which ran the superseded
-  forwarding-cleared `ssh login true` probe every 60 seconds. It was strictly
-  validated, booted out, and exact-unlinked under rollback transaction
-  `20260723T000453Z-46881`; all other Macs already lacked it. Final Mac state
-  had zero helper/SSH/launchd staging candidates, zero unexpected watchdog
-  state, zero orphaned control sockets or mux processes, zero legacy
-  keepalive agents, zero dead tmux panes, only the four active
-  `harness-codex-resume` sessions, two launchd-managed tunnel processes per
-  Mac, and every retained agent socket held live. Office's later private-sync
-  validation created one ordinary GitHub mux whose socket passed OpenSSH's own
-  control-protocol and owner checks; it was expected live state and was
-  preserved. No key or authorization content was read.
-  Watchdog `.run-output.*` files observed during a run vanished normally and
-  were not residue; completed/rolled transaction records remain as required
-  rollback evidence. All four configs are canonical with zero redundant
-  matches; dedicated auth, both supervisors, all watchdogs, all doctors, and
-  clean/current public/private Git passed. All eight Mac routes and both ABQ
-  routes were healthy. Routine guarded arg0 housekeeping also removed six
-  eligible Local directories without touching three live entries; every Mac
-  had zero eligible or unexpected entries. Unrelated `macos-config-sync`
-  Bash-parent/private-layout refusals remain outside this SSH-only task.
-- T-295 completed thirteen frozen fleet-convergence workstreams in protected
-  PRs #212 through #254, ending at `5d55188`. All eight Mac routes passed fresh
-  dedicated authentication and exclusive launchd ownership; ABQ onboarding,
-  Python/Homebrew convergence, AL terminal repair, local-to-t4 mirroring,
-  Codex/arg0 work, the gated paired benchmark, fleet documentation, and the
-  external-user skill reached their acceptance states. The frozen plan is
-  `docs/plans/t295-fleet-convergence.md`; full pre-compaction chronology is at
-  `5d551883648760fcc373973a575a403b18637f44`.
-- T-294 diagnosed the Codex 0.145.0 NFS arg0 lock/delete failure, removed 3,158
-  stale directories without stopping Codex, and published shared housekeeping
-  in PR #208. PR #209 at `f7cdacd` added guarded lock-aware cleanup and a
-  transactional version-scoped launcher, restored ordinary harness push
-  authority while retaining the remote-change prohibition, and passed all 61
-  focused suites plus protected CI. Live install, exact binary-hash rollback,
-  and reapply passed; two short calls and a deliberate nonzero exit were
-  warning-free, remote-control help was ready, all three original held-lock
-  identities survived, and acceptance ended with three live, one young empty,
-  and zero unexpected. After its grace elapsed, guarded-delete manifest
-  `/home/rioyokota/.codex/tmp/.harness-delete.pHVd67/manifest` removed that
-  final empty directory and was exact-unlinked, leaving only the three live
-  entries. Current rollback is
-  `harness codex-arg0-wrapper --rollback`; an official Codex upgrade supersedes
-  the version-scoped wrapper and requires fresh diagnosis before reinstallation.
-
-- T-293 published and rolled out independent managed Mac reverse-route
-  supervision, state-aware monitoring, bounded single/dual-failure recovery,
-  exact rollback, and final fleet convergence in PRs #191 through #206, ending
-  at `97162ef3c554a80a29c63a4b83d39d292ad4fb14`. Full value-minimized evidence
-  is in `docs/audits/t293-connection-self-healing-2026-07-22.md`.
-- T-292 isolated `login`/`login2` from multiplexing and enabled forward-bind
-  fail-fast behavior in protected PRs #182 through #184, ending at 936a54f.
-- T-291 converged the canonical SSH fragment on all eleven managed systems,
-  published four distinct per-Mac payloads, finalized private schema 3, and
-  preserved all live non-shared SSH bytes. Detailed execution and transaction
-  identifiers are in `docs/audits/macos-ssh-finalization-2026-07-21.md`.
-- T-290 diagnosed Aist route oscillation followed by the keepalive window. Its
-  unpublished raw local checkpoint was compacted value-free and the sole
-  preservation ref exact-deleted; no process/network details were published.
-- T-288 completed post-onboarding Git, startup, doctor, and exact-residue
-  housekeeping on all four Macs. The generic fix shipped in PR #170 and the
-  final evidence is in `docs/audits/macos-ssh-finalization-2026-07-21.md`.
-- T-289 published sourced harness-evolution artifacts in PR #168 at f2ffdd99685d;
-  protected CI and clean phase-one passed.
-- T-287 converged the fourth Mac startup files and published PR #166 at
-  90451d49ac96.
-- T-286 independently onboarded the fourth Mac and superseded T-285.
-- T-284 published accelerated/instrumented cowork in PR #163 at 54454b3.
-- T-283 published symmetric Codex-Claude cowork in PR #161 at 535a492.
-- T-282 compacted the ledger and removed proven-obsolete refs in PR #159.
-- T-281 completed three-Mac convergence; T-280 onboarded Home; T-279 repaired
-  its prior Bash drift.
-- T-274 published unified Bash startup and Mac onboarding; T-268/T-269
-  completed the private Mac fleet.
-- T-191 accepted first native weekly backup runs on all seven nodes.
-- T-181 acceptance finished at 69/70 with zero safety failures.
-- T-210 is complete and must not be repeated.
-
-Consult Git history at or before 378df00159d59e8abee645f2bdaebd20cf467cc2
-for superseded plans, exact transaction chronology, prior PR/run identifiers,
-and detailed T-288 evidence.
+Detailed pre-compaction chronology remains available at published commits
+`90451d49ac96`, `378df00159d59e8abee645f2bdaebd20cf467cc2`, and
+`5d551883648760fcc373973a575a403b18637f44`.
