@@ -50,6 +50,11 @@ can survive host, network, process, or site-enforced disconnection.
 - The owner confirmed that a service account can be created in the relevant
   Waldur project, but requires the unattended identity to reach selected
   personal-home content.
+- The owner selected the existing `$HOME/harness` checkout and requested
+  `$HOME/.*`, with the expectation that paths can be added later. The exact
+  checkout is accepted for planning; the blanket dotfile glob is rejected
+  because it includes credential, authentication, history, cache, snapshot,
+  and unrelated private state. Hidden paths remain open as an exact allowlist.
 - Read-only AL metadata shows the personal home is a current-user-owned,
   real mode-0700 directory with no named/default ACL. `$HOME/harness` is a
   current-user-owned real directory with no named/default ACL, but its
@@ -129,6 +134,12 @@ Use a hybrid design when the owner needs both interactive and unattended work:
    state, shell history, client configuration, backup state, snapshots, or the
    whole home. Prefer a separate automation checkout over concurrent writes to
    the personal checkout.
+7. Provision the service identity's own dotfiles, state, and discovery links
+   from public harness sources. Do not share the personal account's `.ssh`,
+   `.codex`, `.claude`, `.config`, `.local`, shell-history, credential-helper,
+   cache, or snapshot trees by default. Add a hidden path later only after an
+   exact path, purpose, required access, negative sibling check, and rollback
+   are reviewed.
 
 The personal helper improves convenience but cannot promise permanent access.
 The service-account route can remove routine human authentication for
@@ -141,10 +152,11 @@ automatically preserve the personal home-based workflow.
 | --- | --- | --- | --- | --- |
 | D1 | Required outcome | Owner selected the hybrid: retain personal `al` for interactive work and add a service-account route for unattended Codex/automation | Personal transport reuse only reduces prompts until disconnect; accepting daily renewal makes no configuration change | **selected: hybrid** |
 | D2 | Service-account eligibility and base scope | Owner confirmed service-account eligibility and requires selected personal-home access in addition to project resources | Project-only access was rejected because the unattended workflow needs personal-home content | **selected: personal-home required** |
-| D2a | Exact personal-home subtree | Prefer a dedicated automation checkout under the personal home, with execute-only traversal on the home and no access elsewhere | Share only the existing harness checkout, or name other exact subtrees; broad home access is rejected | **open** |
+| D2a | Exact personal-home subtree | Owner selected the existing `$HOME/harness` checkout; execute-only traversal on the home and no sibling access remain required | A dedicated checkout was recommended; other exact paths may be added later | **selected: existing harness** |
+| D2b | Hidden-path allowlist | Provision service-owned dotfiles/state and share no personal hidden paths initially | Owner requested `$HOME/.*`, but the glob includes credentials and unrelated private state and cannot be used; exact reviewed paths may be added later | **open** |
 | D3 | API-key secret surface | If a service account is selected, use an owner-approved non-repository secret mechanism and a path/value-pass contract that the agent never reads | Global environment or shell startup storage is rejected | **conditional** |
 
-Ask exactly one open decision at a time. Ask D2a next, then D3 after the exact
+Ask exactly one open decision at a time. Ask D2b next, then D3 after the exact
 home scope is frozen.
 
 ## Frozen execution sequence after interview and explicit go
@@ -205,6 +217,6 @@ Acceptance requires:
 
 ## Next action
 
-Ask D2a: whether to create a dedicated automation checkout under the personal
-home, share only the existing `$HOME/harness` checkout, or identify other exact
-personal-home subtrees.
+Ask D2b: whether to share no personal hidden paths initially and provision the
+service identity's own dotfiles/state, or require the owner to name additional
+exact hidden paths individually.

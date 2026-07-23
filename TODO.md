@@ -94,6 +94,14 @@ has no route into it. CSCS supports targeted ACLs. Broad home access is
 rejected; next action is to select a dedicated automation checkout, the
 existing harness checkout only, or other exact home subtrees.
 
+The owner selected the existing `$HOME/harness` checkout and requested
+`$HOME/.*`, expecting future additions to remain possible. The checkout is an
+exact reviewable scope. The dotfile glob is rejected because it includes SSH,
+agent, Codex/Claude authentication, history, cache, snapshot, and unrelated
+private state. Next action: choose service-owned dotfiles/state with no shared
+personal hidden paths initially, or name additional exact hidden paths for
+individual review.
+
 ### T-196 — Backup lifecycle phase 2
 
 **Status:** time-gated. Progress is 1/8 successful weekly chains everywhere.
