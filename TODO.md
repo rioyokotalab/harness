@@ -115,6 +115,23 @@ passed in the complete local run. Retry is safe; no live state changed. Next:
 checkpoint this evidence to trigger a fresh protected run. Stop before rollout
 if the same failure repeats.
 
+Fresh protected run `29975671674` passed; PR #274 merged as `5897e248` and all
+remote repositories synchronized. Local transaction
+`20260723T030031Z-3024814` applied and validated, then 16 old masters received
+non-terminating `-O stop`. `ab` transaction `20260723T030342Z-541548` applied,
+but its first fresh non-multiplexed probe timed out through the proxy. Both
+Local and `ab` were exactly rolled back; no other live fragment changed. The
+route was intermittent even after rollback, and three old Local mux sockets
+remain for active clients. Next: run matched read-only route probes and revise
+the sequence to validate new paths before draining old masters. Do not resume
+live rollout until the failure is classified.
+
+Three matched rollback-state `ab` probes passed in 3, 0, and 1 seconds. The
+sequence is revised to validate all new paths before draining old masters. A
+Local retry apply then refused the dirty ledger checkout as designed; no live
+state changed. Next: push this checkpoint on a task branch, return to clean
+merged main, and retry only Local.
+
 ### T-196 — Backup lifecycle phase 2
 
 **Status:** time-gated. Progress is 1/8 successful weekly chains everywhere.

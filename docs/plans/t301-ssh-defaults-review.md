@@ -213,3 +213,25 @@ complete local phase-one run had also passed it, so retry is safe and no live
 state was touched. This task will checkpoint the failure through normal Git and
 require a fresh protected run; a repeated failure would stop rollout and
 require separate diagnosis rather than being dismissed.
+
+The fresh protected run `29975671674` passed and PR #274 merged as
+`5897e24896e4f75fde6f75522e75d8879c899399`; all eleven remote repositories
+guarded-synced cleanly. Local transaction
+`20260723T030031Z-3024814` applied and passed effective-default checks. Sixteen
+validated old readable-path masters were sent `-O stop`; no process or socket
+was killed or unlinked. `ab` transaction `20260723T030342Z-541548` then applied,
+but the first fresh non-multiplexed `ab` probe failed with
+`Connection to UNKNOWN port 65535 timed out`. Local was exactly rolled back;
+after the proxied route recovered, `ab` was exactly rolled back too. No other
+live fragment changed. Retry is not yet authorized by evidence: the route was
+intermittent after rollback and old stopped proxy masters may still have active
+clients. Next action is read-only matched route probing, followed by a revised
+sequence that validates new paths before draining old masters.
+
+Three matched rollback-state `ab` probes then passed in 3, 0, and 1 seconds.
+The rollout sequence is revised to leave old masters untouched until every new
+fragment and route passes. A Local retry plan was clean, but apply correctly
+refused the dirty ledger checkout with
+`SSH layout migration requires a clean committed checkout`; no live state
+changed. Next action: preserve this checkpoint on a pushed task branch, return
+to clean merged main, and retry only Local before any remote apply.
