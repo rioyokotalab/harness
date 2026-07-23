@@ -235,7 +235,10 @@ Checkpoint:
   multiplexed `al true`, receipt-matched graceful stop, clean absent status,
   re-start, and final managed status. The current `al` master is ready and
   managed by the helper; the `alps_login` master remains ready.
+- The focused regression, ShellCheck, whitespace validation, and complete
+  phase-1 suite pass on the correction; only the documented undeclared native
+  MPI smoke was skipped.
 
-Next: run the complete suite and publish the filesystem-semantics correction,
+Next: publish the filesystem-semantics correction through protected `main`,
 then synchronize clean fleet checkouts and record the expiry-boundary
 checkpoint.

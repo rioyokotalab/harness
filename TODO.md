@@ -106,9 +106,11 @@ private log. A follow-up now accepts only link count 1 or 2 while preserving
 all other socket and receipt identity checks, with a two-link regression case.
 The corrected live drill passed managed start, status, real multiplexed command
 reuse, receipt-matched stop, clean absent status, and reapply. The `al` and
-`alps_login` masters are now ready. Next: run the complete suite and publish
-the correction, synchronize clean fleet checkouts, and record the
-expiry-boundary checkpoint.
+`alps_login` masters are now ready. The focused regression, ShellCheck,
+whitespace validation, and complete phase-1 suite pass on the correction;
+only the documented undeclared native MPI smoke was skipped. Next: publish the
+correction through protected `main`, synchronize clean fleet checkouts, and
+record the expiry-boundary checkpoint.
 
 ### T-196 — Backup lifecycle phase 2
 
