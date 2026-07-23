@@ -118,22 +118,38 @@ trap 'exit 143' TERM
 umask 077
 private_log=$(mktemp "$ssh_root/.harness-al-session.log.XXXXXX") || exit 78
 chmod 600 "$private_log" || exit 78
+exec 6<"$private_log" || exit 78
+exec 7<"$private_log" || exit 78
+exec 8>"$private_log" || exit 78
+unlink "$private_log" || exit 78
+private_log=
 
 set +e
 "$ssh_command" -o BatchMode=yes -o ConnectionAttempts=1 \
-    -o ControlPersist=no -M -N al </dev/null >/dev/null 2>"$private_log"
+    -o ControlPersist=no -M -N al </dev/null >/dev/null 2>&8
 ssh_status=$?
 set -e
+exec 8>&-
 
-[ "$ssh_status" -ne 0 ] || exit 0
+if [ "$ssh_status" -eq 0 ]; then
+    exec 6<&-
+    exec 7<&-
+    exit 0
+fi
 if grep -Eiq \
     'permission denied|authentication failed|no supported authentication|certificate.*(expired|invalid)' \
-    "$private_log"; then
+    <&6; then
+    exec 6<&-
+    exec 7<&-
     exit 77
 fi
 if grep -Eiq \
     'bad configuration option|terminating, [0-9]+ bad configuration options|command-line line [0-9]+:|percent_expand:|controlpath too long|identity file .* not accessible|no such identity' \
-    "$private_log"; then
+    <&7; then
+    exec 6<&-
+    exec 7<&-
     exit 78
 fi
+exec 6<&-
+exec 7<&-
 exit 75

@@ -142,6 +142,15 @@ protected validation remain before the next live drill. Managed stop also
 removes only the same safe, unusable receipt-matched socket after stopping the
 marked unit, and its focused rollback fixture passes.
 
+The next protected live drill proved restart and socket recovery, but the final
+gate rejected the active session because its private diagnostic file kept a
+pathname for the lifetime of SSH. Rollback again left absent clean state. A
+failing focused fixture now requires anonymous open descriptors: exact-unlink
+the mode-0600 pathname before launching SSH while retaining post-exit
+classification. This behavior is now implemented and the focused suite passes
+all four exit classes plus diagnostic-path absence. Full and protected
+validation remain before the final live drill.
+
 ### T-196 — Backup lifecycle phase 2
 
 **Status:** time-gated. Progress is 1/8 successful weekly chains everywhere.

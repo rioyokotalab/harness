@@ -322,6 +322,10 @@ case $(sed -n '1p' "$FAKE_SSH_MODE_FILE") in
         echo 'Bad configuration option: invalid-fixture' >&2
         exit 255
         ;;
+    anonymous)
+        [ -z "$(find "$HOME/.ssh" -maxdepth 1 \
+            -name '.harness-al-session.log.*' -print)" ]
+        ;;
     success) exit 0 ;;
     *) exit 2 ;;
 esac
@@ -358,7 +362,7 @@ run_harness() {
 }
 
 runner_home=$(new_home runner)
-for runner_case in auth unavailable permanent success; do
+for runner_case in auth unavailable permanent anonymous success; do
     printf '%s\n' "$runner_case" >"$TEST_ROOT/ssh-mode"
     expected=0
     case "$runner_case" in

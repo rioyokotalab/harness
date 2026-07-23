@@ -174,3 +174,14 @@ socket after stopping the marked unit, so a rollback during the retry window
 returns to absent state. The focused stop fixture passes. Commit the
 correction, rerun the complete phase-one and protected checks, then repeat the
 exact `KILL` drill.
+
+The protected correction passed again. The next live `KILL` drill reached
+`NRestarts=1`, replaced both process generations, and transitioned the stale
+socket to a usable managed master. Its final cleanup gate rejected the active
+session because the mode-0600 diagnostic file retained a pathname for the
+lifetime of SSH; rollback returned to absent state. Add a failing fixture that
+requires the runner to open private read/write descriptors and exact-unlink the
+pathname before launching SSH, while retaining post-exit classification. That
+anonymous-diagnostic behavior is now implemented, and all four exit classes
+plus pathname absence pass the focused suite. Revalidate locally and in
+protected CI before the final live drill.
