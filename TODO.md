@@ -395,52 +395,6 @@ pairs remain healthy without credential or unrelated SSH changes.
 
 ## Active tasks
 
-### T-297 — Audit and clean Mac SSH recovery residue
-
-**Phase/status:** executing a value-free four-Mac and Local hygiene audit after
-T-296. Inventory SSH configuration structure and metadata, managed tunnel and
-watchdog ownership, launchd artifacts, current-user SSH processes and control
-sockets, tmux sessions, transaction state, known helper/rollback patterns, and
-Local controller residue. Never read, print, hash, copy, or modify key or
-authorization contents. Remove only exact, unambiguous attempt residue that is
-not live and does not belong to an active Codex or user session; preserve and
-report ambiguous state. Finish by re-running fresh authentication, route,
-doctor/config-plan, repository, and residue checks on every Mac.
-
-**Next action:** collect the initial read-only inventory from Aist, Home,
-Office, Riken, and Local, then classify every deviation against the published
-T-296 supervisor/watchdog contract before making a cleanup change.
-
-**Checkpoint:** core SSH state is healthy on all four Macs: eight fresh routes,
-`auth_blocked=0`, two `managed=1 external=0` tunnels, one loaded healthy
-watchdog, exactly three current-user mode-0600 launchd plists, safe config and
-dedicated-identity metadata, no launchd staging, and clean/current public Git.
-All agent/sshd sockets found under `~/.ssh/agent` had a live holder; no key or
-authorization content was read. Transaction counts are consistent with the
-retained rollback history, not abandoned work.
-
-Three exact attempt residues were removed. Home and Office each had an idle
-ordinary `login` ControlMaster created during rescue; both had zero multiplex
-clients and no command-line forward, exited through their current-user control
-socket, and left both managed routes healthy. Aist's
-`harness-aist-tunnels-agent` tmux session contained exactly two dead panes and
-was removed without touching `harness-codex-resume`. Four empty mode-0700 Local
-directories created by a failed audit-wrapper quoting attempt were deleted by
-guarded manifest `/tmp/harness-t297-planner-cleanup.manifest`; protected anchors
-were unchanged, and the manifest was exact-unlinked. The failed wrapper ran no
-planner and left no Mac residue.
-
-The remaining SSH-layout deviation is reproducible: Home, Office, and Riken
-retain the exact historical `# Github` + redundant `Match all` pair immediately
-before `Host tunnel`; Aist already has the intended tunnel comment and no
-redundant reset, but its private SSH snapshot still has the old pair. A narrow
-transactional adapter change and synthetic rollback test are in progress. It
-accepts only this proven legacy shape and continues to reject every other
-unmanaged `Match`. After protected publication, apply it on the three affected
-Macs and publish all four cleaned payloads through `macos-ssh-sync`. Unrelated
-`macos-config-sync` Bash-parent/private-layout refusals are outside this
-SSH-attempt cleanup and remain untouched.
-
 ### T-273 — Resolve intentionally deferred maintenance
 
 **Phase/status:** executing. Workstreams 1, 2, 3, 5, 7, and 9 are complete.
@@ -495,6 +449,51 @@ docs/audits/restic-first-weekly-2026-07-19.md.
 
 ## Completed anchors
 
+- T-297 completed the value-free Local/four-Mac SSH hygiene audit. PR #268 at
+  `42c971627b6ab67a7866a7d481c738eda269330a` added a narrow transactional
+  normalizer for only the proven legacy `# Github` + redundant `Match all`
+  shape; protected CI and the full phase-one suite passed, and all eleven
+  managed checkouts were guarded-synced to that revision. Home, Office, and
+  Riken normalized through layout transactions `20260722T234346Z-82701`,
+  `20260722T234406Z-83500`, and `20260722T234431Z-23476`. All four private SSH
+  payloads then converged with `agreement=yes action=none`; the final sync
+  transactions were Aist `20260722T234734Z-67984`, Home
+  `20260722T234738Z-94215`, Office `20260722T234744Z-94665`, and Riken
+  `20260722T234650Z-30600`.
+
+  Exact cleanup removed the idle Home/Office rescue `login` masters, Aist's
+  two-dead-pane `harness-aist-tunnels-agent` session, and four empty Local
+  planner directories through guarded deletion. A metadata audit initially
+  treated four current-user mode-0600 control sockets as unheld because macOS
+  `lsof` did not report their OpenSSH mux owners; after exact unlink exposed
+  that false negative, process evidence identified and retired every orphaned
+  GitHub/login mux. Home's orphan was bounded-TERM'd, Aist's exited during
+  revalidation, and Office's reachable master was stopped through OpenSSH's
+  control protocol before three exact orphaned login masters and one GitHub
+  master were bounded-TERM'd. No attached command or child remained.
+
+  The source of Office recurrence was the otherwise fleet-unique loaded
+  `com.rioyokota.ssh-nat-keepalive` agent, which ran the superseded
+  forwarding-cleared `ssh login true` probe every 60 seconds. It was strictly
+  validated, booted out, and exact-unlinked under rollback transaction
+  `20260723T000453Z-46881`; all other Macs already lacked it. Final Mac state
+  had zero helper/SSH/launchd staging candidates, zero unexpected watchdog
+  state, zero orphaned control sockets or mux processes, zero legacy
+  keepalive agents, zero dead tmux panes, only the four active
+  `harness-codex-resume` sessions, two launchd-managed tunnel processes per
+  Mac, and every retained agent socket held live. Office's later private-sync
+  validation created one ordinary GitHub mux whose socket passed OpenSSH's own
+  control-protocol and owner checks; it was expected live state and was
+  preserved. No key or authorization content was read.
+  Watchdog `.run-output.*` files observed during a run vanished normally and
+  were not residue; completed/rolled transaction records remain as required
+  rollback evidence. All four configs are canonical with zero redundant
+  matches; dedicated auth, both supervisors, all watchdogs, all doctors, and
+  clean/current public/private Git passed. All eight Mac routes and both ABQ
+  routes were healthy. Routine guarded arg0 housekeeping also removed six
+  eligible Local directories without touching three live entries; every Mac
+  had zero eligible or unexpected entries. Unrelated `macos-config-sync`
+  Bash-parent/private-layout refusals remain outside this SSH-only task.
 - T-295 completed thirteen frozen fleet-convergence workstreams in protected
   PRs #212 through #254, ending at `5d55188`. All eight Mac routes passed fresh
   dedicated authentication and exclusive launchd ownership; ABQ onboarding,
