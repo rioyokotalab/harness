@@ -173,6 +173,17 @@ runner now enforce that boundary; focused fixtures pass runtime-origin,
 pathname-absence, stale-socket, restart-status, stop, and exit-classification
 coverage. Full, protected, and live validation remain.
 
+Commit `9942d46` passed the complete suite and PR #282 protected CI. A first
+over-broad `.ssh/.nfs…` total-count preflight stopped before signaling and
+rolled back; unrelated placeholders stayed untouched. The corrected
+runner-owned hard-crash drill passed at 2026-07-24 07:49 JST: one restart after
+60 seconds, replaced process generations, recovered stale socket, successful
+AL command, zero runner-held/repository/runtime `.nfs…` paths, and a diagnostic
+held only by deleted tmpfs descriptors. The unit is active/running with
+`NRestarts=1`. Commit/protect this evidence, merge PR #282 without replacing
+the live runner inode, guarded-sync the fleet, then observe the same master no
+earlier than 2026-07-25 07:50 JST.
+
 ### T-196 — Backup lifecycle phase 2
 
 **Status:** time-gated. Progress is 1/8 successful weekly chains everywhere.

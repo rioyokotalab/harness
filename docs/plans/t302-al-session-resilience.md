@@ -220,3 +220,24 @@ unlink its pathname before SSH starts. Focused fixtures prove the diagnostic
 descriptor's runtime origin and all exit classifications. Next commit, run the
 complete suite and protected CI, then perform one final hard-crash drill and
 confirm no runner-held `.nfs…` path before merging the correction.
+
+Commit `9942d46` passed the complete phase-one suite and PR #282 protected CI.
+The first live preflight used an over-broad total `.ssh/.nfs…` count and
+stopped before sending a signal; it rolled back cleanly. Those unrelated
+placeholders remain explicitly out of scope and were not inspected or changed.
+The corrected runner-owned acceptance drill then passed at
+2026-07-24 07:49 JST:
+
+- the exact identity-checked SSH child received `KILL`;
+- systemd restarted once after 60 seconds and replaced both processes;
+- the stale socket recovered to a usable managed master;
+- `harness al-session --status` and `ssh al true` passed;
+- the runner held zero `.nfs…` paths;
+- the repository and runtime directory each contained zero `.nfs…` paths;
+- the diagnostic existed only through deleted tmpfs descriptors.
+
+The unit is active/running with `NRestarts=1`, with its current generation
+active since 2026-07-24 07:48:52 JST. Commit this evidence, pass the final
+protected documentation check, merge PR #282 without replacing the live
+working-tree runner inode, then guarded-sync the fleet. Reschedule the
+certificate-boundary observation no earlier than 2026-07-25 07:50 JST.
