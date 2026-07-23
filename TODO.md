@@ -98,9 +98,12 @@ The owner selected the existing `$HOME/harness` checkout and requested
 `$HOME/.*`, expecting future additions to remain possible. The checkout is an
 exact reviewable scope. The dotfile glob is rejected because it includes SSH,
 agent, Codex/Claude authentication, history, cache, snapshot, and unrelated
-private state. Next action: choose service-owned dotfiles/state with no shared
-personal hidden paths initially, or name additional exact hidden paths for
-individual review.
+private state. The repository installer already supports a layered model:
+canonical non-secret guidance, rules, skills, scripts, and documentation can
+be shared from the harness checkout through service-owned discovery links,
+while credentials and mutable client/runtime state remain account-local. Next
+action: decide whether the service account receives read-only access to that
+canonical checkout or requires cross-identity writes to the same checkout.
 
 ### T-196 — Backup lifecycle phase 2
 

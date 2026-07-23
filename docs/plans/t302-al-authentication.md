@@ -61,6 +61,11 @@ can survive host, network, process, or site-enforced disconnection.
   mode-0755 bytes remain unreachable through the mode-0700 parent. The declared
   `g177` project root already has named/default ACL policy; its entries were
   counted but not exposed.
+- The current `install.sh` already implements a layered account model. It
+  creates account-owned discovery links for public repository guidance, rules,
+  skills, and the `harness` command while resolving `.codex`, `.claude`,
+  `.agents`, and `.local/bin` under the invoking account's own home. It does
+  not require two identities to share their mutable client-state directories.
 
 ## Evidence and interpretation
 
@@ -134,12 +139,17 @@ Use a hybrid design when the owner needs both interactive and unattended work:
    state, shell history, client configuration, backup state, snapshots, or the
    whole home. Prefer a separate automation checkout over concurrent writes to
    the personal checkout.
-7. Provision the service identity's own dotfiles, state, and discovery links
-   from public harness sources. Do not share the personal account's `.ssh`,
-   `.codex`, `.claude`, `.config`, `.local`, shell-history, credential-helper,
-   cache, or snapshot trees by default. Add a hidden path later only after an
-   exact path, purpose, required access, negative sibling check, and rollback
-   are reviewed.
+7. Use a layered account model:
+   - share canonical, non-secret repository content such as guidance, rules,
+     skills, scripts, and documentation from `$HOME/harness`;
+   - run the existing installer as the service identity so its discovery links
+     point to that canonical content but are owned by the service identity;
+   - keep identity-bound and mutable state separate, including `.ssh`,
+     Codex/Claude authentication and sessions, agent sockets, transaction
+     state, locks, caches, temporary state, histories, and credential helpers.
+   Add mutable shared state later only as a dedicated exact directory with a
+   defined owner, permissions, locking contract, and rollback. Never share or
+   symlink entire `.ssh`, `.codex`, `.claude`, `.config`, or `.local` trees.
 
 The personal helper improves convenience but cannot promise permanent access.
 The service-account route can remove routine human authentication for
@@ -153,7 +163,7 @@ automatically preserve the personal home-based workflow.
 | D1 | Required outcome | Owner selected the hybrid: retain personal `al` for interactive work and add a service-account route for unattended Codex/automation | Personal transport reuse only reduces prompts until disconnect; accepting daily renewal makes no configuration change | **selected: hybrid** |
 | D2 | Service-account eligibility and base scope | Owner confirmed service-account eligibility and requires selected personal-home access in addition to project resources | Project-only access was rejected because the unattended workflow needs personal-home content | **selected: personal-home required** |
 | D2a | Exact personal-home subtree | Owner selected the existing `$HOME/harness` checkout; execute-only traversal on the home and no sibling access remain required | A dedicated checkout was recommended; other exact paths may be added later | **selected: existing harness** |
-| D2b | Hidden-path allowlist | Provision service-owned dotfiles/state and share no personal hidden paths initially | Owner requested `$HOME/.*`, but the glob includes credentials and unrelated private state and cannot be used; exact reviewed paths may be added later | **open** |
+| D2b | Dotfile/state sharing model | Share canonical non-secret harness configuration through service-owned discovery links, keep identity-bound and mutable state separate, and expose `$HOME/harness` read-only to the service identity by default | Writable cross-identity access to the same checkout requires an explicit Git ownership/locking design; exact mutable directories may be added later; blanket `$HOME/.*` remains rejected | **open** |
 | D3 | API-key secret surface | If a service account is selected, use an owner-approved non-repository secret mechanism and a path/value-pass contract that the agent never reads | Global environment or shell startup storage is rejected | **conditional** |
 
 Ask exactly one open decision at a time. Ask D2b next, then D3 after the exact
@@ -217,6 +227,6 @@ Acceptance requires:
 
 ## Next action
 
-Ask D2b: whether to share no personal hidden paths initially and provision the
-service identity's own dotfiles/state, or require the owner to name additional
-exact hidden paths individually.
+Ask D2b: whether the service identity should use the layered model with
+read-only access to canonical `$HOME/harness`, or must also write to that same
+checkout. Exact mutable shared directories can be reviewed later.
