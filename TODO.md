@@ -73,7 +73,7 @@ Next free ID: T-303.
 
 ### T-302 — Reduce AL authentication intervention
 
-**Phase:** executing (restart-resilience extension). CSCS requires personal
+**Phase:** validating (restart-resilience extension). CSCS requires personal
 SSH keys to be CSCS-signed and limits personal certificates to one day. The
 owner rejected the higher-complexity service-account/ACL/shared-state design;
 none of it was applied. The selected personal-only design accepts
@@ -119,7 +119,12 @@ suite passes, including a replacement socket, non-restarting authentication
 and permanent failures, schema-1 compatibility, and marker-collision refusal.
 A disposable user-systemd probe independently accepted the exact restart
 properties. Static/full validation, protected publication, the live AL restart
-drill, merge, and guarded fleet synchronization remain.
+drill, merge, and guarded fleet synchronization remain. Implementation commit
+`180d432` passes shell syntax, warning/error-level ShellCheck, `git diff
+--check`, the focused AL suite, and the complete phase-one suite. The latter
+passed all 68 focused shards and every integration gate. An earlier sequential
+shard run's one unrelated watchdog timing failure passed immediately in
+isolation and passed again in the authoritative complete suite.
 
 ### T-196 — Backup lifecycle phase 2
 

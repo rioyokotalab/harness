@@ -1,8 +1,8 @@
 # T-302 AL session restart resilience
 
-**Phase:** executing  
-**Driver:** Codex  
-**Updated:** 2026-07-24 06:47 JST
+**Phase:** validating
+**Driver:** Codex
+**Updated:** 2026-07-24 06:55 JST
 
 ## Outcome
 
@@ -140,12 +140,19 @@ and non-interactive failure behavior.
 
 ## Next action
 
-The owner gave explicit `go`. Initial focused fixtures failed at the intended
-runner gate. The runner, restart policy, schema-2 marked-unit ownership,
-replacement-socket recovery, terminal classifications, schema-1 compatibility,
-and marker-collision refusal are now implemented and the focused suite passes.
-A disposable native user-systemd probe independently accepted and exposed
+The owner gave explicit `go`. Commit `180d432` implements the runner, restart
+policy, schema-2 marked-unit ownership, replacement-socket recovery, terminal
+classifications, schema-1 compatibility, and marker-collision refusal. A
+disposable native user-systemd probe independently accepted and exposed
 `Restart=on-failure`, `RestartUSec=1min`,
-`RestartPreventExitStatus=77 78`, and an unlimited start interval. Next run the
-static, public/source, focused-shard, and complete phase-one validations, then
-publish before the one owner-assisted live AL renewal and restart drill.
+`RestartPreventExitStatus=77 78`, and an unlimited start interval, then
+unloaded without residue.
+
+Shell syntax, warning/error-level ShellCheck, `git diff --check`, and the
+focused AL suite pass. A first sequential all-shard run passed 67/68 and saw
+one unrelated watchdog signal-timing failure; its immediate isolated rerun
+passed. The authoritative complete `tests/test-phase1.sh` run then passed all
+68 parallel focused shards, the guarded-delete gates, and every remaining
+phase-one integration check. Next publish through the protected workflow,
+then request the one owner-assisted AL renewal and perform the live exact
+restart drill.
