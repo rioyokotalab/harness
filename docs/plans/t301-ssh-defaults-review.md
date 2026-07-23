@@ -5,9 +5,9 @@
 Review the shared `Host *` policy, freeze the owner's preferences, then make
 one transactional public-source change and converge the installed fragment on
 Local and all eleven managed remote checkouts. The desired result is secure,
-predictable interactive SSH with bounded connection setup and idle-master
-lifetime, while preserving intentional X11, agent, tunnel, and host-key
-behavior.
+predictable interactive SSH with bounded connection setup and
+collision-resistant multiplexing, while preserving intentional X11, agent,
+tunnel, and host-key behavior.
 
 Planning and interviewing are read-only except for this ledger. Execution must
 not inspect or change credentials, identity contents, agent contents,
@@ -58,7 +58,7 @@ authorization policy are out of scope.
 
 ## Recommended target
 
-The current target, subject to the remaining decision register, is:
+The frozen and completed target is:
 
 1. Retain `ForwardAgent yes` under `Host *`. The owner intentionally wants
    future Linux aliases to inherit agent forwarding without another policy
@@ -266,3 +266,43 @@ This is the same previously observed CI-only race and is unrelated to the
 three-line timeout correction. A normal ledger checkpoint push will obtain a
 fresh protected run; no workflow dispatch or live rollout occurs before that
 run passes.
+
+## Final outcome
+
+Fresh protected run `29976929910` passed and PR #275 merged as
+`5a8a0901ce82b7bb187d74c479125e61e0cb8fe7`. Guarded fleet-sync then moved all
+eleven clean remote repositories from the PR #274 revision to that exact
+functional revision.
+
+The final 30-second live-layout transactions all passed byte comparison,
+effective-policy checks, and fresh non-multiplexed route validation:
+
+| Node | Transaction |
+| --- | --- |
+| local | `20260723T032829Z-3344084` |
+| ab | `20260723T032927Z-690081` |
+| ab2 | `20260723T032952Z-2353944` |
+| ri | `20260723T032953Z-3418699` |
+| al | `20260723T032958Z-37639` |
+| rc | `20260723T033004Z-2824324` |
+| t4 | `20260723T033006Z-2564292` |
+| abq | `20260723T033008Z-2459244` |
+| aist | `20260723T033040Z-72658` |
+| home | `20260723T033133Z-44222` |
+| office | `20260723T033140Z-87624` |
+| riken | `20260723T033146Z-97331` |
+
+Only after every live fragment and route passed, three Local legacy masters
+and Riken's legacy `login` master accepted graceful `ssh -O stop`. Two
+current-user-owned legacy sockets on `ab` had no listening master and returned
+`connection refused`; each was revalidated and exact-unlinked. No SSH process
+was killed and no live socket was unlinked. Final inventory found zero legacy
+or unexpected mux paths on Local and all eleven remotes.
+
+Final acceptance passed for Local plus all seven remote Linux accounts, both
+ABQ routes, and all eight Mac routes. Every repository was clean/current and
+every live fragment byte-identical to the canonical source. All four Mac pairs
+had fresh dedicated authentication, two running launchd-managed services with
+`managed=1 external=0`, healthy watchdog status, and zero doctor failures or
+warnings. The focused SSH/macOS tests, full local phase-one suite, and protected
+phase-one gate all pass. T-301 is complete.

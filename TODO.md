@@ -10,8 +10,9 @@ Next free ID: T-302.
 ## Current state
 
 - Public `main`, Local, and all eleven remote managed checkouts were verified
-  clean/current after T-298; all four private Mac SSH payloads are also
-  current.
+  clean/current at T-301's functional revision
+  `5a8a0901ce82b7bb187d74c479125e61e0cb8fe7`; all four private Mac SSH
+  payloads are also current.
 - The README now leads with owner-facing startup and daily operations, carries
   a pointer to the canonical fleet reference, and separates logical nodes from
   transport-only aliases and the service-only web endpoint.
@@ -23,9 +24,12 @@ Next free ID: T-302.
   riken, each with two independent reverse routes. `abci_login` and
   `alps_login` are transports, not health-report targets; retired si remains
   out of scope.
-- All managed systems use the canonical terminal SSH include and fragment.
-  The four Mac private profiles use schema 3 with one distinct per-host SSH
-  payload and no legacy root payload.
+- All managed systems use the canonical terminal SSH include and byte-identical
+  fragment. Shared defaults use a 30-second connection timeout,
+  collision-resistant `%C` multiplex paths with indefinite persistence, global
+  agent forwarding and trusted X11 with explicit exclusions, and alphabetic
+  directives. The four Mac private profiles use schema 3 with one distinct
+  per-host SSH payload and no legacy root payload.
 - Each Mac runs two current-user launchd tunnel supervisors and a 30-second
   local watchdog. Local keeps their four restricted authorizations in the
   root-owned secondary file
@@ -67,33 +71,6 @@ Next free ID: T-302.
 
 ## Active tasks
 
-### T-301 — Review canonical SSH defaults
-
-**Phase:** ready-for-go. PR #274 published the reviewed default policy as
-`5897e24896e4f75fde6f75522e75d8879c899399`; full local and protected
-phase-one validation pass and all remote repositories are synchronized.
-Selected defaults retain global agent forwarding, global trusted X11 with the
-existing exclusions, automatic key addition, opportunistic `%C`
-multiplexing with indefinite persistence, alphabetic directives, alive count
-3, future known-host hashing, and authenticated host-key updates. The complete
-decision register, failures, transactions, rollback state, and acceptance
-gates are in `docs/plans/t301-ssh-defaults-review.md`.
-
-The safer live sequence has applied and validated Local, `ab`, `ab2`, `ri`,
-`al`, `rc`, and `t4`; exact transaction IDs are in the plan and old masters
-remain untouched after the retry. `abq` timed out during proxy banner exchange
-before apply began, so it and all Macs remain unchanged. A 30-second override
-reached `abq` in 11 seconds and two subsequent probes passed on each ABQ route.
-The owner selected global `ConnectTimeout 30` for D5, retaining a bounded
-portable default without private exceptions. The plan is refrozen with no
-unresolved decisions and the owner issued a fresh `go`. Commit `afd0562`
-updates the canonical fragment, documentation, and effective-policy test; all
-focused tests and the complete local phase-one suite pass. Protected run
-`29976860740` failed only the unchanged macOS supervisor watchdog timing race,
-the same CI-only failure previously observed during T-301. A normal ledger
-checkpoint push will trigger a fresh protected run; live rollout remains
-paused until it passes.
-
 ### T-196 — Backup lifecycle phase 2
 
 **Status:** time-gated. Progress is 1/8 successful weekly chains everywhere.
@@ -119,6 +96,15 @@ Evidence is in `docs/backup-lifecycle-phase2.md`, `docs/home-backup.md`, and
 
 ## Completed anchors
 
+- **T-301:** standardized the shared SSH defaults and alphabetic stanza
+  ordering, replaced readable multiplex paths with `%C`, and selected a
+  30-second global connection timeout after matched nested-route evidence.
+  Functional PRs #274 and #275 end at
+  `5a8a0901ce82b7bb187d74c479125e61e0cb8fe7`. Local and all eleven remotes
+  have byte-identical live fragments, clean/current repositories, effective
+  policy checks, zero legacy mux sockets, and healthy fresh routes. All Mac
+  supervisors report `managed=1 external=0`; the full evidence and transaction
+  IDs are in `docs/plans/t301-ssh-defaults-review.md`.
 - **T-300:** removed the duplicate README node table, made
   `docs/fleet-inventory.md` the sole cold-start table, and added guide links for
   all nine Linux-facing entries. Every public guide returned HTTP 200; existing
