@@ -58,6 +58,21 @@ X11 forwarding is disabled only for `tunnel`, `tunnel2`, `aist`, `aist2`,
 pre-existing GitHub exception. `login` and every other target retain the
 global `ForwardX11 yes` and `ForwardX11Trusted yes` policy.
 
+Directives within each managed stanza are alphabetic, while stanza order is
+semantic and must not be sorted: OpenSSH keeps the first value obtained.
+The global defaults intentionally retain `AddKeysToAgent yes`,
+`ForwardAgent yes`, trusted X11, opportunistic multiplexing, and indefinite
+master persistence so future Linux aliases inherit the owner's
+low-intervention policy. Multiplex sockets use the fixed-length `%C` hash,
+which includes the local host, target, port, remote user, and jump route.
+
+Connection setup is bounded by `ConnectTimeout 15`; encrypted liveness uses
+`ServerAliveInterval 15` and explicit `ServerAliveCountMax 3`.
+`HashKnownHosts yes` applies to entries added in the future and does not rewrite
+existing files. `UpdateHostKeys yes` permits additional host keys only after
+the server authenticates with an already trusted key. These explicit values
+avoid Linux/macOS system-default differences.
+
 ## Changing the managed shared fragment
 
 Do not edit `~/.ssh/config.d/harness.conf` directly. It is an installed
