@@ -81,13 +81,13 @@ running. Official CSCS guidance reserves API-key authentication for separate
 service accounts and explicitly warns against setting `CSCS_API_KEY` globally.
 
 No supported configuration can make fresh personal-account connections
-authenticate indefinitely. The security-preserving choices are to reuse a live
-personal `al` transport until it disconnects, or use a separate service account
-for unattended automation while retaining personal MFA for interactive work.
-The frozen boundaries, conditional decisions, validation experiment, and
-official sources are in `docs/plans/t302-al-authentication.md`. Next action:
-ask whether the required outcome is uninterrupted personal access or genuinely
-unattended Codex/automation access.
+authenticate indefinitely. The owner selected the hybrid design: reuse a live
+personal `al` transport where possible and add a separate service account for
+unattended automation while retaining personal MFA for interactive work. The
+frozen boundaries, conditional decisions, validation experiment, and official
+sources are in `docs/plans/t302-al-authentication.md`. Next action: confirm the
+owner can create the service account in the relevant Waldur project and limit
+it to declared shared project storage rather than the personal account home.
 
 ### T-196 — Backup lifecycle phase 2
 

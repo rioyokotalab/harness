@@ -123,12 +123,13 @@ automatically preserve the personal home-based workflow.
 
 | ID | Decision | Recommended choice | Alternatives and consequence | State |
 | --- | --- | --- | --- | --- |
-| D1 | Required outcome | Hybrid: retain personal `al` for interactive work and add a service-account route for unattended Codex/automation | Personal transport reuse only reduces prompts until disconnect; accepting daily renewal makes no configuration change | **open** |
+| D1 | Required outcome | Owner selected the hybrid: retain personal `al` for interactive work and add a service-account route for unattended Codex/automation | Personal transport reuse only reduces prompts until disconnect; accepting daily renewal makes no configuration change | **selected: hybrid** |
 | D2 | Service-account eligibility and scope | If D1 selects unattended access, confirm the owner can create a service account in the relevant Waldur project and that it may access the intended project storage | Without project authorization, stop at the personal helper | **conditional** |
 | D3 | API-key secret surface | If a service account is selected, use an owner-approved non-repository secret mechanism and a path/value-pass contract that the agent never reads | Global environment or shell startup storage is rejected | **conditional** |
 
-Ask exactly one open decision at a time. D2 and D3 do not need answers unless
-D1 selects unattended access.
+Ask exactly one open decision at a time. D1 selected unattended access, so D2
+is next; ask D3 only after service-account eligibility and storage scope are
+confirmed.
 
 ## Frozen execution sequence after interview and explicit go
 
@@ -184,5 +185,6 @@ Acceptance requires:
 
 ## Next action
 
-Ask D1: whether the owner needs fewer prompts for personal interactive access,
-or truly unattended Codex/automation access.
+Ask D2: whether the owner can create a service account in the relevant Waldur
+project and agrees that the service identity should operate only in declared
+shared project storage rather than the personal account home.
