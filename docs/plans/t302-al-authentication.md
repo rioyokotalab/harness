@@ -199,5 +199,23 @@ Acceptance requires:
 
 ## Next action
 
-Wait for the owner's explicit `go`, then execute the frozen personal-only
-sequence.
+Execution began after the owner's explicit `go`.
+
+Checkpoint:
+
+- Preflight reconfirmed a clean branch, `cscs-key 1.1.0`, a valid
+  current-user agent socket, indefinite multiplex persistence and positive
+  keepalives for both aliases, a ready `alps_login` master, and no `al` master.
+- `harness al-session` now provides value-free `--status`, one
+  non-interactive `--start` attempt, and managed-only graceful `--stop`.
+- A mode-0600 socket-identity receipt prevents the helper from stopping an
+  unrelated master. Private failure output is classified without exposure and
+  exact-unlinked.
+- The focused fixture covers absent, authentication-required, unavailable,
+  managed, idempotent, stopped, external-owner, and unsafe-receipt states.
+  ShellCheck, shell syntax, the focused test, and `git diff --check` pass.
+- Live read-only status is
+  `target=absent ownership=none jump=ready action=start`.
+
+Next: run the public/source-contract checks and `tests/test-phase1.sh`, review
+the complete diff, then publish and perform the live start/rollback drill.

@@ -73,7 +73,7 @@ Next free ID: T-303.
 
 ### T-302 — Reduce AL authentication intervention
 
-**Phase:** interviewing. CSCS requires personal SSH keys to be CSCS-signed and
+**Phase:** executing. CSCS requires personal SSH keys to be CSCS-signed and
 limits personal certificates to one day; `cscs-key 1.1.0` offers only `1d` and
 `1min`. Local currently has a valid agent socket, a fresh non-multiplexed
 `al` login passes, the Ela jump-host master is running, and no `al` master is
@@ -90,7 +90,14 @@ long-lived authenticated master where possible, reports
 reauthentication after a real transport loss. The bounded expiry experiment,
 rollback, acceptance gates, and official sources are in
 `docs/plans/t302-al-authentication.md`. Interview complete; next action:
-wait for explicit `go`, then execute the frozen personal-only sequence.
+the explicit `go` was received. The new `harness al-session` helper and focused
+fixture are implemented. It reports status, makes one non-interactive start
+attempt, distinguishes authentication-required from generic unavailability
+without exposing its private temporary log, records socket identity, and
+gracefully stops only its own master. ShellCheck, shell syntax, the focused
+test, live read-only status, and `git diff --check` pass. Next action: run
+public/source-contract checks and `tests/test-phase1.sh`, review the diff, then
+publish and run the live start/rollback drill.
 
 ### T-196 — Backup lifecycle phase 2
 

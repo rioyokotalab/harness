@@ -1,0 +1,314 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() {
+    echo "Usage: harness al-session [--status|--start|--stop]" >&2
+}
+
+mode=status
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --status) mode=status; shift ;;
+        --start) mode=start; shift ;;
+        --stop) mode=stop; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+
+[ "$(uname -s)" = Linux ] || die "AL session control requires Linux"
+[ "${HARNESS_LOGICAL_HOST:-local}" = local ] ||
+    die "AL session control is restricted to the local controller"
+case ${HOME:-} in /*) ;; *) die "AL session control requires an absolute HOME" ;; esac
+for required in awk flock grep id ln mktemp sed ssh stat tr unlink wc; do
+    command -v "$required" >/dev/null 2>&1 ||
+        die "AL session control requires command: $required"
+done
+
+uid=$(id -u)
+ssh_root=$HOME/.ssh
+state_file=$ssh_root/.harness-al-session.state
+temporary_file=
+private_log=
+rollback_master=no
+published_receipt=no
+
+stat_owner() { stat -Lc '%u' -- "$1"; }
+stat_mode() { stat -Lc '%a' -- "$1"; }
+stat_links() { stat -Lc '%h' -- "$1"; }
+stat_identity() { stat -Lc '%d:%i' -- "$1"; }
+
+[ -d "$HOME" ] && [ ! -L "$HOME" ] && [ "$(stat_owner "$HOME")" = "$uid" ] ||
+    die "AL session control HOME is unsafe"
+[ -d "$ssh_root" ] && [ ! -L "$ssh_root" ] &&
+    [ "$(stat_owner "$ssh_root")" = "$uid" ] ||
+    die "AL session control SSH root is unsafe"
+ssh_root_mode=$(stat_mode "$ssh_root")
+case "$ssh_root_mode" in
+    *[2367][0-7]|*[0-7][2367]) die "AL session control SSH root is writable by another principal" ;;
+esac
+
+cleanup() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ -n "$temporary_file" ] &&
+        [ -f "$temporary_file" ] && [ ! -L "$temporary_file" ] &&
+        [ "$(stat_owner "$temporary_file")" = "$uid" ] &&
+        [ "$(stat_links "$temporary_file")" = 1 ]; then
+        unlink "$temporary_file" || status=2
+    fi
+    if [ -n "$private_log" ] &&
+        [ -f "$private_log" ] && [ ! -L "$private_log" ] &&
+        [ "$(stat_owner "$private_log")" = "$uid" ] &&
+        [ "$(stat_links "$private_log")" = 1 ]; then
+        unlink "$private_log" || status=2
+    fi
+    if [ "$rollback_master" = yes ]; then
+        ssh -o BatchMode=yes -O stop al >/dev/null 2>&1 || status=2
+    fi
+    if [ "$published_receipt" = yes ] &&
+        [ -f "$state_file" ] && [ ! -L "$state_file" ] &&
+        [ "$(stat_owner "$state_file")" = "$uid" ]; then
+        unlink "$state_file" || status=2
+    fi
+    exit "$status"
+}
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+ssh_value() {
+    alias_name=$1
+    key=$2
+    ssh -G "$alias_name" 2>/dev/null |
+        awk -v key="$key" '
+            $1 == key { value=$2; count++ }
+            END {
+                if (count != 1 || value == "") exit 1
+                print value
+            }
+        '
+}
+
+control_path=$(ssh_value al controlpath) ||
+    die "AL session control cannot resolve the target control path"
+control_master=$(ssh_value al controlmaster) ||
+    die "AL session control cannot resolve target multiplex policy"
+control_persist=$(ssh_value al controlpersist) ||
+    die "AL session control cannot resolve target persistence policy"
+proxy_jump=$(ssh_value al proxyjump) ||
+    die "AL session control cannot resolve the target jump route"
+alive_interval=$(ssh_value al serveraliveinterval) ||
+    die "AL session control cannot resolve target keepalive policy"
+alive_count=$(ssh_value al serveralivecountmax) ||
+    die "AL session control cannot resolve target keepalive policy"
+
+case "$control_master" in auto|yes) ;; *) die "AL session control requires target multiplexing" ;; esac
+[ "$control_persist" = yes ] ||
+    die "AL session control requires indefinite target persistence"
+[ "$proxy_jump" = alps_login ] ||
+    die "AL session control requires the declared Ela jump route"
+case "$alive_interval:$alive_count" in
+    *[!0-9:]*|0:*|*:0|'':*|*:'') die "AL session control requires positive target keepalives" ;;
+esac
+case "$control_path" in
+    "$ssh_root"/*) ;;
+    *) die "AL session control path is outside the SSH root" ;;
+esac
+case "$control_path" in *'
+'*) die "AL session control path is malformed" ;; esac
+
+jump_master=$(ssh_value alps_login controlmaster) ||
+    die "AL session control cannot resolve jump multiplex policy"
+jump_persist=$(ssh_value alps_login controlpersist) ||
+    die "AL session control cannot resolve jump persistence policy"
+case "$jump_master" in auto|yes) ;; *) die "AL session control requires jump multiplexing" ;; esac
+[ "$jump_persist" = yes ] ||
+    die "AL session control requires indefinite jump persistence"
+
+master_ready() {
+    ssh -o BatchMode=yes -O check "$1" >/dev/null 2>&1
+}
+
+socket_is_safe() {
+    [ -S "$control_path" ] && [ ! -L "$control_path" ] &&
+        [ "$(stat_owner "$control_path")" = "$uid" ] &&
+        [ "$(stat_links "$control_path")" = 1 ]
+}
+
+receipt_state=absent
+receipt_socket_id=
+inspect_receipt() {
+    receipt_state=absent
+    receipt_socket_id=
+    if [ ! -e "$state_file" ] && [ ! -L "$state_file" ]; then
+        return
+    fi
+    [ -f "$state_file" ] && [ ! -L "$state_file" ] &&
+        [ "$(stat_owner "$state_file")" = "$uid" ] &&
+        [ "$(stat_mode "$state_file")" = 600 ] &&
+        [ "$(stat_links "$state_file")" = 1 ] ||
+        die "AL session receipt is unsafe"
+    [ "$(wc -l <"$state_file" | tr -d ' ')" = 4 ] ||
+        die "AL session receipt is malformed"
+    [ "$(sed -n '1p' "$state_file")" = schema=1 ] &&
+        [ "$(sed -n '2p' "$state_file")" = alias=al ] &&
+        [ "$(sed -n '3p' "$state_file")" = "control_path=$control_path" ] &&
+        [ -n "$(sed -n '4p' "$state_file")" ] ||
+        die "AL session receipt is malformed"
+    receipt_socket_id=$(sed -n 's/^socket_id=//p' "$state_file")
+    case "$receipt_socket_id" in
+        ''|*[!0-9:]*|*:*:*) die "AL session receipt socket identity is malformed" ;;
+    esac
+    receipt_state=present
+}
+
+target_state=absent
+ownership=none
+inspect_target() {
+    inspect_receipt
+    if master_ready al; then
+        socket_is_safe || die "AL session master socket is unsafe"
+        current_socket_id=$(stat_identity "$control_path")
+        target_state=ready
+        if [ "$receipt_state" = absent ]; then
+            ownership=external
+        elif [ "$receipt_socket_id" = "$current_socket_id" ]; then
+            ownership=managed
+        else
+            die "AL session receipt does not match the live master"
+        fi
+        return
+    fi
+    if [ -e "$control_path" ] || [ -L "$control_path" ]; then
+        die "AL session control path exists without a usable master"
+    fi
+    target_state=absent
+    if [ "$receipt_state" = present ]; then
+        ownership=stale
+    else
+        ownership=none
+    fi
+}
+
+jump_state() {
+    if master_ready alps_login; then
+        printf 'ready\n'
+    else
+        printf 'absent\n'
+    fi
+}
+
+exec 9<"$ssh_root"
+case "$mode" in
+    status) flock -s 9 ;;
+    start|stop) flock -x 9 ;;
+esac
+inspect_target
+jump=$(jump_state)
+
+if [ "$mode" = status ]; then
+    case "$target_state:$ownership" in
+        ready:managed|ready:external) action=none ;;
+        absent:stale) action=clean-stale-then-start ;;
+        absent:none) action=start ;;
+        *) die "AL session status is inconsistent" ;;
+    esac
+    printf 'AL_SESSION mode=status target=%s ownership=%s jump=%s action=%s\n' \
+        "$target_state" "$ownership" "$jump" "$action"
+    exit 0
+fi
+
+if [ "$mode" = stop ]; then
+    if [ "$target_state" = ready ] && [ "$ownership" = external ]; then
+        die "refusing to stop an AL master not created by this helper"
+    fi
+    if [ "$target_state" = absent ]; then
+        if [ "$ownership" = stale ]; then
+            unlink "$state_file"
+            printf 'AL_SESSION mode=stop target=absent ownership=stale jump=%s action=receipt-removed\n' \
+                "$jump"
+        else
+            printf 'AL_SESSION mode=stop target=absent ownership=none jump=%s action=none\n' \
+                "$jump"
+        fi
+        exit 0
+    fi
+    ssh -o BatchMode=yes -O stop al >/dev/null 2>&1 ||
+        die "AL session managed master refused graceful stop"
+    attempts=0
+    while master_ready al && [ "$attempts" -lt 5 ]; do
+        sleep 1
+        attempts=$((attempts + 1))
+    done
+    master_ready al &&
+        die "AL session managed master remained usable after graceful stop"
+    [ ! -e "$control_path" ] && [ ! -L "$control_path" ] ||
+        die "AL session control path remained after graceful stop"
+    unlink "$state_file"
+    printf 'AL_SESSION mode=stop target=absent ownership=managed jump=%s action=stopped\n' \
+        "$jump"
+    exit 0
+fi
+
+if [ "$target_state" = ready ]; then
+    printf 'AL_SESSION mode=start target=ready ownership=%s jump=%s action=none\n' \
+        "$ownership" "$jump"
+    exit 0
+fi
+if [ "$ownership" = stale ]; then
+    unlink "$state_file"
+fi
+
+umask 077
+private_log=$(mktemp "$ssh_root/.harness-al-session.log.XXXXXX") ||
+    die "AL session control cannot allocate a private failure log"
+chmod 600 "$private_log"
+if ! ssh -o BatchMode=yes -o ConnectionAttempts=1 -M -N -f al 9<&- \
+    >/dev/null 2>"$private_log"; then
+    if grep -Eiq \
+        'permission denied|authentication failed|no supported authentication|certificate.*(expired|invalid)' \
+        "$private_log"; then
+        result=renewal-required
+    else
+        result=unavailable
+    fi
+    unlink "$private_log"
+    private_log=
+    printf 'AL_SESSION mode=start target=absent ownership=none jump=%s action=%s\n' \
+        "$jump" "$result"
+    exit 1
+fi
+rollback_master=yes
+master_ready al || die "AL session start returned without a usable master"
+socket_is_safe || die "AL session start created an unsafe master socket"
+socket_id=$(stat_identity "$control_path")
+
+temporary_file=$(mktemp "$ssh_root/.harness-al-session.state.XXXXXX") ||
+    die "AL session control cannot allocate a receipt"
+chmod 600 "$temporary_file"
+printf '%s\n' schema=1 alias=al "control_path=$control_path" \
+    "socket_id=$socket_id" >"$temporary_file"
+[ ! -e "$state_file" ] && [ ! -L "$state_file" ] ||
+    die "AL session receipt appeared during start"
+ln "$temporary_file" "$state_file" ||
+    die "AL session control cannot publish the receipt"
+published_receipt=yes
+unlink "$temporary_file"
+temporary_file=
+[ "$(stat_links "$state_file")" = 1 ] ||
+    die "AL session receipt link count is unsafe"
+
+unlink "$private_log"
+private_log=
+rollback_master=no
+published_receipt=no
+jump=$(jump_state)
+printf 'AL_SESSION mode=start target=ready ownership=managed jump=%s action=created\n' \
+    "$jump"

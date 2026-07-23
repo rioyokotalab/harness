@@ -132,6 +132,19 @@ Routine health reports cover the managed Linux nodes and both routes for every
 Mac. Transport-only `abci_login` and `alps_login` are omitted unless the
 transport itself is under investigation.
 
+To reduce repeated CSCS authentication while retaining the personal `al`
+account and MFA policy, keep one multiplexed Daint transport alive:
+
+```bash
+harness al-session --status
+harness al-session --start
+```
+
+`--start` makes one non-interactive attempt using the existing signed
+certificate. It never signs or renews credentials and reports
+`renewal-required` when owner authentication is needed. `--stop` gracefully
+stops only a master created by this helper; it refuses unrelated masters.
+
 From a Mac-local shell, inspect its managed routes and watchdog with:
 
 ```bash
