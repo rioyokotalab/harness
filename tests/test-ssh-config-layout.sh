@@ -61,6 +61,31 @@ git -C "$test_repo" add config/ssh/harness.conf
 git -C "$test_repo" commit -qm canonical
 git -C "$test_repo" branch -M main
 
+python3 - "$test_repo/config/ssh/harness.conf" <<'PY'
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+stanza = None
+options = []
+
+def check(label, values):
+    keys = [line.strip().split(None, 1)[0].lower() for line in values]
+    if keys != sorted(keys):
+        raise SystemExit("managed SSH directives are not alphabetic: " + label)
+
+for raw in path.read_text(encoding="utf-8").splitlines():
+    if raw.startswith("Host "):
+        if stanza is not None:
+            check(stanza, options)
+        stanza = raw
+        options = []
+    elif stanza is not None and raw[:1].isspace() and raw.strip():
+        options.append(raw)
+if stanza is not None:
+    check(stanza, options)
+PY
+
 home=$TEMP_DIR/home
 make_home "$home"
 write_legacy_root "$home/.ssh/config"
@@ -119,11 +144,25 @@ for x11_alias in login node-only; do
 done
 ssh -o CanonicalizeHostname=no -G -F "$TEMP_DIR/effective-config" \
     node-only 2>/dev/null |
-    awk '$1 == "controlmaster" { m=$2 } $1 == "controlpath" { p=$2 }
+    awk '$1 == "addkeystoagent" { a=$2 }
+        $1 == "connecttimeout" { c=$2 }
+        $1 == "controlmaster" { m=$2 } $1 == "controlpath" { p=$2 }
         $1 == "controlpersist" { x=$2 }
         $1 == "exitonforwardfailure" { e=$2 }
-        END { exit m == "auto" && p != "none" && x == "yes" && e == "no" ? 0 : 1 }' ||
-    fail "ordinary target lost multiplexing or inherited fail-fast forwarding"
+        $1 == "forwardagent" { f=$2 }
+        $1 == "hashknownhosts" { h=$2 }
+        $1 == "serveralivecountmax" { n=$2 }
+        $1 == "serveraliveinterval" { i=$2 }
+        $1 == "updatehostkeys" { u=$2 }
+        END {
+            suffix=p
+            sub(/^.*\/cm-/, "", suffix)
+            exit a == "true" && c == 15 && m == "auto" &&
+                p ~ /\/cm-[0-9a-f]+$/ && length(suffix) == 40 &&
+                x == "yes" && e == "no" && f == "yes" &&
+                h == "yes" && n == 3 && i == 15 && u == "true" ? 0 : 1
+        }' ||
+    fail "ordinary target lost managed default policy"
 grep -E '^[[:space:]]*Host[[:space:]]+(github|\*)[[:space:]]*$' \
     "$home/.ssh/config" >/dev/null && fail "shared stanza remained in root"
 grep -F T291_PRIVATE_SENTINEL "$home/.ssh/config" >/dev/null || fail "private root bytes lost"

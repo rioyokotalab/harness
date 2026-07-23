@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-301.
+Next free ID: T-302.
 
 ## Current state
 
@@ -66,6 +66,54 @@ Next free ID: T-301.
 1. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
 
 ## Active tasks
+
+### T-301 — Review canonical SSH defaults
+
+**Phase:** executing. Review only the default `Host *` policy in
+`~/.ssh/config.d/harness.conf`, its repository-managed source and tests, its
+effective OpenSSH behavior, and fleet consistency. Develop evidence-based
+recommendations for settings to retain, remove, change, or add. Non-goals
+during planning/interview are changing SSH files, restarting tunnels, or
+altering credentials, keys, agents, server configuration, or host-specific
+contracts. The complete evidence, five-decision register, provisional target,
+transaction sequence, rollback policy, and acceptance gates are in
+`docs/plans/t301-ssh-defaults-review.md`. Material findings: global agent
+forwarding contradicts the existing six-host scoped policy; indefinite mux
+persistence has left 20 live sockets fleet-wide; `%C` works everywhere; OS
+defaults make known-host hashing inconsistent; and five Linux fragments carry
+an older exception revision even though their `Host *` bytes match. No target
+configuration has been changed. D1 is selected: retain global
+`ForwardAgent yes` so future Linux aliases inherit it; the owner accepts the
+wildcard scope. D2 is selected: retain global trusted X11 with the existing
+GitHub, tunnel, Mac-route, and web exclusions so future Linux aliases inherit
+it. D3 is selected: retain `AddKeysToAgent yes` and its agent-default lifetime
+to minimize intervention. D4 is selected: keep opportunistic multiplexing,
+change the path to `~/.ssh/cm-%C`, expire idle masters after 10 minutes, and
+gracefully drain validated old masters without terminating active sessions.
+D5 is selected: explicitly set a 15-second connection timeout, alive count 3,
+future known-host hashing, and authenticated host-key updates. The decision
+audit was reopened before execution: the owner withdrew `ControlPersist 10m`
+and selected alphabetic directive ordering, then selected current indefinite
+`ControlPersist yes` with the new `%C` path. No target changed. The decision
+audit is complete, the owner gave explicit `go`, and execution began from
+clean/current public main `f654a374311ca2bb62c65c4b4aa5b514eebdc547` with
+only the plan/ledger checkpoint uncommitted. The task branch now implements the
+frozen canonical defaults, alphabetic directive enforcement, and operator
+documentation. Whitespace, layout, Mac SSH sync, Mac plan/doctor, and SSH
+mirror tests pass. No live SSH file has changed. Next: checkpoint the
+implementation, run full phase-one validation from a clean commit, then publish
+before touching any live SSH fragment.
+
+Implementation checkpoint `c368b60` passed the complete phase-one suite from a
+clean checkout. Next: publish through protected CI and guarded-sync the exact
+merge before any live SSH rollout.
+
+PR #274 protected run `29975574360` failed only in the unchanged Mac watchdog
+signal-cleanup timing test after its five-second wait; every T-301-focused
+surface passed. The supervisor suite immediately passed standalone and had
+passed in the complete local run. Retry is safe; no live state changed. Next:
+checkpoint this evidence to trigger a fresh protected run. Stop before rollout
+if the same failure repeats.
 
 ### T-196 — Backup lifecycle phase 2
 
