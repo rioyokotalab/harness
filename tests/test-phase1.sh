@@ -81,6 +81,7 @@ for script in \
     "$ROOT/libexec/harness-restic-schedule" \
     "$ROOT/libexec/harness-fleet-sync" \
     "$ROOT/libexec/harness-connection-monitor" \
+    "$ROOT/libexec/harness-al-session" \
     "$ROOT/libexec/harness-ssh-config-mirror" \
     "$ROOT/libexec/harness-terminfo" \
     "$ROOT/libexec/harness-apply" \
@@ -106,6 +107,7 @@ for script in \
     "$ROOT/tests/test-macos-codex-bootstrap.sh" \
     "$ROOT/tests/test-repository-independence.sh" \
     "$ROOT/tests/test-remote-session.sh" \
+    "$ROOT/tests/test-al-session.sh" \
     "$ROOT/tests/test-safety-guards.sh" \
     "$ROOT/tests/test-ssh-agent-profile.sh" \
     "$ROOT/tests/smoke/debugger-readiness.sh" \
@@ -141,6 +143,8 @@ if [ "${HARNESS_TEST_JOBS:-auto}" = legacy ]; then
     fail "SSH agent profile focused suite"
 "$ROOT/tests/test-remote-session.sh" >/dev/null ||
     fail "remote-session focused suite"
+"$ROOT/tests/test-al-session.sh" >/dev/null ||
+    fail "personal AL session focused suite"
 "$ROOT/tests/test-safety-guards.sh" >/dev/null ||
     fail "interactive safety-guard focused suite"
 "$ROOT/tests/test-github-rulesets.sh" >/dev/null ||

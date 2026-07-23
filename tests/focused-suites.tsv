@@ -5,6 +5,7 @@ tests/test-focused-runner.sh|parallel focused-suite runner
 tests/test-ssh-agent-profile.sh|SSH agent profile focused suite
 tests/test-remote-session.sh|remote-session focused suite
 tests/test-connection-monitor.sh|managed Mac connection monitor focused suite
+tests/test-al-session.sh|personal AL session focused suite
 tests/test-fleet-inventory.sh|cold-start fleet inventory focused suite
 tests/test-safety-guards.sh|interactive safety-guard focused suite
 tests/test-github-rulesets.sh|GitHub ruleset payload focused suite

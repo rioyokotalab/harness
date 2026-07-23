@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-302.
+Next free ID: T-303.
 
 ## Current state
 
@@ -70,6 +70,37 @@ Next free ID: T-302.
 1. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
 
 ## Active tasks
+
+### T-302 — Reduce AL authentication intervention
+
+**Phase:** executing. CSCS requires personal SSH keys to be CSCS-signed and
+limits personal certificates to one day; `cscs-key 1.1.0` offers only `1d` and
+`1min`. Local currently has a valid agent socket, a fresh non-multiplexed
+`al` login passes, the Ela jump-host master is running, and no `al` master is
+running. Official CSCS guidance reserves API-key authentication for separate
+service accounts and explicitly warns against setting `CSCS_API_KEY` globally.
+
+No supported configuration can make fresh personal-account connections
+authenticate indefinitely. The owner retired the proposed service-account,
+cross-account ACL, shared-checkout, and dotfile/state-sharing branch because
+its maintenance cost outweighed the convenience benefit; none of it was
+applied. The frozen design now keeps only the personal `al` account, reuses a
+long-lived authenticated master where possible, reports
+`renewal-required` without retrying or automating MFA, and accepts owner
+reauthentication after a real transport loss. The bounded expiry experiment,
+rollback, acceptance gates, and official sources are in
+`docs/plans/t302-al-authentication.md`. The explicit `go` was received. The new
+`harness al-session` helper and focused
+fixture are implemented. It reports status, makes one non-interactive start
+attempt, distinguishes authentication-required from generic unavailability
+without exposing its private temporary log, records socket identity, and
+gracefully stops only its own master. ShellCheck, shell syntax, the focused
+test, live read-only status, `git diff --check`, public repository audit,
+source contract, all 68 focused shards, and the complete phase-1 suite pass;
+only the suite's documented undeclared-environment native MPI smoke was
+skipped. Git transport and the hosting API are independently ready. Next
+action: publish through protected `main`, then run the live
+start/rollback/reapply drill and record the expiry-boundary checkpoint.
 
 ### T-196 — Backup lifecycle phase 2
 
