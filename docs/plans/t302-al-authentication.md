@@ -238,7 +238,31 @@ Checkpoint:
 - The focused regression, ShellCheck, whitespace validation, and complete
   phase-1 suite pass on the correction; only the documented undeclared native
   MPI smoke was skipped.
+- Guarded fleet sync advanced all 11 managed remote checkouts from `3d9e030`
+  to final merged revision `b43e224`; every remote reported clean applied
+  state and absent transfer residue.
+- Subsequent observation isolated an execution-environment issue: a master
+  launched with `ssh -f` remained ready while the Codex command session lived
+  but was reaped when that session closed. Bare masters remained healthy for
+  bounded 60- and 120-second diagnostics, ruling out a deterministic CSCS
+  unused-connection timeout. Every private diagnostic log was mode 0600,
+  category-only inspected, and exact-unlinked.
+- Local's user systemd manager and runtime directory are ready. The helper now
+  authenticates once non-interactively, then launches foreground
+  `/usr/bin/ssh -M -N` with `ControlPersist=no` in a collected,
+  non-restarting transient user unit with null output. This moves ownership
+  outside the command runner without installing a unit file.
+- A live cross-command drill passed: transient start, managed status after the
+  launching command exited, exact managed stop with unit unload, absent
+  status, reapply, and final managed status. The `al` and `alps_login` masters
+  are currently ready.
+- ShellCheck, the focused regression, whitespace validation, all 68 focused
+  shards, and the complete phase-1 suite pass on the transient-service change;
+  only the documented undeclared native MPI smoke was skipped. At
+  2026-07-23 15:04 JST, a separate post-suite command still observed the same
+  managed master and active/running successful transient unit.
 
-Next: publish the filesystem-semantics correction through protected `main`,
-then synchronize clean fleet checkouts and record the expiry-boundary
-checkpoint.
+Next: publish the transient-service correction through protected `main`, then
+re-sync clean fleet checkouts. If this same receipt-matched master remains
+ready, run the certificate-boundary experiment no earlier than
+2026-07-24 15:04 JST.

@@ -143,7 +143,10 @@ harness al-session --start
 `--start` makes one non-interactive attempt using the existing signed
 certificate. It never signs or renews credentials and reports
 `renewal-required` when owner authentication is needed. `--stop` gracefully
-stops only a master created by this helper; it refuses unrelated masters.
+stops only a master created by this helper; it refuses unrelated masters. On
+Local, the foreground master runs in a non-restarting transient user-systemd
+unit so it survives the command session that launched it. No permanent unit
+file or automatic authentication path is installed.
 
 From a Mac-local shell, inspect its managed routes and watchdog with:
 

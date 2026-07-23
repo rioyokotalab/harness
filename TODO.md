@@ -112,6 +112,23 @@ only the documented undeclared native MPI smoke was skipped. Next: publish the
 correction through protected `main`, synchronize clean fleet checkouts, and
 record the expiry-boundary checkpoint.
 
+PR #278 passed protected CI and merged as `b43e224`; guarded fleet sync then
+advanced all 11 managed remotes cleanly with no transfer residue. Later
+observation proved that Codex's command runner reaps an `ssh -f` descendant
+when its launching command closes. Bare masters survived bounded 60- and
+120-second diagnostics, so this was not a deterministic CSCS idle timeout.
+The helper now uses Local's ready user systemd manager to own foreground
+`ssh -M -N` in a collected, non-restarting transient unit with null output and
+no installed unit file. A cross-command live drill passed start, managed
+status, stop with complete unit unload, absent status, reapply, and final
+managed status. ShellCheck, the focused regression, all 68 focused shards, and
+the complete phase-1 suite pass; only the documented undeclared native MPI
+smoke was skipped. A separate 2026-07-23 15:04 JST check still found the same
+managed master and active transient unit. Next: publish this correction
+through protected `main`, re-sync clean fleet checkouts, then run the
+certificate-boundary experiment no earlier than 2026-07-24 15:04 JST if this
+same receipt-matched master remains ready.
+
 ### T-196 — Backup lifecycle phase 2
 
 **Status:** time-gated. Progress is 1/8 successful weekly chains everywhere.
