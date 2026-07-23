@@ -160,6 +160,30 @@ named diagnostic path existed. The recovered unit is active/running with
 the clean fleet, then observe the same master across the certificate boundary
 no earlier than 2026-07-25 07:35 JST.
 
+PR #281 merged as `0fa3949`, but the merge exposed that unlinking an open file
+under this node's NFS-backed checkout or `~/.ssh` creates visible `.nfs…`
+placeholders. The managed session was stopped cleanly, which released its
+repository and diagnostic placeholders; unrelated live `.ssh/.nfs…`
+placeholders were not touched. Work continues on
+`t302-al-session-runtime-log`: a failing fixture requires the private
+diagnostic descriptors to originate in the validated current-user runtime
+directory instead of NFS before the session is restarted and fleet sync runs.
+Local's runtime directory is owner-only mode 0700 on tmpfs. Both helper and
+runner now enforce that boundary; focused fixtures pass runtime-origin,
+pathname-absence, stale-socket, restart-status, stop, and exit-classification
+coverage. Full, protected, and live validation remain.
+
+Commit `9942d46` passed the complete suite and PR #282 protected CI. A first
+over-broad `.ssh/.nfs…` total-count preflight stopped before signaling and
+rolled back; unrelated placeholders stayed untouched. The corrected
+runner-owned hard-crash drill passed at 2026-07-24 07:49 JST: one restart after
+60 seconds, replaced process generations, recovered stale socket, successful
+AL command, zero runner-held/repository/runtime `.nfs…` paths, and a diagnostic
+held only by deleted tmpfs descriptors. The unit is active/running with
+`NRestarts=1`. Commit/protect this evidence, merge PR #282 without replacing
+the live runner inode, guarded-sync the fleet, then observe the same master no
+earlier than 2026-07-25 07:50 JST.
+
 ### T-196 — Backup lifecycle phase 2
 
 **Status:** time-gated. Progress is 1/8 successful weekly chains everywhere.

@@ -55,6 +55,21 @@ ssh_root_mode=$(stat_mode "$ssh_root")
 case "$ssh_root_mode" in
     *[2367][0-7]|*[0-7][2367]) die "AL session control SSH root is writable by another principal" ;;
 esac
+case ${XDG_RUNTIME_DIR:-} in
+    /*) runtime_root=$XDG_RUNTIME_DIR ;;
+    *) die "AL session control requires an absolute user runtime directory" ;;
+esac
+[ -d "$runtime_root" ] && [ ! -L "$runtime_root" ] &&
+    [ "$(stat_owner "$runtime_root")" = "$uid" ] ||
+    die "AL session control user runtime directory is unsafe"
+runtime_root_mode=$(stat_mode "$runtime_root")
+case "$runtime_root_mode" in
+    *[2367][0-7]|*[0-7][2367])
+        die "AL session control user runtime directory is writable by another principal"
+        ;;
+esac
+[ "$(stat -f -c '%T' -- "$runtime_root")" = tmpfs ] ||
+    die "AL session control user runtime directory is not memory-backed"
 
 cleanup() {
     status=$?
@@ -516,6 +531,7 @@ systemd-run --user --quiet --unit="$unit_name" \
     --property=StartLimitIntervalSec=0 \
     --property=StandardOutput=null --property=StandardError=null \
     --setenv="HOME=$HOME" --setenv="SSH_AUTH_SOCK=$SSH_AUTH_SOCK" \
+    --setenv="XDG_RUNTIME_DIR=$runtime_root" \
     --setenv="HARNESS_AL_SESSION_MARKER=$receipt_marker" \
     -- "$runner" "$ssh_command" 9<&- ||
     die "AL session transient unit failed to start"
