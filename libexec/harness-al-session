@@ -25,7 +25,8 @@ done
 [ "${HARNESS_LOGICAL_HOST:-local}" = local ] ||
     die "AL session control is restricted to the local controller"
 case ${HOME:-} in /*) ;; *) die "AL session control requires an absolute HOME" ;; esac
-for required in awk flock grep id ln mktemp sed ssh stat tr unlink wc; do
+for required in awk flock grep id ln mktemp sed sleep ssh stat systemctl \
+    systemd-run tr unlink wc; do
     command -v "$required" >/dev/null 2>&1 ||
         die "AL session control requires command: $required"
 done
@@ -33,9 +34,11 @@ done
 uid=$(id -u)
 ssh_root=$HOME/.ssh
 state_file=$ssh_root/.harness-al-session.state
+unit_name=harness-al-session.service
 temporary_file=
 private_log=
 rollback_master=no
+rollback_unit=no
 published_receipt=no
 
 stat_owner() { stat -Lc '%u' -- "$1"; }
@@ -70,6 +73,9 @@ cleanup() {
     fi
     if [ "$rollback_master" = yes ]; then
         ssh -o BatchMode=yes -O stop al >/dev/null 2>&1 || status=2
+    fi
+    if [ "$rollback_unit" = yes ]; then
+        systemctl --user stop "$unit_name" >/dev/null 2>&1 || status=2
     fi
     if [ "$published_receipt" = yes ] &&
         [ -f "$state_file" ] && [ ! -L "$state_file" ] &&
@@ -266,11 +272,50 @@ if [ "$ownership" = stale ]; then
     unlink "$state_file"
 fi
 
+systemctl --user show-environment >/dev/null 2>&1 ||
+    die "AL session control requires a running user systemd manager"
+unit_load=$(systemctl --user show --property=LoadState --value \
+    "$unit_name" 2>/dev/null || true)
+case "$unit_load" in
+    ''|not-found) ;;
+    loaded)
+        systemctl --user is-active --quiet "$unit_name" &&
+            die "AL session transient unit is already active without a managed master"
+        systemctl --user reset-failed "$unit_name" >/dev/null 2>&1 || true
+        attempts=0
+        while [ "$attempts" -lt 20 ]; do
+            unit_load=$(systemctl --user show --property=LoadState --value \
+                "$unit_name" 2>/dev/null || true)
+            case "$unit_load" in ''|not-found) break ;; esac
+            sleep 0.1
+            attempts=$((attempts + 1))
+        done
+        case "$unit_load" in
+            ''|not-found) ;;
+            *) die "AL session transient unit did not unload" ;;
+        esac
+        ;;
+    *) die "AL session transient unit state is ambiguous" ;;
+esac
+
+case ${SSH_AUTH_SOCK:-} in
+    /*) ;;
+    *) die "AL session start requires an absolute SSH agent socket" ;;
+esac
+[ -S "$SSH_AUTH_SOCK" ] && [ ! -L "$SSH_AUTH_SOCK" ] &&
+    [ "$(stat_owner "$SSH_AUTH_SOCK")" = "$uid" ] ||
+    die "AL session start requires a current-user SSH agent socket"
+case $(stat_links "$SSH_AUTH_SOCK") in
+    1|2) ;;
+    *) die "AL session SSH agent socket link count is unsafe" ;;
+esac
+
 umask 077
 private_log=$(mktemp "$ssh_root/.harness-al-session.log.XXXXXX") ||
     die "AL session control cannot allocate a private failure log"
 chmod 600 "$private_log"
-if ! ssh -o BatchMode=yes -o ConnectionAttempts=1 -M -N -f al 9<&- \
+if ! ssh -o BatchMode=yes -o ConnectionAttempts=1 \
+    -o ControlMaster=no -o ControlPath=none al true 9<&- \
     >/dev/null 2>"$private_log"; then
     if grep -Eiq \
         'permission denied|authentication failed|no supported authentication|certificate.*(expired|invalid)' \
@@ -285,8 +330,26 @@ if ! ssh -o BatchMode=yes -o ConnectionAttempts=1 -M -N -f al 9<&- \
         "$jump" "$result"
     exit 1
 fi
+unlink "$private_log"
+private_log=
+
+ssh_command=$(command -v ssh)
+case "$ssh_command" in /*) ;; *) die "AL session SSH command is not absolute" ;; esac
+rollback_unit=yes
+systemd-run --user --quiet --collect --unit="$unit_name" \
+    --property=Type=simple --property=Restart=no \
+    --property=StandardOutput=null --property=StandardError=null \
+    --setenv="HOME=$HOME" --setenv="SSH_AUTH_SOCK=$SSH_AUTH_SOCK" \
+    -- "$ssh_command" -o BatchMode=yes -o ConnectionAttempts=1 \
+    -o ControlPersist=no -M -N al 9<&- ||
+    die "AL session transient unit failed to start"
+attempts=0
+while ! master_ready al && [ "$attempts" -lt 20 ]; do
+    sleep 0.25
+    attempts=$((attempts + 1))
+done
+master_ready al || die "AL session transient unit started without a usable master"
 rollback_master=yes
-master_ready al || die "AL session start returned without a usable master"
 socket_is_safe || die "AL session start created an unsafe master socket"
 socket_id=$(stat_identity "$control_path")
 
@@ -305,9 +368,8 @@ temporary_file=
 [ "$(stat_links "$state_file")" = 1 ] ||
     die "AL session receipt link count is unsafe"
 
-unlink "$private_log"
-private_log=
 rollback_master=no
+rollback_unit=no
 published_receipt=no
 jump=$(jump_state)
 printf 'AL_SESSION mode=start target=ready ownership=managed jump=%s action=created\n' \

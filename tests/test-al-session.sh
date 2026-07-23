@@ -23,6 +23,16 @@ stop_fixture_master() {
         HOME="$home" PATH="$fake_bin:/usr/bin:/bin" \
             ssh -O stop al >/dev/null 2>&1 || true
     fi
+    if [ -f "$home/.ssh/agent.pid" ]; then
+        pid=$(sed -n '1p' "$home/.ssh/agent.pid")
+        kill "$pid" >/dev/null 2>&1 || true
+        attempts=0
+        while [ -S "$home/.ssh/agent.sock" ] && [ "$attempts" -lt 50 ]; do
+            sleep 0.1
+            attempts=$((attempts + 1))
+        done
+        unlink "$home/.ssh/agent.pid"
+    fi
 }
 
 cleanup() {
@@ -81,15 +91,23 @@ set -eu
 operation=
 alias_name=
 generate=no
+fresh=no
 while [ "$#" -gt 0 ]; do
     case "$1" in
         -G) generate=yes; shift; alias_name=$1; shift ;;
         -O) shift; operation=$1; shift ;;
-        -o) shift 2 ;;
+        -o)
+            shift
+            [ "$1" != ControlMaster=no ] || fresh=yes
+            shift
+            ;;
         -M|-N|-f|-MN|-Mf|-Nf|-MNf) shift ;;
         --) shift; break ;;
         -*) shift ;;
-        *) alias_name=$1; shift ;;
+        *)
+            [ -n "$alias_name" ] || alias_name=$1
+            shift
+            ;;
     esac
 done
 
@@ -137,6 +155,9 @@ case "$operation:$alias_name" in
             attempts=$((attempts + 1))
         done
         unlink "$pid_file"
+        if [ -f "$HOME/.ssh/fake-unit" ]; then
+            unlink "$HOME/.ssh/fake-unit"
+        fi
         [ ! -S "$HOME/.ssh/cm-al" ]
         ;;
     :al)
@@ -151,6 +172,7 @@ case "$operation:$alias_name" in
                 exit 255
                 ;;
             success)
+                [ "$fresh" = no ] || exit 0
                 python3 "$FAKE_SOCKET_DAEMON" "$HOME/.ssh/cm-al" \
                     >/dev/null 2>&1 &
                 pid=$!
@@ -170,11 +192,71 @@ esac
 EOF
 chmod 755 "$fake_bin/ssh"
 
+cat >"$fake_bin/systemctl" <<'EOF'
+#!/bin/sh
+set -eu
+
+[ "$1" = --user ] || exit 2
+shift
+command_name=$1
+shift
+case "$command_name" in
+    show-environment) exit 0 ;;
+    show)
+        if [ -f "$HOME/.ssh/fake-unit" ]; then
+            echo loaded
+        else
+            echo not-found
+        fi
+        ;;
+    is-active)
+        [ -f "$HOME/.ssh/fake-unit" ]
+        ;;
+    reset-failed) exit 0 ;;
+    stop)
+        if [ -f "$HOME/.ssh/cm-al.pid" ]; then
+            "$FAKE_SSH_COMMAND" -O stop al >/dev/null 2>&1
+        fi
+        ;;
+    *) exit 2 ;;
+esac
+EOF
+chmod 755 "$fake_bin/systemctl"
+
+cat >"$fake_bin/systemd-run" <<'EOF'
+#!/bin/sh
+set -eu
+
+[ "$(sed -n '1p' "$FAKE_SSH_MODE_FILE")" = success ] || exit 1
+printf '%s\n' "$*" >"$HOME/.ssh/systemd-run.args"
+python3 "$FAKE_SOCKET_DAEMON" "$HOME/.ssh/cm-al" >/dev/null 2>&1 &
+pid=$!
+printf '%s\n' "$pid" >"$HOME/.ssh/cm-al.pid"
+printf '%s\n' active >"$HOME/.ssh/fake-unit"
+attempts=0
+while [ ! -S "$HOME/.ssh/cm-al" ] && [ "$attempts" -lt 50 ]; do
+    sleep 0.1
+    attempts=$((attempts + 1))
+done
+[ -S "$HOME/.ssh/cm-al" ]
+EOF
+chmod 755 "$fake_bin/systemd-run"
+
 new_home() {
     name=$1
     path=$TEST_ROOT/home-$name
     mkdir -p "$path/.ssh"
     chmod 700 "$path" "$path/.ssh"
+    python3 "$TEST_ROOT/socket-daemon.py" "$path/.ssh/agent.sock" \
+        >/dev/null 2>&1 &
+    agent_pid=$!
+    printf '%s\n' "$agent_pid" >"$path/.ssh/agent.pid"
+    attempts=0
+    while [ ! -S "$path/.ssh/agent.sock" ] && [ "$attempts" -lt 50 ]; do
+        sleep 0.1
+        attempts=$((attempts + 1))
+    done
+    [ -S "$path/.ssh/agent.sock" ] || fail "agent socket fixture"
     printf '%s\n' "$path"
 }
 
@@ -182,8 +264,10 @@ run_harness() {
     home=$1
     shift
     HOME="$home" HARNESS_LOGICAL_HOST=local \
+        SSH_AUTH_SOCK="$home/.ssh/agent.sock" \
         FAKE_SSH_MODE_FILE="$TEST_ROOT/ssh-mode" \
         FAKE_SOCKET_DAEMON="$TEST_ROOT/socket-daemon.py" \
+        FAKE_SSH_COMMAND="$fake_bin/ssh" \
         PATH="$fake_bin:/usr/bin:/bin" "$HARNESS" al-session "$@"
 }
 
@@ -223,6 +307,16 @@ started=$(run_harness "$home" --start)
     fail "managed receipt type"
 [ "$(stat -c %a "$home/.ssh/.harness-al-session.state")" = 600 ] ||
     fail "managed receipt mode"
+grep -F -- '--collect' "$home/.ssh/systemd-run.args" >/dev/null ||
+    fail "transient unit collection policy"
+grep -F -- '--property=Restart=no' "$home/.ssh/systemd-run.args" >/dev/null ||
+    fail "transient unit restart policy"
+grep -F -- '--property=StandardError=null' \
+    "$home/.ssh/systemd-run.args" >/dev/null ||
+    fail "transient unit private-output policy"
+grep -F -- '-o ControlPersist=no -M -N al' \
+    "$home/.ssh/systemd-run.args" >/dev/null ||
+    fail "foreground master policy"
 
 managed=$(run_harness "$home" --status)
 [ "$managed" = \
