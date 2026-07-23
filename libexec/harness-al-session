@@ -241,7 +241,14 @@ inspect_target() {
         return
     fi
     if [ -e "$control_path" ] || [ -L "$control_path" ]; then
-        die "AL session control path exists without a usable master"
+        [ "$receipt_schema" = schema=2 ] &&
+            [ -S "$control_path" ] && [ ! -L "$control_path" ] &&
+            [ "$(stat_owner "$control_path")" = "$uid" ] ||
+            die "AL session control path exists without a usable master"
+        case $(stat_links "$control_path") in
+            1|2) ;;
+            *) die "AL session control path exists without a usable master" ;;
+        esac
     fi
     if [ "$receipt_state" = absent ]; then
         target_state=absent
@@ -491,6 +498,7 @@ systemd-run --user --quiet --unit="$unit_name" \
     --property=StartLimitIntervalSec=0 \
     --property=StandardOutput=null --property=StandardError=null \
     --setenv="HOME=$HOME" --setenv="SSH_AUTH_SOCK=$SSH_AUTH_SOCK" \
+    --setenv="HARNESS_AL_SESSION_MARKER=$receipt_marker" \
     -- "$runner" "$ssh_command" 9<&- ||
     die "AL session transient unit failed to start"
 attempts=0

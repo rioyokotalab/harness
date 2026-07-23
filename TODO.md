@@ -73,7 +73,7 @@ Next free ID: T-303.
 
 ### T-302 — Reduce AL authentication intervention
 
-**Phase:** validating (restart-resilience extension). CSCS requires personal
+**Phase:** executing (restart-resilience extension). CSCS requires personal
 SSH keys to be CSCS-signed and limits personal certificates to one day. The
 owner rejected the higher-complexity service-account/ACL/shared-state design;
 none of it was applied. The selected personal-only design accepts
@@ -125,6 +125,20 @@ drill, merge, and guarded fleet synchronization remain. Implementation commit
 passed all 68 focused shards and every integration gate. An earlier sequential
 shard run's one unrelated watchdog timing failure passed immediately in
 isolation and passed again in the authoritative complete suite.
+
+PR #281 passed its first protected CI run. The owner renewed AL access. Two
+live `TERM` drills demonstrated OpenSSH's graceful zero exit, for which no
+restart is correct, and rolled back cleanly. An exact identity-checked `KILL`
+drill then exposed a real crash edge: systemd reached `NRestarts=1` with a new
+runner, but the killed OpenSSH process left an unusable Unix socket that
+prevented the replacement from publishing its control master. The bounded
+drill failed safely; the exact marked unit, unusable current-user socket, and
+receipt were removed, leaving absent clean state. A failing focused fixture now
+requires receipt-and-marker-validated stale-socket cleanup in the runner before
+the live drill is repeated. That cleanup and restart-window status handling are
+now implemented locally. The focused suite passes matched cleanup,
+mismatched-marker preservation, and stale-socket `retrying` coverage; full and
+protected validation remain before the next live drill.
 
 ### T-196 — Backup lifecycle phase 2
 

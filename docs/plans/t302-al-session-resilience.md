@@ -1,8 +1,8 @@
 # T-302 AL session restart resilience
 
-**Phase:** validating
+**Phase:** executing
 **Driver:** Codex
-**Updated:** 2026-07-24 06:55 JST
+**Updated:** 2026-07-24 07:10 JST
 
 ## Outcome
 
@@ -156,3 +156,18 @@ passed. The authoritative complete `tests/test-phase1.sh` run then passed all
 phase-one integration check. Next publish through the protected workflow,
 then request the one owner-assisted AL renewal and perform the live exact
 restart drill.
+
+PR #281 passed its first protected CI run. After owner renewal, live `TERM`
+drills correctly produced graceful success and no restart. The exact `KILL`
+drill then proved `NRestarts=1` and a new runner process, but also exposed a
+real crash edge: the killed OpenSSH process left its old Unix socket, so the
+new OpenSSH process could not publish a usable control master. The bounded
+drill failed and rollback was completed manually after exact receipt, unit,
+socket owner, link-count, and unusable-master validation; current AL state is
+absent with no receipt or socket. A new failing fixture now requires the runner
+to exact-unlink only a safe, unusable socket whose schema-2 receipt marker and
+control path match that runner generation. That recovery and restart-window
+status handling are now implemented; the focused suite passes with matched
+cleanup, mismatched-marker preservation, and stale-socket `retrying` coverage.
+Commit the correction, rerun the complete phase-one and protected checks, then
+repeat the exact `KILL` drill.

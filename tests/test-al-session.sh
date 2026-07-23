@@ -140,7 +140,8 @@ fi
 
 case "$operation:$alias_name" in
     check:al)
-        [ -S "$HOME/.ssh/cm-al" ]
+        [ ! -f "$HOME/.ssh/master-unusable" ] &&
+            [ -S "$HOME/.ssh/cm-al" ]
         ;;
     check:alps_login)
         [ "${FAKE_JUMP_READY:-yes}" = yes ]
@@ -285,6 +286,27 @@ chmod 755 "$fake_bin/systemd-run"
 cat >"$fake_bin/runner-ssh" <<'EOF'
 #!/bin/sh
 set -eu
+
+generate=no
+operation=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        -G) generate=yes; shift; shift ;;
+        -O) shift; operation=$1; shift ;;
+        -o) shift; shift ;;
+        -M|-N) shift ;;
+        *) shift ;;
+    esac
+done
+if [ "$generate" = yes ]; then
+    printf '%s\n' "controlpath $HOME/.ssh/cm-al"
+    exit 0
+fi
+if [ "$operation" = check ]; then
+    [ "${FAKE_RUNNER_MASTER_READY:-no}" = yes ]
+    exit
+fi
+
 case $(sed -n '1p' "$FAKE_SSH_MODE_FILE") in
     auth)
         echo 'Permission denied (publickey).' >&2
@@ -354,6 +376,52 @@ for runner_case in auth unavailable permanent success; do
         fail "runner $runner_case left private log"
 done
 
+printf '%s\n' schema=2 alias=al \
+    "control_path=$runner_home/.ssh/cm-al" \
+    unit=harness-al-session.service marker=runner-stale \
+    >"$runner_home/.ssh/.harness-al-session.state"
+chmod 600 "$runner_home/.ssh/.harness-al-session.state"
+python3 "$TEST_ROOT/socket-daemon.py" "$runner_home/.ssh/cm-al" \
+    >/dev/null 2>&1 &
+runner_stale_pid=$!
+attempts=0
+while [ ! -S "$runner_home/.ssh/cm-al" ] && [ "$attempts" -lt 50 ]; do
+    sleep 0.1
+    attempts=$((attempts + 1))
+done
+printf '%s\n' success >"$TEST_ROOT/ssh-mode"
+HOME="$runner_home" FAKE_SSH_MODE_FILE="$TEST_ROOT/ssh-mode" \
+    HARNESS_AL_SESSION_MARKER=runner-stale \
+    "$RUNNER" "$fake_bin/runner-ssh" >/dev/null 2>&1 ||
+    fail "runner stale socket recovery"
+[ ! -e "$runner_home/.ssh/cm-al" ] &&
+    [ ! -L "$runner_home/.ssh/cm-al" ] ||
+    fail "runner retained receipt-matched stale socket"
+kill "$runner_stale_pid"
+wait "$runner_stale_pid" 2>/dev/null || true
+
+python3 "$TEST_ROOT/socket-daemon.py" "$runner_home/.ssh/cm-al" \
+    >/dev/null 2>&1 &
+runner_collision_pid=$!
+attempts=0
+while [ ! -S "$runner_home/.ssh/cm-al" ] && [ "$attempts" -lt 50 ]; do
+    sleep 0.1
+    attempts=$((attempts + 1))
+done
+set +e
+HOME="$runner_home" FAKE_SSH_MODE_FILE="$TEST_ROOT/ssh-mode" \
+    HARNESS_AL_SESSION_MARKER=other-marker \
+    "$RUNNER" "$fake_bin/runner-ssh" >/dev/null 2>&1
+runner_collision_status=$?
+set -e
+[ "$runner_collision_status" -eq 78 ] ||
+    fail "runner mismatched stale socket classification"
+[ -S "$runner_home/.ssh/cm-al" ] ||
+    fail "runner removed mismatched stale socket"
+kill "$runner_collision_pid"
+wait "$runner_collision_pid" 2>/dev/null || true
+unlink "$runner_home/.ssh/.harness-al-session.state"
+
 home=$(new_home basic)
 printf '%s\n' auth >"$TEST_ROOT/ssh-mode"
 status=$(run_harness "$home" --status)
@@ -402,6 +470,9 @@ grep -F -- '--property=RestartSec=60s' \
 grep -F -- '--property=RestartPreventExitStatus=77 78' \
     "$home/.ssh/systemd-run.args" >/dev/null ||
     fail "transient unit terminal exit policy"
+grep -E -- '--setenv=HARNESS_AL_SESSION_MARKER=al-session-[A-Za-z0-9._-]+' \
+    "$home/.ssh/systemd-run.args" >/dev/null ||
+    fail "transient unit marker environment"
 grep -F -- '--property=StandardError=null' \
     "$home/.ssh/systemd-run.args" >/dev/null ||
     fail "transient unit private-output policy"
@@ -427,6 +498,18 @@ managed=$(run_harness "$home" --status)
 [ "$managed" = \
     'AL_SESSION mode=status target=ready ownership=managed jump=ready action=none' ] ||
     fail "managed status"
+
+printf '%s\n' yes >"$home/.ssh/master-unusable"
+sed -i 's/^active=.*/active=activating/; s/^sub=.*/sub=auto-restart/' \
+    "$home/.ssh/fake-unit"
+stale_recovering=$(run_harness "$home" --status)
+[ "$stale_recovering" = \
+    'AL_SESSION mode=status target=recovering ownership=managed jump=ready action=retrying' ] ||
+    fail "recovering status with stale socket"
+unlink "$home/.ssh/master-unusable"
+sed -i 's/^active=.*/active=active/; s/^sub=.*/sub=running/' \
+    "$home/.ssh/fake-unit"
+
 idempotent=$(run_harness "$home" --start)
 [ "$idempotent" = \
     'AL_SESSION mode=start target=ready ownership=managed jump=ready action=none' ] ||

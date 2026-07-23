@@ -149,7 +149,10 @@ the command session that launched it. A transport failure is retried every
 60 seconds while authentication remains usable; an authentication or permanent
 local configuration failure stops retries. `--status` reports `retrying`,
 `renewal-required`, or `repair-required` without exposing diagnostics. No
-permanent unit file or automatic authentication path is installed.
+permanent unit file or automatic authentication path is installed. After a
+hard SSH-process crash, the runner removes an unusable stale control socket
+only when its safe file properties, path, and per-unit marker match the
+protected managed receipt.
 
 From a Mac-local shell, inspect its managed routes and watchdog with:
 
