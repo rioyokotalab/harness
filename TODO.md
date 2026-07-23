@@ -9,10 +9,9 @@ Next free ID: T-299.
 
 ## Current state
 
-- Public `main` is clean at
-  `ff52d8d2a42d84c1ef9ed7c582a7aa99bdc843fe`. Local and all eleven remote
-  managed checkouts were verified clean/current at that revision after T-297;
-  all four private Mac SSH payloads are also current.
+- Public `main`, Local, and all eleven remote managed checkouts were verified
+  clean/current after T-298; all four private Mac SSH payloads are also
+  current.
 - Managed Linux nodes are local, ab, ab2, ri, al, rc, t4, and abq; abq2 is a
   second route to the same ABQ node. Managed Macs are aist, home, office, and
   riken, each with two independent reverse routes. `abci_login` and
@@ -40,6 +39,14 @@ Next free ID: T-299.
   fresh validation before reinstalling the version-scoped wrapper.
 - Exactly one future native weekly primary backup job exists on each managed
   Linux node. First runs passed on 2026-07-19 and keep-all remains effective.
+- Container and package work are requirement-gated guardrails, not pending
+  tasks. Install container capability only for a specific workload. Perform no
+  blanket package upgrade, cleanup, autoremove, cask, service, tap, or
+  unmanaged-dependent mutation; require current freshness evidence and an
+  explicit package selection.
+- Closed non-goals remain plugins/connectors/accounts, administrator settings,
+  automatic publication, background login mutation, active-session reload,
+  and guessing lost unknown configuration.
 - Global safety and collaboration rules in `.codex/AGENTS.md` remain
   authoritative. Never inspect credentials or use raw recursive/bulk
   deletion.
@@ -77,29 +84,11 @@ forget, prune, recurring check/restore, or replica automation is authorized.
 Evidence is in `docs/backup-lifecycle-phase2.md`, `docs/home-backup.md`, and
 `docs/audits/restic-first-weekly-2026-07-19.md`.
 
-### T-273 — Requirement-gated maintenance
-
-**Status:** open only for requirements that have not materialized.
-
-- **Container capability:** install nothing merely for warning parity. Act only
-  when a workload requires a specific capability.
-- **Package maintenance:** no blanket upgrade, cleanup, autoremove, cask,
-  service, tap, or unmanaged-dependent mutation. Reassess only with current
-  freshness evidence and an explicit package selection.
-- **Backup successors:** tracked exclusively by T-196.
-
-Previously resolved under T-273: failed transaction evidence retention, Linux
-agent replacement capability, fourth-Mac onboarding, vendor arg0 management,
-the one-way Local-to-t4 SSH mirror, and removal of `.bash_common`. Closed
-non-goals remain plugins/connectors/accounts, administrator settings,
-automatic publication, background login mutation, active-session reload, and
-guessing lost unknown configuration.
-
 ## Completed anchors
 
-- **T-298:** compacted this board to current state, the T-196/T-273 gates, and
-  durable completion pointers; superseded execution detail remains in Git and
-  the linked audit documents.
+- **T-298:** compacted this board to current state, the T-196 gate, durable
+  guardrails, and completion pointers; superseded execution detail remains in
+  Git and the linked audit documents.
 - **T-297:** completed Local/four-Mac SSH hygiene, canonical layout migration,
   private payload convergence, legacy Office keepalive removal, mux cleanup,
   and final fleet synchronization. Functional PR #268 is
@@ -126,6 +115,9 @@ guessing lost unknown configuration.
   is in `docs/audits/macos-ssh-finalization-2026-07-21.md`.
 - **T-283–T-284:** published symmetric and accelerated Codex-Claude cowork in
   PRs #161 and #163.
+- **T-273:** closed after every concrete maintenance item completed. Backup
+  successors remain under T-196; container and package policy now live as
+  durable guardrails rather than pending work.
 - **Earlier anchors:** T-274 and T-279–T-287 completed Bash, Mac onboarding,
   and ledger foundations; T-191 accepted the first native weekly backups;
   T-181 finished at 69/70 with zero safety failures. T-210 is complete and
