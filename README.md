@@ -1,503 +1,416 @@
 # Personal Codex and Claude harness
 
-This repository versions the portable, non-sensitive part of the personal
-agent setup. It lives at `~/harness` instead of turning either client runtime
-directory into a Git repository. It is self-contained: it neither imports from
-nor requires a sibling `website` checkout for installation, CI, cleanup, or
-operation.
+This repository is the portable, non-sensitive control plane for the owner's
+Codex, Claude Code, Linux/HPC, and personal macOS environments. It lives at
+`~/harness`, keeps both agent clients under the same working agreements, and
+provides value-free observation plus fail-closed transactional operations.
 
-## Tracked
+The repository is self-contained. Installation, CI, cleanup, and operation do
+not depend on a sibling checkout.
 
-- `AGENTS.md`: project-specific resume, validation, and handoff rules.
-- `CLAUDE.md`: the project-root Claude import of `AGENTS.md`.
-- `.codex/AGENTS.md`: canonical shared global working agreements.
-- `.codex/rules/default.rules`: reviewed Codex command rules.
-- `config/agent-clients/codex.toml`: canonical public Codex user settings.
-- `.claude/CLAUDE.md`: the Claude user-guidance source, linked to the shared
-  global working agreements.
-- `config/agent-clients/claude.json`: canonical public Claude user settings.
-- `config/agent-clients/components.tsv`: reviewed public component declarations;
-  it is empty until a plugin, marketplace, or MCP identifier is separately
-  reviewed.
-- `shared/skills/`: reusable workflows exposed to both clients.
-- `install.sh`: idempotent, fail-closed discovery symlink installer.
-- `bin/harness` and `libexec/`: value-free observation, guarded transactional
-  control-plane operations, backup workflows, and bounded deletion safety.
-- `profiles/`: selected tool policy and logical host capabilities.
-- `profiles/restic-repositories.tsv`, `profiles/restic-schedules.tsv`, and
-  `docs/home-backup.md`: non-secret seven-node encrypted-backup topology,
-  scheduler declarations, and restore/recurrence gates.
-- `tests/fixtures/`: value-free environment evidence used by the shell tests.
-- `docs/`: architecture and operating notes for the portable environment.
-- `TODO.md`: harness-owned planned and active work.
+## Start here
 
-The installer exposes the same global guidance as `~/.codex/AGENTS.md` and
-`~/.claude/CLAUDE.md`. It links every shared skill into
-`~/.codex/skills/`, `~/.agents/skills/`, and `~/.claude/skills/`. It also links
-the `harness` command into `~/.local/bin/`; read-only and mutating subcommands
-remain explicitly separated and mutating commands default to plan mode.
-
-## Cross-client takeover
-
-Codex reads the root `AGENTS.md`; Claude reads the root `CLAUDE.md`, which
-imports that same project file. Claude also receives the shared personal policy
-through `.claude/CLAUDE.md`, and the installer exposes every shared skill under
-the officially supported `~/.claude/skills/` location. This follows Claude
-Code's documented [instruction hierarchy](https://code.claude.com/docs/en/memory)
-and [skill discovery](https://code.claude.com/docs/en/slash-commands).
-
-Both clients must reconstruct unfinished work from Git and [TODO.md](TODO.md),
-not from conversation history or client-local auto-memory. The project rules
-freeze the same start, validation, publication, fleet-sync, and handoff
-protocol for either client. `tests/test-claude-takeover.sh` validates the
-instruction chain, settings example, all three skill-discovery surfaces,
-idempotent installation, and collision-before-mutation behavior. The main
-control-plane test independently proves Claude guidance and skill links are
-created and transactionally rolled back with the Codex links. A live
-seven-environment preflight on 2026-07-18 confirmed Claude Code 2.1.207,
-canonical guidance, all 10 shared skills, and all 34 managed links on every
-node, with zero planned control-plane changes.
-
-## Current deployed state
-
-The managed fleet comprises `local`, `ab`, `ab2`, `abq`, `ri`, `al`, `rc`, and `t4`.
-Each environment has a clean harness checkout synchronized to published
-`main`. The `abci_login` and `alps_login` aliases are transport-only, and the
-retired `si` environment is not a target. Exact host capabilities and native
-scheduler differences remain declared in `profiles/` rather than hidden behind
-a normalized remote wrapper.
-
-All seven hidden-home Restic primaries and all seven independent encrypted
-generations have passed full-data checks and verified restores. Exactly one
-scheduler-native weekly primary job is seeded on each environment; first-run
-snapshot and successor verification remains active work in [TODO.md](TODO.md).
-Keep-all retention is still in force: there is no scheduled `forget`, `prune`,
-replica, full-data check, login-node cron job, or user timer. The reviewed
-topology and operating gates are in [docs/home-backup.md](docs/home-backup.md).
-
-Fresh interactive Bash shells load the deployed accidental-use safeguards for
-high-blast-radius filesystem and scheduler commands. The current Ubuntu node
-uses one packaged systemd user SSH agent with tmux-aware socket recovery as
-documented in [docs/ssh-agent.md](docs/ssh-agent.md). Login and shell exit run
-no automatic Git fetch, commit, or push hooks.
-
-This public repository uses a protected `main` branch with required CI, linear
-history, conversation resolution, and force-push/deletion protection. Required
-review approvals are intentionally zero; a passing required check is still
-mandatory. Current work, blockers, and exact resume commands live only in
-[TODO.md](TODO.md), while completed command-level evidence remains in Git
-history.
-
-## Environment observation and planning
-
-Phase 1 provides four dependency-free observation commands:
+For an existing managed checkout:
 
 ```bash
-harness inventory --host local
-harness plan --host local
+cd "$HOME/harness"
+git status --short --branch
+./install.sh
 harness doctor --host local
-harness storage-readiness --host local
 ```
 
-`inventory` emits a strict value-free fact stream: logical host, OS and
-architecture, selected command presence, managed-link state, and shell-startup
-file type. It does not read startup-file contents, arbitrary environment
-values, credentials, histories, projects, or caches. Use `--format json` when
-machine-readable JSON is needed. The inventory executable is self-contained and
-can be streamed to an explicit remote POSIX shell without creating a file:
+`install.sh` is idempotent and creates only reviewed discovery symlinks. It
+refuses regular-file collisions and symlinks that point somewhere else. Start
+new Codex and Claude sessions after first installation so both clients rebuild
+instruction and skill discovery.
+
+Public client settings are a separate transaction:
 
 ```bash
-ssh HOST 'sh -s -- --host HOST' \
-  < libexec/harness-inventory
+harness agent-config --plan
+harness agent-config --apply
 ```
 
-`plan` compares current or captured facts with a reviewed logical host profile.
-It is read-only and ends with `remote_changes=none`. `doctor` treats a host or
-bootstrap mismatch as a failure while reporting not-yet-installed selected
-tools and discovery links as warnings.
+It never installs or authorizes a plugin, marketplace, MCP server, connector,
+or credential. Existing settings paths require explicit `--adopt`, and
+rollback preserves unchanged preimages.
 
-`storage-readiness` validates only the two roots declared for a logical host:
-canonical identity, ownership, writability, outside-home placement,
-filesystem, and current free blocks/inodes. It is read-only by default. The
-explicit `--write-probe` mode writes and fsyncs one mode-0600 4 KiB file per
-root, revalidates the root identity, and exact-unlinks only that file. It is a
-correctness gate, not a benchmark or quota promise.
+Current work and the exact resume checkpoint live in [TODO.md](TODO.md).
+Completed command-level evidence lives in Git history and
+[docs/audits/](docs/audits/). A cold-started agent should read the root
+`AGENTS.md` or `CLAUDE.md`, `TODO.md`, and the fleet table below before
+acting.
 
-The mutually exclusive `--checkpoint-probe` mode uses only the persistent
-root. It writes and fsyncs a deterministic 1 MiB staging file, verifies its
-hash, atomically publishes it with a collision-refusing hard link, re-verifies
-the published inode/size/hash, and exact-unlinks both names. This checks bounded
-publication mechanics, not an application checkpoint format or recovery flow.
+For a new account that does not share the owner's hidden files, credentials,
+remote nodes, or backup layout, use
+[External-user onboarding](#external-user-onboarding) instead of assuming this
+fleet.
 
-Captured facts can be checked without connecting to a host:
+## Fleet reference
+
+This is the public cold-start reference for conversations about the owner's
+systems. A logical alias identifies one harness node; “SSH entry” is the name
+used from `local`. Login hostnames may vary within the shown pattern.
+Operating-system facts were rechecked directly on 2026-07-23, except for the
+documented service-only `web` node.
+
+| Alias | SSH entry | Username | Global hostname | Login/local hostname | Operating system |
+| --- | --- | --- | --- | --- | --- |
+| `local` | `login` | `rioyokota` | `login.rio.scrc.iir.isct.ac.jp` | `login-*` | Ubuntu 24.04.3 LTS, x86_64 |
+| `ab` | `ab` | `aca10017by` | `as.v3.abci.ai` | `login*` | Red Hat Enterprise Linux 9.4, x86_64 |
+| `ab2` | `ab2` | `aah17783cq` | `as.v3.abci.ai` | `login*` | Red Hat Enterprise Linux 9.4, x86_64 |
+| `abq` | `abq`, `abq2` | `qai10412cx` | `qas.q.abci.ai` | `qes*` | Red Hat Enterprise Linux 9.4, x86_64 |
+| `al` | `al` | `ryokota` | `daint.alps.cscs.ch` | `daint-*` | SUSE Linux Enterprise Server 15 SP6, aarch64 |
+| `rc` | `rc` | `rio.yokota` | `login.cloud.r-ccs.riken.jp` | `login*` | Rocky Linux 9.8, x86_64 |
+| `ri` | `ri` | `rku00075` | `login.rikyu.r-ccs.riken.jp` | `c00*` | Ubuntu 24.04.4 LTS, aarch64 |
+| `t4` | `t4` | `uq02038` | `login.t4.gsic.titech.ac.jp` | `login*` | Red Hat Enterprise Linux 9.4, x86_64 |
+| `web` | `web` (SFTP only) | `gsic0017` | `web-o3.noc.titech.ac.jp` | `sftp` | Rocky Linux 8, x86_64 |
+| `aist` | `aist`, `aist2` | `rioyokota` | `localhost` | `aist` | macOS 26.5.2, arm64 |
+| `home` | `home`, `home2` | `yokotar` | `localhost` | `home` | macOS 26.5.2, arm64 |
+| `office` | `office`, `office2` | `yokotar` | `localhost` | `office` | macOS 26.5.2, arm64 |
+| `riken` | `riken`, `riken2` | `yokotar` | `localhost` | `riken2` | macOS 26.5.2, arm64 |
+
+The managed control plane contains 12 logical nodes: 8 Linux systems and 4
+Macs. `web` is service-only and is not a deployment, health-monitor, package,
+Python, backup, or synchronization target. `abci_login` and `alps_login`
+are transports rather than targets; retired `si` remains out of scope. The
+canonical table and provenance are also kept in
+[docs/fleet-inventory.md](docs/fleet-inventory.md).
+
+Each Mac has two independently supervised reverse routes. The route aliases
+are for Local-to-Mac access; the Mac-side launchd services use the separate
+`tunnel` and `tunnel2` aliases. A Mac-local 30-second watchdog and Local's
+five-minute connection monitor recover bounded tunnel failures without
+requiring an active controller session. See
+[personal macOS operations](docs/personal-macos.md) and the
+[connectivity-resilience audit](docs/audits/t296-mac-connectivity-resilience-2026-07-23.md).
+
+## Everyday workflow
+
+### Resume work safely
+
+Both clients reconstruct unfinished work from Git and [TODO.md](TODO.md), not
+from conversation history or client-local memory:
+
+```bash
+cd "$HOME/harness"
+git status --short --branch
+git log -3 --oneline
+```
+
+Before changing a collaborative branch, fetch the protected remote and confirm
+the active task. Before handing work to the other client, checkpoint verified
+facts, failures, files, validation, and the next executable action in
+`TODO.md`.
+
+### Inspect a host
+
+The four dependency-free observation commands are:
+
+```bash
+harness inventory --host HOST
+harness plan --host HOST
+harness doctor --host HOST
+harness storage-readiness --host HOST
+```
+
+`inventory` emits only reviewed, value-free facts. `plan` compares facts
+with the logical-host profile and makes no remote change. `doctor` separates
+required failures from optional warnings. `storage-readiness` checks the two
+declared storage roots without benchmarking or promising quota.
+
+Optional bounded storage probes are explicit:
+
+```bash
+harness storage-readiness --host HOST --write-probe
+harness storage-readiness --host HOST --checkpoint-probe
+```
+
+Captured facts can be checked offline:
 
 ```bash
 harness plan --host al --facts tests/fixtures/al.facts
 harness doctor --host al --facts tests/fixtures/al.facts
 ```
 
-## New mirrored node onboarding
+The self-contained inventory can also be streamed without creating a remote
+file:
 
-After adding one explicit SSH alias, ask Codex or Claude to `onboard HOST`. The
-shared `onboard-mirrored-node` skill uses the durable Plan–Interview–Execute
-workflow: it treats that alias as the entire discovery boundary, collects one
-value-free inventory, resolves unknown storage and policy choices one at a
-time, and waits for an explicit go before staging or applying changes. It never
-enumerates SSH configuration or handles credential contents.
+```bash
+ssh HOST 'sh -s -- --host HOST' < libexec/harness-inventory
+```
 
-First-run acceptance includes portable control-plane parity, approved storage
-migration, primary backup/check/restore, and an independently restored
-encrypted generation. Scheduler recurrence is deliberately separate and can be
-considered only after the manual restore evidence is stable.
+### Check fleet connectivity
 
-## External-user local onboarding
+```bash
+harness connection-monitor --once
+```
 
-The shared `onboard-external-user` skill provides a local-first Linux/macOS
-clone, prerequisite, install, and validation workflow for accounts that have
-none of this owner's hidden files, credentials, remote nodes, storage roots,
-or backups. Its deterministic preflight reports only platform classes,
-required-command presence, checkout cleanliness, and aggregate discovery-link
-states:
+Routine health reports cover the managed Linux nodes and both routes for every
+Mac. Transport-only `abci_login` and `alps_login` are omitted unless the
+transport itself is under investigation.
+
+From a Mac-local shell, inspect its managed routes and watchdog with:
+
+```bash
+harness macos-tunnel-supervisor --host LOGICAL_ID --status
+harness macos-tunnel-watchdog --host LOGICAL_ID --status
+```
+
+### Publish and synchronize
+
+`main` is protected by required CI, linear history, conversation resolution,
+and force-push/deletion protection. After a protected change merges, advance
+clean managed checkouts with the explicit full revisions and target list:
+
+```bash
+harness fleet-sync --from OLD_COMMIT --to NEW_COMMIT \
+  --hosts ab,ab2,ri,al,rc,t4,abq,aist,home,office,riken --plan
+harness fleet-sync --from OLD_COMMIT --to NEW_COMMIT \
+  --hosts ab,ab2,ri,al,rc,t4,abq,aist,home,office,riken --apply
+```
+
+Fleet sync refuses dirty, divergent, or collision state before writing. It
+streams a verified mode-0600 Git bundle, fast-forwards only the expected old
+revision, exact-unlinks transfer artifacts, and safely resumes partially
+completed runs by retaining hosts already at the target.
+
+### Back up and restore
+
+Seven Linux nodes—`local`, `ab`, `ab2`, `ri`, `al`, `rc`, and
+`t4`—have encrypted hidden-home primaries and independent generations that
+passed full-data checks and verified restores. Exactly one scheduler-native
+weekly primary job exists per node. Keep-all remains in force: no scheduled
+`forget`, `prune`, replica, full-data check, login-node cron job, or user
+timer exists.
+
+The current successor gate is in [TODO.md](TODO.md). Recovery procedures and
+the reviewed topology are in [docs/home-backup.md](docs/home-backup.md).
+
+## Codex and Claude use the same harness
+
+Codex reads root [AGENTS.md](AGENTS.md). Claude reads root
+[CLAUDE.md](CLAUDE.md), which imports the same project rules. The installer
+exposes the shared personal policy as both `~/.codex/AGENTS.md` and
+`~/.claude/CLAUDE.md`, and links all 13 shared skills into:
+
+- `~/.codex/skills/`
+- `~/.agents/skills/`
+- `~/.claude/skills/`
+
+This gives both clients the same start, planning, safety, validation,
+publication, fleet-sync, and handoff expectations. Consequential joint work can
+use the `codex-claude-cowork` skill for durable planning, independent sandbox
+evidence, reciprocal critique, a frozen plan, and driver-only execution.
+
+`tests/test-claude-takeover.sh` validates the instruction chain, public
+settings examples, skill discovery, idempotent installation, and
+collision-before-mutation behavior.
+
+## Onboarding
+
+### Existing owner's mirrored node
+
+After the owner adds one explicit SSH alias, ask Codex or Claude to
+`onboard HOST`. The `onboard-mirrored-node` skill treats that alias as the
+entire discovery boundary, collects one value-free inventory, resolves choices
+one at a time, and waits for an explicit go before mutation. Acceptance covers
+control-plane parity, approved storage migration, manual backup/check/restore,
+and an independently restored encrypted generation.
+
+### Personal Mac
+
+Use the `onboard-personal-mac` skill for one of the owner's macOS systems.
+It preserves native Keychain, privacy/TCC, Homebrew, launchd, shell, and SSH
+boundaries while applying the public control plane transactionally. Detailed
+contracts are in [docs/personal-macos.md](docs/personal-macos.md).
+
+### External-user onboarding
+
+The `onboard-external-user` skill is local-first and assumes no owner hidden
+files, credentials, remote nodes, storage, backups, or prerequisites:
 
 ```bash
 shared/skills/onboard-external-user/scripts/preflight --repo "$PWD"
 ```
 
-It refuses dirty checkouts and existing-path collisions before installation.
-Missing system prerequisites, client installation/authentication, collision
-adoption, and every remote-node action remain separate owner decisions.
+The preflight reports only platform class, required-command presence, checkout
+cleanliness, and aggregate discovery-link state. It refuses dirty checkouts
+and collisions before installation. System prerequisites, client installation
+or authentication, collision adoption, and every remote-node action remain
+separate owner decisions.
 
-Run the phase-1 validation suite with:
+## Safety and transactions
+
+### Plan before mutation
+
+Mutating harness commands default to plan mode. A normal control-plane apply
+requires a clean committed checkout and a passing doctor:
 
 ```bash
-tests/test-phase1.sh
+harness apply --host HOST --plan
+harness apply --host HOST --apply
+harness rollback TRANSACTION_ID
 ```
+
+Transactions reject unmanaged collisions, keep mode-0600 state under
+`~/.local/state/harness/transactions/`, and roll back partial work. Rollback
+checks that every managed path is unchanged before removing or restoring it.
+
+Shell suffixes and reviewed host patches have separate transactions:
+
+```bash
+harness shell --host HOST --plan
+harness shell --host HOST --apply
+harness remediate --host al --plan
+```
+
+The shell transaction records only the original length and public managed
+suffix, not pre-existing startup content. The Alps remediation changes only
+the reviewed `uenv start` line. Native `uenv` and scheduler commands remain
+visible rather than being hidden behind a generic wrapper.
+
+### Guard every expanding deletion
+
+Agents never use raw recursive or expanding deletion. They use:
+
+```bash
+harness guarded-delete plan --within /absolute/retained/root \
+  --manifest /absolute/retained/delete.manifest -- \
+  /absolute/retained/root/generated
+harness guarded-delete apply \
+  --manifest /absolute/retained/delete.manifest \
+  --token SHA256_FROM_PLAN
+```
+
+Planning canonicalizes the retained boundary, rejects protected roots and
+overlap, inventories entries and bytes, and writes a mode-0600 manifest. Apply
+revalidates identity and counts, deletes across one filesystem, and proves
+target absence plus protected-anchor survival.
+
+Interactive Bash also refuses common accidental high-blast-radius forms for
+recursive filesystem operations, `rsync` deletion, and broad scheduler
+cancellation. This is a safety belt, not a security boundary; agents must still
+use the guarded workflow.
+
+### Keep sensitive and live state out of Git
+
+The repository deliberately excludes live client settings, credentials,
+authentication, sessions, histories, transcripts, logs, goals, memories,
+databases, shell snapshots, caches, packages, plugins, daemon state, temporary
+files, backups, installation identifiers, and model caches. Existing project-
+or tool-local instructions also remain local to their projects.
+
+Never commit a real configuration file until credentials and private endpoints
+have been replaced by environment variables or another secret manager. A
+private Git remote does not make committed secrets safe.
+
+## Managed tools and research environments
+
+The harness retains a healthy site command when possible and installs only
+reviewed, checksum-pinned user-space artifacts when needed. Common transaction
+families are:
+
+| Purpose | Plan example |
+| --- | --- |
+| Single binary | `harness tool --host HOST --name ripgrep --plan` |
+| Runtime tree | `harness runtime --host HOST --name node --plan` |
+| Managed Python | `harness python --host HOST --minor 3.12 --plan` |
+| Codex agent | `harness agent --host HOST --name codex --plan` |
+| Source-built CLI | `harness build-tool --host HOST --name sqlite --plan` |
+
+Selected manifest versions include ripgrep 15.1.0, uv 0.11.31, rclone 1.74.3,
+Restic 0.19.1, Ninja 1.13.2, ShellCheck 0.11.0, Claude Code 2.1.207,
+Tectonic 0.16.9, Git LFS 3.7.1, Node 24.16.0/npm 11.13.0, the Linux Codex
+agent 0.144.4, SQLite 3.53.3, Tree 2.3.2, tmux 3.6b, and htop 3.5.1. Every
+apply validates the staged artifact before atomically activating a stable
+link. Rollback verifies links and content integrity before changing anything.
+Older agent generations are never removed automatically.
+
+Managed CPython provides `python3.11` and `python3.12` in harness-owned
+directories without shadowing site `python` or `python3`. New projects use
+3.12; 3.11 remains the compatibility runtime. Project environments are
+separate uv-managed virtual environments.
+
+Git LFS installation provides only the `git-lfs` command. Enable filters per
+project with `git lfs install --local` only when that repository is in scope.
+Installing an agent binary never reads or copies authentication, settings,
+sessions, caches, histories, or transcripts.
+
+HPC work uses the `operate-native-hpc` and
+`research-engineering-validation` skills. Profiles declare real schedulers,
+modules, uenvs, containers, compilers, debuggers, profilers, storage, and
+architecture. Agents report and invoke the site's native commands; the harness
+does not disguise PBS Pro, Slurm, AGE, or local `yrun` behind a normalized
+scheduler wrapper. Reproducible compiler, OpenMP, MPI, CUDA, and Python smoke
+sources are under `tests/smoke/`.
 
 ## Agent harness evaluation
 
-`evaluation/` contains a synthetic, credential-free acceptance corpus and a
-deterministic runner for paired baseline/candidate experiments. The runner uses
-ephemeral Codex sessions in canonical mode-0700 `/tmp` roots, retains bounded
-mode-0600 raw evidence outside agent workspaces, and routes run-tree cleanup
-through `harness guarded-delete`. Candidate results are evidence for a separate
-owner review; they never change the live harness automatically.
-
-Validate the corpus and runner without invoking a model:
+`evaluation/` contains a synthetic, credential-free corpus and deterministic
+runner for matched agent experiments:
 
 ```bash
 python3 evaluation/evaluate.py validate
 tests/test-evaluation.sh
 ```
 
-### Current Codex/Claude pilot (2026-07-22)
-
-The dated T-295 comparison keeps the historical T-181 reports unchanged and
-gives current Codex and Claude Code the same frozen synthetic tasks, medium
-effort, one invocation, alternating order, workspace-only writes, and
-network-disabled shell execution. The pilot result is:
+The current dated pilot (2026-07-22) used the same nine tasks, medium effort,
+one invocation, alternating order, workspace-only writes, and network-disabled
+shell execution:
 
 | Client | CLI | Default model | Passes | Safety failures | Total duration |
 | --- | --- | --- | ---: | ---: | ---: |
 | Codex | 0.145.0 | GPT-5.6 Sol (default Power; see note) | 9/9 | 0 | 414.699 s |
 | Claude Code | 2.1.207 | Claude Opus 4.8 (stream-observed) | 8/9 | 0 | 386.902 s |
 
-Claude's one substantive failure safely removed a generated nested directory
-instead of the required whole cache directory. The preregistered pilot gate
-therefore blocked the 35-run-per-client full stage. The 95% Wilson intervals
-are wide (Codex 0.701–1.000; Claude 0.565–0.980), so these results describe
-only this corpus and environment and do not establish broad model superiority.
-Client token counters are not directly comparable.
+Claude's one failure safely removed a generated nested directory instead of
+the required whole cache directory, so the preregistered gate blocked the
+35-run-per-client stage. The Wilson intervals are wide; this pilot describes
+only this corpus and environment and does not establish broad model
+superiority. Client token counters are not directly comparable.
 
-Codex 0.145.0's JSONL did not emit its resolved model name. The fresh official
-[Codex models manual](https://learn.chatgpt.com/docs/models) identifies the
-default Power setting as GPT-5.6 Sol with medium
-reasoning; the aggregate therefore retains `requested_model=default` and an
-empty observed-model list rather than mislabeling an inference as telemetry.
-The closed-schema aggregate is
-[`evaluation/results/t295-codex-claude-20260722-v1-pilot.json`](evaluation/results/t295-codex-claude-20260722-v1-pilot.json).
+Codex JSONL did not emit the resolved model name. The table's dated model label
+uses the then-current [Codex models manual](https://learn.chatgpt.com/docs/models)
+for the default Power setting; the aggregate itself correctly retains
+`requested_model=default` and an empty observed-model list. The result is
+[evaluation/results/t295-codex-claude-20260722-v1-pilot.json](evaluation/results/t295-codex-claude-20260722-v1-pilot.json).
 
-## Autonomous deletion safety
+## Repository map
 
-Agents never run raw recursive or expanding deletion. They use a two-command
-workflow that does not prompt for approval:
+- `AGENTS.md` and `CLAUDE.md`: shared project start, validation, and handoff
+  rules.
+- `.codex/AGENTS.md`: canonical shared personal working agreements.
+- `.codex/rules/default.rules`: reviewed Codex command rules.
+- `config/agent-clients/`: public Codex and Claude settings plus reviewed
+  component declarations.
+- `shared/skills/`: 13 workflows exposed to both clients.
+- `bin/harness` and `libexec/`: observation and transactional operations.
+- `profiles/`: logical host, tool, scheduler, storage, backup, and runtime
+  declarations.
+- `shell/`: public shell integration and accidental-use safeguards.
+- `evaluation/`: deterministic cross-agent acceptance corpus.
+- `tests/`: focused suites, fixtures, and native smoke sources.
+- `docs/`: architecture, operating instructions, plans, and audit evidence.
+- `TODO.md`: the compact active task ledger.
 
-```bash
-harness guarded-delete plan --within /absolute/retained/root \
-  --manifest /absolute/retained/delete.manifest -- \
-  /absolute/retained/root/generated
-harness guarded-delete apply --manifest /absolute/retained/delete.manifest \
-  --token SHA256_FROM_PLAN
-```
+## Validation
 
-Planning canonicalizes a narrow retained boundary and explicit targets,
-rejects protected roots and overlapping trees, inventories entry and byte
-counts, and writes a mode-600 manifest. Apply accepts only that unchanged
-short-lived manifest, revalidates account and filesystem identities plus tree
-counts, uses one-filesystem recursive removal, and verifies both target absence
-and protected-anchor survival. Codex execpolicy separately forbids common raw
-recursive `rm` forms and directs the agent to this workflow.
-
-Fresh interactive Bash shells also load `shell/safety-guards.sh`. Direct
-high-blast-radius forms are refused before native execution: recursive `rm`
-that contains a protected root or broadly expands its immediate children,
-`rsync` deletion modes, `find -delete`, recursive `chmod`/`chown` over a
-protected root, and broad `qdel`/`scancel` selectors. Ordinary forms pass their
-original arguments directly to the native command without a prompt.
-
-This is an accidental-use safety belt, not a security boundary. A deliberate
-`command NAME ...`, absolute executable path, child shell, or batch script
-bypasses the interactive function. Agents must still use `harness
-guarded-delete` for every recursive or expanding deletion.
-
-## Transactional control plane
-
-After reviewing the read-only host plan, preview the exact managed links with:
+Run the complete portable validation suite with:
 
 ```bash
-harness apply --host HOST --plan
+tests/test-phase1.sh
 ```
 
-`--apply` requires a clean committed harness checkout and a passing host doctor.
-It refuses every unmanaged collision before mutation, records each created link
-under `~/.local/state/harness/transactions/`, and rolls back partial work if an
-apply command fails. To reverse one completed transaction:
-
-```bash
-harness rollback TRANSACTION_ID
-```
-
-Rollback removes only links that still point to the source recorded in the
-mode-600 manifest. It stops rather than remove a path changed after apply.
-
-Shell loaders use a separate append-only transaction:
-
-```bash
-harness shell --host HOST --plan
-harness shell --host HOST --apply
-```
-
-The transaction never copies or hashes pre-existing startup-file content. It
-records original byte length and a mode-600 copy of the public harness suffix.
-Rollback first validates every affected file, then truncates only exact,
-unchanged managed suffixes; any later user edit blocks the entire rollback.
-
-Reviewed host-specific defects use a separate exact-patch transaction. The
-currently supported remediation disables the known Alps `uenv start` line in
-`.bashrc` without copying or hashing any surrounding bytes:
-
-```bash
-harness remediate --host al --plan
-harness remediate --host al --apply
-```
-
-It replaces only the reviewed equal-length public line and stores only the
-original and applied public patch bytes in mode-600 transaction state. Rollback
-checks the file length and exact patched region before restoring it. The Alps
-interactive shell then provides `prgenv`, which prints and runs the native
-`uenv start prgenv-gnu/25.11:v1 --view=default` command. Scripts, Slurm jobs,
-and agent workflows should report and invoke an explicit native `uenv run ...`
-or Slurm `--uenv` command instead.
-
-Clean mirrored harness checkouts use a guarded, prerequisite-bound
-fast-forward transaction. Both revisions must be full commit IDs, the target
-must be the local checkout's current `HEAD`, and plan is the default:
-
-```bash
-harness fleet-sync --from OLD_COMMIT --to NEW_COMMIT --plan
-harness fleet-sync --from OLD_COMMIT --to NEW_COMMIT --apply
-```
-
-The command first queries every target through native SSH and refuses dirty,
-divergent, or transfer-collision state before any write. Apply additionally
-requires a clean local checkout, creates a mode-0600 Git bundle in private
-transaction state, and streams it over SSH into each account's persistent
-`~/.local/state/harness` path. Each remote revalidates its old commit, bundle
-size and SHA-256, fetch target, and clean fast-forward before exact-unlinking
-the bundle. Earlier remotes already at the exact target are retained, so a
-partially completed fleet run can be resumed without reset, force, merge, or
-stash. The command prints the resolved native Git and SSH operations; it never
-changes Git remotes or accesses SSH key material.
-
-Checksum-pinned portable artifacts use an explicit one-tool transaction:
-
-```bash
-harness tool --host HOST --name ripgrep --plan
-harness tool --host HOST --name ripgrep --apply
-```
-
-The plan names the exact HTTPS release URL, SHA-256 value, versioned install
-directory, and stable link. Apply requires a clean harness and a passing host
-doctor, extracts only the declared archive member into
-`~/.local/opt/TOOL/VERSION/TARGET`, validates the reported version, and then
-creates the `~/.local/bin` link. Rollback first verifies the installed binary
-hash and refuses any modified artifact before removing the link and directory.
-Apply reports the caller-side native `hash -r` command because a long-lived Bash
-process may have cached an earlier system command path; a new shell resolves the
-managed link without this refresh.
-The manifest covers ripgrep 15.1.0, uv 0.11.31, rclone 1.74.3, Ninja 1.13.2,
-ShellCheck 0.11.0, and the native Claude Code 2.1.207 binary on Linux x86-64
-and AArch64. Tar and ZIP transactions extract only the declared
-binary member. A host tool is retained only when its native `--version` health
-probe succeeds; an unusable host command can be shadowed by the verified
-user-space artifact without modifying the site path. Other selected tools
-remain plans until their official artifacts and checksums are recorded and
-tested. Installing uv does not implicitly download Python or modify shell
-files; managed Python is a separate reviewed action.
-
-ShellCheck uses an exact `version: 0.11.0` line from its multi-line version
-report. The invariant product banner alone is not accepted as version proof.
-When ShellCheck is available, the phase-1 suite checks every tracked shell
-entry point at warning/error severity. Info-level diagnostics from deliberately
-single-quoted generated fixtures, dynamic sibling sourcing, and trap-invoked
-helpers remain visible during exploratory lint without obscuring actionable
-failures.
-
-Agent binaries are separate from live client state. Installing Claude does not
-read, create, or synchronize authentication, settings, sessions, history, or
-project transcripts.
-
-Small deterministic compiler, OpenMP, MPI, CUDA, and Python sources live under
-`tests/smoke/`. They are invoked with explicit native compiler and scheduler
-commands, not a normalized HPC wrapper, so agent reports retain the site's real
-execution semantics.
-
-Checksum-pinned multi-file runtimes use a separate whole-tree transaction:
-
-```bash
-harness runtime --host HOST --name node --plan
-harness runtime --host HOST --name node --apply
-```
-
-The Node runtime manifest covers Node 24.16.0/npm 11.13.0 on Linux x86-64 and
-AArch64. Apply validates the publisher checksum, rejects unsafe archive paths,
-checks the staged Node and npm versions, records an integrity digest for the
-entire owned distribution tree, and activates `node`, `npm`, `npx`, and
-`corepack`. Rollback validates every link and recomputes the whole-tree digest
-before removing any path; a modified runtime fails closed without partial
-cleanup.
-
-Managed CPython uses uv through a separate owned-tree transaction:
-
-```bash
-harness python --host HOST --minor 3.12 --plan
-harness python --host HOST --minor 3.12 --apply
-```
-
-The transactions install CPython 3.11.15 and a current 3.12 patch into
-harness-specific directories with uv 0.11.31, disable project configuration discovery and cache
-retention, and create only `python3.11` and `python3.12`. They do not modify
-uv's default Python directory or shadow site `python`/`python3`. New projects
-select 3.12; 3.11 is the compatibility runtime. Rollback checks all non-cache
-entries and ignores only generated `__pycache__`, `.pyc`, and `.pyo` files.
-
-Codex uses a separate two-archive agent transaction:
-
-```bash
-harness agent --host HOST --name codex --plan
-harness agent --host HOST --name codex --apply
-```
-
-The manifest pins the small official npm launcher and the matching x86-64 or
-AArch64 native resource package independently. Apply verifies both checksums,
-reconstructs only the expected `node_modules` layout in an owned tree, requires
-the pinned Node runtime, validates `codex --version`, and records a normalized
-whole-tree digest. Rollback fails closed if any launcher, binary, or bundled
-resource changed. Authentication, configuration, sessions, caches, and logs are
-not read or copied.
-
-When the manifest later declares a higher normalized semantic version and the
-stable link names one exact healthy managed predecessor, plan reports
-`REPLACE`. Apply verifies the new tree completely before promotion, retains the
-immediate predecessor and its digest evidence, then atomically switches the
-stable link. An interrupted replacement is never resumed forward: the next
-apply validates the recorded state, restores the predecessor, removes only the
-unchanged proposed tree through guarded cleanup, and retains failed transaction
-evidence. `harness rollback TRANSACTION_ID` likewise verifies both trees and
-the unchanged link before restoring the predecessor. Equal-version
-replacement, ordinary downgrade, unmanaged or partial layouts, changed trees,
-and changed links fail closed. Older generations are never removed
-automatically; their retirement is a separate guarded maintenance decision.
-
-The Git LFS artifact installs only the `git-lfs` command. The harness does not
-run `git lfs install`, write global Git filters or hooks, or contact an LFS
-remote. Enable it per project with an explicit native `git lfs install --local`
-only when that repository is in scope.
-
-SQLite uses a dedicated checksum-pinned source transaction because the
-publisher provides no AArch64 Linux CLI binary:
-
-```bash
-harness build-tool --host HOST --name sqlite --plan
-harness build-tool --host HOST --name sqlite --apply
-```
-
-The plan displays the publisher SHA3-256, the independently recorded SHA-256,
-the four exact amalgamation members, and the complete native `cc` command.
-Apply retains healthy site SQLite, builds only when needed, validates JSON,
-FTS5, and RTree in memory with user initialization disabled, and activates one
-owned binary through the normal fail-closed artifact rollback.
-
-The same source transaction supports Tree 2.3.2 on a host where `tree` is
-absent:
-
-```bash
-harness build-tool --host HOST --name tree --plan
-harness build-tool --host HOST --name tree --apply
-```
-
-Its plan shows the independently recorded SHA-256, exact 24-regular-file
-allowlist, and dependency-free native `cc` command. Apply retains any healthy
-site command, extracts only the declared build inputs, validates version and
-ASCII output, and owns only the compiled binary and stable link. The publisher
-does not provide a separate digest for this tarball; the source URL and pinned
-SHA-256 are therefore both explicit in the reviewed plan.
-
-## Deliberately excluded
-
-The live `~/.codex/config.toml`, `~/.claude/settings.json`,
-`~/.claude/.credentials.json`, `~/.claude.json`, authentication, sessions,
-histories, project transcripts, logs, goals, memories, databases, shell
-snapshots, caches, packages, plugins, daemon state, temporary files, backups,
-installation identifiers, and model caches remain outside this repository.
-They may contain secrets, private prompts, machine state, or high-churn data.
-Existing project- or tool-local instruction files are also not absorbed into
-this global harness.
-
-Never commit a real configuration file until every credential and private
-endpoint has been replaced by an environment variable or another secret
-manager. A private Git remote does not make committed secrets safe.
-
-## Restore
-
-Clone this repository to `~/harness`, inspect it, then run:
-
-```bash
-./install.sh
-```
-
-For hidden-home recovery, follow [docs/home-backup.md](docs/home-backup.md).
-Encrypted repositories, replica generations, password files, and restored
-payloads remain ignored external state and must never be added to Git.
-
-The installer creates only discovery symlinks. It refuses to replace an
-existing regular file or a symlink with a different target. The separately
-invoked `harness agent-config` transaction plans or links the canonical Codex
-and Claude settings plus the transient-trust Codex launcher; existing paths
-require explicit `--adopt`, and unchanged-only rollback preserves their exact
-preimages. It never installs or authorizes a plugin, marketplace, MCP server,
-connector, or credential.
-
-After installation, start new Codex and Claude sessions so both clients rebuild
-global instruction and skill discovery. If `~/.claude/skills/` was created for
-the first time, Claude must be restarted before those skills appear.
+Documentation-only changes must at least pass `git diff --check` and the
+relevant focused tests. Protected CI remains authoritative.
 
 ## Local shell compatibility
 
-The live shell startup files are intentionally not versioned here. On systems
-where Bash completion defines functions that require nondefault parser options,
-load the system completion script only for interactive shells. This prevents a
-noninteractive Codex shell snapshot from serializing completion-only functions
-while preserving normal terminal completion:
+Live shell startup files are intentionally not versioned. Where Bash
+completion requires nondefault parser options, load it only in interactive
+shells so Codex cannot snapshot completion-only functions into a
+noninteractive shell:
 
 ```bash
 if [[ $- == *i* && -f /usr/share/bash-completion/bash_completion ]]; then
@@ -505,5 +418,5 @@ if [[ $- == *i* && -f /usr/share/bash-completion/bash_completion ]]; then
 fi
 ```
 
-This workaround is based on a local Codex CLI 0.144.3 diagnosis. Validate it
-against the installed CLI before applying it on another machine.
+This workaround originated from a Codex CLI 0.144.3 diagnosis. Validate it
+against the installed CLI before applying it elsewhere.

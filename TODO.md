@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-299.
+Next free ID: T-300.
 
 ## Current state
 
@@ -60,6 +60,23 @@ Next free ID: T-299.
 1. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
 
 ## Active tasks
+
+### T-299 — Refresh and reprioritize README
+
+**Status:** executing. Verify the current fleet inventory, add the canonical
+node table to the README, and reorder the document around owner-facing quick
+start, fleet reference, routine operations, specialized workflows, and
+implementation detail. Preserve technical contracts and links while removing
+stale deployed-state claims. The value-free live OS/hostname inventory has
+been reconciled with `docs/fleet-inventory.md`; the README and its focused
+inventory regression test are updated. Focused inventory, takeover, public
+audit, evaluation, link, and whitespace checks pass. The first full phase-one
+run reached every suite but ran from the intentionally dirty documentation
+checkout: the tmux and terminfo clean-checkout gates refused it, and the
+parallel evaluation interrupt self-test raced before writing `child.pid` even
+though standalone evaluation passed both before and after that run. Retry is
+safe. Next: checkpoint the intended files, rerun full phase-one validation from
+the clean feature branch, then publish and synchronize the managed fleet.
 
 ### T-196 — Backup lifecycle phase 2
 
