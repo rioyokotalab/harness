@@ -69,68 +69,24 @@ Next free ID: T-302.
 
 ### T-301 — Review canonical SSH defaults
 
-**Phase:** executing. Review only the default `Host *` policy in
-`~/.ssh/config.d/harness.conf`, its repository-managed source and tests, its
-effective OpenSSH behavior, and fleet consistency. Develop evidence-based
-recommendations for settings to retain, remove, change, or add. Non-goals
-during planning/interview are changing SSH files, restarting tunnels, or
-altering credentials, keys, agents, server configuration, or host-specific
-contracts. The complete evidence, five-decision register, provisional target,
-transaction sequence, rollback policy, and acceptance gates are in
-`docs/plans/t301-ssh-defaults-review.md`. Material findings: global agent
-forwarding contradicts the existing six-host scoped policy; indefinite mux
-persistence has left 20 live sockets fleet-wide; `%C` works everywhere; OS
-defaults make known-host hashing inconsistent; and five Linux fragments carry
-an older exception revision even though their `Host *` bytes match. No target
-configuration has been changed. D1 is selected: retain global
-`ForwardAgent yes` so future Linux aliases inherit it; the owner accepts the
-wildcard scope. D2 is selected: retain global trusted X11 with the existing
-GitHub, tunnel, Mac-route, and web exclusions so future Linux aliases inherit
-it. D3 is selected: retain `AddKeysToAgent yes` and its agent-default lifetime
-to minimize intervention. D4 is selected: keep opportunistic multiplexing,
-change the path to `~/.ssh/cm-%C`, expire idle masters after 10 minutes, and
-gracefully drain validated old masters without terminating active sessions.
-D5 is selected: explicitly set a 15-second connection timeout, alive count 3,
-future known-host hashing, and authenticated host-key updates. The decision
-audit was reopened before execution: the owner withdrew `ControlPersist 10m`
-and selected alphabetic directive ordering, then selected current indefinite
-`ControlPersist yes` with the new `%C` path. No target changed. The decision
-audit is complete, the owner gave explicit `go`, and execution began from
-clean/current public main `f654a374311ca2bb62c65c4b4aa5b514eebdc547` with
-only the plan/ledger checkpoint uncommitted. The task branch now implements the
-frozen canonical defaults, alphabetic directive enforcement, and operator
-documentation. Whitespace, layout, Mac SSH sync, Mac plan/doctor, and SSH
-mirror tests pass. No live SSH file has changed. Next: checkpoint the
-implementation, run full phase-one validation from a clean commit, then publish
-before touching any live SSH fragment.
+**Phase:** interviewing. PR #274 published the reviewed default policy as
+`5897e24896e4f75fde6f75522e75d8879c899399`; full local and protected
+phase-one validation pass and all remote repositories are synchronized.
+Selected defaults retain global agent forwarding, global trusted X11 with the
+existing exclusions, automatic key addition, opportunistic `%C`
+multiplexing with indefinite persistence, alphabetic directives, alive count
+3, future known-host hashing, and authenticated host-key updates. The complete
+decision register, failures, transactions, rollback state, and acceptance
+gates are in `docs/plans/t301-ssh-defaults-review.md`.
 
-Implementation checkpoint `c368b60` passed the complete phase-one suite from a
-clean checkout. Next: publish through protected CI and guarded-sync the exact
-merge before any live SSH rollout.
-
-PR #274 protected run `29975574360` failed only in the unchanged Mac watchdog
-signal-cleanup timing test after its five-second wait; every T-301-focused
-surface passed. The supervisor suite immediately passed standalone and had
-passed in the complete local run. Retry is safe; no live state changed. Next:
-checkpoint this evidence to trigger a fresh protected run. Stop before rollout
-if the same failure repeats.
-
-Fresh protected run `29975671674` passed; PR #274 merged as `5897e248` and all
-remote repositories synchronized. Local transaction
-`20260723T030031Z-3024814` applied and validated, then 16 old masters received
-non-terminating `-O stop`. `ab` transaction `20260723T030342Z-541548` applied,
-but its first fresh non-multiplexed probe timed out through the proxy. Both
-Local and `ab` were exactly rolled back; no other live fragment changed. The
-route was intermittent even after rollback, and three old Local mux sockets
-remain for active clients. Next: run matched read-only route probes and revise
-the sequence to validate new paths before draining old masters. Do not resume
-live rollout until the failure is classified.
-
-Three matched rollback-state `ab` probes passed in 3, 0, and 1 seconds. The
-sequence is revised to validate all new paths before draining old masters. A
-Local retry apply then refused the dirty ledger checkout as designed; no live
-state changed. Next: push this checkpoint on a task branch, return to clean
-merged main, and retry only Local.
+The safer live sequence has applied and validated Local, `ab`, `ab2`, `ri`,
+`al`, `rc`, and `t4`; exact transaction IDs are in the plan and old masters
+remain untouched after the retry. `abq` timed out during proxy banner exchange
+before apply began, so it and all Macs remain unchanged. A 30-second override
+reached `abq` in 11 seconds and two subsequent probes passed on each ABQ route.
+D5 is reopened only for the timeout value. Recommended: global
+`ConnectTimeout 30`, retaining a bounded portable default without private
+exceptions. Execution is paused for this one owner decision.
 
 ### T-196 — Backup lifecycle phase 2
 

@@ -118,7 +118,7 @@ Host *
 | D3 | Automatic key addition | Owner selected current `yes`, retaining the agent's default lifetime for automatically added keys | An eight-hour lifetime, manual loading, and per-use confirmation were rejected in favor of minimum intervention | **selected: `yes`** |
 | D4 | Multiplex policy | Owner selected `ControlMaster auto`, `ControlPath ~/.ssh/cm-%C`, `ControlPersist yes`, and graceful old-master drain with `-O stop` | Ten-minute persistence was withdrawn; explicit/default `no` was rejected because the owner prefers indefinite reuse | **selected: `%C`, indefinite** |
 | D6 | Directive ordering | Sort directives alphabetically within every managed stanza while preserving stanza order | No semantic change; makes review and future additions predictable | **selected: alphabetical** |
-| D5 | Deterministic fail-fast/privacy defaults | Owner selected `ConnectTimeout 15`, `ServerAliveCountMax 3`, `HashKnownHosts yes`, and `UpdateHostKeys yes` | Omitting the setup timeout or retaining OS-dependent defaults was rejected in favor of bounded, consistent behavior | **selected: full bundle** |
+| D5 | Deterministic fail-fast/privacy defaults | The selected full bundle remains, but live nested-route evidence requires revisiting `ConnectTimeout 15`; recommended replacement is global `30` | Keep 15 and accept repeated nested-route failures, use private host exceptions, or remove the timeout | **reopened: timeout only** |
 
 The decision audit found no unresolved choices or contradictions. D1–D3 and D4
 retain the owner's low-intervention defaults while `%C` removes readable,
@@ -235,3 +235,20 @@ refused the dirty ledger checkout with
 `SSH layout migration requires a clean committed checkout`; no live state
 changed. Next action: preserve this checkpoint on a pushed task branch, return
 to clean merged main, and retry only Local before any remote apply.
+
+The safer ordering succeeded for Local transaction
+`20260723T030937Z-3043593`: three fresh `ab` probes passed in one second each,
+and old masters were not drained. Transactions then applied and validated on
+`ab` (`20260723T031027Z-208556`), `ab2`
+(`20260723T031050Z-211604`), `ri` (`20260723T031119Z-3416259`), `al`
+(`20260723T031133Z-225268`), `rc` (`20260723T031141Z-2207960`), and `t4`
+(`20260723T031143Z-2096912`). `abq` failed during proxy banner exchange before
+apply emitted a transaction, so it and all four Macs remain unchanged.
+
+This second bounded timeout reopens only D5's 15-second value. A 30-second
+command-line override reached `abq` in 11 seconds, then two matched probes on
+each of `abq` and `abq2` passed in 4/1 and 4/0 seconds. The recommended revision
+is global `ConnectTimeout 30`: it remains fail-fast but accommodates the
+approved nested routes without private per-host exceptions. Execution is
+paused for the owner's choice; already validated nodes remain on the published
+policy and retain exact rollback transactions.
