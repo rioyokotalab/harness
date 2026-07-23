@@ -81,40 +81,16 @@ running. Official CSCS guidance reserves API-key authentication for separate
 service accounts and explicitly warns against setting `CSCS_API_KEY` globally.
 
 No supported configuration can make fresh personal-account connections
-authenticate indefinitely. The owner selected the hybrid design: reuse a live
-personal `al` transport where possible and add a separate service account for
-unattended automation while retaining personal MFA for interactive work. The
-frozen boundaries, conditional decisions, validation experiment, and official
-sources are in `docs/plans/t302-al-authentication.md`.
-
-The owner confirmed service-account eligibility but requires selected
-personal-home access. Read-only AL metadata shows the home is mode 0700 and the
-existing harness checkout has no named ACL, so the service identity currently
-has no route into it. CSCS supports targeted ACLs. Broad home access is
-rejected; next action is to select a dedicated automation checkout, the
-existing harness checkout only, or other exact home subtrees.
-
-The owner selected the existing `$HOME/harness` checkout and requested
-`$HOME/.*`, expecting future additions to remain possible. The checkout is an
-exact reviewable scope. The dotfile glob is rejected because it includes SSH,
-agent, Codex/Claude authentication, history, cache, snapshot, and unrelated
-private state. The repository installer already supports a layered model:
-canonical non-secret guidance, rules, skills, scripts, and documentation can
-be shared from the harness checkout through service-owned discovery links,
-while credentials and mutable client/runtime state remain account-local. The
-owner requires the service identity to edit the existing checkout and prefers
-a service-owned dotfile/state tree linked into the personal account. Writable
-cross-identity checkout access is now selected and will require inherited ACLs
-and explicit Git locking/ownership validation. The owner selected
-`.ssh/config` and `.ssh/config.d` as the first exact shared paths and requested
-symlinks. OpenSSH checks the resolved owner of both the root user config and
-every included file; a personal account therefore cannot use service-owned
-symlink targets. The owner is reconsidering the hybrid because its
-second-identity, ACL, Git-ownership, SSH synchronization, and API-key lifecycle
-cost may outweigh the convenience benefit. Nothing from this service-account
-design has been applied. Next action: decide whether to drop that branch and
-implement only personal-account transport reuse/status, accepting CSCS
-reauthentication after a real transport loss.
+authenticate indefinitely. The owner retired the proposed service-account,
+cross-account ACL, shared-checkout, and dotfile/state-sharing branch because
+its maintenance cost outweighed the convenience benefit; none of it was
+applied. The frozen design now keeps only the personal `al` account, reuses a
+long-lived authenticated master where possible, reports
+`renewal-required` without retrying or automating MFA, and accepts owner
+reauthentication after a real transport loss. The bounded expiry experiment,
+rollback, acceptance gates, and official sources are in
+`docs/plans/t302-al-authentication.md`. Interview complete; next action:
+wait for explicit `go`, then execute the frozen personal-only sequence.
 
 ### T-196 — Backup lifecycle phase 2
 
