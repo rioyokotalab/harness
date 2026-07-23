@@ -66,7 +66,7 @@ master persistence so future Linux aliases inherit the owner's
 low-intervention policy. Multiplex sockets use the fixed-length `%C` hash,
 which includes the local host, target, port, remote user, and jump route.
 
-Connection setup is bounded by `ConnectTimeout 15`; encrypted liveness uses
+Connection setup is bounded by `ConnectTimeout 30`; encrypted liveness uses
 `ServerAliveInterval 15` and explicit `ServerAliveCountMax 3`.
 `HashKnownHosts yes` applies to entries added in the future and does not rewrite
 existing files. `UpdateHostKeys yes` permits additional host keys only after
