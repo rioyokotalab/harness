@@ -478,11 +478,13 @@ docs/audits/restic-first-weekly-2026-07-19.md.
   validated, booted out, and exact-unlinked under rollback transaction
   `20260723T000453Z-46881`; all other Macs already lacked it. Final Mac state
   had zero helper/SSH/launchd staging candidates, zero unexpected watchdog
-  state, zero non-agent control sockets or mux processes, zero legacy
+  state, zero orphaned control sockets or mux processes, zero legacy
   keepalive agents, zero dead tmux panes, only the four active
   `harness-codex-resume` sessions, two launchd-managed tunnel processes per
-  Mac, and every retained agent socket held live. No key or authorization
-  content was read.
+  Mac, and every retained agent socket held live. Office's later private-sync
+  validation created one ordinary GitHub mux whose socket passed OpenSSH's own
+  control-protocol and owner checks; it was expected live state and was
+  preserved. No key or authorization content was read.
   Watchdog `.run-output.*` files observed during a run vanished normally and
   were not residue; completed/rolled transaction records remain as required
   rollback evidence. All four configs are canonical with zero redundant
