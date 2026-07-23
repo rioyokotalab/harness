@@ -157,7 +157,7 @@ ssh -o CanonicalizeHostname=no -G -F "$TEMP_DIR/effective-config" \
         END {
             suffix=p
             sub(/^.*\/cm-/, "", suffix)
-            exit a == "true" && c == 15 && m == "auto" &&
+            exit a == "true" && c == 30 && m == "auto" &&
                 p ~ /\/cm-[0-9a-f]+$/ && length(suffix) == 40 &&
                 x == "yes" && e == "no" && f == "yes" &&
                 h == "yes" && n == 3 && i == 15 && u == "true" ? 0 : 1

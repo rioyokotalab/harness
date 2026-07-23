@@ -81,7 +81,7 @@ The current target, subject to the remaining decision register, is:
    the path transition; this stops new multiplex requests without terminating
    existing multiplexed sessions. New masters use collision-resistant `%C`
    paths and persist indefinitely.
-5. Add `ConnectTimeout 15`, `ServerAliveCountMax 3`, `HashKnownHosts yes`, and
+5. Add `ConnectTimeout 30`, `ServerAliveCountMax 3`, `HashKnownHosts yes`, and
    `UpdateHostKeys yes` explicitly. The first bounds interactive connection
    setup; the remaining lines make the already intended liveness, privacy, and
    authenticated host-key-update behavior independent of OS defaults. Do not
@@ -96,7 +96,7 @@ The refrozen default block is therefore:
 ```sshconfig
 Host *
 	AddKeysToAgent yes
-	ConnectTimeout 15
+	ConnectTimeout 30
 	ControlMaster auto
 	ControlPath ~/.ssh/cm-%C
 	ControlPersist yes
@@ -118,7 +118,7 @@ Host *
 | D3 | Automatic key addition | Owner selected current `yes`, retaining the agent's default lifetime for automatically added keys | An eight-hour lifetime, manual loading, and per-use confirmation were rejected in favor of minimum intervention | **selected: `yes`** |
 | D4 | Multiplex policy | Owner selected `ControlMaster auto`, `ControlPath ~/.ssh/cm-%C`, `ControlPersist yes`, and graceful old-master drain with `-O stop` | Ten-minute persistence was withdrawn; explicit/default `no` was rejected because the owner prefers indefinite reuse | **selected: `%C`, indefinite** |
 | D6 | Directive ordering | Sort directives alphabetically within every managed stanza while preserving stanza order | No semantic change; makes review and future additions predictable | **selected: alphabetical** |
-| D5 | Deterministic fail-fast/privacy defaults | Owner selected `ConnectTimeout 15`, `ServerAliveCountMax 3`, `HashKnownHosts yes`, and `UpdateHostKeys yes` | Omitting the setup timeout or retaining OS-dependent defaults was rejected in favor of bounded, consistent behavior | **selected: full bundle** |
+| D5 | Deterministic fail-fast/privacy defaults | Owner selected the full bundle with global `ConnectTimeout 30`; matched live probes showed that 30 seconds accommodates the approved nested ABQ routes while remaining bounded | Keep 15 and accept repeated nested-route failures, use private host exceptions, or remove the timeout were rejected | **selected: global `30`** |
 
 The decision audit found no unresolved choices or contradictions. D1–D3 and D4
 retain the owner's low-intervention defaults while `%C` removes readable,
@@ -213,3 +213,56 @@ complete local phase-one run had also passed it, so retry is safe and no live
 state was touched. This task will checkpoint the failure through normal Git and
 require a fresh protected run; a repeated failure would stop rollout and
 require separate diagnosis rather than being dismissed.
+
+The fresh protected run `29975671674` passed and PR #274 merged as
+`5897e24896e4f75fde6f75522e75d8879c899399`; all eleven remote repositories
+guarded-synced cleanly. Local transaction
+`20260723T030031Z-3024814` applied and passed effective-default checks. Sixteen
+validated old readable-path masters were sent `-O stop`; no process or socket
+was killed or unlinked. `ab` transaction `20260723T030342Z-541548` then applied,
+but the first fresh non-multiplexed `ab` probe failed with
+`Connection to UNKNOWN port 65535 timed out`. Local was exactly rolled back;
+after the proxied route recovered, `ab` was exactly rolled back too. No other
+live fragment changed. Retry is not yet authorized by evidence: the route was
+intermittent after rollback and old stopped proxy masters may still have active
+clients. Next action is read-only matched route probing, followed by a revised
+sequence that validates new paths before draining old masters.
+
+Three matched rollback-state `ab` probes then passed in 3, 0, and 1 seconds.
+The rollout sequence is revised to leave old masters untouched until every new
+fragment and route passes. A Local retry plan was clean, but apply correctly
+refused the dirty ledger checkout with
+`SSH layout migration requires a clean committed checkout`; no live state
+changed. Next action: preserve this checkpoint on a pushed task branch, return
+to clean merged main, and retry only Local before any remote apply.
+
+The safer ordering succeeded for Local transaction
+`20260723T030937Z-3043593`: three fresh `ab` probes passed in one second each,
+and old masters were not drained. Transactions then applied and validated on
+`ab` (`20260723T031027Z-208556`), `ab2`
+(`20260723T031050Z-211604`), `ri` (`20260723T031119Z-3416259`), `al`
+(`20260723T031133Z-225268`), `rc` (`20260723T031141Z-2207960`), and `t4`
+(`20260723T031143Z-2096912`). `abq` failed during proxy banner exchange before
+apply emitted a transaction, so it and all four Macs remain unchanged.
+
+This second bounded timeout reopened only D5's 15-second value. A 30-second
+command-line override reached `abq` in 11 seconds, then two matched probes on
+each of `abq` and `abq2` passed in 4/1 and 4/0 seconds. The recommended revision
+was global `ConnectTimeout 30`: it remains fail-fast but accommodates the
+approved nested routes without private per-host exceptions. The owner selected
+that revision. The plan is refrozen with no unresolved decisions; execution
+requires a fresh explicit `go` because D5 changed after the prior authorization.
+Already validated nodes remain on the published 15-second policy and retain
+exact rollback transactions.
+
+The owner then selected global `ConnectTimeout 30` and issued a fresh `go`.
+The canonical fragment, documentation, and effective-policy test were updated
+in commit `afd0562`. The focused layout, mirror, macOS SSH-sync, and macOS
+supervisor tests passed independently, followed by a complete local
+`tests/test-phase1.sh` pass. Protected run `29976860740` failed only the
+unchanged watchdog signal timing assertion in
+`test-personal-macos-ssh-supervisor.sh`; every SSH-layout assertion passed.
+This is the same previously observed CI-only race and is unrelated to the
+three-line timeout correction. A normal ledger checkpoint push will obtain a
+fresh protected run; no workflow dispatch or live rollout occurs before that
+run passes.
