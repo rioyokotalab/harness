@@ -62,8 +62,9 @@ Next free ID: T-303.
   deletion.
 - Whenever owner input or approval is requested, or a task completes, report a
   fresh compact health snapshot for every managed Linux node and all four Mac
-  route pairs. Omit `abci_login` and `alps_login` unless a task targets
-  those transports.
+  route pairs. Count abq as Linux and mark it ready only when both abq and abq2
+  routes pass; do not include that pair in the Mac total. Omit `abci_login` and
+  `alps_login` unless a task targets those transports.
 
 ## Next resume checkpoint
 
