@@ -86,8 +86,13 @@ before apply began, so it and all Macs remain unchanged. A 30-second override
 reached `abq` in 11 seconds and two subsequent probes passed on each ABQ route.
 The owner selected global `ConnectTimeout 30` for D5, retaining a bounded
 portable default without private exceptions. The plan is refrozen with no
-unresolved decisions. Execution is paused for a fresh explicit `go` because
-this selection changes the previously authorized frozen plan.
+unresolved decisions and the owner issued a fresh `go`. Commit `afd0562`
+updates the canonical fragment, documentation, and effective-policy test; all
+focused tests and the complete local phase-one suite pass. Protected run
+`29976860740` failed only the unchanged macOS supervisor watchdog timing race,
+the same CI-only failure previously observed during T-301. A normal ledger
+checkpoint push will trigger a fresh protected run; live rollout remains
+paused until it passes.
 
 ### T-196 — Backup lifecycle phase 2
 

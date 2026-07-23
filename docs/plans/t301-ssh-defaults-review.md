@@ -254,3 +254,15 @@ that revision. The plan is refrozen with no unresolved decisions; execution
 requires a fresh explicit `go` because D5 changed after the prior authorization.
 Already validated nodes remain on the published 15-second policy and retain
 exact rollback transactions.
+
+The owner then selected global `ConnectTimeout 30` and issued a fresh `go`.
+The canonical fragment, documentation, and effective-policy test were updated
+in commit `afd0562`. The focused layout, mirror, macOS SSH-sync, and macOS
+supervisor tests passed independently, followed by a complete local
+`tests/test-phase1.sh` pass. Protected run `29976860740` failed only the
+unchanged watchdog signal timing assertion in
+`test-personal-macos-ssh-supervisor.sh`; every SSH-layout assertion passed.
+This is the same previously observed CI-only race and is unrelated to the
+three-line timeout correction. A normal ledger checkpoint push will obtain a
+fresh protected run; no workflow dispatch or live rollout occurs before that
+run passes.
