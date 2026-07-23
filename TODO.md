@@ -138,7 +138,9 @@ requires receipt-and-marker-validated stale-socket cleanup in the runner before
 the live drill is repeated. That cleanup and restart-window status handling are
 now implemented locally. The focused suite passes matched cleanup,
 mismatched-marker preservation, and stale-socket `retrying` coverage; full and
-protected validation remain before the next live drill.
+protected validation remain before the next live drill. Managed stop also
+removes only the same safe, unusable receipt-matched socket after stopping the
+marked unit, and its focused rollback fixture passes.
 
 ### T-196 — Backup lifecycle phase 2
 

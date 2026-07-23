@@ -241,7 +241,9 @@ case "$command_name" in
             unlink "$HOME/.ssh/fake-unit"
         ;;
     stop)
-        if [ -f "$HOME/.ssh/cm-al.pid" ] &&
+        if [ -f "$HOME/.ssh/leave-stale-on-stop" ]; then
+            :
+        elif [ -f "$HOME/.ssh/cm-al.pid" ] &&
             [ -S "$HOME/.ssh/cm-al" ]; then
             "$FAKE_SSH_COMMAND" -O stop al >/dev/null 2>&1
         elif [ -f "$HOME/.ssh/cm-al.pid" ]; then
@@ -627,6 +629,29 @@ stale_stopped=$(run_harness "$stale_home" --stop)
 [ ! -e "$stale_home/.ssh/fake-unit" ] &&
     [ ! -e "$stale_home/.ssh/.harness-al-session.state" ] ||
     fail "schema-2 stale stop residue"
+
+stale_socket_home=$(new_home stale-socket-stop)
+printf '%s\n' success >"$TEST_ROOT/ssh-mode"
+run_harness "$stale_socket_home" --start >/dev/null
+stale_socket_pid=$(sed -n '1p' "$stale_socket_home/.ssh/cm-al.pid")
+printf '%s\n' yes >"$stale_socket_home/.ssh/master-unusable"
+printf '%s\n' yes >"$stale_socket_home/.ssh/leave-stale-on-stop"
+sed -i 's/^active=.*/active=activating/; s/^sub=.*/sub=auto-restart/' \
+    "$stale_socket_home/.ssh/fake-unit"
+stale_socket_stopped=$(run_harness "$stale_socket_home" --stop)
+[ "$stale_socket_stopped" = \
+    'AL_SESSION mode=stop target=absent ownership=managed jump=ready action=stopped' ] ||
+    fail "schema-2 stale-socket stop"
+[ ! -e "$stale_socket_home/.ssh/cm-al" ] &&
+    [ ! -L "$stale_socket_home/.ssh/cm-al" ] &&
+    [ ! -e "$stale_socket_home/.ssh/fake-unit" ] &&
+    [ ! -e "$stale_socket_home/.ssh/.harness-al-session.state" ] ||
+    fail "schema-2 stale-socket stop residue"
+kill "$stale_socket_pid"
+wait "$stale_socket_pid" 2>/dev/null || true
+unlink "$stale_socket_home/.ssh/cm-al.pid"
+unlink "$stale_socket_home/.ssh/master-unusable"
+unlink "$stale_socket_home/.ssh/leave-stale-on-stop"
 
 collision_home=$(new_home collision)
 printf '%s\n' success >"$TEST_ROOT/ssh-mode"

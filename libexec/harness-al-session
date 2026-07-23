@@ -319,6 +319,23 @@ remove_marked_unit() {
     die "AL session marked unit did not unload"
 }
 
+remove_receipt_stale_socket() {
+    if [ ! -e "$control_path" ] && [ ! -L "$control_path" ]; then
+        return
+    fi
+    master_ready al &&
+        die "AL session control path became usable during marked-unit stop"
+    [ -S "$control_path" ] && [ ! -L "$control_path" ] &&
+        [ "$(stat_owner "$control_path")" = "$uid" ] ||
+        die "AL session stale control path is unsafe"
+    case $(stat_links "$control_path") in
+        1|2) ;;
+        *) die "AL session stale control path link count is unsafe" ;;
+    esac
+    unlink "$control_path" ||
+        die "AL session stale control path refused removal"
+}
+
 jump_state() {
     if master_ready alps_login; then
         printf 'ready\n'
@@ -357,6 +374,7 @@ if [ "$mode" = stop ]; then
         { [ "$ownership" = managed ] || [ "$ownership" = stale ]; }; then
         stopped_ownership=$ownership
         remove_marked_unit
+        remove_receipt_stale_socket
         [ ! -e "$control_path" ] && [ ! -L "$control_path" ] ||
             die "AL session control path remained after marked-unit stop"
         unlink "$state_file"

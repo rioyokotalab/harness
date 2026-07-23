@@ -169,5 +169,8 @@ to exact-unlink only a safe, unusable socket whose schema-2 receipt marker and
 control path match that runner generation. That recovery and restart-window
 status handling are now implemented; the focused suite passes with matched
 cleanup, mismatched-marker preservation, and stale-socket `retrying` coverage.
-Commit the correction, rerun the complete phase-one and protected checks, then
-repeat the exact `KILL` drill.
+Managed stop now also removes only that same safe, unusable receipt-matched
+socket after stopping the marked unit, so a rollback during the retry window
+returns to absent state. The focused stop fixture passes. Commit the
+correction, rerun the complete phase-one and protected checks, then repeat the
+exact `KILL` drill.
