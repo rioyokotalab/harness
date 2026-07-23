@@ -1,0 +1,80 @@
+#!/bin/sh
+set -eu
+
+usage() {
+    echo "Usage: harness-al-session-runner /absolute/path/to/ssh" >&2
+}
+
+[ "$#" -eq 1 ] || {
+    usage
+    exit 78
+}
+ssh_command=$1
+case "$ssh_command" in
+    /*) ;;
+    *) exit 78 ;;
+esac
+[ -x "$ssh_command" ] || exit 78
+case ${HOME:-} in
+    /*) ;;
+    *) exit 78 ;;
+esac
+
+for required in chmod grep id mktemp stat unlink; do
+    command -v "$required" >/dev/null 2>&1 || exit 78
+done
+
+uid=$(id -u)
+ssh_root=$HOME/.ssh
+stat_owner() { stat -Lc '%u' -- "$1"; }
+stat_mode() { stat -Lc '%a' -- "$1"; }
+stat_links() { stat -Lc '%h' -- "$1"; }
+
+[ -d "$HOME" ] && [ ! -L "$HOME" ] &&
+    [ "$(stat_owner "$HOME")" = "$uid" ] || exit 78
+[ -d "$ssh_root" ] && [ ! -L "$ssh_root" ] &&
+    [ "$(stat_owner "$ssh_root")" = "$uid" ] || exit 78
+ssh_root_mode=$(stat_mode "$ssh_root")
+case "$ssh_root_mode" in
+    *[2367][0-7]|*[0-7][2367]) exit 78 ;;
+esac
+
+private_log=
+cleanup() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ -n "$private_log" ] &&
+        [ -f "$private_log" ] && [ ! -L "$private_log" ] &&
+        [ "$(stat_owner "$private_log")" = "$uid" ] &&
+        [ "$(stat_links "$private_log")" = 1 ]; then
+        unlink "$private_log" || status=78
+    fi
+    exit "$status"
+}
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+umask 077
+private_log=$(mktemp "$ssh_root/.harness-al-session.log.XXXXXX") || exit 78
+chmod 600 "$private_log" || exit 78
+
+set +e
+"$ssh_command" -o BatchMode=yes -o ConnectionAttempts=1 \
+    -o ControlPersist=no -M -N al </dev/null >/dev/null 2>"$private_log"
+ssh_status=$?
+set -e
+
+[ "$ssh_status" -ne 0 ] || exit 0
+if grep -Eiq \
+    'permission denied|authentication failed|no supported authentication|certificate.*(expired|invalid)' \
+    "$private_log"; then
+    exit 77
+fi
+if grep -Eiq \
+    'bad configuration option|terminating, [0-9]+ bad configuration options|command-line line [0-9]+:|percent_expand:|controlpath too long|identity file .* not accessible|no such identity' \
+    "$private_log"; then
+    exit 78
+fi
+exit 75

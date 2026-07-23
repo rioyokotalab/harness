@@ -73,11 +73,12 @@ Next free ID: T-303.
 
 ### T-302 — Reduce AL authentication intervention
 
-**Phase:** monitoring/time-gated. CSCS requires personal SSH keys to be
-CSCS-signed and limits personal certificates to one day. The owner rejected
-the higher-complexity service-account/ACL/shared-state design; none of it was
-applied. The selected personal-only design accepts reauthentication after a
-real transport loss and never signs, renews, lists, or exposes credentials.
+**Phase:** executing (restart-resilience extension). CSCS requires personal
+SSH keys to be CSCS-signed and limits personal certificates to one day. The
+owner rejected the higher-complexity service-account/ACL/shared-state design;
+none of it was applied. The selected personal-only design accepts
+reauthentication after a real transport loss and never signs, renews, lists,
+or exposes credentials.
 
 `harness al-session` now provides value-free status, one non-interactive start
 attempt, authentication-vs-availability classification, socket-identity
@@ -96,14 +97,29 @@ were healthy, and every monitored route pair was 2/2. Implementation and
 rollout are complete. Full evidence, rollback, and official sources are in
 `docs/plans/t302-al-authentication.md`.
 
-Next action is time-gated: on or after 2026-07-24 15:10 JST, do not replace the
-master; verify managed status, run one multiplexed `ssh al true`, then run one
-private-logged forced-fresh non-multiplexed probe. Multiplexed success plus
-fresh authentication-required proves reuse across the certificate boundary.
-If the master changed, record availability failure; if fresh access succeeds,
-the experiment was invalidated by renewal or timing and must be rescheduled.
-The exact privacy and classification procedure is in
-`docs/plans/t302-al-authentication.md`.
+The time-gated experiment was invalidated before its gate: the managed SSH
+process exited 255 at 2026-07-23 22:35 JST after 7.5 hours, and its transient
+unit had `Restart=no`. No recovery ran while fresh authentication was still
+available; by morning, the absent session correctly required renewal. The
+transport's private output was null, so the exact network/server cause is
+unknown. Certificate expiry itself does not terminate an established session.
+
+The restart-resilience extension is planned in
+`docs/plans/t302-al-session-resilience.md`. It preserves personal MFA and adds
+value-free exit classification, automatic retry only for transport failures,
+restart-aware marked-unit ownership, focused/full tests, one live restart
+drill, protected publication, and guarded fleet sync. The owner selected
+indefinite 60-second retries for classified availability failures, with
+immediate stop on authentication or permanent local errors. The owner gave
+explicit `go` at 2026-07-24 06:30 JST; execution begins with failing focused
+fixtures. The tracked value-free runner, 60-second restart policy, schema-2
+marked-unit receipt, restart-aware status/stop behavior, terminal failure
+classification, and focused fixtures are implemented locally. The focused
+suite passes, including a replacement socket, non-restarting authentication
+and permanent failures, schema-1 compatibility, and marker-collision refusal.
+A disposable user-systemd probe independently accepted the exact restart
+properties. Static/full validation, protected publication, the live AL restart
+drill, merge, and guarded fleet synchronization remain.
 
 ### T-196 — Backup lifecycle phase 2
 
