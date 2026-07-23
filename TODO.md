@@ -99,8 +99,16 @@ test, live read-only status, `git diff --check`, public repository audit,
 source contract, all 68 focused shards, and the complete phase-1 suite pass;
 only the suite's documented undeclared-environment native MPI smoke was
 skipped. Git transport and the hosting API are independently ready. Next
-action: publish through protected `main`, then run the live
-start/rollback/reapply drill and record the expiry-boundary checkpoint.
+action: PR #277 passed protected CI and merged as `30328e3`. The first live
+start failed safely because Local's valid OpenSSH socket has link count 2
+rather than the fixture's assumed 1; rollback removed the master, receipt, and
+private log. A follow-up now accepts only link count 1 or 2 while preserving
+all other socket and receipt identity checks, with a two-link regression case.
+The corrected live drill passed managed start, status, real multiplexed command
+reuse, receipt-matched stop, clean absent status, and reapply. The `al` and
+`alps_login` masters are now ready. Next: run the complete suite and publish
+the correction, synchronize clean fleet checkouts, and record the
+expiry-boundary checkpoint.
 
 ### T-196 — Backup lifecycle phase 2
 

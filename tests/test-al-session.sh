@@ -243,6 +243,9 @@ external_home=$(new_home external)
 HOME="$external_home" FAKE_SSH_MODE_FILE="$TEST_ROOT/ssh-mode" \
     FAKE_SOCKET_DAEMON="$TEST_ROOT/socket-daemon.py" \
     PATH="$fake_bin:/usr/bin:/bin" ssh -MNf al
+ln "$external_home/.ssh/cm-al" "$external_home/.ssh/cm-al.second-link"
+[ "$(stat -c %h "$external_home/.ssh/cm-al")" = 2 ] ||
+    fail "two-link socket fixture"
 external=$(run_harness "$external_home" --status)
 [ "$external" = \
     'AL_SESSION mode=status target=ready ownership=external jump=ready action=none' ] ||
@@ -253,6 +256,7 @@ fi
 grep -F 'refusing to stop an AL master not created by this helper' \
     "$TEST_ROOT/external-stop.out" >/dev/null || fail "external stop refusal"
 stop_fixture_master "$external_home"
+unlink "$external_home/.ssh/cm-al.second-link"
 
 unsafe_home=$(new_home unsafe)
 printf '%s\n' unsafe >"$unsafe_home/receipt-target"

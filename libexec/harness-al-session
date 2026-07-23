@@ -139,7 +139,7 @@ master_ready() {
 socket_is_safe() {
     [ -S "$control_path" ] && [ ! -L "$control_path" ] &&
         [ "$(stat_owner "$control_path")" = "$uid" ] &&
-        [ "$(stat_links "$control_path")" = 1 ]
+        case $(stat_links "$control_path") in 1|2) true ;; *) false ;; esac
 }
 
 receipt_state=absent

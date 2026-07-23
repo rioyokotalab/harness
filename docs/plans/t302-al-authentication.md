@@ -222,6 +222,20 @@ Checkpoint:
   MPI smoke was skipped.
 - Git transport and the hosting API are independently available. The complete
   branch diff passes `git diff --check`.
+- PR #277 passed protected CI and merged as
+  `30328e3f576e399d0b3b22e9d3cb3ba6a5a4a618`.
+- The first live start safely failed its post-start check and rolled back
+  completely: no master, receipt, or private log remained. Direct
+  transactional reproduction showed a valid current-user mode-0600 Unix
+  control socket with link count 2 on Local's home filesystem. The original
+  fixture assumed link count 1. The correction accepts only 1 or 2 while
+  retaining real-socket, non-symlink, current-owner, contained-path, and
+  device/inode receipt checks; a two-link socket regression is added.
+- The corrected live drill passed: managed start, value-free status, a real
+  multiplexed `al true`, receipt-matched graceful stop, clean absent status,
+  re-start, and final managed status. The current `al` master is ready and
+  managed by the helper; the `alps_login` master remains ready.
 
-Next: publish through the protected-main pull-request workflow, then perform
-the live start/rollback/reapply drill and record the expiry-boundary checkpoint.
+Next: run the complete suite and publish the filesystem-semantics correction,
+then synchronize clean fleet checkouts and record the expiry-boundary
+checkpoint.
