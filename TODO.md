@@ -105,9 +105,12 @@ while credentials and mutable client/runtime state remain account-local. The
 owner requires the service identity to edit the existing checkout and prefers
 a service-owned dotfile/state tree linked into the personal account. Writable
 cross-identity checkout access is now selected and will require inherited ACLs
-and explicit Git locking/ownership validation. Next action: freeze whether
-Codex/Claude credentials remain account-local while exact non-secret
-configuration and concurrency-safe state paths are selected individually.
+and explicit Git locking/ownership validation. The owner selected
+`.ssh/config` and `.ssh/config.d` as the first exact shared paths and requested
+symlinks. OpenSSH checks the resolved owner of both the root user config and
+every included file; a personal account therefore cannot use service-owned
+symlink targets. Next action: decide whether to use service-owned canonical
+SSH configuration sources with atomic synchronized, account-owned live copies.
 
 ### T-196 — Backup lifecycle phase 2
 

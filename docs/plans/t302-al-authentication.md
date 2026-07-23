@@ -72,6 +72,13 @@ can survive host, network, process, or site-enforced disconnection.
   repository access as a requirement, but not a blanket link of either
   account's hidden directories. The exact shared paths and concurrency
   contracts remain open.
+- The owner named `.ssh/config` and `.ssh/config.d` as the first exact shared
+  paths and requested symlinks. OpenSSH resolves a configuration symlink,
+  checks the opened target with `fstat`, and rejects it unless the target is
+  owned by the invoking user or root and is not group/world writable. It
+  applies the same ownership check to every user `Include` file. Therefore one
+  service-owned target cannot be the live user configuration for a different
+  Unix account. Directory ACLs do not change that target UID check.
 
 ## Evidence and interpretation
 
@@ -82,6 +89,10 @@ Primary sources:
   <https://docs.cscs.ch/access/service-accounts/>
 - CSCS MFA guide: <https://docs.cscs.ch/access/mfa/>
 - CSCS storage/ACL guide: <https://docs.cscs.ch/guides/storage/>
+- OpenBSD `ssh_config(5)`:
+  <https://man.openbsd.org/OpenBSD-current/man5/ssh_config>
+- OpenSSH portable `readconf.c`:
+  <https://github.com/openssh/openssh-portable/blob/master/readconf.c>
 - Local OpenSSH client behavior and `cscs-key sign --help`
 
 Adopt:
@@ -156,6 +167,13 @@ Use a hybrid design when the owner needs both interactive and unattended work:
    Add mutable shared state later only as a dedicated exact directory with a
    defined owner, permissions, locking contract, and rollback. Never share or
    symlink entire `.ssh`, `.codex`, `.claude`, `.config`, or `.local` trees.
+8. For SSH client configuration, keep service-owned canonical source bytes but
+   materialize synchronized real files separately for each account. Each live
+   `.ssh/config` and included `.ssh/config.d/*` file must be owned by that
+   account (or root) and not group/world writable. Validate exact source parity,
+   effective `ssh -G` output for both identities, atomic replacement, and
+   rollback. A shared writable symlink target is not an OpenSSH-compatible
+   implementation.
 
 The personal helper improves convenience but cannot promise permanent access.
 The service-account route can remove routine human authentication for
@@ -170,7 +188,7 @@ automatically preserve the personal home-based workflow.
 | D2 | Service-account eligibility and base scope | Owner confirmed service-account eligibility and requires selected personal-home access in addition to project resources | Project-only access was rejected because the unattended workflow needs personal-home content | **selected: personal-home required** |
 | D2a | Exact personal-home subtree | Owner selected the existing `$HOME/harness` checkout; execute-only traversal on the home and no sibling access remain required | A dedicated checkout was recommended; other exact paths may be added later | **selected: existing harness** |
 | D2b | Harness checkout access | Owner requires the service identity to edit the existing `$HOME/harness` checkout | This requires inherited ACLs plus Git worktree/index locking and ownership validation; read-only access was rejected | **selected: writable** |
-| D2c | Symlinked dotfile/state scope | Use a service-owned canonical tree and link only exact non-secret configuration or explicitly concurrency-safe state paths into the personal account | Linking whole `.ssh`, `.codex`, `.claude`, `.config`, or `.local` trees would merge credentials, identity state, locks, caches, and unrelated private state and is rejected | **open** |
+| D2c | SSH configuration sharing | Owner selected exact paths `.ssh/config` and `.ssh/config.d`; use service-owned canonical sources with synchronized account-owned live copies | Direct symlinks to one service-owned target fail OpenSSH's resolved-owner check; root-owned symlink targets would prevent direct service-account editing | **open: implementation** |
 | D3 | API-key secret surface | If a service account is selected, use an owner-approved non-repository secret mechanism and a path/value-pass contract that the agent never reads | Global environment or shell startup storage is rejected | **conditional** |
 
 Ask exactly one open decision at a time. Ask D2c next, then D3 after the exact
@@ -234,6 +252,6 @@ Acceptance requires:
 
 ## Next action
 
-Ask D2c: whether Codex/Claude credentials and authentication must remain
-account-local while non-secret configuration and selected session/workflow
-state are considered individually for service-owned canonical symlinks.
+Ask D2c: whether to preserve the owner's canonical-edit requirement by using
+service-owned SSH configuration sources with atomic synchronized account-owned
+live copies instead of incompatible cross-owner symlinks.
