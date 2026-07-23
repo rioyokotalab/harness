@@ -241,3 +241,17 @@ active since 2026-07-24 07:48:52 JST. Commit this evidence, pass the final
 protected documentation check, merge PR #282 without replacing the live
 working-tree runner inode, then guarded-sync the fleet. Reschedule the
 certificate-boundary observation no earlier than 2026-07-25 07:50 JST.
+
+PR #282 merged as `b5c4c7854e1b291531928a8b77c14b27e6c3b126`.
+Local `main` advanced through an exact tree-identical ref transition, so the
+live runner inode was not replaced. Guarded fleet sync advanced all 11 remote
+checkouts from `7965d4190e4cf3faa6f2f8ea685cef750207ff86` to the merged
+revision. The verification plan reported clean `KEEP`, aligned `origin/main`,
+and absent transfer artifacts everywhere. Local remains clean, the AL unit is
+managed and active/running with `NRestarts=1`, and no repository `.nfs…`
+placeholder exists.
+
+Implementation, protected publication, live crash acceptance, cleanup, and
+fleet rollout are complete. The only remaining evidence is the non-disruptive
+certificate-boundary observation no earlier than 2026-07-25 07:50 JST. Do not
+replace the marked master for that observation.
