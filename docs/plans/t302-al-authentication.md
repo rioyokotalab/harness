@@ -79,6 +79,10 @@ can survive host, network, process, or site-enforced disconnection.
   applies the same ownership check to every user `Include` file. Therefore one
   service-owned target cannot be the live user configuration for a different
   Unix account. Directory ACLs do not change that target UID check.
+- After seeing the required second-identity, ACL, Git-ownership, SSH
+  configuration, and secret-lifecycle machinery, the owner questioned whether
+  eliminating daily authentication is worth the operational complexity. No
+  service-account or cross-account configuration has been applied.
 
 ## Evidence and interpretation
 
@@ -188,11 +192,12 @@ automatically preserve the personal home-based workflow.
 | D2 | Service-account eligibility and base scope | Owner confirmed service-account eligibility and requires selected personal-home access in addition to project resources | Project-only access was rejected because the unattended workflow needs personal-home content | **selected: personal-home required** |
 | D2a | Exact personal-home subtree | Owner selected the existing `$HOME/harness` checkout; execute-only traversal on the home and no sibling access remain required | A dedicated checkout was recommended; other exact paths may be added later | **selected: existing harness** |
 | D2b | Harness checkout access | Owner requires the service identity to edit the existing `$HOME/harness` checkout | This requires inherited ACLs plus Git worktree/index locking and ownership validation; read-only access was rejected | **selected: writable** |
-| D2c | SSH configuration sharing | Owner selected exact paths `.ssh/config` and `.ssh/config.d`; use service-owned canonical sources with synchronized account-owned live copies | Direct symlinks to one service-owned target fail OpenSSH's resolved-owner check; root-owned symlink targets would prevent direct service-account editing | **open: implementation** |
+| D2c | SSH configuration sharing | Owner selected exact paths `.ssh/config` and `.ssh/config.d`; use service-owned canonical sources with synchronized account-owned live copies | Direct symlinks to one service-owned target fail OpenSSH's resolved-owner check; root-owned symlink targets would prevent direct service-account editing | **paused pending D4** |
 | D3 | API-key secret surface | If a service account is selected, use an owner-approved non-repository secret mechanism and a path/value-pass contract that the agent never reads | Global environment or shell startup storage is rejected | **conditional** |
+| D4 | Complexity reassessment | Drop the service-account branch and implement only personal transport reuse/status, accepting CSCS reauthentication after a real transport loss | Continuing the hybrid can remove routine MFA for automation but retains the full second-identity maintenance surface | **open** |
 
-Ask exactly one open decision at a time. Ask D2c next, then D3 after the exact
-home scope is frozen.
+Ask exactly one open decision at a time. Ask D4 next. Resume D2c and D3 only if
+the owner retains the service-account branch.
 
 ## Frozen execution sequence after interview and explicit go
 
@@ -252,6 +257,5 @@ Acceptance requires:
 
 ## Next action
 
-Ask D2c: whether to preserve the owner's canonical-edit requirement by using
-service-owned SSH configuration sources with atomic synchronized account-owned
-live copies instead of incompatible cross-owner symlinks.
+Ask D4: whether to drop the service-account branch and keep only the simple
+personal-account transport-reuse/status improvement.

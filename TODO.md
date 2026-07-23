@@ -109,8 +109,12 @@ and explicit Git locking/ownership validation. The owner selected
 `.ssh/config` and `.ssh/config.d` as the first exact shared paths and requested
 symlinks. OpenSSH checks the resolved owner of both the root user config and
 every included file; a personal account therefore cannot use service-owned
-symlink targets. Next action: decide whether to use service-owned canonical
-SSH configuration sources with atomic synchronized, account-owned live copies.
+symlink targets. The owner is reconsidering the hybrid because its
+second-identity, ACL, Git-ownership, SSH synchronization, and API-key lifecycle
+cost may outweigh the convenience benefit. Nothing from this service-account
+design has been applied. Next action: decide whether to drop that branch and
+implement only personal-account transport reuse/status, accepting CSCS
+reauthentication after a real transport loss.
 
 ### T-196 — Backup lifecycle phase 2
 
