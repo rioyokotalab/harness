@@ -88,37 +88,6 @@ Next free ID: T-309.
 
 ## Active tasks
 
-### T-308 — Recover a managed Mac after reboot
-
-**Phase:** validation. The shared `reboot-recovery` skill and deterministic
-Local-side helper are implemented for Aist, Home, Office, and Riken. The workflow
-must distinguish automatic tunnel recovery, owner-only user-session and Codex
-remote-control restoration, and Local-side tmux restoration. It must preserve
-pairing, require both independent routes before starting tmux, inspect no pane
-contents or credentials, and stop on dirty/divergent Git state, missing
-services, ambiguous process/session ownership, or route loss.
-
-Repository cleanup is outside recovery. In particular, the workflow must not
-remove, ignore, or specially classify `.DS_Store`; any dirty checkout is
-reported as a blocker for separate housekeeping.
-
-The skill validator, warning/error-level ShellCheck, focused suite, and live
-read-only Riken check pass. Riken reported routes 2/2, clean/current `main`,
-tunnels 2/2, watchdog ready, remote control ready, and tmux ready. The first
-complete phase-one run passed the new suite and every other shard except the
-tmux and terminfo fixtures, which intentionally refused the uncommitted dirty
-checkout. After committing, two eight-worker runs reproduced the repository's
-existing watchdog cleanup timing sensitivity; the fixture passed alone and
-the complete phase-one suite passed with one focused worker, including every
-focused shard and integration gate.
-
-Working files are `shared/skills/reboot-recovery/`,
-`tests/test-reboot-recovery-skill.sh`, `tests/focused-suites.tsv`,
-`tests/test-phase1.sh`, the two project skill-discovery links, and
-`docs/plans/t308-reboot-recovery-skill.md`. Next: publish through protected CI,
-guarded-sync the fleet, refresh the four Mac Codex contexts, and record
-acceptance.
-
 ### T-303 — Observe intermittent NFS I/O latency
 
 **Phase:** monitoring/time-gated. A read-only, non-sudo client monitor is
@@ -302,6 +271,17 @@ Evidence is in `docs/backup-lifecycle-phase2.md`, `docs/home-backup.md`, and
 
 ## Completed anchors
 
+- **T-308:** added the shared `reboot-recovery` skill and deterministic
+  Local-side helper in PR #306, merged as `9203033`. Recovery now separates
+  automatic launchd tunnel restoration, owner login and Codex remote-control
+  restart, and fail-closed Local tmux restoration. It preserves pairing,
+  requires both routes and clean/current Git, reads no pane contents or
+  credentials, and keeps all repository cleanup—including `.DS_Store`
+  removal—outside recovery. The skill validator, ShellCheck, focused suite,
+  complete phase-one suite, protected CI, guarded eleven-node fleet sync, and
+  four post-sync Mac context refreshes passed. Live status recognized Aist,
+  Home, Office, and Riken as fully ready. Evidence and boundaries are in
+  `docs/plans/t308-reboot-recovery-skill.md`.
 - **T-307:** published symmetric visible TUI messaging and reliable
   same-channel bounded requests in PRs #296–#302. Final implementation
   `4544f7ddd263c78d9a54d80be339be64636c399c` passed protected CI and fleet

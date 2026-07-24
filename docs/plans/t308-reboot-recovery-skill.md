@@ -34,15 +34,18 @@ preserving the existing SSH, Git, credential, and remote-control boundaries.
 5. Guarded fleet sync advances every clean managed checkout, followed by one
    context refresh for each managed Mac Codex session.
 
-## Current checkpoint
+## Acceptance result
 
-The skill validator, warning/error-level ShellCheck, focused fixtures, and a
-live read-only Riken status check pass. Riken was recognized with two routes,
-clean/current `main`, both tunnel services, watchdog, remote control, and a
-healthy detached tmux session. The first complete phase-one run passed the new
-suite; only the existing tmux and terminfo fixtures refused because they
-require a clean committed checkout. From the clean implementation commit, two
-eight-worker runs reproduced the existing watchdog cleanup timing sensitivity;
-that fixture passed independently and the complete phase-one suite passed with
-`HARNESS_TEST_JOBS=1`, including all focused shards and integration gates.
-Protected publication is next.
+PR #306 passed protected CI and merged as
+`9203033b3b2d21aab4f0538dfe534e20695d7140`. The skill validator,
+warning/error-level ShellCheck, focused fixtures, and complete phase-one suite
+passed. Two eight-worker local runs reproduced the existing watchdog cleanup
+timing sensitivity; that fixture passed independently and the authoritative
+complete suite passed with `HARNESS_TEST_JOBS=1`.
+
+Guarded fleet sync advanced all eleven clean remote checkouts with aligned
+`origin/main` and no transfer residue. Exactly one context-refresh instruction
+was submitted to each managed Mac Codex session. Final live status recognized
+Aist, Home, Office, and Riken with two routes, clean/current `main`, both
+tunnel services, watchdog, remote control, and a healthy detached tmux
+session. No recovery action removed or classified `.DS_Store`.
