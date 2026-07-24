@@ -207,7 +207,11 @@ Official Claude Code documentation establishes:
 - Alternative A: informational warning but continue working outside harness.
 - Alternative B: add a shell launcher guard that exits before the client
   starts, in addition to the sentinel.
-- Status: open.
+- Owner decision: use the minimal client instruction sentinels. When Codex or
+  Claude starts outside `~/harness`, it must immediately direct the owner to
+  restart from `~/harness` and refuse task work. Keep the client process open;
+  do not add a shell launcher guard.
+- Status: selected — refuse task work outside `~/harness`.
 
 ### D3 — Existing interactive sessions
 

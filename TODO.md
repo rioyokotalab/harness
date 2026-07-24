@@ -96,6 +96,9 @@ frozen and the owner gives an explicit `go`. D1 is frozen: credentials and
 mixed runtime state remain because project-scoped Codex and Claude still
 consume them; the owner's deletion authority was conditional on not affecting
 that operation.
+D2 is frozen: the minimal global sentinels refuse task work outside
+`~/harness`, explain where to restart, and leave the client process open; no
+shell launcher guard is added.
 
 ### T-302 — Reduce AL authentication intervention
 
