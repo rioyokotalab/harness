@@ -1,0 +1,289 @@
+#!/usr/bin/env python3
+"""Exchange bounded, identified prompts between managed Codex tmux sessions."""
+
+from __future__ import annotations
+
+import argparse
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+import uuid
+from dataclasses import dataclass
+from pathlib import Path
+
+
+MAX_MESSAGE_BYTES = 4096
+ALIAS_RE = re.compile(r"^[a-z][a-z0-9-]{0,31}$")
+PREFIX_RE = re.compile(r"^\[Agent: ([A-Za-z0-9_-]+) Codex\](?:\s|$)")
+TTY_RE = re.compile(r"^/dev/(?:pts/[0-9]+|ttys[0-9A-Za-z]+)$")
+
+
+class MessageError(RuntimeError):
+    pass
+
+
+@dataclass(frozen=True)
+class Pane:
+    identifier: str
+    dead: str
+    path: str
+    tty: str
+
+
+def executable(name: str) -> str:
+    result = shutil.which(name)
+    if result is None:
+        raise MessageError(f"required command is unavailable: {name}")
+    return result
+
+
+def run(
+    arguments: list[str],
+    *,
+    input_bytes: bytes | None = None,
+    timeout: int = 15,
+) -> subprocess.CompletedProcess[bytes]:
+    try:
+        return subprocess.run(
+            arguments,
+            input=input_bytes,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            timeout=timeout,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise MessageError("native command timed out") from exc
+
+
+def read_message(source: str) -> bytes:
+    if not ALIAS_RE.fullmatch(source):
+        raise MessageError("source alias is malformed")
+    message = sys.stdin.buffer.read(MAX_MESSAGE_BYTES + 1)
+    if len(message) > MAX_MESSAGE_BYTES:
+        raise MessageError("message exceeds the byte limit")
+    if not message or b"\0" in message:
+        raise MessageError("message is empty or contains a NUL byte")
+    try:
+        text = message.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise MessageError("message is not valid UTF-8") from exc
+    text = text.rstrip("\n")
+    if not text:
+        raise MessageError("message is empty")
+    prefix = PREFIX_RE.match(text)
+    if prefix is None or prefix.group(1).lower() != source:
+        raise MessageError("message does not identify the declared agent")
+    return text.encode("utf-8")
+
+
+def tmux_output(arguments: list[str]) -> str:
+    result = run([executable("tmux"), *arguments])
+    if result.returncode != 0:
+        raise MessageError("tmux preflight failed")
+    try:
+        return result.stdout.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise MessageError("tmux returned malformed text") from exc
+
+
+def exact_session(name: str) -> None:
+    sessions = tmux_output(["list-sessions", "-F", "#{session_name}"]).splitlines()
+    if sessions.count(name) != 1:
+        raise MessageError("target tmux session is absent or ambiguous")
+
+
+def list_panes(target: str, *, all_session: bool = False) -> list[Pane]:
+    arguments = ["list-panes"]
+    if all_session:
+        arguments.append("-s")
+    arguments.extend(
+        [
+            "-t",
+            target,
+            "-F",
+            "#{pane_id}\t#{pane_dead}\t#{pane_current_path}\t#{pane_tty}",
+        ]
+    )
+    rows = tmux_output(arguments).splitlines()
+    panes: list[Pane] = []
+    for row in rows:
+        fields = row.split("\t")
+        if len(fields) != 4:
+            raise MessageError("tmux pane metadata is malformed")
+        panes.append(Pane(*fields))
+    return panes
+
+
+def codex_processes(tty: str) -> int:
+    if not TTY_RE.fullmatch(tty):
+        return 0
+    result = run(
+        [executable("ps"), "-t", tty.removeprefix("/dev/"), "-o", "comm="]
+    )
+    if result.returncode != 0:
+        return 0
+    try:
+        commands = result.stdout.decode("utf-8").splitlines()
+    except UnicodeDecodeError:
+        return 0
+    return sum(command.strip() == "codex.real" for command in commands)
+
+
+def select_controller_pane() -> Pane:
+    session = "harness"
+    exact_session(session)
+    harness = str(Path.home() / "harness")
+    candidates = [
+        pane
+        for pane in list_panes(session, all_session=True)
+        if pane.dead == "0"
+        and pane.path == harness
+        and codex_processes(pane.tty) == 1
+    ]
+    if len(candidates) != 1:
+        raise MessageError("controller Codex pane is absent or ambiguous")
+    return candidates[0]
+
+
+def select_mac_pane(allow_attached: bool) -> Pane:
+    session = "harness-codex-resume"
+    exact_session(session)
+    if not allow_attached:
+        attached = tmux_output(
+            ["display-message", "-p", "-t", session, "#{session_attached}"]
+        ).strip()
+        if attached != "0":
+            raise MessageError("target Mac session is attached")
+    panes = list_panes(session)
+    harness = str(Path.home() / "harness")
+    candidates = [
+        pane
+        for pane in panes
+        if pane.dead == "0"
+        and pane.path == harness
+        and codex_processes(pane.tty) == 1
+    ]
+    if len(panes) != 1 or len(candidates) != 1:
+        raise MessageError("target Mac Codex pane is absent or ambiguous")
+    return candidates[0]
+
+
+def receive(source: str, target_role: str, allow_attached: bool) -> None:
+    message = read_message(source)
+    if target_role == "controller":
+        if allow_attached:
+            raise MessageError("--allow-attached is unnecessary for the controller")
+        pane = select_controller_pane()
+    else:
+        pane = select_mac_pane(allow_attached)
+    tmux = executable("tmux")
+    buffer_name = f"harness-agent-{uuid.uuid4().hex}"
+    loaded = run([tmux, "load-buffer", "-b", buffer_name, "-"], input_bytes=message)
+    if loaded.returncode != 0:
+        raise MessageError("private tmux buffer load failed")
+    inserted = run(
+        [
+            tmux,
+            "paste-buffer",
+            "-b",
+            buffer_name,
+            "-d",
+            "-t",
+            pane.identifier,
+        ]
+    )
+    if inserted.returncode != 0:
+        run([tmux, "delete-buffer", "-b", buffer_name])
+        raise MessageError("literal tmux insertion failed")
+    time.sleep(1)
+    submitted = run([tmux, "send-keys", "-t", pane.identifier, "C-m"])
+    if submitted.returncode != 0:
+        raise MessageError("tmux submission failed")
+    print(
+        f"AGENT_MESSAGE_RECEIVE source={source} "
+        f"target_role={target_role} status=submitted"
+    )
+
+
+def send(source: str, target: str, target_role: str, allow_attached: bool) -> None:
+    if not ALIAS_RE.fullmatch(target):
+        raise MessageError("target SSH alias is malformed")
+    message = read_message(source)
+    remote = (
+        'exec "$HOME/harness/shared/skills/remote-agent-communication/'
+        f'scripts/agent-message" receive --source {source} '
+        f"--target-role {target_role}"
+    )
+    if allow_attached:
+        remote += " --allow-attached"
+    result = run(
+        [
+            executable("ssh"),
+            "-x",
+            "-o",
+            "BatchMode=yes",
+            "-o",
+            "ClearAllForwardings=yes",
+            "-o",
+            "ForwardAgent=no",
+            target,
+            remote,
+        ],
+        input_bytes=message,
+        timeout=30,
+    )
+    expected = (
+        f"AGENT_MESSAGE_RECEIVE source={source} "
+        f"target_role={target_role} status=submitted\n"
+    ).encode()
+    if result.returncode != 0 or result.stdout != expected:
+        raise MessageError("remote agent-message delivery failed")
+    print(
+        f"AGENT_MESSAGE_SEND source={source} target={target} "
+        f"target_role={target_role} status=submitted"
+    )
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser()
+    commands = parser.add_subparsers(dest="command", required=True)
+    for name in ("send", "receive"):
+        command = commands.add_parser(name)
+        command.add_argument("--source", required=True)
+        command.add_argument(
+            "--target-role", choices=("controller", "mac"), required=True
+        )
+        command.add_argument("--allow-attached", action="store_true")
+        if name == "send":
+            command.add_argument("--target", required=True)
+    return parser
+
+
+def main() -> int:
+    arguments = build_parser().parse_args()
+    try:
+        if arguments.command == "send":
+            send(
+                arguments.source,
+                arguments.target,
+                arguments.target_role,
+                arguments.allow_attached,
+            )
+        else:
+            receive(
+                arguments.source,
+                arguments.target_role,
+                arguments.allow_attached,
+            )
+    except MessageError as exc:
+        print(f"agent-message: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

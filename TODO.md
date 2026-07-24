@@ -84,16 +84,21 @@ Next free ID: T-308.
 
 ### T-307 — Bidirectional remote-agent communication
 
-**Phase:** interviewing. Local can submit messages to the four existing Mac
-Codex conversations without pane reads. The reverse path is not yet proven.
-The planned design uses an owner-only, non-Git, per-host structured mailbox as
-the durable return channel, with strict validation and exact acknowledgement,
-then packages the proven workflow as a project skill. One owner decision
-remains: controller-polled delivery (recommended), direct experimental
-app-server injection into the current Local thread, or a hybrid. The complete
-plan, safety gates, acceptance criteria, and frozen post-go sequence are in
-`docs/plans/t307-remote-agent-communication.md`. Next action: record that one
-choice, audit the decision register, and wait for explicit `go`.
+**Phase:** executing/validating. Bidirectional injection is proven. Local sent
+an identified experiment request to the detached Riken Codex without reading
+its pane; Riken returned `[Agent: Riken Codex] ...` over `ssh login`, and that
+prompt appeared in this same Local/phone-visible conversation. The
+credential-free Local helper exact-unlinked itself. A second app-server proxy
+could not join the occupied control socket, so that unused route and all of its
+temporary state were removed. The new `remote-agent-communication` skill uses
+the simpler symmetric SSH/tmux path, requires `[Agent: NAME Codex]`
+attribution, passes messages through stdin and a private transient tmux buffer,
+validates the unique Codex pane without capturing it, and treats prefixes as
+claimed attribution rather than owner authority. Skill validation and its
+focused adversarial test pass. The complete plan and evidence are in
+`docs/plans/t307-remote-agent-communication.md`. Next action: finish
+focused/full validation, publish and fleet-sync the skill, then repeat
+installed-script round trips with all four Macs.
 
 ### T-302 — Reduce AL authentication intervention
 
