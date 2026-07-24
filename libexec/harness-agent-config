@@ -46,6 +46,7 @@ claude_policy=$HARNESS_ROOT/.claude/settings.json
 legacy_codex_policy=$HARNESS_ROOT/config/agent-clients/codex.toml
 legacy_claude_policy=$HARNESS_ROOT/config/agent-clients/claude.json
 legacy_rules=$HARNESS_ROOT/.codex/rules/default.rules
+home_layout_file=${HARNESS_HOME_LAYOUT_FILE:-$HARNESS_ROOT/profiles/home-layout.tsv}
 
 require_home() {
     case ${HOME:-} in /*) ;; *) die "agent configuration requires an absolute HOME" ;; esac
@@ -123,6 +124,30 @@ strict_regular_owned() {
         [ "$(macos_stat_links "$1")" = 1 ]
 }
 
+declared_local_symlink_is_safe() {
+    [ "$1" = "$HOME/.local" ] && [ -L "$1" ] || return 1
+    logical_host=${HARNESS_LOGICAL_HOST:-}
+    case $logical_host in ''|*[!A-Za-z0-9._-]*) return 1 ;; esac
+    [ -f "$home_layout_file" ] && [ ! -L "$home_layout_file" ] || return 1
+    record=$(awk -F'|' -v host="$logical_host" '
+        $1 == host { print; count++ }
+        END { if (count != 1) exit 1 }
+    ' "$home_layout_file") || return 1
+    old_ifs=$IFS
+    IFS='|'
+    set -- $record
+    IFS=$old_ifs
+    [ "$#" -ge 4 ] || return 1
+    persistent_root=$2
+    moved_items=$4
+    case ",$moved_items," in *,.local,*) ;; *) return 1 ;; esac
+    persistent_physical=$(realpath "$persistent_root" 2>/dev/null) || return 1
+    local_physical=$(realpath "$HOME/.local" 2>/dev/null) || return 1
+    case $local_physical in "$persistent_physical"/*) ;; *) return 1 ;; esac
+    [ -d "$HOME/.local" ] &&
+        [ "$(macos_stat_owner "$HOME/.local")" = "$current_uid" ]
+}
+
 codex_config_is_legacy_managed() {
     strict_regular_owned "$HOME/.codex/config.toml" || return 1
     awk '
@@ -198,20 +223,25 @@ path_state() {
     fi
 }
 
-ensure_directory() {
+ensure_directory() (
     directory=$1
     [ "$directory" = "$HOME" ] && return
     case $directory in "$HOME"/*) ;; *) die "agent configuration parent is unsafe" ;; esac
     if [ -e "$directory" ] || [ -L "$directory" ]; then
-        [ -d "$directory" ] && [ ! -L "$directory" ] &&
-            [ "$(macos_stat_owner "$directory")" = "$current_uid" ] ||
-            die "agent configuration parent is unsafe"
+        if [ -L "$directory" ]; then
+            declared_local_symlink_is_safe "$directory" ||
+                die "agent configuration parent is unsafe"
+        else
+            [ -d "$directory" ] &&
+                [ "$(macos_stat_owner "$directory")" = "$current_uid" ] ||
+                die "agent configuration parent is unsafe"
+        fi
     else
         ensure_directory "${directory%/*}"
         mkdir "$directory"
         chmod 700 "$directory"
     fi
-}
+)
 
 ensure_parent() {
     ensure_directory "${1%/*}"
@@ -223,9 +253,14 @@ prepare_state() {
     umask 077
     for directory in "$HOME/.local" "$HOME/.local/state" "$state_root" "$transaction_root"; do
         if [ -e "$directory" ] || [ -L "$directory" ]; then
-            [ -d "$directory" ] && [ ! -L "$directory" ] &&
-                [ "$(macos_stat_owner "$directory")" = "$current_uid" ] ||
-                die "agent configuration state path is unsafe"
+            if [ -L "$directory" ]; then
+                declared_local_symlink_is_safe "$directory" ||
+                    die "agent configuration state path is unsafe"
+            else
+                [ -d "$directory" ] &&
+                    [ "$(macos_stat_owner "$directory")" = "$current_uid" ] ||
+                    die "agent configuration state path is unsafe"
+            fi
         else
             mkdir "$directory"
             chmod 700 "$directory"

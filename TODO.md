@@ -120,6 +120,11 @@ All compatibility assertions are now updated, and the clean committed
 `tests/test-phase1.sh` run passed. Documentation reflects the schema-2
 project-scoped contract. Next: protected CI, then Local/Linux/Mac pilots before
 fleet rollout.
+PR #285 passed protected CI and merged as `19235ce`. The Local plan reported
+43 recognized changes and zero blocked paths. Before apply, review found the
+schema-2 parent check omitted the fleet's strict declared `~/.local` symlink
+exception; no live path changed. The follow-up fix and regression test pass
+locally and must pass protected CI before the Local pilot resumes.
 
 ### T-302 — Reduce AL authentication intervention
 

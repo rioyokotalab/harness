@@ -128,4 +128,25 @@ fi
 grep -F 'label=codex-sentinel scope=user state=collision action=blocked' \
     "$TEMP_DIR/collision.out" >/dev/null || fail 'collision classification'
 
+linked_home=$TEMP_DIR/linked-home
+persistent_root=$TEMP_DIR/persistent
+linked_local=$persistent_root/account/local
+mkdir -p "$linked_home" "$linked_local"
+chmod 700 "$linked_home" "$persistent_root" "$persistent_root/account" \
+    "$linked_local"
+ln -s "$linked_local" "$linked_home/.local"
+layout=$TEMP_DIR/home-layout.tsv
+printf '%s\n' \
+    "linked|$persistent_root|$persistent_root/cache|.local|none|none|none" \
+    >"$layout"
+HOME="$linked_home" HARNESS_ROOT="$repo" HARNESS_TEST_ALLOW_NONMAIN=1 \
+    HARNESS_LOGICAL_HOST=linked HARNESS_HOME_LAYOUT_FILE="$layout" \
+    "$repo/libexec/harness-agent-config" --apply >"$TEMP_DIR/linked.out"
+grep -F 'AGENT_CONFIG action=applied' "$TEMP_DIR/linked.out" >/dev/null ||
+    fail 'declared .local symlink apply'
+HOME="$linked_home" HARNESS_ROOT="$repo" HARNESS_TEST_ALLOW_NONMAIN=1 \
+    HARNESS_LOGICAL_HOST=linked HARNESS_HOME_LAYOUT_FILE="$layout" \
+    "$repo/libexec/harness-agent-config" --doctor >/dev/null ||
+    fail 'declared .local symlink doctor'
+
 echo 'agent configuration tests: PASS'
