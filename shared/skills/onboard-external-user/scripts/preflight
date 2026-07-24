@@ -21,16 +21,19 @@ case $(uname -m 2>/dev/null || echo unknown) in x86_64|amd64) arch=x86_64 ;; arm
 
 repo_state=invalid
 if [ -d "$repo" ] && [ ! -L "$repo" ] && [ -d "$repo/.git" ] &&
-    [ ! -L "$repo/.git" ] && [ -f "$repo/install.sh" ] && [ ! -L "$repo/install.sh" ]; then
+    [ ! -L "$repo/.git" ] && [ -f "$repo/install.sh" ] &&
+    [ ! -L "$repo/install.sh" ] && [ -f "$repo/AGENTS.md" ] &&
+    [ -f "$repo/CLAUDE.md" ] && [ -f "$repo/.codex/config.toml" ] &&
+    [ -f "$repo/.claude/settings.json" ]; then
     if [ -z "$(git -C "$repo" status --porcelain --untracked-files=normal 2>/dev/null)" ]; then repo_state=clean; else repo_state=dirty; fi
 fi
 
 case ${HOME:-} in /*) ;; *) echo 'EXTERNAL_PREFLIGHT schema=1 status=blocked reason=unsafe-home'; exit 2 ;; esac
 codex_home=${CODEX_HOME:-$HOME/.codex}
 claude_home=${CLAUDE_HOME:-$HOME/.claude}
-user_skills=$HOME/.agents/skills
 user_bin=$HOME/.local/bin
 total=0; current=0; absent=0; collisions=0
+project_total=0; project_current=0; project_collisions=0
 classify_link() {
     source=$1; destination=$2; legacy=${3:-}; total=$((total + 1))
     if [ -L "$destination" ]; then
@@ -46,23 +49,40 @@ classify_link() {
 
 if [ "$repo_state" = clean ]; then
     classify_link "$repo/.codex/AGENTS.md" "$codex_home/AGENTS.md" "$repo/codex/AGENTS.md"
-    classify_link "$repo/.codex/rules/default.rules" "$codex_home/rules/default.rules" "$repo/codex/rules/default.rules"
-    classify_link "$repo/.claude/CLAUDE.md" "$claude_home/CLAUDE.md" "$repo/claude/CLAUDE.md"
+    classify_link "$repo/config/agent-clients/claude-sentinel.md" \
+        "$claude_home/CLAUDE.md" "$repo/.claude/CLAUDE.md"
     classify_link "$repo/bin/harness" "$user_bin/harness"
     for skill_path in "$repo"/shared/skills/*; do
         [ -d "$skill_path" ] || continue
-        if [ ! -f "$skill_path/SKILL.md" ] || [ -L "$skill_path/SKILL.md" ]; then collisions=$((collisions + 1)); continue; fi
+        project_total=$((project_total + 2))
+        if [ ! -f "$skill_path/SKILL.md" ] || [ -L "$skill_path/SKILL.md" ]; then
+            project_collisions=$((project_collisions + 2))
+            continue
+        fi
         name=${skill_path##*/}
-        classify_link "$skill_path" "$codex_home/skills/$name"
-        classify_link "$skill_path" "$user_skills/$name"
-        classify_link "$skill_path" "$claude_home/skills/$name"
+        for project_link in "$repo/.agents/skills/$name" \
+            "$repo/.claude/skills/$name"; do
+            if [ -L "$project_link" ] &&
+                [ "$(readlink "$project_link")" = "../../shared/skills/$name" ]; then
+                project_current=$((project_current + 1))
+            else
+                project_collisions=$((project_collisions + 1))
+            fi
+        done
     done
+    cmp -s "$repo/.codex/config.toml" \
+        "$repo/config/agent-clients/codex.toml" ||
+        project_collisions=$((project_collisions + 1))
+    cmp -s "$repo/.claude/settings.json" \
+        "$repo/config/agent-clients/claude.json" ||
+        project_collisions=$((project_collisions + 1))
 fi
 if command -v codex >/dev/null 2>&1; then codex=present; else codex=absent; fi
 if command -v claude >/dev/null 2>&1; then claude=present; else claude=absent; fi
 status=ready
 [ "$missing" -eq 0 ] && [ "$os" != unsupported ] && [ "$arch" != unsupported ] &&
-    [ "$repo_state" = clean ] && [ "$collisions" -eq 0 ] || status=blocked
-printf 'EXTERNAL_PREFLIGHT schema=1 status=%s os=%s arch=%s required_missing=%s repo=%s links_total=%s links_current=%s links_absent=%s collisions=%s codex=%s claude=%s\n' \
-    "$status" "$os" "$arch" "$missing" "$repo_state" "$total" "$current" "$absent" "$collisions" "$codex" "$claude"
+    [ "$repo_state" = clean ] && [ "$collisions" -eq 0 ] &&
+    [ "$project_collisions" -eq 0 ] || status=blocked
+printf 'EXTERNAL_PREFLIGHT schema=2 status=%s os=%s arch=%s required_missing=%s repo=%s links_total=%s links_current=%s links_absent=%s collisions=%s project_links=%s/%s project_collisions=%s codex=%s claude=%s\n' \
+    "$status" "$os" "$arch" "$missing" "$repo_state" "$total" "$current" "$absent" "$collisions" "$project_current" "$project_total" "$project_collisions" "$codex" "$claude"
 [ "$status" = ready ]

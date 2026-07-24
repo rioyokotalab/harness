@@ -39,30 +39,35 @@ assert_link() {
         fail "wrong link target: $destination"
 }
 
-# Claude Code officially supports project instructions in CLAUDE.md and
-# .claude/CLAUDE.md. The root import gives it the same project handoff rules as
-# AGENTS-aware clients, while the .claude link remains the shared global policy.
+# Claude imports the repository's self-contained AGENTS.md. Client permissions
+# and skill discovery are project-scoped; user scope contains only sentinels.
 [ -f "$ROOT/AGENTS.md" ] && [ ! -L "$ROOT/AGENTS.md" ] ||
     fail "missing project AGENTS.md"
 [ -f "$ROOT/CLAUDE.md" ] && [ ! -L "$ROOT/CLAUDE.md" ] ||
     fail "missing project CLAUDE.md"
 grep -Fx '@AGENTS.md' "$ROOT/CLAUDE.md" >/dev/null ||
     fail "Claude project instructions do not import AGENTS.md"
-[ -L "$ROOT/.claude/CLAUDE.md" ] || fail "Claude global guidance is not a link"
-[ "$(readlink "$ROOT/.claude/CLAUDE.md")" = '../.codex/AGENTS.md' ] ||
-    fail "Claude global guidance target"
-cmp -s "$ROOT/.claude/CLAUDE.md" "$ROOT/.codex/AGENTS.md" ||
-    fail "Codex and Claude global guidance differ"
+[ ! -e "$ROOT/.claude/CLAUDE.md" ] ||
+    fail "redundant project .claude/CLAUDE.md remains"
 grep -F 'Git and `TODO.md` as the durable source of truth' "$ROOT/AGENTS.md" \
     >/dev/null || fail "project takeover source of truth"
-grep -F 'Claude auto-memory are optional context only' "$ROOT/.codex/AGENTS.md" \
-    >/dev/null || fail "global cross-client handoff policy"
-grep -F 'Owner approval alone never creates an exception.' "$ROOT/.codex/AGENTS.md" \
-    >/dev/null || fail "global reviewed-installer deletion boundary"
-grep -F 'include a read-only inventory' "$ROOT/.codex/AGENTS.md" \
-    >/dev/null || fail "global routine arg0 housekeeping policy"
-[ "$(wc -l <"$ROOT/.codex/AGENTS.md" | tr -d ' ')" -le 200 ] ||
-    fail "shared global guidance exceeds the reviewed Claude size bound"
+grep -F 'Claude auto-memory are optional context only' "$ROOT/AGENTS.md" \
+    >/dev/null || fail "project cross-client handoff policy"
+grep -F 'Owner approval alone never creates an exception.' "$ROOT/AGENTS.md" \
+    >/dev/null || fail "project reviewed-installer deletion boundary"
+grep -F 'include a read-only inventory' "$ROOT/AGENTS.md" \
+    >/dev/null || fail "project routine arg0 housekeeping policy"
+grep -F 'Start Codex from the harness repository' "$ROOT/.codex/AGENTS.md" \
+    >/dev/null || fail "Codex launch sentinel"
+grep -F 'Start Claude from the harness repository' \
+    "$ROOT/config/agent-clients/claude-sentinel.md" >/dev/null ||
+    fail "Claude launch sentinel"
+cmp -s "$ROOT/.codex/config.toml" \
+    "$ROOT/config/agent-clients/codex.toml" ||
+    fail "project Codex settings differ"
+cmp -s "$ROOT/.claude/settings.json" \
+    "$ROOT/config/agent-clients/claude.json" ||
+    fail "project Claude settings differ"
 
 python3 - "$ROOT/config/agent-clients/claude.json" <<'PY'
 import json
@@ -76,9 +81,8 @@ assert data.get("permissions") == {"defaultMode": "bypassPermissions"}
 assert data.get("skipDangerousModePermissionPrompt") is True
 PY
 
-# Exercise the standalone installer in an isolated home. Every shared skill
-# must be visible from the Codex, Agent Skills, and Claude personal locations,
-# and a second run must be idempotent.
+# Exercise the standalone installer in an isolated home. It installs only
+# launch sentinels and the harness command; project skill links stay in Git.
 test_home=$TEMP_DIR/home
 codex_home=$test_home/codex-config
 claude_home=$test_home/claude-config
@@ -86,19 +90,22 @@ mkdir -p "$test_home"
 HOME="$test_home" CODEX_HOME="$codex_home" CLAUDE_HOME="$claude_home" \
     "$ROOT/install.sh" >"$TEMP_DIR/install-first.out"
 assert_link "$ROOT/.codex/AGENTS.md" "$codex_home/AGENTS.md"
-assert_link "$ROOT/.codex/rules/default.rules" "$codex_home/rules/default.rules"
-assert_link "$ROOT/.claude/CLAUDE.md" "$claude_home/CLAUDE.md"
+assert_link "$ROOT/config/agent-clients/claude-sentinel.md" \
+    "$claude_home/CLAUDE.md"
 assert_link "$ROOT/bin/harness" "$test_home/.local/bin/harness"
-cmp -s "$claude_home/CLAUDE.md" "$ROOT/.codex/AGENTS.md" ||
-    fail "installed Claude guidance differs from canonical policy"
 
 for skill_path in "$ROOT"/shared/skills/*; do
     [ -f "$skill_path/SKILL.md" ] || fail "shared skill lacks SKILL.md: $skill_path"
     name=${skill_path##*/}
-    assert_link "$skill_path" "$codex_home/skills/$name"
-    assert_link "$skill_path" "$test_home/.agents/skills/$name"
-    assert_link "$skill_path" "$claude_home/skills/$name"
+    assert_link "../../shared/skills/$name" "$ROOT/.agents/skills/$name"
+    assert_link "../../shared/skills/$name" "$ROOT/.claude/skills/$name"
+    [ ! -e "$codex_home/skills/$name" ] || fail "global Codex skill installed"
+    [ ! -e "$test_home/.agents/skills/$name" ] || fail "global Agent skill installed"
+    [ ! -e "$claude_home/skills/$name" ] || fail "global Claude skill installed"
 done
+[ ! -e "$codex_home/config.toml" ] || fail "global Codex settings installed"
+[ ! -e "$claude_home/settings.json" ] || fail "global Claude settings installed"
+[ ! -e "$codex_home/rules/default.rules" ] || fail "global rules installed"
 
 HOME="$test_home" CODEX_HOME="$codex_home" CLAUDE_HOME="$claude_home" \
     "$ROOT/install.sh" >"$TEMP_DIR/install-second.out"

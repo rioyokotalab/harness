@@ -55,17 +55,31 @@ perform a separately reviewed adoption; do not overwrite it.
 
 ## Install and validate
 
-From the recorded clean commit, run `./install.sh` as the current user without
-sudo. The installer preflights every link before mutation and is idempotent.
-It exposes the harness command, shared guidance, and every shared skill to the
-Codex, Agents, and Claude discovery directories; it does not install either
-client or alter their live settings/authentication.
+From the recorded clean commit, first require the repository-native client
+contract:
+
+- root `AGENTS.md` and `CLAUDE.md`;
+- `.codex/config.toml` with `approval_policy="never"` and
+  `sandbox_mode="danger-full-access"`;
+- `.claude/settings.json` with `bypassPermissions` and warning suppression;
+- every canonical skill linked from `.agents/skills/` and
+  `.claude/skills/`.
+
+Then run `./install.sh` as the current user without sudo. The installer
+preflights every link before mutation and is idempotent. It exposes only the
+`harness` command and minimal Codex/Claude launch sentinels that refuse task
+work outside this checkout. It does not install either client, create
+user-global behavioral settings or skill links, or alter
+authentication/runtime state.
 
 Run the preflight again and require `status=ready`, `collisions=0`, and
 `links_absent=0`. Then verify:
 
 - `harness help` and `harness version` succeed;
-- each installed link is still a symlink to the selected checkout;
+- each installed sentinel/command link still points to the selected checkout;
+- both project settings have the reviewed non-interactive permission values;
+- `.agents/skills/` and `.claude/skills/` expose every canonical skill using
+  exact repository-relative symlinks;
 - a newly started installed client can discover `onboard-external-user`;
 - no remote host, storage root, backup repository, scheduler, plugin, or
   authentication state was created; and

@@ -4,7 +4,6 @@ set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 CODEX_HOME=${CODEX_HOME:-"$HOME/.codex"}
 CLAUDE_HOME=${CLAUDE_HOME:-"$HOME/.claude"}
-USER_SKILLS="$HOME/.agents/skills"
 USER_BIN="$HOME/.local/bin"
 
 link_path() {
@@ -55,24 +54,9 @@ preflight_path() {
 managed_links() {
     printf '%s|%s|%s\n' "$ROOT/.codex/AGENTS.md" "$CODEX_HOME/AGENTS.md" \
         "$ROOT/codex/AGENTS.md"
-    printf '%s|%s|%s\n' "$ROOT/.codex/rules/default.rules" \
-        "$CODEX_HOME/rules/default.rules" "$ROOT/codex/rules/default.rules"
-    printf '%s|%s|%s\n' "$ROOT/.claude/CLAUDE.md" "$CLAUDE_HOME/CLAUDE.md" \
-        "$ROOT/claude/CLAUDE.md"
+    printf '%s|%s|%s\n' "$ROOT/config/agent-clients/claude-sentinel.md" \
+        "$CLAUDE_HOME/CLAUDE.md" "$ROOT/.claude/CLAUDE.md"
     printf '%s|%s|\n' "$ROOT/bin/harness" "$USER_BIN/harness"
-
-    for skill_path in "$ROOT"/shared/skills/*
-    do
-        [ -d "$skill_path" ] || continue
-        if [ ! -f "$skill_path/SKILL.md" ]; then
-            echo "refusing skill directory without SKILL.md: $skill_path" >&2
-            exit 1
-        fi
-        name=${skill_path##*/}
-        printf '%s|%s|\n' "$skill_path" "$CODEX_HOME/skills/$name"
-        printf '%s|%s|\n' "$skill_path" "$USER_SKILLS/$name"
-        printf '%s|%s|\n' "$skill_path" "$CLAUDE_HOME/skills/$name"
-    done
 }
 
 links=$(managed_links)
@@ -87,4 +71,4 @@ printf '%s\n' "$links" | while IFS='|' read -r source destination legacy; do
     link_path "$source" "$destination" "$legacy"
 done
 
-echo "Harness command and Codex/Claude discovery links installed. Start new sessions."
+echo "Harness command and out-of-project Codex/Claude sentinels installed. Start clients from this checkout."

@@ -13,6 +13,26 @@
 - Authority: read-only discovery and ledger updates only until every decision
   is frozen and the owner gives an explicit `go`.
 
+## Execution checkpoints
+
+- 2026-07-24 baseline: `tests/test-agent-config.sh`,
+  `tests/test-agent-config-fleet.sh`, `tests/test-onboard-external-user.sh`,
+  and `tests/test-claude-takeover.sh` all passed before implementation.
+  Confirmed boundary: the current installer owns global instruction/rule/skill
+  links, while `agent-config` owns global Codex/Claude settings and the
+  launcher. The migration must retain the launcher but replace both global
+  configuration surfaces.
+- 2026-07-24 implementation checkpoint: repository-native root policy,
+  Codex/Claude project permission files, 13 exact skill links per client,
+  minimal sentinels, schema-2 transactional legacy cleanup, and revised
+  external-user onboarding are implemented. Focused agent-config,
+  agent-config-fleet, Claude-takeover, and external-onboarding tests pass.
+  The first phase-one run found expected stale assertions in
+  `test-repository-independence`, `test-personal-macos-plan-doctor`, and
+  `test-personal-macos-control`. Tmux and terminfo failed only because their
+  clean-checkout gates observed this uncommitted checkpoint; rerun them from
+  the committed tree before classifying them as regressions.
+
 ## Source evidence
 
 Official Codex documentation establishes:

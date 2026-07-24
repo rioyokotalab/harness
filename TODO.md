@@ -108,6 +108,14 @@ test `onboard-external-user` so Linux/external onboarding validates these
 project-scoped settings and does not recreate global behavioral configuration.
 All decisions are frozen; wait for the owner's explicit `go` before target
 configuration changes.
+Execution is authorized. The pre-change focused baseline passed
+`test-agent-config`, `test-agent-config-fleet`, `test-onboard-external-user`,
+and `test-claude-takeover`; implementation is now in progress.
+The project-native settings/skills, sentinels, schema-2 migration, and updated
+external-user workflow are implemented. Their four focused suites pass. The
+first phase-one run identified three stale global-layout tests to update;
+tmux/terminfo clean-checkout failures require a rerun after this checkpoint is
+committed.
 
 ### T-302 — Reduce AL authentication intervention
 
