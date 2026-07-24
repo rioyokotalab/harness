@@ -1219,9 +1219,8 @@ transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
     "$test_repo/.codex/AGENTS.md" ] || fail "wrong applied Codex guidance target"
 [ -L "$test_home/.claude/CLAUDE.md" ] || fail "missing applied Claude guidance link"
 [ "$(readlink "$test_home/.claude/CLAUDE.md")" = \
-    "$test_repo/.claude/CLAUDE.md" ] || fail "wrong applied Claude guidance target"
-cmp -s "$test_home/.claude/CLAUDE.md" "$test_repo/.codex/AGENTS.md" ||
-    fail "applied Claude guidance differs from canonical policy"
+    "$test_repo/config/agent-clients/claude-sentinel.md" ] ||
+    fail "wrong applied Claude guidance target"
 for skill_path in "$test_repo"/shared/skills/*; do
     [ -f "$skill_path/SKILL.md" ] || continue
     skill_name=${skill_path##*/}
@@ -1229,8 +1228,8 @@ for skill_path in "$test_repo"/shared/skills/*; do
         "$test_home/.codex/skills/$skill_name" \
         "$test_home/.agents/skills/$skill_name" \
         "$test_home/.claude/skills/$skill_name"; do
-        [ -L "$skill_link" ] && [ "$(readlink "$skill_link")" = "$skill_path" ] ||
-            fail "missing or incorrect applied skill link: $skill_link"
+        [ ! -e "$skill_link" ] && [ ! -L "$skill_link" ] ||
+            fail "global skill link unexpectedly applied: $skill_link"
     done
 done
 rm "$test_home/.local/bin/harness"
@@ -1249,16 +1248,6 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$transaction" \
 [ ! -L "$test_home/.codex/AGENTS.md" ] || fail "rollback left guidance link"
 [ ! -L "$test_home/.claude/CLAUDE.md" ] ||
     fail "rollback left Claude guidance link"
-for skill_path in "$test_repo"/shared/skills/*; do
-    [ -f "$skill_path/SKILL.md" ] || continue
-    skill_name=${skill_path##*/}
-    for skill_link in \
-        "$test_home/.codex/skills/$skill_name" \
-        "$test_home/.agents/skills/$skill_name" \
-        "$test_home/.claude/skills/$skill_name"; do
-        [ ! -L "$skill_link" ] || fail "rollback left skill link: $skill_link"
-    done
-done
 grep 'status=rolled-back' "$TEMP_DIR/control-rollback.out" >/dev/null ||
     fail "rollback transaction status"
 
