@@ -62,6 +62,9 @@ inapplicable offer in this managed checkout.
   fixture installed the correct 0.145.0 tree but still tried to mutate its
   former hardcoded 0.144.4 path. The fixture reference is corrected; no
   production behavior failed.
-- Safe retry: commit the fixture correction, then rerun the complete suite
-  from the clean branch. No live rollout has started.
-- Next action: commit the fixture correction and rerun `tests/test-phase1.sh`.
+- The corrected clean checkpoint passed all 68 focused shards, guarded-delete,
+  and every remaining phase-one integration gate.
+- Safe retry: no live rollout has started. Publication may be retried from
+  commits `dc1eae5` and `8ee05fc` plus this evidence checkpoint.
+- Next action: publish through protected `main`, synchronize all managed
+  checkouts, and execute the declared transactional upgrade.
