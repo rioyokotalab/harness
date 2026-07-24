@@ -53,7 +53,8 @@ chmod 600 "$private/companion.conf" "$private/hosts/mac-test-pilot.conf"
 ln -s "$ROOT/.codex/AGENTS.md" "$home/.codex/AGENTS.md"
 ln -s "$ROOT/.codex/rules/default.rules" \
     "$home/.codex/rules/default.rules"
-ln -s "$ROOT/.claude/CLAUDE.md" "$home/.claude/CLAUDE.md"
+ln -s "$ROOT/config/agent-clients/claude-sentinel.md" \
+    "$home/.claude/CLAUDE.md"
 
 fake_bin=$TEMP_DIR/fake-bin
 mkdir -p "$fake_bin"

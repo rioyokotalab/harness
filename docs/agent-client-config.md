@@ -1,22 +1,20 @@
-# Codex and Claude user configuration
+# Codex and Claude project configuration
 
-The harness owns exactly one public user-settings body for each client:
+The harness owns one reviewed project-settings body for each client:
 
-- `config/agent-clients/codex.toml`
-- `config/agent-clients/claude.json`
+- `.codex/config.toml`, mirrored by `config/agent-clients/codex.toml`;
+- `.claude/settings.json`, mirrored by
+  `config/agent-clients/claude.json`.
 
-Claude's live path is a direct link. Codex's live path is an owner-only regular
-file containing each key from the public body exactly once. Its optional local
-body may add one opaque `model` string and one opaque
-`model_reasoning_effort` string; all four top-level keys must precede
-client-written trusted-project tables. Codex may also persist its documented
-internal model-tooltip state in one `[tui.model_availability_nux]` table. The
-harness preserves only quoted safe model slugs mapped to nonnegative integers;
-arbitrary TUI settings and malformed or duplicate state remain blocked.
-Their values remain private and are never inventoried or copied into Git.
-Authentication,
-credentials, sessions, histories, memories, caches, databases, private
-endpoints, and machine-specific trust remain outside this contract.
+Codex and Claude load those files only when started from `~/harness`. Root
+`AGENTS.md` is the self-contained shared policy; root `CLAUDE.md` imports it.
+Every canonical skill has one tracked link under `.agents/skills/` and one
+under `.claude/skills/`. No harness behavioral setting, rule, or skill link is
+required from the user's home-directory client configuration.
+
+Authentication, credentials, sessions, histories, memories, caches, databases,
+private endpoints, and machine-specific runtime state remain outside this
+contract and are never inspected or migrated.
 
 The initial reviewed bodies contain only the frozen prompt-free posture. Codex
 uses `approval_policy = "never"` with `sandbox_mode = "danger-full-access"`.
@@ -81,7 +79,7 @@ payloads. Adding the first component requires a protected change that also adds
 its exact native reconciliation adapter and rejects interactive, credential,
 private-endpoint, and machine-command declarations.
 
-## Local transaction
+## Local migration transaction
 
 Read-only commands are value-free:
 
@@ -91,32 +89,23 @@ Read-only commands are value-free:
 ./bin/harness agent-config --doctor
 ```
 
-An existing strict regular Codex file containing only the optional local model
-keys, client-written trusted-project tables, and the bounded internal tooltip
-table is preservation state and blocks the normal plan. After separately
-reviewing its ownership and choosing `--adopt`, apply adds the canonical policy
-keys while retaining that validated local body. Other regular files and
-different symlinks remain replacement state. Apply records a mode-0600 local
-manifest and exact regular-file or symlink preimages before rendering Codex and
-linking Claude plus the managed launcher:
+Schema 2 retains `~/.local/bin/harness-codex`, installs minimal launch
+sentinels at `~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md`, and removes only
+recognized legacy harness configuration:
 
-```bash
-./bin/harness agent-config --adopt --plan
-./bin/harness agent-config --adopt --apply
-```
+- the strict managed `~/.codex/config.toml`;
+- the exact managed Claude settings and Codex rule links; and
+- exact harness skill links from the three former user discovery directories.
 
-Parent directories must normally be owner-controlled real directories. The
-sole symlink exception is `~/.local`: it is accepted only when the selected
-logical host has `.local` in `profiles/home-layout.tsv`, the canonical target
-is strictly below that row's persistent root, and the resolved directory is
-owned by the current user. An undeclared host, an escaping target, or any other
-symlink parent is rejected.
+Unrelated entries—including Codex's vendor-owned `.system` directory—remain.
+Different symlinks, unknown regular settings, hard links, unsafe parents, dirty
+checkouts, and concurrent changes fail closed. `--adopt` remains accepted for
+controller compatibility but never authorizes an unrelated preimage.
 
-The apply output contains a transaction identifier. Rollback first proves all
-three managed paths and every transaction-created directory are unchanged, then
-restores exact prior bytes, modes, and symlink targets. `--drill` automates one
-apply, unchanged-only rollback, accepted reapply, and doctor sequence. Changes
-activate only in fresh Codex and Claude sessions.
+Apply records a mode-0600 manifest plus exact regular-file and symlink
+preimages. Rollback restores only unchanged transaction postimages. `--drill`
+automates apply, rollback, reapply, and doctor. Changes activate only in fresh
+Codex and Claude sessions; authentication and running processes are untouched.
 
 ## Pull-based catch-up and Linux controller
 
@@ -141,7 +130,6 @@ Both routes keep adoption and the rollback/reapply drill explicit:
 ./bin/harness agent-config-fleet --from OLD --to NEW --adopt --apply --drill
 ```
 
-No command automatically commits, pushes a configuration edit, reloads an
-active client, installs a component, or supplies authentication. Editing a live
-settings link dirties the harness checkout; catch-up stops until normal Git
-review publishes or deliberately discards that edit.
+No command automatically reloads an active client, installs a component, or
+supplies authentication. Project settings are normal reviewed Git files;
+catch-up stops on an uncommitted edit.

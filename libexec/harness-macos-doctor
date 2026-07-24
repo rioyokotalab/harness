@@ -100,20 +100,16 @@ else
     failures=$((failures + 1))
 fi
 
-for link_name in codex_guidance codex_rules claude_guidance bash_launcher; do
+for link_name in codex_guidance claude_guidance bash_launcher; do
     value=$(macos_manifest_get "$fact_file" "link_$link_name")
     case "$link_name" in
         codex_guidance)
             link_destination=$HOME/.codex/AGENTS.md
             link_source=$HARNESS_ROOT/.codex/AGENTS.md
             ;;
-        codex_rules)
-            link_destination=$HOME/.codex/rules/default.rules
-            link_source=$HARNESS_ROOT/.codex/rules/default.rules
-            ;;
         claude_guidance)
             link_destination=$HOME/.claude/CLAUDE.md
-            link_source=$HARNESS_ROOT/.claude/CLAUDE.md
+            link_source=$HARNESS_ROOT/config/agent-clients/claude-sentinel.md
             ;;
         bash_launcher)
             link_destination=$HOME/.local/bin/harness-bash

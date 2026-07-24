@@ -25,6 +25,8 @@
 !.codex/**
 !.claude/
 !.claude/**
+!.agents/
+!.agents/**
 !shared/
 !shared/**
 !evaluation/

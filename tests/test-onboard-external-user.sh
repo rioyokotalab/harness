@@ -17,16 +17,26 @@ fail() { echo "FAIL: $*" >&2; exit 1; }
 
 repo=$TEMP_DIR/repo
 home=$TEMP_DIR/home
-mkdir -p "$repo/.codex/rules" "$repo/.claude" "$repo/bin" \
-    "$repo/shared/skills/example" "$home"
-printf '%s\n' guidance >"$repo/.codex/AGENTS.md"
+mkdir -p "$repo/.codex/rules" "$repo/.claude/skills" "$repo/.agents/skills" \
+    "$repo/bin" "$repo/config/agent-clients" "$repo/shared/skills/example" "$home"
+printf '%s\n' project-guidance >"$repo/AGENTS.md"
+printf '%s\n' '@AGENTS.md' >"$repo/CLAUDE.md"
+printf '%s\n' sentinel >"$repo/.codex/AGENTS.md"
 printf '%s\n' rules >"$repo/.codex/rules/default.rules"
-printf '%s\n' guidance >"$repo/.claude/CLAUDE.md"
+printf '%s\n' 'approval_policy = "never"' 'sandbox_mode = "danger-full-access"' \
+    >"$repo/.codex/config.toml"
+cp "$repo/.codex/config.toml" "$repo/config/agent-clients/codex.toml"
+printf '%s\n' '{"permissions":{"defaultMode":"bypassPermissions"},"skipDangerousModePermissionPrompt":true}' \
+    >"$repo/.claude/settings.json"
+cp "$repo/.claude/settings.json" "$repo/config/agent-clients/claude.json"
+printf '%s\n' sentinel >"$repo/config/agent-clients/claude-sentinel.md"
 printf '%s\n' '#!/bin/sh' >"$repo/bin/harness"
 printf '%s\n' '#!/bin/sh' >"$repo/install.sh"
 printf '%s\n' '---' 'name: example' 'description: Example.' '---' \
     >"$repo/shared/skills/example/SKILL.md"
 chmod 755 "$repo/install.sh" "$repo/bin/harness"
+ln -s ../../shared/skills/example "$repo/.agents/skills/example"
+ln -s ../../shared/skills/example "$repo/.claude/skills/example"
 git -C "$repo" init -q -b main
 git -C "$repo" config user.name external-test
 git -C "$repo" config user.email external-test.invalid
@@ -40,8 +50,10 @@ sh -n "$PREFLIGHT" || fail 'preflight syntax'
 HOME="$home" CODEX_HOME="$home/.codex" CLAUDE_HOME="$home/.claude" \
     "$PREFLIGHT" --repo "$repo" >"$TEMP_DIR/absent.out"
 grep -F 'status=ready' "$TEMP_DIR/absent.out" >/dev/null || fail 'fresh status'
-grep -F 'links_total=7 links_current=0 links_absent=7 collisions=0' \
+grep -F 'links_total=3 links_current=0 links_absent=3 collisions=0' \
     "$TEMP_DIR/absent.out" >/dev/null || fail 'fresh link classification'
+grep -F 'project_links=2/2 project_collisions=0' \
+    "$TEMP_DIR/absent.out" >/dev/null || fail 'project discovery classification'
 
 mkdir -p "$home/.codex"
 printf '%s\n' collision >"$home/.codex/AGENTS.md"
