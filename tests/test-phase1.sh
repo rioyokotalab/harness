@@ -1938,7 +1938,7 @@ HOME="$agent_home" PATH="$agent_bin" \
     >"$TEMP_DIR/agent-repeat.out"
 grep 'KEEP agent=codex source=managed-agent' "$TEMP_DIR/agent-repeat.out" >/dev/null ||
     fail "managed agent plan"
-agent_tree=$agent_home/.local/opt/agents/codex/0.144.4/linux-x86_64
+agent_tree=$agent_home/.local/opt/agents/codex/0.145.0/linux-x86_64
 agent_launcher=$agent_tree/node_modules/@openai/codex/bin/codex.js
 cp -p "$agent_launcher" "$TEMP_DIR/original-agent-launcher"
 printf '%s\n' '# changed after apply' >>"$agent_launcher"

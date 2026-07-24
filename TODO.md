@@ -95,11 +95,13 @@ values are recorded in `docs/plans/t305-codex-managed-update.md`. Branch
 `task/t-305-codex-managed-update` starts from `dbde627`. Focused Codex,
 agent-config, external-onboarding, and source-contract tests pass. The first
 full run passed 66 shards; only tmux-config and terminfo stopped at their
-intentional clean-committed-checkout gate. Next: commit the checkpoint, rerun
-the full suite from the clean branch, publish through protected `main`,
-guarded-sync the fleet, apply the transactional agent upgrade on all Linux
-nodes, then remove only AB's redundant npm-global package and prove the
-prompt-causing split is absent.
+intentional clean-committed-checkout gate. After the clean checkpoint, all 68
+focused shards passed; a later integration fixture installed 0.145.0 correctly
+but referenced its former hardcoded 0.144.4 test path. That fixture-only
+reference is corrected. Next: commit the correction, rerun the full suite,
+publish through protected `main`, guarded-sync the fleet, apply the
+transactional agent upgrade on all Linux nodes, then remove only AB's redundant
+npm-global package and prove the prompt-causing split is absent.
 
 ### T-302 — Reduce AL authentication intervention
 

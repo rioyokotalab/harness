@@ -58,6 +58,10 @@ inapplicable offer in this managed checkout.
 - The first full suite passed 66 shards. Only tmux-config and terminfo refused
   because their real-checkout integration gates require a clean committed task
   branch. This is an expected pre-publication gate, not a behavior failure.
-- Safe retry: commit the reviewed checkpoint, then rerun the complete suite
+- After the clean checkpoint, all 68 focused shards passed. A later integration
+  fixture installed the correct 0.145.0 tree but still tried to mutate its
+  former hardcoded 0.144.4 path. The fixture reference is corrected; no
+  production behavior failed.
+- Safe retry: commit the fixture correction, then rerun the complete suite
   from the clean branch. No live rollout has started.
-- Next action: commit this checkpoint and rerun `tests/test-phase1.sh`.
+- Next action: commit the fixture correction and rerun `tests/test-phase1.sh`.
