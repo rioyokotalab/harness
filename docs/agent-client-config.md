@@ -18,10 +18,13 @@ contract and are never inspected or migrated.
 
 The initial reviewed bodies contain only the frozen prompt-free posture. Codex
 uses `approval_policy = "never"` with `sandbox_mode = "danger-full-access"`.
-Claude uses `permissions.defaultMode = "bypassPermissions"` and suppresses the
-one-time dangerous-mode warning. These choices do not suppress authentication,
-macOS privacy, administrator, provider-policy, or Claude's hard-coded root/home
-recursive-deletion circuit-breaker prompts.
+Its startup update check is disabled because Linux Codex releases are pinned
+and upgraded transactionally by the harness; accepting the native update offer
+would install into Node's global prefix without moving the managed command
+link. Claude uses `permissions.defaultMode = "bypassPermissions"` and
+suppresses the one-time dangerous-mode warning. These choices do not suppress
+authentication, macOS privacy, administrator, provider-policy, or Claude's
+hard-coded root/home recursive-deletion circuit-breaker prompts.
 
 ## Project trust launcher
 
@@ -41,6 +44,21 @@ non-interactive and batch shells retain native resolution. The wrapper uses an
 absolute native path, preventing recursion or silent fallback, and preserves
 all arguments and subcommands. Client-persisted project trust stays only in the
 private live regular file and never dirties public Git.
+
+On Linux, do not run `codex update`. Upgrade the two reviewed release records
+in `tools/agents.tsv`, publish them through protected `main`, synchronize the
+managed checkouts, and use the transactional agent command on each logical
+host:
+
+```bash
+./bin/harness agent --host HOST --name codex --plan
+./bin/harness agent --host HOST --name codex --apply
+```
+
+The command downloads only the declared official HTTPS artifacts, verifies
+their SHA-256 digests and package identities, atomically advances
+`~/.local/bin/codex`, retains the predecessor for unchanged-only rollback, and
+refuses an ordinary downgrade.
 
 ## Lock-aware arg0 housekeeping and the Linux NFS wrapper
 

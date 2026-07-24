@@ -97,8 +97,9 @@ validate_sources() {
         die "project Claude policy is invalid"
     awk '
         $0 == "approval_policy = \"never\"" { approval++ }
+        $0 == "check_for_update_on_startup = false" { update++ }
         $0 == "sandbox_mode = \"danger-full-access\"" { sandbox++ }
-        END { exit !(NR == 2 && approval == 1 && sandbox == 1) }
+        END { exit !(NR == 3 && approval == 1 && update == 1 && sandbox == 1) }
     ' "$codex_policy" >/dev/null 2>&1 ||
         die "project Codex policy is invalid"
     count=0
@@ -152,6 +153,7 @@ codex_config_is_legacy_managed() {
     strict_regular_owned "$HOME/.codex/config.toml" || return 1
     awk '
         $0 == "approval_policy = \"never\"" { if (++approval != 1 || section) bad=1; next }
+        $0 == "check_for_update_on_startup = false" { if (++update != 1 || section) bad=1; next }
         $0 == "sandbox_mode = \"danger-full-access\"" { if (++sandbox != 1 || section) bad=1; next }
         $0 ~ /^model = "([^"\\]|\\.)*"$/ { if (++model != 1 || section) bad=1; next }
         $0 ~ /^model_reasoning_effort = "([^"\\]|\\.)*"$/ { if (++effort != 1 || section) bad=1; next }

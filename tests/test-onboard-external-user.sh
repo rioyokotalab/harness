@@ -23,7 +23,9 @@ printf '%s\n' project-guidance >"$repo/AGENTS.md"
 printf '%s\n' '@AGENTS.md' >"$repo/CLAUDE.md"
 printf '%s\n' sentinel >"$repo/.codex/AGENTS.md"
 printf '%s\n' rules >"$repo/.codex/rules/default.rules"
-printf '%s\n' 'approval_policy = "never"' 'sandbox_mode = "danger-full-access"' \
+printf '%s\n' 'approval_policy = "never"' \
+    'check_for_update_on_startup = false' \
+    'sandbox_mode = "danger-full-access"' \
     >"$repo/.codex/config.toml"
 cp "$repo/.codex/config.toml" "$repo/config/agent-clients/codex.toml"
 printf '%s\n' '{"permissions":{"defaultMode":"bypassPermissions"},"skipDangerousModePermissionPrompt":true}' \
