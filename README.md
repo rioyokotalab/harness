@@ -19,21 +19,22 @@ git status --short --branch
 harness doctor --host local
 ```
 
-`install.sh` is idempotent and creates only reviewed discovery symlinks. It
-refuses regular-file collisions and symlinks that point somewhere else. Start
-new Codex and Claude sessions after first installation so both clients rebuild
-instruction and skill discovery.
+`install.sh` is idempotent and creates only the `harness` command link plus
+minimal Codex and Claude launch sentinels. It refuses regular-file collisions
+and symlinks that point somewhere else. Policy, permission settings, rules, and
+all skills are discovered from this checkout.
 
-Public client settings are a separate transaction:
+Legacy global client configuration is removed by a separate transaction:
 
 ```bash
 harness agent-config --plan
 harness agent-config --apply
 ```
 
-It never installs or authorizes a plugin, marketplace, MCP server, connector,
-or credential. Existing settings paths require explicit `--adopt`, and
-rollback preserves unchanged preimages.
+It recognizes only the previous harness-managed settings/rule/skill paths,
+preserves every credential and runtime-state file, and records rollback
+preimages. It never installs or authorizes a plugin, marketplace, MCP server,
+connector, or credential.
 
 Current work and the exact resume checkpoint live in [TODO.md](TODO.md).
 Completed command-level evidence lives in Git history and
@@ -196,13 +197,16 @@ the reviewed topology are in [docs/home-backup.md](docs/home-backup.md).
 ## Codex and Claude use the same harness
 
 Codex reads root [AGENTS.md](AGENTS.md). Claude reads root
-[CLAUDE.md](CLAUDE.md), which imports the same project rules. The installer
-exposes the shared personal policy as both `~/.codex/AGENTS.md` and
-`~/.claude/CLAUDE.md`, and links all 13 shared skills into:
+[CLAUDE.md](CLAUDE.md), which imports the same project rules. Reviewed
+permissions live in `.codex/config.toml` and `.claude/settings.json`. All 13
+shared skills are linked inside the repository:
 
-- `~/.codex/skills/`
-- `~/.agents/skills/`
-- `~/.claude/skills/`
+- `.agents/skills/` for Codex;
+- `.claude/skills/` for Claude.
+
+The only global client files retained by the harness are minimal sentinels at
+`~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md`. Outside `~/harness`, they
+refuse task work and give the exact restart command.
 
 This gives both clients the same start, planning, safety, validation,
 publication, fleet-sync, and handoff expectations. Consequential joint work can
@@ -241,10 +245,11 @@ shared/skills/onboard-external-user/scripts/preflight --repo "$PWD"
 ```
 
 The preflight reports only platform class, required-command presence, checkout
-cleanliness, and aggregate discovery-link state. It refuses dirty checkouts
-and collisions before installation. System prerequisites, client installation
-or authentication, collision adoption, and every remote-node action remain
-separate owner decisions.
+cleanliness, sentinel/command link state, and aggregate project discovery
+state. It validates the tracked permission files and both project skill trees,
+and refuses dirty checkouts or collisions before installation. System
+prerequisites, client installation or authentication, collision adoption, and
+every remote-node action remain separate owner decisions.
 
 ## Safety and transactions
 
@@ -386,11 +391,14 @@ for the default Power setting; the aggregate itself correctly retains
 
 - `AGENTS.md` and `CLAUDE.md`: shared project start, validation, and handoff
   rules.
-- `.codex/AGENTS.md`: canonical shared personal working agreements.
-- `.codex/rules/default.rules`: reviewed Codex command rules.
+- `.codex/AGENTS.md`: minimal global Codex launch sentinel source.
+- `.codex/config.toml` and `.claude/settings.json`: reviewed project
+  permissions.
+- `.codex/rules/default.rules`: project Codex command rules.
 - `config/agent-clients/`: public Codex and Claude settings plus reviewed
-  component declarations.
-- `shared/skills/`: 13 workflows exposed to both clients.
+  sentinel/component declarations.
+- `shared/skills/`: 13 canonical workflows exposed through `.agents/skills/`
+  and `.claude/skills/`.
 - `bin/harness` and `libexec/`: observation and transactional operations.
 - `profiles/`: logical host, tool, scheduler, storage, backup, and runtime
   declarations.

@@ -32,6 +32,11 @@
   `test-personal-macos-control`. Tmux and terminfo failed only because their
   clean-checkout gates observed this uncommitted checkpoint; rerun them from
   the committed tree before classifying them as regressions.
+- 2026-07-24 validation checkpoint: the committed clean-tree rerun passed the
+  complete `tests/test-phase1.sh` suite. The Mac plan/control assertions and
+  final generic control-plane assertions now validate sentinels and the
+  absence of global skill links. Documentation is updated for the schema-2
+  project-scoped contract. Next: protected CI, then Local/Linux/Mac pilots.
 
 ## Source evidence
 

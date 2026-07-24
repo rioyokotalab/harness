@@ -116,6 +116,10 @@ external-user workflow are implemented. Their four focused suites pass. The
 first phase-one run identified three stale global-layout tests to update;
 tmux/terminfo clean-checkout failures require a rerun after this checkpoint is
 committed.
+All compatibility assertions are now updated, and the clean committed
+`tests/test-phase1.sh` run passed. Documentation reflects the schema-2
+project-scoped contract. Next: protected CI, then Local/Linux/Mac pilots before
+fleet rollout.
 
 ### T-302 — Reduce AL authentication intervention
 
