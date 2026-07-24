@@ -47,6 +47,12 @@ Next free ID: T-305.
   housekeeping remain installed. Its rollback is
   `harness codex-arg0-wrapper --rollback`; an official Codex upgrade requires
   fresh validation before reinstalling the version-scoped wrapper.
+- Codex and Claude now use only project-scoped policy, permission settings,
+  rules, and 13 skills when started from `~/harness`. All 12 systems retain
+  only the two global launch sentinels and the Codex launcher; schema-2 doctor,
+  repository convergence, external onboarding preflight, and all four resumed
+  Mac TUIs passed at `309de20`. See
+  `docs/audits/t304-project-scoped-agent-config-2026-07-24.md`.
 - Exactly one future native weekly primary backup job exists on each managed
   Linux node. First runs passed on 2026-07-19 and keep-all remains effective.
 - Container and package work are requirement-gated guardrails, not pending
@@ -57,9 +63,9 @@ Next free ID: T-305.
 - Closed non-goals remain plugins/connectors/accounts, administrator settings,
   automatic publication, background login mutation, active-session reload,
   and guessing lost unknown configuration.
-- Global safety and collaboration rules in `.codex/AGENTS.md` remain
-  authoritative. Never inspect credentials or use raw recursive/bulk
-  deletion.
+- Project safety and collaboration rules in root `AGENTS.md` remain
+  authoritative. `.codex/AGENTS.md` is only the out-of-project launch
+  sentinel. Never inspect credentials or use raw recursive/bulk deletion.
 - Whenever owner input or approval is requested, or a task completes, report a
   fresh compact health snapshot for every managed Linux node and all four Mac
   route pairs. Count abq as Linux and mark it ready only when both abq and abq2
@@ -71,60 +77,6 @@ Next free ID: T-305.
 1. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
 
 ## Active tasks
-
-### T-304 — Make harness the sole Codex and Claude project context
-
-**Phase:** interviewing. The owner selected `~/harness` as the required launch
-directory for Codex and Claude on all eight Linux systems and four Macs. Move
-shared policy, settings, rules, and all 13 skills into repository-scoped
-discovery surfaces; remove only exact harness-managed global behavior and
-discovery paths; and leave a minimal client-specific global startup sentinel
-that directs accidental home-directory launches back to `~/harness`.
-
-Read-only fleet inventory found current managed global guidance, settings,
-rules, launcher, and 13 skill links everywhere. Codex's vendor-owned `.system`
-skill directory exists on some systems and is unrelated state that must remain.
-`~/.claude.json` exists on four systems and may combine OAuth, preferences,
-trust, MCP, project state, and caches; it cannot be safely split or removed.
-Authentication, sessions, memories, caches, databases, installed clients,
-remote control, and unrelated global skills are proposed non-goals.
-
-The complete plan, evidence, open decisions, rollback, and acceptance gates are
-in `docs/plans/t304-project-scoped-agent-config.md`. Ask exactly one unresolved
-decision at a time. Do not modify target configuration until all decisions are
-frozen and the owner gives an explicit `go`. D1 is frozen: credentials and
-mixed runtime state remain because project-scoped Codex and Claude still
-consume them; the owner's deletion authority was conditional on not affecting
-that operation.
-D2 is frozen: the minimal global sentinels refuse task work outside
-`~/harness`, explain where to restart, and leave the client process open; no
-shell launcher guard is added.
-D3 is frozen: after validation, restart and resume the four Mac Codex tmux
-sessions sequentially from `~/harness` while preserving remote control and
-reachability.
-D4 is frozen: retain the current non-interactive Codex and Claude permission
-posture in tracked project settings. The implementation must also update and
-test `onboard-external-user` so Linux/external onboarding validates these
-project-scoped settings and does not recreate global behavioral configuration.
-All decisions are frozen; wait for the owner's explicit `go` before target
-configuration changes.
-Execution is authorized. The pre-change focused baseline passed
-`test-agent-config`, `test-agent-config-fleet`, `test-onboard-external-user`,
-and `test-claude-takeover`; implementation is now in progress.
-The project-native settings/skills, sentinels, schema-2 migration, and updated
-external-user workflow are implemented. Their four focused suites pass. The
-first phase-one run identified three stale global-layout tests to update;
-tmux/terminfo clean-checkout failures require a rerun after this checkpoint is
-committed.
-All compatibility assertions are now updated, and the clean committed
-`tests/test-phase1.sh` run passed. Documentation reflects the schema-2
-project-scoped contract. Next: protected CI, then Local/Linux/Mac pilots before
-fleet rollout.
-PR #285 passed protected CI and merged as `19235ce`. The Local plan reported
-43 recognized changes and zero blocked paths. Before apply, review found the
-schema-2 parent check omitted the fleet's strict declared `~/.local` symlink
-exception; no live path changed. The follow-up fix and regression test pass
-locally and must pass protected CI before the Local pilot resumes.
 
 ### T-302 — Reduce AL authentication intervention
 
