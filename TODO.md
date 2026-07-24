@@ -88,6 +88,36 @@ Next free ID: T-308.
 
 ## Active tasks
 
+### T-303 — Observe intermittent NFS I/O latency
+
+**Phase:** monitoring/time-gated. A read-only, non-sudo client monitor is
+active on Local as transient user unit
+`nfs-io-monitor-20260724T083822.service`. It started at 2026-07-24 08:41 JST
+and is scheduled to stop after 24 hours at 2026-07-25 08:41 JST. Raw evidence
+is on local ext4, outside every measured NFS filesystem, in the
+current-user-owned mode-0700 directory
+`/var/tmp/nfs-monitor-20260724T083822+0900`; logs are mode 0600. The monitor
+samples all five NFS mounts and their three storage servers every ten seconds,
+with full mount statistics every five minutes.
+
+The initial client baseline found healthy sub-millisecond network latency,
+zero NFS RPC retransmissions, no local CPU/I/O pressure, current direct reads
+around 410–435 MiB/s, and fast cached metadata. The primary `/home` export and
+the separate `/mnt/nfs` export were both 95% full; the NFSv4 project exports
+were 1–38% full. The extreme slowdown was not reproduced during the baseline,
+so capacity, intermittent server-side load, uncached write allocation, and
+workload-specific metadata behavior remain hypotheses.
+
+After 2026-07-25 08:41 JST, verify the unit reached a clean terminal state,
+preserve the exact evidence directory, and correlate any latency spikes across
+the recorded NFS, mount, client, network, and capacity series. Do not claim a
+server-side cause without server evidence. Local sudo is not currently
+required; server administration or Local sudo becomes useful only if the
+client trace identifies an unexplained interval. The monitor has `Linger=no`
+and can stop if every `rioyokota` login session ends. Evidence and exact
+follow-up are in
+`docs/audits/t303-nfs-observation-2026-07-24.md`.
+
 ### T-302 — Reduce AL authentication intervention
 
 **Phase:** monitoring/time-gated (restart-resilience extension). CSCS requires
