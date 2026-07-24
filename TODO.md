@@ -107,14 +107,17 @@ read-only Riken check pass. Riken reported routes 2/2, clean/current `main`,
 tunnels 2/2, watchdog ready, remote control ready, and tmux ready. The first
 complete phase-one run passed the new suite and every other shard except the
 tmux and terminfo fixtures, which intentionally refused the uncommitted dirty
-checkout. Retry is safe after committing.
+checkout. After committing, two eight-worker runs reproduced the repository's
+existing watchdog cleanup timing sensitivity; the fixture passed alone and
+the complete phase-one suite passed with one focused worker, including every
+focused shard and integration gate.
 
 Working files are `shared/skills/reboot-recovery/`,
 `tests/test-reboot-recovery-skill.sh`, `tests/focused-suites.tsv`,
 `tests/test-phase1.sh`, the two project skill-discovery links, and
-`docs/plans/t308-reboot-recovery-skill.md`. Next: commit, rerun the complete
-suite from a clean checkout, publish through protected CI, guarded-sync the
-fleet, refresh the four Mac Codex contexts, and record acceptance.
+`docs/plans/t308-reboot-recovery-skill.md`. Next: publish through protected CI,
+guarded-sync the fleet, refresh the four Mac Codex contexts, and record
+acceptance.
 
 ### T-303 — Observe intermittent NFS I/O latency
 

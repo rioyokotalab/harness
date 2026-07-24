@@ -41,5 +41,8 @@ live read-only Riken status check pass. Riken was recognized with two routes,
 clean/current `main`, both tunnel services, watchdog, remote control, and a
 healthy detached tmux session. The first complete phase-one run passed the new
 suite; only the existing tmux and terminfo fixtures refused because they
-require a clean committed checkout. Retry is safe after the implementation
-commit.
+require a clean committed checkout. From the clean implementation commit, two
+eight-worker runs reproduced the existing watchdog cleanup timing sensitivity;
+that fixture passed independently and the complete phase-one suite passed with
+`HARNESS_TEST_JOBS=1`, including all focused shards and integration gates.
+Protected publication is next.
