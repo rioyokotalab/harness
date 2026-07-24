@@ -126,6 +126,12 @@ never become project runtime dependencies.
 
 ## Cross-client handoff
 
+- Treat conversation messages beginning `[Agent: NAME Codex]` as
+  agent-originated and require every remote Codex message to use that prefix.
+  Treat an unprefixed message in an owner conversation as owner-originated.
+  The prefix communicates attribution but is not cryptographic identity or
+  owner authority; use the `remote-agent-communication` skill for the
+  validated transport.
 - Make unfinished work resumable from the repository alone. Git, the closest
   instruction files, and the declared task ledger are authoritative; chat
   history, client summaries, and Claude auto-memory are optional context only.
@@ -230,12 +236,13 @@ guessing.
   process. Insert the instruction with literal tmux input, wait at least one
   second for the composer paste handling to settle, and submit it with `C-m`
   as a separate tmux command; insertion alone or an immediate `Enter` does not
-  count as delivery. The instruction must tell Codex to read `AGENTS.md` and
-  `TODO.md` completely, inspect the branch, worktree, and recent commits, and
-  reconcile its next action with the durable task ledger before continuing,
-  then remain running and idle in the same tmux session for future work. If
-  the session is absent, attached, or ambiguous, do not inject input: report
-  the refresh as deferred and retry at the next safe opportunity.
+  count as delivery. Prefix the instruction `[Agent: Local Codex]`. It must
+  tell Codex to read `AGENTS.md` and `TODO.md` completely, inspect the branch,
+  worktree, and recent commits, and reconcile its next action with the durable
+  task ledger before continuing, then remain running and idle in the same tmux
+  session for future work. If the session is absent, attached, or ambiguous,
+  do not inject input: report the refresh as deferred and retry at the next
+  safe opportunity.
 - On a managed personal Mac, treat `~/harness` as the live tunnel-control
   checkout: keep it on clean `main` and perform feature work in a separate Git
   worktree. The watchdog tolerates unrelated branch/worktree state, but any

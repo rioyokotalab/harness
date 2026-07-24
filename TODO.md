@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-307.
+Next free ID: T-308.
 
 ## Current state
 
@@ -81,6 +81,24 @@ Next free ID: T-307.
 1. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
 
 ## Active tasks
+
+### T-307 — Bidirectional remote-agent communication
+
+**Phase:** executing/validating. Bidirectional injection is proven. Local sent
+an identified experiment request to the detached Riken Codex without reading
+its pane; Riken returned `[Agent: Riken Codex] ...` over `ssh login`, and that
+prompt appeared in this same Local/phone-visible conversation. The
+credential-free Local helper exact-unlinked itself. A second app-server proxy
+could not join the occupied control socket, so that unused route and all of its
+temporary state were removed. The new `remote-agent-communication` skill uses
+the simpler symmetric SSH/tmux path, requires `[Agent: NAME Codex]`
+attribution, passes messages through stdin and a private transient tmux buffer,
+validates the unique Codex pane without capturing it, and treats prefixes as
+claimed attribution rather than owner authority. Skill validation and its
+focused adversarial test pass. The complete plan and evidence are in
+`docs/plans/t307-remote-agent-communication.md`. Next action: finish
+focused/full validation, publish and fleet-sync the skill, then repeat
+installed-script round trips with all four Macs.
 
 ### T-302 — Reduce AL authentication intervention
 
