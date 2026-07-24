@@ -220,7 +220,11 @@ Official Claude Code documentation establishes:
   `~/harness`, preserving remote control.
 - Alternative: leave every existing session on its already-loaded context
   until the owner restarts it manually.
-- Status: open.
+- Owner decision: after project-scoped discovery and settings pass validation,
+  gracefully restart the four Mac Codex tmux sessions one at a time from
+  `~/harness` and resume each latest session. Preserve remote-control
+  continuity and at least one working route throughout.
+- Status: selected — sequential validated restart and resume.
 
 ### D4 — Project permission posture
 

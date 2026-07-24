@@ -99,6 +99,9 @@ that operation.
 D2 is frozen: the minimal global sentinels refuse task work outside
 `~/harness`, explain where to restart, and leave the client process open; no
 shell launcher guard is added.
+D3 is frozen: after validation, restart and resume the four Mac Codex tmux
+sessions sequentially from `~/harness` while preserving remote control and
+reachability.
 
 ### T-302 — Reduce AL authentication intervention
 
