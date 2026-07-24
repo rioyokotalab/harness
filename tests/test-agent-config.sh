@@ -67,6 +67,23 @@ run_config() {
 }
 transaction() { sed -n 's/.*transaction=\([^ ]*\).*/\1/p' "$1" | sed -n '1p'; }
 
+cp "$repo/.codex/config.toml" "$TEMP_DIR/codex-policy.valid"
+sed 's/check_for_update_on_startup = false/check_for_update_on_startup = true/' \
+    "$repo/.codex/config.toml" >"$repo/.codex/config.toml.invalid"
+mv "$repo/.codex/config.toml.invalid" "$repo/.codex/config.toml"
+cp "$repo/.codex/config.toml" "$repo/config/agent-clients/codex.toml"
+git -C "$repo" add .codex/config.toml config/agent-clients/codex.toml
+git -C "$repo" commit -qm 'inject unsafe update policy'
+if run_config --plan >"$TEMP_DIR/update-enabled.out" 2>&1; then
+    fail 'enabled native Codex update check accepted'
+fi
+grep -F 'project Codex policy is invalid' "$TEMP_DIR/update-enabled.out" >/dev/null ||
+    fail 'enabled update policy rejection'
+cp "$TEMP_DIR/codex-policy.valid" "$repo/.codex/config.toml"
+cp "$TEMP_DIR/codex-policy.valid" "$repo/config/agent-clients/codex.toml"
+git -C "$repo" add .codex/config.toml config/agent-clients/codex.toml
+git -C "$repo" commit -qm 'restore managed update policy'
+
 run_config --plan >"$TEMP_DIR/plan.out"
 grep -F 'AGENT_CONFIG schema=2 mode=plan' "$TEMP_DIR/plan.out" >/dev/null ||
     fail 'schema-2 plan'

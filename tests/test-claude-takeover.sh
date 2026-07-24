@@ -65,6 +65,9 @@ grep -F 'Start Claude from the harness repository' \
 cmp -s "$ROOT/.codex/config.toml" \
     "$ROOT/config/agent-clients/codex.toml" ||
     fail "project Codex settings differ"
+grep -Fx 'check_for_update_on_startup = false' \
+    "$ROOT/.codex/config.toml" >/dev/null ||
+    fail "managed Codex startup update check remains enabled"
 cmp -s "$ROOT/.claude/settings.json" \
     "$ROOT/config/agent-clients/claude.json" ||
     fail "project Claude settings differ"

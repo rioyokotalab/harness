@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-305.
+Next free ID: T-306.
 
 ## Current state
 
@@ -77,6 +77,29 @@ Next free ID: T-305.
 1. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
 
 ## Active tasks
+
+### T-305 — Make Linux Codex updates harness-managed
+
+**Phase:** implementation and validation. AB's repeated update prompt is
+confirmed as a split-install loop: the managed command remains 0.144.4 while
+the native updater placed 0.145.0 in Node's separate global prefix. Tmux is not
+causal. All seven remote Linux nodes use the managed 0.144.4 release; only AB
+has the redundant global 0.145.0 package.
+
+The owner approved a fleet-wide managed upgrade, disabling the project startup
+update check, removing AB's redundant package after validation, and documenting
+the supported route. Official registry metadata and exact artifact bytes were
+reconciled for the launcher plus x86_64 and aarch64 native packages; their
+SHA-512 values match registry integrity metadata and their adopted SHA-256
+values are recorded in `docs/plans/t305-codex-managed-update.md`. Branch
+`task/t-305-codex-managed-update` starts from `dbde627`. Focused Codex,
+agent-config, external-onboarding, and source-contract tests pass. The first
+full run passed 66 shards; only tmux-config and terminfo stopped at their
+intentional clean-committed-checkout gate. Next: commit the checkpoint, rerun
+the full suite from the clean branch, publish through protected `main`,
+guarded-sync the fleet, apply the transactional agent upgrade on all Linux
+nodes, then remove only AB's redundant npm-global package and prove the
+prompt-causing split is absent.
 
 ### T-302 — Reduce AL authentication intervention
 

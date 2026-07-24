@@ -1157,9 +1157,9 @@ agent_launcher_parent=$TEMP_DIR/agent-launcher-fixture
 agent_launcher_root=$agent_launcher_parent/package
 agent_launcher_archive=$TEMP_DIR/codex-launcher-fixture.tar.gz
 mkdir -p "$agent_launcher_root/bin"
-printf '%s\n' '#!/bin/sh' 'echo "codex-cli 0.144.4"' >"$agent_launcher_root/bin/codex.js"
+printf '%s\n' '#!/bin/sh' 'echo "codex-cli 0.145.0"' >"$agent_launcher_root/bin/codex.js"
 chmod 755 "$agent_launcher_root/bin/codex.js"
-printf '%s\n' '{"name":"@openai/codex","version":"0.144.4"}' \
+printf '%s\n' '{"name":"@openai/codex","version":"0.145.0"}' \
     >"$agent_launcher_root/package.json"
 tar -czf "$agent_launcher_archive" -C "$agent_launcher_parent" package
 agent_launcher_hash=$(sha256sum "$agent_launcher_archive" | awk '{print $1}')
@@ -1168,13 +1168,13 @@ agent_native_root=$agent_native_parent/package
 agent_native_archive=$TEMP_DIR/codex-native-fixture.tar.gz
 mkdir -p "$agent_native_root/vendor/x86_64-unknown-linux-musl/bin"
 printf '%s\n' native-fixture >"$agent_native_root/vendor/x86_64-unknown-linux-musl/bin/codex"
-printf '%s\n' '{"name":"@openai/codex","version":"0.144.4-linux-x64"}' \
+printf '%s\n' '{"name":"@openai/codex","version":"0.145.0-linux-x64"}' \
     >"$agent_native_root/package.json"
 tar -czf "$agent_native_archive" -C "$agent_native_parent" package
 agent_native_hash=$(sha256sum "$agent_native_archive" | awk '{print $1}')
-sed_in_place "s/613aadb30be4b6a6daa45cbd086f5d4a84636bcd8c036510c106464bd087f193/$agent_launcher_hash/g" \
+sed_in_place "s/416399796cac371d1a033b17f34b08ba9b25c8f298a5b9d00e10f72c3b128c8d/$agent_launcher_hash/g" \
     "$test_repo/tools/agents.tsv"
-sed_in_place "s/9a4a45314e80b53c4761b80067e3a68c2302f9a9026059b5f54f22dec8f34323/$agent_native_hash/" \
+sed_in_place "s/11239480f8e3efd1430f23bbe91c1a397856b8bbe6185ccbaee2382d25e03df2/$agent_native_hash/" \
     "$test_repo/tools/agents.tsv"
 git -C "$test_repo" init -q
 git -C "$test_repo" config user.name harness-test
