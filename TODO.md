@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-308.
+Next free ID: T-309.
 
 ## Current state
 
@@ -47,7 +47,7 @@ Next free ID: T-308.
   `harness codex-arg0-wrapper --rollback`; an official Codex upgrade requires
   fresh validation before reinstalling the version-scoped wrapper.
 - Codex and Claude now use only project-scoped policy, permission settings,
-  rules, and 14 skills when started from `~/harness`. All 12 systems retain
+  rules, and 15 skills when started from `~/harness`. All 12 systems retain
   only the two global launch sentinels and the Codex launcher; schema-2 doctor,
   repository convergence, external onboarding preflight, and all four resumed
   Mac TUIs passed at `309de20`. See
@@ -87,6 +87,34 @@ Next free ID: T-308.
 1. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
 
 ## Active tasks
+
+### T-308 — Recover a managed Mac after reboot
+
+**Phase:** validation. The shared `reboot-recovery` skill and deterministic
+Local-side helper are implemented for Aist, Home, Office, and Riken. The workflow
+must distinguish automatic tunnel recovery, owner-only user-session and Codex
+remote-control restoration, and Local-side tmux restoration. It must preserve
+pairing, require both independent routes before starting tmux, inspect no pane
+contents or credentials, and stop on dirty/divergent Git state, missing
+services, ambiguous process/session ownership, or route loss.
+
+Repository cleanup is outside recovery. In particular, the workflow must not
+remove, ignore, or specially classify `.DS_Store`; any dirty checkout is
+reported as a blocker for separate housekeeping.
+
+The skill validator, warning/error-level ShellCheck, focused suite, and live
+read-only Riken check pass. Riken reported routes 2/2, clean/current `main`,
+tunnels 2/2, watchdog ready, remote control ready, and tmux ready. The first
+complete phase-one run passed the new suite and every other shard except the
+tmux and terminfo fixtures, which intentionally refused the uncommitted dirty
+checkout. Retry is safe after committing.
+
+Working files are `shared/skills/reboot-recovery/`,
+`tests/test-reboot-recovery-skill.sh`, `tests/focused-suites.tsv`,
+`tests/test-phase1.sh`, the two project skill-discovery links, and
+`docs/plans/t308-reboot-recovery-skill.md`. Next: commit, rerun the complete
+suite from a clean checkout, publish through protected CI, guarded-sync the
+fleet, refresh the four Mac Codex contexts, and record acceptance.
 
 ### T-303 — Observe intermittent NFS I/O latency
 

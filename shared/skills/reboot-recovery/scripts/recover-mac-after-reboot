@@ -1,0 +1,95 @@
+#!/bin/sh
+set -eu
+
+usage() {
+    echo "usage: recover-mac-after-reboot --host aist|home|office|riken --status|--start-tmux" >&2
+    exit 64
+}
+
+host=
+action=
+while [ "$#" -gt 0 ]; do
+    case $1 in
+        --host)
+            [ "$#" -ge 2 ] || usage
+            host=$2
+            shift 2
+            ;;
+        --status)
+            [ -z "$action" ] || usage
+            action=status
+            shift
+            ;;
+        --start-tmux)
+            [ -z "$action" ] || usage
+            action=start-tmux
+            shift
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+
+[ -n "$host" ] && [ -n "$action" ] || usage
+case $host in
+    aist|home|office|riken) ;;
+    *) usage ;;
+esac
+
+secondary=${host}2
+ssh_bin=${REBOOT_RECOVERY_SSH_BIN:-/usr/bin/ssh}
+[ -x "$ssh_bin" ] || {
+    echo "reboot recovery: SSH executable is unavailable" >&2
+    exit 69
+}
+
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+remote_helper=$script_dir/mac-reboot-state
+[ -f "$remote_helper" ] && [ ! -L "$remote_helper" ] || {
+    echo "reboot recovery: remote helper is unavailable" >&2
+    exit 69
+}
+
+probe() {
+    "$ssh_bin" -x \
+        -o BatchMode=yes \
+        -o ConnectTimeout=15 \
+        -o ControlMaster=no \
+        -o ControlPath=none \
+        -o ClearAllForwardings=yes \
+        -o ForwardAgent=no \
+        "$1" /usr/bin/true </dev/null >/dev/null 2>&1
+}
+
+routes=0
+selected=
+if probe "$host"; then
+    routes=$((routes + 1))
+    selected=$host
+fi
+if probe "$secondary"; then
+    routes=$((routes + 1))
+    [ -n "$selected" ] || selected=$secondary
+fi
+
+if [ "$routes" -eq 0 ]; then
+    echo "REBOOT_RECOVERY host=$host routes=0/2 status=needs-owner action=restore-routes"
+    exit 2
+fi
+
+echo "REBOOT_RECOVERY host=$host routes=$routes/2 source=$selected"
+
+if [ "$action" = start-tmux ] && [ "$routes" -ne 2 ]; then
+    echo "REBOOT_RECOVERY host=$host action=start-tmux status=blocked reason=route-redundancy"
+    exit 2
+fi
+
+"$ssh_bin" -x \
+    -o BatchMode=yes \
+    -o ConnectTimeout=15 \
+    -o ControlMaster=no \
+    -o ControlPath=none \
+    -o ClearAllForwardings=yes \
+    -o ForwardAgent=no \
+    "$selected" /bin/sh -s -- "$action" <"$remote_helper"

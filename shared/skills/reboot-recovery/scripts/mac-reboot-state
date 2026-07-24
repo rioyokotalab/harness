@@ -1,0 +1,157 @@
+#!/bin/sh
+set -eu
+
+mode=${1:-}
+case $mode in
+    status|start-tmux) ;;
+    *)
+        echo "MAC_REBOOT_STATE status=blocked reason=usage" >&2
+        exit 64
+        ;;
+esac
+
+PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+export PATH
+
+repo=$HOME/harness
+session=harness-codex-resume
+
+blocked() {
+    echo "MAC_REBOOT_STATE mode=$mode status=blocked reason=$1"
+    exit 2
+}
+
+[ "$(uname -s)" = Darwin ] || blocked os
+[ -d "$repo/.git" ] && [ ! -L "$repo" ] || blocked repository
+cd "$repo"
+
+branch=$(git symbolic-ref --quiet --short HEAD 2>/dev/null || printf detached)
+head=$(git rev-parse --verify HEAD 2>/dev/null) || blocked repository
+upstream=$(git rev-parse --verify refs/remotes/origin/main 2>/dev/null) ||
+    blocked upstream
+dirty=$(git status --porcelain --untracked-files=normal 2>/dev/null | wc -l |
+    tr -d '[:space:]')
+
+repo_state=clean
+[ "$dirty" -eq 0 ] || repo_state=dirty
+synchronized=no
+[ "$branch" = main ] && [ "$head" = "$upstream" ] && synchronized=yes
+
+uid=$(id -u)
+loaded() {
+    launchctl print "gui/$uid/$1" >/dev/null 2>&1
+}
+
+tunnels=0
+loaded org.rioyokota.harness.ssh.tunnel && tunnels=$((tunnels + 1))
+loaded org.rioyokota.harness.ssh.tunnel2 && tunnels=$((tunnels + 1))
+watchdog=missing
+loaded org.rioyokota.harness.ssh.tunnel-watchdog && watchdog=ready
+
+remote_control_count=$(
+    ps -axo ppid=,comm= 2>/dev/null |
+        awk '
+            $1 == 1 {
+                command = $2
+                sub(/^.*\//, "", command)
+                if (command == "codex" || command == "codex.real") {
+                    count++
+                }
+            }
+            END { print count + 0 }
+        '
+)
+remote_control=unexpected
+[ "$remote_control_count" -eq 2 ] && remote_control=ready
+
+inspect_tmux() {
+    sessions=$(tmux list-sessions -F '#{session_name}|#{session_attached}' \
+        2>/dev/null || true)
+    matches=$(printf '%s\n' "$sessions" |
+        awk -F '|' -v wanted="$session" '$1 == wanted { count++ } END { print count + 0 }')
+    if [ "$matches" -eq 0 ]; then
+        tmux_state=absent
+        return
+    fi
+    [ "$matches" -eq 1 ] || {
+        tmux_state=conflict
+        return
+    }
+
+    session_line=$(printf '%s\n' "$sessions" |
+        awk -F '|' -v wanted="$session" '$1 == wanted { print; exit }')
+    attached=$(printf '%s\n' "$session_line" | awk -F '|' '{ print $2 }')
+    [ "$attached" = 0 ] || {
+        tmux_state=conflict
+        return
+    }
+
+    pane_line=$(tmux list-panes -t "=$session" \
+        -F '#{pane_dead}|#{pane_current_path}|#{pane_current_command}' \
+        2>/dev/null || true)
+    pane_count=$(printf '%s\n' "$pane_line" |
+        awk 'NF { count++ } END { print count + 0 }')
+    [ "$pane_count" -eq 1 ] || {
+        tmux_state=conflict
+        return
+    }
+    pane_dead=$(printf '%s\n' "$pane_line" | awk -F '|' '{ print $1 }')
+    pane_path=$(printf '%s\n' "$pane_line" | awk -F '|' '{ print $2 }')
+    pane_command=$(printf '%s\n' "$pane_line" | awk -F '|' '{ print $3 }')
+    case $pane_command in
+        codex|codex.real) ;;
+        *)
+            tmux_state=conflict
+            return
+            ;;
+    esac
+    if [ "$pane_dead" = 0 ] && [ "$pane_path" = "$repo" ]; then
+        tmux_state=ready
+    else
+        tmux_state=conflict
+    fi
+}
+
+inspect_tmux
+
+if [ "$mode" = status ]; then
+    status=blocked
+    if [ "$repo_state" = clean ] && [ "$synchronized" = yes ] &&
+        [ "$tunnels" -eq 2 ] && [ "$watchdog" = ready ] &&
+        [ "$remote_control" = ready ]; then
+        case $tmux_state in
+            ready) status=ready ;;
+            absent) status=needs-tmux ;;
+        esac
+    fi
+    echo "MAC_REBOOT_STATE mode=status repo=$repo_state branch=$branch synchronized=$synchronized tunnels=$tunnels/2 watchdog=$watchdog remote_control=$remote_control tmux=$tmux_state status=$status"
+    [ "$status" != blocked ] || exit 2
+    exit 0
+fi
+
+[ "$repo_state" = clean ] || blocked repository-dirty
+[ "$synchronized" = yes ] || blocked repository-divergent
+[ "$tunnels" -eq 2 ] || blocked tunnel-services
+[ "$watchdog" = ready ] || blocked watchdog
+[ "$remote_control" = ready ] || blocked remote-control
+
+case $tmux_state in
+    ready)
+        echo "MAC_REBOOT_STATE mode=start-tmux action=keep status=complete"
+        exit 0
+        ;;
+    absent) ;;
+    *) blocked tmux-conflict ;;
+esac
+
+launcher=$HOME/.local/bin/harness-codex
+[ -x "$launcher" ] || blocked codex-launcher
+tmux new-session -d \
+    -s "$session" \
+    -c "$repo" \
+    "$launcher resume --last"
+sleep 3
+inspect_tmux
+[ "$tmux_state" = ready ] || blocked tmux-start-validation
+
+echo "MAC_REBOOT_STATE mode=start-tmux action=create status=complete"
