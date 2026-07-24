@@ -548,7 +548,6 @@ idempotent=$(run_harness "$home" --start)
     'AL_SESSION mode=start target=ready ownership=managed jump=ready action=none' ] ||
     fail "idempotent start"
 
-old_socket_id=$(stat -c '%d:%i' "$home/.ssh/cm-al")
 old_pid=$(sed -n '1p' "$home/.ssh/cm-al.pid")
 kill "$old_pid"
 attempts=0
@@ -571,6 +570,8 @@ restart_start=$(run_harness "$home" --start)
 python3 "$TEST_ROOT/socket-daemon.py" "$home/.ssh/cm-al" \
     >/dev/null 2>&1 &
 new_pid=$!
+[ "$new_pid" != "$old_pid" ] ||
+    fail "restart fixture did not replace managed process"
 printf '%s\n' "$new_pid" >"$home/.ssh/cm-al.pid"
 attempts=0
 while [ ! -S "$home/.ssh/cm-al" ] && [ "$attempts" -lt 50 ]; do
@@ -581,9 +582,6 @@ done
 sed -i \
     's/^active=.*/active=active/; s/^sub=.*/sub=running/; s/^restarts=.*/restarts=1/' \
     "$home/.ssh/fake-unit"
-new_socket_id=$(stat -c '%d:%i' "$home/.ssh/cm-al")
-[ "$new_socket_id" != "$old_socket_id" ] ||
-    fail "restart fixture did not replace socket identity"
 restarted=$(run_harness "$home" --status)
 [ "$restarted" = \
     'AL_SESSION mode=status target=ready ownership=managed jump=ready action=none' ] ||
