@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-303.
+Next free ID: T-305.
 
 ## Current state
 
@@ -71,6 +71,28 @@ Next free ID: T-303.
 1. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
 
 ## Active tasks
+
+### T-304 — Make harness the sole Codex and Claude project context
+
+**Phase:** interviewing. The owner selected `~/harness` as the required launch
+directory for Codex and Claude on all eight Linux systems and four Macs. Move
+shared policy, settings, rules, and all 13 skills into repository-scoped
+discovery surfaces; remove only exact harness-managed global behavior and
+discovery paths; and leave a minimal client-specific global startup sentinel
+that directs accidental home-directory launches back to `~/harness`.
+
+Read-only fleet inventory found current managed global guidance, settings,
+rules, launcher, and 13 skill links everywhere. Codex's vendor-owned `.system`
+skill directory exists on some systems and is unrelated state that must remain.
+`~/.claude.json` exists on four systems and may combine OAuth, preferences,
+trust, MCP, project state, and caches; it cannot be safely split or removed.
+Authentication, sessions, memories, caches, databases, installed clients,
+remote control, and unrelated global skills are proposed non-goals.
+
+The complete plan, evidence, open decisions, rollback, and acceptance gates are
+in `docs/plans/t304-project-scoped-agent-config.md`. Ask exactly one unresolved
+decision at a time. Do not modify target configuration until all decisions are
+frozen and the owner gives an explicit `go`.
 
 ### T-302 — Reduce AL authentication intervention
 
