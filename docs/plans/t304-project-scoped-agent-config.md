@@ -2,16 +2,17 @@
 
 ## Status
 
-- Phase: ready for execution
+- Phase: complete
 - Owner outcome: Codex and Claude must be launched from `~/harness` on all
   managed Linux and Mac systems; machine-global behavior must not define the
   working environment.
 - Target fleet: Local, AB, AB2, RI, AL, RC, T4, ABQ, Aist, Home, Office, and
   Riken.
-- Next action: wait for the owner's explicit `go`, then execute the frozen
-  plan without further interruption unless an unavoidable boundary is reached.
-- Authority: read-only discovery and ledger updates only until every decision
-  is frozen and the owner gives an explicit `go`.
+- Result: protected PRs #285 and #286 merged; every target is clean/current at
+  `309de20`, schema-2 doctor passes, and the four Mac Codex TUIs were resumed
+  from `~/harness` without replacing their PID-1 daemons.
+- Completion evidence:
+  `docs/audits/t304-project-scoped-agent-config-2026-07-24.md`.
 
 ## Execution checkpoints
 
