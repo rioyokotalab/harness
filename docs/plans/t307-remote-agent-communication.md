@@ -10,9 +10,10 @@ host-neutral for later managed nodes.
 ## Phase and scope
 
 - Phase: executing/validating
-- Status: the installed Riken round trip passed; a concurrent-reply race was
-  reproduced and the serialization correction is under validation
-- Working branch: `fix/t-307-serialize-injection`
+- Status: serialization is published and synced; installed sequential Aist
+  and Riken round trips passed, while Home and Office acknowledgements remain
+  pending after one submitted request each
+- Working branch: `main`
 - Working set: `AGENTS.md`, `TODO.md`, this plan, one new skill under
   `shared/skills/`, discovery links, and focused tests
 - Non-goals: pane transcript capture, credential access, repository mailboxes,
@@ -39,6 +40,14 @@ host-neutral for later managed nodes.
    conversation. The credential-free Local helper exact-unlinked itself.
 5. A Git mailbox would dirty managed checkouts and is unnecessary. Symmetric
    tmux-over-SSH provides direct visible delivery in both directions.
+6. Protected CI passed for the base skill, macOS process-path correction, and
+   concurrent-reply serialization. Guarded fleet sync advanced all 11 managed
+   remote checkouts to `1179f371654fb28cb62e09e170a807fee0c42dd2`.
+7. Sequential installed-skill replies from Aist and Riken arrived intact with
+   their required prefixes and matching request IDs. Home and Office accepted
+   one transport-level submission each but have not produced an agent-level
+   reply. Both sessions remain detached, live, clean/current, and idle by
+   value-free process metadata; no retry was made.
 
 ## Selected protocol
 
@@ -126,5 +135,9 @@ host-neutral for later managed nodes.
 
 ## Next action
 
-Finish focused/full validation, publish and guarded-sync the skill, then repeat
-installed-script round trips with all four Macs.
+Wait for the already-submitted Home and Office replies or obtain owner-visible
+evidence of their TUI state without pane capture. Do not reinject either
+request. If they reply, verify clean/current state and close T-307; if their
+TUIs are in a modal or otherwise not at the prompt, record that state as an
+explicit transport limitation before deciding whether another mechanism is
+needed.
