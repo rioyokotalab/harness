@@ -102,6 +102,16 @@ The instruction requires a complete read of `AGENTS.md` and `TODO.md`, Git
 branch/worktree/recent-commit inspection, and reconciliation of the next
 action with the durable ledger before Codex continues.
 
+PR #291 passed protected CI and merged as `acf2b817`. Guarded fleet sync
+advanced all eleven clean remote checkouts to that revision; the repeat plan
+reported `KEEP` with aligned `origin/main` and no transfer residue everywhere.
+The exact detached Codex panes on Aist, Home, and Office accepted one refresh
+instruction without pane-content inspection. Riken's checkout is equally
+current and clean, but its Codex session is attached, so the new safety rule
+correctly deferred input. The next action is for the owner to detach Riken with
+the normal tmux detach key, then queue its one pending refresh, validate all
+four session states, and close T-306.
+
 ### T-302 — Reduce AL authentication intervention
 
 **Phase:** monitoring/time-gated (restart-resilience extension). CSCS requires
