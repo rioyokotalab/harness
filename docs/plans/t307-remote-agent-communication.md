@@ -10,10 +10,10 @@ host-neutral for later managed nodes.
 ## Phase and scope
 
 - Phase: executing/validating
-- Status: structured required replies passed on Aist and Riken but were omitted
-  again by freshly restarted Home and Office; a schema-constrained resumed-turn
-  fallback is under validation
-- Working branch: `fix/t-307-deterministic-fallback`
+- Status: Home and Office proved reverse replies depend on unavailable
+  `login`/agent state; a same-originating-channel request/reply path is under
+  validation
+- Working branch: `fix/t-307-same-channel-request`
 - Working set: `AGENTS.md`, `TODO.md`, this plan, one new skill under
   `shared/skills/`, discovery links, and focused tests
 - Non-goals: pane transcript capture, credential access, repository mailboxes,
@@ -61,6 +61,24 @@ host-neutral for later managed nodes.
     replacing its live TUI. Its unconstrained final wording failed an exact
     format check and was exact-removed without display. This supports a strict
     output-schema fallback rather than parsing free-form model text.
+11. The first published fallback was invoked once for
+    `t307-home-r3-20260724` after 120 seconds and value-free idle evidence. It
+    failed in six seconds before any Local reply appeared, and its `finally`
+    cleanup left no private artifact. The timing and unsupported-keyword risk
+    make schema validation the leading hypothesis, not a confirmed cause. The
+    next iteration removes schema metadata, regex, and length keywords while
+    retaining equivalent deterministic checks in the wrapper.
+12. Home subsequently reported that it made exactly one response attempt for
+    `t307-home-r3-20260724`; the reverse transport failed and submission is
+    ambiguous. Office also made exactly one attempt, but `login` and its
+    `SSH_AUTH_SOCK` were unavailable and no `status=submitted` was returned.
+    Both agents followed policy. The shared failure is the second,
+    Mac-to-Local SSH connection, not model compliance or response formatting.
+    Neither existing request ID may be retried.
+13. A bounded wait plus idle process metadata did not establish that Home's
+    original turn had ended. The fallback gate must require explicit owner
+    observation of completion without a response attempt; time and idleness
+    alone are insufficient.
 
 ## Selected protocol
 
@@ -81,6 +99,12 @@ host-neutral for later managed nodes.
 6. Serialize the complete paste, submit, and settle interval with a private
    current-user advisory lock. Concurrent agents may wait, but their prompt
    bytes must never share the controller input buffer.
+7. When a response is acceptance-critical, do not use TUI injection. Send the
+   identified request over one Local-to-Mac SSH stdin, process it with one
+   schema-constrained `codex exec resume --last` turn in the existing thread,
+   return the validated response through the same SSH stdout, and inject it
+   into Local. Disable forwarding and do not depend on `login`,
+   `SSH_AUTH_SOCK`, or a second connection.
 
 ## Decision register
 
@@ -98,9 +122,13 @@ host-neutral for later managed nodes.
   `REPLY_REQUIRED ... max_replies=1` contract. The recipient must send one
   status response even when the requested work is blocked or rejected.
 - Configuration cannot make semantic model behavior deterministic. After a
-  confirmed omitted response and only while the preceding turn is
-  unambiguous, the controller may run exactly one read-only, schema-constrained
-  resumed-turn fallback and relay its result as `responder=exec-fallback`.
+  confirmed omitted response and only while the owner explicitly
+  observed the preceding turn finish, the controller may run exactly one
+  read-only, schema-constrained resumed-turn fallback and return its result on
+  the originating channel as `responder=exec-fallback`.
+- Required-response work uses `request` from the start. It returns
+  `responder=exec-request` on the Local-to-Mac connection and must not also be
+  injected through the TUI.
 - A four-Mac simultaneous reply test on 2026-07-24 produced one unprefixed,
   truncated input before a later intact Riken reply. The unprefixed input was
   not attributed. This is evidence that injection must be serialized, not
@@ -125,6 +153,9 @@ host-neutral for later managed nodes.
    results and never infer one route proves another.
 9. Verify clean/current fleet state and absent temporary artifacts, then mark
    T-307 complete.
+10. Replace reverse-SSH response acceptance with one same-channel request on
+    Home and Office, using new IDs only. Verify their ordinary TUI processes
+    remain live and private response artifacts are absent.
 
 ## Safety and recovery
 
@@ -139,11 +170,15 @@ host-neutral for later managed nodes.
   phone-visible conversation.
 - A failed send is retryable only after value-free diagnosis. A successful
   submission must not be retried because delivery is not idempotent.
+- A same-channel request returns its response before success. If transport
+  fails after remote execution, treat its result as ambiguous and do not
+  repeat the same request ID.
 
 ## Acceptance gates
 
-- One request and one matching reply complete on every Mac without pane reads,
-  checkout dirtiness, credential access, or residual temporary files.
+- One same-channel request and matching reply complete on every Mac without
+  reverse SSH, agent forwarding, pane reads, checkout dirtiness, credential
+  access, or residual temporary files.
 - Malformed, misidentified, misrouted, oversized, attached, ambiguous, or
   unsafe messages fail closed in focused tests.
 - Message bytes do not appear in SSH or tmux process arguments or ordinary
@@ -155,8 +190,8 @@ host-neutral for later managed nodes.
 
 ## Next action
 
-Finish focused/full validation of the resumed-turn fallback, publish and
-guarded-sync it, then use it once for a newly omitted Home or Office response.
-Verify that the schema-constrained response appears in Local, the original TUI
-remains live, private logs and temporary files are absent, and no second reply
-or loop occurs.
+Finish validation and publication of the same-channel request flow, then
+guarded-sync it. Issue new acceptance-critical Home and Office requests through
+that flow, verify both replies appear in Local, and confirm each original TUI
+remains live with no private artifacts. Do not retry either prior ambiguous
+request.

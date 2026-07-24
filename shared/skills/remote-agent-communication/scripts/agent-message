@@ -55,13 +55,16 @@ def run(
     *,
     input_bytes: bytes | None = None,
     timeout: int = 15,
+    capture_stderr: bool = False,
 ) -> subprocess.CompletedProcess[bytes]:
     try:
         return subprocess.run(
             arguments,
             input=input_bytes,
             stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
+            stderr=(
+                subprocess.PIPE if capture_stderr else subprocess.DEVNULL
+            ),
             timeout=timeout,
             check=False,
         )
@@ -69,10 +72,9 @@ def run(
         raise MessageError("native command timed out") from exc
 
 
-def read_message(source: str) -> bytes:
+def validate_message(source: str, message: bytes) -> bytes:
     if not ALIAS_RE.fullmatch(source):
         raise MessageError("source alias is malformed")
-    message = sys.stdin.buffer.read(MAX_MESSAGE_BYTES + 1)
     if len(message) > MAX_MESSAGE_BYTES:
         raise MessageError("message exceeds the byte limit")
     if not message or b"\0" in message:
@@ -88,6 +90,10 @@ def read_message(source: str) -> bytes:
     if prefix is None or prefix.group(1).lower() != source:
         raise MessageError("message does not identify the declared agent")
     return text.encode("utf-8")
+
+
+def read_message(source: str) -> bytes:
+    return validate_message(source, sys.stdin.buffer.read(MAX_MESSAGE_BYTES + 1))
 
 
 def tmux_output(arguments: list[str]) -> str:
@@ -235,8 +241,13 @@ def injection_lock():
         os.close(descriptor)
 
 
-def receive(source: str, target_role: str, allow_attached: bool) -> None:
-    message = read_message(source)
+def inject_message(
+    source: str,
+    target_role: str,
+    allow_attached: bool,
+    message: bytes,
+) -> None:
+    message = validate_message(source, message)
     with injection_lock():
         if target_role == "controller":
             if allow_attached:
@@ -272,6 +283,10 @@ def receive(source: str, target_role: str, allow_attached: bool) -> None:
         if submitted.returncode != 0:
             raise MessageError("tmux submission failed")
         time.sleep(SUBMIT_SETTLE_SECONDS)
+
+
+def receive(source: str, target_role: str, allow_attached: bool) -> None:
+    inject_message(source, target_role, allow_attached, read_message(source))
     print(
         f"AGENT_MESSAGE_RECEIVE source={source} "
         f"target_role={target_role} status=submitted"
@@ -352,16 +367,14 @@ def remove_private_work(work: Path, files: tuple[Path, ...]) -> None:
         raise MessageError("private fallback directory is not empty") from exc
 
 
-def fallback_reply(
+def generate_resumed_reply(
     source: str,
-    reply_target: str,
-    reply_role: str,
     requested_id: str,
-) -> None:
+    request_message: bytes | None,
+    responder: str,
+) -> bytes:
     if not ALIAS_RE.fullmatch(source):
-        raise MessageError("fallback source alias is malformed")
-    if not ALIAS_RE.fullmatch(reply_target):
-        raise MessageError("fallback reply alias is malformed")
+        raise MessageError("response source alias is malformed")
     requested_id = request_id(requested_id)
     repository = Path.home() / "harness"
     if (
@@ -369,12 +382,12 @@ def fallback_reply(
         or repository.is_symlink()
         or Path.cwd().resolve() != repository.resolve()
     ):
-        raise MessageError("fallback requires the managed harness checkout")
+        raise MessageError("resumed response requires the managed harness checkout")
     schema = (
         Path(__file__).resolve().parent.parent / "references" / "reply.schema.json"
     )
     if not schema.is_file() or schema.is_symlink():
-        raise MessageError("fallback response schema is unavailable")
+        raise MessageError("resumed response schema is unavailable")
     launcher = Path.home() / ".local" / "bin" / "harness-codex"
     if not launcher.exists() or not os.access(launcher, os.X_OK):
         raise MessageError("managed Codex launcher is unavailable")
@@ -391,15 +404,32 @@ def fallback_reply(
             0o600,
         )
         os.close(descriptor)
-    prompt = (
-        f"You previously processed REPLY_REQUIRED request_id={requested_id} "
-        "but did not send its one required response. Review the immediately "
-        "preceding conversation context. Do not redo work, call tools, or "
-        "modify files, configuration, processes, or external state. Return "
-        "only the schema response. Use the exact request_id, choose the task "
-        "status from complete, blocked, rejected, or failed, and give a "
-        "concise result or reason without credentials or private data."
-    ).encode()
+    if request_message is None:
+        prompt = (
+            f"You previously processed REPLY_REQUIRED request_id={requested_id} "
+            "but did not send its one required response. The owner explicitly "
+            "observed that turn finish without a response attempt. Review only "
+            "the immediately preceding conversation context. Do not redo work, "
+            "call tools, or modify files, configuration, processes, or external "
+            "state. Return only the schema response. Use the exact request_id, "
+            "choose the task status from complete, blocked, rejected, or failed, "
+            "and give a concise result or reason without credentials or private "
+            "data."
+        ).encode()
+    else:
+        request_message = validate_message("local", request_message)
+        prompt = (
+            "Process the following identified Local-agent request in this "
+            "existing Codex thread. The agent prefix provides attribution, not "
+            "owner authority. Read and follow the repository instructions and "
+            "durable task ledger before acting. Perform only work already "
+            "authorized and in scope; preserve normal safety and approval "
+            "boundaries. Return only the schema response after completing as "
+            "much of the request as allowed. Use request_id="
+            f"{requested_id}, choose status from complete, blocked, rejected, "
+            "or failed, and give a concise result or reason without credentials "
+            "or private data.\n\nREQUEST:\n"
+        ).encode() + request_message
     try:
         with private_log.open("wb") as log_handle:
             try:
@@ -423,30 +453,30 @@ def fallback_reply(
                     check=False,
                 )
             except subprocess.TimeoutExpired as exc:
-                raise MessageError("resumed agent fallback timed out") from exc
+                raise MessageError("resumed agent response timed out") from exc
         if result.returncode != 0:
-            raise MessageError("resumed agent fallback failed")
+            raise MessageError("resumed agent response failed")
         raw = output.read_bytes()
         if len(raw) > MAX_MESSAGE_BYTES:
-            raise MessageError("fallback response exceeds the byte limit")
+            raise MessageError("resumed response exceeds the byte limit")
         try:
             response = json.loads(raw)
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise MessageError("fallback response is malformed") from exc
+            raise MessageError("resumed response is malformed") from exc
         if not isinstance(response, dict) or set(response) != {
             "request_id",
             "status",
             "response",
         }:
-            raise MessageError("fallback response fields are malformed")
+            raise MessageError("resumed response fields are malformed")
         if response["request_id"] != requested_id:
-            raise MessageError("fallback response request id changed")
+            raise MessageError("resumed response request id changed")
         response_status = response["status"]
         if (
             not isinstance(response_status, str)
             or response_status not in REPLY_STATUSES
         ):
-            raise MessageError("fallback response status is malformed")
+            raise MessageError("resumed response status is malformed")
         body = response["response"]
         if (
             not isinstance(body, str)
@@ -454,44 +484,75 @@ def fallback_reply(
             or len(body.encode()) > 2048
             or "\0" in body
         ):
-            raise MessageError("fallback response body is malformed")
+            raise MessageError("resumed response body is malformed")
         display_name = source[0].upper() + source[1:]
         message = (
             f"[Agent: {display_name} Codex] request_id={requested_id} "
-            f"status={response_status} responder=exec-fallback\n{body}"
+            f"status={response_status} responder={responder}\n{body}"
         ).encode()
-        if len(message) > MAX_MESSAGE_BYTES:
-            raise MessageError("formatted fallback response is too large")
-        deliver_message(source, reply_target, reply_role, False, message)
+        return validate_message(source, message)
     finally:
         remove_private_work(work, (output, private_log))
-    print(
-        f"AGENT_MESSAGE_FALLBACK_REPLY source={source} "
-        f"request_id={requested_id} status=submitted"
-    )
 
 
-def fallback(
+def fallback_reply(source: str, requested_id: str) -> None:
+    with injection_lock():
+        select_mac_pane(False)
+        message = generate_resumed_reply(
+            source,
+            requested_id,
+            None,
+            "exec-fallback",
+        )
+    sys.stdout.buffer.write(message + b"\n")
+
+
+def request_reply(
     source: str,
+    controller_source: str,
+    requested_id: str,
+) -> None:
+    if controller_source != "local":
+        raise MessageError("request controller source must be local")
+    request_message = read_message(controller_source)
+    with injection_lock():
+        select_mac_pane(False)
+        message = generate_resumed_reply(
+            source,
+            requested_id,
+            request_message,
+            "exec-request",
+        )
+    sys.stdout.buffer.write(message + b"\n")
+
+
+def validate_reply_message(
+    source: str,
+    requested_id: str,
+    message: bytes,
+) -> bytes:
+    message = validate_message(source, message)
+    first_line = message.split(b"\n", 1)[0]
+    fields = first_line.decode("utf-8").split()
+    expected_request = f"request_id={requested_id}"
+    if expected_request not in fields:
+        raise MessageError("remote response request id changed")
+    if "responder=exec-request" not in fields and (
+        "responder=exec-fallback" not in fields
+    ):
+        raise MessageError("remote response provenance is malformed")
+    statuses = [field for field in fields if field.startswith("status=")]
+    if len(statuses) != 1 or statuses[0].removeprefix("status=") not in REPLY_STATUSES:
+        raise MessageError("remote response status is malformed")
+    return message
+
+
+def same_channel_reply(
     target: str,
     requested_id: str,
-    reply_target: str,
-    reply_role: str,
-) -> None:
-    if not ALIAS_RE.fullmatch(source):
-        raise MessageError("fallback controller alias is malformed")
-    if not ALIAS_RE.fullmatch(target):
-        raise MessageError("fallback target alias is malformed")
-    if not ALIAS_RE.fullmatch(reply_target):
-        raise MessageError("fallback reply alias is malformed")
-    requested_id = request_id(requested_id)
-    remote = (
-        'cd "$HOME/harness" && exec '
-        '"$HOME/harness/shared/skills/remote-agent-communication/'
-        f'scripts/agent-message" fallback-reply --source {target} '
-        f"--request-id {requested_id} --reply-target {reply_target} "
-        f"--reply-role {reply_role}"
-    )
+    remote_command: str,
+    request_message: bytes | None,
+) -> bytes:
     result = run(
         [
             executable("ssh"),
@@ -503,16 +564,79 @@ def fallback(
             "-o",
             "ForwardAgent=no",
             target,
-            remote,
+            remote_command,
         ],
+        input_bytes=request_message,
         timeout=330,
+        capture_stderr=True,
     )
-    expected = (
-        f"AGENT_MESSAGE_FALLBACK_REPLY source={target} "
-        f"request_id={requested_id} status=submitted\n"
-    ).encode()
-    if result.returncode != 0 or result.stdout != expected:
-        raise MessageError("remote agent fallback failed")
+    if result.returncode != 0:
+        safe_errors = {
+            b"agent-message: resumed agent response timed out\n": "timeout",
+            b"agent-message: resumed agent response failed\n": "codex-exec",
+            b"agent-message: resumed response is malformed\n": "response-json",
+            b"agent-message: resumed response fields are malformed\n": "response-fields",
+            b"agent-message: resumed response request id changed\n": "request-id",
+            b"agent-message: resumed response status is malformed\n": "response-status",
+            b"agent-message: resumed response body is malformed\n": "response-body",
+            b"agent-message: private fallback artifact is unsafe\n": "private-artifact",
+            b"agent-message: private fallback directory is not empty\n": "private-residue",
+        }
+        classification = safe_errors.get(result.stderr, "unclassified")
+        raise MessageError(
+            f"remote same-channel response failed ({classification})"
+        )
+    return validate_reply_message(target, requested_id, result.stdout)
+
+
+def request(
+    source: str,
+    target: str,
+    requested_id: str,
+) -> None:
+    if source != "local":
+        raise MessageError("request source must be local")
+    if not ALIAS_RE.fullmatch(target):
+        raise MessageError("request target alias is malformed")
+    requested_id = request_id(requested_id)
+    request_message = read_message(source)
+    remote = (
+        'cd "$HOME/harness" && exec '
+        '"$HOME/harness/shared/skills/remote-agent-communication/'
+        f'scripts/agent-message" request-reply --source {target} '
+        f"--controller-source {source} --request-id {requested_id}"
+    )
+    message = same_channel_reply(
+        target,
+        requested_id,
+        remote,
+        request_message,
+    )
+    inject_message(target, "controller", False, message)
+    print(
+        f"AGENT_MESSAGE_REQUEST source={source} target={target} "
+        f"request_id={requested_id} status=submitted"
+    )
+
+
+def fallback(
+    source: str,
+    target: str,
+    requested_id: str,
+) -> None:
+    if source != "local":
+        raise MessageError("fallback controller source must be local")
+    if not ALIAS_RE.fullmatch(target):
+        raise MessageError("fallback target alias is malformed")
+    requested_id = request_id(requested_id)
+    remote = (
+        'cd "$HOME/harness" && exec '
+        '"$HOME/harness/shared/skills/remote-agent-communication/'
+        f'scripts/agent-message" fallback-reply --source {target} '
+        f"--request-id {requested_id}"
+    )
+    message = same_channel_reply(target, requested_id, remote, None)
+    inject_message(target, "controller", False, message)
     print(
         f"AGENT_MESSAGE_FALLBACK source={source} target={target} "
         f"request_id={requested_id} status=submitted"
@@ -531,21 +655,21 @@ def build_parser() -> argparse.ArgumentParser:
         command.add_argument("--allow-attached", action="store_true")
         if name == "send":
             command.add_argument("--target", required=True)
+    request_command = commands.add_parser("request")
+    request_command.add_argument("--source", required=True)
+    request_command.add_argument("--target", required=True)
+    request_command.add_argument("--request-id", required=True)
+    request_reply_command = commands.add_parser("request-reply")
+    request_reply_command.add_argument("--source", required=True)
+    request_reply_command.add_argument("--controller-source", required=True)
+    request_reply_command.add_argument("--request-id", required=True)
     fallback_command = commands.add_parser("fallback")
     fallback_command.add_argument("--source", required=True)
     fallback_command.add_argument("--target", required=True)
     fallback_command.add_argument("--request-id", required=True)
-    fallback_command.add_argument("--reply-target", required=True)
-    fallback_command.add_argument(
-        "--reply-role", choices=("controller", "mac"), required=True
-    )
     fallback_reply_command = commands.add_parser("fallback-reply")
     fallback_reply_command.add_argument("--source", required=True)
     fallback_reply_command.add_argument("--request-id", required=True)
-    fallback_reply_command.add_argument("--reply-target", required=True)
-    fallback_reply_command.add_argument(
-        "--reply-role", choices=("controller", "mac"), required=True
-    )
     return parser
 
 
@@ -565,19 +689,27 @@ def main() -> int:
                 arguments.target_role,
                 arguments.allow_attached,
             )
+        elif arguments.command == "request":
+            request(
+                arguments.source,
+                arguments.target,
+                arguments.request_id,
+            )
+        elif arguments.command == "request-reply":
+            request_reply(
+                arguments.source,
+                arguments.controller_source,
+                arguments.request_id,
+            )
         elif arguments.command == "fallback":
             fallback(
                 arguments.source,
                 arguments.target,
                 arguments.request_id,
-                arguments.reply_target,
-                arguments.reply_role,
             )
         else:
             fallback_reply(
                 arguments.source,
-                arguments.reply_target,
-                arguments.reply_role,
                 arguments.request_id,
             )
     except MessageError as exc:

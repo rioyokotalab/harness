@@ -1,4 +1,4 @@
 interface:
   display_name: "Remote Agent Communication"
-  short_description: "Exchange identified prompts between remote Codex sessions"
-  default_prompt: "Use $remote-agent-communication to send an identified message to another managed Codex session."
+  short_description: "Exchange identified prompts and reliable replies"
+  default_prompt: "Use $remote-agent-communication to send an identified request to a managed Codex thread and obtain one bounded reply."

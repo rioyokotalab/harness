@@ -30,6 +30,11 @@ grep -F 'report that status and the' "$ROOT/AGENTS.md" >/dev/null ||
 grep -F 'Do not put `submission=succeeded` in the response payload' \
     "$ROOT/shared/skills/remote-agent-communication/SKILL.md" >/dev/null ||
     fail "reply submission semantics"
+grep -F 'same-channel `request` flow' "$ROOT/AGENTS.md" >/dev/null ||
+    fail "required-response same-channel policy"
+grep -F 'does not use `ssh login`' \
+    "$ROOT/shared/skills/remote-agent-communication/SKILL.md" >/dev/null ||
+    fail "request reverse-route independence"
 
 home=$TEST_ROOT/home
 fake_bin=$TEST_ROOT/bin
@@ -101,9 +106,15 @@ set -eu
 : "${FAKE_STATE:?}"
 printf '%s\n' "$*" >"$FAKE_STATE/ssh-arguments"
 cp /dev/stdin "$FAKE_STATE/ssh-message"
-if [ "${FAKE_SSH_MODE:-send}" = fallback ]; then
-    printf 'AGENT_MESSAGE_FALLBACK_REPLY source=%s request_id=%s status=submitted\n' \
-        "${FAKE_FALLBACK_SOURCE:?}" "${FAKE_REPLY_REQUEST_ID:?}"
+if [ "${FAKE_SSH_FAIL:-0}" -eq 1 ]; then
+    printf 'unexpected remote failure\n' >&2
+    exit 1
+fi
+if [ "${FAKE_SSH_MODE:-send}" = response ]; then
+    printf '[Agent: %s Codex] request_id=%s status=complete responder=%s\n' \
+        "${FAKE_RESPONSE_NAME:?}" "${FAKE_REPLY_REQUEST_ID:?}" \
+        "${FAKE_RESPONDER:?}"
+    printf 'verified clean\n'
 else
     printf 'AGENT_MESSAGE_RECEIVE source=%s target_role=%s status=submitted\n' \
         "${FAKE_SOURCE:?}" "${FAKE_TARGET_ROLE:?}"
@@ -242,23 +253,67 @@ if run_helper send --source riken --target '../unsafe' \
     fail "unsafe target accepted"
 fi
 
-reply_id=t307-home-fallback-test
+reply_id=t307-home-request-test
+request='[Agent: Local Codex] inspect the current revision and worktree'
+printf %s "$request" >"$state/request-message"
 (
     cd "$home/harness"
-    FAKE_SOURCE=home FAKE_TARGET_ROLE=controller \
+    FAKE_SESSION=harness-codex-resume FAKE_TTY=/dev/ttys000 \
         FAKE_REPLY_REQUEST_ID=$reply_id \
-        run_helper fallback-reply --source home --request-id "$reply_id" \
-        --reply-target login --reply-role controller \
+        run_helper request-reply --source home --controller-source local \
+        --request-id "$reply_id" <"$state/request-message" \
+        >"$state/request-reply.out"
+)
+grep -F -x \
+    "[Agent: Home Codex] request_id=$reply_id status=complete responder=exec-request" \
+    "$state/request-reply.out" >/dev/null || fail "request reply prefix"
+grep -F -x 'verified clean' "$state/request-reply.out" >/dev/null ||
+    fail "request reply body"
+grep -F 'Process the following identified Local-agent request' \
+    "$state/fallback-prompt" >/dev/null || fail "request execution prompt"
+grep -F -x "$request" "$state/fallback-prompt" >/dev/null ||
+    fail "request payload missing from prompt"
+if [ -s "$state/ssh-message" ] &&
+    grep -F "$request" "$state/ssh-arguments" >/dev/null; then
+    fail "request leaked into SSH arguments"
+fi
+if find "$home/.local/state/harness" -maxdepth 1 \
+    -name '.agent-reply-*' -print -quit | grep . >/dev/null; then
+    fail "request private residue"
+fi
+
+FAKE_SSH_MODE=response FAKE_RESPONSE_NAME=Home \
+    FAKE_REPLY_REQUEST_ID=$reply_id FAKE_RESPONDER=exec-request \
+    run_helper request --source local --target home \
+    --request-id "$reply_id" <"$state/request-message" \
+    >"$state/request.out"
+grep -F -x \
+    "AGENT_MESSAGE_REQUEST source=local target=home request_id=$reply_id status=submitted" \
+    "$state/request.out" >/dev/null || fail "request controller output"
+cmp -s "$state/request-message" "$state/ssh-message" ||
+    fail "same-channel request message changed"
+grep -F 'request-reply --source home --controller-source local' \
+    "$state/ssh-arguments" >/dev/null || fail "request native command"
+grep -F -- '-o ForwardAgent=no home' "$state/ssh-arguments" >/dev/null ||
+    fail "request disabled agent forwarding"
+if grep -F 'reply-target' "$state/ssh-arguments" >/dev/null ||
+    grep -F 'reply-role' "$state/ssh-arguments" >/dev/null; then
+    fail "request retained reverse reply route"
+fi
+
+fallback_id=t307-home-fallback-test
+(
+    cd "$home/harness"
+    FAKE_SESSION=harness-codex-resume FAKE_TTY=/dev/ttys000 \
+        FAKE_REPLY_REQUEST_ID=$fallback_id \
+        run_helper fallback-reply --source home --request-id "$fallback_id" \
         >"$state/fallback-reply.out"
 )
 grep -F -x \
-    "AGENT_MESSAGE_FALLBACK_REPLY source=home request_id=$reply_id status=submitted" \
-    "$state/fallback-reply.out" >/dev/null || fail "fallback reply output"
-grep -F -x \
-    "[Agent: Home Codex] request_id=$reply_id status=complete responder=exec-fallback" \
-    "$state/ssh-message" >/dev/null || fail "fallback response prefix"
-grep -F -x 'verified clean' "$state/ssh-message" >/dev/null ||
-    fail "fallback response body"
+    "[Agent: Home Codex] request_id=$fallback_id status=complete responder=exec-fallback" \
+    "$state/fallback-reply.out" >/dev/null || fail "fallback reply prefix"
+grep -F -x 'verified clean' "$state/fallback-reply.out" >/dev/null ||
+    fail "fallback reply body"
 grep -F 'Do not redo work, call tools, or modify files' \
     "$state/fallback-prompt" >/dev/null || fail "fallback read-only prompt"
 if find "$home/.local/state/harness" -maxdepth 1 \
@@ -266,19 +321,39 @@ if find "$home/.local/state/harness" -maxdepth 1 \
     fail "fallback private residue"
 fi
 
-FAKE_SSH_MODE=fallback FAKE_FALLBACK_SOURCE=home \
-    FAKE_REPLY_REQUEST_ID=$reply_id \
+FAKE_SSH_MODE=response FAKE_RESPONSE_NAME=Home \
+    FAKE_REPLY_REQUEST_ID=$fallback_id FAKE_RESPONDER=exec-fallback \
     run_helper fallback --source local --target home \
-    --request-id "$reply_id" --reply-target login \
-    --reply-role controller >"$state/fallback.out"
+    --request-id "$fallback_id" >"$state/fallback.out"
 grep -F -x \
-    "AGENT_MESSAGE_FALLBACK source=local target=home request_id=$reply_id status=submitted" \
+    "AGENT_MESSAGE_FALLBACK source=local target=home request_id=$fallback_id status=submitted" \
     "$state/fallback.out" >/dev/null || fail "fallback controller output"
 grep -F 'fallback-reply --source home' "$state/ssh-arguments" >/dev/null ||
     fail "fallback native command"
+if grep -F 'reply-target' "$state/ssh-arguments" >/dev/null ||
+    grep -F 'reply-role' "$state/ssh-arguments" >/dev/null; then
+    fail "fallback retained reverse reply route"
+fi
+FAKE_SSH_MODE=response FAKE_RESPONSE_NAME=Home \
+    FAKE_REPLY_REQUEST_ID=$fallback_id FAKE_RESPONDER=exec-fallback \
+    FAKE_SSH_FAIL=1 \
+    run_helper fallback --source local --target home \
+    --request-id "$fallback_id" >"$state/fallback-classified.out" 2>&1 &&
+    fail "failed fallback accepted"
+grep -F 'remote same-channel response failed (unclassified)' \
+    "$state/fallback-classified.out" >/dev/null ||
+    fail "fallback failure classification"
+FAKE_SSH_MODE=response FAKE_RESPONSE_NAME=Home \
+    FAKE_REPLY_REQUEST_ID=wrong-request FAKE_RESPONDER=exec-request \
+    run_helper request --source local --target home \
+    --request-id "$reply_id" <"$state/request-message" \
+    >"$state/request-wrong-id.out" 2>&1 &&
+    fail "request accepted changed response id"
+grep -F 'remote response request id changed' \
+    "$state/request-wrong-id.out" >/dev/null ||
+    fail "request id mismatch classification"
 if run_helper fallback --source local --target home \
-    --request-id '../unsafe' --reply-target login \
-    --reply-role controller >"$state/fallback-unsafe.out" 2>&1; then
+    --request-id '../unsafe' >"$state/fallback-unsafe.out" 2>&1; then
     fail "unsafe fallback request id accepted"
 fi
 
