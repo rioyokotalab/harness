@@ -100,11 +100,18 @@ processing in both TUIs. This rules out transport failure for those trials and
 demonstrates nondeterministic response compliance. A structured
 `REPLY_REQUIRED ... max_replies=1` contract is being added to shared agent
 policy and the skill: it requires exactly one status response even when work
-is blocked or rejected, without granting remote owner authority. No transient
-tmux buffer remains. The complete plan and evidence are in
-`docs/plans/t307-remote-agent-communication.md`. Next action: validate,
-publish, guarded-sync, refresh agent context, and run sequential uniquely
-identified response trials on all four Macs.
+is blocked or rejected, without granting remote owner authority. That contract
+is merged and synced at `57ec794f3ec437026e4bf7f3682b05e4a55d1940`;
+Aist and Riken complied, while freshly restarted Home and Office still omitted
+their replies. A read-only `codex exec resume --last` trial completed against
+Home without replacing its TUI, but free-form output failed the exact format
+gate and was removed without display. Work now adds a deterministic fallback:
+one schema-constrained resumed turn reports the immediately preceding result
+and relays it as `responder=exec-fallback`, without redoing work, replacing the
+TUI, or creating a loop. No transient tmux buffer remains. The complete plan
+and evidence are in `docs/plans/t307-remote-agent-communication.md`. Next
+action: finish focused/full validation, publish and guarded-sync, then run one
+live omitted-reply fallback and verify TUI/process/residue invariants.
 
 ### T-302 — Reduce AL authentication intervention
 

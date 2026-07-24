@@ -34,7 +34,7 @@ grep -F 'Do not put `submission=succeeded` in the response payload' \
 home=$TEST_ROOT/home
 fake_bin=$TEST_ROOT/bin
 state=$TEST_ROOT/state
-mkdir -p "$home/harness" "$fake_bin" "$state"
+mkdir -p "$home/harness" "$home/.local/bin" "$fake_bin" "$state"
 
 cat >"$fake_bin/tmux" <<'EOF'
 #!/bin/sh
@@ -101,10 +101,33 @@ set -eu
 : "${FAKE_STATE:?}"
 printf '%s\n' "$*" >"$FAKE_STATE/ssh-arguments"
 cp /dev/stdin "$FAKE_STATE/ssh-message"
-printf 'AGENT_MESSAGE_RECEIVE source=%s target_role=%s status=submitted\n' \
-    "${FAKE_SOURCE:?}" "${FAKE_TARGET_ROLE:?}"
+if [ "${FAKE_SSH_MODE:-send}" = fallback ]; then
+    printf 'AGENT_MESSAGE_FALLBACK_REPLY source=%s request_id=%s status=submitted\n' \
+        "${FAKE_FALLBACK_SOURCE:?}" "${FAKE_REPLY_REQUEST_ID:?}"
+else
+    printf 'AGENT_MESSAGE_RECEIVE source=%s target_role=%s status=submitted\n' \
+        "${FAKE_SOURCE:?}" "${FAKE_TARGET_ROLE:?}"
+fi
 EOF
 chmod 755 "$fake_bin/ssh"
+
+cat >"$home/.local/bin/harness-codex" <<'EOF'
+#!/bin/sh
+set -eu
+: "${FAKE_STATE:?}"
+output=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        -o) output=$2; shift 2 ;;
+        *) shift ;;
+    esac
+done
+[ -n "$output" ]
+cp /dev/stdin "$FAKE_STATE/fallback-prompt"
+printf '{"request_id":"%s","status":"complete","response":"verified clean"}\n' \
+    "${FAKE_REPLY_REQUEST_ID:?}" >"$output"
+EOF
+chmod 755 "$home/.local/bin/harness-codex"
 
 run_helper() {
     HOME=$home FAKE_STATE=$state \
@@ -218,5 +241,49 @@ if run_helper send --source riken --target '../unsafe' \
     >"$state/unsafe-target.out" 2>&1; then
     fail "unsafe target accepted"
 fi
+
+reply_id=t307-home-fallback-test
+(
+    cd "$home/harness"
+    FAKE_SOURCE=home FAKE_TARGET_ROLE=controller \
+        FAKE_REPLY_REQUEST_ID=$reply_id \
+        run_helper fallback-reply --source home --request-id "$reply_id" \
+        --reply-target login --reply-role controller \
+        >"$state/fallback-reply.out"
+)
+grep -F -x \
+    "AGENT_MESSAGE_FALLBACK_REPLY source=home request_id=$reply_id status=submitted" \
+    "$state/fallback-reply.out" >/dev/null || fail "fallback reply output"
+grep -F -x \
+    "[Agent: Home Codex] request_id=$reply_id status=complete responder=exec-fallback" \
+    "$state/ssh-message" >/dev/null || fail "fallback response prefix"
+grep -F -x 'verified clean' "$state/ssh-message" >/dev/null ||
+    fail "fallback response body"
+grep -F 'Do not redo work, call tools, or modify files' \
+    "$state/fallback-prompt" >/dev/null || fail "fallback read-only prompt"
+if find "$home/.local/state/harness" -maxdepth 1 \
+    -name '.agent-reply-*' -print -quit | grep . >/dev/null; then
+    fail "fallback private residue"
+fi
+
+FAKE_SSH_MODE=fallback FAKE_FALLBACK_SOURCE=home \
+    FAKE_REPLY_REQUEST_ID=$reply_id \
+    run_helper fallback --source local --target home \
+    --request-id "$reply_id" --reply-target login \
+    --reply-role controller >"$state/fallback.out"
+grep -F -x \
+    "AGENT_MESSAGE_FALLBACK source=local target=home request_id=$reply_id status=submitted" \
+    "$state/fallback.out" >/dev/null || fail "fallback controller output"
+grep -F 'fallback-reply --source home' "$state/ssh-arguments" >/dev/null ||
+    fail "fallback native command"
+if run_helper fallback --source local --target home \
+    --request-id '../unsafe' --reply-target login \
+    --reply-role controller >"$state/fallback-unsafe.out" 2>&1; then
+    fail "unsafe fallback request id accepted"
+fi
+
+python3 -m json.tool \
+    "$ROOT/shared/skills/remote-agent-communication/references/reply.schema.json" \
+    >/dev/null || fail "fallback response schema"
 
 printf '%s\n' 'remote agent communication tests: PASS'
