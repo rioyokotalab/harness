@@ -143,6 +143,12 @@ never become project runtime dependencies.
   task status in the message; only the transport's local `status=submitted`
   output can prove that submission succeeded. Never retry an acknowledged or
   ambiguous submission.
+- Use the `remote-agent-communication` skill's same-channel `request` flow
+  whenever a Mac response is an acceptance requirement. It resumes the
+  existing thread for one bounded turn and returns the response over the
+  originating Local-to-Mac SSH connection, so it must not depend on a reverse
+  `login` route or forwarded SSH agent. Do not also inject the same request
+  into the TUI.
 - Make unfinished work resumable from the repository alone. Git, the closest
   instruction files, and the declared task ledger are authoritative; chat
   history, client summaries, and Claude auto-memory are optional context only.

@@ -84,34 +84,30 @@ Next free ID: T-308.
 
 ### T-307 — Bidirectional remote-agent communication
 
-**Phase:** executing/validating. Bidirectional injection is proven. The skill,
-macOS process-path correction, and concurrent-reply serialization are merged
-through protected CI and synced to all 11 managed nodes at
-`1179f371654fb28cb62e09e170a807fee0c42dd2`. A simultaneous four-Mac reply
-attempt produced one unprefixed truncated input; it was not attributed, and
-the evidence exposed an overlap window between paste and submission. The
-receiver now holds a private current-user advisory lock across paste,
-submission, and settling, with focused concurrent-delivery coverage.
-Sequential installed-skill round trips from Aist and Riken returned intact
-identified replies in this Local/phone-visible conversation. Home and Office
-accepted and processed one independently submitted request each but did not
-attempt the requested response; the owner confirmed the messages and completed
-processing in both TUIs. This rules out transport failure for those trials and
-demonstrates nondeterministic response compliance. A structured
-`REPLY_REQUIRED ... max_replies=1` contract is being added to shared agent
-policy and the skill: it requires exactly one status response even when work
-is blocked or rejected, without granting remote owner authority. That contract
-is merged and synced at `57ec794f3ec437026e4bf7f3682b05e4a55d1940`;
-Aist and Riken complied, while freshly restarted Home and Office still omitted
-their replies. A read-only `codex exec resume --last` trial completed against
-Home without replacing its TUI, but free-form output failed the exact format
-gate and was removed without display. Work now adds a deterministic fallback:
-one schema-constrained resumed turn reports the immediately preceding result
-and relays it as `responder=exec-fallback`, without redoing work, replacing the
-TUI, or creating a loop. No transient tmux buffer remains. The complete plan
-and evidence are in `docs/plans/t307-remote-agent-communication.md`. Next
-action: finish focused/full validation, publish and guarded-sync, then run one
-live omitted-reply fallback and verify TUI/process/residue invariants.
+**Phase:** executing/validating. Bidirectional TUI injection, macOS
+process-path handling, and serialized submission are merged and fleet-synced.
+Aist and Riken returned correct structured replies. Home and Office also
+obeyed the one-attempt contract, but their attempts failed because the reverse
+`login` transport and/or forwarded `SSH_AUTH_SOCK` were unavailable. Home's
+submission is ambiguous; Office reported no `status=submitted`; neither
+request ID is retryable. This proves that policy compliance cannot make a
+reverse SSH dependency reliable. The first Home fallback was also invoked
+after elapsed-time and idle-process evidence that did not prove the original
+turn had finished; that gate is now rejected.
+
+Work now makes one same-channel request the acceptance-critical path: Local
+sends an identified request over stdin, a bounded schema-constrained
+`codex exec resume --last` turn processes it in the existing Mac thread, and
+the validated reply returns on the same SSH stdout before Local injects it into
+the controller conversation. It requires neither `ssh login` nor
+`SSH_AUTH_SOCK`, and it cannot overlap with helper-mediated TUI delivery.
+The older fallback is retained only after the owner explicitly observed a turn
+finish with no response attempt, and it also returns on the originating
+connection. The complete evidence is in
+`docs/plans/t307-remote-agent-communication.md`. Next action: finish local
+validation, publish and guarded-sync, then run new same-channel requests on
+Home and Office and verify response, live-TUI, and residue invariants without
+retrying any ambiguous ID.
 
 ### T-302 — Reduce AL authentication intervention
 
