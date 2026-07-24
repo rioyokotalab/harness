@@ -10,7 +10,7 @@ agent_tree_hash() {
     tree=$1
     archive=$(mktemp "${TMPDIR:-/tmp}/harness-agent-tree.XXXXXX") ||
         die "cannot allocate agent tree digest staging"
-    tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
+    tar --format=gnu --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
         -cf "$archive" -C "$tree" . || {
         unlink "$archive"
         die "cannot archive managed agent tree"
@@ -627,7 +627,7 @@ tar -xzf "$native_archive" -C "$native_dir" --strip-components=1
 [ "$(PATH="$HOME/.local/bin:/usr/bin:/bin" "$stage/$command_relative" --version 2>/dev/null)" = "$version_line" ] ||
     die "agent version verification failed"
 tree_archive=$(mktemp "$state_root/$transaction_id.tree.XXXXXX")
-tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
+tar --format=gnu --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
     -cf "$tree_archive" -C "$stage" .
 tree_hash=$(sha256sum "$tree_archive" | awk '{print $1}')
 rm "$tree_archive"; tree_archive=

@@ -104,6 +104,22 @@ protected `main`, guarded-sync the fleet, apply the transactional agent upgrade
 on all Linux nodes, then remove only AB's redundant npm-global package and
 prove the prompt-causing split is absent.
 
+PR #288 passed protected CI and merged as `8ea86f0`; all eleven remote
+checkouts are clean/current. AB, AB2, RI, RC, T4, and ABQ now pass managed
+0.145.0 `KEEP` validation, and AB's updater-created npm package was removed
+without changing unrelated globals. Local remains on its intentional official
+standalone 0.145.0 plus T-294 wrapper.
+
+AL stopped before mutation because its 0.144.4 predecessor digest differed.
+The full tree is byte/mode-identical to the verified official arm64 artifacts;
+the discrepancy comes from AL's POSIX default tar format encoding mutable
+metadata, whereas every other node defaults to GNU format. Follow-up branch
+`task/t-305-deterministic-agent-hash` explicitly selects GNU format at both
+tree-digest sites and forces POSIX defaults in the upgrade regression. Next:
+pass full/protected validation, sync the correction, complete AL's
+transactional handover using the retained verified comparison evidence, then
+close T-305.
+
 ### T-302 — Reduce AL authentication intervention
 
 **Phase:** monitoring/time-gated (restart-resilience extension). CSCS requires

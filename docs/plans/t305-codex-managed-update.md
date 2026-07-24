@@ -68,3 +68,31 @@ inapplicable offer in this managed checkout.
   commits `dc1eae5` and `8ee05fc` plus this evidence checkpoint.
 - Next action: publish through protected `main`, synchronize all managed
   checkouts, and execute the declared transactional upgrade.
+
+## Rollout discovery
+
+PR #288 passed protected CI and merged as
+`8ea86f05b4685c39a0be401d4fe3d5281ed43dc0`. All eleven remote checkouts
+advanced cleanly to that revision with no transfer residue. AB, AB2, RI, RC,
+T4, and ABQ completed managed 0.145.0 replacement transactions and now report
+an idempotent managed `KEEP`. AB's redundant npm-global launcher and nested
+native package were removed by npm after a dry run proved those were its only
+targets; unrelated global packages remained identical.
+
+Local already uses the separately managed official standalone 0.145.0 release
+and its T-294 NFS wrapper, so its agent plan correctly refused conversion and
+Local was retained unchanged.
+
+AL stopped before mutation because its predecessor archive hash differed from
+the original transaction evidence. Its 24-entry tree has no links, `.nfs`
+residue, extra paths, or content/mode differences from the exact verified
+official 0.144.4 arm64 archives. The cause is GNU tar 1.34's site default:
+AL uses POSIX format while every other Linux node uses GNU format. POSIX/PAX
+archives encode mutable metadata, so the prior tree digest is not stable.
+
+A follow-up change makes both agent tree-digest sites request GNU format
+explicitly. The upgrade regression forces `TAR_OPTIONS=--format=posix`, proving
+the explicit command-line format remains deterministic even under AL's
+effective default. AL remains untouched until that correction passes protected
+publication; its verified comparison staging is retained solely for the
+one-time transactional handover.
