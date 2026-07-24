@@ -108,6 +108,7 @@ for script in \
     "$ROOT/tests/test-macos-codex-bootstrap.sh" \
     "$ROOT/tests/test-repository-independence.sh" \
     "$ROOT/tests/test-remote-agent-communication.sh" \
+    "$ROOT/tests/test-reboot-recovery-skill.sh" \
     "$ROOT/tests/test-remote-session.sh" \
     "$ROOT/tests/test-al-session.sh" \
     "$ROOT/tests/test-safety-guards.sh" \
@@ -149,6 +150,8 @@ if [ "${HARNESS_TEST_JOBS:-auto}" = legacy ]; then
     fail "remote-session focused suite"
 "$ROOT/tests/test-remote-agent-communication.sh" >/dev/null ||
     fail "remote agent communication focused suite"
+"$ROOT/tests/test-reboot-recovery-skill.sh" >/dev/null ||
+    fail "managed Mac reboot recovery skill"
 "$ROOT/tests/test-al-session.sh" >/dev/null ||
     fail "personal AL session focused suite"
 "$ROOT/tests/test-safety-guards.sh" >/dev/null ||

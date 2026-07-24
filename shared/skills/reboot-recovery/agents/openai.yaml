@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reboot Recovery"
+  short_description: "Restore managed Mac services after a reboot"
+  default_prompt: "Use $reboot-recovery to validate and restore a managed Mac after it reboots."
