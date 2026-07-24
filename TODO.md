@@ -115,10 +115,11 @@ The full tree is byte/mode-identical to the verified official arm64 artifacts;
 the discrepancy comes from AL's POSIX default tar format encoding mutable
 metadata, whereas every other node defaults to GNU format. Follow-up branch
 `task/t-305-deterministic-agent-hash` explicitly selects GNU format at both
-tree-digest sites and forces POSIX defaults in the upgrade regression. Next:
-pass full/protected validation, sync the correction, complete AL's
-transactional handover using the retained verified comparison evidence, then
-close T-305.
+tree-digest sites and forces POSIX defaults in the upgrade regression. The
+clean branch passes all 68 focused shards, guarded-delete, and every phase-one
+integration gate. Next: pass protected validation, sync the correction,
+complete AL's transactional handover using the retained verified comparison
+evidence, then close T-305.
 
 ### T-302 — Reduce AL authentication intervention
 

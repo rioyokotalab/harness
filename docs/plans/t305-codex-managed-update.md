@@ -93,6 +93,7 @@ archives encode mutable metadata, so the prior tree digest is not stable.
 A follow-up change makes both agent tree-digest sites request GNU format
 explicitly. The upgrade regression forces `TAR_OPTIONS=--format=posix`, proving
 the explicit command-line format remains deterministic even under AL's
-effective default. AL remains untouched until that correction passes protected
-publication; its verified comparison staging is retained solely for the
-one-time transactional handover.
+effective default. All 68 focused shards, guarded-delete, and every phase-one
+integration gate pass on the clean follow-up branch. AL remains untouched until
+that correction passes protected publication; its verified comparison staging
+is retained solely for the one-time transactional handover.
