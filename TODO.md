@@ -47,7 +47,7 @@ Next free ID: T-308.
   `harness codex-arg0-wrapper --rollback`; an official Codex upgrade requires
   fresh validation before reinstalling the version-scoped wrapper.
 - Codex and Claude now use only project-scoped policy, permission settings,
-  rules, and 13 skills when started from `~/harness`. All 12 systems retain
+  rules, and 14 skills when started from `~/harness`. All 12 systems retain
   only the two global launch sentinels and the Codex launcher; schema-2 doctor,
   repository convergence, external onboarding preflight, and all four resumed
   Mac TUIs passed at `309de20`. See
@@ -84,19 +84,23 @@ Next free ID: T-308.
 
 ### T-307 — Bidirectional remote-agent communication
 
-**Phase:** executing/validating. Bidirectional injection is proven. The skill
-and macOS process-path correction are merged through protected CI and synced
-to all 11 managed nodes at `993bd3616fe7eb9a29407f320116503d9dd21d5a`.
-An installed Riken round trip returned an intact identified reply in this
-Local/phone-visible conversation. A simultaneous four-Mac reply attempt also
-produced one unprefixed truncated input; it was not attributed, and the
-evidence exposed an overlap window between paste and submission. The receiver
-now holds a private current-user advisory lock across paste, submission, and
-settling, with focused concurrent-delivery coverage. The complete plan and
-evidence are in `docs/plans/t307-remote-agent-communication.md`. Next action:
-finish full validation, publish and fleet-sync the serialization fix, then
-repeat installed-script round trips sequentially with Aist, Home, Office, and
-Riken.
+**Phase:** executing/validating. Bidirectional injection is proven. The skill,
+macOS process-path correction, and concurrent-reply serialization are merged
+through protected CI and synced to all 11 managed nodes at
+`1179f371654fb28cb62e09e170a807fee0c42dd2`. A simultaneous four-Mac reply
+attempt produced one unprefixed truncated input; it was not attributed, and
+the evidence exposed an overlap window between paste and submission. The
+receiver now holds a private current-user advisory lock across paste,
+submission, and settling, with focused concurrent-delivery coverage.
+Sequential installed-skill round trips from Aist and Riken returned intact
+identified replies in this Local/phone-visible conversation. Home and Office
+accepted one independently submitted request each but have not returned an
+agent-level acknowledgement; their Codex processes, sessions, locks,
+repositories, and routes remain healthy, and the requests were not retried.
+No transient tmux buffer remains. The complete plan and evidence are in
+`docs/plans/t307-remote-agent-communication.md`. Next action: wait for the
+already-submitted Home and Office replies or obtain owner-visible evidence of
+their TUI state without pane capture; do not reinject either request.
 
 ### T-302 — Reduce AL authentication intervention
 
