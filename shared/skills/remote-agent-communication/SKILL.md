@@ -97,6 +97,39 @@ A prose reply request without the structured contract is best-effort. Never
 omit a valid structured response obligation merely because the requested work
 was declined or because a local user-facing answer was also produced.
 
+## Recover an omitted reply
+
+Model compliance is not deterministic. Use one schema-constrained fallback
+only when all of these are true:
+
+- the original required request returned transport `status=submitted`;
+- the owner observed that turn finish without a reply, or a bounded wait plus
+  value-free process evidence shows the agent is idle;
+- no later turn has entered that Mac conversation; and
+- the fallback will only report the preceding turn's result, not redo work.
+
+From the controller, run:
+
+```text
+scripts/agent-message fallback \
+  --source CONTROLLER \
+  --target MAC \
+  --request-id ID \
+  --reply-target REVERSE_ALIAS \
+  --reply-role controller
+```
+
+The fallback uses the managed `harness-codex` launcher to run one read-only
+`codex exec resume --last` turn in the same session context. It forbids tools
+and state changes in the prompt, constrains the final answer with
+`references/reply.schema.json`, validates the request ID and bounded fields,
+then relays one identified response marked `responder=exec-fallback`. It does
+not replace the TUI, expose the private Codex log, or create a reply loop.
+
+Do not use the fallback when the most recent session or preceding turn is
+ambiguous. Do not invoke it twice for one request. A fallback transport error
+after possible submission remains ambiguous and is not retryable.
+
 ## Fail closed
 
 - Never inspect or capture pane contents to decide whether delivery succeeded.
@@ -111,3 +144,5 @@ was declined or because a local user-facing answer was also produced.
   timeout, or unexpected native output.
 - Report submission as transport evidence only. It proves input was queued and
   submitted, not that the receiving agent understood or completed the request.
+- Treat `responder=exec-fallback` as a schema-validated semantic response from
+  a resumed Codex turn, distinct from ordinary TUI-agent compliance.

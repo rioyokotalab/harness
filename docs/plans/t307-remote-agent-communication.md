@@ -10,11 +10,10 @@ host-neutral for later managed nodes.
 ## Phase and scope
 
 - Phase: executing/validating
-- Status: transport and serialization are published and synced; owner-visible
-  evidence shows Home and Office processed their requests but nondeterministically
-  omitted the requested replies, so a structured required-reply contract is
-  under validation
-- Working branch: `fix/t-307-required-replies`
+- Status: structured required replies passed on Aist and Riken but were omitted
+  again by freshly restarted Home and Office; a schema-constrained resumed-turn
+  fallback is under validation
+- Working branch: `fix/t-307-deterministic-fallback`
 - Working set: `AGENTS.md`, `TODO.md`, this plan, one new skill under
   `shared/skills/`, discovery links, and focused tests
 - Non-goals: pane transcript capture, credential access, repository mailboxes,
@@ -53,6 +52,15 @@ host-neutral for later managed nodes.
    messages were visible and processed; neither Codex attempted the requested
    response. This rules out transport and TUI submission failure for those
    trials and demonstrates nondeterministic instruction compliance.
+9. The structured contract merged and synced as
+   `57ec794f3ec437026e4bf7f3682b05e4a55d1940`. Aist and Riken each returned one
+   correct structured reply. Home and Office omitted theirs even after their
+   exact detached panes were replaced with `harness-codex resume --last`,
+   proving that startup-loaded policy improves but cannot guarantee compliance.
+10. A read-only `codex exec resume --last` trial completed on Home without
+    replacing its live TUI. Its unconstrained final wording failed an exact
+    format check and was exact-removed without display. This supports a strict
+    output-schema fallback rather than parsing free-form model text.
 
 ## Selected protocol
 
@@ -89,6 +97,10 @@ host-neutral for later managed nodes.
 - Required acknowledgements use one machine-readable
   `REPLY_REQUIRED ... max_replies=1` contract. The recipient must send one
   status response even when the requested work is blocked or rejected.
+- Configuration cannot make semantic model behavior deterministic. After a
+  confirmed omitted response and only while the preceding turn is
+  unambiguous, the controller may run exactly one read-only, schema-constrained
+  resumed-turn fallback and relay its result as `responder=exec-fallback`.
 - A four-Mac simultaneous reply test on 2026-07-24 produced one unprefixed,
   truncated input before a later intact Riken reply. The unprefixed input was
   not attributed. This is evidence that injection must be serialized, not
@@ -143,8 +155,8 @@ host-neutral for later managed nodes.
 
 ## Next action
 
-Validate and publish the structured response obligation, guarded-sync it, and
-refresh each Mac agent's policy context. Run sequential uniquely identified
-trials, recording both transport acknowledgement and agent response. Iterate
-prompt and policy wording from observed results without weakening attribution,
-authority, privacy, no-retry, or no-loop gates.
+Finish focused/full validation of the resumed-turn fallback, publish and
+guarded-sync it, then use it once for a newly omitted Home or Office response.
+Verify that the schema-constrained response appears in Local, the original TUI
+remains live, private logs and temporary files are absent, and no second reply
+or loop occurs.
