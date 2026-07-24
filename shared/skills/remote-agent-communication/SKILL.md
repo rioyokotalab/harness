@@ -48,7 +48,9 @@ The helper uses native non-interactive SSH with forwarding disabled. It passes
 the message only through stdin, validates the destination session and Codex
 process without capturing the pane, loads a private transient tmux buffer,
 pastes it, waits for paste handling, submits a separate `C-m`, and deletes the
-buffer. Exact-unlink the private message file after confirmed success.
+buffer. The receiver holds a current-user private advisory lock through paste,
+submission, and a short settle interval so simultaneous agents cannot combine
+their prompts. Exact-unlink the private message file after confirmed success.
 
 Do not retry after `status=submitted`: delivery is not idempotent. A transport
 failure after submission but before acknowledgement is ambiguous; preserve the
@@ -85,6 +87,7 @@ When a received prompt asks for a reply:
 - For Local, select the unique Codex pane in the `harness` session by its
   current-user process and TTY metadata; other windows may coexist.
 - Stop on an absent or ambiguous session, pane, process, route, sender,
-  malformed prefix, unsafe input, timeout, or unexpected native output.
+  malformed prefix, unsafe input or lock, concurrent-delivery timeout, native
+  timeout, or unexpected native output.
 - Report submission as transport evidence only. It proves input was queued and
   submitted, not that the receiving agent understood or completed the request.

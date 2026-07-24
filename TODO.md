@@ -84,21 +84,19 @@ Next free ID: T-308.
 
 ### T-307 — Bidirectional remote-agent communication
 
-**Phase:** executing/validating. Bidirectional injection is proven. Local sent
-an identified experiment request to the detached Riken Codex without reading
-its pane; Riken returned `[Agent: Riken Codex] ...` over `ssh login`, and that
-prompt appeared in this same Local/phone-visible conversation. The
-credential-free Local helper exact-unlinked itself. A second app-server proxy
-could not join the occupied control socket, so that unused route and all of its
-temporary state were removed. The new `remote-agent-communication` skill uses
-the simpler symmetric SSH/tmux path, requires `[Agent: NAME Codex]`
-attribution, passes messages through stdin and a private transient tmux buffer,
-validates the unique Codex pane without capturing it, and treats prefixes as
-claimed attribution rather than owner authority. Skill validation and its
-focused adversarial test pass. The complete plan and evidence are in
-`docs/plans/t307-remote-agent-communication.md`. Next action: finish
-focused/full validation, publish and fleet-sync the skill, then repeat
-installed-script round trips with all four Macs.
+**Phase:** executing/validating. Bidirectional injection is proven. The skill
+and macOS process-path correction are merged through protected CI and synced
+to all 11 managed nodes at `993bd3616fe7eb9a29407f320116503d9dd21d5a`.
+An installed Riken round trip returned an intact identified reply in this
+Local/phone-visible conversation. A simultaneous four-Mac reply attempt also
+produced one unprefixed truncated input; it was not attributed, and the
+evidence exposed an overlap window between paste and submission. The receiver
+now holds a private current-user advisory lock across paste, submission, and
+settling, with focused concurrent-delivery coverage. The complete plan and
+evidence are in `docs/plans/t307-remote-agent-communication.md`. Next action:
+finish full validation, publish and fleet-sync the serialization fix, then
+repeat installed-script round trips sequentially with Aist, Home, Office, and
+Riken.
 
 ### T-302 — Reduce AL authentication intervention
 
