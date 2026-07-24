@@ -252,6 +252,9 @@ Evidence is in `docs/backup-lifecycle-phase2.md`, `docs/home-backup.md`, and
   A separate `C-m` submitted the existing prompt on all four Macs without
   reading or reinserting it. The durable workflow now requires a paste-settle
   delay followed by a separate `C-m` and does not count insertion as delivery.
+  PR #294's first protected CI run encountered the unrelated timing-sensitive
+  watchdog retention check; the focused macOS SSH supervisor suite and the
+  complete phase-one suite both passed on immediate local retry.
 - **T-305:** eliminated AB's split-install update loop, disabled the
   inapplicable native startup offer, upgraded every remote Linux managed
   installation to verified Codex 0.145.0, removed only AB's redundant npm
