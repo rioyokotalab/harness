@@ -10,8 +10,8 @@ Next free ID: T-307.
 ## Current state
 
 - Public `main`, Local, and all eleven remote managed checkouts are
-  clean/current at T-305's closeout revision
-  `205e6cfed458551a90cb1d1e6f2f7d2a040598ca`; all four private Mac SSH
+  clean/current. T-306's context-refresh policy has functional revision
+  `acf2b817a039d77d230b7f783d5a134180b00f04`; all four private Mac SSH
   payloads remain current.
 - The README now leads with owner-facing startup and daily operations, carries
   a pointer to the canonical fleet reference, and separates logical nodes from
@@ -82,25 +82,6 @@ Next free ID: T-307.
 1. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
 
 ## Active tasks
-
-### T-306 — Refresh running Mac agents after repository sync
-
-**Phase:** executing. The owner requires every running Mac Codex to reconcile
-with the current repository now and after every future agent-driven Mac
-checkout advance. The selected workflow is an explicit repository working
-agreement rather than a hidden `fleet-sync` side effect: after a successful
-advance, the syncing agent queues one literal refresh instruction only when
-the exact `harness-codex-resume` session is detached and contains one live
-Codex pane rooted at `~/harness`. It never inspects pane contents, interrupts
-or respawns Codex, or guesses among ambiguous sessions. Unsafe or unavailable
-targets are reported as deferred and retried at the next safe opportunity.
-
-Execution order is: publish the working agreement through protected `main`,
-guarded-sync all clean managed checkouts, queue the instruction on all four
-verified Mac sessions, and validate repository, session, and route health.
-The instruction requires a complete read of `AGENTS.md` and `TODO.md`, Git
-branch/worktree/recent-commit inspection, and reconciliation of the next
-action with the durable ledger before Codex continues.
 
 ### T-302 — Reduce AL authentication intervention
 
@@ -255,6 +236,14 @@ Evidence is in `docs/backup-lifecycle-phase2.md`, `docs/home-backup.md`, and
 
 ## Completed anchors
 
+- **T-306:** established a durable post-sync rule requiring the syncing agent
+  to reconcile each running Mac Codex with the updated repository without
+  inspecting pane contents or interrupting attached work. PR #291 merged as
+  `acf2b817`; guarded fleet sync advanced all eleven clean remotes with no
+  transfer residue. Aist, Home, and Office accepted one refresh immediately;
+  Riken correctly deferred while attached and accepted its refresh after the
+  owner detached. All four instructions require complete `AGENTS.md` and
+  `TODO.md` reads, Git state inspection, and durable-ledger reconciliation.
 - **T-305:** eliminated AB's split-install update loop, disabled the
   inapplicable native startup offer, upgraded every remote Linux managed
   installation to verified Codex 0.145.0, removed only AB's redundant npm
