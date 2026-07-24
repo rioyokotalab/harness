@@ -107,6 +107,7 @@ for script in \
     "$ROOT/tests/test-onboard-personal-mac-skill.sh" \
     "$ROOT/tests/test-macos-codex-bootstrap.sh" \
     "$ROOT/tests/test-repository-independence.sh" \
+    "$ROOT/tests/test-remote-agent-communication.sh" \
     "$ROOT/tests/test-remote-session.sh" \
     "$ROOT/tests/test-al-session.sh" \
     "$ROOT/tests/test-safety-guards.sh" \
@@ -136,6 +137,8 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "Python syntax: harness-ssh-config-layout"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/tools/run-focused-tests.py").read_text())' ||
     fail "Python syntax: focused-suite runner"
+python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/shared/skills/remote-agent-communication/scripts/agent-message").read_text())' ||
+    fail "Python syntax: remote agent communication"
 
 if [ "${HARNESS_TEST_JOBS:-auto}" = legacy ]; then
 "$ROOT/tests/test-startup-normalize.sh" >/dev/null ||
@@ -144,6 +147,8 @@ if [ "${HARNESS_TEST_JOBS:-auto}" = legacy ]; then
     fail "SSH agent profile focused suite"
 "$ROOT/tests/test-remote-session.sh" >/dev/null ||
     fail "remote-session focused suite"
+"$ROOT/tests/test-remote-agent-communication.sh" >/dev/null ||
+    fail "remote agent communication focused suite"
 "$ROOT/tests/test-al-session.sh" >/dev/null ||
     fail "personal AL session focused suite"
 "$ROOT/tests/test-safety-guards.sh" >/dev/null ||
