@@ -10,10 +10,11 @@ host-neutral for later managed nodes.
 ## Phase and scope
 
 - Phase: executing/validating
-- Status: serialization is published and synced; installed sequential Aist
-  and Riken round trips passed, while Home and Office acknowledgements remain
-  pending after one submitted request each
-- Working branch: `main`
+- Status: transport and serialization are published and synced; owner-visible
+  evidence shows Home and Office processed their requests but nondeterministically
+  omitted the requested replies, so a structured required-reply contract is
+  under validation
+- Working branch: `fix/t-307-required-replies`
 - Working set: `AGENTS.md`, `TODO.md`, this plan, one new skill under
   `shared/skills/`, discovery links, and focused tests
 - Non-goals: pane transcript capture, credential access, repository mailboxes,
@@ -48,6 +49,10 @@ host-neutral for later managed nodes.
    one transport-level submission each but have not produced an agent-level
    reply. Both sessions remain detached, live, clean/current, and idle by
    value-free process metadata; no retry was made.
+8. The owner inspected Home and Office and confirmed on 2026-07-24 that both
+   messages were visible and processed; neither Codex attempted the requested
+   response. This rules out transport and TUI submission failure for those
+   trials and demonstrates nondeterministic instruction compliance.
 
 ## Selected protocol
 
@@ -81,6 +86,9 @@ host-neutral for later managed nodes.
   failed second-client app-server hypothesis in the skill.
 - Never create an autonomous reply loop. Each round must be owner-expected or
   explicitly bounded by the initiating request.
+- Required acknowledgements use one machine-readable
+  `REPLY_REQUIRED ... max_replies=1` contract. The recipient must send one
+  status response even when the requested work is blocked or rejected.
 - A four-Mac simultaneous reply test on 2026-07-24 produced one unprefixed,
   truncated input before a later intact Riken reply. The unprefixed input was
   not attributed. This is evidence that injection must be serialized, not
@@ -135,9 +143,8 @@ host-neutral for later managed nodes.
 
 ## Next action
 
-Wait for the already-submitted Home and Office replies or obtain owner-visible
-evidence of their TUI state without pane capture. Do not reinject either
-request. If they reply, verify clean/current state and close T-307; if their
-TUIs are in a modal or otherwise not at the prompt, record that state as an
-explicit transport limitation before deciding whether another mechanism is
-needed.
+Validate and publish the structured response obligation, guarded-sync it, and
+refresh each Mac agent's policy context. Run sequential uniquely identified
+trials, recording both transport acknowledgement and agent response. Iterate
+prompt and policy wording from observed results without weakening attribution,
+authority, privacy, no-retry, or no-loop gates.

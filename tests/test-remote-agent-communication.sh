@@ -23,6 +23,14 @@ trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
+grep -F 'REPLY_REQUIRED request_id=ID reply_target=ALIAS reply_role=ROLE' \
+    "$ROOT/AGENTS.md" >/dev/null || fail "shared required-reply policy"
+grep -F 'report that status and the' "$ROOT/AGENTS.md" >/dev/null ||
+    fail "blocked reply policy"
+grep -F 'Do not put `submission=succeeded` in the response payload' \
+    "$ROOT/shared/skills/remote-agent-communication/SKILL.md" >/dev/null ||
+    fail "reply submission semantics"
+
 home=$TEST_ROOT/home
 fake_bin=$TEST_ROOT/bin
 state=$TEST_ROOT/state
