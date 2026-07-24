@@ -95,7 +95,7 @@ write_version() {
 }
 
 run_agent() {
-    HOME="$HOME_DIR" HARNESS_ROOT="$REPO" \
+    HOME="$HOME_DIR" HARNESS_ROOT="$REPO" TAR_OPTIONS=--format=posix \
         PATH="$FAKE_BIN:/usr/bin:/bin" \
         "$REPO/libexec/harness-agent" --host local --name codex "$@"
 }
