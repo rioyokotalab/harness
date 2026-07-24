@@ -75,6 +75,8 @@ cat >"$fake_bin/ps" <<'EOF'
 set -eu
 if [ "${FAKE_CODEX_COUNT:-1}" -eq 2 ]; then
     printf 'codex.real\ncodex.real\n'
+elif [ "${FAKE_TTY:-}" = /dev/ttys000 ]; then
+    printf '/opt/homebrew/bin/codex\n'
 else
     printf 'sh\ncodex\ncodex.real\n'
 fi
