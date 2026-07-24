@@ -223,6 +223,15 @@ guessing.
 - Publish through the protected `main` workflow without force-push. After a
   merged control-plane change, use guarded `harness fleet-sync` plan/apply to
   synchronize only clean managed checkouts.
+- After a successful fleet sync advances a managed Mac checkout, queue exactly
+  one context-refresh instruction in its running `harness-codex-resume`
+  session. Require one detached live session with one Codex pane rooted at
+  `$HOME/harness`; never inspect pane contents, interrupt work, or respawn the
+  process. The instruction must tell Codex to read `AGENTS.md` and `TODO.md`
+  completely, inspect the branch, worktree, and recent commits, and reconcile
+  its next action with the durable task ledger before continuing. If the
+  session is absent, attached, or ambiguous, do not inject input: report the
+  refresh as deferred and retry at the next safe opportunity.
 - On a managed personal Mac, treat `~/harness` as the live tunnel-control
   checkout: keep it on clean `main` and perform feature work in a separate Git
   worktree. The watchdog tolerates unrelated branch/worktree state, but any

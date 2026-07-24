@@ -5,13 +5,13 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-306.
+Next free ID: T-307.
 
 ## Current state
 
 - Public `main`, Local, and all eleven remote managed checkouts are
-  clean/current at T-305's deterministic agent revision
-  `cc0e6d87214fd81d83d27b413dd1430cd80314af`; all four private Mac SSH
+  clean/current at T-305's closeout revision
+  `205e6cfed458551a90cb1d1e6f2f7d2a040598ca`; all four private Mac SSH
   payloads remain current.
 - The README now leads with owner-facing startup and daily operations, carries
   a pointer to the canonical fleet reference, and separates logical nodes from
@@ -82,6 +82,25 @@ Next free ID: T-306.
 1. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
 
 ## Active tasks
+
+### T-306 — Refresh running Mac agents after repository sync
+
+**Phase:** executing. The owner requires every running Mac Codex to reconcile
+with the current repository now and after every future agent-driven Mac
+checkout advance. The selected workflow is an explicit repository working
+agreement rather than a hidden `fleet-sync` side effect: after a successful
+advance, the syncing agent queues one literal refresh instruction only when
+the exact `harness-codex-resume` session is detached and contains one live
+Codex pane rooted at `~/harness`. It never inspects pane contents, interrupts
+or respawns Codex, or guesses among ambiguous sessions. Unsafe or unavailable
+targets are reported as deferred and retried at the next safe opportunity.
+
+Execution order is: publish the working agreement through protected `main`,
+guarded-sync all clean managed checkouts, queue the instruction on all four
+verified Mac sessions, and validate repository, session, and route health.
+The instruction requires a complete read of `AGENTS.md` and `TODO.md`, Git
+branch/worktree/recent-commit inspection, and reconciliation of the next
+action with the durable ledger before Codex continues.
 
 ### T-302 — Reduce AL authentication intervention
 
