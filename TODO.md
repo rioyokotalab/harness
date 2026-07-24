@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-307.
+Next free ID: T-308.
 
 ## Current state
 
@@ -81,6 +81,19 @@ Next free ID: T-307.
 1. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
 
 ## Active tasks
+
+### T-307 — Bidirectional remote-agent communication
+
+**Phase:** interviewing. Local can submit messages to the four existing Mac
+Codex conversations without pane reads. The reverse path is not yet proven.
+The planned design uses an owner-only, non-Git, per-host structured mailbox as
+the durable return channel, with strict validation and exact acknowledgement,
+then packages the proven workflow as a project skill. One owner decision
+remains: controller-polled delivery (recommended), direct experimental
+app-server injection into the current Local thread, or a hybrid. The complete
+plan, safety gates, acceptance criteria, and frozen post-go sequence are in
+`docs/plans/t307-remote-agent-communication.md`. Next action: record that one
+choice, audit the decision register, and wait for explicit `go`.
 
 ### T-302 — Reduce AL authentication intervention
 
