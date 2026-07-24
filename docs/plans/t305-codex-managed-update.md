@@ -48,11 +48,10 @@ native self-update command when the installed release supports it. The
 project setting is therefore the narrow surface for suppressing the
 inapplicable offer in this managed checkout.
 
-## Execution state
+## Validation history
 
-- Branch: `task/t-305-codex-managed-update`
+- Initial branch: `task/t-305-codex-managed-update`
 - Base: `dbde6275e4b1815cd688d6caa7f8e42e857336be`
-- Phase: implementation and validation
 - Focused agent-upgrade, agent-config, Claude-takeover, external-onboarding,
   and source-contract suites pass.
 - The first full suite passed 66 shards. Only tmux-config and terminfo refused
@@ -64,10 +63,7 @@ inapplicable offer in this managed checkout.
   production behavior failed.
 - The corrected clean checkpoint passed all 68 focused shards, guarded-delete,
   and every remaining phase-one integration gate.
-- Safe retry: no live rollout has started. Publication may be retried from
-  commits `dc1eae5` and `8ee05fc` plus this evidence checkpoint.
-- Next action: publish through protected `main`, synchronize all managed
-  checkouts, and execute the declared transactional upgrade.
+- PR #288 passed protected `portable-phase1` and squash-merged as `8ea86f0`.
 
 ## Rollout discovery
 
@@ -94,6 +90,53 @@ A follow-up change makes both agent tree-digest sites request GNU format
 explicitly. The upgrade regression forces `TAR_OPTIONS=--format=posix`, proving
 the explicit command-line format remains deterministic even under AL's
 effective default. All 68 focused shards, guarded-delete, and every phase-one
-integration gate pass on the clean follow-up branch. AL remains untouched until
-that correction passes protected publication; its verified comparison staging
-is retained solely for the one-time transactional handover.
+integration gate passed on the clean follow-up branch. PR #289 independently
+passed protected `portable-phase1` and squash-merged as
+`cc0e6d87214fd81d83d27b413dd1430cd80314af`.
+
+## Final rollout
+
+All eleven remote checkouts advanced cleanly to `cc0e6d8` through two guarded
+bundle synchronizations. Repeat plans reported exact `KEEP`, aligned
+`origin/main`, and no transfer artifacts.
+
+| Host | Managed Codex result | Replacement transaction |
+| --- | --- | --- |
+| local | retained official standalone 0.145.0 and T-294 wrapper | not applicable |
+| ab | managed 0.145.0 `KEEP` | `20260724T021505Z-3972951` |
+| ab2 | managed 0.145.0 `KEEP` | `20260724T021647Z-3227048` |
+| ri | managed 0.145.0 `KEEP` | `20260724T021701Z-3899735` |
+| al | managed 0.145.0 `KEEP` | `20260724T023716Z-143742` |
+| rc | managed 0.145.0 `KEEP` | `20260724T021720Z-1794556` |
+| t4 | managed 0.145.0 `KEEP` | `20260724T021741Z-3820195` |
+| abq | managed 0.145.0 `KEEP` | `20260724T021759Z-251100` |
+
+AL's one-time handover first proved that its old tree and a freshly downloaded
+official 0.144.4 arm64 tree had identical relative paths, types, modes, and
+contents under a stable GNU archive hash. It then used the same schema-2
+prepared/promoted/activated/complete transaction and harness recovery contract
+as the normal replacement path. The old tree remains available for exact
+rollback. The helper and its mode-0600 private log were exact-unlinked after
+independent transaction, tree-hash, stable-link, version, and `KEEP`
+validation.
+
+AB's npm uninstall dry run named only `@openai/codex@0.145.0` and its nested
+`@openai/codex-linux-x64` package below the declared Node global root. The
+trusted npm 11.13.0 removal deleted those two package-owned targets; the
+top-level unrelated global package list remained byte-identical, and the
+harness-managed launcher continued to report 0.145.0.
+
+Final cleanup removed 24 eligible completed-invocation arg0 directories
+through lock-aware quarantine and guarded-delete. Fifteen live directories
+(three on Local and three on each Mac) remain; eligible, young, and unexpected
+counts are zero. The two official-artifact comparison trees, all temporary
+manifests, transfer staging, `run_this.sh`, and private logs are absent.
+
+## Result
+
+T-305 is complete. Starting Codex from `~/harness` no longer offers the native
+updater, all project settings carry the reviewed disabled-update policy, and
+every remote Linux managed command points at verified 0.145.0. Future Linux
+upgrades must update `tools/agents.tsv`, pass protected publication, and use
+`harness agent`; do not run `codex update`. Local's standalone update route and
+version-scoped NFS wrapper remain separate by design.

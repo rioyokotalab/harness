@@ -9,10 +9,10 @@ Next free ID: T-306.
 
 ## Current state
 
-- Public `main`, Local, and all eleven remote managed checkouts were verified
-  clean/current at T-301's functional revision
-  `5a8a0901ce82b7bb187d74c479125e61e0cb8fe7`; all four private Mac SSH
-  payloads are also current.
+- Public `main`, Local, and all eleven remote managed checkouts are
+  clean/current at T-305's deterministic agent revision
+  `cc0e6d87214fd81d83d27b413dd1430cd80314af`; all four private Mac SSH
+  payloads remain current.
 - The README now leads with owner-facing startup and daily operations, carries
   a pointer to the canonical fleet reference, and separates logical nodes from
   transport-only aliases and the service-only web endpoint.
@@ -53,6 +53,11 @@ Next free ID: T-306.
   repository convergence, external onboarding preflight, and all four resumed
   Mac TUIs passed at `309de20`. See
   `docs/audits/t304-project-scoped-agent-config-2026-07-24.md`.
+- Codex's native startup update offer is disabled in the project because Linux
+  releases are harness-managed. All seven remote Linux nodes use verified
+  managed Codex 0.145.0; Local retains its official standalone 0.145.0 plus
+  the T-294 NFS wrapper. Tree evidence now explicitly uses deterministic GNU
+  tar format. See `docs/plans/t305-codex-managed-update.md`.
 - Exactly one future native weekly primary backup job exists on each managed
   Linux node. First runs passed on 2026-07-19 and keep-all remains effective.
 - Container and package work are requirement-gated guardrails, not pending
@@ -77,49 +82,6 @@ Next free ID: T-306.
 1. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
 
 ## Active tasks
-
-### T-305 — Make Linux Codex updates harness-managed
-
-**Phase:** implementation and validation. AB's repeated update prompt is
-confirmed as a split-install loop: the managed command remains 0.144.4 while
-the native updater placed 0.145.0 in Node's separate global prefix. Tmux is not
-causal. All seven remote Linux nodes use the managed 0.144.4 release; only AB
-has the redundant global 0.145.0 package.
-
-The owner approved a fleet-wide managed upgrade, disabling the project startup
-update check, removing AB's redundant package after validation, and documenting
-the supported route. Official registry metadata and exact artifact bytes were
-reconciled for the launcher plus x86_64 and aarch64 native packages; their
-SHA-512 values match registry integrity metadata and their adopted SHA-256
-values are recorded in `docs/plans/t305-codex-managed-update.md`. Branch
-`task/t-305-codex-managed-update` starts from `dbde627`. Focused Codex,
-agent-config, external-onboarding, and source-contract tests pass. The first
-full run passed 66 shards; only tmux-config and terminfo stopped at their
-intentional clean-committed-checkout gate. After the clean checkpoint, all 68
-focused shards passed; a later integration fixture installed 0.145.0 correctly
-but referenced its former hardcoded 0.144.4 test path. That fixture-only
-reference is corrected. The clean checkpoint now passes all 68 focused shards,
-guarded-delete, and every phase-one integration gate. Next: publish through
-protected `main`, guarded-sync the fleet, apply the transactional agent upgrade
-on all Linux nodes, then remove only AB's redundant npm-global package and
-prove the prompt-causing split is absent.
-
-PR #288 passed protected CI and merged as `8ea86f0`; all eleven remote
-checkouts are clean/current. AB, AB2, RI, RC, T4, and ABQ now pass managed
-0.145.0 `KEEP` validation, and AB's updater-created npm package was removed
-without changing unrelated globals. Local remains on its intentional official
-standalone 0.145.0 plus T-294 wrapper.
-
-AL stopped before mutation because its 0.144.4 predecessor digest differed.
-The full tree is byte/mode-identical to the verified official arm64 artifacts;
-the discrepancy comes from AL's POSIX default tar format encoding mutable
-metadata, whereas every other node defaults to GNU format. Follow-up branch
-`task/t-305-deterministic-agent-hash` explicitly selects GNU format at both
-tree-digest sites and forces POSIX defaults in the upgrade regression. The
-clean branch passes all 68 focused shards, guarded-delete, and every phase-one
-integration gate. Next: pass protected validation, sync the correction,
-complete AL's transactional handover using the retained verified comparison
-evidence, then close T-305.
 
 ### T-302 — Reduce AL authentication intervention
 
@@ -274,6 +236,13 @@ Evidence is in `docs/backup-lifecycle-phase2.md`, `docs/home-backup.md`, and
 
 ## Completed anchors
 
+- **T-305:** eliminated AB's split-install update loop, disabled the
+  inapplicable native startup offer, upgraded every remote Linux managed
+  installation to verified Codex 0.145.0, removed only AB's redundant npm
+  package, and made agent-tree evidence independent of site tar defaults. PRs
+  #288 and #289 end at `cc0e6d8`; complete artifact, transaction, validation,
+  rollback, and cleanup evidence is in
+  `docs/plans/t305-codex-managed-update.md`.
 - **T-301:** standardized the shared SSH defaults and alphabetic stanza
   ordering, replaced readable multiplex paths with `%C`, and selected a
   30-second global connection timeout after matched nested-route evidence.
