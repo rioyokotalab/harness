@@ -94,13 +94,17 @@ receiver now holds a private current-user advisory lock across paste,
 submission, and settling, with focused concurrent-delivery coverage.
 Sequential installed-skill round trips from Aist and Riken returned intact
 identified replies in this Local/phone-visible conversation. Home and Office
-accepted one independently submitted request each but have not returned an
-agent-level acknowledgement; their Codex processes, sessions, locks,
-repositories, and routes remain healthy, and the requests were not retried.
-No transient tmux buffer remains. The complete plan and evidence are in
-`docs/plans/t307-remote-agent-communication.md`. Next action: wait for the
-already-submitted Home and Office replies or obtain owner-visible evidence of
-their TUI state without pane capture; do not reinject either request.
+accepted and processed one independently submitted request each but did not
+attempt the requested response; the owner confirmed the messages and completed
+processing in both TUIs. This rules out transport failure for those trials and
+demonstrates nondeterministic response compliance. A structured
+`REPLY_REQUIRED ... max_replies=1` contract is being added to shared agent
+policy and the skill: it requires exactly one status response even when work
+is blocked or rejected, without granting remote owner authority. No transient
+tmux buffer remains. The complete plan and evidence are in
+`docs/plans/t307-remote-agent-communication.md`. Next action: validate,
+publish, guarded-sync, refresh agent context, and run sequential uniquely
+identified response trials on all four Macs.
 
 ### T-302 — Reduce AL authentication intervention
 
