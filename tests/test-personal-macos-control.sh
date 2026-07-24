@@ -43,12 +43,14 @@ file_mode() {
 
 PUBLIC=$TEMP_DIR/public
 mkdir -p "$PUBLIC/bin" "$PUBLIC/.codex/rules" "$PUBLIC/.claude" \
+    "$PUBLIC/config/agent-clients" \
     "$PUBLIC/shared/skills/mac-test-skill" \
     "$PUBLIC/profiles/personal-macos"
 cp "$ROOT/bin/harness" "$ROOT/bin/harness-bash" "$PUBLIC/bin/"
 cp "$ROOT/.codex/AGENTS.md" "$PUBLIC/.codex/AGENTS.md"
 cp "$ROOT/.codex/rules/default.rules" "$PUBLIC/.codex/rules/default.rules"
-cp -L "$ROOT/.claude/CLAUDE.md" "$PUBLIC/.claude/CLAUDE.md"
+cp "$ROOT/config/agent-clients/claude-sentinel.md" \
+    "$PUBLIC/config/agent-clients/claude-sentinel.md"
 cp "$ROOT/profiles/personal-macos/base.conf" \
     "$PUBLIC/profiles/personal-macos/base.conf"
 cp "$ROOT/profiles/personal-macos/formula-policy-v4.conf" \
@@ -128,12 +130,12 @@ transaction_id() {
     sed -n 's/^TRANSACTION id=\([^ ]*\) status=complete.*/\1/p' "$1"
 }
 
-link_count=8
+link_count=4
 basic_home=$(make_home basic)
 run_control "$basic_home" --host mac-test-pilot --plan >"$TEMP_DIR/basic.plan"
 [ "$(grep -c '^CREATE link=' "$TEMP_DIR/basic.plan")" -eq "$link_count" ] ||
     fail "plan did not report the exact managed link set"
-grep -F 'END macos_control blocked=0 changes=8 applied=no' \
+grep -F 'END macos_control blocked=0 changes=4 applied=no' \
     "$TEMP_DIR/basic.plan" >/dev/null || fail "plan completion summary"
 [ ! -e "$basic_home/.local" ] && [ ! -L "$basic_home/.local" ] ||
     fail "plan mutated local state"
@@ -155,9 +157,8 @@ basic_status=$basic_home/.local/state/harness/transactions/$basic_tx.macos-contr
 [ -L "$basic_home/.local/bin/harness-bash" ] &&
     [ "$(readlink "$basic_home/.local/bin/harness-bash")" = \
         "$PUBLIC/bin/harness-bash" ] || fail "managed Bash launcher link"
-[ -L "$basic_home/.codex/skills/mac-test-skill" ] &&
-    [ "$(readlink "$basic_home/.codex/skills/mac-test-skill")" = \
-        "$PUBLIC/shared/skills/mac-test-skill" ] || fail "Codex skill link"
+[ ! -e "$basic_home/.codex/skills/mac-test-skill" ] ||
+    fail "global Codex skill link was created"
 
 before_count=$(find "$basic_home/.local/state/harness/transactions" \
     -type f -name '*.macos-control.manifest' | wc -l | tr -d ' ')
@@ -235,7 +236,7 @@ grep -F 'reason=different-symlink' "$TEMP_DIR/wrong.out" >/dev/null ||
 parent_home=$(make_home parent-link)
 mkdir -p "$parent_home/elsewhere"
 chmod 700 "$parent_home/elsewhere"
-ln -s "$parent_home/elsewhere" "$parent_home/.agents"
+ln -s "$parent_home/elsewhere" "$parent_home/.claude"
 if run_control "$parent_home" --host mac-test-pilot --plan \
     >"$TEMP_DIR/parent.out" 2>&1; then
     fail "plan accepted a symlinked parent"
@@ -247,7 +248,7 @@ content_home=$(make_home unexpected-content)
 run_control "$content_home" --host mac-test-pilot --apply >"$TEMP_DIR/content.apply"
 content_tx=$(transaction_id "$TEMP_DIR/content.apply")
 [ -n "$content_tx" ] || fail "unexpected-content apply transaction"
-printf '%s\n' owner-data >"$content_home/.agents/skills/owner-note"
+printf '%s\n' owner-data >"$content_home/.codex/owner-note"
 if run_control "$content_home" --rollback "$content_tx" \
     >"$TEMP_DIR/content.refused" 2>&1; then
     fail "rollback accepted unexpected directory content"
@@ -256,7 +257,7 @@ grep -F 'rollback blocked by non-transaction content' \
     "$TEMP_DIR/content.refused" >/dev/null || fail "unexpected-content refusal"
 [ -L "$content_home/.local/bin/harness" ] ||
     fail "unexpected-content refusal mutated links"
-unlink "$content_home/.agents/skills/owner-note"
+unlink "$content_home/.codex/owner-note"
 run_control "$content_home" --rollback "$content_tx" >"$TEMP_DIR/content.rollback"
 
 state_link_home=$(make_home state-link)
@@ -276,7 +277,7 @@ grep -F 'state path is unsafe' "$TEMP_DIR/state-link.out" >/dev/null ||
     fail "symlinked state path was followed"
 
 partial_home=$(make_home partial-failure)
-if MACOS_TEST_FAIL_DEST="$partial_home/.agents/skills/mac-test-skill" \
+if MACOS_TEST_FAIL_DEST="$partial_home/.claude/CLAUDE.md" \
     run_control "$partial_home" --host mac-test-pilot --apply \
     >"$TEMP_DIR/partial.out" 2>&1; then
     fail "injected partial apply succeeded"
