@@ -229,9 +229,10 @@ guessing.
   `$HOME/harness`; never inspect pane contents, interrupt work, or respawn the
   process. The instruction must tell Codex to read `AGENTS.md` and `TODO.md`
   completely, inspect the branch, worktree, and recent commits, and reconcile
-  its next action with the durable task ledger before continuing. If the
-  session is absent, attached, or ambiguous, do not inject input: report the
-  refresh as deferred and retry at the next safe opportunity.
+  its next action with the durable task ledger before continuing, then remain
+  running and idle in the same tmux session for future work. If the session is
+  absent, attached, or ambiguous, do not inject input: report the refresh as
+  deferred and retry at the next safe opportunity.
 - On a managed personal Mac, treat `~/harness` as the live tunnel-control
   checkout: keep it on clean `main` and perform feature work in a separate Git
   worktree. The watchdog tolerates unrelated branch/worktree state, but any
