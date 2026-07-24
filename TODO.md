@@ -246,7 +246,12 @@ Evidence is in `docs/backup-lifecycle-phase2.md`, `docs/home-backup.md`, and
   changing remote-control daemons, and the contract was tightened so every
   refresh requires complete `AGENTS.md` and `TODO.md` reads, Git state
   inspection, durable-ledger reconciliation, and a return to the running idle
-  state in the same tmux session.
+  state in the same tmux session. The owner then confirmed that the tmux TUI is
+  the same conversation shown by phone remote control, but that immediate
+  `Enter` after literal injection left the text unsubmitted in the composer.
+  A separate `C-m` submitted the existing prompt on all four Macs without
+  reading or reinserting it. The durable workflow now requires a paste-settle
+  delay followed by a separate `C-m` and does not count insertion as delivery.
 - **T-305:** eliminated AB's split-install update loop, disabled the
   inapplicable native startup offer, upgraded every remote Linux managed
   installation to verified Codex 0.145.0, removed only AB's redundant npm
