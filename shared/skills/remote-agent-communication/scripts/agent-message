@@ -130,7 +130,14 @@ def codex_processes(tty: str) -> int:
         commands = result.stdout.decode("utf-8").splitlines()
     except UnicodeDecodeError:
         return 0
-    return sum(command.strip() == "codex.real" for command in commands)
+    names = [Path(command.strip()).name for command in commands]
+    real_count = names.count("codex.real")
+    wrapper_count = names.count("codex")
+    if real_count == 1:
+        return 1
+    if real_count == 0 and wrapper_count == 1:
+        return 1
+    return 0
 
 
 def select_controller_pane() -> Pane:
