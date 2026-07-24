@@ -56,12 +56,16 @@ case "$command" in
         ;;
     paste-buffer)
         printf 'paste-buffer %s\n' "$*" >>"$FAKE_STATE/operations"
+        if ! mkdir "$FAKE_STATE/injection-active" 2>/dev/null; then
+            : >"$FAKE_STATE/injection-overlap"
+        fi
         ;;
     delete-buffer)
         printf 'delete-buffer %s\n' "$*" >>"$FAKE_STATE/operations"
         ;;
     send-keys)
         printf 'send-keys %s\n' "$*" >>"$FAKE_STATE/operations"
+        rmdir "$FAKE_STATE/injection-active" 2>/dev/null || :
         ;;
     *)
         exit 1
@@ -168,6 +172,23 @@ if FAKE_CODEX_COUNT=2 run_helper receive --source riken \
     >"$state/process-ambiguous.out" 2>&1; then
     fail "ambiguous Codex process accepted"
 fi
+
+(
+    printf '%s\n' '[Agent: Riken Codex] concurrent one' |
+        run_helper receive --source riken --target-role controller \
+        >"$state/concurrent-one.out"
+) &
+first_receive=$!
+(
+    printf '%s\n' '[Agent: Home Codex] concurrent two' |
+        run_helper receive --source home --target-role controller \
+        >"$state/concurrent-two.out"
+) &
+second_receive=$!
+wait "$first_receive"
+wait "$second_receive"
+[ ! -e "$state/injection-overlap" ] ||
+    fail "concurrent prompt injections overlapped"
 
 FAKE_SOURCE=riken FAKE_TARGET_ROLE=controller \
     run_helper send --source riken --target login --target-role controller \

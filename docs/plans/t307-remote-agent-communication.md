@@ -10,8 +10,9 @@ host-neutral for later managed nodes.
 ## Phase and scope
 
 - Phase: executing/validating
-- Status: live Riken reverse injection passed; skill validation in progress
-- Working branch: `task/t-307-remote-agent-communication`
+- Status: the installed Riken round trip passed; a concurrent-reply race was
+  reproduced and the serialization correction is under validation
+- Working branch: `fix/t-307-serialize-injection`
 - Working set: `AGENTS.md`, `TODO.md`, this plan, one new skill under
   `shared/skills/`, discovery links, and focused tests
 - Non-goals: pane transcript capture, credential access, repository mailboxes,
@@ -55,6 +56,9 @@ host-neutral for later managed nodes.
 5. Treat a timeout, unreachable host, dead/attached/ambiguous pane, malformed
    prefix, unsafe message, or unexpected native output as a failure rather
    than fabricating delivery.
+6. Serialize the complete paste, submit, and settle interval with a private
+   current-user advisory lock. Concurrent agents may wait, but their prompt
+   bytes must never share the controller input buffer.
 
 ## Decision register
 
@@ -68,6 +72,10 @@ host-neutral for later managed nodes.
   failed second-client app-server hypothesis in the skill.
 - Never create an autonomous reply loop. Each round must be owner-expected or
   explicitly bounded by the initiating request.
+- A four-Mac simultaneous reply test on 2026-07-24 produced one unprefixed,
+  truncated input before a later intact Riken reply. The unprefixed input was
+  not attributed. This is evidence that injection must be serialized, not
+  evidence of agent identity.
 
 ## Execution sequence
 
@@ -83,8 +91,9 @@ host-neutral for later managed nodes.
    guarded-sync every clean managed checkout.
 7. Apply the existing post-sync context refresh with
    `[Agent: Local Codex]` attribution.
-8. Repeat installed-script round trips with Riken, Aist, Home, and Office.
-   Preserve independent results and never infer one route proves another.
+8. Repeat installed-script round trips sequentially with Riken, Aist, Home,
+   and Office after publishing the serialization fix. Preserve independent
+   results and never infer one route proves another.
 9. Verify clean/current fleet state and absent temporary artifacts, then mark
    T-307 complete.
 

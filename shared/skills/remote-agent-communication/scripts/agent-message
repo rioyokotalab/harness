@@ -4,18 +4,24 @@
 from __future__ import annotations
 
 import argparse
+import fcntl
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import time
 import uuid
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
 
 MAX_MESSAGE_BYTES = 4096
+LOCK_WAIT_SECONDS = 30
+PASTE_SETTLE_SECONDS = 1
+SUBMIT_SETTLE_SECONDS = 1
 ALIAS_RE = re.compile(r"^[a-z][a-z0-9-]{0,31}$")
 PREFIX_RE = re.compile(r"^\[Agent: ([A-Za-z0-9_-]+) Codex\](?:\s|$)")
 TTY_RE = re.compile(r"^/dev/(?:pts/[0-9]+|ttys[0-9A-Za-z]+)$")
@@ -179,37 +185,85 @@ def select_mac_pane(allow_attached: bool) -> Pane:
     return candidates[0]
 
 
+@contextmanager
+def injection_lock():
+    state = Path.home() / ".local" / "state" / "harness"
+    state.mkdir(mode=0o700, parents=True, exist_ok=True)
+    state_info = state.lstat()
+    if (
+        not stat.S_ISDIR(state_info.st_mode)
+        or state_info.st_uid != os.getuid()
+        or state_info.st_mode & 0o022
+    ):
+        raise MessageError("agent-message state directory is unsafe")
+
+    lock_path = state / "agent-message.lock"
+    flags = os.O_CREAT | os.O_RDWR | os.O_CLOEXEC
+    flags |= getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(lock_path, flags, 0o600)
+    except OSError as exc:
+        raise MessageError("agent-message lock is unavailable") from exc
+    try:
+        lock_info = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(lock_info.st_mode)
+            or lock_info.st_uid != os.getuid()
+            or lock_info.st_nlink != 1
+            or stat.S_IMODE(lock_info.st_mode) != 0o600
+        ):
+            raise MessageError("agent-message lock is unsafe")
+        deadline = time.monotonic() + LOCK_WAIT_SECONDS
+        while True:
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                if time.monotonic() >= deadline:
+                    raise MessageError("another agent message is still in flight")
+                time.sleep(0.05)
+        yield
+    finally:
+        os.close(descriptor)
+
+
 def receive(source: str, target_role: str, allow_attached: bool) -> None:
     message = read_message(source)
-    if target_role == "controller":
-        if allow_attached:
-            raise MessageError("--allow-attached is unnecessary for the controller")
-        pane = select_controller_pane()
-    else:
-        pane = select_mac_pane(allow_attached)
-    tmux = executable("tmux")
-    buffer_name = f"harness-agent-{uuid.uuid4().hex}"
-    loaded = run([tmux, "load-buffer", "-b", buffer_name, "-"], input_bytes=message)
-    if loaded.returncode != 0:
-        raise MessageError("private tmux buffer load failed")
-    inserted = run(
-        [
-            tmux,
-            "paste-buffer",
-            "-b",
-            buffer_name,
-            "-d",
-            "-t",
-            pane.identifier,
-        ]
-    )
-    if inserted.returncode != 0:
-        run([tmux, "delete-buffer", "-b", buffer_name])
-        raise MessageError("literal tmux insertion failed")
-    time.sleep(1)
-    submitted = run([tmux, "send-keys", "-t", pane.identifier, "C-m"])
-    if submitted.returncode != 0:
-        raise MessageError("tmux submission failed")
+    with injection_lock():
+        if target_role == "controller":
+            if allow_attached:
+                raise MessageError(
+                    "--allow-attached is unnecessary for the controller"
+                )
+            pane = select_controller_pane()
+        else:
+            pane = select_mac_pane(allow_attached)
+        tmux = executable("tmux")
+        buffer_name = f"harness-agent-{uuid.uuid4().hex}"
+        loaded = run(
+            [tmux, "load-buffer", "-b", buffer_name, "-"], input_bytes=message
+        )
+        if loaded.returncode != 0:
+            raise MessageError("private tmux buffer load failed")
+        inserted = run(
+            [
+                tmux,
+                "paste-buffer",
+                "-b",
+                buffer_name,
+                "-d",
+                "-t",
+                pane.identifier,
+            ]
+        )
+        if inserted.returncode != 0:
+            run([tmux, "delete-buffer", "-b", buffer_name])
+            raise MessageError("literal tmux insertion failed")
+        time.sleep(PASTE_SETTLE_SECONDS)
+        submitted = run([tmux, "send-keys", "-t", pane.identifier, "C-m"])
+        if submitted.returncode != 0:
+            raise MessageError("tmux submission failed")
+        time.sleep(SUBMIT_SETTLE_SECONDS)
     print(
         f"AGENT_MESSAGE_RECEIVE source={source} "
         f"target_role={target_role} status=submitted"
@@ -241,7 +295,7 @@ def send(source: str, target: str, target_role: str, allow_attached: bool) -> No
             remote,
         ],
         input_bytes=message,
-        timeout=30,
+        timeout=45,
     )
     expected = (
         f"AGENT_MESSAGE_RECEIVE source={source} "
