@@ -2,13 +2,14 @@
 
 ## Status
 
-- Phase: interviewing
+- Phase: ready for execution
 - Owner outcome: Codex and Claude must be launched from `~/harness` on all
   managed Linux and Mac systems; machine-global behavior must not define the
   working environment.
 - Target fleet: Local, AB, AB2, RI, AL, RC, T4, ABQ, Aist, Home, Office, and
   Riken.
-- Next action: resolve D1, then ask the next unresolved decision.
+- Next action: wait for the owner's explicit `go`, then execute the frozen
+  plan without further interruption unless an unavoidable boundary is reached.
 - Authority: read-only discovery and ledger updates only until every decision
   is frozen and the owner gives an explicit `go`.
 
@@ -85,6 +86,10 @@ Official Claude Code documentation establishes:
 5. Keep `shared/skills/` as the single skill source and update tests,
    documentation, installer behavior, config doctor, and fleet reconciliation
    to reject drift.
+6. Update `onboard-external-user` and its focused tests so a clean Linux or
+   macOS onboarding validates the tracked project settings and project skill
+   discovery, installs only the two minimal global sentinels, and never
+   installs user-global behavioral settings or harness skill links.
 
 ### User scope
 
@@ -111,7 +116,8 @@ Official Claude Code documentation establishes:
    sentinels, exact managed removal, unrelated-state preservation, collision
    refusal, rollback, idempotence, and cold-start client evidence.
 2. Build the repository-scoped instruction, settings, rules, and skill
-   surfaces; update docs and installer contracts.
+   surfaces; update docs, installer contracts, and the
+   `onboard-external-user` workflow.
 3. Replace the current global `agent-config` transaction with a schema-versioned
    plan/apply/doctor/rollback migration that:
    - identifies only exact current managed preimages;
@@ -177,6 +183,8 @@ Official Claude Code documentation establishes:
   collision or concurrent change.
 - Focused and full tests, protected CI, local/Linux/Mac pilots, all 12 final
   doctors, checkout convergence, and fleet health pass.
+- External-user onboarding documents and validates the same project-scoped
+  Codex/Claude permission settings without assuming owner fleet state.
 
 ## Decision register
 
@@ -233,4 +241,8 @@ Official Claude Code documentation establishes:
   Claude `bypassPermissions` plus its warning suppression, now in tracked
   project settings.
 - Alternative: return either client to its default permission prompts.
-- Status: open.
+- Owner decision: preserve the current reviewed non-interactive permission
+  posture in tracked project settings. Update the Linux/external-user
+  onboarding skill so new harness checkouts receive and validate these same
+  project-scoped settings.
+- Status: selected — preserve current permissions at project scope.

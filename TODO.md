@@ -102,6 +102,12 @@ shell launcher guard is added.
 D3 is frozen: after validation, restart and resume the four Mac Codex tmux
 sessions sequentially from `~/harness` while preserving remote control and
 reachability.
+D4 is frozen: retain the current non-interactive Codex and Claude permission
+posture in tracked project settings. The implementation must also update and
+test `onboard-external-user` so Linux/external onboarding validates these
+project-scoped settings and does not recreate global behavioral configuration.
+All decisions are frozen; wait for the owner's explicit `go` before target
+configuration changes.
 
 ### T-302 — Reduce AL authentication intervention
 
