@@ -37,6 +37,13 @@
   final generic control-plane assertions now validate sentinels and the
   absence of global skill links. Documentation is updated for the schema-2
   project-scoped contract. Next: protected CI, then Local/Linux/Mac pilots.
+- 2026-07-24 protected publication: PR #285 passed `portable-phase1` and was
+  squash-merged as `19235ce`. The first read-only Local pilot plan found no
+  path collision, but pre-apply review caught that schema 2 had omitted the
+  existing declaration-aware `~/.local` symlink exception needed by managed
+  storage layouts. No live mutation occurred. A follow-up restores only that
+  strict host/profile/ownership/containment check and adds a linked-home
+  regression test before pilots resume.
 
 ## Source evidence
 
