@@ -10,9 +10,8 @@ Next free ID: T-307.
 ## Current state
 
 - Public `main`, Local, and all eleven remote managed checkouts are
-  clean/current. T-306's context-refresh policy has functional revision
-  `acf2b817a039d77d230b7f783d5a134180b00f04`; all four private Mac SSH
-  payloads remain current.
+  clean/current. T-306's context-refresh policy is current; all four private
+  Mac SSH payloads remain current.
 - The README now leads with owner-facing startup and daily operations, carries
   a pointer to the canonical fleet reference, and separates logical nodes from
   transport-only aliases and the service-only web endpoint.
@@ -242,8 +241,12 @@ Evidence is in `docs/backup-lifecycle-phase2.md`, `docs/home-backup.md`, and
   `acf2b817`; guarded fleet sync advanced all eleven clean remotes with no
   transfer residue. Aist, Home, and Office accepted one refresh immediately;
   Riken correctly deferred while attached and accepted its refresh after the
-  owner detached. All four instructions require complete `AGENTS.md` and
-  `TODO.md` reads, Git state inspection, and durable-ledger reconciliation.
+  owner detached. Validation then found that Aist, Home, and Office completed
+  the instruction and exited cleanly. Their sessions were resumed without
+  changing remote-control daemons, and the contract was tightened so every
+  refresh requires complete `AGENTS.md` and `TODO.md` reads, Git state
+  inspection, durable-ledger reconciliation, and a return to the running idle
+  state in the same tmux session.
 - **T-305:** eliminated AB's split-install update loop, disabled the
   inapplicable native startup offer, upgraded every remote Linux managed
   installation to verified Codex 0.145.0, removed only AB's redundant npm
