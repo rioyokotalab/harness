@@ -92,7 +92,10 @@ remote control, and unrelated global skills are proposed non-goals.
 The complete plan, evidence, open decisions, rollback, and acceptance gates are
 in `docs/plans/t304-project-scoped-agent-config.md`. Ask exactly one unresolved
 decision at a time. Do not modify target configuration until all decisions are
-frozen and the owner gives an explicit `go`.
+frozen and the owner gives an explicit `go`. D1 is frozen: credentials and
+mixed runtime state remain because project-scoped Codex and Claude still
+consume them; the owner's deletion authority was conditional on not affecting
+that operation.
 
 ### T-302 — Reduce AL authentication intervention
 

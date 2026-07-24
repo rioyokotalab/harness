@@ -189,7 +189,14 @@ Official Claude Code documentation establishes:
 - Alternative: include `~/.claude.json` or other mixed state. Rejected by the
   proposed safety boundary because it cannot be separated without inspecting
   or destroying authentication and private runtime state.
-- Status: open.
+- Owner decision: delete global config and credential files only when doing so
+  does not affect Codex launched from `~/harness`. Authentication and runtime
+  state are still consumed by that project-scoped client; deleting them would
+  sign out future launches, break resume/history, and can disrupt Mac remote
+  control. The owner's condition therefore selects the recommended
+  preservation boundary.
+- Status: selected — preserve credentials and mixed runtime state; remove only
+  replaceable harness-managed behavior and discovery configuration.
 
 ### D2 — Accidental launch behavior
 
