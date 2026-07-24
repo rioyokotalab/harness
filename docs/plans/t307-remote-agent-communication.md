@@ -9,11 +9,10 @@ host-neutral for later managed nodes.
 
 ## Phase and scope
 
-- Phase: executing/validating
-- Status: Home and Office proved reverse replies depend on unavailable
-  `login`/agent state; a same-originating-channel request/reply path is under
-  validation
-- Working branch: `fix/t-307-same-channel-request`
+- Phase: complete
+- Status: same-channel requests passed independently on all four Macs
+- Working branch: none; implementation merged in PR #302 at
+  `4544f7ddd263c78d9a54d80be339be64636c399c`
 - Working set: `AGENTS.md`, `TODO.md`, this plan, one new skill under
   `shared/skills/`, discovery links, and focused tests
 - Non-goals: pane transcript capture, credential access, repository mailboxes,
@@ -79,6 +78,23 @@ host-neutral for later managed nodes.
     original turn had ended. The fallback gate must require explicit owner
     observation of completion without a response attempt; time and idleness
     alone are insufficient.
+14. PR #302 passed protected `portable-phase1` CI and merged as
+    `4544f7ddd263c78d9a54d80be339be64636c399c`. Guarded fleet sync advanced all
+    eleven remote managed checkouts, followed by one standard context refresh
+    on each Mac.
+15. New same-channel requests completed independently:
+    - Aist: `t307-aist-r2-20260724`
+    - Home: `t307-home-r4-20260724`
+    - Office: `t307-office-r4-20260724`
+    - Riken: `t307-riken-r2-20260724`
+
+    Each returned one identified `status=complete responder=exec-request`
+    response in Local. Home and Office succeeded despite the reverse
+    `login`/agent state that broke their earlier replies.
+16. The final value-free audit found every Mac at the merged revision with an
+    empty worktree, one detached `harness-codex-resume` session, one live pane
+    rooted at `~/harness`, zero `.agent-reply-*` directories, and zero
+    `harness-agent-*` tmux buffers.
 
 ## Selected protocol
 
@@ -190,8 +206,5 @@ host-neutral for later managed nodes.
 
 ## Next action
 
-Finish validation and publication of the same-channel request flow, then
-guarded-sync it. Issue new acceptance-critical Home and Office requests through
-that flow, verify both replies appear in Local, and confirm each original TUI
-remains live with no private artifacts. Do not retry either prior ambiguous
-request.
+None. T-307 is complete. Do not retry the earlier ambiguous Home or Office
+request IDs.

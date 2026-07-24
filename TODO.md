@@ -57,6 +57,12 @@ Next free ID: T-308.
   managed Codex 0.145.0; Local retains its official standalone 0.145.0 plus
   the T-294 NFS wrapper. Tree evidence now explicitly uses deterministic GNU
   tar format. See `docs/plans/t305-codex-managed-update.md`.
+- Remote Codex communication separates visible best-effort TUI injection from
+  acceptance-critical same-channel requests. All four Macs passed new bounded
+  requests whose replies returned on the originating Local-to-Mac SSH
+  connection without reverse `login`, agent forwarding, pane reads, checkout
+  changes, or private residue. See
+  `docs/plans/t307-remote-agent-communication.md`.
 - Exactly one future native weekly primary backup job exists on each managed
   Linux node. First runs passed on 2026-07-19 and keep-all remains effective.
 - Container and package work are requirement-gated guardrails, not pending
@@ -81,33 +87,6 @@ Next free ID: T-308.
 1. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
 
 ## Active tasks
-
-### T-307 — Bidirectional remote-agent communication
-
-**Phase:** executing/validating. Bidirectional TUI injection, macOS
-process-path handling, and serialized submission are merged and fleet-synced.
-Aist and Riken returned correct structured replies. Home and Office also
-obeyed the one-attempt contract, but their attempts failed because the reverse
-`login` transport and/or forwarded `SSH_AUTH_SOCK` were unavailable. Home's
-submission is ambiguous; Office reported no `status=submitted`; neither
-request ID is retryable. This proves that policy compliance cannot make a
-reverse SSH dependency reliable. The first Home fallback was also invoked
-after elapsed-time and idle-process evidence that did not prove the original
-turn had finished; that gate is now rejected.
-
-Work now makes one same-channel request the acceptance-critical path: Local
-sends an identified request over stdin, a bounded schema-constrained
-`codex exec resume --last` turn processes it in the existing Mac thread, and
-the validated reply returns on the same SSH stdout before Local injects it into
-the controller conversation. It requires neither `ssh login` nor
-`SSH_AUTH_SOCK`, and it cannot overlap with helper-mediated TUI delivery.
-The older fallback is retained only after the owner explicitly observed a turn
-finish with no response attempt, and it also returns on the originating
-connection. The complete evidence is in
-`docs/plans/t307-remote-agent-communication.md`. Next action: finish local
-validation, publish and guarded-sync, then run new same-channel requests on
-Home and Office and verify response, live-TUI, and residue invariants without
-retrying any ambiguous ID.
 
 ### T-302 — Reduce AL authentication intervention
 
@@ -262,6 +241,16 @@ Evidence is in `docs/backup-lifecycle-phase2.md`, `docs/home-backup.md`, and
 
 ## Completed anchors
 
+- **T-307:** published symmetric visible TUI messaging and reliable
+  same-channel bounded requests in PRs #296–#302. Final implementation
+  `4544f7ddd263c78d9a54d80be339be64636c399c` passed protected CI and fleet
+  sync. New independent requests `t307-aist-r2-20260724`,
+  `t307-home-r4-20260724`, `t307-office-r4-20260724`, and
+  `t307-riken-r2-20260724` all returned valid `responder=exec-request`
+  replies; each Mac retained one detached live TUI, a clean/current checkout,
+  zero private response directories, and zero transient message buffers. The
+  durable design and failure evidence are in
+  `docs/plans/t307-remote-agent-communication.md`.
 - **T-306:** established a durable post-sync rule requiring the syncing agent
   to reconcile each running Mac Codex with the updated repository without
   inspecting pane contents or interrupting attached work. PR #291 merged as
