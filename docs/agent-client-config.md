@@ -109,15 +109,17 @@ only that quarantine is removed through guarded-delete. A mode-0600 baseline
 lets a launcher identify residue from an invocation whose exit it directly
 observed without weakening protection for concurrent sessions.
 
-The separately authorized version-scoped wrapper retains the exact Codex
-launcher as `codex.real` beside its original path, installs a small launcher at
-that path, and preserves arguments and exit status. It accepts only the exact
-official standalone release layout or the exact harness-managed npm layout for
-the current Linux architecture. It runs bounded housekeeping before and after
-the preserved launcher. Apply and rollback do not signal or reload existing
-Codex processes. An upgrade changes the stable release link and therefore
-supersedes the old version's wrapper; the new release must be re-diagnosed
-before another installation.
+The separately authorized version-scoped wrapper preserves arguments and exit
+status and accepts only the exact official standalone release layout or the
+exact harness-managed npm layout for the current Linux architecture. A
+standalone install retains the launcher as `codex.real` beside its original
+path. A managed install leaves the package tree byte-identical and points the
+stable link to a separate version-and-architecture-scoped wrapper whose
+`codex.real` symlink names the original managed launcher. It runs bounded
+housekeeping before and after that preserved launcher. Apply and rollback do
+not signal or reload existing Codex processes. An upgrade changes the stable
+release link and therefore supersedes the old version's wrapper; the new
+release must be re-diagnosed before another installation.
 
 ```bash
 ./bin/harness codex-arg0-housekeeping --plan

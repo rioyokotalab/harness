@@ -111,6 +111,16 @@ top item requires unavailable owner or administrator action, leave it deferred,
 continue the next highest safe independent item in that same repository, and
 never cross it for dependent work.
 
+**LIFO gate active 2026-07-26:** pre-rollout review showed that the first
+managed-layout implementation would rename and replace files inside the
+harness-managed npm tree, invalidating the installer transaction's recorded
+whole-tree digest even though wrapper-local tests pass. AL's current
+`harness agent --host al --name codex --plan` still reports the unmodified
+managed tree as `KEEP`. Nothing has been applied. Redesign only the managed
+path to keep that tree byte-identical and install a separate version-scoped
+wrapper target behind the stable symlink; prove agent `KEEP` before and after
+the wrapper transaction, while preserving standalone behavior.
+
 **LIFO gate resolved 2026-07-26:** the first full suite ran with the coherent
 managed-wrapper increment still uncommitted. The tmux and terminfo fixtures
 correctly refused their synthetic apply paths because they require a clean

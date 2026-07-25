@@ -255,16 +255,36 @@ exit "${FAKE_CODEX_STATUS:-0}"
 EOF
 chmod 755 "$managed_bin/codex.js"
 managed_hash=$(sha256sum "$managed_bin/codex.js" | awk '{print $1}')
+managed_tree_hash=$(tar --format=gnu --sort=name --mtime=@0 --owner=0 --group=0 \
+    --numeric-owner -cf - -C "$managed_tree" . | sha256sum | awk '{print $1}')
 ln -s "$managed_bin/codex.js" "$managed_home/.local/bin/codex"
 ln -s "$HARNESS" "$managed_home/.local/bin/harness"
 mkdir -p "$managed_home/.codex/tmp/arg0"
 chmod 700 "$managed_home/.codex/tmp" "$managed_home/.codex/tmp/arg0"
+managed_wrapper_dir=$managed_home/.local/opt/harness/codex-arg0-wrapper/$managed_version/$managed_platform
 
 HARNESS_TESTING=1 HOME="$managed_home" \
     "$ROOT/libexec/harness-codex-arg0-wrapper" --plan \
     >"$TEMP_DIR/managed-plan.out"
 grep -F 'state=unwrapped action=install layout=managed-npm release=0.145.0' \
     "$TEMP_DIR/managed-plan.out" >/dev/null || fail "managed wrapper install plan"
+
+for failure_point in official-move wrapper-move state-move stable-switch; do
+    if HARNESS_TESTING=1 HARNESS_ARG0_FAIL_AFTER="$failure_point" \
+        HOME="$managed_home" "$ROOT/libexec/harness-codex-arg0-wrapper" --apply \
+        >"$TEMP_DIR/managed-transaction-$failure_point.out" 2>&1; then
+        fail "injected managed wrapper failure succeeded: $failure_point"
+    fi
+    [ "$(realpath -e "$managed_home/.local/bin/codex")" = "$managed_bin/codex.js" ] ||
+        fail "managed transaction failure changed stable link: $failure_point"
+    [ ! -e "$managed_wrapper_dir" ] ||
+        fail "managed transaction failure left wrapper state: $failure_point"
+    [ "$(tar --format=gnu --sort=name --mtime=@0 --owner=0 --group=0 \
+        --numeric-owner -cf - -C "$managed_tree" . |
+        sha256sum | awk '{print $1}')" = "$managed_tree_hash" ] ||
+        fail "managed transaction failure changed package tree: $failure_point"
+done
+
 HARNESS_TESTING=1 HOME="$managed_home" \
     "$ROOT/libexec/harness-codex-arg0-wrapper" --apply \
     >"$TEMP_DIR/managed-apply.out"
@@ -275,7 +295,15 @@ HARNESS_TESTING=1 HOME="$managed_home" \
     >"$TEMP_DIR/managed-doctor.out"
 grep -F 'status=ready layout=managed-npm release=0.145.0' \
     "$TEMP_DIR/managed-doctor.out" >/dev/null || fail "managed wrapper doctor"
-[ -x "$managed_bin/codex.real" ] || fail "managed launcher not preserved"
+[ -L "$managed_wrapper_dir/codex.real" ] &&
+    [ "$(readlink "$managed_wrapper_dir/codex.real")" = "$managed_bin/codex.js" ] ||
+    fail "managed launcher not preserved"
+[ "$(realpath -e "$managed_home/.local/bin/codex")" = "$managed_wrapper_dir/codex" ] ||
+    fail "managed stable link does not select wrapper"
+[ "$(tar --format=gnu --sort=name --mtime=@0 --owner=0 --group=0 \
+    --numeric-owner -cf - -C "$managed_tree" . |
+    sha256sum | awk '{print $1}')" = "$managed_tree_hash" ] ||
+    fail "managed wrapper changed package tree"
 
 HOME="$managed_home" CODEX_HOME="$managed_home/.codex" \
     "$managed_home/.local/bin/codex" --version >"$TEMP_DIR/managed-version.out"
@@ -301,9 +329,14 @@ grep -F 'action=restored layout=managed-npm release=0.145.0' \
     "$TEMP_DIR/managed-rollback.out" >/dev/null || fail "managed wrapper rollback"
 [ "$(sha256sum "$managed_bin/codex.js" | awk '{print $1}')" = "$managed_hash" ] ||
     fail "managed rollback changed launcher"
-[ ! -e "$managed_bin/codex.real" ] &&
-    [ ! -e "$managed_bin/.harness-arg0-wrapper.state" ] ||
+[ "$(realpath -e "$managed_home/.local/bin/codex")" = "$managed_bin/codex.js" ] ||
+    fail "managed rollback did not restore stable link"
+[ ! -e "$managed_wrapper_dir" ] ||
     fail "managed rollback left wrapper state"
+[ "$(tar --format=gnu --sort=name --mtime=@0 --owner=0 --group=0 \
+    --numeric-owner -cf - -C "$managed_tree" . |
+    sha256sum | awk '{print $1}')" = "$managed_tree_hash" ] ||
+    fail "managed rollback changed package tree"
 
 invalid_home=$TEMP_DIR/invalid-managed-home
 invalid_bin=$invalid_home/.local/opt/agents/codex/0.145.0/$managed_platform/bin
