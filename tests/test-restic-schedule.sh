@@ -184,8 +184,11 @@ case "$command_name" in
         done
         [ -n "$name" ] || exit 2
         id=$(next_id)
-        if [ "$FAKE_FAMILY" = pbs ] || [ "$FAKE_FAMILY" = abciq ]; then
+        if [ "$FAKE_FAMILY" = pbs ]; then
             [ "$mail_points" = n ] || exit 2
+            full_id=$id.server
+        elif [ "$FAKE_FAMILY" = abciq ]; then
+            [ -z "$mail_points" ] || exit 2
             full_id=$id.server
         else
             full_id=$id
@@ -288,7 +291,7 @@ for declaration in 'local ybatch' 'ri slurm' 'ab pbs' 'abq abciq' 't4 age'; do
         grep -F 'NATIVE ab: qsub -m n ' "$TEST_ROOT/$host.seed" >/dev/null ||
             fail "PBS no-mail default"
     elif [ "$host" = abq ]; then
-        grep -F 'NATIVE abq: qsub -m n -W group_list=qgai50157 -l rt_QC=1 ' \
+        grep -F 'NATIVE abq: qsub -W group_list=qgai50157 -l rt_QC=1 ' \
             "$TEST_ROOT/$host.seed" >/dev/null ||
             fail "ABCI-Q native group and CPU resource request"
     fi

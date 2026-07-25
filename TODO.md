@@ -108,6 +108,24 @@ coherent commit is impossible, and push the issue onto that repository's TODO
 as a LIFO item. Resolve the new top item when safe, record the pop, resume the
 interrupted task, and keep all repositories progressing independently.
 
+**LIFO gate resolved 2026-07-25:** ABQ's first bounded Restic schedule smoke
+failed before allocation with scheduler error `SIM1400`: ABCI-Q requires a
+mail-user value even when `qsub -m n` disables mail. No job ID was returned,
+no backup ran, and no chain state was captured. The official guide confirms
+that any `-m` requires `-M`; the ABCI-Q path now omits mail flags while generic
+PBS retains `-m n`. The fake scheduler distinguishes both contracts, and the
+focused schedule suite, shell syntax, ShellCheck warning gate, and whitespace
+check pass. Run full CI, then retry only the smoke before seeding.
+
+**LIFO gate resolved 2026-07-25:** post-merge SSH-layout plans pass on Local and
+ten remote systems, but a fresh direct AL probe now fails public-key
+authentication. The repository sync to AL had already succeeded through the
+managed route, and no AL configuration mutation was attempted after the
+failure. `harness al-session --status` reports target/jump ready with managed
+ownership, and the normal `ssh al` route passes the plan. The failed probe had
+incorrectly disabled multiplexing and therefore bypassed AL's declared
+authenticated session; use the managed route for AL. Pop back to rollout.
+
 **LIFO gate resolved 2026-07-25:** after the Claude 2.1.220 increment, the full
 suite again passed all 73 focused suites and guarded-delete tests but a later
 tool-plan integration exited with `tool plan contains blocked paths`. The

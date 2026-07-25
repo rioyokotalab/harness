@@ -420,10 +420,10 @@ scheduler_submit() {
             submitted=$(printf '%s\n' "$output" | sed -n 's/^\([A-Za-z0-9._-][A-Za-z0-9._-]*\)$/\1/p')
             ;;
         abciq)
-            printf 'NATIVE %s: qsub -m n -W group_list=%s -l %s -l walltime=%s -a %s -N %s -o /dev/null -e /dev/null %s\n' \
+            printf 'NATIVE %s: qsub -W group_list=%s -l %s -l walltime=%s -a %s -N %s -o /dev/null -e /dev/null %s\n' \
                 "$logical_host" "$account" "$resource" "$walltime" \
                 "$QSUB_TIME" "$JOB_NAME" "$JOB_SCRIPT" >&2
-            output=$(qsub -m n -W "group_list=$account" -l "$resource" \
+            output=$(qsub -W "group_list=$account" -l "$resource" \
                 -l "walltime=$walltime" -a "$QSUB_TIME" -N "$JOB_NAME" \
                 -o /dev/null -e /dev/null "$JOB_SCRIPT") ||
                 die "native ABCI-Q PBS submission failed"
