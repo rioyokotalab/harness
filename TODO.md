@@ -111,15 +111,24 @@ top item requires unavailable owner or administrator action, leave it deferred,
 continue the next highest safe independent item in that same repository, and
 never cross it for dependent work.
 
-**LIFO gate active 2026-07-26:** protected PR #321 run `30166634389` failed in
+**LIFO gate active 2026-07-26:** after PR #321, fleet sync, and a passing AL
+plan, the first apply failed closed at `managed wrapper parent is unsafe`
+before switching the stable launcher. Inspect only type/owner/mode/link
+metadata for `~/.local` and `~/.local/opt`, account for AL's NFS path topology
+without accepting a symlinked leaf parent, verify whether any task-owned empty
+directories were created, and repeat plan/apply only after focused/protected
+coverage. No Codex process was stopped.
+
+**LIFO gate resolved 2026-07-26:** protected PR #321 run `30166634389` failed in
 the unchanged watchdog-signal cleanup fixture after its five-second
 post-termination poll retained a recovery child or lock; every other suite,
 including the changed NFS-alias wrapper fixture, passed. This is the second
-protected occurrence after PR #317's otherwise isolated timing failure, so do
-not dismiss or retry it as noise. Reproduce under matched parallel load,
-identify whether the production trap or only the synthetic synchronization is
-racy, add a bounded deterministic cleanup contract without merely extending a
-sleep, and rerun focused/full/protected validation.
+protected occurrence after PR #317. The production bind probe has an
+eight-second connection timeout while the fixture allowed only five seconds
+for the trap chain. Its poll ceiling now matches that bound plus cleanup margin
+without adding a fixed wait or weakening the exact no-child/no-lock assertion.
+Eight concurrent focused runs, a normal full suite, a matched four-worker
+portable suite, and protected rerun `30166987349` pass.
 
 **LIFO gate resolved 2026-07-26:** the first NFS-alias fixture ShellCheck stopped
 before test execution because a multiline `[` comparison omitted its shell
