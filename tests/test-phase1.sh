@@ -75,7 +75,6 @@ for script in \
     "$ROOT/libexec/harness-codex-resilient" \
     "$ROOT/libexec/codex-arg0-launcher-wrapper" \
     "$ROOT/libexec/harness-storage-readiness" \
-    "$ROOT/libexec/harness-hardening-audit" \
     "$ROOT/libexec/harness-replica" \
     "$ROOT/libexec/harness-repository-fingerprint" \
     "$ROOT/libexec/harness-restic" \
@@ -138,6 +137,8 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "Python syntax: harness-bash-startup-unify"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harness-ssh-config-layout").read_text())' ||
     fail "Python syntax: harness-ssh-config-layout"
+python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harness-hardening-audit").read_text())' ||
+    fail "Python syntax: harness-hardening-audit"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/tools/run-focused-tests.py").read_text())' ||
     fail "Python syntax: focused-suite runner"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/shared/skills/remote-agent-communication/scripts/agent-message").read_text())' ||
