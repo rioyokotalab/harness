@@ -26,7 +26,13 @@ for name, context in expected_contexts.items():
     assert data["name"] == "main-strict-review"
     assert data["target"] == "branch"
     assert data["enforcement"] == "active"
-    assert data["bypass_actors"] == []
+    assert data["bypass_actors"] == [
+        {
+            "actor_id": 5,
+            "actor_type": "RepositoryRole",
+            "bypass_mode": "always",
+        }
+    ]
     assert data["conditions"] == {
         "ref_name": {"exclude": [], "include": ["refs/heads/main"]}
     }
@@ -37,7 +43,7 @@ for name, context in expected_contexts.items():
         "dismiss_stale_reviews_on_push": True,
         "require_code_owner_review": False,
         "require_last_push_approval": False,
-        "required_approving_review_count": 0,
+        "required_approving_review_count": 1,
         "required_review_thread_resolution": True,
     }
     checks = next(rule for rule in data["rules"] if rule["type"] == "required_status_checks")
