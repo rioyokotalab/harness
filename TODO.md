@@ -143,8 +143,12 @@ Decision D-005 is confirmed: converge Claude Code to verified release
 sessions. This explicitly supersedes T-295's Aist removal; Home had no recorded
 intentional-absence decision.
 
-**Next action:** ask D-006 only. Do not mutate target state until every
-decision is frozen and the owner gives explicit `go`.
+Decision D-006 is confirmed: use only existing narrow non-interactive
+authority; stage exact reviewed helpers and top-priority TODO blockers for
+password-, TCC-, or root-gated work, then continue independent work.
+
+**Next action:** present the frozen execution contract and request explicit
+`go`. Do not mutate hardening target state before that gate.
 
 ### T-310 — Make Codex resilient to transient service failures
 
