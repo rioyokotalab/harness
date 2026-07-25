@@ -85,3 +85,10 @@ The sequential rerun from a disposable full clone passed all focused shards
 and every phase-one integration gate. The clone was removed through a guarded
 manifest that revalidated 902 entries and 22,220,376 bytes, proved the target
 absent and protected anchors unchanged, and was then exact-unlinked.
+
+Final review moved doctor-gate cleanup ownership out of a command-substitution
+subshell and made the state schema strict. Both affected focused suites passed.
+A second complete run passed all T-310 coverage but reproduced the unrelated
+30-second watchdog cleanup race; its exact focused suite passed immediately in
+isolation. Protected CI remains authoritative. The second disposable clone and
+manifest were guarded-removed with protected anchors unchanged.

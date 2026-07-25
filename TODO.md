@@ -149,6 +149,17 @@ and 22,220,376 bytes; guarded deletion manifest
 and proved protected anchors unchanged and the target absent. The manifest was
 then exact-unlinked. No validation residue remains.
 
+Final review tightened strict state-schema validation and kept the doctor
+temporary-file identity in the parent supervisor so its exit trap can retain
+cleanup responsibility on an unlink failure. The new supervisor and updated
+reboot suites passed again. A second full-clone run passed every T-310 and
+integration check but hit the previously documented, unrelated
+`test-personal-macos-ssh-supervisor.sh` 30-second watchdog cleanup race; that
+exact suite passed immediately in isolation. The earlier authoritative
+complete suite remains green, and protected CI is the remaining authority.
+The second clone (902 entries, 22,148,614 bytes) and its manifest were removed
+through the same verified guarded workflow with no residue.
+
 ### T-309 — Canonicalize fleet-health probing
 
 **Phase:** planned; ready to execute.
