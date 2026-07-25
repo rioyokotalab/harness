@@ -111,13 +111,15 @@ interrupted task, and keep all repositories progressing independently.
 **LIFO gate resolved 2026-07-25:** after the Claude 2.1.220 increment, the full
 suite again passed all 73 focused suites and guarded-delete tests but a later
 tool-plan integration exited with `tool plan contains blocked paths`. The
-isolated managed-Claude predecessor plan passes. The cause was a concurrent
-task-ledger edit that made the source checkout dirty after its focused suites
-had passed but before the later apply fixture enforced the clean-checkout
-gate—not a transaction defect. A mode-0600 trace confirmed the same gate and
-was exact-unlinked. Commit the ledger, keep the checkout unchanged during the
-next run, and restart the complete gate; no installation or external state
-changed.
+first run was affected by a concurrent ledger edit, but a subsequent clean
+trace isolated a real regression in the generalized predecessor predicate:
+POSIX equal-precedence `&&`/`||` chaining made a valid uv predecessor also
+evaluate the Claude version clause. An explicit tool dispatch now validates uv
+and Claude independently. The existing uv replacement integration and the new
+Claude plan cover both paths. The first guarded cleanup correctly refused after
+the trace added one file; a fresh 13-entry/39,727-byte manifest then deleted
+the exact fixture and proved protected anchors unchanged. Both mode-0600 traces
+and manifests were exact-unlinked. No installation or external state changed.
 
 **LIFO gate resolved 2026-07-25:** the official Claude native installer was
 downloaded once to a mode-0600 temporary file for required review, but the
