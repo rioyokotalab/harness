@@ -255,3 +255,22 @@ Implementation, protected publication, live crash acceptance, cleanup, and
 fleet rollout are complete. The only remaining evidence is the non-disruptive
 certificate-boundary observation no earlier than 2026-07-25 07:50 JST. Do not
 replace the marked master for that observation.
+
+## Certificate-boundary acceptance
+
+The final observation passed at 2026-07-25 13:22 JST without replacing the
+master:
+
+- `harness al-session --status` reported the target and jump ready with
+  managed ownership;
+- the marked unit was active/running with `NRestarts=2`, and its current
+  generation had been active since 2026-07-24 21:19:42 JST;
+- normal multiplexed `ssh al true` passed;
+- one fresh non-multiplexed probe required renewal, proving the working route
+  reused the persistent managed session rather than a current daily
+  certificate; and
+- the fresh probe's mode-0600 runtime log was not read and was exact-unlinked.
+
+T-302 is complete. Routine fleet health must use the managed status plus the
+normal multiplexed route; disabling multiplexing is an authentication-renewal
+probe, not an AL health check.

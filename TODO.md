@@ -120,7 +120,7 @@ follow-up are in
 
 ### T-302 — Reduce AL authentication intervention
 
-**Phase:** monitoring/time-gated (restart-resilience extension). CSCS requires
+**Phase:** complete. CSCS requires
 personal
 SSH keys to be CSCS-signed and limits personal certificates to one day. The
 owner rejected the higher-complexity service-account/ACL/shared-state design;
@@ -245,6 +245,16 @@ time-gated: no earlier than 2026-07-25 07:50 JST, do not replace the master;
 verify the same marked unit remains managed, run multiplexed `ssh al true`, and
 run one private fresh non-multiplexed probe to distinguish continued reuse from
 renewal-required. Record the observation without inspecting credentials.
+
+The final certificate-boundary observation passed at 2026-07-25 13:22 JST.
+The marked unit remained managed and active/running, with `NRestarts=2` and
+its current generation active since 2026-07-24 21:19:42 JST. Normal
+multiplexed `ssh al true` passed. One private non-multiplexed probe required
+renewal, proving that continued access came from the persistent managed
+session rather than a fresh certificate. Its mode-0600 runtime log was not
+read and was exact-unlinked. Routine fleet health now uses the managed status
+and normal route instead of bypassing multiplexing. No further T-302 action
+remains.
 
 ### T-196 — Backup lifecycle phase 2
 
