@@ -646,9 +646,21 @@ for profile in "$ROOT"/profiles/hosts/*.conf; do
     grep "SUMMARY host=$logical_host failures=0" \
         "$TEMP_DIR/doctor-$logical_host.out" >/dev/null ||
         fail "doctor summary: $logical_host"
+    grep -F -x \
+        'PASS user_global_rule=codex_rules state=absent project_scope=required' \
+        "$TEMP_DIR/doctor-$logical_host.out" >/dev/null ||
+        fail "doctor project-scoped Codex rule contract: $logical_host"
     "$HARNESS" plan --host "$logical_host" --facts "$fixture" \
         >"$TEMP_DIR/plan-$logical_host.out" ||
         fail "plan rejected fixture: $logical_host"
+    grep -F -x \
+        'KEEP user_global_rule name=codex_rules state=absent project_scope=required' \
+        "$TEMP_DIR/plan-$logical_host.out" >/dev/null ||
+        fail "plan project-scoped Codex rule contract: $logical_host"
+    if grep -F 'CREATE discovery_link name=codex_rules' \
+        "$TEMP_DIR/plan-$logical_host.out" >/dev/null; then
+        fail "plan proposed prohibited global Codex rule: $logical_host"
+    fi
     grep "END plan host=$logical_host remote_changes=none" \
         "$TEMP_DIR/plan-$logical_host.out" >/dev/null ||
         fail "plan mutation marker: $logical_host"

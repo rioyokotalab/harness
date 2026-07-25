@@ -108,11 +108,20 @@ coherent commit is impossible, and push the issue onto that repository's TODO
 as a LIFO item. Resolve the new top item when safe, record the pop, resume the
 interrupted task, and keep all repositories progressing independently.
 
-**LIFO gate active 2026-07-26:** the new value-free hardening audit reports
-zero findings on 11 systems but fails on AL because its system Python predates
-`from __future__ import annotations`. No target state changed. Remove modern
-annotation/runtime conveniences, add a Python 3.6 grammar contract, rerun
-focused/full CI, then execute the audit on AL before popping this gate.
+**LIFO gate active 2026-07-26:** Linux `harness doctor` reports
+`codex_rules=not-installed` on every host even though T-304 intentionally
+removed the user-global rule and retained it only as repository-scoped policy.
+The stale plan also proposes recreating that prohibited global link. Align
+plan/doctor with the project-scoped contract, add focused regression coverage,
+and validate the result fleet-wide before popping this gate. This Harness-local
+item does not pause any other repository stack.
+
+**LIFO gate resolved 2026-07-26:** the new value-free hardening audit initially
+reported zero findings on 11 systems but failed on AL because its system Python
+predates `from __future__ import annotations`. PR #316 removed modern
+annotation/runtime conveniences and added a Python 3.6 grammar/API contract;
+protected CI passed and the merged command now completes on AL with
+`findings=0`. No target state changed during the failed attempt.
 
 **LIFO gate active 2026-07-26:** all four Mac firewall/stealth plans remain
 off/off and `sudo -n` is unavailable. An identical reviewed, credential-free
@@ -293,8 +302,10 @@ Decision D-006 is confirmed: use only existing narrow non-interactive
 authority; stage exact reviewed helpers and top-priority TODO blockers for
 password-, TCC-, or root-gated work, then continue independent work.
 
-**Next action:** continue the independent repository LIFO stacks, starting
-with the already recorded Students, Website, and Swallow gate resolutions.
+**Next action:** resolve Harness's stale global Codex-rules plan/doctor item
+while the already completed Students, Website, and Swallow stacks remain
+independently closed; continue any newly discovered repository-local stack
+without waiting on the Mac administrator-authentication gate.
 
 ### T-310 — Make Codex resilient to transient service failures
 

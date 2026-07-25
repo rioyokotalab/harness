@@ -57,7 +57,7 @@ case $(fact_get "$fact_file" harness_checkout) in
     *) echo "CHECK harness_checkout reason=unknown-state" ;;
 esac
 
-for item in codex_guidance codex_rules claude_guidance; do
+for item in codex_guidance claude_guidance; do
     state=$(fact_get "$fact_file" "link_$item")
     case "$state" in
         symlink) echo "KEEP discovery_link name=$item" ;;
@@ -68,6 +68,17 @@ for item in codex_guidance codex_rules claude_guidance; do
         *) echo "CHECK discovery_link name=$item reason=unknown-state" ;;
     esac
 done
+case $(fact_get "$fact_file" link_codex_rules) in
+    absent)
+        echo "KEEP user_global_rule name=codex_rules state=absent project_scope=required"
+        ;;
+    symlink|regular|directory|other)
+        echo "CHECK user_global_rule name=codex_rules reason=global-policy-present"
+        ;;
+    *)
+        echo "CHECK user_global_rule name=codex_rules reason=unknown-state"
+        ;;
+esac
 
 for startup in bashrc bash_profile bash_login profile bash_logout; do
     state=$(fact_get "$fact_file" "startup_$startup")
