@@ -120,12 +120,16 @@ run_agent --apply >"$TEMP_DIR/install.out"
 
 wrapped=$HOME_DIR/.local/opt/harness/codex-arg0-wrapper/1.2.3/linux-x86_64/codex
 mkdir -p "${wrapped%/*}"
-printf '%s\n' '#!/bin/sh' 'exit 0' >"$wrapped"
+printf '%s\n' '#!/bin/sh' ': >"$HOME/.wrapped-version-probe"' \
+    "echo 'codex-cli 1.2.3'" >"$wrapped"
 chmod 755 "$wrapped"
 unlink "$stable"
 ln -s "$wrapped" "$stable"
 run_agent --plan | grep -F 'KEEP agent=codex source=managed-agent-wrapped' \
     >/dev/null || fail "wrapped managed install integrity"
+[ -f "$HOME_DIR/.wrapped-version-probe" ] ||
+    fail "wrapped managed plan bypassed stable version probe"
+unlink "$HOME_DIR/.wrapped-version-probe"
 
 write_version 1.2.4
 if run_agent --plan >"$TEMP_DIR/wrapped-upgrade.out" 2>&1; then

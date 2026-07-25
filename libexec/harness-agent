@@ -334,8 +334,10 @@ old_install_dir=
 old_installed_command=
 old_tree_hash=
 if [ -L "$stable_link" ] && [ "$stable_effective" = "$installed_command" ]; then
+    version_probe=$installed_command
+    [ "$wrapped_current" -eq 0 ] || version_probe=$stable_link
     if [ -d "$install_dir" ] && [ -x "$installed_command" ] &&
-        [ "$(PATH="$HOME/.local/bin:/usr/bin:/bin" "$installed_command" --version 2>/dev/null)" = "$version_line" ]; then
+        [ "$(PATH="$HOME/.local/bin:/usr/bin:/bin" "$version_probe" --version 2>/dev/null)" = "$version_line" ]; then
         if [ "$wrapped_current" -eq 1 ]; then
             if ! old_tree_hash=$(managed_tree_hash_from_evidence "$install_dir") ||
                 [ "$(agent_tree_hash "$install_dir")" != "$old_tree_hash" ]; then
