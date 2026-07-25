@@ -122,7 +122,15 @@ Decision D-001 is confirmed: use a one-review, strict-CI, linear-history,
 conversation-resolution floor for non-admin writers with an owner/admin
 bypass; preserve Students' stronger code-owner and last-push gates.
 
-**Next action:** ask D-002 only. Do not mutate target state until every
+Decision D-002 is confirmed: use read-only Actions defaults, Dependabot
+security and grouped monthly update pull requests, and secret scanning with a
+reviewed CI fallback when private-repository hosting does not provide it;
+never auto-merge dependency updates.
+
+Swallow is now clean and current at `76de582`, so an isolated Swallow
+hardening worktree may be created after the interview and explicit `go`.
+
+**Next action:** ask D-003 only. Do not mutate target state until every
 decision is frozen and the owner gives explicit `go`.
 
 ### T-310 — Make Codex resilient to transient service failures
