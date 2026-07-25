@@ -273,6 +273,9 @@ make_job_script() {
             printf '%s\n' '#SBATCH --output=/dev/null' '#SBATCH --error=/dev/null'
         fi
         printf '%s\n' 'set -eu' 'umask 077'
+        if [ "$scheduler" = abciq ]; then
+            printf '%s\n' 'TMPDIR=/tmp' 'export TMPDIR'
+        fi
         printf '%s\n' \
             'diagnostic="$HOME/.local/state/harness/restic-chain/diagnostic.log"' \
             ': >"$diagnostic"' \
