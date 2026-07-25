@@ -127,10 +127,10 @@ runtime dependency.
 
 ### Swallow
 
-- T4's private repository has active pre-existing SW-017 changes on `main`:
-  three modified and six untracked files. Those bytes belong to another active
-  task and will never be stashed, edited, or absorbed by hardening.
-- The last clean remote revision is `434ee85`. Project runtime, authentication,
+- At the owner's readiness signal, T4's private repository is clean on `main`
+  at `76de582`, equal to `origin/main`; its earlier SW-017 working state is now
+  safely committed and no longer blocks an isolated hardening worktree.
+- Project runtime, authentication,
   and private-evidence directories are mode 2700 and no private/runtime path is
   tracked. T4 project storage is 1% used.
 - The GitHub repository has no ruleset, default Actions write permission,
@@ -140,8 +140,8 @@ runtime dependency.
   repository-control risk.
 - The project-local GitHub CLI authentication became unavailable from T4
   during discovery; Local's authorized GitHub capability could still read the
-  repository settings. No credential was inspected. Swallow writes must wait
-  for clean work plus a usable task-scoped transport.
+  repository settings. No credential was inspected. Revalidate task-scoped
+  Git transport before creating the independent Swallow hardening worktree.
 - Tracked code is remote-backed, but ignored models, checkpoints, raw
   profiles, logs, and runtime state have no declared independent backup.
 
@@ -234,7 +234,7 @@ the guarded-delete workflow and verifies protected anchors afterward.
 | ID | Decision | Recommended default | Status |
 | --- | --- | --- | --- |
 | D-001 | Protected-main model across four repositories | One review for non-admin writers, strict checks, linear history, owner/admin bypass | confirmed: option 1 |
-| D-002 | Dependency and GitHub security automation | Read-only Actions defaults, Dependabot alerts/security PRs, monthly grouped updates, secret protection where available; never auto-merge | open |
+| D-002 | Dependency and GitHub security automation | Read-only Actions defaults, Dependabot alerts/security PRs, monthly grouped updates, secret protection where available; never auto-merge | confirmed: option 1 |
 | D-003 | Mac network posture | Firewall plus stealth, preserve signed/built-in access initially, disable Office X11 TCP, validate one Mac at a time | open |
 | D-004 | Backup expansion | Add ABQ weekly scheduling now; plan Mac and Swallow backups separately rather than sweeping large/private state | open |
 | D-005 | Agent/package refresh | Fix broken Riken Claude and update managed Linux Claude to 2.1.220; preserve intentional Aist/Home absence and running sessions | open |
@@ -247,6 +247,16 @@ an owner/admin bypass so owner-authorized work can complete unattended.
 Retain `students`' stronger code-owner-review and last-push-approval gates.
 Add the Swallow ruleset only after its credential-free required CI check exists
 and passes, so protection never names an absent or unproven check.
+
+D-002 consequence: make repository-default Actions permissions read-only and
+disallow Actions from approving pull requests. Enable dependency graphs,
+Dependabot alerts and security-update pull requests, plus monthly grouped
+version-update pull requests for declared package ecosystems and GitHub
+Actions. Enable native secret scanning and push protection where the hosting
+plan supports them; where a private repository lacks that entitlement, use a
+credential-free, pinned, reviewed CI check instead. Never auto-merge dependency
+updates, and repair the currently confirmed Students cryptography advisory in
+its own repository task.
 
 ## Evidence
 
@@ -265,6 +275,6 @@ and passes, so protection never names an absent or unproven check.
 
 ## Next action
 
-Ask D-002 only. After every answer, checkpoint the exact selection and ask the
+Ask D-003 only. After every answer, checkpoint the exact selection and ask the
 next open decision. Do not execute hardening until all decisions are frozen
 and the owner gives explicit `go`.
