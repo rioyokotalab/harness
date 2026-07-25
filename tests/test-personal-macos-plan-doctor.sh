@@ -134,8 +134,20 @@ case "$1" in
     *) exit 99 ;;
 esac
 EOF
+cat >"$fake_bin/socketfilterfw" <<'EOF'
+#!/bin/sh
+case "$1" in
+    --getglobalstate) echo 'Firewall is enabled. (State = 1)' ;;
+    --getstealthmode) echo 'Firewall stealth mode is on' ;;
+    *) exit 2 ;;
+esac
+EOF
 chmod 755 "$fake_bin/uname" "$fake_bin/stat" "$fake_bin/xcode-select" \
-    "$fake_bin/tmux" "$fake_bin/grep" "$fake_bin/brew"
+    "$fake_bin/tmux" "$fake_bin/grep" "$fake_bin/brew" \
+    "$fake_bin/socketfilterfw"
+HARNESS_TEST_MODE=1
+HARNESS_TEST_SOCKETFILTERFW=$fake_bin/socketfilterfw
+export HARNESS_TEST_MODE HARNESS_TEST_SOCKETFILTERFW
 
 brew_log=$TEMP_DIR/brew.log
 facts=$TEMP_DIR/facts.conf
@@ -219,6 +231,19 @@ if grep -F "$fact_sentinel" "$TEMP_DIR/malformed.out" >/dev/null ||
     fail "fact refusal exposed private content"
 fi
 
+malformed_firewall=$TEMP_DIR/malformed-firewall.conf
+sed 's/^firewall=enabled$/firewall=unsafe/' "$facts" >"$malformed_firewall"
+chmod 600 "$malformed_firewall"
+if HOME="$home" BREW_LOG="$TEMP_DIR/malformed-firewall.log" \
+    PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
+    "$DOCTOR" --host mac-test-pilot --facts "$malformed_firewall" \
+    >"$TEMP_DIR/malformed-firewall.out" 2>&1; then
+    fail "doctor accepted malformed firewall fact"
+fi
+grep -F 'personal-Mac firewall fact is malformed' \
+    "$TEMP_DIR/malformed-firewall.out" >/dev/null ||
+    fail "malformed firewall fact refusal"
+
 if HOME="$home" BREW_LOG="$TEMP_DIR/doctor-not-ready.log" \
     PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
     "$DOCTOR" --host mac-test-pilot --facts "$facts" \
@@ -259,6 +284,23 @@ doctor_output=$(HOME="$home" BREW_LOG="$TEMP_DIR/doctor-ready.log" \
 printf '%s\n' "$doctor_output" | grep -F -x \
     'END macos_doctor status=ready failures=0 warnings=0' >/dev/null ||
     fail "ready doctor result"
+disabled_firewall_facts=$TEMP_DIR/disabled-firewall-facts.conf
+sed -e 's/^firewall=enabled$/firewall=disabled/' \
+    -e 's/^firewall_stealth=enabled$/firewall_stealth=disabled/' \
+    "$ready_facts" >"$disabled_firewall_facts"
+chmod 600 "$disabled_firewall_facts"
+disabled_firewall_doctor=$(HOME="$home" \
+    BREW_LOG="$TEMP_DIR/doctor-firewall-disabled.log" FAKE_TREE_PRESENT=1 \
+    PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
+    "$DOCTOR" --host mac-test-pilot --facts "$disabled_firewall_facts")
+for expected in \
+    'WARN security=firewall state=disabled expected=enabled' \
+    'WARN security=firewall_stealth state=disabled expected=enabled' \
+    'END macos_doctor status=ready failures=0 warnings=2'
+do
+    printf '%s\n' "$disabled_firewall_doctor" | grep -F -x "$expected" \
+        >/dev/null || fail "disabled firewall doctor result: $expected"
+done
 case "$doctor_output" in
     *sqlite*|*ninja*|*language*|*agents*|*"$home"*)
         fail "doctor exposed private desired state"
