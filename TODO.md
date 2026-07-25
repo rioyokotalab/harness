@@ -84,19 +84,22 @@ Next free ID: T-312.
 
 ## Next resume checkpoint
 
-1. Resume T-311 at decision D-001; no hardening mutation is authorized before
-   the interview completes and the owner gives explicit `go`.
-2. Resume T-310 closeout only through its isolated branch and existing CI
-   blocker; do not create another push-only retry.
-3. Resume T-309 by adding failing command-contract fixtures for the canonical
-   fleet-health probe.
-4. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
+1. Complete the four deferred T-311 Mac firewall helpers only when the owner
+   can authenticate locally, then validate both routes and exact-unlink each
+   helper. Resolve the separate Codex user-config policy choice afterward.
+2. Recreate T-310's documentation-only closeout from current `main`; preserve
+   only the acceptance appendix and compact current ledger result, because old
+   PR #311 conflicts solely in the heavily advanced `TODO.md`. Do not
+   force-push or merge that stale history.
+3. Continue T-196 only at its exact time/identity gates: preserve the delayed
+   AB/AB2 jobs, retry RI accounting ID `7242` without touching successor
+   `10386`, and inspect AL ID `4238363` only after its later eligibility.
 
 ## Active tasks
 
 ### T-311 — Harden the fleet and independent project repositories
 
-**Phase:** executing after explicit owner `go`.
+**Phase:** nightly safe work complete; deferred owner/admin gates remain.
 
 Audit and harden all managed Linux and Mac nodes plus `harness`, `students`,
 `swallow`, and `website`, while each repository owns its own task, branch,
@@ -110,6 +113,22 @@ interrupted task, and keep all repositories progressing independently. If the
 top item requires unavailable owner or administrator action, leave it deferred,
 continue the next highest safe independent item in that same repository, and
 never cross it for dependent work.
+
+**Final validation checkpoint 2026-07-26:** protected PRs #323–#325 passed and
+merged through `491475eef2eb576765c5b98858429b47cfeffe85`; guarded sync advanced
+all 11 clean remote checkouts after each control-plane change with no transfer
+residue. Harness, Students, Swallow, and Website pass the value-free repository
+audit; each has one active ruleset, read-only/non-approving Actions defaults,
+and zero open Dependabot alerts. Native secret scanning passes for Harness and
+Website; Students and Swallow retain the approved pinned CI fallback because
+their private repositories do not expose that entitlement. All 12 systems
+report Codex 0.145.0 and Claude Code 2.1.220. Routine arg0 cleanup guarded-
+deleted one eligible expected directory per Mac, preserved every live lock,
+and left zero eligible/unexpected state. All four Mac doctors remain ready
+with only the two expected firewall/stealth warnings; their identical reviewed
+helpers remain mode 0700 and unchanged. The installed canonical health command
+reports `Fleet: Linux pass; Macs pass.` Four post-sync Mac context refreshes
+were submitted exactly once.
 
 **LIFO gate resolved 2026-07-26:** the first closeout publication command
 fetched successfully but then attempted to rebase while the coherent ledger
@@ -550,6 +569,15 @@ another repository.
 
 **Phase:** validating; implementation complete locally.
 
+**LIFO publication gate active 2026-07-26:** functional PR #310 is already
+merged and fleet-synchronized, and old closeout PR #311 now has a passing
+protected check. Its four documentation-only commits are 46 commits behind
+current `main`; a read-only merge-tree probe found the expected conflict only
+in `TODO.md`, while the acceptance appendix applies independently. Create a
+fresh branch from current `main`, add the appendix, compact T-310 to its final
+result, publish through protected CI, then close superseded PR #311. Do not
+force-push or transplant the stale task-board compaction.
+
 Implement a portable foreground `harness codex-resilient` supervisor for the
 existing tmux topology. It must launch through `bin/harness-codex`, recover
 only by resuming a saved chat without a prompt, gate retries with Codex's
@@ -616,7 +644,7 @@ through the same verified guarded workflow with no residue.
 
 ### T-309 — Canonicalize fleet-health probing
 
-**Phase:** publishing after complete local and live validation.
+**Phase:** complete.
 
 Routine fleet health already requires AL to pass both
 `harness al-session --status` and a normal multiplexed `ssh al true`. A
@@ -686,6 +714,12 @@ both independent routes, and AL ready through managed status plus its normal
 multiplexed command. Publish through protected CI, merge, guarded-sync the 11
 clean remote checkouts, perform the required four Mac context refreshes, and
 rerun the installed command from Local.
+
+Protected PR #325 passed run `30170878451` and merged as
+`491475eef2eb576765c5b98858429b47cfeffe85`. Guarded fleet sync advanced all
+11 clean remotes with absent transfer artifacts; all four Mac refreshes were
+submitted once. The installed Local command then reproduced
+`Fleet: Linux pass; Macs pass.` T-309 is complete.
 
 ### T-303 — Observe intermittent NFS I/O latency
 
