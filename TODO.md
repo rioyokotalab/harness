@@ -122,6 +122,11 @@ The expected count now covers all eight rows, ABCI-Q participates in exact PBS
 job identity and cancellation handling, and the full Restic schedule suite
 passes. T-311 has popped back to the ABQ schedule increment.
 
+**LIFO gate resolved 2026-07-25:** the first skill-scaffolder help invocation
+used an unversioned `python` command, which is intentionally absent on Local.
+No file was created by that attempt. The exact system skill-creator succeeded
+with `python3`, and the new skill records that portable entry point.
+
 Read-only discovery found P0 risks in the students cryptography lock and
 Swallow's absent protected-main/CI controls; repository-default Actions
 permissions in Harness and Swallow are also overbroad. All Mac firewalls are

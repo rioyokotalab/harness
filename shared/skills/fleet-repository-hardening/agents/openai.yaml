@@ -1,0 +1,3 @@
+interface:
+  display_name: "Fleet Repository Hardening"
+  short_description: "Harden fleets and repositories with LIFO recovery"
