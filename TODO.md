@@ -108,14 +108,18 @@ coherent commit is impossible, and push the issue onto that repository's TODO
 as a LIFO item. Resolve the new top item when safe, record the pop, resume the
 interrupted task, and keep all repositories progressing independently.
 
-**LIFO gate active 2026-07-26:** Harness PR #317 passed the full four-worker
-suite locally but protected CI failed in the unrelated Mac tunnel-watchdog
-signal fixture: its five-second cleanup poll expired while the recovery lock
-remained. Every other focused suite passed. Preserve the exact failed run
-`30163867667`, reproduce the signal fixture under load, distinguish a retained
-child from a timing-only test failure, add the narrow deterministic fix, and
-rerun the full gate before returning to the Codex-rules rollout. Swallow's
-independent PR #2 continues unaffected.
+**LIFO gate resolved 2026-07-26:** Harness PR #317 passed the full four-worker
+suite locally but protected run `30163867667` failed in the unrelated Mac
+tunnel-watchdog signal fixture when its five-second cleanup poll expired.
+Four concurrent isolated repetitions then passed, including child/lock cleanup,
+and the unchanged protected rerun `30164109873` passed every suite. This was a
+timing-only fixture failure; no production or test relaxation was needed.
+Swallow's independent stack continued throughout.
+
+**LIFO gate resolved 2026-07-26:** one parallel PR-status query used a
+misspelled local worktree path and failed before invoking the GitHub CLI. The
+corrected bounded queries immediately succeeded; no repository or external
+state changed.
 
 **LIFO gate active 2026-07-26:** Linux `harness doctor` reports
 `codex_rules=not-installed` on every host even though T-304 intentionally
