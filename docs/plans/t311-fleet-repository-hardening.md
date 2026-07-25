@@ -196,16 +196,21 @@ runtime dependency.
 ## Issue and interruption contract
 
 Pre-existing owner or agent work is never stashed. Each hardening stream uses
-an isolated worktree. On the slightest new ambiguity or failed gate:
+an isolated worktree. Repositories maintain independent LIFO issue stacks. On
+the slightest new ambiguity or failed gate:
 
-1. stop that repository's execution without hiding the failure;
+1. pause the interrupted change without hiding the failure;
 2. preserve exact safe evidence and classify whether retry is safe;
 3. commit a coherent validated partial increment when possible;
 4. otherwise stash only this task's explicitly named WIP paths, never another
    worktree or broad untracked scope;
 5. place the issue at the top of that repository's active TODO section with
    the stash identifier or commit, unchanged state, and next action;
-6. continue only independent work in another repository.
+6. treat that issue as the repository's newest and therefore next task;
+7. resolve it immediately when safe, record the resolution, pop back to the
+   interrupted task, and continue;
+8. keep every other repository progressing independently while this stack is
+   processed.
 
 No raw recursive deletion is permitted. Any multi-path or tree removal uses
 the guarded-delete workflow and verifies protected anchors afterward.
@@ -303,5 +308,6 @@ or wait indefinitely.
 
 ## Next action
 
-All six decisions are frozen. Present the consolidated execution contract and
-request the owner's explicit `go`. Do not execute hardening before that gate.
+The owner gave explicit `go`. Process repository-local issues as LIFO stacks,
+publish each independent validated change through its own protected workflow,
+and stop starting material changes at 04:30 JST for final validation.

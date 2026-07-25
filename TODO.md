@@ -96,16 +96,17 @@ Next free ID: T-312.
 
 ### T-311 — Harden the fleet and independent project repositories
 
-**Phase:** interviewing.
+**Phase:** executing after explicit owner `go`.
 
 Audit and harden all managed Linux and Mac nodes plus `harness`, `students`,
 `swallow`, and `website`, while each repository owns its own task, branch,
 tests, publication route, and handoff. Work ends at 2026-07-26 05:00 JST.
 Pre-existing work is never stashed; new hardening work uses isolated
-worktrees. On any new ambiguity or failed gate, stop that repository, preserve
-safe evidence, stash only explicitly named task-owned WIP when a coherent
-commit is impossible, put the issue first in that repository's active TODO,
-and continue only independent work.
+worktrees. On any new ambiguity or failed gate, pause the interrupted change,
+preserve safe evidence, stash only explicitly named task-owned WIP when a
+coherent commit is impossible, and push the issue onto that repository's TODO
+as a LIFO item. Resolve the new top item when safe, record the pop, resume the
+interrupted task, and keep all repositories progressing independently.
 
 Read-only discovery found P0 risks in the students cryptography lock and
 Swallow's absent protected-main/CI controls; repository-default Actions
@@ -147,8 +148,8 @@ Decision D-006 is confirmed: use only existing narrow non-interactive
 authority; stage exact reviewed helpers and top-priority TODO blockers for
 password-, TCC-, or root-gated work, then continue independent work.
 
-**Next action:** present the frozen execution contract and request explicit
-`go`. Do not mutate hardening target state before that gate.
+**Next action:** continue the independent repository LIFO stacks, starting
+with the already recorded Students, Website, and Swallow gate resolutions.
 
 ### T-310 — Make Codex resilient to transient service failures
 
