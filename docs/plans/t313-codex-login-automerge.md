@@ -98,5 +98,10 @@ repository updates enabled only `allow_auto_merge`; immediate readback is true
 for Harness, Students, Swallow, and Website. No pull request was opted in.
 The combined launcher, resilient route, common alias, documentation, and
 focused coverage are committed as `2b4a437`. The clean four-worker complete
-suite passed all 75 focused suites and every integration gate. Publish through
-protected CI next.
+suite passed all 75 focused suites and every integration gate. Protected PR
+#332 passed and merged as `12054b9`; a clean full clone synchronized all eleven
+remotes after the live Local supervisor's NFS placeholder correctly blocked
+the ordinary source checkout. Exact launcher and alias readback passes every
+Linux target. T4 and all four Macs now run under the supervisor; Mac remote
+control and dual routes remain ready. Local is the final restart and durable
+next action.

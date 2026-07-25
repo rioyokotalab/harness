@@ -137,6 +137,69 @@ rerun the authoritative complete suite from the clean revision. Commit
 `2b4a437` then passed all 75 focused suites, guarded-delete coverage, and every
 phase-one integration gate. Publish through protected CI next.
 
+**LIFO rollout gate resolved 2026-07-26:** protected PR #332 passed and merged as
+`12054b9`, but advancing Local `main` replaced the currently executing
+resilience supervisor script. NFS retained its old inode as one untracked
+`.nfs` placeholder held only by the exact current supervisor PID, so guarded
+fleet-sync refused the dirty source before contacting any node. Preserve the
+live placeholder. Run the reviewed sync from a clean detached worktree at the
+same exact merge revision, restart Local last, and require the placeholder to
+disappear naturally when the old supervisor exits. The exact clean full-clone
+sync later advanced all eleven remotes successfully with absent artifacts.
+
+**LIFO rollout sub-gate resolved 2026-07-26:** the clean detached rollout
+worktree was created at exact merge `12054b9`, but fleet-sync requires a full
+Git checkout and rejected its normal `.git` pointer before contacting any
+node. Preserve that clean worktree for guarded cleanup. Create a disposable
+full local clone with a real `.git` directory at the same revision, run the
+unchanged plan/apply there, and guarded-delete both rollout checkouts after
+Local restart. Full clone `/tmp/t313-rollout-clone.atxL0w` passed plan/apply;
+both rollout checkouts remain for the recorded guarded cleanup.
+
+**LIFO validation gate resolved 2026-07-26:** the clean full-clone sync advanced
+all eleven remotes successfully, but the first seven-node Linux readback used
+an incorrectly escaped exact alias comparison. Every invocation stopped after
+printing the planned native command, making the aggregate look like a launcher
+failure. An isolated direct check proves `harness codex-login --version` exits
+zero with Codex 0.145.0, and direct alias output is exact. Repeat the value-free
+readback with a literal fixed-string comparison; no session or configuration
+changed. The corrected readback passed launcher, alias, and version checks on
+all seven remote Linux targets.
+
+**LIFO restart gate resolved 2026-07-26:** T4's direct TUI stopped gracefully and
+the published supervisor reached running state, but the first helper treated
+its session-owned background Codex daemons as a persistent remote-control app
+server. Their expected PID change caused the prepared rollback to restore the
+direct TUI; the session is live and supervisor status is safely stale. Require
+exact app-server identity only for Local and Macs, where remote control is in
+scope, then retry T4 once through the same graceful transition. The narrowed
+retry passed and T4 now reports managed running supervisor state.
+
+**LIFO Mac restart gate resolved 2026-07-26:** Aist's direct TUI also stopped
+gracefully and the supervisor reached running state, but Codex automatically
+replaced the remote-control app-server PID as part of the TUI lifecycle even
+though the helper never addressed that process. The prepared rollback restored
+the direct TUI and remote control remains present. Preserve pairing and require
+a ready remote-control server after restart rather than an impossible
+same-process identity, then retry Aist once before continuing.
+
+The first narrowed retry reached preflight but a single `Ctrl-C` only canceled
+the just-submitted context-refresh turn; it did not exit the TUI before the
+bounded wait, so rollback again restored a direct client. Submit Codex's
+explicit `/quit` after the cancel signal, with separate paste-settle and Enter,
+then require the old process to exit before respawn. Never inspect the pane.
+That exact method passed on Aist, Home, Office, and Riken; all four report
+managed running supervisor state, ready remote control, and healthy dual
+routes.
+
+**Next action before controller interruption:** Local alone remains on its old
+running supervisor and therefore holds the expected `.nfs` placeholder. Commit
+and push this checkpoint, then run the reviewed graceful helper against the
+attached Local `harness` pane. On resume, do not replay the owner request:
+verify Local supervisor status and eight-thread child path, require the
+placeholder to be absent, guarded-delete the exact rollout clone/worktree and
+helper, publish a compact closeout, and run canonical fleet health.
+
 ### T-311 — Harden the fleet and independent project repositories
 
 **Phase:** nightly safe work complete; deferred owner/admin gates remain.
