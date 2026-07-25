@@ -89,7 +89,7 @@ macOS.
 
 ## Current checkpoint
 
-**Phase:** executing.
+**Phase:** complete.
 
 Read-only discovery and live version compatibility checks are complete. D-001
 is frozen and the owner gave explicit go. No target state changed before go.
@@ -103,5 +103,19 @@ suite passed all 75 focused suites and every integration gate. Protected PR
 remotes after the live Local supervisor's NFS placeholder correctly blocked
 the ordinary source checkout. Exact launcher and alias readback passes every
 Linux target. T4 and all four Macs now run under the supervisor; Mac remote
-control and dual routes remain ready. Local is the final restart and durable
-next action.
+control and dual routes remain ready. Local then restarted through the reviewed
+handoff, returned under the published supervisor, and released the expected NFS
+placeholder without manual removal. Local, T4, and all four Macs report running
+managed supervisors. The launcher syntax, ShellCheck gate, and focused Linux
+routing test pass.
+
+All eleven remote checkouts independently report clean `main` at exact merge
+`12054b9`, aligned `origin/main`, one worktree, and zero stashes. Exact GitHub
+readback remains true for all four repository auto-merge capabilities. Two
+fresh guarded manifests deleted only the recorded rollout clone and worktree
+with protected anchors unchanged; stale worktree metadata was pruned, and the
+reviewed restart helper, runner, private value-free log, message, and manifests
+are absent. Canonical fleet health passes every Linux node, both ABQ routes,
+and both routes for each managed Mac. No pull request was opted into auto-merge,
+no remote-control server was restarted directly, and no macOS thread limit was
+introduced.

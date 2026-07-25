@@ -99,7 +99,7 @@ Next free ID: T-314.
 
 ### T-313 — Enable repository auto-merge and limit login-node Codex threads
 
-**Phase:** executing; D-001 frozen and explicit go received.
+**Phase:** complete.
 
 Enable only the repository-level auto-merge capability on Harness, Students,
 Swallow, and Website; add and fleet-publish a Linux-only Harness Codex launcher
@@ -199,6 +199,33 @@ attached Local `harness` pane. On resume, do not replay the owner request:
 verify Local supervisor status and eight-thread child path, require the
 placeholder to be absent, guarded-delete the exact rollout clone/worktree and
 helper, publish a compact closeout, and run canonical fleet health.
+
+The first detached Local handoff failed before sending any signal because the
+session attachment count changed from one to zero during its three-second
+delay. The old supervisor, message, and placeholder remain unchanged. The
+owner authorized the restart in either attachment state; retain strict detached
+checks for remote targets, but let the explicit Local override accept either
+state and retry once.
+
+**LIFO validation gate resolved 2026-07-26:** the first post-restart remote
+supervisor query appended its positional argument outside the intended remote
+shell script, so Local passed but every remote command returned usage status 2.
+No target changed. The corrected native SSH commands passed on T4, Aist, Home,
+Office, and Riken.
+
+**Final validation 2026-07-26:** Local restarted gracefully under the published
+supervisor, its remote-control server remained ready, and the old supervisor's
+NFS placeholder disappeared naturally. Local, T4, Aist, Home, Office, and
+Riken all report running managed supervisors. The Linux-only launcher contract,
+syntax, ShellCheck, and focused routing suite pass. All eleven remote checkouts
+are clean `main` at `12054b9`, aligned with `origin/main`, with one worktree
+and zero stashes. Exact GitHub readback keeps `allow_auto_merge=true` on
+Harness, Students, Swallow, and Website, with no pull request opted in by this
+task. Guarded deletion removed only the 918-entry rollout clone and 874-entry
+rollout worktree; protected anchors were unchanged, stale Git registration was
+pruned, and all helper, log, message, and manifest residue is absent. Canonical
+health reports `Fleet: Linux pass; Macs pass.` Protected closeout publication
+and synchronization carry only this durable evidence.
 
 ### T-311 — Harden the fleet and independent project repositories
 
