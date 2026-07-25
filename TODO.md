@@ -114,6 +114,12 @@ top item requires unavailable owner or administrator action, leave it deferred,
 continue the next highest safe independent item in that same repository, and
 never cross it for dependent work.
 
+**LIFO gate resolved 2026-07-26:** a final read-only fleet-sync check supplied
+the same exact commit as both source and target. The command rejected the
+invalid no-op locally before contacting any node. Use direct exact
+revision/status/artifact checks for the final aligned-fleet readback; do not
+bypass the transaction contract or invent a synchronization change.
+
 **Final validation checkpoint 2026-07-26:** protected PRs #323–#325 passed and
 merged through `491475eef2eb576765c5b98858429b47cfeffe85`; guarded sync advanced
 all 11 clean remote checkouts after each control-plane change with no transfer
