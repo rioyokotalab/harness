@@ -684,6 +684,15 @@ and a current independent generation.
 | t4 | 8194556 |
 | al | 4238363 |
 
+**2026-07-26 checkpoint:** exact Local job `91840` completed with `0:0`;
+private state is active/success with a present 64-hex snapshot, warning output
+is silent, and exact successor `94950` is pending for 2026-08-02 00:30 JST.
+Local is now 2/8. Exact AB job `2048464.pbs1` remains identity-matched in
+healthy PBS state `Q` after eligibility; warning output is silent and no action
+was taken. The first AB safe-field parser expected the historical `Job_Id =`
+label instead of live `Job Id:` and failed read-only; the corrected exact-ID
+query passed. Do not replace AB's delayed job.
+
 On or after eligibility, identity-match and query only these IDs. Record
 terminal success, snapshot succession, warning silence, and chain count. Delay
 is healthy; do not replace a pending job. Keep-all remains effective. No
