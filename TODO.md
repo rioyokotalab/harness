@@ -129,6 +129,21 @@ same-repository continuation contract searched one phrase across a Markdown
 line break and failed without changing external state. The test now matches
 the stable unbroken clause while retaining the exact behavioral requirement.
 
+**LIFO gate resolved 2026-07-26:** a value-free SSH metadata audit found modes
+0640 on AB/AB2 client configs, 0644 on AL's client config, and 0644 on RC plus
+all four Macs' `authorized_keys`; every path is a current-user-owned,
+single-link regular file. Only those eight modes were tightened to 0600.
+Client parsing and doctor checks pass on AB, AB2, and AL; fresh RC
+authentication and both independent inbound routes for every Mac pass. The
+complete 12-system rerun reports `findings=0`, and all temporary helpers are
+absent. No SSH contents or identity values were read, printed, copied, or
+hashed.
+
+**LIFO gate resolved 2026-07-26:** the first temporary SSH metadata helper
+failed its ShellCheck warning gate on three bare-word assignments before any
+audit ran. Quoted literal assignments passed syntax and ShellCheck; the helper
+then ran value-free and was exact-unlinked from every remote after use.
+
 **LIFO gate active 2026-07-26:** the known off/off Mac firewall and stealth
 posture is not represented in `macos-inventory` or `macos-doctor`, so routine
 readiness can report zero warnings while D-003 remains unresolved. Add only
