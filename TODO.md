@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-312.
+Next free ID: T-313.
 
 ## Current state
 
@@ -91,11 +91,55 @@ Next free ID: T-312.
    only the acceptance appendix and compact current ledger result, because old
    PR #311 conflicts solely in the heavily advanced `TODO.md`. Do not
    force-push or merge that stale history.
-3. Continue T-196 only at its exact time/identity gates: preserve the delayed
-   AB/AB2 jobs, retry RI accounting ID `7242` without touching successor
-   `10386`, and inspect AL ID `4238363` only after its later eligibility.
+3. Continue T-196 only at its exact time/identity gates: AB and AB2 are now
+   2/8 with next-week successors waiting; retry RI accounting ID `7242`
+   without touching successor `10386`, and inspect AL ID `4238363` only after
+   its later eligibility.
 
 ## Active tasks
+
+### T-312 — Fleet and repository housekeeping after hardening
+
+**Phase:** validating.
+
+Clean administrative residue from the completed T-311 hardening run across
+Harness, Students, Website, and Swallow while preserving active task
+worktrees, private/runtime state, research artifacts, credentials, and live
+Codex sessions. The owner explicitly requested execution and selected
+`[HH:MM:SS]` current-local-time prefixes for all future progress commentary;
+that stable cross-project preference is promoted to root `AGENTS.md`.
+
+The read-only inventory confirmed clean/current primary checkouts. Five clean
+Local worktrees and two clean T4 worktrees belong only to merged hardening
+pull requests and have exact-tree or patch-equivalent results on protected
+`main`. The active Harness T-310 closeout worktree and active Students T-002
+checkout are excluded. Cleanup uses guarded manifests for worktree trees,
+followed by native Git metadata pruning and deletion of only the exact merged
+task branches. Routine arg0 cleanup remains lock-aware and may remove only
+eligible expected directories.
+
+Validate clean worktrees, absent task-owned stashes/helpers/transfer residue,
+repository integrity, current upstreams, canonical fleet health, and final
+arg0 counts. If the shared guidance change merges, guarded-sync only clean
+Harness checkouts and refresh each detached managed Mac Codex session exactly
+once.
+
+**Execution checkpoint:** guarded manifests deleted five exact merged
+worktrees on Local and two on T4, with protected anchors unchanged. Native Git
+pruning then removed their administrative records. Thirty-three remote and 21
+local task branches, each tied to a merged protected pull request, were
+deleted; open Dependabot, Harness T-310, Harness T-312, and Students T-002
+branches remain. Git integrity and automatic maintenance pass for all four
+repositories and every managed Harness checkout.
+
+Students' two disposable test/lint caches were guarded-deleted. Aist, Home,
+and Office each had one eligible expected arg0 directory removed; every final
+arg0 plan has zero eligible or unexpected state. Swallow's 33-GiB research
+cache, project environments, private evidence, and runtime artifacts remain.
+Two `.DS_Store` package artifacts were the two hard links to one
+current-user-owned inode. The initial single-link safety preflight refused
+them without change; after exact identity and link-count proof, each exact
+name was unlinked separately and the final count is zero.
 
 ### T-311 — Harden the fleet and independent project repositories
 
@@ -887,9 +931,8 @@ remains.
 
 ### T-196 — Backup lifecycle phase 2
 
-**Status:** time-gated. Local, RI, RC, T4, and ABQ are at 2/8 successful
-weekly chains; AB and AB2 remain at 1/8 with their second jobs delayed in a
-healthy queue, and AL remains 1/8 until its later eligibility. Execution
+**Status:** time-gated. Local, AB, AB2, RI, RC, T4, and ABQ are at 2/8
+successful weekly chains, and AL remains 1/8 until its later eligibility. Execution
 requires eight successful chains, two verified restores per node, and a
 current independent generation.
 
@@ -925,13 +968,14 @@ is still not visible, so keep this observation open and retry only exact ID
 **2026-07-26 checkpoint:** exact Local job `91840` completed with `0:0`;
 private state is active/success with a present 64-hex snapshot, warning output
 is silent, and exact successor `94950` is pending for 2026-08-02 00:30 JST.
-Local is now 2/8. Exact AB job `2048464.pbs1` remains identity-matched in
-healthy PBS state `Q` after eligibility; warning output is silent and no action
-was taken. Exact AB2 job `2048468.pbs1` likewise remains identity-matched in
-healthy PBS state `Q` after eligibility, with silent warning output; no action
-was taken. The first AB safe-field parser expected the historical `Job_Id =`
-label instead of live `Job Id:` and failed read-only; the corrected exact-ID
-query passed. Do not replace either delayed PBS job.
+Local is now 2/8. Exact AB job `2048464.pbs1` and AB2 job
+`2048468.pbs1` later reached terminal PBS state `F` with exit 0 during the
+T-311 final observation window. Both private chains are active/success with a
+present 64-hex snapshot, warnings are silent, and exact successors
+`2064918.pbs1` and `2064919.pbs1` are waiting for 2026-08-02 01:00 and 01:30
+JST respectively. AB and AB2 are now 2/8. The first AB safe-field parser
+expected the historical `Job_Id =` label instead of live `Job Id:` and failed
+read-only; the corrected exact-ID query passed. No job was replaced.
 
 Exact RC job `212389` completed with `0:0`; private state is active/success
 with a present 64-hex snapshot, warnings are silent, and exact successor

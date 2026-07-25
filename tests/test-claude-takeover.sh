@@ -57,6 +57,8 @@ grep -F 'Owner approval alone never creates an exception.' "$ROOT/AGENTS.md" \
     >/dev/null || fail "project reviewed-installer deletion boundary"
 grep -F 'include a read-only inventory' "$ROOT/AGENTS.md" \
     >/dev/null || fail "project routine arg0 housekeeping policy"
+grep -F 'current local time in `[HH:MM:SS]` format' "$ROOT/AGENTS.md" \
+    >/dev/null || fail "project progress timestamp policy"
 grep -F 'Start Codex from the harness repository' "$ROOT/.codex/AGENTS.md" \
     >/dev/null || fail "Codex launch sentinel"
 grep -F 'Start Claude from the harness repository' \
