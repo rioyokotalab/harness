@@ -80,7 +80,7 @@ case $(fact_get "$fact_file" harness_checkout) in
     present) pass "harness_checkout=present" ;;
     *) warn "harness_checkout=not-installed" ;;
 esac
-for item in codex_guidance codex_rules claude_guidance; do
+for item in codex_guidance claude_guidance; do
     state=$(fact_get "$fact_file" "link_$item")
     case "$state" in
         symlink) pass "discovery_link=$item" ;;
@@ -88,6 +88,11 @@ for item in codex_guidance codex_rules claude_guidance; do
         *) warn "discovery_link=$item state=unmanaged" ;;
     esac
 done
+case $(fact_get "$fact_file" link_codex_rules) in
+    absent) pass "user_global_rule=codex_rules state=absent project_scope=required" ;;
+    unknown) warn "user_global_rule=codex_rules state=unknown project_scope=required" ;;
+    *) warn "user_global_rule=codex_rules state=present project_scope=required" ;;
+esac
 
 while IFS='|' read -r tool_name command_name policy host_scope; do
     case "$tool_name" in ''|'#'*) continue ;; esac
