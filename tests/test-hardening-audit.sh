@@ -28,6 +28,17 @@ trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
+python3 - "$ROOT/libexec/harness-hardening-audit" <<'PY'
+import ast
+from pathlib import Path
+import sys
+
+source = Path(sys.argv[1]).read_text(encoding="utf-8")
+ast.parse(source, filename=sys.argv[1], feature_version=(3, 6))
+if "capture_output=" in source or "from __future__ import annotations" in source:
+    raise SystemExit("Python 3.6-incompatible audit API retained")
+PY
+
 repo=$TEST_ROOT/private-repository-name
 mkdir -p "$repo/.github/workflows" "$repo/private"
 git -C "$repo" init -q

@@ -108,6 +108,12 @@ coherent commit is impossible, and push the issue onto that repository's TODO
 as a LIFO item. Resolve the new top item when safe, record the pop, resume the
 interrupted task, and keep all repositories progressing independently.
 
+**LIFO gate active 2026-07-26:** the new value-free hardening audit reports
+zero findings on 11 systems but fails on AL because its system Python predates
+`from __future__ import annotations`. No target state changed. Remove modern
+annotation/runtime conveniences, add a Python 3.6 grammar contract, rerun
+focused/full CI, then execute the audit on AL before popping this gate.
+
 **LIFO gate active 2026-07-26:** all four Mac firewall/stealth plans remain
 off/off and `sudo -n` is unavailable. An identical reviewed, credential-free
 `~/run_this.sh` is staged mode 0700 on Aist, Home, Office, and Riken; its
@@ -118,7 +124,12 @@ authentication is the only remaining gate; do not bypass it, and exact-unlink
 each helper after successful execution and route validation. Continue the
 other independent stacks.
 
-**LIFO gate active 2026-07-26:** corrected ABCI-Q smoke job `176517.qjcm`
+**LIFO gate resolved 2026-07-26:** Office had no running XQuartz process,
+local X11 client, or TCP 6000 listener. Its XQuartz 2.8+ preference domain now
+sets `nolisten_tcp=true`; the current listener count remains zero and the
+preference takes effect on the next XQuartz start without interrupting work.
+
+**LIFO gate resolved 2026-07-26:** corrected ABCI-Q smoke job `176517.qjcm`
 was accepted with the exact group/CPU request but reached scheduler state `E`;
 the value-free schedule status classifies it as `failed`, and no weekly chain
 has been seeded. Event state classified `smoke-restic-failed`; the login-node
@@ -126,7 +137,10 @@ check passes. Allocated probe `176518.qjcm` found Harness, declared storage,
 repository, password-file metadata, and Restic ready, but its inherited
 `TMPDIR` unavailable. Set only ABCI-Q job scripts to compute-local `/tmp`, add
 an exact fake-scheduler contract, pass CI, and require a fresh bounded smoke
-before seeding. No private path or credential value was emitted or read.
+before seeding. PR #315 passed protected CI and merged. The fresh smoke passed,
+its captured successor `176520.qjcm` was exact-cancelled and verified absent,
+and weekly job `176521.qjcm` is active/waiting for
+2026-07-26 03:30 JST. No private path or credential value was emitted or read.
 
 **LIFO gate resolved 2026-07-25:** ABQ's first bounded Restic schedule smoke
 failed before allocation with scheduler error `SIM1400`: ABCI-Q requires a
