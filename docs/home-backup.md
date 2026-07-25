@@ -150,7 +150,8 @@ The `abq` row selects the documented CPU-only shared resource `rt_QC=1`, the
 owner's approved `qgai50157` group through `-W group_list=...`, no lifecycle
 mail, and the default Spot priority. It omits `-m` entirely because ABCI-Q
 requires a corresponding `-M` address whenever `-m` is present; generic PBS's
-`-m n` spelling is invalid there. The route follows the official
+`-m n` spelling is invalid there. Its allocated script also resets an
+inherited login-node-only `TMPDIR` to compute-local `/tmp`. The route follows the official
 [ABCI-Q job guide](https://g-quat-abciq.github.io/abciq-docs/ja/job-execution/);
 do not substitute ABCI or generic PBS flags.
 

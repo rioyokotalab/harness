@@ -177,10 +177,12 @@ case "$command_name" in
         name=
         mail_points=
         previous=
+        script=
         for argument in "$@"; do
             if [ "$previous" = -N ]; then name=$argument; fi
             if [ "$previous" = -m ]; then mail_points=$argument; fi
             previous=$argument
+            script=$argument
         done
         [ -n "$name" ] || exit 2
         id=$(next_id)
@@ -189,6 +191,8 @@ case "$command_name" in
             full_id=$id.server
         elif [ "$FAKE_FAMILY" = abciq ]; then
             [ -z "$mail_points" ] || exit 2
+            grep -F -x 'TMPDIR=/tmp' "$script" >/dev/null || exit 2
+            grep -F -x 'export TMPDIR' "$script" >/dev/null || exit 2
             full_id=$id.server
         else
             full_id=$id
