@@ -267,7 +267,7 @@ if [ "$mode" = status ]; then
     exit 0
 fi
 
-launcher=$HARNESS_ROOT/bin/harness-codex
+launcher=$HARNESS_ROOT/libexec/harness-codex-login
 if [ "${HARNESS_TESTING:-0}" = 1 ] &&
     [ -n "${HARNESS_TEST_CODEX_LAUNCHER:-}" ]; then
     launcher=$HARNESS_TEST_CODEX_LAUNCHER

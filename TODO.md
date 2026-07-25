@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-313.
+Next free ID: T-314.
 
 ## Current state
 
@@ -84,15 +84,58 @@ Next free ID: T-313.
 
 ## Next resume checkpoint
 
-1. Complete the four deferred T-311 Mac firewall helpers only when the owner
+1. Resume T-313 in execution: implement and publish the combined persistent
+   launcher, synchronize all nodes, then gracefully restart every detected
+   Codex TUI with Local last.
+2. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
-2. Continue T-196 only at its exact time/identity gates: AB and AB2 are now
+3. Continue T-196 only at its exact time/identity gates: AB and AB2 are now
    2/8 with next-week successors waiting; retry RI accounting ID `7242`
    without touching successor `10386`, and inspect AL ID `4238363` only after
    its later eligibility.
 
 ## Active tasks
+
+### T-313 — Enable repository auto-merge and limit login-node Codex threads
+
+**Phase:** executing; D-001 frozen and explicit go received.
+
+Enable only the repository-level auto-merge capability on Harness, Students,
+Swallow, and Website; add and fleet-publish a Linux-only Harness Codex launcher
+with eight Rayon and Tokio workers; expose it through the shared interactive
+shell policy; then gracefully restart Local and the four managed Mac TUIs under
+the resilient supervisor without restarting remote-control app servers.
+
+Read-only GitHub checks prove auto-merge is currently disabled on all four
+repositories. The exact limited version command passes on Local and all seven
+remote Linux nodes across both supported architectures, and the native binary
+contains both runtime controls. Local is already supervised; each Mac retains
+one detached unsupervised TUI and a separate live app server. No setting,
+tracked implementation, shell environment, or process has changed.
+
+The complete plan, safety gates, rollback, acceptance criteria, and confirmed
+decision D-001 are in
+`docs/plans/t313-codex-login-automerge.md`. Implement the focused-tested
+launcher next. The GitHub API enabled only `allow_auto_merge` on all four
+repositories and exact readback is true; no pull request was opted in. Publish
+and sync, then restart detected TUIs with Local last.
+
+**LIFO gate resolved 2026-07-26:** the first focused run passed the new
+login-node launcher suite, then the existing resilience suite rejected removal
+of the explicit underlying `harness codex-resilient --run` command from the
+README. No target or process changed. The README now presents both the standard
+`codex` alias and its transparent native Harness command; rerun all affected
+focused gates.
+
+**LIFO gate resolved 2026-07-26:** the first complete four-worker suite passed
+all changed coverage and every independent suite except tmux and terminfo.
+Those two fixtures intentionally require a clean committed Harness checkout
+before their synthetic apply paths and rejected the coherent uncommitted T-313
+increment. No live target changed. Review and commit only this increment, then
+rerun the authoritative complete suite from the clean revision. Commit
+`2b4a437` then passed all 75 focused suites, guarded-delete coverage, and every
+phase-one integration gate. Publish through protected CI next.
 
 ### T-311 — Harden the fleet and independent project repositories
 
