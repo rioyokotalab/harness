@@ -139,6 +139,12 @@ The parser now accepts required `- uses:` syntax while retaining
 immutable-commit enforcement; the focused test and a live value-free audit
 pass. T-311 popped back to command closeout.
 
+**LIFO gate resolved 2026-07-25:** the first full phase-one run stopped
+immediately because the Python hardening-audit executable was mistakenly added
+to the shell `sh -n` list. No later test ran and no external state changed.
+It now uses the Python AST gate; focused command coverage and whitespace checks
+pass. Restart the full suite from its first step.
+
 Read-only discovery found P0 risks in the students cryptography lock and
 Swallow's absent protected-main/CI controls; repository-default Actions
 permissions in Harness and Swallow are also overbroad. All Mac firewalls are
