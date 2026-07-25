@@ -111,6 +111,13 @@ top item requires unavailable owner or administrator action, leave it deferred,
 continue the next highest safe independent item in that same repository, and
 never cross it for dependent work.
 
+**LIFO gate active 2026-07-26:** publishing the declared-storage-link fix to
+the already-merged PR #321 head name was rejected non-fast-forward because the
+remote task branch retains its pre-rebase history. Nothing changed remotely
+and force-push is prohibited. Rename the clean local branch, push the same
+commit to a fresh explicit ref, open a new protected PR, then pop this
+publication-only gate.
+
 **LIFO gate active 2026-07-26:** after PR #321, fleet sync, and a passing AL
 plan, the first apply failed closed at `managed wrapper parent is unsafe`
 before switching the stable launcher. Inspect only type/owner/mode/link
