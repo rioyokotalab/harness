@@ -729,32 +729,22 @@ submitted once. The installed Local command then reproduced
 
 ### T-303 — Observe intermittent NFS I/O latency
 
-**Phase:** monitoring/time-gated. A read-only, non-sudo client monitor is
-active on Local as transient user unit
-`nfs-io-monitor-20260724T083822.service`. It started at 2026-07-24 08:41 JST
-and is scheduled to stop after 24 hours at 2026-07-25 08:41 JST. Raw evidence
-is on local ext4, outside every measured NFS filesystem, in the
-current-user-owned mode-0700 directory
-`/var/tmp/nfs-monitor-20260724T083822+0900`; logs are mode 0600. The monitor
-samples all five NFS mounts and their three storage servers every ten seconds,
-with full mount statistics every five minutes.
+**Phase:** client observation complete; server-side correlation remains.
 
-The initial client baseline found healthy sub-millisecond network latency,
-zero NFS RPC retransmissions, no local CPU/I/O pressure, current direct reads
-around 410–435 MiB/s, and fast cached metadata. The primary `/home` export and
-the separate `/mnt/nfs` export were both 95% full; the NFSv4 project exports
-were 1–38% full. The extreme slowdown was not reproduced during the baseline,
-so capacity, intermittent server-side load, uncached write allocation, and
-workload-specific metadata behavior remain hypotheses.
+The read-only monitor ended cleanly after exactly 24 hours and preserved its
+mode-0700 ext4 evidence directory. Across 148,176,545 new NFS RPC calls, the
+client saw only five retransmissions, no NIC error/drop increase, and no
+sustained server packet loss. Network health therefore does not explain the
+reported stalls.
 
-After 2026-07-25 08:41 JST, verify the unit reached a clean terminal state,
-preserve the exact evidence directory, and correlate any latency spikes across
-the recorded NFS, mount, client, network, and capacity series. Do not claim a
-server-side cause without server evidence. Local sudo is not currently
-required; server administration or Local sudo becomes useful only if the
-client trace identifies an unexplained interval. The monitor has `Linger=no`
-and can stop if every `rioyokota` login session ends. Evidence and exact
-follow-up are in
+The trace reproduced a common failure domain on `192.168.33.30`: all three
+low-utilization exports repeatedly timed out bounded capacity/statfs probes
+between 08:42 and 11:04 JST, `safe` write latency reached 3.936 seconds, and
+later `fast` reads reached 439.5 ms. `/home` separately accumulated roughly
+one second of client write queue while server RTT stayed below 18 ms. Preserve
+the raw directory unchanged and ask the `192.168.33.30` administrator to
+correlate pool/disk, NFS-daemon, cache, and system evidence for the recorded
+intervals. Local sudo is not required. Full results and limitations are in
 `docs/audits/t303-nfs-observation-2026-07-24.md`.
 
 ### T-302 — Reduce AL authentication intervention
