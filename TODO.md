@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-311.
+Next free ID: T-312.
 
 ## Current state
 
@@ -84,13 +84,42 @@ Next free ID: T-311.
 
 ## Next resume checkpoint
 
-1. Resume T-310 by adding failing command-contract fixtures for the Codex
-   transient-service supervisor.
-2. Resume T-309 by adding failing command-contract fixtures for the canonical
+1. Resume T-311 at decision D-001; no hardening mutation is authorized before
+   the interview completes and the owner gives explicit `go`.
+2. Resume T-310 closeout only through its isolated branch and existing CI
+   blocker; do not create another push-only retry.
+3. Resume T-309 by adding failing command-contract fixtures for the canonical
    fleet-health probe.
-3. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
+4. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
 
 ## Active tasks
+
+### T-311 — Harden the fleet and independent project repositories
+
+**Phase:** interviewing.
+
+Audit and harden all managed Linux and Mac nodes plus `harness`, `students`,
+`swallow`, and `website`, while each repository owns its own task, branch,
+tests, publication route, and handoff. Work ends at 2026-07-26 05:00 JST.
+Pre-existing work is never stashed; new hardening work uses isolated
+worktrees. On any new ambiguity or failed gate, stop that repository, preserve
+safe evidence, stash only explicitly named task-owned WIP when a coherent
+commit is impossible, put the issue first in that repository's active TODO,
+and continue only independent work.
+
+Read-only discovery found P0 risks in the students cryptography lock and
+Swallow's absent protected-main/CI controls; repository-default Actions
+permissions in Harness and Swallow are also overbroad. All Mac firewalls are
+off and Office exposes X11 on TCP 6000. ABQ's primary Restic check passes but
+its weekly schedule declaration is absent. Website's current controls and
+locked dependencies passed the matched audit.
+
+The complete baseline, six-decision register, execution order, safety and
+rollback gates, acceptance criteria, evidence, and deadline protocol are in
+`docs/plans/t311-fleet-repository-hardening.md`.
+
+**Next action:** ask D-001 only. Do not mutate target state until every
+decision is frozen and the owner gives explicit `go`.
 
 ### T-310 — Make Codex resilient to transient service failures
 
