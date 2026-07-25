@@ -236,7 +236,7 @@ the guarded-delete workflow and verifies protected anchors afterward.
 | D-001 | Protected-main model across four repositories | One review for non-admin writers, strict checks, linear history, owner/admin bypass | confirmed: option 1 |
 | D-002 | Dependency and GitHub security automation | Read-only Actions defaults, Dependabot alerts/security PRs, monthly grouped updates, secret protection where available; never auto-merge | confirmed: option 1 |
 | D-003 | Mac network posture | Firewall plus stealth, preserve signed/built-in access initially, disable Office X11 TCP, validate one Mac at a time | confirmed: option 1 |
-| D-004 | Backup expansion | Add ABQ weekly scheduling now; plan Mac and Swallow backups separately rather than sweeping large/private state | open |
+| D-004 | Backup expansion | Add ABQ weekly scheduling now; plan Mac and Swallow backups separately rather than sweeping large/private state | confirmed: option 3 |
 | D-005 | Agent/package refresh | Fix broken Riken Claude and update managed Linux Claude to 2.1.220; preserve intentional Aist/Home absence and running sessions | open |
 | D-006 | Administrator boundary during unattended execution | Apply only already non-interactive narrow authority; stage exact helpers for password/TCC/root work at the top of the owning TODO | open |
 
@@ -267,6 +267,11 @@ services before advancing. These administrator changes remain subject to
 D-006; an unavailable authorization must become a precise staged handoff
 rather than an unsafe workaround.
 
+D-004 consequence: repair only ABQ's absent weekly Restic schedule declaration
+and validate both its repository check and declared schedule. Do not expand
+backup scope to Mac state or to Git-ignored Swallow artifacts on T4, and do not
+create follow-up backup tasks for those targets as part of T-311.
+
 ## Evidence
 
 - GitHub Actions permission guidance:
@@ -284,6 +289,6 @@ rather than an unsafe workaround.
 
 ## Next action
 
-Ask D-004 only. After every answer, checkpoint the exact selection and ask the
+Ask D-005 only. After every answer, checkpoint the exact selection and ask the
 next open decision. Do not execute hardening until all decisions are frozen
 and the owner gives explicit `go`.

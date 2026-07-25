@@ -135,7 +135,10 @@ preserving signed/built-in access, disable Office's X11 TCP listener, and
 validate routes and managed ownership one Mac at a time. Administrator changes
 remain gated by D-006.
 
-**Next action:** ask D-004 only. Do not mutate target state until every
+Decision D-004 is confirmed: repair ABQ's missing weekly Restic schedule only;
+do not expand or add tasks for Mac-state or Swallow-artifact backups.
+
+**Next action:** ask D-005 only. Do not mutate target state until every
 decision is frozen and the owner gives explicit `go`.
 
 ### T-310 — Make Codex resilient to transient service failures
