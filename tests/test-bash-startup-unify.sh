@@ -28,6 +28,12 @@ file_mode() {
 repo=$TEMP_DIR/repo
 home=$TEMP_DIR/home
 cp -R "$ROOT" "$repo"
+# A linked worktree represents .git as a regular pointer file.  The copied
+# pointer would still name the source worktree's live Git directory, so detach
+# that one exact file before initializing the synthetic checkout.
+if [ -f "$repo/.git" ] && [ ! -L "$repo/.git" ]; then
+    unlink "$repo/.git"
+fi
 mkdir -p "$home"
 git -C "$repo" init -q
 git -C "$repo" config user.name harness-test
