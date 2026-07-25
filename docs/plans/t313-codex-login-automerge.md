@@ -96,4 +96,7 @@ is frozen and the owner gave explicit go. No target state changed before go.
 GitHub API authentication identified the owner account, and four exact
 repository updates enabled only `allow_auto_merge`; immediate readback is true
 for Harness, Students, Swallow, and Website. No pull request was opted in.
-Implement and validate the combined launcher next.
+The combined launcher, resilient route, common alias, documentation, and
+focused coverage are committed as `2b4a437`. The clean four-worker complete
+suite passed all 75 focused suites and every integration gate. Publish through
+protected CI next.

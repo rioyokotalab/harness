@@ -128,12 +128,14 @@ README. No target or process changed. The README now presents both the standard
 `codex` alias and its transparent native Harness command; rerun all affected
 focused gates.
 
-**LIFO gate active 2026-07-26:** the first complete four-worker suite passed
+**LIFO gate resolved 2026-07-26:** the first complete four-worker suite passed
 all changed coverage and every independent suite except tmux and terminfo.
 Those two fixtures intentionally require a clean committed Harness checkout
 before their synthetic apply paths and rejected the coherent uncommitted T-313
 increment. No live target changed. Review and commit only this increment, then
-rerun the authoritative complete suite from the clean revision.
+rerun the authoritative complete suite from the clean revision. Commit
+`2b4a437` then passed all 75 focused suites, guarded-delete coverage, and every
+phase-one integration gate. Publish through protected CI next.
 
 ### T-311 — Harden the fleet and independent project repositories
 
