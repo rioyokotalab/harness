@@ -318,20 +318,42 @@ action=BLOCK
 source=unknown
 blocked=0
 block_reason=partial-unmanaged-or-invalid-state
+stable_effective=
+wrapped_current=0
+if [ -L "$stable_link" ]; then
+    stable_effective=$(readlink "$stable_link")
+    expected_wrapper=$HOME/.local/opt/harness/codex-arg0-wrapper/$version/$agent_os-$agent_arch/codex
+    if [ "$agent_name" = codex ] && [ "$stable_effective" = "$expected_wrapper" ] &&
+        "$HARNESS_ROOT/libexec/harness-codex-arg0-wrapper" --doctor >/dev/null 2>&1; then
+        stable_effective=$installed_command
+        wrapped_current=1
+    fi
+fi
 old_version=
 old_install_dir=
 old_installed_command=
 old_tree_hash=
-if [ -L "$stable_link" ] && [ "$(readlink "$stable_link")" = "$installed_command" ]; then
+if [ -L "$stable_link" ] && [ "$stable_effective" = "$installed_command" ]; then
     if [ -d "$install_dir" ] && [ -x "$installed_command" ] &&
         [ "$(PATH="$HOME/.local/bin:/usr/bin:/bin" "$installed_command" --version 2>/dev/null)" = "$version_line" ]; then
-        action=KEEP
-        source=managed-agent
+        if [ "$wrapped_current" -eq 1 ]; then
+            if ! old_tree_hash=$(managed_tree_hash_from_evidence "$install_dir") ||
+                [ "$(agent_tree_hash "$install_dir")" != "$old_tree_hash" ]; then
+                blocked=1
+                block_reason=managed-wrapped-tree-changed
+            else
+                action=KEEP
+                source=managed-agent-wrapped
+            fi
+        else
+            action=KEEP
+            source=managed-agent
+        fi
     else
         blocked=1
     fi
 elif [ -L "$stable_link" ]; then
-    current_link=$(readlink "$stable_link")
+    current_link=$stable_effective
     managed_root=$HOME/.local/opt/agents/$agent_name
     if [ -e "$install_dir" ] || [ -L "$install_dir" ]; then
         blocked=1
@@ -371,6 +393,11 @@ elif [ -L "$stable_link" ]; then
                 ;;
             *)
                 blocked=1
+                case "$current_link" in
+                    "$HOME/.local/opt/harness/codex-arg0-wrapper/"*)
+                        block_reason=managed-wrapper-requires-rollback
+                        ;;
+                esac
                 ;;
         esac
     fi

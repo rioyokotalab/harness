@@ -117,9 +117,12 @@ path. A managed install leaves the package tree byte-identical and points the
 stable link to a separate version-and-architecture-scoped wrapper whose
 `codex.real` symlink names the original managed launcher. It runs bounded
 housekeeping before and after that preserved launcher. Apply and rollback do
-not signal or reload existing Codex processes. An upgrade changes the stable
-release link and therefore supersedes the old version's wrapper; the new
-release must be re-diagnosed before another installation.
+not signal or reload existing Codex processes. The managed-agent plan verifies
+both the wrapper and the unchanged package-tree digest and reports the current
+version as managed. Roll back a managed wrapper before a managed Codex version
+upgrade, then re-diagnose the new release before another wrapper installation.
+An official standalone upgrade changes its stable release link and supersedes
+the old version's wrapper.
 
 ```bash
 ./bin/harness codex-arg0-housekeeping --plan
