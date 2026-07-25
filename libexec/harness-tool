@@ -116,6 +116,16 @@ managed_exact=0
 managed_predecessor=0
 old_installed_binary=
 old_binary_hash=
+managed_predecessor_version_matches() {
+    candidate=$1
+    candidate_version=$2
+    observed=$("$candidate" --version 2>/dev/null | sed -n '1p' || true)
+    case "$tool_name" in
+        uv) [ "$observed" = "uv $candidate_version" ] ;;
+        claude) [ "$observed" = "$candidate_version (Claude Code)" ] ;;
+        *) return 1 ;;
+    esac
+}
 if [ -L "$stable_link" ] && [ "$(readlink "$stable_link")" = "$installed_binary" ] &&
     [ -f "$installed_binary" ] && [ ! -L "$installed_binary" ] && [ -x "$installed_binary" ]; then
     managed_exact=1
@@ -132,10 +142,7 @@ if [ "$managed_exact" -eq 0 ] && [ -L "$stable_link" ]; then
                 [ -f "$old_installed_binary" ] && [ ! -L "$old_installed_binary" ] &&
                 [ -x "$old_installed_binary" ] &&
                 [ "$(find "$old_install_dir" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')" -eq 1 ] &&
-                { [ "$tool_name" = uv ] &&
-                    [ "$("$old_installed_binary" --version 2>/dev/null | sed -n '1p')" = "uv $old_version" ] ||
-                  [ "$tool_name" = claude ] &&
-                    [ "$("$old_installed_binary" --version 2>/dev/null | sed -n '1p')" = "$old_version (Claude Code)" ]; } &&
+                managed_predecessor_version_matches "$old_installed_binary" "$old_version" &&
                 awk -v old="$old_version" -v new="$version" 'BEGIN {
                     if (split(old, a, ".") != 3 || split(new, b, ".") != 3) exit 1
                     for (i = 1; i <= 3; i++) {
