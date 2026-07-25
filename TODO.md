@@ -111,12 +111,12 @@ top item requires unavailable owner or administrator action, leave it deferred,
 continue the next highest safe independent item in that same repository, and
 never cross it for dependent work.
 
-**LIFO gate active 2026-07-26:** the first full suite ran with the coherent
+**LIFO gate resolved 2026-07-26:** the first full suite ran with the coherent
 managed-wrapper increment still uncommitted. The tmux and terminfo fixtures
 correctly refused their synthetic apply paths because they require a clean
 committed checkout; every other focused suite, including the changed wrapper
-suite, passed. Commit only this reviewed increment, rerun the full suite from
-that clean commit, and pop the gate if it passes.
+suite, passed. The intended increment was committed alone, and the complete
+eight-worker phase-one suite then passed from that clean commit.
 
 **LIFO gate resolved 2026-07-26:** after the semver fix, the managed invocation
 fixture expected postflight cleanup without creating the pre-existing arg0 root
@@ -735,9 +735,11 @@ private state is active/success with a present 64-hex snapshot, warning output
 is silent, and exact successor `94950` is pending for 2026-08-02 00:30 JST.
 Local is now 2/8. Exact AB job `2048464.pbs1` remains identity-matched in
 healthy PBS state `Q` after eligibility; warning output is silent and no action
+was taken. Exact AB2 job `2048468.pbs1` likewise remains identity-matched in
+healthy PBS state `Q` after eligibility, with silent warning output; no action
 was taken. The first AB safe-field parser expected the historical `Job_Id =`
 label instead of live `Job Id:` and failed read-only; the corrected exact-ID
-query passed. Do not replace AB's delayed job.
+query passed. Do not replace either delayed PBS job.
 
 On or after eligibility, identity-match and query only these IDs. Record
 terminal success, snapshot succession, warning silence, and chain count. Delay
