@@ -668,7 +668,10 @@ if wait "$watchdog_signal_pid"; then
     fail "watchdog accepted termination during recovery"
 fi
 watchdog_signal_wait=0
-while [ -e "$recovery_lock" ] && [ "$watchdog_signal_wait" -lt 50 ]; do
+# The production bind probe has ConnectTimeout=8. Poll rather than sleeping a
+# fixed interval, but allow that bound plus cleanup/scheduling margin before
+# requiring the supervisor trap to have removed its exact recovery lock.
+while [ -e "$recovery_lock" ] && [ "$watchdog_signal_wait" -lt 120 ]; do
     sleep 0.1
     watchdog_signal_wait=$((watchdog_signal_wait + 1))
 done

@@ -111,6 +111,16 @@ top item requires unavailable owner or administrator action, leave it deferred,
 continue the next highest safe independent item in that same repository, and
 never cross it for dependent work.
 
+**LIFO gate active 2026-07-26:** protected PR #321 run `30166634389` failed in
+the unchanged watchdog-signal cleanup fixture after its five-second
+post-termination poll retained a recovery child or lock; every other suite,
+including the changed NFS-alias wrapper fixture, passed. This is the second
+protected occurrence after PR #317's otherwise isolated timing failure, so do
+not dismiss or retry it as noise. Reproduce under matched parallel load,
+identify whether the production trap or only the synthetic synchronization is
+racy, add a bounded deterministic cleanup contract without merely extending a
+sleep, and rerun focused/full/protected validation.
+
 **LIFO gate resolved 2026-07-26:** the first NFS-alias fixture ShellCheck stopped
 before test execution because a multiline `[` comparison omitted its shell
 continuation. The corrected fixture passes syntax, ShellCheck, and the complete
@@ -746,6 +756,22 @@ remains.
 **Status:** time-gated. Progress is 1/8 successful weekly chains everywhere.
 Execution requires eight successful chains, two verified restores per node,
 and a current independent generation.
+
+**LIFO observation issue resolved 2026-07-26:** after RI's live status proved the
+chain had advanced to exact successor `10386`, the first safe history/private
+parser failed before reading state because the remote shell expanded an
+unescaped awk field under `set -u`. The corrected parser read only whitelisted
+metadata and proved private state `active`, result `success`, and a present
+64-hex snapshot without exposing its value. No state or scheduler action
+changed.
+
+**LIFO observation issue active 2026-07-26:** RI's first exact `sacct -j 7242`
+query at the 02:00 eligibility boundary returned unavailable without printing
+job data. Exact live/status queries prove the old ID is no longer queued, the
+chain is active with silent warnings, private result is successful with a
+present snapshot, and exact successor `10386` is pending for 2026-08-02 02:00
+JST. Terminal scheduler history is not yet visible, so keep this observation
+open and retry only exact ID `7242`; do not alter successor `10386`.
 
 | Node | Recorded 2026-07-26 successor |
 | --- | --- |
