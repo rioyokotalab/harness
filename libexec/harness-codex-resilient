@@ -1,0 +1,538 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+export HARNESS_ROOT
+. "$SELF_DIR/harness-common"
+
+usage() {
+    cat >&2 <<'EOF'
+Usage:
+  harness codex-resilient --plan [--name NAME] SELECTOR
+  harness codex-resilient --status [--name NAME]
+  harness codex-resilient --run [--name NAME] SELECTOR
+
+Selectors:
+  --new             start a new chat, then resume the repository's latest chat
+  --last            resume the most recent chat in the current repository
+  --last-all        resume the globally most recent chat
+  --session ID      always resume one explicit session ID or safe session name
+EOF
+}
+
+mode=plan
+mode_seen=no
+name=default
+selector=
+session_id=
+selector_count=0
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --plan|--status|--run)
+            [ "$mode_seen" = no ] || die "Codex resilient mode was specified more than once"
+            mode=${1#--}
+            mode_seen=yes
+            shift
+            ;;
+        --name)
+            [ "$#" -ge 2 ] || die "Codex resilient --name requires a value"
+            name=$2
+            shift 2
+            ;;
+        --new)
+            selector=new
+            selector_count=$((selector_count + 1))
+            shift
+            ;;
+        --last)
+            selector=last
+            selector_count=$((selector_count + 1))
+            shift
+            ;;
+        --last-all)
+            selector=last-all
+            selector_count=$((selector_count + 1))
+            shift
+            ;;
+        --session)
+            [ "$#" -ge 2 ] || die "Codex resilient --session requires a value"
+            selector=explicit
+            session_id=$2
+            selector_count=$((selector_count + 1))
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            usage
+            exit 2
+            ;;
+    esac
+done
+
+require_safe_id "$name"
+if [ "$mode" = status ]; then
+    [ "$selector_count" -eq 0 ] ||
+        die "Codex resilient status does not accept a selector"
+else
+    [ "$selector_count" -eq 1 ] ||
+        die "Codex resilient requires exactly one selector"
+fi
+if [ "$selector" = explicit ]; then
+    require_safe_id "$session_id"
+fi
+if [ "$mode" = run ] && [ "${HARNESS_TESTING:-0}" != 1 ]; then
+    [ -t 0 ] && [ -t 1 ] && [ -t 2 ] ||
+        die "Codex resilient run requires an interactive terminal"
+fi
+for required in awk chmod date id kill mkdir mktemp mv rmdir sed sleep stat \
+    tr uname unlink wc; do
+    command -v "$required" >/dev/null 2>&1 ||
+        die "Codex resilient requires command: $required"
+done
+
+uid=$(id -u)
+platform=$(uname -s)
+if [ "${HARNESS_TESTING:-0}" = 1 ] &&
+    [ -n "${HARNESS_TEST_PLATFORM:-}" ]; then
+    platform=$HARNESS_TEST_PLATFORM
+fi
+path_owner() {
+    case "$platform" in
+        Darwin) stat -f '%u' "$1" ;;
+        *) stat -c '%u' -- "$1" ;;
+    esac
+}
+path_mode() {
+    case "$platform" in
+        Darwin) stat -f '%Lp' "$1" ;;
+        *) stat -c '%a' -- "$1" ;;
+    esac
+}
+path_links() {
+    case "$platform" in
+        Darwin) stat -f '%l' "$1" ;;
+        *) stat -c '%h' -- "$1" ;;
+    esac
+}
+
+if [ "${HARNESS_TESTING:-0}" = 1 ] &&
+    [ -n "${HARNESS_TEST_RUNTIME_DIR:-}" ]; then
+    state_root=$HARNESS_TEST_RUNTIME_DIR
+else
+    case ${XDG_RUNTIME_DIR:-} in
+        /*) runtime_parent=$XDG_RUNTIME_DIR ;;
+        *)
+            case ${TMPDIR:-/tmp} in
+                /*) runtime_parent=${TMPDIR:-/tmp} ;;
+                *) die "Codex resilient runtime parent must be absolute" ;;
+            esac
+            ;;
+    esac
+    state_root=$runtime_parent/harness-codex-resilient-$uid
+fi
+case "$state_root" in
+    /*) ;;
+    *) die "Codex resilient state root must be absolute" ;;
+esac
+
+validate_state_root() {
+    [ -d "$state_root" ] && [ ! -L "$state_root" ] &&
+        [ "$(path_owner "$state_root")" = "$uid" ] ||
+        die "Codex resilient state root is unsafe"
+    state_root_mode=$(path_mode "$state_root")
+    case "$state_root_mode" in
+        *[2367][0-7]|*[0-7][2367])
+            die "Codex resilient state root is writable by another principal"
+            ;;
+    esac
+}
+
+ensure_state_root() {
+    if [ ! -e "$state_root" ] && [ ! -L "$state_root" ]; then
+        old_umask=$(umask)
+        umask 077
+        if ! mkdir "$state_root" 2>/dev/null; then
+            umask "$old_umask"
+            [ -d "$state_root" ] || die "Codex resilient cannot create its state root"
+        else
+            umask "$old_umask"
+        fi
+        chmod 700 "$state_root"
+    fi
+    validate_state_root
+}
+
+state_file=$state_root/$name.state
+lock_dir=$state_root/$name.lock
+lock_pid=$lock_dir/pid
+
+validate_lock_dir() {
+    [ -d "$lock_dir" ] && [ ! -L "$lock_dir" ] &&
+        [ "$(path_owner "$lock_dir")" = "$uid" ] &&
+        [ "$(path_mode "$lock_dir")" = 700 ] ||
+        die "Codex resilient lock is unsafe"
+    [ -f "$lock_pid" ] && [ ! -L "$lock_pid" ] &&
+        [ "$(path_owner "$lock_pid")" = "$uid" ] &&
+        [ "$(path_mode "$lock_pid")" = 600 ] &&
+        [ "$(path_links "$lock_pid")" = 1 ] ||
+        die "Codex resilient lock is unsafe"
+}
+
+validate_state_file() {
+    [ -f "$state_file" ] && [ ! -L "$state_file" ] &&
+        [ "$(path_owner "$state_file")" = "$uid" ] &&
+        [ "$(path_mode "$state_file")" = 600 ] &&
+        [ "$(path_links "$state_file")" = 1 ] ||
+        die "Codex resilient state file is unsafe"
+}
+
+if [ "$mode" = status ]; then
+    if [ ! -e "$state_root" ] && [ ! -L "$state_root" ]; then
+        printf 'CODEX_RESILIENT mode=status name=%s phase=absent\n' "$name"
+        exit 0
+    fi
+    validate_state_root
+    if [ ! -e "$state_file" ] && [ ! -L "$state_file" ]; then
+        printf 'CODEX_RESILIENT mode=status name=%s phase=absent\n' "$name"
+        exit 0
+    fi
+    validate_state_file
+    schema=$(sed -n 's/^schema=//p' "$state_file")
+    stored_name=$(sed -n 's/^name=//p' "$state_file")
+    phase=$(sed -n 's/^phase=//p' "$state_file")
+    stored_selector=$(sed -n 's/^selector=//p' "$state_file")
+    supervisor_pid=$(sed -n 's/^supervisor_pid=//p' "$state_file")
+    attempt=$(sed -n 's/^attempt=//p' "$state_file")
+    delay=$(sed -n 's/^delay=//p' "$state_file")
+    reason=$(sed -n 's/^reason=//p' "$state_file")
+    [ "$schema" = 1 ] && [ "$stored_name" = "$name" ] &&
+        [ -n "$phase" ] && [ -n "$stored_selector" ] &&
+        [ -n "$supervisor_pid" ] &&
+        [ -n "$attempt" ] && [ -n "$delay" ] && [ -n "$reason" ] &&
+        [ "$(wc -l <"$state_file" | tr -d ' ')" = 8 ] ||
+        die "Codex resilient state file is malformed"
+    case "$phase:$stored_selector:$supervisor_pid:$attempt:$delay:$reason" in
+        *[!A-Za-z0-9._:-]*) die "Codex resilient state file is malformed" ;;
+    esac
+    case "$phase" in running|backoff|stopped) ;; *)
+        die "Codex resilient state file is malformed"
+        ;;
+    esac
+    case "$stored_selector" in new|last|last-all|explicit) ;; *)
+        die "Codex resilient state file is malformed"
+        ;;
+    esac
+    case "$supervisor_pid" in
+        ''|*[!0-9]*) die "Codex resilient state file is malformed" ;;
+    esac
+    case "$attempt:$delay" in
+        *[!0-9:]*) die "Codex resilient state file is malformed" ;;
+    esac
+    case "$reason" in
+        active|clean-exit|operator-signal|client-usage|transient-exit|\
+        doctor-failed|local-auth|local-config|local-installation|local-state)
+            ;;
+        *) die "Codex resilient state file is malformed" ;;
+    esac
+    owner_pid=$supervisor_pid
+    case "$phase" in
+        running|backoff)
+            if [ -e "$lock_dir" ] || [ -L "$lock_dir" ]; then
+                validate_lock_dir
+                state_pid=$(sed -n '1p' "$lock_pid")
+                case "$state_pid" in
+                    ''|*[!0-9]*) die "Codex resilient lock is malformed" ;;
+                esac
+                if [ "$state_pid" != "$supervisor_pid" ]; then
+                    die "Codex resilient state and lock ownership differ"
+                elif ! kill -0 "$state_pid" 2>/dev/null; then
+                    phase=stale
+                    reason=owner-absent
+                    owner_pid=none
+                fi
+            else
+                phase=stale
+                reason=owner-absent
+                owner_pid=none
+            fi
+            ;;
+        *) owner_pid=none ;;
+    esac
+    printf 'CODEX_RESILIENT mode=status name=%s phase=%s selector=%s owner_pid=%s attempt=%s delay=%s reason=%s\n' \
+        "$name" "$phase" "$stored_selector" "$owner_pid" "$attempt" "$delay" "$reason"
+    exit 0
+fi
+
+launcher=$HARNESS_ROOT/bin/harness-codex
+if [ "${HARNESS_TESTING:-0}" = 1 ] &&
+    [ -n "${HARNESS_TEST_CODEX_LAUNCHER:-}" ]; then
+    launcher=$HARNESS_TEST_CODEX_LAUNCHER
+fi
+case "$launcher" in
+    /*) ;;
+    *) die "Codex resilient launcher must be absolute" ;;
+esac
+[ -x "$launcher" ] || die "Codex resilient launcher is unavailable"
+
+if [ -e "$state_root" ] || [ -L "$state_root" ]; then
+    validate_state_root
+    if [ -e "$state_file" ] || [ -L "$state_file" ]; then
+        validate_state_file
+    fi
+fi
+
+if [ "$mode" = plan ]; then
+    if [ -d "$state_root" ]; then
+        state_action=retain
+    else
+        state_action=create
+    fi
+    printf 'CODEX_RESILIENT mode=plan name=%s selector=%s status=ready\n' \
+        "$name" "$selector"
+    printf 'RUNTIME action=%s privacy=value-free mode=0600 ownership=exclusive\n' \
+        "$state_action"
+    printf 'RECOVERY action=resume prompt=replay-disabled backoff=15,30,60,120,240,300 jitter=bounded\n'
+    exit 0
+fi
+
+ensure_state_root
+
+temporary_state=
+doctor_file=
+lock_owned=no
+cleanup() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ -n "$doctor_file" ] &&
+        [ -f "$doctor_file" ] && [ ! -L "$doctor_file" ] &&
+        [ "$(path_owner "$doctor_file")" = "$uid" ] &&
+        [ "$(path_links "$doctor_file")" = 1 ]; then
+        unlink "$doctor_file" || status=2
+    fi
+    if [ -n "$temporary_state" ] &&
+        [ -f "$temporary_state" ] && [ ! -L "$temporary_state" ] &&
+        [ "$(path_owner "$temporary_state")" = "$uid" ] &&
+        [ "$(path_links "$temporary_state")" = 1 ]; then
+        unlink "$temporary_state" || status=2
+    fi
+    if [ "$lock_owned" = yes ] &&
+        [ -d "$lock_dir" ] && [ ! -L "$lock_dir" ] &&
+        [ "$(path_owner "$lock_dir")" = "$uid" ]; then
+        if [ -f "$lock_pid" ] && [ ! -L "$lock_pid" ] &&
+            [ "$(path_owner "$lock_pid")" = "$uid" ] &&
+            [ "$(path_links "$lock_pid")" = 1 ]; then
+            unlink "$lock_pid" || status=2
+        fi
+        rmdir "$lock_dir" 2>/dev/null || status=2
+    fi
+    exit "$status"
+}
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+old_umask=$(umask)
+umask 077
+if mkdir "$lock_dir" 2>/dev/null; then
+    lock_owned=yes
+else
+    umask "$old_umask"
+    validate_lock_dir
+    existing_pid=$(sed -n '1p' "$lock_pid")
+    case "$existing_pid" in
+        ''|*[!0-9]*) die "Codex resilient lock is malformed" ;;
+    esac
+    if kill -0 "$existing_pid" 2>/dev/null; then
+        printf 'CODEX_RESILIENT status=blocked reason=already-running name=%s\n' \
+            "$name" >&2
+        exit 2
+    fi
+    unlink "$lock_pid"
+    rmdir "$lock_dir"
+    umask 077
+    mkdir "$lock_dir" ||
+        die "Codex resilient could not replace a stale lock"
+    lock_owned=yes
+fi
+umask "$old_umask"
+chmod 700 "$lock_dir"
+umask 077
+printf '%s\n' "$$" >"$lock_pid"
+umask "$old_umask"
+chmod 600 "$lock_pid"
+lock_owned=yes
+
+write_state() {
+    phase_value=$1
+    attempt_value=$2
+    delay_value=$3
+    reason_value=$4
+    temporary_state=$(mktemp "$state_root/.state.XXXXXX") ||
+        die "Codex resilient cannot allocate state"
+    chmod 600 "$temporary_state"
+    {
+        printf 'schema=1\n'
+        printf 'name=%s\n' "$name"
+        printf 'phase=%s\n' "$phase_value"
+        printf 'selector=%s\n' "$selector"
+        printf 'supervisor_pid=%s\n' "$$"
+        printf 'attempt=%s\n' "$attempt_value"
+        printf 'delay=%s\n' "$delay_value"
+        printf 'reason=%s\n' "$reason_value"
+    } >"$temporary_state"
+    mv -f "$temporary_state" "$state_file"
+    temporary_state=
+    validate_state_file
+}
+
+run_codex() {
+    first_launch=$1
+    case "$selector" in
+        new)
+            if [ "$first_launch" = yes ]; then
+                "$launcher"
+            else
+                "$launcher" resume --last
+            fi
+            ;;
+        last) "$launcher" resume --last ;;
+        last-all) "$launcher" resume --last --all ;;
+        explicit) "$launcher" resume "$session_id" ;;
+        *) die "Codex resilient internal selector error" ;;
+    esac
+}
+
+doctor_status() {
+    check_id=$1
+    awk -v target="\"$check_id\"" '
+        index($0, target) { found=1 }
+        found && index($0, "\"status\"") {
+            line=$0
+            sub(/^.*"status"[[:space:]]*:[[:space:]]*"/, "", line)
+            sub(/".*$/, "", line)
+            print line
+            exit
+        }
+    ' "$doctor_file"
+}
+
+doctor_gate() {
+    gate=
+    doctor_file=$(mktemp "$state_root/.doctor.XXXXXX") ||
+        die "Codex resilient cannot allocate doctor state"
+    chmod 600 "$doctor_file"
+    if ! "$launcher" doctor --json >"$doctor_file" 2>/dev/null; then
+        unlink "$doctor_file"
+        doctor_file=
+        gate=doctor-failed
+        return
+    fi
+    for check in \
+        auth.credentials:local-auth \
+        config.load:local-config \
+        installation:local-installation \
+        state.paths:local-state
+    do
+        check_id=${check%%:*}
+        failure=${check#*:}
+        check_status=$(doctor_status "$check_id")
+        if [ "$check_status" != ok ]; then
+            unlink "$doctor_file"
+            doctor_file=
+            gate=$failure
+            return
+        fi
+    done
+    unlink "$doctor_file"
+    doctor_file=
+    gate=transient-exit
+}
+
+now_epoch() {
+    date +%s
+}
+
+attempt=0
+first_launch=yes
+while :; do
+    write_state running "$attempt" 0 active
+    started=$(now_epoch)
+    set +e
+    run_codex "$first_launch"
+    codex_status=$?
+    set -e
+    finished=$(now_epoch)
+    duration=$((finished - started))
+    [ "$duration" -ge 0 ] || duration=0
+    if [ "${HARNESS_TESTING:-0}" = 1 ] &&
+        [ -n "${HARNESS_TEST_DURATION_FILE:-}" ]; then
+        duration=$(sed -n '1p' "$HARNESS_TEST_DURATION_FILE")
+        case "$duration" in
+            ''|*[!0-9]*) die "Codex resilient test duration is invalid" ;;
+        esac
+        sed '1d' "$HARNESS_TEST_DURATION_FILE" \
+            >"$HARNESS_TEST_DURATION_FILE.next"
+        mv "$HARNESS_TEST_DURATION_FILE.next" \
+            "$HARNESS_TEST_DURATION_FILE"
+    fi
+
+    if [ "$codex_status" -eq 0 ]; then
+        write_state stopped "$attempt" 0 clean-exit
+        printf 'CODEX_RESILIENT status=stopped reason=clean-exit name=%s\n' "$name"
+        exit 0
+    fi
+    case "$codex_status" in
+        129|130|143)
+            write_state stopped "$attempt" 0 operator-signal
+            printf 'CODEX_RESILIENT status=stopped reason=operator-signal name=%s\n' \
+                "$name" >&2
+            exit "$codex_status"
+            ;;
+        2)
+            write_state stopped "$attempt" 0 client-usage
+            printf 'CODEX_RESILIENT status=stopped reason=client-usage name=%s\n' \
+                "$name" >&2
+            exit 2
+            ;;
+    esac
+
+    doctor_gate
+    if [ "$gate" != transient-exit ]; then
+        write_state stopped "$attempt" 0 "$gate"
+        printf 'CODEX_RESILIENT status=stopped reason=%s name=%s\n' \
+            "$gate" "$name" >&2
+        exit 2
+    fi
+
+    if [ "$duration" -ge 900 ]; then
+        attempt=0
+    fi
+    attempt=$((attempt + 1))
+    case "$attempt" in
+        1) delay=15 ;;
+        2) delay=30 ;;
+        3) delay=60 ;;
+        4) delay=120 ;;
+        5) delay=240 ;;
+        *) delay=300 ;;
+    esac
+    if [ "${HARNESS_TESTING:-0}" = 1 ] &&
+        [ -n "${HARNESS_TEST_JITTER:-}" ]; then
+        jitter=$HARNESS_TEST_JITTER
+        case "$jitter" in ''|*[!0-9]*) die "Codex resilient test jitter is invalid" ;; esac
+        [ "$jitter" -le 5 ] || die "Codex resilient test jitter is invalid"
+    else
+        jitter=$((($$ + attempt * 7) % 6))
+    fi
+    total_delay=$((delay + jitter))
+    write_state backoff "$attempt" "$total_delay" transient-exit
+    printf 'CODEX_RESILIENT status=retrying attempt=%s delay=%s name=%s\n' \
+        "$attempt" "$total_delay" "$name" >&2
+    sleep "$total_delay"
+    first_launch=no
+done

@@ -55,6 +55,9 @@ file apply to Codex and Claude when they are started from this repository.
   next actions, and exact working files.
 - Work in small verified steps. Diagnose from evidence, preserve raw failure
   output when it matters, and distinguish confirmed facts from hypotheses.
+- After a transient Codex provider or service failure, resume the saved chat
+  and reconcile durable state; never blindly replay the prior prompt because
+  its tool or external side effects may already have succeeded.
 - Run validation proportional to risk. A generated artifact, optimization, or
   delegated result is not complete until independently checked.
 - For an owner-authorized collaborative repository, fetch before starting work
