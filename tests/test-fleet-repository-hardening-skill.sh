@@ -27,6 +27,8 @@ grep -F 'Use `python3`' "$SKILL" >/dev/null ||
     fail "portable Python entry point"
 grep -F 'unavailable administrator authority' "$SKILL" >/dev/null ||
     fail "administrator handoff"
+grep -F 'next highest safe item in that same repository' "$SKILL" >/dev/null ||
+    fail "same-repository gate continuation"
 grep -F 'material-work cutoff' "$SKILL" >/dev/null ||
     fail "deadline cutoff"
 grep -F 'failed query is `unknown`' "$CHECKLIST" >/dev/null ||
