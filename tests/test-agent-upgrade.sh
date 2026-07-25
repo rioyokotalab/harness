@@ -34,6 +34,10 @@ cat >"$REPO/libexec/harness-doctor" <<'EOF'
 #!/bin/sh
 exit 0
 EOF
+cat >"$REPO/libexec/harness-codex-arg0-wrapper" <<'EOF'
+#!/bin/sh
+[ "${1:-}" = --doctor ]
+EOF
 chmod 755 "$REPO/libexec/"*
 git -C "$REPO" init -q -b main
 git -C "$REPO" config user.name agent-upgrade-test
@@ -114,7 +118,27 @@ run_agent --apply >"$TEMP_DIR/install.out"
     "$old_tree/node_modules/@openai/codex/bin/codex.js" ] ||
     fail "initial managed install"
 
+wrapped=$HOME_DIR/.local/opt/harness/codex-arg0-wrapper/1.2.3/linux-x86_64/codex
+mkdir -p "${wrapped%/*}"
+printf '%s\n' '#!/bin/sh' 'exit 0' >"$wrapped"
+chmod 755 "$wrapped"
+unlink "$stable"
+ln -s "$wrapped" "$stable"
+run_agent --plan | grep -F 'KEEP agent=codex source=managed-agent-wrapped' \
+    >/dev/null || fail "wrapped managed install integrity"
+
 write_version 1.2.4
+if run_agent --plan >"$TEMP_DIR/wrapped-upgrade.out" 2>&1; then
+    fail "managed upgrade accepted active wrapper"
+fi
+grep -F 'reason=managed-wrapper-requires-rollback' \
+    "$TEMP_DIR/wrapped-upgrade.out" >/dev/null ||
+    fail "managed wrapper upgrade refusal reason"
+unlink "$stable"
+ln -s "$old_tree/node_modules/@openai/codex/bin/codex.js" "$stable"
+unlink "$wrapped"
+rmdir "${wrapped%/*}"
+
 cp "$REPO/tools/agents.tsv" "$TEMP_DIR/agents-valid.tsv"
 awk -F'|' 'BEGIN { OFS="|" } /^#/ { print; next } { $7=sprintf("%064d", 0); print }' \
     "$REPO/tools/agents.tsv" >"$REPO/tools/agents.tsv.invalid"
