@@ -229,7 +229,10 @@ for failure_point in official-move wrapper-move state-move; do
         fail "transaction failure left state: $failure_point"
 done
 
-managed_home=$TEMP_DIR/managed-home
+managed_real_home=$TEMP_DIR/managed-real-home
+managed_home=$TEMP_DIR/managed-logical-home
+mkdir "$managed_real_home"
+ln -s "$managed_real_home" "$managed_home"
 managed_version=0.145.0
 case "$(uname -m)" in
     x86_64) managed_platform=linux-x86_64 ;;
@@ -262,6 +265,8 @@ ln -s "$HARNESS" "$managed_home/.local/bin/harness"
 mkdir -p "$managed_home/.codex/tmp/arg0"
 chmod 700 "$managed_home/.codex/tmp" "$managed_home/.codex/tmp/arg0"
 managed_wrapper_dir=$managed_home/.local/opt/harness/codex-arg0-wrapper/$managed_version/$managed_platform
+[ "$(realpath -e "$managed_home/.local/bin/codex")" != \
+    "$managed_bin/codex.js" ] || fail "managed NFS-alias fixture is not distinct"
 
 HARNESS_TESTING=1 HOME="$managed_home" \
     "$ROOT/libexec/harness-codex-arg0-wrapper" --plan \
@@ -275,7 +280,7 @@ for failure_point in official-move wrapper-move state-move stable-switch; do
         >"$TEMP_DIR/managed-transaction-$failure_point.out" 2>&1; then
         fail "injected managed wrapper failure succeeded: $failure_point"
     fi
-    [ "$(realpath -e "$managed_home/.local/bin/codex")" = "$managed_bin/codex.js" ] ||
+    [ "$(readlink "$managed_home/.local/bin/codex")" = "$managed_bin/codex.js" ] ||
         fail "managed transaction failure changed stable link: $failure_point"
     [ ! -e "$managed_wrapper_dir" ] ||
         fail "managed transaction failure left wrapper state: $failure_point"
@@ -298,7 +303,7 @@ grep -F 'status=ready layout=managed-npm release=0.145.0' \
 [ -L "$managed_wrapper_dir/codex.real" ] &&
     [ "$(readlink "$managed_wrapper_dir/codex.real")" = "$managed_bin/codex.js" ] ||
     fail "managed launcher not preserved"
-[ "$(realpath -e "$managed_home/.local/bin/codex")" = "$managed_wrapper_dir/codex" ] ||
+[ "$(readlink "$managed_home/.local/bin/codex")" = "$managed_wrapper_dir/codex" ] ||
     fail "managed stable link does not select wrapper"
 [ "$(tar --format=gnu --sort=name --mtime=@0 --owner=0 --group=0 \
     --numeric-owner -cf - -C "$managed_tree" . |
@@ -329,7 +334,7 @@ grep -F 'action=restored layout=managed-npm release=0.145.0' \
     "$TEMP_DIR/managed-rollback.out" >/dev/null || fail "managed wrapper rollback"
 [ "$(sha256sum "$managed_bin/codex.js" | awk '{print $1}')" = "$managed_hash" ] ||
     fail "managed rollback changed launcher"
-[ "$(realpath -e "$managed_home/.local/bin/codex")" = "$managed_bin/codex.js" ] ||
+[ "$(readlink "$managed_home/.local/bin/codex")" = "$managed_bin/codex.js" ] ||
     fail "managed rollback did not restore stable link"
 [ ! -e "$managed_wrapper_dir" ] ||
     fail "managed rollback left wrapper state"

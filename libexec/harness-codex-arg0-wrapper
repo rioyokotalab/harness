@@ -42,10 +42,17 @@ current_uid=$(id -u)
 stable=$HOME/.local/bin/codex
 template=$HARNESS_ROOT/libexec/codex-arg0-launcher-wrapper
 [ -L "$stable" ] || die "version-scoped Codex launcher link is unavailable"
+stable_target=$(readlink "$stable")
 stable_resolved=$(realpath -e -- "$stable") ||
     die "cannot resolve version-scoped Codex launcher"
 managed_wrapper_prefix=$HOME/.local/opt/harness/codex-arg0-wrapper/
-case "$stable_resolved" in
+case "$stable_target" in
+    "$HOME/.local/opt/agents/codex/"*|"$managed_wrapper_prefix"*)
+        classification_path=$stable_target
+        ;;
+    *) classification_path=$stable_resolved ;;
+esac
+case "$classification_path" in
     "$HOME/.codex/packages/standalone/releases/"*)
         layout=standalone
         source_kind=release
@@ -65,7 +72,7 @@ case "$stable_resolved" in
         layout=managed-npm
         source_kind=release
         prefix=$HOME/.local/opt/agents/codex/
-        relative=${stable_resolved#"$prefix"}
+        relative=${classification_path#"$prefix"}
         release=${relative%%/*}
         remainder=${relative#*/}
         platform=${remainder%%/*}
@@ -79,8 +86,8 @@ case "$stable_resolved" in
         esac
         [ "$suffix" = node_modules/@openai/codex/bin/codex.js ] ||
             die "Codex launcher has an invalid managed npm layout"
-        managed_original=$stable_resolved
-        case "$(readlink "$stable")" in
+        managed_original=$classification_path
+        case "$stable_target" in
             /*) ;;
             *) die "managed Codex stable link must use an absolute target" ;;
         esac
@@ -94,7 +101,7 @@ case "$stable_resolved" in
     "$managed_wrapper_prefix"*)
         layout=managed-npm
         source_kind=wrapper
-        relative=${stable_resolved#"$managed_wrapper_prefix"}
+        relative=${classification_path#"$managed_wrapper_prefix"}
         release=${relative%%/*}
         remainder=${relative#*/}
         platform=${remainder%%/*}
@@ -111,7 +118,7 @@ case "$stable_resolved" in
         wrapper_base=${managed_wrapper_prefix%/}
         wrapper_release_dir=$wrapper_base/$release
         launcher_dir=$wrapper_release_dir/$platform
-        launcher=$stable_resolved
+        launcher=$classification_path
         real_codex=$launcher_dir/codex.real
         state_file=$launcher_dir/.harness-arg0-wrapper.state
         managed_original=$HOME/.local/opt/agents/codex/$release/$platform/node_modules/@openai/codex/bin/codex.js
@@ -141,15 +148,17 @@ field() {
 
 validate_installed() {
     is_wrapper || die "installed arg0 wrapper bytes changed"
-    [ "$(realpath -e -- "$stable")" = "$launcher" ] ||
-        die "stable Codex launcher differs from installed wrapper"
     if [ "$layout" = managed-npm ]; then
+        [ "$(readlink "$stable")" = "$launcher" ] ||
+            die "stable Codex launcher differs from installed wrapper"
         [ -L "$real_codex" ] && [ "$(readlink "$real_codex")" = "$managed_original" ] &&
             [ -f "$managed_original" ] && [ ! -L "$managed_original" ] &&
             [ -x "$managed_original" ] ||
             die "preserved managed Codex launcher is unavailable"
         preserved_launcher=$managed_original
     else
+        [ "$(realpath -e -- "$stable")" = "$launcher" ] ||
+            die "stable Codex launcher differs from installed wrapper"
         [ -f "$real_codex" ] && [ ! -L "$real_codex" ] && [ -x "$real_codex" ] ||
             die "preserved standalone Codex launcher is unavailable"
         preserved_launcher=$real_codex
@@ -275,7 +284,7 @@ if [ "$mode" = apply ]; then
             [ ! -e "$stable_temp" ] && [ ! -L "$stable_temp" ] ||
                 unlink "$stable_temp"
             if [ "$status" -ne 0 ]; then
-                current_stable=$(realpath -e -- "$stable" 2>/dev/null || true)
+                current_stable=$(readlink "$stable" 2>/dev/null || true)
                 if [ "$current_stable" = "$launcher" ]; then
                     recovery_link=$HOME/.local/bin/.codex-wrapper-recovery.$$
                     [ ! -e "$recovery_link" ] && [ ! -L "$recovery_link" ] ||
