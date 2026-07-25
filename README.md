@@ -88,10 +88,11 @@ facts, failures, files, validation, and the next executable action in
 
 ### Survive transient Codex service failures
 
-Run the standard Codex TUI under the foreground resilience supervisor inside
-tmux:
+Inside an interactive Harness shell, the common `codex` alias resumes the
+repository's most recent chat under the foreground resilience supervisor:
 
 ```bash
+codex
 harness codex-resilient --plan --name harness --last
 harness codex-resilient --run --name harness --last
 ```
@@ -99,7 +100,13 @@ harness codex-resilient --run --name harness --last
 Use `--session ID` instead of `--last` when multiple Codex chats can be started
 from the same repository. `--new` creates a new chat on the first launch and
 resumes the repository's most recent chat thereafter; `--last-all` selects the
-globally most recent saved chat.
+globally most recent saved chat. `harness-codex` remains the explicit direct
+launcher for a fresh or intentionally unsupervised client.
+
+On Linux, the supervisor launches Codex through `harness codex-login`, which
+sets `RAYON_NUM_THREADS=8` and `TOKIO_WORKER_THREADS=8` for login-node
+politeness. The command leaves macOS unrestricted and does not install global
+environment settings.
 
 After a nonzero Codex exit, the supervisor runs the native redacted doctor. It
 stops on local authentication, configuration, installation, or state failure.
@@ -113,9 +120,7 @@ harness codex-resilient --status --name harness
 ```
 
 The supervisor stays in the foreground and installs no service. Tmux, launchd,
-systemd, or the operator remains its explicit lifetime owner. Existing Codex
-processes are not converted in place; use the supervisor on their next
-deliberate restart.
+systemd, or the operator remains its explicit lifetime owner.
 
 ### Inspect a host
 

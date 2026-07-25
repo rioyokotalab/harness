@@ -170,6 +170,10 @@ alias_names=$(sed -n 's/^alias \([A-Za-z_][A-Za-z0-9_]*\)=.*/\1/p' \
 att_alias=$(bash -c '. "$1"; alias att' _ "$ROOT/shell/common-aliases.sh")
 [ "$att_alias" = "alias att='tmux attach -t harness'" ] ||
     fail 'common att alias changed'
+codex_alias=$(bash -c '. "$1"; alias codex' _ "$ROOT/shell/common-aliases.sh")
+[ "$codex_alias" = \
+    "alias codex='harness codex-resilient --run --name harness --last'" ] ||
+    fail 'common codex alias is not persistent'
 sudo_alias=$(bash -c '. "$1"; alias sudo' _ "$ROOT/shell/common-aliases.sh")
 [ "$sudo_alias" = "alias sudo='sudo '" ] ||
     fail 'common sudo alias lost trailing-space alias expansion'

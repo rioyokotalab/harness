@@ -1,0 +1,15 @@
+#!/bin/sh
+set -eu
+
+[ -n "${HARNESS_ROOT:-}" ] ||
+    { echo 'harness: repository root is unavailable' >&2; exit 2; }
+
+case $(uname -s) in
+    Linux)
+        RAYON_NUM_THREADS=8
+        TOKIO_WORKER_THREADS=8
+        export RAYON_NUM_THREADS TOKIO_WORKER_THREADS
+        ;;
+esac
+
+exec "$HARNESS_ROOT/bin/harness-codex" "$@"
