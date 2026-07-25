@@ -68,3 +68,50 @@ After the scheduled end, verify clean completion and correlate every latency
 spike across the collected client, network, and capacity series. Request
 server-side or local administrator evidence only for intervals the client
 trace cannot explain.
+
+## Completed observation
+
+The collector ended cleanly after exactly 86,400 seconds at 2026-07-25
+08:41:19 JST. It retained 8,511 ten-second samples spanning the full day; the
+lower-than-ideal 8,640 count reflects serial collection delays during the
+observed stalls rather than an early stop.
+
+Network evidence does not explain the slowdown:
+
+- the three servers had no sustained loss and maximum observed ICMP round-trip
+  times of 1.633, 1.154, and 5.080 ms;
+- the NFS client recorded only five retransmissions over 148,176,545 new RPC
+  calls;
+- the physical NIC added no receive/transmit errors or drops.
+
+The trace did reproduce storage-side latency:
+
+- all three low-utilization exports on `192.168.33.30` repeatedly failed the
+  collector's bounded capacity/statfs operation between 08:42 and 11:04 JST:
+  112 times for `archive`, 74 for `fast`, and 44 for `safe`;
+- `safe` write intervals reached 3,936 ms average RTT/execution at 11:04 JST,
+  `fast` reads reached 439.5 ms at 21:55 JST, and `safe` reads reached
+  148.6 ms at 09:08 JST;
+- system I/O pressure later reached `some=51.65` and `full=37.91`, with up to
+  seven tasks in uninterruptible sleep and 1,323 samples containing at least
+  one such task.
+
+The two 95%-full NFSv3 filesystems never failed their capacity probe. `/home`
+did show a separate one-second client write-queue interval while server RTT
+remained below 18 ms, and `/mnt/nfs` write RTT reached 110.5 ms. Thus capacity
+may still matter for those filesystems, but it cannot explain the repeated
+stalls on the 1–39%-used `192.168.33.30` exports.
+
+## Conclusion and follow-up
+
+The strongest supported cause is intermittent storage/NFS-service latency on
+`192.168.33.30`, with at least one separate client-side queue-pressure episode
+on `/home`. Local network loss and NIC faults are ruled out by the matched
+trace. Local sudo is not required for further client analysis.
+
+The next useful evidence requires the administrator of `192.168.33.30` to
+correlate pool/disk latency, NFS daemon saturation, cache pressure, and system
+logs for 2026-07-24 08:42–11:04 JST and the later 21:55 JST read spike.
+Preserve the mode-0700 evidence directory unchanged until that review is
+complete; do not infer a specific disk, pool, or daemon failure from the
+client trace alone.
