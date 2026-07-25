@@ -1,23 +1,22 @@
 #!/usr/bin/env python3
 """Emit a value-free, read-only repository hardening preflight."""
 
-from __future__ import annotations
-
 import argparse
 import re
 import subprocess
 from pathlib import Path
 
 
-def git(repo: Path, *arguments: str, check: bool = True) -> subprocess.CompletedProcess[bytes]:
+def git(repo, *arguments, check=True):
     return subprocess.run(
         ["git", "-C", str(repo), *arguments],
         check=check,
-        capture_output=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
 
 
-def main() -> int:
+def main():
     parser = argparse.ArgumentParser(
         prog="harness hardening-audit",
         description="value-free read-only repository hardening preflight",

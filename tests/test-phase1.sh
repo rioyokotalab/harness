@@ -137,7 +137,7 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "Python syntax: harness-bash-startup-unify"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harness-ssh-config-layout").read_text())' ||
     fail "Python syntax: harness-ssh-config-layout"
-python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harness-hardening-audit").read_text())' ||
+python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harness-hardening-audit").read_text(), feature_version=(3, 6))' ||
     fail "Python syntax: harness-hardening-audit"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/tools/run-focused-tests.py").read_text())' ||
     fail "Python syntax: focused-suite runner"
