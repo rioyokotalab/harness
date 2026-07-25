@@ -108,16 +108,16 @@ coherent commit is impossible, and push the issue onto that repository's TODO
 as a LIFO item. Resolve the new top item when safe, record the pop, resume the
 interrupted task, and keep all repositories progressing independently.
 
-**LIFO gate active 2026-07-25:** the second full phase-one run reached 65
+**LIFO gate resolved 2026-07-25:** the second full phase-one run reached 65
 focused passes and five failures. A linked-worktree fixture copied its `.git`
 pointer and then created an unintended empty local commit named `baseline` on
 the T-311 branch; nothing was pushed and its tree is byte-identical to its
-parent. Skill discovery also lacks the two tracked links for the new hardening
-skill, while four checkout-sensitive suites reject a valid linked worktree.
-Preserve the reflog evidence, atomically restore the local branch ref to the
-verified parent, add the missing discovery links, make the affected checkout
-gates worktree-aware, and rerun the five focused suites before restarting the
-full gate. No external state changed.
+parent. The reflog evidence was preserved and the local ref atomically restored
+to its verified parent. The missing skill discovery links are now tracked;
+checkout validation accepts both normal and linked worktrees; and the copied
+fixture exact-unlinks only a regular `.git` pointer before initializing its
+synthetic repository. All five previously failing focused suites now pass. No
+external state changed; restart the full gate.
 
 **LIFO gate resolved 2026-07-25:** plain `git push` also advanced the existing
 T-310 closeout branch from `43c8a8a` to its already reviewed local checkpoint
