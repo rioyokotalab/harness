@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-309.
+Next free ID: T-310.
 
 ## Current state
 
@@ -84,9 +84,61 @@ Next free ID: T-309.
 
 ## Next resume checkpoint
 
-1. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
+1. Resume T-309 by adding failing command-contract fixtures for the canonical
+   fleet-health probe.
+2. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
 
 ## Active tasks
+
+### T-309 — Canonicalize fleet-health probing
+
+**Phase:** planned; ready to execute.
+
+Routine fleet health already requires AL to pass both
+`harness al-session --status` and a normal multiplexed `ssh al true`. A
+2026-07-25 ad hoc parallel probe nevertheless forced `ControlMaster=no` and
+`ControlPath=none` on every target. That bypassed AL's healthy managed session,
+tested whether a fresh daily certificate was available, and falsely reported
+AL down. Immediate prescribed checks returned
+`target=ready ownership=managed jump=ready action=none` and normal
+`ssh al true` exited 0. This was a probe artifact, not an AL outage.
+
+Implement one value-free, read-only `harness fleet-health` command and require
+routine health reports to use it instead of agent-authored SSH loops. The
+command must encode target-specific contracts:
+
+- local is checked locally; ab, ab2, ri, rc, and t4 use ordinary
+  configuration-preserving SSH probes;
+- AL first requires the managed `al-session --status` contract, then runs a
+  normal multiplexed `ssh al true`; it must never override `ControlMaster` or
+  `ControlPath` in routine health;
+- abq is one Linux node and passes only when both `abq` and `abq2` routes pass;
+- each managed Mac passes only when both independent reverse aliases pass,
+  using the existing independent-route semantics rather than AL's managed
+  multiplex contract;
+- `abci_login`, `alps_login`, web, and retired aliases are excluded from the
+  routine summary.
+
+Expose deterministic per-node machine-readable results plus the established
+compact summary that names only failures. Keep fresh-authentication diagnosis
+separate and explicit so certificate renewal readiness can never be confused
+with current managed-session reachability.
+
+Add failing focused fixtures first. They must prove that AL receives no
+`ControlMaster`/`ControlPath` override, both ABQ routes are required, both
+routes of every Mac are required, excluded transports are never probed,
+timeouts/SSH failures remain failures, and output is value-free. Then add the
+command, CLI routing/help, focused suite registration, documentation, and the
+AGENTS contract requiring the canonical command. Run ShellCheck, the focused
+suite, `tests/test-phase1.sh`, protected CI, and a live matched case where the
+managed AL route passes while one separately controlled fresh non-multiplexed
+diagnostic requires renewal. Publish and guarded-sync only clean managed
+checkouts.
+
+**Acceptance:** routine fleet health cannot report AL down solely because a
+fresh daily CSCS certificate is unavailable; all logical-node and route-count
+semantics match the canonical inventory; no credential value or private SSH
+diagnostic is read or logged.
 
 ### T-303 — Observe intermittent NFS I/O latency
 
