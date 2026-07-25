@@ -616,7 +616,8 @@ through the same verified guarded workflow with no residue.
 
 ### T-309 — Canonicalize fleet-health probing
 
-**Phase:** planned; ready to execute.
+**Phase:** implementing after the recorded owner-approved T-311 execution
+window.
 
 Routine fleet health already requires AL to pass both
 `harness al-session --status` and a normal multiplexed `ssh al true`. A
@@ -667,6 +668,16 @@ only clean managed checkouts.
 fresh daily CSCS certificate is unavailable; all logical-node and route-count
 semantics match the canonical inventory; no credential value or private SSH
 diagnostic is read or logged.
+
+The failing focused fixture was added first and stopped because
+`harness-fleet-health` did not exist. The initial implementation now uses
+three bounded four-probe batches, emits results in canonical inventory order,
+requires managed AL status before a normal multiplex-preserving route probe,
+requires both independent routes for ABQ and every Mac, excludes transport-only
+aliases, suppresses private SSH diagnostics, and returns nonzero if any logical
+node fails. The focused fixture passes healthy and mixed-failure cases.
+Register the suite, validate shell/static contracts, run the full phase-one
+gate, then perform one live matched fleet check before protected publication.
 
 ### T-303 — Observe intermittent NFS I/O latency
 

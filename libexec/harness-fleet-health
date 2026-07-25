@@ -1,0 +1,163 @@
+#!/bin/sh
+set -eu
+umask 077
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
+
+usage() {
+    cat >&2 <<'EOF'
+Usage: harness fleet-health
+EOF
+}
+
+case "$#" in
+    0) ;;
+    1)
+        case "$1" in -h|--help) usage; exit 0 ;; *) usage; exit 2 ;; esac
+        ;;
+    *) usage; exit 2 ;;
+esac
+
+socket_owner() {
+    case $(uname -s) in
+        Darwin) stat -f '%u' -- "$1" ;;
+        *) stat -c '%u' -- "$1" ;;
+    esac
+}
+
+safe_agent_socket() {
+    [ -n "$1" ] && [ -S "$1" ] && [ "$(socket_owner "$1")" = "$(id -u)" ]
+}
+
+resolve_agent_socket() {
+    if safe_agent_socket "${SSH_AUTH_SOCK:-}"; then
+        printf '%s\n' "$SSH_AUTH_SOCK"
+        return
+    fi
+    if [ -n "${TMUX_PANE:-}" ] && command -v tmux >/dev/null 2>&1; then
+        pane_socket=$(tmux show-environment -t "$TMUX_PANE" SSH_AUTH_SOCK 2>/dev/null || true)
+        case "$pane_socket" in
+            SSH_AUTH_SOCK=*) pane_socket=${pane_socket#SSH_AUTH_SOCK=} ;;
+            *) pane_socket= ;;
+        esac
+        if safe_agent_socket "$pane_socket"; then
+            printf '%s\n' "$pane_socket"
+            return
+        fi
+    fi
+    if [ "${HARNESS_LOGICAL_HOST:-}" = local ] && [ -n "${XDG_RUNTIME_DIR:-}" ]; then
+        fixed_socket=$XDG_RUNTIME_DIR/openssh_agent
+        if safe_agent_socket "$fixed_socket"; then
+            printf '%s\n' "$fixed_socket"
+            return
+        fi
+    fi
+    return 1
+}
+
+agent_socket=$(resolve_agent_socket 2>/dev/null || true)
+
+probe_ordinary() {
+    [ -n "$agent_socket" ] || return 1
+    SSH_AUTH_SOCK=$agent_socket ssh -x -o BatchMode=yes -o ConnectTimeout=8 \
+        -o ConnectionAttempts=1 "$1" true >/dev/null 2>&1
+}
+
+probe_independent() {
+    [ -n "$agent_socket" ] || return 1
+    SSH_AUTH_SOCK=$agent_socket ssh -x -o BatchMode=yes -o ConnectTimeout=8 \
+        -o ConnectionAttempts=1 -o ControlMaster=no -o ControlPath=none \
+        "$1" true >/dev/null 2>&1
+}
+
+probe_pair() {
+    probe_independent "$1" && probe_independent "$2"
+}
+
+probe_al() {
+    "$HARNESS_ROOT/bin/harness" al-session --status >/dev/null 2>&1 &&
+        probe_ordinary al
+}
+
+true & local_pid=$!
+probe_ordinary ab & ab_pid=$!
+probe_ordinary ab2 & ab2_pid=$!
+probe_ordinary ri & ri_pid=$!
+if wait "$local_pid"; then local_status=pass; else local_status=fail; fi
+if wait "$ab_pid"; then ab_status=pass; else ab_status=fail; fi
+if wait "$ab2_pid"; then ab2_status=pass; else ab2_status=fail; fi
+if wait "$ri_pid"; then ri_status=pass; else ri_status=fail; fi
+
+probe_al & al_pid=$!
+probe_ordinary rc & rc_pid=$!
+probe_ordinary t4 & t4_pid=$!
+probe_pair abq abq2 & abq_pid=$!
+if wait "$al_pid"; then al_status=pass; else al_status=fail; fi
+if wait "$rc_pid"; then rc_status=pass; else rc_status=fail; fi
+if wait "$t4_pid"; then t4_status=pass; else t4_status=fail; fi
+if wait "$abq_pid"; then abq_status=pass; else abq_status=fail; fi
+
+probe_pair aist aist2 & aist_pid=$!
+probe_pair home home2 & home_pid=$!
+probe_pair office office2 & office_pid=$!
+probe_pair riken riken2 & riken_pid=$!
+if wait "$aist_pid"; then aist_status=pass; else aist_status=fail; fi
+if wait "$home_pid"; then home_status=pass; else home_status=fail; fi
+if wait "$office_pid"; then office_status=pass; else office_status=fail; fi
+if wait "$riken_pid"; then riken_status=pass; else riken_status=fail; fi
+
+printf 'FLEET_HEALTH node=local class=linux status=%s routes=local\n' "$local_status"
+printf 'FLEET_HEALTH node=ab class=linux status=%s routes=1\n' "$ab_status"
+printf 'FLEET_HEALTH node=ab2 class=linux status=%s routes=1\n' "$ab2_status"
+printf 'FLEET_HEALTH node=ri class=linux status=%s routes=1\n' "$ri_status"
+printf 'FLEET_HEALTH node=al class=linux status=%s routes=managed\n' "$al_status"
+printf 'FLEET_HEALTH node=rc class=linux status=%s routes=1\n' "$rc_status"
+printf 'FLEET_HEALTH node=t4 class=linux status=%s routes=1\n' "$t4_status"
+printf 'FLEET_HEALTH node=abq class=linux status=%s routes=2\n' "$abq_status"
+printf 'FLEET_HEALTH node=aist class=mac status=%s routes=2\n' "$aist_status"
+printf 'FLEET_HEALTH node=home class=mac status=%s routes=2\n' "$home_status"
+printf 'FLEET_HEALTH node=office class=mac status=%s routes=2\n' "$office_status"
+printf 'FLEET_HEALTH node=riken class=mac status=%s routes=2\n' "$riken_status"
+
+append_failure() {
+    current=$1
+    name=$2
+    if [ -n "$current" ]; then
+        printf '%s,%s\n' "$current" "$name"
+    else
+        printf '%s\n' "$name"
+    fi
+}
+
+linux_failures=
+for health_pair in \
+    "local:$local_status" "ab:$ab_status" "ab2:$ab2_status" "ri:$ri_status" \
+    "al:$al_status" "rc:$rc_status" "t4:$t4_status" "abq:$abq_status"; do
+    health_name=${health_pair%%:*}
+    health_status=${health_pair#*:}
+    [ "$health_status" = pass ] ||
+        linux_failures=$(append_failure "$linux_failures" "$health_name")
+done
+mac_failures=
+for health_pair in \
+    "aist:$aist_status" "home:$home_status" \
+    "office:$office_status" "riken:$riken_status"; do
+    health_name=${health_pair%%:*}
+    health_status=${health_pair#*:}
+    [ "$health_status" = pass ] ||
+        mac_failures=$(append_failure "$mac_failures" "$health_name")
+done
+
+if [ -n "$linux_failures" ]; then
+    linux_summary="Linux fail nodes=$linux_failures"
+else
+    linux_summary='Linux pass'
+fi
+if [ -n "$mac_failures" ]; then
+    mac_summary="Macs fail nodes=$mac_failures"
+else
+    mac_summary='Macs pass'
+fi
+printf 'Fleet: %s; %s.\n' "$linux_summary" "$mac_summary"
+[ -z "$linux_failures" ] && [ -z "$mac_failures" ]
