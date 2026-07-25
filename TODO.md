@@ -111,6 +111,25 @@ top item requires unavailable owner or administrator action, leave it deferred,
 continue the next highest safe independent item in that same repository, and
 never cross it for dependent work.
 
+**LIFO gate resolved 2026-07-26:** the first complete portable run after the
+watchdog race fix passed the changed supervisor suite and every other focused
+suite except tmux and terminfo, which intentionally reject a dirty checkout.
+The coherent three-file increment was still uncommitted. No live or external
+state changed; commit the increment and rerun the authoritative full gate from
+that clean revision.
+
+**LIFO gate active 2026-07-26:** protected PR #323 run `30167537954` passed
+the changed managed-agent suite and every other focused suite, but the
+unchanged watchdog signal fixture again retained its recovery lock after the
+test signaled the watchdog. The recovery supervisor acquired its lock before
+installing the signal/exit trap, leaving a narrow crash window that the
+lock-driven fixture can reach under hosted-runner scheduling. Install cleanup
+traps before lock acquisition for both pair recovery and single-route kick,
+exercise a deterministic post-lock delay, retain the exact
+signal/no-child/no-lock assertions, run concurrent focused and full portable
+validation, then publish the correction on the same PR before resuming the AL
+pilot.
+
 **LIFO gate active 2026-07-26:** AL's managed wrapper installed successfully,
 doctor passed, Codex stayed at 0.145.0 with process count unchanged, and the
 managed package digest reported `KEEP`; however, that agent plan invoked the

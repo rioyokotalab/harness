@@ -652,8 +652,9 @@ unlink "$watchdog_home/.fake-bind-fail-tunnel2"
 
 touch "$watchdog_home/.fake-dead-tunnel" "$watchdog_home/.fake-dead-tunnel2" \
     "$watchdog_home/.fake-bind-hang-tunnel" "$watchdog_home/.fake-bind-hang-tunnel2"
-HOME="$watchdog_home" HARNESS_ROOT="$PUBLIC" HARNESS_TEST_MODE=1 \
+env HOME="$watchdog_home" HARNESS_ROOT="$PUBLIC" HARNESS_TEST_MODE=1 \
     HARNESS_TEST_RECOVERY_ATTEMPTS=999 PATH="$FAKE_BIN:/usr/bin:/bin" \
+    HARNESS_TEST_RECOVERY_LOCK_DELAY_SECONDS=2 \
     "$TUNNEL_WATCHDOG" --host mac-test-pilot --run-once \
     >"$TEMP_DIR/watchdog-signal.out" 2>&1 &
 watchdog_signal_pid=$!

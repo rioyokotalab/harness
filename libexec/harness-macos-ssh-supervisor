@@ -345,7 +345,13 @@ acquire_recovery_lock() {
 }
 
 release_recovery_lock() {
-    [ "$recovery_lock_held" -eq 1 ] || return 0
+    if [ "$recovery_lock_held" -ne 1 ]; then
+        [ -e "$recovery_lock" ] || return 0
+        validate_recovery_lock_file
+        [ "$(sed -n 's/^pid=//p' "$recovery_lock")" = "$$" ] &&
+            [ "$(sed -n 's/^start=//p' "$recovery_lock")" = \
+                "$(process_start_for_pid "$$")" ] || return 0
+    fi
     validate_recovery_lock_file
     [ "$(sed -n 's/^pid=//p' "$recovery_lock")" = "$$" ] &&
         [ "$(sed -n 's/^start=//p' "$recovery_lock")" = \
@@ -559,7 +565,6 @@ if [ "$mode" = kick ]; then
     validate_transaction "$transaction_id"
     marker=$transaction_root/$transaction_id.macos-ssh-supervisor.$supervised_alias.active
     macos_require_private_file "$marker" "$current_uid"
-    acquire_recovery_lock || die "Mac SSH supervisor recovery is busy"
     cleanup_kick_lock() {
         status=$?
         trap - EXIT HUP INT TERM
@@ -567,6 +572,7 @@ if [ "$mode" = kick ]; then
         exit "$status"
     }
     trap cleanup_kick_lock EXIT HUP INT TERM
+    acquire_recovery_lock || die "Mac SSH supervisor recovery is busy"
     recovery_action=kick
     if ! service_loaded "$supervised_alias"; then
         recovery_action=bootstrap
@@ -615,11 +621,6 @@ if [ "$mode" = recover-pair ]; then
             die "Mac SSH supervisor active marker is malformed"
         require_ssh_contract "$recovery_alias"
     done
-    if ! acquire_recovery_lock; then
-        printf 'MACOS_SSH_SUPERVISOR mode=recover-pair host=%s action=defer reason=busy\n' \
-            "$logical_host"
-        exit 0
-    fi
     recovery_in_progress=0
     cleanup_pair_recovery() {
         status=$?
@@ -631,6 +632,18 @@ if [ "$mode" = recover-pair ]; then
         exit "$status"
     }
     trap cleanup_pair_recovery EXIT HUP INT TERM
+    if ! acquire_recovery_lock; then
+        printf 'MACOS_SSH_SUPERVISOR mode=recover-pair host=%s action=defer reason=busy\n' \
+            "$logical_host"
+        exit 0
+    fi
+    if [ "${HARNESS_TEST_MODE:-0}" = 1 ]; then
+        recovery_lock_delay=${HARNESS_TEST_RECOVERY_LOCK_DELAY_SECONDS:-0}
+        case "$recovery_lock_delay" in
+            ''|*[!0-9]*) die "invalid recovery lock delay" ;;
+        esac
+        sleep "$recovery_lock_delay"
+    fi
 
     for recovery_alias in "$primary_alias" "$secondary_alias"; do
         recovery_managed=$(managed_process_count "$recovery_alias")
