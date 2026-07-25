@@ -111,6 +111,34 @@ top item requires unavailable owner or administrator action, leave it deferred,
 continue the next highest safe independent item in that same repository, and
 never cross it for dependent work.
 
+**LIFO gate resolved 2026-07-26:** the first closeout publication command
+fetched successfully but then attempted to rebase while the coherent ledger
+edit was still unstaged. Git refused before commit or publication. The remote
+base was unchanged; record this gate in the same edit, commit locally, then
+rebase the clean branch before its explicit push.
+
+**LIFO gate resolved 2026-07-26:** the RI accounting retry used ordinary SSH
+and emitted `X11 forwarding request failed` before the scheduler error.
+Effective-policy readback proves every Linux target intentionally retains
+`ForwardX11 yes`, while all Mac reverse aliases retain the owner-selected
+`ForwardX11 no`; no configuration drift exists. Use `ssh -x` for value-free
+noninteractive probes that do not need X11, without changing the interactive
+Linux default.
+
+**LIFO gate resolved 2026-07-26:** the first PR #323 fleet-sync plan used an
+incorrect expanded target hash and failed locally before contacting any node.
+The exact Git-resolved 40-character revision passed plan/apply and advanced all
+11 clean managed remotes from `70aefb45b8a8c45f7977086ae8bcdffe9130d200`
+to `63ae6fdbde7aa2c657102e5897fc799c79e6f892`; every transfer artifact is
+absent.
+
+**LIFO gate resolved 2026-07-26:** the first post-rollout AL validation command
+expanded an unescaped remote `awk` field under `set -u` and stopped before
+invoking Harness. The corrected value-free sequence passed: wrapper doctor is
+ready, Codex remains 0.145.0, the managed tree reports `KEEP`, process count
+remained zero, and housekeeping stayed
+`live=0 eligible=0 young=0 unexpected=0` before and after the agent plan.
+
 **LIFO gate resolved 2026-07-26:** the first complete portable run after the
 watchdog race fix passed the changed supervisor suite and every other focused
 suite except tmux and terminfo, which intentionally reject a dirty checkout.
@@ -118,7 +146,7 @@ The coherent three-file increment was still uncommitted. No live or external
 state changed; commit the increment and rerun the authoritative full gate from
 that clean revision.
 
-**LIFO gate active 2026-07-26:** protected PR #323 run `30167537954` passed
+**LIFO gate resolved 2026-07-26:** protected PR #323 run `30167537954` passed
 the changed managed-agent suite and every other focused suite, but the
 unchanged watchdog signal fixture again retained its recovery lock after the
 test signaled the watchdog. The recovery supervisor acquired its lock before
@@ -128,9 +156,11 @@ traps before lock acquisition for both pair recovery and single-route kick,
 exercise a deterministic post-lock delay, retain the exact
 signal/no-child/no-lock assertions, run concurrent focused and full portable
 validation, then publish the correction on the same PR before resuming the AL
-pilot.
+pilot. Eight concurrent focused runs and the full four-worker portable suite
+passed; protected run `30170137249` passed and PR #323 merged as
+`63ae6fdbde7aa2c657102e5897fc799c79e6f892`.
 
-**LIFO gate active 2026-07-26:** AL's managed wrapper installed successfully,
+**LIFO gate resolved 2026-07-26:** AL's managed wrapper installed successfully,
 doctor passed, Codex stayed at 0.145.0 with process count unchanged, and the
 managed package digest reported `KEEP`; however, that agent plan invoked the
 package launcher directly for its version check and left one young expected
@@ -138,22 +168,26 @@ arg0 directory, bypassing the stable wrapper. Preserve the young state. When a
 current managed wrapper has already passed doctor, run only the version probe
 through the stable wrapper while continuing to hash the original package tree;
 cover zero-residue wrapped planning and repeat AL validation after protected
-publication.
+publication. PR #323 now routes the version probe through the validated stable
+wrapper; the post-sync AL plan retained `KEEP` and created no arg0 residue.
 
-**LIFO gate active 2026-07-26:** publishing the declared-storage-link fix to
+**LIFO gate resolved 2026-07-26:** publishing the declared-storage-link fix to
 the already-merged PR #321 head name was rejected non-fast-forward because the
 remote task branch retains its pre-rebase history. Nothing changed remotely
 and force-push is prohibited. Rename the clean local branch, push the same
 commit to a fresh explicit ref, open a new protected PR, then pop this
-publication-only gate.
+publication-only gate. Fresh PR #322 passed protected CI and merged as
+`70aefb45b8a8c45f7977086ae8bcdffe9130d200`.
 
-**LIFO gate active 2026-07-26:** after PR #321, fleet sync, and a passing AL
+**LIFO gate resolved 2026-07-26:** after PR #321, fleet sync, and a passing AL
 plan, the first apply failed closed at `managed wrapper parent is unsafe`
 before switching the stable launcher. Inspect only type/owner/mode/link
 metadata for `~/.local` and `~/.local/opt`, account for AL's NFS path topology
 without accepting a symlinked leaf parent, verify whether any task-owned empty
 directories were created, and repeat plan/apply only after focused/protected
-coverage. No Codex process was stopped.
+coverage. No Codex process was stopped. PR #322 accepts only the exact
+fleet-declared current-user-owned storage link while keeping `.local/opt`
+real and owned; the AL apply and doctor passed.
 
 **LIFO gate resolved 2026-07-26:** protected PR #321 run `30166634389` failed in
 the unchanged watchdog-signal cleanup fixture after its five-second
@@ -172,7 +206,7 @@ continuation. The corrected fixture passes syntax, ShellCheck, and the complete
 managed/standalone wrapper transaction suite. No production or external state
 changed.
 
-**LIFO gate active 2026-07-26:** the first AL wrapper plan after PR #320 and
+**LIFO gate resolved 2026-07-26:** the first AL wrapper plan after PR #320 and
 fleet sync failed closed before mutation. AL's stable link text is the exact
 declared absolute managed path under `/users/ryokota`, but `realpath` resolves
 the NFS file through `/capstor/...`; classifying the canonical spelling
@@ -181,9 +215,10 @@ still reports `KEEP`, and no process, link, package, or wrapper state changed.
 Classify managed and managed-wrapper targets from the exact absolute stable-link
 text, retain file/owner/hash checks through the resolved object, keep
 standalone current-link resolution unchanged, add an NFS-alias fixture, and
-repeat the AL pilot.
+repeat the AL pilot. PR #321 implemented that contract, and the later AL
+wrapper plan/apply/doctor passed without changing a Codex process.
 
-**LIFO gate active 2026-07-26:** pre-rollout review showed that the first
+**LIFO gate resolved 2026-07-26:** pre-rollout review showed that the first
 managed-layout implementation would rename and replace files inside the
 harness-managed npm tree, invalidating the installer transaction's recorded
 whole-tree digest even though wrapper-local tests pass. AL's current
@@ -191,7 +226,9 @@ whole-tree digest even though wrapper-local tests pass. AL's current
 managed tree as `KEEP`. Nothing has been applied. Redesign only the managed
 path to keep that tree byte-identical and install a separate version-scoped
 wrapper target behind the stable symlink; prove agent `KEEP` before and after
-the wrapper transaction, while preserving standalone behavior.
+the wrapper transaction, while preserving standalone behavior. PR #320
+implemented the separate wrapper target; matched tests and the AL pilot prove
+the package digest remains `KEEP`.
 
 **LIFO gate resolved 2026-07-26:** the first full suite ran with the coherent
 managed-wrapper increment still uncommitted. The tmux and terminfo fixtures
@@ -214,7 +251,7 @@ was not available to the wrapper command. The wrapper now carries the same
 strict local normalized-semver predicate; syntax, ShellCheck, and both layout
 transactions pass.
 
-**LIFO gate active 2026-07-26:** all 12 systems run Codex 0.145.0, but AL alone
+**LIFO gate resolved 2026-07-26:** all 12 systems run Codex 0.145.0, but AL alone
 emits the stale-arg0 cleanup warning. Its lock-aware housekeeping plan reports
 `live=0 eligible=0 young=2 unexpected=0`, so nothing is currently safe to
 remove. The wrapper doctor fails closed because AL's harness-managed npm
@@ -223,7 +260,10 @@ the version-scoped wrapper currently recognizes only Local's official
 standalone release tree. Extend the wrapper transaction and tests to accept
 only the exact managed npm layout without weakening standalone validation;
 publish and fleet-sync that increment, then pilot it on AL without stopping
-Codex processes. Never remove young arg0 state directly.
+Codex processes. Never remove young arg0 state directly. PRs #320–#323
+completed the managed layout, NFS path, storage-link, and stable-probe
+increments; normal wrapper preflight removed the expected completed residue,
+and final AL housekeeping reports all four counts at zero.
 
 **LIFO gate resolved 2026-07-26:** Harness PR #317 passed the full four-worker
 suite locally but protected run `30163867667` failed in the unrelated Mac
@@ -798,9 +838,11 @@ remains.
 
 ### T-196 — Backup lifecycle phase 2
 
-**Status:** time-gated. Progress is 1/8 successful weekly chains everywhere.
-Execution requires eight successful chains, two verified restores per node,
-and a current independent generation.
+**Status:** time-gated. Local, RI, RC, T4, and ABQ are at 2/8 successful
+weekly chains; AB and AB2 remain at 1/8 with their second jobs delayed in a
+healthy queue, and AL remains 1/8 until its later eligibility. Execution
+requires eight successful chains, two verified restores per node, and a
+current independent generation.
 
 **LIFO observation issue resolved 2026-07-26:** after RI's live status proved the
 chain had advanced to exact successor `10386`, the first safe history/private
@@ -815,8 +857,10 @@ query at the 02:00 eligibility boundary returned unavailable without printing
 job data. Exact live/status queries prove the old ID is no longer queued, the
 chain is active with silent warnings, private result is successful with a
 present snapshot, and exact successor `10386` is pending for 2026-08-02 02:00
-JST. Terminal scheduler history is not yet visible, so keep this observation
-open and retry only exact ID `7242`; do not alter successor `10386`.
+JST. A second exact retry at 03:50 JST failed before job lookup because Slurm
+could not resolve its DNS SRV configuration source. Terminal scheduler history
+is still not visible, so keep this observation open and retry only exact ID
+`7242`; do not alter successor `10386`.
 
 | Node | Recorded 2026-07-26 successor |
 | --- | --- |
@@ -826,6 +870,7 @@ open and retry only exact ID `7242`; do not alter successor `10386`.
 | ri | 7242 |
 | rc | 212389 |
 | t4 | 8194556 |
+| abq | 176521.qjcm |
 | al | 4238363 |
 
 **2026-07-26 checkpoint:** exact Local job `91840` completed with `0:0`;
@@ -838,6 +883,15 @@ healthy PBS state `Q` after eligibility, with silent warning output; no action
 was taken. The first AB safe-field parser expected the historical `Job_Id =`
 label instead of live `Job Id:` and failed read-only; the corrected exact-ID
 query passed. Do not replace either delayed PBS job.
+
+Exact RC job `212389` completed with `0:0`; private state is active/success
+with a present 64-hex snapshot, warnings are silent, and exact successor
+`260847` is pending for 2026-08-02 02:30 JST. Exact T4 job `8194556` completed
+with `failed=0 exit=0`; its private state and warning checks passed, and exact
+successor `8270230` is present for 2026-08-02 03:00 JST. Exact ABQ job
+`176521.qjcm` reached terminal state `F` with exit 0; its private state and
+warning checks passed, and exact successor `176525.qjcm` is waiting for
+2026-08-02 03:30 JST. No job was replaced or modified.
 
 On or after eligibility, identity-match and query only these IDs. Record
 terminal success, snapshot succession, warning silence, and chain count. Delay
