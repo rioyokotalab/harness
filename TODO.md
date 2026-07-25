@@ -108,6 +108,13 @@ coherent commit is impossible, and push the issue onto that repository's TODO
 as a LIFO item. Resolve the new top item when safe, record the pop, resume the
 interrupted task, and keep all repositories progressing independently.
 
+**LIFO gate resolved 2026-07-25:** plain `git push` also advanced the existing
+T-310 closeout branch from `43c8a8a` to its already reviewed local checkpoint
+`cad2e40`. Cause is the owner's global `push.default=matching`; no unrelated
+bytes were created or overwritten and local/remote T-310 now match. All T-311
+publications will use an explicit `HEAD:refs/heads/BRANCH` refspec. Changing
+the global Git preference is outside this task.
+
 Read-only discovery found P0 risks in the students cryptography lock and
 Swallow's absent protected-main/CI controls; repository-default Actions
 permissions in Harness and Swallow are also overbroad. All Mac firewalls are
