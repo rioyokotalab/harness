@@ -92,3 +92,25 @@ A second complete run passed all T-310 coverage but reproduced the unrelated
 30-second watchdog cleanup race; its exact focused suite passed immediately in
 isolation. Protected CI remains authoritative. The second disposable clone and
 manifest were guarded-removed with protected anchors unchanged.
+
+## Acceptance result
+
+Functional PR #310 passed protected `portable-phase1` CI and merged as
+`e9c3e060fc8f4b4496331b1235ca23dcb21d79b0`. Guarded fleet sync advanced all
+eleven clean managed checkouts to that revision; its follow-up plan reported
+clean `KEEP`, aligned `origin/main`, and no transfer artifact for every target.
+
+Exactly one post-sync context refresh was submitted to each existing Aist,
+Home, Office, and Riken Codex TUI without reading pane contents or replacing
+the running process. The supervisor is available everywhere and activates at
+the next deliberate Codex launch; managed Mac reboot recovery selects it
+automatically. Rollback remains stopping the foreground supervisor and
+launching `bin/harness-codex` directly. No credential, product configuration,
+remote-control process, native Codex installation, or persistent service
+changed.
+
+The original documentation-only closeout PR #311 encountered three GitHub
+Actions startup failures with zero jobs before a later ordinary protected run
+passed. By then its task-board edit was obsolete and conflicted with current
+`main`. The accepted appendix was therefore recreated from current `main`
+without force-pushing or transplanting the stale task-board compaction.
