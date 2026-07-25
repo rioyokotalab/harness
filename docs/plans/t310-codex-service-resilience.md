@@ -117,3 +117,11 @@ Closeout PR #311's initial Harness CI run `30157956314` completed with
 test result and made no repository or fleet change. The failure is safe to
 supersede through the ordinary protected run triggered by this evidence
 checkpoint; no manual workflow rerun was dispatched.
+
+The next ordinary protected run `30158060217` also completed
+`startup_failure` with zero jobs. GitHub's
+[public status](https://www.githubstatus.com/) currently reports Actions
+operational but records a July 25 incident in which Actions run starts were
+delayed. This corroborates an external runner-start failure rather than a
+repository test result. Checkpoint this evidence once for one final normal
+push-triggered run; do not make empty commits or dispatch a retry loop.

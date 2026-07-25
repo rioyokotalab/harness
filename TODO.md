@@ -357,7 +357,11 @@ Evidence is in `docs/backup-lifecycle-phase2.md`, `docs/home-backup.md`, and
   run `30157956314` ended `startup_failure` before creating any job and
   produced no logs; no test ran or state changed. Recording this evidence in a
   new closeout commit is safe and lets the ordinary push request fresh
-  protected CI without separately dispatching a workflow.
+  protected CI without separately dispatching a workflow. That fresh run
+  `30158060217` failed identically with zero jobs. GitHub's public status
+  reports Actions operational now but records a July 25 incident involving
+  delayed run starts. Record this external evidence once and allow the normal
+  checkpoint push one final protected run; do not create an empty retry loop.
 - **T-308:** added the shared `reboot-recovery` skill and deterministic
   Local-side helper in PR #306, merged as `9203033`. Recovery now separates
   automatic launchd tunnel restoration, owner login and Codex remote-control
