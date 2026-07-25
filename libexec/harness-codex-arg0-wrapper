@@ -23,6 +23,30 @@ normalized_semver() {
     }'
 }
 
+declared_local_symlink_is_safe() {
+    [ "$1" = "$HOME/.local" ] && [ -L "$1" ] || return 1
+    logical_host=${HARNESS_LOGICAL_HOST:-}
+    case "$logical_host" in ''|*[!A-Za-z0-9._-]*) return 1 ;; esac
+    layout_file=${HARNESS_HOME_LAYOUT_FILE:-$HARNESS_ROOT/profiles/home-layout.tsv}
+    [ -f "$layout_file" ] && [ ! -L "$layout_file" ] || return 1
+    record=$(awk -F'|' -v host="$logical_host" '
+        $1 == host { print; count++ }
+        END { if (count != 1) exit 1 }
+    ' "$layout_file") || return 1
+    [ "$(printf '%s\n' "$record" | awk -F'|' '{ print NF }')" -ge 4 ] || return 1
+    persistent_root=$(printf '%s\n' "$record" | awk -F'|' '{ print $2 }')
+    moved_items=$(printf '%s\n' "$record" | awk -F'|' '{ print $4 }')
+    case ",$moved_items," in *,.local,*) ;; *) return 1 ;; esac
+    [ -d "$persistent_root" ] && [ ! -L "$persistent_root" ] &&
+        [ "$(stat -c '%u' -- "$persistent_root")" = "$current_uid" ] ||
+        return 1
+    [ "$(stat -c '%u' -- "$1")" = "$current_uid" ] &&
+        [ "$(stat -Lc '%u' -- "$1")" = "$current_uid" ] || return 1
+    persistent_physical=$(realpath -e -- "$persistent_root") || return 1
+    local_physical=$(realpath -e -- "$1") || return 1
+    case "$local_physical" in "$persistent_physical"/*) ;; *) return 1 ;; esac
+}
+
 mode=plan
 [ "$#" -le 1 ] || { usage; exit 2; }
 if [ "$#" -eq 1 ]; then
@@ -237,11 +261,15 @@ if [ "$mode" = apply ]; then
     if [ "$layout" = managed-npm ]; then
         [ "$(stat -Lc '%u' -- "$managed_original")" = "$current_uid" ] ||
             die "managed Codex launcher owner differs"
-        for managed_parent in "$HOME/.local" "$HOME/.local/opt"; do
-            [ -d "$managed_parent" ] && [ ! -L "$managed_parent" ] &&
-                [ "$(stat -Lc '%u' -- "$managed_parent")" = "$current_uid" ] ||
-                die "managed wrapper parent is unsafe"
-        done
+        if ! {
+            [ -d "$HOME/.local" ] && [ ! -L "$HOME/.local" ] &&
+                [ "$(stat -Lc '%u' -- "$HOME/.local")" = "$current_uid" ];
+        } && ! declared_local_symlink_is_safe "$HOME/.local"; then
+            die "managed wrapper local parent is unsafe"
+        fi
+        [ -d "$HOME/.local/opt" ] && [ ! -L "$HOME/.local/opt" ] &&
+            [ "$(stat -Lc '%u' -- "$HOME/.local/opt")" = "$current_uid" ] ||
+            die "managed wrapper opt parent is unsafe"
         created_harness_dir=0
         created_wrapper_base=0
         created_wrapper_release=0

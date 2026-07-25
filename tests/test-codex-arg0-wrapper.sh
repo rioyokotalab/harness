@@ -233,6 +233,15 @@ managed_real_home=$TEMP_DIR/managed-real-home
 managed_home=$TEMP_DIR/managed-logical-home
 mkdir "$managed_real_home"
 ln -s "$managed_real_home" "$managed_home"
+managed_persistent=$managed_real_home/persistent
+mkdir -p "$managed_persistent/.local"
+ln -s "$managed_persistent/.local" "$managed_real_home/.local"
+managed_layout=$TEMP_DIR/managed-home-layout.tsv
+printf 'managed-test|%s|%s/cache|.local|none|none|none\n' \
+    "$managed_persistent" "$managed_persistent" >"$managed_layout"
+HARNESS_LOGICAL_HOST=managed-test
+HARNESS_HOME_LAYOUT_FILE=$managed_layout
+export HARNESS_LOGICAL_HOST HARNESS_HOME_LAYOUT_FILE
 managed_version=0.145.0
 case "$(uname -m)" in
     x86_64) managed_platform=linux-x86_64 ;;
