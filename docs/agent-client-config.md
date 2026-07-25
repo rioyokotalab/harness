@@ -45,6 +45,44 @@ absolute native path, preventing recursion or silent fallback, and preserves
 all arguments and subcommands. Client-persisted project trust stays only in the
 private live regular file and never dirties public Git.
 
+## Transient-service supervisor
+
+`harness codex-resilient` is the portable foreground owner for a Codex TUI
+inside tmux. It always delegates to `bin/harness-codex`, so the existing
+project trust, approval, sandbox, Darwin path, and version-scoped arg0
+contracts remain authoritative.
+
+The supervisor supports `--new`, `--last`, `--last-all`, and
+`--session ID`. An explicit saved-session identifier is the concurrency-safe
+choice. The two latest-session selectors rely on the fleet's established
+single active Codex session per checkout or global scope. A fresh first launch
+recovers with repository-scoped `resume --last`; every other recovery retains
+its selected resume scope. No recovery command contains a prompt.
+
+After a nonzero process exit, the supervisor writes Codex doctor's redacted
+JSON to one mode-0600 runtime temporary file, reads only the status of
+`auth.credentials`, `config.load`, `installation`, and `state.paths`, then
+exact-unlinks the file. Any non-`ok` result or a doctor failure stops. Healthy
+local prerequisites classify the exit as transient and use delays of 15, 30,
+60, 120, 240, then at most 300 seconds plus zero-to-five seconds of jitter.
+Fifteen minutes of process lifetime resets the delay. Exit 0 and operator
+signals are terminal, as is the CLI's usage-error exit. `--run` requires all
+three standard streams to be attached to an interactive terminal, preventing
+a detached non-TTY launch failure from becoming a retry loop.
+
+Per-name state and an exclusive process lock live beneath the current user's
+runtime directory. State is value-free and records only mode, selector class,
+owner PID, retry count, delay, and reason; it never captures the terminal,
+prompt, transcript, error message, diagnostic body, credential, or explicit
+session identifier. `--status` cross-checks a running/backoff receipt with its
+live owner and reports stale ownership rather than claiming readiness.
+
+The managed Mac reboot workflow starts its next newly created
+`harness-codex-resume` pane through this supervisor. It retains every existing
+healthy legacy or supervised pane unchanged. Rollback is simply to stop the
+foreground supervisor and start `bin/harness-codex` directly; no persistent
+service or owner configuration is installed.
+
 On Linux, do not run `codex update`. Upgrade the two reviewed release records
 in `tools/agents.tsv`, publish them through protected `main`, synchronize the
 managed checkouts, and use the transactional agent command on each logical

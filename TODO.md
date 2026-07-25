@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-310.
+Next free ID: T-311.
 
 ## Current state
 
@@ -84,11 +84,62 @@ Next free ID: T-310.
 
 ## Next resume checkpoint
 
-1. Resume T-309 by adding failing command-contract fixtures for the canonical
+1. Resume T-310 by adding failing command-contract fixtures for the Codex
+   transient-service supervisor.
+2. Resume T-309 by adding failing command-contract fixtures for the canonical
    fleet-health probe.
-2. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
+3. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
 
 ## Active tasks
+
+### T-310 — Make Codex resilient to transient service failures
+
+**Phase:** validating; implementation complete locally.
+
+Implement a portable foreground `harness codex-resilient` supervisor for the
+existing tmux topology. It must launch through `bin/harness-codex`, recover
+only by resuming a saved chat without a prompt, gate retries with Codex's
+redacted native doctor, and use bounded exponential backoff with jitter. Exit
+0, operator signals, and local authentication/configuration/installation/state
+failures stop rather than loop. Runtime state must be value-free, mode 0600,
+atomically replaced, exclusively owned, and contain no captured terminal or
+diagnostic output.
+
+Support fresh, repository-most-recent, globally-most-recent, and explicit
+session selection. Explicit IDs are preferred; `--last` requires the existing
+one-active-Codex-per-checkout contract. Keep the process in the foreground and
+install no service or owner configuration. Do not interrupt or replace any
+currently running Codex during rollout; adopt it at the next deliberate tmux
+restart.
+
+The complete frozen plan, risk boundaries, rollback, and acceptance gates are
+in `docs/plans/t310-codex-service-resilience.md`. Work is isolated on
+`task/t-310-codex-resilience` from clean/current `c9926be`.
+
+The portable foreground supervisor, CLI route, owner documentation, durable
+no-replay rule, and reboot-recovery integration are implemented. Focused
+fixtures pass fresh/repository/global/explicit selection, resume-without-prompt,
+native-doctor gating, authentication and usage-error stops, terminal signals,
+15–300-second backoff, 15-minute reset, bounded Darwin paths, live/stale lock
+ownership, safe status, and value-free mode-0600 state. The updated
+reboot-recovery skill validates and its focused suite accepts both legacy Codex
+and supervised backoff panes. Shell syntax, warning-level ShellCheck, and
+`git diff --check` pass.
+
+Next run the complete phase-one suite, independently inspect the final diff,
+fetch/integrate current `origin/main`, commit and publish through protected CI,
+then guarded-sync clean managed checkouts. Do not interrupt active Codex
+processes; the standard supervisor takes effect at each next deliberate tmux
+creation.
+
+The first complete-suite attempt from the isolated linked worktree is not
+authoritative: five legacy fixtures require `.git` to be a directory and
+rejected the worktree's normal `.git` file; two existing parallel macOS timing
+fixtures also failed. The new supervisor suite and reboot-recovery suite both
+passed in that run. Retry is safe because the suite changes no live target.
+Commit the focused-validated tree, create a disposable full clone with a real
+`.git` directory, and rerun the complete suite there, sequentially if the
+known parallel timing fixtures recur.
 
 ### T-309 — Canonicalize fleet-health probing
 

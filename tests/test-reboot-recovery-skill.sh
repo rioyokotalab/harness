@@ -125,7 +125,8 @@ assert_contains "$TEST_ROOT/status.out" 'status=needs-tmux' \
 fake_bin=$TEST_ROOT/fake-bin
 fake_home=$TEST_ROOT/home
 state=$TEST_ROOT/state
-mkdir -p "$fake_bin" "$fake_home/harness/.git" "$fake_home/.local/bin" "$state"
+mkdir -p "$fake_bin" "$fake_home/harness/.git" \
+    "$fake_home/harness/bin" "$fake_home/.local/bin" "$state"
 
 cat >"$fake_bin/uname" <<'SH'
 #!/bin/sh
@@ -185,9 +186,14 @@ case $command in
         fi
         ;;
     list-panes)
-        echo "0|$HOME/harness|codex"
+        if [ "${FAKE_TMUX_STATE:-absent}" = supervisor ]; then
+            echo "0|$HOME/harness|sleep|4242"
+        else
+            echo "0|$HOME/harness|codex|4242"
+        fi
         ;;
     new-session)
+        printf '%s\n' "$*" >"$FAKE_STATE/new-session.args"
         : >"$FAKE_STATE/created"
         ;;
     *)
@@ -203,7 +209,16 @@ cat >"$fake_home/.local/bin/harness-codex" <<'SH'
 #!/bin/sh
 exit 0
 SH
-chmod 755 "$fake_bin"/* "$fake_home/.local/bin/harness-codex"
+cat >"$fake_home/harness/bin/harness" <<'SH'
+#!/bin/sh
+if [ "${FAKE_TMUX_STATE:-absent}" = supervisor ]; then
+    echo 'CODEX_RESILIENT mode=status name=harness-codex-resume phase=backoff selector=last owner_pid=4242 attempt=2 delay=30 reason=transient-exit'
+else
+    echo 'CODEX_RESILIENT mode=status name=harness-codex-resume phase=absent'
+fi
+SH
+chmod 755 "$fake_bin"/* "$fake_home/.local/bin/harness-codex" \
+    "$fake_home/harness/bin/harness"
 
 # Replace only the helper's fixed production PATH in this disposable copy so
 # each state transition can be exercised without macOS or live services.
@@ -260,10 +275,18 @@ HOME="$fake_home" FAKE_STATE="$state" \
 assert_contains "$TEST_ROOT/create.out" \
     'action=create status=complete' "tmux creation"
 [ -f "$state/created" ] || fail "tmux creation was not invoked"
+assert_contains "$state/new-session.args" \
+    'codex-resilient --run --name harness-codex-resume --last' \
+    "resilient tmux command"
 
 HOME="$fake_home" FAKE_STATE="$state" \
     "$TEST_ROOT/mac-reboot-state" start-tmux >"$TEST_ROOT/keep.out"
 assert_contains "$TEST_ROOT/keep.out" \
     'action=keep status=complete' "idempotent tmux retention"
+
+HOME="$fake_home" FAKE_STATE="$state" FAKE_TMUX_STATE=supervisor \
+    "$TEST_ROOT/mac-reboot-state" status >"$TEST_ROOT/supervisor.out"
+assert_contains "$TEST_ROOT/supervisor.out" \
+    'tmux=ready status=ready' "supervisor backoff readiness"
 
 echo "Reboot recovery skill tests passed"

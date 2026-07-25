@@ -65,10 +65,16 @@ or an earlier conversation.
 
    ```sh
    tmux new-session -d -s harness-codex-resume -c "$HOME/harness" \
-     "$HOME/.local/bin/harness-codex resume --last"
+     "exec \"$HOME/harness/bin/harness\" codex-resilient --run \
+       --name harness-codex-resume --last"
    ```
 
-   An already healthy session is retained unchanged.
+   The foreground supervisor never replays a prompt. If Codex exits nonzero
+   while its redacted native doctor still reports healthy local
+   authentication, configuration, installation, and state, it resumes the
+   saved chat after bounded exponential backoff. Permanent local failures and
+   operator exits stop. An already healthy legacy or supervised session is
+   retained unchanged.
 
 ## Validate
 
@@ -84,8 +90,11 @@ Mac, run the repository's current value-free checks for:
 Apply arg0 housekeeping only to eligible tracked residue through its guarded
 workflow; do not conflate it with reboot recovery. Confirm exactly one
 detached, live `harness-codex-resume` session with one Codex pane rooted at
-`~/harness`, without reading the pane. Finish with a fresh compact fleet
-health check and report only failing node names.
+`~/harness`, without reading the pane. A supervised pane may report `codex`,
+`codex.real`, `sh`, or `sleep` depending on whether it is running, diagnosing,
+or backing off; require its live value-free supervisor receipt to match the
+tmux pane owner whenever the foreground command is not Codex. Finish with a
+fresh compact fleet health check and report only failing node names.
 
 Checkpoint any unresolved state in `TODO.md`. A failed query is unknown state,
 not proof that a service is absent.

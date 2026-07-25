@@ -86,6 +86,37 @@ the active task. Before handing work to the other client, checkpoint verified
 facts, failures, files, validation, and the next executable action in
 `TODO.md`.
 
+### Survive transient Codex service failures
+
+Run the standard Codex TUI under the foreground resilience supervisor inside
+tmux:
+
+```bash
+harness codex-resilient --plan --name harness --last
+harness codex-resilient --run --name harness --last
+```
+
+Use `--session ID` instead of `--last` when multiple Codex chats can be started
+from the same repository. `--new` creates a new chat on the first launch and
+resumes the repository's most recent chat thereafter; `--last-all` selects the
+globally most recent saved chat.
+
+After a nonzero Codex exit, the supervisor runs the native redacted doctor. It
+stops on local authentication, configuration, installation, or state failure.
+Otherwise it resumes without a prompt after bounded exponential backoff and
+jitter. It never captures the terminal transcript or automatically replays the
+failed turn, because a 503 can arrive after a tool or external side effect
+already succeeded. Inspect its value-free state from another shell:
+
+```bash
+harness codex-resilient --status --name harness
+```
+
+The supervisor stays in the foreground and installs no service. Tmux, launchd,
+systemd, or the operator remains its explicit lifetime owner. Existing Codex
+processes are not converted in place; use the supervisor on their next
+deliberate restart.
+
 ### Inspect a host
 
 The four dependency-free observation commands are:
