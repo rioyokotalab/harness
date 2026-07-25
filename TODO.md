@@ -141,6 +141,14 @@ Commit the focused-validated tree, create a disposable full clone with a real
 `.git` directory, and rerun the complete suite there, sequentially if the
 known parallel timing fixtures recur.
 
+The authoritative rerun from disposable full clone
+`/tmp/t310-validation.nBf3TH` passed all focused shards and every phase-one
+integration gate with `HARNESS_TEST_JOBS=1`. The clone contained 902 entries
+and 22,220,376 bytes; guarded deletion manifest
+`/tmp/t310-validation-delete.manifest` revalidated it, deleted only that clone,
+and proved protected anchors unchanged and the target absent. The manifest was
+then exact-unlinked. No validation residue remains.
+
 ### T-309 — Canonicalize fleet-health probing
 
 **Phase:** planned; ready to execute.

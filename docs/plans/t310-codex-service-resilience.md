@@ -80,3 +80,8 @@ and updated focused suites passed, but legacy fixtures that require `.git` to
 be a directory rejected the normal worktree `.git` file, and two existing
 parallel Mac timing fixtures failed. The run is non-authoritative and
 side-effect free. Rerun from a disposable full clone after the first commit.
+
+The sequential rerun from a disposable full clone passed all focused shards
+and every phase-one integration gate. The clone was removed through a guarded
+manifest that revalidated 902 entries and 22,220,376 bytes, proved the target
+absent and protected anchors unchanged, and was then exact-unlinked.
