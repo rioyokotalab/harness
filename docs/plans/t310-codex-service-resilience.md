@@ -92,3 +92,22 @@ A second complete run passed all T-310 coverage but reproduced the unrelated
 30-second watchdog cleanup race; its exact focused suite passed immediately in
 isolation. Protected CI remains authoritative. The second disposable clone and
 manifest were guarded-removed with protected anchors unchanged.
+
+## Acceptance result
+
+PR #310 passed protected `portable-phase1` CI and merged as
+`e9c3e060fc8f4b4496331b1235ca23dcb21d79b0`. Local `main` advanced by
+fast-forward. Read-only inventory corrected a stale ledger assumption: all
+eleven remotes were actually clean on `main` at `5b8d74e`, not `c9926be`.
+Guarded fleet sync then advanced every remote directly to `e9c3e06`; the
+follow-up plan reported clean `KEEP`, aligned `origin/main`, and no transfer
+artifact for every target.
+
+Exactly one post-sync context refresh was submitted to each existing Aist,
+Home, Office, and Riken Codex TUI without reading pane contents or replacing
+the running process. The supervisor is therefore available everywhere but
+activates only at the next deliberate launch; managed Mac reboot recovery
+selects it automatically. Rollback remains stopping the foreground supervisor
+and launching `bin/harness-codex` directly. No credential, product
+configuration, remote-control process, native Codex installation, or
+persistent service changed.

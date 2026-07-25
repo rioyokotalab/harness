@@ -46,6 +46,11 @@ Next free ID: T-311.
   housekeeping remain installed. Its rollback is
   `harness codex-arg0-wrapper --rollback`; an official Codex upgrade requires
   fresh validation before reinstalling the version-scoped wrapper.
+- `harness codex-resilient` is published on Local and all eleven remotes. It
+  resumes saved chats without replaying prompts after doctor-gated transient
+  exits, uses bounded exponential backoff, and exposes only value-free runtime
+  state. Existing Codex processes were retained; new managed Mac reboot
+  sessions adopt the supervisor automatically.
 - Codex and Claude now use only project-scoped policy, permission settings,
   rules, and 15 skills when started from `~/harness`. All 12 systems retain
   only the two global launch sentinels and the Codex launcher; schema-2 doctor,
@@ -84,81 +89,11 @@ Next free ID: T-311.
 
 ## Next resume checkpoint
 
-1. Resume T-310 by adding failing command-contract fixtures for the Codex
-   transient-service supervisor.
-2. Resume T-309 by adding failing command-contract fixtures for the canonical
+1. Resume T-309 by adding failing command-contract fixtures for the canonical
    fleet-health probe.
-3. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
+2. On or after 2026-07-26, query only the seven T-196 successor job IDs below.
 
 ## Active tasks
-
-### T-310 — Make Codex resilient to transient service failures
-
-**Phase:** validating; implementation complete locally.
-
-Implement a portable foreground `harness codex-resilient` supervisor for the
-existing tmux topology. It must launch through `bin/harness-codex`, recover
-only by resuming a saved chat without a prompt, gate retries with Codex's
-redacted native doctor, and use bounded exponential backoff with jitter. Exit
-0, operator signals, and local authentication/configuration/installation/state
-failures stop rather than loop. Runtime state must be value-free, mode 0600,
-atomically replaced, exclusively owned, and contain no captured terminal or
-diagnostic output.
-
-Support fresh, repository-most-recent, globally-most-recent, and explicit
-session selection. Explicit IDs are preferred; `--last` requires the existing
-one-active-Codex-per-checkout contract. Keep the process in the foreground and
-install no service or owner configuration. Do not interrupt or replace any
-currently running Codex during rollout; adopt it at the next deliberate tmux
-restart.
-
-The complete frozen plan, risk boundaries, rollback, and acceptance gates are
-in `docs/plans/t310-codex-service-resilience.md`. Work is isolated on
-`task/t-310-codex-resilience` from clean/current `c9926be`.
-
-The portable foreground supervisor, CLI route, owner documentation, durable
-no-replay rule, and reboot-recovery integration are implemented. Focused
-fixtures pass fresh/repository/global/explicit selection, resume-without-prompt,
-native-doctor gating, authentication and usage-error stops, terminal signals,
-15–300-second backoff, 15-minute reset, bounded Darwin paths, live/stale lock
-ownership, safe status, and value-free mode-0600 state. The updated
-reboot-recovery skill validates and its focused suite accepts both legacy Codex
-and supervised backoff panes. Shell syntax, warning-level ShellCheck, and
-`git diff --check` pass.
-
-Next run the complete phase-one suite, independently inspect the final diff,
-fetch/integrate current `origin/main`, commit and publish through protected CI,
-then guarded-sync clean managed checkouts. Do not interrupt active Codex
-processes; the standard supervisor takes effect at each next deliberate tmux
-creation.
-
-The first complete-suite attempt from the isolated linked worktree is not
-authoritative: five legacy fixtures require `.git` to be a directory and
-rejected the worktree's normal `.git` file; two existing parallel macOS timing
-fixtures also failed. The new supervisor suite and reboot-recovery suite both
-passed in that run. Retry is safe because the suite changes no live target.
-Commit the focused-validated tree, create a disposable full clone with a real
-`.git` directory, and rerun the complete suite there, sequentially if the
-known parallel timing fixtures recur.
-
-The authoritative rerun from disposable full clone
-`/tmp/t310-validation.nBf3TH` passed all focused shards and every phase-one
-integration gate with `HARNESS_TEST_JOBS=1`. The clone contained 902 entries
-and 22,220,376 bytes; guarded deletion manifest
-`/tmp/t310-validation-delete.manifest` revalidated it, deleted only that clone,
-and proved protected anchors unchanged and the target absent. The manifest was
-then exact-unlinked. No validation residue remains.
-
-Final review tightened strict state-schema validation and kept the doctor
-temporary-file identity in the parent supervisor so its exit trap can retain
-cleanup responsibility on an unlink failure. The new supervisor and updated
-reboot suites passed again. A second full-clone run passed every T-310 and
-integration check but hit the previously documented, unrelated
-`test-personal-macos-ssh-supervisor.sh` 30-second watchdog cleanup race; that
-exact suite passed immediately in isolation. The earlier authoritative
-complete suite remains green, and protected CI is the remaining authority.
-The second clone (902 entries, 22,148,614 bytes) and its manifest were removed
-through the same verified guarded workflow with no residue.
 
 ### T-309 — Canonicalize fleet-health probing
 
@@ -407,6 +342,18 @@ Evidence is in `docs/backup-lifecycle-phase2.md`, `docs/home-backup.md`, and
 
 ## Completed anchors
 
+- **T-310:** PR #310 passed protected CI and merged as
+  `e9c3e060fc8f4b4496331b1235ca23dcb21d79b0`. The portable foreground
+  supervisor resumes without a prompt, stops on local permanent failures,
+  retries locally healthy nonzero exits with bounded jittered backoff, and
+  keeps only strict value-free mode-0600 runtime state. The authoritative
+  complete phase-one suite, focused supervisor/reboot suites, skill validation,
+  and protected CI passed. Guarded fleet sync advanced all eleven clean
+  remotes from `5b8d74e` to `e9c3e06`, a second plan reported `KEEP` and no
+  transfer residue everywhere, and exactly one context refresh was submitted
+  to each Mac. Running Codex processes were not replaced; future managed Mac
+  reboot sessions use the supervisor. Full evidence and rollback are in
+  `docs/plans/t310-codex-service-resilience.md`.
 - **T-308:** added the shared `reboot-recovery` skill and deterministic
   Local-side helper in PR #306, merged as `9203033`. Recovery now separates
   automatic launchd tunnel restoration, owner login and Codex remote-control
