@@ -53,10 +53,13 @@ exception takes effect for new clients. `ExitOnForwardFailure` covers initial
 forward setup only: it does not prove that the ultimate forwarding destination
 is reachable or detect a forward that fails later.
 
-X11 forwarding is disabled only for `tunnel`, `tunnel2`, `aist`, `aist2`,
+Agent and X11 forwarding are disabled for both the `github` alias and direct
+`github.com` Git remotes. The direct-host exception must remain before the
+global defaults because OpenSSH uses the first obtained value. X11 forwarding
+is otherwise disabled only for `tunnel`, `tunnel2`, `aist`, `aist2`,
 `home`, `home2`, `office`, `office2`, `riken`, `riken2`, and `web`, plus the
-pre-existing GitHub exception. `login` and every other target retain the
-global `ForwardX11 yes` and `ForwardX11Trusted yes` policy.
+GitHub exceptions. `login` and every other target retain the global
+`ForwardAgent yes`, `ForwardX11 yes`, and `ForwardX11Trusted yes` policy.
 
 Directives within each managed stanza are alphabetic, while stanza order is
 semantic and must not be sorted: OpenSSH keeps the first value obtained.

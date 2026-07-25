@@ -116,9 +116,17 @@ sed "s|^Include ~/.ssh/config.d/harness.conf$|Include $home/.ssh/config.d/harnes
 ssh -o CanonicalizeHostname=no -G -F "$TEMP_DIR/effective-config" \
     github 2>/dev/null |
     awk '$1 == "hostname" { h=$2 } $1 == "user" { u=$2 }
+        $1 == "forwardagent" { a=$2 } $1 == "forwardx11" { x=$2 }
         $1 == "serveraliveinterval" { s=$2 }
-        END { exit h == "github.com" && u == "git" && s == 15 ? 0 : 1 }' ||
+        END { exit h == "github.com" && u == "git" && a == "no" &&
+            x == "no" && s == 15 ? 0 : 1 }' ||
     fail "terminal include did not resolve GitHub and defaults globally"
+ssh -o CanonicalizeHostname=no -G -F "$TEMP_DIR/effective-config" \
+    github.com 2>/dev/null |
+    awk '$1 == "hostname" { h=$2 } $1 == "forwardagent" { a=$2 }
+        $1 == "forwardx11" { x=$2 }
+        END { exit h == "github.com" && a == "no" && x == "no" ? 0 : 1 }' ||
+    fail "direct GitHub hostname inherited agent or X11 forwarding"
 for failover_alias in tunnel tunnel2; do
     ssh -o CanonicalizeHostname=no -G -F "$TEMP_DIR/effective-config" \
         "$failover_alias" 2>/dev/null |
