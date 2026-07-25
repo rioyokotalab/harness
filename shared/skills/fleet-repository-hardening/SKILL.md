@@ -81,11 +81,17 @@ On the slightest new ambiguity or failed gate:
 5. Treat the new issue as that repository's next task. Resolve it immediately
    when safe, record the resolution, remove only superseded task-owned stash
    state after validation, and pop back to the interrupted task.
-6. Keep every other repository progressing independently.
+6. If the newest item needs owner input, administrator authority, or another
+   unavailable external condition, mark it deferred in place and continue the
+   next highest safe item in that same repository. Do not skip an item whose
+   correctness depends on the gate.
+7. Keep every other repository progressing independently.
 
 A gate is not a terminal stop. It becomes the newest work item. If it needs
 owner input or unavailable administrator authority, leave its exact helper or
-decision at the top and continue the remaining independent stack.
+decision at the top, continue safe independent work below it in the same
+repository, and continue every other repository. Never interpret one blocked
+item as a reason to idle its whole repository.
 
 ## Execute in small protected increments
 

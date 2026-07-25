@@ -209,7 +209,10 @@ the slightest new ambiguity or failed gate:
 6. treat that issue as the repository's newest and therefore next task;
 7. resolve it immediately when safe, record the resolution, pop back to the
    interrupted task, and continue;
-8. keep every other repository progressing independently while this stack is
+8. when an external-only gate cannot be resolved, leave it deferred at the top
+   and continue the next highest safe independent item in that same repository;
+   do not cross the gate for dependent work;
+9. keep every other repository progressing independently while this stack is
    processed.
 
 No raw recursive deletion is permitted. Any multi-path or tree removal uses

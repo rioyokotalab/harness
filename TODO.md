@@ -106,7 +106,10 @@ worktrees. On any new ambiguity or failed gate, pause the interrupted change,
 preserve safe evidence, stash only explicitly named task-owned WIP when a
 coherent commit is impossible, and push the issue onto that repository's TODO
 as a LIFO item. Resolve the new top item when safe, record the pop, resume the
-interrupted task, and keep all repositories progressing independently.
+interrupted task, and keep all repositories progressing independently. If the
+top item requires unavailable owner or administrator action, leave it deferred,
+continue the next highest safe independent item in that same repository, and
+never cross it for dependent work.
 
 **LIFO gate resolved 2026-07-26:** Harness PR #317 passed the full four-worker
 suite locally but protected run `30163867667` failed in the unrelated Mac
@@ -120,6 +123,11 @@ Swallow's independent stack continued throughout.
 misspelled local worktree path and failed before invoking the GitHub CLI. The
 corrected bounded queries immediately succeeded; no repository or external
 state changed.
+
+**LIFO gate resolved 2026-07-26:** the first focused assertion for the
+same-repository continuation contract searched one phrase across a Markdown
+line break and failed without changing external state. The test now matches
+the stable unbroken clause while retaining the exact behavioral requirement.
 
 **LIFO gate active 2026-07-26:** Linux `harness doctor` reports
 `codex_rules=not-installed` on every host even though T-304 intentionally
