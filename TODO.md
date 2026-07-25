@@ -87,11 +87,7 @@ Next free ID: T-313.
 1. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
-2. Recreate T-310's documentation-only closeout from current `main`; preserve
-   only the acceptance appendix and compact current ledger result, because old
-   PR #311 conflicts solely in the heavily advanced `TODO.md`. Do not
-   force-push or merge that stale history.
-3. Continue T-196 only at its exact time/identity gates: AB and AB2 are now
+2. Continue T-196 only at its exact time/identity gates: AB and AB2 are now
    2/8 with next-week successors waiting; retry RI accounting ID `7242`
    without touching successor `10386`, and inspect AL ID `4238363` only after
    its later eligibility.
@@ -572,83 +568,6 @@ Students T-004, Website T-207, and Swallow SW-018 are independently closed;
 continue any newly discovered repository-local stack without waiting on
 another repository.
 
-### T-310 — Make Codex resilient to transient service failures
-
-**Phase:** validating; implementation complete locally.
-
-**LIFO publication gate active 2026-07-26:** functional PR #310 is already
-merged and fleet-synchronized, and old closeout PR #311 now has a passing
-protected check. Its four documentation-only commits are 46 commits behind
-current `main`; a read-only merge-tree probe found the expected conflict only
-in `TODO.md`, while the acceptance appendix applies independently. Create a
-fresh branch from current `main`, add the appendix, compact T-310 to its final
-result, publish through protected CI, then close superseded PR #311. Do not
-force-push or transplant the stale task-board compaction.
-
-Implement a portable foreground `harness codex-resilient` supervisor for the
-existing tmux topology. It must launch through `bin/harness-codex`, recover
-only by resuming a saved chat without a prompt, gate retries with Codex's
-redacted native doctor, and use bounded exponential backoff with jitter. Exit
-0, operator signals, and local authentication/configuration/installation/state
-failures stop rather than loop. Runtime state must be value-free, mode 0600,
-atomically replaced, exclusively owned, and contain no captured terminal or
-diagnostic output.
-
-Support fresh, repository-most-recent, globally-most-recent, and explicit
-session selection. Explicit IDs are preferred; `--last` requires the existing
-one-active-Codex-per-checkout contract. Keep the process in the foreground and
-install no service or owner configuration. Do not interrupt or replace any
-currently running Codex during rollout; adopt it at the next deliberate tmux
-restart.
-
-The complete frozen plan, risk boundaries, rollback, and acceptance gates are
-in `docs/plans/t310-codex-service-resilience.md`. Work is isolated on
-`task/t-310-codex-resilience` from clean/current `c9926be`.
-
-The portable foreground supervisor, CLI route, owner documentation, durable
-no-replay rule, and reboot-recovery integration are implemented. Focused
-fixtures pass fresh/repository/global/explicit selection, resume-without-prompt,
-native-doctor gating, authentication and usage-error stops, terminal signals,
-15–300-second backoff, 15-minute reset, bounded Darwin paths, live/stale lock
-ownership, safe status, and value-free mode-0600 state. The updated
-reboot-recovery skill validates and its focused suite accepts both legacy Codex
-and supervised backoff panes. Shell syntax, warning-level ShellCheck, and
-`git diff --check` pass.
-
-Next run the complete phase-one suite, independently inspect the final diff,
-fetch/integrate current `origin/main`, commit and publish through protected CI,
-then guarded-sync clean managed checkouts. Do not interrupt active Codex
-processes; the standard supervisor takes effect at each next deliberate tmux
-creation.
-
-The first complete-suite attempt from the isolated linked worktree is not
-authoritative: five legacy fixtures require `.git` to be a directory and
-rejected the worktree's normal `.git` file; two existing parallel macOS timing
-fixtures also failed. The new supervisor suite and reboot-recovery suite both
-passed in that run. Retry is safe because the suite changes no live target.
-Commit the focused-validated tree, create a disposable full clone with a real
-`.git` directory, and rerun the complete suite there, sequentially if the
-known parallel timing fixtures recur.
-
-The authoritative rerun from disposable full clone
-`/tmp/t310-validation.nBf3TH` passed all focused shards and every phase-one
-integration gate with `HARNESS_TEST_JOBS=1`. The clone contained 902 entries
-and 22,220,376 bytes; guarded deletion manifest
-`/tmp/t310-validation-delete.manifest` revalidated it, deleted only that clone,
-and proved protected anchors unchanged and the target absent. The manifest was
-then exact-unlinked. No validation residue remains.
-
-Final review tightened strict state-schema validation and kept the doctor
-temporary-file identity in the parent supervisor so its exit trap can retain
-cleanup responsibility on an unlink failure. The new supervisor and updated
-reboot suites passed again. A second full-clone run passed every T-310 and
-integration check but hit the previously documented, unrelated
-`test-personal-macos-ssh-supervisor.sh` 30-second watchdog cleanup race; that
-exact suite passed immediately in isolation. The earlier authoritative
-complete suite remains green, and protected CI is the remaining authority.
-The second clone (902 entries, 22,148,614 bytes) and its manifest were removed
-through the same verified guarded workflow with no residue.
-
 ### T-309 — Canonicalize fleet-health probing
 
 **Phase:** complete.
@@ -952,6 +871,15 @@ Evidence is in `docs/backup-lifecycle-phase2.md`, `docs/home-backup.md`, and
 
 ## Completed anchors
 
+- **T-310:** implemented portable foreground Codex transient-service
+  resilience in functional PR #310, merged as `e9c3e06`. The supervisor
+  resumes the same saved chat without replaying a prompt, gates retries through
+  native doctor, uses bounded backoff, and keeps only value-free private
+  runtime state. Protected CI, guarded eleven-node fleet sync, and four Mac
+  context refreshes passed. The stale closeout PR #311 was superseded after its
+  protected check recovered because its only conflict was obsolete task-board
+  history. Acceptance evidence and rollback are in
+  `docs/plans/t310-codex-service-resilience.md`.
 - **T-312:** completed post-hardening housekeeping in protected Harness PR
   #329 (`328968b`) and Website PR #34 (`b527463`). Guarded cleanup removed
   seven merged worktrees, four eligible arg0 directories, two Students
