@@ -108,6 +108,26 @@ coherent commit is impossible, and push the issue onto that repository's TODO
 as a LIFO item. Resolve the new top item when safe, record the pop, resume the
 interrupted task, and keep all repositories progressing independently.
 
+**LIFO gate resolved 2026-07-25:** after the Claude 2.1.220 increment, the full
+suite again passed all 73 focused suites and guarded-delete tests but a later
+tool-plan integration exited with `tool plan contains blocked paths`. The
+isolated managed-Claude predecessor plan passes. The cause was a concurrent
+task-ledger edit that made the source checkout dirty after its focused suites
+had passed but before the later apply fixture enforced the clean-checkout
+gate—not a transaction defect. A mode-0600 trace confirmed the same gate and
+was exact-unlinked. Commit the ledger, keep the checkout unchanged during the
+next run, and restart the complete gate; no installation or external state
+changed.
+
+**LIFO gate resolved 2026-07-25:** the official Claude native installer was
+downloaded once to a mode-0600 temporary file for required review, but the
+first syntax check used POSIX `sh -n`; the artifact uses Bash syntax and that
+check failed before execution. Bash syntax passes, but the script downloads and
+executes the current native binary's opaque `install` subcommand, so it does
+not satisfy the reviewed-installer exception. It was not run and was
+exact-unlinked. D-005 will instead use checksum-pinned direct native binaries
+and a repository-managed atomic launcher transaction.
+
 **LIFO gate resolved 2026-07-25:** the local Claude predecessor smoke passed, but
 its cleanup attempted obsolete guarded-delete arguments. No deletion occurred;
 the exact synthetic directory `/tmp/claude-plan.NaSyB1` remains and contains
