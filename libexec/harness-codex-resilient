@@ -218,8 +218,25 @@ if [ "$mode" = status ]; then
     case "$phase:$stored_selector:$supervisor_pid:$attempt:$delay:$reason" in
         *[!A-Za-z0-9._:-]*) die "Codex resilient state file is malformed" ;;
     esac
+    case "$phase" in running|backoff|stopped) ;; *)
+        die "Codex resilient state file is malformed"
+        ;;
+    esac
+    case "$stored_selector" in new|last|last-all|explicit) ;; *)
+        die "Codex resilient state file is malformed"
+        ;;
+    esac
     case "$supervisor_pid" in
         ''|*[!0-9]*) die "Codex resilient state file is malformed" ;;
+    esac
+    case "$attempt:$delay" in
+        *[!0-9:]*) die "Codex resilient state file is malformed" ;;
+    esac
+    case "$reason" in
+        active|clean-exit|operator-signal|client-usage|transient-exit|\
+        doctor-failed|local-auth|local-config|local-installation|local-state)
+            ;;
+        *) die "Codex resilient state file is malformed" ;;
     esac
     owner_pid=$supervisor_pid
     case "$phase" in
@@ -405,13 +422,14 @@ doctor_status() {
 }
 
 doctor_gate() {
+    gate=
     doctor_file=$(mktemp "$state_root/.doctor.XXXXXX") ||
         die "Codex resilient cannot allocate doctor state"
     chmod 600 "$doctor_file"
     if ! "$launcher" doctor --json >"$doctor_file" 2>/dev/null; then
         unlink "$doctor_file"
         doctor_file=
-        printf 'doctor-failed\n'
+        gate=doctor-failed
         return
     fi
     for check in \
@@ -426,13 +444,13 @@ doctor_gate() {
         if [ "$check_status" != ok ]; then
             unlink "$doctor_file"
             doctor_file=
-            printf '%s\n' "$failure"
+            gate=$failure
             return
         fi
     done
     unlink "$doctor_file"
     doctor_file=
-    printf 'transient-exit\n'
+    gate=transient-exit
 }
 
 now_epoch() {
@@ -483,7 +501,7 @@ while :; do
             ;;
     esac
 
-    gate=$(doctor_gate)
+    doctor_gate
     if [ "$gate" != transient-exit ]; then
         write_state stopped "$attempt" 0 "$gate"
         printf 'CODEX_RESILIENT status=stopped reason=%s name=%s\n' \
