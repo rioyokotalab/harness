@@ -156,13 +156,14 @@ failed its ShellCheck warning gate on three bare-word assignments before any
 audit ran. Quoted literal assignments passed syntax and ShellCheck; the helper
 then ran value-free and was exact-unlinked from every remote after use.
 
-**LIFO gate active 2026-07-26:** the known off/off Mac firewall and stealth
+**LIFO gate resolved 2026-07-26:** the known off/off Mac firewall and stealth
 posture is not represented in `macos-inventory` or `macos-doctor`, so routine
-readiness can report zero warnings while D-003 remains unresolved. Add only
-value-minimized enabled/disabled/unavailable facts, warn rather than fail while
-administrator action is deferred, cover parsing and malformed facts, and
-validate on all four Macs. Continue safe Harness work below the administrator
-gate.
+readiness previously reported zero warnings while D-003 remained unresolved.
+PR #318 added value-minimized five-setting facts, warning-only posture checks,
+and parsing/malformed coverage; protected CI passed and guarded fleet sync
+advanced all 11 remotes to `a9569f8`. Every Mac now reports exactly the expected
+two disabled firewall/stealth warnings while signed built-in/downloaded access
+passes and block-all remains disabled.
 
 **LIFO gate resolved 2026-07-26:** the first passing firewall visibility
 increment covered global and stealth state but omitted the signed built-in,
@@ -385,10 +386,11 @@ Decision D-006 is confirmed: use only existing narrow non-interactive
 authority; stage exact reviewed helpers and top-priority TODO blockers for
 password-, TCC-, or root-gated work, then continue independent work.
 
-**Next action:** add value-minimized Mac firewall/stealth visibility while the
-administrator-authentication helper remains deferred. Students T-004, Website
-T-207, and Swallow SW-018 are independently closed; continue any newly
-discovered repository-local stack without waiting on another repository.
+**Next action:** continue safe hardening and scheduled backup checkpoints below
+the deferred Codex user-config policy decision and Mac administrator helper.
+Students T-004, Website T-207, and Swallow SW-018 are independently closed;
+continue any newly discovered repository-local stack without waiting on
+another repository.
 
 ### T-310 — Make Codex resilient to transient service failures
 
