@@ -111,6 +111,16 @@ top item requires unavailable owner or administrator action, leave it deferred,
 continue the next highest safe independent item in that same repository, and
 never cross it for dependent work.
 
+**LIFO gate active 2026-07-26:** AL's managed wrapper installed successfully,
+doctor passed, Codex stayed at 0.145.0 with process count unchanged, and the
+managed package digest reported `KEEP`; however, that agent plan invoked the
+package launcher directly for its version check and left one young expected
+arg0 directory, bypassing the stable wrapper. Preserve the young state. When a
+current managed wrapper has already passed doctor, run only the version probe
+through the stable wrapper while continuing to hash the original package tree;
+cover zero-residue wrapped planning and repeat AL validation after protected
+publication.
+
 **LIFO gate active 2026-07-26:** publishing the declared-storage-link fix to
 the already-merged PR #321 head name was rejected non-fast-forward because the
 remote task branch retains its pre-rebase history. Nothing changed remotely
