@@ -115,7 +115,10 @@ else
     private_profile=invalid
 fi
 
-if [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ]; then
+if [ ! -L "$HARNESS_ROOT/.git" ] &&
+    { [ -d "$HARNESS_ROOT/.git" ] || [ -f "$HARNESS_ROOT/.git" ]; } &&
+    [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" = \
+        "$(CDPATH='' cd -- "$HARNESS_ROOT" && pwd -P)" ]; then
     harness_checkout=present
 else
     harness_checkout=invalid

@@ -20,7 +20,8 @@ safe_id() {
 }
 
 validate_checkout() {
-    [ -d "$HARNESS_ROOT/.git" ] && [ ! -L "$HARNESS_ROOT/.git" ] ||
+    [ ! -L "$HARNESS_ROOT/.git" ] &&
+        { [ -d "$HARNESS_ROOT/.git" ] || [ -f "$HARNESS_ROOT/.git" ]; } ||
         die "tmux configuration requires a Git harness checkout"
     [ "$(git -C "$HARNESS_ROOT" rev-parse --show-toplevel 2>/dev/null)" = \
         "$(CDPATH='' cd -- "$HARNESS_ROOT" && pwd -P)" ] ||
