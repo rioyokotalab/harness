@@ -137,11 +137,22 @@ administrator action is deferred, cover parsing and malformed facts, and
 validate on all four Macs. Continue safe Harness work below the administrator
 gate.
 
-**LIFO gate active 2026-07-26:** the first passing firewall visibility
+**LIFO gate resolved 2026-07-26:** the first passing firewall visibility
 increment covered global and stealth state but omitted the signed built-in,
 signed downloaded-app, and block-all settings that are part of D-003's access
-preservation contract. No live state changed. Extend the same value-minimized
-schema and doctor before publication, then rerun the focused and full gates.
+preservation contract. The schema, doctor, enabled/disabled/unavailable/unknown
+parsers, malformed-fact refusal, and warning tests now cover all five settings;
+focused tests and a second full four-worker suite pass. No firewall state
+changed.
+
+**LIFO gate resolved 2026-07-26:** review of the deferred Mac helper found that
+its loose parser treated query failure as off, it did not verify signed or
+block-all policy, and it did not explicitly disable block-all before enabling
+the firewall. None had been applied. All four mode-0700 helpers were
+transactionally replaced with checksum
+`f83690717bc2826af203336196d8ce73b26adc33939762bb325ed66de684d33b`;
+strict plans prove the current off/off/on/on/off baseline and the target
+on/on/on/on/off posture. Staging residue and the local helper are absent.
 
 **LIFO gate resolved 2026-07-26:** Linux `harness doctor` reported
 `codex_rules=not-installed` on every host even though T-304 intentionally
@@ -170,12 +181,13 @@ protected CI passed and the merged command now completes on AL with
 **LIFO gate active 2026-07-26:** all four Mac firewall/stealth plans remain
 off/off and `sudo -n` is unavailable. An identical reviewed, credential-free
 `~/run_this.sh` is staged mode 0700 on Aist, Home, Office, and Riken; its
-SHA-256 is `536627e7068c036ae36c246b0f93e0c5267ff15e3e42658efb6a5f89a2cf6706`.
-It enables signed and built-in access before the firewall and stealth mode,
-validates on/on, and offers an explicit off/off rollback. Administrator
-authentication is the only remaining gate; do not bypass it, and exact-unlink
-each helper after successful execution and route validation. Continue the
-other independent stacks.
+SHA-256 is `f83690717bc2826af203336196d8ce73b26adc33939762bb325ed66de684d33b`.
+It strictly verifies all five settings, enables signed and built-in access,
+disables block-all before the firewall, enables stealth mode, validates
+on/on/on/on/off, and offers an explicit off/off/on/on/off rollback.
+Administrator authentication is the only remaining gate; do not bypass it,
+and exact-unlink each helper after successful execution and route validation.
+Continue safe work in this repository and every other independent stack.
 
 **LIFO gate resolved 2026-07-26:** Office had no running XQuartz process,
 local X11 client, or TCP 6000 listener. Its XQuartz 2.8+ preference domain now
