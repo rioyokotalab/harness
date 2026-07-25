@@ -111,3 +111,9 @@ selects it automatically. Rollback remains stopping the foreground supervisor
 and launching `bin/harness-codex` directly. No credential, product
 configuration, remote-control process, native Codex installation, or
 persistent service changed.
+
+Closeout PR #311's initial Harness CI run `30157956314` completed with
+`startup_failure`, zero jobs, and no log artifact. Therefore it provided no
+test result and made no repository or fleet change. The failure is safe to
+supersede through the ordinary protected run triggered by this evidence
+checkpoint; no manual workflow rerun was dispatched.
