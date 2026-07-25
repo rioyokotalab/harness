@@ -616,8 +616,7 @@ through the same verified guarded workflow with no residue.
 
 ### T-309 — Canonicalize fleet-health probing
 
-**Phase:** implementing after the recorded owner-approved T-311 execution
-window.
+**Phase:** publishing after complete local and live validation.
 
 Routine fleet health already requires AL to pass both
 `harness al-session --status` and a normal multiplexed `ssh al true`. A
@@ -678,6 +677,15 @@ aliases, suppresses private SSH diagnostics, and returns nonzero if any logical
 node fails. The focused fixture passes healthy and mixed-failure cases.
 Register the suite, validate shell/static contracts, run the full phase-one
 gate, then perform one live matched fleet check before protected publication.
+
+The suite is registered and passes with shell syntax, warning-level ShellCheck,
+the focused-runner contract, source contract, whitespace validation, and the
+complete four-worker portable phase-one gate. A live matched run reports every
+Linux logical node ready—including both ABQ routes—every Mac ready through
+both independent routes, and AL ready through managed status plus its normal
+multiplexed command. Publish through protected CI, merge, guarded-sync the 11
+clean remote checkouts, perform the required four Mac context refreshes, and
+rerun the installed command from Local.
 
 ### T-303 — Observe intermittent NFS I/O latency
 
