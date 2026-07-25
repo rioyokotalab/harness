@@ -43,7 +43,7 @@ Next free ID: T-312.
   watchdog state, active Codex sessions, live agent sockets, and rollback
   transaction evidence remain.
 - The Codex 0.145.0 NFS arg0 launcher wrapper and lock-aware guarded
-  housekeeping remain installed. Its rollback is
+  housekeeping remain installed on Local's standalone release. Its rollback is
   `harness codex-arg0-wrapper --rollback`; an official Codex upgrade requires
   fresh validation before reinstalling the version-scoped wrapper.
 - Codex and Claude now use only project-scoped policy, permission settings,
@@ -110,6 +110,38 @@ interrupted task, and keep all repositories progressing independently. If the
 top item requires unavailable owner or administrator action, leave it deferred,
 continue the next highest safe independent item in that same repository, and
 never cross it for dependent work.
+
+**LIFO gate active 2026-07-26:** the first full suite ran with the coherent
+managed-wrapper increment still uncommitted. The tmux and terminfo fixtures
+correctly refused their synthetic apply paths because they require a clean
+committed checkout; every other focused suite, including the changed wrapper
+suite, passed. Commit only this reviewed increment, rerun the full suite from
+that clean commit, and pop the gate if it passes.
+
+**LIFO gate resolved 2026-07-26:** after the semver fix, the managed invocation
+fixture expected postflight cleanup without creating the pre-existing arg0 root
+that activates wrapper baseline tracking. AL has that root, and the standalone
+fixture already models it. The managed fixture now establishes the same private
+root; both success and preserved-exit-status failure paths clean their observed
+residue, and focused syntax, ShellCheck, and transaction tests pass. No
+production or external state changed.
+
+**LIFO gate resolved 2026-07-26:** the first managed-layout focused test failed
+before mutation because `normalized_semver` is private to `harness-agent` and
+was not available to the wrapper command. The wrapper now carries the same
+strict local normalized-semver predicate; syntax, ShellCheck, and both layout
+transactions pass.
+
+**LIFO gate active 2026-07-26:** all 12 systems run Codex 0.145.0, but AL alone
+emits the stale-arg0 cleanup warning. Its lock-aware housekeeping plan reports
+`live=0 eligible=0 young=2 unexpected=0`, so nothing is currently safe to
+remove. The wrapper doctor fails closed because AL's harness-managed npm
+launcher lives under `~/.local/opt/agents/codex/0.145.0/linux-aarch64/`, while
+the version-scoped wrapper currently recognizes only Local's official
+standalone release tree. Extend the wrapper transaction and tests to accept
+only the exact managed npm layout without weakening standalone validation;
+publish and fleet-sync that increment, then pilot it on AL without stopping
+Codex processes. Never remove young arg0 state directly.
 
 **LIFO gate resolved 2026-07-26:** Harness PR #317 passed the full four-worker
 suite locally but protected run `30163867667` failed in the unrelated Mac
