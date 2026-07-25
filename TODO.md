@@ -130,7 +130,12 @@ never auto-merge dependency updates.
 Swallow is now clean and current at `76de582`, so an isolated Swallow
 hardening worktree may be created after the interview and explicit `go`.
 
-**Next action:** ask D-003 only. Do not mutate target state until every
+Decision D-003 is confirmed: enable the Mac firewall and stealth mode while
+preserving signed/built-in access, disable Office's X11 TCP listener, and
+validate routes and managed ownership one Mac at a time. Administrator changes
+remain gated by D-006.
+
+**Next action:** ask D-004 only. Do not mutate target state until every
 decision is frozen and the owner gives explicit `go`.
 
 ### T-310 — Make Codex resilient to transient service failures
