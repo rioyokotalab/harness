@@ -119,21 +119,25 @@ command must encode target-specific contracts:
 - `abci_login`, `alps_login`, web, and retired aliases are excluded from the
   routine summary.
 
-Expose deterministic per-node machine-readable results plus the established
-compact summary that names only failures. Keep fresh-authentication diagnosis
-separate and explicit so certificate renewal readiness can never be confused
-with current managed-session reachability.
+Use bounded parallelism but emit results in canonical inventory order, return
+nonzero if any logical node fails, and expose deterministic per-node
+machine-readable results plus the established compact summary that names only
+failures. Preserve only value-free route/error classifications; never relay
+raw SSH diagnostics. Keep fresh-authentication diagnosis separate and explicit
+so certificate renewal readiness can never be confused with current
+managed-session reachability.
 
 Add failing focused fixtures first. They must prove that AL receives no
 `ControlMaster`/`ControlPath` override, both ABQ routes are required, both
 routes of every Mac are required, excluded transports are never probed,
-timeouts/SSH failures remain failures, and output is value-free. Then add the
-command, CLI routing/help, focused suite registration, documentation, and the
-AGENTS contract requiring the canonical command. Run ShellCheck, the focused
-suite, `tests/test-phase1.sh`, protected CI, and a live matched case where the
-managed AL route passes while one separately controlled fresh non-multiplexed
-diagnostic requires renewal. Publish and guarded-sync only clean managed
-checkouts.
+timeouts/SSH failures remain failures, result order is stable despite
+concurrency, aggregate exit status is nonzero on any failure, and output is
+value-free. Then add the command, CLI routing/help, focused suite registration,
+documentation, and the AGENTS contract requiring the canonical command. Run
+ShellCheck, the focused suite, `tests/test-phase1.sh`, protected CI, and a live
+matched case where the managed AL route passes while one separately controlled
+fresh non-multiplexed diagnostic requires renewal. Publish and guarded-sync
+only clean managed checkouts.
 
 **Acceptance:** routine fleet health cannot report AL down solely because a
 fresh daily CSCS certificate is unavailable; all logical-node and route-count
