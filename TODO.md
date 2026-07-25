@@ -129,6 +129,18 @@ same-repository continuation contract searched one phrase across a Markdown
 line break and failed without changing external state. The test now matches
 the stable unbroken clause while retaining the exact behavioral requirement.
 
+**LIFO gate active 2026-07-26:** value-free `agent-config --doctor` reports an
+unmanaged `~/.codex/config.toml` collision only on nodes with active Codex
+sessions: Local, T4, Aist, Home, Office, and Riken. AB, AB2, RI, AL, RC, and
+ABQ retain the intended global-absence state. The current official Codex manual
+documents this path as the shared CLI/app user layer and says provider,
+notification, telemetry, profile, and some plugin settings cannot live in
+project config. Do not inspect, delete, or rewrite these live product files or
+stop sessions. At owner review, choose between revising T-304 to permit a
+minimal product-owned user layer or removing the files after sessions exit,
+knowing Codex may recreate them. Continue safe Harness work below this policy
+decision.
+
 **LIFO gate resolved 2026-07-26:** a value-free SSH metadata audit found modes
 0640 on AB/AB2 client configs, 0644 on AL's client config, and 0644 on RC plus
 all four Macs' `authorized_keys`; every path is a current-user-owned,
