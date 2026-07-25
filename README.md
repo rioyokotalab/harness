@@ -157,12 +157,13 @@ ssh HOST 'sh -s -- --host HOST' < libexec/harness-inventory
 ### Check fleet connectivity
 
 ```bash
-harness connection-monitor --once
+harness fleet-health
 ```
 
 Routine health reports cover the managed Linux nodes and both routes for every
 Mac. Transport-only `abci_login` and `alps_login` are omitted unless the
-transport itself is under investigation.
+transport itself is under investigation. Use `harness connection-monitor
+--once` separately when diagnosing or recovering Mac tunnel pairs.
 
 To reduce repeated CSCS authentication while retaining the personal `al`
 account and MFA policy, keep one multiplexed Daint transport alive:

@@ -235,6 +235,8 @@ guessing.
   not evidence of absence.
 - Use `docs/fleet-inventory.md` as the cold-start reference for logical aliases,
   SSH entries, usernames, hostnames, and operating systems.
+- Use `harness fleet-health` for routine fleet-health reports; do not replace
+  its target-specific contracts with agent-authored SSH loops.
 - In compact fleet-health reports, count `abq` as a Linux node and mark it
   ready only when both `abq` and `abq2` routes pass. Count only aist, home,
   office, and riken in the Mac-route total.

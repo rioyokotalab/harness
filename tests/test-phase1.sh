@@ -81,6 +81,7 @@ for script in \
     "$ROOT/libexec/harness-restic-primary" \
     "$ROOT/libexec/harness-restic-schedule" \
     "$ROOT/libexec/harness-fleet-sync" \
+    "$ROOT/libexec/harness-fleet-health" \
     "$ROOT/libexec/harness-connection-monitor" \
     "$ROOT/libexec/harness-al-session" \
     "$ROOT/libexec/harness-al-session-runner" \
@@ -256,6 +257,8 @@ if [ "${HARNESS_TEST_JOBS:-auto}" = legacy ]; then
     fail "scientific library readiness focused suite"
 "$ROOT/tests/test-fleet-sync.sh" >/dev/null ||
     fail "fleet sync focused suite"
+"$ROOT/tests/test-fleet-health.sh" >/dev/null ||
+    fail "canonical fleet health focused suite"
 "$ROOT/tests/test-connection-monitor.sh" >/dev/null ||
     fail "managed Mac connection monitor focused suite"
 "$ROOT/tests/test-checkpoint-restart.sh" >/dev/null ||
