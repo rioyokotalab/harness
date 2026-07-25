@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eu
 
-ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 SKILL=$ROOT/shared/skills/fleet-repository-hardening/SKILL.md
 CHECKLIST=$ROOT/shared/skills/fleet-repository-hardening/references/audit-checklist.md
 OPENAI=$ROOT/shared/skills/fleet-repository-hardening/agents/openai.yaml

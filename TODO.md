@@ -108,6 +108,13 @@ coherent commit is impossible, and push the issue onto that repository's TODO
 as a LIFO item. Resolve the new top item when safe, record the pop, resume the
 interrupted task, and keep all repositories progressing independently.
 
+**LIFO gate resolved 2026-07-25:** the third full phase-one run passed all 73
+focused suites, then stopped at ShellCheck warning SC1007 in the new
+hardening-skill test because `CDPATH= cd` contains an ambiguous empty
+assignment. The test now uses the repository's canonical `CDPATH='' cd`
+spelling; its focused contract, ShellCheck warning gate, and whitespace check
+pass. No external state changed; restart the full suite.
+
 **LIFO gate resolved 2026-07-25:** the second full phase-one run reached 65
 focused passes and five failures. A linked-worktree fixture copied its `.git`
 pointer and then created an unintended empty local commit named `baseline` on
