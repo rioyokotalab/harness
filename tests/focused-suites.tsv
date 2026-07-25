@@ -17,6 +17,7 @@ tests/test-codex-arg0-wrapper.sh|Codex arg0 NFS wrapper focused suite
 tests/test-codex-resilient.sh|Codex transient-service supervisor
 tests/test-codex-claude-cowork-skill.sh|Codex-Claude cowork skill protocol
 tests/test-fleet-repository-hardening-skill.sh|fleet and repository hardening skill
+tests/test-hardening-audit.sh|value-free repository hardening preflight
 tests/test-local-mpi-profile.sh|local MPI profile focused suite
 tests/test-personal-macos-profile.sh|personal macOS private-profile focused suite
 tests/test-personal-macos-inventory.sh|personal macOS inventory focused suite

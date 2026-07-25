@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+"""Emit a value-free, read-only repository hardening preflight."""
+
+from __future__ import annotations
+
+import argparse
+import re
+import subprocess
+from pathlib import Path
+
+
+def git(repo: Path, *arguments: str, check: bool = True) -> subprocess.CompletedProcess[bytes]:
+    return subprocess.run(
+        ["git", "-C", str(repo), *arguments],
+        check=check,
+        capture_output=True,
+    )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        prog="harness hardening-audit",
+        description="value-free read-only repository hardening preflight",
+    )
+    parser.add_argument("--repo", default=".", help="Git worktree to inspect")
+    args = parser.parse_args()
+
+    probe = git(Path(args.repo), "rev-parse", "--show-toplevel", check=False)
+    if probe.returncode or not probe.stdout.strip():
+        parser.error("repository is not a Git worktree")
+    root = Path(probe.stdout.decode().strip())
+
+    tracked = [
+        Path(item.decode())
+        for item in git(root, "ls-files", "-z").stdout.split(b"\0")
+        if item
+    ]
+    tracked_set = {path.as_posix() for path in tracked}
+    dirty = sum(
+        bool(item)
+        for item in git(root, "status", "--porcelain=v1", "-z").stdout.split(b"\0")
+    )
+
+    branch_probe = git(root, "symbolic-ref", "-q", "HEAD", check=False)
+    branch = "attached" if branch_probe.returncode == 0 else "detached"
+    upstream_probe = git(root, "rev-parse", "--verify", "@{upstream}", check=False)
+    ahead = behind = 0
+    upstream = "absent"
+    if upstream_probe.returncode == 0:
+        upstream = "present"
+        counts = git(root, "rev-list", "--left-right", "--count", "HEAD...@{upstream}")
+        ahead, behind = (int(value) for value in counts.stdout.decode().split())
+
+    workflows = [
+        path
+        for path in tracked
+        if path.parent.as_posix() == ".github/workflows"
+        and path.suffix in {".yml", ".yaml"}
+    ]
+    unpinned_actions = 0
+    action_pattern = re.compile(r"^\s*-\s*uses:\s*([^#\s]+)", re.MULTILINE)
+    for relative in workflows:
+        text = (root / relative).read_text(encoding="utf-8", errors="replace")
+        for match in action_pattern.finditer(text):
+            action = match.group(1)
+            if action.startswith("./") or action.startswith("docker://"):
+                continue
+            reference = action.rsplit("@", 1)[-1] if "@" in action else ""
+            if not re.fullmatch(r"[0-9a-f]{40}", reference):
+                unpinned_actions += 1
+
+    sensitive_names = re.compile(
+        r"(^|/)(?:\.env(?:\.|$)|private|credentials?|secrets?|\.runtime)(?:/|$)"
+        r"|(?:^|/)[^/]+\.(?:key|pem|p12)$",
+        re.IGNORECASE,
+    )
+    tracked_sensitive = sum(
+        1 for path in tracked if sensitive_names.search(path.as_posix())
+    )
+    todo = root / "TODO.md"
+    todo_bytes = todo.stat().st_size if todo.is_file() else 0
+
+    fields = {
+        "schema": 1,
+        "repo": "ready",
+        "worktree": "clean" if dirty == 0 else "dirty",
+        "dirty_entries": dirty,
+        "branch": branch,
+        "upstream": upstream,
+        "ahead": ahead,
+        "behind": behind,
+        "instructions": "present" if (root / "AGENTS.md").is_file() else "absent",
+        "todo": "present" if todo.is_file() else "absent",
+        "todo_bytes": todo_bytes,
+        "workflows": len(workflows),
+        "unpinned_actions": unpinned_actions,
+        "dependabot": (
+            "present"
+            if {".github/dependabot.yml", ".github/dependabot.yaml"} & tracked_set
+            else "absent"
+        ),
+        "tracked_sensitive_paths": tracked_sensitive,
+    }
+    findings = sum(
+        (
+            dirty > 0,
+            fields["instructions"] == "absent",
+            fields["todo"] == "absent",
+            unpinned_actions > 0,
+            tracked_sensitive > 0,
+        )
+    )
+    print("HARDENING_AUDIT " + " ".join(f"{key}={value}" for key, value in fields.items()))
+    print(f"END hardening_audit findings={findings}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

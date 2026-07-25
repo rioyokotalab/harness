@@ -75,6 +75,7 @@ for script in \
     "$ROOT/libexec/harness-codex-resilient" \
     "$ROOT/libexec/codex-arg0-launcher-wrapper" \
     "$ROOT/libexec/harness-storage-readiness" \
+    "$ROOT/libexec/harness-hardening-audit" \
     "$ROOT/libexec/harness-replica" \
     "$ROOT/libexec/harness-repository-fingerprint" \
     "$ROOT/libexec/harness-restic" \

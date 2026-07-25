@@ -127,6 +127,18 @@ used an unversioned `python` command, which is intentionally absent on Local.
 No file was created by that attempt. The exact system skill-creator succeeded
 with `python3`, and the new skill records that portable entry point.
 
+**LIFO gate resolved 2026-07-25:** overlapping `sed` ranges made the unknown
+command diagnostic appear twice during review. Direct inspection proved the
+source contains exactly one line, so no pre-existing dispatcher bug exists.
+The hardening audit test still asserts diagnostic cardinality.
+
+**LIFO gate resolved 2026-07-25:** the first audit-command fixture reported zero
+unpinned Actions because its parser expected `uses:` without YAML's list-item
+dash. The value-free trace confirmed every other field and guarded cleanup.
+The parser now accepts required `- uses:` syntax while retaining
+immutable-commit enforcement; the focused test and a live value-free audit
+pass. T-311 popped back to command closeout.
+
 Read-only discovery found P0 risks in the students cryptography lock and
 Swallow's absent protected-main/CI controls; repository-default Actions
 permissions in Harness and Swallow are also overbroad. All Mac firewalls are
