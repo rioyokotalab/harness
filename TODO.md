@@ -118,7 +118,11 @@ The complete baseline, six-decision register, execution order, safety and
 rollback gates, acceptance criteria, evidence, and deadline protocol are in
 `docs/plans/t311-fleet-repository-hardening.md`.
 
-**Next action:** ask D-001 only. Do not mutate target state until every
+Decision D-001 is confirmed: use a one-review, strict-CI, linear-history,
+conversation-resolution floor for non-admin writers with an owner/admin
+bypass; preserve Students' stronger code-owner and last-push gates.
+
+**Next action:** ask D-002 only. Do not mutate target state until every
 decision is frozen and the owner gives explicit `go`.
 
 ### T-310 — Make Codex resilient to transient service failures
