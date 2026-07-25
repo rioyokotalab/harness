@@ -120,7 +120,7 @@ if [ -L "$stable_link" ] && [ "$(readlink "$stable_link")" = "$installed_binary"
     [ -f "$installed_binary" ] && [ ! -L "$installed_binary" ] && [ -x "$installed_binary" ]; then
     managed_exact=1
 fi
-if [ "$managed_exact" -eq 0 ] && [ "$tool_name" = uv ] && [ -L "$stable_link" ]; then
+if [ "$managed_exact" -eq 0 ] && [ -L "$stable_link" ]; then
     old_installed_binary=$(readlink "$stable_link")
     case "$old_installed_binary" in
         "$HOME/.local/opt/$tool_name/"*"/$artifact_os-$artifact_arch/$binary")
@@ -132,7 +132,10 @@ if [ "$managed_exact" -eq 0 ] && [ "$tool_name" = uv ] && [ -L "$stable_link" ];
                 [ -f "$old_installed_binary" ] && [ ! -L "$old_installed_binary" ] &&
                 [ -x "$old_installed_binary" ] &&
                 [ "$(find "$old_install_dir" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')" -eq 1 ] &&
-                [ "$("$old_installed_binary" --version 2>/dev/null | sed -n '1p')" = "uv $old_version" ] &&
+                { [ "$tool_name" = uv ] &&
+                    [ "$("$old_installed_binary" --version 2>/dev/null | sed -n '1p')" = "uv $old_version" ] ||
+                  [ "$tool_name" = claude ] &&
+                    [ "$("$old_installed_binary" --version 2>/dev/null | sed -n '1p')" = "$old_version (Claude Code)" ]; } &&
                 awk -v old="$old_version" -v new="$version" 'BEGIN {
                     if (split(old, a, ".") != 3 || split(new, b, ".") != 3) exit 1
                     for (i = 1; i <= 3; i++) {

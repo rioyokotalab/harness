@@ -108,6 +108,22 @@ coherent commit is impossible, and push the issue onto that repository's TODO
 as a LIFO item. Resolve the new top item when safe, record the pop, resume the
 interrupted task, and keep all repositories progressing independently.
 
+**LIFO gate resolved 2026-07-25:** the local Claude predecessor smoke passed, but
+its cleanup attempted obsolete guarded-delete arguments. No deletion occurred;
+the exact synthetic directory `/tmp/claude-plan.NaSyB1` remains and contains
+only the generated fake managed-Claude layout. The current manifest protocol
+validated 9 entries/28,781 bytes, deleted that exact target, proved protected
+anchors unchanged and the target absent, and its single manifest was then
+exact-unlinked. Resume D-005.
+
+**LIFO gate resolved 2026-07-25:** official Claude 2.1.220 artifact verification
+succeeded for both Linux architectures, but the cleanup command incorrectly
+passed two exact files to POSIX `unlink`, which accepts one operand. The two
+current-user-owned mode-0600, single-link temporary artifacts remain at their
+exact discovered paths; no installation or live state changed. Each was
+exact-unlinked separately and a bounded read-only inventory proves zero
+matching residue. Resume D-005.
+
 **LIFO gate resolved 2026-07-25:** the third full phase-one run passed all 73
 focused suites, then stopped at ShellCheck warning SC1007 in the new
 hardening-skill test because `CDPATH= cd` contains an ambiguous empty

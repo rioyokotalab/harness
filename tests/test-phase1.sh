@@ -844,12 +844,24 @@ grep 'KEEP command=shellcheck source=host-provided' \
 mkdir -p "$TEMP_DIR/claude-plan-home"
 HOME="$TEMP_DIR/claude-plan-home" "$HARNESS" tool --host al --name claude \
     --facts "$ROOT/tests/fixtures/al.facts" --plan >"$TEMP_DIR/claude-arm-plan.out"
-grep 'INSTALL artifact=.*claude/2.1.207/linux-aarch64' \
+grep 'INSTALL artifact=.*claude/2.1.220/linux-aarch64' \
     "$TEMP_DIR/claude-arm-plan.out" >/dev/null || fail "Claude AArch64 artifact plan"
-grep 'sha256=02c381be3269489119287dc0b5f4b99b870d886f058918994b51e06b701dd1be' \
+grep 'sha256=e38454d73576a08a2e707f26539d73fc9ef33e890228ca5c58a2bbe810ac884d' \
     "$TEMP_DIR/claude-arm-plan.out" >/dev/null || fail "Claude AArch64 checksum plan"
 grep 'EXTRACT format=tar.gz member=package/claude binary=claude' \
     "$TEMP_DIR/claude-arm-plan.out" >/dev/null || fail "Claude extraction plan"
+claude_old_dir=$TEMP_DIR/claude-plan-home/.local/opt/claude/2.1.207/linux-aarch64
+mkdir -p "$claude_old_dir" "$TEMP_DIR/claude-plan-home/.local/bin"
+printf '%s\n' '#!/bin/sh' 'echo "2.1.207 (Claude Code)"' \
+    >"$claude_old_dir/claude"
+chmod 755 "$claude_old_dir/claude"
+ln -s "$claude_old_dir/claude" \
+    "$TEMP_DIR/claude-plan-home/.local/bin/claude"
+HOME="$TEMP_DIR/claude-plan-home" "$HARNESS" tool --host al --name claude \
+    --plan >"$TEMP_DIR/claude-arm-upgrade-plan.out"
+grep 'REPLACE command=claude from=2.1.207 to=2.1.220 predecessor=retained' \
+    "$TEMP_DIR/claude-arm-upgrade-plan.out" >/dev/null ||
+    fail "Claude managed predecessor replacement plan"
 
 mkdir -p "$TEMP_DIR/tectonic-plan-home"
 HOME="$TEMP_DIR/tectonic-plan-home" "$HARNESS" tool --host rc --name tectonic \
