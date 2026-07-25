@@ -229,4 +229,91 @@ for failure_point in official-move wrapper-move state-move; do
         fail "transaction failure left state: $failure_point"
 done
 
+managed_home=$TEMP_DIR/managed-home
+managed_version=0.145.0
+case "$(uname -m)" in
+    x86_64) managed_platform=linux-x86_64 ;;
+    aarch64) managed_platform=linux-aarch64 ;;
+    *) fail "unsupported managed fixture architecture" ;;
+esac
+managed_tree=$managed_home/.local/opt/agents/codex/$managed_version/$managed_platform
+managed_bin=$managed_tree/node_modules/@openai/codex/bin
+mkdir -p "$managed_bin" "$managed_home/.local/bin"
+cat >"$managed_bin/codex.js" <<'EOF'
+#!/bin/sh
+set -eu
+root=${CODEX_HOME:-$HOME/.codex}/tmp/arg0
+mkdir -p "$root"
+chmod 700 "${root%/*}" "$root"
+directory=$(mktemp -d "$root/codex-arg0XXXXXX")
+: >"$directory/.lock"
+for helper in apply_patch applypatch codex-execve-wrapper codex-linux-sandbox; do
+    ln -s "$0" "$directory/$helper"
+done
+printf 'managed-codex %s\n' "${1:-none}"
+exit "${FAKE_CODEX_STATUS:-0}"
+EOF
+chmod 755 "$managed_bin/codex.js"
+managed_hash=$(sha256sum "$managed_bin/codex.js" | awk '{print $1}')
+ln -s "$managed_bin/codex.js" "$managed_home/.local/bin/codex"
+ln -s "$HARNESS" "$managed_home/.local/bin/harness"
+mkdir -p "$managed_home/.codex/tmp/arg0"
+chmod 700 "$managed_home/.codex/tmp" "$managed_home/.codex/tmp/arg0"
+
+HARNESS_TESTING=1 HOME="$managed_home" \
+    "$ROOT/libexec/harness-codex-arg0-wrapper" --plan \
+    >"$TEMP_DIR/managed-plan.out"
+grep -F 'state=unwrapped action=install layout=managed-npm release=0.145.0' \
+    "$TEMP_DIR/managed-plan.out" >/dev/null || fail "managed wrapper install plan"
+HARNESS_TESTING=1 HOME="$managed_home" \
+    "$ROOT/libexec/harness-codex-arg0-wrapper" --apply \
+    >"$TEMP_DIR/managed-apply.out"
+grep -F 'action=installed layout=managed-npm release=0.145.0' \
+    "$TEMP_DIR/managed-apply.out" >/dev/null || fail "managed wrapper apply"
+HARNESS_TESTING=1 HOME="$managed_home" \
+    "$ROOT/libexec/harness-codex-arg0-wrapper" --doctor \
+    >"$TEMP_DIR/managed-doctor.out"
+grep -F 'status=ready layout=managed-npm release=0.145.0' \
+    "$TEMP_DIR/managed-doctor.out" >/dev/null || fail "managed wrapper doctor"
+[ -x "$managed_bin/codex.real" ] || fail "managed launcher not preserved"
+
+HOME="$managed_home" CODEX_HOME="$managed_home/.codex" \
+    "$managed_home/.local/bin/codex" --version >"$TEMP_DIR/managed-version.out"
+grep -F 'managed-codex --version' "$TEMP_DIR/managed-version.out" >/dev/null ||
+    fail "wrapped managed Codex output"
+[ "$(find "$managed_home/.codex/tmp/arg0" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')" -eq 0 ] ||
+    fail "managed wrapper left completed arg0 residue"
+
+if HOME="$managed_home" CODEX_HOME="$managed_home/.codex" FAKE_CODEX_STATUS=9 \
+    "$managed_home/.local/bin/codex" failure >"$TEMP_DIR/managed-failure.out"; then
+    fail "managed wrapper lost launcher failure status"
+else
+    managed_status=$?
+fi
+[ "$managed_status" -eq 9 ] || fail "managed wrapper changed launcher exit status"
+[ "$(find "$managed_home/.codex/tmp/arg0" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')" -eq 0 ] ||
+    fail "managed wrapper failure path left arg0 residue"
+
+HARNESS_TESTING=1 HOME="$managed_home" \
+    "$ROOT/libexec/harness-codex-arg0-wrapper" --rollback \
+    >"$TEMP_DIR/managed-rollback.out"
+grep -F 'action=restored layout=managed-npm release=0.145.0' \
+    "$TEMP_DIR/managed-rollback.out" >/dev/null || fail "managed wrapper rollback"
+[ "$(sha256sum "$managed_bin/codex.js" | awk '{print $1}')" = "$managed_hash" ] ||
+    fail "managed rollback changed launcher"
+[ ! -e "$managed_bin/codex.real" ] &&
+    [ ! -e "$managed_bin/.harness-arg0-wrapper.state" ] ||
+    fail "managed rollback left wrapper state"
+
+invalid_home=$TEMP_DIR/invalid-managed-home
+invalid_bin=$invalid_home/.local/opt/agents/codex/0.145.0/$managed_platform/bin
+mkdir -p "$invalid_bin" "$invalid_home/.local/bin"
+cp "$managed_bin/codex.js" "$invalid_bin/codex.js"
+ln -s "$invalid_bin/codex.js" "$invalid_home/.local/bin/codex"
+if HARNESS_TESTING=1 HOME="$invalid_home" \
+    "$ROOT/libexec/harness-codex-arg0-wrapper" --plan \
+    >"$TEMP_DIR/managed-invalid.out" 2>&1; then
+    fail "invalid managed layout was accepted"
+fi
+
 echo 'Codex arg0 wrapper tests passed'

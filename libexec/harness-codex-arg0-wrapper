@@ -12,6 +12,17 @@ usage() {
     echo 'Usage: harness codex-arg0-wrapper --plan|--apply|--doctor|--rollback' >&2
 }
 
+normalized_semver() {
+    awk -v version="$1" 'BEGIN {
+        if (version !~ /^[0-9]+\.[0-9]+\.[0-9]+$/) exit 1
+        count = split(version, part, ".")
+        if (count != 3) exit 1
+        for (i = 1; i <= 3; i++) {
+            if (part[i] !~ /^(0|[1-9][0-9]*)$/) exit 1
+        }
+    }'
+}
+
 mode=plan
 [ "$#" -le 1 ] || { usage; exit 2; }
 if [ "$#" -eq 1 ]; then
@@ -30,17 +41,42 @@ case ${HOME:-} in /*) ;; *) die "Codex arg0 wrapper requires an absolute HOME" ;
 current_uid=$(id -u)
 stable=$HOME/.local/bin/codex
 template=$HARNESS_ROOT/libexec/codex-arg0-launcher-wrapper
-[ -L "$stable" ] || die "official standalone Codex launcher link is unavailable"
-launcher=$(realpath -e -- "$stable") || die "cannot resolve official Codex launcher"
+[ -L "$stable" ] || die "version-scoped Codex launcher link is unavailable"
+launcher=$(realpath -e -- "$stable") || die "cannot resolve version-scoped Codex launcher"
 case "$launcher" in
-    "$HOME/.codex/packages/standalone/releases/"*/bin/codex) ;;
-    *) die "Codex launcher is outside the official standalone release tree" ;;
+    "$HOME/.codex/packages/standalone/releases/"*)
+        layout=standalone
+        prefix=$HOME/.codex/packages/standalone/releases/
+        relative=${launcher#"$prefix"}
+        release=${relative%%/*}
+        suffix=${relative#*/}
+        require_safe_id "$release"
+        [ "$suffix" = bin/codex ] ||
+            die "Codex launcher has an invalid standalone release layout"
+        ;;
+    "$HOME/.local/opt/agents/codex/"*)
+        layout=managed-npm
+        prefix=$HOME/.local/opt/agents/codex/
+        relative=${launcher#"$prefix"}
+        release=${relative%%/*}
+        remainder=${relative#*/}
+        platform=${remainder%%/*}
+        suffix=${remainder#*/}
+        require_safe_id "$release"
+        normalized_semver "$release" ||
+            die "managed Codex launcher version is not normalized"
+        case "$(uname -m):$platform" in
+            x86_64:linux-x86_64|aarch64:linux-aarch64) ;;
+            *) die "managed Codex launcher platform differs from this host" ;;
+        esac
+        [ "$suffix" = node_modules/@openai/codex/bin/codex.js ] ||
+            die "Codex launcher has an invalid managed npm layout"
+        ;;
+    *) die "Codex launcher is outside a supported version-scoped release tree" ;;
 esac
-release_bin=${launcher%/*}
-release_root=${release_bin%/bin}
-release=${release_root##*/}
-real_codex=$release_bin/codex.real
-state_file=$release_bin/.harness-arg0-wrapper.state
+launcher_dir=${launcher%/*}
+real_codex=$launcher_dir/codex.real
+state_file=$launcher_dir/.harness-arg0-wrapper.state
 
 is_wrapper() {
     [ -f "$launcher" ] && [ ! -L "$launcher" ] &&
@@ -65,14 +101,14 @@ field() {
 validate_installed() {
     is_wrapper || die "installed arg0 wrapper bytes changed"
     [ -f "$real_codex" ] && [ ! -L "$real_codex" ] && [ -x "$real_codex" ] ||
-        die "preserved official Codex binary is unavailable"
+        die "preserved Codex launcher is unavailable"
     require_private_state
     [ "$(field schema)" = 1 ] && [ "$(field operation)" = codex-arg0-wrapper ] ||
         die "arg0 wrapper state schema is invalid"
     official_hash=$(field official_sha256)
     wrapper_hash=$(field wrapper_sha256)
     [ "$(sha256sum "$real_codex" | awk '{print $1}')" = "$official_hash" ] ||
-        die "preserved official Codex binary changed"
+        die "preserved Codex launcher changed"
     [ "$(sha256sum "$launcher" | awk '{print $1}')" = "$wrapper_hash" ] ||
         die "installed arg0 wrapper changed"
 }
@@ -90,7 +126,8 @@ fi
 if [ "$mode" = doctor ]; then
     [ "$state" = installed ] || die "Codex arg0 wrapper is not installed cleanly"
     validate_installed
-    printf 'CODEX_ARG0_WRAPPER mode=doctor status=ready release=%s\n' "$release"
+    printf 'CODEX_ARG0_WRAPPER mode=doctor status=ready layout=%s release=%s\n' \
+        "$layout" "$release"
     exit 0
 fi
 
@@ -100,8 +137,8 @@ if [ "$mode" = plan ]; then
         installed) validate_installed; action=none ;;
         *) action=blocked ;;
     esac
-    printf 'CODEX_ARG0_WRAPPER mode=plan state=%s action=%s release=%s running_processes=unchanged\n' \
-        "$state" "$action" "$release"
+    printf 'CODEX_ARG0_WRAPPER mode=plan state=%s action=%s layout=%s release=%s running_processes=unchanged\n' \
+        "$state" "$action" "$layout" "$release"
     [ "$action" != blocked ] || die "Codex arg0 wrapper state is ambiguous"
     exit 0
 fi
@@ -110,7 +147,8 @@ if [ "$mode" = apply ]; then
     [ "$state" != ambiguous ] || die "Codex arg0 wrapper state is ambiguous"
     if [ "$state" = installed ]; then
         validate_installed
-        printf 'CODEX_ARG0_WRAPPER mode=apply status=ready action=none release=%s\n' "$release"
+        printf 'CODEX_ARG0_WRAPPER mode=apply status=ready action=none layout=%s release=%s\n' \
+            "$layout" "$release"
         exit 0
     fi
     [ "${HARNESS_TESTING:-0}" = 1 ] || {
@@ -124,11 +162,13 @@ if [ "$mode" = apply ]; then
     [ -f "$template" ] && [ ! -L "$template" ] && [ -x "$template" ] ||
         die "canonical arg0 wrapper template is unavailable"
     sh -n "$template" || die "canonical arg0 wrapper syntax is invalid"
-    [ "$(stat -Lc '%u' -- "$launcher")" = "$current_uid" ] || die "official Codex binary owner differs"
+    [ "$(stat -Lc '%u' -- "$launcher")" = "$current_uid" ] ||
+        die "Codex launcher owner differs"
     official_hash=$(sha256sum "$launcher" | awk '{print $1}')
     wrapper_hash=$(sha256sum "$template" | awk '{print $1}')
-    wrapper_temp=$(mktemp "$release_bin/.codex-wrapper.XXXXXX") || die "cannot stage arg0 wrapper"
-    state_temp=$(mktemp "$release_bin/.codex-wrapper-state.XXXXXX") || {
+    wrapper_temp=$(mktemp "$launcher_dir/.codex-wrapper.XXXXXX") ||
+        die "cannot stage arg0 wrapper"
+    state_temp=$(mktemp "$launcher_dir/.codex-wrapper-state.XXXXXX") || {
         unlink "$wrapper_temp"; die "cannot stage arg0 wrapper state";
     }
     # shellcheck disable=SC2329
@@ -179,20 +219,22 @@ if [ "$mode" = apply ]; then
     fi
     validate_installed
     trap - EXIT HUP INT TERM
-    printf 'CODEX_ARG0_WRAPPER mode=apply status=ready action=installed release=%s running_processes=unchanged\n' "$release"
+    printf 'CODEX_ARG0_WRAPPER mode=apply status=ready action=installed layout=%s release=%s running_processes=unchanged\n' \
+        "$layout" "$release"
     exit 0
 fi
 
 [ "$mode" = rollback ] || { usage; exit 2; }
 [ "$state" = installed ] || die "Codex arg0 wrapper is not installed"
 validate_installed
-rollback_temp=$release_bin/.codex-wrapper-rollback-$$
+rollback_temp=$launcher_dir/.codex-wrapper-rollback-$$
 [ ! -e "$rollback_temp" ] && [ ! -L "$rollback_temp" ] || die "arg0 rollback path collision"
 mv -- "$launcher" "$rollback_temp"
 if ! mv -- "$real_codex" "$launcher"; then
     mv -- "$rollback_temp" "$launcher"
-    die "cannot restore official Codex binary"
+    die "cannot restore Codex launcher"
 fi
 unlink "$rollback_temp"
 unlink "$state_file"
-printf 'CODEX_ARG0_WRAPPER mode=rollback status=ready action=restored release=%s running_processes=unchanged\n' "$release"
+printf 'CODEX_ARG0_WRAPPER mode=rollback status=ready action=restored layout=%s release=%s running_processes=unchanged\n' \
+    "$layout" "$release"
