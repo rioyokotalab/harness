@@ -138,7 +138,12 @@ remain gated by D-006.
 Decision D-004 is confirmed: repair ABQ's missing weekly Restic schedule only;
 do not expand or add tasks for Mac-state or Swallow-artifact backups.
 
-**Next action:** ask D-005 only. Do not mutate target state until every
+Decision D-005 is confirmed: converge Claude Code to verified release
+`2.1.220` on every managed Linux node and Mac without interrupting active
+sessions. This explicitly supersedes T-295's Aist removal; Home had no recorded
+intentional-absence decision.
+
+**Next action:** ask D-006 only. Do not mutate target state until every
 decision is frozen and the owner gives explicit `go`.
 
 ### T-310 — Make Codex resilient to transient service failures
