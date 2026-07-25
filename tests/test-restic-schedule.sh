@@ -51,7 +51,9 @@ rows=$(awk -F'|' '
     }
     END { print count + 0 }
 ' "$schedule_map") || fail "schedule schema"
-[ "$rows" -eq 7 ] || fail "schedule row count"
+[ "$rows" -eq 8 ] || fail "schedule row count"
+grep '^abq|abciq|Asia/Tokyo|Sun|03:30|qgai50157|none|rt_QC=1|' \
+    "$schedule_map" >/dev/null || fail "ABCI-Q schedule declaration"
 grep '^ri|slurm|Asia/Tokyo|Sun|02:00|rkp00015|none|' "$schedule_map" >/dev/null ||
     fail "RI explicit project account"
 
@@ -182,14 +184,14 @@ case "$command_name" in
         done
         [ -n "$name" ] || exit 2
         id=$(next_id)
-        if [ "$FAKE_FAMILY" = pbs ]; then
+        if [ "$FAKE_FAMILY" = pbs ] || [ "$FAKE_FAMILY" = abciq ]; then
             [ "$mail_points" = n ] || exit 2
             full_id=$id.server
         else
             full_id=$id
         fi
         add_job "$full_id" "$name"
-        if [ "$FAKE_FAMILY" = pbs ]; then
+        if [ "$FAKE_FAMILY" = pbs ] || [ "$FAKE_FAMILY" = abciq ]; then
             printf '%s\n' "$full_id"
         else
             printf 'Your job %s ("%s") has been submitted\n' "$id" "$name"
@@ -213,7 +215,7 @@ case "$command_name" in
         ;;
     qstat)
         if [ "${1:-}" = -u ]; then
-            if [ "$FAKE_FAMILY" = pbs ]; then
+            if [ "$FAKE_FAMILY" = pbs ] || [ "$FAKE_FAMILY" = abciq ]; then
                 awk -F'|' -v user="$username" '{ print $1, $2, user, "0", $3, "queue" }' "$jobs"
             else
                 awk -F'|' -v user="$username" '{ print $1, "0", $2, user, "qw", "date", "time", "1" }' "$jobs"
@@ -266,7 +268,7 @@ run_schedule() {
         FAKE_FAMILY="$family" "$HARNESS" restic-schedule "$@" --host "$host"
 }
 
-for declaration in 'local ybatch' 'ri slurm' 'ab pbs' 't4 age'; do
+for declaration in 'local ybatch' 'ri slurm' 'ab pbs' 'abq abciq' 't4 age'; do
     set -- $declaration
     host=$1
     family=$2
@@ -285,6 +287,10 @@ for declaration in 'local ybatch' 'ri slurm' 'ab pbs' 't4 age'; do
     elif [ "$host" = ab ]; then
         grep -F 'NATIVE ab: qsub -m n ' "$TEST_ROOT/$host.seed" >/dev/null ||
             fail "PBS no-mail default"
+    elif [ "$host" = abq ]; then
+        grep -F 'NATIVE abq: qsub -m n -W group_list=qgai50157 -l rt_QC=1 ' \
+            "$TEST_ROOT/$host.seed" >/dev/null ||
+            fail "ABCI-Q native group and CPU resource request"
     fi
     [ "$(wc -l <"$fake_sched/jobs" | tr -d ' ')" -eq 1 ] || fail "$host singleton"
     run_schedule "$host" "$family" "$home" status >"$TEST_ROOT/$host.status" ||
