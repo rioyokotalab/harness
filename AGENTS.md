@@ -235,6 +235,10 @@ guessing.
 - In compact fleet-health reports, count `abq` as a Linux node and mark it
   ready only when both `abq` and `abq2` routes pass. Count only aist, home,
   office, and riken in the Mac-route total.
+- Assess `al` through `harness al-session --status` plus a normal multiplexed
+  `ssh al true`. Do not disable `ControlMaster` or `ControlPath` for routine
+  health: that deliberately bypasses the managed session and tests whether a
+  new daily CSCS authentication is available instead.
 
 ## Change and validation
 
