@@ -111,6 +111,23 @@ top item requires unavailable owner or administrator action, leave it deferred,
 continue the next highest safe independent item in that same repository, and
 never cross it for dependent work.
 
+**LIFO gate resolved 2026-07-26:** the first NFS-alias fixture ShellCheck stopped
+before test execution because a multiline `[` comparison omitted its shell
+continuation. The corrected fixture passes syntax, ShellCheck, and the complete
+managed/standalone wrapper transaction suite. No production or external state
+changed.
+
+**LIFO gate active 2026-07-26:** the first AL wrapper plan after PR #320 and
+fleet sync failed closed before mutation. AL's stable link text is the exact
+declared absolute managed path under `/users/ryokota`, but `realpath` resolves
+the NFS file through `/capstor/...`; classifying the canonical spelling
+therefore rejects a valid managed launcher. The ordinary managed-agent plan
+still reports `KEEP`, and no process, link, package, or wrapper state changed.
+Classify managed and managed-wrapper targets from the exact absolute stable-link
+text, retain file/owner/hash checks through the resolved object, keep
+standalone current-link resolution unchanged, add an NFS-alias fixture, and
+repeat the AL pilot.
+
 **LIFO gate active 2026-07-26:** pre-rollout review showed that the first
 managed-layout implementation would rename and replace files inside the
 harness-managed npm tree, invalidating the installer transaction's recorded
