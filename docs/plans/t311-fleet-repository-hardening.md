@@ -238,7 +238,7 @@ the guarded-delete workflow and verifies protected anchors afterward.
 | D-003 | Mac network posture | Firewall plus stealth, preserve signed/built-in access initially, disable Office X11 TCP, validate one Mac at a time | confirmed: option 1 |
 | D-004 | Backup expansion | Add ABQ weekly scheduling now; plan Mac and Swallow backups separately rather than sweeping large/private state | confirmed: option 3 |
 | D-005 | Agent/package refresh | Converge Claude to verified release 2.1.220 on all managed Linux nodes and Macs without interrupting running sessions | confirmed: option 1 |
-| D-006 | Administrator boundary during unattended execution | Apply only already non-interactive narrow authority; stage exact helpers for password/TCC/root work at the top of the owning TODO | open |
+| D-006 | Administrator boundary during unattended execution | Apply only already non-interactive narrow authority; stage exact helpers for password/TCC/root work at the top of the owning TODO | confirmed: option 1 |
 
 D-001 consequence: standardize the protected-main floor across all four
 repositories. Require one approving review from non-admin writers, strict
@@ -279,6 +279,13 @@ equivalent intentional-absence decision. Use the repository-declared
 installation route, verify exactly one effective executable per node, and do
 not interrupt a running Codex or Claude session solely for the refresh.
 
+D-006 consequence: use only existing, narrowly scoped, non-interactive
+authority during the unattended phase. For password-, TCC-, or root-gated work,
+prepare an exact reviewed helper with explicit impact, validation, and rollback;
+place that blocker first in the owning repository's TODO and continue
+independent work. Do not seek credentials, broaden sudo policy, bypass a gate,
+or wait indefinitely.
+
 ## Evidence
 
 - GitHub Actions permission guidance:
@@ -296,6 +303,5 @@ not interrupt a running Codex or Claude session solely for the refresh.
 
 ## Next action
 
-Ask D-006 only. After every answer, checkpoint the exact selection and ask the
-next open decision. Do not execute hardening until all decisions are frozen
-and the owner gives explicit `go`.
+All six decisions are frozen. Present the consolidated execution contract and
+request the owner's explicit `go`. Do not execute hardening before that gate.
