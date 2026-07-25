@@ -362,6 +362,11 @@ Evidence is in `docs/backup-lifecycle-phase2.md`, `docs/home-backup.md`, and
   reports Actions operational now but records a July 25 incident involving
   delayed run starts. Record this external evidence once and allow the normal
   checkpoint push one final protected run; do not create an empty retry loop.
+  That final run `30158172731` also ended `startup_failure` with zero jobs.
+  Functional T-310 is already merged and synchronized; only closeout PR #311
+  is blocked. Do not push another retry commit. Next either wait for GitHub
+  Actions runner provisioning to stabilize or obtain explicit authority for
+  one native `gh run rerun 30158172731`.
 - **T-308:** added the shared `reboot-recovery` skill and deterministic
   Local-side helper in PR #306, merged as `9203033`. Recovery now separates
   automatic launchd tunnel restoration, owner login and Codex remote-control

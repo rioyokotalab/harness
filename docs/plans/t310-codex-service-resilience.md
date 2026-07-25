@@ -125,3 +125,10 @@ operational but records a July 25 incident in which Actions run starts were
 delayed. This corroborates an external runner-start failure rather than a
 repository test result. Checkpoint this evidence once for one final normal
 push-triggered run; do not make empty commits or dispatch a retry loop.
+
+The final normal run `30158172731` failed identically with zero jobs. Functional
+PR #310 remains merged and synchronized; only ledger closeout PR #311 is
+blocked. This terminal evidence is committed locally but is intentionally not
+pushed, because another push would violate the no-retry-loop decision. Resume
+by waiting for runner provisioning to stabilize or, with explicit owner
+authority, run the native `gh run rerun 30158172731` once.
