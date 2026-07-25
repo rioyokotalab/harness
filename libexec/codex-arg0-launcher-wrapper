@@ -13,7 +13,7 @@ warn() {
     printf 'WARNING: Codex arg0 housekeeping %s; continuing with the official binary\n' "$1" >&2
 }
 
-[ -x "$real_codex" ] && [ -f "$real_codex" ] && [ ! -L "$real_codex" ] || {
+[ -x "$real_codex" ] && [ -f "$real_codex" ] || {
     echo 'codex wrapper: preserved official binary is unavailable' >&2
     exit 126
 }

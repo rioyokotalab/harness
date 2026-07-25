@@ -42,10 +42,14 @@ current_uid=$(id -u)
 stable=$HOME/.local/bin/codex
 template=$HARNESS_ROOT/libexec/codex-arg0-launcher-wrapper
 [ -L "$stable" ] || die "version-scoped Codex launcher link is unavailable"
-launcher=$(realpath -e -- "$stable") || die "cannot resolve version-scoped Codex launcher"
-case "$launcher" in
+stable_resolved=$(realpath -e -- "$stable") ||
+    die "cannot resolve version-scoped Codex launcher"
+managed_wrapper_prefix=$HOME/.local/opt/harness/codex-arg0-wrapper/
+case "$stable_resolved" in
     "$HOME/.codex/packages/standalone/releases/"*)
         layout=standalone
+        source_kind=release
+        launcher=$stable_resolved
         prefix=$HOME/.codex/packages/standalone/releases/
         relative=${launcher#"$prefix"}
         release=${relative%%/*}
@@ -53,11 +57,15 @@ case "$launcher" in
         require_safe_id "$release"
         [ "$suffix" = bin/codex ] ||
             die "Codex launcher has an invalid standalone release layout"
+        launcher_dir=${launcher%/*}
+        real_codex=$launcher_dir/codex.real
+        state_file=$launcher_dir/.harness-arg0-wrapper.state
         ;;
     "$HOME/.local/opt/agents/codex/"*)
         layout=managed-npm
+        source_kind=release
         prefix=$HOME/.local/opt/agents/codex/
-        relative=${launcher#"$prefix"}
+        relative=${stable_resolved#"$prefix"}
         release=${relative%%/*}
         remainder=${relative#*/}
         platform=${remainder%%/*}
@@ -71,12 +79,45 @@ case "$launcher" in
         esac
         [ "$suffix" = node_modules/@openai/codex/bin/codex.js ] ||
             die "Codex launcher has an invalid managed npm layout"
+        managed_original=$stable_resolved
+        case "$(readlink "$stable")" in
+            /*) ;;
+            *) die "managed Codex stable link must use an absolute target" ;;
+        esac
+        wrapper_base=${managed_wrapper_prefix%/}
+        wrapper_release_dir=$wrapper_base/$release
+        launcher_dir=$wrapper_release_dir/$platform
+        launcher=$launcher_dir/codex
+        real_codex=$launcher_dir/codex.real
+        state_file=$launcher_dir/.harness-arg0-wrapper.state
+        ;;
+    "$managed_wrapper_prefix"*)
+        layout=managed-npm
+        source_kind=wrapper
+        relative=${stable_resolved#"$managed_wrapper_prefix"}
+        release=${relative%%/*}
+        remainder=${relative#*/}
+        platform=${remainder%%/*}
+        suffix=${remainder#*/}
+        require_safe_id "$release"
+        normalized_semver "$release" ||
+            die "managed Codex wrapper version is not normalized"
+        case "$(uname -m):$platform" in
+            x86_64:linux-x86_64|aarch64:linux-aarch64) ;;
+            *) die "managed Codex wrapper platform differs from this host" ;;
+        esac
+        [ "$suffix" = codex ] ||
+            die "Codex launcher has an invalid managed wrapper layout"
+        wrapper_base=${managed_wrapper_prefix%/}
+        wrapper_release_dir=$wrapper_base/$release
+        launcher_dir=$wrapper_release_dir/$platform
+        launcher=$stable_resolved
+        real_codex=$launcher_dir/codex.real
+        state_file=$launcher_dir/.harness-arg0-wrapper.state
+        managed_original=$HOME/.local/opt/agents/codex/$release/$platform/node_modules/@openai/codex/bin/codex.js
         ;;
     *) die "Codex launcher is outside a supported version-scoped release tree" ;;
 esac
-launcher_dir=${launcher%/*}
-real_codex=$launcher_dir/codex.real
-state_file=$launcher_dir/.harness-arg0-wrapper.state
 
 is_wrapper() {
     [ -f "$launcher" ] && [ ! -L "$launcher" ] &&
@@ -100,25 +141,47 @@ field() {
 
 validate_installed() {
     is_wrapper || die "installed arg0 wrapper bytes changed"
-    [ -f "$real_codex" ] && [ ! -L "$real_codex" ] && [ -x "$real_codex" ] ||
-        die "preserved Codex launcher is unavailable"
+    [ "$(realpath -e -- "$stable")" = "$launcher" ] ||
+        die "stable Codex launcher differs from installed wrapper"
+    if [ "$layout" = managed-npm ]; then
+        [ -L "$real_codex" ] && [ "$(readlink "$real_codex")" = "$managed_original" ] &&
+            [ -f "$managed_original" ] && [ ! -L "$managed_original" ] &&
+            [ -x "$managed_original" ] ||
+            die "preserved managed Codex launcher is unavailable"
+        preserved_launcher=$managed_original
+    else
+        [ -f "$real_codex" ] && [ ! -L "$real_codex" ] && [ -x "$real_codex" ] ||
+            die "preserved standalone Codex launcher is unavailable"
+        preserved_launcher=$real_codex
+    fi
     require_private_state
     [ "$(field schema)" = 1 ] && [ "$(field operation)" = codex-arg0-wrapper ] ||
         die "arg0 wrapper state schema is invalid"
     official_hash=$(field official_sha256)
     wrapper_hash=$(field wrapper_sha256)
-    [ "$(sha256sum "$real_codex" | awk '{print $1}')" = "$official_hash" ] ||
+    [ "$(sha256sum "$preserved_launcher" | awk '{print $1}')" = "$official_hash" ] ||
         die "preserved Codex launcher changed"
     [ "$(sha256sum "$launcher" | awk '{print $1}')" = "$wrapper_hash" ] ||
         die "installed arg0 wrapper changed"
 }
 
-if is_wrapper; then
+if [ "$layout:$source_kind" = managed-npm:release ]; then
+    if [ -f "$managed_original" ] && [ ! -L "$managed_original" ] &&
+        [ -x "$managed_original" ] &&
+        [ ! -e "$launcher" ] && [ ! -L "$launcher" ] &&
+        [ ! -e "$real_codex" ] && [ ! -L "$real_codex" ] &&
+        [ ! -e "$state_file" ] && [ ! -L "$state_file" ]; then
+        state=unwrapped
+    else
+        state=ambiguous
+    fi
+elif is_wrapper; then
     state=installed
-elif [ -f "$launcher" ] && [ ! -L "$launcher" ] && [ -x "$launcher" ] &&
+elif [ "$layout" = standalone ] &&
+    [ -f "$launcher" ] && [ ! -L "$launcher" ] && [ -x "$launcher" ] &&
     [ ! -e "$real_codex" ] && [ ! -L "$real_codex" ] &&
     [ ! -e "$state_file" ] && [ ! -L "$state_file" ]; then
-    state=unwrapped
+        state=unwrapped
 else
     state=ambiguous
 fi
@@ -162,6 +225,127 @@ if [ "$mode" = apply ]; then
     [ -f "$template" ] && [ ! -L "$template" ] && [ -x "$template" ] ||
         die "canonical arg0 wrapper template is unavailable"
     sh -n "$template" || die "canonical arg0 wrapper syntax is invalid"
+    if [ "$layout" = managed-npm ]; then
+        [ "$(stat -Lc '%u' -- "$managed_original")" = "$current_uid" ] ||
+            die "managed Codex launcher owner differs"
+        for managed_parent in "$HOME/.local" "$HOME/.local/opt"; do
+            [ -d "$managed_parent" ] && [ ! -L "$managed_parent" ] &&
+                [ "$(stat -Lc '%u' -- "$managed_parent")" = "$current_uid" ] ||
+                die "managed wrapper parent is unsafe"
+        done
+        created_harness_dir=0
+        created_wrapper_base=0
+        created_wrapper_release=0
+        created_launcher_dir=0
+        for managed_directory in \
+            "$HOME/.local/opt/harness" "$wrapper_base" \
+            "$wrapper_release_dir" "$launcher_dir"
+        do
+            if [ -e "$managed_directory" ] || [ -L "$managed_directory" ]; then
+                [ -d "$managed_directory" ] && [ ! -L "$managed_directory" ] &&
+                    [ "$(stat -Lc '%u' -- "$managed_directory")" = "$current_uid" ] ||
+                    die "managed wrapper directory is unsafe"
+            else
+                mkdir -- "$managed_directory"
+                chmod 700 "$managed_directory"
+                case "$managed_directory" in
+                    "$HOME/.local/opt/harness") created_harness_dir=1 ;;
+                    "$wrapper_base") created_wrapper_base=1 ;;
+                    "$wrapper_release_dir") created_wrapper_release=1 ;;
+                    "$launcher_dir") created_launcher_dir=1 ;;
+                esac
+            fi
+        done
+        official_hash=$(sha256sum "$managed_original" | awk '{print $1}')
+        wrapper_hash=$(sha256sum "$template" | awk '{print $1}')
+        wrapper_temp=$(mktemp "$launcher_dir/.codex-wrapper.XXXXXX") ||
+            die "cannot stage managed arg0 wrapper"
+        state_temp=$(mktemp "$launcher_dir/.codex-wrapper-state.XXXXXX") || {
+            unlink "$wrapper_temp"; die "cannot stage managed arg0 wrapper state";
+        }
+        stable_temp=$HOME/.local/bin/.codex-wrapper-link.$$
+        [ ! -e "$stable_temp" ] && [ ! -L "$stable_temp" ] ||
+            die "managed arg0 stable-link staging collision"
+        # shellcheck disable=SC2329
+        cleanup_managed_apply() {
+            status=$?
+            trap - EXIT HUP INT TERM
+            [ ! -e "$wrapper_temp" ] || unlink "$wrapper_temp"
+            [ ! -e "$state_temp" ] || unlink "$state_temp"
+            [ ! -e "$stable_temp" ] && [ ! -L "$stable_temp" ] ||
+                unlink "$stable_temp"
+            if [ "$status" -ne 0 ]; then
+                current_stable=$(realpath -e -- "$stable" 2>/dev/null || true)
+                if [ "$current_stable" = "$launcher" ]; then
+                    recovery_link=$HOME/.local/bin/.codex-wrapper-recovery.$$
+                    [ ! -e "$recovery_link" ] && [ ! -L "$recovery_link" ] ||
+                        exit "$status"
+                    ln -s "$managed_original" "$recovery_link" &&
+                        mv -Tf -- "$recovery_link" "$stable"
+                    [ ! -e "$recovery_link" ] && [ ! -L "$recovery_link" ] ||
+                        unlink "$recovery_link"
+                fi
+                if [ -f "$launcher" ] && [ ! -L "$launcher" ] &&
+                    [ "$(sha256sum "$launcher" | awk '{print $1}')" = "$wrapper_hash" ]; then
+                    unlink "$launcher"
+                fi
+                if [ -f "$state_file" ] && [ ! -L "$state_file" ] &&
+                    [ "$(stat -Lc '%u' -- "$state_file")" = "$current_uid" ]; then
+                    unlink "$state_file"
+                fi
+                if [ -L "$real_codex" ] &&
+                    [ "$(readlink "$real_codex")" = "$managed_original" ]; then
+                    unlink "$real_codex"
+                fi
+                [ "$created_launcher_dir" -eq 0 ] ||
+                    rmdir "$launcher_dir" 2>/dev/null || true
+                [ "$created_wrapper_release" -eq 0 ] ||
+                    rmdir "$wrapper_release_dir" 2>/dev/null || true
+                [ "$created_wrapper_base" -eq 0 ] ||
+                    rmdir "$wrapper_base" 2>/dev/null || true
+                [ "$created_harness_dir" -eq 0 ] ||
+                    rmdir "$HOME/.local/opt/harness" 2>/dev/null || true
+            fi
+            exit "$status"
+        }
+        trap cleanup_managed_apply EXIT HUP INT TERM
+        cp -- "$template" "$wrapper_temp"
+        chmod 755 "$wrapper_temp"
+        umask 077
+        {
+            echo 'schema=1'
+            echo 'operation=codex-arg0-wrapper'
+            printf 'official_sha256=%s\n' "$official_hash"
+            printf 'wrapper_sha256=%s\n' "$wrapper_hash"
+        } >"$state_temp"
+        chmod 600 "$state_temp"
+        ln -s "$managed_original" "$real_codex"
+        if [ "${HARNESS_TESTING:-0}:${HARNESS_ARG0_FAIL_AFTER:-}" = 1:official-move ]; then
+            die "injected arg0 wrapper failure after managed launcher link"
+        fi
+        mv -- "$wrapper_temp" "$launcher"
+        wrapper_temp=
+        if [ "${HARNESS_TESTING:-0}:${HARNESS_ARG0_FAIL_AFTER:-}" = 1:wrapper-move ]; then
+            die "injected arg0 wrapper failure after wrapper move"
+        fi
+        mv -- "$state_temp" "$state_file"
+        state_temp=
+        if [ "${HARNESS_TESTING:-0}:${HARNESS_ARG0_FAIL_AFTER:-}" = 1:state-move ]; then
+            die "injected arg0 wrapper failure after state move"
+        fi
+        ln -s "$launcher" "$stable_temp"
+        mv -Tf -- "$stable_temp" "$stable"
+        stable_temp=
+        if [ "${HARNESS_TESTING:-0}:${HARNESS_ARG0_FAIL_AFTER:-}" = 1:stable-switch ]; then
+            die "injected arg0 wrapper failure after stable-link switch"
+        fi
+        source_kind=wrapper
+        validate_installed
+        trap - EXIT HUP INT TERM
+        printf 'CODEX_ARG0_WRAPPER mode=apply status=ready action=installed layout=%s release=%s running_processes=unchanged\n' \
+            "$layout" "$release"
+        exit 0
+    fi
     [ "$(stat -Lc '%u' -- "$launcher")" = "$current_uid" ] ||
         die "Codex launcher owner differs"
     official_hash=$(sha256sum "$launcher" | awk '{print $1}')
@@ -227,6 +411,26 @@ fi
 [ "$mode" = rollback ] || { usage; exit 2; }
 [ "$state" = installed ] || die "Codex arg0 wrapper is not installed"
 validate_installed
+if [ "$layout" = managed-npm ]; then
+    rollback_link=$HOME/.local/bin/.codex-wrapper-rollback-$$
+    [ ! -e "$rollback_link" ] && [ ! -L "$rollback_link" ] ||
+        die "managed arg0 rollback link collision"
+    ln -s "$managed_original" "$rollback_link"
+    if ! mv -Tf -- "$rollback_link" "$stable"; then
+        [ ! -e "$rollback_link" ] && [ ! -L "$rollback_link" ] ||
+            unlink "$rollback_link"
+        die "cannot restore managed Codex stable link"
+    fi
+    unlink "$launcher"
+    unlink "$state_file"
+    unlink "$real_codex"
+    rmdir "$launcher_dir"
+    rmdir "$wrapper_release_dir" 2>/dev/null || true
+    rmdir "$wrapper_base" 2>/dev/null || true
+    printf 'CODEX_ARG0_WRAPPER mode=rollback status=ready action=restored layout=%s release=%s running_processes=unchanged\n' \
+        "$layout" "$release"
+    exit 0
+fi
 rollback_temp=$launcher_dir/.codex-wrapper-rollback-$$
 [ ! -e "$rollback_temp" ] && [ ! -L "$rollback_temp" ] || die "arg0 rollback path collision"
 mv -- "$launcher" "$rollback_temp"
