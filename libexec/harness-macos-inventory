@@ -134,6 +134,8 @@ printf '%s\n' \
     "homebrew=$homebrew" \
     "homebrew_prefix_class=$homebrew_prefix_class" \
     "command_line_tools=$command_line_tools" \
+    "firewall=$(macos_firewall_fact global)" \
+    "firewall_stealth=$(macos_firewall_fact stealth)" \
     "private_profile=$private_profile" \
     "harness_checkout=$harness_checkout" \
     "link_codex_guidance=$(path_kind "$HOME/.codex/AGENTS.md")" \

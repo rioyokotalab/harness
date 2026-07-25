@@ -423,10 +423,47 @@ macos_value_is_one_of() {
     return 1
 }
 
+macos_firewall_fact() {
+    macos_firewall_fact_name=$1
+    macos_firewall_command=/usr/libexec/ApplicationFirewall/socketfilterfw
+    if [ "${HARNESS_TEST_MODE:-0}" = 1 ] &&
+        [ -n "${HARNESS_TEST_SOCKETFILTERFW:-}" ]; then
+        case $HARNESS_TEST_SOCKETFILTERFW in
+            /*) macos_firewall_command=$HARNESS_TEST_SOCKETFILTERFW ;;
+            *) printf '%s\n' unavailable; return ;;
+        esac
+    fi
+    [ -x "$macos_firewall_command" ] ||
+        { printf '%s\n' unavailable; return; }
+    case $macos_firewall_fact_name in
+        global)
+            macos_firewall_output=$(LC_ALL=C "$macos_firewall_command" \
+                --getglobalstate 2>/dev/null) ||
+                { printf '%s\n' unavailable; return; }
+            case $macos_firewall_output in
+                *'(State = 1)'*) printf '%s\n' enabled ;;
+                *'(State = 0)'*) printf '%s\n' disabled ;;
+                *) printf '%s\n' unknown ;;
+            esac
+            ;;
+        stealth)
+            macos_firewall_output=$(LC_ALL=C "$macos_firewall_command" \
+                --getstealthmode 2>/dev/null) ||
+                { printf '%s\n' unavailable; return; }
+            case $macos_firewall_output in
+                'Firewall stealth mode is on') printf '%s\n' enabled ;;
+                'Firewall stealth mode is off') printf '%s\n' disabled ;;
+                *) printf '%s\n' unknown ;;
+            esac
+            ;;
+        *) die "unknown Mac firewall fact" ;;
+    esac
+}
+
 macos_validate_fact_file() {
     macos_fact_file=$1
     macos_fact_policy=$2
-    macos_fact_keys=schema,family,logical_id,architecture,account_shell,account_shell_registry,homebrew,homebrew_prefix_class,command_line_tools,private_profile,harness_checkout,link_codex_guidance,link_codex_rules,link_claude_guidance,link_bash_launcher
+    macos_fact_keys=schema,family,logical_id,architecture,account_shell,account_shell_registry,homebrew,homebrew_prefix_class,command_line_tools,firewall,firewall_stealth,private_profile,harness_checkout,link_codex_guidance,link_codex_rules,link_claude_guidance,link_bash_launcher
     macos_fact_formulae=$(macos_manifest_get "$macos_fact_policy" managed_formulae),$(macos_manifest_get "$macos_fact_policy" retired_formulae)
     for macos_fact_formula in $(printf '%s\n' "$macos_fact_formulae" | tr ',' ' '); do
         macos_fact_formula_key=formula_$(macos_formula_key "$macos_fact_formula")
@@ -463,6 +500,12 @@ macos_validate_fact_file() {
     macos_value_is_one_of \
         "$(macos_manifest_get "$macos_fact_file" command_line_tools)" \
         present absent || die "personal-Mac developer-tools fact is malformed"
+    for macos_firewall_key in firewall firewall_stealth; do
+        macos_value_is_one_of \
+            "$(macos_manifest_get "$macos_fact_file" "$macos_firewall_key")" \
+            enabled disabled unavailable unknown ||
+            die "personal-Mac firewall fact is malformed"
+    done
     macos_value_is_one_of \
         "$(macos_manifest_get "$macos_fact_file" private_profile)" \
         valid absent invalid || die "personal-Mac private-profile fact is malformed"

@@ -129,13 +129,30 @@ same-repository continuation contract searched one phrase across a Markdown
 line break and failed without changing external state. The test now matches
 the stable unbroken clause while retaining the exact behavioral requirement.
 
-**LIFO gate active 2026-07-26:** Linux `harness doctor` reports
+**LIFO gate active 2026-07-26:** the known off/off Mac firewall and stealth
+posture is not represented in `macos-inventory` or `macos-doctor`, so routine
+readiness can report zero warnings while D-003 remains unresolved. Add only
+value-minimized enabled/disabled/unavailable facts, warn rather than fail while
+administrator action is deferred, cover parsing and malformed facts, and
+validate on all four Macs. Continue safe Harness work below the administrator
+gate.
+
+**LIFO gate resolved 2026-07-26:** Linux `harness doctor` reported
 `codex_rules=not-installed` on every host even though T-304 intentionally
 removed the user-global rule and retained it only as repository-scoped policy.
-The stale plan also proposes recreating that prohibited global link. Align
-plan/doctor with the project-scoped contract, add focused regression coverage,
-and validate the result fleet-wide before popping this gate. This Harness-local
-item does not pause any other repository stack.
+PR #317 now treats absence as the required project-scoped state and no longer
+plans to recreate the prohibited global link. Protected CI passed; guarded
+fleet sync advanced all 11 remote checkouts to `967dcf1`; and doctor/plan
+readback passes the exact contract on Local, AB, AB2, RI, AL, RC, T4, and ABQ.
+
+**LIFO gate resolved 2026-07-26:** the first fleet-sync plan used an abbreviated
+new revision and failed closed before any node changed. The exact 40-character
+revision passed plan/apply and every bundle artifact was absent afterward.
+
+**LIFO gate resolved 2026-07-26:** the first sequential doctor-validation loop
+stopped while entering T4 after six hosts had passed. Immediate isolated T4
+doctor and plan checks both passed, as did the resumed T4/ABQ suffix; no target
+state changed during the interrupted read-only loop.
 
 **LIFO gate resolved 2026-07-26:** the new value-free hardening audit initially
 reported zero findings on 11 systems but failed on AL because its system Python
@@ -323,10 +340,10 @@ Decision D-006 is confirmed: use only existing narrow non-interactive
 authority; stage exact reviewed helpers and top-priority TODO blockers for
 password-, TCC-, or root-gated work, then continue independent work.
 
-**Next action:** resolve Harness's stale global Codex-rules plan/doctor item
-while the already completed Students, Website, and Swallow stacks remain
-independently closed; continue any newly discovered repository-local stack
-without waiting on the Mac administrator-authentication gate.
+**Next action:** add value-minimized Mac firewall/stealth visibility while the
+administrator-authentication helper remains deferred. Students T-004, Website
+T-207, and Swallow SW-018 are independently closed; continue any newly
+discovered repository-local stack without waiting on another repository.
 
 ### T-310 — Make Codex resilient to transient service failures
 

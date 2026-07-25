@@ -116,8 +116,36 @@ case "$1" in
     *) exit 99 ;;
 esac
 EOF
+cat >"$fake_bin/socketfilterfw" <<'EOF'
+#!/bin/sh
+[ "${FAKE_FIREWALL_FAIL:-0}" != 1 ] || exit 7
+case "$1" in
+    --getglobalstate)
+        if [ "${FAKE_FIREWALL_MALFORMED:-0}" = 1 ]; then
+            echo 'synthetic malformed firewall state'
+        elif [ "${FAKE_FIREWALL_DISABLED:-0}" = 1 ]; then
+            echo 'Firewall is disabled. (State = 0)'
+        else
+            echo 'Firewall is enabled. (State = 1)'
+        fi
+        ;;
+    --getstealthmode)
+        if [ "${FAKE_FIREWALL_MALFORMED:-0}" = 1 ]; then
+            echo 'synthetic malformed stealth state'
+        elif [ "${FAKE_FIREWALL_DISABLED:-0}" = 1 ]; then
+            echo 'Firewall stealth mode is off'
+        else
+            echo 'Firewall stealth mode is on'
+        fi
+        ;;
+    *) exit 2 ;;
+esac
+EOF
 chmod 755 "$fake_bin/uname" "$fake_bin/stat" "$fake_bin/xcode-select" \
-    "$fake_bin/brew"
+    "$fake_bin/brew" "$fake_bin/socketfilterfw"
+HARNESS_TEST_MODE=1
+HARNESS_TEST_SOCKETFILTERFW=$fake_bin/socketfilterfw
+export HARNESS_TEST_MODE HARNESS_TEST_SOCKETFILTERFW
 
 brew_log=$TEMP_DIR/brew.log
 output=$(HOME="$home" SHELL=/bin/zsh BREW_LOG="$brew_log" \
@@ -133,6 +161,8 @@ for expected in \
     'homebrew=present' \
     'homebrew_prefix_class=apple-silicon-default' \
     'command_line_tools=present' \
+    'firewall=enabled' \
+    'firewall_stealth=enabled' \
     'private_profile=valid' \
     'harness_checkout=present' \
     'link_codex_guidance=symlink' \
@@ -192,6 +222,33 @@ printf '%s\n' "$unusable_output" | grep -F -x 'homebrew=unusable' \
 printf '%s\n' "$unusable_output" | grep -F -x \
     'homebrew_prefix_class=unknown' >/dev/null ||
     fail "unusable Homebrew prefix class"
+
+disabled_firewall_output=$(HOME="$home" SHELL=/bin/zsh \
+    BREW_LOG="$TEMP_DIR/brew-firewall-disabled.log" FAKE_FIREWALL_DISABLED=1 \
+    PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
+    "$INVENTORY" --host mac-test-pilot)
+printf '%s\n' "$disabled_firewall_output" | grep -F -x \
+    'firewall=disabled' >/dev/null || fail "disabled firewall state"
+printf '%s\n' "$disabled_firewall_output" | grep -F -x \
+    'firewall_stealth=disabled' >/dev/null || fail "disabled stealth state"
+
+malformed_firewall_output=$(HOME="$home" SHELL=/bin/zsh \
+    BREW_LOG="$TEMP_DIR/brew-firewall-malformed.log" FAKE_FIREWALL_MALFORMED=1 \
+    PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
+    "$INVENTORY" --host mac-test-pilot)
+printf '%s\n' "$malformed_firewall_output" | grep -F -x \
+    'firewall=unknown' >/dev/null || fail "unknown firewall state"
+printf '%s\n' "$malformed_firewall_output" | grep -F -x \
+    'firewall_stealth=unknown' >/dev/null || fail "unknown stealth state"
+
+failed_firewall_output=$(HOME="$home" SHELL=/bin/zsh \
+    BREW_LOG="$TEMP_DIR/brew-firewall-failed.log" FAKE_FIREWALL_FAIL=1 \
+    PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
+    "$INVENTORY" --host mac-test-pilot)
+printf '%s\n' "$failed_firewall_output" | grep -F -x \
+    'firewall=unavailable' >/dev/null || fail "unavailable firewall state"
+printf '%s\n' "$failed_firewall_output" | grep -F -x \
+    'firewall_stealth=unavailable' >/dev/null || fail "unavailable stealth state"
 
 no_brew_bin=$TEMP_DIR/no-brew-bin
 mkdir -p "$no_brew_bin"

@@ -85,6 +85,16 @@ case $(macos_manifest_get "$fact_file" homebrew_prefix_class) in
     *) echo 'WARN optional=homebrew_prefix state=nondefault-or-unknown'; warnings=$((warnings + 1)) ;;
 esac
 
+for firewall_requirement in firewall firewall_stealth; do
+    firewall_state=$(macos_manifest_get "$fact_file" "$firewall_requirement")
+    if [ "$firewall_state" = enabled ]; then
+        echo "PASS security=$firewall_requirement state=enabled"
+    else
+        echo "WARN security=$firewall_requirement state=$firewall_state expected=enabled"
+        warnings=$((warnings + 1))
+    fi
+done
+
 account_shell=$(macos_manifest_get "$fact_file" account_shell)
 account_shell_registry=$(macos_manifest_get "$fact_file" account_shell_registry)
 if [ "$account_shell" = homebrew-bash ]; then
