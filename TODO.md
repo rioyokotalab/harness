@@ -98,49 +98,6 @@ Next free ID: T-313.
 
 ## Active tasks
 
-### T-312 — Fleet and repository housekeeping after hardening
-
-**Phase:** validating.
-
-Clean administrative residue from the completed T-311 hardening run across
-Harness, Students, Website, and Swallow while preserving active task
-worktrees, private/runtime state, research artifacts, credentials, and live
-Codex sessions. The owner explicitly requested execution and selected
-`[HH:MM:SS]` current-local-time prefixes for all future progress commentary;
-that stable cross-project preference is promoted to root `AGENTS.md`.
-
-The read-only inventory confirmed clean/current primary checkouts. Five clean
-Local worktrees and two clean T4 worktrees belong only to merged hardening
-pull requests and have exact-tree or patch-equivalent results on protected
-`main`. The active Harness T-310 closeout worktree and active Students T-002
-checkout are excluded. Cleanup uses guarded manifests for worktree trees,
-followed by native Git metadata pruning and deletion of only the exact merged
-task branches. Routine arg0 cleanup remains lock-aware and may remove only
-eligible expected directories.
-
-Validate clean worktrees, absent task-owned stashes/helpers/transfer residue,
-repository integrity, current upstreams, canonical fleet health, and final
-arg0 counts. If the shared guidance change merges, guarded-sync only clean
-Harness checkouts and refresh each detached managed Mac Codex session exactly
-once.
-
-**Execution checkpoint:** guarded manifests deleted five exact merged
-worktrees on Local and two on T4, with protected anchors unchanged. Native Git
-pruning then removed their administrative records. Thirty-three remote and 21
-local task branches, each tied to a merged protected pull request, were
-deleted; open Dependabot, Harness T-310, Harness T-312, and Students T-002
-branches remain. Git integrity and automatic maintenance pass for all four
-repositories and every managed Harness checkout.
-
-Students' two disposable test/lint caches were guarded-deleted. Aist, Home,
-and Office each had one eligible expected arg0 directory removed; every final
-arg0 plan has zero eligible or unexpected state. Swallow's 33-GiB research
-cache, project environments, private evidence, and runtime artifacts remain.
-Two `.DS_Store` package artifacts were the two hard links to one
-current-user-owned inode. The initial single-link safety preflight refused
-them without change; after exact identity and link-count proof, each exact
-name was unlinked separately and the final count is zero.
-
 ### T-311 — Harden the fleet and independent project repositories
 
 **Phase:** nightly safe work complete; deferred owner/admin gates remain.
@@ -995,6 +952,17 @@ Evidence is in `docs/backup-lifecycle-phase2.md`, `docs/home-backup.md`, and
 
 ## Completed anchors
 
+- **T-312:** completed post-hardening housekeeping in protected Harness PR
+  #329 (`328968b`) and Website PR #34 (`b527463`). Guarded cleanup removed
+  seven merged worktrees, four eligible arg0 directories, two Students
+  caches, and two exact Swallow `.DS_Store` hard links; 33 remote and 21 local
+  merged task branches were pruned. Active tasks and all private, runtime,
+  research, credential, and live-session state were preserved. Git integrity,
+  the complete Harness suite, eleven-node synchronization, four Mac context
+  refreshes, final residue checks, and canonical fleet health passed. The
+  first refresh used a nonexistent shorthand helper path and failed locally
+  before contact; the installed skill path then submitted exactly once to
+  each Mac. Progress commentary now uses `[HH:MM:SS]` local-time prefixes.
 - **T-308:** added the shared `reboot-recovery` skill and deterministic
   Local-side helper in PR #306, merged as `9203033`. Recovery now separates
   automatic launchd tunnel restoration, owner login and Codex remote-control
