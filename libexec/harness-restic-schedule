@@ -69,7 +69,7 @@ IFS='|' read -r row_host scheduler timezone weekday eligibility account partitio
 $schedule_row
 EOF
 [ "$row_host" = "$logical_host" ] || die "Restic schedule host mismatch"
-case "$scheduler" in slurm|ybatch|pbs|age) ;; *) die "invalid scheduler family" ;; esac
+case "$scheduler" in slurm|ybatch|pbs|abciq|age) ;; *) die "invalid scheduler family" ;; esac
 case "$timezone" in ''|*[!A-Za-z0-9_+./-]*) die "invalid schedule timezone" ;; esac
 [ "$weekday" = Sun ] || die "only the reviewed Sunday schedule is accepted"
 case "$eligibility" in [012][0-9]:[0-5][0-9]) ;; *) die "invalid eligibility time" ;; esac
@@ -293,7 +293,7 @@ valid_job_id() {
     candidate=$1
     case "$scheduler" in
         slurm|ybatch|age) case "$candidate" in ''|*[!0-9]*) return 1 ;; esac ;;
-        pbs) case "$candidate" in ''|*[!A-Za-z0-9._-]*) return 1 ;; esac ;;
+        pbs|abciq) case "$candidate" in ''|*[!A-Za-z0-9._-]*) return 1 ;; esac ;;
     esac
     return 0
 }
@@ -307,7 +307,7 @@ scheduler_find_name() {
             printf '%s\n' "$query" |
                 awk -F'|' -v name="$wanted" '$2 == name { print $1 }'
             ;;
-        pbs)
+        pbs|abciq)
             qstat -u "$username" 2>/dev/null |
                 awk -v name="$wanted" '$2 == name { print $1 }'
             ;;
@@ -331,7 +331,7 @@ scheduler_query_id() {
                 -v name="$wanted_name" -v user="$username" \
                 '$1 == id && $2 == name && $4 == user { print $3 }')
             ;;
-        pbs)
+        pbs|abciq)
             query=$(qstat -f "$wanted_id" 2>/dev/null || true)
             found_id=$(printf '%s\n' "$query" | sed -n 's/^Job Id: *//p' | sed -n '1p')
             found_name=$(printf '%s\n' "$query" | sed -n 's/^[[:space:]]*Job_Name = //p' | sed -n '1p')
@@ -419,6 +419,16 @@ scheduler_submit() {
                 -o /dev/null -e /dev/null "$JOB_SCRIPT") || die "native PBS submission failed"
             submitted=$(printf '%s\n' "$output" | sed -n 's/^\([A-Za-z0-9._-][A-Za-z0-9._-]*\)$/\1/p')
             ;;
+        abciq)
+            printf 'NATIVE %s: qsub -m n -W group_list=%s -l %s -l walltime=%s -a %s -N %s -o /dev/null -e /dev/null %s\n' \
+                "$logical_host" "$account" "$resource" "$walltime" \
+                "$QSUB_TIME" "$JOB_NAME" "$JOB_SCRIPT" >&2
+            output=$(qsub -m n -W "group_list=$account" -l "$resource" \
+                -l "walltime=$walltime" -a "$QSUB_TIME" -N "$JOB_NAME" \
+                -o /dev/null -e /dev/null "$JOB_SCRIPT") ||
+                die "native ABCI-Q PBS submission failed"
+            submitted=$(printf '%s\n' "$output" | sed -n 's/^\([A-Za-z0-9._-][A-Za-z0-9._-]*\)$/\1/p')
+            ;;
         age)
             printf 'NATIVE %s: qsub -g %s -l %s -l h_rt=%s -a %s -N %s -o /dev/null -e /dev/null %s\n' \
                 "$logical_host" "$account" "$resource" "$walltime" "$QSUB_TIME" \
@@ -467,7 +477,7 @@ scheduler_cancel() {
             printf 'NATIVE %s: scancel %s\n' "$logical_host" "$cancel_id" >&2
             scancel "$cancel_id" || die "native Slurm cancellation failed"
             ;;
-        pbs|age)
+        pbs|abciq|age)
             printf 'NATIVE %s: qdel %s\n' "$logical_host" "$cancel_id" >&2
             qdel "$cancel_id" || die "native qdel cancellation failed"
             ;;
@@ -513,7 +523,7 @@ successor_epoch=$successor_epoch"
 current_allocated_id() {
     case "$scheduler" in
         slurm|ybatch) CURRENT_ID=${SLURM_JOB_ID:-} ;;
-        pbs) CURRENT_ID=${PBS_JOBID:-} ;;
+        pbs|abciq) CURRENT_ID=${PBS_JOBID:-} ;;
         age) CURRENT_ID=${JOB_ID:-} ;;
     esac
     valid_job_id "$CURRENT_ID" || die "allocated scheduler job ID is missing or invalid"

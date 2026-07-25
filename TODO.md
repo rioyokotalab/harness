@@ -115,6 +115,13 @@ bytes were created or overwritten and local/remote T-310 now match. All T-311
 publications will use an explicit `HEAD:refs/heads/BRANCH` refspec. Changing
 the global Git preference is outside this task.
 
+**LIFO gate resolved 2026-07-25:** the first ABQ schedule focused run stopped at
+the fixture's hard-coded seven-row count after the eighth `abq` row was added.
+The failure is local and retry-safe; no scheduler job or live schedule changed.
+The expected count now covers all eight rows, ABCI-Q participates in exact PBS
+job identity and cancellation handling, and the full Restic schedule suite
+passes. T-311 has popped back to the ABQ schedule increment.
+
 Read-only discovery found P0 risks in the students cryptography lock and
 Swallow's absent protected-main/CI controls; repository-default Actions
 permissions in Harness and Swallow are also overbroad. All Mac firewalls are
