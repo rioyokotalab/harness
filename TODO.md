@@ -137,6 +137,12 @@ administrator action is deferred, cover parsing and malformed facts, and
 validate on all four Macs. Continue safe Harness work below the administrator
 gate.
 
+**LIFO gate active 2026-07-26:** the first passing firewall visibility
+increment covered global and stealth state but omitted the signed built-in,
+signed downloaded-app, and block-all settings that are part of D-003's access
+preservation contract. No live state changed. Extend the same value-minimized
+schema and doctor before publication, then rerun the focused and full gates.
+
 **LIFO gate resolved 2026-07-26:** Linux `harness doctor` reported
 `codex_rules=not-installed` on every host even though T-304 intentionally
 removed the user-global rule and retained it only as repository-scoped policy.

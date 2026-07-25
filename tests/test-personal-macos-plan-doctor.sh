@@ -139,6 +139,11 @@ cat >"$fake_bin/socketfilterfw" <<'EOF'
 case "$1" in
     --getglobalstate) echo 'Firewall is enabled. (State = 1)' ;;
     --getstealthmode) echo 'Firewall stealth mode is on' ;;
+    --getallowsigned)
+        echo 'Automatically allow built-in signed software ENABLED.'
+        echo 'Automatically allow downloaded signed software ENABLED.'
+        ;;
+    --getblockall) echo 'Firewall has block all state set to disabled.' ;;
     *) exit 2 ;;
 esac
 EOF
@@ -300,6 +305,25 @@ for expected in \
 do
     printf '%s\n' "$disabled_firewall_doctor" | grep -F -x "$expected" \
         >/dev/null || fail "disabled firewall doctor result: $expected"
+done
+strict_firewall_facts=$TEMP_DIR/strict-firewall-facts.conf
+sed -e 's/^firewall_allow_builtin=enabled$/firewall_allow_builtin=disabled/' \
+    -e 's/^firewall_allow_signed_apps=enabled$/firewall_allow_signed_apps=disabled/' \
+    -e 's/^firewall_block_all=disabled$/firewall_block_all=enabled/' \
+    "$ready_facts" >"$strict_firewall_facts"
+chmod 600 "$strict_firewall_facts"
+strict_firewall_doctor=$(HOME="$home" \
+    BREW_LOG="$TEMP_DIR/doctor-firewall-strict.log" FAKE_TREE_PRESENT=1 \
+    PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
+    "$DOCTOR" --host mac-test-pilot --facts "$strict_firewall_facts")
+for expected in \
+    'WARN security=firewall_allow_builtin state=disabled expected=enabled' \
+    'WARN security=firewall_allow_signed_apps state=disabled expected=enabled' \
+    'WARN security=firewall_block_all state=enabled expected=disabled' \
+    'END macos_doctor status=ready failures=0 warnings=3'
+do
+    printf '%s\n' "$strict_firewall_doctor" | grep -F -x "$expected" \
+        >/dev/null || fail "strict firewall doctor result: $expected"
 done
 case "$doctor_output" in
     *sqlite*|*ninja*|*language*|*agents*|*"$home"*)

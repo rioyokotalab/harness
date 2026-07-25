@@ -138,6 +138,26 @@ case "$1" in
             echo 'Firewall stealth mode is on'
         fi
         ;;
+    --getallowsigned)
+        if [ "${FAKE_FIREWALL_MALFORMED:-0}" = 1 ]; then
+            echo 'synthetic malformed signed state'
+        elif [ "${FAKE_FIREWALL_SIGNED_DISABLED:-0}" = 1 ]; then
+            echo 'Automatically allow built-in signed software DISABLED.'
+            echo 'Automatically allow downloaded signed software DISABLED.'
+        else
+            echo 'Automatically allow built-in signed software ENABLED.'
+            echo 'Automatically allow downloaded signed software ENABLED.'
+        fi
+        ;;
+    --getblockall)
+        if [ "${FAKE_FIREWALL_MALFORMED:-0}" = 1 ]; then
+            echo 'synthetic malformed block-all state'
+        elif [ "${FAKE_FIREWALL_BLOCK_ALL:-0}" = 1 ]; then
+            echo 'Firewall has block all state set to enabled.'
+        else
+            echo 'Firewall has block all state set to disabled.'
+        fi
+        ;;
     *) exit 2 ;;
 esac
 EOF
@@ -163,6 +183,9 @@ for expected in \
     'command_line_tools=present' \
     'firewall=enabled' \
     'firewall_stealth=enabled' \
+    'firewall_allow_builtin=enabled' \
+    'firewall_allow_signed_apps=enabled' \
+    'firewall_block_all=disabled' \
     'private_profile=valid' \
     'harness_checkout=present' \
     'link_codex_guidance=symlink' \
@@ -240,6 +263,10 @@ printf '%s\n' "$malformed_firewall_output" | grep -F -x \
     'firewall=unknown' >/dev/null || fail "unknown firewall state"
 printf '%s\n' "$malformed_firewall_output" | grep -F -x \
     'firewall_stealth=unknown' >/dev/null || fail "unknown stealth state"
+for key in firewall_allow_builtin firewall_allow_signed_apps firewall_block_all; do
+    printf '%s\n' "$malformed_firewall_output" | grep -F -x \
+        "$key=unknown" >/dev/null || fail "unknown firewall policy state: $key"
+done
 
 failed_firewall_output=$(HOME="$home" SHELL=/bin/zsh \
     BREW_LOG="$TEMP_DIR/brew-firewall-failed.log" FAKE_FIREWALL_FAIL=1 \
@@ -249,6 +276,25 @@ printf '%s\n' "$failed_firewall_output" | grep -F -x \
     'firewall=unavailable' >/dev/null || fail "unavailable firewall state"
 printf '%s\n' "$failed_firewall_output" | grep -F -x \
     'firewall_stealth=unavailable' >/dev/null || fail "unavailable stealth state"
+for key in firewall_allow_builtin firewall_allow_signed_apps firewall_block_all; do
+    printf '%s\n' "$failed_firewall_output" | grep -F -x \
+        "$key=unavailable" >/dev/null ||
+        fail "unavailable firewall policy state: $key"
+done
+
+strict_firewall_output=$(HOME="$home" SHELL=/bin/zsh \
+    BREW_LOG="$TEMP_DIR/brew-firewall-strict.log" \
+    FAKE_FIREWALL_SIGNED_DISABLED=1 FAKE_FIREWALL_BLOCK_ALL=1 \
+    PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
+    "$INVENTORY" --host mac-test-pilot)
+for expected in \
+    'firewall_allow_builtin=disabled' \
+    'firewall_allow_signed_apps=disabled' \
+    'firewall_block_all=enabled'
+do
+    printf '%s\n' "$strict_firewall_output" | grep -F -x "$expected" \
+        >/dev/null || fail "strict firewall policy state: $expected"
+done
 
 no_brew_bin=$TEMP_DIR/no-brew-bin
 mkdir -p "$no_brew_bin"

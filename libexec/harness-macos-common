@@ -456,6 +456,39 @@ macos_firewall_fact() {
                 *) printf '%s\n' unknown ;;
             esac
             ;;
+        allow_builtin|allow_signed_apps)
+            macos_firewall_output=$(LC_ALL=C "$macos_firewall_command" \
+                --getallowsigned 2>/dev/null) ||
+                { printf '%s\n' unavailable; return; }
+            if [ "$macos_firewall_fact_name" = allow_builtin ]; then
+                macos_firewall_prefix='Automatically allow built-in signed software '
+            else
+                macos_firewall_prefix='Automatically allow downloaded signed software '
+            fi
+            if printf '%s\n' "$macos_firewall_output" |
+                grep -F -x "${macos_firewall_prefix}ENABLED." >/dev/null 2>&1; then
+                printf '%s\n' enabled
+            elif printf '%s\n' "$macos_firewall_output" |
+                grep -F -x "${macos_firewall_prefix}DISABLED." >/dev/null 2>&1; then
+                printf '%s\n' disabled
+            else
+                printf '%s\n' unknown
+            fi
+            ;;
+        block_all)
+            macos_firewall_output=$(LC_ALL=C "$macos_firewall_command" \
+                --getblockall 2>/dev/null) ||
+                { printf '%s\n' unavailable; return; }
+            case $macos_firewall_output in
+                'Firewall has block all state set to enabled.')
+                    printf '%s\n' enabled
+                    ;;
+                'Firewall has block all state set to disabled.')
+                    printf '%s\n' disabled
+                    ;;
+                *) printf '%s\n' unknown ;;
+            esac
+            ;;
         *) die "unknown Mac firewall fact" ;;
     esac
 }
@@ -463,7 +496,7 @@ macos_firewall_fact() {
 macos_validate_fact_file() {
     macos_fact_file=$1
     macos_fact_policy=$2
-    macos_fact_keys=schema,family,logical_id,architecture,account_shell,account_shell_registry,homebrew,homebrew_prefix_class,command_line_tools,firewall,firewall_stealth,private_profile,harness_checkout,link_codex_guidance,link_codex_rules,link_claude_guidance,link_bash_launcher
+    macos_fact_keys=schema,family,logical_id,architecture,account_shell,account_shell_registry,homebrew,homebrew_prefix_class,command_line_tools,firewall,firewall_stealth,firewall_allow_builtin,firewall_allow_signed_apps,firewall_block_all,private_profile,harness_checkout,link_codex_guidance,link_codex_rules,link_claude_guidance,link_bash_launcher
     macos_fact_formulae=$(macos_manifest_get "$macos_fact_policy" managed_formulae),$(macos_manifest_get "$macos_fact_policy" retired_formulae)
     for macos_fact_formula in $(printf '%s\n' "$macos_fact_formulae" | tr ',' ' '); do
         macos_fact_formula_key=formula_$(macos_formula_key "$macos_fact_formula")
@@ -500,7 +533,8 @@ macos_validate_fact_file() {
     macos_value_is_one_of \
         "$(macos_manifest_get "$macos_fact_file" command_line_tools)" \
         present absent || die "personal-Mac developer-tools fact is malformed"
-    for macos_firewall_key in firewall firewall_stealth; do
+    for macos_firewall_key in firewall firewall_stealth \
+        firewall_allow_builtin firewall_allow_signed_apps firewall_block_all; do
         macos_value_is_one_of \
             "$(macos_manifest_get "$macos_fact_file" "$macos_firewall_key")" \
             enabled disabled unavailable unknown ||
