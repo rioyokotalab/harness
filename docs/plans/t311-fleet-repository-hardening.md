@@ -233,12 +233,20 @@ the guarded-delete workflow and verifies protected anchors afterward.
 
 | ID | Decision | Recommended default | Status |
 | --- | --- | --- | --- |
-| D-001 | Protected-main model across four repositories | One review for non-admin writers, strict checks, linear history, owner/admin bypass | open |
+| D-001 | Protected-main model across four repositories | One review for non-admin writers, strict checks, linear history, owner/admin bypass | confirmed: option 1 |
 | D-002 | Dependency and GitHub security automation | Read-only Actions defaults, Dependabot alerts/security PRs, monthly grouped updates, secret protection where available; never auto-merge | open |
 | D-003 | Mac network posture | Firewall plus stealth, preserve signed/built-in access initially, disable Office X11 TCP, validate one Mac at a time | open |
 | D-004 | Backup expansion | Add ABQ weekly scheduling now; plan Mac and Swallow backups separately rather than sweeping large/private state | open |
 | D-005 | Agent/package refresh | Fix broken Riken Claude and update managed Linux Claude to 2.1.220; preserve intentional Aist/Home absence and running sessions | open |
 | D-006 | Administrator boundary during unattended execution | Apply only already non-interactive narrow authority; stage exact helpers for password/TCC/root work at the top of the owning TODO | open |
+
+D-001 consequence: standardize the protected-main floor across all four
+repositories. Require one approving review from non-admin writers, strict
+required checks, linear history, and resolved review conversations; preserve
+an owner/admin bypass so owner-authorized work can complete unattended.
+Retain `students`' stronger code-owner-review and last-push-approval gates.
+Add the Swallow ruleset only after its credential-free required CI check exists
+and passes, so protection never names an absent or unproven check.
 
 ## Evidence
 
@@ -257,6 +265,6 @@ the guarded-delete workflow and verifies protected anchors afterward.
 
 ## Next action
 
-Ask D-001 only. After every answer, checkpoint the exact selection and ask the
+Ask D-002 only. After every answer, checkpoint the exact selection and ask the
 next open decision. Do not execute hardening until all decisions are frozen
 and the owner gives explicit `go`.
