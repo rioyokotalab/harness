@@ -132,9 +132,10 @@ Nothing was removed or restarted.
 
 The umbrella plan and decision register are in
 `docs/plans/t317-fleet-housekeeping-resilience.md`. D-001 selects
-remote-aware resilience first with Harness as the canary; ask D-002 only. No
-housekeeping mutation is authorized before the plan is complete and the owner
-gives a separate execution `go`.
+remote-aware resilience first with Harness as the canary. D-002 includes the
+full reversible housekeeping set plus ordinary non-administrator package and
+dependency upgrades; ask D-003 only. No housekeeping mutation is authorized
+before the plan is complete and the owner gives a separate execution `go`.
 
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 

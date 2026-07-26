@@ -102,6 +102,24 @@ Alternative: authorize ordinary non-administrator package and dependency
 upgrades during this run as well. This produces a broader cleanup but increases
 regression and agent-disruption risk.
 
+**Selected:** include the full recommended housekeeping set plus ordinary
+non-administrator package and dependency upgrades. The owner's exact response
+was “Include everything.” Separate authority boundaries for administrator
+changes, backup pruning, scheduler cancellation, hosting administration,
+credentials, and active-agent disruption are not implicitly expanded.
+
+### D-003 — Administrator-gated host changes
+
+Recommended: audit every host, apply existing narrow non-interactive managed
+authority where already declared, and stage exact reviewed helpers for
+password, sudo, TCC, reboot, or physical-presence gates. Do not interrupt the
+run to request interactive authentication and do not broaden privilege.
+
+Alternative: stop at each administrator gate and ask the owner to authenticate
+interactively so eligible host changes can be completed during this run. This
+maximizes immediate coverage but creates repeated interruptions and a higher
+chance of disturbing active sessions.
+
 **Status:** unresolved.
 
 ## Interruption contract
