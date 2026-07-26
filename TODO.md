@@ -87,11 +87,11 @@ Next free ID: T-317.
 
 ## Next resume checkpoint
 
-1. T-316 has accepted the named Harness fork and is ready for Stage 3. Commit
-   and push the Stage-2 acceptance checkpoint, revalidate every protected
-   identity, then create exactly one detached `swallow` remote TUI for existing
-   root `019f9f69-6b94-70a3-be12-8bef23b88a96`. Do not send pane input or
-   replay the fork/name request.
+1. T-316 has accepted both remote views and is ready for Stage 4. Commit and
+   push the Stage-3 acceptance checkpoint, revalidate every protected/new
+   identity, rename exact old `@42` to `harness-stale`, rename exact accepted
+   fork `@47` to `harness`, and switch the sole attached client to `@47`.
+   Never send pane input or signal the old process in this thread.
 2. T-314 and T-315 are complete. Resume Swallow SW-031 on AB from its targeted
    Slack/GitHub/Hugging Face/web evidence-search handoff; keep planning
    incremental and do not launch a large experiment.
@@ -341,6 +341,19 @@ fresh-connection protocol read, fork lineage, all rollout owners, redacted
 doctor 18/18, and clean aligned Git match. The single naming write is complete
 and must never be replayed. Commit and push this acceptance, then create only
 the Stage-3 detached `swallow` remote resume with no prompt or pane input.
+
+**Stage-3 acceptance 2026-07-27:** one detached native remote resume created
+exact `@48:swallow`, pane `%48`, wrapper PID `3323024` start tick `84158638`,
+and real TUI PID `3323133` start tick `84158671`, with exact Swallow UUID
+argv. Its unique accepted app-server/client inode pair is
+`166524532`/`166522667`. Full validation passed all four tmux windows, all
+eleven protected/new process identities, all three accepted socket pairs,
+unchanged 25-thread cardinality and three unarchived target roots, exact
+Harness persistence, app-server rollout ownership, redacted doctor 18/18, and
+clean aligned Git. The owner remained on `@42:harness`; no prompt or pane
+input was sent. Commit and push this checkpoint, then execute only the Stage-4
+exact window renames and client switch. Do not signal the old standalone
+process in this thread.
 
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
