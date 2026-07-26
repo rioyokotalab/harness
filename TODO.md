@@ -137,7 +137,8 @@ full reversible housekeeping set plus ordinary non-administrator package and
 dependency upgrades. D-003 uses only declared non-interactive authority and
 stages helpers for interactive gates. D-004 forbids scheduler changes and
 protects all active work. D-005 validates backups without pruning snapshots or
-changing retention; ask D-006 only. No housekeeping mutation is authorized
+changing retention. D-006 keeps hosting administration and collaborator-owned
+remote state read-only; ask D-007 only. No housekeeping mutation is authorized
 before the plan is complete and the owner gives a separate execution `go`.
 
 ### T-316 — Map Local tmux to three phone-visible Codex roots
