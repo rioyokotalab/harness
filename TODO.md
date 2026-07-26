@@ -87,9 +87,9 @@ Next free ID: T-315.
 
 ## Next resume checkpoint
 
-1. Resume T-314 at its execution gate. Decision D-002 selected one
-   identity-checked exact-PID `SIGTERM`, but no signal or start is authorized
-   until the owner gives the required separate explicit `go`.
+1. Resume T-314 at its D-002 execution checkpoint. The owner gave the separate
+   explicit `go`; first require this authorization checkpoint and its Swallow
+   counterpart to be pushed, then execute the frozen guarded signal/start once.
 2. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
@@ -102,7 +102,7 @@ Next free ID: T-315.
 
 ### T-314 — Recover Local Slack connector availability
 
-**Phase:** awaiting separate execution authorization.
+**Phase:** executing after separate authorization.
 
 Restore read-only Slack tools to Local Codex after the installed and enabled
 Slack plugin initially listed `RioYokotaLab` and searched `#swallow`, then
@@ -139,10 +139,11 @@ exact-executable, exact-argv checked `SIGTERM`, no `SIGKILL`, followed by
 native start only after confirmed exit.
 
 **Decision D-002:** the owner selected the recommended guarded one-time
-`SIGTERM`. This selects the plan but does not signal or start anything. Obtain
-a separate explicit `go` before execution. If this chat is interrupted,
-resume from this ledger; do not replay the native stop or infer authorization
-from the earlier D-001 `go`.
+`SIGTERM` and then gave the separately required explicit `go`. No signal or
+start preceded this checkpoint. Push it in Harness and Swallow before
+execution, then revalidate and perform the frozen exact-PID signal/start once.
+If interrupted, resume from this ledger and reconcile live state before
+acting; never replay the failed native stop or an ambiguous signal/start.
 
 ### T-313 — Enable repository auto-merge and limit login-node Codex threads
 

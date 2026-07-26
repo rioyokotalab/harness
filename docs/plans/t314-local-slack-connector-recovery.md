@@ -1,6 +1,6 @@
 # T-314 Local Slack connector recovery
 
-**Phase:** awaiting separate execution authorization
+**Phase:** executing after separate authorization
 **Driver:** Local Codex
 **Updated:** 2026-07-27 JST
 
@@ -188,11 +188,10 @@ Out of scope:
 - A fabricated PID record and `SIGKILL` are rejected. The former would
   impersonate daemon-managed state; the latter is unnecessary unless a
   separately reviewed graceful-stop attempt fails.
-- **State:** selected by the owner; execution is not yet authorized. A
-  separate explicit `go` is still required before any signal.
+- **State:** selected and separately authorized by owner `go`.
 
 ## Next action
 
-Checkpoint the owner's D-002 selection in Harness and Swallow, validate and
-push both repositories, and rerun canonical fleet health. Then ask for a
-separate explicit `go`; until it is received, do not signal or start anything.
+Checkpoint the owner's separate D-002 execution `go` in Harness and Swallow
+and push both repositories. Revalidate the frozen server and TUI identities,
+then execute steps 4–6 exactly once.
