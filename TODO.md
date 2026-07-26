@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-317.
+Next free ID: T-318.
 
 ## Current state
 
@@ -87,18 +87,53 @@ Next free ID: T-317.
 
 ## Next resume checkpoint
 
-1. T-314 through T-316 are complete. Resume Swallow SW-031 on AB from its targeted
+1. T-317 is planning a 503-safe Local transition followed by major
+   fleet/repository housekeeping. Live inspection proves the three remote
+   Local TUIs are not supervised; do not begin housekeeping or restart an
+   agent until the owner resolves D-001 in
+   `docs/plans/t317-fleet-housekeeping-resilience.md`.
+2. T-314 through T-316 are complete. Resume Swallow SW-031 on AB from its targeted
    Slack/GitHub/Hugging Face/web evidence-search handoff; keep planning
    incremental and do not launch a large experiment.
-2. Complete the four deferred T-311 Mac firewall helpers only when the owner
+3. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
-3. Continue T-196 only at its exact time/identity gates: AB and AB2 are now
+4. Continue T-196 only at its exact time/identity gates: AB and AB2 are now
    2/8 with next-week successors waiting; retry RI accounting ID `7242`
    without touching successor `10386`, and inspect AL ID `4238363` only after
    its later eligibility.
 
 ## Active tasks
+
+### T-317 — 503-safe fleet and repository housekeeping
+
+**Phase:** interviewing.
+
+The owner asked to confirm that current Local tmux/Codex sessions resist 503
+failures, then perform major housekeeping across the whole managed fleet and
+repositories without disrupting the Students or Swallow agents. Read-only
+inspection at 08:18 JST proves the prerequisite is not met:
+
+- `@47:harness`, `@46:students`, and `@48:swallow` are direct native
+  `codex ... --remote unix://` wrapper/real-TUI pairs;
+- no live `harness-codex-resilient` supervisor owns any of them;
+- resilient status is stale for `harness` and absent for `students` and
+  `swallow`;
+- the deployed supervisor supports only local new/last/last-all/explicit
+  selectors and cannot preserve a remote endpoint during retry;
+- app-server PID `2852569` remains healthy, but app-server availability alone
+  does not restart an exited remote TUI.
+
+The exact protected real TUIs are Students PID `3025057`, Harness PID
+`3184653`, and Swallow PID `3323133`; all remain connected and unchanged.
+Canonical fleet health passes all managed routes. Required read-only Local
+arg0 inventory reports `live=5 eligible=7 young=0 unexpected=0 removed=0`.
+Nothing was removed or restarted.
+
+The umbrella plan and first decision are in
+`docs/plans/t317-fleet-housekeeping-resilience.md`. Ask D-001 only. No
+housekeeping mutation is authorized before the plan is complete and the owner
+gives a separate `go`.
 
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
