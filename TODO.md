@@ -197,7 +197,7 @@ No protected state changed. Commit and push this retry-safe failure, then
 repeat the same preflight and target exact unused index `harness:2`.
 
 **Harness canary acceptance 2026-07-27 08:38 JST:** exact index 2 launch
-created `@49:harness-next`, supervisor PID `4063793` start tick `84409821`,
+created `@49:harness-next`, supervisor PID `4063793` start tick `84409801`,
 wrapper PID `4063851`, and real TUI PID `4064616` start tick `84409839`.
 Supervisor status is `running selector=remote-explicit`; both wrapper and real
 argv resolve to exact Harness root
@@ -208,6 +208,15 @@ this acceptance, then rename old `@47:harness` to `harness-direct`, rename
 accepted `@49:harness-next` to `harness`, and retire only old direct real TUI
 PID `3184653` after immutable revalidation. Never switch either attached
 client or touch Students/Swallow.
+
+**Harness cutover LIFO gate 2026-07-27 08:39 JST:** the first cutover
+validator stopped at its initial Git assertion because it used an incorrectly
+expanded form of pushed short revision `735b6cd`; no rename or signal ran.
+Readback also corrected the canary supervisor's immutable start tick from the
+mistyped `84409821` to exact `84409801`. Exact HEAD/upstream is
+`735b6cd86a0029e08d3924c1fd52ec063258e409`; all four windows and both old/new
+Harness chains are unchanged. Commit and push this correction, then repeat the
+complete cutover validator with only the exact corrected constants.
 
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
