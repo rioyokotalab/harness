@@ -265,6 +265,23 @@ it is now reparented to PID 1 and redacted doctor remains `ok`. The retry is
 safe. Re-run the complete preflight against the real server identity required
 by the frozen acceptance gate, without requiring the transient wrapper.
 
+**LIFO cleanup gate 2026-07-27:** corrected preflight passed and native
+`tmux kill-window -t @0` removed the exact stale window, but its process chain
+did not receive a terminating signal and remained live beyond the bounded
+20-second wait. The command stopped without escalation. The sole attached
+client stayed on `swallow`; `students`, `swallow`, their process chains, and
+the app server are unchanged. The three stale processes now share exact
+session/process group `3837157` and only deleted PTY `/dev/pts/8`.
+
+Do not signal the whole group. Revalidate real TUI PID `2727306`, its exact
+start/argv/parentage, shared rollout, and the surviving topology, then send one
+`SIGTERM` only to that real TUI. The managed arg0 launcher will retain its
+normal postflight path and propagate status 143; the resilience supervisor
+classifies that as an operator stop rather than restarting. Wait up to
+20 seconds for all three exact stale PIDs to disappear and require their arg0
+lock to be released. No `SIGKILL`, second signal, process-group signal, or
+saved-session deletion is authorized; stop if the exact chain remains.
+
 ### T-314 — Recover Local Slack connector availability
 
 **Phase:** complete.
