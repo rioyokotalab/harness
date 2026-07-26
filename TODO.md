@@ -218,6 +218,18 @@ mistyped `84409821` to exact `84409801`. Exact HEAD/upstream is
 Harness chains are unchanged. Commit and push this correction, then repeat the
 complete cutover validator with only the exact corrected constants.
 
+**Harness canary cutover 2026-07-27 08:40 JST:** pushed correction
+`f7baeaabc1467cdb860b0e2fc5d76b9fda1e27cb` passed the full cutover
+validator. Exact `@47` was renamed `harness-direct`, exact `@49` was renamed
+`harness`, and one `SIGTERM` was sent to old direct real TUI PID `3184653` at
+08:40:05 JST. The old real TUI and wrapper PID `3184180` exited without
+respawn, so tmux removed `@47` automatically. Supervised Harness PIDs
+`4063793`/`4063851`/`4064616` remain exact and status is
+`running remote-explicit`; both attached clients remain on unchanged Students.
+Commit and push this result. Then add detached supervised guard connections
+for exact Students and Swallow roots one at a time, validating each before the
+next. Do not switch, rename, signal, or type into either project window.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
