@@ -419,6 +419,18 @@ accepted socket pairs are unchanged, the client remains attached to
 target mutation ran. Commit and push this checkpoint, replace only the typo
 with exact `165756871`, then repeat the complete pre-signal validator.
 
+**Stage-5 stale-chain result 2026-07-27 08:11 JST:** pushed retry checkpoint
+`354deb4d42f48387d6f654a2867723ef4d948847` passed the corrected complete
+pre-signal validator. Exactly one `SIGTERM` was sent to immutable old real TUI
+PID `2727307` at `2026-07-27T08:11:20+0900`; it exited within the bounded
+wait. Wrapper PID `2727170` and `swallow-research` supervisor PID `2345899`
+then exited without respawn. No `resume --last` or `swallow-research` process
+remains. Exact inactive `@42:harness-stale` now contains only original idle
+shell PID `1963022`; the owner remains attached to exact `@47:harness`.
+Commit and push this result, revalidate the three remote clients and absent
+old chain, then remove only exact stale window `@42`. Do not send another
+signal.
+
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
 **Phase:** complete.
