@@ -309,6 +309,14 @@ clean aligned Harness `main`, one detached live `harness-codex-resume` tmux
 session, both Aist routes, and full fleet health. Commit and push this canary,
 then upgrade Home using the same three exact formulae and gates.
 
+**Home package result 2026-07-27 08:55 JST:** the same explicit Homebrew
+transaction installed exact versions 1.18.0, 3.53.4, and 0.11.32. Its internal
+cleanup stayed within package-owned Cellar/cache/log and `/opt/homebrew`
+compiled-cache/symlink state. Readback passes Node and uv execution, clean
+aligned Harness `main`, one detached live Codex tmux session, both Home routes,
+and full fleet health. Commit and push this result, then upgrade Office with
+the same exact package and validation boundary.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
