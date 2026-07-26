@@ -87,12 +87,12 @@ Next free ID: T-317.
 
 ## Next resume checkpoint
 
-1. T-316 is executing at the Stage-2 native naming gate. Commit and push the
-   checkpointed naming amendment in
-   `docs/plans/t316-local-three-thread-mapping.md`, revalidate the exact
-   provisional Harness root/client plus every protected identity, then invoke
-   at most one schema-defined `thread/name/set` request with read-before and
-   read-after checks. Do not replay TUI input, fork, or an ambiguous request.
+1. T-316 is executing at the Stage-2 native naming gate, but the existing tmux
+   session currently has no attached client. Reattach to the same Local
+   `harness` tmux session without restarting any process, then revalidate the
+   exact client selector, provisional Harness root/client, and every protected
+   identity before invoking at most one schema-defined `thread/name/set`
+   request. Do not replay TUI input, fork, or an ambiguous request.
 2. T-314 and T-315 are complete. Resume Swallow SW-031 on AB from its targeted
    Slack/GitHub/Hugging Face/web evidence-search handoff; keep planning
    incremental and do not launch a large experiment.
@@ -260,6 +260,19 @@ schema-defined WebSocket transaction: read exact root state, send one
 connection. Commit and push this amendment before the write. If the request
 or response is ambiguous, do not retry; use read-only reconciliation and stop.
 No Swallow client has been created.
+
+**Stage-2 pre-write gate 2026-07-27 07:50 JST:** naming amendment commit
+`58be67080838f31f137718a0ada727934c60c948` is pushed and the branch is
+clean/aligned. Exact windows, all nine recorded process/start identities, both
+accepted app-server socket pairs, 25-thread cardinality, all three rollout
+descriptors, and filtered native doctor (`overall=ok`, 18/18 checks `ok`)
+match. The sole mismatch is that tmux session `harness` reports
+`session_attached=0` and `tmux list-clients` is empty; the frozen gate requires
+exactly one attached client before a rename or launch. No
+`thread/name/set`, new client, signal, pane input, or tmux mutation occurred.
+The private schema bundle remains at
+`/tmp/t316-app-server-schema.BnxRrl`. Reattach to the existing session without
+restarting anything, then repeat the complete pre-write gate.
 
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
