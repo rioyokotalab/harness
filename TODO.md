@@ -201,6 +201,22 @@ identity remain unchanged. Commit and push this accepted identity, then send
 the `/rename` interaction exactly once to pane `%47` and require persisted
 thread name `harness` before creating Swallow.
 
+**Stage-2 naming gate 2026-07-27:** the planned interaction was sent once to
+exact pane `%47` with separate one-second paste/submit steps: `/rename`, then
+`harness`. The ten-second persistence loop timed out with the new thread's
+name still empty. It is unsafe to replay the input. Value-free log indexing
+proves the TUI received key-handling activity but emitted zero
+`thread/name/set`, name-update, session-renamed, empty-name, or `/rename`
+markers. The accepted fork process, its reciprocal app-server socket, exact
+root/rollout, original active window, and Git remain unchanged.
+
+Do not read the pane or send another key. Inspect the installed official
+app-server protocol for the exact native `thread/name/set` request. If it can
+be invoked through the existing local authenticated control socket with exact
+thread ID and readback, revise only the naming mechanism in the frozen plan
+and checkpoint it before execution; otherwise leave the fork unnamed and stop
+for owner direction. No Swallow client has been created.
+
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
 **Phase:** complete.
