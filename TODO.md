@@ -299,6 +299,16 @@ and package-owned Cellar/cache state. Upgrade Aist first, then require versions,
 managed plan, both routes, tunnels, running Codex session, and Harness checkout
 to remain healthy before proceeding to another Mac.
 
+**Aist package canary 2026-07-27 08:54 JST:** native explicit
+`brew upgrade libnghttp3 sqlite uv` installed exact versions 1.18.0, 3.53.4,
+and 0.11.32. Homebrew's internal cleanup removed obsolete package-owned
+Cellar entries, bottles, caches, logs, and three package-manager symlinks; it
+did not target a repository, credential, backup, or active-session path.
+Readback passes Node and uv execution, a zero-change managed Homebrew plan,
+clean aligned Harness `main`, one detached live `harness-codex-resume` tmux
+session, both Aist routes, and full fleet health. Commit and push this canary,
+then upgrade Home using the same three exact formulae and gates.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
