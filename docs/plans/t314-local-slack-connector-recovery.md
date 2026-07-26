@@ -1,6 +1,6 @@
 # T-314 Local Slack connector recovery
 
-**Phase:** interviewing after a safe native-stop refusal
+**Phase:** awaiting separate execution authorization
 **Driver:** Local Codex
 **Updated:** 2026-07-27 JST
 
@@ -188,12 +188,11 @@ Out of scope:
 - A fabricated PID record and `SIGKILL` are rejected. The former would
   impersonate daemon-managed state; the latter is unnecessary unless a
   separately reviewed graceful-stop attempt fails.
-- **State:** open; no signal or native start is authorized.
+- **State:** selected by the owner; execution is not yet authorized. A
+  separate explicit `go` is still required before any signal.
 
 ## Next action
 
-Checkpoint the safely refused native stop and D-002 in Harness and Swallow,
-validate and push both repositories, remove the private temporary stop log,
-and rerun canonical fleet health. Then ask the owner to select D-002. If
-selected, checkpoint that decision and ask for a separate explicit `go`;
-until then, do not signal or start anything.
+Checkpoint the owner's D-002 selection in Harness and Swallow, validate and
+push both repositories, and rerun canonical fleet health. Then ask for a
+separate explicit `go`; until it is received, do not signal or start anything.
