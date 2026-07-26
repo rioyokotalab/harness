@@ -105,7 +105,7 @@ Next free ID: T-316.
 
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
-**Phase:** executing owner-requested stale live-client cleanup.
+**Phase:** validating owner-requested stale live-client cleanup.
 
 The owner reported different agents in Local tmux and phone Remote immediately
 after T-314. Metadata-only inspection, without reading pane contents, found one
@@ -281,6 +281,25 @@ classifies that as an operator stop rather than restarting. Wait up to
 20 seconds for all three exact stale PIDs to disappear and require their arg0
 lock to be released. No `SIGKILL`, second signal, process-group signal, or
 saved-session deletion is authorized; stop if the exact chain remains.
+
+**LIFO cleanup result 2026-07-27:** every corrected identity gate passed and
+one `SIGTERM` was sent only to real stale TUI PID `2727306`. The real TUI,
+managed arg0 wrapper PID `2727171`, and resilience supervisor PID `3837157`
+all exited within the bounded wait, with no respawn. No second signal was sent.
+The postflight wrapper then exited 1 only because it required supervisor phase
+`stopped`; actual value-free status is the safe
+`phase=stale owner_pid=none reason=owner-absent`. Window `@0` remains absent,
+the sole attached client remains on `swallow`, both surviving windows and all
+their PIDs are unchanged, the Students control-socket peer and app server are
+healthy, and redacted doctor is `ok`.
+
+Arg0 planning reports `live=4 eligible=0 young=2 unexpected=0`; the terminated
+process released its lock, and no housekeeping deletion is eligible or
+authorized. Treat the stale value-free supervisor state as accurate residue
+from removing its tmux owner, not as a live Codex session. Run independent
+final topology/socket/thread/doctor/Git validation and canonical fleet health,
+then close this cleanup. Permanent `codex delete` remains excluded because the
+saved UUID is the active SW-031 thread.
 
 ### T-314 — Recover Local Slack connector availability
 
