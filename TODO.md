@@ -87,10 +87,10 @@ Next free ID: T-315.
 
 ## Next resume checkpoint
 
-1. Resume T-314 from its post-turn result
-   `/tmp/t314-post-turn-result.fE4BY3`. The exact D-002 `SIGTERM` was already
-   sent once; never replay it. Reconcile the old/new server identity, managed
-   PID record, doctor, both TUIs, and both repositories before another action.
+1. Resume T-314 at Decision D-003. The exact first `SIGTERM` was already sent;
+   never replay it. Select whether one detached exact-identity helper may send
+   a second `SIGTERM` and perform native start after forced exit. A separate
+   `go` is required after selection.
 2. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
@@ -103,7 +103,7 @@ Next free ID: T-315.
 
 ### T-314 — Recover Local Slack connector availability
 
-**Phase:** awaiting current turn yield.
+**Phase:** interviewing Decision D-003.
 
 Restore read-only Slack tools to Local Codex after the installed and enabled
 Slack plugin initially listed `RioYokotaLab` and searched `#swallow`, then
@@ -153,24 +153,38 @@ full 60-second grace window, so the guard exited `75`; no second signal,
 the old unmanaged 0.145.0 server and both supervised TUIs live.
 
 The installed-version Codex test confirms the first `SIGTERM` waits for a
-running app-server turn, while a second forces exit. This recovery turn is the
-inline shutdown dependency. Do not send another signal. After this checkpoint
-is pushed, arm the reviewed current-user one-shot continuation: it sends no
-signal, waits for this exact old identity to disappear after the turn yields,
-runs native start once, and verifies the managed PID record, redacted doctor,
-and both TUIs. Its mode-0600 handoff is
+running app-server turn, while a second forces exit. That supported a
+lower-risk no-signal continuation: wait for the exact old identity to
+disappear after the turn yielded, then run native start and verify the managed
+PID record, redacted doctor, and both TUIs. Its mode-0600 handoff was
 `/tmp/t314-post-turn-result.fE4BY3`; the prepared native-start and doctor logs
-are `/tmp/t314-remote-control-start.cMgpXI` and
-`/tmp/t314-post-turn-doctor.qJnJvK`. Preserve failure logs; exact-unlink
-successful private logs and the reviewed helper.
+were `/tmp/t314-remote-control-start.cMgpXI` and
+`/tmp/t314-post-turn-doctor.qJnJvK`.
 
 The first helper launch failed closed before mutation because it contained UID
 `1000` instead of Local's actual `5035`. The corrected helper passed `bash -n`
 and `shellcheck`, exact-unlinked itself, and armed as PID `2562922` at
-2026-07-27 03:18:54 JST. It sends no signal and is waiting for the unchanged
-old PID/start identity to disappear when this turn yields. Push this armed
-checkpoint, then yield; the next turn must begin with the mode-0600 result
-readback above.
+2026-07-27 03:18:54 JST. It sent no signal and waited for the unchanged old
+PID/start identity to disappear after the turn yielded.
+
+**Post-turn result:** the corrected helper waited five minutes after the prior
+turn yielded and failed closed at `waiting_for_graceful_exit` at 03:25:01 JST.
+It sent no signal and did not run native start. At 03:56 JST, the original
+server identity was still live, the managed PID file remained absent, both
+TUIs were unchanged, and filtered redacted doctor remained `ok`.
+
+Installed 0.145.0 source confirms a second forceable signal sets forced
+shutdown, exits even with running assistant turns, and skips orderly
+connection/task/thread cleanup; its exact test expects a second `SIGTERM` to
+exit successfully within two seconds. This may interrupt in-flight app-server
+turns even though the two TUI OS processes are preserved.
+
+**Decision D-003:** open. The recommended bounded path is to arm a detached
+exact-identity helper before signaling; it sends one second `SIGTERM`, never
+`SIGKILL`, waits up to ten seconds for the exact old identity to disappear,
+then invokes native managed start once and verifies the managed PID, redacted
+doctor, and both TUIs. If selected, checkpoint the choice and obtain a
+separate explicit `go`. Until then, do not signal or start anything.
 
 ### T-313 — Enable repository auto-merge and limit login-node Codex threads
 

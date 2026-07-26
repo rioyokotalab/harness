@@ -1,6 +1,6 @@
 # T-314 Local Slack connector recovery
 
-**Phase:** awaiting current turn yield
+**Phase:** interviewing Decision D-003
 **Driver:** Local Codex
 **Updated:** 2026-07-27 JST
 
@@ -94,15 +94,30 @@ Out of scope:
     for a running app-server turn before exit, while a second `SIGTERM` forces
     exit
     ([0.145.0 signal test](https://github.com/openai/codex/blob/25af12f7e61572b0bc18ddb1008be543b91519b0/codex-rs/app-server/tests/suite/v2/connection_handling_websocket_unix.rs#L86-L129)).
-    This recovery turn is therefore the dependency preventing inline graceful
-    exit. Forced termination is unnecessary: a continuation can wait for this
-    turn to yield and then perform the already-authorized native start.
+    This supported the lower-risk hypothesis that yielding the recovery turn
+    would permit graceful exit; the post-turn watcher below rejected that
+    hypothesis.
 14. The first continuation launch failed closed during handoff-file validation
     because its reviewed UID constant was `1000`, while Local's actual UID is
     `5035`. It sent no signal, did not unlink the helper, and did not call
     native start. The corrected helper passed `bash -n` and `shellcheck`, then
     exact-unlinked itself and armed successfully as PID `2562922` at
-    2026-07-27 03:18:54 JST. It is waiting on the unchanged old identity.
+    2026-07-27 03:18:54 JST.
+15. The corrected continuation waited five minutes after the turn yielded,
+    then failed closed at `waiting_for_graceful_exit` at 03:25:01 JST. It sent
+    no signal and did not run native start. At 03:56 JST, PID `3676694` still
+    had the original owner, start time, executable, and argv; redacted doctor
+    was `ok`, both TUIs remained live, and the managed PID file remained
+    absent.
+16. Installed-version shutdown code sets a `forced` flag on a second
+    forceable signal, exits the accept loop even when assistant turns remain,
+    and skips orderly connection/task/thread cleanup
+    ([signal state](https://github.com/openai/codex/blob/25af12f7e61572b0bc18ddb1008be543b91519b0/codex-rs/app-server/src/lib.rs#L225-L267),
+    [forced exit](https://github.com/openai/codex/blob/25af12f7e61572b0bc18ddb1008be543b91519b0/codex-rs/app-server/src/lib.rs#L883-L905),
+    [forced cleanup branch](https://github.com/openai/codex/blob/25af12f7e61572b0bc18ddb1008be543b91519b0/codex-rs/app-server/src/lib.rs#L1114-L1126)).
+    The exact test expects that second `SIGTERM` to exit successfully within
+    two seconds. This is lower level than the rejected graceful wait and may
+    terminate in-flight assistant turns, so it requires a new owner decision.
 
 ## Execution sequence
 
@@ -126,33 +141,41 @@ Out of scope:
    not signal a process group, and do not touch either TUI. Stop on any
    identity drift or if the process remains live.
    **Observed:** all checks passed and one `SIGTERM` was sent; the server
-   remained live for 60 seconds because this turn is still running. No
+   remained live for 60 seconds while assistant turns remained. No
    escalation or start followed.
 5. After this checkpoint is pushed, arm one reviewed current-user one-shot
    continuation. It sends no signal. It revalidates the exact old process
    identity, waits up to five minutes for that identity to disappear after
    this turn yields, and stops without starting on timeout.
-6. After confirmed exit only, the continuation runs native
+   **Observed:** it timed out without mutation; the old identity remained live
+   more than 30 minutes later.
+6. Pause for Decision D-003 and a separate owner `go`. If selected, prepare
+   and arm a reviewed detached current-user helper before the signal so this
+   turn can be interrupted safely. The helper must revalidate the exact old
+   PID/start/owner/executable/argv and both TUIs, send exactly one additional
+   `SIGTERM`, wait at most ten seconds for that exact identity to disappear,
+   and never use `SIGKILL` or a process-group signal.
+7. After confirmed exit only, the helper runs native
    `codex remote-control start --json` once.
    Require exactly one
    current-user `app-server --remote-control --listen unix://` process with a
    new PID/start identity and a managed PID record. Require redacted doctor to
    pass app-server, websocket, auth, state, and installation checks.
-7. Require both pre-existing resilience supervisors and their TUI children to
+8. Require both pre-existing resilience supervisors and their TUI children to
    remain live. If either changes unexpectedly, stop and reconcile from its
    value-free supervisor state; never replay a prior owner prompt.
-8. The owner starts one new chat from `$HOME/harness` and sends the exact Slack
+9. The owner starts one new chat from `$HOME/harness` and sends the exact Slack
    plugin mention. First acceptance turn: list `RioYokotaLab`, then search only
    `#swallow` for `Qwen3`.
-9. On a separate owner turn without reinstalling or restarting anything,
+10. On a separate owner turn without reinstalling or restarting anything,
    search `#swallow` for `Megatron`. This distinguishes one-turn lazy tool
    loading from durable chat connector availability.
-10. If both turns pass, record causal evidence as “app-server refresh repaired
+11. If both turns pass, record causal evidence as “app-server refresh repaired
    the observed state,” not as a general Codex guarantee. Add the smallest
    durable operational guidance: plugin/app changes require one explicit,
    controlled remote-control refresh before starting a plugin-backed chat.
    Do not make ordinary TUI launches restart the shared server.
-11. If either turn still returns `unsupported call`, classify the restart
+12. If either turn still returns `unsupported call`, classify the restart
    hypothesis as rejected. Restore/retain the ready server, record a product
    tool-registration blocker, and do not modify the launcher to hide it.
 
@@ -166,12 +189,16 @@ Out of scope:
   the recovery source.
 - D-001 did not authorize a raw process signal. Decision D-002 and a separate
   owner `go` are required before the proposed exact-PID `SIGTERM`.
-- The D-002 `SIGTERM` has been sent exactly once. Do not send another:
-  installed-version tests establish that a second `SIGTERM` forces exit.
+- The D-002 `SIGTERM` has been sent exactly once. Do not send another without
+  Decision D-003 selection and a separate owner `go`: installed-version source
+  establishes that a second `SIGTERM` forces exit and skips orderly cleanup.
 - The one-shot continuation is only a sequencing mechanism for the already
   authorized native start. It is current-user-owned, carries no credential or
   Slack operation, sends no signal, and fails closed on identity drift,
   timeout, start failure, failed doctor, or changed TUI state.
+- A D-003 helper, if authorized, must be detached and durably checkpointed
+  before it sends the second signal because forced shutdown may interrupt this
+  turn. It may send only that one signal and the already-reviewed native start.
 - Rollback after confirmed old-process exit is the unchanged native
   `codex remote-control start`. If native start fails, preserve the output
   privately, leave both TUIs running, and stop for diagnosis.
@@ -183,8 +210,9 @@ Out of scope:
 ## Acceptance
 
 - One new managed Local app-server identity is ready after the safely refused
-  native stop, one approved identity-checked `SIGTERM`, post-turn graceful
-  exit, and one native start, with both existing supervised TUIs still live.
+  native stop, one approved identity-checked graceful `SIGTERM`, one separately
+  approved exact forced `SIGTERM`, and one native start, with both existing
+  supervised TUIs still live.
 - Native redacted doctor passes app-server, websocket, auth, state, and
   installation checks.
 - The Slack plugin remains installed/enabled at the same revision; no settings,
@@ -226,14 +254,31 @@ Out of scope:
   impersonate daemon-managed state; the latter is unnecessary unless a
   separately reviewed graceful-stop attempt fails.
 - **State:** selected and separately authorized by owner `go`; the exact
-  `SIGTERM` was sent once and timed out without escalation because this turn
-  remains active. Native start has not yet run.
+  `SIGTERM` was sent once; both inline and post-turn graceful waits timed out
+  without escalation. Native start has not run.
+
+### D-003 — Force the drained server to exit with one second SIGTERM
+
+- **Recommended: yes.** Before signaling, arm a detached exact-identity helper
+  that sends one additional `SIGTERM`, waits up to ten seconds without
+  `SIGKILL`, then invokes native managed start exactly once after confirmed
+  exit. This uses the app server's explicit forced-restart path and is narrower
+  than the daemon backend's eventual `SIGKILL`.
+- **Risk:** installed source says forced shutdown skips orderly connection,
+  cleanup-task, and thread shutdown. Both TUI OS processes must remain live,
+  but any assistant turn still running inside the old app server may be
+  interrupted; durable ledgers prevent prompt replay.
+- **Alternative: no.** Keep the healthy unmanaged server and both TUIs
+  unchanged, wait indefinitely for the running-turn count to reach zero, and
+  leave Slack-dependent SW-031 work paused.
+- `SIGKILL`, a process-group signal, TUI signaling, fabricated daemon state,
+  and connector/account changes remain rejected.
+- **State:** open; no second signal or native start is authorized.
 
 ## Next action
 
-The no-signal one-shot continuation is armed as PID `2562922`; its reviewed
-helper is exact-unlinked and its mode-0600 result is
-`/tmp/t314-post-turn-result.fE4BY3`. Push this final armed checkpoint and yield
-the turn so the old server can exit gracefully. On the next turn, inspect that
-result, the managed PID record, redacted doctor, both TUIs, and the two
-repositories before any other action.
+Checkpoint the post-turn timeout and Decision D-003 in Harness and Swallow,
+validate and push both repositories, exact-unlink the superseded mode-0600
+result plus two empty logs, and rerun canonical fleet health. Then ask the
+owner to select D-003; until selected and separately authorized, do not signal
+or start anything.
