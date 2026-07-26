@@ -1,6 +1,6 @@
 # T-314 Local Slack connector recovery
 
-**Phase:** executing after separate authorization
+**Phase:** executing graceful post-turn continuation
 **Driver:** Local Codex
 **Updated:** 2026-07-27 JST
 
@@ -81,6 +81,22 @@ Out of scope:
     [signal implementation](https://github.com/openai/codex/blob/25af12f7e61572b0bc18ddb1008be543b91519b0/codex-rs/app-server-daemon/src/backend/pid.rs#L507-L543)).
     This source evidence explains the refusal and supports, but does not
     authorize, an identity-checked one-time `SIGTERM`.
+11. After D-002 selection and the separate owner `go` were pushed, the frozen
+    PID, start time, owner, executable, argv, TUI, and repository checks all
+    passed. One `SIGTERM` was sent to PID `3676694`. The process retained the
+    same identity for the full 60-second wait, so the guard exited `75` with
+    no second signal, no `SIGKILL`, and no native start.
+12. Post-timeout redacted doctor remained `ok`: the old 0.145.0 server still
+    answers in persistent mode without a managed PID file; both supervisors
+    and both TUI children remain live. The prepared native-start log is still
+    an empty mode-0600 current-user file.
+13. The exact installed-version test specifies that the first `SIGTERM` waits
+    for a running app-server turn before exit, while a second `SIGTERM` forces
+    exit
+    ([0.145.0 signal test](https://github.com/openai/codex/blob/25af12f7e61572b0bc18ddb1008be543b91519b0/codex-rs/app-server/tests/suite/v2/connection_handling_websocket_unix.rs#L86-L129)).
+    This recovery turn is therefore the dependency preventing inline graceful
+    exit. Forced termination is unnecessary: a continuation can wait for this
+    turn to yield and then perform the already-authorized native start.
 
 ## Execution sequence
 
@@ -103,26 +119,34 @@ Out of scope:
    60 seconds for that exact identity to disappear. Do not send `SIGKILL`, do
    not signal a process group, and do not touch either TUI. Stop on any
    identity drift or if the process remains live.
-5. After confirmed exit only, run native `codex remote-control start` once.
+   **Observed:** all checks passed and one `SIGTERM` was sent; the server
+   remained live for 60 seconds because this turn is still running. No
+   escalation or start followed.
+5. After this checkpoint is pushed, arm one reviewed current-user one-shot
+   continuation. It sends no signal. It revalidates the exact old process
+   identity, waits up to five minutes for that identity to disappear after
+   this turn yields, and stops without starting on timeout.
+6. After confirmed exit only, the continuation runs native
+   `codex remote-control start --json` once.
    Require exactly one
    current-user `app-server --remote-control --listen unix://` process with a
    new PID/start identity and a managed PID record. Require redacted doctor to
    pass app-server, websocket, auth, state, and installation checks.
-6. Require both pre-existing resilience supervisors and their TUI children to
+7. Require both pre-existing resilience supervisors and their TUI children to
    remain live. If either changes unexpectedly, stop and reconcile from its
    value-free supervisor state; never replay a prior owner prompt.
-7. The owner starts one new chat from `$HOME/harness` and sends the exact Slack
+8. The owner starts one new chat from `$HOME/harness` and sends the exact Slack
    plugin mention. First acceptance turn: list `RioYokotaLab`, then search only
    `#swallow` for `Qwen3`.
-8. On a separate owner turn without reinstalling or restarting anything,
+9. On a separate owner turn without reinstalling or restarting anything,
    search `#swallow` for `Megatron`. This distinguishes one-turn lazy tool
    loading from durable chat connector availability.
-9. If both turns pass, record causal evidence as “app-server refresh repaired
+10. If both turns pass, record causal evidence as “app-server refresh repaired
    the observed state,” not as a general Codex guarantee. Add the smallest
    durable operational guidance: plugin/app changes require one explicit,
    controlled remote-control refresh before starting a plugin-backed chat.
    Do not make ordinary TUI launches restart the shared server.
-10. If either turn still returns `unsupported call`, classify the restart
+11. If either turn still returns `unsupported call`, classify the restart
    hypothesis as rejected. Restore/retain the ready server, record a product
    tool-registration blocker, and do not modify the launcher to hide it.
 
@@ -136,6 +160,12 @@ Out of scope:
   the recovery source.
 - D-001 did not authorize a raw process signal. Decision D-002 and a separate
   owner `go` are required before the proposed exact-PID `SIGTERM`.
+- The D-002 `SIGTERM` has been sent exactly once. Do not send another:
+  installed-version tests establish that a second `SIGTERM` forces exit.
+- The one-shot continuation is only a sequencing mechanism for the already
+  authorized native start. It is current-user-owned, carries no credential or
+  Slack operation, sends no signal, and fails closed on identity drift,
+  timeout, start failure, failed doctor, or changed TUI state.
 - Rollback after confirmed old-process exit is the unchanged native
   `codex remote-control start`. If native start fails, preserve the output
   privately, leave both TUIs running, and stop for diagnosis.
@@ -147,8 +177,8 @@ Out of scope:
 ## Acceptance
 
 - One new managed Local app-server identity is ready after the safely refused
-  native stop, one approved identity-checked `SIGTERM`, and one native start,
-  with both existing supervised TUIs still live.
+  native stop, one approved identity-checked `SIGTERM`, post-turn graceful
+  exit, and one native start, with both existing supervised TUIs still live.
 - Native redacted doctor passes app-server, websocket, auth, state, and
   installation checks.
 - The Slack plugin remains installed/enabled at the same revision; no settings,
@@ -172,7 +202,8 @@ Out of scope:
 - Reinstalling the plugin is rejected: exact installed/enabled state already
   passes and reinstall would add mutation without testing the leading
   lifecycle hypothesis.
-- **State:** selected and separately authorized by owner `go`.
+- **State:** selected and separately authorized by owner `go`; native stop
+  safely refused the unmanaged server and native start did not run.
 
 ### D-002 — Retire the verified unmanaged server with one exact-PID SIGTERM
 
@@ -188,10 +219,15 @@ Out of scope:
 - A fabricated PID record and `SIGKILL` are rejected. The former would
   impersonate daemon-managed state; the latter is unnecessary unless a
   separately reviewed graceful-stop attempt fails.
-- **State:** selected and separately authorized by owner `go`.
+- **State:** selected and separately authorized by owner `go`; the exact
+  `SIGTERM` was sent once and timed out without escalation because this turn
+  remains active. Native start has not yet run.
 
 ## Next action
 
-Checkpoint the owner's separate D-002 execution `go` in Harness and Swallow
-and push both repositories. Revalidate the frozen server and TUI identities,
-then execute steps 4–6 exactly once.
+Checkpoint the D-002 graceful-wait result and post-turn continuation in Harness
+and Swallow, validate, and push both repositories. Arm the no-signal one-shot
+continuation with mode-0600 result file
+`/tmp/t314-post-turn-result.fE4BY3`, exact-unlink its reviewed script, and
+yield this turn. On the next turn, inspect that result, the managed PID record,
+redacted doctor, both TUIs, and the two repositories before any other action.
