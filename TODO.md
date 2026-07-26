@@ -105,7 +105,7 @@ Next free ID: T-316.
 
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
-**Phase:** executing; owner-authorized no-restart repair in progress.
+**Phase:** validating; no-restart repair is live.
 
 The owner reported different agents in Local tmux and phone Remote immediately
 after T-314. Metadata-only inspection, without reading pane contents, found one
@@ -195,6 +195,19 @@ remains unknown. Retry the frozen plan with stage-labelled checks, requiring
 the new client's exact target-thread argv and established control-socket
 connection while retaining rollout/thread ownership checks on app-server PID
 `2852569`, where they belong.
+
+**Execution result 2026-07-27 06:27 JST:** the corrected frozen repair passed.
+Existing window 0 is now `students-stale` with unchanged pane/supervisor PID
+`3837157`. New detached window 1 is `students`, with wrapper PID `3024942`
+and real TUI PID `3025057`; its exact argv resumes
+`019f7fea-4f00-7681-910d-81ae99a77143` through `--remote unix://`. Socket
+metadata proves its established Unix peer matches the unchanged control-socket
+endpoint on app-server PID `2852569`. That server still owns the Students
+rollout and has current thread-scoped rows; filtered doctor remains wholly
+`ok`. Every pre-existing protected PID is live with its original start time,
+and the sole attached tmux client remained on active `2:swallow`. No existing
+process was signaled, restarted, or given input. Finish independent
+process/socket/tmux/doctor/Git validation, then run canonical fleet health.
 
 ### T-314 — Recover Local Slack connector availability
 
