@@ -124,9 +124,12 @@ metadata shows no TUI connection to the managed control socket. During the
 diagnostic turn, the tmux `swallow` TUI executed this task while the app server
 simultaneously owned a different live agent command rooted in the separate
 Students repository. This is not a same-worktree collision, but it proves the
-phone and terminal are controlling distinct clients. The app server also had
-two root rollouts and one `Archimedes` subagent rollout open, so Remote can
-legitimately show a different chat or agent.
+phone and terminal are controlling distinct clients. Value-free log indexing
+maps the app server's active root to
+`019f7fea-4f00-7681-910d-81ae99a77143`, while this tmux `swallow` turn is
+root `019f9f69-6b94-70a3-be12-8bef23b88a96`; the app server also has the
+first root's `Archimedes` subagent open. Remote can therefore legitimately
+show a different chat or agent.
 
 No process, tmux session, thread, app-server state, prompt, or repository was
 changed during diagnosis. Do not type into both duplicate tmux clients
