@@ -87,10 +87,9 @@ Next free ID: T-315.
 
 ## Next resume checkpoint
 
-1. Resume T-314 at Decision D-003. The exact first `SIGTERM` was already sent;
-   never replay it. Select whether one detached exact-identity helper may send
-   a second `SIGTERM` and perform native start after forced exit. A separate
-   `go` is required after selection.
+1. Resume T-314 at its D-003 execution gate. The owner selected one detached
+   exact-identity helper to send the second `SIGTERM` and perform native start,
+   but no action is authorized until the required separate explicit `go`.
 2. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
@@ -103,7 +102,7 @@ Next free ID: T-315.
 
 ### T-314 — Recover Local Slack connector availability
 
-**Phase:** interviewing Decision D-003.
+**Phase:** awaiting separate D-003 execution authorization.
 
 Restore read-only Slack tools to Local Codex after the installed and enabled
 Slack plugin initially listed `RioYokotaLab` and searched `#swallow`, then
@@ -179,12 +178,12 @@ connection/task/thread cleanup; its exact test expects a second `SIGTERM` to
 exit successfully within two seconds. This may interrupt in-flight app-server
 turns even though the two TUI OS processes are preserved.
 
-**Decision D-003:** open. The recommended bounded path is to arm a detached
-exact-identity helper before signaling; it sends one second `SIGTERM`, never
-`SIGKILL`, waits up to ten seconds for the exact old identity to disappear,
-then invokes native managed start once and verifies the managed PID, redacted
-doctor, and both TUIs. If selected, checkpoint the choice and obtain a
-separate explicit `go`. Until then, do not signal or start anything.
+**Decision D-003:** selected by owner `Go`. The bounded path is to arm a
+detached exact-identity helper before signaling; it sends one second
+`SIGTERM`, never `SIGKILL`, waits up to ten seconds for the exact old identity
+to disappear, then invokes native managed start once and verifies the managed
+PID, redacted doctor, and both TUIs. This selects the plan but does not
+authorize execution; obtain a separate explicit `go` first.
 
 ### T-313 — Enable repository auto-merge and limit login-node Codex threads
 
