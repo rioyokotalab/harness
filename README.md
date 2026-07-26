@@ -103,6 +103,18 @@ resumes the repository's most recent chat thereafter; `--last-all` selects the
 globally most recent saved chat. `harness-codex` remains the explicit direct
 launcher for a fresh or intentionally unsupervised client.
 
+For a phone-visible chat owned by the local remote-control app server, preserve
+both the remote transport and exact root ID on every retry:
+
+```bash
+harness codex-resilient --run --name harness \
+  --remote-session 01900000-0000-7000-8000-000000000000
+```
+
+`--remote-session` always relaunches as
+`resume --remote unix:// ID`; it never falls back to `--last` or replays a
+prompt.
+
 On Linux, the supervisor launches Codex through `harness codex-login`, which
 sets `RAYON_NUM_THREADS=8` and `TOKIO_WORKER_THREADS=8` for login-node
 politeness. The command leaves macOS unrestricted and does not install global

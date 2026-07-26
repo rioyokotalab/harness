@@ -151,6 +151,16 @@ change a live Harness client until the exact remote selector passes focused
 and full Harness validation; do not touch Students or Swallow before the
 Harness canary is accepted.
 
+**Remote-selector LIFO gate 2026-07-27 08:33 JST:** implementation adds exact
+`--remote-session ID`, whose first launch and every retry resolve to
+`resume --remote unix:// ID`. Focused syntax, diff, and resilience tests pass,
+including exact retry argv, doctor gating, backoff, and plan output. The first
+full Phase-1 run passed every relevant suite and failed only
+`test-tmux-config.sh` and `test-terminfo.sh`, which intentionally reject the
+dirty uncommitted checkout. No live client, socket, app server, thread, prompt,
+or remote node changed. Commit the implementation and this checkpoint, then
+rerun full Phase 1 from the clean committed revision before any canary launch.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.

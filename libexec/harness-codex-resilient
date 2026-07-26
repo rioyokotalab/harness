@@ -18,6 +18,8 @@ Selectors:
   --last            resume the most recent chat in the current repository
   --last-all        resume the globally most recent chat
   --session ID      always resume one explicit session ID or safe session name
+  --remote-session ID
+                    always resume one exact session through --remote unix://
 EOF
 }
 
@@ -62,6 +64,14 @@ while [ "$#" -gt 0 ]; do
             selector_count=$((selector_count + 1))
             shift 2
             ;;
+        --remote-session)
+            [ "$#" -ge 2 ] ||
+                die "Codex resilient --remote-session requires a value"
+            selector=remote-explicit
+            session_id=$2
+            selector_count=$((selector_count + 1))
+            shift 2
+            ;;
         -h|--help)
             usage
             exit 0
@@ -81,7 +91,7 @@ else
     [ "$selector_count" -eq 1 ] ||
         die "Codex resilient requires exactly one selector"
 fi
-if [ "$selector" = explicit ]; then
+if [ "$selector" = explicit ] || [ "$selector" = remote-explicit ]; then
     require_safe_id "$session_id"
 fi
 if [ "$mode" = run ] && [ "${HARNESS_TESTING:-0}" != 1 ]; then
@@ -222,7 +232,7 @@ if [ "$mode" = status ]; then
         die "Codex resilient state file is malformed"
         ;;
     esac
-    case "$stored_selector" in new|last|last-all|explicit) ;; *)
+    case "$stored_selector" in new|last|last-all|explicit|remote-explicit) ;; *)
         die "Codex resilient state file is malformed"
         ;;
     esac
@@ -403,6 +413,9 @@ run_codex() {
         last) "$launcher" resume --last ;;
         last-all) "$launcher" resume --last --all ;;
         explicit) "$launcher" resume "$session_id" ;;
+        remote-explicit)
+            "$launcher" resume --remote unix:// "$session_id"
+            ;;
         *) die "Codex resilient internal selector error" ;;
     esac
 }

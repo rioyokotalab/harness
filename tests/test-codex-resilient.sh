@@ -153,6 +153,24 @@ run_supervisor --run --name explicit --session session-123 \
 : >"$TEST_ROOT/codex.calls"
 : >"$TEST_ROOT/sleep.calls"
 printf '1\n0\n' >"$TEST_ROOT/codex.statuses"
+run_supervisor --run --name remote-explicit \
+    --remote-session session-remote >"$TEST_ROOT/remote-explicit.out"
+[ "$(sed -n '1p' "$TEST_ROOT/codex.calls")" = \
+    "resume --remote unix:// session-remote" ] ||
+    fail "remote explicit first resume"
+[ "$(sed -n '2p' "$TEST_ROOT/codex.calls")" = "doctor --json" ] ||
+    fail "remote explicit native doctor"
+[ "$(sed -n '3p' "$TEST_ROOT/codex.calls")" = \
+    "resume --remote unix:// session-remote" ] ||
+    fail "remote explicit recovery drifted"
+[ "$(wc -l <"$TEST_ROOT/codex.calls" | tr -d ' ')" = 3 ] ||
+    fail "remote explicit unexpected call count"
+[ "$(sed -n '1p' "$TEST_ROOT/sleep.calls")" = 15 ] ||
+    fail "remote explicit first retry delay"
+
+: >"$TEST_ROOT/codex.calls"
+: >"$TEST_ROOT/sleep.calls"
+printf '1\n0\n' >"$TEST_ROOT/codex.statuses"
 FAKE_DOCTOR_MODE=auth run_supervisor --run --name auth --last \
     >"$TEST_ROOT/auth.out" 2>&1 &&
     fail "authentication failure was retried"
@@ -223,6 +241,11 @@ HARNESS_TEST_PLATFORM=Darwin run_supervisor --plan --name darwin --last \
     >"$TEST_ROOT/darwin.out"
 grep -F 'name=darwin selector=last status=ready' \
     "$TEST_ROOT/darwin.out" >/dev/null || fail "Darwin plan portability"
+run_supervisor --plan --name remote-plan \
+    --remote-session session-remote >"$TEST_ROOT/remote-plan.out"
+grep -F 'name=remote-plan selector=remote-explicit status=ready' \
+    "$TEST_ROOT/remote-plan.out" >/dev/null ||
+    fail "remote explicit plan"
 
 mkdir "$runtime/locked.lock"
 chmod 700 "$runtime/locked.lock"
