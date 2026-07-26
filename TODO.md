@@ -294,6 +294,17 @@ request or target mutation ran. Commit and push this retry-safe checkpoint,
 change only the ownership checks to full-consuming exact-path prefix matches,
 then repeat the complete pre-write gate.
 
+**Stage-2 pre-write acceptance 2026-07-27 07:49 JST:** the complete
+full-consuming retry passed from pushed revision
+`0032d12fe67699e9450836ab6a29872679b0a61d`. Exact attached client PID
+`3283828` selects `@42:harness`; all nine recorded process/start/argv/executable
+identities, both accepted app-server socket pairs, 25-thread cardinality, all
+three thread rows, exact fork lineage, app-server rollout ownership, private
+schema bundle, clean aligned Git, and redacted doctor 18/18 match. No target
+mutation ran. Commit and push this acceptance checkpoint, recheck its narrow
+live identities, then perform the one D-003 read-before/name-set/read-after
+transaction.
+
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
 **Phase:** complete.
