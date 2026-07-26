@@ -1,6 +1,6 @@
 # T-314 Local Slack connector recovery
 
-**Phase:** ready-for-go
+**Phase:** executing
 **Driver:** Local Codex
 **Updated:** 2026-07-27 JST
 
@@ -137,10 +137,10 @@ Out of scope:
 - Reinstalling the plugin is rejected: exact installed/enabled state already
   passes and reinstall would add mutation without testing the leading
   lifecycle hypothesis.
-- **State:** selected by the owner; waiting for a separate explicit `go`.
+- **State:** selected and separately authorized by owner `go`.
 
 ## Next action
 
-Wait for a separate explicit owner `go`. After `go`, reconstruct both
-repositories and the live topology, checkpoint Swallow, then execute step 3.
-Do not signal the live server while waiting.
+Preflight revalidated both repositories, old app-server PID `3676694`, both
+running supervisors, and Slack plugin revision `11c74d6b`. Commit and push the
+Harness and Swallow pre-signal checkpoints, then execute step 3 exactly once.

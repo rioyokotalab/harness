@@ -87,9 +87,9 @@ Next free ID: T-315.
 
 ## Next resume checkpoint
 
-1. Resume T-314 at `ready-for-go`: D-001 selects one controlled Local
-   remote-control app-server restart. Do not signal the live server or either
-   supervised TUI before the owner's separate explicit `go`.
+1. Resume T-314 in execution at its pre-signal checkpoint. The owner said
+   `go`; first require the Swallow handoff and this execution checkpoint to be
+   pushed, then run the one native Local remote-control stop/start.
 2. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
@@ -102,7 +102,7 @@ Next free ID: T-315.
 
 ### T-314 — Recover Local Slack connector availability
 
-**Phase:** ready-for-go; waiting for explicit execution authorization.
+**Phase:** executing; pre-signal durable checkpoint.
 
 Restore read-only Slack tools to Local Codex after the installed and enabled
 Slack plugin initially listed `RioYokotaLab` and searched `#swallow`, then
@@ -124,9 +124,12 @@ setting, connector authorization, pairing, TUI, or remote node has changed.
 
 **Decision D-001:** the owner selected the recommended one-time native
 `codex remote-control stop` / `start` recovery. The selection does not execute
-or signal anything. Wait for a separate explicit `go`; afterward checkpoint
-Swallow, then execute and validate from the plan. If this chat is interrupted,
-resume T-314 from this ledger without replaying the prior request.
+or signal anything. The owner then gave the separate explicit `go`. Preflight
+revalidated old app-server PID `3676694`, both running supervisors, unchanged
+Slack plugin revision, and clean/aligned Harness and Swallow branches. Push the
+Swallow and Harness execution checkpoints before the first native stop. If this
+chat is interrupted, resume T-314 from this ledger without replaying the prior
+request.
 
 ### T-313 — Enable repository auto-merge and limit login-node Codex threads
 
