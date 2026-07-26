@@ -285,6 +285,20 @@ home, office, and riken. Home-volume use is respectively 31%, 49%, 64%, and
 59%. Apply the same lock-aware command one Mac at a time; require exactly one
 removal while preserving all three live directories and both managed routes.
 
+**Mac package and arg0 gate 2026-07-27 08:53 JST:** the four arg0 apply
+attempts removed nothing because each former eligible candidate reclassified
+as `young=1`; all live counts remain 3 and unexpected counts remain zero.
+Revisit after the grace window without bypassing it.
+
+Repository-managed Homebrew plans are converged. Fresh native metadata is
+identical on all four Macs and names exactly `libnghttp3 1.17.0→1.18.0`,
+`sqlite 3.53.3→3.53.4`, and `uv 0.11.31→0.11.32`. Homebrew reports Node as an
+installed dependent of the first two and no installed dependent for uv. Use
+the trusted-package-manager cleanup exception for only those exact formulae
+and package-owned Cellar/cache state. Upgrade Aist first, then require versions,
+managed plan, both routes, tunnels, running Codex session, and Harness checkout
+to remain healthy before proceeding to another Mac.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
