@@ -1,6 +1,6 @@
 # T-314 Local Slack connector recovery
 
-**Phase:** executing graceful post-turn continuation
+**Phase:** awaiting current turn yield
 **Driver:** Local Codex
 **Updated:** 2026-07-27 JST
 
@@ -97,6 +97,12 @@ Out of scope:
     This recovery turn is therefore the dependency preventing inline graceful
     exit. Forced termination is unnecessary: a continuation can wait for this
     turn to yield and then perform the already-authorized native start.
+14. The first continuation launch failed closed during handoff-file validation
+    because its reviewed UID constant was `1000`, while Local's actual UID is
+    `5035`. It sent no signal, did not unlink the helper, and did not call
+    native start. The corrected helper passed `bash -n` and `shellcheck`, then
+    exact-unlinked itself and armed successfully as PID `2562922` at
+    2026-07-27 03:18:54 JST. It is waiting on the unchanged old identity.
 
 ## Execution sequence
 
@@ -225,9 +231,9 @@ Out of scope:
 
 ## Next action
 
-Checkpoint the D-002 graceful-wait result and post-turn continuation in Harness
-and Swallow, validate, and push both repositories. Arm the no-signal one-shot
-continuation with mode-0600 result file
-`/tmp/t314-post-turn-result.fE4BY3`, exact-unlink its reviewed script, and
-yield this turn. On the next turn, inspect that result, the managed PID record,
-redacted doctor, both TUIs, and the two repositories before any other action.
+The no-signal one-shot continuation is armed as PID `2562922`; its reviewed
+helper is exact-unlinked and its mode-0600 result is
+`/tmp/t314-post-turn-result.fE4BY3`. Push this final armed checkpoint and yield
+the turn so the old server can exit gracefully. On the next turn, inspect that
+result, the managed PID record, redacted doctor, both TUIs, and the two
+repositories before any other action.

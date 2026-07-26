@@ -103,7 +103,7 @@ Next free ID: T-315.
 
 ### T-314 — Recover Local Slack connector availability
 
-**Phase:** executing graceful post-turn continuation.
+**Phase:** awaiting current turn yield.
 
 Restore read-only Slack tools to Local Codex after the installed and enabled
 Slack plugin initially listed `RioYokotaLab` and searched `#swallow`, then
@@ -163,6 +163,14 @@ and both TUIs. Its mode-0600 handoff is
 are `/tmp/t314-remote-control-start.cMgpXI` and
 `/tmp/t314-post-turn-doctor.qJnJvK`. Preserve failure logs; exact-unlink
 successful private logs and the reviewed helper.
+
+The first helper launch failed closed before mutation because it contained UID
+`1000` instead of Local's actual `5035`. The corrected helper passed `bash -n`
+and `shellcheck`, exact-unlinked itself, and armed as PID `2562922` at
+2026-07-27 03:18:54 JST. It sends no signal and is waiting for the unchanged
+old PID/start identity to disappear when this turn yields. Push this armed
+checkpoint, then yield; the next turn must begin with the mode-0600 result
+readback above.
 
 ### T-313 — Enable repository auto-merge and limit login-node Codex threads
 
