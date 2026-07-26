@@ -169,6 +169,27 @@ exactly one attributable new root beyond this baseline. No target changed.
 Commit and push this checkpoint, revalidate the narrow live identities, then
 create `harness-next` once without a prompt.
 
+**Stage-2 LIFO gate 2026-07-27:** the exact fork command ran once and created
+provisional window `@47:harness-next`, wrapper PID `3184180`, real TUI PID
+`3184653`, and exactly one new root
+`019fa076-7132-7992-800e-f6c6d4aeadfb`. The first acceptance loop then timed
+out only because it required the new client to share Students' accepted server
+socket inode `165762130`. Each app-server client correctly has its own accepted
+pair: app-server PID `2852569` owns inode `166156785` with peer `166153028`,
+and new real TUI PID `3184653` owns the reciprocal peer. The app server also
+owns the new rollout. Its first metadata record proves
+`forked_from_id=019f9f69-6b94-70a3-be12-8bef23b88a96`, exact new ID, and
+Harness cwd. Do not replay the fork.
+
+A corrected full validator then stopped at its original-window active-selector
+assertion. Immediate readback and an isolated byte-level comparison both show
+unchanged exact `@42 harness 1 1`; the sole attached client, all three original
+windows/process chains, the new window/process chain, and Git remain
+unchanged. No input, rename, signal, or second launch occurred. The validation
+retry is safe: consume a fresh selector snapshot, require the corrected
+per-client socket pair and exact fork metadata, then proceed to `/rename` only
+after every gate passes.
+
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
 **Phase:** complete.
