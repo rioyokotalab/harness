@@ -174,6 +174,14 @@ execution step is to commit and push this authorization, then revalidate every
 recorded PID, app-server identity, socket, thread root, and active-window
 selector immediately before renaming only window 0.
 
+**LIFO execution gate 2026-07-27:** the first full preflight stopped before
+either tmux mutation because one fixed-string rollout-suffix probe omitted
+grep's `--`; its leading hyphen was parsed as an option and the command exited
+2. Immediate readback proves the original `students` and `swallow` windows,
+active `swallow` client selection, all nine protected PIDs, and clean aligned
+Git state are unchanged. The attempt is retry-safe. Add only the missing `--`
+to that probe and repeat every identity and health check before the rename.
+
 ### T-314 — Recover Local Slack connector availability
 
 **Phase:** complete.
