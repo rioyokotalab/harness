@@ -120,6 +120,26 @@ interactively so eligible host changes can be completed during this run. This
 maximizes immediate coverage but creates repeated interruptions and a higher
 chance of disturbing active sessions.
 
+**Selected:** audit every host, use only existing narrow non-interactive
+managed authority, and stage exact reviewed helpers for password, sudo, TCC,
+reboot, or physical-presence gates. Do not interrupt the run for interactive
+authentication and do not broaden privilege.
+
+### D-004 — Scheduler jobs and active workloads
+
+Recommended: never cancel, requeue, reprioritize, or alter an active or queued
+job during housekeeping. Inventory scheduler state and remove only residue
+proved detached from every live/pending job and active agent. Record suspected
+stale jobs for a later targeted decision.
+
+Alternative: permit cancellation of jobs that native accounting proves failed,
+orphaned, or stale beyond their declared task ledger. This cleans more state
+but adds scheduler-side effects and ownership ambiguity.
+
+Students and Swallow processes, sockets, repositories, worktrees, outputs, and
+scheduler jobs are protected under both options unless a later project-local
+plan explicitly authorizes a matched change.
+
 **Status:** unresolved.
 
 ## Interruption contract
