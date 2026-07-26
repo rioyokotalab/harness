@@ -273,6 +273,18 @@ not infer absence or cross that gate. Arg0 inventories: Local `live=7`,
 arg0 housekeeping command on those six exact hosts, one at a time, then require
 all four counters to be zero. Do not touch scheduler or repository state.
 
+**Arg0 cleanup checkpoint 2026-07-27 08:48 JST:** the existing lock-aware
+housekeeping transaction removed exactly one eligible quarantine tree on each
+of ab, ab2, ri, rc, t4, and abq. Every guarded manifest revalidated ownership,
+identity, counts, bytes, and protected anchors; immediate readback on all six
+is `live=0 eligible=0 young=0 unexpected=0`.
+
+Mac read-only inventory finds clean aligned Harness `main`, Codex 0.145.0,
+Claude 2.1.220, and `live=3 eligible=1 young=0 unexpected=0` on each of aist,
+home, office, and riken. Home-volume use is respectively 31%, 49%, 64%, and
+59%. Apply the same lock-aware command one Mac at a time; require exactly one
+removal while preserving all three live directories and both managed routes.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
