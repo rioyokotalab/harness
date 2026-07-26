@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-316.
+Next free ID: T-317.
 
 ## Current state
 
@@ -87,21 +87,58 @@ Next free ID: T-316.
 
 ## Next resume checkpoint
 
-1. T-314 and T-315 are complete. Resume Swallow SW-031 on AB from its targeted
+1. T-316 is ready for the owner's separate execution `go`. Revalidate the
+   exact Local tmux, process, rollout, app-server, socket, thread-index, and Git
+   identities in `docs/plans/t316-local-three-thread-mapping.md`; do not launch
+   or signal a client before every preflight gate passes.
+2. T-314 and T-315 are complete. Resume Swallow SW-031 on AB from its targeted
    Slack/GitHub/Hugging Face/web evidence-search handoff; keep planning
    incremental and do not launch a large experiment.
-2. Before any future Local Codex TUI restart or recovery, replace the remaining
+3. Before any future Local Codex TUI restart or recovery, replace the remaining
    ambiguous `swallow-research` supervisor selector with an explicit thread ID
    under a separately frozen plan.
-3. Complete the four deferred T-311 Mac firewall helpers only when the owner
+4. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
-4. Continue T-196 only at its exact time/identity gates: AB and AB2 are now
+5. Continue T-196 only at its exact time/identity gates: AB and AB2 are now
    2/8 with next-week successors waiting; retry RI accounting ID `7242`
    without touching successor `10386`, and inspect AL ID `4238363` only after
    its later eligibility.
 
 ## Active tasks
+
+### T-316 — Map Local tmux to three phone-visible Codex roots
+
+**Phase:** ready-for-go.
+
+The owner renamed tmux window `@42` from `swallow` to `harness` and selected
+the following exact mapping:
+
+- existing phone Students root
+  `019f7fea-4f00-7681-910d-81ae99a77143` remains tmux `students`;
+- existing phone Swallow root
+  `019f9f69-6b94-70a3-be12-8bef23b88a96` becomes a remote-backed tmux
+  `swallow`;
+- the current conversation is preserved as a forked, distinct phone-visible
+  root and becomes remote-backed tmux `harness`.
+
+Read-only discovery at 06:53 JST confirms the existing `students` client
+remains connected through `--remote unix://` to app-server PID `2852569`.
+Current `harness` still contains standalone real TUI PID `2727307`, launched
+through ambiguous `resume --last`, and owns the Swallow rollout. The same
+app server has that rollout open for phone Remote, but PID `2727307` has no
+control-socket peer. Codex 0.145.0 officially supports both
+`resume --remote unix:// SESSION_ID` and
+`fork --remote unix:// SESSION_ID`; fork creates a new chat while preserving
+the original transcript. `/rename` is the supported TUI command for assigning
+the new chat a recognizable name.
+
+No live client, process, app server, socket, tmux pane, saved thread, or
+configuration changed during planning beyond the owner's window rename.
+Branch `t316-local-three-thread-mapping` was created from clean aligned
+revision `efd63bf`. The frozen execution, rollback, and acceptance gates are in
+`docs/plans/t316-local-three-thread-mapping.md`. All required mapping decisions
+are resolved; wait for the owner's separate `go`.
 
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
