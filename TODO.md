@@ -130,10 +130,11 @@ Canonical fleet health passes all managed routes. Required read-only Local
 arg0 inventory reports `live=5 eligible=7 young=0 unexpected=0 removed=0`.
 Nothing was removed or restarted.
 
-The umbrella plan and first decision are in
-`docs/plans/t317-fleet-housekeeping-resilience.md`. Ask D-001 only. No
+The umbrella plan and decision register are in
+`docs/plans/t317-fleet-housekeeping-resilience.md`. D-001 selects
+remote-aware resilience first with Harness as the canary; ask D-002 only. No
 housekeeping mutation is authorized before the plan is complete and the owner
-gives a separate `go`.
+gives a separate execution `go`.
 
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 

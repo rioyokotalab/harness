@@ -85,6 +85,23 @@ housekeeping to operations proved unable to affect their processes, sockets,
 storage, repositories, or dependencies. This substantially narrows
 housekeeping and does not satisfy the requested 503-resistant prerequisite.
 
+**Selected:** implement and validate remote-aware resilience first, transition
+Harness as the canary, and postpone all housekeeping until Harness passes.
+Students and Swallow remain untouched until the canary is accepted.
+
+### D-002 — Housekeeping mutation classes
+
+Recommended: begin with reversible repository hygiene, eligible temporary and
+cache residue, stale task-owned worktrees/branches proved merged, broken
+managed links, and safe package-cache cleanup. Audit outdated packages,
+dependencies, backups, schedulers, and hosting controls, but require a later
+specific decision before upgrades, alert/ruleset changes, job cancellation,
+backup pruning, or administrator-gated changes.
+
+Alternative: authorize ordinary non-administrator package and dependency
+upgrades during this run as well. This produces a broader cleanup but increases
+regression and agent-disruption risk.
+
 **Status:** unresolved.
 
 ## Interruption contract
