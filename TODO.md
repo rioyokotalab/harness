@@ -87,12 +87,15 @@ Next free ID: T-317.
 
 ## Next resume checkpoint
 
-1. T-316 Stage 4 is accepted and `/dev/pts/0` now displays exact
-   `@47:harness`. From that new Harness root, resume only Stage 5: reread the
-   complete instructions/ledger/plan, verify all three remote clients plus
-   inactive exact `@42:harness-stale`, then send one `SIGTERM` only to old real
-   TUI PID `2727307` after immutable identity match. Never signal a group,
-   retry a signal, or delete/archive a saved thread.
+1. T-316 Stage 5 is paused at its attachment gate. The owner successfully
+   continued from new Harness root
+   `019fa076-7132-7992-800e-f6c6d4aeadfb`, and tmux still selects exact
+   `@47:harness`, but the session presently has zero attached clients. Reattach
+   to the existing `harness` tmux session without restarting anything, select
+   `@47:harness` if needed, then continue again. Revalidate all three remote
+   clients plus inactive exact `@42:harness-stale` before sending one
+   `SIGTERM` only to old real TUI PID `2727307`. Never signal a group, retry a
+   signal, or delete/archive a saved thread.
 2. T-314 and T-315 are complete. Resume Swallow SW-031 on AB from its targeted
    Slack/GitHub/Hugging Face/web evidence-search handoff; keep planning
    incremental and do not launch a large experiment.
@@ -392,6 +395,19 @@ standalone chain. No pane input or signal ran.
 Commit and push this final Stage-4 checkpoint from the old driver, then yield.
 The owner's next instruction in the new Harness thread is `continue`; that
 agent must reconcile this ledger before performing Stage 5.
+
+**Stage-5 attachment gate 2026-07-27 08:07 JST:** the owner continued from
+the exact new Harness root, and read-only reconciliation found pushed clean
+revision `ddc6562447aacb6ca0909aec017c7c1ab68d12e1`, exact selected
+`@47:harness`, intact remote real TUIs `3025057`, `3184653`, and `3323133`
+with their accepted reciprocal app-server socket pairs, unchanged app-server
+PID `2852569`, and intact old standalone real TUI PID `2727307` with start
+tick `82962590` in inactive `@42:harness-stale`. The tmux session has
+`session_attached=0` and no clients, so the frozen Stage-5 precondition is not
+satisfied. No signal, pane input, launch, rename, window removal, saved-thread
+mutation, or private-schema cleanup ran. Reattach one client to the existing
+session on exact `@47:harness`, then repeat the complete Stage-5 validator;
+the signal remains safe to attempt exactly once only after that gate passes.
 
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
