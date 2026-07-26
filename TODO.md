@@ -189,6 +189,13 @@ and push the exact topology, require both attached clients to remain on
 Students, then create only detached `harness-next`. Never switch either client
 until an owner-controlled Harness attachment is unambiguous.
 
+**Canary LIFO gate 2026-07-27 08:37 JST:** the detached launch reached tmux
+but exited with exact error `create window failed: index 0 in use` before
+starting a process. Current indices are `0:harness`, `1:students`, and
+`3:swallow`; supervisor state remains absent and no matching process exists.
+No protected state changed. Commit and push this retry-safe failure, then
+repeat the same preflight and target exact unused index `harness:2`.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
