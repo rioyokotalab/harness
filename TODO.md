@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-314.
+Next free ID: T-315.
 
 ## Current state
 
@@ -70,9 +70,12 @@ Next free ID: T-314.
   blanket package upgrade, cleanup, autoremove, cask, service, tap, or
   unmanaged-dependent mutation; require current freshness evidence and an
   explicit package selection.
-- Closed non-goals remain plugins/connectors/accounts, administrator settings,
-  automatic publication, background login mutation, active-session reload,
-  and guessing lost unknown configuration.
+- Closed non-goals remain broad plugin/connector/account changes,
+  administrator settings, automatic publication, background login mutation,
+  active-session reload, and guessing lost unknown configuration. T-314
+  narrowly reopens Local's already-installed Slack connector lifecycle after
+  exact owner authorization; it does not authorize credentials or other
+  connectors.
 - Project safety and collaboration rules in root `AGENTS.md` remain
   authoritative. `.codex/AGENTS.md` is only the out-of-project launch
   sentinel. Never inspect credentials or use raw recursive/bulk deletion.
@@ -84,9 +87,9 @@ Next free ID: T-314.
 
 ## Next resume checkpoint
 
-1. Resume T-313 in execution: implement and publish the combined persistent
-   launcher, synchronize all nodes, then gracefully restart every detected
-   Codex TUI with Local last.
+1. Resume T-314 in interviewing: wait for the owner's explicit choice on one
+   controlled Local remote-control app-server restart. Do not signal the live
+   server or either supervised TUI before `go`.
 2. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
@@ -96,6 +99,33 @@ Next free ID: T-314.
    its later eligibility.
 
 ## Active tasks
+
+### T-314 — Recover Local Slack connector availability
+
+**Phase:** interviewing; one restart decision remains.
+
+Restore read-only Slack tools to Local Codex after the installed and enabled
+Slack plugin initially listed `RioYokotaLab` and searched `#swallow`, then
+later returned `unsupported call` before reaching Slack. T4 has no Slack
+plugin installed, so it was not the source of the earlier successful access.
+Local's two supervised TUIs started after the current task began, but its
+separate remote-control app server has remained live since 2026-07-22 and
+predates the plugin enablement recorded by Swallow.
+
+The exact plugin mention still failed, while native doctor reports healthy
+Codex auth, network, websocket, state, installation, and persistent app-server
+state. The resilience launcher manages only foreground TUI restart/resume and
+Linux worker limits; it neither creates nor refreshes the app server. Do not
+couple every TUI launch to a remote-control restart.
+
+The frozen recovery, rollback, two-turn Slack acceptance test, and decision
+register are in `docs/plans/t314-local-slack-connector-recovery.md`. No service,
+setting, connector authorization, pairing, TUI, or remote node has changed.
+
+**Next action:** ask whether to execute the recommended one-time native
+`codex remote-control stop` / `start` recovery. After explicit `go`, checkpoint
+Swallow, then execute and validate from the plan. If this chat is interrupted,
+resume T-314 from this ledger without replaying the prior request.
 
 ### T-313 — Enable repository auto-merge and limit login-node Codex threads
 
