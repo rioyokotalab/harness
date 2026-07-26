@@ -129,6 +129,15 @@ read the exact fork again on that same connection. Do not send pane input. If
 the write response or outcome is ambiguous, do not retry it; reconcile with
 read-only metadata and stop.
 
+Exact-version persistence clarification after the one acknowledged write:
+`rust-v0.145.0` stores an explicit name according to history mode. Legacy
+threads update SQLite `threads.title` and append the latest name to
+`$CODEX_HOME/session_index.jsonl`; paginated threads update
+`threads.name`. A fresh protocol connection must also read the exact name.
+The accepted Harness fork is legacy, so NULL `threads.name` is expected and is
+not a failed write when exact `threads.title`, latest exact-ID index entry, and
+fresh protocol read all equal `harness`.
+
 ## Frozen execution
 
 ### Stage 0 — Durable authorization
@@ -177,10 +186,18 @@ Any mismatch stops before a launch, rename, signal, or input.
    - require its empty success response, then send
      `thread/read(includeTurns=false)` and require exact fork ID, zero turns,
      and exact name `harness`.
-4. Validate the persisted SQLite name, unchanged app-server/process/socket
-   identities, filtered doctor health, and zero new roots. If any write result
-   is ambiguous, do not retry it or remove the accepted provisional client;
-   reconcile read-only state, preserve every original client, and stop.
+4. Validate persistence according to the exact thread history mode:
+   - for this accepted legacy fork, require SQLite `title=harness`,
+     SQLite `name IS NULL`, and the latest exact-ID session-index entry
+     `thread_name=harness`;
+   - for a paginated thread, require SQLite `name=harness`;
+   - on a completely fresh initialized connection, require
+     `thread/read(includeTurns=false)` to return exact fork ID, zero turns, and
+     exact name `harness`.
+   Then require unchanged app-server/process/socket identities, filtered
+   doctor health, and zero new roots. If any write result is ambiguous, do not
+   retry it or remove the accepted provisional client; reconcile read-only
+   state, preserve every original client, and stop.
 
 ### Stage 3 — Create the Swallow view
 

@@ -305,6 +305,34 @@ mutation ran. Commit and push this acceptance checkpoint, recheck its narrow
 live identities, then perform the one D-003 read-before/name-set/read-after
 transaction.
 
+**Stage-2 native naming result 2026-07-27:** pre-write checkpoint
+`720548c5e2ace6f775b17057fba82f6ac834155d` was pushed, the narrow live
+identities revalidated, and one D-003 WebSocket transaction ran. Its
+read-before matched exact fork ID, zero turns, and a name other than
+`harness`; exactly one `thread/name/set` was sent; the empty success response
+was acknowledged; and same-connection read-after matched exact ID, zero turns,
+and exact name `harness`. No retry path ran.
+
+The first bounded SQLite check then left `threads.name` NULL, so execution
+stopped before creating Swallow and used only read-only reconciliation. A
+fresh, independent initialized WebSocket connection again returned exact
+`harness`. Exact official `rust-v0.145.0` source shows the prior validation
+assumption was wrong: `thread/name/set` routes through
+`thread_processor.rs` to `thread-store/src/local/update_thread_metadata.rs`;
+legacy threads update SQLite `title` and append
+`$CODEX_HOME/session_index.jsonl`, while only paginated threads update SQLite
+`name`. This accepted fork is `history_mode=legacy`, with exact
+`title=harness`, `name=NULL`, and latest exact-ID session-index entry
+`thread_name=harness`. The index is a current-user-owned, single-link regular
+file; an added 0600 assertion failed only because the official append path
+uses the process umask and the existing mode is 0664. No second name request,
+new client, signal, pane input, or tmux mutation occurred.
+
+Revise only Stage 2's persistence gate to require the version-correct legacy
+surfaces, commit and push that evidence, then run the complete post-write
+process/socket/thread/doctor/Git validation. No Swallow client has been
+created.
+
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
 **Phase:** complete.
