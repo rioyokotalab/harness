@@ -161,6 +161,16 @@ dirty uncommitted checkout. No live client, socket, app server, thread, prompt,
 or remote node changed. Commit the implementation and this checkpoint, then
 rerun full Phase 1 from the clean committed revision before any canary launch.
 
+**Remote-selector acceptance 2026-07-27 08:35 JST:** pushed implementation
+revision `41c09b7fc02038ee2cc572172c7ed8ccd8e8aed4` passes the complete clean
+`tests/test-phase1.sh` suite, including resilience, tmux, terminfo, guarded
+delete, and all focused suites; only the documented native MPI smoke is
+skipped outside a declared MPI environment. No live state changed. Commit and
+push this acceptance, revalidate exact Harness/Students/Swallow and app-server
+identities, then create only detached `harness-next` under supervisor name
+`harness-canary` with exact remote Harness root. Do not switch or signal a
+client until that new chain passes.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
