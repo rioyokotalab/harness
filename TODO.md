@@ -255,6 +255,16 @@ are absent, `1:students` remains connected to unchanged app-server PID
 `2852569`, active `2:swallow` and its process chain remain unchanged, doctor
 passes, and Git is clean. Never invoke `codex delete` for the shared UUID.
 
+**LIFO cleanup gate 2026-07-27:** the first deletion preflight failed before
+`tmux kill-window` because it added an exact managed-wrapper PID check and
+wrapper `2852494` had exited since the prior checkpoint. Immediate readback
+proves window `@0`, its three target PIDs, both surviving windows, and every
+TUI remain unchanged. Real app-server PID `2852569` retains its exact
+05:46:46 start, argv, control-socket listener and established Students peer;
+it is now reparented to PID 1 and redacted doctor remains `ok`. The retry is
+safe. Re-run the complete preflight against the real server identity required
+by the frozen acceptance gate, without requiring the transient wrapper.
+
 ### T-314 — Recover Local Slack connector availability
 
 **Phase:** complete.
