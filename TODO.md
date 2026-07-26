@@ -87,12 +87,12 @@ Next free ID: T-317.
 
 ## Next resume checkpoint
 
-1. T-316 Stage-4 names are accepted, but the terminal client returned to old
-   `@42` after the first verified switch. Commit and push the cutover evidence,
-   revalidate exact windows/client and all three socket-backed TUIs, then make
-   one final reversible client switch to `@47:harness`. From the new Harness
-   root, the owner should send `continue`; only that continuation may perform
-   Stage-5 stale-client retirement.
+1. T-316 Stage 4 is accepted and `/dev/pts/0` now displays exact
+   `@47:harness`. From that new Harness root, resume only Stage 5: reread the
+   complete instructions/ledger/plan, verify all three remote clients plus
+   inactive exact `@42:harness-stale`, then send one `SIGTERM` only to old real
+   TUI PID `2727307` after immutable identity match. Never signal a group,
+   retry a signal, or delete/archive a saved thread.
 2. T-314 and T-315 are complete. Resume Swallow SW-031 on AB from its targeted
    Slack/GitHub/Hugging Face/web evidence-search handoff; keep planning
    incremental and do not launch a large experiment.
@@ -378,6 +378,20 @@ in that new Harness root, Stage 5 must verify all three remote clients and
 retire only old real TUI PID `2727307` by its recorded immutable identity.
 Preserve private schema bundle `/tmp/t316-app-server-schema.BnxRrl` for
 guarded cleanup in Stage 5.
+
+**Stage-4 final switch 2026-07-27:** cutover checkpoint
+`7c851ea8390a3a4153014ac6990f55e37a9b1c5b` was pushed first. Exact Git,
+four-window mapping, five key process/start identities, and all three accepted
+socket pairs revalidated. One final reversible
+`tmux switch-client -c /dev/pts/0 -t @47` then passed exact readback:
+`/dev/pts/0` is attached to `@47:harness`, new Harness root is
+`019fa076-7132-7992-800e-f6c6d4aeadfb`, `@46:students` and `@48:swallow`
+remain remote-backed, and inactive `@42:harness-stale` retains the old
+standalone chain. No pane input or signal ran.
+
+Commit and push this final Stage-4 checkpoint from the old driver, then yield.
+The owner's next instruction in the new Harness thread is `continue`; that
+agent must reconcile this ledger before performing Stage 5.
 
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
