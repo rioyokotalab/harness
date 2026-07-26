@@ -230,6 +230,16 @@ Commit and push this result. Then add detached supervised guard connections
 for exact Students and Swallow roots one at a time, validating each before the
 next. Do not switch, rename, signal, or type into either project window.
 
+**Students guard acceptance 2026-07-27 08:41 JST:** detached exact
+`@50:students-guard` contains supervisor PID `4073421`, wrapper PID `4073479`,
+and real TUI PID `4073639` start tick `84429126`. Status is
+`running remote-explicit`; argv preserves exact Students root
+`019f7fea-4f00-7681-910d-81ae99a77143`; app server/client socket pair is
+`167484639`/`167478055`. Original Students PID `3025057`, both attached
+Students views, Harness, and Swallow remain unchanged. Commit and push this
+acceptance, then create only a detached Swallow guard at one exact unused
+index and validate it independently.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
