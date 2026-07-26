@@ -283,6 +283,17 @@ launch, signal, pane input, or tmux mutation ran. The retry is safe: commit and
 push this failure checkpoint, substitute only Git's exact resolved revision,
 then repeat the complete pre-write gate.
 
+**Stage-2 LIFO gate 2026-07-27:** the corrected repeat passed Git, attachment,
+all nine immutable process identities, both accepted socket pairs, and exact
+thread cardinality/rows, then stopped in fork metadata because its `lsof -Fn`
+parser required a bare rollout pathname. On this NFS home, `lsof` appends the
+parenthesized mount source to each name record. Isolated readback proves the
+first rollout record still has the exact accepted ID, parent, and cwd and
+app-server PID `2852569` still owns all three expected rollouts. No name
+request or target mutation ran. Commit and push this retry-safe checkpoint,
+change only the ownership checks to full-consuming exact-path prefix matches,
+then repeat the complete pre-write gate.
+
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
 **Phase:** complete.
