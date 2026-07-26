@@ -107,7 +107,7 @@ Next free ID: T-318.
 
 ### T-317 — 503-safe fleet and repository housekeeping
 
-**Phase:** ready-for-go.
+**Phase:** executing.
 
 The owner asked to confirm that current Local tmux/Codex sessions resist 503
 failures, then perform major housekeeping across the whole managed fleet and
@@ -142,6 +142,14 @@ remote state read-only. D-007 selects a 12-hour run with a 10-hour
 material-work cutoff and 2-hour validation reserve. The decision audit is
 complete with exact managed-node and four-repository scope. Wait for a separate
 explicit execution `go`.
+
+**Execution authorization 2026-07-27 08:30 JST:** the owner gave the separate
+final `go`. The 12-hour window ends at 20:30 JST; stop starting material work
+at 18:30 and reserve the final two hours for validation and handoff. Begin only
+with the remote-aware resilience implementation and isolated tests. Do not
+change a live Harness client until the exact remote selector passes focused
+and full Harness validation; do not touch Students or Swallow before the
+Harness canary is accepted.
 
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
