@@ -140,6 +140,23 @@ Students and Swallow processes, sockets, repositories, worktrees, outputs, and
 scheduler jobs are protected under both options unless a later project-local
 plan explicitly authorizes a matched change.
 
+**Selected:** never cancel, requeue, reprioritize, or alter an active or queued
+job during housekeeping. Inventory scheduler state and remove only residue
+proved detached from every live/pending job and active agent. Record suspected
+stale jobs for a later targeted decision.
+
+### D-005 — Backup retention
+
+Recommended: verify backup repositories, schedules, recent successful runs,
+locks, and restore readiness, but do not prune snapshots or change retention.
+Clean only local temporary/cache residue that the backup tool itself proves is
+not repository data and is outside an active operation.
+
+Alternative: run each repository's already-declared native forget/prune policy
+where its schedule, repository identity, current lock state, and recent backup
+success all validate. This can reclaim substantial space but irreversibly
+removes historical recovery points.
+
 **Status:** unresolved.
 
 ## Interruption contract

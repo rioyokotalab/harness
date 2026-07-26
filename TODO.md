@@ -135,8 +135,9 @@ The umbrella plan and decision register are in
 remote-aware resilience first with Harness as the canary. D-002 includes the
 full reversible housekeeping set plus ordinary non-administrator package and
 dependency upgrades. D-003 uses only declared non-interactive authority and
-stages helpers for interactive gates; ask D-004 only. No housekeeping mutation
-is authorized before the plan is complete and the owner gives a separate
+stages helpers for interactive gates. D-004 forbids scheduler changes and
+protects all active work; ask D-005 only. No housekeeping mutation is
+authorized before the plan is complete and the owner gives a separate
 execution `go`.
 
 ### T-316 — Map Local tmux to three phone-visible Codex roots
