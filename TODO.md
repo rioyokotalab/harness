@@ -317,6 +317,13 @@ aligned Harness `main`, one detached live Codex tmux session, both Home routes,
 and full fleet health. Commit and push this result, then upgrade Office with
 the same exact package and validation boundary.
 
+**Office package result 2026-07-27 08:56 JST:** exact versions 1.18.0, 3.53.4,
+and 0.11.32 plus Node/uv execution pass after the explicit transaction.
+Harness remains clean aligned; both Office routes and full fleet health pass.
+The detached managed tmux session has two live windows, one Codex and one
+shell; both are preserved as owner state and are not housekeeping candidates.
+Commit and push this result, then upgrade Riken with the same exact boundary.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
