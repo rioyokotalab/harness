@@ -63,8 +63,9 @@ At 2026-07-27 06:53 JST:
    open. The current standalone TUI has no app-server control-socket peer.
 6. The installed CLI and current official manual document `--remote` for
    `resume` and `fork`. The manual describes fork as preserving the original
-   transcript while creating a new chat. The TUI exposes `/rename`; installed
-   UI strings confirm it opens a name prompt.
+   transcript while creating a new chat. The installed 0.145.0 app-server
+   schema defines `thread/name/set`, and exact-tag transport source defines a
+   Unix WebSocket HTTP Upgrade at `ws://localhost/rpc`.
 
 Process IDs and timestamps are evidence, not assumptions: every one must be
 revalidated immediately before execution.
@@ -103,6 +104,31 @@ Rejected alternatives:
 
 No unresolved owner decisions remain. Execution requires a separate `go`.
 
+### D-003 — Stage-2 naming amendment
+
+The owner-authorized Stage-2 `/rename` interaction was delivered exactly once
+to provisional pane `%47`, but no persisted name or
+`thread/name/set` marker appeared. Replaying pane input is prohibited. The
+failure branch in this plan required inspection of the installed native
+protocol and a checkpointed revision before using another naming mechanism.
+
+Installed 0.145.0 schema proves exact method `thread/name/set`, required
+parameters `threadId` and `name`, and an empty-object response. Exact official
+tag source proves the private Unix control socket uses a standard WebSocket
+Upgrade for `ws://localhost/rpc`. A read-only client matching that transport,
+with per-message compression disabled like the native Rust test client, passed
+`initialize`, `initialized`, and `thread/read(includeTurns=false)` for exact
+accepted fork `019fa076-7132-7992-800e-f6c6d4aeadfb`. It returned zero turns
+and a nonempty inherited name that is not exact `harness`.
+
+Revised and frozen naming mechanism: after this amendment is committed and
+pushed, use one fresh WebSocket connection to read the exact fork, send at
+most one `thread/name/set` request with
+`{"threadId":"019fa076-7132-7992-800e-f6c6d4aeadfb","name":"harness"}`, and
+read the exact fork again on that same connection. Do not send pane input. If
+the write response or outcome is ambiguous, do not retry it; reconcile with
+read-only metadata and stop.
+
 ## Frozen execution
 
 ### Stage 0 — Durable authorization
@@ -139,12 +165,22 @@ Any mismatch stops before a launch, rename, signal, or input.
 2. Require one new wrapper/real-TUI chain, an established peer to the unchanged
    app-server socket, and exactly one newly created unarchived root attributable
    to this fork. Record its exact UUID and rollout path.
-3. Send `/rename` literally to only the provisional pane, submit it after a
-   paste-settle delay, then send `harness` and submit separately. Do not read
-   the pane. Require the new thread's persisted name to become `harness`.
-4. If identification or naming is ambiguous, leave all original clients
-   untouched and remove only the provisional window after exact identity
-   revalidation.
+3. The original `/rename` interaction has already been attempted exactly once
+   and must not be replayed. After committing and pushing D-003, revalidate
+   exact provisional root/window/process/socket identity plus all protected
+   identities. On one fresh native WebSocket connection:
+   - send `initialize`, then `initialized`;
+   - send `thread/read(includeTurns=false)` and require exact fork ID, zero
+     turns, and a name other than exact `harness`;
+   - send exactly one `thread/name/set` request with the exact fork ID and
+     exact name `harness`;
+   - require its empty success response, then send
+     `thread/read(includeTurns=false)` and require exact fork ID, zero turns,
+     and exact name `harness`.
+4. Validate the persisted SQLite name, unchanged app-server/process/socket
+   identities, filtered doctor health, and zero new roots. If any write result
+   is ambiguous, do not retry it or remove the accepted provisional client;
+   reconcile read-only state, preserve every original client, and stop.
 
 ### Stage 3 — Create the Swallow view
 

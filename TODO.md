@@ -87,10 +87,12 @@ Next free ID: T-317.
 
 ## Next resume checkpoint
 
-1. T-316 is ready for the owner's separate execution `go`. Revalidate the
-   exact Local tmux, process, rollout, app-server, socket, thread-index, and Git
-   identities in `docs/plans/t316-local-three-thread-mapping.md`; do not launch
-   or signal a client before every preflight gate passes.
+1. T-316 is executing at the Stage-2 native naming gate. Commit and push the
+   checkpointed naming amendment in
+   `docs/plans/t316-local-three-thread-mapping.md`, revalidate the exact
+   provisional Harness root/client plus every protected identity, then invoke
+   at most one schema-defined `thread/name/set` request with read-before and
+   read-after checks. Do not replay TUI input, fork, or an ambiguous request.
 2. T-314 and T-315 are complete. Resume Swallow SW-031 on AB from its targeted
    Slack/GitHub/Hugging Face/web evidence-search handoff; keep planning
    incremental and do not launch a large experiment.
@@ -232,6 +234,32 @@ was proved and replaying the same request is not useful. The fork name remains
 empty and every live identity is unchanged. Inspect installed WebSocket client
 capability next; prove `thread/read` before revising or invoking the naming
 request.
+
+**Stage-2 native transport gate 2026-07-27:** read-only transport discovery
+failed closed several times before reaching app-server JSON-RPC: a plain
+`socketPath` option is discarded by Debian's installed `ws`; `ws+unix` at
+both `/` and `/rpc` reset during upgrade; raw JSONL closed before an initialize
+response; and an HTTP agent matching `ws://localhost/rpc` still reset while
+advertising per-message compression. None sent `thread/name/set`.
+
+Exact official `rust-v0.145.0` source at tag object
+`1635de866c61d1b76e50b31928ee6d61482435a8` proves the Unix listener uses
+`accept_async`; its test connects a Unix stream with
+`client_async("ws://localhost/rpc", stream)`. Repeating that topology with a
+Node HTTP agent bound to the private control socket and
+`perMessageDeflate:false` passed `initialize`, `initialized`, and
+`thread/read(includeTurns=false)`: exact root
+`019fa076-7132-7992-800e-f6c6d4aeadfb`, zero turns, and a nonempty inherited
+name classified as neither empty nor exact `harness`. The local SQLite
+`threads.name` field remains NULL. The accepted fork, socket pair, original
+clients, app server, tmux selection, and Git remain unchanged.
+
+The frozen plan now replaces only the failed TUI naming mechanism with one
+schema-defined WebSocket transaction: read exact root state, send one
+`thread/name/set` for exact name `harness`, then read it back on the same
+connection. Commit and push this amendment before the write. If the request
+or response is ambiguous, do not retry; use read-only reconciliation and stop.
+No Swallow client has been created.
 
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
