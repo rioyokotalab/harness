@@ -324,6 +324,13 @@ The detached managed tmux session has two live windows, one Codex and one
 shell; both are preserved as owner state and are not housekeeping candidates.
 Commit and push this result, then upgrade Riken with the same exact boundary.
 
+**Mac package convergence 2026-07-27 08:56 JST:** Riken also passes exact
+versions 1.18.0, 3.53.4, and 0.11.32, Node/uv execution, clean aligned Harness,
+one detached live tmux session, both routes, and full fleet health. All four
+Macs now match. Reclassify the previously young arg0 candidate on each Mac
+after the elapsed grace interval; remove it only if the tool now reports
+eligible while retaining all three live directories and zero unexpected.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
