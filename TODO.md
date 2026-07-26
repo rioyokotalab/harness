@@ -179,6 +179,16 @@ all three original clients remain unchanged. Commit and push this retry-safe
 checkpoint, set only the current branch upstream to its exact existing remote
 branch, then repeat the complete validator.
 
+**Canary LIFO gate 2026-07-27 08:36 JST:** after the upstream correction, the
+repeat stopped before launch because tmux now has two attached clients,
+`/dev/pts/0` and `/dev/pts/28`, both selecting exact `@46:students`;
+`@47:harness` is inactive. All four protected process start identities,
+three-window mapping, Git, and absent `harness-canary` state remain unchanged.
+No launch or client switch ran. This does not block a detached canary: commit
+and push the exact topology, require both attached clients to remain on
+Students, then create only detached `harness-next`. Never switch either client
+until an owner-controlled Harness attachment is unambiguous.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
