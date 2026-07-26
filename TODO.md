@@ -105,7 +105,7 @@ Next free ID: T-316.
 
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
-**Phase:** interviewing; no process change yet.
+**Phase:** executing; owner-authorized no-restart repair in progress.
 
 The owner reported different agents in Local tmux and phone Remote immediately
 after T-314. Metadata-only inspection, without reading pane contents, found one
@@ -165,8 +165,14 @@ supervisor enhancement must bind explicit IDs before another recovery.
 **Decision D-001:** recommended is the new remote-backed `students` window
 above. Alternative is no live change: keep using phone Remote for Students and
 the tmux `swallow` window for SW-031 until a future restart can repair the
-supervisors. Await one explicit owner `go`; no tmux input or process launch has
-occurred.
+supervisors. The owner selected the recommended repair with explicit `go` on
+2026-07-27. Git preflight at 06:17 JST found the task branch clean and exactly
+aligned with its upstream at `e673ad1`; tmux still has one attached `harness`
+session with inactive `students` window 0 and active `swallow` window 2. No
+tmux input or process launch preceded this checkpoint. The exact first
+execution step is to commit and push this authorization, then revalidate every
+recorded PID, app-server identity, socket, thread root, and active-window
+selector immediately before renaming only window 0.
 
 ### T-314 — Recover Local Slack connector availability
 
