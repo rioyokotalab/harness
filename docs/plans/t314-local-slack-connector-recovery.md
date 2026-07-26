@@ -1,6 +1,6 @@
 # T-314 Local Slack connector recovery
 
-**Phase:** D-003 helper armed; gate closed
+**Phase:** managed server healthy; first Slack acceptance turn passed
 **Driver:** Local Codex
 **Updated:** 2026-07-27 JST
 
@@ -122,9 +122,30 @@ Out of scope:
     arm preflight rejected an incorrectly expanded authorization commit SHA
     before launching the helper. The unchanged reviewed helper then passed the
     corrected preflight, exact-unlinked itself, and armed as PID `2711446` at
-    2026-07-27 04:33:42 JST. Its mode-0600 gate
-    `/tmp/t314-d003-gate.fHfr6Q` remains closed at mode `600`; no second signal
-    or native start has occurred.
+    2026-07-27 04:33:42 JST behind mode-0600 gate
+    `/tmp/t314-d003-gate.fHfr6Q`.
+18. The gate changed exactly once to mode `400` at 04:36:35 JST. The helper
+    revalidated the frozen identities and sent the authorized second
+    `SIGTERM` once to PID `3676694`. Its ten-second wait timed out at
+    `waiting_for_forced_exit`, so the helper failed closed without invoking
+    native start. The helper and old server are now absent.
+19. Both original TUI children exited during the forced app-server shutdown
+    window. The unchanged `swallow-research` and `harness` supervisors remained
+    live and each created one replacement wrapper/real TUI chain at 04:36:53
+    JST. No prior prompt was replayed.
+20. After readback proved that the helper had not started a server and the old
+    PID was absent, the already-authorized native
+    `codex remote-control start --json` was invoked exactly once at 05:46:46
+    JST. It succeeded with managed shell-wrapper PID `2852494` and exactly one
+    real Codex 0.145.0 app-server child, PID `2852569`. The managed PID record
+    matches the wrapper start time and filtered doctor is `ok`. A verifier
+    exited nonzero only because it expected the record to identify
+    `codex.real`; this was an assumption failure after successful start, and
+    start was not retried.
+21. The first Slack acceptance turn passed: the connector listed
+    `RioYokotaLab` (`T1251HXB4`), resolved public `#swallow`
+    (`C058CUU8HK8`), and returned 20 bounded `Qwen3` results from that channel.
+    The Slack plugin remains enabled at `11c74d6b`; no Slack write occurred.
 
 ## Execution sequence
 
@@ -162,18 +183,27 @@ Out of scope:
    PID/start/owner/executable/argv and both TUIs, send exactly one additional
    `SIGTERM`, wait at most ten seconds for that exact identity to disappear,
    and never use `SIGKILL` or a process-group signal.
+   **Observed:** the checks passed and the second `SIGTERM` was sent once. The
+   helper timed out before confirmed exit and therefore did not run start.
 7. After confirmed exit only, the helper runs native
    `codex remote-control start --json` once.
    Require exactly one
    current-user `app-server --remote-control --listen unix://` process with a
    new PID/start identity and a managed PID record. Require redacted doctor to
    pass app-server, websocket, auth, state, and installation checks.
+   **Observed:** later readback proved the old server and helper absent, so
+   native start was invoked once outside the expired helper. The managed
+   wrapper and sole real child are healthy and doctor passes.
 8. Require both pre-existing resilience supervisors and their TUI children to
    remain live. If either changes unexpectedly, stop and reconcile from its
    value-free supervisor state; never replay a prior owner prompt.
+   **Observed:** both supervisors stayed live and restored replacement TUI
+   children at 04:36:53 JST; no prompt was replayed.
 9. The owner starts one new chat from `$HOME/harness` and sends the exact Slack
    plugin mention. First acceptance turn: list `RioYokotaLab`, then search only
    `#swallow` for `Qwen3`.
+   **Observed:** passed with the exact workspace and channel identities above
+   and 20 bounded results.
 10. On a separate owner turn without reinstalling or restarting anything,
    search `#swallow` for `Megatron`. This distinguishes one-turn lazy tool
    loading from durable chat connector availability.
@@ -196,16 +226,15 @@ Out of scope:
   the recovery source.
 - D-001 did not authorize a raw process signal. Decision D-002 and a separate
   owner `go` are required before the proposed exact-PID `SIGTERM`.
-- The D-002 `SIGTERM` has been sent exactly once. Do not send another without
-  Decision D-003 selection and a separate owner `go`: installed-version source
-  establishes that a second `SIGTERM` forces exit and skips orderly cleanup.
+- The D-002 and D-003 `SIGTERM` signals were each sent exactly once. The old
+  server is absent and the managed replacement is healthy. Never replay either
+  signal, the gate release, or native start.
 - The one-shot continuation is only a sequencing mechanism for the already
   authorized native start. It is current-user-owned, carries no credential or
   Slack operation, sends no signal, and fails closed on identity drift,
   timeout, start failure, failed doctor, or changed TUI state.
-- A D-003 helper, if authorized, must be detached and durably checkpointed
-  before it sends the second signal because forced shutdown may interrupt this
-  turn. It may send only that one signal and the already-reviewed native start.
+- The D-003 helper was detached and durably checkpointed before it sent the
+  second signal. It failed closed before start and is now absent.
 - Rollback after confirmed old-process exit is the unchanged native
   `codex remote-control start`. If native start fails, preserve the output
   privately, leave both TUIs running, and stop for diagnosis.
@@ -218,8 +247,8 @@ Out of scope:
 
 - One new managed Local app-server identity is ready after the safely refused
   native stop, one approved identity-checked graceful `SIGTERM`, one separately
-  approved exact forced `SIGTERM`, and one native start, with both existing
-  supervised TUIs still live.
+  approved exact forced `SIGTERM`, and one native start. Both existing
+  supervisors remain live and each owns one recovered TUI chain.
 - Native redacted doctor passes app-server, websocket, auth, state, and
   installation checks.
 - The Slack plugin remains installed/enabled at the same revision; no settings,
@@ -281,14 +310,16 @@ Out of scope:
 - `SIGKILL`, a process-group signal, TUI signaling, fabricated daemon state,
   and connector/account changes remain rejected.
 - **State:** selected and separately authorized by owner `Go`; helper PID
-  `2711446` is armed behind the closed gate. No second signal or native start
-  has occurred.
+  `2711446` sent the second signal once, timed out before start, and exited.
+  After confirmed old-process exit, native start ran once and produced the
+  healthy managed server. First-turn Slack acceptance passed.
 
 ## Next action
 
-Push this exact armed checkpoint in Harness and Swallow, revalidate helper PID
-`2711446`, old PID `3676694`, both TUIs, clean/aligned repositories, and the
-mode-0600 gate identity. Then change only that gate to mode `400`. On
-reconnect, inspect mode-0600 result `/tmp/t314-d003-result.CKPSpM`, the managed
-PID record, redacted doctor, both TUIs, and both repositories before any other
-action; never replay the gate release or signal.
+Push the exact recovery and first-turn acceptance evidence in Harness and
+Swallow. On a separate owner turn, search only `#swallow` for `Megatron`
+without restarting or reinstalling anything. If it passes, record that the
+controlled app-server refresh repaired the observed state (not a general Codex
+guarantee), exact-unlink the four reviewed temporary evidence files, close
+T-314, and resume SW-031. Never replay the gate release, either signal, or
+native start.

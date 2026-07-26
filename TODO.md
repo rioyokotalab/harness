@@ -87,9 +87,10 @@ Next free ID: T-315.
 
 ## Next resume checkpoint
 
-1. Resume T-314 with D-003 helper PID `2711446` armed behind closed mode-0600
-   gate `/tmp/t314-d003-gate.fHfr6Q`. Push this exact armed checkpoint, then
-   revalidate and release only that gate by changing it to mode `400`.
+1. Resume T-314 with the managed Local app server healthy and the first Slack
+   acceptance turn passed. On a separate owner turn, search only `#swallow`
+   for `Megatron`; if it passes, close T-314 and resume Swallow SW-031 from its
+   targeted evidence-search handoff without another restart or reinstall.
 2. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
@@ -102,7 +103,7 @@ Next free ID: T-315.
 
 ### T-314 — Recover Local Slack connector availability
 
-**Phase:** D-003 helper armed; gate closed.
+**Phase:** managed server healthy; first Slack acceptance turn passed.
 
 Restore read-only Slack tools to Local Codex after the installed and enabled
 Slack plugin initially listed `RioYokotaLab` and searched `#swallow`, then
@@ -196,6 +197,30 @@ native-start, and redacted-doctor files are
 `/tmp/t314-d003-doctor.OGZlx4`. Push this armed checkpoint before changing only
 the gate mode to `400`; on reconnect, inspect the result and never replay the
 gate release or either signal.
+
+**D-003 execution result:** the exact gate changed once from mode `600` to
+`400` at 04:36:35 JST. The helper passed every frozen identity check and sent
+the separately authorized second `SIGTERM` once to PID `3676694`. Its
+ten-second wait ended at `waiting_for_forced_exit`, so it failed closed before
+native start. The old server and both original TUI children subsequently
+exited; the two unchanged resilience supervisors replaced only their TUI
+children at 04:36:53. No prompt was replayed.
+
+At 05:46:46 JST, readback proved that the helper had exited without starting a
+server and that the old PID was absent, so the already-authorized native
+`codex remote-control start --json` was invoked exactly once. It succeeded
+with managed wrapper PID `2852494` and one real Codex 0.145.0 app-server child,
+PID `2852569`. The PID record matches the wrapper start time; exactly one real
+app server is present; filtered doctor is `ok`; both supervisors and their
+replacement TUI chains remain live. A post-success verifier exited nonzero
+only because it expected the PID record to name `codex.real` rather than the
+native shell wrapper. Start was not retried.
+
+**Slack acceptance turn 1:** the enabled Slack plugin remains at revision
+`11c74d6b`. This chat listed `RioYokotaLab` (`T1251HXB4`), resolved public
+`#swallow` (`C058CUU8HK8`), and returned 20 bounded `Qwen3` results from that
+channel. No Slack write occurred. The separate-turn `Megatron` search remains
+the only connector acceptance gate before T-314 can close.
 
 ### T-313 — Enable repository auto-merge and limit login-node Codex threads
 
