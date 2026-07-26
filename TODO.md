@@ -274,6 +274,15 @@ The private schema bundle remains at
 `/tmp/t316-app-server-schema.BnxRrl`. Reattach to the existing session without
 restarting anything, then repeat the complete pre-write gate.
 
+**Stage-2 LIFO gate 2026-07-27:** after the owner reattached one exact client
+to `@42:harness`, the first repeat validator stopped at its initial Git check
+because it compared HEAD to an incorrectly expanded form of the recorded short
+commit ID. The actual clean, aligned revision is
+`f77ac28ee59b05bc33f3afbae17fc3d950504143`; no later assertion, name request,
+launch, signal, pane input, or tmux mutation ran. The retry is safe: commit and
+push this failure checkpoint, substitute only Git's exact resolved revision,
+then repeat the complete pre-write gate.
+
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
 **Phase:** complete.
