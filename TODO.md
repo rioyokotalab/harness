@@ -87,11 +87,12 @@ Next free ID: T-317.
 
 ## Next resume checkpoint
 
-1. T-316 has accepted both remote views and is ready for Stage 4. Commit and
-   push the Stage-3 acceptance checkpoint, revalidate every protected/new
-   identity, rename exact old `@42` to `harness-stale`, rename exact accepted
-   fork `@47` to `harness`, and switch the sole attached client to `@47`.
-   Never send pane input or signal the old process in this thread.
+1. T-316 Stage-4 names are accepted, but the terminal client returned to old
+   `@42` after the first verified switch. Commit and push the cutover evidence,
+   revalidate exact windows/client and all three socket-backed TUIs, then make
+   one final reversible client switch to `@47:harness`. From the new Harness
+   root, the owner should send `continue`; only that continuation may perform
+   Stage-5 stale-client retirement.
 2. T-314 and T-315 are complete. Resume Swallow SW-031 on AB from its targeted
    Slack/GitHub/Hugging Face/web evidence-search handoff; keep planning
    incremental and do not launch a large experiment.
@@ -354,6 +355,29 @@ clean aligned Git. The owner remained on `@42:harness`; no prompt or pane
 input was sent. Commit and push this checkpoint, then execute only the Stage-4
 exact window renames and client switch. Do not signal the old standalone
 process in this thread.
+
+**Stage-4 cutover checkpoint 2026-07-27:** pushed Stage-3 revision
+`a2970c1c3ec85b482c3ae40721977a2707641df6` passed narrow preflight. Exact
+`@42` was renamed once to `harness-stale`, exact `@47` was renamed once from
+`harness-next` to `harness`, and sole client `/dev/pts/0` switched to `@47`;
+the immediate exact postcheck passed. Before the independent validator ran,
+the same terminal client had returned to `@42`. Cause is unknown without
+prohibited pane inspection; do not infer a process failure.
+
+The two new names remain exact. Independent non-selector validation passes
+all five key immutable real-process identities, the three accepted app-server
+socket pairs, unchanged 25-thread cardinality, exact persisted Harness name,
+redacted doctor 18/18, and clean aligned Git. No process changed, no signal or
+pane input ran, and the old standalone chain remains intact in inactive-named
+window `@42:harness-stale` while the client is presently viewing it.
+
+Commit and push this checkpoint first. Then revalidate exact client/window and
+remote-process/socket identities and switch `/dev/pts/0` once more to exact
+`@47:harness` as the final old-thread action. After the owner sends `continue`
+in that new Harness root, Stage 5 must verify all three remote clients and
+retire only old real TUI PID `2727307` by its recorded immutable identity.
+Preserve private schema bundle `/tmp/t316-app-server-schema.BnxRrl` for
+guarded cleanup in Stage 5.
 
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
