@@ -182,6 +182,20 @@ active `swallow` client selection, all nine protected PIDs, and clean aligned
 Git state are unchanged. The attempt is retry-safe. Add only the missing `--`
 to that probe and repeat every identity and health check before the rename.
 
+**LIFO execution gate 2026-07-27:** the corrected full preflight passed, window
+0 was renamed, and one detached remote TUI was launched. An added acceptance
+loop then timed out because it incorrectly required that remote client to own
+the app server's rollout file and emit thread-scoped log rows. The value-free
+log index instead records temporary TUI PID `3007213` with only client-local,
+threadless TUI rows, consistent with the documented remote-client/app-server
+split. The planned rollback removed that temporary window/process and restored
+the original name; readback again proves the nine protected PIDs and active
+`swallow` selection unchanged. Socket acceptance was not durably captured and
+remains unknown. Retry the frozen plan with stage-labelled checks, requiring
+the new client's exact target-thread argv and established control-socket
+connection while retaining rollout/thread ownership checks on app-server PID
+`2852569`, where they belong.
+
 ### T-314 — Recover Local Slack connector availability
 
 **Phase:** complete.
