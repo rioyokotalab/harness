@@ -109,7 +109,7 @@ Next free ID: T-317.
 
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
-**Phase:** ready-for-go.
+**Phase:** executing.
 
 The owner renamed tmux window `@42` from `swallow` to `harness` and selected
 the following exact mapping:
@@ -138,7 +138,24 @@ configuration changed during planning beyond the owner's window rename.
 Branch `t316-local-three-thread-mapping` was created from clean aligned
 revision `efd63bf`. The frozen execution, rollback, and acceptance gates are in
 `docs/plans/t316-local-three-thread-mapping.md`. All required mapping decisions
-are resolved; wait for the owner's separate `go`.
+are resolved.
+
+**Execution authorization 2026-07-27 07:02 JST:** the owner gave the required
+separate `go`. The complete instructions, board, and frozen plan were reread.
+Authenticated fetch and read-only preflight find the task branch clean and
+exactly aligned at pushed revision
+`a5a94539d79e750b8a89f957702844fd1bf2b6f0`; the sole attached client remains
+on exact `@42:harness`, and exact `@46:students` is unchanged. The recorded
+process chains, current-user ownership, parent/session identities, executable
+paths, argv, rollout descriptors, app-server PID `2852569`, Students control
+socket peer, and both root rows all match the frozen state. Immutable Linux
+start ticks are `82962590` for standalone real TUI PID `2727307`,
+`83381863` for app-server PID `2852569`, and `83627668` for Students real TUI
+PID `3025057`. Filtered native doctor overall status remains `ok`.
+
+No client has yet been launched, renamed, signaled, or given input. Commit and
+push this authorization checkpoint, rerun the complete assertion preflight
+against the pushed revision, then create only provisional `harness-next`.
 
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
