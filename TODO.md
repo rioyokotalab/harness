@@ -87,25 +87,13 @@ Next free ID: T-317.
 
 ## Next resume checkpoint
 
-1. T-316 Stage 5 is paused at its attachment gate. The owner successfully
-   continued from new Harness root
-   `019fa076-7132-7992-800e-f6c6d4aeadfb`, and tmux still selects exact
-   `@47:harness`, but the session presently has zero attached clients. Reattach
-   to the existing `harness` tmux session without restarting anything, select
-   `@47:harness` if needed, then continue again. Revalidate all three remote
-   clients plus inactive exact `@42:harness-stale` before sending one
-   `SIGTERM` only to old real TUI PID `2727307`. Never signal a group, retry a
-   signal, or delete/archive a saved thread.
-2. T-314 and T-315 are complete. Resume Swallow SW-031 on AB from its targeted
+1. T-314 through T-316 are complete. Resume Swallow SW-031 on AB from its targeted
    Slack/GitHub/Hugging Face/web evidence-search handoff; keep planning
    incremental and do not launch a large experiment.
-3. Before any future Local Codex TUI restart or recovery, replace the remaining
-   ambiguous `swallow-research` supervisor selector with an explicit thread ID
-   under a separately frozen plan.
-4. Complete the four deferred T-311 Mac firewall helpers only when the owner
+2. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
-5. Continue T-196 only at its exact time/identity gates: AB and AB2 are now
+3. Continue T-196 only at its exact time/identity gates: AB and AB2 are now
    2/8 with next-week successors waiting; retry RI accounting ID `7242`
    without touching successor `10386`, and inspect AL ID `4238363` only after
    its later eligibility.
@@ -114,7 +102,7 @@ Next free ID: T-317.
 
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
-**Phase:** executing.
+**Phase:** complete.
 
 The owner renamed tmux window `@42` from `swallow` to `harness` and selected
 the following exact mapping:
@@ -430,6 +418,29 @@ shell PID `1963022`; the owner remains attached to exact `@47:harness`.
 Commit and push this result, revalidate the three remote clients and absent
 old chain, then remove only exact stale window `@42`. Do not send another
 signal.
+
+**Stage-5 completion 2026-07-27:** exact stale window `@42` was removed after
+pushed retirement checkpoint `0282d40`. Tmux now contains exactly
+`@47:harness`, `@46:students`, and `@48:swallow`; the sole attached client is
+on `@47:harness`. All three real TUIs retain their exact root argv and
+reciprocal peers to unchanged app-server PID `2852569`. The Harness root
+remains exact `019fa076-7132-7992-800e-f6c6d4aeadfb`, legacy title
+`harness`, unarchived, and distinct from exact Students and Swallow roots.
+Thread cardinality remains 25, doctor is wholly `ok`, and the old standalone
+chain is absent without respawn.
+
+The `guarded-bulk-delete` workflow removed only private schema bundle
+`/tmp/t316-app-server-schema.BnxRrl` from retained boundary `/tmp`: manifest
+`/tmp/t316-schema-cleanup.manifest`, token
+`7f96556d129e211aa6944fd4d9a6dfbc59bafeaef3a08d1540b38ab5d52e6c6f`,
+350 entries, 3,332,549 bytes, protected anchors unchanged, target verified
+absent. The single exact mode-600 manifest was then unlinked. Validation:
+`tests/test-codex-resilient.sh` passed; `tests/test-phase1.sh` passed with its
+documented native MPI smoke skip outside a declared MPI environment;
+`git diff --check` passed; canonical fleet health passed all managed Linux
+logical nodes and all four Mac route pairs. No pane content, credential,
+connector, plugin, setting, saved-thread archive/delete, or unrelated
+repository changed.
 
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
