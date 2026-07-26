@@ -87,9 +87,9 @@ Next free ID: T-315.
 
 ## Next resume checkpoint
 
-1. Resume T-314 at its authorized D-003 helper checkpoint. The owner gave the
-   separate execution `Go`; require that authorization to be pushed in Harness
-   and Swallow, then arm the detached helper behind its inert exact-file gate.
+1. Resume T-314 with D-003 helper PID `2711446` armed behind closed mode-0600
+   gate `/tmp/t314-d003-gate.fHfr6Q`. Push this exact armed checkpoint, then
+   revalidate and release only that gate by changing it to mode `400`.
 2. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
@@ -102,7 +102,7 @@ Next free ID: T-315.
 
 ### T-314 — Recover Local Slack connector availability
 
-**Phase:** preparing authorized D-003 helper.
+**Phase:** D-003 helper armed; gate closed.
 
 Restore read-only Slack tools to Local Codex after the installed and enabled
 Slack plugin initially listed `RioYokotaLab` and searched `#swallow`, then
@@ -185,6 +185,17 @@ to disappear, then invokes native managed start once and verifies the managed
 PID, redacted doctor, and both TUIs. The owner then gave the separately
 required execution `Go`. No second signal or native start preceded this
 checkpoint. Push it in Harness and Swallow before preparing the gated helper.
+
+The first arm preflight rejected an incorrectly expanded authorization commit
+SHA before launching the helper; it made no change. The unchanged helper then
+passed corrected preflight, exact-unlinked itself, and armed as PID `2711446`
+at 2026-07-27 04:33:42 JST. Gate `/tmp/t314-d003-gate.fHfr6Q` is the original
+current-user mode-0600 inode `2050:8389271`, so the helper is inert. Result,
+native-start, and redacted-doctor files are
+`/tmp/t314-d003-result.CKPSpM`, `/tmp/t314-d003-start.knkAbQ`, and
+`/tmp/t314-d003-doctor.OGZlx4`. Push this armed checkpoint before changing only
+the gate mode to `400`; on reconnect, inspect the result and never replay the
+gate release or either signal.
 
 ### T-313 — Enable repository auto-merge and limit login-node Codex threads
 

@@ -1,6 +1,6 @@
 # T-314 Local Slack connector recovery
 
-**Phase:** preparing authorized D-003 helper
+**Phase:** D-003 helper armed; gate closed
 **Driver:** Local Codex
 **Updated:** 2026-07-27 JST
 
@@ -118,6 +118,13 @@ Out of scope:
     The exact test expects that second `SIGTERM` to exit successfully within
     two seconds. This is lower level than the rejected graceful wait and may
     terminate in-flight assistant turns, so it requires a new owner decision.
+17. After D-003 selection and separate execution `Go` were pushed, the first
+    arm preflight rejected an incorrectly expanded authorization commit SHA
+    before launching the helper. The unchanged reviewed helper then passed the
+    corrected preflight, exact-unlinked itself, and armed as PID `2711446` at
+    2026-07-27 04:33:42 JST. Its mode-0600 gate
+    `/tmp/t314-d003-gate.fHfr6Q` remains closed at mode `600`; no second signal
+    or native start has occurred.
 
 ## Execution sequence
 
@@ -273,12 +280,15 @@ Out of scope:
   leave Slack-dependent SW-031 work paused.
 - `SIGKILL`, a process-group signal, TUI signaling, fabricated daemon state,
   and connector/account changes remain rejected.
-- **State:** selected and separately authorized by owner `Go`; no second signal
-  or native start preceded this authorization checkpoint.
+- **State:** selected and separately authorized by owner `Go`; helper PID
+  `2711446` is armed behind the closed gate. No second signal or native start
+  has occurred.
 
 ## Next action
 
-Checkpoint the owner's separate D-003 execution `Go` in Harness and Swallow
-and push both repositories. Then prepare and arm a detached helper behind an
-inert exact-file gate; push its exact armed checkpoint before releasing the
-gate for steps 6–8.
+Push this exact armed checkpoint in Harness and Swallow, revalidate helper PID
+`2711446`, old PID `3676694`, both TUIs, clean/aligned repositories, and the
+mode-0600 gate identity. Then change only that gate to mode `400`. On
+reconnect, inspect mode-0600 result `/tmp/t314-d003-result.CKPSpM`, the managed
+PID record, redacted doctor, both TUIs, and both repositories before any other
+action; never replay the gate release or signal.
