@@ -157,6 +157,18 @@ No client has yet been launched, renamed, signaled, or given input. Commit and
 push this authorization checkpoint, rerun the complete assertion preflight
 against the pushed revision, then create only provisional `harness-next`.
 
+**Stage-1 preflight 2026-07-27 07:04 JST:** every fail-closed assertion passed
+against pushed authorization revision
+`dfbff56629f813d1a3e6a0c2211cab8a01c6e253`. Git, tmux topology, all seven
+recorded processes and immutable start ticks, exact argv/executables, both
+rollout descriptors, Students' Unix peer, the standalone client's lack of that
+peer, both root rows, native doctor overall status, and all 18 doctor checks
+match. The unchanged app-server socket inode is `165762130`. The pre-fork
+thread index has 24 rows and maximum `created_at_ms=1785085914011`; require
+exactly one attributable new root beyond this baseline. No target changed.
+Commit and push this checkpoint, revalidate the narrow live identities, then
+create `harness-next` once without a prompt.
+
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
 **Phase:** complete.
