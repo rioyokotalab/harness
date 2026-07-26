@@ -240,6 +240,22 @@ Students views, Harness, and Swallow remain unchanged. Commit and push this
 acceptance, then create only a detached Swallow guard at one exact unused
 index and validate it independently.
 
+**Swallow guard acceptance 2026-07-27 08:42 JST:** detached exact
+`@51:swallow-guard` contains supervisor PID `4077898`, wrapper PID `4077955`,
+and real TUI PID `4078173` start tick `84433123`. Status is
+`running remote-explicit`; argv preserves exact Swallow root
+`019f9f69-6b94-70a3-be12-8bef23b88a96`; app server/client socket pair is
+`167486091`/`167491075`. Original Swallow PID `3323133`, original Students PID
+`3025057`, both attached Students views, and all accepted guard/canary
+identities remain unchanged.
+
+All three roots now have a live supervised remote-aware connection. Students
+and Swallow retain their original direct views in parallel because both owner
+tmux clients are actively attached to Students; no cutover, signal, rename, or
+pane input is permitted until attachment is unambiguous. Commit and push this
+protection checkpoint, then begin read-only fleet/repository inventory. Treat
+all six project TUI connections and app-server PID `2852569` as protected.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
