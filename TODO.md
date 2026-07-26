@@ -190,6 +190,17 @@ retry is safe: consume a fresh selector snapshot, require the corrected
 per-client socket pair and exact fork metadata, then proceed to `/rename` only
 after every gate passes.
 
+**Stage-2 fork acceptance 2026-07-27 07:08 JST:** the full-consuming retry
+passed exact Git, tmux, original/new process, per-client socket, thread
+cardinality, rollout ownership, fork metadata, and all doctor gates. Accepted
+Harness root is `019fa076-7132-7992-800e-f6c6d4aeadfb`; accepted provisional
+window/processes are `@47`, wrapper `3184180`, and real TUI `3184653` with
+start tick `83855518`. Its app-server/client inode pair is
+`166156785`/`166153028`. The original active window and every protected
+identity remain unchanged. Commit and push this accepted identity, then send
+the `/rename` interaction exactly once to pane `%47` and require persisted
+thread name `harness` before creating Swallow.
+
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
 **Phase:** complete.
