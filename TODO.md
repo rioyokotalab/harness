@@ -87,9 +87,10 @@ Next free ID: T-315.
 
 ## Next resume checkpoint
 
-1. Resume T-314 in execution at its pre-signal checkpoint. The owner said
-   `go`; first require the Swallow handoff and this execution checkpoint to be
-   pushed, then run the one native Local remote-control stop/start.
+1. Resume T-314 at Decision D-002. The authorized native stop safely refused
+   the unmanaged app server and no start or signal followed. Select whether to
+   use one identity-checked exact-PID `SIGTERM`; a separate `go` is required
+   after the selection.
 2. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
@@ -102,7 +103,7 @@ Next free ID: T-315.
 
 ### T-314 — Recover Local Slack connector availability
 
-**Phase:** executing; pre-signal durable checkpoint.
+**Phase:** interviewing after a safe native-stop refusal.
 
 Restore read-only Slack tools to Local Codex after the installed and enabled
 Slack plugin initially listed `RioYokotaLab` and searched `#swallow`, then
@@ -122,14 +123,27 @@ The frozen recovery, rollback, two-turn Slack acceptance test, and decision
 register are in `docs/plans/t314-local-slack-connector-recovery.md`. No service,
 setting, connector authorization, pairing, TUI, or remote node has changed.
 
-**Decision D-001:** the owner selected the recommended one-time native
-`codex remote-control stop` / `start` recovery. The selection does not execute
-or signal anything. The owner then gave the separate explicit `go`. Preflight
-revalidated old app-server PID `3676694`, both running supervisors, unchanged
-Slack plugin revision, and clean/aligned Harness and Swallow branches. Push the
-Swallow and Harness execution checkpoints before the first native stop. If this
-chat is interrupted, resume T-314 from this ledger without replaying the prior
-request.
+**Decision D-001 result:** the owner selected the recommended one-time native
+`codex remote-control stop` / `start` recovery and separately said `go`.
+Harness `124822d` and Swallow `5e7baf2` durably captured the pre-signal state.
+The exact native stop was then invoked once and exited `1` with
+`app server is running but is not managed by codex app-server daemon`. Native
+start was not invoked. PID `3676694`, both supervisors, and both TUI children
+remain live and unchanged, so the failed command is not safe to replay.
+
+Value-free state inspection found no managed `app-server.pid`. Official Codex
+0.145.0 source confirms that native stop deliberately refuses a socket-serving
+process without a managed backend. The managed implementation matches PID and
+start time, sends `SIGTERM`, waits 60 seconds, and only then permits forced
+termination. The revised plan proposes one current-user, exact-start-time,
+exact-executable, exact-argv checked `SIGTERM`, no `SIGKILL`, followed by
+native start only after confirmed exit.
+
+**Decision D-002:** open. Select the recommended guarded one-time `SIGTERM` or
+leave the ready unmanaged server unchanged. D-001 did not authorize a direct
+signal. If selected, checkpoint the decision and obtain a separate explicit
+`go` before signaling. If this chat is interrupted, resume from this ledger;
+do not replay the native stop or infer authorization from the earlier `go`.
 
 ### T-313 — Enable repository auto-merge and limit login-node Codex threads
 

@@ -1,6 +1,6 @@
 # T-314 Local Slack connector recovery
 
-**Phase:** executing
+**Phase:** interviewing after a safe native-stop refusal
 **Driver:** Local Codex
 **Updated:** 2026-07-27 JST
 
@@ -59,6 +59,28 @@ Out of scope:
 7. `codex remote-control status --json` returned no usable result during one
    read-only probe. It changed no state. Process identity and redacted native
    doctor evidence will therefore be the restart acceptance signals.
+8. The separately authorized native
+   `codex remote-control stop --json` was invoked exactly once after both
+   repositories' pre-signal checkpoints were pushed. It exited `1` with
+   `app server is running but is not managed by codex app-server daemon`.
+   Native start was not invoked. App-server PID `3676694`, both supervisors,
+   and both TUI children remained live and unchanged.
+9. Value-free daemon-state inspection found no
+   `$CODEX_HOME/app-server-daemon/app-server.pid`. The current-user process is
+   still the exact Codex 0.145.0
+   `app-server --remote-control --listen unix://` command started
+   2026-07-22 11:14:56 JST.
+10. The official Codex `rust-v0.145.0` source at commit
+    `25af12f7e61572b0bc18ddb1008be543b91519b0` deliberately refuses stop or
+    restart when the socket responds but no managed backend is recorded
+    ([lifecycle source](https://github.com/openai/codex/blob/25af12f7e61572b0bc18ddb1008be543b91519b0/codex-rs/app-server-daemon/src/lib.rs#L406-L423)).
+    Its managed backend matches both PID and process start time before sending
+    `SIGTERM`, waits 60 seconds, and only then permits `SIGKILL` before a
+    70-second timeout
+    ([PID backend](https://github.com/openai/codex/blob/25af12f7e61572b0bc18ddb1008be543b91519b0/codex-rs/app-server-daemon/src/backend/pid.rs#L240-L282),
+    [signal implementation](https://github.com/openai/codex/blob/25af12f7e61572b0bc18ddb1008be543b91519b0/codex-rs/app-server-daemon/src/backend/pid.rs#L507-L543)).
+    This source evidence explains the refusal and supports, but does not
+    authorize, an identity-checked one-time `SIGTERM`.
 
 ## Execution sequence
 
@@ -71,26 +93,36 @@ Out of scope:
    any signal so interruption is recoverable from Git alone.
 3. Run native `codex remote-control stop` once. Require a successful exit and
    require only the captured old app-server PID to disappear. Do not signal a
-   PID directly, inspect sockets, or touch either TUI.
-4. Run native `codex remote-control start` once. Require exactly one
+   PID directly, inspect sockets, or touch either TUI. **Observed:** the
+   command safely refused the unmanaged server, so this step is complete but
+   did not stop it.
+4. Pause for Decision D-002 and a separate owner `go`. If selected, revalidate
+   immediately before signaling that PID `3676694` is current-user-owned and
+   still has the same start time, resolved Codex 0.145.0 executable, and exact
+   app-server argv. Send one `SIGTERM` to that exact PID. Wait at most
+   60 seconds for that exact identity to disappear. Do not send `SIGKILL`, do
+   not signal a process group, and do not touch either TUI. Stop on any
+   identity drift or if the process remains live.
+5. After confirmed exit only, run native `codex remote-control start` once.
+   Require exactly one
    current-user `app-server --remote-control --listen unix://` process with a
-   new PID/start identity. Require redacted doctor to pass app-server,
-   websocket, auth, state, and installation checks.
-5. Require both pre-existing resilience supervisors and their TUI children to
+   new PID/start identity and a managed PID record. Require redacted doctor to
+   pass app-server, websocket, auth, state, and installation checks.
+6. Require both pre-existing resilience supervisors and their TUI children to
    remain live. If either changes unexpectedly, stop and reconcile from its
    value-free supervisor state; never replay a prior owner prompt.
-6. The owner starts one new chat from `$HOME/harness` and sends the exact Slack
+7. The owner starts one new chat from `$HOME/harness` and sends the exact Slack
    plugin mention. First acceptance turn: list `RioYokotaLab`, then search only
    `#swallow` for `Qwen3`.
-7. On a separate owner turn without reinstalling or restarting anything,
+8. On a separate owner turn without reinstalling or restarting anything,
    search `#swallow` for `Megatron`. This distinguishes one-turn lazy tool
    loading from durable chat connector availability.
-8. If both turns pass, record causal evidence as “app-server refresh repaired
+9. If both turns pass, record causal evidence as “app-server refresh repaired
    the observed state,” not as a general Codex guarantee. Add the smallest
    durable operational guidance: plugin/app changes require one explicit,
    controlled remote-control refresh before starting a plugin-backed chat.
    Do not make ordinary TUI launches restart the shared server.
-9. If either turn still returns `unsupported call`, classify the restart
+10. If either turn still returns `unsupported call`, classify the restart
    hypothesis as rejected. Restore/retain the ready server, record a product
    tool-registration blocker, and do not modify the launcher to hide it.
 
@@ -102,7 +134,9 @@ Out of scope:
 - This chat's remote-control view may disconnect while the server restarts.
   Both TUI processes are separate and must remain alive. Git checkpoints are
   the recovery source.
-- Rollback from a stopped or failed server is the unchanged native
+- D-001 did not authorize a raw process signal. Decision D-002 and a separate
+  owner `go` are required before the proposed exact-PID `SIGTERM`.
+- Rollback after confirmed old-process exit is the unchanged native
   `codex remote-control start`. If native start fails, preserve the output
   privately, leave both TUIs running, and stop for diagnosis.
 - If pairing is not retained, do not run `pair`, inspect a code, or alter
@@ -112,8 +146,9 @@ Out of scope:
 
 ## Acceptance
 
-- One new Local app-server identity is ready after one native stop/start, with
-  both existing supervised TUIs still live.
+- One new managed Local app-server identity is ready after the safely refused
+  native stop, one approved identity-checked `SIGTERM`, and one native start,
+  with both existing supervised TUIs still live.
 - Native redacted doctor passes app-server, websocket, auth, state, and
   installation checks.
 - The Slack plugin remains installed/enabled at the same revision; no settings,
@@ -139,8 +174,26 @@ Out of scope:
   lifecycle hypothesis.
 - **State:** selected and separately authorized by owner `go`.
 
+### D-002 — Retire the verified unmanaged server with one exact-PID SIGTERM
+
+- **Recommended: yes.** Revalidate current-user ownership, exact PID, process
+  start time, executable, and argv immediately before one `SIGTERM`; wait up
+  to 60 seconds without escalation; then use native
+  `codex remote-control start` only after confirmed exit. This mirrors the
+  official managed backend's guarded first-stage signal while adding no PID
+  file, socket, setting, credential, TUI, or external-service mutation.
+- **Alternative: no.** Keep the known-ready unmanaged app server and both TUIs
+  unchanged. Slack-dependent SW-031 work remains paused because a fresh chat
+  already rejected the less invasive tool-loading hypothesis.
+- A fabricated PID record and `SIGKILL` are rejected. The former would
+  impersonate daemon-managed state; the latter is unnecessary unless a
+  separately reviewed graceful-stop attempt fails.
+- **State:** open; no signal or native start is authorized.
+
 ## Next action
 
-Preflight revalidated both repositories, old app-server PID `3676694`, both
-running supervisors, and Slack plugin revision `11c74d6b`. Commit and push the
-Harness and Swallow pre-signal checkpoints, then execute step 3 exactly once.
+Checkpoint the safely refused native stop and D-002 in Harness and Swallow,
+validate and push both repositories, remove the private temporary stop log,
+and rerun canonical fleet health. Then ask the owner to select D-002. If
+selected, checkpoint that decision and ask for a separate explicit `go`;
+until then, do not signal or start anything.
