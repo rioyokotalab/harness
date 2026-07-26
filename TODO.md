@@ -256,6 +256,23 @@ pane input is permitted until attachment is unambiguous. Commit and push this
 protection checkpoint, then begin read-only fleet/repository inventory. Treat
 all six project TUI connections and app-server PID `2852569` as protected.
 
+**Initial fleet inventory 2026-07-27 08:47 JST:** exact project roots are
+Local Students `/home/rioyokota/projects/students`, Local Website
+`/home/rioyokota/projects/website`, and AB Swallow
+`/groups/gag51395/yokota/projects/swallow`, with a clean T4 mirror. Students
+and AB Swallow are clean active task branches and remain read-only; Website is
+clean aligned `main`. Harness hardening audit has zero findings.
+
+All Linux Harness checkouts are clean/aligned and native doctors have zero
+failures. Native scheduler readback protects pending Local job `94950`, AL job
+`4275926`, and RC job `260847`; T4 and both ABCI accounts showed no jobs. RI
+state is unknown because native `squeue` failed DNS configuration lookup; do
+not infer absence or cross that gate. Arg0 inventories: Local `live=7`,
+`eligible=0`; AL all zero; ab, ab2, ri, rc, t4, and abq each have
+`live=0 eligible=1 young=0 unexpected=0`. Apply only the existing lock-aware
+arg0 housekeeping command on those six exact hosts, one at a time, then require
+all four counters to be zero. Do not touch scheduler or repository state.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
