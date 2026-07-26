@@ -105,7 +105,7 @@ Next free ID: T-316.
 
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
-**Phase:** diagnosed; no process change authorized.
+**Phase:** interviewing; no process change yet.
 
 The owner reported different agents in Local tmux and phone Remote immediately
 after T-314. Metadata-only inspection, without reading pane contents, found one
@@ -135,10 +135,38 @@ No process, tmux session, thread, app-server state, prompt, or repository was
 changed during diagnosis. Do not type into both duplicate tmux clients
 concurrently. Before repair, the owner must select which saved thread belongs
 in each tmux window and whether terminal TUIs should remain independent clients
-or connect to the managed app server. The narrow default is to preserve
-independent clients but relaunch each supervisor only once with an explicit
-`--session ID`; attaching TUIs to the app server is a separate experimental
-architecture choice.
+or connect to the managed app server. If a later restart is allowed, the narrow
+default is to preserve independent clients but relaunch each supervisor only
+once with an explicit `--session ID`.
+
+**No-restart plan:** Codex 0.145.0 supports both an in-process `/resume` picker
+and a TUI connected to the existing app server through
+`codex resume --remote unix:// SESSION_ID`. In-process `/resume` is rejected
+for this repair: it would point the old tmux client at the same saved rollout
+but leave it independent of phone Remote, retain the supervisor's ambiguous
+`--last` recovery, and permit divergent simultaneous turns.
+
+The recommended bounded repair restarts nothing. Preserve every current PID;
+rename only the existing `students` tmux window to `students-stale`; create one
+new detached `students` window whose TUI connects to the already-running
+managed Unix-socket app server and resumes exact Students root
+`019f7fea-4f00-7681-910d-81ae99a77143`. Do not switch the owner's active
+window. Accept only if all pre-existing PIDs remain unchanged, the new TUI has
+an established socket connection to app-server PID `2852569`, and the phone's
+Students root remains active. Validate through process, socket, thread-index,
+tmux, doctor, and repository metadata only; never read either pane.
+
+Rollback is to remove only the newly created window/process and restore the old
+window name; no existing process would be signaled. This provides a live
+terminal view of the same app-server thread as phone Remote, but it does not
+make the old `--last` supervisors durable. A later planned restart or
+supervisor enhancement must bind explicit IDs before another recovery.
+
+**Decision D-001:** recommended is the new remote-backed `students` window
+above. Alternative is no live change: keep using phone Remote for Students and
+the tmux `swallow` window for SW-031 until a future restart can repair the
+supervisors. Await one explicit owner `go`; no tmux input or process launch has
+occurred.
 
 ### T-314 — Recover Local Slack connector availability
 
