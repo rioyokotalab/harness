@@ -440,7 +440,10 @@ documented native MPI smoke skip outside a declared MPI environment;
 `git diff --check` passed; canonical fleet health passed all managed Linux
 logical nodes and all four Mac route pairs. No pane content, credential,
 connector, plugin, setting, saved-thread archive/delete, or unrelated
-repository changed.
+repository changed. One read-only Stage-5 diagnostic mistakenly selected and
+displayed the three stored thread `title` fields despite the plan's
+metadata-only output restriction; it was not repeated, and no pane content or
+transcript payload was modified.
 
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
