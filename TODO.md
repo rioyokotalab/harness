@@ -90,9 +90,9 @@ Next free ID: T-316.
 1. T-314 and T-315 are complete. Resume Swallow SW-031 on AB from its targeted
    Slack/GitHub/Hugging Face/web evidence-search handoff; keep planning
    incremental and do not launch a large experiment.
-2. Before any future Local Codex TUI restart or recovery, replace the two
-   ambiguous supervisor selectors with explicit thread IDs under a separately
-   frozen plan. Preserve the live `students-stale` window until then.
+2. Before any future Local Codex TUI restart or recovery, replace the remaining
+   ambiguous `swallow-research` supervisor selector with an explicit thread ID
+   under a separately frozen plan.
 3. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
@@ -105,7 +105,7 @@ Next free ID: T-316.
 
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
-**Phase:** complete for the owner-selected no-restart scope.
+**Phase:** executing owner-requested stale live-client cleanup.
 
 The owner reported different agents in Local tmux and phone Remote immediately
 after T-314. Metadata-only inspection, without reading pane contents, found one
@@ -235,6 +235,25 @@ not change the two legacy supervisors' ambiguous recovery selectors. Before
 any future TUI restart or recovery, freeze and implement explicit thread IDs;
 do not claim recurrence is impossible until that separate durability step is
 complete.
+
+**Post-completion cleanup 2026-07-27:** the owner explicitly requested deletion
+of both the `students-stale` Codex session and its tmux window. Read-only
+preflight at 06:35 JST proves there is no independently deletable saved session
+behind that name: stale real TUI PID `2727306` and active `swallow` PID
+`2727307` both own saved root
+`019f9f69-6b94-70a3-be12-8bef23b88a96`. Native `codex delete` permanently
+deletes a saved session, so invoking it would delete the active SW-031 thread,
+including this turn. It is excluded.
+
+Interpret the authorized cleanup narrowly: require the sole attached client to
+remain outside exact window `@0`, revalidate window 0's exact pane/supervisor
+and child identities plus both surviving windows, then run native
+`tmux kill-window -t @0` once. This terminates only the stale live supervisor
+and TUI chain while removing its tmux window; it preserves the shared saved
+thread. Accept only if window `@0` and PIDs `3837157`, `2727171`, and `2727306`
+are absent, `1:students` remains connected to unchanged app-server PID
+`2852569`, active `2:swallow` and its process chain remain unchanged, doctor
+passes, and Git is clean. Never invoke `codex delete` for the shared UUID.
 
 ### T-314 — Recover Local Slack connector availability
 
