@@ -157,6 +157,23 @@ where its schedule, repository identity, current lock state, and recent backup
 success all validate. This can reclaim substantial space but irreversibly
 removes historical recovery points.
 
+**Selected:** verify backup repositories, schedules, recent successful runs,
+locks, and restore readiness, but do not prune snapshots or change retention.
+Clean only local temporary/cache residue that the backup tool itself proves is
+not repository data and is outside an active operation.
+
+### D-006 — Hosting-service controls
+
+Recommended: audit GitHub/GitLab repository settings, rules, checks, alerts,
+dependency state, abandoned task branches, and pull requests read-only. Permit
+ordinary task commits, pushes, task pull requests, and protected merges, but do
+not change hosting settings, dismiss alerts, close another owner's work, or
+delete remote branches during this run.
+
+Alternative: include repository-hosting administration and remote branch/PR
+cleanup after exact per-repository validation. This broadens external state
+changes and can affect collaborators outside the visible worktrees.
+
 **Status:** unresolved.
 
 ## Interruption contract
