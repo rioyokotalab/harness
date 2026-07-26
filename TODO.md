@@ -87,12 +87,11 @@ Next free ID: T-317.
 
 ## Next resume checkpoint
 
-1. T-316 is executing at the Stage-2 native naming gate, but the existing tmux
-   session currently has no attached client. Reattach to the same Local
-   `harness` tmux session without restarting any process, then revalidate the
-   exact client selector, provisional Harness root/client, and every protected
-   identity before invoking at most one schema-defined `thread/name/set`
-   request. Do not replay TUI input, fork, or an ambiguous request.
+1. T-316 has accepted the named Harness fork and is ready for Stage 3. Commit
+   and push the Stage-2 acceptance checkpoint, revalidate every protected
+   identity, then create exactly one detached `swallow` remote TUI for existing
+   root `019f9f69-6b94-70a3-be12-8bef23b88a96`. Do not send pane input or
+   replay the fork/name request.
 2. T-314 and T-315 are complete. Resume Swallow SW-031 on AB from its targeted
    Slack/GitHub/Hugging Face/web evidence-search handoff; keep planning
    incremental and do not launch a large experiment.
@@ -332,6 +331,16 @@ Revise only Stage 2's persistence gate to require the version-correct legacy
 surfaces, commit and push that evidence, then run the complete post-write
 process/socket/thread/doctor/Git validation. No Swallow client has been
 created.
+
+**Stage-2 acceptance 2026-07-27:** the complete post-write validator passed
+from pushed naming-result revision
+`3283c7056fe9b613f07b602783ec1b7ecb81c7b5`. Exact attached client/window,
+all nine protected process identities, both existing accepted socket pairs,
+25-thread cardinality, exact legacy SQLite title, latest session-index name,
+fresh-connection protocol read, fork lineage, all rollout owners, redacted
+doctor 18/18, and clean aligned Git match. The single naming write is complete
+and must never be replayed. Commit and push this acceptance, then create only
+the Stage-3 detached `swallow` remote resume with no prompt or pane input.
 
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
