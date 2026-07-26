@@ -87,10 +87,9 @@ Next free ID: T-315.
 
 ## Next resume checkpoint
 
-1. Resume T-314 with the managed Local app server healthy and the first Slack
-   acceptance turn passed. On a separate owner turn, search only `#swallow`
-   for `Megatron`; if it passes, close T-314 and resume Swallow SW-031 from its
-   targeted evidence-search handoff without another restart or reinstall.
+1. T-314 is complete. Resume Swallow SW-031 on AB from its targeted
+   Slack/GitHub/Hugging Face/web evidence-search handoff; keep planning
+   incremental and do not launch a large experiment.
 2. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
@@ -103,7 +102,7 @@ Next free ID: T-315.
 
 ### T-314 — Recover Local Slack connector availability
 
-**Phase:** managed server healthy; first Slack acceptance turn passed.
+**Phase:** complete.
 
 Restore read-only Slack tools to Local Codex after the installed and enabled
 Slack plugin initially listed `RioYokotaLab` and searched `#swallow`, then
@@ -221,6 +220,15 @@ native shell wrapper. Start was not retried.
 `#swallow` (`C058CUU8HK8`), and returned 20 bounded `Qwen3` results from that
 channel. No Slack write occurred. The separate-turn `Megatron` search remains
 the only connector acceptance gate before T-314 can close.
+
+**Completion:** on the next turn, the unchanged connector returned 20 bounded
+`Megatron` results from the same `#swallow` channel. This supports the narrow
+causal conclusion that the controlled app-server refresh repaired the observed
+tool-registration state; it is not a general Codex guarantee. No plugin,
+setting, pairing, credential, or Slack state changed. The four reviewed D-003
+temporary evidence files were exact-unlinked only after both repositories had
+the recovery evidence, and their absence was verified. Resume SW-031 without
+another restart or reinstall.
 
 ### T-313 — Enable repository auto-merge and limit login-node Codex threads
 

@@ -1,6 +1,6 @@
 # T-314 Local Slack connector recovery
 
-**Phase:** managed server healthy; first Slack acceptance turn passed
+**Phase:** complete
 **Driver:** Local Codex
 **Updated:** 2026-07-27 JST
 
@@ -146,6 +146,14 @@ Out of scope:
     `RioYokotaLab` (`T1251HXB4`), resolved public `#swallow`
     (`C058CUU8HK8`), and returned 20 bounded `Qwen3` results from that channel.
     The Slack plugin remains enabled at `11c74d6b`; no Slack write occurred.
+22. On the next turn, without a restart or reinstall, the connector returned
+    20 bounded `Megatron` results from the same channel. Both-turn acceptance
+    therefore passes. This supports only the observed causal result: the
+    controlled app-server refresh repaired the stale tool-registration state.
+23. After the recovery and first-turn evidence was committed in Harness
+    `87a2f40` and Swallow `6513d66`, the four exact reviewed D-003 gate,
+    result, start, and doctor temporary files were revalidated by owner, type,
+    mode, inode, and size, exact-unlinked individually, and verified absent.
 
 ## Execution sequence
 
@@ -205,8 +213,9 @@ Out of scope:
    **Observed:** passed with the exact workspace and channel identities above
    and 20 bounded results.
 10. On a separate owner turn without reinstalling or restarting anything,
-   search `#swallow` for `Megatron`. This distinguishes one-turn lazy tool
-   loading from durable chat connector availability.
+    search `#swallow` for `Megatron`. This distinguishes one-turn lazy tool
+    loading from durable chat connector availability.
+    **Observed:** passed with 20 bounded results from the unchanged channel.
 11. If both turns pass, record causal evidence as “app-server refresh repaired
    the observed state,” not as a general Codex guarantee. Add the smallest
    durable operational guidance: plugin/app changes require one explicit,
@@ -255,7 +264,7 @@ Out of scope:
   credentials, pairing, or external messages changed.
 - A Slack-attached new chat lists `RioYokotaLab` and returns a bounded
   `#swallow` `Qwen3` search, then a second turn returns a bounded `Megatron`
-  search.
+  search. **Passed.**
 - Harness and Swallow carry exact durable evidence, pass their relevant static
   checks, and are published through their normal protected workflows.
 
@@ -312,14 +321,10 @@ Out of scope:
 - **State:** selected and separately authorized by owner `Go`; helper PID
   `2711446` sent the second signal once, timed out before start, and exited.
   After confirmed old-process exit, native start ran once and produced the
-  healthy managed server. First-turn Slack acceptance passed.
+  healthy managed server. Both Slack acceptance turns passed.
 
 ## Next action
 
-Push the exact recovery and first-turn acceptance evidence in Harness and
-Swallow. On a separate owner turn, search only `#swallow` for `Megatron`
-without restarting or reinstalling anything. If it passes, record that the
-controlled app-server refresh repaired the observed state (not a general Codex
-guarantee), exact-unlink the four reviewed temporary evidence files, close
-T-314, and resume SW-031. Never replay the gate release, either signal, or
-native start.
+None for T-314. Resume Swallow SW-031 from its durable targeted-research
+handoff without another restart or reinstall. Never replay the gate release,
+either signal, or native start.
