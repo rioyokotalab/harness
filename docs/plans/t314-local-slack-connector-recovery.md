@@ -1,6 +1,6 @@
 # T-314 Local Slack connector recovery
 
-**Phase:** interviewing
+**Phase:** ready-for-go
 **Driver:** Local Codex
 **Updated:** 2026-07-27 JST
 
@@ -137,10 +137,10 @@ Out of scope:
 - Reinstalling the plugin is rejected: exact installed/enabled state already
   passes and reinstall would add mutation without testing the leading
   lifecycle hypothesis.
-- **State:** awaiting owner decision and explicit `go`.
+- **State:** selected by the owner; waiting for a separate explicit `go`.
 
 ## Next action
 
-Ask D-001 only. After the owner selects the recommended restart, checkpoint the
-decision, set `ready-for-go`, and wait for a separate explicit `go`. Do not
-signal the live server during planning or interviewing.
+Wait for a separate explicit owner `go`. After `go`, reconstruct both
+repositories and the live topology, checkpoint Swallow, then execute step 3.
+Do not signal the live server while waiting.

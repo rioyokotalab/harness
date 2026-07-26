@@ -87,9 +87,9 @@ Next free ID: T-315.
 
 ## Next resume checkpoint
 
-1. Resume T-314 in interviewing: wait for the owner's explicit choice on one
-   controlled Local remote-control app-server restart. Do not signal the live
-   server or either supervised TUI before `go`.
+1. Resume T-314 at `ready-for-go`: D-001 selects one controlled Local
+   remote-control app-server restart. Do not signal the live server or either
+   supervised TUI before the owner's separate explicit `go`.
 2. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
@@ -102,7 +102,7 @@ Next free ID: T-315.
 
 ### T-314 — Recover Local Slack connector availability
 
-**Phase:** interviewing; one restart decision remains.
+**Phase:** ready-for-go; waiting for explicit execution authorization.
 
 Restore read-only Slack tools to Local Codex after the installed and enabled
 Slack plugin initially listed `RioYokotaLab` and searched `#swallow`, then
@@ -122,8 +122,9 @@ The frozen recovery, rollback, two-turn Slack acceptance test, and decision
 register are in `docs/plans/t314-local-slack-connector-recovery.md`. No service,
 setting, connector authorization, pairing, TUI, or remote node has changed.
 
-**Next action:** ask whether to execute the recommended one-time native
-`codex remote-control stop` / `start` recovery. After explicit `go`, checkpoint
+**Decision D-001:** the owner selected the recommended one-time native
+`codex remote-control stop` / `start` recovery. The selection does not execute
+or signal anything. Wait for a separate explicit `go`; afterward checkpoint
 Swallow, then execute and validate from the plan. If this chat is interrupted,
 resume T-314 from this ledger without replaying the prior request.
 
