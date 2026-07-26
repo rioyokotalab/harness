@@ -87,9 +87,9 @@ Next free ID: T-315.
 
 ## Next resume checkpoint
 
-1. Resume T-314 at its D-003 execution gate. The owner selected one detached
-   exact-identity helper to send the second `SIGTERM` and perform native start,
-   but no action is authorized until the required separate explicit `go`.
+1. Resume T-314 at its authorized D-003 helper checkpoint. The owner gave the
+   separate execution `Go`; require that authorization to be pushed in Harness
+   and Swallow, then arm the detached helper behind its inert exact-file gate.
 2. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
@@ -102,7 +102,7 @@ Next free ID: T-315.
 
 ### T-314 — Recover Local Slack connector availability
 
-**Phase:** awaiting separate D-003 execution authorization.
+**Phase:** preparing authorized D-003 helper.
 
 Restore read-only Slack tools to Local Codex after the installed and enabled
 Slack plugin initially listed `RioYokotaLab` and searched `#swallow`, then
@@ -182,8 +182,9 @@ turns even though the two TUI OS processes are preserved.
 detached exact-identity helper before signaling; it sends one second
 `SIGTERM`, never `SIGKILL`, waits up to ten seconds for the exact old identity
 to disappear, then invokes native managed start once and verifies the managed
-PID, redacted doctor, and both TUIs. This selects the plan but does not
-authorize execution; obtain a separate explicit `go` first.
+PID, redacted doctor, and both TUIs. The owner then gave the separately
+required execution `Go`. No second signal or native start preceded this
+checkpoint. Push it in Harness and Swallow before preparing the gated helper.
 
 ### T-313 — Enable repository auto-merge and limit login-node Codex threads
 

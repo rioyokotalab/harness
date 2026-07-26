@@ -1,6 +1,6 @@
 # T-314 Local Slack connector recovery
 
-**Phase:** awaiting separate D-003 execution authorization
+**Phase:** preparing authorized D-003 helper
 **Driver:** Local Codex
 **Updated:** 2026-07-27 JST
 
@@ -273,12 +273,12 @@ Out of scope:
   leave Slack-dependent SW-031 work paused.
 - `SIGKILL`, a process-group signal, TUI signaling, fabricated daemon state,
   and connector/account changes remain rejected.
-- **State:** selected by owner `Go`; no second signal or native start is yet
-  authorized. A separate explicit execution `go` is still required.
+- **State:** selected and separately authorized by owner `Go`; no second signal
+  or native start preceded this authorization checkpoint.
 
 ## Next action
 
-Checkpoint the owner's D-003 selection in Harness and Swallow, validate and
-push both repositories, and rerun canonical fleet health. Then request the
-separate explicit execution `go`; until it is received, do not signal or start
-anything.
+Checkpoint the owner's separate D-003 execution `Go` in Harness and Swallow
+and push both repositories. Then prepare and arm a detached helper behind an
+inert exact-file gate; push its exact armed checkpoint before releasing the
+gate for steps 6–8.
