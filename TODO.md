@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-315.
+Next free ID: T-316.
 
 ## Current state
 
@@ -87,18 +87,55 @@ Next free ID: T-315.
 
 ## Next resume checkpoint
 
-1. T-314 is complete. Resume Swallow SW-031 on AB from its targeted
+1. Resolve T-315's Local Codex thread mapping before another tmux TUI restart
+   or simultaneous terminal input. Do not interrupt the phone-side Students
+   agent or either tmux client without an explicit owner-selected mapping.
+2. T-314 is complete. Resume Swallow SW-031 on AB from its targeted
    Slack/GitHub/Hugging Face/web evidence-search handoff; keep planning
    incremental and do not launch a large experiment.
-2. Complete the four deferred T-311 Mac firewall helpers only when the owner
+3. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
-3. Continue T-196 only at its exact time/identity gates: AB and AB2 are now
+4. Continue T-196 only at its exact time/identity gates: AB and AB2 are now
    2/8 with next-week successors waiting; retry RI accounting ID `7242`
    without touching successor `10386`, and inspect AL ID `4238363` only after
    its later eligibility.
 
 ## Active tasks
+
+### T-315 — Restore one-to-one Local Codex thread mapping
+
+**Phase:** diagnosed; no process change authorized.
+
+The owner reported different agents in Local tmux and phone Remote immediately
+after T-314. Metadata-only inspection, without reading pane contents, found one
+attached tmux session with `students` and `swallow` windows. The `harness`
+supervisor is configured `--last`; `swallow-research` was originally
+`--new`, but its recovery path also runs `resume --last`. After T-314's forced
+shutdown, both replacement real TUI processes `2727306` and `2727307` opened
+the same saved root thread
+`019f9f69-6b94-70a3-be12-8bef23b88a96`. This violates T-310's explicit
+precondition that `--last` is deterministic only when no competing Codex
+session exists in the selected scope.
+
+The phone-side managed app server is the separate healthy process pair
+`2852494`/`2852569`. Neither tmux command includes `--remote`, and socket
+metadata shows no TUI connection to the managed control socket. During the
+diagnostic turn, the tmux `swallow` TUI executed this task while the app server
+simultaneously owned a different live agent command rooted in the separate
+Students repository. This is not a same-worktree collision, but it proves the
+phone and terminal are controlling distinct clients. The app server also had
+two root rollouts and one `Archimedes` subagent rollout open, so Remote can
+legitimately show a different chat or agent.
+
+No process, tmux session, thread, app-server state, prompt, or repository was
+changed during diagnosis. Do not type into both duplicate tmux clients
+concurrently. Before repair, the owner must select which saved thread belongs
+in each tmux window and whether terminal TUIs should remain independent clients
+or connect to the managed app server. The narrow default is to preserve
+independent clients but relaunch each supervisor only once with an explicit
+`--session ID`; attaching TUIs to the app server is a separate experimental
+architecture choice.
 
 ### T-314 — Recover Local Slack connector availability
 
