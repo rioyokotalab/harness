@@ -107,7 +107,7 @@ Next free ID: T-318.
 
 ### T-317 — 503-safe fleet and repository housekeeping
 
-**Phase:** interviewing.
+**Phase:** ready-for-go.
 
 The owner asked to confirm that current Local tmux/Codex sessions resist 503
 failures, then perform major housekeeping across the whole managed fleet and
@@ -138,8 +138,10 @@ dependency upgrades. D-003 uses only declared non-interactive authority and
 stages helpers for interactive gates. D-004 forbids scheduler changes and
 protects all active work. D-005 validates backups without pruning snapshots or
 changing retention. D-006 keeps hosting administration and collaborator-owned
-remote state read-only; ask D-007 only. No housekeeping mutation is authorized
-before the plan is complete and the owner gives a separate execution `go`.
+remote state read-only. D-007 selects a 12-hour run with a 10-hour
+material-work cutoff and 2-hour validation reserve. The decision audit is
+complete with exact managed-node and four-repository scope. Wait for a separate
+explicit execution `go`.
 
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 

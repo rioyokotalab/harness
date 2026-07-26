@@ -8,6 +8,22 @@ thread identities. Only after matched validation, plan and execute major
 housekeeping across the declared fleet and repositories while preserving
 active Students and Swallow work.
 
+## Exact scope
+
+Managed systems:
+
+- Linux: Local, ab, ab2, abq through both `abq` and `abq2`, al, rc, ri, and
+  t4;
+- macOS: aist, home, office, and riken through both managed routes;
+- service-only `web` is excluded from command, package, deployment, and
+  cleanup scope.
+
+Independent repositories: `harness`, `students`, `swallow`, and `website`.
+Each retains its own closest instructions, ledger, branch/worktree,
+validation, and publication route. Occupied Students and Swallow worktrees and
+their active agents are protected; any eligible repository change uses a
+separate isolated worktree after project-local intake.
+
 ## Confirmed starting state
 
 At 2026-07-27 08:18 JST:
@@ -192,7 +208,25 @@ Alternative: a 6-hour run with a 5-hour material-work cutoff and 1-hour final
 validation window. This is less intrusive but will likely leave more audited
 findings deferred.
 
-**Status:** unresolved.
+**Selected:** a 12-hour run from the final execution `go`, stop starting
+material changes after 10 hours, and reserve the final 2 hours for full tests,
+fleet readback, residue checks, repository ledgers, and handoff.
+
+## Frozen execution gate
+
+All seven decisions are resolved and consistent:
+
+1. remote-aware resilience precedes housekeeping, with Harness as canary;
+2. ordinary non-administrator package and dependency upgrades are included;
+3. interactive privilege gates receive staged helpers, not interruptions;
+4. active and queued workloads are never altered;
+5. backup snapshots and retention are never pruned or changed;
+6. hosting administration and collaborator-owned remote state remain
+   read-only;
+7. the run lasts 12 hours with a 10-hour material-work cutoff.
+
+No execution is authorized until the owner gives a separate explicit `go`
+after this frozen revision is pushed.
 
 ## Interruption contract
 
