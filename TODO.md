@@ -87,12 +87,12 @@ Next free ID: T-316.
 
 ## Next resume checkpoint
 
-1. Resolve T-315's Local Codex thread mapping before another tmux TUI restart
-   or simultaneous terminal input. Do not interrupt the phone-side Students
-   agent or either tmux client without an explicit owner-selected mapping.
-2. T-314 is complete. Resume Swallow SW-031 on AB from its targeted
+1. T-314 and T-315 are complete. Resume Swallow SW-031 on AB from its targeted
    Slack/GitHub/Hugging Face/web evidence-search handoff; keep planning
    incremental and do not launch a large experiment.
+2. Before any future Local Codex TUI restart or recovery, replace the two
+   ambiguous supervisor selectors with explicit thread IDs under a separately
+   frozen plan. Preserve the live `students-stale` window until then.
 3. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
@@ -105,7 +105,7 @@ Next free ID: T-316.
 
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
-**Phase:** validating; no-restart repair is live.
+**Phase:** complete for the owner-selected no-restart scope.
 
 The owner reported different agents in Local tmux and phone Remote immediately
 after T-314. Metadata-only inspection, without reading pane contents, found one
@@ -217,6 +217,24 @@ three-window repair, active `swallow` selection, all protected and new PIDs,
 and clean aligned Git state remain stable. Make the parser consume all socket
 rows, repeat the complete independent validation, and invoke fleet health only
 after it passes.
+
+**Completion:** the full-consuming retry passed every independent gate. Exact
+process argv, start-time, tmux, Unix peer-inode, app-server rollout, thread
+index, redacted doctor, supervisor-status, and Git checks all passed while the
+remote-backed window remained live. `tests/test-codex-login.sh` and
+`tests/test-codex-resilient.sh` pass. Canonical fleet health reports Local and
+all seven remote Linux logical nodes ready—including both ABQ routes—and all
+four Mac route pairs at 2/2. No existing process was signaled or restarted,
+and no pane received input.
+
+The active view is now one-to-one: `1:students` is the app-server-backed
+Students root used by phone Remote, and `2:swallow` remains the independent
+SW-031 client. `0:students-stale` deliberately preserves the old duplicate
+client for rollback evidence but must not receive input. This live repair does
+not change the two legacy supervisors' ambiguous recovery selectors. Before
+any future TUI restart or recovery, freeze and implement explicit thread IDs;
+do not claim recurrence is impossible until that separate durability step is
+complete.
 
 ### T-314 — Recover Local Slack connector availability
 
