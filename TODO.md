@@ -105,7 +105,7 @@ Next free ID: T-316.
 
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
-**Phase:** validating owner-requested stale live-client cleanup.
+**Phase:** complete.
 
 The owner reported different agents in Local tmux and phone Remote immediately
 after T-314. Metadata-only inspection, without reading pane contents, found one
@@ -227,14 +227,15 @@ all seven remote Linux logical nodes ready—including both ABQ routes—and all
 four Mac route pairs at 2/2. No existing process was signaled or restarted,
 and no pane received input.
 
-The active view is now one-to-one: `1:students` is the app-server-backed
-Students root used by phone Remote, and `2:swallow` remains the independent
-SW-031 client. `0:students-stale` deliberately preserves the old duplicate
-client for rollback evidence but must not receive input. This live repair does
-not change the two legacy supervisors' ambiguous recovery selectors. Before
-any future TUI restart or recovery, freeze and implement explicit thread IDs;
-do not claim recurrence is impossible until that separate durability step is
-complete.
+The active view after the initial repair was one-to-one: `1:students` is the
+app-server-backed Students root used by phone Remote, and `2:swallow` remains
+the independent SW-031 client. `0:students-stale` deliberately preserves the
+old duplicate client for rollback evidence but must not receive input. The
+owner-authorized cleanup below subsequently removed that stale client and
+window. The live repair does not change the remaining `swallow-research`
+supervisor's ambiguous recovery selector. Before any future TUI restart or
+recovery, freeze and implement its explicit thread ID; do not claim recurrence
+is impossible until that separate durability step is complete.
 
 **Post-completion cleanup 2026-07-27:** the owner explicitly requested deletion
 of both the `students-stale` Codex session and its tmux window. Read-only
@@ -300,6 +301,24 @@ from removing its tmux owner, not as a live Codex session. Run independent
 final topology/socket/thread/doctor/Git validation and canonical fleet health,
 then close this cleanup. Permanent `codex delete` remains excluded because the
 saved UUID is the active SW-031 thread.
+
+**Cleanup completion:** exact window `@0` and stale PIDs `3837157`, `2727171`,
+and `2727306` are absent. Native tmux removal ran once; after tmux left the
+process chain detached, one exact leaf `SIGTERM` let the managed launcher and
+supervisor unwind without respawn. No second signal, `SIGKILL`, process-group
+signal, pane input, or permanent `codex delete` occurred. Saved SW-031 root
+`019f9f69-6b94-70a3-be12-8bef23b88a96` remains unarchived and active in
+`swallow`; deleting it would not have been a stale-only operation.
+
+Independent final validation finds only the intended `students` and `swallow`
+windows, with the sole attached client still on `swallow`; the remote-backed
+Students peer, real app server, thread index, and redacted doctor pass. The
+removed supervisor's value-free residue correctly reports
+`phase=stale owner_pid=none`; it is not a live process. Arg0 planning reports
+`eligible=0 young=3 unexpected=0 removed=0`, so no cleanup ran. Focused
+resilience validation passes, Git is clean/aligned, and canonical fleet health
+passes Local, all seven remote Linux logical nodes including both ABQ routes,
+and all four Mac route pairs at 2/2.
 
 ### T-314 — Recover Local Slack connector availability
 
