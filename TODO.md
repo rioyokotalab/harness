@@ -209,6 +209,15 @@ and the sole attached tmux client remained on active `2:swallow`. No existing
 process was signaled, restarted, or given input. Finish independent
 process/socket/tmux/doctor/Git validation, then run canonical fleet health.
 
+**LIFO validation gate 2026-07-27:** the first final-validation wrapper exited
+141 before fleet health because its socket parser deliberately stopped after
+one record while shell `pipefail` treated the upstream `ss` SIGPIPE as an
+error. This did not mutate tmux or any process. Immediate readback proves the
+three-window repair, active `swallow` selection, all protected and new PIDs,
+and clean aligned Git state remain stable. Make the parser consume all socket
+rows, repeat the complete independent validation, and invoke fleet health only
+after it passes.
+
 ### T-314 — Recover Local Slack connector availability
 
 **Phase:** complete.
