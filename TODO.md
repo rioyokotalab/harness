@@ -409,6 +409,16 @@ mutation, or private-schema cleanup ran. Reattach one client to the existing
 session on exact `@47:harness`, then repeat the complete Stage-5 validator;
 the signal remains safe to attempt exactly once only after that gate passes.
 
+**Stage-5 LIFO gate 2026-07-27 08:10 JST:** after the owner reattached exact
+`/dev/pts/0` to `@47:harness`, the full pre-signal validator exited before its
+signal marker because its first socket assertion misspelled exact client inode
+`165756871` as regex `166?756871`. Immediate readback proves old real TUI PID
+`2727307` still has exact parent/session/start/argv identity, all three
+accepted socket pairs are unchanged, the client remains attached to
+`@47:harness`, doctor is wholly `ok`, and Git is clean/aligned. No signal or
+target mutation ran. Commit and push this checkpoint, replace only the typo
+with exact `165756871`, then repeat the complete pre-signal validator.
+
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
 **Phase:** complete.
