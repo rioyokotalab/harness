@@ -171,6 +171,14 @@ identities, then create only detached `harness-next` under supervisor name
 `harness-canary` with exact remote Harness root. Do not switch or signal a
 client until that new chain passes.
 
+**Canary LIFO gate 2026-07-27 08:35 JST:** the first launch validator stopped
+at its initial Git comparison because the explicitly pushed new task branch
+had no local upstream configured. It did not reach any tmux launch or other
+live assertion; no `harness-next` window or `harness-canary` state exists and
+all three original clients remain unchanged. Commit and push this retry-safe
+checkpoint, set only the current branch upstream to its exact existing remote
+branch, then repeat the complete validator.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
