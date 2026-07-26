@@ -217,6 +217,22 @@ thread ID and readback, revise only the naming mechanism in the frozen plan
 and checkpoint it before execution; otherwise leave the fork unnamed and stop
 for owner direction. No Swallow client has been created.
 
+**Stage-2 native naming discovery 2026-07-27:** the installed experimental
+schema generator created private temporary bundle
+`/tmp/t316-app-server-schema.BnxRrl` with 347 files, three directories, and
+3,303,877 bytes. It proves exact method `thread/name/set`, required parameters
+`threadId` and `name`, an empty success response, and the normal
+initialize/initialized handshake. Preserve this directory for guarded cleanup.
+
+A read-only attempt to use native `codex app-server proxy` for `initialize`
+plus `thread/read(includeTurns=false)` exited zero but emitted no JSON records.
+Its mode-0600 capture was exact-unlinked. The command proxies raw bytes to the
+Unix WebSocket endpoint; it is not a JSONL bridge, so no read or name mutation
+was proved and replaying the same request is not useful. The fork name remains
+empty and every live identity is unchanged. Inspect installed WebSocket client
+capability next; prove `thread/read` before revising or invoking the naming
+request.
+
 ### T-315 — Restore one-to-one Local Codex thread mapping
 
 **Phase:** complete.
