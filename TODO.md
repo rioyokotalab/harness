@@ -196,6 +196,19 @@ starting a process. Current indices are `0:harness`, `1:students`, and
 No protected state changed. Commit and push this retry-safe failure, then
 repeat the same preflight and target exact unused index `harness:2`.
 
+**Harness canary acceptance 2026-07-27 08:38 JST:** exact index 2 launch
+created `@49:harness-next`, supervisor PID `4063793` start tick `84409821`,
+wrapper PID `4063851`, and real TUI PID `4064616` start tick `84409839`.
+Supervisor status is `running selector=remote-explicit`; both wrapper and real
+argv resolve to exact Harness root
+`019fa076-7132-7992-800e-f6c6d4aeadfb`. App-server PID `2852569` owns accepted
+inode `167459432` with reciprocal client peer `167461374` and the exact Harness
+rollout. Both attached clients remain unchanged on Students. Commit and push
+this acceptance, then rename old `@47:harness` to `harness-direct`, rename
+accepted `@49:harness-next` to `harness`, and retire only old direct real TUI
+PID `3184653` after immutable revalidation. Never switch either attached
+client or touch Students/Swallow.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
