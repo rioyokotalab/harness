@@ -121,6 +121,16 @@ from a disposable clean full clone of the exact task revision, then
 guarded-delete only that clone and exact-unlink its mode-0600 manifest after
 successful verification.
 
+**LIFO validation gate 2026-07-27:** the exact clean full clone at `1ddfd83`
+made terminfo pass, but the eight-worker run still failed only tmux when its
+apply preflight briefly observed a dirty checkout. After the runner exited,
+the clone was clean with no tracked or untracked changes; the runner had
+already removed its temporary detailed log. This is evidence of a transient
+parallel validation interaction, not yet proof of its source. Preserve the
+clone, commit this gate, fast-forward it to the checkpoint, run the tmux suite
+alone, then run the complete phase-one suite with one focused worker to remove
+cross-suite checkout-state concurrency from the acceptance result.
+
 ### T-318 — Recover poisoned remote Codex threads
 
 **Phase:** complete.
