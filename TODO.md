@@ -947,6 +947,23 @@ restarts, and the student service/GitHub monitor remain inactive/disabled.
 No Students file, process, service, private state, or Slack configuration was
 changed by T-317.
 
+**Read-only monitoring checkpoint 2026-07-27 13:39 JST:** canonical fleet
+health again passes every Linux target and both routes for every Mac. The
+repository-declared per-host native scheduler interface proves exact future
+jobs `94950`, `2064918.pbs1`, `2064919.pbs1`, `176525.qjcm`, `10386`,
+`4275926`, `260847`, and `8270230` present, with all eight captured smokes
+verified-disabled and absent. A first direct ad hoc query used incompatible
+login-safe command environments on Local, AB/AB2, RI, and T4 and failed
+read-only; it did not change a job. The declared interface resolved each
+platform's command paths/configuration and passed.
+
+Two arg0 directories from completed invocations became eligible after the
+previous checkpoint. The lock-aware housekeeping transaction quarantined both
+under one exact three-entry/eight-byte target, then `guarded-delete`
+revalidated and removed only that quarantine. Immediate readback is
+`live=5 eligible=0 young=0 unexpected=0`; all three supervisors, their exact
+remote selectors, and the canonical three-window topology remain unchanged.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.

@@ -360,6 +360,10 @@ SW-031 branch was untouched.
   82,702,666 bytes below `/tmp`; its manifest, registration, and local task
   refs are absent while remote task refs remain.
 - Test/sync clones and their manifests were exact-verified and removed.
+- Two later completed-invocation arg0 residues were quarantined together as
+  one exact three-entry/eight-byte target, revalidated by `guarded-delete`,
+  and removed. Immediate Local readback retained five live directories with
+  zero eligible or unexpected residue.
 - No active process, repository worktree, backup, scheduler state, credential,
   cache with unresolved ownership, or protected project artifact was deleted.
 
