@@ -36,7 +36,8 @@ grep -F 'never blindly replay the prior prompt' "$ROOT/AGENTS.md" >/dev/null ||
 
 fake_bin=$TEST_ROOT/fake-bin
 runtime=$TEST_ROOT/runtime
-mkdir "$fake_bin" "$runtime"
+managed_root=$TEST_ROOT/home/.local/opt/agents/codex/1/linux/node_modules/@openai/codex
+mkdir -p "$fake_bin" "$runtime" "$managed_root"
 chmod 700 "$runtime"
 
 cat >"$fake_bin/stat" <<'EOF'
@@ -91,7 +92,7 @@ JSON
 JSON
             ;;
         managed-install)
-            cat <<'JSON'
+            cat <<JSON
 {
   "schemaVersion": 1,
   "checks": {
@@ -101,8 +102,8 @@ JSON
       "status": "fail",
       "summary": "npm install -g @openai/codex would update a different install",
       "details": {
-        "managed package root": "/fixture/.local/opt/agents/codex/1/linux/node_modules/@openai/codex",
-        "running package root": "/fixture/.local/opt/agents/codex/1/linux/node_modules/@openai/codex"
+        "managed package root": "$FAKE_MANAGED_ROOT",
+        "running package root": "$FAKE_MANAGED_ROOT"
       }
     },
     "state.paths": {"status": "ok"}
@@ -111,7 +112,7 @@ JSON
 JSON
             ;;
         mismatched-managed-install)
-            cat <<'JSON'
+            cat <<JSON
 {
   "schemaVersion": 1,
   "checks": {
@@ -121,8 +122,31 @@ JSON
       "status": "fail",
       "summary": "npm install -g @openai/codex would update a different install",
       "details": {
-        "managed package root": "/fixture/.local/opt/agents/codex/1/linux/node_modules/@openai/codex",
+        "managed package root": "$FAKE_MANAGED_ROOT",
         "running package root": "/fixture/.local/lib/node_modules/@openai/codex"
+      }
+    },
+    "state.paths": {"status": "ok"}
+  }
+}
+JSON
+            ;;
+        cross-check-install)
+            cat <<JSON
+{
+  "schemaVersion": 1,
+  "checks": {
+    "auth.credentials": {"status": "ok"},
+    "config.load": {"status": "ok"},
+    "installation": {
+      "status": "fail",
+      "summary": "npm install -g @openai/codex would update a different install"
+    },
+    "updates.status": {
+      "status": "fail",
+      "details": {
+        "managed package root": "$FAKE_MANAGED_ROOT",
+        "running package root": "$FAKE_MANAGED_ROOT"
       }
     },
     "state.paths": {"status": "ok"}
@@ -238,6 +262,7 @@ run_supervisor() {
     HARNESS_TEST_THREAD_RECOVERY="$fake_bin/thread-recovery" \
     HARNESS_TEST_RUNTIME_DIR="$runtime" \
     HARNESS_TEST_JITTER=0 \
+    FAKE_MANAGED_ROOT="$managed_root" \
     FAKE_CODEX_CALLS="$TEST_ROOT/codex.calls" \
     FAKE_RECOVERY_CALLS="$TEST_ROOT/recovery.calls" \
     FAKE_CODEX_STATUSES="$TEST_ROOT/codex.statuses" \
@@ -349,6 +374,19 @@ HARNESS_TEST_PLATFORM=Linux FAKE_DOCTOR_MODE=mismatched-managed-install \
 grep -F 'reason=local-installation' \
     "$TEST_ROOT/mismatched-managed-install.out" >/dev/null ||
     fail "mismatched managed installation failure classification"
+
+: >"$TEST_ROOT/codex.calls"
+: >"$TEST_ROOT/sleep.calls"
+printf '1\n0\n' >"$TEST_ROOT/codex.statuses"
+HARNESS_TEST_PLATFORM=Linux FAKE_DOCTOR_MODE=cross-check-install \
+    run_supervisor --run --name cross-check-install --last \
+    >"$TEST_ROOT/cross-check-install.out" 2>&1 &&
+    fail "installation parser borrowed later check details"
+[ "$(wc -l <"$TEST_ROOT/codex.calls" | tr -d ' ')" = 2 ] ||
+    fail "cross-check installation launched again"
+grep -F 'reason=local-installation' \
+    "$TEST_ROOT/cross-check-install.out" >/dev/null ||
+    fail "cross-check installation failure classification"
 
 : >"$TEST_ROOT/codex.calls"
 : >"$TEST_ROOT/sleep.calls"

@@ -86,10 +86,13 @@ exact drift is deferred for owner reconciliation.
   terminal post-failure gate, so a transient client exit could strand an
   otherwise healthy managed session. The correction tolerates only native
   doctor's exact Linux ownership-warning summary when its managed and running
-  package roots are identical inside the versioned Harness agent tree; all
-  other doctor and platform failures retain their prior terminal behavior.
-  Focused tests cover the valid Linux exception, mismatched package roots, and
-  Darwin fail-closed behavior.
+  package roots are identical inside the versioned Harness agent tree and the
+  root is a current-user-owned real directory. The field parser is bounded to
+  the exact `installation` object, so missing data cannot be borrowed from a
+  later check. All other doctor and platform failures retain their prior
+  terminal behavior. Focused tests cover compact healthy checks, the valid
+  Linux exception, cross-object data, mismatched roots, and Darwin fail-closed
+  behavior.
 - Current-user zombie counts are zero on all eight Linux logical nodes.
   System-wide failed-unit counts are Local 0, AB 250, AB2 17, RI 1, AL 4,
   RC 2, T4 0, and ABQ 0. AB/AB2 entries are historical session scopes. RI's
@@ -108,6 +111,20 @@ exact drift is deferred for owner reconciliation.
   by the marker. The other seven Linux logical nodes have no such marker.
   Rebooting the control-plane host is an explicit coordination boundary and
   was deferred without process or service interruption.
+- Native owner-queue readback on AL, RC, T4, and ABQ shows only the exact
+  declared weekly backup successors `4275926`, `260847`, `8270230`, and
+  `176525.qjcm`; none was changed. RI's `squeue` fails at the same DNS SRV
+  configuration-source boundary as its accounting query, so its queue remains
+  unknown and successor `10386` remains untouched. AB/AB2 do not expose their
+  PBS client in the ordinary login environment; their already-verified
+  Harness backup status remains the authoritative readback.
+- Fresh `harness restic-primary check` snapshot enumeration passed on all
+  eight primary repositories using each existing credential only by path.
+  Native Restic structural checks then loaded indexes and checked pack
+  references, snapshots, trees, and blobs on all eight without `--read-data`,
+  snapshot creation, unlock, forget, or prune. Private output stayed in
+  mode-0600 captures; all captures were exact-unlinked and all repository lock
+  directories returned to zero entries.
 
 ## Repository housekeeping
 

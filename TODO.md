@@ -188,8 +188,10 @@ exact Linux warning while retaining fail-closed authentication, configuration,
 state, other installation, command-failure, and non-Linux behavior. The
 exception additionally requires native doctor's managed and running package
 roots to be identical within the versioned `.local/opt/agents/codex` tree;
-warning text alone is insufficient. Focused resilience, login, hardening,
-skill, ShellCheck, and diff checks pass.
+the root must exist as a current-user-owned real directory, and each JSON field
+must occur within the `installation` check rather than a later object. Warning
+text alone is insufficient. Focused resilience, login, hardening, skill,
+ShellCheck, and diff checks pass.
 
 **LIFO test-isolation fix:** the documented plain `tests/test-phase1.sh`
 command inherited the managed Codex process's live `HARNESS_ROOT`, causing
@@ -213,6 +215,12 @@ no unit was reset, restarted, or modified.
 Only Local exposes `/var/run/reboot-required`; AB, AB2, RI, AL, RC, T4, and
 ABQ do not. Rebooting Local would interrupt the control plane and requires
 explicit owner coordination, so no reboot or service interruption ran.
+
+Fresh credential-safe `restic-primary check` snapshot enumeration and native
+Restic structural checks pass on all eight primary repositories. The latter
+loaded indexes and checked pack references, snapshots, trees, and blobs
+without `--read-data` or mutation. All private mode-0600 captures were
+exact-unlinked and all repository lock counts returned to zero.
 
 **Next action:** publish the resilience fix through PR #361 after current-head
 checks pass, continue independent deep checks until the 04:13 JST
