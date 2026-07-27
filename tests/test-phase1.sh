@@ -141,6 +141,8 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "Python syntax: harness-ssh-config-layout"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harness-hardening-audit").read_text(), feature_version=(3, 6))' ||
     fail "Python syntax: harness-hardening-audit"
+python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harness-codex-thread-recovery").read_text(), feature_version=(3, 6))' ||
+    fail "Python syntax: harness-codex-thread-recovery"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/tools/run-focused-tests.py").read_text())' ||
     fail "Python syntax: focused-suite runner"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/shared/skills/remote-agent-communication/scripts/agent-message").read_text())' ||
@@ -153,6 +155,8 @@ if [ "${HARNESS_TEST_JOBS:-auto}" = legacy ]; then
     fail "SSH agent profile focused suite"
 "$ROOT/tests/test-remote-session.sh" >/dev/null ||
     fail "remote-session focused suite"
+"$ROOT/tests/test-codex-thread-recovery.sh" >/dev/null ||
+    fail "Codex thread systemError recovery"
 "$ROOT/tests/test-remote-agent-communication.sh" >/dev/null ||
     fail "remote agent communication focused suite"
 "$ROOT/tests/test-reboot-recovery-skill.sh" >/dev/null ||

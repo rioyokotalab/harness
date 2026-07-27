@@ -87,11 +87,10 @@ Next free ID: T-318.
 
 ## Next resume checkpoint
 
-1. T-318 is already isolated in `/tmp/harness-t318-thread-recovery` and
-   published as stacked PR #338. Its owning agent must reconcile the branch
-   with T-317's owner-directed closeout before protected integration. Do not
-   duplicate its implementation or adopt its watcher during an uncoordinated
-   remote-TUI restart.
+1. T-318 is executing the owner-authorized recovery below. Finish its
+   non-force reconciliation with merged `main`, rerun focused and clean full
+   validation, retarget PR #338 to `main`, and require protected CI before
+   live adoption. Preserve the shared app server and every unrelated TUI.
 2. T-314 through T-317 are complete. Students and Swallow are owned by their
    independent project agents and ledgers; Harness has no project-research
    resume action for either repository.
@@ -107,6 +106,95 @@ Next free ID: T-318.
 
 ## Active tasks
 
+### T-318 — Recover poisoned remote Codex threads
+
+**Phase:** executing owner-authorized recovery.
+
+The owner asked to extend T-310/T-317 transient-service resilience after exact
+Local evidence exposed a second failure class: Swallow's remote TUI and shared
+app server remained healthy, but six consecutive assistant-less turns
+completed with `Request blocked`, and `thread/read` reported `systemError`.
+Restarting only the TUI preserved the error. One exact app-server
+`thread/rollback` of those six turns restored the prior 37-turn history and a
+new diagnostic completed with an assistant response.
+
+The bounded design is in
+`docs/plans/t318-codex-thread-system-error-recovery.md`. Recovery is limited to
+an exact remote thread whose status is `systemError` and whose logical rollout
+tail contains only completed assistant-less turns with no tool, command, file,
+web, or unknown event. Earlier rollback markers must be applied before
+counting; more than eight turns, any active/incomplete turn, identity/path
+drift, unsafe event, protocol ambiguity, or unrecognized schema fails closed.
+The mechanism never replays the rejected prompt and never restarts the shared
+app server.
+
+Work is isolated at `/tmp/harness-t318-thread-recovery` on branch
+`t318-codex-thread-recovery`. The primary checkout and its live
+supervisor-held `.nfs…` inode remain untouched.
+
+Implementation checkpoint:
+
+- Added dependency-free Python-3.6-compatible
+  `harness codex-thread-recovery` plan, status, one-shot, and watch modes.
+  The helper validates exact app-server identity, reconstructs logical rollout
+  turns after durable rollback markers, serializes the final recheck against
+  agent-message injection, caps rollback at eight safe turns, and treats a
+  sent request without an unambiguous acknowledgement as non-retryable.
+- Added deterministic safe, existing-marker, tool-bearing, unknown-event,
+  active-turn, excessive-tail, session-identity, rollout-drift, idle-thread,
+  and ambiguous-acknowledgement fixtures plus a real Unix-WebSocket fake
+  app-server method-sequence test.
+- Integrated one exact watcher only for `codex-resilient --remote-session`.
+  A one-shot safety transaction and watcher-owned readiness receipt are
+  required before TUI launch; supervisor cleanup signals and reaps only its
+  exact child. Unsafe or unavailable recovery blocks before Codex launch.
+  Status and plan output expose the value-free watcher contract.
+- Focused recovery and resilience suites, Python 3.6 AST parsing, shell
+  syntax, `git diff --check`, and the complete clean Phase-1 suite passed at
+  the pre-reconciliation implementation. The disposable validation clone was
+  guarded-deleted with protected anchors unchanged.
+- PR #338 was originally stacked on the T-317 branch. After T-317 closed and
+  merged as `b97d637`, the PR correctly became conflicting because its old
+  board still contained T-317's active history. The current non-force merge
+  keeps `main`'s compact T-317 audit and only this T-318 task/code.
+
+**Recurring Swallow incident 2026-07-27 15:45 JST:** exact read-only
+`thread/read` again reports `systemError` for Swallow root
+`019f9f69-6b94-70a3-be12-8bef23b88a96`, while its exact supervisor/TUI/app
+server remain live at attempt/delay zero and native Codex doctor passes 18/18.
+The watcher is not yet deployed. Its analyzer failed closed before reading the
+tail because the rollout is mode `0664`. Metadata proves a current-user-owned,
+single-link regular file whose group is the current user's private primary
+group, with zero explicit members and one primary account.
+
+The owner said `proceed`. Keep the strict no-group-write recovery boundary:
+after protected publication, revalidate the exact poisoned thread and rollout
+identity, tighten only that rollout from `0664` to `0600`, and run one bounded
+one-shot recovery. Do not weaken the general classifier, replay a prompt,
+restart the shared app server, or touch Students. After recovery is proven,
+deliberately restart only the exact Swallow supervisor/TUI to adopt the
+published watcher and validate a fresh bounded response.
+
+**Next:** finish this conflict-resolution commit, run both focused suites and
+the complete clean full suite, push without force, retarget PR #338 to `main`,
+and require exact-head protected CI before any live mutation.
+
+**Reconciliation acceptance 2026-07-27:** merge revision `e23c0fe` retains
+`main`'s compact T-317 closeout and the complete T-318 implementation without a
+code conflict. Both focused suites, Python AST parsing, diff hygiene, and the
+complete clean `tests/test-phase1.sh` pass; only native MPI is skipped outside
+a declared allocation. The clean, tree-equal, handle-free validation clone was
+guarded-deleted (4,188 entries, 47,602,811 bytes), protected anchors were
+unchanged, and its exact mode-0600 manifest was exact-unlinked.
+
+**Next:** commit and push this acceptance without force, retarget PR #338 to
+`main`, and require exact-head protected CI before the live permission
+tightening or recovery.
+
+PR #338 now targets protected `main` and is mergeable. The retarget event
+reported no check run, so this ledger-only synchronization commit provides the
+normal pull-request `synchronize` event without dispatching a workflow. Require
+`portable-phase1` to pass on this exact new head before live mutation.
 
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 

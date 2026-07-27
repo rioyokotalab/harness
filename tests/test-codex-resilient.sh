@@ -104,9 +104,90 @@ exit "$status"
 EOF
 chmod 755 "$fake_bin/codex-launcher"
 
+cat >"$fake_bin/thread-recovery" <<'EOF'
+#!/bin/sh
+set -eu
+original=$*
+printf '%s\n' "$original" >>"$FAKE_RECOVERY_CALLS"
+mode=$1
+shift
+name=
+thread=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --name) name=$2; shift 2 ;;
+        --thread) thread=$2; shift 2 ;;
+        *) exit 2 ;;
+    esac
+done
+[ -n "$name" ] || exit 2
+state=$HARNESS_TEST_RUNTIME_DIR/$name.recovery.state
+write_state() {
+    phase=$1
+    reason=$2
+    owner=$3
+    {
+        printf 'schema=1\n'
+        printf 'name=%s\n' "$name"
+        printf 'thread=%s\n' "$thread"
+        printf 'owner_pid=%s\n' "$owner"
+        printf 'phase=%s\n' "$phase"
+        printf 'reason=%s\n' "$reason"
+        printf 'recoveries=0\n'
+        printf 'rolled_back=0\n'
+    } >"$state"
+    chmod 600 "$state"
+}
+print_state() {
+    phase=$(sed -n 's/^phase=//p' "$state")
+    reason=$(sed -n 's/^reason=//p' "$state")
+    owner=$(sed -n 's/^owner_pid=//p' "$state")
+    stored_thread=$(sed -n 's/^thread=//p' "$state")
+    printf 'CODEX_THREAD_RECOVERY name=%s thread=%s phase=%s reason=%s recoveries=0 rolled_back=0 owner_pid=%s\n' \
+        "$name" "$stored_thread" "$phase" "$reason" "$owner"
+}
+case "$mode" in
+    --recover)
+        [ -n "$thread" ] || exit 2
+        if [ "${FAKE_RECOVERY_MODE:-watching}" = blocked ]; then
+            write_state blocked unsafe-tail "$$"
+            print_state
+            exit 2
+        fi
+        write_state watching thread-idle "$$"
+        print_state
+        ;;
+    --watch)
+        [ -n "$thread" ] || exit 2
+        stop() {
+            write_state stopped operator-stop "$$"
+            exit 0
+        }
+        trap stop HUP INT TERM
+        write_state watching thread-idle "$$"
+        while :; do
+            /bin/sleep 1
+        done
+        ;;
+    --status)
+        if [ ! -f "$state" ]; then
+            printf 'CODEX_THREAD_RECOVERY name=%s phase=absent\n' "$name"
+        else
+            print_state
+        fi
+        ;;
+    *) exit 2 ;;
+esac
+EOF
+chmod 755 "$fake_bin/thread-recovery"
+
 cat >"$fake_bin/sleep" <<'EOF'
 #!/bin/sh
 set -eu
+if [ "$1" = 1 ]; then
+    /bin/sleep 0.05
+    exit 0
+fi
 printf '%s\n' "$1" >>"$FAKE_SLEEP_CALLS"
 EOF
 chmod 755 "$fake_bin/sleep"
@@ -114,9 +195,11 @@ chmod 755 "$fake_bin/sleep"
 run_supervisor() {
     HARNESS_TESTING=1 \
     HARNESS_TEST_CODEX_LAUNCHER="$fake_bin/codex-launcher" \
+    HARNESS_TEST_THREAD_RECOVERY="$fake_bin/thread-recovery" \
     HARNESS_TEST_RUNTIME_DIR="$runtime" \
     HARNESS_TEST_JITTER=0 \
     FAKE_CODEX_CALLS="$TEST_ROOT/codex.calls" \
+    FAKE_RECOVERY_CALLS="$TEST_ROOT/recovery.calls" \
     FAKE_CODEX_STATUSES="$TEST_ROOT/codex.statuses" \
     FAKE_SLEEP_CALLS="$TEST_ROOT/sleep.calls" \
     PATH="$fake_bin:/usr/bin:/bin" \
@@ -124,6 +207,7 @@ run_supervisor() {
 }
 
 : >"$TEST_ROOT/codex.calls"
+: >"$TEST_ROOT/recovery.calls"
 : >"$TEST_ROOT/sleep.calls"
 printf '1\n0\n' >"$TEST_ROOT/codex.statuses"
 run_supervisor --run --name fresh --new >"$TEST_ROOT/fresh.out"
@@ -167,6 +251,14 @@ run_supervisor --run --name remote-explicit \
     fail "remote explicit unexpected call count"
 [ "$(sed -n '1p' "$TEST_ROOT/sleep.calls")" = 15 ] ||
     fail "remote explicit first retry delay"
+grep -F -- '--recover --name remote-explicit --thread session-remote' \
+    "$TEST_ROOT/recovery.calls" >/dev/null ||
+    fail "remote explicit recovery preflight"
+grep -F -- '--watch --name remote-explicit --thread session-remote' \
+    "$TEST_ROOT/recovery.calls" >/dev/null ||
+    fail "remote explicit recovery watcher"
+grep -F 'phase=stopped' "$runtime/remote-explicit.recovery.state" \
+    >/dev/null || fail "remote explicit recovery watcher cleanup"
 
 : >"$TEST_ROOT/codex.calls"
 : >"$TEST_ROOT/sleep.calls"
@@ -233,6 +325,11 @@ run_supervisor --run --name signal --last >"$TEST_ROOT/signal.out" 2>&1 &&
 run_supervisor --status --name backoff >"$TEST_ROOT/status.out"
 grep -F 'CODEX_RESILIENT mode=status name=backoff phase=stopped' \
     "$TEST_ROOT/status.out" >/dev/null || fail "status output"
+run_supervisor --status --name remote-explicit \
+    >"$TEST_ROOT/remote-status.out"
+grep -F 'CODEX_THREAD_RECOVERY name=remote-explicit' \
+    "$TEST_ROOT/remote-status.out" >/dev/null ||
+    fail "remote recovery status output"
 
 run_supervisor --plan --name planned --last >"$TEST_ROOT/plan.out"
 grep -F 'CODEX_RESILIENT mode=plan name=planned selector=last status=ready' \
@@ -246,6 +343,23 @@ run_supervisor --plan --name remote-plan \
 grep -F 'name=remote-plan selector=remote-explicit status=ready' \
     "$TEST_ROOT/remote-plan.out" >/dev/null ||
     fail "remote explicit plan"
+grep -F 'THREAD_RECOVERY action=watch rollback=safe-tail-only' \
+    "$TEST_ROOT/remote-plan.out" >/dev/null ||
+    fail "remote explicit recovery plan"
+
+: >"$TEST_ROOT/codex.calls"
+: >"$TEST_ROOT/sleep.calls"
+printf '0\n' >"$TEST_ROOT/codex.statuses"
+FAKE_RECOVERY_MODE=blocked \
+    run_supervisor --run --name recovery-blocked \
+        --remote-session session-blocked \
+        >"$TEST_ROOT/recovery-blocked.out" 2>&1 &&
+    fail "unsafe thread recovery tail was accepted"
+[ ! -s "$TEST_ROOT/codex.calls" ] ||
+    fail "unsafe thread recovery launched Codex"
+grep -F 'reason=thread-recovery-blocked' \
+    "$TEST_ROOT/recovery-blocked.out" >/dev/null ||
+    fail "unsafe thread recovery classification"
 
 mkdir "$runtime/locked.lock"
 chmod 700 "$runtime/locked.lock"

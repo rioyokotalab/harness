@@ -53,11 +53,27 @@ project trust, approval, sandbox, Darwin path, and version-scoped arg0
 contracts remain authoritative.
 
 The supervisor supports `--new`, `--last`, `--last-all`, and
-`--session ID`. An explicit saved-session identifier is the concurrency-safe
-choice. The two latest-session selectors rely on the fleet's established
-single active Codex session per checkout or global scope. A fresh first launch
-recovers with repository-scoped `resume --last`; every other recovery retains
-its selected resume scope. No recovery command contains a prompt.
+`--session ID`, plus `--remote-session ID` for an exact app-server-backed
+thread. An explicit saved-session identifier is the concurrency-safe choice.
+The two latest-session selectors rely on the fleet's established single active
+Codex session per checkout or global scope. A fresh first launch recovers with
+repository-scoped `resume --last`; every other recovery retains its selected
+resume scope. A remote selector always retains `resume --remote unix:// ID`.
+No recovery command contains a prompt.
+
+An exact remote selector starts one
+`harness codex-thread-recovery --watch` child. A one-shot readiness transaction
+must succeed before the TUI launches, and the supervisor stops and reaps the
+watcher at exit. The helper speaks the local app-server Unix-WebSocket
+protocol directly and keeps only a mode-0600, value-free receipt. It can roll
+back one to eight trailing turns only when the exact thread is `systemError`
+and every candidate turn is complete, has user input, has no assistant
+response, and contains no tool, command, file, web, external, or unknown
+event. It applies existing rollback markers before counting and revalidates
+thread identity plus rollout identity under the shared agent-message lock.
+Unsafe or changing state and ambiguous rollback acknowledgement fail closed.
+Rollback does not undo local or external effects, so removed prompts are never
+replayed. Other selector classes do not start this watcher.
 
 After a nonzero process exit, the supervisor writes Codex doctor's redacted
 JSON to one mode-0600 runtime temporary file, reads only the status of
@@ -81,7 +97,9 @@ The managed Mac reboot workflow starts its next newly created
 `harness-codex-resume` pane through this supervisor. It retains every existing
 healthy legacy or supervised pane unchanged. Rollback is simply to stop the
 foreground supervisor and start `bin/harness-codex` directly; no persistent
-service or owner configuration is installed.
+service or owner configuration is installed. Publishing or synchronizing a
+new supervisor revision does not signal a running TUI; adoption requires a
+separate deliberate restart.
 
 On Linux, do not run `codex update`. Upgrade the two reviewed release records
 in `tools/agents.tsv`, publish them through protected `main`, synchronize the
