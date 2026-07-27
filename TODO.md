@@ -110,7 +110,7 @@ Next free ID: T-327.
 
 ### T-326 — Use exact progress clocks and default new Codex sessions to Sol high
 
-**Phase:** executing.
+**Phase:** complete.
 
 The owner reported that commentary timestamps drift and requested that newly
 started Codex sessions default to Sol with high reasoning. Two initial bundled
@@ -178,6 +178,27 @@ remain untouched.
 remote, push the task branch with an explicit refspec, and publish it through
 protected exact-head `portable-phase1` CI. Do not activate any existing Codex
 session during publication.
+
+**Completion checkpoint:** protected `portable-phase1` passed for exact head
+`b842242571b4e633f8f339f824c0a4a6681191da`; pull request #367 merged as
+`a8ae9224d8a1eed6202275c284bf89bd7361dffe`. Guarded `harness fleet-sync`
+plan/apply advanced all 11 declared targets (`ab`, `ab2`, `ri`, `al`, `rc`,
+`t4`, `abq`, `aist`, `home`, `office`, and `riken`) from `b4d8d73` to the
+merge revision with exact clean-head and absent-artifact readback. One
+revision-specific context refresh returned transport `status=submitted`
+exactly once on each of `aist`, `home`, `office`, and `riken`; no pane or
+transcript content was inspected, and no existing session was restarted or
+retargeted.
+
+The temporary clean rollout clone
+`/tmp/harness-t326-sync.D3xohb` was planned through mode-0600 manifest
+`/tmp/harness-t326-sync.manifest`, deleted through the exact emitted
+guarded-delete command, and verified absent with protected anchors unchanged;
+the short-lived manifest was then exact-unlinked. The primary checkout remains
+on clean tracked `main` with its two unrelated live `.nfs` files preserved.
+Newly started trusted-project Codex sessions now receive Sol/high from the
+reviewed project config. This task made no user-level Codex config,
+authentication, plugin, MCP, credential, or other external-service change.
 
 ### T-325 — Recover recurring Codex unsafe tails and make the workflow reusable
 
