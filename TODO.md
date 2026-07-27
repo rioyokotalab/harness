@@ -109,7 +109,7 @@ Next free ID: T-319.
 
 ### T-318 — Recover poisoned remote Codex threads
 
-**Phase:** validating in isolated worktree.
+**Phase:** implemented and validated; publication pending.
 
 The owner asked to extend T-310/T-317 transient-service resilience after exact
 Local evidence exposed a second failure class: Swallow's remote TUI and shared
@@ -164,10 +164,19 @@ Checkpoint 2026-07-27:
   suite except `test-tmux-config.sh` and `test-terminfo.sh`; those two
   explicitly rejected the uncommitted checkout, as anticipated. This is a
   retry-safe validation-environment failure, not a product failure.
-- Next: rerun focused/static validation after documentation review, commit the
-  coherent change, validate `tests/test-phase1.sh` from a clean full clone,
-  fetch/reconcile the collaborative remote, and publish the task branch. Do
-  not restart a live supervisor; adoption is a later deliberate operation.
+- Committed the coherent implementation as `9a4eea1`. A standalone full clone
+  at that exact commit initially inherited this controller's exported
+  `HARNESS_ROOT=/home/rioyokota/harness`, so checkout-sensitive fixtures
+  inspected the intentionally dirty primary checkout. With only that inherited
+  override unset, `tests/test-tmux-config.sh`, `tests/test-terminfo.sh`, and
+  the complete parallel `tests/test-phase1.sh` all passed. The disposable
+  925-entry, 23,132,280-byte clone was then removed through guarded-delete
+  manifest `/tmp/harness-t318-validation.GlxWGi.delete.manifest`; protected
+  anchors were unchanged, the target was verified absent, and the short-lived
+  manifest was exact-unlinked.
+- Next: commit this validation checkpoint, fetch and reconcile the
+  collaborative remote, then publish the task branch. Do not restart a live
+  supervisor; adoption is a later deliberate operation.
 
 ### T-317 — 503-safe fleet and repository housekeeping
 
