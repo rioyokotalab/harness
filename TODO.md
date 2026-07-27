@@ -110,7 +110,7 @@ Next free ID: T-323.
 
 ### T-322 — Make the phone-visible Swallow name unique
 
-**Phase:** ready-for-go.
+**Phase:** executing.
 
 After T-321, the owner reported three phone-visible sessions named `swallow`
 plus the expected `swallow-blocked-20260727`. Metadata-only app-server
@@ -136,6 +136,18 @@ perform one acknowledged read-before/name-set/read-after transaction per older
 root, and require the active root, tmux mapping, supervisor/watcher, Harness,
 Students, and app server to remain unchanged. Recording this selection changed
 no thread, name, process, tmux, app-server, or Swallow repository state.
+
+**Execution authorization 2026-07-27 21:24 JST:** the owner gave the separate
+explicit `go`. The first complete pre-write gate stopped before any name write
+because exact original root `019f9f69-6b94-70a3-be12-8bef23b88a96`
+reported `notLoaded` through live `thread/read`, rather than the earlier
+`idle` list classification. Fresh metadata-only reconciliation proves its
+ID/name/cwd remain exact and dormant; failed fork remains idle, blocked root
+remains `systemError`, and active root remains idle under the unchanged
+healthy supervisor/watcher and three-window mapping. Accept `notLoaded` only
+for this dormant original root, commit and push this failed-closed checkpoint,
+then run the two exact read-before/name-set/read-after transactions. No write,
+process, tmux, app-server, or Swallow repository mutation has run.
 
 ### T-321 — Recover recurring Swallow unsafe-tail `Request blocked`
 
