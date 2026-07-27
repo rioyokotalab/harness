@@ -179,6 +179,18 @@ published watcher and validate a fresh bounded response.
 the complete clean full suite, push without force, retarget PR #338 to `main`,
 and require exact-head protected CI before any live mutation.
 
+**Reconciliation acceptance 2026-07-27:** merge revision `e23c0fe` retains
+`main`'s compact T-317 closeout and the complete T-318 implementation without a
+code conflict. Both focused suites, Python AST parsing, diff hygiene, and the
+complete clean `tests/test-phase1.sh` pass; only native MPI is skipped outside
+a declared allocation. The clean, tree-equal, handle-free validation clone was
+guarded-deleted (4,188 entries, 47,602,811 bytes), protected anchors were
+unchanged, and its exact mode-0600 manifest was exact-unlinked.
+
+**Next:** commit and push this acceptance without force, retarget PR #338 to
+`main`, and require exact-head protected CI before the live permission
+tightening or recovery.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
