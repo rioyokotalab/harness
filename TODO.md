@@ -256,12 +256,31 @@ client gates passed. Native `tmux rename-window` changed only `@59` from
 The attached owner client remained on exact `@50:students`; `@60:harness` was
 unchanged. No pane input, client switch, or process signal ran.
 
-**Next action:** commit and push this reversible tmux checkpoint, then
-revalidate old real TUI PID `2877595` / start tick `88838827`, its exact
-parent/session/root argv, old window `@59`, and every protected new/unaffected
-identity. Send one `SIGTERM` only to that old real TUI and let its launcher and
-supervisor unwind without respawn. Do not send a second signal, signal a
-process group, use `SIGKILL`, or touch the preserved poisoned root.
+**LIFO retirement gate:** the first pre-signal command stopped before its
+signal because it used an inferred Students supervisor tick. Exact readback
+proved the entire old chain/window remained live and unchanged. Corrected
+Students tick is `84429115`; no target mutation ran during the failed attempt.
+
+**Old-chain retirement:** the corrected complete gate passed and one
+`SIGTERM` was sent only to old real TUI PID `2877595`. That TUI and launcher
+PID `2877066` exited; old window `@59` disappeared. Supervisor PID `2876863`
+reached `stopped/operator-signal` with no child or respawn, but remains a
+defunct `Z` child of unchanged tmux-server PID `1654260` after the bounded
+wait plus ten read-only seconds. A zombie cannot receive a useful second
+signal; none was sent. The new Swallow, Harness, Students, shared app server,
+attached Students client, and preserved poisoned root remain unchanged.
+
+Swallow service restoration is accepted independently of this parent-reaping
+defect: exact window `@61` is now `swallow`, exact new root is the sole
+phone-visible `swallow`, and its supervisor/watcher/TUI/socket are live and
+idle. The old saved root remains
+`swallow-blocked-20260728/systemError`; its TUI and launcher are absent.
+
+**Next action:** commit and push this retirement result. Reproduce and fix the
+watcher-loss, false rollback-success, and unreaped-supervisor lifecycle defects
+in deterministic focused tests; create and validate the shared
+`recover-codex-unsafe-tail` skill; then publish through protected CI. Do not
+signal the shared tmux server merely to reap PID `2876863`.
 
 ### T-324 — Nightly fleet and repository hardening
 
