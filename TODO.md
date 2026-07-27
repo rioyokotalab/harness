@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-320.
+Next free ID: T-321.
 
 ## Current state
 
@@ -100,6 +100,38 @@ Next free ID: T-320.
    successors recorded below.
 
 ## Active tasks
+
+### T-320 — Make interactive `ls` color portable across the fleet
+
+**Phase:** publication.
+
+The owner observed that SSH sessions from Local to the managed Macs lost
+`ls` color even though reverse SSH sessions from a Mac to Local retained it.
+Forced-PTY evidence established that terminal negotiation is healthy:
+`TERM=tmux-256color`, terminfo is present, and `tput colors` reports 256 on all
+four Macs. Local uses GNU coreutils 9.4, whose `ls --color=auto` emits ANSI
+color on a terminal without `CLICOLOR`. The Macs use the system Apple/BSD
+`ls`; `ls -G` and `CLICOLOR=1 ls --color=auto` emitted ANSI, while the shared
+`ls --color=auto` alias did not.
+
+Use the native TTY-aware option in `shell/common-aliases.sh`: `-G` on Darwin
+and `--color=auto` elsewhere. Keep `CLICOLOR` unset so noninteractive child
+processes and unrelated tools do not inherit a new global color policy. Add a
+focused test that executes both OS branches through a mock `uname`, verifies
+the exact alias, and proves the temporary selection variable does not leak.
+
+Implementation is isolated at `/tmp/harness-t320-ls-color/repo` on branch
+`codex/t320-portable-ls-color`; Local's live supervisor-held
+`libexec/.nfs…` placeholder remains untouched. Bash and POSIX-shell syntax,
+ShellCheck, the startup-normalization test, and diff hygiene pass. The focused
+test executes both OS selections, verifies exact alias values, and proves the
+temporary selector is absent after sourcing. Implementation checkpoint
+`8125981` passed the complete eight-worker `tests/test-phase1.sh` from its
+clean exact revision with inherited `HARNESS_ROOT` removed: all 75 focused
+suites and integration gates passed, with only the declared native-MPI smoke
+skipped outside a declared MPI environment. Next: fetch again, publish through
+protected `main`, use guarded fleet-sync, refresh the four detached Mac Codex
+sessions, and verify new forced-PTY login shells on every managed node.
 
 ### T-319 — Report fleet health every Harness turn
 

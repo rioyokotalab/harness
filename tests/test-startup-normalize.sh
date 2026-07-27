@@ -177,6 +177,23 @@ codex_alias=$(bash -c '. "$1"; alias codex' _ "$ROOT/shell/common-aliases.sh")
 sudo_alias=$(bash -c '. "$1"; alias sudo' _ "$ROOT/shell/common-aliases.sh")
 [ "$sudo_alias" = "alias sudo='sudo '" ] ||
     fail 'common sudo alias lost trailing-space alias expansion'
+mock_bin=$TEMP_DIR/mock-bin
+mkdir "$mock_bin"
+cat >"$mock_bin/uname" <<'EOF'
+#!/bin/sh
+printf '%s\n' "$HARNESS_TEST_UNAME"
+EOF
+chmod 755 "$mock_bin/uname"
+darwin_ls_alias=$(HARNESS_TEST_UNAME=Darwin PATH="$mock_bin:$PATH" \
+    bash -c '. "$1"; alias ls; test -z "${harness_ls_color_option+x}"' \
+    _ "$ROOT/shell/common-aliases.sh")
+[ "$darwin_ls_alias" = "alias ls='ls -G'" ] ||
+    fail 'common ls alias is not native on Darwin'
+linux_ls_alias=$(HARNESS_TEST_UNAME=Linux PATH="$mock_bin:$PATH" \
+    bash -c '. "$1"; alias ls; test -z "${harness_ls_color_option+x}"' \
+    _ "$ROOT/shell/common-aliases.sh")
+[ "$linux_ls_alias" = "alias ls='ls --color=auto'" ] ||
+    fail 'common ls alias is not native on Linux'
 cache_names=$(sed -n 's/^    \([A-Za-z_][A-Za-z0-9_]*\)=.*/\1/p' \
     "$ROOT/shell/cache.sh")
 [ "$cache_names" = "$(printf '%s\n' "$cache_names" | LC_ALL=C sort -f -u)" ] ||
