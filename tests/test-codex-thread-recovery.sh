@@ -66,6 +66,11 @@ case ${1:-} in
         if [ "${FAKE_ROLLBACK_MODE:-ok}" = ambiguous ]; then
             exit 75
         fi
+        if [ "${FAKE_ROLLBACK_MODE:-ok}" != sticky ]; then
+            sed 's/"status":"systemError"/"status":"idle"/' \
+                "$FAKE_READ_RESPONSE" >"$FAKE_READ_RESPONSE.next"
+            mv "$FAKE_READ_RESPONSE.next" "$FAKE_READ_RESPONSE"
+        fi
         printf '{"threadId":"%s","turnCount":37}\n' "$2"
         ;;
     *) exit 2 ;;
@@ -129,6 +134,20 @@ grep -F 'rolled_back=2' "$TEST_ROOT/safe.out" >/dev/null ||
 grep -E 'blocked one|blocked two|baseline|policy' \
     "$runtime/safe.recovery.state" >/dev/null &&
     fail "recovery state retained transcript content"
+
+: >"$TEST_ROOT/rollback.calls"
+write_read_response thread-safe systemError "$safe_rollout"
+FAKE_ROLLBACK_MODE=sticky run_recovery \
+    --recover --name sticky --thread thread-safe \
+    >"$TEST_ROOT/sticky.out" 2>&1 &&
+    fail "post-rollback systemError was reported recovered"
+grep -F 'phase=blocked reason=post-rollback-system-error' \
+    "$TEST_ROOT/sticky.out" >/dev/null ||
+    fail "post-rollback systemError classification"
+grep -F 'rolled_back=2' "$TEST_ROOT/sticky.out" >/dev/null ||
+    fail "post-rollback count preservation"
+[ "$(cat "$TEST_ROOT/rollback.calls")" = 'thread-safe	2' ] ||
+    fail "post-rollback request cardinality"
 
 marker_rollout=$sessions/marker.jsonl
 cat >"$marker_rollout" <<'EOF'
@@ -429,6 +448,7 @@ def send(value):
     connection.sendall(header + payload)
 
 methods = []
+rolled_back = False
 while True:
     opcode, payload = receive()
     if opcode == 8:
@@ -447,7 +467,9 @@ while True:
                 "result": {
                     "thread": {
                         "id": "thread-websocket",
-                        "status": {"type": "systemError"},
+                        "status": {
+                            "type": "idle" if rolled_back else "systemError"
+                        },
                         "path": rollout_path,
                     }
                 },
@@ -470,6 +492,7 @@ while True:
                 },
             }
         )
+        rolled_back = True
     else:
         raise RuntimeError("unexpected method")
 with open(calls_path, "w") as output:
@@ -503,7 +526,8 @@ expected_methods='initialize
 initialized
 thread/read
 thread/read
-thread/rollback'
+thread/rollback
+thread/read'
 [ "$(cat "$TEST_ROOT/websocket.calls")" = "$expected_methods" ] ||
     fail "app-server WebSocket method sequence"
 grep -F 'phase=recovered' "$TEST_ROOT/websocket.out" >/dev/null ||

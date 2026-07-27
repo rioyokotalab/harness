@@ -160,6 +160,8 @@ if [ "${HARNESS_TEST_JOBS:-auto}" = legacy ]; then
     fail "remote-session focused suite"
 "$ROOT/tests/test-codex-thread-recovery.sh" >/dev/null ||
     fail "Codex thread systemError recovery"
+"$ROOT/tests/test-recover-codex-unsafe-tail-skill.sh" >/dev/null ||
+    fail "Codex unsafe-tail recovery skill"
 "$ROOT/tests/test-remote-agent-communication.sh" >/dev/null ||
     fail "remote agent communication focused suite"
 "$ROOT/tests/test-reboot-recovery-skill.sh" >/dev/null ||

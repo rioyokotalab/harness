@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-325.
+Next free ID: T-326.
 
 ## Current state
 
@@ -51,7 +51,7 @@ Next free ID: T-325.
   `harness codex-arg0-wrapper --rollback`; an official Codex upgrade requires
   fresh validation before reinstalling the version-scoped wrapper.
 - Codex and Claude now use only project-scoped policy, permission settings,
-  rules, and 16 skills when started from `~/harness`. All 12 systems retain the
+  rules, and 17 skills when started from `~/harness`. All 12 systems retain the
   two global launch sentinels and Codex launcher. Codex's opaque product-owned
   user configuration is private and accepted on Local, T4, and the four Macs;
   it is absent on the other six nodes. Schema-2 doctor, repository convergence,
@@ -107,6 +107,209 @@ Next free ID: T-325.
    successors recorded below.
 
 ## Active tasks
+
+### T-325 — Recover recurring Codex unsafe tails and make the workflow reusable
+
+**Phase:** executing.
+
+At 2026-07-28 07:04 JST, the owner reported that Swallow was blocked again
+and explicitly requested both recovery and a reusable skill because the
+incident recurs several times per day. Exact metadata-only readback found tmux
+window `@59:swallow` still live under supervisor PID `2876863`, managed
+launcher PID `2877066`, and real TUI PID `2877595`, all retaining their
+2026-07-27 start identities and exact remote root
+`019fa36c-cfa9-7143-ae11-1f538e07bfee`. The TUI has an established Unix peer
+to unchanged app-server PID `2852569`. Harness and Students remain separate
+and live.
+
+The supervisor reports `running/remote-explicit` at attempt/delay zero, but
+its recovery watcher PID `2876942` is absent. Its last mode-0600 receipt is
+`unavailable/recovery-check-failed`; the supervisor currently does not notice
+that watcher loss while its TUI remains live. Fresh initialized app-server
+readback reports the exact root `systemError`. The published analyzer
+validated the canonical rollout metadata and classified exactly one completed,
+assistant-less, side-effect-free tail turn as safely recoverable. No pane or
+transcript content, rejected prompt, credential, or project payload was read.
+
+The owner-authorized immediate action is one invocation of the published
+safe-tail recovery for this exact root. It may send one rollback request only
+after its final lock-serialized identity and rollout recheck. An ambiguous
+acknowledgement is non-retryable. Do not replay or reconstruct the rejected
+prompt, fork or replace the root while the safe path remains available,
+restart the shared app server, or change Harness, Students, or project work.
+
+After live recovery, implement the recurrence fix and a shared,
+project-neutral `recover-codex-unsafe-tail` skill. The implementation must
+make watcher loss observable and fail closed instead of leaving a
+`running` supervisor with no live watcher; preserve every existing safe-tail,
+identity, prompt-replay, and app-server boundary. The skill must reconstruct
+from repository instructions and durable ledgers, use value-free metadata,
+select safe rollback only when proven, route unsafe tails to the established
+fresh-root cutover, and require independent acceptance. Create it under
+`shared/skills/` with both Codex and Claude discovery links, validate its
+metadata and focused behavior, and publish all code, tests, skill, plan, and
+ledger changes through protected Git.
+
+The frozen scope and acceptance gates are in
+`docs/plans/t325-codex-unsafe-tail-recovery-skill.md`.
+
+**LIFO diagnostic gate:** the first read-only module probe used
+`spec_from_file_location` on an extensionless executable and failed before
+loading it because the loader was absent. The retry used Python's source-file
+loader with bytecode disabled and produced the value-free safe-tail result
+above. No live or repository state changed.
+
+**Safe-tail rollback result:** pre-write root, rollout, process, socket, tmux,
+and unaffected-session identities passed. One lock-serialized
+`thread/rollback` was acknowledged as
+`recovered/system-error-safe-tail`, with exactly one turn rolled back. The
+request must never be retried. Immediate postcheck and six fresh initialized
+read-only connections over five seconds still reported `systemError`; the
+remaining tail now has zero safely recoverable turns and the analyzer
+correctly refuses it. All recorded supervisor, TUI, app-server, Harness,
+Students, and tmux identities remain unchanged.
+
+The command wrapper's first Git assertion contained a guessed full expansion
+of the known short checkpoint and printed the actual clean task revision
+instead of stopping. The independently published branch, exact process/root
+checks, and analyzer gate still passed before the rollback, but the assertion
+spelling was wrong and is not reusable. This failure made no separate
+mutation.
+
+This result exposes two implementation defects without weakening the safety
+decision: an acknowledged rollback is reported `recovered` without requiring
+post-rollback root recovery, and a watcher can exit while its parent
+supervisor continues to report `running`. Preserve the root and proceed
+through the established fresh-root cutover. No second rollback is safe or
+authorized.
+
+**Fresh-root identity:** one acknowledged `thread/start` created exact root
+`019fa5a1-7fff-7e92-8e2a-2586c684747f` with the frozen Harness cwd,
+`approvalPolicy=never`, and `sandbox=danger-full-access`. The immediate
+acceptance read incorrectly requested `includeTurns=true` before the empty root
+was materialized, so the server returned exact protocol error `-32600`; the
+start succeeded and must never be retried. A fresh `includeTurns=false` read
+proves exact ID, `idle` status, matching cwd, and a declared path. Old root,
+process, socket, tmux, Harness, Students, and app-server identities remained
+unchanged.
+
+**New-root persistence:** exactly one acknowledged `thread/name/set` named
+root `019fa5a1-7fff-7e92-8e2a-2586c684747f`
+`swallow-recovery-20260728`. Same-connection readback proved its exact
+identity/name, `idle` status, and frozen cwd. The newly materialized rollout
+was a canonical current-user-owned, single-link regular file at installed
+default mode `0664`; one no-follow descriptor transaction revalidated its
+device/inode/owner/type/link identity and changed only that descriptor to
+`0600`. Stable post-readback passed. Neither root creation nor naming may be
+retried.
+
+**Provisional-client acceptance:** one detached launch created exact window
+`@61:0` / pane `%61` named `swallow-next`. Supervisor PID `1605362`, watcher
+PID `1605436`, managed launcher PID `1605549`, and real TUI PID `1605906`
+have immutable start ticks `92535732`, `92535741`, `92535854`, and
+`92535882`. Value-free status is `running/remote-explicit` plus
+`watching/thread-idle`, with attempt/delay and recovery/rollback counts zero.
+The real TUI has reciprocal established Unix peer
+`184651193`/`184652982` to unchanged app server PID `2852569` / start tick
+`83381863`. Old Swallow, Harness, and Students remain unchanged in the
+four-window mapping.
+
+**Cold-start acknowledgement:** under the shared mode-0600 agent-message lock,
+exactly one identified `turn/start` was acknowledged for new root
+`019fa5a1-7fff-7e92-8e2a-2586c684747f` as turn
+`019fa5a3-f90e-7e42-80b6-5adb5009fbfd`. The instruction prohibits rejected
+prompt reconstruction/replay and prior-chat reliance; requires complete
+Harness instructions/ledger, current Swallow repository instructions/ledger,
+Git, and mutable-state reconciliation; leaves thread/process/tmux/app-server
+mutations to this controller; and asks the Swallow agent to remain running and
+idle in the same thread. The request must never be retried.
+
+**Cold-start acceptance:** value-free protocol monitoring proves exact turn
+`019fa5a3-f90e-7e42-80b6-5adb5009fbfd` completed and the new root returned
+`idle` without `systemError`. Its final structure is one user item, ten
+assistant items, one completed MCP tool-call item, and zero active items.
+Watcher status returned to `watching/thread-idle`; all provisional and
+protected process identities remain live, and tmux retains the exact
+four-window mapping. No message text, pane content, command, tool payload, or
+project content was inspected.
+
+**LIFO cutover gate:** the first complete name-cutover command stopped before
+the app-server transaction because it reused immutable start ticks from the
+prior Harness recovery for the older Swallow chain. Fresh readback proved
+neither root name changed. Exact Swallow ticks are supervisor `88838652`,
+launcher `88838773`, and real TUI `88838827`; the corrected full gate used
+only those directly read values. No name, process, tmux, or app-server
+mutation ran during the failed attempt.
+
+**Root-name cutover:** corrected Git, process/start, tmux/client, reciprocal
+socket, native-doctor, and exact root gates passed. One acknowledged
+read-before/name-set/read-after transaction changed only poisoned root
+`019fa36c-cfa9-7143-ae11-1f538e07bfee` from `swallow` to
+`swallow-blocked-20260728`; a second changed only accepted root
+`019fa5a1-7fff-7e92-8e2a-2586c684747f` from its provisional name to
+`swallow`. Old remains `systemError`; new remains `idle`. Neither name write
+may be retried.
+
+**Tmux cutover:** exact old/new window, pane-owner, process/start, and attached
+client gates passed. Native `tmux rename-window` changed only `@59` from
+`swallow` to `swallow-blocked` and `@61` from `swallow-next` to `swallow`.
+The attached owner client remained on exact `@50:students`; `@60:harness` was
+unchanged. No pane input, client switch, or process signal ran.
+
+**LIFO retirement gate:** the first pre-signal command stopped before its
+signal because it used an inferred Students supervisor tick. Exact readback
+proved the entire old chain/window remained live and unchanged. Corrected
+Students tick is `84429115`; no target mutation ran during the failed attempt.
+
+**Old-chain retirement:** the corrected complete gate passed and one
+`SIGTERM` was sent only to old real TUI PID `2877595`. That TUI and launcher
+PID `2877066` exited; old window `@59` disappeared. Supervisor PID `2876863`
+reached `stopped/operator-signal` with no child or respawn, but remains a
+defunct `Z` child of unchanged tmux-server PID `1654260` after the bounded
+wait plus ten read-only seconds. A zombie cannot receive a useful second
+signal; none was sent. The new Swallow, Harness, Students, shared app server,
+attached Students client, and preserved poisoned root remain unchanged.
+
+Swallow service restoration is accepted independently of this parent-reaping
+defect: exact window `@61` is now `swallow`, exact new root is the sole
+phone-visible `swallow`, and its supervisor/watcher/TUI/socket are live and
+idle. The old saved root remains
+`swallow-blocked-20260728/systemError`; its TUI and launcher are absent.
+
+**Implementation checkpoint:** failing-first fixtures reproduced both defects.
+`codex-thread-recovery` now independently reads the root after an acknowledged
+rollback, reports `blocked/post-rollback-system-error` or
+`post-rollback-check-failed` instead of false recovery, and preserves the exact
+rolled-back count. `codex-resilient` now runs a remote-explicit TUI as its
+exact child while monitoring the watcher process; watcher disappearance
+terminates only that exact child and reports
+`stopped/thread-recovery-blocked` instead of leaving a false running state.
+Existing non-remote behavior and every prompt-replay, safe-tail, doctor,
+identity, and backoff gate remain unchanged.
+
+System `skill-creator` initialized shared project-neutral skill
+`recover-codex-unsafe-tail`. Its concise trigger/workflow plus detailed
+protocol encode value-free diagnosis, one safe rollback with postcheck,
+fresh-root cutover for unsafe or persistent errors, non-retryable
+acknowledgements, single-leaf retirement, zombie classification, guarded
+cleanup, and durable handoff. Codex and Claude discovery links are present,
+OpenAI metadata is generated, and the shared count is now 17.
+
+**Validation checkpoint:** implementation commit `b1d11dc` is clean and
+pushed. The system skill validator, focused skill/recovery/resilience tests,
+Python 3.6 grammar, POSIX shell syntax, warning-level ShellCheck, and diff
+hygiene pass. The complete clean-tree `tests/test-phase1.sh` passed all 76
+focused suites, guarded-delete coverage, and every integration gate; only the
+declared native MPI smoke skipped outside an MPI allocation. Live new Swallow
+remains `running/remote-explicit` plus `watching/thread-idle`; old supervisor
+PID `2876863` remains parent-owned zombie `Z` and received no second signal.
+
+**Next action:** commit and push this validation checkpoint, fetch current
+main, open a protected pull request for the exact task head, require
+`portable-phase1`, merge without bypass, then guarded-sync only clean managed
+checkouts. Activate the corrected Swallow supervisor only through a separate
+exact process/root/socket gate after published code is available; do not
+signal the shared tmux server merely to reap PID `2876863`.
 
 ### T-324 — Nightly fleet and repository hardening
 

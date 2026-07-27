@@ -341,9 +341,14 @@ temporary_state=
 doctor_file=
 lock_owned=no
 thread_recovery_pid=
+codex_pid=
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
+    if [ -n "$codex_pid" ]; then
+        kill -TERM "$codex_pid" 2>/dev/null || :
+        wait "$codex_pid" 2>/dev/null || :
+    fi
     if [ -n "$thread_recovery_pid" ]; then
         kill -TERM "$thread_recovery_pid" 2>/dev/null || :
         wait "$thread_recovery_pid" 2>/dev/null || :
@@ -558,6 +563,19 @@ now_epoch() {
     date +%s
 }
 
+process_running() {
+    candidate_pid=$1
+    kill -0 "$candidate_pid" 2>/dev/null || return 1
+    candidate_state=$(
+        ps -o state= -p "$candidate_pid" 2>/dev/null |
+            awk 'NR == 1 { print $1 }'
+    )
+    case "$candidate_state" in
+        ''|Z*) return 1 ;;
+        *) return 0 ;;
+    esac
+}
+
 start_thread_recovery() {
     [ "$selector" = remote-explicit ] || return 0
     set +e
@@ -623,10 +641,29 @@ first_launch=yes
 while :; do
     write_state running "$attempt" 0 active
     started=$(now_epoch)
-    set +e
-    run_codex "$first_launch"
-    codex_status=$?
-    set -e
+    watcher_failed=no
+    if [ "$selector" = remote-explicit ]; then
+        run_codex "$first_launch" &
+        codex_pid=$!
+        while process_running "$codex_pid"; do
+            if ! process_running "$thread_recovery_pid"; then
+                watcher_failed=yes
+                kill -TERM "$codex_pid" 2>/dev/null || :
+                break
+            fi
+            sleep 1
+        done
+        set +e
+        wait "$codex_pid"
+        codex_status=$?
+        set -e
+        codex_pid=
+    else
+        set +e
+        run_codex "$first_launch"
+        codex_status=$?
+        set -e
+    fi
     finished=$(now_epoch)
     duration=$((finished - started))
     [ "$duration" -ge 0 ] || duration=0
@@ -640,6 +677,13 @@ while :; do
             >"$HARNESS_TEST_DURATION_FILE.next"
         mv "$HARNESS_TEST_DURATION_FILE.next" \
             "$HARNESS_TEST_DURATION_FILE"
+    fi
+
+    if [ "$watcher_failed" = yes ]; then
+        write_state stopped "$attempt" 0 thread-recovery-blocked
+        printf 'CODEX_RESILIENT status=blocked reason=thread-recovery-blocked name=%s\n' \
+            "$name" >&2
+        exit 2
     fi
 
     if [ "$codex_status" -eq 0 ]; then
