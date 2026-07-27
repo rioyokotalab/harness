@@ -206,6 +206,18 @@ command, or transcript content was inspected. Commit and push this acceptance,
 then revalidate every old/new root, process, socket, tmux, Students, Swallow,
 app-server, doctor, and Git identity before the exact root-name transfer.
 
+**Root-name cutover:** complete preflight revalidated old/new process chains,
+immutable starts, app server PID `2852569`, Students, Swallow, tmux, Git, and
+exact protocol states. One acknowledged read-before/name-set/read-after
+transaction changed only poisoned root
+`019fa076-7132-7992-800e-f6c6d4aeadfb` from `harness` to
+`harness-blocked-20260727`; a second changed only accepted root
+`019fa3ae-6ad0-7642-aeca-b7b52421f576` from its provisional name to
+`harness`. Old remains `systemError`; new remains idle. Neither write is
+retryable. Commit and push, then rename exact tmux `@49` to
+`harness-blocked`, exact `@60` to `harness`, and switch only the attached
+client from old to new after narrow identity revalidation.
+
 ### T-322 — Make the phone-visible Swallow name unique
 
 **Phase:** complete.
