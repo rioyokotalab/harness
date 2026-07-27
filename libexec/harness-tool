@@ -107,7 +107,7 @@ host_command_healthy() {
                 exit 0
             }'
             ;;
-        shellcheck|restic|uv) tool_version_matches "$binary" ;;
+        shellcheck|restic|rclone|uv) tool_version_matches "$binary" ;;
         *) "$binary" --version >/dev/null 2>&1 ;;
     esac
 }
@@ -121,7 +121,13 @@ managed_predecessor_version_matches() {
     candidate_version=$2
     observed=$("$candidate" --version 2>/dev/null | sed -n '1p' || true)
     case "$tool_name" in
-        uv) [ "$observed" = "uv $candidate_version" ] ;;
+        uv)
+            case "$observed" in
+                "uv $candidate_version"|"uv $candidate_version "*) return 0 ;;
+                *) return 1 ;;
+            esac
+            ;;
+        rclone) [ "$observed" = "rclone v$candidate_version" ] ;;
         claude) [ "$observed" = "$candidate_version (Claude Code)" ] ;;
         *) return 1 ;;
     esac

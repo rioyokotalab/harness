@@ -379,10 +379,10 @@ families are:
 | Codex agent | `harness agent --host HOST --name codex --plan` |
 | Source-built CLI | `harness build-tool --host HOST --name sqlite --plan` |
 
-Selected manifest versions include ripgrep 15.1.0, uv 0.11.31, rclone 1.74.3,
-Restic 0.19.1, Ninja 1.13.2, ShellCheck 0.11.0, Claude Code 2.1.207,
+Selected manifest versions include ripgrep 15.2.0, uv 0.11.32, rclone 1.74.4,
+Restic 0.19.1, Ninja 1.13.2, ShellCheck 0.11.0, Claude Code 2.1.220,
 Tectonic 0.16.9, Git LFS 3.7.1, Node 24.16.0/npm 11.13.0, the Linux Codex
-agent 0.144.4, SQLite 3.53.3, Tree 2.3.2, tmux 3.6b, and htop 3.5.1. Every
+agent 0.145.0, SQLite 3.53.3, Tree 2.3.2, tmux 3.6b, and htop 3.5.1. Every
 apply validates the staged artifact before atomically activating a stable
 link. Rollback verifies links and content integrity before changing anything.
 Older agent generations are never removed automatically.

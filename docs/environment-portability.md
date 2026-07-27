@@ -335,8 +335,8 @@ Validate, per host:
   <https://docs.astral.sh/uv/>
 - uv managed Python behavior:
   <https://docs.astral.sh/uv/guides/install-python/>
-- rclone 1.74.3 release artifacts and publisher checksums:
-  <https://downloads.rclone.org/v1.74.3/>
+- rclone 1.74.4 release artifacts and publisher checksums:
+  <https://downloads.rclone.org/v1.74.4/>
 - Restic 0.19.1 standalone release artifacts and publisher checksums:
   <https://github.com/restic/restic/releases/tag/v0.19.1>
 - tmux 3.6b release source and build documentation:

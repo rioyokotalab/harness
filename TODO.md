@@ -360,6 +360,22 @@ per host—respectively `94950`, `2064918.pbs1`, `2064919.pbs1`,
 smoke job is `verified-disabled` and absent. No snapshot, data read, restore,
 replica, scheduler action, retention change, forget, or prune ran.
 
+**Linux package declaration gate 2026-07-27 10:12 JST:** official registries
+confirm Codex 0.145.0 and Claude Code 2.1.220 are current. Exact publisher
+checksums are reconciled for uv 0.11.32, rclone 1.74.4, and ripgrep 15.2.0 on
+both Linux architectures. The tool updater now enforces rclone's pinned-user
+version and accepts safe uv/rclone managed predecessors, retaining the prior
+artifact for rollback. Replacement-plan/apply/rollback fixtures pass; the
+dirty full Phase-1 run passes every suite except the two intentional
+clean-checkout tmux/terminfo gates.
+
+Node 24.18.0/npm 11.16.0 are newer than the declared 24.16.0/11.13.0, but the
+live read-only plan proved the runtime updater has no managed-predecessor
+transaction and correctly blocks an in-place change. Keep Node and Codex
+launcher declarations unchanged during T-317 rather than risk active-agent
+restart safety. Commit the three prebuilt-tool declarations and updater test,
+then require a fully clean Phase-1 pass before any live package apply.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
