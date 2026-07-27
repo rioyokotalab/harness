@@ -1149,7 +1149,7 @@ and synchronization carry only this durable evidence.
 
 ### T-311 — Harden the fleet and independent project repositories
 
-**Phase:** validating final product-owned Codex user-config policy.
+**Phase:** publishing final product-owned Codex user-config policy.
 
 Audit and harden all managed Linux and Mac nodes plus `harness`, `students`,
 `swallow`, and `website`, while each repository owns its own task, branch,
@@ -1185,8 +1185,16 @@ preserve arbitrary opaque bytes, accept absence, do not recreate a file Codex
 removed, prove no product backup exists, and reject broader mode, symlink, and
 hard-link states. Shell syntax, warning-level ShellCheck, agent-config,
 fleet-controller, source-contract, repository-independence, external-user,
-Claude-takeover, and diff-hygiene checks pass. Next: commit this checkpoint and
-run the complete clean-tree phase-one suite.
+Claude-takeover, and diff-hygiene checks pass. This checkpoint was committed as
+`1759b8a`; complete clean-tree validation follows below.
+
+**D-007 validation checkpoint 2026-07-27:** clean implementation commit
+`1759b8a` passed the complete eight-worker `tests/test-phase1.sh`: all 75
+focused suites and integration gates passed, with only the declared native-MPI
+smoke skipped outside a declared MPI environment. Next: publish through
+protected CI, guarded-sync all eleven remote checkouts, run all twelve
+value-free doctors, and confirm the six present files retain only their
+previously observed safe metadata.
 
 **LIFO gate resolved 2026-07-26:** a final read-only fleet-sync check supplied
 the same exact commit as both source and target. The command rejected the

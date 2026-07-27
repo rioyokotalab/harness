@@ -2,7 +2,7 @@
 
 ## Status and decision
 
-- Phase: validating.
+- Phase: publication.
 - Owner decision: permit Codex's supported user configuration layer while
   keeping Harness behavior, permissions, rules, instructions, and skills
   project-scoped.
@@ -100,5 +100,8 @@ fleet-controller, source-contract, repository-independence, external-user
 onboarding, Claude-takeover, and diff-hygiene checks pass. The focused
 transaction proves opaque-byte preservation, no product backup, accepted
 absence, non-recreation after product removal, and fail-closed mode, symlink,
-and hard-link handling. Next: commit the exact implementation and run the
-complete phase-one suite from that clean revision.
+and hard-link handling. Clean implementation commit `1759b8a` passed the
+complete eight-worker `tests/test-phase1.sh`: all 75 focused suites and
+integration gates passed, with only the declared native-MPI smoke skipped
+outside a declared MPI environment. Next: protected publication and
+fleet-wide value-free acceptance.
