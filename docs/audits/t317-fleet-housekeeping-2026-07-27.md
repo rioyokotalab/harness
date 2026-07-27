@@ -101,6 +101,42 @@ mode-0700 firewall helpers remain staged with checksum
 `f83690717bc2826af203336196d8ce73b26adc33939762bb325ed66de684d33b`;
 they require owner-local administrator authentication.
 
+## Platform lifecycle and Codex parity
+
+| Target | Reported platform | Lifecycle evidence |
+| --- | --- | --- |
+| Local | Ubuntu 24.04.3 LTS, Linux 6.8.0-134 | supported; separate pending security transaction/reboot recorded above |
+| ri | Ubuntu 24.04.4 LTS, Linux 6.17.0-1026 | supported site-managed host |
+| ab / ab2 / abq | RHEL 9.4, Linux 5.14.0-427.13.1.el9_4 | EUS entitlement/maintenance stream unknown |
+| al | SLES 15 SP6, Linux 6.4.0-150600.23.53 | LTSS entitlement unknown |
+| rc | Rocky Linux 9.8, Linux 5.14.0-687.29.1.el9_8 | current supported minor |
+| t4 | RHEL 9.4 userland, Linux 5.14.0-687.25.1.el9_8 | mixed label/kernel; entitlement/maintenance stream unknown |
+| aist / home / office / riken | macOS 26.5.2, Darwin 25.5.0 | current Apple security release |
+
+[Ubuntu's official lifecycle](https://ubuntu.com/about/release-cycle) maintains
+24.04 LTS through May 2029. [Rocky's official version
+guide](https://wiki.rockylinux.org/rocky/version/) maintains Rocky 9 through
+May 2032 and treats superseded minor releases differently; RC reports current
+9.8. [Apple's security release](https://support.apple.com/en-us/127595) records
+macOS 26.5.2 on June 29, 2026, matching all four Macs.
+
+The centrally managed RHEL/SLES targets require qualified interpretation.
+[Red Hat's lifecycle](https://access.redhat.com/support/policy/updates/errata)
+records RHEL 9.4 ordinary EUS through April 30, 2026 and Enhanced EUS through
+April 2028. [SUSE's lifecycle](https://www.suse.com/lifecycle/) records SLES 15
+SP6 general support through December 31, 2025 and LTSS through December 2028.
+T-317 did not inspect subscription identifiers, so it cannot determine whether
+AB/AB2/ABQ/T4 have Enhanced EUS or AL has LTSS. These are site-administrator
+confirmation items, not findings that the systems are unpatched; owner-side OS
+changes are inappropriate.
+
+Every Linux route and all four Macs reports `codex-cli 0.145.0`, matching the
+current public `@openai/codex` package. The official Codex manual cache reports
+current. A post-audit health checkpoint found all three Local supervisors
+`running remote-explicit` at unchanged owner PIDs with attempt/delay zero, the
+same sole tmux client and five window identities, and all canonical fleet
+routes passing.
+
 ## Backup recovery gaps
 
 Every primary repository passes structural metadata integrity. Independent
@@ -243,6 +279,9 @@ deployment ran.
    only after active agents and jobs are safely quiesced.
 8. Active-agent maintenance: resolve value-free agent-config collisions and
    pack Students loose objects only after those agents finish.
+9. Site-admin lifecycle confirmation: establish whether AB/AB2/ABQ/T4 use a
+   maintained RHEL 9.4 extended stream and whether AL has SLES 15 SP6 LTSS;
+   never inspect subscription credentials or mutate site-managed OS packages.
 
 ## Final validation checklist
 

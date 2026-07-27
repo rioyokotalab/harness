@@ -768,6 +768,27 @@ while remote task refs remain. The active Students primary/client were never
 changed and the primary remains at its agent-owned `3c97511`, now four commits
 behind `origin/main`.
 
+**Platform lifecycle and Codex checkpoint 2026-07-27 13:09 JST:** native
+read-only inventory reports Local Ubuntu 24.04.3, RI Ubuntu 24.04.4, AB/AB2/ABQ
+RHEL 9.4, AL SLES 15 SP6, RC Rocky 9.8, T4 RHEL 9.4 userland with an
+`el9_8` kernel, and macOS 26.5.2 on all four Macs. Official lifecycle sources
+confirm Ubuntu 24.04 standard security maintenance through May 2029, Rocky 9
+through May 2032, and macOS 26.5.2 as Apple's current June 29 security release.
+RHEL 9.4 ordinary EUS ended April 30, 2026 but Enhanced EUS extends to April
+2028; AB/AB2/ABQ/T4 entitlement is unknown. SLES 15 SP6 general support ended
+December 31, 2025 and LTSS extends through December 2028; AL entitlement is
+unknown. These are site-admin confirmation items, not evidence that the
+centrally managed systems are unpatched. Do not query subscription identifiers
+or attempt owner-side OS mutation.
+
+Every Linux route and all four Macs reports `codex-cli 0.145.0`, matching the
+current public `@openai/codex` package. The fresh official Codex manual cache is
+current. All three Local supervisors remain `running remote-explicit` with
+unchanged owner PIDs `4063793`, `4073421`, and `4077898`, attempt/delay zero;
+the sole tmux client remains attached to the same session and all five window
+identities are unchanged. Canonical fleet health passes all eight logical
+Linux nodes and all four Mac route pairs.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
