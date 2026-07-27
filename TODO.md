@@ -569,6 +569,75 @@ four Macs retain the known value-free `codex-config` collision while active
 Codex sessions exist; AB, AB2, ABQ, RI, AL, and RC agent-config doctors pass.
 Do not inspect or rewrite those product-owned user files during T-317.
 
+**Workflow and operating-system checkpoint 2026-07-27 11:39 JST:** a
+read-only 14-day GitHub Actions audit finds no unresolved Harness, Website, or
+Swallow failure. Their older failed or cancelled runs are superseded by
+protected passing revisions; Swallow has no non-successful run in the window.
+Students alone retains failed scheduled production run `30165098550` and
+deployment `5602726317` from 2026-07-25. All setup steps passed; the combined
+collection/post step failed when Slack rejected the production post with exact
+API error `not_in_channel`. The successful owner-sandbox route is separate evidence and
+does not validate production channel membership. Current Students `main`
+`1161f45d55e75c7c4500c5544e82fce557694636` is a descendant of the failed
+revision but has no change to `.github/workflows/conferences.yml` or
+`conferences.py`; its next weekly schedule remains exposed to the same
+external membership condition. Do not dispatch the workflow, alter its
+environment, inspect secrets, or invite the bot during T-317. Hand this exact
+finding to the project-local Students agent for an owner-authorized Slack
+membership correction.
+
+Local is Ubuntu 24.04 on running kernel `6.8.0-134`; the reboot marker names
+installed kernel `6.8.0-136` plus `linux-base`. Native package metadata reports
+92 upgrades, including 32 security updates and networking, AppArmor,
+Kubernetes, firmware, and kernel scope. Daily apt and unattended-upgrade
+timers are enabled and no dpkg lock is held. Applying this broad administrator
+transaction or rebooting would cross the frozen authority and disrupt active
+agents, so both remain deferred. All four Macs report zero outdated formulae
+or casks and no Apple software update. Corrected native scheduler readback
+continues to show only the eight protected future backup jobs; RI remains
+unknown because its Slurm DNS SRV lookup still fails. Earlier bare AB/AB2
+`qstat`, ABQ `qstat -u`, and AL `ybatch --help` probes used unsupported native
+forms, were read-only, and were replaced by login-shell PBS, `qselect`, and
+AGE readbacks respectively.
+
+**Protection, dependency, and capacity checkpoint 2026-07-27 11:44 JST:**
+all four active rulesets forbid deletion and non-fast-forward updates, require
+linear history and resolved review threads, dismiss stale reviews, and enforce
+strict current status checks. They nevertheless require zero approving
+reviews. Harness, Website, and Swallow each retain an always-bypass repository
+role actor; Students retains owner user `836314` as a pull-request-only bypass.
+Default workflow tokens remain read-only and cannot approve reviews. Students'
+two environments accept protected branches but have no reviewer or wait
+protection. These are live read-only governance findings, not authorization to
+change hosting settings.
+
+All six tracked workflows use minimum declared token permissions, immutable
+Action SHAs, and non-persisted checkout credentials. The sensitive Students
+`pull_request_target` path checks out only the trusted base SHA and passes
+untrusted event metadata through quoted environment variables to trusted
+code; no contributor code is executed. GitHub reports zero Dependabot alerts.
+Website's locked production audit is zero. Students' only open dependency PR
+`#39` widens cryptography and Ruff constraints, has passing historical checks,
+but is behind current `main`; preserve it for the active Students agent.
+Swallow has no package lock. Its runtime stages a locally pinned
+`nemo-26.06.sif` and verifies SHA-256
+`b625ee8ea6bf89830935eb179055389c195173b624652541e8d85ff49d9287ee`,
+but the bootstrap initially pulls mutable registry tag
+`nvcr.io/nvidia/nemo:26.06` without an immediate digest assertion. Defer a
+digest-qualified source and post-pull verification to SW-031 rather than
+modify its active branch.
+
+Remote Linux storage has ample read-only filesystem headroom: AB `/groups` is
+the highest at 51% blocks and 4% inodes; AB/AB2 `/home` is 11%/11%; ABQ is
+8%/1%; RI is 1%/1%; AL is 5%/5%; RC is 28%/10%; and T4 is 5%/1%. Effective
+Local SSH policy retains collision-safe ControlMaster paths and forwarding for
+declared HPC/default hosts, while GitHub explicitly disables agent and X11
+forwarding. Every Mac has zero listeners in TCP ports 6000–6063. Its wildcard
+listeners resolve to Apple `rapportd`, `ControlCenter`, notification/device
+agents and Dropbox; none is a task-owned cleanup target. Their exposure
+remains bounded by the already-recorded firewall-off finding and staged
+T-311 helper gate.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
