@@ -153,7 +153,7 @@ independent owner/agent action had converged the Local managed session from the
 previous five-window transition state to the intended three exact windows:
 `@49:harness`, `@50:students`, and `@51:swallow`. The original direct Students
 and Swallow TUI PIDs are absent, the supervisor owner PIDs are unchanged, and
-the sole attached client was on Students at that readback. At 13:36 JST it had
+the sole attached client was on Students at that readback. By 13:33 JST it had
 independently selected Harness. T-317 did not signal, rename, kill, switch, or
 type into a window during this convergence.
 

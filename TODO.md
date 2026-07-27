@@ -928,7 +928,7 @@ supervisor owner PIDs `4063793`, `4073421`, and `4077898`; the sole attached
 client was still on Students at that readback. T-317 did not signal, rename,
 kill, switch, or type into these windows during this convergence.
 
-At 13:36 JST the sole client had independently selected Harness. The
+By 13:33 JST the sole client had independently selected Harness. The
 `harness-canary` and `students` supervisors remain at attempt zero. Swallow's
 unchanged supervisor PID `4077898` recorded one transient-exit recovery and
 now owns new wrapper/real TUI PIDs `2166108`/`2166240`, both launched at
