@@ -981,6 +981,20 @@ provider call, workflow dispatch, or rollout. Treat this new branch and agent
 as protected. Students, Swallow, and Website have zero open pull requests;
 T-317 made no change in any of their checkouts.
 
+**Observation interval 2026-07-27 13:44–14:14 JST:** a bounded read-only
+monitor sampled the three supervisor states, exact tmux window/PID mapping,
+Local arg0 plan, and draft PR #337 every five minutes. All six samples plus
+the terminal sample were identical: Harness/Students attempts zero, Swallow
+attempt one, delay zero throughout; exact supervisor PIDs and three windows
+unchanged; `live=5 eligible=0 unexpected=0`; exact PR head `1783241` cleanly
+mergeable with protected CI successful. No mutation was scheduled or run.
+
+At 14:15 JST both protected project agents had advanced only their own
+ledgers. Students remains interviewing-only on T-009 at `1e8b561`, with D-051
+frozen and no target test or runtime mutation. AB Swallow remains clean on
+active SW-031 at `435707b`, whose ledger still forbids large jobs. T-317 did
+not pull, signal, pack, modify, or publish either project.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.

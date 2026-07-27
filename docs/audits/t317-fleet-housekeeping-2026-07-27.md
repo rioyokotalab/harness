@@ -352,6 +352,16 @@ clean/current, AB Swallow remained on active SW-031 at `9cb1ef7`, and the T4
 mirror remained clean/current at `4dcd20d`. Students, Swallow, and Website had
 zero open pull requests.
 
+A continuous 13:44–14:14 JST read-only interval sampled supervisor state,
+exact tmux window/PID mapping, Local arg0 inventory, and draft PR #337 every
+five minutes. Every sample retained exact supervisor/window identities,
+Harness/Students attempt zero, Swallow attempt one with delay zero, five live
+arg0 directories with no eligible/unexpected residue, and successful
+protected CI on an exactly mergeable PR head. No mutation ran. At the next
+readback, Students had advanced only its interviewing ledger to `1e8b561` and
+AB Swallow only its SW-031 ledger to `435707b`; both worktrees remained clean
+and protected from T-317.
+
 ## Guarded deletion and cleanup
 
 - Six Linux and four Mac arg0 candidates were quarantined, revalidated, and
