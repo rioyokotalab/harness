@@ -362,6 +362,17 @@ readback, Students had advanced only its interviewing ledger to `1e8b561` and
 AB Swallow only its SW-031 ledger to `435707b`; both worktrees remained clean
 and protected from T-317.
 
+At 14:20 JST the original Swallow remote supervisor recorded a clean exit and
+its old window was absent. An externally created active `@52:swallow` instead
+contained a separate supervised local `resume --last`, not the exact SW-031
+remote selector. T-317 preserved that attached window untouched. After
+proving the old remote state stopped/unlocked, exact remote process absence,
+an unused index, unchanged app server and other supervisors, and clean/pushed
+Git state, T-317 created only detached `@53:swallow-guard`. Its new supervisor
+PID `3088765` is `running remote-explicit` at attempt/delay zero for the exact
+SW-031 root. The client remained on `@52`; no existing window, process, or
+project was signaled, renamed, switched, or modified.
+
 ## Guarded deletion and cleanup
 
 - Six Linux and four Mac arg0 candidates were quarantined, revalidated, and

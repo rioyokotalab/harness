@@ -995,6 +995,26 @@ frozen and no target test or runtime mutation. AB Swallow remains clean on
 active SW-031 at `435707b`, whose ledger still forbids large jobs. T-317 did
 not pull, signal, pack, modify, or publish either project.
 
+**Swallow guard reconciliation 2026-07-27 14:20–14:23 JST:** the next monitor
+sample found the prior Swallow remote supervisor stopped with
+`reason=clean-exit`, its old `@51` window absent, and a new owner-created
+active `@52:swallow` window. The new window is a Bash pane containing a
+separate healthy `harness codex-resilient --name harness --last` chain; it is
+503-resilient but selects a local last session rather than the exact SW-031
+remote root. The sole client selected `@52`. The monitor was stopped
+immediately. No pane/history was read and no existing process, window, client,
+or repository was changed.
+
+Exact preflight proved the prior `swallow` state cleanly stopped with no lock,
+no remaining process for remote root
+`019f9f69-6b94-70a3-be12-8bef23b88a96`, unused tmux index 3, unchanged
+app-server PID `2852569`, clean/pushed Harness Git state apart from the live
+`.nfs` inode, and unchanged Harness/Students supervisors. T-317 then created
+only detached `@53:swallow-guard` at index 3. New supervisor/wrapper/real PIDs
+`3088765`/`3088805`/`3088989` preserve the exact SW-031 remote selector and
+report `running remote-explicit`, attempt/delay zero. The attached client
+remained on untouched `@52`; no signal, rename, switch, or pane input ran.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
