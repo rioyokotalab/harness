@@ -2,8 +2,10 @@
 
 ## Scope and authority
 
-T-317 runs from 2026-07-27 08:30 JST to 20:30 JST, with material work ending
-at 18:30. It covers:
+T-317 was planned to run from 2026-07-27 08:30 JST to 20:30 JST, with material
+work ending at 18:30. At 15:13 JST the owner explicitly ended the run early
+and directed its removal from the active Harness board because Students and
+Swallow have independent project agents. The completed scope covered:
 
 - Linux: Local, ab, ab2, abq through both routes, ri, al, rc, and t4;
 - macOS: aist, home, office, and riken through both routes;
@@ -214,7 +216,7 @@ decision.
 | Harness | task branch plus live `.nfs…` | strict fsck pass | managed utilities current; deferred source-built tools | protected strict `portable-phase1` |
 | Students | protected primary `main`; isolated T-006/T-007 complete | fsck pass; 51 MiB loose plus 54-byte temp objects | cryptography 49.0.0; Ruff 0.16.0; CI uv 0.11.32; stale PR #39 open | PRs #55–#58 merged; production Slack deployment failed |
 | Website | clean current `main` | fsck pass; zero garbage | Playwright 1.62.0; checkout v7.0.1 | PR #36 merged, no deployment |
-| Swallow | protected active AB branch; clean/current T4 `main` | both fsck pass | no package lock; local SIF hash pinned | strict `Offline checks`; T4 mirror repaired |
+| Swallow | protected active AB branch; clean/current T4 `main` | both fsck pass | inference/Inspect locks; training unlocked; local SIF hash pinned | strict `Offline checks`; T4 mirror repaired |
 
 All four repositories have:
 
@@ -287,18 +289,17 @@ lifecycle scripts disabled reports zero info/low/moderate/high/critical
 findings and leaves the clean worktree unchanged.
 
 Swallow's two-package hosted SBOM covers only repository/Actions metadata, not
-its shell-declared ML environments. Only the Inspect environment has a tracked
-freeze; training/inference need machine-readable locks or submitted dependency
-snapshots after compatibility is frozen. The active SW-031 branch is 35 clean
-commits ahead of current main across 17 files and has no open PR, so this
-reproducibility/ledger compaction belongs after its active publication, not in
-T-317.
+its shell-declared ML environments. Inference and Inspect have tracked freezes;
+the generic training environment has no lock. Swallow commit `55f8f0a` owns
+the training dependency snapshot follow-up. The active SW-031 branch was 35
+clean commits ahead of current main across 17 files and had no open PR at this
+checkpoint, so no project implementation belongs in T-317.
 
 Swallow verifies the staged `nemo-26.06.sif` as
 `b625ee8ea6bf89830935eb179055389c195173b624652541e8d85ff49d9287ee`,
 but bootstrap begins from mutable registry tag `nvcr.io/nvidia/nemo:26.06`
-without an immediate digest assertion. Defer digest-qualified pull and
-post-pull verification to SW-031.
+without an immediate digest assertion. Swallow commit `55f8f0a` owns the
+digest-qualified pull and post-pull verification follow-up.
 
 The live clean Megatron-Bridge source equals publisher v0.4.2 commit
 `c810129341a84e58f4cbed3093f70668a088c028`, with clean Megatron-LM submodule
@@ -308,8 +309,8 @@ The generic training bootstrap also leaves foundational Python packages
 unpinned. Anonymous NGC manifest access returns HTTP 401 and no digest.
 Publisher metadata now reports Megatron-Bridge 0.5.1, vLLM 0.26.0, Inspect AI
 0.3.249, and OpenAI Python 2.48.0 versus compatibility pins 0.4.2, 0.23.0,
-0.3.241, and minimum 2.40.0. SW-031 must treat these as matched compatibility
-experiments, not automatically upgrade the active stack. The header-only
+0.3.241, and minimum 2.40.0. Swallow commit `55f8f0a` classifies these as
+later matched compatibility experiments, not automatic upgrades. The header-only
 anonymous probe capture was exact-unlinked; it exposed a mode-0664 capture
 mistake, so any future diagnostic capture must establish umask 077 first.
 
@@ -373,6 +374,35 @@ PID `3088765` is `running remote-explicit` at attempt/delay zero for the exact
 SW-031 root. The client remained on `@52`; no existing window, process, or
 project was signaled, renamed, switched, or modified.
 
+Five subsequent read-only samples over ten minutes found the restored guard
+stable. The owner/client then selected it and its TUI returned success; the
+supervisor correctly recorded `clean-exit` and tmux removed only that guard.
+Because clean exit is an explicit terminal condition, T-317 did not relaunch
+it. The three remaining Codex sessions are supervised: exact remote Harness,
+exact remote Students, and the owner-created local-last chain within the
+window named `swallow`. The saved SW-031 remote root is no longer actively
+connected from tmux; no T-317 signal, switch, rename, or pane input caused
+that state.
+
+The owner then confirmed that indices 0 and 2 displayed the same chat and
+authorized repair. Exact readback identified inactive index 2 as the mistaken
+Harness-local `--last` chain while index 0 remained selected. T-317 removed
+only exact window `@52` after fixing its complete Bash/supervisor/wrapper/real
+PID chain, then recreated detached index 2 as `@54:swallow` with exact SW-031
+remote root. New supervisor PID `3184546` is `running remote-explicit` at
+attempt/delay zero; indices 0/1 and the attached client never changed. Native
+doctor passes 18/18. The README now documents intentional clean exit and exact
+tmux remote-root recreation and warns that `--last` is not a remote selector.
+
+At the owner's direction, all Swallow research, dependency, and experiment
+actions were removed from Harness's active/deferred queue. Swallow commit
+`55f8f0af1ab63fcd5e9c9cb8fad25338d37a762d` now owns the exact cold-resume,
+container-digest, Bridge-source, training-lock, compatibility, and static-A6
+next actions. AB was cleanly fast-forwarded to that revision. This audit keeps
+cross-repository findings as historical evidence only. Guarded deletion then
+removed the clean, tree-equal, handle-free isolated transfer checkout (281
+entries, 1,993,617 bytes); its exact mode-0600 manifest was exact-unlinked.
+
 ## Guarded deletion and cleanup
 
 - Six Linux and four Mac arg0 candidates were quarantined, revalidated, and
@@ -404,40 +434,52 @@ project was signaled, renamed, switched, or modified.
 2. Owner storage choice: select/configure Mac backup destinations.
 3. T-196 gates: complete weekly stability/restores and create current manual
    encrypted replica generations; do not automate yet.
-4. Hosting-policy decision: reconcile the coordinated July 26 zero-review
-   change with frozen T-311 D-001, including Students' lost code-owner and
-   last-push gates, plus host-enforced Action restrictions for
-   Harness/Swallow.
-5. Students-local Slack administration: resolve production
-   `not_in_channel`; do not rerun until membership is corrected.
-6. SW-031: digest-qualify NeMo bootstrap and continue evidence-only
-   reasoning/tool-use throughput planning; assert the Megatron-Bridge commit
-   before use, pin the generic Python bootstrap, and compare newer ML package
-   lines only through matched small compatibility tests.
-7. Administrator maintenance window: apply Local security updates and reboot
+4. Harness hosting-policy decision: reconcile the coordinated July 26
+   zero-review change with frozen T-311 D-001 and decide whether Harness
+   should enforce selected Actions at the host. Students and Swallow settings
+   belong to their independent project agents.
+5. Administrator maintenance window: apply Local security updates and reboot
    only after active agents and jobs are safely quiesced.
-8. Active-agent maintenance: resolve value-free agent-config collisions and
-   pack Students loose objects only after those agents finish.
-9. Site-admin lifecycle confirmation: establish whether AB/AB2/ABQ/T4 use a
+6. Active-agent maintenance: resolve value-free Codex user-config collisions
+   only after the affected sessions finish or the owner selects a supported
+   product-owned user layer.
+7. Site-admin lifecycle confirmation: establish whether AB/AB2/ABQ/T4 use a
    maintained RHEL 9.4 extended stream and whether AL has SLES 15 SP6 LTSS;
    never inspect subscription credentials or mutate site-managed OS packages.
-10. Website dependency graph: inspect its GitHub UI and decide whether to
+8. Website dependency graph: inspect its GitHub UI and decide whether to
     refresh/regenerate generated SBOM coverage through an owner hosting action;
     retain native lockfile audit meanwhile.
 
-## Final validation checklist
+## Owner-directed early closeout
 
-At the 18:30 cutoff, repeat:
+The owner's 15:13 direction superseded the planned 18:30 material cutoff and
+20:30 deadline. A fresh read-only closeout found:
 
-- supervisor status, tmux metadata, native Codex doctor, and Local arg0 plan;
-- canonical fleet health and Mac tunnel/session doctors;
-- exact native scheduler future-job readback;
-- primary Restic access and absence of locks/processes (do not repeat
-  full-data work);
-- Git branch/worktree/upstream status, PR/check state, and live rulesets;
-- task-temp/helper/residue inventory and `git diff --check`;
-- full clean Harness `tests/test-phase1.sh`.
+- exact Harness, Students, and Swallow remote supervisors running at
+  attempt/delay zero, with one attached client on Harness and no pane reads;
+- native Codex doctor 18/18 `ok`, and Local arg0
+  `live=5 eligible=0 young=0 unexpected=0`;
+- canonical fleet health passing every managed Linux logical node and both
+  routes for all four Macs;
+- all four Mac doctors ready with zero failures and only the two known
+  firewall/stealth warnings;
+- all eight exact future backup jobs present, every smoke verified-disabled
+  and absent, and primary Restic access passing on every Linux target;
+- draft PR #337 mergeable with read-only workflow permissions, the active
+  Harness ruleset, and successful protected CI at pre-closeout head
+  `265c042`;
+- no T-317 task-temp residue. The live supervisor-held Harness `.nfs…` inode
+  and the independently owned T-318 worktree are preserved.
 
-Stop all material work at 18:30 and use the remaining two hours for this
-readback, final audit correction, protected publication, fleet sync if needed,
-and durable handoff.
+One obsolete `codex remote-control doctor` diagnostic failed read-only because
+that command has no `doctor` subcommand in Codex 0.145.0. The corrected native
+`codex doctor --json` returned all 18 checks `ok`; no retryable mutation was
+involved.
+
+The complete clean `tests/test-phase1.sh` suite passed at closeout revision
+`d9bf212`; only the documented native MPI smoke was skipped outside a declared
+allocation. The disposable full clone was clean, tree-equal, and had no open
+handle before guarded deletion removed exactly 4,168 entries / 47,314,593
+bytes below `/tmp`. Protected anchors were unchanged, the clone was absent,
+and the exact mode-0600 manifest was exact-unlinked. Protected PR #337
+publication is the final closeout gate.
