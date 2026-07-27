@@ -188,10 +188,13 @@ boundary and recognizes only a matching aborted turn after it. Any later
 overlap, mismatched turn identity, active tail, assistant/tool/unknown event,
 or other existing refusal remains fail closed. Focused recovery/resilience,
 Python compilation, and diff hygiene pass with new deterministic fixtures for
-both exact protocol cases. The first complete Phase-1 run reached every suite;
-only `test-tmux-config.sh` and `test-terminfo.sh` refused the intentionally
-uncommitted checkout, while every other suite passed. Rerun from the clean
-checkpoint commit for acceptance.
+both exact protocol cases. The initial complete runs exposed only validation
+environment gates: first an intentionally uncommitted checkout, then inherited
+`HARNESS_ROOT=/home/rioyokota/harness` redirected a direct self-test to the
+primary checkout's live `.nfs…` files. With the amendment committed and that
+override removed, both focused configuration tests and the complete clean
+eight-worker `tests/test-phase1.sh` pass; only native MPI is skipped outside a
+declared MPI environment.
 
 **Next:** run the complete clean Phase-1 suite, commit and push without force,
 open a protected-`main` follow-up PR, and require exact-head CI. After merge and
