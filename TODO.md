@@ -193,10 +193,21 @@ proves exact ID, `idle` status, matching cwd, and a declared path. Old root,
 process, socket, tmux, Harness, Students, and app-server identities remained
 unchanged.
 
-**Next action:** commit and push this non-retryable new-root identity, then
-send one provisional `thread/name/set` for
-`swallow-recovery-20260728`. Require same-connection readback and the canonical
-single-link rollout persistence gate before launching a provisional TUI.
+**New-root persistence:** exactly one acknowledged `thread/name/set` named
+root `019fa5a1-7fff-7e92-8e2a-2586c684747f`
+`swallow-recovery-20260728`. Same-connection readback proved its exact
+identity/name, `idle` status, and frozen cwd. The newly materialized rollout
+was a canonical current-user-owned, single-link regular file at installed
+default mode `0664`; one no-follow descriptor transaction revalidated its
+device/inode/owner/type/link identity and changed only that descriptor to
+`0600`. Stable post-readback passed. Neither root creation nor naming may be
+retried.
+
+**Next action:** commit and push this persistence checkpoint, then create one
+detached provisional `swallow-next` tmux window under distinct runtime name
+`swallow-recovery-next` for the exact new root. Require watcher readiness,
+exact process identities, and an established peer to unchanged app server
+before submitting any turn.
 
 ### T-324 — Nightly fleet and repository hardening
 
