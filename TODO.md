@@ -110,7 +110,7 @@ Next free ID: T-322.
 
 ### T-321 — Recover recurring Swallow unsafe-tail `Request blocked`
 
-**Phase:** interviewing.
+**Phase:** ready-for-go.
 
 At 2026-07-27 20:24 JST, the owner reported that the phone/tmux Swallow
 thread was again stuck at `Request blocked`. Read-only metadata proves exact
@@ -133,13 +133,12 @@ only from Swallow's durable repository ledger, then atomically transfer the
 rejected prompt, restart the shared app server, inspect pane/transcript
 content, or delete/archive the old root.
 
-Decision D-001 is open. Recommended: execute that reversible fresh-root
-cutover while retaining the blocked root as rollback evidence. Alternative:
-leave the current thread blocked and use no Swallow agent. The frozen
-execution and safety gates are in
-`docs/plans/t321-swallow-unsafe-tail-recovery.md`. After the owner selects the
-recovery, checkpoint the decision, move to `ready-for-go`, and wait for a
-separate explicit `go`.
+Decision D-001 is selected: the owner chose the recommended reversible
+fresh-root cutover while retaining the blocked root as rollback evidence.
+The frozen execution and safety gates are in
+`docs/plans/t321-swallow-unsafe-tail-recovery.md`. The plan now waits for a
+separate explicit `go`. No thread, tmux, process, app server, prompt, or
+project state changed while recording this decision.
 
 ### T-320 — Make interactive `ls` color portable across the fleet
 

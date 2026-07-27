@@ -115,12 +115,13 @@ Do not:
 
 ### D-001 — Recovery action
 
-Recommended: create the reversible fresh root and cut over only after its
-cold-start turn passes all gates. This restores Swallow while preserving the
-blocked root and its real work.
+Selected by the owner as recommended: create the reversible fresh root and cut
+over only after its cold-start turn passes all gates. This restores Swallow
+while preserving the blocked root and its real work.
 
 Alternative: make no live change and leave Swallow unavailable. This has the
 lowest immediate mutation risk but provides no working SW-031 agent.
 
-No other decision is currently open. After D-001 is selected, freeze the plan
-at `ready-for-go` and wait for a separate explicit execution instruction.
+No other decision is open. The plan is frozen at `ready-for-go`; wait for a
+separate explicit execution instruction. Recording D-001 changed no thread,
+tmux, process, app-server, prompt, or project state.
