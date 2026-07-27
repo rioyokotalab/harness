@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-319.
+Next free ID: T-320.
 
 ## Current state
 
@@ -101,6 +101,25 @@ Next free ID: T-319.
    successors recorded below.
 
 ## Active tasks
+
+### T-319 — Report fleet health every Harness turn
+
+**Phase:** implementation complete; protected publication pending.
+
+The owner requires a fresh canonical fleet-health result in every Harness
+turn's final response. Root `AGENTS.md` and the compact current-state contract
+now require `harness fleet-health` immediately before yielding, explicit
+reporting of failed or unknown checks, and no reuse of a prior turn's result.
+The focused fleet-health suite and `git diff --check` pass.
+
+**LIFO validation gate 2026-07-27:** the first complete eight-worker phase-one
+run passed 73 focused suites; only tmux and terminfo failed because their apply
+fixtures require a clean committed checkout and the primary checkout retains
+the known live supervisor-held `libexec/.nfs…` placeholder. The placeholder
+must remain untouched. Commit this evidence, run the unchanged complete suite
+from a disposable clean full clone of the exact task revision, then
+guarded-delete only that clone and exact-unlink its mode-0600 manifest after
+successful verification.
 
 ### T-318 — Recover poisoned remote Codex threads
 
