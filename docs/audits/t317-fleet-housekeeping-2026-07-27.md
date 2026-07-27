@@ -373,6 +373,16 @@ PID `3088765` is `running remote-explicit` at attempt/delay zero for the exact
 SW-031 root. The client remained on `@52`; no existing window, process, or
 project was signaled, renamed, switched, or modified.
 
+Five subsequent read-only samples over ten minutes found the restored guard
+stable. The owner/client then selected it and its TUI returned success; the
+supervisor correctly recorded `clean-exit` and tmux removed only that guard.
+Because clean exit is an explicit terminal condition, T-317 did not relaunch
+it. The three remaining Codex sessions are supervised: exact remote Harness,
+exact remote Students, and the owner-created local-last chain within the
+window named `swallow`. The saved SW-031 remote root is no longer actively
+connected from tmux; no T-317 signal, switch, rename, or pane input caused
+that state.
+
 ## Guarded deletion and cleanup
 
 - Six Linux and four Mac arg0 candidates were quarantined, revalidated, and

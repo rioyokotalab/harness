@@ -1015,6 +1015,23 @@ only detached `@53:swallow-guard` at index 3. New supervisor/wrapper/real PIDs
 report `running remote-explicit`, attempt/delay zero. The attached client
 remained on untouched `@52`; no signal, rename, switch, or pane input ran.
 
+**Swallow guard soak result 2026-07-27 14:24–14:34 JST:** five read-only
+samples proved the restored exact remote guard stable at the same PIDs,
+selector, attempt zero, and delay zero while all other supervisors and
+protected CI remained healthy. The owner/client then independently selected
+`@53`; the remote TUI returned success, the supervisor recorded
+`reason=clean-exit`, and tmux removed only that window. Client selection
+subsequently moved among the remaining managed windows without T-317 input.
+
+A clean TUI exit is the supervisor's explicit terminal condition, not a
+transient-service failure. T-317 will therefore not recreate or signal the
+SW-031 remote session again. Current Local Codex sessions are still all
+supervised: exact remote Harness `@49`, exact remote Students `@50`, and the
+owner-created local-last chain inside `@52:swallow`. The saved SW-031 root is
+not currently connected from tmux. Native doctor and PR #337 remain green;
+arg0 reports five live, zero eligible/unexpected, and one young completed
+invocation.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
