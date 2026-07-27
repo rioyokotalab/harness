@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-325.
+Next free ID: T-326.
 
 ## Current state
 
@@ -107,6 +107,60 @@ Next free ID: T-325.
    successors recorded below.
 
 ## Active tasks
+
+### T-325 — Recover recurring Codex unsafe tails and make the workflow reusable
+
+**Phase:** executing.
+
+At 2026-07-28 07:04 JST, the owner reported that Swallow was blocked again
+and explicitly requested both recovery and a reusable skill because the
+incident recurs several times per day. Exact metadata-only readback found tmux
+window `@59:swallow` still live under supervisor PID `2876863`, managed
+launcher PID `2877066`, and real TUI PID `2877595`, all retaining their
+2026-07-27 start identities and exact remote root
+`019fa36c-cfa9-7143-ae11-1f538e07bfee`. The TUI has an established Unix peer
+to unchanged app-server PID `2852569`. Harness and Students remain separate
+and live.
+
+The supervisor reports `running/remote-explicit` at attempt/delay zero, but
+its recovery watcher PID `2876942` is absent. Its last mode-0600 receipt is
+`unavailable/recovery-check-failed`; the supervisor currently does not notice
+that watcher loss while its TUI remains live. Fresh initialized app-server
+readback reports the exact root `systemError`. The published analyzer
+validated the canonical rollout metadata and classified exactly one completed,
+assistant-less, side-effect-free tail turn as safely recoverable. No pane or
+transcript content, rejected prompt, credential, or project payload was read.
+
+The owner-authorized immediate action is one invocation of the published
+safe-tail recovery for this exact root. It may send one rollback request only
+after its final lock-serialized identity and rollout recheck. An ambiguous
+acknowledgement is non-retryable. Do not replay or reconstruct the rejected
+prompt, fork or replace the root while the safe path remains available,
+restart the shared app server, or change Harness, Students, or project work.
+
+After live recovery, implement the recurrence fix and a shared,
+project-neutral `recover-codex-unsafe-tail` skill. The implementation must
+make watcher loss observable and fail closed instead of leaving a
+`running` supervisor with no live watcher; preserve every existing safe-tail,
+identity, prompt-replay, and app-server boundary. The skill must reconstruct
+from repository instructions and durable ledgers, use value-free metadata,
+select safe rollback only when proven, route unsafe tails to the established
+fresh-root cutover, and require independent acceptance. Create it under
+`shared/skills/` with both Codex and Claude discovery links, validate its
+metadata and focused behavior, and publish all code, tests, skill, plan, and
+ledger changes through protected Git.
+
+The frozen scope and acceptance gates are in
+`docs/plans/t325-codex-unsafe-tail-recovery-skill.md`.
+
+**LIFO diagnostic gate:** the first read-only module probe used
+`spec_from_file_location` on an extensionless executable and failed before
+loading it because the loader was absent. The retry used Python's source-file
+loader with bytecode disabled and produced the value-free safe-tail result
+above. No live or repository state changed.
+
+**Next action:** commit and push this pre-write checkpoint, rerun the exact
+root/process/socket/status gate, then invoke the safe-tail recovery once.
 
 ### T-324 — Nightly fleet and repository hardening
 
