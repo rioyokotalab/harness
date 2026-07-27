@@ -189,8 +189,18 @@ checkout-validating focused suites to inspect the separate primary checkout
 instead of the task worktree. The phase-one entry point now clears that
 launcher-only variable before dispatch. The first validating rerun correctly
 targeted the task worktree but ran before this fix was committed, so the tmux
-and terminfo clean-checkout gates refused the intentional uncommitted patch;
-the committed-current-head rerun remains required.
+and terminfo clean-checkout gates refused the intentional uncommitted patch.
+The clean committed head then passed all 75 focused suites, guarded deletion,
+and every phase-one integration gate with a deliberately conflicting inherited
+root; only the declared native MPI smoke skipped outside an allocation.
+
+System-wide failed-unit readback found zero on Local, T4, and ABQ; AB/AB2
+contain 250/17 failed historical session scopes; RI has failed
+`logrotate.service`; AL has four failed site mount/GPU/PALS services; and RC
+has failed NetworkManager wait-online plus another account's user manager.
+Current-user zombie counts are zero everywhere and RC's own user manager is
+running. These are shared-site administrator findings outside owner authority;
+no unit was reset, restarted, or modified.
 
 **Next action:** publish the resilience fix through PR #361 after current-head
 checks pass, continue independent deep checks until the 04:13 JST

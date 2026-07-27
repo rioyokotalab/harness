@@ -88,6 +88,15 @@ exact drift is deferred for owner reconciliation.
   doctor's exact Linux ownership-warning summary; all other doctor and
   platform failures retain their prior terminal behavior. Focused tests cover
   both the Linux exception and Darwin fail-closed case.
+- Current-user zombie counts are zero on all eight Linux logical nodes.
+  System-wide failed-unit counts are Local 0, AB 250, AB2 17, RI 1, AL 4,
+  RC 2, T4 0, and ABQ 0. AB/AB2 entries are historical session scopes. RI's
+  `logrotate.service` failed at 2026-07-27 00:00 JST; AL reports failed
+  binfmt mount/automount, GDRCopy, and PALS services; RC reports failed
+  NetworkManager wait-online and another account's user manager while this
+  account's user manager is running. These are shared-site system services
+  requiring administrator authority. They were recorded without reset,
+  restart, log-content inspection, or mutation.
 
 ## Repository housekeeping
 
