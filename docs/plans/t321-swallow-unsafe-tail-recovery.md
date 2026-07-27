@@ -142,3 +142,21 @@ window, supervisor, watcher, retry state, unsafe-tail refusal, Git revision,
 and unaffected Harness/Students mapping. No live mutation preceded this
 checkpoint. Execution resumes at plan step 2's narrow app-server, socket,
 process, and doctor identity gate.
+
+## Execution result
+
+The selected fresh-root recovery completed its live stages without replaying
+the rejected prompt. Exact new root
+`019fa36c-cfa9-7143-ae11-1f538e07bfee` and cold-start turn
+`019fa370-3c31-75b2-8d0b-d7b6cd72b0e4` passed the frozen identity,
+persistence, watcher, assistant-bearing completion, name, tmux, process,
+socket, and doctor gates. The accepted phone/tmux name is `swallow`; its
+supervisor runtime name remains `swallow-recovery`.
+
+The poisoned root is preserved as `swallow-blocked-20260727` with no live
+process chain. Harness, Students, and app-server identities remained unchanged.
+No prompt replay, unsafe rollback, app-server restart, pane/transcript read,
+archive, delete, second signal, process-group signal, or `SIGKILL` occurred.
+Only the generated schema bundle and task-created Python bytecode cache were
+removed through guarded deletion; both manifests were exact-unlinked after
+verified success.

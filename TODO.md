@@ -110,7 +110,7 @@ Next free ID: T-322.
 
 ### T-321 — Recover recurring Swallow unsafe-tail `Request blocked`
 
-**Phase:** executing.
+**Phase:** validating.
 
 At 2026-07-27 20:24 JST, the owner reported that the phone/tmux Swallow
 thread was again stuck at `Request blocked`. Read-only metadata proves exact
@@ -230,6 +230,30 @@ rollback, prompt, or app-server action ran. The saved poisoned root remains
 preserved as `swallow-blocked-20260727`. Commit and push, then perform
 independent final process/socket/thread/tmux/doctor/Git validation and guarded
 cleanup of only the generated schema bundle.
+
+**Live execution validation:** the old window disappeared with its exact
+process chain. Tmux now has exactly `@49:harness` active, `@50:students`, and
+`@59:swallow`; accepted supervisor PID `2876863`, watcher PID `2876942`, and
+real TUI PID `2877595` retain their immutable start identities and exact new
+UUID. Value-free status is `running/remote-explicit` plus
+`watching/thread-idle`, with all retry/recovery counters zero. The established
+Unix peer reaches unchanged app server PID `2852569`; native doctor is
+`overall=ok` with zero failed checks. Protocol readback proves old root
+preserved as `systemError/name=swallow-blocked-20260727`, new root
+`idle/name=swallow`, and the accepted turn completed with assistant output and
+no active items. Harness and Students pane identities are unchanged.
+
+The `guarded-bulk-delete` workflow removed only generated schema bundle
+`/tmp/t321-app-server-schema.sBpGch` (350 entries / 3,332,549 bytes; token
+`d43c69b3d55a924cb6cf088e3fa4b4c79afa23763b3497616ac4d32528b613e4`)
+and task-created `/home/rioyokota/harness/libexec/__pycache__` (two entries /
+42,026 bytes; token
+`3a1ab0b1071d49111bb2dd7d4de3bbbb65937e7fc61c3e783ab70803a7557d95`).
+Protected anchors were unchanged, targets are absent, and both mode-0600
+manifests were exact-unlinked. The live `.nfs…` inode remains untouched.
+Commit this validation, run diff hygiene and protected CI, publish/merge the
+execution ledger, then perform a fresh final live readback and canonical fleet
+health before marking T-321 complete.
 
 ### T-320 — Make interactive `ls` color portable across the fleet
 
