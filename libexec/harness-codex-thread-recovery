@@ -561,8 +561,10 @@ def analyze_rollout(path, thread_id):
     turns = []
     current = None
     session_matches = False
+    last_rollback_line = 0
+    completed_since_rollback = 0
     with open(path, "r") as source:
-        for raw_line in source:
+        for line_number, raw_line in enumerate(source, 1):
             try:
                 record = json.loads(raw_line)
             except ValueError:
@@ -580,20 +582,43 @@ def analyze_rollout(path, thread_id):
 
             if (
                 record_type == "event_msg"
+                and payload_type == "task_complete"
+            ):
+                completed_since_rollback += 1
+                continue
+
+            if (
+                record_type == "event_msg"
                 and payload_type == "thread_rolled_back"
             ):
-                if current is not None:
-                    block("rollback marker appeared inside a turn")
                 count = payload.get("num_turns")
                 if (
                     not isinstance(count, int)
                     or isinstance(count, bool)
                     or count < 1
-                    or count > len(turns)
+                    or count > completed_since_rollback
                 ):
                     block("thread rollback marker is malformed")
-                del turns[-count:]
+                last_rollback_line = line_number
+                completed_since_rollback = 0
                 continue
+
+    if not session_matches:
+        block("thread rollout session identity mismatch")
+
+    with open(path, "r") as source:
+        for line_number, raw_line in enumerate(source, 1):
+            if line_number <= last_rollback_line:
+                continue
+            try:
+                record = json.loads(raw_line)
+            except ValueError:
+                block("thread rollout contains malformed JSON")
+            record_type = record.get("type")
+            payload = record.get("payload")
+            if not isinstance(payload, dict):
+                payload = {}
+            payload_type = payload.get("type")
 
             if (
                 record_type == "event_msg"
@@ -606,6 +631,7 @@ def analyze_rollout(path, thread_id):
                     "user": False,
                     "assistant": False,
                     "unsafe": False,
+                    "turn_id": payload.get("turn_id"),
                 }
                 continue
 
@@ -630,10 +656,26 @@ def analyze_rollout(path, thread_id):
                     current["user"] = True
                 elif payload_type == "agent_message":
                     current["assistant"] = True
+                elif payload_type == "turn_aborted":
+                    turn_id = payload.get("turn_id")
+                    if (
+                        current["turn_id"] is not None
+                        and turn_id != current["turn_id"]
+                    ):
+                        current["unsafe"] = True
+                    else:
+                        current = None
                 elif payload_type == "task_complete":
-                    current["completed"] = True
-                    turns.append(current)
-                    current = None
+                    turn_id = payload.get("turn_id")
+                    if (
+                        current["turn_id"] is not None
+                        and turn_id != current["turn_id"]
+                    ):
+                        current["unsafe"] = True
+                    else:
+                        current["completed"] = True
+                        turns.append(current)
+                        current = None
                 elif payload_type not in (
                     "agent_reasoning",
                     "thread_settings_applied",
@@ -645,8 +687,6 @@ def analyze_rollout(path, thread_id):
             if record_type not in ("world_state", "turn_context"):
                 current["unsafe"] = True
 
-    if not session_matches:
-        block("thread rollout session identity mismatch")
     if current is not None:
         block("thread rollout contains an active turn")
 

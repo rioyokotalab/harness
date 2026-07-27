@@ -160,6 +160,46 @@ run_recovery --recover --name marker --thread thread-marker \
 [ "$(cat "$TEST_ROOT/rollback.calls")" = 'thread-marker	1' ] ||
     fail "durable rollback marker was ignored"
 
+stale_marker_rollout=$sessions/stale-marker.jsonl
+cat >"$stale_marker_rollout" <<'EOF'
+{"timestamp":"1","type":"session_meta","payload":{"id":"thread-stale-marker"}}
+{"timestamp":"2","type":"event_msg","payload":{"type":"task_started","turn_id":"completed-turn"}}
+{"timestamp":"3","type":"response_item","payload":{"type":"message","role":"user"}}
+{"timestamp":"4","type":"event_msg","payload":{"type":"task_complete","turn_id":"completed-turn"}}
+{"timestamp":"5","type":"event_msg","payload":{"type":"task_started","turn_id":"stale-turn"}}
+{"timestamp":"6","type":"response_item","payload":{"type":"message","role":"user"}}
+{"timestamp":"7","type":"response_item","payload":{"type":"custom_tool_call","status":"completed"}}
+{"timestamp":"8","type":"event_msg","payload":{"type":"thread_rolled_back","num_turns":1}}
+{"timestamp":"9","type":"event_msg","payload":{"type":"task_started","turn_id":"safe-turn"}}
+{"timestamp":"10","type":"response_item","payload":{"type":"message","role":"user"}}
+{"timestamp":"11","type":"event_msg","payload":{"type":"task_complete","turn_id":"safe-turn"}}
+EOF
+chmod 600 "$stale_marker_rollout"
+: >"$TEST_ROOT/rollback.calls"
+write_read_response thread-stale-marker systemError "$stale_marker_rollout"
+run_recovery --recover --name stale-marker --thread thread-stale-marker \
+    >"$TEST_ROOT/stale-marker.out"
+[ "$(cat "$TEST_ROOT/rollback.calls")" = 'thread-stale-marker	1' ] ||
+    fail "durable rollback marker did not reset stale lifecycle state"
+
+aborted_rollout=$sessions/aborted.jsonl
+cat >"$aborted_rollout" <<'EOF'
+{"timestamp":"1","type":"session_meta","payload":{"id":"thread-aborted"}}
+{"timestamp":"2","type":"event_msg","payload":{"type":"task_started","turn_id":"aborted-turn"}}
+{"timestamp":"3","type":"response_item","payload":{"type":"message","role":"user"}}
+{"timestamp":"4","type":"event_msg","payload":{"type":"turn_aborted","turn_id":"aborted-turn"}}
+{"timestamp":"5","type":"event_msg","payload":{"type":"task_started","turn_id":"safe-turn"}}
+{"timestamp":"6","type":"response_item","payload":{"type":"message","role":"user"}}
+{"timestamp":"7","type":"event_msg","payload":{"type":"task_complete","turn_id":"safe-turn"}}
+EOF
+chmod 600 "$aborted_rollout"
+: >"$TEST_ROOT/rollback.calls"
+write_read_response thread-aborted systemError "$aborted_rollout"
+run_recovery --recover --name aborted --thread thread-aborted \
+    >"$TEST_ROOT/aborted.out"
+[ "$(cat "$TEST_ROOT/rollback.calls")" = 'thread-aborted	1' ] ||
+    fail "aborted turn contaminated the safe recovery tail"
+
 unsafe_rollout=$sessions/unsafe.jsonl
 cat >"$unsafe_rollout" <<'EOF'
 {"timestamp":"1","type":"session_meta","payload":{"id":"thread-unsafe"}}
