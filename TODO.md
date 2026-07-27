@@ -875,9 +875,12 @@ SBOM endpoint succeeds for Harness (2 packages), Students (34), and Swallow
 (2), but returns confirmed HTTP 404 for public Website both with authenticated
 GitHub API access and anonymously. Website still has enabled Dependabot
 security updates and zero alerts, but T-317 cannot prove that its tracked npm
-manifest participates in the dependency graph. D-006 keeps hosting settings
-read-only; confirm/enable Website dependency-graph generation in the later
-owner hosting-policy decision.
+manifest participates in the dependency graph. GitHub documents public
+dependency graphs as on by default but defines this endpoint's 404 only as
+`Resource not found`, so the cause is unknown rather than proved disabled.
+D-006 keeps hosting settings/actions read-only; inspect the Website graph UI
+and decide whether to refresh/regenerate it in the later owner hosting-policy
+decision.
 
 As an independent compensating check, native
 `npm audit --package-lock-only --ignore-scripts` reports zero vulnerabilities
