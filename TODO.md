@@ -300,6 +300,17 @@ active process, or archive state changed.
 then run the complete clean-tree `tests/test-phase1.sh` before protected
 publication.
 
+**Validation checkpoint:** clean implementation commit `57ba7b7` passed the
+complete eight-worker `tests/test-phase1.sh`: all focused suites, guarded
+deletion, and integration gates passed; only the declared native MPI smoke
+skipped outside an allocation. The branch contains only the frozen config,
+launcher, validator, tests, documentation, and ledger surfaces.
+
+**Next action:** commit this validation evidence, fetch and explicitly push the
+task branch, then open an exact-head protected pull request and require
+`portable-phase1` before merge. Do not reload an existing session or mutate
+the user-layer MCP registration.
+
 ### T-326 — Use exact progress clocks and default new Codex sessions to Sol high
 
 **Phase:** complete.
