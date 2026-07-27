@@ -110,7 +110,7 @@ Next free ID: T-328.
 
 ### T-327 — Align MCP approvals and retire blocked phone sessions
 
-**Phase:** interviewing.
+**Phase:** ready-for-go.
 
 The owner asked to update the MCP setting for recent operating needs and asked
 whether phone-visible `swallow-blocked-20260728` and
@@ -186,12 +186,24 @@ payload, credential, transcript body, or mutable state was read or changed;
 all subsequent checks use only IDs, archive flags, and aggregate process
 counts.
 
-**Decision D-001:** unresolved. Ask whether to use the recommended interactive
-MCP-only granular policy or an explicitly broader alternative. After the
-selection, freeze exact config, validator, test, documentation, activation,
-rollback, and protected-publication steps and wait for separate `go` before
-implementation. Archiving remains an owner-side phone action and is not an
-acceptance gate for the config change.
+**Decision D-001:** selected. The owner's exact response was
+`As you recommend`, selecting the recommended interactive MCP-only granular
+policy. No other decision remains unresolved. Freeze the exact replacement as:
+
+```toml
+approval_policy = { granular = { sandbox_approval = false, rules = false, mcp_elicitations = true, request_permissions = false, skill_approval = false } }
+```
+
+The existing GitHub MCP registration, authentication source, transport, and
+tool policy remain untouched. Existing Codex sessions are not restarted,
+retargeted, or claimed to have reloaded this policy. Archiving remains an
+owner-side phone action and is not an acceptance gate for the config change.
+
+**Next action:** wait for a separate explicit owner instruction such as `go`,
+`proceed`, or `execute`. After that authorization, set the phase to
+`executing`, add the failing focused policy assertions first, and continue
+autonomously through the frozen implementation, validation, protected
+publication, guarded fleet sync, eligible Mac refreshes, and final readback.
 
 ### T-326 — Use exact progress clocks and default new Codex sessions to Sol high
 
