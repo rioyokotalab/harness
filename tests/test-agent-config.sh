@@ -15,6 +15,12 @@ cleanup() {
 }
 trap cleanup EXIT HUP INT TERM
 fail() { echo "FAIL: $*" >&2; exit 1; }
+file_mode() {
+    case $(uname -s) in
+        Darwin) stat -f %Lp "$1" ;;
+        *) stat -c %a "$1" ;;
+    esac
+}
 
 repo=$TEMP_DIR/repo
 home=$TEMP_DIR/home
@@ -47,9 +53,10 @@ git -C "$repo" config user.email agent-config-test.invalid
 git -C "$repo" add .
 git -C "$repo" commit -qm baseline
 
-printf '%s\n' 'approval_policy = "never"' \
-    'sandbox_mode = "danger-full-access"' \
-    'model = "synthetic"' >"$home/.codex/config.toml"
+printf '%s\n' 'opaque product-owned bytes; Harness must not parse this' \
+    >"$home/.codex/config.toml"
+chmod 600 "$home/.codex/config.toml"
+cp "$home/.codex/config.toml" "$TEMP_DIR/product-config.before"
 ln -s "$repo/.codex/AGENTS.md" "$home/.codex/AGENTS.md"
 ln -s "$repo/.codex/rules/default.rules" "$home/.codex/rules/default.rules"
 ln -s "$repo/shared/skills/example" "$home/.codex/skills/example"
@@ -87,8 +94,8 @@ git -C "$repo" commit -qm 'restore managed update policy'
 run_config --plan >"$TEMP_DIR/plan.out"
 grep -F 'AGENT_CONFIG schema=2 mode=plan' "$TEMP_DIR/plan.out" >/dev/null ||
     fail 'schema-2 plan'
-grep -F 'label=codex-config scope=user state=removable-regular action=remove' \
-    "$TEMP_DIR/plan.out" >/dev/null || fail 'Codex config removal plan'
+grep -F 'label=codex-config scope=user state=product-owned action=none' \
+    "$TEMP_DIR/plan.out" >/dev/null || fail 'Codex product config preservation plan'
 grep -F 'label=claude-sentinel scope=user state=legacy action=install' \
     "$TEMP_DIR/plan.out" >/dev/null || fail 'Claude sentinel migration plan'
 grep -F 'PROJECT_AGENT_CONFIG codex=ready claude=ready skills=1' \
@@ -97,6 +104,8 @@ grep -F 'PROJECT_AGENT_CONFIG codex=ready claude=ready skills=1' \
 run_config --apply >"$TEMP_DIR/apply.out"
 tx=$(transaction "$TEMP_DIR/apply.out")
 [ -n "$tx" ] || fail 'transaction id'
+[ ! -e "$home/.local/state/harness/transactions/$tx.agent-config.codex-config.before" ] ||
+    fail 'Codex product config entered transaction backup'
 [ -L "$home/.codex/AGENTS.md" ] &&
     [ "$(readlink "$home/.codex/AGENTS.md")" = "$repo/.codex/AGENTS.md" ] ||
     fail 'Codex sentinel'
@@ -105,11 +114,15 @@ tx=$(transaction "$TEMP_DIR/apply.out")
         "$repo/config/agent-clients/claude-sentinel.md" ] ||
     fail 'Claude sentinel'
 [ -L "$home/.local/bin/harness-codex" ] || fail 'launcher retained'
-for removed in "$home/.codex/config.toml" "$home/.claude/settings.json" \
+for removed in "$home/.claude/settings.json" \
     "$home/.codex/rules/default.rules" "$home/.codex/skills/example" \
     "$home/.agents/skills/example" "$home/.claude/skills/example"; do
     [ ! -e "$removed" ] && [ ! -L "$removed" ] || fail "legacy path retained: $removed"
 done
+cmp "$TEMP_DIR/product-config.before" "$home/.codex/config.toml" >/dev/null ||
+    fail 'Codex product config changed during apply'
+[ "$(file_mode "$home/.codex/config.toml")" = 600 ] ||
+    fail 'Codex product config mode changed during apply'
 [ -f "$home/.codex/skills/.system/marker" ] || fail 'vendor skill removed'
 grep -F -x auth-state "$home/.codex/auth.json" >/dev/null ||
     fail 'Codex auth changed'
@@ -119,8 +132,10 @@ run_config --doctor >"$TEMP_DIR/doctor.out"
 grep -F 'status=ready failures=0' "$TEMP_DIR/doctor.out" >/dev/null ||
     fail 'doctor'
 
+unlink "$home/.codex/config.toml"
 run_config --rollback "$tx" >"$TEMP_DIR/rollback.out"
-[ -f "$home/.codex/config.toml" ] || fail 'Codex config rollback'
+[ ! -e "$home/.codex/config.toml" ] ||
+    fail 'Codex product config recreated during rollback'
 [ -L "$home/.claude/settings.json" ] || fail 'Claude settings rollback'
 [ "$(readlink "$home/.claude/CLAUDE.md")" = "$repo/.claude/CLAUDE.md" ] ||
     fail 'Claude guidance rollback'
@@ -130,9 +145,40 @@ run_config --rollback "$tx" >"$TEMP_DIR/rollback.out"
 [ ! -e "$home/.local/bin/harness-codex" ] ||
     fail 'launcher rollback'
 
+cp "$TEMP_DIR/product-config.before" "$home/.codex/config.toml"
+chmod 600 "$home/.codex/config.toml"
 run_config --apply --drill >"$TEMP_DIR/drill.out"
 grep -F 'AGENT_CONFIG_DRILL rollback=' "$TEMP_DIR/drill.out" >/dev/null ||
     fail 'rollback drill'
+run_config --doctor >/dev/null
+cmp "$TEMP_DIR/product-config.before" "$home/.codex/config.toml" >/dev/null ||
+    fail 'Codex product config changed during drill'
+
+chmod 644 "$home/.codex/config.toml"
+if run_config --doctor >"$TEMP_DIR/config-mode.out" 2>&1; then
+    fail 'broad Codex product config mode accepted'
+fi
+grep -F 'label=codex-config scope=user state=collision action=blocked' \
+    "$TEMP_DIR/config-mode.out" >/dev/null || fail 'Codex config mode refusal'
+chmod 600 "$home/.codex/config.toml"
+
+mv "$home/.codex/config.toml" "$home/.codex/config.product"
+ln -s config.product "$home/.codex/config.toml"
+if run_config --doctor >"$TEMP_DIR/config-symlink.out" 2>&1; then
+    fail 'Codex product config symlink accepted'
+fi
+grep -F 'label=codex-config scope=user state=collision action=blocked' \
+    "$TEMP_DIR/config-symlink.out" >/dev/null || fail 'Codex config symlink refusal'
+unlink "$home/.codex/config.toml"
+mv "$home/.codex/config.product" "$home/.codex/config.toml"
+
+ln "$home/.codex/config.toml" "$home/.codex/config.hardlink"
+if run_config --doctor >"$TEMP_DIR/config-hardlink.out" 2>&1; then
+    fail 'Codex product config hard link accepted'
+fi
+grep -F 'label=codex-config scope=user state=collision action=blocked' \
+    "$TEMP_DIR/config-hardlink.out" >/dev/null || fail 'Codex config hard-link refusal'
+unlink "$home/.codex/config.hardlink"
 run_config --doctor >/dev/null
 
 collision_home=$TEMP_DIR/collision-home

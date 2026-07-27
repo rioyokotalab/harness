@@ -13,15 +13,26 @@ exposed through tracked `.agents/skills/` and `.claude/skills/` links.
 User scope retains only:
 
 - `~/.codex/AGENTS.md`, linked to the Codex launch sentinel;
+- optional `~/.codex/config.toml` owned exclusively by the Codex product;
 - `~/.claude/CLAUDE.md`, linked to the Claude launch sentinel; and
 - `~/.local/bin/harness-codex`, the existing managed launcher.
 
 The sentinels refuse task work outside `~/harness` and give the exact restart
-command. Legacy global Codex/Claude settings, the global Codex rule link, and
-the 39 harness skill links are absent on all 12 systems. Authentication,
-sessions, histories, memories, caches, databases, mixed Claude state, client
-binaries, vendor `.system` skills, remote control, and tunnels were outside
-the transaction and preserved.
+command. Harness-managed global Codex/Claude settings, the global Codex rule
+link, and the 39 harness skill links are absent on all 12 systems.
+Authentication, sessions, histories, memories, caches, databases, mixed
+Claude state, client binaries, vendor `.system` skills, remote control, and
+tunnels were outside the transaction and preserved.
+
+## T-311 amendment — 2026-07-27
+
+The owner selected the supported Codex product-owned user layer. Harness
+continues to own all project behavior and permissions, but treats
+`~/.codex/config.toml` as opaque product state. Value-free doctor acceptance
+requires either absence or a mode-0600, current-user-owned, single-link regular
+file. Harness never reads, copies, hashes, removes, restores, or writes it.
+Unsafe metadata still fails closed. Full rationale and acceptance gates are in
+`docs/plans/t311-codex-user-config-policy.md`.
 
 ## Publication and validation
 
@@ -64,7 +75,7 @@ The final per-host audit proved:
 - schema-2 doctor ready;
 - 13 Codex plus 13 Claude project skill links;
 - zero exact legacy harness global skill links;
-- absent global harness Codex/Claude settings and global Codex rules;
+- no harness-managed global Codex/Claude settings or global Codex rules;
 - current sentinels and launcher; and
 - no fleet-sync transfer residue.
 
