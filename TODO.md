@@ -97,8 +97,11 @@ Next free ID: T-321.
    resume action for either repository.
 2. T-311 is complete, including administrator-authenticated Mac changes and
    D-007's private product-owned Codex user layer.
-3. Ask the `192.168.33.30` administrator to correlate T-303's recorded NFS
-   latency intervals when an external coordination window is available.
+3. Resume T-303 after independently confirming the first-use SSH host key for
+   `nas-03.yokota` / `192.168.33.30`. The server presents ED25519 fingerprint
+   `SHA256:nxj4PfZ55OqTcVm5HReHI6IVy9MMcBQ+BbfrJfZRHes`; no Local
+   `known_hosts` entry exists, so the 2026-07-27 read-only correlation attempt
+   correctly stopped before authentication.
 4. Continue T-196 only at its exact time/identity gates: all eight nodes are
    now 2/8 with next-week successors waiting. Retry RI accounting ID `7242`
    without touching successor `10386`; otherwise wait for the exact 2026-08-02
@@ -1778,6 +1781,18 @@ the raw directory unchanged and ask the `192.168.33.30` administrator to
 correlate pool/disk, NFS-daemon, cache, and system evidence for the recorded
 intervals. Local sudo is not required. Full results and limitations are in
 `docs/audits/t303-nfs-observation-2026-07-24.md`.
+
+At 2026-07-27 19:58 JST, Local resolved `nas-03.yokota` to
+`192.168.33.30` and found a direct SSH route as `rioyokota`, but the first
+batch-mode connection stopped at host-key verification before authentication.
+Neither the IP address nor hostname has a saved Local host-key entry. SSH
+negotiation and an independent key scan consistently observed ED25519
+fingerprint `SHA256:nxj4PfZ55OqTcVm5HReHI6IVy9MMcBQ+BbfrJfZRHes`; that
+agreement does not establish identity. Independently confirm the fingerprint
+through the server console or its administrator, then add only that confirmed
+key and run the bounded read-only procedure recorded in the audit. Do not use
+`StrictHostKeyChecking=no`, accept a key based only on this network path,
+escalate privilege, or change NFS/storage state.
 
 ### T-302 — Reduce AL authentication intervention
 
