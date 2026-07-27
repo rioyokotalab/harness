@@ -110,4 +110,7 @@ grep -F -x 'Fleet: Linux fail nodes=abq; Macs fail nodes=riken.' \
 grep -F 'PRIVATE-SSH-DIAGNOSTIC' "$TEMP_DIR/failed.out" "$TEMP_DIR/failed.err" \
     >/dev/null && fail "private SSH diagnostic escaped"
 
+grep -F 'Before yielding every Harness turn, run `harness fleet-health`' \
+    "$ROOT/AGENTS.md" >/dev/null || fail "per-turn fleet health policy"
+
 echo "fleet health tests: PASS"

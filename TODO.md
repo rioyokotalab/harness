@@ -79,11 +79,11 @@ Next free ID: T-319.
 - Project safety and collaboration rules in root `AGENTS.md` remain
   authoritative. `.codex/AGENTS.md` is only the out-of-project launch
   sentinel. Never inspect credentials or use raw recursive/bulk deletion.
-- Whenever owner input or approval is requested, or a task completes, report a
-  fresh compact health snapshot for every managed Linux node and all four Mac
-  route pairs. Count abq as Linux and mark it ready only when both abq and abq2
-  routes pass; do not include that pair in the Mac total. Omit `abci_login` and
-  `alps_login` unless a task targets those transports.
+- Before yielding every Harness turn, report a fresh compact health snapshot
+  for every managed Linux node and all four Mac route pairs. Count abq as
+  Linux and mark it ready only when both abq and abq2 routes pass; do not
+  include that pair in the Mac total. Omit `abci_login` and `alps_login`
+  unless a task targets those transports.
 
 ## Next resume checkpoint
 
