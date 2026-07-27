@@ -158,6 +158,17 @@ exact drift is deferred for owner reconciliation.
   protected head remained successful/merge-clean and all five canonical fleet
   sweeps passed. Material discovery and repair closed ahead of the 04:13
   cutoff with no open safe LIFO finding.
+- Final exact-head local and protected validation passed. PR #361 head
+  `0363d06` squash-merged as `395d85c`. The first sync plan used stale source
+  `80430de` and failed closed before mutation; exact readback found common
+  clean source `4778acd`. Corrected explicit eleven-target plan/apply advanced
+  every remote head and `origin/main` to `395d85c` with zero transfer
+  artifacts. Aist, Home, and Riken each acknowledged exactly one context
+  refresh; Office was deferred because its detached session still has two
+  windows. Thirty post-sync cycles and six fleet sweeps passed through 04:43
+  JST. The exact 931-entry/23,241,682-byte disposable sync clone was
+  guarded-deleted with protected anchors unchanged, and its manifest was
+  exact-unlinked.
 
 ## Repository housekeeping
 
@@ -258,8 +269,9 @@ browser, image, and Swallow research artifacts remain preserved.
     reconfirmed the recorded state.
 
 Every failed probe was read-only and retry-safe unless explicitly marked
-non-retryable. No credential, pane, transcript, deployment, message, package,
-hosting setting, or unrelated repository state changed.
+non-retryable. No credential, pane, transcript, deployment, package, hosting
+setting, or unrelated repository state changed. The only outbound messages
+were the three policy-required post-sync context refreshes acknowledged above.
 
 ## Primary evidence
 

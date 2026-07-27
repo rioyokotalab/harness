@@ -110,7 +110,7 @@ Next free ID: T-325.
 
 ### T-324 — Nightly fleet and repository hardening
 
-**Phase:** validating.
+**Phase:** complete.
 
 The owner authorized an immediate seven-hour housekeeping and hardening run
 from 2026-07-27 22:13 JST through 2026-07-28 05:13 JST, with safe findings
@@ -263,13 +263,31 @@ final exact-head suite/check, merge PR #361, guarded-sync clean managed
 checkouts, queue the required one-time Mac context refreshes, and complete
 fresh residue/fleet handoff readback.
 
-**Next action:** run final validation on this ledger checkpoint and merge only
-the exact successful PR #361 head. Then guarded-sync only clean managed
-checkouts, issue one required context refresh per eligible Mac session, and
-finish fresh residue and fleet-health readback. The implementation head passed
-all 75 focused suites, guarded-delete coverage, and every phase-one integration
-gate; only the declared native MPI smoke skipped outside an allocation. The
-clean validation clone was guarded-deleted.
+Final exact-head validation passed all 75 focused suites, guarded-delete
+coverage, and every phase-one integration gate; only the declared native MPI
+smoke skipped outside an allocation. PR #361 at exact head `0363d06`
+protected-passed and squash-merged as `395d85c`. Local `main` fast-forwarded
+while preserving its live supervisor-held `.nfs` inodes. The first fleet-sync
+plan used stale source `80430de` and failed closed before mutation; exact
+readback established all eleven remote checkouts clean at common ancestor
+`4778acd`. A corrected explicit eleven-target plan/apply advanced every head
+and `origin/main` to `395d85c` with zero transfer artifacts.
+
+Aist, Home, and Riken each returned exactly one post-sync context-refresh
+`status=submitted`; they must not be retried. Office remained safely deferred
+because its detached `harness-codex-resume` session still has two windows, so
+the one-window policy forbids injection. Thirty post-sync monitoring cycles
+and six canonical fleet sweeps passed through 04:43 JST. The exact
+931-entry/23,241,682-byte sync-source clone was guarded-deleted and its
+manifest exact-unlinked.
+
+This documentation-only closeout must use protected publication. After it
+merges, synchronize its exact revision to the eleven still-clean managed
+checkouts and issue exactly one new context refresh to each then-eligible Mac;
+do not retry Office unless its session independently becomes unambiguous.
+Finish with fresh arg0, transfer-residue, repository-head, protected-check,
+and canonical fleet-health readback. No further T-324 discovery or material
+repair remains.
 
 ### T-323 — Recover Harness unsafe-tail `Request blocked`
 
