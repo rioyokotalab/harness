@@ -202,6 +202,17 @@ project content. Commit and push this acceptance, then execute only the
 read-before/name-set/read-after root-name transfer and exact tmux window
 renames.
 
+**Root-name cutover:** complete preflight revalidated both process chains,
+immutable start ticks, unchanged app server PID `2852569`, Harness selection,
+Students, and exact old/new protocol state. One acknowledged name write plus
+readback changed only poisoned root
+`019fa27c-6280-7f00-8e46-ef878875562b` from `swallow` to
+`swallow-blocked-20260727`; a second acknowledged write plus readback changed
+only accepted root `019fa36c-cfa9-7143-ae11-1f538e07bfee` from its
+provisional name to `swallow`. Old remains `systemError`; new remains idle.
+Neither write is retryable. Commit and push, then rename exact tmux `@58` to
+`swallow-blocked` and exact `@59` to `swallow`, leaving the owner on `@49`.
+
 ### T-320 — Make interactive `ls` color portable across the fleet
 
 **Phase:** complete.
