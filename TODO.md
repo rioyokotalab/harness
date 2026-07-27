@@ -490,6 +490,54 @@ runs are empty; exact formula versions remain libnghttp3 1.18.0, SQLite
 detached Codex sessions and Office's separate shell window remain live; and
 canonical fleet health passes.
 
+**Protected checkpoint rollout 2026-07-27 11:05 JST:** PR #335 passed
+`portable-phase1` and merged at
+`e61c16b8d847c7e43e006773d5e0be73b0be87dc`. Exact guarded fleet sync
+fast-forwarded all 11 clean remote Harness checkouts from `0ad118b` to
+`e61c16b`; every head and `origin/main` matches, every tree is clean, and
+transfer artifacts are absent. The first post-sync readback supplied the same
+commit as both fleet-sync endpoints and was rejected locally before contact;
+direct exact revision checks replaced the invalid no-op transaction.
+
+Pane metadata proved `%0` is the sole live Codex child on every detached Mac
+session and Office `%1` is the childless shell. The first refresh attempt
+passed the literal instruction as unquoted SSH argv and failed in the local
+shell parser before any remote script or pane input. A transport-encoded retry
+revalidated every pane, decoded the same literal instruction, waited one
+second, and submitted a separate `C-m` exactly once to each `%0`. All Codex
+children, Office's shell, both route pairs, and canonical fleet health remain
+live. The 922-entry, 22.9 MB sync clone was guarded-deleted.
+
+**Hugging Face CLI reconciliation 2026-07-27 11:07 JST:** the owner's earlier
+install request was already completed at 07:49 through uv:
+`huggingface-hub 1.24.0` provides healthy `hf`, `huggingface-cli`, and
+`tiny-agents` links on Local, and official PyPI metadata confirms 1.24.0 is
+current. Local has no authenticated HF identity; no credential was inspected
+or changed. Anonymous metadata access nevertheless resolves public Swallow
+model revision `496cd5558fef4af1d426e96327d7a74681063280` exactly. AB and T4
+have no HF CLI; do not add a user-global tool while their Swallow environment
+and agent are active without project-local intake.
+
+**LIFO gate active 2026-07-27 11:14 JST:** all four Macs have zero outdated
+Homebrew formulae and no available Apple software updates. Office's first
+`brew outdated` performed Homebrew's default metadata auto-update before
+returning zero; it changed only package-manager/tap metadata, not installed
+packages. Subsequent probes explicitly disable auto-update. The refreshed
+metadata exposes a pre-existing plan bug: exact inventory reports retired
+generic `icu4c` absent and managed `icu4c@78` present, while per-formula
+`brew list --versions icu4c` resolves the current alias and falsely reports
+the retired generic formula present. The plan therefore blocks with
+`captured retired formula state drifted` despite unchanged installed state.
+
+The local fix takes one exact installed-formula snapshot and classifies policy
+tokens from exact names, eliminating alias resolution and more than 100
+Homebrew subprocesses. A synthetic alias regression requires one snapshot and
+forbids per-formula probes. Syntax, focused ShellCheck with the suite's
+documented source/literal exclusions, diff checks, and the focused Mac
+plan/doctor suite pass. Commit this increment, run the complete clean Phase-1
+gate, publish it through protection, sync the fleet, and require the real
+Office plan to pass with matched wall-time evidence before popping the gate.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
