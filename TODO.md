@@ -169,6 +169,16 @@ the durable surfaces, after which the descriptor transaction can tighten the
 rollout. Commit and push this non-retryable result and order correction, then
 send only the provisional `thread/name/set`.
 
+**New-root acceptance:** exactly one `thread/name/set` named root
+`019fa36c-cfa9-7143-ae11-1f538e07bfee`
+`swallow-recovery-20260727`. Same-connection readback proved exact identity,
+idle state, zero turns, and the expected cwd. Its newly persisted rollout was
+a canonical current-user-owned, single-link regular file at exact mode `0664`;
+the descriptor-identity transaction changed only that inode to `0600`, and
+stable post-readback passed. Neither `thread/start` nor the name write may be
+retried. Commit and push this accepted identity, then launch one detached
+provisional `swallow-next` window under supervisor name `swallow-recovery`.
+
 ### T-320 — Make interactive `ls` color portable across the fleet
 
 **Phase:** complete.
