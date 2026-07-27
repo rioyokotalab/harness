@@ -89,3 +89,16 @@ remains rollback evidence but must not be relaunched without a new plan.
   archive, deletion, second signal, process-group signal, or `SIGKILL`
   occurred.
 - Git is coherent and canonical fleet health passes.
+
+## Execution result
+
+Fresh root `019fa3ae-6ad0-7642-aeca-b7b52421f576` and cold-start turn
+`019fa3b1-741c-77b2-aa01-60285d99e39a` passed every persistence, watcher,
+assistant-bearing completion, name, tmux, process, socket, doctor, and Git
+gate. Phone and active tmux name are `harness`; runtime supervisor name is
+`harness-recovery`.
+
+The poisoned root remains preserved as `harness-blocked-20260727` with no live
+process chain. Students, Swallow, and the shared app server were unchanged.
+Only the generated schema bundle and task-created Python cache were removed
+through guarded deletion.

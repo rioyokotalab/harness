@@ -110,7 +110,7 @@ Next free ID: T-324.
 
 ### T-323 — Recover Harness unsafe-tail `Request blocked`
 
-**Phase:** executing.
+**Phase:** complete.
 
 At 2026-07-27 21:59 JST, metadata-only diagnosis proved the active Harness
 root `019fa076-7132-7992-800e-f6c6d4aeadfb` is `systemError`. The published
@@ -237,6 +237,28 @@ delete, prompt, pane, or app-server action ran. The poisoned saved root remains
 preserved as `harness-blocked-20260727`. Commit and push, then independently
 validate new process/socket/thread/tmux/doctor/Git state and guarded-delete
 only the generated schema bundle.
+
+**Completion:** the final mapping is exactly active `@60:harness`,
+`@50:students`, and `@59:swallow`, one pane each; old `@49` disappeared when
+its exact process chain unwound. New supervisor `3126145`, watcher `3126236`,
+wrapper `3126411`, and real TUI `3126825` retain their immutable starts and
+exact new root argv. Status is `running/remote-explicit` plus
+`watching/thread-idle`, with all retry/recovery counters zero, and the real
+TUI has an established peer to unchanged app server `2852569`.
+
+Protocol readback proves the old root preserved as
+`harness-blocked-20260727/systemError` with 83 turns and no live chain, while
+new root `019fa3ae-6ad0-7642-aeca-b7b52421f576` is
+`harness/idle` with the one accepted assistant-bearing cold-start turn.
+Students and Swallow process identities are unchanged; native doctor reports
+`overallStatus=ok`. The focused thread-recovery regression and diff hygiene
+pass. Guarded deletion removed only generated schema bundle
+`/tmp/t323-app-server-schema.Pokp62` (350 entries / 3,332,549 bytes; token
+`e3b2b977cf4bd095c046c801b7f4231d17d0de1b7cd8dd22ec21ed67f9734a83`)
+with protected anchors unchanged, and its mode-0600 manifest was
+exact-unlinked. The live `.nfs` inode remains untouched. No rejected prompt
+was replayed and no unsafe rollback, pane/transcript read, app-server restart,
+archive, delete, second signal, process-group signal, or `SIGKILL` occurred.
 
 ### T-322 — Make the phone-visible Swallow name unique
 
