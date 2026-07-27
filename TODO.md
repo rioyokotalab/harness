@@ -130,8 +130,9 @@ The mechanism never replays the rejected prompt and never restarts the shared
 app server.
 
 Work is isolated at `/tmp/harness-t318-thread-recovery` on branch
-`t318-codex-thread-recovery`, based on pushed T-317 revision `1783241`. The
-primary checkout and its live supervisor-held `.nfs…` inode remain untouched.
+`t318-codex-thread-recovery`. It was initially based on pushed T-317 revision
+`1783241` and is now rebased onto fetched T-317 tip `c380345`. The primary
+checkout and its live supervisor-held `.nfs…` inode remain untouched.
 Implement the one-shot analyzer/protocol transaction and focused fixtures
 first, then integrate an exact remote-session watcher only after the recovery
 boundary passes independently. Full validation must run from a clean full
@@ -164,8 +165,10 @@ Checkpoint 2026-07-27:
   suite except `test-tmux-config.sh` and `test-terminfo.sh`; those two
   explicitly rejected the uncommitted checkout, as anticipated. This is a
   retry-safe validation-environment failure, not a product failure.
-- Committed the coherent implementation as `9a4eea1`. A standalone full clone
-  at that exact commit initially inherited this controller's exported
+- Committed the coherent implementation as `9a4eea1` before final contributor
+  reconciliation; the equivalent rebased commit is `6242a98`. A standalone
+  full clone at the pre-rebase implementation commit initially inherited this
+  controller's exported
   `HARNESS_ROOT=/home/rioyokota/harness`, so checkout-sensitive fixtures
   inspected the intentionally dirty primary checkout. With only that inherited
   override unset, `tests/test-tmux-config.sh`, `tests/test-terminfo.sh`, and
