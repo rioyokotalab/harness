@@ -53,5 +53,6 @@ fi
     exit 2
 }
 
-exec "$native_codex" --ask-for-approval never --sandbox danger-full-access \
-    "$@"
+exec "$native_codex" --config \
+    'approval_policy={ granular = { sandbox_approval = false, rules = false, mcp_elicitations = true, request_permissions = false, skill_approval = false } }' \
+    --sandbox danger-full-access "$@"

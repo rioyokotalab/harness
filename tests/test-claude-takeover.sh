@@ -71,6 +71,9 @@ grep -F 'Start Claude from the harness repository' \
 cmp -s "$ROOT/.codex/config.toml" \
     "$ROOT/config/agent-clients/codex.toml" ||
     fail "project Codex settings differ"
+grep -Fx 'approval_policy = { granular = { sandbox_approval = false, rules = false, mcp_elicitations = true, request_permissions = false, skill_approval = false } }' \
+    "$ROOT/.codex/config.toml" >/dev/null ||
+    fail "project Codex MCP-only approval policy"
 grep -Fx 'check_for_update_on_startup = false' \
     "$ROOT/.codex/config.toml" >/dev/null ||
     fail "managed Codex startup update check remains enabled"
@@ -94,6 +97,35 @@ assert data.get("$schema") == "https://json.schemastore.org/claude-code-settings
 assert data.get("permissions") == {"defaultMode": "bypassPermissions"}
 assert data.get("skipDangerousModePermissionPrompt") is True
 PY
+
+# The managed launcher must preserve full sandbox access while forwarding the
+# exact MCP-only granular approval policy as one native config argument.
+launcher_home=$TEMP_DIR/launcher-home
+launcher_args=$TEMP_DIR/launcher-args
+mkdir -p "$launcher_home/.local/bin"
+cat >"$launcher_home/.local/bin/codex" <<'SH'
+#!/bin/sh
+printf '%s\n' "$@" >"$HARNESS_TEST_ARGS_OUT"
+SH
+chmod 755 "$launcher_home/.local/bin/codex"
+(
+    cd "$ROOT"
+    HOME="$launcher_home" HARNESS_ROOT="$ROOT" \
+        HARNESS_TEST_ARGS_OUT="$launcher_args" \
+        "$ROOT/bin/harness-codex" --version
+)
+grep -Fx -- '--config' "$launcher_args" >/dev/null ||
+    fail "managed Codex launcher config flag"
+grep -Fx 'approval_policy={ granular = { sandbox_approval = false, rules = false, mcp_elicitations = true, request_permissions = false, skill_approval = false } }' \
+    "$launcher_args" >/dev/null ||
+    fail "managed Codex launcher MCP-only approval value"
+grep -Fx -- '--sandbox' "$launcher_args" >/dev/null ||
+    fail "managed Codex launcher sandbox flag"
+grep -Fx 'danger-full-access' "$launcher_args" >/dev/null ||
+    fail "managed Codex launcher full-access sandbox"
+if grep -Fx -- '--ask-for-approval' "$launcher_args" >/dev/null; then
+    fail "managed Codex launcher retains superseded approval flag"
+fi
 
 # Exercise the standalone installer in an isolated home. It installs only
 # launch sentinels and the harness command; project skill links stay in Git.

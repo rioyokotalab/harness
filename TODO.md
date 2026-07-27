@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-327.
+Next free ID: T-328.
 
 ## Current state
 
@@ -107,6 +107,209 @@ Next free ID: T-327.
    successors recorded below.
 
 ## Active tasks
+
+### T-327 — Align MCP approvals and retire blocked phone sessions
+
+**Phase:** executing.
+
+The owner asked to update the MCP setting for recent operating needs and asked
+whether phone-visible `swallow-blocked-20260728` and
+`harness-blocked-20260727` may be archived. Scope is the smallest durable
+Codex approval-policy change that permits intended MCP use while preserving
+the repository's existing shell/sandbox autonomy and fail-closed boundaries.
+Do not inspect or rewrite opaque product-owned user configuration, expose a
+bearer token, add or remove an MCP server, authenticate a connector, broaden
+GitHub permissions, auto-approve external writes, restart an active client, or
+archive/delete a saved root from this controller.
+
+Read-only current-state discovery found one enabled user-layer GitHub
+streamable-HTTP MCP registration using a bearer-token environment-variable
+name; no token value or user-config bytes were read. Project
+`.codex/config.toml` declares no MCP transport and currently sets
+`approval_policy = "never"`. Six managed nodes intentionally have no
+product-owned user config, so adding a project transport fragment that assumes
+the Local user-layer server would be invalid fleet policy. Current official
+Codex documentation instead supports a project-level granular approval policy:
+keep only MCP elicitations interactive while automatically rejecting sandbox,
+rules, request-permission, and skill-script approval categories. MCP server
+tool policy separately supports `auto`, `prompt`, `writes`, and `approve`;
+automatic approval is not required for the recent need and would broaden
+external-write authority.
+
+Recommended decision D-001 is to replace only project
+`approval_policy = "never"` with the explicit granular policy that enables
+`mcp_elicitations` and disables the other four approval categories. Preserve
+the existing GitHub MCP registration and its current tool policy. This lets
+the owner approve an MCP action from an interactive surface when needed while
+leaving shell, sandbox, and unrelated prompts noninteractive/fail-closed.
+Alternative D-001B is to auto-approve MCP tools, which is not recommended
+because it expands third-party write authority; D-001C leaves the current
+fail-closed behavior unchanged.
+
+If D-001 is selected, execution is:
+
+1. Add failing focused assertions for the exact five-category granular policy
+   in both reviewed project-config mirrors and for rejection of a broadened or
+   incomplete policy.
+2. Change only those mirrors, their exact validator, focused fixtures, and the
+   owner-facing client-config documentation. Do not add an MCP server table or
+   change any user-layer product file.
+3. Require mirrored-byte equality, native Codex 0.145.0 strict parsing, shell
+   syntax and ShellCheck where applicable, focused suites, diff hygiene, and
+   complete clean-tree `tests/test-phase1.sh`.
+4. Publish through exact-head protected CI, guarded-sync only clean managed
+   checkouts, and send one revision-specific context refresh to each eligible
+   managed Mac. The changed policy activates only in clients that load the
+   updated config; do not restart or retarget existing sessions.
+
+Rollback is a protected revert restoring exact `approval_policy = "never"` in
+both mirrors plus its prior validator/tests. Acceptance requires all non-MCP
+approval categories to remain false, no MCP transport/auth/tool-policy drift,
+no user-config or active-session mutation, and passing protected/fleet
+readback. A disposable native strict-config override already accepts the
+recommended syntax under installed Codex 0.145.0.
+
+Fresh SQLite metadata, limited to exact IDs and archive flags, confirms both
+blocked roots remain unarchived. A value-free `/proc` argv scan found zero
+live process references to either blocked ID. Their T-323/T-325 process chains
+were already retired and their accepted replacement roots are distinct.
+Official Codex behavior defines archive as removing a saved session from
+active lists without deleting its transcript, with reversible unarchive.
+Therefore both exact blocked sessions are safe for the owner to archive from
+the phone; do not delete them.
+
+One initial read-only SQLite query used a `COALESCE(name,title)` display while
+checking the four exact roots. The active Swallow row had no stored name, so
+the title fallback unexpectedly rendered its cold-start message. The query
+was stopped and will not be repeated. No rejected prompt, pane content, tool
+payload, credential, transcript body, or mutable state was read or changed;
+all subsequent checks use only IDs, archive flags, and aggregate process
+counts.
+
+**Decision D-001:** selected. The owner's exact response was
+`As you recommend`, selecting the recommended interactive MCP-only granular
+policy. No other decision remains unresolved. Freeze the exact replacement as:
+
+```toml
+approval_policy = { granular = { sandbox_approval = false, rules = false, mcp_elicitations = true, request_permissions = false, skill_approval = false } }
+```
+
+The existing GitHub MCP registration, authentication source, transport, and
+tool policy remain untouched. Existing Codex sessions are not restarted,
+retargeted, or claimed to have reloaded this policy. Archiving remains an
+owner-side phone action and is not an acceptance gate for the config change.
+
+**Next action:** wait for a separate explicit owner instruction such as `go`,
+`proceed`, or `execute`. After that authorization, set the phase to
+`executing`, add the failing focused policy assertions first, and continue
+autonomously through the frozen implementation, validation, protected
+publication, guarded fleet sync, eligible Mac refreshes, and final readback.
+
+**Execution authorization:** the owner gave exact `go`. Branch
+`codex/t327-mcp-archive` is clean and aligned with its published planning head
+`1bdd1d0`; collaborative `origin/main` remains exact `c8afe66`. No config,
+MCP server, authentication, tool policy, active session, or archive state
+changed before this checkpoint.
+
+**Next action:** add the failing focused assertions for the exact granular
+policy and its fail-closed negative fixtures before editing either reviewed
+config mirror or validator.
+
+**Pre-edit scope gate:** source and owner-facing documentation revalidation
+found that managed `bin/harness-codex` passes exact
+`--ask-for-approval never` on every launch. Command-line flags take precedence
+over project config, so the frozen config-only implementation would parse but
+would not change approval behavior in normal managed sessions. No focused test,
+config, validator, launcher, documentation, MCP server, user layer, active
+session, or archive state changed before this gate.
+
+Decision D-002 is now required. Recommended D-002A extends the implementation
+surface to `bin/harness-codex`: replace only its `never` flag with the exact
+granular `approval_policy` command-line config override, retain explicit
+`--sandbox danger-full-access`, and add focused launcher-argument coverage plus
+the already planned mirror/validator/documentation tests. This keeps the
+selected policy effective for managed launches without touching user config,
+MCP transport/auth/tool policy, or existing sessions. D-002B leaves the
+launcher unchanged, in which case the project file affects only direct native
+invocations and does not satisfy the recent managed-session need.
+
+**Next action:** ask the owner whether to expand the frozen implementation by
+the recommended narrow launcher change. After selection, checkpoint the
+decision, return to `ready-for-go`, and wait for a new explicit `go` before
+editing implementation or tests.
+
+**Decision D-002:** selected. The owner answered exact `yes`, approving
+recommended D-002A. The corrected frozen implementation additionally changes
+only `bin/harness-codex` from:
+
+```text
+--ask-for-approval never
+```
+
+to this exact command-line override:
+
+```text
+--config 'approval_policy={ granular = { sandbox_approval = false, rules = false, mcp_elicitations = true, request_permissions = false, skill_approval = false } }'
+```
+
+It retains explicit `--sandbox danger-full-access`. Add dynamic or
+argument-capture focused coverage proving the launcher forwards the exact
+granular value and never emits the superseded `--ask-for-approval never`.
+Update the project-config mirrors, exact validator, onboarding fixture,
+takeover/launcher assertions, and owner-facing documentation together. No
+user-layer file, MCP transport/auth/tool policy, active process, or archive
+state enters scope. D-001 and D-002 resolve all material decisions.
+
+**Next action:** wait for one new explicit `go`, `proceed`, or `execute`.
+After it arrives, set the phase to `executing` and begin with failing focused
+config and launcher assertions before any production edit.
+
+**Corrected execution authorization:** the owner gave the required new exact
+`go`. The task branch remains clean/aligned at `a8a9b92`, and
+`origin/main` remains `c8afe66`. No implementation or live state changed
+between D-002 selection and this authorization.
+
+**Next action:** add and run failing focused assertions for the exact mirrored
+granular policy, fail-closed negative fixtures, and managed-launcher argument
+contract before any production edit.
+
+**Implementation checkpoint:** failing-first takeover and agent-config suites
+stopped before production edits because the granular project policy was absent.
+The external-onboarding suite already passed its synthetic mirror-only
+contract; the aggregate failing-first wrapper incorrectly required that
+unchanged suite to fail and therefore exited nonzero after reporting the two
+intended failures. Its three exact temporary captures were exact-unlinked. No
+external or live state changed.
+
+Both reviewed Codex config mirrors now contain the exact five-category
+granular policy. The validator accepts only that complete line and a negative
+fixture proves `mcp_elicitations = false` fails closed. The managed launcher
+passes the same policy as one native `--config` value, retains explicit
+`danger-full-access`, and no longer passes the superseded
+`--ask-for-approval never`; focused argument capture covers all three
+properties. Owner-facing documentation and the external-onboarding fixture
+match the new contract.
+
+Mirrored-byte equality, POSIX shell syntax, warning-level ShellCheck, native
+Codex 0.145.0 direct and managed-launcher strict-config parsing, takeover,
+agent-config, external-onboarding, and diff-hygiene checks pass. No user
+config, MCP registration, authentication source, transport, tool policy,
+active process, or archive state changed.
+
+**Next action:** review and commit this coherent implementation checkpoint,
+then run the complete clean-tree `tests/test-phase1.sh` before protected
+publication.
+
+**Validation checkpoint:** clean implementation commit `57ba7b7` passed the
+complete eight-worker `tests/test-phase1.sh`: all focused suites, guarded
+deletion, and integration gates passed; only the declared native MPI smoke
+skipped outside an allocation. The branch contains only the frozen config,
+launcher, validator, tests, documentation, and ledger surfaces.
+
+**Next action:** commit this validation evidence, fetch and explicitly push the
+task branch, then open an exact-head protected pull request and require
+`portable-phase1` before merge. Do not reload an existing session or mutate
+the user-layer MCP registration.
 
 ### T-326 — Use exact progress clocks and default new Codex sessions to Sol high
 
