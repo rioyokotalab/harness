@@ -149,6 +149,15 @@ window `@58:2`, supervisor PID `382132`, watcher PID `382211`, remote root
 run. Commit and push this authorization checkpoint, then complete the narrow
 app-server/process/socket/doctor identity gate before one `thread/start`.
 
+**Pre-write plan correction:** installed schema and T-318 evidence show a new
+0.145.0 rollout is created mode `0664`, while watcher readiness requires
+`0600`. The frozen plan now explicitly requires the prior proven
+descriptor-identity transaction: only a current-user-owned, single-link,
+canonical new rollout with exact initial mode `0664` may be opened without
+following links, identity-revalidated through the descriptor, and changed to
+`0600`. No root has been created yet. Commit and push this correction, rerun
+the narrow live preflight, then invoke `thread/start` once.
+
 ### T-320 — Make interactive `ls` color portable across the fleet
 
 **Phase:** complete.

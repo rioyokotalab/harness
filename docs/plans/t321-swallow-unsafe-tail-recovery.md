@@ -54,6 +54,13 @@ Do not:
    Require an acknowledged response with exactly one new root, then read it
    back as idle with zero turns. An ambiguous acknowledgement is
    non-retryable.
+   Before launching a watcher, require the new rollout to be a current-user
+   owned, single-link regular file canonically below `$CODEX_HOME/sessions`.
+   If and only if its mode is the installed 0.145.0 default `0664`, open it
+   without following links, revalidate device/inode/owner/type/link count
+   through the descriptor, and change only that descriptor to `0600`. Require
+   stable identity and exact `0600` readback. Reject every other initial mode
+   or metadata state.
 4. Give the new root a unique provisional name through one acknowledged
    `thread/name/set` and same-connection readback. Preserve the old root name
    and metadata until acceptance.
