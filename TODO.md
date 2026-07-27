@@ -1396,6 +1396,16 @@ firewall/stealth/signed access and disabled block-all. The administrator-
 authentication gate is complete; the separate Codex user-config policy choice
 below remains.
 
+**Post-closeout route observation 2026-07-27:** the first canonical health
+check after PR #345 briefly found Riken primary down while secondary remained
+ready. Both tunnel supervisors were still managed/running; the watchdog's
+latest prior run reported `invariant-failed`. Before the bounded
+`connection-monitor --once --recover` reached Riken, the primary route had
+already returned, so the monitor reported both ready with `action=none`; it
+performed no Riken recovery. A fresh canonical check then passed all Linux
+nodes and all four Mac route pairs. The evidence does not establish firewall
+causation, an authentication failure, or a persistent route defect.
+
 **LIFO gate resolved 2026-07-26:** Office had no running XQuartz process,
 local X11 client, or TCP 6000 listener. Its XQuartz 2.8+ preference domain now
 sets `nolisten_tcp=true`; the current listener count remains zero and the
