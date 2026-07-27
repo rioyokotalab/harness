@@ -149,7 +149,10 @@ reviews despite frozen T-311 D-001 requiring one and stronger Students gates;
 Riken retains a second distinct stale global npm Claude package `0.2.14`
 behind the effective managed `2.1.220` launcher; and Local's shared `/home`
 filesystem is 96% used even though this account uses only about 3 GiB and
-retains about 2.2 TiB available. Office retains one detached childless owner
+retains about 2.2 TiB available. Local also requires a reboot to activate the
+installed `6.8.0-136-generic` kernel and currently runs `6.8.0-134-generic`;
+the root-owned marker names `linux-base` and the new kernel. Office retains
+one detached childless owner
 shell alongside its healthy Codex window, and RI lacks `xauth` while the site
 rejects requested X11 forwarding. Unknown read-only observations are RI
 accounting for old job `7242`, still blocked before lookup by Slurm DNS SRV
@@ -166,8 +169,10 @@ Fourteen more exact Harness branches and Website's one stale branch were
 removed only after current remote heads matched merged PR heads. Six remote
 Linux arg0 residues, ten stale T-295 manifests, and tonight's exact pytest
 root were safely removed; final arg0 plans and guarded-manifest counts are
-zero across all Linux nodes. Ambiguous project/browser artifacts remain
-preserved.
+zero across all Linux nodes. Ten corresponding local T-317/T-321/T-322 refs
+were subsequently removed after the same durable exact-merged proof and a
+fresh worktree-ownership check; their commit IDs remain in the deletion
+output. Ambiguous project/browser artifacts remain preserved.
 
 **LIFO documentation fix:** all twelve live agent-config contracts report 16
 shared skills, while the compact current state still said 15. The stale count
@@ -204,6 +209,10 @@ has failed NetworkManager wait-online plus another account's user manager.
 Current-user zombie counts are zero everywhere and RC's own user manager is
 running. These are shared-site administrator findings outside owner authority;
 no unit was reset, restarted, or modified.
+
+Only Local exposes `/var/run/reboot-required`; AB, AB2, RI, AL, RC, T4, and
+ABQ do not. Rebooting Local would interrupt the control plane and requires
+explicit owner coordination, so no reboot or service interruption ran.
 
 **Next action:** publish the resilience fix through PR #361 after current-head
 checks pass, continue independent deep checks until the 04:13 JST

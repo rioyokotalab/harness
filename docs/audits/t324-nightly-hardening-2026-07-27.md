@@ -99,6 +99,15 @@ exact drift is deferred for owner reconciliation.
   account's user manager is running. These are shared-site system services
   requiring administrator authority. They were recorded without reset,
   restart, log-content inspection, or mutation.
+- Current-user world-writable regular-file counts are zero beneath every
+  present managed Harness/agent release root on all eight Linux nodes.
+  Current-user broken-link counts are likewise zero beneath each present
+  `.local/bin`, Harness release, and agent release root.
+- Local alone has a root-owned reboot-required marker. It currently runs
+  `6.8.0-134-generic`; installed `6.8.0-136-generic` and `linux-base` are named
+  by the marker. The other seven Linux logical nodes have no such marker.
+  Rebooting the control-plane host is an explicit coordination boundary and
+  was deferred without process or service interruption.
 
 ## Repository housekeeping
 
@@ -114,16 +123,23 @@ Fourteen additional Harness remote branches were deleted only after each
 current remote head exactly matched its merged PR head (T-311, T-320, T-321,
 T-322, and T-317 branches). Three T-303 evidence/blocker branches plus
 T-314/T-316 branches without an exact merged-PR proof remain preserved.
+Ten local T-317/T-321/T-322 counterparts remained after that remote cleanup.
+Fresh worktree readback proved only `main` and active T-324 checked out, so
+those local refs were removed using the already-recorded exact merged-PR
+proof. Their deleted abbreviated commits remain in the command record.
 Website's sole stale task branch exactly matched merged PR #36 and was deleted;
 fresh readback leaves only `main`. Repository auto-delete-on-merge remains
 disabled and is a hosting-policy choice, so it was not changed.
 
 Website has one clean `main` worktree and no merged local branch residue.
 Students changed concurrently from clean `main` to a project-owned task branch
-during this audit; no takeover or mutation ran. Swallow has active project
-work on AB plus an additional clean registered SW-013 worktree and many merged
-research branches. Those project-owned experiment refs are preserved for the
-Swallow agent rather than treated as generic Harness residue.
+during this audit and most recently reports
+`task/t-013-skill-driven-sol` with task-ledger changes; no takeover or mutation
+ran. Swallow's active AB project branch also advanced concurrently, while its
+additional registered SW-013 worktree and T4 mirror remain clean. Those
+project-owned experiment refs are preserved for the Swallow agent rather than
+treated as generic Harness residue. Fresh prune dry-runs report no stale
+remote-tracking refs in any repository.
 
 Remote Linux arg0 inventory found one eligible completed residue on AB, AB2,
 RI, RC, T4, and ABQ and none on AL. Each owning node's lock-aware guarded
@@ -166,8 +182,13 @@ browser, image, and Swallow research artifacts remain preserved.
    phase-one entry point now clears that process-only variable. A validating
    rerun then correctly inspected the task worktree, but its intentional
    uncommitted test-isolation patch caused the tmux and terminfo clean gates
-   to refuse. Both failures are deterministic, safe, and require one
-   committed-current-head rerun.
+   to refuse. Both failures were deterministic and safe; the subsequent clean
+   committed head passed all 75 focused suites and phase-one integration.
+8. A fresh commit-to-pull-request association query returned empty after the
+   corresponding remote refs had already been deleted. It made no change and
+   did not supersede the durable same-night proof that each exact remote head
+   matched a merged pull request; local deletion used that prior proof plus a
+   fresh worktree-ownership check.
 
 Every failed probe was read-only and retry-safe unless explicitly marked
 non-retryable. No credential, pane, transcript, deployment, message, package,
