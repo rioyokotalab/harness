@@ -110,7 +110,7 @@ Next free ID: T-325.
 
 ### T-324 — Nightly fleet and repository hardening
 
-**Phase:** executing.
+**Phase:** validating.
 
 The owner authorized an immediate seven-hour housekeeping and hardening run
 from 2026-07-27 22:13 JST through 2026-07-28 05:13 JST, with safe findings
@@ -255,12 +255,21 @@ AB's 250 historical failed session scopes were cleared externally; RI/AL/RC
 shared-system failures and Local's reboot marker remain deferred. All user-unit
 and arg0 checks pass.
 
-**Next action:** publish the resilience fix through PR #361 after current-head
-checks pass, continue independent deep checks until the 04:13 JST
-material-work cutoff, then run final validation and live readback. The earlier
-exact branch head passed all 75 focused suites, guarded-delete coverage, and
-every phase-one integration gate; only the declared native MPI smoke skipped
-outside an allocation. The clean validation clone was guarded-deleted.
+The final 55-cycle discovery monitor completed through 04:06 JST. The exact
+protected head remained successful/merge-clean and all five canonical fleet
+sweeps passed. Material discovery and repair closed ahead of the 04:13 cutoff
+with no open safe LIFO finding. Remaining work is validation-only: pass the
+final exact-head suite/check, merge PR #361, guarded-sync clean managed
+checkouts, queue the required one-time Mac context refreshes, and complete
+fresh residue/fleet handoff readback.
+
+**Next action:** run final validation on this ledger checkpoint and merge only
+the exact successful PR #361 head. Then guarded-sync only clean managed
+checkouts, issue one required context refresh per eligible Mac session, and
+finish fresh residue and fleet-health readback. The implementation head passed
+all 75 focused suites, guarded-delete coverage, and every phase-one integration
+gate; only the declared native MPI smoke skipped outside an allocation. The
+clean validation clone was guarded-deleted.
 
 ### T-323 — Recover Harness unsafe-tail `Request blocked`
 
