@@ -49,7 +49,13 @@ exact drift is deferred for owner reconciliation.
   pass on all Macs. Native update checks report no available software. The
   Home-only wildcard listener is signed Pharos Notify on vendor-documented
   TCP 28201; it is expected print-client functionality. No current-user-owned
-  Linux TCP listener was found.
+  Linux TCP listener or failed user systemd unit was found.
+- Both managed tunnel supervisors and the watchdog are loaded, running, and
+  healthy on every Mac with `managed=1 external=0`. Aist, Home, and Riken have
+  the expected one-window detached Codex resume session. Office also has one
+  childless detached login-shell window created 2026-07-26 in that session.
+  The managed Codex window is healthy; the owner shell is preserved and exact
+  removal is deferred.
 - Official release metadata reports Codex `0.145.0` and Claude Code
   `2.1.220` as current; every system runs those effective versions. Aist/Home
   Codex path duplicates collapse to one canonical target. Riken alone has a
@@ -62,6 +68,29 @@ exact drift is deferred for owner reconciliation.
   closed; no live inode or safety check changed. Guarded deletion removed the
   exact 4,457-entry / 51,190,482-byte diagnostic clone and its manifest was
   exact-unlinked.
+- Effective SSH policy matches the owner-selected forwarding, 30-second
+  timeout, and persistent multiplexing contract. RI repeatedly rejects X11
+  forwarding and lacks `xauth`; this is a site/package capability gap, not
+  authorized package or sshd work, so it is deferred. Other currently
+  multiplexed Linux sessions do not provide uniform DISPLAY evidence; no
+  master was restarted merely for this audit.
+
+## Repository housekeeping
+
+Two old Harness worktrees were clean, unlocked, unused by any live cwd/open
+file, and matched exact merged PR heads: `codex/t322-execute-rename` at PR
+#360 and `t318-codex-thread-recovery` at PR #340. Two guarded transactions
+removed only their exact 883/881-entry worktree trees and exact 10-entry Git
+registration directories. Fresh PR-head and remote-ref readback then gated
+deletion of only those two merged local and remote branches. T-324's worktree,
+the primary checkout, and the live `.nfs` inode remain.
+
+Website has one clean `main` worktree and no merged local branch residue.
+Students changed concurrently from clean `main` to a project-owned task branch
+during this audit; no takeover or mutation ran. Swallow has active project
+work on AB plus an additional clean registered SW-013 worktree and many merged
+research branches. Those project-owned experiment refs are preserved for the
+Swallow agent rather than treated as generic Harness residue.
 
 ## LIFO execution issues
 

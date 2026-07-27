@@ -149,11 +149,18 @@ reviews despite frozen T-311 D-001 requiring one and stronger Students gates;
 Riken retains a second distinct stale global npm Claude package `0.2.14`
 behind the effective managed `2.1.220` launcher; and Local's shared `/home`
 filesystem is 96% used even though this account uses only about 3 GiB and
-retains about 2.2 TiB available. Unknown read-only observations are RI
+retains about 2.2 TiB available. Office retains one detached childless owner
+shell alongside its healthy Codex window, and RI lacks `xauth` while the site
+rejects requested X11 forwarding. Unknown read-only observations are RI
 accounting for old job `7242`, still blocked before lookup by Slurm DNS SRV
 failure, and Local project-agent doctor, whose clean-checkout gate correctly
 refuses the protected live `.nfs` inode. No dependent mutation crossed any of
 these gates.
+
+Two old clean/unused Harness worktrees and their registration directories were
+guarded-deleted only after their exact heads matched merged PRs #360/#340;
+their exact local and remote task refs were then removed. Active T-324,
+Students, and Swallow project work remains untouched.
 
 **Next action:** validate and publish this first audit checkpoint through the
 protected task branch, then continue independent deep checks and LIFO repair
