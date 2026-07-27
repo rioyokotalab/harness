@@ -361,6 +361,28 @@ fast-forward Local plus the clean fleet. Then terminate only the exact current
 backoff sleep leaf so supervisor `1917582` and watcher `1917695` unwind, and
 launch the same root once under the corrected merged code.
 
+**TTY-correction publication and rollout:** protected PR #364 at exact head
+`3aeb54b` passed `portable-phase1` in 2m21s and squash-merged as `0e7f349`.
+Local `main` fast-forwarded to the merge while preserving the three live
+supervisor-held `.nfs` inodes. One clean guarded eleven-target fleet-sync
+advanced ab, ab2, ri, al, rc, t4, abq, aist, home, office, and riken from
+`dcfdc1d` to `0e7f349`; every origin aligned and every transfer artifact was
+absent. Aist, Home, Office, and Riken each returned exactly one
+revision-specific context-refresh `status=submitted`; none may be retried.
+
+Fresh readback finds exact supervisor PID `1917582`, watcher PID `1917695`,
+and backoff sleep leaf PID `2176727`; no TUI is present. The exact accepted
+root remains `019fa5a1-7fff-7e92-8e2a-2586c684747f`, tmux window
+`@62:swallow` remains one pane, and shared app-server PID `2852569` is
+unchanged.
+
+**Next action:** after this checkpoint is committed and pushed, revalidate the
+same identities and signal only the exact current backoff sleep leaf once so
+the stale supervisor and watcher unwind. Launch the same accepted root once in
+one `swallow` window under corrected merge `0e7f349`; do not replay a prompt,
+change the root/name, inspect pane or transcript content, restart the app
+server, or signal the shared tmux server.
+
 ### T-324 — Nightly fleet and repository hardening
 
 **Phase:** complete.
