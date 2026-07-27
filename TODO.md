@@ -179,6 +179,16 @@ stable post-readback passed. Neither `thread/start` nor the name write may be
 retried. Commit and push this accepted identity, then launch one detached
 provisional `swallow-next` window under supervisor name `swallow-recovery`.
 
+**Provisional-client acceptance:** one detached launch created exact window
+`@59:3` / pane `%59`, supervisor PID `2876863`, watcher PID `2876942`,
+and real TUI PID `2877595` for the new UUID. Value-free status is
+`running/remote-explicit` plus `watching/thread-idle`, with attempt/delay and
+recovery/rollback counts all zero. Process argv, session identity, four-window
+mapping, and the established Unix peer to unchanged app server PID `2852569`
+pass. Harness remains active and Students plus blocked Swallow are unchanged.
+Commit and push this accepted identity before submitting the one cold-start
+turn.
+
 ### T-320 — Make interactive `ls` color portable across the fleet
 
 **Phase:** complete.
