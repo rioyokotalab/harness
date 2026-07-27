@@ -383,6 +383,35 @@ one `swallow` window under corrected merge `0e7f349`; do not replay a prompt,
 change the root/name, inspect pane or transcript content, restart the app
 server, or signal the shared tmux server.
 
+**Corrected live activation:** exact sleep PID `2176727`, parent PID
+`1917582`, start tick `92745712`, and argv `sleep 300` revalidated with no TUI
+present. One `SIGTERM` to only that leaf removed it, supervisor `1917582`,
+watcher `1917695`, and window `@62`; no second signal ran. One launch of the
+same accepted root under merged `0e7f349` created exact window/pane
+`@63`/`%63`, supervisor PID `2186520` start tick `92768090`, watcher PID
+`2186599` start tick `92768100`, launcher PID `2186679` start tick
+`92768212`, Codex wrapper PID `2186681` start tick `92768212`, and real TUI
+PID `2187033` start tick `92768282`.
+
+The supervisor is `running/remote-explicit` at attempt zero and the watcher is
+`watching/thread-idle` with zero recoveries and zero rollbacks. The wrapper's
+stdin is exact `/dev/tty`; real TUI/app-server socket inodes are the reciprocal
+pair `185445577`/`185443806`. Shared app-server PID `2852569` and start tick
+`83381863` are unchanged. Native doctor reports 18/18 checks `ok`; SQLite and
+session-index metadata show the accepted root unarchived and named `swallow`,
+while the poisoned root remains unarchived and preserved as
+`swallow-blocked-20260728`. Harness retains exactly `swallow`, `students`, and
+`harness` windows, and attached client PID `3503464` remains on
+`@50:students`. No pane or transcript content was inspected.
+
+**Next action:** use guarded-delete plan/apply for only the task-created schema
+bundle, clean fleet-sync clone, and obsolete merged task worktrees. Preserve
+the active finalization worktree and all three live `.nfs` inodes. Record
+deleted targets and manifest verification, validate the final ledger diff,
+publish through one protected exact-head pull request, then run the required
+clean fleet sync, one revision-specific Mac refresh per managed Mac, and fresh
+canonical fleet health.
+
 ### T-324 — Nightly fleet and repository hardening
 
 **Phase:** complete.
