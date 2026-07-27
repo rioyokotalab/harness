@@ -304,12 +304,28 @@ declared native MPI smoke skipped outside an MPI allocation. Live new Swallow
 remains `running/remote-explicit` plus `watching/thread-idle`; old supervisor
 PID `2876863` remains parent-owned zombie `Z` and received no second signal.
 
-**Next action:** commit and push this validation checkpoint, fetch current
-main, open a protected pull request for the exact task head, require
-`portable-phase1`, merge without bypass, then guarded-sync only clean managed
-checkouts. Activate the corrected Swallow supervisor only through a separate
-exact process/root/socket gate after published code is available; do not
-signal the shared tmux server merely to reap PID `2876863`.
+**Publication and rollout checkpoint:** protected PR #363 at exact head
+`1ae627e` passed `portable-phase1` in 2m28s and squash-merged as `dcfdc1d`.
+The first `gh pr merge` completed the hosting merge but then reported a local
+checkout failure because primary `main` belongs to another worktree; fresh PR
+readback proved `MERGED`, so no merge was retried. Local `main` fast-forwarded
+while preserving three live supervisor-held `.nfs` inodes.
+
+A clean exact full clone produced one guarded eleven-target fleet-sync plan
+from `d6cdb7a` to `dcfdc1d`; every checkout was clean at the exact source.
+The matching apply advanced ab, ab2, ri, al, rc, t4, abq, aist, home, office,
+and riken to the merge with every origin aligned and transfer artifact absent.
+Using the `remote-agent-communication` workflow, Aist, Home, Office, and Riken
+each returned exactly one context-refresh `status=submitted`; none may be
+retried.
+
+**Next action:** commit and push this rollout checkpoint, then revalidate exact
+new Swallow root/window/process/start/socket/idle state, unchanged
+Harness/Students/app server, attached-client selection, native doctor, and
+published Git. Send one `SIGTERM` only to accepted real TUI PID `1605906` so
+its old-inode launcher/watcher/supervisor unwind, then launch the same root in
+one `swallow` window under published supervisor code. Do not replay a prompt,
+change the root/name, signal the shared tmux server, or touch PID `2876863`.
 
 ### T-324 — Nightly fleet and repository hardening
 
