@@ -668,6 +668,42 @@ probe. Existing T-196 policy expressly forbids replica automation and requires
 manual checks/restores before a current generation. Do not create or copy a
 generation during T-317; carry this exact recovery-point gap into T-196.
 
+**Resilience and repository checkpoint 2026-07-27 12:52 JST:** a fresh native
+Codex doctor reports every value-free check `ok`, including auth, config,
+installation, state paths, rollout parity, provider reachability, and
+WebSocket reachability. The focused supervisor suite again proves exact
+remote-session retry, doctor gating, bounded backoff/reset, operator-signal
+refusal, and prompt replay disabled. All three live supervisors remain
+`running remote-explicit` at original owner PIDs `4063793`, `4073421`, and
+`4077898`; the sole attached client remains on the original Students view.
+Local arg0 is `live=7 eligible=0 young=0 unexpected=0`, all routes pass, every
+Restic lock directory is empty, and all 12 systems have zero current-user
+zombies. A diagnostic temp trap initially passed two paths to single-operand
+`unlink`; both exact mode-0600 files were individually identity-validated,
+unlinked, and proved absent.
+
+GitHub has zero Actions cache entries, artifacts, or open issues across all
+four repositories. Filename-only privacy/runtime inspection found no tracked
+credential payload or ignored private/runtime file; no suspected credential
+content was read. Git object stores are small and have no blob above 9 MiB.
+Harness, Website, and both Swallow copies have zero garbage. Students retains
+51 MiB of active loose objects and the three known 54-byte temp objects; do
+not pack or remove them while its agent is active.
+
+Website T-210 upgraded publisher-pinned `actions/checkout` v7.0.0 to v7.0.1
+and corrected `hook-doctor` to resolve Git's common hooks directory from a
+linked worktree. Focused tests, ShellCheck, full offline security, and both
+protected PR heads pass. PR #36 merged as
+`9e1cd10738c88ea745379fe8a9799cd3668fbffd`; Website `main` is clean/current
+and no deployment ran. Live ruleset `19127356` currently requires zero
+approvals despite Website's durable T-198 one-review decision; this remains a
+read-only hosting-policy gap. The fixed Website agent socket was absent, so
+the exact pull/push used the validated current-user process socket under
+Harness precedence. Guarded-delete removed only verified clean worktree
+`/tmp/website-t210.V9Vj3h` (403 entries, 61,097,424 bytes); its registration,
+local branch, manifest, and temp path are absent. The remote task branch
+remains because D-006 forbids remote branch deletion.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
