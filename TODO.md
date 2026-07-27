@@ -51,10 +51,11 @@ Next free ID: T-321.
   `harness codex-arg0-wrapper --rollback`; an official Codex upgrade requires
   fresh validation before reinstalling the version-scoped wrapper.
 - Codex and Claude now use only project-scoped policy, permission settings,
-  rules, and 15 skills when started from `~/harness`. All 12 systems retain
-  only the two global launch sentinels and the Codex launcher; schema-2 doctor,
-  repository convergence, external onboarding preflight, and all four resumed
-  Mac TUIs passed at `309de20`. See
+  rules, and 15 skills when started from `~/harness`. All 12 systems retain the
+  two global launch sentinels and Codex launcher. Codex's opaque product-owned
+  user configuration is private and accepted on Local, T4, and the four Macs;
+  it is absent on the other six nodes. Schema-2 doctor, repository convergence,
+  external onboarding preflight, and all four resumed Mac TUIs pass. See
   `docs/audits/t304-project-scoped-agent-config-2026-07-24.md`.
 - Codex's native startup update offer is disabled in the project because Linux
   releases are harness-managed. All seven remote Linux nodes use verified
@@ -94,8 +95,8 @@ Next free ID: T-321.
 1. T-314 through T-318 are complete. Students and Swallow are owned by their
    independent project agents and ledgers; Harness has no project-research
    resume action for either repository.
-2. T-311 decision D-007 now permits a private product-owned Codex user layer;
-   implement and validate the frozen value-free preservation contract next.
+2. T-311 is complete, including administrator-authenticated Mac changes and
+   D-007's private product-owned Codex user layer.
 3. Ask the `192.168.33.30` administrator to correlate T-303's recorded NFS
    latency intervals when an external coordination window is available.
 4. Continue T-196 only at its exact time/identity gates: all eight nodes are
@@ -1149,7 +1150,7 @@ and synchronization carry only this durable evidence.
 
 ### T-311 — Harden the fleet and independent project repositories
 
-**Phase:** publishing final product-owned Codex user-config policy.
+**Phase:** complete.
 
 Audit and harden all managed Linux and Mac nodes plus `harness`, `students`,
 `swallow`, and `website`, while each repository owns its own task, branch,
@@ -1191,10 +1192,27 @@ Claude-takeover, and diff-hygiene checks pass. This checkpoint was committed as
 **D-007 validation checkpoint 2026-07-27:** clean implementation commit
 `1759b8a` passed the complete eight-worker `tests/test-phase1.sh`: all 75
 focused suites and integration gates passed, with only the declared native-MPI
-smoke skipped outside a declared MPI environment. Next: publish through
-protected CI, guarded-sync all eleven remote checkouts, run all twelve
-value-free doctors, and confirm the six present files retain only their
-previously observed safe metadata.
+smoke skipped outside a declared MPI environment.
+
+**D-007 completion 2026-07-27:** PR #349 passed protected
+`portable-phase1` in 2m19s and squash-merged as `6dfe35d`. Guarded explicit
+eleven-target synchronization advanced every clean remote checkout from
+`a4b1e59` to that revision; every head and origin matched and every transfer
+artifact was absent. Aist, Home, Office, and Riken each returned exactly one
+context-refresh `status=submitted`, and the private message was exact-unlinked.
+
+All eleven remote value-free doctors passed: T4 and the four Macs reported
+`product-owned:none`, while AB, AB2, RI, AL, RC, and ABQ reported
+`absent:none`. Local's first clean-clone doctor correctly found the product
+path ready but rejected three managed links whose absolute targets name the
+live checkout. Two exact-exclude attempts, a disabled user-namespace preflight,
+and an alternate-index preflight each failed before a doctor could run; all
+temporary files were exact-unlinked and no retry changed live state. A
+disposable native-Git validation view finally presented the clean exact tree
+at the live worktree identity without changing its index or files. Local then
+reported `product-owned:none` and doctor `status=ready failures=0`. No product
+configuration bytes, credentials, live configuration, active process, or
+Local's supervisor-held `.nfs…` inode changed. T-311 has no remaining action.
 
 **LIFO gate resolved 2026-07-26:** a final read-only fleet-sync check supplied
 the same exact commit as both source and target. The command rejected the
