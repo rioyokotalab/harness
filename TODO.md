@@ -198,6 +198,14 @@ remaining live cutover mutations to this controller. The request must never be
 retried. Commit and push this acknowledgement, then monitor only value-free
 turn structure until assistant-bearing completion or a fail-closed state.
 
+**Cold-start acceptance:** value-free protocol monitoring proves exact turn
+`019fa3b1-741c-77b2-aa01-60285d99e39a` completed and the new root returned
+idle without `systemError`. Its final structure is one user item and five
+assistant items, with no tool-call items or active item. No message text, pane,
+command, or transcript content was inspected. Commit and push this acceptance,
+then revalidate every old/new root, process, socket, tmux, Students, Swallow,
+app-server, doctor, and Git identity before the exact root-name transfer.
+
 ### T-322 — Make the phone-visible Swallow name unique
 
 **Phase:** complete.
