@@ -110,7 +110,7 @@ Next free ID: T-326.
 
 ### T-325 — Recover recurring Codex unsafe tails and make the workflow reusable
 
-**Phase:** executing.
+**Phase:** complete.
 
 At 2026-07-28 07:04 JST, the owner reported that Swallow was blocked again
 and explicitly requested both recovery and a reusable skill because the
@@ -429,6 +429,27 @@ request, require `portable-phase1`, merge, and fast-forward Local plus the
 clean fleet. Send exactly one merge-specific context refresh to each managed
 Mac and do not retry submitted receipts. Then mark T-325 complete with fresh
 live Swallow and canonical fleet-health evidence.
+
+**Finalization publication and rollout:** protected PR #365 at exact head
+`161315d` passed `portable-phase1` in 1m49s and squash-merged as `50793ec`.
+Local `main` fast-forwarded while preserving two remaining live `.nfs`
+inodes. One clean guarded eleven-target fleet-sync advanced ab, ab2, ri, al,
+rc, t4, abq, aist, home, office, and riken from `0e7f349` to `50793ec`; every
+checkout and origin aligned and every transfer artifact was absent.
+
+The first Aist refresh command named the skill's helper relative to the
+repository root and failed locally with `No such file or directory` before
+SSH, insertion, or submission. One corrected call used the skill-relative
+helper and returned `status=submitted`. Home, Office, and Riken each also
+returned exactly one merge-specific `status=submitted`; none may be retried.
+
+Final live readback still finds supervisor `2186520` running at attempt zero,
+watcher `2186599` `watching/thread-idle` with zero recovery counters, real TUI
+`2187033`, unchanged app-server `2852569`, and exact `@63:swallow`,
+`@50:students`, and `@60:harness` windows. The accepted root remains
+`019fa5a1-7fff-7e92-8e2a-2586c684747f`. No prompt replay, rejected-prompt
+reconstruction, pane or transcript inspection, app-server restart, saved-root
+deletion, or unrelated-session mutation occurred.
 
 ### T-324 — Nightly fleet and repository hardening
 
