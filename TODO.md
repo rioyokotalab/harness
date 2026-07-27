@@ -90,10 +90,8 @@ Next free ID: T-320.
 1. T-314 through T-318 are complete. Students and Swallow are owned by their
    independent project agents and ledgers; Harness has no project-research
    resume action for either repository.
-2. Complete Riken's remaining T-311 Mac firewall helper only when the owner can
-   authenticate locally, then validate both routes and exact-unlink it. Aist,
-   Home, and Office are complete. Resolve the separate Codex user-config
-   policy choice afterward.
+2. The T-311 Mac administrator-authentication gate is complete. Resolve the
+   separate Codex user-config policy choice next.
 3. Ask the `192.168.33.30` administrator to correlate T-303's recorded NFS
    latency intervals when an external coordination window is available.
 4. Continue T-196 only at its exact time/identity gates: all eight nodes are
@@ -1101,7 +1099,8 @@ and synchronization carry only this durable evidence.
 
 ### T-311 — Harden the fleet and independent project repositories
 
-**Phase:** nightly safe work complete; deferred owner/admin gates remain.
+**Phase:** nightly safe work and administrator-authenticated changes complete;
+one owner policy choice remains.
 
 Audit and harden all managed Linux and Mac nodes plus `harness`, `students`,
 `swallow`, and `website`, while each repository owns its own task, branch,
@@ -1387,17 +1386,15 @@ annotation/runtime conveniences and added a Python 3.6 grammar/API contract;
 protected CI passed and the merged command now completes on AL with
 `findings=0`. No target state changed during the failed attempt.
 
-**LIFO gate active 2026-07-27:** Aist, Home, and Office's owner-authenticated
-helpers completed with exact on/on/on/on/off readback. Independent plans
-re-read the same five values, canonical fleet health proved both routes for
-each Mac, and all three exact checksum-matched helpers were unlinked and
-verified absent. Riken remains at the reviewed off/off/on/on/off baseline. Its
-credential-free `~/run_this.sh` helper remains current-user-owned mode 0700
-with SHA-256
-`f83690717bc2826af203336196d8ce73b26adc33939762bb325ed66de684d33b`.
-Administrator authentication is their only remaining gate; continue one Mac
-at a time, require independent five-setting and two-route validation, and
-exact-unlink each helper only after success.
+**LIFO gate resolved 2026-07-27:** Aist, Home, Office, and Riken's
+owner-authenticated helpers completed one Mac at a time with exact
+on/on/on/on/off readback. Independent plans re-read all five values, canonical
+fleet health proved both routes for every Mac, and every exact checksum-matched
+helper was unlinked and verified absent. Final value-free doctors report
+`status=ready failures=0 warnings=0` on all four Macs, including enabled
+firewall/stealth/signed access and disabled block-all. The administrator-
+authentication gate is complete; the separate Codex user-config policy choice
+below remains.
 
 **LIFO gate resolved 2026-07-26:** Office had no running XQuartz process,
 local X11 client, or TCP 6000 listener. Its XQuartz 2.8+ preference domain now
