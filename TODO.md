@@ -224,10 +224,23 @@ Git, and mutable-state reconciliation; leaves thread/process/tmux/app-server
 mutations to this controller; and asks the Swallow agent to remain running and
 idle in the same thread. The request must never be retried.
 
-**Next action:** commit and push this non-retryable acknowledgement, then
-monitor only value-free turn structure until exact assistant-bearing
-completion or a fail-closed state. Do not inspect message text, pane content,
-commands, or project payloads.
+**Cold-start acceptance:** value-free protocol monitoring proves exact turn
+`019fa5a3-f90e-7e42-80b6-5adb5009fbfd` completed and the new root returned
+`idle` without `systemError`. Its final structure is one user item, ten
+assistant items, one completed MCP tool-call item, and zero active items.
+Watcher status returned to `watching/thread-idle`; all provisional and
+protected process identities remain live, and tmux retains the exact
+four-window mapping. No message text, pane content, command, tool payload, or
+project content was inspected.
+
+**Next action:** commit and push this acceptance, then revalidate old/new
+root, process, socket, tmux, Harness, Students, app-server, doctor, and Git
+identities. Perform one read-before/name-set/read-after transaction per root:
+rename old root to a unique `swallow-blocked-20260728` label and accepted root
+to `swallow`. Then rename exact old window `@59` to `swallow-blocked` and
+exact new window `@61` to `swallow`, leaving the owner on the active Students
+window. Do not signal any process until the reversible cutover is durably
+checkpointed.
 
 ### T-324 — Nightly fleet and repository hardening
 
