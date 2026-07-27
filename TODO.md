@@ -538,6 +538,37 @@ plan/doctor suite pass. Commit this increment, run the complete clean Phase-1
 gate, publish it through protection, sync the fleet, and require the real
 Office plan to pass with matched wall-time evidence before popping the gate.
 
+**LIFO gate resolved 2026-07-27 11:30 JST:** exact revision
+`6cef646221fbdc73c66712465213ec0e8fbd5eaf` passed the complete clean
+Phase-1 suite; only native MPI was skipped outside an allocation. The first
+clone launcher compared against an incorrectly anticipated full revision and
+stopped before the suite; the Git-resolved retry passed. The 922-entry test
+clone was guarded-deleted. Protected PR #336 passed in 2m26s and merged as
+`99617e1f37fc9f4ec5fe4083a9eb85aca870f8f6`.
+
+Guarded fleet sync advanced all 11 clean checkouts from `e61c16b` to
+`99617e1`; exact heads and origin refs match and transfer residue is absent.
+Exactly one post-sync refresh was submitted to each revalidated detached Mac
+Codex `%0`; Office `%1` remained untouched. On unchanged Office metadata, the
+old plan failed false drift in 77.97 seconds while the new plan passed with
+zero changes in 16.37 seconds, a 4.76x speedup and 79% wall-time reduction.
+Aist, Home, and Riken also pass with zero changes in 10.63, 4.83, and 13.48
+seconds. All Mac doctors remain ready with only the two known firewall
+warnings, all sessions remain live, canonical fleet health passes, and the
+922-entry sync clone was guarded-deleted.
+
+**Integrity and service checkpoint 2026-07-27 11:30 JST:** strict read-only
+Git object checks pass for Harness, Students, Website, and both AB/T4 Swallow
+copies. They report only dangling objects and zero missing, broken, corrupt,
+or error records; no garbage collection ran. The first combined check
+continued past its retained output yield but completed without temp residue,
+so only its unretained Website/Swallow suffix was repeated separately. User
+systemd has zero failed units on Local and all seven remote Linux targets;
+crontab counts are zero where available and unavailable on AL. T4 and all
+four Macs retain the known value-free `codex-config` collision while active
+Codex sessions exist; AB, AB2, ABQ, RI, AL, and RC agent-config doctors pass.
+Do not inspect or rewrite those product-owned user files during T-317.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
