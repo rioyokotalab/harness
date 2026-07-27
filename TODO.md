@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-324.
+Next free ID: T-325.
 
 ## Current state
 
@@ -107,6 +107,30 @@ Next free ID: T-324.
    successors recorded below.
 
 ## Active tasks
+
+### T-324 — Nightly fleet and repository hardening
+
+**Phase:** executing.
+
+The owner authorized an immediate seven-hour housekeeping and hardening run
+from 2026-07-27 22:13 JST through 2026-07-28 05:13 JST, with safe findings
+resolved immediately as repository-local LIFO stacks and all approval-gated
+items deferred. Stop starting material changes at 04:13 JST and reserve the
+final hour for validation and handoff. Scope is every managed node and the
+independent Harness, Students, Swallow, and Website repositories. The frozen
+scope, authority boundaries, execution sequence, and acceptance gates are in
+`docs/plans/t324-nightly-fleet-repository-hardening.md`.
+
+Local lock-aware arg0 housekeeping initially reported `live=5 eligible=2
+young=0 unexpected=0`. Its guarded apply removed exactly the two eligible
+completed residues through one quarantined target of three entries/eight
+bytes; protected anchors were unchanged. Final planning reports `live=5
+eligible=0 young=0 unexpected=0`.
+
+**Next action:** commit and push this execution checkpoint, then complete the
+read-only fleet and repository-control inventory. Push every confirmed issue
+onto its owning LIFO stack and resolve the newest safe item first; defer any
+item requiring authority beyond the frozen plan.
 
 ### T-323 — Recover Harness unsafe-tail `Request blocked`
 
