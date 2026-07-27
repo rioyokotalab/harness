@@ -1070,6 +1070,17 @@ After clean/tree-equality/open-handle checks, guarded deletion removed the
 isolated transfer checkout (281 entries, 1,993,617 bytes) and the exact
 mode-0600 manifest was exact-unlinked.
 
+At 15:05 JST, exact inactive pane `%54` still mapped to `@54:swallow`, its
+remote-explicit supervisor remained live, and no client was attached to that
+window. One identified `[Agent: Harness Codex]` instruction was pasted, given
+the required one-second settle interval, and submitted separately. It directs
+the Swallow thread to read the Swallow instructions and ledger at `55f8f0a`,
+inspect the AB checkout, resume SW-031 from static gate A6, treat Harness as
+read-only transport context, preserve the separate future-PIE boundary for
+broader external research, and avoid a large experiment. The temporary tmux
+buffer was removed; no pane contents were read and the instruction will not be
+retried after the acknowledged local transport submission.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
