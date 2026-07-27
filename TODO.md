@@ -203,11 +203,24 @@ device/inode/owner/type/link identity and changed only that descriptor to
 `0600`. Stable post-readback passed. Neither root creation nor naming may be
 retried.
 
-**Next action:** commit and push this persistence checkpoint, then create one
-detached provisional `swallow-next` tmux window under distinct runtime name
-`swallow-recovery-next` for the exact new root. Require watcher readiness,
-exact process identities, and an established peer to unchanged app server
-before submitting any turn.
+**Provisional-client acceptance:** one detached launch created exact window
+`@61:0` / pane `%61` named `swallow-next`. Supervisor PID `1605362`, watcher
+PID `1605436`, managed launcher PID `1605549`, and real TUI PID `1605906`
+have immutable start ticks `92535732`, `92535741`, `92535854`, and
+`92535882`. Value-free status is `running/remote-explicit` plus
+`watching/thread-idle`, with attempt/delay and recovery/rollback counts zero.
+The real TUI has reciprocal established Unix peer
+`184651193`/`184652982` to unchanged app server PID `2852569` / start tick
+`83381863`. Old Swallow, Harness, and Students remain unchanged in the
+four-window mapping.
+
+**Next action:** commit and push this accepted provisional identity, then
+submit exactly one lock-serialized cold-start turn to the new root. The
+instruction must prohibit rejected-prompt reconstruction/replay, require full
+Harness `AGENTS.md`/`TODO.md`, Git, current Swallow durable ledger, and mutable
+state reconciliation, resume only the recorded Swallow next action, and
+remain running and idle in the same thread. Treat ambiguous acknowledgement
+as non-retryable.
 
 ### T-324 — Nightly fleet and repository hardening
 
