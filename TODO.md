@@ -233,14 +233,28 @@ protected process identities remain live, and tmux retains the exact
 four-window mapping. No message text, pane content, command, tool payload, or
 project content was inspected.
 
-**Next action:** commit and push this acceptance, then revalidate old/new
-root, process, socket, tmux, Harness, Students, app-server, doctor, and Git
-identities. Perform one read-before/name-set/read-after transaction per root:
-rename old root to a unique `swallow-blocked-20260728` label and accepted root
-to `swallow`. Then rename exact old window `@59` to `swallow-blocked` and
-exact new window `@61` to `swallow`, leaving the owner on the active Students
-window. Do not signal any process until the reversible cutover is durably
-checkpointed.
+**LIFO cutover gate:** the first complete name-cutover command stopped before
+the app-server transaction because it reused immutable start ticks from the
+prior Harness recovery for the older Swallow chain. Fresh readback proved
+neither root name changed. Exact Swallow ticks are supervisor `88838652`,
+launcher `88838773`, and real TUI `88838827`; the corrected full gate used
+only those directly read values. No name, process, tmux, or app-server
+mutation ran during the failed attempt.
+
+**Root-name cutover:** corrected Git, process/start, tmux/client, reciprocal
+socket, native-doctor, and exact root gates passed. One acknowledged
+read-before/name-set/read-after transaction changed only poisoned root
+`019fa36c-cfa9-7143-ae11-1f538e07bfee` from `swallow` to
+`swallow-blocked-20260728`; a second changed only accepted root
+`019fa5a1-7fff-7e92-8e2a-2586c684747f` from its provisional name to
+`swallow`. Old remains `systemError`; new remains `idle`. Neither name write
+may be retried.
+
+**Next action:** commit and push this reversible root-name checkpoint, then
+revalidate exact window/process/client identities and rename only old window
+`@59` to `swallow-blocked` and new window `@61` to `swallow`. Leave the
+attached owner client on exact `@50:students`; do not send pane input or signal
+any process.
 
 ### T-324 — Nightly fleet and repository hardening
 
