@@ -228,6 +228,16 @@ and push this reversible checkpoint, then revalidate old real TUI PID
 `4064616` / start tick `84409839` and send one `SIGTERM` only to that leaf so
 its exact wrapper and supervisor unwind without respawn.
 
+**Old-chain retirement:** exact PID, parent/session, start-tick, executable,
+argv, root, window, and unaffected-target gates passed. One `SIGTERM` was sent
+only to old real TUI PID `4064616`; it, managed wrapper PID `4063851`, and
+legacy supervisor PID `4063793` all exited within the bounded wait without
+respawn. No second signal, process-group signal, `SIGKILL`, rollback, archive,
+delete, prompt, pane, or app-server action ran. The poisoned saved root remains
+preserved as `harness-blocked-20260727`. Commit and push, then independently
+validate new process/socket/thread/tmux/doctor/Git state and guarded-delete
+only the generated schema bundle.
+
 ### T-322 — Make the phone-visible Swallow name unique
 
 **Phase:** complete.
