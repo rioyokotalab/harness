@@ -144,6 +144,9 @@ exact drift is deferred for owner reconciliation.
   query remained successful and merge-clean; six canonical fleet sweeps passed
   all eight Linux logical nodes and both routes for every Mac. One GitHub
   status query was slow but completed successfully without retry or mutation.
+- A second 60-cycle monitor ran through 01:05 JST. The exact protected head
+  remained successful/merge-clean and all six canonical fleet sweeps passed.
+  Several GitHub reads were slow but completed with unchanged state.
 
 ## Repository housekeeping
 
@@ -183,6 +186,14 @@ RI, RC, T4, and ABQ and none on AL. Each owning node's lock-aware guarded
 apply removed only its exact quarantine target (seven entries and about
 8.8 KiB each). Final planning reports zero live, eligible, young, unexpected,
 or leftover guarded-manifest directories on all seven nodes.
+
+Hourly deep readback later found one fresh eligible completed residue on AB,
+AB2, RI, RC, T4, and ABQ, all created by tonight's repeated native Codex
+probes. Six lock-aware guarded transactions each removed one exact
+seven-entry/about-8.8-KiB quarantine with protected anchors unchanged. Fresh
+plans report zero live, eligible, young, unexpected, or guarded-manifest
+directories on all seven remote nodes; Local retains only five protected live
+entries.
 
 Local exact-unlinked ten stale current-user-owned, mode-0600, single-link T-295
 guarded manifests after proving no open descriptor. The exact 225-entry /

@@ -235,6 +235,15 @@ Students and AB Swallow advanced concurrently on their project-owned clean task
 branches; Website and the T4 Swallow mirror remain clean/current. No takeover
 or cross-repository mutation ran.
 
+A second 60-cycle block completed through 01:05 JST. The exact protected head
+remained successful/merge-clean and all six canonical fleet sweeps passed.
+Hourly deep readback found fresh completed arg0 residue from tonight's native
+Codex probes on AB, AB2, RI, RC, T4, and ABQ. Six lock-aware guarded
+transactions each removed one exact seven-entry/about-8.8-KiB quarantine;
+fresh plans now report zero eligible/unexpected residue and zero guarded
+manifests on all seven remote Linux nodes. AL had none and Local's five live
+entries remain protected.
+
 **Next action:** publish the resilience fix through PR #361 after current-head
 checks pass, continue independent deep checks until the 04:13 JST
 material-work cutoff, then run final validation and live readback. The earlier
