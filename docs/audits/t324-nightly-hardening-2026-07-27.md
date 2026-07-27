@@ -85,9 +85,11 @@ exact drift is deferred for owner reconciliation.
   package residue. The resilience supervisor consumed `installation` as a
   terminal post-failure gate, so a transient client exit could strand an
   otherwise healthy managed session. The correction tolerates only native
-  doctor's exact Linux ownership-warning summary; all other doctor and
-  platform failures retain their prior terminal behavior. Focused tests cover
-  both the Linux exception and Darwin fail-closed case.
+  doctor's exact Linux ownership-warning summary when its managed and running
+  package roots are identical inside the versioned Harness agent tree; all
+  other doctor and platform failures retain their prior terminal behavior.
+  Focused tests cover the valid Linux exception, mismatched package roots, and
+  Darwin fail-closed behavior.
 - Current-user zombie counts are zero on all eight Linux logical nodes.
   System-wide failed-unit counts are Local 0, AB 250, AB2 17, RI 1, AL 4,
   RC 2, T4 0, and ABQ 0. AB/AB2 entries are historical session scopes. RI's

@@ -180,8 +180,11 @@ tree, even though the running package is current and no stale npm package
 exists on AB or T4. `harness-codex-resilient` previously made that exact
 ownership warning a terminal post-failure gate. It now tolerates only the
 exact Linux warning while retaining fail-closed authentication, configuration,
-state, other installation, command-failure, and non-Linux behavior. Focused
-resilience, login, hardening, skill, ShellCheck, and diff checks pass.
+state, other installation, command-failure, and non-Linux behavior. The
+exception additionally requires native doctor's managed and running package
+roots to be identical within the versioned `.local/opt/agents/codex` tree;
+warning text alone is insufficient. Focused resilience, login, hardening,
+skill, ShellCheck, and diff checks pass.
 
 **LIFO test-isolation fix:** the documented plain `tests/test-phase1.sh`
 command inherited the managed Codex process's live `HARNESS_ROOT`, causing

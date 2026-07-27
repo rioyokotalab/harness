@@ -99,7 +99,31 @@ JSON
     "config.load": {"status": "ok"},
     "installation": {
       "status": "fail",
-      "summary": "npm install -g @openai/codex would update a different install"
+      "summary": "npm install -g @openai/codex would update a different install",
+      "details": {
+        "managed package root": "/fixture/.local/opt/agents/codex/1/linux/node_modules/@openai/codex",
+        "running package root": "/fixture/.local/opt/agents/codex/1/linux/node_modules/@openai/codex"
+      }
+    },
+    "state.paths": {"status": "ok"}
+  }
+}
+JSON
+            ;;
+        mismatched-managed-install)
+            cat <<'JSON'
+{
+  "schemaVersion": 1,
+  "checks": {
+    "auth.credentials": {"status": "ok"},
+    "config.load": {"status": "ok"},
+    "installation": {
+      "status": "fail",
+      "summary": "npm install -g @openai/codex would update a different install",
+      "details": {
+        "managed package root": "/fixture/.local/opt/agents/codex/1/linux/node_modules/@openai/codex",
+        "running package root": "/fixture/.local/lib/node_modules/@openai/codex"
+      }
     },
     "state.paths": {"status": "ok"}
   }
@@ -312,6 +336,19 @@ HARNESS_TEST_PLATFORM=Darwin FAKE_DOCTOR_MODE=managed-install \
 grep -F 'reason=local-installation' \
     "$TEST_ROOT/unmanaged-install.out" >/dev/null ||
     fail "non-Linux installation failure classification"
+
+: >"$TEST_ROOT/codex.calls"
+: >"$TEST_ROOT/sleep.calls"
+printf '1\n0\n' >"$TEST_ROOT/codex.statuses"
+HARNESS_TEST_PLATFORM=Linux FAKE_DOCTOR_MODE=mismatched-managed-install \
+    run_supervisor --run --name mismatched-managed-install --last \
+    >"$TEST_ROOT/mismatched-managed-install.out" 2>&1 &&
+    fail "mismatched managed installation was retried"
+[ "$(wc -l <"$TEST_ROOT/codex.calls" | tr -d ' ')" = 2 ] ||
+    fail "mismatched managed installation launched again"
+grep -F 'reason=local-installation' \
+    "$TEST_ROOT/mismatched-managed-install.out" >/dev/null ||
+    fail "mismatched managed installation failure classification"
 
 : >"$TEST_ROOT/codex.calls"
 : >"$TEST_ROOT/sleep.calls"
