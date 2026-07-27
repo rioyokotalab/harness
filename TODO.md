@@ -348,6 +348,19 @@ A focused source assertion prevents removing that binding. Validate the
 correction, publish it through a second protected PR, then stop only the exact
 current backoff leaf and relaunch the same root under the corrected merge.
 
+**TTY-correction validation:** clean commit `ccf368b` passes focused
+resilience, thread-recovery, and recovery-skill suites; POSIX shell syntax;
+warning-level ShellCheck; diff hygiene; and the complete
+`tests/test-phase1.sh`. The complete run passed all 76 focused suites,
+guarded-delete coverage, and every integration gate, with only the declared
+native MPI smoke skipped outside an allocation.
+
+**Next action:** commit and push this validation checkpoint, open a second
+protected pull request, require exact-head `portable-phase1`, merge, and
+fast-forward Local plus the clean fleet. Then terminate only the exact current
+backoff sleep leaf so supervisor `1917582` and watcher `1917695` unwind, and
+launch the same root once under the corrected merged code.
+
 ### T-324 — Nightly fleet and repository hardening
 
 **Phase:** complete.
