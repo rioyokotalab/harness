@@ -183,10 +183,20 @@ supervisor continues to report `running`. Preserve the root and proceed
 through the established fresh-root cutover. No second rollback is safe or
 authorized.
 
-**Next action:** commit and push this non-retryable result, revalidate exact
-live identities and the now-unsafe `systemError` state, then create one new
-empty app-server root for the fresh-root cutover. Do not replay the rejected
-prompt or retry the rollback.
+**Fresh-root identity:** one acknowledged `thread/start` created exact root
+`019fa5a1-7fff-7e92-8e2a-2586c684747f` with the frozen Harness cwd,
+`approvalPolicy=never`, and `sandbox=danger-full-access`. The immediate
+acceptance read incorrectly requested `includeTurns=true` before the empty root
+was materialized, so the server returned exact protocol error `-32600`; the
+start succeeded and must never be retried. A fresh `includeTurns=false` read
+proves exact ID, `idle` status, matching cwd, and a declared path. Old root,
+process, socket, tmux, Harness, Students, and app-server identities remained
+unchanged.
+
+**Next action:** commit and push this non-retryable new-root identity, then
+send one provisional `thread/name/set` for
+`swallow-recovery-20260728`. Require same-connection readback and the canonical
+single-link rollout persistence gate before launching a provisional TUI.
 
 ### T-324 — Nightly fleet and repository hardening
 
