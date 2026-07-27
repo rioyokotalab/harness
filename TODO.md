@@ -29,6 +29,10 @@ Next free ID: T-321.
   agent forwarding and trusted X11 with explicit exclusions, and alphabetic
   directives. The four Mac private profiles use schema 3 with one distinct
   per-host SSH payload and no legacy root payload.
+- New interactive shells use native TTY-aware `ls` color on every managed
+  system: `-G` on Darwin and `--color=auto` on Linux. Existing shells retain
+  their previously loaded alias until they re-source the common aliases or
+  start a new shell.
 - Each Mac runs two current-user launchd tunnel supervisors and a 30-second
   local watchdog. Local keeps their four restricted authorizations in the
   root-owned secondary file
@@ -103,7 +107,7 @@ Next free ID: T-321.
 
 ### T-320 — Make interactive `ls` color portable across the fleet
 
-**Phase:** publication.
+**Phase:** complete.
 
 The owner observed that SSH sessions from Local to the managed Macs lost
 `ls` color even though reverse SSH sessions from a Mac to Local retained it.
@@ -129,9 +133,23 @@ temporary selector is absent after sourcing. Implementation checkpoint
 `8125981` passed the complete eight-worker `tests/test-phase1.sh` from its
 clean exact revision with inherited `HARNESS_ROOT` removed: all 75 focused
 suites and integration gates passed, with only the declared native-MPI smoke
-skipped outside a declared MPI environment. Next: fetch again, publish through
-protected `main`, use guarded fleet-sync, refresh the four detached Mac Codex
-sessions, and verify new forced-PTY login shells on every managed node.
+skipped outside a declared MPI environment.
+
+PR #347 passed protected `portable-phase1` CI in 2m25s and squash-merged as
+`f689b8f`. The first fleet-sync plan used stale ledger source `6349928` and
+failed closed on AB before any node changed; exact readback established common
+fleet source `5fcbfd36`. A corrected explicit eleven-target plan/apply advanced
+ab, ab2, ri, al, rc, t4, abq, aist, home, office, and riken from that verified
+ancestor to `f689b8f`; every head and `origin/main` matched the target and
+every transfer artifact was absent after apply. Aist, Home, Office, and Riken
+each returned exactly one context-refresh `status=submitted`, and the private
+message was exact-unlinked.
+
+Fresh interactive pseudo-terminal acceptance passed on Local and all eleven
+remote checkouts: every transport succeeded, every Linux shell reported exact
+`alias ls='ls --color=auto'`, every Mac reported exact
+`alias ls='ls -G'`, and every `ls` emitted ANSI color. Local's live
+supervisor-held `libexec/.nfs…` placeholder remained untouched throughout.
 
 ### T-319 — Report fleet health every Harness turn
 
