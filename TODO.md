@@ -110,7 +110,7 @@ Next free ID: T-322.
 
 ### T-321 — Recover recurring Swallow unsafe-tail `Request blocked`
 
-**Phase:** validating.
+**Phase:** complete.
 
 At 2026-07-27 20:24 JST, the owner reported that the phone/tmux Swallow
 thread was again stuck at `Request blocked`. Read-only metadata proves exact
@@ -254,6 +254,17 @@ manifests were exact-unlinked. The live `.nfs…` inode remains untouched.
 Commit this validation, run diff hygiene and protected CI, publish/merge the
 execution ledger, then perform a fresh final live readback and canonical fleet
 health before marking T-321 complete.
+
+**Completion:** protected PR #356 passed `portable-phase1` and squash-merged
+as `d45eb76`. Post-merge live readback reproduced the exact three-window
+mapping, new root/name, preserved old root/name, immutable new
+supervisor/watcher/TUI/app-server identities, zero retry/recovery counters,
+established socket, and native doctor `overall=ok` with zero failed checks.
+No task-created bytecode or schema residue remains; the unrelated live
+supervisor-held `.nfs…` inode is untouched. Canonical fleet health passes all
+eight Linux logical nodes and all four Mac route pairs. T-321 is complete; the
+active runtime status name is `swallow-recovery`, while the phone thread and
+tmux window are both `swallow`.
 
 ### T-320 — Make interactive `ls` color portable across the fleet
 
