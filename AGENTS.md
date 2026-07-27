@@ -51,7 +51,9 @@ file apply to Codex and Claude when they are started from this repository.
   informed during long work. Stop for choices that materially alter scope or
   external state.
 - Prefix every user-facing progress update in the commentary channel with the
-  current local time in `[HH:MM:SS]` format.
+  current local time in `[HH:MM:SS]` format. Before composing each progress
+  update, run a fresh native `date '+%H:%M:%S'` read and copy that exact value.
+  Never infer a timestamp from a prior message or elapsed time.
 - Reconstruct repository state before acting. For multi-session work, use the
   repository ledger when present and checkpoint facts, decisions, failures,
   next actions, and exact working files.

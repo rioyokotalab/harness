@@ -91,6 +91,22 @@ cp "$TEMP_DIR/codex-policy.valid" "$repo/config/agent-clients/codex.toml"
 git -C "$repo" add .codex/config.toml config/agent-clients/codex.toml
 git -C "$repo" commit -qm 'restore managed update policy'
 
+sed 's/model = "gpt-5.6-sol"/model = "gpt-5.6-terra"/' \
+    "$repo/.codex/config.toml" >"$repo/.codex/config.toml.invalid"
+mv "$repo/.codex/config.toml.invalid" "$repo/.codex/config.toml"
+cp "$repo/.codex/config.toml" "$repo/config/agent-clients/codex.toml"
+git -C "$repo" add .codex/config.toml config/agent-clients/codex.toml
+git -C "$repo" commit -qm 'inject wrong project model'
+if run_config --plan >"$TEMP_DIR/wrong-model.out" 2>&1; then
+    fail 'wrong project Codex model accepted'
+fi
+grep -F 'project Codex policy is invalid' "$TEMP_DIR/wrong-model.out" >/dev/null ||
+    fail 'wrong project model rejection'
+cp "$TEMP_DIR/codex-policy.valid" "$repo/.codex/config.toml"
+cp "$TEMP_DIR/codex-policy.valid" "$repo/config/agent-clients/codex.toml"
+git -C "$repo" add .codex/config.toml config/agent-clients/codex.toml
+git -C "$repo" commit -qm 'restore project model policy'
+
 run_config --plan >"$TEMP_DIR/plan.out"
 grep -F 'AGENT_CONFIG schema=2 mode=plan' "$TEMP_DIR/plan.out" >/dev/null ||
     fail 'schema-2 plan'

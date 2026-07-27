@@ -98,8 +98,13 @@ validate_sources() {
     awk '
         $0 == "approval_policy = \"never\"" { approval++ }
         $0 == "check_for_update_on_startup = false" { update++ }
+        $0 == "model = \"gpt-5.6-sol\"" { model++ }
+        $0 == "model_reasoning_effort = \"high\"" { effort++ }
         $0 == "sandbox_mode = \"danger-full-access\"" { sandbox++ }
-        END { exit !(NR == 3 && approval == 1 && update == 1 && sandbox == 1) }
+        END {
+            exit !(NR == 5 && approval == 1 && update == 1 &&
+                model == 1 && effort == 1 && sandbox == 1)
+        }
     ' "$codex_policy" >/dev/null 2>&1 ||
         die "project Codex policy is invalid"
     count=0

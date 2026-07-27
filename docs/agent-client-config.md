@@ -16,10 +16,12 @@ Authentication, credentials, sessions, histories, memories, caches, databases,
 private endpoints, and machine-specific runtime state remain outside this
 contract and are never inspected or migrated.
 
-The initial reviewed bodies contain only the frozen prompt-free posture. Codex
-uses `approval_policy = "never"` with `sandbox_mode = "danger-full-access"`.
-Its startup update check is disabled because Linux Codex releases are pinned
-and upgraded transactionally by the harness; accepting the native update offer
+The reviewed Codex body uses `approval_policy = "never"` with
+`sandbox_mode = "danger-full-access"`. Newly started trusted-project sessions
+default to `gpt-5.6-sol` with `model_reasoning_effort = "high"`; existing
+sessions retain the model and effort already selected for that chat. The
+startup update check is disabled because Linux Codex releases are pinned and
+upgraded transactionally by the harness; accepting the native update offer
 would install into Node's global prefix without moving the managed command
 link. Claude uses `permissions.defaultMode = "bypassPermissions"` and
 suppresses the one-time dangerous-mode warning. These choices do not suppress
