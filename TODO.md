@@ -110,7 +110,7 @@ Next free ID: T-322.
 
 ### T-321 — Recover recurring Swallow unsafe-tail `Request blocked`
 
-**Phase:** ready-for-go.
+**Phase:** executing.
 
 At 2026-07-27 20:24 JST, the owner reported that the phone/tmux Swallow
 thread was again stuck at `Request blocked`. Read-only metadata proves exact
@@ -139,6 +139,15 @@ The frozen execution and safety gates are in
 `docs/plans/t321-swallow-unsafe-tail-recovery.md`. The plan now waits for a
 separate explicit `go`. No thread, tmux, process, app server, prompt, or
 project state changed while recording this decision.
+
+**Execution authorization 2026-07-27 20:35 JST:** the owner gave the separate
+explicit `go`. Exact read-only preflight revalidated clean/aligned Harness
+`main` at `36d938f`, the three-window mapping with Harness active, Swallow
+window `@58:2`, supervisor PID `382132`, watcher PID `382211`, remote root
+`019fa27c-6280-7f00-8e46-ef878875562b`, attempt/delay zero, and unchanged
+`blocked/unsafe-tail` with one prior recovery/rollback. No target mutation has
+run. Commit and push this authorization checkpoint, then complete the narrow
+app-server/process/socket/doctor identity gate before one `thread/start`.
 
 ### T-320 — Make interactive `ls` color portable across the fleet
 

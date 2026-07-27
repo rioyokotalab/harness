@@ -125,3 +125,12 @@ lowest immediate mutation risk but provides no working SW-031 agent.
 No other decision is open. The plan is frozen at `ready-for-go`; wait for a
 separate explicit execution instruction. Recording D-001 changed no thread,
 tmux, process, app-server, prompt, or project state.
+
+## Execution authorization
+
+At 2026-07-27 20:35 JST, the owner gave the separately required explicit
+`go`. The first complete metadata-only preflight matched the frozen root,
+window, supervisor, watcher, retry state, unsafe-tail refusal, Git revision,
+and unaffected Harness/Students mapping. No live mutation preceded this
+checkpoint. Execution resumes at plan step 2's narrow app-server, socket,
+process, and doctor identity gate.
