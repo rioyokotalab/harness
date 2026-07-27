@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-318.
+Next free ID: T-319.
 
 ## Current state
 
@@ -87,10 +87,10 @@ Next free ID: T-318.
 
 ## Next resume checkpoint
 
-1. T-318 is executing the owner-authorized recovery below. Finish its
-   non-force reconciliation with merged `main`, rerun focused and clean full
-   validation, retarget PR #338 to `main`, and require protected CI before
-   live adoption. Preserve the shared app server and every unrelated TUI.
+1. T-318 is executing the owner-authorized Swallow cold replacement below.
+   Validate and publish the narrow durable-marker/aborted-turn parser amendment,
+   then cut over only the inactive Swallow TUI to the exact idle fork. Preserve
+   the shared app server, Students, Harness, and the poisoned root.
 2. T-314 through T-317 are complete. Students and Swallow are owned by their
    independent project agents and ledgers; Harness has no project-research
    resume action for either repository.
@@ -129,8 +129,8 @@ The mechanism never replays the rejected prompt and never restarts the shared
 app server.
 
 Work is isolated at `/tmp/harness-t318-thread-recovery` on branch
-`t318-codex-thread-recovery`. The primary checkout and its live
-supervisor-held `.nfs…` inode remain untouched.
+`t318-codex-thread-recovery`. The primary checkout's two live
+supervisor-held `.nfs…` inodes remain untouched.
 
 Implementation checkpoint:
 
@@ -149,14 +149,11 @@ Implementation checkpoint:
   required before TUI launch; supervisor cleanup signals and reaps only its
   exact child. Unsafe or unavailable recovery blocks before Codex launch.
   Status and plan output expose the value-free watcher contract.
-- Focused recovery and resilience suites, Python 3.6 AST parsing, shell
-  syntax, `git diff --check`, and the complete clean Phase-1 suite passed at
-  the pre-reconciliation implementation. The disposable validation clone was
-  guarded-deleted with protected anchors unchanged.
-- PR #338 was originally stacked on the T-317 branch. After T-317 closed and
-  merged as `b97d637`, the PR correctly became conflicting because its old
-  board still contained T-317's active history. The current non-force merge
-  keeps `main`'s compact T-317 audit and only this T-318 task/code.
+- PR #338 passed protected CI and squash-merged as `5a73695`. Local and all
+  eleven managed checkouts synchronized to that exact revision; the four Mac
+  context refreshes each returned one acknowledged submission. Both disposable
+  validation/sync clones were guarded-deleted and their exact manifests
+  exact-unlinked.
 
 **Recurring Swallow incident 2026-07-27 15:45 JST:** exact read-only
 `thread/read` again reports `systemError` for Swallow root
@@ -167,34 +164,47 @@ tail because the rollout is mode `0664`. Metadata proves a current-user-owned,
 single-link regular file whose group is the current user's private primary
 group, with zero explicit members and one primary account.
 
-The owner said `proceed`. Keep the strict no-group-write recovery boundary:
-after protected publication, revalidate the exact poisoned thread and rollout
-identity, tighten only that rollout from `0664` to `0600`, and run one bounded
-one-shot recovery. Do not weaken the general classifier, replay a prompt,
-restart the shared app server, or touch Students. After recovery is proven,
-deliberately restart only the exact Swallow supervisor/TUI to adopt the
-published watcher and validate a fresh bounded response.
+The owner said `proceed`. An exact descriptor-identity transaction tightened
+only that rollout from `0664` to `0600`. One recovery attempt then failed
+closed as `unsafe-tail`; no rollback request was sent and it is not retryable
+without new safety evidence. Value-free lifecycle analysis proved why:
 
-**Next:** finish this conflict-resolution commit, run both focused suites and
-the complete clean full suite, push without force, retarget PR #338 to `main`,
-and require exact-head protected CI before any live mutation.
+- a durable six-turn rollback marker exists at rollout line 8411;
+- a later explicit `turn_aborted` supersedes one incomplete turn;
+- the latest completed turn contains many tool records and ends with an error.
 
-**Reconciliation acceptance 2026-07-27:** merge revision `e23c0fe` retains
-`main`'s compact T-317 closeout and the complete T-318 implementation without a
-code conflict. Both focused suites, Python AST parsing, diff hygiene, and the
-complete clean `tests/test-phase1.sh` pass; only native MPI is skipped outside
-a declared allocation. The clean, tree-equal, handle-free validation clone was
-guarded-deleted (4,188 entries, 47,602,811 bytes), protected anchors were
-unchanged, and its exact mode-0600 manifest was exact-unlinked.
+Rollback would discard real project work, so the poisoned root must remain
+intact. The accepted safe fallback is the native remote fork
+`019fa265-a94d-72d3-ae88-aa1d610fed6c`: fresh protocol read reports
+`status=idle`, exact name `swallow`, cwd `/home/rioyokota/harness`, and zero
+turns. It is provisionally live only in detached window `@55:3:swallow-next`;
+the owner remains attached to Students, and old Swallow window `@54:2`, the
+shared app server, Students, and Harness are unchanged.
 
-**Next:** commit and push this acceptance without force, retarget PR #338 to
-`main`, and require exact-head protected CI before the live permission
-tightening or recovery.
+The published analyzer incorrectly evaluated superseded records before the
+latest durable rollback marker and treated `turn_aborted` as unknown. The
+current amendment uses the latest validated rollback marker as a hard history
+boundary and recognizes only a matching aborted turn after it. Any later
+overlap, mismatched turn identity, active tail, assistant/tool/unknown event,
+or other existing refusal remains fail closed. Focused recovery/resilience,
+Python compilation, and diff hygiene pass with new deterministic fixtures for
+both exact protocol cases. The initial complete runs exposed only validation
+environment gates: first an intentionally uncommitted checkout, then inherited
+`HARNESS_ROOT=/home/rioyokota/harness` redirected a direct self-test to the
+primary checkout's live `.nfs…` files. With the amendment committed and that
+override removed, both focused configuration tests and the complete clean
+eight-worker `tests/test-phase1.sh` pass; only native MPI is skipped outside a
+declared MPI environment.
 
-PR #338 now targets protected `main` and is mergeable. The retarget event
-reported no check run, so this ledger-only synchronization commit provides the
-normal pull-request `synchronize` event without dispatching a workflow. Require
-`portable-phase1` to pass on this exact new head before live mutation.
+**Next:** run the complete clean Phase-1 suite, commit and push without force,
+open a protected-`main` follow-up PR, and require exact-head CI. After merge and
+guarded fleet sync, revalidate the fork, tighten only its rollout to `0600`,
+close only provisional `@55` and poisoned Swallow `@54`, recreate index 2 as
+`harness codex-resilient --run --name swallow --remote-session
+019fa265-a94d-72d3-ae88-aa1d610fed6c`, require its exact watcher/TUI/socket
+identities, and send one identified cold-restart instruction to reconcile the
+Swallow repository ledger. Never replay the rejected prompt or restart the
+shared app server.
 
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
