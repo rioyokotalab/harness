@@ -2,7 +2,7 @@
 
 ## Status and decision
 
-- Phase: publication.
+- Phase: complete.
 - Owner decision: permit Codex's supported user configuration layer while
   keeping Harness behavior, permissions, rules, instructions, and skills
   project-scoped.
@@ -103,5 +103,8 @@ absence, non-recreation after product removal, and fail-closed mode, symlink,
 and hard-link handling. Clean implementation commit `1759b8a` passed the
 complete eight-worker `tests/test-phase1.sh`: all 75 focused suites and
 integration gates passed, with only the declared native-MPI smoke skipped
-outside a declared MPI environment. Next: protected publication and
-fleet-wide value-free acceptance.
+outside a declared MPI environment. Protected PR #349 passed and merged as
+`6dfe35d`; guarded sync advanced all eleven remote checkouts. All twelve
+doctors then passed with six `product-owned` and six `absent` states. The
+temporary Local validation view changed no live index, checkout, product file,
+or process. D-007 and T-311 are complete.
