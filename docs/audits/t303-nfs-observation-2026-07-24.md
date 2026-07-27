@@ -115,3 +115,39 @@ logs for 2026-07-24 08:42–11:04 JST and the later 21:55 JST read spike.
 Preserve the mode-0700 evidence directory unchanged until that review is
 complete; do not infer a specific disk, pool, or daemon failure from the
 client trace alone.
+
+## Server-correlation gate
+
+At 2026-07-27 19:58 JST, Local performed a batch-mode SSH preflight for the
+remaining server-side review. `nas-03.yokota` resolves to `192.168.33.30`, the
+same address serving `/tank/archive`, `/tank/fast`, and `/tank/safe`, and the
+effective direct SSH user is `rioyokota`.
+
+The connection failed closed at host-key verification before authentication
+or execution of any remote command. Local has no saved host key for either
+`nas-03.yokota` or `192.168.33.30`. SSH negotiation and a separate key scan
+both observed this ED25519 fingerprint:
+
+```text
+SHA256:nxj4PfZ55OqTcVm5HReHI6IVy9MMcBQ+BbfrJfZRHes
+```
+
+Two observations over the same network path are not independent proof of
+server identity. Obtain the expected fingerprint through the physical/server
+console or its administrator. Do not bypass checking or accept the key from
+this evidence alone.
+
+After that independent confirmation, add only the confirmed ED25519 key and
+run a bounded, read-only inventory before requesting any privileged evidence:
+
+1. identify the operating system and storage/NFS implementation;
+2. determine which unprivileged historical metrics and logs still cover
+   2026-07-24 08:42–11:04 JST and 21:55 JST;
+3. query pool, disk, filesystem, NFS-service, cache/memory-pressure, and system
+   events only for those windows;
+4. correlate timestamps with the preserved client trace and label unavailable
+   evidence explicitly rather than treating it as absence.
+
+Stop if those records require privilege or have expired. Do not change storage,
+exports, services, logging, retention, or performance settings as part of
+T-303.
