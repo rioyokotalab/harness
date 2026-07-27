@@ -412,6 +412,24 @@ publish through one protected exact-head pull request, then run the required
 clean fleet sync, one revision-specific Mac refresh per managed Mac, and fresh
 canonical fleet health.
 
+**Guarded cleanup:** manifest `/tmp/t325-cleanup.manifest`, token
+`c19d16eebb988c6f763510fdc0733e110f2b90c47cf808fbf04192e34da0a978`,
+validated and deleted exactly the task-created schema bundle, clean fleet-sync
+clone, and two obsolete merged worktree roots; all four targets are absent and
+protected anchors were unchanged. A second narrow manifest,
+`/tmp/t325-worktree-admin.manifest`, token
+`e98b8f99dc350a74aed71bdc37301a24a491a6516142f4f4eab9ad9065eccac5`,
+validated and removed only the two resulting prunable Git worktree
+registrations. Git now lists only the primary checkout and active finalization
+worktree. Two live `.nfs` inodes remain protected and unrelated.
+
+**Next action:** remove only the two exact mode-0600 cleanup manifests, commit
+and push this checkpoint, open one protected exact-head finalization pull
+request, require `portable-phase1`, merge, and fast-forward Local plus the
+clean fleet. Send exactly one merge-specific context refresh to each managed
+Mac and do not retry submitted receipts. Then mark T-325 complete with fresh
+live Swallow and canonical fleet-health evidence.
+
 ### T-324 — Nightly fleet and repository hardening
 
 **Phase:** complete.
