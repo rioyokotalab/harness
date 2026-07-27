@@ -77,6 +77,17 @@ exact drift is deferred for owner reconciliation.
   authorized package or sshd work, so it is deferred. Other currently
   multiplexed Linux sessions do not provide uniform DISPLAY evidence; no
   master was restarted merely for this audit.
+- Native `codex doctor --json` passed all required local checks on Local and
+  the four Macs. All seven managed Linux clients reported the same
+  `installation`/`updates.status` failure because npm's mutable global package
+  root differs from the current immutable Harness-owned release tree. AB and
+  T4 have no package at the reported npm root, proving this is not stale
+  package residue. The resilience supervisor consumed `installation` as a
+  terminal post-failure gate, so a transient client exit could strand an
+  otherwise healthy managed session. The correction tolerates only native
+  doctor's exact Linux ownership-warning summary; all other doctor and
+  platform failures retain their prior terminal behavior. Focused tests cover
+  both the Linux exception and Darwin fail-closed case.
 
 ## Repository housekeeping
 
@@ -134,6 +145,10 @@ browser, image, and Swallow research artifacts remain preserved.
    `/tmp` passed. Guarded deletion then removed only the exact 926-entry /
    22,765,943-byte validation clone with protected anchors unchanged; its
    manifest was exact-unlinked.
+6. A validation command referenced nonexistent `tests/test-hardening.sh`
+   after its preceding resilience and login suites passed. The corrected
+   repository test name, `tests/test-hardening-audit.sh`, passed; the failed
+   command made no change.
 
 Every failed probe was read-only and retry-safe unless explicitly marked
 non-retryable. No credential, pane, transcript, deployment, message, package,

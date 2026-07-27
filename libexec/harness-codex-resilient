@@ -465,6 +465,20 @@ doctor_status() {
     ' "$doctor_file"
 }
 
+doctor_summary() {
+    check_id=$1
+    awk -v target="\"$check_id\"" '
+        index($0, target) { found=1 }
+        found && index($0, "\"summary\"") {
+            line=$0
+            sub(/^.*"summary"[[:space:]]*:[[:space:]]*"/, "", line)
+            sub(/".*$/, "", line)
+            print line
+            exit
+        }
+    ' "$doctor_file"
+}
+
 doctor_gate() {
     gate=
     doctor_file=$(mktemp "$state_root/.doctor.XXXXXX") ||
@@ -485,6 +499,15 @@ doctor_gate() {
         check_id=${check%%:*}
         failure=${check#*:}
         check_status=$(doctor_status "$check_id")
+        if [ "$check_id" = installation ] && [ "$platform" = Linux ] &&
+            [ "$(doctor_summary "$check_id")" = \
+                "npm install -g @openai/codex would update a different install" ]; then
+            # Linux fleet clients are installed in immutable Harness-owned
+            # release trees, not npm's mutable global package root. Native
+            # doctor reports that deliberate ownership split as an
+            # installation failure even when the running package is current.
+            continue
+        fi
         if [ "$check_status" != ok ]; then
             unlink "$doctor_file"
             doctor_file=

@@ -173,12 +173,22 @@ preserved.
 shared skills, while the compact current state still said 15. The stale count
 is now 16; no runtime or installed configuration changed.
 
-**Next action:** validate and publish this first audit checkpoint through the
-protected task branch, then continue independent deep checks and LIFO repair
-until the 04:13 JST material-work cutoff. The exact branch head subsequently
-passed all 75 focused suites, guarded-delete coverage, and every phase-one
-integration gate; only the declared native MPI smoke skipped outside an
-allocation. The clean validation clone was guarded-deleted.
+**LIFO resilience fix:** native Codex doctor reports
+`installation=fail` on all seven remote Linux nodes because npm's mutable
+global package root differs from the intended immutable Harness-owned release
+tree, even though the running package is current and no stale npm package
+exists on AB or T4. `harness-codex-resilient` previously made that exact
+ownership warning a terminal post-failure gate. It now tolerates only the
+exact Linux warning while retaining fail-closed authentication, configuration,
+state, other installation, command-failure, and non-Linux behavior. Focused
+resilience, login, hardening, skill, ShellCheck, and diff checks pass.
+
+**Next action:** publish the resilience fix through PR #361 after current-head
+checks pass, continue independent deep checks until the 04:13 JST
+material-work cutoff, then run final validation and live readback. The earlier
+exact branch head passed all 75 focused suites, guarded-delete coverage, and
+every phase-one integration gate; only the declared native MPI smoke skipped
+outside an allocation. The clean validation clone was guarded-deleted.
 
 ### T-323 — Recover Harness unsafe-tail `Request blocked`
 

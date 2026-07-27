@@ -90,6 +90,22 @@ JSON
 }
 JSON
             ;;
+        managed-install)
+            cat <<'JSON'
+{
+  "schemaVersion": 1,
+  "checks": {
+    "auth.credentials": {"status": "ok"},
+    "config.load": {"status": "ok"},
+    "installation": {
+      "status": "fail",
+      "summary": "npm install -g @openai/codex would update a different install"
+    },
+    "state.paths": {"status": "ok"}
+  }
+}
+JSON
+            ;;
         failed) exit 1 ;;
         *) exit 2 ;;
     esac
@@ -272,6 +288,30 @@ FAKE_DOCTOR_MODE=auth run_supervisor --run --name auth --last \
     fail "authentication failure slept"
 grep -F 'reason=local-auth' "$TEST_ROOT/auth.out" >/dev/null ||
     fail "authentication failure classification"
+
+: >"$TEST_ROOT/codex.calls"
+: >"$TEST_ROOT/sleep.calls"
+printf '1\n0\n' >"$TEST_ROOT/codex.statuses"
+HARNESS_TEST_PLATFORM=Linux FAKE_DOCTOR_MODE=managed-install \
+    run_supervisor --run --name managed-install --last \
+    >"$TEST_ROOT/managed-install.out"
+[ "$(wc -l <"$TEST_ROOT/codex.calls" | tr -d ' ')" = 3 ] ||
+    fail "managed Linux installation mismatch blocked recovery"
+grep -F 'reason=clean-exit' "$TEST_ROOT/managed-install.out" >/dev/null ||
+    fail "managed Linux installation recovery status"
+
+: >"$TEST_ROOT/codex.calls"
+: >"$TEST_ROOT/sleep.calls"
+printf '1\n0\n' >"$TEST_ROOT/codex.statuses"
+HARNESS_TEST_PLATFORM=Darwin FAKE_DOCTOR_MODE=managed-install \
+    run_supervisor --run --name unmanaged-install --last \
+    >"$TEST_ROOT/unmanaged-install.out" 2>&1 &&
+    fail "non-Linux installation mismatch was retried"
+[ "$(wc -l <"$TEST_ROOT/codex.calls" | tr -d ' ')" = 2 ] ||
+    fail "non-Linux installation mismatch launched again"
+grep -F 'reason=local-installation' \
+    "$TEST_ROOT/unmanaged-install.out" >/dev/null ||
+    fail "non-Linux installation failure classification"
 
 : >"$TEST_ROOT/codex.calls"
 : >"$TEST_ROOT/sleep.calls"
