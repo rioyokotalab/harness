@@ -78,7 +78,7 @@ esac
 EOF
 cat >"$FAKE_BIN/uv" <<'EOF'
 #!/bin/sh
-if [ "${1:-}" = --version ]; then echo 'uv 0.11.31 (Homebrew fixture)'; exit 0; fi
+if [ "${1:-}" = --version ]; then echo 'uv 0.11.32 (Homebrew fixture)'; exit 0; fi
 printf '%s\n' "$@" >"$UV_ARGS_LOG"
 install_dir=
 minor=

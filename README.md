@@ -103,6 +103,18 @@ resumes the repository's most recent chat thereafter; `--last-all` selects the
 globally most recent saved chat. `harness-codex` remains the explicit direct
 launcher for a fresh or intentionally unsupervised client.
 
+For a phone-visible chat owned by the local remote-control app server, preserve
+both the remote transport and exact root ID on every retry:
+
+```bash
+harness codex-resilient --run --name harness \
+  --remote-session 01900000-0000-7000-8000-000000000000
+```
+
+`--remote-session` always relaunches as
+`resume --remote unix:// ID`; it never falls back to `--last` or replays a
+prompt.
+
 On Linux, the supervisor launches Codex through `harness codex-login`, which
 sets `RAYON_NUM_THREADS=8` and `TOKIO_WORKER_THREADS=8` for login-node
 politeness. The command leaves macOS unrestricted and does not install global
@@ -367,10 +379,10 @@ families are:
 | Codex agent | `harness agent --host HOST --name codex --plan` |
 | Source-built CLI | `harness build-tool --host HOST --name sqlite --plan` |
 
-Selected manifest versions include ripgrep 15.1.0, uv 0.11.31, rclone 1.74.3,
-Restic 0.19.1, Ninja 1.13.2, ShellCheck 0.11.0, Claude Code 2.1.207,
+Selected manifest versions include ripgrep 15.2.0, uv 0.11.32, rclone 1.74.4,
+Restic 0.19.1, Ninja 1.13.2, ShellCheck 0.11.0, Claude Code 2.1.220,
 Tectonic 0.16.9, Git LFS 3.7.1, Node 24.16.0/npm 11.13.0, the Linux Codex
-agent 0.144.4, SQLite 3.53.3, Tree 2.3.2, tmux 3.6b, and htop 3.5.1. Every
+agent 0.145.0, SQLite 3.53.3, Tree 2.3.2, tmux 3.6b, and htop 3.5.1. Every
 apply validates the staged artifact before atomically activating a stable
 link. Rollback verifies links and content integrity before changing anything.
 Older agent generations are never removed automatically.

@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-314.
+Next free ID: T-318.
 
 ## Current state
 
@@ -70,9 +70,12 @@ Next free ID: T-314.
   blanket package upgrade, cleanup, autoremove, cask, service, tap, or
   unmanaged-dependent mutation; require current freshness evidence and an
   explicit package selection.
-- Closed non-goals remain plugins/connectors/accounts, administrator settings,
-  automatic publication, background login mutation, active-session reload,
-  and guessing lost unknown configuration.
+- Closed non-goals remain broad plugin/connector/account changes,
+  administrator settings, automatic publication, background login mutation,
+  active-session reload, and guessing lost unknown configuration. T-314
+  narrowly reopens Local's already-installed Slack connector lifecycle after
+  exact owner authorization; it does not authorize credentials or other
+  connectors.
 - Project safety and collaboration rules in root `AGENTS.md` remain
   authoritative. `.codex/AGENTS.md` is only the out-of-project launch
   sentinel. Never inspect credentials or use raw recursive/bulk deletion.
@@ -84,18 +87,1008 @@ Next free ID: T-314.
 
 ## Next resume checkpoint
 
-1. Resume T-313 in execution: implement and publish the combined persistent
-   launcher, synchronize all nodes, then gracefully restart every detected
-   Codex TUI with Local last.
-2. Complete the four deferred T-311 Mac firewall helpers only when the owner
+1. T-317 is planning a 503-safe Local transition followed by major
+   fleet/repository housekeeping. Live inspection proves the three remote
+   Local TUIs are not supervised; do not begin housekeeping or restart an
+   agent until the owner resolves D-001 in
+   `docs/plans/t317-fleet-housekeeping-resilience.md`.
+2. T-314 through T-316 are complete. Resume Swallow SW-031 on AB from its targeted
+   Slack/GitHub/Hugging Face/web evidence-search handoff; keep planning
+   incremental and do not launch a large experiment.
+3. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
-3. Continue T-196 only at its exact time/identity gates: AB and AB2 are now
+4. Continue T-196 only at its exact time/identity gates: AB and AB2 are now
    2/8 with next-week successors waiting; retry RI accounting ID `7242`
    without touching successor `10386`, and inspect AL ID `4238363` only after
    its later eligibility.
 
 ## Active tasks
+
+### T-317 — 503-safe fleet and repository housekeeping
+
+**Phase:** executing.
+
+The owner asked to confirm that current Local tmux/Codex sessions resist 503
+failures, then perform major housekeeping across the whole managed fleet and
+repositories without disrupting the Students or Swallow agents. Read-only
+inspection at 08:18 JST proves the prerequisite is not met:
+
+- `@47:harness`, `@46:students`, and `@48:swallow` are direct native
+  `codex ... --remote unix://` wrapper/real-TUI pairs;
+- no live `harness-codex-resilient` supervisor owns any of them;
+- resilient status is stale for `harness` and absent for `students` and
+  `swallow`;
+- the deployed supervisor supports only local new/last/last-all/explicit
+  selectors and cannot preserve a remote endpoint during retry;
+- app-server PID `2852569` remains healthy, but app-server availability alone
+  does not restart an exited remote TUI.
+
+The exact protected real TUIs are Students PID `3025057`, Harness PID
+`3184653`, and Swallow PID `3323133`; all remain connected and unchanged.
+Canonical fleet health passes all managed routes. Required read-only Local
+arg0 inventory reports `live=5 eligible=7 young=0 unexpected=0 removed=0`.
+Nothing was removed or restarted.
+
+The umbrella plan and decision register are in
+`docs/plans/t317-fleet-housekeeping-resilience.md`. D-001 selects
+remote-aware resilience first with Harness as the canary. D-002 includes the
+full reversible housekeeping set plus ordinary non-administrator package and
+dependency upgrades. D-003 uses only declared non-interactive authority and
+stages helpers for interactive gates. D-004 forbids scheduler changes and
+protects all active work. D-005 validates backups without pruning snapshots or
+changing retention. D-006 keeps hosting administration and collaborator-owned
+remote state read-only. D-007 selects a 12-hour run with a 10-hour
+material-work cutoff and 2-hour validation reserve. The decision audit is
+complete with exact managed-node and four-repository scope. Wait for a separate
+explicit execution `go`.
+
+**Execution authorization 2026-07-27 08:30 JST:** the owner gave the separate
+final `go`. The 12-hour window ends at 20:30 JST; stop starting material work
+at 18:30 and reserve the final two hours for validation and handoff. Begin only
+with the remote-aware resilience implementation and isolated tests. Do not
+change a live Harness client until the exact remote selector passes focused
+and full Harness validation; do not touch Students or Swallow before the
+Harness canary is accepted.
+
+**Remote-selector LIFO gate 2026-07-27 08:33 JST:** implementation adds exact
+`--remote-session ID`, whose first launch and every retry resolve to
+`resume --remote unix:// ID`. Focused syntax, diff, and resilience tests pass,
+including exact retry argv, doctor gating, backoff, and plan output. The first
+full Phase-1 run passed every relevant suite and failed only
+`test-tmux-config.sh` and `test-terminfo.sh`, which intentionally reject the
+dirty uncommitted checkout. No live client, socket, app server, thread, prompt,
+or remote node changed. Commit the implementation and this checkpoint, then
+rerun full Phase 1 from the clean committed revision before any canary launch.
+
+**Remote-selector acceptance 2026-07-27 08:35 JST:** pushed implementation
+revision `41c09b7fc02038ee2cc572172c7ed8ccd8e8aed4` passes the complete clean
+`tests/test-phase1.sh` suite, including resilience, tmux, terminfo, guarded
+delete, and all focused suites; only the documented native MPI smoke is
+skipped outside a declared MPI environment. No live state changed. Commit and
+push this acceptance, revalidate exact Harness/Students/Swallow and app-server
+identities, then create only detached `harness-next` under supervisor name
+`harness-canary` with exact remote Harness root. Do not switch or signal a
+client until that new chain passes.
+
+**Canary LIFO gate 2026-07-27 08:35 JST:** the first launch validator stopped
+at its initial Git comparison because the explicitly pushed new task branch
+had no local upstream configured. It did not reach any tmux launch or other
+live assertion; no `harness-next` window or `harness-canary` state exists and
+all three original clients remain unchanged. Commit and push this retry-safe
+checkpoint, set only the current branch upstream to its exact existing remote
+branch, then repeat the complete validator.
+
+**Canary LIFO gate 2026-07-27 08:36 JST:** after the upstream correction, the
+repeat stopped before launch because tmux now has two attached clients,
+`/dev/pts/0` and `/dev/pts/28`, both selecting exact `@46:students`;
+`@47:harness` is inactive. All four protected process start identities,
+three-window mapping, Git, and absent `harness-canary` state remain unchanged.
+No launch or client switch ran. This does not block a detached canary: commit
+and push the exact topology, require both attached clients to remain on
+Students, then create only detached `harness-next`. Never switch either client
+until an owner-controlled Harness attachment is unambiguous.
+
+**Canary LIFO gate 2026-07-27 08:37 JST:** the detached launch reached tmux
+but exited with exact error `create window failed: index 0 in use` before
+starting a process. Current indices are `0:harness`, `1:students`, and
+`3:swallow`; supervisor state remains absent and no matching process exists.
+No protected state changed. Commit and push this retry-safe failure, then
+repeat the same preflight and target exact unused index `harness:2`.
+
+**Harness canary acceptance 2026-07-27 08:38 JST:** exact index 2 launch
+created `@49:harness-next`, supervisor PID `4063793` start tick `84409801`,
+wrapper PID `4063851`, and real TUI PID `4064616` start tick `84409839`.
+Supervisor status is `running selector=remote-explicit`; both wrapper and real
+argv resolve to exact Harness root
+`019fa076-7132-7992-800e-f6c6d4aeadfb`. App-server PID `2852569` owns accepted
+inode `167459432` with reciprocal client peer `167461374` and the exact Harness
+rollout. Both attached clients remain unchanged on Students. Commit and push
+this acceptance, then rename old `@47:harness` to `harness-direct`, rename
+accepted `@49:harness-next` to `harness`, and retire only old direct real TUI
+PID `3184653` after immutable revalidation. Never switch either attached
+client or touch Students/Swallow.
+
+**Harness cutover LIFO gate 2026-07-27 08:39 JST:** the first cutover
+validator stopped at its initial Git assertion because it used an incorrectly
+expanded form of pushed short revision `735b6cd`; no rename or signal ran.
+Readback also corrected the canary supervisor's immutable start tick from the
+mistyped `84409821` to exact `84409801`. Exact HEAD/upstream is
+`735b6cd86a0029e08d3924c1fd52ec063258e409`; all four windows and both old/new
+Harness chains are unchanged. Commit and push this correction, then repeat the
+complete cutover validator with only the exact corrected constants.
+
+**Harness canary cutover 2026-07-27 08:40 JST:** pushed correction
+`f7baeaabc1467cdb860b0e2fc5d76b9fda1e27cb` passed the full cutover
+validator. Exact `@47` was renamed `harness-direct`, exact `@49` was renamed
+`harness`, and one `SIGTERM` was sent to old direct real TUI PID `3184653` at
+08:40:05 JST. The old real TUI and wrapper PID `3184180` exited without
+respawn, so tmux removed `@47` automatically. Supervised Harness PIDs
+`4063793`/`4063851`/`4064616` remain exact and status is
+`running remote-explicit`; both attached clients remain on unchanged Students.
+Commit and push this result. Then add detached supervised guard connections
+for exact Students and Swallow roots one at a time, validating each before the
+next. Do not switch, rename, signal, or type into either project window.
+
+**Students guard acceptance 2026-07-27 08:41 JST:** detached exact
+`@50:students-guard` contains supervisor PID `4073421`, wrapper PID `4073479`,
+and real TUI PID `4073639` start tick `84429126`. Status is
+`running remote-explicit`; argv preserves exact Students root
+`019f7fea-4f00-7681-910d-81ae99a77143`; app server/client socket pair is
+`167484639`/`167478055`. Original Students PID `3025057`, both attached
+Students views, Harness, and Swallow remain unchanged. Commit and push this
+acceptance, then create only a detached Swallow guard at one exact unused
+index and validate it independently.
+
+**Swallow guard acceptance 2026-07-27 08:42 JST:** detached exact
+`@51:swallow-guard` contains supervisor PID `4077898`, wrapper PID `4077955`,
+and real TUI PID `4078173` start tick `84433123`. Status is
+`running remote-explicit`; argv preserves exact Swallow root
+`019f9f69-6b94-70a3-be12-8bef23b88a96`; app server/client socket pair is
+`167486091`/`167491075`. Original Swallow PID `3323133`, original Students PID
+`3025057`, both attached Students views, and all accepted guard/canary
+identities remain unchanged.
+
+All three roots now have a live supervised remote-aware connection. Students
+and Swallow retain their original direct views in parallel because both owner
+tmux clients are actively attached to Students; no cutover, signal, rename, or
+pane input is permitted until attachment is unambiguous. Commit and push this
+protection checkpoint, then begin read-only fleet/repository inventory. Treat
+all six project TUI connections and app-server PID `2852569` as protected.
+
+**Initial fleet inventory 2026-07-27 08:47 JST:** exact project roots are
+Local Students `/home/rioyokota/projects/students`, Local Website
+`/home/rioyokota/projects/website`, and AB Swallow
+`/groups/gag51395/yokota/projects/swallow`, with a clean T4 mirror. Students
+and AB Swallow are clean active task branches and remain read-only; Website is
+clean aligned `main`. Harness hardening audit has zero findings.
+
+All Linux Harness checkouts are clean/aligned and native doctors have zero
+failures. Native scheduler readback protects pending Local job `94950`, AL job
+`4275926`, and RC job `260847`; T4 and both ABCI accounts showed no jobs. RI
+state is unknown because native `squeue` failed DNS configuration lookup; do
+not infer absence or cross that gate. Arg0 inventories: Local `live=7`,
+`eligible=0`; AL all zero; ab, ab2, ri, rc, t4, and abq each have
+`live=0 eligible=1 young=0 unexpected=0`. Apply only the existing lock-aware
+arg0 housekeeping command on those six exact hosts, one at a time, then require
+all four counters to be zero. Do not touch scheduler or repository state.
+
+**Arg0 cleanup checkpoint 2026-07-27 08:48 JST:** the existing lock-aware
+housekeeping transaction removed exactly one eligible quarantine tree on each
+of ab, ab2, ri, rc, t4, and abq. Every guarded manifest revalidated ownership,
+identity, counts, bytes, and protected anchors; immediate readback on all six
+is `live=0 eligible=0 young=0 unexpected=0`.
+
+Mac read-only inventory finds clean aligned Harness `main`, Codex 0.145.0,
+Claude 2.1.220, and `live=3 eligible=1 young=0 unexpected=0` on each of aist,
+home, office, and riken. Home-volume use is respectively 31%, 49%, 64%, and
+59%. Apply the same lock-aware command one Mac at a time; require exactly one
+removal while preserving all three live directories and both managed routes.
+
+**Mac package and arg0 gate 2026-07-27 08:53 JST:** the four arg0 apply
+attempts removed nothing because each former eligible candidate reclassified
+as `young=1`; all live counts remain 3 and unexpected counts remain zero.
+Revisit after the grace window without bypassing it.
+
+Repository-managed Homebrew plans are converged. Fresh native metadata is
+identical on all four Macs and names exactly `libnghttp3 1.17.0→1.18.0`,
+`sqlite 3.53.3→3.53.4`, and `uv 0.11.31→0.11.32`. Homebrew reports Node as an
+installed dependent of the first two and no installed dependent for uv. Use
+the trusted-package-manager cleanup exception for only those exact formulae
+and package-owned Cellar/cache state. Upgrade Aist first, then require versions,
+managed plan, both routes, tunnels, running Codex session, and Harness checkout
+to remain healthy before proceeding to another Mac.
+
+**Aist package canary 2026-07-27 08:54 JST:** native explicit
+`brew upgrade libnghttp3 sqlite uv` installed exact versions 1.18.0, 3.53.4,
+and 0.11.32. Homebrew's internal cleanup removed obsolete package-owned
+Cellar entries, bottles, caches, logs, and three package-manager symlinks; it
+did not target a repository, credential, backup, or active-session path.
+Readback passes Node and uv execution, a zero-change managed Homebrew plan,
+clean aligned Harness `main`, one detached live `harness-codex-resume` tmux
+session, both Aist routes, and full fleet health. Commit and push this canary,
+then upgrade Home using the same three exact formulae and gates.
+
+**Home package result 2026-07-27 08:55 JST:** the same explicit Homebrew
+transaction installed exact versions 1.18.0, 3.53.4, and 0.11.32. Its internal
+cleanup stayed within package-owned Cellar/cache/log and `/opt/homebrew`
+compiled-cache/symlink state. Readback passes Node and uv execution, clean
+aligned Harness `main`, one detached live Codex tmux session, both Home routes,
+and full fleet health. Commit and push this result, then upgrade Office with
+the same exact package and validation boundary.
+
+**Office package result 2026-07-27 08:56 JST:** exact versions 1.18.0, 3.53.4,
+and 0.11.32 plus Node/uv execution pass after the explicit transaction.
+Harness remains clean aligned; both Office routes and full fleet health pass.
+The detached managed tmux session has two live windows, one Codex and one
+shell; both are preserved as owner state and are not housekeeping candidates.
+Commit and push this result, then upgrade Riken with the same exact boundary.
+
+**Mac package convergence 2026-07-27 08:56 JST:** Riken also passes exact
+versions 1.18.0, 3.53.4, and 0.11.32, Node/uv execution, clean aligned Harness,
+one detached live tmux session, both routes, and full fleet health. All four
+Macs now match. Reclassify the previously young arg0 candidate on each Mac
+after the elapsed grace interval; remove it only if the tool now reports
+eligible while retaining all three live directories and zero unexpected.
+
+**Mac arg0 convergence 2026-07-27 09:00 JST:** after the full grace interval,
+each of aist, home, office, and riken reclassified exactly one directory as
+eligible. The existing lock-aware transaction guarded-deleted one quarantine
+per Mac. Immediate readback on every Mac is
+`live=3 eligible=0 young=0 unexpected=0`; both routes and canonical fleet
+health pass. No active Codex directory or tmux session changed.
+
+**Website dependency housekeeping 2026-07-27 09:57 JST:** isolated T-209
+updated only exact `@playwright/test` and its supply-chain guard from 1.61.1
+to 1.62.0. Online hashes, zero-vulnerability npm audit, the full offline
+security suite, 38/38 browser tests on local storage, and both protected
+`Offline checks` runs pass. A matched same-NFS diagnostic reproduced two
+representative timeouts under both 1.61.1 and 1.62.0, while 1.62.0 passed all
+38 tests locally; the failure is storage-latency evidence, not an accepted
+dependency regression. Protected PR #35 merged at
+`141a79e4e9a2a88674cb4af7f73500161cca6ffe`; primary Website `main` is
+clean/current and no deployment ran. The task branch, 943-entry isolated
+worktree, and exact 10-entry Git metadata were removed only after tree-equality
+proof and guarded revalidation.
+
+**Backup validation 2026-07-27 10:02 JST:** all eight declared primary
+repositories pass native `restic-primary check` snapshot listing with no
+current-user Restic process before or after: local, ab, ab2, abq, ri, al, rc,
+and t4. Read-only chain reconciliation reports exactly one active future job
+per host—respectively `94950`, `2064918.pbs1`, `2064919.pbs1`,
+`176525.qjcm`, `10386`, `4275926`, `260847`, and `8270230`—and every retained
+smoke job is `verified-disabled` and absent. No snapshot, data read, restore,
+replica, scheduler action, retention change, forget, or prune ran.
+
+**Linux package declaration gate 2026-07-27 10:12 JST:** official registries
+confirm Codex 0.145.0 and Claude Code 2.1.220 are current. Exact publisher
+checksums are reconciled for uv 0.11.32, rclone 1.74.4, and ripgrep 15.2.0 on
+both Linux architectures. The tool updater now enforces rclone's pinned-user
+version and accepts safe uv/rclone managed predecessors, retaining the prior
+artifact for rollback. Replacement-plan/apply/rollback fixtures pass; the
+dirty full Phase-1 run passes every suite except the two intentional
+clean-checkout tmux/terminfo gates.
+
+Node 24.18.0/npm 11.16.0 are newer than the declared 24.16.0/11.13.0, but the
+live read-only plan proved the runtime updater has no managed-predecessor
+transaction and correctly blocks an in-place change. Keep Node and Codex
+launcher declarations unchanged during T-317 rather than risk active-agent
+restart safety. Commit the three prebuilt-tool declarations and updater test,
+then require a fully clean Phase-1 pass before any live package apply.
+
+**Linux prebuilt-tool acceptance 2026-07-27 10:14 JST:** committed revision
+`7f611ef` passes the complete clean `tests/test-phase1.sh` suite, including
+new rclone and uv replacement/rollback coverage, tmux, terminfo, fleet sync,
+guarded delete, backup scheduling, and all focused suites; only native MPI is
+skipped outside a declared allocation. No live package changed. Push this
+acceptance, then finish official release triage before protected publication
+and fleet rollout.
+
+**Linux release triage 2026-07-27 10:16 JST:** official publisher metadata
+also reports rclone 1.74.4, ripgrep 15.2.0, htop 3.5.2, tmux 3.7b, SQLite
+3.53.4, and Tectonic 0.17.0; Restic 0.19.1, Ninja 1.13.2, ShellCheck 0.11.0,
+Git LFS 3.7.1, and Tree 2.3.2 remain current. GitHub asset digests and
+SQLite's publisher SHA3 record were inspected without executing remote code.
+
+Defer htop, tmux, and SQLite because the source-build transaction, like the
+Node runtime transaction, has no safe managed-predecessor path and blocks live
+replacement. Defer Tectonic's 0.16→0.17 feature release pending a workload
+compatibility test; do not infer safety from a version probe alone. These are
+explicit residual update gaps, not permission to overwrite active binaries.
+Proceed with protected publication of only the accepted uv, rclone, and
+ripgrep declaration/updater scope.
+
+### T-316 — Map Local tmux to three phone-visible Codex roots
+
+**Phase:** complete.
+
+The owner renamed tmux window `@42` from `swallow` to `harness` and selected
+the following exact mapping:
+
+- existing phone Students root
+  `019f7fea-4f00-7681-910d-81ae99a77143` remains tmux `students`;
+- existing phone Swallow root
+  `019f9f69-6b94-70a3-be12-8bef23b88a96` becomes a remote-backed tmux
+  `swallow`;
+- the current conversation is preserved as a forked, distinct phone-visible
+  root and becomes remote-backed tmux `harness`.
+
+Read-only discovery at 06:53 JST confirms the existing `students` client
+remains connected through `--remote unix://` to app-server PID `2852569`.
+Current `harness` still contains standalone real TUI PID `2727307`, launched
+through ambiguous `resume --last`, and owns the Swallow rollout. The same
+app server has that rollout open for phone Remote, but PID `2727307` has no
+control-socket peer. Codex 0.145.0 officially supports both
+`resume --remote unix:// SESSION_ID` and
+`fork --remote unix:// SESSION_ID`; fork creates a new chat while preserving
+the original transcript. `/rename` is the supported TUI command for assigning
+the new chat a recognizable name.
+
+No live client, process, app server, socket, tmux pane, saved thread, or
+configuration changed during planning beyond the owner's window rename.
+Branch `t316-local-three-thread-mapping` was created from clean aligned
+revision `efd63bf`. The frozen execution, rollback, and acceptance gates are in
+`docs/plans/t316-local-three-thread-mapping.md`. All required mapping decisions
+are resolved.
+
+**Execution authorization 2026-07-27 07:02 JST:** the owner gave the required
+separate `go`. The complete instructions, board, and frozen plan were reread.
+Authenticated fetch and read-only preflight find the task branch clean and
+exactly aligned at pushed revision
+`a5a94539d79e750b8a89f957702844fd1bf2b6f0`; the sole attached client remains
+on exact `@42:harness`, and exact `@46:students` is unchanged. The recorded
+process chains, current-user ownership, parent/session identities, executable
+paths, argv, rollout descriptors, app-server PID `2852569`, Students control
+socket peer, and both root rows all match the frozen state. Immutable Linux
+start ticks are `82962590` for standalone real TUI PID `2727307`,
+`83381863` for app-server PID `2852569`, and `83627668` for Students real TUI
+PID `3025057`. Filtered native doctor overall status remains `ok`.
+
+No client has yet been launched, renamed, signaled, or given input. Commit and
+push this authorization checkpoint, rerun the complete assertion preflight
+against the pushed revision, then create only provisional `harness-next`.
+
+**Stage-1 preflight 2026-07-27 07:04 JST:** every fail-closed assertion passed
+against pushed authorization revision
+`dfbff56629f813d1a3e6a0c2211cab8a01c6e253`. Git, tmux topology, all seven
+recorded processes and immutable start ticks, exact argv/executables, both
+rollout descriptors, Students' Unix peer, the standalone client's lack of that
+peer, both root rows, native doctor overall status, and all 18 doctor checks
+match. The unchanged app-server socket inode is `165762130`. The pre-fork
+thread index has 24 rows and maximum `created_at_ms=1785085914011`; require
+exactly one attributable new root beyond this baseline. No target changed.
+Commit and push this checkpoint, revalidate the narrow live identities, then
+create `harness-next` once without a prompt.
+
+**Stage-2 LIFO gate 2026-07-27:** the exact fork command ran once and created
+provisional window `@47:harness-next`, wrapper PID `3184180`, real TUI PID
+`3184653`, and exactly one new root
+`019fa076-7132-7992-800e-f6c6d4aeadfb`. The first acceptance loop then timed
+out only because it required the new client to share Students' accepted server
+socket inode `165762130`. Each app-server client correctly has its own accepted
+pair: app-server PID `2852569` owns inode `166156785` with peer `166153028`,
+and new real TUI PID `3184653` owns the reciprocal peer. The app server also
+owns the new rollout. Its first metadata record proves
+`forked_from_id=019f9f69-6b94-70a3-be12-8bef23b88a96`, exact new ID, and
+Harness cwd. Do not replay the fork.
+
+A corrected full validator then stopped at its original-window active-selector
+assertion. Immediate readback and an isolated byte-level comparison both show
+unchanged exact `@42 harness 1 1`; the sole attached client, all three original
+windows/process chains, the new window/process chain, and Git remain
+unchanged. No input, rename, signal, or second launch occurred. The validation
+retry is safe: consume a fresh selector snapshot, require the corrected
+per-client socket pair and exact fork metadata, then proceed to `/rename` only
+after every gate passes.
+
+**Stage-2 fork acceptance 2026-07-27 07:08 JST:** the full-consuming retry
+passed exact Git, tmux, original/new process, per-client socket, thread
+cardinality, rollout ownership, fork metadata, and all doctor gates. Accepted
+Harness root is `019fa076-7132-7992-800e-f6c6d4aeadfb`; accepted provisional
+window/processes are `@47`, wrapper `3184180`, and real TUI `3184653` with
+start tick `83855518`. Its app-server/client inode pair is
+`166156785`/`166153028`. The original active window and every protected
+identity remain unchanged. Commit and push this accepted identity, then send
+the `/rename` interaction exactly once to pane `%47` and require persisted
+thread name `harness` before creating Swallow.
+
+**Stage-2 naming gate 2026-07-27:** the planned interaction was sent once to
+exact pane `%47` with separate one-second paste/submit steps: `/rename`, then
+`harness`. The ten-second persistence loop timed out with the new thread's
+name still empty. It is unsafe to replay the input. Value-free log indexing
+proves the TUI received key-handling activity but emitted zero
+`thread/name/set`, name-update, session-renamed, empty-name, or `/rename`
+markers. The accepted fork process, its reciprocal app-server socket, exact
+root/rollout, original active window, and Git remain unchanged.
+
+Do not read the pane or send another key. Inspect the installed official
+app-server protocol for the exact native `thread/name/set` request. If it can
+be invoked through the existing local authenticated control socket with exact
+thread ID and readback, revise only the naming mechanism in the frozen plan
+and checkpoint it before execution; otherwise leave the fork unnamed and stop
+for owner direction. No Swallow client has been created.
+
+**Stage-2 native naming discovery 2026-07-27:** the installed experimental
+schema generator created private temporary bundle
+`/tmp/t316-app-server-schema.BnxRrl` with 347 files, three directories, and
+3,303,877 bytes. It proves exact method `thread/name/set`, required parameters
+`threadId` and `name`, an empty success response, and the normal
+initialize/initialized handshake. Preserve this directory for guarded cleanup.
+
+A read-only attempt to use native `codex app-server proxy` for `initialize`
+plus `thread/read(includeTurns=false)` exited zero but emitted no JSON records.
+Its mode-0600 capture was exact-unlinked. The command proxies raw bytes to the
+Unix WebSocket endpoint; it is not a JSONL bridge, so no read or name mutation
+was proved and replaying the same request is not useful. The fork name remains
+empty and every live identity is unchanged. Inspect installed WebSocket client
+capability next; prove `thread/read` before revising or invoking the naming
+request.
+
+**Stage-2 native transport gate 2026-07-27:** read-only transport discovery
+failed closed several times before reaching app-server JSON-RPC: a plain
+`socketPath` option is discarded by Debian's installed `ws`; `ws+unix` at
+both `/` and `/rpc` reset during upgrade; raw JSONL closed before an initialize
+response; and an HTTP agent matching `ws://localhost/rpc` still reset while
+advertising per-message compression. None sent `thread/name/set`.
+
+Exact official `rust-v0.145.0` source at tag object
+`1635de866c61d1b76e50b31928ee6d61482435a8` proves the Unix listener uses
+`accept_async`; its test connects a Unix stream with
+`client_async("ws://localhost/rpc", stream)`. Repeating that topology with a
+Node HTTP agent bound to the private control socket and
+`perMessageDeflate:false` passed `initialize`, `initialized`, and
+`thread/read(includeTurns=false)`: exact root
+`019fa076-7132-7992-800e-f6c6d4aeadfb`, zero turns, and a nonempty inherited
+name classified as neither empty nor exact `harness`. The local SQLite
+`threads.name` field remains NULL. The accepted fork, socket pair, original
+clients, app server, tmux selection, and Git remain unchanged.
+
+The frozen plan now replaces only the failed TUI naming mechanism with one
+schema-defined WebSocket transaction: read exact root state, send one
+`thread/name/set` for exact name `harness`, then read it back on the same
+connection. Commit and push this amendment before the write. If the request
+or response is ambiguous, do not retry; use read-only reconciliation and stop.
+No Swallow client has been created.
+
+**Stage-2 pre-write gate 2026-07-27 07:50 JST:** naming amendment commit
+`58be67080838f31f137718a0ada727934c60c948` is pushed and the branch is
+clean/aligned. Exact windows, all nine recorded process/start identities, both
+accepted app-server socket pairs, 25-thread cardinality, all three rollout
+descriptors, and filtered native doctor (`overall=ok`, 18/18 checks `ok`)
+match. The sole mismatch is that tmux session `harness` reports
+`session_attached=0` and `tmux list-clients` is empty; the frozen gate requires
+exactly one attached client before a rename or launch. No
+`thread/name/set`, new client, signal, pane input, or tmux mutation occurred.
+The private schema bundle remains at
+`/tmp/t316-app-server-schema.BnxRrl`. Reattach to the existing session without
+restarting anything, then repeat the complete pre-write gate.
+
+**Stage-2 LIFO gate 2026-07-27:** after the owner reattached one exact client
+to `@42:harness`, the first repeat validator stopped at its initial Git check
+because it compared HEAD to an incorrectly expanded form of the recorded short
+commit ID. The actual clean, aligned revision is
+`f77ac28ee59b05bc33f3afbae17fc3d950504143`; no later assertion, name request,
+launch, signal, pane input, or tmux mutation ran. The retry is safe: commit and
+push this failure checkpoint, substitute only Git's exact resolved revision,
+then repeat the complete pre-write gate.
+
+**Stage-2 LIFO gate 2026-07-27:** the corrected repeat passed Git, attachment,
+all nine immutable process identities, both accepted socket pairs, and exact
+thread cardinality/rows, then stopped in fork metadata because its `lsof -Fn`
+parser required a bare rollout pathname. On this NFS home, `lsof` appends the
+parenthesized mount source to each name record. Isolated readback proves the
+first rollout record still has the exact accepted ID, parent, and cwd and
+app-server PID `2852569` still owns all three expected rollouts. No name
+request or target mutation ran. Commit and push this retry-safe checkpoint,
+change only the ownership checks to full-consuming exact-path prefix matches,
+then repeat the complete pre-write gate.
+
+**Stage-2 pre-write acceptance 2026-07-27 07:49 JST:** the complete
+full-consuming retry passed from pushed revision
+`0032d12fe67699e9450836ab6a29872679b0a61d`. Exact attached client PID
+`3283828` selects `@42:harness`; all nine recorded process/start/argv/executable
+identities, both accepted app-server socket pairs, 25-thread cardinality, all
+three thread rows, exact fork lineage, app-server rollout ownership, private
+schema bundle, clean aligned Git, and redacted doctor 18/18 match. No target
+mutation ran. Commit and push this acceptance checkpoint, recheck its narrow
+live identities, then perform the one D-003 read-before/name-set/read-after
+transaction.
+
+**Stage-2 native naming result 2026-07-27:** pre-write checkpoint
+`720548c5e2ace6f775b17057fba82f6ac834155d` was pushed, the narrow live
+identities revalidated, and one D-003 WebSocket transaction ran. Its
+read-before matched exact fork ID, zero turns, and a name other than
+`harness`; exactly one `thread/name/set` was sent; the empty success response
+was acknowledged; and same-connection read-after matched exact ID, zero turns,
+and exact name `harness`. No retry path ran.
+
+The first bounded SQLite check then left `threads.name` NULL, so execution
+stopped before creating Swallow and used only read-only reconciliation. A
+fresh, independent initialized WebSocket connection again returned exact
+`harness`. Exact official `rust-v0.145.0` source shows the prior validation
+assumption was wrong: `thread/name/set` routes through
+`thread_processor.rs` to `thread-store/src/local/update_thread_metadata.rs`;
+legacy threads update SQLite `title` and append
+`$CODEX_HOME/session_index.jsonl`, while only paginated threads update SQLite
+`name`. This accepted fork is `history_mode=legacy`, with exact
+`title=harness`, `name=NULL`, and latest exact-ID session-index entry
+`thread_name=harness`. The index is a current-user-owned, single-link regular
+file; an added 0600 assertion failed only because the official append path
+uses the process umask and the existing mode is 0664. No second name request,
+new client, signal, pane input, or tmux mutation occurred.
+
+Revise only Stage 2's persistence gate to require the version-correct legacy
+surfaces, commit and push that evidence, then run the complete post-write
+process/socket/thread/doctor/Git validation. No Swallow client has been
+created.
+
+**Stage-2 acceptance 2026-07-27:** the complete post-write validator passed
+from pushed naming-result revision
+`3283c7056fe9b613f07b602783ec1b7ecb81c7b5`. Exact attached client/window,
+all nine protected process identities, both existing accepted socket pairs,
+25-thread cardinality, exact legacy SQLite title, latest session-index name,
+fresh-connection protocol read, fork lineage, all rollout owners, redacted
+doctor 18/18, and clean aligned Git match. The single naming write is complete
+and must never be replayed. Commit and push this acceptance, then create only
+the Stage-3 detached `swallow` remote resume with no prompt or pane input.
+
+**Stage-3 acceptance 2026-07-27:** one detached native remote resume created
+exact `@48:swallow`, pane `%48`, wrapper PID `3323024` start tick `84158638`,
+and real TUI PID `3323133` start tick `84158671`, with exact Swallow UUID
+argv. Its unique accepted app-server/client inode pair is
+`166524532`/`166522667`. Full validation passed all four tmux windows, all
+eleven protected/new process identities, all three accepted socket pairs,
+unchanged 25-thread cardinality and three unarchived target roots, exact
+Harness persistence, app-server rollout ownership, redacted doctor 18/18, and
+clean aligned Git. The owner remained on `@42:harness`; no prompt or pane
+input was sent. Commit and push this checkpoint, then execute only the Stage-4
+exact window renames and client switch. Do not signal the old standalone
+process in this thread.
+
+**Stage-4 cutover checkpoint 2026-07-27:** pushed Stage-3 revision
+`a2970c1c3ec85b482c3ae40721977a2707641df6` passed narrow preflight. Exact
+`@42` was renamed once to `harness-stale`, exact `@47` was renamed once from
+`harness-next` to `harness`, and sole client `/dev/pts/0` switched to `@47`;
+the immediate exact postcheck passed. Before the independent validator ran,
+the same terminal client had returned to `@42`. Cause is unknown without
+prohibited pane inspection; do not infer a process failure.
+
+The two new names remain exact. Independent non-selector validation passes
+all five key immutable real-process identities, the three accepted app-server
+socket pairs, unchanged 25-thread cardinality, exact persisted Harness name,
+redacted doctor 18/18, and clean aligned Git. No process changed, no signal or
+pane input ran, and the old standalone chain remains intact in inactive-named
+window `@42:harness-stale` while the client is presently viewing it.
+
+Commit and push this checkpoint first. Then revalidate exact client/window and
+remote-process/socket identities and switch `/dev/pts/0` once more to exact
+`@47:harness` as the final old-thread action. After the owner sends `continue`
+in that new Harness root, Stage 5 must verify all three remote clients and
+retire only old real TUI PID `2727307` by its recorded immutable identity.
+Preserve private schema bundle `/tmp/t316-app-server-schema.BnxRrl` for
+guarded cleanup in Stage 5.
+
+**Stage-4 final switch 2026-07-27:** cutover checkpoint
+`7c851ea8390a3a4153014ac6990f55e37a9b1c5b` was pushed first. Exact Git,
+four-window mapping, five key process/start identities, and all three accepted
+socket pairs revalidated. One final reversible
+`tmux switch-client -c /dev/pts/0 -t @47` then passed exact readback:
+`/dev/pts/0` is attached to `@47:harness`, new Harness root is
+`019fa076-7132-7992-800e-f6c6d4aeadfb`, `@46:students` and `@48:swallow`
+remain remote-backed, and inactive `@42:harness-stale` retains the old
+standalone chain. No pane input or signal ran.
+
+Commit and push this final Stage-4 checkpoint from the old driver, then yield.
+The owner's next instruction in the new Harness thread is `continue`; that
+agent must reconcile this ledger before performing Stage 5.
+
+**Stage-5 attachment gate 2026-07-27 08:07 JST:** the owner continued from
+the exact new Harness root, and read-only reconciliation found pushed clean
+revision `ddc6562447aacb6ca0909aec017c7c1ab68d12e1`, exact selected
+`@47:harness`, intact remote real TUIs `3025057`, `3184653`, and `3323133`
+with their accepted reciprocal app-server socket pairs, unchanged app-server
+PID `2852569`, and intact old standalone real TUI PID `2727307` with start
+tick `82962590` in inactive `@42:harness-stale`. The tmux session has
+`session_attached=0` and no clients, so the frozen Stage-5 precondition is not
+satisfied. No signal, pane input, launch, rename, window removal, saved-thread
+mutation, or private-schema cleanup ran. Reattach one client to the existing
+session on exact `@47:harness`, then repeat the complete Stage-5 validator;
+the signal remains safe to attempt exactly once only after that gate passes.
+
+**Stage-5 LIFO gate 2026-07-27 08:10 JST:** after the owner reattached exact
+`/dev/pts/0` to `@47:harness`, the full pre-signal validator exited before its
+signal marker because its first socket assertion misspelled exact client inode
+`165756871` as regex `166?756871`. Immediate readback proves old real TUI PID
+`2727307` still has exact parent/session/start/argv identity, all three
+accepted socket pairs are unchanged, the client remains attached to
+`@47:harness`, doctor is wholly `ok`, and Git is clean/aligned. No signal or
+target mutation ran. Commit and push this checkpoint, replace only the typo
+with exact `165756871`, then repeat the complete pre-signal validator.
+
+**Stage-5 stale-chain result 2026-07-27 08:11 JST:** pushed retry checkpoint
+`354deb4d42f48387d6f654a2867723ef4d948847` passed the corrected complete
+pre-signal validator. Exactly one `SIGTERM` was sent to immutable old real TUI
+PID `2727307` at `2026-07-27T08:11:20+0900`; it exited within the bounded
+wait. Wrapper PID `2727170` and `swallow-research` supervisor PID `2345899`
+then exited without respawn. No `resume --last` or `swallow-research` process
+remains. Exact inactive `@42:harness-stale` now contains only original idle
+shell PID `1963022`; the owner remains attached to exact `@47:harness`.
+Commit and push this result, revalidate the three remote clients and absent
+old chain, then remove only exact stale window `@42`. Do not send another
+signal.
+
+**Stage-5 completion 2026-07-27:** exact stale window `@42` was removed after
+pushed retirement checkpoint `0282d40`. Tmux now contains exactly
+`@47:harness`, `@46:students`, and `@48:swallow`; the sole attached client is
+on `@47:harness`. All three real TUIs retain their exact root argv and
+reciprocal peers to unchanged app-server PID `2852569`. The Harness root
+remains exact `019fa076-7132-7992-800e-f6c6d4aeadfb`, legacy title
+`harness`, unarchived, and distinct from exact Students and Swallow roots.
+Thread cardinality remains 25, doctor is wholly `ok`, and the old standalone
+chain is absent without respawn.
+
+The `guarded-bulk-delete` workflow removed only private schema bundle
+`/tmp/t316-app-server-schema.BnxRrl` from retained boundary `/tmp`: manifest
+`/tmp/t316-schema-cleanup.manifest`, token
+`7f96556d129e211aa6944fd4d9a6dfbc59bafeaef3a08d1540b38ab5d52e6c6f`,
+350 entries, 3,332,549 bytes, protected anchors unchanged, target verified
+absent. The single exact mode-600 manifest was then unlinked. Validation:
+`tests/test-codex-resilient.sh` passed; `tests/test-phase1.sh` passed with its
+documented native MPI smoke skip outside a declared MPI environment;
+`git diff --check` passed; canonical fleet health passed all managed Linux
+logical nodes and all four Mac route pairs. No pane content, credential,
+connector, plugin, setting, saved-thread archive/delete, or unrelated
+repository changed. One read-only Stage-5 diagnostic mistakenly selected and
+displayed the three stored thread `title` fields despite the plan's
+metadata-only output restriction; it was not repeated, and no pane content or
+transcript payload was modified.
+
+### T-315 — Restore one-to-one Local Codex thread mapping
+
+**Phase:** complete.
+
+The owner reported different agents in Local tmux and phone Remote immediately
+after T-314. Metadata-only inspection, without reading pane contents, found one
+attached tmux session with `students` and `swallow` windows. The `harness`
+supervisor is configured `--last`; `swallow-research` was originally
+`--new`, but its recovery path also runs `resume --last`. After T-314's forced
+shutdown, both replacement real TUI processes `2727306` and `2727307` opened
+the same saved root thread
+`019f9f69-6b94-70a3-be12-8bef23b88a96`. This violates T-310's explicit
+precondition that `--last` is deterministic only when no competing Codex
+session exists in the selected scope.
+
+The phone-side managed app server is the separate healthy process pair
+`2852494`/`2852569`. Neither tmux command includes `--remote`, and socket
+metadata shows no TUI connection to the managed control socket. During the
+diagnostic turn, the tmux `swallow` TUI executed this task while the app server
+simultaneously owned a different live agent command rooted in the separate
+Students repository. This is not a same-worktree collision, but it proves the
+phone and terminal are controlling distinct clients. Value-free log indexing
+maps the app server's active root to
+`019f7fea-4f00-7681-910d-81ae99a77143`, while this tmux `swallow` turn is
+root `019f9f69-6b94-70a3-be12-8bef23b88a96`; the app server also has the
+first root's `Archimedes` subagent open. Remote can therefore legitimately
+show a different chat or agent.
+
+No process, tmux session, thread, app-server state, prompt, or repository was
+changed during diagnosis. Do not type into both duplicate tmux clients
+concurrently. Before repair, the owner must select which saved thread belongs
+in each tmux window and whether terminal TUIs should remain independent clients
+or connect to the managed app server. If a later restart is allowed, the narrow
+default is to preserve independent clients but relaunch each supervisor only
+once with an explicit `--session ID`.
+
+**No-restart plan:** Codex 0.145.0 supports both an in-process `/resume` picker
+and a TUI connected to the existing app server through
+`codex resume --remote unix:// SESSION_ID`. In-process `/resume` is rejected
+for this repair: it would point the old tmux client at the same saved rollout
+but leave it independent of phone Remote, retain the supervisor's ambiguous
+`--last` recovery, and permit divergent simultaneous turns.
+
+The recommended bounded repair restarts nothing. Preserve every current PID;
+rename only the existing `students` tmux window to `students-stale`; create one
+new detached `students` window whose TUI connects to the already-running
+managed Unix-socket app server and resumes exact Students root
+`019f7fea-4f00-7681-910d-81ae99a77143`. Do not switch the owner's active
+window. Accept only if all pre-existing PIDs remain unchanged, the new TUI has
+an established socket connection to app-server PID `2852569`, and the phone's
+Students root remains active. Validate through process, socket, thread-index,
+tmux, doctor, and repository metadata only; never read either pane.
+
+Rollback is to remove only the newly created window/process and restore the old
+window name; no existing process would be signaled. This provides a live
+terminal view of the same app-server thread as phone Remote, but it does not
+make the old `--last` supervisors durable. A later planned restart or
+supervisor enhancement must bind explicit IDs before another recovery.
+
+**Decision D-001:** recommended is the new remote-backed `students` window
+above. Alternative is no live change: keep using phone Remote for Students and
+the tmux `swallow` window for SW-031 until a future restart can repair the
+supervisors. The owner selected the recommended repair with explicit `go` on
+2026-07-27. Git preflight at 06:17 JST found the task branch clean and exactly
+aligned with its upstream at `e673ad1`; tmux still has one attached `harness`
+session with inactive `students` window 0 and active `swallow` window 2. No
+tmux input or process launch preceded this checkpoint. The exact first
+execution step is to commit and push this authorization, then revalidate every
+recorded PID, app-server identity, socket, thread root, and active-window
+selector immediately before renaming only window 0.
+
+**LIFO execution gate 2026-07-27:** the first full preflight stopped before
+either tmux mutation because one fixed-string rollout-suffix probe omitted
+grep's `--`; its leading hyphen was parsed as an option and the command exited
+2. Immediate readback proves the original `students` and `swallow` windows,
+active `swallow` client selection, all nine protected PIDs, and clean aligned
+Git state are unchanged. The attempt is retry-safe. Add only the missing `--`
+to that probe and repeat every identity and health check before the rename.
+
+**LIFO execution gate 2026-07-27:** the corrected full preflight passed, window
+0 was renamed, and one detached remote TUI was launched. An added acceptance
+loop then timed out because it incorrectly required that remote client to own
+the app server's rollout file and emit thread-scoped log rows. The value-free
+log index instead records temporary TUI PID `3007213` with only client-local,
+threadless TUI rows, consistent with the documented remote-client/app-server
+split. The planned rollback removed that temporary window/process and restored
+the original name; readback again proves the nine protected PIDs and active
+`swallow` selection unchanged. Socket acceptance was not durably captured and
+remains unknown. Retry the frozen plan with stage-labelled checks, requiring
+the new client's exact target-thread argv and established control-socket
+connection while retaining rollout/thread ownership checks on app-server PID
+`2852569`, where they belong.
+
+**Execution result 2026-07-27 06:27 JST:** the corrected frozen repair passed.
+Existing window 0 is now `students-stale` with unchanged pane/supervisor PID
+`3837157`. New detached window 1 is `students`, with wrapper PID `3024942`
+and real TUI PID `3025057`; its exact argv resumes
+`019f7fea-4f00-7681-910d-81ae99a77143` through `--remote unix://`. Socket
+metadata proves its established Unix peer matches the unchanged control-socket
+endpoint on app-server PID `2852569`. That server still owns the Students
+rollout and has current thread-scoped rows; filtered doctor remains wholly
+`ok`. Every pre-existing protected PID is live with its original start time,
+and the sole attached tmux client remained on active `2:swallow`. No existing
+process was signaled, restarted, or given input. Finish independent
+process/socket/tmux/doctor/Git validation, then run canonical fleet health.
+
+**LIFO validation gate 2026-07-27:** the first final-validation wrapper exited
+141 before fleet health because its socket parser deliberately stopped after
+one record while shell `pipefail` treated the upstream `ss` SIGPIPE as an
+error. This did not mutate tmux or any process. Immediate readback proves the
+three-window repair, active `swallow` selection, all protected and new PIDs,
+and clean aligned Git state remain stable. Make the parser consume all socket
+rows, repeat the complete independent validation, and invoke fleet health only
+after it passes.
+
+**Completion:** the full-consuming retry passed every independent gate. Exact
+process argv, start-time, tmux, Unix peer-inode, app-server rollout, thread
+index, redacted doctor, supervisor-status, and Git checks all passed while the
+remote-backed window remained live. `tests/test-codex-login.sh` and
+`tests/test-codex-resilient.sh` pass. Canonical fleet health reports Local and
+all seven remote Linux logical nodes ready—including both ABQ routes—and all
+four Mac route pairs at 2/2. No existing process was signaled or restarted,
+and no pane received input.
+
+The active view after the initial repair was one-to-one: `1:students` is the
+app-server-backed Students root used by phone Remote, and `2:swallow` remains
+the independent SW-031 client. `0:students-stale` deliberately preserves the
+old duplicate client for rollback evidence but must not receive input. The
+owner-authorized cleanup below subsequently removed that stale client and
+window. The live repair does not change the remaining `swallow-research`
+supervisor's ambiguous recovery selector. Before any future TUI restart or
+recovery, freeze and implement its explicit thread ID; do not claim recurrence
+is impossible until that separate durability step is complete.
+
+**Post-completion cleanup 2026-07-27:** the owner explicitly requested deletion
+of both the `students-stale` Codex session and its tmux window. Read-only
+preflight at 06:35 JST proves there is no independently deletable saved session
+behind that name: stale real TUI PID `2727306` and active `swallow` PID
+`2727307` both own saved root
+`019f9f69-6b94-70a3-be12-8bef23b88a96`. Native `codex delete` permanently
+deletes a saved session, so invoking it would delete the active SW-031 thread,
+including this turn. It is excluded.
+
+Interpret the authorized cleanup narrowly: require the sole attached client to
+remain outside exact window `@0`, revalidate window 0's exact pane/supervisor
+and child identities plus both surviving windows, then run native
+`tmux kill-window -t @0` once. This terminates only the stale live supervisor
+and TUI chain while removing its tmux window; it preserves the shared saved
+thread. Accept only if window `@0` and PIDs `3837157`, `2727171`, and `2727306`
+are absent, `1:students` remains connected to unchanged app-server PID
+`2852569`, active `2:swallow` and its process chain remain unchanged, doctor
+passes, and Git is clean. Never invoke `codex delete` for the shared UUID.
+
+**LIFO cleanup gate 2026-07-27:** the first deletion preflight failed before
+`tmux kill-window` because it added an exact managed-wrapper PID check and
+wrapper `2852494` had exited since the prior checkpoint. Immediate readback
+proves window `@0`, its three target PIDs, both surviving windows, and every
+TUI remain unchanged. Real app-server PID `2852569` retains its exact
+05:46:46 start, argv, control-socket listener and established Students peer;
+it is now reparented to PID 1 and redacted doctor remains `ok`. The retry is
+safe. Re-run the complete preflight against the real server identity required
+by the frozen acceptance gate, without requiring the transient wrapper.
+
+**LIFO cleanup gate 2026-07-27:** corrected preflight passed and native
+`tmux kill-window -t @0` removed the exact stale window, but its process chain
+did not receive a terminating signal and remained live beyond the bounded
+20-second wait. The command stopped without escalation. The sole attached
+client stayed on `swallow`; `students`, `swallow`, their process chains, and
+the app server are unchanged. The three stale processes now share exact
+session/process group `3837157` and only deleted PTY `/dev/pts/8`.
+
+Do not signal the whole group. Revalidate real TUI PID `2727306`, its exact
+start/argv/parentage, shared rollout, and the surviving topology, then send one
+`SIGTERM` only to that real TUI. The managed arg0 launcher will retain its
+normal postflight path and propagate status 143; the resilience supervisor
+classifies that as an operator stop rather than restarting. Wait up to
+20 seconds for all three exact stale PIDs to disappear and require their arg0
+lock to be released. No `SIGKILL`, second signal, process-group signal, or
+saved-session deletion is authorized; stop if the exact chain remains.
+
+**LIFO cleanup result 2026-07-27:** every corrected identity gate passed and
+one `SIGTERM` was sent only to real stale TUI PID `2727306`. The real TUI,
+managed arg0 wrapper PID `2727171`, and resilience supervisor PID `3837157`
+all exited within the bounded wait, with no respawn. No second signal was sent.
+The postflight wrapper then exited 1 only because it required supervisor phase
+`stopped`; actual value-free status is the safe
+`phase=stale owner_pid=none reason=owner-absent`. Window `@0` remains absent,
+the sole attached client remains on `swallow`, both surviving windows and all
+their PIDs are unchanged, the Students control-socket peer and app server are
+healthy, and redacted doctor is `ok`.
+
+Arg0 planning reports `live=4 eligible=0 young=2 unexpected=0`; the terminated
+process released its lock, and no housekeeping deletion is eligible or
+authorized. Treat the stale value-free supervisor state as accurate residue
+from removing its tmux owner, not as a live Codex session. Run independent
+final topology/socket/thread/doctor/Git validation and canonical fleet health,
+then close this cleanup. Permanent `codex delete` remains excluded because the
+saved UUID is the active SW-031 thread.
+
+**Cleanup completion:** exact window `@0` and stale PIDs `3837157`, `2727171`,
+and `2727306` are absent. Native tmux removal ran once; after tmux left the
+process chain detached, one exact leaf `SIGTERM` let the managed launcher and
+supervisor unwind without respawn. No second signal, `SIGKILL`, process-group
+signal, pane input, or permanent `codex delete` occurred. Saved SW-031 root
+`019f9f69-6b94-70a3-be12-8bef23b88a96` remains unarchived and active in
+`swallow`; deleting it would not have been a stale-only operation.
+
+Independent final validation finds only the intended `students` and `swallow`
+windows, with the sole attached client still on `swallow`; the remote-backed
+Students peer, real app server, thread index, and redacted doctor pass. The
+removed supervisor's value-free residue correctly reports
+`phase=stale owner_pid=none`; it is not a live process. Arg0 planning reports
+`eligible=0 young=3 unexpected=0 removed=0`, so no cleanup ran. Focused
+resilience validation passes, Git is clean/aligned, and canonical fleet health
+passes Local, all seven remote Linux logical nodes including both ABQ routes,
+and all four Mac route pairs at 2/2.
+
+### T-314 — Recover Local Slack connector availability
+
+**Phase:** complete.
+
+Restore read-only Slack tools to Local Codex after the installed and enabled
+Slack plugin initially listed `RioYokotaLab` and searched `#swallow`, then
+later returned `unsupported call` before reaching Slack. T4 has no Slack
+plugin installed, so it was not the source of the earlier successful access.
+Local's two supervised TUIs started after the current task began, but its
+separate remote-control app server has remained live since 2026-07-22 and
+predates the plugin enablement recorded by Swallow.
+
+The exact plugin mention still failed, while native doctor reports healthy
+Codex auth, network, websocket, state, installation, and persistent app-server
+state. The resilience launcher manages only foreground TUI restart/resume and
+Linux worker limits; it neither creates nor refreshes the app server. Do not
+couple every TUI launch to a remote-control restart.
+
+The frozen recovery, rollback, two-turn Slack acceptance test, and decision
+register are in `docs/plans/t314-local-slack-connector-recovery.md`. No service,
+setting, connector authorization, pairing, TUI, or remote node has changed.
+
+**Decision D-001 result:** the owner selected the recommended one-time native
+`codex remote-control stop` / `start` recovery and separately said `go`.
+Harness `124822d` and Swallow `5e7baf2` durably captured the pre-signal state.
+The exact native stop was then invoked once and exited `1` with
+`app server is running but is not managed by codex app-server daemon`. Native
+start was not invoked. PID `3676694`, both supervisors, and both TUI children
+remain live and unchanged, so the failed command is not safe to replay.
+
+Value-free state inspection found no managed `app-server.pid`. Official Codex
+0.145.0 source confirms that native stop deliberately refuses a socket-serving
+process without a managed backend. The managed implementation matches PID and
+start time, sends `SIGTERM`, waits 60 seconds, and only then permits forced
+termination. The revised plan proposes one current-user, exact-start-time,
+exact-executable, exact-argv checked `SIGTERM`, no `SIGKILL`, followed by
+native start only after confirmed exit.
+
+**Decision D-002:** the owner selected the recommended guarded one-time
+`SIGTERM` and then gave the separately required explicit `go`. No signal or
+start preceded that authorization checkpoint; Harness and Swallow pushed it
+before execution. If interrupted, resume from this ledger and reconcile live
+state before acting; never replay the failed native stop or an ambiguous
+signal/start.
+
+**D-002 execution result:** every frozen identity check passed and one
+`SIGTERM` was sent to PID `3676694`. The same process remained live for the
+full 60-second grace window, so the guard exited `75`; no second signal,
+`SIGKILL`, or native start occurred. Redacted doctor then remained `ok`, with
+the old unmanaged 0.145.0 server and both supervised TUIs live.
+
+The installed-version Codex test confirms the first `SIGTERM` waits for a
+running app-server turn, while a second forces exit. That supported a
+lower-risk no-signal continuation: wait for the exact old identity to
+disappear after the turn yielded, then run native start and verify the managed
+PID record, redacted doctor, and both TUIs. Its mode-0600 handoff was
+`/tmp/t314-post-turn-result.fE4BY3`; the prepared native-start and doctor logs
+were `/tmp/t314-remote-control-start.cMgpXI` and
+`/tmp/t314-post-turn-doctor.qJnJvK`.
+
+The first helper launch failed closed before mutation because it contained UID
+`1000` instead of Local's actual `5035`. The corrected helper passed `bash -n`
+and `shellcheck`, exact-unlinked itself, and armed as PID `2562922` at
+2026-07-27 03:18:54 JST. It sent no signal and waited for the unchanged old
+PID/start identity to disappear after the turn yielded.
+
+**Post-turn result:** the corrected helper waited five minutes after the prior
+turn yielded and failed closed at `waiting_for_graceful_exit` at 03:25:01 JST.
+It sent no signal and did not run native start. At 03:56 JST, the original
+server identity was still live, the managed PID file remained absent, both
+TUIs were unchanged, and filtered redacted doctor remained `ok`.
+
+Installed 0.145.0 source confirms a second forceable signal sets forced
+shutdown, exits even with running assistant turns, and skips orderly
+connection/task/thread cleanup; its exact test expects a second `SIGTERM` to
+exit successfully within two seconds. This may interrupt in-flight app-server
+turns even though the two TUI OS processes are preserved.
+
+**Decision D-003:** selected by owner `Go`. The bounded path is to arm a
+detached exact-identity helper before signaling; it sends one second
+`SIGTERM`, never `SIGKILL`, waits up to ten seconds for the exact old identity
+to disappear, then invokes native managed start once and verifies the managed
+PID, redacted doctor, and both TUIs. The owner then gave the separately
+required execution `Go`. No second signal or native start preceded this
+checkpoint. Push it in Harness and Swallow before preparing the gated helper.
+
+The first arm preflight rejected an incorrectly expanded authorization commit
+SHA before launching the helper; it made no change. The unchanged helper then
+passed corrected preflight, exact-unlinked itself, and armed as PID `2711446`
+at 2026-07-27 04:33:42 JST. Gate `/tmp/t314-d003-gate.fHfr6Q` is the original
+current-user mode-0600 inode `2050:8389271`, so the helper is inert. Result,
+native-start, and redacted-doctor files are
+`/tmp/t314-d003-result.CKPSpM`, `/tmp/t314-d003-start.knkAbQ`, and
+`/tmp/t314-d003-doctor.OGZlx4`. Push this armed checkpoint before changing only
+the gate mode to `400`; on reconnect, inspect the result and never replay the
+gate release or either signal.
+
+**D-003 execution result:** the exact gate changed once from mode `600` to
+`400` at 04:36:35 JST. The helper passed every frozen identity check and sent
+the separately authorized second `SIGTERM` once to PID `3676694`. Its
+ten-second wait ended at `waiting_for_forced_exit`, so it failed closed before
+native start. The old server and both original TUI children subsequently
+exited; the two unchanged resilience supervisors replaced only their TUI
+children at 04:36:53. No prompt was replayed.
+
+At 05:46:46 JST, readback proved that the helper had exited without starting a
+server and that the old PID was absent, so the already-authorized native
+`codex remote-control start --json` was invoked exactly once. It succeeded
+with managed wrapper PID `2852494` and one real Codex 0.145.0 app-server child,
+PID `2852569`. The PID record matches the wrapper start time; exactly one real
+app server is present; filtered doctor is `ok`; both supervisors and their
+replacement TUI chains remain live. A post-success verifier exited nonzero
+only because it expected the PID record to name `codex.real` rather than the
+native shell wrapper. Start was not retried.
+
+**Slack acceptance turn 1:** the enabled Slack plugin remains at revision
+`11c74d6b`. This chat listed `RioYokotaLab` (`T1251HXB4`), resolved public
+`#swallow` (`C058CUU8HK8`), and returned 20 bounded `Qwen3` results from that
+channel. No Slack write occurred. The separate-turn `Megatron` search remains
+the only connector acceptance gate before T-314 can close.
+
+**Completion:** on the next turn, the unchanged connector returned 20 bounded
+`Megatron` results from the same `#swallow` channel. This supports the narrow
+causal conclusion that the controlled app-server refresh repaired the observed
+tool-registration state; it is not a general Codex guarantee. No plugin,
+setting, pairing, credential, or Slack state changed. The four reviewed D-003
+temporary evidence files were exact-unlinked only after both repositories had
+the recovery evidence, and their absence was verified. Resume SW-031 without
+another restart or reinstall.
 
 ### T-313 — Enable repository auto-merge and limit login-node Codex threads
 

@@ -744,9 +744,9 @@ mkdir -p "$TEMP_DIR/tool-plan-home"
 HOME="$TEMP_DIR/tool-plan-home" "$HARNESS" tool --host ab2 --name ripgrep \
     --facts "$ROOT/tests/fixtures/ab2.facts" \
     --plan >"$TEMP_DIR/tool-plan.out"
-grep 'INSTALL artifact=.*ripgrep/15.1.0/linux-x86_64' \
+grep 'INSTALL artifact=.*ripgrep/15.2.0/linux-x86_64' \
     "$TEMP_DIR/tool-plan.out" >/dev/null || fail "tool artifact plan"
-grep 'sha256=1c9297be4a084eea7ecaedf93eb03d058d6faae29bbc57ecdaf5063921491599' \
+grep 'sha256=33e15bcf1624b25cdd2a55813a47a2f95dbe126268203e76aa6a585d1e7b149c' \
     "$TEMP_DIR/tool-plan.out" >/dev/null || fail "tool checksum plan"
 if HOME="$TEMP_DIR/tool-plan-home" "$HARNESS" tool --host ab2 --name unsupported \
     --facts "$ROOT/tests/fixtures/ab2.facts" --plan \
@@ -756,9 +756,9 @@ fi
 mkdir -p "$TEMP_DIR/uv-plan-home"
 HOME="$TEMP_DIR/uv-plan-home" "$HARNESS" tool --host al --name uv \
     --facts "$ROOT/tests/fixtures/al.facts" --plan >"$TEMP_DIR/uv-plan.out"
-grep 'INSTALL artifact=.*uv/0.11.31/linux-aarch64' "$TEMP_DIR/uv-plan.out" \
+grep 'INSTALL artifact=.*uv/0.11.32/linux-aarch64' "$TEMP_DIR/uv-plan.out" \
     >/dev/null || fail "uv AArch64 artifact plan"
-grep 'sha256=d74f23949fd07be4970f293d06ca99d87cd2a78a341c3d7b7fc0df7bc2d8a145' \
+grep 'sha256=4d4fa08d95b06642e5800df6a22bd71455f23f988269e18da2847971d8c0bf31' \
     "$TEMP_DIR/uv-plan.out" >/dev/null || fail "uv AArch64 checksum plan"
 
 mkdir -p "$TEMP_DIR/shellcheck-plan-home"
@@ -781,15 +781,15 @@ grep 'sha256=68a8133197a50beb8803f8d42f9908d1af1c5540d4bb05fdfca8c1fa47decefc' \
 mkdir -p "$TEMP_DIR/rclone-plan-home"
 HOME="$TEMP_DIR/rclone-plan-home" "$HARNESS" tool --host rc --name rclone \
     --facts "$ROOT/tests/fixtures/rc.facts" --plan >"$TEMP_DIR/rclone-x86-plan.out"
-grep 'sha256=dbee7ccd7a5d617e4ed4cd4555c16669b511abfe8d31164f61be35ac9e999bd2' \
+grep 'sha256=fe435e0c36228e7c2f116a8701f01127bb1f694005fc11d1f27186c8bca4115d' \
     "$TEMP_DIR/rclone-x86-plan.out" >/dev/null || fail "rclone x86-64 checksum plan"
-grep 'EXTRACT format=zip member=rclone-v1.74.3-linux-amd64/rclone binary=rclone' \
+grep 'EXTRACT format=zip member=rclone-v1.74.4-linux-amd64/rclone binary=rclone' \
     "$TEMP_DIR/rclone-x86-plan.out" >/dev/null || fail "rclone x86-64 extraction plan"
 HOME="$TEMP_DIR/rclone-plan-home" "$HARNESS" tool --host al --name rclone \
     --facts "$ROOT/tests/fixtures/al.facts" --plan >"$TEMP_DIR/rclone-arm-plan.out"
-grep 'sha256=8f8d47446e061f80c3256659fe8e21f56d72d96aaefe1275d088ea5eb6b42aa7' \
+grep 'sha256=97685285c9ad6a0cf17d5844115d2a67245af6444db672187074bd9c358de419' \
     "$TEMP_DIR/rclone-arm-plan.out" >/dev/null || fail "rclone AArch64 checksum plan"
-grep 'EXTRACT format=zip member=rclone-v1.74.3-linux-arm64/rclone binary=rclone' \
+grep 'EXTRACT format=zip member=rclone-v1.74.4-linux-arm64/rclone binary=rclone' \
     "$TEMP_DIR/rclone-arm-plan.out" >/dev/null || fail "rclone AArch64 extraction plan"
 
 mkdir -p "$TEMP_DIR/restic-plan-home"
@@ -1021,9 +1021,9 @@ grep '^tool_rg=present$' "$TEMP_DIR/user-bin-inventory.out" >/dev/null ||
 test_repo=$TEMP_DIR/repo
 test_home=$TEMP_DIR/home
 mkdir -p "$test_repo" "$test_home"
-managed_rg_dir=$test_home/.local/opt/ripgrep/15.1.0/linux-x86_64
+managed_rg_dir=$test_home/.local/opt/ripgrep/15.2.0/linux-x86_64
 mkdir -p "$managed_rg_dir" "$test_home/.local/bin"
-printf '%s\n' '#!/bin/sh' 'echo "ripgrep 15.1.0"' >"$managed_rg_dir/rg"
+printf '%s\n' '#!/bin/sh' 'echo "ripgrep 15.2.0"' >"$managed_rg_dir/rg"
 chmod 755 "$managed_rg_dir/rg"
 ln -s "$managed_rg_dir/rg" "$test_home/.local/bin/rg"
 HOME="$test_home" PATH="/usr/bin:/bin" \
@@ -1065,14 +1065,14 @@ for command_name in qsub qstat qdel nodestatus; do
 done
 zip_fixture_dir=$TEMP_DIR/zip-fixture
 zip_fixture_archive=$TEMP_DIR/rclone-fixture.zip
-zip_fixture_member=rclone-v1.74.3-linux-amd64/rclone
+zip_fixture_member=rclone-v1.74.4-linux-amd64/rclone
 mkdir -p "$zip_fixture_dir"
-printf '%s\n' '#!/bin/sh' 'echo "rclone v1.74.3"' >"$zip_fixture_dir/rclone"
+printf '%s\n' '#!/bin/sh' 'echo "rclone v1.74.4"' >"$zip_fixture_dir/rclone"
 chmod 755 "$zip_fixture_dir/rclone"
 python3 -c 'import sys,zipfile; z=zipfile.ZipFile(sys.argv[1], "w", zipfile.ZIP_DEFLATED); z.write(sys.argv[2], sys.argv[3]); z.close()' \
     "$zip_fixture_archive" "$zip_fixture_dir/rclone" "$zip_fixture_member"
 zip_fixture_hash=$(sha256sum "$zip_fixture_archive" | awk '{print $1}')
-sed_in_place "s/dbee7ccd7a5d617e4ed4cd4555c16669b511abfe8d31164f61be35ac9e999bd2/$zip_fixture_hash/" \
+sed_in_place "s/fe435e0c36228e7c2f116a8701f01127bb1f694005fc11d1f27186c8bca4115d/$zip_fixture_hash/" \
     "$test_repo/tools/artifacts.tsv"
 restic_fixture=$TEMP_DIR/restic-fixture
 printf '%s\n' '#!/bin/sh' '[ "${1:-}" = version ] || exit 2' \
@@ -1109,12 +1109,12 @@ uv_fixture_parent=$TEMP_DIR/uv-fixture
 uv_fixture_root=$uv_fixture_parent/uv-x86_64-unknown-linux-gnu
 uv_fixture_archive=$TEMP_DIR/uv-fixture.tar.gz
 mkdir -p "$uv_fixture_root"
-printf '%s\n' '#!/bin/sh' 'echo "uv 0.11.31"' >"$uv_fixture_root/uv"
+printf '%s\n' '#!/bin/sh' 'echo "uv 0.11.32"' >"$uv_fixture_root/uv"
 chmod 755 "$uv_fixture_root/uv"
 tar -czf "$uv_fixture_archive" -C "$uv_fixture_parent" \
     uv-x86_64-unknown-linux-gnu/uv
 uv_fixture_hash=$(sha256sum "$uv_fixture_archive" | awk '{print $1}')
-sed_in_place "s/8cc1cd82d434ec565376f98bd938d4b715b5791a80ff2d3aa78821cf85091b4b/$uv_fixture_hash/" \
+sed_in_place "s/aab924fd522efd06f1c5f3b93a243864fc453132c94b2dc49f1371b528a4b967/$uv_fixture_hash/" \
     "$test_repo/tools/artifacts.tsv"
 sqlite_fixture_dir=$TEMP_DIR/sqlite-fixture
 sqlite_fixture_root=$sqlite_fixture_dir/sqlite-amalgamation-3530300
@@ -1706,7 +1706,7 @@ grep "CALLER native='hash -r' reason=refresh-command-path-cache" \
     "$TEMP_DIR/zip-tool-apply.out" >/dev/null || fail "tool caller cache refresh"
 HOME="$test_home" PATH="/usr/bin:/bin" \
     "$test_home/.local/bin/rclone" --version >"$TEMP_DIR/zip-tool-version.out"
-grep '^rclone v1.74.3$' "$TEMP_DIR/zip-tool-version.out" >/dev/null ||
+grep '^rclone v1.74.4$' "$TEMP_DIR/zip-tool-version.out" >/dev/null ||
     fail "ZIP installed version"
 HOME="$test_home" PATH="/usr/bin:/bin" \
     "$test_repo/bin/harness" tool --host local --name rclone --plan \
@@ -1717,20 +1717,51 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$zip_tool_transaction" \
     >"$TEMP_DIR/zip-tool-rollback.out"
 [ ! -e "$test_home/.local/bin/rclone" ] && [ ! -L "$test_home/.local/bin/rclone" ] ||
     fail "ZIP rollback left stable link"
-[ ! -e "$test_home/.local/opt/rclone/1.74.3/linux-x86_64" ] ||
+[ ! -e "$test_home/.local/opt/rclone/1.74.4/linux-x86_64" ] ||
     fail "ZIP rollback left artifact directory"
+
+# Exercise exact forward replacement of a managed rclone artifact and rollback.
+rclone_home=$TEMP_DIR/rclone-upgrade-home
+rclone_old_dir=$rclone_home/.local/opt/rclone/1.74.3/linux-x86_64
+mkdir -p "$rclone_old_dir" "$rclone_home/.local/bin"
+printf '%s\n' '#!/bin/sh' 'echo "rclone v1.74.3"' >"$rclone_old_dir/rclone"
+chmod 755 "$rclone_old_dir/rclone"
+ln -s "$rclone_old_dir/rclone" "$rclone_home/.local/bin/rclone"
+HOME="$rclone_home" PATH="$fake_bin:/usr/bin:/bin" \
+    "$test_repo/bin/harness" tool --host local --name rclone --plan \
+    >"$TEMP_DIR/rclone-upgrade-plan.out"
+grep 'REPLACE command=rclone from=1.74.3 to=1.74.4 predecessor=retained' \
+    "$TEMP_DIR/rclone-upgrade-plan.out" >/dev/null ||
+    fail "rclone replacement plan"
+HOME="$rclone_home" PATH="$fake_bin:/usr/bin:/bin" \
+    FIXTURE_ARCHIVE="$zip_fixture_archive" \
+    "$test_repo/bin/harness" tool --host local --name rclone --apply \
+    >"$TEMP_DIR/rclone-upgrade-apply.out"
+rclone_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
+    "$TEMP_DIR/rclone-upgrade-apply.out")
+[ -n "$rclone_transaction" ] || fail "missing rclone replacement transaction"
+[ "$("$rclone_home/.local/bin/rclone" --version)" = 'rclone v1.74.4' ] ||
+    fail "rclone replacement version"
+[ -f "$rclone_old_dir/rclone" ] || fail "rclone replacement removed predecessor"
+HOME="$rclone_home" "$test_repo/bin/harness" rollback "$rclone_transaction" \
+    >"$TEMP_DIR/rclone-upgrade-rollback.out"
+[ "$(readlink "$rclone_home/.local/bin/rclone")" = "$rclone_old_dir/rclone" ] &&
+    [ "$("$rclone_home/.local/bin/rclone" --version)" = 'rclone v1.74.3' ] ||
+    fail "rclone replacement rollback"
+[ ! -e "$rclone_home/.local/opt/rclone/1.74.4/linux-x86_64" ] ||
+    fail "rclone rollback retained replacement"
 
 # Exercise exact forward replacement of a managed uv artifact and rollback.
 uv_home=$TEMP_DIR/uv-upgrade-home
 uv_old_dir=$uv_home/.local/opt/uv/0.9.18/linux-x86_64
 mkdir -p "$uv_old_dir" "$uv_home/.local/bin"
-printf '%s\n' '#!/bin/sh' 'echo "uv 0.9.18"' >"$uv_old_dir/uv"
+printf '%s\n' '#!/bin/sh' 'echo "uv 0.9.18 (fixture-target)"' >"$uv_old_dir/uv"
 chmod 755 "$uv_old_dir/uv"
 ln -s "$uv_old_dir/uv" "$uv_home/.local/bin/uv"
 HOME="$uv_home" PATH="$fake_bin:/usr/bin:/bin" \
     "$test_repo/bin/harness" tool --host local --name uv --plan \
     >"$TEMP_DIR/uv-upgrade-plan.out"
-grep 'REPLACE command=uv from=0.9.18 to=0.11.31 predecessor=retained' \
+grep 'REPLACE command=uv from=0.9.18 to=0.11.32 predecessor=retained' \
     "$TEMP_DIR/uv-upgrade-plan.out" >/dev/null || fail "uv replacement plan"
 HOME="$uv_home" PATH="$fake_bin:/usr/bin:/bin" FIXTURE_ARCHIVE="$uv_fixture_archive" \
     "$test_repo/bin/harness" tool --host local --name uv --apply \
@@ -1738,15 +1769,15 @@ HOME="$uv_home" PATH="$fake_bin:/usr/bin:/bin" FIXTURE_ARCHIVE="$uv_fixture_arch
 uv_transaction=$(sed -n 's/^TRANSACTION id=\([^ ]*\).*/\1/p' \
     "$TEMP_DIR/uv-upgrade-apply.out")
 [ -n "$uv_transaction" ] || fail "missing uv replacement transaction"
-[ "$("$uv_home/.local/bin/uv" --version)" = 'uv 0.11.31' ] ||
+[ "$("$uv_home/.local/bin/uv" --version)" = 'uv 0.11.32' ] ||
     fail "uv replacement version"
 [ -f "$uv_old_dir/uv" ] || fail "uv replacement removed predecessor"
 HOME="$uv_home" "$test_repo/bin/harness" rollback "$uv_transaction" \
     >"$TEMP_DIR/uv-upgrade-rollback.out"
 [ "$(readlink "$uv_home/.local/bin/uv")" = "$uv_old_dir/uv" ] &&
-    [ "$("$uv_home/.local/bin/uv" --version)" = 'uv 0.9.18' ] ||
+    [ "$("$uv_home/.local/bin/uv" --version)" = 'uv 0.9.18 (fixture-target)' ] ||
     fail "uv replacement rollback"
-[ ! -e "$uv_home/.local/opt/uv/0.11.31/linux-x86_64" ] ||
+[ ! -e "$uv_home/.local/opt/uv/0.11.32/linux-x86_64" ] ||
     fail "uv rollback retained replacement"
 
 # Exercise the single-binary bzip2 release format used by Restic.
@@ -2015,7 +2046,7 @@ printf '%s\n' \
 chmod 755 "$fake_python"
 printf '%s\n' \
     '#!/bin/sh' \
-    'if [ "${1:-}" = --version ]; then echo "uv 0.11.31 (x86_64-unknown-linux-gnu)"; exit 0; fi' \
+    'if [ "${1:-}" = --version ]; then echo "uv 0.11.32 (x86_64-unknown-linux-gnu)"; exit 0; fi' \
     'printf "%s\n" "$@" >"$UV_ARGS_LOG"' \
     'install_dir=' \
     'while [ "$#" -gt 0 ]; do' \
