@@ -115,6 +115,30 @@ harness codex-resilient --run --name harness \
 `resume --remote unix:// ID`; it never falls back to `--last` or replays a
 prompt.
 
+For an intentional per-thread cold reconnect, do not restart the shared
+remote-control app server. Quit Codex normally if you are inside the target
+TUI; exit status zero is terminal and the supervisor will not respawn it. From
+another tmux window, first list immutable window IDs and select a different
+window, then remove only the exact target and recreate its index with the
+exact remote root:
+
+```bash
+tmux list-windows -t harness \
+  -F '#{window_index} #{window_id} #{window_name} #{window_active}'
+tmux select-window -t harness:0
+tmux kill-window -t @EXACT_WINDOW_ID
+tmux new-window -d -t harness:2 -n project -c "$HOME/harness" \
+  'exec "$HOME/harness/bin/harness" codex-resilient --run --name project --remote-session 01900000-0000-7000-8000-000000000000'
+```
+
+Replace the example ID, index, window name, and supervisor name with the
+intended mapping. Never substitute `--last` for a phone-visible remote root:
+it selects the most recent local saved session for the launch directory and
+can make two windows display the same chat. A transient nonzero exit needs no
+manual restart; leave the window in place and let the supervisor retry the
+same exact root. Restarting the shared app server is a separate fleet-wide
+operation because it interrupts every remote-controlled thread.
+
 On Linux, the supervisor launches Codex through `harness codex-login`, which
 sets `RAYON_NUM_THREADS=8` and `TOKIO_WORKER_THREADS=8` for login-node
 politeness. The command leaves macOS unrestricted and does not install global

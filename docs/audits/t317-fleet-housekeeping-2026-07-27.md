@@ -383,6 +383,16 @@ window named `swallow`. The saved SW-031 remote root is no longer actively
 connected from tmux; no T-317 signal, switch, rename, or pane input caused
 that state.
 
+The owner then confirmed that indices 0 and 2 displayed the same chat and
+authorized repair. Exact readback identified inactive index 2 as the mistaken
+Harness-local `--last` chain while index 0 remained selected. T-317 removed
+only exact window `@52` after fixing its complete Bash/supervisor/wrapper/real
+PID chain, then recreated detached index 2 as `@54:swallow` with exact SW-031
+remote root. New supervisor PID `3184546` is `running remote-explicit` at
+attempt/delay zero; indices 0/1 and the attached client never changed. Native
+doctor passes 18/18. The README now documents intentional clean exit and exact
+tmux remote-root recreation and warns that `--last` is not a remote selector.
+
 ## Guarded deletion and cleanup
 
 - Six Linux and four Mac arg0 candidates were quarantined, revalidated, and

@@ -1032,6 +1032,30 @@ not currently connected from tmux. Native doctor and PR #337 remain green;
 arg0 reports five live, zero eligible/unexpected, and one young completed
 invocation.
 
+**Owner-requested mapping repair 2026-07-27 14:45 JST:** the owner confirmed
+that indices 0 and 2 displayed the same session and explained that the
+duplicate came from an attempted Swallow cold restart. Exact preflight proved
+index 2 inactive while the client selected index 0, one Bash child only, and
+the mistaken chain fixed at supervisor/wrapper/real PIDs
+`2939843`/`2940092`/`2965777` with selector `--name harness --last`.
+Harness/Students/app-server identities, pushed Git state, and stopped/unlocked
+Swallow remote state were unchanged.
+
+With explicit owner authorization, `tmux kill-window -t @52` removed only that
+inactive mistaken window and all four of its exact Bash/TUI-chain PIDs.
+Detached recreation at exact index 2 produced `@54:swallow` with
+supervisor/wrapper/real PIDs `3184546`/`3184639`/`3184984`, exact
+`--remote-session 019f9f69-6b94-70a3-be12-8bef23b88a96`, and
+`running remote-explicit` at attempt/delay zero. Indices 0/1 and the attached
+client on Harness never changed. Native doctor passes 18/18 and arg0 has zero
+eligible/unexpected residue.
+
+README now documents the safe owner workflow: normal TUI exit is terminal;
+from another window, list immutable window IDs, switch away, remove only the
+exact target, and recreate its index with the exact remote root. Never use
+`--last` for a phone-visible root and never restart the shared app server for
+a per-thread cold reconnect.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
