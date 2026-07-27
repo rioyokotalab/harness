@@ -104,7 +104,7 @@ Next free ID: T-320.
 
 ### T-319 — Report fleet health every Harness turn
 
-**Phase:** implementation complete; protected publication pending.
+**Phase:** complete.
 
 The owner requires a fresh canonical fleet-health result in every Harness
 turn's final response. Root `AGENTS.md` and the compact current-state contract
@@ -138,6 +138,16 @@ the primary checkout and correctly rejected its preserved live `.nfs…`
 placeholder. The clone remained clean throughout. Exact-unlink the single
 mode-0600 trace, update the clone to this checkpoint, and rerun isolated plus
 complete validation with `HARNESS_ROOT` absent from the test environment.
+
+**Completion 2026-07-27:** the isolated tmux suite and complete eight-worker
+phase-one suite pass from the clean exact clone with the inherited
+`HARNESS_ROOT` removed; all 75 focused suites and integration gates passed,
+with only the declared portable Codex and native MPI skips. Guarded deletion
+removed the exact 944-entry / 23,224,109-byte validation clone and two empty
+diagnostic probe directories, protected anchors were unchanged, and the exact
+mode-0600 manifest was unlinked. Root instructions, the ledger, and focused
+coverage now make a fresh canonical fleet-health result mandatory before every
+Harness turn yields.
 
 ### T-318 — Recover poisoned remote Codex threads
 
