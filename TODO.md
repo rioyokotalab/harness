@@ -870,6 +870,28 @@ unchanged, and exact backup job `8270230` plus its disabled smoke state are
 unchanged. No force, prune, branch deletion, scheduler/runtime action, or AB
 Swallow mutation occurred. AB remains on active SW-031 branch `9cb1ef7`.
 
+**Dependency-graph checkpoint 2026-07-27 14:20 JST:** GitHub's generated SPDX
+SBOM endpoint succeeds for Harness (2 packages), Students (34), and Swallow
+(2), but returns confirmed HTTP 404 for public Website both with authenticated
+GitHub API access and anonymously. Website still has enabled Dependabot
+security updates and zero alerts, but T-317 cannot prove that its tracked npm
+manifest participates in the dependency graph. D-006 keeps hosting settings
+read-only; confirm/enable Website dependency-graph generation in the later
+owner hosting-policy decision.
+
+As an independent compensating check, native
+`npm audit --package-lock-only --ignore-scripts` reports zero vulnerabilities
+at every severity across the exact clean Website lock, and the worktree remains
+clean/current. Registry metadata now reports npm 12.0.1, whose engine range
+accepts the installed Node line, but this is a new package-manager major and
+the Harness runtime transaction still lacks a safe managed-predecessor path.
+Do not replace npm/Node while active agents exist; update the earlier deferred
+npm 11.16 candidate to 12.0.1 and require compatibility plus rollback evidence
+in a later maintenance window.
+
+Draft PR #337's protection rerun on exact head `cc7ea27` passes
+`portable-phase1` in 2m20s.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.

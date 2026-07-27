@@ -245,6 +245,14 @@ All four repositories have zero direct collaborator grants, team grants,
 deploy keys, webhooks, and self-hosted runners. This supplements—not replaces—
 the separately recorded organization ownership and ruleset bypass actors.
 
+GitHub's generated SPDX SBOM endpoint succeeds for Harness, Students, and
+Swallow but returns HTTP 404 for public Website under both authenticated and
+anonymous access. Website's Dependabot security updates remain enabled with
+zero alerts, but dependency-graph participation is therefore unproven. A
+compensating native lockfile-only `npm audit` with lifecycle scripts disabled
+reports zero info/low/moderate/high/critical findings and leaves the clean
+worktree unchanged.
+
 Swallow verifies the staged `nemo-26.06.sif` as
 `b625ee8ea6bf89830935eb179055389c195173b624652541e8d85ff49d9287ee`,
 but bootstrap begins from mutable registry tag `nvcr.io/nvidia/nemo:26.06`
@@ -338,6 +346,8 @@ SW-031 branch was untouched.
 9. Site-admin lifecycle confirmation: establish whether AB/AB2/ABQ/T4 use a
    maintained RHEL 9.4 extended stream and whether AL has SLES 15 SP6 LTSS;
    never inspect subscription credentials or mutate site-managed OS packages.
+10. Website dependency graph: confirm/enable generated SBOM coverage through
+    an owner hosting-settings decision; retain native lockfile audit meanwhile.
 
 ## Final validation checklist
 
