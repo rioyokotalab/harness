@@ -161,6 +161,16 @@ process, tmux, or app-server lifecycle action ran. The request must never be
 retried. Commit and push this non-retryable identity, then send only one
 provisional `thread/name/set` for `harness-recovery-20260727`.
 
+**New-root persistence:** exactly one acknowledged `thread/name/set` named root
+`019fa3ae-6ad0-7642-aeca-b7b52421f576`
+`harness-recovery-20260727`. Same-connection readback proves exact identity,
+Harness cwd, idle state, and zero turns. Its new rollout was a canonical
+current-user-owned, single-link regular file at installed default mode `0664`;
+one descriptor-identity transaction changed only that inode to `0600` and
+stable post-readback passed. Neither request may be retried. Commit and push,
+then launch one detached `harness-next` window under watched supervisor name
+`harness-recovery`.
+
 ### T-322 — Make the phone-visible Swallow name unique
 
 **Phase:** complete.
