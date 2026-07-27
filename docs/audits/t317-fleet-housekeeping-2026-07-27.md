@@ -58,7 +58,7 @@ naturally. It is live kernel residue, not a cleanup candidate.
 | ab | pass | all zero | 0.11.32 | 1.74.4 | metadata pass | 3 | `2064918.pbs1` | `/groups` 51%, 4% inodes |
 | ab2 | pass | all zero | 0.11.32 | 1.74.4 | metadata pass | 3 | `2064919.pbs1` | `/home` 11%, 11% inodes |
 | abq | both pass | all zero | 0.11.32 | 1.74.4 | metadata pass | 2 | `176525.qjcm` | `/home` 8%, 1% inodes |
-| ri | pass | all zero | 0.11.32 | 1.74.4 | metadata pass | 3 | `10386` | `/home` 1%, 1% inodes; scheduler query unknown |
+| ri | pass | all zero | 0.11.32 | 1.74.4 | metadata pass | 3 | `10386` | `/home` 1%, 1% inodes; scheduler recovered |
 | al | managed pass | all zero | 0.11.32 | 1.74.4 | metadata pass | 3 | `4275926` | `/users` 5%; one 50 GiB project quota 51% |
 | rc | pass | all zero | 0.11.32 | 1.74.4 | metadata pass | 3 | `260847` | work filesystem 28%, 10% inodes |
 | t4 | pass | all zero | 0.11.32 | 1.74.4 | metadata pass | 3 | `8270230` | `/home` 5%, 1% inodes |
@@ -68,10 +68,14 @@ loaded indexes, checked all pack references, and verified snapshots, trees,
 and blobs in 1–25 seconds. No data-pack sampling or backup mutation ran. All
 lock directories, task captures, and Restic processes are absent afterward.
 
-RI scheduler state remains unknown because Slurm DNS SRV lookup fails.
-Scheduler state on the other seven nodes contains only the exact future weekly
-backup jobs above. No job was submitted, cancelled, requeued, reprioritized,
-or otherwise changed.
+RI's earlier scheduler query was unknown because Slurm DNS SRV lookup failed.
+A later per-host read-only status resolved exact successor `10386` as
+`PENDING`; all eight exact future weekly jobs in the table are now confirmed
+present, and every retained smoke job is verified-disabled and absent. The
+first remote-status attempt used the Local executable with a remote logical
+host and failed closed at the host-identity guard; corrected per-host SSH
+invocations succeeded. No job was submitted, cancelled, requeued,
+reprioritized, or otherwise changed.
 
 Local runs Ubuntu 24.04 kernel `6.8.0-134`; installed `6.8.0-136` requires a
 reboot. Metadata reports 92 upgrades including 32 security updates. The
@@ -141,6 +145,12 @@ Every managed route is within 0.7 seconds of Local under parallel,
 round-trip-bounded epoch probes. All Linux hosts report NTP synchronized with
 active chronyd and all Macs have `timed` loaded.
 
+Local has zero owner-process TCP listeners. Root-managed
+Kubernetes/NFS/SSH/mail services bind wildcard ports and UFW is active/enabled;
+non-root UFW rule inspection correctly refuses access. Wildcard binding is not
+evidence of external reachability. T-317 did not invoke sudo, scan the host
+externally, or alter firewall/service state.
+
 ## Backup recovery gaps
 
 Every primary repository passes structural metadata integrity. Independent
@@ -192,6 +202,13 @@ production ecosystem: Students pip/Actions, Website npm/Actions, and
 Harness/Swallow Actions. Harness's apparent Python manifests are offline test
 fixtures rather than a production dependency surface.
 
+Filesystem metadata also has zero foreign-owner, set-ID, world-writable, or
+nontrivial-ACL tracked files. Group-writable Harness/Students/Website files use
+the owner's user-private primary group with zero explicit additional members.
+Harness, Students, and Swallow have no executable non-sample Git hook.
+Website's sole pre-commit hook passes its byte-match doctor against the tracked
+canonical copy.
+
 Harness and Website have secret scanning and push protection with zero alerts.
 The private Students and Swallow repositories lack that entitlement. Code
 scanning is unavailable on all four. Students/Website restrict Actions and
@@ -223,6 +240,10 @@ v7.0.1 at `3d3c42e5aac5ba805825da76410c181273ba90b1`, and Students uses
 `5fda3b95a4ea91299a34e894583c3862153e4b97`. Students'
 `pull_request_target` boundary job checks out the immutable trusted base SHA
 before its secret-bearing step and does not execute PR-head code.
+
+All four repositories have zero direct collaborator grants, team grants,
+deploy keys, webhooks, and self-hosted runners. This supplements—not replaces—
+the separately recorded organization ownership and ruleset bypass actors.
 
 Swallow verifies the staged `nemo-26.06.sif` as
 `b625ee8ea6bf89830935eb179055389c195173b624652541e8d85ff49d9287ee`,

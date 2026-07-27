@@ -819,6 +819,39 @@ to upgrade the active stack. The one header-only NGC diagnostic capture was
 418 bytes, current-user-owned, exact-unlinked, and proved absent; it was
 created mode 0664, so future captures must set umask 077 first.
 
+**Hosting, filesystem, and scheduler checkpoint 2026-07-27 13:50 JST:** all
+four GitHub repositories have zero direct collaborator grants, team grants,
+deploy keys, webhooks, and self-hosted runners. Repository access therefore
+has no hidden repository-local grant/channel beyond the already audited
+organization ownership and ruleset bypass actors. Harness, Students, and
+Swallow have no executable non-sample Git hook. Website has exactly one
+pre-commit hook; its read-only doctor proves it byte-matches the tracked
+canonical copy.
+
+All tracked regular files are current-user-owned with zero set-ID and zero
+world-writable modes. Harness/Students/Website use group-writable modes only
+for the owner's user-private primary group, which has zero explicit additional
+members. All local tracked paths have zero ACL marker; AB Swallow has zero
+nontrivial ACL. Local has zero owner-process TCP listeners. Its root-managed
+Kubernetes/NFS/SSH/mail stack has wildcard listeners, while UFW is active and
+enabled; non-root `ufw status` correctly refuses rule visibility. This does
+not prove external exposure. Do not use sudo or alter site firewall/service
+state; carry rule/reachability review to a host-admin window if required.
+
+The exact weekly backup chain remains active on every Linux target:
+`94950`, `2064918.pbs1`, `2064919.pbs1`, `176525.qjcm`, `10386`, `4275926`,
+`260847`, and `8270230`; every retained smoke is verified-disabled and absent.
+RI's native scheduler route now reports exact successor `10386` as `PENDING`,
+resolving the earlier DNS-SRV unknown without mutation. An initial attempt to
+query remote logical hosts with the Local executable failed closed at the
+host-identity guard before remote contact; corrected read-only per-host SSH
+invocations succeeded. No job changed.
+
+Draft Harness PR #337 contains only `TODO.md` and the compact audit relative to
+protected `main`; its first `portable-phase1` passed in 2m20s. Keep it draft
+and unmerged until the 18:30 final readback is appended and the clean local
+Phase-1 gate passes.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
