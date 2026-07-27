@@ -110,7 +110,7 @@ Next free ID: T-323.
 
 ### T-322 — Make the phone-visible Swallow name unique
 
-**Phase:** interviewing.
+**Phase:** ready-for-go.
 
 After T-321, the owner reported three phone-visible sessions named `swallow`
 plus the expected `swallow-blocked-20260727`. Metadata-only app-server
@@ -125,16 +125,17 @@ discovery, without transcript or pane reads, identifies:
 - preserved poisoned root `019fa27c-6280-7f00-8e46-ef878875562b`,
   already uniquely named `swallow-blocked-20260727`, `systemError`.
 
-Recommended D-001 is a reversible metadata-only repair: retain the active root
-as the sole exact `swallow`, rename the original root to
+Decision D-001 is selected: the owner chose the recommended reversible
+metadata-only repair. Retain the active root as the sole exact `swallow`,
+rename the original root to
 `swallow-legacy-20260727`, and rename the failed fork to
 `swallow-failed-fork-20260727`. Preserve all roots and history; do not archive,
-delete, launch, stop, signal, replay, or inspect content. After explicit
-selection and a separate `go`, revalidate all four exact identities/names,
+delete, launch, stop, signal, replay, or inspect content. After a separate
+explicit `go`, revalidate all four exact identities/names,
 perform one acknowledged read-before/name-set/read-after transaction per older
 root, and require the active root, tmux mapping, supervisor/watcher, Harness,
-Students, and app server to remain unchanged. Alternative D-001 is no change,
-leaving three indistinguishable phone labels.
+Students, and app server to remain unchanged. Recording this selection changed
+no thread, name, process, tmux, app-server, or Swallow repository state.
 
 ### T-321 — Recover recurring Swallow unsafe-tail `Request blocked`
 
