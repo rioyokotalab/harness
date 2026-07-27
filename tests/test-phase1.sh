@@ -2,6 +2,9 @@
 set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+# A managed Codex process exports the live checkout for its launchers. Focused
+# suites must instead let each executable derive the checkout under test.
+unset HARNESS_ROOT
 HARNESS=$ROOT/bin/harness
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-test.XXXXXX")

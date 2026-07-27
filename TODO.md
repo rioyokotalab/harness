@@ -183,6 +183,15 @@ exact Linux warning while retaining fail-closed authentication, configuration,
 state, other installation, command-failure, and non-Linux behavior. Focused
 resilience, login, hardening, skill, ShellCheck, and diff checks pass.
 
+**LIFO test-isolation fix:** the documented plain `tests/test-phase1.sh`
+command inherited the managed Codex process's live `HARNESS_ROOT`, causing
+checkout-validating focused suites to inspect the separate primary checkout
+instead of the task worktree. The phase-one entry point now clears that
+launcher-only variable before dispatch. The first validating rerun correctly
+targeted the task worktree but ran before this fix was committed, so the tmux
+and terminfo clean-checkout gates refused the intentional uncommitted patch;
+the committed-current-head rerun remains required.
+
 **Next action:** publish the resilience fix through PR #361 after current-head
 checks pass, continue independent deep checks until the 04:13 JST
 material-work cutoff, then run final validation and live readback. The earlier

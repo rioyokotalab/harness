@@ -149,6 +149,14 @@ browser, image, and Swallow research artifacts remain preserved.
    after its preceding resilience and login suites passed. The corrected
    repository test name, `tests/test-hardening-audit.sh`, passed; the failed
    command made no change.
+7. The first post-fix full suite inherited the live launcher
+   `HARNESS_ROOT` and made tmux validation inspect the separate primary
+   checkout, whose expected live `.nfs` inode failed its clean gate. The
+   phase-one entry point now clears that process-only variable. A validating
+   rerun then correctly inspected the task worktree, but its intentional
+   uncommitted test-isolation patch caused the tmux and terminfo clean gates
+   to refuse. Both failures are deterministic, safe, and require one
+   committed-current-head rerun.
 
 Every failed probe was read-only and retry-safe unless explicitly marked
 non-retryable. No credential, pane, transcript, deployment, message, package,
