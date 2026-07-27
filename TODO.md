@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-321.
+Next free ID: T-322.
 
 ## Current state
 
@@ -107,6 +107,39 @@ Next free ID: T-321.
    successors recorded below.
 
 ## Active tasks
+
+### T-321 — Recover recurring Swallow unsafe-tail `Request blocked`
+
+**Phase:** interviewing.
+
+At 2026-07-27 20:24 JST, the owner reported that the phone/tmux Swallow
+thread was again stuck at `Request blocked`. Read-only metadata proves exact
+tmux window `@58:2` remains live under supervisor PID `382132`, watcher PID
+`382211`, and remote root `019fa27c-6280-7f00-8e46-ef878875562b`.
+`codex-resilient --status` is `running/remote-explicit` at attempt/delay zero;
+its watcher reports `blocked/unsafe-tail`, with one prior safe recovery and
+one rolled-back turn. No pane or rollout content was read, and no process,
+thread, prompt, or tmux state changed.
+
+The watcher is correctly refusing another automatic rollback: the retained
+tail is not proven side-effect-free, so rollback could discard real SW-031
+tool work. Restarting the TUI would reconnect the same poisoned root, and
+forking previously inherited this error. The recommended recovery is the
+proven fresh-root cutover: preserve the blocked root, create and validate one
+empty app-server root, launch it provisionally under an exact remote
+supervisor/watcher, submit one identified cold-start instruction that resumes
+only from Swallow's durable repository ledger, then atomically transfer the
+`swallow` name/window after a completed assistant turn. Never replay the
+rejected prompt, restart the shared app server, inspect pane/transcript
+content, or delete/archive the old root.
+
+Decision D-001 is open. Recommended: execute that reversible fresh-root
+cutover while retaining the blocked root as rollback evidence. Alternative:
+leave the current thread blocked and use no Swallow agent. The frozen
+execution and safety gates are in
+`docs/plans/t321-swallow-unsafe-tail-recovery.md`. After the owner selects the
+recovery, checkpoint the decision, move to `ready-for-go`, and wait for a
+separate explicit `go`.
 
 ### T-320 — Make interactive `ls` color portable across the fleet
 
