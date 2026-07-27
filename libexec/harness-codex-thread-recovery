@@ -1,0 +1,905 @@
+#!/usr/bin/env python3
+"""Recover a side-effect-free Codex thread tail from persistent systemError."""
+
+from __future__ import print_function
+
+import argparse
+import base64
+import contextlib
+import fcntl
+import hashlib
+import json
+import os
+import re
+import signal
+import socket
+import stat
+import struct
+import subprocess
+import sys
+import tempfile
+import time
+
+
+SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
+MAX_ROLLBACK_TURNS = 8
+MAX_WEBSOCKET_MESSAGE = 64 * 1024 * 1024
+LOCK_WAIT_SECONDS = 30
+
+
+class RecoveryError(RuntimeError):
+    pass
+
+
+class RollbackAmbiguous(RecoveryError):
+    pass
+
+
+class RecoveryBlocked(RecoveryError):
+    pass
+
+
+def fail(message):
+    raise RecoveryError(message)
+
+
+def block(message):
+    raise RecoveryBlocked(message)
+
+
+def validate_safe_id(value, label):
+    if not SAFE_ID.match(value):
+        fail("{} is malformed".format(label))
+
+
+def state_root():
+    testing_root = os.environ.get("HARNESS_TEST_RUNTIME_DIR")
+    if os.environ.get("HARNESS_TESTING") == "1" and testing_root:
+        root = testing_root
+    else:
+        runtime = os.environ.get("XDG_RUNTIME_DIR")
+        if not runtime or not os.path.isabs(runtime):
+            runtime = os.environ.get("TMPDIR", "/tmp")
+        if not os.path.isabs(runtime):
+            fail("Codex thread recovery runtime parent must be absolute")
+        root = os.path.join(
+            runtime, "harness-codex-resilient-{}".format(os.getuid())
+        )
+    if not os.path.isabs(root):
+        fail("Codex thread recovery state root must be absolute")
+    if not os.path.exists(root):
+        old_umask = os.umask(0o077)
+        try:
+            os.makedirs(root, 0o700)
+        finally:
+            os.umask(old_umask)
+    info = os.lstat(root)
+    if (
+        not stat.S_ISDIR(info.st_mode)
+        or stat.S_ISLNK(info.st_mode)
+        or info.st_uid != os.getuid()
+        or stat.S_IMODE(info.st_mode) & 0o022
+    ):
+        fail("Codex thread recovery state root is unsafe")
+    return root
+
+
+def state_path(root, name):
+    return os.path.join(root, "{}.recovery.state".format(name))
+
+
+def lock_path(root, name):
+    return os.path.join(root, "{}.recovery.lock".format(name))
+
+
+def validate_regular(path, required_mode=None):
+    info = os.lstat(path)
+    if (
+        not stat.S_ISREG(info.st_mode)
+        or stat.S_ISLNK(info.st_mode)
+        or info.st_uid != os.getuid()
+        or info.st_nlink != 1
+    ):
+        fail("unsafe regular file: {}".format(path))
+    if required_mode is not None and stat.S_IMODE(info.st_mode) != required_mode:
+        fail("unsafe file mode: {}".format(path))
+    return info
+
+
+@contextlib.contextmanager
+def exclusive_file_lock(path, wait_seconds):
+    flags = os.O_CREAT | os.O_RDWR
+    if hasattr(os, "O_CLOEXEC"):
+        flags |= os.O_CLOEXEC
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    old_umask = os.umask(0o077)
+    try:
+        descriptor = os.open(path, flags, 0o600)
+    finally:
+        os.umask(old_umask)
+    try:
+        info = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(info.st_mode)
+            or info.st_uid != os.getuid()
+            or info.st_nlink != 1
+            or stat.S_IMODE(info.st_mode) != 0o600
+        ):
+            fail("Codex thread recovery lock is unsafe")
+        deadline = time.monotonic() + wait_seconds
+        while True:
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except (IOError, OSError):
+                if time.monotonic() >= deadline:
+                    fail("Codex thread recovery lock is busy")
+                time.sleep(0.05)
+        yield
+    finally:
+        os.close(descriptor)
+
+
+def write_state(path, name, thread_id, phase, reason, recoveries, rolled_back):
+    root = os.path.dirname(path)
+    descriptor, temporary = tempfile.mkstemp(prefix=".recovery.", dir=root)
+    try:
+        os.fchmod(descriptor, 0o600)
+        payload = (
+            "schema=1\n"
+            "name={}\n"
+            "thread={}\n"
+            "owner_pid={}\n"
+            "phase={}\n"
+            "reason={}\n"
+            "recoveries={}\n"
+            "rolled_back={}\n"
+        ).format(
+            name,
+            thread_id,
+            os.getpid(),
+            phase,
+            reason,
+            recoveries,
+            rolled_back,
+        )
+        with os.fdopen(descriptor, "w") as output:
+            descriptor = None
+            output.write(payload)
+            output.flush()
+            os.fsync(output.fileno())
+        os.replace(temporary, path)
+        validate_regular(path, 0o600)
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+def read_state(path):
+    validate_regular(path, 0o600)
+    values = {}
+    with open(path, "r") as source:
+        for line in source:
+            line = line.rstrip("\n")
+            if "=" not in line:
+                fail("Codex thread recovery state is malformed")
+            key, value = line.split("=", 1)
+            if key in values:
+                fail("Codex thread recovery state is malformed")
+            values[key] = value
+    expected = {
+        "schema",
+        "name",
+        "thread",
+        "owner_pid",
+        "phase",
+        "reason",
+        "recoveries",
+        "rolled_back",
+    }
+    if set(values) != expected or values["schema"] != "1":
+        fail("Codex thread recovery state is malformed")
+    validate_safe_id(values["name"], "stored recovery name")
+    validate_safe_id(values["thread"], "stored recovery thread")
+    if values["phase"] not in (
+        "watching",
+        "recovered",
+        "blocked",
+        "unavailable",
+        "stopped",
+    ):
+        fail("Codex thread recovery state is malformed")
+    for key in ("owner_pid", "recoveries", "rolled_back"):
+        if not values[key].isdigit():
+            fail("Codex thread recovery state is malformed")
+    if not SAFE_ID.match(values["reason"]):
+        fail("Codex thread recovery state is malformed")
+    return values
+
+
+class WebSocket:
+    def __init__(self, socket_path):
+        self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.socket.settimeout(15)
+        self.socket.connect(socket_path)
+        self.buffer = bytearray()
+        key = base64.b64encode(os.urandom(16)).decode("ascii")
+        request = (
+            "GET /rpc HTTP/1.1\r\n"
+            "Host: localhost\r\n"
+            "Upgrade: websocket\r\n"
+            "Connection: Upgrade\r\n"
+            "Sec-WebSocket-Key: {}\r\n"
+            "Sec-WebSocket-Version: 13\r\n\r\n"
+        ).format(key)
+        self.socket.sendall(request.encode("ascii"))
+        headers = bytearray()
+        while b"\r\n\r\n" not in headers:
+            chunk = self.socket.recv(4096)
+            if not chunk:
+                fail("app-server WebSocket handshake closed")
+            headers.extend(chunk)
+            if len(headers) > 65536:
+                fail("app-server WebSocket handshake is too large")
+        header_bytes, remainder = bytes(headers).split(b"\r\n\r\n", 1)
+        self.buffer.extend(remainder)
+        lines = header_bytes.decode("latin-1").split("\r\n")
+        if " 101 " not in " {} ".format(lines[0]):
+            fail("app-server WebSocket handshake failed")
+        response_headers = {}
+        for line in lines[1:]:
+            if ":" in line:
+                key_name, value = line.split(":", 1)
+                response_headers[key_name.lower()] = value.strip()
+        expected = base64.b64encode(
+            hashlib.sha1(
+                (
+                    key
+                    + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+                ).encode("ascii")
+            ).digest()
+        ).decode("ascii")
+        if response_headers.get("sec-websocket-accept") != expected:
+            fail("app-server WebSocket accept mismatch")
+
+    def close(self):
+        try:
+            self.send_frame(0x8, struct.pack("!H", 1000))
+        except Exception:
+            pass
+        self.socket.close()
+
+    def receive_exact(self, size):
+        while len(self.buffer) < size:
+            chunk = self.socket.recv(max(4096, size - len(self.buffer)))
+            if not chunk:
+                fail("app-server WebSocket closed")
+            self.buffer.extend(chunk)
+        result = bytes(self.buffer[:size])
+        del self.buffer[:size]
+        return result
+
+    def send_frame(self, opcode, payload=b""):
+        mask = os.urandom(4)
+        length = len(payload)
+        header = bytearray([0x80 | opcode])
+        if length < 126:
+            header.append(0x80 | length)
+        elif length < 65536:
+            header.append(0x80 | 126)
+            header.extend(struct.pack("!H", length))
+        else:
+            header.append(0x80 | 127)
+            header.extend(struct.pack("!Q", length))
+        header.extend(mask)
+        masked = bytes(
+            value ^ mask[index % 4] for index, value in enumerate(payload)
+        )
+        self.socket.sendall(header + masked)
+
+    def receive_frame(self):
+        first, second = self.receive_exact(2)
+        finished = bool(first & 0x80)
+        opcode = first & 0x0F
+        masked = bool(second & 0x80)
+        length = second & 0x7F
+        if length == 126:
+            length = struct.unpack("!H", self.receive_exact(2))[0]
+        elif length == 127:
+            length = struct.unpack("!Q", self.receive_exact(8))[0]
+        if length > MAX_WEBSOCKET_MESSAGE:
+            fail("app-server WebSocket message exceeds limit")
+        mask = self.receive_exact(4) if masked else b""
+        payload = self.receive_exact(length)
+        if masked:
+            payload = bytes(
+                value ^ mask[index % 4]
+                for index, value in enumerate(payload)
+            )
+        return finished, opcode, payload
+
+    def receive_json(self):
+        fragments = bytearray()
+        started = False
+        while True:
+            finished, opcode, payload = self.receive_frame()
+            if opcode == 0x8:
+                fail("app-server closed the WebSocket")
+            if opcode == 0x9:
+                self.send_frame(0xA, payload)
+                continue
+            if opcode == 0xA:
+                continue
+            if opcode == 0x1 and not started:
+                started = True
+                fragments.extend(payload)
+            elif opcode == 0x0 and started:
+                fragments.extend(payload)
+            else:
+                fail("app-server sent an unexpected WebSocket frame")
+            if len(fragments) > MAX_WEBSOCKET_MESSAGE:
+                fail("app-server WebSocket message exceeds limit")
+            if finished:
+                try:
+                    return json.loads(fragments.decode("utf-8"))
+                except (UnicodeDecodeError, ValueError):
+                    fail("app-server returned malformed JSON")
+
+    def send_json(self, value):
+        self.send_frame(
+            0x1,
+            json.dumps(value, separators=(",", ":")).encode("utf-8"),
+        )
+
+
+class AppServer:
+    def __init__(self):
+        codex_home = os.environ.get(
+            "CODEX_HOME", os.path.join(os.path.expanduser("~"), ".codex")
+        )
+        configured = os.environ.get("HARNESS_CODEX_APP_SERVER_SOCKET")
+        self.socket_path = configured or os.path.join(
+            codex_home, "app-server-control", "app-server-control.sock"
+        )
+        if not os.path.isabs(self.socket_path):
+            fail("app-server control socket must be absolute")
+        info = os.lstat(self.socket_path)
+        if (
+            not stat.S_ISSOCK(info.st_mode)
+            or info.st_uid != os.getuid()
+        ):
+            fail("app-server control socket is unsafe")
+        self.websocket = WebSocket(self.socket_path)
+        self.next_id = 1
+        initialized = self.request(
+            "initialize",
+            {
+                "clientInfo": {
+                    "name": "codex_cli",
+                    "title": "Codex CLI",
+                    "version": "0.145.0",
+                }
+            },
+        )
+        if not isinstance(initialized, dict):
+            fail("app-server initialize response is malformed")
+        self.websocket.send_json({"method": "initialized", "params": {}})
+
+    def close(self):
+        self.websocket.close()
+
+    def request(self, method, params, ambiguous_on_failure=False):
+        request_id = self.next_id
+        self.next_id += 1
+        sent = False
+        try:
+            self.websocket.send_json(
+                {"method": method, "id": request_id, "params": params}
+            )
+            sent = True
+            while True:
+                response = self.websocket.receive_json()
+                if response.get("id") != request_id:
+                    continue
+                if "error" in response:
+                    error = response["error"]
+                    fail(
+                        "{} failed: code={} message={}".format(
+                            method,
+                            error.get("code"),
+                            error.get("message"),
+                        )
+                    )
+                return response.get("result")
+        except RecoveryError:
+            if ambiguous_on_failure and sent:
+                raise RollbackAmbiguous(
+                    "rollback response is ambiguous; do not retry"
+                )
+            raise
+        except Exception as error:
+            if ambiguous_on_failure and sent:
+                raise RollbackAmbiguous(
+                    "rollback response is ambiguous; do not retry"
+                )
+            raise RecoveryError(
+                "{} transport failed: {}".format(
+                    method, error.__class__.__name__
+                )
+            )
+
+    def read_thread(self, thread_id):
+        result = self.request("thread/read", {"threadId": thread_id})
+        thread = result.get("thread", {}) if isinstance(result, dict) else {}
+        if thread.get("id") != thread_id:
+            fail("app-server thread identity mismatch")
+        status_value = thread.get("status")
+        if isinstance(status_value, dict):
+            status_value = status_value.get("type")
+        path = thread.get("path")
+        return {"threadId": thread_id, "status": status_value, "path": path}
+
+    def rollback(self, thread_id, count):
+        result = self.request(
+            "thread/rollback",
+            {"threadId": thread_id, "numTurns": count},
+            ambiguous_on_failure=True,
+        )
+        thread = result.get("thread", {}) if isinstance(result, dict) else {}
+        if thread.get("id") != thread_id:
+            raise RollbackAmbiguous(
+                "rollback acknowledgement identity is ambiguous; do not retry"
+            )
+        turns = thread.get("turns")
+        if not isinstance(turns, list):
+            raise RollbackAmbiguous(
+                "rollback acknowledgement is malformed; do not retry"
+            )
+        return {"threadId": thread_id, "turnCount": len(turns)}
+
+
+class Backend:
+    def __init__(self):
+        self.executable = os.environ.get("HARNESS_TEST_RECOVERY_BACKEND")
+        self.server = None
+        if self.executable:
+            if os.environ.get("HARNESS_TESTING") != "1":
+                fail("test recovery backend requires HARNESS_TESTING=1")
+            if not os.path.isabs(self.executable):
+                fail("test recovery backend must be absolute")
+        else:
+            self.server = AppServer()
+
+    def close(self):
+        if self.server is not None:
+            self.server.close()
+
+    def call_test_backend(self, *arguments):
+        result = subprocess.run(
+            [self.executable] + list(arguments),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        if result.returncode == 75:
+            raise RollbackAmbiguous(
+                "rollback response is ambiguous; do not retry"
+            )
+        if result.returncode != 0:
+            fail("test recovery backend failed")
+        try:
+            value = json.loads(result.stdout.decode("utf-8"))
+        except (UnicodeDecodeError, ValueError):
+            fail("test recovery backend returned malformed JSON")
+        if not isinstance(value, dict):
+            fail("test recovery backend returned malformed JSON")
+        return value
+
+    def read_thread(self, thread_id):
+        if self.server is not None:
+            return self.server.read_thread(thread_id)
+        result = self.call_test_backend("read", thread_id)
+        if result.get("threadId") != thread_id:
+            fail("test backend thread identity mismatch")
+        return result
+
+    def rollback(self, thread_id, count):
+        if self.server is not None:
+            return self.server.rollback(thread_id, count)
+        result = self.call_test_backend(
+            "rollback", thread_id, str(count)
+        )
+        if result.get("threadId") != thread_id:
+            raise RollbackAmbiguous(
+                "rollback acknowledgement identity is ambiguous; do not retry"
+            )
+        return result
+
+
+def validate_rollout(path, thread_id):
+    if not isinstance(path, str) or not os.path.isabs(path):
+        block("thread rollout path is unavailable")
+    codex_home = os.environ.get(
+        "CODEX_HOME", os.path.join(os.path.expanduser("~"), ".codex")
+    )
+    sessions_root = os.path.realpath(os.path.join(codex_home, "sessions"))
+    real_path = os.path.realpath(path)
+    try:
+        within_sessions = (
+            os.path.commonpath([sessions_root, real_path]) == sessions_root
+        )
+    except ValueError:
+        within_sessions = False
+    if not within_sessions:
+        block("thread rollout path is outside Codex sessions")
+    try:
+        info = os.lstat(path)
+    except OSError:
+        block("thread rollout metadata is unavailable")
+    if (
+        not stat.S_ISREG(info.st_mode)
+        or stat.S_ISLNK(info.st_mode)
+        or info.st_uid != os.getuid()
+        or info.st_nlink != 1
+    ):
+        block("thread rollout metadata is unsafe")
+    if info.st_mode & (stat.S_IWGRP | stat.S_IWOTH):
+        block("thread rollout is writable by another principal")
+    identity = (
+        info.st_dev,
+        info.st_ino,
+        info.st_size,
+        getattr(info, "st_mtime_ns", int(info.st_mtime * 1000000000)),
+    )
+    return real_path, identity
+
+
+def analyze_rollout(path, thread_id):
+    turns = []
+    current = None
+    session_matches = False
+    with open(path, "r") as source:
+        for raw_line in source:
+            try:
+                record = json.loads(raw_line)
+            except ValueError:
+                block("thread rollout contains malformed JSON")
+            record_type = record.get("type")
+            payload = record.get("payload")
+            if not isinstance(payload, dict):
+                payload = {}
+            payload_type = payload.get("type")
+
+            if record_type == "session_meta":
+                if payload.get("id") == thread_id:
+                    session_matches = True
+                continue
+
+            if (
+                record_type == "event_msg"
+                and payload_type == "thread_rolled_back"
+            ):
+                if current is not None:
+                    block("rollback marker appeared inside a turn")
+                count = payload.get("num_turns")
+                if (
+                    not isinstance(count, int)
+                    or isinstance(count, bool)
+                    or count < 1
+                    or count > len(turns)
+                ):
+                    block("thread rollback marker is malformed")
+                del turns[-count:]
+                continue
+
+            if (
+                record_type == "event_msg"
+                and payload_type == "task_started"
+            ):
+                if current is not None:
+                    block("thread rollout has overlapping turns")
+                current = {
+                    "completed": False,
+                    "user": False,
+                    "assistant": False,
+                    "unsafe": False,
+                }
+                continue
+
+            if current is None:
+                continue
+
+            if record_type == "response_item":
+                if payload_type == "message":
+                    role = payload.get("role")
+                    if role == "user":
+                        current["user"] = True
+                    elif role == "assistant":
+                        current["assistant"] = True
+                    elif role not in ("developer", "system"):
+                        current["unsafe"] = True
+                elif payload_type != "reasoning":
+                    current["unsafe"] = True
+                continue
+
+            if record_type == "event_msg":
+                if payload_type == "user_message":
+                    current["user"] = True
+                elif payload_type == "agent_message":
+                    current["assistant"] = True
+                elif payload_type == "task_complete":
+                    current["completed"] = True
+                    turns.append(current)
+                    current = None
+                elif payload_type not in (
+                    "agent_reasoning",
+                    "thread_settings_applied",
+                    "token_count",
+                ):
+                    current["unsafe"] = True
+                continue
+
+            if record_type not in ("world_state", "turn_context"):
+                current["unsafe"] = True
+
+    if not session_matches:
+        block("thread rollout session identity mismatch")
+    if current is not None:
+        block("thread rollout contains an active turn")
+
+    count = 0
+    for turn in reversed(turns):
+        safe_failure = (
+            turn["completed"]
+            and turn["user"]
+            and not turn["assistant"]
+            and not turn["unsafe"]
+        )
+        if not safe_failure:
+            break
+        count += 1
+    if count == 0:
+        block("systemError tail is not safely recoverable")
+    if count > MAX_ROLLBACK_TURNS:
+        block("systemError tail exceeds rollback limit")
+    return count
+
+
+def default_message_lock():
+    override = os.environ.get("HARNESS_TEST_MESSAGE_LOCK")
+    if override:
+        if os.environ.get("HARNESS_TESTING") != "1":
+            fail("test message lock requires HARNESS_TESTING=1")
+        return override
+    return os.path.join(
+        os.path.expanduser("~"),
+        ".local",
+        "state",
+        "harness",
+        "agent-message.lock",
+    )
+
+
+def recover_once(thread_id):
+    backend = Backend()
+    try:
+        before = backend.read_thread(thread_id)
+        status_value = before.get("status")
+        if status_value != "systemError":
+            if status_value in ("idle", "active", "notLoaded"):
+                return "watching", "thread-{}".format(status_value), 0
+            block("thread status is not recognized")
+        path, identity = validate_rollout(before.get("path"), thread_id)
+        count = analyze_rollout(path, thread_id)
+        message_lock = default_message_lock()
+        message_parent = os.path.dirname(message_lock)
+        if not os.path.isdir(message_parent):
+            fail("agent-message lock parent is unavailable")
+        with exclusive_file_lock(message_lock, LOCK_WAIT_SECONDS):
+            second = backend.read_thread(thread_id)
+            if (
+                second.get("status") != "systemError"
+                or second.get("path") != before.get("path")
+            ):
+                fail("thread state changed before rollback")
+            second_path, second_identity = validate_rollout(
+                second.get("path"), thread_id
+            )
+            if second_path != path or second_identity != identity:
+                fail("thread rollout changed before rollback")
+            backend.rollback(thread_id, count)
+        return "recovered", "system-error-safe-tail", count
+    finally:
+        backend.close()
+
+
+def print_status(
+    name,
+    thread_id,
+    phase,
+    reason,
+    recoveries,
+    rolled_back,
+    owner_pid=None,
+):
+    if owner_pid is None:
+        owner_pid = os.getpid()
+    print(
+        "CODEX_THREAD_RECOVERY name={} thread={} phase={} reason={} "
+        "recoveries={} rolled_back={} owner_pid={}".format(
+            name,
+            thread_id,
+            phase,
+            reason,
+            recoveries,
+            rolled_back,
+            owner_pid,
+        )
+    )
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        prog="harness codex-thread-recovery",
+        description="Recover a side-effect-free Codex systemError tail.",
+    )
+    modes = parser.add_mutually_exclusive_group(required=True)
+    modes.add_argument("--plan", action="store_true")
+    modes.add_argument("--status", action="store_true")
+    modes.add_argument("--recover", action="store_true")
+    modes.add_argument("--watch", action="store_true")
+    parser.add_argument("--name", default="default")
+    parser.add_argument("--thread")
+    parser.add_argument("--interval", type=int, default=5)
+    arguments = parser.parse_args()
+    validate_safe_id(arguments.name, "recovery name")
+    if arguments.status:
+        if arguments.thread is not None:
+            parser.error("--status does not accept --thread")
+    else:
+        if arguments.thread is None:
+            parser.error("this mode requires --thread")
+        validate_safe_id(arguments.thread, "thread ID")
+    if arguments.interval < 1 or arguments.interval > 300:
+        parser.error("--interval must be between 1 and 300 seconds")
+    return arguments
+
+
+def main():
+    arguments = parse_arguments()
+    root = state_root()
+    path = state_path(root, arguments.name)
+    if arguments.status:
+        if not os.path.exists(path):
+            print(
+                "CODEX_THREAD_RECOVERY name={} phase=absent".format(
+                    arguments.name
+                )
+            )
+            return 0
+        values = read_state(path)
+        print_status(
+            values["name"],
+            values["thread"],
+            values["phase"],
+            values["reason"],
+            values["recoveries"],
+            values["rolled_back"],
+            values["owner_pid"],
+        )
+        return 0
+    if arguments.plan:
+        print(
+            "CODEX_THREAD_RECOVERY mode=plan name={} thread={} "
+            "status=ready rollback=safe-tail-only max_turns={} "
+            "prompt=replay-disabled".format(
+                arguments.name,
+                arguments.thread,
+                MAX_ROLLBACK_TURNS,
+            )
+        )
+        return 0
+
+    recoveries = 0
+    rolled_back = 0
+    with exclusive_file_lock(
+        lock_path(root, arguments.name), 0 if arguments.watch else 30
+    ):
+        if arguments.recover:
+            try:
+                phase, reason, count = recover_once(arguments.thread)
+            except RecoveryBlocked:
+                phase = "blocked"
+                reason = "unsafe-tail"
+                count = 0
+            if phase == "recovered":
+                recoveries = 1
+                rolled_back = count
+            write_state(
+                path,
+                arguments.name,
+                arguments.thread,
+                phase,
+                reason,
+                recoveries,
+                rolled_back,
+            )
+            print_status(
+                arguments.name,
+                arguments.thread,
+                phase,
+                reason,
+                recoveries,
+                rolled_back,
+            )
+            return 2 if phase == "blocked" else 0
+
+        stopping = [False]
+
+        def stop_watch(_signum, _frame):
+            stopping[0] = True
+
+        signal.signal(signal.SIGTERM, stop_watch)
+        signal.signal(signal.SIGINT, stop_watch)
+        signal.signal(signal.SIGHUP, stop_watch)
+        while not stopping[0]:
+            try:
+                phase, reason, count = recover_once(arguments.thread)
+                if phase == "recovered":
+                    recoveries += 1
+                    rolled_back += count
+            except RollbackAmbiguous:
+                phase = "blocked"
+                reason = "rollback-ambiguous"
+                write_state(
+                    path,
+                    arguments.name,
+                    arguments.thread,
+                    phase,
+                    reason,
+                    recoveries,
+                    rolled_back,
+                )
+                return 75
+            except RecoveryBlocked:
+                phase = "blocked"
+                reason = "unsafe-tail"
+            except RecoveryError:
+                phase = "unavailable"
+                reason = "recovery-check-failed"
+            write_state(
+                path,
+                arguments.name,
+                arguments.thread,
+                phase,
+                reason,
+                recoveries,
+                rolled_back,
+            )
+            deadline = time.monotonic() + arguments.interval
+            while not stopping[0] and time.monotonic() < deadline:
+                time.sleep(min(0.2, deadline - time.monotonic()))
+        write_state(
+            path,
+            arguments.name,
+            arguments.thread,
+            "stopped",
+            "operator-stop",
+            recoveries,
+            rolled_back,
+        )
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except RecoveryError as error:
+        print(
+            "Codex thread recovery failed: {}".format(error),
+            file=sys.stderr,
+        )
+        sys.exit(2)

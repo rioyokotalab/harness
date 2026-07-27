@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-318.
+Next free ID: T-319.
 
 ## Current state
 
@@ -106,6 +106,68 @@ Next free ID: T-318.
    its later eligibility.
 
 ## Active tasks
+
+### T-318 — Recover poisoned remote Codex threads
+
+**Phase:** validating in isolated worktree.
+
+The owner asked to extend T-310/T-317 transient-service resilience after exact
+Local evidence exposed a second failure class: Swallow's remote TUI and shared
+app server remained healthy, but six consecutive assistant-less turns
+completed with `Request blocked`, and `thread/read` reported `systemError`.
+Restarting only the TUI preserved the error. One exact app-server
+`thread/rollback` of those six turns restored the prior 37-turn history and a
+new diagnostic completed with an assistant response.
+
+The bounded design is in
+`docs/plans/t318-codex-thread-system-error-recovery.md`. Recovery is limited to
+an exact remote thread whose status is `systemError` and whose logical rollout
+tail contains only completed assistant-less turns with no tool, command, file,
+web, or unknown event. Earlier rollback markers must be applied before
+counting; more than eight turns, any active/incomplete turn, identity/path
+drift, unsafe event, protocol ambiguity, or unrecognized schema fails closed.
+The mechanism never replays the rejected prompt and never restarts the shared
+app server.
+
+Work is isolated at `/tmp/harness-t318-thread-recovery` on branch
+`t318-codex-thread-recovery`, based on pushed T-317 revision `1783241`. The
+primary checkout and its live supervisor-held `.nfs…` inode remain untouched.
+Implement the one-shot analyzer/protocol transaction and focused fixtures
+first, then integrate an exact remote-session watcher only after the recovery
+boundary passes independently. Full validation must run from a clean full
+clone because linked-worktree `.git` pointers are not accepted by every legacy
+fixture.
+
+Checkpoint 2026-07-27:
+
+- Added dependency-free Python-3.6-compatible
+  `harness codex-thread-recovery` plan, status, one-shot, and watch modes.
+  The helper validates exact app-server identity, reconstructs logical rollout
+  turns after durable rollback markers, serializes the final recheck against
+  agent-message injection, caps rollback at eight safe turns, and treats a
+  sent request without an unambiguous acknowledgement as non-retryable.
+- Added deterministic safe, existing-marker, tool-bearing, unknown-event,
+  active-turn, excessive-tail, session-identity, rollout-drift, idle-thread,
+  and ambiguous-acknowledgement fixtures plus a real Unix-WebSocket fake
+  app-server method-sequence test.
+- Integrated one exact watcher only for `codex-resilient --remote-session`.
+  A one-shot safety transaction and watcher-owned readiness receipt are
+  required before TUI launch; supervisor cleanup signals and reaps only its
+  exact child. Unsafe or unavailable recovery blocks before Codex launch.
+  Status and plan output expose the value-free watcher contract.
+- Verified `tests/test-codex-thread-recovery.sh`,
+  `tests/test-codex-resilient.sh`, Python 3.6 AST parsing, shell syntax, and
+  `git diff --check`. The primary checkout, shared app server, Swallow TUI,
+  and all live agents remain untouched.
+- The first full `tests/test-phase1.sh` pass from the intentionally dirty
+  linked worktree reached and passed both new focused suites and every other
+  suite except `test-tmux-config.sh` and `test-terminfo.sh`; those two
+  explicitly rejected the uncommitted checkout, as anticipated. This is a
+  retry-safe validation-environment failure, not a product failure.
+- Next: rerun focused/static validation after documentation review, commit the
+  coherent change, validate `tests/test-phase1.sh` from a clean full clone,
+  fetch/reconcile the collaborative remote, and publish the task branch. Do
+  not restart a live supervisor; adoption is a later deliberate operation.
 
 ### T-317 — 503-safe fleet and repository housekeeping
 

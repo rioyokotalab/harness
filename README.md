@@ -113,7 +113,24 @@ harness codex-resilient --run --name harness \
 
 `--remote-session` always relaunches as
 `resume --remote unix:// ID`; it never falls back to `--last` or replays a
-prompt.
+prompt. That selector also owns a thread-status watcher. Before launching the
+TUI and every five seconds while it remains live, the watcher reads only the
+exact app-server thread and value-free rollout structure. If the status is
+`systemError`, it rolls back at most eight consecutive completed turns only
+when each has user input but no assistant response, tool use, command, file
+change, web action, external action, or unknown event. It revalidates the
+thread and rollout under the shared agent-message lock immediately before the
+single rollback request. Any active turn, unsafe event, identity drift, or
+ambiguous acknowledgement fails closed. Rollback changes model-visible
+history; it does not undo filesystem or external effects, and the removed
+prompt is never replayed.
+
+Plan or inspect the value-free recovery receipt independently:
+
+```bash
+harness codex-thread-recovery --plan --name harness --thread ID
+harness codex-thread-recovery --status --name harness
+```
 
 On Linux, the supervisor launches Codex through `harness codex-login`, which
 sets `RAYON_NUM_THREADS=8` and `TOKIO_WORKER_THREADS=8` for login-node
@@ -132,7 +149,9 @@ harness codex-resilient --status --name harness
 ```
 
 The supervisor stays in the foreground and installs no service. Tmux, launchd,
-systemd, or the operator remains its explicit lifetime owner.
+systemd, or the operator remains its explicit lifetime owner. A deployed
+supervisor adopts new recovery code only on a deliberate TUI restart; updating
+the checkout never signals or replaces a running client.
 
 ### Inspect a host
 

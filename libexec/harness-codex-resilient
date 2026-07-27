@@ -179,6 +179,11 @@ ensure_state_root() {
 state_file=$state_root/$name.state
 lock_dir=$state_root/$name.lock
 lock_pid=$lock_dir/pid
+thread_recovery=$HARNESS_ROOT/libexec/harness-codex-thread-recovery
+if [ "${HARNESS_TESTING:-0}" = 1 ] &&
+    [ -n "${HARNESS_TEST_THREAD_RECOVERY:-}" ]; then
+    thread_recovery=$HARNESS_TEST_THREAD_RECOVERY
+fi
 
 validate_lock_dir() {
     [ -d "$lock_dir" ] && [ ! -L "$lock_dir" ] &&
@@ -244,7 +249,8 @@ if [ "$mode" = status ]; then
     esac
     case "$reason" in
         active|clean-exit|operator-signal|client-usage|transient-exit|\
-        doctor-failed|local-auth|local-config|local-installation|local-state)
+        doctor-failed|local-auth|local-config|local-installation|local-state|\
+        thread-recovery-blocked)
             ;;
         *) die "Codex resilient state file is malformed" ;;
     esac
@@ -274,6 +280,15 @@ if [ "$mode" = status ]; then
     esac
     printf 'CODEX_RESILIENT mode=status name=%s phase=%s selector=%s owner_pid=%s attempt=%s delay=%s reason=%s\n' \
         "$name" "$phase" "$stored_selector" "$owner_pid" "$attempt" "$delay" "$reason"
+    if [ "$stored_selector" = remote-explicit ]; then
+        case "$thread_recovery" in
+            /*) ;;
+            *) die "Codex thread recovery helper must be absolute" ;;
+        esac
+        [ -x "$thread_recovery" ] ||
+            die "Codex thread recovery helper is unavailable"
+        "$thread_recovery" --status --name "$name"
+    fi
     exit 0
 fi
 
@@ -287,6 +302,14 @@ case "$launcher" in
     *) die "Codex resilient launcher must be absolute" ;;
 esac
 [ -x "$launcher" ] || die "Codex resilient launcher is unavailable"
+if [ "$selector" = remote-explicit ]; then
+    case "$thread_recovery" in
+        /*) ;;
+        *) die "Codex thread recovery helper must be absolute" ;;
+    esac
+    [ -x "$thread_recovery" ] ||
+        die "Codex thread recovery helper is unavailable"
+fi
 
 if [ -e "$state_root" ] || [ -L "$state_root" ]; then
     validate_state_root
@@ -306,6 +329,9 @@ if [ "$mode" = plan ]; then
     printf 'RUNTIME action=%s privacy=value-free mode=0600 ownership=exclusive\n' \
         "$state_action"
     printf 'RECOVERY action=resume prompt=replay-disabled backoff=15,30,60,120,240,300 jitter=bounded\n'
+    if [ "$selector" = remote-explicit ]; then
+        printf 'THREAD_RECOVERY action=watch rollback=safe-tail-only max_turns=8 prompt=replay-disabled\n'
+    fi
     exit 0
 fi
 
@@ -314,9 +340,14 @@ ensure_state_root
 temporary_state=
 doctor_file=
 lock_owned=no
+thread_recovery_pid=
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
+    if [ -n "$thread_recovery_pid" ]; then
+        kill -TERM "$thread_recovery_pid" 2>/dev/null || :
+        wait "$thread_recovery_pid" 2>/dev/null || :
+    fi
     if [ -n "$doctor_file" ] &&
         [ -f "$doctor_file" ] && [ ! -L "$doctor_file" ] &&
         [ "$(path_owner "$doctor_file")" = "$uid" ] &&
@@ -469,6 +500,66 @@ doctor_gate() {
 now_epoch() {
     date +%s
 }
+
+start_thread_recovery() {
+    [ "$selector" = remote-explicit ] || return 0
+    set +e
+    recovery_output=$(
+        "$thread_recovery" --recover --name "$name" --thread "$session_id" \
+            2>/dev/null
+    )
+    recovery_status=$?
+    set -e
+    recovery_phase=$(
+        printf '%s\n' "$recovery_output" |
+            sed -n 's/.* phase=\([^ ]*\).*/\1/p'
+    )
+    if [ "$recovery_status" -ne 0 ] ||
+        { [ "$recovery_phase" != watching ] &&
+          [ "$recovery_phase" != recovered ]; }; then
+        write_state stopped 0 0 thread-recovery-blocked
+        printf 'CODEX_RESILIENT status=blocked reason=thread-recovery-blocked name=%s\n' \
+            "$name" >&2
+        exit 2
+    fi
+
+    "$thread_recovery" --watch --name "$name" --thread "$session_id" \
+        >/dev/null 2>&1 &
+    thread_recovery_pid=$!
+    readiness_attempt=0
+    while [ "$readiness_attempt" -lt 10 ]; do
+        set +e
+        recovery_output=$(
+            "$thread_recovery" --status --name "$name" 2>/dev/null
+        )
+        recovery_status=$?
+        set -e
+        recovery_phase=$(
+            printf '%s\n' "$recovery_output" |
+                sed -n 's/.* phase=\([^ ]*\).*/\1/p'
+        )
+        recovery_owner=$(
+            printf '%s\n' "$recovery_output" |
+                sed -n 's/.* owner_pid=\([^ ]*\).*/\1/p'
+        )
+        if [ "$recovery_status" -eq 0 ] &&
+            [ "$recovery_owner" = "$thread_recovery_pid" ]; then
+            case "$recovery_phase" in
+                watching|recovered) return 0 ;;
+                blocked|unavailable|stopped) break ;;
+            esac
+        fi
+        kill -0 "$thread_recovery_pid" 2>/dev/null || break
+        readiness_attempt=$((readiness_attempt + 1))
+        sleep 1
+    done
+    write_state stopped 0 0 thread-recovery-blocked
+    printf 'CODEX_RESILIENT status=blocked reason=thread-recovery-blocked name=%s\n' \
+        "$name" >&2
+    exit 2
+}
+
+start_thread_recovery
 
 attempt=0
 first_launch=yes
