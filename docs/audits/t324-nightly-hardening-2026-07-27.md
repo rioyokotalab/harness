@@ -147,6 +147,13 @@ exact drift is deferred for owner reconciliation.
 - A second 60-cycle monitor ran through 01:05 JST. The exact protected head
   remained successful/merge-clean and all six canonical fleet sweeps passed.
   Several GitHub reads were slow but completed with unchanged state.
+- A third 120-cycle monitor ran through 03:09 JST. The exact protected head
+  remained successful/merge-clean and all eight canonical fleet sweeps passed.
+  The final deep discovery pass reconfirmed all four Mac doctors ready with no
+  software updates; all Linux user-unit and arg0 checks clean; zero open
+  Dependabot alerts; and unchanged repository workflow, merge, and ruleset
+  settings. AB's 250 historical failed session scopes were cleared by external
+  site activity; no Harness action reset them.
 
 ## Repository housekeeping
 
@@ -237,6 +244,14 @@ browser, image, and Swallow research artifacts remain preserved.
    did not supersede the durable same-night proof that each exact remote head
    matched a merged pull request; local deletion used that prior proof plus a
    fresh worktree-ownership check.
+9. Four Dependabot alert queries used `gh api -f state=open` without forcing
+   GET, so the CLI issued rejected POST requests and GitHub returned 404. No
+   repository or alert state changed. Correct explicit-GET retries returned
+   zero open alerts in all four repositories.
+10. The ruleset-list endpoint omits embedded `rules`, so an attempted compact
+    iterator returned `cannot iterate over: null` for each repository. Exact
+    GETs for rulesets 19127355, 19716717, 19734040, and 19127356 succeeded and
+    reconfirmed the recorded state.
 
 Every failed probe was read-only and retry-safe unless explicitly marked
 non-retryable. No credential, pane, transcript, deployment, message, package,

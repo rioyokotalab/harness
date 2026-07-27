@@ -244,6 +244,17 @@ fresh plans now report zero eligible/unexpected residue and zero guarded
 manifests on all seven remote Linux nodes. AL had none and Local's five live
 entries remain protected.
 
+A third 120-cycle block completed through 03:09 JST. The exact protected head
+remained successful/merge-clean and all eight canonical fleet sweeps passed.
+The final deep discovery pass found no new safe mutation: all four Mac doctors
+pass with no software updates; all repositories retain read-only workflow
+tokens, no review-approval capability, auto-merge enabled, branch
+auto-deletion disabled, and zero open Dependabot alerts. Exact ruleset
+readback confirms the already-deferred zero-review drift remains unchanged.
+AB's 250 historical failed session scopes were cleared externally; RI/AL/RC
+shared-system failures and Local's reboot marker remain deferred. All user-unit
+and arg0 checks pass.
+
 **Next action:** publish the resilience fix through PR #361 after current-head
 checks pass, continue independent deep checks until the 04:13 JST
 material-work cutoff, then run final validation and live readback. The earlier
