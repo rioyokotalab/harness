@@ -189,6 +189,19 @@ pass. Harness remains active and Students plus blocked Swallow are unchanged.
 Commit and push this accepted identity before submitting the one cold-start
 turn.
 
+**Cold-start acceptance:** under the shared agent-message lock, exactly one
+identified `turn/start` was acknowledged for new root
+`019fa36c-cfa9-7143-ae11-1f538e07bfee` as turn
+`019fa370-3c31-75b2-8d0b-d7b6cd72b0e4`. A persistent read-only monitor
+connection timed out once after observing assistant-bearing progress; no write
+was retried, and fresh read-only connections safely continued. Final
+value-free protocol structure proves the turn completed with one user item,
+13 assistant items, one terminal file-change item, no active item, and no
+`systemError`. Harness did not inspect message, pane, command, patch, or
+project content. Commit and push this acceptance, then execute only the
+read-before/name-set/read-after root-name transfer and exact tmux window
+renames.
+
 ### T-320 — Make interactive `ls` color portable across the fleet
 
 **Phase:** complete.
