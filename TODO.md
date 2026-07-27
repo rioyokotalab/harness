@@ -351,6 +351,15 @@ clean/current and no deployment ran. The task branch, 943-entry isolated
 worktree, and exact 10-entry Git metadata were removed only after tree-equality
 proof and guarded revalidation.
 
+**Backup validation 2026-07-27 10:02 JST:** all eight declared primary
+repositories pass native `restic-primary check` snapshot listing with no
+current-user Restic process before or after: local, ab, ab2, abq, ri, al, rc,
+and t4. Read-only chain reconciliation reports exactly one active future job
+per host—respectively `94950`, `2064918.pbs1`, `2064919.pbs1`,
+`176525.qjcm`, `10386`, `4275926`, `260847`, and `8270230`—and every retained
+smoke job is `verified-disabled` and absent. No snapshot, data read, restore,
+replica, scheduler action, retention change, forget, or prune ran.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
