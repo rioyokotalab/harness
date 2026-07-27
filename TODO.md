@@ -149,6 +149,16 @@ mode-0600 manifest was unlinked. Root instructions, the ledger, and focused
 coverage now make a fresh canonical fleet-health result mandatory before every
 Harness turn yields.
 
+**Rollout 2026-07-27:** the first fleet-sync plan supplied ledger-only merge
+`bdde90a` as its source and failed closed on AB before any node changed because
+all remotes were still at exact T-318 merge `bd3f80f`. Corrected guarded
+plan/apply transactions advanced all eleven clean remote checkouts from
+`bd3f80f` to protected T-319 merge `5fcbfd3`; every transfer artifact is
+absent. The required Aist, Home, Office, and Riken context refreshes each
+returned exactly one `status=submitted`. Guarded deletion removed only the
+925-entry / 23,133,602-byte sync clone with protected anchors unchanged, and
+the private message plus exact mode-0600 deletion manifest were unlinked.
+
 ### T-318 — Recover poisoned remote Codex threads
 
 **Phase:** complete.
