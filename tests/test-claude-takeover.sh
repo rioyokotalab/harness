@@ -59,6 +59,10 @@ grep -F 'include a read-only inventory' "$ROOT/AGENTS.md" \
     >/dev/null || fail "project routine arg0 housekeeping policy"
 grep -F 'current local time in `[HH:MM:SS]` format' "$ROOT/AGENTS.md" \
     >/dev/null || fail "project progress timestamp policy"
+grep -F "fresh native \`date '+%H:%M:%S'\` read" "$ROOT/AGENTS.md" \
+    >/dev/null || fail "project progress clock source"
+grep -F 'Never infer a timestamp from a prior message or elapsed time.' \
+    "$ROOT/AGENTS.md" >/dev/null || fail "project progress clock drift guard"
 grep -F 'Start Codex from the harness repository' "$ROOT/.codex/AGENTS.md" \
     >/dev/null || fail "Codex launch sentinel"
 grep -F 'Start Claude from the harness repository' \
@@ -70,6 +74,11 @@ cmp -s "$ROOT/.codex/config.toml" \
 grep -Fx 'check_for_update_on_startup = false' \
     "$ROOT/.codex/config.toml" >/dev/null ||
     fail "managed Codex startup update check remains enabled"
+grep -Fx 'model = "gpt-5.6-sol"' "$ROOT/.codex/config.toml" >/dev/null ||
+    fail "project Codex model default"
+grep -Fx 'model_reasoning_effort = "high"' \
+    "$ROOT/.codex/config.toml" >/dev/null ||
+    fail "project Codex reasoning default"
 cmp -s "$ROOT/.claude/settings.json" \
     "$ROOT/config/agent-clients/claude.json" ||
     fail "project Claude settings differ"

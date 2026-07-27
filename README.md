@@ -485,7 +485,7 @@ for the default Power setting; the aggregate itself correctly retains
   rules.
 - `.codex/AGENTS.md`: minimal global Codex launch sentinel source.
 - `.codex/config.toml` and `.claude/settings.json`: reviewed project
-  permissions.
+  permissions and Codex new-session model defaults.
 - `.codex/rules/default.rules`: project Codex command rules.
 - `config/agent-clients/`: public Codex and Claude settings plus reviewed
   sentinel/component declarations.

@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-326.
+Next free ID: T-327.
 
 ## Current state
 
@@ -107,6 +107,77 @@ Next free ID: T-326.
    successors recorded below.
 
 ## Active tasks
+
+### T-326 — Use exact progress clocks and default new Codex sessions to Sol high
+
+**Phase:** executing.
+
+The owner reported that commentary timestamps drift and requested that newly
+started Codex sessions default to Sol with high reasoning. Two initial bundled
+read-only instruction/ledger commands exceeded their output caps; bounded
+chunk reads then completed all 290 lines of `AGENTS.md`, all 3,066 lines of
+this ledger, and the applicable workflow instructions. No repository or live
+setting changed during those failed reads.
+
+Current project Codex policy is mirrored byte-for-byte between
+`.codex/config.toml` and `config/agent-clients/codex.toml` and contains only
+approval, sandbox, and startup-update settings. The current Codex manual
+documents project `.codex/config.toml` as the durable trusted-repository
+surface, with exact keys `model` and `model_reasoning_effort`; current official
+GPT-5.6 guidance identifies `gpt-5.6-sol` as the explicit flagship model.
+
+Implement the smallest project-scoped change: add exact model
+`gpt-5.6-sol` and effort `high` to both reviewed mirrors, update their
+validator and focused contract, and document that activation applies only to
+new sessions. Strengthen the progress rule so every commentary timestamp is
+copied from a fresh native `date '+%H:%M:%S'` read immediately before the
+message, never extrapolated from a prior timestamp or elapsed time. Do not
+inspect or modify opaque product-owned `~/.codex/config.toml`, restart or
+retarget existing sessions, or change authentication, plugins, MCP servers, or
+unrelated client settings.
+
+**Next action:** add failing focused assertions for the exact clock-source and
+Sol/high contracts, then implement the two mirrored config edits, validator,
+documentation, and focused tests before complete clean-tree validation and
+protected publication.
+
+**Implementation checkpoint:** the failing-first Claude-takeover assertion
+stopped on the absent fresh-clock contract before any production edit. Root
+guidance now requires a native `date '+%H:%M:%S'` read immediately before
+every commentary update and forbids inferring timestamps from prior messages
+or elapsed time. Both reviewed Codex mirrors now contain exact
+`model = "gpt-5.6-sol"` and
+`model_reasoning_effort = "high"`. The project-policy validator requires
+exactly those five reviewed lines, and a focused negative fixture proves a
+different model fails closed.
+
+The current local Codex manual and official GPT-5.6 model guidance confirm the
+project config precedence, exact keys, explicit Sol slug, and supported high
+effort. No user config, running session, model selection, authentication,
+plugin, MCP, or external service changed. Native Codex 0.145.0 strict-config
+parsing, mirrored-byte equality, shell syntax, warning-level ShellCheck, diff
+hygiene, Claude takeover, agent-config, and external-onboarding focused suites
+pass.
+
+**Next action:** commit this coherent implementation checkpoint, run the
+complete clean-tree `tests/test-phase1.sh`, then publish through protected
+exact-head CI. After merge, guarded-sync only clean managed checkouts and send
+one revision-specific context refresh to each eligible managed Mac; activation
+of Sol/high remains limited to sessions started after the updated config is
+loaded.
+
+**Validation checkpoint:** implementation commit `e9091cd` passed the complete
+clean-tree `tests/test-phase1.sh` suite. All focused suites passed, including
+the project config, takeover guidance, external-onboarding mirror, fleet-sync,
+and guarded-delete contracts; the native MPI smoke was correctly skipped
+outside a declared MPI environment. The task branch remains isolated from the
+primary checkout and the primary checkout's two unrelated live `.nfs` files
+remain untouched.
+
+**Next action:** commit this validation checkpoint, fetch the collaborative
+remote, push the task branch with an explicit refspec, and publish it through
+protected exact-head `portable-phase1` CI. Do not activate any existing Codex
+session during publication.
 
 ### T-325 — Recover recurring Codex unsafe tails and make the workflow reusable
 
