@@ -93,10 +93,10 @@ Next free ID: T-318.
    cleanup are complete. Resume the next safe read-only audit stack from the
    latest T-317 checkpoint below. Preserve the live Harness `.nfs…` script
    placeholder and the changing Students and Swallow worktrees.
-2. T-314 through T-316 are complete. After T-317's final validation and
-   handoff, resume Swallow SW-031 on AB from its targeted Slack/GitHub/Hugging
-   Face/web evidence-search handoff; keep planning incremental and do not
-   launch a large experiment.
+2. T-314 through T-316 are complete. Swallow SW-031 is owned exclusively by
+   Swallow's AB `TODO.md`; Harness has no project-research resume action.
+   T-317 may preserve and audit that checkout but must not select or execute
+   its next project task.
 3. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
@@ -620,13 +620,14 @@ code; no contributor code is executed. GitHub reports zero Dependabot alerts.
 Website's locked production audit is zero. Students' only open dependency PR
 `#39` widens cryptography and Ruff constraints, has passing historical checks,
 but is behind current `main`; preserve it for the active Students agent.
-Swallow has no package lock. Its runtime stages a locally pinned
+Swallow has tracked inference and Inspect locks but no training lock. Its
+runtime stages a locally pinned
 `nemo-26.06.sif` and verifies SHA-256
 `b625ee8ea6bf89830935eb179055389c195173b624652541e8d85ff49d9287ee`,
 but the bootstrap initially pulls mutable registry tag
-`nvcr.io/nvidia/nemo:26.06` without an immediate digest assertion. Defer a
-digest-qualified source and post-pull verification to SW-031 rather than
-modify its active branch.
+`nvcr.io/nvidia/nemo:26.06` without an immediate digest assertion. This is
+historical T-317 audit evidence only; Swallow commit `55f8f0a` owns the
+digest-qualified source and post-pull verification task.
 
 Remote Linux storage has ample read-only filesystem headroom: AB `/groups` is
 the highest at 51% blocks and 4% inodes; AB/AB2 `/home` is 11%/11%; ABQ is
@@ -908,11 +909,11 @@ against the audit. Exact remote retry is fault-injected in the isolated
 fake-launcher suite and deployed on all three roots; Students/Swallow guards
 are not deliberately killed because active-agent protection takes precedence
 over destructive live fault injection. Swallow's hosted two-package SBOM does
-not cover its shell-declared ML environments. Only Inspect has a tracked
-freeze; add machine-readable training/inference locks or dependency snapshots
-after compatibility is frozen. Active SW-031 is 35 clean commits / 17 files /
-6,631 additions ahead of current main with no open PR, so do not compact or
-publish it from T-317.
+not cover its shell-declared ML environments. Inference and Inspect have
+tracked freezes; the generic training environment does not. Swallow commit
+`55f8f0a` owns the training dependency snapshot task. Active SW-031 was 35
+clean commits / 17 files / 6,631 additions ahead of current main with no open
+PR at this checkpoint, so do not compact or publish it from T-317.
 
 **External agent reconciliation 2026-07-27 13:29 JST:** Local monotonic goal
 time and NTP-synchronized wall time show that several preceding checkpoint
@@ -1055,6 +1056,16 @@ from another window, list immutable window IDs, switch away, remove only the
 exact target, and recreate its index with the exact remote root. Never use
 `--last` for a phone-visible root and never restart the shared app server for
 a per-thread cold reconnect.
+
+**Project-ledger separation 2026-07-27 15:01 JST:** the owner directed every
+Swallow research, dependency, and experiment action out of Harness. Swallow
+commit `55f8f0af1ab63fcd5e9c9cb8fad25338d37a762d` now begins cold resume from
+the AB Swallow checkout, treats `~/harness` as read-only transport context,
+retains static gate A6 as its next code action, and owns the container,
+Bridge-source, training-lock, and bounded compatibility follow-ups found by
+T-317. AB fast-forwarded cleanly to that exact commit after head/worktree and
+current-user SSH-agent revalidation. Harness retains only infrastructure,
+tmux/remote-control operation, and historical cross-repository audit facts.
 
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 

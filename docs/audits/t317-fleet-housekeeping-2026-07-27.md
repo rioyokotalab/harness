@@ -214,7 +214,7 @@ decision.
 | Harness | task branch plus live `.nfs…` | strict fsck pass | managed utilities current; deferred source-built tools | protected strict `portable-phase1` |
 | Students | protected primary `main`; isolated T-006/T-007 complete | fsck pass; 51 MiB loose plus 54-byte temp objects | cryptography 49.0.0; Ruff 0.16.0; CI uv 0.11.32; stale PR #39 open | PRs #55–#58 merged; production Slack deployment failed |
 | Website | clean current `main` | fsck pass; zero garbage | Playwright 1.62.0; checkout v7.0.1 | PR #36 merged, no deployment |
-| Swallow | protected active AB branch; clean/current T4 `main` | both fsck pass | no package lock; local SIF hash pinned | strict `Offline checks`; T4 mirror repaired |
+| Swallow | protected active AB branch; clean/current T4 `main` | both fsck pass | inference/Inspect locks; training unlocked; local SIF hash pinned | strict `Offline checks`; T4 mirror repaired |
 
 All four repositories have:
 
@@ -287,18 +287,17 @@ lifecycle scripts disabled reports zero info/low/moderate/high/critical
 findings and leaves the clean worktree unchanged.
 
 Swallow's two-package hosted SBOM covers only repository/Actions metadata, not
-its shell-declared ML environments. Only the Inspect environment has a tracked
-freeze; training/inference need machine-readable locks or submitted dependency
-snapshots after compatibility is frozen. The active SW-031 branch is 35 clean
-commits ahead of current main across 17 files and has no open PR, so this
-reproducibility/ledger compaction belongs after its active publication, not in
-T-317.
+its shell-declared ML environments. Inference and Inspect have tracked freezes;
+the generic training environment has no lock. Swallow commit `55f8f0a` owns
+the training dependency snapshot follow-up. The active SW-031 branch was 35
+clean commits ahead of current main across 17 files and had no open PR at this
+checkpoint, so no project implementation belongs in T-317.
 
 Swallow verifies the staged `nemo-26.06.sif` as
 `b625ee8ea6bf89830935eb179055389c195173b624652541e8d85ff49d9287ee`,
 but bootstrap begins from mutable registry tag `nvcr.io/nvidia/nemo:26.06`
-without an immediate digest assertion. Defer digest-qualified pull and
-post-pull verification to SW-031.
+without an immediate digest assertion. Swallow commit `55f8f0a` owns the
+digest-qualified pull and post-pull verification follow-up.
 
 The live clean Megatron-Bridge source equals publisher v0.4.2 commit
 `c810129341a84e58f4cbed3093f70668a088c028`, with clean Megatron-LM submodule
@@ -308,8 +307,8 @@ The generic training bootstrap also leaves foundational Python packages
 unpinned. Anonymous NGC manifest access returns HTTP 401 and no digest.
 Publisher metadata now reports Megatron-Bridge 0.5.1, vLLM 0.26.0, Inspect AI
 0.3.249, and OpenAI Python 2.48.0 versus compatibility pins 0.4.2, 0.23.0,
-0.3.241, and minimum 2.40.0. SW-031 must treat these as matched compatibility
-experiments, not automatically upgrade the active stack. The header-only
+0.3.241, and minimum 2.40.0. Swallow commit `55f8f0a` classifies these as
+later matched compatibility experiments, not automatic upgrades. The header-only
 anonymous probe capture was exact-unlinked; it exposed a mode-0664 capture
 mistake, so any future diagnostic capture must establish umask 077 first.
 
@@ -393,6 +392,13 @@ attempt/delay zero; indices 0/1 and the attached client never changed. Native
 doctor passes 18/18. The README now documents intentional clean exit and exact
 tmux remote-root recreation and warns that `--last` is not a remote selector.
 
+At the owner's direction, all Swallow research, dependency, and experiment
+actions were removed from Harness's active/deferred queue. Swallow commit
+`55f8f0af1ab63fcd5e9c9cb8fad25338d37a762d` now owns the exact cold-resume,
+container-digest, Bridge-source, training-lock, compatibility, and static-A6
+next actions. AB was cleanly fast-forwarded to that revision. This audit keeps
+cross-repository findings as historical evidence only.
+
 ## Guarded deletion and cleanup
 
 - Six Linux and four Mac arg0 candidates were quarantined, revalidated, and
@@ -430,18 +436,14 @@ tmux remote-root recreation and warns that `--last` is not a remote selector.
    Harness/Swallow.
 5. Students-local Slack administration: resolve production
    `not_in_channel`; do not rerun until membership is corrected.
-6. SW-031: digest-qualify NeMo bootstrap and continue evidence-only
-   reasoning/tool-use throughput planning; assert the Megatron-Bridge commit
-   before use, pin the generic Python bootstrap, and compare newer ML package
-   lines only through matched small compatibility tests.
-7. Administrator maintenance window: apply Local security updates and reboot
+6. Administrator maintenance window: apply Local security updates and reboot
    only after active agents and jobs are safely quiesced.
-8. Active-agent maintenance: resolve value-free agent-config collisions and
+7. Active-agent maintenance: resolve value-free agent-config collisions and
    pack Students loose objects only after those agents finish.
-9. Site-admin lifecycle confirmation: establish whether AB/AB2/ABQ/T4 use a
+8. Site-admin lifecycle confirmation: establish whether AB/AB2/ABQ/T4 use a
    maintained RHEL 9.4 extended stream and whether AL has SLES 15 SP6 LTSS;
    never inspect subscription credentials or mutate site-managed OS packages.
-10. Website dependency graph: inspect its GitHub UI and decide whether to
+9. Website dependency graph: inspect its GitHub UI and decide whether to
     refresh/regenerate generated SBOM coverage through an owner hosting action;
     retain native lockfile audit meanwhile.
 
