@@ -154,6 +154,13 @@ the fresh-root path remains selected. Do not chmod or otherwise mutate the
 poisoned root. Commit and push this correction, then rerun the other immutable
 preconditions without bypassing the metadata refusal before `thread/start`.
 
+**Thread-start result:** one acknowledged `thread/start` created exact new root
+`019fa3ae-6ad0-7642-aeca-b7b52421f576`. Same-connection response and readback
+prove `status=idle` with zero turns. No prompt, name, rollout chmod, TUI,
+process, tmux, or app-server lifecycle action ran. The request must never be
+retried. Commit and push this non-retryable identity, then send only one
+provisional `thread/name/set` for `harness-recovery-20260727`.
+
 ### T-322 — Make the phone-visible Swallow name unique
 
 **Phase:** complete.
