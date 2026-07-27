@@ -158,6 +158,17 @@ following links, identity-revalidated through the descriptor, and changed to
 `0600`. No root has been created yet. Commit and push this correction, rerun
 the narrow live preflight, then invoke `thread/start` once.
 
+**Thread-start result:** one acknowledged `thread/start` created exact root
+`019fa36c-cfa9-7143-ae11-1f538e07bfee`, then the immediate rollout gate
+stopped because the declared path did not yet exist. No chmod or name request
+ran, and `thread/start` must not be retried. Fresh protocol reconciliation
+proves the exact root is in app-server memory, idle, zero-turn, unnamed,
+cwd-matched, absent from the state DB, and has no on-disk rollout yet. This
+matches T-318's actual persistence order: one acknowledged name write creates
+the durable surfaces, after which the descriptor transaction can tighten the
+rollout. Commit and push this non-retryable result and order correction, then
+send only the provisional `thread/name/set`.
+
 ### T-320 — Make interactive `ls` color portable across the fleet
 
 **Phase:** complete.
