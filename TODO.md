@@ -384,6 +384,20 @@ skipped outside a declared allocation. No live package changed. Push this
 acceptance, then finish official release triage before protected publication
 and fleet rollout.
 
+**Linux release triage 2026-07-27 10:16 JST:** official publisher metadata
+also reports rclone 1.74.4, ripgrep 15.2.0, htop 3.5.2, tmux 3.7b, SQLite
+3.53.4, and Tectonic 0.17.0; Restic 0.19.1, Ninja 1.13.2, ShellCheck 0.11.0,
+Git LFS 3.7.1, and Tree 2.3.2 remain current. GitHub asset digests and
+SQLite's publisher SHA3 record were inspected without executing remote code.
+
+Defer htop, tmux, and SQLite because the source-build transaction, like the
+Node runtime transaction, has no safe managed-predecessor path and blocks live
+replacement. Defer Tectonic's 0.16→0.17 feature release pending a workload
+compatibility test; do not infer safety from a version probe alone. These are
+explicit residual update gaps, not permission to overwrite active binaries.
+Proceed with protected publication of only the accepted uv, rclone, and
+ripgrep declaration/updater scope.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
