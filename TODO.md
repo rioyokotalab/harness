@@ -1777,6 +1777,13 @@ could not resolve its DNS SRV configuration source. Terminal scheduler history
 is still not visible, so keep this observation open and retry only exact ID
 `7242`; do not alter successor `10386`.
 
+**2026-07-27 read-only retry:** exact RI accounting command
+`sacct -n -X -j 7242 --format=JobIDRaw,JobName,User,State,ExitCode,Start,End`
+again failed before job lookup because Slurm could not resolve its DNS SRV
+configuration source. It printed no job data, and no scheduler state changed.
+Keep the observation open for exact ID `7242`; successor `10386` remains
+untouched.
+
 | Node | Recorded 2026-07-26 successor |
 | --- | --- |
 | local | 91840 |
