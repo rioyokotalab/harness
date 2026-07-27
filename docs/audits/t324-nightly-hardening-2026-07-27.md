@@ -125,6 +125,12 @@ exact drift is deferred for owner reconciliation.
   snapshot creation, unlock, forget, or prune. Private output stayed in
   mode-0600 captures; all captures were exact-unlinked and all repository lock
   directories returned to zero entries.
+- Independent replica roots remain available but unchanged and older than the
+  July 26 primaries: Local/AB/RI/AL/RC/T4 latest generation
+  `20260715T222741Z`, AB2 `20260716T023458Z`, and ABQ
+  `20260722T092250Z`. T-196 requires a manual restore gate before a new
+  immutable generation; no replica copy, promotion, or deletion is authorized
+  or attempted.
 
 ## Repository housekeeping
 

@@ -222,6 +222,12 @@ loaded indexes and checked pack references, snapshots, trees, and blobs
 without `--read-data` or mutation. All private mode-0600 captures were
 exact-unlinked and all repository lock counts returned to zero.
 
+Independent replica generations remain present but older than the July 26
+primaries: Local/AB/RI/AL/RC/T4 latest are `20260715T222741Z`, AB2 is
+`20260716T023458Z`, and ABQ is `20260722T092250Z`. T-196 explicitly requires
+manual restore validation before creating a current immutable generation, so
+no replica copy, promotion, or deletion ran.
+
 **Next action:** publish the resilience fix through PR #361 after current-head
 checks pass, continue independent deep checks until the 04:13 JST
 material-work cutoff, then run final validation and live readback. The earlier
