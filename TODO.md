@@ -221,6 +221,16 @@ this reversible checkpoint, then revalidate old real TUI PID `382364` /
 start tick `87255666` and send one `SIGTERM` only to that leaf so its exact
 wrapper, watcher, and supervisor unwind without respawn.
 
+**Old-chain retirement:** exact PID, parent, session, start-tick, argv, root,
+window, and unaffected-target gates passed. One `SIGTERM` was sent only to
+old real TUI PID `382364`; real TUI, wrapper PID `382272`, watcher PID
+`382211`, and supervisor PID `382132` all exited within four seconds without
+respawn. No second signal, process-group signal, `SIGKILL`, archive, delete,
+rollback, prompt, or app-server action ran. The saved poisoned root remains
+preserved as `swallow-blocked-20260727`. Commit and push, then perform
+independent final process/socket/thread/tmux/doctor/Git validation and guarded
+cleanup of only the generated schema bundle.
+
 ### T-320 — Make interactive `ls` color portable across the fleet
 
 **Phase:** complete.
