@@ -44,6 +44,11 @@ remain direct because replacing them would disrupt active agents; the detached
 guards preserve an exact supervised connection without signaling either
 project.
 
+Transient exits are fault-injected through the isolated fake-launcher suite,
+not by deliberately killing the live Students or Swallow guards. Their exact
+retry path is deployed and continuously healthy, but active-agent protection
+takes precedence over a live destructive fault injection.
+
 The three long-lived supervisors hold the old NFS-unlinked script inode open,
 so `libexec/.nfs0000000002a8b30d0001f88e` must remain until they exit
 naturally. It is live kernel residue, not a cleanup candidate.
@@ -136,10 +141,15 @@ changes are inappropriate.
 
 Every Linux route and all four Macs reports `codex-cli 0.145.0`, matching the
 current public `@openai/codex` package. The official Codex manual cache reports
-current. A post-audit health checkpoint found all three Local supervisors
-`running remote-explicit` at unchanged owner PIDs with attempt/delay zero, the
-same sole tmux client and five window identities, and all canonical fleet
-routes passing.
+current. Every route also reports Claude Code 2.1.220, matching its publisher.
+Linux consistently uses managed Node 24.16.0/npm 11.13.0; the matched deferred
+LTS update is Node 24.18.0/npm 11.16.0 because the runtime transaction lacks a
+safe managed-predecessor rollback. Do not independently mix registry npm
+12.0.1 into that LTS runtime. All Macs already match current Node
+26.5.0/npm 11.17.0. A post-audit health checkpoint found all three Local
+supervisors `running remote-explicit` at unchanged owner PIDs with
+attempt/delay zero, the same sole tmux client and five window identities, and
+all canonical fleet routes passing.
 
 Every managed route is within 0.7 seconds of Local under parallel,
 round-trip-bounded epoch probes. All Linux hosts report NTP synchronized with
@@ -254,6 +264,14 @@ export endpoint's 404 only as `Resource not found`; it does not establish that
 the graph is disabled. A compensating native lockfile-only `npm audit` with
 lifecycle scripts disabled reports zero info/low/moderate/high/critical
 findings and leaves the clean worktree unchanged.
+
+Swallow's two-package hosted SBOM covers only repository/Actions metadata, not
+its shell-declared ML environments. Only the Inspect environment has a tracked
+freeze; training/inference need machine-readable locks or submitted dependency
+snapshots after compatibility is frozen. The active SW-031 branch is 35 clean
+commits ahead of current main across 17 files and has no open PR, so this
+reproducibility/ledger compaction belongs after its active publication, not in
+T-317.
 
 Swallow verifies the staged `nemo-26.06.sif` as
 `b625ee8ea6bf89830935eb179055389c195173b624652541e8d85ff49d9287ee`,

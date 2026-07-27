@@ -888,12 +888,31 @@ at every severity across the exact clean Website lock, and the worktree remains
 clean/current. Registry metadata now reports npm 12.0.1, whose engine range
 accepts the installed Node line, but this is a new package-manager major and
 the Harness runtime transaction still lacks a safe managed-predecessor path.
-Do not replace npm/Node while active agents exist; update the earlier deferred
-npm 11.16 candidate to 12.0.1 and require compatibility plus rollback evidence
-in a later maintenance window.
+Official Node 24.18.0 still bundles npm 11.16.0, so do not independently mix
+npm 12 into the managed LTS runtime. Keep the matched Node 24.18/npm 11.16
+pair as the deferred Linux target and require compatibility plus rollback
+evidence in a later maintenance window. All Macs already match current Node
+26.5.0/npm 11.17.0.
 
 Draft PR #337's protection rerun on exact head `cc7ea27` passes
 `portable-phase1` in 2m20s.
+
+**Agent-tool and plan reconciliation 2026-07-27 14:37 JST:** every Linux route
+and all four Macs reports Claude Code 2.1.220, matching publisher metadata,
+just as all report current Codex 0.145.0. Linux consistently uses managed Node
+24.16.0/npm 11.13.0; the exact deferred LTS pair remains official Node
+24.18.0/npm 11.16.0. Macs already match current Node 26.5.0/npm 11.17.0.
+
+The frozen T-317 decisions and acceptance checklist have been reconciled
+against the audit. Exact remote retry is fault-injected in the isolated
+fake-launcher suite and deployed on all three roots; Students/Swallow guards
+are not deliberately killed because active-agent protection takes precedence
+over destructive live fault injection. Swallow's hosted two-package SBOM does
+not cover its shell-declared ML environments. Only Inspect has a tracked
+freeze; add machine-readable training/inference locks or dependency snapshots
+after compatibility is frozen. Active SW-031 is 35 clean commits / 17 files /
+6,631 additions ahead of current main with no open PR, so do not compact or
+publish it from T-317.
 
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
