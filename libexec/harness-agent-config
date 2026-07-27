@@ -125,6 +125,11 @@ strict_regular_owned() {
         [ "$(macos_stat_links "$1")" = 1 ]
 }
 
+private_regular_owned() {
+    strict_regular_owned "$1" &&
+        [ "$(macos_stat_mode "$1")" = 600 ]
+}
+
 declared_local_symlink_is_safe() {
     [ "$1" = "$HOME/.local" ] && [ -L "$1" ] || return 1
     logical_host=${HARNESS_LOGICAL_HOST:-}
@@ -149,27 +154,6 @@ declared_local_symlink_is_safe() {
         [ "$(macos_stat_owner "$HOME/.local")" = "$current_uid" ]
 }
 
-codex_config_is_legacy_managed() {
-    strict_regular_owned "$HOME/.codex/config.toml" || return 1
-    awk '
-        $0 == "approval_policy = \"never\"" { if (++approval != 1 || section) bad=1; next }
-        $0 == "check_for_update_on_startup = false" { if (++update != 1 || section) bad=1; next }
-        $0 == "sandbox_mode = \"danger-full-access\"" { if (++sandbox != 1 || section) bad=1; next }
-        $0 ~ /^model = "([^"\\]|\\.)*"$/ { if (++model != 1 || section) bad=1; next }
-        $0 ~ /^model_reasoning_effort = "([^"\\]|\\.)*"$/ { if (++effort != 1 || section) bad=1; next }
-        $0 == "" { next }
-        $0 ~ /^\[projects\.\"([^\"\\]|\\.)+\"\]$/ { if (expect) bad=1; expect=1; section="project"; next }
-        section == "project" && expect && $0 == "trust_level = \"trusted\"" { expect=0; next }
-        $0 == "[tui.model_availability_nux]" { if (expect || ++tui != 1) bad=1; section="tui"; next }
-        section == "tui" && $0 ~ /^"[A-Za-z0-9._-]+" = [0-9]+$/ { entries++; next }
-        { bad=1 }
-        END {
-            if (approval != 1 || sandbox != 1 || expect || (tui && !entries)) bad=1
-            exit bad ? 1 : 0
-        }
-    ' "$HOME/.codex/config.toml" >/dev/null 2>&1
-}
-
 records() {
     printf 'link|codex-sentinel|%s|%s|%s\n' \
         "$HOME/.codex/AGENTS.md" "$codex_sentinel" "$HARNESS_ROOT/codex/AGENTS.md"
@@ -177,7 +161,8 @@ records() {
         "$HOME/.claude/CLAUDE.md" "$claude_sentinel" "$HARNESS_ROOT/.claude/CLAUDE.md"
     printf 'link|launcher|%s|%s|-\n' \
         "$HOME/.local/bin/harness-codex" "$launcher_source"
-    printf 'remove|codex-config|%s|regular-codex|-\n' "$HOME/.codex/config.toml"
+    printf 'preserve|codex-config|%s|private-product-owned|-\n' \
+        "$HOME/.codex/config.toml"
     printf 'remove|claude-settings|%s|%s|-\n' \
         "$HOME/.claude/settings.json" "$legacy_claude_policy"
     printf 'remove|codex-rules|%s|%s|%s\n' \
@@ -196,6 +181,17 @@ records() {
 
 path_state() {
     kind=$1; label=$2; destination=$3; expected=$4; legacy=$5
+    if [ "$kind" = preserve ]; then
+        if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
+            printf absent
+        elif [ "$expected" = private-product-owned ] &&
+            private_regular_owned "$destination"; then
+            printf product-owned
+        else
+            printf collision
+        fi
+        return
+    fi
     if [ "$kind" = link ]; then
         if [ -L "$destination" ]; then
             observed=$(readlink "$destination")
@@ -210,8 +206,6 @@ path_state() {
     fi
     if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
         printf current
-    elif [ "$expected" = regular-codex ] && codex_config_is_legacy_managed; then
-        printf removable-regular
     elif [ -L "$destination" ]; then
         observed=$(readlink "$destination")
         if [ "$observed" = "$expected" ] ||
@@ -277,6 +271,12 @@ restore_manifest() {
     while IFS='|' read -r marker kind label destination expected legacy prior backup prior_mode; do
         [ "$marker" = path ] || die "agent configuration manifest is malformed"
         post=$(path_state "$kind" "$label" "$destination" "$expected" "$legacy")
+        if [ "$kind" = preserve ]; then
+            case $post in
+                absent|product-owned) continue ;;
+                *) die "agent configuration rollback blocked by changed live path: $label" ;;
+            esac
+        fi
         case $prior in
             current)
                 [ "$post" = current ] ||
@@ -349,6 +349,7 @@ changes=0
 while IFS='|' read -r kind label destination expected legacy; do
     state=$(path_state "$kind" "$label" "$destination" "$expected" "$legacy")
     case $kind:$state in
+        preserve:absent|preserve:product-owned) action=none ;;
         link:current|remove:current) action=none ;;
         link:absent|link:legacy) action=install; changes=$((changes + 1)) ;;
         remove:removable-link|remove:removable-regular)
@@ -402,7 +403,7 @@ while IFS='|' read -r kind label destination expected legacy; do
     backup=absent
     prior_mode=absent
     case $prior in
-        current|absent) ;;
+        current|absent|product-owned) ;;
         legacy|removable-link)
             backup=$transaction_root/$transaction_id.agent-config.$label.before
             readlink "$destination" >"$backup"
@@ -437,6 +438,7 @@ trap cleanup_apply EXIT HUP INT TERM
 while IFS='|' read -r kind label destination expected legacy; do
     state=$(path_state "$kind" "$label" "$destination" "$expected" "$legacy")
     case $kind:$state in
+        preserve:absent|preserve:product-owned) continue ;;
         link:current|remove:current) continue ;;
         link:absent) ln -s "$expected" "$destination" ;;
         link:legacy)
@@ -449,8 +451,11 @@ while IFS='|' read -r kind label destination expected legacy; do
 done <"$record_file"
 
 while IFS='|' read -r kind label destination expected legacy; do
-    [ "$(path_state "$kind" "$label" "$destination" "$expected" "$legacy")" = current ] ||
-        die "agent configuration verification failed: $label"
+    state=$(path_state "$kind" "$label" "$destination" "$expected" "$legacy")
+    case $kind:$state in
+        preserve:absent|preserve:product-owned|link:current|remove:current) ;;
+        *) die "agent configuration verification failed: $label" ;;
+    esac
 done <"$record_file"
 printf '%s\n' complete >"$status_file"
 complete=1

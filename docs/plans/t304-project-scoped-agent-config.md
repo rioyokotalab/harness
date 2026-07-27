@@ -11,6 +11,9 @@
 - Result: protected PRs #285 and #286 merged; every target is clean/current at
   `309de20`, schema-2 doctor passes, and the four Mac Codex TUIs were resumed
   from `~/harness` without replacing their PID-1 daemons.
+- T-311 amendment: optional `~/.codex/config.toml` is supported as opaque
+  product-owned state when absent or a private current-user single-link regular
+  file. Harness project behavior remains entirely repository-scoped.
 - Completion evidence:
   `docs/audits/t304-project-scoped-agent-config-2026-07-24.md`.
 
@@ -129,8 +132,8 @@ Official Claude Code documentation establishes:
 1. Replace `~/.codex/AGENTS.md` with a minimal sentinel for accidental launches
    outside `~/harness`.
 2. Replace `~/.claude/CLAUDE.md` with an equivalent Claude sentinel.
-3. Remove only the exact harness-managed global paths:
-   - `~/.codex/config.toml`;
+3. Preserve optional Codex product-owned `~/.codex/config.toml` without reading
+   or modifying it. Remove only the exact harness-managed global paths:
    - `~/.codex/rules/default.rules`;
    - the 13 exact harness skill links from `~/.codex/skills`;
    - the 13 exact harness skill links from `~/.agents/skills`;
@@ -208,7 +211,8 @@ Official Claude Code documentation establishes:
   13 skills without depending on harness-managed global configuration.
 - Accidental `$HOME` launches receive the frozen sentinel behavior selected in
   D2 and do not silently work under stale harness policy.
-- No harness-managed global config remains except the two sentinels.
+- No harness-managed global config remains except the two sentinels; optional
+  Codex product-owned user configuration remains outside Harness ownership.
 - Authentication, sessions, memories, caches, databases, binaries, unrelated
   skills, `.system`, remote control, tunnels, and repository user work are
   unchanged.

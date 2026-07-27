@@ -171,17 +171,23 @@ Read-only commands are value-free:
 ```
 
 Schema 2 retains `~/.local/bin/harness-codex`, installs minimal launch
-sentinels at `~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md`, and removes only
-recognized legacy harness configuration:
+sentinels at `~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md`, preserves
+Codex's optional product-owned user configuration, and removes only recognized
+legacy harness configuration:
 
-- the strict managed `~/.codex/config.toml`;
 - the exact managed Claude settings and Codex rule links; and
 - exact harness skill links from the three former user discovery directories.
 
+`~/.codex/config.toml` may be absent or a mode-0600, current-user-owned,
+single-link regular file. The transaction reports only that value-free state
+and never reads, copies, hashes, removes, restores, or writes the file.
+Symlinks, hard links, broader modes, wrong ownership, and non-regular paths
+fail closed.
+
 Unrelated entries—including Codex's vendor-owned `.system` directory—remain.
-Different symlinks, unknown regular settings, hard links, unsafe parents, dirty
-checkouts, and concurrent changes fail closed. `--adopt` remains accepted for
-controller compatibility but never authorizes an unrelated preimage.
+Different symlinks, unsafe parents, dirty checkouts, and concurrent managed
+changes fail closed. `--adopt` remains accepted for controller compatibility
+but never authorizes an unrelated preimage.
 
 Apply records a mode-0600 manifest plus exact regular-file and symlink
 preimages. Rollback restores only unchanged transaction postimages. `--drill`

@@ -94,8 +94,8 @@ Next free ID: T-321.
 1. T-314 through T-318 are complete. Students and Swallow are owned by their
    independent project agents and ledgers; Harness has no project-research
    resume action for either repository.
-2. The T-311 Mac administrator-authentication gate is complete. Resolve the
-   separate Codex user-config policy choice next.
+2. T-311 decision D-007 now permits a private product-owned Codex user layer;
+   implement and validate the frozen value-free preservation contract next.
 3. Ask the `192.168.33.30` administrator to correlate T-303's recorded NFS
    latency intervals when an external coordination window is available.
 4. Continue T-196 only at its exact time/identity gates: all eight nodes are
@@ -1149,8 +1149,7 @@ and synchronization carry only this durable evidence.
 
 ### T-311 — Harden the fleet and independent project repositories
 
-**Phase:** nightly safe work and administrator-authenticated changes complete;
-one owner policy choice remains.
+**Phase:** validating final product-owned Codex user-config policy.
 
 Audit and harden all managed Linux and Mac nodes plus `harness`, `students`,
 `swallow`, and `website`, while each repository owns its own task, branch,
@@ -1164,6 +1163,30 @@ interrupted task, and keep all repositories progressing independently. If the
 top item requires unavailable owner or administrator action, leave it deferred,
 continue the next highest safe independent item in that same repository, and
 never cross it for dependent work.
+
+**Decision D-007 frozen 2026-07-27:** the owner accepted the recommended
+supported Codex user layer. Harness retains project-scoped instructions,
+permissions, rules, and skills, while `~/.codex/config.toml` is opaque
+product-owned state. Accept only absence or a mode-0600, current-user-owned,
+single-link regular file; reject unsafe metadata without reading content.
+Never parse, copy, hash, remove, restore, or write the file, and never stop or
+reload Codex. Value-free metadata confirms the six present files on Local, T4,
+Aist, Home, Office, and Riken already satisfy this contract; the other six
+nodes are absent. The frozen plan, risks, tests, and acceptance criteria are in
+`docs/plans/t311-codex-user-config-policy.md`. Implementation is isolated at
+`/tmp/harness-t311-user-config/repo` on branch
+`codex/t311-product-owned-user-config`; Local's live `.nfs…` placeholder
+remains untouched.
+
+**D-007 implementation checkpoint 2026-07-27:** the schema-2 engine now emits
+a value-free `preserve` record and contains no product-file content parser,
+backup, removal, restore, or write path. Focused apply/rollback/drill tests
+preserve arbitrary opaque bytes, accept absence, do not recreate a file Codex
+removed, prove no product backup exists, and reject broader mode, symlink, and
+hard-link states. Shell syntax, warning-level ShellCheck, agent-config,
+fleet-controller, source-contract, repository-independence, external-user,
+Claude-takeover, and diff-hygiene checks pass. Next: commit this checkpoint and
+run the complete clean-tree phase-one suite.
 
 **LIFO gate resolved 2026-07-26:** a final read-only fleet-sync check supplied
 the same exact commit as both source and target. The command rejected the
@@ -1625,8 +1648,8 @@ Decision D-006 is confirmed: use only existing narrow non-interactive
 authority; stage exact reviewed helpers and top-priority TODO blockers for
 password-, TCC-, or root-gated work, then continue independent work.
 
-**Next action:** continue safe hardening and scheduled backup checkpoints below
-the deferred Codex user-config policy decision and Mac administrator helper.
+**Next action:** implement, validate, publish, and roll out D-007, then continue
+the independently time-gated backup checkpoints.
 Students T-004, Website T-207, and Swallow SW-018 are independently closed;
 continue any newly discovered repository-local stack without waiting on
 another repository.
