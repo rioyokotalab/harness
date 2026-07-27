@@ -110,7 +110,7 @@ Next free ID: T-328.
 
 ### T-327 — Align MCP approvals and retire blocked phone sessions
 
-**Phase:** interviewing.
+**Phase:** ready-for-go.
 
 The owner asked to update the MCP setting for recent operating needs and asked
 whether phone-visible `swallow-blocked-20260728` and
@@ -237,6 +237,32 @@ invocations and does not satisfy the recent managed-session need.
 the recommended narrow launcher change. After selection, checkpoint the
 decision, return to `ready-for-go`, and wait for a new explicit `go` before
 editing implementation or tests.
+
+**Decision D-002:** selected. The owner answered exact `yes`, approving
+recommended D-002A. The corrected frozen implementation additionally changes
+only `bin/harness-codex` from:
+
+```text
+--ask-for-approval never
+```
+
+to this exact command-line override:
+
+```text
+--config 'approval_policy={ granular = { sandbox_approval = false, rules = false, mcp_elicitations = true, request_permissions = false, skill_approval = false } }'
+```
+
+It retains explicit `--sandbox danger-full-access`. Add dynamic or
+argument-capture focused coverage proving the launcher forwards the exact
+granular value and never emits the superseded `--ask-for-approval never`.
+Update the project-config mirrors, exact validator, onboarding fixture,
+takeover/launcher assertions, and owner-facing documentation together. No
+user-layer file, MCP transport/auth/tool policy, active process, or archive
+state enters scope. D-001 and D-002 resolve all material decisions.
+
+**Next action:** wait for one new explicit `go`, `proceed`, or `execute`.
+After it arrives, set the phase to `executing` and begin with failing focused
+config and launcher assertions before any production edit.
 
 ### T-326 — Use exact progress clocks and default new Codex sessions to Sol high
 
