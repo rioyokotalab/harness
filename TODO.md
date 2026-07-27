@@ -214,13 +214,20 @@ The real TUI has reciprocal established Unix peer
 `83381863`. Old Swallow, Harness, and Students remain unchanged in the
 four-window mapping.
 
-**Next action:** commit and push this accepted provisional identity, then
-submit exactly one lock-serialized cold-start turn to the new root. The
-instruction must prohibit rejected-prompt reconstruction/replay, require full
-Harness `AGENTS.md`/`TODO.md`, Git, current Swallow durable ledger, and mutable
-state reconciliation, resume only the recorded Swallow next action, and
-remain running and idle in the same thread. Treat ambiguous acknowledgement
-as non-retryable.
+**Cold-start acknowledgement:** under the shared mode-0600 agent-message lock,
+exactly one identified `turn/start` was acknowledged for new root
+`019fa5a1-7fff-7e92-8e2a-2586c684747f` as turn
+`019fa5a3-f90e-7e42-80b6-5adb5009fbfd`. The instruction prohibits rejected
+prompt reconstruction/replay and prior-chat reliance; requires complete
+Harness instructions/ledger, current Swallow repository instructions/ledger,
+Git, and mutable-state reconciliation; leaves thread/process/tmux/app-server
+mutations to this controller; and asks the Swallow agent to remain running and
+idle in the same thread. The request must never be retried.
+
+**Next action:** commit and push this non-retryable acknowledgement, then
+monitor only value-free turn structure until exact assistant-bearing
+completion or a fail-closed state. Do not inspect message text, pane content,
+commands, or project payloads.
 
 ### T-324 — Nightly fleet and repository hardening
 
