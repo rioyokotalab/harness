@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-322.
+Next free ID: T-323.
 
 ## Current state
 
@@ -107,6 +107,34 @@ Next free ID: T-322.
    successors recorded below.
 
 ## Active tasks
+
+### T-322 — Make the phone-visible Swallow name unique
+
+**Phase:** interviewing.
+
+After T-321, the owner reported three phone-visible sessions named `swallow`
+plus the expected `swallow-blocked-20260727`. Metadata-only app-server
+discovery, without transcript or pane reads, identifies:
+
+- original preserved root `019f9f69-6b94-70a3-be12-8bef23b88a96`,
+  `name=swallow`, currently idle;
+- preserved failed fork `019fa265-a94d-72d3-ae88-aa1d610fed6c`,
+  `name=swallow`, currently idle;
+- active accepted T-321 root `019fa36c-cfa9-7143-ae11-1f538e07bfee`,
+  `name=swallow`, idle under the healthy `swallow-recovery` supervisor;
+- preserved poisoned root `019fa27c-6280-7f00-8e46-ef878875562b`,
+  already uniquely named `swallow-blocked-20260727`, `systemError`.
+
+Recommended D-001 is a reversible metadata-only repair: retain the active root
+as the sole exact `swallow`, rename the original root to
+`swallow-legacy-20260727`, and rename the failed fork to
+`swallow-failed-fork-20260727`. Preserve all roots and history; do not archive,
+delete, launch, stop, signal, replay, or inspect content. After explicit
+selection and a separate `go`, revalidate all four exact identities/names,
+perform one acknowledged read-before/name-set/read-after transaction per older
+root, and require the active root, tmux mapping, supervisor/watcher, Harness,
+Students, and app server to remain unchanged. Alternative D-001 is no change,
+leaving three indistinguishable phone labels.
 
 ### T-321 — Recover recurring Swallow unsafe-tail `Request blocked`
 
