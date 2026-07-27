@@ -191,6 +191,11 @@ unchanged, and its exact mode-0600 manifest was exact-unlinked.
 `main`, and require exact-head protected CI before the live permission
 tightening or recovery.
 
+PR #338 now targets protected `main` and is mergeable. The retarget event
+reported no check run, so this ledger-only synchronization commit provides the
+normal pull-request `synchronize` event without dispatching a workflow. Require
+`portable-phase1` to pass on this exact new head before live mutation.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
