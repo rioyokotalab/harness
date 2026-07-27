@@ -218,6 +218,16 @@ retryable. Commit and push, then rename exact tmux `@49` to
 `harness-blocked`, exact `@60` to `harness`, and switch only the attached
 client from old to new after narrow identity revalidation.
 
+**Tmux cutover:** no client was attached at the narrow preflight. Exact
+`@49` was renamed once from `harness` to `harness-blocked`, exact `@60` was
+renamed once from `harness-next` to `harness`, and native `select-window`
+made `@60:harness` active for the next attachment. The resulting four-window
+mapping is `@49:harness-blocked`, `@50:students`, active `@60:harness`, and
+`@59:swallow`, with one pane each. No pane input or process signal ran. Commit
+and push this reversible checkpoint, then revalidate old real TUI PID
+`4064616` / start tick `84409839` and send one `SIGTERM` only to that leaf so
+its exact wrapper and supervisor unwind without respawn.
+
 ### T-322 — Make the phone-visible Swallow name unique
 
 **Phase:** complete.
