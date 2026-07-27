@@ -789,6 +789,36 @@ the sole tmux client remains attached to the same session and all five window
 identities are unchanged. Canonical fleet health passes all eight logical
 Linux nodes and all four Mac route pairs.
 
+**Clock, repository-path, and Swallow supply-chain checkpoint 2026-07-27
+13:24 JST:** midpoint-corrected parallel epoch probes place every managed route
+within 0.7 seconds of Local. Every Linux target reports NTP synchronized with
+active chronyd; all four Macs have `timed` loaded. This removes clock skew as a
+current TLS, scheduler, Git, or backup-timestamp risk.
+
+All four Git indexes contain only normal 100644/100755 modes, plus Harness's
+32 expected symlinks. There are zero control-character paths and zero
+case-fold collisions. Every Harness symlink is relative, resolves inside the
+repository, and is live. Dependabot covers every production ecosystem:
+Students pip/Actions, Website npm/Actions, and Harness/Swallow Actions;
+Harness's only Python manifests are offline fixtures.
+
+Read-only Swallow inspection confirms its clean live Megatron-Bridge checkout
+equals publisher tag v0.4.2 commit
+`c810129341a84e58f4cbed3093f70668a088c028`, with clean Megatron-LM submodule
+`2edffadb528ea07e261b0c02cdc42a7bb9c3197a`; its checksummed GitHub CLI 2.96.0
+is current. First bootstrap nevertheless clones a movable tag without
+asserting that commit before use, pulls mutable
+`nvcr.io/nvidia/nemo:26.06` before recording the SIF digest, and has an
+unpinned generic Python bootstrap. Anonymous NGC manifest lookup returns HTTP
+401 with no digest, so do not retry or infer one without the site's authorized
+container route. Current publisher metadata is Megatron-Bridge 0.5.1, vLLM
+0.26.0, Inspect AI 0.3.249, and OpenAI Python 2.48.0 versus Swallow's
+compatibility pins 0.4.2, 0.23.0, 0.3.241, and minimum 2.40.0. These version
+differences are inputs for matched SW-031 compatibility tests, not permission
+to upgrade the active stack. The one header-only NGC diagnostic capture was
+418 bytes, current-user-owned, exact-unlinked, and proved absent; it was
+created mode 0664, so future captures must set umask 077 first.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.

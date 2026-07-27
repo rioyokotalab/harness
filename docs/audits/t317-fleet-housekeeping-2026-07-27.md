@@ -137,6 +137,10 @@ current. A post-audit health checkpoint found all three Local supervisors
 same sole tmux client and five window identities, and all canonical fleet
 routes passing.
 
+Every managed route is within 0.7 seconds of Local under parallel,
+round-trip-bounded epoch probes. All Linux hosts report NTP synchronized with
+active chronyd and all Macs have `timed` loaded.
+
 ## Backup recovery gaps
 
 Every primary repository passes structural metadata integrity. Independent
@@ -181,6 +185,13 @@ All four repositories have:
 - Dependabot and automated security updates enabled with zero open alerts;
 - zero Actions caches, artifacts, and open issues.
 
+Index/path hygiene is clean: all four use only normal 100644/100755 modes,
+plus Harness's 32 relative, in-repository, resolving symlinks. There are zero
+control-character paths and zero case-fold collisions. Dependabot covers each
+production ecosystem: Students pip/Actions, Website npm/Actions, and
+Harness/Swallow Actions. Harness's apparent Python manifests are offline test
+fixtures rather than a production dependency surface.
+
 Harness and Website have secret scanning and push protection with zero alerts.
 The private Students and Swallow repositories lack that entitlement. Code
 scanning is unavailable on all four. Students/Website restrict Actions and
@@ -218,6 +229,19 @@ Swallow verifies the staged `nemo-26.06.sif` as
 but bootstrap begins from mutable registry tag `nvcr.io/nvidia/nemo:26.06`
 without an immediate digest assertion. Defer digest-qualified pull and
 post-pull verification to SW-031.
+
+The live clean Megatron-Bridge source equals publisher v0.4.2 commit
+`c810129341a84e58f4cbed3093f70668a088c028`, with clean Megatron-LM submodule
+`2edffadb528ea07e261b0c02cdc42a7bb9c3197a`, but first bootstrap clones the
+movable tag before recording rather than asserting the commit before use.
+The generic training bootstrap also leaves foundational Python packages
+unpinned. Anonymous NGC manifest access returns HTTP 401 and no digest.
+Publisher metadata now reports Megatron-Bridge 0.5.1, vLLM 0.26.0, Inspect AI
+0.3.249, and OpenAI Python 2.48.0 versus compatibility pins 0.4.2, 0.23.0,
+0.3.241, and minimum 2.40.0. SW-031 must treat these as matched compatibility
+experiments, not automatically upgrade the active stack. The header-only
+anonymous probe capture was exact-unlinked; it exposed a mode-0664 capture
+mistake, so any future diagnostic capture must establish umask 077 first.
 
 ## Published changes
 
@@ -274,7 +298,9 @@ deployment ran.
 5. Students-local Slack administration: resolve production
    `not_in_channel`; do not rerun until membership is corrected.
 6. SW-031: digest-qualify NeMo bootstrap and continue evidence-only
-   reasoning/tool-use throughput planning.
+   reasoning/tool-use throughput planning; assert the Megatron-Bridge commit
+   before use, pin the generic Python bootstrap, and compare newer ML package
+   lines only through matched small compatibility tests.
 7. Administrator maintenance window: apply Local security updates and reboot
    only after active agents and jobs are safely quiesced.
 8. Active-agent maintenance: resolve value-free agent-config collisions and
