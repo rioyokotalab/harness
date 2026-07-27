@@ -110,7 +110,7 @@ Next free ID: T-328.
 
 ### T-327 — Align MCP approvals and retire blocked phone sessions
 
-**Phase:** ready-for-go.
+**Phase:** executing.
 
 The owner asked to update the MCP setting for recent operating needs and asked
 whether phone-visible `swallow-blocked-20260728` and
@@ -263,6 +263,42 @@ state enters scope. D-001 and D-002 resolve all material decisions.
 **Next action:** wait for one new explicit `go`, `proceed`, or `execute`.
 After it arrives, set the phase to `executing` and begin with failing focused
 config and launcher assertions before any production edit.
+
+**Corrected execution authorization:** the owner gave the required new exact
+`go`. The task branch remains clean/aligned at `a8a9b92`, and
+`origin/main` remains `c8afe66`. No implementation or live state changed
+between D-002 selection and this authorization.
+
+**Next action:** add and run failing focused assertions for the exact mirrored
+granular policy, fail-closed negative fixtures, and managed-launcher argument
+contract before any production edit.
+
+**Implementation checkpoint:** failing-first takeover and agent-config suites
+stopped before production edits because the granular project policy was absent.
+The external-onboarding suite already passed its synthetic mirror-only
+contract; the aggregate failing-first wrapper incorrectly required that
+unchanged suite to fail and therefore exited nonzero after reporting the two
+intended failures. Its three exact temporary captures were exact-unlinked. No
+external or live state changed.
+
+Both reviewed Codex config mirrors now contain the exact five-category
+granular policy. The validator accepts only that complete line and a negative
+fixture proves `mcp_elicitations = false` fails closed. The managed launcher
+passes the same policy as one native `--config` value, retains explicit
+`danger-full-access`, and no longer passes the superseded
+`--ask-for-approval never`; focused argument capture covers all three
+properties. Owner-facing documentation and the external-onboarding fixture
+match the new contract.
+
+Mirrored-byte equality, POSIX shell syntax, warning-level ShellCheck, native
+Codex 0.145.0 direct and managed-launcher strict-config parsing, takeover,
+agent-config, external-onboarding, and diff-hygiene checks pass. No user
+config, MCP registration, authentication source, transport, tool policy,
+active process, or archive state changed.
+
+**Next action:** review and commit this coherent implementation checkpoint,
+then run the complete clean-tree `tests/test-phase1.sh` before protected
+publication.
 
 ### T-326 — Use exact progress clocks and default new Codex sessions to Sol high
 

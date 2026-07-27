@@ -23,7 +23,7 @@ printf '%s\n' project-guidance >"$repo/AGENTS.md"
 printf '%s\n' '@AGENTS.md' >"$repo/CLAUDE.md"
 printf '%s\n' sentinel >"$repo/.codex/AGENTS.md"
 printf '%s\n' rules >"$repo/.codex/rules/default.rules"
-printf '%s\n' 'approval_policy = "never"' \
+printf '%s\n' 'approval_policy = { granular = { sandbox_approval = false, rules = false, mcp_elicitations = true, request_permissions = false, skill_approval = false } }' \
     'check_for_update_on_startup = false' \
     'model = "gpt-5.6-sol"' \
     'model_reasoning_effort = "high"' \

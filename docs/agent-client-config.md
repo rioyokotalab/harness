@@ -16,26 +16,31 @@ Authentication, credentials, sessions, histories, memories, caches, databases,
 private endpoints, and machine-specific runtime state remain outside this
 contract and are never inspected or migrated.
 
-The reviewed Codex body uses `approval_policy = "never"` with
-`sandbox_mode = "danger-full-access"`. Newly started trusted-project sessions
-default to `gpt-5.6-sol` with `model_reasoning_effort = "high"`; existing
-sessions retain the model and effort already selected for that chat. The
-startup update check is disabled because Linux Codex releases are pinned and
-upgraded transactionally by the harness; accepting the native update offer
-would install into Node's global prefix without moving the managed command
-link. Claude uses `permissions.defaultMode = "bypassPermissions"` and
-suppresses the one-time dangerous-mode warning. These choices do not suppress
-authentication, macOS privacy, administrator, provider-policy, or Claude's
-hard-coded root/home recursive-deletion circuit-breaker prompts.
+The reviewed Codex body uses an explicit granular approval policy with only
+`mcp_elicitations = true`; sandbox, command-rule, request-permission, and
+skill-script approval categories are false and therefore fail closed. It
+retains `sandbox_mode = "danger-full-access"`. Newly started trusted-project
+sessions default to `gpt-5.6-sol` with
+`model_reasoning_effort = "high"`; existing sessions retain the policy, model,
+and effort already loaded for that chat. The startup update check is disabled
+because Linux Codex releases are pinned and upgraded transactionally by the
+harness; accepting the native update offer would install into Node's global
+prefix without moving the managed command link. Claude uses
+`permissions.defaultMode = "bypassPermissions"` and suppresses the one-time
+dangerous-mode warning. These choices do not suppress authentication, macOS
+privacy, administrator, provider-policy, or Claude's hard-coded root/home
+recursive-deletion circuit-breaker prompts.
 
 ## Project trust launcher
 
 `bin/harness-codex` calls the installer-owned native command and passes the
-frozen `never` approval and `danger-full-access` sandbox settings as explicit
-CLI flags, which take precedence over ordinary configuration layers. Linux
-uses `~/.local/bin/codex`. Darwin accepts Homebrew's fixed bin only when it
-resolves inside the current user's official standalone Codex package; the
-older local-bin path remains only as a compatible fallback.
+same exact MCP-only granular approval policy as a native command-line config
+override plus the explicit `danger-full-access` sandbox flag. Those values
+take precedence over ordinary configuration layers and keep managed launches
+aligned with the reviewed project body. Linux uses `~/.local/bin/codex`.
+Darwin accepts Homebrew's fixed bin only when it resolves inside the current
+user's official standalone Codex package; the older local-bin path remains
+only as a compatible fallback.
 The managed Darwin route also exports that fixed Homebrew bin as
 `CODEX_INSTALL_DIR` and places it first on `PATH` before native execution.
 An installer-based update launched by Codex therefore inherits the reviewed

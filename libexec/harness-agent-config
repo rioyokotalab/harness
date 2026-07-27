@@ -96,7 +96,7 @@ validate_sources() {
     ' "$claude_policy" >/dev/null 2>&1 ||
         die "project Claude policy is invalid"
     awk '
-        $0 == "approval_policy = \"never\"" { approval++ }
+        $0 == "approval_policy = { granular = { sandbox_approval = false, rules = false, mcp_elicitations = true, request_permissions = false, skill_approval = false } }" { approval++ }
         $0 == "check_for_update_on_startup = false" { update++ }
         $0 == "model = \"gpt-5.6-sol\"" { model++ }
         $0 == "model_reasoning_effort = \"high\"" { effort++ }

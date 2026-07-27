@@ -75,6 +75,22 @@ run_config() {
 transaction() { sed -n 's/.*transaction=\([^ ]*\).*/\1/p' "$1" | sed -n '1p'; }
 
 cp "$repo/.codex/config.toml" "$TEMP_DIR/codex-policy.valid"
+sed 's/mcp_elicitations = true/mcp_elicitations = false/' \
+    "$repo/.codex/config.toml" >"$repo/.codex/config.toml.invalid"
+mv "$repo/.codex/config.toml.invalid" "$repo/.codex/config.toml"
+cp "$repo/.codex/config.toml" "$repo/config/agent-clients/codex.toml"
+git -C "$repo" add .codex/config.toml config/agent-clients/codex.toml
+git -C "$repo" commit -qm 'disable project MCP approvals'
+if run_config --plan >"$TEMP_DIR/mcp-disabled.out" 2>&1; then
+    fail 'disabled project MCP approvals accepted'
+fi
+grep -F 'project Codex policy is invalid' "$TEMP_DIR/mcp-disabled.out" >/dev/null ||
+    fail 'disabled project MCP approval rejection'
+cp "$TEMP_DIR/codex-policy.valid" "$repo/.codex/config.toml"
+cp "$TEMP_DIR/codex-policy.valid" "$repo/config/agent-clients/codex.toml"
+git -C "$repo" add .codex/config.toml config/agent-clients/codex.toml
+git -C "$repo" commit -qm 'restore project MCP approval policy'
+
 sed 's/check_for_update_on_startup = false/check_for_update_on_startup = true/' \
     "$repo/.codex/config.toml" >"$repo/.codex/config.toml.invalid"
 mv "$repo/.codex/config.toml.invalid" "$repo/.codex/config.toml"
