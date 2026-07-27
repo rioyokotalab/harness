@@ -171,6 +171,13 @@ stable post-readback passed. Neither request may be retried. Commit and push,
 then launch one detached `harness-next` window under watched supervisor name
 `harness-recovery`.
 
+**Provisional-launch gate:** the first `tmux new-window` used target
+`harness`, which this tmux resolved to occupied index zero, and failed with
+`create window failed: index 0 in use`. Exact readback proves no window,
+supervisor, watcher, or TUI was created; both runtime status files remain
+absent and the new root is unchanged. Retry is safe with the explicit session
+window target `harness:`. Do not repeat the rejected target spelling.
+
 ### T-322 — Make the phone-visible Swallow name unique
 
 **Phase:** complete.
