@@ -110,7 +110,7 @@ Next free ID: T-322.
 
 ### T-321 — Recover recurring Swallow unsafe-tail `Request blocked`
 
-**Phase:** ready-for-go.
+**Phase:** validating.
 
 At 2026-07-27 20:24 JST, the owner reported that the phone/tmux Swallow
 thread was again stuck at `Request blocked`. Read-only metadata proves exact
@@ -139,6 +139,121 @@ The frozen execution and safety gates are in
 `docs/plans/t321-swallow-unsafe-tail-recovery.md`. The plan now waits for a
 separate explicit `go`. No thread, tmux, process, app server, prompt, or
 project state changed while recording this decision.
+
+**Execution authorization 2026-07-27 20:35 JST:** the owner gave the separate
+explicit `go`. Exact read-only preflight revalidated clean/aligned Harness
+`main` at `36d938f`, the three-window mapping with Harness active, Swallow
+window `@58:2`, supervisor PID `382132`, watcher PID `382211`, remote root
+`019fa27c-6280-7f00-8e46-ef878875562b`, attempt/delay zero, and unchanged
+`blocked/unsafe-tail` with one prior recovery/rollback. No target mutation has
+run. Commit and push this authorization checkpoint, then complete the narrow
+app-server/process/socket/doctor identity gate before one `thread/start`.
+
+**Pre-write plan correction:** installed schema and T-318 evidence show a new
+0.145.0 rollout is created mode `0664`, while watcher readiness requires
+`0600`. The frozen plan now explicitly requires the prior proven
+descriptor-identity transaction: only a current-user-owned, single-link,
+canonical new rollout with exact initial mode `0664` may be opened without
+following links, identity-revalidated through the descriptor, and changed to
+`0600`. No root has been created yet. Commit and push this correction, rerun
+the narrow live preflight, then invoke `thread/start` once.
+
+**Thread-start result:** one acknowledged `thread/start` created exact root
+`019fa36c-cfa9-7143-ae11-1f538e07bfee`, then the immediate rollout gate
+stopped because the declared path did not yet exist. No chmod or name request
+ran, and `thread/start` must not be retried. Fresh protocol reconciliation
+proves the exact root is in app-server memory, idle, zero-turn, unnamed,
+cwd-matched, absent from the state DB, and has no on-disk rollout yet. This
+matches T-318's actual persistence order: one acknowledged name write creates
+the durable surfaces, after which the descriptor transaction can tighten the
+rollout. Commit and push this non-retryable result and order correction, then
+send only the provisional `thread/name/set`.
+
+**New-root acceptance:** exactly one `thread/name/set` named root
+`019fa36c-cfa9-7143-ae11-1f538e07bfee`
+`swallow-recovery-20260727`. Same-connection readback proved exact identity,
+idle state, zero turns, and the expected cwd. Its newly persisted rollout was
+a canonical current-user-owned, single-link regular file at exact mode `0664`;
+the descriptor-identity transaction changed only that inode to `0600`, and
+stable post-readback passed. Neither `thread/start` nor the name write may be
+retried. Commit and push this accepted identity, then launch one detached
+provisional `swallow-next` window under supervisor name `swallow-recovery`.
+
+**Provisional-client acceptance:** one detached launch created exact window
+`@59:3` / pane `%59`, supervisor PID `2876863`, watcher PID `2876942`,
+and real TUI PID `2877595` for the new UUID. Value-free status is
+`running/remote-explicit` plus `watching/thread-idle`, with attempt/delay and
+recovery/rollback counts all zero. Process argv, session identity, four-window
+mapping, and the established Unix peer to unchanged app server PID `2852569`
+pass. Harness remains active and Students plus blocked Swallow are unchanged.
+Commit and push this accepted identity before submitting the one cold-start
+turn.
+
+**Cold-start acceptance:** under the shared agent-message lock, exactly one
+identified `turn/start` was acknowledged for new root
+`019fa36c-cfa9-7143-ae11-1f538e07bfee` as turn
+`019fa370-3c31-75b2-8d0b-d7b6cd72b0e4`. A persistent read-only monitor
+connection timed out once after observing assistant-bearing progress; no write
+was retried, and fresh read-only connections safely continued. Final
+value-free protocol structure proves the turn completed with one user item,
+13 assistant items, one terminal file-change item, no active item, and no
+`systemError`. Harness did not inspect message, pane, command, patch, or
+project content. Commit and push this acceptance, then execute only the
+read-before/name-set/read-after root-name transfer and exact tmux window
+renames.
+
+**Root-name cutover:** complete preflight revalidated both process chains,
+immutable start ticks, unchanged app server PID `2852569`, Harness selection,
+Students, and exact old/new protocol state. One acknowledged name write plus
+readback changed only poisoned root
+`019fa27c-6280-7f00-8e46-ef878875562b` from `swallow` to
+`swallow-blocked-20260727`; a second acknowledged write plus readback changed
+only accepted root `019fa36c-cfa9-7143-ae11-1f538e07bfee` from its
+provisional name to `swallow`. Old remains `systemError`; new remains idle.
+Neither write is retryable. Commit and push, then rename exact tmux `@58` to
+`swallow-blocked` and exact `@59` to `swallow`, leaving the owner on `@49`.
+
+**Tmux cutover:** exact preconditions passed and native `tmux rename-window`
+ran once per target. The four-window mapping is now `@49:harness` active,
+`@50:students`, `@58:swallow-blocked`, and `@59:swallow`; every window has
+one pane. No client switch, pane input, or process signal ran. Commit and push
+this reversible checkpoint, then revalidate old real TUI PID `382364` /
+start tick `87255666` and send one `SIGTERM` only to that leaf so its exact
+wrapper, watcher, and supervisor unwind without respawn.
+
+**Old-chain retirement:** exact PID, parent, session, start-tick, argv, root,
+window, and unaffected-target gates passed. One `SIGTERM` was sent only to
+old real TUI PID `382364`; real TUI, wrapper PID `382272`, watcher PID
+`382211`, and supervisor PID `382132` all exited within four seconds without
+respawn. No second signal, process-group signal, `SIGKILL`, archive, delete,
+rollback, prompt, or app-server action ran. The saved poisoned root remains
+preserved as `swallow-blocked-20260727`. Commit and push, then perform
+independent final process/socket/thread/tmux/doctor/Git validation and guarded
+cleanup of only the generated schema bundle.
+
+**Live execution validation:** the old window disappeared with its exact
+process chain. Tmux now has exactly `@49:harness` active, `@50:students`, and
+`@59:swallow`; accepted supervisor PID `2876863`, watcher PID `2876942`, and
+real TUI PID `2877595` retain their immutable start identities and exact new
+UUID. Value-free status is `running/remote-explicit` plus
+`watching/thread-idle`, with all retry/recovery counters zero. The established
+Unix peer reaches unchanged app server PID `2852569`; native doctor is
+`overall=ok` with zero failed checks. Protocol readback proves old root
+preserved as `systemError/name=swallow-blocked-20260727`, new root
+`idle/name=swallow`, and the accepted turn completed with assistant output and
+no active items. Harness and Students pane identities are unchanged.
+
+The `guarded-bulk-delete` workflow removed only generated schema bundle
+`/tmp/t321-app-server-schema.sBpGch` (350 entries / 3,332,549 bytes; token
+`d43c69b3d55a924cb6cf088e3fa4b4c79afa23763b3497616ac4d32528b613e4`)
+and task-created `/home/rioyokota/harness/libexec/__pycache__` (two entries /
+42,026 bytes; token
+`3a1ab0b1071d49111bb2dd7d4de3bbbb65937e7fc61c3e783ab70803a7557d95`).
+Protected anchors were unchanged, targets are absent, and both mode-0600
+manifests were exact-unlinked. The live `.nfs…` inode remains untouched.
+Commit this validation, run diff hygiene and protected CI, publish/merge the
+execution ledger, then perform a fresh final live readback and canonical fleet
+health before marking T-321 complete.
 
 ### T-320 — Make interactive `ls` color portable across the fleet
 

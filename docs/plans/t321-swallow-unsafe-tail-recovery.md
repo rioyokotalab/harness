@@ -55,8 +55,16 @@ Do not:
    back as idle with zero turns. An ambiguous acknowledgement is
    non-retryable.
 4. Give the new root a unique provisional name through one acknowledged
-   `thread/name/set` and same-connection readback. Preserve the old root name
-   and metadata until acceptance.
+   `thread/name/set` and same-connection readback. An empty `thread/start` root
+   may remain only in app-server memory until this name write creates its
+   durable state. After naming, require the new rollout to be a current-user
+   owned, single-link regular file canonically below `$CODEX_HOME/sessions`.
+   If and only if its mode is the installed 0.145.0 default `0664`, open it
+   without following links, revalidate device/inode/owner/type/link count
+   through the descriptor, and change only that descriptor to `0600`. Require
+   stable identity and exact `0600` readback. Reject every other initial mode
+   or metadata state. Preserve the old root name and metadata until
+   acceptance.
 5. Create one detached provisional tmux window and launch
    `harness codex-resilient --remote-session NEW_ID` with a distinct
    provisional supervisor name. Require exact process/start identities, one
@@ -125,3 +133,30 @@ lowest immediate mutation risk but provides no working SW-031 agent.
 No other decision is open. The plan is frozen at `ready-for-go`; wait for a
 separate explicit execution instruction. Recording D-001 changed no thread,
 tmux, process, app-server, prompt, or project state.
+
+## Execution authorization
+
+At 2026-07-27 20:35 JST, the owner gave the separately required explicit
+`go`. The first complete metadata-only preflight matched the frozen root,
+window, supervisor, watcher, retry state, unsafe-tail refusal, Git revision,
+and unaffected Harness/Students mapping. No live mutation preceded this
+checkpoint. Execution resumes at plan step 2's narrow app-server, socket,
+process, and doctor identity gate.
+
+## Execution result
+
+The selected fresh-root recovery completed its live stages without replaying
+the rejected prompt. Exact new root
+`019fa36c-cfa9-7143-ae11-1f538e07bfee` and cold-start turn
+`019fa370-3c31-75b2-8d0b-d7b6cd72b0e4` passed the frozen identity,
+persistence, watcher, assistant-bearing completion, name, tmux, process,
+socket, and doctor gates. The accepted phone/tmux name is `swallow`; its
+supervisor runtime name remains `swallow-recovery`.
+
+The poisoned root is preserved as `swallow-blocked-20260727` with no live
+process chain. Harness, Students, and app-server identities remained unchanged.
+No prompt replay, unsafe rollback, app-server restart, pane/transcript read,
+archive, delete, second signal, process-group signal, or `SIGKILL` occurred.
+Only the generated schema bundle and task-created Python bytecode cache were
+removed through guarded deletion; both manifests were exact-unlinked after
+verified success.
