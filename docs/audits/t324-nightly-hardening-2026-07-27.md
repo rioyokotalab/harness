@@ -131,6 +131,19 @@ exact drift is deferred for owner reconciliation.
   `20260722T092250Z`. T-196 requires a manual restore gate before a new
   immutable generation; no replica copy, promotion, or deletion is authorized
   or attempted.
+- Epoch readback is within the one-second probe window on all eight Linux
+  nodes and all four Macs. Every Linux node reports system time
+  synchronization active; macOS exposes no matching unprivileged status field
+  but has zero observed skew.
+- Post-validation residue readback found zero task-owned phase-one,
+  resilience, focused-runner, Restic-check, or guarded-delete temporary roots
+  under Local `/tmp`. Primary Restic repository roots are current-user-owned
+  real directories with effective mode 0700 (setgid 02700 on applicable
+  project filesystems).
+- A 30-cycle live monitor ran through 2026-07-28 00:01 JST. Every exact PR-head
+  query remained successful and merge-clean; six canonical fleet sweeps passed
+  all eight Linux logical nodes and both routes for every Mac. One GitHub
+  status query was slow but completed successfully without retry or mutation.
 
 ## Repository housekeeping
 
@@ -157,9 +170,10 @@ disabled and is a hosting-policy choice, so it was not changed.
 Website has one clean `main` worktree and no merged local branch residue.
 Students changed concurrently from clean `main` to a project-owned task branch
 during this audit and most recently reports
-`task/t-013-skill-driven-sol` with task-ledger changes; no takeover or mutation
-ran. Swallow's active AB project branch also advanced concurrently, while its
-additional registered SW-013 worktree and T4 mirror remain clean. Those
+`task/t-013-skill-driven-sol` clean at `d9e9a4a`; no takeover or mutation ran.
+Swallow's active AB project branch also advanced concurrently and is clean at
+`edef7f9`, while its additional registered SW-013 worktree and T4 mirror
+remain clean. Those
 project-owned experiment refs are preserved for the Swallow agent rather than
 treated as generic Harness residue. Fresh prune dry-runs report no stale
 remote-tracking refs in any repository.

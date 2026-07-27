@@ -228,6 +228,13 @@ primaries: Local/AB/RI/AL/RC/T4 latest are `20260715T222741Z`, AB2 is
 manual restore validation before creating a current immutable generation, so
 no replica copy, promotion, or deletion ran.
 
+The first 30-cycle live monitor completed through 2026-07-28 00:01 JST. Every
+protected-head readback remained successful/merge-clean and all six canonical
+fleet sweeps passed every Linux logical node and both routes for every Mac.
+Students and AB Swallow advanced concurrently on their project-owned clean task
+branches; Website and the T4 Swallow mirror remain clean/current. No takeover
+or cross-repository mutation ran.
+
 **Next action:** publish the resilience fix through PR #361 after current-head
 checks pass, continue independent deep checks until the 04:13 JST
 material-work cutoff, then run final validation and live readback. The earlier
