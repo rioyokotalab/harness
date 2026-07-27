@@ -133,7 +133,8 @@ arg0 inventory reports `live=5 eligible=7 young=0 unexpected=0 removed=0`.
 Nothing was removed or restarted.
 
 The umbrella plan and decision register are in
-`docs/plans/t317-fleet-housekeeping-resilience.md`. D-001 selects
+`docs/plans/t317-fleet-housekeeping-resilience.md`; the compact verified audit
+matrix is `docs/audits/t317-fleet-housekeeping-2026-07-27.md`. D-001 selects
 remote-aware resilience first with Harness as the canary. D-002 includes the
 full reversible housekeeping set plus ordinary non-administrator package and
 dependency upgrades. D-003 uses only declared non-interactive authority and
