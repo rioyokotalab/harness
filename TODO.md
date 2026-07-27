@@ -131,6 +131,14 @@ clone, commit this gate, fast-forward it to the checkpoint, run the tmux suite
 alone, then run the complete phase-one suite with one focused worker to remove
 cross-suite checkout-state concurrency from the acceptance result.
 
+**LIFO validation gate resolved 2026-07-27:** the isolated tmux retry proved
+the apparent transient-dirty hypothesis wrong. The managed shell had exported
+`HARNESS_ROOT=/home/rioyokota/harness`, so the clean clone's helper inspected
+the primary checkout and correctly rejected its preserved live `.nfs…`
+placeholder. The clone remained clean throughout. Exact-unlink the single
+mode-0600 trace, update the clone to this checkpoint, and rerun isolated plus
+complete validation with `HARNESS_ROOT` absent from the test environment.
+
 ### T-318 — Recover poisoned remote Codex threads
 
 **Phase:** complete.
