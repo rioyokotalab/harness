@@ -331,6 +331,26 @@ Macs now match. Reclassify the previously young arg0 candidate on each Mac
 after the elapsed grace interval; remove it only if the tool now reports
 eligible while retaining all three live directories and zero unexpected.
 
+**Mac arg0 convergence 2026-07-27 09:00 JST:** after the full grace interval,
+each of aist, home, office, and riken reclassified exactly one directory as
+eligible. The existing lock-aware transaction guarded-deleted one quarantine
+per Mac. Immediate readback on every Mac is
+`live=3 eligible=0 young=0 unexpected=0`; both routes and canonical fleet
+health pass. No active Codex directory or tmux session changed.
+
+**Website dependency housekeeping 2026-07-27 09:57 JST:** isolated T-209
+updated only exact `@playwright/test` and its supply-chain guard from 1.61.1
+to 1.62.0. Online hashes, zero-vulnerability npm audit, the full offline
+security suite, 38/38 browser tests on local storage, and both protected
+`Offline checks` runs pass. A matched same-NFS diagnostic reproduced two
+representative timeouts under both 1.61.1 and 1.62.0, while 1.62.0 passed all
+38 tests locally; the failure is storage-latency evidence, not an accepted
+dependency regression. Protected PR #35 merged at
+`141a79e4e9a2a88674cb4af7f73500161cca6ffe`; primary Website `main` is
+clean/current and no deployment ran. The task branch, 943-entry isolated
+worktree, and exact 10-entry Git metadata were removed only after tree-equality
+proof and guarded revalidation.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
