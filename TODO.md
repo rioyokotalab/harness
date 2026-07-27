@@ -87,14 +87,16 @@ Next free ID: T-318.
 
 ## Next resume checkpoint
 
-1. T-317 is planning a 503-safe Local transition followed by major
-   fleet/repository housekeeping. Live inspection proves the three remote
-   Local TUIs are not supervised; do not begin housekeeping or restart an
-   agent until the owner resolves D-001 in
-   `docs/plans/t317-fleet-housekeeping-resilience.md`.
-2. T-314 through T-316 are complete. Resume Swallow SW-031 on AB from its targeted
-   Slack/GitHub/Hugging Face/web evidence-search handoff; keep planning
-   incremental and do not launch a large experiment.
+1. T-317 is executing its frozen 12-hour resilience and housekeeping plan.
+   Remote-aware supervision, fleet utility rollout, Website dependency
+   maintenance, backup checks, repository/hosting inventory, and Mac package
+   cleanup are complete. Resume the next safe read-only audit stack from the
+   latest T-317 checkpoint below. Preserve the live Harness `.nfs…` script
+   placeholder and the changing Students and Swallow worktrees.
+2. T-314 through T-316 are complete. After T-317's final validation and
+   handoff, resume Swallow SW-031 on AB from its targeted Slack/GitHub/Hugging
+   Face/web evidence-search handoff; keep planning incremental and do not
+   launch a large experiment.
 3. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
@@ -423,6 +425,70 @@ versions, repeat `KEEP` plans, a passing doctor, and a clean aligned Harness
 checkout; canonical fleet health passed after every host. The prior managed
 artifacts are intentionally retained for rollback. Ripgrep 15.2.0 is already
 healthy host-provided everywhere, so no ripgrep apply ran.
+
+**Repository and hosting audit 2026-07-27 10:42 JST:** Website remains clean
+aligned `main` with one worktree and no stash. The active Students agent has
+since modified only `TODO.md` and `tools/state/session.md`; preserve that
+worktree and its three 54-byte loose-object temporary files. AB Swallow
+advanced independently to `9cb1ef7` with two worktrees, while its T4 mirror
+remains clean `main`; both stay read-only. Harness has only its current
+worktree and no stash, apart from the protected live `.nfs…` placeholder.
+
+Read-only GitHub API access is healthy for all four repositories. Each has one
+active protected-main ruleset, strict declared status checks, read-only
+non-approving default workflow permissions, enabled Dependabot alerts and
+automated security fixes, and zero open Dependabot alerts. Harness and Website
+have secret scanning and push protection with zero alerts. The private
+Students and Swallow repositories do not expose secret scanning, and code
+scanning is unavailable on all four. Students and Website enforce selected
+Actions plus SHA pinning at the host; Harness and Swallow allow all Actions
+without host-enforced pinning, although every currently tracked external
+action is pinned to a full SHA and checkout credentials are not persisted.
+These are read-only governance findings under D-006.
+
+Dependabot PR #313 proposes only checkout `v6.0.2→v7.0.1`; official tag and
+release metadata bind exact SHA `3d3c42e5aac5ba805825da76410c181273ba90b1`
+and Node 24 runtime. Its prior green check is behind current `main`, so the
+identical pinned update was committed on T-317 as `63f2c46`. The first isolated
+full test inherited the live checkout's exported `HARNESS_ROOT` and correctly
+failed only its clean-tree gate; with that variable explicitly unset, both
+affected focused tests and the complete clean-clone Phase-1 suite pass. The
+922-entry, 22.9 MB clone was guarded-deleted. Students PR #39 passes its
+protected checks but is untouched while Students is active.
+
+**Storage and Mac security audit 2026-07-27 10:57 JST:** Local's shared
+`/home` filesystem is 96% used but only 2% of inodes are used; the owner's
+declared `.local` and project roots resolve to the separate 1%-used safe
+volume. A quota command is unavailable. The only Local cache volume of note
+is 569 MB. Preserve the 271 MB Website Playwright browser cache because it is
+the active test dependency. Preserve the 298 MB completed T-205 sandbox and
+its small seals because its detached clones retain modified/untracked evidence
+despite zero open handles; completion alone does not prove those bytes
+disposable.
+
+FileVault, SIP, Gatekeeper, and automatic update checking remain enabled on all
+four Macs, with no active Time Machine operation. Their firewall posture
+remains off/off/on/on/off and each doctor is ready with exactly the expected
+firewall and stealth warnings. The four mode-0700 staged admin helpers retain
+exact checksum
+`f83690717bc2826af203336196d8ce73b26adc33939762bb325ed66de684d33b`;
+local administrator authentication remains the only gate. Home's first
+inventory query met a broken multiplex master and refused forwarded
+connection; canonical fleet health restored and passed both routes before the
+interrupted read-only suffix was repeated successfully. One raw Linux
+listener query was too broad for shared HPC login nodes and emitted system
+and ephemeral endpoints; it was read-only and was replaced with counts. No
+listener could be attributed to this account, so no shared-system listener is
+a housekeeping target.
+
+Homebrew's exact dry runs identified only package-owned cache/vendor runtime
+state plus Office's three already-broken package links and two empty Homebrew
+directories. Sequential native cleanup reclaimed approximately 68.4 MB on
+Aist, 129.0 MB on Home, 198.9 MB on Office, and 189 MB on Riken. Repeat dry
+runs are empty; exact formula versions remain libnghttp3 1.18.0, SQLite
+3.53.4, and uv 0.11.32; all four Harness trees remain clean `main`; all
+detached Codex sessions and Office's separate shell window remain live; and
+canonical fleet health passes.
 
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
