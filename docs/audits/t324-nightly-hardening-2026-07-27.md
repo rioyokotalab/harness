@@ -15,7 +15,7 @@ invocations. Protected anchors were unchanged. Final planning reports
 
 | Repository | Git / preflight | Dependencies and tests | Hosting controls |
 | --- | --- | --- | --- |
-| Harness | isolated T-324 branch clean; hardening audit zero findings | focused/full validation pending after the audit ledger settles | zero Dependabot/secret alerts; read-only Actions; SHA-pinned workflow |
+| Harness | isolated T-324 branch clean; hardening audit zero findings | all 75 focused suites, guarded-delete coverage, and phase-one integrations pass; only declared native MPI smoke skipped outside an allocation | zero Dependabot/secret alerts; read-only Actions; SHA-pinned workflow |
 | Students | clean/current `main`; hardening audit zero findings | `uv lock --check` and full offline gate pass, 97 tests | zero Dependabot alerts; private secret fallback retained |
 | Swallow | active AB task branch and T4 `main` clean/aligned after fetch; hardening audit zero findings | AB login-safe static, secret, portability, SW-030, and SW-031 gates pass | zero Dependabot alerts; private secret fallback retained |
 | Website | clean/current `main`; hardening audit zero findings | npm audit zero findings; full security/supply-chain suite passes | zero Dependabot/secret alerts; read-only Actions; SHA-pinned workflow |
@@ -77,6 +77,11 @@ exact drift is deferred for owner reconciliation.
 4. The first executable-cardinality probe used unsupported `command -v -a`
    and produced false zeros. The corrected `type -a -p` plus canonical-target
    check found the exact Riken duplicate above.
+5. The first clean-clone full-suite launch named the not-yet-created clone as
+   its working directory and failed before process creation. The retry from
+   `/tmp` passed. Guarded deletion then removed only the exact 926-entry /
+   22,765,943-byte validation clone with protected anchors unchanged; its
+   manifest was exact-unlinked.
 
 Every failed probe was read-only and retry-safe unless explicitly marked
 non-retryable. No credential, pane, transcript, deployment, message, package,

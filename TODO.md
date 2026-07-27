@@ -157,7 +157,10 @@ these gates.
 
 **Next action:** validate and publish this first audit checkpoint through the
 protected task branch, then continue independent deep checks and LIFO repair
-until the 04:13 JST material-work cutoff.
+until the 04:13 JST material-work cutoff. The exact branch head subsequently
+passed all 75 focused suites, guarded-delete coverage, and every phase-one
+integration gate; only the declared native MPI smoke skipped outside an
+allocation. The clean validation clone was guarded-deleted.
 
 ### T-323 — Recover Harness unsafe-tail `Request blocked`
 
