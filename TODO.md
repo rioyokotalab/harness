@@ -103,7 +103,7 @@ Next free ID: T-321.
 
 ### T-320 — Make interactive `ls` color portable across the fleet
 
-**Phase:** validation.
+**Phase:** publication.
 
 The owner observed that SSH sessions from Local to the managed Macs lost
 `ls` color even though reverse SSH sessions from a Mac to Local retained it.
@@ -125,11 +125,13 @@ Implementation is isolated at `/tmp/harness-t320-ls-color/repo` on branch
 `libexec/.nfs…` placeholder remains untouched. Bash and POSIX-shell syntax,
 ShellCheck, the startup-normalization test, and diff hygiene pass. The focused
 test executes both OS selections, verifies exact alias values, and proves the
-temporary selector is absent after sourcing. Next: commit this checkpoint and
-run the complete phase-one suite from the clean exact revision with inherited
-`HARNESS_ROOT` removed; then fetch again, publish through protected `main`, use
-guarded fleet-sync, refresh the four detached Mac Codex sessions, and verify
-new forced-PTY login shells on every managed node.
+temporary selector is absent after sourcing. Implementation checkpoint
+`8125981` passed the complete eight-worker `tests/test-phase1.sh` from its
+clean exact revision with inherited `HARNESS_ROOT` removed: all 75 focused
+suites and integration gates passed, with only the declared native-MPI smoke
+skipped outside a declared MPI environment. Next: fetch again, publish through
+protected `main`, use guarded fleet-sync, refresh the four detached Mac Codex
+sessions, and verify new forced-PTY login shells on every managed node.
 
 ### T-319 — Report fleet health every Harness turn
 
