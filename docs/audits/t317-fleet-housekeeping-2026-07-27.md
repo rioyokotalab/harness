@@ -148,8 +148,29 @@ safe managed-predecessor rollback. Do not independently mix registry npm
 12.0.1 into that LTS runtime. All Macs already match current Node
 26.5.0/npm 11.17.0. A post-audit health checkpoint found all three Local
 supervisors `running remote-explicit` at unchanged owner PIDs with
-attempt/delay zero, the same sole tmux client and five window identities, and
-all canonical fleet routes passing.
+attempt/delay zero and all canonical fleet routes passing. At 13:29 JST an
+independent owner/agent action had converged the Local managed session from the
+previous five-window transition state to the intended three exact windows:
+`@49:harness`, `@50:students`, and `@51:swallow`. The original direct Students
+and Swallow TUI PIDs are absent, the supervisor owner PIDs are unchanged, and
+the sole attached client was on Students at that readback. At 13:36 JST it had
+independently selected Harness. T-317 did not signal, rename, kill, switch, or
+type into a window during this convergence.
+
+Swallow's unchanged supervisor recorded attempt 1 and owns a new wrapper/real
+TUI chain launched at 13:28:23 with the exact original remote root. Its live
+status is `running remote-explicit` with delay zero. The prior child exit cause
+is unknown, so this is direct evidence of successful child recovery but not
+evidence that the trigger was specifically HTTP 503. The Harness and Students
+supervisors remain at attempt zero. Native Codex doctor passes all 18 checks,
+including state/thread agreement, WebSocket and provider reachability, and
+persistent app-server health.
+
+Several intermediate ledger checkpoint headings were accidentally written
+with future wall-clock labels. Local monotonic goal time and synchronized wall
+time exposed the inconsistency; those headings now use the minute of the
+commit that first durably contained the evidence. The findings themselves are
+unchanged.
 
 Every managed route is within 0.7 seconds of Local under parallel,
 round-trip-bounded epoch probes. All Linux hosts report NTP synchronized with

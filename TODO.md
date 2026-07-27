@@ -669,7 +669,7 @@ probe. Existing T-196 policy expressly forbids replica automation and requires
 manual checks/restores before a current generation. Do not create or copy a
 generation during T-317; carry this exact recovery-point gap into T-196.
 
-**Resilience and repository checkpoint 2026-07-27 12:52 JST:** a fresh native
+**Resilience and repository checkpoint 2026-07-27 12:19 JST:** a fresh native
 Codex doctor reports every value-free check `ok`, including auth, config,
 installation, state paths, rollout parity, provider reachability, and
 WebSocket reachability. The focused supervisor suite again proves exact
@@ -705,7 +705,7 @@ Harness precedence. Guarded-delete removed only verified clean worktree
 local branch, manifest, and temp path are absent. The remote task branch
 remains because D-006 forbids remote branch deletion.
 
-**Ruleset provenance gate 2026-07-27 13:08 JST:** all four live rulesets were
+**Ruleset provenance gate 2026-07-27 12:26 JST:** all four live rulesets were
 updated in a coordinated 11-minute window on July 26—Swallow 10:26, Harness
 and Website 10:35, Students 10:37 JST. Their current zero-review form conflicts
 with frozen T-311 D-001's one-review floor and removes Students' selected
@@ -741,7 +741,7 @@ the stale registration and local task refs are absent, and remote task refs
 remain under D-006. The protected primary stays deliberately at its agent-owned
 `3c97511`, two commits behind `origin/main`, until that agent reconciles it.
 
-**CI supply-chain checkpoint 2026-07-27 12:56 JST:** an exact four-repository
+**CI supply-chain checkpoint 2026-07-27 12:49 JST:** an exact four-repository
 workflow inventory finds only publisher actions. Harness, Students, Website,
 and Swallow all pin `actions/checkout` v7.0.1 to publisher commit
 `3d3c42e5aac5ba805825da76410c181273ba90b1`; Students additionally pins
@@ -768,7 +768,7 @@ while remote task refs remain. The active Students primary/client were never
 changed and the primary remains at its agent-owned `3c97511`, now four commits
 behind `origin/main`.
 
-**Platform lifecycle and Codex checkpoint 2026-07-27 13:09 JST:** native
+**Platform lifecycle and Codex checkpoint 2026-07-27 12:53 JST:** native
 read-only inventory reports Local Ubuntu 24.04.3, RI Ubuntu 24.04.4, AB/AB2/ABQ
 RHEL 9.4, AL SLES 15 SP6, RC Rocky 9.8, T4 RHEL 9.4 userland with an
 `el9_8` kernel, and macOS 26.5.2 on all four Macs. Official lifecycle sources
@@ -819,7 +819,7 @@ to upgrade the active stack. The one header-only NGC diagnostic capture was
 418 bytes, current-user-owned, exact-unlinked, and proved absent; it was
 created mode 0664, so future captures must set umask 077 first.
 
-**Hosting, filesystem, and scheduler checkpoint 2026-07-27 13:50 JST:** all
+**Hosting, filesystem, and scheduler checkpoint 2026-07-27 13:08 JST:** all
 four GitHub repositories have zero direct collaborator grants, team grants,
 deploy keys, webhooks, and self-hosted runners. Repository access therefore
 has no hidden repository-local grant/channel beyond the already audited
@@ -852,7 +852,7 @@ protected `main`; its first `portable-phase1` passed in 2m20s. Keep it draft
 and unmerged until the 18:30 final readback is appended and the clean local
 Phase-1 gate passes.
 
-**T4 Swallow mirror repair 2026-07-27 14:08 JST:** read-only live-remote and
+**T4 Swallow mirror repair 2026-07-27 13:13 JST:** read-only live-remote and
 GitHub comparison proved the clean T4 `main`/`origin/main`
 `d7b9870892244e105867aed82d1ff27d444e810b` was non-divergently 104 commits
 behind live GitHub `main` `4dcd20d7db9c5d55aa57fa9dd4af8d8ada5b41a3`.
@@ -870,7 +870,7 @@ unchanged, and exact backup job `8270230` plus its disabled smoke state are
 unchanged. No force, prune, branch deletion, scheduler/runtime action, or AB
 Swallow mutation occurred. AB remains on active SW-031 branch `9cb1ef7`.
 
-**Dependency-graph checkpoint 2026-07-27 14:20 JST:** GitHub's generated SPDX
+**Dependency-graph checkpoint 2026-07-27 13:17 JST:** GitHub's generated SPDX
 SBOM endpoint succeeds for Harness (2 packages), Students (34), and Swallow
 (2), but returns confirmed HTTP 404 for public Website both with authenticated
 GitHub API access and anonymously. Website still has enabled Dependabot
@@ -897,7 +897,7 @@ evidence in a later maintenance window. All Macs already match current Node
 Draft PR #337's protection rerun on exact head `cc7ea27` passes
 `portable-phase1` in 2m20s.
 
-**Agent-tool and plan reconciliation 2026-07-27 14:37 JST:** every Linux route
+**Agent-tool and plan reconciliation 2026-07-27 13:20 JST:** every Linux route
 and all four Macs reports Claude Code 2.1.220, matching publisher metadata,
 just as all report current Codex 0.145.0. Linux consistently uses managed Node
 24.16.0/npm 11.13.0; the exact deferred LTS pair remains official Node
@@ -913,6 +913,39 @@ freeze; add machine-readable training/inference locks or dependency snapshots
 after compatibility is frozen. Active SW-031 is 35 clean commits / 17 files /
 6,631 additions ahead of current main with no open PR, so do not compact or
 publish it from T-317.
+
+**External agent reconciliation 2026-07-27 13:29 JST:** Local monotonic goal
+time and NTP-synchronized wall time show that several preceding checkpoint
+headings were accidentally recorded in the future. Their labels are corrected
+to the minute of the commit that first durably contained each checkpoint; no
+underlying finding or external state is changed.
+
+The owner or another active client independently completed the deferred tmux
+topology convergence. The original direct Students and Swallow real TUI PIDs
+`3025057` and `3323133` are absent. The sole managed session now contains only
+exact windows `@49:harness`, `@50:students`, and `@51:swallow`, with unchanged
+supervisor owner PIDs `4063793`, `4073421`, and `4077898`; the sole attached
+client was still on Students at that readback. T-317 did not signal, rename,
+kill, switch, or type into these windows during this convergence.
+
+At 13:36 JST the sole client had independently selected Harness. The
+`harness-canary` and `students` supervisors remain at attempt zero. Swallow's
+unchanged supervisor PID `4077898` recorded one transient-exit recovery and
+now owns new wrapper/real TUI PIDs `2166108`/`2166240`, both launched at
+13:28:23 with the exact original Swallow remote root. Its status is
+`running remote-explicit`, attempt 1, delay zero; the exit cause is unknown,
+so this proves successful live child recovery but not specifically a 503.
+Native Codex doctor passes 18/18 checks, including state/thread agreement,
+WebSocket/provider reachability, and persistent app-server health.
+
+The Students project agent also completed its own isolated T-008 deployment.
+The primary is clean/current `main` at `8ee1f429a246157b6bcb98c1a89f19e509451912`.
+PR #59 merged the validated owner-sandbox dependency deployment as
+`bfd2367a1bb6759e900b02a831cb85369b69f33f`; PR #60 closed its durable ledger.
+Its complete gate passed 1,759 tests, the owner sandbox is active with zero
+restarts, and the student service/GitHub monitor remain inactive/disabled.
+No Students file, process, service, private state, or Slack configuration was
+changed by T-317.
 
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
