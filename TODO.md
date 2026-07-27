@@ -276,10 +276,39 @@ phone-visible `swallow`, and its supervisor/watcher/TUI/socket are live and
 idle. The old saved root remains
 `swallow-blocked-20260728/systemError`; its TUI and launcher are absent.
 
-**Next action:** commit and push this retirement result. Reproduce and fix the
-watcher-loss, false rollback-success, and unreaped-supervisor lifecycle defects
-in deterministic focused tests; create and validate the shared
-`recover-codex-unsafe-tail` skill; then publish through protected CI. Do not
+**Implementation checkpoint:** failing-first fixtures reproduced both defects.
+`codex-thread-recovery` now independently reads the root after an acknowledged
+rollback, reports `blocked/post-rollback-system-error` or
+`post-rollback-check-failed` instead of false recovery, and preserves the exact
+rolled-back count. `codex-resilient` now runs a remote-explicit TUI as its
+exact child while monitoring the watcher process; watcher disappearance
+terminates only that exact child and reports
+`stopped/thread-recovery-blocked` instead of leaving a false running state.
+Existing non-remote behavior and every prompt-replay, safe-tail, doctor,
+identity, and backoff gate remain unchanged.
+
+System `skill-creator` initialized shared project-neutral skill
+`recover-codex-unsafe-tail`. Its concise trigger/workflow plus detailed
+protocol encode value-free diagnosis, one safe rollback with postcheck,
+fresh-root cutover for unsafe or persistent errors, non-retryable
+acknowledgements, single-leaf retirement, zombie classification, guarded
+cleanup, and durable handoff. Codex and Claude discovery links are present,
+OpenAI metadata is generated, and the shared count is now 17.
+
+**Validation checkpoint:** implementation commit `b1d11dc` is clean and
+pushed. The system skill validator, focused skill/recovery/resilience tests,
+Python 3.6 grammar, POSIX shell syntax, warning-level ShellCheck, and diff
+hygiene pass. The complete clean-tree `tests/test-phase1.sh` passed all 76
+focused suites, guarded-delete coverage, and every integration gate; only the
+declared native MPI smoke skipped outside an MPI allocation. Live new Swallow
+remains `running/remote-explicit` plus `watching/thread-idle`; old supervisor
+PID `2876863` remains parent-owned zombie `Z` and received no second signal.
+
+**Next action:** commit and push this validation checkpoint, fetch current
+main, open a protected pull request for the exact task head, require
+`portable-phase1`, merge without bypass, then guarded-sync only clean managed
+checkouts. Activate the corrected Swallow supervisor only through a separate
+exact process/root/socket gate after published code is available; do not
 signal the shared tmux server merely to reap PID `2876863`.
 
 ### T-324 — Nightly fleet and repository hardening
