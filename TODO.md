@@ -110,14 +110,15 @@ Next free ID: T-323.
 
 ### T-322 — Make the phone-visible Swallow name unique
 
-**Phase:** ready-for-go.
+**Phase:** complete.
 
 After T-321, the owner reported three phone-visible sessions named `swallow`
 plus the expected `swallow-blocked-20260727`. Metadata-only app-server
 discovery, without transcript or pane reads, identifies:
 
 - original preserved root `019f9f69-6b94-70a3-be12-8bef23b88a96`,
-  `name=swallow`, currently idle;
+  initially `name=swallow`; the execution preflight refined its live status
+  from list-level `idle` to read-level `notLoaded`;
 - preserved failed fork `019fa265-a94d-72d3-ae88-aa1d610fed6c`,
   `name=swallow`, currently idle;
 - active accepted T-321 root `019fa36c-cfa9-7143-ae11-1f538e07bfee`,
@@ -136,6 +137,39 @@ perform one acknowledged read-before/name-set/read-after transaction per older
 root, and require the active root, tmux mapping, supervisor/watcher, Harness,
 Students, and app server to remain unchanged. Recording this selection changed
 no thread, name, process, tmux, app-server, or Swallow repository state.
+
+**Execution authorization 2026-07-27 21:24 JST:** the owner gave the separate
+explicit `go`. The first complete pre-write gate stopped before any name write
+because exact original root `019f9f69-6b94-70a3-be12-8bef23b88a96`
+reported `notLoaded` through live `thread/read`, rather than the earlier
+`idle` list classification. Fresh metadata-only reconciliation proves its
+ID/name/cwd remain exact and dormant; failed fork remains idle, blocked root
+remains `systemError`, and active root remains idle under the unchanged
+healthy supervisor/watcher and three-window mapping. Accept `notLoaded` only
+for this dormant original root, commit and push this failed-closed checkpoint,
+then run the two exact read-before/name-set/read-after transactions. No write,
+process, tmux, app-server, or Swallow repository mutation has run.
+
+**Execution result 2026-07-27 21:27 JST:** exactly two acknowledged
+`thread/name/set` writes completed, each bracketed by an exact
+read-before/read-after check and without retry:
+
+- original root `019f9f69-6b94-70a3-be12-8bef23b88a96` is now
+  `swallow-legacy-20260727`, still `notLoaded`;
+- failed fork `019fa265-a94d-72d3-ae88-aa1d610fed6c` is now
+  `swallow-failed-fork-20260727`, still `idle`;
+- active root `019fa36c-cfa9-7143-ae11-1f538e07bfee` remains the sole exact
+  `swallow`, still `idle`;
+- poisoned root `019fa27c-6280-7f00-8e46-ef878875562b` remains
+  `swallow-blocked-20260727`, still `systemError`.
+
+Independent app-server listing reports `exact_swallow_count=1`. Immutable
+process start ticks for the `swallow-recovery` supervisor, watcher, real TUI,
+and app server are unchanged; the watcher remains on the active root with
+`recoveries=0` and `rolled_back=0`; tmux remains exactly `harness`, `students`,
+and `swallow`; and native doctor reports `overall=ok failed_checks=0`. No
+thread was archived or deleted, no process or tmux state was changed, and no
+pane, transcript, or Swallow repository content was read.
 
 ### T-321 — Recover recurring Swallow unsafe-tail `Request blocked`
 
