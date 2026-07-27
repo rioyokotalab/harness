@@ -638,6 +638,36 @@ agents and Dropbox; none is a task-owned cleanup target. Their exposure
 remains bounded by the already-recorded firewall-off finding and staged
 T-311 helper gate.
 
+**Backup-integrity checkpoint 2026-07-27 11:49 JST:** the earlier
+`restic-primary check` contract proves repository access and snapshot listing,
+not Restic metadata integrity. A bounded stronger native `restic check
+--no-cache` now passes independently on local, ab, ab2, abq, ri, al, rc, and
+t4. Each repository acquired and released its exclusive lock, loaded indexes,
+checked every pack reference, and verified snapshots, trees, and blobs with no
+errors in 1–25 seconds. The repositories contain two or three snapshots each.
+Every mode-0600 capture was exact-unlinked and every host has zero task temp
+files and zero current-user Restic processes afterward. No data-pack sampling,
+restore, snapshot, retention, forget, prune, repair, or replica operation ran.
+
+All four Macs report `Running = 0` from Time Machine, no configured
+destination, and no local Time Machine snapshot. Therefore Time Machine
+restore readiness is unavailable on aist, home, office, and riken. This does
+not prove the absence of a different backup service, but none is declared in
+Harness. Selecting storage and configuring a Mac backup destination requires a
+new owner decision; do not infer or provision one during T-317.
+
+Each declared encrypted replica root contains exactly one immutable generation
+and no `.staging-*` residue. Read-only decryption shows that every generation
+contains only its first snapshot: July 15 for local, ab, ri, al, rc, and t4;
+July 16 for ab2; and July 22 for abq. The primaries now contain three snapshots
+each, except abq with two, and their newest snapshots are all from July 26.
+Thus every independent replica is behind its primary. Current primary
+repository sizes total about 40 GiB (AB alone is 25 GiB), so a fleet replica
+refresh is material network and storage work rather than a housekeeping
+probe. Existing T-196 policy expressly forbids replica automation and requires
+manual checks/restores before a current generation. Do not create or copy a
+generation during T-317; carry this exact recovery-point gap into T-196.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
