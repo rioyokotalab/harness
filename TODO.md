@@ -51,7 +51,7 @@ Next free ID: T-326.
   `harness codex-arg0-wrapper --rollback`; an official Codex upgrade requires
   fresh validation before reinstalling the version-scoped wrapper.
 - Codex and Claude now use only project-scoped policy, permission settings,
-  rules, and 16 skills when started from `~/harness`. All 12 systems retain the
+  rules, and 17 skills when started from `~/harness`. All 12 systems retain the
   two global launch sentinels and Codex launcher. Codex's opaque product-owned
   user configuration is private and accepted on Local, T4, and the four Macs;
   it is absent on the other six nodes. Schema-2 doctor, repository convergence,

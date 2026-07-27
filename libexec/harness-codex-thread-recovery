@@ -751,6 +751,15 @@ def recover_once(thread_id):
             if second_path != path or second_identity != identity:
                 fail("thread rollout changed before rollback")
             backend.rollback(thread_id, count)
+        try:
+            after = backend.read_thread(thread_id)
+        except RecoveryError:
+            return "blocked", "post-rollback-check-failed", count
+        status_value = after.get("status")
+        if status_value == "systemError":
+            return "blocked", "post-rollback-system-error", count
+        if status_value not in ("idle", "active", "notLoaded"):
+            return "blocked", "post-rollback-check-failed", count
         return "recovered", "system-error-safe-tail", count
     finally:
         backend.close()
@@ -858,6 +867,8 @@ def main():
             if phase == "recovered":
                 recoveries = 1
                 rolled_back = count
+            elif count:
+                rolled_back = count
             write_state(
                 path,
                 arguments.name,
@@ -890,6 +901,8 @@ def main():
                 phase, reason, count = recover_once(arguments.thread)
                 if phase == "recovered":
                     recoveries += 1
+                    rolled_back += count
+                elif count:
                     rolled_back += count
             except RollbackAmbiguous:
                 phase = "blocked"

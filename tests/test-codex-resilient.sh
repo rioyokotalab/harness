@@ -164,6 +164,12 @@ status=$(sed -n '1p' "$FAKE_CODEX_STATUSES")
 [ -n "$status" ] || status=0
 sed '1d' "$FAKE_CODEX_STATUSES" >"$FAKE_CODEX_STATUSES.next"
 mv "$FAKE_CODEX_STATUSES.next" "$FAKE_CODEX_STATUSES"
+if [ "${FAKE_CODEX_HOLD:-0}" = 1 ]; then
+    trap 'exit 143' HUP INT TERM
+    while :; do
+        /bin/sleep 1
+    done
+fi
 exit "$status"
 EOF
 chmod 755 "$fake_bin/codex-launcher"
@@ -229,6 +235,10 @@ case "$mode" in
         }
         trap stop HUP INT TERM
         write_state watching thread-idle "$$"
+        if [ "${FAKE_RECOVERY_MODE:-watching}" = exit-after-ready ]; then
+            /bin/sleep 1
+            exit 1
+        fi
         while :; do
             /bin/sleep 1
         done
@@ -324,6 +334,22 @@ grep -F -- '--watch --name remote-explicit --thread session-remote' \
     fail "remote explicit recovery watcher"
 grep -F 'phase=stopped' "$runtime/remote-explicit.recovery.state" \
     >/dev/null || fail "remote explicit recovery watcher cleanup"
+
+: >"$TEST_ROOT/codex.calls"
+: >"$TEST_ROOT/recovery.calls"
+: >"$TEST_ROOT/sleep.calls"
+printf '0\n' >"$TEST_ROOT/codex.statuses"
+FAKE_RECOVERY_MODE=exit-after-ready FAKE_CODEX_HOLD=1 \
+    run_supervisor --run --name watcher-exit \
+        --remote-session session-watcher-exit \
+        >"$TEST_ROOT/watcher-exit.out" 2>&1 &&
+    fail "dead recovery watcher left Codex running"
+grep -F 'reason=thread-recovery-blocked' \
+    "$TEST_ROOT/watcher-exit.out" >/dev/null ||
+    fail "dead recovery watcher classification"
+[ "$(grep -c '^resume --remote unix:// session-watcher-exit$' \
+    "$TEST_ROOT/codex.calls")" = 1 ] ||
+    fail "dead recovery watcher relaunched Codex"
 
 : >"$TEST_ROOT/codex.calls"
 : >"$TEST_ROOT/sleep.calls"
