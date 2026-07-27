@@ -97,11 +97,10 @@ Next free ID: T-321.
    resume action for either repository.
 2. T-311 is complete, including administrator-authenticated Mac changes and
    D-007's private product-owned Codex user layer.
-3. Resume T-303 after independently confirming the first-use SSH host key for
-   `nas-03.yokota` / `192.168.33.30`. The server presents ED25519 fingerprint
-   `SHA256:nxj4PfZ55OqTcVm5HReHI6IVy9MMcBQ+BbfrJfZRHes`; no Local
-   `known_hosts` entry exists, so the 2026-07-27 read-only correlation attempt
-   correctly stopped before authentication.
+3. T-303 is externally blocked: the owner confirmed no access to or prior
+   login on `nas-03.yokota` / `192.168.33.30`. Resume only if the responsible
+   administrator or a trusted physical/hypervisor console can independently
+   confirm the recorded host fingerprint and intended login account.
 4. Continue T-196 only at its exact time/identity gates: all eight nodes are
    now 2/8 with next-week successors waiting. Retry RI accounting ID `7242`
    without touching successor `10386`; otherwise wait for the exact 2026-08-02
@@ -1764,7 +1763,7 @@ submitted once. The installed Local command then reproduced
 
 ### T-303 — Observe intermittent NFS I/O latency
 
-**Phase:** client observation complete; server-side correlation remains.
+**Phase:** blocked on external server administrator access.
 
 The read-only monitor ended cleanly after exactly 24 hours and preserved its
 mode-0700 ext4 evidence directory. Across 148,176,545 new NFS RPC calls, the
@@ -1803,6 +1802,14 @@ has never logged in to this server, so first establish who installed or
 currently administers it, or obtain its physical/virtual Ubuntu console. That
 trusted path must confirm the recorded ED25519 fingerprint and the intended
 login account before Local attempts SSH.
+
+The owner then confirmed having no access to the machine. T-303 is blocked
+rather than complete because server-side correlation remains unavailable.
+Do not retry SSH, guess credentials, recover an account, or alter the NFS
+client mounts. Resume only when the owner identifies the responsible
+administrator or obtains a trusted physical/hypervisor console; the first
+action remains independent confirmation of both the recorded fingerprint and
+the intended login account.
 
 ### T-302 — Reduce AL authentication intervention
 

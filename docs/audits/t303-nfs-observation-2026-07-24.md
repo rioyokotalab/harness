@@ -172,3 +172,10 @@ That independently trusted path must confirm both the host fingerprint and
 the intended login account. Password guessing, first-use acceptance from the
 same network path, or account recovery would be a separate administrative
 operation and is not authorized by this diagnostic task.
+
+The owner subsequently confirmed having no access to the machine. Server-side
+correlation is therefore externally blocked, not disproven and not complete.
+The existing client conclusion remains the strongest supported operational
+result. No further login attempt is retry-safe until a responsible
+administrator or trusted console independently confirms the host fingerprint
+and intended account.
