@@ -110,7 +110,7 @@ Next free ID: T-328.
 
 ### T-327 — Align MCP approvals and retire blocked phone sessions
 
-**Phase:** ready-for-go.
+**Phase:** interviewing.
 
 The owner asked to update the MCP setting for recent operating needs and asked
 whether phone-visible `swallow-blocked-20260728` and
@@ -204,6 +204,39 @@ owner-side phone action and is not an acceptance gate for the config change.
 `executing`, add the failing focused policy assertions first, and continue
 autonomously through the frozen implementation, validation, protected
 publication, guarded fleet sync, eligible Mac refreshes, and final readback.
+
+**Execution authorization:** the owner gave exact `go`. Branch
+`codex/t327-mcp-archive` is clean and aligned with its published planning head
+`1bdd1d0`; collaborative `origin/main` remains exact `c8afe66`. No config,
+MCP server, authentication, tool policy, active session, or archive state
+changed before this checkpoint.
+
+**Next action:** add the failing focused assertions for the exact granular
+policy and its fail-closed negative fixtures before editing either reviewed
+config mirror or validator.
+
+**Pre-edit scope gate:** source and owner-facing documentation revalidation
+found that managed `bin/harness-codex` passes exact
+`--ask-for-approval never` on every launch. Command-line flags take precedence
+over project config, so the frozen config-only implementation would parse but
+would not change approval behavior in normal managed sessions. No focused test,
+config, validator, launcher, documentation, MCP server, user layer, active
+session, or archive state changed before this gate.
+
+Decision D-002 is now required. Recommended D-002A extends the implementation
+surface to `bin/harness-codex`: replace only its `never` flag with the exact
+granular `approval_policy` command-line config override, retain explicit
+`--sandbox danger-full-access`, and add focused launcher-argument coverage plus
+the already planned mirror/validator/documentation tests. This keeps the
+selected policy effective for managed launches without touching user config,
+MCP transport/auth/tool policy, or existing sessions. D-002B leaves the
+launcher unchanged, in which case the project file affects only direct native
+invocations and does not satisfy the recent managed-session need.
+
+**Next action:** ask the owner whether to expand the frozen implementation by
+the recommended narrow launcher change. After selection, checkpoint the
+decision, return to `ready-for-go`, and wait for a new explicit `go` before
+editing implementation or tests.
 
 ### T-326 — Use exact progress clocks and default new Codex sessions to Sol high
 
