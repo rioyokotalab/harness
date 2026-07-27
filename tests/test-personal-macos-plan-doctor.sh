@@ -115,6 +115,10 @@ case "$1" in
                 '
             printf '%s\n' 'ninja 1.0'
         elif [ "$#" -eq 4 ]; then
+            if [ "${FAKE_ALIAS_RESOLUTION:-0}" = 1 ] &&
+                [ "$4" = icu4c ]; then
+                exit 0
+            fi
             case ",$FAKE_MANAGED_FORMULAE,ninja," in *,$4,*) ;; *) exit 1 ;; esac
             [ "$4" != tree ] || [ "${FAKE_TREE_PRESENT:-0}" = 1 ]
         else
@@ -163,6 +167,7 @@ HOME="$home" SHELL=/bin/zsh BREW_LOG="$brew_log" \
     PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
     "$INVENTORY" --host mac-test-pilot >"$facts"
 chmod 600 "$facts"
+: >"$brew_log"
 
 plan_output=$(HOME="$home" SHELL=/bin/zsh BREW_LOG="$brew_log" \
     PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
@@ -184,6 +189,22 @@ case "$plan_output" in *"$home"*|*/opt/homebrew*) fail "plan exposed private pat
 if grep -E '^(update|install|upgrade|cleanup|services|tap|bundle)( |$)' \
     "$brew_log" >/dev/null; then
     fail "plan executed a mutating Homebrew command"
+fi
+[ "$(grep -F -x -c 'list --formula --versions' "$brew_log")" -eq 1 ] ||
+    fail "plan did not use one installed-formula snapshot"
+if grep -E '^list --formula --versions .+' "$brew_log" >/dev/null; then
+    fail "plan queried alias-resolving per-formula state"
+fi
+
+: >"$brew_log"
+alias_plan_output=$(HOME="$home" SHELL=/bin/zsh BREW_LOG="$brew_log" \
+    FAKE_ALIAS_RESOLUTION=1 PATH="$fake_bin:/usr/bin:/bin" HARNESS_ROOT="$ROOT" \
+    "$PLAN" --host mac-test-pilot --facts "$facts")
+printf '%s\n' "$alias_plan_output" | grep -F -x \
+    'END macos_plan blocked=0 package_changes=not-applied network=none' \
+    >/dev/null || fail "Homebrew alias resolution created false formula drift"
+if grep -E '^list --formula --versions .+' "$brew_log" >/dev/null; then
+    fail "alias regression used a per-formula Homebrew query"
 fi
 
 unlink "$home/.codex/AGENTS.md"
