@@ -451,18 +451,50 @@ run_codex() {
     esac
 }
 
-doctor_status() {
+doctor_field() {
     check_id=$1
-    awk -v target="\"$check_id\"" '
-        index($0, target) { found=1 }
-        found && index($0, "\"status\"") {
-            line=$0
-            sub(/^.*"status"[[:space:]]*:[[:space:]]*"/, "", line)
-            sub(/".*$/, "", line)
-            print line
-            exit
+    field_name=$2
+    awk -v target="\"$check_id\"" -v field="\"$field_name\"" '
+        function emit_value(source, value) {
+            if (index(source, field ":") == 0)
+                return 0
+            value=source
+            sub("^.*" field "[[:space:]]*:[[:space:]]*\"", "", value)
+            sub(/".*$/, "", value)
+            print value
+            return 1
         }
+        {
+            line=$0
+            sub(/^[[:space:]]*/, "", line)
+            started=0
+        }
+        !found && index(line, target ": {") == 1 {
+            found=1
+            started=1
+            sub("^" target "[[:space:]]*:[[:space:]]*\\{", "", line)
+        }
+        found && !started {
+            match($0, /[^[:space:]]/)
+            indentation=RSTART - 1
+            if (indentation <= 4 && index(line, "\"") == 1)
+                exit
+        }
+        found && emit_value(line) { exit }
+        found && started && index(line, "}") { exit }
     ' "$doctor_file"
+}
+
+doctor_status() {
+    doctor_field "$1" status
+}
+
+doctor_summary() {
+    doctor_field "$1" summary
+}
+
+doctor_detail() {
+    doctor_field "$1" "$2"
 }
 
 doctor_gate() {
@@ -485,6 +517,31 @@ doctor_gate() {
         check_id=${check%%:*}
         failure=${check#*:}
         check_status=$(doctor_status "$check_id")
+        if [ "$check_id" = installation ] && [ "$platform" = Linux ] &&
+            [ "$(doctor_summary "$check_id")" = \
+                "npm install -g @openai/codex would update a different install" ]; then
+            managed_package_root=$(
+                doctor_detail "$check_id" "managed package root"
+            )
+            running_package_root=$(
+                doctor_detail "$check_id" "running package root"
+            )
+            # Linux fleet clients are installed in immutable Harness-owned
+            # release trees, not npm's mutable global package root. Native
+            # doctor reports that deliberate ownership split as an
+            # installation failure even when the running package is current.
+            if [ "$managed_package_root" = "$running_package_root" ]; then
+                case "$managed_package_root" in
+                    /*/.local/opt/agents/codex/*)
+                        if [ -d "$managed_package_root" ] &&
+                            [ ! -L "$managed_package_root" ] &&
+                            [ "$(path_owner "$managed_package_root")" = "$uid" ]; then
+                            continue
+                        fi
+                        ;;
+                esac
+            fi
+        fi
         if [ "$check_status" != ok ]; then
             unlink "$doctor_file"
             doctor_file=
