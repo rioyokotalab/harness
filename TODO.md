@@ -137,9 +137,27 @@ isolated on branch `codex/t324-nightly` in
 request with current-head checks. Do not rewrite or revert public history
 merely to conceal the bypass.
 
-**Next action:** complete the read-only fleet and repository-control inventory.
-Push every confirmed issue onto its owning LIFO stack and resolve the newest
-safe item first; defer any item requiring authority beyond the frozen plan.
+**First audit checkpoint:** repository dependency, secret, workflow,
+hardening, and declared test gates pass for Harness, Students, Swallow, and
+Website. Core fleet doctors, declared storage, weekly backup successors, Mac
+platform security, current agent releases, and current-user listener checks
+pass or match explicit policy. Detailed evidence and the LIFO probe failures
+are in `docs/audits/t324-nightly-hardening-2026-07-27.md`.
+
+Deferred authority-gated findings are: all four live rulesets require zero
+reviews despite frozen T-311 D-001 requiring one and stronger Students gates;
+Riken retains a second distinct stale global npm Claude package `0.2.14`
+behind the effective managed `2.1.220` launcher; and Local's shared `/home`
+filesystem is 96% used even though this account uses only about 3 GiB and
+retains about 2.2 TiB available. Unknown read-only observations are RI
+accounting for old job `7242`, still blocked before lookup by Slurm DNS SRV
+failure, and Local project-agent doctor, whose clean-checkout gate correctly
+refuses the protected live `.nfs` inode. No dependent mutation crossed any of
+these gates.
+
+**Next action:** validate and publish this first audit checkpoint through the
+protected task branch, then continue independent deep checks and LIFO repair
+until the 04:13 JST material-work cutoff.
 
 ### T-323 — Recover Harness unsafe-tail `Request blocked`
 
