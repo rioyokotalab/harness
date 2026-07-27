@@ -151,6 +151,17 @@ scanning is unavailable on all four. Students/Website restrict Actions and
 enforce SHA pinning at the host; Harness/Swallow currently allow all Actions
 without host-enforced SHA pinning.
 
+All four rulesets were modified in one 11-minute window on 2026-07-26:
+Swallow at 10:26 JST, Harness and Website at 10:35, and Students at 10:37.
+The current zero-review form conflicts with frozen T-311 D-001, which selected
+one approving review for non-admin writers and retained Students' code-owner
+and last-push approval gates. Students still tracks an owner-only
+`CODEOWNERS`, but its live ruleset no longer requires code-owner or last-push
+approval. The organization audit-log endpoint returned HTTP 404 under current
+GitHub capability, so the actor and intent are unknown; do not label the
+change accidental or intentional without owner evidence. No open pull request
+has auto-merge enabled.
+
 Students scheduled run `30165098550`, deployment `5602726317`, failed at the
 combined collection/post step with Slack API error `not_in_channel`. Current
 Students `main` has no workflow or implementation change that resolves it.
@@ -197,8 +208,10 @@ Website deployment ran.
 2. Owner storage choice: select/configure Mac backup destinations.
 3. T-196 gates: complete weekly stability/restores and create current manual
    encrypted replica generations; do not automate yet.
-4. Hosting-policy decision: reconcile zero required reviews and bypass actors,
-   plus host-enforced Action restrictions for Harness/Swallow.
+4. Hosting-policy decision: reconcile the coordinated July 26 zero-review
+   change with frozen T-311 D-001, including Students' lost code-owner and
+   last-push gates, plus host-enforced Action restrictions for
+   Harness/Swallow.
 5. Students-local Slack administration: resolve production
    `not_in_channel`; do not rerun until membership is corrected.
 6. SW-031: digest-qualify NeMo bootstrap and continue evidence-only

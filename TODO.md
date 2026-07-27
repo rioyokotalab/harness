@@ -705,6 +705,16 @@ Harness precedence. Guarded-delete removed only verified clean worktree
 local branch, manifest, and temp path are absent. The remote task branch
 remains because D-006 forbids remote branch deletion.
 
+**Ruleset provenance gate 2026-07-27 13:08 JST:** all four live rulesets were
+updated in a coordinated 11-minute window on July 26—Swallow 10:26, Harness
+and Website 10:35, Students 10:37 JST. Their current zero-review form conflicts
+with frozen T-311 D-001's one-review floor and removes Students' selected
+code-owner and last-push gates even though its owner-only `CODEOWNERS` remains
+tracked. The organization audit-log endpoint returns HTTP 404 under current
+GitHub capability, so actor and intent are unknown. No open PR has auto-merge
+enabled. Keep hosting state read-only under D-006 and require owner provenance
+or a fresh policy decision before restoring the T-311 baseline.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
