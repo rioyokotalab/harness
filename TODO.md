@@ -109,7 +109,7 @@ Next free ID: T-319.
 
 ### T-318 — Recover poisoned remote Codex threads
 
-**Phase:** implemented and validated; publication pending.
+**Phase:** published for review; live adoption deferred.
 
 The owner asked to extend T-310/T-317 transient-service resilience after exact
 Local evidence exposed a second failure class: Swallow's remote TUI and shared
@@ -177,9 +177,17 @@ Checkpoint 2026-07-27:
   manifest `/tmp/harness-t318-validation.GlxWGi.delete.manifest`; protected
   anchors were unchanged, the target was verified absent, and the short-lived
   manifest was exact-unlinked.
-- Next: commit this validation checkpoint, fetch and reconcile the
-  collaborative remote, then publish the task branch. Do not restart a live
-  supervisor; adoption is a later deliberate operation.
+- Final fetch found T-317 had advanced through `c380345`; the task commits were
+  rebased without conflict, both focused suites passed again, and branch
+  `t318-codex-thread-recovery` was pushed without force. GitHub API access was
+  independently preflighted and stacked PR #338 targets `t317-fleet-final`:
+  <https://github.com/rioyokotalab/harness/pull/338>. Readback reports the PR
+  open and merge-clean with no checks reported yet.
+- Next: let protected review/CI integrate PR #338 with T-317. After the
+  resulting control-plane revision is deliberately synchronized, adopt the
+  watcher only during separately coordinated remote-TUI restarts. Never
+  restart the shared app server or interrupt Harness, Students, or Swallow
+  merely to activate this change.
 
 ### T-317 — 503-safe fleet and repository housekeeping
 
