@@ -127,10 +127,19 @@ completed residues through one quarantined target of three entries/eight
 bytes; protected anchors were unchanged. Final planning reports `live=5
 eligible=0 young=0 unexpected=0`.
 
-**Next action:** commit and push this execution checkpoint, then complete the
-read-only fleet and repository-control inventory. Push every confirmed issue
-onto its owning LIFO stack and resolve the newest safe item first; defer any
-item requiring authority beyond the frozen plan.
+**LIFO publication gate:** execution checkpoint `1734f1d` was pushed directly
+to `main`; the hosting service accepted it through the owner's bypass despite
+the repository rule requiring a pull request and `portable-phase1`. The
+intended two files are exact and no unrelated state changed, but this
+publication path was wrong and is non-retryable. All subsequent T-324 work is
+isolated on branch `codex/t324-nightly` in
+`/tmp/harness-t324-nightly` and must publish only through a protected pull
+request with current-head checks. Do not rewrite or revert public history
+merely to conceal the bypass.
+
+**Next action:** complete the read-only fleet and repository-control inventory.
+Push every confirmed issue onto its owning LIFO stack and resolve the newest
+safe item first; defer any item requiring authority beyond the frozen plan.
 
 ### T-323 — Recover Harness unsafe-tail `Request blocked`
 
