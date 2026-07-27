@@ -304,12 +304,62 @@ declared native MPI smoke skipped outside an MPI allocation. Live new Swallow
 remains `running/remote-explicit` plus `watching/thread-idle`; old supervisor
 PID `2876863` remains parent-owned zombie `Z` and received no second signal.
 
-**Next action:** commit and push this validation checkpoint, fetch current
-main, open a protected pull request for the exact task head, require
-`portable-phase1`, merge without bypass, then guarded-sync only clean managed
-checkouts. Activate the corrected Swallow supervisor only through a separate
-exact process/root/socket gate after published code is available; do not
-signal the shared tmux server merely to reap PID `2876863`.
+**Publication and rollout checkpoint:** protected PR #363 at exact head
+`1ae627e` passed `portable-phase1` in 2m28s and squash-merged as `dcfdc1d`.
+The first `gh pr merge` completed the hosting merge but then reported a local
+checkout failure because primary `main` belongs to another worktree; fresh PR
+readback proved `MERGED`, so no merge was retried. Local `main` fast-forwarded
+while preserving three live supervisor-held `.nfs` inodes.
+
+A clean exact full clone produced one guarded eleven-target fleet-sync plan
+from `d6cdb7a` to `dcfdc1d`; every checkout was clean at the exact source.
+The matching apply advanced ab, ab2, ri, al, rc, t4, abq, aist, home, office,
+and riken to the merge with every origin aligned and transfer artifact absent.
+Using the `remote-agent-communication` workflow, Aist, Home, Office, and Riken
+each returned exactly one context-refresh `status=submitted`; none may be
+retried.
+
+**Next action:** commit and push this rollout checkpoint, then revalidate exact
+new Swallow root/window/process/start/socket/idle state, unchanged
+Harness/Students/app server, attached-client selection, native doctor, and
+published Git. Send one `SIGTERM` only to accepted real TUI PID `1605906` so
+its old-inode launcher/watcher/supervisor unwind, then launch the same root in
+one `swallow` window under published supervisor code. Do not replay a prompt,
+change the root/name, signal the shared tmux server, or touch PID `2876863`.
+
+**LIFO live-activation gate:** exact preflight passed and one `SIGTERM` to
+accepted real TUI PID `1605906` retired its old-inode TUI, launcher, watcher,
+supervisor, and window without prompt replay. A new `@62:swallow` launched the
+same exact idle root under published supervisor PID `1917582` and watcher PID
+`1917695`. The first three native TUI launches then exited transiently and
+entered bounded backoff while the root and watcher remained idle.
+
+Diagnosis from process structure and the implementation is exact: the new
+watcher-monitor design starts `run_codex` as an asynchronous shell command.
+POSIX non-job-control shells provide null stdin to that command, so an
+interactive TUI cannot retain its controlling-terminal input. Focused fakes
+did not read stdin and therefore missed this production contract. No pane,
+transcript, rejected prompt, root/name, app-server, Harness, Students, or
+project state changed.
+
+The correction binds production remote-explicit background launches
+explicitly to `/dev/tty` while retaining null-input-compatible test execution.
+A focused source assertion prevents removing that binding. Validate the
+correction, publish it through a second protected PR, then stop only the exact
+current backoff leaf and relaunch the same root under the corrected merge.
+
+**TTY-correction validation:** clean commit `ccf368b` passes focused
+resilience, thread-recovery, and recovery-skill suites; POSIX shell syntax;
+warning-level ShellCheck; diff hygiene; and the complete
+`tests/test-phase1.sh`. The complete run passed all 76 focused suites,
+guarded-delete coverage, and every integration gate, with only the declared
+native MPI smoke skipped outside an allocation.
+
+**Next action:** commit and push this validation checkpoint, open a second
+protected pull request, require exact-head `portable-phase1`, merge, and
+fast-forward Local plus the clean fleet. Then terminate only the exact current
+backoff sleep leaf so supervisor `1917582` and watcher `1917695` unwind, and
+launch the same root once under the corrected merged code.
 
 ### T-324 — Nightly fleet and repository hardening
 
