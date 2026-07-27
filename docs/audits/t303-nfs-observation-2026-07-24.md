@@ -151,3 +151,24 @@ run a bounded, read-only inventory before requesting any privileged evidence:
 Stop if those records require privilege or have expired. Do not change storage,
 exports, services, logging, retention, or performance settings as part of
 T-303.
+
+### Access discovery
+
+At 2026-07-27 20:10 JST, a bounded read-only service check found port 22 open
+and ports 80 and 443 closed or filtered. The SSH identification string was
+`SSH-2.0-OpenSSH_9.6p1 Ubuntu-3ubuntu13.18`. This supports an Ubuntu
+SSH-administered host and provides no browser-management path.
+
+Value-minimized `ssh-keygen -F` queries for the exact hostname and address
+found no historical trust record on Local, AB, AB2, RI, RC, T4, ABQ's two
+routes, AL, Aist, Home, Office, or Riken. The queries returned fingerprints
+only if present and did not inspect SSH credentials; all returned none. No
+authentication was attempted.
+
+The owner reports never having logged in to `nas-03`. The next safe step is
+therefore organizational or console discovery: identify the person who
+installed/administers the host, or use its physical or hypervisor console.
+That independently trusted path must confirm both the host fingerprint and
+the intended login account. Password guessing, first-use acceptance from the
+same network path, or account recovery would be a separate administrative
+operation and is not authorized by this diagnostic task.

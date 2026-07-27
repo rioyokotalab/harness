@@ -1794,6 +1794,16 @@ key and run the bounded read-only procedure recorded in the audit. Do not use
 `StrictHostKeyChecking=no`, accept a key based only on this network path,
 escalate privilege, or change NFS/storage state.
 
+At 2026-07-27 20:10 JST, bounded service discovery found only SSH reachable
+among ports 22, 80, and 443. The public banner identifies Ubuntu OpenSSH
+`9.6p1 Ubuntu-3ubuntu13.18`; there is no observed browser-management route.
+Exact hostname/IP lookups found no historical `known_hosts` record on Local or
+any of the twelve other managed SSH routes. No login was attempted. The owner
+has never logged in to this server, so first establish who installed or
+currently administers it, or obtain its physical/virtual Ubuntu console. That
+trusted path must confirm the recorded ED25519 fingerprint and the intended
+login account before Local attempts SSH.
+
 ### T-302 — Reduce AL authentication intervention
 
 **Phase:** complete. CSCS requires
