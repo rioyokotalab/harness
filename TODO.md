@@ -250,11 +250,18 @@ read-before/name-set/read-after transaction changed only poisoned root
 `swallow`. Old remains `systemError`; new remains `idle`. Neither name write
 may be retried.
 
-**Next action:** commit and push this reversible root-name checkpoint, then
-revalidate exact window/process/client identities and rename only old window
-`@59` to `swallow-blocked` and new window `@61` to `swallow`. Leave the
-attached owner client on exact `@50:students`; do not send pane input or signal
-any process.
+**Tmux cutover:** exact old/new window, pane-owner, process/start, and attached
+client gates passed. Native `tmux rename-window` changed only `@59` from
+`swallow` to `swallow-blocked` and `@61` from `swallow-next` to `swallow`.
+The attached owner client remained on exact `@50:students`; `@60:harness` was
+unchanged. No pane input, client switch, or process signal ran.
+
+**Next action:** commit and push this reversible tmux checkpoint, then
+revalidate old real TUI PID `2877595` / start tick `88838827`, its exact
+parent/session/root argv, old window `@59`, and every protected new/unaffected
+identity. Send one `SIGTERM` only to that old real TUI and let its launcher and
+supervisor unwind without respawn. Do not send a second signal, signal a
+process group, use `SIGKILL`, or touch the preserved poisoned root.
 
 ### T-324 — Nightly fleet and repository hardening
 
