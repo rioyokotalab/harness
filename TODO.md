@@ -398,6 +398,32 @@ explicit residual update gaps, not permission to overwrite active binaries.
 Proceed with protected publication of only the accepted uv, rclone, and
 ripgrep declaration/updater scope.
 
+**Protected publication and fleet sync 2026-07-27 10:25 JST:** PR #334 passed
+required `portable-phase1` in 2m23s and merged at
+`0ad118b9a1e8398afb15fd0b967d867633b9ac44`. A verified mode-0600 Git bundle
+fast-forwarded clean Harness `main` checkouts on ab, ab2, abq, ri, al, rc, t4,
+aist, home, office, and riken from exact `5137648` to `0ad118b`; every remote
+origin ref advanced atomically and every transfer artifact was absent after
+apply. Exactly one literal context-refresh instruction was submitted to the
+validated detached Codex supervisor pane on each Mac after a one-second paste
+settle; Office's separate shell pane was untouched. All sessions remained
+detached/live and canonical fleet health passed.
+
+Local checkout replacement left one `.nfs…` copy of the prior resilient
+script because exact live supervisor PIDs `4063793`, `4073421`, and `4077898`
+hold it open. Preserve it: this is live NFS kernel residue, not a cleanup
+candidate. Fleet sync and package applies therefore used clean temporary
+clones, each guarded-deleted after completion.
+
+**Linux utility convergence 2026-07-27 10:32 JST:** checksum-gated transactions
+converged uv 0.11.32 and rclone 1.74.4 on local, ab, ab2, abq, ri, al, rc, and
+t4, sequentially. AB/AB2 received new managed rclone user-path links; the
+other hosts used exact managed replacements. Every host reports exact
+versions, repeat `KEEP` plans, a passing doctor, and a clean aligned Harness
+checkout; canonical fleet health passed after every host. The prior managed
+artifacts are intentionally retained for rollback. Ripgrep 15.2.0 is already
+healthy host-provided everywhere, so no ripgrep apply ran.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
