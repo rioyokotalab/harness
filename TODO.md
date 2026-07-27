@@ -95,10 +95,10 @@ Next free ID: T-319.
    helper. Resolve the separate Codex user-config policy choice afterward.
 3. Ask the `192.168.33.30` administrator to correlate T-303's recorded NFS
    latency intervals when an external coordination window is available.
-4. Continue T-196 only at its exact time/identity gates: AB and AB2 are now
-   2/8 with next-week successors waiting; retry RI accounting ID `7242`
-   without touching successor `10386`, and inspect AL ID `4238363` only after
-   its later eligibility.
+4. Continue T-196 only at its exact time/identity gates: all eight nodes are
+   now 2/8 with next-week successors waiting. Retry RI accounting ID `7242`
+   without touching successor `10386`; otherwise wait for the exact 2026-08-02
+   successors recorded below.
 
 ## Active tasks
 
@@ -1754,10 +1754,9 @@ remains.
 
 ### T-196 — Backup lifecycle phase 2
 
-**Status:** time-gated. Local, AB, AB2, RI, RC, T4, and ABQ are at 2/8
-successful weekly chains, and AL remains 1/8 until its later eligibility. Execution
-requires eight successful chains, two verified restores per node, and a
-current independent generation.
+**Status:** time-gated. All eight nodes are at 2/8 successful weekly chains.
+Execution requires eight successful chains, two verified restores per node,
+and a current independent generation.
 
 **LIFO observation issue resolved 2026-07-26:** after RI's live status proved the
 chain had advanced to exact successor `10386`, the first safe history/private
@@ -1783,6 +1782,12 @@ again failed before job lookup because Slurm could not resolve its DNS SRV
 configuration source. It printed no job data, and no scheduler state changed.
 Keep the observation open for exact ID `7242`; successor `10386` remains
 untouched.
+
+**2026-07-27 AL checkpoint:** exact job `4238363` matched
+`hal2607260100` and completed with `0:0`. Private state is active/success with
+a present 64-hex snapshot, warning output is silent, and exact successor
+`4275926` (`hal2608020100`) is pending for 2026-08-02 01:00 Europe/Zurich.
+AL is now 2/8. No scheduler or backup state changed.
 
 | Node | Recorded 2026-07-26 successor |
 | --- | --- |
