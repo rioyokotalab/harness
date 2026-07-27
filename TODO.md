@@ -1716,8 +1716,10 @@ Evidence is in `docs/backup-lifecycle-phase2.md`, `docs/home-backup.md`, and
   healthy, all four Mac doctors ready with only the two known firewall
   warnings, and all eight future backup chains present with primary access
   passing. The detailed evidence and deferred authority gates remain in
-  `docs/audits/t317-fleet-housekeeping-2026-07-27.md`. Clean full-suite and
-  protected-publication closeout remain on PR #337.
+  `docs/audits/t317-fleet-housekeeping-2026-07-27.md`. The complete clean
+  Phase-1 suite passed at `d9bf212`; guarded deletion then removed its exact
+  4,168-entry / 47,314,593-byte validation clone and the mode-0600 manifest
+  was exact-unlinked. Protected publication is PR #337.
 - **T-310:** implemented portable foreground Codex transient-service
   resilience in functional PR #310, merged as `e9c3e06`. The supervisor
   resumes the same saved chat without replaying a prompt, gates retries through

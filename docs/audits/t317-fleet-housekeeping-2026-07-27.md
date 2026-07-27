@@ -474,5 +474,12 @@ The owner's 15:13 direction superseded the planned 18:30 material cutoff and
 One obsolete `codex remote-control doctor` diagnostic failed read-only because
 that command has no `doctor` subcommand in Codex 0.145.0. The corrected native
 `codex doctor --json` returned all 18 checks `ok`; no retryable mutation was
-involved. Clean full-suite validation and protected PR publication are the
-remaining closeout gates.
+involved.
+
+The complete clean `tests/test-phase1.sh` suite passed at closeout revision
+`d9bf212`; only the documented native MPI smoke was skipped outside a declared
+allocation. The disposable full clone was clean, tree-equal, and had no open
+handle before guarded deletion removed exactly 4,168 entries / 47,314,593
+bytes below `/tmp`. Protected anchors were unchanged, the clone was absent,
+and the exact mode-0600 manifest was exact-unlinked. Protected PR #337
+publication is the final closeout gate.
