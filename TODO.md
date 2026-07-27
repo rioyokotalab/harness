@@ -376,6 +376,14 @@ launcher declarations unchanged during T-317 rather than risk active-agent
 restart safety. Commit the three prebuilt-tool declarations and updater test,
 then require a fully clean Phase-1 pass before any live package apply.
 
+**Linux prebuilt-tool acceptance 2026-07-27 10:14 JST:** committed revision
+`7f611ef` passes the complete clean `tests/test-phase1.sh` suite, including
+new rclone and uv replacement/rollback coverage, tmux, terminfo, fleet sync,
+guarded delete, backup scheduling, and all focused suites; only native MPI is
+skipped outside a declared allocation. No live package changed. Push this
+acceptance, then finish official release triage before protected publication
+and fleet rollout.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
