@@ -51,10 +51,16 @@ Do not:
    clean/aligned task Git.
 3. Invoke one exact `harness codex-thread-recovery --recover` transaction.
    Require an unambiguous `recovered/system-error-safe-tail` result with one
-   rolled-back turn. Never retry an ambiguous request.
-4. Read the exact root back as non-`systemError`, require the same TUI,
-   supervisor, app server, tmux mapping, and unaffected sessions, and confirm
-   no prompt was replayed.
+   rolled-back turn. Never retry an ambiguous request. Read the exact root
+   back independently; acknowledgement alone is not recovery acceptance.
+4. If the exact root remains `systemError` and its remaining tail is not
+   safely recoverable, preserve it and use the proven fresh-root cutover:
+   create and persist one empty root, launch one provisional watched TUI,
+   submit one ledger-only cold-start turn, accept assistant-bearing completion,
+   transfer root/window names, and retire only the old exact leaf TUI. If it
+   instead becomes non-`systemError`, retain the same TUI and skip the cutover.
+   In either case require the same app server, tmux mapping or intended
+   cutover, unaffected sessions, and no prompt replay.
 5. Reproduce the watcher-loss lifecycle in a deterministic fixture. Amend the
    resilient supervisor so a remote TUI cannot remain reported `running` after
    its watcher exits. Keep safe rollback and every existing fail-closed gate

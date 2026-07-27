@@ -159,8 +159,34 @@ loading it because the loader was absent. The retry used Python's source-file
 loader with bytecode disabled and produced the value-free safe-tail result
 above. No live or repository state changed.
 
-**Next action:** commit and push this pre-write checkpoint, rerun the exact
-root/process/socket/status gate, then invoke the safe-tail recovery once.
+**Safe-tail rollback result:** pre-write root, rollout, process, socket, tmux,
+and unaffected-session identities passed. One lock-serialized
+`thread/rollback` was acknowledged as
+`recovered/system-error-safe-tail`, with exactly one turn rolled back. The
+request must never be retried. Immediate postcheck and six fresh initialized
+read-only connections over five seconds still reported `systemError`; the
+remaining tail now has zero safely recoverable turns and the analyzer
+correctly refuses it. All recorded supervisor, TUI, app-server, Harness,
+Students, and tmux identities remain unchanged.
+
+The command wrapper's first Git assertion contained a guessed full expansion
+of the known short checkpoint and printed the actual clean task revision
+instead of stopping. The independently published branch, exact process/root
+checks, and analyzer gate still passed before the rollback, but the assertion
+spelling was wrong and is not reusable. This failure made no separate
+mutation.
+
+This result exposes two implementation defects without weakening the safety
+decision: an acknowledged rollback is reported `recovered` without requiring
+post-rollback root recovery, and a watcher can exit while its parent
+supervisor continues to report `running`. Preserve the root and proceed
+through the established fresh-root cutover. No second rollback is safe or
+authorized.
+
+**Next action:** commit and push this non-retryable result, revalidate exact
+live identities and the now-unsafe `systemError` state, then create one new
+empty app-server root for the fresh-root cutover. Do not replay the rejected
+prompt or retry the rollback.
 
 ### T-324 — Nightly fleet and repository hardening
 
