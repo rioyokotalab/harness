@@ -131,7 +131,7 @@ decision.
 | Repository | Worktree | Integrity | Dependencies | Hosting |
 | --- | --- | --- | --- | --- |
 | Harness | task branch plus live `.nfs…` | strict fsck pass | managed utilities current; deferred source-built tools | protected strict `portable-phase1` |
-| Students | protected active `main` | fsck pass; 51 MiB loose plus 54-byte temp objects | lock present; PR #39 behind current main | strict two-check protection; production Slack deployment failed |
+| Students | protected primary `main`; isolated T-006 complete | fsck pass; 51 MiB loose plus 54-byte temp objects | cryptography 49.0.0; Ruff 0.16.0; stale PR #39 open | PRs #55/#56 merged; production Slack deployment failed |
 | Website | clean current `main` | fsck pass; zero garbage | Playwright 1.62.0; checkout v7.0.1 | PR #36 merged, no deployment |
 | Swallow | protected active AB branch; clean T4 mirror | both fsck pass | no package lock; local SIF hash pinned | strict `Offline checks`; no task mutation |
 
@@ -181,13 +181,17 @@ post-pull verification to SW-031.
 | Harness | #334 | `0ad118b` | remote-aware resilience; uv/rclone declarations |
 | Harness | #335 | `e61c16b` | fleet housekeeping checkpoint |
 | Harness | #336 | `99617e1` | alias-safe, faster Mac package plan |
+| Students | #55 | `c0eb424` | cryptography 49.0.0; Ruff 0.16.0 |
+| Students | #56 | `8414383` | close T-006 ledger |
 | Website | #35 | `141a79e` | Playwright 1.62.0 |
 | Website | #36 | `9e1cd10` | checkout v7.0.1; linked-worktree hook doctor |
 
 Every Harness merge passed `portable-phase1`, synchronized all eleven clean
 remote checkouts, and sent exactly one post-sync context refresh to each
-validated Mac Codex pane. Every Website merge passed `Offline checks`; no
-Website deployment ran.
+validated Mac Codex pane. Every Students T-006 head passed `Offline checks`
+and `Enforce student folder`; its protected primary checkout and active client
+were not changed. Every Website merge passed `Offline checks`; no Website
+deployment ran.
 
 ## Guarded deletion and cleanup
 
@@ -197,6 +201,10 @@ Website deployment ran.
 - Website T-209 and T-210 isolated worktrees were removed after clean,
   tree-equality, merge, and open-handle gates. T-210 deleted exactly 403
   entries / 61,097,424 bytes below `/tmp`.
+- Students T-006 ran only in an isolated worktree after T-005 completed. After
+  exact PR/tree verification, guarded deletion removed exactly 2,833 entries /
+  82,704,211 bytes below `/tmp`; its manifest, registration, and local task
+  refs are absent while remote task refs remain.
 - Test/sync clones and their manifests were exact-verified and removed.
 - No active process, repository worktree, backup, scheduler state, credential,
   cache with unresolved ownership, or protected project artifact was deleted.

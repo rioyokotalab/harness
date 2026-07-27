@@ -715,6 +715,32 @@ GitHub capability, so actor and intent are unknown. No open PR has auto-merge
 enabled. Keep hosting state read-only under D-006 and require owner provenance
 or a fresh policy decision before restoring the T-311 baseline.
 
+**Students dependency checkpoint 2026-07-27 12:41 JST:** Students T-005 was
+already complete and its primary checkout was clean, so T-006 ran only in
+isolated worktree `/tmp/students-t006.LKAifR`; the active direct Students tmux
+client and primary checkout were never changed, signaled, pulled, or restarted.
+Official release metadata and changelogs were reconciled before widening the
+bounds. uv 0.11.32 moved exactly cryptography 48.0.1 to 49.0.0 and Ruff
+0.15.22 to 0.16.0, with no unrelated locked package version change. Production
+imports only `InvalidTag` and `AESGCM`, outside cryptography 49's documented
+removals and ChaCha20 behavior change. Focused storage/CLI tests passed 21
+tests; the complete frozen offline gate passed 1,759 tests plus compile, Ruff,
+secret scanning, repository validation, and diff hygiene.
+
+Both required checks passed on exact PR #55 head
+`f549709b67ffb17bf35417690f5561f43477bced`; it squash-merged as
+`c0eb42470c3bb1d236c2231bd26fc4613062aedc`. Documentation-only closure PR #56
+also passed both checks on exact head
+`1a8ac7eb29be0c325b7132b135fd1b71ff68045f` and merged as
+`8414383a922f54ab0e2229bff2509d3bb5141338`. Its first merge preflight stopped
+before mutation when an anticipated full SHA was wrong; the exact Git/GitHub
+head was then read back before merge. Stale Dependabot PR #39 remains open and
+untouched. Guarded deletion removed only the finished isolated worktree
+(2,833 entries, 82,704,211 bytes); the mode-0600 manifest was exact-unlinked,
+the stale registration and local task refs are absent, and remote task refs
+remain under D-006. The protected primary stays deliberately at its agent-owned
+`3c97511`, two commits behind `origin/main`, until that agent reconciles it.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
