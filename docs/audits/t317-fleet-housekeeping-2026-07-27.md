@@ -131,7 +131,7 @@ decision.
 | Repository | Worktree | Integrity | Dependencies | Hosting |
 | --- | --- | --- | --- | --- |
 | Harness | task branch plus live `.nfs…` | strict fsck pass | managed utilities current; deferred source-built tools | protected strict `portable-phase1` |
-| Students | protected primary `main`; isolated T-006 complete | fsck pass; 51 MiB loose plus 54-byte temp objects | cryptography 49.0.0; Ruff 0.16.0; stale PR #39 open | PRs #55/#56 merged; production Slack deployment failed |
+| Students | protected primary `main`; isolated T-006/T-007 complete | fsck pass; 51 MiB loose plus 54-byte temp objects | cryptography 49.0.0; Ruff 0.16.0; CI uv 0.11.32; stale PR #39 open | PRs #55–#58 merged; production Slack deployment failed |
 | Website | clean current `main` | fsck pass; zero garbage | Playwright 1.62.0; checkout v7.0.1 | PR #36 merged, no deployment |
 | Swallow | protected active AB branch; clean T4 mirror | both fsck pass | no package lock; local SIF hash pinned | strict `Offline checks`; no task mutation |
 
@@ -168,6 +168,15 @@ Students `main` has no workflow or implementation change that resolves it.
 Do not dispatch, alter the environment, inspect secrets, or invite the bot
 outside a project-local owner-authorized Slack correction.
 
+An exact workflow audit found no write-capable workflow token and no persisted
+checkout credential. Every third-party execution reference is publisher-owned,
+current, and full-SHA pinned: all four repositories use `actions/checkout`
+v7.0.1 at `3d3c42e5aac5ba805825da76410c181273ba90b1`, and Students uses
+`actions/setup-python` v7.0.0 at
+`5fda3b95a4ea91299a34e894583c3862153e4b97`. Students'
+`pull_request_target` boundary job checks out the immutable trusted base SHA
+before its secret-bearing step and does not execute PR-head code.
+
 Swallow verifies the staged `nemo-26.06.sif` as
 `b625ee8ea6bf89830935eb179055389c195173b624652541e8d85ff49d9287ee`,
 but bootstrap begins from mutable registry tag `nvcr.io/nvidia/nemo:26.06`
@@ -183,6 +192,8 @@ post-pull verification to SW-031.
 | Harness | #336 | `99617e1` | alias-safe, faster Mac package plan |
 | Students | #55 | `c0eb424` | cryptography 49.0.0; Ruff 0.16.0 |
 | Students | #56 | `8414383` | close T-006 ledger |
+| Students | #57 | `726685e` | align three CI uv pins to 0.11.32 |
+| Students | #58 | `394b50e` | close T-007 ledger |
 | Website | #35 | `141a79e` | Playwright 1.62.0 |
 | Website | #36 | `9e1cd10` | checkout v7.0.1; linked-worktree hook doctor |
 
@@ -204,6 +215,10 @@ deployment ran.
 - Students T-006 ran only in an isolated worktree after T-005 completed. After
   exact PR/tree verification, guarded deletion removed exactly 2,833 entries /
   82,704,211 bytes below `/tmp`; its manifest, registration, and local task
+  refs are absent while remote task refs remain.
+- Students T-007 likewise ran only in an isolated worktree. After exact
+  PR/tree verification, guarded deletion removed exactly 2,833 entries /
+  82,702,666 bytes below `/tmp`; its manifest, registration, and local task
   refs are absent while remote task refs remain.
 - Test/sync clones and their manifests were exact-verified and removed.
 - No active process, repository worktree, backup, scheduler state, credential,

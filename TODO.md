@@ -741,6 +741,33 @@ the stale registration and local task refs are absent, and remote task refs
 remain under D-006. The protected primary stays deliberately at its agent-owned
 `3c97511`, two commits behind `origin/main`, until that agent reconciles it.
 
+**CI supply-chain checkpoint 2026-07-27 12:56 JST:** an exact four-repository
+workflow inventory finds only publisher actions. Harness, Students, Website,
+and Swallow all pin `actions/checkout` v7.0.1 to publisher commit
+`3d3c42e5aac5ba805825da76410c181273ba90b1`; Students additionally pins
+`actions/setup-python` v7.0.0 to
+`5fda3b95a4ea91299a34e894583c3862153e4b97`. Live publisher release and tag
+metadata confirm both are current. No workflow has a write-capable token or
+persisted checkout credential. Students' secret-bearing
+`pull_request_target` boundary job explicitly checks out the immutable trusted
+base SHA and does not execute PR-head code.
+
+The only drift was three Students workflow installs of uv 0.11.31 while
+official PyPI metadata, the lock-generation version, and the fleet baseline
+are 0.11.32. Isolated T-007 changed exactly those three pins. The lock remained
+unchanged and valid; the complete offline gate passed 1,759 tests plus compile,
+Ruff, secret scanning, repository validation, and diff hygiene. PR #57 passed
+both required checks on exact head
+`6121c90fde99d2418f7dd948f6cf37a8fdbb0e03` and merged as
+`726685e22d73e3746370c86c49e5d4a7f75e5d95`; closure PR #58 passed both on
+exact head `e46ca01af8c4c9dc49c83571de36d9a4ef4e038b` and merged as
+`394b50e1e1fe41003a49a4e80098fdac2470e653`. No workflow was dispatched.
+Guarded deletion removed only `/tmp/students-t007-uv` (2,833 entries,
+82,702,666 bytes); its manifest, stale registration, and local refs are absent
+while remote task refs remain. The active Students primary/client were never
+changed and the primary remains at its agent-owned `3c97511`, now four commits
+behind `origin/main`.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
