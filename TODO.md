@@ -87,19 +87,15 @@ Next free ID: T-319.
 
 ## Next resume checkpoint
 
-1. T-318 is executing the owner-authorized Swallow cold replacement below.
-   Validate and publish the narrow durable-marker/aborted-turn parser amendment,
-   then cut over only the inactive Swallow TUI to the exact idle fork. Preserve
-   the shared app server, Students, Harness, and the poisoned root.
-2. T-314 through T-317 are complete. Students and Swallow are owned by their
+1. T-314 through T-318 are complete. Students and Swallow are owned by their
    independent project agents and ledgers; Harness has no project-research
    resume action for either repository.
-3. Complete the four deferred T-311 Mac firewall helpers only when the owner
+2. Complete the four deferred T-311 Mac firewall helpers only when the owner
    can authenticate locally, then validate both routes and exact-unlink each
    helper. Resolve the separate Codex user-config policy choice afterward.
-4. Ask the `192.168.33.30` administrator to correlate T-303's recorded NFS
+3. Ask the `192.168.33.30` administrator to correlate T-303's recorded NFS
    latency intervals when an external coordination window is available.
-5. Continue T-196 only at its exact time/identity gates: AB and AB2 are now
+4. Continue T-196 only at its exact time/identity gates: AB and AB2 are now
    2/8 with next-week successors waiting; retry RI accounting ID `7242`
    without touching successor `10386`, and inspect AL ID `4238363` only after
    its later eligibility.
@@ -108,7 +104,7 @@ Next free ID: T-319.
 
 ### T-318 — Recover poisoned remote Codex threads
 
-**Phase:** executing owner-authorized recovery.
+**Phase:** complete.
 
 The owner asked to extend T-310/T-317 transient-service resilience after exact
 Local evidence exposed a second failure class: Swallow's remote TUI and shared
@@ -128,9 +124,9 @@ drift, unsafe event, protocol ambiguity, or unrecognized schema fails closed.
 The mechanism never replays the rejected prompt and never restarts the shared
 app server.
 
-Work is isolated at `/tmp/harness-t318-thread-recovery` on branch
+Implementation used `/tmp/harness-t318-thread-recovery` on branch
 `t318-codex-thread-recovery`. The primary checkout's two live
-supervisor-held `.nfs…` inodes remain untouched.
+supervisor-held `.nfs…` inodes remained untouched.
 
 Implementation checkpoint:
 
@@ -154,6 +150,11 @@ Implementation checkpoint:
   context refreshes each returned one acknowledged submission. Both disposable
   validation/sync clones were guarded-deleted and their exact manifests
   exact-unlinked.
+- The durable-marker/aborted-turn correction passed protected CI in 2m24s and
+  PR #339 squash-merged as `c47805a`. Local and all eleven managed checkouts
+  synchronized to that revision, every transfer artifact was absent after
+  apply, and the four required Mac refreshes again returned exactly one
+  `status=submitted` each.
 
 **Recurring Swallow incident 2026-07-27 15:45 JST:** exact read-only
 `thread/read` again reports `systemError` for Swallow root
@@ -173,13 +174,12 @@ without new safety evidence. Value-free lifecycle analysis proved why:
 - a later explicit `turn_aborted` supersedes one incomplete turn;
 - the latest completed turn contains many tool records and ends with an error.
 
-Rollback would discard real project work, so the poisoned root must remain
-intact. The accepted safe fallback is the native remote fork
-`019fa265-a94d-72d3-ae88-aa1d610fed6c`: fresh protocol read reports
-`status=idle`, exact name `swallow`, cwd `/home/rioyokota/harness`, and zero
-turns. It is provisionally live only in detached window `@55:3:swallow-next`;
-the owner remains attached to Students, and old Swallow window `@54:2`, the
-shared app server, Students, and Harness are unchanged.
+Rollback would discard real project work, so the poisoned root remains intact.
+A native remote fork `019fa265-a94d-72d3-ae88-aa1d610fed6c` initially read
+`idle` with zero turns, but its first rejected cold-start turn was safely
+rolled back once and exposed the inherited tool-bearing error. The watcher then
+blocked it as `unsafe-tail`; no project action occurred and the fork remains
+preserved rather than retried.
 
 The published analyzer incorrectly evaluated superseded records before the
 latest durable rollback marker and treated `turn_aborted` as unknown. The
@@ -196,15 +196,28 @@ override removed, both focused configuration tests and the complete clean
 eight-worker `tests/test-phase1.sh` pass; only native MPI is skipped outside a
 declared MPI environment.
 
-**Next:** run the complete clean Phase-1 suite, commit and push without force,
-open a protected-`main` follow-up PR, and require exact-head CI. After merge and
-guarded fleet sync, revalidate the fork, tighten only its rollout to `0600`,
-close only provisional `@55` and poisoned Swallow `@54`, recreate index 2 as
-`harness codex-resilient --run --name swallow --remote-session
-019fa265-a94d-72d3-ae88-aa1d610fed6c`, require its exact watcher/TUI/socket
-identities, and send one identified cold-restart instruction to reconcile the
-Swallow repository ledger. Never replay the rejected prompt or restart the
-shared app server.
+**Completion 2026-07-27:** the installed 0.145.0 protocol schema established
+that a bare remote TUI does not persist a root before a first turn, while
+`thread/start` creates an exact empty root. One acknowledged `thread/start`
+with the frozen cwd/approval/sandbox settings created
+`019fa27c-6280-7f00-8e46-ef878875562b`; one acknowledged name write and fresh
+read proved `status=idle`, name `swallow`, cwd `/home/rioyokota/harness`, and
+zero turns. Its single-link current-user rollout was descriptor-tightened from
+`0664` to `0600` with stable identity. The generated schema bundle and sync
+clone were guarded-deleted with protected anchors unchanged and exact
+mode-0600 manifests exact-unlinked.
+
+Only the inactive target chains/windows were stopped. The surviving owner
+view stayed on Harness, Students was untouched, and the shared app server
+remained PID `2852569` with the new TUI's exact Unix peer. Swallow is now only
+window `@58:2` on supervisor `382132`, watcher `382211`, and exact remote root
+`019fa27c-6280-7f00-8e46-ef878875562b`; status is
+`running/remote-explicit` plus `watching/thread-active`, attempt/delay zero,
+recoveries/rollbacks zero. One lock-serialized identified cold-start
+instruction was submitted. Value-free rollout structure proves an active turn
+with assistant messages and completed tool-call pairs, not an idle or poisoned
+TUI. The Swallow agent owns all further SW-031 work from its repository ledger;
+Harness must not replay the prompt or inspect pane content.
 
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
