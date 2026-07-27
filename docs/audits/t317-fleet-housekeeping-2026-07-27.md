@@ -343,6 +343,15 @@ and value-free hardening audit pass afterward. A pre-existing childless SSH
 process and exact future backup job `8270230` remained unchanged; AB's active
 SW-031 branch was untouched.
 
+A later ownership readback found Students on new local planning branch
+`task/t-009-rebuild-validation-suite` at `2f3b0bb`. Its project ledger keeps
+T-009 in interviewing-only offline planning and forbids service, Slack,
+private-state, workflow, provider, and rollout actions. T-317 treats that
+branch and agent as protected and made no Students change. Website remained
+clean/current, AB Swallow remained on active SW-031 at `9cb1ef7`, and the T4
+mirror remained clean/current at `4dcd20d`. Students, Swallow, and Website had
+zero open pull requests.
+
 ## Guarded deletion and cleanup
 
 - Six Linux and four Mac arg0 candidates were quarantined, revalidated, and

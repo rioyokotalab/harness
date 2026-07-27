@@ -964,6 +964,23 @@ revalidated and removed only that quarantine. Immediate readback is
 `live=5 eligible=0 young=0 unexpected=0`; all three supervisors, their exact
 remote selectors, and the canonical three-window topology remain unchanged.
 
+**Repository ownership checkpoint 2026-07-27 13:43 JST:** Harness remains
+clean apart from its supervisor-held `.nfs` inode and draft PR #337 is cleanly
+mergeable with protected CI passing on exact head `1799b23`. Website remains
+clean/current `main`. AB Swallow remains clean on its unchanged active SW-031
+branch at `9cb1ef7`; T4's actual mirror path
+`/home/8/uq02038/projects/swallow` is clean/current `main` at `4dcd20d`.
+The first T4 probe reused AB's project path and failed before Git invocation;
+the corrected declared checkout passed.
+
+Students independently started local planning branch
+`task/t-009-rebuild-validation-suite` at `2f3b0bb`. Its durable ledger is in
+the interviewing phase and explicitly limits work to offline planning with no
+service restart, student contact, private-state/credential access, live Slack,
+provider call, workflow dispatch, or rollout. Treat this new branch and agent
+as protected. Students, Swallow, and Website have zero open pull requests;
+T-317 made no change in any of their checkouts.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
