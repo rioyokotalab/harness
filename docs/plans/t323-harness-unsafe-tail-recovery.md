@@ -8,8 +8,9 @@ discarding real work from poisoned root
 
 ## Confirmed state and decision
 
-The active root is `systemError`, and the published structural analyzer
-classifies its tail as unsafe for rollback. Window `@49:harness` is live under
+The active root is `systemError`, and the published analyzer refuses recovery
+at old-rollout metadata validation because that rollout remains group-writable.
+Its tail is therefore not proven safe for rollback. Window `@49:harness` is live under
 supervisor `4063793`, wrapper `4063851`, and real TUI `4064616`, but legacy
 runtime name `harness-canary` has no watcher. App server `2852569`, Students,
 and Swallow are healthy and out of mutation scope.

@@ -114,7 +114,8 @@ Next free ID: T-324.
 
 At 2026-07-27 21:59 JST, metadata-only diagnosis proved the active Harness
 root `019fa076-7132-7992-800e-f6c6d4aeadfb` is `systemError`. The published
-T-318 analyzer classifies its retained rollout tail as unsafe for rollback.
+T-318 analyzer refuses recovery because the old rollout remains group-writable;
+it therefore cannot prove the retained tail safe for rollback.
 Active tmux window `@49:harness` is owned by legacy supervisor
 `harness-canary` PID `4063793`, wrapper PID `4063851`, and real TUI PID
 `4064616`; immutable start ticks are `84409801`, `84409804`, and `84409839`.
@@ -143,6 +144,15 @@ remains untouched.
 **Next action:** commit and push this execution checkpoint, rerun exact
 Git/tmux/process/app-server/thread/doctor gates, then send one acknowledged
 `thread/start`. An ambiguous acknowledgement is non-retryable.
+
+**Pre-write correction:** the pushed preflight stopped before `thread/start`
+because an explicit diagnostic tried to require structural `unsafe-tail`
+classification after rollout validation. Validation correctly refused the
+old group-writable rollout first, so the tail structure was never reached.
+This preserves the same fail-closed decision: rollback is not proven safe and
+the fresh-root path remains selected. Do not chmod or otherwise mutate the
+poisoned root. Commit and push this correction, then rerun the other immutable
+preconditions without bypassing the metadata refusal before `thread/start`.
 
 ### T-322 — Make the phone-visible Swallow name unique
 
