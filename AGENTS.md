@@ -239,6 +239,9 @@ guessing.
   SSH entries, usernames, hostnames, and operating systems.
 - Use `harness fleet-health` for routine fleet-health reports; do not replace
   its target-specific contracts with agent-authored SSH loops.
+- Before yielding every Harness turn, run `harness fleet-health` and include
+  its fresh compact status in the final response. Report a failed or unknown
+  check explicitly; never omit the snapshot or reuse a prior turn's result.
 - In compact fleet-health reports, count `abq` as a Linux node and mark it
   ready only when both `abq` and `abq2` routes pass. Count only aist, home,
   office, and riken in the Mac-route total.

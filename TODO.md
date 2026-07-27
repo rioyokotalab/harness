@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-319.
+Next free ID: T-320.
 
 ## Current state
 
@@ -79,11 +79,11 @@ Next free ID: T-319.
 - Project safety and collaboration rules in root `AGENTS.md` remain
   authoritative. `.codex/AGENTS.md` is only the out-of-project launch
   sentinel. Never inspect credentials or use raw recursive/bulk deletion.
-- Whenever owner input or approval is requested, or a task completes, report a
-  fresh compact health snapshot for every managed Linux node and all four Mac
-  route pairs. Count abq as Linux and mark it ready only when both abq and abq2
-  routes pass; do not include that pair in the Mac total. Omit `abci_login` and
-  `alps_login` unless a task targets those transports.
+- Before yielding every Harness turn, report a fresh compact health snapshot
+  for every managed Linux node and all four Mac route pairs. Count abq as
+  Linux and mark it ready only when both abq and abq2 routes pass; do not
+  include that pair in the Mac total. Omit `abci_login` and `alps_login`
+  unless a task targets those transports.
 
 ## Next resume checkpoint
 
@@ -101,6 +101,53 @@ Next free ID: T-319.
    successors recorded below.
 
 ## Active tasks
+
+### T-319 — Report fleet health every Harness turn
+
+**Phase:** complete.
+
+The owner requires a fresh canonical fleet-health result in every Harness
+turn's final response. Root `AGENTS.md` and the compact current-state contract
+now require `harness fleet-health` immediately before yielding, explicit
+reporting of failed or unknown checks, and no reuse of a prior turn's result.
+The focused fleet-health suite and `git diff --check` pass.
+
+**LIFO validation gate 2026-07-27:** the first complete eight-worker phase-one
+run passed 73 focused suites; only tmux and terminfo failed because their apply
+fixtures require a clean committed checkout and the primary checkout retains
+the known live supervisor-held `libexec/.nfs…` placeholder. The placeholder
+must remain untouched. Commit this evidence, run the unchanged complete suite
+from a disposable clean full clone of the exact task revision, then
+guarded-delete only that clone and exact-unlink its mode-0600 manifest after
+successful verification.
+
+**LIFO validation gate 2026-07-27:** the exact clean full clone at `1ddfd83`
+made terminfo pass, but the eight-worker run still failed only tmux when its
+apply preflight briefly observed a dirty checkout. After the runner exited,
+the clone was clean with no tracked or untracked changes; the runner had
+already removed its temporary detailed log. This is evidence of a transient
+parallel validation interaction, not yet proof of its source. Preserve the
+clone, commit this gate, fast-forward it to the checkpoint, run the tmux suite
+alone, then run the complete phase-one suite with one focused worker to remove
+cross-suite checkout-state concurrency from the acceptance result.
+
+**LIFO validation gate resolved 2026-07-27:** the isolated tmux retry proved
+the apparent transient-dirty hypothesis wrong. The managed shell had exported
+`HARNESS_ROOT=/home/rioyokota/harness`, so the clean clone's helper inspected
+the primary checkout and correctly rejected its preserved live `.nfs…`
+placeholder. The clone remained clean throughout. Exact-unlink the single
+mode-0600 trace, update the clone to this checkpoint, and rerun isolated plus
+complete validation with `HARNESS_ROOT` absent from the test environment.
+
+**Completion 2026-07-27:** the isolated tmux suite and complete eight-worker
+phase-one suite pass from the clean exact clone with the inherited
+`HARNESS_ROOT` removed; all 75 focused suites and integration gates passed,
+with only the declared portable Codex and native MPI skips. Guarded deletion
+removed the exact 944-entry / 23,224,109-byte validation clone and two empty
+diagnostic probe directories, protected anchors were unchanged, and the exact
+mode-0600 manifest was unlinked. Root instructions, the ledger, and focused
+coverage now make a fresh canonical fleet-health result mandatory before every
+Harness turn yields.
 
 ### T-318 — Recover poisoned remote Codex threads
 
