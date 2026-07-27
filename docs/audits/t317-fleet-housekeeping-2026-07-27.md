@@ -183,7 +183,7 @@ decision.
 | Harness | task branch plus live `.nfs…` | strict fsck pass | managed utilities current; deferred source-built tools | protected strict `portable-phase1` |
 | Students | protected primary `main`; isolated T-006/T-007 complete | fsck pass; 51 MiB loose plus 54-byte temp objects | cryptography 49.0.0; Ruff 0.16.0; CI uv 0.11.32; stale PR #39 open | PRs #55–#58 merged; production Slack deployment failed |
 | Website | clean current `main` | fsck pass; zero garbage | Playwright 1.62.0; checkout v7.0.1 | PR #36 merged, no deployment |
-| Swallow | protected active AB branch; clean T4 mirror | both fsck pass | no package lock; local SIF hash pinned | strict `Offline checks`; no task mutation |
+| Swallow | protected active AB branch; clean/current T4 `main` | both fsck pass | no package lock; local SIF hash pinned | strict `Offline checks`; T4 mirror repaired |
 
 All four repositories have:
 
@@ -284,6 +284,15 @@ validated Mac Codex pane. Every Students T-006 head passed `Offline checks`
 and `Enforce student folder`; its protected primary checkout and active client
 were not changed. Every Website merge passed `Offline checks`; no Website
 deployment ran.
+
+T4's clean Swallow mirror was 104 commits non-divergently behind live GitHub
+`main`. After its own instructions, clean single-worktree state, absence of
+Git locks/open files, current-user SSH agent, and exact scheduler state were
+revalidated, it fast-forwarded without force from `d7b9870` to current
+`4dcd20d`. Swallow's login-safe static/portability/secret suite, strict fsck,
+and value-free hardening audit pass afterward. A pre-existing childless SSH
+process and exact future backup job `8270230` remained unchanged; AB's active
+SW-031 branch was untouched.
 
 ## Guarded deletion and cleanup
 

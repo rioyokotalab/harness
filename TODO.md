@@ -852,6 +852,24 @@ protected `main`; its first `portable-phase1` passed in 2m20s. Keep it draft
 and unmerged until the 18:30 final readback is appended and the clean local
 Phase-1 gate passes.
 
+**T4 Swallow mirror repair 2026-07-27 14:08 JST:** read-only live-remote and
+GitHub comparison proved the clean T4 `main`/`origin/main`
+`d7b9870892244e105867aed82d1ff27d444e810b` was non-divergently 104 commits
+behind live GitHub `main` `4dcd20d7db9c5d55aa57fa9dd4af8d8ada5b41a3`.
+T4's own `AGENTS.md` was reread completely. Preflight proved one clean
+worktree, no stash or Git lock, no open-file references, and only exact future
+backup job `8270230`; a pre-existing childless `ssh` process had its CWD in
+the tree but no open repository file.
+
+With a current-user-owned forwarded agent socket, `git fetch origin main`
+resolved the same exact live commit and `git merge --ff-only origin/main`
+advanced only the clean T4 mirror. Login-safe Swallow static/portability/secret
+checks, strict fsck, and the value-free hardening audit pass; the worktree is
+clean/current with zero findings. The childless SSH PID remains alive and
+unchanged, and exact backup job `8270230` plus its disabled smoke state are
+unchanged. No force, prune, branch deletion, scheduler/runtime action, or AB
+Swallow mutation occurred. AB remains on active SW-031 branch `9cb1ef7`.
+
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
 **Phase:** complete.
