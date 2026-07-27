@@ -166,6 +166,19 @@ one revision-specific context refresh to each eligible managed Mac; activation
 of Sol/high remains limited to sessions started after the updated config is
 loaded.
 
+**Validation checkpoint:** implementation commit `e9091cd` passed the complete
+clean-tree `tests/test-phase1.sh` suite. All focused suites passed, including
+the project config, takeover guidance, external-onboarding mirror, fleet-sync,
+and guarded-delete contracts; the native MPI smoke was correctly skipped
+outside a declared MPI environment. The task branch remains isolated from the
+primary checkout and the primary checkout's two unrelated live `.nfs` files
+remain untouched.
+
+**Next action:** commit this validation checkpoint, fetch the collaborative
+remote, push the task branch with an explicit refspec, and publish it through
+protected exact-head `portable-phase1` CI. Do not activate any existing Codex
+session during publication.
+
 ### T-325 — Recover recurring Codex unsafe tails and make the workflow reusable
 
 **Phase:** complete.
