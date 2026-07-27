@@ -2,8 +2,10 @@
 
 ## Scope and authority
 
-T-317 runs from 2026-07-27 08:30 JST to 20:30 JST, with material work ending
-at 18:30. It covers:
+T-317 was planned to run from 2026-07-27 08:30 JST to 20:30 JST, with material
+work ending at 18:30. At 15:13 JST the owner explicitly ended the run early
+and directed its removal from the active Harness board because Students and
+Swallow have independent project agents. The completed scope covered:
 
 - Linux: Local, ab, ab2, abq through both routes, ri, al, rc, and t4;
 - macOS: aist, home, office, and riken through both routes;
@@ -432,36 +434,45 @@ entries, 1,993,617 bytes); its exact mode-0600 manifest was exact-unlinked.
 2. Owner storage choice: select/configure Mac backup destinations.
 3. T-196 gates: complete weekly stability/restores and create current manual
    encrypted replica generations; do not automate yet.
-4. Hosting-policy decision: reconcile the coordinated July 26 zero-review
-   change with frozen T-311 D-001, including Students' lost code-owner and
-   last-push gates, plus host-enforced Action restrictions for
-   Harness/Swallow.
-5. Students-local Slack administration: resolve production
-   `not_in_channel`; do not rerun until membership is corrected.
-6. Administrator maintenance window: apply Local security updates and reboot
+4. Harness hosting-policy decision: reconcile the coordinated July 26
+   zero-review change with frozen T-311 D-001 and decide whether Harness
+   should enforce selected Actions at the host. Students and Swallow settings
+   belong to their independent project agents.
+5. Administrator maintenance window: apply Local security updates and reboot
    only after active agents and jobs are safely quiesced.
-7. Active-agent maintenance: resolve value-free agent-config collisions and
-   pack Students loose objects only after those agents finish.
-8. Site-admin lifecycle confirmation: establish whether AB/AB2/ABQ/T4 use a
+6. Active-agent maintenance: resolve value-free Codex user-config collisions
+   only after the affected sessions finish or the owner selects a supported
+   product-owned user layer.
+7. Site-admin lifecycle confirmation: establish whether AB/AB2/ABQ/T4 use a
    maintained RHEL 9.4 extended stream and whether AL has SLES 15 SP6 LTSS;
    never inspect subscription credentials or mutate site-managed OS packages.
-9. Website dependency graph: inspect its GitHub UI and decide whether to
+8. Website dependency graph: inspect its GitHub UI and decide whether to
     refresh/regenerate generated SBOM coverage through an owner hosting action;
     retain native lockfile audit meanwhile.
 
-## Final validation checklist
+## Owner-directed early closeout
 
-At the 18:30 cutoff, repeat:
+The owner's 15:13 direction superseded the planned 18:30 material cutoff and
+20:30 deadline. A fresh read-only closeout found:
 
-- supervisor status, tmux metadata, native Codex doctor, and Local arg0 plan;
-- canonical fleet health and Mac tunnel/session doctors;
-- exact native scheduler future-job readback;
-- primary Restic access and absence of locks/processes (do not repeat
-  full-data work);
-- Git branch/worktree/upstream status, PR/check state, and live rulesets;
-- task-temp/helper/residue inventory and `git diff --check`;
-- full clean Harness `tests/test-phase1.sh`.
+- exact Harness, Students, and Swallow remote supervisors running at
+  attempt/delay zero, with one attached client on Harness and no pane reads;
+- native Codex doctor 18/18 `ok`, and Local arg0
+  `live=5 eligible=0 young=0 unexpected=0`;
+- canonical fleet health passing every managed Linux logical node and both
+  routes for all four Macs;
+- all four Mac doctors ready with zero failures and only the two known
+  firewall/stealth warnings;
+- all eight exact future backup jobs present, every smoke verified-disabled
+  and absent, and primary Restic access passing on every Linux target;
+- draft PR #337 mergeable with read-only workflow permissions, the active
+  Harness ruleset, and successful protected CI at pre-closeout head
+  `265c042`;
+- no T-317 task-temp residue. The live supervisor-held Harness `.nfs…` inode
+  and the independently owned T-318 worktree are preserved.
 
-Stop all material work at 18:30 and use the remaining two hours for this
-readback, final audit correction, protected publication, fleet sync if needed,
-and durable handoff.
+One obsolete `codex remote-control doctor` diagnostic failed read-only because
+that command has no `doctor` subcommand in Codex 0.145.0. The corrected native
+`codex doctor --json` returned all 18 checks `ok`; no retryable mutation was
+involved. Clean full-suite validation and protected PR publication are the
+remaining closeout gates.
