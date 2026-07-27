@@ -62,6 +62,9 @@ exact drift is deferred for owner reconciliation.
   second distinct global npm Claude package at stale version `0.2.14`, behind
   the effective managed `2.1.220` launcher. Package removal is separately
   gated and is deferred with the exact package selected.
+- All twelve agent-config outputs report 16 shared skills. The compact Harness
+  current-state text incorrectly said 15 and was corrected to 16 without
+  changing runtime configuration.
 - Eleven remote project-agent doctors passed. Local's project-agent doctor is
   unknown because its explicit clean-checkout gate sees the preserved live
   supervisor-held `.nfs` inode. Two disposable-view exclude spellings failed

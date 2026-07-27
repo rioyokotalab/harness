@@ -51,7 +51,7 @@ Next free ID: T-325.
   `harness codex-arg0-wrapper --rollback`; an official Codex upgrade requires
   fresh validation before reinstalling the version-scoped wrapper.
 - Codex and Claude now use only project-scoped policy, permission settings,
-  rules, and 15 skills when started from `~/harness`. All 12 systems retain the
+  rules, and 16 skills when started from `~/harness`. All 12 systems retain the
   two global launch sentinels and Codex launcher. Codex's opaque product-owned
   user configuration is private and accepted on Local, T4, and the four Macs;
   it is absent on the other six nodes. Schema-2 doctor, repository convergence,
@@ -168,6 +168,10 @@ Linux arg0 residues, ten stale T-295 manifests, and tonight's exact pytest
 root were safely removed; final arg0 plans and guarded-manifest counts are
 zero across all Linux nodes. Ambiguous project/browser artifacts remain
 preserved.
+
+**LIFO documentation fix:** all twelve live agent-config contracts report 16
+shared skills, while the compact current state still said 15. The stale count
+is now 16; no runtime or installed configuration changed.
 
 **Next action:** validate and publish this first audit checkpoint through the
 protected task branch, then continue independent deep checks and LIFO repair
