@@ -85,12 +85,32 @@ registration directories. Fresh PR-head and remote-ref readback then gated
 deletion of only those two merged local and remote branches. T-324's worktree,
 the primary checkout, and the live `.nfs` inode remain.
 
+Fourteen additional Harness remote branches were deleted only after each
+current remote head exactly matched its merged PR head (T-311, T-320, T-321,
+T-322, and T-317 branches). Three T-303 evidence/blocker branches plus
+T-314/T-316 branches without an exact merged-PR proof remain preserved.
+Website's sole stale task branch exactly matched merged PR #36 and was deleted;
+fresh readback leaves only `main`. Repository auto-delete-on-merge remains
+disabled and is a hosting-policy choice, so it was not changed.
+
 Website has one clean `main` worktree and no merged local branch residue.
 Students changed concurrently from clean `main` to a project-owned task branch
 during this audit; no takeover or mutation ran. Swallow has active project
 work on AB plus an additional clean registered SW-013 worktree and many merged
 research branches. Those project-owned experiment refs are preserved for the
 Swallow agent rather than treated as generic Harness residue.
+
+Remote Linux arg0 inventory found one eligible completed residue on AB, AB2,
+RI, RC, T4, and ABQ and none on AL. Each owning node's lock-aware guarded
+apply removed only its exact quarantine target (seven entries and about
+8.8 KiB each). Final planning reports zero live, eligible, young, unexpected,
+or leftover guarded-manifest directories on all seven nodes.
+
+Local exact-unlinked ten stale current-user-owned, mode-0600, single-link T-295
+guarded manifests after proving no open descriptor. The exact 225-entry /
+602,089-byte pytest root created by tonight's validated Students run was
+guarded-deleted with protected anchors unchanged. Ambiguous historical
+browser, image, and Swallow research artifacts remain preserved.
 
 ## LIFO execution issues
 

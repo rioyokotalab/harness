@@ -162,6 +162,13 @@ guarded-deleted only after their exact heads matched merged PRs #360/#340;
 their exact local and remote task refs were then removed. Active T-324,
 Students, and Swallow project work remains untouched.
 
+Fourteen more exact Harness branches and Website's one stale branch were
+removed only after current remote heads matched merged PR heads. Six remote
+Linux arg0 residues, ten stale T-295 manifests, and tonight's exact pytest
+root were safely removed; final arg0 plans and guarded-manifest counts are
+zero across all Linux nodes. Ambiguous project/browser artifacts remain
+preserved.
+
 **Next action:** validate and publish this first audit checkpoint through the
 protected task branch, then continue independent deep checks and LIFO repair
 until the 04:13 JST material-work cutoff. The exact branch head subsequently
