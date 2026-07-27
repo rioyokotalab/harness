@@ -327,6 +327,27 @@ its old-inode launcher/watcher/supervisor unwind, then launch the same root in
 one `swallow` window under published supervisor code. Do not replay a prompt,
 change the root/name, signal the shared tmux server, or touch PID `2876863`.
 
+**LIFO live-activation gate:** exact preflight passed and one `SIGTERM` to
+accepted real TUI PID `1605906` retired its old-inode TUI, launcher, watcher,
+supervisor, and window without prompt replay. A new `@62:swallow` launched the
+same exact idle root under published supervisor PID `1917582` and watcher PID
+`1917695`. The first three native TUI launches then exited transiently and
+entered bounded backoff while the root and watcher remained idle.
+
+Diagnosis from process structure and the implementation is exact: the new
+watcher-monitor design starts `run_codex` as an asynchronous shell command.
+POSIX non-job-control shells provide null stdin to that command, so an
+interactive TUI cannot retain its controlling-terminal input. Focused fakes
+did not read stdin and therefore missed this production contract. No pane,
+transcript, rejected prompt, root/name, app-server, Harness, Students, or
+project state changed.
+
+The correction binds production remote-explicit background launches
+explicitly to `/dev/tty` while retaining null-input-compatible test execution.
+A focused source assertion prevents removing that binding. Validate the
+correction, publish it through a second protected PR, then stop only the exact
+current backoff leaf and relaunch the same root under the corrected merge.
+
 ### T-324 — Nightly fleet and repository hardening
 
 **Phase:** complete.

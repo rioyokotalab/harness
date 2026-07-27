@@ -643,7 +643,11 @@ while :; do
     started=$(now_epoch)
     watcher_failed=no
     if [ "$selector" = remote-explicit ]; then
-        run_codex "$first_launch" &
+        if [ "${HARNESS_TESTING:-0}" = 1 ]; then
+            run_codex "$first_launch" &
+        else
+            run_codex "$first_launch" </dev/tty &
+        fi
         codex_pid=$!
         while process_running "$codex_pid"; do
             if ! process_running "$thread_recovery_pid"; then
