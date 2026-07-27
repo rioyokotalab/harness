@@ -188,6 +188,16 @@ The real TUI has an established Unix peer to unchanged app server PID
 `2852569`; old Harness, Students, and Swallow remain unchanged. Commit and
 push these identities, then submit exactly one lock-serialized cold-start turn.
 
+**Cold-start acknowledgement:** under the shared mode-0600 agent-message lock,
+exactly one identified `turn/start` was acknowledged for new root
+`019fa3ae-6ad0-7642-aeca-b7b52421f576` as turn
+`019fa3b1-741c-77b2-aa01-60285d99e39a`. The instruction prohibits rejected
+prompt reconstruction/replay and prior-chat reliance, requires complete
+`AGENTS.md`/`TODO.md` plus Git/mutable-state reconciliation, and leaves all
+remaining live cutover mutations to this controller. The request must never be
+retried. Commit and push this acknowledgement, then monitor only value-free
+turn structure until assistant-bearing completion or a fail-closed state.
+
 ### T-322 — Make the phone-visible Swallow name unique
 
 **Phase:** complete.
