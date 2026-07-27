@@ -178,6 +178,16 @@ supervisor, watcher, or TUI was created; both runtime status files remain
 absent and the new root is unchanged. Retry is safe with the explicit session
 window target `harness:`. Do not repeat the rejected target spelling.
 
+**Provisional-client acceptance:** the corrected explicit session target
+created exact `@60:2` / pane `%60` named `harness-next`. Supervisor PID
+`3126145`, watcher PID `3126236`, managed wrapper PID `3126411`, and real TUI
+PID `3126825` have start ticks `89268913`, `89268923`, `89269034`, and
+`89269064`. Value-free status is `running/remote-explicit` plus
+`watching/thread-idle`, with attempt/delay and recovery/rollback counts zero.
+The real TUI has an established Unix peer to unchanged app server PID
+`2852569`; old Harness, Students, and Swallow remain unchanged. Commit and
+push these identities, then submit exactly one lock-serialized cold-start turn.
+
 ### T-322 — Make the phone-visible Swallow name unique
 
 **Phase:** complete.
