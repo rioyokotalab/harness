@@ -397,7 +397,9 @@ actions were removed from Harness's active/deferred queue. Swallow commit
 `55f8f0af1ab63fcd5e9c9cb8fad25338d37a762d` now owns the exact cold-resume,
 container-digest, Bridge-source, training-lock, compatibility, and static-A6
 next actions. AB was cleanly fast-forwarded to that revision. This audit keeps
-cross-repository findings as historical evidence only.
+cross-repository findings as historical evidence only. Guarded deletion then
+removed the clean, tree-equal, handle-free isolated transfer checkout (281
+entries, 1,993,617 bytes); its exact mode-0600 manifest was exact-unlinked.
 
 ## Guarded deletion and cleanup
 

@@ -1066,6 +1066,9 @@ Bridge-source, training-lock, and bounded compatibility follow-ups found by
 T-317. AB fast-forwarded cleanly to that exact commit after head/worktree and
 current-user SSH-agent revalidation. Harness retains only infrastructure,
 tmux/remote-control operation, and historical cross-repository audit facts.
+After clean/tree-equality/open-handle checks, guarded deletion removed the
+isolated transfer checkout (281 entries, 1,993,617 bytes) and the exact
+mode-0600 manifest was exact-unlinked.
 
 ### T-316 — Map Local tmux to three phone-visible Codex roots
 
