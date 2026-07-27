@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-323.
+Next free ID: T-324.
 
 ## Current state
 
@@ -107,6 +107,42 @@ Next free ID: T-323.
    successors recorded below.
 
 ## Active tasks
+
+### T-323 — Recover Harness unsafe-tail `Request blocked`
+
+**Phase:** executing.
+
+At 2026-07-27 21:59 JST, metadata-only diagnosis proved the active Harness
+root `019fa076-7132-7992-800e-f6c6d4aeadfb` is `systemError`. The published
+T-318 analyzer classifies its retained rollout tail as unsafe for rollback.
+Active tmux window `@49:harness` is owned by legacy supervisor
+`harness-canary` PID `4063793`, wrapper PID `4063851`, and real TUI PID
+`4064616`; immutable start ticks are `84409801`, `84409804`, and `84409839`.
+The supervisor is running at attempt/delay zero but has no recovery watcher.
+Shared app server PID `2852569` / start tick `83381863`, Students, and Swallow
+remain live. No pane/transcript content was read and no prompt, thread,
+process, tmux, app-server, or repository state changed during diagnosis.
+
+The owner selected the proven fresh-root recovery and gave explicit `go`.
+Preserve the poisoned root, create one new empty app-server root, name and
+descriptor-tighten it, launch provisional `harness-next` under a current
+watcher, and submit exactly one cold-start instruction that reconstructs only
+from complete `AGENTS.md`, `TODO.md`, Git, and mutable-state reads. Never
+reconstruct or replay the rejected prompt, fork/resume the poisoned root,
+roll it back, inspect content, restart the shared app server, or change
+Students/Swallow. Cut over names/windows and retire only the old leaf TUI
+after an assistant-bearing completed turn passes all gates.
+
+The frozen transaction, failure handling, and acceptance criteria are in
+`docs/plans/t323-harness-unsafe-tail-recovery.md`. One read-only diagnostic
+import created `libexec/__pycache__`; guarded deletion removed exactly its two
+entries / 42,026 bytes with protected anchors unchanged, and its mode-0600
+manifest was exact-unlinked. The unrelated live supervisor-held `.nfs` inode
+remains untouched.
+
+**Next action:** commit and push this execution checkpoint, rerun exact
+Git/tmux/process/app-server/thread/doctor gates, then send one acknowledged
+`thread/start`. An ambiguous acknowledgement is non-retryable.
 
 ### T-322 — Make the phone-visible Swallow name unique
 
