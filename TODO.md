@@ -213,6 +213,14 @@ provisional name to `swallow`. Old remains `systemError`; new remains idle.
 Neither write is retryable. Commit and push, then rename exact tmux `@58` to
 `swallow-blocked` and exact `@59` to `swallow`, leaving the owner on `@49`.
 
+**Tmux cutover:** exact preconditions passed and native `tmux rename-window`
+ran once per target. The four-window mapping is now `@49:harness` active,
+`@50:students`, `@58:swallow-blocked`, and `@59:swallow`; every window has
+one pane. No client switch, pane input, or process signal ran. Commit and push
+this reversible checkpoint, then revalidate old real TUI PID `382364` /
+start tick `87255666` and send one `SIGTERM` only to that leaf so its exact
+wrapper, watcher, and supervisor unwind without respawn.
+
 ### T-320 — Make interactive `ls` color portable across the fleet
 
 **Phase:** complete.
