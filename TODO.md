@@ -111,8 +111,7 @@ Next free ID: T-338.
 
 ### T-336 — Benchmark current Codex and Claude Harness development
 
-**Phase:** planning complete; implementation started; scored model execution
-has not started.
+**Phase:** implementation validated; scored model execution has not started.
 
 The owner asked for a ten-hour, evidence-backed comparison of whether current
 Claude Code can develop Harness as effectively and safely as current Codex,
@@ -163,9 +162,22 @@ During planning, protected `main` advanced independently through T-335 and
 T-337 to `1cb46d47355bb61df4e763f04b11f60310373a39`; this task preserved both
 and rebased before implementation.
 
-**Next action:** implement the frozen manifest, property graders, matched
-runner, schemas, containment probes, and focused tests. Do not start scored
-model runs until model-free validation passes from a clean task commit.
+**Implementation checkpoint 2026-07-28 23:36 JST:** the versioned corpus,
+closed result schema, shell-mediated runner, 16 synthetic fixture seeds,
+property graders, model-free references, containment probes, focused test, and
+evaluation documentation are implemented. Independent validation established
+that all 16 untouched fixture baselines fail their hidden grader and all 16
+model-free reference solutions pass. `development_v2.py validate`,
+`development_v2.py selftest`, the focused suite, Python compilation,
+ShellCheck, and `git diff --check` pass. Generated Python cache residue was
+removed through one verified guarded-delete transaction. The bounded fixture
+worker is closed; its exhaustive handoff remains in
+`evaluation/development-v2/FIXTURE-HANDOFF.md`.
+
+**Next action:** commit the validated implementation so the source tree is
+clean, then run the 32-invocation pilot in the declared private run root. Stop
+before confirmation only for containment or evidence-integrity failure; do not
+retry an acknowledged row.
 
 ### T-337 — Promote bridge-first managed Codex cutovers
 

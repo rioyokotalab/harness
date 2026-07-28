@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "queries": [
+    {
+      "job_id": "job-417",
+      "exit_status": 1,
+      "stdout_bytes": 0,
+      "classification": "accounting-unavailable"
+    }
+  ],
+  "successor_observed": {
+    "job_id": "job-418",
+    "state": "pending"
+  }
+}

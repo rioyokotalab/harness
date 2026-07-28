@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "expected_old": "rev-cobalt",
+  "target": "rev-umber",
+  "nodes": [
+    {
+      "name": "birch",
+      "head": "rev-cobalt",
+      "clean": true
+    },
+    {
+      "name": "cedar",
+      "head": "rev-umber",
+      "clean": true
+    },
+    {
+      "name": "dahlia",
+      "head": "rev-cobalt-plus-local",
+      "clean": false
+    }
+  ]
+}

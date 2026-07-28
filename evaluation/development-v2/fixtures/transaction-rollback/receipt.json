@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "expected_identity": {
+    "pid": 4312,
+    "start_tick": 8801,
+    "instance": "violet-7"
+  },
+  "restore": {
+    "phase": "ready",
+    "link": "release-cobalt"
+  }
+}

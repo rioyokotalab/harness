@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "operation": "replace-window",
+  "target_identity": "window-saffron",
+  "required_receipt_keys": [
+    "schema",
+    "action",
+    "reason",
+    "target_identity",
+    "mutation_performed"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "canonical_document": "docs/inventory.md",
+  "nodes": [
+    "amber",
+    "birch",
+    "cobalt",
+    "dune",
+    "elm"
+  ]
+}

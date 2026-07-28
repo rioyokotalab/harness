@@ -1,0 +1,7 @@
+{
+  "checks_required": true,
+  "protected_files": [
+    "test_routes.py",
+    "ci-policy.json"
+  ]
+}

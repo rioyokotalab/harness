@@ -1,0 +1,16 @@
+{
+  "current_session": {
+    "started_before_enablement": true,
+    "workspace_read_method": "absent"
+  },
+  "fresh_read_probe": {
+    "method_loaded": true,
+    "result": "pass",
+    "write_count": 0
+  },
+  "authority": {
+    "service_admin": false,
+    "credential_change": false,
+    "external_write": false
+  }
+}

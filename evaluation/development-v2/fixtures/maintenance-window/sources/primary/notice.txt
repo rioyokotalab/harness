@@ -1,0 +1,7 @@
+authority=Aurora Facilities Board
+node=opal
+primary_start=2042-08-03T09:00:00+09:00
+primary_end=2042-08-03T17:00:00+09:00
+backup_start=2042-08-24T09:00:00+09:00
+backup_end=2042-08-24T17:00:00+09:00
+scope=full-stop
