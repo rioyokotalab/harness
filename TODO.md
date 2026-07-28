@@ -111,7 +111,7 @@ Next free ID: T-336.
 
 ### T-335 — Restore Slack tools before the next Swallow run
 
-**Phase:** blocked on Local-controller lifecycle ownership.
+**Phase:** executing under Local-controller lifecycle ownership.
 
 The owner requires functional Slack access before authorizing the planned
 12-hour Swallow TODO run. This task is a connector-readiness gate only; no
@@ -248,6 +248,39 @@ validate that mutation. After it leaves this Swallow thread running and idle
 under a newly started plugin-enabled process, resume T-335 here and run one
 direct read-only Slack workspace/channel probe. Do not repeat the successful
 ephemeral probe or start the 12-hour task before that same-thread acceptance.
+
+**Local-controller takeover 2026-07-28:** the owner requested reconciliation
+of exact pushed checkpoint
+`19cb7cb0c7c90a07af15e8271fa51e2f94cf1598` and explicitly requested the
+recorded same-root Swallow lifecycle refresh. The task worktree is
+clean/aligned at that checkpoint; protected Local `main` is clean/aligned at
+`c06028f82cf55c9dcdcc75f56a5472d9aafc6bec`. This resolves the transport
+blocker and authorizes only the already frozen controller-owned lifecycle
+transaction.
+
+Fresh pane-blind preflight finds the observe-only monitor healthy with all
+three chains and exact order `0:harness,1:students,2:swallow`. Swallow is one
+live pane `@77` rooted at `/home/rioyokota/harness`; no tmux client is
+attached. Its exact saved root remains
+`019fa5a1-7fff-7e92-8e2a-2586c684747f`, and value-free status is
+`running/remote-explicit` plus `watching/thread-idle`, with zero recoveries and
+rollbacks. Exact supervisor PID/start `654594/94624954`, watcher
+`654657/94624964`, launcher `654847/94625075`, and real TUI
+`654935/94625082` are live. Shared app server PID/start
+`2852569/83381863` and monitor PID/start `1903223/95835645` remain live.
+The current-user, single-link, mode-0600 shared agent-message lock is safe.
+No app-server control connection, pane/transcript read, prompt input, signal,
+launch, connector write, or Slack call ran during reconciliation.
+
+**Next action:** checkpoint this exact preimage, then hold the shared
+agent-message lock, revalidate every recorded identity and idle/unattached
+gate, send one `SIGTERM` only to real Swallow TUI PID `654935`, and require
+the old chain/window to unwind. Launch the same saved root exactly once as
+`2:swallow` with runtime name `swallow-recovery-next` under current
+plugin-enabled code. Never retry an ambiguous signal/launch, replay a prompt,
+restart the app server, or create/rename/archive a saved root. Accept only a
+new supervisor/watcher/TUI/socket chain, thread-idle receipt, exact order,
+unchanged Harness/Students/app-server/monitor identities, and no Slack write.
 
 ### T-334 — Extend maintenance awareness to remote Linux nodes
 
