@@ -111,7 +111,7 @@ Next free ID: T-336.
 
 ### T-335 — Restore Slack tools before the next Swallow run
 
-**Phase:** interviewing.
+**Phase:** executing.
 
 The owner requires functional Slack access before authorizing the planned
 12-hour Swallow TODO run. This task is a connector-readiness gate only; no
@@ -181,10 +181,16 @@ lifecycle refresh. The alternative is to skip the discriminator and go
 directly to interactive connector reconnection, which may repeat OAuth
 unnecessarily and still cannot update this thread's immutable tool catalog.
 
-**Next action:** commit and push this planning checkpoint, then wait for an
-explicit `go`. After that authorization, run exactly one fresh-session
-read-only Slack probe, record its value-free result, and continue only along
-the matching branch above.
+**Execution authorization 2026-07-28:** the owner gave exact `go`. Fresh
+fetch confirms the task branch is clean/aligned at pushed planning commit
+`4393cadb4563b0579c419967ff8c80c7b19af02c`, with protected `origin/main`
+at `c06028f82cf55c9dcdcc75f56a5472d9aafc6bec`. No Slack call, fresh Codex
+session, connector/authentication change, process signal, or 12-hour Swallow
+work preceded this checkpoint.
+
+**Next action:** commit and push this authorization checkpoint, then run the
+one fresh-session read-only Slack probe exactly once. Record its value-free
+result and continue only along the matching frozen-plan branch.
 
 ### T-334 — Extend maintenance awareness to remote Linux nodes
 
