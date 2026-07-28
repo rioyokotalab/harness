@@ -289,6 +289,18 @@ context refresh per advanced Mac. Keep the periodic monitor stopped until the
 corrected merge is installed; then reactivate it and require two consecutive
 healthy passes before resuming the exact RI accounting query.
 
+Correction/recovery commit `b4370e8` passes Python and shell syntax,
+warning-level ShellCheck, diff hygiene, the focused monitor regression, all 75
+parallel focused shards, guarded-delete coverage, and every phase-one
+integration gate. Only the declared native MPI smoke skipped outside an MPI
+allocation. The periodic monitor remained stopped and the three restored
+windows remained outside suite mutation.
+
+**Next action:** push the exact validated head, publish through protected CI,
+merge, guarded-sync reachable clean checkouts, and issue one context refresh
+per advanced Mac. Then reactivate the corrected monitor and require two
+consecutive healthy passes before resuming the exact RI accounting query.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
@@ -680,6 +692,15 @@ this ledger, revalidate the reboot-required marker and active control-plane
 state, then perform post-power-on recovery and validation of routes, managed
 services, remote control, tmux, repositories, supervisors, effective kernel,
 and canonical fleet health.
+
+**Power sequence frozen 2026-07-28:** after the controller restated the safe
+default, the owner said `Proceed`. Therefore schedule no action now; on
+2026-08-08 perform an orderly shutdown before 09:00 JST, keep Local off
+through both outage days, and power it on only after confirmed restoration
+after 18:00 JST on 2026-08-09. Use 2026-08-29/30 only if the Institute invokes
+the contingency dates. Physical or firmware power-on availability remains an
+external preflight immediately before shutdown; do not shut down unless a
+post-outage power-on path is confirmed.
 
 ### T-327 — Align MCP approvals and retire blocked phone sessions
 
