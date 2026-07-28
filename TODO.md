@@ -111,7 +111,7 @@ Next free ID: T-338.
 
 ### T-337 — Promote bridge-first managed Codex cutovers
 
-**Phase:** implementation approved; isolated worktree active.
+**Phase:** bridge-first policy and skill implemented; full validation pending.
 
 The owner requires the bridge-window cutover proven by T-335 to become a
 global Harness behavior instead of remaining incident-local. T-336 is already
@@ -143,8 +143,22 @@ occupied by an independent dirty benchmark worktree and remains untouched.
 - ABQ remains inside its recorded maintenance stop and must not be probed or
   synchronized.
 
-**Next executable action:** commit and push this ledger checkpoint, then add
-the focused failing bridge-first assertions.
+**Implementation checkpoint:**
+
+- The focused test first failed at `global bridge-first policy`, proving the
+  new invariant was not already enforced.
+- Root policy now requires a distinct provisional root/window/runtime,
+  acceptance before rename-only promotion, retirement afterward, no zombie
+  signaling or zombie launch gate, and no ambiguous retry.
+- The reusable skill, protocol, and OpenAI interface now cover both unsafe-tail
+  recovery and authorized managed root/TUI replacement.
+- `tests/test-recover-codex-unsafe-tail-skill.sh`, `git diff --check`, and the
+  skill-creator `quick_validate.py` check pass. The validator is a readable
+  Python entry point rather than an executable file, so it was invoked through
+  `python3`.
+
+**Next executable action:** commit and push the implementation, then run the
+relevant Harness focused checks and `tests/test-phase1.sh`.
 
 ### T-335 — Restore Slack tools before the next Swallow run
 
