@@ -71,6 +71,10 @@ file apply to Codex and Claude when they are started from this repository.
 - Treat authenticated Git transport and hosting-service API or administration
   access as separate capabilities. Preflight and report them independently;
   never infer API or settings authority from a successful fetch or push.
+- During repository hardening, treat a live required pull-request approval
+  count of zero as owner-selected accepted policy. Do not classify it as a
+  finding or change it unless the owner separately authorizes the exact
+  repository and ruleset write.
 - When an intended Git or SSH command needs agent authentication, require its
   `SSH_AUTH_SOCK` to name a current-user-owned Unix socket. If the process
   socket is unusable under tmux, recover only from the current tmux session's

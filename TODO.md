@@ -4286,6 +4286,23 @@ and synchronization carry only this durable evidence.
 
 **Phase:** complete.
 
+**Owner review-policy override 2026-07-28:** the owner restored the required
+approving-review count to zero and explicitly directed future hardening
+sessions not to alter it. Fresh readback confirms active rulesets `19127355`
+(Harness), `19716717` (Students), `19734040` (Swallow), and `19127356`
+(Website) each have `required_approving_review_count=0`. This supersedes
+T-311 D-001's one-review floor: zero is accepted policy, not a hardening
+finding, and any future change requires separate explicit authorization for
+the exact repository and ruleset. No hosting-service write ran during this
+checkpoint.
+
+Policy commit `7af1ce5` adds the same guard to root working agreements and
+the shared fleet-hardening skill, with focused regression coverage. The
+system skill validator, focused hardening-skill test, warning-level
+ShellCheck, diff hygiene, and complete clean `tests/test-phase1.sh` pass; only
+the declared native MPI smoke skipped outside an MPI environment. Publish
+through protected exact-head CI without changing any live ruleset.
+
 Audit and harden all managed Linux and Mac nodes plus `harness`, `students`,
 `swallow`, and `website`, while each repository owns its own task, branch,
 tests, publication route, and handoff. Work ends at 2026-07-26 05:00 JST.
@@ -4779,9 +4796,11 @@ The complete baseline, six-decision register, execution order, safety and
 rollback gates, acceptance criteria, evidence, and deadline protocol are in
 `docs/plans/t311-fleet-repository-hardening.md`.
 
-Decision D-001 is confirmed: use a one-review, strict-CI, linear-history,
-conversation-resolution floor for non-admin writers with an owner/admin
-bypass; preserve Students' stronger code-owner and last-push gates.
+Decision D-001 historically selected a one-review, strict-CI,
+linear-history, conversation-resolution floor for non-admin writers with an
+owner/admin bypass plus stronger Students review gates. The 2026-07-28 owner
+override above supersedes that review-count choice; do not reapply it during
+hardening.
 
 Decision D-002 is confirmed: use read-only Actions defaults, Dependabot
 security and grouped monthly update pull requests, and secret scanning with a
