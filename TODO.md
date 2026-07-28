@@ -210,6 +210,31 @@ CI, merge without weakening the one-review rule, and guarded-sync the clean
 fleet. Then complete the old-inode Swallow restart transaction recorded above
 and close T-329 with fresh value-free runtime and fleet-health evidence.
 
+**Protected publication:** exact head
+`8cb911a7d81ea097e39cd4a9a756d7e7e6dddfad` passed `portable-phase1` in
+2m25s. One merge attempt supplied an incorrect guessed full OID and was
+rejected before mutation; fresh readback supplied the authoritative OID. One
+exact-head administrator-bypass merge then created
+`52ca82d8d10e548dfc91f18417e5a408a76ff8ab` without weakening the one-review
+rule. Local `main` fast-forwarded while preserving its two unrelated live
+`.nfs` inodes.
+
+The first eleven-target fleet-sync plan made no changes and stopped at ABQ
+when its native SSH preflight returned `Connection closed by UNKNOWN port
+65535`. Immediate independent `ssh -x abq true` and `ssh -x abq2 true` probes
+returned the same failure. ABQ state is unknown and no apply ran; retry is safe
+only after both routes recover. The other targets' plan output before ABQ was
+read-only.
+
+**Next action:** before waiting on external ABQ reachability, complete the
+already published Local Swallow old-inode restart: revalidate exact
+`@64`/root/process/socket/client/app-server identities, signal only real TUI
+PID `3087000` once, require its chain/window to unwind, and relaunch the same
+root in one `swallow` window under merge `52ca82d` without prompt replay.
+Then plan/apply the ten currently reachable targets, send one required Mac
+context refresh each, and leave exact ABQ rollout deferred until both routes
+pass.
+
 ### T-328 — Complete authorized T-311/T-324 deferred hardening
 
 **Phase:** time-gated; concrete outage dates received, safe Local power
