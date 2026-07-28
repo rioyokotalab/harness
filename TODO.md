@@ -626,6 +626,20 @@ leave it on `0:harness` long enough to send a new `go`; then rerun the stable
 unattached gate and continue without another app-server read unless rollout
 metadata or protected identities drift.
 
+**External Students teardown 2026-07-28:** after the owner supplied the new
+`go` and the sole client was observed on Harness, fresh metadata found the
+Students window absent, its supervisor PID `4073421` as a parent-owned zombie
+at the recorded start tick `84429115`, its TUI PID `4073639` absent, and the
+Students recovery receipt absent. The resilient status classified the chain
+`stopped/operator-signal`. Harness and Swallow remain live with exact
+supervisor/watcher/TUI identities, `thread-idle` watcher receipts, and the
+unchanged app server; the client remains on Harness. No cause is inferred.
+Treat the old signal as externally/ambiguously sent: never signal the zombie,
+never retry the old leaf, and record its reaping boundary. Revalidate the
+saved Students root and rollout once under the all-watchers-quiesced
+controller transaction, then launch the same root exactly once only if the
+fresh status and lifecycle gates pass.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
