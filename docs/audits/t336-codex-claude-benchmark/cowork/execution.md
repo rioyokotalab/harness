@@ -45,14 +45,24 @@ below.
     clients, and declares that Claude remains Bash-mediated. External, MCP,
     web, delegation, and out-of-workspace actions remain failures. The stopped
     `-r2` row is excluded and is not retried.
-13. `-r3` completed one matched pair, then stopped when a timed-out Claude
-    process was killed but the frozen helper raised during its final reap.
-    Read-only process validation found no remaining client.
+13. `-r3` completed one matched pair, then stopped when a Claude launcher
+    remained alive after closing its output pipes and the frozen helper raised
+    during its bounded final reap. Read-only process validation found no
+    remaining client.
 14. Added a runner-local bounded process loop with the same byte and timeout
     policy, explicit TERM/SIGKILL phases, a bounded post-kill reap window, and
     a hard stop if a process remains. A deterministic SIGTERM-ignoring child
     now exercises this path in model-free self-tests. The distinct corrected
     experiment is `-r4`; acknowledged `-r3` rows remain excluded.
+15. The complete `-r4` pilot yielded Codex 16/16 accepted and Claude 14/16
+    accepted, with both Claude findings caused solely by generated
+    `__pycache__` residue. The Claude tool shell had not retained the outer
+    no-bytecode setting and still had read-only owner-home visibility.
+16. Preserved the `-r4` aggregate as invalid calibration evidence. The distinct
+    `-r5` wrapper sets HOME, TMPDIR, no-bytecode, private bytecode-prefix, and
+    pytest-cache values inside bubblewrap and overlays the owner home with empty
+    tmpfs. Model-free probes now test writable workspace, denied network,
+    hidden owner home, and absent workspace bytecode residue.
 
 ## Deviations
 
@@ -72,7 +82,10 @@ below.
   per-invocation tool allowlist. The final comparison is workspace-confined
   rather than tool-identical, and the resulting limitation is part of every
   public interpretation.
-- The frozen shared process helper did not convert one post-kill reap timeout
-  into a row result. T-336 keeps the shared historical evaluator byte-stable
-  and uses a focused runner-local replacement whose timeout path has a
-  deterministic regression test.
+- The frozen shared process helper did not convert one post-output lingering
+  launcher into a bounded row result. T-336 keeps the shared historical
+  evaluator byte-stable and uses a focused runner-local replacement whose
+  timeout/reap path has a deterministic regression test.
+- Claude's Bash subprocess did not retain selected outer environment values,
+  so the final wrapper sets them inside the sandbox. The same correction hides
+  owner-home contents rather than relying only on instruction compliance.

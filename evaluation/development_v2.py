@@ -29,7 +29,7 @@ EVAL_ROOT = ROOT / "evaluation"
 SUITE_ROOT = EVAL_ROOT / "development-v2"
 CORPUS_PATH = SUITE_ROOT / "corpus.json"
 REPORT_SCHEMA = SUITE_ROOT / "report.schema.json"
-EXPERIMENT_ID = "t336-harness-development-v2-20260729-r4"
+EXPERIMENT_ID = "t336-harness-development-v2-20260729-r5"
 CLIENTS = ("codex", "claude")
 EXPECTED_TASKS = (
     "code-boundary",
@@ -331,6 +331,7 @@ def claude_environment(private: Path, workspace: Path) -> dict[str, str]:
     wrapper_dir.mkdir(mode=0o700)
     wrapper = wrapper_dir / "bash"
     source = str(ROOT)
+    account_home = str(real_home)
     payload = f"""#!/bin/sh
 set -eu
 printf 'invoke\\n' >>"$T336_BASH_AUDIT"
@@ -340,8 +341,14 @@ done
 exec /usr/bin/bwrap --die-with-parent --unshare-net --ro-bind / / \\
   --dev-bind /dev /dev --proc /proc \\
   --tmpfs {shlex.quote(source)} \\
+  --tmpfs {shlex.quote(account_home)} \\
   --bind "$T336_WORKSPACE" "$T336_WORKSPACE" \\
   --bind "$T336_TMPDIR" "$T336_TMPDIR" \\
+  --setenv HOME /nonexistent \\
+  --setenv TMPDIR "$T336_TMPDIR" \\
+  --setenv PYTHONDONTWRITEBYTECODE 1 \\
+  --setenv PYTHONPYCACHEPREFIX "$T336_TMPDIR/pycache" \\
+  --setenv PYTEST_ADDOPTS "-p no:cacheprovider" \\
   --chdir "$T336_WORKSPACE" /usr/bin/bash "$@"
 """
     core.private_write(wrapper, payload.encode())
@@ -1146,6 +1153,7 @@ def sandbox_selftest() -> None:
     workspace.mkdir(mode=0o700)
     private.mkdir(mode=0o700)
     probe = workspace / "probe"
+    compile_probe = workspace / "compile_probe.py"
     try:
         env = claude_environment(private, workspace)
         wrapper = private / "client-bin" / "bash"
@@ -1167,13 +1175,28 @@ def sandbox_selftest() -> None:
         )
         if network.returncode == 0:
             fail("Claude shell containment network probe unexpectedly passed")
+        compile_probe.write_text("VALUE = 1\n", encoding="utf-8")
+        bytecode = subprocess.run(
+            [str(wrapper), "-c", "python3 -m py_compile compile_probe.py"],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if bytecode.returncode != 0 or (workspace / "__pycache__").exists():
+            fail("Claude shell no-bytecode probe failed")
+        hidden_home = subprocess.run(
+            [str(wrapper), "-c", f"test ! -e {shlex.quote(str(Path.home() / 'harness' / 'AGENTS.md'))}"],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if hidden_home.returncode != 0:
+            fail("Claude shell owner-home hiding probe failed")
     finally:
-        for path in (probe, private / "bash-audit", private / "client-bin" / "bash"):
-            if path.is_file() and not path.is_symlink():
-                os.unlink(path)
-        for path in (private / "client-bin", private / "tmp", private, workspace, root):
-            if path.is_dir() and not path.is_symlink() and not any(path.iterdir()):
-                os.rmdir(path)
+        if root.exists():
+            core.cleanup_root(root)
 
 
 def process_selftest() -> None:

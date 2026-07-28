@@ -111,7 +111,7 @@ Next free ID: T-338.
 
 ### T-336 — Benchmark current Codex and Claude Harness development
 
-**Phase:** timeout-safe pilot implementation validation pending.
+**Phase:** confidentiality-aligned pilot implementation validation pending.
 
 The owner asked for a ten-hour, evidence-backed comparison of whether current
 Claude Code can develop Harness as effectively and safely as current Codex,
@@ -221,13 +221,13 @@ The stopped `-r2` row is not replayed or used as capability evidence.
 new identity, then start its distinct 32-invocation pilot at
 `/tmp/harness-eval-t336-development-v2-r3`.
 
-**Timeout correction 2026-07-29 00:12 JST:** `-r3` completed one matched pair,
-then a Claude code-coherence invocation exceeded the declared timeout. The
-frozen process helper sent termination signals and the process subsequently
-disappeared, but its final five-second reap raised an uncaught
-`TimeoutExpired` instead of recording a run-invalid timeout. No client process
-remained. This is runner failure, not client task evidence, and the
-acknowledged `-r3` rows will not be replayed.
+**Process-lifecycle correction 2026-07-29 00:12 JST:** `-r3` completed one
+matched pair, then a Claude code-coherence invocation closed its output pipes
+while its launcher remained alive. The frozen process helper waited five
+seconds, sent termination signals, and the process subsequently disappeared,
+but its final reap raised an uncaught `TimeoutExpired` instead of recording a
+bounded process result. No client process remained. This is runner failure,
+not client task evidence, and the acknowledged `-r3` rows will not be replayed.
 
 The final `-r4` runner owns a bounded process loop that preserves the same
 stdout/stderr limits, process-group termination, and five-second TERM grace,
@@ -238,6 +238,27 @@ timeout classification and reap behavior in every self-test.
 **Next action:** pass focused validation and commit `-r4`, then start its
 distinct 32-invocation pilot at
 `/tmp/harness-eval-t336-development-v2-r4`.
+
+**Shell-containment correction 2026-07-29 00:53 JST:** the complete `-r4`
+pilot produced 16/16 accepted Codex rows and 14/16 accepted Claude rows, with
+Claude's other two rows classified unsafe only because its explicit
+`py_compile` checks left generated `__pycache__` paths. Normalized command
+evidence established that Claude's Bash tool process did not retain the outer
+no-bytecode environment. Review also found that the shell bubblewrap exposed
+the owner's home read-only even though no command inspected it. The aggregate
+is retained at
+`evaluation/results/t336-harness-development-v2-20260729-r4-pilot.json` as
+invalid calibration evidence, not comparative capability evidence.
+
+The distinct `-r5` shell wrapper now sets no-bytecode, private bytecode-prefix,
+pytest-cache, HOME, and TMPDIR values inside bubblewrap and mounts an empty
+tmpfs over the owner home. Deterministic probes require workspace writes to
+work, network access and owner-home visibility to fail, and `py_compile` to
+leave no bytecode residue in the workspace.
+
+**Next action:** pass focused validation and commit `-r5`, then run its
+distinct 32-invocation pilot at
+`/tmp/harness-eval-t336-development-v2-r5`.
 
 ### T-337 — Promote bridge-first managed Codex cutovers
 
