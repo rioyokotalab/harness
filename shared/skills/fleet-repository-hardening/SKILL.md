@@ -111,6 +111,9 @@ before efficiency or package freshness.
   to provider-wide scanning.
 - Never auto-merge dependency updates.
 - Require a passing, exact CI context before adding it to branch protection.
+- Treat an owner-selected required approving-review count of zero as an
+  accepted baseline, not a finding. Never raise it during hardening without
+  separate explicit authorization for the exact repository and ruleset.
 - Preserve stronger repository-specific review rules.
 - Apply host changes transactionally and validate one host or route at a time.
 - Use only existing narrow non-interactive administrator authority. Stage an

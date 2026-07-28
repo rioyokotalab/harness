@@ -5,13 +5,14 @@ ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 SKILL=$ROOT/shared/skills/fleet-repository-hardening/SKILL.md
 CHECKLIST=$ROOT/shared/skills/fleet-repository-hardening/references/audit-checklist.md
 OPENAI=$ROOT/shared/skills/fleet-repository-hardening/agents/openai.yaml
+AGENTS=$ROOT/AGENTS.md
 
 fail() {
     printf 'FAIL: %s\n' "$1" >&2
     exit 1
 }
 
-for path in "$SKILL" "$CHECKLIST" "$OPENAI"; do
+for path in "$SKILL" "$CHECKLIST" "$OPENAI" "$AGENTS"; do
     [ -f "$path" ] || fail "missing skill resource: $path"
 done
 
@@ -31,6 +32,10 @@ grep -F 'next highest safe item in that same repository' "$SKILL" >/dev/null ||
     fail "same-repository gate continuation"
 grep -F 'material-work cutoff' "$SKILL" >/dev/null ||
     fail "deadline cutoff"
+grep -F 'required approving-review count of zero' "$SKILL" >/dev/null ||
+    fail "zero-review hardening baseline"
+grep -F 'required pull-request approval' "$AGENTS" >/dev/null ||
+    fail "zero-review global agreement"
 grep -F 'failed query is `unknown`' "$CHECKLIST" >/dev/null ||
     fail "unknown-state classification"
 grep -F 'Harden fleets and repositories with LIFO recovery' "$OPENAI" >/dev/null ||
