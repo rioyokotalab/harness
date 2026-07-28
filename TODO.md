@@ -388,6 +388,19 @@ cleanup remains paused. Checkpoint this state before any Students recovery;
 signal nothing unless its exact unattached identity, safe rollout/status, and
 rollback path pass again.
 
+**Control-socket interference confirmed:** subsequent one-shot recovery-backend
+reads caused the restored Harness and Swallow watcher/TUI/window chains to
+unwind again even though the periodic monitor was absent. Only Students
+remained, and tmux moved both clients back to it. Do not create any additional
+app-server control connection while managed watchers are live; the monitor and
+manual verifier must use only non-interfering process, socket, receipt, and
+tmux metadata. Students cannot be signaled while attached. Its exact
+current-user-owned, regular, single-link rollout was located by thread identity
+without reading content and is mode 0664; this explains the recovery gate
+`thread rollout is writable by another principal`. A narrow `go-w` metadata
+correction is eligible, but watcher restoration must wait for an unattached,
+safe lifecycle cutover.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
