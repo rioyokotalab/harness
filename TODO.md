@@ -503,6 +503,40 @@ checksum plus every live identity, arm it once as a detached process with the
 new pushed task head, and require a value-free `armed` receipt before yielding
 this turn. Do not retry an ambiguous arm.
 
+**LIFO arm gate:** exact helper PID `835911` armed and self-unlinked, but its
+first wait-loop sample found one newly attached tmux client and failed before
+the signal. Private result `/tmp/t335-cutover-result.nSco2l` records
+`stage=wait-idle signal_sent=no launch_ack=no retry=safe`; the helper is
+absent. Exact old and peer process/window/root identities, healthy monitor,
+and task/main Git state remain unchanged.
+
+The sole client is current-user tmux client PID/start `804512/97965917`,
+exact argv hash
+`c116d35fd8030bd82ce9b7ee33af9633a3a172a963260667ee7c5efa9efb724b`,
+TTY `/dev/pts/29`, attached to unaffected exact Harness window `@80`. This is
+a safe established topology previously supported by the Harness cutover
+procedure. Revise only the client gate: require this exact client identity,
+TTY, and selected Harness window before signal, after old-chain unwind, after
+launch, and at both monitor samples. Never move or detach it. All other helper
+gates remain unchanged.
+
+**Next action:** preserve the first private result, prepare a new helper and
+new mode-0600 result with the corrected exact Harness-client gate, validate
+and checkpoint them, then arm one retry only after that checkpoint is pushed.
+
+**Corrected retry helper:** `/tmp/t335-cutover-retry-e4af07b.sh` is exact
+current-user mode-0700, single-link, and has SHA-256
+`34165c18cd93f490facbc4f3d37eedcd5487cfafd5926cc75a940c267ca15a34`.
+Its empty current-user mode-0600 result is
+`/tmp/t335-cutover-retry-result.JMnvZz`. Shell syntax and warning-level
+ShellCheck pass. The corrected start-tick parser handles parenthesized process
+names, and the exact client gate passes without reading or moving its pane.
+
+**Next action:** commit and push this failure/correction checkpoint, revalidate
+the exact retry helper, old/peer/client identities, Git, monitor, and result
+metadata, then arm the one proven-safe retry with that pushed head. Preserve
+the first result and do not retry after ambiguous arm, signal, or launch.
+
 ### T-334 — Extend maintenance awareness to remote Linux nodes
 
 **Phase:** complete after this closeout checkpoint reaches protected `main`.
