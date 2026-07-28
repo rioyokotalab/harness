@@ -573,6 +573,16 @@ the same client selection, unchanged peer chains/app server, a new exact
 Students supervisor/TUI/watcher/socket, preserved roots, exact ordering, and
 multiple interval-separated observe-only passes with all three healthy.
 
+The first transaction attempt failed at its initial read-only client gate,
+before acquiring the shared lock, pausing a watcher, or opening the app-server
+connection: `/dev/pts/31` had independently moved from Swallow back to exact
+Harness window `@76`. Both peer watchers remained running at their recorded
+start ticks and Students remained unattached. No signal, process, app-server,
+tmux, thread, name, or rollout mutation occurred, so one retry is safe after
+accepting either exact unaffected Harness/Swallow selection as the preimage
+and requiring that selected window to remain unchanged through the
+transaction.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
