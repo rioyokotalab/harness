@@ -172,6 +172,22 @@ task head, require protected `portable-phase1`, merge through the preserved
 administrator bypass without changing review rules, then guarded-sync and
 validate the reachable fleet.
 
+PR #386 exact head `9898ac1` passed protected `portable-phase1` in 2m19s and
+merged through the preserved administrator bypass as
+`cc64086dea3cfc5009411ad6d2a7a0d19e54bca1`; the one-review rule was not
+changed. Local `main` fast-forwarded cleanly to that merge.
+
+The first fleet-sync plan used Local's pre-merge `7db6e25` as the remote
+source and stopped read-only at AB because its actual clean head remains
+`ef3de1e`; no checkout or transfer artifact changed. Retry is safe with exact
+published remote source `ef3de1e8ba6a13b36689c2b9cc0cd20cd7895366` for the
+currently aligned reachable fleet, leaving any host at another head
+fail-closed for separate reconciliation.
+
+**Next action:** rerun guarded plan/apply from exact `ef3de1e` to `cc64086`,
+then require an idempotent `KEEP` plan, one context refresh per advanced Mac,
+fresh interactive alias/native-command readback, and canonical fleet health.
+
 ### T-331 — Restore disappeared Local Harness tmux window
 
 **Phase:** complete.
