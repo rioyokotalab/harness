@@ -327,6 +327,29 @@ sync reachable clean checkouts, refresh advanced Macs once, then reactivate
 the monitor. Keep Students observation-only while any attached client selects
 its window.
 
+PR #381 passed exact-head protected CI in 2m22s and merged as
+`d2d8abf6eb05ce4df5f9cc40371edd2a676c2425` without changing the one-review
+ruleset. Guarded sync advanced the ten reachable clean checkouts and a second
+plan reported exact `KEEP`, aligned `origin/main`, and absent transfer
+artifacts. Each advanced Mac received exactly one pane-blind context refresh.
+Guarded deletion removed only the 4,864-entry/57,866,603-byte temporary sync
+clone, verified protected anchors unchanged and target absent, and its
+mode-0600 manifest was exact-unlinked.
+
+The corrected 30-second monitor is active in its dedicated detached session.
+One immediate and one full-interval readback both preserved exact order,
+three one-pane live windows, and both clients on the same Students window.
+The receipt remains safely `degraded healthy=2 order_action=none
+repair_action=none`: Harness and Swallow are healthy, while Students is
+watcher-absent and protected by the new attached-client gate. No process
+signal, launch, client move, pane read, transcript read, or prompt input ran.
+
+**Next action:** the owner must move both attached clients off Students to
+Harness or Swallow. Then let the monitor repair Students at most once, require
+its exact watcher/TUI/socket and unchanged client selection, and observe two
+consecutive `healthy=3` passes before marking T-330 complete. Do not move the
+clients automatically.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
@@ -3820,6 +3843,13 @@ again failed before job lookup because Slurm could not resolve its DNS SRV
 configuration source. It printed no job data, and no scheduler state changed.
 Keep the observation open for exact ID `7242`; successor `10386` remains
 untouched.
+
+**2026-07-28 read-only retry:** the same exact native `sacct` command returned
+exit 1 with zero stdout bytes and 243 private stderr bytes. Stderr content was
+not read; both mode-0600 captures were exact-unlinked. The failure therefore
+remains classified only as accounting unavailable, not as a missing job. No
+scheduler state changed and successor `10386` remains untouched. A later
+exact-ID retry remains safe.
 
 **2026-07-27 AL checkpoint:** exact job `4238363` matched
 `hal2607260100` and completed with `0:0`. Private state is active/success with
