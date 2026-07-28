@@ -111,7 +111,7 @@ Next free ID: T-336.
 
 ### T-335 — Restore Slack tools before the next Swallow run
 
-**Phase:** blocked on same-root Slack tool availability.
+**Phase:** blocked on Local-controller handoff for a new root.
 
 The owner requires functional Slack access before authorizing the planned
 12-hour Swallow TODO run. This task is a connector-readiness gate only; no
@@ -353,6 +353,39 @@ starting a new durable Slack-capable Swallow root (recommended, because the
 fresh process already passed) and a separately planned shared app-server
 investigation. Preserve this root idle until that choice is recorded. No
 benchmark run is authorized by this checkpoint.
+
+**Decision D-002 and execution authorization:** the owner selected the
+recommended new durable Slack-capable Swallow root with exact `go`. This
+rejects a shared app-server investigation and does not authorize another
+refresh of saved root `019fa5a1-7fff-7e92-8e2a-2586c684747f`, repetition of
+the ephemeral probe, prompt replay, Slack writes, or benchmark work before
+Slack acceptance.
+
+The current Swallow agent must not mutate its own TUI, tmux, supervisor,
+watcher, app-server, monitor, or recovery-controller state. The Local
+controller owns the lifecycle transaction. It must first reconcile this
+pushed decision checkpoint, perform its own pane-blind current-state
+preflight, and freeze the smallest topology transition that preserves the old
+saved root without deleting, renaming, or archiving it while placing one
+newly created durable root under current plugin-enabled code in the managed
+Swallow slot. It must checkpoint exact preconditions and interruption rules
+before any signal or acknowledged launch, never replay a rejected or prior
+prompt, and never retry an ambiguous launch.
+
+Acceptance requires the new root to be durable and idle in the managed
+Swallow thread, the unrelated Harness and Students roots plus shared app
+server and monitor to retain their validated identities, and a subsequent
+direct read-only workspace/channel probe in the new root to identify
+`RioYokotaLab/T1251HXB4` and `swallow/C058CUU8HK8` with zero Slack writes.
+Do not start the 12-hour task until that same-root probe passes.
+
+**Next action:** commit and push this owner-authorized choice. Then the owner
+must ask the existing Local controller to reconcile the exact pushed
+checkpoint and execute the controller-owned new-root lifecycle plan. The
+declared same-host agent-message routes remain unavailable from this Swallow
+thread; do not bypass SSH host verification, call the receive side manually,
+or inject tmux directly. Resume T-335 in the newly created root for the direct
+Slack acceptance probe.
 
 ### T-334 — Extend maintenance awareness to remote Linux nodes
 
