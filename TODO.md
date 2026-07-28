@@ -258,6 +258,14 @@ before reboot, reboot only inside that interval, then recover and validate
 routes, managed services, remote control, tmux, repositories, supervisors,
 the effective kernel, and canonical fleet health.
 
+**Publication LIFO gate:** PR #371 exact head `da67ca4` passed protected
+`portable-phase1` in 2m24s. The first exact-head ordinary merge then failed
+without merging because the newly active one-review rule correctly blocks an
+unreviewed pull request. GitHub instructed use of the preserved administrator
+bypass. This is retry-safe: publish this ledger checkpoint, require current
+exact-head CI again, then merge once with explicit `--admin` and exact-head
+matching. Do not weaken or revert the review rule.
+
 ### T-327 — Align MCP approvals and retire blocked phone sessions
 
 **Phase:** complete.
