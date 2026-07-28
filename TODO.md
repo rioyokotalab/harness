@@ -350,6 +350,31 @@ its exact watcher/TUI/socket and unchanged client selection, and observe two
 consecutive `healthy=3` passes before marking T-330 complete. Do not move the
 clients automatically.
 
+**Second live monitor regression 2026-07-28:** during bounded housekeeping,
+both clients had returned to Students and the monitor receipt became
+`healthy=0 order_action=deferred-ambiguous`, with only the exact Students
+window remaining. Harness and Swallow had again lost their windows and
+lifecycle chains despite both being healthy at activation. The attached-client
+gate correctly preserved Students, but post-unwind launch deferral did not
+prevent repeated healthy-watcher loss. This proves the remaining defect is
+upstream of repair selection; periodic live thread/status collection itself is
+not accepted safe.
+
+The exact one-pane published monitor identity passed and one rollback stopped
+only `harness-tmux-codex-monitor`; absence was verified. Students, both
+attached clients, the shared tmux server, saved roots, and app server were not
+signaled or modified. Routine housekeeping found three live, two eligible,
+zero young, and zero unexpected arg0 roots plus six clean completed-worktree
+candidates, but all cleanup is paused behind this LIFO recovery.
+
+**Next action:** keep the periodic monitor stopped and do not reactivate it
+with live app-server thread reads. Revalidate and restore only the exact
+Harness and Swallow lifecycle chains without prompt input/replay, preserving
+attached Students and the shared app server. Then replace periodic app-server
+thread reads with a non-interfering health source or observe-only metadata
+contract, add a reproduction that proves healthy watchers remain live across
+multiple intervals, and republish before any future monitor activation.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
