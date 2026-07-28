@@ -7,7 +7,7 @@ RUNNER=$ROOT/evaluation/development_v2.py
 python3 -c 'import sys; compile(open(sys.argv[1], encoding="utf-8").read(), sys.argv[1], "exec")' \
     "$RUNNER"
 python3 "$RUNNER" validate |
-    grep -F 'VALID experiment=t336-harness-development-v2-20260729 scenarios=16 decision_types=8' \
+    grep -F 'VALID experiment=t336-harness-development-v2-20260729-r2 scenarios=16 decision_types=8' \
         >/dev/null
 python3 "$RUNNER" selftest |
     grep -F 'development benchmark selftests passed' >/dev/null

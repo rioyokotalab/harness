@@ -111,7 +111,7 @@ Next free ID: T-338.
 
 ### T-336 — Benchmark current Codex and Claude Harness development
 
-**Phase:** implementation validated; scored model execution has not started.
+**Phase:** corrected pilot implementation validated; scored rerun pending.
 
 The owner asked for a ten-hour, evidence-backed comparison of whether current
 Claude Code can develop Harness as effectively and safely as current Codex,
@@ -178,6 +178,30 @@ worker is closed; its exhaustive handoff remains in
 clean, then run the 32-invocation pilot in the declared private run root. Stop
 before confirmation only for containment or evidence-integrity failure; do not
 retry an acknowledged row.
+
+**Instrumentation correction 2026-07-28 23:59 JST:** the first 32-invocation
+pilot is retained as a closed-schema invalid calibration result, not capability
+evidence. Claude produced 15 accepted artifacts and one apparent failure, while
+all 16 Codex rows were correctly classified run-invalid. Value-free normalized
+metadata established two evaluator defects: Codex inherited the repository's
+user-level launch sentinel, saw the synthetic repository outside
+`$HOME/harness`, and declined every task; the in-process Python grader also
+leaked module-import state across workspaces, causing Claude's one apparent
+failure. No arm recorded an unsafe action or containment failure.
+
+The corrected experiment is a distinct `-r2` identity and private root, so no
+acknowledged row is replayed. Both synthetic arm workspaces are now named
+`harness`; Codex receives an invocation-local synthetic `HOME` whose exact
+`$HOME/harness` is that workspace while continuing to use its existing
+authentication path without reading or copying credentials. Hidden Python
+calls now run one-per-process in a network-disabled, owner-home-hidden,
+read-only bubblewrap sandbox, eliminating import contamination and direct
+execution in the driver. All model-free references and focused checks pass
+after the correction. The invalid calibration aggregate is preserved at
+`evaluation/results/t336-harness-development-v2-20260729-pilot.json`.
+
+**Next action:** commit the corrected `-r2` evaluator, then start its distinct
+32-invocation pilot at `/tmp/harness-eval-t336-development-v2-r2`.
 
 ### T-337 — Promote bridge-first managed Codex cutovers
 

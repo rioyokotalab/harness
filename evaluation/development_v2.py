@@ -26,7 +26,7 @@ EVAL_ROOT = ROOT / "evaluation"
 SUITE_ROOT = EVAL_ROOT / "development-v2"
 CORPUS_PATH = SUITE_ROOT / "corpus.json"
 REPORT_SCHEMA = SUITE_ROOT / "report.schema.json"
-EXPERIMENT_ID = "t336-harness-development-v2-20260729"
+EXPERIMENT_ID = "t336-harness-development-v2-20260729-r2"
 CLIENTS = ("codex", "claude")
 EXPECTED_TASKS = (
     "code-boundary",
@@ -290,7 +290,7 @@ def prepare_row(root: Path, task: dict[str, Any], observation: int) -> Path:
         arm = pair / client
         private = arm / "private"
         private.mkdir(mode=0o700, parents=True)
-        workspace = arm / "workspace"
+        workspace = arm / "harness"
         revision = prepare_workspace(workspace, task)
         protected = {
             relative: core.file_hash(workspace / core.safe_relative(relative))
@@ -357,6 +357,32 @@ exec /usr/bin/bwrap --die-with-parent --unshare-net --ro-bind / / \\
             "T336_BASH_AUDIT": str(audit),
             "SHELL": str(wrapper),
             "PATH": f"{wrapper_dir}:{env.get('PATH', '/usr/bin:/bin')}",
+        }
+    )
+    return env
+
+
+def codex_environment(private: Path, workspace: Path) -> dict[str, str]:
+    allow = ("USER", "LOGNAME", "PATH", "SHELL", "LANG", "LC_ALL", "TERM")
+    env = {key: os.environ[key] for key in allow if key in os.environ}
+    real_home = Path(os.environ.get("HOME", ""))
+    if not real_home.is_absolute():
+        fail("account HOME is unavailable for Codex authentication")
+    codex_home = Path(os.environ.get("CODEX_HOME", str(real_home / ".codex")))
+    if not codex_home.is_absolute():
+        fail("CODEX_HOME must be absolute")
+    if workspace.name != "harness" or workspace.parent.name not in CLIENTS:
+        fail("Codex synthetic home/workspace layout is invalid")
+    tmp = private / "tmp"
+    tmp.mkdir(mode=0o700)
+    env.update(
+        {
+            "HOME": str(workspace.parent),
+            "CODEX_HOME": str(codex_home),
+            "TMPDIR": str(tmp),
+            "NO_COLOR": "1",
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "PYTEST_ADDOPTS": "-p no:cacheprovider",
         }
     )
     return env
@@ -514,12 +540,93 @@ def call_module(
     workspace: Path, filename: str, function: str, *args: Any, **kwargs: Any
 ) -> Any:
     path = workspace / filename
-    module_spec = importlib.util.spec_from_file_location(f"t336_{filename.replace('.', '_')}", path)
-    if module_spec is None or module_spec.loader is None:
+    if not path.is_file() or path.is_symlink():
         raise ValueError(f"cannot load {filename}")
-    module = importlib.util.module_from_spec(module_spec)
-    module_spec.loader.exec_module(module)
-    return getattr(module, function)(*args, **kwargs)
+    script = """
+import contextlib
+import importlib.util
+import io
+import json
+import sys
+
+filename, function, raw_args, raw_kwargs = sys.argv[1:]
+try:
+    spec = importlib.util.spec_from_file_location("t336_subject", filename)
+    if spec is None or spec.loader is None:
+        raise ValueError("module unavailable")
+    module = importlib.util.module_from_spec(spec)
+    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        spec.loader.exec_module(module)
+        value = getattr(module, function)(*json.loads(raw_args), **json.loads(raw_kwargs))
+    envelope = {"ok": True, "value": value}
+except Exception as exc:
+    envelope = {"ok": False, "error_type": type(exc).__name__}
+print(json.dumps(envelope, sort_keys=True))
+"""
+    scratch = Path(tempfile.mkdtemp(prefix="t336-grader-call.", dir="/tmp"))
+    os.chmod(scratch, 0o700)
+    stdout = scratch / "stdout"
+    stderr = scratch / "stderr"
+    account_home = str(Path.home())
+    command = [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--unshare-net",
+        "--ro-bind",
+        "/",
+        "/",
+        "--dev",
+        "/dev",
+        "--proc",
+        "/proc",
+        "--tmpfs",
+        account_home,
+        "--ro-bind",
+        str(workspace),
+        str(workspace),
+        "--chdir",
+        str(workspace),
+        "/usr/bin/python3",
+        "-B",
+        "-c",
+        script,
+        filename,
+        function,
+        json.dumps(args),
+        json.dumps(kwargs),
+    ]
+    env = {
+        "HOME": "/nonexistent",
+        "PATH": "/usr/bin:/bin",
+        "LANG": "C.UTF-8",
+        "PYTHONDONTWRITEBYTECODE": "1",
+    }
+    try:
+        process = core.bounded_process(
+            command,
+            workspace,
+            env,
+            stdout,
+            stderr,
+            {"max_stdout_bytes": 65536, "max_stderr_bytes": 65536},
+            10,
+        )
+        if process["returncode"] != 0 or process["termination"]:
+            raise RuntimeError("sandboxed module call failed")
+        try:
+            envelope = json.loads(stdout.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            raise RuntimeError("sandboxed module result is malformed") from exc
+        if envelope.get("ok") is True:
+            return envelope.get("value")
+        if envelope.get("error_type") == "ValueError":
+            raise ValueError("sandboxed subject raised ValueError")
+        raise RuntimeError(f"sandboxed subject raised {envelope.get('error_type', 'unknown')}")
+    finally:
+        for artifact in (stdout, stderr):
+            if artifact.is_file() and not artifact.is_symlink():
+                os.unlink(artifact)
+        os.rmdir(scratch)
 
 
 def grade_task(task_id: str, workspace: Path) -> list[str]:
@@ -724,7 +831,7 @@ def run_client(client: str, private: Path, corpus: dict[str, Any]) -> dict[str, 
         fail(f"interrupted acknowledged row requires review: {private}")
     manifest = core.read_private_json(private / "manifest.json")
     task = tasks_by_id(corpus)[manifest["task_id"]]
-    workspace = private.parent / "workspace"
+    workspace = private.parent / "harness"
     if core.hash_tree(workspace) != manifest["initial_digest"] or core.status_paths(workspace) != manifest["initial_status"]:
         fail("development workspace differs from immutable initial state")
     attempt = private / "attempt-1"
@@ -732,7 +839,7 @@ def run_client(client: str, private: Path, corpus: dict[str, Any]) -> dict[str, 
     raw = attempt / "raw.jsonl"
     stderr = attempt / "stderr"
     if client == "codex":
-        env = core.codex_environment(attempt, workspace)
+        env = codex_environment(attempt, workspace)
         command = codex_command(workspace, task, corpus)
     else:
         env = claude_environment(attempt, workspace)
