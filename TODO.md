@@ -110,7 +110,7 @@ Next free ID: T-328.
 
 ### T-327 — Align MCP approvals and retire blocked phone sessions
 
-**Phase:** executing.
+**Phase:** complete.
 
 The owner asked to update the MCP setting for recent operating needs and asked
 whether phone-visible `swallow-blocked-20260728` and
@@ -306,10 +306,39 @@ deletion, and integration gates passed; only the declared native MPI smoke
 skipped outside an allocation. The branch contains only the frozen config,
 launcher, validator, tests, documentation, and ledger surfaces.
 
-**Next action:** commit this validation evidence, fetch and explicitly push the
-task branch, then open an exact-head protected pull request and require
-`portable-phase1` before merge. Do not reload an existing session or mutate
-the user-layer MCP registration.
+Validation evidence commit `b73e32215df23e78bbc4b90c4b515010ced47966`
+was the exact head of PR #369. Protected `portable-phase1` passed in 1m34s;
+the exact reviewed head then merged without force as
+`9dea2ab302ea408253736cc1c64c059e69acb6d8`.
+
+Guarded fleet-sync plan and apply advanced all eleven declared clean managed
+checkouts (`ab`, `ab2`, `ri`, `al`, `rc`, `t4`, `abq`, `aist`, `home`,
+`office`, and `riken`) from exact `c8afe66df84e88679f09aa2fba909e67be2662b9`
+to exact `9dea2ab302ea408253736cc1c64c059e69acb6d8`. Each reported matching local
+and origin heads and an absent transfer artifact. Exactly one revision-specific
+context refresh returned transport `status=submitted` for each detached
+`harness-codex-resume` session on `aist`, `home`, `office`, and `riken`;
+none was retried, restarted, retargeted, or inspected.
+
+The private refresh input was exact-unlinked after those four acknowledged
+submissions. Temporary clean clone `/tmp/harness-t327-sync.gpaFmV` was removed
+through guarded-delete manifest `/tmp/t327-sync-delete.manifest`; apply
+validated one target with 4,737 entries and 54,991,049 bytes, then verified
+the target absent and protected anchors unchanged. The manifest was absent
+after apply.
+
+T-327 is complete. The exact MCP-only granular approval policy is now durable
+and fleet-synchronized for newly started or reloaded Codex clients. Sandbox,
+rules, request-permission, and skill-script approval categories remain
+fail-closed. The existing GitHub MCP registration, authentication source,
+transport, and tool policy are unchanged; no product-owned user config,
+active process, or saved-session archive state was mutated. Existing sessions
+were deliberately left running under their already loaded settings.
+
+The two exact blocked saved sessions remain safe for the owner to archive from
+the phone. Archive is reversible and does not delete their transcript; this
+controller did not archive or delete either root. No further T-327 action is
+pending.
 
 ### T-326 — Use exact progress clocks and default new Codex sessions to Sol high
 
