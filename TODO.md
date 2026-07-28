@@ -266,6 +266,32 @@ bypass. This is retry-safe: publish this ledger checkpoint, require current
 exact-head CI again, then merge once with explicit `--admin` and exact-head
 matching. Do not weaken or revert the review rule.
 
+**Publication and rollout checkpoint:** refreshed PR #371 exact head
+`0e805ac839ab455a762ba22daf7f84a36781dd18` passed protected
+`portable-phase1` in 2m23s. One exact-head `--admin` merge used only the
+preserved owner/admin bypass and created merge
+`40aeb2f1cce3f7e0481d9e7851662cbea2e29098`; the one-review rules remain
+enabled.
+
+Guarded fleet-sync plan/apply advanced all eleven declared clean checkouts
+(`ab`, `ab2`, `ri`, `al`, `rc`, `t4`, `abq`, `aist`, `home`, `office`, and
+`riken`) from exact `f054e3eb9c72aa72ada1dc6eafad49ef8ea3a738` to the
+merge. Every local/origin head matched and every transfer artifact was absent.
+Aist, Home, Office, and Riken each returned exactly one merge-specific context
+refresh `status=submitted`; none was retried, and the private input was
+exact-unlinked.
+
+Guarded manifest `/tmp/t328-sync-delete.manifest` validated and removed only
+the exact 4,766-entry / 55,784,562-byte clean sync clone
+`/tmp/harness-t328-sync.fp4lWg`, verified protected anchors unchanged and the
+target absent, and was then exact-unlinked. The two unrelated live Local
+`.nfs` inodes remain untouched.
+
+**Next action:** no authorized safe action remains until the owner supplies a
+concrete Local maintenance-window start and end. At that time, cold-reconcile
+this ledger and live control-plane state, then execute only the recorded Local
+reboot, recovery, and validation transaction inside the interval.
+
 ### T-327 — Align MCP approvals and retire blocked phone sessions
 
 **Phase:** complete.
