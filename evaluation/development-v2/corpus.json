@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "experiment_id": "t336-harness-development-v2-20260729-r3",
+  "experiment_id": "t336-harness-development-v2-20260729-r4",
   "fixed_seed": "t336-20260729-v1",
   "limits": {
     "timeout_seconds": 600,

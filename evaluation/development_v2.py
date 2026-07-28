@@ -10,12 +10,15 @@ import json
 import os
 import platform
 import re
+import selectors
 import shlex
 import shutil
+import signal
 import stat
 import subprocess
 import sys
 import tempfile
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -26,7 +29,7 @@ EVAL_ROOT = ROOT / "evaluation"
 SUITE_ROOT = EVAL_ROOT / "development-v2"
 CORPUS_PATH = SUITE_ROOT / "corpus.json"
 REPORT_SCHEMA = SUITE_ROOT / "report.schema.json"
-EXPERIMENT_ID = "t336-harness-development-v2-20260729-r3"
+EXPERIMENT_ID = "t336-harness-development-v2-20260729-r4"
 CLIENTS = ("codex", "claude")
 EXPECTED_TASKS = (
     "code-boundary",
@@ -386,6 +389,95 @@ def codex_environment(private: Path, workspace: Path) -> dict[str, str]:
         }
     )
     return env
+
+
+def bounded_client_process(
+    args: list[str],
+    cwd: Path,
+    env: dict[str, str],
+    stdout_path: Path,
+    stderr_path: Path,
+    limits: dict[str, int],
+    timeout: float,
+) -> dict[str, Any]:
+    stdout_fd = os.open(stdout_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    stderr_fd = os.open(stderr_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    stdout_file = os.fdopen(stdout_fd, "wb")
+    stderr_file = os.fdopen(stderr_fd, "wb")
+    started = time.monotonic()
+    process = subprocess.Popen(
+        args,
+        cwd=cwd,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        start_new_session=True,
+    )
+    selector = selectors.DefaultSelector()
+    assert process.stdout is not None and process.stderr is not None
+    selector.register(process.stdout, selectors.EVENT_READ, (stdout_file, "stdout", limits["max_stdout_bytes"]))
+    selector.register(process.stderr, selectors.EVENT_READ, (stderr_file, "stderr", limits["max_stderr_bytes"]))
+    counts = {"stdout": 0, "stderr": 0}
+    termination: str | None = None
+    termination_started: float | None = None
+    killed_at: float | None = None
+
+    def signal_group(value: int) -> None:
+        try:
+            os.killpg(process.pid, value)
+        except ProcessLookupError:
+            pass
+
+    try:
+        while selector.get_map() or process.poll() is None:
+            now = time.monotonic()
+            if now - started > timeout and termination is None:
+                termination = "timeout"
+                termination_started = now
+                signal_group(signal.SIGTERM)
+            if termination_started is not None and now - termination_started > 5 and killed_at is None:
+                killed_at = now
+                signal_group(signal.SIGKILL)
+            if killed_at is not None and now - killed_at > 20 and process.poll() is None:
+                fail("client process could not be reaped after SIGKILL")
+            for key, _ in selector.select(timeout=0.1):
+                chunk = os.read(key.fileobj.fileno(), 65536)
+                if not chunk:
+                    selector.unregister(key.fileobj)
+                    continue
+                target, label, maximum = key.data
+                remaining = maximum - counts[label]
+                if remaining > 0:
+                    target.write(chunk[:remaining])
+                    counts[label] += min(len(chunk), remaining)
+                if len(chunk) > remaining and termination is None:
+                    termination = f"{label}-limit"
+                    termination_started = now
+                    signal_group(signal.SIGTERM)
+        returncode = process.wait(timeout=1)
+    except BaseException:
+        if process.poll() is None:
+            signal_group(signal.SIGKILL)
+            try:
+                process.wait(timeout=20)
+            except subprocess.TimeoutExpired:
+                pass
+        raise
+    finally:
+        selector.close()
+        stdout_file.flush()
+        stderr_file.flush()
+        os.fsync(stdout_file.fileno())
+        os.fsync(stderr_file.fileno())
+        stdout_file.close()
+        stderr_file.close()
+    return {
+        "returncode": returncode,
+        "termination": termination,
+        "duration_ms": int((time.monotonic() - started) * 1000),
+        "stdout_bytes": counts["stdout"],
+        "stderr_bytes": counts["stderr"],
+    }
 
 
 def codex_command(workspace: Path, task: dict[str, Any], corpus: dict[str, Any]) -> list[str]:
@@ -848,7 +940,7 @@ def run_client(client: str, private: Path, corpus: dict[str, Any]) -> dict[str, 
         f"{shlex.join(printable)} PROMPT_SHA256={manifest['prompt_sha256']}",
         flush=True,
     )
-    process = core.bounded_process(
+    process = bounded_client_process(
         command,
         workspace,
         env,
@@ -1082,6 +1174,30 @@ def sandbox_selftest() -> None:
         for path in (private / "client-bin", private / "tmp", private, workspace, root):
             if path.is_dir() and not path.is_symlink() and not any(path.iterdir()):
                 os.rmdir(path)
+
+
+def process_selftest() -> None:
+    root = Path(tempfile.mkdtemp(prefix="t336-process.", dir="/tmp"))
+    os.chmod(root, 0o700)
+    stdout = root / "stdout"
+    stderr = root / "stderr"
+    try:
+        result = bounded_client_process(
+            ["/bin/bash", "-c", "trap '' TERM; sleep 30"],
+            root,
+            {"HOME": "/nonexistent", "PATH": "/usr/bin:/bin"},
+            stdout,
+            stderr,
+            {"max_stdout_bytes": 1024, "max_stderr_bytes": 1024},
+            0.1,
+        )
+        if result["termination"] != "timeout" or result["returncode"] == 0:
+            fail("bounded client timeout/reap selftest failed")
+    finally:
+        for artifact in (stdout, stderr):
+            if artifact.is_file() and not artifact.is_symlink():
+                os.unlink(artifact)
+        os.rmdir(root)
 
 
 def write_json(path: Path, value: Any) -> None:
@@ -1387,6 +1503,7 @@ def selftest() -> None:
     }
     core.validate_closed_object(sentinel, REPORT_SCHEMA)
     sandbox_selftest()
+    process_selftest()
     grader_selftest(corpus)
 
 

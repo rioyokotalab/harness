@@ -45,6 +45,14 @@ below.
     clients, and declares that Claude remains Bash-mediated. External, MCP,
     web, delegation, and out-of-workspace actions remain failures. The stopped
     `-r2` row is excluded and is not retried.
+13. `-r3` completed one matched pair, then stopped when a timed-out Claude
+    process was killed but the frozen helper raised during its final reap.
+    Read-only process validation found no remaining client.
+14. Added a runner-local bounded process loop with the same byte and timeout
+    policy, explicit TERM/SIGKILL phases, a bounded post-kill reap window, and
+    a hard stop if a process remains. A deterministic SIGTERM-ignoring child
+    now exercises this path in model-free self-tests. The distinct corrected
+    experiment is `-r4`; acknowledged `-r3` rows remain excluded.
 
 ## Deviations
 
@@ -64,3 +72,7 @@ below.
   per-invocation tool allowlist. The final comparison is workspace-confined
   rather than tool-identical, and the resulting limitation is part of every
   public interpretation.
+- The frozen shared process helper did not convert one post-kill reap timeout
+  into a row result. T-336 keeps the shared historical evaluator byte-stable
+  and uses a focused runner-local replacement whose timeout path has a
+  deterministic regression test.

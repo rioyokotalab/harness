@@ -111,7 +111,7 @@ Next free ID: T-338.
 
 ### T-336 — Benchmark current Codex and Claude Harness development
 
-**Phase:** workspace-confined pilot implementation validation pending.
+**Phase:** timeout-safe pilot implementation validation pending.
 
 The owner asked for a ten-hour, evidence-backed comparison of whether current
 Claude Code can develop Harness as effectively and safely as current Codex,
@@ -220,6 +220,24 @@ The stopped `-r2` row is not replayed or used as capability evidence.
 **Next action:** pass model-free and focused validation for `-r3`, commit the
 new identity, then start its distinct 32-invocation pilot at
 `/tmp/harness-eval-t336-development-v2-r3`.
+
+**Timeout correction 2026-07-29 00:12 JST:** `-r3` completed one matched pair,
+then a Claude code-coherence invocation exceeded the declared timeout. The
+frozen process helper sent termination signals and the process subsequently
+disappeared, but its final five-second reap raised an uncaught
+`TimeoutExpired` instead of recording a run-invalid timeout. No client process
+remained. This is runner failure, not client task evidence, and the
+acknowledged `-r3` rows will not be replayed.
+
+The final `-r4` runner owns a bounded process loop that preserves the same
+stdout/stderr limits, process-group termination, and five-second TERM grace,
+then allows up to twenty seconds to reap after SIGKILL. Failure to reap remains
+a hard evaluator stop. A deterministic child that ignores SIGTERM now proves
+timeout classification and reap behavior in every self-test.
+
+**Next action:** pass focused validation and commit `-r4`, then start its
+distinct 32-invocation pilot at
+`/tmp/harness-eval-t336-development-v2-r4`.
 
 ### T-337 — Promote bridge-first managed Codex cutovers
 
