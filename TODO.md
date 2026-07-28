@@ -605,6 +605,16 @@ no-active-turn structure, exact rollout inode, exact process/window/client
 identities, and both peer watchers before sending the one allowed leaf
 `SIGTERM`.
 
+The first final signal gate stopped before `kill`: while the rollout scan still
+proved no active turn, the sole client had independently moved onto exact
+Students window `@50`. The follow-on absence poll was entered because its
+shell lacked fail-fast after the rejected Python gate; it only performed
+read-only PID/window checks and timed out as expected. Students TUI `4073639`,
+both peer watchers, all three windows, and the app server remain live at their
+recorded identities. No signal or other mutation occurred. Wait for the owner
+client to select Harness or Swallow, then rerun the exact final gate; the
+signal remains unsent and one attempt remains authorized.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
