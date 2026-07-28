@@ -11,6 +11,11 @@
   `git diff --check`, and the cowork session validator pass.
 - `tests/test-phase1.sh` passes from clean commit `4abbc8c`. Its declared native
   MPI smoke remains skipped outside a declared MPI environment.
+- Protected CI first failed because its credential-free portable runner cannot
+  execute the local bubblewrap capability probe. The scored runner remains
+  byte-stable; only the focused test now uses static containment declarations
+  under `HARNESS_PORTABLE_CI=1`, while normal local validation continues to run
+  the complete sandbox, process, and model-free grader self-tests.
 - The initial full-suite attempt failed only the two expected clean-checkout
   gates while result/README changes were uncommitted. After checkpointing those
   artifacts, both gates and the complete suite passed.

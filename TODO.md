@@ -312,6 +312,19 @@ through protected CI, guarded-sync clean eligible managed checkouts, issue any
 required Mac context refresh, then guarded-delete all private T-336 run roots
 and temporary cowork staging.
 
+**Protected-CI correction 2026-07-29 02:45 JST:** PR #397's first
+`portable-phase1` run failed only at the benchmark shell-containment write
+probe because the credential-free GitHub runner cannot execute the local
+bubblewrap capability. The scored runner and both result digests remain
+byte-stable. `tests/test-development-evaluation.sh` now retains syntax,
+corpus, plan, counterbalance, and static containment-declaration checks under
+`HARNESS_PORTABLE_CI=1`; normal local runs still execute the full sandbox,
+process, and model-free grader self-tests.
+
+**Next action:** validate both focused-test modes and the complete local suite,
+push the narrow test-only correction, then require protected CI to pass before
+merge.
+
 ### T-337 — Promote bridge-first managed Codex cutovers
 
 **Phase:** complete after this rollout checkpoint reaches protected `main`.

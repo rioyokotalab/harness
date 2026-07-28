@@ -9,8 +9,19 @@ python3 -c 'import sys; compile(open(sys.argv[1], encoding="utf-8").read(), sys.
 python3 "$RUNNER" validate |
     grep -F 'VALID experiment=t336-harness-development-v2-20260729-r5 scenarios=16 decision_types=8' \
         >/dev/null
-python3 "$RUNNER" selftest |
-    grep -F 'development benchmark selftests passed' >/dev/null
+if [ "${HARNESS_PORTABLE_CI:-0}" = 1 ]; then
+    for declaration in \
+        '"--unshare-net"' \
+        '"--tmpfs"' \
+        'PYTHONPYCACHEPREFIX' \
+        'process_selftest()' \
+        'grader_selftest(corpus)'; do
+        grep -F "$declaration" "$RUNNER" >/dev/null
+    done
+else
+    python3 "$RUNNER" selftest |
+        grep -F 'development benchmark selftests passed' >/dev/null
+fi
 
 pilot=$(python3 "$RUNNER" plan --stage pilot)
 confirmation=$(python3 "$RUNNER" plan --stage confirmation)
