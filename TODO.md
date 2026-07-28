@@ -110,7 +110,7 @@ Next free ID: T-331.
 
 ### T-330 — Monitor and order Local tmux Codex windows
 
-**Phase:** interviewing.
+**Phase:** ready-for-go.
 
 The owner requested periodic pane-blind health checks for every managed Codex
 window in Local's `harness` tmux session and enforcement of canonical order
@@ -136,21 +136,20 @@ When all three window identities are unique it may use native
 Ambiguous, duplicate, extra, attached-path, unsafe-thread, or unknown state
 fails closed.
 
-Decision D-001 remains open: whether the monitor may also perform narrowly
-gated self-repair. Recommended `safe-auto-repair` restarts only an exact
+Decision D-001 is frozen as `safe-auto-repair`. In response to the one open
+choice, the owner selected “as you recommend.” The monitor may restart only an exact
 missing-watcher or missing-window chain whose saved thread identity is
 canonical and freshly `idle` or `notLoaded`; it never starts a turn, replays a
 prompt, rolls back, renames/archives roots, restarts the app server, or repairs
-active/systemError/unknown state. `observe-and-order` would report lifecycle
-faults but require a controller turn for every restart.
+active/systemError/unknown state.
 
 The frozen planning detail, failure gates, execution sequence, rollback, and
 acceptance criteria are in
 `docs/plans/t330-tmux-codex-monitor.md`.
 
-**Next action:** obtain D-001, checkpoint the answer, set `ready-for-go`, and
-wait for explicit execution authorization. No tmux, process, app-server,
-thread, service, or live monitor mutation has run.
+**Next action:** wait for explicit owner `go`, `proceed`, or `execute`. Then
+implement and validate the frozen plan in its recorded order. No tmux,
+process, app-server, thread, service, or live monitor mutation has run.
 
 ### T-329 — Restore disappeared Swallow tmux window
 

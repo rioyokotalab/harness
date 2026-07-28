@@ -26,7 +26,7 @@ In scope:
 2. Order correction only after unique identity proof for exactly the three
    declared windows.
 3. Periodic value-free status and a durable last-known-good mapping.
-4. Optional narrowly gated lifecycle repair under decision D-001.
+4. Narrowly gated lifecycle repair under frozen decision D-001.
 5. Focused fixtures, full validation, protected publication, Local activation,
    guarded fleet rollout, and Mac context refreshes.
 
@@ -169,14 +169,16 @@ Under D-001 `observe-and-order`, omit all signal/launch paths.
 
 ### D-001 — Lifecycle repair
 
-- **Recommended: `safe-auto-repair`.** Automatically repair only saved,
+- **Selected: `safe-auto-repair`.** Automatically repair only saved,
   identity-proven `idle`/`notLoaded` threads while keeping every active,
   unsafe, ambiguous, or unknown case read-only.
 - **Alternative: `observe-and-order`.** Enforce ordering and report unhealthy
   lifecycle state, but require a controller turn for every process/window
   restart.
 
-Open until the owner selects one.
+Frozen on 2026-07-28 when the owner answered “as you recommend.” No decision
+remains open. Phase is `ready-for-go`; implementation must wait for an explicit
+`go`, `proceed`, or `execute`.
 
 ## Acceptance
 
