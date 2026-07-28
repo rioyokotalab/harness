@@ -513,6 +513,16 @@ perform the one bounded Students lifecycle cutover and multi-interval
 observe-only acceptance. Do not reactivate the periodic monitor or publish the
 closeout until all three watchers pass.
 
+**Attached-client diagnosis:** the two tmux clients are separate ordinary SSH
+terminal attachments, not Codex control processes. Current `/dev/pts/31`
+client PID `908572` attached at 14:03 JST and remained active through this
+diagnostic. Older `/dev/pts/8` client PID `3503464` attached at 22:48 JST on
+2026-07-27 and last recorded tmux activity at 23:14 JST; its SSH shell remains
+open but idle. Both currently select Harness. No client was detached, moved,
+or given input. If the owner confirms the older attachment is stale, detach
+only exact client `/dev/pts/8`, then revalidate one remaining client before
+the Students cutover.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
