@@ -204,6 +204,32 @@ primary root is exact `$HOME/harness`, clean, and aligned, then run one
 ephemeral read-only Slack probe there. Record its value-free result and
 continue only along the matching frozen-plan branch.
 
+**Fresh-session Slack result:** after the primary checkout was revalidated
+exactly clean/aligned at `$HOME/harness`, one `codex exec --ephemeral` process
+completed the bounded probe. It called only
+`slack.slack_list_workspaces` and `slack.slack_search_channels`; both MCP
+calls completed without error. Final readback identified workspace
+`RioYokotaLab` / `T1251HXB4` and public channel `swallow` /
+`C058CUU8HK8`, with `slack_write_occurred=false`. No message body was
+requested or returned in the final result, no Slack write or authentication
+change occurred, and the process persisted no session. Its three
+current-user mode-0600 captures were exact-unlinked and absence verified.
+
+This proves the installed plugin and existing connector authorization are
+healthy in a newly started Codex process. The failure is narrowed to the
+current Swallow process's stale per-session tool catalog. The original
+same-thread continuity requirement selects the frozen plan's same-root
+lifecycle path; do not create a replacement root or restart the shared app
+server.
+
+**Next action:** commit and push this non-retryable success checkpoint. Then
+ask the existing Local controller, through the identified agent-message
+transport, to perform its own fail-closed preflight and one same-saved-root
+Swallow TUI lifecycle refresh under current plugin-enabled code, with no
+prompt replay or app-server restart. After the refreshed Swallow process
+returns idle, require one direct read-only workspace/channel probe in that
+same thread before starting the 12-hour work.
+
 ### T-334 — Extend maintenance awareness to remote Linux nodes
 
 **Phase:** complete after this closeout checkpoint reaches protected `main`.
