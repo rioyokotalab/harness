@@ -194,6 +194,12 @@ than the native decorated output. No package, link, process, or file changed.
 Retry is safe with a prefix/exact-native-output assertion before planning the
 guarded removal.
 
+The corrected identity and open-file gate passed with
+`open_processes=0`, but guarded planning refused before publishing a manifest
+because macOS `/tmp` is a symlink and therefore cannot be a recursive-delete
+anchor. No link or package changed. Retry is safe using canonical retained
+manifest parent `/private/tmp`; keep the package boundary and target exact.
+
 ### T-327 — Align MCP approvals and retire blocked phone sessions
 
 **Phase:** complete.
