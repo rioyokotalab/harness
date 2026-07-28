@@ -200,6 +200,23 @@ because macOS `/tmp` is a symlink and therefore cannot be a recursive-delete
 anchor. No link or package changed. Retry is safe using canonical retained
 manifest parent `/private/tmp`; keep the package boundary and target exact.
 
+**Riken removal result:** canonical guarded plan recorded one exact
+current-user-owned package target with 488 entries and 50,987,121 bytes.
+After a final identity check, exact single-file `unlink` removed only matching
+shadow launcher `/opt/homebrew/bin/claude`; the emitted guarded apply then
+validated and deleted only
+`/opt/homebrew/lib/node_modules/@anthropic-ai/claude-code`, with protected
+anchors unchanged and target absent.
+
+The apply command `exec`-replaced its remote shell, so same-command postchecks
+after it did not execute. A separate strict postcheck initially exited before
+its summary because it expected the mode-0600 manifest to be auto-removed.
+Fresh value-free reconciliation proves package and link absent, one effective
+Claude path, managed version `2.1.220`, and only exact task manifest
+`/private/tmp/t328-riken-claude-delete.manifest` still present. Exact-unlink
+that single reviewed manifest, verify absence, and do not repeat package or
+link removal.
+
 ### T-327 — Align MCP approvals and retire blocked phone sessions
 
 **Phase:** complete.
