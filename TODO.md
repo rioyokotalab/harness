@@ -111,7 +111,7 @@ Next free ID: T-336.
 
 ### T-335 — Restore Slack tools before the next Swallow run
 
-**Phase:** blocked on Local-controller handoff for a new root.
+**Phase:** executing the authorized new-root transition.
 
 The owner requires functional Slack access before authorizing the planned
 12-hour Swallow TODO run. This task is a connector-readiness gate only; no
@@ -386,6 +386,65 @@ declared same-host agent-message routes remain unavailable from this Swallow
 thread; do not bypass SSH host verification, call the receive side manually,
 or inject tmux directly. Resume T-335 in the newly created root for the direct
 Slack acceptance probe.
+
+**D-002 ownership clarification:** the owner clarified that “Local
+controller” means any Codex running on Local rather than only the Harness tmux
+window. This exact Swallow Codex therefore owns the already authorized
+transaction. The same-host agent-message route is no longer a prerequisite;
+its failed probes must not be repeated.
+
+Fresh pane-blind preflight at protected Local `main`
+`fcadc7ae68182036f1aa128fe3b7bea977cddc4f` finds exact
+`0:harness,1:students,2:swallow`, one pane each, and no attached tmux client.
+The observe-only monitor remains PID/start `1903223/95835645` and reports
+`healthy=3`, with no order or repair action. Swallow remains exact window
+`@81`, supervisor `117011/97720707`, watcher `117106/97720718`, launcher
+`117408/97720829`, wrapper `117410/97720829`, and real TUI
+`117499/97720836`. Its status is attempt-zero `running/remote-explicit`; the
+watcher reports the exact old root and changes between `thread-active` during
+this turn and `thread-idle` after it. Shared app server
+`2852569/83381863`, Harness supervisor `2767660`, and Students supervisor
+`1638582` remain live. Project configuration supplies exact model
+`gpt-5.6-sol` and reasoning effort `high` to newly started sessions.
+
+**Frozen self-cutover execution:**
+
+1. From exact clean `$HOME/harness`, start one new persistent native
+   `codex exec --json` session under project-default Sol/high. Its new,
+   non-replayed cold-start instruction may read only the Harness instructions
+   and T-335 ledger, then directly call only Slack workspace listing and
+   public `#swallow` resolution. It must make no file, Git, process, tmux,
+   authentication, or Slack write and must report the exact workspace/channel
+   identities plus `slack_write_occurred=false`.
+2. Accept only one unambiguous new thread ID whose same-root turn completes
+   with `RioYokotaLab/T1251HXB4` and `swallow/C058CUU8HK8`. Preserve the
+   private mode-0600 event capture until its value-free identifiers and result
+   are checkpointed; do not retry an ambiguous thread creation or Slack call.
+3. Checkpoint and push the accepted new root before touching the old chain.
+   Prepare one syntax-checked, current-user private detached helper with exact
+   old process/start/window/root identities, new root ID, unchanged peer
+   identities, and bounded interruption rules.
+4. After this turn yields, the helper waits for the old watcher to report
+   `thread-idle`, revalidates every frozen identity and the absence of tmux
+   clients, sends one `SIGTERM` only to old real TUI PID `117499`, and
+   requires the exact old chain/window to unwind. It sends no second signal
+   and never signals a process group.
+5. Only after exact old-chain absence, launch one acknowledged detached
+   `2:swallow` window under runtime `swallow-recovery-next` with
+   `--remote-session NEW_ID`. Never retry an ambiguous launch. Require a new
+   supervisor/watcher/TUI reciprocal-socket chain, exact three-window order,
+   the new root at `thread-idle`, unchanged Harness/Students/app-server/
+   monitor identities, and two interval-separated healthy monitor receipts.
+
+The old saved root remains preserved without rename, archive, deletion,
+rollback, or prompt replay. Failure before the signal leaves all live state
+unchanged and is retry-safe only after reconciliation. Failure after the
+single signal or launch acknowledgement is non-retryable: preserve the helper
+result and reconcile exact state. The 12-hour task remains stopped until the
+new-root Slack read and live cutover both pass.
+
+**Next action:** commit and push this clarified ownership plus exact preimage,
+then run step 1 once.
 
 ### T-334 — Extend maintenance awareness to remote Linux nodes
 
