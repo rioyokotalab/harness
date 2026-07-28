@@ -123,3 +123,13 @@ python3 evaluation/development_v2.py run-stage \
 Raw events, stderr, workspaces, and per-row metadata remain private in the
 mode-0700 run root. Publish only the closed-schema aggregate through the
 runner's `report` command.
+
+The final 2026-07-29 `-r5` pilot passed 16/16 for both clients. Across the
+cumulative three-observation confirmation result, Codex passed 48/48 and
+Claude passed 46/48. Claude had one functional root-route edge-case failure and
+one strict scope-preservation failure from an undeclared helper file; neither
+client had an invalid, no-artifact, or containment outcome. See the
+[pilot](results/t336-harness-development-v2-20260729-r5-pilot.json) and
+[confirmation](results/t336-harness-development-v2-20260729-r5-confirmation.json)
+aggregates. The earlier non-`r5` aggregates are retained only as invalid
+calibration evidence.

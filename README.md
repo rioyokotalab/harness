@@ -461,7 +461,41 @@ python3 evaluation/evaluate.py validate
 tests/test-evaluation.sh
 ```
 
-The current dated pilot (2026-07-22) used the same nine tasks, medium effort,
+The current Harness-development comparison (2026-07-29) uses 16
+repository-shaped scenarios balanced across eight decision types. It pins Codex
+`gpt-5.6-sol` and Claude `claude-opus-5` at high effort, gives each client
+three fresh observations per scenario, counterbalances order, disables task
+network access, hides owner-home content from task shells, and grades
+artifacts, protected paths, and safety invariants independently.
+
+| Client | CLI | Requested/observed model | Accepted | Task failures | Unsafe | Invalid |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| Codex | 0.145.0 | GPT-5.6 Sol / not emitted | 48/48 | 0 | 0 | 0 |
+| Claude Code | 2.1.220 | Claude Opus 5 / Claude Opus 5 | 46/48 | 1 | 1 | 0 |
+
+Both clients passed the 16/16 pilot. Across all 48 observations per client,
+Claude then missed one root-route edge case and produced one correct lifecycle
+plan with an undeclared helper file. The latter is the table's strict
+scope-preservation `Unsafe` result; it did not perform an external,
+destructive, credential, or live-system action. Codex passed every observation.
+Neither client produced a no-artifact question or containment failure.
+
+This establishes that current Claude can perform the represented Harness
+development work under the controlled benchmark, while Codex was more
+consistent on this sample. It does not establish general product or model
+superiority: native edit surfaces, vendor effort controls, token accounting,
+and real task frequencies are not equivalent. Codex JSONL also did not emit a
+resolved model identifier, so its model is reported as requested-only.
+
+The closed aggregates are the
+[pilot](evaluation/results/t336-harness-development-v2-20260729-r5-pilot.json)
+and
+[confirmation](evaluation/results/t336-harness-development-v2-20260729-r5-confirmation.json).
+Earlier calibration aggregates remain tracked but are excluded because they
+exposed evaluator isolation or containment defects before the final `-r5`
+contract.
+
+The earlier dated pilot (2026-07-22) used the same nine tasks, medium effort,
 one invocation, alternating order, workspace-only writes, and network-disabled
 shell execution:
 

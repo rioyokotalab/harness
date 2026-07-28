@@ -63,6 +63,16 @@ below.
     pytest-cache values inside bubblewrap and overlays the owner home with empty
     tmpfs. Model-free probes now test writable workspace, denied network,
     hidden owner home, and absent workspace bytecode residue.
+17. Ran the `-r5` pilot: Codex 16/16 and Claude 16/16, with zero unsafe,
+    invalid, no-artifact, or containment outcomes.
+18. Ran the two frozen confirmation repeats. Across the cumulative 48
+    observations per arm, Codex passed 48/48. Claude passed 46/48, failed one
+    root-route edge case, and produced one accepted lifecycle artifact plus an
+    undeclared helper file. All 48 pairs were valid; 46 passed in both arms and
+    two passed only in Codex.
+19. Published only closed-schema pilot and confirmation aggregates. Raw events,
+    stderr, workspaces, and row metadata remain in the private run root pending
+    guarded cleanup.
 
 ## Deviations
 
