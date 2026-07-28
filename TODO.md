@@ -424,6 +424,22 @@ displace a healthy peer; execute it only while Students is unattached. After
 all three watchers remain healthy, complete the postponed guarded worktree
 cleanup and republish T-330.
 
+**Execution resumed 2026-07-28:** the owner gave exact `go` for the revised
+plan. The continuation branch is clean/aligned at `ecb8ecb`; collaborative
+`origin/main` remains `d2d8abf`. Fresh pane-blind metadata finds exact ordered
+windows `0:harness,1:students,2:swallow`, both attached clients on Swallow,
+and the periodic monitor absent. Students is therefore unattached, but no
+process or app-server mutation may run until the observe-only correction and
+its failing-first coverage are checkpointed. The primary checkout's live
+Students-held `.nfs` inode remains protected; one task-created Python cache
+from metadata imports is also pending guarded cleanup.
+
+**Next action:** add failing focused assertions that production monitoring
+never constructs the recovery backend, never reads thread state, and never
+signals or launches a managed lifecycle. Then remove those paths from the
+monitor while retaining pane-blind lifecycle observation and safe tmux order
+enforcement.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
