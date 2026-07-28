@@ -111,7 +111,7 @@ Next free ID: T-334.
 
 ### T-333 — Make fleet health maintenance-aware
 
-**Phase:** executing.
+**Phase:** complete after this closeout checkpoint reaches protected `main`.
 
 The owner requested that an unreachable managed node be reconciled against its
 official service-status or maintenance source before it is classified as an
@@ -183,6 +183,31 @@ The task worktree remained clean, and no managed checkout changed.
 task head, require protected `portable-phase1`, merge without changing rules,
 then guarded-sync only the ten reachable clean checkouts while ABQ remains
 deliberately unprobed.
+
+PR #389 exact head `48b69b8` passed protected `portable-phase1` in 1m55s and
+merged through the preserved administrator bypass as
+`9f82c34b1bcef67f3c5bbc4f246300a256590221`; the one-review rule was not
+changed. Local `main` fast-forwarded cleanly.
+
+Guarded plan/apply advanced `ab`, `ab2`, `ri`, `al`, `rc`, `t4`, `aist`,
+`home`, `office`, and `riken` from exact `ca424c5` to `9f82c34`; an idempotent
+follow-up plan reported exact `KEEP`, aligned `origin/main`, and absent transfer
+artifacts for all ten. ABQ was omitted from both synchronization operations and
+was not probed. Aist, Home, Office, and Riken each returned exactly one
+pane-blind merge-specific context-refresh `status=submitted`; none was retried.
+
+Canonical live fleet health on merged `main` reports all seven non-ABQ Linux
+nodes and all four Mac routes passing, with ABQ separately in maintenance
+through `2026-07-29T17:00:00+09:00`; both ABQ routes are skipped. The official
+source remains
+`https://unit.aist.go.jp/g-quat/HowToUse/abci_q/#status`.
+
+**Next action:** publish this closeout checkpoint through protected CI,
+guarded-sync the resulting documentation-only merge to the same ten clean
+reachable checkouts, and issue one merge-specific context refresh per advanced
+Mac. Do not contact ABQ before the recorded maintenance window expires. Once
+that closeout is synchronized and canonical fleet health is fresh, no T-333
+action remains.
 
 ### T-332 — Preserve native `codex` and move managed shorthand to `co`
 
