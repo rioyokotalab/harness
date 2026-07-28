@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-330.
+Next free ID: T-331.
 
 ## Current state
 
@@ -107,6 +107,88 @@ Next free ID: T-330.
    successors recorded below.
 
 ## Active tasks
+
+### T-330 — Monitor and order Local tmux Codex windows
+
+**Phase:** executing.
+
+The owner requested periodic pane-blind health checks for every managed Codex
+window in Local's `harness` tmux session and enforcement of canonical order
+`0:harness`, `1:students`, `2:swallow`. The spelling `harneess` is treated as
+the existing canonical `harness`; no rename to the typo is planned.
+
+Read-only discovery finds exactly those three one-pane windows already at the
+requested indices and rooted at `/home/rioyokota/harness`. Their resilient
+supervisors and real Codex TUIs are live. Swallow has a live current recovery
+watcher. Harness's watcher receipt is stale at
+`unavailable/recovery-check-failed` and recorded watcher PID `3126236` is
+absent while the Harness root is currently active. Students has no recovery
+receipt while its root is idle. Both supervisors predate the published
+watcher-lifecycle correction, so current process liveness alone is not full
+health.
+
+The recommended design is a dedicated detached
+`harness-tmux-codex-monitor` tmux session running every 30 seconds, separate
+from the existing five-minute SSH connection monitor. It will inspect only
+tmux/process/status/app-server metadata, never pane or transcript content.
+When all three window identities are unique it may use native
+`tmux swap-window -d` to enforce indices without changing attached clients.
+Ambiguous, duplicate, extra, attached-path, unsafe-thread, or unknown state
+fails closed.
+
+Decision D-001 is frozen as `safe-auto-repair`. In response to the one open
+choice, the owner selected “as you recommend.” The monitor may restart only an exact
+missing-watcher or missing-window chain whose saved thread identity is
+canonical and freshly `idle` or `notLoaded`; it never starts a turn, replays a
+prompt, rolls back, renames/archives roots, restarts the app server, or repairs
+active/systemError/unknown state.
+
+The frozen planning detail, failure gates, execution sequence, rollback, and
+acceptance criteria are in
+`docs/plans/t330-tmux-codex-monitor.md`.
+
+At 2026-07-28 10:52 JST the owner gave explicit `go`. Fresh Git and tmux
+readback still matches the frozen preimage: clean task branch, exact ordered
+windows `@60:harness`, `@50:students`, `@65:swallow`, and both attached
+clients on Harness. No live monitor or lifecycle mutation has run.
+
+The dispatcher, monitor, and deterministic focused fixtures are implemented.
+The monitor uses only tmux/process/status/app-server metadata, keeps private
+mode-0600 identity/receipt state beneath the current-user runtime directory,
+fails closed on ambiguous topology or unsafe thread state, preserves attached
+clients during `swap-window -d`, and limits safe repair to one exact
+idle/notLoaded chain per pass. A real observation-only collector pass found
+the requested order already exact, Swallow healthy, and only the expected
+legacy missing-watcher state on Harness and Students. It changed no tmux
+state.
+
+The first real collector pass exposed a naive `/proc/PID/stat` split on the
+space-containing `codex TUI` process name; the parser now isolates the
+parenthesized command field and a deterministic regression covers it. Python
+syntax, shell syntax, warning-level ShellCheck, diff hygiene, and the focused
+monitor suite pass. One generated two-entry/37,640-byte Python cache and one
+five-entry/8,336-byte isolated probe root were each removed through exact
+guarded-delete manifests; both applies verified protected anchors unchanged
+and targets absent, and both manifests were exact-unlinked.
+
+The first complete phase-one run reached the parallel focused stage. Seventy-
+four shards passed; only the shared tmux and terminfo fixtures failed because
+their safety gates require a clean committed checkout. The new monitor fixture
+was then added to both legacy and parallel focused-suite routing.
+
+**Next action:** commit the implementation checkpoint, rerun the complete
+phase-one suite from the clean task checkout, publish through protected CI,
+merge, guarded-sync clean managed checkouts, and only then activate and
+validate the dedicated 30-second Local monitor.
+
+Implementation commit `5fb42bc` passes the complete phase-one suite: all 75
+parallel focused shards, guarded-delete coverage, and every integration gate
+passed; only the declared native MPI smoke skipped outside an MPI allocation.
+The task checkout remained clean during the run.
+
+**Next action:** publish the exact validated head through protected CI, merge,
+guarded-sync clean managed checkouts, then activate and validate the dedicated
+30-second Local monitor.
 
 ### T-329 — Restore disappeared Swallow tmux window
 

@@ -1,0 +1,696 @@
+#!/usr/bin/env python3
+"""Pane-blind health, ordering, and bounded repair for Local Codex windows."""
+
+from __future__ import print_function
+
+import argparse
+import contextlib
+import fcntl
+import importlib.machinery
+import json
+import os
+import re
+import signal
+import stat
+import subprocess
+import sys
+import tempfile
+import time
+
+
+sys.dont_write_bytecode = True
+EXPECTED = (("harness", 0), ("students", 1), ("swallow", 2))
+SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
+
+
+class MonitorError(RuntimeError):
+    pass
+
+
+def fail(message):
+    raise MonitorError(message)
+
+
+def run(arguments, check=True):
+    result = subprocess.run(
+        arguments,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    if check and result.returncode != 0:
+        fail("native command failed")
+    return result.stdout.decode("utf-8", "strict")
+
+
+def runtime_root():
+    parent = os.environ.get("XDG_RUNTIME_DIR")
+    if not parent or not os.path.isabs(parent):
+        parent = os.environ.get("TMPDIR", "/tmp")
+    if not os.path.isabs(parent):
+        fail("runtime parent must be absolute")
+    root = os.path.join(parent, "harness-tmux-codex-monitor-{}".format(os.getuid()))
+    if not os.path.exists(root):
+        old = os.umask(0o077)
+        try:
+            os.makedirs(root, 0o700)
+        finally:
+            os.umask(old)
+    info = os.lstat(root)
+    if (
+        not stat.S_ISDIR(info.st_mode)
+        or stat.S_ISLNK(info.st_mode)
+        or info.st_uid != os.getuid()
+        or stat.S_IMODE(info.st_mode) != 0o700
+    ):
+        fail("runtime root is unsafe")
+    return root
+
+
+def atomic_json(path, value):
+    parent = os.path.dirname(path)
+    descriptor, temporary = tempfile.mkstemp(prefix=".monitor.", dir=parent)
+    try:
+        os.fchmod(descriptor, 0o600)
+        payload = (json.dumps(value, sort_keys=True) + "\n").encode("utf-8")
+        os.write(descriptor, payload)
+        os.fsync(descriptor)
+        os.close(descriptor)
+        descriptor = -1
+        os.replace(temporary, path)
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+def read_private_json(path, default):
+    if not os.path.exists(path):
+        return default
+    info = os.lstat(path)
+    if (
+        not stat.S_ISREG(info.st_mode)
+        or stat.S_ISLNK(info.st_mode)
+        or info.st_uid != os.getuid()
+        or info.st_nlink != 1
+        or stat.S_IMODE(info.st_mode) != 0o600
+    ):
+        fail("private state is unsafe")
+    with open(path, "r") as stream:
+        value = json.load(stream)
+    return value
+
+
+@contextlib.contextmanager
+def exclusive_lock(path):
+    old = os.umask(0o077)
+    try:
+        descriptor = os.open(path, os.O_CREAT | os.O_RDWR, 0o600)
+    finally:
+        os.umask(old)
+    try:
+        fcntl.flock(descriptor, fcntl.LOCK_EX)
+        yield
+    finally:
+        fcntl.flock(descriptor, fcntl.LOCK_UN)
+        os.close(descriptor)
+
+
+def parse_proc_stat(pid, value):
+    prefix = "{} (".format(pid)
+    end = value.rfind(") ")
+    if not value.startswith(prefix) or end < len(prefix):
+        raise ValueError("malformed process stat")
+    comm = value[len(prefix) : end]
+    fields = value[end + 2 :].split()
+    if len(fields) < 20:
+        raise ValueError("short process stat")
+    return {
+        "pid": pid,
+        "parent": int(fields[1]),
+        "start": fields[19],
+        "comm": comm,
+    }
+
+
+def process_info(pid):
+    try:
+        with open("/proc/{}/stat".format(pid), "r") as stream:
+            info = parse_proc_stat(pid, stream.read())
+        with open("/proc/{}/cmdline".format(pid), "rb") as stream:
+            argv = [part.decode("utf-8", "strict") for part in stream.read().split(b"\0") if part]
+    except (IOError, OSError, UnicodeError, ValueError):
+        return None
+    info["argv"] = argv
+    return info
+
+
+def children(parent):
+    result = []
+    try:
+        names = os.listdir("/proc")
+    except OSError:
+        return result
+    for name in names:
+        if not name.isdigit():
+            continue
+        info = process_info(int(name))
+        if info and info["parent"] == parent:
+            result.append(info)
+    return result
+
+
+def descendants(parent):
+    pending = [parent]
+    found = []
+    visited = set()
+    while pending:
+        current = pending.pop()
+        if current in visited:
+            continue
+        visited.add(current)
+        for child in children(current):
+            found.append(child)
+            pending.append(child["pid"])
+    return found
+
+
+def parse_supervisor(info):
+    if not info:
+        return None
+    argv = info["argv"]
+    if len(argv) < 7 or "harness-codex-resilient" not in " ".join(argv[:2]):
+        return None
+    try:
+        run_index = argv.index("--run")
+        name_index = argv.index("--name")
+        remote_index = argv.index("--remote-session")
+        runtime_name = argv[name_index + 1]
+        thread_id = argv[remote_index + 1]
+    except (ValueError, IndexError):
+        return None
+    if run_index < 1 or not SAFE_ID.match(runtime_name) or not SAFE_ID.match(thread_id):
+        return None
+    return {"runtime": runtime_name, "thread": thread_id, "start": info["start"]}
+
+
+def resilient_status(runtime_name):
+    harness = os.path.join(os.environ["HARNESS_ROOT"], "bin", "harness")
+    result = subprocess.run(
+        [harness, "codex-resilient", "--status", "--name", runtime_name],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    text = result.stdout.decode("utf-8", "strict")
+    lines = [line for line in text.splitlines() if line]
+    if result.returncode != 0 or not lines:
+        return None
+    first = dict(item.split("=", 1) for item in lines[0].split()[1:] if "=" in item)
+    recovery = None
+    if len(lines) > 1:
+        recovery = dict(item.split("=", 1) for item in lines[1].split()[1:] if "=" in item)
+    return first, recovery
+
+
+def recovery_module():
+    path = os.path.join(
+        os.environ["HARNESS_ROOT"], "libexec", "harness-codex-thread-recovery"
+    )
+    return importlib.machinery.SourceFileLoader("tmux_monitor_recovery", path).load_module()
+
+
+def read_thread(module, backend, thread_id):
+    value = backend.read_thread(thread_id)
+    status_value = value.get("status")
+    rollout_valid = False
+    if status_value in ("idle", "active", "notLoaded", "systemError"):
+        try:
+            module.validate_rollout(value.get("path"), thread_id)
+            rollout_valid = True
+        except module.RecoveryError:
+            rollout_valid = False
+    return status_value, rollout_valid
+
+
+def reciprocal_socket(tui_pid):
+    output = run(["ss", "-xnpH"], check=False)
+    pairs = []
+    expression = re.compile(r"\*\s+([0-9]+)\s+\*\s+([0-9]+).*pid=([0-9]+)")
+    path_expression = re.compile(r"\s([0-9]+)\s+\*\s+([0-9]+).*pid=([0-9]+)")
+    for line in output.splitlines():
+        match = expression.search(line) or path_expression.search(line)
+        if match:
+            pairs.append((int(match.group(1)), int(match.group(2)), int(match.group(3))))
+    tui_pairs = {(left, right) for left, right, pid in pairs if pid == tui_pid}
+    for left, right, pid in pairs:
+        if pid != tui_pid and (right, left) in tui_pairs:
+            return pid
+    return None
+
+
+def tmux_windows():
+    output = run(
+        [
+            "tmux",
+            "list-windows",
+            "-t",
+            "harness",
+            "-F",
+            "#{window_index}\t#{window_id}\t#{window_name}\t#{window_panes}\t"
+            "#{pane_id}\t#{pane_pid}\t#{pane_current_path}\t#{pane_dead}",
+        ]
+    )
+    windows = []
+    for line in output.splitlines():
+        fields = line.split("\t")
+        if len(fields) != 8:
+            fail("tmux window metadata is malformed")
+        windows.append(
+            {
+                "index": int(fields[0]),
+                "window_id": fields[1],
+                "name": fields[2],
+                "panes": int(fields[3]),
+                "pane_id": fields[4],
+                "pane_pid": int(fields[5]),
+                "path": fields[6],
+                "dead": fields[7] == "1",
+            }
+        )
+    return windows
+
+
+def tmux_clients():
+    output = run(
+        ["tmux", "list-clients", "-t", "harness", "-F", "#{client_pid}\t#{window_id}"],
+        check=False,
+    )
+    return sorted(tuple(line.split("\t", 1)) for line in output.splitlines() if "\t" in line)
+
+
+def enforce_order(windows):
+    expected_names = [name for name, _index in EXPECTED]
+    if (
+        len(windows) != 3
+        or sorted(window["name"] for window in windows) != sorted(expected_names)
+        or any(window["panes"] != 1 or window["dead"] for window in windows)
+        or any(window["path"] != os.environ["HARNESS_ROOT"] for window in windows)
+    ):
+        return windows, "deferred-ambiguous"
+    before_clients = tmux_clients()
+    action = "none"
+    for name, target_index in EXPECTED[:2]:
+        current = next(window for window in windows if window["name"] == name)
+        if current["index"] != target_index:
+            target = next(
+                (window for window in windows if window["index"] == target_index),
+                None,
+            )
+            operation = "swap-window" if target else "move-window"
+            run(
+                [
+                    "tmux",
+                    operation,
+                    "-d",
+                    "-s",
+                    current["window_id"],
+                    "-t",
+                    "harness:{}".format(target_index),
+                ]
+            )
+            action = "ordered"
+            windows = tmux_windows()
+    if next(window for window in windows if window["name"] == "swallow")["index"] != 2:
+        fail("tmux order correction did not converge")
+    if tmux_clients() != before_clients:
+        fail("tmux order correction changed attached clients")
+    return windows, action
+
+
+def collect_health(windows, module, backend):
+    health = {}
+    for name, expected_index in EXPECTED:
+        matches = [window for window in windows if window["name"] == name]
+        if len(matches) != 1:
+            health[name] = {"state": "unhealthy", "reason": "window-missing"}
+            continue
+        window = matches[0]
+        entry = {"window": window, "state": "unhealthy", "reason": "metadata"}
+        if (
+            window["panes"] != 1
+            or window["dead"]
+            or window["path"] != os.environ["HARNESS_ROOT"]
+        ):
+            health[name] = entry
+            continue
+        supervisor_info = process_info(window["pane_pid"])
+        identity = parse_supervisor(supervisor_info)
+        if not identity:
+            entry["reason"] = "supervisor-identity"
+            health[name] = entry
+            continue
+        status_value = resilient_status(identity["runtime"])
+        if not status_value:
+            entry["reason"] = "supervisor-status"
+            health[name] = entry
+            continue
+        supervisor, recovery = status_value
+        if (
+            supervisor.get("phase") not in ("running", "backoff")
+            or supervisor.get("owner_pid") != str(window["pane_pid"])
+        ):
+            entry["reason"] = "supervisor-owner"
+            health[name] = entry
+            continue
+        thread_status, rollout_valid = read_thread(
+            module, backend, identity["thread"]
+        )
+        entry.update(
+            {
+                "identity": identity,
+                "thread_status": thread_status,
+                "rollout_valid": rollout_valid,
+            }
+        )
+        tui = next(
+            (item for item in descendants(window["pane_pid"]) if item["comm"] == "codex.real"),
+            None,
+        )
+        entry["tui"] = tui
+        if supervisor.get("phase") == "backoff" and tui is None:
+            entry["state"] = "recovering"
+            entry["reason"] = "supervisor-backoff"
+            health[name] = entry
+            continue
+        if not tui:
+            entry["reason"] = "tui-absent"
+            health[name] = entry
+            continue
+        peer_pid = reciprocal_socket(tui["pid"])
+        entry["app_server_pid"] = peer_pid
+        if not peer_pid:
+            entry["reason"] = "socket-absent"
+            health[name] = entry
+            continue
+        watcher_ok = False
+        if recovery and recovery.get("phase") in ("watching", "recovered"):
+            try:
+                watcher_pid = int(recovery.get("owner_pid", "0"))
+            except ValueError:
+                watcher_pid = 0
+            watcher = process_info(watcher_pid)
+            watcher_ok = bool(
+                watcher
+                and watcher["parent"] == window["pane_pid"]
+                and recovery.get("thread") == identity["thread"]
+            )
+        if not watcher_ok:
+            entry["reason"] = "watcher-absent"
+            health[name] = entry
+            continue
+        if not rollout_valid or thread_status not in ("idle", "active", "notLoaded"):
+            entry["reason"] = "thread-unsafe"
+            health[name] = entry
+            continue
+        entry["state"] = "healthy"
+        entry["reason"] = "ready"
+        entry["expected_index"] = expected_index
+        health[name] = entry
+    return health
+
+
+def mapping_snapshot(mapping, health):
+    for name, _index in EXPECTED:
+        entry = health.get(name, {})
+        identity = entry.get("identity")
+        if (
+            identity
+            and entry.get("rollout_valid")
+            and entry.get("thread_status") in ("idle", "active", "notLoaded")
+            and entry.get("app_server_pid")
+        ):
+            mapping[name] = {
+                "runtime": identity["runtime"],
+                "thread": identity["thread"],
+                "app_server_pid": entry["app_server_pid"],
+                "app_server_start": process_info(entry["app_server_pid"])["start"],
+            }
+    return mapping
+
+
+def launch_window(name, index, mapping):
+    value = mapping[name]
+    command = (
+        "exec env XDG_RUNTIME_DIR={runtime} {root}/bin/harness "
+        "codex-resilient --run --name {name} --remote-session {thread}"
+    ).format(
+        runtime=os.environ.get("XDG_RUNTIME_DIR", ""),
+        root=os.environ["HARNESS_ROOT"],
+        name=value["runtime"],
+        thread=value["thread"],
+    )
+    run(
+        [
+            "tmux",
+            "new-window",
+            "-d",
+            "-t",
+            "harness:{}".format(index),
+            "-n",
+            name,
+            "-c",
+            os.environ["HARNESS_ROOT"],
+            command,
+        ]
+    )
+
+
+def repair_once(windows, health, mapping, module, backend):
+    before_clients = tmux_clients()
+    for name, index in EXPECTED:
+        entry = health.get(name, {})
+        if name not in mapping:
+            continue
+        saved = mapping[name]
+        saved_server = process_info(saved.get("app_server_pid", 0))
+        if (
+            not saved_server
+            or saved_server["comm"] != "codex.real"
+            or saved_server["start"] != saved.get("app_server_start")
+        ):
+            continue
+        if entry.get("app_server_pid") not in (
+            None,
+            saved["app_server_pid"],
+        ):
+            continue
+        identity = entry.get("identity")
+        if identity and (
+            identity.get("runtime") != saved.get("runtime")
+            or identity.get("thread") != saved.get("thread")
+        ):
+            continue
+        status_value, rollout_valid = read_thread(module, backend, saved["thread"])
+        if status_value not in ("idle", "notLoaded") or not rollout_valid:
+            continue
+        reason = entry.get("reason")
+        if reason == "watcher-absent" and entry.get("tui"):
+            tui = entry["tui"]
+            current = process_info(tui["pid"])
+            if not current or current["start"] != tui["start"]:
+                fail("repair TUI identity drifted")
+            os.kill(tui["pid"], signal.SIGTERM)
+            deadline = time.monotonic() + 10
+            while time.monotonic() < deadline:
+                if process_info(tui["pid"]) is None:
+                    break
+                time.sleep(0.2)
+            else:
+                fail("repair TUI did not exit")
+            deadline = time.monotonic() + 10
+            while time.monotonic() < deadline:
+                if not any(window["name"] == name for window in tmux_windows()):
+                    break
+                time.sleep(0.2)
+            else:
+                fail("repair window did not unwind")
+            launch_window(name, index, mapping)
+            action = "restarted-{}".format(name)
+        elif reason == "window-missing":
+            if any(window["index"] == index for window in windows):
+                continue
+            launch_window(name, index, mapping)
+            action = "restored-{}".format(name)
+        else:
+            continue
+        if tmux_clients() != before_clients:
+            fail("repair changed attached clients")
+        return action
+    return "none"
+
+
+def test_fixture(path, enforce, repair):
+    with open(path, "r") as stream:
+        fixture = json.load(stream)
+    windows = fixture["windows"]
+    order_action = "none"
+    names = [window["name"] for window in windows]
+    if enforce:
+        if len(windows) == 3 and sorted(names) == sorted(name for name, _ in EXPECTED):
+            for name, index in EXPECTED:
+                next(window for window in windows if window["name"] == name)["index"] = index
+            order_action = "ordered" if fixture.get("out_of_order") else "none"
+        else:
+            order_action = "deferred-ambiguous"
+    repair_action = "none"
+    if repair:
+        for name, _index in EXPECTED:
+            value = fixture.get("health", {}).get(name, {})
+            if (
+                value.get("reason") in ("watcher-absent", "window-missing")
+                and value.get("thread_status") in ("idle", "notLoaded")
+                and value.get("mapping")
+            ):
+                repair_action = "repair-eligible-{}".format(name)
+                break
+    states = fixture.get("health", {})
+    healthy = sum(1 for value in states.values() if value.get("state") == "healthy")
+    print(
+        "TMUX_CODEX_MONITOR phase={} healthy={} order_action={} repair_action={}".format(
+            "healthy" if healthy == 3 else "degraded",
+            healthy,
+            order_action,
+            repair_action,
+        )
+    )
+    return 0 if healthy == 3 else 1
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(prog="harness tmux-codex-monitor")
+    modes = parser.add_mutually_exclusive_group(required=True)
+    modes.add_argument("--once", action="store_true")
+    modes.add_argument("--interval", type=int)
+    modes.add_argument("--status", action="store_true")
+    parser.add_argument("--enforce-order", action="store_true")
+    parser.add_argument("--repair", action="store_true")
+    arguments = parser.parse_args()
+    if arguments.interval is not None and not 30 <= arguments.interval <= 3600:
+        parser.error("--interval must be between 30 and 3600 seconds")
+    if arguments.status and (arguments.enforce_order or arguments.repair):
+        parser.error("--status does not accept mutation flags")
+    return arguments
+
+
+def main():
+    arguments = parse_arguments()
+    fixture = os.environ.get("HARNESS_TEST_TMUX_CODEX_FIXTURE")
+    if fixture:
+        if os.environ.get("HARNESS_TESTING") != "1":
+            fail("test fixture requires HARNESS_TESTING=1")
+        return test_fixture(fixture, arguments.enforce_order, arguments.repair)
+    root = runtime_root()
+    receipt_path = os.path.join(root, "receipt.json")
+    mapping_path = os.path.join(root, "mapping.json")
+    if arguments.status:
+        receipt = read_private_json(receipt_path, None)
+        if not receipt:
+            print("TMUX_CODEX_MONITOR phase=absent")
+            return 1
+        owner = process_info(receipt.get("owner_pid", 0))
+        if (
+            not owner
+            or owner["comm"] != "python3"
+            or int(time.time()) - receipt.get("epoch", 0) > 120
+        ):
+            receipt["phase"] = "stale"
+        print(
+            "TMUX_CODEX_MONITOR phase={} healthy={} order_action={} "
+            "repair_action={} owner_pid={}".format(
+                receipt["phase"],
+                receipt["healthy"],
+                receipt["order_action"],
+                receipt["repair_action"],
+                receipt["owner_pid"],
+            )
+        )
+        return 0 if receipt["phase"] == "healthy" else 1
+    module = recovery_module()
+    stopping = [False]
+    signal.signal(signal.SIGTERM, lambda _signum, _frame: stopping.__setitem__(0, True))
+    while not stopping[0]:
+        phase = "unavailable"
+        healthy = 0
+        order_action = "none"
+        repair_action = "none"
+        with exclusive_lock(os.path.join(root, "monitor.lock")):
+            try:
+                windows = tmux_windows()
+                if arguments.enforce_order:
+                    windows, order_action = enforce_order(windows)
+                backend = module.Backend()
+                try:
+                    health = collect_health(windows, module, backend)
+                    mapping = read_private_json(mapping_path, {})
+                    mapping = mapping_snapshot(mapping, health)
+                    atomic_json(mapping_path, mapping)
+                    if arguments.repair:
+                        repair_action = repair_once(
+                            windows, health, mapping, module, backend
+                        )
+                    healthy = sum(
+                        1 for entry in health.values() if entry["state"] == "healthy"
+                    )
+                    phase = (
+                        "healthy"
+                        if healthy == 3 and order_action != "deferred-ambiguous"
+                        else "degraded"
+                    )
+                    for name, index in EXPECTED:
+                        entry = health.get(name, {})
+                        print(
+                            "TMUX_CODEX_WINDOW index={} name={} state={} reason={}".format(
+                                index,
+                                name,
+                                entry.get("state", "unhealthy"),
+                                entry.get("reason", "window-missing"),
+                            )
+                        )
+                finally:
+                    backend.close()
+            except MonitorError:
+                phase = "unavailable"
+            receipt = {
+                "schema": 1,
+                "phase": phase,
+                "healthy": healthy,
+                "order_action": order_action,
+                "repair_action": repair_action,
+                "owner_pid": os.getpid(),
+                "epoch": int(time.time()),
+            }
+            atomic_json(receipt_path, receipt)
+        print(
+            "TMUX_CODEX_MONITOR phase={} healthy={} order_action={} repair_action={}".format(
+                phase, healthy, order_action, repair_action
+            )
+        )
+        if arguments.once:
+            return 0 if phase == "healthy" else 1
+        deadline = time.monotonic() + arguments.interval
+        while not stopping[0]:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            time.sleep(min(0.2, remaining))
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except (MonitorError, ValueError, KeyError, OSError) as error:
+        print("harness: tmux Codex monitor failed: {}".format(error), file=sys.stderr)
+        sys.exit(2)
