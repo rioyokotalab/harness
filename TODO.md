@@ -475,6 +475,34 @@ unlink the two private captures, then prepare and validate the detached
 post-turn cutover helper from frozen step 3. Do not signal the old TUI before
 the helper gate and its exact preimage are durably checkpointed.
 
+**Cutover-helper checkpoint:** new-root acceptance commit
+`429644c1f17ab0ae35614dbbd4e5c178ec2763d2` is pushed and the two reviewed
+mode-0600 captures were exact-unlinked; both paths are absent. No old-process
+or tmux mutation has run.
+
+Prepared exact helper `/tmp/t335-cutover-429644c.sh` is a current-user-owned,
+single-link mode-0700 regular file with SHA-256
+`4bc1caf823f939f7e1a7a9389f266fa9e925c9fe851caeadddf12eec0475bc00`.
+Its empty result is exact current-user mode-0600
+`/tmp/t335-cutover-result.nSco2l`. `bash -n`, warning-level ShellCheck, every
+required native command, shared-lock metadata, monitor-receipt metadata,
+new-rollout metadata, Git identities, process starts/argv hashes, exact tmux
+mapping, and no-client preconditions pass.
+
+The helper exact-unlinks its own script after safe startup, takes the shared
+agent-message lock, and requires the task head supplied at arm time to equal
+its pushed upstream. It waits at most 120 seconds for this turn's old watcher
+to become `thread-idle`; any failure before the signal records
+`retry=safe`. After the one old-TUI leaf signal, any failure records
+`retry=blocked`. It sends no second signal and launches at most once. Two
+accepted monitor samples must be separate periodic receipts after launch,
+not a stale pre-cutover receipt.
+
+**Next action:** commit and push this helper checkpoint. Revalidate its exact
+checksum plus every live identity, arm it once as a detached process with the
+new pushed task head, and require a value-free `armed` receipt before yielding
+this turn. Do not retry an ambiguous arm.
+
 ### T-334 — Extend maintenance awareness to remote Linux nodes
 
 **Phase:** complete after this closeout checkpoint reaches protected `main`.
