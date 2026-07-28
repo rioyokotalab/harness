@@ -37,10 +37,8 @@ mkdir -p "$PUBLIC/bin" "$PUBLIC/libexec" "$PUBLIC/profiles" "$FAKE_BIN" "$STATE"
 cp "$ROOT/bin/harness" "$PUBLIC/bin/harness"
 cp "$ROOT/libexec/harness-inventory" "$PUBLIC/libexec/harness-inventory"
 cp "$HEALTH" "$PUBLIC/libexec/harness-fleet-health"
-cat >"$PUBLIC/profiles/fleet-maintenance.tsv" <<'EOF'
-# node|start_epoch|end_epoch|end_display|status_url|reason
-abq|1785200400|1785312000|2026-07-29T17:00:00+09:00|https://unit.aist.go.jp/g-quat/HowToUse/abci_q/#status|scheduled-service-stop
-EOF
+cp "$ROOT/profiles/fleet-status-sources.tsv" "$PUBLIC/profiles/"
+cp "$ROOT/profiles/fleet-maintenance.tsv" "$PUBLIC/profiles/"
 
 cat >"$PUBLIC/libexec/harness-al-session" <<'EOF'
 #!/bin/sh
@@ -122,18 +120,99 @@ grep -E '^abq2? ' "$STATE/calls" >/dev/null &&
 unlink "$STATE/abq.fail"
 unlink "$STATE/abq2.fail"
 
+: >"$STATE/calls"
+: >"$STATE/ab.fail"
+: >"$STATE/ab2.fail"
+PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_ROOT="$PUBLIC" HARNESS_TESTING=1 \
+    HARNESS_FLEET_HEALTH_NOW_EPOCH=1787274000 \
+    HARNESS_FLEET_HEALTH_STATE="$STATE" "$HEALTH" \
+    >"$TEMP_DIR/ab-maintenance.out"
+grep -F -x \
+    'FLEET_HEALTH node=ab class=linux status=maintenance routes=skipped/1 maintenance_end=2026-08-28T13:00:00+09:00 status_url=https://abci.ai/en/about_abci/info.html' \
+    "$TEMP_DIR/ab-maintenance.out" >/dev/null ||
+    fail "AB maintenance status"
+grep -F -x \
+    'FLEET_HEALTH node=ab2 class=linux status=maintenance routes=skipped/1 maintenance_end=2026-08-28T13:00:00+09:00 status_url=https://abci.ai/en/about_abci/info.html' \
+    "$TEMP_DIR/ab-maintenance.out" >/dev/null ||
+    fail "AB2 maintenance status"
+grep -F -x 'Fleet: Linux maintenance nodes=ab,ab2; Macs pass.' \
+    "$TEMP_DIR/ab-maintenance.out" >/dev/null ||
+    fail "AB maintenance compact summary"
+grep -E '^ab2? ' "$STATE/calls" >/dev/null &&
+    fail "ABCI 3.0 was probed during scheduled maintenance"
+unlink "$STATE/ab.fail"
+unlink "$STATE/ab2.fail"
+
+: >"$STATE/ab.fail"
+: >"$STATE/ab2.fail"
+: >"$STATE/ri.fail"
+: >"$STATE/al-session.fail"
+: >"$STATE/rc.fail"
+: >"$STATE/t4.fail"
 : >"$STATE/abq2.fail"
 : >"$STATE/riken.fail"
 if PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_ROOT="$PUBLIC" HARNESS_TESTING=1 \
-    HARNESS_FLEET_HEALTH_NOW_EPOCH=1785312000 \
+    HARNESS_FLEET_HEALTH_NOW_EPOCH=1787889600 \
     HARNESS_FLEET_HEALTH_STATE="$STATE" "$HEALTH" \
     >"$TEMP_DIR/failed.out" 2>"$TEMP_DIR/failed.err"; then
     fail "fleet health accepted failed routes"
 fi
-grep -F -x 'Fleet: Linux fail nodes=abq; Macs fail nodes=riken.' \
+grep -F -x \
+    'Fleet: Linux fail nodes=ab,ab2,ri,al,rc,t4,abq; Macs fail nodes=riken.' \
     "$TEMP_DIR/failed.out" >/dev/null || fail "failed compact summary"
+for expected_failure in \
+    'node=ab class=linux status=fail routes=1 status_url=https://abci.ai/en/about_abci/info.html' \
+    'node=ab2 class=linux status=fail routes=1 status_url=https://abci.ai/en/about_abci/info.html' \
+    'node=ri class=linux status=fail routes=1 status_url=https://docs.r-ccs.riken.jp/rikyu/en/contact/' \
+    'node=al class=linux status=fail routes=managed status_url=https://status.cscs.ch/' \
+    'node=rc class=linux status=fail routes=1 status_url=https://portal.cloud.r-ccs.riken.jp/' \
+    'node=t4 class=linux status=fail routes=1 status_url=https://www.t4.cii.isct.ac.jp/' \
+    'node=abq class=linux status=fail routes=2 status_url=https://unit.aist.go.jp/g-quat/HowToUse/abci_q/#status'; do
+    grep -F -x "FLEET_HEALTH $expected_failure" "$TEMP_DIR/failed.out" >/dev/null ||
+        fail "remote Linux failure source: $expected_failure"
+done
 grep -F 'PRIVATE-SSH-DIAGNOSTIC' "$TEMP_DIR/failed.out" "$TEMP_DIR/failed.err" \
     >/dev/null && fail "private SSH diagnostic escaped"
+for failed_route in ab ab2 ri al-session rc t4 abq2 riken; do
+    unlink "$STATE/$failed_route.fail"
+done
+
+printf '%s\n' \
+    'ab|1790000000|1790001000|2026-09-21T23:30:00+09:00|https://abci.ai/en/about_abci/info.html|scheduled-service-stop' \
+    >>"$PUBLIC/profiles/fleet-maintenance.tsv"
+PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_ROOT="$PUBLIC" HARNESS_TESTING=1 \
+    HARNESS_FLEET_HEALTH_NOW_EPOCH=1787889600 \
+    HARNESS_FLEET_HEALTH_STATE="$STATE" "$HEALTH" \
+    >"$TEMP_DIR/non-overlap.out"
+grep -F -x 'Fleet: Linux pass; Macs pass.' "$TEMP_DIR/non-overlap.out" \
+    >/dev/null || fail "non-overlapping maintenance windows"
+
+cp "$PUBLIC/profiles/fleet-status-sources.tsv" \
+    "$PUBLIC/profiles/fleet-status-sources.saved"
+printf '%s\n' 'ab|https://duplicate.invalid/|public-status' \
+    >>"$PUBLIC/profiles/fleet-status-sources.tsv"
+: >"$STATE/calls"
+if PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_ROOT="$PUBLIC" HARNESS_TESTING=1 \
+    HARNESS_FLEET_HEALTH_NOW_EPOCH=1787889600 \
+    HARNESS_FLEET_HEALTH_STATE="$STATE" "$HEALTH" \
+    >"$TEMP_DIR/bad-source.out" 2>"$TEMP_DIR/bad-source.err"; then
+    fail "fleet health accepted a duplicate status source"
+fi
+[ ! -s "$STATE/calls" ] || fail "malformed source registry reached probes"
+mv "$PUBLIC/profiles/fleet-status-sources.saved" \
+    "$PUBLIC/profiles/fleet-status-sources.tsv"
+
+printf '%s\n' \
+    'ab|1787275000|1787276000|2026-08-21T10:33:20+09:00|https://abci.ai/en/about_abci/info.html|scheduled-service-stop' \
+    >>"$PUBLIC/profiles/fleet-maintenance.tsv"
+: >"$STATE/calls"
+if PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_ROOT="$PUBLIC" HARNESS_TESTING=1 \
+    HARNESS_FLEET_HEALTH_NOW_EPOCH=1787889600 \
+    HARNESS_FLEET_HEALTH_STATE="$STATE" "$HEALTH" \
+    >"$TEMP_DIR/overlap.out" 2>"$TEMP_DIR/overlap.err"; then
+    fail "fleet health accepted overlapping maintenance windows"
+fi
+[ ! -s "$STATE/calls" ] || fail "overlapping registry reached probes"
 
 grep -F 'Before yielding every Harness turn, run `harness fleet-health`' \
     "$ROOT/AGENTS.md" >/dev/null || fail "per-turn fleet health policy"

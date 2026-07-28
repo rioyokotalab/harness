@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-334.
+Next free ID: T-335.
 
 ## Current state
 
@@ -108,6 +108,79 @@ Next free ID: T-334.
    successors recorded below.
 
 ## Active tasks
+
+### T-334 — Extend maintenance awareness to remote Linux nodes
+
+**Phase:** executing.
+
+The owner asked to apply T-333's official-maintenance reconciliation to the
+other managed remote Linux nodes. Scope is exact logical nodes `ab`, `ab2`,
+`ri`, `al`, `rc`, and `t4`; preserve ABQ's existing behavior. The frozen
+source matrix, negative evidence, execution sequence, safety gates, rollback,
+and acceptance criteria are in
+`docs/plans/t334-linux-maintenance-sources.md`.
+
+Official readback on 2026-07-28 establishes one new full-service window:
+ABCI 3.0 will suspend all services from 2026-08-21 10:00 through
+2026-08-28 13:00 JST. Register that exact half-open interval for both `ab`
+logical accounts. CSCS Daint has no active or upcoming maintenance in the
+official status feed. TSUBAME4 returned to normal operation after today's
+sequential login-node maintenance and therefore remains probeable. RIKYU and
+R-CCS Cloud expose official support/service portals but no verifiable public
+maintenance feed; retain unknown classification when those sources cannot
+resolve an outage.
+
+Generalize the registry-backed classifier to every remote Linux logical node,
+add one reviewed official source per node, support multiple non-overlapping
+future windows, skip only exact active full-route stops, and include the
+official URL on every unexpected remote Linux failure. Do not scrape websites
+at runtime, suppress partial service work, change route semantics, inspect
+authenticated portal content, or contact ABQ during its active stop.
+
+The owner's direct request is the explicit execution authorization for this
+frozen scope; no material decision remains.
+
+**Next action:** commit and push this evidence/plan checkpoint, add
+failing-first generalized maintenance and source-registry fixtures, then
+implement the narrow classifier before full validation.
+
+Planning checkpoint `ace889e` is pushed. Failing-first focused coverage then
+stopped at the new active ABCI 3.0 expectation because `ab` and `ab2` were
+still probed. The implementation adds one reviewed source row for every remote
+Linux logical node, registers the exact future ABCI 3.0 window for both
+accounts, selects active maintenance generically, allows non-overlapping future
+windows, and rejects malformed, missing, duplicate-source, or overlapping
+records before probes.
+
+Every remote Linux logical node now skips only its exact active route contract,
+emits source-bearing maintenance, and carries its official URL on unexpected
+failure. ABQ's two-route behavior, AL's managed route, raw SSH diagnostic
+suppression, canonical ordering, compact summaries, Mac contracts, and
+non-failing/non-ready maintenance semantics remain unchanged.
+
+The first generalized selector used AWK's built-in function name `index` as a
+loop variable and failed locally before any network probe. Renaming only that
+variable to `slot` resolved the LIFO issue. No live or external state changed.
+Shell syntax, warning-level ShellCheck, diff hygiene, the focused fleet-health
+suite, the fleet-inventory suite, and live current-time readback pass. The
+deterministic suite proves simultaneous AB/AB2 and ABQ suppression, exclusive-
+end recovery, every remote failure URL, accepted non-overlapping windows, and
+fail-closed malformed/overlap behavior.
+
+**Next action:** commit the coherent implementation, run the complete clean
+phase-one suite, then publish through protected exact-head CI before changing
+any managed checkout.
+
+Implementation commit `81d427d` passes the complete clean phase-one suite:
+every focused and integration shard passed, guarded-delete coverage passed,
+and only the declared native MPI smoke skipped outside an MPI environment.
+The task worktree remained clean, and no managed checkout or live service
+changed.
+
+**Next action:** commit this validation checkpoint, fetch and push the exact
+task head, require protected `portable-phase1`, merge without changing rules,
+then guarded-sync only clean reachable checkouts while ABQ remains deliberately
+unprobed.
 
 ### T-333 — Make fleet health maintenance-aware
 

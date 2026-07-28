@@ -19,7 +19,13 @@ case "$#" in
     *) usage; exit 2 ;;
 esac
 
+status_source_file=$HARNESS_ROOT/profiles/fleet-status-sources.tsv
 maintenance_file=$HARNESS_ROOT/profiles/fleet-maintenance.tsv
+[ -f "$status_source_file" ] && [ ! -L "$status_source_file" ] ||
+    {
+        echo "harness fleet-health: status source registry is unavailable" >&2
+        exit 2
+    }
 [ -f "$maintenance_file" ] && [ ! -L "$maintenance_file" ] ||
     {
         echo "harness fleet-health: maintenance registry is unavailable" >&2
@@ -43,9 +49,31 @@ case ${HARNESS_FLEET_HEALTH_NOW_EPOCH:-} in
         ;;
 esac
 
-maintenance_record_for() {
+status_source_for() {
     awk -F'|' -v wanted="$1" '
-        BEGIN { invalid = 0 }
+        BEGIN { invalid = 0; found = 0 }
+        /^#/ || NF == 0 { next }
+        NF != 3 ||
+        $1 !~ /^[a-z][a-z0-9._-]*$/ ||
+        $2 !~ /^https:\/\/[^[:space:]|]+$/ ||
+        $3 !~ /^[a-z][a-z-]*$/ ||
+        seen[$1]++ {
+            invalid = 1
+            next
+        }
+        $1 == wanted {
+            print $2
+            found++
+        }
+        END {
+            if (invalid || found != 1) exit 2
+        }
+    ' "$status_source_file"
+}
+
+active_maintenance_for() {
+    awk -F'|' -v wanted="$1" -v now="$now_epoch" '
+        BEGIN { invalid = 0; active = 0 }
         /^#/ || NF == 0 { next }
         NF != 6 ||
         $1 !~ /^[a-z][a-z0-9._-]*$/ ||
@@ -54,42 +82,91 @@ maintenance_record_for() {
         $4 !~ /^[0-9T:+-]+$/ ||
         $5 !~ /^https:\/\/[^[:space:]|]+$/ ||
         $6 !~ /^[a-z0-9-]+$/ ||
-        ($2 + 0) >= ($3 + 0) ||
-        seen[$1]++ {
+        ($2 + 0) >= ($3 + 0) {
             invalid = 1
             next
         }
-        $1 == wanted {
+        {
+            start = $2 + 0
+            stop = $3 + 0
+            for (slot = 1; slot <= count[$1]; slot++) {
+                if (start < ends[$1, slot] && stop > starts[$1, slot]) {
+                    invalid = 1
+                }
+            }
+            count[$1]++
+            starts[$1, count[$1]] = start
+            ends[$1, count[$1]] = stop
+        }
+        $1 == wanted && now >= ($2 + 0) && now < ($3 + 0) {
             print
+            active++
         }
         END {
-            if (invalid) exit 2
+            if (invalid || active > 1) exit 2
         }
     ' "$maintenance_file"
 }
 
-abq_maintenance=$(maintenance_record_for abq) ||
+ab_status_url=$(status_source_for ab) &&
+    ab2_status_url=$(status_source_for ab2) &&
+    ri_status_url=$(status_source_for ri) &&
+    al_status_url=$(status_source_for al) &&
+    rc_status_url=$(status_source_for rc) &&
+    t4_status_url=$(status_source_for t4) &&
+    abq_status_url=$(status_source_for abq) ||
+    {
+        echo "harness fleet-health: status source registry is malformed" >&2
+        exit 2
+    }
+
+ab_maintenance=$(active_maintenance_for ab) &&
+    ab2_maintenance=$(active_maintenance_for ab2) &&
+    ri_maintenance=$(active_maintenance_for ri) &&
+    al_maintenance=$(active_maintenance_for al) &&
+    rc_maintenance=$(active_maintenance_for rc) &&
+    t4_maintenance=$(active_maintenance_for t4) &&
+    abq_maintenance=$(active_maintenance_for abq) ||
     {
         echo "harness fleet-health: maintenance registry is malformed" >&2
         exit 2
     }
-abq_maintenance_active=0
-abq_maintenance_end=
-abq_status_url=
-if [ -n "$abq_maintenance" ]; then
-    maintenance_rest=${abq_maintenance#*|}
-    abq_maintenance_start=${maintenance_rest%%|*}
-    maintenance_rest=${maintenance_rest#*|}
-    abq_maintenance_stop=${maintenance_rest%%|*}
-    maintenance_rest=${maintenance_rest#*|}
-    abq_maintenance_end=${maintenance_rest%%|*}
-    maintenance_rest=${maintenance_rest#*|}
-    abq_status_url=${maintenance_rest%%|*}
-    if [ "$now_epoch" -ge "$abq_maintenance_start" ] &&
-        [ "$now_epoch" -lt "$abq_maintenance_stop" ]; then
-        abq_maintenance_active=1
+
+maintenance_metadata() {
+    if [ -z "$1" ]; then
+        printf '|\n'
+        return
     fi
-fi
+    maintenance_rest=${1#*|}
+    maintenance_rest=${maintenance_rest#*|}
+    maintenance_rest=${maintenance_rest#*|}
+    maintenance_end=${maintenance_rest%%|*}
+    maintenance_rest=${maintenance_rest#*|}
+    maintenance_url=${maintenance_rest%%|*}
+    printf '%s|%s\n' "$maintenance_end" "$maintenance_url"
+}
+
+ab_maintenance_meta=$(maintenance_metadata "$ab_maintenance")
+ab_maintenance_end=${ab_maintenance_meta%%|*}
+ab_maintenance_url=${ab_maintenance_meta#*|}
+ab2_maintenance_meta=$(maintenance_metadata "$ab2_maintenance")
+ab2_maintenance_end=${ab2_maintenance_meta%%|*}
+ab2_maintenance_url=${ab2_maintenance_meta#*|}
+ri_maintenance_meta=$(maintenance_metadata "$ri_maintenance")
+ri_maintenance_end=${ri_maintenance_meta%%|*}
+ri_maintenance_url=${ri_maintenance_meta#*|}
+al_maintenance_meta=$(maintenance_metadata "$al_maintenance")
+al_maintenance_end=${al_maintenance_meta%%|*}
+al_maintenance_url=${al_maintenance_meta#*|}
+rc_maintenance_meta=$(maintenance_metadata "$rc_maintenance")
+rc_maintenance_end=${rc_maintenance_meta%%|*}
+rc_maintenance_url=${rc_maintenance_meta#*|}
+t4_maintenance_meta=$(maintenance_metadata "$t4_maintenance")
+t4_maintenance_end=${t4_maintenance_meta%%|*}
+t4_maintenance_url=${t4_maintenance_meta#*|}
+abq_maintenance_meta=$(maintenance_metadata "$abq_maintenance")
+abq_maintenance_end=${abq_maintenance_meta%%|*}
+abq_maintenance_url=${abq_maintenance_meta#*|}
 
 socket_owner() {
     case $(uname -s) in
@@ -153,26 +230,68 @@ probe_al() {
 }
 
 true & local_pid=$!
-probe_ordinary ab & ab_pid=$!
-probe_ordinary ab2 & ab2_pid=$!
-probe_ordinary ri & ri_pid=$!
+ab_pid=
+if [ -n "$ab_maintenance" ]; then
+    ab_status=maintenance
+else
+    probe_ordinary ab & ab_pid=$!
+fi
+ab2_pid=
+if [ -n "$ab2_maintenance" ]; then
+    ab2_status=maintenance
+else
+    probe_ordinary ab2 & ab2_pid=$!
+fi
+ri_pid=
+if [ -n "$ri_maintenance" ]; then
+    ri_status=maintenance
+else
+    probe_ordinary ri & ri_pid=$!
+fi
 if wait "$local_pid"; then local_status=pass; else local_status=fail; fi
-if wait "$ab_pid"; then ab_status=pass; else ab_status=fail; fi
-if wait "$ab2_pid"; then ab2_status=pass; else ab2_status=fail; fi
-if wait "$ri_pid"; then ri_status=pass; else ri_status=fail; fi
+if [ -n "$ab_pid" ]; then
+    if wait "$ab_pid"; then ab_status=pass; else ab_status=fail; fi
+fi
+if [ -n "$ab2_pid" ]; then
+    if wait "$ab2_pid"; then ab2_status=pass; else ab2_status=fail; fi
+fi
+if [ -n "$ri_pid" ]; then
+    if wait "$ri_pid"; then ri_status=pass; else ri_status=fail; fi
+fi
 
-probe_al & al_pid=$!
-probe_ordinary rc & rc_pid=$!
-probe_ordinary t4 & t4_pid=$!
+al_pid=
+if [ -n "$al_maintenance" ]; then
+    al_status=maintenance
+else
+    probe_al & al_pid=$!
+fi
+rc_pid=
+if [ -n "$rc_maintenance" ]; then
+    rc_status=maintenance
+else
+    probe_ordinary rc & rc_pid=$!
+fi
+t4_pid=
+if [ -n "$t4_maintenance" ]; then
+    t4_status=maintenance
+else
+    probe_ordinary t4 & t4_pid=$!
+fi
 abq_pid=
-if [ "$abq_maintenance_active" -eq 1 ]; then
+if [ -n "$abq_maintenance" ]; then
     abq_status=maintenance
 else
     probe_pair abq abq2 & abq_pid=$!
 fi
-if wait "$al_pid"; then al_status=pass; else al_status=fail; fi
-if wait "$rc_pid"; then rc_status=pass; else rc_status=fail; fi
-if wait "$t4_pid"; then t4_status=pass; else t4_status=fail; fi
+if [ -n "$al_pid" ]; then
+    if wait "$al_pid"; then al_status=pass; else al_status=fail; fi
+fi
+if [ -n "$rc_pid" ]; then
+    if wait "$rc_pid"; then rc_status=pass; else rc_status=fail; fi
+fi
+if [ -n "$t4_pid" ]; then
+    if wait "$t4_pid"; then t4_status=pass; else t4_status=fail; fi
+fi
 if [ -n "$abq_pid" ]; then
     if wait "$abq_pid"; then abq_status=pass; else abq_status=fail; fi
 fi
@@ -186,26 +305,38 @@ if wait "$home_pid"; then home_status=pass; else home_status=fail; fi
 if wait "$office_pid"; then office_status=pass; else office_status=fail; fi
 if wait "$riken_pid"; then riken_status=pass; else riken_status=fail; fi
 
+print_remote_linux() {
+    case "$2" in
+        maintenance)
+            printf 'FLEET_HEALTH node=%s class=linux status=maintenance routes=skipped/%s maintenance_end=%s status_url=%s\n' \
+                "$1" "$3" "$4" "$5"
+        ;;
+        fail)
+            printf 'FLEET_HEALTH node=%s class=linux status=fail routes=%s status_url=%s\n' \
+                "$1" "$3" "$6"
+        ;;
+        *)
+            printf 'FLEET_HEALTH node=%s class=linux status=%s routes=%s\n' \
+                "$1" "$2" "$3"
+        ;;
+    esac
+}
+
 printf 'FLEET_HEALTH node=local class=linux status=%s routes=local\n' "$local_status"
-printf 'FLEET_HEALTH node=ab class=linux status=%s routes=1\n' "$ab_status"
-printf 'FLEET_HEALTH node=ab2 class=linux status=%s routes=1\n' "$ab2_status"
-printf 'FLEET_HEALTH node=ri class=linux status=%s routes=1\n' "$ri_status"
-printf 'FLEET_HEALTH node=al class=linux status=%s routes=managed\n' "$al_status"
-printf 'FLEET_HEALTH node=rc class=linux status=%s routes=1\n' "$rc_status"
-printf 'FLEET_HEALTH node=t4 class=linux status=%s routes=1\n' "$t4_status"
-case "$abq_status" in
-    maintenance)
-        printf 'FLEET_HEALTH node=abq class=linux status=maintenance routes=skipped/2 maintenance_end=%s status_url=%s\n' \
-            "$abq_maintenance_end" "$abq_status_url"
-        ;;
-    fail)
-        printf 'FLEET_HEALTH node=abq class=linux status=fail routes=2 status_url=%s\n' \
-            "$abq_status_url"
-        ;;
-    *)
-        printf 'FLEET_HEALTH node=abq class=linux status=%s routes=2\n' "$abq_status"
-        ;;
-esac
+print_remote_linux ab "$ab_status" 1 \
+    "$ab_maintenance_end" "$ab_maintenance_url" "$ab_status_url"
+print_remote_linux ab2 "$ab2_status" 1 \
+    "$ab2_maintenance_end" "$ab2_maintenance_url" "$ab2_status_url"
+print_remote_linux ri "$ri_status" 1 \
+    "$ri_maintenance_end" "$ri_maintenance_url" "$ri_status_url"
+print_remote_linux al "$al_status" managed \
+    "$al_maintenance_end" "$al_maintenance_url" "$al_status_url"
+print_remote_linux rc "$rc_status" 1 \
+    "$rc_maintenance_end" "$rc_maintenance_url" "$rc_status_url"
+print_remote_linux t4 "$t4_status" 1 \
+    "$t4_maintenance_end" "$t4_maintenance_url" "$t4_status_url"
+print_remote_linux abq "$abq_status" 2 \
+    "$abq_maintenance_end" "$abq_maintenance_url" "$abq_status_url"
 printf 'FLEET_HEALTH node=aist class=mac status=%s routes=2\n' "$aist_status"
 printf 'FLEET_HEALTH node=home class=mac status=%s routes=2\n' "$home_status"
 printf 'FLEET_HEALTH node=office class=mac status=%s routes=2\n' "$office_status"
