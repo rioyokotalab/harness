@@ -182,6 +182,18 @@ package through the guarded boundary while preserving effective `2.1.220`.
 Then reconcile Office, record accepted RI/Local/shared-site findings, and
 leave only the concrete Local maintenance-window question unresolved.
 
+**Riken LIFO preflight gate:** the first read-only identity probe confirmed
+effective `/Users/yokotar/.local/bin/claude`, exact native output
+`2.1.220 (Claude Code)`, stale current-user-owned real package directory
+`/opt/homebrew/lib/node_modules/@anthropic-ai/claude-code` at exact version
+`0.2.14`, and matching current-user-owned symlink
+`/opt/homebrew/bin/claude` to
+`../lib/node_modules/@anthropic-ai/claude-code/cli.mjs`. It exited nonzero
+only because its final assertion incorrectly expected bare `2.1.220` rather
+than the native decorated output. No package, link, process, or file changed.
+Retry is safe with a prefix/exact-native-output assertion before planning the
+guarded removal.
+
 ### T-327 — Align MCP approvals and retire blocked phone sessions
 
 **Phase:** complete.
