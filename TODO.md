@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-329.
+Next free ID: T-330.
 
 ## Current state
 
@@ -107,6 +107,108 @@ Next free ID: T-329.
    successors recorded below.
 
 ## Active tasks
+
+### T-329 — Restore disappeared Swallow tmux window
+
+**Phase:** active; lifecycle repair authorized, no live write has run.
+
+At 2026-07-28 10:02 JST the owner reported that the `swallow` window had
+disappeared from Local's `harness` tmux session and asked for diagnosis and
+repair. Metadata-only readback finds only exact one-pane windows
+`@60:harness` and `@50:students`; both attached clients remain on Harness.
+The previously accepted Swallow window `@63`, supervisor PID `2186520`,
+watcher PID `2186599`, launcher PIDs `2186679`/`2186681`, and real TUI PID
+`2187033` are all absent. Shared app-server PID `2852569` and the unaffected
+Harness and Students windows remain live. No pane or transcript content was
+read.
+
+The exact final runtime receipt name is `swallow-recovery-next`. Its
+mode-0600 supervisor receipt changed at 2026-07-28 09:14:03 JST to
+`stopped/thread-recovery-blocked`; its last watcher receipt changed at
+09:13:17 JST and remains stale at `watching/thread-idle` for accepted root
+`019fa5a1-7fff-7e92-8e2a-2586c684747f`. The recorded process IDs are absent.
+Therefore the corrected supervisor behaved fail-closed when its watcher
+disappeared: it terminated the exact TUI child and exited, which removed the
+tmux window. The available value-free receipts do not establish why the
+watcher exited; do not infer a cause or inspect private logs.
+
+One fresh initialized app-server `thread/read` reports the accepted root as
+`notLoaded` with its canonical rollout identity valid. Under the
+`recover-codex-unsafe-tail` decision table this is not a thread-recovery or
+rollback case. Preserve the root and repair only the absent
+watcher/supervisor/TUI lifecycle. The poisoned
+`swallow-blocked-20260728` root, all other saved roots, names, shared app
+server, attached clients, and unrelated sessions remain out of scope.
+
+**Next action:** immediately revalidate the same root, app server, exact
+two-window mapping, absent Swallow process chain, native doctor, and clean
+published Git. Launch exactly one detached `swallow` tmux window rooted at
+`$HOME/harness`, using the current published `codex-resilient` with runtime
+name `swallow-recovery-next` and exact accepted remote-session ID. Do not
+start a turn or replay a prompt. Accept only a live supervisor, watcher,
+launcher, TUI, reciprocal app-server socket, idle/notLoaded root, and one
+three-window mapping with both attached clients unchanged. Then determine
+from public behavior and focused fixtures whether a watcher transport failure
+needs a bounded retry correction; do not weaken fail-closed handling for
+unsafe thread state.
+
+**Live restoration:** the final identity gate passed at published merge
+`dacbde5523f5c7c3d63ca790d5841daf6d687c94`: accepted root remained
+`notLoaded` with valid rollout identity, shared app server `2852569` remained
+live, exact old process chain was absent, and only Harness/Students windows
+existed. The first native `tmux new-window -t harness` call failed before
+creation because tmux resolved occupied index 0; no process or window changed
+and retry was safe with an explicit free index.
+
+One exact launch at free index 2 created window/pane `@64`/`%64` named
+`swallow` without starting a turn or replaying a prompt. Supervisor PID
+`3086577` start tick `93621307`, watcher PID `3086675` tick `93621317`,
+launcher PID `3086869` and wrapper PID `3086871` tick `93621429`, and real
+TUI PID `3087000` tick `93621772` are live. Status is
+`running/remote-explicit` plus `watching/thread-idle`, attempt/delay and
+recovery/rollback counts are zero, accepted root is now `idle`, and reciprocal
+socket inodes `187143781`/`187147378` connect the TUI only to unchanged app
+server PID `2852569` / tick `83381863`. Tmux has exactly Harness, Students,
+and Swallow one-pane windows; both attached clients remain on Harness.
+
+**Concrete lifecycle defect:** independent code inspection found that the
+watcher's interval loop checked `time.monotonic() < deadline` and then read
+the clock again inside `time.sleep(deadline - time.monotonic())`. Crossing
+the deadline between those reads can pass a negative delay to `sleep`, raise
+an uncaught `ValueError`, leave the last watcher receipt stale, and trigger
+the supervisor's observed fail-closed window retirement. This race is
+consistent with the incident, although the value-free receipts cannot prove
+the historical watcher's exact exception.
+
+The correction computes one remaining duration per loop, exits when it is
+non-positive, and otherwise sleeps for the smaller of 0.2 seconds or that
+positive remainder. A deterministic fake clock crosses the deadline between
+reads and requires no negative sleep. The focused thread-recovery and
+resilient-supervisor suites, shell syntax, warning-level ShellCheck, and diff
+hygiene pass. One accidental Python bytecode cache with two entries and
+46,728 bytes was removed through guarded manifest
+`t329-pycache-delete.manifest`; protected anchors were unchanged, the target
+was verified absent, and the manifest was exact-unlinked.
+
+**Next action:** commit the correction and this live checkpoint, run the
+complete clean phase-one suite, publish through exact-head protected CI, then
+guarded-sync the clean fleet. Because the active Swallow process still
+executes the old inode, after publication revalidate its exact idle chain and
+signal only its real TUI leaf once; relaunch the same root/window under the
+merged correction without prompt replay. Preserve the accepted and poisoned
+roots, app server, Harness, Students, clients, and unrelated work.
+
+**Complete validation:** implementation/live checkpoint commit `d3cdb5e`
+passes every focused suite, guarded-delete coverage, and all phase-one
+integration gates; only the declared native MPI smoke skipped outside an MPI
+allocation. Fresh post-suite status still reports exact supervisor `3086577`
+running at attempt zero, watcher `3086675` at `watching/thread-idle`, and one
+`@64:swallow` window alongside unchanged Harness and Students.
+
+**Next action:** push the exact validated head, publish it through protected
+CI, merge without weakening the one-review rule, and guarded-sync the clean
+fleet. Then complete the old-inode Swallow restart transaction recorded above
+and close T-329 with fresh value-free runtime and fleet-health evidence.
 
 ### T-328 — Complete authorized T-311/T-324 deferred hardening
 

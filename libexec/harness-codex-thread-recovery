@@ -765,6 +765,15 @@ def recover_once(thread_id):
         backend.close()
 
 
+def wait_for_interval(stopping, interval):
+    deadline = time.monotonic() + interval
+    while not stopping[0]:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
+        time.sleep(min(0.2, remaining))
+
+
 def print_status(
     name,
     thread_id,
@@ -932,9 +941,7 @@ def main():
                 recoveries,
                 rolled_back,
             )
-            deadline = time.monotonic() + arguments.interval
-            while not stopping[0] and time.monotonic() < deadline:
-                time.sleep(min(0.2, deadline - time.monotonic()))
+            wait_for_interval(stopping, arguments.interval)
         write_state(
             path,
             arguments.name,

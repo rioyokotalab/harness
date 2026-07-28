@@ -78,6 +78,40 @@ esac
 EOF
 chmod 755 "$backend"
 
+HARNESS_THREAD_RECOVERY=$ROOT/libexec/harness-codex-thread-recovery \
+python3 -B <<'PY'
+from __future__ import print_function
+import importlib.machinery
+import os
+
+module = importlib.machinery.SourceFileLoader(
+    "harness_codex_thread_recovery",
+    os.environ["HARNESS_THREAD_RECOVERY"],
+).load_module()
+
+
+class FakeClock(object):
+    def __init__(self):
+        self.values = iter((0.0, 0.9, 1.1))
+        self.sleeps = []
+
+    def monotonic(self):
+        return next(self.values)
+
+    def sleep(self, delay):
+        if delay < 0:
+            raise AssertionError("negative sleep")
+        self.sleeps.append(delay)
+
+
+clock = FakeClock()
+module.time.monotonic = clock.monotonic
+module.time.sleep = clock.sleep
+module.wait_for_interval([False], 1)
+if len(clock.sleeps) != 1 or not 0 < clock.sleeps[0] <= 0.2:
+    raise AssertionError("watch interval did not clamp deadline crossing")
+PY
+
 run_recovery() {
     HARNESS_TESTING=1 \
     HARNESS_TEST_RUNTIME_DIR="$runtime" \
