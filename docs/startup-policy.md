@@ -54,8 +54,8 @@ are common across all nodes. Site-only aliases remain in the relevant live
 The common `co` alias starts the managed resilient Harness Codex session.
 `codex` is deliberately not aliased, preserving native commands such as
 `codex --version`. Existing shells retain aliases already loaded in memory;
-the change takes effect after starting a fresh interactive shell or explicitly
-re-sourcing `shell/common-aliases.sh`.
+start a fresh interactive shell, or update one existing shell explicitly with
+`unalias codex 2>/dev/null; . "$HOME/harness/shell/common-aliases.sh"`.
 
 ## Interactive destructive-command safeguards
 

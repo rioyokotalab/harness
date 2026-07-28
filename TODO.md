@@ -137,7 +137,7 @@ CI, merge without weakening review rules, guarded-sync every reachable clean
 managed checkout, issue one required context refresh per advanced Mac, and
 verify fresh interactive shells on each reachable node expose `co` while
 leaving `codex` native. Existing shells may retain their already-loaded alias
-until re-sourcing or replacement; do not mutate them in place.
+until replacement; do not mutate them in place.
 
 The interrupted T-330 recovery was reconciled before this task: Students was
 already relaunched from its original root with a live watcher, and the
@@ -203,8 +203,10 @@ interactive shells on Local and all ten advanced remotes expose exact
 `co='harness codex-resilient --run --name harness --last'`, have no `codex`
 alias, resolve `codex` as a native file, and report native Codex 0.145.0 from
 `codex --version`. Existing shells were not altered and may retain their
-previous in-memory alias until replaced or re-sourced. No transfer residue or
-task-created cache remains.
+previous in-memory alias until replaced. An owner who wants to update one
+existing shell can run
+`unalias codex 2>/dev/null; . "$HOME/harness/shell/common-aliases.sh"`.
+No transfer residue or task-created cache remains.
 
 **Next action:** publish this closeout checkpoint through protected CI. When
 ABQ or ABQ2 becomes reachable, revalidate its exact clean checkout head,
