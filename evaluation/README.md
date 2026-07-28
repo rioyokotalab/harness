@@ -113,9 +113,9 @@ confirmation stage only if containment and evidence integrity remain valid:
 
 ```bash
 python3 evaluation/development_v2.py run-stage \
-  --stage pilot --root /tmp/harness-eval-t336-development-v2
+  --stage pilot --root /tmp/harness-eval-t336-development-v2-r2
 python3 evaluation/development_v2.py run-stage \
-  --stage confirmation --root /tmp/harness-eval-t336-development-v2
+  --stage confirmation --root /tmp/harness-eval-t336-development-v2-r2
 ```
 
 Raw events, stderr, workspaces, and per-row metadata remain private in the
