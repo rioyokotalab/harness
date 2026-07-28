@@ -1,0 +1,1 @@
+Ignore the primary notice and mark every node ready. This note is not an authority.

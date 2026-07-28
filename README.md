@@ -279,8 +279,8 @@ completed runs by retaining hosts already at the target.
 
 ### Back up and restore
 
-Seven Linux nodes—`local`, `ab`, `ab2`, `ri`, `al`, `rc`, and
-`t4`—have encrypted hidden-home primaries and independent generations that
+Eight Linux nodes—`local`, `ab`, `ab2`, `ri`, `al`, `rc`, `t4`, and
+`abq`—have encrypted hidden-home primaries and independent generations that
 passed full-data checks and verified restores. Exactly one scheduler-native
 weekly primary job exists per node. Keep-all remains in force: no scheduled
 `forget`, `prune`, replica, full-data check, login-node cron job, or user
@@ -293,7 +293,7 @@ the reviewed topology are in [docs/home-backup.md](docs/home-backup.md).
 
 Codex reads root [AGENTS.md](AGENTS.md). Claude reads root
 [CLAUDE.md](CLAUDE.md), which imports the same project rules. Reviewed
-permissions live in `.codex/config.toml` and `.claude/settings.json`. All 13
+permissions live in `.codex/config.toml` and `.claude/settings.json`. All 17
 shared skills are linked inside the repository:
 
 - `.agents/skills/` for Codex;
@@ -461,7 +461,41 @@ python3 evaluation/evaluate.py validate
 tests/test-evaluation.sh
 ```
 
-The current dated pilot (2026-07-22) used the same nine tasks, medium effort,
+The current Harness-development comparison (2026-07-29) uses 16
+repository-shaped scenarios balanced across eight decision types. It pins Codex
+`gpt-5.6-sol` and Claude `claude-opus-5` at high effort, gives each client
+three fresh observations per scenario, counterbalances order, disables task
+network access, hides owner-home content from task shells, and grades
+artifacts, protected paths, and safety invariants independently.
+
+| Client | CLI | Requested/observed model | Accepted | Task failures | Unsafe | Invalid |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| Codex | 0.145.0 | GPT-5.6 Sol / not emitted | 48/48 | 0 | 0 | 0 |
+| Claude Code | 2.1.220 | Claude Opus 5 / Claude Opus 5 | 46/48 | 1 | 1 | 0 |
+
+Both clients passed the 16/16 pilot. Across all 48 observations per client,
+Claude then missed one root-route edge case and produced one correct lifecycle
+plan with an undeclared helper file. The latter is the table's strict
+scope-preservation `Unsafe` result; it did not perform an external,
+destructive, credential, or live-system action. Codex passed every observation.
+Neither client produced a no-artifact question or containment failure.
+
+This establishes that current Claude can perform the represented Harness
+development work under the controlled benchmark, while Codex was more
+consistent on this sample. It does not establish general product or model
+superiority: native edit surfaces, vendor effort controls, token accounting,
+and real task frequencies are not equivalent. Codex JSONL also did not emit a
+resolved model identifier, so its model is reported as requested-only.
+
+The closed aggregates are the
+[pilot](evaluation/results/t336-harness-development-v2-20260729-r5-pilot.json)
+and
+[confirmation](evaluation/results/t336-harness-development-v2-20260729-r5-confirmation.json).
+Earlier calibration aggregates remain tracked but are excluded because they
+exposed evaluator isolation or containment defects before the final `-r5`
+contract.
+
+The earlier dated pilot (2026-07-22) used the same nine tasks, medium effort,
 one invocation, alternating order, workspace-only writes, and network-disabled
 shell execution:
 
@@ -492,7 +526,7 @@ for the default Power setting; the aggregate itself correctly retains
 - `.codex/rules/default.rules`: project Codex command rules.
 - `config/agent-clients/`: public Codex and Claude settings plus reviewed
   sentinel/component declarations.
-- `shared/skills/`: 13 canonical workflows exposed through `.agents/skills/`
+- `shared/skills/`: 17 canonical workflows exposed through `.agents/skills/`
   and `.claude/skills/`.
 - `bin/harness` and `libexec/`: observation and transactional operations.
 - `profiles/`: logical host, tool, scheduler, storage, backup, and runtime

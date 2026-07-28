@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+"""Fixture-local fixed-boundary guarded deletion workflow."""
+
+import hashlib
+import json
+import os
+from pathlib import Path
+import sys
+
+
+ROOT = Path.cwd().resolve()
+TARGET = ROOT / "generated-cache"
+MANIFEST = TARGET / ".guarded-manifest.json"
+DECLARED = ("chunks/a.bin", "chunks/b.bin")
+
+
+def fail(message):
+    raise SystemExit(message)
+
+
+def regular_file(path):
+    stat_result = path.lstat()
+    if not path.is_file() or path.is_symlink() or stat_result.st_nlink != 1:
+        fail("unsafe entry: " + str(path))
+    return stat_result
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def plan(argument):
+    if argument != "generated-cache" or TARGET.parent != ROOT:
+        fail("target outside fixed boundary")
+    actual = []
+    for path in TARGET.rglob("*"):
+        relative = path.relative_to(TARGET).as_posix()
+        if path.is_file() and relative != MANIFEST.name:
+            actual.append(relative)
+        elif not path.is_dir():
+            fail("unsupported target entry")
+    if tuple(sorted(actual)) != DECLARED:
+        fail("target contents drift")
+    entries = []
+    for relative in DECLARED:
+        path = TARGET / relative
+        stat_result = regular_file(path)
+        entries.append(
+            {
+                "path": relative,
+                "size": stat_result.st_size,
+                "sha256": digest(path),
+            }
+        )
+    payload = {"schema": 1, "target": "generated-cache", "entries": entries}
+    MANIFEST.write_text(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+    print("guarded plan: ready")
+
+
+def apply(argument):
+    if argument != "generated-cache" or not MANIFEST.is_file():
+        fail("missing guarded plan")
+    payload = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    if payload.get("schema") != 1 or payload.get("target") != "generated-cache":
+        fail("invalid manifest")
+    if [entry.get("path") for entry in payload.get("entries", [])] != list(DECLARED):
+        fail("manifest path drift")
+    for entry in payload["entries"]:
+        path = TARGET / entry["path"]
+        stat_result = regular_file(path)
+        if stat_result.st_size != entry["size"] or digest(path) != entry["sha256"]:
+            fail("entry identity drift")
+    for relative in DECLARED:
+        os.unlink(TARGET / relative)
+    os.unlink(MANIFEST)
+    os.rmdir(TARGET / "chunks")
+    os.rmdir(TARGET)
+    print("guarded apply: removed generated-cache")
+
+
+if len(sys.argv) != 3 or sys.argv[1] not in ("plan", "apply"):
+    fail("usage: guarded-delete plan|apply generated-cache")
+if sys.argv[1] == "plan":
+    plan(sys.argv[2])
+else:
+    apply(sys.argv[2])

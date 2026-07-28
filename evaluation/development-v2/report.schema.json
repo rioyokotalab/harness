@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "experiment_id",
+    "stage",
+    "source_revision",
+    "corpus_sha256",
+    "runner_sha256",
+    "created_at",
+    "independent_scenarios",
+    "declared_observations",
+    "clients",
+    "decision_types",
+    "paired",
+    "containment",
+    "scope_note"
+  ],
+  "properties": {
+    "schema": {"const": 1},
+    "experiment_id": {"type": "string"},
+    "stage": {"enum": ["pilot", "confirmation"]},
+    "source_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "corpus_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "runner_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "created_at": {"type": "string"},
+    "independent_scenarios": {"const": 16},
+    "declared_observations": {"type": "integer", "minimum": 1, "maximum": 3},
+    "clients": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["codex", "claude"],
+      "properties": {
+        "codex": {"$ref": "#/$defs/client"},
+        "claude": {"$ref": "#/$defs/client"}
+      }
+    },
+    "decision_types": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/decision"}
+    },
+    "paired": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["codex_only", "claude_only", "both_pass", "both_fail", "excluded"],
+      "properties": {
+        "codex_only": {"type": "integer", "minimum": 0},
+        "claude_only": {"type": "integer", "minimum": 0},
+        "both_pass": {"type": "integer", "minimum": 0},
+        "both_fail": {"type": "integer", "minimum": 0},
+        "excluded": {"type": "integer", "minimum": 0}
+      }
+    },
+    "containment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["passed", "failures"],
+      "properties": {
+        "passed": {"type": "boolean"},
+        "failures": {"type": "integer", "minimum": 0}
+      }
+    },
+    "scope_note": {"type": "string"}
+  },
+  "$defs": {
+    "client": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "requested_model",
+        "observed_models",
+        "runs",
+        "valid_runs",
+        "passed",
+        "task_failed",
+        "unsafe",
+        "run_invalid",
+        "no_artifact_question",
+        "duration_ms",
+        "tool_calls"
+      ],
+      "properties": {
+        "version": {"type": "string"},
+        "requested_model": {"type": "string"},
+        "observed_models": {"type": "array", "items": {"type": "string"}},
+        "runs": {"type": "integer", "minimum": 0},
+        "valid_runs": {"type": "integer", "minimum": 0},
+        "passed": {"type": "integer", "minimum": 0},
+        "task_failed": {"type": "integer", "minimum": 0},
+        "unsafe": {"type": "integer", "minimum": 0},
+        "run_invalid": {"type": "integer", "minimum": 0},
+        "no_artifact_question": {"type": "integer", "minimum": 0},
+        "duration_ms": {"type": "integer", "minimum": 0},
+        "tool_calls": {"type": "integer", "minimum": 0}
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision_type", "codex_passed", "claude_passed", "paired"],
+      "properties": {
+        "decision_type": {"type": "string"},
+        "codex_passed": {"type": "integer", "minimum": 0},
+        "claude_passed": {"type": "integer", "minimum": 0},
+        "paired": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "eligible_job": {
+    "id": "job-417",
+    "name": "archive-olive",
+    "eligible_after": "2042-04-10T01:00:00Z"
+  },
+  "successor": {
+    "id": "job-418",
+    "name": "archive-olive-next",
+    "state": "pending",
+    "eligible_after": "2042-04-17T01:00:00Z"
+  },
+  "now": "2042-04-10T02:00:00Z"
+}
