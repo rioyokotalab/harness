@@ -111,7 +111,7 @@ Next free ID: T-338.
 
 ### T-337 — Promote bridge-first managed Codex cutovers
 
-**Phase:** implementation validated; protected-main publication pending.
+**Phase:** complete after this rollout checkpoint reaches protected `main`.
 
 The owner requires the bridge-window cutover proven by T-335 to become a
 global Harness behavior instead of remaining incident-local. T-336 is already
@@ -168,8 +168,29 @@ occupied by an independent dirty benchmark worktree and remains untouched.
 - Branch commits `3cdc3cc` and `c82e285` are published on
   `origin/codex/t337-bridge-first-cutover`.
 
-**Next executable action:** commit and push this validation checkpoint, fetch
-and integrate protected `main`, then open and merge the exact-head pull request.
+**Publication and rollout checkpoint:**
+
+- PR #395 exact head `7953aacbde14cdd243a94287eb5a0c3bb13c4f3d`
+  passed protected `portable-phase1` in 2m0s and merged normally as
+  `1cb46d47355bb61df4e763f04b11f60310373a39`.
+- The first ten-target fleet-sync plan used stale source `d651293` and failed
+  closed on AB before mutation. A corrected plan established all ten reachable
+  clean checkouts at `fcadc7a`; guarded apply advanced `ab`, `ab2`, `ri`, `al`,
+  `rc`, `t4`, `aist`, `home`, `office`, and `riken` to the merge commit with
+  exact head/origin agreement and absent transfer artifacts. A repeat plan
+  reports KEEP for all ten.
+- ABQ was omitted and not contacted during its recorded maintenance stop.
+- Exactly one pane-blind context refresh returned `status=submitted` for each
+  advanced Mac (`aist`, `home`, `office`, and `riken`). These submissions must
+  not be retried.
+- No live Swallow bridge/controller/app-server/tmux/thread/scheduler state or
+  independent T-336 worktree content changed.
+
+**Next executable action:** publish this closeout-only ledger checkpoint
+through protected exact-head CI, guarded-sync the resulting merge to the same
+ten clean checkouts without contacting ABQ, submit one merge-specific
+pane-blind context refresh to each advanced Mac, then record fresh canonical
+fleet health.
 
 ### T-335 — Restore Slack tools before the next Swallow run
 
