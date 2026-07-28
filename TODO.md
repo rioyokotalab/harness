@@ -489,6 +489,30 @@ guarded housekeeping. The owner must move both attached clients off Students
 again immediately before a controller-owned cutover; revalidate that exact
 precondition rather than relying on this checkpoint.
 
+**Rollout and housekeeping:** one guarded ten-target plan/apply advanced `ab`,
+`ab2`, `ri`, `al`, `rc`, `t4`, `aist`, `home`, `office`, and `riken` from
+`d2d8abf` to `ef3de1e`; every checkout/origin aligned and every transfer
+artifact was absent. ABQ was excluded because both routes remain unavailable.
+The first Aist refresh used the nonexistent repository-root shorthand helper
+and failed locally before contact. The skill-relative helper then returned
+exactly one `status=submitted` for Aist, Home, Office, and Riken; none may be
+retried.
+
+Guarded cleanup removed the exact 944-entry/23,719,639-byte sync clone and six
+clean completed worktree roots whose heads exactly matched merged PRs #368,
+#370, and #378–#381. A second guarded transaction removed only their six
+prunable Git worktree registrations. All targets were verified absent with
+protected anchors unchanged; all three manifests were exact-unlinked. Git now
+lists only the primary checkout and this active closeout worktree. Fresh arg0
+planning reports five live, zero eligible, zero young, zero unexpected, and
+zero removed. The primary checkout remains aligned with only the protected
+Students-held `.nfs` inode untracked.
+
+**Next action:** wait for both clients to select Harness or Swallow, then
+perform the one bounded Students lifecycle cutover and multi-interval
+observe-only acceptance. Do not reactivate the periodic monitor or publish the
+closeout until all three watchers pass.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
