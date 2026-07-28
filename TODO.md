@@ -375,6 +375,19 @@ thread reads with a non-interfering health source or observe-only metadata
 contract, add a reproduction that proves healthy watchers remain live across
 multiple intervals, and republish before any future monitor activation.
 
+**Restoration checkpoint 2026-07-28:** the private saved mappings, app-server
+identities, canonical rollouts, absent old lifecycle chains, free target
+indices, and attached Students clients all passed before one-window recovery.
+Harness was restored at index 0 and Swallow at index 2 without prompt input;
+both exact roots, supervisors, TUIs, reciprocal app-server sockets, and
+watchers passed. The periodic monitor remains absent. Both attached clients
+subsequently selected Swallow without agent movement. A fresh pane-blind check
+then found the still-live Students TUI had independently lost its recovery
+watcher, so full three-window health is not yet accepted and arg0/worktree
+cleanup remains paused. Checkpoint this state before any Students recovery;
+signal nothing unless its exact unattached identity, safe rollout/status, and
+rollback path pass again.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
