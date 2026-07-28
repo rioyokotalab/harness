@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-335.
+Next free ID: T-336.
 
 ## Current state
 
@@ -108,6 +108,83 @@ Next free ID: T-335.
    successors recorded below.
 
 ## Active tasks
+
+### T-335 — Restore Slack tools before the next Swallow run
+
+**Phase:** interviewing.
+
+The owner requires functional Slack access before authorizing the planned
+12-hour Swallow TODO run. This task is a connector-readiness gate only; no
+Swallow benchmark, scheduler, Git publication, Slack message, or 12-hour work
+has started.
+
+Fresh read-only discovery on 2026-07-28 establishes:
+
+- Local plugin `slack@openai-curated` version `11c74d6b` is installed and
+  enabled with `authPolicy=ON_INSTALL`.
+- Its required connector app is exact ID
+  `asdk_app_69a1d78e929881919bba0dbda1f6436d`.
+- Redacted native doctor reports Codex authentication, provider HTTP,
+  Responses WebSocket, persistent app-server, and local state healthy.
+- The active thread loads every bundled Slack skill but exposes no Slack
+  connector methods in its callable tool catalog. Two independent tool
+  discovery routes returned no Slack method, so functional access in this
+  thread is unavailable rather than merely untested.
+- The current official Codex manual says newly installed plugin skills and
+  tools become available only after starting a new CLI session. It also keeps
+  plugin installation, connector access, source-service authorization, and
+  runtime permissions as separate gates.
+- GitHub access is already ready on Local and AB, and authenticated Hugging
+  Face access is ready through AB's existing project-local client; those
+  preflight results require no remediation.
+
+The leading hypothesis is a stale per-session capability snapshot or a
+connector-authorization gate, not a general Codex network/authentication
+failure. Do not treat that hypothesis as confirmed until a fresh-session
+probe distinguishes the two.
+
+**Frozen bounded plan:**
+
+1. Preserve the current Swallow root, its tmux/TUI/recovery chain, and the
+   shared app server. From an isolated noninteractive process, start one fresh
+   disposable Codex session with the installed Slack plugin explicitly
+   selected and request one read-only workspace/channel identity operation.
+   It must not send, draft, schedule, react, edit, or create Slack content.
+2. If the fresh session returns a Slack read result, classify installation
+   and connector authorization as healthy and the current-thread catalog as
+   stale. Do not restart or signal the current chain from this thread. Ask the
+   existing Local controller for one bounded lifecycle refresh of the same
+   saved Swallow root, with no prompt replay, only if preserving that root is
+   still required; otherwise start the 12-hour work in a new Slack-capable
+   Swallow session.
+3. If the fresh session reports connection or authorization missing, stop
+   without retrying or changing credentials. The owner completes the native
+   Slack connector OAuth flow through the supported plugin UI, shares no
+   credential with an agent, and then authorizes one new fresh-session read
+   probe.
+4. If a fresh authenticated session still lacks Slack methods, preserve the
+   exact value-free failure and escalate through the plugin troubleshooting
+   path. Do not reinstall the plugin, edit product-owned user configuration,
+   restart the shared app server, or change workspace/plugin administration
+   without a separately frozen correction.
+
+Acceptance requires one bounded Slack read to identify the connected workspace
+and resolve public `#swallow`, zero Slack writes, no credential exposure, and
+a Slack-capable session selected for the later 12-hour run. A plugin-list
+result alone is not acceptance.
+
+**Decision D-001, recommended:** run the one disposable fresh-session read
+probe now. It is the lowest-impact documented discriminator and leaves the
+current Swallow lifecycle untouched. If it proves the connector healthy, use
+the existing Local controller rather than this thread for any same-root
+lifecycle refresh. The alternative is to skip the discriminator and go
+directly to interactive connector reconnection, which may repeat OAuth
+unnecessarily and still cannot update this thread's immutable tool catalog.
+
+**Next action:** commit and push this planning checkpoint, then wait for an
+explicit `go`. After that authorization, run exactly one fresh-session
+read-only Slack probe, record its value-free result, and continue only along
+the matching branch above.
 
 ### T-334 — Extend maintenance awareness to remote Linux nodes
 
