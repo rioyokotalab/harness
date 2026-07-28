@@ -111,7 +111,7 @@ Next free ID: T-335.
 
 ### T-334 — Extend maintenance awareness to remote Linux nodes
 
-**Phase:** executing.
+**Phase:** complete after this closeout checkpoint reaches protected `main`.
 
 The owner asked to apply T-333's official-maintenance reconciliation to the
 other managed remote Linux nodes. Scope is exact logical nodes `ab`, `ab2`,
@@ -177,10 +177,25 @@ and only the declared native MPI smoke skipped outside an MPI environment.
 The task worktree remained clean, and no managed checkout or live service
 changed.
 
-**Next action:** commit this validation checkpoint, fetch and push the exact
-task head, require protected `portable-phase1`, merge without changing rules,
-then guarded-sync only clean reachable checkouts while ABQ remains deliberately
-unprobed.
+Validation checkpoint `0deb50b` was pushed as PR #391. Protected
+`portable-phase1` passed at the exact head in 2m2s, and the PR merged without
+changing the one-review rule as merge commit
+`8f180225b6648b5de87482c111e6ecf5fb1327d0`.
+
+One guarded ten-target fleet-sync plan found exactly `ab`, `ab2`, `ri`, `al`,
+`rc`, `t4`, `aist`, `home`, `office`, and `riken` clean at source
+`b42877badfca6cb64e82e66c94e075bde8b9a284`. Apply advanced all ten to the
+merge commit, and an idempotent repeat plan reported exact KEEP for each
+target. ABQ was omitted and not contacted during its active published
+maintenance. Exactly one pane-blind context refresh returned
+`status=submitted` for each advanced Mac (`aist`, `home`, `office`, and
+`riken`); no pane or transcript content was inspected.
+
+**Next action:** publish this closeout-only ledger checkpoint through protected
+exact-head CI, guarded-sync the resulting documentation-only merge to the same
+ten clean checkouts without contacting ABQ, submit one merge-specific
+pane-blind context refresh to each advanced Mac, and record fresh canonical
+fleet health.
 
 ### T-333 — Make fleet health maintenance-aware
 
