@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-332.
+Next free ID: T-333.
 
 ## Current state
 
@@ -107,6 +107,70 @@ Next free ID: T-332.
    successors recorded below.
 
 ## Active tasks
+
+### T-332 — Preserve native `codex` and move managed shorthand to `co`
+
+**Phase:** executing.
+
+The owner reports that the fleet-wide interactive `codex` alias hides the
+native executable, including ordinary commands such as `codex --version`, and
+asked to rename only that managed shorthand to `co` and propagate the change
+to the fleet.
+
+The tracked source is `shell/common-aliases.sh`, loaded only by fresh
+interactive shells through `shell/interactive.sh`. The exact change is to
+remove the `codex` alias, add alphabetically ordered
+`co='harness codex-resilient --run --name harness --last'`, and update the
+tracked `harness_remote_codex` helper to execute `co` so its existing managed
+resilient behavior is preserved. Native `codex` remains resolved through
+`PATH`; no executable, launcher, product configuration, active shell, tmux
+pane, saved root, process, or app server is renamed or restarted.
+
+Add failing-first focused assertions for the exact `co` alias, absence of a
+`codex` alias, native `codex --version` passthrough, and the remote helper's
+`co` target. Then update the focused startup/login tests and owner-facing
+startup documentation, run diff hygiene, syntax/ShellCheck, focused suites,
+and the complete clean phase-one suite. Publish through protected exact-head
+CI, merge without weakening review rules, guarded-sync every reachable clean
+managed checkout, issue one required context refresh per advanced Mac, and
+verify fresh interactive shells on each reachable node expose `co` while
+leaving `codex` native. Existing shells may retain their already-loaded alias
+until re-sourcing or replacement; do not mutate them in place.
+
+The interrupted T-330 recovery was reconciled before this task: Students was
+already relaunched from its original root with a live watcher, and the
+independent Local controller subsequently restored Harness. Guarded cleanup
+removed only the task-created two-entry/42,659-byte
+`libexec/__pycache__`, verified protected anchors unchanged and target absent,
+and exact-unlinked its mode-0600 manifest.
+
+**Next action:** commit this scope checkpoint, add the failing focused
+assertions, and continue through the frozen implementation and protected fleet
+rollout.
+
+Failing-first startup and login tests stopped because `co` was absent. The
+implementation now replaces only the tracked `codex` alias with alphabetically
+ordered `co`, changes `harness_remote_codex` to execute `co`, and documents
+that native `codex` remains available. Focused coverage requires the exact
+resilient `co` expansion, rejects any `codex` alias, executes a fake native
+`codex --version`, and checks both declared and future-profile remote helper
+commands. Diff hygiene, Bash syntax, warning-level ShellCheck, startup
+normalization, and the focused Codex login-node suite pass.
+
+**Next action:** commit this coherent implementation, run the complete clean
+phase-one suite, then publish through exact-head protected CI before changing
+any managed checkout.
+
+Implementation commit `3ca09a4` passes the complete clean phase-one suite: all
+focused shards, guarded-delete coverage, and every integration gate passed;
+only the declared native MPI smoke skipped outside an MPI environment. The
+task worktree remained clean during validation, and no managed checkout or
+live shell changed.
+
+**Next action:** commit this validation checkpoint, fetch and push the exact
+task head, require protected `portable-phase1`, merge through the preserved
+administrator bypass without changing review rules, then guarded-sync and
+validate the reachable fleet.
 
 ### T-331 — Restore disappeared Local Harness tmux window
 

@@ -76,10 +76,14 @@ grep -F 'codex-login      launch Codex with bounded Linux login-node worker pool
     "$ROOT/bin/harness" >/dev/null ||
     fail 'Harness help omits bounded launcher'
 
-codex_alias=$(bash -c '. "$1"; alias codex' _ \
+co_alias=$(bash -c '. "$1"; alias co' _ \
     "$ROOT/shell/common-aliases.sh")
-[ "$codex_alias" = \
-    "alias codex='harness codex-resilient --run --name harness --last'" ] ||
-    fail 'shared codex alias does not use resilient supervisor'
+[ "$co_alias" = \
+    "alias co='harness codex-resilient --run --name harness --last'" ] ||
+    fail 'shared co alias does not use resilient supervisor'
+if bash -c '. "$1"; alias codex >/dev/null 2>&1' \
+    _ "$ROOT/shell/common-aliases.sh"; then
+    fail 'shared aliases still hide native codex'
+fi
 
 printf '%s\n' 'PASS: Codex login-node launcher'

@@ -51,6 +51,12 @@ tracked, copied, hashed, or included in transaction state. Other safe aliases
 are common across all nodes. Site-only aliases remain in the relevant live
 `.bashrc` and are unique and alphabetic.
 
+The common `co` alias starts the managed resilient Harness Codex session.
+`codex` is deliberately not aliased, preserving native commands such as
+`codex --version`. Existing shells retain aliases already loaded in memory;
+the change takes effect after starting a fresh interactive shell or explicitly
+re-sourcing `shell/common-aliases.sh`.
+
 ## Interactive destructive-command safeguards
 
 Every fresh interactive Bash shell sources `shell/safety-guards.sh`. Thin
