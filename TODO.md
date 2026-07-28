@@ -401,6 +401,29 @@ without reading content and is mode 0664; this explains the recovery gate
 correction is eligible, but watcher restoration must wait for an unattached,
 safe lifecycle cutover.
 
+**Housekeeping/recovery result:** Students rollout mode was narrowed from 0664
+to 0644 after exact path, owner, regular-file, single-link, inode, and retained
+content checks; no transcript content was read. Harness and Swallow were then
+restored again from saved identities without opening the app-server control
+socket. Three non-interfering samples over ten seconds kept those two exact
+watchers healthy, the required `0:harness,1:students,2:swallow` order held, both
+clients remained on Students, and the periodic monitor remained absent.
+Students is healthy at the TUI/supervisor/socket layer but still has no watcher;
+do not signal it while attached or use an app-server read that would displace
+the other watchers. The latest arg0 plan/apply found five live, zero eligible,
+zero young, zero unexpected, and removed zero. Seven auxiliary worktrees are
+clean (one is this active continuation); retain all six completed candidates
+until the live recovery is closed, and preserve the primary Students-held
+`.nfs` file.
+
+**Revised next action:** replace the periodic backend reads with an
+observe-only metadata contract and add a multi-interval live test that never
+opens the app-server control socket. Separately design a controller-owned,
+all-watchers-quiesced Students cutover so one safe status/rollout check cannot
+displace a healthy peer; execute it only while Students is unattached. After
+all three watchers remain healthy, complete the postponed guarded worktree
+cleanup and republish T-330.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
