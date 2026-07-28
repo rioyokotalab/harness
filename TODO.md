@@ -110,7 +110,8 @@ Next free ID: T-329.
 
 ### T-328 — Complete authorized T-311/T-324 deferred hardening
 
-**Phase:** blocked on a concrete Local maintenance window.
+**Phase:** time-gated; concrete outage dates received, safe Local power
+sequencing remains to be frozen.
 
 On 2026-07-28 the owner explicitly authorized the exact remaining deferred
 T-311/T-324 actions and accepted findings:
@@ -307,6 +308,35 @@ an owner-provided internal notice naming the start, end, and any weather
 contingency. Then checkpoint that concrete JST interval, cold-reconcile this
 ledger and live control-plane state, and execute only the recorded Local
 reboot, recovery, and validation transaction inside the confirmed interval.
+
+**Owner-supplied outage notice 2026-07-28:** the owner supplied the exact
+Japanese notice text for the statutory inspection of the extra-high-voltage
+receiving/transformation equipment and secondary substations. It states that
+the entire Ookayama campus will lose power on Saturday 2026-08-08 and Sunday
+2026-08-09, approximately 09:00–18:00 JST on each day. If weather or another
+condition prevents inspection, the reserve dates are Saturday 2026-08-29 and
+Sunday 2026-08-30, again approximately 09:00–18:00 JST on each day. This
+owner-provided notice supersedes the earlier date inference and satisfies the
+missing outage-window evidence gate; no public source URL accompanied it.
+
+No shutdown, reboot scheduling, process/service change, or control-plane
+interruption ran when the notice was received. The published authorization
+says to reboot Local during the maintenance window, but the notice defines
+two separate daytime outages and does not state whether Local should be
+orderly shut down before the first outage, restarted between outage days, or
+kept off until the second day's power restoration. Do not convert a planned
+reboot into one or two uncontrolled power-loss cycles.
+
+**Next action:** freeze the owner's desired power sequence and confirm how
+Local will be powered on after the final outage. The safe default proposal is
+an orderly shutdown before 09:00 JST on 2026-08-08, remain off through both
+outage days, and power on only after the Institute confirms restoration after
+18:00 JST on 2026-08-09; use the 2026-08-29/30 dates only if the Institute
+announces the contingency. Immediately before the chosen shutdown, cold-read
+this ledger, revalidate the reboot-required marker and active control-plane
+state, then perform post-power-on recovery and validation of routes, managed
+services, remote control, tmux, repositories, supervisors, effective kernel,
+and canonical fleet health.
 
 ### T-327 — Align MCP approvals and retire blocked phone sessions
 
