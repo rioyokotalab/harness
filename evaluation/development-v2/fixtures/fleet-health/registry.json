@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "nodes": [
+    {
+      "name": "moss",
+      "kind": "ordinary",
+      "routes": [true]
+    },
+    {
+      "name": "ridge",
+      "kind": "managed-session",
+      "managed_status": "ready",
+      "routes": [true]
+    },
+    {
+      "name": "delta",
+      "kind": "dual-route",
+      "routes": [true, true]
+    },
+    {
+      "name": "studio",
+      "kind": "paired-desktop",
+      "routes": [true, true]
+    },
+    {
+      "name": "quarry",
+      "kind": "ordinary",
+      "routes": [],
+      "maintenance": {
+        "start": "2042-06-10T09:00:00Z",
+        "end": "2042-06-10T12:00:00Z",
+        "full_stop": true
+      }
+    }
+  ]
+}

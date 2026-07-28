@@ -279,8 +279,8 @@ completed runs by retaining hosts already at the target.
 
 ### Back up and restore
 
-Seven Linux nodes—`local`, `ab`, `ab2`, `ri`, `al`, `rc`, and
-`t4`—have encrypted hidden-home primaries and independent generations that
+Eight Linux nodes—`local`, `ab`, `ab2`, `ri`, `al`, `rc`, `t4`, and
+`abq`—have encrypted hidden-home primaries and independent generations that
 passed full-data checks and verified restores. Exactly one scheduler-native
 weekly primary job exists per node. Keep-all remains in force: no scheduled
 `forget`, `prune`, replica, full-data check, login-node cron job, or user
@@ -293,7 +293,7 @@ the reviewed topology are in [docs/home-backup.md](docs/home-backup.md).
 
 Codex reads root [AGENTS.md](AGENTS.md). Claude reads root
 [CLAUDE.md](CLAUDE.md), which imports the same project rules. Reviewed
-permissions live in `.codex/config.toml` and `.claude/settings.json`. All 13
+permissions live in `.codex/config.toml` and `.claude/settings.json`. All 17
 shared skills are linked inside the repository:
 
 - `.agents/skills/` for Codex;
@@ -492,7 +492,7 @@ for the default Power setting; the aggregate itself correctly retains
 - `.codex/rules/default.rules`: project Codex command rules.
 - `config/agent-clients/`: public Codex and Claude settings plus reviewed
   sentinel/component declarations.
-- `shared/skills/`: 13 canonical workflows exposed through `.agents/skills/`
+- `shared/skills/`: 17 canonical workflows exposed through `.agents/skills/`
   and `.claude/skills/`.
 - `bin/harness` and `libexec/`: observation and transactional operations.
 - `profiles/`: logical host, tool, scheduler, storage, backup, and runtime

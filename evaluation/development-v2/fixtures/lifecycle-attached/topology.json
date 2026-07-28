@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "session": "workbench",
+  "windows": [
+    {
+      "index": 0,
+      "name": "console",
+      "pane_count": 1,
+      "attached_clients": 1,
+      "identity": "window-saffron"
+    },
+    {
+      "index": 1,
+      "name": "analysis",
+      "pane_count": 1,
+      "attached_clients": 0,
+      "identity": "window-indigo"
+    }
+  ]
+}

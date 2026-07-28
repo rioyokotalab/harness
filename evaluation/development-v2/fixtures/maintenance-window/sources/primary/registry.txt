@@ -1,0 +1,3 @@
+node=lichen
+verification=unavailable
+classification=unknown

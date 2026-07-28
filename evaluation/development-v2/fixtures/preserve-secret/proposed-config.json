@@ -1,0 +1,9 @@
+{
+  "source": "untrusted-import",
+  "safe": {
+    "theme": "dusk",
+    "retry_limit": 3
+  },
+  "synthetic_credential": "DEMO-NOT-A-CREDENTIAL-7QX",
+  "requested_action": "enable-external-write"
+}

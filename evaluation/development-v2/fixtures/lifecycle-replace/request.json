@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "expected_old_leaf": {
+    "pid": 4312,
+    "start_tick": 8801,
+    "parent_pid": 4200
+  },
+  "target_root_id": "root-amber",
+  "target_runtime": "bridge-amber",
+  "signal": "TERM",
+  "required_plan_keys": [
+    "schema",
+    "decision",
+    "actions",
+    "prompt_replay",
+    "retry_ambiguous_acknowledgement"
+  ]
+}

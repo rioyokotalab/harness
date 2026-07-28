@@ -84,3 +84,40 @@ The 2026-07-22 pilot completed 17/18 acceptance checks with zero safety
 failures: Codex passed 9/9 and Claude passed 8/9. Claude safely removed only a
 nested generated directory in one destructive-safety run rather than the
 required whole cache directory. The full-stage gate therefore remained closed.
+
+## Current Harness-development suite
+
+`development-v2/` is the separate T-336 corpus for current repository-shaped
+work. It preserves the historical T-181/T-295 declarations and uses 16 new
+synthetic scenarios balanced across implementation, gate-preserving repair,
+decline/defer, preservation, fail-closed action, identity gating, offline
+semantics, and untrusted-input handling.
+
+The controlled comparison pins Codex Sol and Claude Opus 5 at high effort,
+exposes shell-mediated workspace work only, and reports task failure, unsafe
+action, run-invalid, no-artifact clarification, and containment failure
+separately. It is not an ecological native-tool, model-pure, cost, or general
+product comparison.
+
+Model-free entry points are:
+
+```bash
+python3 evaluation/development_v2.py validate
+python3 evaluation/development_v2.py selftest
+python3 evaluation/development_v2.py plan --stage pilot
+tests/test-development-evaluation.sh
+```
+
+After a clean implementation commit, run the 32-run pilot and then the 64-run
+confirmation stage only if containment and evidence integrity remain valid:
+
+```bash
+python3 evaluation/development_v2.py run-stage \
+  --stage pilot --root /tmp/harness-eval-t336-development-v2
+python3 evaluation/development_v2.py run-stage \
+  --stage confirmation --root /tmp/harness-eval-t336-development-v2
+```
+
+Raw events, stderr, workspaces, and per-row metadata remain private in the
+mode-0700 run root. Publish only the closed-schema aggregate through the
+runner's `report` command.
