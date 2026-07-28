@@ -60,3 +60,19 @@ four task failures comprise three reply-count validation misses and one
 protected root-route normalization miss. Both arms contain 48 valid rows with
 zero unsafe, invalid, no-artifact, or containment outcomes. This addendum
 supersedes the acceptance conclusion above without rewriting its chronology.
+
+## Publication validation
+
+The accepted `-r7` source and reports passed the benchmark-focused test, closed
+report digest/privacy checks, cowork complete-phase validation, protected
+`portable-phase1`, and the complete clean-tree Harness suite. A detached cold
+clone of merge `ed1ea25433300ccd2650498468e522cfd0fb4b16` repeated the
+benchmark test in native and portable-CI modes and the complete Harness suite.
+The only skip was the declared native MPI smoke outside a declared MPI
+environment.
+
+The merge was guarded-synchronized to all ten eligible managed checkouts with
+an exact `KEEP` repeat. ABQ remained maintenance-excluded. Each advanced Mac
+received exactly one pane-blind merge-specific context refresh. The private
+`-r6` and `-r7` roots and the detached audit clone were guarded-deleted after
+validation; public aggregates and source remain.
