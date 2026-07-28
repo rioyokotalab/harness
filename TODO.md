@@ -111,7 +111,7 @@ Next free ID: T-336.
 
 ### T-335 — Restore Slack tools before the next Swallow run
 
-**Phase:** executing.
+**Phase:** blocked on Local-controller lifecycle ownership.
 
 The owner requires functional Slack access before authorizing the planned
 12-hour Swallow TODO run. This task is a connector-readiness gate only; no
@@ -229,6 +229,25 @@ Swallow TUI lifecycle refresh under current plugin-enabled code, with no
 prompt replay or app-server restart. After the refreshed Swallow process
 returns idle, require one direct read-only workspace/channel probe in that
 same thread before starting the 12-hour work.
+
+**Controller-transport gate:** this Swallow process has no declared safe
+same-host `agent-message send` route to the separate Local controller.
+Read-only `localhost` SSH stopped at host-key verification and configured
+alias `login` failed DNS resolution. Neither reached the helper or controller.
+Do not bypass host verification, invent an alias, invoke the receive-side
+helper manually for an operational message, or inject tmux input directly.
+No message was submitted and no controller, process, tmux, app-server, or
+recovery state changed.
+
+**Owner/controller action required:** in the existing Harness controller
+thread, request reconciliation of remote branch
+`codex/t335-slack-access` at exact checkpoint
+`2d740bab3309b34e13d437ed5acc3b8c7ed77468`, followed by the same-saved-root
+Swallow lifecycle refresh recorded above. The controller must own and
+validate that mutation. After it leaves this Swallow thread running and idle
+under a newly started plugin-enabled process, resume T-335 here and run one
+direct read-only Slack workspace/channel probe. Do not repeat the successful
+ephemeral probe or start the 12-hour task before that same-thread acceptance.
 
 ### T-334 — Extend maintenance awareness to remote Linux nodes
 
