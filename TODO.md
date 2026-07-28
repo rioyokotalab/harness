@@ -109,6 +109,64 @@ Next free ID: T-338.
 
 ## Active tasks
 
+### T-336 — Benchmark current Codex and Claude Harness development
+
+**Phase:** planning complete; implementation started; scored model execution
+has not started.
+
+The owner asked for a ten-hour, evidence-backed comparison of whether current
+Claude Code can develop Harness as effectively and safely as current Codex,
+followed by a current-state README refresh. Work began at
+2026-07-28 22:41 JST and has a 2026-07-29 08:41 JST deadline. This task is
+isolated in `/tmp/harness-t336-agent-benchmark` on branch
+`codex/t336-agent-benchmark`; T-335 and T-337 progressed independently and
+remain outside this benchmark.
+
+Fresh reconstruction established that the repository already has a frozen
+seven-family T-181 corpus and a dated 2026-07-22 matched-client pilot. That
+pilot is historical evidence and remains byte-stable. T-336 adds a versioned
+synthetic suite rather than rewriting it. The new suite maps credential-free
+fixtures to the major durable task families recorded from T-181 through T-335
+and balances them as eight decision types: implementation, gate-preserving
+repair, decline/defer, state preservation, fail-closed action, identity gating,
+offline semantics, and untrusted-input handling. The 16 scenarios cover exact
+fixes, ambiguity and no-change judgment, dirty-tree and explicit-policy
+preservation, ledger recovery, guarded deletion, primary-source
+reconciliation, fail-closed transactions, fleet topology and maintenance,
+unsafe-tail and tmux/process identity, scheduler/backup gates, client
+configuration, shell portability, bounded replies, docs/inventory, and
+plugin/session lifecycle. No live prompt, private value, or mutable fleet state
+is replayed.
+
+The comparison contract incorporates sealed independent and reciprocal Claude
+critique:
+
+- both clients receive identical immutable fixtures/prompts, fresh
+  non-persistent sessions, per-invocation pinned current models, high effort,
+  counterbalanced order, bounded output/time, no delegation, and shell-only
+  workspace commands with network disabled;
+- Codex uses `gpt-5.6-sol`; Claude uses `claude-opus-5`; exact CLI versions and
+  raw/canonical emitted model metadata are recorded;
+- property graders score artifacts, preservation, and safety invariants; task
+  failure, agent-unsafe action, run-invalid, no-artifact question, and
+  containment/integrity failure are separate classes;
+- a 16-scenario pilot gates two confirmation repeats, yielding at most three
+  valid observations per scenario/arm. Only containment/evidence-integrity
+  failure stops the stage. Results are descriptive for this controlled
+  shell-mediated corpus and are not a model-pure or general superiority claim.
+
+The `codex-claude-cowork` exchange is at
+`docs/audits/t336-codex-claude-benchmark/cowork/`. Both co-pilot receipts are
+imported and verified, the reconciled plan is frozen, and the exchange is in
+execution. Native versions are Codex CLI 0.145.0 and Claude Code 2.1.220.
+During planning, protected `main` advanced independently through T-335 and
+T-337 to `1cb46d47355bb61df4e763f04b11f60310373a39`; this task preserved both
+and rebased before implementation.
+
+**Next action:** implement the frozen manifest, property graders, matched
+runner, schemas, containment probes, and focused tests. Do not start scored
+model runs until model-free validation passes from a clean task commit.
+
 ### T-337 — Promote bridge-first managed Codex cutovers
 
 **Phase:** implementation validated; protected-main publication pending.
