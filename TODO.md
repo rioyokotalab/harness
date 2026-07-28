@@ -110,7 +110,8 @@ Next free ID: T-331.
 
 ### T-330 — Monitor and order Local tmux Codex windows
 
-**Phase:** executing.
+**Phase:** monitor active; final three-chain acceptance deferred until the
+legacy roots become safely idle.
 
 The owner requested periodic pane-blind health checks for every managed Codex
 window in Local's `harness` tmux session and enforcement of canonical order
@@ -176,7 +177,7 @@ four shards passed; only the shared tmux and terminfo fixtures failed because
 their safety gates require a clean committed checkout. The new monitor fixture
 was then added to both legacy and parallel focused-suite routing.
 
-**Next action:** commit the implementation checkpoint, rerun the complete
+**Implementation checkpoint:** commit the implementation, rerun the complete
 phase-one suite from the clean task checkout, publish through protected CI,
 merge, guarded-sync clean managed checkouts, and only then activate and
 validate the dedicated 30-second Local monitor.
@@ -186,9 +187,40 @@ parallel focused shards, guarded-delete coverage, and every integration gate
 passed; only the declared native MPI smoke skipped outside an MPI allocation.
 The task checkout remained clean during the run.
 
-**Next action:** publish the exact validated head through protected CI, merge,
-guarded-sync clean managed checkouts, then activate and validate the dedicated
-30-second Local monitor.
+PR #378 passed exact-head `portable-phase1` in 2m21s and merged through the
+preserved administrator bypass as
+`7973dc01e9c8347e95dbf0ea106e0c12df2e742b`; the one-review ruleset was not
+changed. Local `main` fast-forwarded while preserving its two unrelated live
+`.nfs` inodes. One guarded plan/apply advanced clean checkouts on `ab`, `ab2`,
+`ri`, `al`, `rc`, `t4`, `aist`, `home`, `office`, and `riken`; a second plan
+reported exact `KEEP`, aligned `origin/main`, and absent transfer artifacts on
+all ten. ABQ/ABQ2 remain the declared external blocker and were not mutated.
+Exactly one post-sync context refresh was submitted to each advanced Mac via
+the pane-blind transport. The 4,835-entry/57,233,376-byte temporary sync clone
+was removed through guarded manifest `t330-sync-delete.manifest`; protected
+anchors were unchanged, the target was absent, and the manifest was
+exact-unlinked.
+
+The merged 30-second monitor is now live in one detached
+`harness-tmux-codex-monitor` session with one non-dead pane rooted at
+`/home/rioyokota/harness`. Its current-user runtime directory is mode 0700;
+mapping, receipt, and lock files are mode 0600 with one link. Consecutive
+passes preserve exact order `0:harness`, `1:students`, `2:swallow`, one live
+pane per window, and report no order or repair action. The current receipt is
+safely degraded at one fully healthy chain: Harness remains active in this
+controller turn with its stale legacy watcher, and Students now reports active
+without a canonical rollout path and no watcher. Swallow's current watcher
+remains live. Both active roots are ineligible for D-001 repair, so no signal,
+launch, prompt input/replay, root mutation, app-server restart, pane read, or
+transcript read occurred. Attached-client selection changed between external
+readbacks while monitor `order_action=none`; no cause is inferred.
+
+**Next action:** leave the monitor running. After Harness and Students
+naturally report canonical `idle` or `notLoaded`, let it repair at most one
+saved exact legacy chain per pass. Then require two consecutive 30-second
+passes with `healthy=3`, exact order, live detached monitor, current mode-0600
+receipt, and unchanged clients across each monitor mutation before marking
+T-330 complete. Do not force either active root or replay any prompt.
 
 ### T-329 — Restore disappeared Swallow tmux window
 
