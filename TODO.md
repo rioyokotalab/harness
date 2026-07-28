@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-333.
+Next free ID: T-334.
 
 ## Current state
 
@@ -108,6 +108,81 @@ Next free ID: T-333.
    successors recorded below.
 
 ## Active tasks
+
+### T-333 — Make fleet health maintenance-aware
+
+**Phase:** executing.
+
+The owner requested that an unreachable managed node be reconciled against its
+official service-status or maintenance source before it is classified as an
+incident, and identified the ABCI-Q System H status page as the authority for
+ABQ:
+`https://unit.aist.go.jp/g-quat/HowToUse/abci_q/#status`.
+
+Official readback on 2026-07-28 confirms System H is currently
+`サービス停止中` and records one scheduled maintenance service stop from
+2026-07-28 10:00 through 2026-07-29 17:00 JST. Adopt that exact interval and
+source; do not generalize the window beyond its published end or infer status
+for another system.
+
+Implement one reviewed public maintenance registry containing node, exact
+epoch bounds, display end, official status URL, and a value-free reason.
+`harness fleet-health` must skip both ABQ route probes while the exact window
+is active, emit `status=maintenance` separately from pass/fail, treat scheduled
+maintenance as non-failing but not ready, and retain the official URL in
+unexpected ABQ failure output after expiry. Add a testing-only current-time
+override and deterministic focused coverage proving both routes are uncalled
+during maintenance, ordinary probes resume at the exclusive end, and unrelated
+nodes retain their current contracts.
+
+Promote the owner's repeated cross-project preference to root `AGENTS.md`:
+when a managed route unexpectedly fails, consult its official status source
+before classifying an incident; an unavailable lookup is unknown, and an exact
+active maintenance window is reported separately from readiness. Runtime
+health remains credential-free and does not scrape mutable HTML; protected
+repository updates freeze exact sourced windows, while agents perform live
+official lookups for unexpected failures.
+
+Non-goals are changing SSH timeouts or route definitions, probing during a
+known stop, treating maintenance as healthy/ready, scraping arbitrary site
+HTML in the runtime command, adding credentials, or suppressing a failure
+outside the exact window. Rollback is a protected revert of the registry,
+policy, implementation, tests, and documentation. Acceptance requires focused
+and full clean tests, protected CI, guarded synchronization of reachable clean
+checkouts, a live ABQ maintenance readback with zero route probes, and
+canonical fleet health reporting Linux readiness plus maintenance separately.
+
+**Next action:** commit this evidence and scope checkpoint, add failing-first
+maintenance fixtures, then implement the narrow registry-backed classifier.
+
+The focused suite first failed at the new maintenance expectation. The
+implementation now reads a fail-closed, non-symlinked public registry, accepts
+a deterministic current-time override only under `HARNESS_TESTING=1`, and
+skips both ABQ probes for the exact half-open published interval. At the
+exclusive end it resumes the ordinary two-route contract. Maintenance emits a
+separate non-ready, non-failing status with the exact display end and official
+source URL; an unexpected ABQ failure outside the window retains that URL.
+The registry rejects malformed or duplicate records.
+
+Shell syntax, diff hygiene, warning-level ShellCheck, and the focused fleet
+health suite pass. The deterministic fixture proves no ABQ SSH call occurs at
+the start boundary and ordinary failure detection resumes at the exclusive end.
+A live 2026-07-28 readback reports ABQ maintenance through
+2026-07-29T17:00:00+09:00 while all other Linux and Mac routes pass.
+
+**Next action:** commit the coherent implementation, run the complete clean
+phase-one suite, then publish through exact-head protected CI before changing
+any managed checkout.
+
+Implementation commit `0af81b0` passes the complete clean phase-one suite:
+every focused and integration shard passed, guarded-delete coverage passed,
+and only the declared native MPI smoke skipped outside an MPI environment.
+The task worktree remained clean, and no managed checkout changed.
+
+**Next action:** commit this validation checkpoint, fetch and push the exact
+task head, require protected `portable-phase1`, merge without changing rules,
+then guarded-sync only the ten reachable clean checkouts while ABQ remains
+deliberately unprobed.
 
 ### T-332 — Preserve native `codex` and move managed shorthand to `co`
 

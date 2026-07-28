@@ -241,6 +241,11 @@ guessing.
   SSH entries, usernames, hostnames, and operating systems.
 - Use `harness fleet-health` for routine fleet-health reports; do not replace
   its target-specific contracts with agent-authored SSH loops.
+- When a managed route unexpectedly fails, consult that system's official
+  status or maintenance source before classifying an incident. Treat a failed
+  lookup as unknown. Report an exact active maintenance window separately from
+  readiness and failure, and do not probe a node whose current stop is already
+  recorded in the reviewed maintenance registry.
 - Before yielding every Harness turn, run `harness fleet-health` and include
   its fresh compact status in the final response. Report a failed or unknown
   check explicitly; never omit the snapshot or reuse a prior turn's result.

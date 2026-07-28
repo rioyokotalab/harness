@@ -33,10 +33,14 @@ fail() {
 PUBLIC=$TEMP_DIR/public
 FAKE_BIN=$TEMP_DIR/fake-bin
 STATE=$TEMP_DIR/state
-mkdir -p "$PUBLIC/bin" "$PUBLIC/libexec" "$FAKE_BIN" "$STATE"
+mkdir -p "$PUBLIC/bin" "$PUBLIC/libexec" "$PUBLIC/profiles" "$FAKE_BIN" "$STATE"
 cp "$ROOT/bin/harness" "$PUBLIC/bin/harness"
 cp "$ROOT/libexec/harness-inventory" "$PUBLIC/libexec/harness-inventory"
 cp "$HEALTH" "$PUBLIC/libexec/harness-fleet-health"
+cat >"$PUBLIC/profiles/fleet-maintenance.tsv" <<'EOF'
+# node|start_epoch|end_epoch|end_display|status_url|reason
+abq|1785200400|1785312000|2026-07-29T17:00:00+09:00|https://unit.aist.go.jp/g-quat/HowToUse/abci_q/#status|scheduled-service-stop
+EOF
 
 cat >"$PUBLIC/libexec/harness-al-session" <<'EOF'
 #!/bin/sh
@@ -72,7 +76,8 @@ ssh-agent -a "$SSH_AUTH_SOCK" -s >"$TEMP_DIR/agent.env"
 AGENT_PID=$(sed -n 's/^SSH_AGENT_PID=\([0-9][0-9]*\);.*/\1/p' "$TEMP_DIR/agent.env")
 [ -n "$AGENT_PID" ] || fail "test SSH agent PID"
 
-PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_ROOT="$PUBLIC" \
+PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_ROOT="$PUBLIC" HARNESS_TESTING=1 \
+    HARNESS_FLEET_HEALTH_NOW_EPOCH=1785312000 \
     HARNESS_FLEET_HEALTH_STATE="$STATE" "$HEALTH" >"$TEMP_DIR/healthy.out"
 expected='local ab ab2 ri al rc t4 abq aist home office riken'
 observed=$(sed -n 's/^FLEET_HEALTH node=\([^ ]*\).*/\1/p' "$TEMP_DIR/healthy.out" |
@@ -98,9 +103,29 @@ for route in abq abq2 aist aist2 home home2 office office2 riken riken2; do
         fail "independent route path contract missing for $route"
 done
 
+: >"$STATE/calls"
+: >"$STATE/abq.fail"
+: >"$STATE/abq2.fail"
+PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_ROOT="$PUBLIC" HARNESS_TESTING=1 \
+    HARNESS_FLEET_HEALTH_NOW_EPOCH=1785200400 \
+    HARNESS_FLEET_HEALTH_STATE="$STATE" "$HEALTH" \
+    >"$TEMP_DIR/maintenance.out"
+grep -F -x \
+    'FLEET_HEALTH node=abq class=linux status=maintenance routes=skipped/2 maintenance_end=2026-07-29T17:00:00+09:00 status_url=https://unit.aist.go.jp/g-quat/HowToUse/abci_q/#status' \
+    "$TEMP_DIR/maintenance.out" >/dev/null ||
+    fail "ABQ maintenance status"
+grep -F -x 'Fleet: Linux maintenance nodes=abq; Macs pass.' \
+    "$TEMP_DIR/maintenance.out" >/dev/null ||
+    fail "maintenance compact summary"
+grep -E '^abq2? ' "$STATE/calls" >/dev/null &&
+    fail "ABQ was probed during scheduled maintenance"
+unlink "$STATE/abq.fail"
+unlink "$STATE/abq2.fail"
+
 : >"$STATE/abq2.fail"
 : >"$STATE/riken.fail"
-if PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_ROOT="$PUBLIC" \
+if PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_ROOT="$PUBLIC" HARNESS_TESTING=1 \
+    HARNESS_FLEET_HEALTH_NOW_EPOCH=1785312000 \
     HARNESS_FLEET_HEALTH_STATE="$STATE" "$HEALTH" \
     >"$TEMP_DIR/failed.out" 2>"$TEMP_DIR/failed.err"; then
     fail "fleet health accepted failed routes"
@@ -112,5 +137,7 @@ grep -F 'PRIVATE-SSH-DIAGNOSTIC' "$TEMP_DIR/failed.out" "$TEMP_DIR/failed.err" \
 
 grep -F 'Before yielding every Harness turn, run `harness fleet-health`' \
     "$ROOT/AGENTS.md" >/dev/null || fail "per-turn fleet health policy"
+grep -F 'consult that system'\''s official' "$ROOT/AGENTS.md" >/dev/null ||
+    fail "official maintenance lookup policy"
 
 echo "fleet health tests: PASS"
