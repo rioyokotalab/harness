@@ -583,6 +583,28 @@ accepting either exact unaffected Harness/Swallow selection as the preimage
 and requiring that selected window to remain unchanged through the
 transaction.
 
+The corrected dynamic-client transaction acquired the shared lock, confirmed
+both exact watcher leaves held no socket, paused only those leaves, opened one
+initialized backend, read all three exact roots, closed it, and resumed both
+watchers through the unconditional cleanup path. Harness, Students, and
+Swallow each reported canonical `active` with safe rollout identity; Students
+remained exact mode `0644`, device `197`, inode `21139179`. No thread or
+lifecycle write ran. Six seconds after resume, both peer watcher receipts
+remained `watching/thread-active` with zero recovery/rollback counts, every
+recorded process/start identity and window remained live, and the sole client
+remained on exact Harness.
+
+A separate safe-structure scan of the Students rollout inspected only record
+types and turn identifiers, never message or tool content. It found balanced
+latest lifecycle metadata with no active turn (`532` task starts, `516`
+completions, and `14` aborts). The recovery protocol explicitly permits
+lifecycle-only repair for a canonical `active` root when the defect is
+separately proven; Students' absent watcher is proven, no turn is active, and
+no thread mutation is planned. The final signal gate must revalidate that same
+no-active-turn structure, exact rollout inode, exact process/window/client
+identities, and both peer watchers before sending the one allowed leaf
+`SIGTERM`.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
