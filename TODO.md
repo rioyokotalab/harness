@@ -253,6 +253,42 @@ live watcher/TUI/socket and preserving Students, clients, roots, and the shared
 app server. Do not retry a launch after ambiguous acknowledgement. Resume the
 deferred exact RI accounting query only after this LIFO incident is stable.
 
+**Root cause and live recovery:** the monitor's missing-watcher transaction
+validated `idle`/`notLoaded` before signaling, but after the exact TUI and
+window unwound it launched the replacement immediately without re-reading the
+root. Teardown can transiently leave the root active or otherwise not ready
+for the new supervisor's recovery preflight; that preflight then fails closed
+as `thread-recovery-blocked`, retiring the replacement window. The correction
+performs a fresh post-unwind read. If the root is not canonical
+`idle`/`notLoaded`, it records `retired-NAME` and leaves the window absent for
+a later safe missing-window pass instead of launching immediately. A
+deterministic regression requires an active post-unwind root to produce no
+launch, and the focused suite passes.
+
+Private native doctor output returned success for required authentication,
+configuration, installation, and state gates; only the owner-accepted
+`project.agent=unknown` remained, and the mode-0600 output was exact-unlinked.
+Fresh final gates found both preserved missing roots `active` with canonical
+rollouts, their prior chains absent, exact indices 0 and 2 free, Students
+unchanged at index 1, and the saved app-server identity unchanged. Under the
+recovery protocol, active permitted lifecycle repair but no thread mutation.
+
+One prompt-free launch restored Harness at index 0 from its exact saved root;
+its live watcher, TUI, reciprocal app-server socket, and unchanged client
+selection passed. Only after that acceptance, one prompt-free launch restored
+Swallow at index 2 with the same gates. Both launches acknowledged once and
+were not retried. Exact order and all three lifecycle chains are healthy; the
+periodic monitor remains stopped. No prompt input/replay, root rollback,
+fresh-root creation, name/archive change, app-server restart, pane read, or
+transcript read occurred.
+
+**Next action:** commit the correction and recovery checkpoint, run the
+focused monitor suite and complete clean phase-one suite, publish through
+exact-head protected CI, guarded-sync reachable clean checkouts, and issue one
+context refresh per advanced Mac. Keep the periodic monitor stopped until the
+corrected merge is installed; then reactivate it and require two consecutive
+healthy passes before resuming the exact RI accounting query.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
