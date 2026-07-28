@@ -296,6 +296,22 @@ portable suites plus result/schema/hygiene checks, then publish through
 protected `main`, guarded-sync only clean eligible managed checkouts, issue
 required Mac context refreshes, and guarded-delete private run roots.
 
+**Validation checkpoint 2026-07-29 02:36 JST:** final result/schema/hygiene
+checks, `tests/test-development-evaluation.sh`,
+`tests/test-client-comparison.sh`, `tests/test-claude-takeover.sh`,
+`git diff --check`, and the cowork validator pass. The first full-suite run
+failed only the deliberate clean-checkout guards in `test-tmux-config.sh` and
+`test-terminfo.sh` while the new result/README files were uncommitted. After
+clean checkpoint `4abbc8c`, `tests/test-phase1.sh` passes, including both
+guards; its declared native MPI smoke remains skipped outside a declared MPI
+environment.
+
+**Next action:** complete the cowork exchange, commit this validation
+checkpoint, fetch and reconcile protected `main`, push the task branch, merge
+through protected CI, guarded-sync clean eligible managed checkouts, issue any
+required Mac context refresh, then guarded-delete all private T-336 run roots
+and temporary cowork staging.
+
 ### T-337 — Promote bridge-first managed Codex cutovers
 
 **Phase:** complete after this rollout checkpoint reaches protected `main`.
