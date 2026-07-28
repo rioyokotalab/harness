@@ -85,6 +85,44 @@ health["harness"]["identity"] = {
     "thread": "saved-thread",
 }
 assert module.repair_once([], health, mapping, object(), object()) == "none"
+
+mapping["harness"]["app_server_start"] = "server-start"
+def process_after_signal(pid):
+    if pid == 23:
+        if process_after_signal.tui_live:
+            process_after_signal.tui_live = False
+            return {
+                "pid": 23,
+                "parent": 1,
+                "start": "tui-start",
+                "comm": "codex.real",
+                "argv": [],
+            }
+        return None
+    return {
+        "pid": pid,
+        "parent": 1,
+        "start": "server-start",
+        "comm": "codex.real",
+        "argv": [],
+    }
+
+process_after_signal.tui_live = True
+module.process_info = process_after_signal
+thread_reads = iter((("idle", True), ("active", True)))
+module.read_thread = lambda _module, _backend, _thread: next(thread_reads)
+module.os.kill = lambda pid, signum: None
+module.time.sleep = lambda _seconds: None
+module.tmux_windows = lambda: []
+launches = []
+module.launch_window = lambda name, index, saved: launches.append(
+    (name, index, saved)
+)
+assert (
+    module.repair_once([], health, mapping, object(), object())
+    == "retired-harness"
+)
+assert launches == []
 PY
 
 cat >"$TEST_ROOT/healthy.json" <<'EOF'

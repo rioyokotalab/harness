@@ -516,8 +516,14 @@ def repair_once(windows, health, mapping, module, backend):
                 time.sleep(0.2)
             else:
                 fail("repair window did not unwind")
-            launch_window(name, index, mapping)
-            action = "restarted-{}".format(name)
+            post_status, post_rollout = read_thread(
+                module, backend, saved["thread"]
+            )
+            if post_status not in ("idle", "notLoaded") or not post_rollout:
+                action = "retired-{}".format(name)
+            else:
+                launch_window(name, index, mapping)
+                action = "restarted-{}".format(name)
         elif reason == "window-missing":
             if any(window["index"] == index for window in windows):
                 continue

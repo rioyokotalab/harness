@@ -222,6 +222,85 @@ passes with `healthy=3`, exact order, live detached monitor, current mode-0600
 receipt, and unchanged clients across each monitor mutation before marking
 T-330 complete. Do not force either active root or replay any prompt.
 
+**LIFO monitor regression 2026-07-28:** after the owner said `Proceed`, fresh
+metadata found the monitor receipt at `healthy=0`,
+`order_action=deferred-ambiguous`, with only the exact Students window
+remaining. Harness and Swallow supervisor receipts were both
+`stopped/thread-recovery-blocked`; their windows, supervisors, watchers,
+launchers, and TUIs were absent. Students remained one live one-pane window
+rooted at `/home/rioyokota/harness`. No pane or transcript content was read.
+
+The exact dedicated monitor session still contained one live Python monitor
+pane rooted at the published checkout. A first rollback command failed before
+mutation because its expected argv included the dispatcher while `exec` had
+correctly replaced that process with the libexec path. The corrected exact
+argv/path/one-pane identity gate passed; one `tmux kill-session` stopped only
+`harness-tmux-codex-monitor`, and absence was verified. No managed project
+window or shared tmux server was signaled.
+
+Fresh app-server reads prove both preserved missing roots are `active`, have
+canonical rollout identities, and still reference the same live app server.
+Under `recover-codex-unsafe-tail`, this forbids rollback, fresh-root cutover,
+prompt replay, and thread mutation. Lifecycle-only restoration remains
+permitted after a fresh `idle` or `notLoaded` read, but no launch has run.
+
+**Next action:** keep the periodic monitor stopped. Determine and fix the
+monitor/supervisor race with failing fixtures before republishing it. For live
+recovery, wait for each preserved missing root to become canonical `idle` or
+`notLoaded`, then restore exactly one Harness and one Swallow lifecycle under
+the current published supervisor without prompt input or replay, requiring a
+live watcher/TUI/socket and preserving Students, clients, roots, and the shared
+app server. Do not retry a launch after ambiguous acknowledgement. Resume the
+deferred exact RI accounting query only after this LIFO incident is stable.
+
+**Root cause and live recovery:** the monitor's missing-watcher transaction
+validated `idle`/`notLoaded` before signaling, but after the exact TUI and
+window unwound it launched the replacement immediately without re-reading the
+root. Teardown can transiently leave the root active or otherwise not ready
+for the new supervisor's recovery preflight; that preflight then fails closed
+as `thread-recovery-blocked`, retiring the replacement window. The correction
+performs a fresh post-unwind read. If the root is not canonical
+`idle`/`notLoaded`, it records `retired-NAME` and leaves the window absent for
+a later safe missing-window pass instead of launching immediately. A
+deterministic regression requires an active post-unwind root to produce no
+launch, and the focused suite passes.
+
+Private native doctor output returned success for required authentication,
+configuration, installation, and state gates; only the owner-accepted
+`project.agent=unknown` remained, and the mode-0600 output was exact-unlinked.
+Fresh final gates found both preserved missing roots `active` with canonical
+rollouts, their prior chains absent, exact indices 0 and 2 free, Students
+unchanged at index 1, and the saved app-server identity unchanged. Under the
+recovery protocol, active permitted lifecycle repair but no thread mutation.
+
+One prompt-free launch restored Harness at index 0 from its exact saved root;
+its live watcher, TUI, reciprocal app-server socket, and unchanged client
+selection passed. Only after that acceptance, one prompt-free launch restored
+Swallow at index 2 with the same gates. Both launches acknowledged once and
+were not retried. Exact order and all three lifecycle chains are healthy; the
+periodic monitor remains stopped. No prompt input/replay, root rollback,
+fresh-root creation, name/archive change, app-server restart, pane read, or
+transcript read occurred.
+
+**Next action:** commit the correction and recovery checkpoint, run the
+focused monitor suite and complete clean phase-one suite, publish through
+exact-head protected CI, guarded-sync reachable clean checkouts, and issue one
+context refresh per advanced Mac. Keep the periodic monitor stopped until the
+corrected merge is installed; then reactivate it and require two consecutive
+healthy passes before resuming the exact RI accounting query.
+
+Correction/recovery commit `b4370e8` passes Python and shell syntax,
+warning-level ShellCheck, diff hygiene, the focused monitor regression, all 75
+parallel focused shards, guarded-delete coverage, and every phase-one
+integration gate. Only the declared native MPI smoke skipped outside an MPI
+allocation. The periodic monitor remained stopped and the three restored
+windows remained outside suite mutation.
+
+**Next action:** push the exact validated head, publish through protected CI,
+merge, guarded-sync reachable clean checkouts, and issue one context refresh
+per advanced Mac. Then reactivate the corrected monitor and require two
+consecutive healthy passes before resuming the exact RI accounting query.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
@@ -613,6 +692,15 @@ this ledger, revalidate the reboot-required marker and active control-plane
 state, then perform post-power-on recovery and validation of routes, managed
 services, remote control, tmux, repositories, supervisors, effective kernel,
 and canonical fleet health.
+
+**Power sequence frozen 2026-07-28:** after the controller restated the safe
+default, the owner said `Proceed`. Therefore schedule no action now; on
+2026-08-08 perform an orderly shutdown before 09:00 JST, keep Local off
+through both outage days, and power it on only after confirmed restoration
+after 18:00 JST on 2026-08-09. Use 2026-08-29/30 only if the Institute invokes
+the contingency dates. Physical or firmware power-on availability remains an
+external preflight immediately before shutdown; do not shut down unless a
+post-outage power-on path is confirmed.
 
 ### T-327 — Align MCP approvals and retire blocked phone sessions
 
