@@ -1,4 +1,4 @@
 interface:
-  display_name: "Recover Codex Unsafe Tail"
-  short_description: "Safely recover recurring blocked Codex threads"
-  default_prompt: "Use $recover-codex-unsafe-tail to diagnose and recover this blocked managed Codex thread without replaying its rejected prompt."
+  display_name: "Recover or Replace Codex Thread"
+  short_description: "Safely recover or bridge managed Codex threads"
+  default_prompt: "Use $recover-codex-unsafe-tail to diagnose, recover, or bridge this managed Codex thread without replaying rejected work."

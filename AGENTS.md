@@ -62,6 +62,12 @@ file apply to Codex and Claude when they are started from this repository.
 - After a transient Codex provider or service failure, resume the saved chat
   and reconcile durable state; never blindly replay the prior prompt because
   its tool or external side effects may already have succeeded.
+- For an authorized managed Codex saved-root/TUI replacement or fresh-root
+  cutover, use a bridge-first cutover. Create and fully accept a distinct
+  provisional root, tmux window, and runtime before rename-only promotion;
+  retire the old leaf only after promotion. An already exited zombie must not
+  block the bridge or be signaled, and an ambiguous launch or promotion must
+  never be retried.
 - Run validation proportional to risk. A generated artifact, optimization, or
   delegated result is not complete until independently checked.
 - For an owner-authorized collaborative repository, fetch before starting work

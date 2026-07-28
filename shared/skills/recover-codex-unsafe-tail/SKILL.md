@@ -1,9 +1,9 @@
 ---
 name: recover-codex-unsafe-tail
-description: Diagnose and recover a managed remote Codex thread that repeatedly shows Request blocked, reports systemError, has an unsafe or unavailable recovery tail, or has lost its recovery watcher. Use for Harness-managed phone/tmux Codex sessions when recovery must preserve tool-bearing work, avoid rejected-prompt replay, and choose safely between one proven rollback and a fresh-root cutover.
+description: Diagnose, recover, or replace a managed remote Codex thread that repeatedly shows Request blocked, reports systemError, has an unsafe or unavailable recovery tail, has lost its recovery watcher, or requires an authorized saved-root/TUI replacement. Use for Harness-managed phone/tmux Codex sessions when recovery must preserve tool-bearing work, avoid rejected-prompt replay, and choose safely between one proven rollback and a bridge-first fresh-root cutover.
 ---
 
-# Recover Codex unsafe tails
+# Recover or replace Codex unsafe tails
 
 Restore one managed Codex surface from durable repository state while
 preserving the poisoned root and unrelated sessions.
@@ -42,7 +42,9 @@ Use exactly one branch:
   acknowledged rollback and independent post-read. Never retry an ambiguous
   request.
 - Post-rollback `systemError`, `unsafe-tail`, unrecognized structure, or a
-  watcher refusal: preserve the root and use the fresh-root cutover.
+  watcher refusal: preserve the root and use the bridge-first fresh-root cutover.
+- An authorized saved-root/TUI replacement that does not have a safe in-place
+  path: use the same bridge-first fresh-root cutover.
 - Unavailable app server, identity drift, unsafe rollout metadata, active
   ambiguous request, or missing authority: stop and checkpoint the blocker.
 
@@ -54,8 +56,9 @@ group, or use `SIGKILL`.
 
 Require an assistant-bearing completed cold-start turn, no active item or
 `systemError`, exact phone/tmux name agreement, a live watcher and TUI socket,
-an absent old TUI/launcher chain, a preserved blocked root, unchanged
-unaffected sessions/app server, coherent Git, and canonical fleet health.
+the accepted bridge runtime identity unchanged, an absent old TUI/launcher
+chain, a preserved blocked root, unchanged unaffected sessions/app server,
+coherent Git, and canonical fleet health.
 
 Treat an unreaped zombie as already exited but not absent: never signal it
 again, record its parent-owned reaping boundary, and do not claim a zero-zombie

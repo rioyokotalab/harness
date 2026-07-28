@@ -2,6 +2,7 @@
 set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+AGENTS=$ROOT/AGENTS.md
 SKILL=$ROOT/shared/skills/recover-codex-unsafe-tail/SKILL.md
 PROTOCOL=$ROOT/shared/skills/recover-codex-unsafe-tail/references/protocol.md
 OPENAI=$ROOT/shared/skills/recover-codex-unsafe-tail/agents/openai.yaml
@@ -11,7 +12,7 @@ fail() {
     exit 1
 }
 
-for path in "$SKILL" "$PROTOCOL" "$OPENAI"; do
+for path in "$AGENTS" "$SKILL" "$PROTOCOL" "$OPENAI"; do
     [ -f "$path" ] && [ ! -L "$path" ] ||
         fail "missing skill resource: $path"
 done
@@ -24,6 +25,20 @@ grep -F 'Never retry an ambiguous' "$SKILL" >/dev/null ||
     fail "ambiguous acknowledgement boundary"
 grep -F 'fresh-root cutover' "$SKILL" >/dev/null ||
     fail "unsafe-tail route"
+grep -F 'bridge-first cutover' "$AGENTS" >/dev/null ||
+    fail "global bridge-first policy"
+grep -F 'bridge-first fresh-root cutover' "$SKILL" >/dev/null ||
+    fail "bridge-first skill route"
+grep -F -x '## Bridge-first fresh-root cutover' "$PROTOCOL" >/dev/null ||
+    fail "bridge-first protocol"
+grep -F 'distinct provisional root, tmux window, and runtime name' \
+    "$PROTOCOL" >/dev/null || fail "distinct bridge identities"
+grep -F 'Promotion is rename-only' "$PROTOCOL" >/dev/null ||
+    fail "rename-only promotion"
+grep -F 'Only after the accepted bridge is promoted' "$PROTOCOL" >/dev/null ||
+    fail "promotion-before-retirement"
+grep -F 'must not block bridge launch or promotion' "$PROTOCOL" >/dev/null ||
+    fail "zombie bridge boundary"
 grep -F 'Never read pane text' "$SKILL" >/dev/null ||
     fail "content boundary"
 grep -F 'Treat an unreaped zombie as already exited but not absent' \

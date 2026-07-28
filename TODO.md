@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-336.
+Next free ID: T-338.
 
 ## Current state
 
@@ -108,6 +108,68 @@ Next free ID: T-336.
    successors recorded below.
 
 ## Active tasks
+
+### T-337 — Promote bridge-first managed Codex cutovers
+
+**Phase:** implementation validated; protected-main publication pending.
+
+The owner requires the bridge-window cutover proven by T-335 to become a
+global Harness behavior instead of remaining incident-local. T-336 is already
+occupied by an independent dirty benchmark worktree and remains untouched.
+
+**Frozen bounded plan:**
+
+1. Add focused failing assertions for the bridge-first invariants.
+2. Promote a concise global rule into root `AGENTS.md`.
+3. Update the reusable `recover-codex-unsafe-tail` skill and protocol so an
+   authorized managed Codex root/TUI replacement creates and accepts a
+   distinct provisional root, tmux window, and runtime before promotion.
+4. Require rename-only promotion of that accepted bridge, then retire the old
+   leaf; an already exited zombie may neither block bridge launch nor be
+   signaled.
+5. Validate skill discovery and metadata, run the focused checks and
+   `tests/test-phase1.sh`, publish through protected `main`, then guarded-sync
+   only clean reachable managed checkouts and issue the required context
+   refresh to any advanced eligible Mac checkout.
+
+**Authority and preservation boundary:**
+
+- This task may change only Harness policy, the reusable recovery skill,
+  focused tests, and this ledger.
+- Do not mutate the live T-335 Swallow bridge, controller, app server, tmux
+  state, thread, or scheduler state.
+- Preserve the independent T-336 worktree and all unrelated branches,
+  worktrees, and dirty files.
+- ABQ remains inside its recorded maintenance stop and must not be probed or
+  synchronized.
+
+**Implementation checkpoint:**
+
+- The focused test first failed at `global bridge-first policy`, proving the
+  new invariant was not already enforced.
+- Root policy now requires a distinct provisional root/window/runtime,
+  acceptance before rename-only promotion, retirement afterward, no zombie
+  signaling or zombie launch gate, and no ambiguous retry.
+- The reusable skill, protocol, and OpenAI interface now cover both unsafe-tail
+  recovery and authorized managed root/TUI replacement.
+- `tests/test-recover-codex-unsafe-tail-skill.sh`, `git diff --check`, and the
+  skill-creator `quick_validate.py` check pass. The validator is a readable
+  Python entry point rather than an executable file, so it was invoked through
+  `python3`.
+
+**Validation checkpoint:**
+
+- `tests/test-recover-codex-unsafe-tail-skill.sh`,
+  `tests/test-claude-takeover.sh`, `tests/test-hardening-audit.sh`,
+  `git diff --check`, and skill `quick_validate.py` pass.
+- `tests/test-phase1.sh` passes; its declared native MPI smoke remains skipped
+  outside a declared MPI environment and is unrelated to this policy-only
+  change.
+- Branch commits `3cdc3cc` and `c82e285` are published on
+  `origin/codex/t337-bridge-first-cutover`.
+
+**Next executable action:** commit and push this validation checkpoint, fetch
+and integrate protected `main`, then open and merge the exact-head pull request.
 
 ### T-335 — Restore Slack tools before the next Swallow run
 
