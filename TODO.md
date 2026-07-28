@@ -111,7 +111,7 @@ Next free ID: T-336.
 
 ### T-335 — Restore Slack tools before the next Swallow run
 
-**Phase:** executing owner-selected bridge-window recovery.
+**Phase:** complete after bridge closeout reaches protected `main`.
 
 The owner requires functional Slack access before authorizing the planned
 12-hour Swallow TODO run. This task is a connector-readiness gate only; no
@@ -626,6 +626,42 @@ task.
 
 **Next action:** commit and push this frozen bridge checkpoint, then execute
 step 2 once.
+
+**Bridge recovery completion:** pushed plan
+`5199ecf62f01364ab9a19eee78b018a8d004f502` preceded one lock-serialized
+native launch. Exact provisional window `@82/2:swallow-bridge` was
+acknowledged once with distinct runtime `swallow-bridge-t335` and accepted
+root `019fa8db-e4e0-7b81-9c02-a3b0954b5a95`; no retry ran.
+
+Before promotion, the provisional chain passed attempt-zero
+`running/remote-explicit` plus `watching/thread-idle`, with zero recovery and
+rollback counts. The exact same window was then renamed once to `swallow`;
+its index, pane, root, runtime, and process chain did not change. Final exact
+supervisor PID/start is `964619/98154438`, watcher `964741/98154447`,
+launcher `964880/98154559`, wrapper `964882/98154559`, and real TUI
+`964969/98154567`. Reciprocal socket inodes `199741356/199746651` connect
+that TUI to unchanged app server PID `2852569`.
+
+Two distinct post-promotion periodic receipts report
+`healthy=3 order_action=none repair_action=none`. Tmux is exact
+`@80/0:harness,@78/1:students,@82/2:swallow`, one pane each. Owner client
+`804512` remained on exact Harness `@80`; peer and monitor identities are
+unchanged. The stopped old runtime remains stopped, its inert parent-owned
+zombie was neither signaled nor awaited, and old/new saved roots remain
+preserved.
+
+Private bridge result `/tmp/t335-bridge-result.03aWkr` records exactly one
+launch, one promotion, and two monitor samples at mode `0600`. No prompt
+input/replay, Slack write, app-server restart, saved-root rename/archive/
+delete, second launch, window move, client movement, or benchmark work ran.
+The new root's earlier direct Slack acceptance and this live bridge
+acceptance jointly satisfy T-335.
+
+**Next action:** commit and push this completion checkpoint, exact-unlink the
+three reviewed T-335 cutover result files after verifying their owner/mode/
+link identities, record cleanup, and publish the docs-only T-335 closeout
+through protected exact-head CI. Do not start the separate 12-hour task from
+Harness.
 
 ### T-334 — Extend maintenance awareness to remote Linux nodes
 
