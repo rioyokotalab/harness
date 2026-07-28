@@ -523,6 +523,21 @@ or given input. If the owner confirms the older attachment is stale, detach
 only exact client `/dev/pts/8`, then revalidate one remaining client before
 the Students cutover.
 
+**Stale-client detachment:** the owner authorized `detach it`. The first exact
+wrapper compared tmux's literal `\t` format output as real tab fields and
+failed before `tmux detach-client`; both clients remained attached. The
+corrected space-delimited identity gate revalidated stale client
+`/dev/pts/8` / PID `3503464` and current client `/dev/pts/31` / PID `908572`.
+One native `tmux detach-client -t /dev/pts/8` removed only the stale
+attachment. Exact postcheck leaves one client, `/dev/pts/31`, unchanged on
+Harness; Students is now unattached. No window, pane, process, or client
+selection changed otherwise.
+
+**Next action:** checkpoint this non-retryable detach, then execute only the
+previously authorized Students lifecycle cutover under the unsafe-tail
+protocol. Preserve the attached Harness client, other two lifecycle chains,
+all saved roots, and the shared app server.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
