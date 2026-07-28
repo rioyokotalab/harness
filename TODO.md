@@ -110,8 +110,7 @@ Next free ID: T-331.
 
 ### T-330 — Monitor and order Local tmux Codex windows
 
-**Phase:** monitor active; final three-chain acceptance deferred until the
-legacy roots become safely idle.
+**Phase:** executing observe-only correction and bounded lifecycle recovery.
 
 The owner requested periodic pane-blind health checks for every managed Codex
 window in Local's `harness` tmux session and enforcement of canonical order
@@ -439,6 +438,27 @@ never constructs the recovery backend, never reads thread state, and never
 signals or launches a managed lifecycle. Then remove those paths from the
 monitor while retaining pane-blind lifecycle observation and safe tmux order
 enforcement.
+
+**Observe-only implementation checkpoint:** failing-first source assertions
+stopped on the production backend/read/repair paths. The monitor now contains
+no recovery-backend construction, thread read, process signal, or lifecycle
+launch path; `--repair` is retired. It retains exact tmux ordering, resilient
+receipt/process ancestry, watcher ownership, current-user TUI/app-server
+identity, reciprocal socket, duplicate runtime/thread refusal, and private
+lifecycle mapping/receipt state. Focused fixtures, Python 3.6 grammar, POSIX
+shell syntax, warning-level ShellCheck, and diff hygiene pass.
+
+The first live one-shot used the task worktree as `HARNESS_ROOT` and therefore
+reported all three live-root paths as metadata mismatches; it made no order or
+lifecycle mutation. The corrected explicit live-root observation reports
+Harness and Swallow healthy and only Students `watcher-absent`, with
+`repair_action=none`. Two task-created Python cache roots were removed through
+separate guarded manifests; each target was verified absent with protected
+anchors unchanged, and both manifests were exact-unlinked.
+
+**Next action:** review and commit this coherent implementation, run the
+complete clean `tests/test-phase1.sh`, then publish through protected
+exact-head CI before any Students lifecycle cutover.
 
 ### T-329 — Restore disappeared Swallow tmux window
 

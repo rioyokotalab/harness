@@ -6,7 +6,6 @@ from __future__ import print_function
 import argparse
 import contextlib
 import fcntl
-import importlib.machinery
 import json
 import os
 import re
@@ -140,6 +139,7 @@ def process_info(pid):
             info = parse_proc_stat(pid, stream.read())
         with open("/proc/{}/cmdline".format(pid), "rb") as stream:
             argv = [part.decode("utf-8", "strict") for part in stream.read().split(b"\0") if part]
+        info["uid"] = os.stat("/proc/{}".format(pid)).st_uid
     except (IOError, OSError, UnicodeError, ValueError):
         return None
     info["argv"] = argv
@@ -212,26 +212,6 @@ def resilient_status(runtime_name):
     if len(lines) > 1:
         recovery = dict(item.split("=", 1) for item in lines[1].split()[1:] if "=" in item)
     return first, recovery
-
-
-def recovery_module():
-    path = os.path.join(
-        os.environ["HARNESS_ROOT"], "libexec", "harness-codex-thread-recovery"
-    )
-    return importlib.machinery.SourceFileLoader("tmux_monitor_recovery", path).load_module()
-
-
-def read_thread(module, backend, thread_id):
-    value = backend.read_thread(thread_id)
-    status_value = value.get("status")
-    rollout_valid = False
-    if status_value in ("idle", "active", "notLoaded", "systemError"):
-        try:
-            module.validate_rollout(value.get("path"), thread_id)
-            rollout_valid = True
-        except module.RecoveryError:
-            rollout_valid = False
-    return status_value, rollout_valid
 
 
 def reciprocal_socket(tui_pid):
@@ -329,7 +309,7 @@ def enforce_order(windows):
     return windows, action
 
 
-def collect_health(windows, module, backend):
+def collect_health(windows):
     health = {}
     for name, expected_index in EXPECTED:
         matches = [window for window in windows if window["name"] == name]
@@ -347,7 +327,7 @@ def collect_health(windows, module, backend):
             continue
         supervisor_info = process_info(window["pane_pid"])
         identity = parse_supervisor(supervisor_info)
-        if not identity:
+        if not identity or supervisor_info["uid"] != os.getuid():
             entry["reason"] = "supervisor-identity"
             health[name] = entry
             continue
@@ -364,16 +344,7 @@ def collect_health(windows, module, backend):
             entry["reason"] = "supervisor-owner"
             health[name] = entry
             continue
-        thread_status, rollout_valid = read_thread(
-            module, backend, identity["thread"]
-        )
-        entry.update(
-            {
-                "identity": identity,
-                "thread_status": thread_status,
-                "rollout_valid": rollout_valid,
-            }
-        )
+        entry["identity"] = identity
         tui = next(
             (item for item in descendants(window["pane_pid"]) if item["comm"] == "codex.real"),
             None,
@@ -388,12 +359,25 @@ def collect_health(windows, module, backend):
             entry["reason"] = "tui-absent"
             health[name] = entry
             continue
+        if tui["uid"] != os.getuid():
+            entry["reason"] = "tui-identity"
+            health[name] = entry
+            continue
         peer_pid = reciprocal_socket(tui["pid"])
-        entry["app_server_pid"] = peer_pid
         if not peer_pid:
             entry["reason"] = "socket-absent"
             health[name] = entry
             continue
+        peer = process_info(peer_pid)
+        if (
+            not peer
+            or peer["uid"] != os.getuid()
+            or peer["comm"] != "codex.real"
+        ):
+            entry["reason"] = "app-server-identity"
+            health[name] = entry
+            continue
+        entry["app_server_pid"] = peer_pid
         watcher_ok = False
         if recovery and recovery.get("phase") in ("watching", "recovered"):
             try:
@@ -403,6 +387,7 @@ def collect_health(windows, module, backend):
             watcher = process_info(watcher_pid)
             watcher_ok = bool(
                 watcher
+                and watcher["uid"] == os.getuid()
                 and watcher["parent"] == window["pane_pid"]
                 and recovery.get("thread") == identity["thread"]
             )
@@ -410,14 +395,21 @@ def collect_health(windows, module, backend):
             entry["reason"] = "watcher-absent"
             health[name] = entry
             continue
-        if not rollout_valid or thread_status not in ("idle", "active", "notLoaded"):
-            entry["reason"] = "thread-unsafe"
-            health[name] = entry
-            continue
         entry["state"] = "healthy"
         entry["reason"] = "ready"
         entry["expected_index"] = expected_index
         health[name] = entry
+    for field in ("runtime", "thread"):
+        values = {}
+        for name, entry in health.items():
+            identity = entry.get("identity")
+            if identity:
+                values.setdefault(identity[field], []).append(name)
+        for names in values.values():
+            if len(names) > 1:
+                for name in names:
+                    health[name]["state"] = "unhealthy"
+                    health[name]["reason"] = "identity-duplicate"
     return health
 
 
@@ -427,8 +419,7 @@ def mapping_snapshot(mapping, health):
         identity = entry.get("identity")
         if (
             identity
-            and entry.get("rollout_valid")
-            and entry.get("thread_status") in ("idle", "active", "notLoaded")
+            and entry.get("state") == "healthy"
             and entry.get("app_server_pid")
         ):
             mapping[name] = {
@@ -440,110 +431,7 @@ def mapping_snapshot(mapping, health):
     return mapping
 
 
-def launch_window(name, index, mapping):
-    value = mapping[name]
-    command = (
-        "exec env XDG_RUNTIME_DIR={runtime} {root}/bin/harness "
-        "codex-resilient --run --name {name} --remote-session {thread}"
-    ).format(
-        runtime=os.environ.get("XDG_RUNTIME_DIR", ""),
-        root=os.environ["HARNESS_ROOT"],
-        name=value["runtime"],
-        thread=value["thread"],
-    )
-    run(
-        [
-            "tmux",
-            "new-window",
-            "-d",
-            "-t",
-            "harness:{}".format(index),
-            "-n",
-            name,
-            "-c",
-            os.environ["HARNESS_ROOT"],
-            command,
-        ]
-    )
-
-
-def repair_once(windows, health, mapping, module, backend):
-    before_clients = tmux_clients()
-    selected_windows = {window_id for _client_pid, window_id in before_clients}
-    for name, index in EXPECTED:
-        entry = health.get(name, {})
-        if name not in mapping:
-            continue
-        if (
-            entry.get("reason") == "watcher-absent"
-            and entry.get("window", {}).get("window_id") in selected_windows
-        ):
-            continue
-        saved = mapping[name]
-        saved_server = process_info(saved.get("app_server_pid", 0))
-        if (
-            not saved_server
-            or saved_server["comm"] != "codex.real"
-            or saved_server["start"] != saved.get("app_server_start")
-        ):
-            continue
-        if entry.get("app_server_pid") not in (
-            None,
-            saved["app_server_pid"],
-        ):
-            continue
-        identity = entry.get("identity")
-        if identity and (
-            identity.get("runtime") != saved.get("runtime")
-            or identity.get("thread") != saved.get("thread")
-        ):
-            continue
-        status_value, rollout_valid = read_thread(module, backend, saved["thread"])
-        if status_value not in ("idle", "notLoaded") or not rollout_valid:
-            continue
-        reason = entry.get("reason")
-        if reason == "watcher-absent" and entry.get("tui"):
-            tui = entry["tui"]
-            current = process_info(tui["pid"])
-            if not current or current["start"] != tui["start"]:
-                fail("repair TUI identity drifted")
-            os.kill(tui["pid"], signal.SIGTERM)
-            deadline = time.monotonic() + 10
-            while time.monotonic() < deadline:
-                if process_info(tui["pid"]) is None:
-                    break
-                time.sleep(0.2)
-            else:
-                fail("repair TUI did not exit")
-            deadline = time.monotonic() + 10
-            while time.monotonic() < deadline:
-                if not any(window["name"] == name for window in tmux_windows()):
-                    break
-                time.sleep(0.2)
-            else:
-                fail("repair window did not unwind")
-            post_status, post_rollout = read_thread(
-                module, backend, saved["thread"]
-            )
-            if post_status not in ("idle", "notLoaded") or not post_rollout:
-                action = "retired-{}".format(name)
-            else:
-                launch_window(name, index, mapping)
-                action = "restarted-{}".format(name)
-        elif reason == "window-missing":
-            if any(window["index"] == index for window in windows):
-                continue
-            launch_window(name, index, mapping)
-            action = "restored-{}".format(name)
-        else:
-            continue
-        if tmux_clients() != before_clients:
-            fail("repair changed attached clients")
-        return action
-    return "none"
-
-
-def test_fixture(path, enforce, repair):
+def test_fixture(path, enforce):
     with open(path, "r") as stream:
         fixture = json.load(stream)
     windows = fixture["windows"]
@@ -557,16 +445,6 @@ def test_fixture(path, enforce, repair):
         else:
             order_action = "deferred-ambiguous"
     repair_action = "none"
-    if repair:
-        for name, _index in EXPECTED:
-            value = fixture.get("health", {}).get(name, {})
-            if (
-                value.get("reason") in ("watcher-absent", "window-missing")
-                and value.get("thread_status") in ("idle", "notLoaded")
-                and value.get("mapping")
-            ):
-                repair_action = "repair-eligible-{}".format(name)
-                break
     states = fixture.get("health", {})
     healthy = sum(1 for value in states.values() if value.get("state") == "healthy")
     print(
@@ -587,12 +465,11 @@ def parse_arguments():
     modes.add_argument("--interval", type=int)
     modes.add_argument("--status", action="store_true")
     parser.add_argument("--enforce-order", action="store_true")
-    parser.add_argument("--repair", action="store_true")
     arguments = parser.parse_args()
     if arguments.interval is not None and not 30 <= arguments.interval <= 3600:
         parser.error("--interval must be between 30 and 3600 seconds")
-    if arguments.status and (arguments.enforce_order or arguments.repair):
-        parser.error("--status does not accept mutation flags")
+    if arguments.status and arguments.enforce_order:
+        parser.error("--status does not accept --enforce-order")
     return arguments
 
 
@@ -602,7 +479,7 @@ def main():
     if fixture:
         if os.environ.get("HARNESS_TESTING") != "1":
             fail("test fixture requires HARNESS_TESTING=1")
-        return test_fixture(fixture, arguments.enforce_order, arguments.repair)
+        return test_fixture(fixture, arguments.enforce_order)
     root = runtime_root()
     receipt_path = os.path.join(root, "receipt.json")
     mapping_path = os.path.join(root, "mapping.json")
@@ -629,7 +506,6 @@ def main():
             )
         )
         return 0 if receipt["phase"] == "healthy" else 1
-    module = recovery_module()
     stopping = [False]
     signal.signal(signal.SIGTERM, lambda _signum, _frame: stopping.__setitem__(0, True))
     while not stopping[0]:
@@ -642,36 +518,28 @@ def main():
                 windows = tmux_windows()
                 if arguments.enforce_order:
                     windows, order_action = enforce_order(windows)
-                backend = module.Backend()
-                try:
-                    health = collect_health(windows, module, backend)
-                    mapping = read_private_json(mapping_path, {})
-                    mapping = mapping_snapshot(mapping, health)
-                    atomic_json(mapping_path, mapping)
-                    if arguments.repair:
-                        repair_action = repair_once(
-                            windows, health, mapping, module, backend
+                health = collect_health(windows)
+                mapping = read_private_json(mapping_path, {})
+                mapping = mapping_snapshot(mapping, health)
+                atomic_json(mapping_path, mapping)
+                healthy = sum(
+                    1 for entry in health.values() if entry["state"] == "healthy"
+                )
+                phase = (
+                    "healthy"
+                    if healthy == 3 and order_action != "deferred-ambiguous"
+                    else "degraded"
+                )
+                for name, index in EXPECTED:
+                    entry = health.get(name, {})
+                    print(
+                        "TMUX_CODEX_WINDOW index={} name={} state={} reason={}".format(
+                            index,
+                            name,
+                            entry.get("state", "unhealthy"),
+                            entry.get("reason", "window-missing"),
                         )
-                    healthy = sum(
-                        1 for entry in health.values() if entry["state"] == "healthy"
                     )
-                    phase = (
-                        "healthy"
-                        if healthy == 3 and order_action != "deferred-ambiguous"
-                        else "degraded"
-                    )
-                    for name, index in EXPECTED:
-                        entry = health.get(name, {})
-                        print(
-                            "TMUX_CODEX_WINDOW index={} name={} state={} reason={}".format(
-                                index,
-                                name,
-                                entry.get("state", "unhealthy"),
-                                entry.get("reason", "window-missing"),
-                            )
-                        )
-                finally:
-                    backend.close()
             except MonitorError:
                 phase = "unavailable"
             receipt = {
