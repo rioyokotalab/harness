@@ -28,10 +28,20 @@ target. The `web` OS is documented by the
 [Science Tokyo NOC service specification](https://www.noc.cii.isct.ac.jp/srv/wwwsrv/)
 and an [official Tokyo Tech technical document](https://www.titech.ac.jp/0/pdf/info-31935-3.pdf).
 
-ABQ operational status and maintenance are authoritative only on the
-[official ABCI-Q status page](https://unit.aist.go.jp/g-quat/HowToUse/abci_q/#status).
-The reviewed maintenance registry records exact sourced service-stop windows
-so `harness fleet-health` skips both ABQ routes while a window is active and
-resumes probing at its exclusive end. An unexpected failure outside a recorded
-window carries that official URL for live reconciliation; a failed lookup is
-unknown, not evidence of either maintenance or an incident.
+Official operational or support sources for every remote Linux logical node
+are declared in `profiles/fleet-status-sources.tsv`. Public status pages are
+available for [ABCI 3.0](https://abci.ai/en/about_abci/info.html),
+[ABCI-Q](https://unit.aist.go.jp/g-quat/HowToUse/abci_q/#status),
+[CSCS](https://status.cscs.ch/), and
+[TSUBAME4](https://www.t4.cii.isct.ac.jp/). RIKYU and R-CCS Cloud currently
+expose an official support page and service portal rather than a verified
+public maintenance feed.
+
+The reviewed maintenance registry records exact sourced full-service-stop
+windows. `harness fleet-health` skips only the affected logical node and its
+declared route contract while a window is active, then resumes probing at the
+exclusive end. Partial maintenance does not suppress a whole logical-node
+probe. An unexpected remote Linux failure carries its official URL for live
+reconciliation; a failed lookup is unknown, not evidence of maintenance or an
+incident. The frozen source review and scope are in
+`docs/plans/t334-linux-maintenance-sources.md`.

@@ -1,2 +1,4 @@
 # node|start_epoch|end_epoch|end_display|status_url|reason
 abq|1785200400|1785312000|2026-07-29T17:00:00+09:00|https://unit.aist.go.jp/g-quat/HowToUse/abci_q/#status|scheduled-service-stop
+ab|1787274000|1787889600|2026-08-28T13:00:00+09:00|https://abci.ai/en/about_abci/info.html|scheduled-service-stop
+ab2|1787274000|1787889600|2026-08-28T13:00:00+09:00|https://abci.ai/en/about_abci/info.html|scheduled-service-stop

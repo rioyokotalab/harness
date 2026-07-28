@@ -144,6 +144,33 @@ frozen scope; no material decision remains.
 failing-first generalized maintenance and source-registry fixtures, then
 implement the narrow classifier before full validation.
 
+Planning checkpoint `ace889e` is pushed. Failing-first focused coverage then
+stopped at the new active ABCI 3.0 expectation because `ab` and `ab2` were
+still probed. The implementation adds one reviewed source row for every remote
+Linux logical node, registers the exact future ABCI 3.0 window for both
+accounts, selects active maintenance generically, allows non-overlapping future
+windows, and rejects malformed, missing, duplicate-source, or overlapping
+records before probes.
+
+Every remote Linux logical node now skips only its exact active route contract,
+emits source-bearing maintenance, and carries its official URL on unexpected
+failure. ABQ's two-route behavior, AL's managed route, raw SSH diagnostic
+suppression, canonical ordering, compact summaries, Mac contracts, and
+non-failing/non-ready maintenance semantics remain unchanged.
+
+The first generalized selector used AWK's built-in function name `index` as a
+loop variable and failed locally before any network probe. Renaming only that
+variable to `slot` resolved the LIFO issue. No live or external state changed.
+Shell syntax, warning-level ShellCheck, diff hygiene, the focused fleet-health
+suite, the fleet-inventory suite, and live current-time readback pass. The
+deterministic suite proves simultaneous AB/AB2 and ABQ suppression, exclusive-
+end recovery, every remote failure URL, accepted non-overlapping windows, and
+fail-closed malformed/overlap behavior.
+
+**Next action:** commit the coherent implementation, run the complete clean
+phase-one suite, then publish through protected exact-head CI before changing
+any managed checkout.
+
 ### T-333 — Make fleet health maintenance-aware
 
 **Phase:** complete after this closeout checkpoint reaches protected `main`.
