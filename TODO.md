@@ -111,8 +111,7 @@ Next free ID: T-338.
 
 ### T-336 — Benchmark current Codex and Claude Harness development
 
-**Phase:** final comparison complete; repository and publication validation in
-progress.
+**Phase:** complete after this rollout checkpoint reaches protected `main`.
 
 The owner asked for a ten-hour, evidence-backed comparison of whether current
 Claude Code can develop Harness as effectively and safely as current Codex,
@@ -324,6 +323,35 @@ process, and model-free grader self-tests.
 **Next action:** validate both focused-test modes and the complete local suite,
 push the narrow test-only correction, then require protected CI to pass before
 merge.
+
+**Publication and rollout checkpoint:**
+
+- PR #397 exact head
+  `4f0f7eec3d5e17d597eed69fcf0fd125335d0d58` passed protected
+  `portable-phase1` on its corrected run in 2m23s and merged normally as
+  `ccc160e93e6b01f2122be3b0302b9f9687732301`.
+- The clean Local control checkout fast-forwarded from
+  `96d8d00fe3fcc13f340e45bd5be1be696d97f10f` to the merge. One guarded
+  ten-target fleet-sync plan and apply advanced `ab`, `ab2`, `ri`, `al`, `rc`,
+  `t4`, `aist`, `home`, `office`, and `riken` to exact head/origin agreement
+  with absent transfer artifacts. A repeat plan reports `KEEP` for all ten.
+- ABQ remained excluded and was not contacted during its recorded maintenance
+  stop.
+- The remote-agent transport submitted exactly one merge-specific,
+  pane-blind context refresh to each of Aist, Home, Office, and Riken; all four
+  returned `status=submitted` and must not be retried. The private input was
+  exact-unlinked.
+- One guarded-delete manifest revalidated and removed exactly six private
+  task roots: five benchmark run roots plus the Claude cowork sandbox
+  (11,885 entries; 29,308,741 bytes). Protected anchors were unchanged, all
+  targets are absent, and the manifest was exact-unlinked. Published
+  closed-schema aggregates and the task worktree remain.
+
+**Next executable action:** publish this closeout-only ledger checkpoint
+through protected exact-head CI, guarded-sync the resulting merge to the same
+ten clean checkouts without contacting ABQ, submit one merge-specific
+pane-blind context refresh to each advanced Mac, then record fresh canonical
+fleet health. No benchmark run or private evidence may be recreated.
 
 ### T-337 — Promote bridge-first managed Codex cutovers
 
