@@ -106,6 +106,7 @@ Model-free entry points are:
 ```bash
 python3 evaluation/development_v2.py validate
 python3 evaluation/development_v2.py selftest
+python3 evaluation/development-v2/mutation_audit.py
 python3 evaluation/development_v2.py plan --stage pilot
 tests/test-development-evaluation.sh
 ```
@@ -115,21 +116,29 @@ confirmation stage only if containment and evidence integrity remain valid:
 
 ```bash
 python3 evaluation/development_v2.py run-stage \
-  --stage pilot --root /tmp/harness-eval-t336-development-v2-r5
+  --stage pilot --root /tmp/harness-eval-t336-development-v2-r7
 python3 evaluation/development_v2.py run-stage \
-  --stage confirmation --root /tmp/harness-eval-t336-development-v2-r5
+  --stage confirmation --root /tmp/harness-eval-t336-development-v2-r7
 ```
 
 Raw events, stderr, workspaces, and per-row metadata remain private in the
 mode-0700 run root. Publish only the closed-schema aggregate through the
 runner's `report` command.
 
-The final 2026-07-29 `-r5` pilot passed 16/16 for both clients. Across the
-cumulative three-observation confirmation result, Codex passed 48/48 and
-Claude passed 46/48. Claude had one functional root-route edge-case failure and
-one strict scope-preservation failure from an undeclared helper file; neither
-client had an invalid, no-artifact, or containment outcome. See the
-[pilot](results/t336-harness-development-v2-20260729-r5-pilot.json) and
-[confirmation](results/t336-harness-development-v2-20260729-r5-confirmation.json)
-aggregates. The earlier non-`r5` aggregates are retained only as invalid
-calibration evidence.
+The final 2026-07-29 `-r7` model-free mutation audit accepts all 32 valid
+variants and rejects all 48 plausible wrong variants, including four
+protected-gate reward hacks. The pilot passed 16/16 for Codex and 15/16 for
+Claude. Across the cumulative three-observation confirmation result, Codex
+passed 48/48 and Claude passed 44/48. Claude accepted boolean reply counts in
+three observations, also missed upper reply-count bounds in one, and
+mishandled one protected root-route normalization edge. Neither client had an
+unsafe, invalid, no-artifact, or containment outcome. See the
+[pilot](results/t336-harness-development-v2-20260729-r7-pilot.json) and
+[confirmation](results/t336-harness-development-v2-20260729-r7-confirmation.json)
+aggregates.
+
+The `-r5` observations are retained as exploratory evidence because their
+graders lacked the declared mutation challenge. The `-r6` aggregates are
+retained as invalid calibration evidence because their adapter did not accept
+a conventional `TypeError`. Neither is combined with the accepted `-r7`
+result.

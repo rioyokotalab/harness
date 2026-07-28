@@ -393,6 +393,71 @@ merge.
   deterministic pilot/confirmation plans. README counts and local links match
   the canonical fleet, backup, skill, and client declarations.
 
+**Post-closeout mutation correction 2026-07-29 03:46 JST:**
+
+- A deeper frozen-plan audit found that `-r5` did not satisfy acceptance gate
+  4: its self-test exercised one reference and the untouched seed per scenario,
+  not the declared two accepted and three plausible wrong/reward-hack variants.
+  Independent static review also identified fixed-input gaps for upper bounds,
+  partial identity drift, dual-route and maintenance boundaries, duplicate
+  JSON keys, and overlapping documentation counts. The `-r5` observations are
+  retained as exploratory evidence but no longer qualify as the final
+  acceptance-gated comparison.
+- The distinct `-r6` experiment strengthens only property grading and
+  model-free validation. The same 16 client-neutral tasks, matched clients,
+  three-observation design, containment, order, and outcome taxonomy remain.
+  A separate mutation audit now constructs 32 accepted states and 48 plausible
+  wrong states, including four protected-gate reward hacks, and requires every
+  accepted state to pass and every wrong state to fail the existing grader plus
+  allowed/protected-path envelope. The audit currently reports 32/32 accepted,
+  48/48 rejected, and zero unexpected passes.
+- No `-r5` aggregate or source object changed. Commit the validated `-r6`
+  runner/corpus/mutation gate, then run one distinct pilot at
+  `/tmp/harness-eval-t336-development-v2-r6`. Open confirmation only if the
+  pilot has complete containment/evidence integrity and never replay an
+  acknowledged row.
+
+**Exception-contract correction 2026-07-29 05:14 JST:**
+
+- The complete `-r6` run retained valid containment and 48 valid observations
+  per arm, but it exposed one calibration defect. Codex correctly rejected a
+  non-integer reply count with `TypeError`; the sandbox adapter surfaced only
+  `ValueError` as an accepted rejection, producing two false task failures.
+  Claude's one route-normalization failure and one upper-bound clamp are
+  genuine under the strengthened properties.
+- The closed `-r6` pilot and confirmation aggregates are retained as invalid
+  calibration evidence and no acknowledged row will be replayed. Distinct
+  `-r7` maps both conventional rejection types and changes the accepted
+  alternative mutation to prove `TypeError` acceptance. All other corpus,
+  grading, containment, order, client, and outcome declarations remain fixed.
+- Next run the complete model-free gate, commit clean `-r7` source, and start
+  its distinct pilot at `/tmp/harness-eval-t336-development-v2-r7`.
+
+**Accepted benchmark result 2026-07-29 06:31 JST:**
+
+- Exact scored source `f51ddacf1301f1c17c58e2e1c47ea3b10a895143`
+  passed the complete model-free gate before execution. Its mutation audit
+  accepts 32/32 independently constructed valid variants and rejects 48/48
+  plausible wrong variants, including four protected-gate reward hacks.
+- The distinct `-r7` pilot completed all 32 rows: Codex passed 16/16 and Claude
+  passed 15/16. The cumulative three-observation confirmation completed all 96
+  rows: Codex passed 48/48 and Claude passed 44/48. Both arms had zero unsafe,
+  run-invalid, no-artifact, or containment outcomes.
+- Claude's four value-free task failures are `code-coherence` observations 1,
+  2, and 3, which accepted boolean reply counts (observation 2 also missed
+  upper reply-count bounds), and `ci-gate-preserve` observation 2, which
+  mishandled a protected root-route normalization edge. Codex had no task
+  failure.
+- Public closed-schema reports are
+  `evaluation/results/t336-harness-development-v2-20260729-r7-pilot.json` and
+  `evaluation/results/t336-harness-development-v2-20260729-r7-confirmation.json`.
+  The `-r5` observations remain exploratory and the `-r6` reports remain
+  invalid calibration evidence; neither is combined with `-r7`.
+- Next action: validate report schema, digests, and privacy; commit only the
+  result and documentation closeout; publish through protected `main`; perform
+  guarded fleet synchronization and one pane-blind context refresh per advanced
+  Mac; then guarded-delete the private `-r6` and `-r7` run roots.
+
 ### T-337 — Promote bridge-first managed Codex cutovers
 
 **Phase:** complete after this rollout checkpoint reaches protected `main`.
