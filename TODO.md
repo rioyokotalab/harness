@@ -301,6 +301,32 @@ merge, guarded-sync reachable clean checkouts, and issue one context refresh
 per advanced Mac. Then reactivate the corrected monitor and require two
 consecutive healthy passes before resuming the exact RI accounting query.
 
+**Pre-activation attached-client gate:** after merge `42f7b73`, one
+observation-only pass found Harness and Swallow healthy and Students
+watcher-absent. Both attached clients currently selected the exact Students
+window. No monitor session was started because the repair path checked client
+selection only after a signal; that detects drift but cannot prevent tmux from
+moving a client when its selected window exits. The next correction must
+refuse missing-watcher repair when any attached client selects that exact
+window. Missing-window restoration remains unaffected because no selected
+window exists.
+
+**Next action:** add and validate the pre-signal attached-window refusal,
+publish it through protected CI, sync reachable clean checkouts, refresh
+advanced Macs once, then reactivate the monitor. It may observe Students but
+must not repair it until both clients select another window. No prompt input,
+process signal, or monitor-session launch occurred at this gate.
+
+Commit `83d7fc8` implements the pre-signal refusal and passes the focused
+monitor suite, all 75 parallel focused shards, guarded-delete coverage, and
+every phase-one integration gate. Only the declared native MPI smoke skipped
+outside an allocation.
+
+**Next action:** publish the exact validated head through protected CI, merge,
+sync reachable clean checkouts, refresh advanced Macs once, then reactivate
+the monitor. Keep Students observation-only while any attached client selects
+its window.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.

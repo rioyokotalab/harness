@@ -469,9 +469,15 @@ def launch_window(name, index, mapping):
 
 def repair_once(windows, health, mapping, module, backend):
     before_clients = tmux_clients()
+    selected_windows = {window_id for _client_pid, window_id in before_clients}
     for name, index in EXPECTED:
         entry = health.get(name, {})
         if name not in mapping:
+            continue
+        if (
+            entry.get("reason") == "watcher-absent"
+            and entry.get("window", {}).get("window_id") in selected_windows
+        ):
             continue
         saved = mapping[name]
         saved_server = process_info(saved.get("app_server_pid", 0))

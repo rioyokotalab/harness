@@ -123,6 +123,15 @@ assert (
     == "retired-harness"
 )
 assert launches == []
+
+process_after_signal.tui_live = True
+module.tmux_clients = lambda: [("client", "@attached")]
+module.read_thread = lambda _module, _backend, _thread: ("idle", True)
+module.os.kill = lambda _pid, _signum: (_ for _ in ()).throw(
+    AssertionError("attached TUI was signaled")
+)
+health["harness"]["window"] = {"window_id": "@attached"}
+assert module.repair_once([], health, mapping, object(), object()) == "none"
 PY
 
 cat >"$TEST_ROOT/healthy.json" <<'EOF'
