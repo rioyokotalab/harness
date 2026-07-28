@@ -287,10 +287,26 @@ the exact 4,766-entry / 55,784,562-byte clean sync clone
 target absent, and was then exact-unlinked. The two unrelated live Local
 `.nfs` inodes remain untouched.
 
-**Next action:** no authorized safe action remains until the owner supplies a
-concrete Local maintenance-window start and end. At that time, cold-reconcile
-this ledger and live control-plane state, then execute only the recorded Local
-reboot, recovery, and validation transaction inside the interval.
+**Maintenance-window research 2026-07-28:** the Institute's official public
+notice confirms the 2026 university-wide summer closure from Saturday
+2026-08-08 through Wednesday 2026-08-12 JST:
+`https://www.isct.ac.jp/ja/news/m5k26th50gk6`. It does not state the
+Ookayama power-cut hours. The current official NOC maintenance listing
+(`https://www.noc.cii.isct.ac.jp/category/maintenance/`) has no 2026
+Ookayama summer-outage notice, and the official July student bulletin
+(`https://students.isct.ac.jp/ja/news/zob9wctj8nh3`) mentions service
+shutdowns but no campus-wide power-cut interval.
+
+The 2024 and 2025 public notices placed the actual Ookayama outage on the
+Saturday/Sunday before or at the summer closure, so 2026-08-08/09 is a
+plausible inference only. It is not accepted as a reboot window. No reboot,
+shutdown scheduling, process, service, or repository runtime mutation ran.
+
+**Next action:** wait for the Institute's exact 2026 Ookayama outage notice or
+an owner-provided internal notice naming the start, end, and any weather
+contingency. Then checkpoint that concrete JST interval, cold-reconcile this
+ledger and live control-plane state, and execute only the recorded Local
+reboot, recovery, and validation transaction inside the confirmed interval.
 
 ### T-327 — Align MCP approvals and retire blocked phone sessions
 
