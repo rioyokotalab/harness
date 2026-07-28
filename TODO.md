@@ -111,7 +111,7 @@ Next free ID: T-336.
 
 ### T-335 — Restore Slack tools before the next Swallow run
 
-**Phase:** executing under Local-controller lifecycle ownership.
+**Phase:** validating in the refreshed Swallow thread.
 
 The owner requires functional Slack access before authorizing the planned
 12-hour Swallow TODO run. This task is a connector-readiness gate only; no
@@ -291,6 +291,43 @@ Slack mutation. Fresh readback still finds exact old supervisor/TUI/watcher,
 `thread-idle`, and unchanged `0:harness,1:students,2:swallow` topology.
 Retry is safe after checkpointing this failure; substitute only the exact
 Git-resolved revision and repeat every pre-signal gate.
+
+**Same-root lifecycle refresh:** pushed pre-signal checkpoint
+`4de722ce93cb31aea160568b417208e40361d4a2` and every final Git, process,
+tmux, idle-root receipt, monitor, app-server, attachment, and shared-lock gate
+passed. While holding the shared lock, the controller sent one `SIGTERM` only
+to old real Swallow TUI PID `654935`. Old TUI, wrapper, launcher, watcher,
+supervisor, and exact window `@77` all exited; every old PID is absent and no
+second signal ran.
+
+One acknowledged, non-retried native tmux launch created exact
+`@81/2:swallow` on the same saved root
+`019fa5a1-7fff-7e92-8e2a-2586c684747f` with the same runtime name
+`swallow-recovery-next` under the newly started plugin-enabled process.
+New supervisor PID/start is `117011/97720707`, watcher
+`117106/97720718`, launcher `117408/97720829`, wrapper
+`117410/97720829`, and real TUI `117499/97720836`. Value-free status is
+`running/remote-explicit` plus `watching/thread-idle`, with zero recoveries
+and rollbacks.
+
+The transaction's first post-launch validator timed out after acknowledgement
+because its native `tmux list-panes -t harness` query scoped itself to one
+window instead of the whole session. It did not signal or launch again.
+Independent full-session metadata and an observe-only one-shot prove exact
+`0:harness,1:students,2:swallow`, one healthy pane each, unchanged Harness and
+Students chains, no attached tmux clients, unchanged shared app server
+`2852569/83381863`, unchanged periodic monitor `1903223/95835645`, and
+`phase=healthy healthy=3 order_action=none repair_action=none`. No prompt
+input/replay, pane/transcript read, app-server restart/control connection,
+root create/name/archive change, connector/authentication change, Slack call,
+or 12-hour project work ran.
+
+**Next action:** resume this exact Swallow thread and perform one direct
+read-only `slack_list_workspaces` plus public `#swallow` channel-resolution
+probe from its newly loaded tool catalog. Require workspace
+`RioYokotaLab/T1251HXB4`, channel `swallow/C058CUU8HK8`, and zero Slack
+writes before starting the separate 12-hour task. Do not repeat the
+already-successful ephemeral probe or refresh the lifecycle again.
 
 ### T-334 — Extend maintenance awareness to remote Linux nodes
 
