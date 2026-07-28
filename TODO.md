@@ -470,6 +470,25 @@ app-server mutation ran.
 head, require protected `portable-phase1`, and merge before performing the
 controller-owned Students cutover.
 
+**Protected publication:** PR #382 exact head `5fc414c` passed
+`portable-phase1` in 2m21s and merged through the preserved administrator
+bypass as `ef3de1e8ba6a13b36689c2b9cc0cd20cd7895366`; the one-review rule was
+not changed. Local `main` fast-forwarded to the merge while preserving the
+exact live Students-held `.nfs` inode.
+
+The merged observe-only one-shot reports Harness and Swallow healthy and only
+Students `watcher-absent`, with no order or repair action. Exact order and all
+three one-pane live roots remain correct, and the periodic monitor is absent.
+Both attached clients had selected Swallow at execution start but independently
+returned to Students before the final cutover gate. Under the unsafe-tail
+protocol Students is attached again, so no watcher quiesce, app-server
+connection, process signal, window launch, or client move ran.
+
+**Next action:** complete only safe fleet synchronization and postponed
+guarded housekeeping. The owner must move both attached clients off Students
+again immediately before a controller-owned cutover; revalidate that exact
+precondition rather than relying on this checkpoint.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
