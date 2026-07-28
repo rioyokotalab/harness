@@ -174,6 +174,16 @@ A live 2026-07-28 readback reports ABQ maintenance through
 phase-one suite, then publish through exact-head protected CI before changing
 any managed checkout.
 
+Implementation commit `0af81b0` passes the complete clean phase-one suite:
+every focused and integration shard passed, guarded-delete coverage passed,
+and only the declared native MPI smoke skipped outside an MPI environment.
+The task worktree remained clean, and no managed checkout changed.
+
+**Next action:** commit this validation checkpoint, fetch and push the exact
+task head, require protected `portable-phase1`, merge without changing rules,
+then guarded-sync only the ten reachable clean checkouts while ABQ remains
+deliberately unprobed.
+
 ### T-332 — Preserve native `codex` and move managed shorthand to `co`
 
 **Phase:** complete on Local and ten reachable remotes; ABQ propagation is
