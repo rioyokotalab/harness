@@ -110,7 +110,7 @@ Next free ID: T-332.
 
 ### T-331 — Restore disappeared Local Harness tmux window
 
-**Phase:** executing bounded lifecycle-only recovery.
+**Phase:** complete.
 
 At 2026-07-28 18:54 JST the owner reported that Local's canonical
 `0:harness` window had disappeared. Pane-blind metadata confirms the shared
@@ -127,17 +127,23 @@ remote-session ID remains
 observe-only by design; its current degraded receipt correctly reports two
 healthy windows and makes no repair attempt.
 
-**Next action:** revalidate the exact two unaffected lifecycle chains, sole
-client, free index 0, saved Harness identity, shared app server, and stale
-Harness supervisor. Under one fail-closed transaction, temporarily pause only
-the two unaffected watcher leaves, launch exactly one detached `0:harness`
-window with the published resilient supervisor and same saved root, and resume
-both watcher leaves unconditionally. Do not send input, replay a prompt,
-create or rename a root, read a pane/transcript, restart the app server, or
-retry an ambiguous launch. Accept only exact three-window order, unchanged
-client selection and peer identities, a new Harness
-supervisor/watcher/TUI/socket chain, and healthy observe-only monitor
-readback.
+The final identity gate passed with index 0 free, one client on Students, the
+two unaffected supervisors/watchers/TUIs at their recorded start ticks, and
+the same app server and monitor. One fail-closed transaction paused only the
+two peer watcher leaves, launched exactly one detached `0:harness` window
+using the published resilient supervisor and same saved root, then resumed
+both peer watchers unconditionally. Native tmux acknowledged the launch once;
+it was not retried.
+
+New Harness supervisor PID `2767660` and watcher PID `2767815` are live. The
+watcher reports `watching/thread-idle` with zero recovery and rollback counts,
+and the new TUI has the required reciprocal socket to the unchanged app
+server. An immediate observe-only pass and a later full-interval receipt both
+reported `phase=healthy healthy=3 order_action=none repair_action=none`.
+Exact order `0:harness,1:students,2:swallow`, one live pane per window, the
+sole client on Students, and both peer chains remained unchanged. No prompt
+input/replay, pane or transcript read, root creation/rename, app-server
+restart, or second launch occurred. T-331 has no remaining action.
 
 ### T-330 — Monitor and order Local tmux Codex windows
 
