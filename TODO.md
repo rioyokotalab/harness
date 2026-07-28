@@ -198,6 +198,18 @@ signal only its real TUI leaf once; relaunch the same root/window under the
 merged correction without prompt replay. Preserve the accepted and poisoned
 roots, app server, Harness, Students, clients, and unrelated work.
 
+**Complete validation:** implementation/live checkpoint commit `d3cdb5e`
+passes every focused suite, guarded-delete coverage, and all phase-one
+integration gates; only the declared native MPI smoke skipped outside an MPI
+allocation. Fresh post-suite status still reports exact supervisor `3086577`
+running at attempt zero, watcher `3086675` at `watching/thread-idle`, and one
+`@64:swallow` window alongside unchanged Harness and Students.
+
+**Next action:** push the exact validated head, publish it through protected
+CI, merge without weakening the one-review rule, and guarded-sync the clean
+fleet. Then complete the old-inode Swallow restart transaction recorded above
+and close T-329 with fresh value-free runtime and fleet-health evidence.
+
 ### T-328 — Complete authorized T-311/T-324 deferred hardening
 
 **Phase:** time-gated; concrete outage dates received, safe Local power
