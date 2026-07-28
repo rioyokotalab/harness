@@ -689,6 +689,37 @@ head through protected CI, merge without weakening the one-review rule, then
 reactivate the observe-only monitor and require two consecutive healthy
 passes before closing T-330.
 
+**Post-merge cleanup checkpoint:** Local fast-forwarded to merge
+`b78a1a7`. Phase-one validation recreated only
+`/home/rioyokota/harness/libexec/__pycache__` (two entries, 42,659 bytes).
+Guarded manifest
+`/home/rioyokota/harness/libexec/t330-pycache-delete.manifest` validated
+and removed that exact generated directory with protected anchors unchanged;
+the mode-0600 manifest was then exact-unlinked. Local tracked state is clean
+with no residue.
+
+**Monitor activation checkpoint:** the protected Students acceptance is
+published and the live three-window/client/app-server identities remain
+accepted. The next live write is to start exactly one detached
+`harness-tmux-codex-monitor` session rooted at `/home/rioyokota/harness`
+using merged observe-only code and `--interval 30 --enforce-order`. It must
+remain one pane, detached, and never read panes/transcripts or construct an
+app-server backend. Require two interval-separated receipts with
+`healthy=3`, exact order, all three live lifecycle chains, unchanged client
+selection, and no repair/order action before closing T-330.
+
+**T-330 complete 2026-07-28:** one detached
+`harness-tmux-codex-monitor` session is live in pane `@79`, rooted at
+`/home/rioyokota/harness`, with monitor owner PID `1903223`. Two
+full-interval acceptance samples both reported
+`phase=healthy healthy=3 order_action=none repair_action=none`. Exact
+`0:harness,1:students,2:swallow` order, one pane per window, all three
+supervisor/watcher/TUI chains, reciprocal sockets, unchanged app server, and
+the sole client on Harness remained stable. No repair, prompt input, replay,
+pane read, transcript read, root mutation, or client movement occurred.
+T-330's required live acceptance is complete; publish this final ledger
+checkpoint and retain the monitor as the periodic observe-only owner.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
