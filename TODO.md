@@ -171,6 +171,17 @@ fail-closed malformed/overlap behavior.
 phase-one suite, then publish through protected exact-head CI before changing
 any managed checkout.
 
+Implementation commit `81d427d` passes the complete clean phase-one suite:
+every focused and integration shard passed, guarded-delete coverage passed,
+and only the declared native MPI smoke skipped outside an MPI environment.
+The task worktree remained clean, and no managed checkout or live service
+changed.
+
+**Next action:** commit this validation checkpoint, fetch and push the exact
+task head, require protected `portable-phase1`, merge without changing rules,
+then guarded-sync only clean reachable checkouts while ABQ remains deliberately
+unprobed.
+
 ### T-333 — Make fleet health maintenance-aware
 
 **Phase:** complete after this closeout checkpoint reaches protected `main`.
