@@ -27,3 +27,11 @@ a command, deployment, health-monitor, package, Python, or synchronization
 target. The `web` OS is documented by the
 [Science Tokyo NOC service specification](https://www.noc.cii.isct.ac.jp/srv/wwwsrv/)
 and an [official Tokyo Tech technical document](https://www.titech.ac.jp/0/pdf/info-31935-3.pdf).
+
+ABQ operational status and maintenance are authoritative only on the
+[official ABCI-Q status page](https://unit.aist.go.jp/g-quat/HowToUse/abci_q/#status).
+The reviewed maintenance registry records exact sourced service-stop windows
+so `harness fleet-health` skips both ABQ routes while a window is active and
+resumes probing at its exclusive end. An unexpected failure outside a recorded
+window carries that official URL for live reconciliation; a failed lookup is
+unknown, not evidence of either maintenance or an incident.

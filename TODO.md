@@ -155,6 +155,25 @@ canonical fleet health reporting Linux readiness plus maintenance separately.
 **Next action:** commit this evidence and scope checkpoint, add failing-first
 maintenance fixtures, then implement the narrow registry-backed classifier.
 
+The focused suite first failed at the new maintenance expectation. The
+implementation now reads a fail-closed, non-symlinked public registry, accepts
+a deterministic current-time override only under `HARNESS_TESTING=1`, and
+skips both ABQ probes for the exact half-open published interval. At the
+exclusive end it resumes the ordinary two-route contract. Maintenance emits a
+separate non-ready, non-failing status with the exact display end and official
+source URL; an unexpected ABQ failure outside the window retains that URL.
+The registry rejects malformed or duplicate records.
+
+Shell syntax, diff hygiene, warning-level ShellCheck, and the focused fleet
+health suite pass. The deterministic fixture proves no ABQ SSH call occurs at
+the start boundary and ordinary failure detection resumes at the exclusive end.
+A live 2026-07-28 readback reports ABQ maintenance through
+2026-07-29T17:00:00+09:00 while all other Linux and Mac routes pass.
+
+**Next action:** commit the coherent implementation, run the complete clean
+phase-one suite, then publish through exact-head protected CI before changing
+any managed checkout.
+
 ### T-332 — Preserve native `codex` and move managed shorthand to `co`
 
 **Phase:** complete on Local and ten reachable remotes; ABQ propagation is
