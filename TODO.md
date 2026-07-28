@@ -615,6 +615,17 @@ recorded identities. No signal or other mutation occurred. Wait for the owner
 client to select Harness or Swallow, then rerun the exact final gate; the
 signal remains unsent and one attempt remains authorized.
 
+Two further final gates also stopped before `kill`: the first required the
+transient Swallow preimage after the client had already moved to Harness; the
+corrected dynamic gate then found the client traversing Students. A subsequent
+60-second pane-blind wait never observed the client stably on Harness or
+Swallow for two seconds and ended with `/dev/pts/31` on Students. Every gate
+was read-only, exact TUI `4073639` remains live, and the one authorized signal
+remains unsent. Do not move the owner client automatically. The owner must
+leave it on `0:harness` long enough to send a new `go`; then rerun the stable
+unattached gate and continue without another app-server read unless rollout
+metadata or protected identities drift.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
