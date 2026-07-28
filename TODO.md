@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-335.
+Next free ID: T-336.
 
 ## Current state
 
@@ -108,6 +108,574 @@ Next free ID: T-335.
    successors recorded below.
 
 ## Active tasks
+
+### T-335 — Restore Slack tools before the next Swallow run
+
+**Phase:** complete after bridge closeout reaches protected `main`.
+
+The owner requires functional Slack access before authorizing the planned
+12-hour Swallow TODO run. This task is a connector-readiness gate only; no
+Swallow benchmark, scheduler, Git publication, Slack message, or 12-hour work
+has started.
+
+Fresh read-only discovery on 2026-07-28 establishes:
+
+- Local plugin `slack@openai-curated` version `11c74d6b` is installed and
+  enabled with `authPolicy=ON_INSTALL`.
+- Its required connector app is exact ID
+  `asdk_app_69a1d78e929881919bba0dbda1f6436d`.
+- Redacted native doctor reports Codex authentication, provider HTTP,
+  Responses WebSocket, persistent app-server, and local state healthy.
+- The active thread loads every bundled Slack skill but exposes no Slack
+  connector methods in its callable tool catalog. Two independent tool
+  discovery routes returned no Slack method, so functional access in this
+  thread is unavailable rather than merely untested.
+- The current official Codex manual says newly installed plugin skills and
+  tools become available only after starting a new CLI session. It also keeps
+  plugin installation, connector access, source-service authorization, and
+  runtime permissions as separate gates.
+- GitHub access is already ready on Local and AB, and authenticated Hugging
+  Face access is ready through AB's existing project-local client; those
+  preflight results require no remediation.
+
+The leading hypothesis is a stale per-session capability snapshot or a
+connector-authorization gate, not a general Codex network/authentication
+failure. Do not treat that hypothesis as confirmed until a fresh-session
+probe distinguishes the two.
+
+**Frozen bounded plan:**
+
+1. Preserve the current Swallow root, its tmux/TUI/recovery chain, and the
+   shared app server. From an isolated noninteractive process, start one fresh
+   disposable Codex session with the installed Slack plugin explicitly
+   selected and request one read-only workspace/channel identity operation.
+   It must not send, draft, schedule, react, edit, or create Slack content.
+2. If the fresh session returns a Slack read result, classify installation
+   and connector authorization as healthy and the current-thread catalog as
+   stale. Do not restart or signal the current chain from this thread. Ask the
+   existing Local controller for one bounded lifecycle refresh of the same
+   saved Swallow root, with no prompt replay, only if preserving that root is
+   still required; otherwise start the 12-hour work in a new Slack-capable
+   Swallow session.
+3. If the fresh session reports connection or authorization missing, stop
+   without retrying or changing credentials. The owner completes the native
+   Slack connector OAuth flow through the supported plugin UI, shares no
+   credential with an agent, and then authorizes one new fresh-session read
+   probe.
+4. If a fresh authenticated session still lacks Slack methods, preserve the
+   exact value-free failure and escalate through the plugin troubleshooting
+   path. Do not reinstall the plugin, edit product-owned user configuration,
+   restart the shared app server, or change workspace/plugin administration
+   without a separately frozen correction.
+
+Acceptance requires one bounded Slack read to identify the connected workspace
+and resolve public `#swallow`, zero Slack writes, no credential exposure, and
+a Slack-capable session selected for the later 12-hour run. A plugin-list
+result alone is not acceptance.
+
+**Decision D-001, recommended:** run the one disposable fresh-session read
+probe now. It is the lowest-impact documented discriminator and leaves the
+current Swallow lifecycle untouched. If it proves the connector healthy, use
+the existing Local controller rather than this thread for any same-root
+lifecycle refresh. The alternative is to skip the discriminator and go
+directly to interactive connector reconnection, which may repeat OAuth
+unnecessarily and still cannot update this thread's immutable tool catalog.
+
+**Execution authorization 2026-07-28:** the owner gave exact `go`. Fresh
+fetch confirms the task branch is clean/aligned at pushed planning commit
+`4393cadb4563b0579c419967ff8c80c7b19af02c`, with protected `origin/main`
+at `c06028f82cf55c9dcdcc75f56a5472d9aafc6bec`. No Slack call, fresh Codex
+session, connector/authentication change, process signal, or 12-hour Swallow
+work preceded this checkpoint.
+
+**LIFO probe-root gate:** the first ephemeral process ran from the isolated
+T-335 worktree. Harness's launch sentinel rejected it because that Git root
+is not exactly `$HOME/harness`; the final output contained only the sentinel
+instruction. Event structure proves one local command preflight and no Slack
+tool call. The process exited zero without persisting a session, connector
+access, authentication change, Slack read/write, controller mutation, or
+project change. Its three current-user mode-0600 captures were exact-unlinked
+and absence verified. This is a proven pre-Slack local failure, so one retry
+is safe from the exact clean primary Harness root without weakening the
+sentinel.
+
+**Next action:** commit and push this failed-safe checkpoint, revalidate the
+primary root is exact `$HOME/harness`, clean, and aligned, then run one
+ephemeral read-only Slack probe there. Record its value-free result and
+continue only along the matching frozen-plan branch.
+
+**Fresh-session Slack result:** after the primary checkout was revalidated
+exactly clean/aligned at `$HOME/harness`, one `codex exec --ephemeral` process
+completed the bounded probe. It called only
+`slack.slack_list_workspaces` and `slack.slack_search_channels`; both MCP
+calls completed without error. Final readback identified workspace
+`RioYokotaLab` / `T1251HXB4` and public channel `swallow` /
+`C058CUU8HK8`, with `slack_write_occurred=false`. No message body was
+requested or returned in the final result, no Slack write or authentication
+change occurred, and the process persisted no session. Its three
+current-user mode-0600 captures were exact-unlinked and absence verified.
+
+This proves the installed plugin and existing connector authorization are
+healthy in a newly started Codex process. The failure is narrowed to the
+current Swallow process's stale per-session tool catalog. The original
+same-thread continuity requirement selects the frozen plan's same-root
+lifecycle path; do not create a replacement root or restart the shared app
+server.
+
+**Next action:** commit and push this non-retryable success checkpoint. Then
+ask the existing Local controller, through the identified agent-message
+transport, to perform its own fail-closed preflight and one same-saved-root
+Swallow TUI lifecycle refresh under current plugin-enabled code, with no
+prompt replay or app-server restart. After the refreshed Swallow process
+returns idle, require one direct read-only workspace/channel probe in that
+same thread before starting the 12-hour work.
+
+**Controller-transport gate:** this Swallow process has no declared safe
+same-host `agent-message send` route to the separate Local controller.
+Read-only `localhost` SSH stopped at host-key verification and configured
+alias `login` failed DNS resolution. Neither reached the helper or controller.
+Do not bypass host verification, invent an alias, invoke the receive-side
+helper manually for an operational message, or inject tmux input directly.
+No message was submitted and no controller, process, tmux, app-server, or
+recovery state changed.
+
+**Owner/controller action required:** in the existing Harness controller
+thread, request reconciliation of remote branch
+`codex/t335-slack-access` at exact checkpoint
+`2d740bab3309b34e13d437ed5acc3b8c7ed77468`, followed by the same-saved-root
+Swallow lifecycle refresh recorded above. The controller must own and
+validate that mutation. After it leaves this Swallow thread running and idle
+under a newly started plugin-enabled process, resume T-335 here and run one
+direct read-only Slack workspace/channel probe. Do not repeat the successful
+ephemeral probe or start the 12-hour task before that same-thread acceptance.
+
+**Local-controller takeover 2026-07-28:** the owner requested reconciliation
+of exact pushed checkpoint
+`19cb7cb0c7c90a07af15e8271fa51e2f94cf1598` and explicitly requested the
+recorded same-root Swallow lifecycle refresh. The task worktree is
+clean/aligned at that checkpoint; protected Local `main` is clean/aligned at
+`c06028f82cf55c9dcdcc75f56a5472d9aafc6bec`. This resolves the transport
+blocker and authorizes only the already frozen controller-owned lifecycle
+transaction.
+
+Fresh pane-blind preflight finds the observe-only monitor healthy with all
+three chains and exact order `0:harness,1:students,2:swallow`. Swallow is one
+live pane `@77` rooted at `/home/rioyokota/harness`; no tmux client is
+attached. Its exact saved root remains
+`019fa5a1-7fff-7e92-8e2a-2586c684747f`, and value-free status is
+`running/remote-explicit` plus `watching/thread-idle`, with zero recoveries and
+rollbacks. Exact supervisor PID/start `654594/94624954`, watcher
+`654657/94624964`, launcher `654847/94625075`, and real TUI
+`654935/94625082` are live. Shared app server PID/start
+`2852569/83381863` and monitor PID/start `1903223/95835645` remain live.
+The current-user, single-link, mode-0600 shared agent-message lock is safe.
+No app-server control connection, pane/transcript read, prompt input, signal,
+launch, connector write, or Slack call ran during reconciliation.
+
+**Next action:** checkpoint this exact preimage, then hold the shared
+agent-message lock, revalidate every recorded identity and idle/unattached
+gate, send one `SIGTERM` only to real Swallow TUI PID `654935`, and require
+the old chain/window to unwind. Launch the same saved root exactly once as
+`2:swallow` with runtime name `swallow-recovery-next` under current
+plugin-enabled code. Never retry an ambiguous signal/launch, replay a prompt,
+restart the app server, or create/rename/archive a saved root. Accept only a
+new supervisor/watcher/TUI/socket chain, thread-idle receipt, exact order,
+unchanged Harness/Students/app-server/monitor identities, and no Slack write.
+
+**LIFO controller gate:** the first lock-serialized transaction stopped at
+its initial task-worktree Git assertion because it compared HEAD with an
+incorrectly expanded form of short checkpoint `135c2ac`. Git's exact resolved
+revision is `135c2ace0b37480f9ee48dc7b4bb33b814d3531b`. The shared lock was
+released normally before any process, tmux, app-server, prompt, connector, or
+Slack mutation. Fresh readback still finds exact old supervisor/TUI/watcher,
+`thread-idle`, and unchanged `0:harness,1:students,2:swallow` topology.
+Retry is safe after checkpointing this failure; substitute only the exact
+Git-resolved revision and repeat every pre-signal gate.
+
+**Same-root lifecycle refresh:** pushed pre-signal checkpoint
+`4de722ce93cb31aea160568b417208e40361d4a2` and every final Git, process,
+tmux, idle-root receipt, monitor, app-server, attachment, and shared-lock gate
+passed. While holding the shared lock, the controller sent one `SIGTERM` only
+to old real Swallow TUI PID `654935`. Old TUI, wrapper, launcher, watcher,
+supervisor, and exact window `@77` all exited; every old PID is absent and no
+second signal ran.
+
+One acknowledged, non-retried native tmux launch created exact
+`@81/2:swallow` on the same saved root
+`019fa5a1-7fff-7e92-8e2a-2586c684747f` with the same runtime name
+`swallow-recovery-next` under the newly started plugin-enabled process.
+New supervisor PID/start is `117011/97720707`, watcher
+`117106/97720718`, launcher `117408/97720829`, wrapper
+`117410/97720829`, and real TUI `117499/97720836`. Value-free status is
+`running/remote-explicit` plus `watching/thread-idle`, with zero recoveries
+and rollbacks.
+
+The transaction's first post-launch validator timed out after acknowledgement
+because its native `tmux list-panes -t harness` query scoped itself to one
+window instead of the whole session. It did not signal or launch again.
+Independent full-session metadata and an observe-only one-shot prove exact
+`0:harness,1:students,2:swallow`, one healthy pane each, unchanged Harness and
+Students chains, no attached tmux clients, unchanged shared app server
+`2852569/83381863`, unchanged periodic monitor `1903223/95835645`, and
+`phase=healthy healthy=3 order_action=none repair_action=none`. No prompt
+input/replay, pane/transcript read, app-server restart/control connection,
+root create/name/archive change, connector/authentication change, Slack call,
+or 12-hour project work ran.
+
+**Next action:** resume this exact Swallow thread and perform one direct
+read-only `slack_list_workspaces` plus public `#swallow` channel-resolution
+probe from its newly loaded tool catalog. Require workspace
+`RioYokotaLab/T1251HXB4`, channel `swallow/C058CUU8HK8`, and zero Slack
+writes before starting the separate 12-hour task. Do not repeat the
+already-successful ephemeral probe or refresh the lifecycle again.
+
+**Same-thread acceptance result:** after the owner confirmed the controller
+work was done, this exact resumed Swallow thread reconciled clean pushed
+checkpoint `217ff8f139caf401ad077457cb863cdb0cda2ec4`. Its loaded skill
+catalog includes the Slack skill, but its callable tool catalog contains zero
+Slack methods. Both a broad read-only discovery for Slack workspace/channel
+tools and an exact discovery for `slack_list_workspaces` /
+`slack_search_channels` returned zero tools. Therefore no direct Slack call
+could run and same-thread acceptance did not pass. No ephemeral probe was
+repeated; no Slack read or write, authentication change, process/tmux/app-
+server/recovery-controller mutation, prompt replay, or 12-hour project work
+occurred.
+
+The controller's one lifecycle refresh succeeded exactly as recorded, but it
+did not make connector methods callable in the preserved saved root. The
+fresh-session result still proves the installed connector is healthy; the
+remaining failure is specific to this preserved root/session capability
+catalog. Do not repeat the same lifecycle refresh or the already-successful
+ephemeral probe.
+
+**Next action:** before the 12-hour run, freeze an owner choice between
+starting a new durable Slack-capable Swallow root (recommended, because the
+fresh process already passed) and a separately planned shared app-server
+investigation. Preserve this root idle until that choice is recorded. No
+benchmark run is authorized by this checkpoint.
+
+**Decision D-002 and execution authorization:** the owner selected the
+recommended new durable Slack-capable Swallow root with exact `go`. This
+rejects a shared app-server investigation and does not authorize another
+refresh of saved root `019fa5a1-7fff-7e92-8e2a-2586c684747f`, repetition of
+the ephemeral probe, prompt replay, Slack writes, or benchmark work before
+Slack acceptance.
+
+The current Swallow agent must not mutate its own TUI, tmux, supervisor,
+watcher, app-server, monitor, or recovery-controller state. The Local
+controller owns the lifecycle transaction. It must first reconcile this
+pushed decision checkpoint, perform its own pane-blind current-state
+preflight, and freeze the smallest topology transition that preserves the old
+saved root without deleting, renaming, or archiving it while placing one
+newly created durable root under current plugin-enabled code in the managed
+Swallow slot. It must checkpoint exact preconditions and interruption rules
+before any signal or acknowledged launch, never replay a rejected or prior
+prompt, and never retry an ambiguous launch.
+
+Acceptance requires the new root to be durable and idle in the managed
+Swallow thread, the unrelated Harness and Students roots plus shared app
+server and monitor to retain their validated identities, and a subsequent
+direct read-only workspace/channel probe in the new root to identify
+`RioYokotaLab/T1251HXB4` and `swallow/C058CUU8HK8` with zero Slack writes.
+Do not start the 12-hour task until that same-root probe passes.
+
+**Next action:** commit and push this owner-authorized choice. Then the owner
+must ask the existing Local controller to reconcile the exact pushed
+checkpoint and execute the controller-owned new-root lifecycle plan. The
+declared same-host agent-message routes remain unavailable from this Swallow
+thread; do not bypass SSH host verification, call the receive side manually,
+or inject tmux directly. Resume T-335 in the newly created root for the direct
+Slack acceptance probe.
+
+**D-002 ownership clarification:** the owner clarified that “Local
+controller” means any Codex running on Local rather than only the Harness tmux
+window. This exact Swallow Codex therefore owns the already authorized
+transaction. The same-host agent-message route is no longer a prerequisite;
+its failed probes must not be repeated.
+
+Fresh pane-blind preflight at protected Local `main`
+`fcadc7ae68182036f1aa128fe3b7bea977cddc4f` finds exact
+`0:harness,1:students,2:swallow`, one pane each, and no attached tmux client.
+The observe-only monitor remains PID/start `1903223/95835645` and reports
+`healthy=3`, with no order or repair action. Swallow remains exact window
+`@81`, supervisor `117011/97720707`, watcher `117106/97720718`, launcher
+`117408/97720829`, wrapper `117410/97720829`, and real TUI
+`117499/97720836`. Its status is attempt-zero `running/remote-explicit`; the
+watcher reports the exact old root and changes between `thread-active` during
+this turn and `thread-idle` after it. Shared app server
+`2852569/83381863`, Harness supervisor `2767660`, and Students supervisor
+`1638582` remain live. Project configuration supplies exact model
+`gpt-5.6-sol` and reasoning effort `high` to newly started sessions.
+
+**Frozen self-cutover execution:**
+
+1. From exact clean `$HOME/harness`, start one new persistent native
+   `codex exec --json` session under project-default Sol/high. Its new,
+   non-replayed cold-start instruction may read only the Harness instructions
+   and T-335 ledger, then directly call only Slack workspace listing and
+   public `#swallow` resolution. It must make no file, Git, process, tmux,
+   authentication, or Slack write and must report the exact workspace/channel
+   identities plus `slack_write_occurred=false`.
+2. Accept only one unambiguous new thread ID whose same-root turn completes
+   with `RioYokotaLab/T1251HXB4` and `swallow/C058CUU8HK8`. Preserve the
+   private mode-0600 event capture until its value-free identifiers and result
+   are checkpointed; do not retry an ambiguous thread creation or Slack call.
+3. Checkpoint and push the accepted new root before touching the old chain.
+   Prepare one syntax-checked, current-user private detached helper with exact
+   old process/start/window/root identities, new root ID, unchanged peer
+   identities, and bounded interruption rules.
+4. After this turn yields, the helper waits for the old watcher to report
+   `thread-idle`, revalidates every frozen identity and the absence of tmux
+   clients, sends one `SIGTERM` only to old real TUI PID `117499`, and
+   requires the exact old chain/window to unwind. It sends no second signal
+   and never signals a process group.
+5. Only after exact old-chain absence, launch one acknowledged detached
+   `2:swallow` window under runtime `swallow-recovery-next` with
+   `--remote-session NEW_ID`. Never retry an ambiguous launch. Require a new
+   supervisor/watcher/TUI reciprocal-socket chain, exact three-window order,
+   the new root at `thread-idle`, unchanged Harness/Students/app-server/
+   monitor identities, and two interval-separated healthy monitor receipts.
+
+The old saved root remains preserved without rename, archive, deletion,
+rollback, or prompt replay. Failure before the signal leaves all live state
+unchanged and is retry-safe only after reconciliation. Failure after the
+single signal or launch acknowledgement is non-retryable: preserve the helper
+result and reconcile exact state. The 12-hour task remains stopped until the
+new-root Slack read and live cutover both pass.
+
+**Next action:** commit and push this clarified ownership plus exact preimage,
+then run step 1 once.
+
+**New-root Slack acceptance:** pushed ownership checkpoint
+`4c9d96cefafbfd31540e22a2e4114549b83768cd` preceded one persistent native
+`harness codex-login exec --json` cold start from exact clean
+`$HOME/harness`, with explicit model `gpt-5.6-sol`, reasoning effort `high`,
+and no replayed or prior prompt. It acknowledged exactly one new root,
+`019fa8db-e4e0-7b81-9c02-a3b0954b5a95`, and one completed turn.
+
+Value-free event inspection found only the two Slack methods
+`codex_apps.slack.slack_list_workspaces` and
+`codex_apps.slack.slack_list_user_conversations`, each with balanced start
+and completion events. The exact final acceptance line identifies
+`RioYokotaLab/T1251HXB4` and public `swallow/C058CUU8HK8`, with
+`slack_write_occurred=false`. No Slack write, message-content search, file,
+Git, process, tmux, app-server, recovery-controller, or authentication change
+ran in that root. The 12-hour task did not start.
+
+The new root has one current-user-owned, single-link regular rollout at its
+canonical session path. Its installed-version default mode was `0664`; after
+exact path, owner, type, and link-count validation, only that file's mode was
+changed to `0600` and read back successfully. The old Swallow chain, all peer
+identities, three-window topology, and healthy monitor remained unchanged
+after the cold start. Private event/final captures remain mode `0600` until
+this result is pushed, then must be exact-unlinked.
+
+**Next action:** commit and push this non-retryable new-root success, exact-
+unlink the two private captures, then prepare and validate the detached
+post-turn cutover helper from frozen step 3. Do not signal the old TUI before
+the helper gate and its exact preimage are durably checkpointed.
+
+**Cutover-helper checkpoint:** new-root acceptance commit
+`429644c1f17ab0ae35614dbbd4e5c178ec2763d2` is pushed and the two reviewed
+mode-0600 captures were exact-unlinked; both paths are absent. No old-process
+or tmux mutation has run.
+
+Prepared exact helper `/tmp/t335-cutover-429644c.sh` is a current-user-owned,
+single-link mode-0700 regular file with SHA-256
+`4bc1caf823f939f7e1a7a9389f266fa9e925c9fe851caeadddf12eec0475bc00`.
+Its empty result is exact current-user mode-0600
+`/tmp/t335-cutover-result.nSco2l`. `bash -n`, warning-level ShellCheck, every
+required native command, shared-lock metadata, monitor-receipt metadata,
+new-rollout metadata, Git identities, process starts/argv hashes, exact tmux
+mapping, and no-client preconditions pass.
+
+The helper exact-unlinks its own script after safe startup, takes the shared
+agent-message lock, and requires the task head supplied at arm time to equal
+its pushed upstream. It waits at most 120 seconds for this turn's old watcher
+to become `thread-idle`; any failure before the signal records
+`retry=safe`. After the one old-TUI leaf signal, any failure records
+`retry=blocked`. It sends no second signal and launches at most once. Two
+accepted monitor samples must be separate periodic receipts after launch,
+not a stale pre-cutover receipt.
+
+**Next action:** commit and push this helper checkpoint. Revalidate its exact
+checksum plus every live identity, arm it once as a detached process with the
+new pushed task head, and require a value-free `armed` receipt before yielding
+this turn. Do not retry an ambiguous arm.
+
+**LIFO arm gate:** exact helper PID `835911` armed and self-unlinked, but its
+first wait-loop sample found one newly attached tmux client and failed before
+the signal. Private result `/tmp/t335-cutover-result.nSco2l` records
+`stage=wait-idle signal_sent=no launch_ack=no retry=safe`; the helper is
+absent. Exact old and peer process/window/root identities, healthy monitor,
+and task/main Git state remain unchanged.
+
+The sole client is current-user tmux client PID/start `804512/97965917`,
+exact argv hash
+`c116d35fd8030bd82ce9b7ee33af9633a3a172a963260667ee7c5efa9efb724b`,
+TTY `/dev/pts/29`, attached to unaffected exact Harness window `@80`. This is
+a safe established topology previously supported by the Harness cutover
+procedure. Revise only the client gate: require this exact client identity,
+TTY, and selected Harness window before signal, after old-chain unwind, after
+launch, and at both monitor samples. Never move or detach it. All other helper
+gates remain unchanged.
+
+**Next action:** preserve the first private result, prepare a new helper and
+new mode-0600 result with the corrected exact Harness-client gate, validate
+and checkpoint them, then arm one retry only after that checkpoint is pushed.
+
+**Corrected retry helper:** `/tmp/t335-cutover-retry-e4af07b.sh` is exact
+current-user mode-0700, single-link, and has SHA-256
+`34165c18cd93f490facbc4f3d37eedcd5487cfafd5926cc75a940c267ca15a34`.
+Its empty current-user mode-0600 result is
+`/tmp/t335-cutover-retry-result.JMnvZz`. Shell syntax and warning-level
+ShellCheck pass. The corrected start-tick parser handles parenthesized process
+names, and the exact client gate passes without reading or moving its pane.
+
+**Next action:** commit and push this failure/correction checkpoint, revalidate
+the exact retry helper, old/peer/client identities, Git, monitor, and result
+metadata, then arm the one proven-safe retry with that pushed head. Preserve
+the first result and do not retry after ambiguous arm, signal, or launch.
+
+**Cutover retry result:** exact helper PID `858008` armed against pushed head
+`fab011bc1f390ae71b02e1f4b6c266c63d07037b`, self-unlinked, acquired the
+shared lock, observed the old root idle, and sent one acknowledged `SIGTERM`
+only to old real TUI PID `117499`. The TUI, wrapper, launcher, and watcher
+exited, and exact window `@81` disappeared. No second signal ran.
+
+The helper then exhausted its old-chain wait because supervisor PID `117011`
+remains an exact parent-owned zombie at original start tick `97720707`. It
+recorded
+`stage=old-unwind signal_sent=yes launch_ack=no retry=blocked` in exact
+current-user mode-0600 result
+`/tmp/t335-cutover-retry-result.JMnvZz` and exited. This proves no new tmux
+launch was attempted or acknowledged; do not rerun either helper or signal
+the zombie.
+
+Pane-blind reconciliation finds only exact one-pane windows
+`@80/0:harness` and `@78/1:students`; the owner client remains exact PID
+`804512` but is now selected on Students `@78`. No cause is inferred for that
+selection change. Harness, Students, shared app server
+`2852569/83381863`, and periodic monitor `1903223/95835645` retain their
+identities. Resilient status is `stopped/operator-signal`, watcher status is
+`stopped/operator-stop`, and monitor status is expectedly
+`degraded healthy=2` with no repair action. New Slack-accepted root
+`019fa8db-e4e0-7b81-9c02-a3b0954b5a95` remains durably present at exact
+mode `0600`, with no live `swallow-recovery-next` process.
+
+The missing Swallow window is therefore an expected intermediate effect of
+the authorized old-TUI cutover, but it is not the intended completed state.
+The launch stage did not run because the helper conservatively treated the
+inert zombie as live.
+
+**Next action:** after explicit owner confirmation to repair, freeze one
+launch-only transaction. Never signal or wait on zombie PID `117011`; require
+the old TUI/wrapper/launcher/watcher absent, exact `@81` absent, no live
+runtime process, new root durable and idle, exact unaffected identities, and
+the owner's current client selection unchanged. Then acknowledge exactly one
+detached `2:swallow` launch using runtime `swallow-recovery-next` and
+`--remote-session 019fa8db-e4e0-7b81-9c02-a3b0954b5a95`. Do not retry an
+ambiguous launch. Accept only a new supervisor/watcher/TUI/socket chain and
+two new interval-separated healthy monitor receipts.
+
+**Decision D-003 and go:** the owner explicitly selected the more robust
+bridge-window approach and said `go`. Supersede only the direct launch portion
+above. Do not touch the stopped `swallow-recovery-next` runtime or zombie
+`117011`.
+
+Fresh read-only state at pushed checkpoint
+`02d0dd5410eeb50fe6369ac22c391b85ffb33843` finds primary `main` clean and
+aligned at `fcadc7ae68182036f1aa128fe3b7bea977cddc4f`; the task worktree is
+clean/aligned. Exact old TUI, wrapper, launcher, watcher, and `@81` remain
+absent. The old saved root's rollout is receiving this owner turn, while new
+root `019fa8db-e4e0-7b81-9c02-a3b0954b5a95` retains its exact unchanged
+22:15:38 JST mtime, mode `0600`, and no live process, proving it is the idle
+bridge target. Exact Harness/Students/app-server/monitor identities remain
+unchanged. One owner client PID `804512` is attached to unaffected Harness
+window `@80`; it must not be moved or detached.
+
+**Frozen bridge execution:**
+
+1. Checkpoint and push this decision and exact preimage before live mutation.
+2. Under the shared agent-message lock, revalidate exact Git, two-window
+   topology, client selection, absent old live chain, inert zombie identity,
+   new rollout identity/mtime/mode, peer identities, absent provisional
+   runtime `swallow-bridge-t335`, and degraded two-window monitor receipt.
+3. Acknowledge exactly one detached provisional window at free index 2 named
+   `swallow-bridge`, using distinct runtime `swallow-bridge-t335` and
+   `--remote-session 019fa8db-e4e0-7b81-9c02-a3b0954b5a95`. Do not retry an
+   ambiguous launch.
+4. Before promotion, require one exact provisional supervisor/watcher/TUI
+   chain, attempt-zero `running/remote-explicit`, the new root at
+   `watching/thread-idle`, a reciprocal socket to unchanged app server
+   `2852569`, unchanged peer/client identities, and no process using stopped
+   runtime `swallow-recovery-next`.
+5. Rename only that accepted exact window from `swallow-bridge` to `swallow`;
+   it remains at index 2 and retains the same pane and process chain. Do not
+   launch again, move a window, send input, or change the saved root name.
+6. Require exact `0:harness,1:students,2:swallow`, unchanged owner selection
+   on `@80`, the new root still `thread-idle`, and two distinct post-promotion
+   periodic receipts with `healthy=3`, no order action, and no repair action.
+
+Failure before launch leaves live state unchanged. Failure after launch
+acknowledgement preserves the provisional bridge for read-only reconciliation;
+never retry or remove it ambiguously. Failure after rename preserves that same
+accepted chain and requires validation only. No step signals a process,
+restarts the app server, replays a prompt, writes Slack, or starts the 12-hour
+task.
+
+**Next action:** commit and push this frozen bridge checkpoint, then execute
+step 2 once.
+
+**Bridge recovery completion:** pushed plan
+`5199ecf62f01364ab9a19eee78b018a8d004f502` preceded one lock-serialized
+native launch. Exact provisional window `@82/2:swallow-bridge` was
+acknowledged once with distinct runtime `swallow-bridge-t335` and accepted
+root `019fa8db-e4e0-7b81-9c02-a3b0954b5a95`; no retry ran.
+
+Before promotion, the provisional chain passed attempt-zero
+`running/remote-explicit` plus `watching/thread-idle`, with zero recovery and
+rollback counts. The exact same window was then renamed once to `swallow`;
+its index, pane, root, runtime, and process chain did not change. Final exact
+supervisor PID/start is `964619/98154438`, watcher `964741/98154447`,
+launcher `964880/98154559`, wrapper `964882/98154559`, and real TUI
+`964969/98154567`. Reciprocal socket inodes `199741356/199746651` connect
+that TUI to unchanged app server PID `2852569`.
+
+Two distinct post-promotion periodic receipts report
+`healthy=3 order_action=none repair_action=none`. Tmux is exact
+`@80/0:harness,@78/1:students,@82/2:swallow`, one pane each. Owner client
+`804512` remained on exact Harness `@80`; peer and monitor identities are
+unchanged. The stopped old runtime remains stopped, its inert parent-owned
+zombie was neither signaled nor awaited, and old/new saved roots remain
+preserved.
+
+Private bridge result `/tmp/t335-bridge-result.03aWkr` records exactly one
+launch, one promotion, and two monitor samples at mode `0600`. No prompt
+input/replay, Slack write, app-server restart, saved-root rename/archive/
+delete, second launch, window move, client movement, or benchmark work ran.
+The new root's earlier direct Slack acceptance and this live bridge
+acceptance jointly satisfy T-335.
+
+**Next action:** commit and push this completion checkpoint, exact-unlink the
+three reviewed T-335 cutover result files after verifying their owner/mode/
+link identities, record cleanup, and publish the docs-only T-335 closeout
+through protected exact-head CI. Do not start the separate 12-hour task from
+Harness.
+
+**Private-result cleanup:** completion checkpoint
+`a4fec9ab35e940b9e074308304fcbf67b9088b83` is pushed. Exact files
+`/tmp/t335-cutover-result.nSco2l`,
+`/tmp/t335-cutover-retry-result.JMnvZz`, and
+`/tmp/t335-bridge-result.03aWkr` each passed regular-file, current-user,
+mode-0600, and single-link checks, were exact-unlinked individually, and are
+absent. No recursive or broad cleanup ran.
+
+**Next action:** publish this final docs-only closeout through protected
+exact-head CI, merge without changing repository rules, fast-forward clean
+Local `main`, and retain the healthy live bridge chain. T-335 then has no
+remaining action; the Swallow project agent may separately start its
+owner-authorized 12-hour ledger work.
 
 ### T-334 — Extend maintenance awareness to remote Linux nodes
 
