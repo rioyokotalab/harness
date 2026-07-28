@@ -9,9 +9,10 @@ Next free ID: T-333.
 
 ## Current state
 
-- Public `main`, Local, and all eleven remote managed checkouts are
-  clean/current. T-306's context-refresh policy is current; all four private
-  Mac SSH payloads remain current.
+- Public `main`, Local, and ten reachable remote managed checkouts are
+  clean/current. ABQ is unreachable through both declared routes, so its
+  checkout state is unknown. T-306's context-refresh policy is current; all
+  four private Mac SSH payloads remain current.
 - The README now leads with owner-facing startup and daily operations, carries
   a pointer to the canonical fleet reference, and separates logical nodes from
   transport-only aliases and the service-only web endpoint.
@@ -110,7 +111,8 @@ Next free ID: T-333.
 
 ### T-332 — Preserve native `codex` and move managed shorthand to `co`
 
-**Phase:** executing.
+**Phase:** complete on Local and ten reachable remotes; ABQ propagation is
+externally blocked.
 
 The owner reports that the fleet-wide interactive `codex` alias hides the
 native executable, including ordinary commands such as `codex --version`, and
@@ -171,6 +173,43 @@ live shell changed.
 task head, require protected `portable-phase1`, merge through the preserved
 administrator bypass without changing review rules, then guarded-sync and
 validate the reachable fleet.
+
+PR #386 exact head `9898ac1` passed protected `portable-phase1` in 2m19s and
+merged through the preserved administrator bypass as
+`cc64086dea3cfc5009411ad6d2a7a0d19e54bca1`; the one-review rule was not
+changed. Local `main` fast-forwarded cleanly to that merge.
+
+The first fleet-sync plan used Local's pre-merge `7db6e25` as the remote
+source and stopped read-only at AB because its actual clean head remains
+`ef3de1e`; no checkout or transfer artifact changed. Retry is safe with exact
+published remote source `ef3de1e8ba6a13b36689c2b9cc0cd20cd7895366` for the
+currently aligned reachable fleet, leaving any host at another head
+fail-closed for separate reconciliation.
+
+**Next action:** rerun guarded plan/apply from exact `ef3de1e` to `cc64086`,
+then require an idempotent `KEEP` plan, one context refresh per advanced Mac,
+fresh interactive alias/native-command readback, and canonical fleet health.
+
+The corrected ten-target plan/apply advanced `ab`, `ab2`, `ri`, `al`, `rc`,
+`t4`, `aist`, `home`, `office`, and `riken` from exact `ef3de1e` to
+`cc64086`; a second plan reported exact `KEEP`, aligned `origin/main`, and
+absent transfer artifacts everywhere. A separate ABQ plan failed read-only
+during SSH banner exchange, so ABQ remains unchanged and unknown; retry only
+when either declared route recovers.
+
+Aist, Home, Office, and Riken each returned exactly one pane-blind
+merge-specific context-refresh `status=submitted`; none was retried. Fresh
+interactive shells on Local and all ten advanced remotes expose exact
+`co='harness codex-resilient --run --name harness --last'`, have no `codex`
+alias, resolve `codex` as a native file, and report native Codex 0.145.0 from
+`codex --version`. Existing shells were not altered and may retain their
+previous in-memory alias until replaced or re-sourced. No transfer residue or
+task-created cache remains.
+
+**Next action:** publish this closeout checkpoint through protected CI. When
+ABQ or ABQ2 becomes reachable, revalidate its exact clean checkout head,
+guarded-sync only ABQ to the current protected `main`, and run the same fresh
+interactive alias/native-version readback. No other T-332 action remains.
 
 ### T-331 — Restore disappeared Local Harness tmux window
 
