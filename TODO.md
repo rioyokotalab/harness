@@ -270,6 +270,25 @@ then-current closeout merge, verify both routes and aligned local/origin head,
 and mark T-329 fully complete. Do not disturb the accepted Swallow root or
 live `@65` chain.
 
+**Closeout publication and reachable-fleet rollout:** exact head
+`160dc5f6aef3fc2ca35363b9f1a701eead7ac421` passed protected
+`portable-phase1` in 1m48s and merged as
+`b1ad2f6ea41bc5428ff2a1ec0dedeb535098f723`. Local `main` fast-forwarded
+while preserving the two unrelated live `.nfs` inodes. A guarded plan/apply
+advanced the same ten reachable targets from `52ca82d` to the closeout merge;
+every checkout/origin aligned and every artifact was absent. Each managed Mac
+returned exactly one closeout-specific context-refresh `status=submitted`;
+none may be retried. Guarded deletion removed only the 4,799-entry /
+56,555,536-byte clean closeout-sync clone, verified protected anchors
+unchanged and target absent, and the private input and manifest were
+exact-unlinked.
+
+**Next action:** ABQ alone remains deferred at `dacbde5`. When both `abq` and
+`abq2` routes pass, guarded-sync only exact clean ABQ to `b1ad2f6`, verify
+both routes plus aligned local/origin head, publish this final handoff, and
+mark T-329 fully complete. The Local Swallow service is already restored and
+requires no further process, tmux, thread, name, or app-server mutation.
+
 ### T-328 — Complete authorized T-311/T-324 deferred hardening
 
 **Phase:** time-gated; concrete outage dates received, safe Local power
