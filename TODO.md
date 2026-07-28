@@ -152,9 +152,34 @@ readback still matches the frozen preimage: clean task branch, exact ordered
 windows `@60:harness`, `@50:students`, `@65:swallow`, and both attached
 clients on Harness. No live monitor or lifecycle mutation has run.
 
-**Next action:** implement the dispatcher, monitor, and deterministic focused
-fixtures. Then run the frozen validation sequence before any publication or
-live activation.
+The dispatcher, monitor, and deterministic focused fixtures are implemented.
+The monitor uses only tmux/process/status/app-server metadata, keeps private
+mode-0600 identity/receipt state beneath the current-user runtime directory,
+fails closed on ambiguous topology or unsafe thread state, preserves attached
+clients during `swap-window -d`, and limits safe repair to one exact
+idle/notLoaded chain per pass. A real observation-only collector pass found
+the requested order already exact, Swallow healthy, and only the expected
+legacy missing-watcher state on Harness and Students. It changed no tmux
+state.
+
+The first real collector pass exposed a naive `/proc/PID/stat` split on the
+space-containing `codex TUI` process name; the parser now isolates the
+parenthesized command field and a deterministic regression covers it. Python
+syntax, shell syntax, warning-level ShellCheck, diff hygiene, and the focused
+monitor suite pass. One generated two-entry/37,640-byte Python cache and one
+five-entry/8,336-byte isolated probe root were each removed through exact
+guarded-delete manifests; both applies verified protected anchors unchanged
+and targets absent, and both manifests were exact-unlinked.
+
+The first complete phase-one run reached the parallel focused stage. Seventy-
+four shards passed; only the shared tmux and terminfo fixtures failed because
+their safety gates require a clean committed checkout. The new monitor fixture
+was then added to both legacy and parallel focused-suite routing.
+
+**Next action:** commit the implementation checkpoint, rerun the complete
+phase-one suite from the clean task checkout, publish through protected CI,
+merge, guarded-sync clean managed checkouts, and only then activate and
+validate the dedicated 30-second Local monitor.
 
 ### T-329 — Restore disappeared Swallow tmux window
 
