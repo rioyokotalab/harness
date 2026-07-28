@@ -393,6 +393,30 @@ merge.
   deterministic pilot/confirmation plans. README counts and local links match
   the canonical fleet, backup, skill, and client declarations.
 
+**Post-closeout mutation correction 2026-07-29 03:46 JST:**
+
+- A deeper frozen-plan audit found that `-r5` did not satisfy acceptance gate
+  4: its self-test exercised one reference and the untouched seed per scenario,
+  not the declared two accepted and three plausible wrong/reward-hack variants.
+  Independent static review also identified fixed-input gaps for upper bounds,
+  partial identity drift, dual-route and maintenance boundaries, duplicate
+  JSON keys, and overlapping documentation counts. The `-r5` observations are
+  retained as exploratory evidence but no longer qualify as the final
+  acceptance-gated comparison.
+- The distinct `-r6` experiment strengthens only property grading and
+  model-free validation. The same 16 client-neutral tasks, matched clients,
+  three-observation design, containment, order, and outcome taxonomy remain.
+  A separate mutation audit now constructs 32 accepted states and 48 plausible
+  wrong states, including four protected-gate reward hacks, and requires every
+  accepted state to pass and every wrong state to fail the existing grader plus
+  allowed/protected-path envelope. The audit currently reports 32/32 accepted,
+  48/48 rejected, and zero unexpected passes.
+- No `-r5` aggregate or source object changed. Commit the validated `-r6`
+  runner/corpus/mutation gate, then run one distinct pilot at
+  `/tmp/harness-eval-t336-development-v2-r6`. Open confirmation only if the
+  pilot has complete containment/evidence integrity and never replay an
+  acknowledged row.
+
 ### T-337 — Promote bridge-first managed Codex cutovers
 
 **Phase:** complete after this rollout checkpoint reaches protected `main`.

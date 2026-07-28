@@ -3,11 +3,14 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 RUNNER=$ROOT/evaluation/development_v2.py
+MUTATION_AUDIT=$ROOT/evaluation/development-v2/mutation_audit.py
 
 python3 -c 'import sys; compile(open(sys.argv[1], encoding="utf-8").read(), sys.argv[1], "exec")' \
     "$RUNNER"
+python3 -c 'import sys; compile(open(sys.argv[1], encoding="utf-8").read(), sys.argv[1], "exec")' \
+    "$MUTATION_AUDIT"
 python3 "$RUNNER" validate |
-    grep -F 'VALID experiment=t336-harness-development-v2-20260729-r5 scenarios=16 decision_types=8' \
+    grep -F 'VALID experiment=t336-harness-development-v2-20260729-r6 scenarios=16 decision_types=8' \
         >/dev/null
 if [ "${HARNESS_PORTABLE_CI:-0}" = 1 ]; then
     for declaration in \
@@ -21,6 +24,9 @@ if [ "${HARNESS_PORTABLE_CI:-0}" = 1 ]; then
 else
     python3 "$RUNNER" selftest |
         grep -F 'development benchmark selftests passed' >/dev/null
+    PYTHONDONTWRITEBYTECODE=1 python3 "$MUTATION_AUDIT" |
+        grep -F 'MUTATION_AUDIT scenarios=16 accepted=32 rejected=48 unexpected_passes=0 reward_hacks=4 status=pass' \
+            >/dev/null
 fi
 
 pilot=$(python3 "$RUNNER" plan --stage pilot)
