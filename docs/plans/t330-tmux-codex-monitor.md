@@ -21,12 +21,12 @@ In scope:
 
 1. Metadata-only inventory of session, window ID/index/name, pane count,
    pane PID/path/dead state, resilient runtime name, watcher receipt/owner,
-   process ancestry, exact remote thread ID, app-server thread status, and
-   mode-0600 monitor state.
+   process ancestry, exact remote thread ID, reciprocal app-server process
+   identity, and mode-0600 monitor state.
 2. Order correction only after unique identity proof for exactly the three
    declared windows.
-3. Periodic value-free status and a durable last-known-good mapping.
-4. Narrowly gated lifecycle repair under frozen decision D-001.
+3. Periodic value-free status and a durable last-known-good lifecycle mapping.
+4. Controller-owned lifecycle recovery outside the periodic monitor.
 5. Focused fixtures, full validation, protected publication, Local activation,
    guarded fleet rollout, and Mac context refreshes.
 
@@ -63,14 +63,15 @@ Out of scope:
 
 Add `harness tmux-codex-monitor` with:
 
-- `--once [--enforce-order] [--repair]`;
-- `--interval SECONDS [--enforce-order] [--repair]`, bounded to 30–3600;
+- `--once [--enforce-order]`;
+- `--interval SECONDS [--enforce-order]`, bounded to 30–3600;
 - `--status`, reading only a current-user-owned mode-0600 receipt.
 
 The monitor owns a current-user-only runtime directory and lock. Each pass
 emits one value-free record per window plus one summary. It snapshots the
-exact healthy mapping only from validated live process argv and app-server
-metadata. No thread ID or private path is printed in ordinary output.
+exact healthy mapping only from validated live process argv, watcher receipts,
+and reciprocal process/socket metadata. It never opens the app-server control
+socket. No thread ID or private path is printed in ordinary output.
 
 ### Health contract
 
@@ -82,15 +83,15 @@ A healthy window requires:
 4. exact `--run --name NAME --remote-session ID` process identity;
 5. one live watcher owned by that supervisor and a current watcher receipt for
    the same runtime/thread;
-6. a live Codex TUI descendant and reciprocal Unix peer to the unchanged
-   current-user app server;
-7. app-server thread status `idle`, `active`, or `notLoaded`, never
-   `systemError` or unrecognized;
-8. no duplicate declared name, duplicate runtime, or extra `harness`-session
+6. a live Codex TUI descendant and reciprocal Unix peer to a current-user
+   Codex app-server process;
+7. no duplicate declared name, duplicate runtime, or extra `harness`-session
    window.
 
-`active` is healthy but not repairable. Supervisor backoff with a live watcher
-is `recovering`, not a reason for a second controller.
+This is explicitly lifecycle health, not thread-state acceptance. Thread
+status and rollout safety remain controller-owned recovery gates. Supervisor
+backoff with a live watcher is `recovering`, not a reason for a second
+controller.
 
 ### Order enforcement
 
@@ -107,36 +108,23 @@ Use `tmux swap-window -d` by immutable source window ID:
 Any drift stops before the next swap. Never rename or delete a window to make
 the order pass.
 
-### Optional safe lifecycle repair
+### Controller-owned lifecycle recovery
 
-Under recommended D-001 `safe-auto-repair`, repair at most one window per pass.
-Require a private saved mapping from an earlier healthy observation, exact
-canonical rollout identity, fresh app-server status `idle` or `notLoaded`,
-unchanged other windows/clients/app server, and an absent or independently
-identified stale chain.
-
-- Missing watcher with a live old-inode TUI: send one `SIGTERM` only to the
-  identity-checked real TUI leaf, let its chain/window unwind, then launch the
-  same thread at its canonical index under current published code.
-- Missing window/chain: launch the saved exact thread once at the canonical
-  free index.
-- Missing real TUI while resilient supervisor is in bounded backoff: defer to
-  the supervisor.
-
-After any acknowledged signal or launch, never retry ambiguously. Require the
-full health contract and unchanged attached clients before acceptance.
-`active`, `systemError`, unsafe rollout, missing mapping, extra windows,
-identity drift, or failed read remains value-free unhealthy with no mutation.
-
-Under D-001 `observe-and-order`, omit all signal/launch paths.
+The periodic monitor never constructs a recovery backend, reads a thread,
+signals a process, or launches a lifecycle. Missing watchers and windows remain
+value-free unhealthy. A separate controller turn may use the established
+unsafe-tail recovery protocol only after checkpointing exact identities,
+quiescing other recovery watchers, proving the target window unattached, and
+performing one fresh app-server status/rollout transaction. Any acknowledgement
+or signal retains the protocol's non-retryable boundary.
 
 ## Execution sequence
 
 1. Checkpoint D-001 and wait for explicit owner `go`.
 2. Add the command dispatcher, monitor implementation, and focused test.
 3. Add deterministic fixtures for healthy, out-of-order, extra, duplicate,
-   missing watcher, missing window, active, systemError, stale mapping,
-   client-selection retention, one-repair-per-pass, and ambiguous launch.
+   missing watcher, missing window, and client-selection retention, plus
+   source contracts proving the monitor has no backend/read/signal/launch path.
 4. Run syntax, ShellCheck, diff hygiene, focused tests, and complete phase one.
 5. Publish through exact-head protected CI and merge via the preserved
    administrator bypass without changing review policy.
@@ -144,9 +132,8 @@ Under D-001 `observe-and-order`, omit all signal/launch paths.
    per advanced managed Mac. Preserve the exact T-329 ABQ blocker.
 7. Revalidate Local live state. Start one detached
    `harness-tmux-codex-monitor` session at 30 seconds under merged code.
-8. Let the monitor snapshot all three mappings. Under D-001, Students may be
-   repaired immediately because it is idle; Harness must wait until its root
-   is idle after the active controller turn.
+8. Let the monitor snapshot all three mappings. Perform any required lifecycle
+   recovery only from a separate controller checkpoint.
 9. Validate two consecutive passes, exact order, three healthy Codex chains,
    attached-client stability, mode-0600 receipt, dedicated monitor liveness,
    no pane reads/input, and canonical fleet health.
@@ -157,8 +144,8 @@ Under D-001 `observe-and-order`, omit all signal/launch paths.
   do not signal the shared tmux server.
 - Order swaps are reversible by immutable window ID and do not alter windows,
   panes, threads, or clients.
-- A completed leaf signal is not retryable; reconstruct current state and
-  either accept the ensuing unwind or stop.
+- The monitor has no leaf-signal or launch path. Any separate controller
+  recovery retains its own non-retryable acknowledgement boundary.
 - Removing repository implementation after publication requires a new
   protected change; stopping the monitor leaves the existing resilient
   supervisors unchanged.
@@ -169,16 +156,13 @@ Under D-001 `observe-and-order`, omit all signal/launch paths.
 
 ### D-001 — Lifecycle repair
 
-- **Selected: `safe-auto-repair`.** Automatically repair only saved,
-  identity-proven `idle`/`notLoaded` threads while keeping every active,
-  unsafe, ambiguous, or unknown case read-only.
-- **Alternative: `observe-and-order`.** Enforce ordering and report unhealthy
-  lifecycle state, but require a controller turn for every process/window
-  restart.
+The original `safe-auto-repair` selection was retired after repeated live
+regressions proved that the monitor's app-server control connection displaced
+managed recovery watchers before repair selection. The revised selected
+contract is `observe-and-order`: enforce unambiguous order and report lifecycle
+health, but require a controller turn for every process/window recovery.
 
-Frozen on 2026-07-28 when the owner answered “as you recommend.” No decision
-remains open. Phase is `ready-for-go`; implementation must wait for an explicit
-`go`, `proceed`, or `execute`.
+The owner authorized this revised execution with exact `go` on 2026-07-28.
 
 ## Acceptance
 
@@ -187,7 +171,7 @@ remains open. Phase is `ready-for-go`; implementation must wait for an explicit
 - Both attached clients remain on their pre-activation exact window IDs.
 - Monitor status reports running/current and its receipt is mode 0600.
 - No pane/transcript read, prompt input/replay, root mutation, app-server
-  restart, unrelated window/session change, credential access, or raw bulk
-  deletion.
+  control connection/restart, lifecycle signal/launch, unrelated
+  window/session change, credential access, or raw bulk deletion.
 - Focused and complete suites pass; protected CI and reachable-fleet rollout
   are recorded; ABQ remains explicit if still unreachable.

@@ -110,8 +110,7 @@ Next free ID: T-331.
 
 ### T-330 — Monitor and order Local tmux Codex windows
 
-**Phase:** monitor active; final three-chain acceptance deferred until the
-legacy roots become safely idle.
+**Phase:** executing observe-only correction and bounded lifecycle recovery.
 
 The owner requested periodic pane-blind health checks for every managed Codex
 window in Local's `harness` tmux session and enforcement of canonical order
@@ -326,6 +325,150 @@ outside an allocation.
 sync reachable clean checkouts, refresh advanced Macs once, then reactivate
 the monitor. Keep Students observation-only while any attached client selects
 its window.
+
+PR #381 passed exact-head protected CI in 2m22s and merged as
+`d2d8abf6eb05ce4df5f9cc40371edd2a676c2425` without changing the one-review
+ruleset. Guarded sync advanced the ten reachable clean checkouts and a second
+plan reported exact `KEEP`, aligned `origin/main`, and absent transfer
+artifacts. Each advanced Mac received exactly one pane-blind context refresh.
+Guarded deletion removed only the 4,864-entry/57,866,603-byte temporary sync
+clone, verified protected anchors unchanged and target absent, and its
+mode-0600 manifest was exact-unlinked.
+
+The corrected 30-second monitor is active in its dedicated detached session.
+One immediate and one full-interval readback both preserved exact order,
+three one-pane live windows, and both clients on the same Students window.
+The receipt remains safely `degraded healthy=2 order_action=none
+repair_action=none`: Harness and Swallow are healthy, while Students is
+watcher-absent and protected by the new attached-client gate. No process
+signal, launch, client move, pane read, transcript read, or prompt input ran.
+
+**Next action:** the owner must move both attached clients off Students to
+Harness or Swallow. Then let the monitor repair Students at most once, require
+its exact watcher/TUI/socket and unchanged client selection, and observe two
+consecutive `healthy=3` passes before marking T-330 complete. Do not move the
+clients automatically.
+
+**Second live monitor regression 2026-07-28:** during bounded housekeeping,
+both clients had returned to Students and the monitor receipt became
+`healthy=0 order_action=deferred-ambiguous`, with only the exact Students
+window remaining. Harness and Swallow had again lost their windows and
+lifecycle chains despite both being healthy at activation. The attached-client
+gate correctly preserved Students, but post-unwind launch deferral did not
+prevent repeated healthy-watcher loss. This proves the remaining defect is
+upstream of repair selection; periodic live thread/status collection itself is
+not accepted safe.
+
+The exact one-pane published monitor identity passed and one rollback stopped
+only `harness-tmux-codex-monitor`; absence was verified. Students, both
+attached clients, the shared tmux server, saved roots, and app server were not
+signaled or modified. Routine housekeeping found three live, two eligible,
+zero young, and zero unexpected arg0 roots plus six clean completed-worktree
+candidates, but all cleanup is paused behind this LIFO recovery.
+
+**Next action:** keep the periodic monitor stopped and do not reactivate it
+with live app-server thread reads. Revalidate and restore only the exact
+Harness and Swallow lifecycle chains without prompt input/replay, preserving
+attached Students and the shared app server. Then replace periodic app-server
+thread reads with a non-interfering health source or observe-only metadata
+contract, add a reproduction that proves healthy watchers remain live across
+multiple intervals, and republish before any future monitor activation.
+
+**Restoration checkpoint 2026-07-28:** the private saved mappings, app-server
+identities, canonical rollouts, absent old lifecycle chains, free target
+indices, and attached Students clients all passed before one-window recovery.
+Harness was restored at index 0 and Swallow at index 2 without prompt input;
+both exact roots, supervisors, TUIs, reciprocal app-server sockets, and
+watchers passed. The periodic monitor remains absent. Both attached clients
+subsequently selected Swallow without agent movement. A fresh pane-blind check
+then found the still-live Students TUI had independently lost its recovery
+watcher, so full three-window health is not yet accepted and arg0/worktree
+cleanup remains paused. Checkpoint this state before any Students recovery;
+signal nothing unless its exact unattached identity, safe rollout/status, and
+rollback path pass again.
+
+**Control-socket interference confirmed:** subsequent one-shot recovery-backend
+reads caused the restored Harness and Swallow watcher/TUI/window chains to
+unwind again even though the periodic monitor was absent. Only Students
+remained, and tmux moved both clients back to it. Do not create any additional
+app-server control connection while managed watchers are live; the monitor and
+manual verifier must use only non-interfering process, socket, receipt, and
+tmux metadata. Students cannot be signaled while attached. Its exact
+current-user-owned, regular, single-link rollout was located by thread identity
+without reading content and is mode 0664; this explains the recovery gate
+`thread rollout is writable by another principal`. A narrow `go-w` metadata
+correction is eligible, but watcher restoration must wait for an unattached,
+safe lifecycle cutover.
+
+**Housekeeping/recovery result:** Students rollout mode was narrowed from 0664
+to 0644 after exact path, owner, regular-file, single-link, inode, and retained
+content checks; no transcript content was read. Harness and Swallow were then
+restored again from saved identities without opening the app-server control
+socket. Three non-interfering samples over ten seconds kept those two exact
+watchers healthy, the required `0:harness,1:students,2:swallow` order held, both
+clients remained on Students, and the periodic monitor remained absent.
+Students is healthy at the TUI/supervisor/socket layer but still has no watcher;
+do not signal it while attached or use an app-server read that would displace
+the other watchers. The latest arg0 plan/apply found five live, zero eligible,
+zero young, zero unexpected, and removed zero. Seven auxiliary worktrees are
+clean (one is this active continuation); retain all six completed candidates
+until the live recovery is closed, and preserve the primary Students-held
+`.nfs` file.
+
+**Revised next action:** replace the periodic backend reads with an
+observe-only metadata contract and add a multi-interval live test that never
+opens the app-server control socket. Separately design a controller-owned,
+all-watchers-quiesced Students cutover so one safe status/rollout check cannot
+displace a healthy peer; execute it only while Students is unattached. After
+all three watchers remain healthy, complete the postponed guarded worktree
+cleanup and republish T-330.
+
+**Execution resumed 2026-07-28:** the owner gave exact `go` for the revised
+plan. The continuation branch is clean/aligned at `ecb8ecb`; collaborative
+`origin/main` remains `d2d8abf`. Fresh pane-blind metadata finds exact ordered
+windows `0:harness,1:students,2:swallow`, both attached clients on Swallow,
+and the periodic monitor absent. Students is therefore unattached, but no
+process or app-server mutation may run until the observe-only correction and
+its failing-first coverage are checkpointed. The primary checkout's live
+Students-held `.nfs` inode remains protected; one task-created Python cache
+from metadata imports is also pending guarded cleanup.
+
+**Next action:** add failing focused assertions that production monitoring
+never constructs the recovery backend, never reads thread state, and never
+signals or launches a managed lifecycle. Then remove those paths from the
+monitor while retaining pane-blind lifecycle observation and safe tmux order
+enforcement.
+
+**Observe-only implementation checkpoint:** failing-first source assertions
+stopped on the production backend/read/repair paths. The monitor now contains
+no recovery-backend construction, thread read, process signal, or lifecycle
+launch path; `--repair` is retired. It retains exact tmux ordering, resilient
+receipt/process ancestry, watcher ownership, current-user TUI/app-server
+identity, reciprocal socket, duplicate runtime/thread refusal, and private
+lifecycle mapping/receipt state. Focused fixtures, Python 3.6 grammar, POSIX
+shell syntax, warning-level ShellCheck, and diff hygiene pass.
+
+The first live one-shot used the task worktree as `HARNESS_ROOT` and therefore
+reported all three live-root paths as metadata mismatches; it made no order or
+lifecycle mutation. The corrected explicit live-root observation reports
+Harness and Swallow healthy and only Students `watcher-absent`, with
+`repair_action=none`. Two task-created Python cache roots were removed through
+separate guarded manifests; each target was verified absent with protected
+anchors unchanged, and both manifests were exact-unlinked.
+
+**Next action:** review and commit this coherent implementation, run the
+complete clean `tests/test-phase1.sh`, then publish through protected
+exact-head CI before any Students lifecycle cutover.
+
+**Validation checkpoint:** implementation commit `e4ff83a` passed all focused
+suites, guarded-delete coverage, and every phase-one integration gate; only the
+declared native MPI smoke skipped outside an allocation. The task worktree is
+clean, the periodic monitor remains absent, and no Students lifecycle or
+app-server mutation ran.
+
+**Next action:** commit this validation evidence, fetch and push the exact task
+head, require protected `portable-phase1`, and merge before performing the
+controller-owned Students cutover.
 
 ### T-329 — Restore disappeared Swallow tmux window
 
@@ -3820,6 +3963,13 @@ again failed before job lookup because Slurm could not resolve its DNS SRV
 configuration source. It printed no job data, and no scheduler state changed.
 Keep the observation open for exact ID `7242`; successor `10386` remains
 untouched.
+
+**2026-07-28 read-only retry:** the same exact native `sacct` command returned
+exit 1 with zero stdout bytes and 243 private stderr bytes. Stderr content was
+not read; both mode-0600 captures were exact-unlinked. The failure therefore
+remains classified only as accounting unavailable, not as a missing job. No
+scheduler state changed and successor `10386` remains untouched. A later
+exact-ID retry remains safe.
 
 **2026-07-27 AL checkpoint:** exact job `4238363` matched
 `hal2607260100` and completed with `0:0`. Private state is active/success with

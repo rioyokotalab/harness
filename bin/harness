@@ -68,7 +68,7 @@ Read-only phase-1 commands:
   codex-login      launch Codex with bounded Linux login-node worker pools
   codex-resilient  supervise/resume Codex after transient service failures
   codex-thread-recovery  recover a side-effect-free remote thread systemError
-  tmux-codex-monitor  monitor/order/repair Local managed Codex windows
+  tmux-codex-monitor  observe/order Local managed Codex windows
   agent-config-catch-up  explicitly catch up and reconcile one local node
   agent-config-fleet  sequentially reconcile local and managed Linux nodes
   storage-readiness  validate declared large/cache storage; optionally probe writes

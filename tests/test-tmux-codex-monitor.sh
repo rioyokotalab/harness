@@ -43,6 +43,13 @@ import os
 module = importlib.machinery.SourceFileLoader(
     "tmux_monitor_test", os.environ["HARNESS_MONITOR_PATH"]
 ).load_module()
+with open(os.environ["HARNESS_MONITOR_PATH"], "r") as stream:
+    source = stream.read()
+assert "Backend(" not in source
+assert "def read_thread(" not in source
+assert "def repair_once(" not in source
+assert "def launch_window(" not in source
+assert "os.kill(" not in source
 fields = ["S", "17"] + ["0"] * 17 + ["424242"] + ["0"] * 3
 value = "23 (codex TUI) " + " ".join(fields)
 parsed = module.parse_proc_stat(23, value)
@@ -53,8 +60,6 @@ assert parsed == {
     "comm": "codex TUI",
 }
 
-module.tmux_clients = lambda: []
-module.read_thread = lambda _module, _backend, _thread: ("idle", True)
 module.process_info = lambda pid: {
     "pid": pid,
     "parent": 1,
@@ -63,81 +68,30 @@ module.process_info = lambda pid: {
     "argv": [],
 }
 mapping = {
-    "harness": {
-        "runtime": "saved-runtime",
-        "thread": "saved-thread",
-        "app_server_pid": 99,
-        "app_server_start": "server-start",
-    }
+    "students": {"preserved": True}
 }
 health = {
     "harness": {
-        "reason": "watcher-absent",
+        "state": "healthy",
         "app_server_pid": 99,
-        "identity": {"runtime": "different-runtime", "thread": "different-thread"},
-        "tui": {"pid": 23, "start": "tui-start"},
+        "identity": {"runtime": "runtime", "thread": "thread"},
     }
 }
-assert module.repair_once([], health, mapping, object(), object()) == "none"
-mapping["harness"]["app_server_start"] = "reused-pid"
-health["harness"]["identity"] = {
-    "runtime": "saved-runtime",
-    "thread": "saved-thread",
+assert module.mapping_snapshot(mapping, health) == {
+    "students": {"preserved": True},
+    "harness": {
+        "runtime": "runtime",
+        "thread": "thread",
+        "app_server_pid": 99,
+        "app_server_start": "server-start",
+    },
 }
-assert module.repair_once([], health, mapping, object(), object()) == "none"
-
-mapping["harness"]["app_server_start"] = "server-start"
-def process_after_signal(pid):
-    if pid == 23:
-        if process_after_signal.tui_live:
-            process_after_signal.tui_live = False
-            return {
-                "pid": 23,
-                "parent": 1,
-                "start": "tui-start",
-                "comm": "codex.real",
-                "argv": [],
-            }
-        return None
-    return {
-        "pid": pid,
-        "parent": 1,
-        "start": "server-start",
-        "comm": "codex.real",
-        "argv": [],
-    }
-
-process_after_signal.tui_live = True
-module.process_info = process_after_signal
-thread_reads = iter((("idle", True), ("active", True)))
-module.read_thread = lambda _module, _backend, _thread: next(thread_reads)
-module.os.kill = lambda pid, signum: None
-module.time.sleep = lambda _seconds: None
-module.tmux_windows = lambda: []
-launches = []
-module.launch_window = lambda name, index, saved: launches.append(
-    (name, index, saved)
-)
-assert (
-    module.repair_once([], health, mapping, object(), object())
-    == "retired-harness"
-)
-assert launches == []
-
-process_after_signal.tui_live = True
-module.tmux_clients = lambda: [("client", "@attached")]
-module.read_thread = lambda _module, _backend, _thread: ("idle", True)
-module.os.kill = lambda _pid, _signum: (_ for _ in ()).throw(
-    AssertionError("attached TUI was signaled")
-)
-health["harness"]["window"] = {"window_id": "@attached"}
-assert module.repair_once([], health, mapping, object(), object()) == "none"
 PY
 
 cat >"$TEST_ROOT/healthy.json" <<'EOF'
 {"windows":[{"name":"harness","index":0},{"name":"students","index":1},{"name":"swallow","index":2}],"health":{"harness":{"state":"healthy"},"students":{"state":"healthy"},"swallow":{"state":"healthy"}}}
 EOF
-run_fixture "$TEST_ROOT/healthy.json" --enforce-order --repair \
+run_fixture "$TEST_ROOT/healthy.json" --enforce-order \
     >"$TEST_ROOT/healthy.out"
 grep -F 'phase=healthy healthy=3 order_action=none repair_action=none' \
     "$TEST_ROOT/healthy.out" >/dev/null || fail "healthy classification"
@@ -160,26 +114,22 @@ fi
 grep -F 'order_action=deferred-ambiguous' "$TEST_ROOT/extra.out" >/dev/null ||
     fail "extra window did not fail closed"
 
-cat >"$TEST_ROOT/repair.json" <<'EOF'
-{"windows":[{"name":"harness","index":0},{"name":"students","index":1},{"name":"swallow","index":2}],"health":{"harness":{"state":"unhealthy","reason":"watcher-absent","thread_status":"active","mapping":true},"students":{"state":"unhealthy","reason":"watcher-absent","thread_status":"idle","mapping":true},"swallow":{"state":"healthy"}}}
+cat >"$TEST_ROOT/degraded.json" <<'EOF'
+{"windows":[{"name":"harness","index":0},{"name":"students","index":1},{"name":"swallow","index":2}],"health":{"harness":{"state":"healthy"},"students":{"state":"unhealthy","reason":"watcher-absent"},"swallow":{"state":"healthy"}}}
 EOF
-if run_fixture "$TEST_ROOT/repair.json" --repair \
-    >"$TEST_ROOT/repair.out"; then
-    fail "degraded repair fixture returned healthy"
+if run_fixture "$TEST_ROOT/degraded.json" \
+    >"$TEST_ROOT/degraded.out"; then
+    fail "degraded fixture returned healthy"
 fi
-grep -F 'repair_action=repair-eligible-students' \
-    "$TEST_ROOT/repair.out" >/dev/null ||
-    fail "safe idle repair selection"
+grep -F 'repair_action=none' "$TEST_ROOT/degraded.out" >/dev/null ||
+    fail "observe-only monitor selected repair"
 
-cat >"$TEST_ROOT/unsafe.json" <<'EOF'
-{"windows":[{"name":"harness","index":0},{"name":"students","index":1},{"name":"swallow","index":2}],"health":{"harness":{"state":"unhealthy","reason":"window-missing","thread_status":"systemError","mapping":true},"students":{"state":"unhealthy","reason":"watcher-absent","thread_status":"idle","mapping":false},"swallow":{"state":"healthy"}}}
-EOF
-if run_fixture "$TEST_ROOT/unsafe.json" --repair \
-    >"$TEST_ROOT/unsafe.out"; then
-    fail "unsafe repair fixture returned healthy"
+if run_fixture "$TEST_ROOT/degraded.json" --repair \
+    >"$TEST_ROOT/repair-flag.out" 2>&1; then
+    fail "retired repair flag was accepted"
 fi
-grep -F 'repair_action=none' "$TEST_ROOT/unsafe.out" >/dev/null ||
-    fail "unsafe or unmapped state selected repair"
+grep -F 'unrecognized arguments: --repair' "$TEST_ROOT/repair-flag.out" \
+    >/dev/null || fail "retired repair flag diagnostic"
 
 if HARNESS_TEST_TMUX_CODEX_FIXTURE="$TEST_ROOT/healthy.json" \
     "$HARNESS" tmux-codex-monitor --once >"$TEST_ROOT/no-test.out" 2>&1; then
