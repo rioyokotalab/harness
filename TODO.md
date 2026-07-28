@@ -282,6 +282,16 @@ restart the app server, or create/rename/archive a saved root. Accept only a
 new supervisor/watcher/TUI/socket chain, thread-idle receipt, exact order,
 unchanged Harness/Students/app-server/monitor identities, and no Slack write.
 
+**LIFO controller gate:** the first lock-serialized transaction stopped at
+its initial task-worktree Git assertion because it compared HEAD with an
+incorrectly expanded form of short checkpoint `135c2ac`. Git's exact resolved
+revision is `135c2ace0b37480f9ee48dc7b4bb33b814d3531b`. The shared lock was
+released normally before any process, tmux, app-server, prompt, connector, or
+Slack mutation. Fresh readback still finds exact old supervisor/TUI/watcher,
+`thread-idle`, and unchanged `0:harness,1:students,2:swallow` topology.
+Retry is safe after checkpointing this failure; substitute only the exact
+Git-resolved revision and repeat every pre-signal gate.
+
 ### T-334 — Extend maintenance awareness to remote Linux nodes
 
 **Phase:** complete after this closeout checkpoint reaches protected `main`.
