@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-328.
+Next free ID: T-329.
 
 ## Current state
 
@@ -107,6 +107,164 @@ Next free ID: T-328.
    successors recorded below.
 
 ## Active tasks
+
+### T-328 — Complete authorized T-311/T-324 deferred hardening
+
+**Phase:** blocked on a concrete Local maintenance window.
+
+On 2026-07-28 the owner explicitly authorized the exact remaining deferred
+T-311/T-324 actions and accepted findings:
+
+1. Apply frozen T-311 D-001 to GitHub rulesets `19127355` (Harness),
+   `19716717` (Students), `19734040` (Swallow), and `19127356` (Website):
+   require one approval everywhere, preserve the existing owner/admin bypass
+   actor and every other rule, and restore Students code-owner and last-push
+   approval.
+2. Remove only Riken's shadowed global
+   `/opt/homebrew` `@anthropic-ai/claude-code@0.2.14`, preserving the effective
+   Harness-managed Claude Code `2.1.220`.
+3. Treat only Office's extra detached childless login-shell tmux window as
+   disposable. The existing Local recovery controller may remove only that
+   exact window and then submit the one deferred context refresh without
+   reading pane content or restarting the healthy Codex window.
+4. Reboot Local only during the owner's maintenance window, then recover and
+   validate the control plane.
+5. Accept RI without X11.
+6. Accept Local project-agent doctor as `unknown` while the two live
+   supervisors hold the protected `.nfs` inodes.
+7. Treat the recorded shared-site failed-unit findings as accepted external
+   risks; do not reset, restart, inspect private logs, or mutate them.
+
+The literal authorization says `[maintenance window]` rather than naming an
+actual interval. The Local reboot therefore remains time-gated and must not
+run until the owner supplies a concrete start/end window. This does not block
+the six independent actions or acceptance checkpoints.
+
+Fresh GitHub readback confirms all four exact rulesets are active and retain
+their recorded bypass actor and strict checks. Each currently requires zero
+approvals; Students also has both `require_code_owner_review=false` and
+`require_last_push_approval=false`. Update one repository at a time with a
+complete preimage, change only the authorized pull-request parameters, read
+back the exact ruleset, and restore only that repository's preimage if its
+acceptance check fails.
+
+Riken removal must revalidate the exact stale package tree and any package-owned
+launcher link without following links. Use guarded deletion for the package
+tree and exact single-file unlink only for a matching shadow launcher; verify
+the effective managed executable remains exact version `2.1.220` before and
+after. Do not run blanket npm cleanup or touch another package.
+
+Office removal must require exactly one healthy Codex window plus one
+childless login-shell window in the standard detached session. Remove only the
+exact extra window by immutable tmux identity, then use the reviewed
+remote-agent transport for one deferred revision-specific context refresh.
+Never inspect or capture either pane.
+
+**GitHub ruleset result:** complete. Fresh preimages were read immediately
+before the authorized writes. Exact one-repository PUT/readback transactions
+changed only the pull-request review parameters:
+
+- Harness `19127355`, Swallow `19734040`, and Website `19127356` now require
+  one approval and retain exact repository-role `5` / `always` bypasses.
+- Students `19716717` now requires one approval,
+  `require_code_owner_review=true`, and
+  `require_last_push_approval=true`; exact user `836314` /
+  `pull_request` bypass is unchanged.
+
+All four remain active with the same target conditions, deletion and
+non-fast-forward protection, linear history, strict required checks,
+conversation resolution, stale-review dismissal, allowed merge methods, and
+other pull-request parameters. Every immediate readback passed, so no rollback
+write ran.
+
+**Next action:** revalidate and remove only Riken's exact stale global Claude
+package through the guarded boundary while preserving effective `2.1.220`.
+Then reconcile Office, record accepted RI/Local/shared-site findings, and
+leave only the concrete Local maintenance-window question unresolved.
+
+**Riken LIFO preflight gate:** the first read-only identity probe confirmed
+effective `/Users/yokotar/.local/bin/claude`, exact native output
+`2.1.220 (Claude Code)`, stale current-user-owned real package directory
+`/opt/homebrew/lib/node_modules/@anthropic-ai/claude-code` at exact version
+`0.2.14`, and matching current-user-owned symlink
+`/opt/homebrew/bin/claude` to
+`../lib/node_modules/@anthropic-ai/claude-code/cli.mjs`. It exited nonzero
+only because its final assertion incorrectly expected bare `2.1.220` rather
+than the native decorated output. No package, link, process, or file changed.
+Retry is safe with a prefix/exact-native-output assertion before planning the
+guarded removal.
+
+The corrected identity and open-file gate passed with
+`open_processes=0`, but guarded planning refused before publishing a manifest
+because macOS `/tmp` is a symlink and therefore cannot be a recursive-delete
+anchor. No link or package changed. Retry is safe using canonical retained
+manifest parent `/private/tmp`; keep the package boundary and target exact.
+
+**Riken removal result:** canonical guarded plan recorded one exact
+current-user-owned package target with 488 entries and 50,987,121 bytes.
+After a final identity check, exact single-file `unlink` removed only matching
+shadow launcher `/opt/homebrew/bin/claude`; the emitted guarded apply then
+validated and deleted only
+`/opt/homebrew/lib/node_modules/@anthropic-ai/claude-code`, with protected
+anchors unchanged and target absent.
+
+The apply command `exec`-replaced its remote shell, so same-command postchecks
+after it did not execute. A separate strict postcheck initially exited before
+its summary because it expected the mode-0600 manifest to be auto-removed.
+Fresh value-free reconciliation proves package and link absent, one effective
+Claude path, managed version `2.1.220`, and only exact task manifest
+`/private/tmp/t328-riken-claude-delete.manifest` still present. Exact-unlink
+that single reviewed manifest, verify absence, and do not repeat package or
+link removal.
+
+**Office LIFO metadata gate:** the first read-only tmux inventory stopped
+before listing state because its remote double-quoted awk expression expanded
+`$2` under `set -u`. No tmux, process, pane, or repository state changed.
+Retry is safe with direct native tmux format output and no shell-field parser.
+
+The corrected native metadata read proved standard session
+`harness-codex-resume` detached with two one-pane windows:
+active `@0:codex` rooted at `/Users/yokotar/harness` with one live child, and
+inactive `@1:bash` rooted at the same path with a childless shell. Complete
+immutable preflight passed; one native `tmux kill-window -t @1` removed only
+that authorized window and its shell PID. Exact `@0:codex` and its child
+identity remained live, detached, and unchanged.
+
+One private mode-0600 refresh input then used the reviewed
+`remote-agent-communication` transport. Office returned exact
+`status=submitted` once for the current published Harness revision
+`f054e3eb9c72aa72ada1dc6eafad49ef8ea3a738`; it was not retried. The private
+input was exact-unlinked. No pane or transcript content was read.
+
+**Accepted-state readback:** RI passes a fresh `ssh -x` route and still has no
+`xauth`; the owner accepts RI without X11, so no package, SSH, or site change
+is pending. Local `agent-config --doctor` exits `2` at its explicit
+clean-committed-checkout gate. Each of the two preserved untracked `.nfs`
+paths has exactly one live holder, matching the owner's accepted `unknown`
+classification; neither inode or supervisor changed. Fresh shared-site native
+failed-unit counts are RI `1`, AL `4`, and RC `2`. They are accepted external
+risks and received no reset, restart, private-log read, or mutation.
+
+Local still runs kernel `6.8.0-134-generic` and retains the root-owned
+reboot-required marker. The authorization contains literal placeholder
+`[maintenance window]`, not a usable start/end interval. No reboot or
+control-plane interruption ran. This is the sole remaining T-328 blocker.
+
+**Next action:** publish this completed ruleset/Riken/Office/acceptance
+checkpoint through protected Harness CI, synchronize the clean managed fleet,
+and leave T-328 blocked. When the owner supplies a concrete Local maintenance
+window, revalidate the marker and active control-plane state immediately
+before reboot, reboot only inside that interval, then recover and validate
+routes, managed services, remote control, tmux, repositories, supervisors,
+the effective kernel, and canonical fleet health.
+
+**Publication LIFO gate:** PR #371 exact head `da67ca4` passed protected
+`portable-phase1` in 2m24s. The first exact-head ordinary merge then failed
+without merging because the newly active one-review rule correctly blocks an
+unreviewed pull request. GitHub instructed use of the preserved administrator
+bypass. This is retry-safe: publish this ledger checkpoint, require current
+exact-head CI again, then merge once with explicit `--admin` and exact-head
+matching. Do not weaken or revert the review rule.
 
 ### T-327 — Align MCP approvals and retire blocked phone sessions
 
