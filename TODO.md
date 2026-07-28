@@ -453,10 +453,36 @@ merge.
   `evaluation/results/t336-harness-development-v2-20260729-r7-confirmation.json`.
   The `-r5` observations remain exploratory and the `-r6` reports remain
   invalid calibration evidence; neither is combined with `-r7`.
-- Next action: validate report schema, digests, and privacy; commit only the
-  result and documentation closeout; publish through protected `main`; perform
-  guarded fleet synchronization and one pane-blind context refresh per advanced
-  Mac; then guarded-delete the private `-r6` and `-r7` run roots.
+- Report schema, runner/corpus digests, and privacy assertions pass. The
+  benchmark-focused test, cowork complete-phase validator, and clean-tree
+  `tests/test-phase1.sh` pass with only the declared native MPI environment
+  skip.
+
+**Publication and cleanup checkpoint 2026-07-29 06:45 JST:**
+
+- PR #401 exact head `22a0ba80e32b8a11d3e60bf59425a229a86fb32c`
+  passed protected `portable-phase1` run `30401393630` in 2m25s and squash
+  merged as `ed1ea25433300ccd2650498468e522cfd0fb4b16`. Local `main`
+  fast-forwarded cleanly to that exact merge.
+- One guarded ten-target fleet-sync plan/apply advanced `ab`, `ab2`, `ri`,
+  `al`, `rc`, `t4`, `aist`, `home`, `office`, and `riken` from `d3295fd` to
+  `ed1ea25`; the repeat plan reports exact head/origin `KEEP` for all ten. ABQ
+  remained excluded and was not contacted under its recorded maintenance
+  window.
+- The remote-agent transport submitted exactly one merge-specific pane-blind
+  context refresh to Aist, Home, Office, and Riken. All four returned
+  `status=submitted`; no input file was persisted and none may be retried.
+- One guarded-delete transaction removed exactly the private `-r6` and `-r7`
+  roots (13,759 entries; 33,860,813 bytes) with unchanged protected anchors.
+  A detached cold clone of exact merge `ed1ea25` then passed the benchmark suite
+  in native and portable-CI modes plus complete `tests/test-phase1.sh`. Its
+  declared native MPI smoke remained skipped outside a declared MPI
+  environment. The audit clone was guarded-deleted (1,054 entries; 24,528,166
+  bytes); both manifests were exact-unlinked.
+- Next action: continue value-free stability observation through the owner's
+  ten-hour window, then record a fresh canonical fleet-health snapshot. The
+  accepted runner and reports remain frozen; do not recreate private benchmark
+  evidence.
 
 ### T-337 — Promote bridge-first managed Codex cutovers
 
