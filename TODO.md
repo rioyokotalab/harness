@@ -317,6 +317,16 @@ advanced Macs once, then reactivate the monitor. It may observe Students but
 must not repair it until both clients select another window. No prompt input,
 process signal, or monitor-session launch occurred at this gate.
 
+Commit `83d7fc8` implements the pre-signal refusal and passes the focused
+monitor suite, all 75 parallel focused shards, guarded-delete coverage, and
+every phase-one integration gate. Only the declared native MPI smoke skipped
+outside an allocation.
+
+**Next action:** publish the exact validated head through protected CI, merge,
+sync reachable clean checkouts, refresh advanced Macs once, then reactivate
+the monitor. Keep Students observation-only while any attached client selects
+its window.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
