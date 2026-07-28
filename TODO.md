@@ -640,6 +640,23 @@ saved Students root and rollout once under the all-watchers-quiesced
 controller transaction, then launch the same root exactly once only if the
 fresh status and lifecycle gates pass.
 
+**Post-teardown root read:** with the client on exact Harness and only the
+Harness/Swallow windows present, the controller paused only their watcher
+leaves, read all three roots through one initialized backend, closed it, and
+resumed both watchers unconditionally. Harness, Students, and Swallow were
+all canonical `idle`; Students retained the exact current-user-owned
+single-link rollout at mode `0644`, device `197`, inode `21139179`.
+The exact peer process/start identities, two-window topology, app server, and
+Harness client remained unchanged after a three-second readback. The
+Students root is lifecycle-safe for one prompt-free replacement launch.
+
+**Next action:** launch exactly one detached `students` window at index 1
+using runtime name `students` and the same saved remote-session ID
+`019f7fea-4f00-7681-910d-81ae99a77143`; do not send input or retry an
+ambiguous launch. Require a new supervisor, watcher, TUI, reciprocal socket,
+idle root, exact order, unchanged Harness/Swallow/app-server/client
+identities, and no second signal to the old zombie.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
