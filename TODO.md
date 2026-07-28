@@ -110,7 +110,7 @@ Next free ID: T-329.
 
 ### T-328 — Complete authorized T-311/T-324 deferred hardening
 
-**Phase:** executing.
+**Phase:** blocked on a concrete Local maintenance window.
 
 On 2026-07-28 the owner explicitly authorized the exact remaining deferred
 T-311/T-324 actions and accepted findings:
@@ -221,6 +221,42 @@ link removal.
 before listing state because its remote double-quoted awk expression expanded
 `$2` under `set -u`. No tmux, process, pane, or repository state changed.
 Retry is safe with direct native tmux format output and no shell-field parser.
+
+The corrected native metadata read proved standard session
+`harness-codex-resume` detached with two one-pane windows:
+active `@0:codex` rooted at `/Users/yokotar/harness` with one live child, and
+inactive `@1:bash` rooted at the same path with a childless shell. Complete
+immutable preflight passed; one native `tmux kill-window -t @1` removed only
+that authorized window and its shell PID. Exact `@0:codex` and its child
+identity remained live, detached, and unchanged.
+
+One private mode-0600 refresh input then used the reviewed
+`remote-agent-communication` transport. Office returned exact
+`status=submitted` once for the current published Harness revision
+`f054e3eb9c72aa72ada1dc6eafad49ef8ea3a738`; it was not retried. The private
+input was exact-unlinked. No pane or transcript content was read.
+
+**Accepted-state readback:** RI passes a fresh `ssh -x` route and still has no
+`xauth`; the owner accepts RI without X11, so no package, SSH, or site change
+is pending. Local `agent-config --doctor` exits `2` at its explicit
+clean-committed-checkout gate. Each of the two preserved untracked `.nfs`
+paths has exactly one live holder, matching the owner's accepted `unknown`
+classification; neither inode or supervisor changed. Fresh shared-site native
+failed-unit counts are RI `1`, AL `4`, and RC `2`. They are accepted external
+risks and received no reset, restart, private-log read, or mutation.
+
+Local still runs kernel `6.8.0-134-generic` and retains the root-owned
+reboot-required marker. The authorization contains literal placeholder
+`[maintenance window]`, not a usable start/end interval. No reboot or
+control-plane interruption ran. This is the sole remaining T-328 blocker.
+
+**Next action:** publish this completed ruleset/Riken/Office/acceptance
+checkpoint through protected Harness CI, synchronize the clean managed fleet,
+and leave T-328 blocked. When the owner supplies a concrete Local maintenance
+window, revalidate the marker and active control-plane state immediately
+before reboot, reboot only inside that interval, then recover and validate
+routes, managed services, remote control, tmux, repositories, supervisors,
+the effective kernel, and canonical fleet health.
 
 ### T-327 — Align MCP approvals and retire blocked phone sessions
 
