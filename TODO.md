@@ -708,6 +708,18 @@ app-server backend. Require two interval-separated receipts with
 `healthy=3`, exact order, all three live lifecycle chains, unchanged client
 selection, and no repair/order action before closing T-330.
 
+**T-330 complete 2026-07-28:** one detached
+`harness-tmux-codex-monitor` session is live in pane `@79`, rooted at
+`/home/rioyokota/harness`, with monitor owner PID `1903223`. Two
+full-interval acceptance samples both reported
+`phase=healthy healthy=3 order_action=none repair_action=none`. Exact
+`0:harness,1:students,2:swallow` order, one pane per window, all three
+supervisor/watcher/TUI chains, reciprocal sockets, unchanged app server, and
+the sole client on Harness remained stable. No repair, prompt input, replay,
+pane read, transcript read, root mutation, or client movement occurred.
+T-330's required live acceptance is complete; publish this final ledger
+checkpoint and retain the monitor as the periodic observe-only owner.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
