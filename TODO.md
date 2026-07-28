@@ -373,6 +373,26 @@ merge.
 - T-336 is closed. The scored aggregates and runner remain frozen; no private
   benchmark root or private evidence should be recreated.
 
+**Post-closeout evidence checkpoint 2026-07-29 03:29 JST:**
+
+- PR #399 corrected the current backup guide from seven to eight declared
+  routes and made the already-completed rollout the terminal T-336 ledger
+  state. Protected CI passed in 2m21s; merge `faeb290` was guarded-synchronized
+  to the same ten eligible clean checkouts with a repeat `KEEP` result. ABQ
+  remained maintenance-skipped and uncontacted. Exactly one merge-specific
+  pane-blind refresh was submitted to each advanced Mac and was not retried.
+- An independent report-integrity audit found that both final aggregates
+  truthfully identify scored source revision
+  `848e1c43e9ebc3a2f7bc4016742a3c5972b19805`, but the pre-rebase commit was
+  not reachable from a published branch. New annotated tag
+  `t336-development-v2-r5-source` now preserves that exact commit; remote
+  readback peels to the recorded revision. Its runner, corpus, and closed
+  schema bytes equal the published tree, and both aggregate digests match.
+- Both final reports pass the closed schema and internal total checks, expose
+  no prompt, raw output, home, or temporary path, and retain balanced 16/32
+  deterministic pilot/confirmation plans. README counts and local links match
+  the canonical fleet, backup, skill, and client declarations.
+
 ### T-337 — Promote bridge-first managed Codex cutovers
 
 **Phase:** complete after this rollout checkpoint reaches protected `main`.
