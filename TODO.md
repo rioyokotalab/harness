@@ -663,6 +663,20 @@ link identities, record cleanup, and publish the docs-only T-335 closeout
 through protected exact-head CI. Do not start the separate 12-hour task from
 Harness.
 
+**Private-result cleanup:** completion checkpoint
+`a4fec9ab35e940b9e074308304fcbf67b9088b83` is pushed. Exact files
+`/tmp/t335-cutover-result.nSco2l`,
+`/tmp/t335-cutover-retry-result.JMnvZz`, and
+`/tmp/t335-bridge-result.03aWkr` each passed regular-file, current-user,
+mode-0600, and single-link checks, were exact-unlinked individually, and are
+absent. No recursive or broad cleanup ran.
+
+**Next action:** publish this final docs-only closeout through protected
+exact-head CI, merge without changing repository rules, fast-forward clean
+Local `main`, and retain the healthy live bridge chain. T-335 then has no
+remaining action; the Swallow project agent may separately start its
+owner-authorized 12-hour ledger work.
+
 ### T-334 — Extend maintenance awareness to remote Linux nodes
 
 **Phase:** complete after this closeout checkpoint reaches protected `main`.
