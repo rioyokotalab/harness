@@ -657,6 +657,26 @@ ambiguous launch. Require a new supervisor, watcher, TUI, reciprocal socket,
 idle root, exact order, unchanged Harness/Swallow/app-server/client
 identities, and no second signal to the old zombie.
 
+**Students replacement acceptance 2026-07-28:** after the fresh idle-root
+read, exactly one detached `students` window was launched at index 1 with
+the same runtime name and remote-session ID. The launch was acknowledged once
+and was not retried. New supervisor PID `1638582`, watcher `1638660`, and
+real TUI PID `1638835` are live at their exact captured start ticks; the
+watcher receipt is `watching/thread-idle`, recovery and rollback counts are
+zero, and the saved root remains canonical idle. The new TUI has an
+established reciprocal socket with unchanged app server PID `2852569`.
+Three interval-separated pane-blind samples preserved exact order
+`0:harness,1:students,2:swallow`, one pane per window, the owner client on
+Harness, all three supervisor/watcher/TUI chains, and the unchanged app
+server. The old Students supervisor was observed first as a parent-owned
+zombie and then reaped; it was never signaled again. No prompt input, thread
+mutation, root/name change, pane read, or transcript read occurred.
+
+**Next action:** retain the periodic monitor stopped until this acceptance is
+published with the closeout checks. Then run the focused monitor/recovery
+tests, complete clean phase-one validation, publish through protected CI, and
+only afterward reactivate the observe-only monitor for two healthy passes.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
