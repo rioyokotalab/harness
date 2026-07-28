@@ -111,7 +111,7 @@ Next free ID: T-336.
 
 ### T-335 — Restore Slack tools before the next Swallow run
 
-**Phase:** executing the authorized new-root transition.
+**Phase:** blocked after old-chain unwind, before new-root launch.
 
 The owner requires functional Slack access before authorizing the planned
 12-hour Swallow TODO run. This task is a connector-readiness gate only; no
@@ -536,6 +536,47 @@ names, and the exact client gate passes without reading or moving its pane.
 the exact retry helper, old/peer/client identities, Git, monitor, and result
 metadata, then arm the one proven-safe retry with that pushed head. Preserve
 the first result and do not retry after ambiguous arm, signal, or launch.
+
+**Cutover retry result:** exact helper PID `858008` armed against pushed head
+`fab011bc1f390ae71b02e1f4b6c266c63d07037b`, self-unlinked, acquired the
+shared lock, observed the old root idle, and sent one acknowledged `SIGTERM`
+only to old real TUI PID `117499`. The TUI, wrapper, launcher, and watcher
+exited, and exact window `@81` disappeared. No second signal ran.
+
+The helper then exhausted its old-chain wait because supervisor PID `117011`
+remains an exact parent-owned zombie at original start tick `97720707`. It
+recorded
+`stage=old-unwind signal_sent=yes launch_ack=no retry=blocked` in exact
+current-user mode-0600 result
+`/tmp/t335-cutover-retry-result.JMnvZz` and exited. This proves no new tmux
+launch was attempted or acknowledged; do not rerun either helper or signal
+the zombie.
+
+Pane-blind reconciliation finds only exact one-pane windows
+`@80/0:harness` and `@78/1:students`; the owner client remains exact PID
+`804512` but is now selected on Students `@78`. No cause is inferred for that
+selection change. Harness, Students, shared app server
+`2852569/83381863`, and periodic monitor `1903223/95835645` retain their
+identities. Resilient status is `stopped/operator-signal`, watcher status is
+`stopped/operator-stop`, and monitor status is expectedly
+`degraded healthy=2` with no repair action. New Slack-accepted root
+`019fa8db-e4e0-7b81-9c02-a3b0954b5a95` remains durably present at exact
+mode `0600`, with no live `swallow-recovery-next` process.
+
+The missing Swallow window is therefore an expected intermediate effect of
+the authorized old-TUI cutover, but it is not the intended completed state.
+The launch stage did not run because the helper conservatively treated the
+inert zombie as live.
+
+**Next action:** after explicit owner confirmation to repair, freeze one
+launch-only transaction. Never signal or wait on zombie PID `117011`; require
+the old TUI/wrapper/launcher/watcher absent, exact `@81` absent, no live
+runtime process, new root durable and idle, exact unaffected identities, and
+the owner's current client selection unchanged. Then acknowledge exactly one
+detached `2:swallow` launch using runtime `swallow-recovery-next` and
+`--remote-session 019fa8db-e4e0-7b81-9c02-a3b0954b5a95`. Do not retry an
+ambiguous launch. Accept only a new supervisor/watcher/TUI/socket chain and
+two new interval-separated healthy monitor receipts.
 
 ### T-334 — Extend maintenance awareness to remote Linux nodes
 
