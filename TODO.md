@@ -111,7 +111,7 @@ Next free ID: T-338.
 
 ### T-337 — Promote bridge-first managed Codex cutovers
 
-**Phase:** bridge-first policy and skill implemented; full validation pending.
+**Phase:** implementation validated; protected-main publication pending.
 
 The owner requires the bridge-window cutover proven by T-335 to become a
 global Harness behavior instead of remaining incident-local. T-336 is already
@@ -157,8 +157,19 @@ occupied by an independent dirty benchmark worktree and remains untouched.
   Python entry point rather than an executable file, so it was invoked through
   `python3`.
 
-**Next executable action:** commit and push the implementation, then run the
-relevant Harness focused checks and `tests/test-phase1.sh`.
+**Validation checkpoint:**
+
+- `tests/test-recover-codex-unsafe-tail-skill.sh`,
+  `tests/test-claude-takeover.sh`, `tests/test-hardening-audit.sh`,
+  `git diff --check`, and skill `quick_validate.py` pass.
+- `tests/test-phase1.sh` passes; its declared native MPI smoke remains skipped
+  outside a declared MPI environment and is unrelated to this policy-only
+  change.
+- Branch commits `3cdc3cc` and `c82e285` are published on
+  `origin/codex/t337-bridge-first-cutover`.
+
+**Next executable action:** commit and push this validation checkpoint, fetch
+and integrate protected `main`, then open and merge the exact-head pull request.
 
 ### T-335 — Restore Slack tools before the next Swallow run
 
