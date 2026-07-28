@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-328.
+Next free ID: T-329.
 
 ## Current state
 
@@ -107,6 +107,63 @@ Next free ID: T-328.
    successors recorded below.
 
 ## Active tasks
+
+### T-328 — Complete authorized T-311/T-324 deferred hardening
+
+**Phase:** executing.
+
+On 2026-07-28 the owner explicitly authorized the exact remaining deferred
+T-311/T-324 actions and accepted findings:
+
+1. Apply frozen T-311 D-001 to GitHub rulesets `19127355` (Harness),
+   `19716717` (Students), `19734040` (Swallow), and `19127356` (Website):
+   require one approval everywhere, preserve the existing owner/admin bypass
+   actor and every other rule, and restore Students code-owner and last-push
+   approval.
+2. Remove only Riken's shadowed global
+   `/opt/homebrew` `@anthropic-ai/claude-code@0.2.14`, preserving the effective
+   Harness-managed Claude Code `2.1.220`.
+3. Treat only Office's extra detached childless login-shell tmux window as
+   disposable. The existing Local recovery controller may remove only that
+   exact window and then submit the one deferred context refresh without
+   reading pane content or restarting the healthy Codex window.
+4. Reboot Local only during the owner's maintenance window, then recover and
+   validate the control plane.
+5. Accept RI without X11.
+6. Accept Local project-agent doctor as `unknown` while the two live
+   supervisors hold the protected `.nfs` inodes.
+7. Treat the recorded shared-site failed-unit findings as accepted external
+   risks; do not reset, restart, inspect private logs, or mutate them.
+
+The literal authorization says `[maintenance window]` rather than naming an
+actual interval. The Local reboot therefore remains time-gated and must not
+run until the owner supplies a concrete start/end window. This does not block
+the six independent actions or acceptance checkpoints.
+
+Fresh GitHub readback confirms all four exact rulesets are active and retain
+their recorded bypass actor and strict checks. Each currently requires zero
+approvals; Students also has both `require_code_owner_review=false` and
+`require_last_push_approval=false`. Update one repository at a time with a
+complete preimage, change only the authorized pull-request parameters, read
+back the exact ruleset, and restore only that repository's preimage if its
+acceptance check fails.
+
+Riken removal must revalidate the exact stale package tree and any package-owned
+launcher link without following links. Use guarded deletion for the package
+tree and exact single-file unlink only for a matching shadow launcher; verify
+the effective managed executable remains exact version `2.1.220` before and
+after. Do not run blanket npm cleanup or touch another package.
+
+Office removal must require exactly one healthy Codex window plus one
+childless login-shell window in the standard detached session. Remove only the
+exact extra window by immutable tmux identity, then use the reviewed
+remote-agent transport for one deferred revision-specific context refresh.
+Never inspect or capture either pane.
+
+**Next action:** commit this authorization checkpoint, then revalidate and
+apply the four GitHub rulesets one at a time. Continue with Riken and Office,
+record accepted RI/Local/shared-site findings, and leave only the concrete
+Local maintenance-window question unresolved.
 
 ### T-327 — Align MCP approvals and retire blocked phone sessions
 
