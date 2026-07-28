@@ -222,6 +222,37 @@ passes with `healthy=3`, exact order, live detached monitor, current mode-0600
 receipt, and unchanged clients across each monitor mutation before marking
 T-330 complete. Do not force either active root or replay any prompt.
 
+**LIFO monitor regression 2026-07-28:** after the owner said `Proceed`, fresh
+metadata found the monitor receipt at `healthy=0`,
+`order_action=deferred-ambiguous`, with only the exact Students window
+remaining. Harness and Swallow supervisor receipts were both
+`stopped/thread-recovery-blocked`; their windows, supervisors, watchers,
+launchers, and TUIs were absent. Students remained one live one-pane window
+rooted at `/home/rioyokota/harness`. No pane or transcript content was read.
+
+The exact dedicated monitor session still contained one live Python monitor
+pane rooted at the published checkout. A first rollback command failed before
+mutation because its expected argv included the dispatcher while `exec` had
+correctly replaced that process with the libexec path. The corrected exact
+argv/path/one-pane identity gate passed; one `tmux kill-session` stopped only
+`harness-tmux-codex-monitor`, and absence was verified. No managed project
+window or shared tmux server was signaled.
+
+Fresh app-server reads prove both preserved missing roots are `active`, have
+canonical rollout identities, and still reference the same live app server.
+Under `recover-codex-unsafe-tail`, this forbids rollback, fresh-root cutover,
+prompt replay, and thread mutation. Lifecycle-only restoration remains
+permitted after a fresh `idle` or `notLoaded` read, but no launch has run.
+
+**Next action:** keep the periodic monitor stopped. Determine and fix the
+monitor/supervisor race with failing fixtures before republishing it. For live
+recovery, wait for each preserved missing root to become canonical `idle` or
+`notLoaded`, then restore exactly one Harness and one Swallow lifecycle under
+the current published supervisor without prompt input or replay, requiring a
+live watcher/TUI/socket and preserving Students, clients, roots, and the shared
+app server. Do not retry a launch after ambiguous acknowledgement. Resume the
+deferred exact RI accounting query only after this LIFO incident is stable.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
