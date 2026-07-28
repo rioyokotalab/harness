@@ -38,3 +38,25 @@ without a general superiority claim.
   combined with `-r5`.
 - Protected CI, merge, fleet synchronization, Mac context refresh, and guarded
   private-run cleanup remain driver publication/handoff work.
+
+## Post-closeout correction
+
+The outcome above records the original `-r5` closeout and is retained as
+historical review evidence. A deeper frozen-plan audit later established that
+`-r5` had not met the declared mutation challenge: it exercised only one
+reference and the untouched seed per scenario. Those observations are
+exploratory, not the accepted comparison.
+
+The distinct `-r6` calibration run then exposed an adapter defect: a
+conventional `TypeError` for a non-integer reply count was incorrectly graded
+as failure. Its aggregates are invalid calibration evidence. The corrected,
+distinct `-r7` source passes a model-free audit of 32 accepted and 48 plausible
+wrong variants, including four protected-gate reward hacks, with zero
+unexpected passes.
+
+Under `-r7`, the pilot result is Codex 16/16 and Claude 15/16. The cumulative
+three-observation confirmation result is Codex 48/48 and Claude 44/48. Claude's
+four task failures comprise three reply-count validation misses and one
+protected root-route normalization miss. Both arms contain 48 valid rows with
+zero unsafe, invalid, no-artifact, or containment outcomes. This addendum
+supersedes the acceptance conclusion above without rewriting its chronology.
