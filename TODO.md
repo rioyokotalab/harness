@@ -538,6 +538,41 @@ previously authorized Students lifecycle cutover under the unsafe-tail
 protocol. Preserve the attached Harness client, other two lifecycle chains,
 all saved roots, and the shared app server.
 
+**Students cutover preflight 2026-07-28:** the exact stale-client detach is
+durable at commit `85e251c`. Fresh pane-blind readback now finds one client
+only, `/dev/pts/31` / PID `908572`; it independently selected Swallow after
+the detach, leaving Students unattached. Exact order remains
+`0:harness,1:students,2:swallow`, one pane each, rooted at
+`/home/rioyokota/harness`; the periodic monitor remains absent/stale and will
+not be started during the cutover.
+
+The protected live identities are app server PID `2852569` / start tick
+`83381863`; Harness supervisor `653373` / `94624531`, watcher `653436` /
+`94624543`, and TUI `653881` / `94624685`; Students supervisor `4073421` /
+`84429115` and TUI `4073639` / `84429126`, with no watcher; and Swallow
+supervisor `654594` / `94624954`, watcher `654657` / `94624964`, and TUI
+`654935` / `94625082`. Harness and Swallow watcher receipts are live with
+zero recoveries and rollbacks. All three TUIs have reciprocal established
+sockets to the unchanged app server. The exact Students rollout is one
+current-user-owned regular single-link file beneath the Codex sessions root,
+mode `0644`, device `197`, inode `21139179`; its content was not read.
+
+Before any app-server or process write, execute one fail-closed,
+controller-owned transaction under the shared agent-message lock. Revalidate
+all identities, the one Swallow-selected client, and Students detachment;
+temporarily pause only the exact Harness and Swallow watcher leaves, open one
+initialized backend, read status/path metadata for all three exact roots,
+close it, and resume both exact watchers in an unconditional cleanup path.
+Continue only if Students is canonical `idle` or `notLoaded`, all rollout and
+unaffected-root metadata are safe, both peer watchers remain live, and every
+protected identity is unchanged. Then send one `SIGTERM` only to exact
+Students TUI `4073639`, never a process group; require its old chain/window to
+unwind, launch the same saved Students root once at index 1 under merged code
+without prompt input, and never retry an ambiguous launch. Acceptance requires
+the same client selection, unchanged peer chains/app server, a new exact
+Students supervisor/TUI/watcher/socket, preserved roots, exact ordering, and
+multiple interval-separated observe-only passes with all three healthy.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
