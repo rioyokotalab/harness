@@ -188,9 +188,21 @@ at `c06028f82cf55c9dcdcc75f56a5472d9aafc6bec`. No Slack call, fresh Codex
 session, connector/authentication change, process signal, or 12-hour Swallow
 work preceded this checkpoint.
 
-**Next action:** commit and push this authorization checkpoint, then run the
-one fresh-session read-only Slack probe exactly once. Record its value-free
-result and continue only along the matching frozen-plan branch.
+**LIFO probe-root gate:** the first ephemeral process ran from the isolated
+T-335 worktree. Harness's launch sentinel rejected it because that Git root
+is not exactly `$HOME/harness`; the final output contained only the sentinel
+instruction. Event structure proves one local command preflight and no Slack
+tool call. The process exited zero without persisting a session, connector
+access, authentication change, Slack read/write, controller mutation, or
+project change. Its three current-user mode-0600 captures were exact-unlinked
+and absence verified. This is a proven pre-Slack local failure, so one retry
+is safe from the exact clean primary Harness root without weakening the
+sentinel.
+
+**Next action:** commit and push this failed-safe checkpoint, revalidate the
+primary root is exact `$HOME/harness`, clean, and aligned, then run one
+ephemeral read-only Slack probe there. Record its value-free result and
+continue only along the matching frozen-plan branch.
 
 ### T-334 — Extend maintenance awareness to remote Linux nodes
 
