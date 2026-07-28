@@ -689,6 +689,25 @@ head through protected CI, merge without weakening the one-review rule, then
 reactivate the observe-only monitor and require two consecutive healthy
 passes before closing T-330.
 
+**Post-merge cleanup checkpoint:** Local fast-forwarded to merge
+`b78a1a7`. Phase-one validation recreated only
+`/home/rioyokota/harness/libexec/__pycache__` (two entries, 42,659 bytes).
+Guarded manifest
+`/home/rioyokota/harness/libexec/t330-pycache-delete.manifest` validated
+and removed that exact generated directory with protected anchors unchanged;
+the mode-0600 manifest was then exact-unlinked. Local tracked state is clean
+with no residue.
+
+**Monitor activation checkpoint:** the protected Students acceptance is
+published and the live three-window/client/app-server identities remain
+accepted. The next live write is to start exactly one detached
+`harness-tmux-codex-monitor` session rooted at `/home/rioyokota/harness`
+using merged observe-only code and `--interval 30 --enforce-order`. It must
+remain one pane, detached, and never read panes/transcripts or construct an
+app-server backend. Require two interval-separated receipts with
+`healthy=3`, exact order, all three live lifecycle chains, unchanged client
+selection, and no repair/order action before closing T-330.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
