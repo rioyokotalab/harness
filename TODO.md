@@ -470,6 +470,225 @@ app-server mutation ran.
 head, require protected `portable-phase1`, and merge before performing the
 controller-owned Students cutover.
 
+**Protected publication:** PR #382 exact head `5fc414c` passed
+`portable-phase1` in 2m21s and merged through the preserved administrator
+bypass as `ef3de1e8ba6a13b36689c2b9cc0cd20cd7895366`; the one-review rule was
+not changed. Local `main` fast-forwarded to the merge while preserving the
+exact live Students-held `.nfs` inode.
+
+The merged observe-only one-shot reports Harness and Swallow healthy and only
+Students `watcher-absent`, with no order or repair action. Exact order and all
+three one-pane live roots remain correct, and the periodic monitor is absent.
+Both attached clients had selected Swallow at execution start but independently
+returned to Students before the final cutover gate. Under the unsafe-tail
+protocol Students is attached again, so no watcher quiesce, app-server
+connection, process signal, window launch, or client move ran.
+
+**Next action:** complete only safe fleet synchronization and postponed
+guarded housekeeping. The owner must move both attached clients off Students
+again immediately before a controller-owned cutover; revalidate that exact
+precondition rather than relying on this checkpoint.
+
+**Rollout and housekeeping:** one guarded ten-target plan/apply advanced `ab`,
+`ab2`, `ri`, `al`, `rc`, `t4`, `aist`, `home`, `office`, and `riken` from
+`d2d8abf` to `ef3de1e`; every checkout/origin aligned and every transfer
+artifact was absent. ABQ was excluded because both routes remain unavailable.
+The first Aist refresh used the nonexistent repository-root shorthand helper
+and failed locally before contact. The skill-relative helper then returned
+exactly one `status=submitted` for Aist, Home, Office, and Riken; none may be
+retried.
+
+Guarded cleanup removed the exact 944-entry/23,719,639-byte sync clone and six
+clean completed worktree roots whose heads exactly matched merged PRs #368,
+#370, and #378–#381. A second guarded transaction removed only their six
+prunable Git worktree registrations. All targets were verified absent with
+protected anchors unchanged; all three manifests were exact-unlinked. Git now
+lists only the primary checkout and this active closeout worktree. Fresh arg0
+planning reports five live, zero eligible, zero young, zero unexpected, and
+zero removed. The primary checkout remains aligned with only the protected
+Students-held `.nfs` inode untracked.
+
+**Next action:** wait for both clients to select Harness or Swallow, then
+perform the one bounded Students lifecycle cutover and multi-interval
+observe-only acceptance. Do not reactivate the periodic monitor or publish the
+closeout until all three watchers pass.
+
+**Attached-client diagnosis:** the two tmux clients are separate ordinary SSH
+terminal attachments, not Codex control processes. Current `/dev/pts/31`
+client PID `908572` attached at 14:03 JST and remained active through this
+diagnostic. Older `/dev/pts/8` client PID `3503464` attached at 22:48 JST on
+2026-07-27 and last recorded tmux activity at 23:14 JST; its SSH shell remains
+open but idle. Both currently select Harness. No client was detached, moved,
+or given input. If the owner confirms the older attachment is stale, detach
+only exact client `/dev/pts/8`, then revalidate one remaining client before
+the Students cutover.
+
+**Stale-client detachment:** the owner authorized `detach it`. The first exact
+wrapper compared tmux's literal `\t` format output as real tab fields and
+failed before `tmux detach-client`; both clients remained attached. The
+corrected space-delimited identity gate revalidated stale client
+`/dev/pts/8` / PID `3503464` and current client `/dev/pts/31` / PID `908572`.
+One native `tmux detach-client -t /dev/pts/8` removed only the stale
+attachment. Exact postcheck leaves one client, `/dev/pts/31`, unchanged on
+Harness; Students is now unattached. No window, pane, process, or client
+selection changed otherwise.
+
+**Next action:** checkpoint this non-retryable detach, then execute only the
+previously authorized Students lifecycle cutover under the unsafe-tail
+protocol. Preserve the attached Harness client, other two lifecycle chains,
+all saved roots, and the shared app server.
+
+**Students cutover preflight 2026-07-28:** the exact stale-client detach is
+durable at commit `85e251c`. Fresh pane-blind readback now finds one client
+only, `/dev/pts/31` / PID `908572`; it independently selected Swallow after
+the detach, leaving Students unattached. Exact order remains
+`0:harness,1:students,2:swallow`, one pane each, rooted at
+`/home/rioyokota/harness`; the periodic monitor remains absent/stale and will
+not be started during the cutover.
+
+The protected live identities are app server PID `2852569` / start tick
+`83381863`; Harness supervisor `653373` / `94624531`, watcher `653436` /
+`94624543`, and TUI `653881` / `94624685`; Students supervisor `4073421` /
+`84429115` and TUI `4073639` / `84429126`, with no watcher; and Swallow
+supervisor `654594` / `94624954`, watcher `654657` / `94624964`, and TUI
+`654935` / `94625082`. Harness and Swallow watcher receipts are live with
+zero recoveries and rollbacks. All three TUIs have reciprocal established
+sockets to the unchanged app server. The exact Students rollout is one
+current-user-owned regular single-link file beneath the Codex sessions root,
+mode `0644`, device `197`, inode `21139179`; its content was not read.
+
+Before any app-server or process write, execute one fail-closed,
+controller-owned transaction under the shared agent-message lock. Revalidate
+all identities, the one Swallow-selected client, and Students detachment;
+temporarily pause only the exact Harness and Swallow watcher leaves, open one
+initialized backend, read status/path metadata for all three exact roots,
+close it, and resume both exact watchers in an unconditional cleanup path.
+Continue only if Students is canonical `idle` or `notLoaded`, all rollout and
+unaffected-root metadata are safe, both peer watchers remain live, and every
+protected identity is unchanged. Then send one `SIGTERM` only to exact
+Students TUI `4073639`, never a process group; require its old chain/window to
+unwind, launch the same saved Students root once at index 1 under merged code
+without prompt input, and never retry an ambiguous launch. Acceptance requires
+the same client selection, unchanged peer chains/app server, a new exact
+Students supervisor/TUI/watcher/socket, preserved roots, exact ordering, and
+multiple interval-separated observe-only passes with all three healthy.
+
+The first transaction attempt failed at its initial read-only client gate,
+before acquiring the shared lock, pausing a watcher, or opening the app-server
+connection: `/dev/pts/31` had independently moved from Swallow back to exact
+Harness window `@76`. Both peer watchers remained running at their recorded
+start ticks and Students remained unattached. No signal, process, app-server,
+tmux, thread, name, or rollout mutation occurred, so one retry is safe after
+accepting either exact unaffected Harness/Swallow selection as the preimage
+and requiring that selected window to remain unchanged through the
+transaction.
+
+The corrected dynamic-client transaction acquired the shared lock, confirmed
+both exact watcher leaves held no socket, paused only those leaves, opened one
+initialized backend, read all three exact roots, closed it, and resumed both
+watchers through the unconditional cleanup path. Harness, Students, and
+Swallow each reported canonical `active` with safe rollout identity; Students
+remained exact mode `0644`, device `197`, inode `21139179`. No thread or
+lifecycle write ran. Six seconds after resume, both peer watcher receipts
+remained `watching/thread-active` with zero recovery/rollback counts, every
+recorded process/start identity and window remained live, and the sole client
+remained on exact Harness.
+
+A separate safe-structure scan of the Students rollout inspected only record
+types and turn identifiers, never message or tool content. It found balanced
+latest lifecycle metadata with no active turn (`532` task starts, `516`
+completions, and `14` aborts). The recovery protocol explicitly permits
+lifecycle-only repair for a canonical `active` root when the defect is
+separately proven; Students' absent watcher is proven, no turn is active, and
+no thread mutation is planned. The final signal gate must revalidate that same
+no-active-turn structure, exact rollout inode, exact process/window/client
+identities, and both peer watchers before sending the one allowed leaf
+`SIGTERM`.
+
+The first final signal gate stopped before `kill`: while the rollout scan still
+proved no active turn, the sole client had independently moved onto exact
+Students window `@50`. The follow-on absence poll was entered because its
+shell lacked fail-fast after the rejected Python gate; it only performed
+read-only PID/window checks and timed out as expected. Students TUI `4073639`,
+both peer watchers, all three windows, and the app server remain live at their
+recorded identities. No signal or other mutation occurred. Wait for the owner
+client to select Harness or Swallow, then rerun the exact final gate; the
+signal remains unsent and one attempt remains authorized.
+
+Two further final gates also stopped before `kill`: the first required the
+transient Swallow preimage after the client had already moved to Harness; the
+corrected dynamic gate then found the client traversing Students. A subsequent
+60-second pane-blind wait never observed the client stably on Harness or
+Swallow for two seconds and ended with `/dev/pts/31` on Students. Every gate
+was read-only, exact TUI `4073639` remains live, and the one authorized signal
+remains unsent. Do not move the owner client automatically. The owner must
+leave it on `0:harness` long enough to send a new `go`; then rerun the stable
+unattached gate and continue without another app-server read unless rollout
+metadata or protected identities drift.
+
+**External Students teardown 2026-07-28:** after the owner supplied the new
+`go` and the sole client was observed on Harness, fresh metadata found the
+Students window absent, its supervisor PID `4073421` as a parent-owned zombie
+at the recorded start tick `84429115`, its TUI PID `4073639` absent, and the
+Students recovery receipt absent. The resilient status classified the chain
+`stopped/operator-signal`. Harness and Swallow remain live with exact
+supervisor/watcher/TUI identities, `thread-idle` watcher receipts, and the
+unchanged app server; the client remains on Harness. No cause is inferred.
+Treat the old signal as externally/ambiguously sent: never signal the zombie,
+never retry the old leaf, and record its reaping boundary. Revalidate the
+saved Students root and rollout once under the all-watchers-quiesced
+controller transaction, then launch the same root exactly once only if the
+fresh status and lifecycle gates pass.
+
+**Post-teardown root read:** with the client on exact Harness and only the
+Harness/Swallow windows present, the controller paused only their watcher
+leaves, read all three roots through one initialized backend, closed it, and
+resumed both watchers unconditionally. Harness, Students, and Swallow were
+all canonical `idle`; Students retained the exact current-user-owned
+single-link rollout at mode `0644`, device `197`, inode `21139179`.
+The exact peer process/start identities, two-window topology, app server, and
+Harness client remained unchanged after a three-second readback. The
+Students root is lifecycle-safe for one prompt-free replacement launch.
+
+**Next action:** launch exactly one detached `students` window at index 1
+using runtime name `students` and the same saved remote-session ID
+`019f7fea-4f00-7681-910d-81ae99a77143`; do not send input or retry an
+ambiguous launch. Require a new supervisor, watcher, TUI, reciprocal socket,
+idle root, exact order, unchanged Harness/Swallow/app-server/client
+identities, and no second signal to the old zombie.
+
+**Students replacement acceptance 2026-07-28:** after the fresh idle-root
+read, exactly one detached `students` window was launched at index 1 with
+the same runtime name and remote-session ID. The launch was acknowledged once
+and was not retried. New supervisor PID `1638582`, watcher `1638660`, and
+real TUI PID `1638835` are live at their exact captured start ticks; the
+watcher receipt is `watching/thread-idle`, recovery and rollback counts are
+zero, and the saved root remains canonical idle. The new TUI has an
+established reciprocal socket with unchanged app server PID `2852569`.
+Three interval-separated pane-blind samples preserved exact order
+`0:harness,1:students,2:swallow`, one pane per window, the owner client on
+Harness, all three supervisor/watcher/TUI chains, and the unchanged app
+server. The old Students supervisor was observed first as a parent-owned
+zombie and then reaped; it was never signaled again. No prompt input, thread
+mutation, root/name change, pane read, or transcript read occurred.
+
+**Next action:** retain the periodic monitor stopped until this acceptance is
+published with the closeout checks. Then run the focused monitor/recovery
+tests, complete clean phase-one validation, publish through protected CI, and
+only afterward reactivate the observe-only monitor for two healthy passes.
+
+**Validation checkpoint 2026-07-28:** the focused monitor suite and focused
+thread-recovery suite passed. A clean `tests/test-phase1.sh` run passed all
+75 parallel focused shards, guarded-delete coverage, and every integration
+gate; only the declared native MPI smoke skipped outside an MPI allocation.
+The closeout checkout remained clean during the run, and no live monitor or
+managed window was started, stopped, signaled, moved, or read by the tests.
+
+**Next action:** commit this validation evidence, publish the exact closeout
+head through protected CI, merge without weakening the one-review rule, then
+reactivate the observe-only monitor and require two consecutive healthy
+passes before closing T-330.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
