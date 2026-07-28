@@ -1,4 +1,4 @@
-# Seven-node hidden-home backup and restore gate
+# Eight-node hidden-home backup and restore gate
 
 This workflow backs up every top-level `~/.*` path, including secret-bearing
 paths, without putting their names or contents in Git. Unified non-secret
@@ -12,7 +12,7 @@ primary repository on its selected persistent storage. Encrypted repository
 bytes receive a second, versioned copy at a different site: remote primaries go
 to the current node's safe NFS root, while the current node's primary goes to
 T4. A versioned empty destination avoids synchronization with deletion and
-keeps an independently checkable generation. All seven declared routes are
+keeps an independently checkable generation. All eight declared routes are
 active; each node must still pass its own manual initialization, full-data
 check, restore, and independent-generation gate before scheduling or cleanup.
 

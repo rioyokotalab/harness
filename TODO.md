@@ -111,7 +111,7 @@ Next free ID: T-338.
 
 ### T-336 — Benchmark current Codex and Claude Harness development
 
-**Phase:** complete after this rollout checkpoint reaches protected `main`.
+**Phase:** complete.
 
 The owner asked for a ten-hour, evidence-backed comparison of whether current
 Claude Code can develop Harness as effectively and safely as current Codex,
@@ -347,11 +347,31 @@ merge.
   targets are absent, and the manifest was exact-unlinked. Published
   closed-schema aggregates and the task worktree remain.
 
-**Next executable action:** publish this closeout-only ledger checkpoint
-through protected exact-head CI, guarded-sync the resulting merge to the same
-ten clean checkouts without contacting ABQ, submit one merge-specific
-pane-blind context refresh to each advanced Mac, then record fresh canonical
-fleet health. No benchmark run or private evidence may be recreated.
+**Final rollout checkpoint 2026-07-29 03:10 JST:**
+
+- The closeout-only PR #398 exact head
+  `7dd1055a70041680810b62e944919c8d264ff386` passed protected
+  `portable-phase1` in 2m23s and merged normally as
+  `c55239d0540513795f54008e3d09a0a6c0c32020`.
+- The clean Local control checkout fast-forwarded from the first merge to the
+  closeout merge. One guarded ten-target fleet-sync plan and apply advanced
+  `ab`, `ab2`, `ri`, `al`, `rc`, `t4`, `aist`, `home`, `office`, and `riken`
+  from the first merge to the closeout merge with exact head/origin agreement.
+  A repeat plan reports `KEEP` for all ten; ABQ remained excluded and was not
+  contacted during its recorded maintenance stop.
+- The remote-agent transport submitted exactly one closeout-merge-specific,
+  pane-blind context refresh to each of Aist, Home, Office, and Riken. All four
+  returned `status=submitted`, the private input was exact-unlinked, and none
+  may be retried.
+- A detached cold clone of exact closeout merge `c55239d` passed the benchmark
+  focused suite in native and portable-CI modes, result/source digest checks,
+  the public-repository, fleet-inventory, client-comparison, and Claude
+  takeover tests, and the complete `tests/test-phase1.sh` suite. Its declared
+  native MPI smoke remained skipped outside a declared MPI environment. The
+  audit clone was then guarded-deleted (5,494 entries; 68,951,271 bytes) with
+  unchanged protected anchors and an exact-unlinked manifest.
+- T-336 is closed. The scored aggregates and runner remain frozen; no private
+  benchmark root or private evidence should be recreated.
 
 ### T-337 — Promote bridge-first managed Codex cutovers
 
