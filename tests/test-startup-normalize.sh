@@ -170,10 +170,26 @@ alias_names=$(sed -n 's/^alias \([A-Za-z_][A-Za-z0-9_]*\)=.*/\1/p' \
 att_alias=$(bash -c '. "$1"; alias att' _ "$ROOT/shell/common-aliases.sh")
 [ "$att_alias" = "alias att='tmux attach -t harness'" ] ||
     fail 'common att alias changed'
-codex_alias=$(bash -c '. "$1"; alias codex' _ "$ROOT/shell/common-aliases.sh")
-[ "$codex_alias" = \
-    "alias codex='harness codex-resilient --run --name harness --last'" ] ||
-    fail 'common codex alias is not persistent'
+co_alias=$(bash -c '. "$1"; alias co' _ "$ROOT/shell/common-aliases.sh")
+[ "$co_alias" = \
+    "alias co='harness codex-resilient --run --name harness --last'" ] ||
+    fail 'common co alias is not persistent'
+if bash -c '. "$1"; alias codex >/dev/null 2>&1' \
+    _ "$ROOT/shell/common-aliases.sh"; then
+    fail 'common aliases still hide native codex'
+fi
+native_bin=$TEMP_DIR/native-bin
+mkdir "$native_bin"
+cat >"$native_bin/codex" <<'EOF'
+#!/bin/sh
+printf '%s\n' 'native-codex-version'
+EOF
+chmod 755 "$native_bin/codex"
+native_codex_version=$(PATH="$native_bin:/usr/bin:/bin" \
+    bash -c 'shopt -s expand_aliases; . "$1"; eval "codex --version"' \
+    _ "$ROOT/shell/common-aliases.sh")
+[ "$native_codex_version" = native-codex-version ] ||
+    fail 'native codex version is not reachable'
 sudo_alias=$(bash -c '. "$1"; alias sudo' _ "$ROOT/shell/common-aliases.sh")
 [ "$sudo_alias" = "alias sudo='sudo '" ] ||
     fail 'common sudo alias lost trailing-space alias expansion'

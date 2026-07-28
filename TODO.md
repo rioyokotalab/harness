@@ -148,6 +148,19 @@ and exact-unlinked its mode-0600 manifest.
 assertions, and continue through the frozen implementation and protected fleet
 rollout.
 
+Failing-first startup and login tests stopped because `co` was absent. The
+implementation now replaces only the tracked `codex` alias with alphabetically
+ordered `co`, changes `harness_remote_codex` to execute `co`, and documents
+that native `codex` remains available. Focused coverage requires the exact
+resilient `co` expansion, rejects any `codex` alias, executes a fake native
+`codex --version`, and checks both declared and future-profile remote helper
+commands. Diff hygiene, Bash syntax, warning-level ShellCheck, startup
+normalization, and the focused Codex login-node suite pass.
+
+**Next action:** commit this coherent implementation, run the complete clean
+phase-one suite, then publish through exact-head protected CI before changing
+any managed checkout.
+
 ### T-331 — Restore disappeared Local Harness tmux window
 
 **Phase:** complete.

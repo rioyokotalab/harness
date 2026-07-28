@@ -88,11 +88,14 @@ facts, failures, files, validation, and the next executable action in
 
 ### Survive transient Codex service failures
 
-Inside an interactive Harness shell, the common `codex` alias resumes the
-repository's most recent chat under the foreground resilience supervisor:
+Inside an interactive Harness shell, the common `co` alias resumes the
+repository's most recent chat under the foreground resilience supervisor.
+The unaliased `codex` command remains available for native subcommands such as
+`codex --version`:
 
 ```bash
-codex
+co
+codex --version
 harness codex-resilient --plan --name harness --last
 harness codex-resilient --run --name harness --last
 ```

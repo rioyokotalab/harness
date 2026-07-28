@@ -46,11 +46,12 @@ The managed Darwin route also exports that fixed Homebrew bin as
 An installer-based update launched by Codex therefore inherits the reviewed
 destination and does not add its default local-bin block to a shell profile.
 The managed live launcher is `~/.local/bin/harness-codex`. Fresh managed
-interactive Bash shells define a shell-local `codex` function that calls it;
-non-interactive and batch shells retain native resolution. The wrapper uses an
-absolute native path, preventing recursion or silent fallback, and preserves
-all arguments and subcommands. Client-persisted project trust stays only in the
-private live regular file and never dirties public Git.
+interactive Bash shells define `co` as the resilient shorthand and leave
+`codex` unaliased, so native subcommands such as `codex --version` resolve
+normally. Non-interactive and batch shells also retain native resolution. The
+wrapper uses an absolute native path, preventing recursion or silent fallback,
+and preserves all arguments and subcommands. Client-persisted project trust
+stays only in the private live regular file and never dirties public Git.
 
 ## Transient-service supervisor
 
