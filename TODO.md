@@ -152,6 +152,52 @@ from public behavior and focused fixtures whether a watcher transport failure
 needs a bounded retry correction; do not weaken fail-closed handling for
 unsafe thread state.
 
+**Live restoration:** the final identity gate passed at published merge
+`dacbde5523f5c7c3d63ca790d5841daf6d687c94`: accepted root remained
+`notLoaded` with valid rollout identity, shared app server `2852569` remained
+live, exact old process chain was absent, and only Harness/Students windows
+existed. The first native `tmux new-window -t harness` call failed before
+creation because tmux resolved occupied index 0; no process or window changed
+and retry was safe with an explicit free index.
+
+One exact launch at free index 2 created window/pane `@64`/`%64` named
+`swallow` without starting a turn or replaying a prompt. Supervisor PID
+`3086577` start tick `93621307`, watcher PID `3086675` tick `93621317`,
+launcher PID `3086869` and wrapper PID `3086871` tick `93621429`, and real
+TUI PID `3087000` tick `93621772` are live. Status is
+`running/remote-explicit` plus `watching/thread-idle`, attempt/delay and
+recovery/rollback counts are zero, accepted root is now `idle`, and reciprocal
+socket inodes `187143781`/`187147378` connect the TUI only to unchanged app
+server PID `2852569` / tick `83381863`. Tmux has exactly Harness, Students,
+and Swallow one-pane windows; both attached clients remain on Harness.
+
+**Concrete lifecycle defect:** independent code inspection found that the
+watcher's interval loop checked `time.monotonic() < deadline` and then read
+the clock again inside `time.sleep(deadline - time.monotonic())`. Crossing
+the deadline between those reads can pass a negative delay to `sleep`, raise
+an uncaught `ValueError`, leave the last watcher receipt stale, and trigger
+the supervisor's observed fail-closed window retirement. This race is
+consistent with the incident, although the value-free receipts cannot prove
+the historical watcher's exact exception.
+
+The correction computes one remaining duration per loop, exits when it is
+non-positive, and otherwise sleeps for the smaller of 0.2 seconds or that
+positive remainder. A deterministic fake clock crosses the deadline between
+reads and requires no negative sleep. The focused thread-recovery and
+resilient-supervisor suites, shell syntax, warning-level ShellCheck, and diff
+hygiene pass. One accidental Python bytecode cache with two entries and
+46,728 bytes was removed through guarded manifest
+`t329-pycache-delete.manifest`; protected anchors were unchanged, the target
+was verified absent, and the manifest was exact-unlinked.
+
+**Next action:** commit the correction and this live checkpoint, run the
+complete clean phase-one suite, publish through exact-head protected CI, then
+guarded-sync the clean fleet. Because the active Swallow process still
+executes the old inode, after publication revalidate its exact idle chain and
+signal only its real TUI leaf once; relaunch the same root/window under the
+merged correction without prompt replay. Preserve the accepted and poisoned
+roots, app server, Harness, Students, clients, and unrelated work.
+
 ### T-328 — Complete authorized T-311/T-324 deferred hardening
 
 **Phase:** time-gated; concrete outage dates received, safe Local power
