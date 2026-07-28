@@ -161,6 +161,17 @@ normalization, and the focused Codex login-node suite pass.
 phase-one suite, then publish through exact-head protected CI before changing
 any managed checkout.
 
+Implementation commit `3ca09a4` passes the complete clean phase-one suite: all
+focused shards, guarded-delete coverage, and every integration gate passed;
+only the declared native MPI smoke skipped outside an MPI environment. The
+task worktree remained clean during validation, and no managed checkout or
+live shell changed.
+
+**Next action:** commit this validation checkpoint, fetch and push the exact
+task head, require protected `portable-phase1`, merge through the preserved
+administrator bypass without changing review rules, then guarded-sync and
+validate the reachable fleet.
+
 ### T-331 — Restore disappeared Local Harness tmux window
 
 **Phase:** complete.
