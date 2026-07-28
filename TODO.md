@@ -677,6 +677,18 @@ published with the closeout checks. Then run the focused monitor/recovery
 tests, complete clean phase-one validation, publish through protected CI, and
 only afterward reactivate the observe-only monitor for two healthy passes.
 
+**Validation checkpoint 2026-07-28:** the focused monitor suite and focused
+thread-recovery suite passed. A clean `tests/test-phase1.sh` run passed all
+75 parallel focused shards, guarded-delete coverage, and every integration
+gate; only the declared native MPI smoke skipped outside an MPI allocation.
+The closeout checkout remained clean during the run, and no live monitor or
+managed window was started, stopped, signaled, moved, or read by the tests.
+
+**Next action:** commit this validation evidence, publish the exact closeout
+head through protected CI, merge without weakening the one-review rule, then
+reactivate the observe-only monitor and require two consecutive healthy
+passes before closing T-330.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
