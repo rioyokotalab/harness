@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-334.
+Next free ID: T-335.
 
 ## Current state
 
@@ -108,6 +108,41 @@ Next free ID: T-334.
    successors recorded below.
 
 ## Active tasks
+
+### T-334 — Extend maintenance awareness to remote Linux nodes
+
+**Phase:** executing.
+
+The owner asked to apply T-333's official-maintenance reconciliation to the
+other managed remote Linux nodes. Scope is exact logical nodes `ab`, `ab2`,
+`ri`, `al`, `rc`, and `t4`; preserve ABQ's existing behavior. The frozen
+source matrix, negative evidence, execution sequence, safety gates, rollback,
+and acceptance criteria are in
+`docs/plans/t334-linux-maintenance-sources.md`.
+
+Official readback on 2026-07-28 establishes one new full-service window:
+ABCI 3.0 will suspend all services from 2026-08-21 10:00 through
+2026-08-28 13:00 JST. Register that exact half-open interval for both `ab`
+logical accounts. CSCS Daint has no active or upcoming maintenance in the
+official status feed. TSUBAME4 returned to normal operation after today's
+sequential login-node maintenance and therefore remains probeable. RIKYU and
+R-CCS Cloud expose official support/service portals but no verifiable public
+maintenance feed; retain unknown classification when those sources cannot
+resolve an outage.
+
+Generalize the registry-backed classifier to every remote Linux logical node,
+add one reviewed official source per node, support multiple non-overlapping
+future windows, skip only exact active full-route stops, and include the
+official URL on every unexpected remote Linux failure. Do not scrape websites
+at runtime, suppress partial service work, change route semantics, inspect
+authenticated portal content, or contact ABQ during its active stop.
+
+The owner's direct request is the explicit execution authorization for this
+frozen scope; no material decision remains.
+
+**Next action:** commit and push this evidence/plan checkpoint, add
+failing-first generalized maintenance and source-registry fixtures, then
+implement the narrow classifier before full validation.
 
 ### T-333 — Make fleet health maintenance-aware
 
