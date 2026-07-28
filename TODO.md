@@ -4221,6 +4221,14 @@ remains classified only as accounting unavailable, not as a missing job. No
 scheduler state changed and successor `10386` remains untouched. A later
 exact-ID retry remains safe.
 
+**2026-07-28 follow-up read-only retry:** the exact native command
+`ssh -x ri 'sacct -n -X -j 7242 --format=JobIDRaw,JobName,User,State,ExitCode,Start,End'`
+again returned exit 1 with zero stdout bytes and 243 private stderr bytes.
+Stderr was not read; its mode-0600 capture and the empty stdout capture were
+exact-unlinked with no residue. This remains accounting unavailable, not
+evidence that job `7242` is missing. No scheduler state changed and
+successor `10386` remains untouched; another exact-ID retry remains safe.
+
 **2026-07-27 AL checkpoint:** exact job `4238363` matched
 `hal2607260100` and completed with `0:0`. Private state is active/success with
 a present 64-hex snapshot, warning output is silent, and exact successor
