@@ -3728,6 +3728,13 @@ finding, and any future change requires separate explicit authorization for
 the exact repository and ruleset. No hosting-service write ran during this
 checkpoint.
 
+Policy commit `7af1ce5` adds the same guard to root working agreements and
+the shared fleet-hardening skill, with focused regression coverage. The
+system skill validator, focused hardening-skill test, warning-level
+ShellCheck, diff hygiene, and complete clean `tests/test-phase1.sh` pass; only
+the declared native MPI smoke skipped outside an MPI environment. Publish
+through protected exact-head CI without changing any live ruleset.
+
 Audit and harden all managed Linux and Mac nodes plus `harness`, `students`,
 `swallow`, and `website`, while each repository owns its own task, branch,
 tests, publication route, and handoff. Work ends at 2026-07-26 05:00 JST.
