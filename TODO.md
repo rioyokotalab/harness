@@ -111,7 +111,7 @@ Next free ID: T-336.
 
 ### T-335 — Restore Slack tools before the next Swallow run
 
-**Phase:** validating in the refreshed Swallow thread.
+**Phase:** blocked on same-root Slack tool availability.
 
 The owner requires functional Slack access before authorizing the planned
 12-hour Swallow TODO run. This task is a connector-readiness gate only; no
@@ -328,6 +328,31 @@ probe from its newly loaded tool catalog. Require workspace
 `RioYokotaLab/T1251HXB4`, channel `swallow/C058CUU8HK8`, and zero Slack
 writes before starting the separate 12-hour task. Do not repeat the
 already-successful ephemeral probe or refresh the lifecycle again.
+
+**Same-thread acceptance result:** after the owner confirmed the controller
+work was done, this exact resumed Swallow thread reconciled clean pushed
+checkpoint `217ff8f139caf401ad077457cb863cdb0cda2ec4`. Its loaded skill
+catalog includes the Slack skill, but its callable tool catalog contains zero
+Slack methods. Both a broad read-only discovery for Slack workspace/channel
+tools and an exact discovery for `slack_list_workspaces` /
+`slack_search_channels` returned zero tools. Therefore no direct Slack call
+could run and same-thread acceptance did not pass. No ephemeral probe was
+repeated; no Slack read or write, authentication change, process/tmux/app-
+server/recovery-controller mutation, prompt replay, or 12-hour project work
+occurred.
+
+The controller's one lifecycle refresh succeeded exactly as recorded, but it
+did not make connector methods callable in the preserved saved root. The
+fresh-session result still proves the installed connector is healthy; the
+remaining failure is specific to this preserved root/session capability
+catalog. Do not repeat the same lifecycle refresh or the already-successful
+ephemeral probe.
+
+**Next action:** before the 12-hour run, freeze an owner choice between
+starting a new durable Slack-capable Swallow root (recommended, because the
+fresh process already passed) and a separately planned shared app-server
+investigation. Preserve this root idle until that choice is recorded. No
+benchmark run is authorized by this checkpoint.
 
 ### T-334 — Extend maintenance awareness to remote Linux nodes
 
