@@ -217,6 +217,11 @@ Claude path, managed version `2.1.220`, and only exact task manifest
 that single reviewed manifest, verify absence, and do not repeat package or
 link removal.
 
+**Office LIFO metadata gate:** the first read-only tmux inventory stopped
+before listing state because its remote double-quoted awk expression expanded
+`$2` under `set -u`. No tmux, process, pane, or repository state changed.
+Retry is safe with direct native tmux format output and no shell-field parser.
+
 ### T-327 — Align MCP approvals and retire blocked phone sessions
 
 **Phase:** complete.
