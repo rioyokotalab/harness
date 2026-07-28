@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-331.
+Next free ID: T-332.
 
 ## Current state
 
@@ -107,6 +107,37 @@ Next free ID: T-331.
    successors recorded below.
 
 ## Active tasks
+
+### T-331 — Restore disappeared Local Harness tmux window
+
+**Phase:** executing bounded lifecycle-only recovery.
+
+At 2026-07-28 18:54 JST the owner reported that Local's canonical
+`0:harness` window had disappeared. Pane-blind metadata confirms the shared
+`harness` tmux server and sole client remain live, but only the exact
+`1:students` and `2:swallow` windows remain. Both unaffected windows retain
+one live resilient supervisor, recovery watcher, TUI, and the existing shared
+remote-control app server. The Harness resilient receipt is stale because its
+recorded supervisor is absent, and its recovery receipt is absent. No pane or
+transcript content was read, and no cause is inferred.
+
+The accepted Harness runtime name is `harness` and its exact saved
+remote-session ID remains
+`019fa3ae-6ad0-7642-aeca-b7b52421f576`. The published periodic monitor is
+observe-only by design; its current degraded receipt correctly reports two
+healthy windows and makes no repair attempt.
+
+**Next action:** revalidate the exact two unaffected lifecycle chains, sole
+client, free index 0, saved Harness identity, shared app server, and stale
+Harness supervisor. Under one fail-closed transaction, temporarily pause only
+the two unaffected watcher leaves, launch exactly one detached `0:harness`
+window with the published resilient supervisor and same saved root, and resume
+both watcher leaves unconditionally. Do not send input, replay a prompt,
+create or rename a root, read a pane/transcript, restart the app server, or
+retry an ambiguous launch. Accept only exact three-window order, unchanged
+client selection and peer identities, a new Harness
+supervisor/watcher/TUI/socket chain, and healthy observe-only monitor
+readback.
 
 ### T-330 — Monitor and order Local tmux Codex windows
 
