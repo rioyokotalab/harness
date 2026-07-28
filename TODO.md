@@ -160,10 +160,27 @@ exact extra window by immutable tmux identity, then use the reviewed
 remote-agent transport for one deferred revision-specific context refresh.
 Never inspect or capture either pane.
 
-**Next action:** commit this authorization checkpoint, then revalidate and
-apply the four GitHub rulesets one at a time. Continue with Riken and Office,
-record accepted RI/Local/shared-site findings, and leave only the concrete
-Local maintenance-window question unresolved.
+**GitHub ruleset result:** complete. Fresh preimages were read immediately
+before the authorized writes. Exact one-repository PUT/readback transactions
+changed only the pull-request review parameters:
+
+- Harness `19127355`, Swallow `19734040`, and Website `19127356` now require
+  one approval and retain exact repository-role `5` / `always` bypasses.
+- Students `19716717` now requires one approval,
+  `require_code_owner_review=true`, and
+  `require_last_push_approval=true`; exact user `836314` /
+  `pull_request` bypass is unchanged.
+
+All four remain active with the same target conditions, deletion and
+non-fast-forward protection, linear history, strict required checks,
+conversation resolution, stale-review dismissal, allowed merge methods, and
+other pull-request parameters. Every immediate readback passed, so no rollback
+write ran.
+
+**Next action:** revalidate and remove only Riken's exact stale global Claude
+package through the guarded boundary while preserving effective `2.1.220`.
+Then reconcile Office, record accepted RI/Local/shared-site findings, and
+leave only the concrete Local maintenance-window question unresolved.
 
 ### T-327 — Align MCP approvals and retire blocked phone sessions
 
