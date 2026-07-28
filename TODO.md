@@ -110,7 +110,7 @@ Next free ID: T-331.
 
 ### T-330 — Monitor and order Local tmux Codex windows
 
-**Phase:** ready-for-go.
+**Phase:** executing.
 
 The owner requested periodic pane-blind health checks for every managed Codex
 window in Local's `harness` tmux session and enforcement of canonical order
@@ -147,9 +147,14 @@ The frozen planning detail, failure gates, execution sequence, rollback, and
 acceptance criteria are in
 `docs/plans/t330-tmux-codex-monitor.md`.
 
-**Next action:** wait for explicit owner `go`, `proceed`, or `execute`. Then
-implement and validate the frozen plan in its recorded order. No tmux,
-process, app-server, thread, service, or live monitor mutation has run.
+At 2026-07-28 10:52 JST the owner gave explicit `go`. Fresh Git and tmux
+readback still matches the frozen preimage: clean task branch, exact ordered
+windows `@60:harness`, `@50:students`, `@65:swallow`, and both attached
+clients on Harness. No live monitor or lifecycle mutation has run.
+
+**Next action:** implement the dispatcher, monitor, and deterministic focused
+fixtures. Then run the frozen validation sequence before any publication or
+live activation.
 
 ### T-329 — Restore disappeared Swallow tmux window
 
