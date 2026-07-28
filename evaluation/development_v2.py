@@ -29,7 +29,7 @@ EVAL_ROOT = ROOT / "evaluation"
 SUITE_ROOT = EVAL_ROOT / "development-v2"
 CORPUS_PATH = SUITE_ROOT / "corpus.json"
 REPORT_SCHEMA = SUITE_ROOT / "report.schema.json"
-EXPERIMENT_ID = "t336-harness-development-v2-20260729-r6"
+EXPERIMENT_ID = "t336-harness-development-v2-20260729-r7"
 CLIENTS = ("codex", "claude")
 EXPECTED_TASKS = (
     "code-boundary",
@@ -727,6 +727,8 @@ print(json.dumps(envelope, sort_keys=True))
             return envelope.get("value")
         if envelope.get("error_type") == "ValueError":
             raise ValueError("sandboxed subject raised ValueError")
+        if envelope.get("error_type") == "TypeError":
+            raise TypeError("sandboxed subject raised TypeError")
         raise RuntimeError(f"sandboxed subject raised {envelope.get('error_type', 'unknown')}")
     finally:
         for artifact in (stdout, stderr):
@@ -779,7 +781,7 @@ def grade_task(task_id: str, workspace: Path) -> list[str]:
                 try:
                     operation()
                     failures.append(label)
-                except ValueError:
+                except (TypeError, ValueError):
                     pass
         elif task_id == "ci-gate-preserve":
             fn = lambda value: call_module(workspace, "routes.py", "normalize_route", value)

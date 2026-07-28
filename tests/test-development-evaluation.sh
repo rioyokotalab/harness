@@ -10,7 +10,7 @@ python3 -c 'import sys; compile(open(sys.argv[1], encoding="utf-8").read(), sys.
 python3 -c 'import sys; compile(open(sys.argv[1], encoding="utf-8").read(), sys.argv[1], "exec")' \
     "$MUTATION_AUDIT"
 python3 "$RUNNER" validate |
-    grep -F 'VALID experiment=t336-harness-development-v2-20260729-r6 scenarios=16 decision_types=8' \
+    grep -F 'VALID experiment=t336-harness-development-v2-20260729-r7 scenarios=16 decision_types=8' \
         >/dev/null
 if [ "${HARNESS_PORTABLE_CI:-0}" = 1 ]; then
     for declaration in \

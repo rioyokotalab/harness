@@ -417,6 +417,22 @@ merge.
   pilot has complete containment/evidence integrity and never replay an
   acknowledged row.
 
+**Exception-contract correction 2026-07-29 05:14 JST:**
+
+- The complete `-r6` run retained valid containment and 48 valid observations
+  per arm, but it exposed one calibration defect. Codex correctly rejected a
+  non-integer reply count with `TypeError`; the sandbox adapter surfaced only
+  `ValueError` as an accepted rejection, producing two false task failures.
+  Claude's one route-normalization failure and one upper-bound clamp are
+  genuine under the strengthened properties.
+- The closed `-r6` pilot and confirmation aggregates are retained as invalid
+  calibration evidence and no acknowledged row will be replayed. Distinct
+  `-r7` maps both conventional rejection types and changes the accepted
+  alternative mutation to prove `TypeError` acceptance. All other corpus,
+  grading, containment, order, client, and outcome declarations remain fixed.
+- Next run the complete model-free gate, commit clean `-r7` source, and start
+  its distinct pilot at `/tmp/harness-eval-t336-development-v2-r7`.
+
 ### T-337 — Promote bridge-first managed Codex cutovers
 
 **Phase:** complete after this rollout checkpoint reaches protected `main`.

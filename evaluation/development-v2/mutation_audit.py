@@ -142,7 +142,7 @@ def accepted_alternative(workspace: Path, task_id: str) -> list[str]:
             '''"""Produce small event records."""\n\nMAX_REPLY_COUNT = 8\n\n'''
             '''def _reply_count(value):\n'''
             '''    if isinstance(value, bool) or not isinstance(value, int):\n'''
-            '''        raise ValueError("invalid reply count")\n'''
+            '''        raise TypeError("invalid reply count")\n'''
             '''    if not 0 <= value <= MAX_REPLY_COUNT:\n'''
             '''        raise ValueError("invalid reply count")\n'''
             '''    return value\n\n\n'''
@@ -158,7 +158,7 @@ def accepted_alternative(workspace: Path, task_id: str) -> list[str]:
             '''    elif schema == 2:\n        count = record.get("reply_count")\n'''
             '''    else:\n        raise ValueError("unsupported schema")\n'''
             '''    if isinstance(count, bool) or not isinstance(count, int) or not 0 <= count <= MAX_REPLY_COUNT:\n'''
-            '''        raise ValueError("invalid reply count")\n'''
+            '''        raise TypeError("invalid reply count")\n'''
             '''    return {"kind": record["kind"], "payload": record["payload"], "reply_count": count}\n''',
             encoding="utf-8",
         )
