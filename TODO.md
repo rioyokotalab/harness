@@ -111,7 +111,7 @@ Next free ID: T-336.
 
 ### T-335 — Restore Slack tools before the next Swallow run
 
-**Phase:** blocked after old-chain unwind, before new-root launch.
+**Phase:** executing owner-selected bridge-window recovery.
 
 The owner requires functional Slack access before authorizing the planned
 12-hour Swallow TODO run. This task is a connector-readiness gate only; no
@@ -577,6 +577,55 @@ detached `2:swallow` launch using runtime `swallow-recovery-next` and
 `--remote-session 019fa8db-e4e0-7b81-9c02-a3b0954b5a95`. Do not retry an
 ambiguous launch. Accept only a new supervisor/watcher/TUI/socket chain and
 two new interval-separated healthy monitor receipts.
+
+**Decision D-003 and go:** the owner explicitly selected the more robust
+bridge-window approach and said `go`. Supersede only the direct launch portion
+above. Do not touch the stopped `swallow-recovery-next` runtime or zombie
+`117011`.
+
+Fresh read-only state at pushed checkpoint
+`02d0dd5410eeb50fe6369ac22c391b85ffb33843` finds primary `main` clean and
+aligned at `fcadc7ae68182036f1aa128fe3b7bea977cddc4f`; the task worktree is
+clean/aligned. Exact old TUI, wrapper, launcher, watcher, and `@81` remain
+absent. The old saved root's rollout is receiving this owner turn, while new
+root `019fa8db-e4e0-7b81-9c02-a3b0954b5a95` retains its exact unchanged
+22:15:38 JST mtime, mode `0600`, and no live process, proving it is the idle
+bridge target. Exact Harness/Students/app-server/monitor identities remain
+unchanged. One owner client PID `804512` is attached to unaffected Harness
+window `@80`; it must not be moved or detached.
+
+**Frozen bridge execution:**
+
+1. Checkpoint and push this decision and exact preimage before live mutation.
+2. Under the shared agent-message lock, revalidate exact Git, two-window
+   topology, client selection, absent old live chain, inert zombie identity,
+   new rollout identity/mtime/mode, peer identities, absent provisional
+   runtime `swallow-bridge-t335`, and degraded two-window monitor receipt.
+3. Acknowledge exactly one detached provisional window at free index 2 named
+   `swallow-bridge`, using distinct runtime `swallow-bridge-t335` and
+   `--remote-session 019fa8db-e4e0-7b81-9c02-a3b0954b5a95`. Do not retry an
+   ambiguous launch.
+4. Before promotion, require one exact provisional supervisor/watcher/TUI
+   chain, attempt-zero `running/remote-explicit`, the new root at
+   `watching/thread-idle`, a reciprocal socket to unchanged app server
+   `2852569`, unchanged peer/client identities, and no process using stopped
+   runtime `swallow-recovery-next`.
+5. Rename only that accepted exact window from `swallow-bridge` to `swallow`;
+   it remains at index 2 and retains the same pane and process chain. Do not
+   launch again, move a window, send input, or change the saved root name.
+6. Require exact `0:harness,1:students,2:swallow`, unchanged owner selection
+   on `@80`, the new root still `thread-idle`, and two distinct post-promotion
+   periodic receipts with `healthy=3`, no order action, and no repair action.
+
+Failure before launch leaves live state unchanged. Failure after launch
+acknowledgement preserves the provisional bridge for read-only reconciliation;
+never retry or remove it ambiguously. Failure after rename preserves that same
+accepted chain and requires validation only. No step signals a process,
+restarts the app server, replays a prompt, writes Slack, or starts the 12-hour
+task.
+
+**Next action:** commit and push this frozen bridge checkpoint, then execute
+step 2 once.
 
 ### T-334 — Extend maintenance awareness to remote Linux nodes
 
