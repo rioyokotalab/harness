@@ -460,6 +460,16 @@ anchors unchanged, and both manifests were exact-unlinked.
 complete clean `tests/test-phase1.sh`, then publish through protected
 exact-head CI before any Students lifecycle cutover.
 
+**Validation checkpoint:** implementation commit `e4ff83a` passed all focused
+suites, guarded-delete coverage, and every phase-one integration gate; only the
+declared native MPI smoke skipped outside an allocation. The task worktree is
+clean, the periodic monitor remains absent, and no Students lifecycle or
+app-server mutation ran.
+
+**Next action:** commit this validation evidence, fetch and push the exact task
+head, require protected `portable-phase1`, and merge before performing the
+controller-owned Students cutover.
+
 ### T-329 — Restore disappeared Swallow tmux window
 
 **Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
