@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-329.
+Next free ID: T-330.
 
 ## Current state
 
@@ -107,6 +107,50 @@ Next free ID: T-329.
    successors recorded below.
 
 ## Active tasks
+
+### T-329 — Restore disappeared Swallow tmux window
+
+**Phase:** active; lifecycle repair authorized, no live write has run.
+
+At 2026-07-28 10:02 JST the owner reported that the `swallow` window had
+disappeared from Local's `harness` tmux session and asked for diagnosis and
+repair. Metadata-only readback finds only exact one-pane windows
+`@60:harness` and `@50:students`; both attached clients remain on Harness.
+The previously accepted Swallow window `@63`, supervisor PID `2186520`,
+watcher PID `2186599`, launcher PIDs `2186679`/`2186681`, and real TUI PID
+`2187033` are all absent. Shared app-server PID `2852569` and the unaffected
+Harness and Students windows remain live. No pane or transcript content was
+read.
+
+The exact final runtime receipt name is `swallow-recovery-next`. Its
+mode-0600 supervisor receipt changed at 2026-07-28 09:14:03 JST to
+`stopped/thread-recovery-blocked`; its last watcher receipt changed at
+09:13:17 JST and remains stale at `watching/thread-idle` for accepted root
+`019fa5a1-7fff-7e92-8e2a-2586c684747f`. The recorded process IDs are absent.
+Therefore the corrected supervisor behaved fail-closed when its watcher
+disappeared: it terminated the exact TUI child and exited, which removed the
+tmux window. The available value-free receipts do not establish why the
+watcher exited; do not infer a cause or inspect private logs.
+
+One fresh initialized app-server `thread/read` reports the accepted root as
+`notLoaded` with its canonical rollout identity valid. Under the
+`recover-codex-unsafe-tail` decision table this is not a thread-recovery or
+rollback case. Preserve the root and repair only the absent
+watcher/supervisor/TUI lifecycle. The poisoned
+`swallow-blocked-20260728` root, all other saved roots, names, shared app
+server, attached clients, and unrelated sessions remain out of scope.
+
+**Next action:** immediately revalidate the same root, app server, exact
+two-window mapping, absent Swallow process chain, native doctor, and clean
+published Git. Launch exactly one detached `swallow` tmux window rooted at
+`$HOME/harness`, using the current published `codex-resilient` with runtime
+name `swallow-recovery-next` and exact accepted remote-session ID. Do not
+start a turn or replay a prompt. Accept only a live supervisor, watcher,
+launcher, TUI, reciprocal app-server socket, idle/notLoaded root, and one
+three-window mapping with both attached clients unchanged. Then determine
+from public behavior and focused fixtures whether a watcher transport failure
+needs a bounded retry correction; do not weaken fail-closed handling for
+unsafe thread state.
 
 ### T-328 — Complete authorized T-311/T-324 deferred hardening
 
