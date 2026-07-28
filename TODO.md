@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-330.
+Next free ID: T-331.
 
 ## Current state
 
@@ -107,6 +107,50 @@ Next free ID: T-330.
    successors recorded below.
 
 ## Active tasks
+
+### T-330 — Monitor and order Local tmux Codex windows
+
+**Phase:** interviewing.
+
+The owner requested periodic pane-blind health checks for every managed Codex
+window in Local's `harness` tmux session and enforcement of canonical order
+`0:harness`, `1:students`, `2:swallow`. The spelling `harneess` is treated as
+the existing canonical `harness`; no rename to the typo is planned.
+
+Read-only discovery finds exactly those three one-pane windows already at the
+requested indices and rooted at `/home/rioyokota/harness`. Their resilient
+supervisors and real Codex TUIs are live. Swallow has a live current recovery
+watcher. Harness's watcher receipt is stale at
+`unavailable/recovery-check-failed` and recorded watcher PID `3126236` is
+absent while the Harness root is currently active. Students has no recovery
+receipt while its root is idle. Both supervisors predate the published
+watcher-lifecycle correction, so current process liveness alone is not full
+health.
+
+The recommended design is a dedicated detached
+`harness-tmux-codex-monitor` tmux session running every 30 seconds, separate
+from the existing five-minute SSH connection monitor. It will inspect only
+tmux/process/status/app-server metadata, never pane or transcript content.
+When all three window identities are unique it may use native
+`tmux swap-window -d` to enforce indices without changing attached clients.
+Ambiguous, duplicate, extra, attached-path, unsafe-thread, or unknown state
+fails closed.
+
+Decision D-001 remains open: whether the monitor may also perform narrowly
+gated self-repair. Recommended `safe-auto-repair` restarts only an exact
+missing-watcher or missing-window chain whose saved thread identity is
+canonical and freshly `idle` or `notLoaded`; it never starts a turn, replays a
+prompt, rolls back, renames/archives roots, restarts the app server, or repairs
+active/systemError/unknown state. `observe-and-order` would report lifecycle
+faults but require a controller turn for every restart.
+
+The frozen planning detail, failure gates, execution sequence, rollback, and
+acceptance criteria are in
+`docs/plans/t330-tmux-codex-monitor.md`.
+
+**Next action:** obtain D-001, checkpoint the answer, set `ready-for-go`, and
+wait for explicit execution authorization. No tmux, process, app-server,
+thread, service, or live monitor mutation has run.
 
 ### T-329 — Restore disappeared Swallow tmux window
 
