@@ -35,6 +35,16 @@ below.
    owner-home hidden, and the workspace read-only.
 10. Reran every model-free reference and focused check successfully. The
     corrected scored pilot has not started.
+11. Started the distinct `-r2` pilot. Its first Codex row loaded the synthetic
+    guidance, produced the accepted workspace artifacts, and stayed within all
+    path and source invariants, but the runner stopped because the client used
+    its native sandboxed `file_change` event.
+12. Reclassified that as an edit-surface mismatch rather than a containment
+    escape. The executable `-r3` contract permits Codex's sandboxed native patch
+    event, retains network-disabled shell and workspace boundaries for both
+    clients, and declares that Claude remains Bash-mediated. External, MCP,
+    web, delegation, and out-of-workspace actions remain failures. The stopped
+    `-r2` row is excluded and is not retried.
 
 ## Deviations
 
@@ -49,3 +59,8 @@ below.
   cross-workspace Python import caching. The invalid rows are not retried or
   used as comparative evidence; the corrected experiment has a new identity
   and run root.
+- The shell-only design could not be enforced on current Codex CLI 0.145.0,
+  which exposes its sandboxed native patch event without a supported
+  per-invocation tool allowlist. The final comparison is workspace-confined
+  rather than tool-identical, and the resulting limitation is part of every
+  public interpretation.
