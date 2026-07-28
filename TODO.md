@@ -446,6 +446,35 @@ new-root Slack read and live cutover both pass.
 **Next action:** commit and push this clarified ownership plus exact preimage,
 then run step 1 once.
 
+**New-root Slack acceptance:** pushed ownership checkpoint
+`4c9d96cefafbfd31540e22a2e4114549b83768cd` preceded one persistent native
+`harness codex-login exec --json` cold start from exact clean
+`$HOME/harness`, with explicit model `gpt-5.6-sol`, reasoning effort `high`,
+and no replayed or prior prompt. It acknowledged exactly one new root,
+`019fa8db-e4e0-7b81-9c02-a3b0954b5a95`, and one completed turn.
+
+Value-free event inspection found only the two Slack methods
+`codex_apps.slack.slack_list_workspaces` and
+`codex_apps.slack.slack_list_user_conversations`, each with balanced start
+and completion events. The exact final acceptance line identifies
+`RioYokotaLab/T1251HXB4` and public `swallow/C058CUU8HK8`, with
+`slack_write_occurred=false`. No Slack write, message-content search, file,
+Git, process, tmux, app-server, recovery-controller, or authentication change
+ran in that root. The 12-hour task did not start.
+
+The new root has one current-user-owned, single-link regular rollout at its
+canonical session path. Its installed-version default mode was `0664`; after
+exact path, owner, type, and link-count validation, only that file's mode was
+changed to `0600` and read back successfully. The old Swallow chain, all peer
+identities, three-window topology, and healthy monitor remained unchanged
+after the cold start. Private event/final captures remain mode `0600` until
+this result is pushed, then must be exact-unlinked.
+
+**Next action:** commit and push this non-retryable new-root success, exact-
+unlink the two private captures, then prepare and validate the detached
+post-turn cutover helper from frozen step 3. Do not signal the old TUI before
+the helper gate and its exact preimage are durably checkpointed.
+
 ### T-334 — Extend maintenance awareness to remote Linux nodes
 
 **Phase:** complete after this closeout checkpoint reaches protected `main`.
