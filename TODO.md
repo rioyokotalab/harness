@@ -110,7 +110,7 @@ Next free ID: T-330.
 
 ### T-329 — Restore disappeared Swallow tmux window
 
-**Phase:** active; lifecycle repair authorized, no live write has run.
+**Phase:** complete on Local; exact ABQ fleet rollout externally blocked.
 
 At 2026-07-28 10:02 JST the owner reported that the `swallow` window had
 disappeared from Local's `harness` tmux session and asked for diagnosis and
@@ -234,6 +234,41 @@ root in one `swallow` window under merge `52ca82d` without prompt replay.
 Then plan/apply the ten currently reachable targets, send one required Mac
 context refresh each, and leave exact ABQ rollout deferred until both routes
 pass.
+
+**Merged-code live acceptance:** the exact `@64`/root/process/socket/client/
+app-server gate passed. One `SIGTERM` was sent only to old-inode real TUI PID
+`3087000`; its TUI, launcher, watcher, supervisor, and window all exited, and
+no second signal ran. One prompt-free launch of the same accepted root under
+merge `52ca82d` created exact window/pane `@65`/`%65`. Supervisor PID
+`3365669` start tick `93705245`, watcher PID `3365748` tick `93705255`,
+launcher PID `3365807` and wrapper PID `3365808` tick `93705367`, and real
+TUI PID `3365895` tick `93705374` are live. Status remains attempt-zero
+`running/remote-explicit` plus `watching/thread-idle`, accepted root is
+`idle`, and reciprocal socket inodes `187523792`/`187527325` connect only to
+unchanged app server PID `2852569` / tick `83381863`. Harness and Students
+remain unchanged, and both attached clients stayed on Harness. No pane,
+transcript, prompt, or rejected content was read.
+
+One guarded plan/apply then advanced the ten reachable targets `ab`, `ab2`,
+`ri`, `al`, `rc`, `t4`, `aist`, `home`, `office`, and `riken` from
+`dacbde5` to `52ca82d`; every checkout/origin aligned and every transfer
+artifact was absent. Aist, Home, Office, and Riken each returned exactly one
+merge-specific context-refresh `status=submitted`; none may be retried and
+the private input was exact-unlinked. Guarded manifest
+`/tmp/harness-t329-sync.FLaOTG/guarded-delete.manifest` validated and removed
+only the 4,792-entry / 56,363,075-byte clean sync clone, verified protected
+anchors unchanged and target absent, and was exact-unlinked.
+
+Two separate post-rollout probes still find both `abq` and `abq2` failing with
+`Connection closed by UNKNOWN port 65535`. ABQ remains at exact published
+source `dacbde5` by last successful preflight; current state is unknown while
+unreachable. No ABQ apply or scheduler mutation ran.
+
+**Next action:** publish this closeout checkpoint through protected CI. When
+both ABQ routes pass, guarded-sync only exact clean ABQ from `dacbde5` to the
+then-current closeout merge, verify both routes and aligned local/origin head,
+and mark T-329 fully complete. Do not disturb the accepted Swallow root or
+live `@65` chain.
 
 ### T-328 — Complete authorized T-311/T-324 deferred hardening
 
