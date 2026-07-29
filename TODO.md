@@ -162,6 +162,13 @@ No step reads pane or transcript content, replays or injects a prompt, deletes
 a rollout, changes a thread name, launches or signals a process, moves a tmux
 client/window, restarts the shared app server, or modifies another repository.
 
+**Retry-safe preflight refusal:** the first lock-serialized transaction exited
+before the archive request because its task-head gate used an incorrect manual
+expansion of abbreviated commit `c5f2435`. Exact task head and upstream are
+`c5f2435d61aba5c3fa91773eaa0e946f37d008fe`. No `thread/archive` request was
+sent, and readback remains unchanged, so one corrected retry after publishing
+this checkpoint is safe.
+
 ### T-340 — Map phone-visible Swallow root into Local tmux
 
 **Phase:** complete after this closeout reaches protected `main`.
