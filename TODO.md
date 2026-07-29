@@ -109,6 +109,71 @@ Next free ID: T-344.
 
 ## Active tasks
 
+### T-344 — Recover Swallow and automate blocked-root cutover
+
+**Phase:** executing after value-free diagnosis; no recovery write has run.
+
+At 2026-07-30 07:06 JST the owner reported that Local tmux Swallow was
+blocked again and requested both immediate repair and automatic recovery for
+future blocked Codex roots. Scope is Local's exact managed Swallow chain plus
+the reusable Harness recovery control plane. Preserve the independent T-343
+worktrees, Harness and Students roots/processes, the shared app server, the
+owner's attached Harness client, repository policy, and all unrelated work.
+Never inspect pane or transcript content, reconstruct or replay a rejected
+prompt, issue another rollback, restart the app server, or delete/archive a
+saved root.
+
+Fresh pane-blind diagnosis proves:
+
+- exact canonical topology is one pane each at
+  `@87/0:harness,@88/1:students,@92/2:swallow`; sole client
+  `2132268` on `/dev/pts/25` selects unaffected Harness `@87`;
+- Swallow runtime `swallow-phone-t340` remains attempt-zero and running under
+  supervisor `3085990`, launcher `3086166`, and real TUI `3086168`, using
+  root `019fa5a1-7fff-7e92-8e2a-2586c684747f`;
+- watcher `808442` reports exact `blocked/unsafe-tail`, with zero successful
+  recoveries and one already rolled-back turn. This selects bridge-first
+  fresh-root recovery; another rollback is unsafe and forbidden;
+- Harness and Students retain healthy running supervisor/watcher/TUI chains.
+  Shared app server `2852569/83381863` and observe-only tmux monitor
+  `2340081` are unchanged;
+- the monitor correctly reports `degraded healthy=2`,
+  `repair_action=none`, and one-shot reason `watcher-absent` for Swallow. It
+  did not miss topology or liveness. Its intentionally observe-only contract
+  cannot create/name/accept/promote a fresh root, so it can detect but not
+  complete this recovery.
+
+The immediate transaction follows the reusable unsafe-tail protocol. Create
+and persist exactly one provisional root with the blocked root's frozen cwd,
+approval policy, and sandbox; launch it in a distinct provisional tmux
+window/runtime; submit one new cold-start instruction that reconstructs only
+from complete repository instructions, `TODO.md`, Git, and mutable external
+state; require an assistant-bearing completed turn without `systemError`;
+then transfer phone/tmux names by read-before/write/read-after and rename-only
+promotion. Preserve the blocked root under a unique blocked name and retire
+only its exact old TUI leaf after promotion. Every acknowledged request,
+launch, rename, and signal is non-retryable.
+
+The reusable correction keeps `harness-tmux-codex-monitor` observe-only and
+adds a distinct fail-closed recovery controller. The monitor publishes exact
+value-free unhealthy evidence; the controller may act only on a canonical
+three-window mapping, one uniquely mapped unsafe-tail root, healthy peers,
+unchanged app-server identity, a current-user private lock/journal, and a
+pre-authorized generic cold-start contract. It must implement the same
+bridge-first gates, durable pre-write receipt, bounded one-attempt identities,
+and no-content acceptance as the manual protocol. Unknown, active ambiguous,
+multi-target, unavailable, attached-target, or identity-drift states remain
+report-only. Add deterministic fixtures for detection without repair,
+successful one-target bridge state progression, duplicate/ambiguous refusal,
+non-retry of sent operations, peer preservation, and crash reconciliation.
+
+**Next action:** commit and push this exact pre-mutation checkpoint. Then
+revalidate every recorded Git/tmux/process/root/socket/client identity and
+execute one bridge-first Swallow recovery. After live acceptance, implement
+the separate controller in this worktree, validate focused and complete
+tests, publish through protected CI without changing ruleset approvals, and
+activate only the exact merged controller after a final live preflight.
+
 ### T-343 — Harden durable Codex-to-Claude handoff
 
 **Phase:** validating after implementation and the first clean full-suite pass.
