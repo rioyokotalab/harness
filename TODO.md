@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-341.
+Next free ID: T-342.
 
 ## Current state
 
@@ -108,6 +108,59 @@ Next free ID: T-341.
    successors recorded below.
 
 ## Active tasks
+
+### T-341 — Archive the retired Swallow saved root
+
+**Phase:** frozen pre-write checkpoint.
+
+At 2026-07-29 14:18 JST the owner requested removal of the old Swallow remote
+session after T-340 made the phone-visible root canonical in Local tmux. Apply
+the request as Codex's supported reversible archive operation, which removes
+the saved session from active remote-control lists without deleting its
+rollout. Permanent transcript deletion is not authorized.
+
+The sole write target is retired exact root
+`019fa8db-e4e0-7b81-9c02-a3b0954b5a95`. Fresh pane- and transcript-blind
+readback identifies it as idle, unnamed, unarchived, and backed by a
+current-user-owned, mode-0600, single-link regular rollout. Its resilient
+runtime `swallow-t338` remains stopped by `operator-signal`, its recovery
+watcher remains stopped by `operator-stop`, and a value-free `/proc` scan
+excluding the inspecting process ancestry finds zero live argv references to
+the exact root.
+
+The protected live root is exact
+`019fa5a1-7fff-7e92-8e2a-2586c684747f`, active and named `swallow`, with its
+unchanged canonical rollout and complete attempt-zero process chain:
+supervisor `3085990/103604354`, watcher `3086056/103604365`, launcher
+`3086166`, and TUI `3086168/103604477`. Shared app server
+`2852569/83381863`, monitor `2340081/102606237`, and sole tmux client
+`2963496` are live. The client currently selects Students `@88`; do not move
+it. Exact one-pane topology remains
+`@87/0:harness,@88/1:students,@92/2:swallow`, and the monitor reports healthy
+3/3 with no order or repair action. Exact SQLite metadata confirms both roots
+are currently unarchived.
+
+**Frozen execution:**
+
+1. Publish this exact checkpoint before the app-server write.
+2. Under the current-user-owned shared `agent-message.lock`, revalidate the
+   pushed task head, both exact roots and rollout identities, zero old-root
+   process references, the protected live chain, app server, monitor,
+   topology, and current client selection.
+3. Send exactly one `thread/archive` request for only the retired root. Treat
+   any ambiguous acknowledgement as non-retryable; record it and do not issue
+   a second request.
+4. Require an explicit successful response, then independently read back only
+   exact IDs and archive flags from SQLite: old root archived, live root
+   unarchived. Also require direct metadata readback of the live root and all
+   protected topology/process/client identities to remain unchanged.
+5. Run native doctor, focused thread-recovery and tmux-monitor tests, diff
+   hygiene, clean Git, and canonical fleet health. Publish the closeout through
+   protected exact-head CI and merge normally.
+
+No step reads pane or transcript content, replays or injects a prompt, deletes
+a rollout, changes a thread name, launches or signals a process, moves a tmux
+client/window, restarts the shared app server, or modifies another repository.
 
 ### T-340 — Map phone-visible Swallow root into Local tmux
 
