@@ -380,7 +380,23 @@ phone/tmux mirror.
 
 ## Next action
 
-The owner supplied explicit `go`. Implement execution steps 3–6 in the isolated
-task worktree, beginning with the private dispatcher/event state and preserving
-the live tmux, saved-root, and remote-control state until publication and
-activation preflight.
+Implementation checkpoint is complete in the isolated worktree. Run full
+phase-one validation, independently review the exact diff, and publish the
+implementation checkpoint before any live activation.
+
+Implemented surfaces:
+
+- `libexec/harness-codex-recovery-helper`;
+- `libexec/harness-tmux-codex-monitor`;
+- `bin/harness`;
+- `tests/test-codex-recovery-helper.sh`;
+- `tests/test-tmux-codex-monitor.sh`;
+- focused-suite and phase-one registration.
+
+Focused helper, monitor, resilient-supervisor, thread-recovery, and
+unsafe-tail-skill tests pass. Python syntax and diff hygiene pass. One generated
+`libexec/__pycache__` tree with 3 entries/78,687 bytes was removed through
+guarded manifest
+`libexec/t345-pycache-delete.manifest`; protected anchors were unchanged and
+the exact manifest was then unlinked. No live tmux, Codex, saved-root,
+remote-control, or external state changed.
