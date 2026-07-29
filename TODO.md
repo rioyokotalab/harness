@@ -298,6 +298,20 @@ r2 name `swallow-recovery-20260730` to canonical `swallow` through the same
 single-connection gate. Do not alter tmux until both root names have exact
 independent readback.
 
+**Accepted-root name acknowledgement:** exactly one second
+read-before/write/read-after transaction changed accepted r2 from
+`swallow-recovery-20260730` to canonical `swallow`. It remains `idle` at its
+unchanged cwd/path; stderr is empty. The request must not be retried. The old
+root remains uniquely `swallow-blocked-20260730`.
+
+**Next action:** publish the complete root-name transfer. Revalidate both
+chains and the Harness-selected client, stage old exact window `@92` from
+index 2 to free index 4 and accepted exact `@93` from index 3 to canonical
+index 2 without changing either pane/process chain, rename old `@92`
+`swallow-blocked`, then perform rename-only promotion of `@93` to `swallow`.
+Checkpoint that reversible topology before signaling only old exact TUI leaf
+`3086168`.
+
 ### T-343 — Harden durable Codex-to-Claude handoff
 
 **Phase:** validating after implementation and the first clean full-suite pass.
