@@ -369,6 +369,26 @@ read-only reconciliation before the next decision.
   were test-environment/clean-tree refusals and did not alter live tmux,
   process, app-server, or saved-root state.
 
+**Monitor publication and launch correction:**
+
+- PR #405 exact head `755306f089fda4f793a4b690736763722365e442`
+  passed protected `portable-phase1` in 2m27s and squash merged as
+  `f9651f51c79a0f13c4e6afad9fbf96b43178f771`. Local `main` advanced to that
+  exact merge.
+- One exact `SIGTERM` stopped old periodic monitor PID `1903223`. The
+  canonical monitor-session relaunch was acknowledged once, but its process
+  exited and the session disappeared. It must not be retried.
+- A matched foreground read with `HARNESS_ROOT` absent reproduces exact
+  value-free failure `tmux Codex monitor failed: 'HARNESS_ROOT'`. The prior
+  process inherited that variable; the native relaunch command omitted it.
+  Harness and Students remain unchanged and live.
+- Publish this checkpoint, then launch one distinct provisional monitor
+  session with explicit `HARNESS_ROOT=/home/rioyokota/harness`, the merged
+  Python entry point, 30-second interval, and order enforcement. Accept a new
+  healthy-two receipt and unchanged Codex/app-server identities before
+  rename-only promotion to `harness-tmux-codex-monitor`. Do not reuse or retry
+  the failed process identity.
+
 ### T-336 — Benchmark current Codex and Claude Harness development
 
 **Phase:** complete.
