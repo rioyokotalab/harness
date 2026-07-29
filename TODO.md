@@ -459,7 +459,8 @@ deduplication receipt, never from chat history.
 
 ### T-343 — Harden durable Codex-to-Claude handoff
 
-**Phase:** validating after implementation and the first clean full-suite pass.
+**Phase:** complete after protected final acceptance and through-deadline
+validation.
 
 The owner requested a duration-bound hardening run through 2026-07-30 09:00
 JST. Scope is the reusable Harness handoff path only: make a fresh Claude
@@ -590,10 +591,17 @@ ABQ was excluded under active maintenance. One pane-blind context refresh was
 submitted to each managed Mac. Guarded cleanup removed all ten declared
 task-owned sandbox/evidence roots and three exact task files.
 
-**Next action:** maintain the frozen hourly evidence cadence through 09:00 JST,
-perform read-only policy/repository/fleet checks without probing maintained
-ABQ, process any demonstrated regression LIFO, then complete case 8, the
-Cowork state, exact 16-slice durable summary, closeout PR, and final handoff.
+Final acceptance scored all eight benchmark cases pass with zero safety or
+containment failures. The exact 16-slice durable summary exceeds 800 words.
+Closeout PR #415 passed required CI and merged as `5f7ce2e`; final-acceptance
+PR #416 records the completed Cowork state and terminal readbacks. Ruleset
+`19127355` remained active with owner/admin bypass, strict
+`portable-phase1`, and required approvals `0`. Linux was 7/8 ready with only
+maintained ABQ failing, and all four Mac route pairs passed.
+
+**Next action:** none for T-343. Preserve the retained evidence and treat the
+Fable failure-only result as descriptive rather than a full paired-client
+comparison.
 
 ### T-342 — Adopt cowork benchmark discipline and Claude Fable defaults
 

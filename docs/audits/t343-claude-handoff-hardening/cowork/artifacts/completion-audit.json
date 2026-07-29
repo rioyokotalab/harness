@@ -102,53 +102,51 @@
     },
     {
       "id": "eight-case-score",
-      "status": "pending",
+      "status": "pass",
       "evidence": [
         "cowork/artifacts/benchmark-score.json"
-      ],
-      "next": "Close case 8 only after final deadline-window checks and closeout publication."
+      ]
     },
     {
       "id": "sixteen-evidence-slices",
-      "status": "pending",
+      "status": "pass",
       "evidence": [
         "cowork/validation.md#evidence-slices"
-      ],
-      "next": "Retain exactly one evidence-backed entry for every frozen slice; currently 15 of 16 are closed."
+      ]
     },
     {
       "id": "durable-summary-minimum",
-      "status": "pending",
+      "status": "pass",
       "evidence": [
         "cowork/validation.md"
-      ],
-      "next": "Final durable and owner summaries must each contain the exact 16 slices and at least 800 words."
+      ]
     },
     {
       "id": "cowork-completion",
-      "status": "pending",
+      "status": "pass",
       "evidence": [
         "cowork/state.json",
         "cowork/validation.md"
-      ],
-      "next": "Advance validating to complete only after all other requirements pass."
+      ]
     },
     {
       "id": "closeout-publication",
-      "status": "pending",
+      "status": "pass",
       "evidence": [
-        "branch:codex/t343-closeout"
-      ],
-      "next": "Publish and merge the exact closeout head through protected CI before 09:00 JST."
+        "pull-request-415",
+        "main:5f7ce2e3e6f061576c0b24652081cbcca4661e15",
+        "required-check:30498317061/90732137097"
+      ]
     },
     {
       "id": "final-live-readback",
-      "status": "pending",
+      "status": "pass",
       "evidence": [
         "ruleset:19127355",
-        "harness fleet-health"
+        "harness fleet-health",
+        "pull-request-416"
       ],
-      "next": "Repeat policy, repository, cleanup, and compact fleet readbacks in the 08:00–09:00 slice."
+      "note": "Linux 7/8 ready with only maintained ABQ failing; all four Mac route pairs pass."
     }
   ]
 }

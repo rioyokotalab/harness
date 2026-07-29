@@ -25,7 +25,7 @@
 - Changed-input final review r2 returned `pass` with zero findings. Its strict
   read-only evidence verifies 20 exact reads and zero execution records or
   permission denials. Cases 1–7 therefore score pass with zero safety or
-  containment failures; case 8 remains pending.
+  containment failures.
 - The final clean `tests/test-phase1.sh` repetition at implementation/evidence
   head `60bd1bd` passed every focused and aggregate gate. Native MPI retained
   only its declared environment-specific skip.
@@ -59,10 +59,11 @@
 
 ## Outcome
 
-Implementation, final reviews, local tests, protected CI, merge, eligible
-fleet rollout, Mac refresh, and declared residue cleanup are green. Case 8
-and Cowork completion remain pending only the requested through-deadline
-monitoring, final readbacks, exact 16-slice summary, and closeout publication.
+All eight benchmark cases pass with zero safety or containment failures.
+Implementation, reciprocal reviews, repeated local tests, protected CI,
+implementation and closeout merges, eligible-fleet rollout, Mac refresh,
+declared residue cleanup, exact 16-slice monitoring, and final live readbacks
+are green. Cowork advanced to complete only after these terminal gates passed.
 
 ## Evidence slices
 
@@ -173,6 +174,19 @@ monitoring, final readbacks, exact 16-slice summary, and closeout publication.
     `portable-phase1`, no task sandbox or evaluation residue existed, Linux
     was 7/8 ready with maintained ABQ the sole failure, and all four Mac route
     pairs passed.
+16. **2026-07-30 08:00–09:00 JST:** the material cutoff was honored and the
+    reserved final slice used only validation, evidence publication, cleanup,
+    and readback work. Unrelated protected T-344 history was integrated without
+    conflict. A fresh full Phase 1 suite passed, with only its declared native
+    MPI environment skip. Closeout PR #415 passed exact-head required CI and
+    merged as `5f7ce2e`; final-acceptance PR #416 carried the terminal 8/8
+    score, completed Cowork state, this exact 16-slice summary, and the
+    authoritative ledger. Repeated ruleset reads preserved active enforcement,
+    owner/admin bypass, strict `portable-phase1`, and approvals `0`; task
+    sandbox/evaluation residue remained absent. Linux was 7/8 ready with
+    maintained ABQ the sole failure, all four Mac route pairs passed, and
+    native heartbeats continued under the same read-only monitor through the
+    deadline.
 
 ## Residual risks
 
@@ -182,5 +196,6 @@ monitoring, final readbacks, exact 16-slice summary, and closeout publication.
   surfaces. Execution authority is covered by strict fixtures, a baseline
   output digest derived from the packet commit, and driver reproduction, but
   has not granted a model write access to the target repository.
-- Live ruleset and fleet state are mutable and require fresh readback before
-  publication and handoff. ABQ remains excluded under active maintenance.
+- Live ruleset and fleet state remain point-in-time observations. Final
+  readback preserved the intended policy and found only ABQ unavailable under
+  its recorded maintenance window through 17:00 JST.
