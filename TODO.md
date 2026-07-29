@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-340.
+Next free ID: T-341.
 
 ## Current state
 
@@ -108,6 +108,66 @@ Next free ID: T-340.
    successors recorded below.
 
 ## Active tasks
+
+### T-340 — Map phone-visible Swallow root into Local tmux
+
+**Phase:** frozen before the owner-authorized live cutover.
+
+At 2026-07-29 13:51 JST the owner reported that Local's `2:swallow` tmux
+window differs from the phone-visible remote session and requested that the
+phone session become the tmux session. Pane- and transcript-blind app-server
+metadata confirms the mismatch:
+
+- the active phone-visible root named `swallow` is exact
+  `019fa5a1-7fff-7e92-8e2a-2586c684747f`, status `idle`, with a canonical
+  current-user-owned, mode-0600, single-link rollout;
+- exact tmux window `@91/2:swallow` instead runs unnamed idle root
+  `019fa8db-e4e0-7b81-9c02-a3b0954b5a95` through runtime `swallow-t338`,
+  supervisor `2349453/102620670`, watcher `2349526/102620680`, launcher
+  `2349724/102620791`, and TUI `2349726/102620791`.
+
+Harness and Students retain their accepted process/root/socket mappings.
+Shared app server `2852569/83381863` and periodic monitor
+`2340081/102606237` are unchanged. The sole attached client
+`2963496/103443147` selects unaffected Harness window `@87`; free index 3,
+runtime `swallow-phone-t340`, and provisional/old window names are absent.
+Both roots are healthy, so no rollback, new root, cold-start turn, prompt,
+app-server name write, or transcript inspection is required.
+
+**Frozen bridge-first execution:**
+
+1. Publish this checkpoint before any tmux, process, or app-server write.
+2. Under the shared agent-message lock, revalidate exact Git, roots, rollouts,
+   processes, sockets, client selection, monitor receipt, and absent targets.
+3. Move only old live window `@91` from index 2 to free index 3 and rename it
+   `swallow-old-t340`, retaining its pane and complete process chain. This
+   frees canonical index 2 while preserving the old root/TUI as rollback
+   authority.
+4. Acknowledge exactly one detached `harness:2` window named
+   `swallow-phone-bridge`, using distinct runtime `swallow-phone-t340` and
+   `--remote-session 019fa5a1-7fff-7e92-8e2a-2586c684747f`. Never retry an
+   ambiguous launch.
+5. Accept only an attempt-zero supervisor/watcher/TUI chain for the exact
+   phone root, with zero recoveries/rollbacks and a reciprocal socket to
+   unchanged app server `2852569`. Then rename only that accepted exact window
+   to `swallow`; do not move, relaunch, or send input to it.
+6. Publish the accepted promotion identities. Revalidate old TUI
+   `2349726/102620791`, its exact parent/window/root, every new/peer identity,
+   and the attached Harness client; then send one `SIGTERM` only to that old
+   leaf. Never signal a process group, zombie, peer, watcher, supervisor, or
+   the shared app server, and never send a second signal.
+7. Require final exact one-pane topology
+   `0:harness,1:students,2:swallow`, absent old live leaf/launcher/window,
+   preserved old saved root, unchanged client/peer/app-server identities, the
+   phone root idle and still named `swallow`, two fresh healthy monitor
+   receipts, native doctor, focused recovery/resilience/monitor tests, clean
+   Git, and canonical fleet health.
+
+Failure before launch acknowledgement is retry-safe only after read-only
+reconciliation. Any ambiguous launch or post-promotion failure is
+non-retryable: preserve both chains and checkpoint exact state. No step reads
+or replays either root's content, starts a project task, or changes phone,
+Slack, credential, connector, or unrelated repository state.
 
 ### T-339 — Consolidate Local monitor tmux sessions
 
