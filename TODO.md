@@ -167,12 +167,32 @@ report-only. Add deterministic fixtures for detection without repair,
 successful one-target bridge state progression, duplicate/ambiguous refusal,
 non-retry of sent operations, peer preservation, and crash reconciliation.
 
-**Next action:** commit and push this exact pre-mutation checkpoint. Then
-revalidate every recorded Git/tmux/process/root/socket/client identity and
-execute one bridge-first Swallow recovery. After live acceptance, implement
-the separate controller in this worktree, validate focused and complete
-tests, publish through protected CI without changing ruleset approvals, and
-activate only the exact merged controller after a final live preflight.
+**First provisional-root refusal:** pushed checkpoint `52e7dfc` preceded one
+persistent native cold-start request. It acknowledged exact new root
+`019fafec-3da4-77d2-a88f-e7abaa380a06` and completed one turn with four
+assistant items, fourteen terminal command items, no active item, and no
+transport error. Raw mode-0600 events were not inspected for message, command,
+or tool payload content. Main remained clean and unchanged; no live tmux,
+process, app-server, or external state changed.
+
+The new root is not an acceptable bridge. Exact metadata reports the required
+cwd, disabled sandbox, Sol/high, and canonical single-link rollout, but its
+stored approval mode is `never` rather than the blocked root's frozen granular
+MCP-only policy. Its installed-version rollout mode is also the expected
+pre-acceptance `0664`. Preserve this distinct unnamed root and do not launch,
+name, chmod, archive, delete, or reuse it. The failed attempt is unambiguous,
+so one changed-input cold start is safe under a distinct root: pass the exact
+granular approval override explicitly and otherwise keep the same no-replay,
+read-only instruction and acceptance gates.
+
+**Next action:** commit and push this refusal before another root creation.
+Then execute exactly one corrected cold start, require its stored approval and
+sandbox to match the blocked root, descriptor-tighten only an accepted `0664`
+rollout to `0600`, and continue the bridge-first Swallow recovery. After live
+acceptance, implement the separate controller in this worktree, validate
+focused and complete tests, publish through protected CI without changing
+ruleset approvals, and activate only the exact merged controller after a
+final live preflight.
 
 ### T-343 — Harden durable Codex-to-Claude handoff
 
