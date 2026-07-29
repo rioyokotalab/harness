@@ -1,0 +1,154 @@
+{
+  "schema": 1,
+  "task_id": "T-343",
+  "target_main": "0fdfd973c8c2e349bcdf74ee2e522fece65cca69",
+  "deadline": "2026-07-30T09:00:00+09:00",
+  "material_change_cutoff": "2026-07-30T08:00:00+09:00",
+  "requirements": [
+    {
+      "id": "benchmark-agreement",
+      "status": "pass",
+      "evidence": [
+        "cowork/benchmark.md",
+        "cowork/receipts/independent.json",
+        "cowork/receipts/reciprocal.json"
+      ]
+    },
+    {
+      "id": "task-bound-handoff",
+      "status": "pass",
+      "evidence": [
+        "libexec/harness-claude-handoff",
+        "tests/test-claude-handoff.sh",
+        "cowork/artifacts/native-r2-evidence.json"
+      ]
+    },
+    {
+      "id": "authority-and-retry-separation",
+      "status": "pass",
+      "evidence": [
+        "docs/schemas/claude-handoff-evidence.schema.json",
+        "docs/schemas/claude-handoff-retry.schema.json",
+        "tests/test-claude-handoff.sh",
+        "cowork/artifacts/native-r1-retry.json"
+      ]
+    },
+    {
+      "id": "frozen-fable-retest",
+      "status": "pass",
+      "evidence": [
+        "evaluation/results/t343-t336-fable-high-20260729-r1.json",
+        "tests/test-t343-fable-retest.sh"
+      ]
+    },
+    {
+      "id": "reciprocal-final-review",
+      "status": "pass",
+      "evidence": [
+        "cowork/artifacts/final-review-r1.json",
+        "cowork/artifacts/final-review-r2.json",
+        "cowork/execution.md"
+      ]
+    },
+    {
+      "id": "repository-validation",
+      "status": "pass",
+      "evidence": [
+        "cowork/validation.md",
+        "tests/test-phase1.sh"
+      ]
+    },
+    {
+      "id": "protected-publication",
+      "status": "pass",
+      "evidence": [
+        "pull-request-412",
+        "main:0fdfd973c8c2e349bcdf74ee2e522fece65cca69",
+        "required-check:30442745725/90545672626"
+      ]
+    },
+    {
+      "id": "zero-approval-policy-preserved",
+      "status": "pass",
+      "evidence": [
+        "ruleset:19127355",
+        "tests/test-claude-handoff.sh",
+        "cowork/validation.md"
+      ]
+    },
+    {
+      "id": "eligible-fleet-rollout",
+      "status": "pass",
+      "evidence": [
+        "cowork/execution.md",
+        "main:0fdfd973c8c2e349bcdf74ee2e522fece65cca69"
+      ],
+      "note": "ABQ is excluded under the authoritative active System H maintenance stop."
+    },
+    {
+      "id": "mac-context-refresh",
+      "status": "pass",
+      "evidence": [
+        "cowork/execution.md"
+      ]
+    },
+    {
+      "id": "task-owned-residue-cleanup",
+      "status": "pass",
+      "evidence": [
+        "cowork/execution.md",
+        "cowork/validation.md"
+      ]
+    },
+    {
+      "id": "eight-case-score",
+      "status": "pending",
+      "evidence": [
+        "cowork/artifacts/benchmark-score.json"
+      ],
+      "next": "Close case 8 only after final deadline-window checks and closeout publication."
+    },
+    {
+      "id": "sixteen-evidence-slices",
+      "status": "pending",
+      "evidence": [
+        "cowork/validation.md#evidence-slices"
+      ],
+      "next": "Retain exactly one evidence-backed entry for every frozen slice; currently 2 of 16 are closed."
+    },
+    {
+      "id": "durable-summary-minimum",
+      "status": "pending",
+      "evidence": [
+        "cowork/validation.md"
+      ],
+      "next": "Final durable and owner summaries must each contain the exact 16 slices and at least 800 words."
+    },
+    {
+      "id": "cowork-completion",
+      "status": "pending",
+      "evidence": [
+        "cowork/state.json",
+        "cowork/validation.md"
+      ],
+      "next": "Advance validating to complete only after all other requirements pass."
+    },
+    {
+      "id": "closeout-publication",
+      "status": "pending",
+      "evidence": [
+        "branch:codex/t343-closeout"
+      ],
+      "next": "Publish and merge the exact closeout head through protected CI before 09:00 JST."
+    },
+    {
+      "id": "final-live-readback",
+      "status": "pending",
+      "evidence": [
+        "ruleset:19127355",
+        "harness fleet-health"
+      ],
+      "next": "Repeat policy, repository, cleanup, and compact fleet readbacks in the 08:00–09:00 slice."
+    }
+  ]
+}
