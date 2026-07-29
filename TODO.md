@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-340.
+Next free ID: T-341.
 
 ## Current state
 
@@ -108,6 +108,186 @@ Next free ID: T-340.
    successors recorded below.
 
 ## Active tasks
+
+### T-340 — Map phone-visible Swallow root into Local tmux
+
+**Phase:** complete after this closeout reaches protected `main`.
+
+At 2026-07-29 13:51 JST the owner reported that Local's `2:swallow` tmux
+window differs from the phone-visible remote session and requested that the
+phone session become the tmux session. Pane- and transcript-blind app-server
+metadata confirms the mismatch:
+
+- the active phone-visible root named `swallow` is exact
+  `019fa5a1-7fff-7e92-8e2a-2586c684747f`, status `idle`, with a canonical
+  current-user-owned, mode-0600, single-link rollout;
+- exact tmux window `@91/2:swallow` instead runs unnamed idle root
+  `019fa8db-e4e0-7b81-9c02-a3b0954b5a95` through runtime `swallow-t338`,
+  supervisor `2349453/102620670`, watcher `2349526/102620680`, launcher
+  `2349724/102620791`, and TUI `2349726/102620791`.
+
+Harness and Students retain their accepted process/root/socket mappings.
+Shared app server `2852569/83381863` and periodic monitor
+`2340081/102606237` are unchanged. The sole attached client
+`2963496/103443147` selects unaffected Harness window `@87`; free index 3,
+runtime `swallow-phone-t340`, and provisional/old window names are absent.
+Both roots are healthy, so no rollback, new root, cold-start turn, prompt,
+app-server name write, or transcript inspection is required.
+
+**Frozen bridge-first execution:**
+
+1. Publish this checkpoint before any tmux, process, or app-server write.
+2. Under the shared agent-message lock, revalidate exact Git, roots, rollouts,
+   processes, sockets, client selection, monitor receipt, and absent targets.
+3. Move only old live window `@91` from index 2 to free index 3 and rename it
+   `swallow-old-t340`, retaining its pane and complete process chain. This
+   frees canonical index 2 while preserving the old root/TUI as rollback
+   authority.
+4. Acknowledge exactly one detached `harness:2` window named
+   `swallow-phone-bridge`, using distinct runtime `swallow-phone-t340` and
+   `--remote-session 019fa5a1-7fff-7e92-8e2a-2586c684747f`. Never retry an
+   ambiguous launch.
+5. Accept only an attempt-zero supervisor/watcher/TUI chain for the exact
+   phone root, with zero recoveries/rollbacks and a reciprocal socket to
+   unchanged app server `2852569`. Then rename only that accepted exact window
+   to `swallow`; do not move, relaunch, or send input to it.
+6. Publish the accepted promotion identities. Revalidate old TUI
+   `2349726/102620791`, its exact parent/window/root, every new/peer identity,
+   and the attached Harness client; then send one `SIGTERM` only to that old
+   leaf. Never signal a process group, zombie, peer, watcher, supervisor, or
+   the shared app server, and never send a second signal.
+7. Require final exact one-pane topology
+   `0:harness,1:students,2:swallow`, absent old live leaf/launcher/window,
+   preserved old saved root, unchanged client/peer/app-server identities, the
+   phone root idle and still named `swallow`, two fresh healthy monitor
+   receipts, native doctor, focused recovery/resilience/monitor tests, clean
+   Git, and canonical fleet health.
+
+Failure before launch acknowledgement is retry-safe only after read-only
+reconciliation. Any ambiguous launch or post-promotion failure is
+non-retryable: preserve both chains and checkpoint exact state. No step reads
+or replays either root's content, starts a project task, or changes phone,
+Slack, credential, connector, or unrelated repository state.
+
+**Retry-safe preflight refusal:** the first lock-serialized transaction exited
+before any tmux/process write because its task-head gate used an incorrect
+manual expansion of abbreviated commit `0b68e60`. Exact task head and upstream
+are `0b68e60c86508f6cea771b9bda6608fe487e5764`. Readback proves unchanged
+`@91/2:swallow`, unchanged old chain and attached Harness client, absent
+runtime `swallow-phone-t340`, and a still-healthy monitor. No launch request
+was sent or acknowledged, so one corrected retry after this checkpoint is
+safe.
+
+**Bridge launch acknowledgement and acceptance:** corrected pushed checkpoint
+`de67ba4ff209b8d20b89ce92558db5b3644f0bb4` passed every final gate. Old exact
+window `@91` moved to index 3 and was renamed `swallow-old-t340` while
+retaining pane `%91` and its complete process chain. One native launch was
+acknowledged exactly once as provisional `@92/2:swallow-phone-bridge`, pane
+`%92`, runtime `swallow-phone-t340`, and supervisor
+`3085990/103604354`; it must never be retried.
+
+The bridge is attempt-zero `running/remote-explicit` with watcher
+`3086056` reporting exact phone root
+`019fa5a1-7fff-7e92-8e2a-2586c684747f` as `thread-idle`, zero recoveries, and
+zero rollbacks. Exact TUI `3086168/103604477` has one reciprocal socket peer
+to unchanged app server `2852569`; same-connection readback retains root name
+`swallow` and status `idle`. Old chain, Harness/Students, and attached client
+`2963496` on Harness `@87` are unchanged. No prompt, app-server write, process
+signal, or second launch ran.
+
+**Next action:** publish this non-retryable launch checkpoint, revalidate both
+chains and the client, then rename only accepted `@92` to `swallow`. Preserve
+old `@91` until the promotion checkpoint is pushed.
+
+**Promotion checkpoint:** pushed launch checkpoint `47acb76` preceded a fresh
+lock-serialized identity gate. One acknowledged rename changed only accepted
+window `@92/2` from `swallow-phone-bridge` to `swallow`; pane `%92`,
+supervisor `3085990`, watcher `3086056`, TUI `3086168`, phone root, runtime,
+and socket peer did not change. Old `@91/3:swallow-old-t340` remains live and
+unchanged, and client `2963496` remains on Harness `@87`.
+
+**Next action:** publish this promotion checkpoint. Then revalidate the exact
+old TUI/parent/window/root plus every protected new/peer/client identity, send
+one `SIGTERM` only to old leaf `2349726`, and perform read-only reconciliation.
+Never send a second signal.
+
+**Old-leaf retirement acknowledgement:** pushed promotion checkpoint
+`f4115bb` preceded complete identity and root-status revalidation. One exact
+`SIGTERM` was acknowledged only for old TUI `2349726/102620791`; no second
+signal ran. Old TUI, launcher, watcher, supervisor, pane, and window `@91` are
+absent. Runtime `swallow-t338` records `stopped/operator-signal` and its
+watcher records `stopped/operator-stop`.
+
+Final exact topology is one-pane
+`@87/0:harness,@88/1:students,@92/2:swallow`. Accepted runtime
+`swallow-phone-t340` remains attempt-zero with supervisor
+`3085990/103604354`, watcher `3086056`, TUI `3086168/103604477`, and a
+reciprocal socket to unchanged app server `2852569`. Exact phone root
+`019fa5a1-7fff-7e92-8e2a-2586c684747f` remains idle and named `swallow`; the
+retired tmux root remains preserved, idle, unnamed, and unarchived. Client
+`2963496` remains on Harness `@87`. First post-retirement periodic receipt
+epoch `1785301176` reports
+`healthy=3 order_action=none repair_action=none`.
+
+**Next action:** publish this non-retryable retirement checkpoint, obtain a
+second fresh healthy monitor receipt, then run the frozen doctor, focused
+tests, Git, root/name, topology, and fleet acceptance gates.
+
+**Validation and LIFO cleanup checkpoint:** retirement checkpoint `0fab76b`
+is pushed. Second post-retirement receipt epoch `1785301237` is healthy 3/3.
+Native doctor and all four focused unsafe-tail, thread-recovery, resilient,
+and tmux-monitor tests passed. The validation command nevertheless returned
+nonzero only because its final status read sampled a transient
+`degraded healthy=1` receipt; the next periodic receipt at epoch `1785301310`
+was healthy 3/3 and an independent one-shot classified every window
+`healthy/ready`.
+
+During that interval the resilient supervisors replaced only Harness watcher
+`1620577` with `3106303` and Students watcher `1638105` with `3106336`.
+Their supervisors, TUIs, saved roots, and app-server sockets did not change;
+the accepted Swallow watcher remained `3086056`. Available value-free evidence
+does not establish the trigger, so do not attribute it to a particular
+validation command. The owner-controlled client concurrently changed
+selection from Harness `@87` to Students `@88`; the controller did not move it
+and preserves the new selection.
+
+Native validation created seven eligible arg0 directories by cleanup time.
+The `guarded-bulk-delete` workflow in lock-aware
+`codex-arg0-housekeeping --apply` quarantined only those entries and
+guarded-deleted exact target
+`/home/rioyokota/.codex/tmp/arg0-quarantine-20260729T050325Z-3120077`
+(8 entries / 23 bytes) with protected anchors unchanged. Its short-lived
+mode-0600 manifest and state directory are absent. Fresh inventory reports
+`live=5 eligible=0 young=0 unexpected=0 removed=0`.
+
+**Next action:** publish this drift/cleanup checkpoint. Require two fresh
+healthy periodic receipts with the replacement peer watchers stable, then
+complete root/name, topology, process/socket, Git, and fleet acceptance.
+
+**Final acceptance:**
+
+- Fresh periodic epochs `1785301463` and `1785301494` both report
+  `healthy=3 order_action=none repair_action=none`; replacement Harness
+  watcher `3106303`, Students watcher `3106336`, and accepted Swallow watcher
+  `3086056` remain stable.
+- Active phone listing and same-connection readback both identify exact root
+  `019fa5a1-7fff-7e92-8e2a-2586c684747f` as idle and named `swallow`.
+  Tmux exact `@92/2:swallow` runs that same root through unchanged accepted
+  supervisor `3085990/103604354` and TUI `3086168/103604477`, with reciprocal
+  peer to app server `2852569`.
+- Exact one-pane topology is
+  `@87/0:harness,@88/1:students,@92/2:swallow`; old live chain/window is
+  absent, its saved root remains preserved, and owner client `2963496` remains
+  on its current Students selection `@88`.
+- Native doctor, all four focused tests, diff hygiene, clean/aligned primary
+  and task Git, zero eligible/unexpected arg0 residue, and canonical fleet
+  health pass. No prompt replay/input, pane/transcript read, root creation,
+  root name/archive/delete, app-server write/restart, second launch/signal, or
+  unrelated project action occurred.
+
+**Next action:** publish this ledger closeout through protected exact-head CI,
+merge normally, fast-forward clean Local `main`, and require the accepted
+phone/tmux root mapping plus fresh canonical fleet health to remain unchanged.
 
 ### T-339 — Consolidate Local monitor tmux sessions
 
