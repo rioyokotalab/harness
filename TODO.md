@@ -111,7 +111,7 @@ Next free ID: T-341.
 
 ### T-340 — Map phone-visible Swallow root into Local tmux
 
-**Phase:** frozen before the owner-authorized live cutover.
+**Phase:** complete after this closeout reaches protected `main`.
 
 At 2026-07-29 13:51 JST the owner reported that Local's `2:swallow` tmux
 window differs from the phone-visible remote session and requested that the
@@ -263,6 +263,31 @@ mode-0600 manifest and state directory are absent. Fresh inventory reports
 **Next action:** publish this drift/cleanup checkpoint. Require two fresh
 healthy periodic receipts with the replacement peer watchers stable, then
 complete root/name, topology, process/socket, Git, and fleet acceptance.
+
+**Final acceptance:**
+
+- Fresh periodic epochs `1785301463` and `1785301494` both report
+  `healthy=3 order_action=none repair_action=none`; replacement Harness
+  watcher `3106303`, Students watcher `3106336`, and accepted Swallow watcher
+  `3086056` remain stable.
+- Active phone listing and same-connection readback both identify exact root
+  `019fa5a1-7fff-7e92-8e2a-2586c684747f` as idle and named `swallow`.
+  Tmux exact `@92/2:swallow` runs that same root through unchanged accepted
+  supervisor `3085990/103604354` and TUI `3086168/103604477`, with reciprocal
+  peer to app server `2852569`.
+- Exact one-pane topology is
+  `@87/0:harness,@88/1:students,@92/2:swallow`; old live chain/window is
+  absent, its saved root remains preserved, and owner client `2963496` remains
+  on its current Students selection `@88`.
+- Native doctor, all four focused tests, diff hygiene, clean/aligned primary
+  and task Git, zero eligible/unexpected arg0 residue, and canonical fleet
+  health pass. No prompt replay/input, pane/transcript read, root creation,
+  root name/archive/delete, app-server write/restart, second launch/signal, or
+  unrelated project action occurred.
+
+**Next action:** publish this ledger closeout through protected exact-head CI,
+merge normally, fast-forward clean Local `main`, and require the accepted
+phone/tmux root mapping plus fresh canonical fleet health to remain unchanged.
 
 ### T-339 — Consolidate Local monitor tmux sessions
 
