@@ -185,6 +185,12 @@ flags remain unchanged. Do not pin the archive to an older owner selection:
 capture the sole client's current exact selection under the write lock and
 require that same value after acknowledgement.
 
+The following preflight also stopped before the archive request because the
+retired root transitioned normally from `idle` to `notLoaded`; its identity,
+rollout, zero process references, and unarchived SQLite flag are unchanged.
+Accept either recognized non-running status at the final gate while preserving
+all exact identity and archive constraints.
+
 ### T-340 — Map phone-visible Swallow root into Local tmux
 
 **Phase:** complete after this closeout reaches protected `main`.
