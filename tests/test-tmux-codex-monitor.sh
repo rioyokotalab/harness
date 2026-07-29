@@ -40,6 +40,7 @@ HARNESS_MONITOR_ROOT="$ROOT" \
     python3 -B - <<'PY'
 import importlib.machinery
 import os
+import tempfile
 
 os.environ["HARNESS_ROOT"] = os.environ["HARNESS_MONITOR_ROOT"]
 module = importlib.machinery.SourceFileLoader(
@@ -52,6 +53,9 @@ assert "def read_thread(" not in source
 assert "def repair_once(" not in source
 assert "def launch_window(" not in source
 assert "os.kill(" not in source
+assert "capture-pane" not in source
+assert "read-pane" not in source
+assert "thread/read" not in source
 fields = ["S", "17"] + ["0"] * 17 + ["424242"] + ["0"] * 3
 value = "23 (codex TUI) " + " ".join(fields)
 parsed = module.parse_proc_stat(23, value)
@@ -160,6 +164,117 @@ codex_0146 = module.collect_health(
 assert codex_0146["students"]["state"] == "healthy"
 assert codex_0146["students"]["tui"]["pid"] == 11
 assert codex_0146["students"]["app_server_pid"] == 99
+module.resilient_status = lambda _runtime: (
+    {"phase": "running", "owner_pid": "10"},
+    {
+        "phase": "blocked",
+        "reason": "unsafe-tail",
+        "owner_pid": "12",
+        "thread": "thread-students",
+        "recoveries": "0",
+        "rolled_back": "1",
+    },
+)
+unsafe_0146 = module.collect_health(
+    [
+        {
+            "index": 1,
+            "window_id": "@fixture",
+            "name": "students",
+            "panes": 1,
+            "pane_id": "%fixture",
+            "pane_pid": 10,
+            "path": os.environ["HARNESS_MONITOR_ROOT"],
+            "dead": False,
+        }
+    ]
+)
+assert unsafe_0146["students"]["state"] == "blocked"
+assert unsafe_0146["students"]["reason"] == "unsafe-tail"
+
+windows = [
+    {
+        "index": index,
+        "window_id": "@{}".format(index),
+        "name": name,
+        "panes": 1,
+        "pane_id": "%{}".format(index),
+        "pane_pid": 10 + index,
+        "path": os.environ["HARNESS_MONITOR_ROOT"],
+        "dead": False,
+    }
+    for name, index in module.EXPECTED
+]
+health = {
+    name: {
+        "state": "healthy",
+        "reason": "ready",
+        "window": windows[index],
+        "app_server_pid": 99,
+        "recovery": {"phase": "watching", "reason": "thread-idle"},
+    }
+    for name, index in module.EXPECTED
+}
+health["swallow"] = {
+    "state": "blocked",
+    "reason": "unsafe-tail",
+    "window": windows[2],
+    "app_server_pid": 99,
+    "identity": {"runtime": "swallow-runtime", "thread": "swallow-thread"},
+    "watcher": {"pid": 42, "start": "watcher-start"},
+    "recovery": {
+        "phase": "blocked",
+        "reason": "unsafe-tail",
+        "recoveries": "0",
+        "rolled_back": "1",
+    },
+}
+candidate, selection = module.recovery_candidate(windows, health, [])
+assert selection == "candidate"
+assert candidate["target"] == "swallow"
+assert candidate["controller_pane"] == "%0"
+assert module.recovery_candidate(windows, health, [("7", "@2")]) == (
+    None,
+    "deferred-target-attached",
+)
+health["harness"]["recovery"]["reason"] = "thread-active"
+assert module.recovery_candidate(windows, health, []) == (
+    None,
+    "deferred-controller-active",
+)
+health["harness"]["recovery"]["reason"] = "thread-idle"
+assert "rejected prompt" in module.recovery_message(
+    candidate, module.recovery_event(candidate)
+).decode()
+
+class Result:
+    returncode = 0
+
+calls = []
+module.subprocess.run = lambda arguments, **_kwargs: calls.append(arguments) or Result()
+module.PASTE_SETTLE_SECONDS = 0
+module.SUBMIT_SETTLE_SECONDS = 0
+with tempfile.TemporaryDirectory() as state:
+    action = module.request_controller_recovery(state, candidate)
+    assert action == "controller-requested"
+    assert len(calls) == 3
+    before = list(calls)
+    assert module.request_controller_recovery(state, candidate) == "already-requested"
+    assert calls == before
+with tempfile.TemporaryDirectory() as state:
+    failed_calls = []
+    module.subprocess.run = (
+        lambda arguments, **_kwargs: failed_calls.append(arguments)
+        or type("Failed", (), {"returncode": 1})()
+    )
+    assert module.request_controller_recovery(state, candidate) == (
+        "request-ambiguous"
+    )
+    before = list(failed_calls)
+    assert module.request_controller_recovery(state, candidate) == (
+        "already-requested"
+    )
+    assert failed_calls == before
 PY
 
 cat >"$TEST_ROOT/healthy.json" <<'EOF'
@@ -196,7 +311,17 @@ if run_fixture "$TEST_ROOT/degraded.json" \
     fail "degraded fixture returned healthy"
 fi
 grep -F 'repair_action=none' "$TEST_ROOT/degraded.out" >/dev/null ||
-    fail "observe-only monitor selected repair"
+    fail "generic degradation selected recovery"
+
+cat >"$TEST_ROOT/requested.json" <<'EOF'
+{"repair_action":"controller-requested","windows":[{"name":"harness","index":0},{"name":"students","index":1},{"name":"swallow","index":2}],"health":{"harness":{"state":"healthy"},"students":{"state":"healthy"},"swallow":{"state":"blocked","reason":"unsafe-tail"}}}
+EOF
+if run_fixture "$TEST_ROOT/requested.json" \
+    >"$TEST_ROOT/requested.out"; then
+    fail "requested fixture returned healthy"
+fi
+grep -F 'repair_action=controller-requested' "$TEST_ROOT/requested.out" \
+    >/dev/null || fail "controller request classification"
 
 if run_fixture "$TEST_ROOT/degraded.json" --repair \
     >"$TEST_ROOT/repair-flag.out" 2>&1; then

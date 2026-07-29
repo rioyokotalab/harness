@@ -507,6 +507,15 @@ single-route failure reports `use-primary` or `use-secondary` and a dual loss
 reports `routes-unavailable`; `--recover` never sends a supervisor command for
 ABQ.
 
+On Local, `harness tmux-codex-monitor --interval 30 --enforce-order
+--auto-recover` additionally recognizes one exact Students or Swallow
+`blocked/unsafe-tail` watcher. It submits one durably deduplicated request to
+the healthy idle Harness controller only when the canonical three-window
+topology, healthy peer, shared app-server identity, and unattached target all
+remain exact. It reads no pane or transcript content and leaves active,
+attached, ambiguous, multi-target, and Harness-controller failures
+report-only.
+
 The updater requires the expected `main` branch, exactly one `origin`, normal
 `origin/main` tracking, a clean worktree, an explicit full target equal to the
 fetched `origin/main`, and ancestry from the current revision. It validates the

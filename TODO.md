@@ -357,6 +357,46 @@ durably deduplicated controller path requests recovery from an idle healthy
 Harness controller. Never inject into or interrupt an active controller, and
 never retry an acknowledged or ambiguous request.
 
+**Automatic trigger implementation:** the monitor now distinguishes a live,
+identity-matched watcher receipt in exact `blocked/unsafe-tail` from a missing
+watcher. Optional `--auto-recover` selects only one blocked Students or Swallow
+root under exact canonical three-window topology, an idle healthy Harness
+controller, one healthy sibling, one unchanged shared app-server identity, and
+an unattached target window. It writes a mode-0600 event reservation before
+literal controller insertion and records submission afterward; the event key
+binds the target runtime/root, watcher PID/start tick, app-server PID/start
+tick, and recovery counters. A reserved, submitted, or ambiguous event is
+never retried.
+
+The one identified request instructs the existing Harness controller to
+reconstruct solely from repository instructions, `TODO.md`, Git, and mutable
+external state and to apply the established unsafe-tail skill without replay,
+pane/transcript inspection, app-server restart, peer interruption, or
+ambiguous-operation retry. The monitor itself still performs no app-server
+control operation, rollback, root mutation, lifecycle launch, or process
+signal. Harness-controller failure, active controller, attached target,
+unhealthy peer, duplicate target, topology drift, and identity drift remain
+report-only. Focused fixtures cover exact unsafe-tail classification, candidate
+selection, active-controller and attached-target deferral, successful
+reservation/submission, durable deduplication, and ambiguous non-retry.
+
+Focused validation passes:
+
+- Python 3.6 AST compatibility and `git diff --check`;
+- `tests/test-tmux-codex-monitor.sh`;
+- a live healthy `--once --auto-recover` pass against the preserved canonical
+  topology, reporting three healthy windows and `repair_action=none`.
+
+Generated validation cache `/tmp/harness-t344-swallow-auto-recovery/libexec/__pycache__`
+was removed through guarded manifest `/tmp/t344-pycache.manifest`; the tool
+verified the target absent and protected anchors unchanged.
+
+**Next action:** publish this implementation checkpoint, run the complete
+phase-one suite, and inspect the exact diff. Then merge through protected CI
+without changing the owner-selected zero-approval policy. Activate
+`--auto-recover` only after merged-code validation and only while the current
+Swallow remains healthy; do not inject into the active parent Harness task.
+
 ### T-343 — Harden durable Codex-to-Claude handoff
 
 **Phase:** validating after implementation and the first clean full-suite pass.

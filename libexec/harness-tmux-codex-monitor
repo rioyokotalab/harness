@@ -6,6 +6,7 @@ from __future__ import print_function
 import argparse
 import contextlib
 import fcntl
+import hashlib
 import json
 import os
 import re
@@ -21,6 +22,8 @@ sys.dont_write_bytecode = True
 EXPECTED = (("harness", 0), ("students", 1), ("swallow", 2))
 CODEX_COMMS = ("codex", "codex.real")
 SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
+PASTE_SETTLE_SECONDS = 1
+SUBMIT_SETTLE_SECONDS = 1
 
 
 class MonitorError(RuntimeError):
@@ -384,7 +387,8 @@ def collect_health(windows):
             continue
         entry["app_server_pid"] = peer_pid
         watcher_ok = False
-        if recovery and recovery.get("phase") in ("watching", "recovered"):
+        watcher = None
+        if recovery:
             try:
                 watcher_pid = int(recovery.get("owner_pid", "0"))
             except ValueError:
@@ -396,6 +400,18 @@ def collect_health(windows):
                 and watcher["parent"] == window["pane_pid"]
                 and recovery.get("thread") == identity["thread"]
             )
+        entry["recovery"] = recovery
+        entry["watcher"] = watcher if watcher_ok else None
+        if (
+            watcher_ok
+            and recovery.get("phase") == "blocked"
+            and recovery.get("reason") == "unsafe-tail"
+        ):
+            entry["state"] = "blocked"
+            entry["reason"] = "unsafe-tail"
+            entry["expected_index"] = expected_index
+            health[name] = entry
+            continue
         if not watcher_ok:
             entry["reason"] = "watcher-absent"
             health[name] = entry
@@ -436,6 +452,176 @@ def mapping_snapshot(mapping, health):
     return mapping
 
 
+def canonical_topology(windows):
+    if len(windows) != len(EXPECTED):
+        return False
+    for name, index in EXPECTED:
+        matches = [
+            window
+            for window in windows
+            if window["name"] == name and window["index"] == index
+        ]
+        if (
+            len(matches) != 1
+            or matches[0]["panes"] != 1
+            or matches[0]["dead"]
+            or matches[0]["path"] != os.environ["HARNESS_ROOT"]
+        ):
+            return False
+    return True
+
+
+def recovery_candidate(windows, health, clients):
+    blocked = [
+        name
+        for name in ("students", "swallow")
+        if health.get(name, {}).get("state") == "blocked"
+        and health[name].get("reason") == "unsafe-tail"
+    ]
+    if not blocked:
+        return None, "none"
+    if len(blocked) != 1 or not canonical_topology(windows):
+        return None, "deferred-ambiguous"
+    target = blocked[0]
+    controller = health.get("harness", {})
+    controller_recovery = controller.get("recovery") or {}
+    if (
+        controller.get("state") != "healthy"
+        or controller_recovery.get("phase") != "watching"
+        or controller_recovery.get("reason") != "thread-idle"
+    ):
+        return None, "deferred-controller-active"
+    peer = "swallow" if target == "students" else "students"
+    if health.get(peer, {}).get("state") != "healthy":
+        return None, "deferred-peer-unhealthy"
+    target_entry = health[target]
+    target_window = target_entry["window"]
+    if target_window["window_id"] in {window_id for _pid, window_id in clients}:
+        return None, "deferred-target-attached"
+    app_servers = {
+        entry.get("app_server_pid")
+        for entry in (controller, health[peer], target_entry)
+    }
+    if len(app_servers) != 1 or None in app_servers:
+        return None, "deferred-app-server-identity"
+    identity = target_entry.get("identity") or {}
+    watcher = target_entry.get("watcher") or {}
+    recovery = target_entry.get("recovery") or {}
+    server = process_info(target_entry["app_server_pid"])
+    required = (
+        identity.get("runtime"),
+        identity.get("thread"),
+        watcher.get("pid"),
+        watcher.get("start"),
+        server,
+    )
+    if not all(required):
+        return None, "deferred-identity"
+    candidate = {
+        "schema": 1,
+        "target": target,
+        "runtime": identity["runtime"],
+        "thread": identity["thread"],
+        "watcher_pid": watcher["pid"],
+        "watcher_start": watcher["start"],
+        "app_server_pid": target_entry["app_server_pid"],
+        "app_server_start": server["start"],
+        "recoveries": recovery.get("recoveries", "unknown"),
+        "rolled_back": recovery.get("rolled_back", "unknown"),
+        "controller_pane": controller["window"]["pane_id"],
+    }
+    return candidate, "candidate"
+
+
+def recovery_event(candidate):
+    identity = dict(candidate)
+    identity.pop("controller_pane", None)
+    payload = json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()
+    return hashlib.sha256(payload).hexdigest()
+
+
+def recovery_message(candidate, event):
+    return (
+        "[Agent: Local Codex] Automatic unsafe-tail recovery request "
+        "event_id={event} target={target} runtime={runtime}. "
+        "Before task work, confirm the repository root is $HOME/harness. "
+        "Read AGENTS.md and TODO.md completely, inspect the current branch, "
+        "worktree, recent commits, durable task state, and mutable external "
+        "state, then reconcile only this exact blocked managed root. Apply the "
+        "recover-codex-unsafe-tail skill. Never reconstruct or replay a "
+        "rejected prompt, inspect pane or transcript content, repeat an "
+        "acknowledged or ambiguous operation, restart the shared app server, "
+        "or disturb healthy peers or attached clients. Use bridge-first "
+        "fresh-root recovery if the recorded unsafe tail remains exact, "
+        "checkpoint every non-retryable boundary, and remain in the Harness "
+        "thread after reporting the value-free result."
+    ).format(
+        event=event,
+        target=candidate["target"],
+        runtime=candidate["runtime"],
+    ).encode("utf-8")
+
+
+def request_controller_recovery(root, candidate):
+    journal_path = os.path.join(root, "recovery-request.json")
+    event = recovery_event(candidate)
+    journal = read_private_json(journal_path, None)
+    if journal and journal.get("event") == event:
+        return "already-requested"
+    reservation = {
+        "schema": 1,
+        "event": event,
+        "target": candidate["target"],
+        "runtime": candidate["runtime"],
+        "thread": candidate["thread"],
+        "phase": "reserved",
+        "epoch": int(time.time()),
+    }
+    atomic_json(journal_path, reservation)
+    buffer_name = "harness-recovery-{}".format(event[:16])
+    message = recovery_message(candidate, event)
+    loaded = subprocess.run(
+        ["tmux", "load-buffer", "-b", buffer_name, "-"],
+        input=message,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    if loaded.returncode != 0:
+        return "request-ambiguous"
+    inserted = subprocess.run(
+        [
+            "tmux",
+            "paste-buffer",
+            "-b",
+            buffer_name,
+            "-d",
+            "-t",
+            candidate["controller_pane"],
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    if inserted.returncode != 0:
+        run(["tmux", "delete-buffer", "-b", buffer_name], check=False)
+        return "request-ambiguous"
+    time.sleep(PASTE_SETTLE_SECONDS)
+    submitted = subprocess.run(
+        ["tmux", "send-keys", "-t", candidate["controller_pane"], "C-m"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    if submitted.returncode != 0:
+        return "request-ambiguous"
+    time.sleep(SUBMIT_SETTLE_SECONDS)
+    reservation["phase"] = "submitted"
+    reservation["submitted_epoch"] = int(time.time())
+    atomic_json(journal_path, reservation)
+    return "controller-requested"
+
+
 def test_fixture(path, enforce):
     with open(path, "r") as stream:
         fixture = json.load(stream)
@@ -449,7 +635,7 @@ def test_fixture(path, enforce):
             order_action = "ordered" if fixture.get("out_of_order") else "none"
         else:
             order_action = "deferred-ambiguous"
-    repair_action = "none"
+    repair_action = fixture.get("repair_action", "none")
     states = fixture.get("health", {})
     healthy = sum(1 for value in states.values() if value.get("state") == "healthy")
     print(
@@ -470,11 +656,14 @@ def parse_arguments():
     modes.add_argument("--interval", type=int)
     modes.add_argument("--status", action="store_true")
     parser.add_argument("--enforce-order", action="store_true")
+    parser.add_argument("--auto-recover", action="store_true")
     arguments = parser.parse_args()
     if arguments.interval is not None and not 30 <= arguments.interval <= 3600:
         parser.error("--interval must be between 30 and 3600 seconds")
     if arguments.status and arguments.enforce_order:
         parser.error("--status does not accept --enforce-order")
+    if arguments.status and arguments.auto_recover:
+        parser.error("--status does not accept --auto-recover")
     return arguments
 
 
@@ -535,6 +724,16 @@ def main():
                     if healthy == 3 and order_action != "deferred-ambiguous"
                     else "degraded"
                 )
+                if arguments.auto_recover:
+                    candidate, selection = recovery_candidate(
+                        windows,
+                        health,
+                        tmux_clients(),
+                    )
+                    if candidate:
+                        repair_action = request_controller_recovery(root, candidate)
+                    elif selection != "none":
+                        repair_action = selection
                 for name, index in EXPECTED:
                     entry = health.get(name, {})
                     print(
