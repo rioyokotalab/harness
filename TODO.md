@@ -338,6 +338,24 @@ read-only reconciliation before the next decision.
   apply or rollback is authorized or required for this tmux restoration;
   preserve the running processes and defer that separate live-launcher change.
 
+**0.146.0 monitor implementation checkpoint:**
+
+- The focused monitor fixture first failed on a synthetic `comm=codex` TUI and
+  app-server peer, reproducing the live false negative.
+- Health collection now considers only descendant candidates whose process
+  name is `codex` or `codex.real` and which have a reciprocal Unix socket.
+  It requires exactly one such candidate and accepts the same two names only
+  for the current-user-owned reciprocal peer; multiple candidates fail closed
+  as `tui-ambiguous`.
+- The focused test passes. One live one-shot read using the new code reports
+  Harness and Students healthy and only Swallow missing, with no order or
+  repair action. No process or app-server state changed.
+- A syntax check generated exact two-entry
+  `libexec/__pycache__`; guarded-delete manifest
+  `/tmp/t338-pycache.manifest` validated and removed only that 29,933-byte
+  directory with protected anchors unchanged. The reviewed mode-0600 manifest
+  was exact-unlinked and both paths are absent.
+
 ### T-336 — Benchmark current Codex and Claude Harness development
 
 **Phase:** complete.
