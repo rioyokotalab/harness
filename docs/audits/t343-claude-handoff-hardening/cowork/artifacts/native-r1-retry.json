@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "task_id": "T-343",
+  "previous_run_id": "t343-native-readonly-r1",
+  "next_run_id": "t343-native-readonly-r2",
+  "previous_outcome": "launch-validation-failure",
+  "previous_acknowledged": false,
+  "previous_imported": false,
+  "protected_state_unchanged": true,
+  "input_changed": true,
+  "replayed": false,
+  "exact_error_sha256": "d8a1e758a0885d376f7a2457d829c53f27040ef929246fb4e28105670fb743de"
+}

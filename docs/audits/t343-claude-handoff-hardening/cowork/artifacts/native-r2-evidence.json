@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "task_id": "T-343",
+  "run_id": "t343-native-readonly-r2",
+  "authority_class": "read-only",
+  "stage_receipt": {
+    "prompt_sha256": "999c2f241a170d7cb102c2c3cc6b569bcf9a0e397701b9d0a03f35e51a7a8258",
+    "inputs": {
+      "AGENTS.md": "dbeac54ffc3d03c4e58c82d8d68e704604c2df6d8385dc95b1b61bf6f99141fe",
+      "TODO.md": "557086b1f17aa754404f38f15863255c85448f191ae878e9f436941b8c9a4a09",
+      "docs/audits/t343-claude-handoff-hardening/cowork/reconciliation.md": "04aa22fdac158d075375e680098bfdea1f89e9d5999be8427f379f4f8f608abe",
+      "docs/audits/t343-claude-handoff-hardening/cowork/state.json": "91b16161344bddc9b446d3a53638f68df62a650790922f8b2ffaf43b49afa708",
+      "handoff.json": "ac304b429cda5d2d1df0d98f5b2c85790ba0b548158c06c9454d77b3c442f236"
+    }
+  },
+  "read_manifest": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "dbeac54ffc3d03c4e58c82d8d68e704604c2df6d8385dc95b1b61bf6f99141fe"
+    },
+    {
+      "path": "TODO.md",
+      "sha256": "557086b1f17aa754404f38f15863255c85448f191ae878e9f436941b8c9a4a09"
+    },
+    {
+      "path": "docs/audits/t343-claude-handoff-hardening/cowork/reconciliation.md",
+      "sha256": "04aa22fdac158d075375e680098bfdea1f89e9d5999be8427f379f4f8f608abe"
+    },
+    {
+      "path": "docs/audits/t343-claude-handoff-hardening/cowork/state.json",
+      "sha256": "91b16161344bddc9b446d3a53638f68df62a650790922f8b2ffaf43b49afa708"
+    },
+    {
+      "path": "handoff.json",
+      "sha256": "ac304b429cda5d2d1df0d98f5b2c85790ba0b548158c06c9454d77b3c442f236"
+    },
+    {
+      "path": "artifacts/copilot-prompt.md",
+      "sha256": "999c2f241a170d7cb102c2c3cc6b569bcf9a0e397701b9d0a03f35e51a7a8258"
+    }
+  ],
+  "recovered": {
+    "task_id": "T-343",
+    "run_id": "t343-native-readonly-r2",
+    "repository_root": "/tmp/harness-t343-claude-handoff-hardening",
+    "baseline_commit": "bd47587db69f029cce5a43ec8b8e48a19b94f472",
+    "phase": "executing",
+    "authority_class": "read-only",
+    "next_action": "verify the sealed read-only handoff evidence without changing the target",
+    "checks": [
+      "tests/test-claude-handoff.sh",
+      "tests/test-codex-claude-cowork-skill.sh",
+      "tests/test-phase1.sh"
+    ]
+  },
+  "execution_records": []
+}

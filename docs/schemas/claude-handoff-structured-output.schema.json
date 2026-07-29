@@ -1,0 +1,82 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "run_id",
+    "authority_class",
+    "stage_receipt",
+    "read_manifest",
+    "recovered",
+    "execution_records"
+  ],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "task_id": {"type": "string"},
+    "run_id": {"type": "string"},
+    "authority_class": {"type": "string", "enum": ["read-only", "execution"]},
+    "stage_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["prompt_sha256", "inputs"],
+      "properties": {
+        "prompt_sha256": {"type": "string"},
+        "inputs": {
+          "type": "object",
+          "additionalProperties": {"type": "string"}
+        }
+      }
+    },
+    "read_manifest": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": {"type": "string"},
+          "sha256": {"type": "string"}
+        }
+      }
+    },
+    "recovered": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "run_id",
+        "repository_root",
+        "baseline_commit",
+        "phase",
+        "authority_class",
+        "next_action",
+        "checks"
+      ],
+      "properties": {
+        "task_id": {"type": "string"},
+        "run_id": {"type": "string"},
+        "repository_root": {"type": "string"},
+        "baseline_commit": {"type": "string"},
+        "phase": {"type": "string"},
+        "authority_class": {"type": "string"},
+        "next_action": {"type": "string"},
+        "checks": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "execution_records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["case_id", "command", "exit_status", "output_sha256"],
+        "properties": {
+          "case_id": {"type": "string"},
+          "command": {"type": "array", "items": {"type": "string"}},
+          "exit_status": {"type": "integer"},
+          "output_sha256": {"type": "string"}
+        }
+      }
+    }
+  }
+}

@@ -16,6 +16,72 @@ Authentication, credentials, sessions, histories, memories, caches, databases,
 private endpoints, and machine-specific runtime state remain outside this
 contract and are never inspected or migrated.
 
+## Task-bound Claude handoff
+
+`harness claude-handoff` validates a bounded, expiring packet before a fresh
+Claude process is asked to recover durable work. Packet schema 1 binds the task
+and run IDs, canonical repository root, exact Git baseline, phase, Fable/high
+client profile, authority class, allowed paths, source files, checks, next
+action, issue time, and expiry. Validation requires separate expected values
+from the driver and rejects unknown fields, unsafe paths, wrong or noncanonical
+roots, current Git-head drift, wrong task/run/baseline, future or expired
+packets, and linked or foreign-owned packet files:
+
+```bash
+./bin/harness claude-handoff validate \
+  --packet STAGE/handoff.json \
+  --expect-task T-NNN --expect-run-id RUN_ID \
+  --expect-root REPOSITORY --expect-baseline FULL_COMMIT \
+  --now YYYY-MM-DDTHH:MM:SSZ
+```
+
+The evidence gate is authority-specific. A `read-only` packet has no allowed
+write path, and its evidence must contain the exact sealed prompt/input receipt
+plus a complete path/digest read manifest and zero execution records. An
+`execution` packet must declare relative allowed paths, include a successful
+`git rev-parse HEAD` baseline record, and supply command, exit, and output
+digests. Codex must independently reproduce one exact execution record in a
+separate current-user-owned JSON receipt; model prose cannot satisfy that
+requirement.
+
+`verify-evidence` reopens every staged source, the fixed staged
+`handoff.json`, and `artifacts/copilot-prompt.md`; it caps each copied source at
+1 MiB, checks current-user ownership and single-link regular-file identity,
+matches copied bytes to the packet's live declared source files, and then
+matches the model's receipt and recovered fields. The packet, evidence, prompt,
+and driver receipt retain the narrower 64 KiB input cap. The stage contains
+exactly packet source files plus `handoff.json`; extra or missing inputs fail
+closed.
+
+```bash
+./bin/harness claude-handoff verify-evidence \
+  --packet STAGE/handoff.json --stage STAGE/stage.json \
+  --evidence STAGE/evidence.json \
+  --expect-task T-NNN --expect-run-id RUN_ID \
+  --expect-root REPOSITORY --expect-baseline FULL_COMMIT \
+  --now YYYY-MM-DDTHH:MM:SSZ
+```
+
+For native structured output, use
+`docs/schemas/claude-handoff-structured-output.schema.json`; the canonical
+public evidence schema retains its Draft 2020-12 metadata, which Claude Code
+2.1.220's native `--json-schema` parser does not accept. A read-only launch
+uses explicit Fable/high, project-only settings, a nonpersistent print session,
+`dontAsk`, and only Read/Grep/Glob. Tool flags are authority reduction, not OS
+confinement; use an environment-native read-only filesystem sandbox and seal
+protected driver digests around the client window.
+
+Failed rows are never replayed. `verify-retry` requires a distinct next run,
+changed input, unchanged protected state, no prior import, no replay, an exact
+error digest, and one of the narrow observed outcomes:
+`transport-failure`, `launch-validation-failure`, or `candidate-invalid`.
+Other or ambiguous outcomes require a separate recovery decision.
+
+These packets are task evidence, not credentials or standing authority. They
+do not change the ordinary interactive Claude profile, authorize target
+execution, prove model authorship, or replace Cowork's benchmark, seals,
+receipts, owner `go`, and driver-only target writes.
+
 The reviewed Codex body uses an explicit granular approval policy with only
 `mcp_elicitations = true`; sandbox, command-rule, request-permission, and
 skill-script approval categories are false and therefore fail closed. It

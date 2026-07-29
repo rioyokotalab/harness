@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rioyokotalab.github.io/harness/schemas/claude-handoff-evidence.schema.json",
+  "title": "Claude handoff evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "run_id",
+    "authority_class",
+    "stage_receipt",
+    "read_manifest",
+    "recovered",
+    "execution_records"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "task_id": {"type": "string", "pattern": "^T-[0-9]+$"},
+    "run_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "authority_class": {"enum": ["read-only", "execution"]},
+    "stage_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["prompt_sha256", "inputs"],
+      "properties": {
+        "prompt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "inputs": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "read_manifest": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "recovered": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "run_id",
+        "repository_root",
+        "baseline_commit",
+        "phase",
+        "authority_class",
+        "next_action",
+        "checks"
+      ],
+      "properties": {
+        "task_id": {"type": "string"},
+        "run_id": {"type": "string"},
+        "repository_root": {"type": "string"},
+        "baseline_commit": {"type": "string"},
+        "phase": {"type": "string"},
+        "authority_class": {"type": "string"},
+        "next_action": {"type": "string"},
+        "checks": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "execution_records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["case_id", "command", "exit_status", "output_sha256"],
+        "properties": {
+          "case_id": {"type": "string"},
+          "command": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string"}
+          },
+          "exit_status": {"type": "integer", "minimum": 0, "maximum": 255},
+          "output_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    }
+  }
+}

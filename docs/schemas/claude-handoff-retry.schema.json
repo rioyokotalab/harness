@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rioyokotalab.github.io/harness/schemas/claude-handoff-retry.schema.json",
+  "title": "Claude handoff retry record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "previous_run_id",
+    "next_run_id",
+    "previous_outcome",
+    "previous_acknowledged",
+    "previous_imported",
+    "protected_state_unchanged",
+    "input_changed",
+    "replayed",
+    "exact_error_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "task_id": {"type": "string", "pattern": "^T-[0-9]+$"},
+    "previous_run_id": {"type": "string"},
+    "next_run_id": {"type": "string"},
+    "previous_outcome": {
+      "enum": [
+        "transport-failure",
+        "launch-validation-failure",
+        "candidate-invalid"
+      ]
+    },
+    "previous_acknowledged": {"type": "boolean"},
+    "previous_imported": {"const": false},
+    "protected_state_unchanged": {"const": true},
+    "input_changed": {"const": true},
+    "replayed": {"const": false},
+    "exact_error_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}
