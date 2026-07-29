@@ -233,6 +233,37 @@ epoch `1785301176` reports
 second fresh healthy monitor receipt, then run the frozen doctor, focused
 tests, Git, root/name, topology, and fleet acceptance gates.
 
+**Validation and LIFO cleanup checkpoint:** retirement checkpoint `0fab76b`
+is pushed. Second post-retirement receipt epoch `1785301237` is healthy 3/3.
+Native doctor and all four focused unsafe-tail, thread-recovery, resilient,
+and tmux-monitor tests passed. The validation command nevertheless returned
+nonzero only because its final status read sampled a transient
+`degraded healthy=1` receipt; the next periodic receipt at epoch `1785301310`
+was healthy 3/3 and an independent one-shot classified every window
+`healthy/ready`.
+
+During that interval the resilient supervisors replaced only Harness watcher
+`1620577` with `3106303` and Students watcher `1638105` with `3106336`.
+Their supervisors, TUIs, saved roots, and app-server sockets did not change;
+the accepted Swallow watcher remained `3086056`. Available value-free evidence
+does not establish the trigger, so do not attribute it to a particular
+validation command. The owner-controlled client concurrently changed
+selection from Harness `@87` to Students `@88`; the controller did not move it
+and preserves the new selection.
+
+Native validation created seven eligible arg0 directories by cleanup time.
+The `guarded-bulk-delete` workflow in lock-aware
+`codex-arg0-housekeeping --apply` quarantined only those entries and
+guarded-deleted exact target
+`/home/rioyokota/.codex/tmp/arg0-quarantine-20260729T050325Z-3120077`
+(8 entries / 23 bytes) with protected anchors unchanged. Its short-lived
+mode-0600 manifest and state directory are absent. Fresh inventory reports
+`live=5 eligible=0 young=0 unexpected=0 removed=0`.
+
+**Next action:** publish this drift/cleanup checkpoint. Require two fresh
+healthy periodic receipts with the replacement peer watchers stable, then
+complete root/name, topology, process/socket, Git, and fleet acceptance.
+
 ### T-339 — Consolidate Local monitor tmux sessions
 
 **Phase:** complete after this closeout reaches protected `main`.
