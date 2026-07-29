@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-343.
+Next free ID: T-344.
 
 ## Current state
 
@@ -108,6 +108,83 @@ Next free ID: T-343.
    successors recorded below.
 
 ## Active tasks
+
+### T-343 — Harden durable Codex-to-Claude handoff
+
+**Phase:** ready-for-go; target execution remains blocked until the owner gives
+explicit `go`.
+
+The owner requested a duration-bound hardening run through 2026-07-30 09:00
+JST. Scope is the reusable Harness handoff path only: make a fresh Claude
+process recover exact task state from the repository, receive task-appropriate
+authority, preserve unrelated work and accepted policy, and leave
+independently reproducible evidence. Sibling repositories, live threads/tmux/
+app servers, user settings, credentials, connectors, schedulers, packages,
+system state, hosting settings, and deployments are excluded.
+
+The immutable baseline is
+`333d67b2179906dbaea5c7ea7e763613851e52b8`. Work is isolated in
+`/tmp/harness-t343-claude-handoff-hardening` on branch
+`codex/t343-claude-handoff-hardening`; Codex and Claude sandboxes are detached
+clean clones at the same baseline. The schema-3 exchange, charter, frozen
+benchmark, evidence, reconciliation, execution, and validation records live
+under `docs/audits/t343-claude-handoff-hardening/cowork/`.
+
+Confirmed preparation facts:
+
+- Claude Code 2.1.220 supports Fable/high, explicit no-tools, plan/dontAsk
+  modes, project-only settings, JSON output, and nonpersistent print sessions.
+- The tracked Claude mirrors are byte-identical and select Fable/high. Their
+  general interactive bypass-permissions default is a benchmark input, not an
+  authorization to edit live user settings or a predetermined finding.
+- T-336's accepted `-r7` reports and four Claude failure capsules and T-342's
+  Cowork evidence remain immutable. Any retest uses a distinct identity and
+  unchanged corpus/grader/containment.
+- Native agent-config doctor passes with 17 skills. Harness ruleset `19127355`
+  retains strict `portable-phase1`, owner/admin bypass, and owner-selected zero
+  approvals; hardening must preserve that exact policy.
+- Local, `ab`, `ab2`, `ri`, `al`, `rc`, `t4`, and all four Mac route pairs
+  pass canonical health. Both ABQ routes fail, while the official G-QuAT page
+  still reports System H `サービス停止中`; do not probe or synchronize ABQ
+  until official or canonical evidence establishes restoration.
+
+The benchmark `t343-claude-handoff-v1` has eight binary cases: cold durable
+takeover; task/root identity; authority separation; instruction/policy
+preservation; Cowork integrity; interruption/retry safety; the four frozen
+T-336 capsules; and end-to-end acceptance. A safety or containment failure
+cannot be offset by another case. Each retained iteration records hypothesis,
+before/after identity, exact check/input, result, and keep/revert.
+
+Matched discussion is complete. Codex's baseline suites are regression
+evidence, not fresh-takeover proof. Claude's independent run executed no
+commands because its Bash surface failed on read-only product state and did
+not discover the stage; its sealed evidence was retained as the founding
+negative result that mechanically importable prose need not prove execution.
+The first reciprocal launch failed before the model because network isolation
+blocked the API. The second reached Claude but was structurally invalid due to
+a driver-prompt omission and was not imported. A changed third run read the
+exact stage under Read/Grep/Glob, accepted the amended benchmark, and imported
+successfully. Independent and reciprocal receipt hashes verify.
+
+Both agents agreed to authority-class evidence: read-only requires sealed
+prompt/input receipt plus an exact read manifest and refuses execution
+records; execution class requires command/exit/output digests, baseline
+identity, and mandatory Codex reproduction of one deterministic record. The
+current stage has no top-level `stage_sha256`, so implementation must bind its
+actual prompt/input map or first define that aggregate field canonically.
+
+Material implementation stops at 08:00 JST, reserving the final hour for full
+validation, protected publication/readback, guarded cleanup, and handoff.
+Evidence uses exactly 16 JST slices: the partial `17:32–18:00` slice and every
+full hour through `08:00–09:00`. The durable and owner summaries each require
+exactly 16 timestamped evidence entries and at least 800 words.
+
+**Next action:** publish this preparation checkpoint and wait for one explicit
+owner `go`. Then Codex starts with the five-item repository-local slice frozen
+in `cowork/reconciliation.md`: packet/identity fixtures; authority-class
+evidence binding; one real read-only fresh-process Claude round trip; the
+broken-sandbox negative; and the observed distinct-identity retry fixtures.
+No target implementation or live rollout occurs before `go`.
 
 ### T-342 — Adopt cowork benchmark discipline and Claude Fable defaults
 
