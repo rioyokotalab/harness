@@ -111,9 +111,9 @@ Next free ID: T-343.
 
 ### T-342 — Adopt cowork benchmark discipline and Claude Fable defaults
 
-**Phase:** implementation and native default-model validation complete on
-`codex/t342-claude-remediation`; publish through protected CI from commit
-`4d21c8d` plus the final cowork evidence commit.
+**Phase:** complete after this closeout reaches protected `main`; implementation,
+native default-model validation, publication, and the reachable-fleet rollout
+are complete. ABCI-Q remains a separately recorded post-maintenance unknown.
 
 The owner's duration-window incident showed a session narrating unmeasured
 progress instead of iterating against a frozen benchmark. Students T-035
@@ -173,13 +173,33 @@ Validation:
   `docs/audits/t342-claude-remediation/cowork/`.
 - Students target commit `8c04f63` on
   `codex/t035-claude-boundaries` independently passed 17 focused worker tests
-  and the complete 174-test offline gate.
+  and the complete 174-test offline gate. PR 218 squash-merged as
+  `ee0779ef774a3bedacbad0ed3dc79581af2ea19c`.
+- Harness PR 410 passed protected `portable-phase1` and merge-merged as
+  `fcf737cf0f0d7dd99626f9c4d8dcd05cc6ed7cca`.
+- Guarded `harness fleet-sync` advanced the ten reachable targets `ab`, `ab2`,
+  `ri`, `al`, `rc`, `t4`, `aist`, `home`, `office`, and `riken` from
+  `75470e8afbec9f7d1fb65e9b7b9c9878ef99518e` to `fcf737c`. The four advanced
+  Macs each accepted exactly one detached, pane-blind context refresh through
+  the managed communication transport.
+- `abq` was correctly excluded while its reviewed AIST maintenance registry
+  entry remained active through 2026-07-29 17:00 JST. The first canonical
+  post-window fleet-health read at 17:00:15 JST found both `abq` routes
+  unavailable. The official G-QuAT page still listed only the scheduled
+  17:00 end and had not posted evidence of restored service, so no blind retry
+  or fleet write followed. Its checkout is therefore still expected at
+  `75470e8a`; readiness and the deferred sync are unknown, not failed rollout
+  evidence.
+- The nine private task roots and five stale T-342 Git worktree-admin roots
+  were removed with immutable guarded-delete plans and verified absent;
+  unrelated worktrees were preserved.
 
-**Next action:** publish both task branches through protected CI, then, as a
-separate future distinct run identity, retest only the four frozen T-336
-Claude failure capsules with Claude on `fable` at high effort under the
-unchanged grader and containment contract, recording the outcome as a new
-result alongside — never a rewrite of — the accepted `-r7` reports.
+**Next action:** after official status or a future canonical health read proves
+`abq` ready, plan/apply only its deferred sync from `75470e8a` to the then
+current protected `main`. Separately, under a new run identity, retest only the
+four frozen T-336 Claude failure capsules with Claude on `fable` at high
+effort under the unchanged grader and containment contract, recording the
+outcome alongside — never as a rewrite of — the accepted `-r7` reports.
 
 ### T-341 — Archive the retired Swallow saved root
 
