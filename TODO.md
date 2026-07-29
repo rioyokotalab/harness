@@ -93,19 +93,16 @@ Next free ID: T-339.
 
 ## Next resume checkpoint
 
-1. Complete T-338's owner-authorized lifecycle-only restoration of Local's
-   absent canonical `harness` tmux session. Do not roll back, replace, rename,
-   or replay any saved root.
-2. T-314 through T-318 are complete. Students and Swallow are owned by their
+1. T-314 through T-318 are complete. Students and Swallow are owned by their
    independent project agents and ledgers; Harness has no project-research
    resume action for either repository.
-3. T-311 is complete, including administrator-authenticated Mac changes and
+2. T-311 is complete, including administrator-authenticated Mac changes and
    D-007's private product-owned Codex user layer.
-4. T-303 is externally blocked: the owner confirmed no access to or prior
+3. T-303 is externally blocked: the owner confirmed no access to or prior
    login on `nas-03.yokota` / `192.168.33.30`. Resume only if the responsible
    administrator or a trusted physical/hypervisor console can independently
    confirm the recorded host fingerprint and intended login account.
-5. Continue T-196 only at its exact time/identity gates: all eight nodes are
+4. Continue T-196 only at its exact time/identity gates: all eight nodes are
    now 2/8 with next-week successors waiting. Retry RI accounting ID `7242`
    without touching successor `10386`; otherwise wait for the exact 2026-08-02
    successors recorded below.
@@ -114,7 +111,7 @@ Next free ID: T-339.
 
 ### T-338 — Restore Local's absent canonical tmux session
 
-**Phase:** executing recurrence correction.
+**Phase:** complete after this final closeout reaches protected `main`.
 
 At 2026-07-29 09:58 JST the owner explicitly requested restoration after the
 read-only diagnosis confirmed that `att` still correctly targets `harness` but
@@ -368,6 +365,65 @@ read-only reconciliation before the next decision.
   declared native MPI environment skip. The two earlier full-suite failures
   were test-environment/clean-tree refusals and did not alter live tmux,
   process, app-server, or saved-root state.
+
+**Monitor publication and launch correction:**
+
+- PR #405 exact head `755306f089fda4f793a4b690736763722365e442`
+  passed protected `portable-phase1` in 2m27s and squash merged as
+  `f9651f51c79a0f13c4e6afad9fbf96b43178f771`. Local `main` advanced to that
+  exact merge.
+- One exact `SIGTERM` stopped old periodic monitor PID `1903223`. The
+  canonical monitor-session relaunch was acknowledged once, but its process
+  exited and the session disappeared. It must not be retried.
+- A matched foreground read with `HARNESS_ROOT` absent reproduces exact
+  value-free failure `tmux Codex monitor failed: 'HARNESS_ROOT'`. The prior
+  process inherited that variable; the native relaunch command omitted it.
+  Harness and Students remain unchanged and live.
+- Publish this checkpoint, then launch one distinct provisional monitor
+  session with explicit `HARNESS_ROOT=/home/rioyokota/harness`, the merged
+  Python entry point, 30-second interval, and order enforcement. Accept a new
+  healthy-two receipt and unchanged Codex/app-server identities before
+  rename-only promotion to `harness-tmux-codex-monitor`. Do not reuse or retry
+  the failed process identity.
+
+**Final live acceptance:**
+
+- A distinct explicit-environment monitor bridge was acknowledged once at
+  `@90`, owner `2340081/102606237`, and reported both then-present windows
+  healthy. Rename-only promotion changed only its session name to canonical
+  `harness-tmux-codex-monitor`; process, pane, command, interval, order mode,
+  and receipt owner remained unchanged.
+- The first two Swallow preflights failed before native launch because the
+  reviewed peer helper still gated the retired monitor PID. Readback proved
+  runtime `swallow-t338` and index 2 absent, so correcting only that private
+  preflight identity and retrying remained safe. One subsequent native launch
+  was acknowledged and was not retried.
+- Final detached one-pane topology is exact
+  `@87/0:harness,@88/1:students,@91/2:swallow`. Harness is supervisor
+  `1612366/102448136`, replacement watcher `1620577/102456369`, and TUI
+  `1612939/102448303`, runtime `harness-next-t338`. Students is supervisor
+  `1638028/102482546`, watcher `1638105/102482561`, and 0.146.0 TUI
+  `1638302/102482673`, runtime `students-t338`. Swallow is supervisor
+  `2349453/102620670`, watcher `2349526/102620680`, and 0.146.0 TUI
+  `2349726/102620791`, runtime `swallow-t338`.
+- All three retain their previously accepted exact roots, attempt zero,
+  watching state, zero recovery/rollback counts, and reciprocal sockets to
+  unchanged app server `2852569/83381863`. Two distinct periodic receipts at
+  epochs `1785291204` and `1785291235` report
+  `phase=healthy healthy=3 order_action=none repair_action=none`.
+- The nine reviewed current-user, mode-0700, single-link T-338 transaction
+  scripts were exact-unlinked individually and are absent. The generated
+  pycache and manifest remain absent; Git has no `.nfs` residue.
+- No saved-root creation, rollback, rename, archive, deletion, prompt
+  injection/replay, pane/transcript read, app-server write/restart, process
+  group signal, `SIGKILL`, attached-client movement, fleet sync, or unrelated
+  project action occurred.
+
+**Next action:** publish this ledger-only final closeout through protected CI,
+merge normally, fast-forward Local `main`, then require unchanged live chains,
+native doctor, a clean tree, and canonical fleet health. The separately
+unwrapped Codex 0.146.0 arg0 launcher remains an owner-approval proposal, not a
+T-338 blocker.
 
 ### T-336 — Benchmark current Codex and Claude Harness development
 
