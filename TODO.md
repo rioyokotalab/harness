@@ -355,6 +355,14 @@ read-only reconciliation before the next decision.
   `/tmp/t338-pycache.manifest` validated and removed only that 29,933-byte
   directory with protected anchors unchanged. The reviewed mode-0600 manifest
   was exact-unlinked and both paths are absent.
+- The first complete-suite attempt exposed that the new in-process fixture
+  inherited `HARNESS_ROOT` only in an ordinary shell. The initial correction
+  passed the focused test but a second complete run proved `collect_health`
+  itself still needed that variable exported inside the fixture; the same
+  uncommitted correction also made clean-tree-gated tmux-config and terminfo
+  tests refuse as designed. The fixture now explicitly exports its declared
+  monitor root before loading the module. Commit this correction to restore a
+  clean tree, then rerun the focused and complete suites.
 
 ### T-336 — Benchmark current Codex and Claude Harness development
 

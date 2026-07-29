@@ -36,10 +36,12 @@ run_fixture() {
 }
 
 HARNESS_MONITOR_PATH="$ROOT/libexec/harness-tmux-codex-monitor" \
+HARNESS_MONITOR_ROOT="$ROOT" \
     python3 -B - <<'PY'
 import importlib.machinery
 import os
 
+os.environ["HARNESS_ROOT"] = os.environ["HARNESS_MONITOR_ROOT"]
 module = importlib.machinery.SourceFileLoader(
     "tmux_monitor_test", os.environ["HARNESS_MONITOR_PATH"]
 ).load_module()
@@ -150,7 +152,7 @@ codex_0146 = module.collect_health(
             "panes": 1,
             "pane_id": "%fixture",
             "pane_pid": 10,
-            "path": os.environ["HARNESS_ROOT"],
+            "path": os.environ["HARNESS_MONITOR_ROOT"],
             "dead": False,
         }
     ]
