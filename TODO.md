@@ -271,6 +271,25 @@ read-only reconciliation before the next decision.
   one replacement and persistent watcher loss remains bounded and fail-closed.
   Keep the value-free runtime-state schema unchanged.
 
+**Implementation checkpoint:**
+
+- The focused supervisor test first failed at `single watcher loss was not
+  replaced`, proving the live-loss amplification remained in current code.
+- The supervisor now reaps an unexpectedly exited watcher, repeats the exact
+  existing safe-tail preflight, and replaces only that watcher while retaining
+  the same TUI PID. Three consecutive replacements are allowed; a watcher
+  stable for 300 seconds resets the budget. Failed preflight/readiness or a
+  fourth consecutive loss still terminates the TUI and records
+  `thread-recovery-blocked`.
+- Fixtures prove a one-time watcher exit causes two recovery preflights and
+  watchers but exactly one Codex launch, while persistent exits stop after
+  four total watcher launches (initial plus three replacements). Runtime state
+  remains value-free and schema-compatible.
+- `tests/test-codex-resilient.sh`, thread-recovery, tmux-monitor, startup
+  normalization, filtered ShellCheck, and `git diff --check` pass. The
+  provisional bridge remains live on its unchanged root and old supervisor;
+  publishing code alone does not mutate or upgrade it.
+
 ### T-336 — Benchmark current Codex and Claude Harness development
 
 **Phase:** complete.

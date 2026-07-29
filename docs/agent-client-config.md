@@ -72,16 +72,22 @@ No recovery command contains a prompt.
 An exact remote selector starts one
 `harness codex-thread-recovery --watch` child. A one-shot readiness transaction
 must succeed before the TUI launches, and the supervisor stops and reaps the
-watcher at exit. The helper speaks the local app-server Unix-WebSocket
-protocol directly and keeps only a mode-0600, value-free receipt. It can roll
-back one to eight trailing turns only when the exact thread is `systemError`
-and every candidate turn is complete, has user input, has no assistant
-response, and contains no tool, command, file, web, external, or unknown
-event. It applies existing rollback markers before counting and revalidates
-thread identity plus rollout identity under the shared agent-message lock.
-Unsafe or changing state and ambiguous rollback acknowledgement fail closed.
-Rollback does not undo local or external effects, so removed prompts are never
-replayed. Other selector classes do not start this watcher.
+watcher at exit. If a ready watcher unexpectedly exits while the same TUI
+remains live, the supervisor reaps that exact child, repeats the existing
+safe-tail preflight, and may replace only the watcher without relaunching the
+TUI. Replacement is bounded to three consecutive attempts and its budget
+resets only after five minutes of watcher stability. Failed preflight,
+readiness, or budget exhaustion still terminates the TUI and fails closed.
+The helper speaks the local app-server Unix-WebSocket protocol directly and
+keeps only a mode-0600, value-free receipt. It can roll back one to eight
+trailing turns only when the exact thread is `systemError` and every candidate
+turn is complete, has user input, has no assistant response, and contains no
+tool, command, file, web, external, or unknown event. It applies existing
+rollback markers before counting and revalidates thread identity plus rollout
+identity under the shared agent-message lock. Unsafe or changing state and
+ambiguous rollback acknowledgement fail closed. Rollback does not undo local
+or external effects, so removed prompts are never replayed. Other selector
+classes do not start this watcher.
 
 After a nonzero process exit, the supervisor writes Codex doctor's redacted
 JSON to one mode-0600 runtime temporary file, reads only the status of

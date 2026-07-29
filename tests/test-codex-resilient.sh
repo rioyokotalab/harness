@@ -167,12 +167,15 @@ status=$(sed -n '1p' "$FAKE_CODEX_STATUSES")
 [ -n "$status" ] || status=0
 sed '1d' "$FAKE_CODEX_STATUSES" >"$FAKE_CODEX_STATUSES.next"
 mv "$FAKE_CODEX_STATUSES.next" "$FAKE_CODEX_STATUSES"
-if [ "${FAKE_CODEX_HOLD:-0}" = 1 ]; then
-    trap 'exit 143' HUP INT TERM
-    while :; do
-        /bin/sleep 1
-    done
-fi
+case ${FAKE_CODEX_HOLD:-0} in
+    1)
+        trap 'exit 143' HUP INT TERM
+        while :; do
+            /bin/sleep 1
+        done
+        ;;
+    short) /bin/sleep 2 ;;
+esac
 exit "$status"
 EOF
 chmod 755 "$fake_bin/codex-launcher"
@@ -238,10 +241,20 @@ case "$mode" in
         }
         trap stop HUP INT TERM
         write_state watching thread-idle "$$"
-        if [ "${FAKE_RECOVERY_MODE:-watching}" = exit-after-ready ]; then
-            /bin/sleep 1
-            exit 1
-        fi
+        case ${FAKE_RECOVERY_MODE:-watching} in
+            exit-after-ready)
+                /bin/sleep 1
+                exit 1
+                ;;
+            exit-once-after-ready)
+                marker=$HARNESS_TEST_RUNTIME_DIR/$name.recovery.once
+                if [ ! -e "$marker" ]; then
+                    : >"$marker"
+                    /bin/sleep 1
+                    exit 1
+                fi
+                ;;
+        esac
         while :; do
             /bin/sleep 1
         done
@@ -342,6 +355,29 @@ grep -F 'phase=stopped' "$runtime/remote-explicit.recovery.state" \
 : >"$TEST_ROOT/recovery.calls"
 : >"$TEST_ROOT/sleep.calls"
 printf '0\n' >"$TEST_ROOT/codex.statuses"
+FAKE_RECOVERY_MODE=exit-once-after-ready FAKE_CODEX_HOLD=short \
+    run_supervisor --run --name watcher-restart \
+        --remote-session session-watcher-restart \
+        >"$TEST_ROOT/watcher-restart.out" 2>&1
+grep -F 'status=watcher-restarted count=1' \
+    "$TEST_ROOT/watcher-restart.out" >/dev/null ||
+    fail "single watcher loss was not replaced"
+grep -F 'reason=clean-exit' "$TEST_ROOT/watcher-restart.out" >/dev/null ||
+    fail "replacement watcher did not preserve the Codex process"
+[ "$(grep -c '^resume --remote unix:// session-watcher-restart$' \
+    "$TEST_ROOT/codex.calls")" = 1 ] ||
+    fail "watcher replacement relaunched Codex"
+[ "$(grep -c '^--recover --name watcher-restart --thread session-watcher-restart$' \
+    "$TEST_ROOT/recovery.calls")" = 2 ] ||
+    fail "watcher replacement did not repeat safe-tail preflight once"
+[ "$(grep -c '^--watch --name watcher-restart --thread session-watcher-restart$' \
+    "$TEST_ROOT/recovery.calls")" = 2 ] ||
+    fail "watcher replacement count"
+
+: >"$TEST_ROOT/codex.calls"
+: >"$TEST_ROOT/recovery.calls"
+: >"$TEST_ROOT/sleep.calls"
+printf '0\n' >"$TEST_ROOT/codex.statuses"
 FAKE_RECOVERY_MODE=exit-after-ready FAKE_CODEX_HOLD=1 \
     run_supervisor --run --name watcher-exit \
         --remote-session session-watcher-exit \
@@ -353,6 +389,12 @@ grep -F 'reason=thread-recovery-blocked' \
 [ "$(grep -c '^resume --remote unix:// session-watcher-exit$' \
     "$TEST_ROOT/codex.calls")" = 1 ] ||
     fail "dead recovery watcher relaunched Codex"
+[ "$(grep -c '^--recover --name watcher-exit --thread session-watcher-exit$' \
+    "$TEST_ROOT/recovery.calls")" = 4 ] ||
+    fail "persistent watcher failure preflight was not bounded"
+[ "$(grep -c '^--watch --name watcher-exit --thread session-watcher-exit$' \
+    "$TEST_ROOT/recovery.calls")" = 4 ] ||
+    fail "persistent watcher replacement was not bounded"
 
 : >"$TEST_ROOT/codex.calls"
 : >"$TEST_ROOT/sleep.calls"

@@ -592,10 +592,7 @@ start_thread_recovery() {
     if [ "$recovery_status" -ne 0 ] ||
         { [ "$recovery_phase" != watching ] &&
           [ "$recovery_phase" != recovered ]; }; then
-        write_state stopped 0 0 thread-recovery-blocked
-        printf 'CODEX_RESILIENT status=blocked reason=thread-recovery-blocked name=%s\n' \
-            "$name" >&2
-        exit 2
+        return 1
     fi
 
     "$thread_recovery" --watch --name "$name" --thread "$session_id" \
@@ -628,13 +625,26 @@ start_thread_recovery() {
         readiness_attempt=$((readiness_attempt + 1))
         sleep 1
     done
+    if process_running "$thread_recovery_pid"; then
+        kill -TERM "$thread_recovery_pid" 2>/dev/null || :
+    fi
+    set +e
+    wait "$thread_recovery_pid" 2>/dev/null
+    set -e
+    thread_recovery_pid=
+    return 1
+}
+
+if ! start_thread_recovery; then
     write_state stopped 0 0 thread-recovery-blocked
     printf 'CODEX_RESILIENT status=blocked reason=thread-recovery-blocked name=%s\n' \
         "$name" >&2
     exit 2
-}
-
-start_thread_recovery
+fi
+watcher_restart_count=0
+watcher_started=$(now_epoch)
+watcher_restart_limit=3
+watcher_stable_reset=300
 
 attempt=0
 first_launch=yes
@@ -651,6 +661,25 @@ while :; do
         codex_pid=$!
         while process_running "$codex_pid"; do
             if ! process_running "$thread_recovery_pid"; then
+                watcher_finished=$(now_epoch)
+                watcher_duration=$((watcher_finished - watcher_started))
+                [ "$watcher_duration" -ge 0 ] || watcher_duration=0
+                set +e
+                wait "$thread_recovery_pid" 2>/dev/null
+                set -e
+                thread_recovery_pid=
+                if [ "$watcher_duration" -ge "$watcher_stable_reset" ]; then
+                    watcher_restart_count=0
+                fi
+                if [ "$watcher_restart_count" -lt "$watcher_restart_limit" ]; then
+                    watcher_restart_count=$((watcher_restart_count + 1))
+                    if start_thread_recovery; then
+                        watcher_started=$(now_epoch)
+                        printf 'CODEX_RESILIENT status=watcher-restarted count=%s name=%s\n' \
+                            "$watcher_restart_count" "$name" >&2
+                        continue
+                    fi
+                fi
                 watcher_failed=yes
                 kill -TERM "$codex_pid" 2>/dev/null || :
                 break
