@@ -62,6 +62,15 @@ for name in (
     value = json.loads((root / "docs/schemas" / name).read_text(encoding="utf-8"))
     if value.get("type") != "object" or value.get("additionalProperties") is not False:
         raise SystemExit("handoff schema is not a closed object: " + name)
+retry = json.loads(
+    (root / "docs/schemas/claude-handoff-retry.schema.json").read_text(
+        encoding="utf-8"
+    )
+)
+run_pattern = "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+for name in ("previous_run_id", "next_run_id"):
+    if retry.get("properties", {}).get(name, {}).get("pattern") != run_pattern:
+        raise SystemExit("retry schema run identity pattern differs: " + name)
 structured = json.loads(
     (root / "docs/schemas/claude-handoff-structured-output.schema.json").read_text(
         encoding="utf-8"
@@ -96,6 +105,9 @@ printf '%s\n' '{"required_approvals":0,"owner_selected":true}' \
 git -C "$repo" add AGENTS.md TODO.md policy.json
 git -C "$repo" commit -qm baseline
 baseline=$(git -C "$repo" rev-parse HEAD)
+baseline_output_digest=$(python3 -c \
+    'import hashlib, sys; print(hashlib.sha256((sys.argv[1] + "\n").encode()).hexdigest())' \
+    "$baseline")
 policy_digest=$(sha_file "$repo/policy.json")
 printf '%s\n' 'owner draft: preserve this unrelated dirty file' \
     >"$repo/owner-note.txt"
@@ -267,6 +279,64 @@ verify_readonly_evidence | grep -Fx \
     'CLAUDE_HANDOFF_EVIDENCE status=pass task=T-343 run=t343-readonly-r1 authority=read-only reads=4 records=0 reproduced=0' \
     >/dev/null || fail "read-only evidence acceptance"
 
+python3 - "$EVIDENCE" "$STAGE_DIR/read-mismatch-evidence.json" \
+    "$digest_d" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+value = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+value["read_manifest"][0]["sha256"] = sys.argv[3]
+Path(sys.argv[2]).write_text(json.dumps(value, sort_keys=True) + "\n", encoding="utf-8")
+PY
+expect_failure read-mismatch "$HARNESS" claude-handoff verify-evidence \
+    --packet "$PACKET" --stage "$STAGE" \
+    --evidence "$STAGE_DIR/read-mismatch-evidence.json" \
+    --expect-task T-343 --expect-run-id t343-readonly-r1 \
+    --expect-root "$repo" --expect-baseline "$baseline" \
+    --now 2026-07-29T10:00:00Z
+grep -F 'read manifest does not match the sealed stage' \
+    "$TEST_ROOT/read-mismatch.out" >/dev/null ||
+    fail "read-manifest mismatch diagnostic"
+
+python3 - "$EVIDENCE" "$STAGE_DIR/recovered-mismatch-evidence.json" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+value = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+value["recovered"]["next_action"] = "different action"
+Path(sys.argv[2]).write_text(json.dumps(value, sort_keys=True) + "\n", encoding="utf-8")
+PY
+expect_failure recovered-mismatch "$HARNESS" claude-handoff verify-evidence \
+    --packet "$PACKET" --stage "$STAGE" \
+    --evidence "$STAGE_DIR/recovered-mismatch-evidence.json" \
+    --expect-task T-343 --expect-run-id t343-readonly-r1 \
+    --expect-root "$repo" --expect-baseline "$baseline" \
+    --now 2026-07-29T10:00:00Z
+grep -F 'recovered handoff does not match the packet' \
+    "$TEST_ROOT/recovered-mismatch.out" >/dev/null ||
+    fail "recovered mismatch diagnostic"
+
+python3 - "$STAGE" "$STAGE_DIR/stage-missing-input.json" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+value = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+del value["inputs"]["TODO.md"]
+Path(sys.argv[2]).write_text(json.dumps(value, sort_keys=True) + "\n", encoding="utf-8")
+PY
+expect_failure missing-stage-input "$HARNESS" claude-handoff verify-evidence \
+    --packet "$PACKET" --stage "$STAGE_DIR/stage-missing-input.json" \
+    --evidence "$EVIDENCE" \
+    --expect-task T-343 --expect-run-id t343-readonly-r1 \
+    --expect-root "$repo" --expect-baseline "$baseline" \
+    --now 2026-07-29T10:00:00Z
+grep -F 'stage inputs differ from packet source files' \
+    "$TEST_ROOT/missing-stage-input.out" >/dev/null ||
+    fail "stage-input set mismatch diagnostic"
+
 write_readonly_evidence "$digest_d"
 expect_failure receipt-mismatch verify_readonly_evidence
 grep -F 'prompt receipt mismatch' "$TEST_ROOT/receipt-mismatch.out" \
@@ -325,7 +395,7 @@ cat >"$EVIDENCE" <<EOF
       "case_id": "baseline",
       "command": ["git", "rev-parse", "HEAD"],
       "exit_status": 0,
-      "output_sha256": "$digest_d"
+      "output_sha256": "$baseline_output_digest"
     }
   ]
 }
@@ -337,7 +407,7 @@ cat >"$REPRODUCTION" <<EOF
   "case_id": "baseline",
   "command": ["git", "rev-parse", "HEAD"],
   "exit_status": 0,
-  "output_sha256": "$digest_d",
+  "output_sha256": "$baseline_output_digest",
   "reproduced_at": "2026-07-29T10:01:00Z"
 }
 EOF
@@ -354,6 +424,21 @@ verify_execution_evidence() {
 verify_execution_evidence | grep -Fx \
     'CLAUDE_HANDOFF_EVIDENCE status=pass task=T-343 run=t343-readonly-r1 authority=execution reads=4 records=1 reproduced=1' \
     >/dev/null || fail "execution evidence acceptance"
+
+sed "s/$baseline_output_digest/$digest_d/" "$EVIDENCE" \
+    >"$STAGE_DIR/bad-baseline-evidence.json"
+sed "s/$baseline_output_digest/$digest_d/" "$REPRODUCTION" \
+    >"$STAGE_DIR/bad-baseline-reproduction.json"
+expect_failure baseline-output-mismatch "$HARNESS" claude-handoff verify-evidence \
+    --packet "$PACKET" --stage "$STAGE" \
+    --evidence "$STAGE_DIR/bad-baseline-evidence.json" \
+    --driver-reproduction "$STAGE_DIR/bad-baseline-reproduction.json" \
+    --expect-task T-343 --expect-run-id t343-readonly-r1 \
+    --expect-root "$repo" --expect-baseline "$baseline" \
+    --now 2026-07-29T10:00:00Z
+grep -F 'baseline output digest mismatch' \
+    "$TEST_ROOT/baseline-output-mismatch.out" >/dev/null ||
+    fail "baseline output mismatch diagnostic"
 
 printf '%s\n' 'drift' >>"$STAGE_DIR/TODO.md"
 expect_failure stale-stage verify_execution_evidence

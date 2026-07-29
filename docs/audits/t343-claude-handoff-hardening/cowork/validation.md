@@ -17,6 +17,11 @@
 - The first clean `tests/test-phase1.sh` run passed all focused and aggregate
   gates. Its native MPI smoke emitted the suite's declared skip because this
   checkout is not a declared MPI execution environment.
+- Final read-only review r1 returned three concrete nonblocking findings under
+  a validated 19-read packet with no execution or permission denial. All three
+  are now represented by focused assertions: retry-schema identity parity,
+  read/recovered/stage-input refusal paths, and baseline-output digest binding.
+  `tests/test-claude-handoff.sh` passes after the corrections.
 
 ## Outcome
 
@@ -29,8 +34,9 @@ and the exact 16-slice handoff remain pending.
 
 - The failure-only Fable result is descriptive and is not a full paired-client
   comparison. One protected-gate repair remains a valid task failure.
-- The native cold-takeover process used a read-only tool surface. Execution
-  authority is covered by strict fixtures and driver reproduction but has not
-  granted a model write access to the target repository.
+- The native cold-takeover and final critique processes used read-only tool
+  surfaces. Execution authority is covered by strict fixtures, a baseline
+  output digest derived from the packet commit, and driver reproduction, but
+  has not granted a model write access to the target repository.
 - Live ruleset and fleet state are mutable and require fresh readback before
   publication and handoff. ABQ remains excluded under active maintenance.

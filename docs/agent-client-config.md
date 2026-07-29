@@ -40,9 +40,10 @@ write path, and its evidence must contain the exact sealed prompt/input receipt
 plus a complete path/digest read manifest and zero execution records. An
 `execution` packet must declare relative allowed paths, include a successful
 `git rev-parse HEAD` baseline record, and supply command, exit, and output
-digests. Codex must independently reproduce one exact execution record in a
-separate current-user-owned JSON receipt; model prose cannot satisfy that
-requirement.
+digests. The baseline output digest is SHA-256 over the exact UTF-8 bytes
+`BASELINE_COMMIT\n` from the packet. Codex must independently reproduce one
+exact execution record in a separate current-user-owned JSON receipt; model
+prose cannot satisfy that requirement.
 
 `verify-evidence` reopens every staged source, the fixed staged
 `handoff.json`, and `artifacts/copilot-prompt.md`; it caps each copied source at
