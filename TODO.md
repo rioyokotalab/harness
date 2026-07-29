@@ -111,9 +111,8 @@ Next free ID: T-346.
 
 ### T-345 — Dedicated Codex recovery helper and phone/tmux mirror
 
-**Phase:** executing after explicit owner `go`; all decisions are frozen.
-Implementation is starting in the isolated task worktree, while live activation
-remains deferred until publication and exact preflight.
+**Phase:** blocked on main-thread activation handoff after merged
+implementation and fleet rollout.
 
 The owner requested a dedicated `monitor:2 helper` recovery lane that does not
 depend on Harness, Students, or Swallow siblings being idle, automatically
@@ -233,6 +232,46 @@ monitor focused suites plus diff hygiene pass.
 protected pull request after required CI, then guarded-sync clean eligible
 checkouts. Do not activate live helper/Codex/root/remote-control/archive state
 before merged-code preflight.
+
+**Publication and rollout:** protected PR #417 passed required
+`portable-phase1` at exact head
+`8752ab60525f8f072fb4cbaf23134b9c34e690c8` and merged as
+`5351f0cb04716aa5082eaee5d049e4efd10bc4be`. Required approvals remained the
+owner-selected zero and no hosting setting changed. Local main fast-forwarded
+cleanly.
+
+Guarded Linux fleet sync first refused the incorrect recent source because all
+six reachable managed Linux checkouts were still at exact ancestor
+`0fdfd973c8c2e349bcdf74ee2e522fece65cca69`. The corrected plan/apply advanced
+`ab`, `ab2`, `ri`, `al`, `rc`, and `t4` from that exact source to the merge,
+with all transfer artifacts absent afterward. ABQ remained excluded. Native
+per-Mac update plan/apply advanced clean Aist, Home, Office, and Riken public
+checkouts from `0fdfd97` to the merge while preserving private target
+`7ad105c1d39731cad257e86d8909c7dfcf70a5bd`. Completed transaction IDs are
+Aist `20260729T234932Z-92930`, Home `20260729T234929Z-34565`, Office
+`20260729T234936Z-63917`, and Riken `20260729T234935Z-45420`.
+
+This side conversation cannot interact with existing or new sub-agents.
+Consequently the four required existing-Mac context refreshes and Local's new
+ephemeral recovery worker must be completed by the main Harness controller.
+No partial monitor replacement, helper launch, Codex message, saved-root
+archive, or remote-control write was attempted.
+
+Fresh pane-blind Local readback remains
+`@87/0:harness,@88/1:students,@93/2:swallow` and
+`@40/0:tunnel,@94/1:codex`, with no helper window. Existing monitor PID
+`2859842` reports three healthy roots. Exact Harness and Students watchers are
+active, Swallow is idle, all three resilient chains are running, and merged
+`harness codex-recovery-helper --status` reports `phase=absent`.
+
+**Next action for the main Harness controller:** read this ledger and the T-345
+plan completely; confirm clean merged `5351f0c`; submit one merge-specific
+pane-blind context refresh to each advanced Mac through
+`remote-agent-communication`; bridge-replace only old monitor `@94` with merged
+code; create and validate exact `monitor:2 helper`; let its one serialized
+mirror event reversibly archive only the three frozen baseline extras; then
+require exact three-root phone/tmux parity, two healthy monitor/helper
+intervals, absent-only remote-control behavior, and fresh fleet health.
 
 ### T-344 — Recover Swallow and automate blocked-root cutover
 

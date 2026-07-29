@@ -1,6 +1,6 @@
 # T-345 dedicated Codex recovery helper
 
-**Phase:** validating
+**Phase:** blocked on main-thread activation handoff
 **Driver:** Local Codex
 **Updated:** 2026-07-30 JST
 **Branch:** `codex/t345-recovery-helper`
@@ -414,3 +414,59 @@ pass at merge head `a528d8427e45713d7603fdd0b6a33aff6fa0745a`.
 Next: publish this validation checkpoint, open the exact-head protected pull
 request, require CI, and merge without changing the owner-selected zero-review
 policy. Live activation remains deferred.
+
+## Publication and rollout checkpoint
+
+Protected PR #417 passed required `portable-phase1` at exact head
+`8752ab60525f8f072fb4cbaf23134b9c34e690c8` and merged as
+`5351f0cb04716aa5082eaee5d049e4efd10bc4be`. Required approvals remained the
+owner-selected zero; no hosting setting changed. Local main fast-forwarded
+cleanly.
+
+Guarded fleet sync initially refused source `3aeda96` because reachable Linux
+checkouts were still at exact ancestor
+`0fdfd973c8c2e349bcdf74ee2e522fece65cca69`. A corrected plan from that exact
+source passed, then apply advanced `ab`, `ab2`, `ri`, `al`, `rc`, and `t4` to
+the merge with absent transfer artifacts. ABQ remained excluded. Aist, Home,
+Office, and Riken each had clean public `0fdfd97` and private
+`7ad105c1d39731cad257e86d8909c7dfcf70a5bd` checkouts. Native per-Mac
+`macos-update` plan/apply advanced each public checkout to the merge, retained
+the private target, and completed these transactions:
+
+- Aist `20260729T234932Z-92930`;
+- Home `20260729T234929Z-34565`;
+- Office `20260729T234936Z-63917`;
+- Riken `20260729T234935Z-45420`.
+
+This side conversation is prohibited from interacting with existing or new
+sub-agents. Therefore it cannot submit the four required existing-Mac context
+refreshes or activate `monitor:2 helper`, whose accepted design intentionally
+launches a new ephemeral Codex worker for the current mirror-drift event.
+Those agent interactions are deferred to the main Harness controller despite
+complete owner authorization. No partial monitor replacement, helper launch,
+saved-root archive, remote-control write, or Codex message was attempted.
+
+Fresh live readback remains safe and exact:
+
+- `harness` is `@87/0:harness,@88/1:students,@93/2:swallow`;
+- `monitor` is `@40/0:tunnel,@94/1:codex`, with no helper;
+- monitor PID `2859842` still runs the pre-merge loaded
+  `--interval 30 --enforce-order --auto-recover` process and reports
+  `healthy=3`;
+- Harness and Students watcher receipts are active; Swallow is idle; all three
+  exact resilient chains are running;
+- `harness codex-recovery-helper --status` reports `phase=absent`.
+
+Next executable action belongs to the main Harness controller:
+
+1. read this plan and `TODO.md`, fetch, and confirm clean merged
+   `5351f0cb04716aa5082eaee5d049e4efd10bc4be`;
+2. use `remote-agent-communication` to submit exactly one pane-blind
+   merge-specific context refresh to each advanced Mac;
+3. revalidate Local's exact tmux/process/root/app-server/client identities;
+4. bridge-replace only old monitor window `@94` with merged monitor code;
+5. create and validate exact `monitor:2 helper`;
+6. allow its one serialized mirror event to classify and reversibly archive
+   only the three frozen baseline extras;
+7. validate exact three-root phone/tmux parity, two monitor/helper intervals,
+   absent-only remote-control behavior, and fresh fleet health.
