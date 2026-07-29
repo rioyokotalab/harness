@@ -85,6 +85,13 @@ monitoring, final readbacks, exact 16-slice summary, and closeout publication.
    `portable-phase1`, all 13 declared cleanup paths remained absent, Linux
    remained 7/8 ready with maintained ABQ the sole failure, and all four Mac
    route pairs passed.
+5. **2026-07-29 21:00–22:00 JST:** sub-minute native heartbeats completed the
+   full slice without interruption or mutation. The 22:00 readback again
+   proved clean merged main `0fdfd97`, a clean pushed closeout branch at
+   `0a63aa7`, merged PR #412, no closeout PR, active ruleset `19127355` with
+   zero approvals and strict `portable-phase1`, all 13 cleanup paths absent,
+   Linux 7/8 ready with maintained ABQ the sole failure, and all four Mac route
+   pairs passing.
 
 ## Residual risks
 
