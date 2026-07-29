@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-344.
+Next free ID: T-346.
 
 ## Current state
 
@@ -108,6 +108,131 @@ Next free ID: T-344.
    successors recorded below.
 
 ## Active tasks
+
+### T-345 — Dedicated Codex recovery helper and phone/tmux mirror
+
+**Phase:** executing after explicit owner `go`; all decisions are frozen.
+Implementation is starting in the isolated task worktree, while live activation
+remains deferred until publication and exact preflight.
+
+The owner requested a dedicated `monitor:2 helper` recovery lane that does not
+depend on Harness, Students, or Swallow siblings being idle, automatically
+restores confirmed-lost remote control, keeps top-level phone-visible roots
+aligned with exact `harness:0/1/2`, and removes proven temporary roots.
+
+Read-only discovery confirms the existing T-344 monitor is healthy but sends
+its one recovery request into an idle Harness controller, so active Harness is
+the current blocker. Native Codex has no ephemeral interactive TUI but does
+support `codex exec --ephemeral`. The selected architecture is therefore a
+deterministic waiting dispatcher in `monitor:2` that starts one bounded
+Sol/high ephemeral Codex worker per immutable event. This avoids creating a
+fourth saved helper root.
+
+The current canonical tmux roots are Harness
+`019fa3ae-6ad0-7642-aeca-b7b52421f576`, Students
+`019f7fea-4f00-7681-910d-81ae99a77143`, and Swallow
+`019fafef-5ebf-72f1-b1ce-2444e7570dc1`. The exact session topology remains
+`@87/0:harness,@88/1:students,@93/2:swallow`; `monitor` remains
+`@40/0:tunnel,@94/1:codex`, with no helper window. All three project chains
+and remote-control app server `2852569` are currently healthy. Redacted native
+doctor app-server, authentication, installation, websocket, state, and parity
+checks are `ok`.
+
+Direct value-free metadata identifies six unarchived non-subagent top-level
+Harness-cwd roots: the three canonical roots plus old exec
+`019f6271-667e-7f02-9a4b-4edd2b83b725`, retired Swallow
+`019fa5a1-7fff-7e92-8e2a-2586c684747f`, and rejected T-344 provisional
+`019fafec-3da4-77d2-a88f-e7abaa380a06`. The latter three are the frozen
+one-time baseline cleanup candidates; final process, rollout, inactivity, and
+identity checks remain mandatory.
+
+The exhaustive scope, queue/journal design, bridge-first transaction,
+remote-control absent-state recovery, mirror contract, tests, rollback, and
+acceptance gates are in
+`docs/plans/t345-dedicated-codex-recovery-helper.md`. The decision register is:
+
+1. D-001: **selected — reversible archive.** Proven temporary roots leave the
+   active phone list but retain saved history and an exact `unarchive`
+   rollback. Automatic permanent deletion is forbidden.
+2. D-002: **selected — confirmed absence only.** Native remote-control start
+   may run once only after exact absence proof. A live but unresponsive server
+   is report-only and must not be signaled, stopped, or restarted
+   automatically.
+
+The owner additionally requires every successfully recovered canonical thread
+to resume its interrupted durable task. After bridge promotion and healthy
+readback, the helper must reserve and submit exactly one distinct continuation
+instruction. That instruction reads complete applicable instructions and
+ledgers, inspects Git/recent commits/worktrees and mutable external state,
+reconciles side effects that may already have occurred, and continues the
+first recorded unverified action. It never reconstructs or replays the
+rejected prompt. An acknowledged or ambiguous continuation is never resent.
+
+**Working set:** branch `codex/t345-recovery-helper`, isolated worktree
+`/tmp/harness-t345-recovery-helper`, `TODO.md`, and
+`docs/plans/t345-dedicated-codex-recovery-helper.md`. Preserve both T-343
+worktrees, all earlier recovery worktrees, the live root checkout, all tmux
+windows/processes, saved roots, and remote control until explicit `go`.
+
+**Execution authorization:** the owner supplied exact `go` after D-001,
+D-002, and the post-promotion continuation contract were published at
+`ae1569db92964dea4485b0e21101905d27f784f8`. This authorizes only the frozen
+plan.
+
+**Next action:** implement the private helper dispatcher, event queue,
+ephemeral-worker launcher, continuation receipt, and monitor producer in the
+isolated task worktree. Do not activate `monitor:2`, launch live Codex, change
+remote control, or archive a root before protected publication and exact live
+preflight.
+
+**Implementation checkpoint:** the new
+`harness codex-recovery-helper` owns a mode-0700 runtime root, immutable
+mode-0600 events/receipts/logs, one-attempt worker launch receipts, direct
+top-level mirror observation, confirmed-absence remote-control events, and one
+Sol/high `codex exec --ephemeral` child per accepted event. The worker prompt
+freezes bridge-first recovery, active-sibling tolerance, attached-target
+deferral, reversible archive only, absent-only native start, no pane/transcript
+reads, no rejected-prompt replay, and exactly one deduplicated post-promotion
+durable-task continuation.
+
+The tmux monitor no longer inserts recovery input into Harness. It can queue
+exact blocked Harness, Students, and Swallow roots independently, including
+multiple blocked targets, while requiring canonical topology, stable exact
+identities, one shared app server, and an unattached target. Source contracts
+now reject tmux paste/send input from the monitor.
+
+Passing checks:
+
+- `tests/test-codex-recovery-helper.sh`;
+- `tests/test-tmux-codex-monitor.sh`;
+- `tests/test-codex-resilient.sh`;
+- `tests/test-codex-thread-recovery.sh`;
+- `tests/test-recover-codex-unsafe-tail-skill.sh`;
+- Python syntax and `git diff --check`.
+
+The syntax check generated `libexec/__pycache__` with 3 entries/78,687 bytes.
+The guarded-delete workflow validated and removed only that exact tree with
+protected anchors unchanged, then the exact short-lived manifest was unlinked.
+No live tmux, Codex, saved-root, remote-control, or external state changed.
+
+**Next action:** commit and push this implementation checkpoint, run complete
+`tests/test-phase1.sh`, independently inspect the exact diff, and proceed
+through protected publication before any live activation.
+
+**Validation checkpoint:** complete `tests/test-phase1.sh` passed all 82
+focused suites, guarded-delete coverage, and all integration gates; the native
+MPI smoke was the expected skip outside a declared MPI environment. During the
+run, protected `main` advanced through T-343's two documentation-only closeout
+commits to `3aeda96a96caa74b67f68a4da0d9d97dec510d55`. The clean task branch
+integrated that head without conflict. The already-published pre-rebase task
+line was merged rather than force-pushed, producing exact head
+`a528d8427e45713d7603fdd0b6a33aff6fa0745a`. Post-integration helper and
+monitor focused suites plus diff hygiene pass.
+
+**Next action:** publish this validation checkpoint, open and merge the exact
+protected pull request after required CI, then guarded-sync clean eligible
+checkouts. Do not activate live helper/Codex/root/remote-control/archive state
+before merged-code preflight.
 
 ### T-344 — Recover Swallow and automate blocked-root cutover
 

@@ -1,0 +1,798 @@
+#!/usr/bin/env python3
+"""Serialize Local Codex recovery events through an ephemeral helper worker."""
+
+from __future__ import print_function
+
+import argparse
+import contextlib
+import fcntl
+import hashlib
+import json
+import os
+import re
+import signal
+import sqlite3
+import stat
+import subprocess
+import sys
+import tempfile
+import time
+
+
+sys.dont_write_bytecode = True
+SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
+SAFE_WINDOW_ID = re.compile(r"^@[0-9]+$")
+EXPECTED = (("harness", 0), ("students", 1), ("swallow", 2))
+TERMINAL_PHASES = ("completed", "failed", "ambiguous", "deferred")
+ACCEPTED_RESULT = re.compile(r"^RECOVERY_RESULT status=accepted(?:[ \t]|$)")
+APPROVAL_POLICY = (
+    '{ granular = { sandbox_approval = false, rules = false, '
+    'mcp_elicitations = true, request_permissions = false, '
+    'skill_approval = false } }'
+)
+
+
+class HelperError(RuntimeError):
+    pass
+
+
+def fail(message):
+    raise HelperError(message)
+
+
+def safe_id(value, label):
+    if not SAFE_ID.match(value):
+        fail("{} is malformed".format(label))
+    return value
+
+
+def safe_window_id(value):
+    if not SAFE_WINDOW_ID.match(value):
+        fail("window ID is malformed")
+    return value
+
+
+def process_info(pid):
+    try:
+        with open("/proc/{}/stat".format(pid), "r") as stream:
+            value = stream.read()
+        prefix = "{} (".format(pid)
+        end = value.rfind(") ")
+        if not value.startswith(prefix) or end < len(prefix):
+            return None
+        fields = value[end + 2 :].split()
+        if len(fields) < 20:
+            return None
+        with open("/proc/{}/cmdline".format(pid), "rb") as stream:
+            argv = [
+                part.decode("utf-8", "strict")
+                for part in stream.read().split(b"\0")
+                if part
+            ]
+        return {
+            "pid": pid,
+            "parent": int(fields[1]),
+            "start": fields[19],
+            "comm": value[len(prefix) : end],
+            "uid": os.stat("/proc/{}".format(pid)).st_uid,
+            "argv": argv,
+        }
+    except (IOError, OSError, UnicodeError, ValueError):
+        return None
+
+
+def runtime_root():
+    testing = os.environ.get("HARNESS_TEST_RUNTIME_DIR")
+    if testing and os.environ.get("HARNESS_TESTING") == "1":
+        root = testing
+    else:
+        parent = os.environ.get("XDG_RUNTIME_DIR")
+        if not parent or not os.path.isabs(parent):
+            parent = os.environ.get("TMPDIR", "/tmp")
+        if not os.path.isabs(parent):
+            fail("runtime parent must be absolute")
+        root = os.path.join(
+            parent, "harness-codex-recovery-helper-{}".format(os.getuid())
+        )
+    if not os.path.isabs(root):
+        fail("runtime root must be absolute")
+    if not os.path.exists(root):
+        old = os.umask(0o077)
+        try:
+            os.makedirs(root, 0o700)
+        finally:
+            os.umask(old)
+    validate_directory(root)
+    for name in ("events", "receipts", "logs"):
+        path = os.path.join(root, name)
+        if not os.path.exists(path):
+            old = os.umask(0o077)
+            try:
+                os.mkdir(path, 0o700)
+            finally:
+                os.umask(old)
+        validate_directory(path)
+    return root
+
+
+def validate_directory(path):
+    info = os.lstat(path)
+    if (
+        not stat.S_ISDIR(info.st_mode)
+        or stat.S_ISLNK(info.st_mode)
+        or info.st_uid != os.getuid()
+        or stat.S_IMODE(info.st_mode) != 0o700
+    ):
+        fail("private directory is unsafe")
+
+
+def validate_regular(path):
+    info = os.lstat(path)
+    if (
+        not stat.S_ISREG(info.st_mode)
+        or stat.S_ISLNK(info.st_mode)
+        or info.st_uid != os.getuid()
+        or info.st_nlink != 1
+        or stat.S_IMODE(info.st_mode) != 0o600
+    ):
+        fail("private file is unsafe")
+    return info
+
+
+def atomic_json(path, value):
+    parent = os.path.dirname(path)
+    descriptor, temporary = tempfile.mkstemp(prefix=".helper.", dir=parent)
+    try:
+        os.fchmod(descriptor, 0o600)
+        payload = (json.dumps(value, sort_keys=True) + "\n").encode("utf-8")
+        os.write(descriptor, payload)
+        os.fsync(descriptor)
+        os.close(descriptor)
+        descriptor = -1
+        os.replace(temporary, path)
+        validate_regular(path)
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+def read_json(path, default=None):
+    if not os.path.exists(path):
+        return default
+    validate_regular(path)
+    with open(path, "r") as stream:
+        return json.load(stream)
+
+
+@contextlib.contextmanager
+def exclusive_lock(path, nonblocking=False):
+    flags = os.O_CREAT | os.O_RDWR
+    if hasattr(os, "O_CLOEXEC"):
+        flags |= os.O_CLOEXEC
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    old = os.umask(0o077)
+    try:
+        descriptor = os.open(path, flags, 0o600)
+    finally:
+        os.umask(old)
+    try:
+        info = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(info.st_mode)
+            or info.st_uid != os.getuid()
+            or info.st_nlink != 1
+            or stat.S_IMODE(info.st_mode) != 0o600
+        ):
+            fail("private lock is unsafe")
+        operation = fcntl.LOCK_EX
+        if nonblocking:
+            operation |= fcntl.LOCK_NB
+        try:
+            fcntl.flock(descriptor, operation)
+        except (IOError, OSError):
+            fail("helper is already running")
+        yield
+    finally:
+        fcntl.flock(descriptor, fcntl.LOCK_UN)
+        os.close(descriptor)
+
+
+def event_identity(value):
+    payload = json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+    return hashlib.sha256(payload).hexdigest()
+
+
+def event_path(root, event_id):
+    safe_id(event_id, "event ID")
+    return os.path.join(root, "events", "{}.json".format(event_id))
+
+
+def receipt_path(root, event_id):
+    safe_id(event_id, "event ID")
+    return os.path.join(root, "receipts", "{}.json".format(event_id))
+
+
+def enqueue_event(root, identity):
+    event_id = event_identity(identity)
+    path = event_path(root, event_id)
+    if os.path.exists(path):
+        current = read_json(path)
+        if current.get("identity") != identity or current.get("event") != event_id:
+            fail("event identity collision")
+        return event_id, "already-queued"
+    event = {
+        "schema": 1,
+        "event": event_id,
+        "identity": identity,
+        "created_ns": time.time_ns() if hasattr(time, "time_ns") else int(time.time() * 1e9),
+    }
+    atomic_json(path, event)
+    return event_id, "queued"
+
+
+def blocked_identity(arguments):
+    return {
+        "schema": 1,
+        "kind": "blocked-root",
+        "target": safe_id(arguments.target, "target"),
+        "runtime": safe_id(arguments.runtime, "runtime"),
+        "thread": safe_id(arguments.thread, "thread"),
+        "watcher_pid": arguments.watcher_pid,
+        "watcher_start": safe_id(arguments.watcher_start, "watcher start"),
+        "app_server_pid": arguments.app_server_pid,
+        "app_server_start": safe_id(
+            arguments.app_server_start, "app-server start"
+        ),
+        "window_id": safe_window_id(arguments.window_id),
+        "window_index": arguments.window_index,
+    }
+
+
+def run_value(arguments, check=True):
+    result = subprocess.run(
+        arguments,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    if check and result.returncode != 0:
+        fail("native metadata command failed")
+    return result.stdout.decode("utf-8", "strict")
+
+
+def remote_control_processes():
+    found = []
+    try:
+        names = os.listdir("/proc")
+    except OSError:
+        return found
+    for name in names:
+        if not name.isdigit():
+            continue
+        info = process_info(int(name))
+        if not info or info["uid"] != os.getuid():
+            continue
+        argv = info["argv"]
+        if (
+            "app-server" in argv
+            and "--remote-control" in argv
+            and "--listen" in argv
+        ):
+            found.append(info)
+    return found
+
+
+def observe_remote_control(root):
+    if os.environ.get("HARNESS_TEST_SKIP_DETECTION") == "1":
+        return
+    processes = remote_control_processes()
+    state_path = os.path.join(root, "remote-control.json")
+    previous = read_json(state_path, {})
+    if len(processes) == 1:
+        current = {
+            "schema": 1,
+            "pid": processes[0]["pid"],
+            "start": processes[0]["start"],
+            "epoch": int(time.time()),
+        }
+        atomic_json(state_path, current)
+        return
+    if len(processes) > 1:
+        return
+    identity = {
+        "schema": 1,
+        "kind": "remote-control-absent",
+        "last_pid": previous.get("pid", 0),
+        "last_start": previous.get("start", "none"),
+    }
+    enqueue_event(root, identity)
+
+
+def tmux_mapping():
+    output = run_value(
+        [
+            "tmux",
+            "list-windows",
+            "-t",
+            "harness",
+            "-F",
+            "#{window_index}\t#{window_name}\t#{window_id}\t#{pane_pid}",
+        ],
+        check=False,
+    )
+    rows = []
+    for line in output.splitlines():
+        fields = line.split("\t")
+        if len(fields) != 4:
+            continue
+        try:
+            index = int(fields[0])
+            pane_pid = int(fields[3])
+        except ValueError:
+            continue
+        rows.append((index, fields[1], fields[2], pane_pid))
+    if sorted((index, name) for index, name, _window, _pid in rows) != sorted(
+        (index, name) for name, index in EXPECTED
+    ):
+        return None
+    mapping = {}
+    for index, name, window_id, pane_pid in rows:
+        info = process_info(pane_pid)
+        if not info:
+            return None
+        argv = info["argv"]
+        try:
+            remote = argv.index("--remote-session")
+            thread_id = argv[remote + 1]
+        except (ValueError, IndexError):
+            return None
+        if not SAFE_ID.match(thread_id):
+            return None
+        mapping[name] = {
+            "index": index,
+            "window_id": window_id,
+            "thread": thread_id,
+        }
+    return mapping
+
+
+def state_database():
+    codex_home = os.environ.get("CODEX_HOME", os.path.expanduser("~/.codex"))
+    return os.path.join(codex_home, "state_5.sqlite")
+
+
+def observe_mirror(root):
+    if os.environ.get("HARNESS_TEST_SKIP_DETECTION") == "1":
+        return
+    mapping = tmux_mapping()
+    database = state_database()
+    if not mapping or not os.path.isfile(database):
+        return
+    uri = "file:{}?mode=ro".format(database)
+    try:
+        connection = sqlite3.connect(uri, uri=True, timeout=1)
+        rows = connection.execute(
+            "SELECT id FROM threads "
+            "WHERE cwd = ? AND archived = 0 "
+            "AND source NOT LIKE ? ORDER BY id",
+            (os.environ["HARNESS_ROOT"], '{"subagent"%'),
+        ).fetchall()
+        active = sorted(row[0] for row in rows)
+        canonical = sorted(value["thread"] for value in mapping.values())
+        mismatched = []
+        for role, value in mapping.items():
+            row = connection.execute(
+                "SELECT archived, "
+                "CASE WHEN COALESCE(NULLIF(name, ''), title) = ? "
+                "THEN 1 ELSE 0 END "
+                "FROM threads WHERE id = ?",
+                (role, value["thread"]),
+            ).fetchone()
+            if not row or row[0] != 0 or row[1] != 1:
+                mismatched.append(role)
+    except sqlite3.Error:
+        return
+    finally:
+        if "connection" in locals():
+            connection.close()
+    extras = sorted(set(active) - set(canonical))
+    missing = sorted(set(canonical) - set(active))
+    if not extras and not missing and not mismatched:
+        return
+    identity = {
+        "schema": 1,
+        "kind": "mirror-drift",
+        "canonical": [
+            {
+                "role": role,
+                "thread": mapping[role]["thread"],
+                "window_id": mapping[role]["window_id"],
+            }
+            for role, _index in EXPECTED
+        ],
+        "extras": extras,
+        "missing": missing,
+        "name_mismatch": sorted(mismatched),
+    }
+    enqueue_event(root, identity)
+
+
+def worker_prompt(event):
+    identity = event["identity"]
+    serialized = json.dumps(identity, sort_keys=True, separators=(",", ":"))
+    return """\
+You are the dedicated Local Codex recovery worker for one immutable event.
+Do not rely on prior chat history. Confirm that the Git repository root is
+exactly /home/rioyokota/harness, then read AGENTS.md, TODO.md, the
+recover-codex-unsafe-tail SKILL.md, and its protocol completely before any
+target action.
+
+Immutable event:
+{event}
+
+This is a bounded live-recovery turn, not general repository work. Do not edit
+Git-tracked files, settings, credentials, plugins, connectors, MCP state, or
+unrelated processes. Never inspect tmux pane or transcript content. Never
+reconstruct or replay a rejected prompt. Never retry an acknowledged or
+ambiguous write, launch, signal, archive, or submission. Never invoke
+`codex delete`, a process-group signal, SIGKILL, or a forced remote-control
+restart. Serialize lifecycle operations with the current-user mode-0600
+agent-message.lock and use value-free receipts.
+
+For kind=blocked-root, revalidate every event identity against current tmux,
+process, watcher, rollout, app-server, attachment, Git, and durable-ledger
+state. Healthy sibling threads may be active and do not need to be idle.
+Multiple blocked roots are handled by separate serialized events. The exact
+target itself must be unattached. If exact blocked/unsafe-tail evidence
+remains, use bridge-first fresh-root recovery: create and accept one distinct
+provisional root/window/runtime before rename-only promotion; preserve peers
+and attached clients; retire only the old exact TUI leaf; reversibly archive
+the retired blocked root and any rejected helper-created provisional root
+after exact zero-reference and inactivity proof.
+
+After successful promotion and healthy canonical readback, submit exactly one
+deduplicated continuation instruction to the recovered canonical thread. The
+instruction must say: read all applicable instructions and durable ledgers,
+inspect the current branch, worktree, recent commits, and mutable external
+state, reconcile side effects that may already have occurred, then continue
+only the first recorded unverified action. It must explicitly forbid
+reconstructing or replaying the rejected prompt. Reserve before insertion,
+wait at least one second for paste handling, submit C-m separately, and never
+resubmit an acknowledged or ambiguous continuation.
+
+For kind=remote-control-absent, revalidate confirmed absence of every
+current-user remote-control app-server identity and reciprocal project peer.
+Run native `codex remote-control start --json` at most once after the
+pre-write receipt, then require one new exact identity and redacted doctor
+readiness. If any live server identity exists, report deferred and do not
+signal, stop, or restart it. Pairing or account mutation is forbidden.
+
+For kind=mirror-drift, use the three exact tmux argv roots as canonical.
+Subagent roots are excluded. Reversibly archive only roots already classified
+as baseline or helper-created temporary/retired roots in TODO.md or durable
+helper receipts, after exact zero-process-reference and structural inactivity
+proof. Preserve every unclassified root. Restore canonical names/archive flags
+only through one read-before/write/read-after transaction; ambiguous writes
+are not retried.
+
+Finish with one value-free status line beginning RECOVERY_RESULT and exit
+nonzero on any failed or ambiguous gate.
+""".format(event=serialized)
+
+
+def codex_command():
+    override = os.environ.get("HARNESS_TEST_CODEX")
+    if override:
+        if os.environ.get("HARNESS_TESTING") != "1" or not os.path.isabs(override):
+            fail("test Codex override is unsafe")
+        binary = override
+    else:
+        binary = os.path.expanduser("~/.local/bin/codex")
+    if not os.path.isfile(binary) or not os.access(binary, os.X_OK):
+        fail("Codex launcher is unavailable")
+    return [
+        binary,
+        "exec",
+        "--ephemeral",
+        "-C",
+        os.environ["HARNESS_ROOT"],
+        "-m",
+        "sol",
+        "-c",
+        'model_reasoning_effort="high"',
+        "-c",
+        "approval_policy={}".format(APPROVAL_POLICY),
+        "-s",
+        "danger-full-access",
+        "-",
+    ]
+
+
+def event_files(root):
+    paths = []
+    directory = os.path.join(root, "events")
+    for name in os.listdir(directory):
+        if not name.endswith(".json"):
+            continue
+        path = os.path.join(directory, name)
+        event = read_json(path)
+        if (
+            not isinstance(event, dict)
+            or event.get("schema") != 1
+            or event.get("event") != name[:-5]
+            or event_identity(event.get("identity")) != event.get("event")
+        ):
+            fail("queued event is malformed")
+        paths.append((event.get("created_ns", 0), name, event))
+    return [value[2] for value in sorted(paths)]
+
+
+def reconcile_started(root, event):
+    path = receipt_path(root, event["event"])
+    receipt = read_json(path)
+    if not receipt:
+        return False
+    phase = receipt.get("phase")
+    if phase in TERMINAL_PHASES:
+        return True
+    if phase == "launch-reserved":
+        receipt["phase"] = "ambiguous"
+        receipt["reason"] = "launch-result-unknown"
+        receipt["epoch"] = int(time.time())
+        atomic_json(path, receipt)
+        return True
+    if phase == "worker-started":
+        worker = process_info(receipt.get("worker_pid", 0))
+        if (
+            worker
+            and worker["uid"] == os.getuid()
+            and worker["start"] == receipt.get("worker_start")
+        ):
+            return True
+        receipt["phase"] = "ambiguous"
+        receipt["reason"] = "worker-result-unknown"
+        receipt["epoch"] = int(time.time())
+        atomic_json(path, receipt)
+        return True
+    fail("event receipt phase is malformed")
+
+
+def process_event(root, event):
+    if reconcile_started(root, event):
+        return False
+    event_id = event["event"]
+    receipt = {
+        "schema": 1,
+        "event": event_id,
+        "phase": "launch-reserved",
+        "reason": "worker-not-yet-acknowledged",
+        "epoch": int(time.time()),
+    }
+    path = receipt_path(root, event_id)
+    atomic_json(path, receipt)
+    log_path = os.path.join(root, "logs", "{}.log".format(event_id))
+    flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
+    if hasattr(os, "O_CLOEXEC"):
+        flags |= os.O_CLOEXEC
+    old = os.umask(0o077)
+    try:
+        descriptor = os.open(log_path, flags, 0o600)
+    finally:
+        os.umask(old)
+    prompt = worker_prompt(event).encode("utf-8")
+    try:
+        process = subprocess.Popen(
+            codex_command(),
+            cwd=os.environ["HARNESS_ROOT"],
+            stdin=subprocess.PIPE,
+            stdout=descriptor,
+            stderr=subprocess.STDOUT,
+            close_fds=True,
+        )
+        info = process_info(process.pid)
+        if not info or info["uid"] != os.getuid():
+            receipt["phase"] = "ambiguous"
+            receipt["reason"] = "worker-identity-unavailable"
+            atomic_json(path, receipt)
+            process.stdin.close()
+            return True
+        receipt.update(
+            {
+                "phase": "worker-started",
+                "reason": "worker-running",
+                "worker_pid": process.pid,
+                "worker_start": info["start"],
+                "epoch": int(time.time()),
+            }
+        )
+        atomic_json(path, receipt)
+        process.stdin.write(prompt)
+        process.stdin.close()
+        returncode = process.wait()
+        accepted = False
+        try:
+            with open(log_path, "r") as stream:
+                for line in stream:
+                    if ACCEPTED_RESULT.match(line.rstrip("\n")):
+                        accepted = True
+        except (IOError, OSError, UnicodeError):
+            accepted = False
+        receipt.update(
+            {
+                "phase": "completed" if returncode == 0 and accepted else "failed",
+                "reason": (
+                    "worker-success"
+                    if returncode == 0 and accepted
+                    else "worker-result-unaccepted"
+                    if returncode == 0
+                    else "worker-failed"
+                ),
+                "returncode": returncode,
+                "epoch": int(time.time()),
+            }
+        )
+        atomic_json(path, receipt)
+        return True
+    except (IOError, OSError, subprocess.SubprocessError):
+        receipt["phase"] = "ambiguous"
+        receipt["reason"] = "worker-launch-ambiguous"
+        receipt["epoch"] = int(time.time())
+        atomic_json(path, receipt)
+        return True
+    finally:
+        os.close(descriptor)
+
+
+def summary(root, owner_pid, phase):
+    counts = {
+        "queued": 0,
+        "completed": 0,
+        "failed": 0,
+        "ambiguous": 0,
+        "deferred": 0,
+        "running": 0,
+    }
+    for event in event_files(root):
+        receipt = read_json(receipt_path(root, event["event"]), {})
+        current = receipt.get("phase", "queued")
+        if current in ("launch-reserved", "worker-started"):
+            current = "running"
+        if current in counts:
+            counts[current] += 1
+    return {
+        "schema": 1,
+        "phase": phase,
+        "owner_pid": owner_pid,
+        "epoch": int(time.time()),
+        "counts": counts,
+    }
+
+
+def print_summary(value):
+    counts = value["counts"]
+    print(
+        "CODEX_RECOVERY_HELPER phase={} queued={} running={} completed={} "
+        "failed={} ambiguous={} deferred={} owner_pid={}".format(
+            value["phase"],
+            counts["queued"],
+            counts["running"],
+            counts["completed"],
+            counts["failed"],
+            counts["ambiguous"],
+            counts["deferred"],
+            value["owner_pid"],
+        )
+    )
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(prog="harness codex-recovery-helper")
+    modes = parser.add_mutually_exclusive_group(required=True)
+    modes.add_argument("--run", action="store_true")
+    modes.add_argument("--once", action="store_true")
+    modes.add_argument("--status", action="store_true")
+    modes.add_argument("--enqueue-blocked", action="store_true")
+    parser.add_argument("--interval", type=int, default=30)
+    parser.add_argument("--target")
+    parser.add_argument("--runtime")
+    parser.add_argument("--thread")
+    parser.add_argument("--watcher-pid", type=int)
+    parser.add_argument("--watcher-start")
+    parser.add_argument("--app-server-pid", type=int)
+    parser.add_argument("--app-server-start")
+    parser.add_argument("--window-id")
+    parser.add_argument("--window-index", type=int)
+    arguments = parser.parse_args()
+    if not 5 <= arguments.interval <= 3600:
+        parser.error("--interval must be between 5 and 3600 seconds")
+    blocked_fields = (
+        "target",
+        "runtime",
+        "thread",
+        "watcher_pid",
+        "watcher_start",
+        "app_server_pid",
+        "app_server_start",
+        "window_id",
+        "window_index",
+    )
+    if arguments.enqueue_blocked:
+        if any(getattr(arguments, field) is None for field in blocked_fields):
+            parser.error("--enqueue-blocked requires the exact blocked identity")
+    elif any(getattr(arguments, field) is not None for field in blocked_fields):
+        parser.error("blocked identity arguments require --enqueue-blocked")
+    return arguments
+
+
+def main():
+    arguments = parse_arguments()
+    root = runtime_root()
+    if arguments.enqueue_blocked:
+        _event, action = enqueue_event(root, blocked_identity(arguments))
+        print("CODEX_RECOVERY_HELPER enqueue={}".format(action))
+        return 0
+    helper_receipt = os.path.join(root, "helper.json")
+    if arguments.status:
+        value = read_json(helper_receipt)
+        if not value:
+            print("CODEX_RECOVERY_HELPER phase=absent")
+            return 1
+        owner = process_info(value.get("owner_pid", 0))
+        if (
+            not owner
+            or owner["uid"] != os.getuid()
+            or int(time.time()) - value.get("epoch", 0) > 120
+        ):
+            value["phase"] = "stale"
+        print_summary(value)
+        return 0 if value["phase"] in ("idle", "working") else 1
+
+    stopping = [False]
+
+    def stop(_signum, _frame):
+        stopping[0] = True
+
+    signal.signal(signal.SIGTERM, stop)
+    signal.signal(signal.SIGINT, stop)
+    signal.signal(signal.SIGHUP, stop)
+    with exclusive_lock(os.path.join(root, "helper.lock"), nonblocking=True):
+        while not stopping[0]:
+            observe_remote_control(root)
+            observe_mirror(root)
+            events = event_files(root)
+            pending = []
+            for event in events:
+                receipt = read_json(receipt_path(root, event["event"]), {})
+                if receipt.get("phase") not in TERMINAL_PHASES:
+                    pending.append(event)
+            phase = "working" if pending else "idle"
+            value = summary(root, os.getpid(), phase)
+            atomic_json(helper_receipt, value)
+            if pending:
+                process_event(root, pending[0])
+                updated = summary(root, os.getpid(), "idle")
+                if updated["counts"]["running"]:
+                    updated["phase"] = "working"
+                value = updated
+                atomic_json(helper_receipt, value)
+            if arguments.once:
+                print_summary(value)
+                return 0
+            deadline = time.monotonic() + arguments.interval
+            while not stopping[0] and time.monotonic() < deadline:
+                time.sleep(min(0.2, deadline - time.monotonic()))
+        value = summary(root, os.getpid(), "stopped")
+        atomic_json(helper_receipt, value)
+        print_summary(value)
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except (HelperError, ValueError, KeyError, OSError, sqlite3.Error) as error:
+        print("harness: Codex recovery helper failed: {}".format(error), file=sys.stderr)
+        sys.exit(2)
