@@ -363,6 +363,11 @@ read-only reconciliation before the next decision.
   tests refuse as designed. The fixture now explicitly exports its declared
   monitor root before loading the module. Commit this correction to restore a
   clean tree, then rerun the focused and complete suites.
+- After the fixture correction was committed, the focused monitor test and
+  complete `tests/test-phase1.sh` passed from a clean tree with only the
+  declared native MPI environment skip. The two earlier full-suite failures
+  were test-environment/clean-tree refusals and did not alter live tmux,
+  process, app-server, or saved-root state.
 
 ### T-336 — Benchmark current Codex and Claude Harness development
 
