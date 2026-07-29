@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-339.
+Next free ID: T-340.
 
 ## Current state
 
@@ -111,7 +111,7 @@ Next free ID: T-339.
 
 ### T-339 — Consolidate Local monitor tmux sessions
 
-**Phase:** executing the owner-authorized rename/move transaction.
+**Phase:** complete after this closeout reaches protected `main`.
 
 At 2026-07-29 13:35 JST the owner requested that the two detached Local
 infrastructure monitors be presented as one tmux session named `monitor`, with
@@ -137,6 +137,26 @@ for all three managed windows.
    `monitor:1:codex/@90/%90/2340081`; unchanged process starts; absent old
    source names; unchanged attached client; two fresh healthy Codex-monitor
    receipts; coherent Git; and canonical fleet health.
+
+**Completion checkpoint:**
+
+- Rename/move acknowledgement was unambiguous. Exact session `$7` is now
+  detached `monitor` with one-pane windows
+  `@40/0:tunnel/%40/2135569` and `@90/1:codex/%90/2340081`; both old source
+  session names are absent.
+- Tunnel-monitor owner `2135569` retains its 2026-07-23 01:38:44 JST start,
+  and Codex-monitor owner `2340081` retains its 2026-07-29 11:10:50 JST start.
+  No monitor process or pane was restarted.
+- Fresh receipts at epochs `1785299856` and `1785299887` both report
+  `phase=healthy healthy=3 order_action=none repair_action=none` from unchanged
+  owner `2340081`.
+- Attached client `2963496` remains on the unaffected canonical `harness`
+  session. No pane read/input, process signal, command replay, Codex or tunnel
+  lifecycle action, or unrelated tmux mutation occurred.
+
+**Next action:** validate diff hygiene and canonical fleet health, publish this
+ledger closeout through protected CI, merge normally, and fast-forward Local
+`main` without changing the accepted live topology.
 
 ### T-338 — Restore Local's absent canonical tmux session
 
