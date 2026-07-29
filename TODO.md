@@ -111,7 +111,7 @@ Next free ID: T-344.
 
 ### T-343 — Harden durable Codex-to-Claude handoff
 
-**Phase:** executing after owner `go` at 2026-07-29 18:03 JST.
+**Phase:** validating after implementation and the first clean full-suite pass.
 
 The owner requested a duration-bound hardening run through 2026-07-30 09:00
 JST. Scope is the reusable Harness handoff path only: make a fresh Claude
@@ -207,11 +207,14 @@ Claude 2.1.220/Fable/high: all three `code-coherence` observations passed;
 outcomes. The immutable public result SHA-256 is
 `224eb5d8e81c7f7ff302e34147e22fe320e6fb6b37fb89359aac3ae12f783ee8`.
 
-**Next action:** commit and publish the retest result and preservation proof.
-Then score the first seven benchmark cases from exact evidence, run the full
-focused set and clean `tests/test-phase1.sh`, obtain one final read-only Claude
-diff critique through the handoff contract, and process any demonstrated issue
-LIFO before protected publication.
+The first clean `tests/test-phase1.sh` acceptance run passed, including every
+focused suite and guarded-delete tests; the native MPI smoke remained the
+suite's declared environment-specific skip.
+
+**Next action:** score the first seven benchmark cases from exact evidence,
+obtain one final read-only Claude diff critique through the handoff contract,
+and process any demonstrated issue LIFO before the final clean full-suite run
+and protected publication.
 
 ### T-342 — Adopt cowork benchmark discipline and Claude Fable defaults
 
