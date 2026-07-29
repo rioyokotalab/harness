@@ -1,0 +1,648 @@
+#!/usr/bin/env python3
+"""Validate task-bound Claude handoff packets and their evidence."""
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path, PurePosixPath
+import re
+import stat
+import subprocess
+import sys
+
+
+MAX_INPUT_BYTES = 64 * 1024
+MAX_STAGE_INPUT_BYTES = 1024 * 1024
+PACKET_FIELDS = {
+    "schema_version",
+    "task_id",
+    "run_id",
+    "repository_root",
+    "baseline_commit",
+    "phase",
+    "client",
+    "model",
+    "effort",
+    "authority_class",
+    "allowed_paths",
+    "source_files",
+    "checks",
+    "next_action",
+    "issued_at",
+    "expires_at",
+}
+PHASES = {"ready-for-go", "executing", "validating"}
+AUTHORITIES = {"read-only", "execution"}
+TASK_PATTERN = re.compile(r"^T-[0-9]+$")
+RUN_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+COMMIT_PATTERN = re.compile(r"^[0-9a-f]{40}$")
+SHA_PATTERN = re.compile(r"^[0-9a-f]{64}$")
+CASE_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+STAGE_FIELDS = {
+    "schema_version",
+    "driver",
+    "copilot",
+    "mode",
+    "phase",
+    "destination_before_sha256",
+    "inputs",
+    "prompt_sha256",
+}
+EVIDENCE_FIELDS = {
+    "schema_version",
+    "task_id",
+    "run_id",
+    "authority_class",
+    "stage_receipt",
+    "read_manifest",
+    "recovered",
+    "execution_records",
+}
+RECOVERED_FIELDS = {
+    "task_id",
+    "run_id",
+    "repository_root",
+    "baseline_commit",
+    "phase",
+    "authority_class",
+    "next_action",
+    "checks",
+}
+READ_FIELDS = {"path", "sha256"}
+EXECUTION_FIELDS = {"case_id", "command", "exit_status", "output_sha256"}
+REPRODUCTION_FIELDS = EXECUTION_FIELDS | {
+    "schema_version",
+    "run_id",
+    "reproduced_at",
+}
+RETRY_FIELDS = {
+    "schema_version",
+    "task_id",
+    "previous_run_id",
+    "next_run_id",
+    "previous_outcome",
+    "previous_acknowledged",
+    "previous_imported",
+    "protected_state_unchanged",
+    "input_changed",
+    "replayed",
+    "exact_error_sha256",
+}
+RETRY_OUTCOMES = {
+    "transport-failure",
+    "launch-validation-failure",
+    "candidate-invalid",
+}
+
+
+class HandoffError(Exception):
+    pass
+
+
+def fail(message):
+    raise HandoffError(message)
+
+
+def read_owned_json(path_text, label):
+    path = Path(path_text)
+    descriptor = -1
+    flags = os.O_RDONLY
+    if hasattr(os, "O_CLOEXEC"):
+        flags |= os.O_CLOEXEC
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    try:
+        descriptor = os.open(str(path), flags)
+    except OSError:
+        fail("%s must be a real regular file" % label)
+    try:
+        metadata = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(metadata.st_mode)
+            or metadata.st_uid != os.getuid()
+            or metadata.st_nlink != 1
+        ):
+            fail("%s must be a real regular file owned only once by the current user" % label)
+        if metadata.st_size > MAX_INPUT_BYTES:
+            fail("%s exceeds the size limit" % label)
+        chunks = []
+        remaining = MAX_INPUT_BYTES + 1
+        while remaining:
+            block = os.read(descriptor, min(remaining, 65536))
+            if not block:
+                break
+            chunks.append(block)
+            remaining -= len(block)
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+    raw = b"".join(chunks)
+    try:
+        text = raw.decode("utf-8")
+        value = json.loads(text)
+    except (UnicodeDecodeError, ValueError):
+        fail("%s is not valid UTF-8 JSON" % label)
+    if not isinstance(value, dict):
+        fail("%s must contain one JSON object" % label)
+    return value
+
+
+def parse_time(value, label):
+    if not isinstance(value, str) or not value.endswith("Z"):
+        fail("%s must be an RFC3339 UTC timestamp" % label)
+    try:
+        parsed = datetime.fromisoformat(value[:-1] + "+00:00")
+    except (AttributeError, ValueError):
+        # Python 3.6 compatibility for the fixed second-resolution format.
+        try:
+            parsed = datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ").replace(
+                tzinfo=timezone.utc
+            )
+        except (TypeError, ValueError):
+            fail("%s must be an RFC3339 UTC timestamp" % label)
+    if parsed.utcoffset() != timezone.utc.utcoffset(parsed):
+        fail("%s must be an RFC3339 UTC timestamp" % label)
+    return parsed
+
+
+def validate_string_list(value, label, allow_empty):
+    if not isinstance(value, list) or (not allow_empty and not value):
+        fail("%s must be a non-empty list" % label)
+    if any(not isinstance(item, str) or not item for item in value):
+        fail("%s contains an invalid entry" % label)
+    if len(value) != len(set(value)):
+        fail("%s contains a duplicate entry" % label)
+    return value
+
+
+def validate_relative_paths(values, label):
+    for value in values:
+        path = PurePosixPath(value)
+        if path.is_absolute() or value != path.as_posix() or ".." in path.parts:
+            fail("%s contains an unsafe path" % label)
+
+
+def canonical_directory(path_text, label):
+    try:
+        path = Path(path_text).resolve(strict=True)
+    except (OSError, RuntimeError):
+        fail("%s is not an existing directory" % label)
+    if not path.is_dir():
+        fail("%s is not an existing directory" % label)
+    return path
+
+
+def git_head(root):
+    result = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        universal_newlines=True,
+    )
+    if result.returncode != 0:
+        fail("expected repository root is not a Git worktree")
+    value = result.stdout.strip()
+    if not COMMIT_PATTERN.fullmatch(value):
+        fail("expected repository root has an invalid Git head")
+    return value
+
+
+def validate_packet(value, args):
+    if set(value) != PACKET_FIELDS:
+        fail("packet fields differ from schema")
+    if value["schema_version"] != 1:
+        fail("unsupported packet schema")
+    if not isinstance(value["task_id"], str) or not TASK_PATTERN.fullmatch(value["task_id"]):
+        fail("packet task identifier is invalid")
+    if not isinstance(value["run_id"], str) or not RUN_PATTERN.fullmatch(value["run_id"]):
+        fail("packet run identifier is invalid")
+    if (
+        not isinstance(value["baseline_commit"], str)
+        or not COMMIT_PATTERN.fullmatch(value["baseline_commit"])
+    ):
+        fail("packet baseline is invalid")
+    if value["phase"] not in PHASES:
+        fail("packet phase is invalid")
+    if value["client"] != "claude" or value["model"] != "fable" or value["effort"] != "high":
+        fail("packet client profile is invalid")
+    if value["authority_class"] not in AUTHORITIES:
+        fail("packet authority class is invalid")
+    allowed_paths = validate_string_list(
+        value["allowed_paths"], "allowed_paths", value["authority_class"] == "read-only"
+    )
+    source_files = validate_string_list(value["source_files"], "source_files", False)
+    checks = validate_string_list(value["checks"], "checks", False)
+    validate_relative_paths(allowed_paths, "allowed_paths")
+    validate_relative_paths(source_files, "source_files")
+    if value["authority_class"] == "read-only" and allowed_paths:
+        fail("read-only packet must not declare writable paths")
+    if not isinstance(value["next_action"], str) or not value["next_action"].strip():
+        fail("packet next action is invalid")
+
+    issued_at = parse_time(value["issued_at"], "issued_at")
+    expires_at = parse_time(value["expires_at"], "expires_at")
+    now = parse_time(args.now, "now")
+    if issued_at > now:
+        fail("packet is not yet valid")
+    if expires_at <= now or expires_at <= issued_at:
+        fail("packet is expired")
+
+    expected_root = canonical_directory(args.expect_root, "expected repository root")
+    packet_root = canonical_directory(value["repository_root"], "packet repository root")
+    if packet_root != expected_root:
+        fail("repository root mismatch")
+    if value["repository_root"] != str(packet_root):
+        fail("packet repository root is not canonical")
+    if value["task_id"] != args.expect_task:
+        fail("task mismatch")
+    if value["run_id"] != args.expect_run_id:
+        fail("run identity mismatch")
+    if value["baseline_commit"] != args.expect_baseline:
+        fail("baseline mismatch")
+    if git_head(expected_root) != args.expect_baseline:
+        fail("repository head differs from expected baseline")
+    for relative in source_files:
+        source = expected_root / relative
+        if not source.is_file() or source.is_symlink():
+            fail("declared source file is absent or unsafe")
+    return checks, source_files
+
+
+def validate_digest(value, label):
+    if not isinstance(value, str) or not SHA_PATTERN.fullmatch(value):
+        fail("%s is not a SHA-256 digest" % label)
+
+
+def validate_digest_map(value, label):
+    if not isinstance(value, dict) or not value:
+        fail("%s must be a non-empty digest map" % label)
+    for name, digest in value.items():
+        if not isinstance(name, str) or not name:
+            fail("%s contains an invalid name" % label)
+        validate_relative_paths([name], label)
+        validate_digest(digest, "%s digest" % label)
+    return value
+
+
+def validate_stage(value):
+    if set(value) != STAGE_FIELDS or value["schema_version"] != 3:
+        fail("stage fields differ from schema")
+    if value["driver"] != "codex" or value["copilot"] != "claude":
+        fail("stage roles are invalid")
+    if value["mode"] not in {"independent", "reciprocal"}:
+        fail("stage mode is invalid")
+    if value["phase"] not in PHASES:
+        fail("stage phase is invalid")
+    validate_digest(value["destination_before_sha256"], "stage destination")
+    validate_digest(value["prompt_sha256"], "stage prompt")
+    validate_digest_map(value["inputs"], "stage inputs")
+    return value
+
+
+def validate_read_manifest(value, stage):
+    if not isinstance(value, list) or not value:
+        fail("read manifest must be a non-empty list")
+    observed = {}
+    for row in value:
+        if not isinstance(row, dict) or set(row) != READ_FIELDS:
+            fail("read manifest row fields differ from schema")
+        path = row["path"]
+        if not isinstance(path, str) or not path:
+            fail("read manifest path is invalid")
+        validate_relative_paths([path], "read manifest")
+        if path in observed:
+            fail("read manifest contains a duplicate path")
+        validate_digest(row["sha256"], "read manifest digest")
+        observed[path] = row["sha256"]
+    expected = {
+        path: digest_and_size[0]
+        for path, digest_and_size in stage["_verified_files"].items()
+    }
+    if observed != expected:
+        fail("read manifest does not match the sealed stage")
+    return value
+
+
+def digest_owned_file(path, label, maximum=MAX_INPUT_BYTES):
+    descriptor = -1
+    flags = os.O_RDONLY
+    if hasattr(os, "O_CLOEXEC"):
+        flags |= os.O_CLOEXEC
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    try:
+        descriptor = os.open(str(path), flags)
+    except OSError:
+        fail("%s must be a real regular file" % label)
+    digest = hashlib.sha256()
+    total = 0
+    try:
+        metadata = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(metadata.st_mode)
+            or metadata.st_uid != os.getuid()
+            or metadata.st_nlink != 1
+        ):
+            fail("%s must be a current-user-owned single-link file" % label)
+        while True:
+            block = os.read(descriptor, 65536)
+            if not block:
+                break
+            total += len(block)
+            if total > maximum:
+                fail("%s exceeds the size limit" % label)
+            digest.update(block)
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+    if total < 1:
+        fail("%s must not be empty" % label)
+    return digest.hexdigest(), total
+
+
+def verify_stage_files(stage, stage_path, packet_path, packet):
+    stage_root = stage_path.parent
+    if packet_path.parent != stage_root or packet_path.name != "handoff.json":
+        fail("packet must be the fixed staged handoff.json")
+    if "handoff.json" not in stage["inputs"]:
+        fail("stage inputs do not bind handoff.json")
+    expected_inputs = set(packet["source_files"]) | {"handoff.json"}
+    if set(stage["inputs"]) != expected_inputs:
+        fail("stage inputs differ from packet source files")
+    verified = {}
+    for relative, expected_digest in stage["inputs"].items():
+        path = stage_root / relative
+        actual_digest, size = digest_owned_file(
+            path, "staged input", MAX_STAGE_INPUT_BYTES
+        )
+        if actual_digest != expected_digest:
+            fail("staged input digest mismatch")
+        verified[relative] = (actual_digest, size)
+        if relative != "handoff.json":
+            source_digest, source_size = digest_owned_file(
+                Path(packet["repository_root"]) / relative,
+                "packet source file",
+                MAX_STAGE_INPUT_BYTES,
+            )
+            if (source_digest, source_size) != (actual_digest, size):
+                fail("staged input differs from packet source file")
+    prompt_path = stage_root / "artifacts" / "copilot-prompt.md"
+    prompt_digest, prompt_size = digest_owned_file(prompt_path, "staged prompt")
+    if prompt_digest != stage["prompt_sha256"]:
+        fail("staged prompt digest mismatch")
+    verified["artifacts/copilot-prompt.md"] = (prompt_digest, prompt_size)
+    stage["_verified_files"] = verified
+
+
+def validate_execution_records(value):
+    if not isinstance(value, list):
+        fail("execution records must be a list")
+    records = {}
+    for row in value:
+        if not isinstance(row, dict) or set(row) != EXECUTION_FIELDS:
+            fail("execution record fields differ from schema")
+        case_id = row["case_id"]
+        if not isinstance(case_id, str) or not CASE_PATTERN.fullmatch(case_id):
+            fail("execution case identifier is invalid")
+        if case_id in records:
+            fail("execution records contain a duplicate case")
+        command = validate_string_list(row["command"], "execution command", False)
+        if (
+            not isinstance(row["exit_status"], int)
+            or isinstance(row["exit_status"], bool)
+            or row["exit_status"] < 0
+            or row["exit_status"] > 255
+        ):
+            fail("execution exit status is invalid")
+        validate_digest(row["output_sha256"], "execution output")
+        records[case_id] = {
+            "case_id": case_id,
+            "command": command,
+            "exit_status": row["exit_status"],
+            "output_sha256": row["output_sha256"],
+        }
+    return records
+
+
+def validate_recovered(value, packet):
+    if not isinstance(value, dict) or set(value) != RECOVERED_FIELDS:
+        fail("recovered fields differ from schema")
+    expected = {
+        "task_id": packet["task_id"],
+        "run_id": packet["run_id"],
+        "repository_root": packet["repository_root"],
+        "baseline_commit": packet["baseline_commit"],
+        "phase": packet["phase"],
+        "authority_class": packet["authority_class"],
+        "next_action": packet["next_action"],
+        "checks": packet["checks"],
+    }
+    if value != expected:
+        fail("recovered handoff does not match the packet")
+
+
+def validate_reproduction(value, packet, records):
+    if set(value) != REPRODUCTION_FIELDS or value["schema_version"] != 1:
+        fail("driver reproduction fields differ from schema")
+    if value["run_id"] != packet["run_id"]:
+        fail("driver reproduction run identity mismatch")
+    parse_time(value["reproduced_at"], "reproduced_at")
+    comparable = {
+        name: value[name]
+        for name in ("case_id", "command", "exit_status", "output_sha256")
+    }
+    case_id = comparable["case_id"]
+    if case_id not in records or records[case_id] != comparable:
+        fail("driver reproduction does not match an execution record")
+    return comparable
+
+
+def verify_evidence(args):
+    packet = read_owned_json(args.packet, "packet")
+    checks, source_files = validate_packet(packet, args)
+    stage = validate_stage(read_owned_json(args.stage, "stage"))
+    stage_path = Path(args.stage).resolve(strict=True)
+    packet_path = Path(args.packet).resolve(strict=True)
+    verify_stage_files(stage, stage_path, packet_path, packet)
+    evidence = read_owned_json(args.evidence, "evidence")
+    if set(evidence) != EVIDENCE_FIELDS or evidence["schema_version"] != 1:
+        fail("evidence fields differ from schema")
+    if evidence["task_id"] != packet["task_id"]:
+        fail("evidence task mismatch")
+    if evidence["run_id"] != packet["run_id"]:
+        fail("evidence run identity mismatch")
+    if evidence["authority_class"] != packet["authority_class"]:
+        fail("evidence authority mismatch")
+    if stage["phase"] != packet["phase"]:
+        fail("stage phase mismatch")
+
+    receipt = evidence["stage_receipt"]
+    if not isinstance(receipt, dict) or set(receipt) != {"prompt_sha256", "inputs"}:
+        fail("stage receipt fields differ from schema")
+    if receipt["prompt_sha256"] != stage["prompt_sha256"]:
+        fail("prompt receipt mismatch")
+    if receipt["inputs"] != stage["inputs"]:
+        fail("input receipt mismatch")
+    validate_digest_map(receipt["inputs"], "evidence inputs")
+    reads = validate_read_manifest(evidence["read_manifest"], stage)
+    validate_recovered(evidence["recovered"], packet)
+    records = validate_execution_records(evidence["execution_records"])
+
+    reproduced = 0
+    if packet["authority_class"] == "read-only":
+        if records:
+            fail("read-only evidence must not contain execution records")
+        if args.driver_reproduction:
+            fail("read-only evidence must not use driver reproduction")
+    else:
+        if not records:
+            fail("execution evidence requires command records")
+        baseline = records.get("baseline")
+        if (
+            baseline is None
+            or baseline["command"] != ["git", "rev-parse", "HEAD"]
+            or baseline["exit_status"] != 0
+        ):
+            fail("execution evidence requires the baseline command record")
+        if not args.driver_reproduction:
+            fail("execution evidence requires driver reproduction")
+        reproduction = read_owned_json(args.driver_reproduction, "driver reproduction")
+        validate_reproduction(reproduction, packet, records)
+        reproduced = 1
+
+    print(
+        "CLAUDE_HANDOFF_EVIDENCE status=pass task=%s run=%s authority=%s "
+        "reads=%d records=%d reproduced=%d"
+        % (
+            packet["task_id"],
+            packet["run_id"],
+            packet["authority_class"],
+            len(reads),
+            len(records),
+            reproduced,
+        )
+    )
+    return 0
+
+
+def verify_retry(args):
+    value = read_owned_json(args.record, "retry record")
+    if set(value) != RETRY_FIELDS or value["schema_version"] != 1:
+        fail("retry record fields differ from schema")
+    for field in ("task_id", "previous_run_id", "next_run_id"):
+        if not isinstance(value[field], str):
+            fail("retry identity is invalid")
+    if not TASK_PATTERN.fullmatch(value["task_id"]):
+        fail("retry task identifier is invalid")
+    if (
+        not RUN_PATTERN.fullmatch(value["previous_run_id"])
+        or not RUN_PATTERN.fullmatch(value["next_run_id"])
+    ):
+        fail("retry run identity is invalid")
+    if value["task_id"] != args.expect_task:
+        fail("retry task mismatch")
+    if value["previous_run_id"] != args.expect_previous:
+        fail("previous run identity mismatch")
+    if value["next_run_id"] != args.expect_next:
+        fail("next run identity mismatch")
+    if value["previous_run_id"] == value["next_run_id"]:
+        fail("retry requires a distinct run identity")
+    if value["previous_outcome"] not in RETRY_OUTCOMES:
+        fail("retry outcome is invalid")
+    for field in (
+        "previous_acknowledged",
+        "previous_imported",
+        "protected_state_unchanged",
+        "input_changed",
+        "replayed",
+    ):
+        if not isinstance(value[field], bool):
+            fail("retry boolean field is invalid")
+    if value["previous_imported"]:
+        fail("an imported result must not be retried")
+    if not value["protected_state_unchanged"]:
+        fail("retry requires unchanged protected state")
+    if not value["input_changed"]:
+        fail("retry requires changed input")
+    if value["replayed"]:
+        fail("retry record reports a blind replay")
+    validate_digest(value["exact_error_sha256"], "retry error")
+    print(
+        "CLAUDE_HANDOFF_RETRY status=pass task=%s previous=%s next=%s "
+        "outcome=%s acknowledged=%d"
+        % (
+            value["task_id"],
+            value["previous_run_id"],
+            value["next_run_id"],
+            value["previous_outcome"],
+            int(value["previous_acknowledged"]),
+        )
+    )
+    return 0
+
+
+def parser():
+    result = argparse.ArgumentParser(
+        prog="harness claude-handoff",
+        description="Validate task-bound Claude handoff packets and evidence.",
+    )
+    commands = result.add_subparsers(dest="command")
+    validate = commands.add_parser("validate")
+    validate.add_argument("--packet", required=True)
+    validate.add_argument("--expect-task", required=True)
+    validate.add_argument("--expect-run-id", required=True)
+    validate.add_argument("--expect-root", required=True)
+    validate.add_argument("--expect-baseline", required=True)
+    validate.add_argument("--now", required=True)
+    evidence = commands.add_parser("verify-evidence")
+    evidence.add_argument("--packet", required=True)
+    evidence.add_argument("--stage", required=True)
+    evidence.add_argument("--evidence", required=True)
+    evidence.add_argument("--driver-reproduction")
+    evidence.add_argument("--expect-task", required=True)
+    evidence.add_argument("--expect-run-id", required=True)
+    evidence.add_argument("--expect-root", required=True)
+    evidence.add_argument("--expect-baseline", required=True)
+    evidence.add_argument("--now", required=True)
+    retry = commands.add_parser("verify-retry")
+    retry.add_argument("--record", required=True)
+    retry.add_argument("--expect-task", required=True)
+    retry.add_argument("--expect-previous", required=True)
+    retry.add_argument("--expect-next", required=True)
+    return result
+
+
+def main():
+    args = parser().parse_args()
+    if args.command == "validate":
+        packet = read_owned_json(args.packet, "packet")
+        checks, source_files = validate_packet(packet, args)
+        print(
+            "CLAUDE_HANDOFF status=pass task=%s run=%s phase=%s "
+            "authority=%s checks=%d sources=%d"
+            % (
+                packet["task_id"],
+                packet["run_id"],
+                packet["phase"],
+                packet["authority_class"],
+                len(checks),
+                len(source_files),
+            )
+        )
+        return 0
+    if args.command == "verify-evidence":
+        return verify_evidence(args)
+    if args.command == "verify-retry":
+        return verify_retry(args)
+    parser().print_usage(sys.stderr)
+    return 2
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except HandoffError as error:
+        print("claude handoff refused: %s" % error, file=sys.stderr)
+        sys.exit(2)

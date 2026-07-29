@@ -111,8 +111,7 @@ Next free ID: T-344.
 
 ### T-343 — Harden durable Codex-to-Claude handoff
 
-**Phase:** ready-for-go; target execution remains blocked until the owner gives
-explicit `go`.
+**Phase:** executing after owner `go` at 2026-07-29 18:03 JST.
 
 The owner requested a duration-bound hardening run through 2026-07-30 09:00
 JST. Scope is the reusable Harness handoff path only: make a fresh Claude
@@ -147,6 +146,13 @@ Confirmed preparation facts:
   pass canonical health. Both ABQ routes fail, while the official G-QuAT page
   still reports System H `サービス停止中`; do not probe or synchronize ABQ
   until official or canonical evidence establishes restoration.
+- Execution preflight at commit `bd47587db69f029cce5a43ec8b8e48a19b94f472`
+  found the task branch clean and equal to its remote, protected `main`
+  unchanged at `333d67b`, and the sole unrelated open PR still #377. Ruleset
+  `19127355` remains active with owner/admin bypass, strict
+  `portable-phase1`, and zero required approvals. The official G-QuAT page was
+  updated to extend System H maintenance through 2026-07-30 17:00 JST, so ABQ
+  remains excluded for the entire T-343 run.
 
 The benchmark `t343-claude-handoff-v1` has eight binary cases: cold durable
 takeover; task/root identity; authority separation; instruction/policy
@@ -179,12 +185,21 @@ Evidence uses exactly 16 JST slices: the partial `17:32–18:00` slice and every
 full hour through `08:00–09:00`. The durable and owner summaries each require
 exactly 16 timestamped evidence entries and at least 800 words.
 
-**Next action:** publish this preparation checkpoint and wait for one explicit
-owner `go`. Then Codex starts with the five-item repository-local slice frozen
-in `cowork/reconciliation.md`: packet/identity fixtures; authority-class
-evidence binding; one real read-only fresh-process Claude round trip; the
-broken-sandbox negative; and the observed distinct-identity retry fixtures.
-No target implementation or live rollout occurs before `go`.
+The first implementation slice now passes. `harness claude-handoff` validates
+strict expiring task/root/baseline packets, read-only versus execution evidence,
+driver reproduction, staged-source freshness, and changed-identity retry
+records. Native r1 failed before model execution on unsupported public-schema
+metadata and is retained as a validated no-acknowledgement retry. Distinct r2
+used the metadata-free native schema and a read-only OS sandbox; Claude
+Fable/high returned exact six-file recovery evidence with no execution records
+or permission denials. The driver independently matched staged and live source
+bytes and preserved the target/protected digests. Structured evidence is
+tracked under the Cowork artifacts directory.
+
+**Next action:** commit and publish this verified increment. Then test policy
+and unrelated-dirty preservation, run the four frozen T-336 Claude failure
+capsules under a new Fable/high identity, and continue full benchmark
+acceptance before final reciprocal diff review.
 
 ### T-342 — Adopt cowork benchmark discipline and Claude Fable defaults
 
