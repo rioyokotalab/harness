@@ -199,6 +199,18 @@ signal, or second launch ran.
 chains and the client, then rename only accepted `@92` to `swallow`. Preserve
 old `@91` until the promotion checkpoint is pushed.
 
+**Promotion checkpoint:** pushed launch checkpoint `47acb76` preceded a fresh
+lock-serialized identity gate. One acknowledged rename changed only accepted
+window `@92/2` from `swallow-phone-bridge` to `swallow`; pane `%92`,
+supervisor `3085990`, watcher `3086056`, TUI `3086168`, phone root, runtime,
+and socket peer did not change. Old `@91/3:swallow-old-t340` remains live and
+unchanged, and client `2963496` remains on Harness `@87`.
+
+**Next action:** publish this promotion checkpoint. Then revalidate the exact
+old TUI/parent/window/root plus every protected new/peer/client identity, send
+one `SIGTERM` only to old leaf `2349726`, and perform read-only reconciliation.
+Never send a second signal.
+
 ### T-339 — Consolidate Local monitor tmux sessions
 
 **Phase:** complete after this closeout reaches protected `main`.
