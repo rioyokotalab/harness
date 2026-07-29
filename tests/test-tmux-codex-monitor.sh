@@ -191,6 +191,31 @@ unsafe_0146 = module.collect_health(
 )
 assert unsafe_0146["students"]["state"] == "blocked"
 assert unsafe_0146["students"]["reason"] == "unsafe-tail"
+module.resilient_status = lambda _runtime: (
+    {"phase": "running", "owner_pid": "10"},
+    {
+        "phase": "blocked",
+        "reason": "post-rollback-system-error",
+        "owner_pid": "12",
+        "thread": "thread-students",
+    },
+)
+other_blocked = module.collect_health(
+    [
+        {
+            "index": 1,
+            "window_id": "@fixture",
+            "name": "students",
+            "panes": 1,
+            "pane_id": "%fixture",
+            "pane_pid": 10,
+            "path": os.environ["HARNESS_MONITOR_ROOT"],
+            "dead": False,
+        }
+    ]
+)
+assert other_blocked["students"]["state"] == "unhealthy"
+assert other_blocked["students"]["reason"] == "watcher-state"
 
 windows = [
     {
@@ -246,6 +271,16 @@ health["harness"]["recovery"]["reason"] = "thread-idle"
 assert "rejected prompt" in module.recovery_message(
     candidate, module.recovery_event(candidate)
 ).decode()
+module.tmux_windows = lambda: windows
+module.collect_health = lambda _windows: health
+module.tmux_clients = lambda: []
+health["harness"]["recovery"]["reason"] = "thread-active"
+with tempfile.TemporaryDirectory() as state:
+    assert module.request_controller_recovery(state, candidate) == (
+        "deferred-identity-drift"
+    )
+    assert not os.path.exists(os.path.join(state, "recovery-request.json"))
+health["harness"]["recovery"]["reason"] = "thread-idle"
 
 class Result:
     returncode = 0
@@ -255,11 +290,13 @@ module.subprocess.run = lambda arguments, **_kwargs: calls.append(arguments) or 
 module.PASTE_SETTLE_SECONDS = 0
 module.SUBMIT_SETTLE_SECONDS = 0
 with tempfile.TemporaryDirectory() as state:
-    action = module.request_controller_recovery(state, candidate)
+    action = module.request_controller_recovery(state, candidate, revalidate=False)
     assert action == "controller-requested"
     assert len(calls) == 3
     before = list(calls)
-    assert module.request_controller_recovery(state, candidate) == "already-requested"
+    assert module.request_controller_recovery(
+        state, candidate, revalidate=False
+    ) == "already-requested"
     assert calls == before
 with tempfile.TemporaryDirectory() as state:
     failed_calls = []
@@ -267,11 +304,15 @@ with tempfile.TemporaryDirectory() as state:
         lambda arguments, **_kwargs: failed_calls.append(arguments)
         or type("Failed", (), {"returncode": 1})()
     )
-    assert module.request_controller_recovery(state, candidate) == (
+    assert module.request_controller_recovery(
+        state, candidate, revalidate=False
+    ) == (
         "request-ambiguous"
     )
     before = list(failed_calls)
-    assert module.request_controller_recovery(state, candidate) == (
+    assert module.request_controller_recovery(
+        state, candidate, revalidate=False
+    ) == (
         "already-requested"
     )
     assert failed_calls == before

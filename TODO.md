@@ -386,14 +386,24 @@ Focused validation passes:
 - `tests/test-tmux-codex-monitor.sh`;
 - a live healthy `--once --auto-recover` pass against the preserved canonical
   topology, reporting three healthy windows and `repair_action=none`.
+- complete `tests/test-phase1.sh`, including every focused suite and guarded
+  deletion tests; native MPI remains the suite's declared environment skip.
+
+Post-suite source review tightened three fail-closed boundaries: a live watcher
+in any blocked state other than exact `unsafe-tail` is now unhealthy rather
+than healthy; inability to enumerate attached tmux clients is unavailable
+rather than falsely unattached; and the monitor performs a second complete
+topology/health/client read immediately before writing the event reservation,
+refusing any event or controller-pane identity drift. Focused tests cover these
+corrections; the complete suite must be rerun after this review checkpoint.
 
 Generated validation cache `/tmp/harness-t344-swallow-auto-recovery/libexec/__pycache__`
 was removed through guarded manifest `/tmp/t344-pycache.manifest`; the tool
 verified the target absent and protected anchors unchanged.
 
-**Next action:** publish this implementation checkpoint, run the complete
-phase-one suite, and inspect the exact diff. Then merge through protected CI
-without changing the owner-selected zero-approval policy. Activate
+**Next action:** publish the post-review corrections and rerun the complete
+phase-one suite. Then merge through protected CI without changing the
+owner-selected zero-approval policy. Activate
 `--auto-recover` only after merged-code validation and only while the current
 Swallow remains healthy; do not inject into the active parent Harness task.
 

@@ -269,7 +269,6 @@ def tmux_windows():
 def tmux_clients():
     output = run(
         ["tmux", "list-clients", "-t", "harness", "-F", "#{client_pid}\t#{window_id}"],
-        check=False,
     )
     return sorted(tuple(line.split("\t", 1)) for line in output.splitlines() if "\t" in line)
 
@@ -414,6 +413,10 @@ def collect_health(windows):
             continue
         if not watcher_ok:
             entry["reason"] = "watcher-absent"
+            health[name] = entry
+            continue
+        if recovery.get("phase") not in ("watching", "recovered"):
+            entry["reason"] = "watcher-state"
             health[name] = entry
             continue
         entry["state"] = "healthy"
@@ -562,7 +565,22 @@ def recovery_message(candidate, event):
     ).encode("utf-8")
 
 
-def request_controller_recovery(root, candidate):
+def request_controller_recovery(root, candidate, revalidate=True):
+    if revalidate:
+        current_windows = tmux_windows()
+        current_health = collect_health(current_windows)
+        current, _selection = recovery_candidate(
+            current_windows,
+            current_health,
+            tmux_clients(),
+        )
+        if (
+            not current
+            or recovery_event(current) != recovery_event(candidate)
+            or current["controller_pane"] != candidate["controller_pane"]
+        ):
+            return "deferred-identity-drift"
+        candidate = current
     journal_path = os.path.join(root, "recovery-request.json")
     event = recovery_event(candidate)
     journal = read_private_json(journal_path, None)
