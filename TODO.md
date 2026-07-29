@@ -204,6 +204,33 @@ connection or write was attempted. Retry is safe after publishing this
 failure; compare authoritative `HEAD` directly with its upstream instead of
 embedding a manually expanded object ID.
 
+The next preflight also stopped before a connection because a human-formatted
+`ps` state field contained alignment whitespace; all live state remained
+unchanged. A corrected start-tick gate then paused the three exact watcher
+leaves under the shared lock and sent one `thread/start`, but the helper
+returned its non-retryable ambiguous exit before an acknowledgement. Its
+result and stderr are empty, SQLite contains no root created at that time, and
+all watcher receipts and processes resumed unchanged. Never repeat that
+`thread/start`.
+
+Distinct direct cold-start r2 root
+`019fafef-5ebf-72f1-b1ce-2444e7570dc1` completed with four assistant items,
+fourteen terminal command items, no failed item, and no active turn. A
+watcher-quiesced read-only app-server connection independently reports it
+`notLoaded` at the exact canonical rollout and cwd. Codex 0.146.0 still stored
+legacy `approval_mode=never` despite the explicit granular command-line
+override; this is reproducible for both new 0.146.0 roots, while older 0.145.0
+roots store the granular object.
+
+The installed app-server schema provides exact
+`thread/settings/update` fields for approval policy, sandbox, model, effort,
+and cwd. Salvage only r2 through one explicit settings update rather than
+creating a fourth root or retrying the ambiguous start. Before that write,
+descriptor-tighten its validated current-user, single-link `0664` rollout to
+`0600`. Then send one settings update under the quiesced-watcher transaction,
+require SQLite granular-policy readback plus unchanged root identity, and
+continue naming/bridge launch only after checkpointing the acknowledgement.
+
 ### T-343 — Harden durable Codex-to-Claude handoff
 
 **Phase:** validating after implementation and the first clean full-suite pass.
