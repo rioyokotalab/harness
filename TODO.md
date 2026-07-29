@@ -248,6 +248,22 @@ acceptance before promotion. Name r2 provisionally through the independently
 supported `thread/name/set` method, then launch it once as a distinct bridge.
 If naming or launch acknowledgement is ambiguous, stop and preserve state.
 
+**Provisional-name acknowledgement:** exactly one watcher-quiesced
+`thread/name/set` named accepted r2 root
+`019fafef-5ebf-72f1-b1ce-2444e7570dc1`
+`swallow-recovery-20260730`. Same-connection readback reports exact
+`notLoaded` root, canonical cwd/path, and provisional name; stderr is empty.
+The request must not be retried. All three watcher leaves resumed at their
+unchanged identities.
+
+**Next action:** publish this acknowledgement, then create one distinct
+detached provisional tmux window at free index 3 named
+`swallow-recovery-bridge` with runtime `swallow-recovery-t344` and exact r2
+root. Require attempt-zero supervisor/watcher/TUI, exact effective granular
+argv, reciprocal app-server socket, accepted root state, unchanged peers and
+client, and a degraded monitor that still preserves canonical windows before
+any promotion.
+
 ### T-343 — Harden durable Codex-to-Claude handoff
 
 **Phase:** validating after implementation and the first clean full-suite pass.
