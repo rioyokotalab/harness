@@ -78,6 +78,12 @@ grep -F '`harness claude-handoff` validates a bounded, expiring packet' \
     "$ROOT/docs/agent-client-config.md" >/dev/null ||
     fail "handoff documentation"
 
+sha_file() {
+    python3 -c \
+        'import hashlib, pathlib, sys; print(hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest())' \
+        "$1"
+}
+
 repo=$TEST_ROOT/repo
 mkdir -p "$repo" "$STAGE_DIR/artifacts"
 git -C "$repo" init -q
@@ -85,9 +91,15 @@ git -C "$repo" config user.name handoff-test
 git -C "$repo" config user.email handoff-test.invalid
 printf '%s\n' '# instructions' >"$repo/AGENTS.md"
 printf '%s\n' '# ledger' >"$repo/TODO.md"
-git -C "$repo" add AGENTS.md TODO.md
+printf '%s\n' '{"required_approvals":0,"owner_selected":true}' \
+    >"$repo/policy.json"
+git -C "$repo" add AGENTS.md TODO.md policy.json
 git -C "$repo" commit -qm baseline
 baseline=$(git -C "$repo" rev-parse HEAD)
+policy_digest=$(sha_file "$repo/policy.json")
+printf '%s\n' 'owner draft: preserve this unrelated dirty file' \
+    >"$repo/owner-note.txt"
+owner_digest=$(sha_file "$repo/owner-note.txt")
 
 write_packet() {
     task_id=$1
@@ -177,12 +189,6 @@ cp "$repo/AGENTS.md" "$STAGE_DIR/AGENTS.md"
 cp "$repo/TODO.md" "$STAGE_DIR/TODO.md"
 printf '%s\n' 'Read the sealed handoff packet and source files.' \
     >"$STAGE_DIR/artifacts/copilot-prompt.md"
-
-sha_file() {
-    python3 -c \
-        'import hashlib, pathlib, sys; print(hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest())' \
-        "$1"
-}
 
 digest_a=$(sha_file "$STAGE_DIR/AGENTS.md")
 digest_b=$(sha_file "$STAGE_DIR/TODO.md")
@@ -438,5 +444,12 @@ write_retry native-r1 native-r2 launch-validation-failure false true
     --expect-next native-r2 | grep -Fx \
     'CLAUDE_HANDOFF_RETRY status=pass task=T-343 previous=native-r1 next=native-r2 outcome=launch-validation-failure acknowledged=0' \
     >/dev/null || fail "launch validation retry acceptance"
+
+[ "$(sha_file "$repo/policy.json")" = "$policy_digest" ] ||
+    fail "zero-approval policy drift"
+[ "$(sha_file "$repo/owner-note.txt")" = "$owner_digest" ] ||
+    fail "unrelated dirty file drift"
+[ "$(git -C "$repo" status --porcelain)" = '?? owner-note.txt' ] ||
+    fail "unrelated dirty status drift"
 
 printf '%s\n' 'Claude handoff tests passed'
