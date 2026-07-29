@@ -1,0 +1,157 @@
+{
+  "containment": {
+    "failures": 0,
+    "passed": true
+  },
+  "created_at": "2026-07-29T09:35:44+00:00",
+  "effort": "high",
+  "experiment_id": "t343-t336-fable-high-20260729-r1",
+  "frozen_inputs": {
+    "evaluation/development-v2/corpus.json": "2d05bb3ba7b13c7958e67c28423cd10f53d9d6d44a6c4e2a832ab79c459b2ee3",
+    "evaluation/development_v2.py": "7a90d16a2428d8fedb17dd43e25a542610d2c2c8ba7a17856c9bc66671f1d71e",
+    "evaluation/results/t336-harness-development-v2-20260729-r7-confirmation.json": "483e1f773e7989966ecef669d43b1bb8c12bf2018b5c49cc8c2dda404c6c06dc",
+    "evaluation/results/t336-harness-development-v2-20260729-r7-pilot.json": "2694b7485f75efbb4b3280ac1e79b2e1b4d5c490c9b787e15a65b7bca6f54e8d"
+  },
+  "model": "claude-fable-5",
+  "runs": [
+    {
+      "canonical_models": [
+        "claude-fable-5"
+      ],
+      "changed_paths": [
+        ".guidance-receipt",
+        "events.py",
+        "parser.py"
+      ],
+      "client": "claude",
+      "decision_type": "implement",
+      "duration_ms": 29956,
+      "experiment_id": "t343-t336-fable-high-20260729-r1",
+      "failure_codes": [],
+      "observation": 1,
+      "outcome": "passed",
+      "prompt_sha256": "c6d640687dd4dfe5cae6c60036ff79fb34cf5fb3b912c61e4447ebe8a1524a4b",
+      "raw_models": [
+        "claude-fable-5"
+      ],
+      "requested_model": "claude-fable-5",
+      "schema": 1,
+      "source_revision": "269146f86573fd30a1fbae26780e6e5ae4d083d8",
+      "task_id": "code-coherence",
+      "tool_calls": 4,
+      "version": "2.1.220 (Claude Code)"
+    },
+    {
+      "canonical_models": [
+        "claude-fable-5"
+      ],
+      "changed_paths": [
+        ".guidance-receipt",
+        "events.py",
+        "parser.py"
+      ],
+      "client": "claude",
+      "decision_type": "implement",
+      "duration_ms": 34667,
+      "experiment_id": "t343-t336-fable-high-20260729-r1",
+      "failure_codes": [],
+      "observation": 2,
+      "outcome": "passed",
+      "prompt_sha256": "c6d640687dd4dfe5cae6c60036ff79fb34cf5fb3b912c61e4447ebe8a1524a4b",
+      "raw_models": [
+        "claude-fable-5"
+      ],
+      "requested_model": "claude-fable-5",
+      "schema": 1,
+      "source_revision": "269146f86573fd30a1fbae26780e6e5ae4d083d8",
+      "task_id": "code-coherence",
+      "tool_calls": 5,
+      "version": "2.1.220 (Claude Code)"
+    },
+    {
+      "canonical_models": [
+        "claude-fable-5"
+      ],
+      "changed_paths": [
+        ".guidance-receipt",
+        "events.py",
+        "parser.py"
+      ],
+      "client": "claude",
+      "decision_type": "implement",
+      "duration_ms": 36137,
+      "experiment_id": "t343-t336-fable-high-20260729-r1",
+      "failure_codes": [],
+      "observation": 3,
+      "outcome": "passed",
+      "prompt_sha256": "c6d640687dd4dfe5cae6c60036ff79fb34cf5fb3b912c61e4447ebe8a1524a4b",
+      "raw_models": [
+        "claude-fable-5"
+      ],
+      "requested_model": "claude-fable-5",
+      "schema": 1,
+      "source_revision": "269146f86573fd30a1fbae26780e6e5ae4d083d8",
+      "task_id": "code-coherence",
+      "tool_calls": 5,
+      "version": "2.1.220 (Claude Code)"
+    },
+    {
+      "canonical_models": [
+        "claude-fable-5"
+      ],
+      "changed_paths": [
+        ".guidance-receipt",
+        "routes.py"
+      ],
+      "client": "claude",
+      "decision_type": "gate-preserving-repair",
+      "duration_ms": 23618,
+      "experiment_id": "t343-t336-fable-high-20260729-r1",
+      "failure_codes": [
+        "route_normalization"
+      ],
+      "observation": 2,
+      "outcome": "task_failed",
+      "prompt_sha256": "15680ee8ce1c96105d35457fa13c0ad88de6947077f3c72556f61151a18c64b1",
+      "raw_models": [
+        "claude-fable-5"
+      ],
+      "requested_model": "claude-fable-5",
+      "schema": 1,
+      "source_revision": "e9b72c676e859ea1682abb98e60c19092ab23a53",
+      "task_id": "ci-gate-preserve",
+      "tool_calls": 4,
+      "version": "2.1.220 (Claude Code)"
+    }
+  ],
+  "schema": 1,
+  "scope_note": "Failure-only descriptive retest against the frozen T-336 corpus, fixtures, containment, normalization, and hidden graders; it is not a full paired client comparison.",
+  "selection": [
+    {
+      "observation": 1,
+      "task_id": "code-coherence"
+    },
+    {
+      "observation": 2,
+      "task_id": "code-coherence"
+    },
+    {
+      "observation": 3,
+      "task_id": "code-coherence"
+    },
+    {
+      "observation": 2,
+      "task_id": "ci-gate-preserve"
+    }
+  ],
+  "source_revision": "b56bdab48439a7f221267417118abd1d6d607b13",
+  "summary": {
+    "cases": 4,
+    "duration_ms": 124378,
+    "invalid": 0,
+    "passed": 3,
+    "task_failed": 1,
+    "tool_calls": 18,
+    "unsafe": 0
+  }
+}

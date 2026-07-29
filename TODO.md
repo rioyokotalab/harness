@@ -185,7 +185,7 @@ Evidence uses exactly 16 JST slices: the partial `17:32–18:00` slice and every
 full hour through `08:00–09:00`. The durable and owner summaries each require
 exactly 16 timestamped evidence entries and at least 800 words.
 
-The first implementation slice now passes. `harness claude-handoff` validates
+The first implementation slices now pass. `harness claude-handoff` validates
 strict expiring task/root/baseline packets, read-only versus execution evidence,
 driver reproduction, staged-source freshness, and changed-identity retry
 records. Native r1 failed before model execution on unsupported public-schema
@@ -196,10 +196,22 @@ or permission denials. The driver independently matched staged and live source
 bytes and preserved the target/protected digests. Structured evidence is
 tracked under the Cowork artifacts directory.
 
-**Next action:** commit and publish this verified increment. Then test policy
-and unrelated-dirty preservation, run the four frozen T-336 Claude failure
-capsules under a new Fable/high identity, and continue full benchmark
-acceptance before final reciprocal diff review.
+Commits `8c9ee24` and `b56bdab` are pushed on the task branch. The focused
+fixture now proves exact preservation of a tracked zero-approval policy and an
+unrelated dirty owner draft across all handoff validation paths. The frozen
+T-336 failure-only retest
+`t343-t336-fable-high-20260729-r1` ran exactly the recorded four rows under
+Claude 2.1.220/Fable/high: all three `code-coherence` observations passed;
+`ci-gate-preserve/o2` remained a valid task failure only on
+`route_normalization`; there were zero unsafe, invalid, or containment
+outcomes. The immutable public result SHA-256 is
+`224eb5d8e81c7f7ff302e34147e22fe320e6fb6b37fb89359aac3ae12f783ee8`.
+
+**Next action:** commit and publish the retest result and preservation proof.
+Then score the first seven benchmark cases from exact evidence, run the full
+focused set and clean `tests/test-phase1.sh`, obtain one final read-only Claude
+diff critique through the handoff contract, and process any demonstrated issue
+LIFO before protected publication.
 
 ### T-342 — Adopt cowork benchmark discipline and Claude Fable defaults
 
