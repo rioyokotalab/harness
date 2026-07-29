@@ -109,6 +109,310 @@ Next free ID: T-344.
 
 ## Active tasks
 
+### T-344 — Recover Swallow and automate blocked-root cutover
+
+**Phase:** live Swallow recovery complete; reusable automatic recovery
+implementation remains.
+
+At 2026-07-30 07:06 JST the owner reported that Local tmux Swallow was
+blocked again and requested both immediate repair and automatic recovery for
+future blocked Codex roots. Scope is Local's exact managed Swallow chain plus
+the reusable Harness recovery control plane. Preserve the independent T-343
+worktrees, Harness and Students roots/processes, the shared app server, the
+owner's attached Harness client, repository policy, and all unrelated work.
+Never inspect pane or transcript content, reconstruct or replay a rejected
+prompt, issue another rollback, restart the app server, or delete/archive a
+saved root.
+
+Fresh pane-blind diagnosis proves:
+
+- exact canonical topology is one pane each at
+  `@87/0:harness,@88/1:students,@92/2:swallow`; sole client
+  `2132268` on `/dev/pts/25` selects unaffected Harness `@87`;
+- Swallow runtime `swallow-phone-t340` remains attempt-zero and running under
+  supervisor `3085990`, launcher `3086166`, and real TUI `3086168`, using
+  root `019fa5a1-7fff-7e92-8e2a-2586c684747f`;
+- watcher `808442` reports exact `blocked/unsafe-tail`, with zero successful
+  recoveries and one already rolled-back turn. This selects bridge-first
+  fresh-root recovery; another rollback is unsafe and forbidden;
+- Harness and Students retain healthy running supervisor/watcher/TUI chains.
+  Shared app server `2852569/83381863` and observe-only tmux monitor
+  `2340081` are unchanged;
+- the monitor correctly reports `degraded healthy=2`,
+  `repair_action=none`, and one-shot reason `watcher-absent` for Swallow. It
+  did not miss topology or liveness. Its intentionally observe-only contract
+  cannot create/name/accept/promote a fresh root, so it can detect but not
+  complete this recovery.
+
+The immediate transaction follows the reusable unsafe-tail protocol. Create
+and persist exactly one provisional root with the blocked root's frozen cwd,
+approval policy, and sandbox; launch it in a distinct provisional tmux
+window/runtime; submit one new cold-start instruction that reconstructs only
+from complete repository instructions, `TODO.md`, Git, and mutable external
+state; require an assistant-bearing completed turn without `systemError`;
+then transfer phone/tmux names by read-before/write/read-after and rename-only
+promotion. Preserve the blocked root under a unique blocked name and retire
+only its exact old TUI leaf after promotion. Every acknowledged request,
+launch, rename, and signal is non-retryable.
+
+The reusable correction keeps `harness-tmux-codex-monitor` observe-only and
+adds a distinct fail-closed recovery controller. The monitor publishes exact
+value-free unhealthy evidence; the controller may act only on a canonical
+three-window mapping, one uniquely mapped unsafe-tail root, healthy peers,
+unchanged app-server identity, a current-user private lock/journal, and a
+pre-authorized generic cold-start contract. It must implement the same
+bridge-first gates, durable pre-write receipt, bounded one-attempt identities,
+and no-content acceptance as the manual protocol. Unknown, active ambiguous,
+multi-target, unavailable, attached-target, or identity-drift states remain
+report-only. Add deterministic fixtures for detection without repair,
+successful one-target bridge state progression, duplicate/ambiguous refusal,
+non-retry of sent operations, peer preservation, and crash reconciliation.
+
+**First provisional-root refusal:** pushed checkpoint `52e7dfc` preceded one
+persistent native cold-start request. It acknowledged exact new root
+`019fafec-3da4-77d2-a88f-e7abaa380a06` and completed one turn with four
+assistant items, fourteen terminal command items, no active item, and no
+transport error. Raw mode-0600 events were not inspected for message, command,
+or tool payload content. Main remained clean and unchanged; no live tmux,
+process, app-server, or external state changed.
+
+The new root is not an acceptable bridge. Exact metadata reports the required
+cwd, disabled sandbox, Sol/high, and canonical single-link rollout, but its
+stored approval mode is `never` rather than the blocked root's frozen granular
+MCP-only policy. Its installed-version rollout mode is also the expected
+pre-acceptance `0664`. Preserve this distinct unnamed root and do not launch,
+name, chmod, archive, delete, or reuse it. The failed attempt is unambiguous,
+so one changed-input cold start is safe under a distinct root: pass the exact
+granular approval override explicitly and otherwise keep the same no-replay,
+read-only instruction and acceptance gates.
+
+**Next action:** commit and push this refusal before another root creation.
+Then execute exactly one corrected cold start, require its stored approval and
+sandbox to match the blocked root, descriptor-tighten only an accepted `0664`
+rollout to `0600`, and continue the bridge-first Swallow recovery. After live
+acceptance, implement the separate controller in this worktree, validate
+focused and complete tests, publish through protected CI without changing
+ruleset approvals, and activate only the exact merged controller after a
+final live preflight.
+
+**Pre-write gate correction:** the first shared-app-server transaction exited
+at its initial Git assertion because the controller manually expanded short
+checkpoint `8583fd9` incorrectly. Authoritative Git resolves it to
+`8583fd9b3bef789f269557b8dedda0a56b1fb93e`. Result and stderr captures
+remain empty; all three watcher processes are running, their receipts are
+unchanged, topology/client/app-server state is unchanged, and no app-server
+connection or write was attempted. Retry is safe after publishing this
+failure; compare authoritative `HEAD` directly with its upstream instead of
+embedding a manually expanded object ID.
+
+The next preflight also stopped before a connection because a human-formatted
+`ps` state field contained alignment whitespace; all live state remained
+unchanged. A corrected start-tick gate then paused the three exact watcher
+leaves under the shared lock and sent one `thread/start`, but the helper
+returned its non-retryable ambiguous exit before an acknowledgement. Its
+result and stderr are empty, SQLite contains no root created at that time, and
+all watcher receipts and processes resumed unchanged. Never repeat that
+`thread/start`.
+
+Distinct direct cold-start r2 root
+`019fafef-5ebf-72f1-b1ce-2444e7570dc1` completed with four assistant items,
+fourteen terminal command items, no failed item, and no active turn. A
+watcher-quiesced read-only app-server connection independently reports it
+`notLoaded` at the exact canonical rollout and cwd. Codex 0.146.0 still stored
+legacy `approval_mode=never` despite the explicit granular command-line
+override; this is reproducible for both new 0.146.0 roots, while older 0.145.0
+roots store the granular object.
+
+The installed app-server schema provides exact
+`thread/settings/update` fields for approval policy, sandbox, model, effort,
+and cwd. Salvage only r2 through one explicit settings update rather than
+creating a fourth root or retrying the ambiguous start. Before that write,
+descriptor-tighten its validated current-user, single-link `0664` rollout to
+`0600`. Then send one settings update under the quiesced-watcher transaction,
+require SQLite granular-policy readback plus unchanged root identity, and
+continue naming/bridge launch only after checkpointing the acknowledgement.
+
+**r2 persistence and settings boundary:** a no-follow descriptor transaction
+revalidated r2's current-user regular single-link rollout and changed only its
+mode from `0664` to `0600`, preserving device `197`, inode `241871989`, and
+content size `468766`. One schema-valid `thread/settings/update` was then sent
+under the watcher-quiesced shared lock, but returned the non-retryable
+ambiguous exit with empty result/stderr. Independent SQLite readback remains
+unchanged at `approval_mode=never`, disabled sandbox, Sol/high, and exact cwd;
+all three watchers resumed unchanged. Never repeat that settings request.
+
+Proceed only because the managed provisional TUI launch itself supplies the
+repository's exact granular approval override and disabled sandbox as
+immutable argv, so effective live policy does not depend on the stale
+direct-exec metadata. Require that exact argv plus watcher/root/socket
+acceptance before promotion. Name r2 provisionally through the independently
+supported `thread/name/set` method, then launch it once as a distinct bridge.
+If naming or launch acknowledgement is ambiguous, stop and preserve state.
+
+**Provisional-name acknowledgement:** exactly one watcher-quiesced
+`thread/name/set` named accepted r2 root
+`019fafef-5ebf-72f1-b1ce-2444e7570dc1`
+`swallow-recovery-20260730`. Same-connection readback reports exact
+`notLoaded` root, canonical cwd/path, and provisional name; stderr is empty.
+The request must not be retried. All three watcher leaves resumed at their
+unchanged identities.
+
+**Next action:** publish this acknowledgement, then create one distinct
+detached provisional tmux window at free index 3 named
+`swallow-recovery-bridge` with runtime `swallow-recovery-t344` and exact r2
+root. Require attempt-zero supervisor/watcher/TUI, exact effective granular
+argv, reciprocal app-server socket, accepted root state, unchanged peers and
+client, and a degraded monitor that still preserves canonical windows before
+any promotion.
+
+**Bridge launch acknowledgement and acceptance:** one native launch was
+acknowledged exactly once as provisional `@93/3:swallow-recovery-bridge`,
+pane `%93`, runtime `swallow-recovery-t344`, and exact r2 root; it must never
+be retried. Attempt-zero supervisor `2266420`, watcher `2266511`, launcher
+`2266661`, and real TUI `2266662` are live. The watcher reports
+`watching/thread-idle` with zero recoveries/rollbacks. Exact TUI argv supplies
+the granular approval override and disabled sandbox, and reciprocal socket
+inodes `231986500/231982805` connect only to unchanged app server `2852569`.
+The accepted root already contains its completed assistant-bearing cold-start
+turn. Harness, Students, old blocked Swallow, client `2132268` on Harness, and
+canonical monitor result remain unchanged.
+
+**Next action:** publish this non-retryable bridge identity. Transfer root
+names with one read-before/write/read-after transaction each: old root
+`019fa5a1-7fff-7e92-8e2a-2586c684747f` from `swallow` to
+`swallow-blocked-20260730`, then accepted r2 from its provisional name to
+`swallow`. Preserve every acknowledgement before the next write. Stage the
+old exact tmux window away from canonical index 2, stage accepted `@93` into
+index 2 without changing its pane/process chain, then perform rename-only
+promotion and retire only the old exact TUI leaf.
+
+**Blocked-root name acknowledgement:** under the shared lock, all four exact
+watchers were paused and one same-connection read-before/write/read-after
+transaction changed only old root
+`019fa5a1-7fff-7e92-8e2a-2586c684747f` from `swallow` to
+`swallow-blocked-20260730`. It remains `systemError` at its unchanged
+canonical cwd/path; stderr is empty. The request must not be retried. Every
+watcher resumed and both live chains remain preserved.
+
+**Next action:** publish this acknowledgement, then transfer exact accepted
+r2 name `swallow-recovery-20260730` to canonical `swallow` through the same
+single-connection gate. Do not alter tmux until both root names have exact
+independent readback.
+
+**Accepted-root name acknowledgement:** exactly one second
+read-before/write/read-after transaction changed accepted r2 from
+`swallow-recovery-20260730` to canonical `swallow`. It remains `idle` at its
+unchanged cwd/path; stderr is empty. The request must not be retried. The old
+root remains uniquely `swallow-blocked-20260730`.
+
+**Next action:** publish the complete root-name transfer. Revalidate both
+chains and the Harness-selected client, stage old exact window `@92` from
+index 2 to free index 4 and accepted exact `@93` from index 3 to canonical
+index 2 without changing either pane/process chain, rename old `@92`
+`swallow-blocked`, then perform rename-only promotion of `@93` to `swallow`.
+Checkpoint that reversible topology before signaling only old exact TUI leaf
+`3086168`.
+
+**Tmux promotion acknowledgement:** exact old `@92` staged to index 4,
+accepted `@93` staged to canonical index 2, old renamed
+`swallow-blocked`, and accepted bridge rename-only promoted to `swallow`.
+Both panes, roots, runtimes, and complete process chains retained their exact
+identities; no relaunch or prompt ran. Native staging changed the attached
+session's selected window from Harness `@87` to accepted `@93` despite the
+preflight. One exact client-targeted correction immediately restored sole
+client `2132268` on `/dev/pts/25` to original Harness `@87`; postcheck passed.
+
+The reversible topology is now
+`@87/0:harness,@88/1:students,@93/2:swallow,@92/4:swallow-blocked`.
+**Next action:** publish this topology. Then revalidate the old leaf's PID,
+start tick, parent/window/root, every accepted/peer/app-server/client identity,
+and send one `SIGTERM` only to old real TUI `3086168`. Never send a second
+signal; require old launcher/watcher/supervisor/window absence and preserve its
+blocked saved root.
+
+**Live recovery acceptance:** the final identity gate matched old TUI
+`3086168` at start tick `103604477`, parent launcher `3086166`, old window
+`@92/4`, old root argv, all peers, the app server, and the Harness-selected
+client. Exactly one `SIGTERM` was sent only to that old TUI. The old TUI,
+launcher, watcher, supervisor, pane, and window exited without a second signal;
+its runtime records `stopped/operator-signal`, its watcher records
+`stopped/operator-stop` with zero recoveries and one prior rollback, and its
+saved root remains preserved as `swallow-blocked-20260730` in `systemError`.
+
+Final topology is exactly
+`@87/0:harness,@88/1:students,@93/2:swallow`, with sole client `2132268`
+still selecting Harness `@87`. Accepted Swallow root
+`019fafef-5ebf-72f1-b1ce-2444e7570dc1` is `idle`, canonically named
+`swallow`, and runs in attempt-zero runtime `swallow-recovery-t344`; its
+watcher remains idle with zero recoveries and zero rollbacks. A fresh
+observe-only monitor pass reports all three canonical windows healthy. No
+rejected prompt was reconstructed or replayed, no pane/transcript content was
+read, no app-server restart occurred, no peer was interrupted, and no saved
+root was archived or deleted.
+
+**Next action:** implement and validate the separate fail-closed automatic
+recovery trigger in this worktree. Keep the topology monitor itself
+observe-only; it may publish exact unsafe-tail evidence, while a distinct
+durably deduplicated controller path requests recovery from an idle healthy
+Harness controller. Never inject into or interrupt an active controller, and
+never retry an acknowledged or ambiguous request.
+
+**Automatic trigger implementation:** the monitor now distinguishes a live,
+identity-matched watcher receipt in exact `blocked/unsafe-tail` from a missing
+watcher. Optional `--auto-recover` selects only one blocked Students or Swallow
+root under exact canonical three-window topology, an idle healthy Harness
+controller, one healthy sibling, one unchanged shared app-server identity, and
+an unattached target window. It writes a mode-0600 event reservation before
+literal controller insertion and records submission afterward; the event key
+binds the target runtime/root, watcher PID/start tick, app-server PID/start
+tick, and recovery counters. A reserved, submitted, or ambiguous event is
+never retried.
+
+The one identified request instructs the existing Harness controller to
+reconstruct solely from repository instructions, `TODO.md`, Git, and mutable
+external state and to apply the established unsafe-tail skill without replay,
+pane/transcript inspection, app-server restart, peer interruption, or
+ambiguous-operation retry. The monitor itself still performs no app-server
+control operation, rollback, root mutation, lifecycle launch, or process
+signal. Harness-controller failure, active controller, attached target,
+unhealthy peer, duplicate target, topology drift, and identity drift remain
+report-only. Focused fixtures cover exact unsafe-tail classification, candidate
+selection, active-controller and attached-target deferral, successful
+reservation/submission, durable deduplication, and ambiguous non-retry.
+
+Focused validation passes:
+
+- Python 3.6 AST compatibility and `git diff --check`;
+- `tests/test-tmux-codex-monitor.sh`;
+- a live healthy `--once --auto-recover` pass against the preserved canonical
+  topology, reporting three healthy windows and `repair_action=none`.
+- complete `tests/test-phase1.sh`, including every focused suite and guarded
+  deletion tests; native MPI remains the suite's declared environment skip.
+
+Post-suite source review tightened three fail-closed boundaries: a live watcher
+in any blocked state other than exact `unsafe-tail` is now unhealthy rather
+than healthy; inability to enumerate attached tmux clients is unavailable
+rather than falsely unattached; and the monitor performs a second complete
+topology/health/client read immediately before writing the event reservation,
+refusing any event or controller-pane identity drift. Focused tests cover these
+corrections; the complete suite must be rerun after this review checkpoint.
+
+The post-review rerun of `tests/test-phase1.sh` passes completely, again with
+only the declared native-MPI environment skip. Exact head
+`7ea4b27282589d0d267ba774edd2f9ec4f4f0e4e` is clean, pushed, based directly
+on current `origin/main` `0fdfd973c8c2e349bcdf74ee2e522fece65cca69`,
+and has authenticated Git transport plus separately verified hosting API
+availability.
+
+Generated validation cache `/tmp/harness-t344-swallow-auto-recovery/libexec/__pycache__`
+was removed through guarded manifest `/tmp/t344-pycache.manifest`; the tool
+verified the target absent and protected anchors unchanged.
+
+**Next action:** open and merge the exact-head task pull request through
+protected CI without changing the owner-selected zero-approval policy. Activate
+`--auto-recover` only after merged-code validation and only while the current
+Swallow remains healthy; do not inject into the active parent Harness task.
+
 ### T-343 — Harden durable Codex-to-Claude handoff
 
 **Phase:** validating after implementation and the first clean full-suite pass.

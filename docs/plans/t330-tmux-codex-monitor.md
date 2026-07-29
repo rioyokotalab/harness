@@ -26,14 +26,16 @@ In scope:
 2. Order correction only after unique identity proof for exactly the three
    declared windows.
 3. Periodic value-free status and a durable last-known-good lifecycle mapping.
-4. Controller-owned lifecycle recovery outside the periodic monitor.
+4. Controller-owned lifecycle recovery, with an optional fail-closed one-shot
+   handoff from the periodic monitor.
 5. Focused fixtures, full validation, protected publication, Local activation,
    guarded fleet rollout, and Mac context refreshes.
 
 Out of scope:
 
 - reading or capturing pane or transcript content;
-- sending input, starting a turn, or replaying any prompt;
+- sending arbitrary input or replaying any prompt; the sole exception is the
+  exact deduplicated unsafe-tail request to an independently idle controller;
 - rollback, fresh-root creation, root name/archive changes, or app-server
   restart;
 - killing an unidentified process, a process group, the tmux server, an
@@ -112,11 +114,21 @@ the order pass.
 
 The periodic monitor never constructs a recovery backend, reads a thread,
 signals a process, or launches a lifecycle. Missing watchers and windows remain
-value-free unhealthy. A separate controller turn may use the established
-unsafe-tail recovery protocol only after checkpointing exact identities,
-quiescing other recovery watchers, proving the target window unattached, and
-performing one fresh app-server status/rollout transaction. Any acknowledgement
-or signal retains the protocol's non-retryable boundary.
+value-free unhealthy. With `--auto-recover`, it may submit one identified
+request to the existing Harness controller only when exactly one Students or
+Swallow watcher reports `blocked/unsafe-tail`, all three canonical windows and
+the shared app-server identity remain exact, both peers are healthy, the
+Harness controller watcher reports `thread-idle`, and the target window is
+unattached. A mode-0600 reservation journal is written before literal tmux
+insertion; an acknowledged or ambiguous request is never retried.
+
+The separate controller turn then uses the established unsafe-tail recovery
+protocol only after reconstructing durable state, checkpointing exact
+identities, quiescing other recovery watchers, proving the target remains
+unattached, and performing the required fresh acceptance checks. The trigger
+never reads pane or transcript content and cannot recover the Harness
+controller itself, ambiguous topology, multiple blocked roots, an attached
+target, an active controller, or unhealthy peers.
 
 ## Execution sequence
 
@@ -136,7 +148,8 @@ or signal retains the protocol's non-retryable boundary.
    recovery only from a separate controller checkpoint.
 9. Validate two consecutive passes, exact order, three healthy Codex chains,
    attached-client stability, mode-0600 receipt, dedicated monitor liveness,
-   no pane reads/input, and canonical fleet health.
+   no pane reads or target input, no duplicate controller request, and
+   canonical fleet health.
 
 ## Rollback and interruption
 
@@ -163,6 +176,14 @@ contract is `observe-and-order`: enforce unambiguous order and report lifecycle
 health, but require a controller turn for every process/window recovery.
 
 The owner authorized this revised execution with exact `go` on 2026-07-28.
+
+### D-002 — Unsafe-tail controller handoff
+
+After a live Swallow unsafe-tail incident on 2026-07-30, the owner requested
+automatic recovery. The selected extension preserves D-001's separation: the
+monitor still performs no lifecycle mutation or app-server control operation,
+but may durably deduplicate and submit one recovery request to the already
+managed, idle Harness controller. Every non-exact state remains report-only.
 
 ## Acceptance
 
