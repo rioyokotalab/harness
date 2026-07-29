@@ -243,8 +243,31 @@ focused and aggregate gates; native MPI retained only its declared
 environment-specific skip. Fresh ruleset `19127355` readback remains active
 with owner/admin bypass, strict required `portable-phase1`, review-thread
 resolution, and owner-selected zero required approvals. The branch and remote
-task head are equal and no task PR exists, so protected PR creation is the next
-safe action.
+task head were equal and no task PR existed, so protected PR creation was the
+next safe action.
+
+### Iteration 6 — credential-free portable CI
+
+- Hypothesis: the new retest declaration check is portable to the protected
+  credential-free CI environment.
+- Before identity: PR #412 exact head `7cbd214`; local final Phase 1 pass;
+  protected check run `30442484653`, job `90544823517`.
+- Exact check: required `portable-phase1`.
+- Observed result: failed after 1m30s only in
+  `tests/test-t343-fable-retest.sh`. The helper's `validate` command attempted
+  `claude --version`; Claude is intentionally absent from portable CI. All
+  preceding reported focused suites passed.
+- Decision: retain the failure. Add an explicit
+  `--skip-client-check` path restricted to
+  `HARNESS_PORTABLE_CI=1`, report the skip in the machine-readable validation
+  line, retain exact native version checking everywhere else, and add both
+  allowed and forbidden bypass fixtures.
+
+Normal local validation, a simulated credential-free
+`HARNESS_PORTABLE_CI=1 PATH=/usr/bin:/bin` validation, and
+`tests/test-development-evaluation.sh` now pass. The skip is explicit and
+counted; it does not silently satisfy a native model run or alter the retained
+scored evidence.
 
 ## Deviations
 

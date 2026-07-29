@@ -20,9 +20,18 @@ source = Path(sys.argv[1]).read_text(encoding="utf-8")
 ast.parse(source, filename=sys.argv[1])
 PY
 
-"$RETEST" validate | grep -Fx \
-    'VALID retest=t343-t336-fable-high-20260729-r1 cases=4 model=claude-fable-5 effort=high' \
-    >/dev/null || fail "retest validation"
+if [ "${HARNESS_PORTABLE_CI:-}" = 1 ]; then
+    "$RETEST" validate --skip-client-check | grep -Fx \
+        'VALID retest=t343-t336-fable-high-20260729-r1 cases=4 model=claude-fable-5 effort=high client_check=skipped-portable-ci' \
+        >/dev/null || fail "portable retest validation"
+else
+    "$RETEST" validate | grep -Fx \
+        'VALID retest=t343-t336-fable-high-20260729-r1 cases=4 model=claude-fable-5 effort=high' \
+        >/dev/null || fail "retest validation"
+    if "$RETEST" validate --skip-client-check >/dev/null 2>&1; then
+        fail "client check bypass outside portable CI"
+    fi
+fi
 "$RETEST" selftest | grep -Fx \
     'SELFTEST retest=t343-t336-fable-high-20260729-r1 selected=code-coherence/o1,code-coherence/o2,code-coherence/o3,ci-gate-preserve/o2' \
     >/dev/null || fail "retest selection"

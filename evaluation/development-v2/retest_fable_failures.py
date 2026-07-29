@@ -8,6 +8,7 @@ import copy
 import hashlib
 import importlib.util
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -94,11 +95,17 @@ def selection_label() -> str:
     return ",".join(f"{task_id}/o{observation}" for task_id, observation in SELECTED)
 
 
-def validate() -> None:
+def validate(*, skip_client_check: bool) -> None:
+    if skip_client_check and os.environ.get("HARNESS_PORTABLE_CI") != "1":
+        fail("--skip-client-check is restricted to HARNESS_PORTABLE_CI=1")
     runner = load_runner()
-    corpus = retest_corpus(runner, check_client=True)
+    corpus = retest_corpus(runner, check_client=not skip_client_check)
     selection(runner, corpus)
-    print(f"VALID retest={RETEST_ID} cases={len(SELECTED)} model={MODEL} effort={EFFORT}")
+    suffix = " client_check=skipped-portable-ci" if skip_client_check else ""
+    print(
+        f"VALID retest={RETEST_ID} cases={len(SELECTED)} "
+        f"model={MODEL} effort={EFFORT}{suffix}"
+    )
 
 
 def selftest() -> None:
@@ -227,7 +234,8 @@ def report(root: Path, output: Path) -> None:
 def parser() -> argparse.ArgumentParser:
     value = argparse.ArgumentParser(description=__doc__)
     commands = value.add_subparsers(dest="command", required=True)
-    commands.add_parser("validate")
+    validate_parser = commands.add_parser("validate")
+    validate_parser.add_argument("--skip-client-check", action="store_true")
     commands.add_parser("selftest")
     run_parser = commands.add_parser("run")
     run_parser.add_argument("--root", required=True, type=Path)
@@ -240,7 +248,7 @@ def parser() -> argparse.ArgumentParser:
 def main() -> None:
     args = parser().parse_args()
     if args.command == "validate":
-        validate()
+        validate(skip_client_check=args.skip_client_check)
     elif args.command == "selftest":
         selftest()
     elif args.command == "run":

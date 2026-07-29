@@ -227,8 +227,15 @@ required `portable-phase1`, review-thread resolution, and owner-selected zero
 required approvals. The branch equals its pushed remote and has no existing
 pull request.
 
-**Next action:** create the exact-head protected pull request, wait for strict
-CI, merge only that head, read back policy, synchronize only clean reachable
+PR #412 was created at exact head `7cbd214`. Its first required
+`portable-phase1` run failed only because the new retest declaration check
+called the intentionally absent Claude CLI in credential-free CI. The helper
+now permits an explicit, reported client-version skip only when
+`HARNESS_PORTABLE_CI=1`; normal local use retains exact version enforcement.
+Normal and simulated portable focused checks pass.
+
+**Next action:** push the verified portability correction, wait for strict CI,
+merge only that exact head, read back policy, synchronize only clean reachable
 checkouts with ABQ excluded, complete required safe Mac context refreshes,
 guarded-clean task residue, and finish case 8 plus the exact 16-slice handoff.
 

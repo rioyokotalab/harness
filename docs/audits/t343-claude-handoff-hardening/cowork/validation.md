@@ -32,13 +32,18 @@
 - Fresh ruleset `19127355` readback is active with repository-role
   owner/admin bypass, strict required `portable-phase1`, review-thread
   resolution, and owner-selected required approvals `0`.
+- Protected PR #412's first `portable-phase1` run failed only because the
+  retest declaration validator required the intentionally absent Claude CLI.
+  The changed helper now exposes a machine-reported client-check skip only
+  under `HARNESS_PORTABLE_CI=1`; normal local use still requires exact Claude
+  2.1.220. Both local and simulated credential-free focused checks pass.
 
 ## Outcome
 
 Repository-local validation is green for completed implementation, two
 read-only final reviews, and the final clean full-suite repetition. Protected
-CI/publication, rollout readback, cleanup, case 8 closeout, and the exact
-16-slice handoff remain pending.
+CI requires the changed exact-head rerun; publication, rollout readback,
+cleanup, case 8 closeout, and the exact 16-slice handoff remain pending.
 
 ## Evidence slices
 
