@@ -178,6 +178,13 @@ recoveries and rollbacks. No app-server write was sent in either refusal.
 Publish this drift checkpoint, freeze the replacement identity, and perform
 only one retry.
 
+The next preflight likewise refused before the archive call because the sole
+owner-controlled client moved from Students `@88` to Swallow `@92`. The
+controller did not move it; topology, processes, roots, monitor, and archive
+flags remain unchanged. Do not pin the archive to an older owner selection:
+capture the sole client's current exact selection under the write lock and
+require that same value after acknowledgement.
+
 ### T-340 — Map phone-visible Swallow root into Local tmux
 
 **Phase:** complete after this closeout reaches protected `main`.
