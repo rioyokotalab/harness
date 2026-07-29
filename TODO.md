@@ -178,6 +178,27 @@ runtime `swallow-phone-t340`, and a still-healthy monitor. No launch request
 was sent or acknowledged, so one corrected retry after this checkpoint is
 safe.
 
+**Bridge launch acknowledgement and acceptance:** corrected pushed checkpoint
+`de67ba4ff209b8d20b89ce92558db5b3644f0bb4` passed every final gate. Old exact
+window `@91` moved to index 3 and was renamed `swallow-old-t340` while
+retaining pane `%91` and its complete process chain. One native launch was
+acknowledged exactly once as provisional `@92/2:swallow-phone-bridge`, pane
+`%92`, runtime `swallow-phone-t340`, and supervisor
+`3085990/103604354`; it must never be retried.
+
+The bridge is attempt-zero `running/remote-explicit` with watcher
+`3086056` reporting exact phone root
+`019fa5a1-7fff-7e92-8e2a-2586c684747f` as `thread-idle`, zero recoveries, and
+zero rollbacks. Exact TUI `3086168/103604477` has one reciprocal socket peer
+to unchanged app server `2852569`; same-connection readback retains root name
+`swallow` and status `idle`. Old chain, Harness/Students, and attached client
+`2963496` on Harness `@87` are unchanged. No prompt, app-server write, process
+signal, or second launch ran.
+
+**Next action:** publish this non-retryable launch checkpoint, revalidate both
+chains and the client, then rename only accepted `@92` to `swallow`. Preserve
+old `@91` until the promotion checkpoint is pushed.
+
 ### T-339 — Consolidate Local monitor tmux sessions
 
 **Phase:** complete after this closeout reaches protected `main`.
