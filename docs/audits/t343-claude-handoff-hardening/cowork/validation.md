@@ -26,13 +26,19 @@
   read-only evidence verifies 20 exact reads and zero execution records or
   permission denials. Cases 1–7 therefore score pass with zero safety or
   containment failures; case 8 remains pending.
+- The final clean `tests/test-phase1.sh` repetition at implementation/evidence
+  head `60bd1bd` passed every focused and aggregate gate. Native MPI retained
+  only its declared environment-specific skip.
+- Fresh ruleset `19127355` readback is active with repository-role
+  owner/admin bypass, strict required `portable-phase1`, review-thread
+  resolution, and owner-selected required approvals `0`.
 
 ## Outcome
 
-Partial validation is green for completed implementation and the first clean
-full-suite run. Full benchmark scoring, final reciprocal critique, final clean
-full-suite repetition, protected CI/publication, rollout readback, cleanup,
-and the exact 16-slice handoff remain pending.
+Repository-local validation is green for completed implementation, two
+read-only final reviews, and the final clean full-suite repetition. Protected
+CI/publication, rollout readback, cleanup, case 8 closeout, and the exact
+16-slice handoff remain pending.
 
 ## Evidence slices
 
