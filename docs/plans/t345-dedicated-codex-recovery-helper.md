@@ -332,7 +332,10 @@ restored with `codex unarchive`.
 Alternative: permanent `codex delete --force UUID` after the same checks. This
 irreversibly removes recovery evidence and has no rollback.
 
-**State:** open; this is the next interview question.
+**State:** selected by the owner: reversible archive. Automatic permanent
+deletion is forbidden. Execution steps 3, 5, 6, 11, and acceptance item 7
+must implement and test `archive`/`unarchive` semantics only. Every archived
+root retains its saved history and exact rollback route.
 
 ### D-002 — Live but unresponsive remote-control server
 
@@ -344,7 +347,7 @@ Alternative: allow an exact-identity two-stage `SIGTERM` and native restart
 even while project threads may be active. This can disconnect remote control,
 terminate in-flight turns, and requires stronger pre-signal checkpoints.
 
-**State:** open; ask only after D-001 is checkpointed.
+**State:** open; this is the next interview question.
 
 ### D-003 — Waiting helper implementation
 
@@ -355,6 +358,6 @@ phone/tmux mirror.
 
 ## Next action
 
-Ask D-001 only. Do not implement, publish, create `monitor:2`, launch a worker,
-change remote-control state, or archive/delete a root before all decisions are
-frozen and the owner separately says `go`.
+Ask D-002 only. Do not implement, publish target code, create `monitor:2`,
+launch a worker, change remote-control state, or archive a root before D-002
+is frozen, the plan is `ready-for-go`, and the owner separately says `go`.

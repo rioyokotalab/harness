@@ -147,10 +147,11 @@ identity checks remain mandatory.
 The exhaustive scope, queue/journal design, bridge-first transaction,
 remote-control absent-state recovery, mirror contract, tests, rollback, and
 acceptance gates are in
-`docs/plans/t345-dedicated-codex-recovery-helper.md`. Two decisions remain:
+`docs/plans/t345-dedicated-codex-recovery-helper.md`. The decision register is:
 
-1. D-001: recommended reversible archive versus permanent deletion of proven
-   temporary roots.
+1. D-001: **selected — reversible archive.** Proven temporary roots leave the
+   active phone list but retain saved history and an exact `unarchive`
+   rollback. Automatic permanent deletion is forbidden.
 2. D-002: recommended automatic recovery of confirmed absence only versus
    force-restarting a live unresponsive app server while turns may be active.
 
@@ -160,10 +161,10 @@ acceptance gates are in
 worktrees, all earlier recovery worktrees, the live root checkout, all tmux
 windows/processes, saved roots, and remote control during interview.
 
-**Next action:** ask only D-001 and checkpoint the answer. Do not implement,
-publish, activate `monitor:2`, launch Codex, change remote control, or
-archive/delete a root before D-002 is also resolved, the plan is
-`ready-for-go`, and the owner separately says `go`.
+**Next action:** ask only D-002 and checkpoint the answer. Do not implement,
+publish target code, activate `monitor:2`, launch Codex, change remote control,
+or archive a root before D-002 is resolved, the plan is `ready-for-go`, and
+the owner separately says `go`.
 
 ### T-344 — Recover Swallow and automate blocked-root cutover
 
