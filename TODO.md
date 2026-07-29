@@ -219,6 +219,21 @@ No live tmux, Codex, saved-root, remote-control, or external state changed.
 `tests/test-phase1.sh`, independently inspect the exact diff, and proceed
 through protected publication before any live activation.
 
+**Validation checkpoint:** complete `tests/test-phase1.sh` passed all 82
+focused suites, guarded-delete coverage, and all integration gates; the native
+MPI smoke was the expected skip outside a declared MPI environment. During the
+run, protected `main` advanced through T-343's two documentation-only closeout
+commits to `3aeda96a96caa74b67f68a4da0d9d97dec510d55`. The clean task branch
+integrated that head without conflict. The already-published pre-rebase task
+line was merged rather than force-pushed, producing exact head
+`a528d8427e45713d7603fdd0b6a33aff6fa0745a`. Post-integration helper and
+monitor focused suites plus diff hygiene pass.
+
+**Next action:** publish this validation checkpoint, open and merge the exact
+protected pull request after required CI, then guarded-sync clean eligible
+checkouts. Do not activate live helper/Codex/root/remote-control/archive state
+before merged-code preflight.
+
 ### T-344 — Recover Swallow and automate blocked-root cutover
 
 **Phase:** complete; live Swallow recovered and automatic unsafe-tail handoff

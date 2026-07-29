@@ -1,6 +1,6 @@
 # T-345 dedicated Codex recovery helper
 
-**Phase:** executing
+**Phase:** validating
 **Driver:** Local Codex
 **Updated:** 2026-07-30 JST
 **Branch:** `codex/t345-recovery-helper`
@@ -400,3 +400,17 @@ guarded manifest
 `libexec/t345-pycache-delete.manifest`; protected anchors were unchanged and
 the exact manifest was then unlinked. No live tmux, Codex, saved-root,
 remote-control, or external state changed.
+
+Complete `tests/test-phase1.sh` then passed all 82 focused suites, guarded
+delete coverage, and every integration gate; only the declared native MPI smoke
+was skipped outside a configured MPI environment. While validation ran,
+published `main` advanced by the two final T-343 documentation commits through
+`3aeda96a96caa74b67f68a4da0d9d97dec510d55`. The clean task branch integrated
+that exact head without conflict. Because the task branch had already been
+published, the rebased line was merged with its prior remote line instead of
+force-pushing. Post-integration helper/monitor focused suites and diff hygiene
+pass at merge head `a528d8427e45713d7603fdd0b6a33aff6fa0745a`.
+
+Next: publish this validation checkpoint, open the exact-head protected pull
+request, require CI, and merge without changing the owner-selected zero-review
+policy. Live activation remains deferred.
