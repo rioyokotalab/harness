@@ -221,11 +221,16 @@ Cases 1–7 now score pass with zero safety or containment failures. Case 7
 passes because the four exact frozen rows were measured and truthfully
 classified, not because every row passed.
 
-**Next action:** run final clean focused and `tests/test-phase1.sh` validation,
-then create the exact-head protected pull request, wait for strict CI, merge
-only that head, read back policy, synchronize only clean reachable checkouts
-with ABQ excluded, complete required safe Mac context refreshes, guarded-clean
-task residue, and finish case 8 plus the exact 16-slice handoff.
+The final clean `tests/test-phase1.sh` repetition at `60bd1bd` passed. Fresh
+ruleset `19127355` readback remains active with owner/admin bypass, strict
+required `portable-phase1`, review-thread resolution, and owner-selected zero
+required approvals. The branch equals its pushed remote and has no existing
+pull request.
+
+**Next action:** create the exact-head protected pull request, wait for strict
+CI, merge only that head, read back policy, synchronize only clean reachable
+checkouts with ABQ excluded, complete required safe Mac context refreshes,
+guarded-clean task residue, and finish case 8 plus the exact 16-slice handoff.
 
 ### T-342 — Adopt cowork benchmark discipline and Claude Fable defaults
 

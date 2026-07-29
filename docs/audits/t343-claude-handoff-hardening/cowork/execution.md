@@ -238,6 +238,14 @@ ran and were classified, not because every model row passed. Case 8 remains
 pending final clean validation, protected publication/readback, rollout,
 residue cleanup, and durable handoff.
 
+The final clean `tests/test-phase1.sh` repetition at `60bd1bd` passed all
+focused and aggregate gates; native MPI retained only its declared
+environment-specific skip. Fresh ruleset `19127355` readback remains active
+with owner/admin bypass, strict required `portable-phase1`, review-thread
+resolution, and owner-selected zero required approvals. The branch and remote
+task head are equal and no task PR exists, so protected PR creation is the next
+safe action.
+
 ## Deviations
 
 None. The owner `go` matches the frozen plan. No live system, sibling
