@@ -118,15 +118,18 @@ harness codex-resilient --run --name harness \
 `resume --remote unix:// ID`; it never falls back to `--last` or replays a
 prompt. That selector also owns a thread-status watcher. Before launching the
 TUI and every five seconds while it remains live, the watcher reads only the
-exact app-server thread and value-free rollout structure. If the status is
-`systemError`, it rolls back at most eight consecutive completed turns only
-when each has user input but no assistant response, tool use, command, file
-change, web action, external action, or unknown event. It revalidates the
-thread and rollout under the shared agent-message lock immediately before the
-single rollback request. Any active turn, unsafe event, identity drift, or
-ambiguous acknowledgement fails closed. Rollback changes model-visible
-history; it does not undo filesystem or external effects, and the removed
-prompt is never replayed.
+exact app-server thread and value-free rollout structure. An unexpectedly
+exited watcher may be replaced without relaunching the same live TUI, but only
+after the same safe-tail preflight and at most three consecutive times; five
+minutes of watcher stability resets that budget. Failed replacement remains
+fail-closed. If the status is `systemError`, the helper rolls back at most
+eight consecutive completed turns only when each has user input but no
+assistant response, tool use, command, file change, web action, external
+action, or unknown event. It revalidates the thread and rollout under the
+shared agent-message lock immediately before the single rollback request. Any
+active turn, unsafe event, identity drift, or ambiguous acknowledgement fails
+closed. Rollback changes model-visible history; it does not undo filesystem
+or external effects, and the removed prompt is never replayed.
 
 Plan or inspect the value-free recovery receipt independently:
 
