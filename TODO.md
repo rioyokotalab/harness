@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-338.
+Next free ID: T-339.
 
 ## Current state
 
@@ -93,21 +93,122 @@ Next free ID: T-338.
 
 ## Next resume checkpoint
 
-1. T-314 through T-318 are complete. Students and Swallow are owned by their
+1. Complete T-338's owner-authorized lifecycle-only restoration of Local's
+   absent canonical `harness` tmux session. Do not roll back, replace, rename,
+   or replay any saved root.
+2. T-314 through T-318 are complete. Students and Swallow are owned by their
    independent project agents and ledgers; Harness has no project-research
    resume action for either repository.
-2. T-311 is complete, including administrator-authenticated Mac changes and
+3. T-311 is complete, including administrator-authenticated Mac changes and
    D-007's private product-owned Codex user layer.
-3. T-303 is externally blocked: the owner confirmed no access to or prior
+4. T-303 is externally blocked: the owner confirmed no access to or prior
    login on `nas-03.yokota` / `192.168.33.30`. Resume only if the responsible
    administrator or a trusted physical/hypervisor console can independently
    confirm the recorded host fingerprint and intended login account.
-4. Continue T-196 only at its exact time/identity gates: all eight nodes are
+5. Continue T-196 only at its exact time/identity gates: all eight nodes are
    now 2/8 with next-week successors waiting. Retry RI accounting ID `7242`
    without touching successor `10386`; otherwise wait for the exact 2026-08-02
    successors recorded below.
 
 ## Active tasks
+
+### T-338 — Restore Local's absent canonical tmux session
+
+**Phase:** complete after this closeout reaches protected `main`.
+
+At 2026-07-29 09:58 JST the owner explicitly requested restoration after the
+read-only diagnosis confirmed that `att` still correctly targets `harness` but
+the entire canonical tmux session is absent. Only detached sessions
+`harness-connection-monitor` and `harness-tmux-codex-monitor` remain. The tmux
+server is unchanged at PID `1654260`, started 2026-07-20 15:56 JST; Local has
+not rebooted. The periodic monitor is unchanged at PID `1903223` and correctly
+reports `unavailable healthy=0` with no repair action.
+
+The three previously accepted resilient supervisors and recovery watchers are
+absent. Their stopped receipts were written together at 2026-07-29 00:10:06
+JST with `thread-recovery-blocked`; no durable evidence identifies the
+initiating signal or tmux action. Shared app server PID `2852569`, start
+2026-07-27 05:46 JST, remains unchanged and protocol-readable.
+
+One pane- and transcript-blind `thread/read` with `includeTurns=false` proves
+the exact accepted saved roots remain canonical current-user, single-link
+rollouts under the Codex sessions root:
+
+- Harness `019fa3ae-6ad0-7642-aeca-b7b52421f576`, name `harness`, `active`,
+  mode `0600`;
+- Students `019f7fea-4f00-7681-910d-81ae99a77143`, name `students`, `active`,
+  mode `0644`;
+- Swallow `019fa8db-e4e0-7b81-9c02-a3b0954b5a95`, unnamed, `notLoaded`, mode
+  `0600`.
+
+None is `systemError`, so the reusable recovery decision table requires only
+repair of the separately proven missing watcher/supervisor/TUI lifecycle. Do
+not roll back, create, rename, fork, archive, delete, or replay any saved root;
+do not inspect pane/transcript content, restart or signal the shared app
+server, or send an app-server write.
+
+**Frozen execution:**
+
+1. Publish this pre-mutation checkpoint.
+2. Under the shared mode-0600 agent-message lock, revalidate Git, exact absent
+   canonical session and old chains, root status/metadata, app server, monitor,
+   free indices `0`, `1`, and `2`, and absent runtime owners.
+3. Create exactly one detached canonical tmux session with `0:harness`, using
+   runtime `harness` and its exact saved root. Treat native launch
+   acknowledgement as non-retryable; reconcile read-only after ambiguity.
+4. Require an attempt-zero running supervisor, watching recovery helper,
+   real TUI, reciprocal socket to the unchanged app server, and accepted root
+   status before creating exactly one `1:students` window with runtime
+   `students` and its exact root under the same gates.
+5. After Students acceptance, create exactly one `2:swallow` window with the
+   already accepted runtime `swallow-bridge-t335` and its exact root under the
+   same gates.
+6. Require exact detached topology `0:harness,1:students,2:swallow`, one pane
+   each, three live attempt-zero supervisor/watcher/TUI/socket chains, two
+   distinct healthy monitor receipts, native doctor, coherent Git, and
+   canonical fleet health.
+
+No cold-start prompt is needed because no root is replaced. A failure after
+any launch acknowledgement preserves that exact window and permits only
+read-only reconciliation before the next decision.
+
+**Recovery completion checkpoint:**
+
+- Pre-mutation checkpoint `cd1565e` was pushed before any tmux or process
+  write. Three lock-serialized native tmux launches were acknowledged exactly
+  once and were not retried.
+- Exact detached topology is one-pane
+  `@83/0:harness,@84/1:students,@85/2:swallow`, with no attached tmux client.
+  `att` therefore again has the canonical `harness` session available.
+- Harness is supervisor `1234039/102219899`, watcher
+  `1234140/102219910`, and real TUI `1234446/102220029`, using runtime
+  `harness` and unchanged root
+  `019fa3ae-6ad0-7642-aeca-b7b52421f576`.
+- Students is supervisor `1243706/102232120`, watcher
+  `1243785/102232136`, and real TUI `1244352/102232445`, using runtime
+  `students` and unchanged root
+  `019f7fea-4f00-7681-910d-81ae99a77143`.
+- Swallow is supervisor `1257397/102249535`, watcher
+  `1257461/102249545`, and real TUI `1257780/102249664`, using accepted
+  runtime `swallow-bridge-t335` and unchanged root
+  `019fa8db-e4e0-7b81-9c02-a3b0954b5a95`.
+- Every chain is attempt zero with a watching helper, zero recoveries and
+  rollbacks, and a reciprocal socket to unchanged app server
+  `2852569/83381863`. Independent periodic receipts at epochs `1785287515`
+  and `1785287545` both report
+  `phase=healthy healthy=3 order_action=none repair_action=none`.
+- Native Codex doctor passes all 18 checks. The unsafe-tail skill,
+  resilient-supervisor, thread-recovery, and tmux-monitor focused tests pass,
+  as does `git diff --check`.
+- The three reviewed current-user, mode-0700, single-link transaction scripts
+  were exact-unlinked individually and are absent. No pane/transcript read,
+  saved-root or app-server write, prompt injection/replay, signal, rollback,
+  fresh root, name change, app-server restart, second launch, client movement,
+  or unrelated task action occurred.
+
+**Next action:** publish this ledger-only closeout through protected exact-head
+CI, merge normally, fast-forward Local `main`, then revalidate the same live
+chains and canonical fleet health without synchronizing the fleet.
 
 ### T-336 — Benchmark current Codex and Claude Harness development
 
