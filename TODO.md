@@ -111,8 +111,8 @@ Next free ID: T-344.
 
 ### T-344 — Recover Swallow and automate blocked-root cutover
 
-**Phase:** live Swallow recovery complete; reusable automatic recovery
-implementation remains.
+**Phase:** complete; live Swallow recovered and automatic unsafe-tail handoff
+active.
 
 At 2026-07-30 07:06 JST the owner reported that Local tmux Swallow was
 blocked again and requested both immediate repair and automatic recovery for
@@ -412,6 +412,50 @@ verified the target absent and protected anchors unchanged.
 protected CI without changing the owner-selected zero-approval policy. Activate
 `--auto-recover` only after merged-code validation and only while the current
 Swallow remains healthy; do not inject into the active parent Harness task.
+
+**Publication and activation:** protected CI `portable-phase1` passed on PR
+#413 at exact head `ae71ca115db4b3f6cae0fd70cdfd52a0e818f1d0`; the PR merged
+as `5b042c34d6119282ef072990015ab1e666169664`. Live ruleset `19127355`
+readback remained active with the owner-selected required approval count
+exactly zero. The clean Local main checkout fast-forwarded to that merge.
+
+Activation first proved the old detached monitor session exact:
+`monitor:1/codex` pane `%90`, process `2340081`, start
+`2026-07-29 11:10:50 JST`, argv without `--auto-recover`, and a healthy
+three-window receipt. One exact `SIGTERM` stopped only that monitor process;
+because tmux did not retain its exited sole pane, window `codex` exited with
+it. One new detached window was then created exactly once at
+`monitor:1/codex`, immutable window/pane `@94/%94`, rooted at
+`/home/rioyokota/harness`, with process `2859842` and merged argv
+`harness-tmux-codex-monitor --interval 30 --enforce-order --auto-recover`.
+Two consecutive 30-second receipts reported
+`healthy=3 order_action=none repair_action=none`; canonical Harness topology
+remained `@87/0:harness,@88/1:students,@93/2:swallow`, and sole client
+`2132268` remained on Harness `@87`. The active parent controller was not
+interrupted and no request was inserted.
+
+Private T-344 temporary prompt/event/readback/helper files were each
+exact-unlinked after identity/mode review. Generated schema directory
+`/tmp/t344-app-server-schema` was deleted through guarded manifest
+`/tmp/t344-schema-delete.manifest`, and the tool verified protected anchors
+unchanged and the target absent. Both generated Python cache directories were
+likewise guarded-deleted and verified. All three short-lived guarded manifests
+were exact-unlinked after success; a final exact-path inventory found no T-344
+temporary residue.
+
+**Residual boundary:** the automatic path intentionally does not recover a
+blocked Harness controller, an attached target, an active controller,
+ambiguous or noncanonical topology, multiple blocked roots, an unhealthy peer,
+or app-server/process identity drift. These states remain value-free deferred
+status. For one exact unattached Students or Swallow unsafe tail, the monitor
+submits one identified, pre-reserved request to the idle Harness controller;
+the controller still owns and revalidates every bridge-first lifecycle
+mutation.
+
+**Next action:** none for T-344. Preserve merged code, saved blocked root
+`swallow-blocked-20260730`, current accepted Swallow root, and monitor runtime.
+Future unsafe-tail events resume from this ledger and the monitor's private
+deduplication receipt, never from chat history.
 
 ### T-343 — Harden durable Codex-to-Claude handoff
 
