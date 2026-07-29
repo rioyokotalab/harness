@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-344.
+Next free ID: T-346.
 
 ## Current state
 
@@ -108,6 +108,62 @@ Next free ID: T-344.
    successors recorded below.
 
 ## Active tasks
+
+### T-345 — Dedicated Codex recovery helper and phone/tmux mirror
+
+**Phase:** interviewing; implementation and live activation have not started.
+
+The owner requested a dedicated `monitor:2 helper` recovery lane that does not
+depend on Harness, Students, or Swallow siblings being idle, automatically
+restores confirmed-lost remote control, keeps top-level phone-visible roots
+aligned with exact `harness:0/1/2`, and removes proven temporary roots.
+
+Read-only discovery confirms the existing T-344 monitor is healthy but sends
+its one recovery request into an idle Harness controller, so active Harness is
+the current blocker. Native Codex has no ephemeral interactive TUI but does
+support `codex exec --ephemeral`. The selected architecture is therefore a
+deterministic waiting dispatcher in `monitor:2` that starts one bounded
+Sol/high ephemeral Codex worker per immutable event. This avoids creating a
+fourth saved helper root.
+
+The current canonical tmux roots are Harness
+`019fa3ae-6ad0-7642-aeca-b7b52421f576`, Students
+`019f7fea-4f00-7681-910d-81ae99a77143`, and Swallow
+`019fafef-5ebf-72f1-b1ce-2444e7570dc1`. The exact session topology remains
+`@87/0:harness,@88/1:students,@93/2:swallow`; `monitor` remains
+`@40/0:tunnel,@94/1:codex`, with no helper window. All three project chains
+and remote-control app server `2852569` are currently healthy. Redacted native
+doctor app-server, authentication, installation, websocket, state, and parity
+checks are `ok`.
+
+Direct value-free metadata identifies six unarchived non-subagent top-level
+Harness-cwd roots: the three canonical roots plus old exec
+`019f6271-667e-7f02-9a4b-4edd2b83b725`, retired Swallow
+`019fa5a1-7fff-7e92-8e2a-2586c684747f`, and rejected T-344 provisional
+`019fafec-3da4-77d2-a88f-e7abaa380a06`. The latter three are the frozen
+one-time baseline cleanup candidates; final process, rollout, inactivity, and
+identity checks remain mandatory.
+
+The exhaustive scope, queue/journal design, bridge-first transaction,
+remote-control absent-state recovery, mirror contract, tests, rollback, and
+acceptance gates are in
+`docs/plans/t345-dedicated-codex-recovery-helper.md`. Two decisions remain:
+
+1. D-001: recommended reversible archive versus permanent deletion of proven
+   temporary roots.
+2. D-002: recommended automatic recovery of confirmed absence only versus
+   force-restarting a live unresponsive app server while turns may be active.
+
+**Working set:** branch `codex/t345-recovery-helper`, isolated worktree
+`/tmp/harness-t345-recovery-helper`, `TODO.md`, and
+`docs/plans/t345-dedicated-codex-recovery-helper.md`. Preserve both T-343
+worktrees, all earlier recovery worktrees, the live root checkout, all tmux
+windows/processes, saved roots, and remote control during interview.
+
+**Next action:** ask only D-001 and checkpoint the answer. Do not implement,
+publish, activate `monitor:2`, launch Codex, change remote control, or
+archive/delete a root before D-002 is also resolved, the plan is
+`ready-for-go`, and the owner separately says `go`.
 
 ### T-344 — Recover Swallow and automate blocked-root cutover
 
