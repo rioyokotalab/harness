@@ -246,6 +246,31 @@ read-only reconciliation before the next decision.
    session/window identity. Restore Students and Swallow afterward under
    distinct accepted runtimes and require sustained healthy monitor receipts.
 
+**Diagnosis result and selected correction:**
+
+- One acknowledged provisional session `harness-bridge-t338` with window
+  `@86/0:harness-bridge`, runtime `harness-bridge-t338`, and the unchanged
+  Harness root reached attempt-zero running/watching state with a reciprocal
+  socket to the unchanged app server.
+- The bridge survived native doctor, each of the four focused tests
+  individually, the original five-command concurrent validation bundle, and
+  an additional stability interval. None reproduced watcher loss, so the
+  earlier temporal correlation is rejected as a demonstrated cause.
+- The repeated durable boundary is nevertheless exact: all three watcher
+  leaves disappeared while their supervisors remained alive long enough to
+  write `stopped/thread-recovery-blocked`. Current supervisor behavior then
+  deliberately terminates each healthy TUI and exits on the first watcher
+  loss, turning a leaf failure into disappearance of the whole tmux session.
+- Correct only that amplification path. On unexpected watcher exit, reap the
+  exact child and run the existing safe-tail recovery preflight before
+  launching a replacement watcher. Permit at most three consecutive
+  replacements, reset the budget only after five minutes of watcher
+  stability, and retain fail-closed TUI termination when preflight/readiness
+  fails or the bounded budget is exhausted. Never relaunch or replay the TUI.
+- Add focused fixtures proving one watcher loss preserves the same TUI through
+  one replacement and persistent watcher loss remains bounded and fail-closed.
+  Keep the value-free runtime-state schema unchanged.
+
 ### T-336 — Benchmark current Codex and Claude Harness development
 
 **Phase:** complete.
