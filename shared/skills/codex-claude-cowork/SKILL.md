@@ -1,6 +1,6 @@
 ---
 name: codex-claude-cowork
-description: Coordinate Codex and Claude Code as a symmetric driver/co-pilot pair through durable files, independent sandbox experiments, reciprocal evidence critique, a frozen plan, and driver-only target execution. Use when the owner asks Codex and Claude to work together, cross-review or challenge a consequential plan, compare both agents empirically, hand a task between the two clients, or have either client drive the other through a reproducible planning-discussion-execution workflow.
+description: Coordinate Codex and Claude Code as a symmetric driver/co-pilot pair through durable files, an agreed benchmark, independent sandbox experiments, reciprocal evidence critique, and driver-only target execution. Use when the owner asks both clients to work together, cross-review or compare them, hand a task between them, or specifies a duration or time window for continued work.
 ---
 
 # Codex–Claude cowork
@@ -38,8 +38,8 @@ boundaries controlling throughout.
 
 5. Fill `charter.md` with the task, scope, non-goals, authority, baseline,
    sandbox construction, acceptance gates, and cleanup policy. The driver owns
-   `charter.md`, `plan.md`, `driver-evidence.md`, `reconciliation.md`,
-   `execution.md`, and `validation.md`; the co-pilot owns
+   `charter.md`, `plan.md`, `benchmark.md`, `driver-evidence.md`,
+   `reconciliation.md`, `execution.md`, and `validation.md`; the co-pilot owns
    the content of `copilot-evidence.md`. By default the co-pilot writes a staged
    candidate inside its sandbox and the driver validates/imports those exact
    bytes; neither client receives a live-session write grant during discussion.
@@ -55,7 +55,20 @@ facts from assumptions and include dependencies, failure modes, recovery,
 evidence questions, and validation for every material step. Planning may use
 read-only discovery but must not mutate the target.
 
-Advance to `discussing` only after the charter and plan pass the validator:
+`init` mechanically creates a dedicated `benchmark.md` before any evidence.
+Complete its identity, observable cases, evidence and iteration method, stop
+condition, and agreement sections during planning: name the exact target and
+baseline identity, the observable cases every candidate is measured against,
+how evidence is collected and iterated, and when work stops. The benchmark is
+driver-owned and protected, and is included in the independent and reciprocal
+staged inputs for schema-3 sessions; the frozen
+benchmark agreement precedes target execution.
+A schema-3 session cannot advance to `discussing` until the
+benchmark content is complete, and legacy schema-1/2 sessions keep their
+frozen benchmark-free rules and are never rewritten in place.
+
+Advance to `discussing` only after the charter, plan, and benchmark pass the
+validator:
 
 ```text
 scripts/cowork-session advance SESSION_DIR discussing
@@ -76,7 +89,7 @@ scripts/cowork-session advance SESSION_DIR discussing
      --seal EXTERNAL_SEAL_FILE
    ```
 
-   For a schema-2 staged session `--seal` is required. It writes a real,
+   For a schema-2+ staged session `--seal` is required. It writes a real,
    mode-0600, path-free seal committing the exact `stage.json` SHA-256; refuse a
    seal path inside the session or stage-parent tree. Keep each stage a direct
    child of the co-pilot sandbox so that parent is the true sandbox root.
@@ -89,8 +102,10 @@ scripts/cowork-session advance SESSION_DIR discussing
    A prose-only review is insufficient when an experiment is safe and feasible.
    Use the sealed copy at `STAGE_DIR/artifacts/copilot-prompt.md` as standard
    input. Give routine passes an explicit time/experiment budget and use a
-   reviewed model/effort option supported by the installed native CLI; escalate
-   only when a material disagreement remains. Record the resolved options.
+   reviewed model/effort option supported by the installed native CLI. For
+   Claude windows, default to `fable` at `high` effort unless the frozen
+   benchmark explicitly requires another supported pairing; escalate only when
+   a material disagreement remains. Record the resolved options.
    When a client window is long enough to monitor, run the recognizable native
    command in the background and sample the read-only status surface:
 
@@ -128,7 +143,7 @@ scripts/cowork-session advance SESSION_DIR discussing
    sandbox before invocation. Do not write any driver-owned live file during
    the client window. Compare protected and stage-manifest seals after return.
    Inspect the candidate, then run `scripts/cowork-session import-copilot
-   SESSION_DIR STAGE_DIR --seal EXTERNAL_SEAL_FILE`. For a schema-2 staged
+   SESSION_DIR STAGE_DIR --seal EXTERNAL_SEAL_FILE`. For a schema-2+ staged
    session the seal is required: import refuses a seal inside the session or
    stage-parent tree and, before any target write, requires exact owner, single
    link count, non-symlink, schema, roles, mode, phase, destination-before, and
@@ -145,7 +160,12 @@ scripts/cowork-session advance SESSION_DIR discussing
    evidence, matched baselines, narrower claims, and safer reversible changes.
    The frozen plan must state which proposals were accepted or rejected and
    why.
-6. Advance to `ready-for-execution`. If required evidence is missing,
+6. Record both exact role-bound agreement records in the benchmark's
+   Agreement section, one for the driver and one for the co-pilot, using the
+   exact format in the protocol reference. A schema-3 session cannot advance
+   to `ready-for-execution` until both records exist and the normal
+   independent and reciprocal evidence receipts pass.
+7. Advance to `ready-for-execution`. If required evidence is missing,
    contradictory, unsafe, or non-reproducible, remain in discussion or ask the
    owner one material question. Do not execute by majority vote.
 
@@ -161,10 +181,16 @@ scripts/cowork-session advance SESSION_DIR ready-for-execution
 2. Re-read `state.json`, `charter.md`, and the frozen plan from disk. Revalidate
    target identity, authority, cleanliness, baseline drift, and rollback before
    advancing to `executing`.
-3. Let only the driver mutate the target. Execute small steps, validate each
+3. Let only the driver mutate the target; the frozen benchmark agreement
+   precedes target execution. Execute small steps, validate each
    one, and record commands, results, deviations, and evidence pointers in
    `execution.md`. A new material choice returns the session to owner review; it
-   does not inherit authority from the sandbox experiment.
+   does not inherit authority from the sandbox experiment. Record every
+   candidate iteration against the frozen benchmark: its hypothesis, the
+   before/after digest or diff, the exact check and input identity, the
+   observed result, and the keep/revert decision.
+   Unchanged blind retries do not count as iterations;
+   iterate only after a distinct observed failure.
 4. Advance to `validating`, run all frozen acceptance and regression checks,
    and record them in `validation.md`. The co-pilot may inspect the final diff
    and challenge validation in a read-only pass, but may not repair the target.
@@ -172,6 +198,23 @@ scripts/cowork-session advance SESSION_DIR ready-for-execution
    pass and no required disagreement remains. Checkpoint the repository ledger
    with modified files, evidence paths, failures and retry safety, remaining
    risks, cleanup state, and next action.
+
+## Duration-bounded owner requests
+
+When the owner's request specifies a duration or time window for continued
+work, use this skill together with `long-running-task-ledger`, freeze the
+benchmark, evidence cadence, and stop conditions before target execution, and
+iterate only from recorded measurements.
+
+The duration job's final summary and its durable ledger summary must each
+contain exactly one timestamped, evidence-backed
+time-slice entry per requested hour (rounded up),
+plus the outcome, validation, residual risks, and
+the exact next action, and must total at least
+`max(300, 50 * ceil(requested hours))` words.
+A no-change slice names the stable blocker or wait evidence it
+observed; invented results, findings subdivided across slices to simulate
+progress, and padding do not count.
 
 ## Preserve symmetry and safety
 
@@ -195,7 +238,9 @@ scripts/cowork-session advance SESSION_DIR ready-for-execution
   Hashes detect change; they do not prevent it or restore bytes. Direct-session
   write is an exceptional sealed fallback, and read-only mode is only an
   advisory tripwire.
-- Schema-2 staged sessions create a closed, driver-owned `receipts/` chain. The
+- Schema-2+ staged sessions create a closed, driver-owned `receipts/` chain;
+  new schema-3 sessions add the protected `benchmark.md` to both staged input
+  sets. The
   independent and reciprocal receipts bind projected inputs, full live state,
   exact stage metadata, destination-before bytes, the external seal SHA-256, and
   the accepted candidate without storing paths. Ready and later phases require

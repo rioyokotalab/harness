@@ -297,6 +297,22 @@ guessing.
   difference in its runtime-critical scripts or public Mac profile inputs must
   continue to fail closed.
 
+## Duration-bounded owner requests
+
+- Any owner request that specifies a duration or time window for continued
+  work must use both the `codex-claude-cowork` and `long-running-task-ledger`
+  skills, freeze the benchmark, evidence cadence, and stop conditions before
+  target execution, and iterate only from recorded measurements. A duration
+  is a budget for measured iteration against the frozen benchmark, not
+  permission to broaden scope or to narrate unmeasured activity.
+- A duration job's final summary and its durable ledger summary must each
+  contain exactly one timestamped, evidence-backed time-slice entry per
+  requested hour (rounded up), plus the outcome, validation, residual risks,
+  and the exact next action, and must total at least
+  `max(300, 50 * ceil(requested hours))` words. A no-change slice names the
+  stable blocker or wait evidence it observed; invented results, findings
+  subdivided across slices to simulate progress, and padding do not count.
+
 ## Handoff
 
 - Before yielding unfinished work, update `TODO.md` with verified results,

@@ -175,11 +175,40 @@ grep -F 'stage_manifest_sha256' "$PROTOCOL" >/dev/null ||
     fail 'protocol missing sealed manifest binding'
 grep -F 'does not reopen' "$PROTOCOL" >/dev/null ||
     fail 'protocol overstates verify-receipts seal coverage'
+grep -F 'benchmark agreement precedes target execution' "$SKILL" >/dev/null ||
+    fail 'skill missing benchmark-agreement execution gate'
+grep -F 'benchmark agreement precedes target execution' "$PROTOCOL" >/dev/null ||
+    fail 'protocol missing benchmark-agreement execution gate'
+grep -F 'agreement: role=driver client=' "$PROTOCOL" >/dev/null ||
+    fail 'protocol missing exact role-bound agreement record format'
+grep -F 'Unchanged blind retries do not count' "$SKILL" >/dev/null ||
+    fail 'skill missing blind-retry exclusion'
+grep -F 'Unchanged blind retries do not count' "$PROTOCOL" >/dev/null ||
+    fail 'protocol missing blind-retry exclusion'
+grep -F 'keep/revert decision' "$PROTOCOL" >/dev/null ||
+    fail 'protocol missing iteration record contract'
+grep -F -- '--tools ""' "$PROTOCOL" >/dev/null ||
+    fail 'protocol missing documented no-tools critique flag'
+grep -F 'not an empty `--allowedTools`' "$PROTOCOL" >/dev/null ||
+    fail 'protocol missing empty-allowedTools refusal'
+grep -F 'time-slice entry per requested hour' "$SKILL" >/dev/null ||
+    fail 'skill missing duration-job summary contract'
+grep -F 'default to `fable` at `high` effort' "$SKILL" >/dev/null ||
+    fail 'skill missing Claude Fable/high default'
+grep -F 'Default to `--model fable --effort high`' "$PROTOCOL" >/dev/null ||
+    fail 'protocol missing native Claude Fable/high default'
 
 fill() {
     file=$1
     sed 's/^TODO$/verified synthetic evidence/' "$file" >"$file.next"
     mv "$file.next" "$file"
+}
+
+# Append both exact role-bound agreement records to a schema-3 benchmark.
+agree() {
+    printf '%s\n%s\n' \
+        "agreement: role=driver client=$2 benchmark-accepted" \
+        "agreement: role=copilot client=$3 benchmark-accepted" >>"$1/benchmark.md"
 }
 
 codex_session=$TEMP_DIR/codex-driver
@@ -207,6 +236,7 @@ grep -F 'unresolved TODO marker' "$TEMP_DIR/early.out" >/dev/null ||
     fail 'missing unfinished-file refusal'
 fill "$codex_session/charter.md"
 fill "$codex_session/plan.md"
+fill "$codex_session/benchmark.md"
 printf '\n  TODO marker mentioned as evidence, not a placeholder.\n' \
     >>"$codex_session/plan.md"
 "$SESSION" advance "$codex_session" discussing >/dev/null
@@ -220,6 +250,7 @@ grep -F 'invalid transition' "$TEMP_DIR/skip.out" >/dev/null ||
 fill "$codex_session/driver-evidence.md"
 fill "$codex_session/copilot-evidence.md"
 fill "$codex_session/reconciliation.md"
+agree "$codex_session" codex claude
 "$SESSION" advance "$codex_session" ready-for-execution >/dev/null
 "$SESSION" advance "$codex_session" executing >/dev/null
 fill "$codex_session/execution.md"
@@ -360,6 +391,7 @@ pred=$TEMP_DIR/r2-pred
 "$SESSION" init "$pred" --driver claude >/dev/null
 fill "$pred/charter.md"
 fill "$pred/plan.md"
+fill "$pred/benchmark.md"
 "$SESSION" advance "$pred" discussing >/dev/null
 succ=$TEMP_DIR/r2-succ
 "$SESSION" init "$succ" --driver codex --predecessor "$pred" >/dev/null
@@ -399,6 +431,7 @@ r3_session=$TEMP_DIR/r3-session
 "$SESSION" init "$r3_session" --driver codex >/dev/null
 fill "$r3_session/charter.md"
 fill "$r3_session/plan.md"
+fill "$r3_session/benchmark.md"
 "$SESSION" advance "$r3_session" discussing >/dev/null
 
 r3_independent=$BOX/r3-independent
@@ -425,7 +458,12 @@ assert stage["mode"] == "independent"
 assert stage["driver"] == "codex"
 assert stage["copilot"] == "claude"
 assert stage["phase"] == "discussing"
-assert sorted(stage["inputs"]) == ["charter.md", "plan.md", "state.json"]
+assert sorted(stage["inputs"]) == [
+    "benchmark.md",
+    "charter.md",
+    "plan.md",
+    "state.json",
+]
 assert "path" not in stage
 assert stat.S_IMODE(stage_path.parent.stat().st_mode) == 0o700
 assert stat.S_IMODE((stage_path.parent / "artifacts").stat().st_mode) == 0o700
@@ -469,6 +507,7 @@ r3_invalid_session=$TEMP_DIR/r3-invalid-session
 "$SESSION" init "$r3_invalid_session" --driver codex >/dev/null
 fill "$r3_invalid_session/charter.md"
 fill "$r3_invalid_session/plan.md"
+fill "$r3_invalid_session/benchmark.md"
 "$SESSION" advance "$r3_invalid_session" discussing >/dev/null
 
 if "$SESSION" stage "$r3_invalid_session" \
@@ -559,12 +598,14 @@ r4_pred=$TEMP_DIR/r4-pred
 "$SESSION" init "$r4_pred" --driver codex >/dev/null
 fill "$r4_pred/charter.md"
 fill "$r4_pred/plan.md"
+fill "$r4_pred/benchmark.md"
 "$SESSION" advance "$r4_pred" discussing >/dev/null
 
 r4_session=$TEMP_DIR/r4-session
 "$SESSION" init "$r4_session" --driver claude --predecessor "$r4_pred" >/dev/null
 fill "$r4_session/charter.md"
 fill "$r4_session/plan.md"
+fill "$r4_session/benchmark.md"
 "$SESSION" advance "$r4_session" discussing >/dev/null
 
 r4_stage=$BOX/r4-stage
@@ -608,6 +649,7 @@ r4_unknown=$TEMP_DIR/r4-unknown
 "$SESSION" init "$r4_unknown" --driver codex >/dev/null
 fill "$r4_unknown/charter.md"
 fill "$r4_unknown/plan.md"
+fill "$r4_unknown/benchmark.md"
 "$SESSION" advance "$r4_unknown" discussing >/dev/null
 python3 - "$r4_unknown/state.json" <<'PY'
 import json
@@ -635,6 +677,7 @@ r4_predkey=$TEMP_DIR/r4-predkey
 "$SESSION" init "$r4_predkey" --driver claude --predecessor "$r4_predkey_pred" >/dev/null
 fill "$r4_predkey/charter.md"
 fill "$r4_predkey/plan.md"
+fill "$r4_predkey/benchmark.md"
 "$SESSION" advance "$r4_predkey" discussing >/dev/null
 python3 - "$r4_predkey/state.json" <<'PY'
 import json
@@ -661,6 +704,7 @@ r4_fresh=$TEMP_DIR/r4-fresh
 "$SESSION" init "$r4_fresh" --driver claude --predecessor "$r4_fresh_pred" >/dev/null
 fill "$r4_fresh/charter.md"
 fill "$r4_fresh/plan.md"
+fill "$r4_fresh/benchmark.md"
 "$SESSION" advance "$r4_fresh" discussing >/dev/null
 r4_fresh_stage=$BOX/r4-fresh-stage
 "$SESSION" stage "$r4_fresh" "$r4_fresh_stage" --mode independent \
@@ -690,6 +734,7 @@ r4_stale=$TEMP_DIR/r4-stale
 "$SESSION" init "$r4_stale" --driver codex >/dev/null
 fill "$r4_stale/charter.md"
 fill "$r4_stale/plan.md"
+fill "$r4_stale/benchmark.md"
 "$SESSION" advance "$r4_stale" discussing >/dev/null
 r4_stale_stage=$BOX/r4-stale-stage
 "$SESSION" stage "$r4_stale" "$r4_stale_stage" --mode independent \
@@ -741,10 +786,11 @@ grep -F 'unresolved TODO marker' "$TEMP_DIR/r4-incons.out" >/dev/null ||
 # a genuinely completed predecessor is still accepted
 r4_valid=$TEMP_DIR/r4-valid-pred
 "$SESSION" init "$r4_valid" --driver codex --exchange-mode direct >/dev/null
-for name in charter plan driver-evidence copilot-evidence reconciliation \
+for name in charter plan benchmark driver-evidence copilot-evidence reconciliation \
     execution validation; do
     fill "$r4_valid/$name.md"
 done
+agree "$r4_valid" codex claude
 for phase in discussing ready-for-execution executing validating complete; do
     "$SESSION" advance "$r4_valid" "$phase" >/dev/null
 done
@@ -777,6 +823,13 @@ state.pop("exchange_mode")
 path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 PY
 rmdir "$r5_legacy/receipts"
+# the downgraded legacy fixture must not be rewritten to hold a benchmark file
+if "$SESSION" check "$r5_legacy" >"$TEMP_DIR/r5-legacy-benchmark.out" 2>&1; then
+    fail 'schema-1 session accepted a benchmark file'
+fi
+grep -F 'must not contain benchmark.md' "$TEMP_DIR/r5-legacy-benchmark.out" \
+    >/dev/null || fail 'missing legacy benchmark refusal'
+unlink "$r5_legacy/benchmark.md"
 "$SESSION" check "$r5_legacy" >/dev/null
 mkdir "$r5_legacy/receipts"
 if "$SESSION" check "$r5_legacy" >"$TEMP_DIR/r5-legacy-layout.out" 2>&1; then
@@ -800,7 +853,7 @@ import pathlib
 import sys
 
 state = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
-assert state["schema_version"] == 2, state
+assert state["schema_version"] == 3, state
 assert state["exchange_mode"] == "staged", state
 assert state["predecessor"]["phase"] == "complete", state
 PY
@@ -810,6 +863,7 @@ r5_direct=$TEMP_DIR/r5-direct
 "$SESSION" init "$r5_direct" --driver claude --exchange-mode direct >/dev/null
 fill "$r5_direct/charter.md"
 fill "$r5_direct/plan.md"
+fill "$r5_direct/benchmark.md"
 "$SESSION" advance "$r5_direct" discussing >/dev/null
 if "$SESSION" stage "$r5_direct" "$TEMP_DIR/r5-direct-stage" \
     --mode independent >"$TEMP_DIR/r5-direct-stage.out" 2>&1; then
@@ -818,17 +872,26 @@ fi
 grep -F 'staged exchange-mode session' "$TEMP_DIR/r5-direct-stage.out" >/dev/null ||
     fail 'missing direct-mode staging refusal'
 
-# default schema-2 staged flow creates an ordered, protected receipt chain
+# default schema-3 staged flow creates an ordered, protected receipt chain
 r5_session=$TEMP_DIR/r5-session
 "$SESSION" init "$r5_session" --driver codex >/dev/null
 [ -d "$r5_session/receipts" ] && [ ! -L "$r5_session/receipts" ] ||
     fail 'schema-2 receipts directory identity'
 fill "$r5_session/charter.md"
 fill "$r5_session/plan.md"
+fill "$r5_session/benchmark.md"
 "$SESSION" advance "$r5_session" discussing >/dev/null
 fill "$r5_session/driver-evidence.md"
 fill "$r5_session/copilot-evidence.md"
 fill "$r5_session/reconciliation.md"
+if "$SESSION" advance "$r5_session" ready-for-execution \
+    >"$TEMP_DIR/r5-no-agreement.out" 2>&1; then
+    fail 'staged ready phase accepted missing benchmark agreements'
+fi
+grep -F 'missing the exact driver agreement record' \
+    "$TEMP_DIR/r5-no-agreement.out" >/dev/null ||
+    fail 'missing benchmark agreement gate'
+agree "$r5_session" codex claude
 if "$SESSION" advance "$r5_session" ready-for-execution \
     >"$TEMP_DIR/r5-no-receipts.out" 2>&1; then
     fail 'staged ready phase accepted no receipts'
@@ -921,6 +984,7 @@ r5_drift=$TEMP_DIR/r5-drift
 "$SESSION" init "$r5_drift" --driver claude >/dev/null
 fill "$r5_drift/charter.md"
 fill "$r5_drift/plan.md"
+fill "$r5_drift/benchmark.md"
 "$SESSION" advance "$r5_drift" discussing >/dev/null
 r5_drift_stage=$BOX/r5-drift-stage
 "$SESSION" stage "$r5_drift" "$r5_drift_stage" --mode independent \
@@ -941,6 +1005,7 @@ r5_fail=$TEMP_DIR/r5-fail
 "$SESSION" init "$r5_fail" --driver codex >/dev/null
 fill "$r5_fail/charter.md"
 fill "$r5_fail/plan.md"
+fill "$r5_fail/benchmark.md"
 "$SESSION" advance "$r5_fail" discussing >/dev/null
 r5_fail_stage=$BOX/r5-fail-stage
 "$SESSION" stage "$r5_fail" "$r5_fail_stage" --mode independent \
@@ -990,6 +1055,7 @@ r6_new_session() {
     "$SESSION" init "$_dir" --driver claude >/dev/null
     fill "$_dir/charter.md"
     fill "$_dir/plan.md"
+    fill "$_dir/benchmark.md"
     "$SESSION" advance "$_dir" discussing >/dev/null
 }
 
@@ -1173,6 +1239,7 @@ r9_seal=$SEALS/r9.json
 "$SESSION" init "$r9_session" --driver codex >/dev/null
 fill "$r9_session/charter.md"
 fill "$r9_session/plan.md"
+fill "$r9_session/benchmark.md"
 "$SESSION" advance "$r9_session" discussing >/dev/null
 printf '%s\n' 'bounded co-pilot prompt' >"$r9_prompt"
 "$SESSION" stage "$r9_session" "$r9_stage" --mode independent \
@@ -1381,6 +1448,7 @@ r9_bad_session=$TEMP_DIR/r9-bad-session
 "$SESSION" init "$r9_bad_session" --driver claude >/dev/null
 fill "$r9_bad_session/charter.md"
 fill "$r9_bad_session/plan.md"
+fill "$r9_bad_session/benchmark.md"
 "$SESSION" advance "$r9_bad_session" discussing >/dev/null
 ln -s "$r9_prompt" "$TEMP_DIR/r9-prompt-link"
 if "$SESSION" stage "$r9_bad_session" "$BOX/r9-bad-stage" --mode independent \
@@ -1400,6 +1468,7 @@ r9_compat_seal=$SEALS/r9-compat.json
 "$SESSION" init "$r9_compat" --driver claude >/dev/null
 fill "$r9_compat/charter.md"
 fill "$r9_compat/plan.md"
+fill "$r9_compat/benchmark.md"
 "$SESSION" advance "$r9_compat" discussing >/dev/null
 "$SESSION" stage "$r9_compat" "$r9_compat_stage" --mode independent \
     --seal "$r9_compat_seal" >/dev/null
@@ -1419,5 +1488,114 @@ PY
 fill "$r9_compat_stage/candidate-copilot-evidence.md"
 "$SESSION" import-copilot "$r9_compat" "$r9_compat_stage" \
     --seal "$r9_compat_seal" >/dev/null || fail 'import rejected stage schema 2'
+
+# --- round 10: mechanical schema-3 benchmark and role-bound agreement gates ---
+
+# init creates the driver-owned benchmark before any evidence, at schema 3
+r10_session=$TEMP_DIR/r10-session
+"$SESSION" init "$r10_session" --driver claude --exchange-mode direct >/dev/null
+python3 - "$r10_session/state.json" "$r10_session/benchmark.md" <<'PY'
+import json
+import pathlib
+import sys
+
+state = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert state["schema_version"] == 3, state
+text = pathlib.Path(sys.argv[2]).read_text(encoding="utf-8")
+for heading in (
+    "# Benchmark",
+    "## Identity",
+    "## Observable cases",
+    "## Evidence and iteration method",
+    "## Stop condition",
+    "## Agreement",
+):
+    assert f"{heading}\n" in text, heading
+PY
+"$SESSION" digests "$r10_session" >"$TEMP_DIR/r10-digests"
+grep -F '  benchmark.md' "$TEMP_DIR/r10-digests" >/dev/null ||
+    fail 'protected manifest must include the schema-3 benchmark'
+
+# planning cannot advance to discussing until the benchmark content is complete
+fill "$r10_session/charter.md"
+fill "$r10_session/plan.md"
+if "$SESSION" advance "$r10_session" discussing >"$TEMP_DIR/r10-early.out" 2>&1; then
+    fail 'advanced to discussing with an unfinished benchmark'
+fi
+grep -F 'benchmark.md still contains an unresolved TODO marker' \
+    "$TEMP_DIR/r10-early.out" >/dev/null || fail 'missing benchmark completeness gate'
+fill "$r10_session/benchmark.md"
+"$SESSION" advance "$r10_session" discussing >/dev/null
+
+# discussion cannot reach ready-for-execution without both exact role-bound
+# agreement records; a partial or wrong-client record is insufficient
+fill "$r10_session/driver-evidence.md"
+fill "$r10_session/copilot-evidence.md"
+fill "$r10_session/reconciliation.md"
+if "$SESSION" advance "$r10_session" ready-for-execution \
+    >"$TEMP_DIR/r10-none.out" 2>&1; then
+    fail 'accepted ready-for-execution without agreement records'
+fi
+grep -F 'missing the exact driver agreement record' "$TEMP_DIR/r10-none.out" \
+    >/dev/null || fail 'missing driver agreement refusal'
+printf '%s\n' 'agreement: role=driver client=claude benchmark-accepted' \
+    >>"$r10_session/benchmark.md"
+if "$SESSION" advance "$r10_session" ready-for-execution \
+    >"$TEMP_DIR/r10-driver-only.out" 2>&1; then
+    fail 'accepted ready-for-execution with only the driver agreement'
+fi
+grep -F 'missing the exact copilot agreement record' "$TEMP_DIR/r10-driver-only.out" \
+    >/dev/null || fail 'missing copilot agreement refusal'
+printf '%s\n' 'agreement: role=copilot client=claude benchmark-accepted' \
+    >>"$r10_session/benchmark.md"
+if "$SESSION" advance "$r10_session" ready-for-execution \
+    >"$TEMP_DIR/r10-wrong-client.out" 2>&1; then
+    fail 'accepted a wrong-client copilot agreement record'
+fi
+grep -F 'missing the exact copilot agreement record' \
+    "$TEMP_DIR/r10-wrong-client.out" >/dev/null ||
+    fail 'missing wrong-client agreement refusal'
+printf '%s\n' 'agreement: role=copilot client=codex benchmark-accepted' \
+    >>"$r10_session/benchmark.md"
+"$SESSION" advance "$r10_session" ready-for-execution >/dev/null
+
+# a schema-2 fixture keeps its frozen benchmark-free reader and stage inputs
+r10_v2=$TEMP_DIR/r10-v2
+"$SESSION" init "$r10_v2" --driver codex >/dev/null
+python3 - "$r10_v2/state.json" <<'PY'
+import json
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+state = json.loads(path.read_text(encoding="utf-8"))
+state["schema_version"] = 2
+path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+if "$SESSION" check "$r10_v2" >"$TEMP_DIR/r10-v2-benchmark.out" 2>&1; then
+    fail 'schema-2 session accepted a benchmark file'
+fi
+grep -F 'must not contain benchmark.md' "$TEMP_DIR/r10-v2-benchmark.out" \
+    >/dev/null || fail 'missing schema-2 benchmark refusal'
+unlink "$r10_v2/benchmark.md"
+"$SESSION" check "$r10_v2" >/dev/null
+fill "$r10_v2/charter.md"
+fill "$r10_v2/plan.md"
+"$SESSION" advance "$r10_v2" discussing >/dev/null
+r10_v2_stage=$BOX/r10-v2-stage
+"$SESSION" stage "$r10_v2" "$r10_v2_stage" --mode independent \
+    --seal "$SEALS/r10-v2.json" >/dev/null
+python3 - "$r10_v2_stage/stage.json" <<'PY'
+import json
+import pathlib
+import sys
+
+stage = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert sorted(stage["inputs"]) == ["charter.md", "plan.md", "state.json"], stage
+PY
+fill "$r10_v2_stage/candidate-copilot-evidence.md"
+"$SESSION" import-copilot "$r10_v2" "$r10_v2_stage" \
+    --seal "$SEALS/r10-v2.json" >/dev/null
+"$SESSION" verify-receipts "$r10_v2" >/dev/null
 
 echo 'Codex-Claude cowork skill tests passed'
