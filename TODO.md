@@ -264,6 +264,27 @@ argv, reciprocal app-server socket, accepted root state, unchanged peers and
 client, and a degraded monitor that still preserves canonical windows before
 any promotion.
 
+**Bridge launch acknowledgement and acceptance:** one native launch was
+acknowledged exactly once as provisional `@93/3:swallow-recovery-bridge`,
+pane `%93`, runtime `swallow-recovery-t344`, and exact r2 root; it must never
+be retried. Attempt-zero supervisor `2266420`, watcher `2266511`, launcher
+`2266661`, and real TUI `2266662` are live. The watcher reports
+`watching/thread-idle` with zero recoveries/rollbacks. Exact TUI argv supplies
+the granular approval override and disabled sandbox, and reciprocal socket
+inodes `231986500/231982805` connect only to unchanged app server `2852569`.
+The accepted root already contains its completed assistant-bearing cold-start
+turn. Harness, Students, old blocked Swallow, client `2132268` on Harness, and
+canonical monitor result remain unchanged.
+
+**Next action:** publish this non-retryable bridge identity. Transfer root
+names with one read-before/write/read-after transaction each: old root
+`019fa5a1-7fff-7e92-8e2a-2586c684747f` from `swallow` to
+`swallow-blocked-20260730`, then accepted r2 from its provisional name to
+`swallow`. Preserve every acknowledgement before the next write. Stage the
+old exact tmux window away from canonical index 2, stage accepted `@93` into
+index 2 without changing its pane/process chain, then perform rename-only
+promotion and retire only the old exact TUI leaf.
+
 ### T-343 — Harden durable Codex-to-Claude handoff
 
 **Phase:** validating after implementation and the first clean full-suite pass.
