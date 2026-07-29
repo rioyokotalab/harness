@@ -37,13 +37,23 @@
   The changed helper now exposes a machine-reported client-check skip only
   under `HARNESS_PORTABLE_CI=1`; normal local use still requires exact Claude
   2.1.220. Both local and simulated credential-free focused checks pass.
+- Corrected required check run `30442745725` passed on exact head `3b8857b`;
+  PR #412 merged by rebase as main `0fdfd97`. Post-merge ruleset readback
+  preserves strict `portable-phase1`, owner/admin bypass, and required
+  approvals `0`.
+- Local and all ten eligible clean remote checkouts reached `0fdfd97`; ABQ was
+  excluded under active maintenance. Exactly one pane-blind context refresh
+  was submitted to each managed Mac session.
+- Guarded cleanup removed ten task-owned evidence/sandbox roots (4400 entries,
+  86131602 bytes), verified protected anchors unchanged, and left no declared
+  target. Three exact task files were unlinked after identity checks.
 
 ## Outcome
 
-Repository-local validation is green for completed implementation, two
-read-only final reviews, and the final clean full-suite repetition. Protected
-CI requires the changed exact-head rerun; publication, rollout readback,
-cleanup, case 8 closeout, and the exact 16-slice handoff remain pending.
+Implementation, final reviews, local tests, protected CI, merge, eligible
+fleet rollout, Mac refresh, and declared residue cleanup are green. Case 8
+and Cowork completion remain pending only the requested through-deadline
+monitoring, final readbacks, exact 16-slice summary, and closeout publication.
 
 ## Evidence slices
 
