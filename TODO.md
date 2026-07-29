@@ -114,7 +114,7 @@ Next free ID: T-339.
 
 ### T-338 — Restore Local's absent canonical tmux session
 
-**Phase:** complete after this closeout reaches protected `main`.
+**Phase:** executing recurrence correction.
 
 At 2026-07-29 09:58 JST the owner explicitly requested restoration after the
 read-only diagnosis confirmed that `att` still correctly targets `harness` but
@@ -206,9 +206,45 @@ read-only reconciliation before the next decision.
   fresh root, name change, app-server restart, second launch, client movement,
   or unrelated task action occurred.
 
-**Next action:** publish this ledger-only closeout through protected exact-head
-CI, merge normally, fast-forward Local `main`, then revalidate the same live
-chains and canonical fleet health without synchronizing the fleet.
+**Publication and recurrence checkpoint:**
+
+- PR #403 exact head `1bf2534a0a6e4e9653a3c4c5c794789a089f8851`
+  passed protected `portable-phase1` in 2m24s and squash merged as
+  `f43f6ddd0a2814a770f12487f8293662aa316629`. Local `main` fast-forwarded
+  cleanly to that exact merge; no fleet sync ran.
+- The mandatory post-merge readback found the canonical session absent again.
+  All three new supervisor receipts had in fact changed together at
+  2026-07-29 10:13:53 JST to `stopped/thread-recovery-blocked`; their watcher
+  receipts retain `unavailable/recovery-check-failed` and the recorded watcher
+  PIDs are absent. The shared tmux server, app server, and periodic monitor
+  retain their exact identities.
+- The common stop occurred after two independent healthy receipts and during
+  the later local validation bundle. Native doctor and four focused tests all
+  returned success, but temporal proximity does not prove which command or
+  concurrent interaction terminated the watchers. No pane/transcript content
+  or private log was read, and no cause is asserted.
+- The three acknowledged canonical launches remain non-retryable. Do not
+  repeat them or claim that PR #403 completed live acceptance.
+
+**Revised frozen diagnosis:**
+
+1. Publish this regression checkpoint before another process or tmux write.
+2. Under the shared lock, revalidate the unchanged app server, healthy saved
+   Harness root, absent canonical session/chains, coherent Git, and exact
+   stopped receipts.
+3. Launch one distinct provisional detached tmux session/window/runtime for
+   the unchanged Harness root. This is a new bridge identity, not a retry of
+   `@83` or runtime `harness`; never replay or inject a prompt.
+4. After full watcher/TUI/socket acceptance, execute each validation suspect
+   separately with a liveness readback between commands. Begin with native
+   doctor, then each focused test; run the former concurrent bundle only if
+   every isolated command preserves the bridge.
+5. Preserve an acknowledged failed bridge for read-only reconciliation. If
+   one exact command reproduces the common watcher loss, checkpoint it and
+   correct that lifecycle defect before any canonical promotion.
+6. Only a stable accepted bridge may be promoted by rename to canonical
+   session/window identity. Restore Students and Swallow afterward under
+   distinct accepted runtimes and require sustained healthy monitor receipts.
 
 ### T-336 — Benchmark current Codex and Claude Harness development
 
