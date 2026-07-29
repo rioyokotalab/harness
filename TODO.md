@@ -211,6 +211,28 @@ old TUI/parent/window/root plus every protected new/peer/client identity, send
 one `SIGTERM` only to old leaf `2349726`, and perform read-only reconciliation.
 Never send a second signal.
 
+**Old-leaf retirement acknowledgement:** pushed promotion checkpoint
+`f4115bb` preceded complete identity and root-status revalidation. One exact
+`SIGTERM` was acknowledged only for old TUI `2349726/102620791`; no second
+signal ran. Old TUI, launcher, watcher, supervisor, pane, and window `@91` are
+absent. Runtime `swallow-t338` records `stopped/operator-signal` and its
+watcher records `stopped/operator-stop`.
+
+Final exact topology is one-pane
+`@87/0:harness,@88/1:students,@92/2:swallow`. Accepted runtime
+`swallow-phone-t340` remains attempt-zero with supervisor
+`3085990/103604354`, watcher `3086056`, TUI `3086168/103604477`, and a
+reciprocal socket to unchanged app server `2852569`. Exact phone root
+`019fa5a1-7fff-7e92-8e2a-2586c684747f` remains idle and named `swallow`; the
+retired tmux root remains preserved, idle, unnamed, and unarchived. Client
+`2963496` remains on Harness `@87`. First post-retirement periodic receipt
+epoch `1785301176` reports
+`healthy=3 order_action=none repair_action=none`.
+
+**Next action:** publish this non-retryable retirement checkpoint, obtain a
+second fresh healthy monitor receipt, then run the frozen doctor, focused
+tests, Git, root/name, topology, and fleet acceptance gates.
+
 ### T-339 — Consolidate Local monitor tmux sessions
 
 **Phase:** complete after this closeout reaches protected `main`.
