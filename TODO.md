@@ -111,7 +111,7 @@ Next free ID: T-342.
 
 ### T-341 — Archive the retired Swallow saved root
 
-**Phase:** frozen pre-write checkpoint.
+**Phase:** complete after this closeout reaches protected `main`.
 
 At 2026-07-29 14:18 JST the owner requested removal of the old Swallow remote
 session after T-340 made the phone-visible root canonical in Local tmux. Apply
@@ -190,6 +190,32 @@ retired root transitioned normally from `idle` to `notLoaded`; its identity,
 rollout, zero process references, and unarchived SQLite flag are unchanged.
 Accept either recognized non-running status at the final gate while preserving
 all exact identity and archive constraints.
+
+**Archive acknowledgement and final acceptance:** pushed checkpoint
+`063d4798547db9b756385519bedd0612a72bd6e9` preceded a complete
+lock-serialized identity gate. Exactly one `thread/archive` request for retired
+root `019fa8db-e4e0-7b81-9c02-a3b0954b5a95` returned an explicit successful
+empty response. No retry or `thread/delete` request ran.
+
+Independent SQLite readback now reports that exact old root archived with an
+archive timestamp, while live root
+`019fa5a1-7fff-7e92-8e2a-2586c684747f` remains unarchived, idle, and named
+`swallow`. The old rollout remains present; no old-root process reference
+exists. Accepted supervisor `3085990/103604354`, replacement watcher
+`3235064/103782314`, launcher `3086166/103604477`, TUI
+`3086168/103604477`, app server `2852569/83381863`, monitor
+`2340081/102606237`, exact topology
+`@87/0:harness,@88/1:students,@92/2:swallow`, and owner client `2963496` on
+Swallow `@92` remain unchanged.
+
+Native Local doctor passes with only the two accepted unavailable-container
+warnings. Focused thread-recovery, resilient-supervisor, and tmux-monitor tests
+pass, as does diff hygiene. Fresh monitor status is healthy 3/3 with no order
+or repair action.
+
+**Next action:** publish this closeout through protected exact-head CI, merge
+normally, fast-forward clean Local `main`, and require the exact old/live
+archive flags plus canonical fleet health to remain accepted.
 
 ### T-340 — Map phone-visible Swallow root into Local tmux
 
