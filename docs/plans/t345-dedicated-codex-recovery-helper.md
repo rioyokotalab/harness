@@ -1,6 +1,6 @@
 # T-345 dedicated Codex recovery helper
 
-**Phase:** interviewing
+**Phase:** ready-for-go
 **Driver:** Local Codex
 **Updated:** 2026-07-30 JST
 **Branch:** `codex/t345-recovery-helper`
@@ -13,7 +13,8 @@ Harness, Students, or Swallow root without requiring either healthy sibling
 thread to be idle. Keep the phone remote-control active list aligned with the
 three canonical roots in tmux session `harness`, and retire helper-created or
 otherwise proven temporary top-level roots automatically after safe
-replacement.
+replacement. After promotion, resume the recovered role's exact durable task
+without reconstructing or replaying the rejected prompt.
 
 The canonical user-facing mapping remains:
 
@@ -46,9 +47,12 @@ In scope:
    one native `codex remote-control start --json` invocation.
 6. Name/archive reconciliation for the three exact tmux roots and proven
    temporary top-level roots.
-7. A one-time baseline convergence of existing top-level Harness-cwd roots
+7. One deduplicated post-promotion continuation that reconciles Git, the
+   durable ledger, recent commits, worktree state, and mutable external state
+   before resuming the recovered role's recorded next action.
+8. A one-time baseline convergence of existing top-level Harness-cwd roots
    after exact read-only classification and the owner's cleanup decision.
-8. Focused tests, full Harness validation, protected publication, guarded
+9. Focused tests, full Harness validation, protected publication, guarded
    fleet sync, Local activation, and a safe Mac context refresh where eligible.
 
 Out of scope:
@@ -183,7 +187,14 @@ The worker follows the bridge-first protocol:
 9. archive the old blocked root and any rejected helper-created provisional
    root only according to the selected cleanup policy;
 10. require the canonical three-window mapping, unchanged attached clients,
-    stable peers, and a healthy replacement watcher.
+    stable peers, and a healthy replacement watcher;
+11. reserve one distinct continuation event, submit one cold-resume
+    instruction to the promoted canonical thread, and record submission before
+    release. The instruction must read complete applicable instructions and
+    durable ledgers, inspect current Git and mutable external state, reconcile
+    any side effects that may already have occurred, and continue only the
+    first recorded unverified action. It must never reconstruct or replay the
+    rejected prompt.
 
 If the target is Harness, the owner may remain attached to another exact
 window or no window; the helper never injects input into the blocked target.
@@ -207,9 +218,9 @@ project supervisors/TUIs without prompt replay, and unchanged pairing. A
 pairing request, identity conflict, or ambiguous native result stops without
 retry or account mutation.
 
-A live but unresponsive server is a separate risk decision because forced
-shutdown can interrupt all active turns. The default plan never signals or
-restarts a live identity automatically.
+A live but unresponsive server is report-only. The helper never signals or
+restarts a live app-server identity automatically because forced shutdown can
+interrupt all active turns.
 
 ### 5. Phone/tmux mirror and temporary roots
 
@@ -226,16 +237,16 @@ automatically removed from the active phone list only when:
 - no live process argv references its UUID;
 - its rollout identity is canonical and structurally inactive;
 - it is not any canonical tmux root;
-- the archive/delete preimage and one-attempt receipt are durable.
+- the archive preimage and one-attempt receipt are durable.
 
 The helper will not infer that every unreferenced root is temporary. New
 unclassified roots produce a value-free drift report and remain untouched.
 
 ## Execution sequence
 
-1. Resolve D-001 cleanup semantics and D-002 live-server recovery boundary,
-   checkpoint each answer, audit the plan, set `ready-for-go`, and wait for a
-   separate explicit `go`.
+1. Reconstruct the selected D-001 reversible-archive and D-002 absent-only
+   decisions, the post-promotion task-continuation requirement, and this
+   `ready-for-go` plan after a separate explicit `go`.
 2. Reconstruct the frozen plan from Git; fetch and integrate published main
    without touching T-343 or unrelated worktrees.
 3. Add the `codex-recovery-helper` dispatcher, command routing, private state
@@ -243,20 +254,23 @@ unclassified roots produce a value-free drift report and remain untouched.
 4. Refactor the monitor's current controller-paste path into queue production.
    Preserve its existing health/order behavior and prohibit app-server control
    connections, pane reads, arbitrary input, and direct lifecycle writes.
-5. Add the reviewed recovery prompt and deterministic transaction support for
-   blocked-root, absent-remote-control, mirror, and cleanup events.
+5. Add the reviewed recovery and post-promotion continuation prompts plus
+   deterministic transaction support for blocked-root,
+   absent-remote-control, mirror, continuation, and cleanup events.
 6. Add focused fixtures for:
    - blocked Harness while both peers are active;
    - blocked Students/Swallow while Harness is active;
    - two and three blocked roots queued serially;
    - attached-target deferral;
+   - post-promotion resume from the durable next action without rejected-prompt
+     replay, including partial-side-effect reconciliation;
    - event identity drift and duplicate/ambiguous non-retry;
    - ephemeral worker identity and no saved helper root;
    - absent app server one-start recovery;
-   - live/unresponsive server refusal according to D-002;
+   - live/unresponsive server report-only refusal;
    - canonical naming/archive mirror;
    - unclassified and subagent-root preservation;
-   - archive/delete behavior according to D-001;
+   - reversible archive and unarchive rollback behavior;
    - monitor/helper restart and journal reconciliation.
 7. Run Python syntax, ShellCheck where applicable, `git diff --check`, the
    focused monitor/helper/resilient suites, and `tests/test-phase1.sh`.
@@ -272,7 +286,7 @@ unclassified roots produce a value-free drift report and remain untouched.
     disturb windows 0 or 1.
 11. Freeze and execute the one-time baseline cleanup for only the three
     recorded noncanonical top-level roots, subject to D-001 and fresh
-    inactivity/identity checks. Never retry an ambiguous archive/delete.
+    inactivity/identity checks. Never retry an ambiguous archive.
 12. Validate two monitor/helper intervals, exact tmux order, exact three-root
     active remote-control metadata, helper ephemerality, stable clients and
     peers, current remote-control doctor, no temporary helper roots, no pane or
@@ -290,9 +304,12 @@ unclassified roots produce a value-free drift report and remain untouched.
   journal.
 - If an app-server start is acknowledged or ambiguous, never invoke start
   again. Read process/doctor state and stop.
-- If a fresh-root launch, name, promotion, signal, archive, or delete is
+- If a fresh-root launch, name, promotion, signal, or archive is
   acknowledged or ambiguous, never repeat it. Resume from the journal and
   actual metadata.
+- If the post-promotion continuation submission is acknowledged or ambiguous,
+  never resubmit it. Reconcile the canonical thread and durable task ledger on
+  a later owner/controller turn.
 - If the helper process exits, the monitor remains observe/order only and
   reports helper absence. Restart reads receipts before accepting new work.
 - No recovery action modifies Git. Repository implementation and live runtime
@@ -314,10 +331,13 @@ Acceptance requires:
 7. helper-created rejected/retired roots leave the active list under D-001;
 8. confirmed-absent remote control starts once and returns healthy without
    pairing mutation or prompt replay;
-9. live app-server behavior matches D-002;
-10. focused and complete suites, protected CI, guarded rollout, Local live
+9. a live unresponsive app server is reported without signal or restart;
+10. every recovered canonical thread receives at most one continuation
+    submission and resumes from the durable first unverified action after
+    current-state reconciliation, never from the rejected prompt;
+11. focused and complete suites, protected CI, guarded rollout, Local live
     checks, and fresh fleet health all pass;
-11. no pane/transcript content, credential, unrelated worktree, review-count
+12. no pane/transcript content, credential, unrelated worktree, review-count
     setting, external service, or unclassified root changed.
 
 ## Decision register
@@ -347,7 +367,9 @@ Alternative: allow an exact-identity two-stage `SIGTERM` and native restart
 even while project threads may be active. This can disconnect remote control,
 terminate in-flight turns, and requires stronger pre-signal checkpoints.
 
-**State:** open; this is the next interview question.
+**State:** selected by the owner: confirmed-absence recovery only. A live but
+unresponsive server is value-free report-only and must not be signaled,
+stopped, or restarted automatically.
 
 ### D-003 — Waiting helper implementation
 
@@ -358,6 +380,7 @@ phone/tmux mirror.
 
 ## Next action
 
-Ask D-002 only. Do not implement, publish target code, create `monitor:2`,
-launch a worker, change remote-control state, or archive a root before D-002
-is frozen, the plan is `ready-for-go`, and the owner separately says `go`.
+Wait for a separate explicit owner `go`. Then reconstruct this frozen plan and
+selected decisions from disk, set phase `executing`, and begin implementation
+at execution step 2. Until `go`, do not implement, publish target code, create
+`monitor:2`, launch a worker, change remote-control state, or archive a root.

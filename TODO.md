@@ -111,7 +111,8 @@ Next free ID: T-346.
 
 ### T-345 — Dedicated Codex recovery helper and phone/tmux mirror
 
-**Phase:** interviewing; implementation and live activation have not started.
+**Phase:** ready-for-go; all decisions are frozen, and implementation and live
+activation have not started.
 
 The owner requested a dedicated `monitor:2 helper` recovery lane that does not
 depend on Harness, Students, or Swallow siblings being idle, automatically
@@ -152,19 +153,30 @@ acceptance gates are in
 1. D-001: **selected — reversible archive.** Proven temporary roots leave the
    active phone list but retain saved history and an exact `unarchive`
    rollback. Automatic permanent deletion is forbidden.
-2. D-002: recommended automatic recovery of confirmed absence only versus
-   force-restarting a live unresponsive app server while turns may be active.
+2. D-002: **selected — confirmed absence only.** Native remote-control start
+   may run once only after exact absence proof. A live but unresponsive server
+   is report-only and must not be signaled, stopped, or restarted
+   automatically.
+
+The owner additionally requires every successfully recovered canonical thread
+to resume its interrupted durable task. After bridge promotion and healthy
+readback, the helper must reserve and submit exactly one distinct continuation
+instruction. That instruction reads complete applicable instructions and
+ledgers, inspects Git/recent commits/worktrees and mutable external state,
+reconciles side effects that may already have occurred, and continues the
+first recorded unverified action. It never reconstructs or replays the
+rejected prompt. An acknowledged or ambiguous continuation is never resent.
 
 **Working set:** branch `codex/t345-recovery-helper`, isolated worktree
 `/tmp/harness-t345-recovery-helper`, `TODO.md`, and
 `docs/plans/t345-dedicated-codex-recovery-helper.md`. Preserve both T-343
 worktrees, all earlier recovery worktrees, the live root checkout, all tmux
-windows/processes, saved roots, and remote control during interview.
+windows/processes, saved roots, and remote control until explicit `go`.
 
-**Next action:** ask only D-002 and checkpoint the answer. Do not implement,
-publish target code, activate `monitor:2`, launch Codex, change remote control,
-or archive a root before D-002 is resolved, the plan is `ready-for-go`, and
-the owner separately says `go`.
+**Next action:** wait for a separate explicit owner `go`. Then reconstruct the
+frozen plan from disk, set T-345 to `executing`, and begin implementation.
+Until `go`, do not publish target code, activate `monitor:2`, launch Codex,
+change remote control, or archive a root.
 
 ### T-344 — Recover Swallow and automate blocked-root cutover
 
