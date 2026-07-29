@@ -155,6 +155,15 @@ monitoring, final readbacks, exact 16-slice summary, and closeout publication.
     strict `portable-phase1`, no task sandbox or evaluation residue, Linux 7/8
     ready with maintained ABQ the sole failure, and all four Mac route pairs
     passing.
+15. **2026-07-30 07:00–08:00 JST:** native heartbeats covered the final
+    pre-cutoff slice without interruption or mutation. The 08:00 readback
+    proved clean protected main at `f533310`, incorporating unrelated merged
+    T-344 work after T-343’s `0fdfd97`; the pushed closeout branch was clean at
+    `d0d6fdc`. PR #412 remained merged, no closeout PR existed, ruleset
+    `19127355` remained active with zero approvals and strict
+    `portable-phase1`, no task sandbox or evaluation residue existed, Linux
+    was 7/8 ready with maintained ABQ the sole failure, and all four Mac route
+    pairs passed.
 
 ## Residual risks
 
