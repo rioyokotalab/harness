@@ -126,6 +126,35 @@ metadata-free native structured schema is intentionally separate from the
 canonical public schema, and its constraint remains enforced by the strict
 driver validator.
 
+### Iteration 4 — frozen T-336 Fable/high failure retest
+
+- Hypothesis: a new task-specific runner can retest only the four accepted
+  Claude failure rows with Fable/high while leaving the frozen r7 runner,
+  corpus, fixtures, graders, and accepted reports byte-identical.
+- Before identity: clean implementation commit `8c9ee24`; new focused fixture
+  `tests/test-t343-fable-retest.sh`; no retest runner exists.
+- Exact check: `tests/test-t343-fable-retest.sh`.
+- Observed result: failed at the first assertion with
+  `FAIL: missing executable Fable failure retest`.
+- Decision: keep the failing fixture. Implement only a task-specific wrapper
+  that verifies all frozen hashes, deep-copies the corpus in memory, changes
+  the new experiment identity and Claude model declaration, and delegates
+  workspace preparation, containment, normalization, and hidden grading to
+  the frozen runner.
+
+The wrapper and unchanged focused fixture now pass. The original runner,
+corpus, fixtures, and accepted pilot and confirmation reports retain their
+frozen SHA-256 identities. `tests/test-development-evaluation.sh` also passes.
+A syntax check generated two untracked bytecode-cache directories; guarded
+deletion manifest `/tmp/t343-pycache-cleanup.manifest` validated 2 targets,
+4 entries, and 113025 bytes, then deleted only those targets and verified
+protected anchors unchanged. The first post-cleanup test exposed that importing
+the frozen runner could recreate one cache before the imported module disabled
+bytecode writes. Set that process flag before import, guarded-delete the one
+recreated two-entry cache with a fresh manifest, and prove the focused test no
+longer recreates either cache. Both short-lived manifests were exact-unlinked
+after successful verified application.
+
 ## Deviations
 
 None. The owner `go` matches the frozen plan. No live system, sibling
