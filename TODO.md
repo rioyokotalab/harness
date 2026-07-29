@@ -290,6 +290,16 @@ read-only reconciliation before the next decision.
   provisional bridge remains live on its unchanged root and old supervisor;
   publishing code alone does not mutate or upgrade it.
 
+**Validation checkpoint:**
+
+- Complete `tests/test-phase1.sh` passes with only its declared native MPI
+  environment skip. The provisional bridge retained the same
+  `@86`/supervisor/watcher/TUI identity through the full suite.
+- Next action is protected publication of exact implementation head, followed
+  by a second distinct bridge launched from merged code. Accept and promote
+  only that new-code process chain; retire the old provisional leaf afterward
+  with one exact signal under the reusable bridge-first protocol.
+
 ### T-336 — Benchmark current Codex and Claude Harness development
 
 **Phase:** complete.
