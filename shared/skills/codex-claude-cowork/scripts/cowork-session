@@ -17,8 +17,8 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-SCHEMA_VERSION = 2
-SUPPORTED_SCHEMA_VERSIONS = {1, 2}
+SCHEMA_VERSION = 3
+SUPPORTED_SCHEMA_VERSIONS = {1, 2, 3}
 STAGE_SCHEMA_VERSION = 3
 SUPPORTED_STAGE_SCHEMA_VERSIONS = {2, 3}
 RECEIPT_SCHEMA_VERSION = 2
@@ -29,6 +29,7 @@ EXCHANGE_MODES = {"staged", "direct"}
 COPILOT_OWNED = "copilot-evidence.md"
 COPILOT_CANDIDATE = "candidate-copilot-evidence.md"
 COPILOT_PROMPT = "copilot-prompt.md"
+BENCHMARK = "benchmark.md"
 RECEIPTS_DIR = "receipts"
 ARTIFACTS_KEEP = ".gitkeep"
 RECEIPT_NAMES = {
@@ -163,8 +164,38 @@ TODO
 """,
 }
 
+# The mechanical benchmark is a schema-3 protocol file: created by `init`
+# before any evidence, driver-owned/protected, and required complete before
+# discussion. Legacy schema-1/2 sessions never contain it and are never
+# rewritten in place to add it.
+BENCHMARK_TEMPLATE = """# Benchmark
+
+## Identity
+
+TODO
+
+## Observable cases
+
+TODO
+
+## Evidence and iteration method
+
+TODO
+
+## Stop condition
+
+TODO
+
+## Agreement
+
+TODO
+"""
+
+ALL_TEMPLATES = dict(TEMPLATES)
+ALL_TEMPLATES[BENCHMARK] = BENCHMARK_TEMPLATE
+
 LEGACY_TOP_LEVEL = set(TEMPLATES) | {"state.json", "artifacts"}
-ALLOWED_TOP_LEVEL = LEGACY_TOP_LEVEL | {RECEIPTS_DIR}
+ALLOWED_TOP_LEVEL = LEGACY_TOP_LEVEL | {RECEIPTS_DIR, BENCHMARK}
 
 # The protected set is every top-level entry the co-pilot does not own: the
 # driver-owned Markdown plus state.json. `copilot-evidence.md` and the shared,
@@ -184,6 +215,15 @@ STAGE_INPUTS = {
         "copilot-evidence.md",
     ),
 }
+# Schema-3 sessions stage the driver-owned benchmark in both modes so the
+# co-pilot criticizes against the same frozen observable cases.
+STAGE_INPUTS_V3 = {
+    mode: names + (BENCHMARK,) for mode, names in STAGE_INPUTS.items()
+}
+
+
+def stage_inputs_for(schema_version: int, mode: str) -> tuple:
+    return STAGE_INPUTS_V3[mode] if schema_version >= 3 else STAGE_INPUTS[mode]
 
 REQUIRED_BY_PHASE = {
     "planning": (),
@@ -371,6 +411,8 @@ def validate_layout(root: Path) -> None:
         require_owned_kind(root / name, "file")
     if (root / RECEIPTS_DIR).exists() or (root / RECEIPTS_DIR).is_symlink():
         require_owned_kind(root / RECEIPTS_DIR, "directory")
+    if (root / BENCHMARK).exists() or (root / BENCHMARK).is_symlink():
+        require_owned_kind(root / BENCHMARK, "file")
 
 
 def load_state(root: Path) -> dict:
@@ -401,6 +443,11 @@ def load_state(root: Path) -> dict:
         require_owned_kind(receipts_path, "directory")
         if value.get("exchange_mode") not in EXCHANGE_MODES:
             fail("schema-2 state has an invalid exchange mode")
+    benchmark_path = root / BENCHMARK
+    if schema_version >= 3:
+        require_owned_kind(benchmark_path, "file")
+    elif benchmark_path.exists() or benchmark_path.is_symlink():
+        fail("schema-1/2 session must not contain benchmark.md")
     driver = value.get("driver")
     copilot = value.get("copilot")
     if driver not in CLIENTS or copilot not in CLIENTS or driver == copilot:
@@ -419,7 +466,7 @@ def validate_named_text(name: str, text: str) -> None:
     if has_todo(text):
         fail(f"{name} still contains an unresolved TODO marker")
     position = -1
-    for heading in re.findall(r"(?m)^##? .+$", TEMPLATES[name]):
+    for heading in re.findall(r"(?m)^##? .+$", ALL_TEMPLATES[name]):
         match = re.search(rf"(?m)^{re.escape(heading)}$", text)
         if match is None:
             fail(f"{name} is missing required heading: {heading}")
@@ -428,14 +475,51 @@ def validate_named_text(name: str, text: str) -> None:
         position = match.start()
 
 
-def validate_files(root: Path, phase: str) -> None:
-    for name in REQUIRED_BY_PHASE[phase]:
+def required_files(state: dict, phase: str) -> tuple:
+    names = REQUIRED_BY_PHASE[phase]
+    if state.get("schema_version", 1) >= 3 and phase != "planning":
+        names = (BENCHMARK,) + names
+    return names
+
+
+def agreement_record(role: str, client: str) -> str:
+    return f"agreement: role={role} client={client} benchmark-accepted"
+
+
+def validate_benchmark_agreements(root: Path, state: dict) -> None:
+    """Require both exact role-bound agreement records before execution.
+
+    The records are mechanical: one exact line per role, bound to the exact
+    client recorded in state.json, inside the benchmark's Agreement section.
+    They assert protocol completeness, not authorship: a same-user writer can
+    forge a line, which is why the benchmark stays in the protected digest set.
+    """
+    text = (root / BENCHMARK).read_text(encoding="utf-8")
+    heading = re.search(r"(?m)^## Agreement$", text)
+    if heading is None:
+        fail(f"{BENCHMARK} is missing required heading: ## Agreement")
+    section = text[heading.end():]
+    for role in ("driver", "copilot"):
+        record = agreement_record(role, state[role])
+        if re.search(rf"(?m)^{re.escape(record)}$", section) is None:
+            fail(
+                f"{BENCHMARK} is missing the exact {role} agreement record: "
+                f"{record}"
+            )
+
+
+def validate_files(root: Path, state: dict, phase: str) -> None:
+    for name in required_files(state, phase):
         path = root / name
         try:
             text = path.read_text(encoding="utf-8")
         except FileNotFoundError:
             fail(f"{phase} requires {name}")
         validate_named_text(name, text)
+    if state.get("schema_version", 1) >= 3 and PHASES.index(phase) >= PHASES.index(
+        "ready-for-execution"
+    ):
+        validate_benchmark_agreements(root, state)
 
 
 def is_sha256(value: object) -> bool:
@@ -486,7 +570,8 @@ def load_receipt(root: Path, state: dict, mode: str) -> dict:
     if value["phase"] != "discussing":
         fail(f"{mode} receipt was not created during discussion")
     inputs = value["inputs"]
-    if not isinstance(inputs, dict) or set(inputs) != set(STAGE_INPUTS[mode]):
+    expected_inputs = stage_inputs_for(state.get("schema_version", 1), mode)
+    if not isinstance(inputs, dict) or set(inputs) != set(expected_inputs):
         fail(f"{mode} receipt has unexpected or missing input hashes")
     for name, digest in inputs.items():
         if not is_sha256(digest):
@@ -560,7 +645,7 @@ def predecessor_record(raw: str) -> dict:
     # Validate the predecessor's phase-required content before snapshotting its
     # provenance, so a recorded phase cannot describe a session whose Markdown
     # never satisfied it. This runs before any successor directory is created.
-    validate_files(pred_root, pred_state["phase"])
+    validate_files(pred_root, pred_state, pred_state["phase"])
     pred_bytes = (pred_root / "state.json").read_bytes()
     return {
         "path": str(pred_root),
@@ -678,15 +763,15 @@ def stage_session(args: argparse.Namespace) -> None:
     state = load_state(root)
     if state["phase"] != "discussing":
         fail("staging requires a discussing session")
-    if state["schema_version"] == 2 and state["exchange_mode"] != "staged":
+    if state["schema_version"] >= 2 and state["exchange_mode"] != "staged":
         fail("staging requires a staged exchange-mode session")
-    validate_files(root, "discussing")
-    inputs = STAGE_INPUTS[args.mode]
+    validate_files(root, state, "discussing")
+    inputs = stage_inputs_for(state["schema_version"], args.mode)
     if args.mode == "reciprocal":
         for name in ("driver-evidence.md", COPILOT_OWNED):
             validate_named_text(name, (root / name).read_text(encoding="utf-8"))
     receipts = validate_receipts(root, state, "discussing")
-    if state["schema_version"] == 2:
+    if state["schema_version"] >= 2:
         if args.mode == "independent" and receipts:
             fail("independent stage requires no existing receipts")
         if args.mode == "reciprocal" and set(receipts) != {"independent"}:
@@ -707,9 +792,9 @@ def stage_session(args: argparse.Namespace) -> None:
     # leaves no partial stage. Writing the seal is still a second file after
     # stage.json: fail-closed, not cross-file atomic.
     seal_target = None
-    if state["schema_version"] == 2:
+    if state["schema_version"] >= 2:
         if not args.seal:
-            fail("schema-2 staged staging requires --seal EXTERNAL_FILE")
+            fail("schema-2+ staged staging requires --seal EXTERNAL_FILE")
         seal_target = seal_location_ok(root, stage_root.parent, args.seal)
         if seal_target.exists() or seal_target.is_symlink():
             fail(f"seal path already exists: {seal_target}")
@@ -795,8 +880,11 @@ def load_stage(stage_root: Path) -> dict:
         expected_keys.add("prompt_sha256")
     if set(stage_state) != expected_keys:
         fail("stage metadata has unexpected or missing keys")
-    inputs = STAGE_INPUTS[mode]
-    if set(stage_state.get("inputs", {})) != set(inputs):
+    staged_inputs = stage_state.get("inputs", {})
+    if not isinstance(staged_inputs, dict) or set(staged_inputs) not in (
+        set(STAGE_INPUTS[mode]),
+        set(STAGE_INPUTS_V3[mode]),
+    ):
         fail("stage metadata has unexpected or missing input hashes")
     if not is_sha256(stage_state.get("destination_before_sha256")):
         fail("stage metadata has an invalid destination-before hash")
@@ -808,7 +896,7 @@ def load_stage(stage_root: Path) -> dict:
     for name, digest in stage_state["inputs"].items():
         if not is_sha256(digest):
             fail(f"stage metadata has an invalid input hash: {name}")
-    expected_entries = set(inputs) | {
+    expected_entries = set(staged_inputs) | {
         "stage.json",
         "artifacts",
         COPILOT_CANDIDATE,
@@ -825,7 +913,7 @@ def load_stage(stage_root: Path) -> dict:
         fail(f"invalid stage layout ({'; '.join(details)})")
     require_owned_kind(stage_root / "artifacts", "directory")
     require_owned_kind(stage_root / COPILOT_CANDIDATE, "file")
-    for name in inputs:
+    for name in staged_inputs:
         require_owned_kind(stage_root / name, "file")
     prompt_path = stage_root / "artifacts" / COPILOT_PROMPT
     if stage_schema >= 3 and prompt_sha256 is None:
@@ -919,9 +1007,9 @@ def import_copilot(args: argparse.Namespace) -> None:
     state = load_state(root)
     if state["phase"] != "discussing":
         fail("co-pilot import requires a discussing session")
-    if state["schema_version"] == 2 and state["exchange_mode"] != "staged":
+    if state["schema_version"] >= 2 and state["exchange_mode"] != "staged":
         fail("co-pilot import requires a staged exchange-mode session")
-    validate_files(root, "discussing")
+    validate_files(root, state, "discussing")
     stage_root = session_path(args.stage_dir)
     root_real = root.resolve()
     stage_real = stage_root.resolve()
@@ -936,6 +1024,10 @@ def import_copilot(args: argparse.Namespace) -> None:
         fail("stage roles no longer match the live session")
     if stage_state["phase"] != "discussing":
         fail("stage phase is not discussing")
+    if set(stage_state["inputs"]) != set(
+        stage_inputs_for(state["schema_version"], stage_state["mode"])
+    ):
+        fail("stage inputs do not match the live session schema")
 
     destination = root / COPILOT_OWNED
     previous = destination.read_bytes()
@@ -944,7 +1036,7 @@ def import_copilot(args: argparse.Namespace) -> None:
     receipt_path = None
     receipt_bytes = None
     receipts = validate_receipts(root, state, "discussing")
-    if state["schema_version"] == 2:
+    if state["schema_version"] >= 2:
         mode = stage_state["mode"]
         receipt_path = root / RECEIPTS_DIR / RECEIPT_NAMES[mode]
         if receipt_path.exists() or receipt_path.is_symlink():
@@ -957,9 +1049,9 @@ def import_copilot(args: argparse.Namespace) -> None:
         fail("live co-pilot evidence drifted from the staged destination-before hash")
 
     seal_sha256 = None
-    if state["schema_version"] == 2:
+    if state["schema_version"] >= 2:
         if not args.seal:
-            fail("schema-2 staged import requires --seal EXTERNAL_FILE")
+            fail("schema-2+ staged import requires --seal EXTERNAL_FILE")
         seal, seal_sha256 = load_seal(args.seal, root, stage_root)
         if seal["driver"] != state["driver"] or seal["copilot"] != state["copilot"]:
             fail("seal roles do not match the live session")
@@ -973,7 +1065,7 @@ def import_copilot(args: argparse.Namespace) -> None:
         if seal["stage_manifest_sha256"] != actual_stage_manifest:
             fail("stage.json does not match the sealed manifest hash")
 
-    for name in STAGE_INPUTS[stage_state["mode"]]:
+    for name in stage_inputs_for(state["schema_version"], stage_state["mode"]):
         staged = (stage_root / name).read_bytes()
         expected = stage_state["inputs"][name]
         if sha256_bytes(staged) != expected:
@@ -1003,7 +1095,7 @@ def import_copilot(args: argparse.Namespace) -> None:
         fail("co-pilot candidate is not valid UTF-8")
     validate_named_text(COPILOT_OWNED, candidate_text)
 
-    if state["schema_version"] == 2:
+    if state["schema_version"] >= 2:
         receipt = {
             "schema_version": RECEIPT_SCHEMA_VERSION,
             "mode": stage_state["mode"],
@@ -1027,7 +1119,7 @@ def import_copilot(args: argparse.Namespace) -> None:
     try:
         atomic_replace_bytes(destination, candidate)
         require_owned_kind(destination, "file")
-        validate_files(root, "discussing")
+        validate_files(root, state, "discussing")
         if receipt_path is not None and receipt_bytes is not None:
             atomic_create_bytes(receipt_path, receipt_bytes)
             receipt_created = True
@@ -1075,6 +1167,7 @@ def init(args: argparse.Namespace) -> None:
     write_json_atomic(root / "state.json", state)
     for name, content in TEMPLATES.items():
         (root / name).write_text(content, encoding="utf-8")
+    (root / BENCHMARK).write_text(BENCHMARK_TEMPLATE, encoding="utf-8")
     (root / "artifacts").mkdir(mode=0o700)
     (root / "artifacts" / ARTIFACTS_KEEP).touch(mode=0o600, exist_ok=False)
     (root / RECEIPTS_DIR).mkdir(mode=0o700)
@@ -1092,7 +1185,7 @@ def check(args: argparse.Namespace) -> None:
     phase = args.phase or state["phase"]
     if phase not in PHASES:
         fail(f"unknown phase: {phase}")
-    validate_files(root, phase)
+    validate_files(root, state, phase)
     validate_receipts(root, state, phase)
     print(f"valid {phase} session: {root}")
 
@@ -1146,7 +1239,7 @@ def status_snapshot(args: argparse.Namespace) -> dict:
     """Build one deterministic, read-only session/stage monitoring snapshot."""
     root = session_path(args.session_dir)
     state = load_state(root)
-    validate_files(root, state["phase"])
+    validate_files(root, state, state["phase"])
     receipts = validate_receipts(root, state, state["phase"])
     snapshot = {
         "schema_version": 1,
@@ -1175,8 +1268,12 @@ def status_snapshot(args: argparse.Namespace) -> dict:
             or stage_state["copilot"] != state["copilot"]
         ):
             fail("stage roles do not match the live session")
+        if set(stage_state["inputs"]) != set(
+            stage_inputs_for(state["schema_version"], stage_state["mode"])
+        ):
+            fail("stage inputs do not match the live session schema")
         inputs_fresh = True
-        for name in STAGE_INPUTS[stage_state["mode"]]:
+        for name in sorted(stage_state["inputs"]):
             staged = (stage_root / name).read_bytes()
             if sha256_bytes(staged) != stage_state["inputs"][name]:
                 inputs_fresh = False
@@ -1321,7 +1418,10 @@ def wait_copilot(args: argparse.Namespace) -> None:
 def digests(args: argparse.Namespace) -> None:
     root = session_path(args.session_dir)
     validate_layout(root)
-    for name in PROTECTED_ENTRIES:
+    protected = list(PROTECTED_ENTRIES)
+    if (root / BENCHMARK).exists():
+        protected.append(BENCHMARK)
+    for name in sorted(protected):
         data = (root / name).read_bytes()
         print(f"{hashlib.sha256(data).hexdigest()}  {name}")
     receipts_root = root / RECEIPTS_DIR
@@ -1359,13 +1459,13 @@ def advance(args: argparse.Namespace) -> None:
     current_index = PHASES.index(state["phase"])
     target_index = PHASES.index(args.phase)
     if target_index == current_index:
-        validate_files(root, args.phase)
+        validate_files(root, state, args.phase)
         validate_receipts(root, state, args.phase)
         print(f"already at valid phase {args.phase}: {root}")
         return
     if target_index != current_index + 1:
         fail(f"invalid transition {state['phase']} -> {args.phase}")
-    validate_files(root, args.phase)
+    validate_files(root, state, args.phase)
     validate_receipts(root, state, args.phase)
     state["phase"] = args.phase
     state["updated_at"] = now()
@@ -1438,7 +1538,7 @@ def parser() -> argparse.ArgumentParser:
     )
     stage_parser.add_argument(
         "--seal",
-        help="external path-free seal file (required for schema-2 staged sessions)",
+        help="external path-free seal file (required for schema-2+ staged sessions)",
     )
     stage_parser.set_defaults(handler=stage_session)
     import_parser = commands.add_parser(
@@ -1448,7 +1548,7 @@ def parser() -> argparse.ArgumentParser:
     import_parser.add_argument("stage_dir")
     import_parser.add_argument(
         "--seal",
-        help="external path-free seal file (required for schema-2 staged sessions)",
+        help="external path-free seal file (required for schema-2+ staged sessions)",
     )
     import_parser.set_defaults(handler=import_copilot)
     advance_parser = commands.add_parser("advance", help="validate and advance one phase")

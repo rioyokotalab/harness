@@ -123,6 +123,45 @@ cp "$TEMP_DIR/codex-policy.valid" "$repo/config/agent-clients/codex.toml"
 git -C "$repo" add .codex/config.toml config/agent-clients/codex.toml
 git -C "$repo" commit -qm 'restore project model policy'
 
+cp "$repo/config/agent-clients/claude.json" "$TEMP_DIR/claude-policy.valid"
+sed 's/"model": "fable"/"model": "opus"/' "$TEMP_DIR/claude-policy.valid" \
+    >"$repo/.claude/settings.json"
+cp "$repo/.claude/settings.json" "$repo/config/agent-clients/claude.json"
+git -C "$repo" add .claude/settings.json config/agent-clients/claude.json
+git -C "$repo" commit -qm 'inject wrong project Claude model'
+if run_config --plan >"$TEMP_DIR/claude-wrong-model.out" 2>&1; then
+    fail 'wrong project Claude model accepted'
+fi
+grep -F 'project Claude policy is invalid' "$TEMP_DIR/claude-wrong-model.out" \
+    >/dev/null || fail 'wrong project Claude model rejection'
+
+sed '/"effortLevel": "high",/d' "$TEMP_DIR/claude-policy.valid" \
+    >"$repo/.claude/settings.json"
+cp "$repo/.claude/settings.json" "$repo/config/agent-clients/claude.json"
+git -C "$repo" add .claude/settings.json config/agent-clients/claude.json
+git -C "$repo" commit -qm 'drop project Claude effort'
+if run_config --plan >"$TEMP_DIR/claude-no-effort.out" 2>&1; then
+    fail 'missing project Claude effort accepted'
+fi
+grep -F 'project Claude policy is invalid' "$TEMP_DIR/claude-no-effort.out" \
+    >/dev/null || fail 'missing project Claude effort rejection'
+
+sed 's/"model": "fable"/"model": "fable-x"/' "$TEMP_DIR/claude-policy.valid" \
+    >"$repo/.claude/settings.json"
+cp "$TEMP_DIR/claude-policy.valid" "$repo/config/agent-clients/claude.json"
+git -C "$repo" add .claude/settings.json config/agent-clients/claude.json
+git -C "$repo" commit -qm 'diverge project Claude mirrors'
+if run_config --plan >"$TEMP_DIR/claude-diverged.out" 2>&1; then
+    fail 'diverged project Claude mirrors accepted'
+fi
+grep -F 'project Claude policy differs from its public contract' \
+    "$TEMP_DIR/claude-diverged.out" >/dev/null ||
+    fail 'diverged project Claude mirror rejection'
+cp "$TEMP_DIR/claude-policy.valid" "$repo/.claude/settings.json"
+cp "$TEMP_DIR/claude-policy.valid" "$repo/config/agent-clients/claude.json"
+git -C "$repo" add .claude/settings.json config/agent-clients/claude.json
+git -C "$repo" commit -qm 'restore project Claude policy'
+
 run_config --plan >"$TEMP_DIR/plan.out"
 grep -F 'AGENT_CONFIG schema=2 mode=plan' "$TEMP_DIR/plan.out" >/dev/null ||
     fail 'schema-2 plan'

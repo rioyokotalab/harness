@@ -11,11 +11,13 @@ absolute, shell-safe paths resolved for the active repository.
 planning -> discussing -> ready-for-execution -> executing -> validating -> complete
 ```
 
-`init` writes session schema 2. Its default `exchange_mode=staged` uses the
+`init` writes session schema 3. Its default `exchange_mode=staged` uses the
 receipt-backed workflow below. `init --exchange-mode direct` declares the
 exceptional sealed live-session fallback up front and forbids staged commands
 and receipts. The validator continues to read strict schema-1 predecessor
-sessions under their original receipt-free layout.
+sessions under their original receipt-free layout and schema-2 sessions under
+their frozen benchmark-free rules; a legacy session is never rewritten in
+place, and a `benchmark.md` inside a schema-1/2 session is refused.
 
 The exchange directory contains:
 
@@ -24,19 +26,45 @@ The exchange directory contains:
 | `state.json` | validator | schema version, driver, co-pilot, phase, timestamps |
 | `charter.md` | driver | task, boundaries, baseline and sandboxes, acceptance |
 | `plan.md` | driver | steps, evidence questions, risks and recovery |
+| `benchmark.md` | driver | schema 3: identity, observable cases, evidence and iteration method, stop condition, agreement |
 | `driver-evidence.md` | driver | independent run, results, critique, changes |
 | `copilot-evidence.md` | co-pilot | independent run, results, critique, changes |
 | `reconciliation.md` | driver | accepted evidence, disagreements, frozen plan, gates |
 | `execution.md` | driver | target steps/results and deviations |
 | `validation.md` | driver | final checks, outcome, residual risks |
 | `artifacts/` | shared, bounded | tracked `.gitkeep`, task prompts, and public-safe raw logs named in evidence |
-| `receipts/` | driver/validator | schema-2 staged import receipts; closed independent/reciprocal set |
+| `receipts/` | driver/validator | schema-2+ staged import receipts; closed independent/reciprocal set |
+
+`init` mechanically creates `benchmark.md` before any evidence. It is
+driver-owned, sits in the protected digest set, and is included in the
+independent and reciprocal staged inputs of a schema-3 session. A schema-3
+session cannot advance from `planning` to `discussing` until the benchmark
+content is complete, and cannot advance from `discussing` to
+`ready-for-execution` until the Agreement section contains both exact
+role-bound agreement records — one per role, bound to the exact clients in
+`state.json` — and the normal independent and reciprocal receipts pass:
+
+```text
+agreement: role=driver client=DRIVER_CLIENT benchmark-accepted
+agreement: role=copilot client=COPILOT_CLIENT benchmark-accepted
+```
+
+The benchmark agreement precedes target execution: no `executing` phase is
+reachable without it. During execution, record every candidate iteration
+against the frozen benchmark with its hypothesis, before/after digest or
+diff, the exact check and input identity it was measured by, the observed
+result, and the keep/revert decision.
+Unchanged blind retries do not count as iterations;
+iterate only after a distinct observed failure. Like every other
+protocol check, the agreement records assert protocol completeness, not
+authorship: a same-user writer can forge a line, which is why the benchmark
+stays in the sealed protected digest set.
 
 The validator rejects missing headings, untouched standalone template `TODO`
 markers, role mismatch, skipped or backward phases, symlinked or foreign-owned
 protocol entries, hard-linked protocol files (any regular protocol file with a
 link count other than one, which would alias content outside the session), and
-any missing or unexpected top-level entry. New schema-2 sessions require real
+any missing or unexpected top-level entry. New schema-2+ sessions require real
 current-user-owned `artifacts/` and `receipts/` directories; strict legacy
 schema-1 sessions retain their old layout and forbid `receipts/`. It does not
 prove factual correctness, client
@@ -105,7 +133,8 @@ scripts/cowork-session stage SESSION_DIR STAGE_DIR --mode reciprocal \
   --seal EXTERNAL_SEAL_FILE
 ```
 
-An independent stage contains `charter.md`, `plan.md`, and a fail-closed
+An independent stage contains `charter.md`, `plan.md`, `benchmark.md` for a
+schema-3 session, and a fail-closed
 path-free projection of `state.json`; a reciprocal stage also contains both
 evidence files. The staged `state.json` is not the raw file: `stage` whitelists
 exactly the supported schema fields, drops `predecessor.path` (a local absolute path a
@@ -141,7 +170,7 @@ driver seal unless the external pre-window value also matches. When reporting a
 seal deviation for reciprocal review, copy the bounded before/after manifests
 into the reciprocal stage artifacts.
 
-For a schema-2 staged session `--seal` is required and turns that advisory hash
+For a schema-2+ staged session `--seal` is required and turns that advisory hash
 into an enforced anchor. `stage` resolves and pre-checks the seal path *before*
 minting any stage bytes — refusing a seal resolved inside the live session or the
 stage-parent sandbox, or an already-present seal path, so a bad seal leaves no
@@ -172,7 +201,7 @@ the driver inspects the complete candidate and then runs:
 scripts/cowork-session import-copilot SESSION_DIR STAGE_DIR --seal EXTERNAL_SEAL_FILE
 ```
 
-For a schema-2 staged session `--seal` is required. Before any target write,
+For a schema-2+ staged session `--seal` is required. Before any target write,
 import refuses a seal resolved inside the session or stage-parent tree; requires a
 real, current-user-owned, single-link, non-symlink file; parses UTF-8 JSON with
 exactly the seven seal keys and supported schema; and requires the seal `driver`,
@@ -203,8 +232,8 @@ than prevents or restores. Changes to any retained field (phase, timestamps,
 roles, retained predecessor fields) are still stale-rejected with the live
 `copilot-evidence.md` byte-identical.
 
-New sessions use schema 2 and `exchange_mode=staged` unless initialized with the
-exceptional `--exchange-mode direct`. A schema-2 stage binds the live
+New sessions use schema 3 and `exchange_mode=staged` unless initialized with the
+exceptional `--exchange-mode direct`. A schema-2+ stage binds the live
 `copilot-evidence.md` hash as `destination_before_sha256`; import refuses drift
 before mutation. A successful staged import creates exactly one closed receipt
 for its mode under `receipts/`. Receipt fields bind roles, phase, projected input
@@ -251,12 +280,26 @@ When Codex drives Claude, run Claude from the Claude sandbox with noninteractive
 print mode. Build the narrowest reviewed `--allowedTools` list from the frozen
 experiment and use a non-prompting permission mode. Do not use
 `--dangerously-skip-permissions`. For routine bounded critique, select explicit
-model/effort options only after confirming them in the installed `--help`, and
-record them; escalate only for an unresolved material claim:
+model/effort options only after confirming them in the installed `--help`.
+Default to `--model fable --effort high` unless the frozen benchmark explicitly
+requires another supported pairing, and record the resolved options; escalate
+only for an unresolved material claim:
 
 ```text
 claude --print --permission-mode dontAsk \
   --allowedTools REVIEWED_TOOL_LIST \
+  < STAGE_DIR/artifacts/copilot-prompt.md \
+  > STAGE_DIR/candidate-copilot-evidence.md
+```
+
+For a native no-tools critique — a pure prose review with every tool denied —
+use the documented `--tools ""` option, not an empty `--allowedTools` value:
+an empty allow-list is an absent constraint to some client versions, while
+`--tools ""` is the documented explicit denial. Confirm the flag in the
+installed `--help` and record the resolved command:
+
+```text
+claude --print --permission-mode dontAsk --tools "" \
   < STAGE_DIR/artifacts/copilot-prompt.md \
   > STAGE_DIR/candidate-copilot-evidence.md
 ```

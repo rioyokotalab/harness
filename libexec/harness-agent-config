@@ -91,6 +91,8 @@ validate_sources() {
         die "Claude configuration validator requires jq"
     jq -e '
         type == "object" and
+        .model == "fable" and
+        .effortLevel == "high" and
         .permissions == {"defaultMode":"bypassPermissions"} and
         .skipDangerousModePermissionPrompt == true
     ' "$claude_policy" >/dev/null 2>&1 ||

@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-342.
+Next free ID: T-343.
 
 ## Current state
 
@@ -108,6 +108,61 @@ Next free ID: T-342.
    successors recorded below.
 
 ## Active tasks
+
+### T-342 — Adopt cowork benchmark discipline and Claude Fable defaults
+
+**Phase:** implementation validated in the detached T-342 worktree; publish
+through protected CI from a clean candidate.
+
+The owner's duration-window incident showed a session narrating unmeasured
+progress instead of iterating against a frozen benchmark. Students T-035
+carries the project-specific remediation in that repository's own ledger; this
+task records the reusable Harness improvements:
+
+- `codex-claude-cowork` session schema 3: `init` mechanically creates a
+  driver-owned, protected `benchmark.md` (identity, observable cases,
+  evidence/iteration method, stop condition, agreement) before any evidence,
+  and it joins the independent and reciprocal staged inputs. Planning cannot
+  reach `discussing` until the benchmark content is complete, and discussion
+  cannot reach `ready-for-execution` until both exact role-bound agreement
+  records exist plus the normal independent/reciprocal receipts. Schema-1/2
+  readers and fixtures remain valid under their frozen rules and are never
+  rewritten in place; a benchmark file inside a legacy session is refused.
+- `SKILL.md` and `references/protocol.md` now state that the benchmark
+  agreement precedes target execution; that every candidate iteration records
+  its hypothesis, before/after digest or diff, exact check and input
+  identity, observed result, and keep/revert decision, with unchanged blind
+  retries not counting; and that a native no-tools critique uses the
+  documented `--tools ""`, not an empty `--allowedTools`.
+- Root `AGENTS.md` adds the durable duration rule: any owner request that
+  specifies a duration or time window for continued work uses both
+  `codex-claude-cowork` and `long-running-task-ledger`, freezes the
+  benchmark, evidence cadence, and stop conditions before execution, and
+  iterates from measurements. Final and durable summaries carry exactly one
+  timestamped, evidence-backed time-slice entry per requested hour (rounded
+  up), plus outcome, validation, residual risks, and the exact next action,
+  at `max(300, 50 * ceil(requested hours))` words or more; a no-change slice
+  names its stable blocker or wait evidence. The same contract is in the
+  cowork skill guidance.
+- Both tracked project Claude setting mirrors (`.claude/settings.json` and
+  `config/agent-clients/claude.json`) now pin `"model": "fable"` and
+  `"effortLevel": "high"` while preserving the existing permission keys.
+  `libexec/harness-agent-config` fails closed on a missing or wrong value and
+  on diverged mirrors; the agent-config and Claude-takeover focused tests
+  cover the accepted and refused states. `~/.claude/settings.json` stays
+  untouched.
+
+T-336's frozen result identities are preserved: the accepted `-r7` pilot
+(Codex 16/16, Claude 15/16) and confirmation (Codex 48/48, Claude 44/48)
+reports and the four Claude failure capsules — `code-coherence` observations
+1, 2, and 3 and `ci-gate-preserve` observation 2 — remain byte-stable and are
+not rewritten or recombined.
+
+**Next action:** publish these changes through protected CI, then, as a
+separate future distinct run identity, retest only the four frozen T-336
+Claude failure capsules with Claude on `fable` at high effort under the
+unchanged grader and containment contract, recording the outcome as a new
+result alongside — never a rewrite of — the accepted `-r7` reports.
 
 ### T-341 — Archive the retired Swallow saved root
 
