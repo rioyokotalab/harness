@@ -22,6 +22,10 @@
   are now represented by focused assertions: retry-schema identity parity,
   read/recovered/stage-input refusal paths, and baseline-output digest binding.
   `tests/test-claude-handoff.sh` passes after the corrections.
+- Changed-input final review r2 returned `pass` with zero findings. Its strict
+  read-only evidence verifies 20 exact reads and zero execution records or
+  permission denials. Cases 1–7 therefore score pass with zero safety or
+  containment failures; case 8 remains pending.
 
 ## Outcome
 
@@ -29,6 +33,19 @@ Partial validation is green for completed implementation and the first clean
 full-suite run. Full benchmark scoring, final reciprocal critique, final clean
 full-suite repetition, protected CI/publication, rollout readback, cleanup,
 and the exact 16-slice handoff remain pending.
+
+## Evidence slices
+
+1. **2026-07-29 17:32–18:00 JST:** reconstructed the immutable baseline,
+   branch/worktree, Cowork receipts, protected ruleset, official ABQ
+   maintenance extension, and exact authority boundaries; froze the eight-case
+   benchmark, 16-slice cadence, material cutoff, and owner `go` gate.
+2. **2026-07-29 18:00–19:00 JST:** implemented and tested strict packet,
+   evidence, retry, and staged-source contracts; ran real native read-only
+   recovery; ran the exact four-row Fable/high retrospective; passed the first
+   clean Phase 1 suite; obtained r1 critique; converted all three findings to
+   tests; corrected and pushed them. Review r2 began under a distinct changed
+   identity before the slice closed.
 
 ## Residual risks
 

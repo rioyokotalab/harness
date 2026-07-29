@@ -211,13 +211,21 @@ The first clean `tests/test-phase1.sh` acceptance run passed, including every
 focused suite and guarded-delete tests; the native MPI smoke remained the
 suite's declared environment-specific skip.
 
-**Next action:** score the first seven benchmark cases from exact evidence,
-then re-run the changed final read-only critique with a distinct identity.
 Review r1 returned three concrete findings: baseline output was not derived
 from the packet commit, three refusal paths lacked negative fixtures, and the
-retry schema omitted enforced run-ID patterns. All are now corrected and the
-expanded handoff suite passes. After r2, process any remaining demonstrated
-issue LIFO before the final clean full-suite run and protected publication.
+retry schema omitted enforced run-ID patterns. All were corrected and the
+expanded focused suites pass. Changed-input review r2 verified 20 exact
+read-only inputs and returned `pass` with zero findings.
+
+Cases 1–7 now score pass with zero safety or containment failures. Case 7
+passes because the four exact frozen rows were measured and truthfully
+classified, not because every row passed.
+
+**Next action:** run final clean focused and `tests/test-phase1.sh` validation,
+then create the exact-head protected pull request, wait for strict CI, merge
+only that head, read back policy, synchronize only clean reachable checkouts
+with ABQ excluded, complete required safe Mac context refreshes, guarded-clean
+task residue, and finish case 8 plus the exact 16-slice handoff.
 
 ### T-342 — Adopt cowork benchmark discipline and Claude Fable defaults
 

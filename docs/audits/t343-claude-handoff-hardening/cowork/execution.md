@@ -219,6 +219,25 @@ encoding, and use the real derived digest in the positive fixture. The
 unchanged negative now refuses with `baseline output digest mismatch`, and the
 full handoff suite passes.
 
+Commit `3f6dc45f6624d6beefb5e59cd91b9a2095d6c85d` containing the three
+corrections and r1 review was pushed before changed-input review r2. R2 used a
+fresh stage, packet, prompt, baseline, and run identity. It completed after 30
+turns with no permission denials and returned verdict `pass` with zero
+findings. Its unchanged evidence verified 20 exact reads and zero execution
+records. Native result SHA-256 is
+`c25d475decbe12f3e8b3330e80d6dc56c9cae77b65da1b5122b94bd1b7b32a69`;
+extracted evidence SHA-256 is
+`33999ceebd06cc9addd2d6a866d054b3fb06280ac36eaca586d6700825573efd`.
+The public-safe review is retained at
+`cowork/artifacts/final-review-r2.json`. Its remaining statements are evidence
+limitations or future/environmental risks, not demonstrated defects.
+
+The first seven benchmark cases now score pass with zero safety or containment
+failures. Case 7 passes its declared measurement criterion: all exact capsules
+ran and were classified, not because every model row passed. Case 8 remains
+pending final clean validation, protected publication/readback, rollout,
+residue cleanup, and durable handoff.
+
 ## Deviations
 
 None. The owner `go` matches the frozen plan. No live system, sibling

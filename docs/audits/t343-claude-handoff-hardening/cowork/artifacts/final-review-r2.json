@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "run_id": "t343-final-review-r2",
+  "client_version": "2.1.220 (Claude Code)",
+  "requested_model": "fable",
+  "effort": "high",
+  "source_revision": "3f6dc45f6624d6beefb5e59cd91b9a2095d6c85d",
+  "native_result_sha256": "c25d475decbe12f3e8b3330e80d6dc56c9cae77b65da1b5122b94bd1b7b32a69",
+  "evidence_sha256": "33999ceebd06cc9addd2d6a866d054b3fb06280ac36eaca586d6700825573efd",
+  "stage_sha256": "2a39807de22e62322e69e0da5725e25e1a6cf0ec4244b3736051e30dcf1c98da",
+  "is_error": false,
+  "subtype": "success",
+  "num_turns": 30,
+  "permission_denials": [],
+  "canonical_models": [
+    "claude-fable-5",
+    "claude-haiku-4-5"
+  ],
+  "review": {
+    "verdict": "pass",
+    "findings": [],
+    "residual_risks": [
+      "Limit of evidence: this review ran under Read/Grep/Glob only, so no SHA-256 digest, git query, or test execution was independently performed; stage.json input digests, the packet baseline 3f6dc45f being the repository HEAD, staged-versus-live source byte identity, and the claim that the expanded handoff suite passes were consistency-checked across records, not recomputed or rerun. Driver-side validate/verify-evidence and the packet's five checks remain the binding verification.",
+      "Limit of evidence: an echoed read manifest proves receipt of the sealed digest map, not byte-complete reading of every source; complete-read compliance is self-reported, the accepted contract limitation recorded in docs/audits/t343-claude-handoff-hardening/cowork/execution.md.",
+      "Limit of evidence: TODO.md (391 KB) exceeds the read window; the header, current state, the complete T-343 section, and the adjacent T-342 section were read in full and the remainder was searched for T-343/handoff/retest references only, finding no contradictions with the staged records.",
+      "Limit of evidence: F1-F3 closure was verified against the staged corrected sources and the negative-fixture logic traced by hand; the assertion that these fixtures actually pass under execution rests on the driver's recorded suite runs in execution.md and validation.md.",
+      "Implementation scope, not a demonstrated defect: only the mandatory baseline record's output_sha256 is cryptographically bound to the packet commit (libexec/harness-claude-handoff:509-513); other execution records' output digests remain bound only by the driver's single-record reproduction and honesty, the contract limitation r1 already recorded and the F1 fix deliberately did not expand.",
+      "Potential future defect, carried over from r1 (not demonstrated, outside F1-F3 scope): tests/test-claude-handoff.sh:53 still uses ast.parse feature_version=(3, 6); newer CPython releases have been raising the minimum supported feature_version, so the 3.6 syntax gate's behavior on future interpreters remains unverified.",
+      "Implementation state, not a defect: acceptance is not yet claimable — benchmark scoring of the eight cases, import of this r2 critique, the final clean full-suite repetition, protected publication, and live ruleset/fleet readback remain pending per validation.md and the TODO.md next action."
+    ]
+  }
+}
