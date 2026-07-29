@@ -185,6 +185,40 @@ isolated task worktree. Do not activate `monitor:2`, launch live Codex, change
 remote control, or archive a root before protected publication and exact live
 preflight.
 
+**Implementation checkpoint:** the new
+`harness codex-recovery-helper` owns a mode-0700 runtime root, immutable
+mode-0600 events/receipts/logs, one-attempt worker launch receipts, direct
+top-level mirror observation, confirmed-absence remote-control events, and one
+Sol/high `codex exec --ephemeral` child per accepted event. The worker prompt
+freezes bridge-first recovery, active-sibling tolerance, attached-target
+deferral, reversible archive only, absent-only native start, no pane/transcript
+reads, no rejected-prompt replay, and exactly one deduplicated post-promotion
+durable-task continuation.
+
+The tmux monitor no longer inserts recovery input into Harness. It can queue
+exact blocked Harness, Students, and Swallow roots independently, including
+multiple blocked targets, while requiring canonical topology, stable exact
+identities, one shared app server, and an unattached target. Source contracts
+now reject tmux paste/send input from the monitor.
+
+Passing checks:
+
+- `tests/test-codex-recovery-helper.sh`;
+- `tests/test-tmux-codex-monitor.sh`;
+- `tests/test-codex-resilient.sh`;
+- `tests/test-codex-thread-recovery.sh`;
+- `tests/test-recover-codex-unsafe-tail-skill.sh`;
+- Python syntax and `git diff --check`.
+
+The syntax check generated `libexec/__pycache__` with 3 entries/78,687 bytes.
+The guarded-delete workflow validated and removed only that exact tree with
+protected anchors unchanged, then the exact short-lived manifest was unlinked.
+No live tmux, Codex, saved-root, remote-control, or external state changed.
+
+**Next action:** commit and push this implementation checkpoint, run complete
+`tests/test-phase1.sh`, independently inspect the exact diff, and proceed
+through protected publication before any live activation.
+
 ### T-344 — Recover Swallow and automate blocked-root cutover
 
 **Phase:** complete; live Swallow recovered and automatic unsafe-tail handoff

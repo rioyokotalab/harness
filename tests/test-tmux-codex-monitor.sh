@@ -56,6 +56,8 @@ assert "os.kill(" not in source
 assert "capture-pane" not in source
 assert "read-pane" not in source
 assert "thread/read" not in source
+assert "paste-buffer" not in source
+assert "send-keys" not in source
 fields = ["S", "17"] + ["0"] * 17 + ["424242"] + ["0"] * 3
 value = "23 (codex TUI) " + " ".join(fields)
 parsed = module.parse_proc_stat(23, value)
@@ -236,6 +238,10 @@ health = {
         "reason": "ready",
         "window": windows[index],
         "app_server_pid": 99,
+        "identity": {
+            "runtime": "{}-runtime".format(name),
+            "thread": "{}-thread".format(name),
+        },
         "recovery": {"phase": "watching", "reason": "thread-idle"},
     }
     for name, index in module.EXPECTED
@@ -254,68 +260,49 @@ health["swallow"] = {
         "rolled_back": "1",
     },
 }
-candidate, selection = module.recovery_candidate(windows, health, [])
-assert selection == "candidate"
-assert candidate["target"] == "swallow"
-assert candidate["controller_pane"] == "%0"
-assert module.recovery_candidate(windows, health, [("7", "@2")]) == (
-    None,
+candidates, selection = module.recovery_candidates(windows, health, [])
+assert selection == "candidates"
+assert len(candidates) == 1
+assert candidates[0]["target"] == "swallow"
+assert candidates[0]["window_id"] == "@2"
+assert module.recovery_candidates(windows, health, [("7", "@2")]) == (
+    [],
     "deferred-target-attached",
 )
 health["harness"]["recovery"]["reason"] = "thread-active"
-assert module.recovery_candidate(windows, health, []) == (
-    None,
-    "deferred-controller-active",
-)
+assert len(module.recovery_candidates(windows, health, [])[0]) == 1
 health["harness"]["recovery"]["reason"] = "thread-idle"
-assert "rejected prompt" in module.recovery_message(
-    candidate, module.recovery_event(candidate)
-).decode()
-module.tmux_windows = lambda: windows
-module.collect_health = lambda _windows: health
-module.tmux_clients = lambda: []
-health["harness"]["recovery"]["reason"] = "thread-active"
-with tempfile.TemporaryDirectory() as state:
-    assert module.request_controller_recovery(state, candidate) == (
-        "deferred-identity-drift"
-    )
-    assert not os.path.exists(os.path.join(state, "recovery-request.json"))
-health["harness"]["recovery"]["reason"] = "thread-idle"
+health["harness"] = {
+    "state": "blocked",
+    "reason": "unsafe-tail",
+    "window": windows[0],
+    "app_server_pid": 99,
+    "identity": {"runtime": "harness-runtime", "thread": "harness-thread"},
+    "watcher": {"pid": 12, "start": "watcher-start"},
+    "recovery": {
+        "phase": "blocked",
+        "reason": "unsafe-tail",
+        "recoveries": "0",
+        "rolled_back": "1",
+    },
+}
+candidates, selection = module.recovery_candidates(windows, health, [])
+assert selection == "candidates"
+assert [value["target"] for value in candidates] == ["harness", "swallow"]
+assert module.recovery_candidates(windows, health, [("7", "@0")])[0][0][
+    "target"
+] == "swallow"
 
 class Result:
     returncode = 0
 
 calls = []
 module.subprocess.run = lambda arguments, **_kwargs: calls.append(arguments) or Result()
-module.PASTE_SETTLE_SECONDS = 0
-module.SUBMIT_SETTLE_SECONDS = 0
-with tempfile.TemporaryDirectory() as state:
-    action = module.request_controller_recovery(state, candidate, revalidate=False)
-    assert action == "controller-requested"
-    assert len(calls) == 3
-    before = list(calls)
-    assert module.request_controller_recovery(
-        state, candidate, revalidate=False
-    ) == "already-requested"
-    assert calls == before
-with tempfile.TemporaryDirectory() as state:
-    failed_calls = []
-    module.subprocess.run = (
-        lambda arguments, **_kwargs: failed_calls.append(arguments)
-        or type("Failed", (), {"returncode": 1})()
-    )
-    assert module.request_controller_recovery(
-        state, candidate, revalidate=False
-    ) == (
-        "request-ambiguous"
-    )
-    before = list(failed_calls)
-    assert module.request_controller_recovery(
-        state, candidate, revalidate=False
-    ) == (
-        "already-requested"
-    )
-    assert failed_calls == before
+assert module.enqueue_helper_recovery(candidates[0])
+assert len(calls) == 1
+assert "codex-recovery-helper" in calls[0]
+assert "--enqueue-blocked" in calls[0]
+assert "--thread" in calls[0]
 PY
 
 cat >"$TEST_ROOT/healthy.json" <<'EOF'
@@ -355,14 +342,14 @@ grep -F 'repair_action=none' "$TEST_ROOT/degraded.out" >/dev/null ||
     fail "generic degradation selected recovery"
 
 cat >"$TEST_ROOT/requested.json" <<'EOF'
-{"repair_action":"controller-requested","windows":[{"name":"harness","index":0},{"name":"students","index":1},{"name":"swallow","index":2}],"health":{"harness":{"state":"healthy"},"students":{"state":"healthy"},"swallow":{"state":"blocked","reason":"unsafe-tail"}}}
+{"repair_action":"helper-queued-1","windows":[{"name":"harness","index":0},{"name":"students","index":1},{"name":"swallow","index":2}],"health":{"harness":{"state":"healthy"},"students":{"state":"healthy"},"swallow":{"state":"blocked","reason":"unsafe-tail"}}}
 EOF
 if run_fixture "$TEST_ROOT/requested.json" \
     >"$TEST_ROOT/requested.out"; then
     fail "requested fixture returned healthy"
 fi
-grep -F 'repair_action=controller-requested' "$TEST_ROOT/requested.out" \
-    >/dev/null || fail "controller request classification"
+grep -F 'repair_action=helper-queued-1' "$TEST_ROOT/requested.out" \
+    >/dev/null || fail "helper queue classification"
 
 if run_fixture "$TEST_ROOT/degraded.json" --repair \
     >"$TEST_ROOT/repair-flag.out" 2>&1; then

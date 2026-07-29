@@ -148,6 +148,8 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "Python syntax: harness-codex-thread-recovery"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harness-tmux-codex-monitor").read_text(), feature_version=(3, 6))' ||
     fail "Python syntax: harness-tmux-codex-monitor"
+python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harness-codex-recovery-helper").read_text(), feature_version=(3, 6))' ||
+    fail "Python syntax: harness-codex-recovery-helper"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/tools/run-focused-tests.py").read_text())' ||
     fail "Python syntax: focused-suite runner"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/shared/skills/remote-agent-communication/scripts/agent-message").read_text())' ||
@@ -275,6 +277,8 @@ if [ "${HARNESS_TEST_JOBS:-auto}" = legacy ]; then
     fail "managed Mac connection monitor focused suite"
 "$ROOT/tests/test-tmux-codex-monitor.sh" >/dev/null ||
     fail "Local tmux Codex monitor focused suite"
+"$ROOT/tests/test-codex-recovery-helper.sh" >/dev/null ||
+    fail "dedicated Local Codex recovery helper"
 "$ROOT/tests/test-checkpoint-restart.sh" >/dev/null ||
     fail "checkpoint restart focused suite"
 "$ROOT/tests/test-hpc-cpu-routes.sh" >/dev/null ||
