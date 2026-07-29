@@ -67,6 +67,16 @@ monitoring, final readbacks, exact 16-slice summary, and closeout publication.
    clean Phase 1 suite; obtained r1 critique; converted all three findings to
    tests; corrected and pushed them. Review r2 began under a distinct changed
    identity before the slice closed.
+3. **2026-07-29 19:00–20:00 JST:** changed-input review r2 returned pass with
+   zero findings; final clean Phase 1 passed; the first protected CI run
+   exposed and the changed exact-head run closed the credential-free native
+   client assumption; PR #412 merged as `0fdfd97`; Local and ten eligible
+   remotes synchronized; four one-shot Mac refreshes were submitted; guarded
+   cleanup removed all declared task roots. At 20:00, main and closeout were
+   clean and equal to their remotes, ruleset `19127355` read active/zero/
+   strict-`portable-phase1`, PR #412 remained merged, 13 declared cleanup
+   paths remained absent, Linux was 7/8 ready with maintained ABQ the sole
+   failure, and all four Mac route pairs passed.
 
 ## Residual risks
 
