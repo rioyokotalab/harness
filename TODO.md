@@ -111,7 +111,8 @@ Next free ID: T-344.
 
 ### T-344 — Recover Swallow and automate blocked-root cutover
 
-**Phase:** executing after value-free diagnosis; no recovery write has run.
+**Phase:** live Swallow recovery complete; reusable automatic recovery
+implementation remains.
 
 At 2026-07-30 07:06 JST the owner reported that Local tmux Swallow was
 blocked again and requested both immediate repair and automatic recovery for
@@ -328,6 +329,33 @@ start tick, parent/window/root, every accepted/peer/app-server/client identity,
 and send one `SIGTERM` only to old real TUI `3086168`. Never send a second
 signal; require old launcher/watcher/supervisor/window absence and preserve its
 blocked saved root.
+
+**Live recovery acceptance:** the final identity gate matched old TUI
+`3086168` at start tick `103604477`, parent launcher `3086166`, old window
+`@92/4`, old root argv, all peers, the app server, and the Harness-selected
+client. Exactly one `SIGTERM` was sent only to that old TUI. The old TUI,
+launcher, watcher, supervisor, pane, and window exited without a second signal;
+its runtime records `stopped/operator-signal`, its watcher records
+`stopped/operator-stop` with zero recoveries and one prior rollback, and its
+saved root remains preserved as `swallow-blocked-20260730` in `systemError`.
+
+Final topology is exactly
+`@87/0:harness,@88/1:students,@93/2:swallow`, with sole client `2132268`
+still selecting Harness `@87`. Accepted Swallow root
+`019fafef-5ebf-72f1-b1ce-2444e7570dc1` is `idle`, canonically named
+`swallow`, and runs in attempt-zero runtime `swallow-recovery-t344`; its
+watcher remains idle with zero recoveries and zero rollbacks. A fresh
+observe-only monitor pass reports all three canonical windows healthy. No
+rejected prompt was reconstructed or replayed, no pane/transcript content was
+read, no app-server restart occurred, no peer was interrupted, and no saved
+root was archived or deleted.
+
+**Next action:** implement and validate the separate fail-closed automatic
+recovery trigger in this worktree. Keep the topology monitor itself
+observe-only; it may publish exact unsafe-tail evidence, while a distinct
+durably deduplicated controller path requests recovery from an idle healthy
+Harness controller. Never inject into or interrupt an active controller, and
+never retry an acknowledged or ambiguous request.
 
 ### T-343 — Harden durable Codex-to-Claude handoff
 
