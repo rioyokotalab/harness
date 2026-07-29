@@ -47,6 +47,15 @@
 - Guarded cleanup removed ten task-owned evidence/sandbox roots (4400 entries,
   86131602 bytes), verified protected anchors unchanged, and left no declared
   target. Three exact task files were unlinked after identity checks.
+- At the 08:00 material cutoff, protected main had advanced cleanly to
+  `f533310` through unrelated T-344 work. The closeout history was rebased
+  onto that exact base without conflict, and a fresh `tests/test-phase1.sh`
+  passed every focused and aggregate gate with only the declared native MPI
+  environment skip.
+- Closeout PR #415 passed required `portable-phase1` run `30498317061`, job
+  `90732137097`, on exact head `6a18f72` and merged by rebase as
+  `5f7ce2e`. Final case-8, Cowork-state, and through-deadline evidence remain
+  on the distinct final-acceptance follow-up.
 
 ## Outcome
 
