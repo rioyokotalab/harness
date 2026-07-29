@@ -36,10 +36,12 @@ run_fixture() {
 }
 
 HARNESS_MONITOR_PATH="$ROOT/libexec/harness-tmux-codex-monitor" \
+HARNESS_MONITOR_ROOT="$ROOT" \
     python3 -B - <<'PY'
 import importlib.machinery
 import os
 
+os.environ["HARNESS_ROOT"] = os.environ["HARNESS_MONITOR_ROOT"]
 module = importlib.machinery.SourceFileLoader(
     "tmux_monitor_test", os.environ["HARNESS_MONITOR_PATH"]
 ).load_module()
@@ -86,6 +88,78 @@ assert module.mapping_snapshot(mapping, health) == {
         "app_server_start": "server-start",
     },
 }
+
+def process(pid):
+    values = {
+        10: {
+            "pid": 10,
+            "parent": 1,
+            "start": "supervisor-start",
+            "comm": "harness-codex-r",
+            "argv": [],
+            "uid": os.getuid(),
+        },
+        12: {
+            "pid": 12,
+            "parent": 10,
+            "start": "watcher-start",
+            "comm": "python3",
+            "argv": [],
+            "uid": os.getuid(),
+        },
+        99: {
+            "pid": 99,
+            "parent": 1,
+            "start": "app-server-start",
+            "comm": "codex",
+            "argv": [],
+            "uid": os.getuid(),
+        },
+    }
+    return values.get(pid)
+
+module.process_info = process
+module.parse_supervisor = lambda _info: {
+    "runtime": "students-t338",
+    "thread": "thread-students",
+    "start": "supervisor-start",
+}
+module.resilient_status = lambda _runtime: (
+    {"phase": "running", "owner_pid": "10"},
+    {
+        "phase": "watching",
+        "owner_pid": "12",
+        "thread": "thread-students",
+    },
+)
+module.descendants = lambda _pid: [
+    {
+        "pid": 11,
+        "parent": 10,
+        "start": "tui-start",
+        "comm": "codex",
+        "argv": [],
+        "uid": os.getuid(),
+    }
+]
+module.reciprocal_socket = lambda pid: 99 if pid == 11 else None
+codex_0146 = module.collect_health(
+    [
+        {
+            "index": 1,
+            "window_id": "@fixture",
+            "name": "students",
+            "panes": 1,
+            "pane_id": "%fixture",
+            "pane_pid": 10,
+            "path": os.environ["HARNESS_MONITOR_ROOT"],
+            "dead": False,
+        }
+    ]
+)
+assert codex_0146["students"]["state"] == "healthy"
+assert codex_0146["students"]["tui"]["pid"] == 11
+assert codex_0146["students"]["app_server_pid"] == 99
 PY
 
 cat >"$TEST_ROOT/healthy.json" <<'EOF'

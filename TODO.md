@@ -300,6 +300,75 @@ read-only reconciliation before the next decision.
   only that new-code process chain; retire the old provisional leaf afterward
   with one exact signal under the reusable bridge-first protocol.
 
+**Merged-code bridge and LIFO monitor checkpoint:**
+
+- PR #404 exact head `568a105c4c060ddff5157318c39fd05ddabe96c6`
+  passed protected `portable-phase1` in 2m28s and squash merged as
+  `bad83d30a54c3f5195226fd3767526966f32ad3d`. Local `main` advanced to that
+  exact merge.
+- One distinct merged-code bridge was acknowledged as
+  `@87/0:harness-next`, runtime `harness-next-t338`, supervisor
+  `1612366/102448136`, watcher `1612423/102448146`, and TUI
+  `1612939/102448303`. One controlled exact watcher-leaf `SIGTERM` was sent
+  only to PID `1612423`; it was not retried. Replacement watcher
+  `1620577/102456369` became ready while the supervisor, TUI, root, and
+  app-server socket remained unchanged, proving the live correction.
+- Rename-only promotion changed that exact session/window to canonical
+  `harness/@87/0:harness`. One exact `SIGTERM` then retired only old
+  provisional TUI `1305917`; its old supervisor/watcher/session exited, and
+  its held `.nfs` script inode disappeared. No second signal ran.
+- One distinct Students launch was acknowledged at
+  `@88/1:students`, runtime `students-t338`, supervisor `1638028`, watcher
+  `1638105`, and exact root
+  `019f7fea-4f00-7681-910d-81ae99a77143`. Its real TUI is
+  `1638302/102482673` and has a reciprocal socket to unchanged app server
+  `2852569/83381863`.
+- During this launch, mutable native Codex advanced from 0.145.0 to 0.146.0.
+  The new binary's process name is `codex`, not `codex.real`. The periodic
+  monitor therefore falsely reports Students `tui-absent` even though exact
+  executable, process, root, watcher, and reciprocal-socket evidence is live.
+  Do not retry the acknowledged Students launch.
+- Correct the monitor to consider only `codex` or `codex.real` descendant
+  candidates that have a reciprocal app-server socket, and accept the same two
+  names for that validated peer. Add a focused 0.146.0 process-name fixture,
+  publish through protected CI, then restart only the exact periodic monitor
+  on merged code before continuing Swallow.
+- `harness codex-arg0-wrapper --doctor` now reports not installed cleanly and
+  its plan reports the 0.146.0 standalone release as unwrapped. No wrapper
+  apply or rollback is authorized or required for this tmux restoration;
+  preserve the running processes and defer that separate live-launcher change.
+
+**0.146.0 monitor implementation checkpoint:**
+
+- The focused monitor fixture first failed on a synthetic `comm=codex` TUI and
+  app-server peer, reproducing the live false negative.
+- Health collection now considers only descendant candidates whose process
+  name is `codex` or `codex.real` and which have a reciprocal Unix socket.
+  It requires exactly one such candidate and accepts the same two names only
+  for the current-user-owned reciprocal peer; multiple candidates fail closed
+  as `tui-ambiguous`.
+- The focused test passes. One live one-shot read using the new code reports
+  Harness and Students healthy and only Swallow missing, with no order or
+  repair action. No process or app-server state changed.
+- A syntax check generated exact two-entry
+  `libexec/__pycache__`; guarded-delete manifest
+  `/tmp/t338-pycache.manifest` validated and removed only that 29,933-byte
+  directory with protected anchors unchanged. The reviewed mode-0600 manifest
+  was exact-unlinked and both paths are absent.
+- The first complete-suite attempt exposed that the new in-process fixture
+  inherited `HARNESS_ROOT` only in an ordinary shell. The initial correction
+  passed the focused test but a second complete run proved `collect_health`
+  itself still needed that variable exported inside the fixture; the same
+  uncommitted correction also made clean-tree-gated tmux-config and terminfo
+  tests refuse as designed. The fixture now explicitly exports its declared
+  monitor root before loading the module. Commit this correction to restore a
+  clean tree, then rerun the focused and complete suites.
+- After the fixture correction was committed, the focused monitor test and
+  complete `tests/test-phase1.sh` passed from a clean tree with only the
+  declared native MPI environment skip. The two earlier full-suite failures
+  were test-environment/clean-tree refusals and did not alter live tmux,
+  process, app-server, or saved-root state.
+
 ### T-336 — Benchmark current Codex and Claude Harness development
 
 **Phase:** complete.
