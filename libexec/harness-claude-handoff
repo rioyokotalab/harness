@@ -506,6 +506,11 @@ def verify_evidence(args):
             or baseline["exit_status"] != 0
         ):
             fail("execution evidence requires the baseline command record")
+        expected_baseline_output = hashlib.sha256(
+            (packet["baseline_commit"] + "\n").encode("utf-8")
+        ).hexdigest()
+        if baseline["output_sha256"] != expected_baseline_output:
+            fail("baseline output digest mismatch")
         if not args.driver_reproduction:
             fail("execution evidence requires driver reproduction")
         reproduction = read_owned_json(args.driver_reproduction, "driver reproduction")

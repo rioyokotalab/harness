@@ -212,9 +212,12 @@ focused suite and guarded-delete tests; the native MPI smoke remained the
 suite's declared environment-specific skip.
 
 **Next action:** score the first seven benchmark cases from exact evidence,
-obtain one final read-only Claude diff critique through the handoff contract,
-and process any demonstrated issue LIFO before the final clean full-suite run
-and protected publication.
+then re-run the changed final read-only critique with a distinct identity.
+Review r1 returned three concrete findings: baseline output was not derived
+from the packet commit, three refusal paths lacked negative fixtures, and the
+retry schema omitted enforced run-ID patterns. All are now corrected and the
+expanded handoff suite passes. After r2, process any remaining demonstrated
+issue LIFO before the final clean full-suite run and protected publication.
 
 ### T-342 — Adopt cowork benchmark discipline and Claude Fable defaults
 

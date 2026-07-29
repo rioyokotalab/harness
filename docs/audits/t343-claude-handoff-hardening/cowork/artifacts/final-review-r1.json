@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "run_id": "t343-final-review-r1",
+  "client_version": "2.1.220 (Claude Code)",
+  "requested_model": "fable",
+  "effort": "high",
+  "source_revision": "213c8f72dad32d4c2c3400a7da9311c07f71f6a1",
+  "native_result_sha256": "c7fcdc21e07e2d5d974915595776ba708c46410da8e6110cd9320bbc6ad6bd2e",
+  "evidence_sha256": "891edaeb0449165f59f225d330ff58641b24df465a42ebdbb9e50de7dfdfad64",
+  "stage_sha256": "e3f946d97710ffebcf93e9418a3adb06457da5e08dfd01ac982e68592646e4c1",
+  "is_error": false,
+  "subtype": "success",
+  "num_turns": 30,
+  "permission_denials": [],
+  "canonical_models": [
+    "claude-fable-5",
+    "claude-haiku-4-5"
+  ],
+  "review": {
+    "verdict": "findings",
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "nonblocking",
+        "path": "libexec/harness-claude-handoff",
+        "summary": "The mandatory baseline execution record's output digest is never bound to the packet's expected baseline commit, so a fabricated output_sha256 passes verification.",
+        "evidence": "libexec/harness-claude-handoff:502-508 checks only that the 'baseline' record has command ['git','rev-parse','HEAD'] and exit_status 0; the output_sha256 is validated only as 64 hex characters. tests/test-claude-handoff.sh:196,323-343 uses the placeholder digest 'ddd…d' for that record and both verify-evidence and driver reproduction pass (asserted at lines 354-356), because validate_reproduction (lines 446-459) also only compares JSON fields without recomputing anything.",
+        "recommendation": "Define the execution-record output encoding convention (for example SHA-256 over the exact stdout bytes 'COMMIT\\n') and have verify-evidence require the baseline record's output_sha256 to equal the digest derived from the expected baseline commit; otherwise document explicitly that this binding rests on driver reproduction honesty."
+      },
+      {
+        "id": "F2",
+        "severity": "nonblocking",
+        "path": "tests/test-claude-handoff.sh",
+        "summary": "Three validator refusal paths in verify-evidence have no negative test coverage: read-manifest mismatch, recovered-field mismatch, and stage-inputs/source_files set mismatch.",
+        "evidence": "tests/test-claude-handoff.sh exercises prompt receipt mismatch (line 270), forbidden execution records (line 276), stale staged bytes (line 358), missing reproduction (line 364), and the broken-sandbox case (line 385), but no assertion triggers 'read manifest does not match the sealed stage' (libexec/harness-claude-handoff:324), 'recovered handoff does not match the packet' (line 443), or 'stage inputs differ from packet source files' (line 373).",
+        "recommendation": "Add one focused negative assertion per untested refusal path (drop or alter one read-manifest row, mutate one recovered field, and add or remove one stage input) so regressions in these gates are caught by the focused suite."
+      },
+      {
+        "id": "F3",
+        "severity": "nonblocking",
+        "path": "docs/schemas/claude-handoff-retry.schema.json",
+        "summary": "The public retry schema is laxer than the validator: previous_run_id and next_run_id are unconstrained strings while the validator enforces the run-identity pattern.",
+        "evidence": "docs/schemas/claude-handoff-retry.schema.json:23-24 declares {'type': 'string'} with no pattern, but libexec/harness-claude-handoff:539-543 rejects run identities not matching ^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$; the packet and evidence schemas both carry that pattern for run_id, so the retry schema under-documents the accepted contract (safe direction, validator is stricter).",
+        "recommendation": "Add the same run-identity pattern to previous_run_id and next_run_id in the public retry schema so the documented contract matches the enforced one."
+      }
+    ],
+    "residual_risks": [
+      "Limit of evidence: this review ran under Read/Grep/Glob only, so no SHA-256 digest or git query was independently recomputed; stage.json input digests, the frozen retest result digest 224eb5d8…, staged-versus-live source freshness, and the packet baseline 213c8f72… being the repository HEAD were consistency-checked across records, not rehashed. Driver-side verify-evidence remains the binding check.",
+      "Limit of evidence: an echoed read manifest proves receipt of the sealed digest map, not complete byte-level reading of every source; complete-read compliance is self-reported by the copilot, an accepted contract limitation recorded in docs/audits/t343-claude-handoff-hardening/cowork/execution.md.",
+      "Limit of evidence: TODO.md (391 KB) exceeds the read window; the header, T-343, and adjacent T-342/T-341 sections were read in full and the remainder was searched for T-343/handoff/Fable references only, finding no contradictions.",
+      "Limit of evidence: execution-class trust ultimately rests on the driver honestly authoring the reproduction receipt after a real re-run; the validator is a consistency gate, not an executor, so it cannot detect a colluding or careless driver.",
+      "Potential future defect (not demonstrated): tests/test-claude-handoff.sh:53 uses ast.parse feature_version=(3, 6); newer CPython releases have been raising the minimum supported feature_version, so the 3.6 syntax gate's behavior on future interpreters is unverified here.",
+      "Implementation state, not a defect: acceptance is not yet claimable — benchmark scoring of the eight cases, import of this final critique, the final clean full-suite repetition, protected publication, and live ruleset/fleet readback remain pending per validation.md and the TODO.md next action."
+    ]
+  }
+}

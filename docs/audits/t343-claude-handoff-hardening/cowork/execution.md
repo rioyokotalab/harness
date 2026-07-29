@@ -181,6 +181,44 @@ digests and the dirty status must remain unchanged. The focused test passes,
 closing the benchmark's repository-local policy and dirty-work preservation
 assertion without touching a live hosting setting.
 
+### Iteration 5 — final read-only reciprocal critique
+
+- Hypothesis: a fresh Fable/high process reviewing the complete implementation
+  bundle under the new packet will either produce no concrete defect or expose
+  a falsifiable issue before publication.
+- Before identity: clean pushed commit
+  `213c8f72dad32d4c2c3400a7da9311c07f71f6a1`; Cowork phase `validating`;
+  read-only run `t343-final-review-r1`; 17 source files plus the fixed packet
+  and prompt.
+- Exact surface: one native Claude Code 2.1.220 process, Fable/high,
+  Read/Grep/Glob only, `dontAsk`, project settings, no session persistence,
+  OS read-only root, and a closed review/evidence output schema.
+- Observed result: success after 30 turns, no permission denials, canonical
+  Fable plus the documented internal Haiku auxiliary model. The unchanged
+  packet evidence passed with 19 exact reads and zero execution records.
+  Native result SHA-256 is
+  `c7fcdc21e07e2d5d974915595776ba708c46410da8e6110cd9320bbc6ad6bd2e`;
+  extracted evidence SHA-256 is
+  `891edaeb0449165f59f225d330ff58641b24df465a42ebdbb9e50de7dfdfad64`.
+- Findings: (1) the required baseline record accepted a fabricated output
+  digest when the reproduction repeated it; (2) three explicit refusal paths
+  lacked focused negative fixtures; and (3) the retry schema omitted the run
+  identity pattern enforced by the validator.
+- Decision: retain the public-safe review at
+  `cowork/artifacts/final-review-r1.json`, convert all three findings to failing
+  checks, and resolve them in repository-local LIFO order.
+
+The retry-schema check first failed on `previous_run_id`; adding the validator's
+exact pattern to both retry identities advanced the fixture. All three new
+refusal fixtures then passed against existing production behavior: altered read
+manifest, altered recovered next action, and missing staged source input. The
+remaining test failed because an evidence record and reproduction containing
+the same fabricated baseline digest were accepted. Bind the required baseline
+record to SHA-256 of the exact UTF-8 bytes `BASELINE_COMMIT\n`, document that
+encoding, and use the real derived digest in the positive fixture. The
+unchanged negative now refuses with `baseline output digest mismatch`, and the
+full handoff suite passes.
+
 ## Deviations
 
 None. The owner `go` matches the frozen plan. No live system, sibling
