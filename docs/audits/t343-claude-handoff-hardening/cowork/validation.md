@@ -14,13 +14,16 @@
   `route_normalization` hidden boundary.
 - `tests/test-development-evaluation.sh`,
   `tests/test-t343-fable-retest.sh`, and `git diff --check` pass.
+- The first clean `tests/test-phase1.sh` run passed all focused and aggregate
+  gates. Its native MPI smoke emitted the suite's declared skip because this
+  checkout is not a declared MPI execution environment.
 
 ## Outcome
 
-Partial validation is green for completed implementation. Full benchmark
-scoring, the complete focused set, `tests/test-phase1.sh`, final reciprocal
-critique, protected CI/publication, rollout readback, cleanup, and the exact
-16-slice handoff remain pending.
+Partial validation is green for completed implementation and the first clean
+full-suite run. Full benchmark scoring, final reciprocal critique, final clean
+full-suite repetition, protected CI/publication, rollout readback, cleanup,
+and the exact 16-slice handoff remain pending.
 
 ## Residual risks
 
