@@ -111,8 +111,9 @@ Next free ID: T-346.
 
 ### T-345 — Dedicated Codex recovery helper and phone/tmux mirror
 
-**Phase:** ready-for-go; all decisions are frozen, and implementation and live
-activation have not started.
+**Phase:** executing after explicit owner `go`; all decisions are frozen.
+Implementation is starting in the isolated task worktree, while live activation
+remains deferred until publication and exact preflight.
 
 The owner requested a dedicated `monitor:2 helper` recovery lane that does not
 depend on Harness, Students, or Swallow siblings being idle, automatically
@@ -173,10 +174,16 @@ rejected prompt. An acknowledged or ambiguous continuation is never resent.
 worktrees, all earlier recovery worktrees, the live root checkout, all tmux
 windows/processes, saved roots, and remote control until explicit `go`.
 
-**Next action:** wait for a separate explicit owner `go`. Then reconstruct the
-frozen plan from disk, set T-345 to `executing`, and begin implementation.
-Until `go`, do not publish target code, activate `monitor:2`, launch Codex,
-change remote control, or archive a root.
+**Execution authorization:** the owner supplied exact `go` after D-001,
+D-002, and the post-promotion continuation contract were published at
+`ae1569db92964dea4485b0e21101905d27f784f8`. This authorizes only the frozen
+plan.
+
+**Next action:** implement the private helper dispatcher, event queue,
+ephemeral-worker launcher, continuation receipt, and monitor producer in the
+isolated task worktree. Do not activate `monitor:2`, launch live Codex, change
+remote control, or archive a root before protected publication and exact live
+preflight.
 
 ### T-344 — Recover Swallow and automate blocked-root cutover
 

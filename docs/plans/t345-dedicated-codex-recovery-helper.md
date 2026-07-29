@@ -1,6 +1,6 @@
 # T-345 dedicated Codex recovery helper
 
-**Phase:** ready-for-go
+**Phase:** executing
 **Driver:** Local Codex
 **Updated:** 2026-07-30 JST
 **Branch:** `codex/t345-recovery-helper`
@@ -380,7 +380,7 @@ phone/tmux mirror.
 
 ## Next action
 
-Wait for a separate explicit owner `go`. Then reconstruct this frozen plan and
-selected decisions from disk, set phase `executing`, and begin implementation
-at execution step 2. Until `go`, do not implement, publish target code, create
-`monitor:2`, launch a worker, change remote-control state, or archive a root.
+The owner supplied explicit `go`. Implement execution steps 3–6 in the isolated
+task worktree, beginning with the private dispatcher/event state and preserving
+the live tmux, saved-root, and remote-control state until publication and
+activation preflight.
