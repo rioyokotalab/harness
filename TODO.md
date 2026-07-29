@@ -285,6 +285,19 @@ old exact tmux window away from canonical index 2, stage accepted `@93` into
 index 2 without changing its pane/process chain, then perform rename-only
 promotion and retire only the old exact TUI leaf.
 
+**Blocked-root name acknowledgement:** under the shared lock, all four exact
+watchers were paused and one same-connection read-before/write/read-after
+transaction changed only old root
+`019fa5a1-7fff-7e92-8e2a-2586c684747f` from `swallow` to
+`swallow-blocked-20260730`. It remains `systemError` at its unchanged
+canonical cwd/path; stderr is empty. The request must not be retried. Every
+watcher resumed and both live chains remain preserved.
+
+**Next action:** publish this acknowledgement, then transfer exact accepted
+r2 name `swallow-recovery-20260730` to canonical `swallow` through the same
+single-connection gate. Do not alter tmux until both root names have exact
+independent readback.
+
 ### T-343 — Harden durable Codex-to-Claude handoff
 
 **Phase:** validating after implementation and the first clean full-suite pass.
