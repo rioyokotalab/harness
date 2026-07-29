@@ -194,6 +194,16 @@ focused and complete tests, publish through protected CI without changing
 ruleset approvals, and activate only the exact merged controller after a
 final live preflight.
 
+**Pre-write gate correction:** the first shared-app-server transaction exited
+at its initial Git assertion because the controller manually expanded short
+checkpoint `8583fd9` incorrectly. Authoritative Git resolves it to
+`8583fd9b3bef789f269557b8dedda0a56b1fb93e`. Result and stderr captures
+remain empty; all three watcher processes are running, their receipts are
+unchanged, topology/client/app-server state is unchanged, and no app-server
+connection or write was attempted. Retry is safe after publishing this
+failure; compare authoritative `HEAD` directly with its upstream instead of
+embedding a manually expanded object ID.
+
 ### T-343 — Harden durable Codex-to-Claude handoff
 
 **Phase:** validating after implementation and the first clean full-suite pass.
