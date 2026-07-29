@@ -169,6 +169,15 @@ non-retryable: preserve both chains and checkpoint exact state. No step reads
 or replays either root's content, starts a project task, or changes phone,
 Slack, credential, connector, or unrelated repository state.
 
+**Retry-safe preflight refusal:** the first lock-serialized transaction exited
+before any tmux/process write because its task-head gate used an incorrect
+manual expansion of abbreviated commit `0b68e60`. Exact task head and upstream
+are `0b68e60c86508f6cea771b9bda6608fe487e5764`. Readback proves unchanged
+`@91/2:swallow`, unchanged old chain and attached Harness client, absent
+runtime `swallow-phone-t340`, and a still-healthy monitor. No launch request
+was sent or acknowledged, so one corrected retry after this checkpoint is
+safe.
+
 ### T-339 — Consolidate Local monitor tmux sessions
 
 **Phase:** complete after this closeout reaches protected `main`.
