@@ -169,6 +169,15 @@ expansion of abbreviated commit `c5f2435`. Exact task head and upstream are
 sent, and readback remains unchanged, so one corrected retry after publishing
 this checkpoint is safe.
 
+The corrected transaction also exited before the archive request because the
+resilient Swallow supervisor replaced watcher `3086056/103604365` with
+`3235064/103782314` after the frozen checkpoint. The supervisor, launcher,
+TUI, root, tmux topology, client selection, monitor, and both unarchived flags
+remain unchanged; the replacement watcher reports `thread-idle` with zero
+recoveries and rollbacks. No app-server write was sent in either refusal.
+Publish this drift checkpoint, freeze the replacement identity, and perform
+only one retry.
+
 ### T-340 — Map phone-visible Swallow root into Local tmux
 
 **Phase:** complete after this closeout reaches protected `main`.
