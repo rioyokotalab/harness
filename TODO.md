@@ -397,13 +397,19 @@ topology/health/client read immediately before writing the event reservation,
 refusing any event or controller-pane identity drift. Focused tests cover these
 corrections; the complete suite must be rerun after this review checkpoint.
 
+The post-review rerun of `tests/test-phase1.sh` passes completely, again with
+only the declared native-MPI environment skip. Exact head
+`7ea4b27282589d0d267ba774edd2f9ec4f4f0e4e` is clean, pushed, based directly
+on current `origin/main` `0fdfd973c8c2e349bcdf74ee2e522fece65cca69`,
+and has authenticated Git transport plus separately verified hosting API
+availability.
+
 Generated validation cache `/tmp/harness-t344-swallow-auto-recovery/libexec/__pycache__`
 was removed through guarded manifest `/tmp/t344-pycache.manifest`; the tool
 verified the target absent and protected anchors unchanged.
 
-**Next action:** publish the post-review corrections and rerun the complete
-phase-one suite. Then merge through protected CI without changing the
-owner-selected zero-approval policy. Activate
+**Next action:** open and merge the exact-head task pull request through
+protected CI without changing the owner-selected zero-approval policy. Activate
 `--auto-recover` only after merged-code validation and only while the current
 Swallow remains healthy; do not inject into the active parent Harness task.
 
