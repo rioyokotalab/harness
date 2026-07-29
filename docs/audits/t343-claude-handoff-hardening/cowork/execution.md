@@ -269,6 +269,33 @@ Normal local validation, a simulated credential-free
 counted; it does not silently satisfy a native model run or alter the retained
 scored evidence.
 
+The corrected required check run `30442745725`, job `90545672626`, passed in
+2m30s on exact PR head `3b8857b`. PR #412 merged by rebase at
+2026-07-29 19:15 JST as protected main
+`0fdfd973c8c2e349bcdf74ee2e522fece65cca69`. Post-merge ruleset
+`19127355` readback remained active with owner/admin bypass, strict required
+`portable-phase1`, review-thread resolution, and owner-selected zero required
+approvals.
+
+Local main fast-forwarded cleanly. Guarded fleet-sync plan and apply advanced
+all ten eligible clean remote checkouts (`ab`, `ab2`, `ri`, `al`, `rc`, `t4`,
+`aist`, `home`, `office`, and `riken`) from `333d67b` to `0fdfd97`; every
+receipt reported target HEAD and origin equal with transfer artifact absent.
+ABQ was explicitly excluded under the official active System H stop.
+
+Using the pane-blind `remote-agent-communication` transport, exactly one
+merge-specific context refresh returned `status=submitted` for each detached
+managed Mac session: Aist, Home, Office, and Riken. No pane content was read,
+no submission was retried, and the private common input was exact-unlinked
+after all four acknowledgements.
+
+Guarded cleanup manifest `/tmp/t343-cleanup.manifest` validated ten task-owned
+roots totaling 4400 entries and 86131602 bytes. Apply deleted only those roots
+and verified protected anchors unchanged and targets absent. The mode-0600
+manifest plus two remaining current-user-owned single-link task files were
+then exact-unlinked. The feature worktree remains intentionally retained until
+the closeout branch has no further use.
+
 ## Deviations
 
 None. The owner `go` matches the frozen plan. No live system, sibling

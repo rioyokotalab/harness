@@ -582,10 +582,18 @@ now permits an explicit, reported client-version skip only when
 `HARNESS_PORTABLE_CI=1`; normal local use retains exact version enforcement.
 Normal and simulated portable focused checks pass.
 
-**Next action:** push the verified portability correction, wait for strict CI,
-merge only that exact head, read back policy, synchronize only clean reachable
-checkouts with ABQ excluded, complete required safe Mac context refreshes,
-guarded-clean task residue, and finish case 8 plus the exact 16-slice handoff.
+The corrected exact-head required check passed and PR #412 merged by rebase as
+main `0fdfd973c8c2e349bcdf74ee2e522fece65cca69`. Post-merge policy
+readback preserves strict `portable-phase1`, owner/admin bypass, and required
+approvals `0`. Local and all ten eligible clean remotes reached that commit;
+ABQ was excluded under active maintenance. One pane-blind context refresh was
+submitted to each managed Mac. Guarded cleanup removed all ten declared
+task-owned sandbox/evidence roots and three exact task files.
+
+**Next action:** maintain the frozen hourly evidence cadence through 09:00 JST,
+perform read-only policy/repository/fleet checks without probing maintained
+ABQ, process any demonstrated regression LIFO, then complete case 8, the
+Cowork state, exact 16-slice durable summary, closeout PR, and final handoff.
 
 ### T-342 — Adopt cowork benchmark discipline and Claude Fable defaults
 
