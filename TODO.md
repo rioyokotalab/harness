@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-339.
+Next free ID: T-340.
 
 ## Current state
 
@@ -108,6 +108,55 @@ Next free ID: T-339.
    successors recorded below.
 
 ## Active tasks
+
+### T-339 — Consolidate Local monitor tmux sessions
+
+**Phase:** complete after this closeout reaches protected `main`.
+
+At 2026-07-29 13:35 JST the owner requested that the two detached Local
+infrastructure monitors be presented as one tmux session named `monitor`, with
+windows `0:tunnel` and `1:codex`. This is a container-only topology change:
+preserve both existing panes and process chains without restart, signal, pane
+read, input, or command replay.
+
+Preflight proves target session `monitor` is absent. The exact detached
+sources are session `$7` / window `@40` / pane `%40` / owner
+`2135569`, currently `harness-connection-monitor:0:monitor`, and session `$16`
+/ window `@90` / pane `%90` / owner `2340081`, currently
+`harness-tmux-codex-monitor:0:python3`. Both have one live pane rooted at
+`/home/rioyokota/harness`. The only attached client is PID `2963496` on the
+unaffected canonical `harness` session. The Codex monitor receipt is healthy
+for all three managed windows.
+
+**Frozen execution:**
+
+1. Rename exact session `$7` to `monitor` and exact window `@40` to `tunnel`.
+2. Move exact window `@90` to free target `monitor:1`, allowing its now-empty
+   source session to disappear, then rename only that window to `codex`.
+3. Require detached exact topology `monitor:0:tunnel/@40/%40/2135569` and
+   `monitor:1:codex/@90/%90/2340081`; unchanged process starts; absent old
+   source names; unchanged attached client; two fresh healthy Codex-monitor
+   receipts; coherent Git; and canonical fleet health.
+
+**Completion checkpoint:**
+
+- Rename/move acknowledgement was unambiguous. Exact session `$7` is now
+  detached `monitor` with one-pane windows
+  `@40/0:tunnel/%40/2135569` and `@90/1:codex/%90/2340081`; both old source
+  session names are absent.
+- Tunnel-monitor owner `2135569` retains its 2026-07-23 01:38:44 JST start,
+  and Codex-monitor owner `2340081` retains its 2026-07-29 11:10:50 JST start.
+  No monitor process or pane was restarted.
+- Fresh receipts at epochs `1785299856` and `1785299887` both report
+  `phase=healthy healthy=3 order_action=none repair_action=none` from unchanged
+  owner `2340081`.
+- Attached client `2963496` remains on the unaffected canonical `harness`
+  session. No pane read/input, process signal, command replay, Codex or tunnel
+  lifecycle action, or unrelated tmux mutation occurred.
+
+**Next action:** validate diff hygiene and canonical fleet health, publish this
+ledger closeout through protected CI, merge normally, and fast-forward Local
+`main` without changing the accepted live topology.
 
 ### T-338 — Restore Local's absent canonical tmux session
 
