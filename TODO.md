@@ -111,8 +111,9 @@ Next free ID: T-343.
 
 ### T-342 — Adopt cowork benchmark discipline and Claude Fable defaults
 
-**Phase:** implementation validated in the detached T-342 worktree; publish
-through protected CI from a clean candidate.
+**Phase:** implementation and native default-model validation complete on
+`codex/t342-claude-remediation`; publish through protected CI from commit
+`4d21c8d` plus the final cowork evidence commit.
 
 The owner's duration-window incident showed a session narrating unmeasured
 progress instead of iterating against a frozen benchmark. Students T-035
@@ -158,7 +159,23 @@ reports and the four Claude failure capsules — `code-coherence` observations
 1, 2, and 3 and `ci-gate-preserve` observation 2 — remain byte-stable and are
 not rewritten or recombined.
 
-**Next action:** publish these changes through protected CI, then, as a
+Validation:
+
+- Cowork, agent-config and Claude-takeover focused suites passed after driver
+  review; the complete clean-candidate `tests/test-phase1.sh` gate passed.
+- A native Claude Code 2.1.220 launch used project settings only, no CLI model
+  or effort override, and `--tools ""`; it returned
+  `PROJECT_DEFAULT_OK`, `is_error=false`, one turn, and canonical
+  `claude-fable-5` model usage. The mode-0600 raw result was exact-unlinked
+  after recording the value-free receipt.
+- The complete schema-2 predecessor cowork exchange, benchmark, reciprocal
+  receipts, implementation deviations and validation are retained under
+  `docs/audits/t342-claude-remediation/cowork/`.
+- Students target commit `8c04f63` on
+  `codex/t035-claude-boundaries` independently passed 17 focused worker tests
+  and the complete 174-test offline gate.
+
+**Next action:** publish both task branches through protected CI, then, as a
 separate future distinct run identity, retest only the four frozen T-336
 Claude failure capsules with Claude on `fable` at high effort under the
 unchanged grader and containment contract, recording the outcome as a new
