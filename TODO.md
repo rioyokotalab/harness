@@ -312,6 +312,23 @@ index 2 without changing either pane/process chain, rename old `@92`
 Checkpoint that reversible topology before signaling only old exact TUI leaf
 `3086168`.
 
+**Tmux promotion acknowledgement:** exact old `@92` staged to index 4,
+accepted `@93` staged to canonical index 2, old renamed
+`swallow-blocked`, and accepted bridge rename-only promoted to `swallow`.
+Both panes, roots, runtimes, and complete process chains retained their exact
+identities; no relaunch or prompt ran. Native staging changed the attached
+session's selected window from Harness `@87` to accepted `@93` despite the
+preflight. One exact client-targeted correction immediately restored sole
+client `2132268` on `/dev/pts/25` to original Harness `@87`; postcheck passed.
+
+The reversible topology is now
+`@87/0:harness,@88/1:students,@93/2:swallow,@92/4:swallow-blocked`.
+**Next action:** publish this topology. Then revalidate the old leaf's PID,
+start tick, parent/window/root, every accepted/peer/app-server/client identity,
+and send one `SIGTERM` only to old real TUI `3086168`. Never send a second
+signal; require old launcher/watcher/supervisor/window absence and preserve its
+blocked saved root.
+
 ### T-343 — Harden durable Codex-to-Claude handoff
 
 **Phase:** validating after implementation and the first clean full-suite pass.
