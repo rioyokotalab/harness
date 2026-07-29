@@ -231,6 +231,23 @@ descriptor-tighten its validated current-user, single-link `0664` rollout to
 require SQLite granular-policy readback plus unchanged root identity, and
 continue naming/bridge launch only after checkpointing the acknowledgement.
 
+**r2 persistence and settings boundary:** a no-follow descriptor transaction
+revalidated r2's current-user regular single-link rollout and changed only its
+mode from `0664` to `0600`, preserving device `197`, inode `241871989`, and
+content size `468766`. One schema-valid `thread/settings/update` was then sent
+under the watcher-quiesced shared lock, but returned the non-retryable
+ambiguous exit with empty result/stderr. Independent SQLite readback remains
+unchanged at `approval_mode=never`, disabled sandbox, Sol/high, and exact cwd;
+all three watchers resumed unchanged. Never repeat that settings request.
+
+Proceed only because the managed provisional TUI launch itself supplies the
+repository's exact granular approval override and disabled sandbox as
+immutable argv, so effective live policy does not depend on the stale
+direct-exec metadata. Require that exact argv plus watcher/root/socket
+acceptance before promotion. Name r2 provisionally through the independently
+supported `thread/name/set` method, then launch it once as a distinct bridge.
+If naming or launch acknowledgement is ambiguous, stop and preserve state.
+
 ### T-343 — Harden durable Codex-to-Claude handoff
 
 **Phase:** validating after implementation and the first clean full-suite pass.
