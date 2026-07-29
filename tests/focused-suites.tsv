@@ -52,6 +52,7 @@ tests/test-onboard-mirrored-node.sh|onboarding focused suite
 tests/test-onboard-external-user.sh|external user onboarding focused suite
 tests/test-client-comparison.sh|matched Codex and Claude comparison declaration
 tests/test-development-evaluation.sh|current Harness development benchmark focused suite
+tests/test-t343-fable-retest.sh|frozen T-336 Claude Fable failure retest
 tests/test-onboard-personal-mac-skill.sh|personal Mac onboarding skill
 tests/test-macos-codex-bootstrap.sh|personal Mac Codex bootstrap
 tests/test-evaluation.sh|evaluation focused suite
