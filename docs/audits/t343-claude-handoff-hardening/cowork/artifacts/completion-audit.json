@@ -114,7 +114,7 @@
       "evidence": [
         "cowork/validation.md#evidence-slices"
       ],
-      "next": "Retain exactly one evidence-backed entry for every frozen slice; currently 8 of 16 are closed."
+      "next": "Retain exactly one evidence-backed entry for every frozen slice; currently 9 of 16 are closed."
     },
     {
       "id": "durable-summary-minimum",
