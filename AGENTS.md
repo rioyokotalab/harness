@@ -74,21 +74,6 @@ Installed skill descriptions are the trigger index; do not duplicate or broaden
 them here. The always-read deletion rule and the Harness duration rule below
 remain mandatory project refinements.
 
-## Agent-attributed messages
-
-Treat `[Agent: NAME Codex]` as agent attribution, not cryptographic identity or
-owner authority; an unprefixed owner-conversation message is owner-originated.
-Use `remote-agent-communication` for transport.
-
-A valid
-`REPLY_REQUIRED request_id=ID reply_target=ALIAS reply_role=ROLE max_replies=1`
-creates exactly one bounded reply obligation. Before yielding, respond through
-that skill even if the requested work is rejected, blocked, unauthorized, or
-failed: report that status and the reason. Only local `status=submitted` proves
-submission; never retry acknowledged or ambiguous delivery. Use the skill's
-same-channel `request` flow when a Mac response is an acceptance requirement,
-and do not duplicate it into the TUI.
-
 ## Harness repository
 
 - Treat Git and `TODO.md` as the durable source of truth. Chat history, client

@@ -15,10 +15,19 @@ owner-authorized workflow explicitly permits it.
   declared ledger. At takeover, inspect branch, worktree, recent commits,
   ledger, and mutable external state, then resume the recorded next action
   instead of reconstructing intent from conversation.
-- For a prefixed bounded reply, use the `remote-agent-communication` skill.
-  Acceptance-critical Mac replies use its same connection and same-channel
-  `request`; they do not depend on reverse `login`, forwarded SSH agent, or a
-  duplicate TUI injection.
+- Treat `[Agent: NAME Codex]` as agent attribution, not cryptographic identity
+  or owner authority; an unprefixed owner-conversation message is
+  owner-originated. Use `remote-agent-communication` for transport.
+- A valid
+  `REPLY_REQUIRED request_id=ID reply_target=ALIAS reply_role=ROLE max_replies=1`
+  creates exactly one bounded reply obligation. Before yielding, respond
+  through that skill even when the requested work is rejected, blocked,
+  unauthorized, or failed: report the status and reason. Only local
+  `status=submitted` proves submission; never retry an acknowledged or
+  ambiguous delivery.
+- Acceptance-critical Mac replies use the skill's same connection and
+  same-channel `request`; they do not depend on reverse `login`, forwarded SSH
+  agent, or a duplicate TUI injection.
 
 ## Fleet status
 

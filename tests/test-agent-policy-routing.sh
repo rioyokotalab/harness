@@ -76,8 +76,6 @@ assert_contains '`codex-claude-cowork` and' "$AGENTS" \
     'duration cowork route'
 assert_contains 'Installed skill descriptions are the trigger index' "$AGENTS" \
     'skill catalog routing authority'
-assert_contains 'REPLY_REQUIRED request_id=ID' "$AGENTS" \
-    'bounded reply contract'
 
 # Conditional authority stays reachable through the exact route that selects it.
 assert_contains 'Owner approval alone never' "$EXTERNAL" \
@@ -91,6 +89,9 @@ assert_contains 'docs/fleet-inventory.md' "$RUNTIME" \
     'fleet inventory route'
 assert_contains 'Do not run it for every unrelated' "$RUNTIME" \
     'bounded fleet-health cadence'
+assert_contains 'REPLY_REQUIRED request_id=ID' "$RUNTIME" \
+    'bounded reply contract'
+assert_contains 'Only local' "$RUNTIME" 'reply submission evidence'
 assert_contains '$CODEX_HOME/tmp/arg0' "$HOUSEKEEPING" \
     'arg0 housekeeping route'
 assert_contains 'Prefer primary sources' "$RESEARCH" \
