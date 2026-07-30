@@ -13,13 +13,14 @@ managed windows, five matched read-only samples took:
 
 `401.953, 410.532, 410.675, 404.941, 419.834 ms`.
 
-The retained monitor takes one process snapshot and one Unix-socket snapshot
-per cycle, then resolves all three target trees in memory. Five matched samples
-took:
+The retained monitor takes one metadata-only process snapshot and one
+Unix-socket snapshot per cycle, then resolves all three target trees in memory.
+It reads command arguments only for the three exact tmux pane owners needed to
+identify their supervisors. Five matched samples took:
 
-`47.057, 46.041, 46.298, 45.478, 45.980 ms`.
+`43.934, 39.519, 40.008, 42.516, 47.336 ms`.
 
-That is an 8.8x reduction at the medians (410.532 to 46.041 ms). The snapshot
+That is a 9.7x reduction at the medians (410.532 to 42.516 ms). The snapshot
 also gives one internally consistent process view to Harness, Students, and
 Swallow. Exact target, PID/start-time, process ownership, watcher, app-server,
 phone-mirror, and recovery gates remain unchanged; the recovery helper still
@@ -41,4 +42,3 @@ before the delayed first-batch probe ended. Maintenance exclusions, paired
 routes, ordinary versus independent SSH options, AL managed-session behavior,
 compact output, and failure classification are unchanged. The fleet-health
 and source-contract suites pass.
-

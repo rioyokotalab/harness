@@ -231,20 +231,30 @@ def parse_proc_stat(pid, value):
     }
 
 
-def process_info(pid):
+def process_metadata(pid):
     try:
         with open("/proc/{}/stat".format(pid), "r") as stream:
             info = parse_proc_stat(pid, stream.read())
+        info["uid"] = os.stat("/proc/{}".format(pid)).st_uid
+    except (IOError, OSError, ValueError):
+        return None
+    return info
+
+
+def process_info(pid):
+    info = process_metadata(pid)
+    if not info:
+        return None
+    try:
         with open("/proc/{}/cmdline".format(pid), "rb") as stream:
             argv = [part.decode("utf-8", "strict") for part in stream.read().split(b"\0") if part]
-        info["uid"] = os.stat("/proc/{}".format(pid)).st_uid
     except (IOError, OSError, UnicodeError, ValueError):
         return None
     info["argv"] = argv
     return info
 
 
-def process_snapshot():
+def process_snapshot(command_pids=()):
     processes = {}
     try:
         names = os.listdir("/proc")
@@ -253,9 +263,21 @@ def process_snapshot():
     for name in names:
         if not name.isdigit():
             continue
-        info = process_info(int(name))
+        info = process_metadata(int(name))
         if info:
             processes[info["pid"]] = info
+    for pid in command_pids:
+        summary = processes.get(pid)
+        detailed = process_info(pid)
+        if (
+            not summary
+            or not detailed
+            or detailed["start"] != summary["start"]
+            or detailed["uid"] != summary["uid"]
+        ):
+            processes.pop(pid, None)
+            continue
+        processes[pid] = detailed
     return processes
 
 
@@ -310,7 +332,7 @@ def descendants(parent):
 def parse_supervisor(info):
     if not info:
         return None
-    argv = info["argv"]
+    argv = info.get("argv", ())
     if len(argv) < 7 or "harness-codex-resilient" not in " ".join(argv[:2]):
         return None
     try:
@@ -893,7 +915,9 @@ def main():
                 windows = tmux_windows()
                 if arguments.enforce_order:
                     windows, order_action = enforce_order(windows)
-                processes = process_snapshot()
+                processes = process_snapshot(
+                    window["pane_pid"] for window in windows
+                )
                 socket_peers = reciprocal_socket_snapshot()
                 health = collect_health(windows, processes, socket_peers)
                 mapping = read_private_json(mapping_path, {})

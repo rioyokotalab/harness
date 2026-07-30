@@ -84,6 +84,35 @@ module.socket_pairs = lambda: [
     (303, 404, 12),
 ]
 assert module.reciprocal_socket_snapshot() == {11: 99, 99: 11}
+original_listdir = module.os.listdir
+original_metadata = module.process_metadata
+original_process_info = module.process_info
+detailed_calls = []
+try:
+    module.os.listdir = lambda _path: ["10", "11", "not-a-pid"]
+    module.process_metadata = lambda pid: {
+        "pid": pid,
+        "parent": 1,
+        "start": "start-{}".format(pid),
+        "comm": "fixture",
+        "uid": os.getuid(),
+    }
+    module.process_info = lambda pid: detailed_calls.append(pid) or {
+        "pid": pid,
+        "parent": 1,
+        "start": "start-{}".format(pid),
+        "comm": "fixture",
+        "uid": os.getuid(),
+        "argv": ["managed", str(pid)],
+    }
+    bounded_snapshot = module.process_snapshot([11])
+    assert detailed_calls == [11]
+    assert "argv" not in bounded_snapshot[10]
+    assert bounded_snapshot[11]["argv"] == ["managed", "11"]
+finally:
+    module.os.listdir = original_listdir
+    module.process_metadata = original_metadata
+    module.process_info = original_process_info
 
 with tempfile.TemporaryDirectory() as helper_root:
     os.environ["HARNESS_TESTING"] = "1"
