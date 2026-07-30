@@ -195,3 +195,5 @@ requires exact equality with board headings, derives the next free ID from the
 descending index, and validates every indexed source. That broader check found
 one stale T-343 plan pointer; it now names the retained Cowork plan. The
 dynamic ledger contract passes all 43 index rows.
+Every dated full-board archive must also be a regular indexed source, so a
+future archive receives the fast route only after durable lookup covers it.

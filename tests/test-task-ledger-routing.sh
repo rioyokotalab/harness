@@ -72,12 +72,14 @@ by_task = {row["task"]: row for row in rows}
 assert len(by_task) == len(rows)
 task_numbers = []
 allowed_states = {"active", "time-gated", "blocked", "complete"}
+indexed_sources = set()
 for row in rows:
     assert re.fullmatch(r"T-\d+", row["task"]), row
     assert row["state"] in allowed_states, row
     assert row["summary"] and row["source"], row
     task_numbers.append(int(row["task"][2:]))
     for source in row["source"].split(";"):
+        indexed_sources.add(source)
         candidate = Path(source)
         assert not candidate.is_absolute() and ".." not in candidate.parts, (
             row["task"],
@@ -87,6 +89,14 @@ for row in rows:
         assert resolved.exists() and not resolved.is_symlink(), (row["task"], source)
 assert task_numbers == sorted(task_numbers, reverse=True), task_numbers
 assert f"Next free ID: T-{max(task_numbers) + 1}." in text
+archives = sorted((root / "docs/history").glob("TODO-full-archive-*.md"))
+assert archives, archives
+for archive_path in archives:
+    assert re.fullmatch(
+        r"TODO-full-archive-\d{4}-\d{2}-\d{2}\.md", archive_path.name
+    ), archive_path
+    assert archive_path.is_file() and not archive_path.is_symlink(), archive_path
+    assert archive_path.relative_to(root).as_posix() in indexed_sources, archive_path
 for task in board_tasks:
     assert by_task[task]["state"] != "complete", task
     sources = by_task[task]["source"].split(";")
