@@ -275,7 +275,9 @@ all accepted partial writes, and exact next safe reconciliation action.
 ## Rollback and recovery
 
 - Pre-request refusal: no lifecycle write occurred; correct only the changed
-  input under a new published plan.
+  input under a new published plan. The first controller's terminal journal
+  is preserved and the changed input must use distinct journal/result paths;
+  never reuse or truncate the first receipt.
 - Ambiguous request: do not retry, compensate, or reconnect. Preserve the
   journal and reconcile read-only database/app-server state later.
 - Accepted archive judged undesirable later: the owner may separately
