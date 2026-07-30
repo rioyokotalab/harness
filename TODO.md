@@ -366,6 +366,34 @@ proven-unsent preflight may be replaced by one newly digest-bound controller
 using these exact current watcher identities; the refused controller bytes
 must not execute.
 
+Protected PR #463 passed `portable-phase1` and merge-merged as
+`b59fbceb5be625be1ac30602a613845bf49c3b63`. Replacement controller
+digest `d31d307d47e3361f04b0909997c883086c7c3b0fd7cdb2c92db8930ac7e9b49b`
+passed zero-write preflight and then executed exactly once. On one
+experimental-capable shared-app-server connection, `thread/start` request
+`6` acknowledged new root
+`019fb2bc-52ab-78f0-88a4-00c9bdb0f271`; `thread/name/set` request `7`
+acknowledged provisional name `students-native-bridge-20260730`. Both are
+consumed and must never be retried.
+
+The acknowledged start response proved exact direct Students cwd, source
+`vscode`, resolved `gpt-5.6-sol`/`high`, granular approval, and disabled
+sandbox with model/config overrides omitted. Readback proves the same
+unarchived idle zero-turn root and provisional name. Codex 0.145 persisted
+the expected empty-root null model/reasoning columns and created exact
+current-user, one-link rollout device/inode `197/242006548` at mode `0664`.
+The three canonical windows and every protected process/client identity
+remain unchanged; no provisional runtime, prompt input, root promotion,
+signal, or archive occurred.
+
+**Next action:** publish this non-retryable root checkpoint. Then require the
+same exact root, journal, response, Git, peer, app-server, watcher, client,
+and topology identities; tighten only rollout inode `197/242006548` to mode
+`0600` through a no-follow descriptor transaction and launch exactly one
+detached provisional index-3 window/runtime from the direct Students checkout
+with explicit `--target students`. Never relaunch an acknowledged or
+ambiguous bridge.
+
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
 **Phase:** complete.
