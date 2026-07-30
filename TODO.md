@@ -799,12 +799,33 @@ bind only `XDG_RUNTIME_DIR=/run/user/5035` without modifying global tmux or
 owner environment. The diagnostic stopped cleanly; no helper process/window
 or helper-lock holder remains. Its stopped receipt is not acceptance evidence.
 
-**Next action:** publish this diagnostic/root-cause checkpoint. Then use one
-new changed-input controller and exactly one `tmux new-window -e
-XDG_RUNTIME_DIR=/run/user/5035` to create `monitor:2:helper` under merged code.
-Require one new current-user owner, no worker child, unchanged monitor/project
-identities, a fresh healthy phone receipt, and two interval-separated healthy
-helper/monitor readbacks before final T-350 closeout.
+Protected PR #478 merge-merged the diagnostic checkpoint as
+`bd7dcf949bb03d5d1b49182dacff1913b20793b6`; Local main fast-forwarded.
+Explicit-environment controller digest
+`2c558a3b1623033ff2b9bbb1d8313152fdf870f9d833ec4b6237d93db06bed14`
+passed zero-write preflight and executed exactly once. Its native
+`tmux new-window -e XDG_RUNTIME_DIR=/run/user/5035` acknowledged
+`@102/%102` and reported PID `3878703`, but that process/window also exited
+before healthy readback. Journal digest
+`a05b24d337d5357d479ef4647a4a22e2b0e55fcd30e3e2cc3c9a898f1bb07de0`
+and result digest
+`5d9139997a08c9917ec8b5d1212bd74a55b105db5fbfd6e1787315657d6637a3`
+record `helper-restart-readback-ambiguous`; the controller is consumed and
+must never run again.
+
+Exact reconciliation again finds no helper process/window and unchanged
+monitor/project topology. The explicit runtime directory was therefore not
+sufficient to explain or fix the tmux-only exit. Tmux server messages contain
+no exit detail, and no pane content was read.
+
+**Next action:** publish this resolved explicit-environment failure. Then
+launch one distinct diagnostic helper window with the same exact command and
+runtime environment but redirect stdout/stderr before exec to a new mode-0600
+private file. Preserve dead-pane metadata long enough to record only exit
+status and minimum startup error, without inspecting pane/transcript content.
+Fix from that evidence, restore exactly one helper, and require fresh healthy
+phone parity plus two interval-separated monitor/helper receipts before final
+T-350 closeout.
 
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
