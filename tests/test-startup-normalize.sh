@@ -168,7 +168,7 @@ alias_names=$(sed -n 's/^alias \([A-Za-z_][A-Za-z0-9_]*\)=.*/\1/p' \
 [ "$alias_names" = "$(printf '%s\n' "$alias_names" | LC_ALL=C sort -u)" ] ||
     fail 'common aliases are not unique and alphabetic'
 att_alias=$(bash -c '. "$1"; alias att' _ "$ROOT/shell/common-aliases.sh")
-[ "$att_alias" = "alias att='tmux attach -t harness'" ] ||
+[ "$att_alias" = "alias att='tmux attach -t projects'" ] ||
     fail 'common att alias changed'
 co_alias=$(bash -c '. "$1"; alias co' _ "$ROOT/shell/common-aliases.sh")
 [ "$co_alias" = \

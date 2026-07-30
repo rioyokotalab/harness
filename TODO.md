@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-349.
+Next free ID: T-350.
 
 ## Current state
 
@@ -142,6 +142,55 @@ items. Students and Swallow project research remains owned by their independent
 agents and ledgers.
 
 ## Task records
+
+### T-349 — Rename the canonical Local tmux session to `projects`
+
+**Phase:** executing.
+
+The owner requested that the canonical Local tmux session be renamed from
+`harness` to `projects`, that the `att` alias follow the new name, and that the
+tracked change be propagated across the managed fleet. The three canonical
+window names remain `0:harness`, `1:students`, and `2:swallow`; Codex runtime
+names, saved roots, phone names, and the independent `monitor` session are out
+of scope.
+
+Cold-start preflight found protected `main` clean/aligned at
+`f464a77939855bb3f364ad3f1a4dfdbc87c77b39`. Work is isolated in
+`/tmp/harness-t349-projects-session` on branch
+`codex/t349-projects-session`. Live session `$14` is attached with exact
+windows `@87/0:harness`, `@88/1:students`, and `@98/2:swallow`; the monitor and
+recovery helper are healthy and currently target the old session name.
+
+**Frozen execution:** update the tracked `att` alias, owner-facing tmux
+examples, monitor, helper, and focused assertions to use exact session
+`projects`; validate and publish through protected `main`; then stop only the
+idle monitor/helper owners, rename exact live session `$14` once with native
+`tmux rename-session`, and respawn those two infrastructure panes under merged
+code. Require the attached client and all three project panes/process chains
+to remain unchanged, two interval-separated healthy monitor/helper receipts,
+and exact `projects` topology with old session name absent.
+
+After live acceptance, use guarded `harness fleet-sync` plan/apply for every
+clean reachable managed checkout, require an idempotent plan, validate fresh
+interactive `att` aliases, and issue the required one-time context refresh to
+each advanced Mac. A failed or ambiguous rename is not retried until exact
+session-ID readback resolves it.
+
+**Next action:** add failing focused assertions for exact session
+`projects`, then implement the tracked rename contract and run focused plus
+complete phase-one validation. No live tmux or fleet mutation has run.
+
+Failing-first assertions stopped on the old `att` target and absent monitor
+and helper session constants. The implementation now uses exact
+`SESSION_NAME = "projects"` for every monitor/helper tmux query and order
+target, points `att` and current README recovery examples to `projects`, and
+leaves canonical window/runtime role `harness` unchanged. Startup, monitor,
+and helper focused suites pass, as do Python 3.6 grammar, Bash syntax, stale
+active-reference search, and diff hygiene.
+
+**Next action:** commit this coherent implementation, run the complete clean
+`tests/test-phase1.sh`, then publish the exact validated head through protected
+CI before any live session or fleet mutation.
 
 ### T-348 — Keep phone remote-control roots mirrored to Local tmux
 

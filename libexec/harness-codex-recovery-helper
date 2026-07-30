@@ -22,6 +22,7 @@ import time
 sys.dont_write_bytecode = True
 SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 SAFE_WINDOW_ID = re.compile(r"^@[0-9]+$")
+SESSION_NAME = "projects"
 EXPECTED = (("harness", 0), ("students", 1), ("swallow", 2))
 INTERACTIVE_SOURCES = ("cli", "vscode")
 TERMINAL_PHASES = ("completed", "failed", "ambiguous", "deferred")
@@ -318,7 +319,7 @@ def tmux_mapping():
             "tmux",
             "list-windows",
             "-t",
-            "harness",
+            SESSION_NAME,
             "-F",
             "#{window_index}\t#{window_name}\t#{window_id}\t#{pane_pid}",
         ],

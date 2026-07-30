@@ -18,6 +18,7 @@ import time
 
 
 sys.dont_write_bytecode = True
+SESSION_NAME = "projects"
 EXPECTED = (("harness", 0), ("students", 1), ("swallow", 2))
 CODEX_COMMS = ("codex", "codex.real")
 SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
@@ -312,7 +313,7 @@ def tmux_windows():
             "tmux",
             "list-windows",
             "-t",
-            "harness",
+            SESSION_NAME,
             "-F",
             "#{window_index}\t#{window_id}\t#{window_name}\t#{window_panes}\t"
             "#{pane_id}\t#{pane_pid}\t#{pane_current_path}\t#{pane_dead}",
@@ -340,7 +341,14 @@ def tmux_windows():
 
 def tmux_clients():
     output = run(
-        ["tmux", "list-clients", "-t", "harness", "-F", "#{client_pid}\t#{window_id}"],
+        [
+            "tmux",
+            "list-clients",
+            "-t",
+            SESSION_NAME,
+            "-F",
+            "#{client_pid}\t#{window_id}",
+        ],
     )
     return sorted(tuple(line.split("\t", 1)) for line in output.splitlines() if "\t" in line)
 
@@ -372,7 +380,7 @@ def enforce_order(windows):
                     "-s",
                     current["window_id"],
                     "-t",
-                    "harness:{}".format(target_index),
+                    "{}:{}".format(SESSION_NAME, target_index),
                 ]
             )
             action = "ordered"

@@ -146,11 +146,11 @@ window, then remove only the exact target and recreate its index with the
 exact remote root:
 
 ```bash
-tmux list-windows -t harness \
+tmux list-windows -t projects \
   -F '#{window_index} #{window_id} #{window_name} #{window_active}'
-tmux select-window -t harness:0
+tmux select-window -t projects:0
 tmux kill-window -t @EXACT_WINDOW_ID
-tmux new-window -d -t harness:2 -n project -c "$HOME/harness" \
+tmux new-window -d -t projects:2 -n project -c "$HOME/harness" \
   'exec "$HOME/harness/bin/harness" codex-resilient --run --name project --remote-session 01900000-0000-7000-8000-000000000000'
 ```
 
