@@ -652,3 +652,12 @@ checkpoint the accepted review corrections, complete final exact-tree validation
 publish one protected Harness pull request, prove its exact merged tree and
 absence of a post-merge push allocation, take fresh fleet health, and close at
 the requested deadline.
+
+## 2026-07-31 06:00–06:59 JST
+
+In progress. The slice opened from committed checkpoint `eae2aee` after all
+review corrections and the single stale focused-runner fixture were resolved.
+The context benchmark now independently reconstructs its Markdown table and
+median claims from the tracked scenario manifest, so subsequent selected-task
+record growth fails its own focused contract instead of silently staling the
+reported reductions. Scoped ShellCheck and the context contract pass.
