@@ -33,6 +33,18 @@ cases = [
         True,
     ),
     (
+        ["docs/tasks/T-999.md"],
+        "R0",
+        ["tests/test-task-ledger-routing.sh"],
+        True,
+    ),
+    (
+        ["docs/history/TODO-full-archive-2099-12-31.md"],
+        "R0",
+        ["tests/test-task-ledger-routing.sh"],
+        True,
+    ),
+    (
         ["shared/skills/codex-claude-cowork/SKILL.md"],
         "R1",
         [
@@ -250,4 +262,4 @@ assert unknown["tier"] == "R3"
 assert unknown["suites"] == ["tests/test-phase1.sh"]
 PY
 
-printf '%s\n' 'VALIDATION_ROUTER status=pass cases=39'
+printf '%s\n' 'VALIDATION_ROUTER status=pass cases=41'

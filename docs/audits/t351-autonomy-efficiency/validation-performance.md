@@ -183,3 +183,11 @@ Launcher and selector startup were already below material thresholds: 200
 direct `harness version` invocations took 0.51 seconds, 200 invocations through
 the current managed link took 1.02 seconds, and one path-explicit validation
 plan took 0.06 seconds. No startup rewrite was retained.
+
+The first map encoded the four current task-record IDs and one archive date.
+That made the next valid `docs/tasks/T-N.md` or dated full-TODO archive unknown
+and therefore R3 until the map itself was edited. The two namespaces now use
+closed numeric/date patterns and still select the ledger contract; arbitrary
+`docs/` paths remain documentation-only and unknown non-doc paths remain R3.
+A synthetic future task selects cacheable R0 in 0.07 seconds. All 41 router
+cases and the ledger contract pass.
