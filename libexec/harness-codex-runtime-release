@@ -142,14 +142,18 @@ release_parent=$private_root/releases
 ensure_private_dir "$release_parent"
 target_release_parent=$release_parent/$release_target
 ensure_private_dir "$target_release_parent"
-release_dir=$target_release_parent/$commit
 marker_name=.codex-runtime-release
-marker=$release_dir/$marker_name
 manifest_tmp=$(mktemp "$private_root/.manifest.XXXXXX") || {
     echo "harness: Codex runtime release manifest cannot be allocated" >&2
     exit 2
 }
 chmod 600 "$manifest_tmp"
+payload_tmp=$(mktemp "$private_root/.payload.XXXXXX") || {
+    unlink "$manifest_tmp"
+    echo "harness: Codex runtime payload identity cannot be allocated" >&2
+    exit 2
+}
+chmod 600 "$payload_tmp"
 stage=
 lock_dir=
 lock_owned=no
@@ -187,6 +191,11 @@ cleanup() {
         [ "$(path_owner "$manifest_tmp")" = "$uid" ] &&
         [ "$(path_links "$manifest_tmp")" = 1 ]; then
         unlink "$manifest_tmp" || status=2
+    fi
+    if [ -f "$payload_tmp" ] && [ ! -L "$payload_tmp" ] &&
+        [ "$(path_owner "$payload_tmp")" = "$uid" ] &&
+        [ "$(path_links "$payload_tmp")" = 1 ]; then
+        unlink "$payload_tmp" || status=2
     fi
     exit "$status"
 }
@@ -293,6 +302,54 @@ done <"$manifest_tmp"
     exit 2
 }
 
+payload_count=0
+while IFS='	' read -r path mode extra; do
+    case "$path" in ''|'#'*) continue ;; esac
+    expected=$(git -C "$source_root" rev-parse "$commit:$path" 2>/dev/null) || {
+        echo "harness: committed Codex runtime file is unavailable: $path" >&2
+        exit 2
+    }
+    case "$expected" in
+        *[!0-9a-f]*|'')
+            echo "harness: committed Codex runtime object is malformed" >&2
+            exit 2
+            ;;
+    esac
+    case ${#expected} in
+        40|64) ;;
+        *)
+            echo "harness: committed Codex runtime object is malformed" >&2
+            exit 2
+            ;;
+    esac
+    printf '%s\t%s\t%s\n' "$path" "$mode" "$expected" >>"$payload_tmp"
+    payload_count=$((payload_count + 1))
+done <"$manifest_tmp"
+[ "$payload_count" -eq "$manifest_count" ] || {
+    echo "harness: Codex runtime payload identity is incomplete" >&2
+    exit 2
+}
+payload_id=$(git -C "$source_root" hash-object "$payload_tmp" 2>/dev/null) || {
+    echo "harness: Codex runtime payload identity is unavailable" >&2
+    exit 2
+}
+case "$payload_id" in
+    *[!0-9a-f]*|'')
+        echo "harness: Codex runtime payload identity is malformed" >&2
+        exit 2
+        ;;
+esac
+case ${#payload_id} in
+    40|64) ;;
+    *)
+        echo "harness: Codex runtime payload identity is malformed" >&2
+        exit 2
+        ;;
+esac
+release_dir=$target_release_parent/$payload_id
+marker=$release_dir/$marker_name
+marker_source_commit=
+
 validate_release() {
     [ -d "$release_dir" ] && [ ! -L "$release_dir" ] &&
         [ "$(path_owner "$release_dir")" = "$uid" ] &&
@@ -306,24 +363,29 @@ validate_release() {
         [ "$(path_owner "$marker")" = "$uid" ] &&
         [ "$(path_mode "$marker")" = 400 ] &&
         [ "$(path_links "$marker")" = 1 ] || return 1
-    [ "$(sed -n '1p' "$marker")" = "schema=1" ] &&
-        [ "$(sed -n '2p' "$marker")" = "commit=$commit" ] &&
-        [ "$(sed -n '3p' "$marker")" = "target=$release_target" ] &&
-        [ "$(wc -l <"$marker" | tr -d ' ')" = 3 ] || return 1
+    [ "$(sed -n '1p' "$marker")" = "schema=2" ] &&
+        [ "$(sed -n '2p' "$marker")" = "payload=$payload_id" ] &&
+        [ "$(sed -n '4p' "$marker")" = "target=$release_target" ] &&
+        [ "$(wc -l <"$marker" | tr -d ' ')" = 4 ] || return 1
+    marker_source_commit=$(
+        sed -n '3s/^source_commit=//p' "$marker"
+    )
+    case "$marker_source_commit" in
+        *[!0-9a-f]*|'') return 1 ;;
+    esac
+    case ${#marker_source_commit} in 40|64) ;; *) return 1 ;; esac
     validated=0
-    while IFS='	' read -r path mode extra; do
-        case "$path" in ''|'#'*) continue ;; esac
+    while IFS='	' read -r path mode expected extra; do
+        [ -z "${extra:-}" ] || return 1
         candidate=$release_dir/$path
         [ -f "$candidate" ] && [ ! -L "$candidate" ] &&
             [ "$(path_owner "$candidate")" = "$uid" ] &&
             [ "$(path_mode "$candidate")" = "$mode" ] &&
             [ "$(path_links "$candidate")" = 1 ] || return 1
-        expected=$(git -C "$source_root" rev-parse "$commit:$path" 2>/dev/null) ||
-            return 1
         actual=$(git hash-object "$candidate" 2>/dev/null) || return 1
         [ "$actual" = "$expected" ] || return 1
         validated=$((validated + 1))
-    done <"$manifest_tmp"
+    done <"$payload_tmp"
     [ "$validated" -eq "$manifest_count" ]
 }
 
@@ -333,7 +395,7 @@ if [ -e "$release_dir" ] || [ -L "$release_dir" ]; then
         exit 2
     }
 else
-    lock_dir=$target_release_parent/.$commit.lock
+    lock_dir=$target_release_parent/.$payload_id.lock
     old_umask=$(umask)
     umask 077
     if mkdir "$lock_dir" 2>/dev/null; then
@@ -362,7 +424,7 @@ else
     umask "$old_umask"
 
     if [ "$lock_owned" = yes ]; then
-        stage=$(mktemp -d "$target_release_parent/.stage.$commit.XXXXXX") || {
+        stage=$(mktemp -d "$target_release_parent/.stage.$payload_id.XXXXXX") || {
             echo "harness: Codex runtime release staging cannot be allocated" >&2
             exit 2
         }
@@ -378,8 +440,9 @@ else
             chmod "$mode" "$stage/$path"
         done <"$manifest_tmp"
         {
-            printf 'schema=1\n'
-            printf 'commit=%s\n' "$commit"
+            printf 'schema=2\n'
+            printf 'payload=%s\n' "$payload_id"
+            printf 'source_commit=%s\n' "$commit"
             printf 'target=%s\n' "$release_target"
         } >"$stage/$marker_name"
         chmod 400 "$stage/$marker_name"
@@ -394,10 +457,11 @@ else
 fi
 
 HARNESS_CONTROL_ROOT=$release_dir
-HARNESS_CODEX_RELEASE_COMMIT=$commit
+HARNESS_CODEX_RELEASE_COMMIT=$marker_source_commit
+HARNESS_CODEX_RELEASE_PAYLOAD=$payload_id
 HARNESS_CODEX_RELEASE_TARGET=$release_target
 export HARNESS_CONTROL_ROOT HARNESS_TARGET_ROOT HARNESS_CODEX_RELEASE_COMMIT
-export HARNESS_CODEX_RELEASE_TARGET
+export HARNESS_CODEX_RELEASE_PAYLOAD HARNESS_CODEX_RELEASE_TARGET
 unset HARNESS_ROOT
 if [ "$lock_owned" = yes ]; then
     unlink "$lock_dir/pid"
@@ -406,5 +470,7 @@ if [ "$lock_owned" = yes ]; then
 fi
 unlink "$manifest_tmp"
 manifest_tmp=
+unlink "$payload_tmp"
+payload_tmp=
 trap - EXIT HUP INT TERM
 exec "$release_dir/libexec/harness-codex-resilient" "$@"

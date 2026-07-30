@@ -12,6 +12,9 @@ swallow_pid=
 harness_release=
 students_release=
 swallow_release=
+harness_payload=
+students_payload=
+swallow_payload=
 
 fail() {
     printf 'FAIL: %s\n' "$*" >&2
@@ -166,16 +169,31 @@ wait_for_file() {
     fail "runtime supervisor readiness timed out"
 }
 
-harness_release=$release_root/releases/harness/$commit
+release_for_target() {
+    release_target=$1
+    set -- "$release_root/releases/$release_target"/*
+    [ "$#" -eq 1 ] && [ -d "$1" ] && [ ! -L "$1" ] ||
+        fail "$release_target does not have one exact immutable release"
+    printf '%s\n' "$1"
+}
+
 launch_supervisor "$target_harness" harness "$TEST_ROOT/harness.out"
 harness_pid=$launched_pid
 wait_for_file "$runtime/harness/shared.state" "$harness_pid"
+harness_release=$(release_for_target harness)
+harness_payload=${harness_release##*/}
 [ -f "$harness_release/.codex-runtime-release" ] ||
-    fail "commit-addressed runtime release was not created"
-grep -F "commit=$commit" "$harness_release/.codex-runtime-release" >/dev/null ||
-    fail "runtime release marker lost commit identity"
+    fail "payload-addressed runtime release was not created"
+grep -F "payload=$harness_payload" \
+    "$harness_release/.codex-runtime-release" >/dev/null ||
+    fail "runtime release marker lost payload identity"
+grep -F "source_commit=$commit" \
+    "$harness_release/.codex-runtime-release" >/dev/null ||
+    fail "runtime release marker lost creation provenance"
 grep -F 'target=harness' "$harness_release/.codex-runtime-release" >/dev/null ||
     fail "runtime release marker lost target identity"
+[ "$harness_payload" != "$commit" ] ||
+    fail "runtime release remained keyed by the whole commit"
 [ "$(file_mode "$harness_release")" = 500 ] &&
     [ "$(file_mode "$harness_release/.codex-runtime-release")" = 400 ] &&
     [ "$(file_mode \
@@ -208,10 +226,11 @@ if [ "$(uname -s)" = Linux ]; then
     done
 fi
 
-students_release=$release_root/releases/students/$commit
 launch_supervisor "$target_students" students "$TEST_ROOT/students.out"
 students_pid=$launched_pid
 wait_for_file "$runtime/students/shared.state" "$students_pid"
+students_release=$(release_for_target students)
+students_payload=${students_release##*/}
 [ -f "$students_release/.codex-runtime-release" ] ||
     fail "Students target-scoped runtime release was not created"
 grep -F 'target=students' "$runtime/students/shared.state" >/dev/null ||
@@ -221,10 +240,11 @@ grep -F 'target=students' "$runtime/students/shared.state" >/dev/null ||
 [ -d "$runtime/harness/shared.lock" ] ||
     fail "same-name Students supervisor interfered with Harness lock"
 
-swallow_release=$release_root/releases/swallow/$commit
 launch_supervisor "$target_swallow" swallow "$TEST_ROOT/swallow.out"
 swallow_pid=$launched_pid
 wait_for_file "$runtime/swallow/shared.state" "$swallow_pid"
+swallow_release=$(release_for_target swallow)
+swallow_payload=${swallow_release##*/}
 [ -f "$swallow_release/.codex-runtime-release" ] ||
     fail "Swallow target-scoped runtime release was not created"
 grep -F 'target=swallow' "$runtime/swallow/shared.state" >/dev/null ||
@@ -234,11 +254,15 @@ grep -F 'target=swallow' "$runtime/swallow/shared.state" >/dev/null ||
 [ -d "$runtime/harness/shared.lock" ] &&
     [ -d "$runtime/students/shared.lock" ] ||
     fail "same-name Swallow supervisor interfered with another target lock"
+[ "$harness_payload" = "$students_payload" ] &&
+    [ "$harness_payload" = "$swallow_payload" ] ||
+    fail "identical payload changed identity across target-scoped releases"
 
 status_output=$(
     HARNESS_CONTROL_ROOT="$harness_release" \
     HARNESS_TARGET_ROOT="$target_harness" \
     HARNESS_CODEX_RELEASE_COMMIT="$commit" \
+    HARNESS_CODEX_RELEASE_PAYLOAD="$harness_payload" \
     HARNESS_CODEX_RELEASE_TARGET=harness \
     HARNESS_TESTING=1 \
     HARNESS_TEST_RUNTIME_DIR="$runtime" \
@@ -252,6 +276,7 @@ status_output=$(
     HARNESS_CONTROL_ROOT="$students_release" \
     HARNESS_TARGET_ROOT="$target_harness" \
     HARNESS_CODEX_RELEASE_COMMIT="$commit" \
+    HARNESS_CODEX_RELEASE_PAYLOAD="$students_payload" \
     HARNESS_CODEX_RELEASE_TARGET=students \
     HARNESS_TESTING=1 \
     HARNESS_TEST_RUNTIME_DIR="$runtime" \
@@ -264,6 +289,7 @@ printf '%s\n' "$status_output" |
 if HARNESS_CONTROL_ROOT="$harness_release" \
     HARNESS_TARGET_ROOT="$target_harness" \
     HARNESS_CODEX_RELEASE_COMMIT="$commit" \
+    HARNESS_CODEX_RELEASE_PAYLOAD="$harness_payload" \
     HARNESS_CODEX_RELEASE_TARGET=harness \
     HARNESS_TESTING=1 \
     HARNESS_TEST_RUNTIME_DIR="$runtime" \
@@ -273,6 +299,46 @@ if HARNESS_CONTROL_ROOT="$harness_release" \
 fi
 grep -F 'status requires --target' "$TEST_ROOT/ambiguous.out" >/dev/null ||
     fail "cross-target status ambiguity was not classified"
+if env -u HARNESS_CODEX_RELEASE_PAYLOAD \
+    HARNESS_CONTROL_ROOT="$harness_release" \
+    HARNESS_TARGET_ROOT="$target_harness" \
+    HARNESS_CODEX_RELEASE_COMMIT="$commit" \
+    HARNESS_CODEX_RELEASE_TARGET=harness \
+    HARNESS_TESTING=1 \
+    HARNESS_TEST_RUNTIME_DIR="$runtime" \
+        "$harness_release/libexec/harness-codex-resilient" \
+            --status --target harness --name shared \
+            >"$TEST_ROOT/missing-payload.out" 2>&1; then
+    fail "released runtime accepted missing payload identity"
+fi
+grep -F 'Codex runtime release marker is invalid' \
+    "$TEST_ROOT/missing-payload.out" >/dev/null ||
+    fail "missing payload identity did not fail closed"
+
+git -C "$control" commit -q --allow-empty -m 'unrelated fixture change'
+unrelated_commit=$(git -C "$control" rev-parse HEAD)
+[ "$unrelated_commit" != "$commit" ] ||
+    fail "unrelated fixture commit did not advance provenance"
+(
+    cd "$target_harness"
+    HARNESS_TESTING=1 \
+    HARNESS_TEST_CODEX_RELEASE_ROOT="$release_root" \
+    HARNESS_TEST_RUNTIME_DIR="$runtime" \
+    HARNESS_CODEX_RELEASE_TARGET=harness \
+    HARNESS_TARGET_ROOT="$target_harness" \
+        "$control/libexec/harness-codex-runtime-release" \
+            --exec-resilient --plan --target harness \
+            --name unrelated-reuse --last
+) >"$TEST_ROOT/unrelated-reuse.out"
+[ "$(release_for_target harness)" = "$harness_release" ] ||
+    fail "unrelated commit created a second Harness runtime release"
+grep -F "source_commit=$commit" \
+    "$harness_release/.codex-runtime-release" >/dev/null ||
+    fail "warm reuse changed immutable creation provenance"
+if grep -F "source_commit=$unrelated_commit" \
+    "$harness_release/.codex-runtime-release" >/dev/null; then
+    fail "warm reuse rewrote immutable creation provenance"
+fi
 
 fake_native=$TEST_ROOT/fake-native-codex
 cat >"$fake_native" <<'EOF'
@@ -322,6 +388,7 @@ run_released_launcher() {
             HARNESS_CONTROL_ROOT="$released_root" \
             HARNESS_TARGET_ROOT="$target_harness" \
             HARNESS_CODEX_RELEASE_COMMIT="$commit" \
+            HARNESS_CODEX_RELEASE_PAYLOAD="$harness_payload" \
             HARNESS_CODEX_RELEASE_FUTURE=ambient-release \
             HARNESS_CODEX_RELEASE_TARGET="$released_target" \
             HARNESS_TESTING=1 \

@@ -5,16 +5,25 @@ SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 derived_control_root=$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)
 release_active=no
 release_marker=$derived_control_root/.codex-runtime-release
-if [ -f "$release_marker" ] && [ ! -L "$release_marker" ] &&
-    [ "${HARNESS_CONTROL_ROOT:-}" = "$derived_control_root" ] &&
-    [ -n "${HARNESS_CODEX_RELEASE_COMMIT:-}" ] &&
-    [ -n "${HARNESS_CODEX_RELEASE_TARGET:-}" ] &&
-    [ "$(sed -n '1p' "$release_marker")" = "schema=1" ] &&
-    [ "$(sed -n '2p' "$release_marker")" = \
-        "commit=$HARNESS_CODEX_RELEASE_COMMIT" ] &&
-    [ "$(sed -n '3p' "$release_marker")" = \
-        "target=$HARNESS_CODEX_RELEASE_TARGET" ] &&
-    [ "$(wc -l <"$release_marker" | tr -d ' ')" = 3 ]; then
+if [ -e "$release_marker" ] || [ -L "$release_marker" ]; then
+    [ -f "$release_marker" ] && [ ! -L "$release_marker" ] &&
+        [ "${HARNESS_CONTROL_ROOT:-}" = "$derived_control_root" ] &&
+        [ -n "${HARNESS_CODEX_RELEASE_COMMIT:-}" ] &&
+        [ -n "${HARNESS_CODEX_RELEASE_PAYLOAD:-}" ] &&
+        [ -n "${HARNESS_CODEX_RELEASE_TARGET:-}" ] &&
+        [ "${derived_control_root##*/}" = \
+            "$HARNESS_CODEX_RELEASE_PAYLOAD" ] &&
+        [ "$(sed -n '1p' "$release_marker")" = "schema=2" ] &&
+        [ "$(sed -n '2p' "$release_marker")" = \
+            "payload=$HARNESS_CODEX_RELEASE_PAYLOAD" ] &&
+        [ "$(sed -n '3p' "$release_marker")" = \
+            "source_commit=$HARNESS_CODEX_RELEASE_COMMIT" ] &&
+        [ "$(sed -n '4p' "$release_marker")" = \
+            "target=$HARNESS_CODEX_RELEASE_TARGET" ] &&
+        [ "$(wc -l <"$release_marker" | tr -d ' ')" = 4 ] || {
+        echo "harness: Codex runtime release marker is invalid" >&2
+        exit 2
+    }
     release_active=yes
     HARNESS_CONTROL_ROOT=$derived_control_root
     case ${HARNESS_TARGET_ROOT:-} in
