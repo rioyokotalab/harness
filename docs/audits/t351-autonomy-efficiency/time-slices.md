@@ -458,6 +458,13 @@ unchanged runs took 50.16, 49.68, and 50.30 seconds; three candidate runs took
 reduction. All six passed all 91 suites, with effectively unchanged CPU and
 RSS, so the candidate was retained.
 
+An exact integrated checkpoint of the retained tree then passed all 91 suites
+in 56.54 seconds, using 159.22 seconds user, 162.75 seconds system, and 516,220
+KiB maximum RSS. This is 15.9% below the prior 67.19-second integrated
+checkpoint. Because system load varies, the matched admission comparison is
+the causal evidence; the integrated result is retained as a whole-tree
+acceptance checkpoint rather than a general performance claim.
+
 Cleanup was prepared but deliberately split from final application. The
 task-owned Harness worktrees were enumerated exactly and classified as
 patch-equivalent retained experiments, synthetic validation probes, or the

@@ -74,6 +74,7 @@ Matched retained measurements:
 | overlap, exact tree after policy/onboarding routing | 87.13 s | 160.98 s | 169.00 s | 503,696 KiB |
 | overlap plus concurrent ShellCheck, matched candidate median | 65.51 s | approximately unchanged | approximately unchanged | variable |
 | exact integrated tree after ShellCheck overlap | 67.19 s | 161.23 s | 165.12 s | 521,212 KiB |
+| exact integrated tree after longest-first admission | 56.54 s | 159.22 s | 162.75 s | 516,220 KiB |
 
 The retained automatic route sees eight affinity-visible CPUs and gives seven
 to focused suites while integration proceeds. Explicit or legacy worker counts
@@ -155,3 +156,9 @@ longest-first samples took 45.77, 46.14, and 45.86 seconds (median 45.86), an
 8.6% reduction. All six passed all 91 suites. Median CPU and peak RSS were
 effectively unchanged, so the gain is attributed only to a shorter bounded
 queue tail.
+
+The first integrated checkpoint after retaining both the long-root fixture
+correction and longest-first admission passed all 91 suites in 56.54 seconds,
+with 159.22 seconds user, 162.75 seconds system, and 516,220 KiB maximum RSS.
+That is 15.9% below the prior 67.19-second exact-tree checkpoint without
+claiming a cross-machine or long-term performance change.
