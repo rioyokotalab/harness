@@ -775,14 +775,36 @@ panes/processes remain unchanged. The merged helper supports read-only status
 and help under the exact system Python used by the failed launch, but its
 run-mode exit reason is not yet known; no pane or transcript was inspected.
 
-**Next action:** publish this second resolved helper checkpoint. Then run one
-distinct bounded non-tmux diagnostic instance with stdout/stderr redirected to
-a new mode-0600 private file, journal its exact PID/start before observation,
-and stop on any ambiguous launch. Inspect only the minimum startup error
-needed to diagnose, never pane/transcript content. Fix or recover from that
-evidence, then restore exactly one helper window and require fresh healthy
-phone parity plus two interval-separated monitor/helper receipts before final
-T-350 closeout.
+Protected PR #477 merge-merged the second resolved-helper checkpoint as
+`e8c3af3530e396fd315fb24ba4c5248b1c014543`; Local main fast-forwarded.
+Diagnostic-controller digest
+`7159e85d38fd42aaa9e334b8877348a2109905a5c43ee60154231014b3551744`
+passed zero-write preflight and executed exactly once. Its direct foreground
+helper `3837653/115210506` remained healthy for the complete three-second
+observation, then acknowledged one exact `SIGTERM` and exited zero. Journal
+digest
+`e3ab36d21a859d6e9027dc07e255cddb2196e039fcf1872f08bb50c34f2ca887`
+and result digest
+`a69e3519741bb763596702e91b1e97c8257950fcb8928e8c3f3fa5605b6c68b5`
+record accepted `foreground-helper-survived`; its mode-0600 private output is
+117 bytes with digest
+`d5fad2dd878aa3314523ba560bfb36cc7492fe238583a65bb6200ed884f9031a`
+and did not need content inspection.
+
+This isolates the failed tmux launches from helper run mode. Read-only tmux
+environment lookup shows both `XDG_RUNTIME_DIR` and `TMPDIR` absent, while the
+successful direct process inherited the canonical `/run/user/5035` runtime
+root. Tmux 3.4 supports per-window `-e environment`, so the next launch can
+bind only `XDG_RUNTIME_DIR=/run/user/5035` without modifying global tmux or
+owner environment. The diagnostic stopped cleanly; no helper process/window
+or helper-lock holder remains. Its stopped receipt is not acceptance evidence.
+
+**Next action:** publish this diagnostic/root-cause checkpoint. Then use one
+new changed-input controller and exactly one `tmux new-window -e
+XDG_RUNTIME_DIR=/run/user/5035` to create `monitor:2:helper` under merged code.
+Require one new current-user owner, no worker child, unchanged monitor/project
+identities, a fresh healthy phone receipt, and two interval-separated healthy
+helper/monitor readbacks before final T-350 closeout.
 
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
