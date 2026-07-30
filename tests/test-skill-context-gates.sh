@@ -6,6 +6,7 @@ COWORK=$ROOT/shared/skills/codex-claude-cowork
 HPC=$ROOT/shared/skills/operate-native-hpc
 PIE=$ROOT/shared/skills/plan-interview-execute/SKILL.md
 REMOTE=$ROOT/shared/skills/remote-agent-communication/SKILL.md
+HARDENING=$ROOT/shared/skills/fleet-repository-hardening/SKILL.md
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 assert_contains() {
@@ -30,7 +31,7 @@ for path in \
     "$HPC/references/alps.md" \
     "$HPC/references/rccs.md" \
     "$HPC/references/tsubame.md" \
-    "$PIE" "$REMOTE"; do
+    "$PIE" "$REMOTE" "$HARDENING"; do
     [ -f "$path" ] && [ ! -L "$path" ] || fail "missing regular file: $path"
 done
 
@@ -95,6 +96,10 @@ assert_contains 'do not manufacture an interview' "$PIE" \
     'PIE empty-interview refusal'
 assert_contains 'The go instruction authorizes only the frozen plan' "$PIE" \
     'PIE go authority boundary'
+assert_contains 'add another interview or confirmation' "$HARDENING" \
+    'hardening frozen-authority autonomy'
+assert_contains 'same request is the `go`' "$HARDENING" \
+    'hardening current-request execution authority'
 
 # HPC selects common plus one exact site and retains site-specific stop gates.
 for route in common current abci riken alps rccs tsubame; do

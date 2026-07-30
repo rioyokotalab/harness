@@ -21,6 +21,10 @@ grep -F 'name: fleet-repository-hardening' "$SKILL" >/dev/null ||
     fail "skill name"
 grep -F 'repository-local LIFO' "$SKILL" >/dev/null ||
     fail "LIFO contract"
+grep -F 'add another interview or confirmation' "$SKILL" >/dev/null ||
+    fail "already-authorized autonomy gate"
+grep -F 'same request is the `go`' "$SKILL" >/dev/null ||
+    fail "existing execution authority"
 grep -F 'git push origin HEAD:refs/heads/TASK_BRANCH' "$SKILL" >/dev/null ||
     fail "explicit push refspec"
 grep -F 'Do not use plain `git push`' "$SKILL" >/dev/null ||

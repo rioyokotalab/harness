@@ -1,6 +1,6 @@
 ---
 name: fleet-repository-hardening
-description: Audit and harden multiple repositories and their Linux/macOS execution fleet through independent ledgers, isolated worktrees, a frozen owner interview, repository-local LIFO issue stacks, small protected changes, live-settings readback, and deadline-based handoff. Use for nightly or multi-hour security, reliability, dependency, CI, backup, SSH, agent-tooling, or repository-governance reviews spanning two or more repositories or nodes.
+description: Audit and harden multiple repositories and their Linux/macOS execution fleet through independent ledgers, isolated worktrees, frozen owner decisions, repository-local LIFO issue stacks, small protected changes, live-settings readback, and deadline-based handoff. Use for nightly or multi-hour security, reliability, dependency, CI, backup, SSH, agent-tooling, or repository-governance reviews spanning two or more repositories or nodes.
 ---
 
 # Fleet and Repository Hardening
@@ -14,8 +14,9 @@ route.
 
 Read and apply these installed skills when their trigger is present:
 
-- `plan-interview-execute` for the initial audit, owner decisions, frozen plan,
-  and explicit execution gate;
+- `plan-interview-execute` only when the owner requests planning, interview, or
+  a separate explicit `go`, or when unresolved material choices remain. Do not
+  add another interview or confirmation to already frozen, authorized work;
 - `long-running-task-ledger` for every multi-session or deadline-bound stream;
 - `evidence-first-research` for current advisories, platform entitlements,
   vendor guidance, and security claims;
@@ -63,9 +64,13 @@ The umbrella plan must freeze:
 - the issue-stack protocol; and
 - the deadline, material-work cutoff, final-validation window, and handoff.
 
-Ask one material owner question at a time when requested. Record each answer
-before asking the next. Do not mutate target state until all decisions are
-frozen and the owner gives explicit `go`.
+Ask one material owner question at a time only when requested or when a
+discoverable answer cannot resolve a decision that changes scope, authority, or
+external state. Record each answer before asking the next. If decisions are
+already complete and the owner's request explicitly authorizes execution, that
+same request is the `go`; never manufacture a second confirmation. Do not
+mutate target state until material choices are frozen and execution authority
+exists.
 
 ## Process issues as repository-local LIFO stacks
 

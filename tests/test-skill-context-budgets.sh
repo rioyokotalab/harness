@@ -6,6 +6,7 @@ COWORK=$ROOT/shared/skills/codex-claude-cowork
 HPC=$ROOT/shared/skills/operate-native-hpc
 PIE=$ROOT/shared/skills/plan-interview-execute/SKILL.md
 REMOTE=$ROOT/shared/skills/remote-agent-communication/SKILL.md
+HARDENING=$ROOT/shared/skills/fleet-repository-hardening/SKILL.md
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 words() { wc -w <"$1" | tr -d ' '; }
@@ -63,6 +64,7 @@ fi
 
 assert_max "$(words "$PIE")" 1150 'PIE entry'
 assert_max "$(words "$REMOTE")" 1300 'remote-agent entry'
+assert_max "$(words "$HARDENING")" 1200 'fleet-hardening entry'
 
 printf '%s\n' \
     "Skill context budgets passed: cowork $COWORK_BEFORE->$cowork_initial words (-$cowork_reduction%); HPC $HPC_BEFORE->$hpc_largest words (-$hpc_reduction%, largest selected route)"

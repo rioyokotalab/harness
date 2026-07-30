@@ -21,7 +21,7 @@ its eventual protected publication.
 | ordinary code fix | 74,455 | 2,540 | 96.6% | 3,627 | 1,553 | 57.2% |
 | tmux health diagnosis | 73,545 | 2,546 | 96.5% | 2,717 | 1,559 | 42.6% |
 | unsafe-tail recovery | 75,931 | 4,022 | 94.7% | 5,103 | 3,035 | 40.5% |
-| fleet hardening | 76,238 | 5,888 | 92.3% | 5,410 | 4,901 | 9.4% |
+| fleet hardening | 76,238 | 4,855 | 93.6% | 5,410 | 3,868 | 28.5% |
 | native HPC experiment | 77,550 | 4,478 | 94.2% | 6,722 | 3,491 | 48.1% |
 | duration Cowork | 80,599 | 5,734 | 92.9% | 9,771 | 4,747 | 51.4% |
 

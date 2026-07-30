@@ -1,0 +1,112 @@
+# T-351 sustainable private Actions transition
+
+## Decision
+
+Keep GitHub-hosted validation for untrusted contributions, but stop allocating a
+private runner for an owner-only pull request whose exact tree was validated
+locally. Remove duplicate `main` push workflows, retain one unconditional
+weekly/manual hosted gate in each private repository, and use one coherent PR
+per task instead of opening PRs for ledger-only checkpoints.
+
+This is repository-only and required no organization, billing, ruleset, or
+approval-count write. It avoids the security and maintenance burden of a
+persistent self-hosted runner while preserving independent hosted execution for
+untrusted code.
+
+## Measured baseline
+
+The fixed audit window was
+`2026-06-30T14:10:07Z`–`2026-07-30T14:10:07Z`.
+Dependabot-only activity was separated.
+
+| Repository | Visibility | Runs/jobs observed | Private rounded non-Dependabot job-minutes |
+| --- | --- | --- | ---: |
+| Harness | public | 576 PR, 678 push, 2 Dependabot; 2,474.8 wall-minutes | 0 |
+| Students | private | 525 PR CI, 480 push CI, 525 boundary, 2 conference, 22 Dependabot | 1,543 |
+| Swallow | private | 145 PR, 133 push, 1 Dependabot | 278 |
+| Website | public | 43 PR, 17 historical push, 2 Dependabot; 258.4 wall-minutes | 0 |
+
+GitHub documents that standard hosted runners are free in public repositories,
+whereas private repositories consume plan allowance and then bill overage:
+[Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions).
+The run audit therefore distinguishes public wall time from the private minute
+pool in the owner's notification.
+
+Three trigger corrections alone remove 1,142 of the observed 1,821 private
+minutes (62.7%):
+
+- 522 owner-only Students boundary job-minutes;
+- 487 duplicate Students post-merge push job-minutes;
+- 133 duplicate Swallow post-merge push job-minutes.
+
+The owner-only Offline jobs now skip as well. The historical query did not bind
+every PR's author and event sender, so no unsupported retrospective count is
+assigned to that additional saving. Operationally, a normal future owner task
+allocates zero private runners in either repository; independent weekly runs
+cost roughly one rounded job-minute per repository per week.
+
+## Implemented state
+
+Students:
+
+- PR #490, merged as
+  `80defa6816969b9644ec81c26accc026ae2edb5e`, removed `push`, retained PR,
+  weekly (`17 18 * * 6` UTC), and manual events, and skips both private jobs
+  only when PR author and event sender are `rioyokota`.
+- PR #491, merged as
+  `dafb4a3f2963c2535ae9c4a5ecb133b1238b5598`, recorded closeout with both
+  required jobs skipped and no post-merge run.
+- The exact merged trees matched the reviewed trees. The local gate passed 481
+  tests plus 29 subtests.
+
+Swallow:
+
+- PR #136, merged as
+  `6a682e00000c54cd13d18b3bd8eb4820b1c8567d`, removed `push`, retained PR,
+  weekly (`43 18 * * 6` UTC), and manual events, and skips the private job only
+  when both author and sender are the owner.
+- PR #137, merged as
+  `0e9029b1a8ca60a3c6b906bff0a475df7323e555`, recorded closeout with the
+  required job skipped and no post-merge run.
+- The exact merged trees matched the reviewed trees, and the complete
+  login-safe static suite passed.
+
+GitHub's job-condition syntax supports this event-specific selection:
+[job conditions](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-jobs-with-conditions).
+A skipped required job reports success, so the existing required context can
+remain unchanged:
+[required-check behavior](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks).
+
+## Trust and residual risk
+
+The owner records the exact head tree, command, result, platform, and validator
+digest in an owner-authored PR. That is same-trust-root self-attestation, not
+independent CI. GitHub does not mechanically validate the receipt when the job
+is skipped; owner identity and protected-PR review are the trust boundary.
+Weekly hosted runs independently detect merged-tree drift within at most seven
+days. A direct administrator bypass has the same bounded residual.
+
+Mixed or non-owner events still run all hosted checks, including Students'
+trusted-base boundary. No untrusted pull-request code runs on a persistent
+self-hosted machine; GitHub explicitly warns about self-hosted runner exposure
+to untrusted workflows:
+[secure use reference](https://docs.github.com/en/actions/reference/security/secure-use).
+
+Rejected alternatives were:
+
+- a persistent self-hosted runner, because it expands credential, persistence,
+  and cleanup risk for untrusted code;
+- disabling private Actions, because non-owner validation would disappear;
+- moving private repositories or artifacts public, because that changes the
+  data boundary;
+- workflow-level path filtering for a required workflow, because a skipped
+  workflow can leave its required check pending;
+- using an HPC/login node as a CI daemon, because scheduler, billing, site
+  policy, and untrusted-code isolation become operational dependencies.
+
+Account plan, billing-cycle boundary, payment state, budget, and organization
+Actions policy remain unknown: available read-only credentials lack
+`admin:org`, and no scope expansion was requested. The repository-only
+transition is effective without those facts. Reassess only if non-owner volume
+alone begins to approach the allowance; at that point ephemeral isolated
+runners or a plan change can be compared against measured demand.
