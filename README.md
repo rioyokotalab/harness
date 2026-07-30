@@ -574,6 +574,15 @@ tests/test-phase1.sh
 Documentation-only changes must at least pass `git diff --check` and the
 relevant focused tests. Protected CI remains authoritative.
 
+For private Students and Swallow work, owner-authored pull requests use an
+exact-tree local validation receipt and skip before hosted-runner allocation;
+mixed or non-owner pull requests still run hosted checks. Duplicate post-merge
+`main` runs are disabled, while weekly and manual hosted runs provide an
+independent backstop. Harness is public and keeps hosted pull-request CI but
+likewise avoids the redundant post-merge run. The measured cost model, trust
+boundary, and rejected alternatives are recorded in
+[`docs/audits/t351-autonomy-efficiency/actions-transition.md`](docs/audits/t351-autonomy-efficiency/actions-transition.md).
+
 ## Local shell compatibility
 
 Live shell startup files are intentionally not versioned. Where Bash
