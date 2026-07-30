@@ -1,6 +1,6 @@
 # T-348 phone remote-control mirror
 
-**Phase:** physical-phone accepted; correcting unsent promotion controller
+**Phase:** accepted bridge promoted; publishing pre-retirement checkpoint
 **Driver:** Local Codex
 **Updated:** 2026-07-30 JST
 **Branch:** `codex/t348-phone-mirror`
@@ -340,3 +340,22 @@ hold the monitor's native private lock rather than stopping its terminal job,
 and pause only the four exact watcher leaves. Revalidate all original
 preimages, perform the two name requests and three tmux writes once, then
 publish the promotion checkpoint before any old-leaf signal or archive.
+
+Promoter r2 digest
+`7e2fbf889f349d99b75ed478c915f06d7322ba8dcfc0f9a92a8916e2b7232254`
+executed once after protected refusal merge
+`745e7d0b8fc9fa2c0c0b386e2003c57f2515155b`. Old-root name request `3`,
+accepted-root name request `6`, both window renames, and the one position swap
+were each acknowledged. Resulting IDs are
+`@98/2:swallow` for accepted root
+`019fb1ab-b559-79c2-ad9c-0ee8f426cedc` and
+`@93/3:swallow-retired-20260730` for preserved old root
+`019fafef-5ebf-72f1-b1ce-2444e7570dc1`. The client remains on `@87`;
+accepted process identities are unchanged and attempt zero. All paused
+watchers resumed, and monitor/helper performed no repair.
+
+Publish this accepted rename-only promotion before any old-leaf signal.
+Afterward, revalidate exact old TUI `2266662` and its parent/root/window chain,
+then send only that leaf one `SIGTERM`. Never send a second signal. Require
+the old launcher, watcher, supervisor, pane, and window to unwind before the
+separate reversible archive stage.
