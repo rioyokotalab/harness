@@ -9,11 +9,11 @@ Next free ID: T-351.
 
 ## Current state
 
-- Protected `main`, Local, and all eleven managed remote checkouts contain the
-  complete T-350 control plane at
-  `c9f4fa3a956dc21b2c50cac0a79ee6cf3ecb4536`. Aist, Home, Office, and Riken
-  each accepted exactly one merge-specific context refresh; none may be
-  retried.
+- Protected `main` and Local contain the complete T-350 closeout. All eleven
+  managed remote checkouts remain clean/aligned at its active control-plane
+  merge `c9f4fa3a956dc21b2c50cac0a79ee6cf3ecb4536`; the subsequent ledger-only
+  closeout does not require fleet sync. Aist, Home, Office, and Riken each
+  accepted exactly one merge-specific context refresh; none may be retried.
 - Local's canonical detached tmux session is `$14:projects`, with exact
   repository-native windows `@87/0:harness`, `@99/1:students`, and
   `@100/2:swallow`. Monitor topology is
@@ -21,7 +21,8 @@ Next free ID: T-351.
   phone parity, and the helper is idle with an empty queue. All three resilient
   chains remain live at attempt zero. No tmux client is attached.
 - ABQ is aligned through both declared routes. All eleven remote heads and
-  remote refs equal current protected main and no fleet-sync artifact remains.
+  remote refs equal the active control-plane merge and no fleet-sync artifact
+  remains.
 - The README now leads with owner-facing startup and daily operations, carries
   a pointer to the canonical fleet reference, and separates logical nodes from
   transport-only aliases and the service-only web endpoint.
@@ -915,8 +916,11 @@ short-lived manifest was exact-unlinked.
 Fresh Local readback after rollout reports the helper idle with an empty queue,
 the monitor healthy three of three with exact phone parity and no pending
 action, exact canonical repository-native tmux order, and no attached client.
-T-350 is complete. Swallow project work remains independently owned by its
-canonical direct-cwd agent; its recorded next project action is SW-031.
+Protected PR #482 passed `portable-phase1` and merge-merged this documentation
+closeout as `e3ed59ada526dccce6c2d6f28f838b03df6367e3`; it contains no
+control-plane change and therefore requires no repeat fleet sync or context
+refresh. T-350 is complete. Swallow project work remains independently owned
+by its canonical direct-cwd agent; its recorded next project action is SW-031.
 
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
