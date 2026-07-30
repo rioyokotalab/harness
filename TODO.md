@@ -336,6 +336,23 @@ mirror event reversibly archive only the three frozen baseline extras; then
 require exact three-root phone/tmux parity, two healthy monitor/helper
 intervals, absent-only remote-control behavior, and fresh fleet health.
 
+**Main-controller activation preflight 2026-07-30 09:20 JST:** the complete
+root instructions, task board, T-345 plan, and applicable ledger and
+communication workflows were reread from disk. Local protected `main` is
+clean/aligned at `116a9939814b432f8ef2c8813a8a0f99073c10ff`, containing
+implementation merge `5351f0c`. The exact live pane-blind topology remains
+`@87/0:harness,@88/1:students,@93/2:swallow` and
+`@40/0:tunnel,@94/1:codex`; one owner client selects Harness `@87`.
+Monitor PID `2859842` retains the pre-merge loaded command and reports
+`healthy=3`; shared app server `2852569` is live; exact helper status remains
+`phase=absent`. All unrelated worktrees and open PR #377 remain preserved.
+
+**Next action:** publish this pre-mutation checkpoint, then submit exactly one
+T-345 implementation-specific pane-blind context refresh to Aist, Home,
+Office, and Riken. An acknowledged or ambiguous submission is never retried.
+Only after recording all four outcomes may the controller revalidate and
+bridge-replace old monitor `@94`.
+
 ### T-344 — Recover Swallow and automate blocked-root cutover
 
 **Phase:** complete; live Swallow recovered and automatic unsafe-tail handoff
