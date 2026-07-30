@@ -33,6 +33,8 @@ while IFS='|' read -r scenario baseline_total baseline_nonledger resources; do
         path=$ROOT/$relative
         [ -f "$path" ] && [ ! -L "$path" ] ||
             fail "$scenario selected unsafe or missing resource: $relative"
+        git -C "$ROOT" ls-files --error-unmatch -- "$relative" >/dev/null 2>&1 ||
+            fail "$scenario selected untracked resource: $relative"
         count=$(words "$path")
         current_total=$((current_total + count))
         [ "$relative" = TODO.md ] ||

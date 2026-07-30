@@ -6,8 +6,8 @@
 ^tests/test-task-ledger-routing\.sh$|R0|tests/test-task-ledger-routing.sh|task ledger validator
 ^docs/github-rulesets/|R1|tests/test-github-rulesets.sh|ruleset fixture
 ^tests/test-github-rulesets\.sh$|R1|tests/test-github-rulesets.sh|ruleset fixture validator
-^shared/skills/codex-claude-cowork/(SKILL\.md|references/(session-planning|evidence-exchange|native-clients|execution-duration|recovery)\.md)$|R1|tests/test-skill-context-budgets.sh|cowork routed context budget
-^shared/skills/codex-claude-cowork/(SKILL\.md|references/(session-planning|evidence-exchange|native-clients|execution-duration|recovery)\.md)$|R1|tests/test-skill-context-gates.sh|cowork routed safety gates
+^shared/skills/codex-claude-cowork/(SKILL\.md|references/(session-planning|evidence-review|evidence-exchange|native-clients|execution-duration|recovery)\.md)$|R1|tests/test-skill-context-budgets.sh|cowork routed context budget
+^shared/skills/codex-claude-cowork/(SKILL\.md|references/(session-planning|evidence-review|evidence-exchange|native-clients|execution-duration|recovery)\.md)$|R1|tests/test-skill-context-gates.sh|cowork routed safety gates
 ^shared/skills/codex-claude-cowork/references/protocol\.md$|R3|-|cowork compatibility aggregate
 ^shared/skills/codex-claude-cowork/(scripts|agents)/|R3|-|cowork executable or client configuration
 ^tests/test-codex-claude-cowork-skill\.sh$|R3|-|cowork executable validator

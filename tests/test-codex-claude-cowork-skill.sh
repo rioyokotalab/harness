@@ -6,6 +6,7 @@ HARNESS=$ROOT/bin/harness
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 SKILL=$ROOT/shared/skills/codex-claude-cowork/SKILL.md
 SESSION_PLANNING=$ROOT/shared/skills/codex-claude-cowork/references/session-planning.md
+EVIDENCE_REVIEW=$ROOT/shared/skills/codex-claude-cowork/references/evidence-review.md
 EVIDENCE_EXCHANGE=$ROOT/shared/skills/codex-claude-cowork/references/evidence-exchange.md
 NATIVE_CLIENTS=$ROOT/shared/skills/codex-claude-cowork/references/native-clients.md
 EXECUTION_DURATION=$ROOT/shared/skills/codex-claude-cowork/references/execution-duration.md
@@ -36,7 +37,7 @@ trap 'exit 143' TERM
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 
-for path in "$SKILL" "$SESSION_PLANNING" "$EVIDENCE_EXCHANGE" \
+for path in "$SKILL" "$SESSION_PLANNING" "$EVIDENCE_REVIEW" "$EVIDENCE_EXCHANGE" \
     "$NATIVE_CLIENTS" "$EXECUTION_DURATION" "$RECOVERY" "$SESSION" "$OPENAI"; do
     [ -f "$path" ] && [ ! -L "$path" ] || fail "missing regular file: $path"
 done
@@ -48,8 +49,8 @@ grep -F 'The client handling the owner' "$SKILL" | grep -F '**driver**' >/dev/nu
 grep -F 'driver owns session content except' "$SESSION_PLANNING" >/dev/null &&
     grep -F '`copilot-evidence.md`' "$SESSION_PLANNING" >/dev/null ||
     fail 'co-pilot content ownership'
-grep -F 'prose-only' "$EVIDENCE_EXCHANGE" >/dev/null &&
-    grep -F 'review is insufficient' "$EVIDENCE_EXCHANGE" >/dev/null ||
+grep -F 'prose-only' "$EVIDENCE_REVIEW" >/dev/null &&
+    grep -F 'review is insufficient' "$EVIDENCE_REVIEW" >/dev/null ||
     fail 'experiment gate'
 grep -F 'Let only the driver mutate the target' "$SKILL" >/dev/null || fail 'execution role'
 grep -F 'Do not grant either' "$SKILL" >/dev/null || fail 'role symmetry'

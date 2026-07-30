@@ -62,8 +62,9 @@ action:
 | Task or phase | Required reference |
 |---|---|
 | Initialize, reconstruct, plan, or advance to `discussing` | [session-planning.md](references/session-planning.md) |
-| Run independent/reciprocal evidence, stage, monitor, import, reconcile, or advance to `ready-for-execution` | [evidence-exchange.md](references/evidence-exchange.md) |
-| Launch either native co-pilot client | [native-clients.md](references/native-clients.md) plus the evidence reference |
+| Evidence design, production, critique, reconciliation, or `ready-for-execution` | [evidence-review.md](references/evidence-review.md) |
+| Stage, monitor, or import | [evidence-exchange.md](references/evidence-exchange.md) |
+| Launch a native co-pilot | [native-clients.md](references/native-clients.md) plus both evidence references |
 | Execute, validate, or satisfy a duration-bounded request | [execution-duration.md](references/execution-duration.md) |
 | Recover, transfer roles, use direct exchange, or diagnose ambiguous interruption | [recovery.md](references/recovery.md) |
 

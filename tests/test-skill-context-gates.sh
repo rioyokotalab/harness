@@ -28,6 +28,7 @@ assert_contains() {
 for path in \
     "$COWORK/SKILL.md" \
     "$COWORK/references/session-planning.md" \
+    "$COWORK/references/evidence-review.md" \
     "$COWORK/references/evidence-exchange.md" \
     "$COWORK/references/native-clients.md" \
     "$COWORK/references/execution-duration.md" \
@@ -107,13 +108,15 @@ assert_contains 'guarded-deletion workflow' "$COWORK/SKILL.md" \
 assert_contains 'Cross-product role transfer requires an explicit owner instruction' \
     "$COWORK/SKILL.md" 'cowork takeover authority gate'
 
-for route in session-planning evidence-exchange native-clients \
+for route in session-planning evidence-review evidence-exchange native-clients \
     execution-duration recovery; do
     assert_contains "[$route.md](references/$route.md)" "$COWORK/SKILL.md" \
         "cowork missing $route route"
 done
 assert_contains 'benchmark agreement precedes target execution' \
     "$COWORK/references/session-planning.md" 'cowork benchmark gate'
+assert_contains 'prose-only review is insufficient' \
+    "$COWORK/references/evidence-review.md" 'cowork experiment gate'
 assert_contains 'not cross-file crash atomic' \
     "$COWORK/references/evidence-exchange.md" 'cowork crash ambiguity gate'
 assert_contains '`--dangerously-skip-permissions`' \

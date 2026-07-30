@@ -23,7 +23,7 @@ its eventual protected publication.
 | unsafe-tail recovery | 75,931 | 2,635 | 96.5% | 5,103 | 2,389 | 53.1% |
 | fleet hardening | 76,238 | 4,002 | 94.7% | 5,410 | 3,756 | 30.5% |
 | native HPC experiment | 77,550 | 2,924 | 96.2% | 6,722 | 2,678 | 60.1% |
-| duration Cowork | 80,599 | 4,291 | 94.6% | 9,771 | 4,045 | 58.6% |
+| duration Cowork | 80,599 | 4,275 | 94.6% | 9,771 | 4,029 | 58.7% |
 
 The median total reduction is 97.3%, above the frozen 85% threshold; every
 scenario exceeds 94%, above the per-scenario 50% floor. Median non-ledger
@@ -45,7 +45,7 @@ checks that selected inputs are regular tracked files, enforces all frozen
 thresholds, and fails if the active board or policy router regresses.
 
 Phase routing reduced the largest selected routes as follows: Cowork
-5,926→969 words (83.6%), HPC 2,668→1,117 (58.1%), PIE 1,088→615
+5,926→972 words (83.6%), HPC 2,668→1,117 (58.1%), PIE 1,088→615
 (43.5%), remote communication 1,241→737 (40.6%), fleet hardening
 1,431→864 (39.6%, including LIFO handling added to the largest interrupted
 phase), and personal-Mac onboarding 1,527→953 (37.6%, including component
@@ -84,4 +84,10 @@ Cowork's mandatory entry now contains only its cross-phase authority,
 isolation, import, sole-writer, ambiguity, and routing gates. Initialization,
 evidence, execution, recovery, and duration mechanics stay in their selected
 references; removing duplicated flow prose and compacting those gates reduced
-the initial route from 1,231 to 969 words without changing those references.
+the initial route from 1,231 to 972 words.
+
+Evidence reasoning and sealed exchange now route independently. Review or
+reconciliation selects 842 words, while stage/status/import selects 1,097
+instead of the former 1,327-word combined route. A native evidence pass selects
+both references and remains complete at 1,645 words; the split removes no
+transaction or evidence requirement.
