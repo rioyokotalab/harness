@@ -270,11 +270,17 @@ for fleet/runtime work, route failure, rollout, and final handoff—not every
 unrelated turn. It also reuses recorded validation when bytes, environment
 contract, and acceptance scope are unchanged; a resumed session alone cannot
 trigger duplicate work. Root policy remains 863 words and all eight context
-scenarios retain 94.0–98.1% total reduction. Policy, context, Claude takeover,
-fleet, monitor, connection-monitor, runtime, backup, routed-component, and
-source-contract checks passed at their owning revisions. Independent workers
-also reported complete 91-suite passes around 73 seconds; one exact final
-integrated run remains deliberately deferred until all retained bytes settle.
-No hosting setting, approval count, billing state, credential, scheduler,
-live project session, app-server, tmux, pane, transcript, or control process
-was changed.
+scenarios retain 94.0–98.1% total reduction. External-user onboarding was
+additionally split into a 192-word mandatory boundary/router plus one current
+account, preflight, installation, or acceptance reference. Its largest route
+is 391 words instead of the 664-word monolith, a 41.1% reduction, with
+collision, package/admin, credential, sudo, installer, rollback, and
+remote-handoff gates covered.
+
+Policy, context, Claude takeover, fleet, monitor, connection-monitor, runtime,
+backup, routed-component, external-onboarding, and source-contract checks
+passed at their owning revisions. Independent workers also reported complete
+91-suite passes around 73 seconds; one exact final integrated run remains
+deliberately deferred until all retained bytes settle. No hosting setting,
+approval count, billing state, credential, scheduler, live project session,
+app-server, tmux, pane, transcript, or control process was changed.
