@@ -145,7 +145,7 @@ agents and ledgers.
 
 ### T-348 — Keep phone remote-control roots mirrored to Local tmux
 
-**Phase:** accepted bridge promoted; publishing pre-retirement checkpoint.
+**Phase:** old chain retired; publishing pre-archive checkpoint.
 
 The owner reports that Swallow is absent from phone Remote and requests a
 periodic one-to-one mirror for Harness, Students, and Swallow. Complete
@@ -448,6 +448,32 @@ protected `main`. Only afterward, revalidate the exact old real TUI
 Send one `SIGTERM` only to old TUI `2266662`; never send a second signal.
 Require its launcher/watcher/supervisor/pane/window to unwind before any
 archive.
+
+Promotion checkpoint PR #452 passed protected `portable-phase1` and merged as
+`1f950692852053f86a15cff6c56597eaa1ccfaec`. Retirement controller digest
+`be70faa1208be27f8ab130a836a41f5e1bf52fa80f6a3ff2210e34cceb0f20fe`
+passed zero-write preflight against every exact identity and sent one
+`SIGTERM` only to old TUI PID `2266662`. The signal acknowledgement is
+non-retryable.
+
+Within 1.1 seconds the old TUI, launcher `2266661`, watcher `2266511`,
+supervisor `2266420`, pane `%93`, and window `@93` all exited. No zombie
+remains and no second signal was sent. Exact canonical topology is now
+`@87/0:harness,@88/1:students,@98/2:swallow`; the sole client remains on
+`@87`. Accepted root/process identities remain unchanged at attempt zero.
+Monitor reports three healthy process chains and no repair; phone-mirror
+remains unavailable only because the retired old root is still reversibly
+unarchived. Helper remains idle without auto-mirror.
+
+Retirement controller v1 is consumed and must not execute again. Old root
+`019fafef-5ebf-72f1-b1ce-2444e7570dc1` remains preserved and unarchived.
+
+**Next action:** publish this zero-zombie retirement checkpoint through
+protected `main`, then prove exact old-root inactivity and zero process,
+tmux, client, and loaded-runtime references. If the accepted canonical root,
+app server, helper/monitor, and unaffected roots remain exact, send one native
+reversible archive request for only the retired old root. Never delete its
+rollout and never repeat an acknowledged or ambiguous archive.
 
 ### T-347 — Complete T-345 mirror convergence
 

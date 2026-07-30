@@ -1,6 +1,6 @@
 # T-348 phone remote-control mirror
 
-**Phase:** accepted bridge promoted; publishing pre-retirement checkpoint
+**Phase:** old chain retired; publishing pre-archive checkpoint
 **Driver:** Local Codex
 **Updated:** 2026-07-30 JST
 **Branch:** `codex/t348-phone-mirror`
@@ -359,3 +359,17 @@ Afterward, revalidate exact old TUI `2266662` and its parent/root/window chain,
 then send only that leaf one `SIGTERM`. Never send a second signal. Require
 the old launcher, watcher, supervisor, pane, and window to unwind before the
 separate reversible archive stage.
+
+Promotion checkpoint PR #452 merged as
+`1f950692852053f86a15cff6c56597eaa1ccfaec`. Retirement controller digest
+`be70faa1208be27f8ab130a836a41f5e1bf52fa80f6a3ff2210e34cceb0f20fe`
+then sent and acknowledged one `SIGTERM` only to old TUI `2266662`. The old
+TUI, launcher, watcher, supervisor, pane, and window exited within 1.1
+seconds; no zombie remains and no second signal was sent.
+
+Canonical topology is now
+`@87/0:harness,@88/1:students,@98/2:swallow`, with the client still on `@87`
+and the accepted chain unchanged at attempt zero. Publish this checkpoint,
+then prove old-root inactivity and zero runtime/tmux/client references before
+one reversible native archive request. Preserve the old rollout and never
+repeat an acknowledged or ambiguous archive.
