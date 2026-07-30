@@ -404,6 +404,30 @@ window/process/event/receipt/worker or root/archive write was created;
 `monitor:2` remains free and helper status remains `phase=absent`. Retry is
 safe after publishing this exact correction and changing only that Git gate.
 
+**Helper launch and mirror-event failure 2026-07-30 09:28 JST:** after the
+corrected pushed-head gate, one provisional helper launch was acknowledged
+exactly once as `@96/2:helper-next-t345`, pane `%96`, process `4140398`.
+Its mode-0700 runtime and mode-0600 lock, helper, remote-control, immutable
+event, receipt, and log metadata pass. It detected exactly the three canonical
+roots, the three frozen extras, zero missing roots, and two canonical-name
+mismatches, then launched one Sol/high ephemeral worker as PID `4140404`.
+
+The worker exited `1`; immutable event
+`13de62583acf5ad5babd684785e636d5bb20d5643ac52b8440cbd93c2155e586`
+is terminal `failed/worker-failed` with no accepted `RECOVERY_RESULT`. Its
+private 72-line log was not read because pane/transcript content is excluded.
+No worker remains. Independent exact-ID SQLite readback shows all six roots
+still unarchived, all three extras still have zero process references, and the
+two pre-existing canonical-name mismatches remain. The event and any possible
+target-side attempt must never be retried.
+
+**Next action:** publish this non-retryable failure. Rename-only promote live
+accepted `@96` to exact `monitor:2 helper`, preserving its failed receipt and
+all protected state. Then collect two interval-separated monitor/helper
+readbacks and stop T-345 short of mirror convergence; diagnose or amend the
+failed event only under a separately frozen changed-input plan that does not
+read the private worker log or repeat an ambiguous operation.
+
 ### T-344 — Recover Swallow and automate blocked-root cutover
 
 **Phase:** complete; live Swallow recovered and automatic unsafe-tail handoff
