@@ -377,13 +377,18 @@ checkpoint then passed all 91 suites in 67.19 seconds, with 161.23 seconds user,
 165.12 seconds system, and 521,212 KiB maximum RSS.
 
 The experiment's disposable 7,709-entry, 132,890,970-byte benchmark root was
-removed through the guarded workflow after exact revalidation. Task-wide
-worktrees, eligible Codex arg0 residue, and previously identified stale
-test-launcher processes remain deferred to the single deadline cleanup so they
-are not repeatedly disturbed. No live Codex, tmux, app-server, monitor,
-recovery, scheduler, or project-agent process was mutated, and no pane or
-transcript was read. Remaining work is to hold implementation bytes stable,
-run the final exact-tree complete suite after the last evidence edits, publish
-one protected Harness pull request, prove its exact merged tree and absence of
-a post-merge push run, perform guarded cleanup, run fresh fleet health, and
-close at the requested deadline.
+removed through the guarded workflow after exact revalidation. A separate
+routine arg0 inventory found 5 held/live directories, 599 eligible, 0 young,
+and 0 unexpected. The repository helper locked and quarantined only the 599
+eligible identities, then its guarded manifest verified 605 entries / 2,184
+bytes and unchanged protected anchors before removal. Immediate readback was
+live 5, eligible 0, young 0, unexpected 0. Task worktrees and previously
+identified stale test-launcher processes remain deferred to deadline cleanup;
+arg0 will be inventoried again because fresh Codex invocations can create new
+residue. No live Codex, tmux, app-server, monitor, recovery, scheduler, or
+project-agent process was mutated, and no pane or transcript was read.
+Remaining work is to hold implementation bytes stable, run the final exact-tree
+complete suite after the last evidence edits, publish one protected Harness
+pull request, prove its exact merged tree and absence of a post-merge push run,
+perform guarded cleanup, run fresh fleet health, and close at the requested
+deadline.
