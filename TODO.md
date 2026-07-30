@@ -166,7 +166,7 @@ agents and ledgers.
 
 ### T-347 — Complete T-345 mirror convergence
 
-**Phase:** r5 bounded childless-stop correction frozen; publication pending.
+**Phase:** r6 journal-aware helper pause frozen; publication pending.
 
 The immutable T-345 helper event remains terminal `failed/worker-failed`; its
 private worker log remains unread and the event must never be retried.
@@ -326,6 +326,27 @@ user, mode `0700`, one link, 5,108 bytes, SHA-256
 It verifies the exact base and r4 support digests, passes syntax and zero-write
 controller preflight, and has distinct absent journal/result paths.
 
+PR #428 passed `portable-phase1` at exact r5 head
+`a74f245b3cab6bf083f8761c5268a7de1d1b9f2c` and merge-merged as
+`de7aca0c55f301e50aa634691178204bbbba676f`. r5 ran once and again
+terminally refused before a helper `stopped` record, watcher signal,
+app-server connection, or operation. Its mode-0600 journal proves helper
+resume and `verified=0`; all five pre-request receipts remain immutable.
+
+r6 removes the duplicated boundary between a wrapper-owned helper stop and
+the base helper pause. One journal-aware function now validates the exact
+helper, records `stop-sent`, performs the bounded fresh-idle/stopped-childless
+loop, adds the helper to unconditional cleanup, records `stopped`, and exposes
+the proof once to the unchanged base child gate. Watcher handling and every
+lifecycle operation remain unchanged.
+
+Private r6 wrapper
+`/run/user/5035/harness-t347-mirror-convergence/controller-r6.py` is current
+user, mode `0700`, one link, 5,913 bytes, SHA-256
+`afdb9657ef03402161cc5369dafc29626c69d9deb75621a0de0154f1e9fb6de5`.
+It verifies the exact base/r4 support digests, passes syntax and zero-write
+preflight, and has distinct absent journal/result paths.
+
 The immutable controller checkpoint is exact commit
 `70c5194066965df1bffc0078f36361ded50d7bc2` in clean worktree
 `/tmp/harness-t347-t345-mirror-execution`. That worktree must remain at this
@@ -335,10 +356,10 @@ an ancestor. PR #423 passed `portable-phase1` at recording head
 `6fc06163946452ca1fe9a7d015279c2b161ea9ff` and merge-merged as
 `805016261124fd07b365a2cbf962222939e0758d`.
 
-**Next action:** publish the fourth no-request refusal and exact r5 wrapper
+**Next action:** publish the fifth no-request refusal and exact r6 wrapper
 through the protected workflow. Then pass the resulting protected-main merge,
-checkpoint `70c5194`, base digest `df5f4f0`, and r5 digest `a246320` to one r5
-execution. Never rerun the original or r2-r4 controllers. Do not open the
+checkpoint `70c5194`, base digest `df5f4f0`, and r6 digest `afdb965` to one r6
+execution. Never rerun the original or r2-r5 controllers. Do not open the
 app-server connection, signal helper/watchers, or write root metadata before
 protected publication.
 
