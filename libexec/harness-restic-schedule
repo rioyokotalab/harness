@@ -162,6 +162,76 @@ state_get() {
     printf '%s\n' "$value"
 }
 
+read_warning_state() {
+    # Interactive startup needs one metadata validation and one content pass.
+    validate_private_file "$chain_state"
+    warning_parse_status=0
+    warning_state=$(
+        awk '
+            function capture(key, prefix) {
+                seen[key]++
+                if (seen[key] == 1) {
+                    value[key] = substr($0, length(prefix) + 1)
+                }
+            }
+            /^status=/ { capture("status", "status="); next }
+            /^job_id=/ { capture("job_id", "job_id="); next }
+            /^job_name=/ { capture("job_name", "job_name="); next }
+            /^last_result=/ {
+                capture("last_result", "last_result=")
+                next
+            }
+            END {
+                printf "status=%s\n", value["status"]
+                printf "job_id=%s\n", value["job_id"]
+                printf "job_name=%s\n", value["job_name"]
+                printf "last_result=%s\n", value["last_result"]
+                printf "duplicate_status=%d\n", (seen["status"] > 1)
+                printf "duplicate_job_id=%d\n", (seen["job_id"] > 1)
+                printf "duplicate_job_name=%d\n", (seen["job_name"] > 1)
+                printf "duplicate_last_result=%d\n", (seen["last_result"] > 1)
+            }
+        ' "$chain_state"
+    ) || warning_parse_status=$?
+    [ "$warning_parse_status" -eq 0 ] || die "private state parse failed"
+
+    status_value=
+    job_id=
+    job_name=
+    last_result=
+    warning_duplicate_status=
+    warning_duplicate_job_id=
+    warning_duplicate_job_name=
+    warning_duplicate_last_result=
+    while IFS= read -r warning_field; do
+        case "$warning_field" in
+            status=*) status_value=${warning_field#status=} ;;
+            job_id=*) job_id=${warning_field#job_id=} ;;
+            job_name=*) job_name=${warning_field#job_name=} ;;
+            last_result=*) last_result=${warning_field#last_result=} ;;
+            duplicate_status=*)
+                warning_duplicate_status=${warning_field#duplicate_status=}
+                ;;
+            duplicate_job_id=*)
+                warning_duplicate_job_id=${warning_field#duplicate_job_id=}
+                ;;
+            duplicate_job_name=*)
+                warning_duplicate_job_name=${warning_field#duplicate_job_name=}
+                ;;
+            duplicate_last_result=*)
+                warning_duplicate_last_result=${warning_field#duplicate_last_result=}
+                ;;
+            *) die "private state parse failed" ;;
+        esac
+    done <<EOF
+$warning_state
+EOF
+    case "$warning_duplicate_status:$warning_duplicate_job_id:$warning_duplicate_job_name:$warning_duplicate_last_result" in
+        [01]:[01]:[01]:[01]) ;;
+        *) die "private state parse failed" ;;
+    esac
+}
+
 atomic_write() {
     destination=$1
     content=$2
@@ -577,11 +647,15 @@ case "$command_name" in
     warning)
         [ -e "$chain_state" ] || [ -L "$chain_state" ] || exit 0
         validate_state_dir
-        status_value=$(state_get "$chain_state" status)
+        read_warning_state
+        [ "$warning_duplicate_status" -eq 0 ] ||
+            die "duplicate private state key"
         [ "$status_value" = active ] || exit 0
-        job_id=$(state_get "$chain_state" job_id)
-        job_name=$(state_get "$chain_state" job_name)
-        last_result=$(state_get "$chain_state" last_result)
+        if [ "$warning_duplicate_job_id" -ne 0 ] ||
+            [ "$warning_duplicate_job_name" -ne 0 ] ||
+            [ "$warning_duplicate_last_result" -ne 0 ]; then
+            die "duplicate private state key"
+        fi
         scheduler_query_id "$job_id" "$job_name"
         if [ "$JOB_PRESENT" -ne 1 ]; then
             printf 'harness: weekly backup chain warning on %s: captured future job is missing\n' "$logical_host"
