@@ -9,25 +9,18 @@ Next free ID: T-350.
 
 ## Current state
 
-- Protected `main` and Local are clean/aligned at
-  `4b75af573ca4c9b475861f6718bb2b5ed7dbfd12` after the T-345/T-347
-  closeout. T-345 implementation merge
-  `5351f0cb04716aa5082eaee5d049e4efd10bc4be` is installed on the ten
-  reachable remote managed checkouts. T-306's context-refresh policy is
-  current; Aist, Home, Office, and Riken each accepted exactly one
-  T-345-specific refresh and none may be retried.
-- Local's canonical tmux topology is
-  `@87/0:harness,@88/1:students,@93/2:swallow`; monitor topology is
-  `@40/0:tunnel,@95/1:codex,@97/2:helper`. Monitor health is 3/3; helper
-  `2562117` is idle with only historical `failed=1`; all three resilient chains
-  remain live at attempt zero. T-347 verified all five root lifecycle
-  operations, exact three-root phone/tmux parity, two helper intervals, and
-  native doctor 18/18. The historical failed mirror event must not be retried.
-- ABQ is unreachable through both declared routes. The official G-QuAT status
-  page still reports System H `サービス停止中` with the current scheduled
-  stop ending 2026-07-30 17:00 JST. Its checkout remains unknown and no
-  deferred synchronization should run before official or canonical evidence
-  proves restoration.
+- Protected `main`, Local, and all eleven managed remote checkouts are
+  clean/aligned at `bae105c99673a44c95155abe7d940324c475c655` after T-349.
+  Aist, Home, Office, and Riken each accepted exactly one merge-specific
+  context refresh; none may be retried.
+- Local's canonical attached tmux session is `$14:projects`, with exact
+  windows `@87/0:harness`, `@88/1:students`, and `@98/2:swallow`. Monitor
+  topology is `@40/0:tunnel,@95/1:codex,@97/2:helper`; monitor health is 3/3
+  with exact phone parity, and the helper is idle with only its historical
+  failure. All three resilient chains remain live at attempt zero.
+- ABQ has returned through both declared routes. Its previously deferred clean
+  checkout advanced from exact ancestor `dacbde5` to current protected main,
+  both refs align, and no transfer artifact remains.
 - The README now leads with owner-facing startup and daily operations, carries
   a pointer to the canonical fleet reference, and separates logical nodes from
   transport-only aliases and the service-only web endpoint.
@@ -145,7 +138,7 @@ agents and ledgers.
 
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
-**Phase:** executing.
+**Phase:** complete after this closeout reaches protected `main`.
 
 The owner requested that the canonical Local tmux session be renamed from
 `harness` to `projects`, that the `att` alias follow the new name, and that the
@@ -235,6 +228,28 @@ clean reachable managed checkouts from pre-task protected main to the resulting
 closeout merge. Require an idempotent plan, fresh interactive exact
 `att='tmux attach -t projects'` on every advanced host, the required one-time
 Mac context refreshes, and canonical fleet health.
+
+Live-acceptance PR #457 exact head
+`d928663ebe5f037b820bfed0a5f93c82c0838dbd` passed protected
+`portable-phase1` and merge-merged as
+`bae105c99673a44c95155abe7d940324c475c655`. Guarded fleet synchronization
+advanced `ab`, `ab2`, `ri`, `al`, `rc`, `t4`, `aist`, `home`, `office`, and
+`riken` from their accepted shared baseline `b820a7c`; Aist's separately
+verified stale head/origin relationship was repaired in the same guarded
+transaction. Restored ABQ advanced separately from exact clean ancestor
+`dacbde5`. Every host now has exact aligned local/origin heads and absent
+transfer artifacts, and both follow-up plans report only `KEEP`.
+
+Fresh interactive shells on Local and all eleven remote aliases return exact
+`att='tmux attach -t projects'`. The four advanced Macs each accepted exactly
+one pane-blind T-349 context refresh with transport `status=submitted`; none
+was retried. Existing already-open shells retain their in-memory alias until
+they source `shell/common-aliases.sh` or start a fresh shell.
+
+**Completion:** T-349 is complete. The canonical Local tmux session is
+`projects`, the independent `monitor` session is unchanged, all three project
+windows and phone-visible roots remain healthy, and the renamed `att` alias is
+present across the synchronized fleet. No further T-349 mutation is pending.
 
 ### T-348 — Keep phone remote-control roots mirrored to Local tmux
 
