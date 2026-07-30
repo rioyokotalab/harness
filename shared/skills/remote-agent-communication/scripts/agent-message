@@ -41,6 +41,8 @@ class Pane:
     dead: str
     path: str
     tty: str
+    window_index: str
+    window_name: str
 
 
 def executable(name: str) -> str:
@@ -121,14 +123,15 @@ def list_panes(target: str, *, all_session: bool = False) -> list[Pane]:
             "-t",
             target,
             "-F",
-            "#{pane_id}\t#{pane_dead}\t#{pane_current_path}\t#{pane_tty}",
+            "#{pane_id}\t#{pane_dead}\t#{pane_current_path}\t#{pane_tty}\t"
+            "#{window_index}\t#{window_name}",
         ]
     )
     rows = tmux_output(arguments).splitlines()
     panes: list[Pane] = []
     for row in rows:
         fields = row.split("\t")
-        if len(fields) != 4:
+        if len(fields) != 6:
             raise MessageError("tmux pane metadata is malformed")
         panes.append(Pane(*fields))
     return panes
@@ -157,13 +160,15 @@ def codex_processes(tty: str) -> int:
 
 
 def select_controller_pane() -> Pane:
-    session = "harness"
+    session = "projects"
     exact_session(session)
     harness = str(Path.home() / "harness")
     candidates = [
         pane
         for pane in list_panes(session, all_session=True)
         if pane.dead == "0"
+        and pane.window_index == "0"
+        and pane.window_name == "harness"
         and pane.path == harness
         and codex_processes(pane.tty) == 1
     ]

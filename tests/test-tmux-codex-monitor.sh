@@ -127,6 +127,11 @@ health = {
         "state": "healthy",
         "app_server_pid": 99,
         "identity": {"runtime": "runtime", "thread": "thread"},
+        "window": {
+            "index": 0,
+            "window_id": "@0",
+            "path": os.environ["HARNESS_MONITOR_ROOT"],
+        },
     }
 }
 assert module.mapping_snapshot(mapping, health) == {
@@ -136,6 +141,10 @@ assert module.mapping_snapshot(mapping, health) == {
         "thread": "thread",
         "app_server_pid": 99,
         "app_server_start": "server-start",
+        "index": 0,
+        "window_id": "@0",
+        "cwd": os.environ["HARNESS_MONITOR_ROOT"],
+        "native_cwd": True,
     },
 }
 
@@ -173,6 +182,7 @@ module.parse_supervisor = lambda _info: {
     "runtime": "students-t338",
     "thread": "thread-students",
     "start": "supervisor-start",
+    "target": None,
 }
 module.resilient_status = lambda _runtime: (
     {"phase": "running", "owner_pid": "10"},
@@ -210,6 +220,29 @@ codex_0146 = module.collect_health(
 assert codex_0146["students"]["state"] == "healthy"
 assert codex_0146["students"]["tui"]["pid"] == 11
 assert codex_0146["students"]["app_server_pid"] == 99
+native_window = [
+    {
+        "index": 1,
+        "window_id": "@fixture",
+        "name": "students",
+        "panes": 1,
+        "pane_id": "%fixture",
+        "pane_pid": 10,
+        "path": module.TARGET_PATHS["students"],
+        "dead": False,
+    }
+]
+native_missing_target = module.collect_health(native_window)
+assert native_missing_target["students"]["state"] == "unhealthy"
+assert native_missing_target["students"]["reason"] == "supervisor-target"
+module.parse_supervisor = lambda _info: {
+    "runtime": "students-t338",
+    "thread": "thread-students",
+    "start": "supervisor-start",
+    "target": "students",
+}
+native_targeted = module.collect_health(native_window)
+assert native_targeted["students"]["state"] == "healthy"
 module.resilient_status = lambda _runtime: (
     {"phase": "running", "owner_pid": "10"},
     {

@@ -49,15 +49,15 @@ command=$1
 shift
 case "$command" in
     list-sessions)
-        printf '%s\n' "${FAKE_SESSION:-harness}"
+        printf '%s\n' "${FAKE_SESSION:-projects}"
         ;;
     list-panes)
         tty=${FAKE_TTY:-/dev/pts/7}
         if [ "${FAKE_AMBIGUOUS:-0}" -eq 1 ]; then
-            printf '%%0\t0\t%s/harness\t%s\n' "$HOME" "$tty"
-            printf '%%1\t0\t%s/harness\t/dev/pts/8\n' "$HOME"
+            printf '%%0\t0\t%s/harness\t%s\t0\tharness\n' "$HOME" "$tty"
+            printf '%%1\t0\t%s/harness\t/dev/pts/8\t0\tharness\n' "$HOME"
         else
-            printf '%%0\t0\t%s/harness\t%s\n' "$HOME" "$tty"
+            printf '%%0\t0\t%s/harness\t%s\t0\tharness\n' "$HOME" "$tty"
         fi
         ;;
     display-message)
@@ -142,7 +142,7 @@ chmod 755 "$home/.local/bin/harness-codex"
 
 run_helper() {
     HOME=$home FAKE_STATE=$state \
-        FAKE_SESSION=${FAKE_SESSION:-harness} \
+        FAKE_SESSION=${FAKE_SESSION:-projects} \
         FAKE_ATTACHED=${FAKE_ATTACHED:-0} \
         FAKE_AMBIGUOUS=${FAKE_AMBIGUOUS:-0} \
         FAKE_CODEX_COUNT=${FAKE_CODEX_COUNT:-1} \

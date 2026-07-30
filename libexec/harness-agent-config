@@ -74,7 +74,9 @@ validate_sources() {
     for tracked in AGENTS.md CLAUDE.md .codex/AGENTS.md .codex/config.toml \
         .codex/rules/default.rules .claude/settings.json \
         config/agent-clients/codex.toml config/agent-clients/claude.json \
-        config/agent-clients/claude-sentinel.md bin/harness-codex; do
+        config/agent-clients/claude-sentinel.md bin/harness-codex \
+        libexec/harness_codex_targets.py \
+        profiles/codex-session-targets.tsv; do
         [ "$(git -C "$HARNESS_ROOT" ls-files --error-unmatch "$tracked" 2>/dev/null)" = "$tracked" ] ||
             die "agent configuration source is untracked: $tracked"
         [ -f "$HARNESS_ROOT/$tracked" ] && [ ! -L "$HARNESS_ROOT/$tracked" ] ||

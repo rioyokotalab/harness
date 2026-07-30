@@ -11,6 +11,7 @@ if [ -L "$launcher_path" ]; then
 fi
 SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$launcher_path")" 2>/dev/null && pwd -P)
 HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." 2>/dev/null && pwd -P)}
+export HARNESS_ROOT
 
 if project_root=$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null); then
     project_root=$(CDPATH='' cd -- "$project_root" 2>/dev/null && pwd -P) || {
@@ -23,6 +24,23 @@ fi
 case "$project_root" in
     *'"'*|*'\'*|*'
 '*) echo "harness-codex: current project root cannot be encoded safely" >&2; exit 2 ;;
+esac
+target_resolver=$HARNESS_ROOT/libexec/harness_codex_targets.py
+[ -x "$target_resolver" ] || {
+    echo "harness-codex: target resolver is unavailable" >&2
+    exit 2
+}
+command -v python3 >/dev/null 2>&1 || {
+    echo "harness-codex: python3 is unavailable" >&2
+    exit 2
+}
+target=$(python3 "$target_resolver" target-for-repository "$project_root") || {
+    echo "harness-codex: current repository is outside the managed target map" >&2
+    exit 2
+}
+case "$target" in
+    harness|students|swallow) ;;
+    *) echo "harness-codex: target resolver returned an invalid target" >&2; exit 2 ;;
 esac
 
 native_codex=$HOME/.local/bin/codex

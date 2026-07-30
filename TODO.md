@@ -150,29 +150,32 @@ Git transport reaches `github:rioyokotalab/swallow` with default branch
 
 **Recommended scope:** preserve the accepted Harness-owned tmux, remote-root,
 watcher, monitor, helper, and phone-mirror lifecycle unchanged; clone the
-Swallow repository into distinct checkout `/home/rioyokota/projects/swallow`; read its
-own instructions and task ledger completely; verify branch, worktree, recent
+Swallow repository into the distinct direct checkout
+`/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow`; read its own
+instructions and task ledger completely; verify branch, worktree, recent
 commits, remote alignment, and repository-local validation entry points; then
 record the exact Swallow next action without executing project work. Never
 apply Harness repository policy as Swallow project policy, and do not move,
 rename, relaunch, or replace the current canonical Codex root.
 
-**Decision D-001 — selected:** use exact checkout
-`/home/rioyokota/projects/swallow` and retain the unchanged Harness-owned
-runtime boundary.
+**Decision D-001 — selected and changed-input amended:** use exact direct
+checkouts `/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students` and
+`/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow`, preserve the
+pre-existing symlinked `/home/rioyokota/projects` workspace and its unrelated
+private files unchanged, and retain the Harness-owned runtime boundary.
 
 **Decision D-002 — selected, scope expanded by owner clarification:** migrate the
 three canonical sessions to repository-native working directories:
 `harness` at `/home/rioyokota/harness`, `students` at
-`/home/rioyokota/projects/students`, and `swallow` at
-`/home/rioyokota/projects/swallow`. The recommended implementation makes the
-tracked monitor, helper, resilient launcher, global launch sentinels, and
-cold-start/continuation contracts target-aware. Every recovered thread first
-reconstructs Harness control state, then reads its mapped repository's own
-instructions and declared durable ledger completely, inspects that
-repository's Git and mutable external state, and resumes only its first
-recorded unverified action. Focused tests must prove the mapping and reject
-unknown targets.
+`/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students`, and `swallow` at
+`/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow`. The recommended
+implementation makes the tracked monitor, helper, resilient launcher, global
+launch sentinels, and cold-start/continuation contracts target-aware. Every
+recovered thread first reconstructs Harness control state, then reads its
+mapped repository's own instructions and declared durable ledger completely,
+inspects that repository's Git and mutable external state, and resumes only
+its first recorded unverified action. Focused tests must prove the mapping and
+reject unknown targets.
 
 Do not merely restart the existing Students or Swallow roots: their persisted
 cwd is Harness and current monitor/helper contracts require that value.
@@ -255,14 +258,49 @@ deleting the receipt files is authorized by the frozen decision. No Swallow
 clone, project configuration, Harness control-plane implementation, or live
 session mutation was attempted.
 
-**Next action:** obtain one changed-input owner decision. Recommended: preserve
-the symlinked owner workspace and receipt files unchanged, replace D-001/D-002
-with fresh direct, non-symlinked canonical clones at
+**Changed-input authorization:** the owner answered exact `yes`, replacing
+D-001/D-002 with fresh direct, non-symlinked canonical clones at
 `/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students` and
-`/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow`, then resume the
-frozen sequence from repository preparation. Do not clone Swallow or modify
-either project before that decision. Do not restart a project session before
-its repository and the target-aware control plane are protected and active.
+`/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow`. The existing
+symlinked owner workspace and receipt files remain outside the migration and
+must stay unchanged.
+
+**Repository preparation result:** the owner-owned mode-0700 direct NFS parent
+and both absent targets passed non-symlink, ownership, and authenticated Git
+preflight. Fresh canonical clones read their complete repository instructions
+and ledgers and identified, but did not execute, Students T-037 and Swallow
+SW-033. Students PR #464 published exact task head `74eab28` as protected
+`main` `60237a6309c0f572bac2bde2e086f669b10f6938`; Swallow PR #133
+published exact task head `98bb37e` as protected `main`
+`471505b1ba03b5e5da9b988550ac3c4741ca5998`. Each tracks the exact
+Sol/high, granular-approval, disabled-sandbox Codex defaults and an
+exact-config regression. Students passed 435 tests and 29 subtests plus its
+secret/declaration gates; Swallow passed its complete login-safe static suite
+in required `render-only` mode. Both canonical checkouts are clean aligned
+`main`. The pre-existing symlinked workspace and private receipt files remain
+unchanged.
+
+**Control-plane implementation checkpoint:** the closed tracked target profile
+and resolver now admit only the three exact canonical repository roots and
+reject unknown, duplicate, symlinked, unavailable, or world-writable inputs.
+The launcher, resilient supervisor, launch sentinels, monitor, recovery
+helper, phone-mirror readback, recovery prompt, and Local controller selector
+are target-aware. The monitor/helper intentionally accept both the legacy
+all-Harness topology and either one-project-native intermediate topology while
+recording `native_cwd`; a native Students or Swallow supervisor must carry its
+matching explicit target. The controller transport now selects only
+`projects:0:harness`. All seven focused suites pass. The first complete
+phase-1 run passed every suite except the tmux/terminfo tests whose own clean
+committed-checkout gates correctly rejected the dirty feature worktree; rerun
+the complete gate after this checkpoint is committed.
+
+**Next action:** commit and push the verified Harness implementation, rerun
+`tests/test-phase1.sh` from the clean commit, then publish it through a
+protected pull request. Activate and validate the target-aware monitor/helper
+without touching a project TUI. Only after the legacy topology remains
+healthy may Students begin its separate bridge-first, phone-confirmed
+migration. Do not restart a project session before the target-aware control
+plane is protected and active.
 
 ### T-349 — Rename the canonical Local tmux session to `projects`
 

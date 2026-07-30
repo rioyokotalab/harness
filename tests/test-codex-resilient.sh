@@ -518,20 +518,31 @@ grep -F 'CODEX_THREAD_RECOVERY name=remote-explicit' \
     fail "remote recovery status output"
 
 run_supervisor --plan --name planned --last >"$TEST_ROOT/plan.out"
-grep -F 'CODEX_RESILIENT mode=plan name=planned selector=last status=ready' \
+grep -F 'CODEX_RESILIENT mode=plan name=planned target=harness selector=last status=ready' \
     "$TEST_ROOT/plan.out" >/dev/null || fail "plan output"
 HARNESS_TEST_PLATFORM=Darwin run_supervisor --plan --name darwin --last \
     >"$TEST_ROOT/darwin.out"
-grep -F 'name=darwin selector=last status=ready' \
+grep -F 'name=darwin target=harness selector=last status=ready' \
     "$TEST_ROOT/darwin.out" >/dev/null || fail "Darwin plan portability"
 run_supervisor --plan --name remote-plan \
     --remote-session session-remote >"$TEST_ROOT/remote-plan.out"
-grep -F 'name=remote-plan selector=remote-explicit status=ready' \
+grep -F 'name=remote-plan target=harness selector=remote-explicit status=ready' \
     "$TEST_ROOT/remote-plan.out" >/dev/null ||
     fail "remote explicit plan"
 grep -F 'THREAD_RECOVERY action=watch rollback=safe-tail-only' \
     "$TEST_ROOT/remote-plan.out" >/dev/null ||
     fail "remote explicit recovery plan"
+run_supervisor --plan --name explicit-target --target harness --last \
+    >"$TEST_ROOT/explicit-target.out"
+grep -F 'name=explicit-target target=harness selector=last status=ready' \
+    "$TEST_ROOT/explicit-target.out" >/dev/null ||
+    fail "explicit target plan"
+run_supervisor --plan --name wrong-target --target students --last \
+    >"$TEST_ROOT/wrong-target.out" 2>&1 &&
+    fail "mismatched repository target was accepted"
+grep -F 'target does not match its repository' \
+    "$TEST_ROOT/wrong-target.out" >/dev/null ||
+    fail "mismatched repository target classification"
 
 : >"$TEST_ROOT/codex.calls"
 : >"$TEST_ROOT/sleep.calls"

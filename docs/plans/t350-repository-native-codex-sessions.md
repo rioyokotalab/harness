@@ -9,8 +9,8 @@ operate from the repository named by its window:
 | Target | Window | Canonical repository |
 | --- | --- | --- |
 | Harness | `projects:0:harness` | `/home/rioyokota/harness` |
-| Students | `projects:1:students` | `/home/rioyokota/projects/students` |
-| Swallow | `projects:2:swallow` | `/home/rioyokota/projects/swallow` |
+| Students | `projects:1:students` | `/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students` |
+| Swallow | `projects:2:swallow` | `/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow` |
 
 After an automatic blocked-root recovery, the accepted replacement must read
 the mapped repository's complete instructions and durable ledger, reconcile
@@ -58,9 +58,13 @@ saved roots through reversible archive. Harness's live root remains unchanged.
 
 ### D-001 — Repository layout
 
-Selected: use `/home/rioyokota/projects/students` and
-`/home/rioyokota/projects/swallow`; retain `/home/rioyokota/harness` for
-Harness. Do not nest independent repositories inside Harness.
+Selected, amended after the first execution gate: use direct, non-symlinked
+canonical clones at
+`/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students` and
+`/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow`; retain
+`/home/rioyokota/harness` for Harness. Preserve the pre-existing symlinked
+`/home/rioyokota/projects` workspace and its unrelated private files
+unchanged. Do not nest independent repositories inside Harness.
 
 ### D-002 — Repository-native saved roots
 
@@ -146,9 +150,9 @@ action runs in this stage.
 1. Freeze exact old Students root/window/process/watcher/app-server/client
    identities and all unaffected peers.
 2. Create exactly one new interactive app-server root with cwd
-   `/home/rioyokota/projects/students`, granular approval, disabled sandbox,
-   and project-resolved Sol/high defaults. Never retry an acknowledged or
-   ambiguous start.
+   `/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students`, granular
+   approval, disabled sandbox, and project-resolved Sol/high defaults. Never
+   retry an acknowledged or ambiguous start.
 3. Launch one distinct provisional tmux window/runtime from that repository.
 4. Submit one generic Students cold-start instruction and require a completed
    assistant-bearing turn, no active/error tail, repository instructions and
@@ -166,10 +170,11 @@ Checkpoint every sent request and non-retry boundary before proceeding.
 ### 5. Migrate Swallow
 
 Repeat the Students transaction with exact cwd
-`/home/rioyokota/projects/swallow`. Stop separately for physical-phone
-confirmation. Do not infer Swallow acceptance from Students acceptance. After
-promotion, the recovered Swallow thread must identify SW-033's durable next
-action but must remain idle; T-350 does not authorize executing it.
+`/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow`. Stop separately
+for physical-phone confirmation. Do not infer Swallow acceptance from Students
+acceptance. After promotion, the recovered Swallow thread must identify
+SW-033's durable next action but must remain idle; T-350 does not authorize
+executing it.
 
 ### 6. Final validation and closeout
 
