@@ -595,12 +595,53 @@ record accepted creation. The start response proved exact direct cwd,
 model/config overrides. Existing Harness, Students, and Swallow windows,
 processes, and roots remain unchanged; no provisional runtime or input exists.
 
-**Next action:** publish this non-retryable Swallow root checkpoint. Then
-require the same root/receipt/repository/process/client/topology identities,
-tighten only the new rollout inode to mode `0600`, and launch exactly one
-detached provisional index-3 window/runtime from direct Swallow with explicit
-`--target swallow`. Stop and reconcile rather than relaunch on any ambiguous
-launch.
+Protected PR #471 merge-merged the non-retryable Swallow root checkpoint as
+`65b1b6ad6a9427b1ea71b3fbee389181842b451f`. Launch-controller digest
+`3efc53015508f2d5152ffe91ee8fdeb2fcf560e644731c96bc88960b7263f29b`
+passed its rebound zero-write preflight and executed exactly once. It tightened
+only rollout inode `197/32811603` to mode `0600`, then launched detached
+provisional window `@100/3:swallow-native-bridge-20260730/%100` from the
+direct Swallow checkout under runtime `swallow-native-t350`. Exact live
+identities are supervisor `2995423/114847415`, watcher
+`2995497/114847430`, and TUI `2995742/114847541`; the runtime remains attempt
+zero with no recovery or rollback. Launch journal digest
+`3fdc156c2ba1939b4c9a85efa83af6783da709ec6a688d28700b289dcc1dab40`
+and result digest
+`c1a65dab89099137df7657a2b21a27fb9a61c35cda2ff61a1603f1dad0918274`
+record accepted `provisional-runtime-ready`. The controller is consumed and
+must never run again.
+
+Cold-start submitter digest
+`6f589e166d7a545c07e8f20bc69eac4b677f8d67e60e047a54c7c0e90e2616f9`
+first refused without writes because its imported creation gate still expected
+the pre-launch three-window topology. The corrected digest passed zero-write
+preflight and executed exactly once. Under the message lock it performed one
+literal paste to `%100`, waited 1.2 seconds, and acknowledged one separate
+`C-m`; no input may be replayed. Submit journal digest
+`e3250aad2915d8f0fdcb829e3e12334a53febb5e6d1a60eaff447a00cdab0e18`
+and result digest
+`390d6b2d6751985f5865fd3676d8e31896d20301e90ee48fe1d0f93ccd3e7ab9`
+record accepted `cold-start-submitted`.
+
+Metadata-only app-server readback with turns excluded observed the provisional
+root transition from active to idle with exact direct cwd and provisional
+name. Its database row remains unarchived and resolved to `gpt-5.6-sol`;
+Swallow's clean tracked configuration declares high reasoning, and the
+original start acknowledgement proved Sol/high. The direct checkout remains
+clean/aligned at `471505b1ba03b5e5da9b988550ac3c4741ca5998`. Existing
+Harness, Students, and old Swallow identities remain unchanged, and no
+pane/transcript content was inspected. While the fourth bridge window exists,
+the canonical three-role monitor fails closed as degraded with unavailable
+phone parity and deferred ambiguous ordering; the non-auto-mirror helper is
+idle and did not mutate lifecycle state.
+
+**Next action:** publish this launch-and-cold-start checkpoint, then obtain
+the owner's physical-phone confirmation that exact provisional name
+`swallow-native-bridge-20260730` is visible. Do not move, rename, signal,
+archive, repeat input, or promote before that confirmation. After acceptance,
+perform one bridge-first rename-only promotion and reversible retirement of
+only old Swallow root `019fb1ab-b559-79c2-ad9c-0ee8f426cedc`, then reconcile
+before any archive request.
 
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
