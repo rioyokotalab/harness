@@ -10,10 +10,17 @@ HARNESS=$ROOT/bin/harness
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
+focused_pid=
 
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
+    if [ -n "$focused_pid" ]; then
+        if ! wait "$focused_pid"; then
+            [ "$status" -ne 0 ] || status=1
+        fi
+        focused_pid=
+    fi
     cleanup_failed=0
     if [ -d "$TEMP_DIR" ]; then
         "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEMP_DIR" \
@@ -173,8 +180,8 @@ python3 "$ROOT/tools/run-focused-tests.py" \
     --root "$ROOT" \
     --manifest "$ROOT/tests/focused-suites.tsv" \
     --log-dir "$TEMP_DIR/focused-logs" \
-    --jobs "$focused_jobs" ||
-    fail "focused suites"
+    --jobs "$focused_jobs" &
+focused_pid=$!
 # Direct non-interactive SSH can omit ~/.local/bin even when the managed
 # Restic installation is healthy. The harness route must find that exact
 # fallback, while retaining normal PATH precedence when a site command exists.
@@ -2025,5 +2032,12 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$artifact_transaction" \
 [ ! -e "$artifact_link" ] && [ ! -L "$artifact_link" ] ||
     fail "artifact rollback left link"
 [ ! -e "$artifact_dir" ] || fail "artifact rollback left directory"
+
+set +e
+wait "$focused_pid"
+focused_status=$?
+set -e
+focused_pid=
+[ "$focused_status" -eq 0 ] || fail "focused suites"
 
 echo "phase-1 harness tests passed"

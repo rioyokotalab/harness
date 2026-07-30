@@ -2,6 +2,7 @@
 set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+PHASE1=$ROOT/tests/test-phase1.sh
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-focused-runner-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
@@ -19,6 +20,14 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
+
+grep -F 'focused_pid=$!' "$PHASE1" >/dev/null ||
+    fail "phase-1 does not overlap focused and integration gates"
+grep -F 'wait "$focused_pid"' "$PHASE1" >/dev/null ||
+    fail "phase-1 does not join focused validation"
+grep -F '[ "$focused_status" -eq 0 ] || fail "focused suites"' \
+    "$PHASE1" >/dev/null || fail "phase-1 loses focused-suite failure"
+
 fake=$TEMP_DIR/root
 mkdir -p "$fake/tests"
 
