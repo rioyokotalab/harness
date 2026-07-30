@@ -145,7 +145,7 @@ agents and ledgers.
 
 ### T-348 — Keep phone remote-control roots mirrored to Local tmux
 
-**Phase:** retired root archived; validating final convergence.
+**Phase:** complete.
 
 The owner reports that Swallow is absent from phone Remote and requests a
 periodic one-to-one mirror for Harness, Students, and Swallow. Complete
@@ -505,6 +505,41 @@ three-window/root/process/client/app-server state, native doctor, focused
 recovery/resilience/helper/monitor tests, complete `tests/test-phase1.sh`,
 clean Git, and fresh fleet health. After validation, guarded-delete only the
 generated schema bundle and close T-348 without deleting any saved rollout.
+
+Archive reconciliation PR #454 passed protected `portable-phase1` and merged
+as `002f9bc847ccdcc25aab58ac943794ea10a5a4cd`. A second receipt pair more
+than one monitor/helper interval after the first is independently healthy:
+exactly three phone-eligible canonical roots, three healthy process chains,
+no mismatch, and no order or repair action.
+
+Final exact live state is
+`@87/0:harness,@88/1:students,@98/2:swallow`, with sole client PID `197678`
+on `@87`. Harness, Students, and accepted Swallow supervisors/watchers remain
+attempt zero. Active and loaded app-server sets contain exactly those three
+roots; the retired old root is absent from both, archived with an archive
+timestamp, and has zero process/tmux/client references. Its unchanged
+mode-0600 one-link rollout remains recoverable. Monitor is
+`healthy=3 phone_mirror=healthy`; helper is idle with zero queued/running
+events, its historical failure, and one terminal deferred mirror receipt.
+
+Local native doctor passes with only the two accepted unavailable-container
+warnings. Focused thread-recovery, resilient-supervisor, recovery-helper, and
+tmux-monitor suites pass. Complete `tests/test-phase1.sh` passes, as do
+`git diff --check`, clean/aligned Git, and protected CI for every execution
+checkpoint.
+
+The `guarded-bulk-delete` workflow planned and deleted only generated schema
+directory `/run/user/5035/harness-t348-phone-mirror/schema` (352 entries,
+3,350,881 bytes), verified protected anchors unchanged and the target absent,
+then exact-unlinked its mode-0600 short-lived manifest. All private lifecycle
+controllers and value-free journals remain under the mode-0700 task root for
+durable non-retry evidence. No saved rollout was deleted.
+
+**Completion:** T-348 is complete. The phone-visible interactive Swallow root
+`019fb1ab-b559-79c2-ad9c-0ee8f426cedc` is canonical in Local tmux and covered
+by continuous phone-eligibility monitoring. The old root
+`019fafef-5ebf-72f1-b1ce-2444e7570dc1` is reversibly archived. No further
+T-348 lifecycle action is pending.
 
 ### T-347 — Complete T-345 mirror convergence
 

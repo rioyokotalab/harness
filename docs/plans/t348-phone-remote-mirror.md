@@ -1,6 +1,6 @@
 # T-348 phone remote-control mirror
 
-**Phase:** retired root archived; validating final convergence
+**Phase:** complete
 **Driver:** Local Codex
 **Updated:** 2026-07-30 JST
 **Branch:** `codex/t348-phone-mirror`
@@ -393,3 +393,23 @@ Publish this reconciled archive, then require a second interval-separated
 healthy receipt pair, native doctor, focused and complete tests, clean Git,
 and canonical fleet health. Remove only generated schema through guarded
 deletion; preserve all saved rollouts.
+
+Archive reconciliation PR #454 merged as
+`002f9bc847ccdcc25aab58ac943794ea10a5a4cd`. A second interval-separated
+helper/monitor receipt pair is healthy with exact three-root phone
+eligibility, three healthy chains, and no order or repair action. Active and
+loaded app-server sets contain exactly Harness, Students, and accepted
+Swallow; the old root is archived and absent from both while its mode-0600
+one-link rollout remains present.
+
+Native doctor passes with only the two accepted container warnings. All four
+focused lifecycle suites and complete `tests/test-phase1.sh` pass. Guarded
+deletion removed only the generated 352-entry schema tree and verified
+protected anchors unchanged; the short-lived manifest was exact-unlinked.
+Private value-free controllers and journals remain as non-retry evidence.
+
+T-348 is complete. Canonical Swallow root
+`019fb1ab-b559-79c2-ad9c-0ee8f426cedc` is phone-visible and mapped to
+`@98/2:swallow`; old root
+`019fafef-5ebf-72f1-b1ce-2444e7570dc1` is reversibly archived. No rollout was
+deleted and no lifecycle action remains.
