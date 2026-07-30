@@ -149,7 +149,10 @@ Require all of the following before opening the app-server connection:
 6. the accepted app-server PID/start identity, exact argv, current-user-owned
    Unix control socket, and the expected three project peers;
 7. six exact current-user-owned, one-link rollout files under the canonical
-   Codex sessions root, with their immutable file identities recorded;
+   Codex sessions root; freeze full device/inode/size/mtime identity for the
+   three inactive extras. For active canonical roots freeze exact real path,
+   owner, and link identity, and refresh mutable size/mtime immediately before
+   each operation rather than treating legitimate active-turn growth as drift;
 8. all three extras have zero process references and are absent from every
    canonical supervisor/watcher/TUI argv; use exact-ID PID-only matching and
    never enumerate or retain unrelated current-user process arguments;

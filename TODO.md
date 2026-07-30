@@ -166,7 +166,7 @@ agents and ledgers.
 
 ### T-347 — Complete T-345 mirror convergence
 
-**Phase:** live-helper fresh-epoch controller v2 frozen; publication pending.
+**Phase:** active-canonical controller v3 frozen; publication pending.
 
 The immutable T-345 helper event remains terminal `failed/worker-failed`; its
 private worker log remains unread and the event must never be retried.
@@ -375,6 +375,33 @@ It verifies the exact base/r4 support digests, has signal-safe watcher cleanup,
 passes syntax and zero-write preflight, and has distinct absent journal/result
 paths.
 
+PR #430 passed `portable-phase1` at exact v2 head
+`4c72f9a4c37c296130ae1bc8593c385cb98dc2a7` and merge-merged as
+`43a228920b7eb3417953aa65f554b8ded2c6160d`. v2 ran once and terminally
+refused after recording only a fresh helper epoch; it signaled no watcher,
+opened no app-server connection, sent no operation, and remained
+`verified=0`. Its receipt is immutable.
+
+A value-free read-only reproduction returned exact reason
+`rollout-identity-changed`: the active Harness or Students canonical rollout
+can legitimately advance while v2 waits for a fresh helper epoch. The three
+inactive extra rollouts do not have that property and retain exact immutable
+identity.
+
+v3 therefore keeps complete device/inode/size/mtime identity for every extra
+rollout, while canonical roots retain exact path, owner, link, database,
+process, root, and socket checks. It refreshes canonical mutable file identity
+immediately before each operation; direct app readback compares canonical
+paths and full extra identities. No lifecycle safety gate is weakened for an
+archive target.
+
+Private v3 wrapper
+`/run/user/5035/harness-t347-mirror-convergence/controller-v3.py` is current
+user, mode `0700`, one link, 6,047 bytes, SHA-256
+`49cd9c37315c755876fde95dd994f9bc9868181192078523fea86a57816fcb4a`.
+It verifies exact v2 digest `f07d922`, passes syntax and zero-write preflight,
+and has distinct absent journal/result paths.
+
 The immutable controller checkpoint is exact commit
 `70c5194066965df1bffc0078f36361ded50d7bc2` in clean worktree
 `/tmp/harness-t347-t345-mirror-execution`. That worktree must remain at this
@@ -384,11 +411,11 @@ an ancestor. PR #423 passed `portable-phase1` at recording head
 `6fc06163946452ca1fe9a7d015279c2b161ea9ff` and merge-merged as
 `805016261124fd07b365a2cbf962222939e0758d`.
 
-**Next action:** publish the sixth no-request refusal and exact v2 controller
+**Next action:** publish the seventh no-request refusal and exact v3 wrapper
 through the protected workflow. Then pass the resulting protected-main merge,
-checkpoint `70c5194`, and v2 digest `f07d922` to one v2 execution. Never rerun
-the original or r2-r6 controllers. Do not open the app-server connection,
-signal watchers, or write root metadata before protected publication.
+checkpoint `70c5194`, and v3 digest `49cd9c3` to one v3 execution. Never rerun
+any prior controller. Do not open the app-server connection, signal watchers,
+or write root metadata before protected publication.
 
 ### T-346 — Reprioritize the durable Harness action queue
 
