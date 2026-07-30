@@ -1,5 +1,6 @@
 # regex|tier|suite-or--|reason
 ^TODO\.md$|R0|tests/test-task-ledger-routing.sh|active ledger contract
+^docs/tasks/T-(351|196|328|303)\.md$|R0|tests/test-task-ledger-routing.sh|routed active task record
 ^docs/history/TODO-full-archive-2026-07-30\.md$|R0|tests/test-task-ledger-routing.sh|archived ledger identity
 ^docs/tasks/index\.tsv$|R0|tests/test-task-ledger-routing.sh|task index contract
 ^tests/test-task-ledger-routing\.sh$|R0|tests/test-task-ledger-routing.sh|task ledger validator
