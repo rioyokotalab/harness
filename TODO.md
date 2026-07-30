@@ -304,6 +304,55 @@ may Students begin its separate bridge-first, phone-confirmed migration. Do
 not restart a project session before the target-aware control plane is
 protected and active.
 
+**Protected activation and Students pre-write checkpoint:** Harness PR #461
+passed protected `portable-phase1` at exact head
+`987b7fb975672ccfa866bbb2fc9eeecae103740e` and merge-merged as
+`85778207d63da39015dd52cd4aeffc554b460533`. Local `main` fast-forwarded to
+that merge. Only monitor pane `%95` and helper pane `%97` were respawned with
+the merged code; their new owners `2540438` and `2540432` produced two
+interval-separated healthy/idle readbacks while all three project windows,
+processes, roots, and the sole client remained unchanged.
+
+The replaced monitor inode remains as exact untracked NFS file
+`libexec/.nfs0000000002b382ef00022fce`, device `197`, inode `45318895`,
+current-user mode `0775`, held through inherited descriptor 10 by exactly the
+three untouched legacy supervisors `1612366`, `1638028`, and `4144052`.
+This is the previously accepted live-supervisor NFS boundary; do not unlink
+it or restart a project TUI merely to make Local Git cosmetically clean.
+
+Guarded fleet synchronization advanced clean `ab`, `ab2`, `ri`, `al`, `rc`,
+`t4`, `aist`, `home`, `office`, and `riken` from their actual shared baseline
+`bae105c99673a44c95155abe7d940324c475c655` to merge `8577820`. Each of the
+four advanced Mac sessions accepted exactly one non-retryable, pane-blind
+context refresh with transport `status=submitted`. The disposable clean sync
+clone and detached worktree were removed through two verified guarded-delete
+transactions; their manifests were exact-unlinked and the stale worktree
+administrative record was removed through the same guarded workflow.
+
+Fresh Students migration preflight proves exact old root
+`019f7fea-4f00-7681-910d-81ae99a77143`, supervisor
+`1638028/102482546`, watcher `808488/108350746`, window
+`@88/1:students`, and Harness cwd. Its recovery status is idle at attempt
+zero with no rollback. The target is unattached; sole client `197678` remains
+on unaffected `@87/0:harness`. Harness root
+`019fa3ae-6ad0-7642-aeca-b7b52421f576` and Swallow root
+`019fb1ab-b559-79c2-ad9c-0ee8f426cedc` retain their exact live chains.
+Shared app server `2852569/83381863`, socket device/inode
+`197/24090962`, and merged monitor/helper identities are stable. The direct
+Students checkout is clean aligned `main` at
+`60237a6309c0f572bac2bde2e086f669b10f6938`; all three active canonical
+database roots remain in Harness cwd and no provisional Students root exists.
+
+**Next action:** after this checkpoint is protected, run one digest-bound
+zero-write preflight for a new Students root controller. If every frozen
+identity still matches, initialize one new shared-app-server connection with
+`capabilities.experimentalApi=true`, then send exactly one `thread/start`
+with direct Students cwd, granular approval, disabled sandbox, and omitted
+model/config overrides. Name only the acknowledged new root
+`students-native-bridge-20260730`. Journal each sent request before
+transmission and never retry an acknowledged or ambiguous start/name. Stop
+and publish the result before any provisional tmux launch.
+
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
 **Phase:** complete.
