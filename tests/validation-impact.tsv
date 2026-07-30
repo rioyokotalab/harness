@@ -52,6 +52,9 @@
 ^libexec/.*(codex|tmux|recovery|fleet|agent|ssh|restic|replica|delete|credential|secret|safety)|R3|-|lifecycle or authority-sensitive runtime
 ^tests/.*(codex|tmux|recovery|fleet|agent|ssh|restic|replica|delete|credential|secret|safety)|R3|-|lifecycle or authority-sensitive test
 ^libexec/harness-terminfo$|R2|tests/test-terminfo.sh|mapped ordinary component
+^config/terminfo/tmux-256color\.src$|R2|tests/test-terminfo.sh|mapped ordinary terminfo source
 ^tests/test-terminfo\.sh$|R2|tests/test-terminfo.sh|mapped ordinary component test
+^tests/smoke/debugger\.c$|R2|tests/test-debugger-readiness.sh|mapped ordinary debugger source fixture
+^tests/fixtures/scientific-library-bin/(h5cc|nc-config|pkg-config)$|R2|tests/test-scientific-library-readiness.sh|mapped ordinary scientific-library fixture
 ^docs/|R0|-|documentation
 ^README\.md$|R1|tests/test-fleet-inventory.sh|owner guide and fleet table

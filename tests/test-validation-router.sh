@@ -77,6 +77,42 @@ cases = [
         False,
     ),
     (
+        ["config/terminfo/tmux-256color.src"],
+        "R2",
+        ["tests/test-terminfo.sh"],
+        False,
+    ),
+    (
+        ["tests/smoke/debugger.c"],
+        "R2",
+        ["tests/test-debugger-readiness.sh"],
+        False,
+    ),
+    (
+        [
+            "tests/fixtures/scientific-library-bin/h5cc",
+            "tests/fixtures/scientific-library-bin/nc-config",
+            "tests/fixtures/scientific-library-bin/pkg-config",
+        ],
+        "R2",
+        ["tests/test-scientific-library-readiness.sh"],
+        False,
+    ),
+    (
+        [
+            "config/terminfo/tmux-256color.src",
+            "tests/smoke/debugger.c",
+            "tests/fixtures/scientific-library-bin/h5cc",
+        ],
+        "R2",
+        [
+            "tests/test-debugger-readiness.sh",
+            "tests/test-scientific-library-readiness.sh",
+            "tests/test-terminfo.sh",
+        ],
+        False,
+    ),
+    (
         ["AGENTS.md"],
         "R3",
         ["tests/test-phase1.sh"],
@@ -114,17 +150,45 @@ for unsafe in ("/absolute", "../escape", "./relative"):
         pass
     else:
         raise AssertionError(unsafe)
+
+protected_r3 = [
+    ".github/workflows/ci.yml",
+    "tests/validation-impact.tsv",
+    "tests/focused-suites.tsv",
+    "libexec/harness-validate",
+    "tests/guarded-test-cleanup.sh",
+    "config/tmux/tmux.conf",
+    "tests/smoke/debugger-readiness.sh",
+    "tests/smoke/scientific-library-readiness.sh",
+    "tests/fixtures/offline-project/uv.lock",
+    "evaluation/evaluate.py",
+    "libexec/harness-storage-readiness",
+    "libexec/harness-codex-resilient",
+    "libexec/harness-fleet-health",
+    "libexec/harness-restic",
+    "libexec/harness-ssh-config-layout",
+    "libexec/harness-agent-config",
+]
+for path in protected_r3:
+    result = classify(root, [path], rules)
+    assert result["tier"] == "R3", (path, result)
+    assert result["suites"] == ["tests/test-phase1.sh"], (path, result)
+    assert result["cacheable"] is False, (path, result)
 PY
 
 docs_plan=$(plan --path TODO.md --path docs/tasks/index.tsv)
 skill_plan=$(plan --path shared/skills/codex-claude-cowork/SKILL.md)
+ordinary_plan=$(plan \
+    --path config/terminfo/tmux-256color.src \
+    --path tests/smoke/debugger.c \
+    --path tests/fixtures/scientific-library-bin/h5cc)
 unknown_plan=$(plan --path unknown/path)
 
-python3 - "$docs_plan" "$skill_plan" "$unknown_plan" <<'PY'
+python3 - "$docs_plan" "$skill_plan" "$ordinary_plan" "$unknown_plan" <<'PY'
 import json
 import sys
 
-docs, skill, unknown = (json.loads(value) for value in sys.argv[1:])
+docs, skill, ordinary, unknown = (json.loads(value) for value in sys.argv[1:])
 assert docs["tier"] == "R0"
 assert docs["suites"] == ["tests/test-task-ledger-routing.sh"]
 assert skill["tier"] == "R1"
@@ -132,8 +196,14 @@ assert skill["suites"] == [
     "tests/test-skill-context-budgets.sh",
     "tests/test-skill-context-gates.sh",
 ]
+assert ordinary["tier"] == "R2"
+assert ordinary["suites"] == [
+    "tests/test-debugger-readiness.sh",
+    "tests/test-scientific-library-readiness.sh",
+    "tests/test-terminfo.sh",
+]
 assert unknown["tier"] == "R3"
 assert unknown["suites"] == ["tests/test-phase1.sh"]
 PY
 
-printf '%s\n' 'VALIDATION_ROUTER status=pass cases=13'
+printf '%s\n' 'VALIDATION_ROUTER status=pass cases=34'
