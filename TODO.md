@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-351.
+Next free ID: T-352.
 
 ## Current state
 
@@ -137,6 +137,34 @@ items. Students and Swallow project research remains owned by their independent
 agents and ledgers.
 
 ## Task records
+
+### T-351 — Reduce Actions, context, contention, and execution latency
+
+**Phase:** executing through 2026-07-31 09:00 JST.
+
+The owner froze the priority order as autonomy, then efficiency, then safety
+where safety does not obstruct the first two.  T-351 reduces private GitHub
+Actions usage, mandatory skill/ledger context, repeated validation and
+approval gates, and cross-project contention while preserving independent
+Harness, Students, and Swallow work.
+
+The immutable baseline, exact scope and authority boundaries, Actions and
+context measurements, six-part Codex/Claude benchmark, 11-slice evidence
+cadence, stop conditions, and acceptance gates are in
+`docs/plans/t351-autonomy-efficiency.md`.  Duration evidence is in
+`docs/audits/t351-autonomy-efficiency/time-slices.md`.
+
+Current facts: Local's live `.nfs` inode and Swallow's dirty SW-031 branch are
+unrelated and preserved; account billing and organization Actions-policy state
+are unknown because the read-only credential lacks `admin:org`; all reviewed
+rulesets still require zero approvals; no hosting-administration or live
+Codex-session mutation is authorized.  Work proceeds in isolated worktrees,
+with Codex as the only target driver and Claude confined to a sealed sandbox.
+
+**Next action:** finish the clean full-suite baseline, initialize the schema-3
+Cowork exchange and two same-baseline sandboxes, obtain independent benchmark
+agreements and reciprocal critiques, then implement only retained
+evidence-backed iterations.
 
 ### T-350 — Prepare the canonical Swallow workspace
 
