@@ -9,19 +9,19 @@ Next free ID: T-351.
 
 ## Current state
 
-- Protected `main` and Local contain the complete T-349 closeout. All eleven
-  managed remote checkouts are clean/aligned at its active control-plane merge
-  `bae105c99673a44c95155abe7d940324c475c655`. Aist, Home, Office, and Riken
+- Protected `main`, Local, and all eleven managed remote checkouts contain the
+  complete T-350 control plane at
+  `c9f4fa3a956dc21b2c50cac0a79ee6cf3ecb4536`. Aist, Home, Office, and Riken
   each accepted exactly one merge-specific context refresh; none may be
   retried.
-- Local's canonical attached tmux session is `$14:projects`, with exact
-  windows `@87/0:harness`, `@88/1:students`, and `@98/2:swallow`. Monitor
-  topology is `@40/0:tunnel,@95/1:codex,@97/2:helper`; monitor health is 3/3
-  with exact phone parity, and the helper is idle with only its historical
-  failure. All three resilient chains remain live at attempt zero.
-- ABQ has returned through both declared routes. Its previously deferred clean
-  checkout advanced from exact ancestor `dacbde5` to current protected main,
-  both refs align, and no transfer artifact remains.
+- Local's canonical detached tmux session is `$14:projects`, with exact
+  repository-native windows `@87/0:harness`, `@99/1:students`, and
+  `@100/2:swallow`. Monitor topology is
+  `@40/0:tunnel,@95/1:codex,@104/2:helper`; monitor health is 3/3 with exact
+  phone parity, and the helper is idle with an empty queue. All three resilient
+  chains remain live at attempt zero. No tmux client is attached.
+- ABQ is aligned through both declared routes. All eleven remote heads and
+  remote refs equal current protected main and no fleet-sync artifact remains.
 - The README now leads with owner-facing startup and daily operations, carries
   a pointer to the canonical fleet reference, and separates logical nodes from
   transport-only aliases and the service-only web endpoint.
@@ -139,7 +139,7 @@ agents and ledgers.
 
 ### T-350 — Prepare the canonical Swallow workspace
 
-**Phase:** executing.
+**Phase:** complete.
 
 The owner wants the canonical `projects:2:swallow` Codex workspace to handle
 Swallow project work from now on. Read-only discovery confirms that the live
@@ -893,12 +893,30 @@ checkout. The 2,852-entry, 63,322,103-byte clone was removed through a
 verified guarded-delete transaction; protected anchors were unchanged and its
 short-lived manifest was exact-unlinked.
 
-**Next action:** publish this final runtime and validation checkpoint through
-protected `main`. Then run guarded fleet-sync plan/apply for the merged
-control-plane fix, require an idempotent plan, and deliver exactly one required
-pane-blind context refresh to each clean advanced Mac session. Record those
-results in one final documentation-only closeout; do not relaunch or otherwise
-mutate any project runtime.
+Protected PR #481 passed `portable-phase1` at exact head
+`aa1a0a3e9b45ac3f9391a5beaeff2ce519097f27` and merge-merged as
+`c9f4fa3a956dc21b2c50cac0a79ee6cf3ecb4536`; Local `main` fast-forwarded
+while preserving the accepted `.nfs` inode. The first combined fleet-sync
+plan failed read-only when it discovered ABQ still at the older declared
+baseline, and the first apply failed locally before contact because the live
+checkout is intentionally dirty. A clean full clone then guarded-sync
+advanced `ab`, `ab2`, `ri`, `al`, `rc`, `t4`, `aist`, `home`, `office`, and
+`riken` from `85778207d63da39015dd52cd4aeffc554b460533`, and separately
+advanced `abq` from `bae105c99673a44c95155abe7d940324c475c655`, to exact
+merge `c9f4fa3`. Follow-up plans reported only `KEEP` for all eleven targets.
+
+Aist, Home, Office, and Riken each returned exactly one pane-blind,
+merge-specific context-refresh transport `status=submitted` to its detached,
+unambiguous `harness-codex-resume` session. None may be retried. The
+2,856-entry, 63,544,064-byte clean sync clone was removed through a verified
+guarded-delete transaction; protected anchors were unchanged and its
+short-lived manifest was exact-unlinked.
+
+Fresh Local readback after rollout reports the helper idle with an empty queue,
+the monitor healthy three of three with exact phone parity and no pending
+action, exact canonical repository-native tmux order, and no attached client.
+T-350 is complete. Swallow project work remains independently owned by its
+canonical direct-cwd agent; its recorded next project action is SW-031.
 
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
