@@ -43,6 +43,23 @@ routes, ordinary versus independent SSH options, AL managed-session behavior,
 compact output, and failure classification are unchanged. The fleet-health
 and source-contract suites pass.
 
+## Connection-monitor route snapshot
+
+The connection monitor formerly probed its ten primary and secondary routes
+serially before classifying each pair. It now admits the initial read-only
+route probes through a four-slot FIFO queue, records one immutable result per
+route, and only then performs the existing pair classification and any
+authorized recovery sequentially.
+
+Five matched synthetic samples took 918–925 ms for the serial fixture (median
+922 ms) and 291–311 ms for the queue (median 304 ms), a 67.0% critical-path
+reduction. The fixture reached but never exceeded four probes, proved that the
+fifth route started before the delayed first route ended, observed every route
+exactly once, and observed no supervisor recovery or authorization call during
+the snapshot. Down-route classification and the focused connection-monitor and
+source-contract suites pass. No live monitor cycle was restarted for this
+measurement.
+
 ## Interactive backup warning
 
 Interactive shell startup calls the backup-chain warning path. The original

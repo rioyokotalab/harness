@@ -190,7 +190,87 @@ slice; only independently reviewed evidence will be retained.
 
 ## 2026-07-31 02:00–02:59 JST
 
-In progress. Close the four independently reproduced cross-target fail-open
-paths before resuming latency work, integrate the routed recovery skill only
-after lifecycle review, and retain further startup optimizations only when
-matched measurements and focused safety fixtures pass.
+Four independently reproduced cross-target fail-open paths were closed before
+latency work resumed. Exact saved-thread launch and rollback now require both
+the requested target and persisted working directory to match the closed
+Harness/Students/Swallow map; the managed path no longer accepts a targetless
+global last-thread selector. The recovery helper rejects an unknown target
+before it can create runtime directories, events, receipts, logs, or a worker.
+The direct launcher derives its physical control root, rejects ambient target
+confusion, and strips release/test variables before native Codex. The immutable
+released launcher independently rechecks target versus repository for all six
+wrong-target permutations. Runtime-isolation, resilient supervisor, recovery
+helper, target-map, launcher, Claude-takeover, and source-contract fixtures
+passed. No live saved root, TUI, app server, watcher, monitor, or tmux window
+was read, signalled, restarted, or replaced.
+
+Unsafe-tail recovery was also converted from one broad instruction body into
+an always-read boundary/router plus diagnosis, rollback, bridge-first, and
+acceptance references. The selected recovery scenario now reads 3,000 words
+instead of 75,931 in the immutable baseline while preserving the rejected-tail
+non-replay rule, one-proven-rollback limit, fresh-root bridge gate, exact target
+identity, ambiguous-attempt prohibition, and two-receipt acceptance contract.
+Focused route-reachability and lifecycle fixtures passed before integration.
+
+The two continuously exercised read paths received matched optimization.
+The tmux Codex monitor formerly rebuilt the complete `/proc` descendant graph
+for each tree node and queried Unix sockets for each Codex candidate. Five
+read-only Local samples had a 410.532 ms median. The retained implementation
+takes one metadata-only process snapshot and one socket snapshot per cycle,
+then reads arguments only for the three exact managed pane owners. Five matched
+samples had a 42.516 ms median, a 9.7x improvement, while exact target,
+PID/start-time, ownership, watcher, app-server, phone-mirror, and recovery
+revalidation gates remain unchanged. The focused monitor and source-contract
+suites pass.
+
+Fleet health's former three fixed parallel batches were replaced by a bounded
+four-slot FIFO admission queue, with results still rendered in canonical
+order. A synthetic schedule with one 1.5-second probe in each former batch had
+a 4.500-second barrier critical path; three retained queue runs took
+1.921–1.932 seconds, median 1.925, never exceeded four probes, and demonstrated
+later work beginning before the delayed first batch completed. Maintenance
+exclusions, paired routes, AL managed-session semantics, independent SSH
+options, and classifications are unchanged. The connection monitor now uses
+the same bounded pattern only for its initial ten-route read-only snapshot,
+then performs pair classification and any authorized recovery sequentially.
+Five matched serial samples took 918–925 ms, median 922; queued samples took
+291–311 ms, median 304, a 67.0% reduction. Every route was observed exactly
+once, concurrency was exactly bounded, the fifth probe overlapped the delayed
+first, down-route classification stayed correct, and no recovery or
+authorization command occurred during snapshotting.
+
+Interactive backup warnings no longer revalidate and rescan the same private
+state file for every field. One metadata check and one `awk` parse now detect
+duplicates and collect all fields before the still-fresh native scheduler
+query. Five healthy calls improved from a 0.05 to 0.03-second median and from
+35 to 22 observed process launches; the absent-state path remained 0.01
+seconds. Ybatch, Slurm, PBS, ABCI-Q, AGE, duplicate, malformed, unsafe-mode,
+missing-job, failed-query, and failed-backup fixtures pass.
+
+Immutable Codex releases are now addressed by the ordered path, mode, and Git
+blob identity of the exact seven-file runtime payload rather than the complete
+Harness commit. Harness, Students, and Swallow retain distinct release
+directories and locks, and markers retain target and source-commit provenance.
+Across twelve matched pairs, cold creation changed from 247.5 to 262.5 ms and
+same-commit validation from 194.5 to 199.5 ms; the first launch after an
+unrelated commit improved from 241.5 to 182.0 ms and reused one directory
+instead of creating a second. The small cold/warm overhead remains under
+review for safe Git-object batching; no claim is made before that independent
+comparison completes.
+
+Three ordinary validation fixtures were promoted from unknown/full-suite
+routing to exact owning suites: terminfo source, debugger smoke source, and
+scientific-library tool fixtures now take 0.01–0.93 seconds, while unknown and
+sensitive paths still escalate. Policy now requires fresh fleet health only
+for fleet/runtime work, route failure, rollout, and final handoff—not every
+unrelated turn. It also reuses recorded validation when bytes, environment
+contract, and acceptance scope are unchanged; a resumed session alone cannot
+trigger duplicate work. Root policy remains 863 words and all eight context
+scenarios retain 94.0–98.1% total reduction. Policy, context, Claude takeover,
+fleet, monitor, connection-monitor, runtime, backup, routed-component, and
+source-contract checks passed at their owning revisions. Independent workers
+also reported complete 91-suite passes around 73 seconds; one exact final
+integrated run remains deliberately deferred until all retained bytes settle.
+No hosting setting, approval count, billing state, credential, scheduler,
+live project session, app-server, tmux, pane, transcript, or control process
+was changed.
