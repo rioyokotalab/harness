@@ -67,6 +67,10 @@ assert_contains 'safety, lifecycle, cleanup,' "$AGENTS" \
     'full validation escalation'
 assert_contains 'Git and `TODO.md` as the durable source of truth' "$AGENTS" \
     'durable source of truth'
+assert_contains "task's board-linked record" "$AGENTS" \
+    'selected active-task route'
+assert_contains 'never expand it with task chronology' "$AGENTS" \
+    'compact board handoff gate'
 assert_contains 'never preload' "$AGENTS" 'archive selective-read gate'
 assert_contains '`codex-claude-cowork` and' "$AGENTS" \
     'duration cowork route'

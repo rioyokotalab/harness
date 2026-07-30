@@ -16,19 +16,19 @@ its eventual protected publication.
 
 | Scenario | Before total | After total | Total reduction | Before non-ledger | After non-ledger | Non-ledger reduction |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| factual lookup | 73,734 | 1,588 | 97.8% | 2,906 | 1,342 | 53.8% |
-| documentation edit | 73,545 | 1,799 | 97.5% | 2,717 | 1,553 | 42.8% |
-| ordinary code fix | 74,455 | 1,799 | 97.5% | 3,627 | 1,553 | 57.2% |
-| tmux health diagnosis | 73,545 | 1,805 | 97.5% | 2,717 | 1,559 | 42.6% |
-| unsafe-tail recovery | 75,931 | 3,281 | 95.7% | 5,103 | 3,035 | 40.5% |
-| fleet hardening | 76,238 | 4,389 | 94.2% | 5,410 | 4,143 | 23.4% |
-| native HPC experiment | 77,550 | 3,737 | 95.2% | 6,722 | 3,491 | 48.1% |
-| duration Cowork | 80,599 | 4,993 | 93.8% | 9,771 | 4,747 | 51.4% |
+| factual lookup | 73,734 | 1,618 | 97.8% | 2,906 | 1,372 | 52.8% |
+| documentation edit | 73,545 | 1,829 | 97.5% | 2,717 | 1,583 | 41.7% |
+| ordinary code fix | 74,455 | 1,829 | 97.5% | 3,627 | 1,583 | 56.4% |
+| tmux health diagnosis | 73,545 | 1,835 | 97.5% | 2,717 | 1,589 | 41.5% |
+| unsafe-tail recovery | 75,931 | 3,311 | 95.6% | 5,103 | 3,065 | 39.9% |
+| fleet hardening | 76,238 | 4,419 | 94.2% | 5,410 | 4,173 | 22.9% |
+| native HPC experiment | 77,550 | 3,767 | 95.1% | 6,722 | 3,521 | 47.6% |
+| duration Cowork | 80,599 | 5,023 | 93.8% | 9,771 | 4,777 | 51.1% |
 
 The median total reduction is 96.5%, above the frozen 85% threshold; every
 scenario exceeds 93%, above the per-scenario 50% floor. Median non-ledger
-reduction is 45.5%, above the 30% independent policy/skill threshold. The
-always-read policy is 1,082 words, and the active board is 52 lines / 246 words,
+reduction is 44.6%, above the 30% independent policy/skill threshold. The
+always-read policy is 1,112 words, and the active board is 52 lines / 246 words,
 and selected conditional policy routes are separately budgeted by
 `tests/test-agent-policy-routing.sh`.
 

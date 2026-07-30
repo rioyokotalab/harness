@@ -103,10 +103,11 @@ and do not duplicate it into the TUI.
 - Treat Git and `TODO.md` as the durable source of truth. Chat history, client
   summaries, and Claude auto-memory are optional context only.
 - At cold start, read this file and the active board completely, inspect the
-  branch, worktree, and recent commits, and select one recorded task. Read its
-  linked plan and indexed evidence only after selection; never preload
-  `docs/history/`. Before changing collaborative work, fetch and reconcile its
-  current remote through the conditional Git policy.
+  branch, worktree, and recent commits, and select one recorded task. Read that
+  task's board-linked record, then only the plan and evidence it routes;
+  never preload another active record or `docs/history/`. Before changing
+  collaborative work, fetch and reconcile its current remote through the
+  conditional Git policy.
 - Resume the first unverified recorded action. Revalidate only mutable inputs
   used by that action; a failed query is unknown, not evidence of absence.
 - Keep Harness independent of the sibling `website` repository.
@@ -123,6 +124,8 @@ and do not duplicate it into the TUI.
   external inputs before resuming the recorded next action. At handoff, record
   verified results, identifiers, failures and retry safety, modified files,
   validation, remaining checks, the next action, and required authority.
-- Before yielding unfinished work, update `TODO.md`. Keep bulky reproducible
-  evidence in tracked artifacts; never record credentials, private environment
-  values, or chat-only assumptions.
+- Before yielding unfinished work, update the selected task record. Change
+  `TODO.md` only when its phase, ordering, next-action summary, or record
+  pointer changes; never expand it with task chronology. Keep bulky
+  reproducible evidence in tracked artifacts and never record credentials,
+  private environment values, or chat-only assumptions.
