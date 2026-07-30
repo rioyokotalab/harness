@@ -697,3 +697,31 @@ was tightened once more to require the exact pull-request, weekly schedule,
 and manual event set; adversarial fixtures reject inline `push`,
 `pull_request_target`, and job-level write permissions. This is a local
 contract change only and does not dispatch or mutate a workflow.
+
+Fresh hosting readback confirms that Harness ruleset `19127355` remains active
+with strict required check `portable-phase1` (integration `15368`), zero
+required approvals, code-owner review disabled, last-push approval disabled,
+and the preserved always-bypass for repository role `5`. No ruleset write was
+made. The Harness run list contains only the failed and successful
+`pull_request` runs for T-351 heads `65e4206ca492056233d9f7f5afa31a893ec63599`
+and `23113ae3c52ce9e581aab6b059205ca5cd5105ab`; there is no push run for either
+head.
+
+Post-transition mutable-state readback also found Students at
+`1b42ec3e79259d332760be2fdc954e258def6de5` and Swallow at
+`1f1951d573eef05ce4055c140088d97ca8328382`. Their current owner pull-request
+jobs skip before runner allocation, and neither repository has a
+post-transition main-push allocation. Students retains exact
+`pull_request`/weekly/manual CI events and a trusted-base
+`pull_request_target` boundary job; Swallow retains exact
+`pull_request`/weekly/manual CI events. These are readbacks of independently
+published repository state, not further T-351 writes.
+
+A real one-CPU-affinity complete-suite probe then exercised the retained
+low-core serial route. It reached all 91 suites in 3:48.89; 89 passed, while
+the tmux-configuration and terminfo fixtures correctly refused their
+apply-mode checks because this evidence file was still uncommitted. That
+precondition failure is retained and is not classified as a low-core product
+failure or acceptance result. The evidence update will be checkpointed before
+one clean-tree repeat; the failed command will not be replayed against the
+same dirty input.
