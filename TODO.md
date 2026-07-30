@@ -635,13 +635,46 @@ the canonical three-role monitor fails closed as degraded with unavailable
 phone parity and deferred ambiguous ordering; the non-auto-mirror helper is
 idle and did not mutate lifecycle state.
 
-**Next action:** publish this launch-and-cold-start checkpoint, then obtain
-the owner's physical-phone confirmation that exact provisional name
-`swallow-native-bridge-20260730` is visible. Do not move, rename, signal,
-archive, repeat input, or promote before that confirmation. After acceptance,
-perform one bridge-first rename-only promotion and reversible retirement of
-only old Swallow root `019fb1ab-b559-79c2-ad9c-0ee8f426cedc`, then reconcile
-before any archive request.
+Protected PR #472 merge-merged the launch-and-cold-start checkpoint as
+`d209791cb9c55fa7849b7389edc6bcde55a252d6`. The owner then physically
+confirmed exact provisional name `swallow-native-bridge-20260730` visible on
+the phone.
+
+Two promotion preflights refused with zero writes while reconciling unrelated
+live Students Git evolution and the fact that this app-server build does not
+persist presentation names in its SQLite `name` column. The final separate
+Swallow-only controller instead preserves Students by process/cwd identity and
+uses metadata-only app-server readback as the name authority. Controller digest
+`9f4ce6cf9298245fb4a68fb6391d8d96b7cacde3f5b7cac5dab3c6109f4b7ada`
+passed zero-write preflight and executed exactly once under the message and
+monitor locks. It paused only the two exact Swallow watchers, acknowledged
+old-root `thread/name/set` request `3` and new-root request `6`, renamed only
+windows `@98` and `@100`, acknowledged one `@100:@98` swap, and resumed both
+watchers.
+
+Canonical `projects:2:swallow` is now direct-cwd window
+`@100/%100/2995423`, and old window `@98/%98/4144052` is isolated at index 3
+as `swallow-retired-20260730`. New root
+`019fb2e8-b1e1-7200-b316-481df624712a` is named `swallow`; old root
+`019fb1ab-b559-79c2-ad9c-0ee8f426cedc` is named
+`swallow-retired-20260730`. Metadata-only app-server readback with turns
+excluded proves both idle names/cwds plus unchanged active Harness/Students
+roots and exact four-root loaded/unarchived sets. The new runtime remains
+attempt zero with no recovery or rollback. Promotion journal digest
+`82259598c29d582115eb7b2cf90cccd250a22c9da76aca4f282b1387ba4605cb`
+and result digest
+`e2164fe6f9ceca9a4c72a0a4b76b39035503cdd426011a083dd179a045baa5f0`
+record accepted `rename-only-promotion-complete`; the controller is consumed
+and must never run again. No pane/transcript content or project files were
+inspected or changed.
+
+**Next action:** publish this non-retryable promotion checkpoint. Then require
+the same receipt/root/process/topology identities and signal only old exact TUI
+leaf `4144360/112775273` once. Require normal old-chain unwind, zero remaining
+process/window references, and exact canonical three-window health before
+considering one separately journaled archive request for only the retired old
+root. Do not signal the old supervisor, watcher, launcher, or any canonical
+process directly.
 
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
