@@ -1,6 +1,6 @@
 # T-348 phone remote-control mirror
 
-**Phase:** executing authorized experimental-handshake start
+**Phase:** experimental root accepted; prelaunch checkpoint
 **Driver:** Local Codex
 **Updated:** 2026-07-30 JST
 **Branch:** `codex/t348-phone-mirror`
@@ -267,6 +267,18 @@ sandbox, exact Harness cwd, and omitted `model`/`config` fields. Requests `5`
 and `6` remain consumed and non-retryable, and every bridge-first and
 physical-phone confirmation gate remains unchanged.
 
+**Result:** controller v5 sent the one start as experimental-capable request
+`7` and acknowledged root
+`019fb1ab-b559-79c2-ad9c-0ee8f426cedc`. Request `9` acknowledged its unique
+provisional name. Both operations are consumed and non-retryable. The
+controller stopped before launch because Codex 0.145 left model and reasoning
+columns null for the empty root and created its current-user, one-link rollout
+as mode 0664. The acknowledged response had already validated resolved
+Sol/high, granular approval, disabled sandbox, exact cwd, and `vscode`
+source. Read-only reconciliation confirms the root remains idle, zero-turn,
+loaded, and absent from the default interactive list before its first turn.
+All paused processes resumed and all old state is unchanged.
+
 ## Next action
 
 Implementation passed complete validation and merged through protected PR
@@ -279,12 +291,14 @@ all-source top-level list, and loaded-thread readback each proved exactly the
 original three roots and no provisional name. The owner has now separately
 authorized one changed-input start after reviewing that proven-absent result.
 
-Preserve the old Swallow and disabled automatic mirror event. Publish D-005
-through protected `main`, then revalidate every frozen Git, tmux, process,
-watcher, app-server, database, helper, monitor, complete-list, and prior-result
-precondition. If all pass, send the one authorized start on a distinct new
-connection initialized with `capabilities.experimentalApi=true`. Journal the
-operation before sending; never retry an acknowledged or ambiguous result.
-Checkpoint the result durably before any provisional runtime launch. A
-successful provisional bridge still stops at explicit physical-phone
+Preserve the old Swallow and disabled automatic mirror event. Publish the D-005
+result through protected `main`; requests `7` and `9` must not be repeated.
+Reconcile the exact accepted empty root and all frozen Git, tmux, process,
+watcher, app-server, database, helper, monitor, and prior-result preconditions.
+If they remain exact, tighten only its validated current-user single-link
+rollout to mode 0600 and launch the one provisional index-3 runtime. Journal
+the launch and generic cold-start input before each operation and never repeat
+an acknowledged or ambiguous one. Require one assistant-bearing completed
+turn, resolved Sol/high persistence, default interactive-list inclusion, and
+an attempt-zero runtime checkpoint. Then stop at explicit physical-phone
 confirmation before any rename, retirement, archive, or promotion.
