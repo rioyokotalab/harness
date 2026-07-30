@@ -145,7 +145,7 @@ agents and ledgers.
 
 ### T-348 — Keep phone remote-control roots mirrored to Local tmux
 
-**Phase:** physical-phone accepted; publishing promotion authorization.
+**Phase:** physical-phone accepted; blocked at owner-client safety gate.
 
 The owner reports that Swallow is absent from phone Remote and requests a
 periodic one-to-one mirror for Harness, Students, and Swallow. Complete
@@ -376,6 +376,25 @@ journaled promotion transaction to rename old root/window to
 swap only window IDs `@98` and `@93` so the accepted bridge occupies index 2.
 Checkpoint that rename-only promotion before signaling or archiving old
 Swallow.
+
+Phone confirmation PR #449 passed protected `portable-phase1` and merged as
+`799fe94a9ec0ba54f2c14f92df46267878aaa9bd`. The immediate read-only
+promotion preflight found all four resilient chains at attempt zero, helper
+idle, monitor preserving all state, exact four-window topology, and both old
+and accepted Swallow roots live. It also found the sole tmux client PID
+`197678` had moved from unaffected Harness window `@87` to affected old
+Swallow window `@93`.
+
+No app-server, name, tmux, signal, archive, or process write was sent. Moving
+or detaching the owner's client remains excluded, and promoting while it is
+on `@93` would carry the client to the retired window and later displace it
+when that window exits.
+
+**Next action and owner action required:** the owner should select Harness
+window 0 in the attached tmux client (normally prefix then `0`) and then
+confirm here. Revalidate exact client PID `197678` on window ID `@87` before
+continuing the already-authorized promotion. Do not select, move, or detach
+the client from the controller.
 
 ### T-347 — Complete T-345 mirror convergence
 
