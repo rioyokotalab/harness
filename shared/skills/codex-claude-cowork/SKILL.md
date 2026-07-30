@@ -78,34 +78,10 @@ selected file completely before its guarded action:
 Do not load the legacy aggregate `references/protocol.md` during normal routing;
 it remains only as an unselected compatibility fallback for historical
 handoffs. If the current phase is unknown, validate session state first and
-read the recovery reference before choosing another phase.
+read the recovery reference before choosing another phase. Use
+`--exchange-mode direct` only through that recorded recovery fallback.
 
-## Core flow
-
-1. Initialize the durable exchange with
-   `scripts/cowork-session init SESSION_DIR --driver codex|claude`, then fill
-   the driver-owned charter, plan, and benchmark under the session-planning
-   contract. Use `--exchange-mode direct` only through the recorded recovery
-   fallback.
-2. Freeze the driver's independent evidence before opening the co-pilot
-   window. Run a blinded independent stage, then a reciprocal stage. The
-   co-pilot writes only its staged candidate; the driver validates and imports
-   those exact bytes.
-3. Reconcile reproducible evidence rather than client brand. Preserve material
-   disagreement and uncertainty. Do not execute by majority vote.
-4. After the owner go gate, execute only as driver in small measured steps,
-   validate the frozen acceptance criteria, and checkpoint evidence, failures,
-   retry safety, residual risks, cleanup, and the exact next action.
-
-## Duration-bounded requests
-
-Use `long-running-task-ledger` together with this skill. Freeze the benchmark,
-evidence cadence, and stop conditions before target execution and iterate only
-from recorded measurements.
-
-The final summary and durable ledger summary must each contain exactly one
-timestamped, evidence-backed time-slice entry per requested hour, rounded up,
-plus outcome, validation, residual risks, and exact next action. Each must total
-at least `max(300, 50 * ceil(requested hours))` words. A no-change slice names
-the stable blocker or wait evidence observed; invented results, subdivided
-findings, and padding do not count.
+Duration requests also select `execution-duration.md` and
+`long-running-task-ledger`. The final and durable summaries each require
+exactly one timestamped, evidence-backed time-slice entry per requested hour;
+the root duration policy owns the minimum length and no-padding contract.

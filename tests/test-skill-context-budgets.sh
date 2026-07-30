@@ -39,9 +39,9 @@ UNSAFE_TRANSACTION_BEFORE=1221
 cowork_entry=$(words "$COWORK/SKILL.md")
 cowork_plan=$(words "$COWORK/references/session-planning.md")
 cowork_initial=$((cowork_entry + cowork_plan))
-assert_max "$cowork_entry" 1000 'cowork entry'
+assert_max "$cowork_entry" 750 'cowork entry'
 assert_max "$cowork_plan" 400 'cowork planning reference'
-assert_max "$cowork_initial" 1300 'cowork initial planning route'
+assert_max "$cowork_initial" 1100 'cowork initial planning route'
 cowork_reduction=$(((COWORK_BEFORE - cowork_initial) * 100 / COWORK_BEFORE))
 [ "$cowork_reduction" -ge 75 ] ||
     fail "cowork initial reduction is not material: $cowork_reduction%"

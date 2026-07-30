@@ -23,7 +23,7 @@ its eventual protected publication.
 | unsafe-tail recovery | 75,931 | 2,707 | 96.4% | 5,103 | 2,461 | 51.7% |
 | fleet hardening | 76,238 | 4,074 | 94.6% | 5,410 | 3,828 | 29.2% |
 | native HPC experiment | 77,550 | 2,996 | 96.1% | 6,722 | 2,750 | 59.0% |
-| duration Cowork | 80,599 | 4,625 | 94.2% | 9,771 | 4,379 | 55.1% |
+| duration Cowork | 80,599 | 4,459 | 94.4% | 9,771 | 4,213 | 56.8% |
 
 The median total reduction is 97.2%, above the frozen 85% threshold; every
 scenario exceeds 94%, above the per-scenario 50% floor. Median non-ledger
@@ -45,7 +45,7 @@ checks that selected inputs are regular tracked files, enforces all frozen
 thresholds, and fails if the active board or policy router regresses.
 
 Phase routing reduced the largest selected routes as follows: Cowork
-5,926→1,231 words (79.2%), HPC 2,668→1,117 (58.1%), PIE 1,088→615
+5,926→1,065 words (82.0%), HPC 2,668→1,117 (58.1%), PIE 1,088→615
 (43.5%), remote communication 1,241→737 (40.6%), fleet hardening
 1,431→864 (39.6%, including LIFO handling added to the largest interrupted
 phase), and personal-Mac onboarding 1,527→953 (37.6%, including component
@@ -79,3 +79,9 @@ therefore no longer duplicates a partial trigger table.
 `tests/test-skill-context-budgets.sh` freezes selected routes, while
 `tests/test-skill-context-gates.sh` proves that common authority rules and
 phase-specific stop conditions remain reachable.
+
+Cowork's mandatory entry now contains only its cross-phase authority,
+isolation, import, sole-writer, ambiguity, and routing gates. Initialization,
+evidence, execution, recovery, and duration mechanics stay in their selected
+references; removing duplicated core-flow prose reduced the initial route from
+1,231 to 1,065 words without changing those references.
