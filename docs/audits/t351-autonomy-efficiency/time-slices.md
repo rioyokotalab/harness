@@ -570,6 +570,17 @@ bytes, removed the quarantine, and verified unchanged protected anchors.
 Immediate readback is `live=5 eligible=0 young=0 unexpected=0 removed=0`.
 No whole arg0 root was removed and no live lock was disturbed.
 
+Mutable repository state was then read back again without a write. Students
+had independently advanced through PRs #492 and #493 to
+`009de4e1607292b5a5b2c64a41bf6a06f297fd42`. Both its CI and boundary jobs
+skipped for each owner PR, and neither merge allocated a push run. Swallow
+remained at PR #139 / `1f1951d`. Fresh default-branch workflow bytes in both
+private repositories still contain the owner-only conditions, non-owner PR
+coverage, weekly/manual CI backstops, and no CI push trigger. Harness ruleset
+`19127355` still requires the strict `portable-phase1` PR check, zero approvals,
+and the preserved repository-role bypass; its stored fixture matches. Harness
+is public, so its eventual hosted PR gate does not consume private minutes.
+
 One progress update in this slice accidentally reused the previous timestamp
 instead of running the required fresh native `date` read. The next update
 immediately disclosed and corrected the miss with a fresh `05:07:27` read.

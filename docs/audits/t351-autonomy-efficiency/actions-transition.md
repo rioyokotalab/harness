@@ -111,6 +111,17 @@ At 03:51 JST, Harness task head `eba31ff` also had an empty branch run list.
 Its pre-PR checkpoint pushes therefore allocated no runner; the one eventual
 protected pull request remains the intended live hosted check.
 
+At 05:13 JST, Students had independently advanced through PRs #492 and #493 to
+`009de4e1607292b5a5b2c64a41bf6a06f297fd42`. Runs `30577547728`,
+`30577547719`, `30577791707`, and `30577791762` show both CI and the
+pull-request-target boundary job skipped for those two owner pull requests.
+Neither merge allocated a push run. Fresh default-branch workflow bytes still
+contain the owner-only job conditions, pull-request plus weekly/manual CI,
+pull-request-target boundary enforcement for other authors, and no CI push
+trigger. Swallow remained at PR #139 / `1f1951d`; its same workflow invariants
+and no-push-run state were unchanged. These are later operational observations,
+not independent attestation or a forecast.
+
 GitHub's job-condition syntax supports this event-specific selection:
 [job conditions](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-jobs-with-conditions).
 A skipped required job reports success, so the existing required context can
