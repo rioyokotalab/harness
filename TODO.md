@@ -166,7 +166,7 @@ agents and ledgers.
 
 ### T-347 — Complete T-345 mirror convergence
 
-**Phase:** r6 journal-aware helper pause frozen; publication pending.
+**Phase:** live-helper fresh-epoch controller v2 frozen; publication pending.
 
 The immutable T-345 helper event remains terminal `failed/worker-failed`; its
 private worker log remains unread and the event must never be retried.
@@ -347,6 +347,34 @@ user, mode `0700`, one link, 5,913 bytes, SHA-256
 It verifies the exact base/r4 support digests, passes syntax and zero-write
 preflight, and has distinct absent journal/result paths.
 
+PR #429 passed `portable-phase1` at exact r6 head
+`2597cd0b29219e16c5e9d26ff44e65db78bc883e` and merge-merged as
+`5b890981620e861533bc95332733434bb58cb3c7`. r6 ran once and recorded an
+accepted `stopped` helper before immediately refusing, safely resuming it, and
+remaining at `verified=0`; no watcher signal, app-server connection, operation
+phase, or lifecycle request occurred. A subsequent lock-serialized,
+value-free signal diagnostic proved exact helper `SIGSTOP` does not remain
+stable long enough for the base post-check. All six pre-request receipts remain
+immutable and runtime health returned to the accepted state.
+
+Controller v2 changes the input rather than repeating an unstable signal. It
+waits for the next exact idle helper epoch and zero-child readback, then holds
+the shared lifecycle lock and requires that epoch to remain unchanged while it
+pauses only the three recovery watchers and executes the fixed five operations.
+This leaves nearly the full 30-second helper sleep interval; any epoch change
+refuses immediately. If a lifecycle request was sent but all five did not
+verify, v2 sends one exact `SIGTERM` only to the accepted helper before watcher
+cleanup, preventing a partial identity from launching a worker. No-request
+failure leaves the helper unchanged.
+
+Private v2 controller
+`/run/user/5035/harness-t347-mirror-convergence/controller-v2.py` is current
+user, mode `0700`, one link, 11,114 bytes, SHA-256
+`f07d922e8c00040c090419fb7d10b52e8ef2f1a93af39a400171484b964d9b23`.
+It verifies the exact base/r4 support digests, has signal-safe watcher cleanup,
+passes syntax and zero-write preflight, and has distinct absent journal/result
+paths.
+
 The immutable controller checkpoint is exact commit
 `70c5194066965df1bffc0078f36361ded50d7bc2` in clean worktree
 `/tmp/harness-t347-t345-mirror-execution`. That worktree must remain at this
@@ -356,12 +384,11 @@ an ancestor. PR #423 passed `portable-phase1` at recording head
 `6fc06163946452ca1fe9a7d015279c2b161ea9ff` and merge-merged as
 `805016261124fd07b365a2cbf962222939e0758d`.
 
-**Next action:** publish the fifth no-request refusal and exact r6 wrapper
+**Next action:** publish the sixth no-request refusal and exact v2 controller
 through the protected workflow. Then pass the resulting protected-main merge,
-checkpoint `70c5194`, base digest `df5f4f0`, and r6 digest `afdb965` to one r6
-execution. Never rerun the original or r2-r5 controllers. Do not open the
-app-server connection, signal helper/watchers, or write root metadata before
-protected publication.
+checkpoint `70c5194`, and v2 digest `f07d922` to one v2 execution. Never rerun
+the original or r2-r6 controllers. Do not open the app-server connection,
+signal watchers, or write root metadata before protected publication.
 
 ### T-346 — Reprioritize the durable Harness action queue
 

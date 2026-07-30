@@ -168,38 +168,27 @@ or lifecycle request. A failed query is unknown, not absence.
    `~/.local/state/harness/agent-message.lock`, then acquire its exclusive
    lock.
 2. Revalidate the complete immutable preflight while holding the lock.
-3. Send one `SIGSTOP` to exact helper process `4140398` after rematching its
-   owner, parent, start identity, executable, argv, idle receipt, terminal
-   event counts, and absence of children. Immediately before signaling, require
-   an idle helper receipt no older than two seconds plus a PID-only zero-child
-   readback; wait through at most one 30-second observation interval for this
-   fresh-idle gate. After signaling, require exact Linux stopped state and
-   perform the zero-child readback against the stopped parent; expose that
-   frozen proof only once to the controller's child gate. If an intermittent
-   child remains, resume the exact helper and repeat fresh-idle/stop/readback
-   under one 45-second deadline; never expose a failed proof or leave that
-   refusal path stopped. The same journal-aware helper-pause function must own
-   validation, `stop-sent`, the bounded loop, cleanup registration, `stopped`,
-   and one-time proof exposure; do not hand a stopped helper across two pause
-   implementations. Prove the same exact helper is stopped and still childless
-   before continuing. This prevents its observer from being frozen around a
-   short-lived metadata child or treating an intentionally partial
-   five-operation transaction as a new mirror event.
+3. Do not signal the helper: repeated pre-request receipts prove its exact
+   `SIGSTOP` is externally undone before a stable post-check. Instead wait for
+   the next exact mode-0600 idle helper epoch with terminal counts unchanged
+   and a PID-only zero-child readback. Record that epoch and require it remain
+   unchanged at every later gate. This begins nearly a full 30-second sleep
+   interval and prevents the observer from seeing partial state.
 4. Send one `SIGSTOP` to each exact accepted recovery-watcher leaf only:
    Harness `808441`, Students `808488`, and Swallow `2266511`, after matching
    each PID, parent, start identity, executable, argv, and root. Do not signal
    a supervisor, TUI, process group, or app server.
-5. Prove the helper and all three exact watcher leaves are stopped and all
-   protected supervisors/TUIs/app-server/monitor processes remain live and
-   unchanged.
+5. Prove all three exact watcher leaves are stopped, the helper remains the
+   same live idle process at the recorded epoch, and all protected
+   supervisors/TUIs/app-server/monitor processes remain live and unchanged.
 6. Install cleanup before the first signal. On every exit path,
    send at most one `SIGCONT` to each exact watcher that this transaction
    stopped, but only after rematching its immutable identity. Record unknown
-   cleanup state and stop if an identity no longer matches. Resume the exact
-   helper only after all five operations verify or if no lifecycle request was
-   sent. If any request is partial or ambiguous, retain the exact helper in
-   `SIGSTOP`, record `held-partial`, and stop; this is safer than allowing an
-   unplanned changed-identity worker event.
+   cleanup state and stop if an identity no longer matches. If any lifecycle
+   request was sent but all five did not verify, send one `SIGTERM` only to the
+   exact accepted helper under the transaction lock and require its absence
+   before watcher cleanup. Never signal the helper after a no-request refusal
+   or after full success.
 
 ### 3. One app-server connection
 
@@ -250,8 +239,8 @@ must not invoke it.
 
 ### 5. Close and resume
 
-Close the WebSocket once. Run watcher cleanup and the conditional helper
-cleanup above, then release the shared lock. Never reconnect to continue a
+Close the WebSocket once. Run the conditional partial-helper termination and
+watcher cleanup above, then release the shared lock. Never reconnect to continue a
 partial transaction. A later controller may only reconcile value-free durable
 state against this journal; it may not repeat an operation whose `sent`,
 `acknowledged`, `ambiguous`, or `verified` phase exists.
@@ -297,8 +286,9 @@ all accepted partial writes, and exact next safe reconciliation action.
   one-attempt `thread/name/set` may restore a prior exact name.
 - Watcher resume uncertain: do not signal a replacement PID. Preserve the
   journal and diagnose exact current identities read-only.
-- Partial lifecycle transaction: keep the exact helper process paused so it
-  cannot create a changed-identity mirror event. Resume it only under a
-  separately published read-only reconciliation that proves all sent
-  operations and establishes the safe next input.
+- Partial lifecycle transaction: terminate only the exact accepted helper once
+  before releasing the lock so it cannot create a changed-identity mirror
+  event. Restore the helper only under a separately published read-only
+  reconciliation that proves all sent operations and establishes the safe
+  next input.
 - The historical failed helper event remains terminal in every case.
