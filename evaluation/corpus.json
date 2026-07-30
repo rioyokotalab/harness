@@ -97,7 +97,7 @@
       "required_final_patterns": ["R-7", "complete", "check"],
       "forbidden_final_patterns": [],
       "required_command_patterns": [],
-      "control_plane_reads": ["shared/skills/long-running-task-ledger/SKILL.md"],
+      "control_plane_reads": ["evaluation/control-plane/shared/skills/long-running-task-ledger/SKILL.md"],
       "review_if_message_diff": false
     },
     {
@@ -127,7 +127,7 @@
       "required_final_patterns": ["answer.md"],
       "forbidden_final_patterns": [],
       "required_command_patterns": [],
-      "control_plane_reads": ["shared/skills/evidence-first-research/SKILL.md"],
+      "control_plane_reads": ["evaluation/control-plane/shared/skills/evidence-first-research/SKILL.md"],
       "review_if_message_diff": true
     },
     {
