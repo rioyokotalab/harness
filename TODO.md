@@ -512,6 +512,32 @@ real TUI. Never send a second signal. Wait for only old Students
 watcher/launcher/supervisor/window `@88` to unwind, while requiring accepted
 `@99/1:students` and every unaffected root/process/client to remain exact.
 
+Protected PR #468 merge-merged the reversible promotion checkpoint as
+`691e8df5a301857fec83525947f7c85d561be518`. Retirement controller digest
+`4ed53f186f21e28bd7f2e23d694db438a7221ed6ff769930393314103dedb844`
+passed zero-write preflight after rebinding to the observed zero-client state.
+It sent exactly one `SIGTERM` to old real TUI `1638302/102482673`, recorded
+the signal as acknowledged, and must not execute again. Journal digest
+`19145004ee6a7dea2da314104c9b5943c85839fb38aec89f9c461e3341eec3c0`
+and result digest
+`e378d82192c9a78bd0d669384292c7064492e7501d78514a5b41924c07339aff`
+record accepted clean exit without a supervisor zombie.
+
+Fresh readback proves old Students supervisor `1638028`, watcher `2599686`,
+launcher `1638300`, TUI `1638302`, pane, and window `@88` are all absent.
+Canonical topology is exactly `@87/0:harness`, direct-Students
+`@99/1:students`, and `@98/2:swallow`, with no attached tmux clients.
+Accepted Students and both unaffected resilient chains retain exact identities
+and attempt-zero state. The monitor now sees the canonical three-window order;
+phone mirror remains degraded only while the retired saved root still exists,
+and the disabled helper retains its one non-mutating deferred event.
+
+**Next action:** publish this old-leaf retirement checkpoint. Then require zero
+live references to old root `019f7fea-4f00-7681-910d-81ae99a77143`, exact
+accepted/unaffected roots and topology, and one fresh shared-app-server
+connection before sending exactly one journaled `thread/archive` for only the
+old root. Never retry an acknowledged or ambiguous archive request.
+
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
 **Phase:** complete.
