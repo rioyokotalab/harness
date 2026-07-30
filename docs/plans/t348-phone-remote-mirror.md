@@ -244,7 +244,16 @@ the product exposes no supported phone-list status API.
 
 ## Next action
 
-Wait for the owner's separate explicit `go`. Then begin with failing focused
-fixtures and continue autonomously through implementation, protected
-publication, merged-code activation, and the provisional bridge. Pause again
-only at the physical-phone confirmation gate before old-root retirement.
+Implementation passed complete validation and merged through protected PR
+#442 as `c3895805b79c772c0bad58f6b4f792914fa2c89f`; merged-code monitor/helper
+activation correctly reports only `interactive_source:swallow`.
+
+The first initialized live `thread/start` was sent as request ID `5` but
+returned without a usable acknowledgement or root identity. Database,
+all-source top-level list, and loaded-thread readback each prove exactly the
+original three roots and no provisional name, but the frozen non-retry rule
+still applies. Preserve the old Swallow and automatic-event pause. Do not send
+another start unless the owner separately freezes a changed-input retry after
+reviewing this proven-absent result. Any authorized retry must omit the
+unproven model/config overrides, use the verified Sol/high defaults, and retain
+the physical-phone confirmation gate before retirement.
