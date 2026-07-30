@@ -929,3 +929,36 @@ In progress. The slice opened from clean implementation checkpoint
 hour boundary. No product candidate remains open. Work is limited to terminal
 ledger preparation, one final exact-tree suite after those bytes settle, and
 the predeclared publication/cleanup/health sequence.
+
+At 08:31 JST, a fresh authenticated fetch found `origin/main` unchanged at
+`f2ce89ac3ea393cb5a7b882bed1b79fe773974fb`; local clean head was
+`0549474c0dda8eb970e44fcf6f510ca84f42ba1f`, and the existing PR remained
+cleanly mergeable at its last pushed successful head. Ruleset `19127355`
+remained active with zero approvals, code-owner and last-push review disabled,
+strict `portable-phase1` integration `15368`, and repository-role `5` always
+bypass. No write was made.
+
+Students independently advanced to
+`d57dc9131bc91ab549d3bf6933087d2deca26fbf`. Its latest three owner PRs again
+show paired skipped CI/boundary jobs; current workflow bytes retain the exact
+no-push, PR/weekly/manual, read-only, owner-skip, and trusted-base boundary
+contracts. Swallow remains at
+`1f1951d573eef05ce4055c140088d97ca8328382`.
+
+The same preclosure cleanup found seven eligible arg0 entries, no young or
+unexpected entries, and five live locks. Guarded housekeeping removed exactly
+seven and passed all checks; readback is `live=5 eligible=0 young=0
+unexpected=0`.
+
+Terminal ledger bytes are now prepared but not yet published. T-351 is absent
+from the active board, indexed complete without `TODO.md` as a source, and
+states `Complete upon protected merge of PR #484`; therefore the change cannot
+become authoritative on `main` unless its condition is satisfied. The board is
+43 lines / 211 words, the retained completed record is 426 words, and all 78
+index rows plus active/completed source invariants pass.
+
+Reconstructed frozen context results now span 94.2–97.7% total reduction with
+a 96.6% median and a 47.7% median non-ledger reduction. Board plus the frozen
+representative record is 637 words, 44.8% below the prior 1,153-word board.
+The benchmark explicitly distinguishes this reproducible completed payload
+from a current cold start, which does not load T-351 from the active board.

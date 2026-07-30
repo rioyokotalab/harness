@@ -17,29 +17,31 @@ its eventual protected publication.
 
 | Scenario | Before total | After total | Total reduction | Before non-ledger | After non-ledger | Non-ledger reduction |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| factual lookup | 73,734 | 1,752 | 97.6% | 2,906 | 1,506 | 48.1% |
-| documentation edit | 73,545 | 2,064 | 97.1% | 2,717 | 1,818 | 33.0% |
-| ordinary code fix | 74,455 | 1,790 | 97.5% | 3,627 | 1,544 | 57.4% |
-| tmux health diagnosis | 73,545 | 1,724 | 97.6% | 2,717 | 1,478 | 45.6% |
-| unsafe-tail recovery | 75,931 | 3,074 | 95.9% | 5,103 | 2,828 | 44.5% |
-| fleet hardening | 76,238 | 4,455 | 94.1% | 5,410 | 4,209 | 22.1% |
-| native HPC experiment | 77,550 | 3,377 | 95.6% | 6,722 | 3,131 | 53.4% |
-| duration Cowork | 80,599 | 4,729 | 94.1% | 9,771 | 4,483 | 54.1% |
+| factual lookup | 73,734 | 1,693 | 97.7% | 2,906 | 1,482 | 49.0% |
+| documentation edit | 73,545 | 2,005 | 97.2% | 2,717 | 1,794 | 33.9% |
+| ordinary code fix | 74,455 | 1,731 | 97.6% | 3,627 | 1,520 | 58.0% |
+| tmux health diagnosis | 73,545 | 1,665 | 97.7% | 2,717 | 1,454 | 46.4% |
+| unsafe-tail recovery | 75,931 | 3,015 | 96.0% | 5,103 | 2,804 | 45.0% |
+| fleet hardening | 76,238 | 4,396 | 94.2% | 5,410 | 4,185 | 22.6% |
+| native HPC experiment | 77,550 | 3,318 | 95.7% | 6,722 | 3,107 | 53.7% |
+| duration Cowork | 80,599 | 4,670 | 94.2% | 9,771 | 4,459 | 54.3% |
 
-The median total reduction is 96.5%, above the frozen 85% threshold; every
+The median total reduction is 96.6%, above the frozen 85% threshold; every
 scenario exceeds 94%, above the per-scenario 50% floor. Median non-ledger
-reduction is 46.8%, above the 30% independent policy/skill threshold. The
-always-read policy is 805 words, and the active board is 52 lines / 246 words,
+reduction is 47.7%, above the 30% independent policy/skill threshold. The
+always-read policy is 805 words, and the active board is 43 lines / 211 words,
 and selected conditional policy routes are separately budgeted by
 `tests/test-agent-policy-routing.sh`.
 
-Active-task details are now one hop behind the board. At this checkpoint the
- selected T-351 record is 450 words during execution, so board plus relevant
-record is 696 words—39.6% below the prior 1,153-word board—while unrelated
-backup successor IDs, outage contingency
-details, and the blocked NFS fingerprint are not loaded. The ledger fixture
-requires all four task records, their board routes, and their exact critical
-facts before allowing this compaction.
+The frozen benchmark deliberately retains the completed T-351 record as its
+representative task payload. That record is 426 words and the completed active
+board is 43 lines / 211 words, so board plus representative payload is 637
+words—44.8% below the prior 1,153-word board. A current cold start reads the
+board and only a selected active record; it does not load completed T-351 or
+unrelated backup successor IDs, outage contingency details, and the blocked
+NFS fingerprint. The ledger fixture requires all four compact task records,
+their active/completed routing, and their exact critical facts before allowing
+this compaction.
 
 `tests/test-context-routing-benchmark.sh` recalculates every current count,
 checks that selected inputs are regular tracked files, enforces all frozen

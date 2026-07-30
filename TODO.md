@@ -17,15 +17,6 @@ Next free ID: T-352.
 
 ## Active queue
 
-### T-351 — Reduce Actions, context, contention, and execution latency
-
-**Phase:** executing through 2026-07-31 09:00 JST.
-
-**Record:** `docs/tasks/T-351.md`.
-
-**Next:** continue measured route and latency review, then protected
-publication, guarded cleanup, fleet health, and deadline handoff.
-
 ### T-196 — Backup lifecycle phase 2
 
 **Phase:** time-gated until 2026-08-02; all eight chains are 2/8.

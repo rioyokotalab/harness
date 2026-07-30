@@ -1,5 +1,5 @@
 task	state	summary	source
-T-351	active	Autonomy and execution-efficiency duration task	TODO.md;docs/tasks/T-351.md;docs/plans/t351-autonomy-efficiency.md
+T-351	complete	Autonomy and execution-efficiency duration task	docs/tasks/T-351.md;docs/plans/t351-autonomy-efficiency.md;docs/audits/t351-autonomy-efficiency/time-slices.md
 T-350	complete	Repository-native Codex sessions	docs/history/TODO-full-archive-2026-07-30.md;docs/plans/t350-repository-native-codex-sessions.md
 T-349	complete	Rename canonical Local tmux session to projects	docs/history/TODO-full-archive-2026-07-30.md
 T-348	complete	Phone-visible roots mirrored to Local tmux	docs/history/TODO-full-archive-2026-07-30.md

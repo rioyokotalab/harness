@@ -98,9 +98,9 @@ Harness:
   validator, manifest, safety, lifecycle, cleanup, credential, and unknown
   changes still run full phase one. Weekly/manual events are unconditional
   full backstops.
-- The final task pull request is the live transition check. Its merge must not
-  start a push run; the exact merged tree and run list are reconciled before
-  closeout.
+- PR #484 is the terminal transition check. On `main`, its terminal body
+  records the exact final head, protected check, merge tree, and absent
+  post-merge push run.
 
 ### Post-transition readback
 

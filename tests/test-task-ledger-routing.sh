@@ -45,7 +45,7 @@ task_text = "\n".join(
 for required in (
     "docs/plans/t351-autonomy-efficiency.md",
     "docs/audits/t351-autonomy-efficiency/time-slices.md",
-    "Run one final exact-tree suite",
+    "Complete upon protected merge of PR #484",
     "hosting settings, rulesets",
     "94950",
     "2064918.pbs1",
@@ -111,7 +111,7 @@ for task in sorted(set(task_files) - set(board_tasks)):
     assert "TODO.md" not in sources, task
     assert f"docs/tasks/{task}.md" in sources, task
 for task, state in {
-    "T-351": "active",
+    "T-351": "complete",
     "T-196": "time-gated",
     "T-328": "time-gated",
     "T-303": "blocked",
