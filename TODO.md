@@ -14,9 +14,10 @@ Next free ID: T-347.
   activation evidence branch. T-345 implementation merge
   `5351f0cb04716aa5082eaee5d049e4efd10bc4be` is installed on the ten
   reachable remote managed checkouts; the later documentation handoff is
-  Local-only pending publication. T-306's context-refresh policy is current;
-  Aist, Home, Office, and Riken each accepted exactly one T-345-specific
-  refresh and none may be retried.
+  protected on `main` at
+  `949e84a9fa5e16fdcf818094b21f3700f09bb291`. T-306's context-refresh
+  policy is current; Aist, Home, Office, and Riken each accepted exactly one
+  T-345-specific refresh and none may be retried.
 - Local's canonical tmux topology is
   `@87/0:harness,@88/1:students,@93/2:swallow`; monitor topology is
   `@40/0:tunnel,@95/1:codex,@96/2:helper`. The merged monitor and helper are
@@ -454,10 +455,17 @@ start/stop/signal, prompt replay, pane/transcript read, client movement,
 project-window mutation, second monitor/helper/worker launch, or unrelated
 worktree change occurred.
 
-**Next action:** publish this partial acceptance through protected CI. Keep the
-live monitor/helper processes and failed event unchanged. A subsequent task
-must first freeze a transcript-free changed-input failure diagnosis and
-one-attempt correction; T-345 mirror convergence and closure remain pending.
+**Publication checkpoint:** PR #420 exact head
+`c1e43292b03b3a59aa0ef5bbd1ff84366aae22e0` passed required
+`portable-phase1` in 2m29s and merge-merged as
+`949e84a9fa5e16fdcf818094b21f3700f09bb291`. Local `main` fast-forwarded
+cleanly. This ledger-only publication did not require fleet synchronization
+and did not change the live monitor/helper processes or failed event.
+
+**Next action:** keep the live monitor/helper processes and failed event
+unchanged. A subsequent task must first freeze a transcript-free changed-input
+failure diagnosis and one-attempt correction; T-345 mirror convergence and
+closure remain pending.
 
 ### T-344 — Recover Swallow and automate blocked-root cutover
 
