@@ -818,13 +818,37 @@ monitor/project topology. The explicit runtime directory was therefore not
 sufficient to explain or fix the tmux-only exit. Tmux server messages contain
 no exit detail, and no pane content was read.
 
-**Next action:** publish this resolved explicit-environment failure. Then
-launch one distinct diagnostic helper window with the same exact command and
-runtime environment but redirect stdout/stderr before exec to a new mode-0600
-private file. Preserve dead-pane metadata long enough to record only exit
-status and minimum startup error, without inspecting pane/transcript content.
-Fix from that evidence, restore exactly one helper, and require fresh healthy
-phone parity plus two interval-separated monitor/helper receipts before final
+Protected PR #479 merge-merged the resolved explicit-environment failure as
+`2e08c32604758d966a93cddec7571b37fe76c2d5`; Local main fast-forwarded.
+Private-output tmux diagnostic controller digest
+`7122096bbf45c31a45cd080e65140227b268a28cade678ffca8c544cf2d1369a`
+and its bound launcher digest
+`2ed179fa120b7d2d55f7831dc082fcf63c5b49f7644dba6b19399b4832f9a39c`
+passed zero-write preflight and executed exactly once. It acknowledged
+diagnostic `@103/%103` with reported PID `3920764`, captured exit code 1 and
+640 private output bytes, then acknowledged removal of only that diagnostic
+window. Journal digest
+`987c088b22d8423e06522c87614d568b8353f9b77f61864bc1f114f6cc948196`
+and result digest
+`2f8c3f1d62804dcb78d22e19dba73d38874bd9a6817a91a8e42791bfff202a55`
+record accepted `tmux-startup-exit-captured`.
+
+The minimum private startup error is
+`harness_codex_targets.TargetError: Harness root is unavailable`: direct
+Python invocation bypassed `bin/harness`, while tmux has no inherited
+`HARNESS_ROOT`. The repository launcher deterministically derives and exports
+that variable before executing the helper. This reconciles both prior
+failures: the first `bin/harness` launch lacked the runtime-directory binding;
+the later direct-Python launches had that binding but lacked the Harness root.
+Current state again has no helper process/window or lock holder, with unchanged
+monitor/project topology.
+
+**Next action:** publish this exact startup diagnosis. Then use one new
+changed-input controller and exactly one helper window combining the repository
+`bin/harness codex-recovery-helper --run --interval 30` launcher with per-window
+`XDG_RUNTIME_DIR=/run/user/5035`. Require one new current-user owner, no worker
+child, unchanged monitor/project identities, a fresh healthy phone receipt,
+and two interval-separated healthy helper/monitor readbacks before final
 T-350 closeout.
 
 ### T-349 — Rename the canonical Local tmux session to `projects`
