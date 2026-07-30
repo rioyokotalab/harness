@@ -2,6 +2,12 @@
 tests/test-startup-normalize.sh|startup normalization focused suite
 tests/test-bash-startup-unify.sh|canonical Bash startup transaction
 tests/test-focused-runner.sh|parallel focused-suite runner
+tests/test-validation-router.sh|risk-tier validation selector
+tests/test-task-ledger-routing.sh|compact active-task ledger routing
+tests/test-agent-policy-routing.sh|conditional agent-policy routing
+tests/test-context-routing-benchmark.sh|mandatory context benchmark
+tests/test-skill-context-budgets.sh|selected skill context budgets
+tests/test-skill-context-gates.sh|selected skill safety gates
 tests/test-ssh-agent-profile.sh|SSH agent profile focused suite
 tests/test-remote-session.sh|remote-session focused suite
 tests/test-remote-agent-communication.sh|remote agent communication focused suite
