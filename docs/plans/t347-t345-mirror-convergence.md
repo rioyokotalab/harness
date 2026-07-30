@@ -167,17 +167,27 @@ or lifecycle request. A failed query is unknown, not absence.
    `~/.local/state/harness/agent-message.lock`, then acquire its exclusive
    lock.
 2. Revalidate the complete immutable preflight while holding the lock.
-3. Send one `SIGSTOP` to each exact accepted recovery-watcher leaf only:
+3. Send one `SIGSTOP` to exact helper process `4140398` after rematching its
+   owner, parent, start identity, executable, argv, idle receipt, terminal
+   event counts, and absence of children. Prove the same exact helper is
+   stopped before continuing. This prevents its 30-second observer from
+   treating an intentionally partial five-operation transaction as a new
+   mirror event.
+4. Send one `SIGSTOP` to each exact accepted recovery-watcher leaf only:
    Harness `808441`, Students `808488`, and Swallow `2266511`, after matching
    each PID, parent, start identity, executable, argv, and root. Do not signal
    a supervisor, TUI, process group, or app server.
-4. Prove all three exact watcher leaves are stopped and all protected
-   supervisors/TUIs/app-server/monitor/helper processes remain live and
+5. Prove the helper and all three exact watcher leaves are stopped and all
+   protected supervisors/TUIs/app-server/monitor processes remain live and
    unchanged.
-5. Install unconditional cleanup before the first signal. On every exit path,
+6. Install cleanup before the first signal. On every exit path,
    send at most one `SIGCONT` to each exact watcher that this transaction
    stopped, but only after rematching its immutable identity. Record unknown
-   cleanup state and stop if an identity no longer matches.
+   cleanup state and stop if an identity no longer matches. Resume the exact
+   helper only after all five operations verify or if no lifecycle request was
+   sent. If any request is partial or ambiguous, retain the exact helper in
+   `SIGSTOP`, record `held-partial`, and stop; this is safer than allowing an
+   unplanned changed-identity worker event.
 
 ### 3. One app-server connection
 
@@ -228,11 +238,11 @@ must not invoke it.
 
 ### 5. Close and resume
 
-Close the WebSocket once. Run unconditional watcher cleanup and release the
-shared lock. Never reconnect to continue a partial transaction. A later
-controller may only reconcile value-free durable state against this journal;
-it may not repeat an operation whose `sent`, `acknowledged`, `ambiguous`, or
-`verified` phase exists.
+Close the WebSocket once. Run watcher cleanup and the conditional helper
+cleanup above, then release the shared lock. Never reconnect to continue a
+partial transaction. A later controller may only reconcile value-free durable
+state against this journal; it may not repeat an operation whose `sent`,
+`acknowledged`, `ambiguous`, or `verified` phase exists.
 
 ## Acceptance
 
@@ -273,4 +283,8 @@ all accepted partial writes, and exact next safe reconciliation action.
   one-attempt `thread/name/set` may restore a prior exact name.
 - Watcher resume uncertain: do not signal a replacement PID. Preserve the
   journal and diagnose exact current identities read-only.
+- Partial lifecycle transaction: keep the exact helper process paused so it
+  cannot create a changed-identity mirror event. Resume it only under a
+  separately published read-only reconciliation that proves all sent
+  operations and establishes the safe next input.
 - The historical failed helper event remains terminal in every case.

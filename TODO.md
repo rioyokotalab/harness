@@ -166,7 +166,7 @@ agents and ledgers.
 
 ### T-347 — Complete T-345 mirror convergence
 
-**Phase:** frozen; owner authorized execution after protected publication.
+**Phase:** controller prepared; checkpoint publication pending.
 
 The immutable T-345 helper event remains terminal `failed/worker-failed`; its
 private worker log remains unread and the event must never be retried.
@@ -194,11 +194,38 @@ attempt zero, and no tmux client was attached.
 separately frozen changed-input correction. No unresolved owner decision
 remains.
 
-**Next action:** validate and publish this plan through the protected workflow.
-Then prepare a private mode-0700 controller and mode-0600 journal/result,
-checkpoint their exact digest and pushed Git head, and execute the fixed
-transaction once. Do not open the app-server connection, stop watchers, or
-write root metadata before that checkpoint.
+Protected PR #422 passed `portable-phase1` at exact plan head
+`945320d8566ad65cb9cea4189cc77781e7d014c1` and merge-merged as
+`38a209b14b03c5bb64f7cee6312eb3cfdc1f234d`.
+
+A private one-shot controller now exists at
+`/run/user/5035/harness-t347-mirror-convergence/controller.py`: current user,
+mode `0700`, one link, 33,110 bytes, SHA-256
+`1e3e569c36cf1f92b40777d641332e150a9ba3349f8789367cdb9dd25a663ef1`.
+Its mode-`preflight` passed against the exact merge with `writes=0`; no
+journal/result exists. It uses the repository's validated Unix WebSocket
+transport and implements the fixed five-operation transaction.
+
+Preflight exposed one race not safely covered by the first plan: the live
+30-second helper could observe an intentionally partial archive/name sequence
+and create a changed-identity worker event. The amended transaction therefore
+pauses exact accepted helper process `4140398` under the shared lock before
+pausing the three watchers. It resumes the helper after five verified
+operations or if no lifecycle request was sent. A partial or ambiguous write
+leaves only that exact helper safely stopped and records `held-partial`, while
+all three watchers resume. This amendment launches no worker and changes no
+root state.
+
+Two frozen extra rollouts use their pre-existing owner-owned, one-link mode
+`0664`; the other four accepted rollouts are `0600` or `0644`. The controller
+freezes exact file identity and location under the Codex sessions root without
+changing these historical modes.
+
+**Next action:** commit this controller checkpoint and amendment. Record that
+exact commit from a second publication commit, push and merge both through the
+protected workflow, then execute from the unchanged exact checkpoint worktree.
+Do not open the app-server connection, signal helper/watchers, or write root
+metadata before protected publication.
 
 ### T-346 — Reprioritize the durable Harness action queue
 
