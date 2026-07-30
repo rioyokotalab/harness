@@ -394,3 +394,77 @@ complete suite after the last evidence edits, publish one protected Harness
 pull request, prove its exact merged tree and absence of a post-merge push run,
 perform guarded cleanup, run fresh fleet health, and close at the requested
 deadline.
+
+## 2026-07-31 04:00–04:59 JST
+
+This slice tested the retained isolation boundaries under simultaneous load,
+then used the resulting evidence to remove one validation false failure. Three
+concurrent rounds each ran the target/runtime isolation, tmux-monitor,
+connection-monitor, and fleet-health fixtures under separate private `TMPDIR`
+roots. All 12 cases passed. The three round walls were 2.812, 2.819, and 2.818
+seconds. Every nested fixture root was gone afterward. The 25-entry,
+53,989-byte parent was then removed through a guarded manifest after unchanged
+protected-anchor and identity readback. These were synthetic read-only
+fixtures: no live Codex, tmux, app-server, connection monitor, fleet route,
+pane, transcript, or controller was inspected or mutated.
+
+A source-level adversarial review followed the stress run. The immutable
+runtime release still resolves exact committed blobs and modes, stages under a
+private target-scoped directory, acquires a target-scoped lock, promotes
+atomically, and fails closed on stale or mismatched state. Harness, Students,
+and Swallow retain distinct target identities, state roots, release locks,
+runtime logs, and launch CWD checks. A repository search found no newly
+introduced global lock in their ordinary work or validation paths. The one
+intentionally shared recovery/message-control lock remains short-lived and
+serializes only the same recovery authority boundary. The earlier target and
+CWD permutations, monitor snapshots, bounded queues, and exact recovery-helper
+rejections therefore remained consistent with the concurrent result.
+
+The exact current complete-suite orchestration was then profiled without
+weakening it. A first process tracer was unsuitable: LeakSanitizer explicitly
+refused to execute under `ptrace`. The traced parent and its exact,
+newly-created test process group were stopped, and none of that sample's timing
+was interpreted. Native component timing instead measured the 91 focused
+suites at 48.60 seconds with eight workers and ShellCheck alone at 35.80
+seconds. A clean detached six-worker complete run passed all 91 suites in
+60.42 seconds. The automatic seven-worker route passed all 91 in 57.67
+seconds, so the evidence does not justify reducing the current one-CPU
+reserve. The automatic policy was retained.
+
+One preliminary automatic run did expose a deterministic fixture defect. It
+used a long private `TMPDIR` and failed only `test-al-session.sh` after the
+fixture waited five seconds for its fake agent socket. Running that suite again
+under the identical path reproduced the failure; three simultaneous instances
+under separate short roots all passed. The path to the longest fixture socket
+exceeded Linux's 107-byte filesystem Unix-domain socket limit, so Python could
+never bind it. This was not a loaded-system timeout, product failure, or
+cross-session collision. The fixture now projects its longest socket pathname,
+keeps the caller's canonical temporary base when it fits, and otherwise uses a
+unique guarded root under canonical `/tmp`. A fast self-check exercises the
+long-path selection. No product timeout, assertion, or acceptance requirement
+changed. The correction makes isolated per-session test roots robust without
+adding latency to the normal path.
+
+Cleanup was prepared but deliberately split from final application. The
+task-owned Harness worktrees were enumerated exactly and classified as
+patch-equivalent retained experiments, synthetic validation probes, or the
+active branch. The unrelated live main checkout, its held `.nfs` inode, and the
+pre-existing T-347 and T-350 worktrees remain out of scope. The Students and
+Swallow transition clones, private Cowork evidence root, exact T-351 diagnostic
+files, new profile roots, and four old childless fake-launcher processes were
+also identified by exact path or process identity. No broad `/tmp` traversal
+or cleanup mutation was used. Before final removal, the guarded deletion skill
+will be reread, every exact target will be revalidated for owner, boundary,
+process use, and current Git role, and only task-owned disposable identities
+will be removed.
+
+The earlier arg0 cleanup remained effective immediately after application:
+five held/live roots, zero eligible, zero young, and zero unexpected. A final
+inventory is still required because ordinary Codex launches can create fresh
+residue. No hosting setting, ruleset, approval count, billing state, credential,
+project session, scheduler, or live service changed in this slice. Remaining
+work is to profile whether focused-suite admission order can shorten the
+critical path without changing coverage, freeze the last implementation bytes,
+run the exact-tree complete validation, publish through one protected Harness
+pull request, prove the merged tree and zero post-merge push allocation,
+guarded-clean all task-owned residue, and take the fresh final fleet snapshot.

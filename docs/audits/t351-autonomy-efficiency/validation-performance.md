@@ -117,3 +117,25 @@ background-gate failure may now be reported after the independent integration
 body finishes, but it can never be lost or converted into success. Ordinary
 development normally runs the owning R0–R2 route, so this delayed R3 failure
 tradeoff affects only broad/final validation.
+
+## Gate contention and isolated temporary roots
+
+A later native component profile measured the 91 focused suites at 48.60
+seconds with eight workers and ShellCheck alone at 35.80 seconds. An attempted
+`ptrace` profile was stopped and discarded because LeakSanitizer correctly
+refuses to execute while traced; no timing from that run was retained. On the
+same clean detached tree, a complete six-worker sample passed in 60.42 seconds,
+while the automatic seven-worker route passed in 57.67 seconds. This does not
+support reducing the automatic worker count, so the one-CPU reserve remains.
+
+The first automatic sample used a deliberately long isolated `TMPDIR` and
+failed only the AL socket fixture. Repeating that suite alone under the same
+path reproduced the failure, while three concurrent instances under short,
+independent roots all passed. The cause was deterministic: the longest
+filesystem-backed Unix-domain socket name exceeded Linux's 107-byte pathname
+limit, so Python could not bind it and the test reported a misleading
+five-second readiness timeout. The fixture now retains the caller's canonical
+`TMPDIR` whenever the longest projected socket fits and otherwise creates its
+unique guarded root directly under canonical `/tmp`. A cheap self-check covers
+the long-path selection. This changes no product timeout or assertion and
+prevents isolated long-root validation from requiring a false-failure rerun.
