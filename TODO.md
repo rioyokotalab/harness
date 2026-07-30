@@ -724,11 +724,17 @@ implementation worktree passed every relevant shard and failed only the two
 existing clean-checkout-required tmux/terminfo shards; rerun from the clean
 commit is required.
 
-**Next action:** commit the helper fix, regression, and this reconciliation,
-then run complete `tests/test-phase1.sh` from the clean commit. Publish through
-protected main only after it passes. Fast-forward Local main, restart only the
-idle helper pane under merged code, and require two interval-separated healthy
-helper/monitor receipts with exact phone parity before final T-350 closeout.
+Implementation/reconciliation commit
+`8343c89` passed complete `tests/test-phase1.sh` from a clean checkout: every
+focused shard, guarded-delete coverage, and integration check passed; only the
+declared native MPI smoke skipped outside an MPI environment. The worktree
+remained clean throughout that validation.
+
+**Next action:** commit this validation checkpoint, rerun diff hygiene and the
+focused helper suite, then publish the exact head through protected main.
+Fast-forward Local main, restart only the idle helper pane under merged code,
+and require two interval-separated healthy helper/monitor receipts with exact
+phone parity before final T-350 closeout.
 
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
