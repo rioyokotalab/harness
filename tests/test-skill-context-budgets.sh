@@ -8,6 +8,7 @@ PIE=$ROOT/shared/skills/plan-interview-execute
 REMOTE=$ROOT/shared/skills/remote-agent-communication
 HARDENING=$ROOT/shared/skills/fleet-repository-hardening
 PERSONAL_MAC=$ROOT/shared/skills/onboard-personal-mac
+UNSAFE=$ROOT/shared/skills/recover-codex-unsafe-tail
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 words() { wc -w <"$1" | tr -d ' '; }
@@ -29,6 +30,10 @@ HARDENING_BEFORE=1431
 # Before routing, every personal-Mac invocation selected the 889-word entry
 # and its mandatory 638-word aggregate stage reference.
 PERSONAL_MAC_BEFORE=1527
+# Before routing, diagnosis selected only the 455-word entry; either live
+# transaction selected that entry plus the 766-word aggregate protocol.
+UNSAFE_DIAGNOSIS_BEFORE=455
+UNSAFE_TRANSACTION_BEFORE=1221
 
 cowork_entry=$(words "$COWORK/SKILL.md")
 cowork_plan=$(words "$COWORK/references/session-planning.md")
@@ -176,5 +181,39 @@ personal_reduction=$(((PERSONAL_MAC_BEFORE - personal_largest) * 100 /
 assert_max "$(words "$PERSONAL_MAC/references/stages.md")" 80 \
     'personal-Mac compatibility stage index'
 
+unsafe_entry=$(words "$UNSAFE/SKILL.md")
+unsafe_safe=$(words "$UNSAFE/references/safe-rollback.md")
+unsafe_bridge=$(words "$UNSAFE/references/bridge-first.md")
+unsafe_acceptance=$(words "$UNSAFE/references/acceptance.md")
+assert_max "$unsafe_entry" 420 'unsafe-tail entry'
+assert_max "$unsafe_safe" 180 'unsafe-tail safe rollback reference'
+assert_max "$unsafe_bridge" 620 'unsafe-tail bridge reference'
+assert_max "$unsafe_acceptance" 180 'unsafe-tail common acceptance'
+
+unsafe_diagnosis_route=$unsafe_entry
+unsafe_safe_route=$((unsafe_entry + unsafe_safe + unsafe_acceptance))
+unsafe_bridge_route=$((unsafe_entry + unsafe_bridge + unsafe_acceptance))
+assert_max "$unsafe_diagnosis_route" 420 \
+    'unsafe-tail diagnosis selected route'
+assert_max "$unsafe_safe_route" 750 \
+    'unsafe-tail safe rollback selected route'
+assert_max "$unsafe_bridge_route" 1180 \
+    'unsafe-tail bridge selected route'
+
+unsafe_diagnosis_reduction=$(((UNSAFE_DIAGNOSIS_BEFORE -
+    unsafe_diagnosis_route) * 100 / UNSAFE_DIAGNOSIS_BEFORE))
+unsafe_safe_reduction=$(((UNSAFE_TRANSACTION_BEFORE - unsafe_safe_route) *
+    100 / UNSAFE_TRANSACTION_BEFORE))
+unsafe_bridge_reduction=$(((UNSAFE_TRANSACTION_BEFORE - unsafe_bridge_route) *
+    100 / UNSAFE_TRANSACTION_BEFORE))
+[ "$unsafe_diagnosis_reduction" -ge 10 ] ||
+    fail "unsafe-tail diagnosis reduction is not material: $unsafe_diagnosis_reduction%"
+[ "$unsafe_safe_reduction" -ge 40 ] ||
+    fail "unsafe-tail rollback reduction is not material: $unsafe_safe_reduction%"
+[ "$unsafe_bridge_reduction" -ge 5 ] ||
+    fail "unsafe-tail bridge reduction is not material: $unsafe_bridge_reduction%"
+assert_max "$(words "$UNSAFE/references/protocol.md")" 80 \
+    'unsafe-tail compatibility protocol index'
+
 printf '%s\n' \
-    "Skill context budgets passed: cowork $COWORK_BEFORE->$cowork_initial words (-$cowork_reduction%); HPC $HPC_BEFORE->$hpc_largest words (-$hpc_reduction%); PIE $PIE_BEFORE->$pie_largest words (-$pie_reduction%); remote $REMOTE_BEFORE->$remote_largest words (-$remote_reduction%); hardening $HARDENING_BEFORE->$hardening_largest words (-$hardening_reduction%, largest selected routes including interrupted phase); personal-Mac $PERSONAL_MAC_BEFORE->$personal_largest words (-$personal_reduction%, cumulative component acceptance)"
+    "Skill context budgets passed: cowork $COWORK_BEFORE->$cowork_initial words (-$cowork_reduction%); HPC $HPC_BEFORE->$hpc_largest words (-$hpc_reduction%); PIE $PIE_BEFORE->$pie_largest words (-$pie_reduction%); remote $REMOTE_BEFORE->$remote_largest words (-$remote_reduction%); hardening $HARDENING_BEFORE->$hardening_largest words (-$hardening_reduction%, largest selected routes including interrupted phase); personal-Mac $PERSONAL_MAC_BEFORE->$personal_largest words (-$personal_reduction%, cumulative component acceptance); unsafe-tail diagnosis $UNSAFE_DIAGNOSIS_BEFORE->$unsafe_diagnosis_route words (-$unsafe_diagnosis_reduction%), rollback $UNSAFE_TRANSACTION_BEFORE->$unsafe_safe_route words (-$unsafe_safe_reduction%), bridge $UNSAFE_TRANSACTION_BEFORE->$unsafe_bridge_route words (-$unsafe_bridge_reduction%)"

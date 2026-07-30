@@ -8,6 +8,11 @@ PIE=$ROOT/shared/skills/plan-interview-execute
 REMOTE=$ROOT/shared/skills/remote-agent-communication
 HARDENING=$ROOT/shared/skills/fleet-repository-hardening
 PERSONAL_MAC=$ROOT/shared/skills/onboard-personal-mac
+UNSAFE=$ROOT/shared/skills/recover-codex-unsafe-tail
+UNSAFE_SAFE=$UNSAFE/references/safe-rollback.md
+UNSAFE_BRIDGE=$UNSAFE/references/bridge-first.md
+UNSAFE_ACCEPTANCE=$UNSAFE/references/acceptance.md
+UNSAFE_PROTOCOL=$UNSAFE/references/protocol.md
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 assert_contains() {
@@ -61,7 +66,12 @@ for path in \
     "$PERSONAL_MAC/references/agent-config.md" \
     "$PERSONAL_MAC/references/acceptance.md" \
     "$PERSONAL_MAC/references/orphan-cleanup.md" \
-    "$PERSONAL_MAC/references/stages.md"; do
+    "$PERSONAL_MAC/references/stages.md" \
+    "$UNSAFE/SKILL.md" \
+    "$UNSAFE_SAFE" \
+    "$UNSAFE_BRIDGE" \
+    "$UNSAFE_ACCEPTANCE" \
+    "$UNSAFE_PROTOCOL"; do
     [ -f "$path" ] && [ ! -L "$path" ] || fail "missing regular file: $path"
 done
 
@@ -299,5 +309,89 @@ assert_contains 'live startup reference or open handle' \
 assert_contains 'Do not preload this compatibility index' \
     "$PERSONAL_MAC/references/stages.md" \
     'personal-Mac legacy aggregate marker'
+
+# Unsafe-tail diagnosis loads no transaction. Each mutation route directly
+# selects only its exact transaction plus common acceptance.
+assert_contains '| diagnose or classify without mutation | no transaction reference |' \
+    "$UNSAFE/SKILL.md" 'unsafe-tail diagnosis route'
+assert_contains '[safe-rollback.md](references/safe-rollback.md)' \
+    "$UNSAFE/SKILL.md" 'unsafe-tail safe route'
+assert_contains '[bridge-first.md](references/bridge-first.md)' \
+    "$UNSAFE/SKILL.md" 'unsafe-tail bridge route'
+[ "$(grep -Fc '[acceptance.md](references/acceptance.md)' \
+    "$UNSAFE/SKILL.md")" -eq 2 ] ||
+    fail 'unsafe-tail acceptance is not selected by both transactions'
+assert_contains 'References do not select one another' "$UNSAFE/SKILL.md" \
+    'unsafe-tail no-reference-chaining gate'
+if grep -F '](references/protocol.md)' "$UNSAFE/SKILL.md" >/dev/null; then
+    fail 'unsafe-tail entry selects legacy aggregate'
+fi
+if grep -E '(safe-rollback|bridge-first|acceptance|protocol)\.md' \
+    "$UNSAFE_SAFE" "$UNSAFE_BRIDGE" "$UNSAFE_ACCEPTANCE" >/dev/null; then
+    fail 'unsafe-tail reference selects a cross-route reference'
+fi
+assert_contains 'Do not preload this legacy index' "$UNSAFE_PROTOCOL" \
+    'unsafe-tail legacy aggregate marker'
+assert_contains 'contains no transaction instructions' "$UNSAFE_PROTOCOL" \
+    'unsafe-tail compatibility-only index'
+
+# Marker coverage protects the safety semantics across their selected routes.
+assert_contains 'narrow authority for that session' "$UNSAFE/SKILL.md" \
+    'unsafe-tail authority marker'
+assert_contains 'closed canonical map' "$UNSAFE/SKILL.md" \
+    'unsafe-tail closed-target marker'
+assert_contains 'stored thread CWD must' "$UNSAFE/SKILL.md" \
+    'unsafe-tail target/CWD marker'
+assert_contains 'Every direct `codex-thread-recovery` `--plan`' \
+    "$UNSAFE/SKILL.md" 'unsafe-tail target-scoped plan marker'
+assert_contains '`--recover`, or `--watch` requires `--target TARGET`' \
+    "$UNSAFE/SKILL.md" 'unsafe-tail target-scoped recover/watch marker'
+assert_contains '--status --name NAME --target TARGET' "$UNSAFE/SKILL.md" \
+    'unsafe-tail target-aware status marker'
+assert_contains 'supervisor/watcher/launcher/TUI identities' \
+    "$UNSAFE/SKILL.md" 'unsafe-tail identity marker'
+assert_contains 'Never read pane text, transcript or message text' \
+    "$UNSAFE/SKILL.md" 'unsafe-tail content marker'
+assert_contains 'reconstruct or replay a rejected prompt' "$UNSAFE/SKILL.md" \
+    'unsafe-tail no-replay marker'
+assert_contains 'Never retry the request' "$UNSAFE_SAFE" \
+    'unsafe-tail rollback non-retry marker'
+assert_contains '--recover --name NAME --thread ID --target TARGET`' \
+    "$UNSAFE_SAFE" 'unsafe-tail target-scoped rollback marker'
+assert_contains "thread's stored CWD to equal its exact repository" \
+    "$UNSAFE_SAFE" 'unsafe-tail rollback target/CWD marker'
+assert_contains 'never retry a sent' "$UNSAFE_BRIDGE" \
+    'unsafe-tail bridge non-retry marker'
+assert_contains 'Bridge-first fresh-root replacement' "$UNSAFE_BRIDGE" \
+    'unsafe-tail bridge-first marker'
+assert_contains 'must not block bridge launch or promotion' "$UNSAFE_BRIDGE" \
+    'unsafe-tail zombie marker'
+assert_contains 'Send one `SIGTERM` only to that leaf' "$UNSAFE_BRIDGE" \
+    'unsafe-tail signal marker'
+assert_contains 'restart the shared app server' "$UNSAFE/SKILL.md" \
+    'unsafe-tail app-server marker'
+assert_contains "TARGET\`'s exact closed-map repository" "$UNSAFE_BRIDGE" \
+    'unsafe-tail bridge target/CWD marker'
+assert_contains 'unchanged unaffected sessions, shared app server' \
+    "$UNSAFE_ACCEPTANCE" 'unsafe-tail unaffected-session marker'
+assert_contains 'accepted target unchanged' "$UNSAFE_ACCEPTANCE" \
+    'unsafe-tail accepted-target marker'
+assert_contains 'native doctor, focused recovery and resilience tests' \
+    "$UNSAFE_ACCEPTANCE" 'unsafe-tail doctor marker'
+assert_contains 'canonical fleet health' "$UNSAFE_ACCEPTANCE" \
+    'unsafe-tail fleet marker'
+assert_contains 'invoke `guarded-bulk-delete`' "$UNSAFE_ACCEPTANCE" \
+    'unsafe-tail guarded-delete marker'
+
+unsafe_direct_commands=$(grep -hE \
+    'codex-thread-recovery --(plan|recover|watch)([[:space:]]|`)' \
+    "$UNSAFE/SKILL.md" "$UNSAFE_SAFE" "$UNSAFE_BRIDGE" \
+    "$UNSAFE_ACCEPTANCE" "$UNSAFE_PROTOCOL" || true)
+[ -n "$unsafe_direct_commands" ] ||
+    fail 'unsafe-tail direct recovery command coverage is empty'
+if printf '%s\n' "$unsafe_direct_commands" |
+    grep -Fv -- '--target TARGET' >/dev/null; then
+    fail 'unsafe-tail direct recovery command lacks --target TARGET'
+fi
 
 printf '%s\n' 'Skill context gate tests passed'
