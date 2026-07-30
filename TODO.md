@@ -23,9 +23,9 @@ Next free ID: T-348.
   `@40/0:tunnel,@95/1:codex,@96/2:helper`. The merged monitor and helper are
   live; monitor health is 3/3. The helper is idle with one immutable failed
   mirror event, so T-345 is not closed and that event must not be retried.
-  T-347 freezes the authorized deterministic changed-input correction. Twelve
+  T-347 freezes the authorized deterministic changed-input correction. Thirteen
   immutable one-shot receipts prove no lifecycle request has yet been sent;
-  the complete refusal-boundary v8 controller cannot run before its protected
+  the composition-correct v9 controller cannot run before its protected
   publication and checkpoint.
 - ABQ is unreachable through both declared routes. The official G-QuAT status
   page still reports System H `サービス停止中` with the current scheduled
@@ -118,7 +118,7 @@ Next free ID: T-348.
    `13de62583acf5ad5babd684785e636d5bb20d5643ac52b8440cbd93c2155e586`,
    its mode-0600 evidence, and all six unchanged root archive flags. Never
    retry the event or inspect its private worker log.
-2. Publish T-347's complete refusal-boundary v8 checkpoint. It uses the
+2. Publish T-347's composition-correct v9 checkpoint. It uses the
    existing private fsynced per-operation journal and one metadata-only
    app-server connection, and can prove whether each exact request was
    unattempted, acknowledged, or ambiguous without worker transcript content.
@@ -168,7 +168,7 @@ agents and ledgers.
 
 ### T-347 — Complete T-345 mirror convergence
 
-**Phase:** complete refusal-boundary controller v8 frozen; publication pending.
+**Phase:** composition-correct controller v9 frozen; publication pending.
 
 The immutable T-345 helper event remains terminal `failed/worker-failed`; its
 private worker log remains unread and the event must never be retried.
@@ -519,6 +519,32 @@ distinct absent journal/result paths. Python cache residue was removed through
 guarded-delete with protected anchors unchanged; its short-lived manifest was
 exact-unlinked.
 
+PR #436 passed `portable-phase1` at exact v8 head
+`1de38012e37b659fec5760798128d23530bb8bee` and merge-merged as
+`3b88ae214e99af947a2da19633df34a52440ce59`. v8 ran once and terminally
+refused after stopping and resuming all three exact watchers. Its mode-0600
+journal/result are respectively 1,839 and 116 bytes, remain `verified=0`, and
+contain no operation phase or lifecycle request. The exact value-free reason
+is `canonical-app-name-baseline-changed`.
+
+This proves the v6 name-aware function was not composed into execution. v6
+assigned it to the v3 module, but v3 defines and assigns its older gate inside
+`main` after that assignment. v9 wraps v3's v2 loader and installs the already
+reviewed v6 gate immediately before v2 `main`, after v3's replacement. Its
+zero-write preflight also requires an identity check proving that composition
+ran. Complete refusal-boundary journaling remains active; no other preflight,
+helper/watcher, operation, transport, or request behavior changes.
+
+Private v9 wrapper
+`/run/user/5035/harness-t347-mirror-convergence/controller-v9.py` is current
+user, mode `0700`, one link, 5,637 bytes, SHA-256
+`82bef8dfedbb3c0ef67cd9e8384a9f68f86a1dfeeb13ccce5deeb96bbeae4637`.
+It verifies exact v6 digest, passes syntax and zero-write preflight, and has
+distinct absent journal/result paths. One preflight invocation with a
+nonmatching expected wrapper digest failed at the outer wrapper before
+controller loading and created no receipt or runtime action; the subsequent
+exact-digest preflight passed.
+
 The immutable controller checkpoint is exact commit
 `70c5194066965df1bffc0078f36361ded50d7bc2` in clean worktree
 `/tmp/harness-t347-t345-mirror-execution`. That worktree must remain at this
@@ -528,9 +554,9 @@ an ancestor. PR #423 passed `portable-phase1` at recording head
 `6fc06163946452ca1fe9a7d015279c2b161ea9ff` and merge-merged as
 `805016261124fd07b365a2cbf962222939e0758d`.
 
-**Next action:** publish the twelfth no-request refusal and exact v8 wrapper
+**Next action:** publish the thirteenth no-request refusal and exact v9 wrapper
 through the protected workflow. Then pass the resulting protected-main merge,
-checkpoint `70c5194`, and v8 digest `4006a03` to one v8 execution. Never rerun
+checkpoint `70c5194`, and v9 digest `82bef8d` to one v9 execution. Never rerun
 any prior controller. Do not open the app-server connection, signal watchers,
 or write root metadata before protected publication.
 
