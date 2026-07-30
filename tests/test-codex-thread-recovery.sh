@@ -420,6 +420,9 @@ write_read_response thread-cross systemError "$cross_rollout" "$target_students"
 run_recovery --recover --name cross-error --thread thread-cross \
     >"$TEST_ROOT/cross-error.out" 2>&1 &&
     fail "cross-target systemError thread was accepted"
+grep -F 'phase=blocked reason=target-mismatch' \
+    "$TEST_ROOT/cross-error.out" >/dev/null ||
+    fail "cross-target systemError was not classified"
 [ ! -s "$TEST_ROOT/rollback.calls" ] ||
     fail "cross-target systemError thread reached rollback"
 

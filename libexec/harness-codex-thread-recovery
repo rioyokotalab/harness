@@ -40,6 +40,10 @@ class RecoveryBlocked(RecoveryError):
     pass
 
 
+class TargetMismatch(RecoveryBlocked):
+    pass
+
+
 def fail(message):
     raise RecoveryError(message)
 
@@ -624,7 +628,9 @@ def validate_thread_repository(path, thread_id, expected_repository):
             ):
                 block("thread rollout session identity mismatch")
             if payload.get("cwd") != expected_repository:
-                block("thread rollout repository does not match target")
+                raise TargetMismatch(
+                    "thread rollout repository does not match target"
+                )
             return
     block("thread rollout session metadata is unavailable")
 
@@ -1004,6 +1010,10 @@ def main():
                 phase, reason, count = recover_once(
                     arguments.thread, expected_repository
                 )
+            except TargetMismatch:
+                phase = "blocked"
+                reason = "target-mismatch"
+                count = 0
             except RecoveryBlocked:
                 phase = "blocked"
                 reason = "unsafe-tail"
@@ -1063,6 +1073,9 @@ def main():
                     rolled_back,
                 )
                 return 75
+            except TargetMismatch:
+                phase = "blocked"
+                reason = "target-mismatch"
             except RecoveryBlocked:
                 phase = "blocked"
                 reason = "unsafe-tail"
