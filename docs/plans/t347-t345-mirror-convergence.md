@@ -209,6 +209,9 @@ or lifecycle request. A failed query is unknown, not absence.
    equality, status type, path identity, empty-turn count, and boolean
    canonical-name equality. Discard preview, source details, and all other
    returned metadata without logging or printing it.
+   Canonical app names may already be exact while legacy database name
+   booleans remain mismatched; require exact app names, then retain the
+   idempotent one-attempt name writes to persist database parity.
 5. Require each canonical root's status to be recognized and not
    `systemError`. Harness or Students may be `active` because this owner turn
    is live. Require each extra to be `idle` or `notLoaded`, with an empty
