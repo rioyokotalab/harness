@@ -538,6 +538,35 @@ accepted/unaffected roots and topology, and one fresh shared-app-server
 connection before sending exactly one journaled `thread/archive` for only the
 old root. Never retry an acknowledged or ambiguous archive request.
 
+Protected PR #469 merge-merged the retirement checkpoint as
+`62a268e201766937defe69d43aefef402c7d477d`. Archive controller digest
+`56c5a5c1f2f8ad1e848176374a40ec482110ec608e1fcb7bf9d17a664574b5ab`
+passed zero-write preflight and executed exactly once. App-server
+`thread/archive` request `5` for only retired Students root
+`019f7fea-4f00-7681-910d-81ae99a77143` was journaled before transmission and
+acknowledged. Its five-second database persistence wait expired, so the
+controller conservatively recorded `archive-persistence-ambiguous`; journal
+digest `42dbb97981ff6e15e4273463d2cb4fe1d0c948f3dd4a6cb93e60e399925caeac`
+and result digest
+`8347c6c963163273d2477a2d0321fdc5a8fe54aa0da80cba3ff3e8bd651d16ea`
+are consumed and must never execute again.
+
+Immediate read-only reconciliation subsequently proved the delayed operation
+completed exactly: the old database row has `archived=1`, app-server readback
+reports `notLoaded`, the root is absent from exact loaded and unarchived
+interactive sets, and it is present in the archived set. Its rollout identity
+is unchanged; no file was deleted. Canonical loaded/interactive roots are now
+exactly Harness, direct Students, and Swallow. Canonical tmux topology and all
+three resilient chains remain exact, and no live process references the old
+root. Students' bridge-first repository-native lifecycle migration is
+therefore complete without replaying any acknowledged or ambiguous request.
+
+**Next action:** publish the reconciled Students archive checkpoint and obtain
+two interval-separated healthy canonical monitor/helper readbacks. Then begin
+Swallow as a separate bridge-first migration from its clean direct checkout,
+with new one-shot receipts and its own physical-phone visibility confirmation;
+do not reuse any Students lifecycle controller or acknowledgement.
+
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
 **Phase:** complete.
