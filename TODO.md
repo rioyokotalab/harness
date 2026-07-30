@@ -691,15 +691,50 @@ root idle/loaded/unarchived and the canonical new root idle. Monitor process
 health is three of three but phone parity correctly remains degraded until
 the extra retired app-server root is archived; the helper is idle.
 
-**Next action:** publish this non-retryable retirement checkpoint. Then prepare
-a separate one-attempt app-server archive controller bound to these receipts,
-exact canonical process/topology identities, zero old-root process/window
-references, and the still-idle retired old root. Send one
-`thread/archive` request for only old root
-`019fb1ab-b559-79c2-ad9c-0ee8f426cedc`; never retry an acknowledged or
-ambiguous request. Reconcile delayed persistence read-only, then require two
-interval-separated healthy monitor/helper and exact phone-parity receipts
-before final T-350 closeout.
+Protected PR #474 merge-merged the non-retryable retirement checkpoint as
+`7b3380751d986fcee59f3233f15a84c845d69a95`. Archive-controller digest
+`dab39d3c6f09bd463dca170d24e7feae59ce39a44b4c3c51ddc300b04e65a371`
+passed zero-write preflight and executed exactly once. App-server
+`thread/archive` request `5` for only retired old Swallow root
+`019fb1ab-b559-79c2-ad9c-0ee8f426cedc` was journaled before transmission
+and acknowledged. Its 15-second persistence wait expired, so the controller
+conservatively recorded `archive-persistence-ambiguous`; journal digest
+`208b45015ae0d16c7ed002015eecd357f71c63dafb373746268e0bfc584a5492`
+and result digest
+`654fefe6aadbb5f54b540258ea07989e509b3d1269220a4554fc7edf557d92ad`
+are consumed and must never execute again.
+
+Immediate read-only reconciliation proved the delayed operation completed
+exactly: the old database row has `archived=1`, app-server readback reports
+`notLoaded`, exact loaded and unarchived sets contain only the three canonical
+roots, and the archived set contains the old root once. Its unchanged mode-0600
+rollout remains at identity `197/242010329`; no file was deleted. Canonical
+tmux/process/root identities and zero old-root process references remain exact.
+
+Phone parity remained degraded despite that exact state. Root-cause
+reconciliation found the helper's active-top-level query excluded only
+subagent sources and therefore misclassified two unrelated source-`exec`
+Students rehearsal roots as phone-interactive extras. Those roots are outside
+T-350 and remain unchanged. The implementation now counts only declared
+interactive `cli`/`vscode` sources. A focused regression proves both `exec`
+and subagent roots are ignored while a true extra interactive root still
+degrades parity. Python 3.6 grammar, the focused helper suite, and diff hygiene
+pass. An initial complete phase-one run from the intentionally dirty
+implementation worktree passed every relevant shard and failed only the two
+existing clean-checkout-required tmux/terminfo shards; rerun from the clean
+commit is required.
+
+Implementation/reconciliation commit
+`8343c89` passed complete `tests/test-phase1.sh` from a clean checkout: every
+focused shard, guarded-delete coverage, and integration check passed; only the
+declared native MPI smoke skipped outside an MPI environment. The worktree
+remained clean throughout that validation.
+
+**Next action:** commit this validation checkpoint, rerun diff hygiene and the
+focused helper suite, then publish the exact head through protected main.
+Fast-forward Local main, restart only the idle helper pane under merged code,
+and require two interval-separated healthy helper/monitor receipts with exact
+phone parity before final T-350 closeout.
 
 ### T-349 — Rename the canonical Local tmux session to `projects`
 

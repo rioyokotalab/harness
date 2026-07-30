@@ -461,13 +461,16 @@ def phone_mirror_snapshot(mapping, database, processes, target_paths, codex_home
         )
         roots = sorted(set(target_paths.values()))
         placeholders = ",".join("?" for _value in roots)
+        source_placeholders = ",".join("?" for _value in INTERACTIVE_SOURCES)
         active = sorted(
             row[0]
             for row in connection.execute(
                 "SELECT id FROM threads "
                 "WHERE cwd IN ({}) AND archived = 0 "
-                "AND source NOT LIKE ? ORDER BY id".format(placeholders),
-                tuple(roots) + ('{"subagent"%',),
+                "AND source IN ({}) ORDER BY id".format(
+                    placeholders, source_placeholders
+                ),
+                tuple(roots) + INTERACTIVE_SOURCES,
             ).fetchall()
         )
         for role, _index in EXPECTED:

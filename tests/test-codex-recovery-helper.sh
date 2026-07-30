@@ -238,6 +238,18 @@ connection.execute(
         "subagent",
     ),
 )
+connection.execute(
+    "INSERT INTO threads VALUES (?, ?, ?, ?, ?, ?, ?)",
+    (
+        "thread-exec",
+        str(extra_rollout),
+        "exec",
+        harness_root,
+        "exec",
+        0,
+        "exec",
+    ),
+)
 connection.commit()
 extra, drift = module.phone_mirror_snapshot(
     mapping, str(database), processes, target_paths, str(codex_home)
