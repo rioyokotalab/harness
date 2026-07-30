@@ -145,7 +145,7 @@ agents and ledgers.
 
 ### T-348 — Keep phone remote-control roots mirrored to Local tmux
 
-**Phase:** physical-phone accepted; correcting unsent promotion controller.
+**Phase:** accepted bridge promoted; publishing pre-retirement checkpoint.
 
 The owner reports that Swallow is absent from phone Remote and requests a
 periodic one-to-one mirror for Harness, Students, and Swallow. Complete
@@ -419,6 +419,35 @@ then run zero-write preflight for the corrected controller. If every original
 identity and pre-promotion value still matches, perform the two root-name
 writes and three tmux rename/swap writes once. Never execute promoter v1
 again. Checkpoint the accepted promotion before old-leaf retirement.
+
+The proven-unsent refusal merged through protected PR #451 as
+`745e7d0b8fc9fa2c0c0b386e2003c57f2515155b`. Corrected promoter r2 digest
+`7e2fbf889f349d99b75ed478c915f06d7322ba8dcfc0f9a92a8916e2b7232254`
+passed zero-write preflight, held the monitor's private lock, left the helper
+running, and paused/resumed only the four exact watcher leaves.
+
+On one app-server connection, old-root name request `3` acknowledged
+`swallow-retired-20260730` and accepted-root request `6` acknowledged
+`swallow`. Tmux rename writes for `@93` and `@98` and one `@98:@93` swap each
+acknowledged once. Exact resulting topology is
+`@87/0:harness,@88/1:students,@98/2:swallow,@93/3:swallow-retired-20260730`.
+The sole client remains on `@87`; accepted supervisor `4144052`, watcher
+`4144136`, launcher `4144358`, TUI `4144360`, and root
+`019fb1ab-b559-79c2-ad9c-0ee8f426cedc` are unchanged at attempt zero.
+Old root `019fafef-5ebf-72f1-b1ce-2444e7570dc1` and its complete live chain
+remain preserved. App-server and database readback agree on both new names.
+
+Promoter r2 is consumed and must not execute again. Monitor/helper remain live
+and performed no repair. No old-process signal or archive request has been
+sent.
+
+**Next action:** publish this reversible promotion checkpoint through
+protected `main`. Only afterward, revalidate the exact old real TUI
+`2266662`, launcher `2266661`, supervisor `2266420`, watcher `2266511`, pane
+`%93`, window `@93`, old root, accepted chain, app server, and sole client.
+Send one `SIGTERM` only to old TUI `2266662`; never send a second signal.
+Require its launcher/watcher/supervisor/pane/window to unwind before any
+archive.
 
 ### T-347 — Complete T-345 mirror convergence
 
