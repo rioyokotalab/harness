@@ -42,7 +42,7 @@ Usage:
 Selectors:
   --new             start a new chat, then resume the repository's latest chat
   --last            resume the most recent chat in the current repository
-  --session ID      always resume one explicit session ID or safe session name
+  --session ID      resume one exact saved thread after target-CWD preflight
   --remote-session ID
                     always resume one exact session through --remote unix://
 
