@@ -907,3 +907,25 @@ cleanup.
 After the grace interval, those eight entries became eligible with no
 unexpected state. Guarded housekeeping removed exactly eight and passed all
 checks; readback returned to `live=5 eligible=0 young=0 unexpected=0`.
+
+At 07:31 JST, Students had independently advanced to
+`bf9b40046ea1109aa89a23074611f93766fcdd61`. Its latest three owner pull
+requests again produced paired skipped CI and boundary jobs. Fresh
+default-branch bytes still have PR/weekly/manual CI with no push trigger,
+read-only defaults, dual owner/sender skipping, and trusted-base
+`pull_request_target` boundary execution for other authors. Swallow remained
+at `1f1951d573eef05ce4055c140088d97ca8328382`; no new run appeared.
+
+The remainder of the slice admitted no product change. Fresh checks found no
+test process or queued/in-progress Harness run, only the active T-351
+task-prefix worktree, and arg0 `live=5 eligible=0 young=0 unexpected=0`.
+Existing local and protected acceptance was reused instead of rerun against
+unchanged bytes.
+
+## 2026-07-31 08:00–08:59 JST
+
+In progress. The slice opened from clean implementation checkpoint
+`6765f655f6e760a74d8b756bd0bc5ee94872850b` plus this documentation-only
+hour boundary. No product candidate remains open. Work is limited to terminal
+ledger preparation, one final exact-tree suite after those bytes settle, and
+the predeclared publication/cleanup/health sequence.
