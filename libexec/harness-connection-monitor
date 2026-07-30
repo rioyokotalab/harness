@@ -88,8 +88,8 @@ check_pair() {
     monitor_host=$1
     primary=$2
     secondary=$3
-    if probe_route "$primary"; then primary_state=ready; else primary_state=down; fi
-    if probe_route "$secondary"; then secondary_state=ready; else secondary_state=down; fi
+    primary_state=$4
+    secondary_state=$5
     pair_state=healthy
     pair_action=none
     if [ "$primary_state" = down ] && [ "$secondary_state" = down ]; then
@@ -144,8 +144,8 @@ check_failover_pair() {
     monitor_host=$1
     primary=$2
     secondary=$3
-    if probe_route "$primary"; then primary_state=ready; else primary_state=down; fi
-    if probe_route "$secondary"; then secondary_state=ready; else secondary_state=down; fi
+    primary_state=$4
+    secondary_state=$5
     if [ "$primary_state" = ready ] && [ "$secondary_state" = ready ]; then
         pair_state=healthy
         pair_action=none
@@ -162,6 +162,104 @@ check_failover_pair() {
     printf '%s pair=%s/%s host=%s primary=%s secondary=%s state=%s action=%s\n' \
         "$(date +%Y-%m-%dT%H:%M:%S%z)" "$primary" "$secondary" \
         "$monitor_host" "$primary_state" "$secondary_state" "$pair_state" "$pair_action"
+}
+
+snapshot_routes='aist aist2 office office2 riken riken2 home home2 abq abq2'
+snapshot_jobs=
+snapshot_active=0
+snapshot_aist=
+snapshot_aist2=
+snapshot_office=
+snapshot_office2=
+snapshot_riken=
+snapshot_riken2=
+snapshot_home=
+snapshot_home2=
+snapshot_abq=
+snapshot_abq2=
+
+cleanup_snapshot() {
+    cleanup_status=$?
+    trap - EXIT HUP INT TERM
+    for cleanup_pid in $snapshot_jobs; do
+        kill "$cleanup_pid" 2>/dev/null || true
+    done
+    for cleanup_pid in $snapshot_jobs; do
+        wait "$cleanup_pid" 2>/dev/null || true
+    done
+    exec 3>&-
+    for cleanup_route in $snapshot_routes; do
+        [ ! -e "$snapshot_dir/$cleanup_route" ] ||
+            unlink "$snapshot_dir/$cleanup_route"
+    done
+    [ ! -e "$snapshot_fifo" ] || unlink "$snapshot_fifo"
+    rmdir "$snapshot_dir" 2>/dev/null || true
+    exit "$cleanup_status"
+}
+
+launch_snapshot_probe() {
+    snapshot_route=$1
+    (
+        set +e
+        if probe_route "$snapshot_route"; then
+            snapshot_result=ready
+        else
+            snapshot_result=down
+        fi
+        printf '%s\n' "$snapshot_result" >"$snapshot_dir/$snapshot_route"
+        snapshot_write_status=$?
+        printf '%s\n' "$snapshot_route" >&3
+        exit "$snapshot_write_status"
+    ) &
+    snapshot_jobs="$snapshot_jobs $!"
+    snapshot_active=$((snapshot_active + 1))
+}
+
+await_snapshot_probe() {
+    IFS= read -r snapshot_completed <&3 ||
+        die "connection monitor route snapshot failed"
+    case " $snapshot_routes " in
+        *" $snapshot_completed "*) ;;
+        *) die "connection monitor route snapshot returned an unknown route" ;;
+    esac
+    snapshot_active=$((snapshot_active - 1))
+}
+
+load_snapshot_state() {
+    snapshot_route=$1
+    IFS= read -r snapshot_state <"$snapshot_dir/$snapshot_route" ||
+        die "connection monitor route snapshot is incomplete"
+    case "$snapshot_state" in
+        ready|down) ;;
+        *) die "connection monitor route snapshot has an invalid state" ;;
+    esac
+    eval "snapshot_$snapshot_route=\$snapshot_state"
+}
+
+take_route_snapshot() {
+    snapshot_jobs=
+    snapshot_active=0
+    for snapshot_route in $snapshot_routes; do
+        [ ! -e "$snapshot_dir/$snapshot_route" ] ||
+            unlink "$snapshot_dir/$snapshot_route"
+        launch_snapshot_probe "$snapshot_route"
+        if [ "$snapshot_active" -ge 4 ]; then
+            await_snapshot_probe
+        fi
+    done
+    while [ "$snapshot_active" -gt 0 ]; do
+        await_snapshot_probe
+    done
+    snapshot_wait_failed=0
+    for snapshot_pid in $snapshot_jobs; do
+        wait "$snapshot_pid" || snapshot_wait_failed=1
+    done
+    snapshot_jobs=
+    [ "$snapshot_wait_failed" -eq 0 ] ||
+        die "connection monitor route snapshot could not be recorded"
+    for snapshot_route in $snapshot_routes; do
+        load_snapshot_state "$snapshot_route"
+    done
 }
 
 mode=
@@ -186,13 +284,27 @@ if [ "$mode" = interval ]; then
         die "connection monitor interval must be between 30 and 3600 seconds"
 fi
 agent_socket=$(resolve_agent_socket) || die "connection monitor has no safe SSH agent socket"
+umask 077
+snapshot_base=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P) ||
+    die "connection monitor temporary directory is unavailable"
+snapshot_dir=$(mktemp -d "$snapshot_base/harness-connection-monitor.XXXXXX") ||
+    die "connection monitor could not create snapshot state"
+snapshot_fifo=$snapshot_dir/completed
+mkfifo "$snapshot_fifo" || die "connection monitor could not create snapshot queue"
+exec 3<>"$snapshot_fifo"
+unlink "$snapshot_fifo"
+trap cleanup_snapshot EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 while :; do
-    check_pair aist aist aist2
-    check_pair office office office2
-    check_pair riken riken riken2
-    check_pair home home home2
-    check_failover_pair abq abq abq2
+    take_route_snapshot
+    check_pair aist aist aist2 "$snapshot_aist" "$snapshot_aist2"
+    check_pair office office office2 "$snapshot_office" "$snapshot_office2"
+    check_pair riken riken riken2 "$snapshot_riken" "$snapshot_riken2"
+    check_pair home home home2 "$snapshot_home" "$snapshot_home2"
+    check_failover_pair abq abq abq2 "$snapshot_abq" "$snapshot_abq2"
     [ "$mode" = interval ] || break
     sleep "$interval"
 done
