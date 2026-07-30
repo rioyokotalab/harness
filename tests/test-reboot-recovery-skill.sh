@@ -5,6 +5,10 @@ ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HELPER=$ROOT/shared/skills/reboot-recovery/scripts/recover-mac-after-reboot
 REMOTE=$ROOT/shared/skills/reboot-recovery/scripts/mac-reboot-state
 SKILL=$ROOT/shared/skills/reboot-recovery/SKILL.md
+REFERENCES=$ROOT/shared/skills/reboot-recovery/references
+STATUS_REFERENCE=$REFERENCES/status-discovery.md
+RECOVERY_REFERENCE=$REFERENCES/recovery-start.md
+VALIDATION_REFERENCE=$REFERENCES/validation-closeout.md
 HARNESS=$ROOT/bin/harness
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
@@ -39,26 +43,138 @@ assert_contains() {
     grep -F "$2" "$1" >/dev/null || fail "$3"
 }
 
+words() {
+    wc -w <"$1" | tr -d ' '
+}
+
+assert_max() {
+    [ "$1" -le "$2" ] || fail "$3 word budget exceeded: $1 > $2"
+}
+
 sh -n "$HELPER" || fail "controller helper syntax"
 sh -n "$REMOTE" || fail "remote helper syntax"
 
 grep -Fx 'name: reboot-recovery' "$SKILL" >/dev/null ||
     fail "skill name"
-grep -F 'remote-control start' "$SKILL" >/dev/null ||
-    fail "owner remote-control step"
-grep -F 'Existing pairing normally persists' "$SKILL" >/dev/null ||
-    fail "pairing persistence"
-if ! grep -F 'Never remove, ignore, or specially classify' "$SKILL" >/dev/null ||
-    ! grep -F '.DS_Store' "$SKILL" >/dev/null ||
-    ! grep -F 'any dirty checkout is a blocker' "$SKILL" >/dev/null; then
-    fail "repository cleanup boundary"
+
+for reference in \
+    "$STATUS_REFERENCE" \
+    "$RECOVERY_REFERENCE" \
+    "$VALIDATION_REFERENCE"; do
+    [ -f "$reference" ] && [ ! -L "$reference" ] ||
+        fail "missing regular phase reference: $reference"
+done
+
+for route in status-discovery recovery-start validation-closeout; do
+    [ "$(grep -Fc "[$route.md](references/$route.md)" "$SKILL")" -eq 1 ] ||
+        fail "$route route is not uniquely reachable"
+done
+
+if grep -E '\]\([^)]*[.]md\)' \
+    "$STATUS_REFERENCE" "$RECOVERY_REFERENCE" "$VALIDATION_REFERENCE" \
+    >/dev/null; then
+    fail "phase reference selects another reference"
 fi
+
+# These gates must trigger from the mandatory router even when all references
+# remain unloaded.
+assert_contains "$SKILL" \
+    "Set \`HOST\` only to \`aist\`, \`home\`, \`office\`, or \`riken\`" \
+    "router host boundary"
+assert_contains "$SKILL" \
+    'Never inspect, expose, copy, hash, generate, or modify credentials' \
+    "router credential boundary"
+assert_contains "$SKILL" \
+    'Never read or capture tmux pane or transcript contents.' \
+    "router tmux privacy boundary"
+assert_contains "$SKILL" 'Dirty, divergent, or non-current Git state' \
+    "router dirty/divergent refusal"
+assert_contains "$SKILL" 'an unavailable route pair' \
+    "router route-pair refusal"
+assert_contains "$SKILL" 'missing managed services' \
+    "router service refusal"
+assert_contains "$SKILL" 'Conflicting tmux state' \
+    "router tmux-conflict refusal"
+assert_contains "$SKILL" \
+    "remove, ignore, or specially classify \`.DS_Store\`" \
+    "router repository cleanup boundary"
+assert_contains "$SKILL" \
+    'A failed query is unknown state, not evidence of absence or readiness.' \
+    "router unknown-state boundary"
+
+assert_contains "$STATUS_REFERENCE" 'remote-control start' \
+    "owner remote-control step"
+assert_contains "$STATUS_REFERENCE" 'Existing pairing normally persists' \
+    "pairing persistence"
+assert_contains "$STATUS_REFERENCE" 'ask the owner to log into the Mac locally' \
+    "owner local-login checkpoint"
+assert_contains "$STATUS_REFERENCE" \
+    'Do not recover through another identity.' \
+    "unrelated identity refusal"
+assert_contains "$STATUS_REFERENCE" \
+    'guarded fleet sync only for a clean managed checkout.' \
+    "clean fleet-sync boundary"
+
+assert_contains "$RECOVERY_REFERENCE" \
+    "both routes, clean/current \`main\`, both tunnel" \
+    "start readiness gate"
+assert_contains "$RECOVERY_REFERENCE" \
+    'codex-resilient --run' \
+    "resilient tmux command"
+assert_contains "$RECOVERY_REFERENCE" \
+    'never reconstructs or replays a prompt' \
+    "prompt replay prohibition"
+
+assert_contains "$VALIDATION_REFERENCE" \
+    'Require both aliases to pass fresh independent probes.' \
+    "fresh route validation"
+assert_contains "$VALIDATION_REFERENCE" \
+    'exactly one detached, live' \
+    "exact tmux session topology"
+assert_contains "$VALIDATION_REFERENCE" \
+    "with one Codex pane rooted at \`~/harness\`" \
+    "exact pane topology"
+assert_contains "$VALIDATION_REFERENCE" \
+    'require the live value-free supervisor receipt to match the tmux pane owner' \
+    "supervisor receipt gate"
+assert_contains "$VALIDATION_REFERENCE" \
+    'Keep arg0 housekeeping separate from reboot recovery.' \
+    "arg0 separation"
+assert_contains "$VALIDATION_REFERENCE" \
+    "fresh compact \`harness fleet-health\` check" \
+    "fresh fleet-health closeout"
+
 if grep -E '(rm|unlink).*[.]DS_Store|[.]DS_Store.*(rm|unlink)' \
-    "$SKILL" "$HELPER" "$REMOTE" >/dev/null; then
+    "$SKILL" "$STATUS_REFERENCE" "$RECOVERY_REFERENCE" \
+    "$VALIDATION_REFERENCE" "$HELPER" "$REMOTE" >/dev/null; then
     fail "recovery contains DS_Store removal"
 fi
-grep -F 'Never read or capture tmux pane contents.' "$SKILL" >/dev/null ||
-    fail "tmux privacy boundary"
+
+BASELINE_AGGREGATE=599
+BASELINE_LARGEST_ROUTE=599
+entry_words=$(words "$SKILL")
+status_words=$(words "$STATUS_REFERENCE")
+recovery_words=$(words "$RECOVERY_REFERENCE")
+validation_words=$(words "$VALIDATION_REFERENCE")
+aggregate_words=$((entry_words + status_words + recovery_words +
+    validation_words))
+largest_reference=$status_words
+[ "$recovery_words" -le "$largest_reference" ] ||
+    largest_reference=$recovery_words
+[ "$validation_words" -le "$largest_reference" ] ||
+    largest_reference=$validation_words
+largest_route=$((entry_words + largest_reference))
+route_reduction=$(((BASELINE_LARGEST_ROUTE - largest_route) * 100 /
+    BASELINE_LARGEST_ROUTE))
+
+assert_max "$entry_words" 275 "router"
+assert_max "$status_words" 160 "status/discovery reference"
+assert_max "$recovery_words" 130 "recovery/start reference"
+assert_max "$validation_words" 140 "validation/closeout reference"
+assert_max "$aggregate_words" 675 "aggregate"
+assert_max "$largest_route" 425 "largest selected route"
+[ "$route_reduction" -ge 25 ] ||
+    fail "largest selected route reduction is not material: $route_reduction%"
 
 fake_ssh=$TEST_ROOT/fake-ssh
 cat >"$fake_ssh" <<'SH'
@@ -289,4 +405,5 @@ HOME="$fake_home" FAKE_STATE="$state" FAKE_TMUX_STATE=supervisor \
 assert_contains "$TEST_ROOT/supervisor.out" \
     'tmux=ready status=ready' "supervisor backoff readiness"
 
-echo "Reboot recovery skill tests passed"
+printf '%s\n' \
+    "Reboot recovery skill tests passed: aggregate $BASELINE_AGGREGATE->$aggregate_words words; largest selected route $BASELINE_LARGEST_ROUTE->$largest_route words (-$route_reduction%)"
