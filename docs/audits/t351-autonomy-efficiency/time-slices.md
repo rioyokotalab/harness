@@ -844,3 +844,51 @@ seconds, with 159.27 seconds user CPU, 163.03 seconds system CPU, and 734,396
 KiB maximum RSS. This accepts the implementation locally. The result-recording
 edit is documentation-only; protected parsing and execution of the changed
 workflow remain required rather than inferred from local YAML parsing.
+
+## 2026-07-31 07:00–07:59 JST
+
+In progress. The slice opened from exact pushed head
+`9a95c95487c0291b5846a1e6566bd2e299db7d11`. Its workflow-routing
+implementation passed all 91 local suites at clean parent `0a5b9bd`, and its
+result-only documentation passed R0 before the push. `origin/main` remained
+`f2ce89ac3ea393cb5a7b882bed1b79fe773974fb`; GitHub had not yet registered
+the changed-input run at the boundary, so protected parsing and execution
+remain pending rather than assumed.
+
+GitHub registered pull-request run `30585597976` and job `91016058295` for the
+exact pushed head. The job waited 5m08s before runner assignment;
+the official GitHub status
+[components](https://www.githubstatus.com/api/v2/components.json) and
+[unresolved-incidents](https://www.githubstatus.com/api/v2/incidents/unresolved.json)
+APIs reported Actions operational and no unresolved incident, while
+organization-wide active-run visibility was unavailable. The
+queue cause is therefore unknown and is not attributed to repository code or
+to the selector.
+
+Once assigned, checkout, non-secret capability, and affinity steps passed. The
+PR selector executed the expected R3/full route, the non-PR full-backstop step
+was explicitly skipped, and `portable-phase1` passed in 1m37s of assigned-job
+time. This proves GitHub parsed the split conditions, preserved the required
+check, and executed full validation for the workflow/validator diff. It does
+not measure a future narrow hosted PR.
+
+The credential-free job log confirms `tier=R3`, `phase-1 harness tests
+passed`, and `focused-tests: jobs=3 visible_cpus=4 mode=auto reserve_cpus=1`.
+This is the first retained hosted CPU-count evidence for this candidate; it
+does not retroactively validate the withdrawn two-core inference.
+
+PR readback is again cleanly mergeable. The exact head has one and only one
+workflow run, `30585597976`, with event `pull_request` and conclusion
+`success`; no push run exists.
+
+The local full run created 14 eligible completed-invocation arg0 directories.
+Lock-aware guarded cleanup removed exactly those 14 and passed manifest,
+ownership, mode, protected-anchor, and absence verification. Fresh state is
+again `live=5 eligible=0 young=0 unexpected=0`; every held live lock remains.
+
+The hosted log also exposed a value-free reporting defect: clean runs with
+explicit `--no-receipt` were labeled `receipt=none-dirty`. The validator now
+reports `none-disabled` when a clean identity exists and receipt publication
+was intentionally disabled; a genuinely dirty tree still reports
+`none-dirty`. An execution-level mocked-identity regression passes and proves
+the disabled route never calls receipt lookup or publication.

@@ -345,14 +345,18 @@ decision = {
 }
 
 
-def identity_scenario(sequence, *, cache_hit):
+def identity_scenario(sequence, *, cache_hit, no_receipt=False):
     remaining = iter(sequence)
+
+    def unexpected_receipt_call(*_args):
+        raise AssertionError("receipt function called with --no-receipt")
+
     validator_globals.update(
         {
             "parse_args": lambda: SimpleNamespace(
                 base="HEAD^",
                 jobs="auto",
-                no_receipt=False,
+                no_receipt=no_receipt,
                 path=[],
                 plan=False,
                 receipt_dir=None,
@@ -361,30 +365,51 @@ def identity_scenario(sequence, *, cache_hit):
             "changed_paths": lambda _root, _base: ["docs/test.md"],
             "classify": lambda _root, _paths, _rules: decision,
             "clean_tree_identity": lambda *_args: next(remaining),
-            "private_receipt_dir": lambda *_args: Path("/tmp"),
+            "private_receipt_dir": (
+                unexpected_receipt_call
+                if no_receipt
+                else (lambda *_args: Path("/tmp"))
+            ),
             "cached_receipt": (
-                (lambda *_args: Path("/tmp/cached.json"))
-                if cache_hit
-                else (lambda *_args: None)
+                unexpected_receipt_call
+                if no_receipt
+                else (
+                    (lambda *_args: Path("/tmp/cached.json"))
+                    if cache_hit
+                    else (lambda *_args: None)
+                )
             ),
             "run_validation": lambda *_args: [
                 {"path": "fixture", "seconds": 0.0, "status": 0}
             ],
-            "publish_receipt": lambda *_args: Path(
-                "/tmp/nonexistent-validation-receipt"
+            "publish_receipt": (
+                unexpected_receipt_call
+                if no_receipt
+                else lambda *_args: Path(
+                    "/tmp/nonexistent-validation-receipt"
+                )
             ),
         }
     )
-    with contextlib.redirect_stderr(io.StringIO()):
-        return module["main"]()
+    stdout = io.StringIO()
+    with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(
+        io.StringIO()
+    ):
+        status = module["main"]()
+    return status, stdout.getvalue()
 
 
 try:
-    assert identity_scenario([identity, drifted], cache_hit=True) == 2
-    assert identity_scenario([identity, drifted], cache_hit=False) == 2
+    assert identity_scenario([identity, drifted], cache_hit=True)[0] == 2
+    assert identity_scenario([identity, drifted], cache_hit=False)[0] == 2
     assert identity_scenario(
         [identity, identity, drifted], cache_hit=False
-    ) == 2
+    )[0] == 2
+    status, output = identity_scenario(
+        [identity, identity], cache_hit=False, no_receipt=True
+    )
+    assert status == 0
+    assert "receipt=none-disabled" in output
 finally:
     validator_globals.update(originals)
 

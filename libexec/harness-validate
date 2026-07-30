@@ -579,7 +579,7 @@ def main() -> int:
         )
         return 2
 
-    receipt = "none-dirty"
+    receipt = "none-dirty" if identity is None else "none-disabled"
     if identity and receipt_dir:
         try:
             receipt_path = publish_receipt(receipt_dir, identity, results)

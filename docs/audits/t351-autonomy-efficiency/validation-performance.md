@@ -273,3 +273,16 @@ in 55.03 seconds, with 159.27 seconds user CPU, 163.03 seconds system CPU, and
 734,396 KiB maximum RSS. This accepts local behavior; the subsequent evidence
 edit is documentation-only, and protected workflow parsing/execution remains
 a separate required check.
+
+Protected pull-request run `30585597976` then accepted exact pushed head
+`9a95c95487c0291b5846a1e6566bd2e299db7d11`. After an unassigned-runner queue
+of 5m08s whose cause remained unknown, the job completed in 1m37s: the PR selector ran
+the expected R3/full route and the non-PR full-backstop step was skipped.
+GitHub's status API reported Actions operational with no unresolved incident
+at the time. Queue duration is excluded from selector performance and no narrow
+hosted latency claim is made.
+
+The credential-free log reports `tier=R3`, all phase-one tests passing, and
+`jobs=3 visible_cpus=4 mode=auto reserve_cpus=1`. That is exact hosted
+low-core execution evidence for the automatic reserve and three-worker route;
+it is not a two-core sample.
