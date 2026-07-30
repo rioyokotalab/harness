@@ -56,6 +56,7 @@ Matched retained measurements:
 | overlap, auto with one reserved CPU | 72.50 s | 152.19 s | 167.65 s | 784,336 KiB |
 | overlap, exact tree after remote routing | 72.21 s | not retained | not retained | 516,124 KiB |
 | overlap, exact tree after PIE routing | 72.54 s | 151.62 s | 167.71 s | 511,064 KiB |
+| overlap, exact tree after task/hardening routing | 73.57 s | 153.07 s | 165.15 s | 620,456 KiB |
 
 The retained automatic route sees eight affinity-visible CPUs and gives seven
 to focused suites while integration proceeds. Explicit or legacy worker counts
@@ -63,7 +64,7 @@ remain exact and reserve zero. The repeated automatic result is 36.7% faster
 than the integrated serial tree and 36.8% faster than the original baseline.
 Peak RSS varied substantially between matched runs, so no memory reduction is
 claimed; all values remained near the original baseline run's 744,832 KiB.
-Both exact-tree post-routing runs again passed all 89 suites. Only wall time
+All exact-tree post-routing runs passed all 89 suites. Only wall time
 and maximum RSS were requested from the remote-routing invocation, so its CPU
 times are deliberately reported as unavailable rather than inferred.
 
