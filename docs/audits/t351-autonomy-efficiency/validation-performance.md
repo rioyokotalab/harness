@@ -78,6 +78,7 @@ Matched retained measurements:
 | overlap plus concurrent ShellCheck, matched candidate median | 65.51 s | approximately unchanged | approximately unchanged | variable |
 | exact integrated tree after ShellCheck overlap | 67.19 s | 161.23 s | 165.12 s | 521,212 KiB |
 | exact integrated tree after longest-first admission | 56.54 s | 159.22 s | 162.75 s | 516,220 KiB |
+| review-corrected integrated tree | 54.35 s | 158.69 s | 162.58 s | 721,900 KiB |
 
 The retained automatic route sees eight affinity-visible CPUs and gives seven
 to focused suites while integration proceeds. Explicit or legacy worker counts
@@ -170,6 +171,15 @@ correction and longest-first admission passed all 91 suites in 56.54 seconds,
 with 159.22 seconds user, 162.75 seconds system, and 516,220 KiB maximum RSS.
 That is 15.9% below the prior 67.19-second exact-tree checkpoint without
 claiming a cross-machine or long-term performance change.
+
+After independent review corrections, a clean integration checkpoint failed
+only a stale source assertion in the focused-runner fixture; the other 90
+suites passed in 54.08 seconds. The corrected fixture then passed, and the
+unchanged complete orchestration passed all 91 suites in 54.35 seconds with
+the resource values above. The failed run remains evidence and is not counted
+as acceptance. The 54.35-second sample is 52.6% below the immutable
+114.77-second baseline, but only the matched component comparisons above are
+treated as causal measurements.
 
 An integration-only disposable profiler passed the unchanged fixture body in
 30.44 seconds. On the retained longest-first tree, seven focused workers took

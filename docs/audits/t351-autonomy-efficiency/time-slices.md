@@ -661,3 +661,10 @@ The context benchmark now independently reconstructs its Markdown table and
 median claims from the tracked scenario manifest, so subsequent selected-task
 record growth fails its own focused contract instead of silently staling the
 reported reductions. Scoped ShellCheck and the context contract pass.
+
+The clean complete-suite rerun passed all 91 registered suites in 54.35
+seconds, with 158.69 seconds user CPU, 162.58 seconds system CPU, and 721,900
+KiB maximum RSS. This clears the preceding 90/91 checkpoint without a waiver.
+The wall result is 52.6% below the immutable 114.77-second baseline, while the
+matched ShellCheck and longest-first comparisons remain the causal evidence;
+the varying RSS is not presented as a memory improvement.
