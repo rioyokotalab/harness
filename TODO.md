@@ -755,13 +755,34 @@ project panes/processes remain exact. Stale helper receipts still describe
 the stopped old owner and old degraded phone snapshot, so they are not
 acceptance evidence.
 
-**Next action:** publish this ambiguous-but-resolved helper checkpoint. Then
-use a distinct changed-input one-attempt controller to create exactly one new
-detached `monitor:2:helper` window running the merged helper command directly.
-Do not retry `respawn-pane`. Require one new current-user owner, no worker
-child, unchanged monitor/project identities, a fresh healthy helper phone
-receipt, and two interval-separated healthy helper/monitor readbacks before
-final T-350 closeout.
+Protected PR #476 merge-merged the resolved absent-helper checkpoint as
+`33e177f04d969a0cf217778d9b3e781bf81a993b`; Local main fast-forwarded.
+Distinct changed-input controller digest
+`10ceb0c6c881c702f5714c7d9ca92803cbfafc70880bbfaa3d53606574e4ce0c`
+then passed zero-write preflight and executed exactly once. Its native
+`tmux new-window` for absent `monitor:2:helper` acknowledged new
+`@101/%101` and reported PID `3790921`, but that process/window exited before
+healthy readback. Journal digest
+`039ef692937b390e9c9f067619d1b937163cc52936f814bd7163e63e23e862db`
+and result digest
+`b531c803aabdd833b3adb44ad3433939991e63236315f7819d470d6550f643c7`
+record `helper-restart-readback-ambiguous`; the controller is consumed and
+must never run again.
+
+Exact reconciliation again finds no helper process/window and no holder of
+the mode-0600 helper lock. Monitor/tunnel and all three canonical project
+panes/processes remain unchanged. The merged helper supports read-only status
+and help under the exact system Python used by the failed launch, but its
+run-mode exit reason is not yet known; no pane or transcript was inspected.
+
+**Next action:** publish this second resolved helper checkpoint. Then run one
+distinct bounded non-tmux diagnostic instance with stdout/stderr redirected to
+a new mode-0600 private file, journal its exact PID/start before observation,
+and stop on any ambiguous launch. Inspect only the minimum startup error
+needed to diagnose, never pane/transcript content. Fix or recover from that
+evidence, then restore exactly one helper window and require fresh healthy
+phone parity plus two interval-separated monitor/helper receipts before final
+T-350 closeout.
 
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
