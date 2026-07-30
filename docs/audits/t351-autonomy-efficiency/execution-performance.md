@@ -42,3 +42,18 @@ before the delayed first-batch probe ended. Maintenance exclusions, paired
 routes, ordinary versus independent SSH options, AL managed-session behavior,
 compact output, and failure classification are unchanged. The fleet-health
 and source-contract suites pass.
+
+## Interactive backup warning
+
+Interactive shell startup calls the backup-chain warning path. The original
+path independently validated and parsed the same private state file for each
+field. The retained path validates metadata once, parses all warning fields in
+one `awk` pass, detects every duplicate key before querying the scheduler, and
+still performs one fresh native scheduler query.
+
+Five healthy Local calls improved from 0.05–0.06 seconds (median 0.05) to
+0.03–0.04 seconds (median 0.03). Observed process launches fell from 35 to 22;
+the absent-state fast path remained 0.01 seconds and nine launches. Fixtures
+cover ybatch, Slurm, PBS, ABCI-Q, and AGE plus duplicate, malformed,
+unsafe-mode, missing-job, failed-query, and failed-backup states. The Restic
+schedule and Bash startup suites pass.
