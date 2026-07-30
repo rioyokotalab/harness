@@ -33,8 +33,8 @@ and selected conditional policy routes are separately budgeted by
 `tests/test-agent-policy-routing.sh`.
 
 Active-task details are now one hop behind the board. At this checkpoint the
-selected T-351 record is 760 words during execution, so board plus relevant
-record is 1,006 words—12.7% below the prior 1,153-word board—while unrelated
+selected T-351 record is 408 words during execution, so board plus relevant
+record is 654 words—43.3% below the prior 1,153-word board—while unrelated
 backup successor IDs, outage contingency
 details, and the blocked NFS fingerprint are not loaded. The ledger fixture
 requires all four task records, their board routes, and their exact critical

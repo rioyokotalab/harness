@@ -44,7 +44,7 @@ task_text = "\n".join(path.read_text(encoding="utf-8") for path in task_files.va
 for required in (
     "docs/plans/t351-autonomy-efficiency.md",
     "docs/audits/t351-autonomy-efficiency/time-slices.md",
-    "Integrate the independently measured shell-warning",
+    "Review the isolated HPC-router and phase-one latency experiments",
     "hosting settings, rulesets",
     "94950",
     "2064918.pbs1",
