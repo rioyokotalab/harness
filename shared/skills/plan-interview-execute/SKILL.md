@@ -1,6 +1,6 @@
 ---
 name: plan-interview-execute
-description: Run a thorough, ledger-backed Plan–Interview–Execute (PIE) workflow for consequential, ambiguous, multi-step, or multi-session work. Use when the owner asks to plan first, resolve choices interactively or one question at a time, wait for an explicit go, execute autonomously afterward, or make work resumable without relying on chat context.
+description: Run a ledger-backed Plan–Interview–Execute (PIE) workflow when the owner explicitly asks to plan before execution, resolve still-open material choices interactively or one question at a time, wait for a go after those choices are frozen, or resume an existing PIE ledger. Do not trigger merely because work is consequential, multi-step, multi-session, or already has a complete frozen plan plus explicit execution authorization.
 ---
 
 # Plan–Interview–Execute
@@ -8,6 +8,24 @@ description: Run a thorough, ledger-backed Plan–Interview–Execute (PIE) work
 Use the repository ledger as the source of truth for all three phases. Keep the
 on-disk plan exhaustive and user updates compact. Do not treat conversation
 history as durable state.
+
+## Apply the trigger boundary
+
+Use this workflow only for an explicit plan/interview/go request, unresolved
+material owner decisions that require an interview, or an existing task already
+recorded in a PIE phase. Do not invoke it merely because ordinary implementation
+is consequential, ambiguous, multi-step, multi-session, or ledger-backed.
+
+If the owner has already supplied a complete frozen plan, resolved all material
+choices, and explicitly authorized execution, continue under the applicable
+domain and ledger workflows without starting a new interview. For an existing
+PIE task at `ready-for-go`, an explicit `go` resumes Phase 3 directly. Never
+repeat settled questions.
+
+If planning discovers no unresolved owner decision, record that fact and move
+directly to `ready-for-go`; do not manufacture an interview. A newly discovered
+material gap still stops execution. Ask the one necessary question, and enter
+the interview phase only when the task actually has an unresolved decision.
 
 ## Establish durable state
 
@@ -46,9 +64,11 @@ Read-only probes and disposable validation that cannot affect the target are
 allowed. If planning discovers a material scope change, checkpoint it and keep
 the phase at `planning`.
 
-When the plan is coherent, set the phase to `interviewing` and give the owner a
-compact summary: outcome, major stages, material risks, and number of unresolved
-decisions. Keep the complete detail in the ledger.
+When the plan is coherent and material decisions remain, set the phase to
+`interviewing` and give the owner a compact summary: outcome, major stages,
+material risks, and number of unresolved decisions. Keep complete detail in the
+ledger. If no material decision remains, set `ready-for-go` and summarize the
+frozen execution and safety gates without an interview.
 
 ## Phase 2: Interview
 

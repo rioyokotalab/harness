@@ -1,6 +1,10 @@
-# Cowork protocol reference
+# Legacy aggregate cowork protocol
 
-Read this reference for every cowork session. Paths below are conceptual; use
+This compatibility reference preserves historical handoff links. Normal skill
+routing must use the task- and phase-specific references linked directly from
+`SKILL.md`; do not preload this aggregate.
+
+Paths below are conceptual and retained for historical reconstruction; use
 absolute, shell-safe paths resolved for the active repository.
 
 ## State machine and files

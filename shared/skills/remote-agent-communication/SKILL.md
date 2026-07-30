@@ -169,7 +169,7 @@ retryable.
 - For a Mac target, require the standard detached
   `harness-codex-resume` session. Use `--allow-attached` only when the owner
   explicitly expects injection into a directly attached Mac terminal.
-- For Local, select the unique Codex pane in the `harness` session by its
+- For Local, select the unique Codex pane in the `projects` session by its
   current-user process and TTY metadata; other windows may coexist.
 - Stop on an absent or ambiguous session, pane, process, route, sender,
   malformed prefix, unsafe input or lock, concurrent-delivery timeout, native

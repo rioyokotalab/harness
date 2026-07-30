@@ -17,7 +17,20 @@ before executing it and report the same command with its result.
 2. Resolve the logical target through `~/harness/profiles/hosts/HOST.conf`.
    Reject aliases without a profile. Never deploy or run workloads on proxy
    nodes, `si`, `web`, or `github`.
-3. Read [references/sites.md](references/sites.md) for the selected target.
+3. Read [common.md](references/common.md) completely, then read
+   exactly one selected site reference:
+
+   | Resolved target | Required site reference |
+   |---|---|
+   | current node | [current.md](references/current.md) |
+   | `ab`, `ab2` | [abci.md](references/abci.md) |
+   | `ri` | [riken.md](references/riken.md) |
+   | `al` | [alps.md](references/alps.md) |
+   | `rc` | [rccs.md](references/rccs.md) |
+   | `t4` | [tsubame.md](references/tsubame.md) |
+
+   Do not preload the aggregate legacy `references/sites.md`. If the resolved
+   target has no exact row, stop without probing or running a workload.
 4. Identify the requested correctness gate, resource shape, duration, project
    environment, output paths, and whether the operation can consume allocation
    or billing points.
