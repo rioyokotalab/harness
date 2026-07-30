@@ -47,7 +47,9 @@ printf 'swallow\t2\t%s\n' "$swallow" >>"$profile"
 
 run_resolver() {
     PYTHONDONTWRITEBYTECODE=1 HARNESS_TESTING=1 \
-        HARNESS_ROOT="$test_harness" \
+        HARNESS_ROOT="$TEST_ROOT/ambient-must-not-win" \
+        HARNESS_CONTROL_ROOT="$ROOT" \
+        HARNESS_TARGET_ROOT="$test_harness" \
         HARNESS_TEST_CODEX_TARGETS_FILE="$profile" \
         python3 "$resolver" "$@"
 }
@@ -59,6 +61,19 @@ grep -F 'CODEX_TARGETS status=ready count=3' "$TEST_ROOT/ready.out" \
     fail "Students target lookup"
 [ "$(run_resolver target-for-repository "$swallow")" = swallow ] ||
     fail "Swallow reverse target lookup"
+PYTHONPATH="$ROOT/libexec" PYTHONDONTWRITEBYTECODE=1 HARNESS_TESTING=1 \
+    HARNESS_CONTROL_ROOT="$ROOT" HARNESS_TARGET_ROOT="$test_harness" \
+    HARNESS_TEST_CODEX_TARGETS_FILE="$profile" \
+    python3 - "$test_harness" "$students" <<'PY' ||
+import sys
+from harness_codex_targets import cwd_allowed
+
+harness, students = sys.argv[1:]
+assert cwd_allowed("students", students)
+assert not cwd_allowed("students", harness)
+assert not cwd_allowed("swallow", harness)
+PY
+    fail "target-native CWD eligibility"
 if run_resolver target-for-repository "$TEST_ROOT" \
     >"$TEST_ROOT/outside.out" 2>&1; then
     fail "outside repository admitted"

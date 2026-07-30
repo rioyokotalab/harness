@@ -79,6 +79,7 @@ with tempfile.TemporaryDirectory() as helper_root:
             "unarchived": True,
             "exact_name": True,
             "exact_cwd": True,
+            "native_cwd": True,
             "rollout_location": True,
             "rollout_exists": True,
             "interactive_source": True,
@@ -182,10 +183,10 @@ module.parse_supervisor = lambda _info: {
     "runtime": "students-t338",
     "thread": "thread-students",
     "start": "supervisor-start",
-    "target": None,
+    "target": "students",
 }
-module.resilient_status = lambda _runtime: (
-    {"phase": "running", "owner_pid": "10"},
+module.resilient_status = lambda _target, _runtime: (
+    {"target": "students", "phase": "running", "owner_pid": "10"},
     {
         "phase": "watching",
         "owner_pid": "12",
@@ -217,9 +218,8 @@ codex_0146 = module.collect_health(
         }
     ]
 )
-assert codex_0146["students"]["state"] == "healthy"
-assert codex_0146["students"]["tui"]["pid"] == 11
-assert codex_0146["students"]["app_server_pid"] == 99
+assert codex_0146["students"]["state"] == "unhealthy"
+assert codex_0146["students"]["reason"] == "native-cwd"
 native_window = [
     {
         "index": 1,
@@ -232,6 +232,12 @@ native_window = [
         "dead": False,
     }
 ]
+module.parse_supervisor = lambda _info: {
+    "runtime": "students-t338",
+    "thread": "thread-students",
+    "start": "supervisor-start",
+    "target": None,
+}
 native_missing_target = module.collect_health(native_window)
 assert native_missing_target["students"]["state"] == "unhealthy"
 assert native_missing_target["students"]["reason"] == "supervisor-target"
@@ -243,8 +249,10 @@ module.parse_supervisor = lambda _info: {
 }
 native_targeted = module.collect_health(native_window)
 assert native_targeted["students"]["state"] == "healthy"
-module.resilient_status = lambda _runtime: (
-    {"phase": "running", "owner_pid": "10"},
+assert native_targeted["students"]["tui"]["pid"] == 11
+assert native_targeted["students"]["app_server_pid"] == 99
+module.resilient_status = lambda _target, _runtime: (
+    {"target": "students", "phase": "running", "owner_pid": "10"},
     {
         "phase": "blocked",
         "reason": "unsafe-tail",
@@ -263,15 +271,15 @@ unsafe_0146 = module.collect_health(
             "panes": 1,
             "pane_id": "%fixture",
             "pane_pid": 10,
-            "path": os.environ["HARNESS_MONITOR_ROOT"],
+            "path": module.TARGET_PATHS["students"],
             "dead": False,
         }
     ]
 )
 assert unsafe_0146["students"]["state"] == "blocked"
 assert unsafe_0146["students"]["reason"] == "unsafe-tail"
-module.resilient_status = lambda _runtime: (
-    {"phase": "running", "owner_pid": "10"},
+module.resilient_status = lambda _target, _runtime: (
+    {"target": "students", "phase": "running", "owner_pid": "10"},
     {
         "phase": "blocked",
         "reason": "post-rollback-system-error",
@@ -288,7 +296,7 @@ other_blocked = module.collect_health(
             "panes": 1,
             "pane_id": "%fixture",
             "pane_pid": 10,
-            "path": os.environ["HARNESS_MONITOR_ROOT"],
+            "path": module.TARGET_PATHS["students"],
             "dead": False,
         }
     ]
@@ -304,7 +312,7 @@ windows = [
         "panes": 1,
         "pane_id": "%{}".format(index),
         "pane_pid": 10 + index,
-        "path": os.environ["HARNESS_MONITOR_ROOT"],
+        "path": module.TARGET_PATHS[name],
         "dead": False,
     }
     for name, index in module.EXPECTED
@@ -377,7 +385,7 @@ calls = []
 module.subprocess.run = lambda arguments, **_kwargs: calls.append(arguments) or Result()
 assert module.enqueue_helper_recovery(candidates[0])
 assert len(calls) == 1
-assert "codex-recovery-helper" in calls[0]
+assert calls[0][0].endswith("/libexec/harness-codex-recovery-helper")
 assert "--enqueue-blocked" in calls[0]
 assert "--thread" in calls[0]
 PY

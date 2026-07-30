@@ -1,0 +1,8 @@
+# path	mode
+libexec/harness-common	555
+libexec/harness-codex-resilient	555
+libexec/harness-codex-runtime-launch	555
+libexec/harness-codex-thread-recovery	555
+libexec/harness_codex_targets.py	555
+profiles/codex-runtime-release.tsv	444
+profiles/codex-session-targets.tsv	444

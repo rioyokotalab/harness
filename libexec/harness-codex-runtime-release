@@ -1,0 +1,410 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" 2>/dev/null && pwd -P)
+source_root=$(CDPATH='' cd -- "$SELF_DIR/.." 2>/dev/null && pwd -P)
+
+usage() {
+    echo "Usage: harness-codex-runtime-release --exec-resilient ARGS..." >&2
+    exit 2
+}
+
+[ "$#" -ge 1 ] && [ "$1" = --exec-resilient ] || usage
+shift
+
+for required in chmod git id mkdir mktemp mv rmdir sed sleep stat tr uname \
+    unlink wc
+do
+    command -v "$required" >/dev/null 2>&1 || {
+        echo "harness: Codex runtime release requires command: $required" >&2
+        exit 2
+    }
+done
+
+top=$(git -C "$source_root" rev-parse --show-toplevel 2>/dev/null) || {
+    echo "harness: Codex runtime release source is not a Git checkout" >&2
+    exit 2
+}
+[ "$top" = "$source_root" ] || {
+    echo "harness: Codex runtime release source is not an exact Git root" >&2
+    exit 2
+}
+commit=$(git -C "$source_root" rev-parse 'HEAD^{commit}' 2>/dev/null) || {
+    echo "harness: Codex runtime release commit is unavailable" >&2
+    exit 2
+}
+case "$commit" in
+    *[!0-9a-f]*|'')
+        echo "harness: Codex runtime release commit is malformed" >&2
+        exit 2
+        ;;
+esac
+case ${#commit} in
+    40|64) ;;
+    *)
+        echo "harness: Codex runtime release commit is malformed" >&2
+        exit 2
+        ;;
+esac
+
+HARNESS_TARGET_ROOT=${HARNESS_TARGET_ROOT:-${HARNESS_CONTROL_ROOT:-$source_root}}
+case "$HARNESS_TARGET_ROOT" in
+    /*) ;;
+    *)
+        echo "harness: Codex runtime target root must be absolute" >&2
+        exit 2
+        ;;
+esac
+case ${HARNESS_CODEX_RELEASE_TARGET:-} in
+    harness|students|swallow) release_target=$HARNESS_CODEX_RELEASE_TARGET ;;
+    *)
+        echo "harness: Codex runtime release target is unavailable" >&2
+        exit 2
+        ;;
+esac
+if [ "${HARNESS_TESTING:-0}" = 1 ] &&
+    [ -n "${HARNESS_TEST_CODEX_RELEASE_ROOT:-}" ]; then
+    private_root=$HARNESS_TEST_CODEX_RELEASE_ROOT
+else
+    case ${XDG_RUNTIME_DIR:-} in
+        /*) runtime_parent=$XDG_RUNTIME_DIR ;;
+        *)
+            case ${TMPDIR:-/tmp} in
+                /*) runtime_parent=${TMPDIR:-/tmp} ;;
+                *)
+                    echo "harness: Codex runtime parent must be absolute" >&2
+                    exit 2
+                    ;;
+            esac
+            ;;
+    esac
+    private_root=$runtime_parent/harness-codex-control-$(id -u)
+fi
+case "$private_root" in
+    /*) ;;
+    *)
+        echo "harness: Codex runtime release root must be absolute" >&2
+        exit 2
+        ;;
+esac
+
+uid=$(id -u)
+platform=$(uname -s)
+path_owner() {
+    case "$platform" in
+        Darwin) stat -f '%u' "$1" ;;
+        *) stat -c '%u' -- "$1" ;;
+    esac
+}
+path_mode() {
+    case "$platform" in
+        Darwin) stat -f '%Lp' "$1" ;;
+        *) stat -c '%a' -- "$1" ;;
+    esac
+}
+path_links() {
+    case "$platform" in
+        Darwin) stat -f '%l' "$1" ;;
+        *) stat -c '%h' -- "$1" ;;
+    esac
+}
+
+validate_private_dir() {
+    path=$1
+    [ -d "$path" ] && [ ! -L "$path" ] &&
+        [ "$(path_owner "$path")" = "$uid" ] &&
+        [ "$(path_mode "$path")" = 700 ] || {
+        echo "harness: Codex runtime release directory is unsafe" >&2
+        exit 2
+    }
+}
+ensure_private_dir() {
+    path=$1
+    if [ ! -e "$path" ] && [ ! -L "$path" ]; then
+        old_umask=$(umask)
+        umask 077
+        if ! mkdir "$path" 2>/dev/null; then
+            umask "$old_umask"
+            [ -d "$path" ] || {
+                echo "harness: Codex runtime release directory cannot be created" >&2
+                exit 2
+            }
+        else
+            umask "$old_umask"
+        fi
+        chmod 700 "$path"
+    fi
+    validate_private_dir "$path"
+}
+
+ensure_private_dir "$private_root"
+release_parent=$private_root/releases
+ensure_private_dir "$release_parent"
+target_release_parent=$release_parent/$release_target
+ensure_private_dir "$target_release_parent"
+release_dir=$target_release_parent/$commit
+marker_name=.codex-runtime-release
+marker=$release_dir/$marker_name
+manifest_tmp=$(mktemp "$private_root/.manifest.XXXXXX") || {
+    echo "harness: Codex runtime release manifest cannot be allocated" >&2
+    exit 2
+}
+chmod 600 "$manifest_tmp"
+stage=
+lock_dir=
+lock_owned=no
+cleanup() {
+    status=$?
+    trap - EXIT HUP INT TERM
+    if [ -n "$stage" ] && [ -d "$stage" ] && [ ! -L "$stage" ] &&
+        [ "$(path_owner "$stage")" = "$uid" ]; then
+        chmod 700 "$stage" "$stage/libexec" "$stage/profiles" ||
+            status=2
+        while IFS='	' read -r path mode; do
+            case "$path" in ''|'#'*) continue ;; esac
+            candidate=$stage/$path
+            if [ -f "$candidate" ] && [ ! -L "$candidate" ] &&
+                [ "$(path_owner "$candidate")" = "$uid" ] &&
+                [ "$(path_links "$candidate")" = 1 ]; then
+                unlink "$candidate" || status=2
+            fi
+        done <"$manifest_tmp"
+        if [ -f "$stage/$marker_name" ] && [ ! -L "$stage/$marker_name" ]; then
+            unlink "$stage/$marker_name" || status=2
+        fi
+        rmdir "$stage/libexec" "$stage/profiles" "$stage" 2>/dev/null || status=2
+    fi
+    if [ "$lock_owned" = yes ] && [ -d "$lock_dir" ] && [ ! -L "$lock_dir" ] &&
+        [ "$(path_owner "$lock_dir")" = "$uid" ]; then
+        if [ -f "$lock_dir/pid" ] && [ ! -L "$lock_dir/pid" ] &&
+            [ "$(path_owner "$lock_dir/pid")" = "$uid" ] &&
+            [ "$(path_links "$lock_dir/pid")" = 1 ]; then
+            unlink "$lock_dir/pid" || status=2
+        fi
+        rmdir "$lock_dir" 2>/dev/null || status=2
+    fi
+    if [ -f "$manifest_tmp" ] && [ ! -L "$manifest_tmp" ] &&
+        [ "$(path_owner "$manifest_tmp")" = "$uid" ] &&
+        [ "$(path_links "$manifest_tmp")" = 1 ]; then
+        unlink "$manifest_tmp" || status=2
+    fi
+    exit "$status"
+}
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+git -C "$source_root" show "$commit:profiles/codex-runtime-release.tsv" \
+    >"$manifest_tmp" 2>/dev/null || {
+    echo "harness: committed Codex runtime release manifest is unavailable" >&2
+    exit 2
+}
+
+manifest_count=0
+seen_common=no
+seen_resilient=no
+seen_launcher=no
+seen_recovery=no
+seen_targets=no
+seen_release_profile=no
+seen_targets_profile=no
+while IFS='	' read -r path mode extra; do
+    case "$path" in ''|'#'*) continue ;; esac
+    [ -z "${extra:-}" ] || {
+        echo "harness: Codex runtime release manifest is malformed" >&2
+        exit 2
+    }
+    case "$path" in
+        libexec/harness-common)
+            [ "$seen_common" = no ] || {
+                echo "harness: Codex runtime release manifest has a duplicate path" >&2
+                exit 2
+            }
+            seen_common=yes
+            ;;
+        libexec/harness-codex-resilient)
+            [ "$seen_resilient" = no ] || {
+                echo "harness: Codex runtime release manifest has a duplicate path" >&2
+                exit 2
+            }
+            seen_resilient=yes
+            ;;
+        libexec/harness-codex-runtime-launch)
+            [ "$seen_launcher" = no ] || {
+                echo "harness: Codex runtime release manifest has a duplicate path" >&2
+                exit 2
+            }
+            seen_launcher=yes
+            ;;
+        libexec/harness-codex-thread-recovery)
+            [ "$seen_recovery" = no ] || {
+                echo "harness: Codex runtime release manifest has a duplicate path" >&2
+                exit 2
+            }
+            seen_recovery=yes
+            ;;
+        libexec/harness_codex_targets.py)
+            [ "$seen_targets" = no ] || {
+                echo "harness: Codex runtime release manifest has a duplicate path" >&2
+                exit 2
+            }
+            seen_targets=yes
+            ;;
+        profiles/codex-runtime-release.tsv)
+            [ "$seen_release_profile" = no ] || {
+                echo "harness: Codex runtime release manifest has a duplicate path" >&2
+                exit 2
+            }
+            seen_release_profile=yes
+            ;;
+        profiles/codex-session-targets.tsv)
+            [ "$seen_targets_profile" = no ] || {
+                echo "harness: Codex runtime release manifest has a duplicate path" >&2
+                exit 2
+            }
+            seen_targets_profile=yes
+            ;;
+        *)
+            echo "harness: Codex runtime release path is outside its closed manifest" >&2
+            exit 2
+            ;;
+    esac
+    case "$path" in
+        *..*|*//*|*'
+'*|*''*)
+            echo "harness: Codex runtime release path is malformed" >&2
+            exit 2
+            ;;
+    esac
+    case "$mode" in 444|555) ;; *)
+        echo "harness: Codex runtime release mode is malformed" >&2
+        exit 2
+        ;;
+    esac
+    manifest_count=$((manifest_count + 1))
+done <"$manifest_tmp"
+[ "$manifest_count" -eq 7 ] &&
+    [ "$seen_common:$seen_resilient:$seen_launcher:$seen_recovery" = \
+        yes:yes:yes:yes ] &&
+    [ "$seen_targets:$seen_release_profile:$seen_targets_profile" = \
+        yes:yes:yes ] || {
+    echo "harness: Codex runtime release manifest is incomplete" >&2
+    exit 2
+}
+
+validate_release() {
+    [ -d "$release_dir" ] && [ ! -L "$release_dir" ] &&
+        [ "$(path_owner "$release_dir")" = "$uid" ] &&
+        [ "$(path_mode "$release_dir")" = 500 ] || return 1
+    for release_component in "$release_dir/libexec" "$release_dir/profiles"; do
+        [ -d "$release_component" ] && [ ! -L "$release_component" ] &&
+            [ "$(path_owner "$release_component")" = "$uid" ] &&
+            [ "$(path_mode "$release_component")" = 500 ] || return 1
+    done
+    [ -f "$marker" ] && [ ! -L "$marker" ] &&
+        [ "$(path_owner "$marker")" = "$uid" ] &&
+        [ "$(path_mode "$marker")" = 400 ] &&
+        [ "$(path_links "$marker")" = 1 ] || return 1
+    [ "$(sed -n '1p' "$marker")" = "schema=1" ] &&
+        [ "$(sed -n '2p' "$marker")" = "commit=$commit" ] &&
+        [ "$(sed -n '3p' "$marker")" = "target=$release_target" ] &&
+        [ "$(wc -l <"$marker" | tr -d ' ')" = 3 ] || return 1
+    validated=0
+    while IFS='	' read -r path mode extra; do
+        case "$path" in ''|'#'*) continue ;; esac
+        candidate=$release_dir/$path
+        [ -f "$candidate" ] && [ ! -L "$candidate" ] &&
+            [ "$(path_owner "$candidate")" = "$uid" ] &&
+            [ "$(path_mode "$candidate")" = "$mode" ] &&
+            [ "$(path_links "$candidate")" = 1 ] || return 1
+        expected=$(git -C "$source_root" rev-parse "$commit:$path" 2>/dev/null) ||
+            return 1
+        actual=$(git hash-object "$candidate" 2>/dev/null) || return 1
+        [ "$actual" = "$expected" ] || return 1
+        validated=$((validated + 1))
+    done <"$manifest_tmp"
+    [ "$validated" -eq "$manifest_count" ]
+}
+
+if [ -e "$release_dir" ] || [ -L "$release_dir" ]; then
+    validate_release || {
+        echo "harness: existing Codex runtime release is invalid" >&2
+        exit 2
+    }
+else
+    lock_dir=$target_release_parent/.$commit.lock
+    old_umask=$(umask)
+    umask 077
+    if mkdir "$lock_dir" 2>/dev/null; then
+        lock_owned=yes
+        printf '%s\n' "$$" >"$lock_dir/pid"
+        chmod 600 "$lock_dir/pid"
+    else
+        umask "$old_umask"
+        wait_count=0
+        while [ "$wait_count" -lt 30 ]; do
+            if [ -e "$release_dir" ] || [ -L "$release_dir" ]; then
+                validate_release || {
+                    echo "harness: concurrent Codex runtime release is invalid" >&2
+                    exit 2
+                }
+                break
+            fi
+            sleep 1
+            wait_count=$((wait_count + 1))
+        done
+        [ -d "$release_dir" ] || {
+            echo "harness: Codex runtime release is locked" >&2
+            exit 2
+        }
+    fi
+    umask "$old_umask"
+
+    if [ "$lock_owned" = yes ]; then
+        stage=$(mktemp -d "$target_release_parent/.stage.$commit.XXXXXX") || {
+            echo "harness: Codex runtime release staging cannot be allocated" >&2
+            exit 2
+        }
+        chmod 700 "$stage"
+        mkdir "$stage/libexec" "$stage/profiles"
+        chmod 700 "$stage/libexec" "$stage/profiles"
+        while IFS='	' read -r path mode extra; do
+            case "$path" in ''|'#'*) continue ;; esac
+            git -C "$source_root" show "$commit:$path" >"$stage/$path" 2>/dev/null || {
+                echo "harness: committed Codex runtime file is unavailable: $path" >&2
+                exit 2
+            }
+            chmod "$mode" "$stage/$path"
+        done <"$manifest_tmp"
+        {
+            printf 'schema=1\n'
+            printf 'commit=%s\n' "$commit"
+            printf 'target=%s\n' "$release_target"
+        } >"$stage/$marker_name"
+        chmod 400 "$stage/$marker_name"
+        chmod 500 "$stage/libexec" "$stage/profiles" "$stage"
+        mv "$stage" "$release_dir"
+        stage=
+        validate_release || {
+            echo "harness: created Codex runtime release failed validation" >&2
+            exit 2
+        }
+    fi
+fi
+
+HARNESS_CONTROL_ROOT=$release_dir
+HARNESS_CODEX_RELEASE_COMMIT=$commit
+HARNESS_CODEX_RELEASE_TARGET=$release_target
+export HARNESS_CONTROL_ROOT HARNESS_TARGET_ROOT HARNESS_CODEX_RELEASE_COMMIT
+export HARNESS_CODEX_RELEASE_TARGET
+unset HARNESS_ROOT
+if [ "$lock_owned" = yes ]; then
+    unlink "$lock_dir/pid"
+    rmdir "$lock_dir"
+    lock_owned=no
+fi
+unlink "$manifest_tmp"
+manifest_tmp=
+trap - EXIT HUP INT TERM
+exec "$release_dir/libexec/harness-codex-resilient" "$@"

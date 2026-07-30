@@ -20,7 +20,12 @@ import time
 
 
 sys.dont_write_bytecode = True
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+CONTROL_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+TARGET_ROOT = CONTROL_ROOT
+os.environ["HARNESS_CONTROL_ROOT"] = CONTROL_ROOT
+os.environ["HARNESS_TARGET_ROOT"] = TARGET_ROOT
+os.environ.pop("HARNESS_ROOT", None)
+sys.path.insert(0, os.path.join(CONTROL_ROOT, "libexec"))
 from harness_codex_targets import (  # noqa: E402
     TargetError,
     cwd_allowed,
@@ -403,10 +408,7 @@ def rollout_eligible(path, codex_home):
 
 def phone_mirror_snapshot(mapping, database, processes, target_paths, codex_home):
     def mapped_cwd_allowed(role, path):
-        return path == target_paths[role] or (
-            role in ("students", "swallow")
-            and path == target_paths["harness"]
-        )
+        return path == target_paths[role]
 
     now = int(time.time())
     owner = process_info(os.getpid())
@@ -530,7 +532,7 @@ def phone_mirror_snapshot(mapping, database, processes, target_paths, codex_home
         failed = sorted(
             name
             for name, value in checks.items()
-            if name != "native_cwd" and not value
+            if not value
         )
         if failed:
             role_mismatches[role] = failed
@@ -729,7 +731,7 @@ def codex_command():
         "exec",
         "--ephemeral",
         "-C",
-        os.environ["HARNESS_ROOT"],
+        TARGET_ROOT,
         "-m",
         "sol",
         "-c",
@@ -814,10 +816,22 @@ def process_event(root, event):
     finally:
         os.umask(old)
     prompt = worker_prompt(event).encode("utf-8")
+    worker_environment = os.environ.copy()
+    for variable in (
+        "HARNESS_ROOT",
+        "HARNESS_CONTROL_ROOT",
+        "HARNESS_TARGET_ROOT",
+        "HARNESS_CODEX_RELEASE_COMMIT",
+        "HARNESS_CODEX_RELEASE_TARGET",
+        "HARNESS_TEST_CODEX_RELEASE_ROOT",
+        "HARNESS_TEST_FORCE_CODEX_RELEASE",
+    ):
+        worker_environment.pop(variable, None)
     try:
         process = subprocess.Popen(
             codex_command(),
-            cwd=os.environ["HARNESS_ROOT"],
+            cwd=TARGET_ROOT,
+            env=worker_environment,
             stdin=subprocess.PIPE,
             stdout=descriptor,
             stderr=subprocess.STDOUT,

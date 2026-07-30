@@ -19,7 +19,9 @@ tests/test-claude-takeover.sh|Claude takeover focused suite
 tests/test-claude-handoff.sh|task-bound Claude handoff focused suite
 tests/test-codex-arg0-wrapper.sh|Codex arg0 NFS wrapper focused suite
 tests/test-codex-login.sh|Codex login-node launcher focused suite
+tests/test-codex-targets.sh|repository-native Codex target map focused suite
 tests/test-codex-resilient.sh|Codex transient-service supervisor
+tests/test-codex-runtime-isolation.sh|Codex target-scoped immutable runtime
 tests/test-codex-thread-recovery.sh|Codex thread systemError recovery
 tests/test-recover-codex-unsafe-tail-skill.sh|Codex unsafe-tail recovery skill
 tests/test-codex-claude-cowork-skill.sh|Codex-Claude cowork skill protocol

@@ -1,0 +1,101 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" 2>/dev/null && pwd -P)
+derived_control_root=$(CDPATH='' cd -- "$SELF_DIR/.." 2>/dev/null && pwd -P)
+if [ -n "${HARNESS_CONTROL_ROOT:-}" ] &&
+    [ "$HARNESS_CONTROL_ROOT" != "$derived_control_root" ]; then
+    echo "harness-codex: control root does not match its launcher" >&2
+    exit 2
+fi
+HARNESS_CONTROL_ROOT=$derived_control_root
+HARNESS_TARGET_ROOT=${HARNESS_TARGET_ROOT:-$HARNESS_CONTROL_ROOT}
+export HARNESS_CONTROL_ROOT HARNESS_TARGET_ROOT
+unset HARNESS_ROOT
+
+case "$HARNESS_CONTROL_ROOT:$HARNESS_TARGET_ROOT" in
+    /*:/*) ;;
+    *)
+        echo "harness-codex: control and target roots must be absolute" >&2
+        exit 2
+        ;;
+esac
+
+if project_root=$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null); then
+    project_root=$(CDPATH='' cd -- "$project_root" 2>/dev/null && pwd -P) || {
+        echo "harness-codex: current project root is unavailable" >&2
+        exit 2
+    }
+else
+    project_root=$(pwd -P)
+fi
+case "$project_root" in
+    *'"'*|*'\'*|*'
+'*) echo "harness-codex: current project root cannot be encoded safely" >&2; exit 2 ;;
+esac
+
+target_resolver=$HARNESS_CONTROL_ROOT/libexec/harness_codex_targets.py
+[ -x "$target_resolver" ] || {
+    echo "harness-codex: target resolver is unavailable" >&2
+    exit 2
+}
+command -v python3 >/dev/null 2>&1 || {
+    echo "harness-codex: python3 is unavailable" >&2
+    exit 2
+}
+target=$(python3 "$target_resolver" target-for-repository "$project_root") || {
+    echo "harness-codex: current repository is outside the managed target map" >&2
+    exit 2
+}
+case "$target" in
+    harness|students|swallow) ;;
+    *) echo "harness-codex: target resolver returned an invalid target" >&2; exit 2 ;;
+esac
+
+native_codex=$HOME/.local/bin/codex
+if [ "${HARNESS_TESTING:-0}" = 1 ] &&
+    [ -n "${HARNESS_TEST_NATIVE_CODEX:-}" ]; then
+    native_codex=$HARNESS_TEST_NATIVE_CODEX
+elif [ "$(uname -s)" = Darwin ] && command -v brew >/dev/null 2>&1; then
+    brew_prefix=$(brew --prefix 2>/dev/null || true)
+    case "$brew_prefix" in
+        /opt/homebrew|/usr/local) brew_codex=$brew_prefix/bin/codex ;;
+        *)
+            if [ "${HARNESS_TEST_ALLOW_NONMAIN:-0}" = 1 ]; then
+                brew_codex=$brew_prefix/bin/codex
+            fi
+            ;;
+    esac
+    if [ -n "${brew_codex:-}" ] && [ -x "$brew_codex" ]; then
+        brew_codex_physical=$(realpath "$brew_codex" 2>/dev/null || true)
+        case "$brew_codex_physical" in
+            "$HOME/.codex/packages/standalone/"*)
+                native_codex=$brew_codex
+                CODEX_INSTALL_DIR=$brew_prefix/bin
+                PATH=$CODEX_INSTALL_DIR:$PATH
+                export CODEX_INSTALL_DIR PATH
+                ;;
+        esac
+    fi
+fi
+[ -x "$native_codex" ] || {
+    echo "harness-codex: relocated native codex command is unavailable" >&2
+    exit 2
+}
+
+case $(uname -s) in
+    Linux)
+        RAYON_NUM_THREADS=8
+        TOKIO_WORKER_THREADS=8
+        export RAYON_NUM_THREADS TOKIO_WORKER_THREADS
+        ;;
+esac
+
+unset HARNESS_ROOT HARNESS_CONTROL_ROOT HARNESS_TARGET_ROOT
+unset HARNESS_CODEX_RELEASE_COMMIT HARNESS_CODEX_RELEASE_TARGET
+unset HARNESS_TEST_CODEX_RELEASE_ROOT
+unset HARNESS_TEST_FORCE_CODEX_RELEASE HARNESS_TEST_NATIVE_CODEX
+
+exec "$native_codex" --config \
+    'approval_policy={ granular = { sandbox_approval = false, rules = false, mcp_elicitations = true, request_permissions = false, skill_approval = false } }' \
+    --sandbox danger-full-access "$@"

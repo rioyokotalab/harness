@@ -35,6 +35,18 @@ mkdir -m 700 "$RUNTIME" "$CAPTURE"
 cat >"$FAKE_CODEX" <<'EOF'
 #!/bin/sh
 set -eu
+for variable in HARNESS_ROOT HARNESS_CONTROL_ROOT HARNESS_TARGET_ROOT \
+    HARNESS_CODEX_RELEASE_COMMIT HARNESS_CODEX_RELEASE_TARGET \
+    HARNESS_TEST_CODEX_RELEASE_ROOT \
+    HARNESS_TEST_FORCE_CODEX_RELEASE
+do
+    eval 'present=${'"$variable"'+yes}'
+    [ -z "${present:-}" ] || {
+        printf 'leaked=%s\n' "$variable" >"$HARNESS_TEST_CAPTURE/control-leak"
+        exit 9
+    }
+done
+printf '%s\n' sanitized >"$HARNESS_TEST_CAPTURE/control-environment"
 printf '%s\n' "$*" >>"$HARNESS_TEST_CAPTURE/arguments"
 cat >"$HARNESS_TEST_CAPTURE/prompt"
 printf '%s\n' 'RECOVERY_RESULT status=accepted'
@@ -144,15 +156,16 @@ for index, role in enumerate(("harness", "students", "swallow")):
 connection.commit()
 processes = [{"pid": os.getpid(), "start": "remote-start"}]
 
-healthy, drift = module.phone_mirror_snapshot(
+legacy_cwd, drift = module.phone_mirror_snapshot(
     mapping, str(database), processes, target_paths, str(codex_home)
 )
-assert healthy["status"] == "healthy"
-assert healthy["active_top_level_count"] == 3
-assert healthy["mismatch_classes"] == []
-assert healthy["roles"]["harness"]["native_cwd"] is True
-assert healthy["roles"]["students"]["native_cwd"] is False
-assert healthy["roles"]["swallow"]["native_cwd"] is False
+assert legacy_cwd["status"] == "degraded"
+assert legacy_cwd["active_top_level_count"] == 3
+assert "native_cwd:students" in legacy_cwd["mismatch_classes"]
+assert "native_cwd:swallow" in legacy_cwd["mismatch_classes"]
+assert legacy_cwd["roles"]["harness"]["native_cwd"] is True
+assert legacy_cwd["roles"]["students"]["native_cwd"] is False
+assert legacy_cwd["roles"]["swallow"]["native_cwd"] is False
 assert drift["kind"] == "phone-mirror-drift"
 
 connection.execute(
@@ -165,11 +178,25 @@ mapping["students"]["native_cwd"] = True
 partially_native, _drift = module.phone_mirror_snapshot(
     mapping, str(database), processes, target_paths, str(codex_home)
 )
-assert partially_native["status"] == "healthy"
+assert partially_native["status"] == "degraded"
 assert partially_native["active_top_level_count"] == 3
 assert partially_native["roles"]["students"]["exact_cwd"] is True
 assert partially_native["roles"]["students"]["native_cwd"] is True
 assert partially_native["roles"]["swallow"]["native_cwd"] is False
+assert "native_cwd:swallow" in partially_native["mismatch_classes"]
+
+connection.execute(
+    "UPDATE threads SET cwd = ? WHERE id = 'thread-swallow'",
+    (target_paths["swallow"],),
+)
+connection.commit()
+mapping["swallow"]["cwd"] = target_paths["swallow"]
+mapping["swallow"]["native_cwd"] = True
+healthy, _drift = module.phone_mirror_snapshot(
+    mapping, str(database), processes, target_paths, str(codex_home)
+)
+assert healthy["status"] == "healthy"
+assert healthy["mismatch_classes"] == []
 
 connection.execute(
     "UPDATE threads SET source = 'exec' WHERE id = 'thread-swallow'"
@@ -285,6 +312,10 @@ grep -F 'enqueue=queued' "$TEST_ROOT/enqueue.out" >/dev/null ||
 helper --once >"$TEST_ROOT/once.out"
 grep -F 'completed=1' "$TEST_ROOT/once.out" >/dev/null ||
     fail "ephemeral worker did not complete"
+[ -f "$CAPTURE/control-environment" ] ||
+    fail "worker control environment was not checked"
+[ ! -e "$CAPTURE/control-leak" ] ||
+    fail "worker inherited a Harness control variable"
 [ "$(wc -l <"$CAPTURE/arguments" | tr -d ' ')" = 1 ] ||
     fail "unexpected worker invocation count"
 grep -F 'exec --ephemeral' "$CAPTURE/arguments" >/dev/null ||

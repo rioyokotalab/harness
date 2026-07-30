@@ -18,7 +18,11 @@ import time
 
 
 sys.dont_write_bytecode = True
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+CONTROL_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+os.environ["HARNESS_CONTROL_ROOT"] = CONTROL_ROOT
+os.environ["HARNESS_TARGET_ROOT"] = CONTROL_ROOT
+os.environ.pop("HARNESS_ROOT", None)
+sys.path.insert(0, os.path.join(CONTROL_ROOT, "libexec"))
 from harness_codex_targets import (  # noqa: E402
     TargetError,
     load_targets,
@@ -44,12 +48,7 @@ def fail(message):
 
 
 def target_cwd_allowed(name, path):
-    if path == TARGET_PATHS[name]:
-        return True
-    return (
-        name in ("students", "swallow")
-        and path == TARGET_PATHS["harness"]
-    )
+    return path == TARGET_PATHS[name]
 
 
 def run(arguments, check=True):
@@ -179,6 +178,7 @@ def phone_mirror_health(now=None):
         "unarchived",
         "exact_name",
         "exact_cwd",
+        "native_cwd",
         "rollout_location",
         "rollout_exists",
         "interactive_source",
@@ -307,10 +307,21 @@ def parse_supervisor(info):
     }
 
 
-def resilient_status(runtime_name):
-    harness = os.path.join(os.environ["HARNESS_ROOT"], "bin", "harness")
+def resilient_status(target, runtime_name):
+    resilient = os.path.join(
+        os.environ["HARNESS_CONTROL_ROOT"],
+        "libexec",
+        "harness-codex-resilient",
+    )
     result = subprocess.run(
-        [harness, "codex-resilient", "--status", "--name", runtime_name],
+        [
+            resilient,
+            "--status",
+            "--target",
+            target,
+            "--name",
+            runtime_name,
+        ],
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
         check=False,
@@ -439,11 +450,11 @@ def collect_health(windows):
             continue
         window = matches[0]
         entry = {"window": window, "state": "unhealthy", "reason": "metadata"}
-        if (
-            window["panes"] != 1
-            or window["dead"]
-            or not target_cwd_allowed(name, window["path"])
-        ):
+        if window["panes"] != 1 or window["dead"]:
+            health[name] = entry
+            continue
+        if not target_cwd_allowed(name, window["path"]):
+            entry["reason"] = "native-cwd"
             health[name] = entry
             continue
         supervisor_info = process_info(window["pane_pid"])
@@ -452,25 +463,19 @@ def collect_health(windows):
             entry["reason"] = "supervisor-identity"
             health[name] = entry
             continue
-        if (
-            identity.get("target") not in (None, name)
-            or (
-                window["path"] == TARGET_PATHS[name]
-                and name != "harness"
-                and identity.get("target") != name
-            )
-        ):
+        if identity.get("target") != name:
             entry["reason"] = "supervisor-target"
             health[name] = entry
             continue
-        status_value = resilient_status(identity["runtime"])
+        status_value = resilient_status(name, identity["runtime"])
         if not status_value:
             entry["reason"] = "supervisor-status"
             health[name] = entry
             continue
         supervisor, recovery = status_value
         if (
-            supervisor.get("phase") not in ("running", "backoff")
+            supervisor.get("target") != name
+            or supervisor.get("phase") not in ("running", "backoff")
             or supervisor.get("owner_pid") != str(window["pane_pid"])
         ):
             entry["reason"] = "supervisor-owner"
@@ -676,10 +681,13 @@ def recovery_candidates(windows, health, clients):
 
 
 def enqueue_helper_recovery(candidate):
-    harness = os.path.join(os.environ["HARNESS_ROOT"], "bin", "harness")
+    helper = os.path.join(
+        os.environ["HARNESS_CONTROL_ROOT"],
+        "libexec",
+        "harness-codex-recovery-helper",
+    )
     arguments = [
-        harness,
-        "codex-recovery-helper",
+        helper,
         "--enqueue-blocked",
         "--target",
         candidate["target"],
