@@ -38,18 +38,18 @@ housekeeping_words=$(words "$HOUSEKEEPING")
 research_words=$(words "$RESEARCH")
 duration_words=$(words "$DURATION")
 
-assert_max "$root_words" 1050 'always-read policy'
+assert_max "$root_words" 900 'always-read policy'
 assert_max "$external_words" 550 'repository/external policy'
-assert_max "$runtime_words" 550 'runtime/fleet policy'
-assert_max "$housekeeping_words" 300 'housekeeping/promotion policy'
-assert_max "$research_words" 100 'research policy'
-assert_max "$duration_words" 100 'duration policy'
-assert_max "$((root_words + external_words))" 1750 'Git selected route'
-assert_max "$((root_words + runtime_words))" 1750 'runtime selected route'
-assert_max "$((root_words + housekeeping_words))" 1500 \
+assert_max "$runtime_words" 575 'runtime/fleet policy'
+assert_max "$housekeeping_words" 275 'housekeeping/promotion policy'
+assert_max "$research_words" 85 'research policy'
+assert_max "$duration_words" 85 'duration policy'
+assert_max "$((root_words + external_words))" 1450 'Git selected route'
+assert_max "$((root_words + runtime_words))" 1500 'runtime selected route'
+assert_max "$((root_words + housekeeping_words))" 1200 \
     'housekeeping selected route'
-assert_max "$((root_words + research_words))" 1300 'research selected route'
-assert_max "$((root_words + duration_words))" 1300 'duration selected route'
+assert_max "$((root_words + research_words))" 1000 'research selected route'
+assert_max "$((root_words + duration_words))" 1000 'duration selected route'
 
 for route in repository-and-external managed-runtime-and-fleet \
     housekeeping-and-promotion research duration; do
