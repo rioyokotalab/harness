@@ -85,12 +85,20 @@ mode, and Git blob identity of that exact closed seven-file payload. Harness,
 Students, and Swallow still have distinct target directories and locks, and
 the immutable marker retains the creation commit as provenance.
 
-Twelve matched pairs measured a small bounded cost on cold creation
-(247.5→262.5 ms, +6.1%) and same-commit warm validation
-(194.5→199.5 ms, +2.6%). The first launch after an unrelated commit improved
-from 241.5 to 182.0 ms (−24.6%) and retained one release directory instead of
-creating a second. A final-head reuse took 177 ms. Marker, target, content,
-mode, ownership, link-count, recovery-worker environment, and closed-manifest
-gates remain covered by the runtime, resilient, helper, target, launcher, and
-source-contract suites. Legacy commit-addressed releases are left untouched
-for processes that may still reference them.
+The first payload-addressed version used seven Git object lookups and seven
+file-hash processes. Its initial twelve matched pairs measured a small bounded
+cost on cold creation (247.5→262.5 ms, +6.1%) and same-commit warm validation
+(194.5→199.5 ms, +2.6%), while the first launch after an unrelated commit
+improved from 241.5 to 182.0 ms (−24.6%) and retained one release directory.
+
+The final implementation resolves the seven committed regular blobs in one
+`git ls-tree` call and validates all seven release files in one argv-safe
+`git hash-object` call. A second twelve-pair comparison against the exact first
+payload implementation improved cold creation from 256.5 to 220.0 ms (14.2%),
+same-commit validation from 193.5 to 148.0 ms (23.5%), and unrelated-commit
+reuse from 197.0 to 158.5 ms (19.5%). Both sides retained exactly one release
+with identical payload identity and original creation provenance. Marker,
+target, content, mode, ownership, link-count, recovery-worker environment, and
+closed-manifest gates remain covered by the runtime, resilient, helper,
+target, launcher, and source-contract suites. Legacy commit-addressed releases
+are left untouched for processes that may still reference them.

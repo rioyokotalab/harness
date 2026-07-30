@@ -251,12 +251,16 @@ Immutable Codex releases are now addressed by the ordered path, mode, and Git
 blob identity of the exact seven-file runtime payload rather than the complete
 Harness commit. Harness, Students, and Swallow retain distinct release
 directories and locks, and markers retain target and source-commit provenance.
-Across twelve matched pairs, cold creation changed from 247.5 to 262.5 ms and
-same-commit validation from 194.5 to 199.5 ms; the first launch after an
-unrelated commit improved from 241.5 to 182.0 ms and reused one directory
-instead of creating a second. The small cold/warm overhead remains under
-review for safe Git-object batching; no claim is made before that independent
-comparison completes.
+Across twelve matched pairs, the first version's cold creation changed from
+247.5 to 262.5 ms and same-commit validation from 194.5 to 199.5 ms; the first
+launch after an unrelated commit improved from 241.5 to 182.0 ms and reused
+one directory instead of creating a second. A retained follow-up resolves all
+seven committed objects in one `git ls-tree` call and validates all seven
+released files in one argv-safe `git hash-object` call. Twelve new matched
+pairs against the exact first payload implementation improved cold creation
+from 256.5 to 220.0 ms (14.2%), warm validation from 193.5 to 148.0 ms (23.5%),
+and unrelated-commit reuse from 197.0 to 158.5 ms (19.5%). Both fixtures kept
+one identical payload with the original provenance.
 
 Three ordinary validation fixtures were promoted from unknown/full-suite
 routing to exact owning suites: terminfo source, debugger smoke source, and
