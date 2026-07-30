@@ -903,3 +903,7 @@ Immediate post-run arg0 inventory is `live=5 eligible=0 young=8
 unexpected=0`. The eight fresh completed helpers remain inside their grace
 period and were preserved; they will be reclassified only during final
 cleanup.
+
+After the grace interval, those eight entries became eligible with no
+unexpected state. Guarded housekeeping removed exactly eight and passed all
+checks; readback returned to `live=5 eligible=0 young=0 unexpected=0`.
