@@ -5,157 +5,44 @@ description: Audit and harden multiple repositories and their Linux/macOS execut
 
 # Fleet and Repository Hardening
 
-Apply this workflow when hardening must improve several independently owned
-repositories or hosts without turning them into one coupled change. Preserve
-each repository's instructions, task board, validation, branch, and publication
-route.
+Keep each repository operationally independent: preserve its instructions,
+ledger, branch, worktree, validation, publication route, and lifecycle locks.
+Never make a sibling repository depend at runtime on this skill or the
+coordinating harness. Never stash pre-existing owner or agent work.
 
-## Compose the required workflows
+## Compose only triggered workflows
 
-Read and apply these installed skills when their trigger is present:
+- Apply `plan-interview-execute` only for an owner-requested plan, interview,
+  separate explicit `go`, or a still-open material choice. Do not add an
+  interview or confirmation to frozen, authorized execution.
+- Apply `long-running-task-ledger` to multi-session or deadline-bound work.
+- Apply both `codex-claude-cowork` and `long-running-task-ledger` before target
+  execution for any duration-specified owner request.
+- Apply `evidence-first-research` to current advisories, entitlements, vendor
+  guidance, or security claims.
+- Apply `operate-native-hpc` before scheduler or allocation work.
+- Apply `guarded-bulk-delete` before recursive or expanded multi-path cleanup.
 
-- `plan-interview-execute` only when the owner requests planning, interview, or
-  a separate explicit `go`, or when unresolved material choices remain. Do not
-  add another interview or confirmation to already frozen, authorized work;
-- `long-running-task-ledger` for every multi-session or deadline-bound stream;
-- `evidence-first-research` for current advisories, platform entitlements,
-  vendor guidance, and security claims;
-- `operate-native-hpc` before scheduler or allocation work; and
-- `guarded-bulk-delete` before any recursive or multi-path deletion.
+## Route exact working context
 
-Never make a sibling repository depend at runtime on this skill or the harness.
-Skills govern the working method; each project remains operationally
-self-contained.
+Reconstruct the recorded phase, then read every matching reference completely
+before its action. Do not preload later phases or unrelated host types.
 
-## Reconstruct before planning
+| Current action | Read completely |
+| --- | --- |
+| reconstruct, discover, benchmark, freeze decisions, or establish authority | [planning.md](references/planning.md) |
+| inspect repository or hosting controls | [repository-audit.md](references/repository-audit.md) |
+| inspect Linux or HPC hosts | [linux-audit.md](references/linux-audit.md) |
+| inspect macOS hosts | [macos-audit.md](references/macos-audit.md) |
+| implement a frozen repository or host change | [execution.md](references/execution.md) |
+| handle any ambiguity, failed gate, or blocker | [issue-stack.md](references/issue-stack.md), in addition to the current phase |
+| validate, publish, clean task residue, reach a cutoff, or hand off | [closeout.md](references/closeout.md) |
 
-1. Read the closest `AGENTS.md`, `CLAUDE.md`, task ledger, and declared session
-   state in every repository.
-2. Fetch each collaborative remote. Record branch, revision, upstream,
-   worktree state, active pull requests, and pre-existing work.
-3. Inventory the in-scope hosts read-only: reachability, OS, storage pressure,
-   backup status, agent versions, security controls, and managed-service state.
-   Use a native status interface rather than inferring health from one process.
-4. Read live repository controls separately from Git transport: Actions token
-   defaults, rulesets, required checks, dependency alerts, update automation,
-   secret protection entitlement, environments, and open alerts.
-5. Distinguish confirmed risks, expected policy differences, stale warnings,
-   and hypotheses. Do not turn absence or a failed query into a finding.
+When the phase or target type changes, read the newly selected reference before
+continuing. If the phase, ownership, or authority cannot be reconstructed,
+stop target mutation and record that unknown state in the owning ledger.
 
-Use `python3`, not an assumed unversioned `python`. For uv environments use
-`uv pip check --python PATH`; do not assume the environment contains pip.
-Keep local-versus-remote shell expansion explicit in SSH commands.
-
-## Establish independent ownership
-
-Create one umbrella plan in the coordinating repository and one task in every
-affected repository's own TODO. Use an isolated worktree and task branch for
-each stream. Never stash pre-existing owner or agent work.
-
-The umbrella plan must freeze:
-
-- exact repositories and hosts;
-- risk-ranked findings and non-goals;
-- repository and system authority boundaries;
-- protected-main, dependency/security, network, backup, package, and
-  administrator preferences when relevant;
-- per-repository acceptance gates;
-- rollback and publication routes;
-- the issue-stack protocol; and
-- the deadline, material-work cutoff, final-validation window, and handoff.
-
-Ask one material owner question at a time only when requested or when a
-discoverable answer cannot resolve a decision that changes scope, authority, or
-external state. Record each answer before asking the next. If decisions are
-already complete and the owner's request explicitly authorizes execution, that
-same request is the `go`; never manufacture a second confirmation. Do not
-mutate target state until material choices are frozen and execution authority
-exists.
-
-## Process issues as repository-local LIFO stacks
-
-On the slightest new ambiguity or failed gate:
-
-1. Pause only the interrupted change and preserve safe evidence.
-2. Classify retry safety and whether a coherent validated partial commit exists.
-3. If not, stash only explicitly named task-owned paths. Never use a broad
-   stash and never include pre-existing work.
-4. Push the issue to the top of that repository's active TODO with the exact
-   failure, stash or commit identifier, unchanged external state, and next
-   command.
-5. Treat the new issue as that repository's next task. Resolve it immediately
-   when safe, record the resolution, remove only superseded task-owned stash
-   state after validation, and pop back to the interrupted task.
-6. If the newest item needs owner input, administrator authority, or another
-   unavailable external condition, mark it deferred in place and continue the
-   next highest safe item in that same repository. Do not skip an item whose
-   correctness depends on the gate.
-7. Keep every other repository progressing independently.
-
-A gate is not a terminal stop. It becomes the newest work item. If it needs
-owner input or unavailable administrator authority, leave its exact helper or
-decision at the top, continue safe independent work below it in the same
-repository, and continue every other repository. Never interpret one blocked
-item as a reason to idle its whole repository.
-
-## Execute in small protected increments
-
-Prioritize credential exposure, vulnerable runtime dependencies, privileged
-workflow injection, absent required CI, and uncontrolled default branches
-before efficiency or package freshness.
-
-- Add a focused regression before or with each behavior change.
-- Keep Actions permissions read-only by default and never let workflows approve
-  pull requests unless explicitly required.
-- Move untrusted event values through environment variables rather than
-  interpolating them into shell source.
-- Pin third-party Actions by immutable commit.
-- Enable native dependency and secret protection only where the hosting plan
-  supports it. For unavailable private-repository secret protection, use a
-  credential-free, pinned, reviewed local/CI fallback; do not claim equivalence
-  to provider-wide scanning.
-- Never auto-merge dependency updates.
-- Require a passing, exact CI context before adding it to branch protection.
-- Treat an owner-selected required approving-review count of zero as an
-  accepted baseline, not a finding. Never raise it during hardening without
-  separate explicit authorization for the exact repository and ruleset.
-- Preserve stronger repository-specific review rules.
-- Apply host changes transactionally and validate one host or route at a time.
-- Use only existing narrow non-interactive administrator authority. Stage an
-  exact reviewed helper with impact, rollback, and validation for password,
-  root, reboot, TCC, or physical gates.
-
-Fetch immediately before publication. Push with an explicit refspec:
-
-```bash
-git push origin HEAD:refs/heads/TASK_BRANCH
-```
-
-Do not use plain `git push`; a global `push.default=matching` can publish other
-local branches. Never force-push.
-
-## Validate and close
-
-For each repository:
-
-1. Run focused tests, the declared full suite, dependency/lock checks, secret
-   checks, and `git diff --check`.
-2. Push a small commit series and open the repository-owned pull request.
-3. Require exact current-head checks; read back live rules/settings after any
-   hosting change.
-4. Merge only through the selected protected workflow and verify alerts or
-   settings that should change after merge.
-5. Record commits, pull requests, immutable rule identifiers, checks, external
-   state, residue, and remaining stack items in that repository's ledger.
-
-For the fleet, independently recheck logical nodes, redundant routes, managed
-service ownership, backups, and changed configuration. Do not report an
-unverified route pair as healthy.
-
-Stop starting material changes at the frozen cutoff. Use the remaining window
-for full regression, live-settings readback, fleet health, residue, clean-tree,
-branch/worktree, and ledger checks. At the deadline, leave the next executable
-action and authority requirement in every unfinished repository.
-
-Read [references/audit-checklist.md](references/audit-checklist.md) for the
-minimum discovery and final-readback matrix.
+Do not mutate target state until `planning.md` has established frozen material
+choices and execution authority. Keep unaffected repositories progressing
+independently; one blocked stack must not acquire another repository's lock,
+alter its ledger, or stop its safe work.

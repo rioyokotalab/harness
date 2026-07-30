@@ -6,7 +6,7 @@ COWORK=$ROOT/shared/skills/codex-claude-cowork
 HPC=$ROOT/shared/skills/operate-native-hpc
 PIE=$ROOT/shared/skills/plan-interview-execute
 REMOTE=$ROOT/shared/skills/remote-agent-communication
-HARDENING=$ROOT/shared/skills/fleet-repository-hardening/SKILL.md
+HARDENING=$ROOT/shared/skills/fleet-repository-hardening
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 assert_contains() {
@@ -39,7 +39,15 @@ for path in \
     "$PIE/references/planning.md" \
     "$PIE/references/interview.md" \
     "$PIE/references/execution.md" \
-    "$HARDENING"; do
+    "$HARDENING/SKILL.md" \
+    "$HARDENING/references/planning.md" \
+    "$HARDENING/references/repository-audit.md" \
+    "$HARDENING/references/linux-audit.md" \
+    "$HARDENING/references/macos-audit.md" \
+    "$HARDENING/references/execution.md" \
+    "$HARDENING/references/issue-stack.md" \
+    "$HARDENING/references/closeout.md" \
+    "$HARDENING/references/audit-checklist.md"; do
     [ -f "$path" ] && [ ! -L "$path" ] || fail "missing regular file: $path"
 done
 
@@ -120,10 +128,43 @@ assert_contains 'Continue autonomously through settled choices' \
     "$PIE/references/execution.md" 'PIE execution autonomy gate'
 assert_contains 'generation by itself is not acceptance' \
     "$PIE/references/execution.md" 'PIE independent acceptance gate'
-assert_contains 'add another interview or confirmation' "$HARDENING" \
+assert_contains 'Do not add an' "$HARDENING/SKILL.md" \
     'hardening frozen-authority autonomy'
-assert_contains 'same request is the `go`' "$HARDENING" \
+assert_contains 'same request is the `go`' \
+    "$HARDENING/references/planning.md" \
     'hardening current-request execution authority'
+for route in planning repository-audit linux-audit macos-audit execution \
+    issue-stack closeout; do
+    assert_contains "[$route.md](references/$route.md)" \
+        "$HARDENING/SKILL.md" "hardening missing $route route"
+done
+assert_contains 'reproducible baseline, measurable benchmark' \
+    "$HARDENING/references/planning.md" 'hardening benchmark gate'
+assert_contains 'one task in every' "$HARDENING/references/planning.md" \
+    'hardening ledger gate'
+assert_contains 'On the slightest new ambiguity or failed gate' \
+    "$HARDENING/references/issue-stack.md" 'hardening LIFO gate'
+assert_contains 'For private Actions' \
+    "$HARDENING/references/execution.md" \
+    'hardening private Actions gate'
+assert_contains 'Treat pull-request code as untrusted' \
+    "$HARDENING/references/execution.md" \
+    'hardening untrusted-code gate'
+assert_contains 'required approving-review count of zero' \
+    "$HARDENING/references/execution.md" \
+    'hardening zero-approval gate'
+assert_contains 'Use `guarded-bulk-delete`' \
+    "$HARDENING/references/closeout.md" \
+    'hardening cleanup gate'
+assert_contains 'stop starting material changes at the frozen cutoff' \
+    "$HARDENING/references/closeout.md" \
+    'hardening duration cutoff'
+assert_contains 'At the deadline, stop execution' \
+    "$HARDENING/references/closeout.md" \
+    'hardening deadline stop'
+assert_contains 'do not preload this compatibility index' \
+    "$HARDENING/references/audit-checklist.md" \
+    'hardening legacy aggregate marker'
 
 # HPC selects common plus one exact site and retains site-specific stop gates.
 for route in common current abci riken alps rccs tsubame; do

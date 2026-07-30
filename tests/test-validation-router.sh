@@ -51,6 +51,16 @@ cases = [
         True,
     ),
     (
+        ["shared/skills/fleet-repository-hardening/references/execution.md"],
+        "R1",
+        [
+            "tests/test-fleet-repository-hardening-skill.sh",
+            "tests/test-skill-context-budgets.sh",
+            "tests/test-skill-context-gates.sh",
+        ],
+        False,
+    ),
+    (
         ["libexec/harness-terminfo"],
         "R2",
         ["tests/test-terminfo.sh"],

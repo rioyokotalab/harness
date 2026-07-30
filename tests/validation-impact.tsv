@@ -18,6 +18,8 @@
 ^shared/skills/plan-interview-execute/(SKILL\.md|references/(planning|interview|execution)\.md)$|R1|tests/test-skill-context-gates.sh|PIE routed behavior gates
 ^tests/test-skill-context-(budgets|gates)\.sh$|R3|-|skill routing validator
 ^shared/skills/fleet-repository-hardening/|R1|tests/test-fleet-repository-hardening-skill.sh|hardening skill
+^shared/skills/fleet-repository-hardening/|R1|tests/test-skill-context-budgets.sh|hardening routed context budget
+^shared/skills/fleet-repository-hardening/|R1|tests/test-skill-context-gates.sh|hardening routed safety gates
 ^tests/test-fleet-repository-hardening-skill\.sh$|R1|tests/test-fleet-repository-hardening-skill.sh|hardening skill validator
 ^shared/skills/onboard-personal-mac/|R1|tests/test-onboard-personal-mac-skill.sh|personal Mac skill
 ^tests/test-onboard-personal-mac-skill\.sh$|R1|tests/test-onboard-personal-mac-skill.sh|personal Mac skill validator
