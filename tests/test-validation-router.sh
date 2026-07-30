@@ -29,7 +29,10 @@ cases = [
     (
         ["shared/skills/codex-claude-cowork/SKILL.md"],
         "R1",
-        ["tests/test-codex-claude-cowork-skill.sh"],
+        [
+            "tests/test-skill-context-budgets.sh",
+            "tests/test-skill-context-gates.sh",
+        ],
         False,
     ),
     (
@@ -90,7 +93,10 @@ docs, skill, unknown = (json.loads(value) for value in sys.argv[1:])
 assert docs["tier"] == "R0"
 assert docs["suites"] == ["tests/test-task-ledger-routing.sh"]
 assert skill["tier"] == "R1"
-assert skill["suites"] == ["tests/test-codex-claude-cowork-skill.sh"]
+assert skill["suites"] == [
+    "tests/test-skill-context-budgets.sh",
+    "tests/test-skill-context-gates.sh",
+]
 assert unknown["tier"] == "R3"
 assert unknown["suites"] == ["tests/test-phase1.sh"]
 PY
