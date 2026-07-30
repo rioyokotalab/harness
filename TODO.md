@@ -9,22 +9,20 @@ Next free ID: T-348.
 
 ## Current state
 
-- Protected `main` and Local were clean/current at
-  `116a9939814b432f8ef2c8813a8a0f99073c10ff` before the current T-345
-  activation evidence branch. T-345 implementation merge
+- Protected `main` and Local are clean/aligned at
+  `3ef3292d8e3f740454dc6e1170070f23db9d257e` before the T-345/T-347
+  closeout-only branch. T-345 implementation merge
   `5351f0cb04716aa5082eaee5d049e4efd10bc4be` is installed on the ten
-  reachable remote managed checkouts; the later documentation handoff is
-  protected on `main` at
-  `949e84a9fa5e16fdcf818094b21f3700f09bb291`. T-306's context-refresh
-  policy is current; Aist, Home, Office, and Riken each accepted exactly one
+  reachable remote managed checkouts. T-306's context-refresh policy is
+  current; Aist, Home, Office, and Riken each accepted exactly one
   T-345-specific refresh and none may be retried.
 - Local's canonical tmux topology is
   `@87/0:harness,@88/1:students,@93/2:swallow`; monitor topology is
-  temporarily `@40/0:tunnel,@95/1:codex` after the partial-transaction
-  safeguard terminated exact helper `4140398`; monitor health remains 3/3 and
-  all three resilient chains remain live. T-347 has verified all five root
-  lifecycle operations and freezes the final one-shot v12 helper bridge. The
-  historical failed mirror event must not be retried.
+  `@40/0:tunnel,@95/1:codex,@97/2:helper`. Monitor health is 3/3; helper
+  `2562117` is idle with only historical `failed=1`; all three resilient chains
+  remain live at attempt zero. T-347 verified all five root lifecycle
+  operations, exact three-root phone/tmux parity, two helper intervals, and
+  native doctor 18/18. The historical failed mirror event must not be retried.
 - ABQ is unreachable through both declared routes. The official G-QuAT status
   page still reports System H `サービス停止中` with the current scheduled
   stop ending 2026-07-30 17:00 JST. Its checkout remains unknown and no
@@ -110,25 +108,6 @@ Next free ID: T-348.
 
 ## Prioritized next steps
 
-### Act now — reconcile T-345's failed mirror event
-
-1. Preserve terminal event
-   `13de62583acf5ad5babd684785e636d5bb20d5643ac52b8440cbd93c2155e586`,
-   its mode-0600 evidence, and all six unchanged root archive flags. Never
-   retry the event or inspect its private worker log.
-2. Publish T-347's one-shot v12 helper bridge checkpoint. It verifies the
-   complete root lifecycle receipt, launches one provisional helper from
-   protected code, validates it without a worker event, and rename-only
-   promotes it to exact `monitor:2 helper`.
-3. Retain exact live topology
-   `@40/0:tunnel,@95/1:codex,@96/2:helper` and the canonical project mapping.
-   The four Mac refreshes, monitor bridge, helper launch, and helper promotion
-   are complete and non-retryable.
-4. Close T-345 only after the three frozen extras are reversibly archived,
-   both canonical-name mismatches are corrected, exact phone/tmux parity
-   passes, and a fresh changed-input event or controller transaction has
-   unambiguous one-attempt evidence.
-
 ### After official ABQ restoration
 
 - Reconcile ABQ's exact clean checkout and use one guarded sync to the then
@@ -166,7 +145,7 @@ agents and ledgers.
 
 ### T-347 — Complete T-345 mirror convergence
 
-**Phase:** mirror roots converged; one-shot helper bridge v12 frozen.
+**Phase:** complete live; closeout publication pending.
 
 The immutable T-345 helper event remains terminal `failed/worker-failed`; its
 private worker log remains unread and the event must never be retried.
@@ -660,6 +639,30 @@ user, mode `0700`, one link, 22,976 bytes, SHA-256
 It verifies exact base and v11 receipt digests, passes syntax and zero-write
 preflight, and has distinct absent journal/result paths.
 
+PR #440 passed `portable-phase1` at exact v12 head
+`37a761dd62cbc3f4e1c107ff7287bf8e5662af96` and merge-merged as
+`3ef3292d8e3f740454dc6e1170070f23db9d257e`. v12 launched exactly one
+provisional helper, verified its private idle receipt and unchanged event set,
+then rename-only promoted the accepted window to `@97/2:helper`. Its
+mode-0600 journal/result are respectively 1,272 and 117 bytes with SHA-256
+`861d9aa9e292bc3ff0f4588b19e69a6435137933356b88530316b46d1c94b4b8`
+and
+`da8ed16337da86a69aa300dacf33b7804597868ae1c7e3cf0ecd157392700863`.
+Both launch and promotion are `reserved/sent/acknowledged/verified`; neither
+may be retried.
+
+Final independent acceptance passes. Project topology is exactly
+`@87/0:harness,@88/1:students,@93/2:swallow`; monitor topology is exactly
+`@40/0:tunnel,@95/1:codex,@97/2:helper`. Database and metadata readbacks show
+exactly the three canonical active roots with matching names, all three frozen
+extras reversibly archived with saved rollouts and zero process references,
+and no fourth helper root. Monitor remains healthy 3/3; helper `2562117`
+remains idle with only the immutable historical `failed=1`; all resilient
+chains remain at attempt zero. Two interval-separated helper/monitor/resilient
+readbacks pass. Native redacted doctor reports `overallStatus=ok` and 18/18
+checks `ok`; its mode-0600 capture was exact-unlinked. No pane, transcript,
+turn, rejected prompt, or private worker log was read.
+
 The immutable controller checkpoint is exact commit
 `70c5194066965df1bffc0078f36361ded50d7bc2` in clean worktree
 `/tmp/harness-t347-t345-mirror-execution`. That worktree must remain at this
@@ -669,11 +672,10 @@ an ancestor. PR #423 passed `portable-phase1` at recording head
 `6fc06163946452ca1fe9a7d015279c2b161ea9ff` and merge-merged as
 `805016261124fd07b365a2cbf962222939e0758d`.
 
-**Next action:** publish the accepted v11 lifecycle receipt and exact v12
-controller through the protected workflow. Then pass the resulting
-protected-main merge, checkpoint `70c5194`, and v12 digest `97ba2e5` to one
-v12 execution. Never rerun any prior controller or lifecycle operation. Do
-not launch or rename the helper before protected publication.
+**Next action:** publish this ledger-only closeout through the protected
+workflow. Do not fleet-sync or send a Mac context refresh. After merge, T-347
+and T-345 have no remaining action; never rerun any controller, lifecycle
+operation, helper launch, promotion, or historical failed event.
 
 ### T-346 — Reprioritize the durable Harness action queue
 
@@ -690,9 +692,8 @@ protected `main`.
 
 ### T-345 — Dedicated Codex recovery helper and phone/tmux mirror
 
-**Phase:** partially activated; monitor/helper topology is live, but mirror
-convergence is blocked on one terminal failed worker event pending a separately
-frozen changed-input correction.
+**Phase:** complete live; final acceptance and immutable receipt are recorded
+under T-347.
 
 The owner requested a dedicated `monitor:2 helper` recovery lane that does not
 depend on Harness, Students, or Swallow siblings being idle, automatically
