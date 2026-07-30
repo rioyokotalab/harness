@@ -29,9 +29,11 @@ grep -F 'shellcheck_pid=$!' "$PHASE1" >/dev/null ||
     fail "phase-1 does not overlap ShellCheck and integration gates"
 grep -F 'wait "$shellcheck_pid"' "$PHASE1" >/dev/null ||
     fail "phase-1 does not join ShellCheck validation"
-grep -F 'auto) focused_jobs=auto; focused_reserve=1' "$PHASE1" >/dev/null &&
+grep -F '        focused_jobs=auto' "$PHASE1" >/dev/null &&
+    grep -F '        focused_reserve=1' "$PHASE1" >/dev/null &&
+    grep -F '[ "$visible_cpus" -le 2 ]' "$PHASE1" >/dev/null &&
     grep -F -- '--reserve-cpus "$focused_reserve"' "$PHASE1" >/dev/null ||
-    fail "phase-1 does not reserve one CPU for integration"
+    fail "phase-1 does not reserve one CPU or serialize low-core gates"
 grep -F '[ "$focused_status" -eq 0 ] || fail "focused suites"' \
     "$PHASE1" >/dev/null || fail "phase-1 loses focused-suite failure"
 grep -F '[ "$shellcheck_status" -eq 0 ] || fail "ShellCheck warning/error gate"' \
@@ -40,6 +42,9 @@ grep -F '[ "$shellcheck_status" -eq 0 ] || fail "ShellCheck warning/error gate"'
 python3 - "$PHASE1" <<'PY'
 import pathlib
 import sys
+
+if not __debug__:
+    raise SystemExit("focused-runner contract requires Python assertions")
 
 text = pathlib.Path(sys.argv[1]).read_text()
 shellcheck_start = text.index("shellcheck_pid=$!")
@@ -109,6 +114,9 @@ PYTHONDONTWRITEBYTECODE=1 python3 - "$ROOT/tools/run-focused-tests.py" <<'PY'
 import importlib.util
 import pathlib
 import sys
+
+if not __debug__:
+    raise SystemExit("focused-runner unit checks require Python assertions")
 
 path = pathlib.Path(sys.argv[1])
 spec = importlib.util.spec_from_file_location("focused_runner", path)

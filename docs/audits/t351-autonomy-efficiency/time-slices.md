@@ -637,6 +637,15 @@ than relying on timing. No product check was weakened. A second progress
 message also reused `05:32:40`; it was disclosed and corrected immediately
 with a fresh `05:33:57` read. Both timestamp misses remain recorded.
 
+The clean integration checkpoint at the slice boundary ran all 91 registered
+suites in 54.08 seconds and passed 90. The sole failure was a stale
+`test-focused-runner.sh` source assertion that still expected the former
+one-line auto-worker assignment; product execution and the other 90 suites
+passed. The fixture now checks the retained one-CPU reserve and low-core
+serialization separately, rejects optimized Python, and passes focused
+revalidation. The failed complete run is not waived and does not count as the
+final suite.
+
 No hosting setting, ruleset, approval count, billing state, credential,
 project session, scheduler, or live service changed. Remaining work is to
 checkpoint the accepted review corrections, complete final exact-tree validation,
