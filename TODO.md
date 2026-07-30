@@ -23,8 +23,10 @@ Next free ID: T-348.
   `@40/0:tunnel,@95/1:codex,@96/2:helper`. The merged monitor and helper are
   live; monitor health is 3/3. The helper is idle with one immutable failed
   mirror event, so T-345 is not closed and that event must not be retried.
-  T-347 freezes the authorized deterministic changed-input correction; no
-  lifecycle write occurs before its protected publication and checkpoint.
+  T-347 freezes the authorized deterministic changed-input correction. Twelve
+  immutable one-shot receipts prove no lifecycle request has yet been sent;
+  the complete refusal-boundary v8 controller cannot run before its protected
+  publication and checkpoint.
 - ABQ is unreachable through both declared routes. The official G-QuAT status
   page still reports System H `サービス停止中` with the current scheduled
   stop ending 2026-07-30 17:00 JST. Its checkout remains unknown and no
@@ -116,10 +118,10 @@ Next free ID: T-348.
    `13de62583acf5ad5babd684785e636d5bb20d5643ac52b8440cbd93c2155e586`,
    its mode-0600 evidence, and all six unchanged root archive flags. Never
    retry the event or inspect its private worker log.
-2. Publish T-347's changed-input controller plan. It uses a private fsynced
-   per-operation journal and one metadata-only app-server connection, and can
-   prove whether each exact request was unattempted, acknowledged, or
-   ambiguous without worker transcript content.
+2. Publish T-347's complete refusal-boundary v8 checkpoint. It uses the
+   existing private fsynced per-operation journal and one metadata-only
+   app-server connection, and can prove whether each exact request was
+   unattempted, acknowledged, or ambiguous without worker transcript content.
 3. Retain exact live topology
    `@40/0:tunnel,@95/1:codex,@96/2:helper` and the canonical project mapping.
    The four Mac refreshes, monitor bridge, helper launch, and helper promotion
@@ -166,7 +168,7 @@ agents and ledgers.
 
 ### T-347 — Complete T-345 mirror convergence
 
-**Phase:** lifecycle-diagnostic controller v7 frozen; publication pending.
+**Phase:** complete refusal-boundary controller v8 frozen; publication pending.
 
 The immutable T-345 helper event remains terminal `failed/worker-failed`; its
 private worker log remains unread and the event must never be retried.
@@ -484,6 +486,39 @@ user, mode `0700`, one link, 4,720 bytes, SHA-256
 It verifies exact v6 digest, passes syntax and zero-write preflight, and has
 distinct absent journal/result paths.
 
+PR #435 passed `portable-phase1` at exact v7 head
+`e8dc464d74e8c41f1b19c42a59c6a93b31e2f876` and merge-merged as
+`2398129e15bf9b7198a5b5870a16e4fc91910733`. v7 ran once and terminally
+refused after stopping and resuming all three exact watchers. Its mode-0600
+journal/result are respectively 1,712 and 116 bytes, remain `verified=0`, and
+contain no operation `reserved`, `sent`, `acknowledged`, `ambiguous`, or
+`verified` phase. The helper was not signaled, no lifecycle request occurred,
+and all runtime owners returned to the accepted state.
+
+The v7 diagnostic did not cover the actual refusal site. The v3 amendment
+wraps the base lifecycle function and can refuse in its database refresh before
+calling the function v7 instrumented. The same omission also excludes the v6
+app metadata preflight. Current lock-serialized, value-free reproductions show
+the app metadata preflight, app-open socket gate, watcher-paused app metadata
+preflight, and watcher-paused post-app static gate all pass; these checks sent
+no lifecycle write and retained no returned metadata. Therefore no safety gate
+is changed on inference.
+
+v8 instead wraps the base `refuse` boundary after the fsynced journal is
+created. It records the value-free reason for every later base refusal,
+including the v6 app metadata gate and v3 pre-lifecycle database refresh, while
+leaving all gates, helper/watcher handling, operation ordering, transport, and
+request behavior unchanged.
+
+Private v8 wrapper
+`/run/user/5035/harness-t347-mirror-convergence/controller-v8.py` is current
+user, mode `0700`, one link, 4,478 bytes, SHA-256
+`4006a03ee7774ba196e21276fbed21d8359c518668fbda17e85f139f088f3b23`.
+It verifies exact v6 digest, passes syntax and zero-write preflight, and has
+distinct absent journal/result paths. Python cache residue was removed through
+guarded-delete with protected anchors unchanged; its short-lived manifest was
+exact-unlinked.
+
 The immutable controller checkpoint is exact commit
 `70c5194066965df1bffc0078f36361ded50d7bc2` in clean worktree
 `/tmp/harness-t347-t345-mirror-execution`. That worktree must remain at this
@@ -493,9 +528,9 @@ an ancestor. PR #423 passed `portable-phase1` at recording head
 `6fc06163946452ca1fe9a7d015279c2b161ea9ff` and merge-merged as
 `805016261124fd07b365a2cbf962222939e0758d`.
 
-**Next action:** publish the eleventh no-request refusal and exact v7 wrapper
+**Next action:** publish the twelfth no-request refusal and exact v8 wrapper
 through the protected workflow. Then pass the resulting protected-main merge,
-checkpoint `70c5194`, and v7 digest `b29b865` to one v7 execution. Never rerun
+checkpoint `70c5194`, and v8 digest `4006a03` to one v8 execution. Never rerun
 any prior controller. Do not open the app-server connection, signal watchers,
 or write root metadata before protected publication.
 
