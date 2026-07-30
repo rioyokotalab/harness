@@ -292,15 +292,17 @@ matching explicit target. The controller transport now selects only
 `projects:0:harness`. All seven focused suites pass. The first complete
 phase-1 run passed every suite except the tmux/terminfo tests whose own clean
 committed-checkout gates correctly rejected the dirty feature worktree; rerun
-the complete gate after this checkpoint is committed.
+the complete gate after this checkpoint is committed. Commit
+`ca464a166693ef60f6186ce611d3dcd1a7309f59` is clean and the rerun passed the
+complete phase-1 suite; native MPI remains the suite's declared environment
+skip.
 
-**Next action:** commit and push the verified Harness implementation, rerun
-`tests/test-phase1.sh` from the clean commit, then publish it through a
+**Next action:** publish the verified Harness implementation through a
 protected pull request. Activate and validate the target-aware monitor/helper
-without touching a project TUI. Only after the legacy topology remains
-healthy may Students begin its separate bridge-first, phone-confirmed
-migration. Do not restart a project session before the target-aware control
-plane is protected and active.
+without touching a project TUI. Only after the legacy topology remains healthy
+may Students begin its separate bridge-first, phone-confirmed migration. Do
+not restart a project session before the target-aware control plane is
+protected and active.
 
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
