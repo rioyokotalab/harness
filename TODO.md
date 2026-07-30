@@ -9,17 +9,19 @@ Next free ID: T-347.
 
 ## Current state
 
-- Public `main` and Local are clean/current at
-  `b820a7c5b9eb9c165710cd068e1a398182ce94ef`. T-345 implementation merge
+- Protected `main` and Local were clean/current at
+  `116a9939814b432f8ef2c8813a8a0f99073c10ff` before the current T-345
+  activation evidence branch. T-345 implementation merge
   `5351f0cb04716aa5082eaee5d049e4efd10bc4be` is installed on the ten
   reachable remote managed checkouts; the later documentation handoff is
-  Local-only pending T-345 activation. T-306's context-refresh policy is
-  current and all four private Mac SSH payloads remain current.
+  Local-only pending publication. T-306's context-refresh policy is current;
+  Aist, Home, Office, and Riken each accepted exactly one T-345-specific
+  refresh and none may be retried.
 - Local's canonical tmux topology is
   `@87/0:harness,@88/1:students,@93/2:swallow`; monitor topology is
-  `@40/0:tunnel,@94/1:codex`. Exact `monitor:2 helper` is absent and
-  `harness codex-recovery-helper --status` reports `phase=absent`, so T-345's
-  main-controller activation is the immediate executable task.
+  `@40/0:tunnel,@95/1:codex,@96/2:helper`. The merged monitor and helper are
+  live; monitor health is 3/3. The helper is idle with one immutable failed
+  mirror event, so T-345 is not closed and that event must not be retried.
 - ABQ is unreachable through both declared routes. The official G-QuAT status
   page still reports System H `サービス停止中` with the current scheduled
   stop ending 2026-07-30 17:00 JST. Its checkout remains unknown and no
@@ -105,23 +107,24 @@ Next free ID: T-347.
 
 ## Prioritized next steps
 
-### Act now — complete T-345 activation
+### Act now — reconcile T-345's failed mirror event
 
-1. Reconcile clean Local `main` at `b820a7c`, the merged T-345 implementation
-   at `5351f0c`, the complete T-345 plan, and fresh value-free topology before
-   any live write.
-2. Submit exactly one merge-specific pane-blind context refresh to each
-   already-advanced Mac through `remote-agent-communication`; never retry an
-   acknowledged or ambiguous submission.
-3. Bridge-replace only old monitor window `@94` with merged code, then create
-   and validate exact detached `monitor:2 helper`. Preserve all three
-   canonical project roots, their windows, the shared app server, and owner
-   client selection.
-4. Allow one serialized mirror event to reversibly archive only T-345's three
-   frozen baseline extras. Permanent deletion remains forbidden.
-5. Close T-345 only after exact phone/tmux parity, absent-only remote-control
-   behavior, two healthy monitor/helper intervals, clean Git, and fresh
-   canonical fleet health.
+1. Preserve terminal event
+   `13de62583acf5ad5babd684785e636d5bb20d5643ac52b8440cbd93c2155e586`,
+   its mode-0600 evidence, and all six unchanged root archive flags. Never
+   retry the event or inspect its private worker log.
+2. Freeze a changed-input diagnosis and correction that can prove no target
+   write was attempted without relying on worker transcript content. Do not
+   archive, rename, or unarchive any root before that proof and protected
+   publication.
+3. Retain exact live topology
+   `@40/0:tunnel,@95/1:codex,@96/2:helper` and the canonical project mapping.
+   The four Mac refreshes, monitor bridge, helper launch, and helper promotion
+   are complete and non-retryable.
+4. Close T-345 only after the three frozen extras are reversibly archived,
+   both canonical-name mismatches are corrected, exact phone/tmux parity
+   passes, and a fresh changed-input event or controller transaction has
+   unambiguous one-attempt evidence.
 
 ### After official ABQ restoration
 
@@ -173,8 +176,9 @@ protected `main`.
 
 ### T-345 — Dedicated Codex recovery helper and phone/tmux mirror
 
-**Phase:** ready for main-controller activation after merged implementation
-and fleet rollout; exact helper remains absent.
+**Phase:** partially activated; monitor/helper topology is live, but mirror
+convergence is blocked on one terminal failed worker event pending a separately
+frozen changed-input correction.
 
 The owner requested a dedicated `monitor:2 helper` recovery lane that does not
 depend on Harness, Students, or Swallow siblings being idle, automatically
@@ -335,6 +339,125 @@ code; create and validate exact `monitor:2 helper`; let its one serialized
 mirror event reversibly archive only the three frozen baseline extras; then
 require exact three-root phone/tmux parity, two healthy monitor/helper
 intervals, absent-only remote-control behavior, and fresh fleet health.
+
+**Main-controller activation preflight 2026-07-30 09:20 JST:** the complete
+root instructions, task board, T-345 plan, and applicable ledger and
+communication workflows were reread from disk. Local protected `main` is
+clean/aligned at `116a9939814b432f8ef2c8813a8a0f99073c10ff`, containing
+implementation merge `5351f0c`. The exact live pane-blind topology remains
+`@87/0:harness,@88/1:students,@93/2:swallow` and
+`@40/0:tunnel,@94/1:codex`; one owner client selects Harness `@87`.
+Monitor PID `2859842` retains the pre-merge loaded command and reports
+`healthy=3`; shared app server `2852569` is live; exact helper status remains
+`phase=absent`. All unrelated worktrees and open PR #377 remain preserved.
+
+**Next action:** publish this pre-mutation checkpoint, then submit exactly one
+T-345 implementation-specific pane-blind context refresh to Aist, Home,
+Office, and Riken. An acknowledged or ambiguous submission is never retried.
+Only after recording all four outcomes may the controller revalidate and
+bridge-replace old monitor `@94`.
+
+**Mac refresh checkpoint 2026-07-30 09:22 JST:** the first Aist command used
+the nonexistent repository-root shorthand `scripts/agent-message` and failed
+locally with exit `127` before SSH or target contact, so a corrected attempt
+was safe. The skill-relative transport then returned exact
+`status=submitted` once for Aist, Home, Office, and Riken. Each message named
+T-345 implementation `5351f0c`, required complete instruction/ledger and Git
+reconciliation, and required the existing Mac thread to remain running and
+idle. None may be retried; no pane or transcript content was inspected.
+
+**Next action:** commit and push this non-retryable submission evidence, then
+under a fresh exact identity gate bridge-replace only old monitor window
+`@94` with merged monitor code. Preserve `@40`, all three project windows,
+the shared app server, and the owner client selection.
+
+**Monitor bridge acceptance:** the complete preflight matched clean Local
+`116a993`, old `@94/%94` process `2859842`, its exact argv, a healthy
+three-root receipt, `@40`, the canonical project topology, and sole client
+`3513491` on Harness `@87`. One distinct merged-code monitor was acknowledged
+exactly once as provisional `@95/3:codex-next-t345`, pane `%95`, process
+`4116681`. It produced an exact `healthy=3 order_action=none
+repair_action=none` receipt while old `@94` and every protected identity
+remained live. The launch must not be retried.
+
+**Next action:** publish this accepted bridge identity, then stage old `@94`
+to free index 4, stage accepted `@95` to canonical index 1, rename only the
+accepted window to `codex`, and send one `SIGTERM` only to old monitor process
+`2859842`. Require old window/process absence and a fresh accepted-owner
+receipt; never send a second signal.
+
+**Monitor promotion acceptance:** exact old `@94` was staged to free index 4
+and accepted `@95` was staged to canonical index 1 without changing either
+pane or process. Accepted `@95` was renamed to `codex`; one `SIGTERM` was
+then sent only to old process `2859842`. Old process, pane, and window exited
+without a second signal. Final monitor mapping is
+`@40/0:tunnel,@95/1:codex`; accepted process `4116681` remains live, and sole
+owner client `3513491` remains on Harness `@87`.
+
+**Next action:** publish this non-retryable promotion, then launch one
+provisional `monitor:2` helper window from merged code. Require its exact
+process, private mode-0700/0600 runtime state, and value-free live receipt
+before rename-only promotion to `helper`; preserve any immutable mirror event
+and never retry an acknowledged helper or worker launch.
+
+**Helper LIFO preflight refusal:** the first helper-launch transaction stopped
+at its initial Git assertion because it compared the task head with an
+incorrect manually expanded form of short commit `468e360`. Authoritative Git
+resolves it to `468e360342b13c7154be48486ad1d38c86158121`. No helper
+window/process/event/receipt/worker or root/archive write was created;
+`monitor:2` remains free and helper status remains `phase=absent`. Retry is
+safe after publishing this exact correction and changing only that Git gate.
+
+**Helper launch and mirror-event failure 2026-07-30 09:28 JST:** after the
+corrected pushed-head gate, one provisional helper launch was acknowledged
+exactly once as `@96/2:helper-next-t345`, pane `%96`, process `4140398`.
+Its mode-0700 runtime and mode-0600 lock, helper, remote-control, immutable
+event, receipt, and log metadata pass. It detected exactly the three canonical
+roots, the three frozen extras, zero missing roots, and two canonical-name
+mismatches, then launched one Sol/high ephemeral worker as PID `4140404`.
+
+The worker exited `1`; immutable event
+`13de62583acf5ad5babd684785e636d5bb20d5643ac52b8440cbd93c2155e586`
+is terminal `failed/worker-failed` with no accepted `RECOVERY_RESULT`. Its
+private 72-line log was not read because pane/transcript content is excluded.
+No worker remains. Independent exact-ID SQLite readback shows all six roots
+still unarchived, all three extras still have zero process references, and the
+two pre-existing canonical-name mismatches remain. The event and any possible
+target-side attempt must never be retried.
+
+**Next action:** publish this non-retryable failure. Rename-only promote live
+accepted `@96` to exact `monitor:2 helper`, preserving its failed receipt and
+all protected state. Then collect two interval-separated monitor/helper
+readbacks and stop T-345 short of mirror convergence; diagnose or amend the
+failed event only under a separately frozen changed-input plan that does not
+read the private worker log or repeat an ambiguous operation.
+
+**Partial live acceptance:** one rename-only promotion changed accepted
+`@96/2:helper-next-t345` to exact `@96/2:helper` without changing pane `%96`
+or process `4140398`. Final monitor topology is exactly
+`@40/0:tunnel,@95/1:codex,@96/2:helper`, one live pane each. The canonical
+project topology remains exactly
+`@87/0:harness,@88/1:students,@93/2:swallow`; sole client `3513491` remains
+on Harness `@87`; shared app server `2852569` remains live.
+
+Interval-separated monitor epochs `1785371386` and `1785371417` both report
+`healthy=3 order_action=none repair_action=none` from accepted process
+`4116681`. Helper epochs `1785371384` and `1785371414` both report the same
+live owner and terminal count `failed=1`, with no queued, running, completed,
+ambiguous, or deferred event. The ephemeral worker is absent and no fourth
+saved helper root exists. Native redacted doctor reports `overallStatus=ok`
+and all 18 checks `ok`; its private capture was exact-unlinked.
+
+The three canonical and three frozen-extra archive flags remain zero, and the
+extras have zero process references. No root archive/name write, app-server
+start/stop/signal, prompt replay, pane/transcript read, client movement,
+project-window mutation, second monitor/helper/worker launch, or unrelated
+worktree change occurred.
+
+**Next action:** publish this partial acceptance through protected CI. Keep the
+live monitor/helper processes and failed event unchanged. A subsequent task
+must first freeze a transcript-free changed-input failure diagnosis and
+one-attempt correction; T-345 mirror convergence and closure remain pending.
 
 ### T-344 — Recover Swallow and automate blocked-root cutover
 
