@@ -128,7 +128,62 @@ measured route and latency work in the next slice.
 
 ## 2026-07-31 01:00–01:59 JST
 
-In progress. Reconcile the bounded private-run concurrency sample, review the
-fleet-hardening phase-routing sidecar, and retain only changes that reduce
-selected context without weakening its LIFO, authority, or untrusted-code
-gates.
+The bounded cancellation review found no further material Actions lever: the
+latest 1,000 Students runs in the frozen window contained only three cancelled
+runs and Swallow's complete 285-run sample contained one. Existing
+event-scoped concurrency already cancels superseded pull-request work, so no
+additional cancellation machinery was retained. The Harness workflow now
+removes its duplicate `main` push trigger while preserving pull-request,
+weekly, and manual execution; a focused sustainability fixture proves the
+event and permission contract. README now states the resulting trust model:
+owner work in the private repositories uses same-root exact-tree evidence and
+allocates no hosted runner, mixed/non-owner work remains independently hosted,
+and weekly/manual runs remain the backstop. The Harness PR and no-push-run
+observation remain final-publication gates.
+
+Task routing reduced the active board from 1,153 to 246 words and moved
+chronology into four selected records without losing a byte from the tracked
+historical snapshot. Cold-resume fixtures recover every exact T-351, T-196,
+T-328, and T-303 gate through one board hop. Fleet hardening now selects
+planning, repository/Linux/macOS audit, execution, LIFO issue-stack, and
+closeout references by current phase; its largest interrupted route is 864
+words instead of 1,431. Personal-Mac onboarding similarly selects the current
+component plus common execution and acceptance gates; its largest cumulative
+route is 953 words instead of 1,527. Both full skill suites passed, including
+authority, untrusted-code, orphan-revalidation, and acceptance-marker checks.
+
+The always-visible 17-skill descriptions fell from 819 to 375 words while
+retaining a tested trigger marker for every workflow. Historical client
+evaluation initially rejected the evolved ledger skill, exactly as its frozen
+baseline guard should. The repository's established compatibility mechanism
+was applied: byte-exact baseline copies of the ledger and research skills now
+live under `evaluation/control-plane/`, and the two historical tasks route to
+those copies. Both evaluation suites then passed without weakening or
+regenerating the frozen benchmark. The complete 91-suite phase-one run passed
+in 73.69 seconds (152.89 user, 168.49 system) after that correction.
+
+Further policy routing moved bounded remote-reply obligations, duration
+cadence, and standing Git authority out of every prompt and into their exact
+conditional modules. Root `AGENTS.md` is now 833 words, down from 997 at the
+start of this slice and 2,881 at the immutable baseline. The factual,
+documentation, ordinary-code, and tmux scenarios now select 1,330, 1,589,
+1,589, and 1,620 words respectively. The explicit duration route still loads
+its 66-word cadence module, exact hourly-slice contract, Cowork workflow, and
+ledger. Tight route budgets now fail if root or conditional policy re-bloats.
+Eight stale one-off command approvals for old paper queries, website checks,
+and design-review paths were removed from the new-session rules surface. It
+shrunk from 2,915 to 1,152 bytes while retaining recurring Git, HPC,
+local-server, and recursive-delete safeguards; config, fleet-config, and
+destructive-command tests pass, and a new byte/entry budget protects the gain.
+
+A read-only process audit found the live tmux Codex monitor using about 1.2% of
+one CPU and the connection monitor effectively idle, so neither justified a
+cadence change. Four zero-CPU, current-user, parentless fake launchers from
+older interrupted test roots were identified as cleanup candidates; their
+backing temporary directories are absent. They were not signalled in this
+slice because exact UID, parent, state, start-tick, and argv identities must be
+revalidated at cleanup. No live supervisor, managed session, tmux pane,
+app-server, account, ruleset, billing, scheduler, credential, or project-agent
+state changed. Two independent read-only audits and an isolated
+unsafe-recovery skill-routing implementation remain in progress for the next
+slice; only independently reviewed evidence will be retained.

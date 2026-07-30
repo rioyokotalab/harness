@@ -57,6 +57,7 @@ Matched retained measurements:
 | overlap, exact tree after remote routing | 72.21 s | not retained | not retained | 516,124 KiB |
 | overlap, exact tree after PIE routing | 72.54 s | 151.62 s | 167.71 s | 511,064 KiB |
 | overlap, exact tree after task/hardening routing | 73.57 s | 153.07 s | 165.15 s | 620,456 KiB |
+| overlap, 91-suite tree after catalog compatibility | 73.69 s | 152.89 s | 168.49 s | not retained |
 
 The retained automatic route sees eight affinity-visible CPUs and gives seven
 to focused suites while integration proceeds. Explicit or legacy worker counts
@@ -64,9 +65,10 @@ remain exact and reserve zero. The repeated automatic result is 36.7% faster
 than the integrated serial tree and 36.8% faster than the original baseline.
 Peak RSS varied substantially between matched runs, so no memory reduction is
 claimed; all values remained near the original baseline run's 744,832 KiB.
-All exact-tree post-routing runs passed all 89 suites. Only wall time
-and maximum RSS were requested from the remote-routing invocation, so its CPU
-times are deliberately reported as unavailable rather than inferred.
+All exact-tree post-routing runs passed every then-registered suite; the latest
+tree contains 91 suites. Only wall time and maximum RSS were requested from the
+remote-routing invocation, and maximum RSS was not requested from the latest
+catalog-compatibility run, so unavailable values are not inferred.
 
 `tests/test-focused-runner.sh` enforces background start, one-CPU automatic
 reserve, join, and failure propagation. A focused-suite failure may now be
