@@ -5,13 +5,13 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-348.
+Next free ID: T-349.
 
 ## Current state
 
 - Protected `main` and Local are clean/aligned at
-  `3ef3292d8e3f740454dc6e1170070f23db9d257e` before the T-345/T-347
-  closeout-only branch. T-345 implementation merge
+  `4b75af573ca4c9b475861f6718bb2b5ed7dbfd12` after the T-345/T-347
+  closeout. T-345 implementation merge
   `5351f0cb04716aa5082eaee5d049e4efd10bc4be` is installed on the ten
   reachable remote managed checkouts. T-306's context-refresh policy is
   current; Aist, Home, Office, and Riken each accepted exactly one
@@ -142,6 +142,55 @@ items. Students and Swallow project research remains owned by their independent
 agents and ledgers.
 
 ## Task records
+
+### T-348 — Keep phone remote-control roots mirrored to Local tmux
+
+**Phase:** ready for go.
+
+The owner reports that Swallow is absent from phone Remote and requests a
+periodic one-to-one mirror for Harness, Students, and Swallow. Complete
+read-only diagnosis found all current monitor, tmux, process, watcher, socket,
+database, rollout, name, archive, remote-control process, and native-doctor
+checks healthy. The missed distinction is exact: Harness and Students have
+interactive source `vscode`, while Swallow has source `exec`. Codex's
+documented default `thread/list` includes only `cli` and `vscode`, so the
+current monitor incorrectly accepts a canonical root that the interactive
+phone-facing list excludes.
+
+The frozen plan is
+`docs/plans/t348-phone-remote-mirror.md`. It adds a private periodic
+phone-eligibility receipt and makes monitor health require exact canonical
+tmux/root/name/archive/path/source parity. It never opens an app-server control
+connection from the monitor and never claims physical-phone rendering from
+local metadata.
+
+The initial repair is bridge-first: create one distinct interactive
+app-server Swallow root, cold-reconcile only from repository instructions and
+durable ledgers, launch it in a provisional tmux window, and require host
+interactive-list acceptance. Preserve old `@93/2:swallow` until the owner
+confirms that the provisional root is visible on the physical phone. Only then
+transfer names/topology, retire one old TUI leaf, and reversibly archive the
+retired old root. Direct SQLite/rollout rewriting, app-server restart, prompt
+replay, pane/transcript reads, root deletion, client movement, and peer
+mutation are excluded.
+
+Git planning work is isolated in `/tmp/harness-t348-phone-mirror` on branch
+`codex/t348-phone-mirror` from exact protected main
+`4b75af573ca4c9b475861f6718bb2b5ed7dbfd12`. No live app-server connection,
+thread/root write, process signal, tmux mutation, or external write ran during
+planning.
+
+**Decisions D-001–D-003, recommended:** use an app-server-created interactive
+replacement rather than rewriting immutable `exec` source metadata; require
+physical-phone confirmation before retiring old Swallow; and call the
+machine-checkable state `phone eligible`, leaving product-side rendering
+failures report-only.
+
+**Next action:** wait for one separate explicit `go`. Then add failing focused
+fixtures, implement and validate the monitor/helper contract, publish through
+protected exact-head CI without changing zero approvals, activate merged code,
+and create the provisional bridge. Pause only for the owner's phone-visible
+confirmation before final promotion and archive.
 
 ### T-347 — Complete T-345 mirror convergence
 
