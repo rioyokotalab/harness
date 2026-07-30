@@ -1,6 +1,6 @@
 # T-348 phone remote-control mirror
 
-**Phase:** experimental root accepted; prelaunch checkpoint
+**Phase:** provisional bridge accepted; awaiting physical-phone confirmation
 **Driver:** Local Codex
 **Updated:** 2026-07-30 JST
 **Branch:** `codex/t348-phone-mirror`
@@ -291,14 +291,25 @@ all-source top-level list, and loaded-thread readback each proved exactly the
 original three roots and no provisional name. The owner has now separately
 authorized one changed-input start after reviewing that proven-absent result.
 
-Preserve the old Swallow and disabled automatic mirror event. Publish the D-005
-result through protected `main`; requests `7` and `9` must not be repeated.
-Reconcile the exact accepted empty root and all frozen Git, tmux, process,
-watcher, app-server, database, helper, monitor, and prior-result preconditions.
-If they remain exact, tighten only its validated current-user single-link
-rollout to mode 0600 and launch the one provisional index-3 runtime. Journal
-the launch and generic cold-start input before each operation and never repeat
-an acknowledged or ambiguous one. Require one assistant-bearing completed
-turn, resolved Sol/high persistence, default interactive-list inclusion, and
-an attempt-zero runtime checkpoint. Then stop at explicit physical-phone
-confirmation before any rename, retirement, archive, or promotion.
+Prelaunch result PR #447 merged as
+`4ada98b0c8d53ba28d3254d22098667f663b77e0`. The one-shot launch receipt
+acknowledges mode-0600 tightening of only the accepted rollout and provisional
+window `@98/3:swallow-phone-bridge-20260730`. Its supervisor, watcher, and TUI
+are live at attempt zero against the exact accepted root; the sole owner
+client remained on Harness.
+
+The separately journaled generic cold-start paste and delayed submit were each
+acknowledged once. Value-free app-server inspection proves one completed
+assistant-bearing turn, no error, idle status, exact interactive source/cwd,
+exact provisional app-server name, and default interactive-list inclusion.
+The database persists resolved model `gpt-5.6-sol`; Codex 0.145 leaves the
+reasoning-effort and custom-name columns null, while the acknowledged start
+response proves `high` and the live app server returns the exact provisional
+name. No pane or transcript content was read and no name request was repeated.
+
+Stop at the physical-phone gate. Preserve old `@93/2:swallow` and provisional
+`@98/3` exactly. The owner must confirm that
+`swallow-phone-bridge-20260730` appears in phone Remote before any rename,
+topology move, process signal, retirement, archive, or promotion. All prior
+start, name, launch, paste, and submit operations remain consumed and
+non-retryable.

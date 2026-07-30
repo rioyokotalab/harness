@@ -145,7 +145,7 @@ agents and ledgers.
 
 ### T-348 — Keep phone remote-control roots mirrored to Local tmux
 
-**Phase:** experimental root accepted; prelaunch checkpoint publication.
+**Phase:** provisional bridge accepted; awaiting physical-phone confirmation.
 
 The owner reports that Swallow is absent from phone Remote and requests a
 periodic one-to-one mirror for Harness, Students, and Swallow. Complete
@@ -325,6 +325,41 @@ index-3 runtime already authorized by the bridge plan. Submit the one generic
 cold-start instruction once, require an assistant-bearing completed turn and
 resolved Sol/high persistence/default-list inclusion, checkpoint again, and
 stop for physical-phone confirmation before promotion.
+
+Prelaunch result PR #447 passed protected `portable-phase1` and merged as
+`4ada98b0c8d53ba28d3254d22098667f663b77e0`. One-shot launcher digest
+`bc3f797fe84be9177606252910da8c1694f6f8d84e2a5fe220c954446c17d829`
+tightened only the accepted root's validated rollout to mode 0600 and
+acknowledged provisional window `@98` at index 3. Runtime
+`swallow-phone-t348` is attempt zero with supervisor `4144052`, recovery
+watcher `4144136`, and TUI `4144360`, all rooted at exact Harness cwd and
+exact remote root. The owner's sole tmux client remained on `@87/0:harness`.
+
+One-shot submitter digest
+`efa7487fb25cab0c7ffff9e943f77db03e74be0623e03f3db180f5b4954c908c`
+acknowledged one literal generic cold-start paste and, after 1.2 seconds, one
+separate submit. No pane or transcript content was read. Value-free
+app-server validation now proves exactly one completed assistant-bearing turn,
+idle status, no turn error, exact `vscode` source/cwd, exact provisional
+app-server name, inclusion in the three-root default interactive list, and
+inclusion in the four-root loaded list. The database now persists resolved
+model `gpt-5.6-sol`; Codex 0.145 still leaves reasoning effort and custom-name
+columns null, while the acknowledged start response proves `high` and the
+live app server returns the exact provisional name. No name request was
+repeated.
+
+Old `@93/2:swallow` remains live and untouched. The helper is idle with one
+disabled queued mirror event and its historical failure. Monitor
+`healthy=3 phone_mirror=unavailable` is expected while the provisional fourth
+root/window exists; it performed no repair. All launch and submission
+receipts are mode 0600 under
+`/run/user/5035/harness-t348-phone-mirror/`.
+
+**Next action and required owner evidence:** stop all lifecycle work. The owner
+must confirm that `swallow-phone-bridge-20260730` is visible in phone Remote.
+Until that exact confirmation, do not rename either root, move either window,
+signal any process, archive old Swallow, repeat a start/name/launch/input, or
+promote the provisional bridge.
 
 ### T-347 — Complete T-345 mirror convergence
 
