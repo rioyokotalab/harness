@@ -192,6 +192,16 @@ active-reference search, and diff hygiene.
 `tests/test-phase1.sh`, then publish the exact validated head through protected
 CI before any live session or fleet mutation.
 
+Implementation commit `eb1387e` passes the complete clean phase-one suite:
+all focused shards, guarded-delete coverage, and integration checks passed;
+only the declared native MPI smoke skipped outside an allocation. The worktree
+remained clean during validation, and the live tmux session, monitors, and
+fleet remain unchanged.
+
+**Next action:** commit this validation checkpoint, fetch and push the exact
+task head, require protected `portable-phase1`, and merge before executing the
+frozen live rename.
+
 ### T-348 — Keep phone remote-control roots mirrored to Local tmux
 
 **Phase:** complete.
