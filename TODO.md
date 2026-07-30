@@ -20,13 +20,11 @@ Next free ID: T-348.
   T-345-specific refresh and none may be retried.
 - Local's canonical tmux topology is
   `@87/0:harness,@88/1:students,@93/2:swallow`; monitor topology is
-  `@40/0:tunnel,@95/1:codex,@96/2:helper`. The merged monitor and helper are
-  live; monitor health is 3/3. The helper is idle with one immutable failed
-  mirror event, so T-345 is not closed and that event must not be retried.
-  T-347 freezes the authorized deterministic changed-input correction. Thirteen
-  immutable one-shot receipts prove no lifecycle request has yet been sent;
-  the composition-correct v9 controller cannot run before its protected
-  publication and checkpoint.
+  temporarily `@40/0:tunnel,@95/1:codex` after the partial-transaction
+  safeguard terminated exact helper `4140398`; monitor health remains 3/3 and
+  all three resilient chains remain live. T-347 has one acknowledged archive,
+  twelve earlier no-request refusals, and a frozen partial-safe v10
+  continuation. The historical failed mirror event must not be retried.
 - ABQ is unreachable through both declared routes. The official G-QuAT status
   page still reports System H `サービス停止中` with the current scheduled
   stop ending 2026-07-30 17:00 JST. Its checkout remains unknown and no
@@ -118,7 +116,7 @@ Next free ID: T-348.
    `13de62583acf5ad5babd684785e636d5bb20d5643ac52b8440cbd93c2155e586`,
    its mode-0600 evidence, and all six unchanged root archive flags. Never
    retry the event or inspect its private worker log.
-2. Publish T-347's composition-correct v9 checkpoint. It uses the
+2. Publish T-347's partial-safe v10 checkpoint. It uses the
    existing private fsynced per-operation journal and one metadata-only
    app-server connection, and can prove whether each exact request was
    unattempted, acknowledged, or ambiguous without worker transcript content.
@@ -168,7 +166,7 @@ agents and ledgers.
 
 ### T-347 — Complete T-345 mirror convergence
 
-**Phase:** composition-correct controller v9 frozen; publication pending.
+**Phase:** one archive acknowledged; partial-safe controller v10 frozen.
 
 The immutable T-345 helper event remains terminal `failed/worker-failed`; its
 private worker log remains unread and the event must never be retried.
@@ -545,6 +543,57 @@ nonmatching expected wrapper digest failed at the outer wrapper before
 controller loading and created no receipt or runtime action; the subsequent
 exact-digest preflight passed.
 
+PR #437 passed `portable-phase1` at exact v9 head
+`3f0360abed20f12179a5cd0c7b699233cc69f4b5` and merge-merged as
+`872432183d9d4d40ef63dae06a1fb26867802e5e`. v9 ran once. It reconciled the
+correct app-name gate, sent `archive-old-exec` exactly once, and received an
+explicit matching acknowledgement. Same-connection verification then refused
+with exact value-free reason `rollout-path-unsafe`: native archive moves the
+saved rollout from the sessions tree to the exact archived-sessions path, so
+the inherited pre-archive path validator cannot verify it there.
+
+The mode-0600 v9 journal/result are respectively 2,332 and 116 bytes with
+SHA-256
+`145fdec74e54b9c1bb7353d07da60e468ef31871c5dd54fa2137cbfabe9fab1c`
+and
+`d88f69d2b86228d0c704a6bd53e769793879cc1c9fd49edfbe0fbc718e54cdec`.
+They prove the first operation only is `reserved/sent/acknowledged`, with no
+ambiguous or later operation. The partial safeguard sent one `SIGTERM` only to
+exact helper `4140398`, proved it absent, and resumed all three watchers.
+
+Independent value-free readback proves only old exec is archived, the other
+two extras and both database name mismatches remain, the active set is the
+three canonical roots plus those two extras, and all extras have zero process
+references. The archived rollout is preserved as the same one-link,
+owner-owned file at its exact native archived-sessions location. Project
+topology is unchanged; monitor topology is now exactly
+`@40/0:tunnel,@95/1:codex`. Monitor health is 3/3, helper status is the
+expected stale historical receipt, and all three resilient chains remain
+running at attempt zero.
+
+v10 verifies the exact immutable v9 receipt before acting. It treats the first
+operation as read-only `reconciled-acknowledged-v9`, never resends it, freezes
+the native archived-sessions paths for completed archives, and retains full
+file identity across the native rename. It then has one request budget for
+each of the remaining two archives and two idempotent name writes. The absent
+helper and two-window monitor topology are exact preconditions; watcher,
+socket, Git, database, process, failed-event, and app metadata gates remain.
+Any later partial failure verifies the helper is already absent and sends no
+helper signal. A fully verified result intentionally leaves helper restoration
+to a separately published one-shot launch.
+
+Private v10 wrapper
+`/run/user/5035/harness-t347-mirror-convergence/controller-v10.py` is current
+user, mode `0700`, one link, 22,352 bytes, SHA-256
+`f09ec370ae845ed9ced4059ef5eab71192ee4180cb24924518b5a49ca1bc5fb9`.
+It verifies exact v6 and v9 receipt digests, passes syntax and zero-write
+preflight, and has distinct absent journal/result paths. Two development
+preflights failed at the outer wrapper before journal creation: stale helper
+status correctly exits one, and archived rollouts correctly live outside the
+active sessions root. v10 now handles both exact native contracts; neither
+failed preflight opened an app connection, signaled a process, or wrote root
+metadata.
+
 The immutable controller checkpoint is exact commit
 `70c5194066965df1bffc0078f36361ded50d7bc2` in clean worktree
 `/tmp/harness-t347-t345-mirror-execution`. That worktree must remain at this
@@ -554,11 +603,12 @@ an ancestor. PR #423 passed `portable-phase1` at recording head
 `6fc06163946452ca1fe9a7d015279c2b161ea9ff` and merge-merged as
 `805016261124fd07b365a2cbf962222939e0758d`.
 
-**Next action:** publish the thirteenth no-request refusal and exact v9 wrapper
-through the protected workflow. Then pass the resulting protected-main merge,
-checkpoint `70c5194`, and v9 digest `82bef8d` to one v9 execution. Never rerun
-any prior controller. Do not open the app-server connection, signal watchers,
-or write root metadata before protected publication.
+**Next action:** publish the acknowledged v9 partial receipt and exact v10
+wrapper through the protected workflow. Then pass the resulting protected-main
+merge, checkpoint `70c5194`, and v10 digest `f09ec37` to one v10 execution.
+Never rerun any prior controller or resend `archive-old-exec`. Do not open the
+app-server connection, signal watchers, launch the helper, or write root
+metadata before protected publication.
 
 ### T-346 — Reprioritize the durable Harness action queue
 
