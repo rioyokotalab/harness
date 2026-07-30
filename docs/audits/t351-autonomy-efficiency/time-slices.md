@@ -424,12 +424,14 @@ The exact current complete-suite orchestration was then profiled without
 weakening it. A first process tracer was unsuitable: LeakSanitizer explicitly
 refused to execute under `ptrace`. The traced parent and its exact,
 newly-created test process group were stopped, and none of that sample's timing
-was interpreted. Native component timing instead measured the 91 focused
-suites at 48.60 seconds with eight workers and ShellCheck alone at 35.80
-seconds. A clean detached six-worker complete run passed all 91 suites in
-60.42 seconds. The automatic seven-worker route passed all 91 in 57.67
-seconds, so the evidence does not justify reducing the current one-CPU
-reserve. The automatic policy was retained.
+was interpreted. An initial standalone focused timing was also discarded
+because it inherited the managed process's live `HARNESS_ROOT`; phase one
+correctly clears that variable. With the production environment contract,
+three unchanged seven-worker focused runs passed all 91 suites in 50.16,
+49.68, and 50.30 seconds. ShellCheck alone took 35.80 seconds. A clean detached
+six-worker complete run passed all suites in 60.42 seconds. The automatic
+seven-worker route passed in 57.67 seconds, so the evidence does not justify
+reducing the one-CPU reserve. The automatic policy was retained.
 
 One preliminary automatic run did expose a deterministic fixture defect. It
 used a long private `TMPDIR` and failed only `test-al-session.sh` after the
@@ -444,6 +446,17 @@ unique guarded root under canonical `/tmp`. A fast self-check exercises the
 long-path selection. No product timeout, assertion, or acceptance requirement
 changed. The correction makes isolated per-session test roots robust without
 adding latency to the normal path.
+
+The same profile showed that manifest-order admission left several 23–32
+second personal-macOS fixtures near the middle of the bounded queue. A
+disposable committed candidate added an optional 1–3,600-second admission
+estimate, admitted larger estimates first, and retained each suite's original
+index, log, canonical report position, and failure label. Its contract covers
+priority order, canonical output, and malformed estimates. Three matched
+unchanged runs took 50.16, 49.68, and 50.30 seconds; three candidate runs took
+45.77, 46.14, and 45.86 seconds. The medians, 50.16 and 45.86, show an 8.6%
+reduction. All six passed all 91 suites, with effectively unchanged CPU and
+RSS, so the candidate was retained.
 
 Cleanup was prepared but deliberately split from final application. The
 task-owned Harness worktrees were enumerated exactly and classified as
@@ -463,8 +476,7 @@ five held/live roots, zero eligible, zero young, and zero unexpected. A final
 inventory is still required because ordinary Codex launches can create fresh
 residue. No hosting setting, ruleset, approval count, billing state, credential,
 project session, scheduler, or live service changed in this slice. Remaining
-work is to profile whether focused-suite admission order can shorten the
-critical path without changing coverage, freeze the last implementation bytes,
-run the exact-tree complete validation, publish through one protected Harness
-pull request, prove the merged tree and zero post-merge push allocation,
-guarded-clean all task-owned residue, and take the fresh final fleet snapshot.
+work is to freeze the last implementation bytes, run the exact-tree complete
+validation, publish through one protected Harness pull request, prove the
+merged tree and zero post-merge push allocation, guarded-clean all task-owned
+residue, and take the fresh final fleet snapshot.

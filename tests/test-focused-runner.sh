@@ -155,6 +155,17 @@ if python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
     fail 'runner accepted zero jobs'
 fi
 
+printf '%s\n' 'tests/one.sh|one|unbounded' >"$fake/invalid-priority.tsv"
+if python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
+    --manifest "$fake/invalid-priority.tsv" \
+    --log-dir "$fake/invalid-priority-logs" --jobs 1 \
+    >"$TEMP_DIR/invalid-priority.out" 2>&1; then
+    fail 'runner accepted an invalid admission estimate'
+fi
+grep -F 'focused-tests: invalid manifest line 1' \
+    "$TEMP_DIR/invalid-priority.out" >/dev/null ||
+    fail 'missing invalid admission estimate diagnostic'
+
 if python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
     --manifest "$fake/pass.tsv" --log-dir "$fake/pass-logs" --jobs 2 \
     >"$TEMP_DIR/exists.out" 2>"$TEMP_DIR/exists.err"; then

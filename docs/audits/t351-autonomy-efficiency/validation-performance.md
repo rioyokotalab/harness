@@ -120,13 +120,16 @@ tradeoff affects only broad/final validation.
 
 ## Gate contention and isolated temporary roots
 
-A later native component profile measured the 91 focused suites at 48.60
-seconds with eight workers and ShellCheck alone at 35.80 seconds. An attempted
-`ptrace` profile was stopped and discarded because LeakSanitizer correctly
-refuses to execute while traced; no timing from that run was retained. On the
-same clean detached tree, a complete six-worker sample passed in 60.42 seconds,
-while the automatic seven-worker route passed in 57.67 seconds. This does not
-support reducing the automatic worker count, so the one-CPU reserve remains.
+A later native component profile measured ShellCheck alone at 35.80 seconds.
+An attempted `ptrace` profile was stopped and discarded because LeakSanitizer
+correctly refuses to execute while traced; no timing from that run was
+retained. An initial standalone focused run was also discarded because it
+inherited the managed process's live `HARNESS_ROOT`; phase one correctly clears
+that variable. With the exact production environment contract, three unchanged
+seven-worker focused samples took 50.16, 49.68, and 50.30 seconds. On a clean
+detached tree, a complete six-worker sample passed in 60.42 seconds, while the
+automatic seven-worker route passed in 57.67 seconds. This does not support
+reducing the automatic worker count, so the one-CPU reserve remains.
 
 The first automatic sample used a deliberately long isolated `TMPDIR` and
 failed only the AL socket fixture. Repeating that suite alone under the same
@@ -139,3 +142,16 @@ five-second readiness timeout. The fixture now retains the caller's canonical
 unique guarded root directly under canonical `/tmp`. A cheap self-check covers
 the long-path selection. This changes no product timeout or assertion and
 prevents isolated long-root validation from requiring a false-failure rerun.
+
+The focused runner formerly admitted suites in manifest order, which delayed
+the longest personal-macOS and evaluation fixtures until earlier short suites
+had drained. The manifest now accepts an optional bounded integer estimate used
+only for admission. The runner preserves original indices, canonical result
+order, attributable logs, the same worker cap, and identical pass/fail joins,
+but admits higher estimates first. Its focused contract proves priority
+admission, canonical output, and malformed-estimate refusal. Three matched
+unchanged samples took 50.16, 49.68, and 50.30 seconds (median 50.16); three
+longest-first samples took 45.77, 46.14, and 45.86 seconds (median 45.86), an
+8.6% reduction. All six passed all 91 suites. Median CPU and peak RSS were
+effectively unchanged, so the gain is attributed only to a shorter bounded
+queue tail.
