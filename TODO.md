@@ -166,7 +166,7 @@ agents and ledgers.
 
 ### T-347 — Complete T-345 mirror convergence
 
-**Phase:** active-canonical controller v3 frozen; publication pending.
+**Phase:** exact transport-loader controller v4 frozen; publication pending.
 
 The immutable T-345 helper event remains terminal `failed/worker-failed`; its
 private worker log remains unread and the event must never be retried.
@@ -402,6 +402,26 @@ user, mode `0700`, one link, 6,047 bytes, SHA-256
 It verifies exact v2 digest `f07d922`, passes syntax and zero-write preflight,
 and has distinct absent journal/result paths.
 
+PR #431 passed `portable-phase1` at exact v3 head
+`35345a122034f69dfbd390e64a676876e521eb8b` and merge-merged as
+`80cc40c96c1679048bbd300a9b49cb5569f9eb2a`. v3 ran once, stopped and
+resumed all three watchers, and terminally refused before any operation. Its
+journal remains `verified=0`, with no helper signal and no lifecycle request.
+
+The exact value-free read-only diagnosis is `transport-import-failed`.
+Generic Python import discovery returns no loader for extensionless executable
+`libexec/harness-codex-thread-recovery`, so v3 never opened an app-server
+connection. Explicit `SourceFileLoader` against the exact checkpoint file
+loads successfully and exposes the expected `AppServer` implementation.
+
+Private v4 wrapper
+`/run/user/5035/harness-t347-mirror-convergence/controller-v4.py` is current
+user, mode `0700`, one link, 3,494 bytes, SHA-256
+`d22231bdc12a33085fe10f05cb107aef0728dc572fde72806e97368aae8d11ff`.
+It verifies exact v3 digest `49cd9c3`, changes only import resolution for the
+exact transport basename, passes syntax, loader, and zero-write preflight
+checks, and has distinct absent journal/result paths.
+
 The immutable controller checkpoint is exact commit
 `70c5194066965df1bffc0078f36361ded50d7bc2` in clean worktree
 `/tmp/harness-t347-t345-mirror-execution`. That worktree must remain at this
@@ -411,9 +431,9 @@ an ancestor. PR #423 passed `portable-phase1` at recording head
 `6fc06163946452ca1fe9a7d015279c2b161ea9ff` and merge-merged as
 `805016261124fd07b365a2cbf962222939e0758d`.
 
-**Next action:** publish the seventh no-request refusal and exact v3 wrapper
+**Next action:** publish the eighth no-request refusal and exact v4 wrapper
 through the protected workflow. Then pass the resulting protected-main merge,
-checkpoint `70c5194`, and v3 digest `49cd9c3` to one v3 execution. Never rerun
+checkpoint `70c5194`, and v4 digest `d22231b` to one v4 execution. Never rerun
 any prior controller. Do not open the app-server connection, signal watchers,
 or write root metadata before protected publication.
 
