@@ -145,7 +145,7 @@ agents and ledgers.
 
 ### T-348 — Keep phone remote-control roots mirrored to Local tmux
 
-**Phase:** blocked at second non-retryable thread-start gate.
+**Phase:** executing one authorized experimental-handshake start.
 
 The owner reports that Swallow is absent from phone Remote and requests a
 periodic one-to-one mirror for Harness, Students, and Swallow. Complete
@@ -277,6 +277,23 @@ and omitted model/config overrides, and preserve every existing non-retry and
 phone-confirmation gate. This is a changed handshake and a new start, not a
 retry of request ID `6`; it requires explicit owner authorization. The
 physical-phone gate remains unresolved.
+
+**Experimental-handshake authorization:** on 2026-07-30 the owner stated
+exactly: “I authorize one T-348 thread/start on a new app-server connection
+initialized with capabilities.experimentalApi=true. Retain granular approval,
+disabled sandbox, exact Harness cwd, omit model/config, and preserve all
+existing non-retry and phone-confirmation gates.” This authorizes exactly one
+newly journaled start after a successful experimental-capable handshake. It
+does not authorize retrying requests `5` or `6`, changing any peer root, or
+proceeding past the physical-phone confirmation gate.
+
+**Next action:** publish this authorization through protected `main`, then
+revalidate the exact clean/aligned merge, sole tmux client, canonical roots,
+processes, watchers, helper/monitor state, and complete top-level/loaded-root
+sets. If every frozen precondition passes, send the one authorized start on a
+new connection initialized with `capabilities.experimentalApi=true`. Preserve
+the returned or ambiguous result without retry and checkpoint it durably
+before any provisional runtime launch.
 
 ### T-347 — Complete T-345 mirror convergence
 
