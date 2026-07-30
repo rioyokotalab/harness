@@ -1,0 +1,37 @@
+# regex|tier|suite-or--|reason
+^TODO\.md$|R0|tests/test-task-ledger-routing.sh|active ledger contract
+^docs/history/TODO-full-archive-2026-07-30\.md$|R0|tests/test-task-ledger-routing.sh|archived ledger identity
+^docs/tasks/index\.tsv$|R0|tests/test-task-ledger-routing.sh|task index contract
+^tests/test-task-ledger-routing\.sh$|R0|tests/test-task-ledger-routing.sh|task ledger validator
+^docs/github-rulesets/|R1|tests/test-github-rulesets.sh|ruleset fixture
+^tests/test-github-rulesets\.sh$|R1|tests/test-github-rulesets.sh|ruleset fixture validator
+^shared/skills/codex-claude-cowork/|R1|tests/test-codex-claude-cowork-skill.sh|cowork skill
+^tests/test-codex-claude-cowork-skill\.sh$|R1|tests/test-codex-claude-cowork-skill.sh|cowork skill validator
+^shared/skills/fleet-repository-hardening/|R1|tests/test-fleet-repository-hardening-skill.sh|hardening skill
+^tests/test-fleet-repository-hardening-skill\.sh$|R1|tests/test-fleet-repository-hardening-skill.sh|hardening skill validator
+^shared/skills/onboard-personal-mac/|R1|tests/test-onboard-personal-mac-skill.sh|personal Mac skill
+^tests/test-onboard-personal-mac-skill\.sh$|R1|tests/test-onboard-personal-mac-skill.sh|personal Mac skill validator
+^shared/skills/reboot-recovery/|R1|tests/test-reboot-recovery-skill.sh|reboot recovery skill
+^tests/test-reboot-recovery-skill\.sh$|R1|tests/test-reboot-recovery-skill.sh|reboot recovery validator
+^shared/skills/recover-codex-unsafe-tail/|R3|-|managed lifecycle recovery
+^tests/test-recover-codex-unsafe-tail-skill\.sh$|R3|-|managed lifecycle recovery validator
+^shared/skills/remote-agent-communication/|R3|-|cross-client message transport
+^tests/test-remote-agent-communication\.sh$|R3|-|message transport validator
+^shared/skills/guarded-bulk-delete/|R3|-|recursive deletion safety
+^AGENTS\.md$|R3|-|root authorization and validation policy
+^CLAUDE\.md$|R3|-|root client policy import
+^\.github/workflows/|R3|-|hosted workflow
+^bin/|R3|-|public command dispatcher
+^libexec/harness-validate$|R3|-|validation selector
+^tests/validation-impact\.tsv$|R3|-|validation impact map
+^tests/focused-suites\.tsv$|R3|-|complete-suite manifest
+^tests/test-phase1\.sh$|R3|-|complete-suite runner
+^tests/guarded-test-cleanup\.sh$|R3|-|test cleanup safety
+^tools/run-focused-tests\.py$|R3|-|parallel focused runner
+^libexec/harness_codex_targets\.py$|R3|-|managed target identity
+^libexec/.*(codex|tmux|recovery|fleet|agent|ssh|restic|replica|delete|credential|secret|safety)|R3|-|lifecycle or authority-sensitive runtime
+^tests/.*(codex|tmux|recovery|fleet|agent|ssh|restic|replica|delete|credential|secret|safety)|R3|-|lifecycle or authority-sensitive test
+^libexec/harness-terminfo$|R2|tests/test-terminfo.sh|mapped ordinary component
+^tests/test-terminfo\.sh$|R2|tests/test-terminfo.sh|mapped ordinary component test
+^docs/|R0|-|documentation
+^README\.md$|R1|tests/test-fleet-inventory.sh|owner guide and fleet table

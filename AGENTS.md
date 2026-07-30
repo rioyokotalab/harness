@@ -54,9 +54,10 @@ file apply to Codex and Claude when they are started from this repository.
   current local time in `[HH:MM:SS]` format. Before composing each progress
   update, run a fresh native `date '+%H:%M:%S'` read and copy that exact value.
   Never infer a timestamp from a prior message or elapsed time.
-- Reconstruct repository state before acting. For multi-session work, use the
-  repository ledger when present and checkpoint facts, decisions, failures,
-  next actions, and exact working files.
+- Reconstruct repository state before acting. Read the active ledger and the
+  selected task's linked plan; read archived chronology only when its index or
+  contradictory evidence makes it relevant. For multi-session work,
+  checkpoint facts, decisions, failures, next actions, and exact working files.
 - Work in small verified steps. Diagnose from evidence, preserve raw failure
   output when it matters, and distinguish confirmed facts from hypotheses.
 - After a transient Codex provider or service failure, resume the saved chat
@@ -68,12 +69,18 @@ file apply to Codex and Claude when they are started from this repository.
   retire the old leaf only after promotion. An already exited zombie must not
   block the bridge or be signaled, and an ambiguous launch or promotion must
   never be retried.
-- Run validation proportional to risk. A generated artifact, optimization, or
-  delegated result is not complete until independently checked.
+- Run deterministic risk-tier validation. Documentation/ledger changes get
+  diff and contract checks; a mapped component gets its owning suite plus
+  invariants; workflow, validator, manifest, selector, safety, lifecycle,
+  cleanup, credential, and unknown changes get the complete suite. A generated
+  artifact, optimization, or delegated result is not complete until
+  independently checked.
 - For an owner-authorized collaborative repository, fetch before starting work
   and again before pushing, integrate non-conflicting contributor commits, and
-  push small verified commits promptly instead of accumulating a long local
-  queue. Never force-push or overwrite ambiguous remote work.
+  push small verified branch checkpoints promptly. Use one coherent protected
+  pull request for the task; do not open or wait on a pull request merely to
+  publish a ledger checkpoint. Never force-push or overwrite ambiguous remote
+  work.
 - Treat authenticated Git transport and hosting-service API or administration
   access as separate capabilities. Preflight and report them independently;
   never infer API or settings authority from a successful fetch or push.
@@ -108,23 +115,24 @@ file apply to Codex and Claude when they are started from this repository.
 
 ## Reusable workflows
 
-At every task start, actively compare the request and repository guidance
-against the installed shared skills and workflows. Read every matching skill
-completely and apply each applicable one by default, including its planning,
-ledger, validation, and handoff gates; do not invoke irrelevant workflows.
+At every task start, route the request to the smallest exact skill set. Read
+each selected `SKILL.md` completely, but load references only when its router
+selects them for the current operation. Do not stack a broad workflow onto a
+more specific one merely because the task is consequential or multi-step.
 Closer project rules stay authoritative, and project repositories remain
-operationally self-contained: skills guide the agent's working method and
-never become project runtime dependencies.
+operationally self-contained: skills guide the method and never become project
+runtime dependencies.
 
 - Whenever applying a skill, explicitly name that skill in user-facing
   commentary before its first skill-directed action and state why it applies.
   Name each applicable skill separately; if a skill later causes an external
   action or pause, identify it again at that point.
 
-- Use the `long-running-task-ledger` skill for durable multi-step or
-  multi-session work.
-- Use the `plan-interview-execute` skill for consequential, ambiguous, or
-  multi-session work that needs owner decisions frozen before execution.
+- Use the `long-running-task-ledger` skill when work must survive a handoff,
+  interruption, duration boundary, or later resume.
+- Use the `plan-interview-execute` skill only when the owner asks to plan or
+  interview first, requires an explicit `go`, or unresolved choices materially
+  change scope or external state. Do not add it to already frozen execution.
 - Use the `bounded-agent-delegation` skill only when delegation is permitted
   and saves more context than it costs.
 - Use the `evidence-first-research` skill for factual or literature research.
@@ -244,9 +252,11 @@ guessing.
 - Before changing anything, read the applicable instructions and `TODO.md`,
   inspect the current branch and working tree, fetch the collaborative remote,
   and reconstruct the exact next action and blockers.
+- Read a task's linked plan and indexed evidence after selecting that task.
+  Do not read `docs/history/` wholesale during an ordinary cold start.
 - Resume only the recorded task. Revalidate scheduler, hosting-service, and
-  other mutable external state before acting; a failed query is unknown state,
-  not evidence of absence.
+  other mutable external inputs used by the next action; do not repeatedly
+  recheck unrelated stable state. A failed query is unknown, not absence.
 - Use `docs/fleet-inventory.md` as the cold-start reference for logical aliases,
   SSH entries, usernames, hostnames, and operating systems.
 - Use `harness fleet-health` for routine fleet-health reports; do not replace
@@ -256,9 +266,12 @@ guessing.
   lookup as unknown. Report an exact active maintenance window separately from
   readiness and failure, and do not probe a node whose current stop is already
   recorded in the reviewed maintenance registry.
-- Before yielding every Harness turn, run `harness fleet-health` and include
-  its fresh compact status in the final response. Report a failed or unknown
-  check explicitly; never omit the snapshot or reuse a prior turn's result.
+- Run a fresh `harness fleet-health` for fleet/runtime work, an unexpected
+  route failure, before and after control-plane rollout, and at a long-job
+  deadline or final handoff. Do not run it before every unrelated repository,
+  documentation, or local-test turn; use the monitor's current bounded status
+  when no fleet claim is being made. Report failed or unknown checks
+  explicitly.
 - In compact fleet-health reports, count `abq` as a Linux node and mark it
   ready only when both `abq` and `abq2` routes pass. Count only aist, home,
   office, and riken in the Mac-route total.
@@ -271,9 +284,11 @@ guessing.
 
 - Keep this repository independent of the sibling `website` repository. Do not
   import its scripts, CI, policy files, artifacts, or working-tree state.
-- Add focused tests for changed behavior and run `tests/test-phase1.sh` before
-  merge. Documentation-only work must at least pass `git diff --check` and the
-  relevant focused test; protected CI remains authoritative.
+- Add focused tests for changed behavior and use `harness validate` to select
+  the deterministic risk tier. Documentation-only work must at least pass
+  `git diff --check` and its contract test. Run the complete phase-one suite
+  for broad/control-plane and validator/safety/lifecycle/unknown changes, and
+  once on the final integrated tree before protected publication.
 - Publish through the protected `main` workflow without force-push. After a
   merged control-plane change, use guarded `harness fleet-sync` plan/apply to
   synchronize only clean managed checkouts.
