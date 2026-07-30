@@ -353,6 +353,19 @@ model/config overrides. Name only the acknowledged new root
 transmission and never retry an acknowledged or ambiguous start/name. Stop
 and publish the result before any provisional tmux launch.
 
+The first digest-bound controller preflight refused with
+`process-identity-changed` before creating its journal, opening an app-server
+connection, or sending any write. Independent process readback identified
+only a simultaneous normal watcher-generation rollover: Harness, Students,
+and Swallow watcher leaves are now respectively
+`2599521/114484673`, `2599686/114484689`, and
+`2599591/114484678`, with the same supervisors, threads, attempt-zero
+counters, and parent relationships. Monitor/helper remain healthy/idle and
+all root, tmux, app-server, Git, and client identities are unchanged. The
+proven-unsent preflight may be replaced by one newly digest-bound controller
+using these exact current watcher identities; the refused controller bytes
+must not execute.
+
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
 **Phase:** complete.
