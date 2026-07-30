@@ -41,8 +41,8 @@ The first complete hosted validation succeeded as
 Harness ruleset `19127355` is active on `main`. It requires a pull request,
 conversation resolution, an up-to-date branch, linear history, and this
 repository's GitHub Actions check from integration `15368`. Force pushes and
-branch deletion are blocked, there is no bypass actor, and the workflow retains
-read-only token permissions.
+branch deletion are blocked. Repository-role actor `5` has the preserved
+`always` bypass, and the workflow retains read-only token permissions.
 
 The owner later chose zero required approvals so personal work does not depend
 on a second account. An author may therefore merge after the required CI check
@@ -51,8 +51,9 @@ PR #5 in the harness repository exercised this zero-approval path successfully.
 
 The exact restore/update payload is
 [`harness-main.json`](github-rulesets/harness-main.json). It matches the live
-zero-approval policy, uses no bypass actor, and allows only squash or rebase
-merges. Relevant official documentation:
+zero-approval policy, preserves repository-role actor `5` as an `always`
+bypass, and allows only squash or rebase merges. Relevant official
+documentation:
 
 - <https://docs.github.com/en/rest/repos/rules?apiVersion=2026-03-10>
 - <https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets>
