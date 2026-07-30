@@ -5,14 +5,26 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-346.
+Next free ID: T-347.
 
 ## Current state
 
-- Public `main`, Local, and ten reachable remote managed checkouts are
-  clean/current. ABQ is unreachable through both declared routes, so its
-  checkout state is unknown. T-306's context-refresh policy is current; all
-  four private Mac SSH payloads remain current.
+- Public `main` and Local are clean/current at
+  `b820a7c5b9eb9c165710cd068e1a398182ce94ef`. T-345 implementation merge
+  `5351f0cb04716aa5082eaee5d049e4efd10bc4be` is installed on the ten
+  reachable remote managed checkouts; the later documentation handoff is
+  Local-only pending T-345 activation. T-306's context-refresh policy is
+  current and all four private Mac SSH payloads remain current.
+- Local's canonical tmux topology is
+  `@87/0:harness,@88/1:students,@93/2:swallow`; monitor topology is
+  `@40/0:tunnel,@94/1:codex`. Exact `monitor:2 helper` is absent and
+  `harness codex-recovery-helper --status` reports `phase=absent`, so T-345's
+  main-controller activation is the immediate executable task.
+- ABQ is unreachable through both declared routes. The official G-QuAT status
+  page still reports System H `サービス停止中` with the current scheduled
+  stop ending 2026-07-30 17:00 JST. Its checkout remains unknown and no
+  deferred synchronization should run before official or canonical evidence
+  proves restoration.
 - The README now leads with owner-facing startup and daily operations, carries
   a pointer to the canonical fleet reference, and separates logical nodes from
   transport-only aliases and the service-only web endpoint.
@@ -91,28 +103,78 @@ Next free ID: T-346.
   include that pair in the Mac total. Omit `abci_login` and `alps_login`
   unless a task targets those transports.
 
-## Next resume checkpoint
+## Prioritized next steps
 
-1. T-314 through T-318 are complete. Students and Swallow are owned by their
-   independent project agents and ledgers; Harness has no project-research
-   resume action for either repository.
-2. T-311 is complete, including administrator-authenticated Mac changes and
-   D-007's private product-owned Codex user layer.
-3. T-303 is externally blocked: the owner confirmed no access to or prior
-   login on `nas-03.yokota` / `192.168.33.30`. Resume only if the responsible
-   administrator or a trusted physical/hypervisor console can independently
-   confirm the recorded host fingerprint and intended login account.
-4. Continue T-196 only at its exact time/identity gates: all eight nodes are
-   now 2/8 with next-week successors waiting. Retry RI accounting ID `7242`
-   without touching successor `10386`; otherwise wait for the exact 2026-08-02
-   successors recorded below.
+### Act now — complete T-345 activation
 
-## Active tasks
+1. Reconcile clean Local `main` at `b820a7c`, the merged T-345 implementation
+   at `5351f0c`, the complete T-345 plan, and fresh value-free topology before
+   any live write.
+2. Submit exactly one merge-specific pane-blind context refresh to each
+   already-advanced Mac through `remote-agent-communication`; never retry an
+   acknowledged or ambiguous submission.
+3. Bridge-replace only old monitor window `@94` with merged code, then create
+   and validate exact detached `monitor:2 helper`. Preserve all three
+   canonical project roots, their windows, the shared app server, and owner
+   client selection.
+4. Allow one serialized mirror event to reversibly archive only T-345's three
+   frozen baseline extras. Permanent deletion remains forbidden.
+5. Close T-345 only after exact phone/tmux parity, absent-only remote-control
+   behavior, two healthy monitor/helper intervals, clean Git, and fresh
+   canonical fleet health.
+
+### After official ABQ restoration
+
+- Reconcile ABQ's exact clean checkout and use one guarded sync to the then
+  current protected `main`. This is the shared deferred catch-up for T-329,
+  T-332, T-342, and T-345; then verify both routes, native `codex`, managed
+  `co`, and aligned local/origin heads. The official page currently schedules
+  the System H stop through 2026-07-30 17:00 JST.
+
+### At the recorded time gates
+
+- **2026-08-02:** continue T-196 from the exact eight successor job identities
+  recorded in its section. All nodes are 2/8. Query only those identities,
+  preserve pending successors, and never seed or replace a healthy chain.
+  RI accounting ID `7242` may be retried read-only without touching successor
+  `10386`.
+- **2026-08-08/09:** execute T-328's frozen Local power sequence only after
+  confirming a physical or firmware power-on path and current Institute
+  outage status. Shut down orderly before 09:00 on August 8, remain off
+  through both outage days, and recover only after confirmed restoration
+  after 18:00 on August 9. Use August 29/30 only if the Institute invokes the
+  contingency dates.
+
+### Externally blocked
+
+- T-303 remains blocked until the responsible administrator or a trusted
+  physical/hypervisor console independently confirms both the recorded
+  `nas-03.yokota` host fingerprint and intended login account. Do not retry
+  SSH or alter NFS state before that evidence exists.
+
+Completed T-311 and T-314 through T-344 are historical records, not resume
+items. Students and Swallow project research remains owned by their independent
+agents and ledgers.
+
+## Task records
+
+### T-346 — Reprioritize the durable Harness action queue
+
+**Phase:** complete after protected publication.
+
+The owner requested a current-ledger review and a clearer execution order.
+Fresh Git, pull-request, tmux, helper-status, official ABQ maintenance, and
+canonical fleet readbacks established the queue above. This task changes only
+the compact current state, priority index, T-345 phase wording, and next-action
+pointer; all detailed task records remain intact.
+
+**Next action:** none after this documentation-only reorganization reaches
+protected `main`.
 
 ### T-345 — Dedicated Codex recovery helper and phone/tmux mirror
 
-**Phase:** blocked on main-thread activation handoff after merged
-implementation and fleet rollout.
+**Phase:** ready for main-controller activation after merged implementation
+and fleet rollout; exact helper remains absent.
 
 The owner requested a dedicated `monitor:2 helper` recovery lane that does not
 depend on Harness, Students, or Swallow siblings being idle, automatically
@@ -265,7 +327,8 @@ active, Swallow is idle, all three resilient chains are running, and merged
 `harness codex-recovery-helper --status` reports `phase=absent`.
 
 **Next action for the main Harness controller:** read this ledger and the T-345
-plan completely; confirm clean merged `5351f0c`; submit one merge-specific
+plan completely; confirm clean Local `main` at `b820a7c` containing merged
+implementation `5351f0c`; submit one merge-specific
 pane-blind context refresh to each advanced Mac through
 `remote-agent-communication`; bridge-replace only old monitor `@94` with merged
 code; create and validate exact `monitor:2 helper`; let its one serialized
