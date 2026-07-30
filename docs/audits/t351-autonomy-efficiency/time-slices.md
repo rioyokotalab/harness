@@ -487,25 +487,100 @@ Readback after the latest branch push showed the exact local and remote head
 the branch. The value-free hardening audit reported a clean attached worktree,
 zero unpinned actions, zero tracked sensitive paths, and zero findings.
 
-Cleanup was prepared but deliberately split from final application. The
-task-owned Harness worktrees were enumerated exactly and classified as
-patch-equivalent retained experiments, synthetic validation probes, or the
-active branch. The unrelated live main checkout, its held `.nfs` inode, and the
-pre-existing T-347 and T-350 worktrees remain out of scope. The Students and
-Swallow transition clones, private Cowork evidence root, exact T-351 diagnostic
-files, new profile roots, and four old childless fake-launcher processes were
-also identified by exact path or process identity. No broad `/tmp` traversal
-or cleanup mutation was used. Before final removal, the guarded deletion skill
-will be reread, every exact target will be revalidated for owner, boundary,
-process use, and current Git role, and only task-owned disposable identities
-will be removed.
+The final ledger-routing audit in this hour found two forward-compatibility
+gaps without loading the historical board. Impact routing recognized only the
+current T-351 record and one literal archive name, and the ledger test checked
+only a fixed sample of records. The route now recognizes every canonical
+`docs/tasks/T-N.md` record and every dated full archive as R0 documentation.
+The fixture synthesizes a future task path and proves a 0.07-second R0 plan.
+The ledger test dynamically discovers every task record, requires exact
+board/record equality, validates unique descending IDs and allowed states,
+derives the next free ID from the maximum index, checks every source as a safe
+existing non-symlink, requires active records to cite both the board and
+record, and requires every dated full archive to be indexed. That generalized
+check exposed one stale T-343 source path. Its index entry was corrected to the
+existing Cowork plan; no historical content was fabricated or moved. All 43
+ledger rows and all 41 router cases passed. Exact local and remote task head
+then matched `54fbbde9576d8cf1e63fa1718690d95888b4bdab`, again with no branch
+Actions run.
 
-The earlier arg0 cleanup remained effective immediately after application:
-five held/live roots, zero eligible, zero young, and zero unexpected. A final
-inventory is still required because ordinary Codex launches can create fresh
-residue. No hosting setting, ruleset, approval count, billing state, credential,
-project session, scheduler, or live service changed in this slice. Remaining
-work is to freeze the last implementation bytes, run the exact-tree complete
-validation, publish through one protected Harness pull request, prove the
-merged tree and zero post-merge push allocation, guarded-clean all task-owned
-residue, and take the fresh final fleet snapshot.
+## 2026-07-31 05:00–05:59 JST
+
+In progress. This slice applies and verifies the pre-reconciled deadline
+cleanup while keeping the active agent root available through publication.
+Before mutation, the guarded-bulk-delete instructions were reread completely.
+The inventory resolved 23 disposable T-351 worktrees, their 23 matching Git
+administration directories, 19 local experiment branches, 24 disposable
+temporary roots or clones, and 21 exact temporary evidence files. Every
+worktree was current-user-owned and clean, and no process had it as a current
+directory. The live checkout, active T-351 worktree, pre-existing T-347 and
+T-350 worktrees, unrelated `codex/t351-housekeeping` branch, recovery-held
+`.nfs` inode, and all live agent/session roots were explicit protected
+exclusions.
+
+The 23 worktrees, 24 temporary roots, and 21 files were moved into one
+current-user-owned private quarantine while their identities were still
+known. The first immutable payload manifest described 26,165 worktree entries
+and 9,405 temporary-root entries, totaling 513,376,287 bytes, plus 22
+file-container entries and 52,400 bytes. It validated and removed the
+worktree payload, then failed closed on a Students fixture containing 17
+owner-owned mode-0555 directories and 100 mode-0444 files. The failed manifest
+was not replayed and no broader deletion command was substituted. Readback
+proved that only its first target was absent; the remaining two targets were
+still owner UID 5035, inside the fixed quarantine, free of symlinks and foreign
+ownership, with exactly those 17 non-writable directories.
+
+The narrow recovery changed only the owner write bit on those 17 exact
+remaining directories after ownership, boundary, and symlink revalidation.
+A fresh manifest then described 136 temporary-root entries / 252,857 bytes and
+22 file-container entries / 52,400 bytes. It validated both identities,
+deleted both targets, and verified unchanged protected anchors and absent
+targets. A separate fresh manifest covered the 23 exact
+`.git/worktrees/<name>` administration directories under the fixed repository
+boundary; all 23 validated, were removed, and were verified absent. Git then
+deleted the 19 exact local experiment branches one by one. No remote branch
+was deleted. The failed, retry, and administration manifests were exact-unlinked
+only after their outcomes were read back, and their empty private state and
+quarantine directories were removed with `rmdir`.
+
+Post-cleanup `git worktree list --porcelain` now contains exactly four roots:
+the live main checkout, retained T-347, retained T-350, and active T-351.
+The T-351 branch inventory contains only the active
+`codex/t351-autonomy-efficiency` branch and unrelated
+`codex/t351-housekeeping`. A `/tmp` inventory contains no other task-owned
+`harness-t351-*` directory. These checks also prove why the active worktree is
+not yet disposable: it is this agent's current execution root and the sole
+publication candidate.
+
+Four orphaned test-only launchers were treated separately from filesystem
+deletion. Exact revalidation showed owner UID 5035, parent PID 1, sleeping
+state, unchanged July 29–30 start times, and argv paths ending in removed
+`fake-bin/codex-launcher` fixtures. Each had only a transient one-second
+`sleep` child. The four exact parent PIDs received `SIGTERM`; two seconds later
+all four parents and all four observed children were absent. No name-based,
+group-wide, Codex, tmux, app-server, recovery, monitor, scheduler, or project
+process signal was sent.
+
+Ordinary validation and Codex activity had recreated completed helper residue
+after the prior cleanup. A fresh lock-aware arg0 plan reported five held/live
+directories, 109 eligible completed invocations, zero young, and zero
+unexpected. The repository helper locked and quarantined only those 109
+eligible identities, then its guarded manifest validated 115 entries / 714
+bytes, removed the quarantine, and verified unchanged protected anchors.
+Immediate readback is `live=5 eligible=0 young=0 unexpected=0 removed=0`.
+No whole arg0 root was removed and no live lock was disturbed.
+
+One progress update in this slice accidentally reused the previous timestamp
+instead of running the required fresh native `date` read. The next update
+immediately disclosed and corrected the miss with a fresh `05:07:27` read.
+This is retained as process evidence rather than silently normalized. It did
+not alter task state, but it confirms that the timestamp gate still depends on
+per-message execution discipline.
+
+No hosting setting, ruleset, approval count, billing state, credential,
+project session, scheduler, or live service changed. Remaining work is to
+reconcile exact implementation bytes and mutable Actions state, close this
+hour with a fresh checkpoint, complete the final exact-tree validation,
+publish one protected Harness pull request, prove its exact merged tree and
+absence of a post-merge push allocation, take fresh fleet health, and close at
+the requested deadline.
