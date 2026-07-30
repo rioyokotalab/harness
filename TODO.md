@@ -394,6 +394,49 @@ detached provisional index-3 window/runtime from the direct Students checkout
 with explicit `--target students`. Never relaunch an acknowledged or
 ambiguous bridge.
 
+Protected PR #464 passed `portable-phase1` and merge-merged as
+`6c3f28b64ec2f5d358ae2a170ef5408e9600ba0a`. One-shot launcher digest
+`b65f18b0ea35e5aaf7f3b49360a5dcf351ade9a47da9cfc3ca3d4cc23264358b`
+passed zero-write preflight, tightened only rollout device/inode
+`197/242006548` to mode `0600`, and acknowledged exactly one provisional
+window `@99/3:students-native-bridge-20260730`, pane `%99`. Runtime
+`students-native-t350` is attempt zero with supervisor
+`2652612/114537087`, watcher `2652720/114537099`, and TUI
+`2652989/114537211`, all rooted at the exact direct Students checkout and
+bound to the unchanged shared app server. The owner client remains on
+unaffected Harness `@87`.
+
+One-shot submitter digest
+`068eed5c6ce36cf263e9246c141b27400eef4b4dccd1b9dd1b18c0ece79edb88`
+acknowledged one private-buffer paste, waited 1.2 seconds, and acknowledged
+one separate `C-m`. It must not execute again. Pane-blind app-server
+validation proves one completed assistant-bearing turn, six assistant
+message items, zero turn errors, idle root status, exact direct cwd/source,
+exact provisional app-server name, and inclusion in both exact four-root
+loaded and unarchived interactive sets. The database now persists model
+`gpt-5.6-sol`; reasoning remains null as in the established Codex 0.145
+empty-root lifecycle, while the acknowledged start response proves `high`
+and the repository project configuration requires it.
+
+One post-turn database diagnostic mistakenly emitted the fallback title field,
+which at that point was byte-identical to the controller-authored cold-start
+prompt already recorded in the private submitter source. No pane, unknown
+conversation text, rejected prompt, assistant content, or tool payload was
+read, and no state changed. Do not query or emit the `title` fallback again;
+use only app-server name readback and boolean database metadata until the
+post-turn canonical name write.
+
+The expected fourth root/window leaves the helper with one disabled queued
+mirror event and the monitor degraded with
+`phone_mirror=unavailable/order_action=deferred-ambiguous`; both remain
+non-mutating. Old Students and all unaffected roots/chains remain live.
+
+**Next action and required owner evidence:** stop lifecycle work and ask the
+owner to confirm that `students-native-bridge-20260730` is visible in phone
+Remote. Until that exact confirmation, do not rename either Students root or
+window, move either window, signal any process, archive the old root, repeat
+start/name/launch/input, or promote the provisional bridge.
+
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
 **Phase:** complete.
