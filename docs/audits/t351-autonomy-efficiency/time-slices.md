@@ -690,3 +690,10 @@ selection and hashes Python optimization plus locale inputs into cache
 identity. Direct refusal probes pass for the ledger, router, Actions, context,
 and focused-runner validators. This closes the general environment route
 rather than relying only on each new script's assertion guard.
+
+Changed-input protected run `30582235091` then passed exact commit
+`23113ae3c52ce9e581aab6b059205ca5cd5105ab`. The workflow regression parser
+was tightened once more to require the exact pull-request, weekly schedule,
+and manual event set; adversarial fixtures reject inline `push`,
+`pull_request_target`, and job-level write permissions. This is a local
+contract change only and does not dispatch or mutate a workflow.

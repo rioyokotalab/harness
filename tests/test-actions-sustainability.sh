@@ -43,6 +43,18 @@ def validate(text: str) -> None:
     ):
         raise ValueError("duplicate main push trigger restored")
 
+    if semantic.count("on:") != 1:
+        raise ValueError("workflow does not have one canonical event block")
+    event_keys = []
+    for line in semantic[semantic.index("on:") + 1 :]:
+        if line and not line[0].isspace():
+            break
+        match = re.fullmatch(r"  ([a-z_]+):", line)
+        if match:
+            event_keys.append(match.group(1))
+    if event_keys != ["pull_request", "schedule", "workflow_dispatch"]:
+        raise ValueError("workflow has an undeclared event trigger")
+
     declarations = [
         (number, line)
         for number, line in enumerate(semantic)
@@ -76,6 +88,11 @@ mutations = (
     workflow.replace(
         "  portable-phase1:\n",
         "  portable-phase1:\n    permissions: write-all\n",
+        1,
+    ),
+    workflow.replace(
+        "  workflow_dispatch:\n",
+        "  pull_request_target:\n  workflow_dispatch:\n",
         1,
     ),
 )
