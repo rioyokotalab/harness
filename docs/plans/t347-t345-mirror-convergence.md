@@ -178,9 +178,12 @@ or lifecycle request. A failed query is unknown, not absence.
    frozen proof only once to the controller's child gate. If an intermittent
    child remains, resume the exact helper and repeat fresh-idle/stop/readback
    under one 45-second deadline; never expose a failed proof or leave that
-   refusal path stopped. Prove the same exact helper is stopped and still
-   childless before continuing. This prevents its observer from being frozen
-   around a short-lived metadata child or treating an intentionally partial
+   refusal path stopped. The same journal-aware helper-pause function must own
+   validation, `stop-sent`, the bounded loop, cleanup registration, `stopped`,
+   and one-time proof exposure; do not hand a stopped helper across two pause
+   implementations. Prove the same exact helper is stopped and still childless
+   before continuing. This prevents its observer from being frozen around a
+   short-lived metadata child or treating an intentionally partial
    five-operation transaction as a new mirror event.
 4. Send one `SIGSTOP` to each exact accepted recovery-watcher leaf only:
    Harness `808441`, Students `808488`, and Swallow `2266511`, after matching
