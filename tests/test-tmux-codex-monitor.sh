@@ -68,6 +68,49 @@ assert parsed == {
     "comm": "codex TUI",
 }
 
+with tempfile.TemporaryDirectory() as helper_root:
+    os.environ["HARNESS_TESTING"] = "1"
+    os.environ["HARNESS_TEST_RECOVERY_RUNTIME_DIR"] = helper_root
+    current = module.process_info(os.getpid())
+    roles = {
+        name: {
+            "tmux_mapping": True,
+            "unarchived": True,
+            "exact_name": True,
+            "exact_cwd": True,
+            "rollout_location": True,
+            "rollout_exists": True,
+            "interactive_source": True,
+        }
+        for name, _index in module.EXPECTED
+    }
+    receipt = {
+        "schema": 1,
+        "epoch": int(module.time.time()),
+        "owner_pid": os.getpid(),
+        "owner_start": current["start"],
+        "status": "healthy",
+        "remote_control": {
+            "exactly_one": True,
+            "pid": os.getpid(),
+            "start": current["start"],
+        },
+        "canonical_count": 3,
+        "active_top_level_count": 3,
+        "roles": roles,
+        "mismatch_classes": [],
+    }
+    module.atomic_json(os.path.join(helper_root, "phone-mirror.json"), receipt)
+    assert module.phone_mirror_health() == "healthy"
+    receipt["status"] = "degraded"
+    receipt["roles"]["swallow"]["interactive_source"] = False
+    receipt["mismatch_classes"] = ["interactive_source:swallow"]
+    module.atomic_json(os.path.join(helper_root, "phone-mirror.json"), receipt)
+    assert module.phone_mirror_health() == "degraded"
+    receipt["epoch"] -= 121
+    module.atomic_json(os.path.join(helper_root, "phone-mirror.json"), receipt)
+    assert module.phone_mirror_health() == "unavailable"
+
 module.process_info = lambda pid: {
     "pid": pid,
     "parent": 1,
@@ -310,7 +353,7 @@ cat >"$TEST_ROOT/healthy.json" <<'EOF'
 EOF
 run_fixture "$TEST_ROOT/healthy.json" --enforce-order \
     >"$TEST_ROOT/healthy.out"
-grep -F 'phase=healthy healthy=3 order_action=none repair_action=none' \
+grep -F 'phase=healthy healthy=3 phone_mirror=healthy order_action=none repair_action=none' \
     "$TEST_ROOT/healthy.out" >/dev/null || fail "healthy classification"
 
 cat >"$TEST_ROOT/ordered.json" <<'EOF'
@@ -340,6 +383,17 @@ if run_fixture "$TEST_ROOT/degraded.json" \
 fi
 grep -F 'repair_action=none' "$TEST_ROOT/degraded.out" >/dev/null ||
     fail "generic degradation selected recovery"
+
+cat >"$TEST_ROOT/phone-degraded.json" <<'EOF'
+{"phone_mirror":"degraded","windows":[{"name":"harness","index":0},{"name":"students","index":1},{"name":"swallow","index":2}],"health":{"harness":{"state":"healthy"},"students":{"state":"healthy"},"swallow":{"state":"healthy"}}}
+EOF
+if run_fixture "$TEST_ROOT/phone-degraded.json" \
+    >"$TEST_ROOT/phone-degraded.out"; then
+    fail "phone-ineligible fixture returned healthy"
+fi
+grep -F 'phase=degraded healthy=3 phone_mirror=degraded' \
+    "$TEST_ROOT/phone-degraded.out" >/dev/null ||
+    fail "phone eligibility did not degrade monitor"
 
 cat >"$TEST_ROOT/requested.json" <<'EOF'
 {"repair_action":"helper-queued-1","windows":[{"name":"harness","index":0},{"name":"students","index":1},{"name":"swallow","index":2}],"health":{"harness":{"state":"healthy"},"students":{"state":"healthy"},"swallow":{"state":"blocked","reason":"unsafe-tail"}}}

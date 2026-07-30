@@ -145,7 +145,7 @@ agents and ledgers.
 
 ### T-348 — Keep phone remote-control roots mirrored to Local tmux
 
-**Phase:** ready for go.
+**Phase:** executing.
 
 The owner reports that Swallow is absent from phone Remote and requests a
 periodic one-to-one mirror for Harness, Students, and Swallow. Complete
@@ -174,7 +174,8 @@ retired old root. Direct SQLite/rollout rewriting, app-server restart, prompt
 replay, pane/transcript reads, root deletion, client movement, and peer
 mutation are excluded.
 
-Git planning work is isolated in `/tmp/harness-t348-phone-mirror` on branch
+The owner supplied the separate `go` on 2026-07-30. Git work is isolated in
+`/tmp/harness-t348-phone-mirror` on branch
 `codex/t348-phone-mirror` from exact protected main
 `4b75af573ca4c9b475861f6718bb2b5ed7dbfd12`. No live app-server connection,
 thread/root write, process signal, tmux mutation, or external write ran during
@@ -186,11 +187,16 @@ physical-phone confirmation before retiring old Swallow; and call the
 machine-checkable state `phone eligible`, leaving product-side rendering
 failures report-only.
 
-**Next action:** wait for one separate explicit `go`. Then add failing focused
-fixtures, implement and validate the monitor/helper contract, publish through
-protected exact-head CI without changing zero approvals, activate merged code,
-and create the provisional bridge. Pause only for the owner's phone-visible
-confirmation before final promotion and archive.
+**Execution checkpoint:** the helper now emits a mode-0600 value-free
+phone-eligibility receipt and reserves a deduplicated
+`phone-mirror-drift` event; the monitor requires a fresh exact receipt.
+Automatic mirror-event execution remains opt-in so the existing Local
+controller owns this first Swallow bridge.
+
+**Next action:** complete focused and full validation, protected publication,
+and merged-code activation, then create and validate the provisional
+interactive Swallow bridge. Pause for the owner's phone-visible confirmation
+before any canonical rename, old-process retirement, or reversible archive.
 
 ### T-347 — Complete T-345 mirror convergence
 

@@ -102,6 +102,81 @@ def read_private_json(path, default):
     return value
 
 
+def helper_runtime_root():
+    testing = os.environ.get("HARNESS_TEST_RECOVERY_RUNTIME_DIR")
+    if testing and os.environ.get("HARNESS_TESTING") == "1":
+        return testing
+    parent = os.environ.get("XDG_RUNTIME_DIR")
+    if not parent or not os.path.isabs(parent):
+        parent = os.environ.get("TMPDIR", "/tmp")
+    if not os.path.isabs(parent):
+        return None
+    return os.path.join(
+        parent, "harness-codex-recovery-helper-{}".format(os.getuid())
+    )
+
+
+def phone_mirror_health(now=None):
+    root = helper_runtime_root()
+    if not root:
+        return "unavailable"
+    try:
+        receipt = read_private_json(
+            os.path.join(root, "phone-mirror.json"), None
+        )
+    except (MonitorError, ValueError, KeyError, OSError):
+        return "unavailable"
+    if not receipt or receipt.get("schema") != 1:
+        return "unavailable"
+    current = int(time.time()) if now is None else now
+    if current - receipt.get("epoch", 0) > 120:
+        return "unavailable"
+    owner = process_info(receipt.get("owner_pid", 0))
+    if (
+        not owner
+        or owner.get("uid") != os.getuid()
+        or owner.get("start") != receipt.get("owner_start")
+    ):
+        return "unavailable"
+    status = receipt.get("status")
+    if status not in ("healthy", "degraded", "unavailable"):
+        return "unavailable"
+    remote = receipt.get("remote_control", {})
+    if remote.get("exactly_one"):
+        process = process_info(remote.get("pid", 0))
+        if (
+            not process
+            or process.get("uid") != os.getuid()
+            or process.get("start") != remote.get("start")
+        ):
+            return "unavailable"
+    if status != "healthy":
+        return status
+    roles = receipt.get("roles", {})
+    required = (
+        "tmux_mapping",
+        "unarchived",
+        "exact_name",
+        "exact_cwd",
+        "rollout_location",
+        "rollout_exists",
+        "interactive_source",
+    )
+    if (
+        not remote.get("exactly_one")
+        or receipt.get("canonical_count") != len(EXPECTED)
+        or receipt.get("active_top_level_count") != len(EXPECTED)
+        or receipt.get("mismatch_classes")
+        or sorted(roles) != sorted(name for name, _index in EXPECTED)
+        or any(
+            not all(roles[name].get(field) is True for field in required)
+            for name, _index in EXPECTED
+        )
+    ):
+        return "unavailable"
+    return "healthy"
+
+
 @contextlib.contextmanager
 def exclusive_lock(path):
     old = os.umask(0o077)
@@ -587,17 +662,27 @@ def test_fixture(path, enforce):
         else:
             order_action = "deferred-ambiguous"
     repair_action = fixture.get("repair_action", "none")
+    phone_mirror = fixture.get("phone_mirror", "healthy")
     states = fixture.get("health", {})
     healthy = sum(1 for value in states.values() if value.get("state") == "healthy")
+    phase = (
+        "healthy"
+        if healthy == 3
+        and order_action != "deferred-ambiguous"
+        and phone_mirror == "healthy"
+        else "degraded"
+    )
     print(
-        "TMUX_CODEX_MONITOR phase={} healthy={} order_action={} repair_action={}".format(
-            "healthy" if healthy == 3 else "degraded",
+        "TMUX_CODEX_MONITOR phase={} healthy={} phone_mirror={} "
+        "order_action={} repair_action={}".format(
+            phase,
             healthy,
+            phone_mirror,
             order_action,
             repair_action,
         )
     )
-    return 0 if healthy == 3 else 1
+    return 0 if phase == "healthy" else 1
 
 
 def parse_arguments():
@@ -641,10 +726,11 @@ def main():
         ):
             receipt["phase"] = "stale"
         print(
-            "TMUX_CODEX_MONITOR phase={} healthy={} order_action={} "
-            "repair_action={} owner_pid={}".format(
+            "TMUX_CODEX_MONITOR phase={} healthy={} phone_mirror={} "
+            "order_action={} repair_action={} owner_pid={}".format(
                 receipt["phase"],
                 receipt["healthy"],
+                receipt.get("phone_mirror", "unavailable"),
                 receipt["order_action"],
                 receipt["repair_action"],
                 receipt["owner_pid"],
@@ -656,6 +742,7 @@ def main():
     while not stopping[0]:
         phase = "unavailable"
         healthy = 0
+        phone_mirror = "unavailable"
         order_action = "none"
         repair_action = "none"
         with exclusive_lock(os.path.join(root, "monitor.lock")):
@@ -670,9 +757,12 @@ def main():
                 healthy = sum(
                     1 for entry in health.values() if entry["state"] == "healthy"
                 )
+                phone_mirror = phone_mirror_health()
                 phase = (
                     "healthy"
-                    if healthy == 3 and order_action != "deferred-ambiguous"
+                    if healthy == 3
+                    and order_action != "deferred-ambiguous"
+                    and phone_mirror == "healthy"
                     else "degraded"
                 )
                 if arguments.auto_recover:
@@ -710,6 +800,7 @@ def main():
                 "schema": 1,
                 "phase": phase,
                 "healthy": healthy,
+                "phone_mirror": phone_mirror,
                 "order_action": order_action,
                 "repair_action": repair_action,
                 "owner_pid": os.getpid(),
@@ -717,8 +808,9 @@ def main():
             }
             atomic_json(receipt_path, receipt)
         print(
-            "TMUX_CODEX_MONITOR phase={} healthy={} order_action={} repair_action={}".format(
-                phase, healthy, order_action, repair_action
+            "TMUX_CODEX_MONITOR phase={} healthy={} phone_mirror={} "
+            "order_action={} repair_action={}".format(
+                phase, healthy, phone_mirror, order_action, repair_action
             )
         )
         if arguments.once:
