@@ -668,13 +668,38 @@ record accepted `rename-only-promotion-complete`; the controller is consumed
 and must never run again. No pane/transcript content or project files were
 inspected or changed.
 
-**Next action:** publish this non-retryable promotion checkpoint. Then require
-the same receipt/root/process/topology identities and signal only old exact TUI
-leaf `4144360/112775273` once. Require normal old-chain unwind, zero remaining
-process/window references, and exact canonical three-window health before
-considering one separately journaled archive request for only the retired old
-root. Do not signal the old supervisor, watcher, launcher, or any canonical
-process directly.
+Protected PR #473 merge-merged the non-retryable promotion checkpoint as
+`8416dc132fe4c8964a0b334be7b9fd086cf9a7b7`. Retirement-controller digest
+`24a13453e7c0248df4720e56a96c11175b635e92f914748e7f475f2b665797e7`
+passed zero-write preflight and executed exactly once under the message and
+monitor locks. It acknowledged one `SIGTERM` to only old exact TUI leaf
+`4144360/112775273`; no other process was signaled. The old launcher, watcher,
+and supervisor then exited normally without a zombie, and retired window
+`@98` disappeared through normal pane-chain unwind.
+
+Retirement journal digest
+`30491d1797eb608b26b63840f99afac53c250a7db2e5cda1db91449218517426`
+and result digest
+`88dedb95b37c3c4fa19cbe64bc6ebbbed58e996b1f06a7bfda82b3759d717c58`
+record accepted `old-chain-exited`; the controller is consumed and must never
+run again. Exact canonical topology is now
+`@87/0:harness`, `@99/1:students`, and direct-cwd
+`@100/2:swallow`. There are zero process-command references to the retired
+old root, and the `.nfs` inode is now held only by the untouched Harness
+supervisor. Metadata-only app-server readback still reports the retired old
+root idle/loaded/unarchived and the canonical new root idle. Monitor process
+health is three of three but phone parity correctly remains degraded until
+the extra retired app-server root is archived; the helper is idle.
+
+**Next action:** publish this non-retryable retirement checkpoint. Then prepare
+a separate one-attempt app-server archive controller bound to these receipts,
+exact canonical process/topology identities, zero old-root process/window
+references, and the still-idle retired old root. Send one
+`thread/archive` request for only old root
+`019fb1ab-b559-79c2-ad9c-0ee8f426cedc`; never retry an acknowledged or
+ambiguous request. Reconcile delayed persistence read-only, then require two
+interval-separated healthy monitor/helper and exact phone-parity receipts
+before final T-350 closeout.
 
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
