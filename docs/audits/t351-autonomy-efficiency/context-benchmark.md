@@ -16,19 +16,19 @@ its eventual protected publication.
 
 | Scenario | Before total | After total | Total reduction | Before non-ledger | After non-ledger | Non-ledger reduction |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| factual lookup | 73,734 | 1,313 | 98.2% | 2,906 | 1,067 | 63.2% |
-| documentation edit | 73,545 | 1,337 | 98.1% | 2,717 | 1,091 | 59.8% |
-| ordinary code fix | 74,455 | 1,337 | 98.2% | 3,627 | 1,091 | 69.9% |
-| tmux health diagnosis | 73,545 | 1,285 | 98.2% | 2,717 | 1,039 | 61.7% |
-| unsafe-tail recovery | 75,931 | 2,635 | 96.5% | 5,103 | 2,389 | 53.1% |
-| fleet hardening | 76,238 | 4,002 | 94.7% | 5,410 | 3,756 | 30.5% |
-| native HPC experiment | 77,550 | 2,924 | 96.2% | 6,722 | 2,678 | 60.1% |
-| duration Cowork | 80,599 | 4,275 | 94.6% | 9,771 | 4,029 | 58.7% |
+| factual lookup | 73,734 | 1,297 | 98.2% | 2,906 | 1,051 | 63.8% |
+| documentation edit | 73,545 | 1,321 | 98.2% | 2,717 | 1,075 | 60.4% |
+| ordinary code fix | 74,455 | 1,321 | 98.2% | 3,627 | 1,075 | 70.3% |
+| tmux health diagnosis | 73,545 | 1,269 | 98.2% | 2,717 | 1,023 | 62.3% |
+| unsafe-tail recovery | 75,931 | 2,619 | 96.5% | 5,103 | 2,373 | 53.4% |
+| fleet hardening | 76,238 | 3,986 | 94.7% | 5,410 | 3,740 | 30.8% |
+| native HPC experiment | 77,550 | 2,908 | 96.2% | 6,722 | 2,662 | 60.3% |
+| duration Cowork | 80,599 | 4,259 | 94.7% | 9,771 | 4,013 | 58.9% |
 
 The median total reduction is 97.3%, above the frozen 85% threshold; every
 scenario exceeds 94%, above the per-scenario 50% floor. Median non-ledger
-reduction is 59.9%, above the 30% independent policy/skill threshold. The
-always-read policy is 816 words, and the active board is 52 lines / 246 words,
+reduction is 60.3%, above the 30% independent policy/skill threshold. The
+always-read policy is 800 words, and the active board is 52 lines / 246 words,
 and selected conditional policy routes are separately budgeted by
 `tests/test-agent-policy-routing.sh`.
 
@@ -68,7 +68,7 @@ collision, cleanup, and unknown-state stops before references load.
 
 Conditional policy is now split by exact Git, external-operation,
 managed-Codex, and fleet actions. The corresponding root-plus-module routes
-are 1,091, 1,090, 1,039, and 1,147 words. An ordinary Git action no longer
+are 1,075, 1,074, 1,023, and 1,131 words. An ordinary Git action no longer
 loads installer/global-configuration policy, and tmux recovery no longer loads
 fleet maintenance and rollout policy.
 

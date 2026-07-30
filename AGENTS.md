@@ -84,10 +84,9 @@ remain mandatory project refinements.
 - Add focused tests for changed behavior and use `harness validate` for its
   deterministic risk tier. Run phase one for broad or escalated changes and
   once on the final integrated tree before protected publication.
-- At takeover, inspect branch, worktree, commits, ledger, and mutable external
-  inputs before the recorded next action. At handoff, record verified results,
-  identifiers, failures and retry safety, modified files, validation, remaining
-  checks, next action, and required authority.
+- At handoff, record verified results, identifiers, failures and retry safety,
+  modified files, validation, remaining checks, next action, and required
+  authority.
 - Before yielding unfinished work, update the selected task record. Change
   `TODO.md` only when its phase, ordering, next-action summary, or record
   pointer changes; never expand it with task chronology. Keep bulky
