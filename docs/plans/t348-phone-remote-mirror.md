@@ -272,7 +272,14 @@ authorized one changed-input start after reviewing that proven-absent result.
 
 Preserve the old Swallow and disabled automatic mirror event. Do not send
 another start, launch a provisional window/runtime, or mutate names, archives,
-processes, or topology. Read-only diagnosis may establish why the live
-0.145.0 remote-control app server rejects both request shapes. Any alternate
-creation path or further start requires a separately frozen owner decision;
-the physical-phone confirmation gate remains pending.
+processes, or topology. Read-only diagnosis established that the live Codex
+0.145.0 protocol experimental-gates nested granular approval, while the prior
+controller connections did not advertise `capabilities.experimentalApi`.
+A separate read-only experimental-capable handshake and loaded-root list
+passed with exactly the original three roots.
+
+The recommended alternate is one newly authorized start on a new connection
+initialized with `experimentalApi=true`, retaining granular approval, disabled
+sandbox, exact cwd, omitted model/config overrides, all non-retry gates, and
+the physical-phone confirmation pause. This is a new changed-handshake
+decision and requires explicit owner authorization.

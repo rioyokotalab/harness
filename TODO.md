@@ -260,10 +260,23 @@ disabled queued mirror event, and every canonical watcher is attempt zero.
 
 **Next action and authority:** remain report-only. Do not send another
 `thread/start`, launch a provisional window/runtime, or change old Swallow.
-Read-only diagnosis may determine why the live 0.145.0 remote-control app
-server rejects current start requests, but any alternate creation method or
-further start requires a new frozen owner decision. The physical-phone gate
-remains unresolved.
+Read-only diagnosis established a concrete compatibility cause. The live
+remote-control server is Codex 0.145.0. Its exact official
+`rust-v0.145.0` protocol marks nested granular `approvalPolicy` as
+experimental, while controller v4's initialize request omitted
+`capabilities.experimentalApi`; both starts therefore reached an
+experimental-gating boundary before root creation. A separate read-only
+connection initialized with `experimentalApi=true` successfully completed the
+handshake and exact loaded-root list, still returning only the three canonical
+roots.
+
+**Recommended new decision:** if the owner wants another creation attempt,
+freeze exactly one start on a new connection initialized with
+`experimentalApi=true`, retain granular approval, disabled sandbox, exact cwd,
+and omitted model/config overrides, and preserve every existing non-retry and
+phone-confirmation gate. This is a changed handshake and a new start, not a
+retry of request ID `6`; it requires explicit owner authorization. The
+physical-phone gate remains unresolved.
 
 ### T-347 — Complete T-345 mirror convergence
 
