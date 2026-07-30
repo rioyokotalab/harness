@@ -752,3 +752,58 @@ from 440 to 450 words, and the self-check deliberately rejected the stale
 table. The reconstructed current median is 46.8%, with a 96.5% total median;
 the record, all eight rows, and both medians were corrected without changing a
 threshold or scenario.
+
+The periodic cleanup pass found five held/live Codex arg0 directories, 64
+eligible completed-invocation directories, no young entries, and no unexpected
+layout. The lock-aware housekeeping command quarantined exactly the 64
+eligible entries and passed the guarded-delete manifest, identity, ownership,
+mode, protected-anchor, and absence checks. Fresh readback is `live=5
+eligible=0 young=0 unexpected=0`; all held live directories remain. No test
+process is left, and the only T-351 `/tmp` root is the active publication
+worktree.
+
+The resulting evidence-only dirty diff selected R0 and passed fresh
+`harness validate --base HEAD` in 0.12 seconds without publishing a
+dirty-tree cache receipt. This is the intended ordinary ledger path rather
+than another full-suite rerun.
+
+PR #484 remains open, cleanly mergeable, with no review, comment, or inline
+thread. Repository readback allows merge, squash, and rebase methods; the
+active ruleset still carries required linear history plus the previously
+verified always-bypass role. Existing protected Harness publication uses an
+explicit merge commit under that preserved owner bypass, so final publication
+will keep the task's verified commit history rather than silently
+changing merge strategy.
+
+After a fresh fetch confirmed unchanged `origin/main`
+`f2ce89ac3ea393cb5a7b882bed1b79fe773974fb` as an ancestor, checkpoint
+`c37c593e66127dd054e4409b0b40f8b3796d60ad` was pushed to the existing PR.
+Protected pull-request run `30584273112` passed its credential-free
+`portable-phase1` job in 2m16s. The run event is exactly `pull_request`, and no
+push workflow was created. Harness is public, so this portable readback does
+not consume the private rioyokotalab minute allowance.
+
+One progress message then over-interpreted the hosted affinity contract as
+evidence of a two-core runner. The workflow records tool/platform capability
+but not a retained CPU count. Six seconds later a fresh timestamped correction
+withdrew that claim: the real low-core execution evidence is the one-CPU Local
+run, while the two-CPU path remains fixture-covered. No tracked metric or
+acceptance decision used the unsupported inference.
+
+Students independently advanced again to
+`610a9ea06afa91e8df6d4b7350142668640af11f`. Its latest four owner pull
+requests each produced skipped CI and boundary jobs, with no intervening push
+run. Fresh default-branch bytes still retain exact PR/weekly/manual CI,
+trusted-base `pull_request_target` boundary enforcement for other authors,
+read-only default permissions, and the dual owner/actor skip. Swallow remains
+at `1f1951d573eef05ce4055c140088d97ca8328382` with the same
+PR/weekly/manual and owner-skip contract; its only displayed push run predates
+the transition. This later independent traffic strengthens operational
+readback without changing T-351's repository writes.
+
+A second progress update described that live repository observation too
+broadly as a fresh no-cross-lock/receipt result. Five seconds later it was
+corrected: the new evidence proves independent Git/workflow activity while
+Harness stayed unchanged, whereas the lock, receipt, and tmux no-cross-mutation
+claim belongs only to the earlier controlled parallel benchmark. The durable
+statement above uses the bounded interpretation.

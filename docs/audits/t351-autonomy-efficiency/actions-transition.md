@@ -122,6 +122,17 @@ trigger. Swallow remained at PR #139 / `1f1951d`; its same workflow invariants
 and no-push-run state were unchanged. These are later operational observations,
 not independent attestation or a forecast.
 
+At 06:46 JST, Students had independently advanced again to
+`610a9ea06afa91e8df6d4b7350142668640af11f`. Its latest four owner pull
+requests each produced skipped CI and boundary jobs, with no intervening push
+run. Fresh default-branch workflow bytes still retained exact
+pull-request/weekly/manual CI, trusted-base `pull_request_target` enforcement
+for other authors, read-only default permissions, and the dual owner/actor
+skip. Swallow remained at
+`1f1951d573eef05ce4055c140088d97ca8328382`; its workflow bytes and
+post-transition no-push state were unchanged. This is another bounded live
+observation, not a guarantee about future event volume.
+
 GitHub's job-condition syntax supports this event-specific selection:
 [job conditions](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-jobs-with-conditions).
 A skipped required job reports success, so the existing required context can
