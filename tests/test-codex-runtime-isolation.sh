@@ -309,6 +309,14 @@ set -eu
 printf '%s\n' "$*" >"$HARNESS_TEST_CAPTURE/release-forwarding"
 EOF
 chmod 700 "$fake_once"
+fake_thread_check=$TEST_ROOT/fake-thread-check
+cat >"$fake_thread_check" <<'EOF'
+#!/bin/sh
+set -eu
+[ "$1" = --check ]
+printf '%s\n' "$*" >"$HARNESS_TEST_CAPTURE/thread-check"
+EOF
+chmod 700 "$fake_thread_check"
 (
     cd "$target_students"
     HARNESS_TESTING=1 \
@@ -316,6 +324,7 @@ chmod 700 "$fake_once"
     HARNESS_TEST_CODEX_RELEASE_ROOT="$release_root" \
     HARNESS_TEST_RUNTIME_DIR="$runtime" \
     HARNESS_TEST_CODEX_LAUNCHER="$fake_once" \
+    HARNESS_TEST_THREAD_RECOVERY="$fake_thread_check" \
     HARNESS_TEST_CAPTURE="$capture" \
         "$control/libexec/harness-codex-resilient" \
             --run --target students --name explicit-forward \
@@ -323,6 +332,9 @@ chmod 700 "$fake_once"
 ) >"$TEST_ROOT/release-forwarding.out"
 [ "$(cat "$capture/release-forwarding")" = 'resume session-explicit' ] ||
     fail "release handoff changed the explicit no-replay selector"
+grep -F -- '--target students --thread session-explicit' \
+    "$capture/thread-check" >/dev/null ||
+    fail "release handoff omitted explicit thread target preflight"
 
 chmod 700 "$harness_release" "$harness_release/libexec"
 chmod 755 "$harness_release/libexec/harness-codex-resilient"

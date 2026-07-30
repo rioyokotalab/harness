@@ -102,10 +102,13 @@ harness codex-resilient --run --name harness --last
 ```
 
 Use `--session ID` instead of `--last` when multiple Codex chats can be started
-from the same repository. `--new` creates a new chat on the first launch and
-resumes the repository's most recent chat thereafter; `--last-all` selects the
-globally most recent saved chat. `harness-codex` remains the explicit direct
-launcher for a fresh or intentionally unsupervised client.
+from the same repository. Before every exact-ID launch, the supervisor requires
+the saved thread's persisted CWD to match the current managed target. `--new`
+creates a new chat on the first launch and resumes the repository's most recent
+chat thereafter. The target-scoped supervisor rejects global `--last-all`;
+use `harness-codex resume --last --all` only for an intentional unsupervised
+global resume. `harness-codex` remains the explicit direct launcher for a fresh
+or intentionally unsupervised client.
 
 For a phone-visible chat owned by the local remote-control app server, preserve
 both the remote transport and exact root ID on every retry:
@@ -135,7 +138,7 @@ or external effects, and the removed prompt is never replayed.
 Plan or inspect the value-free recovery receipt independently:
 
 ```bash
-harness codex-thread-recovery --plan --name harness --thread ID
+harness codex-thread-recovery --plan --name harness --target harness --thread ID
 harness codex-thread-recovery --status --name harness
 ```
 

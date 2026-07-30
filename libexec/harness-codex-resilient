@@ -42,10 +42,12 @@ Usage:
 Selectors:
   --new             start a new chat, then resume the repository's latest chat
   --last            resume the most recent chat in the current repository
-  --last-all        resume the globally most recent chat
   --session ID      always resume one explicit session ID or safe session name
   --remote-session ID
                     always resume one exact session through --remote unix://
+
+The target-scoped supervisor rejects global `--last-all`; use the direct
+`harness-codex` launcher for an intentional unsupervised global resume.
 EOF
 }
 
@@ -85,9 +87,7 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         --last-all)
-            selector=last-all
-            selector_count=$((selector_count + 1))
-            shift
+            die "Codex resilient --last-all is outside target-scoped supervision"
             ;;
         --session)
             [ "$#" -ge 2 ] || die "Codex resilient --session requires a value"
@@ -172,7 +172,6 @@ if [ "$mode" = run ] && [ "$release_active" = no ] &&
     case "$selector" in
         new) set -- --new ;;
         last) set -- --last ;;
-        last-all) set -- --last-all ;;
         explicit) set -- --session "$session_id" ;;
         remote-explicit) set -- --remote-session "$session_id" ;;
         *) die "Codex resilient internal selector error" ;;
@@ -624,8 +623,14 @@ run_codex() {
             fi
             ;;
         last) "$launcher" resume --last ;;
-        last-all) "$launcher" resume --last --all ;;
-        explicit) "$launcher" resume "$session_id" ;;
+        explicit)
+            if ! "$thread_recovery" --check --name "$recovery_name" \
+                --target "$target" --thread "$session_id" \
+                >/dev/null 2>&1; then
+                return 2
+            fi
+            "$launcher" resume "$session_id"
+            ;;
         remote-explicit)
             "$launcher" resume --remote unix:// "$session_id"
             ;;
@@ -758,7 +763,7 @@ start_thread_recovery() {
     set +e
     recovery_output=$(
         "$thread_recovery" --recover --name "$recovery_name" \
-            --thread "$session_id" \
+            --target "$target" --thread "$session_id" \
             2>/dev/null
     )
     recovery_status=$?
@@ -773,7 +778,8 @@ start_thread_recovery() {
         return 1
     fi
 
-    "$thread_recovery" --watch --name "$recovery_name" --thread "$session_id" \
+    "$thread_recovery" --watch --name "$recovery_name" --target "$target" \
+        --thread "$session_id" \
         >/dev/null 2>&1 &
     thread_recovery_pid=$!
     readiness_attempt=0

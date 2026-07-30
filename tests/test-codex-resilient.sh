@@ -189,9 +189,11 @@ mode=$1
 shift
 name=
 thread=
+target=
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --name) name=$2; shift 2 ;;
+        --target) target=$2; shift 2 ;;
         --thread) thread=$2; shift 2 ;;
         *) exit 2 ;;
     esac
@@ -223,8 +225,14 @@ print_state() {
         "$name" "$stored_thread" "$phase" "$reason" "$owner"
 }
 case "$mode" in
+    --check)
+        [ -n "$thread" ] && [ -n "$target" ] || exit 2
+        [ "${FAKE_RECOVERY_MODE:-watching}" != blocked-check ] || exit 2
+        printf 'CODEX_THREAD_RECOVERY mode=check target=%s thread=%s status=ready thread_status=idle\n' \
+            "$target" "$thread"
+        ;;
     --recover)
-        [ -n "$thread" ] || exit 2
+        [ -n "$thread" ] && [ -n "$target" ] || exit 2
         if [ "${FAKE_RECOVERY_MODE:-watching}" = blocked ]; then
             write_state blocked unsafe-tail "$$"
             print_state
@@ -234,7 +242,7 @@ case "$mode" in
         print_state
         ;;
     --watch)
-        [ -n "$thread" ] || exit 2
+        [ -n "$thread" ] && [ -n "$target" ] || exit 2
         stop() {
             write_state stopped operator-stop "$$"
             exit 0
@@ -335,6 +343,13 @@ run_supervisor --run --name explicit --session session-123 \
     "resume session-123" ] || fail "explicit first resume"
 [ "$(sed -n '3p' "$TEST_ROOT/codex.calls")" = \
     "resume session-123" ] || fail "explicit recovery drifted"
+: >"$TEST_ROOT/codex.calls"
+FAKE_RECOVERY_MODE=blocked-check \
+    run_supervisor --run --name explicit-cross --session session-cross \
+        >"$TEST_ROOT/explicit-cross.out" 2>&1 &&
+    fail "cross-target explicit session was launched"
+[ ! -s "$TEST_ROOT/codex.calls" ] ||
+    fail "cross-target explicit session reached native Codex"
 
 : >"$TEST_ROOT/codex.calls"
 : >"$TEST_ROOT/sleep.calls"
@@ -353,10 +368,10 @@ run_supervisor --run --name remote-explicit \
     fail "remote explicit unexpected call count"
 [ "$(sed -n '1p' "$TEST_ROOT/sleep.calls")" = 15 ] ||
     fail "remote explicit first retry delay"
-grep -F -- '--recover --name harness:remote-explicit --thread session-remote' \
+grep -F -- '--recover --name harness:remote-explicit --target harness --thread session-remote' \
     "$TEST_ROOT/recovery.calls" >/dev/null ||
     fail "remote explicit recovery preflight"
-grep -F -- '--watch --name harness:remote-explicit --thread session-remote' \
+grep -F -- '--watch --name harness:remote-explicit --target harness --thread session-remote' \
     "$TEST_ROOT/recovery.calls" >/dev/null ||
     fail "remote explicit recovery watcher"
 grep -F 'phase=stopped' "$runtime/harness:remote-explicit.recovery.state" \
@@ -378,10 +393,10 @@ grep -F 'reason=clean-exit' "$TEST_ROOT/watcher-restart.out" >/dev/null ||
 [ "$(grep -c '^resume --remote unix:// session-watcher-restart$' \
     "$TEST_ROOT/codex.calls")" = 1 ] ||
     fail "watcher replacement relaunched Codex"
-[ "$(grep -c '^--recover --name harness:watcher-restart --thread session-watcher-restart$' \
+[ "$(grep -c '^--recover --name harness:watcher-restart --target harness --thread session-watcher-restart$' \
     "$TEST_ROOT/recovery.calls")" = 2 ] ||
     fail "watcher replacement did not repeat safe-tail preflight once"
-[ "$(grep -c '^--watch --name harness:watcher-restart --thread session-watcher-restart$' \
+[ "$(grep -c '^--watch --name harness:watcher-restart --target harness --thread session-watcher-restart$' \
     "$TEST_ROOT/recovery.calls")" = 2 ] ||
     fail "watcher replacement count"
 
@@ -400,10 +415,10 @@ grep -F 'reason=thread-recovery-blocked' \
 [ "$(grep -c '^resume --remote unix:// session-watcher-exit$' \
     "$TEST_ROOT/codex.calls")" = 1 ] ||
     fail "dead recovery watcher relaunched Codex"
-[ "$(grep -c '^--recover --name harness:watcher-exit --thread session-watcher-exit$' \
+[ "$(grep -c '^--recover --name harness:watcher-exit --target harness --thread session-watcher-exit$' \
     "$TEST_ROOT/recovery.calls")" = 4 ] ||
     fail "persistent watcher failure preflight was not bounded"
-[ "$(grep -c '^--watch --name harness:watcher-exit --thread session-watcher-exit$' \
+[ "$(grep -c '^--watch --name harness:watcher-exit --target harness --thread session-watcher-exit$' \
     "$TEST_ROOT/recovery.calls")" = 4 ] ||
     fail "persistent watcher replacement was not bounded"
 
@@ -483,8 +498,19 @@ grep -F 'reason=client-usage' "$TEST_ROOT/usage.out" >/dev/null ||
 
 : >"$TEST_ROOT/codex.calls"
 : >"$TEST_ROOT/sleep.calls"
+if run_supervisor --run --name global --last-all \
+    >"$TEST_ROOT/global.out" 2>&1; then
+    fail "global resume entered target-scoped supervision"
+fi
+[ ! -s "$TEST_ROOT/codex.calls" ] ||
+    fail "rejected global resume reached native Codex"
+grep -F 'outside target-scoped supervision' "$TEST_ROOT/global.out" \
+    >/dev/null || fail "global resume rejection reason"
+
+: >"$TEST_ROOT/codex.calls"
+: >"$TEST_ROOT/sleep.calls"
 printf '1\n1\n1\n1\n1\n1\n0\n' >"$TEST_ROOT/codex.statuses"
-run_supervisor --run --name backoff --last-all >"$TEST_ROOT/backoff.out"
+run_supervisor --run --name backoff --last >"$TEST_ROOT/backoff.out"
 expected_delays='15
 30
 60
@@ -493,8 +519,8 @@ expected_delays='15
 300'
 [ "$(cat "$TEST_ROOT/sleep.calls")" = "$expected_delays" ] ||
     fail "exponential retry schedule"
-run_count=$(grep -c '^resume --last --all$' "$TEST_ROOT/codex.calls")
-[ "$run_count" = 7 ] || fail "global resume selector changed"
+run_count=$(grep -c '^resume --last$' "$TEST_ROOT/codex.calls")
+[ "$run_count" = 7 ] || fail "repository resume selector changed"
 [ "$(grep -c '^doctor --json$' "$TEST_ROOT/codex.calls")" = 6 ] ||
     fail "doctor count"
 
