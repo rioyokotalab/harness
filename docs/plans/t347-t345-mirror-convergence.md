@@ -175,8 +175,10 @@ or lifecycle request. A failed query is unknown, not absence.
    `SIGSTOP` is externally undone before a stable post-check. Instead wait for
    the next exact mode-0600 idle helper epoch with terminal counts unchanged
    and a PID-only zero-child readback. Record that epoch and require it remain
-   unchanged at every later gate. This begins nearly a full 30-second sleep
-   interval and prevents the observer from seeing partial state.
+   unchanged, idle, and no older than ten seconds at every later gate; do not
+   repeat the child query after the frozen selection. This begins nearly a
+   full 30-second sleep interval and prevents the observer from seeing partial
+   state.
 4. Send one `SIGSTOP` to each exact accepted recovery-watcher leaf only:
    Harness `808441`, Students `808488`, and Swallow `2266511`, after matching
    each PID, parent, start identity, executable, argv, and root. Do not signal
