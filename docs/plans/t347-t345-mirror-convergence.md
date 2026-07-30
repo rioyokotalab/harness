@@ -175,10 +175,13 @@ or lifecycle request. A failed query is unknown, not absence.
    readback; wait through at most one 30-second observation interval for this
    fresh-idle gate. After signaling, require exact Linux stopped state and
    perform the zero-child readback against the stopped parent; expose that
-   frozen proof only once to the controller's child gate. Prove the same exact
-   helper is stopped and still childless before continuing. This prevents its
-   observer from being frozen around a short-lived metadata child or treating
-   an intentionally partial five-operation transaction as a new mirror event.
+   frozen proof only once to the controller's child gate. If an intermittent
+   child remains, resume the exact helper and repeat fresh-idle/stop/readback
+   under one 45-second deadline; never expose a failed proof or leave that
+   refusal path stopped. Prove the same exact helper is stopped and still
+   childless before continuing. This prevents its observer from being frozen
+   around a short-lived metadata child or treating an intentionally partial
+   five-operation transaction as a new mirror event.
 4. Send one `SIGSTOP` to each exact accepted recovery-watcher leaf only:
    Harness `808441`, Students `808488`, and Swallow `2266511`, after matching
    each PID, parent, start identity, executable, argv, and root. Do not signal
