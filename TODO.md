@@ -166,7 +166,7 @@ agents and ledgers.
 
 ### T-347 — Complete T-345 mirror convergence
 
-**Phase:** app-name-aware controller v5 frozen; publication pending.
+**Phase:** frozen-epoch controller v6 frozen; publication pending.
 
 The immutable T-345 helper event remains terminal `failed/worker-failed`; its
 private worker log remains unread and the event must never be retried.
@@ -444,6 +444,28 @@ It retains the exact transport loader, requires all canonical app names exact
 at preflight, permits their database persistence writes, passes syntax and
 zero-write preflight, and has distinct absent journal/result paths.
 
+PR #433 passed `portable-phase1` at exact v5 head
+`c97785cfeb9d3619a03319aefd297975a37ce763` and merge-merged as
+`4d93a8df3648ecf6aa7932ff411981dd2430f4d8`. v5 ran once, stopped and
+resumed all watchers, opened one metadata-only app-server connection, and
+terminally refused before any operation. It remains `verified=0` with no
+lifecycle request. A same-input read-only reproduction proves the post-app
+static gate passes.
+
+The remaining pre-operation refusal is the redundant helper child query after
+the fresh epoch and zero-child selection had already passed. v6 preserves the
+initial zero-child gate, then requires only the same mode-0600 idle
+epoch/counts and an age no greater than ten seconds through the short
+operation window. This remains well inside the helper's 30-second interval.
+
+Private v6 wrapper
+`/run/user/5035/harness-t347-mirror-convergence/controller-v6.py` is current
+user, mode `0700`, one link, 5,460 bytes, SHA-256
+`54cdfd21389dc3dc718b05ec37b62fae490d3b125e21b942b92d21c790cdc42d`.
+It verifies exact v3 digest, retains the source loader and app-name amendment,
+passes syntax and zero-write preflight, and has distinct absent journal/result
+paths.
+
 The immutable controller checkpoint is exact commit
 `70c5194066965df1bffc0078f36361ded50d7bc2` in clean worktree
 `/tmp/harness-t347-t345-mirror-execution`. That worktree must remain at this
@@ -453,9 +475,9 @@ an ancestor. PR #423 passed `portable-phase1` at recording head
 `6fc06163946452ca1fe9a7d015279c2b161ea9ff` and merge-merged as
 `805016261124fd07b365a2cbf962222939e0758d`.
 
-**Next action:** publish the ninth no-request refusal and exact v5 wrapper
+**Next action:** publish the tenth no-request refusal and exact v6 wrapper
 through the protected workflow. Then pass the resulting protected-main merge,
-checkpoint `70c5194`, and v5 digest `124dee9` to one v5 execution. Never rerun
+checkpoint `70c5194`, and v6 digest `54cdfd2` to one v6 execution. Never rerun
 any prior controller. Do not open the app-server connection, signal watchers,
 or write root metadata before protected publication.
 
