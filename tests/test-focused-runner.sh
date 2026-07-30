@@ -80,6 +80,31 @@ python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
 [ "$(grep -c '^PASS suite=' "$TEMP_DIR/pass.out")" -eq 2 ] ||
     fail 'parallel result count'
 
+for name in early priority late; do
+    cat >"$fake/tests/$name.sh" <<'EOF'
+#!/bin/sh
+set -eu
+printf '%s\n' "${0##*/}" >>"$ORDER_FILE"
+EOF
+    chmod 755 "$fake/tests/$name.sh"
+done
+printf '%s\n' \
+    'tests/early.sh|early|1' \
+    'tests/priority.sh|priority|9' \
+    'tests/late.sh|late|1' >"$fake/priority.tsv"
+ORDER_FILE="$TEMP_DIR/priority.order" \
+    python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
+    --manifest "$fake/priority.tsv" --log-dir "$fake/priority-logs" --jobs 1 \
+    >"$TEMP_DIR/priority.out" 2>"$TEMP_DIR/priority.err" ||
+    fail 'priority admission'
+[ "$(cat "$TEMP_DIR/priority.order")" = "priority.sh
+early.sh
+late.sh" ] || fail 'priority admission order'
+[ "$(sed -n 's/^PASS suite=\([^ ]*\).*/\1/p' "$TEMP_DIR/priority.out")" = \
+    "early.sh
+priority.sh
+late.sh" ] || fail 'priority changed canonical output order'
+
 PYTHONDONTWRITEBYTECODE=1 python3 - "$ROOT/tools/run-focused-tests.py" <<'PY'
 import importlib.util
 import pathlib

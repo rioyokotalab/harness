@@ -49,18 +49,26 @@ def resolve_jobs(raw: str, reserve_cpus: int = 0) -> tuple[int, int | None]:
         return 0, None
 
 
-def load_manifest(root: Path, manifest: Path) -> list[tuple[Path, str]]:
-    suites: list[tuple[Path, str]] = []
+def load_manifest(root: Path, manifest: Path) -> list[tuple[int, Path, str, int]]:
+    suites: list[tuple[int, Path, str, int]] = []
     for number, raw in enumerate(manifest.read_text(encoding="utf-8").splitlines(), 1):
         if not raw or raw.startswith("#"):
             continue
-        fields = raw.split("|", 1)
-        if len(fields) != 2 or not fields[0] or not fields[1]:
+        fields = raw.split("|")
+        if len(fields) not in (2, 3) or not fields[0] or not fields[1]:
             raise ValueError(f"invalid manifest line {number}")
+        estimate = 0
+        if len(fields) == 3:
+            try:
+                estimate = int(fields[2])
+            except ValueError as error:
+                raise ValueError(f"invalid manifest line {number}") from error
+            if estimate < 1 or estimate > 3600:
+                raise ValueError(f"invalid manifest line {number}")
         path = root / fields[0]
         if not path.is_file() or path.is_symlink():
             raise ValueError(f"unsafe or absent suite: {fields[0]}")
-        suites.append((path, fields[1]))
+        suites.append((len(suites) + 1, path, fields[1], estimate))
     if not suites:
         raise ValueError("empty focused-suite manifest")
     return suites
@@ -110,9 +118,10 @@ def main() -> int:
 
     results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as executor:
+        admission_order = sorted(suites, key=lambda suite: (-suite[3], suite[0]))
         futures = [
-            executor.submit(run_one, i, path, label, root, log_dir)
-            for i, (path, label) in enumerate(suites, 1)
+            executor.submit(run_one, index, path, label, root, log_dir)
+            for index, path, label, _ in admission_order
         ]
         for future in concurrent.futures.as_completed(futures):
             results.append(future.result())
