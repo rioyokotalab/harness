@@ -286,3 +286,10 @@ The credential-free log reports `tier=R3`, all phase-one tests passing, and
 `jobs=3 visible_cpus=4 mode=auto reserve_cpus=1`. That is exact hosted
 low-core execution evidence for the automatic reserve and three-worker route;
 it is not a two-core sample.
+
+The explicit no-receipt route now distinguishes a clean intentionally disabled
+receipt (`none-disabled`) from a dirty tree (`none-dirty`). Execution-level
+tests forbid receipt-directory, cache, or publication calls when disabled.
+Clean checkpoint `8a20262` produced the new label and passed all 91 suites in
+56.59 seconds, with 159.34 seconds user CPU, 163.95 seconds system CPU, and
+545,772 KiB maximum RSS.

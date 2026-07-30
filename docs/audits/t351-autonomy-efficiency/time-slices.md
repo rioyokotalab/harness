@@ -892,3 +892,14 @@ reports `none-disabled` when a clean identity exists and receipt publication
 was intentionally disabled; a genuinely dirty tree still reports
 `none-dirty`. An execution-level mocked-identity regression passes and proves
 the disabled route never calls receipt lookup or publication.
+
+Clean validator checkpoint `8a20262` then passed actual
+`harness validate --base HEAD --no-receipt` with
+`receipt=none-disabled`, followed by all 91 integrated suites in 56.59
+seconds. Resource use was 159.34 seconds user CPU, 163.95 seconds system CPU,
+and 545,772 KiB maximum RSS.
+
+Immediate post-run arg0 inventory is `live=5 eligible=0 young=8
+unexpected=0`. The eight fresh completed helpers remain inside their grace
+period and were preserved; they will be reclassified only during final
+cleanup.
