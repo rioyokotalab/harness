@@ -7,6 +7,7 @@ HPC=$ROOT/shared/skills/operate-native-hpc
 PIE=$ROOT/shared/skills/plan-interview-execute
 REMOTE=$ROOT/shared/skills/remote-agent-communication
 HARDENING=$ROOT/shared/skills/fleet-repository-hardening
+PERSONAL_MAC=$ROOT/shared/skills/onboard-personal-mac
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 words() { wc -w <"$1" | tr -d ' '; }
@@ -25,6 +26,9 @@ REMOTE_BEFORE=1241
 # Before routing, every hardening invocation selected both the 1,130-word
 # entry and its 301-word aggregate checklist.
 HARDENING_BEFORE=1431
+# Before routing, every personal-Mac invocation selected the 889-word entry
+# and its mandatory 638-word aggregate stage reference.
+PERSONAL_MAC_BEFORE=1527
 
 cowork_entry=$(words "$COWORK/SKILL.md")
 cowork_plan=$(words "$COWORK/references/session-planning.md")
@@ -121,5 +125,56 @@ hardening_reduction=$(((HARDENING_BEFORE - hardening_largest) * 100 / HARDENING_
 assert_max "$(words "$HARDENING/references/audit-checklist.md")" 80 \
     'fleet-hardening compatibility audit index'
 
+personal_entry=$(words "$PERSONAL_MAC/SKILL.md")
+personal_common=$(words "$PERSONAL_MAC/references/execution-common.md")
+personal_planning=$(words "$PERSONAL_MAC/references/planning.md")
+assert_max "$personal_entry" 450 'personal-Mac entry'
+assert_max "$personal_common" 250 'personal-Mac execution common'
+personal_planning_route=$((personal_entry + personal_planning))
+assert_max "$personal_planning_route" 700 'personal-Mac planning route'
+
+personal_component_words_largest=0
+personal_component_largest=0
+for name in private-companion bootstrap-packages public-control bash-startup \
+    tmux ssh-private agent-config; do
+    component_words=$(words "$PERSONAL_MAC/references/$name.md")
+    assert_max "$component_words" 160 "personal-Mac $name reference"
+    selected_words=$((personal_entry + personal_common + component_words))
+    assert_max "$selected_words" 850 \
+        "personal-Mac $name execution route"
+    [ "$component_words" -le "$personal_component_words_largest" ] ||
+        personal_component_words_largest=$component_words
+    [ "$selected_words" -le "$personal_component_largest" ] ||
+        personal_component_largest=$selected_words
+done
+
+personal_acceptance=$(words "$PERSONAL_MAC/references/acceptance.md")
+assert_max "$personal_acceptance" 180 'personal-Mac acceptance reference'
+# Acceptance augments execution common and the exact component under test.
+personal_acceptance_route=$((personal_entry + personal_common +
+    personal_acceptance + personal_component_words_largest))
+assert_max "$personal_acceptance_route" 1000 \
+    'personal-Mac component acceptance route'
+personal_orphan=$(words "$PERSONAL_MAC/references/orphan-cleanup.md")
+assert_max "$personal_orphan" 100 'personal-Mac orphan reference'
+# Orphan cleanup may augment component acceptance during revalidation. Count
+# that largest cumulative combination rather than dropping the component.
+personal_orphan_route=$((personal_entry + personal_common +
+    personal_acceptance + personal_component_words_largest + personal_orphan))
+assert_max "$personal_orphan_route" 1000 \
+    'personal-Mac cumulative orphan route'
+
+personal_largest=$personal_component_largest
+[ "$personal_acceptance_route" -le "$personal_largest" ] ||
+    personal_largest=$personal_acceptance_route
+[ "$personal_orphan_route" -le "$personal_largest" ] ||
+    personal_largest=$personal_orphan_route
+personal_reduction=$(((PERSONAL_MAC_BEFORE - personal_largest) * 100 /
+    PERSONAL_MAC_BEFORE))
+[ "$personal_reduction" -ge 35 ] ||
+    fail "personal-Mac largest-route reduction is not material: $personal_reduction%"
+assert_max "$(words "$PERSONAL_MAC/references/stages.md")" 80 \
+    'personal-Mac compatibility stage index'
+
 printf '%s\n' \
-    "Skill context budgets passed: cowork $COWORK_BEFORE->$cowork_initial words (-$cowork_reduction%); HPC $HPC_BEFORE->$hpc_largest words (-$hpc_reduction%); PIE $PIE_BEFORE->$pie_largest words (-$pie_reduction%); remote $REMOTE_BEFORE->$remote_largest words (-$remote_reduction%); hardening $HARDENING_BEFORE->$hardening_largest words (-$hardening_reduction%, largest selected routes including interrupted phase)"
+    "Skill context budgets passed: cowork $COWORK_BEFORE->$cowork_initial words (-$cowork_reduction%); HPC $HPC_BEFORE->$hpc_largest words (-$hpc_reduction%); PIE $PIE_BEFORE->$pie_largest words (-$pie_reduction%); remote $REMOTE_BEFORE->$remote_largest words (-$remote_reduction%); hardening $HARDENING_BEFORE->$hardening_largest words (-$hardening_reduction%, largest selected routes including interrupted phase); personal-Mac $PERSONAL_MAC_BEFORE->$personal_largest words (-$personal_reduction%, cumulative component acceptance)"

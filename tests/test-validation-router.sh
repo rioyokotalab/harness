@@ -61,6 +61,16 @@ cases = [
         False,
     ),
     (
+        ["shared/skills/onboard-personal-mac/references/bash-startup.md"],
+        "R1",
+        [
+            "tests/test-onboard-personal-mac-skill.sh",
+            "tests/test-skill-context-budgets.sh",
+            "tests/test-skill-context-gates.sh",
+        ],
+        False,
+    ),
+    (
         ["libexec/harness-terminfo"],
         "R2",
         ["tests/test-terminfo.sh"],
@@ -126,4 +136,4 @@ assert unknown["tier"] == "R3"
 assert unknown["suites"] == ["tests/test-phase1.sh"]
 PY
 
-printf '%s\n' 'VALIDATION_ROUTER status=pass cases=12'
+printf '%s\n' 'VALIDATION_ROUTER status=pass cases=13'

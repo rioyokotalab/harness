@@ -7,6 +7,7 @@ HPC=$ROOT/shared/skills/operate-native-hpc
 PIE=$ROOT/shared/skills/plan-interview-execute
 REMOTE=$ROOT/shared/skills/remote-agent-communication
 HARDENING=$ROOT/shared/skills/fleet-repository-hardening
+PERSONAL_MAC=$ROOT/shared/skills/onboard-personal-mac
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 assert_contains() {
@@ -47,7 +48,20 @@ for path in \
     "$HARDENING/references/execution.md" \
     "$HARDENING/references/issue-stack.md" \
     "$HARDENING/references/closeout.md" \
-    "$HARDENING/references/audit-checklist.md"; do
+    "$HARDENING/references/audit-checklist.md" \
+    "$PERSONAL_MAC/SKILL.md" \
+    "$PERSONAL_MAC/references/planning.md" \
+    "$PERSONAL_MAC/references/execution-common.md" \
+    "$PERSONAL_MAC/references/private-companion.md" \
+    "$PERSONAL_MAC/references/bootstrap-packages.md" \
+    "$PERSONAL_MAC/references/public-control.md" \
+    "$PERSONAL_MAC/references/bash-startup.md" \
+    "$PERSONAL_MAC/references/tmux.md" \
+    "$PERSONAL_MAC/references/ssh-private.md" \
+    "$PERSONAL_MAC/references/agent-config.md" \
+    "$PERSONAL_MAC/references/acceptance.md" \
+    "$PERSONAL_MAC/references/orphan-cleanup.md" \
+    "$PERSONAL_MAC/references/stages.md"; do
     [ -f "$path" ] && [ ! -L "$path" ] || fail "missing regular file: $path"
 done
 
@@ -227,5 +241,60 @@ if grep -F 'unique Codex pane in the `harness` session' \
     "$REMOTE/SKILL.md" >/dev/null; then
     fail 'remote-agent retains stale Local session'
 fi
+
+# Personal-Mac onboarding keeps one-host/go/unknown gates in the entry, then
+# composes execution common with only the active component and acceptance.
+for route in planning execution-common private-companion bootstrap-packages \
+    public-control bash-startup tmux ssh-private agent-config acceptance \
+    orphan-cleanup; do
+    assert_contains "[$route.md](references/$route.md)" \
+        "$PERSONAL_MAC/SKILL.md" "personal-Mac missing $route route"
+done
+assert_contains 'exactly one owner-named Mac' "$PERSONAL_MAC/SKILL.md" \
+    'personal-Mac one-host gate'
+assert_contains 'Do not mutate the target until `planning.md`' \
+    "$PERSONAL_MAC/SKILL.md" 'personal-Mac plan/go gate'
+assert_contains 'Component routes augment `execution-common.md`' \
+    "$PERSONAL_MAC/SKILL.md" 'personal-Mac cumulative route gate'
+assert_contains 'wait for the owner' \
+    "$PERSONAL_MAC/references/planning.md" 'personal-Mac explicit go'
+assert_contains 'TCC response' \
+    "$PERSONAL_MAC/references/execution-common.md" \
+    'personal-Mac credential/TCC pause'
+assert_contains 'reload an active shell or tmux' \
+    "$PERSONAL_MAC/references/execution-common.md" \
+    'personal-Mac no-live-reload gate'
+assert_contains 'baseline-only profile' \
+    "$PERSONAL_MAC/references/private-companion.md" \
+    'personal-Mac private companion default'
+assert_contains 'externally managed site-packages' \
+    "$PERSONAL_MAC/references/bootstrap-packages.md" \
+    'personal-Mac package boundary'
+assert_contains '`approval_policy=never`' \
+    "$PERSONAL_MAC/references/bootstrap-packages.md" \
+    'personal-Mac zero-prompt bootstrap'
+assert_contains '`--merge-distinct-profile`' \
+    "$PERSONAL_MAC/references/bash-startup.md" \
+    'personal-Mac startup default'
+assert_contains 'fresh isolated tmux server' \
+    "$PERSONAL_MAC/references/tmux.md" 'personal-Mac tmux isolation'
+assert_contains '`--adopt-remote`' \
+    "$PERSONAL_MAC/references/ssh-private.md" \
+    'personal-Mac SSH adoption'
+assert_contains 'both Codex and Claude' \
+    "$PERSONAL_MAC/references/agent-config.md" \
+    'personal-Mac agent configuration'
+assert_contains 'exact unchanged-only rollback' \
+    "$PERSONAL_MAC/references/acceptance.md" \
+    'personal-Mac rollback/reapply gate'
+assert_contains 'protected CI' \
+    "$PERSONAL_MAC/references/acceptance.md" \
+    'personal-Mac protected publication'
+assert_contains 'live startup reference or open handle' \
+    "$PERSONAL_MAC/references/orphan-cleanup.md" \
+    'personal-Mac orphan retention gate'
+assert_contains 'Do not preload this compatibility index' \
+    "$PERSONAL_MAC/references/stages.md" \
+    'personal-Mac legacy aggregate marker'
 
 printf '%s\n' 'Skill context gate tests passed'

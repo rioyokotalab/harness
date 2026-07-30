@@ -22,6 +22,8 @@
 ^shared/skills/fleet-repository-hardening/|R1|tests/test-skill-context-gates.sh|hardening routed safety gates
 ^tests/test-fleet-repository-hardening-skill\.sh$|R1|tests/test-fleet-repository-hardening-skill.sh|hardening skill validator
 ^shared/skills/onboard-personal-mac/|R1|tests/test-onboard-personal-mac-skill.sh|personal Mac skill
+^shared/skills/onboard-personal-mac/|R1|tests/test-skill-context-budgets.sh|personal Mac routed context budget
+^shared/skills/onboard-personal-mac/|R1|tests/test-skill-context-gates.sh|personal Mac routed safety gates
 ^tests/test-onboard-personal-mac-skill\.sh$|R1|tests/test-onboard-personal-mac-skill.sh|personal Mac skill validator
 ^shared/skills/reboot-recovery/|R1|tests/test-reboot-recovery-skill.sh|reboot recovery skill
 ^tests/test-reboot-recovery-skill\.sh$|R1|tests/test-reboot-recovery-skill.sh|reboot recovery validator
