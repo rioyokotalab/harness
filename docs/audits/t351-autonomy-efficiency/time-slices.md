@@ -187,3 +187,10 @@ app-server, account, ruleset, billing, scheduler, credential, or project-agent
 state changed. Two independent read-only audits and an isolated
 unsafe-recovery skill-routing implementation remain in progress for the next
 slice; only independently reviewed evidence will be retained.
+
+## 2026-07-31 02:00–02:59 JST
+
+In progress. Close the four independently reproduced cross-target fail-open
+paths before resuming latency work, integrate the routed recovery skill only
+after lifecycle review, and retain further startup optimizations only when
+matched measurements and focused safety fixtures pass.

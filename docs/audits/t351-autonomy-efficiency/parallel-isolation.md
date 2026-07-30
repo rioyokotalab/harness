@@ -39,3 +39,33 @@ native receipt lived only under its Harness runtime root; Students' UV cache
 and Swallow's temporary files stayed under their distinct roots. The private
 raw logs and receipts are task-owned cleanup inputs after this tracked summary
 is committed.
+
+## Adversarial boundary review
+
+An independent static review then tested four ways a nominally target-scoped
+operation could cross repositories. All four were reproduced before the
+correction and closed with focused regression fixtures:
+
+- Every exact saved-thread launch, remote recovery check, and rollback now
+  requires both the requested thread ID and its persisted rollout CWD to equal
+  the closed target repository. Cross-target idle and `systemError` threads
+  fail before native launch or rollback.
+- The direct launcher derives its physical Harness control root instead of
+  trusting ambient root variables, then strips all Harness release/test state
+  before native Codex. A released launcher requires its immutable release
+  target to equal the repository selected from the closed map. Tests cover all
+  six wrong-target permutations among Harness, Students, and Swallow.
+- The recovery helper rejects an unknown or missing target before creating its
+  runtime directories, event, receipt, log, or worker. Only the three declared
+  targetless event kinds map explicitly to Harness.
+- Managed `--last-all` is rejected because it is not repository-scoped. It
+  remains available only through the intentional direct unsupervised launcher.
+
+The three target-scoped runtime supervisors, locks, state files, releases, and
+recovery events remain independently addressable even when their runtime names
+are identical. The monitor now observes one process/socket snapshot for all
+three windows, avoiding both repeated system scans and within-cycle skew.
+Focused target, runtime-isolation, recovery, helper, resilient-supervisor,
+monitor, launcher, and source-contract tests pass. These repository changes do
+not restart or alter the existing live clients; adoption remains a separate
+post-merge lifecycle action.

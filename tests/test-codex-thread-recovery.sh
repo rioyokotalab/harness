@@ -155,6 +155,9 @@ write_read_response() {
             >"$rollout.next"
         mv "$rollout.next" "$rollout"
         chmod 600 "$rollout"
+    elif ! sed -n '1p' "$rollout" |
+        grep -F "\"cwd\":\"$thread_cwd\"" >/dev/null; then
+        fail "test rollout CWD changed across responses"
     fi
     printf '{"threadId":"%s","status":"%s","path":"%s","cwd":"%s"}\n' \
         "$thread" "$status_value" "$rollout" "$thread_cwd" \
