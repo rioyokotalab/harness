@@ -12,7 +12,7 @@ usage() {
 [ "$#" -ge 1 ] && [ "$1" = --exec-resilient ] || usage
 shift
 
-for required in chmod git id mkdir mktemp mv rmdir sed sleep stat tr uname \
+for required in awk chmod git id mkdir mktemp mv rmdir sed sleep stat tr uname \
     unlink wc
 do
     command -v "$required" >/dev/null 2>&1 || {
@@ -154,6 +154,13 @@ payload_tmp=$(mktemp "$private_root/.payload.XXXXXX") || {
     exit 2
 }
 chmod 600 "$payload_tmp"
+batch_tmp=$(mktemp "$private_root/.batch.XXXXXX") || {
+    unlink "$payload_tmp"
+    unlink "$manifest_tmp"
+    echo "harness: Codex runtime Git batch cannot be allocated" >&2
+    exit 2
+}
+chmod 600 "$batch_tmp"
 stage=
 lock_dir=
 lock_owned=no
@@ -196,6 +203,11 @@ cleanup() {
         [ "$(path_owner "$payload_tmp")" = "$uid" ] &&
         [ "$(path_links "$payload_tmp")" = 1 ]; then
         unlink "$payload_tmp" || status=2
+    fi
+    if [ -f "$batch_tmp" ] && [ ! -L "$batch_tmp" ] &&
+        [ "$(path_owner "$batch_tmp")" = "$uid" ] &&
+        [ "$(path_links "$batch_tmp")" = 1 ]; then
+        unlink "$batch_tmp" || status=2
     fi
     exit "$status"
 }
@@ -302,29 +314,62 @@ done <"$manifest_tmp"
     exit 2
 }
 
-payload_count=0
-while IFS='	' read -r path mode extra; do
-    case "$path" in ''|'#'*) continue ;; esac
-    expected=$(git -C "$source_root" rev-parse "$commit:$path" 2>/dev/null) || {
-        echo "harness: committed Codex runtime file is unavailable: $path" >&2
+resolve_payload_objects() {
+    set --
+    while IFS='	' read -r path mode extra; do
+        case "$path" in ''|'#'*) continue ;; esac
+        set -- "$@" "$path"
+    done <"$manifest_tmp"
+    [ "$#" -eq "$manifest_count" ] || {
+        echo "harness: Codex runtime payload query is incomplete" >&2
         exit 2
     }
-    case "$expected" in
-        *[!0-9a-f]*|'')
-            echo "harness: committed Codex runtime object is malformed" >&2
-            exit 2
-            ;;
-    esac
-    case ${#expected} in
-        40|64) ;;
-        *)
-            echo "harness: committed Codex runtime object is malformed" >&2
-            exit 2
-            ;;
-    esac
-    printf '%s\t%s\t%s\n' "$path" "$mode" "$expected" >>"$payload_tmp"
-    payload_count=$((payload_count + 1))
-done <"$manifest_tmp"
+    git -C "$source_root" ls-tree -r "$commit" -- "$@" \
+        >"$batch_tmp" 2>/dev/null || {
+        echo "harness: committed Codex runtime objects are unavailable" >&2
+        exit 2
+    }
+    awk -F '	' '
+        NR == FNR {
+            if ($1 == "" || substr($1, 1, 1) == "#")
+                next
+            order[++count] = $1
+            release_mode[$1] = $2
+            allowed[$1] = 1
+            next
+        }
+        {
+            fields = split($1, metadata, " ")
+            path = $2
+            if (NF != 2 || fields != 3 || metadata[2] != "blob" ||
+                (metadata[1] != "100644" && metadata[1] != "100755") ||
+                path == "" || !(path in allowed) || seen[path]++)
+                exit 1
+            object = metadata[3]
+            if (object !~ /^[0-9a-f]+$/ ||
+                (length(object) != 40 && length(object) != 64))
+                exit 1
+            object_id[path] = object
+            resolved++
+        }
+        END {
+            if (resolved != count)
+                exit 1
+            for (i = 1; i <= count; i++) {
+                path = order[i]
+                if (!(path in object_id))
+                    exit 1
+                print path "	" release_mode[path] "	" object_id[path]
+            }
+        }
+    ' "$manifest_tmp" "$batch_tmp" >"$payload_tmp" || {
+        echo "harness: committed Codex runtime object set is incomplete" >&2
+        exit 2
+    }
+}
+resolve_payload_objects
+
+payload_count=$(wc -l <"$payload_tmp" | tr -d ' ')
 [ "$payload_count" -eq "$manifest_count" ] || {
     echo "harness: Codex runtime payload identity is incomplete" >&2
     exit 2
@@ -375,6 +420,7 @@ validate_release() {
     esac
     case ${#marker_source_commit} in 40|64) ;; *) return 1 ;; esac
     validated=0
+    set --
     while IFS='	' read -r path mode expected extra; do
         [ -z "${extra:-}" ] || return 1
         candidate=$release_dir/$path
@@ -382,11 +428,25 @@ validate_release() {
             [ "$(path_owner "$candidate")" = "$uid" ] &&
             [ "$(path_mode "$candidate")" = "$mode" ] &&
             [ "$(path_links "$candidate")" = 1 ] || return 1
-        actual=$(git hash-object "$candidate" 2>/dev/null) || return 1
-        [ "$actual" = "$expected" ] || return 1
+        set -- "$@" "$candidate"
         validated=$((validated + 1))
     done <"$payload_tmp"
-    [ "$validated" -eq "$manifest_count" ]
+    [ "$validated" -eq "$manifest_count" ] || return 1
+    git -C "$source_root" hash-object -- "$@" >"$batch_tmp" 2>/dev/null ||
+        return 1
+    validation_ok=yes
+    exec 3<"$batch_tmp"
+    while IFS='	' read -r path mode expected extra; do
+        if ! IFS= read -r actual <&3 || [ "$actual" != "$expected" ]; then
+            validation_ok=no
+            break
+        fi
+    done <"$payload_tmp"
+    if [ "$validation_ok" = yes ] && IFS= read -r actual <&3; then
+        validation_ok=no
+    fi
+    exec 3<&-
+    [ "$validation_ok" = yes ]
 }
 
 if [ -e "$release_dir" ] || [ -L "$release_dir" ]; then
@@ -472,5 +532,7 @@ unlink "$manifest_tmp"
 manifest_tmp=
 unlink "$payload_tmp"
 payload_tmp=
+unlink "$batch_tmp"
+batch_tmp=
 trap - EXIT HUP INT TERM
 exec "$release_dir/libexec/harness-codex-resilient" "$@"

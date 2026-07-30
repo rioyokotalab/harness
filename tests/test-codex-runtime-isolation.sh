@@ -82,10 +82,13 @@ control=$TEST_ROOT/control
 release_root=$TEST_ROOT/private-control
 runtime=$TEST_ROOT/runtime
 capture=$TEST_ROOT/capture
+git_wrapper_dir=$TEST_ROOT/git-wrapper
+git_log=$TEST_ROOT/git.log
 target_harness=$TEST_ROOT/target-harness
 target_students=$TEST_ROOT/target-students
 target_swallow=$TEST_ROOT/target-swallow
-mkdir -m 700 "$control" "$release_root" "$runtime" "$capture"
+mkdir -m 700 "$control" "$release_root" "$runtime" "$capture" \
+    "$git_wrapper_dir"
 mkdir "$control/libexec" "$control/profiles"
 
 for repository in "$target_harness" "$target_students" "$target_swallow"; do
@@ -123,6 +126,15 @@ git -C "$control" config user.email 'harness-runtime@example.invalid'
 git -C "$control" add libexec profiles
 git -C "$control" commit -q -m 'runtime fixture'
 commit=$(git -C "$control" rev-parse HEAD)
+real_git=$(command -v git)
+
+cat >"$git_wrapper_dir/git" <<'EOF'
+#!/bin/sh
+set -eu
+printf '%s\n' "$*" >>"$HARNESS_TEST_GIT_LOG"
+exec "$HARNESS_TEST_REAL_GIT" "$@"
+EOF
+chmod 700 "$git_wrapper_dir/git"
 
 fake_launcher=$TEST_ROOT/fake-launcher
 cat >"$fake_launcher" <<'EOF'
@@ -142,7 +154,10 @@ launch_supervisor() {
     (
         cd "$repository"
         exec env \
+            PATH="$git_wrapper_dir:$PATH" \
             HARNESS_TESTING=1 \
+            HARNESS_TEST_GIT_LOG="$git_log" \
+            HARNESS_TEST_REAL_GIT="$real_git" \
             HARNESS_TEST_FORCE_CODEX_RELEASE=1 \
             HARNESS_TEST_CODEX_RELEASE_ROOT="$release_root" \
             HARNESS_TEST_RUNTIME_DIR="$runtime" \
@@ -182,6 +197,16 @@ harness_pid=$launched_pid
 wait_for_file "$runtime/harness/shared.state" "$harness_pid"
 harness_release=$(release_for_target harness)
 harness_payload=${harness_release##*/}
+[ "$(grep -c ' ls-tree -r ' "$git_log")" -eq 1 ] ||
+    fail "runtime payload objects were not resolved in one Git invocation"
+[ "$(grep -c ' hash-object -- ' "$git_log")" -eq 1 ] ||
+    fail "runtime release files were not hashed in one Git invocation"
+awk '
+    / ls-tree -r / { if (NF != 13) exit 1; tree = 1 }
+    / hash-object -- / { if (NF != 11) exit 1; hashes = 1 }
+    END { if (!tree || !hashes) exit 1 }
+' "$git_log" ||
+    fail "runtime Git batches did not carry exactly seven safe path arguments"
 [ -f "$harness_release/.codex-runtime-release" ] ||
     fail "payload-addressed runtime release was not created"
 grep -F "payload=$harness_payload" \
