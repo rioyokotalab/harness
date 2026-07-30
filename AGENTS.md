@@ -36,6 +36,9 @@ every selected file completely before its first matching action.
   workflow, policy, validator, manifest, selector, safety, lifecycle, cleanup,
   credential, and unknown changes get the complete suite. Independently inspect
   generated, optimized, or delegated results.
+- Reuse recorded validation when target bytes, environment contract, and
+  acceptance scope are unchanged. Rerun only changed owning checks, mutable
+  inputs, or required final integration—not merely because a session resumed.
 
 ## Conditional policy router
 

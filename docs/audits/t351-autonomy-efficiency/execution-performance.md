@@ -57,3 +57,23 @@ the absent-state fast path remained 0.01 seconds and nine launches. Fixtures
 cover ybatch, Slurm, PBS, ABCI-Q, and AGE plus duplicate, malformed,
 unsafe-mode, missing-job, failed-query, and failed-backup states. The Restic
 schedule and Bash startup suites pass.
+
+## Immutable Codex runtime reuse
+
+The runtime release formerly used the complete Harness commit as its directory
+identity even though only seven committed files execute after handoff.
+Unrelated documentation or test commits therefore created redundant immutable
+releases for all three targets. Releases are now keyed by the ordered path,
+mode, and Git blob identity of that exact closed seven-file payload. Harness,
+Students, and Swallow still have distinct target directories and locks, and
+the immutable marker retains the creation commit as provenance.
+
+Twelve matched pairs measured a small bounded cost on cold creation
+(247.5→262.5 ms, +6.1%) and same-commit warm validation
+(194.5→199.5 ms, +2.6%). The first launch after an unrelated commit improved
+from 241.5 to 182.0 ms (−24.6%) and retained one release directory instead of
+creating a second. A final-head reuse took 177 ms. Marker, target, content,
+mode, ownership, link-count, recovery-worker environment, and closed-manifest
+gates remain covered by the runtime, resilient, helper, target, launcher, and
+source-contract suites. Legacy commit-addressed releases are left untouched
+for processes that may still reference them.

@@ -311,6 +311,11 @@ The only global client files retained by the harness are minimal sentinels at
 `~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md`. Outside `~/harness`, they
 refuse task work and give the exact restart command.
 
+Inside Harness, the root router loads only the policy module matching the next
+action. Each selected skill likewise routes only its current phase, site, or
+mode references; unrelated workflows and completed task history are not
+preloaded.
+
 This gives both clients the same start, planning, safety, validation,
 publication, fleet-sync, and handoff expectations. Consequential joint work can
 use the `codex-claude-cowork` skill for durable planning, independent sandbox
@@ -565,7 +570,9 @@ and gate fixtures, and mapped components run their owning suite. Workflow,
 policy, selector, manifest, safety, lifecycle, cleanup, credential, and unknown
 changes escalate automatically. Exact clean-tree R0/R1 results may reuse a
 content-addressed local receipt; that receipt is owner self-attestation, not
-independent CI.
+independent CI. Recorded validation is also reused when the target bytes,
+environment contract, and acceptance scope are unchanged: resuming a session
+alone does not trigger another run.
 
 Run the complete portable suite for broad changes and once on the final
 integrated tree:

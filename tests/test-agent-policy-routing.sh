@@ -70,6 +70,8 @@ assert_contains 'never blindly replay the prior prompt' "$AGENTS" \
     'provider retry boundary'
 assert_contains 'safety, lifecycle, cleanup,' "$AGENTS" \
     'full validation escalation'
+assert_contains 'not merely because a session resumed' "$AGENTS" \
+    'unchanged validation reuse'
 assert_contains 'Git and `TODO.md` as the durable source of truth' "$AGENTS" \
     'durable source of truth'
 assert_contains "task's board-linked record" "$AGENTS" \
