@@ -7,7 +7,7 @@ SKILL=$ROOT/shared/skills/remote-agent-communication/SKILL.md
 DELIVERY=$ROOT/shared/skills/remote-agent-communication/references/delivery.md
 REQUEST=$ROOT/shared/skills/remote-agent-communication/references/request.md
 FALLBACK=$ROOT/shared/skills/remote-agent-communication/references/fallback.md
-RUNTIME_POLICY=$ROOT/docs/agent-policy/managed-runtime-and-fleet.md
+RUNTIME_POLICY=$ROOT/docs/agent-policy/managed-codex.md
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 TEST_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/remote-agent-communication-test.XXXXXX")
 

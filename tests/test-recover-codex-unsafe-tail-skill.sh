@@ -3,7 +3,7 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 AGENTS=$ROOT/AGENTS.md
-RUNTIME_POLICY=$ROOT/docs/agent-policy/managed-runtime-and-fleet.md
+RUNTIME_POLICY=$ROOT/docs/agent-policy/managed-codex.md
 SKILL=$ROOT/shared/skills/recover-codex-unsafe-tail/SKILL.md
 PROTOCOL=$ROOT/shared/skills/recover-codex-unsafe-tail/references/protocol.md
 SAFE=$ROOT/shared/skills/recover-codex-unsafe-tail/references/safe-rollback.md

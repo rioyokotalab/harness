@@ -290,7 +290,7 @@ if PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_ROOT="$PUBLIC" HARNESS_TESTING=1 \
 fi
 [ ! -s "$STATE/calls" ] || fail "overlapping registry reached probes"
 
-POLICY=$ROOT/docs/agent-policy/managed-runtime-and-fleet.md
+POLICY=$ROOT/docs/agent-policy/fleet.md
 grep -F 'Run fresh `harness fleet-health` for fleet/runtime work' \
     "$POLICY" >/dev/null || fail "risk-bounded fleet health policy"
 grep -F 'consult that system'\''s official' "$POLICY" >/dev/null ||

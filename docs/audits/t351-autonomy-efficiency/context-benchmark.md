@@ -16,25 +16,25 @@ its eventual protected publication.
 
 | Scenario | Before total | After total | Total reduction | Before non-ledger | After non-ledger | Non-ledger reduction |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| factual lookup | 73,734 | 1,360 | 98.1% | 2,906 | 1,114 | 61.6% |
-| documentation edit | 73,545 | 1,619 | 97.7% | 2,717 | 1,373 | 49.4% |
-| ordinary code fix | 74,455 | 1,619 | 97.8% | 3,627 | 1,373 | 62.1% |
-| tmux health diagnosis | 73,545 | 1,650 | 97.7% | 2,717 | 1,404 | 48.3% |
-| unsafe-tail recovery | 75,931 | 3,000 | 96.0% | 5,103 | 2,754 | 46.0% |
-| fleet hardening | 76,238 | 4,220 | 94.4% | 5,410 | 3,974 | 26.5% |
-| native HPC experiment | 77,550 | 3,486 | 95.5% | 6,722 | 3,240 | 51.8% |
-| duration Cowork | 80,599 | 4,835 | 94.0% | 9,771 | 4,589 | 53.0% |
+| factual lookup | 73,734 | 1,385 | 98.1% | 2,906 | 1,139 | 60.8% |
+| documentation edit | 73,545 | 1,409 | 98.0% | 2,717 | 1,163 | 57.1% |
+| ordinary code fix | 74,455 | 1,409 | 98.1% | 3,627 | 1,163 | 67.9% |
+| tmux health diagnosis | 73,545 | 1,357 | 98.1% | 2,717 | 1,111 | 59.1% |
+| unsafe-tail recovery | 75,931 | 2,707 | 96.4% | 5,103 | 2,461 | 51.7% |
+| fleet hardening | 76,238 | 4,074 | 94.6% | 5,410 | 3,828 | 29.2% |
+| native HPC experiment | 77,550 | 3,276 | 95.7% | 6,722 | 3,030 | 54.9% |
+| duration Cowork | 80,599 | 4,625 | 94.2% | 9,771 | 4,379 | 55.1% |
 
-The median total reduction is 96.8%, above the frozen 85% threshold; every
-scenario exceeds 93%, above the per-scenario 50% floor. Median non-ledger
-reduction is 50.6%, above the 30% independent policy/skill threshold. The
-always-read policy is 863 words, and the active board is 52 lines / 246 words,
+The median total reduction is 97.2%, above the frozen 85% threshold; every
+scenario exceeds 94%, above the per-scenario 50% floor. Median non-ledger
+reduction is 56.1%, above the 30% independent policy/skill threshold. The
+always-read policy is 888 words, and the active board is 52 lines / 246 words,
 and selected conditional policy routes are separately budgeted by
 `tests/test-agent-policy-routing.sh`.
 
 Active-task details are now one hop behind the board. At this checkpoint the
-selected T-351 record is 683 words during execution, so board plus relevant
-record is 929 words—19.4% below the prior 1,153-word board—while unrelated
+selected T-351 record is 738 words during execution, so board plus relevant
+record is 984 words—14.7% below the prior 1,153-word board—while unrelated
 backup successor IDs, outage contingency
 details, and the blocked NFS fingerprint are not loaded. The ledger fixture
 requires all four task records, their board routes, and their exact critical
@@ -54,6 +54,18 @@ for diagnosis, 721 for safe rollback, or 1,148 for bridge replacement instead
 of 455 for diagnosis or 1,221 for either transaction. The fleet scenario above
 conservatively counts every phase and both host types, not just its largest
 instantaneous route.
+
+Three additional onboarding/recovery workflows now route by phase:
+external-user onboarding selects at most 391 instead of 664 words (41.1%),
+mirrored-node onboarding 630 instead of 1,157 (45.5%), and reboot recovery 408
+instead of 599 (31.9%). Their mandatory entries retain authority, credential,
+collision, cleanup, and unknown-state stops before references load.
+
+Conditional policy is now split by exact Git, external-operation,
+managed-Codex, and fleet actions. The corresponding root-plus-module routes
+are 1,163, 1,162, 1,111, and 1,219 words. An ordinary Git action no longer
+loads installer/global-configuration policy, and tmux recovery no longer loads
+fleet maintenance and rollout policy.
 
 The 17 always-visible skill descriptions fell from 819 to 375 words (54.2%).
 Each remains a precise trigger index; `tests/test-skill-catalog-budget.sh`

@@ -47,8 +47,10 @@ repository. Multiple matching rows select multiple files.
 
 | Read completely | Select before |
 | --- | --- |
-| [repository-and-external.md](docs/agent-policy/repository-and-external.md) | authenticated Git or SSH; commit, push, PR, merge, publication; hosting/API/account/config writes; packages/installers; repository hardening |
-| [managed-runtime-and-fleet.md](docs/agent-policy/managed-runtime-and-fleet.md) | managed Codex, tmux, phone, app-server, recovery, reboot, fleet, route failure, fleet sync, or an `[Agent: NAME Codex]` message |
+| [repository-git.md](docs/agent-policy/repository-git.md) | authenticated Git or SSH; branch, fetch, commit, push, PR, merge, publication, or repository hardening |
+| [external-operations.md](docs/agent-policy/external-operations.md) | hosting/account API access or writes; owner/global configuration; packages/installers; or `~/run_this.sh` |
+| [managed-codex.md](docs/agent-policy/managed-codex.md) | managed Codex, tmux, phone, app-server, recovery, reboot, or an `[Agent: NAME Codex]` message |
+| [fleet.md](docs/agent-policy/fleet.md) | fleet/node/route work, health or maintenance checks, fleet sync, or managed-Mac checkout rollout |
 | [housekeeping-and-promotion.md](docs/agent-policy/housekeeping-and-promotion.md) | housekeeping, residue cleanup, launcher cleanup diagnosis, or promotion of reusable guidance |
 | [research.md](docs/agent-policy/research.md) | factual or literature research, research-program work, scientific/HPC experiments, performance claims, or presentations |
 | [duration.md](docs/agent-policy/duration.md) | an explicit duration, deadline, time window, overnight run, or instruction to keep iterating |

@@ -14,7 +14,7 @@ CLOSEOUT=$SKILL_ROOT/references/closeout.md
 AGGREGATE=$SKILL_ROOT/references/audit-checklist.md
 OPENAI=$SKILL_ROOT/agents/openai.yaml
 AGENTS=$ROOT/AGENTS.md
-EXTERNAL_POLICY=$ROOT/docs/agent-policy/repository-and-external.md
+EXTERNAL_POLICY=$ROOT/docs/agent-policy/repository-git.md
 
 fail() {
     printf 'FAIL: %s\n' "$1" >&2

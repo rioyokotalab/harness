@@ -55,7 +55,7 @@ grep -F 'Git and `TODO.md` as the durable source of truth' "$ROOT/AGENTS.md" \
 grep -F 'Claude auto-memory are optional context only' "$ROOT/AGENTS.md" \
     >/dev/null || fail "project cross-client handoff policy"
 grep -F 'Owner approval alone never' \
-    "$ROOT/docs/agent-policy/repository-and-external.md" \
+    "$ROOT/docs/agent-policy/external-operations.md" \
     >/dev/null || fail "project reviewed-installer deletion boundary"
 grep -F 'Include a read-only inventory' \
     "$ROOT/docs/agent-policy/housekeeping-and-promotion.md" \
