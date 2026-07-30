@@ -16,10 +16,11 @@ root = Path(sys.argv[1])
 board = root / "TODO.md"
 archive = root / "docs/history/TODO-full-archive-2026-07-30.md"
 index = root / "docs/tasks/index.tsv"
-task_files = {
-    task: root / "docs/tasks" / f"{task}.md"
-    for task in ("T-351", "T-196", "T-328", "T-303")
-}
+task_files = {}
+for path in sorted((root / "docs/tasks").glob("T-*.md")):
+    match = re.fullmatch(r"(T-\d+)\.md", path.name)
+    assert match and path.is_file() and not path.is_symlink(), path
+    task_files[match.group(1)] = path
 
 text = board.read_text(encoding="utf-8")
 lines = text.splitlines()
@@ -29,18 +30,15 @@ assert len(words) <= 600, len(words)
 assert hashlib.sha256(archive.read_bytes()).hexdigest() == (
     "d55459a2944fdb86986677d7fce6bdcbccd0b86a6b6eee799f60fe183a9ff95a"
 )
-assert "Next free ID: T-352." in text
-assert re.findall(r"^### (T-\d+) —", text, re.MULTILINE) == [
-    "T-351",
-    "T-196",
-    "T-328",
-    "T-303",
-]
-for task, path in task_files.items():
-    assert path.is_file() and not path.is_symlink(), (task, path)
+board_tasks = re.findall(r"^### (T-\d+) —", text, re.MULTILINE)
+assert board_tasks and len(board_tasks) == len(set(board_tasks)), board_tasks
+assert set(board_tasks) == set(task_files), (board_tasks, sorted(task_files))
+for task in board_tasks:
     assert f"`docs/tasks/{task}.md`" in text, task
 
-task_text = "\n".join(path.read_text(encoding="utf-8") for path in task_files.values())
+task_text = "\n".join(
+    task_files[task].read_text(encoding="utf-8") for task in board_tasks
+)
 for required in (
     "docs/plans/t351-autonomy-efficiency.md",
     "docs/audits/t351-autonomy-efficiency/time-slices.md",
@@ -72,6 +70,28 @@ assert rows
 assert list(rows[0]) == ["task", "state", "summary", "source"]
 by_task = {row["task"]: row for row in rows}
 assert len(by_task) == len(rows)
+task_numbers = []
+allowed_states = {"active", "time-gated", "blocked", "complete"}
+for row in rows:
+    assert re.fullmatch(r"T-\d+", row["task"]), row
+    assert row["state"] in allowed_states, row
+    assert row["summary"] and row["source"], row
+    task_numbers.append(int(row["task"][2:]))
+    for source in row["source"].split(";"):
+        candidate = Path(source)
+        assert not candidate.is_absolute() and ".." not in candidate.parts, (
+            row["task"],
+            source,
+        )
+        resolved = root / candidate
+        assert resolved.exists() and not resolved.is_symlink(), (row["task"], source)
+assert task_numbers == sorted(task_numbers, reverse=True), task_numbers
+assert f"Next free ID: T-{max(task_numbers) + 1}." in text
+for task in board_tasks:
+    assert by_task[task]["state"] != "complete", task
+    sources = by_task[task]["source"].split(";")
+    assert "TODO.md" in sources, task
+    assert f"docs/tasks/{task}.md" in sources, task
 for task, state in {
     "T-351": "active",
     "T-196": "time-gated",
@@ -80,8 +100,6 @@ for task, state in {
     "T-350": "complete",
 }.items():
     assert by_task[task]["state"] == state
-    for source in by_task[task]["source"].split(";"):
-        assert (root / source).is_file(), (task, source)
 
 print(
     f"TASK_LEDGER status=pass lines={len(lines)} words={len(words)} "

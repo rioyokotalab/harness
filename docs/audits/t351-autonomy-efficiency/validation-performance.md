@@ -190,4 +190,8 @@ and therefore R3 until the map itself was edited. The two namespaces now use
 closed numeric/date patterns and still select the ledger contract; arbitrary
 `docs/` paths remain documentation-only and unknown non-doc paths remain R3.
 A synthetic future task selects cacheable R0 in 0.07 seconds. All 41 router
-cases and the ledger contract pass.
+cases pass. The ledger contract now discovers every numbered task record,
+requires exact equality with board headings, derives the next free ID from the
+descending index, and validates every indexed source. That broader check found
+one stale T-343 plan pointer; it now names the retained Cowork plan. The
+dynamic ledger contract passes all 43 index rows.
