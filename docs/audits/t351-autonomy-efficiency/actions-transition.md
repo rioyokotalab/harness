@@ -107,6 +107,10 @@ content in both private repositories still had pull-request, weekly, and
 manual triggers, the owner-only job condition, and no `push` trigger. This is
 one later workload observation, not a forecast of future consumption.
 
+At 03:51 JST, Harness task head `eba31ff` also had an empty branch run list.
+Its pre-PR checkpoint pushes therefore allocated no runner; the one eventual
+protected pull request remains the intended live hosted check.
+
 GitHub's job-condition syntax supports this event-specific selection:
 [job conditions](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-jobs-with-conditions).
 A skipped required job reports success, so the existing required context can

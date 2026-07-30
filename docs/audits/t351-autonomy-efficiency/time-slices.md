@@ -360,6 +360,8 @@ remained at `dafb4a3`; Swallow had independently advanced through PR #139 to
 run. Both private workflows still had pull-request, weekly, and manual
 triggers, exact owner-only conditions, and no duplicate push trigger. Thus the
 repository-only transition remained effective after later unrelated work.
+Harness task head `eba31ff` had an empty branch run list at 03:51, proving its
+pre-PR checkpoint pushes also allocated no runner.
 No ruleset, approval count, billing, organization policy, credential, or
 hosting setting was changed.
 
