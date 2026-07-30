@@ -229,81 +229,162 @@ probe_al() {
         probe_ordinary al
 }
 
-true & local_pid=$!
-ab_pid=
+run_fleet_probe() {
+    case "$1" in
+        ab|ab2|ri|rc|t4) probe_ordinary "$1" ;;
+        al) probe_al ;;
+        abq) probe_pair abq abq2 ;;
+        aist) probe_pair aist aist2 ;;
+        home) probe_pair home home2 ;;
+        office) probe_pair office office2 ;;
+        riken) probe_pair riken riken2 ;;
+        *) return 2 ;;
+    esac
+}
+
+run_queued_probe() {
+    trap - 0 HUP INT TERM
+    queued_name=$1
+    if run_fleet_probe "$queued_name"; then
+        queued_status=pass
+    else
+        queued_status=fail
+    fi
+    printf '%s|%s\n' "$queued_name" "$queued_status" >&3
+}
+
+record_probe_result() {
+    case "$1:$2" in
+        ab:pass|ab:fail) ab_status=$2 ;;
+        ab2:pass|ab2:fail) ab2_status=$2 ;;
+        ri:pass|ri:fail) ri_status=$2 ;;
+        al:pass|al:fail) al_status=$2 ;;
+        rc:pass|rc:fail) rc_status=$2 ;;
+        t4:pass|t4:fail) t4_status=$2 ;;
+        abq:pass|abq:fail) abq_status=$2 ;;
+        aist:pass|aist:fail) aist_status=$2 ;;
+        home:pass|home:fail) home_status=$2 ;;
+        office:pass|office:fail) office_status=$2 ;;
+        riken:pass|riken:fail) riken_status=$2 ;;
+        *)
+            echo "harness fleet-health: probe queue returned malformed state" >&2
+            return 2
+            ;;
+    esac
+}
+
+local_status=pass
+set --
 if [ -n "$ab_maintenance" ]; then
     ab_status=maintenance
 else
-    probe_ordinary ab & ab_pid=$!
+    set -- "$@" ab
 fi
-ab2_pid=
 if [ -n "$ab2_maintenance" ]; then
     ab2_status=maintenance
 else
-    probe_ordinary ab2 & ab2_pid=$!
+    set -- "$@" ab2
 fi
-ri_pid=
 if [ -n "$ri_maintenance" ]; then
     ri_status=maintenance
 else
-    probe_ordinary ri & ri_pid=$!
-fi
-if wait "$local_pid"; then local_status=pass; else local_status=fail; fi
-if [ -n "$ab_pid" ]; then
-    if wait "$ab_pid"; then ab_status=pass; else ab_status=fail; fi
-fi
-if [ -n "$ab2_pid" ]; then
-    if wait "$ab2_pid"; then ab2_status=pass; else ab2_status=fail; fi
-fi
-if [ -n "$ri_pid" ]; then
-    if wait "$ri_pid"; then ri_status=pass; else ri_status=fail; fi
+    set -- "$@" ri
 fi
 
-al_pid=
 if [ -n "$al_maintenance" ]; then
     al_status=maintenance
 else
-    probe_al & al_pid=$!
+    set -- "$@" al
 fi
-rc_pid=
 if [ -n "$rc_maintenance" ]; then
     rc_status=maintenance
 else
-    probe_ordinary rc & rc_pid=$!
+    set -- "$@" rc
 fi
-t4_pid=
 if [ -n "$t4_maintenance" ]; then
     t4_status=maintenance
 else
-    probe_ordinary t4 & t4_pid=$!
+    set -- "$@" t4
 fi
-abq_pid=
 if [ -n "$abq_maintenance" ]; then
     abq_status=maintenance
 else
-    probe_pair abq abq2 & abq_pid=$!
-fi
-if [ -n "$al_pid" ]; then
-    if wait "$al_pid"; then al_status=pass; else al_status=fail; fi
-fi
-if [ -n "$rc_pid" ]; then
-    if wait "$rc_pid"; then rc_status=pass; else rc_status=fail; fi
-fi
-if [ -n "$t4_pid" ]; then
-    if wait "$t4_pid"; then t4_status=pass; else t4_status=fail; fi
-fi
-if [ -n "$abq_pid" ]; then
-    if wait "$abq_pid"; then abq_status=pass; else abq_status=fail; fi
+    set -- "$@" abq
 fi
 
-probe_pair aist aist2 & aist_pid=$!
-probe_pair home home2 & home_pid=$!
-probe_pair office office2 & office_pid=$!
-probe_pair riken riken2 & riken_pid=$!
-if wait "$aist_pid"; then aist_status=pass; else aist_status=fail; fi
-if wait "$home_pid"; then home_status=pass; else home_status=fail; fi
-if wait "$office_pid"; then office_status=pass; else office_status=fail; fi
-if wait "$riken_pid"; then riken_status=pass; else riken_status=fail; fi
+set -- "$@" aist home office riken
+
+queue_dir=$(mktemp -d "${TMPDIR:-/tmp}/harness-fleet-health.XXXXXX") ||
+    {
+        echo "harness fleet-health: probe queue is unavailable" >&2
+        exit 2
+    }
+completion_pipe=$queue_dir/completions
+queue_fd_open=0
+
+cleanup_probe_queue() {
+    cleanup_status=0
+    if [ "$queue_fd_open" -eq 1 ]; then
+        exec 3>&-
+        queue_fd_open=0
+    fi
+    if [ -p "$completion_pipe" ]; then
+        unlink "$completion_pipe" || cleanup_status=1
+    fi
+    if [ -d "$queue_dir" ]; then
+        rmdir "$queue_dir" || cleanup_status=1
+    fi
+    return "$cleanup_status"
+}
+
+cleanup_probe_queue_on_exit() {
+    queue_exit_status=$?
+    trap - 0 HUP INT TERM
+    if ! cleanup_probe_queue && [ "$queue_exit_status" -eq 0 ]; then
+        queue_exit_status=2
+    fi
+    exit "$queue_exit_status"
+}
+
+trap cleanup_probe_queue_on_exit 0
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+mkfifo "$completion_pipe" ||
+    {
+        echo "harness fleet-health: probe queue is unavailable" >&2
+        exit 2
+    }
+exec 3<>"$completion_pipe"
+queue_fd_open=1
+
+# Admission is FIFO and output is rendered later in canonical node order.
+# Completion only frees a slot; it never changes which probe is admitted next.
+max_probes=4
+active_probes=0
+while [ "$#" -gt 0 ] || [ "$active_probes" -gt 0 ]; do
+    while [ "$#" -gt 0 ] && [ "$active_probes" -lt "$max_probes" ]; do
+        run_queued_probe "$1" &
+        active_probes=$((active_probes + 1))
+        shift
+    done
+    if [ "$active_probes" -gt 0 ]; then
+        if ! IFS='|' read -r completed_name completed_status <&3; then
+            echo "harness fleet-health: probe queue did not complete" >&2
+            exit 2
+        fi
+        record_probe_result "$completed_name" "$completed_status"
+        active_probes=$((active_probes - 1))
+    fi
+done
+wait
+cleanup_probe_queue ||
+    {
+        echo "harness fleet-health: probe queue cleanup failed" >&2
+        exit 2
+    }
+trap - 0 HUP INT TERM
 
 print_remote_linux() {
     case "$2" in
