@@ -465,6 +465,28 @@ checkpoint. Because system load varies, the matched admission comparison is
 the causal evidence; the integrated result is retained as a whole-tree
 acceptance checkpoint rather than a general performance claim.
 
+A disposable integration-only route passed the unchanged fixture body in
+30.44 seconds. The remaining wall was therefore gate contention, not command
+dispatch: 200 direct launcher calls took 0.51 seconds, 200 through the current
+managed link took 1.02, and a path-explicit validation plan took 0.06. Repeating
+the complete tree with six focused workers took 56.76 seconds, effectively tied
+with seven at 56.54; five regressed to 63.56. The automatic seven-worker policy
+remains because no lower count produced a material portable gain.
+
+Two bounded ShellCheck chunks were also tested and rejected. In isolation they
+reduced ShellCheck from 35.80 to 18.71 seconds, but on clean exact candidates
+with six focused workers the complete wall changed from 56.76 to 57.67 seconds
+and peak RSS from 522,452 to 794,776 KiB. That is 1.6% slower and 52.1% more
+memory. One preliminary run had also carried a profiler-only source edit; the
+runtime-isolation contract correctly failed it, so its result was discarded.
+The target never received either profiler edit or the rejected ShellCheck
+change.
+
+Readback after the latest branch push showed the exact local and remote head
+`00e483b005c4e7f83708ec7dde4b6c13beac44eb`, with no Actions run allocated for
+the branch. The value-free hardening audit reported a clean attached worktree,
+zero unpinned actions, zero tracked sensitive paths, and zero findings.
+
 Cleanup was prepared but deliberately split from final application. The
 task-owned Harness worktrees were enumerated exactly and classified as
 patch-equivalent retained experiments, synthetic validation probes, or the

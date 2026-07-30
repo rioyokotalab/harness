@@ -162,3 +162,24 @@ correction and longest-first admission passed all 91 suites in 56.54 seconds,
 with 159.22 seconds user, 162.75 seconds system, and 516,220 KiB maximum RSS.
 That is 15.9% below the prior 67.19-second exact-tree checkpoint without
 claiming a cross-machine or long-term performance change.
+
+An integration-only disposable profiler passed the unchanged fixture body in
+30.44 seconds. On the retained longest-first tree, seven focused workers took
+56.54 seconds end to end, six took 56.76, and five took 63.56. The six/seven
+difference is noise-sized and five materially regresses, so the portable
+automatic policy remains seven on this eight-CPU affinity rather than encoding
+a machine-specific constant.
+
+Splitting ShellCheck into two 20-file chunks improved its isolated wall from
+35.80 to 18.71 seconds, but did not improve the complete critical path. On
+clean exact candidates with six focused workers, single-process ShellCheck
+passed in 56.76 seconds / 522,452 KiB, while the two-way candidate passed in
+57.67 seconds / 794,776 KiB. The candidate was rejected for 1.6% worse wall and
+52.1% higher peak RSS. A first disposable attempt also contained a
+profiler-only source edit; the runtime-isolation contract rejected it, and that
+run was discarded rather than attributed to ShellCheck.
+
+Launcher and selector startup were already below material thresholds: 200
+direct `harness version` invocations took 0.51 seconds, 200 invocations through
+the current managed link took 1.02 seconds, and one path-explicit validation
+plan took 0.06 seconds. No startup rewrite was retained.
