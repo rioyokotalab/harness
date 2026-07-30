@@ -437,6 +437,25 @@ Remote. Until that exact confirmation, do not rename either Students root or
 window, move either window, signal any process, archive the old root, repeat
 start/name/launch/input, or promote the provisional bridge.
 
+**Students physical-phone confirmation:** the owner replied exactly
+`visible`, confirming that `students-native-bridge-20260730` appears in phone
+Remote. Fresh readback still proves all four exact root names/cwds, all four
+attempt-zero resilient chains, provisional `@99/%99`, old Students `@88/%88`,
+sole client `197678` on unaffected Harness `@87`, and the same shared app
+server. Monitor/helper remain non-mutating in the expected fourth-root state.
+This satisfies the external acceptance gate and authorizes only the frozen
+rename-only promotion; it does not authorize repeating any consumed request,
+relaunching either Students runtime, deleting either saved root, or changing
+Harness or Swallow.
+
+**Next action:** publish this physical confirmation through protected `main`.
+Then run one digest-bound zero-write promotion preflight. If every frozen
+identity remains exact, rename old root/window to
+`students-retired-20260730`, rename accepted root/window to `students`, and
+swap only window IDs `@99` and `@88` so accepted `@99` occupies index 1.
+Checkpoint that reversible rename-only promotion before sending any old-leaf
+signal or archive request.
+
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
 **Phase:** complete.
