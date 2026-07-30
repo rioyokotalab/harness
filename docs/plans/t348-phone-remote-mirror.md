@@ -1,6 +1,6 @@
 # T-348 phone remote-control mirror
 
-**Phase:** blocked after authorized changed-input start
+**Phase:** executing authorized experimental-handshake start
 **Driver:** Local Codex
 **Updated:** 2026-07-30 JST
 **Branch:** `codex/t348-phone-mirror`
@@ -258,6 +258,15 @@ top-level list, and loaded-root reconciliation again prove exactly the
 original three roots and no provisional name. The authorization is consumed;
 request ID `6` must not be retried.
 
+### D-005 — Experimental-capable handshake after request 6
+
+**Owner-authorized:** send exactly one newly journaled `thread/start` on a new
+app-server connection whose initialize request includes
+`capabilities.experimentalApi=true`. Retain granular approval, disabled
+sandbox, exact Harness cwd, and omitted `model`/`config` fields. Requests `5`
+and `6` remain consumed and non-retryable, and every bridge-first and
+physical-phone confirmation gate remains unchanged.
+
 ## Next action
 
 Implementation passed complete validation and merged through protected PR
@@ -270,16 +279,12 @@ all-source top-level list, and loaded-thread readback each proved exactly the
 original three roots and no provisional name. The owner has now separately
 authorized one changed-input start after reviewing that proven-absent result.
 
-Preserve the old Swallow and disabled automatic mirror event. Do not send
-another start, launch a provisional window/runtime, or mutate names, archives,
-processes, or topology. Read-only diagnosis established that the live Codex
-0.145.0 protocol experimental-gates nested granular approval, while the prior
-controller connections did not advertise `capabilities.experimentalApi`.
-A separate read-only experimental-capable handshake and loaded-root list
-passed with exactly the original three roots.
-
-The recommended alternate is one newly authorized start on a new connection
-initialized with `experimentalApi=true`, retaining granular approval, disabled
-sandbox, exact cwd, omitted model/config overrides, all non-retry gates, and
-the physical-phone confirmation pause. This is a new changed-handshake
-decision and requires explicit owner authorization.
+Preserve the old Swallow and disabled automatic mirror event. Publish D-005
+through protected `main`, then revalidate every frozen Git, tmux, process,
+watcher, app-server, database, helper, monitor, complete-list, and prior-result
+precondition. If all pass, send the one authorized start on a distinct new
+connection initialized with `capabilities.experimentalApi=true`. Journal the
+operation before sending; never retry an acknowledged or ambiguous result.
+Checkpoint the result durably before any provisional runtime launch. A
+successful provisional bridge still stops at explicit physical-phone
+confirmation before any rename, retirement, archive, or promotion.
