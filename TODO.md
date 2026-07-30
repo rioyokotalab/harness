@@ -145,7 +145,7 @@ agents and ledgers.
 
 ### T-348 — Keep phone remote-control roots mirrored to Local tmux
 
-**Phase:** physical-phone accepted; blocked at owner-client safety gate.
+**Phase:** physical-phone accepted; correcting unsent promotion controller.
 
 The owner reports that Swallow is absent from phone Remote and requests a
 periodic one-to-one mirror for Harness, Students, and Swallow. Complete
@@ -395,6 +395,30 @@ window 0 in the attached tmux client (normally prefix then `0`) and then
 confirm here. Revalidate exact client PID `197678` on window ID `@87` before
 continuing the already-authorized promotion. Do not select, move, or detach
 the client from the controller.
+
+The owner replied `done`, and readback proved exact client PID `197678` on
+unaffected window `@87`. One-shot promoter digest
+`5929ed750f5c2c5f25bdb7689794fe6febd859ce9b45c58d8544fb29dac888fa`
+then paused the monitor, helper, and four watcher leaves, but refused before
+opening its promotion app-server connection or sending any name/tmux write.
+Its journal has no `thread-name`, `tmux-name`, or `tmux-swap` event. All four
+watchers resumed with acknowledged records; independent readback proves the
+monitor/helper also running, exact pre-promotion names/topology, exact client
+on `@87`, and both Swallow roots unchanged. The terminal result is
+`ambiguous/process-resume-ambiguous`, but the target promotion itself is
+proven unsent and may use a separately journaled corrected controller.
+
+The correction must not try to stop the single-process monitor/helper terminal
+jobs. Keep the helper live because it has no `--auto-mirror`, hold the
+monitor's own mode-0600 `monitor.lock` across the short transaction, and pause
+only the four exact watcher leaves. Accept an already-running monitor/helper
+as unchanged, not as an ambiguous resume.
+
+**Next action:** publish this proven-unsent refusal through protected `main`,
+then run zero-write preflight for the corrected controller. If every original
+identity and pre-promotion value still matches, perform the two root-name
+writes and three tmux rename/swap writes once. Never execute promoter v1
+again. Checkpoint the accepted promotion before old-leaf retirement.
 
 ### T-347 — Complete T-345 mirror convergence
 
