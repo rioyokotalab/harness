@@ -17,25 +17,25 @@ its eventual protected publication.
 
 | Scenario | Before total | After total | Total reduction | Before non-ledger | After non-ledger | Non-ledger reduction |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| factual lookup | 73,734 | 1,719 | 97.6% | 2,906 | 1,473 | 49.3% |
-| documentation edit | 73,545 | 2,031 | 97.2% | 2,717 | 1,785 | 34.3% |
-| ordinary code fix | 74,455 | 1,757 | 97.6% | 3,627 | 1,511 | 58.3% |
-| tmux health diagnosis | 73,545 | 1,691 | 97.7% | 2,717 | 1,445 | 46.8% |
-| unsafe-tail recovery | 75,931 | 3,041 | 95.9% | 5,103 | 2,795 | 45.2% |
-| fleet hardening | 76,238 | 4,422 | 94.1% | 5,410 | 4,176 | 22.8% |
-| native HPC experiment | 77,550 | 3,344 | 95.6% | 6,722 | 3,098 | 53.9% |
-| duration Cowork | 80,599 | 4,696 | 94.1% | 9,771 | 4,450 | 54.4% |
+| factual lookup | 73,734 | 1,742 | 97.6% | 2,906 | 1,496 | 48.5% |
+| documentation edit | 73,545 | 2,054 | 97.2% | 2,717 | 1,808 | 33.4% |
+| ordinary code fix | 74,455 | 1,780 | 97.6% | 3,627 | 1,534 | 57.7% |
+| tmux health diagnosis | 73,545 | 1,714 | 97.6% | 2,717 | 1,468 | 45.9% |
+| unsafe-tail recovery | 75,931 | 3,064 | 95.9% | 5,103 | 2,818 | 44.7% |
+| fleet hardening | 76,238 | 4,445 | 94.1% | 5,410 | 4,199 | 22.3% |
+| native HPC experiment | 77,550 | 3,367 | 95.6% | 6,722 | 3,121 | 53.5% |
+| duration Cowork | 80,599 | 4,719 | 94.1% | 9,771 | 4,473 | 54.2% |
 
 The median total reduction is 96.5%, above the frozen 85% threshold; every
 scenario exceeds 94%, above the per-scenario 50% floor. Median non-ledger
-reduction is 48.0%, above the 30% independent policy/skill threshold. The
+reduction is 47.2%, above the 30% independent policy/skill threshold. The
 always-read policy is 805 words, and the active board is 52 lines / 246 words,
 and selected conditional policy routes are separately budgeted by
 `tests/test-agent-policy-routing.sh`.
 
 Active-task details are now one hop behind the board. At this checkpoint the
-selected T-351 record is 417 words during execution, so board plus relevant
-record is 663 words—42.5% below the prior 1,153-word board—while unrelated
+selected T-351 record is 440 words during execution, so board plus relevant
+record is 686 words—40.5% below the prior 1,153-word board—while unrelated
 backup successor IDs, outage contingency
 details, and the blocked NFS fingerprint are not loaded. The ledger fixture
 requires all four task records, their board routes, and their exact critical
