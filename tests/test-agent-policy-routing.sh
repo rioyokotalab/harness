@@ -83,6 +83,8 @@ assert_contains 'Installed skill descriptions are the trigger index' "$AGENTS" \
 # Conditional authority stays reachable through the exact route that selects it.
 assert_contains 'Owner approval alone never' "$EXTERNAL" \
     'installer exception boundary'
+assert_contains 'Ordinary Git operations inside the active task' "$EXTERNAL" \
+    'standing Git authority'
 assert_contains 'approval count of zero' "$EXTERNAL" \
     'owner-selected zero approvals'
 assert_contains 'SSH_AUTH_SOCK' "$EXTERNAL" 'agent socket boundary'

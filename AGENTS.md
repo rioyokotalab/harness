@@ -14,11 +14,6 @@ every selected file completely before its first matching action.
   and broad owner configuration are separate authority boundaries. Exact owner
   authorization permits only the smallest atomic change; otherwise collect one
   approval bundle and continue all safe in-scope work.
-- Ordinary Git operations inside the active task are standing-authorized,
-  including fetch, branch, commit, rebase, push, task pull-request, and merge.
-  They do not authorize hosting administration, workflow dispatch,
-  deployments, messages, cleanup, or credential access. Never force-push or
-  overwrite ambiguous remote work.
 - A duration or persistence request never broadens scope.
 - Never run raw recursive or multi-path deletion (`rm -r`, `rm -rf`,
   `find -delete`, deletion loops or globs, `rsync --delete`, or equivalents).
