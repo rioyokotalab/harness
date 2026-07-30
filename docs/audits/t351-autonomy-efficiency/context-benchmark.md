@@ -21,7 +21,7 @@ its eventual protected publication.
 | ordinary code fix | 74,455 | 1,799 | 97.5% | 3,627 | 1,553 | 57.2% |
 | tmux health diagnosis | 73,545 | 1,805 | 97.5% | 2,717 | 1,559 | 42.6% |
 | unsafe-tail recovery | 75,931 | 3,281 | 95.7% | 5,103 | 3,035 | 40.5% |
-| fleet hardening | 76,238 | 4,114 | 94.6% | 5,410 | 3,868 | 28.5% |
+| fleet hardening | 76,238 | 4,389 | 94.2% | 5,410 | 4,143 | 23.4% |
 | native HPC experiment | 77,550 | 3,737 | 95.2% | 6,722 | 3,491 | 48.1% |
 | duration Cowork | 80,599 | 4,993 | 93.8% | 9,771 | 4,747 | 51.4% |
 
@@ -45,8 +45,13 @@ thresholds, and fails if the active board or policy router regresses.
 
 Phase routing also reduced the largest selected PIE route from 1,088 to 652
 words (40.1%) and the largest remote-communication route from 1,241 to 771
-words (37.9%). The PIE entry selects exactly one of planning, interview, or
+words (37.9%). Fleet hardening's prior 1,431-word entry-plus-checklist route is
+now at most 892 words (37.7%) even when LIFO issue handling is added to the
+largest interrupted phase. PIE selects exactly one of planning, interview, or
 execution; remote communication selects exactly one of delivery, synchronous
-request, or fallback. `tests/test-skill-context-budgets.sh` freezes these
-budgets, while `tests/test-skill-context-gates.sh` proves that the common
-authority rules and phase-specific stop conditions remain reachable.
+request, or fallback; and hardening selects only the current phase and host
+type, adding issue handling only after a failure. The fleet scenario above
+conservatively counts every phase and both host types, not just its largest
+instantaneous route. `tests/test-skill-context-budgets.sh` freezes these
+budgets, while `tests/test-skill-context-gates.sh` proves that common authority
+rules and phase-specific stop conditions remain reachable.

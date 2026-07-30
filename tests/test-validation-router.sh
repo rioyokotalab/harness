@@ -126,4 +126,4 @@ assert unknown["tier"] == "R3"
 assert unknown["suites"] == ["tests/test-phase1.sh"]
 PY
 
-printf '%s\n' 'VALIDATION_ROUTER status=pass cases=11'
+printf '%s\n' 'VALIDATION_ROUTER status=pass cases=12'

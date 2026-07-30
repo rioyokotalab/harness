@@ -22,7 +22,9 @@ assert_max() {
 COWORK_BEFORE=5926
 HPC_BEFORE=2668
 REMOTE_BEFORE=1241
-HARDENING_BEFORE=1130
+# Before routing, every hardening invocation selected both the 1,130-word
+# entry and its 301-word aggregate checklist.
+HARDENING_BEFORE=1431
 
 cowork_entry=$(words "$COWORK/SKILL.md")
 cowork_plan=$(words "$COWORK/references/session-planning.md")
@@ -96,7 +98,7 @@ hardening_entry=$(words "$HARDENING/SKILL.md")
 assert_max "$hardening_entry" 450 'fleet-hardening entry'
 hardening_largest=0
 for name in planning repository-audit linux-audit macos-audit execution \
-    issue-stack closeout; do
+    closeout; do
     phase_words=$(words "$HARDENING/references/$name.md")
     assert_max "$phase_words" 350 "fleet-hardening $name reference"
     selected_words=$((hardening_entry + phase_words))
@@ -105,6 +107,14 @@ for name in planning repository-audit linux-audit macos-audit execution \
     [ "$selected_words" -le "$hardening_largest" ] ||
         hardening_largest=$selected_words
 done
+issue_words=$(words "$HARDENING/references/issue-stack.md")
+assert_max "$issue_words" 220 'fleet-hardening issue-stack reference'
+# The router explicitly adds issue handling to the interrupted phase. Measure
+# that cumulative route rather than pretending issue handling replaces it.
+hardening_issue_route=$((hardening_largest + issue_words))
+[ "$hardening_issue_route" -le 950 ] ||
+    fail "fleet-hardening interrupted-phase route exceeds 950 words: $hardening_issue_route"
+hardening_largest=$hardening_issue_route
 hardening_reduction=$(((HARDENING_BEFORE - hardening_largest) * 100 / HARDENING_BEFORE))
 [ "$hardening_reduction" -ge 35 ] ||
     fail "fleet-hardening largest-route reduction is not material: $hardening_reduction%"
@@ -112,4 +122,4 @@ assert_max "$(words "$HARDENING/references/audit-checklist.md")" 80 \
     'fleet-hardening compatibility audit index'
 
 printf '%s\n' \
-    "Skill context budgets passed: cowork $COWORK_BEFORE->$cowork_initial words (-$cowork_reduction%); HPC $HPC_BEFORE->$hpc_largest words (-$hpc_reduction%); PIE $PIE_BEFORE->$pie_largest words (-$pie_reduction%); remote $REMOTE_BEFORE->$remote_largest words (-$remote_reduction%); hardening $HARDENING_BEFORE->$hardening_largest words (-$hardening_reduction%, largest selected routes)"
+    "Skill context budgets passed: cowork $COWORK_BEFORE->$cowork_initial words (-$cowork_reduction%); HPC $HPC_BEFORE->$hpc_largest words (-$hpc_reduction%); PIE $PIE_BEFORE->$pie_largest words (-$pie_reduction%); remote $REMOTE_BEFORE->$remote_largest words (-$remote_reduction%); hardening $HARDENING_BEFORE->$hardening_largest words (-$hardening_reduction%, largest selected routes including interrupted phase)"
