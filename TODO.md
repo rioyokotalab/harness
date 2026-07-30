@@ -567,6 +567,41 @@ Swallow as a separate bridge-first migration from its clean direct checkout,
 with new one-shot receipts and its own physical-phone visibility confirmation;
 do not reuse any Students lifecycle controller or acknowledgement.
 
+Protected PR #470 merge-merged the reconciled Students completion checkpoint
+as `880cb5e36e262252d6e30f5181e7d502ff145da9`. Two interval-separated
+readbacks then reported canonical three-window order, healthy phone mirror,
+and idle helper with an empty queue.
+
+Swallow cold reconstruction read its complete `AGENTS.md` and 5,562-line
+`TODO.md`, fetched its collaborative remote, and found direct checkout
+`/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow` clean/aligned
+`main` at `471505b1ba03b5e5da9b988550ac3c4741ca5998`. The next project action
+is SW-031's static host-generator implementation contract; T-350 identified
+but did not execute it.
+
+Swallow create-controller digest
+`d8ba843d86d4ff7029b4c43e1d0ba167bc8cdcc2f05ca13a3cb2fcad05b73ba2`
+passed zero-write preflight and executed exactly once. On one fresh
+experimental-capable app-server connection, `thread/start` request `7`
+acknowledged direct-cwd root
+`019fb2e8-b1e1-7200-b316-481df624712a`, and `thread/name/set` request `8`
+acknowledged `swallow-native-bridge-20260730`. Both are consumed and must not
+be retried. Journal digest
+`49c405170725e4aa8e586cc3bd01b6e654bfde39acaee6bbd48ef75e6112b4c8`
+and result digest
+`e66602eb7332869c8188cb1df32e16a463567ae713fcccabc85bdab7197a796e`
+record accepted creation. The start response proved exact direct cwd,
+`gpt-5.6-sol`/`high`, granular approval, disabled sandbox, and omitted
+model/config overrides. Existing Harness, Students, and Swallow windows,
+processes, and roots remain unchanged; no provisional runtime or input exists.
+
+**Next action:** publish this non-retryable Swallow root checkpoint. Then
+require the same root/receipt/repository/process/client/topology identities,
+tighten only the new rollout inode to mode `0600`, and launch exactly one
+detached provisional index-3 window/runtime from direct Swallow with explicit
+`--target swallow`. Stop and reconcile rather than relaunch on any ambiguous
+launch.
+
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
 **Phase:** complete.
