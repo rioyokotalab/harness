@@ -23,7 +23,7 @@ Next free ID: T-348.
   temporarily `@40/0:tunnel,@95/1:codex` after the partial-transaction
   safeguard terminated exact helper `4140398`; monitor health remains 3/3 and
   all three resilient chains remain live. T-347 has one acknowledged archive,
-  twelve earlier no-request refusals, and a frozen partial-safe v10
+  thirteen no-request terminal receipts, and a frozen stopped-helper v11
   continuation. The historical failed mirror event must not be retried.
 - ABQ is unreachable through both declared routes. The official G-QuAT status
   page still reports System H `サービス停止中` with the current scheduled
@@ -116,7 +116,7 @@ Next free ID: T-348.
    `13de62583acf5ad5babd684785e636d5bb20d5643ac52b8440cbd93c2155e586`,
    its mode-0600 evidence, and all six unchanged root archive flags. Never
    retry the event or inspect its private worker log.
-2. Publish T-347's partial-safe v10 checkpoint. It uses the
+2. Publish T-347's stopped-helper v11 checkpoint. It uses the
    existing private fsynced per-operation journal and one metadata-only
    app-server connection, and can prove whether each exact request was
    unattempted, acknowledged, or ambiguous without worker transcript content.
@@ -166,7 +166,7 @@ agents and ledgers.
 
 ### T-347 — Complete T-345 mirror convergence
 
-**Phase:** one archive acknowledged; partial-safe controller v10 frozen.
+**Phase:** one archive acknowledged; stopped-helper controller v11 frozen.
 
 The immutable T-345 helper event remains terminal `failed/worker-failed`; its
 private worker log remains unread and the event must never be retried.
@@ -594,6 +594,36 @@ active sessions root. v10 now handles both exact native contracts; neither
 failed preflight opened an app connection, signaled a process, or wrote root
 metadata.
 
+PR #438 passed `portable-phase1` at exact v10 head
+`c6bad783fd5deabc88d14d37e5618b7d903af164` and merge-merged as
+`ef6be2aa1793d2dce4ba8e5524dca443f564dbe3`. v10 ran once and failed before
+any watcher signal, app-server connection, reconciliation phase, or operation.
+Its mode-0600 journal/result are respectively 420 and 107 bytes with SHA-256
+`be4f1255e8392edada957a8446bf36c2457d23af3f192daa5b964e17727fe770`
+and
+`166d0b854d7b5310f88dca7797f9fb7989ec5b40cb647b943593eb56cdfd679d`.
+The journal contains only transaction `reserved/failed`; no operation was
+retried or attempted.
+
+The exact value-free cause is the helper receipt phase. The partial
+termination path durably writes `phase=stopped`, while the first v10 absence
+adapter required the pre-termination `idle` phase even though native status
+correctly reported the absent owner as stale. All other helper schema, owner,
+counts, epoch, process absence, topology, and health checks pass.
+
+v11 verifies the exact immutable v10 no-action receipt and the actual
+mode-0600 `stopped` helper state. It adapts only that exact stopped phase to
+v10's already reviewed absence assertion in memory; any other phase refuses.
+All v10 receipt, database, archived-rollout, topology, watcher, app metadata,
+operation, and request gates remain byte-identical.
+
+Private v11 wrapper
+`/run/user/5035/harness-t347-mirror-convergence/controller-v11.py` is current
+user, mode `0700`, one link, 5,701 bytes, SHA-256
+`470f1bb1ea9ffa1c243c34181b6366ceb07733e760311cef033f0e8515b5e7e4`.
+It verifies exact v10 controller and receipt digests, passes syntax and
+zero-write preflight, and has distinct absent journal/result paths.
+
 The immutable controller checkpoint is exact commit
 `70c5194066965df1bffc0078f36361ded50d7bc2` in clean worktree
 `/tmp/harness-t347-t345-mirror-execution`. That worktree must remain at this
@@ -603,9 +633,9 @@ an ancestor. PR #423 passed `portable-phase1` at recording head
 `6fc06163946452ca1fe9a7d015279c2b161ea9ff` and merge-merged as
 `805016261124fd07b365a2cbf962222939e0758d`.
 
-**Next action:** publish the acknowledged v9 partial receipt and exact v10
+**Next action:** publish the no-action v10 receipt and exact v11
 wrapper through the protected workflow. Then pass the resulting protected-main
-merge, checkpoint `70c5194`, and v10 digest `f09ec37` to one v10 execution.
+merge, checkpoint `70c5194`, and v11 digest `470f1bb` to one v11 execution.
 Never rerun any prior controller or resend `archive-old-exec`. Do not open the
 app-server connection, signal watchers, launch the helper, or write root
 metadata before protected publication.
