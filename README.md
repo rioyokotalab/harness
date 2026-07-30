@@ -36,11 +36,12 @@ preserves every credential and runtime-state file, and records rollback
 preimages. It never installs or authorizes a plugin, marketplace, MCP server,
 connector, or credential.
 
-Current work and the exact resume checkpoint live in [TODO.md](TODO.md).
-Completed command-level evidence lives in Git history and
-[docs/audits/](docs/audits/). A cold-started agent should read the root
-`AGENTS.md` or `CLAUDE.md`, `TODO.md`, and the canonical
-[fleet inventory](docs/fleet-inventory.md) before acting.
+The compact queue lives in [TODO.md](TODO.md); each active item links one
+task-specific record containing its exact resume checkpoint. Completed
+command-level evidence lives in Git history and [docs/audits/](docs/audits/).
+A cold-started agent reads the root `AGENTS.md` or `CLAUDE.md`, the queue, and
+only the selected task record. It reads the canonical
+[fleet inventory](docs/fleet-inventory.md) only for fleet or host work.
 
 For a new account that does not share the owner's hidden files, credentials,
 remote nodes, or backup layout, use
@@ -72,8 +73,8 @@ requiring an active controller session. See
 
 ### Resume work safely
 
-Both clients reconstruct unfinished work from Git and [TODO.md](TODO.md), not
-from conversation history or client-local memory:
+Both clients reconstruct unfinished work from Git, [TODO.md](TODO.md), and the
+selected task record—not conversation history or client-local memory:
 
 ```bash
 cd "$HOME/harness"
@@ -82,9 +83,9 @@ git log -3 --oneline
 ```
 
 Before changing a collaborative branch, fetch the protected remote and confirm
-the active task. Before handing work to the other client, checkpoint verified
-facts, failures, files, validation, and the next executable action in
-`TODO.md`.
+the active task. Before handoff, checkpoint verified facts, failures, files,
+validation, and the next executable action in that task's record. Change
+`TODO.md` only when the queue-level phase, order, summary, or pointer changes.
 
 ### Survive transient Codex service failures
 
@@ -289,8 +290,9 @@ weekly primary job exists per node. Keep-all remains in force: no scheduled
 `forget`, `prune`, replica, full-data check, login-node cron job, or user
 timer exists.
 
-The current successor gate is in [TODO.md](TODO.md). Recovery procedures and
-the reviewed topology are in [docs/home-backup.md](docs/home-backup.md).
+The current successor gate is in
+[the T-196 record](docs/tasks/T-196.md). Recovery procedures and the reviewed
+topology are in [docs/home-backup.md](docs/home-backup.md).
 
 ## Codex and Claude use the same harness
 
@@ -543,11 +545,27 @@ for the default Power setting; the aggregate itself correctly retains
 - `evaluation/`: deterministic cross-agent acceptance corpus.
 - `tests/`: focused suites, fixtures, and native smoke sources.
 - `docs/`: architecture, operating instructions, plans, and audit evidence.
-- `TODO.md`: the compact active task ledger.
+- `TODO.md`: compact active queue; `docs/tasks/`: selected active-task records
+  and the completed-task index.
 
 ## Validation
 
-Run the complete portable validation suite with:
+Use the deterministic impact selector during ordinary work:
+
+```bash
+harness validate --base origin/main
+harness validate --plan --path PATH
+```
+
+Documentation and ledger changes run their contracts, routed skills run budget
+and gate fixtures, and mapped components run their owning suite. Workflow,
+policy, selector, manifest, safety, lifecycle, cleanup, credential, and unknown
+changes escalate automatically. Exact clean-tree R0/R1 results may reuse a
+content-addressed local receipt; that receipt is owner self-attestation, not
+independent CI.
+
+Run the complete portable suite for broad changes and once on the final
+integrated tree:
 
 ```bash
 tests/test-phase1.sh
