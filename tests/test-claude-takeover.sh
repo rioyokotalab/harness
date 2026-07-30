@@ -123,13 +123,13 @@ launcher_args=$TEMP_DIR/launcher-args
 mkdir -p "$launcher_home/.local/bin"
 cat >"$launcher_home/.local/bin/codex" <<'SH'
 #!/bin/sh
-printf '%s\n' "$@" >"$HARNESS_TEST_ARGS_OUT"
+printf '%s\n' "$@" >"$CODEX_TEST_ARGS_OUT"
 SH
 chmod 755 "$launcher_home/.local/bin/codex"
 (
     cd "$ROOT"
     HOME="$launcher_home" HARNESS_ROOT="$ROOT" \
-        HARNESS_TEST_ARGS_OUT="$launcher_args" \
+        CODEX_TEST_ARGS_OUT="$launcher_args" \
         "$ROOT/bin/harness-codex" --version
 )
 grep -Fx -- '--config' "$launcher_args" >/dev/null ||

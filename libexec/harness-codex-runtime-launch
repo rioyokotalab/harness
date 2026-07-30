@@ -13,6 +13,16 @@ HARNESS_TARGET_ROOT=${HARNESS_TARGET_ROOT:-$HARNESS_CONTROL_ROOT}
 export HARNESS_CONTROL_ROOT HARNESS_TARGET_ROOT
 unset HARNESS_ROOT
 
+case ${HARNESS_CODEX_RELEASE_TARGET:-} in
+    harness|students|swallow)
+        release_target=$HARNESS_CODEX_RELEASE_TARGET
+        ;;
+    *)
+        echo "harness-codex: released runtime target is invalid" >&2
+        exit 2
+        ;;
+esac
+
 case "$HARNESS_CONTROL_ROOT:$HARNESS_TARGET_ROOT" in
     /*:/*) ;;
     *)
@@ -51,6 +61,10 @@ case "$target" in
     harness|students|swallow) ;;
     *) echo "harness-codex: target resolver returned an invalid target" >&2; exit 2 ;;
 esac
+if [ "$release_target" != "$target" ]; then
+    echo "harness-codex: released runtime target does not match current repository" >&2
+    exit 2
+fi
 
 native_codex=$HOME/.local/bin/codex
 if [ "${HARNESS_TESTING:-0}" = 1 ] &&
@@ -92,9 +106,14 @@ case $(uname -s) in
 esac
 
 unset HARNESS_ROOT HARNESS_CONTROL_ROOT HARNESS_TARGET_ROOT
-unset HARNESS_CODEX_RELEASE_COMMIT HARNESS_CODEX_RELEASE_TARGET
-unset HARNESS_TEST_CODEX_RELEASE_ROOT
-unset HARNESS_TEST_FORCE_CODEX_RELEASE HARNESS_TEST_NATIVE_CODEX
+release_test_variables=$(
+    env | sed -n \
+        -e 's/^\(HARNESS_CODEX_RELEASE_[A-Z0-9_]*\)=.*/\1/p' \
+        -e 's/^\(HARNESS_TEST[A-Z0-9_]*\)=.*/\1/p'
+)
+for release_test_variable in $release_test_variables; do
+    unset "$release_test_variable"
+done
 
 exec "$native_codex" --config \
     'approval_policy={ granular = { sandbox_approval = false, rules = false, mcp_elicitations = true, request_permissions = false, skill_approval = false } }' \

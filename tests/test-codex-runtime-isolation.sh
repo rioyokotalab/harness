@@ -8,8 +8,10 @@ TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEST_ROOT=$(mktemp -d "$TEMP_BASE/harness-codex-runtime-test.XXXXXX")
 harness_pid=
 students_pid=
+swallow_pid=
 harness_release=
 students_release=
+swallow_release=
 
 fail() {
     printf 'FAIL: %s\n' "$*" >&2
@@ -35,9 +37,12 @@ stop_process() {
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
+    stop_process "$swallow_pid"
     stop_process "$students_pid"
     stop_process "$harness_pid"
-    for runtime_release in "$harness_release" "$students_release"; do
+    for runtime_release in \
+        "$harness_release" "$students_release" "$swallow_release"
+    do
         if [ -n "$runtime_release" ] && [ -d "$runtime_release" ] &&
             [ ! -L "$runtime_release" ]; then
             chmod 700 "$runtime_release" \
@@ -84,6 +89,7 @@ for repository in "$target_harness" "$target_students" "$target_swallow"; do
     mkdir -p "$repository/.codex"
     git -C "$repository" init -q -b main
     printf '%s\n' 'model = "gpt-5.6-sol"' \
+        'model_reasoning_effort = "high"' \
         >"$repository/.codex/config.toml"
 done
 
@@ -215,6 +221,20 @@ grep -F 'target=students' "$runtime/students/shared.state" >/dev/null ||
 [ -d "$runtime/harness/shared.lock" ] ||
     fail "same-name Students supervisor interfered with Harness lock"
 
+swallow_release=$release_root/releases/swallow/$commit
+launch_supervisor "$target_swallow" swallow "$TEST_ROOT/swallow.out"
+swallow_pid=$launched_pid
+wait_for_file "$runtime/swallow/shared.state" "$swallow_pid"
+[ -f "$swallow_release/.codex-runtime-release" ] ||
+    fail "Swallow target-scoped runtime release was not created"
+grep -F 'target=swallow' "$runtime/swallow/shared.state" >/dev/null ||
+    fail "Swallow supervisor state lost target identity"
+[ -d "$runtime/swallow/shared.lock" ] ||
+    fail "Swallow target lock is absent"
+[ -d "$runtime/harness/shared.lock" ] &&
+    [ -d "$runtime/students/shared.lock" ] ||
+    fail "same-name Swallow supervisor interfered with another target lock"
+
 status_output=$(
     HARNESS_CONTROL_ROOT="$harness_release" \
     HARNESS_TARGET_ROOT="$target_harness" \
@@ -258,45 +278,167 @@ fake_native=$TEST_ROOT/fake-native-codex
 cat >"$fake_native" <<'EOF'
 #!/bin/sh
 set -eu
-for variable in HARNESS_ROOT HARNESS_CONTROL_ROOT HARNESS_TARGET_ROOT \
-    HARNESS_CODEX_RELEASE_COMMIT HARNESS_CODEX_RELEASE_TARGET \
-    HARNESS_TEST_CODEX_RELEASE_ROOT \
-    HARNESS_TEST_FORCE_CODEX_RELEASE HARNESS_TEST_NATIVE_CODEX
-do
-    eval 'present=${'"$variable"'+yes}'
-    [ -z "${present:-}" ] || {
-        printf 'leaked=%s\n' "$variable" >"$HARNESS_TEST_CAPTURE/native-leak"
-        exit 9
-    }
-done
-[ "${RAYON_NUM_THREADS:-}" = 8 ]
-[ "${TOKIO_WORKER_THREADS:-}" = 8 ]
-printf '%s\n' "$*" >"$HARNESS_TEST_CAPTURE/native-arguments"
-printf '%s\n' sanitized >"$HARNESS_TEST_CAPTURE/native-environment"
+
+printf '%s\n' executed >"$CODEX_LAUNCH_CAPTURE/native-executed"
+leaked=$(
+    env | sed -n \
+        -e 's/^\(HARNESS_ROOT\)=.*/\1/p' \
+        -e 's/^\(HARNESS_CONTROL_ROOT\)=.*/\1/p' \
+        -e 's/^\(HARNESS_TARGET_ROOT\)=.*/\1/p' \
+        -e 's/^\(HARNESS_CODEX_RELEASE_[A-Z0-9_]*\)=.*/\1/p' \
+        -e 's/^\(HARNESS_TEST[A-Z0-9_]*\)=.*/\1/p' |
+        sed -n '1p'
+)
+if [ -n "$leaked" ]; then
+    printf 'leaked=%s\n' "$leaked" >"$CODEX_LAUNCH_CAPTURE/native-leak"
+    exit 9
+fi
+case $(uname -s) in
+    Linux)
+        [ "${RAYON_NUM_THREADS:-}" = 8 ] || exit 10
+        [ "${TOKIO_WORKER_THREADS:-}" = 8 ] || exit 11
+        ;;
+esac
+[ "$(pwd -P)" = "$CODEX_EXPECTED_REPOSITORY" ] || exit 12
+grep -F -x 'model = "gpt-5.6-sol"' .codex/config.toml >/dev/null ||
+    exit 13
+grep -F -x 'model_reasoning_effort = "high"' .codex/config.toml \
+    >/dev/null || exit 14
+printf '%s\n' "$*" >"$CODEX_LAUNCH_CAPTURE/native-arguments"
+printf '%s\n' sanitized >"$CODEX_LAUNCH_CAPTURE/native-environment"
 EOF
 chmod 700 "$fake_native"
-(
-    cd "$target_harness"
-    HARNESS_ROOT="$TEST_ROOT/ambient-root" \
-    HARNESS_CONTROL_ROOT="$harness_release" \
-    HARNESS_TARGET_ROOT="$target_harness" \
-    HARNESS_CODEX_RELEASE_COMMIT="$commit" \
-    HARNESS_CODEX_RELEASE_TARGET=harness \
-    HARNESS_TESTING=1 \
-    HARNESS_TEST_CODEX_RELEASE_ROOT="$release_root" \
-    HARNESS_TEST_FORCE_CODEX_RELEASE=1 \
-    HARNESS_TEST_NATIVE_CODEX="$fake_native" \
-    HARNESS_TEST_CAPTURE="$capture" \
-        "$harness_release/libexec/harness-codex-runtime-launch" resume --last
-)
-[ -f "$capture/native-environment" ] ||
-    fail "native Codex environment was not checked"
-[ ! -e "$capture/native-leak" ] ||
-    fail "native Codex inherited a Harness control variable"
-grep -F -- '--sandbox danger-full-access resume --last' \
-    "$capture/native-arguments" >/dev/null ||
-    fail "runtime launcher changed native Codex arguments"
 
+run_released_launcher() {
+    released_target=$1
+    released_root=$2
+    released_repository=$3
+    released_capture=$capture/valid-$released_target
+    mkdir "$released_capture"
+    (
+        cd "$released_repository"
+        env \
+            HARNESS_ROOT="$TEST_ROOT/ambient-root" \
+            HARNESS_CONTROL_ROOT="$released_root" \
+            HARNESS_TARGET_ROOT="$target_harness" \
+            HARNESS_CODEX_RELEASE_COMMIT="$commit" \
+            HARNESS_CODEX_RELEASE_FUTURE=ambient-release \
+            HARNESS_CODEX_RELEASE_TARGET="$released_target" \
+            HARNESS_TESTING=1 \
+            HARNESS_TEST_CODEX_RELEASE_ROOT="$release_root" \
+            HARNESS_TEST_FORCE_CODEX_RELEASE=1 \
+            HARNESS_TEST_NATIVE_CODEX="$fake_native" \
+            HARNESS_TEST_FUTURE_VARIABLE=ambient-test \
+            CODEX_LAUNCH_CAPTURE="$released_capture" \
+            CODEX_EXPECTED_REPOSITORY="$released_repository" \
+            "$released_root/libexec/harness-codex-runtime-launch" \
+                resume --last
+    )
+    [ -f "$released_capture/native-environment" ] ||
+        fail "$released_target native Codex environment was not checked"
+    [ ! -e "$released_capture/native-leak" ] ||
+        fail "$released_target native Codex inherited Harness state"
+    grep -F -- '--sandbox danger-full-access resume --last' \
+        "$released_capture/native-arguments" >/dev/null ||
+        fail "$released_target runtime launcher changed native arguments"
+}
+
+run_released_launcher harness "$harness_release" "$target_harness"
+run_released_launcher students "$students_release" "$target_students"
+run_released_launcher swallow "$swallow_release" "$target_swallow"
+
+assert_wrong_release_repository() {
+    wrong_release_target=$1
+    wrong_release_root=$2
+    wrong_repository_target=$3
+    wrong_repository=$4
+    wrong_capture=$capture/wrong-$wrong_release_target-$wrong_repository_target
+    mkdir "$wrong_capture"
+    if (
+        cd "$wrong_repository"
+        env \
+            HARNESS_CONTROL_ROOT="$wrong_release_root" \
+            HARNESS_TARGET_ROOT="$target_harness" \
+            HARNESS_CODEX_RELEASE_COMMIT="$commit" \
+            HARNESS_CODEX_RELEASE_TARGET="$wrong_release_target" \
+            HARNESS_TESTING=1 \
+            HARNESS_TEST_NATIVE_CODEX="$fake_native" \
+            CODEX_LAUNCH_CAPTURE="$wrong_capture" \
+            CODEX_EXPECTED_REPOSITORY="$wrong_repository" \
+            "$wrong_release_root/libexec/harness-codex-runtime-launch" \
+                --probe wrong-target
+    ) >"$TEST_ROOT/wrong-$wrong_release_target-$wrong_repository_target.out" \
+        2>&1; then
+        fail "$wrong_release_target release accepted $wrong_repository_target"
+    fi
+    grep -F 'released runtime target does not match current repository' \
+        "$TEST_ROOT/wrong-$wrong_release_target-$wrong_repository_target.out" \
+        >/dev/null ||
+        fail "$wrong_release_target release mismatch was not classified"
+    [ ! -e "$wrong_capture/native-executed" ] ||
+        fail "$wrong_release_target release reached native Codex from $wrong_repository_target"
+}
+
+assert_wrong_release_repository \
+    harness "$harness_release" students "$target_students"
+assert_wrong_release_repository \
+    harness "$harness_release" swallow "$target_swallow"
+assert_wrong_release_repository \
+    students "$students_release" harness "$target_harness"
+assert_wrong_release_repository \
+    students "$students_release" swallow "$target_swallow"
+assert_wrong_release_repository \
+    swallow "$swallow_release" harness "$target_harness"
+assert_wrong_release_repository \
+    swallow "$swallow_release" students "$target_students"
+
+invalid_capture=$capture/invalid-release-target
+mkdir "$invalid_capture"
+if (
+    cd "$target_harness"
+    env \
+        HARNESS_CONTROL_ROOT="$harness_release" \
+        HARNESS_TARGET_ROOT="$target_harness" \
+        HARNESS_CODEX_RELEASE_COMMIT="$commit" \
+        HARNESS_CODEX_RELEASE_TARGET=invalid \
+        HARNESS_TESTING=1 \
+        HARNESS_TEST_NATIVE_CODEX="$fake_native" \
+        CODEX_LAUNCH_CAPTURE="$invalid_capture" \
+        CODEX_EXPECTED_REPOSITORY="$target_harness" \
+        "$harness_release/libexec/harness-codex-runtime-launch" --probe
+) >"$TEST_ROOT/invalid-release-target.out" 2>&1; then
+    fail "released runtime launcher accepted an invalid target"
+fi
+grep -F 'released runtime target is invalid' \
+    "$TEST_ROOT/invalid-release-target.out" >/dev/null ||
+    fail "invalid released runtime target was not classified"
+[ ! -e "$invalid_capture/native-executed" ] ||
+    fail "invalid released runtime target reached native Codex"
+
+missing_capture=$capture/missing-release-target
+mkdir "$missing_capture"
+if (
+    cd "$target_harness"
+    env -u HARNESS_CODEX_RELEASE_TARGET \
+        HARNESS_CONTROL_ROOT="$harness_release" \
+        HARNESS_TARGET_ROOT="$target_harness" \
+        HARNESS_CODEX_RELEASE_COMMIT="$commit" \
+        HARNESS_TESTING=1 \
+        HARNESS_TEST_NATIVE_CODEX="$fake_native" \
+        CODEX_LAUNCH_CAPTURE="$missing_capture" \
+        CODEX_EXPECTED_REPOSITORY="$target_harness" \
+        "$harness_release/libexec/harness-codex-runtime-launch" --probe
+) >"$TEST_ROOT/missing-release-target.out" 2>&1; then
+    fail "released runtime launcher accepted a missing target"
+fi
+grep -F 'released runtime target is invalid' \
+    "$TEST_ROOT/missing-release-target.out" >/dev/null ||
+    fail "missing released runtime target was not classified"
+[ ! -e "$missing_capture/native-executed" ] ||
+    fail "missing released runtime target reached native Codex"
+
+stop_process "$swallow_pid"
+swallow_pid=
 stop_process "$students_pid"
 students_pid=
 stop_process "$harness_pid"
