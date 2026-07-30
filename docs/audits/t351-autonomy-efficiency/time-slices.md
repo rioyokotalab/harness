@@ -725,3 +725,30 @@ precondition failure is retained and is not classified as a low-core product
 failure or acceptance result. The evidence update will be checkpointed before
 one clean-tree repeat; the failed command will not be replayed against the
 same dirty input.
+
+After checkpoint `0c5c24e`, the worktree was exactly clean and the changed-input
+repeat passed. Under native `taskset -c 0`, the focused runner reported
+`jobs=1 visible_cpus=1 mode=auto reserve_cpus=1`; all 91 focused suites,
+the integration body, and guarded-delete checks passed in 4:53.10. Resource
+use was 145.27 seconds user CPU, 105.09 seconds system CPU, and 800,208 KiB
+maximum RSS. This independently exercises the low-core serialization branch;
+its intentionally slower wall time is not folded into the normal eight-CPU
+performance comparison.
+
+The task-ledger contract was also generalized for clean deadline closure.
+Active board entries must remain a subset of durable task records and must be
+non-complete with both board and record sources. A durable task record omitted
+from the active board must instead be indexed complete, omit `TODO.md` from
+its sources, and retain its own record source. Required handoff facts are
+checked across all durable task records rather than only active records. The
+current 78-row index and four-task board pass unchanged; this prepares T-351
+to leave the active queue without deleting its compact recovery record.
+
+The benchmark self-check initially reported its exact current median
+non-ledger reduction as 47.2%; the selected task record retained an earlier
+48.0% prose value because that record is an input rather than the benchmark's
+output document. Adding the protected-input checkpoint then grew that record
+from 440 to 450 words, and the self-check deliberately rejected the stale
+table. The reconstructed current median is 46.8%, with a 96.5% total median;
+the record, all eight rows, and both medians were corrected without changing a
+threshold or scenario.

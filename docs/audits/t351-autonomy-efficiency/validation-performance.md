@@ -81,6 +81,7 @@ Matched retained measurements:
 | exact integrated tree after ShellCheck overlap | 67.19 s | 161.23 s | 165.12 s | 521,212 KiB |
 | exact integrated tree after longest-first admission | 56.54 s | 159.22 s | 162.75 s | 516,220 KiB |
 | review-corrected integrated tree | 54.35 s | 158.69 s | 162.58 s | 721,900 KiB |
+| portable protected-input checkpoint | 55.37 s | not retained | not retained | not retained |
 
 The retained automatic route sees eight affinity-visible CPUs and gives seven
 to focused suites while integration proceeds. Explicit or legacy worker counts
@@ -183,6 +184,11 @@ as acceptance. The 54.35-second sample is 52.6% below the immutable
 114.77-second baseline, but only the matched component comparisons above are
 treated as causal measurements.
 
+After correcting the frozen evaluation self-test's checkout-location
+assumption, the exact changed input later accepted by protected run
+`30582235091` passed all 91 local suites in 55.37 seconds. CPU and RSS counters
+were not retained for that invocation and are not inferred.
+
 An integration-only disposable profiler passed the unchanged fixture body in
 30.44 seconds. On the retained longest-first tree, seven focused workers took
 56.54 seconds end to end, six took 56.76, and five took 63.56. The six/seven
@@ -225,3 +231,21 @@ gate as tracked changes. The repository intentionally ignores unknown
 top-level local directories, but an ignored top-level file is detected by name
 and rejected without opening potentially private bytes; it becomes valid only
 after deliberate source tracking, when an unknown path escalates to R3.
+
+## Low-core acceptance
+
+A complete clean-tree run under native `taskset -c 0` affinity exercised the
+automatic one-visible-CPU route rather than only its source fixture. The
+focused runner reported `jobs=1 visible_cpus=1 mode=auto reserve_cpus=1`, all
+91 focused suites passed, the integration body and guarded-delete checks
+passed, and phase one exited zero in 4:53.10. It used 145.27 seconds user CPU,
+105.09 seconds system CPU, and 800,208 KiB maximum RSS. The slower wall result
+is expected because the focused, ShellCheck, and integration gates serialize
+on this route; it is portability evidence and is not compared with the normal
+eight-CPU performance baseline.
+
+An immediately preceding one-CPU probe ran from a dirty evidence checkout and
+is not acceptance evidence. It reached all 91 suites in 3:48.89, passed 89,
+and failed only because the tmux-configuration and terminfo fixtures correctly
+refused apply-mode checks from an uncommitted checkout. The changed input was
+checkpointed before the successful repeat.

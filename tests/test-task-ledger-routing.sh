@@ -35,12 +35,12 @@ assert hashlib.sha256(archive.read_bytes()).hexdigest() == (
 )
 board_tasks = re.findall(r"^### (T-\d+) —", text, re.MULTILINE)
 assert board_tasks and len(board_tasks) == len(set(board_tasks)), board_tasks
-assert set(board_tasks) == set(task_files), (board_tasks, sorted(task_files))
+assert set(board_tasks) <= set(task_files), (board_tasks, sorted(task_files))
 for task in board_tasks:
     assert f"`docs/tasks/{task}.md`" in text, task
 
 task_text = "\n".join(
-    task_files[task].read_text(encoding="utf-8") for task in board_tasks
+    task_files[task].read_text(encoding="utf-8") for task in sorted(task_files)
 )
 for required in (
     "docs/plans/t351-autonomy-efficiency.md",
@@ -104,6 +104,11 @@ for task in board_tasks:
     assert by_task[task]["state"] != "complete", task
     sources = by_task[task]["source"].split(";")
     assert "TODO.md" in sources, task
+    assert f"docs/tasks/{task}.md" in sources, task
+for task in sorted(set(task_files) - set(board_tasks)):
+    assert by_task[task]["state"] == "complete", task
+    sources = by_task[task]["source"].split(";")
+    assert "TODO.md" not in sources, task
     assert f"docs/tasks/{task}.md" in sources, task
 for task, state in {
     "T-351": "active",
