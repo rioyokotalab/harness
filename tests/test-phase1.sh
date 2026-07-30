@@ -12,10 +12,18 @@ TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 focused_pid=
+shellcheck_pid=
 
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
+    if [ -n "$shellcheck_pid" ]; then
+        if ! wait "$shellcheck_pid"; then
+            echo "FAIL: ShellCheck warning/error gate" >&2
+            [ "$status" -ne 0 ] || status=1
+        fi
+        shellcheck_pid=
+    fi
     if [ -n "$focused_pid" ]; then
         if ! wait "$focused_pid"; then
             [ "$status" -ne 0 ] || status=1
@@ -317,9 +325,12 @@ if env -u HARNESS_INTERACTIVE_LOADED -u HARNESS_REMOTE_SESSION_LOADED \
 fi
 
 if command -v shellcheck >/dev/null 2>&1; then
-    git -C "$ROOT" grep -Il -z '^#!.*\(sh\|bash\)' -- . \
-        ':(exclude)tests/fixtures/**' |
-        xargs -0 shellcheck --severity=warning || fail "ShellCheck warning/error gate"
+    (
+        git -C "$ROOT" grep -Il -z '^#!.*\(sh\|bash\)' -- . \
+            ':(exclude)tests/fixtures/**' |
+            xargs -0 shellcheck --severity=warning
+    ) &
+    shellcheck_pid=$!
 fi
 
 for script in \
@@ -2035,11 +2046,21 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$artifact_transaction" \
     fail "artifact rollback left link"
 [ ! -e "$artifact_dir" ] || fail "artifact rollback left directory"
 
+shellcheck_status=0
+focused_status=0
 set +e
-wait "$focused_pid"
-focused_status=$?
+if [ -n "$shellcheck_pid" ]; then
+    wait "$shellcheck_pid"
+    shellcheck_status=$?
+    shellcheck_pid=
+fi
+if [ -n "$focused_pid" ]; then
+    wait "$focused_pid"
+    focused_status=$?
+    focused_pid=
+fi
 set -e
-focused_pid=
+[ "$shellcheck_status" -eq 0 ] || fail "ShellCheck warning/error gate"
 [ "$focused_status" -eq 0 ] || fail "focused suites"
 
 echo "phase-1 harness tests passed"

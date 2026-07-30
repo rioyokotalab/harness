@@ -25,11 +25,30 @@ grep -F 'focused_pid=$!' "$PHASE1" >/dev/null ||
     fail "phase-1 does not overlap focused and integration gates"
 grep -F 'wait "$focused_pid"' "$PHASE1" >/dev/null ||
     fail "phase-1 does not join focused validation"
+grep -F 'shellcheck_pid=$!' "$PHASE1" >/dev/null ||
+    fail "phase-1 does not overlap ShellCheck and integration gates"
+grep -F 'wait "$shellcheck_pid"' "$PHASE1" >/dev/null ||
+    fail "phase-1 does not join ShellCheck validation"
 grep -F 'auto) focused_jobs=auto; focused_reserve=1' "$PHASE1" >/dev/null &&
     grep -F -- '--reserve-cpus "$focused_reserve"' "$PHASE1" >/dev/null ||
     fail "phase-1 does not reserve one CPU for integration"
 grep -F '[ "$focused_status" -eq 0 ] || fail "focused suites"' \
     "$PHASE1" >/dev/null || fail "phase-1 loses focused-suite failure"
+grep -F '[ "$shellcheck_status" -eq 0 ] || fail "ShellCheck warning/error gate"' \
+    "$PHASE1" >/dev/null || fail "phase-1 loses ShellCheck failure"
+
+python3 - "$PHASE1" <<'PY'
+import pathlib
+import sys
+
+text = pathlib.Path(sys.argv[1]).read_text()
+shellcheck_start = text.index("shellcheck_pid=$!")
+integration_start = text.index('"$ROOT/tests/test-guarded-delete.sh"')
+shellcheck_join = text.rindex('wait "$shellcheck_pid"')
+integration_end = text.index('artifact_dir=$test_home/.local/opt/fixture')
+assert shellcheck_start < integration_start
+assert shellcheck_join > integration_end
+PY
 
 fake=$TEMP_DIR/root
 mkdir -p "$fake/tests"
