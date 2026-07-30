@@ -166,7 +166,7 @@ agents and ledgers.
 
 ### T-347 — Complete T-345 mirror convergence
 
-**Phase:** exact controller checkpoint frozen; protected publication pending.
+**Phase:** privacy-corrected controller frozen; final publication pending.
 
 The immutable T-345 helper event remains terminal `failed/worker-failed`; its
 private worker log remains unread and the event must never be retried.
@@ -200,8 +200,8 @@ Protected PR #422 passed `portable-phase1` at exact plan head
 
 A private one-shot controller now exists at
 `/run/user/5035/harness-t347-mirror-convergence/controller.py`: current user,
-mode `0700`, one link, 33,110 bytes, SHA-256
-`1e3e569c36cf1f92b40777d641332e150a9ba3349f8789367cdb9dd25a663ef1`.
+mode `0700`, one link, 33,313 bytes, SHA-256
+`df5f4f04f7cbc2dacd50da9ba69e35a8c77e81f7572a2cd64489b18a276b1401`.
 Its mode-`preflight` passed against the exact merge with `writes=0`; no
 journal/result exists. It uses the repository's validated Unix WebSocket
 transport and implements the fixed five-operation transaction.
@@ -221,18 +221,28 @@ Two frozen extra rollouts use their pre-existing owner-owned, one-link mode
 freezes exact file identity and location under the Codex sessions root without
 changing these historical modes.
 
+Final private-controller review replaced its broad current-user `/proc` argv
+traversal with PID-only `pgrep` checks for each exact extra UUID and a
+parent-scoped PID-only helper-child query. This avoids reading unrelated
+process arguments while retaining the zero-reference gate. The corrected
+controller passed syntax validation and a fresh zero-write preflight against
+checkpoint `70c5194` and protected main `8050162`; the earlier controller
+digest is superseded and must not execute.
+
 The immutable controller checkpoint is exact commit
 `70c5194066965df1bffc0078f36361ded50d7bc2` in clean worktree
 `/tmp/harness-t347-t345-mirror-execution`. That worktree must remain at this
 commit through execution. The later publication commit records it but is not
 part of the controller input; protected `main` must contain the checkpoint as
-an ancestor.
+an ancestor. PR #423 passed `portable-phase1` at recording head
+`6fc06163946452ca1fe9a7d015279c2b161ea9ff` and merge-merged as
+`805016261124fd07b365a2cbf962222939e0758d`.
 
-**Next action:** publish this exact checkpoint and recording commit through the
-protected workflow. Then pass the resulting exact protected-main merge commit
-plus checkpoint `70c5194` and controller digest `1e3e569` to one controller
-execution. Do not open the app-server connection, signal helper/watchers, or
-write root metadata before protected publication.
+**Next action:** publish the privacy-corrected digest and PID-only process gate
+through the protected workflow. Then pass the resulting exact protected-main
+merge commit plus checkpoint `70c5194` and controller digest `df5f4f0` to one
+controller execution. Do not open the app-server connection, signal
+helper/watchers, or write root metadata before protected publication.
 
 ### T-346 — Reprioritize the durable Harness action queue
 

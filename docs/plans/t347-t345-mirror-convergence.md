@@ -151,7 +151,8 @@ Require all of the following before opening the app-server connection:
 7. six exact current-user-owned, one-link rollout files under the canonical
    Codex sessions root, with their immutable file identities recorded;
 8. all three extras have zero process references and are absent from every
-   canonical supervisor/watcher/TUI argv;
+   canonical supervisor/watcher/TUI argv; use exact-ID PID-only matching and
+   never enumerate or retain unrelated current-user process arguments;
 9. SQLite metadata, read through a read-only connection, shows the three
    canonical and three extra IDs unarchived, exact Harness cwd, and exactly
    the two recorded canonical-name mismatches. Compare names as booleans only;
