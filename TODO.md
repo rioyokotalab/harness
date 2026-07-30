@@ -5,7 +5,7 @@ harness. Keep only current state, active decisions and gates, exact next
 actions, and compact completion pointers here. Git history and the linked audit
 documents retain completed execution detail.
 
-Next free ID: T-347.
+Next free ID: T-348.
 
 ## Current state
 
@@ -23,6 +23,8 @@ Next free ID: T-347.
   `@40/0:tunnel,@95/1:codex,@96/2:helper`. The merged monitor and helper are
   live; monitor health is 3/3. The helper is idle with one immutable failed
   mirror event, so T-345 is not closed and that event must not be retried.
+  T-347 freezes the authorized deterministic changed-input correction; no
+  lifecycle write occurs before its protected publication and checkpoint.
 - ABQ is unreachable through both declared routes. The official G-QuAT status
   page still reports System H `サービス停止中` with the current scheduled
   stop ending 2026-07-30 17:00 JST. Its checkout remains unknown and no
@@ -114,10 +116,10 @@ Next free ID: T-347.
    `13de62583acf5ad5babd684785e636d5bb20d5643ac52b8440cbd93c2155e586`,
    its mode-0600 evidence, and all six unchanged root archive flags. Never
    retry the event or inspect its private worker log.
-2. Freeze a changed-input diagnosis and correction that can prove no target
-   write was attempted without relying on worker transcript content. Do not
-   archive, rename, or unarchive any root before that proof and protected
-   publication.
+2. Publish T-347's changed-input controller plan. It uses a private fsynced
+   per-operation journal and one metadata-only app-server connection, and can
+   prove whether each exact request was unattempted, acknowledged, or
+   ambiguous without worker transcript content.
 3. Retain exact live topology
    `@40/0:tunnel,@95/1:codex,@96/2:helper` and the canonical project mapping.
    The four Mac refreshes, monitor bridge, helper launch, and helper promotion
@@ -161,6 +163,42 @@ items. Students and Swallow project research remains owned by their independent
 agents and ledgers.
 
 ## Task records
+
+### T-347 — Complete T-345 mirror convergence
+
+**Phase:** frozen; owner authorized execution after protected publication.
+
+The immutable T-345 helper event remains terminal `failed/worker-failed`; its
+private worker log remains unread and the event must never be retried.
+Independent value-free readback showed no archive/name change, so the selected
+changed input is a deterministic controller transaction rather than another
+Codex worker.
+
+The complete one-connection design, five-operation order, fsynced one-attempt
+journal, app-server/watcher serialization, no-content gates, rollback policy,
+and acceptance checks are in
+`docs/plans/t347-t345-mirror-convergence.md`. Installed Codex 0.146.0 schema
+confirms the exact `thread/read`, `thread/archive`, and `thread/name/set`
+methods and parameters. Generated schema was removed through guarded-delete;
+protected anchors were unchanged and its short-lived manifest was
+exact-unlinked.
+
+At planning readback, project topology remained
+`@87/0:harness,@88/1:students,@93/2:swallow`; monitor topology remained
+`@40/0:tunnel,@95/1:codex,@96/2:helper`. Monitor was healthy 3/3, helper was
+idle with only its one historical failure, all three resilient chains were at
+attempt zero, and no tmux client was attached.
+
+**Authorization:** the owner said to do all needed work and supplied explicit
+`go` after the T-345 ledger had selected reversible archive and required this
+separately frozen changed-input correction. No unresolved owner decision
+remains.
+
+**Next action:** validate and publish this plan through the protected workflow.
+Then prepare a private mode-0700 controller and mode-0600 journal/result,
+checkpoint their exact digest and pushed Git head, and execute the fixed
+transaction once. Do not open the app-server connection, stop watchers, or
+write root metadata before that checkpoint.
 
 ### T-346 — Reprioritize the durable Harness action queue
 
@@ -462,10 +500,10 @@ worktree change occurred.
 cleanly. This ledger-only publication did not require fleet synchronization
 and did not change the live monitor/helper processes or failed event.
 
-**Next action:** keep the live monitor/helper processes and failed event
-unchanged. A subsequent task must first freeze a transcript-free changed-input
-failure diagnosis and one-attempt correction; T-345 mirror convergence and
-closure remain pending.
+**Next action:** T-347 now owns the separately frozen transcript-free,
+one-attempt controller correction. Keep the live monitor/helper processes and
+failed event unchanged until T-347's protected plan and private-controller
+checkpoint are published.
 
 ### T-344 — Recover Swallow and automate blocked-root cutover
 
