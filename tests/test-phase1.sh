@@ -169,17 +169,18 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/shared/skills
     fail "Python syntax: remote agent communication"
 
 case ${HARNESS_TEST_JOBS:-auto} in
-    legacy) focused_jobs=1 ;;
-    auto) focused_jobs=auto ;;
+    legacy) focused_jobs=1; focused_reserve=0 ;;
+    auto) focused_jobs=auto; focused_reserve=1 ;;
     ''|*[!0-9]*)
         fail "HARNESS_TEST_JOBS must be auto, legacy, or an integer"
         ;;
-    *) focused_jobs=$HARNESS_TEST_JOBS ;;
+    *) focused_jobs=$HARNESS_TEST_JOBS; focused_reserve=0 ;;
 esac
 python3 "$ROOT/tools/run-focused-tests.py" \
     --root "$ROOT" \
     --manifest "$ROOT/tests/focused-suites.tsv" \
     --log-dir "$TEMP_DIR/focused-logs" \
+    --reserve-cpus "$focused_reserve" \
     --jobs "$focused_jobs" &
 focused_pid=$!
 # Direct non-interactive SSH can omit ~/.local/bin even when the managed

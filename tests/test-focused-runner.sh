@@ -25,6 +25,9 @@ grep -F 'focused_pid=$!' "$PHASE1" >/dev/null ||
     fail "phase-1 does not overlap focused and integration gates"
 grep -F 'wait "$focused_pid"' "$PHASE1" >/dev/null ||
     fail "phase-1 does not join focused validation"
+grep -F 'auto) focused_jobs=auto; focused_reserve=1' "$PHASE1" >/dev/null &&
+    grep -F -- '--reserve-cpus "$focused_reserve"' "$PHASE1" >/dev/null ||
+    fail "phase-1 does not reserve one CPU for integration"
 grep -F '[ "$focused_status" -eq 0 ] || fail "focused suites"' \
     "$PHASE1" >/dev/null || fail "phase-1 loses focused-suite failure"
 
@@ -71,12 +74,16 @@ assert module.default_jobs(1) == 4
 assert module.default_jobs(7) == 4
 assert module.default_jobs(8) == 8
 assert module.default_jobs(64) == 8
+assert module.auto_jobs(1, 1) == 1
+assert module.auto_jobs(7, 1) == 4
+assert module.auto_jobs(8, 1) == 7
+assert module.auto_jobs(64, 1) == 8
 PY
 python3 "$ROOT/tools/run-focused-tests.py" --root "$fake" \
     --manifest "$fake/pass.tsv" --log-dir "$fake/auto-logs" --jobs auto \
     >"$TEMP_DIR/auto.out" 2>"$TEMP_DIR/auto.err" || fail 'auto jobs pass'
 [ ! -s "$TEMP_DIR/auto.err" ] || fail 'auto jobs emitted stderr'
-grep -E '^focused-tests: jobs=(4|8) visible_cpus=[0-9]+ mode=auto$' \
+grep -E '^focused-tests: jobs=([1-8]) visible_cpus=[0-9]+ mode=auto reserve_cpus=0$' \
     "$TEMP_DIR/auto.out" >/dev/null || fail 'missing auto jobs selection'
 [ "$(grep -c '^PASS suite=' "$TEMP_DIR/auto.out")" -eq 2 ] ||
     fail 'auto jobs result count'

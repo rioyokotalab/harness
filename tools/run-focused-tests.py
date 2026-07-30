@@ -18,6 +18,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--manifest", required=True)
     parser.add_argument("--log-dir", required=True)
     parser.add_argument("--jobs", required=True)
+    parser.add_argument("--reserve-cpus", type=int, default=0)
     return parser.parse_args()
 
 
@@ -31,10 +32,17 @@ def default_jobs(visible_cpus: int) -> int:
     return 8 if visible_cpus >= 8 else 4
 
 
-def resolve_jobs(raw: str) -> tuple[int, int | None]:
+def auto_jobs(visible_cpus: int, reserve_cpus: int) -> int:
+    available = max(1, visible_cpus - reserve_cpus)
+    return min(default_jobs(visible_cpus), available)
+
+
+def resolve_jobs(raw: str, reserve_cpus: int = 0) -> tuple[int, int | None]:
     if raw == "auto":
         visible_cpus = visible_cpu_count()
-        return default_jobs(visible_cpus), visible_cpus
+        return auto_jobs(visible_cpus, reserve_cpus), visible_cpus
+    if reserve_cpus:
+        return 0, None
     try:
         return int(raw), None
     except ValueError:
@@ -72,10 +80,11 @@ def run_one(index: int, path: Path, label: str, root: Path, log_dir: Path) -> tu
 
 def main() -> int:
     args = parse_args()
-    jobs, visible_cpus = resolve_jobs(args.jobs)
-    if jobs < 1 or jobs > 16:
+    jobs, visible_cpus = resolve_jobs(args.jobs, args.reserve_cpus)
+    if args.reserve_cpus < 0 or args.reserve_cpus > 15 or jobs < 1 or jobs > 16:
         print(
-            "focused-tests: --jobs must be auto or an integer between 1 and 16",
+            "focused-tests: --jobs must be auto or an integer between 1 and 16; "
+            "--reserve-cpus 0..15 is valid only with auto",
             file=sys.stderr,
         )
         return 2
@@ -94,7 +103,10 @@ def main() -> int:
         return 2
 
     if visible_cpus is not None:
-        print(f"focused-tests: jobs={jobs} visible_cpus={visible_cpus} mode=auto")
+        print(
+            f"focused-tests: jobs={jobs} visible_cpus={visible_cpus} mode=auto "
+            f"reserve_cpus={args.reserve_cpus}"
+        )
 
     results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as executor:
