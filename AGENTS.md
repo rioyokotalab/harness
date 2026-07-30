@@ -53,6 +53,7 @@ repository. Multiple matching rows select multiple files.
 | [managed-runtime-and-fleet.md](docs/agent-policy/managed-runtime-and-fleet.md) | managed Codex, tmux, phone, app-server, recovery, reboot, fleet, route failure, fleet sync, or an `[Agent: NAME Codex]` message |
 | [housekeeping-and-promotion.md](docs/agent-policy/housekeeping-and-promotion.md) | housekeeping, residue cleanup, launcher cleanup diagnosis, or promotion of reusable guidance |
 | [research.md](docs/agent-policy/research.md) | factual or literature research, research-program work, scientific/HPC experiments, performance claims, or presentations |
+| [duration.md](docs/agent-policy/duration.md) | an explicit duration, deadline, time window, overnight run, or instruction to keep iterating |
 
 Do not preload these files for unrelated work. The routing contract is tested;
 an unknown policy-sensitive action fails toward the more specific workflow or
@@ -91,11 +92,6 @@ remain mandatory project refinements.
   deterministic risk tier. Run the complete phase-one suite for broad or
   escalated changes and once on the final integrated tree before protected
   publication.
-- A duration-specified request uses both `codex-claude-cowork` and
-  `long-running-task-ledger`. Freeze its benchmark, evidence cadence, and stop
-  conditions before target execution. The final and durable summaries each
-  contain exactly one evidence-backed slice per requested hour (rounded up)
-  and at least `max(300, 50 * ceil(requested hours))` words.
 - At takeover, inspect branch, worktree, recent commits, ledger, and mutable
   external inputs before resuming the recorded next action. At handoff, record
   verified results, identifiers, failures and retry safety, modified files,

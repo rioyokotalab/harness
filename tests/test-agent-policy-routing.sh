@@ -7,6 +7,7 @@ EXTERNAL=$ROOT/docs/agent-policy/repository-and-external.md
 RUNTIME=$ROOT/docs/agent-policy/managed-runtime-and-fleet.md
 HOUSEKEEPING=$ROOT/docs/agent-policy/housekeeping-and-promotion.md
 RESEARCH=$ROOT/docs/agent-policy/research.md
+DURATION=$ROOT/docs/agent-policy/duration.md
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 words() { wc -w <"$1" | tr -d ' '; }
@@ -24,7 +25,8 @@ assert_contains() {
     grep -F -- "$pattern" "$file" >/dev/null || fail "$label"
 }
 
-for path in "$AGENTS" "$EXTERNAL" "$RUNTIME" "$HOUSEKEEPING" "$RESEARCH"; do
+for path in "$AGENTS" "$EXTERNAL" "$RUNTIME" "$HOUSEKEEPING" "$RESEARCH" \
+    "$DURATION"; do
     [ -f "$path" ] && [ ! -L "$path" ] ||
         fail "missing regular policy file: $path"
 done
@@ -34,20 +36,23 @@ external_words=$(words "$EXTERNAL")
 runtime_words=$(words "$RUNTIME")
 housekeeping_words=$(words "$HOUSEKEEPING")
 research_words=$(words "$RESEARCH")
+duration_words=$(words "$DURATION")
 
 assert_max "$root_words" 1050 'always-read policy'
 assert_max "$external_words" 550 'repository/external policy'
 assert_max "$runtime_words" 550 'runtime/fleet policy'
 assert_max "$housekeeping_words" 300 'housekeeping/promotion policy'
 assert_max "$research_words" 100 'research policy'
+assert_max "$duration_words" 100 'duration policy'
 assert_max "$((root_words + external_words))" 1750 'Git selected route'
 assert_max "$((root_words + runtime_words))" 1750 'runtime selected route'
 assert_max "$((root_words + housekeeping_words))" 1500 \
     'housekeeping selected route'
 assert_max "$((root_words + research_words))" 1300 'research selected route'
+assert_max "$((root_words + duration_words))" 1300 'duration selected route'
 
 for route in repository-and-external managed-runtime-and-fleet \
-    housekeeping-and-promotion research; do
+    housekeeping-and-promotion research duration; do
     assert_contains "[$route.md](docs/agent-policy/$route.md)" "$AGENTS" \
         "missing policy route: $route"
 done
@@ -72,8 +77,6 @@ assert_contains "task's board-linked record" "$AGENTS" \
 assert_contains 'never expand it with task chronology' "$AGENTS" \
     'compact board handoff gate'
 assert_contains 'never preload' "$AGENTS" 'archive selective-read gate'
-assert_contains '`codex-claude-cowork` and' "$AGENTS" \
-    'duration cowork route'
 assert_contains 'Installed skill descriptions are the trigger index' "$AGENTS" \
     'skill catalog routing authority'
 
@@ -96,10 +99,15 @@ assert_contains '$CODEX_HOME/tmp/arg0' "$HOUSEKEEPING" \
     'arg0 housekeeping route'
 assert_contains 'Prefer primary sources' "$RESEARCH" \
     'research provenance default'
+assert_contains '`codex-claude-cowork` and `long-running-task-ledger`' \
+    "$DURATION" 'duration cowork route'
+assert_contains 'max(300, 50 * ceil(requested hours))' "$DURATION" \
+    'duration summary floor'
 
 # Prove large task-specific details are not back in the mandatory core.
 for unrelated in 'SSH_AUTH_SOCK' 'docs/fleet-inventory.md' \
-    '$CODEX_HOME/tmp/arg0' 'Prefer primary sources'; do
+    '$CODEX_HOME/tmp/arg0' 'Prefer primary sources' \
+    'max(300, 50 * ceil(requested hours))'; do
     if grep -F -- "$unrelated" "$AGENTS" >/dev/null; then
         fail "conditional detail leaked into always-read policy: $unrelated"
     fi
@@ -109,4 +117,4 @@ grep -Fx '@AGENTS.md' "$ROOT/CLAUDE.md" >/dev/null ||
     fail 'Claude does not import the policy router'
 
 printf '%s\n' \
-    "AGENT_POLICY_ROUTING status=pass root_words=$root_words external=$external_words runtime=$runtime_words housekeeping=$housekeeping_words research=$research_words"
+    "AGENT_POLICY_ROUTING status=pass root_words=$root_words external=$external_words runtime=$runtime_words housekeeping=$housekeeping_words research=$research_words duration=$duration_words"
