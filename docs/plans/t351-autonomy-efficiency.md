@@ -129,7 +129,10 @@ Measure mandatory words for these scenarios from a clean start:
 
 Acceptance:
 
-- median mandatory context falls by at least 70%;
+- median mandatory context falls by at least 85%, and every scenario falls by
+  at least 50%;
+- median non-ledger policy/skill context falls by at least 30%, so moving task
+  history alone cannot satisfy the benchmark;
 - simple scenarios do not read unrelated task history or skill references;
 - every scenario still reaches all applicable authority, safety, validation,
   ledger, and handoff gates;
@@ -155,7 +158,8 @@ component, and broad/control-plane.
 Acceptance:
 
 - deterministic impact selection explains every selected test;
-- docs-only and skill-only validation complete in at most 15 seconds on Local;
+- docs-only validation completes in at most five seconds and skill-only in at
+  most ten seconds on Local;
 - a mapped component runs its owning suite plus invariant checks, not all
   unrelated Mac/HPC suites;
 - broad, validator, manifest, safety, lifecycle, and unknown changes escalate
@@ -180,6 +184,8 @@ Acceptance:
 - estimated private hosted minutes per normal owner task fall by at least 90%
   from the observed checkpoint pattern;
 - no ruleset or approval-count write is required for the repository-only path.
+- each private repository retains one unconditional weekly full hosted run,
+  bounding independent post-hoc drift detection to at most seven days.
 
 ### B5 — parallel project isolation
 

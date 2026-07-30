@@ -1,0 +1,44 @@
+task	state	summary	source
+T-351	active	Autonomy and execution-efficiency duration task	TODO.md;docs/plans/t351-autonomy-efficiency.md
+T-350	complete	Repository-native Codex sessions	docs/history/TODO-full-archive-2026-07-30.md;docs/plans/t350-repository-native-codex-sessions.md
+T-349	complete	Rename canonical Local tmux session to projects	docs/history/TODO-full-archive-2026-07-30.md
+T-348	complete	Phone-visible roots mirrored to Local tmux	docs/history/TODO-full-archive-2026-07-30.md
+T-347	complete	T-345 mirror convergence	docs/history/TODO-full-archive-2026-07-30.md
+T-346	complete	Reprioritize durable Harness queue	docs/history/TODO-full-archive-2026-07-30.md
+T-345	complete	Dedicated recovery helper and phone/tmux mirror	docs/history/TODO-full-archive-2026-07-30.md
+T-344	complete	Recover Swallow and automate blocked-root cutover	docs/history/TODO-full-archive-2026-07-30.md
+T-343	complete	Durable Codex-to-Claude handoff	docs/history/TODO-full-archive-2026-07-30.md;docs/plans/t343-claude-handoff-hardening.md
+T-342	complete	Cowork benchmark discipline and Claude defaults	docs/history/TODO-full-archive-2026-07-30.md
+T-341	complete	Archive retired Swallow saved root	docs/history/TODO-full-archive-2026-07-30.md
+T-340	complete	Map phone-visible Swallow root into Local tmux	docs/history/TODO-full-archive-2026-07-30.md
+T-339	complete	Consolidate Local monitor tmux sessions	docs/history/TODO-full-archive-2026-07-30.md
+T-338	complete	Restore absent canonical Local tmux session	docs/history/TODO-full-archive-2026-07-30.md
+T-337	complete	Bridge-first managed Codex cutovers	docs/history/TODO-full-archive-2026-07-30.md
+T-336	complete	Benchmark Codex and Claude Harness development	docs/history/TODO-full-archive-2026-07-30.md;docs/audits/t336-codex-claude-benchmark
+T-335	complete	Restore Slack tools for Swallow	docs/history/TODO-full-archive-2026-07-30.md
+T-334	complete	Maintenance awareness for remote Linux nodes	docs/history/TODO-full-archive-2026-07-30.md
+T-333	complete	Maintenance-aware fleet health	docs/history/TODO-full-archive-2026-07-30.md
+T-332	complete	Preserve codex and use co shorthand	docs/history/TODO-full-archive-2026-07-30.md
+T-331	complete	Restore disappeared Harness tmux window	docs/history/TODO-full-archive-2026-07-30.md
+T-330	complete	Monitor and order Local tmux Codex windows	docs/history/TODO-full-archive-2026-07-30.md
+T-329	complete	Restore disappeared Swallow tmux window	docs/history/TODO-full-archive-2026-07-30.md
+T-328	time-gated	Deferred Local reboot during Institute outage	TODO.md;docs/history/TODO-full-archive-2026-07-30.md
+T-327	complete	Align MCP approvals and retire blocked phone sessions	docs/history/TODO-full-archive-2026-07-30.md
+T-326	complete	Exact progress clocks and Sol-high defaults	docs/history/TODO-full-archive-2026-07-30.md
+T-325	complete	Reusable unsafe-tail recovery	docs/history/TODO-full-archive-2026-07-30.md
+T-324	complete	Nightly fleet and repository hardening	docs/history/TODO-full-archive-2026-07-30.md
+T-323	complete	Recover Harness unsafe tail	docs/history/TODO-full-archive-2026-07-30.md
+T-322	complete	Unique phone-visible Swallow name	docs/history/TODO-full-archive-2026-07-30.md
+T-321	complete	Recover recurring Swallow unsafe tail	docs/history/TODO-full-archive-2026-07-30.md
+T-320	complete	Portable interactive ls color	docs/history/TODO-full-archive-2026-07-30.md
+T-319	complete	Fleet-health reporting policy	docs/history/TODO-full-archive-2026-07-30.md
+T-318	complete	Recover poisoned remote Codex threads	docs/history/TODO-full-archive-2026-07-30.md
+T-316	complete	Map Local tmux to three phone roots	docs/history/TODO-full-archive-2026-07-30.md
+T-315	complete	One-to-one Local Codex thread mapping	docs/history/TODO-full-archive-2026-07-30.md
+T-314	complete	Recover Local Slack connector	docs/history/TODO-full-archive-2026-07-30.md
+T-313	complete	Auto-merge and login-node worker limits	docs/history/TODO-full-archive-2026-07-30.md
+T-311	complete	Fleet and repository hardening	docs/history/TODO-full-archive-2026-07-30.md
+T-309	complete	Canonical fleet-health probing	docs/history/TODO-full-archive-2026-07-30.md
+T-303	blocked	NFS latency requires trusted server access	TODO.md;docs/audits/t303-nfs-observation-2026-07-24.md
+T-302	complete	Accept AL daily authentication	docs/history/TODO-full-archive-2026-07-30.md
+T-196	time-gated	Backup lifecycle weekly successors	TODO.md;docs/backup-lifecycle-phase2.md
