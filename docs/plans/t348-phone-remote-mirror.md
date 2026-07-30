@@ -1,6 +1,6 @@
 # T-348 phone remote-control mirror
 
-**Phase:** provisional bridge accepted; awaiting physical-phone confirmation
+**Phase:** physical-phone accepted; publishing promotion authorization
 **Driver:** Local Codex
 **Updated:** 2026-07-30 JST
 **Branch:** `codex/t348-phone-mirror`
@@ -279,6 +279,13 @@ source. Read-only reconciliation confirms the root remains idle, zero-turn,
 loaded, and absent from the default interactive list before its first turn.
 All paused processes resumed and all old state is unchanged.
 
+### D-006 — Physical-phone acceptance
+
+**Owner-confirmed:** the owner replied exactly `visible` after being asked to
+confirm `swallow-phone-bridge-20260730` in phone Remote. The physical-phone
+gate is satisfied. Continue only with the frozen rename-only promotion,
+single-leaf retirement, and reversible old-root archive sequence.
+
 ## Next action
 
 Implementation passed complete validation and merged through protected PR
@@ -307,9 +314,12 @@ reasoning-effort and custom-name columns null, while the acknowledged start
 response proves `high` and the live app server returns the exact provisional
 name. No pane or transcript content was read and no name request was repeated.
 
-Stop at the physical-phone gate. Preserve old `@93/2:swallow` and provisional
-`@98/3` exactly. The owner must confirm that
-`swallow-phone-bridge-20260730` appears in phone Remote before any rename,
-topology move, process signal, retirement, archive, or promotion. All prior
-start, name, launch, paste, and submit operations remain consumed and
-non-retryable.
+Publish D-006 through protected `main`, then revalidate old
+`@93/2:swallow`, accepted `@98/3:swallow-phone-bridge-20260730`, both exact
+roots, all protected processes/watchers, the sole client, and every no-content
+acceptance gate. If unchanged, perform one journaled promotion transaction:
+rename the old root/window `swallow-retired-20260730`, rename the accepted
+root/window `swallow`, and swap only `@98` with `@93` so the accepted window
+occupies index 2 without relaunch. Publish that reversible promotion
+checkpoint before any old-leaf signal or old-root archive. All prior start,
+name, launch, paste, and submit operations remain consumed and non-retryable.
