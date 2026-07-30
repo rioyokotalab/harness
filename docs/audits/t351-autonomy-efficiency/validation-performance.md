@@ -72,6 +72,7 @@ Matched retained measurements:
 | overlap, exact tree after task/hardening routing | 73.57 s | 153.07 s | 165.15 s | 620,456 KiB |
 | overlap, 91-suite tree after catalog compatibility | 73.69 s | 152.89 s | 168.49 s | not retained |
 | overlap, exact tree after policy/onboarding routing | 87.13 s | 160.98 s | 169.00 s | 503,696 KiB |
+| overlap plus concurrent ShellCheck, matched candidate median | 65.51 s | approximately unchanged | approximately unchanged | variable |
 
 The retained automatic route sees eight affinity-visible CPUs and gives seven
 to focused suites while integration proceeds. Explicit or legacy worker counts
@@ -89,9 +90,27 @@ integration body set the 87.13-second wall time. That one sample is evidence
 for where to profile next, not evidence that routing changes caused the
 difference from prior 72–74-second samples.
 
-`tests/test-focused-runner.sh` enforces background start, one-CPU automatic
-reserve, join, and failure propagation. A focused-suite failure may now be
-reported after the independent integration body finishes, but it can never be
-lost or converted into success. Ordinary development normally runs the owning
-R0–R2 route, so this delayed R3 failure tradeoff affects only broad/final
-validation.
+That profile showed the unchanged ShellCheck gate taking about 48 seconds
+before the integration body began. A retained two-file change now starts
+ShellCheck beside the already independent focused runner, executes the
+unchanged integration body, and explicitly joins both gates before success or
+guarded temporary-root cleanup. Three matched baseline runs took 76.38, 76.02,
+and 80.38 seconds (median 76.38); three candidates took 62.98, 68.54, and 65.51
+seconds (median 65.51), a 14.2% wall reduction. All six passed all 91 suites.
+POSIX syntax, ShellCheck, focused-runner, source-contract, and diff checks also
+passed. No assertion or suite was removed.
+
+CPU time was approximately unchanged and RSS varied too much for a memory
+claim. As with the focused runner, a background ShellCheck failure can be
+reported only after the independent integration body finishes, but its
+diagnostic and nonzero status cannot be lost or converted into success. Each
+side reused one exact source tree across its three runs, with only the two
+intended files differing between sides. The final integrated T-351 tree still
+requires one complete run before publication.
+
+`tests/test-focused-runner.sh` enforces both background starts and joins,
+one-CPU automatic reserve for focused suites, and failure propagation. A
+background-gate failure may now be reported after the independent integration
+body finishes, but it can never be lost or converted into success. Ordinary
+development normally runs the owning R0–R2 route, so this delayed R3 failure
+tradeoff affects only broad/final validation.
