@@ -284,3 +284,10 @@ passed at their owning revisions. Independent workers also reported complete
 deliberately deferred until all retained bytes settle. No hosting setting,
 approval count, billing state, credential, scheduler, live project session,
 app-server, tmux, pane, transcript, or control process was changed.
+
+## 2026-07-31 03:00–03:59 JST
+
+In progress. Integrate the independently validated mirrored-node and reboot
+routers, then split conditional policy by exact Git, external-operation,
+managed-Codex, and fleet actions without weakening authority or lifecycle
+gates.
