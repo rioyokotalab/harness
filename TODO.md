@@ -145,7 +145,7 @@ agents and ledgers.
 
 ### T-348 — Keep phone remote-control roots mirrored to Local tmux
 
-**Phase:** executing one authorized experimental-handshake start.
+**Phase:** experimental root accepted; prelaunch checkpoint publication.
 
 The owner reports that Swallow is absent from phone Remote and requests a
 periodic one-to-one mirror for Harness, Students, and Swallow. Complete
@@ -294,6 +294,37 @@ sets. If every frozen precondition passes, send the one authorized start on a
 new connection initialized with `capabilities.experimentalApi=true`. Preserve
 the returned or ambiguous result without retry and checkpoint it durably
 before any provisional runtime launch.
+
+Controller v5 digest
+`ad76bfce401c052e49814cefa3adaa52e730722cadb06e56f19ce253dc131c29`
+passed zero-write preflight against authorization merge
+`3982726cd2d3807e4fca3db089cb8318a3b68266`. Its new experimental-capable
+connection used requests `2`–`6` only for exact no-content reads. The one
+authorized start was sent as request `7` and acknowledged root
+`019fb1ab-b559-79c2-ad9c-0ee8f426cedc`; request `9` then acknowledged the
+unique name `swallow-phone-bridge-20260730`. The response validated exact
+Harness cwd, source `vscode`, idle/empty state, resolved
+`gpt-5.6-sol`/`high`, granular approval, and disabled sandbox.
+
+The controller safely stopped before provisional tmux launch with
+`new-root-database-changed`. Codex 0.145 persisted the still-empty root with
+exact cwd/source/name and a current-user, one-link mode-0664 rollout, but null
+database model/reasoning fields. Read-only app-server reconciliation confirms
+the same idle, zero-turn root in the exact four-root loaded set. It is not yet
+in the two-root default interactive list. Every paused watcher and helper
+resumed; the old Swallow, all three canonical windows, the sole client, and
+all peer roots are unchanged. Requests `7` and `9` are acknowledged and must
+never be repeated.
+
+**Next action:** publish this result through protected `main`. Then reconcile
+the accepted empty-root persistence semantics without another start or name
+write. If the frozen response, root identity, zero-turn state, exact
+metadata/path, process topology, and current-user single-link rollout remain
+exact, tighten only that rollout to mode 0600 and launch the one provisional
+index-3 runtime already authorized by the bridge plan. Submit the one generic
+cold-start instruction once, require an assistant-bearing completed turn and
+resolved Sol/high persistence/default-list inclusion, checkpoint again, and
+stop for physical-phone confirmation before promotion.
 
 ### T-347 — Complete T-345 mirror convergence
 
