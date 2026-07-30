@@ -14,9 +14,13 @@ loads its guidance from the experiment's exact immutable baseline revision; a
 shallow checkout may not contain that commit. Later live global-guidance
 maintenance does not alter the frozen baseline, corpus, or recorded reports.
 
-The unique required-check candidate is `portable-phase1`. It runs the complete
-phase-one integration suite except for explicitly client/site-specific native
-checks. Native MPI compile/run is a separate explicit
+The unique required-check candidate is `portable-phase1`. On pull requests it
+runs the deterministic impact selector against the event's exact base SHA:
+documentation and routed skills receive their owning checks, while workflow,
+policy, validator, manifest, safety, lifecycle, cleanup, credential, and
+unknown changes escalate to the complete phase-one integration suite. Weekly
+and manual events run that complete portable suite unconditionally. Native MPI
+compile/run is a separate explicit
 `HARNESS_NATIVE_MPI=1 tests/test-native-mpi.sh` gate for a declared MPI
 environment and is not part of the portable default.
 GitHub's declared Ubuntu 24.04 image includes the required C/C++ compilers,
@@ -54,7 +58,9 @@ PR #5 in the harness repository exercised this zero-approval path successfully.
 The exact restore/update payload is
 [`harness-main.json`](github-rulesets/harness-main.json). It matches the live
 zero-approval policy, preserves repository-role actor `5` as an `always`
-bypass, and allows only squash or rebase merges. Relevant official
+bypass, and does not encode repository merge-method settings. Current
+repository readback permits merge commits, squash, and rebase; changing those
+methods remains a separate hosting-setting write. Relevant official
 documentation:
 
 - <https://docs.github.com/en/rest/repos/rules?apiVersion=2026-03-10>

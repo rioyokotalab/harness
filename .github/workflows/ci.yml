@@ -19,6 +19,9 @@ jobs:
     name: portable-phase1
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    env:
+      HARNESS_PORTABLE_CI: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
     steps:
       - name: Check out without persisted credentials
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -36,8 +39,9 @@ jobs:
           shellcheck --version | sed -n '2p'
       - name: Test Linux affinity readiness contract
         run: tests/test-affinity-readiness.sh
-      - name: Run credential-free portable phase-one gate
-        env:
-          HARNESS_PORTABLE_CI: "1"
-          PYTHONDONTWRITEBYTECODE: "1"
+      - name: Run risk-routed portable pull-request gate
+        if: github.event_name == 'pull_request'
+        run: bin/harness validate --base "${{ github.event.pull_request.base.sha }}" --no-receipt
+      - name: Run credential-free portable full backstop
+        if: github.event_name != 'pull_request'
         run: tests/test-phase1.sh

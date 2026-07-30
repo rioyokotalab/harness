@@ -49,6 +49,8 @@
 ^tests/test-context-routing-benchmark\.sh$|R3|-|context benchmark validator
 ^\.github/workflows/|R3|-|hosted workflow
 ^tests/test-actions-sustainability\.sh$|R3|-|hosted workflow trigger contract
+^docs/ci-and-merge-controls\.md$|R1|tests/test-actions-sustainability.sh|hosted workflow documentation
+^docs/audits/t351-autonomy-efficiency/actions-transition\.md$|R1|tests/test-actions-sustainability.sh|hosted workflow evidence
 ^bin/|R3|-|public command dispatcher
 ^libexec/harness-validate$|R3|-|validation selector
 ^tests/validation-impact\.tsv$|R3|-|validation impact map

@@ -249,3 +249,21 @@ is not acceptance evidence. It reached all 91 suites in 3:48.89, passed 89,
 and failed only because the tmux-configuration and terminfo fixtures correctly
 refused apply-mode checks from an uncommitted checkout. The changed input was
 checkpointed before the successful repeat.
+
+## Protected pull-request routing
+
+The hosted Harness pull-request job now invokes the same deterministic selector
+against `github.event.pull_request.base.sha`; weekly and manual events still
+invoke phase one unconditionally. A clean documentation-only checkpoint passed
+the portable R0 selector locally in 0.19 seconds. The CI guide and Actions audit
+select their exact owning R1 suite, while a workflow-path plan remains
+non-cacheable R3 and selects `tests/test-phase1.sh`.
+
+This removes unnecessary test work from future narrow public pull requests
+without changing the required check name or weakening broad/unknown routing.
+The workflow contract proves unique event-specific selector/full-backstop
+steps, immutable event-base selection, read-only permissions, and adversarial
+rejection of an always-full or mutable-base substitution. The 0.19-second
+sample is local selected-work evidence, not a claim about hosted startup or
+end-to-end latency; a protected broad T-351 run will still execute full phase
+one.

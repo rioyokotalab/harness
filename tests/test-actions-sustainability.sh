@@ -72,6 +72,35 @@ def validate(text: str) -> None:
     if block != ["  contents: read"]:
         raise ValueError("workflow token is not exactly contents: read")
 
+    step_contracts = (
+        (
+            "      - name: Run risk-routed portable pull-request gate",
+            [
+                "        if: github.event_name == 'pull_request'",
+                '        run: bin/harness validate --base "${{ github.event.pull_request.base.sha }}" --no-receipt',
+            ],
+        ),
+        (
+            "      - name: Run credential-free portable full backstop",
+            [
+                "        if: github.event_name != 'pull_request'",
+                "        run: tests/test-phase1.sh",
+            ],
+        ),
+    )
+    for heading, expected in step_contracts:
+        if semantic.count(heading) != 1:
+            raise ValueError(f"workflow step is not unique: {heading.strip()}")
+        start = semantic.index(heading) + 1
+        block = []
+        for line in semantic[start:]:
+            if line.startswith("      - name: "):
+                break
+            if line.strip():
+                block.append(line)
+        if block != expected:
+            raise ValueError(f"workflow step contract changed: {heading.strip()}")
+
 
 workflow = Path(sys.argv[1]).read_text(encoding="utf-8")
 try:
@@ -95,6 +124,16 @@ mutations = (
         "  pull_request_target:\n  workflow_dispatch:\n",
         1,
     ),
+    workflow.replace(
+        "github.event.pull_request.base.sha",
+        "github.sha",
+        1,
+    ),
+    workflow.replace(
+        "github.event_name != 'pull_request'",
+        "always()",
+        1,
+    ),
 )
 for mutation in mutations:
     try:
@@ -112,6 +151,14 @@ grep -F 'portable-phase1' "$WORKFLOW" >/dev/null ||
     fail 'required check missing'
 grep -F 'HARNESS_PORTABLE_CI: "1"' "$WORKFLOW" >/dev/null ||
     fail 'portable gate contract missing'
+grep -F -x "        if: github.event_name == 'pull_request'" "$WORKFLOW" >/dev/null ||
+    fail 'pull-request selector condition missing'
+grep -F -x '        run: bin/harness validate --base "${{ github.event.pull_request.base.sha }}" --no-receipt' "$WORKFLOW" >/dev/null ||
+    fail 'pull-request risk selector changed'
+grep -F -x "        if: github.event_name != 'pull_request'" "$WORKFLOW" >/dev/null ||
+    fail 'weekly/manual full-backstop condition missing'
+grep -F -x '        run: tests/test-phase1.sh' "$WORKFLOW" >/dev/null ||
+    fail 'weekly/manual full backstop changed'
 
 grep -F 'duplicate `main` push runner' "$DOC" >/dev/null ||
     fail 'owner documentation does not explain trigger routing'

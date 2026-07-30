@@ -584,6 +584,12 @@ tests/test-phase1.sh
 Documentation-only changes must at least pass `git diff --check` and the
 relevant focused tests. Protected CI remains authoritative.
 
+Protected Harness pull requests use the same impact selector with the event's
+exact base revision. Narrow changes therefore run only their owning contracts,
+while workflow, policy, validator, manifest, safety, lifecycle, cleanup,
+credential, and unknown changes still run the complete suite. Weekly and
+manual events remain unconditional full portable backstops.
+
 For private Students and Swallow work, owner-authored pull requests use an
 exact-tree local validation receipt and skip before hosted-runner allocation;
 mixed or non-owner pull requests still run hosted checks. Duplicate post-merge

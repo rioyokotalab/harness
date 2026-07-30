@@ -93,6 +93,11 @@ Harness:
 - Its task branch retains the required `portable-phase1` pull-request job,
   removes the duplicate `main` push trigger, and adds weekly
   (`11 19 * * 6` UTC) plus manual full runs.
+- Pull requests use the deterministic impact selector against the immutable
+  event base SHA. Narrow changes run owning contracts; workflow, policy,
+  validator, manifest, safety, lifecycle, cleanup, credential, and unknown
+  changes still run full phase one. Weekly/manual events are unconditional
+  full backstops.
 - The final task pull request is the live transition check. Its merge must not
   start a push run; the exact merged tree and run list are reconciled before
   closeout.

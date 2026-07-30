@@ -190,6 +190,18 @@ cases = [
         False,
     ),
     (
+        ["docs/ci-and-merge-controls.md"],
+        "R1",
+        ["tests/test-actions-sustainability.sh"],
+        True,
+    ),
+    (
+        ["docs/audits/t351-autonomy-efficiency/actions-transition.md"],
+        "R1",
+        ["tests/test-actions-sustainability.sh"],
+        True,
+    ),
+    (
         ["unmapped/new-file"],
         "R3",
         ["tests/test-phase1.sh"],

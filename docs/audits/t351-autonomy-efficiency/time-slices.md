@@ -807,3 +807,34 @@ corrected: the new evidence proves independent Git/workflow activity while
 Harness stayed unchanged, whereas the lock, receipt, and tmux no-cross-mutation
 claim belongs only to the earlier controlled parallel benchmark. The durable
 statement above uses the bounded interpretation.
+
+The stability review identified one final bounded latency candidate rather
+than a defect: Harness pull requests still invoke the complete public suite
+even though the retained selector safely routes narrow changes. On clean
+documentation-only checkpoint `f9e10fd`, the portable selector passed R0 in
+0.19 seconds. A direct plan for `.github/workflows/ci.yml` remains non-cacheable
+R3 and selects `tests/test-phase1.sh`. The retained candidate splits the
+workflow so pull requests invoke that selector with the immutable event base
+SHA, while weekly and manual events remain unconditional full backstops. No
+hosted narrow-change latency reduction is claimed from the local sample.
+
+That same readback exposed one stale current guide sentence: the ruleset
+fixture was described as allowing only squash or rebase, even though merge
+methods are a separate repository setting and live readback permits merge,
+squash, and rebase. The guide now separates those surfaces and records all
+three current methods. No hosting setting or ruleset was changed.
+
+Selector review also found that the exact CI guide and Actions audit read by
+`test-actions-sustainability.sh` still fell through the generic documentation
+R0 rule. The candidate will route only those two files to that owning R1
+suite. This closes documentation/contract drift without sending unrelated
+documentation back through broad validation.
+
+The implementation keeps required check name `portable-phase1` and read-only
+permissions. Its contract requires exactly one PR selector step and one
+non-PR full step, and adversarially rejects replacing the event base with
+mutable `github.sha` or making the full backstop unconditional. Actions,
+24-case routing, whitespace, exact R1 documentation plans, and exact R3
+workflow plans pass. Because this task changes the workflow and validators,
+its protected run must still execute full phase one; the optimization applies
+only when a future diff actually selects a narrow tier.
