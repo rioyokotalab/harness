@@ -162,6 +162,8 @@ if [ "$mode" != status ]; then
         [ "$target" != "$HARNESS_CODEX_RELEASE_TARGET" ]; then
         die "Codex runtime release target does not match its repository"
     fi
+    CDPATH='' cd -- "$current_repository" ||
+        die "Codex resilient repository is unavailable"
 fi
 if [ "$selector" = explicit ] || [ "$selector" = remote-explicit ]; then
     require_safe_id "$session_id"
@@ -285,7 +287,7 @@ set_scoped_paths() {
     state_file=$state_dir/$name.state
     lock_dir=$state_dir/$name.lock
     lock_pid=$lock_dir/pid
-    recovery_name=$state_target:$name
+    recovery_name=$name
     legacy_state=no
 }
 
@@ -462,7 +464,13 @@ if [ "$mode" = status ]; then
         esac
         [ -x "$thread_recovery" ] ||
             die "Codex thread recovery helper is unavailable"
-        "$thread_recovery" --status --name "$recovery_name"
+        if [ "$legacy_state" = yes ]; then
+            printf 'CODEX_THREAD_RECOVERY name=%s phase=legacy-target-unknown\n' \
+                "$recovery_name"
+        else
+            "$thread_recovery" --status --name "$recovery_name" \
+                --target "$state_target"
+        fi
     fi
     exit 0
 fi
@@ -519,6 +527,43 @@ if [ "$mode" = plan ]; then
     exit 0
 fi
 
+validate_legacy_lock_dir() {
+    legacy_lock_dir=$state_root/$name.lock
+    legacy_lock_pid=$legacy_lock_dir/pid
+    [ -d "$legacy_lock_dir" ] && [ ! -L "$legacy_lock_dir" ] &&
+        [ "$(path_owner "$legacy_lock_dir")" = "$uid" ] &&
+        [ "$(path_mode "$legacy_lock_dir")" = 700 ] ||
+        die "Codex resilient legacy lock is unsafe"
+    [ -f "$legacy_lock_pid" ] && [ ! -L "$legacy_lock_pid" ] &&
+        [ "$(path_owner "$legacy_lock_pid")" = "$uid" ] &&
+        [ "$(path_mode "$legacy_lock_pid")" = 600 ] &&
+        [ "$(path_links "$legacy_lock_pid")" = 1 ] ||
+        die "Codex resilient legacy lock is unsafe"
+}
+
+reconcile_legacy_lock() {
+    legacy_lock_dir=$state_root/$name.lock
+    legacy_lock_pid=$legacy_lock_dir/pid
+    if [ ! -e "$legacy_lock_dir" ] && [ ! -L "$legacy_lock_dir" ]; then
+        return
+    fi
+    validate_legacy_lock_dir
+    legacy_pid=$(sed -n '1p' "$legacy_lock_pid")
+    case "$legacy_pid" in
+        ''|*[!0-9]*) die "Codex resilient legacy lock is malformed" ;;
+    esac
+    if kill -0 "$legacy_pid" 2>/dev/null; then
+        printf 'CODEX_RESILIENT status=blocked reason=legacy-already-running name=%s\n' \
+            "$name" >&2
+        exit 2
+    fi
+    unlink "$legacy_lock_pid"
+    rmdir "$legacy_lock_dir" ||
+        die "Codex resilient could not remove a stale legacy lock"
+}
+
+ensure_state_root
+reconcile_legacy_lock
 ensure_state_dir
 
 temporary_state=
@@ -795,7 +840,8 @@ start_thread_recovery() {
     while [ "$readiness_attempt" -lt 10 ]; do
         set +e
         recovery_output=$(
-            "$thread_recovery" --status --name "$recovery_name" 2>/dev/null
+            "$thread_recovery" --status --name "$recovery_name" \
+                --target "$target" 2>/dev/null
         )
         recovery_status=$?
         set -e

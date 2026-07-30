@@ -198,15 +198,16 @@ while [ "$#" -gt 0 ]; do
         *) exit 2 ;;
     esac
 done
-[ -n "$name" ] || exit 2
-state=$HARNESS_TEST_RUNTIME_DIR/$name.recovery.state
+[ -n "$name" ] && [ -n "$target" ] || exit 2
+effective_name=$target:$name
+state=$HARNESS_TEST_RUNTIME_DIR/$effective_name.recovery.state
 write_state() {
     phase=$1
     reason=$2
     owner=$3
     {
         printf 'schema=1\n'
-        printf 'name=%s\n' "$name"
+        printf 'name=%s\n' "$effective_name"
         printf 'thread=%s\n' "$thread"
         printf 'owner_pid=%s\n' "$owner"
         printf 'phase=%s\n' "$phase"
@@ -222,7 +223,7 @@ print_state() {
     owner=$(sed -n 's/^owner_pid=//p' "$state")
     stored_thread=$(sed -n 's/^thread=//p' "$state")
     printf 'CODEX_THREAD_RECOVERY name=%s thread=%s phase=%s reason=%s recoveries=0 rolled_back=0 owner_pid=%s\n' \
-        "$name" "$stored_thread" "$phase" "$reason" "$owner"
+        "$effective_name" "$stored_thread" "$phase" "$reason" "$owner"
 }
 case "$mode" in
     --check)
@@ -255,7 +256,7 @@ case "$mode" in
                 exit 1
                 ;;
             exit-once-after-ready)
-                marker=$HARNESS_TEST_RUNTIME_DIR/$name.recovery.once
+                marker=$HARNESS_TEST_RUNTIME_DIR/$effective_name.recovery.once
                 if [ ! -e "$marker" ]; then
                     : >"$marker"
                     /bin/sleep 1
@@ -269,7 +270,7 @@ case "$mode" in
         ;;
     --status)
         if [ ! -f "$state" ]; then
-            printf 'CODEX_THREAD_RECOVERY name=%s phase=absent\n' "$name"
+            printf 'CODEX_THREAD_RECOVERY name=%s phase=absent\n' "$effective_name"
         else
             print_state
         fi
@@ -368,10 +369,10 @@ run_supervisor --run --name remote-explicit \
     fail "remote explicit unexpected call count"
 [ "$(sed -n '1p' "$TEST_ROOT/sleep.calls")" = 15 ] ||
     fail "remote explicit first retry delay"
-grep -F -- '--recover --name harness:remote-explicit --target harness --thread session-remote' \
+grep -F -- '--recover --name remote-explicit --target harness --thread session-remote' \
     "$TEST_ROOT/recovery.calls" >/dev/null ||
     fail "remote explicit recovery preflight"
-grep -F -- '--watch --name harness:remote-explicit --target harness --thread session-remote' \
+grep -F -- '--watch --name remote-explicit --target harness --thread session-remote' \
     "$TEST_ROOT/recovery.calls" >/dev/null ||
     fail "remote explicit recovery watcher"
 grep -F 'phase=stopped' "$runtime/harness:remote-explicit.recovery.state" \
@@ -393,10 +394,10 @@ grep -F 'reason=clean-exit' "$TEST_ROOT/watcher-restart.out" >/dev/null ||
 [ "$(grep -c '^resume --remote unix:// session-watcher-restart$' \
     "$TEST_ROOT/codex.calls")" = 1 ] ||
     fail "watcher replacement relaunched Codex"
-[ "$(grep -c '^--recover --name harness:watcher-restart --target harness --thread session-watcher-restart$' \
+[ "$(grep -c '^--recover --name watcher-restart --target harness --thread session-watcher-restart$' \
     "$TEST_ROOT/recovery.calls")" = 2 ] ||
     fail "watcher replacement did not repeat safe-tail preflight once"
-[ "$(grep -c '^--watch --name harness:watcher-restart --target harness --thread session-watcher-restart$' \
+[ "$(grep -c '^--watch --name watcher-restart --target harness --thread session-watcher-restart$' \
     "$TEST_ROOT/recovery.calls")" = 2 ] ||
     fail "watcher replacement count"
 
@@ -415,10 +416,10 @@ grep -F 'reason=thread-recovery-blocked' \
 [ "$(grep -c '^resume --remote unix:// session-watcher-exit$' \
     "$TEST_ROOT/codex.calls")" = 1 ] ||
     fail "dead recovery watcher relaunched Codex"
-[ "$(grep -c '^--recover --name harness:watcher-exit --target harness --thread session-watcher-exit$' \
+[ "$(grep -c '^--recover --name watcher-exit --target harness --thread session-watcher-exit$' \
     "$TEST_ROOT/recovery.calls")" = 4 ] ||
     fail "persistent watcher failure preflight was not bounded"
-[ "$(grep -c '^--watch --name harness:watcher-exit --target harness --thread session-watcher-exit$' \
+[ "$(grep -c '^--watch --name watcher-exit --target harness --thread session-watcher-exit$' \
     "$TEST_ROOT/recovery.calls")" = 4 ] ||
     fail "persistent watcher replacement was not bounded"
 
@@ -594,6 +595,34 @@ FAKE_RECOVERY_MODE=blocked \
 grep -F 'reason=thread-recovery-blocked' \
     "$TEST_ROOT/recovery-blocked.out" >/dev/null ||
     fail "unsafe thread recovery classification"
+
+mkdir "$runtime/legacy-live.lock"
+chmod 700 "$runtime/legacy-live.lock"
+printf '%s\n' "$$" >"$runtime/legacy-live.lock/pid"
+chmod 600 "$runtime/legacy-live.lock/pid"
+: >"$TEST_ROOT/codex.calls"
+printf '0\n' >"$TEST_ROOT/codex.statuses"
+run_supervisor --run --name legacy-live --last \
+    >"$TEST_ROOT/legacy-live.out" 2>&1 &&
+    fail "target-scoped supervisor bypassed a live legacy lock"
+grep -F 'reason=legacy-already-running' \
+    "$TEST_ROOT/legacy-live.out" >/dev/null ||
+    fail "live legacy lock classification"
+unlink "$runtime/legacy-live.lock/pid"
+rmdir "$runtime/legacy-live.lock"
+
+mkdir "$runtime/legacy-stale.lock"
+chmod 700 "$runtime/legacy-stale.lock"
+printf '99999999\n' >"$runtime/legacy-stale.lock/pid"
+chmod 600 "$runtime/legacy-stale.lock/pid"
+: >"$TEST_ROOT/codex.calls"
+printf '0\n' >"$TEST_ROOT/codex.statuses"
+run_supervisor --run --name legacy-stale --last \
+    >"$TEST_ROOT/legacy-stale.out"
+grep -F 'reason=clean-exit' "$TEST_ROOT/legacy-stale.out" >/dev/null ||
+    fail "stale legacy lock was not recovered"
+[ ! -e "$runtime/legacy-stale.lock" ] ||
+    fail "stale legacy lock residue"
 
 mkdir "$runtime/harness/locked.lock"
 chmod 700 "$runtime/harness/locked.lock"

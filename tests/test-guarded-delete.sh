@@ -101,6 +101,7 @@ shift 2
 case "$*" in
     '-exec stat -f %z {} +') exec /usr/bin/find "$target" -xdev -printf '%s\n' ;;
     '-depth -delete') exec /usr/bin/find "$target" -xdev -depth -delete ;;
+    -type\ d*) exec /usr/bin/find "$target" -xdev "$@" ;;
     *) exit 2 ;;
 esac
 EOF
@@ -202,6 +203,37 @@ grep -F "NEXT harness guarded-delete apply --manifest '$success_manifest' --toke
 [ -f "$TEST_ROOT/root/keep/file" ] || fail "success removed retained sibling"
 grep 'VERIFIED protected_anchors=unchanged targets=absent' \
     "$TEST_ROOT/success.apply" >/dev/null || fail "success verification marker"
+
+mkdir -p "$TEST_ROOT/root/read-only/nested/deep"
+printf '%s\n' delete >"$TEST_ROOT/root/read-only/nested/deep/file"
+chmod 555 "$TEST_ROOT/root/read-only/nested" "$TEST_ROOT/root/read-only/nested/deep"
+readonly_manifest=$TEST_ROOT/read-only.manifest
+"$HARNESS" guarded-delete plan --within "$TEST_ROOT/root" \
+    --manifest "$readonly_manifest" -- "$TEST_ROOT/root/read-only" \
+    >"$TEST_ROOT/read-only.plan"
+readonly_token=$(token_from "$TEST_ROOT/read-only.plan")
+"$HARNESS" guarded-delete apply --manifest "$readonly_manifest" \
+    --token "$readonly_token" >"$TEST_ROOT/read-only.apply"
+[ ! -e "$TEST_ROOT/root/read-only" ] ||
+    fail "read-only owner directories remain"
+grep -F 'PREPARED path=' "$TEST_ROOT/read-only.apply" >/dev/null ||
+    fail "read-only preparation marker"
+
+mkdir -p "$TEST_ROOT/root/mode-drift"
+mode_manifest=$TEST_ROOT/mode-drift.manifest
+"$HARNESS" guarded-delete plan --within "$TEST_ROOT/root" \
+    --manifest "$mode_manifest" -- "$TEST_ROOT/root/mode-drift" \
+    >"$TEST_ROOT/mode-drift.plan"
+mode_token=$(token_from "$TEST_ROOT/mode-drift.plan")
+case $(file_mode "$TEST_ROOT/root/mode-drift") in
+    700) chmod 755 "$TEST_ROOT/root/mode-drift" ;;
+    *) chmod 700 "$TEST_ROOT/root/mode-drift" ;;
+esac
+expect_failure 'target mode changed; re-plan' "$TEST_ROOT/mode-drift.out" \
+    "$HARNESS" guarded-delete apply --manifest "$mode_manifest" \
+    --token "$mode_token"
+[ -d "$TEST_ROOT/root/mode-drift" ] ||
+    fail "mode drift removed target"
 
 expect_failure 'HOME differs from the account database' "$TEST_ROOT/home.out" \
     env HOME=/tmp "$HARNESS" guarded-delete plan \

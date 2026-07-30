@@ -139,7 +139,7 @@ Plan or inspect the value-free recovery receipt independently:
 
 ```bash
 harness codex-thread-recovery --plan --name harness --target harness --thread ID
-harness codex-thread-recovery --status --name harness
+harness codex-thread-recovery --status --name harness --target harness
 ```
 
 For an intentional per-thread cold reconnect, do not restart the shared
@@ -311,7 +311,7 @@ The only global client files retained by the harness are minimal sentinels at
 `~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md`. Outside `~/harness`, they
 refuse task work and give the exact restart command.
 
-Inside Harness, the root router loads only the policy module matching the next
+Inside Harness, the root router loads only policy modules matching the next
 action. Each selected skill likewise routes only its current phase, site, or
 mode references; unrelated workflows and completed task history are not
 preloaded.

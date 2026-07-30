@@ -9,9 +9,20 @@ plan() {
 }
 
 python3 - "$VALIDATE" "$ROOT" <<'PY'
+import contextlib
+import hashlib
+import io
+import json
+import os
 from pathlib import Path
 import runpy
+import subprocess
 import sys
+import tempfile
+from types import SimpleNamespace
+
+if not __debug__:
+    raise SystemExit("validation-router test requires Python assertions")
 
 validator = Path(sys.argv[1])
 root = Path(sys.argv[2])
@@ -125,6 +136,12 @@ cases = [
         False,
     ),
     (
+        ["tests/test-terminfo.sh"],
+        "R3",
+        ["tests/test-phase1.sh"],
+        False,
+    ),
+    (
         ["config/terminfo/tmux-256color.src"],
         "R2",
         ["tests/test-terminfo.sh"],
@@ -199,6 +216,143 @@ for unsafe in ("/absolute", "../escape", "./relative"):
     else:
         raise AssertionError(unsafe)
 
+original_tmpdir = os.environ.get("TMPDIR")
+try:
+    os.environ["TMPDIR"] = "/tmp/validation-contract-a"
+    environment_a = module["environment_contract"]("auto")
+    os.environ["TMPDIR"] = "/tmp/validation-contract-b"
+    environment_b = module["environment_contract"]("auto")
+finally:
+    if original_tmpdir is None:
+        os.environ.pop("TMPDIR", None)
+    else:
+        os.environ["TMPDIR"] = original_tmpdir
+assert environment_a["tmpdir_sha256"] != environment_b["tmpdir_sha256"]
+assert set(("home_sha256", "path_sha256", "tmpdir_sha256")) <= set(environment_a)
+assert "/tmp/validation-contract-a" not in json.dumps(environment_a)
+
+with tempfile.TemporaryDirectory() as raw_receipts:
+    receipt_dir = Path(raw_receipts)
+    identity = {"cacheable": True, "identity_sha256": "a" * 64}
+    payload = {"identity": identity, "result": {"status": "pass"}}
+    data = module["canonical_json"](payload)
+    digest = hashlib.sha256(data).hexdigest()
+    receipt = receipt_dir / f"{identity['identity_sha256']}--{digest}.json"
+    receipt.write_bytes(data)
+    receipt.chmod(0o600)
+    assert module["cached_receipt"](receipt_dir, identity) == receipt
+    wrong_name = receipt_dir / (
+        f"{identity['identity_sha256']}--{'b' * 64}.json"
+    )
+    receipt.rename(wrong_name)
+    assert module["cached_receipt"](receipt_dir, identity) is None
+
+with tempfile.TemporaryDirectory() as raw_repo:
+    fixture = Path(raw_repo)
+    subprocess.run(
+        ["git", "init", "-q"], cwd=fixture, check=True,
+        stdin=subprocess.DEVNULL,
+    )
+    candidate = fixture / "new.txt"
+    candidate.write_text("clean\n", encoding="utf-8")
+    assert module["untracked_whitespace_check"](
+        fixture, ["new.txt"]
+    ) == 0
+    candidate.write_text("trailing whitespace \n", encoding="utf-8")
+    assert module["untracked_whitespace_check"](
+        fixture, ["new.txt"]
+    ) == 1
+    (fixture / ".gitignore").write_text(
+        "*\n!.gitignore\n", encoding="utf-8"
+    )
+    subprocess.run(
+        ["git", "add", ".gitignore"], cwd=fixture, check=True,
+        stdin=subprocess.DEVNULL,
+    )
+    candidate.unlink()
+    ignored_candidate = fixture / "unexpected-top-level.sh"
+    ignored_candidate.write_text("opaque\n", encoding="utf-8")
+    assert module["ignored_top_level_files"](fixture) == [
+        "unexpected-top-level.sh"
+    ]
+    assert module["untracked_whitespace_check"](
+        fixture, ["unexpected-top-level.sh"]
+    ) == 1
+
+validator_globals = module["main"].__globals__
+patched_names = (
+    "parse_args",
+    "load_rules",
+    "changed_paths",
+    "classify",
+    "clean_tree_identity",
+    "private_receipt_dir",
+    "cached_receipt",
+    "run_validation",
+    "publish_receipt",
+)
+originals = {name: validator_globals[name] for name in patched_names}
+identity = {
+    "cacheable": True,
+    "identity_sha256": "c" * 64,
+}
+drifted = {
+    "cacheable": True,
+    "identity_sha256": "d" * 64,
+}
+decision = {
+    "cacheable": True,
+    "full": False,
+    "matches": [],
+    "paths": ["docs/test.md"],
+    "suites": [],
+    "tier": "R0",
+}
+
+
+def identity_scenario(sequence, *, cache_hit):
+    remaining = iter(sequence)
+    validator_globals.update(
+        {
+            "parse_args": lambda: SimpleNamespace(
+                base="HEAD^",
+                jobs="auto",
+                no_receipt=False,
+                path=[],
+                plan=False,
+                receipt_dir=None,
+            ),
+            "load_rules": lambda _root: [],
+            "changed_paths": lambda _root, _base: ["docs/test.md"],
+            "classify": lambda _root, _paths, _rules: decision,
+            "clean_tree_identity": lambda *_args: next(remaining),
+            "private_receipt_dir": lambda *_args: Path("/tmp"),
+            "cached_receipt": (
+                (lambda *_args: Path("/tmp/cached.json"))
+                if cache_hit
+                else (lambda *_args: None)
+            ),
+            "run_validation": lambda *_args: [
+                {"path": "fixture", "seconds": 0.0, "status": 0}
+            ],
+            "publish_receipt": lambda *_args: Path(
+                "/tmp/nonexistent-validation-receipt"
+            ),
+        }
+    )
+    with contextlib.redirect_stderr(io.StringIO()):
+        return module["main"]()
+
+
+try:
+    assert identity_scenario([identity, drifted], cache_hit=True) == 2
+    assert identity_scenario([identity, drifted], cache_hit=False) == 2
+    assert identity_scenario(
+        [identity, identity, drifted], cache_hit=False
+    ) == 2
+finally:
+    validator_globals.update(originals)
+
 protected_r3 = [
     ".github/workflows/ci.yml",
     "tests/validation-impact.tsv",
@@ -224,12 +378,19 @@ protected_r3 = [
     "tests/test-fleet-repository-hardening-skill.sh",
     "tests/test-onboard-personal-mac-skill.sh",
     "tests/test-reboot-recovery-skill.sh",
+    "tests/test-task-ledger-routing.sh",
+    "tests/test-github-rulesets.sh",
+    "tests/test-terminfo.sh",
 ]
 for path in protected_r3:
     result = classify(root, [path], rules)
     assert result["tier"] == "R3", (path, result)
     assert result["suites"] == ["tests/test-phase1.sh"], (path, result)
     assert result["cacheable"] is False, (path, result)
+print(
+    f"VALIDATION_ROUTER_CLASSIFY status=pass cases={len(cases)} "
+    f"protected={len(protected_r3)}"
+)
 PY
 
 docs_plan=$(plan --path TODO.md --path docs/tasks/index.tsv)
@@ -243,6 +404,9 @@ unknown_plan=$(plan --path unknown/path)
 python3 - "$docs_plan" "$skill_plan" "$ordinary_plan" "$unknown_plan" <<'PY'
 import json
 import sys
+
+if not __debug__:
+    raise SystemExit("validation-router plan test requires Python assertions")
 
 docs, skill, ordinary, unknown = (json.loads(value) for value in sys.argv[1:])
 assert docs["tier"] == "R0"
@@ -262,4 +426,4 @@ assert unknown["tier"] == "R3"
 assert unknown["suites"] == ["tests/test-phase1.sh"]
 PY
 
-printf '%s\n' 'VALIDATION_ROUTER status=pass cases=41'
+printf '%s\n' 'VALIDATION_ROUTER status=pass'

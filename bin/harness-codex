@@ -84,6 +84,10 @@ case "$target" in
     harness|students|swallow) ;;
     *) echo "harness-codex: target resolver returned an invalid target" >&2; exit 2 ;;
 esac
+CDPATH='' cd -- "$project_root" || {
+    echo "harness-codex: current project root is unavailable" >&2
+    exit 2
+}
 
 native_codex=$HOME/.local/bin/codex
 if [ "$(uname -s)" = Darwin ] && command -v brew >/dev/null 2>&1; then

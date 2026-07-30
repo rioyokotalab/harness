@@ -117,6 +117,30 @@ def normalize_paths(paths: Iterable[str]) -> list[str]:
     return sorted(normalized)
 
 
+def ignored_top_level_files(root: Path) -> list[str]:
+    tracked_roots = {
+        Path(path).parts[0]
+        for path in run_git(root, "ls-files").stdout.splitlines()
+        if Path(path).parts
+    }
+    unexpected: list[str] = []
+    for candidate in root.iterdir():
+        if candidate.name == ".git" or candidate.name in tracked_roots:
+            continue
+        try:
+            info = candidate.lstat()
+        except FileNotFoundError:
+            continue
+        if not (stat.S_ISREG(info.st_mode) or stat.S_ISLNK(info.st_mode)):
+            continue
+        ignored = run_git(
+            root, "check-ignore", "-q", "--", candidate.name, check=False
+        )
+        if ignored.returncode == 0:
+            unexpected.append(candidate.name)
+    return sorted(unexpected)
+
+
 def changed_paths(root: Path, base: str) -> list[str]:
     run_git(root, "cat-file", "-e", f"{base}^{{commit}}")
     tracked = run_git(
@@ -130,7 +154,8 @@ def changed_paths(root: Path, base: str) -> list[str]:
     untracked = run_git(
         root, "ls-files", "--others", "--exclude-standard"
     ).stdout.splitlines()
-    return normalize_paths([*tracked, *untracked])
+    ignored_top_level = ignored_top_level_files(root)
+    return normalize_paths([*tracked, *untracked, *ignored_top_level])
 
 
 def classify(root: Path, paths: list[str], rules: list[Rule]) -> dict:
@@ -201,14 +226,25 @@ def environment_contract(jobs: str) -> dict[str, str]:
         stderr=subprocess.DEVNULL,
         check=True,
     ).stdout.strip()
+    def value_digest(name: str) -> str:
+        marker = (
+            b"set\0" + os.fsencode(os.environ[name])
+            if name in os.environ
+            else b"unset\0"
+        )
+        return hashlib.sha256(marker).hexdigest()
+
     return {
+        "home_sha256": value_digest("HOME"),
         "git": git_version,
         "jobs": jobs,
         "machine": platform.machine(),
+        "path_sha256": value_digest("PATH"),
         "portable_ci": os.environ.get("HARNESS_PORTABLE_CI", ""),
         "python": platform.python_version(),
         "release": platform.release(),
         "system": platform.system(),
+        "tmpdir_sha256": value_digest("TMPDIR"),
     }
 
 
@@ -313,14 +349,68 @@ def cached_receipt(receipt_dir: Path, identity: dict) -> Path | None:
     prefix = identity["identity_sha256"] + "--"
     for path in sorted(receipt_dir.glob(prefix + "*.json")):
         try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+            info = path.lstat()
+            if (
+                not stat.S_ISREG(info.st_mode)
+                or stat.S_ISLNK(info.st_mode)
+                or info.st_uid != os.getuid()
+                or stat.S_IMODE(info.st_mode) != 0o600
+                or info.st_nlink != 1
+            ):
+                continue
+            data = path.read_bytes()
+            digest = hashlib.sha256(data).hexdigest()
+            if path.name != f"{identity['identity_sha256']}--{digest}.json":
+                continue
+            payload = json.loads(data.decode("utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
             continue
         if payload.get("identity") == identity and payload.get("result", {}).get(
             "status"
         ) == "pass":
             return path
     return None
+
+
+def untracked_whitespace_check(root: Path, paths: list[str]) -> int:
+    if not paths:
+        return 0
+    tracked = set(
+        run_git(root, "ls-files", "--", *paths).stdout.splitlines()
+    )
+    for relative in paths:
+        if relative in tracked:
+            continue
+        ignored = run_git(
+            root, "check-ignore", "-q", "--", relative, check=False
+        )
+        if ignored.returncode == 0:
+            # An ignored top-level file is not a publishable source input.
+            # Reject it without opening or diffing potentially private bytes.
+            return 1
+        candidate = root / relative
+        try:
+            info = candidate.lstat()
+        except FileNotFoundError:
+            return 1
+        if not stat.S_ISREG(info.st_mode) or stat.S_ISLNK(info.st_mode):
+            return 1
+        result = subprocess.run(
+            ["git", "diff", "--no-index", "--check", "--", "/dev/null", relative],
+            cwd=root,
+            env={**os.environ, "GIT_OPTIONAL_LOCKS": "0"},
+            stdin=subprocess.DEVNULL,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        # --no-index returns one for an ordinary nonempty difference. Any
+        # diagnostic output under --check is a whitespace error; other status
+        # values are command failures.
+        if result.returncode not in (0, 1) or result.stdout or result.stderr:
+            return 1
+    return 0
 
 
 def run_validation(root: Path, base: str, decision: dict, jobs: str) -> list[dict]:
@@ -340,6 +430,18 @@ def run_validation(root: Path, base: str, decision: dict, jobs: str) -> list[dic
         }
     ]
     if diff.returncode != 0:
+        return results
+
+    untracked_started = time.monotonic()
+    untracked_status = untracked_whitespace_check(root, decision["paths"])
+    results.append(
+        {
+            "path": "git diff --no-index --check (untracked)",
+            "seconds": round(time.monotonic() - untracked_started, 6),
+            "status": untracked_status,
+        }
+    )
+    if untracked_status != 0:
         return results
 
     env = os.environ.copy()
@@ -435,6 +537,15 @@ def main() -> int:
             return 2
         cached = cached_receipt(receipt_dir, identity)
         if cached:
+            if clean_tree_identity(
+                root, args.base, decision, args.jobs
+            ) != identity:
+                print(
+                    "validate: tree or validation contract changed during "
+                    "receipt lookup",
+                    file=sys.stderr,
+                )
+                return 2
             print(
                 f"VALIDATE status=pass reuse=1 tier={decision['tier']} "
                 f"receipt={cached}"
@@ -450,13 +561,42 @@ def main() -> int:
         )
         return 1
 
+    if identity and clean_tree_identity(
+        root, args.base, decision, args.jobs
+    ) != identity:
+        print(
+            "validate: tree or validation contract changed during validation",
+            file=sys.stderr,
+        )
+        return 2
+
     receipt = "none-dirty"
     if identity and receipt_dir:
         try:
-            receipt = str(publish_receipt(receipt_dir, identity, results))
+            receipt_path = publish_receipt(receipt_dir, identity, results)
         except FileExistsError:
             print("validate: ambiguous receipt collision", file=sys.stderr)
             return 2
+        if clean_tree_identity(root, args.base, decision, args.jobs) != identity:
+            try:
+                info = receipt_path.lstat()
+                if (
+                    stat.S_ISREG(info.st_mode)
+                    and not stat.S_ISLNK(info.st_mode)
+                    and info.st_uid == os.getuid()
+                    and stat.S_IMODE(info.st_mode) == 0o600
+                    and info.st_nlink == 1
+                ):
+                    receipt_path.unlink()
+            except OSError:
+                pass
+            print(
+                "validate: tree or validation contract changed during "
+                "receipt publication",
+                file=sys.stderr,
+            )
+            return 2
+        receipt = str(receipt_path)
     print(
         f"VALIDATE status=pass reuse=0 tier={decision['tier']} "
         f"receipt={receipt}"

@@ -1,12 +1,13 @@
 ---
 name: reboot-recovery
-description: Restore and validate managed tunnels, remote control, and standard Codex tmux state after an aist, home, office, or riken reboot or power loss.
+description: Restore and validate managed tunnels, remote control, and standard Codex tmux state after an aist, home, office, or riken reboot, power loss, or loss of its normal Codex session.
 ---
 
 # Recover a managed Mac after reboot
 
-Recover exactly one owner-named Mac from Git, `TODO.md`, and the closest
-instructions. Never infer readiness from a phone connection or prior chat.
+Recover one owner-named Mac from Git, the active board, its selected task
+record, and closest instructions. Never infer readiness from a phone
+connection or prior chat.
 
 ## Mandatory boundaries
 

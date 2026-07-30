@@ -57,6 +57,20 @@ def validate_safe_id(value, label):
         fail("{} is malformed".format(label))
 
 
+def logical_recovery_name(target, name):
+    prefix = "{}:".format(target)
+    if name.startswith(prefix):
+        name = name[len(prefix) :]
+    if not name or ":" in name:
+        fail("recovery name is not target-local")
+    validate_safe_id(name, "recovery name")
+    return name
+
+
+def scoped_recovery_name(target, name):
+    return "{}:{}".format(target, logical_recovery_name(target, name))
+
+
 def repository_for_target(target):
     validate_safe_id(target, "recovery target")
     if target not in MANAGED_TARGETS:
@@ -935,14 +949,20 @@ def parse_arguments():
     if arguments.status:
         if arguments.thread is not None:
             parser.error("--status does not accept --thread")
-        if arguments.target is not None:
-            parser.error("--status does not accept --target")
+        if arguments.target is None:
+            parser.error("--status requires --target")
     else:
         if arguments.target is None:
             parser.error("this mode requires --target")
+    if arguments.target is not None:
         validate_safe_id(arguments.target, "recovery target")
         if arguments.target not in MANAGED_TARGETS:
             parser.error("--target is outside the managed target map")
+        try:
+            logical_recovery_name(arguments.target, arguments.name)
+        except RecoveryError as error:
+            parser.error(str(error))
+    if not arguments.status:
         if arguments.thread is None:
             parser.error("this mode requires --thread")
         validate_safe_id(arguments.thread, "thread ID")
@@ -980,16 +1000,20 @@ def main():
         )
         return 0
     root = state_root()
-    path = state_path(root, arguments.name)
+    logical_name = logical_recovery_name(arguments.target, arguments.name)
+    recovery_name = scoped_recovery_name(arguments.target, logical_name)
+    path = state_path(root, recovery_name)
     if arguments.status:
         if not os.path.exists(path):
             print(
-                "CODEX_THREAD_RECOVERY name={} phase=absent".format(
-                    arguments.name
+                "CODEX_THREAD_RECOVERY name={} target={} phase=absent".format(
+                    logical_name, arguments.target
                 )
             )
             return 0
         values = read_state(path)
+        if values["name"] != recovery_name:
+            fail("Codex thread recovery state target differs")
         print_status(
             values["name"],
             values["thread"],
@@ -1002,8 +1026,12 @@ def main():
         return 0
     recoveries = 0
     rolled_back = 0
+    legacy_lock = lock_path(root, logical_name)
+    if os.path.exists(legacy_lock):
+        with exclusive_file_lock(legacy_lock, 0):
+            pass
     with exclusive_file_lock(
-        lock_path(root, arguments.name), 0 if arguments.watch else 30
+        lock_path(root, recovery_name), 0 if arguments.watch else 30
     ):
         if arguments.recover:
             try:
@@ -1025,7 +1053,7 @@ def main():
                 rolled_back = count
             write_state(
                 path,
-                arguments.name,
+                recovery_name,
                 arguments.thread,
                 phase,
                 reason,
@@ -1033,7 +1061,7 @@ def main():
                 rolled_back,
             )
             print_status(
-                arguments.name,
+                recovery_name,
                 arguments.thread,
                 phase,
                 reason,
@@ -1065,7 +1093,7 @@ def main():
                 reason = "rollback-ambiguous"
                 write_state(
                     path,
-                    arguments.name,
+                    recovery_name,
                     arguments.thread,
                     phase,
                     reason,
@@ -1084,7 +1112,7 @@ def main():
                 reason = "recovery-check-failed"
             write_state(
                 path,
-                arguments.name,
+                recovery_name,
                 arguments.thread,
                 phase,
                 reason,
@@ -1094,7 +1122,7 @@ def main():
             wait_for_interval(stopping, arguments.interval)
         write_state(
             path,
-            arguments.name,
+            recovery_name,
             arguments.thread,
             "stopped",
             "operator-stop",

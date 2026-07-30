@@ -56,6 +56,8 @@ sh -n "$REMOTE" || fail "remote helper syntax"
 
 grep -Fx 'name: reboot-recovery' "$SKILL" >/dev/null ||
     fail "skill name"
+assert_contains "$SKILL" 'loss of its normal Codex session' \
+    "missing-session trigger"
 
 for reference in \
     "$STATUS_REFERENCE" \
@@ -143,6 +145,8 @@ assert_contains "$VALIDATION_REFERENCE" \
 assert_contains "$VALIDATION_REFERENCE" \
     "fresh compact \`harness fleet-health\` check" \
     "fresh fleet-health closeout"
+assert_contains "$VALIDATION_REFERENCE" 'selected task record' \
+    "routed ledger closeout"
 
 if grep -E '(rm|unlink).*[.]DS_Store|[.]DS_Store.*(rm|unlink)' \
     "$SKILL" "$STATUS_REFERENCE" "$RECOVERY_REFERENCE" \

@@ -39,7 +39,8 @@ no bypass actor and must be corrected with the fixture.
 
 Local receipts are not independent validation.  The accepted private design
 trades merge-time hosted prevention for same-trust-root auditable
-self-attestation and unconditional hosted detection within seven days.
+self-attestation and a weekly independent hosted opportunity. GitHub's
+best-effort scheduler does not provide a hard seven-day completion bound.
 Direct bypass pushes also lose immediate private `main` hosted validation.
 This is an explicit owner-priority tradeoff, not an unchanged-safety claim.
 Non-owner CI and Students boundary enforcement are unchanged.
@@ -99,5 +100,5 @@ rollout; implementation must not interrupt active project work.
 - Three project validations overlap without cross-repository files, receipts,
   temp roots, cancellation, pane input, or lifecycle locks.
 - Full phase one, diff hygiene, skill validation, protected checks, cleanup,
-  and deadline fleet health pass; residual direct-push and seven-day detection
-  risks remain explicitly documented.
+  and deadline fleet health pass; residual direct-push and best-effort weekly
+  detection risks remain explicitly documented.

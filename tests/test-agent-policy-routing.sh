@@ -102,6 +102,10 @@ assert_contains 'Ordinary Git operations inside the active task' "$GIT_POLICY" \
 assert_contains 'approval count of zero' "$GIT_POLICY" \
     'owner-selected zero approvals'
 assert_contains 'SSH_AUTH_SOCK' "$GIT_POLICY" 'agent socket boundary'
+assert_contains 'same-trust-root self-attestation' "$GIT_POLICY" \
+    'local receipt trust boundary'
+assert_contains 'hosted CI remains authoritative' "$GIT_POLICY" \
+    'protected CI authority'
 assert_contains 'bridge-first cutover' "$CODEX" \
     'bridge-first lifecycle boundary'
 assert_contains 'docs/fleet-inventory.md' "$FLEET" \
@@ -119,6 +123,12 @@ assert_contains '`codex-claude-cowork` and `long-running-task-ledger`' \
     "$DURATION" 'duration cowork route'
 assert_contains 'max(300, 50 * ceil(requested hours))' "$DURATION" \
     'duration summary floor'
+assert_contains 'saved-thread or unsafe-tail recovery' "$AGENTS" \
+    'exact managed recovery selector'
+assert_contains 'fleet-health or maintenance checks' "$AGENTS" \
+    'exact fleet selector'
+assert_contains 'explicit duration, end time/date' "$AGENTS" \
+    'exact duration selector'
 
 # Prove large task-specific details are not back in the mandatory core.
 for unrelated in 'SSH_AUTH_SOCK' 'docs/fleet-inventory.md' \

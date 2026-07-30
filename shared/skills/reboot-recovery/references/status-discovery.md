@@ -1,7 +1,8 @@
 # Status and discovery
 
-1. Read the repository instructions and `TODO.md`, fetch the collaborative
-   remote, and reconstruct the current published revision and fleet state.
+1. Read the repository instructions, active board, and selected task record;
+   fetch the collaborative remote and reconstruct the current published
+   revision and fleet state.
 2. From Local, run:
 
    ```sh

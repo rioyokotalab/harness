@@ -506,7 +506,7 @@ Actions run.
 
 ## 2026-07-31 05:00–05:59 JST
 
-In progress. This slice applies and verifies the pre-reconciled deadline
+Completed. This slice applied and verified the pre-reconciled deadline
 cleanup while keeping the active agent root available through publication.
 Before mutation, the guarded-bulk-delete instructions were reread completely.
 The inventory resolved 23 disposable T-351 worktrees, their 23 matching Git
@@ -588,10 +588,58 @@ This is retained as process evidence rather than silently normalized. It did
 not alter task state, but it confirms that the timestamp gate still depends on
 per-message execution discipline.
 
+The cleanup failure exposed a reusable defect in the deletion workflow:
+current-user-owned read-only fixture trees were safely classifiable but could
+not be removed without an ad hoc permission repair between plan and apply.
+The retained schema-3 guarded-delete candidate now records each target's owner
+and mode, rejects mode drift, inventories every recursive directory owner at
+both plan and apply, completes validation for every target before preparation,
+and adds only the owner-write bit to directories before bounded deletion. It
+never changes a foreign-owned directory. Its focused contract covers an
+owner-owned mode-0555 nested tree, target-mode drift, Darwin adaptation, stale
+manifests, identity changes, protected roots, and ordinary success. The
+guarded-delete, skill-budget, routing, and gate fixtures pass.
+
+Four bounded read-only Codex reviewers then independently audited runtime
+isolation, Actions/ledger state, policy/context routing, and validation
+correctness. They made no edits. Across 23 reported findings, the accepted
+corrections include: legacy supervisor-lock reconciliation during release
+adoption; exact project-root normalization from repository subdirectories;
+target-qualified thread-recovery locks and state; stale and incomplete runtime
+release-lock recovery; final-poll release validation; archive-derived task
+index coverage; semantic rejection of inline Actions `push` triggers and
+job-level permissions; R3 escalation for every validator; explicit refusal
+under optimized Python; post-test and post-receipt exact-tree checks; receipt
+filename digest verification; hashed HOME/PATH/TMPDIR cache inputs; untracked
+managed-path whitespace checking; value-free rejection of ignored top-level
+files without opening their bytes; byte-counted AF_UNIX fixture selection;
+and non-overlapped one/two-CPU or legacy validation. A weekly cron is now
+described as a best-effort independent opportunity, not a hard seven-day
+guarantee.
+
+The policy/context review also restored the normal-session-loss trigger to
+reboot recovery, routed HPC and reboot checkpoints to the selected task record,
+narrowed generic recovery/health/deadline selectors, made multiple matching
+policy modules explicit, and restored the mandatory distinction between local
+self-attestation and authoritative protected CI. Every frozen context scenario
+now includes the selected T-351 record; documentation publication includes
+both Git and external-operation policy. Recalculated results remain well above
+the frozen gates: 94.1–97.7% total reduction, 96.5% median, and 48.0% median
+non-ledger reduction. The active board remains 52 lines / 246 words.
+
+Focused correction validation passed for Actions sustainability, task routing,
+validation routing, context routing, policy routing, catalog and skill gates,
+reboot recovery, guarded deletion, AL session handling, resilient supervision,
+target/thread recovery, runtime isolation, and recovery-helper behavior. One
+parallel fixture initially observed supervisor state before its fake launcher
+had written the CWD receipt; the test now waits for that exact receipt rather
+than relying on timing. No product check was weakened. A second progress
+message also reused `05:32:40`; it was disclosed and corrected immediately
+with a fresh `05:33:57` read. Both timestamp misses remain recorded.
+
 No hosting setting, ruleset, approval count, billing state, credential,
 project session, scheduler, or live service changed. Remaining work is to
-reconcile exact implementation bytes and mutable Actions state, close this
-hour with a fresh checkpoint, complete the final exact-tree validation,
+checkpoint the accepted review corrections, complete final exact-tree validation,
 publish one protected Harness pull request, prove its exact merged tree and
 absence of a post-merge push allocation, take fresh fleet health, and close at
 the requested deadline.

@@ -27,6 +27,8 @@ while IFS='|' read -r scenario baseline_total baseline_nonledger resources; do
     rows=$((rows + 1))
     current_total=0
     current_nonledger=0
+    selected_task_count=0
+    selected_external=0
     old_ifs=$IFS
     IFS=,
     for relative in $resources; do
@@ -39,8 +41,22 @@ while IFS='|' read -r scenario baseline_total baseline_nonledger resources; do
         current_total=$((current_total + count))
         [ "$relative" = TODO.md ] ||
             current_nonledger=$((current_nonledger + count))
+        case $relative in
+            docs/tasks/T-351.md) selected_task_count=$((selected_task_count + 1)) ;;
+            docs/tasks/T-*.md)
+                fail "$scenario selected unrelated task record: $relative"
+                ;;
+            docs/agent-policy/external-operations.md) selected_external=1 ;;
+        esac
     done
     IFS=$old_ifs
+
+    [ "$selected_task_count" -eq 1 ] ||
+        fail "$scenario did not select exactly one active task record"
+    if [ "$scenario" = documentation-edit ]; then
+        [ "$selected_external" -eq 1 ] ||
+            fail 'documentation publication route omitted external policy'
+    fi
 
     [ "$current_total" -lt "$baseline_total" ] ||
         fail "$scenario total context did not fall"

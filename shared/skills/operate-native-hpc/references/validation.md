@@ -18,5 +18,6 @@ evidence and match validation to the workload:
 
 Record the target, exact native commands, job ID, environment mechanism,
 resource shape, correctness results, failures, narrow cleanup, and next action
-in the project ledger or `~/harness/TODO.md`. Record neither credentials nor a
-full environment dump.
+in the project ledger or selected Harness task record. Change the active board
+only when its routing summary changes. Record neither credentials nor a full
+environment dump.

@@ -449,6 +449,26 @@ validate_release() {
     [ "$validation_ok" = yes ]
 }
 
+validate_release_lock_dir() {
+    [ -d "$lock_dir" ] && [ ! -L "$lock_dir" ] &&
+        [ "$(path_owner "$lock_dir")" = "$uid" ] &&
+        [ "$(path_mode "$lock_dir")" = 700 ] || {
+        echo "harness: Codex runtime release lock is unsafe" >&2
+        exit 2
+    }
+}
+
+validate_release_lock() {
+    validate_release_lock_dir
+    [ -f "$lock_dir/pid" ] && [ ! -L "$lock_dir/pid" ] &&
+        [ "$(path_owner "$lock_dir/pid")" = "$uid" ] &&
+        [ "$(path_mode "$lock_dir/pid")" = 600 ] &&
+        [ "$(path_links "$lock_dir/pid")" = 1 ] || {
+        echo "harness: Codex runtime release lock is unsafe" >&2
+        exit 2
+    }
+}
+
 if [ -e "$release_dir" ] || [ -L "$release_dir" ]; then
     validate_release || {
         echo "harness: existing Codex runtime release is invalid" >&2
@@ -460,30 +480,70 @@ else
     umask 077
     if mkdir "$lock_dir" 2>/dev/null; then
         lock_owned=yes
-        printf '%s\n' "$$" >"$lock_dir/pid"
-        chmod 600 "$lock_dir/pid"
     else
         umask "$old_umask"
-        wait_count=0
-        while [ "$wait_count" -lt 30 ]; do
-            if [ -e "$release_dir" ] || [ -L "$release_dir" ]; then
-                validate_release || {
-                    echo "harness: concurrent Codex runtime release is invalid" >&2
+        if [ -e "$release_dir" ] || [ -L "$release_dir" ]; then
+            validate_release || {
+                echo "harness: concurrent Codex runtime release is invalid" >&2
+                exit 2
+            }
+        elif [ ! -e "$lock_dir" ] && [ ! -L "$lock_dir" ]; then
+            umask 077
+            if mkdir "$lock_dir" 2>/dev/null; then
+                lock_owned=yes
+            fi
+            umask "$old_umask"
+        else
+            validate_release_lock_dir
+            lock_ready_count=0
+            while [ ! -f "$lock_dir/pid" ] &&
+                [ "$lock_ready_count" -lt 20 ]; do
+                sleep 0.05
+                lock_ready_count=$((lock_ready_count + 1))
+            done
+            if [ ! -f "$lock_dir/pid" ]; then
+                rmdir "$lock_dir" || {
+                    echo "harness: incomplete Codex runtime release lock changed" >&2
                     exit 2
                 }
-                break
+                umask 077
+                if mkdir "$lock_dir" 2>/dev/null; then
+                    lock_owned=yes
+                fi
+                umask "$old_umask"
             fi
-            sleep 1
-            wait_count=$((wait_count + 1))
-        done
-        [ -d "$release_dir" ] || {
-            echo "harness: Codex runtime release is locked" >&2
-            exit 2
-        }
+        fi
     fi
-    umask "$old_umask"
+    if [ "$lock_owned" != yes ] &&
+        [ ! -e "$release_dir" ] && [ ! -L "$release_dir" ]; then
+        validate_release_lock
+        lock_pid=$(sed -n '1p' "$lock_dir/pid")
+        case "$lock_pid" in
+            ''|*[!0-9]*)
+                echo "harness: Codex runtime release lock is malformed" >&2
+                exit 2
+                ;;
+        esac
+        if ! kill -0 "$lock_pid" 2>/dev/null; then
+            unlink "$lock_dir/pid"
+            rmdir "$lock_dir" || {
+                echo "harness: stale Codex runtime release lock changed" >&2
+                exit 2
+            }
+            umask 077
+            if mkdir "$lock_dir" 2>/dev/null; then
+                lock_owned=yes
+            fi
+            umask "$old_umask"
+        fi
+    fi
 
     if [ "$lock_owned" = yes ]; then
+        old_umask=$(umask)
+        umask 077
+        printf '%s\n' "$$" >"$lock_dir/pid"
+        umask "$old_umask"
+        chmod 600 "$lock_dir/pid"
         stage=$(mktemp -d "$target_release_parent/.stage.$payload_id.XXXXXX") || {
             echo "harness: Codex runtime release staging cannot be allocated" >&2
             exit 2
@@ -511,6 +571,23 @@ else
         stage=
         validate_release || {
             echo "harness: created Codex runtime release failed validation" >&2
+            exit 2
+        }
+    else
+        wait_count=0
+        while [ "$wait_count" -lt 30 ]; do
+            if [ -e "$release_dir" ] || [ -L "$release_dir" ]; then
+                break
+            fi
+            sleep 1
+            wait_count=$((wait_count + 1))
+        done
+        [ -d "$release_dir" ] || {
+            echo "harness: Codex runtime release is locked" >&2
+            exit 2
+        }
+        validate_release || {
+            echo "harness: concurrent Codex runtime release is invalid" >&2
             exit 2
         }
     fi

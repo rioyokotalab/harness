@@ -14,9 +14,12 @@
 
 Clean-tree R0/R1 results may reuse a private content-addressed receipt only when
 base, head, tree, changed paths, environment contract, validator/map bytes, and
-selected-suite bytes all match. Receipts state that they are owner
-self-attestation from the same trust root, not independent CI. R2/R3 and paths
-containing lifecycle-sensitive tokens do not reuse cache.
+selected-suite bytes all match. HOME, PATH, and TMPDIR enter as value-free
+hashes. Cache lookup, test completion, and receipt publication each recheck the
+exact clean-tree identity; cached files must match their advertised content
+digest. Receipts state that they are owner self-attestation from the same trust
+root, not independent CI. R2/R3 and paths containing lifecycle-sensitive
+tokens do not reuse cache. Every validator path is R3.
 
 Measured Local wall times before phase-one overlap were:
 
@@ -78,7 +81,10 @@ Matched retained measurements:
 
 The retained automatic route sees eight affinity-visible CPUs and gives seven
 to focused suites while integration proceeds. Explicit or legacy worker counts
-remain exact and reserve zero. The repeated automatic result is 36.7% faster
+remain exact and reserve zero. Legacy, explicit one-worker, and automatic
+one/two-CPU routes run the focused and ShellCheck gates without integration
+overlap, avoiding low-core oversubscription; higher-core automatic behavior is
+unchanged. The repeated automatic result is 36.7% faster
 than the integrated serial tree and 36.8% faster than the original baseline.
 Peak RSS varied substantially between matched runs, so no memory reduction is
 claimed; all values remained near the original baseline run's 744,832 KiB.
@@ -112,12 +118,13 @@ requires one complete run after the last evidence bytes settle and before
 publication. A subsequent clean integrated checkpoint passed all 91 suites in
 67.19 seconds with the resource values shown above.
 
-`tests/test-focused-runner.sh` enforces both background starts and joins,
-one-CPU automatic reserve for focused suites, and failure propagation. A
-background-gate failure may now be reported after the independent integration
-body finishes, but it can never be lost or converted into success. Ordinary
-development normally runs the owning R0–R2 route, so this delayed R3 failure
-tradeoff affects only broad/final validation.
+The focused/runtime contracts enforce one canonical focused-runner invocation,
+high-core background starts and joins, low-core serialization, one-CPU
+automatic reserve, and failure propagation. A background-gate failure may be
+reported after the independent integration body finishes, but it can never be
+lost or converted into success. Ordinary development normally runs the owning
+R0–R2 route, so this delayed R3 failure tradeoff affects only broad/final
+validation.
 
 ## Gate contention and isolated temporary roots
 
@@ -139,10 +146,11 @@ independent roots all passed. The cause was deterministic: the longest
 filesystem-backed Unix-domain socket name exceeded Linux's 107-byte pathname
 limit, so Python could not bind it and the test reported a misleading
 five-second readiness timeout. The fixture now retains the caller's canonical
-`TMPDIR` whenever the longest projected socket fits and otherwise creates its
-unique guarded root directly under canonical `/tmp`. A cheap self-check covers
-the long-path selection. This changes no product timeout or assertion and
-prevents isolated long-root validation from requiring a false-failure rerun.
+`TMPDIR` whenever the longest projected socket fits in bytes and otherwise
+creates its unique guarded root directly under canonical `/tmp`. Cheap ASCII
+and multibyte self-checks cover the selection. This changes no product timeout
+or assertion and prevents isolated long-root validation from requiring a
+false-failure rerun.
 
 The focused runner formerly admitted suites in manifest order, which delayed
 the longest personal-macOS and evaluation fixtures until earlier short suites
@@ -189,11 +197,19 @@ That made the next valid `docs/tasks/T-N.md` or dated full-TODO archive unknown
 and therefore R3 until the map itself was edited. The two namespaces now use
 closed numeric/date patterns and still select the ledger contract; arbitrary
 `docs/` paths remain documentation-only and unknown non-doc paths remain R3.
-A synthetic future task selects cacheable R0 in 0.07 seconds. All 41 router
-cases pass. The ledger contract now discovers every numbered task record,
+A synthetic future task selects cacheable R0 in 0.07 seconds. Router output now
+derives its classification and protected-set counts instead of printing a
+stale constant. The ledger contract discovers every numbered task record,
 requires exact equality with board headings, derives the next free ID from the
-descending index, and validates every indexed source. That broader check found
-one stale T-343 plan pointer; it now names the retained Cowork plan. The
-dynamic ledger contract passes all 43 index rows.
+descending index, validates every indexed source, and requires every archived
+task heading and completed-anchor range to be indexed. That broader check
+found one stale T-343 plan pointer; it now names the retained Cowork plan. The
+dynamic ledger contract passes all 78 index rows.
 Every dated full-board archive must also be a regular indexed source, so a
 future archive receives the fast route only after durable lookup covers it.
+
+Untracked files under managed source roots now receive the same whitespace
+gate as tracked changes. The repository intentionally ignores unknown
+top-level local directories, but an ignored top-level file is detected by name
+and rejected without opening potentially private bytes; it becomes valid only
+after deliberate source tracking, when an unknown path escalates to R3.

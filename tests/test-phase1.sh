@@ -178,20 +178,50 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/shared/skills
     fail "Python syntax: remote agent communication"
 
 case ${HARNESS_TEST_JOBS:-auto} in
-    legacy) focused_jobs=1; focused_reserve=0 ;;
-    auto) focused_jobs=auto; focused_reserve=1 ;;
+    legacy)
+        focused_jobs=1
+        focused_reserve=0
+        overlap_gates=no
+        ;;
+    auto)
+        focused_jobs=auto
+        focused_reserve=1
+        visible_cpus=$(python3 -c \
+            'import os; print(len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1))')
+        if [ "$visible_cpus" -le 2 ]; then
+            overlap_gates=no
+        else
+            overlap_gates=yes
+        fi
+        ;;
     ''|*[!0-9]*)
         fail "HARNESS_TEST_JOBS must be auto, legacy, or an integer"
         ;;
-    *) focused_jobs=$HARNESS_TEST_JOBS; focused_reserve=0 ;;
+    *)
+        focused_jobs=$HARNESS_TEST_JOBS
+        focused_reserve=0
+        if [ "$focused_jobs" -eq 1 ]; then
+            overlap_gates=no
+        else
+            overlap_gates=yes
+        fi
+        ;;
 esac
-python3 "$ROOT/tools/run-focused-tests.py" \
-    --root "$ROOT" \
-    --manifest "$ROOT/tests/focused-suites.tsv" \
-    --log-dir "$TEMP_DIR/focused-logs" \
-    --reserve-cpus "$focused_reserve" \
-    --jobs "$focused_jobs" &
-focused_pid=$!
+run_focused_suites() {
+    python3 "$ROOT/tools/run-focused-tests.py" \
+        --root "$ROOT" \
+        --manifest "$ROOT/tests/focused-suites.tsv" \
+        --log-dir "$TEMP_DIR/focused-logs" \
+        --reserve-cpus "$focused_reserve" \
+        --jobs "$focused_jobs"
+}
+if [ "$overlap_gates" = yes ]; then
+    run_focused_suites &
+    focused_pid=$!
+else
+    run_focused_suites ||
+        fail "focused suites"
+fi
 # Direct non-interactive SSH can omit ~/.local/bin even when the managed
 # Restic installation is healthy. The harness route must find that exact
 # fallback, while retaining normal PATH precedence when a site command exists.
@@ -325,12 +355,20 @@ if env -u HARNESS_INTERACTIVE_LOADED -u HARNESS_REMOTE_SESSION_LOADED \
 fi
 
 if command -v shellcheck >/dev/null 2>&1; then
-    (
+    if [ "$overlap_gates" = yes ]; then
+        (
+            git -C "$ROOT" grep -Il -z '^#!.*\(sh\|bash\)' -- . \
+                ':(exclude)tests/fixtures/**' |
+                xargs -0 shellcheck --severity=warning
+        ) &
+        shellcheck_pid=$!
+    elif ! (
         git -C "$ROOT" grep -Il -z '^#!.*\(sh\|bash\)' -- . \
             ':(exclude)tests/fixtures/**' |
             xargs -0 shellcheck --severity=warning
-    ) &
-    shellcheck_pid=$!
+    ); then
+        fail "ShellCheck warning/error gate"
+    fi
 fi
 
 for script in \

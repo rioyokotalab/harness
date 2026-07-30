@@ -134,8 +134,9 @@ The owner records the exact head tree, command, result, platform, and validator
 digest in an owner-authored PR. That is same-trust-root self-attestation, not
 independent CI. GitHub does not mechanically validate the receipt when the job
 is skipped; owner identity and protected-PR review are the trust boundary.
-Weekly hosted runs independently detect merged-tree drift within at most seven
-days. A direct administrator bypass has the same bounded residual.
+Weekly scheduled runs provide an independent merged-tree drift-detection
+opportunity, but GitHub's best-effort scheduler gives no hard seven-day
+completion bound. A direct administrator bypass has the same residual.
 
 Mixed or non-owner events still run all hosted checks, including Students'
 trusted-base boundary. No untrusted pull-request code runs on a persistent

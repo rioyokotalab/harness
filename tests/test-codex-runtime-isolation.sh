@@ -66,10 +66,11 @@ trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-[ "$(grep -c '^python3 "\$ROOT/tools/run-focused-tests.py"' \
+[ "$(grep -Ec '^[[:space:]]*python3 "\$ROOT/tools/run-focused-tests.py"' \
     "$ROOT/tests/test-phase1.sh")" = 1 ] ||
     fail "phase-1 retains divergent focused-suite execution"
-grep -F 'legacy) focused_jobs=1' "$ROOT/tests/test-phase1.sh" >/dev/null ||
+grep -F '        focused_jobs=1' "$ROOT/tests/test-phase1.sh" >/dev/null &&
+    grep -F '        overlap_gates=no' "$ROOT/tests/test-phase1.sh" >/dev/null ||
     fail "legacy compatibility does not select the normal manifest serially"
 [ "$(grep -c '^tests/test-codex-targets.sh|' \
     "$ROOT/tests/focused-suites.tsv")" = 1 ] ||
@@ -98,6 +99,24 @@ for repository in "$target_harness" "$target_students" "$target_swallow"; do
         'model_reasoning_effort = "high"' \
         >"$repository/.codex/config.toml"
 done
+mkdir "$target_harness/nested"
+
+direct_home=$TEST_ROOT/direct-home
+direct_capture=$TEST_ROOT/direct-cwd
+mkdir -p "$direct_home/.local/bin"
+cat >"$direct_home/.local/bin/codex" <<'EOF'
+#!/bin/sh
+pwd -P >"$DIRECT_CAPTURE"
+EOF
+chmod 700 "$direct_home/.local/bin/codex"
+(
+    cd "$ROOT/docs"
+    env -u HARNESS_ROOT -u HARNESS_CONTROL_ROOT -u HARNESS_TARGET_ROOT \
+        HOME="$direct_home" DIRECT_CAPTURE="$direct_capture" \
+            "$ROOT/bin/harness-codex" --version
+)
+[ "$(cat "$direct_capture")" = "$ROOT" ] ||
+    fail "direct Codex launcher retained a repository subdirectory"
 
 for path in \
     libexec/harness-common \
@@ -141,6 +160,7 @@ cat >"$fake_launcher" <<'EOF'
 #!/bin/sh
 set -eu
 printf '%s\n' "$$" >"$FAKE_LAUNCH_PID_FILE"
+pwd -P >"$FAKE_LAUNCH_CWD_FILE"
 while [ ! -e "$FAKE_STOP_FILE" ]; do
     /bin/sleep 0.05
 done
@@ -163,6 +183,7 @@ launch_supervisor() {
             HARNESS_TEST_RUNTIME_DIR="$runtime" \
             HARNESS_TEST_CODEX_LAUNCHER="$fake_launcher" \
             FAKE_LAUNCH_PID_FILE="$TEST_ROOT/$target.launcher.pid" \
+            FAKE_LAUNCH_CWD_FILE="$TEST_ROOT/$target.launcher.cwd" \
             FAKE_STOP_FILE="$TEST_ROOT/stop-launchers" \
             "$control/libexec/harness-codex-resilient" \
                 --run --target "$target" --name shared --last
@@ -192,9 +213,12 @@ release_for_target() {
     printf '%s\n' "$1"
 }
 
-launch_supervisor "$target_harness" harness "$TEST_ROOT/harness.out"
+launch_supervisor "$target_harness/nested" harness "$TEST_ROOT/harness.out"
 harness_pid=$launched_pid
 wait_for_file "$runtime/harness/shared.state" "$harness_pid"
+wait_for_file "$TEST_ROOT/harness.launcher.cwd" "$harness_pid"
+[ "$(cat "$TEST_ROOT/harness.launcher.cwd")" = "$target_harness" ] ||
+    fail "resilient launcher retained a repository subdirectory"
 harness_release=$(release_for_target harness)
 harness_payload=${harness_release##*/}
 [ "$(grep -c ' ls-tree -r ' "$git_log")" -eq 1 ] ||
@@ -439,6 +463,26 @@ run_released_launcher harness "$harness_release" "$target_harness"
 run_released_launcher students "$students_release" "$target_students"
 run_released_launcher swallow "$swallow_release" "$target_swallow"
 
+subdir_capture=$capture/released-subdirectory
+mkdir "$subdir_capture"
+(
+    cd "$target_harness/nested"
+    env \
+        HARNESS_CONTROL_ROOT="$harness_release" \
+        HARNESS_TARGET_ROOT="$target_harness" \
+        HARNESS_CODEX_RELEASE_COMMIT="$commit" \
+        HARNESS_CODEX_RELEASE_PAYLOAD="$harness_payload" \
+        HARNESS_CODEX_RELEASE_TARGET=harness \
+        HARNESS_TESTING=1 \
+        HARNESS_TEST_NATIVE_CODEX="$fake_native" \
+        CODEX_LAUNCH_CAPTURE="$subdir_capture" \
+        CODEX_EXPECTED_REPOSITORY="$target_harness" \
+        "$harness_release/libexec/harness-codex-runtime-launch" \
+            --probe subdirectory
+)
+[ -f "$subdir_capture/native-environment" ] ||
+    fail "released launcher did not normalize a repository subdirectory"
+
 assert_wrong_release_repository() {
     wrong_release_target=$1
     wrong_release_root=$2
@@ -569,6 +613,93 @@ chmod 700 "$fake_thread_check"
 grep -F -- '--target students --thread session-explicit' \
     "$capture/thread-check" >/dev/null ||
     fail "release handoff omitted explicit thread target preflight"
+
+held_release=$release_root/held-harness-release
+chmod 700 "$harness_release"
+mv "$harness_release" "$held_release"
+chmod 500 "$held_release"
+release_lock=$release_root/releases/harness/.$harness_payload.lock
+mkdir "$release_lock"
+chmod 700 "$release_lock"
+printf '99999999\n' >"$release_lock/pid"
+chmod 600 "$release_lock/pid"
+(
+    cd "$target_harness"
+    HARNESS_TESTING=1 \
+    HARNESS_TEST_CODEX_RELEASE_ROOT="$release_root" \
+    HARNESS_CODEX_RELEASE_TARGET=harness \
+    HARNESS_TARGET_ROOT="$target_harness" \
+        "$control/libexec/harness-codex-runtime-release" \
+            --exec-resilient --plan --target harness \
+            --name stale-release-lock --last
+) >"$TEST_ROOT/stale-release-lock.out"
+[ -d "$harness_release" ] && [ ! -e "$release_lock" ] ||
+    fail "stale runtime release lock was not recovered"
+
+incomplete_release=$release_root/incomplete-harness-release
+chmod 700 "$harness_release"
+mv "$harness_release" "$incomplete_release"
+chmod 500 "$incomplete_release"
+mkdir "$release_lock"
+chmod 700 "$release_lock"
+(
+    cd "$target_harness"
+    HARNESS_TESTING=1 \
+    HARNESS_TEST_CODEX_RELEASE_ROOT="$release_root" \
+    HARNESS_CODEX_RELEASE_TARGET=harness \
+    HARNESS_TARGET_ROOT="$target_harness" \
+        "$control/libexec/harness-codex-runtime-release" \
+            --exec-resilient --plan --target harness \
+            --name incomplete-release-lock --last
+) >"$TEST_ROOT/incomplete-release-lock.out"
+[ -d "$harness_release" ] && [ ! -e "$release_lock" ] ||
+    fail "incomplete runtime release lock was not recovered"
+
+delayed_release=$release_root/delayed-harness-release
+chmod 700 "$harness_release"
+mv "$harness_release" "$delayed_release"
+chmod 700 "$delayed_release"
+mkdir "$release_lock"
+chmod 700 "$release_lock"
+printf '%s\n' "$$" >"$release_lock/pid"
+chmod 600 "$release_lock/pid"
+wait_bin=$TEST_ROOT/wait-bin
+mkdir "$wait_bin"
+cat >"$wait_bin/sleep" <<'EOF'
+#!/bin/sh
+set -eu
+count=0
+[ ! -f "$RELEASE_WAIT_COUNT" ] ||
+    count=$(sed -n '1p' "$RELEASE_WAIT_COUNT")
+count=$((count + 1))
+printf '%s\n' "$count" >"$RELEASE_WAIT_COUNT"
+if [ "$count" -eq 30 ]; then
+    mv "$DELAYED_RELEASE" "$EXPECTED_RELEASE"
+    chmod 500 "$EXPECTED_RELEASE"
+fi
+EOF
+chmod 700 "$wait_bin/sleep"
+(
+    cd "$target_harness"
+    PATH="$wait_bin:$PATH" \
+    RELEASE_WAIT_COUNT="$TEST_ROOT/release-wait.count" \
+    DELAYED_RELEASE="$delayed_release" \
+    EXPECTED_RELEASE="$harness_release" \
+    HARNESS_TESTING=1 \
+    HARNESS_TEST_CODEX_RELEASE_ROOT="$release_root" \
+    HARNESS_CODEX_RELEASE_TARGET=harness \
+    HARNESS_TARGET_ROOT="$target_harness" \
+        "$control/libexec/harness-codex-runtime-release" \
+            --exec-resilient --plan --target harness \
+            --name final-poll-release --last
+) >"$TEST_ROOT/final-poll-release.out"
+[ "$(cat "$TEST_ROOT/release-wait.count")" = 30 ] ||
+    fail "final-poll release fixture did not reach the boundary"
+grep -F 'name=final-poll-release target=harness selector=last status=ready' \
+    "$TEST_ROOT/final-poll-release.out" >/dev/null ||
+    fail "final-poll concurrent release lost validated provenance"
+unlink "$release_lock/pid"
+rmdir "$release_lock"
 
 chmod 700 "$harness_release" "$harness_release/libexec"
 chmod 755 "$harness_release/libexec/harness-codex-resilient"

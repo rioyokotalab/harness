@@ -129,9 +129,7 @@ if len(clock.sleeps) != 1 or not 0 < clock.sleeps[0] <= 0.2:
 PY
 
 run_recovery() {
-    if [ "${1:-}" != --status ]; then
-        set -- --target "${RECOVERY_TARGET:-harness}" "$@"
-    fi
+    set -- --target "${RECOVERY_TARGET:-harness}" "$@"
     HARNESS_TESTING=1 \
     HARNESS_CONTROL_ROOT="$ROOT" \
     HARNESS_TARGET_ROOT="$target_harness" \
@@ -195,11 +193,48 @@ grep -F 'rolled_back=2' "$TEST_ROOT/safe.out" >/dev/null ||
     fail "safe rollback count"
 [ "$(cat "$TEST_ROOT/rollback.calls")" = 'thread-safe	2' ] ||
     fail "safe rollback request"
-[ "$(stat -c %a "$runtime/safe.recovery.state")" = 600 ] ||
+[ "$(stat -c %a "$runtime/harness:safe.recovery.state")" = 600 ] ||
     fail "recovery state mode"
 grep -E 'blocked one|blocked two|baseline|policy' \
-    "$runtime/safe.recovery.state" >/dev/null &&
+    "$runtime/harness:safe.recovery.state" >/dev/null &&
     fail "recovery state retained transcript content"
+
+student_parallel_rollout=$sessions/student-parallel.jsonl
+cat >"$student_parallel_rollout" <<'EOF'
+{"timestamp":"1","type":"session_meta","payload":{"id":"thread-student-parallel"}}
+{"timestamp":"2","type":"event_msg","payload":{"type":"task_started"}}
+{"timestamp":"3","type":"response_item","payload":{"type":"message","role":"user"}}
+{"timestamp":"4","type":"response_item","payload":{"type":"message","role":"assistant"}}
+{"timestamp":"5","type":"event_msg","payload":{"type":"task_complete"}}
+EOF
+chmod 600 "$student_parallel_rollout"
+write_read_response thread-student-parallel idle "$student_parallel_rollout" \
+    "$target_students"
+RECOVERY_TARGET=students run_recovery \
+    --recover --name parallel --thread thread-student-parallel \
+    >"$TEST_ROOT/student-parallel.out"
+
+harness_parallel_rollout=$sessions/harness-parallel.jsonl
+cat >"$harness_parallel_rollout" <<'EOF'
+{"timestamp":"1","type":"session_meta","payload":{"id":"thread-harness-parallel"}}
+{"timestamp":"2","type":"event_msg","payload":{"type":"task_started"}}
+{"timestamp":"3","type":"response_item","payload":{"type":"message","role":"user"}}
+{"timestamp":"4","type":"response_item","payload":{"type":"message","role":"assistant"}}
+{"timestamp":"5","type":"event_msg","payload":{"type":"task_complete"}}
+EOF
+chmod 600 "$harness_parallel_rollout"
+write_read_response thread-harness-parallel idle "$harness_parallel_rollout"
+run_recovery --recover --name parallel --thread thread-harness-parallel \
+    >"$TEST_ROOT/harness-parallel.out"
+[ -f "$runtime/students:parallel.recovery.state" ] &&
+    [ -f "$runtime/harness:parallel.recovery.state" ] ||
+    fail "same-name recovery state is not target-scoped"
+grep -F 'thread=thread-student-parallel' \
+    "$runtime/students:parallel.recovery.state" >/dev/null ||
+    fail "Students recovery state was overwritten"
+grep -F 'thread=thread-harness-parallel' \
+    "$runtime/harness:parallel.recovery.state" >/dev/null ||
+    fail "Harness recovery state was overwritten"
 
 : >"$TEST_ROOT/rollback.calls"
 write_read_response thread-safe systemError "$safe_rollout"

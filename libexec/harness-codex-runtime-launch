@@ -65,6 +65,10 @@ if [ "$release_target" != "$target" ]; then
     echo "harness-codex: released runtime target does not match current repository" >&2
     exit 2
 fi
+CDPATH='' cd -- "$project_root" || {
+    echo "harness-codex: current project root is unavailable" >&2
+    exit 2
+}
 
 native_codex=$HOME/.local/bin/codex
 if [ "${HARNESS_TESTING:-0}" = 1 ] &&

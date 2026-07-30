@@ -12,6 +12,9 @@ from pathlib import Path
 import re
 import sys
 
+if not __debug__:
+    raise SystemExit("task-ledger validator requires Python assertions")
+
 root = Path(sys.argv[1])
 board = root / "TODO.md"
 archive = root / "docs/history/TODO-full-archive-2026-07-30.md"
@@ -111,8 +114,21 @@ for task, state in {
 }.items():
     assert by_task[task]["state"] == state
 
+archive_text = archive.read_text(encoding="utf-8")
+archived_records = set(
+    re.findall(r"^### (T-\d+) —", archive_text, re.MULTILINE)
+)
+completed_text = archive_text.split("## Completed anchors", 1)[1]
+completed_anchors = set(re.findall(r"T-\d+", completed_text))
+for first, last in re.findall(r"T-(\d+)[–-]T-(\d+)", completed_text):
+    start, stop = sorted((int(first), int(last)))
+    completed_anchors.update(f"T-{number}" for number in range(start, stop + 1))
+for task in sorted(archived_records | completed_anchors):
+    assert task in by_task, ("unindexed archived task", task)
+
 print(
     f"TASK_LEDGER status=pass lines={len(lines)} words={len(words)} "
-    f"index_rows={len(rows)}"
+    f"index_rows={len(rows)} archived_tasks={len(archived_records)} "
+    f"completed_anchors={len(completed_anchors)}"
 )
 PY

@@ -23,6 +23,8 @@ Read this file completely before the matching action selected by root
 - Publish Harness through protected `main`. Ordinary Git authorization does
   not include workflow dispatch, deployment, repository settings, rulesets,
   billing, or organization administration.
+- Local validation receipts are same-trust-root self-attestation. Protected
+  hosted CI remains authoritative wherever configured.
 
 ## Authentication and native commands
 

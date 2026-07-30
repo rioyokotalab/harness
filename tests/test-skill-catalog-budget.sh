@@ -21,7 +21,10 @@ expected = {
     "onboard-personal-mac": ("exactly one personal Mac",),
     "operate-native-hpc": ("native scheduler", "matched experiments"),
     "plan-interview-execute": ("fully frozen authorized execution",),
-    "reboot-recovery": ("aist, home, office, or riken",),
+    "reboot-recovery": (
+        "aist, home, office, or riken",
+        "loss of its normal Codex session",
+    ),
     "recover-codex-unsafe-tail": ("Request blocked", "never replay"),
     "remote-agent-communication": ("without reading panes", "bounded reply"),
     "research-engineering-validation": ("matched benchmarks",),

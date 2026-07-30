@@ -46,8 +46,9 @@ Thresholds:
 - at least 90% lower estimated private hosted minutes for ordinary owner work;
 - no hosted runner for a trusted owner job when its required job can be
   conditionally skipped, but unchanged hosted execution for untrusted work;
-- one unconditional weekly full hosted run in each private repository limits
-  independent post-hoc drift detection to at most seven days;
+- one scheduled weekly full hosted opportunity in each private repository,
+  plus manual dispatch, provides independent post-hoc drift detection without
+  claiming a hard completion bound from a best-effort scheduler;
 - three concurrent project validations with no cross-project mutation or
   lifecycle lock;
 - complete unchanged suite passing once before publication.
@@ -72,8 +73,9 @@ agreement: role=copilot client=claude benchmark-accepted
 
 Both roles accept one explicitly named reduction for private owner/agent
 changes: contemporaneous independent hosted prevention becomes auditable
-same-trust-root local self-attestation plus unconditional hosted detection
-within seven days.  Non-owner hosted validation remains unchanged.  Existing
+same-trust-root local self-attestation plus a weekly independent hosted
+backstop with no hard seven-day completion guarantee. Non-owner hosted
+validation remains unchanged. Existing
 owner/admin bypasses also leave direct pushes without receipt-bearing PR
 evidence after private `main` push triggers are removed; local discipline and
 the weekly run are the compensating controls.  Receipts must never be described

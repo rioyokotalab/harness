@@ -18,5 +18,6 @@ pane may report `codex`, `codex.real`, `sh`, or `sleep` while running,
 diagnosing, or backing off. Whenever its foreground command is not Codex,
 require the live value-free supervisor receipt to match the tmux pane owner.
 
-Finish with a fresh compact `harness fleet-health` check and report only
-failing node names. Checkpoint unresolved state in `TODO.md`.
+Finish with a fresh compact `harness fleet-health` check and report
+failing node names. Checkpoint unresolved state in the selected task record;
+change the active board only when its routing summary changes.

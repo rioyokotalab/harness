@@ -4,7 +4,8 @@ The baseline is immutable Harness commit
 `f2ce89ac3ea393cb5a7b882bed1b79fe773974fb`. Baseline counts were reproduced
 with `git show COMMIT:PATH | wc -w`; current counts are the sum of the exact
 resources selected in `context-scenarios.tsv`. “Non-ledger” excludes only
-`TODO.md`, so policy and skill savings cannot be hidden by board compaction.
+`TODO.md`; the selected task record remains in the non-ledger count, so policy
+and skill savings cannot be hidden by board compaction or task routing.
 
 The scenario routes deliberately include every phase-specific resource needed
 to complete the named task. For example, duration Cowork includes planning,
@@ -16,25 +17,25 @@ its eventual protected publication.
 
 | Scenario | Before total | After total | Total reduction | Before non-ledger | After non-ledger | Non-ledger reduction |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| factual lookup | 73,734 | 1,297 | 98.2% | 2,906 | 1,051 | 63.8% |
-| documentation edit | 73,545 | 1,321 | 98.2% | 2,717 | 1,075 | 60.4% |
-| ordinary code fix | 74,455 | 1,321 | 98.2% | 3,627 | 1,075 | 70.3% |
-| tmux health diagnosis | 73,545 | 1,269 | 98.2% | 2,717 | 1,023 | 62.3% |
-| unsafe-tail recovery | 75,931 | 2,619 | 96.5% | 5,103 | 2,373 | 53.4% |
-| fleet hardening | 76,238 | 3,986 | 94.7% | 5,410 | 3,740 | 30.8% |
-| native HPC experiment | 77,550 | 2,908 | 96.2% | 6,722 | 2,662 | 60.3% |
-| duration Cowork | 80,599 | 4,259 | 94.7% | 9,771 | 4,013 | 58.9% |
+| factual lookup | 73,734 | 1,719 | 97.6% | 2,906 | 1,473 | 49.3% |
+| documentation edit | 73,545 | 2,031 | 97.2% | 2,717 | 1,785 | 34.3% |
+| ordinary code fix | 74,455 | 1,757 | 97.6% | 3,627 | 1,511 | 58.3% |
+| tmux health diagnosis | 73,545 | 1,691 | 97.7% | 2,717 | 1,445 | 46.8% |
+| unsafe-tail recovery | 75,931 | 3,041 | 95.9% | 5,103 | 2,795 | 45.2% |
+| fleet hardening | 76,238 | 4,422 | 94.1% | 5,410 | 4,176 | 22.8% |
+| native HPC experiment | 77,550 | 3,344 | 95.6% | 6,722 | 3,098 | 53.9% |
+| duration Cowork | 80,599 | 4,696 | 94.1% | 9,771 | 4,450 | 54.4% |
 
-The median total reduction is 97.3%, above the frozen 85% threshold; every
+The median total reduction is 96.5%, above the frozen 85% threshold; every
 scenario exceeds 94%, above the per-scenario 50% floor. Median non-ledger
-reduction is 60.3%, above the 30% independent policy/skill threshold. The
-always-read policy is 800 words, and the active board is 52 lines / 246 words,
+reduction is 48.0%, above the 30% independent policy/skill threshold. The
+always-read policy is 805 words, and the active board is 52 lines / 246 words,
 and selected conditional policy routes are separately budgeted by
 `tests/test-agent-policy-routing.sh`.
 
 Active-task details are now one hop behind the board. At this checkpoint the
-selected T-351 record is 408 words during execution, so board plus relevant
-record is 654 words—43.3% below the prior 1,153-word board—while unrelated
+selected T-351 record is 417 words during execution, so board plus relevant
+record is 663 words—42.5% below the prior 1,153-word board—while unrelated
 backup successor IDs, outage contingency
 details, and the blocked NFS fingerprint are not loaded. The ledger fixture
 requires all four task records, their board routes, and their exact critical
@@ -68,11 +69,11 @@ collision, cleanup, and unknown-state stops before references load.
 
 Conditional policy is now split by exact Git, external-operation,
 managed-Codex, and fleet actions. The corresponding root-plus-module routes
-are 1,075, 1,074, 1,023, and 1,131 words. An ordinary Git action no longer
+are 1,094, 1,079, 1,028, and 1,136 words. An ordinary Git action no longer
 loads installer/global-configuration policy, and tmux recovery no longer loads
 fleet maintenance and rollout policy.
 
-The 17 always-visible skill descriptions fell from 819 to 375 words (54.2%).
+The 17 always-visible skill descriptions fell from 819 to 381 words (53.5%).
 Each remains a precise trigger index; `tests/test-skill-catalog-budget.sh`
 enforces a 400-word total plus skill-specific trigger markers. The root policy
 therefore no longer duplicates a partial trigger table.
