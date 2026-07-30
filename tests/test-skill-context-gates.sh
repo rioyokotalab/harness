@@ -112,7 +112,7 @@ assert_contains 'routing must use the task- and phase-specific references' \
 # PIE must not manufacture an interview when decisions and authorization exist.
 pie_frontmatter=$(sed -n '1,5p' "$PIE/SKILL.md")
 printf '%s\n' "$pie_frontmatter" | grep -F \
-    'Do not trigger merely because work is consequential, multi-step, multi-session' \
+    'skip fully frozen authorized execution' \
     >/dev/null || fail 'PIE narrow frontmatter trigger'
 if printf '%s\n' "$pie_frontmatter" | grep -F \
     'for consequential, ambiguous, multi-step, or multi-session work' >/dev/null; then
@@ -258,6 +258,9 @@ assert_contains 'Component routes augment `execution-common.md`' \
     "$PERSONAL_MAC/SKILL.md" 'personal-Mac cumulative route gate'
 assert_contains 'wait for the owner' \
     "$PERSONAL_MAC/references/planning.md" 'personal-Mac explicit go'
+assert_contains 'selected task record' \
+    "$PERSONAL_MAC/references/planning.md" \
+    'personal-Mac routed task ledger'
 assert_contains 'TCC response' \
     "$PERSONAL_MAC/references/execution-common.md" \
     'personal-Mac credential/TCC pause'

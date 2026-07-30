@@ -8,6 +8,7 @@ tests/test-agent-policy-routing.sh|conditional agent-policy routing
 tests/test-context-routing-benchmark.sh|mandatory context benchmark
 tests/test-skill-context-budgets.sh|selected skill context budgets
 tests/test-skill-context-gates.sh|selected skill safety gates
+tests/test-skill-catalog-budget.sh|always-visible skill catalog budget
 tests/test-ssh-agent-profile.sh|SSH agent profile focused suite
 tests/test-remote-session.sh|remote-session focused suite
 tests/test-remote-agent-communication.sh|remote agent communication focused suite

@@ -1,6 +1,6 @@
 ---
 name: reboot-recovery
-description: Restore and validate the repository-managed tunnels, Codex remote control, and standard Codex tmux session after aist, home, office, or riken reboots. Use when a managed personal Mac has restarted, returned after power loss, lost its normal Codex session, or needs a post-reboot readiness check from Local.
+description: Restore and validate managed tunnels, remote control, and standard Codex tmux state after an aist, home, office, or riken reboot or power loss.
 ---
 
 # Recover a managed Mac after reboot

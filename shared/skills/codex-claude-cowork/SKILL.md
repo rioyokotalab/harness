@@ -1,6 +1,6 @@
 ---
 name: codex-claude-cowork
-description: Coordinate Codex and Claude Code as a symmetric driver/co-pilot pair through durable files, frozen benchmarks, independent sandbox experiments, reciprocal evidence critique, and driver-only target execution. Use when the owner explicitly asks both native clients to work together, compare or cross-review them, hand work between them, or continue measured work for a stated duration.
+description: Coordinate Codex and Claude for explicit collaboration, comparison, handoff, or duration work through an agreed benchmark, isolated experiments, reciprocal evidence critique, and one target driver.
 ---
 
 # Codex–Claude cowork

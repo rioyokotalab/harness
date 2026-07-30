@@ -1,6 +1,6 @@
 ---
 name: onboard-external-user
-description: Safely set up a clean local Linux or macOS account to use the Codex/Claude harness without assuming the owner's hidden files, credentials, remote nodes, storage, backups, or installed prerequisites. Use when an external or first-time user asks to clone, install, validate, repair, or understand a local harness installation before any separate mirrored-node onboarding.
+description: Set up or repair a first-time external user's clean Linux/macOS Harness account without assuming owner credentials, hidden files, storage, backups, remote nodes, or prerequisites.
 ---
 
 # Onboard External User

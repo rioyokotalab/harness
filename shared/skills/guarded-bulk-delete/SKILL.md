@@ -1,6 +1,6 @@
 ---
 name: guarded-bulk-delete
-description: Plan, execute, and verify autonomous deletion of directory trees with protected-root rejection, explicit canonical boundaries, immutable short-lived manifests, identity and size revalidation, and post-delete checks. Use whenever Codex or Claude would otherwise run recursive rm, find -delete, wildcard cleanup, synchronization with deletion, or any command that can remove multiple files or directories, including to classify whether reviewed installer or package-manager internal cleanup qualifies for the narrow exception.
+description: Use before recursive, wildcard, synchronized, or multi-path deletion, including installer-cleanup classification; enforce protected roots, immutable manifests, identity/size revalidation, and post-delete checks.
 ---
 
 # Guarded bulk delete

@@ -1,6 +1,6 @@
 ---
 name: evidence-first-research
-description: Research factual, technical, scholarly, or current questions with traceable provenance. Use for web lookup, literature review, metadata reconciliation, recommendations, or any claim whose correctness depends on external evidence.
+description: Research factual, current, scholarly, or recommendation questions with traceable primary-source provenance, including web lookup, literature review, and metadata reconciliation.
 ---
 
 # Evidence-first research

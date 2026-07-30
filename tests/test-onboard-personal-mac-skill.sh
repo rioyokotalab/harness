@@ -80,6 +80,8 @@ assert_contains 'Do not preload this compatibility index' "$STAGES" \
 
 assert_contains 'Require exactly one owner-supplied' "$PLANNING" \
     'one-host planning gate'
+assert_contains 'selected task record' "$PLANNING" \
+    'routed active-task ledger'
 assert_contains 'one material decision at a time' "$PLANNING" \
     'interview gate'
 assert_contains 'wait for the owner' "$PLANNING" 'explicit go gate'
@@ -142,6 +144,8 @@ assert_contains 'macos-doctor --host HOST' "$ACCEPTANCE" \
     'doctor acceptance'
 assert_contains 'protected CI' "$ACCEPTANCE" \
     'protected publication gate'
+assert_contains 'selected task record' "$ACCEPTANCE" \
+    'selected-record handoff'
 assert_contains 'live startup reference or open handle' "$ORPHAN" \
     'active Bash common retention'
 assert_contains 'exact-unlink only a proven orphan' "$ORPHAN" \

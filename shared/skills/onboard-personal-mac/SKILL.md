@@ -1,14 +1,14 @@
 ---
 name: onboard-personal-mac
-description: Safely plan, execute, validate, roll back, and checkpoint onboarding of one personal macOS host into the repository-managed harness. Use when the owner asks Codex to onboard, configure, catch up, migrate, or finish setup of a personal Mac, including a newly reachable remaining Mac; Codex must run the native commands itself rather than hand shell scripts to the owner.
+description: Plan, execute, validate, roll back, or resume onboarding of exactly one personal Mac; Codex runs native commands and pauses only at unavoidable owner gates.
 ---
 
 # Onboard one personal Mac
 
-Operate exactly one owner-named Mac. Treat repository Git and `TODO.md` as
-durable truth; never infer its state from another Mac. Codex runs every native
-command. The owner supplies only decisions and unavoidable physical or
-authentication interaction.
+Operate exactly one owner-named Mac. Treat repository Git, the compact
+`TODO.md` queue, and its selected task record as durable truth; never infer
+state from another Mac. Codex runs every native command; the owner supplies only
+decisions and unavoidable physical or authentication interaction.
 
 ## Route only the current phase and components
 

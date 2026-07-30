@@ -1,6 +1,6 @@
 ---
 name: onboard-mirrored-node
-description: Safely onboard a newly configured SSH alias into the mirrored harness fleet with ledger-backed planning, value-free discovery, strict declarations, transactional bootstrap, storage migration, and manual backup/restore validation. Use when the owner adds a new node to SSH configuration and asks to mirror the existing control plane or run `onboard HOST`.
+description: Onboard a newly configured SSH alias into the mirrored Harness fleet using ledger-backed discovery, declarations, transactional bootstrap/storage migration, and backup/restore validation.
 ---
 
 # Onboard Mirrored Node

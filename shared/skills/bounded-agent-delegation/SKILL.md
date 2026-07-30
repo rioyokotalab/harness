@@ -1,6 +1,6 @@
 ---
 name: bounded-agent-delegation
-description: Decide, dispatch, and review bounded subagent work when the user and active project instructions permit delegation. Use for independent research, diagnosis, or non-overlapping implementation whose saved context exceeds dispatch and review cost.
+description: Delegate bounded independent research, diagnosis, or non-overlapping implementation only when project policy permits and saved context exceeds dispatch and review cost.
 ---
 
 # Bounded agent delegation

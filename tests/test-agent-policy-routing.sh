@@ -35,7 +35,7 @@ runtime_words=$(words "$RUNTIME")
 housekeeping_words=$(words "$HOUSEKEEPING")
 research_words=$(words "$RESEARCH")
 
-assert_max "$root_words" 1200 'always-read policy'
+assert_max "$root_words" 1050 'always-read policy'
 assert_max "$external_words" 550 'repository/external policy'
 assert_max "$runtime_words" 550 'runtime/fleet policy'
 assert_max "$housekeeping_words" 300 'housekeeping/promotion policy'
@@ -74,6 +74,8 @@ assert_contains 'never expand it with task chronology' "$AGENTS" \
 assert_contains 'never preload' "$AGENTS" 'archive selective-read gate'
 assert_contains '`codex-claude-cowork` and' "$AGENTS" \
     'duration cowork route'
+assert_contains 'Installed skill descriptions are the trigger index' "$AGENTS" \
+    'skill catalog routing authority'
 assert_contains 'REPLY_REQUIRED request_id=ID' "$AGENTS" \
     'bounded reply contract'
 

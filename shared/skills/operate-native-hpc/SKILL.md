@@ -1,6 +1,6 @@
 ---
 name: operate-native-hpc
-description: Plan, execute, monitor, validate, and clean up LLM training, GPU, MPI, and HPC development work through each configured system's visible native scheduler, environment, module, uenv, and container commands. Use for workload readiness, allocations, job submission, distributed runs, accelerator or MPI smoke tests, project environment entry, scheduler diagnosis, and matched performance experiments on the current node or the in-scope ab, ab2, ri, al, rc, and t4 targets.
+description: Operate managed HPC work through each site's native scheduler, environment, modules, containers, and visible commands for allocations, MPI/GPU runs, diagnosis, or matched experiments.
 ---
 
 # Operate Native HPC

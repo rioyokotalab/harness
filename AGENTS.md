@@ -70,18 +70,9 @@ dependencies.
 Before a skill-directed action, name the skill and why it applies in
 user-facing commentary. Name it again if it causes an external action or pause.
 
-| Skill | Exact trigger |
-| --- | --- |
-| `long-running-task-ledger` | work must survive interruption, handoff, a duration boundary, or later resume |
-| `plan-interview-execute` | the owner asks for planning/interview/explicit go, or a still-open material choice changes scope or external state; not already-frozen execution |
-| `bounded-agent-delegation` | delegation is permitted and saves more context than it costs |
-| `evidence-first-research` | factual, current, literature, or provenance-sensitive research |
-| `research-engineering-validation` | distributed training, scientific HPC, GPU/numerical/performance software |
-| `operate-native-hpc` | scheduler, allocation, distributed run, or matched experiment on a managed HPC target |
-| `onboard-mirrored-node` | a new SSH alias must join the mirrored control plane |
-| `research-presentation-workflow` | research talk, slides, poster-to-slides, or visual technical explanation |
-| `research-program-management` | multi-project or student-progress coordination |
-| `guarded-bulk-delete` | any recursive or expanded multi-path deletion |
+Installed skill descriptions are the trigger index; do not duplicate or broaden
+them here. The always-read deletion rule and the Harness duration rule below
+remain mandatory project refinements.
 
 ## Agent-attributed messages
 

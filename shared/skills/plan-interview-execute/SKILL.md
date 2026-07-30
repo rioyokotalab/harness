@@ -1,6 +1,6 @@
 ---
 name: plan-interview-execute
-description: Run a ledger-backed Plan–Interview–Execute (PIE) workflow when the owner explicitly asks to plan before execution, resolve still-open material choices interactively or one question at a time, wait for a go after those choices are frozen, or resume an existing PIE ledger. Do not trigger merely because work is consequential, multi-step, multi-session, or already has a complete frozen plan plus explicit execution authorization.
+description: Use when the owner explicitly requests planning/interview/go, a material owner choice remains open, or an existing PIE ledger must resume; skip fully frozen authorized execution.
 ---
 
 # Plan–Interview–Execute

@@ -17,7 +17,8 @@ After each fresh managed login-shell check, repeat the component no-op plan and
 `macos-doctor`; startup-local commands can mutate only when executed.
 
 Record outcomes, transaction locality, validation, exclusions, remaining
-authority, and the next Mac boundary in `TODO.md`. Publish generic changes
+authority, and the next Mac boundary in the selected task record. Change
+`TODO.md` only when its queue-level summary changes. Publish generic changes
 through protected CI; never commit private facts. Complete only after
-rollback/reapply and fresh-session gates pass. On interruption, retain the last
-verified state and retry-safe next action.
+rollback/reapply and fresh-session gates pass. On interruption, retain the
+last verified state and retry-safe next action.

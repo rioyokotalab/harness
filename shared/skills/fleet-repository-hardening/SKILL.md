@@ -1,6 +1,6 @@
 ---
 name: fleet-repository-hardening
-description: Audit and harden multiple repositories and their Linux/macOS execution fleet through independent ledgers, isolated worktrees, frozen owner decisions, repository-local LIFO issue stacks, small protected changes, live-settings readback, and deadline-based handoff. Use for nightly or multi-hour security, reliability, dependency, CI, backup, SSH, agent-tooling, or repository-governance reviews spanning two or more repositories or nodes.
+description: Audit or harden multiple repositories or fleet nodes using independent ledgers, isolated worktrees, frozen decisions, repository-local LIFO issue stacks, protected changes, and deadline handoff.
 ---
 
 # Fleet and Repository Hardening

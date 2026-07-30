@@ -1,6 +1,6 @@
 ---
 name: remote-agent-communication
-description: Exchange explicitly identified prompts and bounded replies between existing managed Codex threads over SSH without reading pane contents. Use when the owner asks one remote Codex to talk to, question, hand off to, notify, or obtain a reliable reply from the Local controller or one of the managed Mac Codex sessions, including bidirectional agent conversations visible through Codex remote control.
+description: Send identified prompts or one bounded reply between existing managed Codex threads over SSH without reading panes; use for owner-requested agent communication, questions, notifications, or handoffs.
 ---
 
 # Remote agent communication

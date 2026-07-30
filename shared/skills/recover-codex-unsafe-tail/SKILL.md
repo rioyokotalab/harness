@@ -1,6 +1,6 @@
 ---
 name: recover-codex-unsafe-tail
-description: Diagnose, recover, or replace a managed remote Codex thread that repeatedly shows Request blocked, reports systemError, has an unsafe or unavailable recovery tail, has lost its recovery watcher, or requires an authorized saved-root/TUI replacement. Use for Harness-managed phone/tmux Codex sessions when recovery must preserve tool-bearing work, avoid rejected-prompt replay, and choose safely between one proven rollback and a bridge-first fresh-root cutover.
+description: Diagnose or recover a managed phone/tmux Codex thread with Request blocked, systemError, an unsafe tail, lost watcher, or authorized root/TUI replacement—never replay rejected prompts.
 ---
 
 # Recover or replace Codex unsafe tails
