@@ -14,12 +14,14 @@
 
 Clean-tree R0/R1 results may reuse a private content-addressed receipt only when
 base, head, tree, changed paths, environment contract, validator/map bytes, and
-selected-suite bytes all match. HOME, PATH, and TMPDIR enter as value-free
-hashes. Cache lookup, test completion, and receipt publication each recheck the
-exact clean-tree identity; cached files must match their advertised content
-digest. Receipts state that they are owner self-attestation from the same trust
-root, not independent CI. R2/R3 and paths containing lifecycle-sensitive
-tokens do not reuse cache. Every validator path is R3.
+selected-suite bytes all match. HOME, PATH, TMPDIR, locale, and Python
+optimization mode enter as value-free hashes; optimized Python is rejected
+because it removes assertion-based contracts. Cache lookup, test completion,
+and receipt publication each recheck the exact clean-tree identity; cached
+files must match their advertised content digest. Receipts state that they are
+owner self-attestation from the same trust root, not independent CI. R2/R3 and
+paths containing lifecycle-sensitive tokens do not reuse cache. Every
+validator path is R3.
 
 Measured Local wall times before phase-one overlap were:
 

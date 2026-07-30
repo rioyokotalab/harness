@@ -238,14 +238,22 @@ def environment_contract(jobs: str) -> dict[str, str]:
         "home_sha256": value_digest("HOME"),
         "git": git_version,
         "jobs": jobs,
+        "lang_sha256": value_digest("LANG"),
+        "lc_all_sha256": value_digest("LC_ALL"),
         "machine": platform.machine(),
         "path_sha256": value_digest("PATH"),
         "portable_ci": os.environ.get("HARNESS_PORTABLE_CI", ""),
         "python": platform.python_version(),
+        "pythonoptimize_sha256": value_digest("PYTHONOPTIMIZE"),
         "release": platform.release(),
         "system": platform.system(),
         "tmpdir_sha256": value_digest("TMPDIR"),
     }
+
+
+def validate_python_mode() -> None:
+    if os.environ.get("PYTHONOPTIMIZE", "") not in ("", "0"):
+        raise ValueError("PYTHONOPTIMIZE would disable validator assertions")
 
 
 def validator_contract(root: Path, suites: list[str]) -> dict:
@@ -501,6 +509,7 @@ def main() -> int:
     args = parse_args()
     root = Path(__file__).resolve().parent.parent
     try:
+        validate_python_mode()
         rules = load_rules(root)
         if args.path:
             if not args.plan:

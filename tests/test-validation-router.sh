@@ -228,8 +228,31 @@ finally:
     else:
         os.environ["TMPDIR"] = original_tmpdir
 assert environment_a["tmpdir_sha256"] != environment_b["tmpdir_sha256"]
-assert set(("home_sha256", "path_sha256", "tmpdir_sha256")) <= set(environment_a)
+assert set(
+    (
+        "home_sha256",
+        "lang_sha256",
+        "lc_all_sha256",
+        "path_sha256",
+        "pythonoptimize_sha256",
+        "tmpdir_sha256",
+    )
+) <= set(environment_a)
 assert "/tmp/validation-contract-a" not in json.dumps(environment_a)
+original_optimize = os.environ.get("PYTHONOPTIMIZE")
+try:
+    os.environ["PYTHONOPTIMIZE"] = "1"
+    try:
+        module["validate_python_mode"]()
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("optimized Python mode was accepted")
+finally:
+    if original_optimize is None:
+        os.environ.pop("PYTHONOPTIMIZE", None)
+    else:
+        os.environ["PYTHONOPTIMIZE"] = original_optimize
 
 with tempfile.TemporaryDirectory() as raw_receipts:
     receipt_dir = Path(raw_receipts)

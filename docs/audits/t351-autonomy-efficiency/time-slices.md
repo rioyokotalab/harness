@@ -668,3 +668,25 @@ KiB maximum RSS. This clears the preceding 90/91 checkpoint without a waiver.
 The wall result is 52.6% below the immutable 114.77-second baseline, while the
 matched ShellCheck and longest-first comparisons remain the causal evidence;
 the varying RSS is not presented as a memory improvement.
+
+Protected PR #484 then exposed a portability-only evaluation failure that
+Local's `/tmp` worktree could not trigger. The frozen evaluation corpus had
+moved its ledger skill oracle to `evaluation/control-plane/`, but the
+adversarial self-test still emitted a command for the evolving live
+`shared/skills/` path. On GitHub's checkout below the account home, the
+outside-scope detector correctly noticed the mismatch and failed; Local's
+checkout outside its account home never entered that branch. The self-test now
+derives exactly one declared frozen path, directly proves that command is
+allowlisted even outside the account home, and uses it for safe, chained,
+pipeline, and hostile cases. Portable-CI evaluation and syntax checks pass.
+Run `30581818079` remains a failed receipt and will not be rerun unchanged.
+The initial PR body also carried an incorrectly completed long hash after the
+verified short `65e4206` prefix. Fresh `git rev-parse` and PR readback corrected
+it to exact head `65e4206ca492056233d9f7f5afa31a893ec63599` before that body
+was used as evidence; no repository or run state depended on the typo.
+
+The local validation entry also now rejects nonzero `PYTHONOPTIMIZE` before
+selection and hashes Python optimization plus locale inputs into cache
+identity. Direct refusal probes pass for the ledger, router, Actions, context,
+and focused-runner validators. This closes the general environment route
+rather than relying only on each new script's assertion guard.
