@@ -97,6 +97,16 @@ Harness:
   start a push run; the exact merged tree and run list are reconciled before
   closeout.
 
+### Post-transition readback
+
+At 2026-07-31 03:12 JST, Students remained at closeout head `dafb4a3`.
+Swallow had independently advanced through PR #139 to
+`1f1951d573eef05ce4055c140088d97ca8328382`. Its owner pull-request run
+`30557998116` skipped, and that merge produced no push run. Fresh workflow
+content in both private repositories still had pull-request, weekly, and
+manual triggers, the owner-only job condition, and no `push` trigger. This is
+one later workload observation, not a forecast of future consumption.
+
 GitHub's job-condition syntax supports this event-specific selection:
 [job conditions](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-jobs-with-conditions).
 A skipped required job reports success, so the existing required context can
