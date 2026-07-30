@@ -202,6 +202,40 @@ fleet remain unchanged.
 task head, require protected `portable-phase1`, and merge before executing the
 frozen live rename.
 
+PR #456 exact head `006a26f46040c0d7c1ee320ab14a3e04311d446a`
+passed protected `portable-phase1` and merge-merged as
+`cb4ed43`. Local `main` fast-forwarded cleanly to that merge before any live
+write.
+
+The first exact `SIGSTOP` attempts on idle monitor `3835977` and helper
+`3834026` were acknowledged but both foreground single-process pane jobs
+immediately continued; no session, receipt, event, or project state changed.
+Fresh status remained healthy/idle with no child process. The bounded
+transaction then respawned only panes `%95` and `%97` into inert exact
+`/usr/bin/sleep 600` holders, proved both old owners absent, and sent one
+native `tmux rename-session -t '$14' projects`. The command acknowledged and
+exact readback proves session ID `$14` is attached as `projects`, while old
+name `harness` is absent.
+
+Project windows and pane owners remained exact:
+`@87/0:harness/%87/1612366`, `@88/1:students/%88/1638028`, and
+`@98/2:swallow/%98/4144052`. Sole client `197678` remained on `$14/@87`.
+Only monitor/helper panes were respawned under merged code, as owners
+`1491051` and `1491347`; the tunnel monitor was unchanged.
+
+Two interval-separated receipt pairs at epochs `1785403128` and
+`1785403188`–`1785403189` report three healthy chains, exact three-root phone
+parity, no mismatch, no order action, and no repair action. All three resilient
+chains remain attempt zero with their existing recovery watchers and saved
+roots. No pane/transcript content, project input, app-server write, root
+lifecycle action, client movement, or project-process signal occurred.
+
+**Next action:** commit and publish this live acceptance, then guarded-sync all
+clean reachable managed checkouts from pre-task protected main to the resulting
+closeout merge. Require an idempotent plan, fresh interactive exact
+`att='tmux attach -t projects'` on every advanced host, the required one-time
+Mac context refreshes, and canonical fleet health.
+
 ### T-348 — Keep phone remote-control roots mirrored to Local tmux
 
 **Phase:** complete.
