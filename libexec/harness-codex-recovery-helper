@@ -40,6 +40,11 @@ EXPECTED = tuple((value["name"], value["index"]) for value in TARGETS)
 TARGET_PATHS = {
     value["name"]: value["repository"] for value in TARGETS
 }
+TARGETLESS_EVENT_KINDS = (
+    "mirror-drift",
+    "phone-mirror-drift",
+    "remote-control-absent",
+)
 INTERACTIVE_SOURCES = ("cli", "vscode")
 TERMINAL_PHASES = ("completed", "failed", "ambiguous", "deferred")
 ACCEPTED_RESULT = re.compile(r"^RECOVERY_RESULT status=accepted(?:[ \t]|$)")
@@ -62,6 +67,25 @@ def safe_id(value, label):
     if not SAFE_ID.match(value):
         fail("{} is malformed".format(label))
     return value
+
+
+def managed_target(value):
+    if not isinstance(value, str):
+        fail("target is malformed")
+    safe_id(value, "target")
+    if value not in TARGET_PATHS:
+        fail("target is outside the closed managed target map")
+    return value
+
+
+def event_target(identity):
+    if not isinstance(identity, dict):
+        fail("event identity is malformed")
+    if "target" not in identity:
+        if identity.get("kind") not in TARGETLESS_EVENT_KINDS:
+            fail("event target is required")
+        return "harness"
+    return managed_target(identity["target"])
 
 
 def safe_window_id(value):
@@ -234,6 +258,7 @@ def receipt_path(root, event_id):
 
 
 def enqueue_event(root, identity):
+    event_target(identity)
     event_id = event_identity(identity)
     path = event_path(root, event_id)
     if os.path.exists(path):
@@ -255,7 +280,7 @@ def blocked_identity(arguments):
     return {
         "schema": 1,
         "kind": "blocked-root",
-        "target": safe_id(arguments.target, "target"),
+        "target": managed_target(arguments.target),
         "runtime": safe_id(arguments.runtime, "runtime"),
         "thread": safe_id(arguments.thread, "thread"),
         "watcher_pid": arguments.watcher_pid,
@@ -625,9 +650,7 @@ def observe_mirror(root):
 def worker_prompt(event):
     identity = event["identity"]
     serialized = json.dumps(identity, sort_keys=True, separators=(",", ":"))
-    target = identity.get("target", "harness")
-    if target not in TARGET_PATHS:
-        target = "harness"
+    target = event_target(identity)
     target_repository = TARGET_PATHS[target]
     return """\
 You are the dedicated Local Codex recovery worker for one immutable event.
@@ -759,6 +782,7 @@ def event_files(root):
             or event_identity(event.get("identity")) != event.get("event")
         ):
             fail("queued event is malformed")
+        event_target(event["identity"])
         paths.append((event.get("created_ns", 0), name, event))
     return [value[2] for value in sorted(paths)]
 
@@ -794,6 +818,7 @@ def reconcile_started(root, event):
 
 
 def process_event(root, event):
+    prompt = worker_prompt(event).encode("utf-8")
     if reconcile_started(root, event):
         return False
     event_id = event["event"]
@@ -815,7 +840,6 @@ def process_event(root, event):
         descriptor = os.open(log_path, flags, 0o600)
     finally:
         os.umask(old)
-    prompt = worker_prompt(event).encode("utf-8")
     worker_environment = os.environ.copy()
     for variable in (
         "HARNESS_ROOT",
@@ -988,9 +1012,10 @@ def parse_arguments():
 
 def main():
     arguments = parse_arguments()
+    blocked = blocked_identity(arguments) if arguments.enqueue_blocked else None
     root = runtime_root()
     if arguments.enqueue_blocked:
-        _event, action = enqueue_event(root, blocked_identity(arguments))
+        _event, action = enqueue_event(root, blocked)
         print("CODEX_RECOVERY_HELPER enqueue={}".format(action))
         return 0
     helper_receipt = os.path.join(root, "helper.json")

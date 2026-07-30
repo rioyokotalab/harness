@@ -89,6 +89,23 @@ module = importlib.machinery.SourceFileLoader(
     "recovery_helper_phone_test", source
 ).load_module()
 assert module.SESSION_NAME == "projects"
+for kind in module.TARGETLESS_EVENT_KINDS:
+    prompt = module.worker_prompt({"identity": {"kind": kind}})
+    assert "Exact managed target: harness" in prompt
+try:
+    module.worker_prompt(
+        {"identity": {"kind": "blocked-root", "target": "unknown"}}
+    )
+except module.HelperError:
+    pass
+else:
+    raise AssertionError("unknown explicit target fell back")
+try:
+    module.worker_prompt({"identity": {"kind": "blocked-root"}})
+except module.HelperError:
+    pass
+else:
+    raise AssertionError("targetless blocked event was accepted")
 phone_event = {"identity": {"kind": "phone-mirror-drift"}}
 assert module.event_pending(phone_event, {}, False) is False
 assert module.event_pending(phone_event, {}, True) is True
@@ -296,27 +313,74 @@ helper() {
         "$HARNESS" codex-recovery-helper "$@"
 }
 
+unknown_status=0
 helper --enqueue-blocked \
-    --target swallow \
-    --runtime swallow-recovery-t345 \
-    --thread 019fafef-5ebf-72f1-b1ce-2444e7570dc1 \
-    --watcher-pid 4242 \
-    --watcher-start 123456 \
-    --app-server-pid 4343 \
-    --app-server-start 654321 \
-    --window-id @93 \
-    --window-index 2 >"$TEST_ROOT/enqueue.out"
-grep -F 'enqueue=queued' "$TEST_ROOT/enqueue.out" >/dev/null ||
-    fail "blocked event was not queued"
+    --target unknown \
+    --runtime unknown-recovery-t351 \
+    --thread thread-unknown \
+    --watcher-pid 4249 \
+    --watcher-start 123459 \
+    --app-server-pid 4349 \
+    --app-server-start 654329 \
+    --window-id @99 \
+    --window-index 9 >"$TEST_ROOT/unknown.out" 2>"$TEST_ROOT/unknown.err" ||
+    unknown_status=$?
+[ "$unknown_status" -eq 2 ] ||
+    fail "unknown target did not exit 2"
+for area in events receipts logs
+do
+    [ ! -e "$RUNTIME/$area" ] ||
+        fail "unknown target created $area state"
+done
+[ -z "$(find "$CAPTURE" -mindepth 1 -print -quit)" ] ||
+    fail "unknown target invoked the worker"
 
-helper --once >"$TEST_ROOT/once.out"
-grep -F 'completed=1' "$TEST_ROOT/once.out" >/dev/null ||
-    fail "ephemeral worker did not complete"
+completed=0
+for target in harness students swallow
+do
+    case "$target" in
+        harness)
+            index=0
+            repository=$ROOT
+            ;;
+        students)
+            index=1
+            repository=/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students
+            ;;
+        swallow)
+            index=2
+            repository=/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow
+            ;;
+    esac
+    helper --enqueue-blocked \
+        --target "$target" \
+        --runtime "$target-recovery-t351" \
+        --thread "thread-$target" \
+        --watcher-pid "$((4240 + index))" \
+        --watcher-start "12345$index" \
+        --app-server-pid "$((4340 + index))" \
+        --app-server-start "65432$index" \
+        --window-id "@9$index" \
+        --window-index "$index" >"$TEST_ROOT/enqueue-$target.out"
+    grep -F 'enqueue=queued' "$TEST_ROOT/enqueue-$target.out" >/dev/null ||
+        fail "$target blocked event was not queued"
+
+    completed=$((completed + 1))
+    helper --once >"$TEST_ROOT/once-$target.out"
+    grep -F "completed=$completed" "$TEST_ROOT/once-$target.out" >/dev/null ||
+        fail "$target ephemeral worker did not complete"
+    grep -F "Exact managed target: $target" "$CAPTURE/prompt" >/dev/null ||
+        fail "$target recovery prompt identity is absent"
+    grep -F "Exact target repository: $repository" \
+        "$CAPTURE/prompt" >/dev/null ||
+        fail "$target recovery prompt repository is absent"
+done
+
 [ -f "$CAPTURE/control-environment" ] ||
     fail "worker control environment was not checked"
 [ ! -e "$CAPTURE/control-leak" ] ||
     fail "worker inherited a Harness control variable"
-[ "$(wc -l <"$CAPTURE/arguments" | tr -d ' ')" = 1 ] ||
+[ "$(wc -l <"$CAPTURE/arguments" | tr -d ' ')" = 3 ] ||
     fail "unexpected worker invocation count"
 grep -F 'exec --ephemeral' "$CAPTURE/arguments" >/dev/null ||
     fail "worker is not ephemeral"
@@ -333,26 +397,20 @@ grep -F 'codex remote-control start --json' \
     fail "absent-only remote-control contract is absent"
 grep -F 'Reversibly archive only roots' "$CAPTURE/prompt" >/dev/null ||
     fail "reversible archive contract is absent"
-grep -F 'Exact managed target: swallow' "$CAPTURE/prompt" >/dev/null ||
-    fail "recovery prompt target identity is absent"
-grep -F \
-    'Exact target repository: /mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow' \
-    "$CAPTURE/prompt" >/dev/null ||
-    fail "recovery prompt target repository is absent"
 
 helper --once >"$TEST_ROOT/repeat.out"
-[ "$(wc -l <"$CAPTURE/arguments" | tr -d ' ')" = 1 ] ||
+[ "$(wc -l <"$CAPTURE/arguments" | tr -d ' ')" = 3 ] ||
     fail "completed event was retried"
 
 helper --enqueue-blocked \
     --target swallow \
-    --runtime swallow-recovery-t345 \
-    --thread 019fafef-5ebf-72f1-b1ce-2444e7570dc1 \
+    --runtime swallow-recovery-t351 \
+    --thread thread-swallow \
     --watcher-pid 4242 \
-    --watcher-start 123456 \
-    --app-server-pid 4343 \
-    --app-server-start 654321 \
-    --window-id @93 \
+    --watcher-start 123452 \
+    --app-server-pid 4342 \
+    --app-server-start 654322 \
+    --window-id @92 \
     --window-index 2 >"$TEST_ROOT/duplicate.out"
 grep -F 'enqueue=already-queued' "$TEST_ROOT/duplicate.out" >/dev/null ||
     fail "duplicate event was not deduplicated"
@@ -362,22 +420,22 @@ if helper --status >"$TEST_ROOT/status.out"; then
 fi
 grep -F 'phase=stale' "$TEST_ROOT/status.out" >/dev/null ||
     fail "one-shot helper status is not stale"
-grep -F 'completed=1' "$TEST_ROOT/status.out" >/dev/null ||
+grep -F 'completed=3' "$TEST_ROOT/status.out" >/dev/null ||
     fail "helper status lost completion"
 
-receipt=$(find "$RUNTIME/receipts" -type f -name '*.json')
-[ -n "$receipt" ] || fail "event receipt is absent"
-python3 - "$receipt" <<'PY'
+python3 - "$RUNTIME/receipts" <<'PY'
 import json
 import pathlib
 import stat
 import sys
 
-path = pathlib.Path(sys.argv[1])
-value = json.loads(path.read_text())
-assert value["phase"] == "completed"
-assert value["returncode"] == 0
-assert stat.S_IMODE(path.stat().st_mode) == 0o600
+paths = sorted(pathlib.Path(sys.argv[1]).glob("*.json"))
+assert len(paths) == 3
+for path in paths:
+    value = json.loads(path.read_text())
+    assert value["phase"] == "completed"
+    assert value["returncode"] == 0
+    assert stat.S_IMODE(path.stat().st_mode) == 0o600
 PY
 
 printf '%s\n' "Codex recovery helper tests: PASS"
