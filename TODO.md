@@ -166,7 +166,7 @@ agents and ledgers.
 
 ### T-347 — Complete T-345 mirror convergence
 
-**Phase:** controller prepared; checkpoint publication pending.
+**Phase:** exact controller checkpoint frozen; protected publication pending.
 
 The immutable T-345 helper event remains terminal `failed/worker-failed`; its
 private worker log remains unread and the event must never be retried.
@@ -221,11 +221,18 @@ Two frozen extra rollouts use their pre-existing owner-owned, one-link mode
 freezes exact file identity and location under the Codex sessions root without
 changing these historical modes.
 
-**Next action:** commit this controller checkpoint and amendment. Record that
-exact commit from a second publication commit, push and merge both through the
-protected workflow, then execute from the unchanged exact checkpoint worktree.
-Do not open the app-server connection, signal helper/watchers, or write root
-metadata before protected publication.
+The immutable controller checkpoint is exact commit
+`70c5194066965df1bffc0078f36361ded50d7bc2` in clean worktree
+`/tmp/harness-t347-t345-mirror-execution`. That worktree must remain at this
+commit through execution. The later publication commit records it but is not
+part of the controller input; protected `main` must contain the checkpoint as
+an ancestor.
+
+**Next action:** publish this exact checkpoint and recording commit through the
+protected workflow. Then pass the resulting exact protected-main merge commit
+plus checkpoint `70c5194` and controller digest `1e3e569` to one controller
+execution. Do not open the app-server connection, signal helper/watchers, or
+write root metadata before protected publication.
 
 ### T-346 — Reprioritize the durable Harness action queue
 
