@@ -396,6 +396,14 @@ process, private mode-0700/0600 runtime state, and value-free live receipt
 before rename-only promotion to `helper`; preserve any immutable mirror event
 and never retry an acknowledged helper or worker launch.
 
+**Helper LIFO preflight refusal:** the first helper-launch transaction stopped
+at its initial Git assertion because it compared the task head with an
+incorrect manually expanded form of short commit `468e360`. Authoritative Git
+resolves it to `468e360342b13c7154be48486ad1d38c86158121`. No helper
+window/process/event/receipt/worker or root/archive write was created;
+`monitor:2` remains free and helper status remains `phase=absent`. Retry is
+safe after publishing this exact correction and changing only that Git gate.
+
 ### T-344 — Recover Swallow and automate blocked-root cutover
 
 **Phase:** complete; live Swallow recovered and automatic unsafe-tail handoff
