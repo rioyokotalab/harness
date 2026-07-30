@@ -353,6 +353,20 @@ Office, and Riken. An acknowledged or ambiguous submission is never retried.
 Only after recording all four outcomes may the controller revalidate and
 bridge-replace old monitor `@94`.
 
+**Mac refresh checkpoint 2026-07-30 09:22 JST:** the first Aist command used
+the nonexistent repository-root shorthand `scripts/agent-message` and failed
+locally with exit `127` before SSH or target contact, so a corrected attempt
+was safe. The skill-relative transport then returned exact
+`status=submitted` once for Aist, Home, Office, and Riken. Each message named
+T-345 implementation `5351f0c`, required complete instruction/ledger and Git
+reconciliation, and required the existing Mac thread to remain running and
+idle. None may be retried; no pane or transcript content was inspected.
+
+**Next action:** commit and push this non-retryable submission evidence, then
+under a fresh exact identity gate bridge-replace only old monitor window
+`@94` with merged monitor code. Preserve `@40`, all three project windows,
+the shared app server, and the owner client selection.
+
 ### T-344 — Recover Swallow and automate blocked-root cutover
 
 **Phase:** complete; live Swallow recovered and automatic unsafe-tail handoff
