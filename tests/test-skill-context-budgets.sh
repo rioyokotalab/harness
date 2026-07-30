@@ -23,6 +23,7 @@ assert_max() {
 # Frozen T-351 baselines measured before conditional routing.
 COWORK_BEFORE=5926
 HPC_BEFORE=2668
+HPC_LARGEST_BEFORE=1397
 REMOTE_BEFORE=1241
 # Before routing, every hardening invocation selected both the 1,130-word
 # entry and its 301-word aggregate checklist.
@@ -56,19 +57,36 @@ fi
 
 hpc_entry=$(words "$HPC/SKILL.md")
 hpc_common=$(words "$HPC/references/common.md")
-assert_max "$hpc_entry" 900 'HPC entry'
+assert_max "$hpc_entry" 300 'HPC entry'
 assert_max "$hpc_common" 250 'HPC common reference'
 
+hpc_phase_total=0
+hpc_phase_largest=0
+for name in planning execute-monitor validation; do
+    phase_words=$(words "$HPC/references/$name.md")
+    assert_max "$phase_words" 270 "HPC $name phase reference"
+    hpc_phase_total=$((hpc_phase_total + phase_words))
+    [ "$phase_words" -le "$hpc_phase_largest" ] ||
+        hpc_phase_largest=$phase_words
+done
+
+hpc_site_total=0
 hpc_largest=0
 for name in current abci riken alps rccs tsubame; do
     site_words=$(words "$HPC/references/$name.md")
     assert_max "$site_words" 350 "HPC $name reference"
-    route_words=$((hpc_entry + hpc_common + site_words))
-    assert_max "$route_words" 1500 "HPC $name selected route"
+    hpc_site_total=$((hpc_site_total + site_words))
+    route_words=$((hpc_entry + hpc_common + site_words +
+        hpc_phase_largest))
+    assert_max "$route_words" 1125 "HPC $name selected route"
     [ "$route_words" -le "$hpc_largest" ] || hpc_largest=$route_words
 done
-hpc_reduction=$(((HPC_BEFORE - hpc_largest) * 100 / HPC_BEFORE))
-[ "$hpc_reduction" -ge 40 ] ||
+hpc_aggregate=$((hpc_entry + hpc_common + hpc_site_total +
+    hpc_phase_total))
+assert_max "$hpc_aggregate" "$HPC_BEFORE" 'HPC aggregate'
+hpc_reduction=$(((HPC_LARGEST_BEFORE - hpc_largest) * 100 /
+    HPC_LARGEST_BEFORE))
+[ "$hpc_reduction" -ge 20 ] ||
     fail "HPC largest-route reduction is not material: $hpc_reduction%"
 
 if grep -F '](references/sites.md)' "$HPC/SKILL.md" >/dev/null; then
@@ -216,4 +234,4 @@ assert_max "$(words "$UNSAFE/references/protocol.md")" 80 \
     'unsafe-tail compatibility protocol index'
 
 printf '%s\n' \
-    "Skill context budgets passed: cowork $COWORK_BEFORE->$cowork_initial words (-$cowork_reduction%); HPC $HPC_BEFORE->$hpc_largest words (-$hpc_reduction%); PIE $PIE_BEFORE->$pie_largest words (-$pie_reduction%); remote $REMOTE_BEFORE->$remote_largest words (-$remote_reduction%); hardening $HARDENING_BEFORE->$hardening_largest words (-$hardening_reduction%, largest selected routes including interrupted phase); personal-Mac $PERSONAL_MAC_BEFORE->$personal_largest words (-$personal_reduction%, cumulative component acceptance); unsafe-tail diagnosis $UNSAFE_DIAGNOSIS_BEFORE->$unsafe_diagnosis_route words (-$unsafe_diagnosis_reduction%), rollback $UNSAFE_TRANSACTION_BEFORE->$unsafe_safe_route words (-$unsafe_safe_reduction%), bridge $UNSAFE_TRANSACTION_BEFORE->$unsafe_bridge_route words (-$unsafe_bridge_reduction%)"
+    "Skill context budgets passed: cowork $COWORK_BEFORE->$cowork_initial words (-$cowork_reduction%); HPC aggregate $HPC_BEFORE->$hpc_aggregate words, largest route $HPC_LARGEST_BEFORE->$hpc_largest (-$hpc_reduction%); PIE $PIE_BEFORE->$pie_largest words (-$pie_reduction%); remote $REMOTE_BEFORE->$remote_largest words (-$remote_reduction%); hardening $HARDENING_BEFORE->$hardening_largest words (-$hardening_reduction%, largest selected routes including interrupted phase); personal-Mac $PERSONAL_MAC_BEFORE->$personal_largest words (-$personal_reduction%, cumulative component acceptance); unsafe-tail diagnosis $UNSAFE_DIAGNOSIS_BEFORE->$unsafe_diagnosis_route words (-$unsafe_diagnosis_reduction%), rollback $UNSAFE_TRANSACTION_BEFORE->$unsafe_safe_route words (-$unsafe_safe_reduction%), bridge $UNSAFE_TRANSACTION_BEFORE->$unsafe_bridge_route words (-$unsafe_bridge_reduction%)"

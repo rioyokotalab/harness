@@ -4,6 +4,9 @@ set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 COWORK=$ROOT/shared/skills/codex-claude-cowork
 HPC=$ROOT/shared/skills/operate-native-hpc
+HPC_PLANNING=$HPC/references/planning.md
+HPC_EXECUTE=$HPC/references/execute-monitor.md
+HPC_VALIDATION=$HPC/references/validation.md
 PIE=$ROOT/shared/skills/plan-interview-execute
 REMOTE=$ROOT/shared/skills/remote-agent-communication
 HARDENING=$ROOT/shared/skills/fleet-repository-hardening
@@ -37,6 +40,9 @@ for path in \
     "$HPC/references/alps.md" \
     "$HPC/references/rccs.md" \
     "$HPC/references/tsubame.md" \
+    "$HPC_PLANNING" \
+    "$HPC_EXECUTE" \
+    "$HPC_VALIDATION" \
     "$REMOTE/SKILL.md" \
     "$REMOTE/references/delivery.md" \
     "$REMOTE/references/request.md" \
@@ -195,12 +201,26 @@ for route in common current abci riken alps rccs tsubame; do
     assert_contains "[$route.md](references/$route.md)" "$HPC/SKILL.md" \
         "HPC missing $route route"
 done
+for route in planning execute-monitor validation; do
+    [ "$(grep -Fc "[$route.md](references/$route.md)" "$HPC/SKILL.md")" -eq 1 ] ||
+        fail "HPC $route phase is not uniquely reachable"
+done
 [ "$(grep -Eoc '\[(current|abci|riken|alps|rccs|tsubame)\.md\]\(references/[a-z-]+\.md\)' \
     "$HPC/SKILL.md")" -eq 6 ] || fail 'HPC route table is not one-reference-per-site'
-assert_contains 'exactly one selected site reference' "$HPC/SKILL.md" \
+assert_contains 'Then read exactly one' "$HPC/SKILL.md" \
     'HPC one-site routing gate'
 assert_contains 'target has no exact row, stop' "$HPC/SKILL.md" \
     'HPC unknown-target stop'
+assert_contains 'Read only the current phase reference' "$HPC/SKILL.md" \
+    'HPC one-phase routing gate'
+assert_contains 'Do not preload later or completed phases' "$HPC/SKILL.md" \
+    'HPC unloaded-phase gate'
+assert_contains 'phase references never select one another' "$HPC/SKILL.md" \
+    'HPC phase chaining refusal'
+if grep -E '\]\([^)]*[.]md\)' \
+    "$HPC_PLANNING" "$HPC_EXECUTE" "$HPC_VALIDATION" >/dev/null; then
+    fail 'HPC phase reference selects another reference'
+fi
 if grep -E 'ABCI|RIKYU|Alps|R-CCS|TSUBAME|`ab2?`|`ri`|`al`|`rc`|`t4`' \
     "$HPC/references/common.md" >/dev/null; then
     fail 'HPC common reference contains selected-site material'
@@ -211,8 +231,72 @@ for route in current abci riken alps rccs tsubame; do
         fail "HPC $route reference pulls another site reference"
     fi
 done
+
+# These safety triggers must remain in the mandatory router even when every
+# phase reference is unloaded.
+assert_contains 'Reject an alias' "$HPC/SKILL.md" \
+    'HPC target rejection'
+assert_contains 'without a target profile' "$HPC/SKILL.md" \
+    'HPC target-profile rejection'
+assert_contains 'Never run workloads on proxy nodes' "$HPC/SKILL.md" \
+    'HPC proxy rejection'
+assert_contains 'print the fully resolved command prefixed with `NATIVE`' \
+    "$HPC/SKILL.md" 'HPC native-command visibility'
+assert_contains 'Put no hidden scheduler wrapper' "$HPC/SKILL.md" \
+    'HPC hidden-wrapper refusal'
+assert_contains 'required billing group or project account is missing' \
+    "$HPC/SKILL.md" 'HPC missing billing/account stop'
+assert_contains 'Never install a generic global framework' "$HPC/SKILL.md" \
+    'HPC generic-framework refusal'
+assert_contains 'Never read, print, record, or transmit credentials' \
+    "$HPC/SKILL.md" 'HPC credential refusal'
+assert_contains 'full environment dump' "$HPC/SKILL.md" \
+    'HPC full-environment refusal'
+
+assert_contains 'Separate login-node discovery from compute-node evidence' \
+    "$HPC_PLANNING" 'HPC login/compute distinction'
+assert_contains 'Freeze a correct baseline before optimization' \
+    "$HPC_PLANNING" 'HPC frozen baseline'
+assert_contains 'verify declared job and source paths retain the same bytes' \
+    "$HPC_EXECUTE" 'HPC queued source-byte identity'
+assert_contains 'explicitly reviewed shared boundary' "$HPC_EXECUTE" \
+    'HPC multi-node shared-boundary gate'
+assert_contains 'expected digest and executability from every intended node' \
+    "$HPC_EXECUTE" 'HPC multi-node digest gate'
+assert_contains 'exact-name collision query and require' "$HPC_EXECUTE" \
+    'HPC collision-query gate'
+assert_contains 'exact success grammar for one job ID' "$HPC_EXECUTE" \
+    'HPC exact job-ID grammar'
+assert_contains 'then immediately query that' "$HPC_EXECUTE" \
+    'HPC exact job query'
+assert_contains 'ID and match owner and name' "$HPC_EXECUTE" \
+    'HPC job owner/name match'
+assert_contains 'Monitor only the captured job ID' "$HPC_EXECUTE" \
+    'HPC single-job monitor'
+assert_contains 'Cancel only that ID' "$HPC_EXECUTE" \
+    'HPC single-job cancellation'
+assert_contains 'Remove only job-scoped temporary builds and smoke output' \
+    "$HPC_EXECUTE" 'HPC narrow cleanup'
+assert_contains 'CPU/build:' "$HPC_VALIDATION" 'HPC CPU validation'
+assert_contains 'GPU:' "$HPC_VALIDATION" 'HPC GPU validation'
+assert_contains 'MPI/distributed:' "$HPC_VALIDATION" 'HPC MPI validation'
+assert_contains 'LLM training:' "$HPC_VALIDATION" 'HPC LLM validation'
+assert_contains 'Performance:' "$HPC_VALIDATION" \
+    'HPC performance validation'
+assert_contains 'frozen baseline with matched commands' "$HPC_VALIDATION" \
+    'HPC matched performance baseline'
+assert_contains 'Record neither credentials nor a' "$HPC_VALIDATION" \
+    'HPC validation credential refusal'
 assert_contains 'Never use broad user-wide' \
     "$HPC/references/common.md" 'HPC scoped-cancel gate'
+assert_contains 'exact success grammar for one job ID' \
+    "$HPC/references/common.md" 'HPC common exact job-ID gate'
+assert_contains 'match its owner and name' \
+    "$HPC/references/common.md" 'HPC common owner/name query'
+assert_contains 'exit status of every collision/status query' \
+    "$HPC/references/common.md" 'HPC common collision status gate'
+assert_contains 'Monitor or cancel only the captured job ID' \
+    "$HPC/references/common.md" 'HPC common single-job gate'
 assert_contains 'no residue-free test-only mode' \
     "$HPC/references/current.md" 'current-node dry-run gate'
 assert_contains 'explicit billing group and resource request' \
