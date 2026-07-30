@@ -5,7 +5,7 @@ ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 COWORK=$ROOT/shared/skills/codex-claude-cowork
 HPC=$ROOT/shared/skills/operate-native-hpc
 PIE=$ROOT/shared/skills/plan-interview-execute/SKILL.md
-REMOTE=$ROOT/shared/skills/remote-agent-communication/SKILL.md
+REMOTE=$ROOT/shared/skills/remote-agent-communication
 HARDENING=$ROOT/shared/skills/fleet-repository-hardening/SKILL.md
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
@@ -31,7 +31,11 @@ for path in \
     "$HPC/references/alps.md" \
     "$HPC/references/rccs.md" \
     "$HPC/references/tsubame.md" \
-    "$PIE" "$REMOTE" "$HARDENING"; do
+    "$REMOTE/SKILL.md" \
+    "$REMOTE/references/delivery.md" \
+    "$REMOTE/references/request.md" \
+    "$REMOTE/references/fallback.md" \
+    "$PIE" "$HARDENING"; do
     [ -f "$path" ] && [ ! -L "$path" ] || fail "missing regular file: $path"
 done
 
@@ -139,10 +143,27 @@ assert_contains 'do not guess or consume points' \
 assert_contains 'Normal skill routing reads `common.md` and exactly' \
     "$HPC/references/sites.md" 'HPC legacy aggregate marker'
 
-# The prose must match the implementation's canonical Local session.
-assert_contains 'unique Codex pane in the `projects` session' "$REMOTE" \
+# Remote communication keeps common identity/retry gates in the entry and
+# selects only the requested transport path.
+for route in delivery request fallback; do
+    assert_contains "[$route.md](references/$route.md)" "$REMOTE/SKILL.md" \
+        "remote-agent missing $route route"
+done
+assert_contains 'Never create an autonomous' "$REMOTE/SKILL.md" \
+    'remote-agent loop refusal'
+assert_contains 'Never retry an acknowledged delivery' "$REMOTE/SKILL.md" \
+    'remote-agent acknowledgement boundary'
+assert_contains 'unique current-user Codex pane in `projects`' \
+    "$REMOTE/SKILL.md" \
     'remote-agent canonical Local session'
-if grep -F 'unique Codex pane in the `harness` session' "$REMOTE" >/dev/null; then
+assert_contains 'Do not put' "$REMOTE/references/delivery.md" \
+    'remote-agent response evidence gate'
+assert_contains 'does not use `ssh login`' "$REMOTE/references/request.md" \
+    'remote-agent request route independence'
+assert_contains 'Never invoke it twice' "$REMOTE/references/fallback.md" \
+    'remote-agent fallback replay refusal'
+if grep -F 'unique Codex pane in the `harness` session' \
+    "$REMOTE/SKILL.md" >/dev/null; then
     fail 'remote-agent retains stale Local session'
 fi
 
