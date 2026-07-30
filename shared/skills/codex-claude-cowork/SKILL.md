@@ -11,61 +11,53 @@ or substitute a same-product subagent for the other client.
 
 ## Always enforce
 
-- Keep the closest repository instructions, ledger, safety skills, and owner
-  authority controlling. Cowork never grants credential access, external
+- Closest repository instructions, ledger, safety skills, and owner authority
+  control. Cowork never grants credential access or authority for external
   writes, publication, deployment, package installation, scheduler use,
-  messaging, destructive cleanup, or target mutation that the underlying task
-  did not independently authorize.
-- Reconstruct the target, Git state, ledger, and mutable external state before
-  changing it. Preserve unrelated work. Require both native clients; if the
-  co-pilot is unavailable, stop before target execution and never fabricate its
+  messaging, destructive cleanup, or target mutation absent from the task.
+- Reconstruct target, Git, ledger, and mutable external state before changes;
+  preserve unrelated work. Require both native clients.
+  If the co-pilot is unavailable, stop before target execution. Never fabricate
   evidence.
 - Separate the target, live exchange, and two disposable sandboxes built from
-  one named baseline. Keep credentials, private values, and unrelated data out
-  of every sandbox, prompt, stage, seal, receipt, and evidence artifact.
-- Planning and co-pilot experiments are read-only with respect to the target.
-  Use staged exchange by default and never grant the co-pilot the live session.
-  A direct-session write grant is an exceptional, explicitly recorded fallback
-  only when the frozen experiment cannot use staging.
+  one named baseline. Exclude credentials, private values, and unrelated data
+  from every sandbox, prompt, stage, seal, receipt, and artifact.
+- Planning and co-pilot experiments are read-only against the target. Stage by
+  default and never grant the co-pilot the live session. A direct-session write
+  grant requires a recorded fallback when the frozen experiment cannot stage.
 - Before every co-pilot window, seal driver-owned live state outside all
-  co-pilot-writable trees and retain a recoverable preimage. Make no
-  driver-owned live write during the window; any protected change is a stop
-  condition.
-- Every staged pass requires a driver-only prompt, direct-child stage, external
-  seal outside every co-pilot-writable tree, inspected candidate, validated
-  `import-copilot`, and verified receipts. A seal, freshness, destination,
-  receipt, or crash-ambiguity failure stops; never relaunder or blindly retry
-  the stage.
+  co-pilot-writable trees and retain a recoverable preimage. Freeze
+  driver-owned live writes during that window; any protected change stops.
+- Every staged pass needs a driver-only prompt, direct-child stage, external
+  seal outside co-pilot-writable trees, inspected candidate, validated
+  `import-copilot`, and receipts. A seal, freshness, destination, receipt, or
+  crash-ambiguity failure stops; never relaunder or blindly retry the stage.
 - Treat `status`, `wait-copilot`, candidate state, freshness summaries, and PID
-  reachability as advisory observations only. They never authorize import.
-- Treat hashes, seals, receipts, file ownership, modes, and process state only
-  as the byte-integrity or advisory evidence they actually provide. They do not
-  prove authorship, semantic correctness, success, or equivalent Claude/Codex
-  confinement. Inspect the returned evidence and protected state independently.
-- Let only the driver mutate the target. The frozen benchmark, both role-bound
-  agreement records, required evidence imports, owner go status, target
-  identity, authority, cleanliness, rollback, and applicable acceptance gates
-  must all pass before target execution.
-- An original request is a go only when it explicitly orders execution after
-  cowork planning within the same frozen scope. Otherwise wait for a new
-  explicit `go`. A new material choice, missing evidence, unsafe disagreement,
-  identity drift, failed gate, ambiguous partial action, or missing authority
-  stops execution and returns the work to owner review.
-- Use reviewed native non-prompting client options and the narrowest task
-  permissions. Never use a bypass flag merely to make automation pass, weaken a
-  safeguard after a client error, or retry an unchanged ambiguous action.
+  reachability as advisory only. They never authorize import.
+- Hashes, seals, receipts, ownership, modes, and process state prove only byte
+  integrity or advisory facts—not authorship, semantics, success, or equivalent
+  client confinement. Inspect evidence and protected state independently.
+- Let only the driver mutate the target. Before execution, require the frozen
+  benchmark, both role-bound agreements, required imports, owner go, target
+  identity, authority, cleanliness, rollback, and acceptance gates.
+- Only an original request explicitly ordering execution after cowork planning
+  in the same frozen scope is go. Otherwise wait for a new explicit `go`.
+  Material change, missing evidence or authority, unsafe disagreement, identity
+  drift, failed gate, or ambiguous partial action returns to owner review.
+- Use reviewed native non-prompting options and narrowest task permissions.
+  Never use a bypass flag to pass automation, weaken a safeguard after client
+  error, or retry an unchanged ambiguous action.
 - Before cleanup that can remove a tree or multiple paths, use the applicable
-  guarded-deletion workflow. Retaining a clearly identified sandbox is safer
-  than unreviewed recursive cleanup.
-- Same-role process recovery may resume a validated session in place.
-  Cross-product role transfer requires an explicit owner instruction and a new
-  session beginning at planning; it cannot inherit target authority or the
-  predecessor's phase.
+  guarded-deletion workflow; retain a known sandbox over unreviewed cleanup.
+- Same-role recovery may resume a validated session.
+  Cross-product role transfer requires an explicit owner instruction; start a
+  new planning session that inherits neither target authority nor predecessor
+  phase.
 
 ## Route references
 
-Read only the references selected by the current task or phase, but read each
-selected file completely before its guarded action:
+Read only current matching references, each completely before its guarded
+action:
 
 | Task or phase | Required reference |
 |---|---|
@@ -75,13 +67,12 @@ selected file completely before its guarded action:
 | Execute, validate, or satisfy a duration-bounded request | [execution-duration.md](references/execution-duration.md) |
 | Recover, transfer roles, use direct exchange, or diagnose ambiguous interruption | [recovery.md](references/recovery.md) |
 
-Do not load the legacy aggregate `references/protocol.md` during normal routing;
-it remains only as an unselected compatibility fallback for historical
-handoffs. If the current phase is unknown, validate session state first and
-read the recovery reference before choosing another phase. Use
-`--exchange-mode direct` only through that recorded recovery fallback.
+Do not normally load legacy aggregate `references/protocol.md`; it is an
+unselected compatibility fallback for historical handoffs. For an unknown
+phase, validate session state and read recovery before another phase. Use
+`--exchange-mode direct` only through that recorded fallback.
 
 Duration requests also select `execution-duration.md` and
 `long-running-task-ledger`. The final and durable summaries each require
-exactly one timestamped, evidence-backed time-slice entry per requested hour;
-the root duration policy owns the minimum length and no-padding contract.
+one timestamped, evidence-backed time-slice entry per requested hour; root
+duration policy owns length and no-padding.
