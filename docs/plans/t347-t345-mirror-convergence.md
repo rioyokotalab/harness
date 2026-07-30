@@ -170,10 +170,13 @@ or lifecycle request. A failed query is unknown, not absence.
 2. Revalidate the complete immutable preflight while holding the lock.
 3. Send one `SIGSTOP` to exact helper process `4140398` after rematching its
    owner, parent, start identity, executable, argv, idle receipt, terminal
-   event counts, and absence of children. Prove the same exact helper is
-   stopped before continuing. This prevents its 30-second observer from
-   treating an intentionally partial five-operation transaction as a new
-   mirror event.
+   event counts, and absence of children. Immediately before signaling, require
+   an idle helper receipt no older than two seconds plus a PID-only zero-child
+   readback; wait through at most one 30-second observation interval for this
+   fresh-idle gate. Prove the same exact helper is stopped and still childless
+   before continuing. This prevents its observer from being frozen around a
+   short-lived metadata child or treating an intentionally partial
+   five-operation transaction as a new mirror event.
 4. Send one `SIGSTOP` to each exact accepted recovery-watcher leaf only:
    Harness `808441`, Students `808488`, and Swallow `2266511`, after matching
    each PID, parent, start identity, executable, argv, and root. Do not signal

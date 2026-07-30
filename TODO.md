@@ -166,7 +166,7 @@ agents and ledgers.
 
 ### T-347 — Complete T-345 mirror convergence
 
-**Phase:** r2 no-child correction frozen; publication pending.
+**Phase:** r3 fresh-idle correction frozen; publication pending.
 
 The immutable T-345 helper event remains terminal `failed/worker-failed`; its
 private worker log remains unread and the event must never be retried.
@@ -257,6 +257,29 @@ exact no-child result from exit `1` plus empty stdout to accepted empty
 selection. Syntax and a fresh zero-write r2 preflight pass against checkpoint
 `70c5194` and protected main `722e767`.
 
+PR #425 passed `portable-phase1` at exact r2 head
+`3f435a9c42e51a7d106b94111391914d558765a9` and merge-merged as
+`e18fb6eebeded7fd9ce0b6254bf8ab753c2fcf62`. r2 then ran once and terminally
+refused with the same 655-byte journal shape: only exact helper stop/resume,
+`verified=0`, and no watcher signal, app-server connection, operation phase,
+or lifecycle request. The original and r2 receipts remain immutable.
+
+The remaining race was not GNU `ps` exit interpretation. The helper can be
+stopped during its short-lived periodic `tmux` metadata child even while its
+last receipt is idle. The child then remains visible until its stopped parent
+can reap it, so correctly refusing was necessary.
+
+Distinct r3 wrapper
+`/run/user/5035/harness-t347-mirror-convergence/controller-r3.py` is current
+user, mode `0700`, one link, 5,651 bytes, SHA-256
+`6135ed2d07013411581df393dbcea25da67854c36ce1758485e37440ab3a00d5`.
+Immediately before helper `SIGSTOP`, it waits up to 35 seconds for a
+mode-0600 idle helper receipt no older than two seconds and a PID-only
+zero-child `pgrep -P` readback. The base controller then retains its
+independent zero-child refusal. The r3 fresh-idle gate passed read-only in
+seven seconds; syntax and zero-write controller preflight also pass. Its
+distinct journal/result paths are absent.
+
 The immutable controller checkpoint is exact commit
 `70c5194066965df1bffc0078f36361ded50d7bc2` in clean worktree
 `/tmp/harness-t347-t345-mirror-execution`. That worktree must remain at this
@@ -266,12 +289,12 @@ an ancestor. PR #423 passed `portable-phase1` at recording head
 `6fc06163946452ca1fe9a7d015279c2b161ea9ff` and merge-merged as
 `805016261124fd07b365a2cbf962222939e0758d`.
 
-**Next action:** publish this no-request refusal and exact r2 wrapper through
-the protected workflow. Then pass the resulting exact protected-main merge
-commit, checkpoint `70c5194`, base digest `df5f4f0`, and r2 digest `56ef3fb`
-to one r2 execution. Never rerun the original journal/controller. Do not open
-the app-server connection, signal helper/watchers, or write root metadata
-before protected publication.
+**Next action:** publish the second no-request refusal and exact r3 wrapper
+through the protected workflow. Then pass the resulting protected-main merge,
+checkpoint `70c5194`, base digest `df5f4f0`, and r3 digest `6135ed2` to one r3
+execution. Never rerun the original or r2 controllers. Do not open the
+app-server connection, signal helper/watchers, or write root metadata before
+protected publication.
 
 ### T-346 — Reprioritize the durable Harness action queue
 
