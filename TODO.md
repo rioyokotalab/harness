@@ -843,13 +843,62 @@ the later direct-Python launches had that binding but lacked the Harness root.
 Current state again has no helper process/window or lock holder, with unchanged
 monitor/project topology.
 
-**Next action:** publish this exact startup diagnosis. Then use one new
-changed-input controller and exactly one helper window combining the repository
-`bin/harness codex-recovery-helper --run --interval 30` launcher with per-window
-`XDG_RUNTIME_DIR=/run/user/5035`. Require one new current-user owner, no worker
-child, unchanged monitor/project identities, a fresh healthy phone receipt,
-and two interval-separated healthy helper/monitor readbacks before final
-T-350 closeout.
+Protected PR #480 merge-merged the exact startup diagnosis as
+`9407b765e098b9d7bb66c4d1ad6d4f36a502a26e`; Local `main` fast-forwarded.
+Final helper-launch controller digest
+`bfe2cd3e4faff335e83cf7d164c4b06c65c80853ac3d5091a5975e67a6363e9f`
+then passed zero-write preflight and executed exactly once. It combined the
+repository `bin/harness codex-recovery-helper --run --interval 30` launcher
+with per-window `XDG_RUNTIME_DIR=/run/user/5035` and acknowledged helper
+window `@104/2:helper`, pane `%104`, and reported PID `3965921`. Its 15-second
+readback expired before the helper's delayed startup completed, so the
+controller conservatively returned ambiguous. Journal digest
+`e29c6dfccc03712f30a361bb4c399d56c2aab5630a4f2df02e116f57f4995ba4`
+and result digest
+`5ac27b03601375ed86bd5982e4a26a8065c2031cc2a590144c5131a47f626ca6`
+are consumed; never rerun the controller.
+
+Read-only reconciliation subsequently proved that exact acknowledged launch
+completed: helper owner `3965921/115335501` is alive and idle with no worker
+child in canonical `@104/%104`, its fresh phone receipt is healthy, and no
+client is attached. Two interval-separated samples at 22:33 and 22:34 JST
+reported the helper idle with an empty queue and monitor owner
+`2540438/114413139` healthy with three of three canonical projects, healthy
+phone mirror, and no order or repair action. Historical
+`failed=1,deferred=3` helper counters retain the earlier consumed launch
+history and do not describe current work.
+
+Final pane-blind metadata validation with turns excluded proves exact canonical
+interactive roots Harness `019fa3ae-6ad0-7642-aeca-b7b52421f576`,
+Students `019fb2bc-52ab-78f0-88a4-00c9bdb0f271`, and Swallow
+`019fb2e8-b1e1-7200-b316-481df624712a`, with their exact names and mapped
+working directories. The retired old Swallow root remains archived once,
+not loaded, and unreferenced by any process or window. Canonical tmux topology
+is `@87/0:harness`, `@99/1:students`, `@100/2:swallow`; all three resilient
+chains remain attempt zero with no recovery or rollback. Harness and Students
+database rows persist `gpt-5.6-sol`/`high`; Swallow persists
+`gpt-5.6-sol` with the installed empty-root reasoning-column limitation, while
+its acknowledged start response and clean tracked project configuration both
+prove high reasoning. Students' unrelated active T-047 Git work was preserved
+without inspection or mutation; Swallow remains clean/aligned at
+`471505b1ba03b5e5da9b988550ac3c4741ca5998`.
+
+The final focused resilient, thread-recovery, tmux-monitor, and recovery-helper
+suites all pass. Native redacted `agent-config --doctor` remains unknown on
+the authoritative Local checkout because the accepted live-supervisor `.nfs`
+inode keeps its clean-checkout gate closed. A disposable real clone confirmed
+that an alternate checkout cannot substitute for that authoritative surface:
+its user sentinel paths correctly classify as collisions against the live
+checkout. The 2,852-entry, 63,322,103-byte clone was removed through a
+verified guarded-delete transaction; protected anchors were unchanged and its
+short-lived manifest was exact-unlinked.
+
+**Next action:** publish this final runtime and validation checkpoint through
+protected `main`. Then run guarded fleet-sync plan/apply for the merged
+control-plane fix, require an idempotent plan, and deliver exactly one required
+pane-blind context refresh to each clean advanced Mac session. Record those
+results in one final documentation-only closeout; do not relaunch or otherwise
+mutate any project runtime.
 
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
