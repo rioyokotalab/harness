@@ -164,6 +164,9 @@ Require all of the following before opening the app-server connection:
 
 Any mismatch records `refused` before a control connection, watcher signal,
 or lifecycle request. A failed query is unknown, not absence.
+If every earlier gate passes but the exact lifecycle preflight refuses, append
+only its value-free reason to the operation journal before normal cleanup; do
+not send the operation or broaden diagnostic output.
 
 ### 2. Serialization and watcher pause
 

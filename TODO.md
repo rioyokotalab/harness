@@ -166,7 +166,7 @@ agents and ledgers.
 
 ### T-347 — Complete T-345 mirror convergence
 
-**Phase:** frozen-epoch controller v6 frozen; publication pending.
+**Phase:** lifecycle-diagnostic controller v7 frozen; publication pending.
 
 The immutable T-345 helper event remains terminal `failed/worker-failed`; its
 private worker log remains unread and the event must never be retried.
@@ -466,6 +466,24 @@ It verifies exact v3 digest, retains the source loader and app-name amendment,
 passes syntax and zero-write preflight, and has distinct absent journal/result
 paths.
 
+PR #434 passed `portable-phase1` at exact v6 head
+`0564c51346f47d2d1322d50da17463a9e5921a03` and merge-merged as
+`6e9fee482c296f8c9545ce77140a2d6fb2b99752`. v6 ran once, stopped and
+resumed all watchers, opened one metadata-only app-server connection, and
+terminally refused before any operation. It remains `verified=0` with no
+lifecycle request. Independent same-input post-app static validation passes.
+
+v7 changes no gate or request behavior. Its exact base source loader wraps only
+the lifecycle boundary so a pre-request `Refused` reason is appended to the
+mode-0600 operation journal before normal failure cleanup.
+
+Private v7 wrapper
+`/run/user/5035/harness-t347-mirror-convergence/controller-v7.py` is current
+user, mode `0700`, one link, 4,720 bytes, SHA-256
+`b29b8656d45df955e2ed853af304d2c67b016a760aa1b66933c14afeb56ea0b7`.
+It verifies exact v6 digest, passes syntax and zero-write preflight, and has
+distinct absent journal/result paths.
+
 The immutable controller checkpoint is exact commit
 `70c5194066965df1bffc0078f36361ded50d7bc2` in clean worktree
 `/tmp/harness-t347-t345-mirror-execution`. That worktree must remain at this
@@ -475,9 +493,9 @@ an ancestor. PR #423 passed `portable-phase1` at recording head
 `6fc06163946452ca1fe9a7d015279c2b161ea9ff` and merge-merged as
 `805016261124fd07b365a2cbf962222939e0758d`.
 
-**Next action:** publish the tenth no-request refusal and exact v6 wrapper
+**Next action:** publish the eleventh no-request refusal and exact v7 wrapper
 through the protected workflow. Then pass the resulting protected-main merge,
-checkpoint `70c5194`, and v6 digest `54cdfd2` to one v6 execution. Never rerun
+checkpoint `70c5194`, and v7 digest `b29b865` to one v7 execution. Never rerun
 any prior controller. Do not open the app-server connection, signal watchers,
 or write root metadata before protected publication.
 
