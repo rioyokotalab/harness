@@ -9,10 +9,11 @@ Next free ID: T-350.
 
 ## Current state
 
-- Protected `main`, Local, and all eleven managed remote checkouts are
-  clean/aligned at `bae105c99673a44c95155abe7d940324c475c655` after T-349.
-  Aist, Home, Office, and Riken each accepted exactly one merge-specific
-  context refresh; none may be retried.
+- Protected `main` and Local contain the complete T-349 closeout. All eleven
+  managed remote checkouts are clean/aligned at its active control-plane merge
+  `bae105c99673a44c95155abe7d940324c475c655`. Aist, Home, Office, and Riken
+  each accepted exactly one merge-specific context refresh; none may be
+  retried.
 - Local's canonical attached tmux session is `$14:projects`, with exact
   windows `@87/0:harness`, `@88/1:students`, and `@98/2:swallow`. Monitor
   topology is `@40/0:tunnel,@95/1:codex,@97/2:helper`; monitor health is 3/3
@@ -138,7 +139,7 @@ agents and ledgers.
 
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
-**Phase:** complete after this closeout reaches protected `main`.
+**Phase:** complete.
 
 The owner requested that the canonical Local tmux session be renamed from
 `harness` to `projects`, that the `att` alias follow the new name, and that the
@@ -250,6 +251,9 @@ they source `shell/common-aliases.sh` or start a fresh shell.
 `projects`, the independent `monitor` session is unchanged, all three project
 windows and phone-visible roots remain healthy, and the renamed `att` alias is
 present across the synchronized fleet. No further T-349 mutation is pending.
+Closeout PR #458 passed protected `portable-phase1` and merged as
+`6a3efa2`; it changes only this durable ledger, so the already-validated
+control-plane fleet was not synchronized or context-refreshed again.
 
 ### T-348 — Keep phone remote-control roots mirrored to Local tmux
 
