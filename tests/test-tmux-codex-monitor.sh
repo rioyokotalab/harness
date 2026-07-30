@@ -68,6 +68,22 @@ assert parsed == {
     "start": "424242",
     "comm": "codex TUI",
 }
+snapshot_fixture = {
+    1: {"pid": 1, "parent": 0},
+    2: {"pid": 2, "parent": 1},
+    3: {"pid": 3, "parent": 2},
+    4: {"pid": 4, "parent": 9},
+}
+assert [
+    item["pid"]
+    for item in module.snapshot_descendants(1, snapshot_fixture)
+] == [2, 3]
+module.socket_pairs = lambda: [
+    (101, 202, 11),
+    (202, 101, 99),
+    (303, 404, 12),
+]
+assert module.reciprocal_socket_snapshot() == {11: 99, 99: 11}
 
 with tempfile.TemporaryDirectory() as helper_root:
     os.environ["HARNESS_TESTING"] = "1"
@@ -104,6 +120,7 @@ with tempfile.TemporaryDirectory() as helper_root:
     }
     module.atomic_json(os.path.join(helper_root, "phone-mirror.json"), receipt)
     assert module.phone_mirror_health() == "healthy"
+    assert module.phone_mirror_health(processes={os.getpid(): current}) == "healthy"
     receipt["status"] = "degraded"
     receipt["roles"]["swallow"]["interactive_source"] = False
     receipt["mismatch_classes"] = ["interactive_source:swallow"]
@@ -251,6 +268,28 @@ native_targeted = module.collect_health(native_window)
 assert native_targeted["students"]["state"] == "healthy"
 assert native_targeted["students"]["tui"]["pid"] == 11
 assert native_targeted["students"]["app_server_pid"] == 99
+snapshot_processes = {
+    10: process(10),
+    11: {
+        "pid": 11,
+        "parent": 10,
+        "start": "tui-start",
+        "comm": "codex",
+        "argv": [],
+        "uid": os.getuid(),
+    },
+    12: process(12),
+    99: process(99),
+}
+snapshot_targeted = module.collect_health(
+    native_window, snapshot_processes, {11: 99, 99: 11}
+)
+assert snapshot_targeted["students"]["state"] == "healthy"
+assert module.mapping_snapshot(
+    {},
+    snapshot_targeted,
+    snapshot_processes,
+)["students"]["app_server_start"] == "app-server-start"
 module.resilient_status = lambda _target, _runtime: (
     {"target": "students", "phase": "running", "owner_pid": "10"},
     {
