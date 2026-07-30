@@ -367,6 +367,21 @@ under a fresh exact identity gate bridge-replace only old monitor window
 `@94` with merged monitor code. Preserve `@40`, all three project windows,
 the shared app server, and the owner client selection.
 
+**Monitor bridge acceptance:** the complete preflight matched clean Local
+`116a993`, old `@94/%94` process `2859842`, its exact argv, a healthy
+three-root receipt, `@40`, the canonical project topology, and sole client
+`3513491` on Harness `@87`. One distinct merged-code monitor was acknowledged
+exactly once as provisional `@95/3:codex-next-t345`, pane `%95`, process
+`4116681`. It produced an exact `healthy=3 order_action=none
+repair_action=none` receipt while old `@94` and every protected identity
+remained live. The launch must not be retried.
+
+**Next action:** publish this accepted bridge identity, then stage old `@94`
+to free index 4, stage accepted `@95` to canonical index 1, rename only the
+accepted window to `codex`, and send one `SIGTERM` only to old monitor process
+`2859842`. Require old window/process absence and a fresh accepted-owner
+receipt; never send a second signal.
+
 ### T-344 — Recover Swallow and automate blocked-root cutover
 
 **Phase:** complete; live Swallow recovered and automatic unsafe-tail handoff
