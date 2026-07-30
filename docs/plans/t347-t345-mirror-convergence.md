@@ -198,6 +198,9 @@ or lifecycle request. A failed query is unknown, not absence.
 1. Reuse the repository's validated Unix WebSocket transport contract:
    current-user-owned socket, HTTP Upgrade for `ws://localhost/rpc`, no
    per-message compression, bounded frames, and unique request IDs.
+   Load the exact extensionless published transport executable with Python's
+   explicit source loader; generic import discovery is not an accepted loader
+   for this file.
 2. Open exactly one connection, send `initialize`, require a valid object
    response, then send the `initialized` notification.
 3. Read all six exact roots with
