@@ -145,7 +145,7 @@ agents and ledgers.
 
 ### T-348 — Keep phone remote-control roots mirrored to Local tmux
 
-**Phase:** executing.
+**Phase:** blocked at non-retryable thread-start gate.
 
 The owner reports that Swallow is absent from phone Remote and requests a
 periodic one-to-one mirror for Harness, Students, and Swallow. Complete
@@ -193,9 +193,47 @@ phone-eligibility receipt and reserves a deduplicated
 Automatic mirror-event execution remains opt-in so the existing Local
 controller owns this first Swallow bridge.
 
-**Next action:** complete focused and full validation, protected publication,
-and merged-code activation, then create and validate the provisional
-interactive Swallow bridge. Pause for the owner's phone-visible confirmation
+Implementation commit `d52f6a21a5d7f1efc2fab3a30bd0465c01df19b7`
+passed the complete phase-1 suite and protected `portable-phase1` in PR #442,
+which merge-merged as
+`c3895805b79c772c0bad58f6b4f792914fa2c89f`. Local `main` is clean/aligned at
+that merge. Exact merged-code activation restarted only monitor PID `3835977`
+and helper PID `3834026`; the helper runs without `--auto-mirror`. Monitor
+readback is `healthy=3 phone_mirror=degraded`, and the private receipt has one
+exact mismatch class, `interactive_source:swallow`. One deduplicated
+phone-mirror event is queued but cannot execute automatically.
+
+Private controller v1 refused on an extensionless Python transport import
+before opening an app-server connection. V2 opened one initialized connection
+but refused while validating the expected active/source metadata of the old
+roots. Both attempts created no root and resumed every paused watcher. A later
+preflight refusal detected that the owner's sole tmux client had moved from
+Swallow to Students before a journal or request existed.
+
+Controller v3 digest
+`37ee85ba72f8d57a1cb4f4cb3f2f90d8c53eda3475261c8dcb373a99c1522b96`
+then passed zero-write preflight with the exact client on Students. It sent
+one `thread/start` as initialized app-server request ID `5`, but returned
+`thread-start-ambiguous` before receiving a usable root identity. This request
+must never be retried. Value-free post-read proves the unchanged app-server,
+all watchers resumed, exact database active-root count three, default/all
+top-level `thread/list` count three with zero unknown root, loaded-thread count
+three with zero unknown root, and zero provisional-name row. No root name,
+rollout, TUI, tmux, archive, signal, or project mutation followed the
+ambiguous request.
+
+Private mode-0600 journals/results remain under
+`/run/user/5035/harness-t348-phone-mirror/`; do not infer permission to read
+payload-bearing logs or retry request ID `5`. The generated schema bundle also
+remains there and requires guarded deletion after the task closes.
+
+**Next action and authority:** preserve the old canonical Swallow and the
+disabled automatic mirror event. A fresh `thread/start` requires a separately
+frozen owner decision that explicitly accepts the proven-absent result as a
+changed-input retry; without it, remain report-only. If authorized, omit the
+unproven model/config overrides and rely on the already verified Sol/high
+project defaults, retain granular approval and disabled sandbox, reserve a new
+controller/journal identity, and still pause at physical-phone confirmation
 before any canonical rename, old-process retirement, or reversible archive.
 
 ### T-347 — Complete T-345 mirror convergence
