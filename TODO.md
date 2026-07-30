@@ -145,7 +145,7 @@ agents and ledgers.
 
 ### T-348 — Keep phone remote-control roots mirrored to Local tmux
 
-**Phase:** blocked at non-retryable thread-start gate.
+**Phase:** executing authorized changed-input recovery.
 
 The owner reports that Swallow is absent from phone Remote and requests a
 periodic one-to-one mirror for Harness, Students, and Swallow. Complete
@@ -227,14 +227,22 @@ Private mode-0600 journals/results remain under
 payload-bearing logs or retry request ID `5`. The generated schema bundle also
 remains there and requires guarded deletion after the task closes.
 
-**Next action and authority:** preserve the old canonical Swallow and the
-disabled automatic mirror event. A fresh `thread/start` requires a separately
-frozen owner decision that explicitly accepts the proven-absent result as a
-changed-input retry; without it, remain report-only. If authorized, omit the
-unproven model/config overrides and rely on the already verified Sol/high
-project defaults, retain granular approval and disabled sandbox, reserve a new
-controller/journal identity, and still pause at physical-phone confirmation
-before any canonical rename, old-process retirement, or reversible archive.
+**Changed-input authorization:** on 2026-07-30 the owner stated exactly:
+“I authorize one changed-input T-348 thread/start after request 5’s
+proven-absent reconciliation. Omit the model/config overrides and use the
+verified Sol/high defaults.” This authorizes one distinct newly journaled
+`thread/start`; it does not authorize retrying request ID `5`, weakening any
+identity gate, or proceeding past physical-phone confirmation.
+
+**Next action and authority:** revalidate the published proven-absent result,
+old canonical Swallow, peers, app server, client selection, monitor/helper,
+and source mismatch. Reserve a new private controller/journal identity and
+send exactly one start with exact Harness cwd, granular approval, disabled
+sandbox, and no `model` or `config` fields. Require the returned root itself
+and SQLite to resolve to Sol/high and source `vscode`; otherwise stop without
+another start. Continue through provisional naming, window/runtime launch, and
+one generic cold-start turn, then pause at physical-phone confirmation before
+any canonical rename, old-process retirement, or reversible archive.
 
 ### T-347 — Complete T-345 mirror convergence
 

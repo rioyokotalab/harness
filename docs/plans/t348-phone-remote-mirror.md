@@ -1,6 +1,6 @@
 # T-348 phone remote-control mirror
 
-**Phase:** ready for go
+**Phase:** executing authorized changed-input recovery
 **Driver:** Local Codex
 **Updated:** 2026-07-30 JST
 **Branch:** `codex/t348-phone-mirror`
@@ -242,6 +242,14 @@ the provisional root before old Swallow retirement and reversible archive.
 supported host metadata. Do not claim or auto-repair physical rendering when
 the product exposes no supported phone-list status API.
 
+### D-004 — Changed-input start after request 5
+
+**Owner-authorized:** send exactly one distinct newly journaled
+`thread/start` after the published proven-absent reconciliation. Omit `model`
+and `config` from that request and require the returned root and persisted
+metadata to resolve to the verified Sol/high defaults. Request ID `5` remains
+non-retryable.
+
 ## Next action
 
 Implementation passed complete validation and merged through protected PR
@@ -250,10 +258,14 @@ activation correctly reports only `interactive_source:swallow`.
 
 The first initialized live `thread/start` was sent as request ID `5` but
 returned without a usable acknowledgement or root identity. Database,
-all-source top-level list, and loaded-thread readback each prove exactly the
-original three roots and no provisional name, but the frozen non-retry rule
-still applies. Preserve the old Swallow and automatic-event pause. Do not send
-another start unless the owner separately freezes a changed-input retry after
-reviewing this proven-absent result. Any authorized retry must omit the
-unproven model/config overrides, use the verified Sol/high defaults, and retain
-the physical-phone confirmation gate before retirement.
+all-source top-level list, and loaded-thread readback each proved exactly the
+original three roots and no provisional name. The owner has now separately
+authorized one changed-input start after reviewing that proven-absent result.
+
+Revalidate every published identity and reserve a new controller/journal.
+Send exactly one start with Harness cwd, granular approval, disabled sandbox,
+and no `model` or `config` fields. Require the acknowledged root and persisted
+metadata to resolve to Sol/high and interactive source `vscode`; otherwise
+stop without another start. Continue only through provisional root naming,
+bridge launch, and one generic cold-start turn. Preserve the old Swallow and
+pause at physical-phone confirmation before retirement.
