@@ -145,7 +145,7 @@ agents and ledgers.
 
 ### T-348 — Keep phone remote-control roots mirrored to Local tmux
 
-**Phase:** provisional bridge accepted; awaiting physical-phone confirmation.
+**Phase:** physical-phone accepted; publishing promotion authorization.
 
 The owner reports that Swallow is absent from phone Remote and requests a
 periodic one-to-one mirror for Harness, Students, and Swallow. Complete
@@ -360,6 +360,22 @@ must confirm that `swallow-phone-bridge-20260730` is visible in phone Remote.
 Until that exact confirmation, do not rename either root, move either window,
 signal any process, archive old Swallow, repeat a start/name/launch/input, or
 promote the provisional bridge.
+
+**Physical-phone confirmation:** on 2026-07-30 the owner replied exactly
+`visible`, confirming that `swallow-phone-bridge-20260730` appears in phone
+Remote. This satisfies D-002's external acceptance gate and activates only the
+already-frozen promotion/retirement sequence. It does not authorize repeating
+any consumed request, relaunching either runtime, deleting either root, or
+changing Harness or Students.
+
+**Next action:** publish this confirmation through protected `main`, then
+revalidate every exact Git, root, app-server, tmux, client, process, watcher,
+rollout, monitor/helper, and no-content turn gate. If unchanged, use one
+journaled promotion transaction to rename old root/window to
+`swallow-retired-20260730`, rename the accepted root/window to `swallow`, and
+swap only window IDs `@98` and `@93` so the accepted bridge occupies index 2.
+Checkpoint that rename-only promotion before signaling or archiving old
+Swallow.
 
 ### T-347 — Complete T-345 mirror convergence
 
