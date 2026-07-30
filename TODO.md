@@ -166,7 +166,7 @@ agents and ledgers.
 
 ### T-347 — Complete T-345 mirror convergence
 
-**Phase:** privacy-corrected controller frozen; final publication pending.
+**Phase:** r2 no-child correction frozen; publication pending.
 
 The immutable T-345 helper event remains terminal `failed/worker-failed`; its
 private worker log remains unread and the event must never be retried.
@@ -229,6 +229,34 @@ controller passed syntax validation and a fresh zero-write preflight against
 checkpoint `70c5194` and protected main `8050162`; the earlier controller
 digest is superseded and must not execute.
 
+PR #424 passed `portable-phase1` at exact privacy-correction head
+`6e46854b180fec7ff8ad76eb20f4664021599564` and merge-merged as
+`722e767664f923a81c4479a7a2b3491b7326f745`. A final zero-write preflight
+passed, then the one-shot controller ran once. Its mode-0600 journal/result
+are respectively 655 and 116 bytes and terminal `refused`, `verified=0`.
+The journal proves only exact helper `4140398` was stopped and resumed; there
+is no operation `reserved`, `sent`, `acknowledged`, `ambiguous`, or `verified`
+record. No watcher was signaled and no app-server connection or root lifecycle
+request occurred. Monitor/helper and all three resilient chains returned to
+healthy accepted identities.
+
+The value-free cause is deterministic: parent-scoped GNU `ps` exits `1` with
+empty stdout when the helper has no children, but the controller treated every
+nonzero exit as a query failure. Because the journal proves no lifecycle
+request was attempted, the frozen plan permits a distinct changed-input
+controller rather than a retry.
+
+Private r2 wrapper
+`/run/user/5035/harness-t347-mirror-convergence/controller-r2.py` is current
+user, mode `0700`, one link, 3,726 bytes, SHA-256
+`56ef3fbd99fa9e1d022bc0150be0589a4a176b58c91f6d906300e7a4e028b2b9`.
+It preserves and verifies base digest
+`df5f4f04f7cbc2dacd50da9ba69e35a8c77e81f7572a2cd64489b18a276b1401`,
+uses distinct absent `journal-r2.jsonl`/`result-r2.json`, and changes only the
+exact no-child result from exit `1` plus empty stdout to accepted empty
+selection. Syntax and a fresh zero-write r2 preflight pass against checkpoint
+`70c5194` and protected main `722e767`.
+
 The immutable controller checkpoint is exact commit
 `70c5194066965df1bffc0078f36361ded50d7bc2` in clean worktree
 `/tmp/harness-t347-t345-mirror-execution`. That worktree must remain at this
@@ -238,11 +266,12 @@ an ancestor. PR #423 passed `portable-phase1` at recording head
 `6fc06163946452ca1fe9a7d015279c2b161ea9ff` and merge-merged as
 `805016261124fd07b365a2cbf962222939e0758d`.
 
-**Next action:** publish the privacy-corrected digest and PID-only process gate
-through the protected workflow. Then pass the resulting exact protected-main
-merge commit plus checkpoint `70c5194` and controller digest `df5f4f0` to one
-controller execution. Do not open the app-server connection, signal
-helper/watchers, or write root metadata before protected publication.
+**Next action:** publish this no-request refusal and exact r2 wrapper through
+the protected workflow. Then pass the resulting exact protected-main merge
+commit, checkpoint `70c5194`, base digest `df5f4f0`, and r2 digest `56ef3fb`
+to one r2 execution. Never rerun the original journal/controller. Do not open
+the app-server connection, signal helper/watchers, or write root metadata
+before protected publication.
 
 ### T-346 — Reprioritize the durable Harness action queue
 
