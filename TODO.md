@@ -22,9 +22,9 @@ Next free ID: T-348.
   `@87/0:harness,@88/1:students,@93/2:swallow`; monitor topology is
   temporarily `@40/0:tunnel,@95/1:codex` after the partial-transaction
   safeguard terminated exact helper `4140398`; monitor health remains 3/3 and
-  all three resilient chains remain live. T-347 has one acknowledged archive,
-  thirteen no-request terminal receipts, and a frozen stopped-helper v11
-  continuation. The historical failed mirror event must not be retried.
+  all three resilient chains remain live. T-347 has verified all five root
+  lifecycle operations and freezes the final one-shot v12 helper bridge. The
+  historical failed mirror event must not be retried.
 - ABQ is unreachable through both declared routes. The official G-QuAT status
   page still reports System H `サービス停止中` with the current scheduled
   stop ending 2026-07-30 17:00 JST. Its checkout remains unknown and no
@@ -116,10 +116,10 @@ Next free ID: T-348.
    `13de62583acf5ad5babd684785e636d5bb20d5643ac52b8440cbd93c2155e586`,
    its mode-0600 evidence, and all six unchanged root archive flags. Never
    retry the event or inspect its private worker log.
-2. Publish T-347's stopped-helper v11 checkpoint. It uses the
-   existing private fsynced per-operation journal and one metadata-only
-   app-server connection, and can prove whether each exact request was
-   unattempted, acknowledged, or ambiguous without worker transcript content.
+2. Publish T-347's one-shot v12 helper bridge checkpoint. It verifies the
+   complete root lifecycle receipt, launches one provisional helper from
+   protected code, validates it without a worker event, and rename-only
+   promotes it to exact `monitor:2 helper`.
 3. Retain exact live topology
    `@40/0:tunnel,@95/1:codex,@96/2:helper` and the canonical project mapping.
    The four Mac refreshes, monitor bridge, helper launch, and helper promotion
@@ -166,7 +166,7 @@ agents and ledgers.
 
 ### T-347 — Complete T-345 mirror convergence
 
-**Phase:** one archive acknowledged; stopped-helper controller v11 frozen.
+**Phase:** mirror roots converged; one-shot helper bridge v12 frozen.
 
 The immutable T-345 helper event remains terminal `failed/worker-failed`; its
 private worker log remains unread and the event must never be retried.
@@ -624,6 +624,42 @@ user, mode `0700`, one link, 5,701 bytes, SHA-256
 It verifies exact v10 controller and receipt digests, passes syntax and
 zero-write preflight, and has distinct absent journal/result paths.
 
+PR #439 passed `portable-phase1` at exact v11 head
+`6142e5c075871261552db9cfa97ad754f1146f53` and merge-merged as
+`2f4aea38c34624155f00da2465e640925de2895f`. v11 ran once and accepted all
+five operation keys. It read-only reconciled v9's acknowledged old-exec
+archive without resending it, then sent, acknowledged, and verified exactly
+the two remaining archives and two name writes in their frozen order.
+
+Its mode-0600 journal/result are respectively 3,633 and 113 bytes with
+SHA-256
+`26278f91966c92dfc72641a960240744cb0daf172b271aa70a2f191c71ef45e8`
+and
+`a0c9a94e860ece5e6aeb7ee547455561bf73f2fb6e436f626fefa7b9a72c4911`.
+Independent value-free database readback proves the active top-level set is
+exactly the three canonical roots, all canonical names match, all three extras
+are archived with their saved rollouts preserved, and all extras have zero
+process references. Monitor health remains 3/3 and every resilient chain is
+running at attempt zero. The helper intentionally remains absent with its
+historical stopped receipt, so final helper acceptance is still pending.
+
+v12 verifies the exact immutable v11 receipt and final root/database/process
+state before acting. Under the shared lifecycle lock it has one launch budget
+for provisional `monitor:2 helper-next-t347`. It requires the new pane,
+current-user helper process, private idle receipt, unchanged historical
+`failed=1` event set, exact root convergence, stable project/monitor/client
+selection, and healthy monitor/resilient/app-server identities. Only then does
+it have one rename-only promotion budget to `helper`; an acknowledged partial
+launch is preserved and never relaunched. Full acceptance requires a second
+helper epoch and two complete post-launch validations with no new event.
+
+Private v12 controller
+`/run/user/5035/harness-t347-mirror-convergence/controller-v12.py` is current
+user, mode `0700`, one link, 22,976 bytes, SHA-256
+`97ba2e51c0c9432feea4d5c416859b09ce57f57fcd39edfccb94a72a230fc219`.
+It verifies exact base and v11 receipt digests, passes syntax and zero-write
+preflight, and has distinct absent journal/result paths.
+
 The immutable controller checkpoint is exact commit
 `70c5194066965df1bffc0078f36361ded50d7bc2` in clean worktree
 `/tmp/harness-t347-t345-mirror-execution`. That worktree must remain at this
@@ -633,12 +669,11 @@ an ancestor. PR #423 passed `portable-phase1` at recording head
 `6fc06163946452ca1fe9a7d015279c2b161ea9ff` and merge-merged as
 `805016261124fd07b365a2cbf962222939e0758d`.
 
-**Next action:** publish the no-action v10 receipt and exact v11
-wrapper through the protected workflow. Then pass the resulting protected-main
-merge, checkpoint `70c5194`, and v11 digest `470f1bb` to one v11 execution.
-Never rerun any prior controller or resend `archive-old-exec`. Do not open the
-app-server connection, signal watchers, launch the helper, or write root
-metadata before protected publication.
+**Next action:** publish the accepted v11 lifecycle receipt and exact v12
+controller through the protected workflow. Then pass the resulting
+protected-main merge, checkpoint `70c5194`, and v12 digest `97ba2e5` to one
+v12 execution. Never rerun any prior controller or lifecycle operation. Do
+not launch or rename the helper before protected publication.
 
 ### T-346 — Reprioritize the durable Harness action queue
 
