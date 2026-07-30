@@ -838,3 +838,9 @@ mutable `github.sha` or making the full backstop unconditional. Actions,
 workflow plans pass. Because this task changes the workflow and validators,
 its protected run must still execute full phase one; the optimization applies
 only when a future diff actually selects a narrow tier.
+
+Clean checkpoint `0a5b9bd` then passed all 91 integrated suites in 55.03
+seconds, with 159.27 seconds user CPU, 163.03 seconds system CPU, and 734,396
+KiB maximum RSS. This accepts the implementation locally. The result-recording
+edit is documentation-only; protected parsing and execution of the changed
+workflow remain required rather than inferred from local YAML parsing.

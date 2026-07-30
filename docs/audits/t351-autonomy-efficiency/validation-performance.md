@@ -267,3 +267,9 @@ rejection of an always-full or mutable-base substitution. The 0.19-second
 sample is local selected-work evidence, not a claim about hosted startup or
 end-to-end latency; a protected broad T-351 run will still execute full phase
 one.
+
+The clean integrated implementation checkpoint `0a5b9bd` passed all 91 suites
+in 55.03 seconds, with 159.27 seconds user CPU, 163.03 seconds system CPU, and
+734,396 KiB maximum RSS. This accepts local behavior; the subsequent evidence
+edit is documentation-only, and protected workflow parsing/execution remains
+a separate required check.
