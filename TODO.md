@@ -382,6 +382,20 @@ accepted window to `codex`, and send one `SIGTERM` only to old monitor process
 `2859842`. Require old window/process absence and a fresh accepted-owner
 receipt; never send a second signal.
 
+**Monitor promotion acceptance:** exact old `@94` was staged to free index 4
+and accepted `@95` was staged to canonical index 1 without changing either
+pane or process. Accepted `@95` was renamed to `codex`; one `SIGTERM` was
+then sent only to old process `2859842`. Old process, pane, and window exited
+without a second signal. Final monitor mapping is
+`@40/0:tunnel,@95/1:codex`; accepted process `4116681` remains live, and sole
+owner client `3513491` remains on Harness `@87`.
+
+**Next action:** publish this non-retryable promotion, then launch one
+provisional `monitor:2` helper window from merged code. Require its exact
+process, private mode-0700/0600 runtime state, and value-free live receipt
+before rename-only promotion to `helper`; preserve any immutable mirror event
+and never retry an acknowledged helper or worker launch.
+
 ### T-344 — Recover Swallow and automate blocked-root cutover
 
 **Phase:** complete; live Swallow recovered and automatic unsafe-tail handoff
