@@ -4,7 +4,7 @@ set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 COWORK=$ROOT/shared/skills/codex-claude-cowork
 HPC=$ROOT/shared/skills/operate-native-hpc
-PIE=$ROOT/shared/skills/plan-interview-execute/SKILL.md
+PIE=$ROOT/shared/skills/plan-interview-execute
 REMOTE=$ROOT/shared/skills/remote-agent-communication
 HARDENING=$ROOT/shared/skills/fleet-repository-hardening/SKILL.md
 
@@ -63,7 +63,20 @@ if grep -F '](references/sites.md)' "$HPC/SKILL.md" >/dev/null; then
     fail 'HPC entry still selects the aggregate sites reference'
 fi
 
-assert_max "$(words "$PIE")" 1150 'PIE entry'
+PIE_BEFORE=1088
+pie_entry=$(words "$PIE/SKILL.md")
+assert_max "$pie_entry" 600 'PIE entry'
+pie_largest=0
+for name in planning interview execution; do
+    phase_words=$(words "$PIE/references/$name.md")
+    assert_max "$phase_words" 400 "PIE $name reference"
+    route_words=$((pie_entry + phase_words))
+    assert_max "$route_words" 850 "PIE $name selected route"
+    [ "$route_words" -le "$pie_largest" ] || pie_largest=$route_words
+done
+pie_reduction=$(((PIE_BEFORE - pie_largest) * 100 / PIE_BEFORE))
+[ "$pie_reduction" -ge 25 ] ||
+    fail "PIE largest-route reduction is not material: $pie_reduction%"
 remote_entry=$(words "$REMOTE/SKILL.md")
 assert_max "$remote_entry" 450 'remote-agent entry'
 remote_largest=0
@@ -81,4 +94,4 @@ remote_reduction=$(((REMOTE_BEFORE - remote_largest) * 100 / REMOTE_BEFORE))
 assert_max "$(words "$HARDENING")" 1200 'fleet-hardening entry'
 
 printf '%s\n' \
-    "Skill context budgets passed: cowork $COWORK_BEFORE->$cowork_initial words (-$cowork_reduction%); HPC $HPC_BEFORE->$hpc_largest words (-$hpc_reduction%); remote $REMOTE_BEFORE->$remote_largest words (-$remote_reduction%, largest selected routes)"
+    "Skill context budgets passed: cowork $COWORK_BEFORE->$cowork_initial words (-$cowork_reduction%); HPC $HPC_BEFORE->$hpc_largest words (-$hpc_reduction%); PIE $PIE_BEFORE->$pie_largest words (-$pie_reduction%); remote $REMOTE_BEFORE->$remote_largest words (-$remote_reduction%, largest selected routes)"

@@ -4,7 +4,7 @@ set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 COWORK=$ROOT/shared/skills/codex-claude-cowork
 HPC=$ROOT/shared/skills/operate-native-hpc
-PIE=$ROOT/shared/skills/plan-interview-execute/SKILL.md
+PIE=$ROOT/shared/skills/plan-interview-execute
 REMOTE=$ROOT/shared/skills/remote-agent-communication
 HARDENING=$ROOT/shared/skills/fleet-repository-hardening/SKILL.md
 
@@ -35,7 +35,11 @@ for path in \
     "$REMOTE/references/delivery.md" \
     "$REMOTE/references/request.md" \
     "$REMOTE/references/fallback.md" \
-    "$PIE" "$HARDENING"; do
+    "$PIE/SKILL.md" \
+    "$PIE/references/planning.md" \
+    "$PIE/references/interview.md" \
+    "$PIE/references/execution.md" \
+    "$HARDENING"; do
     [ -f "$path" ] && [ ! -L "$path" ] || fail "missing regular file: $path"
 done
 
@@ -84,7 +88,7 @@ assert_contains 'routing must use the task- and phase-specific references' \
     "$COWORK/references/protocol.md" 'cowork legacy aggregate marker'
 
 # PIE must not manufacture an interview when decisions and authorization exist.
-pie_frontmatter=$(sed -n '1,5p' "$PIE")
+pie_frontmatter=$(sed -n '1,5p' "$PIE/SKILL.md")
 printf '%s\n' "$pie_frontmatter" | grep -F \
     'Do not trigger merely because work is consequential, multi-step, multi-session' \
     >/dev/null || fail 'PIE narrow frontmatter trigger'
@@ -92,14 +96,30 @@ if printf '%s\n' "$pie_frontmatter" | grep -F \
     'for consequential, ambiguous, multi-step, or multi-session work' >/dev/null; then
     fail 'PIE retains broad legacy trigger'
 fi
-assert_contains 'complete frozen plan, resolved all material' "$PIE" \
+assert_contains 'complete frozen plan, resolved all material' "$PIE/SKILL.md" \
     'PIE frozen-plan bypass'
-assert_contains 'an explicit `go` resumes Phase 3 directly' "$PIE" \
+assert_contains 'an explicit `go` resumes Phase 3 directly' "$PIE/SKILL.md" \
     'PIE ready-for-go direct execution'
-assert_contains 'do not manufacture an interview' "$PIE" \
+assert_contains 'do not manufacture an interview' "$PIE/SKILL.md" \
     'PIE empty-interview refusal'
-assert_contains 'The go instruction authorizes only the frozen plan' "$PIE" \
+assert_contains 'The go instruction authorizes only the frozen plan' "$PIE/SKILL.md" \
     'PIE go authority boundary'
+for route in planning interview execution; do
+    assert_contains "[$route.md](references/$route.md)" "$PIE/SKILL.md" \
+        "PIE missing $route route"
+done
+assert_contains 'exactly one matching' "$PIE/SKILL.md" \
+    'PIE single-phase routing gate'
+assert_contains 'Do not mutate the target system during planning' \
+    "$PIE/references/planning.md" 'PIE planning mutation boundary'
+assert_contains 'Ask exactly one material decision question at a time' \
+    "$PIE/references/interview.md" 'PIE one-question interview gate'
+assert_contains 'Wait for an explicit owner instruction' \
+    "$PIE/references/interview.md" 'PIE explicit go gate'
+assert_contains 'Continue autonomously through settled choices' \
+    "$PIE/references/execution.md" 'PIE execution autonomy gate'
+assert_contains 'generation by itself is not acceptance' \
+    "$PIE/references/execution.md" 'PIE independent acceptance gate'
 assert_contains 'add another interview or confirmation' "$HARDENING" \
     'hardening frozen-authority autonomy'
 assert_contains 'same request is the `go`' "$HARDENING" \

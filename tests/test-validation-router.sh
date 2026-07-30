@@ -36,6 +36,15 @@ cases = [
         False,
     ),
     (
+        ["shared/skills/plan-interview-execute/references/execution.md"],
+        "R1",
+        [
+            "tests/test-skill-context-budgets.sh",
+            "tests/test-skill-context-gates.sh",
+        ],
+        True,
+    ),
+    (
         ["libexec/harness-terminfo"],
         "R2",
         ["tests/test-terminfo.sh"],
@@ -101,4 +110,4 @@ assert unknown["tier"] == "R3"
 assert unknown["suites"] == ["tests/test-phase1.sh"]
 PY
 
-printf '%s\n' 'VALIDATION_ROUTER status=pass cases=9'
+printf '%s\n' 'VALIDATION_ROUTER status=pass cases=10'

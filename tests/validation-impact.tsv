@@ -13,8 +13,8 @@
 ^shared/skills/operate-native-hpc/(SKILL\.md|references/(common|current|abci|riken|alps|rccs|tsubame)\.md)$|R1|tests/test-skill-context-budgets.sh|HPC routed context budget
 ^shared/skills/operate-native-hpc/(SKILL\.md|references/(common|current|abci|riken|alps|rccs|tsubame)\.md)$|R1|tests/test-skill-context-gates.sh|HPC routed safety gates
 ^shared/skills/operate-native-hpc/references/sites\.md$|R3|-|HPC compatibility aggregate
-^shared/skills/plan-interview-execute/SKILL\.md$|R1|tests/test-skill-context-budgets.sh|PIE routed context budget
-^shared/skills/plan-interview-execute/SKILL\.md$|R1|tests/test-skill-context-gates.sh|PIE routed behavior gates
+^shared/skills/plan-interview-execute/(SKILL\.md|references/(planning|interview|execution)\.md)$|R1|tests/test-skill-context-budgets.sh|PIE routed context budget
+^shared/skills/plan-interview-execute/(SKILL\.md|references/(planning|interview|execution)\.md)$|R1|tests/test-skill-context-gates.sh|PIE routed behavior gates
 ^tests/test-skill-context-(budgets|gates)\.sh$|R3|-|skill routing validator
 ^shared/skills/fleet-repository-hardening/|R1|tests/test-fleet-repository-hardening-skill.sh|hardening skill
 ^tests/test-fleet-repository-hardening-skill\.sh$|R1|tests/test-fleet-repository-hardening-skill.sh|hardening skill validator

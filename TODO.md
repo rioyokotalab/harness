@@ -59,6 +59,25 @@ or untrusted-code boundaries.
 - Codex and Claude accepted benchmark `t351-autonomy-efficiency-v1`.
 - The clean immutable Harness baseline passed the complete phase-one suite in
   114.77 seconds.
+- The active board is 174 lines / 1,153 words, with byte-exact history and a
+  searchable 43-row task index. Routed mandatory context now falls 92.6–96.6%
+  across all eight frozen scenarios, with 45.5% median non-ledger reduction.
+- `harness validate` selects deterministic R0–R3 gates and exact-tree local
+  receipts. Documentation validates in 0.13 seconds, routed skills in 0.31
+  seconds, and mapped terminfo in 1.03 seconds; unknown or control-plane
+  changes still require the complete suite.
+- The complete suite overlaps independent integration and focused-test work,
+  reserves one of eight visible CPUs by default, retains all 89 registered
+  suites, and repeatedly passes in about 72 seconds versus the 114.77-second
+  baseline.
+- Routed Cowork, HPC, PIE, and remote-communication skills select only their
+  current phase/site/mode references. Largest selected routes are respectively
+  1,259, 1,440, 652, and 771 words, with regression-tested authority gates.
+- Target-scoped Codex runtime identities isolate Harness, Students, and
+  Swallow release roots, state, locks, recovery, and validation receipts.
+  Three concurrent repository-local validations completed without changing
+  another project's Git, lock, or tmux metadata; one expected failure remained
+  confined to its own process and receipt.
 - Private Actions transition is protected and complete: Students PRs #490 and
   #491 end at `dafb4a3`; Swallow PRs #136 and #137 end at `0e9029b`.
   Owner-only jobs now skip without allocating runners, mixed/non-owner events
@@ -69,15 +88,13 @@ or untrusted-code boundaries.
   policy remain unknown because current read-only credentials lack
   `admin:org`. This does not block the repository-only path.
 
-**Working files:** this board and archive/index; root `AGENTS.md`; Harness
-validation router/tests; ruleset fixture/docs; T-351 plan/audit; isolated
-skill-routing and runtime-isolation worktrees.
+**Working files:** this board and archive/index; root and routed policy;
+validation router/tests; target-scoped runtime; routed shared skills; T-351
+plan/audit; task-owned validation and cowork worktrees.
 
-**Next action:** integrate and review the two isolated Harness implementation
-slices, add the risk-tier validation router and exact-tree receipt, reconcile
-the live Harness ruleset fixture from read-only evidence, run matched context,
-latency, and three-project isolation benchmarks, then complete protected
-publication, cleanup, and the 09:00 handoff.
+**Next action:** continue measured route/latency review, run the complete suite
+after each retained control-plane batch, then perform one protected Harness
+publication, guarded cleanup, fresh fleet health, and the 09:00 handoff.
 
 **Authority boundary:** ordinary repository Git and task pull requests are
 authorized. Do not write hosting settings, rulesets, billing, app-server,

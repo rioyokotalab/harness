@@ -35,7 +35,7 @@ assert re.findall(r"^### (T-\d+) —", text, re.MULTILINE) == [
 for required in (
     "docs/plans/t351-autonomy-efficiency.md",
     "docs/audits/t351-autonomy-efficiency/time-slices.md",
-    "integrate and review the two isolated Harness implementation",
+    "continue measured route/latency review",
     "Do not write hosting settings",
     "94950",
     "2064918.pbs1",
