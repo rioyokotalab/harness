@@ -485,6 +485,33 @@ and the unchanged pre-swap tmux topology. It may perform only the two tmux
 renames and one `@99`/`@88` swap, with each operation journaled before
 transmission. Stop on any ambiguous operation and never rerun the continuation.
 
+Protected PR #467 merge-merged the partial-state checkpoint as
+`2b89bc690a463a0f6311b1ed2a49640ff7bb227e`. Tmux-only continuation digest
+`a3dad98f78a2cee569f3c6a5791f2b614ff7333212b8133cb7dcc39ff7b80027`
+passed zero-write preflight and executed exactly once. Its two rename
+operations and one `@99`/`@88` swap were each journaled before transmission
+and acknowledged. Journal digest
+`39af6afc64c6454931244714b0276bac3d42ef4d6d40fe4fb0df45208fad07f9`
+and result digest
+`729d9966ba10848b6f9a7ee1c98143d0734f618ab9c5ca2b5892bd0c04783383`
+are consumed and must not execute again.
+
+Fresh readback proves accepted direct-Students root
+`019fb2bc-52ab-78f0-88a4-00c9bdb0f271` named `students`, unchanged
+supervisor `2652612/114537087`, pane `@99/%99`, and canonical index 1. Old
+root `019f7fea-4f00-7681-910d-81ae99a77143` is named
+`students-retired-20260730` and remains live under unchanged supervisor
+`1638028/102482546` in `@88/%88` at index 3. Both are idle, all four watchers
+resumed at attempt zero, Harness and Swallow are unchanged, and the sole client
+remains on Harness `@87`. The direct Students checkout is clean aligned
+`main` at `46a9651d27f6fb35d7fc68a4e710e66f0257de0d`.
+
+**Next action:** publish this reversible promotion checkpoint. Only afterward,
+freeze the exact old launcher/TUI identities and send one `SIGTERM` to the old
+real TUI. Never send a second signal. Wait for only old Students
+watcher/launcher/supervisor/window `@88` to unwind, while requiring accepted
+`@99/1:students` and every unaffected root/process/client to remain exact.
+
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
 **Phase:** complete.
