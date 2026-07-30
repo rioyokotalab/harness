@@ -145,7 +145,7 @@ agents and ledgers.
 
 ### T-348 — Keep phone remote-control roots mirrored to Local tmux
 
-**Phase:** old chain retired; publishing pre-archive checkpoint.
+**Phase:** retired root archived; validating final convergence.
 
 The owner reports that Swallow is absent from phone Remote and requests a
 periodic one-to-one mirror for Harness, Students, and Swallow. Complete
@@ -474,6 +474,37 @@ tmux, client, and loaded-runtime references. If the accepted canonical root,
 app server, helper/monitor, and unaffected roots remain exact, send one native
 reversible archive request for only the retired old root. Never delete its
 rollout and never repeat an acknowledged or ambiguous archive.
+
+Retirement checkpoint PR #453 passed protected `portable-phase1` and merged as
+`2f8afba682f1df693b1ec036c93bf06c298eb19b`. Reversible archiver digest
+`7da2cfd410cd3dacf343b0bb43a5a859fea4061a924ae7515b270a867de65579`
+passed zero-write preflight with zero old-root process/tmux/client references,
+then sent exactly one `thread/archive` as request `5`. The app server returned
+an explicit successful object response and the journal records
+`acknowledged`. That request is consumed and must never be retried.
+
+The controller's five-second persistence wait ended
+`ambiguous/archive-persistence-ambiguous`, but fresh independent readback
+immediately afterward proves the acknowledged operation completed: exact old
+root `019fafef-5ebf-72f1-b1ce-2444e7570dc1` has `archived=1` and an archive
+timestamp; the exact active and loaded sets contain only the three canonical
+roots; accepted root `019fb1ab-b559-79c2-ad9c-0ee8f426cedc` remains
+unarchived and named `swallow`; and the old rollout remains the same
+current-user, mode-0600, one-link inode. No delete, unarchive, second archive,
+process, tmux, name, or peer write followed.
+
+The first post-archive helper receipt is already `healthy` with exact
+three-root phone eligibility and no mismatch; the first monitor receipt is
+`healthy=3 phone_mirror=healthy` with no order or repair action. Helper has
+zero queued/running events; its previously queued mirror event is now one
+terminal deferred receipt and is non-retryable.
+
+**Next action:** publish this archive reconciliation through protected `main`,
+then require a second interval-separated healthy helper/monitor receipt, exact
+three-window/root/process/client/app-server state, native doctor, focused
+recovery/resilience/helper/monitor tests, complete `tests/test-phase1.sh`,
+clean Git, and fresh fleet health. After validation, guarded-delete only the
+generated schema bundle and close T-348 without deleting any saved rollout.
 
 ### T-347 — Complete T-345 mirror convergence
 

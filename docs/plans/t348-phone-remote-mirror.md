@@ -1,6 +1,6 @@
 # T-348 phone remote-control mirror
 
-**Phase:** old chain retired; publishing pre-archive checkpoint
+**Phase:** retired root archived; validating final convergence
 **Driver:** Local Codex
 **Updated:** 2026-07-30 JST
 **Branch:** `codex/t348-phone-mirror`
@@ -373,3 +373,23 @@ and the accepted chain unchanged at attempt zero. Publish this checkpoint,
 then prove old-root inactivity and zero runtime/tmux/client references before
 one reversible native archive request. Preserve the old rollout and never
 repeat an acknowledged or ambiguous archive.
+
+Retirement checkpoint PR #453 merged as
+`2f8afba682f1df693b1ec036c93bf06c298eb19b`. Archiver digest
+`7da2cfd410cd3dacf343b0bb43a5a859fea4061a924ae7515b270a867de65579`
+then sent exactly one retired-root archive request `5` and received an explicit
+object acknowledgement. Its five-second database wait timed out, so the
+controller conservatively returned `archive-persistence-ambiguous`; the
+request is consumed and must not be retried.
+
+Independent readback now proves the exact old root archived with an archive
+timestamp and absent from both active and loaded sets. The accepted root
+remains unarchived and canonical, the old rollout inode remains present and
+mode 0600, and no old process/tmux/client reference exists. First fresh
+helper/monitor receipts are both healthy with exact three-root phone
+eligibility and no repair.
+
+Publish this reconciled archive, then require a second interval-separated
+healthy receipt pair, native doctor, focused and complete tests, clean Git,
+and canonical fleet health. Remove only generated schema through guarded
+deletion; preserve all saved rollouts.
