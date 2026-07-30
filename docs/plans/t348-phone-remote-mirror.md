@@ -1,6 +1,6 @@
 # T-348 phone remote-control mirror
 
-**Phase:** executing authorized changed-input recovery
+**Phase:** blocked after authorized changed-input start
 **Driver:** Local Codex
 **Updated:** 2026-07-30 JST
 **Branch:** `codex/t348-phone-mirror`
@@ -250,6 +250,14 @@ and `config` from that request and require the returned root and persisted
 metadata to resolve to the verified Sol/high defaults. Request ID `5` remains
 non-retryable.
 
+**Result:** controller v4 sent the authorized start exactly once as
+new-connection request ID `6`, after using request ID `5` only for an exact
+read-only loaded-root check. Request ID `6` returned
+`thread-start-ambiguous` with no usable root identity. Database, complete
+top-level list, and loaded-root reconciliation again prove exactly the
+original three roots and no provisional name. The authorization is consumed;
+request ID `6` must not be retried.
+
 ## Next action
 
 Implementation passed complete validation and merged through protected PR
@@ -262,10 +270,16 @@ all-source top-level list, and loaded-thread readback each proved exactly the
 original three roots and no provisional name. The owner has now separately
 authorized one changed-input start after reviewing that proven-absent result.
 
-Revalidate every published identity and reserve a new controller/journal.
-Send exactly one start with Harness cwd, granular approval, disabled sandbox,
-and no `model` or `config` fields. Require the acknowledged root and persisted
-metadata to resolve to Sol/high and interactive source `vscode`; otherwise
-stop without another start. Continue only through provisional root naming,
-bridge launch, and one generic cold-start turn. Preserve the old Swallow and
-pause at physical-phone confirmation before retirement.
+Preserve the old Swallow and disabled automatic mirror event. Do not send
+another start, launch a provisional window/runtime, or mutate names, archives,
+processes, or topology. Read-only diagnosis established that the live Codex
+0.145.0 protocol experimental-gates nested granular approval, while the prior
+controller connections did not advertise `capabilities.experimentalApi`.
+A separate read-only experimental-capable handshake and loaded-root list
+passed with exactly the original three roots.
+
+The recommended alternate is one newly authorized start on a new connection
+initialized with `experimentalApi=true`, retaining granular approval, disabled
+sandbox, exact cwd, omitted model/config overrides, all non-retry gates, and
+the physical-phone confirmation pause. This is a new changed-handshake
+decision and requires explicit owner authorization.
