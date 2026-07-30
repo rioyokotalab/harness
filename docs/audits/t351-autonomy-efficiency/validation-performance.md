@@ -73,6 +73,7 @@ Matched retained measurements:
 | overlap, 91-suite tree after catalog compatibility | 73.69 s | 152.89 s | 168.49 s | not retained |
 | overlap, exact tree after policy/onboarding routing | 87.13 s | 160.98 s | 169.00 s | 503,696 KiB |
 | overlap plus concurrent ShellCheck, matched candidate median | 65.51 s | approximately unchanged | approximately unchanged | variable |
+| exact integrated tree after ShellCheck overlap | 67.19 s | 161.23 s | 165.12 s | 521,212 KiB |
 
 The retained automatic route sees eight affinity-visible CPUs and gives seven
 to focused suites while integration proceeds. Explicit or legacy worker counts
@@ -106,7 +107,9 @@ reported only after the independent integration body finishes, but its
 diagnostic and nonzero status cannot be lost or converted into success. Each
 side reused one exact source tree across its three runs, with only the two
 intended files differing between sides. The final integrated T-351 tree still
-requires one complete run before publication.
+requires one complete run after the last evidence bytes settle and before
+publication. A subsequent clean integrated checkpoint passed all 91 suites in
+67.19 seconds with the resource values shown above.
 
 `tests/test-focused-runner.sh` enforces both background starts and joins,
 one-CPU automatic reserve for focused suites, and failure propagation. A

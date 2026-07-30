@@ -287,7 +287,103 @@ app-server, tmux, pane, transcript, or control process was changed.
 
 ## 2026-07-31 03:00–03:59 JST
 
-In progress. Integrate the independently validated mirrored-node and reboot
-routers, then split conditional policy by exact Git, external-operation,
-managed-Codex, and fleet actions without weakening authority or lifecycle
-gates.
+This slice concentrated on removing mandatory work that was still unrelated to
+the next action, then profiling the remaining complete-suite critical path. The
+owner's priority order stayed frozen: remove interaction gates first, remove
+latency and context second, and retain security boundaries that do not obstruct
+those goals. No new owner choice was needed. The branch remained one coherent
+T-351 branch; checkpoints were pushed directly without opening a pull request
+or allocating an Actions runner.
+
+Three previously reviewed workflow splits were integrated first. Mirrored-node
+onboarding now uses a 227-word entry and one current phase route; its largest
+selection is 630 words instead of 1,157, a 45.5% reduction. Reboot recovery
+uses a 259-word entry and at most 408 words instead of 599, a 31.9% reduction.
+External-user onboarding remains at a 391-word maximum instead of 664. Their
+tests retain value-free discovery, exact target and account ownership,
+credential and package boundaries, rollback, unknown-state stops, backup
+acceptance, and remote-handoff checks. Native HPC was split a second time:
+after selecting exactly one current site, the agent also selects exactly one
+planning, execution/monitoring, or validation phase. The largest route is 1,117
+words, 58.1% below the immutable 2,668-word aggregate and 20.0% below the first
+site-routed implementation. Common scheduler, allocation, launcher,
+correctness, cleanup, and matched-performance gates remain reachable.
+
+The monolithic project policy was replaced by exact-operation modules for
+repository Git, external operations, managed Codex, fleet, housekeeping,
+research, and duration work. The always-read root was then conservatively
+compacted from 888 to 800 words. Git, external, managed-Codex, and fleet routes
+are now 1,075, 1,074, 1,023, and 1,131 words. The root still directly carries
+credential refusal, guarded deletion, fresh native progress timestamps,
+side-effect-safe provider recovery, validation escalation, exact reuse, compact
+ledger routing, skill selection, and handoff requirements. A duplicated
+takeover inspection was removed because cold-start reconstruction and
+next-action mutable-input revalidation already require the same evidence.
+Regression ceilings were tightened to 825 root words and correspondingly
+smaller cumulative routes, so the savings cannot silently regress. An initial
+draft broke two literal contract markers despite retaining their meaning; the
+failure was caught immediately by policy and Claude-takeover fixtures, the
+phrases were restored without restoring redundant prose, and all routed policy
+tests passed.
+
+The active T-351 record was compacted to 408 words while the board remained 52
+lines and 246 words. Board plus selected record is 654 words, 43.3% below the
+old 1,153-word board alone. The context fixture now also proves every selected
+resource is Git-tracked, rather than merely regular and non-symlinked. Across
+the eight immutable scenarios, current totals are 94.7–98.2% below baseline,
+with a 97.3% median; median non-ledger policy/skill reduction is 60.3%.
+Unrelated task chronology, historical protocols, installer policy, fleet
+maintenance details, and other phase references are not loaded unless their
+exact action selects them.
+
+Cowork received two evidence-backed refinements. Its mandatory authority entry
+fell from 721 to 625 words, then became 628 words after gaining a precise
+second-level evidence router; the initial planning route is 972 words versus
+the immutable 5,926, an 83.6% reduction. Authority, two-native-client,
+isolation, sealed-state, advisory-status, sole-writer, owner-go, no-bypass,
+guarded-cleanup, and cross-product-transfer gates remain always reachable.
+Evidence reasoning/reconciliation was separated from the sealed transaction:
+review selects 842 words, while stage/status/import selects 1,097 instead of
+the former 1,327-word combined route. A native evidence pass selects both
+references and preserves every evidence and transaction requirement. The
+duration scenario now totals 4,259 words and still includes planning, review,
+exchange, native-client, execution/duration, and recovery phases. Cowork,
+context-budget, safety-gate, catalog, and the expanded 39-case validation
+router tests passed. One router fixture initially expected the new Codex path
+to be cacheable; the fail-closed non-cache token correctly made it non-cacheable,
+and the fixture was corrected rather than weakening the selector.
+
+Mutable Actions state was read back at 03:12 JST without a write. Students
+remained at `dafb4a3`; Swallow had independently advanced through PR #139 to
+`1f1951d573eef05ce4055c140088d97ca8328382`. Swallow owner run
+`30557998116` skipped before runner allocation, and its merge produced no push
+run. Both private workflows still had pull-request, weekly, and manual
+triggers, exact owner-only conditions, and no duplicate push trigger. Thus the
+repository-only transition remained effective after later unrelated work.
+No ruleset, approval count, billing, organization policy, credential, or
+hosting setting was changed.
+
+The remaining full-suite profile found an unchanged approximately 48-second
+ShellCheck gate running before the integration body. An isolated two-file
+candidate started ShellCheck beside the focused runner, ran the integration
+body unchanged, then explicitly joined both gates before success or guarded
+cleanup. Three matched baselines took 76.38, 76.02, and 80.38 seconds; three
+candidates took 62.98, 68.54, and 65.51 seconds. The medians, 76.38 and 65.51,
+show a 14.2% wall reduction. All six passed all 91 suites. No assertion or
+suite was removed; CPU cost was approximately unchanged and RSS was too
+variable for a claim. POSIX syntax, ShellCheck, focused failure propagation,
+source contracts, and diff checks passed after import. A clean integrated
+checkpoint then passed all 91 suites in 67.19 seconds, with 161.23 seconds user,
+165.12 seconds system, and 521,212 KiB maximum RSS.
+
+The experiment's disposable 7,709-entry, 132,890,970-byte benchmark root was
+removed through the guarded workflow after exact revalidation. Task-wide
+worktrees, eligible Codex arg0 residue, and previously identified stale
+test-launcher processes remain deferred to the single deadline cleanup so they
+are not repeatedly disturbed. No live Codex, tmux, app-server, monitor,
+recovery, scheduler, or project-agent process was mutated, and no pane or
+transcript was read. Remaining work is to hold implementation bytes stable,
+run the final exact-tree complete suite after the last evidence edits, publish
+one protected Harness pull request, prove its exact merged tree and absence of
+a post-merge push run, perform guarded cleanup, run fresh fleet health, and
+close at the requested deadline.
