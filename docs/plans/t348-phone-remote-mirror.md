@@ -1,6 +1,6 @@
 # T-348 phone remote-control mirror
 
-**Phase:** physical-phone accepted; publishing promotion authorization
+**Phase:** physical-phone accepted; blocked at owner-client safety gate
 **Driver:** Local Codex
 **Updated:** 2026-07-30 JST
 **Branch:** `codex/t348-phone-mirror`
@@ -314,12 +314,14 @@ reasoning-effort and custom-name columns null, while the acknowledged start
 response proves `high` and the live app server returns the exact provisional
 name. No pane or transcript content was read and no name request was repeated.
 
-Publish D-006 through protected `main`, then revalidate old
-`@93/2:swallow`, accepted `@98/3:swallow-phone-bridge-20260730`, both exact
-roots, all protected processes/watchers, the sole client, and every no-content
-acceptance gate. If unchanged, perform one journaled promotion transaction:
-rename the old root/window `swallow-retired-20260730`, rename the accepted
-root/window `swallow`, and swap only `@98` with `@93` so the accepted window
-occupies index 2 without relaunch. Publish that reversible promotion
-checkpoint before any old-leaf signal or old-root archive. All prior start,
-name, launch, paste, and submit operations remain consumed and non-retryable.
+D-006 merged through protected PR #449 as
+`799fe94a9ec0ba54f2c14f92df46267878aaa9bd`. Read-only promotion preflight
+then found sole client PID `197678` on affected old window `@93`, rather than
+the previously frozen unaffected window `@87`. Every root, runtime, watcher,
+window, helper, and monitor remained live; no promotion write was sent.
+
+Wait for the owner to select Harness window 0 in the attached tmux client.
+Revalidate that exact client on `@87`; the controller must not move or detach
+it. Only then perform the journaled root/window renames and `@98`/`@93`
+position swap, preserving every consumed non-retry gate. Publish the
+reversible promotion checkpoint before any old-leaf signal or archive.
