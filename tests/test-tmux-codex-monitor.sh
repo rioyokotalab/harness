@@ -46,6 +46,7 @@ os.environ["HARNESS_ROOT"] = os.environ["HARNESS_MONITOR_ROOT"]
 module = importlib.machinery.SourceFileLoader(
     "tmux_monitor_test", os.environ["HARNESS_MONITOR_PATH"]
 ).load_module()
+assert module.SESSION_NAME == "projects"
 with open(os.environ["HARNESS_MONITOR_PATH"], "r") as stream:
     source = stream.read()
 assert "Backend(" not in source

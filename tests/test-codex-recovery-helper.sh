@@ -76,6 +76,7 @@ source, test_root = sys.argv[1:3]
 module = importlib.machinery.SourceFileLoader(
     "recovery_helper_phone_test", source
 ).load_module()
+assert module.SESSION_NAME == "projects"
 phone_event = {"identity": {"kind": "phone-mirror-drift"}}
 assert module.event_pending(phone_event, {}, False) is False
 assert module.event_pending(phone_event, {}, True) is True
