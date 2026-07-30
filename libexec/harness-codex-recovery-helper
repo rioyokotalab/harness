@@ -23,6 +23,7 @@ sys.dont_write_bytecode = True
 SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 SAFE_WINDOW_ID = re.compile(r"^@[0-9]+$")
 EXPECTED = (("harness", 0), ("students", 1), ("swallow", 2))
+INTERACTIVE_SOURCES = ("cli", "vscode")
 TERMINAL_PHASES = ("completed", "failed", "ambiguous", "deferred")
 ACCEPTED_RESULT = re.compile(r"^RECOVERY_RESULT status=accepted(?:[ \t]|$)")
 APPROVAL_POLICY = (
@@ -364,47 +365,158 @@ def state_database():
     return os.path.join(codex_home, "state_5.sqlite")
 
 
-def observe_mirror(root):
-    if os.environ.get("HARNESS_TEST_SKIP_DETECTION") == "1":
-        return
-    mapping = tmux_mapping()
-    database = state_database()
-    if not mapping or not os.path.isfile(database):
-        return
-    uri = "file:{}?mode=ro".format(database)
+def rollout_eligible(path, codex_home):
+    if not path or not os.path.isabs(path):
+        return False
+    sessions = os.path.realpath(os.path.join(codex_home, "sessions"))
+    resolved = os.path.realpath(path)
     try:
-        connection = sqlite3.connect(uri, uri=True, timeout=1)
-        rows = connection.execute(
-            "SELECT id FROM threads "
-            "WHERE cwd = ? AND archived = 0 "
-            "AND source NOT LIKE ? ORDER BY id",
-            (os.environ["HARNESS_ROOT"], '{"subagent"%'),
-        ).fetchall()
-        active = sorted(row[0] for row in rows)
-        canonical = sorted(value["thread"] for value in mapping.values())
-        mismatched = []
-        for role, value in mapping.items():
-            row = connection.execute(
-                "SELECT archived, "
-                "CASE WHEN COALESCE(NULLIF(name, ''), title) = ? "
-                "THEN 1 ELSE 0 END "
-                "FROM threads WHERE id = ?",
-                (role, value["thread"]),
+        if os.path.commonpath((sessions, resolved)) != sessions:
+            return False
+        info = os.lstat(path)
+    except (OSError, ValueError):
+        return False
+    return (
+        stat.S_ISREG(info.st_mode)
+        and not stat.S_ISLNK(info.st_mode)
+        and info.st_uid == os.getuid()
+        and info.st_nlink == 1
+    )
+
+
+def phone_mirror_snapshot(mapping, database, processes, harness_root, codex_home):
+    now = int(time.time())
+    owner = process_info(os.getpid())
+    receipt = {
+        "schema": 1,
+        "epoch": now,
+        "owner_pid": os.getpid(),
+        "owner_start": owner["start"] if owner else "unknown",
+        "status": "unavailable",
+        "remote_control": {"exactly_one": len(processes) == 1},
+        "canonical_count": len(mapping) if mapping else 0,
+        "active_top_level_count": None,
+        "roles": {},
+        "mismatch_classes": [],
+    }
+    if len(processes) == 1:
+        receipt["remote_control"].update(
+            {"pid": processes[0]["pid"], "start": processes[0]["start"]}
+        )
+    else:
+        receipt["mismatch_classes"].append("remote-control-count")
+    for role, index in EXPECTED:
+        mapped = bool(
+            mapping
+            and role in mapping
+            and mapping[role].get("index") == index
+        )
+        receipt["roles"][role] = {
+            "tmux_mapping": mapped,
+            "unarchived": False,
+            "exact_name": False,
+            "exact_cwd": False,
+            "rollout_location": False,
+            "rollout_exists": False,
+            "interactive_source": False,
+        }
+    if not mapping:
+        receipt["mismatch_classes"].append("tmux-topology")
+        return receipt, None
+    if not os.path.isfile(database):
+        receipt["mismatch_classes"].append("database-unavailable")
+        return receipt, None
+
+    active = []
+    canonical = sorted(value["thread"] for value in mapping.values())
+    canonical_rows = {}
+    try:
+        connection = sqlite3.connect(
+            "file:{}?mode=ro".format(database), uri=True, timeout=1
+        )
+        active = sorted(
+            row[0]
+            for row in connection.execute(
+                "SELECT id FROM threads "
+                "WHERE cwd = ? AND archived = 0 "
+                "AND source NOT LIKE ? ORDER BY id",
+                (harness_root, '{"subagent"%'),
+            ).fetchall()
+        )
+        for role, _index in EXPECTED:
+            canonical_rows[role] = connection.execute(
+                "SELECT archived, COALESCE(NULLIF(name, ''), title), cwd, "
+                "source, rollout_path FROM threads WHERE id = ?",
+                (mapping[role]["thread"],),
             ).fetchone()
-            if not row or row[0] != 0 or row[1] != 1:
-                mismatched.append(role)
     except sqlite3.Error:
-        return
+        receipt["mismatch_classes"].append("database-query")
+        return receipt, None
     finally:
         if "connection" in locals():
             connection.close()
+
+    receipt["active_top_level_count"] = len(active)
     extras = sorted(set(active) - set(canonical))
     missing = sorted(set(canonical) - set(active))
-    if not extras and not missing and not mismatched:
-        return
-    identity = {
+    if len(active) != len(EXPECTED):
+        receipt["mismatch_classes"].append("active-top-level-count")
+    if extras:
+        receipt["mismatch_classes"].append("extra-active-root")
+    if missing:
+        receipt["mismatch_classes"].append("canonical-root-inactive")
+
+    role_mismatches = {}
+    for role, _index in EXPECTED:
+        checks = receipt["roles"][role]
+        row = canonical_rows.get(role)
+        if row:
+            rollout_path = row[4]
+            checks.update(
+                {
+                    "unarchived": row[0] == 0,
+                    "exact_name": row[1] == role,
+                    "exact_cwd": row[2] == harness_root,
+                    "rollout_location": bool(
+                        rollout_path
+                        and os.path.isabs(rollout_path)
+                        and os.path.commonpath(
+                            (
+                                os.path.realpath(
+                                    os.path.join(codex_home, "sessions")
+                                ),
+                                os.path.realpath(rollout_path),
+                            )
+                        )
+                        == os.path.realpath(os.path.join(codex_home, "sessions"))
+                    ),
+                    "rollout_exists": rollout_eligible(
+                        rollout_path, codex_home
+                    ),
+                    "interactive_source": row[3] in INTERACTIVE_SOURCES,
+                }
+            )
+        failed = sorted(name for name, value in checks.items() if not value)
+        if failed:
+            role_mismatches[role] = failed
+            receipt["mismatch_classes"].extend(
+                "{}:{}".format(name, role) for name in failed
+            )
+
+    if (
+        receipt["remote_control"]["exactly_one"]
+        and not extras
+        and not missing
+        and len(active) == len(EXPECTED)
+        and not role_mismatches
+    ):
+        receipt["status"] = "healthy"
+    else:
+        receipt["status"] = "degraded"
+    receipt["mismatch_classes"] = sorted(set(receipt["mismatch_classes"]))
+    drift = {
         "schema": 1,
-        "kind": "mirror-drift",
+        "kind": "phone-mirror-drift",
         "canonical": [
             {
                 "role": role,
@@ -415,9 +527,60 @@ def observe_mirror(root):
         ],
         "extras": extras,
         "missing": missing,
-        "name_mismatch": sorted(mismatched),
+        "mismatch_classes": receipt["mismatch_classes"],
     }
-    enqueue_event(root, identity)
+    return receipt, drift
+
+
+def pending_event_for_kind(root, kind):
+    for event in event_files(root):
+        if event["identity"].get("kind") != kind:
+            continue
+        receipt = read_json(receipt_path(root, event["event"]), {})
+        if receipt.get("phase") not in TERMINAL_PHASES:
+            return event
+    return None
+
+
+def defer_queued_event(root, event, reason):
+    path = receipt_path(root, event["event"])
+    if os.path.exists(path):
+        return False
+    atomic_json(
+        path,
+        {
+            "schema": 1,
+            "event": event["event"],
+            "phase": "deferred",
+            "reason": reason,
+            "epoch": int(time.time()),
+        },
+    )
+    return True
+
+
+def observe_mirror(root):
+    if os.environ.get("HARNESS_TEST_SKIP_DETECTION") == "1":
+        return
+    mapping = tmux_mapping()
+    database = state_database()
+    codex_home = os.environ.get("CODEX_HOME", os.path.expanduser("~/.codex"))
+    receipt, drift = phone_mirror_snapshot(
+        mapping,
+        database,
+        remote_control_processes(),
+        os.environ["HARNESS_ROOT"],
+        codex_home,
+    )
+    atomic_json(os.path.join(root, "phone-mirror.json"), receipt)
+    pending = pending_event_for_kind(root, "phone-mirror-drift")
+    if receipt["status"] == "healthy":
+        if pending:
+            defer_queued_event(root, pending, "drift-resolved")
+        return
+    if drift and receipt["status"] == "degraded":
+        if not pending:
+            enqueue_event(root, drift)
 
 
 def worker_prompt(event):
@@ -477,6 +640,20 @@ helper receipts, after exact zero-process-reference and structural inactivity
 proof. Preserve every unclassified root. Restore canonical names/archive flags
 only through one read-before/write/read-after transaction; ambiguous writes
 are not retried.
+
+For kind=phone-mirror-drift, first require exactly one source-ineligible
+canonical root, two healthy interactive peers, one unchanged app-server
+identity, exact canonical tmux topology, an unattached idle target, and no
+unclassified extra active root. A source value is immutable: never rewrite it
+in SQLite or a rollout. Create one distinct interactive app-server root and
+provisional tmux window by the bridge-first protocol, submit only the generic
+cold-start reconstruction instruction from complete repository instructions,
+durable ledgers, Git, and mutable external state, and preserve both roots.
+Never reconstruct or replay prior task content. Stop deferred after host
+eligibility validation so the owner can confirm physical-phone visibility;
+never rename, signal, archive, or retire the old canonical root before that
+separate confirmation. Unknown, multiple-target, attached, active,
+ambiguous, or physical-phone-only failures are report-only.
 
 Finish with one value-free status line beginning RECOVERY_RESULT and exit
 nonzero on any failed or ambiguous gate.
@@ -646,6 +823,15 @@ def process_event(root, event):
         os.close(descriptor)
 
 
+def event_pending(event, receipt, auto_mirror):
+    if receipt.get("phase") in TERMINAL_PHASES:
+        return False
+    return (
+        event["identity"].get("kind") != "phone-mirror-drift"
+        or auto_mirror
+    )
+
+
 def summary(root, owner_pid, phase):
     counts = {
         "queued": 0,
@@ -696,6 +882,7 @@ def parse_arguments():
     modes.add_argument("--status", action="store_true")
     modes.add_argument("--enqueue-blocked", action="store_true")
     parser.add_argument("--interval", type=int, default=30)
+    parser.add_argument("--auto-mirror", action="store_true")
     parser.add_argument("--target")
     parser.add_argument("--runtime")
     parser.add_argument("--thread")
@@ -724,6 +911,10 @@ def parse_arguments():
             parser.error("--enqueue-blocked requires the exact blocked identity")
     elif any(getattr(arguments, field) is not None for field in blocked_fields):
         parser.error("blocked identity arguments require --enqueue-blocked")
+    if arguments.auto_mirror and (
+        arguments.status or arguments.enqueue_blocked
+    ):
+        parser.error("--auto-mirror requires --run or --once")
     return arguments
 
 
@@ -766,7 +957,7 @@ def main():
             pending = []
             for event in events:
                 receipt = read_json(receipt_path(root, event["event"]), {})
-                if receipt.get("phase") not in TERMINAL_PHASES:
+                if event_pending(event, receipt, arguments.auto_mirror):
                     pending.append(event)
             phase = "working" if pending else "idle"
             value = summary(root, os.getpid(), phase)
