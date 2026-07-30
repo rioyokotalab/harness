@@ -456,6 +456,35 @@ swap only window IDs `@99` and `@88` so accepted `@99` occupies index 1.
 Checkpoint that reversible rename-only promotion before sending any old-leaf
 signal or archive request.
 
+The first promotion controller digest
+`512080ae29ba6166d5bc743c6468945cf13476d413aea2e2a0608fa10c1f1a1b`
+initially refused zero-write because Students `origin/main` had legitimately
+advanced to protected merge `46a9651d27f6fb35d7fc68a4e710e66f0257de0d`.
+The clean direct checkout fast-forwarded to that exact commit; a rebound
+zero-write preflight then passed.
+
+The one execution attempt journaled and acknowledged old-root name request
+`3` as `students-retired-20260730` and accepted-root name request `6` as
+`students`. Fresh app-server readback proves both exact names and idle roots.
+Codex 0.145 nevertheless left both database `name` columns null, so the
+controller refused at its stricter database persistence assertion before
+sending any tmux rename or swap. Journal digest
+`99c2200e9728c194046bcc7c909d28380e6a650ee385227598961c2a6f762bf9`
+and result digest
+`80175ea81d767705c074ce06f58bb28d1f530cdf5112271c6c6c4ba1bd843d0d`
+are consumed. All four paused watchers resumed with their original identities
+and attempt-zero state. Exact tmux topology remains unchanged, with old
+Students `@88/1:students` and accepted `@99/3:students-native-bridge-20260730`.
+Do not retry either acknowledged app-server request or execute the consumed
+controller.
+
+**Next action:** publish this partial-promotion reconciliation. Then use one
+new digest-bound continuation that requires the exact consumed journal/result,
+the two renamed app-server roots, unchanged processes/clients/repositories,
+and the unchanged pre-swap tmux topology. It may perform only the two tmux
+renames and one `@99`/`@88` swap, with each operation journaled before
+transmission. Stop on any ambiguous operation and never rerun the continuation.
+
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
 **Phase:** complete.
