@@ -730,11 +730,38 @@ focused shard, guarded-delete coverage, and integration check passed; only the
 declared native MPI smoke skipped outside an MPI environment. The worktree
 remained clean throughout that validation.
 
-**Next action:** commit this validation checkpoint, rerun diff hygiene and the
-focused helper suite, then publish the exact head through protected main.
-Fast-forward Local main, restart only the idle helper pane under merged code,
-and require two interval-separated healthy helper/monitor receipts with exact
-phone parity before final T-350 closeout.
+Validation checkpoint `63741e2` retained passing diff hygiene and focused
+helper coverage. Protected PR #475 then passed `portable-phase1` and
+merge-merged the archive reconciliation and interactive-source fix as
+`ee4a80d00f41ef4c8cd115889ab25f443075a3f3`; Local main fast-forwarded
+cleanly apart from the preserved `.nfs` holder.
+
+Helper-restart controller digest
+`caa942a27fa4e019a5fca7c68de67000368a1b9651e6d16ea825526ff037f07a`
+passed zero-write preflight and executed exactly once against idle helper
+`2540432/114413138` in pane `%97`. Its exact native `tmux respawn-pane`
+returned success and was acknowledged, but no replacement process survived;
+the 15-second readback expired. Journal digest
+`3a7f9d579a22cf151e1e797aa3b1f59ad7d85a87666b0acfb4bad15a694bb3e4`
+and result digest
+`ccb3f6bfadb66d85742c6f8cabf54782842c64ee3cfa78b07188f8cd589c7588`
+record `helper-restart-readback-ambiguous` and are consumed. Never rerun that
+respawn.
+
+Exact reconciliation proves old helper `2540432` is absent and helper
+window/pane `@97/%97` disappeared. The unchanged monitor remains
+`2540438/114413139` at `@95/%95`; tunnel window `@40/%40` and all canonical
+project panes/processes remain exact. Stale helper receipts still describe
+the stopped old owner and old degraded phone snapshot, so they are not
+acceptance evidence.
+
+**Next action:** publish this ambiguous-but-resolved helper checkpoint. Then
+use a distinct changed-input one-attempt controller to create exactly one new
+detached `monitor:2:helper` window running the merged helper command directly.
+Do not retry `respawn-pane`. Require one new current-user owner, no worker
+child, unchanged monitor/project identities, a fresh healthy helper phone
+receipt, and two interval-separated healthy helper/monitor readbacks before
+final T-350 closeout.
 
 ### T-349 — Rename the canonical Local tmux session to `projects`
 
