@@ -166,7 +166,7 @@ agents and ledgers.
 
 ### T-347 — Complete T-345 mirror convergence
 
-**Phase:** r3 fresh-idle correction frozen; publication pending.
+**Phase:** r4 atomic childless-stop correction frozen; publication pending.
 
 The immutable T-345 helper event remains terminal `failed/worker-failed`; its
 private worker log remains unread and the event must never be retried.
@@ -280,6 +280,29 @@ independent zero-child refusal. The r3 fresh-idle gate passed read-only in
 seven seconds; syntax and zero-write controller preflight also pass. Its
 distinct journal/result paths are absent.
 
+PR #426 passed `portable-phase1` at exact r3 head
+`991ba770ad6435147709eef35fb063a0e0d5f56a` and merge-merged as
+`2caa515e7ad7762878ceeb0f516f0f03682865b4`. r3 ran once and again
+terminally refused before any watcher or operation phase. Its 655-byte
+mode-0600 journal proves only helper stop/resume and `verified=0`; no
+app-server connection or lifecycle request occurred. All three pre-request
+receipts remain immutable and all runtime health returned to the accepted
+state.
+
+The r3 fresh-idle proof occurred immediately before `SIGSTOP`, but its base
+child query was still a separate observation. r4 makes this proof atomic:
+after fresh idle it signals the exact helper, waits for Linux state `T`, checks
+the stopped parent has zero children, and exposes that frozen proof exactly
+once to the unchanged base gate. A child causes immediate helper resume and
+refusal.
+
+Private r4 wrapper
+`/run/user/5035/harness-t347-mirror-convergence/controller-r4.py` is current
+user, mode `0700`, one link, 6,423 bytes, SHA-256
+`bc610c2c3a40f6b3c22d2ba1447fe18f9a80ac572890b0f0d136c5bdae116aa7`.
+Its read-only fresh-idle gate passed in eight seconds, syntax and zero-write
+controller preflight pass, and distinct r4 journal/result paths are absent.
+
 The immutable controller checkpoint is exact commit
 `70c5194066965df1bffc0078f36361ded50d7bc2` in clean worktree
 `/tmp/harness-t347-t345-mirror-execution`. That worktree must remain at this
@@ -289,10 +312,10 @@ an ancestor. PR #423 passed `portable-phase1` at recording head
 `6fc06163946452ca1fe9a7d015279c2b161ea9ff` and merge-merged as
 `805016261124fd07b365a2cbf962222939e0758d`.
 
-**Next action:** publish the second no-request refusal and exact r3 wrapper
+**Next action:** publish the third no-request refusal and exact r4 wrapper
 through the protected workflow. Then pass the resulting protected-main merge,
-checkpoint `70c5194`, base digest `df5f4f0`, and r3 digest `6135ed2` to one r3
-execution. Never rerun the original or r2 controllers. Do not open the
+checkpoint `70c5194`, base digest `df5f4f0`, and r4 digest `bc610c2` to one r4
+execution. Never rerun the original, r2, or r3 controllers. Do not open the
 app-server connection, signal helper/watchers, or write root metadata before
 protected publication.
 
