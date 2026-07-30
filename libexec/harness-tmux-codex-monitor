@@ -18,8 +18,19 @@ import time
 
 
 sys.dont_write_bytecode = True
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from harness_codex_targets import (  # noqa: E402
+    TargetError,
+    load_targets,
+    validate_all,
+)
+
 SESSION_NAME = "projects"
-EXPECTED = (("harness", 0), ("students", 1), ("swallow", 2))
+TARGETS = load_targets()
+EXPECTED = tuple((value["name"], value["index"]) for value in TARGETS)
+TARGET_PATHS = {
+    value["name"]: value["repository"] for value in TARGETS
+}
 CODEX_COMMS = ("codex", "codex.real")
 SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 
@@ -30,6 +41,15 @@ class MonitorError(RuntimeError):
 
 def fail(message):
     raise MonitorError(message)
+
+
+def target_cwd_allowed(name, path):
+    if path == TARGET_PATHS[name]:
+        return True
+    return (
+        name in ("students", "swallow")
+        and path == TARGET_PATHS["harness"]
+    )
 
 
 def run(arguments, check=True):
@@ -269,7 +289,22 @@ def parse_supervisor(info):
         return None
     if run_index < 1 or not SAFE_ID.match(runtime_name) or not SAFE_ID.match(thread_id):
         return None
-    return {"runtime": runtime_name, "thread": thread_id, "start": info["start"]}
+    target = None
+    try:
+        target_index = argv.index("--target")
+        target = argv[target_index + 1]
+    except ValueError:
+        pass
+    except IndexError:
+        return None
+    if target is not None and target not in TARGET_PATHS:
+        return None
+    return {
+        "runtime": runtime_name,
+        "thread": thread_id,
+        "start": info["start"],
+        "target": target,
+    }
 
 
 def resilient_status(runtime_name):
@@ -359,7 +394,10 @@ def enforce_order(windows):
         len(windows) != 3
         or sorted(window["name"] for window in windows) != sorted(expected_names)
         or any(window["panes"] != 1 or window["dead"] for window in windows)
-        or any(window["path"] != os.environ["HARNESS_ROOT"] for window in windows)
+        or any(
+            not target_cwd_allowed(window["name"], window["path"])
+            for window in windows
+        )
     ):
         return windows, "deferred-ambiguous"
     before_clients = tmux_clients()
@@ -404,7 +442,7 @@ def collect_health(windows):
         if (
             window["panes"] != 1
             or window["dead"]
-            or window["path"] != os.environ["HARNESS_ROOT"]
+            or not target_cwd_allowed(name, window["path"])
         ):
             health[name] = entry
             continue
@@ -412,6 +450,17 @@ def collect_health(windows):
         identity = parse_supervisor(supervisor_info)
         if not identity or supervisor_info["uid"] != os.getuid():
             entry["reason"] = "supervisor-identity"
+            health[name] = entry
+            continue
+        if (
+            identity.get("target") not in (None, name)
+            or (
+                window["path"] == TARGET_PATHS[name]
+                and name != "harness"
+                and identity.get("target") != name
+            )
+        ):
+            entry["reason"] = "supervisor-target"
             health[name] = entry
             continue
         status_value = resilient_status(identity["runtime"])
@@ -531,6 +580,10 @@ def mapping_snapshot(mapping, health):
                 "thread": identity["thread"],
                 "app_server_pid": entry["app_server_pid"],
                 "app_server_start": process_info(entry["app_server_pid"])["start"],
+                "index": entry["window"]["index"],
+                "window_id": entry["window"]["window_id"],
+                "cwd": entry["window"]["path"],
+                "native_cwd": entry["window"]["path"] == TARGET_PATHS[name],
             }
     return mapping
 
@@ -548,7 +601,7 @@ def canonical_topology(windows):
             len(matches) != 1
             or matches[0]["panes"] != 1
             or matches[0]["dead"]
-            or matches[0]["path"] != os.environ["HARNESS_ROOT"]
+            or not target_cwd_allowed(name, matches[0]["path"])
         ):
             return False
     return True
@@ -718,6 +771,10 @@ def main():
         if os.environ.get("HARNESS_TESTING") != "1":
             fail("test fixture requires HARNESS_TESTING=1")
         return test_fixture(fixture, arguments.enforce_order)
+    try:
+        validate_all()
+    except TargetError as error:
+        fail(str(error))
     root = runtime_root()
     receipt_path = os.path.join(root, "receipt.json")
     mapping_path = os.path.join(root, "mapping.json")
@@ -835,6 +892,6 @@ def main():
 if __name__ == "__main__":
     try:
         sys.exit(main())
-    except (MonitorError, ValueError, KeyError, OSError) as error:
+    except (MonitorError, TargetError, ValueError, KeyError, OSError) as error:
         print("harness: tmux Codex monitor failed: {}".format(error), file=sys.stderr)
         sys.exit(2)

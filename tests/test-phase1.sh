@@ -150,6 +150,8 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harne
     fail "Python syntax: harness-tmux-codex-monitor"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harness-codex-recovery-helper").read_text(), feature_version=(3, 6))' ||
     fail "Python syntax: harness-codex-recovery-helper"
+python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/libexec/harness_codex_targets.py").read_text(), feature_version=(3, 6))' ||
+    fail "Python syntax: harness_codex_targets"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/tools/run-focused-tests.py").read_text())' ||
     fail "Python syntax: focused-suite runner"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/shared/skills/remote-agent-communication/scripts/agent-message").read_text())' ||
@@ -204,6 +206,8 @@ if [ "${HARNESS_TEST_JOBS:-auto}" = legacy ]; then
     fail "shared tmux configuration focused suite"
 "$ROOT/tests/test-agent-config.sh" >/dev/null ||
     fail "agent configuration focused suite"
+"$ROOT/tests/test-codex-targets.sh" >/dev/null ||
+    fail "repository-native Codex target map focused suite"
 "$ROOT/tests/test-agent-config-fleet.sh" >/dev/null ||
     fail "agent configuration fleet focused suite"
 "$ROOT/tests/test-personal-macos-update.sh" >/dev/null ||

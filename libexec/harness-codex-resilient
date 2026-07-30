@@ -9,9 +9,9 @@ export HARNESS_ROOT
 usage() {
     cat >&2 <<'EOF'
 Usage:
-  harness codex-resilient --plan [--name NAME] SELECTOR
+  harness codex-resilient --plan [--name NAME] [--target TARGET] SELECTOR
   harness codex-resilient --status [--name NAME]
-  harness codex-resilient --run [--name NAME] SELECTOR
+  harness codex-resilient --run [--name NAME] [--target TARGET] SELECTOR
 
 Selectors:
   --new             start a new chat, then resume the repository's latest chat
@@ -26,6 +26,7 @@ EOF
 mode=plan
 mode_seen=no
 name=default
+target=
 selector=
 session_id=
 selector_count=0
@@ -40,6 +41,11 @@ while [ "$#" -gt 0 ]; do
         --name)
             [ "$#" -ge 2 ] || die "Codex resilient --name requires a value"
             name=$2
+            shift 2
+            ;;
+        --target)
+            [ "$#" -ge 2 ] || die "Codex resilient --target requires a value"
+            target=$2
             shift 2
             ;;
         --new)
@@ -87,9 +93,31 @@ require_safe_id "$name"
 if [ "$mode" = status ]; then
     [ "$selector_count" -eq 0 ] ||
         die "Codex resilient status does not accept a selector"
+    [ -z "$target" ] ||
+        die "Codex resilient status does not accept --target"
 else
     [ "$selector_count" -eq 1 ] ||
         die "Codex resilient requires exactly one selector"
+fi
+target_resolver=$HARNESS_ROOT/libexec/harness_codex_targets.py
+if [ "$mode" != status ]; then
+    [ -x "$target_resolver" ] ||
+        die "Codex target resolver is unavailable"
+    command -v python3 >/dev/null 2>&1 ||
+        die "Codex target resolver requires python3"
+    current_repository=$(
+        git -C "$PWD" rev-parse --show-toplevel 2>/dev/null
+    ) || die "Codex resilient must start from a managed repository"
+    current_repository=$(
+        CDPATH='' cd -- "$current_repository" 2>/dev/null && pwd -P
+    ) || die "Codex resilient repository is unavailable"
+    resolved_target=$(
+        python3 "$target_resolver" target-for-repository "$current_repository"
+    ) || die "Codex resilient repository is outside the managed target map"
+    if [ -n "$target" ] && [ "$target" != "$resolved_target" ]; then
+        die "Codex resilient target does not match its repository"
+    fi
+    target=$resolved_target
 fi
 if [ "$selector" = explicit ] || [ "$selector" = remote-explicit ]; then
     require_safe_id "$session_id"
@@ -324,8 +352,8 @@ if [ "$mode" = plan ]; then
     else
         state_action=create
     fi
-    printf 'CODEX_RESILIENT mode=plan name=%s selector=%s status=ready\n' \
-        "$name" "$selector"
+    printf 'CODEX_RESILIENT mode=plan name=%s target=%s selector=%s status=ready\n' \
+        "$name" "$target" "$selector"
     printf 'RUNTIME action=%s privacy=value-free mode=0600 ownership=exclusive\n' \
         "$state_action"
     printf 'RECOVERY action=resume prompt=replay-disabled backoff=15,30,60,120,240,300 jitter=bounded\n'

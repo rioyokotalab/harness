@@ -20,10 +20,21 @@ import time
 
 
 sys.dont_write_bytecode = True
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from harness_codex_targets import (  # noqa: E402
+    TargetError,
+    cwd_allowed,
+    load_targets,
+)
+
 SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 SAFE_WINDOW_ID = re.compile(r"^@[0-9]+$")
 SESSION_NAME = "projects"
-EXPECTED = (("harness", 0), ("students", 1), ("swallow", 2))
+TARGETS = load_targets()
+EXPECTED = tuple((value["name"], value["index"]) for value in TARGETS)
+TARGET_PATHS = {
+    value["name"]: value["repository"] for value in TARGETS
+}
 INTERACTIVE_SOURCES = ("cli", "vscode")
 TERMINAL_PHASES = ("completed", "failed", "ambiguous", "deferred")
 ACCEPTED_RESULT = re.compile(r"^RECOVERY_RESULT status=accepted(?:[ \t]|$)")
@@ -321,27 +332,30 @@ def tmux_mapping():
             "-t",
             SESSION_NAME,
             "-F",
-            "#{window_index}\t#{window_name}\t#{window_id}\t#{pane_pid}",
+            "#{window_index}\t#{window_name}\t#{window_id}\t#{pane_pid}"
+            "\t#{pane_current_path}",
         ],
         check=False,
     )
     rows = []
     for line in output.splitlines():
         fields = line.split("\t")
-        if len(fields) != 4:
+        if len(fields) != 5:
             continue
         try:
             index = int(fields[0])
             pane_pid = int(fields[3])
         except ValueError:
             continue
-        rows.append((index, fields[1], fields[2], pane_pid))
-    if sorted((index, name) for index, name, _window, _pid in rows) != sorted(
+        rows.append((index, fields[1], fields[2], pane_pid, fields[4]))
+    if sorted((index, name) for index, name, _window, _pid, _cwd in rows) != sorted(
         (index, name) for name, index in EXPECTED
     ):
         return None
     mapping = {}
-    for index, name, window_id, pane_pid in rows:
+    for index, name, window_id, pane_pid, cwd in rows:
+        if not cwd_allowed(name, cwd):
+            return None
         info = process_info(pane_pid)
         if not info:
             return None
@@ -357,6 +371,8 @@ def tmux_mapping():
             "index": index,
             "window_id": window_id,
             "thread": thread_id,
+            "cwd": cwd,
+            "native_cwd": cwd == TARGET_PATHS[name],
         }
     return mapping
 
@@ -385,7 +401,13 @@ def rollout_eligible(path, codex_home):
     )
 
 
-def phone_mirror_snapshot(mapping, database, processes, harness_root, codex_home):
+def phone_mirror_snapshot(mapping, database, processes, target_paths, codex_home):
+    def mapped_cwd_allowed(role, path):
+        return path == target_paths[role] or (
+            role in ("students", "swallow")
+            and path == target_paths["harness"]
+        )
+
     now = int(time.time())
     owner = process_info(os.getpid())
     receipt = {
@@ -411,6 +433,7 @@ def phone_mirror_snapshot(mapping, database, processes, harness_root, codex_home
             mapping
             and role in mapping
             and mapping[role].get("index") == index
+            and mapped_cwd_allowed(role, mapping[role].get("cwd", ""))
         )
         receipt["roles"][role] = {
             "tmux_mapping": mapped,
@@ -420,6 +443,7 @@ def phone_mirror_snapshot(mapping, database, processes, harness_root, codex_home
             "rollout_location": False,
             "rollout_exists": False,
             "interactive_source": False,
+            "native_cwd": False,
         }
     if not mapping:
         receipt["mismatch_classes"].append("tmux-topology")
@@ -435,13 +459,15 @@ def phone_mirror_snapshot(mapping, database, processes, harness_root, codex_home
         connection = sqlite3.connect(
             "file:{}?mode=ro".format(database), uri=True, timeout=1
         )
+        roots = sorted(set(target_paths.values()))
+        placeholders = ",".join("?" for _value in roots)
         active = sorted(
             row[0]
             for row in connection.execute(
                 "SELECT id FROM threads "
-                "WHERE cwd = ? AND archived = 0 "
-                "AND source NOT LIKE ? ORDER BY id",
-                (harness_root, '{"subagent"%'),
+                "WHERE cwd IN ({}) AND archived = 0 "
+                "AND source NOT LIKE ? ORDER BY id".format(placeholders),
+                tuple(roots) + ('{"subagent"%',),
             ).fetchall()
         )
         for role, _index in EXPECTED:
@@ -477,7 +503,8 @@ def phone_mirror_snapshot(mapping, database, processes, harness_root, codex_home
                 {
                     "unarchived": row[0] == 0,
                     "exact_name": row[1] == role,
-                    "exact_cwd": row[2] == harness_root,
+                    "exact_cwd": row[2] == mapping[role]["cwd"],
+                    "native_cwd": row[2] == target_paths[role],
                     "rollout_location": bool(
                         rollout_path
                         and os.path.isabs(rollout_path)
@@ -497,7 +524,11 @@ def phone_mirror_snapshot(mapping, database, processes, harness_root, codex_home
                     "interactive_source": row[3] in INTERACTIVE_SOURCES,
                 }
             )
-        failed = sorted(name for name, value in checks.items() if not value)
+        failed = sorted(
+            name
+            for name, value in checks.items()
+            if name != "native_cwd" and not value
+        )
         if failed:
             role_mismatches[role] = failed
             receipt["mismatch_classes"].extend(
@@ -523,6 +554,8 @@ def phone_mirror_snapshot(mapping, database, processes, harness_root, codex_home
                 "role": role,
                 "thread": mapping[role]["thread"],
                 "window_id": mapping[role]["window_id"],
+                "cwd": mapping[role]["cwd"],
+                "native_cwd": mapping[role]["cwd"] == target_paths[role],
             }
             for role, _index in EXPECTED
         ],
@@ -570,7 +603,7 @@ def observe_mirror(root):
         mapping,
         database,
         remote_control_processes(),
-        os.environ["HARNESS_ROOT"],
+        TARGET_PATHS,
         codex_home,
     )
     atomic_json(os.path.join(root, "phone-mirror.json"), receipt)
@@ -587,6 +620,10 @@ def observe_mirror(root):
 def worker_prompt(event):
     identity = event["identity"]
     serialized = json.dumps(identity, sort_keys=True, separators=(",", ":"))
+    target = identity.get("target", "harness")
+    if target not in TARGET_PATHS:
+        target = "harness"
+    target_repository = TARGET_PATHS[target]
     return """\
 You are the dedicated Local Codex recovery worker for one immutable event.
 Do not rely on prior chat history. Confirm that the Git repository root is
@@ -596,6 +633,14 @@ target action.
 
 Immutable event:
 {event}
+
+Exact managed target: {target}
+Exact target repository: {target_repository}
+
+After reconstructing the Harness control state, read the target repository's
+complete root instructions and declared durable ledger from that exact
+repository. Reconcile its branch, worktree, recent commits, and mutable
+external state, and continue only its first recorded unverified action.
 
 This is a bounded live-recovery turn, not general repository work. Do not edit
 Git-tracked files, settings, credentials, plugins, connectors, MCP state, or
@@ -634,7 +679,8 @@ pre-write receipt, then require one new exact identity and redacted doctor
 readiness. If any live server identity exists, report deferred and do not
 signal, stop, or restart it. Pairing or account mutation is forbidden.
 
-For kind=mirror-drift, use the three exact tmux argv roots as canonical.
+For kind=mirror-drift, use the three exact target-profile repository roots and
+their current target-allowed tmux working directories as canonical.
 Subagent roots are excluded. Reversibly archive only roots already classified
 as baseline or helper-created temporary/retired roots in TODO.md or durable
 helper receipts, after exact zero-process-reference and structural inactivity
@@ -658,7 +704,11 @@ ambiguous, or physical-phone-only failures are report-only.
 
 Finish with one value-free status line beginning RECOVERY_RESULT and exit
 nonzero on any failed or ambiguous gate.
-""".format(event=serialized)
+""".format(
+        event=serialized,
+        target=target,
+        target_repository=target_repository,
+    )
 
 
 def codex_command():
@@ -985,6 +1035,13 @@ def main():
 if __name__ == "__main__":
     try:
         sys.exit(main())
-    except (HelperError, ValueError, KeyError, OSError, sqlite3.Error) as error:
+    except (
+        HelperError,
+        TargetError,
+        ValueError,
+        KeyError,
+        OSError,
+        sqlite3.Error,
+    ) as error:
         print("harness: Codex recovery helper failed: {}".format(error), file=sys.stderr)
         sys.exit(2)

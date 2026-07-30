@@ -1,12 +1,16 @@
 # Harness launch sentinel
 
 This user-level instruction exists only to catch accidental launches outside
-the harness repository.
+the three managed repository-native Codex workspaces.
 
 Before doing task work, confirm that the current Git repository root is exactly
-`$HOME/harness`. If it is not, refuse the task and tell the owner:
+one of:
 
-> Start Codex from the harness repository: `cd "$HOME/harness" && codex`
+- `$HOME/harness`
+- `/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students`
+- `/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow`
 
-Do not apply harness policy to another directory. When the repository root is
-`$HOME/harness`, defer completely to its root `AGENTS.md`.
+If it is not, refuse the task and tell the owner to start Codex from the
+intended managed repository. Never apply one repository's policy to another
+directory. For an admitted root, defer completely to that repository's root
+`AGENTS.md` and declared durable ledger.

@@ -63,11 +63,23 @@ grep -F "fresh native \`date '+%H:%M:%S'\` read" "$ROOT/AGENTS.md" \
     >/dev/null || fail "project progress clock source"
 grep -F 'Never infer a timestamp from a prior message or elapsed time.' \
     "$ROOT/AGENTS.md" >/dev/null || fail "project progress clock drift guard"
-grep -F 'Start Codex from the harness repository' "$ROOT/.codex/AGENTS.md" \
-    >/dev/null || fail "Codex launch sentinel"
-grep -F 'Start Claude from the harness repository' \
+for managed_root in \
+    '$HOME/harness' \
+    '/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students' \
+    '/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow'
+do
+    grep -F -- "$managed_root" "$ROOT/.codex/AGENTS.md" >/dev/null ||
+        fail "Codex launch sentinel root: $managed_root"
+    grep -F -- "$managed_root" \
+        "$ROOT/config/agent-clients/claude-sentinel.md" >/dev/null ||
+        fail "Claude launch sentinel root: $managed_root"
+done
+grep -F "Never apply one repository's policy to another" \
+    "$ROOT/.codex/AGENTS.md" >/dev/null ||
+    fail "Codex cross-repository policy isolation"
+grep -F "Never apply one repository's policy to another" \
     "$ROOT/config/agent-clients/claude-sentinel.md" >/dev/null ||
-    fail "Claude launch sentinel"
+    fail "Claude cross-repository policy isolation"
 cmp -s "$ROOT/.codex/config.toml" \
     "$ROOT/config/agent-clients/codex.toml" ||
     fail "project Codex settings differ"

@@ -65,7 +65,7 @@ assert "physical-phone visibility" in source
 assert "never rewrite it" in source
 PY
 
-python3 -B - "$SOURCE" "$TEST_ROOT" <<'PY'
+HARNESS_ROOT=$ROOT python3 -B - "$SOURCE" "$TEST_ROOT" <<'PY'
 import importlib.machinery
 import os
 import pathlib
@@ -105,6 +105,11 @@ sessions = codex_home / "sessions"
 sessions.mkdir(parents=True)
 database = codex_home / "state_5.sqlite"
 harness_root = str(base / "harness")
+target_paths = {
+    "harness": harness_root,
+    "students": str(base / "students"),
+    "swallow": str(base / "swallow"),
+}
 mapping = {}
 connection = sqlite3.connect(str(database))
 connection.execute(
@@ -133,24 +138,45 @@ for index, role in enumerate(("harness", "students", "swallow")):
         "index": index,
         "window_id": "@{}".format(index),
         "thread": thread,
+        "cwd": harness_root,
+        "native_cwd": role == "harness",
     }
 connection.commit()
 processes = [{"pid": os.getpid(), "start": "remote-start"}]
 
 healthy, drift = module.phone_mirror_snapshot(
-    mapping, str(database), processes, harness_root, str(codex_home)
+    mapping, str(database), processes, target_paths, str(codex_home)
 )
 assert healthy["status"] == "healthy"
 assert healthy["active_top_level_count"] == 3
 assert healthy["mismatch_classes"] == []
+assert healthy["roles"]["harness"]["native_cwd"] is True
+assert healthy["roles"]["students"]["native_cwd"] is False
+assert healthy["roles"]["swallow"]["native_cwd"] is False
 assert drift["kind"] == "phone-mirror-drift"
+
+connection.execute(
+    "UPDATE threads SET cwd = ? WHERE id = 'thread-students'",
+    (target_paths["students"],),
+)
+connection.commit()
+mapping["students"]["cwd"] = target_paths["students"]
+mapping["students"]["native_cwd"] = True
+partially_native, _drift = module.phone_mirror_snapshot(
+    mapping, str(database), processes, target_paths, str(codex_home)
+)
+assert partially_native["status"] == "healthy"
+assert partially_native["active_top_level_count"] == 3
+assert partially_native["roles"]["students"]["exact_cwd"] is True
+assert partially_native["roles"]["students"]["native_cwd"] is True
+assert partially_native["roles"]["swallow"]["native_cwd"] is False
 
 connection.execute(
     "UPDATE threads SET source = 'exec' WHERE id = 'thread-swallow'"
 )
 connection.commit()
 ineligible, _drift = module.phone_mirror_snapshot(
-    mapping, str(database), processes, harness_root, str(codex_home)
+    mapping, str(database), processes, target_paths, str(codex_home)
 )
 assert ineligible["status"] == "degraded"
 assert ineligible["roles"]["swallow"]["interactive_source"] is False
@@ -163,7 +189,7 @@ connection.execute(
 )
 connection.commit()
 missing_rollout, _drift = module.phone_mirror_snapshot(
-    mapping, str(database), processes, harness_root, str(codex_home)
+    mapping, str(database), processes, target_paths, str(codex_home)
 )
 assert missing_rollout["status"] == "degraded"
 assert missing_rollout["roles"]["swallow"]["rollout_location"] is True
@@ -176,7 +202,7 @@ connection.execute(
 )
 connection.commit()
 metadata_drift, _drift = module.phone_mirror_snapshot(
-    mapping, str(database), processes, harness_root, str(codex_home)
+    mapping, str(database), processes, target_paths, str(codex_home)
 )
 assert metadata_drift["status"] == "degraded"
 assert metadata_drift["roles"]["swallow"]["unarchived"] is False
@@ -214,7 +240,7 @@ connection.execute(
 )
 connection.commit()
 extra, drift = module.phone_mirror_snapshot(
-    mapping, str(database), processes, harness_root, str(codex_home)
+    mapping, str(database), processes, target_paths, str(codex_home)
 )
 assert extra["active_top_level_count"] == 4
 assert "extra-active-root" in extra["mismatch_classes"]
@@ -264,6 +290,12 @@ grep -F 'codex remote-control start --json' \
     fail "absent-only remote-control contract is absent"
 grep -F 'Reversibly archive only roots' "$CAPTURE/prompt" >/dev/null ||
     fail "reversible archive contract is absent"
+grep -F 'Exact managed target: swallow' "$CAPTURE/prompt" >/dev/null ||
+    fail "recovery prompt target identity is absent"
+grep -F \
+    'Exact target repository: /mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow' \
+    "$CAPTURE/prompt" >/dev/null ||
+    fail "recovery prompt target repository is absent"
 
 helper --once >"$TEST_ROOT/repeat.out"
 [ "$(wc -l <"$CAPTURE/arguments" | tr -d ' ')" = 1 ] ||

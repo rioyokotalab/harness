@@ -26,12 +26,15 @@ repo=$TEMP_DIR/repo
 home=$TEMP_DIR/home
 mkdir -p "$repo/bin" "$repo/libexec" "$repo/.codex/rules" \
     "$repo/.claude/skills" "$repo/.agents/skills" \
-    "$repo/config/agent-clients" "$repo/shared/skills/example" \
+    "$repo/config/agent-clients" "$repo/profiles" \
+    "$repo/shared/skills/example" \
     "$home/.codex/rules" "$home/.codex/skills/.system" \
     "$home/.agents/skills" "$home/.claude/skills" "$home/.local/bin"
 cp "$ROOT/bin/harness" "$ROOT/bin/harness-codex" "$repo/bin/"
 cp "$ROOT/libexec/harness-agent-config" "$ROOT/libexec/harness-common" \
-    "$ROOT/libexec/harness-macos-common" "$repo/libexec/"
+    "$ROOT/libexec/harness-macos-common" \
+    "$ROOT/libexec/harness_codex_targets.py" "$repo/libexec/"
+cp "$ROOT/profiles/codex-session-targets.tsv" "$repo/profiles/"
 cp "$ROOT/config/agent-clients/codex.toml" \
     "$ROOT/config/agent-clients/claude.json" \
     "$ROOT/config/agent-clients/claude-sentinel.md" \
@@ -46,7 +49,8 @@ printf '%s\n' '---' 'name: example' 'description: Example.' '---' \
 ln -s ../../shared/skills/example "$repo/.agents/skills/example"
 ln -s ../../shared/skills/example "$repo/.claude/skills/example"
 chmod 755 "$repo/bin/harness" "$repo/bin/harness-codex" \
-    "$repo/libexec/harness-agent-config"
+    "$repo/libexec/harness-agent-config" \
+    "$repo/libexec/harness_codex_targets.py"
 git -C "$repo" init -q -b main
 git -C "$repo" config user.name agent-config-test
 git -C "$repo" config user.email agent-config-test.invalid
