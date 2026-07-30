@@ -145,7 +145,7 @@ agents and ledgers.
 
 ### T-348 — Keep phone remote-control roots mirrored to Local tmux
 
-**Phase:** executing authorized changed-input recovery.
+**Phase:** blocked at second non-retryable thread-start gate.
 
 The owner reports that Swallow is absent from phone Remote and requests a
 periodic one-to-one mirror for Harness, Students, and Swallow. Complete
@@ -234,15 +234,36 @@ verified Sol/high defaults.” This authorizes one distinct newly journaled
 `thread/start`; it does not authorize retrying request ID `5`, weakening any
 identity gate, or proceeding past physical-phone confirmation.
 
-**Next action and authority:** revalidate the published proven-absent result,
-old canonical Swallow, peers, app server, client selection, monitor/helper,
-and source mismatch. Reserve a new private controller/journal identity and
-send exactly one start with exact Harness cwd, granular approval, disabled
-sandbox, and no `model` or `config` fields. Require the returned root itself
-and SQLite to resolve to Sol/high and source `vscode`; otherwise stop without
-another start. Continue through provisional naming, window/runtime launch, and
-one generic cold-start turn, then pause at physical-phone confirmation before
-any canonical rename, old-process retirement, or reversible archive.
+Changed-input authorization was published through protected PR #444 as merge
+`139cdf4ebb03930c8c8c922e28affdf26557c95b`. Controller v4 digest
+`e08d09dda5d4a5da6d6562ea6af8ee8fd9f11211086bb33153ffa4b28825899b`
+passed zero-write preflight against that clean/aligned merge, the sole client
+on Harness, exact canonical roots/processes/watchers, and the original
+proven-absent result. On a new initialized connection, request ID `5` was only
+a read-only loaded-root check and proved the exact three canonical roots.
+
+The one authorized changed-input `thread/start` was then sent exactly once as
+request ID `6`, with exact Harness cwd, granular approval, disabled sandbox,
+and no `model` or `config` fields. It again returned
+`thread-start-ambiguous` before a usable root identity. This request and the
+owner's one-start authorization are consumed and must never be retried.
+Value-free post-read independently proves the unchanged app server, all four
+paused processes resumed, exact database active-root count three, complete
+top-level `thread/list` count three with zero unknown root, loaded-thread count
+three with zero unknown root, and zero provisional-name row. No name, rollout,
+TUI, tmux, archive, retirement, project, or peer mutation followed.
+
+Private mode-0600 `journal-v4.jsonl` and `result-v4.json` remain under
+`/run/user/5035/harness-t348-phone-mirror/`. The old canonical Swallow remains
+live; monitor is `healthy=3 phone_mirror=degraded`, helper is idle with one
+disabled queued mirror event, and every canonical watcher is attempt zero.
+
+**Next action and authority:** remain report-only. Do not send another
+`thread/start`, launch a provisional window/runtime, or change old Swallow.
+Read-only diagnosis may determine why the live 0.145.0 remote-control app
+server rejects current start requests, but any alternate creation method or
+further start requires a new frozen owner decision. The physical-phone gate
+remains unresolved.
 
 ### T-347 — Complete T-345 mirror convergence
 
