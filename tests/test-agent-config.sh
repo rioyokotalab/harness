@@ -15,6 +15,13 @@ cleanup() {
 }
 trap cleanup EXIT HUP INT TERM
 fail() { echo "FAIL: $*" >&2; exit 1; }
+rules=$ROOT/.codex/rules/default.rules
+rule_bytes=$(wc -c <"$rules" | tr -d ' ')
+allow_count=$(grep -c 'decision="allow"' "$rules")
+[ "$rule_bytes" -le 1800 ] ||
+    fail "always-injected command rules exceed byte budget: $rule_bytes"
+[ "$allow_count" -le 6 ] ||
+    fail "always-injected command allowlist exceeds entry budget: $allow_count"
 file_mode() {
     case $(uname -s) in
         Darwin) stat -f %Lp "$1" ;;
