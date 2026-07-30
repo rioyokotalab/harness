@@ -1,6 +1,6 @@
 # T-348 phone remote-control mirror
 
-**Phase:** physical-phone accepted; blocked at owner-client safety gate
+**Phase:** physical-phone accepted; correcting unsent promotion controller
 **Driver:** Local Codex
 **Updated:** 2026-07-30 JST
 **Branch:** `codex/t348-phone-mirror`
@@ -325,3 +325,18 @@ Revalidate that exact client on `@87`; the controller must not move or detach
 it. Only then perform the journaled root/window renames and `@98`/`@93`
 position swap, preserving every consumed non-retry gate. Publish the
 reversible promotion checkpoint before any old-leaf signal or archive.
+
+The owner replied `done`; exact readback proved client PID `197678` on `@87`.
+Promoter v1 digest
+`5929ed750f5c2c5f25bdb7689794fe6febd859ce9b45c58d8544fb29dac888fa`
+then stopped before any app-server promotion connection, name request, tmux
+rename, or swap. Its journal proves only pause/resume activity and terminal
+`process-resume-ambiguous`; independent readback proves all six paused
+processes running and every target value unchanged. Promoter v1 is consumed
+and must not execute again, but the promotion transaction is proven unsent.
+
+Use a distinct corrected controller. Keep the non-auto-mirror helper running,
+hold the monitor's native private lock rather than stopping its terminal job,
+and pause only the four exact watcher leaves. Revalidate all original
+preimages, perform the two name requests and three tmux writes once, then
+publish the promotion checkpoint before any old-leaf signal or archive.
