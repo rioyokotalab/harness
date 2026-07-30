@@ -1,0 +1,10 @@
+# Frozen baseline: f2ce89ac3ea393cb5a7b882bed1b79fe773974fb
+# scenario|baseline_total_words|baseline_nonledger_words|current selected resources (comma-separated)
+factual-lookup|73734|2906|AGENTS.md,TODO.md,docs/agent-policy/research.md,shared/skills/evidence-first-research/SKILL.md
+documentation-edit|73545|2717|AGENTS.md,TODO.md,docs/agent-policy/repository-and-external.md
+ordinary-code-fix|74455|3627|AGENTS.md,TODO.md,docs/agent-policy/repository-and-external.md
+tmux-health-diagnosis|73545|2717|AGENTS.md,TODO.md,docs/agent-policy/managed-runtime-and-fleet.md
+unsafe-tail-recovery|75931|5103|AGENTS.md,TODO.md,docs/agent-policy/managed-runtime-and-fleet.md,shared/skills/long-running-task-ledger/SKILL.md,shared/skills/recover-codex-unsafe-tail/SKILL.md,shared/skills/recover-codex-unsafe-tail/references/protocol.md
+fleet-hardening|76238|5410|AGENTS.md,TODO.md,docs/agent-policy/repository-and-external.md,docs/agent-policy/managed-runtime-and-fleet.md,shared/skills/fleet-repository-hardening/SKILL.md,shared/skills/fleet-repository-hardening/references/audit-checklist.md,shared/skills/long-running-task-ledger/SKILL.md,shared/skills/plan-interview-execute/SKILL.md,shared/skills/evidence-first-research/SKILL.md
+native-hpc-experiment|77550|6722|AGENTS.md,TODO.md,docs/agent-policy/repository-and-external.md,docs/agent-policy/research.md,shared/skills/long-running-task-ledger/SKILL.md,shared/skills/research-engineering-validation/SKILL.md,shared/skills/operate-native-hpc/SKILL.md,shared/skills/operate-native-hpc/references/common.md,shared/skills/operate-native-hpc/references/current.md
+duration-cowork|80599|9771|AGENTS.md,TODO.md,docs/agent-policy/repository-and-external.md,shared/skills/long-running-task-ledger/SKILL.md,shared/skills/codex-claude-cowork/SKILL.md,shared/skills/codex-claude-cowork/references/session-planning.md,shared/skills/codex-claude-cowork/references/evidence-exchange.md,shared/skills/codex-claude-cowork/references/native-clients.md,shared/skills/codex-claude-cowork/references/execution-duration.md,shared/skills/codex-claude-cowork/references/recovery.md

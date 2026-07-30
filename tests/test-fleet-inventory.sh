@@ -9,7 +9,8 @@ fail() { echo "FAIL: $*" >&2; exit 1; }
 
 [ -f "$DOC" ] && [ ! -L "$DOC" ] || fail "fleet inventory missing"
 [ -f "$README" ] && [ ! -L "$README" ] || fail "README missing"
-grep -F 'docs/fleet-inventory.md' "$ROOT/AGENTS.md" >/dev/null ||
+grep -F 'docs/fleet-inventory.md' \
+    "$ROOT/docs/agent-policy/managed-runtime-and-fleet.md" >/dev/null ||
     fail "cold-start inventory pointer missing"
 
 for logical in local ab ab2 abq al rc ri t4 web aist home office riken; do

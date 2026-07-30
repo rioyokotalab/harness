@@ -6,13 +6,14 @@ SKILL=$ROOT/shared/skills/fleet-repository-hardening/SKILL.md
 CHECKLIST=$ROOT/shared/skills/fleet-repository-hardening/references/audit-checklist.md
 OPENAI=$ROOT/shared/skills/fleet-repository-hardening/agents/openai.yaml
 AGENTS=$ROOT/AGENTS.md
+EXTERNAL_POLICY=$ROOT/docs/agent-policy/repository-and-external.md
 
 fail() {
     printf 'FAIL: %s\n' "$1" >&2
     exit 1
 }
 
-for path in "$SKILL" "$CHECKLIST" "$OPENAI" "$AGENTS"; do
+for path in "$SKILL" "$CHECKLIST" "$OPENAI" "$AGENTS" "$EXTERNAL_POLICY"; do
     [ -f "$path" ] || fail "missing skill resource: $path"
 done
 
@@ -34,7 +35,7 @@ grep -F 'material-work cutoff' "$SKILL" >/dev/null ||
     fail "deadline cutoff"
 grep -F 'required approving-review count of zero' "$SKILL" >/dev/null ||
     fail "zero-review hardening baseline"
-grep -F 'required pull-request approval' "$AGENTS" >/dev/null ||
+grep -F 'required pull-request approval' "$EXTERNAL_POLICY" >/dev/null ||
     fail "zero-review global agreement"
 grep -F 'failed query is `unknown`' "$CHECKLIST" >/dev/null ||
     fail "unknown-state classification"

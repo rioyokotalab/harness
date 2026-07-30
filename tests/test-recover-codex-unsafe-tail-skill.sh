@@ -3,6 +3,7 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 AGENTS=$ROOT/AGENTS.md
+RUNTIME_POLICY=$ROOT/docs/agent-policy/managed-runtime-and-fleet.md
 SKILL=$ROOT/shared/skills/recover-codex-unsafe-tail/SKILL.md
 PROTOCOL=$ROOT/shared/skills/recover-codex-unsafe-tail/references/protocol.md
 OPENAI=$ROOT/shared/skills/recover-codex-unsafe-tail/agents/openai.yaml
@@ -12,7 +13,7 @@ fail() {
     exit 1
 }
 
-for path in "$AGENTS" "$SKILL" "$PROTOCOL" "$OPENAI"; do
+for path in "$AGENTS" "$RUNTIME_POLICY" "$SKILL" "$PROTOCOL" "$OPENAI"; do
     [ -f "$path" ] && [ ! -L "$path" ] ||
         fail "missing skill resource: $path"
 done
@@ -25,7 +26,7 @@ grep -F 'Never retry an ambiguous' "$SKILL" >/dev/null ||
     fail "ambiguous acknowledgement boundary"
 grep -F 'fresh-root cutover' "$SKILL" >/dev/null ||
     fail "unsafe-tail route"
-grep -F 'bridge-first cutover' "$AGENTS" >/dev/null ||
+grep -F 'bridge-first cutover' "$RUNTIME_POLICY" >/dev/null ||
     fail "global bridge-first policy"
 grep -F 'bridge-first fresh-root cutover' "$SKILL" >/dev/null ||
     fail "bridge-first skill route"

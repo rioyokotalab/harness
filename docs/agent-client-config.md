@@ -7,7 +7,8 @@ The harness owns one reviewed project-settings body for each client:
   `config/agent-clients/claude.json`.
 
 Codex and Claude load those files only when started from `~/harness`. Root
-`AGENTS.md` is the self-contained shared policy; root `CLAUDE.md` imports it.
+`AGENTS.md` is the always-read shared policy router; root `CLAUDE.md` imports
+it. Exact conditional modules remain project-local under `docs/agent-policy/`.
 Every canonical skill has one tracked link under `.agents/skills/` and one
 under `.claude/skills/`. No harness behavioral setting, rule, or skill link is
 required from the user's home-directory client configuration.

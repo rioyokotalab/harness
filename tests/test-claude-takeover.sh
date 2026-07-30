@@ -39,8 +39,9 @@ assert_link() {
         fail "wrong link target: $destination"
 }
 
-# Claude imports the repository's self-contained AGENTS.md. Client permissions
-# and skill discovery are project-scoped; user scope contains only sentinels.
+# Claude imports the repository's AGENTS.md policy router. Conditional policy,
+# client permissions, and skill discovery are project-scoped; user scope
+# contains only sentinels.
 [ -f "$ROOT/AGENTS.md" ] && [ ! -L "$ROOT/AGENTS.md" ] ||
     fail "missing project AGENTS.md"
 [ -f "$ROOT/CLAUDE.md" ] && [ ! -L "$ROOT/CLAUDE.md" ] ||
@@ -53,15 +54,18 @@ grep -F 'Git and `TODO.md` as the durable source of truth' "$ROOT/AGENTS.md" \
     >/dev/null || fail "project takeover source of truth"
 grep -F 'Claude auto-memory are optional context only' "$ROOT/AGENTS.md" \
     >/dev/null || fail "project cross-client handoff policy"
-grep -F 'Owner approval alone never creates an exception.' "$ROOT/AGENTS.md" \
+grep -F 'Owner approval alone never' \
+    "$ROOT/docs/agent-policy/repository-and-external.md" \
     >/dev/null || fail "project reviewed-installer deletion boundary"
-grep -F 'include a read-only inventory' "$ROOT/AGENTS.md" \
+grep -F 'Include a read-only inventory' \
+    "$ROOT/docs/agent-policy/housekeeping-and-promotion.md" \
     >/dev/null || fail "project routine arg0 housekeeping policy"
-grep -F 'current local time in `[HH:MM:SS]` format' "$ROOT/AGENTS.md" \
+grep -F 'current local time in' "$ROOT/AGENTS.md" \
     >/dev/null || fail "project progress timestamp policy"
-grep -F "fresh native \`date '+%H:%M:%S'\` read" "$ROOT/AGENTS.md" \
+grep -F 'run a fresh native' "$ROOT/AGENTS.md" >/dev/null &&
+    grep -F "\`date '+%H:%M:%S'\` read" "$ROOT/AGENTS.md" \
     >/dev/null || fail "project progress clock source"
-grep -F 'Never infer a timestamp from a prior message or elapsed time.' \
+grep -F 'Never infer a timestamp' \
     "$ROOT/AGENTS.md" >/dev/null || fail "project progress clock drift guard"
 for managed_root in \
     '$HOME/harness' \

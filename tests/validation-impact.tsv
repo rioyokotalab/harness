@@ -29,6 +29,10 @@
 ^shared/skills/guarded-bulk-delete/|R3|-|recursive deletion safety
 ^AGENTS\.md$|R3|-|root authorization and validation policy
 ^CLAUDE\.md$|R3|-|root client policy import
+^docs/agent-policy/|R3|-|conditional authorization and safety policy
+^tests/test-agent-policy-routing\.sh$|R3|-|policy routing validator
+^docs/audits/t351-autonomy-efficiency/context-(benchmark\.md|scenarios\.tsv)$|R1|tests/test-context-routing-benchmark.sh|context routing benchmark
+^tests/test-context-routing-benchmark\.sh$|R3|-|context benchmark validator
 ^\.github/workflows/|R3|-|hosted workflow
 ^bin/|R3|-|public command dispatcher
 ^libexec/harness-validate$|R3|-|validation selector
