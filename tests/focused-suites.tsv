@@ -20,6 +20,7 @@ tests/test-al-session.sh|personal AL session focused suite
 tests/test-fleet-inventory.sh|cold-start fleet inventory focused suite
 tests/test-safety-guards.sh|interactive safety-guard focused suite
 tests/test-github-rulesets.sh|GitHub ruleset payload focused suite
+tests/test-actions-sustainability.sh|GitHub Actions sustainability focused suite
 tests/test-repository-independence.sh|repository independence focused suite
 tests/test-claude-takeover.sh|Claude takeover focused suite
 tests/test-claude-handoff.sh|task-bound Claude handoff focused suite

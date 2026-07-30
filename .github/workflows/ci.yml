@@ -1,16 +1,17 @@
 name: Harness CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    - cron: "11 19 * * 6"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: harness-ci-${{ github.workflow }}-${{ github.ref }}
+  group: harness-ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

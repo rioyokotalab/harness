@@ -8,6 +8,12 @@ locally. Remove duplicate `main` push workflows, retain one unconditional
 weekly/manual hosted gate in each private repository, and use one coherent PR
 per task instead of opening PRs for ledger-only checkpoints.
 
+Harness remains publicly hosted and independently validates every pull request,
+but it also removes its duplicate post-merge `main` run and retains a weekly
+plus manual full gate. This does not change the private-minute allowance; it
+removes 678 observed public duplicate runs and eliminates needless post-merge
+waiting and hosted work.
+
 This is repository-only and required no organization, billing, ruleset, or
 approval-count write. It avoids the security and maintenance burden of a
 persistent self-hosted runner while preserving independent hosted execution for
@@ -45,6 +51,17 @@ assigned to that additional saving. Operationally, a normal future owner task
 allocates zero private runners in either repository; independent weekly runs
 cost roughly one rounded job-minute per repository per week.
 
+A post-transition cancellation audit did not reveal another material trigger
+lever. GitHub's bounded search returned the latest 1,000 Students runs in the
+fixed window: only one pull-request and two push runs were cancelled. Swallow's
+complete 285-run result through the transition contained one cancelled
+pull-request run. Both current CI workflows already group by pull-request ref
+and cancel superseded work; Students' boundary workflow groups by pull-request
+number. The 1,000-result Students cap is reported explicitly, so these counts
+are not misrepresented as a complete 30-day denominator. Retain the existing
+concurrency configuration and do not add complexity for an already bounded
+source of spend.
+
 ## Implemented state
 
 Students:
@@ -70,6 +87,15 @@ Swallow:
   required job skipped and no post-merge run.
 - The exact merged trees matched the reviewed trees, and the complete
   login-safe static suite passed.
+
+Harness:
+
+- Its task branch retains the required `portable-phase1` pull-request job,
+  removes the duplicate `main` push trigger, and adds weekly
+  (`11 19 * * 6` UTC) plus manual full runs.
+- The final task pull request is the live transition check. Its merge must not
+  start a push run; the exact merged tree and run list are reconciled before
+  closeout.
 
 GitHub's job-condition syntax supports this event-specific selection:
 [job conditions](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-jobs-with-conditions).

@@ -2,11 +2,13 @@
 
 ## Implemented harness gate
 
-`.github/workflows/ci.yml` runs on every `main` push and pull request with only
-`contents: read`. It uses the official checkout action pinned to the immutable
-v6.0.2 commit and disables persisted Git credentials. It has no secrets,
-deployment, model calls, remote-node access, scheduler commands, package
-installation, or cache writes outside its ephemeral runner.
+`.github/workflows/ci.yml` runs for pull requests to `main`, one weekly
+independent full check, and manual full checks, with only `contents: read`.
+After a strict required pull-request check, the merge does not allocate a
+duplicate `main` push runner. It uses the official checkout action pinned to
+the immutable v7.0.1 commit and disables persisted Git credentials. It has no
+secrets, deployment, model calls, remote-node access, scheduler commands,
+package installation, or cache writes outside its ephemeral runner.
 Checkout fetches complete public history because the evaluation validator
 loads its guidance from the experiment's exact immutable baseline revision; a
 shallow checkout may not contain that commit. Later live global-guidance
@@ -30,7 +32,7 @@ The security choices follow GitHub's official guidance to grant read-only
 default token access and pin actions to a full commit SHA:
 
 - <https://docs.github.com/en/actions/reference/security/secure-use>
-- <https://github.com/actions/checkout/releases/tag/v6.0.2>
+- <https://github.com/actions/checkout/releases/tag/v7.0.1>
 - <https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md>
 
 The first complete hosted validation succeeded as
