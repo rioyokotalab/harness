@@ -18,16 +18,23 @@
 ^shared/skills/plan-interview-execute/(SKILL\.md|references/(planning|interview|execution)\.md)$|R1|tests/test-skill-context-gates.sh|PIE routed behavior gates
 ^tests/test-skill-context-(budgets|gates)\.sh$|R3|-|skill routing validator
 ^tests/test-skill-catalog-budget\.sh$|R3|-|always-visible skill catalog validator
-^shared/skills/fleet-repository-hardening/|R1|tests/test-fleet-repository-hardening-skill.sh|hardening skill
-^shared/skills/fleet-repository-hardening/|R1|tests/test-skill-context-budgets.sh|hardening routed context budget
-^shared/skills/fleet-repository-hardening/|R1|tests/test-skill-context-gates.sh|hardening routed safety gates
-^tests/test-fleet-repository-hardening-skill\.sh$|R1|tests/test-fleet-repository-hardening-skill.sh|hardening skill validator
-^shared/skills/onboard-personal-mac/|R1|tests/test-onboard-personal-mac-skill.sh|personal Mac skill
-^shared/skills/onboard-personal-mac/|R1|tests/test-skill-context-budgets.sh|personal Mac routed context budget
-^shared/skills/onboard-personal-mac/|R1|tests/test-skill-context-gates.sh|personal Mac routed safety gates
-^tests/test-onboard-personal-mac-skill\.sh$|R1|tests/test-onboard-personal-mac-skill.sh|personal Mac skill validator
-^shared/skills/reboot-recovery/|R1|tests/test-reboot-recovery-skill.sh|reboot recovery skill
-^tests/test-reboot-recovery-skill\.sh$|R1|tests/test-reboot-recovery-skill.sh|reboot recovery validator
+^shared/skills/fleet-repository-hardening/(SKILL\.md|references/.*\.md)$|R1|tests/test-fleet-repository-hardening-skill.sh|hardening skill
+^shared/skills/fleet-repository-hardening/(SKILL\.md|references/.*\.md)$|R1|tests/test-skill-context-budgets.sh|hardening routed context budget
+^shared/skills/fleet-repository-hardening/(SKILL\.md|references/.*\.md)$|R1|tests/test-skill-context-gates.sh|hardening routed safety gates
+^shared/skills/fleet-repository-hardening/agents/|R3|-|hardening client configuration
+^tests/test-fleet-repository-hardening-skill\.sh$|R3|-|hardening skill validator
+^shared/skills/onboard-personal-mac/(SKILL\.md|references/.*\.md)$|R1|tests/test-onboard-personal-mac-skill.sh|personal Mac skill
+^shared/skills/onboard-personal-mac/(SKILL\.md|references/.*\.md)$|R1|tests/test-skill-context-budgets.sh|personal Mac routed context budget
+^shared/skills/onboard-personal-mac/(SKILL\.md|references/.*\.md)$|R1|tests/test-skill-context-gates.sh|personal Mac routed safety gates
+^shared/skills/onboard-personal-mac/agents/|R3|-|personal Mac client configuration
+^tests/test-onboard-personal-mac-skill\.sh$|R3|-|personal Mac skill validator
+^shared/skills/onboard-mirrored-node/(SKILL\.md|references/(planning-interview|declarations-phase|declarations|bootstrap-migration|backup-acceptance)\.md)$|R1|tests/test-onboard-mirrored-node.sh|SSH mirrored-node routed safety gates
+^shared/skills/onboard-mirrored-node/(scripts|agents)/|R3|-|mirrored-node executable or client configuration
+^shared/skills/onboard-external-user/(SKILL\.md|references/(boundary|preflight|installation|acceptance)\.md)$|R1|tests/test-onboard-external-user.sh|external-user routed contract
+^shared/skills/onboard-external-user/(scripts|agents)/|R3|-|external-user executable or client configuration
+^shared/skills/reboot-recovery/(SKILL\.md|references/(status-discovery|recovery-start|validation-closeout)\.md)$|R1|tests/test-reboot-recovery-skill.sh|reboot recovery routed safety gates
+^shared/skills/reboot-recovery/(scripts|agents)/|R3|-|reboot recovery executable or client configuration
+^tests/test-reboot-recovery-skill\.sh$|R3|-|reboot recovery validator
 ^shared/skills/recover-codex-unsafe-tail/|R3|-|managed lifecycle recovery
 ^tests/test-recover-codex-unsafe-tail-skill\.sh$|R3|-|managed lifecycle recovery validator
 ^shared/skills/remote-agent-communication/|R3|-|cross-client message transport

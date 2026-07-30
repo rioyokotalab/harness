@@ -80,6 +80,24 @@ cases = [
         False,
     ),
     (
+        ["shared/skills/onboard-mirrored-node/references/planning-interview.md"],
+        "R1",
+        ["tests/test-onboard-mirrored-node.sh"],
+        False,
+    ),
+    (
+        ["shared/skills/onboard-external-user/references/acceptance.md"],
+        "R1",
+        ["tests/test-onboard-external-user.sh"],
+        True,
+    ),
+    (
+        ["shared/skills/reboot-recovery/references/status-discovery.md"],
+        "R1",
+        ["tests/test-reboot-recovery-skill.sh"],
+        False,
+    ),
+    (
         ["libexec/harness-terminfo"],
         "R2",
         ["tests/test-terminfo.sh"],
@@ -177,6 +195,14 @@ protected_r3 = [
     "libexec/harness-restic",
     "libexec/harness-ssh-config-layout",
     "libexec/harness-agent-config",
+    "shared/skills/onboard-mirrored-node/scripts/onboard-preflight",
+    "shared/skills/onboard-external-user/scripts/preflight",
+    "shared/skills/reboot-recovery/scripts/recover-mac-after-reboot",
+    "shared/skills/fleet-repository-hardening/agents/openai.yaml",
+    "shared/skills/onboard-personal-mac/agents/openai.yaml",
+    "tests/test-fleet-repository-hardening-skill.sh",
+    "tests/test-onboard-personal-mac-skill.sh",
+    "tests/test-reboot-recovery-skill.sh",
 ]
 for path in protected_r3:
     result = classify(root, [path], rules)
@@ -215,4 +241,4 @@ assert unknown["tier"] == "R3"
 assert unknown["suites"] == ["tests/test-phase1.sh"]
 PY
 
-printf '%s\n' 'VALIDATION_ROUTER status=pass cases=35'
+printf '%s\n' 'VALIDATION_ROUTER status=pass cases=38'

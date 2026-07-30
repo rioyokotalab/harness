@@ -31,6 +31,19 @@ Measured Local wall times before phase-one overlap were:
 These results meet the frozen five-second docs and ten-second skill ceilings.
 Unknown and control-plane probes still select R3.
 
+Three newly phase-routed workflow references also moved from unknown/R3 to
+their exact owning contract:
+
+| Routed reference | Three wall samples | Median |
+| --- | --- | ---: |
+| external-user onboarding | 0.29, 0.28, 0.27 s | 0.28 s |
+| mirrored-node onboarding | 0.43, 0.41, 0.40 s | 0.41 s |
+| reboot recovery | 0.46, 0.57, 0.45 s | 0.46 s |
+
+Their executable scripts, client configuration, and validator tests remain R3.
+The same split now protects hardening and personal-Mac client configuration and
+validator changes from being mistaken for prose-only work.
+
 ## Complete-suite overlap
 
 The clean baseline at immutable commit
