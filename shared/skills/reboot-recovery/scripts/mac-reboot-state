@@ -48,21 +48,27 @@ loaded org.rioyokota.harness.ssh.tunnel2 && tunnels=$((tunnels + 1))
 watchdog=missing
 loaded org.rioyokota.harness.ssh.tunnel-watchdog && watchdog=ready
 
-remote_control_count=$(
-    ps -axo ppid=,comm= 2>/dev/null |
-        awk '
-            $1 == 1 {
-                command = $2
-                sub(/^.*\//, "", command)
-                if (command == "codex" || command == "codex.real") {
-                    count++
-                }
+# Identify the remote-control daemon pair by role rather than by parentage.
+# Both processes are owned by the login account, but only one of them is
+# reparented to launchd in some healthy arrangements: the app-server may
+# still be a live child of its pid-update-loop. Counting ppid==1 therefore
+# reported a working host as unexpected. Matching argv also excludes an
+# interactive Codex TUI, which carries neither role.
+remote_control_roles=$(
+    ps -axo user=,args= 2>/dev/null |
+        awk -v owner="$(id -un)" '
+            $1 != owner { next }
+            {
+                argv = $0
+                sub(/^[^ ]+[ ]+/, "", argv)
             }
-            END { print count + 0 }
+            argv ~ /app-server .*--remote-control/ { server++ }
+            argv ~ /app-server daemon pid-update-loop/ { loop++ }
+            END { print (server + 0) "," (loop + 0) }
         '
 )
 remote_control=unexpected
-[ "$remote_control_count" -eq 2 ] && remote_control=ready
+[ "$remote_control_roles" = "1,1" ] && remote_control=ready
 
 inspect_tmux() {
     sessions=$(tmux list-sessions -F '#{session_name}|#{session_attached}' \

@@ -260,7 +260,10 @@ echo Darwin
 SH
 cat >"$fake_bin/id" <<'SH'
 #!/bin/sh
-[ "${1:-}" = -u ] && echo 502
+case ${1:-} in
+    -u) echo 502 ;;
+    -un) echo managed-owner ;;
+esac
 SH
 cat >"$fake_bin/git" <<'SH'
 #!/bin/sh
@@ -289,11 +292,33 @@ case $* in
 esac
 exit 0
 SH
-cat >"$fake_bin/ps" <<'SH'
+cat >"$fake_bin/ps" <<SH
 #!/bin/sh
-echo '1 /managed/codex.real'
-[ "${FAKE_REMOTE_CONTROL_COUNT:-2}" -eq 2 ] &&
-    echo '1 /managed/codex.real'
+owner=\$(id -un)
+case \${FAKE_REMOTE_CONTROL_TOPOLOGY:-launchd-owned} in
+    launchd-owned)
+        echo "\$owner /managed/codex.real app-server --remote-control --listen unix://"
+        echo "\$owner /managed/codex.real app-server daemon pid-update-loop"
+        ;;
+    child-owned)
+        # Healthy variant: the app-server is still a child of its
+        # pid-update-loop rather than reparented to launchd.
+        echo "\$owner /managed/codex.real app-server daemon pid-update-loop"
+        echo "\$owner /managed/codex.real app-server --remote-control --listen unix://"
+        ;;
+    tui-only)
+        # An interactive Codex TUI carries neither daemon role.
+        echo "\$owner /managed/codex.real --config approval_policy=granular"
+        ;;
+    server-missing)
+        echo "\$owner /managed/codex.real app-server daemon pid-update-loop"
+        ;;
+    foreign-owner)
+        echo "someone-else /managed/codex.real app-server --remote-control --listen unix://"
+        echo "someone-else /managed/codex.real app-server daemon pid-update-loop"
+        ;;
+esac
+exit 0
 SH
 cat >"$fake_bin/tmux" <<'SH'
 #!/bin/sh
@@ -384,13 +409,24 @@ fi
 assert_contains "$TEST_ROOT/tunnel.out" 'reason=tunnel-services' \
     "missing tunnel refusal"
 
-if HOME="$fake_home" FAKE_STATE="$state" FAKE_REMOTE_CONTROL_COUNT=1 \
-    "$TEST_ROOT/mac-reboot-state" start-tmux \
-    >"$TEST_ROOT/remote-control.out"; then
-    fail "unexpected remote-control topology accepted"
-fi
-assert_contains "$TEST_ROOT/remote-control.out" 'reason=remote-control' \
-    "remote-control refusal"
+for topology in tui-only server-missing foreign-owner; do
+    if HOME="$fake_home" FAKE_STATE="$state" \
+        FAKE_REMOTE_CONTROL_TOPOLOGY="$topology" \
+        "$TEST_ROOT/mac-reboot-state" start-tmux \
+        >"$TEST_ROOT/remote-control-$topology.out"; then
+        fail "unexpected remote-control topology accepted: $topology"
+    fi
+    assert_contains "$TEST_ROOT/remote-control-$topology.out" \
+        'reason=remote-control' "remote-control refusal: $topology"
+done
+
+# A live app-server parented by its pid-update-loop is healthy, not drift.
+HOME="$fake_home" FAKE_STATE="$state" \
+    FAKE_REMOTE_CONTROL_TOPOLOGY=child-owned \
+    "$TEST_ROOT/mac-reboot-state" status \
+    >"$TEST_ROOT/remote-control-child.out" || true
+assert_contains "$TEST_ROOT/remote-control-child.out" 'remote_control=ready' \
+    "child-owned app-server accepted"
 
 if HOME="$fake_home" FAKE_STATE="$state" FAKE_TMUX_STATE=conflict \
     "$TEST_ROOT/mac-reboot-state" start-tmux >"$TEST_ROOT/conflict.out"; then
