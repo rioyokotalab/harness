@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-355.
+Next free ID: T-356.
 
 ## Resume contract
 
@@ -16,6 +16,13 @@ Next free ID: T-355.
 5. A failed mutable-state query is unknown, never evidence of absence.
 
 ## Active queue
+
+### T-355 — Private Personal operations project
+
+**Phase:** interviewing; local, GitHub, connector, and live-session execution
+remain deferred until the owner freezes the plan and says `go`.
+
+**Record:** `docs/tasks/T-355.md`. **Plan:** `docs/plans/t355-personal-project.md`.
 
 ### T-354 — Relocate repository-native Codex roots under `projects`
 
