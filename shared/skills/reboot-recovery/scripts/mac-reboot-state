@@ -122,7 +122,7 @@ inspect_tmux() {
             # deliberate restart. A live receipt additionally proves the new
             # supervisor owns this pane.
             ;;
-        harness-codex-resilient|sh|sleep)
+        harness-codex-resilient|sh|bash|sleep)
             [ "$supervisor_matches" = yes ] || {
                 tmux_state=conflict
                 return
