@@ -235,7 +235,8 @@ Rationale and consequences:
 
 ### D-006 — Calendar authority
 
-Status: option selected on 2026-07-31; D-006a parameters remain open.
+Status: option and proactive trigger selected on 2026-07-31; D-006b bounds
+remain open.
 
 Selected: balanced autonomy. The owner's exact answer was `2`.
 
@@ -252,25 +253,41 @@ Frozen portion:
 - ambiguous writes are never retried until the event and calendar are read
   back with exact date, time, timezone, and recurrence scope.
 
-D-006a must choose whether qualifying autonomous writes occur only inside an
-explicit owner-requested calendar task or may be created proactively under
-bounded rules. D-006 is not fully frozen until that parameter is selected.
+D-006b must freeze the proactive horizon, duration, count, expiry, and reminder
+scope. D-006 is not fully frozen until that package is selected.
 
 #### D-006a — Trigger for qualifying autonomous calendar writes
 
+Status: frozen on 2026-07-31.
+
+Selected: allow qualifying holds or reminders to be written proactively under
+bounded rules. The owner's exact answer was `2`.
+
+Consequences:
+
+- every proactive write must remain on the exact Personal-managed calendar
+  selected during setup, be private and metadata-minimal, non-recurring,
+  attendee/resource/conference-free, and send no notification;
+- holds remain transparent and Personal may remove only a qualifying hold that
+  it created;
+- reminder changes preserve every non-reminder event field; and
+- no proactive write is allowed until D-006b's numeric and reminder limits are
+  frozen and implemented as testable policy.
+
+#### D-006b — Proactive calendar limits
+
 Status: open.
 
-Recommended default: explicit-task-only. Once the owner requests a calendar
-task that includes a hold or reminder, Personal may perform the qualifying
-write without a second confirmation when it is on the exact requested
-calendar and time range, attendee/resource/conference-free, non-recurring,
-transparent for a hold, private and metadata-minimal, and sends no
-notification. It may remove only a qualifying hold it created and may change
-only personal reminder fields while preserving all other event data.
+Recommended default: proactive holds only. Allow at most three active holds on
+the selected Personal calendar, no more than 14 days ahead and two hours each,
+with a generic private title and no description, location, conference, guest,
+resource, recurrence, or notification. Remove an unaccepted hold within
+48 hours. Reminder changes remain explicit-task-only but need no second
+confirmation when they otherwise satisfy D-006.
 
-Alternative: allow proactive holds or reminders under additional numeric
-limits on horizon, duration, count, and expiry. If selected, those limits
-require a further frozen sub-decision before D-006 is complete.
+Alternative: use the same hold limits and additionally allow proactive
+personal reminders on user-owned events within 30 days, with at most two
+reminders per event. Exact lead times would require one further sub-decision.
 
 ### D-007 — Research-budget authority
 
