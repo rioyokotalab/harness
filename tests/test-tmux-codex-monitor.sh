@@ -528,15 +528,6 @@ try:
     module.tmux_clients = lambda: [("7", "@0", "%0")]
     module.tmux_panes = lambda: copy.deepcopy(reordered)
     def swap(arguments, check=True):
-        if arguments[1] == "select-pane":
-            pane_id = arguments[3]
-            title = arguments[5]
-            pane = next(
-                pane for pane in reordered if pane["pane_id"] == pane_id
-            )
-            pane["title"] = title
-            order_calls.append(("title", pane_id))
-            return ""
         assert arguments[:3] == ["tmux", "swap-pane", "-d"]
         source_id = arguments[4]
         target_id = arguments[6]
@@ -552,7 +543,6 @@ try:
         ordered, key=lambda pane: pane["index"]
     )] == list(module.EXPECTED)
     assert order_calls
-    assert ("title", "%0") in order_calls
 finally:
     module.run = original_run
     module.tmux_panes = original_tmux_panes

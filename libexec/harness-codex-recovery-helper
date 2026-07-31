@@ -377,7 +377,7 @@ def tmux_mapping():
             SESSION_NAME,
             "-F",
             "#{window_index}\t#{window_name}\t#{window_id}\t"
-            "#{pane_index}\t#{pane_title}\t"
+            "#{pane_index}\t"
             + PANE_ROLE_FORMAT
             + "\t#{pane_id}\t#{pane_pid}\t#{pane_current_path}\t#{pane_dead}",
         ],
@@ -386,12 +386,12 @@ def tmux_mapping():
     rows = []
     for line in output.splitlines():
         fields = line.split("\t")
-        if len(fields) != 10:
+        if len(fields) != 9:
             continue
         try:
             window_index = int(fields[0])
             pane_index = int(fields[3])
-            pane_pid = int(fields[7])
+            pane_pid = int(fields[6])
         except ValueError:
             continue
         rows.append(
@@ -400,12 +400,11 @@ def tmux_mapping():
                 "window_name": fields[1],
                 "window_id": fields[2],
                 "index": pane_index,
-                "title": fields[4],
-                "name": fields[5],
-                "pane_id": fields[6],
+                "name": fields[4],
+                "pane_id": fields[5],
                 "pane_pid": pane_pid,
-                "cwd": fields[8],
-                "dead": fields[9] == "1",
+                "cwd": fields[7],
+                "dead": fields[8] == "1",
             }
         )
     if len(rows) != len(EXPECTED):

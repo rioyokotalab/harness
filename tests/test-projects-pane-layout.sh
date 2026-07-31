@@ -83,6 +83,9 @@ tmux_test select-pane -t "$swallow_id" -T swallow
 tmux_test swap-pane -d -s "$harness_id" -t projects:codex.0
 tmux_test swap-pane -d -s "$students_id" -t projects:codex.1
 tmux_test select-layout -t projects:codex main-vertical >/dev/null
+tmux_test set-option -w -t projects:codex pane-border-status top
+tmux_test set-option -w -t projects:codex pane-border-format \
+    ' #{pane_index}:#{@harness_target} '
 
 [ "$(tmux_test list-windows -t projects -F '#{window_index}:#{window_name}')" = \
     '0:codex' ] || fail "canonical sole window"
@@ -93,6 +96,9 @@ tmux_test select-layout -t projects:codex main-vertical >/dev/null
 [ "$(tmux_test list-panes -t projects:codex \
     -F '#{pane_index}:#{pane_title}' | tr '\n' ' ')" = \
     '0:harness 1:students 2:swallow ' ] || fail "canonical pane order"
+[ "$(tmux_test display-message -p -t projects:codex \
+    '#{pane-border-status}|#{pane-border-format}')" = \
+    'top| #{pane_index}:#{@harness_target} ' ] || fail "stable pane labels"
 assert_pane_identity projects:codex.0 "$harness_id" "$harness_pid"
 assert_pane_identity projects:codex.1 "$students_id" "$students_pid"
 assert_pane_identity projects:codex.2 "$swallow_id" "$swallow_pid"

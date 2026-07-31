@@ -67,10 +67,10 @@ case "$command" in
         tty=${FAKE_TTY:-/dev/pts/7}
         role=${FAKE_PANE_ROLE:-harness}
         if [ "${FAKE_AMBIGUOUS:-0}" -eq 1 ]; then
-            printf '%%0\t0\t%s/harness\t%s\t0\tcodex\t0\tharness\t%s\n' "$HOME" "$tty" "$role"
-            printf '%%1\t0\t%s/harness\t/dev/pts/8\t0\tcodex\t0\tharness\t%s\n' "$HOME" "$role"
+            printf '%%0\t0\t%s/harness\t%s\t0\tcodex\t0\t%s\n' "$HOME" "$tty" "$role"
+            printf '%%1\t0\t%s/harness\t/dev/pts/8\t0\tcodex\t0\t%s\n' "$HOME" "$role"
         else
-            printf '%%0\t0\t%s/harness\t%s\t0\tcodex\t0\tharness\t%s\n' "$HOME" "$tty" "$role"
+            printf '%%0\t0\t%s/harness\t%s\t0\tcodex\t0\t%s\n' "$HOME" "$tty" "$role"
         fi
         ;;
     display-message)
