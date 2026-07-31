@@ -19,17 +19,15 @@ Next free ID: T-360.
 
 ### T-358 — Overnight duration run: claude tmux window and multi-repo development
 
-**Phase:** executing until 2026-08-01 05:30 local; owner go in originating
-request. Next: tmux `claude` window, 04:25 model switch-back, five-repo
-TODO-driven development with batched publication.
+**Phase:** validated; awaiting review of the single publication PR. Next:
+owner merges it, answers the students T-043 go request, and decides the Mac
+remote-control gates.
 
 **Record:** `docs/tasks/T-358.md`.
 
 ### T-359 — Claude pane monitor and recovery parity
 
-**Phase:** executing (owner-ordered 02:47 within the overnight window).
-Next: claude monitor + helper client support + border titles + recovery
-drill, published with the T-358 run.
+**Phase:** deployed and drill-proven; published with T-358.
 
 **Record:** `docs/tasks/T-359.md`.
 

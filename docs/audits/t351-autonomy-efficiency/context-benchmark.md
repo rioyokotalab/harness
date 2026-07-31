@@ -17,14 +17,14 @@ its eventual protected publication.
 
 | Scenario | Before total | After total | Total reduction | Before non-ledger | After non-ledger | Non-ledger reduction |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| factual lookup | 73,734 | 1,797 | 97.5% | 2,906 | 1,482 | 49.0% |
-| documentation edit | 73,545 | 2,109 | 97.1% | 2,717 | 1,794 | 33.9% |
-| ordinary code fix | 74,455 | 1,835 | 97.5% | 3,627 | 1,520 | 58.0% |
-| tmux health diagnosis | 73,545 | 1,796 | 97.5% | 2,717 | 1,481 | 45.4% |
-| unsafe-tail recovery | 75,931 | 3,155 | 95.8% | 5,103 | 2,840 | 44.3% |
-| fleet hardening | 76,238 | 4,500 | 94.0% | 5,410 | 4,185 | 22.6% |
-| native HPC experiment | 77,550 | 3,422 | 95.5% | 6,722 | 3,107 | 53.7% |
-| duration Cowork | 80,599 | 4,969 | 93.8% | 9,771 | 4,654 | 52.3% |
+| factual lookup | 73,734 | 1,779 | 97.5% | 2,906 | 1,482 | 49.0% |
+| documentation edit | 73,545 | 2,091 | 97.1% | 2,717 | 1,794 | 33.9% |
+| ordinary code fix | 74,455 | 1,817 | 97.5% | 3,627 | 1,520 | 58.0% |
+| tmux health diagnosis | 73,545 | 1,778 | 97.5% | 2,717 | 1,481 | 45.4% |
+| unsafe-tail recovery | 75,931 | 3,137 | 95.8% | 5,103 | 2,840 | 44.3% |
+| fleet hardening | 76,238 | 4,482 | 94.1% | 5,410 | 4,185 | 22.6% |
+| native HPC experiment | 77,550 | 3,404 | 95.6% | 6,722 | 3,107 | 53.7% |
+| duration Cowork | 80,599 | 4,951 | 93.8% | 9,771 | 4,654 | 52.3% |
 
 The median total reduction is 96.4%, above the frozen 85% threshold; every
 scenario exceeds 93%, above the per-scenario 50% floor. Median non-ledger

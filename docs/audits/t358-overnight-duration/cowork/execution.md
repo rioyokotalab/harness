@@ -122,6 +122,21 @@ All timestamps are fresh native local reads.
   was then added (live panes remain unconditionally protected), suite
   extended, monitor redeployed 03:40.
 
+- 04:25:00 — C3 switch-back fired exactly on schedule (timer v2 pid 543772,
+  re-armed 03:51 with post-drill identities after the superseded v1 was
+  killed). Staged outcomes: %110 readiness by-construction → one-shot
+  delivery ok, consumption not claimed; %108/%109 skipped fail-closed —
+  their idle titles are task-titled (`✳ <task>`), not the launch-time
+  `✳ Claude Code`, so the exact-title gate correctly refused. Finding: the
+  idle-title readiness surface must match the `✳ ` prefix, not the full
+  launch title. Per the frozen clarification (conclusively skipped panes may
+  receive one first attempt after fresh checks), %109 passed full identity
+  guards plus `✳ `-prefix idleness and received its one-shot delivery at
+  04:27:08. %108 hosts this driver session itself, which runs Fable
+  (claude-fable-5 self-evidence); no delivery needed. Effective models:
+  %108 fable (application evidence), %109/%110 delivery-confirmed only,
+  recorded per benchmark as not consumption-verified.
+
 ## Deviations
 
 - Two commentary timestamps early in the run were inferred instead of read
