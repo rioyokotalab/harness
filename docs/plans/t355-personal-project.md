@@ -438,12 +438,28 @@ Rationale and consequences:
 
 ### D-012 — Harness skill coupling
 
-Status: open.
+Status: frozen on 2026-07-31.
 
-Recommended default: read-only project discovery links to the canonical
-Harness shared skills, with a pinned compatibility manifest and startup
-validation. This stays current across cold starts. Frozen copies improve
-repository independence but drift and increase unrelated text and maintenance.
+Selected: expose every canonical Harness shared skill through live project
+discovery links that Personal workflows treat as read-only, and use canonical
+Harness commands directly. The owner's exact answer was `1`.
+
+Rationale and consequences:
+
+- track only discovery links and a thin compatibility manifest in Personal;
+  do not copy shared `SKILL.md` contents or Harness command implementations;
+- expose the skill catalog at cold start, but read a full skill only when its
+  description matches the current task under the normal trigger rules;
+- resolve each link to the exact canonical Harness shared-skill path and verify
+  that Personal's own update or synchronization workflow never writes through
+  it; D-002 means this is a workflow boundary, not same-user filesystem
+  enforcement;
+- invoke the installed canonical `harness` command and record its compatible
+  interface/version without wrapping or vendoring it;
+- fail closed with a precise Harness-path or compatibility error if a required
+  skill or command is absent, rather than silently using stale copies; and
+- accept that Personal intentionally depends on the canonical Harness checkout
+  and receives validated Harness skill updates automatically.
 
 ### D-013 — Agent-client support
 
@@ -533,11 +549,12 @@ without silently inheriting broader connector capability.
 
 ### 3. Install skill and command discovery
 
-Expose only the selected Harness shared skills through repository discovery,
-plus Personal-specific routing skills created only where repeated expertise is
-needed. Keep root instructions compact and route domain work to focused files
-so unrelated skills are not read. Validate links, cold-start discovery,
-read-only boundaries, and behavior after a clean process restart.
+Expose every canonical Harness shared skill through repository discovery, plus
+Personal-specific routing skills created only where repeated expertise is
+needed. Keep root instructions and the catalog compact; route domain work to
+focused files and read full skill instructions only on a matching trigger.
+Validate links, compatibility, cold-start discovery, read-only boundaries, and
+behavior after a clean process restart.
 
 ### 4. Publish and harden the remote
 
