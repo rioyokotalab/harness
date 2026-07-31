@@ -412,14 +412,29 @@ Consequences:
 
 ### D-011 — Meaning of cold restart
 
-Status: open.
+Status: frozen on 2026-07-31.
 
-Recommended direction after D-010: require the Harness session to reconstruct
-Personal work from Harness's T-355 record plus Personal's compact repository
-ledger after a cold restart. No Personal TUI, saved-root, phone, tmux, or host
-reboot restoration is promised. A newly launched bounded process must
-reconstruct only from Personal's repository state and the exact Harness
-request, never a prior child conversation.
+Selected: split durable authority by domain without duplicating facts. The
+owner's exact answer was `1`.
+
+Rationale and consequences:
+
+- Harness's ledger owns Personal setup/integration, exact path and repository
+  identity, bounded launcher and lock contract, connector-boundary validation,
+  and cross-repository blockers;
+- Personal's compact ledger owns Personal operational tasks, metadata-safe
+  source references, domain outcomes, and its first executable next action;
+- each ledger stores an exact pointer to the other where needed, but does not
+  copy the other's task details;
+- after a cold Harness restart, read Harness `AGENTS.md`, `TODO.md`, and the
+  routed Personal integration record, then read Personal `AGENTS.md`,
+  `TODO.md`, and only its selected task record;
+- each bounded child reconstructs from Personal repository state plus the
+  exact current Harness request, never prior chat or child conversation state;
+- update the ledger that owns a changed fact and only its pointer/acceptance
+  receipt in the other repository; and
+- no Personal TUI, saved root, phone, tmux, app-server, or host-reboot
+  restoration is promised.
 
 ### D-012 — Harness skill coupling
 
@@ -605,6 +620,8 @@ Completion requires all of the following:
   mapping, monitor/helper role, recovery mapping, or app-server root;
 - a clean Harness restart reconstructs Personal's exact path, policy, ledger,
   approved skills, and next action without chat history;
+- Harness and Personal ledgers contain one owner for each fact, exact
+  cross-repository pointers, and no duplicated operational task narrative;
 - focused Personal checks, owning Harness tests, `harness validate`,
   `tests/test-phase1.sh`, and `git diff --check` pass where proportional to the
   surfaces actually changed; and
