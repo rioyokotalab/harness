@@ -19,10 +19,10 @@ Next free ID: T-357.
 
 ### T-356 — Personal-only email/calendar connector boundary
 
-**Phase:** blocked on owner selection and authorization of one non-sensitive
-Calendar read. The combined Gmail-plus-Calendar read-only consent completed
-with exactly two scopes; Calendar and all writes remain blocked pending
-acceptance.
+**Phase:** blocked on exact calendar-name confirmation and one changed-input
+value-free read retry authorization. The first bounded exact-name attempt
+returned unknown without an event payload and is non-retryable unchanged;
+Calendar and all writes remain blocked.
 
 **Record:** `docs/tasks/T-356.md`.
 

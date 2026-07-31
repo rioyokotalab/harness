@@ -1,6 +1,6 @@
 # T-356 Harness integration plan
 
-Phase: `blocked on owner-selected non-sensitive Calendar read acceptance`.
+Phase: `blocked after one non-retryable unknown Calendar acceptance read`.
 
 ## Outcome
 
