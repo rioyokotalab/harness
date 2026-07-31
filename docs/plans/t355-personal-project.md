@@ -91,10 +91,11 @@ copied.
 ## Assumptions to validate before execution
 
 - Research-budget source systems, file formats, retention rules, and delegated
-  authority have not yet been identified.
-- The owner has not yet chosen whether Harness should launch a bounded
-  Personal-rooted process for sensitive operations or whether D-004 should be
-  superseded so the existing Harness session performs them directly.
+  authority have not yet been identified. D-016 deliberately defers every live
+  budget source until a later source-specific PIE decision.
+- D-010a selects a bounded Personal-rooted process driven from Harness; its
+  exact-path, one-process, client-parity, and clean-exit contracts remain to be
+  validated during execution.
 - Any bounded Personal-rooted process would likely use Sol/high, granular
   approvals, and disabled sandbox, but its exact defaults remain open.
 
@@ -587,12 +588,27 @@ Consequences:
 
 ### D-016 — Budget sources and classification
 
-Status: open.
+Status: frozen on 2026-07-31.
 
-Recommended default: inventory source systems and classify fields before
-connecting anything. Record the system of record, owner, sensitivity,
-retention, read/write interface, and authoritative reconciliation rule without
-copying values into the plan.
+Selected: keep the initial Personal scaffold source-neutral and connect no
+research-budget source. The owner's exact answer was `1`.
+
+Consequences:
+
+- include only a metadata-safe source-register schema and budget policy in the
+  initial scaffold; do not add a budget connector, import path, live file,
+  account identity, fixture, or sample value;
+- before any future budget source is connected, run a source-specific PIE
+  decision that records only its non-secret system name and type, system of
+  record, owner, sensitivity classes, retention, read/write interface,
+  delegated authority, and authoritative reconciliation rule;
+- keep D-007's budget read, analysis, edit, and submission authority dormant
+  until that source-specific decision is frozen and its connector boundary
+  passes D-004;
+- initial acceptance must prove that no budget source or tool is advertised or
+  enabled; and
+- this defers live budget functionality without blocking the repository,
+  email, calendar, policy, or cold-start scaffold.
 
 ### D-017 — External research and disclosure
 
@@ -697,6 +713,8 @@ proposal as required by D-004.
 Enable writes only after the corresponding action contract and confirmation
 UX pass. Fetch live content only just in time for an owner task, never as a
 test fixture, and persist only the metadata-safe result selected in D-003.
+Under D-016, connect no research-budget source during initial execution; leave
+the source register empty until a later source-specific PIE decision.
 
 ### 8. Add the assistant
 
