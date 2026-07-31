@@ -1,0 +1,43 @@
+#!/bin/sh
+set -eu
+
+fail() {
+    printf 'OAUTH_BROWSER status=failed reason=%s\n' "$1" >&2
+    exit 2
+}
+
+[ "$#" -eq 0 ] || fail unexpected-argument
+browser_host=${HARNESS_OAUTH_BROWSER_HOST:-}
+case $browser_host in
+    aist|home|office|riken) ;;
+    *) fail browser-host-invalid ;;
+esac
+
+ssh_bin=ssh
+if [ "${HARNESS_TESTING:-0}" = 1 ]; then
+    ssh_bin=${HARNESS_TEST_SSH:-$ssh_bin}
+fi
+[ -x "$(command -v "$ssh_bin" 2>/dev/null || true)" ] ||
+    fail ssh-unavailable
+
+authorization_url=
+IFS= read -r authorization_url || [ -n "$authorization_url" ] ||
+    fail authorization-url-missing
+if IFS= read -r _; then
+    fail authorization-url-multiline
+fi
+case $authorization_url in
+    'https://accounts.google.com/o/oauth2/v2/auth?'*) ;;
+    *) fail authorization-url-invalid ;;
+esac
+case $authorization_url in
+    *\"*|*\\*) fail authorization-url-invalid ;;
+esac
+
+if ! printf 'open location "%s"\n' "$authorization_url" |
+    "$ssh_bin" -x "$browser_host" /usr/bin/osascript - \
+        >/dev/null 2>&1; then
+    fail browser-open-failed
+fi
+printf 'OAUTH_BROWSER status=submitted host=%s privacy=ephemeral-url\n' \
+    "$browser_host"

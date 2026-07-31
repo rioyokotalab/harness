@@ -62,6 +62,13 @@ printf '%s\n' \
     '#!/bin/sh' \
     'set -eu' \
     'printf "%s\n" "$@" >"$PERSONAL_CAPTURE/auth.args"' \
+    'helper=' \
+    'while [ "$#" -gt 0 ]; do' \
+    '    if [ "$1" = --browser-helper ]; then helper=$2; shift 2; else shift; fi' \
+    'done' \
+    'if [ -n "$helper" ]; then' \
+    '    printf "%s" "https://accounts.google.com/o/oauth2/v2/auth?fixture=1" | "$helper"' \
+    'fi' \
     'printf "synthetic-auth\n"' \
     >"$personal/bin/personal-google-auth"
 chmod 700 "$personal/bin/personal-google-mcp" \
@@ -100,6 +107,27 @@ printf 'claude-result\n'
 EOF
 chmod 700 "$fake_codex" "$fake_claude"
 
+fake_ssh=$TEST_ROOT/ssh
+cat >"$fake_ssh" <<'EOF'
+#!/bin/sh
+set -eu
+case " $* " in
+    *' -O forward '*)
+        printf '%s\n' "$@" >"$PERSONAL_CAPTURE/tunnel.args"
+        printf active >"$PERSONAL_CAPTURE/tunnel.active"
+        exit 0
+        ;;
+    *' -O cancel '*)
+        printf '%s\n' "$@" >"$PERSONAL_CAPTURE/tunnel-cleanup.args"
+        printf stopped >"$PERSONAL_CAPTURE/tunnel.stopped"
+        exit 0
+        ;;
+esac
+printf '%s\n' "$@" >"$PERSONAL_CAPTURE/browser-ssh.args"
+cat >"$PERSONAL_CAPTURE/browser-ssh.stdin"
+EOF
+chmod 700 "$fake_ssh"
+
 run_agent() {
     HARNESS_TESTING=1 \
     HARNESS_TEST_PERSONAL_ROOT="$personal" \
@@ -107,6 +135,7 @@ run_agent() {
     HARNESS_TEST_PROFILE_ROOT="$profile" \
     HARNESS_TEST_NATIVE_CODEX="$fake_codex" \
     HARNESS_TEST_NATIVE_CLAUDE="$fake_claude" \
+    HARNESS_TEST_SSH="$fake_ssh" \
     PERSONAL_GOOGLE_BACKEND=fixture \
     PERSONAL_GOOGLE_FIXTURE=/unexpected \
     PERSONAL_CAPTURE="$capture" \
@@ -247,6 +276,32 @@ for argument in --profile "$profile" --domain email \
     grep -Fx -- "$argument" "$capture/auth.args" >/dev/null ||
         fail "authorization argument: $argument"
 done
+
+run_agent --authorize --domain email --browser-host riken \
+    --client-file "$TEST_ROOT/synthetic-client.json" \
+    >"$TEST_ROOT/remote-auth.out"
+for argument in --callback-port 53682 --browser-helper \
+    "$ROOT/libexec/harness-oauth-browser-open"; do
+    grep -Fx -- "$argument" "$capture/auth.args" >/dev/null ||
+        fail "remote authorization argument: $argument"
+done
+grep -Fx -- '-R' "$capture/tunnel.args" >/dev/null ||
+    fail 'OAuth reverse tunnel argument'
+grep -Fx '127.0.0.1:53682:127.0.0.1:53682' \
+    "$capture/tunnel.args" >/dev/null || fail 'OAuth reverse tunnel binding'
+grep -Fx riken "$capture/tunnel.args" >/dev/null ||
+    fail 'OAuth reverse tunnel host'
+grep -Fx riken "$capture/browser-ssh.args" >/dev/null ||
+    fail 'OAuth browser host'
+if grep -F 'accounts.google.com' "$capture/browser-ssh.args" >/dev/null; then
+    fail 'authorization URL leaked into SSH arguments'
+fi
+grep -F 'open location "https://accounts.google.com/' \
+    "$capture/browser-ssh.stdin" >/dev/null ||
+    fail 'authorization URL did not use encrypted stdin'
+[ -f "$capture/tunnel.stopped" ] || fail 'OAuth tunnel lifecycle cleanup'
+grep -Fx cancel "$capture/tunnel-cleanup.args" >/dev/null ||
+    fail 'OAuth tunnel cancellation command'
 
 lock_file=$runtime/harness-personal-agent/operation.lock
 flock "$lock_file" sleep 1 &
