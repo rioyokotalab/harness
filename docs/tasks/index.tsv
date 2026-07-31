@@ -1,5 +1,5 @@
 task	state	summary	source
-T-353	active	Graceful Claude Fable-to-Opus fallback	TODO.md;docs/tasks/T-353.md
+T-353	complete	Graceful Claude Fable-to-Opus fallback	docs/tasks/T-353.md
 T-352	active	Pane-native Local Codex session	TODO.md;docs/tasks/T-352.md;docs/plans/t352-pane-native-projects.md
 T-351	complete	Autonomy and execution-efficiency duration task	docs/tasks/T-351.md;docs/plans/t351-autonomy-efficiency.md;docs/audits/t351-autonomy-efficiency/time-slices.md
 T-350	complete	Repository-native Codex sessions	docs/history/TODO-full-archive-2026-07-30.md;docs/plans/t350-repository-native-codex-sessions.md

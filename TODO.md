@@ -17,22 +17,14 @@ Next free ID: T-354.
 
 ## Active queue
 
-### T-353 — Graceful Claude Fable-to-Opus fallback
-
-**Phase:** implementation and clean R3 validation pass; final integrated
-validation and protected publication remain.
-
-**Record:** `docs/tasks/T-353.md`. Preserve Fable/high as primary, permit only
-native Opus/high availability fallback, and never replay a quota- or
-transport-failed prompt.
-
 ### T-352 — Consolidate Local Codex sessions into one pane-native window
 
 **Phase:** equal horizontal layout published and fleet-synchronized; Riken's
 managed tmux session remains absent, so its context refresh is deferred.
 
-**Record:** `docs/tasks/T-352.md`. Retry the retained Riken refresh only after
-its detached managed session returns; do not create it under refresh authority.
+**Record:** `docs/tasks/T-352.md`. Retry only the newest retained Riken refresh
+after its detached managed session returns; do not create it under refresh
+authority or submit both retained inputs.
 
 ### T-196 — Backup lifecycle phase 2
 
