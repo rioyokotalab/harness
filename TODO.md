@@ -19,7 +19,7 @@ Next free ID: T-354.
 
 ### T-353 — Graceful Claude Fable-to-Opus fallback
 
-**Phase:** implementation and focused validation pass; clean committed R3
+**Phase:** implementation and clean R3 validation pass; final integrated
 validation and protected publication remain.
 
 **Record:** `docs/tasks/T-353.md`. Preserve Fable/high as primary, permit only
