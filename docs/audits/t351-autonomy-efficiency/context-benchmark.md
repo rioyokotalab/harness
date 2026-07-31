@@ -17,25 +17,25 @@ its eventual protected publication.
 
 | Scenario | Before total | After total | Total reduction | Before non-ledger | After non-ledger | Non-ledger reduction |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| factual lookup | 73,734 | 1,744 | 97.6% | 2,906 | 1,482 | 49.0% |
-| documentation edit | 73,545 | 2,056 | 97.2% | 2,717 | 1,794 | 33.9% |
-| ordinary code fix | 74,455 | 1,782 | 97.6% | 3,627 | 1,520 | 58.0% |
-| tmux health diagnosis | 73,545 | 1,743 | 97.6% | 2,717 | 1,481 | 45.4% |
-| unsafe-tail recovery | 75,931 | 3,102 | 95.9% | 5,103 | 2,840 | 44.3% |
-| fleet hardening | 76,238 | 4,447 | 94.1% | 5,410 | 4,185 | 22.6% |
-| native HPC experiment | 77,550 | 3,369 | 95.6% | 6,722 | 3,107 | 53.7% |
-| duration Cowork | 80,599 | 4,721 | 94.1% | 9,771 | 4,459 | 54.3% |
+| factual lookup | 73,734 | 1,785 | 97.5% | 2,906 | 1,482 | 49.0% |
+| documentation edit | 73,545 | 2,097 | 97.1% | 2,717 | 1,794 | 33.9% |
+| ordinary code fix | 74,455 | 1,823 | 97.5% | 3,627 | 1,520 | 58.0% |
+| tmux health diagnosis | 73,545 | 1,784 | 97.5% | 2,717 | 1,481 | 45.4% |
+| unsafe-tail recovery | 75,931 | 3,143 | 95.8% | 5,103 | 2,840 | 44.3% |
+| fleet hardening | 76,238 | 4,488 | 94.1% | 5,410 | 4,185 | 22.6% |
+| native HPC experiment | 77,550 | 3,410 | 95.6% | 6,722 | 3,107 | 53.7% |
+| duration Cowork | 80,599 | 4,957 | 93.8% | 9,771 | 4,654 | 52.3% |
 
-The median total reduction is 96.5%, above the frozen 85% threshold; every
-scenario exceeds 94%, above the per-scenario 50% floor. Median non-ledger
+The median total reduction is 96.4%, above the frozen 85% threshold; every
+scenario exceeds 93%, above the per-scenario 50% floor. Median non-ledger
 reduction is 47.2%, above the 30% independent policy/skill threshold. The
-always-read policy is 805 words, and the active board is 51 lines / 262 words,
+always-read policy is 805 words, and the active board is 60 lines / 303 words,
 and selected conditional policy routes are separately budgeted by
 `tests/test-agent-policy-routing.sh`.
 
 The frozen benchmark deliberately retains the completed T-351 record as its
 representative task payload. That record is 426 words and the active board is
-51 lines / 262 words, so board plus representative payload is 688 words—40.3%
+60 lines / 303 words, so board plus representative payload is 729 words—36.8%
 below the prior 1,153-word board. A current cold start reads the
 board and only a selected active record; it does not load completed T-351 or
 unrelated backup successor IDs, outage contingency details, and the blocked
@@ -48,7 +48,7 @@ checks that selected inputs are regular tracked files, enforces all frozen
 thresholds, and fails if the active board or policy router regresses.
 
 Phase routing reduced the largest selected routes as follows: Cowork
-5,926→972 words (83.6%), HPC 2,668→1,117 (58.1%), PIE 1,088→615
+5,926→1,011 words (82.9%), HPC 2,668→1,117 (58.1%), PIE 1,088→615
 (43.5%), remote communication 1,241→737 (40.6%), fleet hardening
 1,431→864 (39.6%, including LIFO handling added to the largest interrupted
 phase), and personal-Mac onboarding 1,527→953 (37.6%, including component
@@ -87,10 +87,10 @@ Cowork's mandatory entry now contains only its cross-phase authority,
 isolation, import, sole-writer, ambiguity, and routing gates. Initialization,
 evidence, execution, recovery, and duration mechanics stay in their selected
 references; removing duplicated flow prose and compacting those gates reduced
-the initial route from 1,231 to 972 words.
+the initial route from 1,231 to 1,011 words.
 
 Evidence reasoning and sealed exchange now route independently. Review or
-reconciliation selects 842 words, while stage/status/import selects 1,097
+reconciliation selects 881 words, while stage/status/import selects 1,136
 instead of the former 1,327-word combined route. A native evidence pass selects
-both references and remains complete at 1,645 words; the split removes no
+both references and remains complete at 1,795 words; the split removes no
 transaction or evidence requirement.
