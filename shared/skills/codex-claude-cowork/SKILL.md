@@ -47,6 +47,10 @@ or substitute a same-product subagent for the other client.
 - Use reviewed native non-prompting options and narrowest task permissions.
   Never use a bypass flag to pass automation, weaken a safeguard after client
   error, or retry an unchanged ambiguous action.
+- Keep Claude on Fable/high as primary and Opus/high as its sole ordered native
+  fallback whenever Claude is driver or co-pilot. Native fallback may continue
+  one availability-failed turn; never synthesize it by launching another
+  process or replaying a prompt.
 - Before cleanup that can remove a tree or multiple paths, use the applicable
   guarded-deletion workflow; retain a known sandbox over unreviewed cleanup.
 - Same-role recovery may resume a validated session.

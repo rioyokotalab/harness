@@ -22,11 +22,14 @@ contract and are never inspected or migrated.
 `harness claude-handoff` validates a bounded, expiring packet before a fresh
 Claude process is asked to recover durable work. Packet schema 1 binds the task
 and run IDs, canonical repository root, exact Git baseline, phase, Fable/high
-client profile, authority class, allowed paths, source files, checks, next
-action, issue time, and expiry. Validation requires separate expected values
-from the driver and rejects unknown fields, unsafe paths, wrong or noncanonical
-roots, current Git-head drift, wrong task/run/baseline, future or expired
-packets, and linked or foreign-owned packet files:
+primary client profile, authority class, allowed paths, source files, checks,
+next action, issue time, and expiry. The packet's `model` field records the
+primary intent; the project profile and reviewed native invocation add Opus at
+high effort as the sole ordered availability fallback. Validation requires
+separate expected values from the driver and rejects unknown fields, unsafe
+paths, wrong or noncanonical roots, current Git-head drift, wrong
+task/run/baseline, future or expired packets, and linked or foreign-owned
+packet files:
 
 ```bash
 ./bin/harness claude-handoff validate \
@@ -67,11 +70,12 @@ closed.
 For native structured output, use
 `docs/schemas/claude-handoff-structured-output.schema.json`; the canonical
 public evidence schema retains its Draft 2020-12 metadata, which Claude Code
-2.1.220's native `--json-schema` parser does not accept. A read-only launch
-uses explicit Fable/high, project-only settings, a nonpersistent print session,
-`dontAsk`, and only Read/Grep/Glob. Tool flags are authority reduction, not OS
-confinement; use an environment-native read-only filesystem sandbox and seal
-protected driver digests around the client window.
+2.1.220's native `--json-schema` parser does not accept. A read-only launch uses
+explicit `--model fable --effort high --fallback-model opus`, project-only
+settings, a nonpersistent print session, `dontAsk`, and only Read/Grep/Glob.
+Tool flags are authority reduction, not OS confinement; use an
+environment-native read-only filesystem sandbox and seal protected driver
+digests around the client window.
 
 Failed rows are never replayed. `verify-retry` requires a distinct next run,
 changed input, unchanged protected state, no prior import, no replay, an exact
@@ -95,9 +99,14 @@ because Linux Codex releases are pinned and upgraded transactionally by the
 harness; accepting the native update offer would install into Node's global
 prefix without moving the managed command link. Claude uses
 `permissions.defaultMode = "bypassPermissions"` and suppresses the one-time
-dangerous-mode warning. These choices do not suppress authentication, macOS
-privacy, administrator, provider-policy, or Claude's hard-coded root/home
-recursive-deletion circuit-breaker prompts.
+dangerous-mode warning. Claude starts with Fable/high and has Opus/high as its
+sole ordered native fallback for an overloaded, unavailable, or otherwise
+eligible server-failed turn. Authentication, billing, rate-limit,
+request-size, transport, and shared session or weekly usage-limit failures do
+not trigger that fallback and must not be converted into prompt replay. These
+choices do not suppress authentication, macOS privacy, administrator,
+provider-policy, or Claude's hard-coded root/home recursive-deletion
+circuit-breaker prompts.
 
 ## Project trust launcher
 

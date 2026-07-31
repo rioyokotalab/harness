@@ -285,12 +285,13 @@ print mode. Build the narrowest reviewed `--allowedTools` list from the frozen
 experiment and use a non-prompting permission mode. Do not use
 `--dangerously-skip-permissions`. For routine bounded critique, select explicit
 model/effort options only after confirming them in the installed `--help`.
-Default to `--model fable --effort high` unless the frozen benchmark explicitly
-requires another supported pairing, and record the resolved options; escalate
-only for an unresolved material claim:
+Default to `--model fable --effort high --fallback-model opus` unless the
+frozen benchmark explicitly requires another supported pairing, and record
+the resolved options; escalate only for an unresolved material claim:
 
 ```text
 claude --print --permission-mode dontAsk \
+  --model fable --effort high --fallback-model opus \
   --allowedTools REVIEWED_TOOL_LIST \
   < STAGE_DIR/artifacts/copilot-prompt.md \
   > STAGE_DIR/candidate-copilot-evidence.md
@@ -303,10 +304,20 @@ an empty allow-list is an absent constraint to some client versions, while
 installed `--help` and record the resolved command:
 
 ```text
-claude --print --permission-mode dontAsk --tools "" \
+claude --print --permission-mode dontAsk \
+  --model fable --effort high --fallback-model opus --tools "" \
   < STAGE_DIR/artifacts/copilot-prompt.md \
   > STAGE_DIR/candidate-copilot-evidence.md
 ```
+
+The persistent project profile gives a Claude driver the same Fable/high
+primary and sole Opus/high fallback. Native fallback covers eligible
+availability and server failures for the current turn. Authentication,
+billing, rate-limit, request-size, transport, and shared session or weekly
+usage-limit failures do not trigger it. Preserve those failures rather than
+launching a second client or replaying the prompt. Record a native fallback
+notice or emitted resolved-model evidence when available; otherwise do not
+infer that a switch occurred.
 
 When Claude drives Codex, run ephemeral Codex in the Codex sandbox. Use
 workspace-write confinement and no interactive approvals. Keep the stage below

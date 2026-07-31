@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-353.
+Next free ID: T-354.
 
 ## Resume contract
 
@@ -16,6 +16,15 @@ Next free ID: T-353.
 5. A failed mutable-state query is unknown, never evidence of absence.
 
 ## Active queue
+
+### T-353 — Graceful Claude Fable-to-Opus fallback
+
+**Phase:** implementation and focused validation pass; clean committed R3
+validation and protected publication remain.
+
+**Record:** `docs/tasks/T-353.md`. Preserve Fable/high as primary, permit only
+native Opus/high availability fallback, and never replay a quota- or
+transport-failed prompt.
 
 ### T-352 — Consolidate Local Codex sessions into one pane-native window
 

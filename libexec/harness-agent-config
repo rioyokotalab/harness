@@ -95,6 +95,7 @@ validate_sources() {
         type == "object" and
         .model == "fable" and
         .effortLevel == "high" and
+        .fallbackModel == ["opus"] and
         .permissions == {"defaultMode":"bypassPermissions"} and
         .skipDangerousModePermissionPrompt == true
     ' "$claude_policy" >/dev/null 2>&1 ||

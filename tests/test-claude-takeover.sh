@@ -112,6 +112,7 @@ data = json.loads(path.read_text(encoding="utf-8"))
 assert data.get("$schema") == "https://json.schemastore.org/claude-code-settings.json"
 assert data.get("model") == "fable"
 assert data.get("effortLevel") == "high"
+assert data.get("fallbackModel") == ["opus"]
 assert data.get("permissions") == {"defaultMode": "bypassPermissions"}
 assert data.get("skipDangerousModePermissionPrompt") is True
 PY
