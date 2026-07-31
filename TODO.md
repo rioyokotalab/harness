@@ -17,15 +17,6 @@ Next free ID: T-357.
 
 ## Active queue
 
-### T-356 — Personal-only email/calendar connector boundary
-
-**Phase:** blocked on owner verification or enablement of Google Calendar API
-for the OAuth client's Cloud project. The authorized diagnostic retry returned
-`google-api-failed` without an event payload; Calendar and all writes remain
-blocked.
-
-**Record:** `docs/tasks/T-356.md`.
-
 ### T-354 — Relocate repository-native Codex roots under `projects`
 
 **Phase:** blocked until the live checkout occupying the exact Students
