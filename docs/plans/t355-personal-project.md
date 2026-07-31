@@ -145,14 +145,25 @@ Rationale and consequences:
 
 ### D-002 — Security isolation from other same-user agents
 
-Status: open.
+Status: frozen on 2026-07-31.
 
-Recommended default: if Harness, Students, and Swallow must be technically
-unable to use Personal connectors or read Personal local state, use a separate
-Unix identity and separate Codex home/runtime. If policy-level separation is
-enough, retain the current identity but store no sensitive payload locally,
-deny Personal connectors outside the Personal root, and test effective config
-from all four roots.
+Selected: retain the existing `rioyokota` Unix identity and use tested
+project-policy and configuration isolation. The owner's exact answer was `2`.
+
+Rationale and consequences:
+
+- Personal may use the requested NFS path and integrate as another managed
+  target in the existing Local lifecycle without a cross-user bridge;
+- do not persist plaintext sensitive payload locally, because another process
+  running as `rioyokota` remains technically able to read same-user files and
+  user-level product state;
+- scope Personal connectors out of the effective tool inventory for Harness,
+  Students, and Swallow and test that behavior, but describe the result as an
+  operational guardrail rather than an operating-system security boundary;
+- connector credentials still must not be committed, logged, copied, or
+  exposed to project files; and
+- if technical confidentiality from same-user agents becomes required, D-002
+  must be superseded by a separately planned identity/runtime migration.
 
 ### D-003 — Sensitive-data residency
 
@@ -169,10 +180,11 @@ key, retention, backup, and recovery design.
 Status: open.
 
 Recommended default: authorize only required read capabilities in the Personal
-runtime, add write capabilities one domain at a time, and prove they are
-unavailable from fresh Harness, Students, and Swallow roots. Escalate to a
-separate Codex home/runtime if project configuration cannot enforce the chosen
-boundary. Never commit connector state or tokens.
+runtime, add write capabilities one domain at a time, and verify they are not
+advertised or enabled in the effective configuration of fresh Harness,
+Students, and Swallow roots. Under frozen D-002 this is a tested operational
+guardrail, not proof of technical inaccessibility from another same-user
+process. Never commit connector state or tokens.
 
 ### D-005 — Email authority
 
@@ -373,10 +385,11 @@ three targets and never retry an ambiguous start or promotion.
 ### 7. Connect domains incrementally
 
 For each selected source, authorize the minimum capability, run a synthetic or
-owner-selected non-sensitive read test, then verify the capability is absent
-from non-Personal roots. Enable writes only after the corresponding action
-contract and confirmation UX pass. Do not use live email, calendar, or budget
-content as test fixtures.
+owner-selected non-sensitive read test, then verify it is not advertised or
+enabled in fresh non-Personal roots. Record that this validates the
+configuration boundary selected in D-002, not technical same-user isolation.
+Enable writes only after the corresponding action contract and confirmation
+UX pass. Do not use live email, calendar, or budget content as test fixtures.
 
 ### 8. Add the assistant
 
