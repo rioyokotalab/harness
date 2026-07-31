@@ -1,6 +1,6 @@
 # T-356 Harness integration plan
 
-Phase: `blocked on an owner-selected browser host for the loopback flow`.
+Phase: `blocked on one changed-input Gmail consent authorization`.
 
 ## Outcome
 
@@ -27,6 +27,7 @@ readiness evidence, and every live source task. Follow the exhaustive plan at
 ## Expected files
 
 - `libexec/harness-personal-agent`
+- `libexec/harness-oauth-browser-open`
 - `tests/test-personal-agent.sh`
 - focused tests added only if the existing suite would become too broad
 - `docs/tasks/T-356.md`
@@ -86,6 +87,9 @@ owner gates.
   names beyond the fixed contract, hashes, and command output are never read.
 - All live connector calls remain blocked until privacy and OAuth readbacks
   are complete.
+- A remote browser handoff uses one fixed Local callback port, an exact managed
+  SSH reverse forward, and an authorization URL sent only through encrypted
+  standard input. The forward must be cancelled on every exit path.
 - Every ambiguous login, consent, install, or live call is non-retryable until
   reconciled.
 - A connector failure never falls back to a global plugin, account connector,

@@ -11,7 +11,8 @@ Usage:
   harness personal-agent --status
   harness personal-agent --profile-bootstrap
   harness personal-agent --privacy-attest --provider openai|anthropic --value off
-  harness personal-agent --authorize --domain email|calendar --client-file PATH
+  harness personal-agent --authorize --domain email|calendar --client-file PATH \
+    [--browser-host aist|home|office|riken]
   harness personal-agent --run --client codex|claude --task ID \
     --domain local|email|calendar
 
@@ -28,6 +29,7 @@ domain=
 provider=
 attested_value=
 client_file=
+browser_host=
 while [ "$#" -gt 0 ]; do
     case $1 in
         --status) mode=status; shift ;;
@@ -63,6 +65,11 @@ while [ "$#" -gt 0 ]; do
         --client-file)
             [ "$#" -ge 2 ] || { usage; exit 2; }
             client_file=$2
+            shift 2
+            ;;
+        --browser-host)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            browser_host=$2
             shift 2
             ;;
         -h|--help) usage; exit 0 ;;
@@ -278,9 +285,66 @@ if [ "$mode" = authorize ]; then
     case $domain in email|calendar) ;; *) fail invalid-domain ;; esac
     [ -n "$client_file" ] || fail oauth-client-path-missing
     case $client_file in /*) ;; *) fail oauth-client-path-non-absolute ;; esac
-    exec "$personal_root/bin/personal-google-auth" \
-        --profile "$profile_root" --domain "$domain" \
-        --client-file "$client_file"
+    if [ -z "$browser_host" ]; then
+        exec "$personal_root/bin/personal-google-auth" \
+            --profile "$profile_root" --domain "$domain" \
+            --client-file "$client_file"
+    fi
+    case $browser_host in
+        aist|home|office|riken) ;;
+        *) fail oauth-browser-host-invalid ;;
+    esac
+    browser_helper=$CONTROL_ROOT/libexec/harness-oauth-browser-open
+    [ -f "$browser_helper" ] && [ ! -L "$browser_helper" ] &&
+        [ -x "$browser_helper" ] || fail oauth-browser-helper-invalid
+    [ "$(stat -c %u "$browser_helper")" = "$(id -u)" ] &&
+        [ "$(stat -c %h "$browser_helper")" = 1 ] ||
+        fail oauth-browser-helper-invalid
+    callback_port=53682
+    ssh_bin=ssh
+    if [ "${HARNESS_TESTING:-0}" = 1 ]; then
+        callback_port=${HARNESS_TEST_OAUTH_CALLBACK_PORT:-$callback_port}
+        ssh_bin=${HARNESS_TEST_SSH:-$ssh_bin}
+    else
+        [ -n "${SSH_AUTH_SOCK:-}" ] && [ -S "$SSH_AUTH_SOCK" ] &&
+            [ "$(stat -c %u "$SSH_AUTH_SOCK")" = "$(id -u)" ] ||
+            fail ssh-agent-unavailable
+    fi
+    case $callback_port in
+        ''|*[!0-9]*) fail oauth-callback-port-invalid ;;
+    esac
+    [ "$callback_port" -ge 1024 ] && [ "$callback_port" -le 65535 ] ||
+        fail oauth-callback-port-invalid
+    python3 - "$callback_port" <<'PY' || fail oauth-callback-port-unavailable
+import socket
+import sys
+
+with socket.socket() as listener:
+    listener.bind(("127.0.0.1", int(sys.argv[1])))
+PY
+    reverse_forward="127.0.0.1:$callback_port:127.0.0.1:$callback_port"
+    "$ssh_bin" -x -O forward -o ExitOnForwardFailure=yes \
+        -R "$reverse_forward" "$browser_host" >/dev/null 2>&1 ||
+        fail oauth-tunnel-failed
+    # shellcheck disable=SC2329
+    cleanup_oauth_tunnel() {
+        status=$?
+        trap - EXIT HUP INT TERM
+        "$ssh_bin" -x -O cancel -R "$reverse_forward" "$browser_host" \
+            >/dev/null 2>&1 || true
+        exit "$status"
+    }
+    trap cleanup_oauth_tunnel EXIT
+    trap 'exit 129' HUP
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+    HARNESS_OAUTH_BROWSER_HOST=$browser_host \
+        "$personal_root/bin/personal-google-auth" \
+            --profile "$profile_root" --domain "$domain" \
+            --client-file "$client_file" \
+            --callback-port "$callback_port" \
+            --browser-helper "$browser_helper"
+    exit $?
 fi
 
 case $client in codex|claude) ;; *) fail invalid-client ;; esac
