@@ -19,10 +19,10 @@ Next free ID: T-357.
 
 ### T-356 — Personal-only email/calendar connector boundary
 
-**Phase:** blocked on one changed-input Gmail consent authorization. The owner
-selected `riken`; its encrypted reverse-loopback browser bridge and exact
-cleanup pass synthetic validation, while the token remains absent and every
-connector remains blocked.
+**Phase:** blocked on owner selection and authorization of one non-sensitive
+Gmail read. The Riken consent completed with exactly one read-only scope, the
+private token boundary and tunnel cleanup pass, and every connector remains
+blocked pending acceptance.
 
 **Record:** `docs/tasks/T-356.md`.
 
