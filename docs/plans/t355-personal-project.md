@@ -321,13 +321,29 @@ Rationale and consequences:
 
 Status: open.
 
-The D-001 selection removes organization roles such as `Triage` from the
-design. Before this decision is asked, verify the current permissions granted
-to collaborators on a private personal-account repository. Recommended
-direction: wait until the assistant creates an account and enables two-factor
-authentication, then grant the least capability that the selected
-collaboration workflow actually requires. Do not add the assistant to
-`rioyokotalab` or share Personal connector authorization.
+Verified evidence on 2026-07-31:
+
+- GitHub documents only two permission levels for a personal-account
+  repository: owner and collaborator. A collaborator on a private repository
+  necessarily receives write access; read-only and `Triage` roles are
+  unavailable:
+  <https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/repository-access-and-collaboration/permission-levels-for-a-personal-account-repository>.
+- A collaborator can be invited after creating a GitHub account:
+  <https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/repository-access-and-collaboration/inviting-collaborators-to-a-personal-repository>.
+- Removing a collaborator revokes remote access and deletes a private fork,
+  but cannot retract a local clone already made.
+
+Recommended default: after the assistant creates an account and enables
+two-factor authentication, add the exact username as a collaborator only if
+the owner wants the assistant to edit metadata-safe policy or task records.
+Accept that this grants repository write access, protect `main`, keep all
+sensitive content and connector authorization outside GitHub, and do not add
+the assistant to `rioyokotalab`.
+
+Alternative: give no repository access and collaborate through a separately
+selected metadata-safe channel. If granular read-only or `Triage` GitHub
+access is essential, D-001 must be superseded by a dedicated-organization
+design; `rioyokotalab` remains unsuitable under its inherited group access.
 
 ### D-009 — Collaboration content
 
