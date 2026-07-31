@@ -500,7 +500,7 @@ Rationale and consequences:
 
 ### D-014 — Git governance and automation
 
-Status: open.
+Status: frozen on 2026-07-31.
 
 Verified evidence on 2026-07-31:
 
@@ -517,10 +517,23 @@ history; block deletion and force-push; preserve owner bypass; no required
 status checks; no GitHub Actions or workflow files; and credential-free local
 validation with a metadata-safe receipt.
 
-One cost/fallback choice remains: make GitHub Pro-capable protection a hard
-prerequisite, allow an unprotected collaborator repository, or keep the
-repository owner-only when protection is unavailable. No agent action may
-purchase or change a GitHub plan.
+Selected: create and publish the private repository owner-only, but make
+protected `main` a hard prerequisite for the assistant invitation. The
+owner's exact answer was `1`.
+
+Consequences:
+
+- create the owner-only private remote and push only the credential-free,
+  metadata-safe scaffold;
+- read back whether private branch protection/rulesets are supported and apply
+  the fixed package when available;
+- if unavailable, keep the repository owner-only, record the assistant
+  invitation as deferred, and ask the owner to enable an eligible GitHub plan;
+- never purchase, upgrade, downgrade, or otherwise alter billing;
+- do not substitute an unprotected collaborator repository or weaken the
+  protection package; and
+- after protection is active, the assistant invitation still waits for the
+  exact username and two-factor-authentication prerequisite from D-008.
 
 ### D-015 — Retention, logs, and backup
 
@@ -606,7 +619,9 @@ Create the private remote under the selected owner. Before pushing, read back
 visibility, base/inherited access, teams, collaborators, fork settings, and
 default branch. Push the credential-free scaffold, install the frozen
 ruleset without changing approval count from zero, and confirm Actions has no
-triggerable workflow. Re-read effective access afterward.
+triggerable workflow. If private protection is unavailable, keep the
+repository owner-only and defer only the assistant invitation. Re-read
+effective access afterward.
 
 ### 5. Preserve Harness's three-target lifecycle
 
