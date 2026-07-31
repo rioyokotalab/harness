@@ -70,6 +70,35 @@ All timestamps are fresh native local reads.
     task"); deferred gates all owner-gated (PIE per budget source; assistant
     GitHub access).
 
+- 23:51–23:54 — C5 harness iteration 3 (distinct observed failure → fix):
+  phase-1 run failed four focused suites. Two were real fixture drift from
+  the T-358 board entry: `test-task-ledger-routing` (index.tsv must list
+  every board task with Next free ID = max+1) and
+  `test-context-routing-benchmark` (recorded table pinned to live board
+  bytes). Fixed by adding the T-358 `active` index row and regenerating the
+  benchmark table/median (96.5%→96.4%); both suites pass. Two remain
+  environment-bound: tmux-config and terminfo demand a clean checkout and
+  fail on this host solely due to the live `.nfs` handles (same class T-357
+  recorded); protected hosted CI remains authoritative. Committed `645ed7e`.
+- 23:48–23:54 — website T-211 (verified no-op audit, T-207 pattern): offline
+  suite, metrics validate, hook doctor all green on `9e1cd10`; ledger,
+  driver report, metrics row, and log line recorded; PR #37 open awaiting
+  `Offline checks` (public repo, no private Actions quota impact).
+- 23:46 — students pane %109 kickoff delivered; title surface confirmed
+  active T-043 BG-003 work; progress monitored via durable repo state only.
+
+- 00:45 checkpoint — students T-043 BG-003 planning is COMPLETE within its
+  charter: driver evidence 23:54; staged codex critique imported (26,438
+  bytes, receipts `749a4e47…`/`d2e9a0fb…`); reconciliation + benchmark rev 2
+  frozen 00:15 (rev 1 rejected by co-pilot over exactly-once semantics;
+  driver accepted and added operation-specific terminal cases); T-043 record
+  updated 00:16 with an exact owner-go phrase; session at `discussing`;
+  nothing implemented, nothing pushed, worktree preserved. Pane %109 idle.
+  Switch-back timer PID 3069131 alive; all three panes healthy (`claude`,
+  idle titles). No further owner-executable work exists in any of the five
+  repositories tonight; remaining slices record stable waits and the frozen
+  timer/validation events.
+
 ## Deviations
 
 - Two commentary timestamps early in the run were inferred instead of read
@@ -80,3 +109,7 @@ All timestamps are fresh native local reads.
   acknowledged; end-of-run cleanup goes through `guarded-bulk-delete`.
 - Driver P1 (04:40 refire) withdrawn after co-pilot rejection; timer is
   strictly one-shot.
+- One bare `git push` under the repo's `push.default=matching` fast-forwarded
+  local `codex/t356-riken-oauth-bridge` to `3910e45`; that commit is
+  already-merged public main history, so no new content was published.
+  Explicit refspecs are used for every subsequent push.
