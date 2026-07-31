@@ -180,8 +180,9 @@ Rationale and consequences:
   leave the authoritative copy in its source system;
 - do not create an encrypted Personal data vault or a backup chain for
   sensitive source content; and
-- Codex thread/context retention remains a separate D-015 decision because
-  source-system-only storage does not by itself control product-side history.
+- D-015 permits only minimum task-scoped sensitive results in the owner-facing
+  Harness conversation and accepts applicable product-side retention; local
+  source-system-only storage does not itself control that history.
 
 ### D-004 — Connector and authentication boundary
 
@@ -409,8 +410,9 @@ Consequences:
   or sensitive output under D-003;
 - an ambiguous launch or connector write is never retried until exact process
   and source state are reconciled; and
-- D-015 must still freeze how sensitive output appears in the owner-facing
-  Harness conversation and how product-side context is retained.
+- under D-015, return only the minimum task-scoped sensitive result to the
+  owner-facing Harness conversation; never relay raw source dumps,
+  attachments, or credentials.
 
 ### D-011 — Meaning of cold restart
 
@@ -537,7 +539,7 @@ Consequences:
 
 ### D-015 — Retention, logs, and backup
 
-Status: researched on 2026-07-31; owner choice open.
+Status: frozen on 2026-07-31.
 
 Frozen D-003 prohibits a local sensitive-data vault and source-content backup.
 Official product documentation establishes:
@@ -564,26 +566,24 @@ Official product documentation establishes:
   exact OpenAI and Anthropic account types and privacy settings in use remain
   unknown and must be verified before live sensitive work.
 
-The implementation can therefore prohibit child-side local history, resume,
-auto-memory, plaintext logs, feedback, telemetry, retained temporary output,
-and sensitive backups. Git and normal backup may contain only policy, code,
-and metadata-safe records. That still leaves a material owner-facing choice:
-any detailed result shown in this Harness conversation becomes OpenAI product
-content. If Claude is the driver, live source content goes to Anthropic and a
-detailed result relayed here also goes to OpenAI.
+Selected: permit only the minimum task-scoped sensitive result in the
+owner-facing Harness conversation. The owner's exact answer was `1`.
 
-Options to freeze:
+Consequences:
 
-1. Recommended for useful summaries and drafts: permit only the minimum
-   task-scoped sensitive result in this owner-facing Harness conversation,
-   accept the applicable product-side retention, and require model-improvement
-   controls off for both providers before first live use. Never relay raw
-   source dumps, attachments, or credentials.
-2. Permit detailed results here only when Codex is the driver. Claude may
-   perform non-sensitive work and metadata-only live operations, narrowing
-   D-013's live parity but avoiding a two-provider detailed-result path.
-3. Permit only metadata-safe results in Harness regardless of driver. The
-   owner must inspect all sensitive details and drafts in their source systems.
+- accept the applicable provider-side retention and require the effective
+  model-improvement controls to be off for both providers before first live
+  sensitive use;
+- if Claude drives, accept that live source content goes to Anthropic and the
+  minimum sensitive result relayed into Harness also goes to OpenAI;
+- never relay raw source dumps, attachments, credentials, or unnecessarily
+  broad content;
+- disable child-side Codex history and Claude session persistence, prompt
+  history, auto-memory, nonessential traffic, feedback, and resume behavior;
+- create no plaintext sensitive logs, retained temporary output, local
+  sensitive cache, or source-content backup; and
+- allow Git and normal backup to contain only policy, code, and metadata-safe
+  records.
 
 ### D-016 — Budget sources and classification
 
