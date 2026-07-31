@@ -294,12 +294,28 @@ Frozen limits:
 
 ### D-007 — Research-budget authority
 
-Status: open.
+Status: frozen on 2026-07-31.
 
-Recommended default: autonomous read-only reconciliation, anomaly detection,
-forecasting, and draft reports; require confirmation for source-system edits.
-Never approve, submit, purchase, transfer, reimburse, or represent a financial
-commitment.
+Selected: autonomous analysis with exact confirmation for non-binding source
+edits or report submissions and a hard prohibition on agent-executed
+financial commitments. The owner's exact answer was `1`.
+
+Rationale and consequences:
+
+- Personal may autonomously read bounded source data, reconcile records,
+  identify anomalies, model scenarios, forecast, and draft reports in the
+  active conversation;
+- each non-binding source-system edit or report submission requires exact
+  owner confirmation that enumerates the system, records, fields, proposed
+  values or redacted diff, and action;
+- Personal must never approve spending, place an order, execute a purchase,
+  payment, transfer, or reimbursement, change bank/payee/tax/account details,
+  attest or sign, accept terms, or otherwise represent a financial
+  commitment;
+- ambiguous writes or submissions are never retried until authoritative state
+  is read back; and
+- D-003 prohibits persisting budget values, exports, reports containing
+  sensitive values, or live-data test fixtures in project state.
 
 ### D-008 — Administrative-assistant access
 
