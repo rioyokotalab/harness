@@ -147,20 +147,33 @@ module.process_identity = lambda pid: {
     "argv": ["claude", "--model", "fable"],
 }
 
-# recovery candidates: attached pane deferred
+ROOT_DIR = module.runtime_root()
+
+# recovery candidates: attached pane deferred inside the grace window
 module.tmux_clients = lambda: "client0\t%10\n"
 candidates, selection = module.recovery_candidates(
-    dead, module.collect_health(dead)
+    dead, module.collect_health(dead), ROOT_DIR
 )
 assert candidates == [] and selection == "deferred-target-attached", (
     candidates,
     selection,
 )
 
+# attached dead pane recovers once the bounded grace expires
+grace_path = os.path.join(ROOT_DIR, "attached-dead.json")
+with open(grace_path, "w") as stream:
+    json.dump({"%10:4000": int(time.time()) - 3600}, stream)
+os.chmod(grace_path, 0o600)
+candidates, selection = module.recovery_candidates(
+    dead, module.collect_health(dead), ROOT_DIR
+)
+assert selection == "candidates" and candidates, (candidates, selection)
+os.unlink(grace_path)
+
 # recovery candidates: unattached pane queues with continue relaunch
 module.tmux_clients = lambda: ""
 candidates, selection = module.recovery_candidates(
-    dead, module.collect_health(dead)
+    dead, module.collect_health(dead), ROOT_DIR
 )
 assert selection == "candidates" and len(candidates) == 1
 assert candidates[0]["target"] == "harness"
@@ -192,14 +205,14 @@ def write_event(name, phase, offset=0):
 
 write_event("aa", "failed")
 candidates, selection = module.recovery_candidates(
-    dead, module.collect_health(dead)
+    dead, module.collect_health(dead), ROOT_DIR
 )
 assert candidates and candidates[0]["relaunch"] == "plain"
 
 write_event("bb", "completed")
 write_event("cc", "completed")
 candidates, selection = module.recovery_candidates(
-    dead, module.collect_health(dead)
+    dead, module.collect_health(dead), ROOT_DIR
 )
 assert candidates == [] and selection == "deferred-target-attached"
 

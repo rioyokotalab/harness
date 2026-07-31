@@ -99,6 +99,29 @@ All timestamps are fresh native local reads.
   repositories tonight; remaining slices record stable waits and the frozen
   timer/validation events.
 
+- 02:47–03:40 — T-359 (exact owner order, superseding the frozen T-358
+  boundary for this addition): built and deployed Claude pane recovery
+  parity. `harness_claude_targets.py` + `claude-session-targets.tsv`
+  (closed map, CLAUDE.md marker), `harness-tmux-claude-monitor`
+  (content-blind health/order/rate-limited enqueue, `@harness_claude_target`
+  roles), `harness-claude-pane-recovery` (respawn-only worker, no -k, dead
+  panes only, --continue then plain), additive `--enqueue-claude-blocked`
+  helper mode dispatching that worker. Deployed: `remain-on-exit on` on
+  projects:claude; monitor session reordered to tunnel/codex/claude/helper
+  with the claude monitor live; pane-border titles (top) mirrored onto
+  projects:claude and all monitor windows. bin/harness dispatch added.
+  Owning suites pass: new claude suite, tmux-codex-monitor, codex-targets,
+  codex-recovery-helper (codex path behavior-identical). Committed
+  `dc1424b`.
+- 03:17 live drill: killed swallow pane claude (pid 3062635) → pane dead
+  (remain-on-exit held pane %110). Iterations from observed failures:
+  (1) dead panes report empty cwd → dead check now precedes cwd check in
+  health/topology/worker verify; (2) recovery correctly deferred
+  `deferred-target-attached` because the owner's client sat focused on the
+  dead pane — guard demonstrated live; a bounded 600s attached-dead grace
+  was then added (live panes remain unconditionally protected), suite
+  extended, monitor redeployed 03:40.
+
 ## Deviations
 
 - Two commentary timestamps early in the run were inferred instead of read

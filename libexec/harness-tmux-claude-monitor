@@ -46,6 +46,7 @@ TARGET_PATHS = {value["name"]: value["repository"] for value in TARGETS}
 RATE_LIMIT_WINDOW_SECONDS = 3600
 RATE_LIMIT_MAX_EVENTS = 3
 CLAUDE_EVENT_KIND = "claude-pane-blocked"
+ATTACHED_DEAD_GRACE_SECONDS = 600
 
 
 class MonitorError(RuntimeError):
@@ -412,7 +413,24 @@ def attached_pane_ids():
     return attached
 
 
-def recovery_candidates(panes, health):
+def attachment_grace_expired(root, pane):
+    """A dead pane focused by an attached client defers for a bounded grace
+    window (crash output stays readable), then recovers anyway."""
+    path = os.path.join(root, "attached-dead.json")
+    state = read_private_json(path, {})
+    key = "{}:{}".format(pane["pane_id"], pane["pane_pid"])
+    now = int(time.time())
+    entry = state.get(key)
+    if not isinstance(entry, int):
+        state = {key: now}
+        atomic_json(path, state)
+        return False
+    if now - entry >= ATTACHED_DEAD_GRACE_SECONDS:
+        return True
+    return False
+
+
+def recovery_candidates(panes, health, root):
     blocked = [
         (name, value)
         for name, value in health.items()
@@ -427,7 +445,9 @@ def recovery_candidates(panes, health):
     deferred = False
     for name, value in blocked:
         pane = value["pane"]
-        if pane["pane_id"] in attached:
+        if pane["pane_id"] in attached and not attachment_grace_expired(
+            root, pane
+        ):
             deferred = True
             continue
         recent, failed_recent = recent_event_stats(name)
@@ -552,7 +572,7 @@ def iteration(arguments, root, receipt_path):
     )
     repair_action = "none"
     if arguments.auto_recover:
-        candidates, selection = recovery_candidates(panes, health)
+        candidates, selection = recovery_candidates(panes, health, root)
         if candidates:
             queued = 0
             for candidate in candidates:
