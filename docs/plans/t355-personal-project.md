@@ -211,12 +211,27 @@ Rationale and consequences:
 
 ### D-005 — Email authority
 
-Status: open.
+Status: frozen on 2026-07-31.
 
-Recommended default: autonomous search, read, summarize, classify, and draft;
-require exact owner confirmation before send, forward, archive, delete, label,
-unsubscribe, or modify mailbox state. Batch confirmation must enumerate
-threads and actions.
+Selected: autonomous email analysis and in-conversation drafting, with exact
+owner confirmation for every enumerated batch of mailbox writes. The owner's
+exact answer was `1`.
+
+Rationale and consequences:
+
+- Personal may autonomously search, read, summarize, triage, classify, extract
+  actions, and prepare reply or forward text in the active conversation;
+- creating or updating a Gmail draft is a mailbox write, distinct from
+  presenting draft text in the conversation;
+- sending, forwarding, creating Gmail drafts, archiving, deleting or
+  trashing, labeling or moving, unsubscribing, and changing message state
+  require exact owner confirmation;
+- one confirmation may cover a batch only when it enumerates the mailbox,
+  threads or messages, recipients where applicable, and exact actions;
+- an ambiguous write result is never retried until current mailbox state is
+  read back; and
+- D-003 prohibits persisting fetched bodies or generated sensitive drafts in
+  project files, Git, caches, logs, or validation output.
 
 ### D-006 — Calendar authority
 
