@@ -6,8 +6,9 @@ Create an independently operated Personal project at
 `/mnt/nfs-03/safe/Users/rioyokota/projects/personal` for sensitive email,
 calendar, and research-budget work. It must reconstruct its own policy and
 durable task state after a cold start, discover the approved Harness commands
-and skills without depending on chat history, and participate in managed
-Codex recovery without disturbing Harness, Students, or Swallow.
+and skills without depending on chat history, and be developed and operated
+from Harness without becoming a managed tmux, saved-root, phone, monitor, or
+recovery target.
 
 The finished system must minimize disclosure and external side effects. A
 private Git repository may contain policy, schemas, tests, and metadata-safe
@@ -24,11 +25,10 @@ In scope:
    a compact ledger, focused validation, and approved skill discovery;
 3. create and govern a private remote repository under the ownership model
    selected by the owner;
-4. add Personal as an independent managed Harness target through protected,
-   tested control-plane changes;
-5. activate and validate a distinct Codex root, Local pane or window, and
-   phone-visible thread; and
-6. invite the administrative assistant only after an account and security
+4. define and validate a Harness-operated execution context that preserves the
+   frozen connector and policy boundary without a persistent Personal session;
+   and
+5. invite the administrative assistant only after an account and security
    prerequisites exist, at the frozen least-privilege role.
 
 Out of scope unless separately selected:
@@ -38,8 +38,9 @@ Out of scope unless separately selected:
   approving budgets, or making research-administration commitments;
 - importing historical sensitive data into Git;
 - weakening Harness, Students, or Swallow policy or availability;
-- promising host-reboot tmux resurrection when only Codex cold-start
-  reconstruction has been implemented; and
+- adding Personal to Harness's target map, launch sentinels, tmux topology,
+  saved roots, phone mapping, monitor, helper, or recovery controller;
+- promising a persistent or phone-visible Personal runtime; and
 - treating a repository, tmux pane, saved root, or mode-0700 directory as an
   operating-system security boundary against the same Unix user.
 
@@ -52,9 +53,9 @@ owner `go`.
 After `go`, ordinary local Git and task-scoped remote Git operations are
 standing-authorized. GitHub repository creation, organization settings,
 rulesets, collaborator invitations, connector authorization, connector
-writes, live app-server/root operations, tmux topology changes, and phone
-promotion remain distinct actions governed by the frozen plan. No credential
-contents may be read or copied.
+writes, and any bounded Personal execution-context launch remain distinct
+actions governed by the frozen plan. No credential contents may be read or
+copied.
 
 ## Confirmed facts
 
@@ -67,40 +68,35 @@ contents may be read or copied.
    Its 67 members therefore inherit write access to every organization
    repository, including private repositories; a lower repository role cannot
    subtract that inherited permission.
-4. The administrative assistant has no GitHub account. An outside-collaborator
-   invitation cannot become usable until an account with a matching verified
-   address exists; invitations expire, and an outside collaborator consumes a
-   Team-plan seat.
+4. The administrative assistant has no GitHub account. The selected
+   personal-account repository can invite only a GitHub account as a
+   write-level collaborator; there is no read-only or `Triage` role.
 5. Students and Swallow use repository-local instructions, task ledgers,
    project `.codex/config.toml`, static validation, private Git remotes, and
    Harness skill discovery. Students freezes copies of shared skills; Swallow
    follows absolute links to the live Harness skills.
 6. The managed Local lifecycle is deliberately closed over exactly three
    targets and one `projects:0:codex` window with three horizontal panes.
-   Personal cannot be made durable by an ad hoc pane alone.
+   The owner selected no Personal target or pane, so this closed lifecycle must
+   remain unchanged.
 7. Project configuration can override trusted-project Codex settings and can
    declare project-scoped MCP servers. Plugin installation, connector
    authorization, tool policy, and runtime permissions are separate layers;
-   effective isolation must be tested from both Personal and non-Personal
-   roots.
-8. The presently documented Local topology does not automatically recreate
-   tmux state after a host reboot. Repository cold start, Codex saved-root
-   recovery, and host-reboot recovery are different acceptance claims.
+   a Codex process rooted at Harness does not gain Personal's project
+   configuration merely because a tool command addresses the Personal path.
+8. The no-session selection therefore conflicts with D-004 unless sensitive
+   operations run in a bounded Personal-rooted process or D-004 is explicitly
+   superseded. D-010a must resolve that execution context.
 
 ## Assumptions to validate before execution
 
-- The owner wants operational independence and strict data handling, but has
-  not yet chosen whether Personal must be confidential from other agents
-  running as the same Unix user.
-- Email and calendar should stay in their source systems unless the owner
-  selects a narrowly encrypted cache.
 - Research-budget source systems, file formats, retention rules, and delegated
   authority have not yet been identified.
-- The assistant should not receive connector credentials or broad repository
-  write access merely because collaboration is desired.
-- Sol/high, granular approvals, and disabled sandbox are likely desired for
-  the Personal Codex root, but sensitive-domain action boundaries may justify
-  stricter tool policy.
+- The owner has not yet chosen whether Harness should launch a bounded
+  Personal-rooted process for sensitive operations or whether D-004 should be
+  superseded so the existing Harness session performs them directly.
+- Any bounded Personal-rooted process would likely use Sol/high, granular
+  approvals, and disabled sandbox, but its exact defaults remain open.
 
 ## Dependencies and ordering
 
@@ -108,11 +104,12 @@ The access architecture (D-001) precedes remote creation. The security boundary
 (D-002), data residency (D-003), and connector model (D-004) precede project
 configuration or authentication. Domain-specific action authority (D-005
 through D-007) precedes tool-policy tests. Assistant access (D-008 and D-009)
-precedes any invitation. Topology and cold-restart semantics (D-010 and D-011)
-precede Harness lifecycle implementation. Skill/client choices (D-012 and
-D-013) precede scaffold links. Governance, retention, source classification,
-and external-data rules (D-014 through D-017) precede publication. Phone
-identity (D-018) precedes live activation.
+precedes any invitation. The no-session choice (D-010) makes D-010a's
+execution context and D-011's cold-restart semantics prerequisites for
+connector validation. Skill/client choices (D-012 and D-013) precede scaffold
+links. Governance, retention, source classification, and external-data rules
+(D-014 through D-017) precede publication. D-018 is resolved as not
+applicable.
 
 T-354 remains independently blocked. Personal creation must not occupy or
 mutate either T-354 source or destination. Existing Harness, Students, and
@@ -152,8 +149,8 @@ project-policy and configuration isolation. The owner's exact answer was `2`.
 
 Rationale and consequences:
 
-- Personal may use the requested NFS path and integrate as another managed
-  target in the existing Local lifecycle without a cross-user bridge;
+- Personal may use the requested NFS path and be operated from Harness under
+  the same user without a cross-user bridge; D-010 excludes a managed target;
 - do not persist plaintext sensitive payload locally, because another process
   running as `rioyokota` remains technically able to read same-user files and
   user-level product state;
@@ -366,21 +363,52 @@ allowing sensitive collaboration content would contradict frozen D-003.
 
 ### D-010 — Local tmux topology
 
+Status: frozen on 2026-07-31.
+
+Selected in the owner's words: “In the same way that `~/projects/website` does
+not have a dedicated session in tmux, personal does not need one. We can
+continue its development from harness.”
+
+Consequences:
+
+- create no Personal tmux pane/window/session, saved root, phone-visible
+  thread, monitor/helper target, recovery mapping, or app-server root;
+- keep the accepted `projects:0:codex` three-pane topology and the exact
+  Harness/Students/Swallow target map unchanged;
+- perform repository development from the Harness session using explicit
+  Personal paths and independent Git state;
+- do not add Personal to launch sentinels as a managed target; D-010a may
+  authorize one exact non-persistent path admission if a bounded process is
+  selected; and
+- resolve sensitive connector execution separately in D-010a because a
+  Harness-rooted Codex process does not apply Personal project configuration.
+
+#### D-010a — Sensitive-operation execution context
+
 Status: open.
 
-Recommended default: add a second window, `projects:1:personal`, with one pane.
-This preserves the established equal-width three-pane operational window and
-gives sensitive work a clearer visual boundary. A fourth pane or separate tmux
-session remains possible but requires different monitor and recovery semantics.
+Recommended default: Harness remains the driver but launches one bounded,
+non-persistent Codex process rooted at Personal only for a sensitive Personal
+operation. That process reads Personal's project policy and effective
+connector configuration, records only the metadata-safe result, and exits. It
+has no tmux pane, saved root, phone identity, monitor role, or durable
+conversation dependency. This requires a narrowly tested, exact-path
+launch-sentinel admission that is explicitly not a managed target. Harness
+continues ordinary repository development directly.
+
+Alternative: perform sensitive operations in the existing Harness-rooted
+session. This is simpler, but it supersedes D-004 because connector exposure
+and policy would be Harness-scoped rather than Personal-project-scoped.
 
 ### D-011 — Meaning of cold restart
 
 Status: open.
 
-Recommended default: require repository-policy reconstruction and
-saved-root/TUI recovery after Codex restart, plus explicit post-host-reboot
-recovery validation; do not promise unattended tmux resurrection unless the
-owner separately selects and accepts a persistent service.
+Recommended direction after D-010: require the Harness session to reconstruct
+Personal work from Harness's T-355 record plus Personal's compact repository
+ledger after a cold restart. No Personal TUI, saved-root, phone, tmux, or host
+reboot restoration is promised. Whether a bounded Personal-rooted process is
+also part of this contract depends on D-010a.
 
 ### D-012 — Harness skill coupling
 
@@ -437,12 +465,11 @@ or identity data to unapproved external services.
 
 ### D-018 — Phone-visible identity and notifications
 
-Status: open.
+Status: frozen as not applicable on 2026-07-31 by D-010.
 
-Recommended default: one distinct saved root and phone label `Personal`,
-mapped one-to-one to its exact Local pane. Require physical phone visibility
-confirmation before promotion and keep sensitive notification previews
-disabled where configurable.
+Personal receives no phone-visible root, thread, notification identity, or
+Local pane mapping. Existing Harness, Students, and Swallow phone mappings
+remain unchanged.
 
 ## Execution stages
 
@@ -451,8 +478,8 @@ disabled where configurable.
 Ask one material question at a time, give a recommendation and consequences,
 record each answer durably, reconcile dependencies, and present the complete
 frozen plan. Wait for explicit `go`. Revalidate GitHub policy, target
-absence/identity, Harness branch, live lifecycle, and connector capability
-before any mutation.
+absence/identity, Harness branch, unchanged three-target lifecycle, and
+connector capability before any mutation.
 
 ### 1. Establish the selected access boundary
 
@@ -494,25 +521,27 @@ default branch. Push the credential-free scaffold, install the frozen
 ruleset without changing approval count from zero, and confirm Actions has no
 triggerable workflow. Re-read effective access afterward.
 
-### 5. Extend Harness's managed lifecycle
+### 5. Preserve Harness's three-target lifecycle
 
-In an isolated Harness feature worktree, expand the closed target model and
-both launch sentinels. Update target parsing, project config, monitor, helper,
-recovery controller, remote-agent selection, phone mapping, tmux topology,
-documentation, and owning tests according to D-010 and D-018. Preserve exact
-Harness/Students/Swallow identities and availability. Run focused tests,
-`harness validate`, and `tests/test-phase1.sh`; publish through protected
-`main` with no force-push or workflow dispatch.
+Do not change the target map, tmux topology, app server, saved roots, phone
+mappings, monitor, helper, recovery controller, or remote-agent selector. If
+D-010a selects a bounded process, add only an exact non-persistent Personal
+path admission to the launch sentinels without adding a managed target. Keep
+T-355 and the Personal repository ledger sufficient for the Harness session to
+find the project and resume its exact next action. Run focused ledger,
+sentinel, and repository-routing tests; run broader Harness validation only
+for actual Harness code or policy changes.
 
-### 6. Activate bridge-first
+### 6. Validate the selected non-persistent execution context
 
-Freeze the live three-target topology without reading panes or transcripts.
-Create a distinct provisional Personal root/runtime/pane using exact cwd and
-frozen project config. Validate model, reasoning level, approval mode,
-sandbox, tool inventory, connector restrictions, task-ledger reconstruction,
-and absence of duplicate roots. Require separate physical phone visibility
-confirmation. Promote by rename/move only after acceptance; preserve the old
-three targets and never retry an ambiguous start or promotion.
+Implement D-010a without creating a managed target. If a bounded
+Personal-rooted process is selected, launch it only through an explicit
+Harness operation, validate exact cwd, project policy, model/config, effective
+tool inventory, connector restrictions, and metadata-safe handoff, then
+require it to exit. Prove there is no tmux pane, saved root, phone identity,
+monitor role, app-server root, or durable conversation dependency. If the
+Harness-rooted session is selected instead, explicitly supersede D-004 and
+validate the resulting broader connector boundary before authorization.
 
 ### 7. Connect domains incrementally
 
@@ -530,18 +559,19 @@ test fixture, and persist only the metadata-safe result selected in D-003.
 ### 8. Add the assistant
 
 Wait for the assistant's account and frozen security prerequisite. Invite the
-exact verified username once, at the frozen outside-collaborator role. Treat an
+exact verified username once, as the frozen write collaborator. Treat an
 ambiguous invitation as non-retryable until read back. Verify no organization,
 team, connector, secret, or sensitive-content access was added indirectly.
 
 ### 9. Acceptance and recovery rehearsal
 
-From a clean process with no chat context, prove that Personal discovers its
-instructions, task ledger, skills, command, exact root, and effective
-permissions. Rehearse the selected Codex-restart and host-reboot recovery
-claims. Validate repository access from authorized and unauthorized
-perspectives without exposing data. Record a redacted acceptance receipt and
-the exact rollback state.
+From a clean Harness process with no chat context, prove that T-355 routes to
+the exact Personal root and that the Personal ledger, instructions, approved
+skills, command, and first next action are reconstructed without a Personal
+session. Validate the selected bounded execution context, repository access
+from authorized and unauthorized perspectives, and only the cold-restart
+claims frozen in D-011. Record a redacted acceptance receipt and exact rollback
+state.
 
 ## Validation and acceptance
 
@@ -561,10 +591,13 @@ Completion requires all of the following:
   absent elsewhere to the degree promised by D-002;
 - Harness, Students, and Swallow retain their exact accepted roots, processes,
   threads, phone mappings, and healthy monitor state;
-- Personal has exactly one accepted root and Local mapping, with physical
-  phone confirmation before promotion;
+- Personal has no managed root, tmux pane/window/session, saved root, phone
+  mapping, monitor/helper role, recovery mapping, or app-server root;
+- a clean Harness restart reconstructs Personal's exact path, policy, ledger,
+  approved skills, and next action without chat history;
 - focused Personal checks, owning Harness tests, `harness validate`,
-  `tests/test-phase1.sh`, and `git diff --check` pass on published bytes; and
+  `tests/test-phase1.sh`, and `git diff --check` pass where proportional to the
+  surfaces actually changed; and
 - the recovery rehearsal proves only the cold-restart guarantees actually
   claimed.
 
@@ -577,9 +610,9 @@ Completion requires all of the following:
   repository's intended grants and prove a reversible restoration plan.
 - Before connector mutation, capture only non-secret capability metadata.
   Revoke the newly added capability on failed isolation; never print tokens.
-- Before live activation, capture pane/root/process/thread/phone identities.
-  Reject the provisional root on failure and leave the three accepted targets
-  untouched.
+- Before any bounded Personal process, verify the three accepted targets are
+  unchanged. On failure, terminate only the exact bounded process after
+  revalidation and leave the three-target lifecycle untouched.
 - Never replay a rejected prompt or retry an ambiguous app-server, GitHub,
   invitation, connector, send, calendar, or financial write.
 - If interrupted, resume from `docs/tasks/T-355.md` and the first unverified
@@ -589,7 +622,7 @@ Completion requires all of the following:
 
 During the interview, checkpoint each frozen material answer. During
 execution, checkpoint after access-boundary proof, local scaffold validation,
-remote governance readback, protected Harness publication, Personal root
-acceptance, each connector domain, assistant invitation, and final recovery
-rehearsal. Each checkpoint records facts, failures, retry safety, modified
-surfaces, validation, remaining authority, and one exact next action.
+remote governance readback, non-persistent execution-context validation, each
+connector domain, assistant invitation, and final cold-start rehearsal. Each
+checkpoint records facts, failures, retry safety, modified surfaces,
+validation, remaining authority, and one exact next action.
