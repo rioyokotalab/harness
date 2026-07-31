@@ -19,8 +19,9 @@ Next free ID: T-357.
 
 ### T-356 — Personal-only email/calendar connector boundary
 
-**Phase:** interviewing in Personal P-002; no connector or provider mutation
-is authorized.
+**Phase:** interviewing in Personal P-002; architecture is frozen and the
+Google authorization identity is the next open decision. No connector or
+provider mutation is authorized.
 
 **Record:** `docs/tasks/T-356.md`.
 
