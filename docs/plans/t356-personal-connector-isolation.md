@@ -54,6 +54,10 @@ P-002 P2-D001 froze the repository-native direct Google API MCP architecture
 on 2026-07-31 from the owner's exact answer `1`. Harness must never substitute
 a provider first-party account-wide connector.
 
+P-002 P2-D002 froze one shared Google authorization identity for Gmail and
+Calendar on 2026-07-31 from the owner's exact answer `1`. Harness uses one
+opaque private profile while preserving separate domain scopes and readiness.
+
 ## Safety and retry contract
 
 - Profile bootstrap may create only a fixed current-user-owned private
