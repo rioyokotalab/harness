@@ -61,6 +61,22 @@ printf '%s\n' '#!/bin/sh' 'exit 0' >"$personal/bin/personal-google-mcp"
 printf '%s\n' \
     '#!/bin/sh' \
     'set -eu' \
+    'env | sed -n '\''/^HARNESS_/p'\'' >"$PERSONAL_CAPTURE/write.env"' \
+    'env | sed -n '\''/^PERSONAL_GOOGLE_/p'\'' >"$PERSONAL_CAPTURE/write.profile-env"' \
+    'cat >"$PERSONAL_CAPTURE/write.stdin"' \
+    'if grep -F ambiguous "$PERSONAL_CAPTURE/write.stdin" >/dev/null; then' \
+    '    exit 3' \
+    'fi' \
+    'if grep -F rejected "$PERSONAL_CAPTURE/write.stdin" >/dev/null; then' \
+    '    exit 2' \
+    'fi' \
+    'printf '\''PERSONAL_CALENDAR_WRITE status=complete operation=fixture result=deleted\n'\'' >&2' \
+    >"$personal/bin/personal-google-calendar-write"
+# The single quotes intentionally preserve fixture-runtime expansion.
+# shellcheck disable=SC2016
+printf '%s\n' \
+    '#!/bin/sh' \
+    'set -eu' \
     'printf "%s\n" "$@" >"$PERSONAL_CAPTURE/auth.args"' \
     'helper=' \
     'while [ "$#" -gt 0 ]; do' \
@@ -72,7 +88,8 @@ printf '%s\n' \
     'printf "synthetic-auth\n"' \
     >"$personal/bin/personal-google-auth"
 chmod 700 "$personal/bin/personal-google-mcp" \
-    "$personal/bin/personal-google-auth"
+    "$personal/bin/personal-google-auth" \
+    "$personal/bin/personal-google-calendar-write"
 git -C "$personal" init -q -b main
 
 fake_codex=$TEST_ROOT/codex
@@ -302,6 +319,47 @@ grep -F 'open location "https://accounts.google.com/' \
 [ -f "$capture/tunnel.stopped" ] || fail 'OAuth tunnel lifecycle cleanup'
 grep -Fx cancel "$capture/tunnel-cleanup.args" >/dev/null ||
     fail 'OAuth tunnel cancellation command'
+
+run_agent --authorize --domain calendar-write --browser-host riken \
+    --client-file "$TEST_ROOT/synthetic-client.json" \
+    >"$TEST_ROOT/remote-write-auth.out"
+grep -Fx calendar-write "$capture/auth.args" >/dev/null ||
+    fail 'write authorization domain'
+
+if printf '%s\n' '{"fixture":"success"}' |
+    run_agent --calendar-write --task P-TEST-WRITE \
+        >"$TEST_ROOT/write-blocked.out" 2>&1; then
+    fail 'calendar write bypassed readiness gate'
+fi
+grep -F 'reason=connector-not-ready' "$TEST_ROOT/write-blocked.out" >/dev/null ||
+    fail 'calendar write readiness gate'
+
+sed 's/^codex\tcalendar\tblocked\t/codex\tcalendar\tready\t/;
+     s/^claude\tcalendar\tblocked\t/claude\tcalendar\tready\t/' \
+    "$personal/config/connector-readiness.tsv" \
+    >"$personal/config/connector-readiness.tmp"
+mv "$personal/config/connector-readiness.tmp" \
+    "$personal/config/connector-readiness.tsv"
+
+printf '%s\n' '{"fixture":"success"}' |
+    run_agent --calendar-write --task P-TEST-WRITE \
+        >"$TEST_ROOT/write.out" 2>"$TEST_ROOT/write.err"
+grep -Fx '{"fixture":"success"}' "$capture/write.stdin" >/dev/null ||
+    fail 'calendar write stdin'
+[ ! -s "$capture/write.env" ] || fail 'calendar write Harness environment leak'
+grep -Fx "PERSONAL_GOOGLE_PROFILE=$profile" "$capture/write.profile-env" \
+    >/dev/null || fail 'calendar write profile binding'
+grep -F 'client=native domain=calendar-write result=success' \
+    "$TEST_ROOT/write.err" >/dev/null || fail 'calendar write receipt'
+
+if printf '%s\n' '{"fixture":"ambiguous"}' |
+    run_agent --calendar-write --task P-TEST-WRITE \
+        >"$TEST_ROOT/write-ambiguous.out" 2>&1; then
+    fail 'ambiguous calendar write reported success'
+fi
+grep -F 'retry=forbidden-until-reconciled' \
+    "$TEST_ROOT/write-ambiguous.out" >/dev/null ||
+    fail 'ambiguous calendar write retry gate'
 
 lock_file=$runtime/harness-personal-agent/operation.lock
 flock "$lock_file" sleep 1 &

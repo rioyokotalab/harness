@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-357.
+Next free ID: T-358.
 
 ## Resume contract
 
@@ -16,6 +16,13 @@ Next free ID: T-357.
 5. A failed mutable-state query is unknown, never evidence of absence.
 
 ## Active queue
+
+### T-357 — Personal owned-calendar write controller
+
+**Phase:** executing; implementation and focused validation pass. Publish the
+Personal and Harness boundaries before live consent or Calendar mutation.
+
+**Record:** `docs/tasks/T-357.md`.
 
 ### T-354 — Relocate repository-native Codex roots under `projects`
 

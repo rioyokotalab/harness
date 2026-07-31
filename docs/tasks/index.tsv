@@ -1,4 +1,5 @@
 task	state	summary	source
+T-357	active	Personal owned-calendar write controller	TODO.md;docs/tasks/T-357.md
 T-356	complete	Personal-only email/calendar connector boundary	docs/tasks/T-356.md;docs/plans/t356-personal-connector-isolation.md
 T-355	complete	Private Personal operations project	docs/tasks/T-355.md;docs/plans/t355-personal-project.md
 T-354	blocked	Relocate repository-native Codex roots under projects	TODO.md;docs/tasks/T-354.md
