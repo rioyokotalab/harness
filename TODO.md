@@ -17,14 +17,6 @@ Next free ID: T-356.
 
 ## Active queue
 
-### T-355 — Private Personal operations project
-
-**Phase:** validating. The private scaffold and protected owner-only remote
-pass. The bounded launcher and sentinel admission are implemented on the task
-branch; merge, live agent-config apply, and final cold-start readback remain.
-
-**Record:** `docs/tasks/T-355.md`. **Plan:** `docs/plans/t355-personal-project.md`.
-
 ### T-354 — Relocate repository-native Codex roots under `projects`
 
 **Phase:** blocked until the live checkout occupying the exact Students
