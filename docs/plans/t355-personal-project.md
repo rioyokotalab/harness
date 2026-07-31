@@ -167,13 +167,24 @@ Rationale and consequences:
 
 ### D-003 — Sensitive-data residency
 
-Status: open.
+Status: frozen on 2026-07-31.
 
-Recommended default: source-system-only content with metadata-safe local
-ledgers (identifiers, status, dates, and redacted outcomes). Do not persist
-message bodies, attendee-sensitive notes, budget values, attachments, or
-exports in Git. An encrypted local vault is a later opt-in with a separate
-key, retention, backup, and recovery design.
+Selected: keep sensitive content in its source systems and persist only
+metadata-safe local records. The owner's exact answer was `1`.
+
+Rationale and consequences:
+
+- allowed durable records are opaque source identifiers, status, dates,
+  policy, and redacted outcomes needed to resume work;
+- do not persist message bodies, attachments, attendee-sensitive notes,
+  calendar descriptions, budget values, exports, or generated sensitive
+  drafts in the repository, project directory, caches, or validation output;
+- fetch selected content just in time through the approved connector and
+  leave the authoritative copy in its source system;
+- do not create an encrypted Personal data vault or a backup chain for
+  sensitive source content; and
+- Codex thread/context retention remains a separate D-015 decision because
+  source-system-only storage does not by itself control product-side history.
 
 ### D-004 — Connector and authentication boundary
 
@@ -281,10 +292,11 @@ credential-free checks and store only a metadata-safe validation receipt.
 
 Status: open.
 
-Recommended default: no plaintext sensitive logs or transcripts in the
+Frozen D-003 prohibits a local sensitive-data vault and source-content backup.
+Recommended direction: no plaintext sensitive logs or transcripts in the
 project; minimize local caches; redact command output; retain Git only for
-policy/code/metadata. Add encrypted backup only for explicitly selected
-non-Git state after restore testing.
+policy, code, and metadata-safe records. This decision still must freeze Codex
+thread/history handling and any backup needed for non-sensitive runtime state.
 
 ### D-016 — Budget sources and classification
 
@@ -389,7 +401,8 @@ owner-selected non-sensitive read test, then verify it is not advertised or
 enabled in fresh non-Personal roots. Record that this validates the
 configuration boundary selected in D-002, not technical same-user isolation.
 Enable writes only after the corresponding action contract and confirmation
-UX pass. Do not use live email, calendar, or budget content as test fixtures.
+UX pass. Fetch live content only just in time for an owner task, never as a
+test fixture, and persist only the metadata-safe result selected in D-003.
 
 ### 8. Add the assistant
 
