@@ -1,0 +1,4 @@
+# target	pane_index	canonical_repository
+harness	0	@HARNESS_ROOT@
+students	1	/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students
+swallow	2	/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow

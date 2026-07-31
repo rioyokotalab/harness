@@ -1,0 +1,205 @@
+#!/usr/bin/env python3
+"""Bounded native recovery of one dead managed Claude pane.
+
+Invoked by harness-codex-recovery-helper for claude-pane-blocked events.
+Content-blind: only tmux metadata and /proc identity are read; the pane is
+respawned in place (never killed) with the frozen launch flags. Prints
+RECOVERY_RESULT status=accepted on verified success.
+"""
+
+from __future__ import print_function
+
+import argparse
+import os
+import subprocess
+import sys
+import time
+
+
+sys.dont_write_bytecode = True
+CONTROL_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+os.environ.setdefault("HARNESS_CONTROL_ROOT", CONTROL_ROOT)
+sys.path.insert(0, os.path.join(CONTROL_ROOT, "libexec"))
+from harness_claude_targets import (  # noqa: E402
+    LAUNCH_FLAGS,
+    PANE_ROLE_OPTION,
+    SESSION_NAME,
+    WINDOW_NAME,
+    TargetError,
+    repository_for,
+)
+
+
+class RecoveryError(RuntimeError):
+    pass
+
+
+def fail(message):
+    raise RecoveryError(message)
+
+
+def tmux_binary():
+    override = os.environ.get("HARNESS_TEST_TMUX")
+    if override:
+        if os.environ.get("HARNESS_TESTING") != "1" or not os.path.isabs(override):
+            fail("test tmux override is unsafe")
+        return override
+    return "tmux"
+
+
+def claude_binary():
+    override = os.environ.get("HARNESS_TEST_CLAUDE")
+    if override:
+        if os.environ.get("HARNESS_TESTING") != "1" or not os.path.isabs(override):
+            fail("test Claude override is unsafe")
+        binary = override
+    else:
+        binary = os.path.expanduser("~/.local/bin/claude")
+    if not os.path.isfile(binary) or not os.access(binary, os.X_OK):
+        fail("Claude launcher is unavailable")
+    return binary
+
+
+def run_value(arguments):
+    result = subprocess.run(
+        arguments,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    if result.returncode != 0:
+        fail("native command failed")
+    try:
+        return result.stdout.decode("utf-8", "strict").rstrip("\n")
+    except UnicodeError:
+        fail("native command output is malformed")
+
+
+def pane_snapshot(tmux, pane_id):
+    output = run_value(
+        [
+            tmux,
+            "display-message",
+            "-p",
+            "-t",
+            pane_id,
+            "\t".join(
+                (
+                    "#{session_name}",
+                    "#{window_id}",
+                    "#{window_name}",
+                    "#{pane_id}",
+                    "#{pane_dead}",
+                    "#{pane_pid}",
+                    "#{pane_current_path}",
+                    "#{" + PANE_ROLE_OPTION + "}",
+                )
+            ),
+        ]
+    )
+    fields = output.split("\t")
+    if len(fields) != 8:
+        fail("tmux pane metadata is malformed")
+    return {
+        "session": fields[0],
+        "window_id": fields[1],
+        "window_name": fields[2],
+        "pane_id": fields[3],
+        "dead": fields[4] == "1",
+        "pane_pid": fields[5],
+        "path": fields[6],
+        "role": fields[7],
+    }
+
+
+def verify_target_pane(snapshot, arguments, repository):
+    if snapshot["session"] != SESSION_NAME:
+        fail("pane is outside the managed session")
+    if snapshot["window_id"] != arguments.window_id:
+        fail("pane window identity drifted")
+    if snapshot["window_name"] != WINDOW_NAME:
+        fail("pane window name drifted")
+    if snapshot["pane_id"] != arguments.pane_id:
+        fail("pane identity drifted")
+    if snapshot["role"] != arguments.target:
+        fail("pane role option drifted")
+    if not snapshot["dead"] and snapshot["path"] != repository:
+        fail("pane working directory drifted")
+
+
+def main():
+    parser = argparse.ArgumentParser(prog="harness-claude-pane-recovery")
+    parser.add_argument("--target", required=True)
+    parser.add_argument("--window-id", required=True)
+    parser.add_argument("--window-index", type=int, required=True)
+    parser.add_argument("--pane-id", required=True)
+    parser.add_argument("--pane-index", type=int, required=True)
+    parser.add_argument("--pane-pid", type=int, required=True)
+    parser.add_argument("--pane-start", required=True)
+    parser.add_argument("--relaunch", choices=("continue", "plain"), required=True)
+    arguments = parser.parse_args()
+
+    tmux = tmux_binary()
+    claude = claude_binary()
+    repository = repository_for(arguments.target)
+
+    before = pane_snapshot(tmux, arguments.pane_id)
+    verify_target_pane(before, arguments, repository)
+    if not before["dead"]:
+        print(
+            "RECOVERY_RESULT status=rejected reason=pane-alive "
+            "target={} pane={}".format(arguments.target, arguments.pane_id)
+        )
+        return 1
+
+    command = "exec {} {}".format(claude, " ".join(LAUNCH_FLAGS))
+    if arguments.relaunch == "continue":
+        command += " --continue"
+    subprocess.run(
+        [tmux, "respawn-pane", "-t", arguments.pane_id, command],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=True,
+    )
+
+    deadline = time.time() + 10
+    verified = False
+    while time.time() < deadline:
+        after = pane_snapshot(tmux, arguments.pane_id)
+        verify_target_pane(after, arguments, repository)
+        if not after["dead"] and after["pane_pid"] != before["pane_pid"]:
+            try:
+                with open(
+                    "/proc/{}/stat".format(after["pane_pid"]), "r"
+                ) as stream:
+                    stream.read()
+                verified = True
+                break
+            except (IOError, OSError):
+                pass
+        time.sleep(0.5)
+    if not verified:
+        print(
+            "RECOVERY_RESULT status=failed reason=respawn-unverified "
+            "target={} pane={}".format(arguments.target, arguments.pane_id)
+        )
+        return 1
+    print(
+        "RECOVERY_RESULT status=accepted target={} pane={} relaunch={}".format(
+            arguments.target, arguments.pane_id, arguments.relaunch
+        )
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except (RecoveryError, TargetError) as error:
+        print("harness: {}".format(error), file=sys.stderr)
+        sys.exit(2)
+    except subprocess.SubprocessError:
+        print("harness: pane respawn failed", file=sys.stderr)
+        sys.exit(2)

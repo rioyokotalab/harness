@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-359.
+Next free ID: T-360.
 
 ## Resume contract
 
@@ -24,6 +24,14 @@ request. Next: tmux `claude` window, 04:25 model switch-back, five-repo
 TODO-driven development with batched publication.
 
 **Record:** `docs/tasks/T-358.md`.
+
+### T-359 — Claude pane monitor and recovery parity
+
+**Phase:** executing (owner-ordered 02:47 within the overnight window).
+Next: claude monitor + helper client support + border titles + recovery
+drill, published with the T-358 run.
+
+**Record:** `docs/tasks/T-359.md`.
 
 ### T-354 — Relocate repository-native Codex roots under `projects`
 

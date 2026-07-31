@@ -307,6 +307,22 @@ def blocked_identity(arguments):
     }
 
 
+def claude_blocked_identity(arguments):
+    return {
+        "schema": 2,
+        "kind": "claude-pane-blocked",
+        "client": "claude",
+        "target": managed_target(arguments.target),
+        "window_id": safe_window_id(arguments.window_id),
+        "window_index": arguments.window_index,
+        "pane_id": safe_pane_id(arguments.pane_id),
+        "pane_index": arguments.pane_index,
+        "pane_pid": arguments.pane_pid,
+        "pane_start": safe_id(arguments.pane_start, "pane start"),
+        "relaunch": arguments.relaunch,
+    }
+
+
 def run_value(arguments, check=True):
     result = subprocess.run(
         arguments,
@@ -819,6 +835,39 @@ def codex_command():
     ]
 
 
+def claude_recovery_command(identity):
+    override = os.environ.get("HARNESS_TEST_CLAUDE_RECOVERY")
+    if override:
+        if os.environ.get("HARNESS_TESTING") != "1" or not os.path.isabs(override):
+            fail("test Claude recovery override is unsafe")
+        binary = override
+    else:
+        binary = os.path.join(
+            CONTROL_ROOT, "libexec", "harness-claude-pane-recovery"
+        )
+    if not os.path.isfile(binary) or not os.access(binary, os.X_OK):
+        fail("Claude pane recovery worker is unavailable")
+    return [
+        binary,
+        "--target",
+        identity["target"],
+        "--window-id",
+        identity["window_id"],
+        "--window-index",
+        str(identity["window_index"]),
+        "--pane-id",
+        identity["pane_id"],
+        "--pane-index",
+        str(identity["pane_index"]),
+        "--pane-pid",
+        str(identity["pane_pid"]),
+        "--pane-start",
+        identity["pane_start"],
+        "--relaunch",
+        identity["relaunch"],
+    ]
+
+
 def event_files(root):
     paths = []
     directory = os.path.join(root, "events")
@@ -870,7 +919,15 @@ def reconcile_started(root, event):
 
 
 def process_event(root, event):
-    prompt = worker_prompt(event).encode("utf-8")
+    claude_event = (
+        event["identity"].get("kind") == "claude-pane-blocked"
+    )
+    if claude_event:
+        prompt = b""
+        worker_command = claude_recovery_command(event["identity"])
+    else:
+        prompt = worker_prompt(event).encode("utf-8")
+        worker_command = codex_command()
     if reconcile_started(root, event):
         return False
     event_id = event["event"]
@@ -906,7 +963,7 @@ def process_event(root, event):
         worker_environment.pop(variable, None)
     try:
         process = subprocess.Popen(
-            codex_command(),
+            worker_command,
             cwd=TARGET_ROOT,
             env=worker_environment,
             stdin=subprocess.PIPE,
@@ -1026,6 +1083,7 @@ def parse_arguments():
     modes.add_argument("--once", action="store_true")
     modes.add_argument("--status", action="store_true")
     modes.add_argument("--enqueue-blocked", action="store_true")
+    modes.add_argument("--enqueue-claude-blocked", action="store_true")
     parser.add_argument("--interval", type=int, default=30)
     parser.add_argument("--auto-mirror", action="store_true")
     parser.add_argument("--target")
@@ -1039,29 +1097,54 @@ def parse_arguments():
     parser.add_argument("--window-index", type=int)
     parser.add_argument("--pane-id")
     parser.add_argument("--pane-index", type=int)
+    parser.add_argument("--pane-pid", type=int)
+    parser.add_argument("--pane-start")
+    parser.add_argument("--relaunch", choices=("continue", "plain"))
     arguments = parser.parse_args()
     if not 5 <= arguments.interval <= 3600:
         parser.error("--interval must be between 5 and 3600 seconds")
-    blocked_fields = (
+    shared_fields = (
         "target",
+        "window_id",
+        "window_index",
+        "pane_id",
+        "pane_index",
+    )
+    codex_fields = (
         "runtime",
         "thread",
         "watcher_pid",
         "watcher_start",
         "app_server_pid",
         "app_server_start",
-        "window_id",
-        "window_index",
-        "pane_id",
-        "pane_index",
     )
+    claude_fields = ("pane_pid", "pane_start", "relaunch")
     if arguments.enqueue_blocked:
-        if any(getattr(arguments, field) is None for field in blocked_fields):
+        if any(
+            getattr(arguments, field) is None
+            for field in shared_fields + codex_fields
+        ):
             parser.error("--enqueue-blocked requires the exact blocked identity")
-    elif any(getattr(arguments, field) is not None for field in blocked_fields):
-        parser.error("blocked identity arguments require --enqueue-blocked")
+        if any(getattr(arguments, field) is not None for field in claude_fields):
+            parser.error("Claude identity arguments require --enqueue-claude-blocked")
+    elif arguments.enqueue_claude_blocked:
+        if any(
+            getattr(arguments, field) is None
+            for field in shared_fields + claude_fields
+        ):
+            parser.error(
+                "--enqueue-claude-blocked requires the exact blocked identity"
+            )
+        if any(getattr(arguments, field) is not None for field in codex_fields):
+            parser.error("blocked identity arguments require --enqueue-blocked")
+    elif any(
+        getattr(arguments, field) is not None
+        for field in shared_fields + codex_fields + claude_fields
+    ):
+        parser.error("blocked identity arguments require an enqueue mode")
     if arguments.auto_mirror and (
         arguments.status or arguments.enqueue_blocked
+        or arguments.enqueue_claude_blocked
     ):
         parser.error("--auto-mirror requires --run or --once")
     return arguments
@@ -1070,8 +1153,10 @@ def parse_arguments():
 def main():
     arguments = parse_arguments()
     blocked = blocked_identity(arguments) if arguments.enqueue_blocked else None
+    if arguments.enqueue_claude_blocked:
+        blocked = claude_blocked_identity(arguments)
     root = runtime_root()
-    if arguments.enqueue_blocked:
+    if arguments.enqueue_blocked or arguments.enqueue_claude_blocked:
         _event, action = enqueue_event(root, blocked)
         print("CODEX_RECOVERY_HELPER enqueue={}".format(action))
         return 0
