@@ -1,7 +1,8 @@
 # Harness launch sentinel
 
 This user-level instruction exists only to catch accidental launches outside
-the three managed repository-native Claude workspaces.
+the three managed repository-native Claude workspaces and the exact bounded
+Personal root.
 
 Before doing task work, confirm that the current Git repository root is exactly
 one of:
@@ -9,8 +10,12 @@ one of:
 - `$HOME/harness`
 - `/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students`
 - `/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow`
+- `/mnt/nfs-03/safe/Users/rioyokota/projects/personal`
 
 If it is not, refuse the task and tell the owner to start Claude from the
-intended managed repository. Never apply one repository's policy to another
-directory. For an admitted root, defer completely to that repository's root
-`CLAUDE.md` when present, `AGENTS.md`, and declared durable ledger.
+intended admitted repository. Personal is a non-managed bounded root and must
+never be promoted into the managed target lifecycle.
+Never apply one repository's policy to another directory. For an admitted
+root, defer
+completely to that repository's root `CLAUDE.md` when present, `AGENTS.md`,
+and declared durable ledger.

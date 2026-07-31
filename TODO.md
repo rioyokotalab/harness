@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-354.
+Next free ID: T-356.
 
 ## Resume contract
 
@@ -16,6 +16,21 @@ Next free ID: T-354.
 5. A failed mutable-state query is unknown, never evidence of absence.
 
 ## Active queue
+
+### T-355 — Private Personal operations project
+
+**Phase:** validating. The private scaffold and protected owner-only remote
+pass. The bounded launcher and sentinel admission are implemented on the task
+branch; merge, live agent-config apply, and final cold-start readback remain.
+
+**Record:** `docs/tasks/T-355.md`. **Plan:** `docs/plans/t355-personal-project.md`.
+
+### T-354 — Relocate repository-native Codex roots under `projects`
+
+**Phase:** blocked until the live checkout occupying the exact Students
+destination is retired; no direct rename is safe.
+
+**Record:** `docs/tasks/T-354.md`.
 
 ### T-196 — Backup lifecycle phase 2
 

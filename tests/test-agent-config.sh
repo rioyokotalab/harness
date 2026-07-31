@@ -206,6 +206,16 @@ tx=$(transaction "$TEMP_DIR/apply.out")
     [ "$(readlink "$home/.claude/CLAUDE.md")" = \
         "$repo/config/agent-clients/claude-sentinel.md" ] ||
     fail 'Claude sentinel'
+grep -F '/mnt/nfs-03/safe/Users/rioyokota/projects/personal' \
+    "$home/.codex/AGENTS.md" >/dev/null ||
+    fail 'Codex bounded Personal admission'
+grep -F '/mnt/nfs-03/safe/Users/rioyokota/projects/personal' \
+    "$home/.claude/CLAUDE.md" >/dev/null ||
+    fail 'Claude bounded Personal admission'
+grep -F 'non-managed bounded root' "$home/.codex/AGENTS.md" >/dev/null ||
+    fail 'Codex Personal non-managed classification'
+grep -F 'non-managed bounded root' "$home/.claude/CLAUDE.md" >/dev/null ||
+    fail 'Claude Personal non-managed classification'
 [ -L "$home/.local/bin/harness-codex" ] || fail 'launcher retained'
 for removed in "$home/.claude/settings.json" \
     "$home/.codex/rules/default.rules" "$home/.codex/skills/example" \

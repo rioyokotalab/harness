@@ -130,6 +130,37 @@ wrapper uses an absolute native path, preventing recursion or silent fallback,
 and preserves all arguments and subcommands. Client-persisted project trust
 stays only in the private live regular file and never dirties public Git.
 
+## Bounded Personal process
+
+`harness personal-agent` is a non-managed bridge from Harness to the exact
+private repository at
+`/mnt/nfs-03/safe/Users/rioyokota/projects/personal`. It never adds a Codex
+target, tmux pane, phone thread, app-server root, monitor role, saved root, or
+recovery identity. The user launch sentinels admit that one exact path while
+labeling it non-managed.
+
+`--run` requires an identified Codex or Claude driver, a bounded task ID, the
+`local` domain, and a prompt on standard input. A current-user runtime lock
+serializes both clients. The launcher validates the exact real mode-0700
+repository and its owned single-link policy/configuration files, scrubs
+Harness control variables, streams output without a log, and retains only one
+mode-0600 value-free runtime receipt. It never retries a failed or ambiguous
+run.
+
+Codex uses `exec --ephemeral --ignore-user-config --strict-config`, Sol/high,
+the reviewed granular policy, danger-full-access, disabled history, memory,
+feedback, suggestions, and web search. Claude uses non-persistent print mode,
+project-only settings, a strict empty MCP configuration, Fable/high with the
+sole Opus fallback, `dontAsk`, a narrow local tool list, and disabled
+auto-memory, telemetry, feedback, error reporting, and nonessential traffic.
+These controls do not establish provider-side retention.
+
+Email, calendar, and research-budget domains fail closed. They remain blocked
+until a later protected change provides a Personal-only connector runtime and
+the Personal readiness ledger records its independent isolation and
+provider-privacy evidence. Installed user-level plugins are not treated as a
+project isolation boundary.
+
 ## Transient-service supervisor
 
 `harness codex-resilient` is the portable foreground owner for a Codex TUI

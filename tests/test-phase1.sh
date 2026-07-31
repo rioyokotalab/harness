@@ -96,6 +96,7 @@ for script in \
     "$ROOT/libexec/harness-codex-resilient" \
     "$ROOT/libexec/harness-codex-runtime-launch" \
     "$ROOT/libexec/harness-codex-runtime-release" \
+    "$ROOT/libexec/harness-personal-agent" \
     "$ROOT/libexec/codex-arg0-launcher-wrapper" \
     "$ROOT/libexec/harness-storage-readiness" \
     "$ROOT/libexec/harness-replica" \
@@ -128,6 +129,7 @@ for script in \
     "$ROOT/tests/test-bash-startup-unify.sh" \
     "$ROOT/tests/test-focused-runner.sh" \
     "$ROOT/tests/test-codex-runtime-isolation.sh" \
+    "$ROOT/tests/test-personal-agent.sh" \
     "$ROOT/tests/test-local-mpi-profile.sh" \
     "$ROOT/tests/test-native-mpi.sh" \
     "$ROOT/tests/test-onboard-personal-mac-skill.sh" \
