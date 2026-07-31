@@ -1,6 +1,6 @@
 # T-356 Harness integration plan
 
-Phase: `blocked`.
+Phase: `blocked on provider privacy verification`.
 
 ## Outcome
 
