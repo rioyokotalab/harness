@@ -63,6 +63,12 @@ the owner's exact answer `1`. Live access requires a value-free owner
 attestation that **Improve the model for everyone** is off; Harness never reads
 or records account identity or plan details.
 
+P-002 P2-D004 froze a consumer Claude account on 2026-07-31 from the owner's
+exact answer `1`. Live access requires a value-free owner attestation that
+**Help Improve Claude** is off. Existing T-355 D-015 already accepts applicable
+provider retention; revalidate it before first live use without repeating the
+settled decision unless terms materially change.
+
 ## Safety and retry contract
 
 - Profile bootstrap may create only a fixed current-user-owned private
