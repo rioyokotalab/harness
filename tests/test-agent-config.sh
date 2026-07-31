@@ -157,6 +157,17 @@ fi
 grep -F 'project Claude policy is invalid' "$TEMP_DIR/claude-no-effort.out" \
     >/dev/null || fail 'missing project Claude effort rejection'
 
+sed '/"fallbackModel": \[/,/^  ],$/d' "$TEMP_DIR/claude-policy.valid" \
+    >"$repo/.claude/settings.json"
+cp "$repo/.claude/settings.json" "$repo/config/agent-clients/claude.json"
+git -C "$repo" add .claude/settings.json config/agent-clients/claude.json
+git -C "$repo" commit -qm 'drop project Claude fallback'
+if run_config --plan >"$TEMP_DIR/claude-no-fallback.out" 2>&1; then
+    fail 'missing project Claude fallback accepted'
+fi
+grep -F 'project Claude policy is invalid' "$TEMP_DIR/claude-no-fallback.out" \
+    >/dev/null || fail 'missing project Claude fallback rejection'
+
 sed 's/"model": "fable"/"model": "fable-x"/' "$TEMP_DIR/claude-policy.valid" \
     >"$repo/.claude/settings.json"
 cp "$TEMP_DIR/claude-policy.valid" "$repo/config/agent-clients/claude.json"

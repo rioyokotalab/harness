@@ -53,3 +53,8 @@ A client failure is retry-safe only when the sandbox, stage, seal, receipts,
 owned files, and target prove that no ambiguous partial action occurred.
 Record the exact error, touched state, and retry precondition. Absent output,
 process loss, timeout, or advisory candidate readiness is not success.
+Let Claude's configured Fable-to-Opus availability fallback complete inside
+the original turn. A rate limit, shared usage limit, authentication, billing,
+request-size, or transport failure is not evidence that native fallback ran
+or that replay is safe; preserve the failure and reconcile before any distinct
+changed-input attempt.

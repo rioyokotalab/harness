@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-353.
+Next free ID: T-354.
 
 ## Resume contract
 
@@ -17,13 +17,22 @@ Next free ID: T-353.
 
 ## Active queue
 
+### T-353 — Graceful Claude Fable-to-Opus fallback
+
+**Phase:** implementation and clean R3 validation pass; final integrated
+validation and protected publication remain.
+
+**Record:** `docs/tasks/T-353.md`. Preserve Fable/high as primary, permit only
+native Opus/high availability fallback, and never replay a quota- or
+transport-failed prompt.
+
 ### T-352 — Consolidate Local Codex sessions into one pane-native window
 
-**Phase:** equal horizontal live layout accepted; protected publication and
-post-sync refresh remain, with Riken's managed tmux session absent.
+**Phase:** equal horizontal layout published and fleet-synchronized; Riken's
+managed tmux session remains absent, so its context refresh is deferred.
 
-**Record:** `docs/tasks/T-352.md`. Publish and synchronize the canonical-layout
-amendment, then refresh only safe detached managed Mac sessions.
+**Record:** `docs/tasks/T-352.md`. Retry the retained Riken refresh only after
+its detached managed session returns; do not create it under refresh authority.
 
 ### T-196 — Backup lifecycle phase 2
 

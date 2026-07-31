@@ -14,11 +14,13 @@ interpolate untrusted task text into a shell command.
 Run Claude from its sandbox in noninteractive print mode. Use the narrowest
 reviewed `--allowedTools` list and a non-prompting permission mode. Do not use
 `--dangerously-skip-permissions`. Confirm model and effort flags in the
-installed native help. Default to `--model fable --effort high` unless the
-frozen benchmark requires another supported pairing:
+installed native help. Default to
+`--model fable --effort high --fallback-model opus` unless the frozen
+benchmark requires another supported pairing:
 
 ```text
 claude --print --permission-mode dontAsk \
+  --model fable --effort high --fallback-model opus \
   --allowedTools REVIEWED_TOOL_LIST \
   < STAGE_DIR/artifacts/copilot-prompt.md \
   > STAGE_DIR/candidate-copilot-evidence.md
@@ -28,10 +30,21 @@ For a no-tools prose critique, use the documented `--tools ""`; an empty
 `--allowedTools` is not an equivalent denial:
 
 ```text
-claude --print --permission-mode dontAsk --tools "" \
+claude --print --permission-mode dontAsk \
+  --model fable --effort high --fallback-model opus --tools "" \
   < STAGE_DIR/artifacts/copilot-prompt.md \
   > STAGE_DIR/candidate-copilot-evidence.md
 ```
+
+The same project profile keeps Fable/high primary and Opus/high as the sole
+ordered fallback when Claude is the driver. Native fallback applies only when
+the primary is overloaded, unavailable, or returns another eligible server
+error, and only for that turn. Authentication, billing, rate-limit,
+request-size, transport, and shared session or weekly usage-limit failures are
+not fallback-eligible. Preserve those failures and their reset information;
+do not launch a second client or replay the prompt. Record the fallback notice
+and resolved model evidence when the native output exposes them, and otherwise
+do not infer that a switch occurred.
 
 ## Claude drives Codex
 

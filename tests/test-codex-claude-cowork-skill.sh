@@ -191,8 +191,22 @@ grep -F '`--allowedTools` is not an equivalent denial' "$NATIVE_CLIENTS" >/dev/n
     fail 'protocol missing empty-allowedTools refusal'
 grep -F 'time-slice entry per requested hour' "$SKILL" >/dev/null ||
     fail 'skill missing duration-job summary contract'
-grep -F 'Default to `--model fable --effort high`' "$NATIVE_CLIENTS" >/dev/null ||
+grep -F 'Default to' "$NATIVE_CLIENTS" >/dev/null &&
+    grep -F '`--model fable --effort high --fallback-model opus`' \
+        "$NATIVE_CLIENTS" >/dev/null ||
     fail 'protocol missing native Claude Fable/high default'
+fallback_commands=$(grep -Fc -- \
+    '--model fable --effort high --fallback-model opus' "$NATIVE_CLIENTS")
+[ "$fallback_commands" -eq 3 ] ||
+    fail 'protocol missing explicit Claude Fable-to-Opus policy and commands'
+grep -F 'shared session or weekly usage-limit failures are' \
+    "$NATIVE_CLIENTS" >/dev/null ||
+    fail 'protocol overstates Claude fallback coverage'
+grep -F 'do not launch a second client or replay the prompt' \
+    "$NATIVE_CLIENTS" >/dev/null ||
+    fail 'protocol missing Claude fallback replay refusal'
+grep -F 'configured Fable-to-Opus availability fallback' "$RECOVERY" >/dev/null ||
+    fail 'recovery missing same-turn Claude fallback rule'
 
 fill() {
     file=$1
