@@ -13,6 +13,9 @@ Usage:
   harness personal-agent --privacy-attest --provider openai|anthropic --value off
   harness personal-agent --authorize --domain email|calendar --client-file PATH \
     [--browser-host aist|home|office|riken]
+  harness personal-agent --authorize --domain calendar-write --client-file PATH \
+    [--browser-host aist|home|office|riken]
+  harness personal-agent --calendar-write --task ID
   harness personal-agent --run --client codex|claude --task ID \
     --domain local|email|calendar
 
@@ -36,6 +39,7 @@ while [ "$#" -gt 0 ]; do
         --profile-bootstrap) mode=profile-bootstrap; shift ;;
         --privacy-attest) mode=privacy-attest; shift ;;
         --authorize) mode=authorize; shift ;;
+        --calendar-write) mode=calendar-write; shift ;;
         --run) mode=run; shift ;;
         --client)
             [ "$#" -ge 2 ] || { usage; exit 2; }
@@ -78,7 +82,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 case $mode in
-    status|profile-bootstrap|privacy-attest|authorize|run) ;;
+    status|profile-bootstrap|privacy-attest|authorize|calendar-write|run) ;;
     *) usage; exit 2 ;;
 esac
 
@@ -126,7 +130,8 @@ fi
 for required in AGENTS.md CLAUDE.md TODO.md .codex/config.toml \
     .claude/settings.json config/connector-readiness.tsv \
     config/empty-mcp.json config/personal-mcp.json \
-    bin/personal-google-auth bin/personal-google-mcp; do
+    bin/personal-google-auth bin/personal-google-mcp \
+    bin/personal-google-calendar-write; do
     [ -f "$personal_root/$required" ] &&
         [ ! -L "$personal_root/$required" ] ||
         fail "personal-contract-$required"
@@ -282,7 +287,7 @@ fi
 if [ "$mode" = authorize ]; then
     [ "$profile_state" = ready ] || fail profile-not-ready
     [ "$privacy_state" = ready ] || fail privacy-not-ready
-    case $domain in email|calendar) ;; *) fail invalid-domain ;; esac
+    case $domain in email|calendar|calendar-write) ;; *) fail invalid-domain ;; esac
     [ -n "$client_file" ] || fail oauth-client-path-missing
     case $client_file in /*) ;; *) fail oauth-client-path-non-absolute ;; esac
     if [ -z "$browser_host" ]; then
@@ -347,7 +352,6 @@ PY
     exit $?
 fi
 
-case $client in codex|claude) ;; *) fail invalid-client ;; esac
 case $task in
     [A-Za-z0-9]*)
         case $task in *[!A-Za-z0-9._-]*)
@@ -357,21 +361,35 @@ case $task in
         ;;
     *) fail invalid-task ;;
 esac
-case $domain in
-    local) ;;
-    email|calendar)
-        readiness=$(awk -F '\t' -v client="$client" -v domain="$domain" '
-            $1 == client && $2 == domain { print $3; count++ }
-            END { if (count != 1) exit 1 }
-        ' "$personal_root/config/connector-readiness.tsv") ||
-            fail connector-readiness-ambiguous
-        [ "$readiness" = ready ] || fail connector-not-ready
-        [ "$profile_state" = ready ] || fail profile-not-ready
-        [ "$privacy_state" = ready ] || fail privacy-not-ready
-        ;;
-    research-budget) fail connector-not-ready ;;
-    *) fail invalid-domain ;;
-esac
+if [ "$mode" = calendar-write ]; then
+    client=native
+    domain=calendar-write
+    calendar_ready_rows=$(awk -F '\t' '
+        ($1 == "codex" || $1 == "claude") &&
+            $2 == "calendar" && $3 == "ready" { count++ }
+        END { print count + 0 }
+    ' "$personal_root/config/connector-readiness.tsv")
+    [ "$calendar_ready_rows" -eq 2 ] || fail connector-not-ready
+    [ "$profile_state" = ready ] || fail profile-not-ready
+    [ "$privacy_state" = ready ] || fail privacy-not-ready
+else
+    case $client in codex|claude) ;; *) fail invalid-client ;; esac
+    case $domain in
+        local) ;;
+        email|calendar)
+            readiness=$(awk -F '\t' -v client="$client" -v domain="$domain" '
+                $1 == client && $2 == domain { print $3; count++ }
+                END { if (count != 1) exit 1 }
+            ' "$personal_root/config/connector-readiness.tsv") ||
+                fail connector-readiness-ambiguous
+            [ "$readiness" = ready ] || fail connector-not-ready
+            [ "$profile_state" = ready ] || fail profile-not-ready
+            [ "$privacy_state" = ready ] || fail privacy-not-ready
+            ;;
+        research-budget) fail connector-not-ready ;;
+        *) fail invalid-domain ;;
+    esac
+fi
 [ ! -t 0 ] || fail prompt-must-use-stdin
 
 receipt=$runtime_dir/last.receipt
@@ -398,16 +416,35 @@ if [ "${HARNESS_TESTING:-0}" = 1 ]; then
     native_codex=${HARNESS_TEST_NATIVE_CODEX:-$native_codex}
     native_claude=${HARNESS_TEST_NATIVE_CLAUDE:-$native_claude}
 fi
-if [ "$client" = codex ]; then
-    [ -x "$native_codex" ] || fail codex-unavailable
-else
-    [ -n "$native_claude" ] && [ -x "$native_claude" ] ||
-        fail claude-unavailable
+if [ "$mode" = run ]; then
+    if [ "$client" = codex ]; then
+        [ -x "$native_codex" ] || fail codex-unavailable
+    else
+        [ -n "$native_claude" ] && [ -x "$native_claude" ] ||
+            fail claude-unavailable
+    fi
 fi
 write_receipt running pending
 
 set +e
-if [ "$client" = codex ]; then
+if [ "$mode" = calendar-write ]; then
+    (
+        CDPATH='' cd -- "$personal_root" || exit 2
+        harness_variables=$(env | sed -n \
+            's/^\(HARNESS_[A-Za-z0-9_]*\)=.*/\1/p')
+        for harness_variable in $harness_variables; do
+            unset "$harness_variable"
+        done
+        personal_google_variables=$(env | sed -n \
+            's/^\(PERSONAL_GOOGLE_[A-Za-z0-9_]*\)=.*/\1/p')
+        for personal_google_variable in $personal_google_variables; do
+            unset "$personal_google_variable"
+        done
+        PERSONAL_GOOGLE_PROFILE=$profile_root \
+            "$personal_root/bin/personal-google-calendar-write"
+    )
+    result=$?
+elif [ "$client" = codex ]; then
     (
         CDPATH='' cd -- "$personal_root" || exit 2
         harness_variables=$(env | sed -n \
@@ -509,7 +546,12 @@ if [ "$result" -eq 0 ]; then
         "$task" "$client" "$domain" >&2
 else
     write_receipt complete "exit-$result"
-    printf 'PERSONAL_AGENT_RECEIPT status=complete task=%s client=%s domain=%s result=exit-%s retry=forbidden-until-reconciled\n' \
-        "$task" "$client" "$domain" "$result" >&2
+    if [ "$mode" = calendar-write ] && [ "$result" -eq 2 ]; then
+        retry=safe-after-revalidation
+    else
+        retry=forbidden-until-reconciled
+    fi
+    printf 'PERSONAL_AGENT_RECEIPT status=complete task=%s client=%s domain=%s result=exit-%s retry=%s\n' \
+        "$task" "$client" "$domain" "$result" "$retry" >&2
 fi
 exit "$result"
