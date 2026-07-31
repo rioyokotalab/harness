@@ -1,6 +1,6 @@
 # T-356 Harness integration plan
 
-Phase: `blocked on provider privacy verification`.
+Phase: `blocked on Gmail OAuth-client path and owner consent`.
 
 ## Outcome
 
