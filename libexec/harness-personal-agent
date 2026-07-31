@@ -9,7 +9,11 @@ usage() {
     cat >&2 <<'EOF'
 Usage:
   harness personal-agent --status
-  harness personal-agent --run --client codex|claude --task ID --domain local
+  harness personal-agent --profile-bootstrap
+  harness personal-agent --privacy-attest --provider openai|anthropic --value off
+  harness personal-agent --authorize --domain email|calendar --client-file PATH
+  harness personal-agent --run --client codex|claude --task ID \
+    --domain local|email|calendar
 
 The run prompt must arrive on standard input. Email, calendar, and
 research-budget domains remain blocked until their Personal-only connector
@@ -21,9 +25,15 @@ mode=
 client=
 task=
 domain=
+provider=
+attested_value=
+client_file=
 while [ "$#" -gt 0 ]; do
     case $1 in
         --status) mode=status; shift ;;
+        --profile-bootstrap) mode=profile-bootstrap; shift ;;
+        --privacy-attest) mode=privacy-attest; shift ;;
+        --authorize) mode=authorize; shift ;;
         --run) mode=run; shift ;;
         --client)
             [ "$#" -ge 2 ] || { usage; exit 2; }
@@ -40,19 +50,39 @@ while [ "$#" -gt 0 ]; do
             domain=$2
             shift 2
             ;;
+        --provider)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            provider=$2
+            shift 2
+            ;;
+        --value)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            attested_value=$2
+            shift 2
+            ;;
+        --client-file)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            client_file=$2
+            shift 2
+            ;;
         -h|--help) usage; exit 0 ;;
         *) usage; exit 2 ;;
     esac
 done
 
-case $mode in status|run) ;; *) usage; exit 2 ;; esac
+case $mode in
+    status|profile-bootstrap|privacy-attest|authorize|run) ;;
+    *) usage; exit 2 ;;
+esac
 
 if [ "${HARNESS_TESTING:-0}" = 1 ]; then
     personal_root=${HARNESS_TEST_PERSONAL_ROOT:-$DEFAULT_PERSONAL_ROOT}
     runtime_base=${HARNESS_TEST_RUNTIME_ROOT:-${XDG_RUNTIME_DIR:-/run/user/$(id -u)}}
+    profile_root=${HARNESS_TEST_PROFILE_ROOT:-$HOME/.local/state/harness-personal-agent/google}
 else
     personal_root=$DEFAULT_PERSONAL_ROOT
     runtime_base=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
+    profile_root=$HOME/.local/state/harness-personal-agent/google
 fi
 
 fail() {
@@ -60,7 +90,10 @@ fail() {
     exit 2
 }
 
-case "$personal_root:$runtime_base" in /*:/*) ;; *) fail non-absolute-path ;; esac
+case "$personal_root:$runtime_base:$profile_root" in
+    /*:/*:/*) ;;
+    *) fail non-absolute-path ;;
+esac
 
 invoking_root=$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null || true)
 [ -n "$invoking_root" ] || fail outside-harness
@@ -85,7 +118,8 @@ fi
 
 for required in AGENTS.md CLAUDE.md TODO.md .codex/config.toml \
     .claude/settings.json config/connector-readiness.tsv \
-    config/empty-mcp.json; do
+    config/empty-mcp.json config/personal-mcp.json \
+    bin/personal-google-auth bin/personal-google-mcp; do
     [ -f "$personal_root/$required" ] &&
         [ ! -L "$personal_root/$required" ] ||
         fail "personal-contract-$required"
@@ -115,15 +149,138 @@ exec 9>"$lock_file"
 chmod 600 "$lock_file"
 if ! flock -n 9; then
     if [ "$mode" = status ]; then
-        printf 'PERSONAL_AGENT status=ready root=ready lock=busy connectors=blocked managed_target=false\n'
+        printf 'PERSONAL_AGENT status=ready root=ready lock=busy profile=unknown privacy=unknown connectors=unknown managed_target=false\n'
         exit 0
     fi
     fail operation-locked
 fi
 
+profile_state=absent
+privacy_state=blocked
+privacy_file_state=absent
+validate_profile() {
+    if [ -e "$profile_root" ] || [ -L "$profile_root" ]; then
+        profile_state=invalid
+    fi
+    [ -d "$profile_root" ] && [ ! -L "$profile_root" ] ||
+        return 1
+    [ "$(stat -c %u "$profile_root")" = "$(id -u)" ] &&
+        [ "$(stat -c %a "$profile_root")" = 700 ] ||
+        return 1
+    profile_state=ready
+    privacy_file=$profile_root/privacy.tsv
+    if [ -e "$privacy_file" ] || [ -L "$privacy_file" ]; then
+        privacy_file_state=invalid
+        if [ -f "$privacy_file" ] && [ ! -L "$privacy_file" ] &&
+            [ "$(stat -c %u "$privacy_file")" = "$(id -u)" ] &&
+            [ "$(stat -c %a "$privacy_file")" = 600 ] &&
+            [ "$(stat -c %h "$privacy_file")" = 1 ]; then
+            if awk -F '\t' '
+                ($1 == "openai" || $1 == "anthropic") && $2 == "off" &&
+                    !seen[$1]++ { count++; next }
+                { invalid++ }
+                END { exit !(!invalid && count == 2) }
+            ' "$privacy_file" >/dev/null 2>&1; then
+                privacy_file_state=complete
+                privacy_state=ready
+            elif awk -F '\t' '
+                ($1 == "openai" || $1 == "anthropic") && $2 == "off" &&
+                    !seen[$1]++ { count++; next }
+                { invalid++ }
+                END { exit !(!invalid && count == 1) }
+            ' "$privacy_file" >/dev/null 2>&1; then
+                privacy_file_state=partial
+            fi
+        fi
+    fi
+    return 0
+}
+validate_profile || true
+ready_connector_rows=$(awk -F '\t' '
+    ($1 == "codex" || $1 == "claude") &&
+        ($2 == "email" || $2 == "calendar") && $3 == "ready" {
+        count++
+    }
+    END { print count + 0 }
+' "$personal_root/config/connector-readiness.tsv")
+case $ready_connector_rows in
+    0) connector_state=blocked ;;
+    4) connector_state=ready ;;
+    *) connector_state=partial ;;
+esac
+
 if [ "$mode" = status ]; then
-    printf 'PERSONAL_AGENT status=ready root=ready lock=free connectors=blocked managed_target=false\n'
+    printf 'PERSONAL_AGENT status=ready root=ready lock=free profile=%s privacy=%s connectors=%s managed_target=false\n' \
+        "$profile_state" "$privacy_state" "$connector_state"
     exit 0
+fi
+
+if [ "$mode" = profile-bootstrap ]; then
+    if [ "$profile_state" = absent ]; then
+        profile_parent=${profile_root%/*}
+        if [ ! -e "$profile_parent" ] && [ ! -L "$profile_parent" ]; then
+            profile_grandparent=${profile_parent%/*}
+            [ -d "$profile_grandparent" ] &&
+                [ ! -L "$profile_grandparent" ] ||
+                fail profile-parent-unavailable
+            [ "$(stat -c %u "$profile_grandparent")" = "$(id -u)" ] ||
+                fail profile-parent-owner
+            mkdir -m 700 "$profile_parent"
+        fi
+        [ -d "$profile_parent" ] && [ ! -L "$profile_parent" ] ||
+            fail profile-parent-type
+        [ "$(stat -c %u "$profile_parent")" = "$(id -u)" ] ||
+            fail profile-parent-owner
+        [ "$(stat -c %a "$profile_parent")" = 700 ] ||
+            fail profile-parent-permissions
+        mkdir -m 700 "$profile_root"
+        validate_profile || fail profile-bootstrap-failed
+    elif [ "$profile_state" != ready ]; then
+        fail profile-invalid
+    fi
+    printf 'PERSONAL_AGENT status=complete action=profile-bootstrap profile=ready privacy=%s\n' \
+        "$privacy_state"
+    exit 0
+fi
+
+if [ "$mode" = privacy-attest ]; then
+    [ "$profile_state" = ready ] || fail profile-not-ready
+    [ "$privacy_file_state" != invalid ] || fail privacy-file-invalid
+    case $provider in openai|anthropic) ;; *) fail invalid-provider ;; esac
+    [ "$attested_value" = off ] || fail invalid-attestation
+    privacy_file=$profile_root/privacy.tsv
+    privacy_tmp=$profile_root/privacy.$$.tmp
+    {
+        if [ -f "$privacy_file" ] && [ ! -L "$privacy_file" ] &&
+            [ "$(stat -c %u "$privacy_file")" = "$(id -u)" ] &&
+            [ "$(stat -c %a "$privacy_file")" = 600 ] &&
+            [ "$(stat -c %h "$privacy_file")" = 1 ]; then
+            awk -F '\t' -v provider="$provider" '
+                ($1 == "openai" || $1 == "anthropic") &&
+                    $2 == "off" && $1 != provider {
+                    print $1 "\t" $2
+                }
+            ' "$privacy_file"
+        fi
+        printf '%s\toff\n' "$provider"
+    } | LC_ALL=C sort >"$privacy_tmp"
+    chmod 600 "$privacy_tmp"
+    mv "$privacy_tmp" "$privacy_file"
+    validate_profile || fail privacy-attestation-failed
+    printf 'PERSONAL_AGENT status=complete action=privacy-attest provider=%s value=off privacy=%s\n' \
+        "$provider" "$privacy_state"
+    exit 0
+fi
+
+if [ "$mode" = authorize ]; then
+    [ "$profile_state" = ready ] || fail profile-not-ready
+    [ "$privacy_state" = ready ] || fail privacy-not-ready
+    case $domain in email|calendar) ;; *) fail invalid-domain ;; esac
+    [ -n "$client_file" ] || fail oauth-client-path-missing
+    case $client_file in /*) ;; *) fail oauth-client-path-non-absolute ;; esac
+    exec "$personal_root/bin/personal-google-auth" \
+        --profile "$profile_root" --domain "$domain" \
+        --client-file "$client_file"
 fi
 
 case $client in codex|claude) ;; *) fail invalid-client ;; esac
@@ -138,15 +295,17 @@ case $task in
 esac
 case $domain in
     local) ;;
-    email|calendar|research-budget)
+    email|calendar)
         readiness=$(awk -F '\t' -v client="$client" -v domain="$domain" '
             $1 == client && $2 == domain { print $3; count++ }
             END { if (count != 1) exit 1 }
         ' "$personal_root/config/connector-readiness.tsv") ||
             fail connector-readiness-ambiguous
         [ "$readiness" = ready ] || fail connector-not-ready
-        fail connector-runtime-profile-unimplemented
+        [ "$profile_state" = ready ] || fail profile-not-ready
+        [ "$privacy_state" = ready ] || fail privacy-not-ready
         ;;
+    research-budget) fail connector-not-ready ;;
     *) fail invalid-domain ;;
 esac
 [ ! -t 0 ] || fail prompt-must-use-stdin
@@ -192,7 +351,12 @@ if [ "$client" = codex ]; then
         for harness_variable in $harness_variables; do
             unset "$harness_variable"
         done
-        "$native_codex" exec --ephemeral --ignore-user-config --strict-config \
+        personal_google_variables=$(env | sed -n \
+            's/^\(PERSONAL_GOOGLE_[A-Za-z0-9_]*\)=.*/\1/p')
+        for personal_google_variable in $personal_google_variables; do
+            unset "$personal_google_variable"
+        done
+        set -- exec --ephemeral --ignore-user-config --strict-config \
             -C "$personal_root" --model gpt-5.6-sol \
             -c 'model_reasoning_effort="high"' \
             -c 'approval_policy={ granular = { sandbox_approval = false, rules = false, mcp_elicitations = true, request_permissions = false, skill_approval = false } }' \
@@ -201,8 +365,18 @@ if [ "$client" = codex ]; then
             -c 'memories.use_memories=false' \
             -c 'feedback.enabled=false' \
             -c 'tool_suggest.discoverables=[]' \
-            -c 'web_search="disabled"' \
-            --sandbox danger-full-access -
+            -c 'web_search="disabled"'
+        if [ "$domain" != local ]; then
+            set -- "$@" \
+                -c 'mcp_servers.personal-google-readonly.enabled=true' \
+                -c "mcp_servers.personal-google-readonly.env={ PERSONAL_GOOGLE_PROFILE=\"$profile_root\" }"
+        fi
+        set -- "$@" --sandbox danger-full-access -
+        if [ "$domain" = local ]; then
+            "$native_codex" "$@"
+        else
+            PERSONAL_GOOGLE_ALLOWED_DOMAIN="$domain" "$native_codex" "$@"
+        fi
     )
     result=$?
 else
@@ -213,21 +387,53 @@ else
         for harness_variable in $harness_variables; do
             unset "$harness_variable"
         done
-        CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 \
-        CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 \
-        DISABLE_TELEMETRY=1 \
-        DISABLE_ERROR_REPORTING=1 \
-        DISABLE_BUG_COMMAND=1 \
-        CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1 \
-        "$native_claude" --print --no-session-persistence --no-chrome \
+        personal_google_variables=$(env | sed -n \
+            's/^\(PERSONAL_GOOGLE_[A-Za-z0-9_]*\)=.*/\1/p')
+        for personal_google_variable in $personal_google_variables; do
+            unset "$personal_google_variable"
+        done
+        if [ "$domain" = local ]; then
+            mcp_manifest=$personal_root/config/empty-mcp.json
+        else
+            mcp_manifest=$personal_root/config/personal-mcp.json
+        fi
+        set -- --print --no-session-persistence --no-chrome \
             --setting-sources project \
             --settings "$personal_root/.claude/settings.json" \
             --strict-mcp-config \
-            --mcp-config "$personal_root/config/empty-mcp.json" \
+            --mcp-config "$mcp_manifest" \
             --model fable --effort high --fallback-model opus \
             --permission-mode dontAsk \
             --allowedTools Read Grep Glob Edit Write 'Bash(git *)' \
                 'Bash(./bin/validate)' 'Bash(harness *)'
+        if [ "$domain" = email ]; then
+            set -- "$@" \
+                'mcp__personal-google-readonly__personal_google_status' \
+                'mcp__personal-google-readonly__personal_gmail_search' \
+                'mcp__personal-google-readonly__personal_gmail_thread'
+        elif [ "$domain" = calendar ]; then
+            set -- "$@" \
+                'mcp__personal-google-readonly__personal_google_status' \
+                'mcp__personal-google-readonly__personal_calendar_events'
+        fi
+        if [ "$domain" = local ]; then
+            CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 \
+            CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 \
+            DISABLE_TELEMETRY=1 \
+            DISABLE_ERROR_REPORTING=1 \
+            DISABLE_BUG_COMMAND=1 \
+            CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1 \
+            "$native_claude" "$@"
+        else
+            PERSONAL_GOOGLE_ALLOWED_DOMAIN="$domain" \
+            CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 \
+            CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 \
+            DISABLE_TELEMETRY=1 \
+            DISABLE_ERROR_REPORTING=1 \
+            DISABLE_BUG_COMMAND=1 \
+            CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1 \
+            "$native_claude" "$@"
+        fi
     )
     result=$?
 fi
