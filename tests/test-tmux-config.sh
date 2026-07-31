@@ -29,6 +29,8 @@ file_mode() {
 }
 
 command -v tmux >/dev/null 2>&1 || fail "tmux unavailable"
+grep -F -x 'bind-key z resize-pane -Z' "$ROOT/config/tmux/tmux.conf" \
+    >/dev/null || fail "managed pane zoom binding"
 home=$TEMP_DIR/home
 mkdir "$home"
 long_tmp=$TEMP_DIR/long-default-temporary-directory/with-enough-components/to-exceed-the-tmux-socket-path-limit

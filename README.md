@@ -145,26 +145,39 @@ harness codex-thread-recovery --status --name harness --target harness
 For an intentional per-thread cold reconnect, do not restart the shared
 remote-control app server. Quit Codex normally if you are inside the target
 TUI; exit status zero is terminal and the supervisor will not respawn it. From
-another tmux window, first list immutable window IDs and select a different
-window, then remove only the exact target and recreate its index with the
-exact remote root:
+another project pane, first list immutable pane IDs and select a different
+pane. Remove only the exact target pane, then split the canonical window with
+the exact repository, target, and remote root:
 
 ```bash
-tmux list-windows -t projects \
-  -F '#{window_index} #{window_id} #{window_name} #{window_active}'
-tmux select-window -t projects:0
-tmux kill-window -t @EXACT_WINDOW_ID
-tmux new-window -d -t projects:2 -n project -c "$HOME/harness" \
-  'exec "$HOME/harness/bin/harness" codex-resilient --run --name project --remote-session 01900000-0000-7000-8000-000000000000'
+tmux list-panes -s -t projects \
+  -F '#{pane_index} #{pane_id} #{pane_title} #{pane_active}'
+tmux select-pane -t %UNAFFECTED_PANE_ID
+tmux kill-pane -t %EXACT_TARGET_PANE_ID
+tmux split-window -d -P -F '#{pane_id}' -t projects:0 \
+  -c /absolute/project/repository \
+  'exec "$HOME/harness/bin/harness" codex-resilient --run --name project --target project --remote-session 01900000-0000-7000-8000-000000000000'
+tmux set-option -p -t %NEW_PANE_ID @harness_target project
+tmux select-pane -t %NEW_PANE_ID -T project
+tmux swap-pane -d -s %NEW_PANE_ID -t projects:0.TARGET_INDEX
+tmux select-layout -t projects:0 main-vertical
 ```
 
-Replace the example ID, index, window name, and supervisor name with the
-intended mapping. Never substitute `--last` for a phone-visible remote root:
+Replace `project` and the example IDs, pane index, repository, and remote root
+with one exact declared target. The pane-local `@harness_target` option is its
+stable automation identity; the title is its presentation label. Never
+substitute `--last` for a phone-visible remote root:
 it selects the most recent local saved session for the launch directory and
-can make two windows display the same chat. A transient nonzero exit needs no
-manual restart; leave the window in place and let the supervisor retry the
+can make two panes display the same chat. A transient nonzero exit needs no
+manual restart; leave the pane in place and let the supervisor retry the
 same exact root. Restarting the shared app server is a separate fleet-wide
 operation because it interrupts every remote-controlled thread.
+
+The canonical Local layout is one `projects:0:codex` window with panes
+`0:harness`, `1:students`, and `2:swallow`. `Ctrl-b z` toggles the selected
+pane between the overview and full-window zoom. Resilient supervisors recover
+Codex failures while tmux remains alive; this is not a Local host-reboot
+session-restoration service.
 
 On Linux, the supervisor launches Codex through `harness codex-login`, which
 sets `RAYON_NUM_THREADS=8` and `TOKIO_WORKER_THREADS=8` for login-node

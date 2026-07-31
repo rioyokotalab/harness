@@ -46,7 +46,7 @@ for repository in "$test_harness" "$students" "$swallow"; do
         'model_reasoning_effort = "high"' \
         >"$repository/.codex/config.toml"
 done
-printf '# target\tindex\tcanonical_repository\n' >"$profile"
+printf '# target\tpane_index\tcanonical_repository\n' >"$profile"
 printf 'harness\t0\t@HARNESS_ROOT@\n' >>"$profile"
 printf 'students\t1\t%s\n' "$students" >>"$profile"
 printf 'swallow\t2\t%s\n' "$swallow" >>"$profile"
@@ -72,9 +72,21 @@ PYTHONPATH="$ROOT/libexec" PYTHONDONTWRITEBYTECODE=1 HARNESS_TESTING=1 \
     HARNESS_TEST_CODEX_TARGETS_FILE="$profile" \
     python3 - "$test_harness" "$students" <<'PY' ||
 import sys
-from harness_codex_targets import cwd_allowed
+from harness_codex_targets import (
+    INITIAL_LAYOUT,
+    PANE_ROLE_OPTION,
+    SESSION_NAME,
+    WINDOW_INDEX,
+    WINDOW_NAME,
+    cwd_allowed,
+)
 
 harness, students = sys.argv[1:]
+assert SESSION_NAME == "projects"
+assert WINDOW_INDEX == 0
+assert WINDOW_NAME == "codex"
+assert INITIAL_LAYOUT == "main-vertical"
+assert PANE_ROLE_OPTION == "@harness_target"
 assert cwd_allowed("students", students)
 assert not cwd_allowed("students", harness)
 assert not cwd_allowed("swallow", harness)

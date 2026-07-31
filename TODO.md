@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-352.
+Next free ID: T-353.
 
 ## Resume contract
 
@@ -16,6 +16,13 @@ Next free ID: T-352.
 5. A failed mutable-state query is unknown, never evidence of absence.
 
 ## Active queue
+
+### T-352 — Consolidate Local Codex sessions into one pane-native window
+
+**Phase:** executing under the owner's process-preserving cutover authorization.
+
+**Record:** `docs/tasks/T-352.md`. Publish and validate pane-aware control
+logic before changing the attached live session.
 
 ### T-196 — Backup lifecycle phase 2
 

@@ -27,6 +27,10 @@ os.environ["HARNESS_TARGET_ROOT"] = TARGET_ROOT
 os.environ.pop("HARNESS_ROOT", None)
 sys.path.insert(0, os.path.join(CONTROL_ROOT, "libexec"))
 from harness_codex_targets import (  # noqa: E402
+    SESSION_NAME,
+    WINDOW_INDEX,
+    WINDOW_NAME,
+    PANE_ROLE_OPTION,
     TargetError,
     cwd_allowed,
     load_targets,
@@ -34,9 +38,10 @@ from harness_codex_targets import (  # noqa: E402
 
 SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 SAFE_WINDOW_ID = re.compile(r"^@[0-9]+$")
-SESSION_NAME = "projects"
+SAFE_PANE_ID = re.compile(r"^%[0-9]+$")
 TARGETS = load_targets()
 EXPECTED = tuple((value["name"], value["index"]) for value in TARGETS)
+PANE_ROLE_FORMAT = "#{" + PANE_ROLE_OPTION + "}"
 TARGET_PATHS = {
     value["name"]: value["repository"] for value in TARGETS
 }
@@ -91,6 +96,12 @@ def event_target(identity):
 def safe_window_id(value):
     if not SAFE_WINDOW_ID.match(value):
         fail("window ID is malformed")
+    return value
+
+
+def safe_pane_id(value):
+    if not SAFE_PANE_ID.match(value):
+        fail("pane ID is malformed")
     return value
 
 
@@ -278,7 +289,7 @@ def enqueue_event(root, identity):
 
 def blocked_identity(arguments):
     return {
-        "schema": 1,
+        "schema": 2,
         "kind": "blocked-root",
         "target": managed_target(arguments.target),
         "runtime": safe_id(arguments.runtime, "runtime"),
@@ -291,6 +302,8 @@ def blocked_identity(arguments):
         ),
         "window_id": safe_window_id(arguments.window_id),
         "window_index": arguments.window_index,
+        "pane_id": safe_pane_id(arguments.pane_id),
+        "pane_index": arguments.pane_index,
     }
 
 
@@ -358,35 +371,63 @@ def tmux_mapping():
     output = run_value(
         [
             "tmux",
-            "list-windows",
+            "list-panes",
+            "-s",
             "-t",
             SESSION_NAME,
             "-F",
-            "#{window_index}\t#{window_name}\t#{window_id}\t#{pane_pid}"
-            "\t#{pane_current_path}",
+            "#{window_index}\t#{window_name}\t#{window_id}\t"
+            "#{pane_index}\t#{pane_title}\t"
+            + PANE_ROLE_FORMAT
+            + "\t#{pane_id}\t#{pane_pid}\t#{pane_current_path}\t#{pane_dead}",
         ],
         check=False,
     )
     rows = []
     for line in output.splitlines():
         fields = line.split("\t")
-        if len(fields) != 5:
+        if len(fields) != 10:
             continue
         try:
-            index = int(fields[0])
-            pane_pid = int(fields[3])
+            window_index = int(fields[0])
+            pane_index = int(fields[3])
+            pane_pid = int(fields[7])
         except ValueError:
             continue
-        rows.append((index, fields[1], fields[2], pane_pid, fields[4]))
-    if sorted((index, name) for index, name, _window, _pid, _cwd in rows) != sorted(
+        rows.append(
+            {
+                "window_index": window_index,
+                "window_name": fields[1],
+                "window_id": fields[2],
+                "index": pane_index,
+                "title": fields[4],
+                "name": fields[5],
+                "pane_id": fields[6],
+                "pane_pid": pane_pid,
+                "cwd": fields[8],
+                "dead": fields[9] == "1",
+            }
+        )
+    if len(rows) != len(EXPECTED):
+        return None
+    windows = {
+        (row["window_index"], row["window_name"], row["window_id"])
+        for row in rows
+    }
+    if len(windows) != 1:
+        return None
+    window_index, window_name, _window_id = next(iter(windows))
+    if window_index != WINDOW_INDEX or window_name != WINDOW_NAME:
+        return None
+    if sorted((row["index"], row["name"]) for row in rows) != sorted(
         (index, name) for name, index in EXPECTED
-    ):
+    ) or any(row["dead"] for row in rows):
         return None
     mapping = {}
-    for index, name, window_id, pane_pid, cwd in rows:
-        if not cwd_allowed(name, cwd):
+    for row in rows:
+        if not cwd_allowed(row["name"], row["cwd"]):
             return None
-        info = process_info(pane_pid)
+        info = process_info(row["pane_pid"])
         if not info:
             return None
         argv = info["argv"]
@@ -397,12 +438,15 @@ def tmux_mapping():
             return None
         if not SAFE_ID.match(thread_id):
             return None
-        mapping[name] = {
-            "index": index,
-            "window_id": window_id,
+        mapping[row["name"]] = {
+            "index": row["index"],
+            "pane_id": row["pane_id"],
+            "window_index": row["window_index"],
+            "window_id": row["window_id"],
+            "window_name": row["window_name"],
             "thread": thread_id,
-            "cwd": cwd,
-            "native_cwd": cwd == TARGET_PATHS[name],
+            "cwd": row["cwd"],
+            "native_cwd": row["cwd"] == TARGET_PATHS[row["name"]],
         }
     return mapping
 
@@ -460,6 +504,9 @@ def phone_mirror_snapshot(mapping, database, processes, target_paths, codex_home
             mapping
             and role in mapping
             and mapping[role].get("index") == index
+            and mapping[role].get("pane_id")
+            and mapping[role].get("window_index") == WINDOW_INDEX
+            and mapping[role].get("window_name") == WINDOW_NAME
             and mapped_cwd_allowed(role, mapping[role].get("cwd", ""))
         )
         receipt["roles"][role] = {
@@ -583,7 +630,10 @@ def phone_mirror_snapshot(mapping, database, processes, target_paths, codex_home
             {
                 "role": role,
                 "thread": mapping[role]["thread"],
+                "pane_id": mapping[role]["pane_id"],
+                "pane_index": mapping[role]["index"],
                 "window_id": mapping[role]["window_id"],
+                "window_index": mapping[role]["window_index"],
                 "cwd": mapping[role]["cwd"],
                 "native_cwd": mapping[role]["cwd"] == target_paths[role],
             }
@@ -683,12 +733,15 @@ For kind=blocked-root, revalidate every event identity against current tmux,
 process, watcher, rollout, app-server, attachment, Git, and durable-ledger
 state. Healthy sibling threads may be active and do not need to be idle.
 Multiple blocked roots are handled by separate serialized events. The exact
-target itself must be unattached. If exact blocked/unsafe-tail evidence
-remains, use bridge-first fresh-root recovery: create and accept one distinct
-provisional root/window/runtime before rename-only promotion; preserve peers
-and attached clients; retire only the old exact TUI leaf; reversibly archive
-the retired blocked root and any rejected helper-created provisional root
-after exact zero-reference and inactivity proof.
+target pane itself must not be selected by an attached client. If exact
+blocked/unsafe-tail evidence remains, use bridge-first fresh-root recovery:
+create and accept one distinct provisional root/window/runtime before
+promotion. Move only the fully accepted provisional pane into
+`projects:0:codex`; assign its exact pane-local `@harness_target` role, title,
+and index; preserve peer panes and attached clients; and retire only the old
+exact TUI leaf. Reversibly archive the retired blocked root and any rejected
+helper-created provisional root after exact zero-reference and inactivity
+proof. Never identify a target by the shared window alone.
 
 After successful promotion and healthy canonical readback, submit exactly one
 deduplicated continuation instruction to the recovered canonical thread. The
@@ -985,6 +1038,8 @@ def parse_arguments():
     parser.add_argument("--app-server-start")
     parser.add_argument("--window-id")
     parser.add_argument("--window-index", type=int)
+    parser.add_argument("--pane-id")
+    parser.add_argument("--pane-index", type=int)
     arguments = parser.parse_args()
     if not 5 <= arguments.interval <= 3600:
         parser.error("--interval must be between 5 and 3600 seconds")
@@ -998,6 +1053,8 @@ def parse_arguments():
         "app_server_start",
         "window_id",
         "window_index",
+        "pane_id",
+        "pane_index",
     )
     if arguments.enqueue_blocked:
         if any(getattr(arguments, field) is None for field in blocked_fields):

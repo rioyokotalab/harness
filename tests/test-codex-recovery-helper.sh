@@ -76,6 +76,9 @@ assert "codex unarchive" not in source
 assert "phone-mirror-drift" in source
 assert "physical-phone visibility" in source
 assert "never rewrite it" in source
+assert "projects:0:codex" in source
+assert "@harness_target" in source
+assert "shared window alone" in source
 PY
 
 HARNESS_ROOT=$ROOT python3 -B - "$SOURCE" "$TEST_ROOT" <<'PY'
@@ -90,6 +93,9 @@ module = importlib.machinery.SourceFileLoader(
     "recovery_helper_phone_test", source
 ).load_module()
 assert module.SESSION_NAME == "projects"
+assert module.WINDOW_INDEX == 0
+assert module.WINDOW_NAME == "codex"
+assert module.PANE_ROLE_OPTION == "@harness_target"
 for kind in module.TARGETLESS_EVENT_KINDS:
     prompt = module.worker_prompt({"identity": {"kind": kind}})
     assert "Exact managed target: harness" in prompt
@@ -130,6 +136,50 @@ assert module.defer_queued_event(
 assert module.pending_event_for_kind(
     str(event_root), "phone-mirror-drift"
 ) is None
+original_run_value = module.run_value
+original_process_info = module.process_info
+rows = [
+    "0\tcodex\t@50\t{}\t{}\t{}\t%{}\t{}\t{}\t0".format(
+        index,
+        role,
+        role,
+        index,
+        100 + index,
+        module.TARGET_PATHS[role],
+    )
+    for role, index in module.EXPECTED
+]
+module.run_value = lambda _arguments, check=False: "\n".join(rows) + "\n"
+module.process_info = lambda pid: {
+    "argv": [
+        "harness-codex-resilient",
+        "--remote-session",
+        "thread-{}".format(module.EXPECTED[pid - 100][0]),
+    ]
+}
+pane_mapping = module.tmux_mapping()
+assert sorted(pane_mapping) == ["harness", "students", "swallow"]
+assert pane_mapping["harness"]["pane_id"] == "%0"
+assert pane_mapping["swallow"]["window_id"] == "@50"
+assert pane_mapping["students"]["window_name"] == "codex"
+title_drift = [
+    row.replace(
+        "\t{}\t{}\t".format(role, role),
+        "\tapplication-title\t{}\t".format(role),
+        1,
+    )
+    for row, (role, _index) in zip(rows, module.EXPECTED)
+]
+module.run_value = lambda _arguments, check=False: (
+    "\n".join(title_drift) + "\n"
+)
+assert module.tmux_mapping() is not None
+module.run_value = lambda _arguments, check=False: (
+    "\n".join(row.replace("\tcodex\t", "\twrong\t") for row in rows) + "\n"
+)
+assert module.tmux_mapping() is None
+module.run_value = original_run_value
+module.process_info = original_process_info
 codex_home = base / "codex-home"
 sessions = codex_home / "sessions"
 sessions.mkdir(parents=True)
@@ -166,7 +216,10 @@ for index, role in enumerate(("harness", "students", "swallow")):
     )
     mapping[role] = {
         "index": index,
-        "window_id": "@{}".format(index),
+        "pane_id": "%{}".format(index),
+        "window_index": 0,
+        "window_id": "@0",
+        "window_name": "codex",
         "thread": thread,
         "cwd": harness_root,
         "native_cwd": role == "harness",
@@ -327,7 +380,9 @@ helper --enqueue-blocked \
     --app-server-pid 4349 \
     --app-server-start 654329 \
     --window-id @99 \
-    --window-index 9 >"$TEST_ROOT/unknown.out" 2>"$TEST_ROOT/unknown.err" ||
+    --window-index 0 \
+    --pane-id %99 \
+    --pane-index 9 >"$TEST_ROOT/unknown.out" 2>"$TEST_ROOT/unknown.err" ||
     unknown_status=$?
 [ "$unknown_status" -eq 2 ] ||
     fail "unknown target did not exit 2"
@@ -364,8 +419,10 @@ do
         --watcher-start "12345$index" \
         --app-server-pid "$((4340 + index))" \
         --app-server-start "65432$index" \
-        --window-id "@9$index" \
-        --window-index "$index" >"$TEST_ROOT/enqueue-$target.out"
+        --window-id @90 \
+        --window-index 0 \
+        --pane-id "%9$index" \
+        --pane-index "$index" >"$TEST_ROOT/enqueue-$target.out"
     grep -F 'enqueue=queued' "$TEST_ROOT/enqueue-$target.out" >/dev/null ||
         fail "$target blocked event was not queued"
 
@@ -414,8 +471,10 @@ helper --enqueue-blocked \
     --watcher-start 123452 \
     --app-server-pid 4342 \
     --app-server-start 654322 \
-    --window-id @92 \
-    --window-index 2 >"$TEST_ROOT/duplicate.out"
+    --window-id @90 \
+    --window-index 0 \
+    --pane-id %92 \
+    --pane-index 2 >"$TEST_ROOT/duplicate.out"
 grep -F 'enqueue=already-queued' "$TEST_ROOT/duplicate.out" >/dev/null ||
     fail "duplicate event was not deduplicated"
 

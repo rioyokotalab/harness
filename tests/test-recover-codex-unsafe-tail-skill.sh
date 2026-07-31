@@ -96,8 +96,14 @@ assert_contains 'never issue a second rollback' "$SAFE" \
 # Bridge creation, promotion, retirement, zombie, and retry gates.
 assert_contains 'distinct provisional root, tmux window, and runtime name' \
     "$BRIDGE" 'distinct bridge identities'
-assert_contains 'Promotion is rename-only' "$BRIDGE" \
+assert_contains 'Root promotion is rename-only' "$BRIDGE" \
     'rename-only promotion'
+assert_contains 'For a declared pane-native target' "$BRIDGE" \
+    'pane-native promotion'
+assert_contains '`break-pane -d`' "$BRIDGE" \
+    'old pane preservation'
+assert_contains '`join-pane -d`' "$BRIDGE" \
+    'accepted pane promotion'
 assert_contains 'Only after promotion and that published checkpoint' "$BRIDGE" \
     'promotion-before-retirement'
 assert_contains 'must not block bridge launch or promotion' "$BRIDGE" \

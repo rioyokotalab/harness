@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pane-blind health, ordering, and bounded repair for Local Codex windows."""
+"""Content-blind health, ordering, and bounded repair for Local Codex panes."""
 
 from __future__ import print_function
 
@@ -24,14 +24,18 @@ os.environ["HARNESS_TARGET_ROOT"] = CONTROL_ROOT
 os.environ.pop("HARNESS_ROOT", None)
 sys.path.insert(0, os.path.join(CONTROL_ROOT, "libexec"))
 from harness_codex_targets import (  # noqa: E402
+    SESSION_NAME,
+    WINDOW_INDEX,
+    WINDOW_NAME,
+    PANE_ROLE_OPTION,
     TargetError,
     load_targets,
     validate_all,
 )
 
-SESSION_NAME = "projects"
 TARGETS = load_targets()
 EXPECTED = tuple((value["name"], value["index"]) for value in TARGETS)
+PANE_ROLE_FORMAT = "#{" + PANE_ROLE_OPTION + "}"
 TARGET_PATHS = {
     value["name"]: value["repository"] for value in TARGETS
 }
@@ -430,36 +434,41 @@ def reciprocal_socket_snapshot():
     return peers
 
 
-def tmux_windows():
+def tmux_panes():
     output = run(
         [
             "tmux",
-            "list-windows",
+            "list-panes",
+            "-s",
             "-t",
             SESSION_NAME,
             "-F",
-            "#{window_index}\t#{window_id}\t#{window_name}\t#{window_panes}\t"
-            "#{pane_id}\t#{pane_pid}\t#{pane_current_path}\t#{pane_dead}",
+            "#{window_index}\t#{window_id}\t#{window_name}\t"
+            "#{pane_index}\t#{pane_id}\t#{pane_title}\t"
+            + PANE_ROLE_FORMAT
+            + "\t#{pane_pid}\t#{pane_current_path}\t#{pane_dead}",
         ]
     )
-    windows = []
+    panes = []
     for line in output.splitlines():
         fields = line.split("\t")
-        if len(fields) != 8:
-            fail("tmux window metadata is malformed")
-        windows.append(
+        if len(fields) != 10:
+            fail("tmux pane metadata is malformed")
+        panes.append(
             {
-                "index": int(fields[0]),
+                "window_index": int(fields[0]),
                 "window_id": fields[1],
-                "name": fields[2],
-                "panes": int(fields[3]),
+                "window_name": fields[2],
+                "index": int(fields[3]),
                 "pane_id": fields[4],
-                "pane_pid": int(fields[5]),
-                "path": fields[6],
-                "dead": fields[7] == "1",
+                "title": fields[5],
+                "name": fields[6],
+                "pane_pid": int(fields[7]),
+                "path": fields[8],
+                "dead": fields[9] == "1",
             }
         )
-    return windows
+    return panes
 
 
 def tmux_clients():
@@ -470,72 +479,111 @@ def tmux_clients():
             "-t",
             SESSION_NAME,
             "-F",
-            "#{client_pid}\t#{window_id}",
+            "#{client_pid}\t#{window_id}\t#{pane_id}",
         ],
     )
-    return sorted(tuple(line.split("\t", 1)) for line in output.splitlines() if "\t" in line)
+    return sorted(
+        tuple(line.split("\t"))
+        for line in output.splitlines()
+        if line.count("\t") == 2
+    )
 
 
-def enforce_order(windows):
+def canonical_window(panes):
+    identities = {
+        (pane["window_index"], pane["window_id"], pane["window_name"])
+        for pane in panes
+    }
+    if len(identities) != 1:
+        return False
+    index, _window_id, name = next(iter(identities))
+    return index == WINDOW_INDEX and name == WINDOW_NAME
+
+
+def enforce_order(panes):
     expected_names = [name for name, _index in EXPECTED]
     if (
-        len(windows) != 3
-        or sorted(window["name"] for window in windows) != sorted(expected_names)
-        or any(window["panes"] != 1 or window["dead"] for window in windows)
+        len(panes) != len(EXPECTED)
+        or not canonical_window(panes)
+        or sorted(pane["name"] for pane in panes) != sorted(expected_names)
+        or any(pane["dead"] for pane in panes)
         or any(
-            not target_cwd_allowed(window["name"], window["path"])
-            for window in windows
+            not target_cwd_allowed(pane["name"], pane["path"])
+            for pane in panes
         )
     ):
-        return windows, "deferred-ambiguous"
+        return panes, "deferred-ambiguous"
     before_clients = tmux_clients()
     action = "none"
-    for name, target_index in EXPECTED[:2]:
-        current = next(window for window in windows if window["name"] == name)
-        if current["index"] != target_index:
-            target = next(
-                (window for window in windows if window["index"] == target_index),
-                None,
-            )
-            operation = "swap-window" if target else "move-window"
+    for pane in panes:
+        if pane["title"] != pane["name"]:
             run(
                 [
                     "tmux",
-                    operation,
+                    "select-pane",
+                    "-t",
+                    pane["pane_id"],
+                    "-T",
+                    pane["name"],
+                ]
+            )
+            action = "titled"
+    if action == "titled":
+        panes = tmux_panes()
+    for name, target_index in EXPECTED:
+        current = next(pane for pane in panes if pane["name"] == name)
+        if current["index"] != target_index:
+            target = next(
+                (pane for pane in panes if pane["index"] == target_index),
+                None,
+            )
+            if target is None:
+                fail("tmux pane order target is absent")
+            run(
+                [
+                    "tmux",
+                    "swap-pane",
                     "-d",
                     "-s",
-                    current["window_id"],
+                    current["pane_id"],
                     "-t",
-                    "{}:{}".format(SESSION_NAME, target_index),
+                    target["pane_id"],
                 ]
             )
             action = "ordered"
-            windows = tmux_windows()
-    if next(window for window in windows if window["name"] == "swallow")["index"] != 2:
+            panes = tmux_panes()
+    if any(
+        next(pane for pane in panes if pane["name"] == name)["index"] != index
+        for name, index in EXPECTED
+    ):
         fail("tmux order correction did not converge")
     if tmux_clients() != before_clients:
         fail("tmux order correction changed attached clients")
-    return windows, action
+    return panes, action
 
 
-def collect_health(windows, processes=None, socket_peers=None):
+def collect_health(panes, processes=None, socket_peers=None):
     lookup_process = process_info if processes is None else processes.get
     health = {}
     for name, expected_index in EXPECTED:
-        matches = [window for window in windows if window["name"] == name]
+        matches = [pane for pane in panes if pane["name"] == name]
         if len(matches) != 1:
-            health[name] = {"state": "unhealthy", "reason": "window-missing"}
+            health[name] = {"state": "unhealthy", "reason": "pane-missing"}
             continue
-        window = matches[0]
-        entry = {"window": window, "state": "unhealthy", "reason": "metadata"}
-        if window["panes"] != 1 or window["dead"]:
+        pane = matches[0]
+        entry = {"pane": pane, "state": "unhealthy", "reason": "metadata"}
+        if (
+            pane["dead"]
+            or pane["window_index"] != WINDOW_INDEX
+            or pane["window_name"] != WINDOW_NAME
+        ):
             health[name] = entry
             continue
-        if not target_cwd_allowed(name, window["path"]):
+        if not target_cwd_allowed(name, pane["path"]):
             entry["reason"] = "native-cwd"
             health[name] = entry
             continue
-        supervisor_info = lookup_process(window["pane_pid"])
+        supervisor_info = lookup_process(pane["pane_pid"])
         identity = parse_supervisor(supervisor_info)
         if not identity or supervisor_info["uid"] != os.getuid():
             entry["reason"] = "supervisor-identity"
@@ -554,7 +602,7 @@ def collect_health(windows, processes=None, socket_peers=None):
         if (
             supervisor.get("target") != name
             or supervisor.get("phase") not in ("running", "backoff")
-            or supervisor.get("owner_pid") != str(window["pane_pid"])
+            or supervisor.get("owner_pid") != str(pane["pane_pid"])
         ):
             entry["reason"] = "supervisor-owner"
             health[name] = entry
@@ -562,9 +610,9 @@ def collect_health(windows, processes=None, socket_peers=None):
         entry["identity"] = identity
         tui_candidates = []
         process_descendants = (
-            descendants(window["pane_pid"])
+            descendants(pane["pane_pid"])
             if processes is None
-            else snapshot_descendants(window["pane_pid"], processes)
+            else snapshot_descendants(pane["pane_pid"], processes)
         )
         for item in process_descendants:
             if item["comm"] not in CODEX_COMMS:
@@ -617,7 +665,7 @@ def collect_health(windows, processes=None, socket_peers=None):
             watcher_ok = bool(
                 watcher
                 and watcher["uid"] == os.getuid()
-                and watcher["parent"] == window["pane_pid"]
+                and watcher["parent"] == pane["pane_pid"]
                 and recovery.get("thread") == identity["thread"]
             )
         entry["recovery"] = recovery
@@ -676,26 +724,28 @@ def mapping_snapshot(mapping, health, processes=None):
                 "thread": identity["thread"],
                 "app_server_pid": entry["app_server_pid"],
                 "app_server_start": server["start"],
-                "index": entry["window"]["index"],
-                "window_id": entry["window"]["window_id"],
-                "cwd": entry["window"]["path"],
-                "native_cwd": entry["window"]["path"] == TARGET_PATHS[name],
+                "index": entry["pane"]["index"],
+                "pane_id": entry["pane"]["pane_id"],
+                "window_index": entry["pane"]["window_index"],
+                "window_id": entry["pane"]["window_id"],
+                "window_name": entry["pane"]["window_name"],
+                "cwd": entry["pane"]["path"],
+                "native_cwd": entry["pane"]["path"] == TARGET_PATHS[name],
             }
     return mapping
 
 
-def canonical_topology(windows):
-    if len(windows) != len(EXPECTED):
+def canonical_topology(panes):
+    if len(panes) != len(EXPECTED) or not canonical_window(panes):
         return False
     for name, index in EXPECTED:
         matches = [
-            window
-            for window in windows
-            if window["name"] == name and window["index"] == index
+            pane
+            for pane in panes
+            if pane["name"] == name and pane["index"] == index
         ]
         if (
             len(matches) != 1
-            or matches[0]["panes"] != 1
             or matches[0]["dead"]
             or not target_cwd_allowed(name, matches[0]["path"])
         ):
@@ -703,7 +753,7 @@ def canonical_topology(windows):
     return True
 
 
-def recovery_candidates(windows, health, clients, processes=None):
+def recovery_candidates(panes, health, clients, processes=None):
     lookup_process = process_info if processes is None else processes.get
     blocked = [
         name
@@ -713,14 +763,14 @@ def recovery_candidates(windows, health, clients, processes=None):
     ]
     if not blocked:
         return [], "none"
-    if not canonical_topology(windows):
+    if not canonical_topology(panes):
         return [], "deferred-ambiguous"
     stable = []
     for name, _index in EXPECTED:
         entry = health.get(name, {})
         if (
             not entry.get("identity")
-            or not entry.get("window")
+            or not entry.get("pane")
             or not entry.get("app_server_pid")
         ):
             return [], "deferred-peer-identity"
@@ -728,13 +778,13 @@ def recovery_candidates(windows, health, clients, processes=None):
     app_servers = {entry.get("app_server_pid") for entry in stable}
     if len(app_servers) != 1 or None in app_servers:
         return [], "deferred-app-server-identity"
-    attached = {window_id for _pid, window_id in clients}
+    attached = {pane_id for _pid, _window_id, pane_id in clients}
     candidates = []
     deferred = False
     for target in blocked:
         target_entry = health[target]
-        target_window = target_entry["window"]
-        if target_window["window_id"] in attached:
+        target_pane = target_entry["pane"]
+        if target_pane["pane_id"] in attached:
             deferred = True
             continue
         identity = target_entry.get("identity") or {}
@@ -763,8 +813,10 @@ def recovery_candidates(windows, health, clients, processes=None):
                 "app_server_start": server["start"],
                 "recoveries": recovery.get("recoveries", "unknown"),
                 "rolled_back": recovery.get("rolled_back", "unknown"),
-                "window_id": target_window["window_id"],
-                "window_index": target_window["index"],
+                "window_id": target_pane["window_id"],
+                "window_index": target_pane["window_index"],
+                "pane_id": target_pane["pane_id"],
+                "pane_index": target_pane["index"],
             }
         )
     if candidates:
@@ -799,6 +851,10 @@ def enqueue_helper_recovery(candidate):
         candidate["window_id"],
         "--window-index",
         str(candidate["window_index"]),
+        "--pane-id",
+        candidate["pane_id"],
+        "--pane-index",
+        str(candidate["pane_index"]),
     ]
     result = subprocess.run(
         arguments,
@@ -812,13 +868,13 @@ def enqueue_helper_recovery(candidate):
 def test_fixture(path, enforce):
     with open(path, "r") as stream:
         fixture = json.load(stream)
-    windows = fixture["windows"]
+    panes = fixture["panes"]
     order_action = "none"
-    names = [window["name"] for window in windows]
+    names = [pane["name"] for pane in panes]
     if enforce:
-        if len(windows) == 3 and sorted(names) == sorted(name for name, _ in EXPECTED):
+        if len(panes) == 3 and sorted(names) == sorted(name for name, _ in EXPECTED):
             for name, index in EXPECTED:
-                next(window for window in windows if window["name"] == name)["index"] = index
+                next(pane for pane in panes if pane["name"] == name)["index"] = index
             order_action = "ordered" if fixture.get("out_of_order") else "none"
         else:
             order_action = "deferred-ambiguous"
@@ -912,14 +968,14 @@ def main():
         repair_action = "none"
         with exclusive_lock(os.path.join(root, "monitor.lock")):
             try:
-                windows = tmux_windows()
+                panes = tmux_panes()
                 if arguments.enforce_order:
-                    windows, order_action = enforce_order(windows)
+                    panes, order_action = enforce_order(panes)
                 processes = process_snapshot(
-                    window["pane_pid"] for window in windows
+                    pane["pane_pid"] for pane in panes
                 )
                 socket_peers = reciprocal_socket_snapshot()
-                health = collect_health(windows, processes, socket_peers)
+                health = collect_health(panes, processes, socket_peers)
                 mapping = read_private_json(mapping_path, {})
                 mapping = mapping_snapshot(mapping, health, processes)
                 atomic_json(mapping_path, mapping)
@@ -936,7 +992,7 @@ def main():
                 )
                 if arguments.auto_recover:
                     candidates, selection = recovery_candidates(
-                        windows,
+                        panes,
                         health,
                         tmux_clients(),
                         processes,
@@ -957,11 +1013,11 @@ def main():
                 for name, index in EXPECTED:
                     entry = health.get(name, {})
                     print(
-                        "TMUX_CODEX_WINDOW index={} name={} state={} reason={}".format(
+                        "TMUX_CODEX_PANE index={} name={} state={} reason={}".format(
                             index,
                             name,
                             entry.get("state", "unhealthy"),
-                            entry.get("reason", "window-missing"),
+                            entry.get("reason", "pane-missing"),
                         )
                     )
             except MonitorError:
