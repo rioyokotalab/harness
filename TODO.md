@@ -19,10 +19,12 @@ Next free ID: T-353.
 
 ### T-352 — Consolidate Local Codex sessions into one pane-native window
 
-**Phase:** executing under the owner's process-preserving cutover authorization.
+**Phase:** live migration accepted; Riken post-sync context refresh deferred
+because its managed tmux session is absent.
 
-**Record:** `docs/tasks/T-352.md`. Publish and validate pane-aware control
-logic before changing the attached live session.
+**Record:** `docs/tasks/T-352.md`. Retry only the retained Riken refresh after
+one detached managed session is proven live; do not create that session under
+refresh authority.
 
 ### T-196 — Backup lifecycle phase 2
 
