@@ -1,6 +1,6 @@
 # T-356 Harness integration plan
 
-Phase: `blocked on owner-selected non-sensitive Gmail read acceptance`.
+Phase: `blocked on exact Calendar read-only consent authorization`.
 
 ## Outcome
 

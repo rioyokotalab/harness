@@ -19,10 +19,9 @@ Next free ID: T-357.
 
 ### T-356 — Personal-only email/calendar connector boundary
 
-**Phase:** blocked on owner selection and authorization of one non-sensitive
-Gmail read. The Riken consent completed with exactly one read-only scope, the
-private token boundary and tunnel cleanup pass, and every connector remains
-blocked pending acceptance.
+**Phase:** blocked on exact Calendar read-only consent authorization. Gmail
+read-only passed one owner-selected non-sensitive acceptance search and is
+ready for Codex and Claude; Calendar and all writes remain blocked.
 
 **Record:** `docs/tasks/T-356.md`.
 
