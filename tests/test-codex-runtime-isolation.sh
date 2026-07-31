@@ -12,6 +12,7 @@ swallow_pid=
 harness_release=
 students_release=
 swallow_release=
+canonical_release=
 harness_payload=
 students_payload=
 swallow_payload=
@@ -44,7 +45,8 @@ cleanup() {
     stop_process "$students_pid"
     stop_process "$harness_pid"
     for runtime_release in \
-        "$harness_release" "$students_release" "$swallow_release"
+        "$harness_release" "$students_release" "$swallow_release" \
+        "$canonical_release"
     do
         if [ -n "$runtime_release" ] && [ -d "$runtime_release" ] &&
             [ ! -L "$runtime_release" ]; then
@@ -245,9 +247,32 @@ grep -F 'target=harness' "$harness_release/.codex-runtime-release" >/dev/null ||
     fail "runtime release remained keyed by the whole commit"
 [ "$(file_mode "$harness_release")" = 500 ] &&
     [ "$(file_mode "$harness_release/.codex-runtime-release")" = 400 ] &&
-    [ "$(file_mode \
+[ "$(file_mode \
         "$harness_release/libexec/harness-codex-resilient")" = 555 ] ||
     fail "runtime release is not read-only"
+
+canonical_parent=$TEST_ROOT/canonical-parent
+canonical_alias=$TEST_ROOT/canonical-alias
+canonical_root=$canonical_alias/private-control
+mkdir -m 700 "$canonical_parent" "$canonical_parent/private-control"
+ln -s "$canonical_parent" "$canonical_alias"
+canonical_release=$canonical_parent/private-control/releases/harness/$harness_payload
+(
+    cd "$target_harness"
+    HARNESS_TESTING=1 \
+    HARNESS_TEST_CODEX_RELEASE_ROOT="$canonical_root" \
+    HARNESS_CODEX_RELEASE_TARGET=harness \
+    HARNESS_TARGET_ROOT="$target_harness" \
+        "$control/libexec/harness-codex-runtime-release" \
+            --exec-resilient --plan --target harness \
+            --name canonical-parent --last
+) >"$TEST_ROOT/canonical-parent.out"
+grep -F 'name=canonical-parent target=harness selector=last status=ready' \
+    "$TEST_ROOT/canonical-parent.out" >/dev/null ||
+    fail "runtime release did not survive a canonical parent-path change"
+[ -d "$canonical_release" ] ||
+    fail "runtime release was not created under its canonical parent"
+
 grep -F 'target=harness' "$runtime/harness/shared.state" >/dev/null ||
     fail "Harness supervisor state lost target identity"
 [ -d "$runtime/harness/shared.lock" ] ||
