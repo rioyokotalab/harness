@@ -3,8 +3,8 @@
 Require both aliases to pass fresh independent probes. On the recovered Mac,
 run value-free checks:
 
-- `macos-ssh-supervisor --host HOST --auth-status`
-- `macos-ssh-supervisor --host HOST --status`
+- `macos-tunnel-supervisor --host HOST --auth-status`
+- `macos-tunnel-supervisor --host HOST --status`
 - `macos-tunnel-watchdog --status`
 - `macos-doctor`
 - `codex-arg0-housekeeping --plan`

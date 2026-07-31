@@ -17,15 +17,6 @@ Next free ID: T-354.
 
 ## Active queue
 
-### T-352 — Consolidate Local Codex sessions into one pane-native window
-
-**Phase:** Riken's managed session is live; its matching supervisor is
-misclassified only because macOS reports the `/bin/sh` process as `bash`.
-
-**Record:** `docs/tasks/T-352.md`. Publish the narrow classifier fix, validate
-the existing session without relaunching it, then submit only the newest
-retained refresh.
-
 ### T-196 — Backup lifecycle phase 2
 
 **Phase:** time-gated until 2026-08-02; all eight chains are 2/8.

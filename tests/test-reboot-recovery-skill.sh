@@ -131,6 +131,12 @@ assert_contains "$VALIDATION_REFERENCE" \
     'Require both aliases to pass fresh independent probes.' \
     "fresh route validation"
 assert_contains "$VALIDATION_REFERENCE" \
+    'macos-tunnel-supervisor --host HOST --auth-status' \
+    "managed tunnel authentication validation"
+assert_contains "$VALIDATION_REFERENCE" \
+    'macos-tunnel-supervisor --host HOST --status' \
+    "managed tunnel process validation"
+assert_contains "$VALIDATION_REFERENCE" \
     'exactly one detached, live' \
     "exact tmux session topology"
 assert_contains "$VALIDATION_REFERENCE" \
