@@ -19,8 +19,8 @@ Next free ID: T-356.
 
 ### T-355 — Private Personal operations project
 
-**Phase:** interviewing; local, GitHub, connector, and live-session execution
-remain deferred until the owner freezes the plan and says `go`.
+**Phase:** ready-for-go; D-001 through D-019 are frozen. Local, GitHub,
+connector, and bounded-process execution remain deferred until explicit `go`.
 
 **Record:** `docs/tasks/T-355.md`. **Plan:** `docs/plans/t355-personal-project.md`.
 

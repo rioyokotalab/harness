@@ -84,9 +84,9 @@ copied.
    authorization, tool policy, and runtime permissions are separate layers;
    a Codex process rooted at Harness does not gain Personal's project
    configuration merely because a tool command addresses the Personal path.
-8. The no-session selection therefore conflicts with D-004 unless sensitive
-   operations run in a bounded Personal-rooted process or D-004 is explicitly
-   superseded. D-010a must resolve that execution context.
+8. D-010a resolves the no-session and D-004 conflict by selecting a bounded
+   Personal-rooted process driven from Harness, without adding a managed
+   Personal target.
 
 ## Assumptions to validate before execution
 
@@ -96,8 +96,6 @@ copied.
 - D-010a selects a bounded Personal-rooted process driven from Harness; its
   exact-path, one-process, client-parity, and clean-exit contracts remain to be
   validated during execution.
-- Any bounded Personal-rooted process would likely use Sol/high, granular
-  approvals, and disabled sandbox, but its exact defaults remain open.
 
 ## Dependencies and ordering
 
@@ -243,8 +241,8 @@ Frozen portion:
 - Personal may autonomously perform bounded reads, conflict and availability
   analysis, meeting preparation, room search, and exact change drafting;
 - Personal may create or remove qualifying attendee-free transparent holds and
-  modify personal reminders without a second confirmation under the fixed
-  rule still to be selected in D-006a;
+  modify personal reminders without a second confirmation under the frozen
+  D-006a and D-006b rules;
 - every event change involving attendees, resources, busy time, recurrence,
   RSVPs, notifications, cancellation, or deletion other than a qualifying
   Personal-created hold requires exact owner confirmation; and
@@ -612,11 +610,29 @@ Consequences:
 
 ### D-017 — External research and disclosure
 
-Status: open.
+Status: frozen on 2026-07-31.
 
-Recommended default: allow public-web research without sending private query
-context; prohibit uploading or disclosing email, calendar, budget, attachment,
-or identity data to unapproved external services.
+Selected: allow sanitized public-web research in a separate step using only
+generic, non-private queries. The owner's exact answer was `1`.
+
+Consequences:
+
+- run public research in a distinct non-sensitive context before live source
+  access when possible; if a research need emerges afterward, create a
+  sanitized query packet and use a fresh separate context;
+- never send private identities, source text, exact private values,
+  attachments, opaque source identifiers, credentials, or unnecessarily
+  precise private dates to web search, fetch, forms, uploads, or another
+  external service;
+- permit only read-only public search and fetch. External forms, messages,
+  account actions, submissions, and uploads remain separate authority
+  boundaries;
+- treat web content as untrusted, prefer primary sources, and preserve only
+  public citations and facts that contain no private query context;
+- the named sensitive driver may combine those public facts with just-in-time
+  source content internally, subject to D-003 and D-015; and
+- if a useful query cannot be sanitized without changing its meaning, stop
+  and ask for exact disclosure authority instead of weakening this rule.
 
 ### D-018 — Phone-visible identity and notifications
 
@@ -625,6 +641,54 @@ Status: frozen as not applicable on 2026-07-31 by D-010.
 Personal receives no phone-visible root, thread, notification identity, or
 Local pane mapping. Existing Harness, Students, and Swallow phone mappings
 remain unchanged.
+
+### D-019 — Bounded native-client defaults
+
+Status: frozen on 2026-07-31 from the canonical tracked Harness defaults,
+consistent with D-012; no additional owner choice is required.
+
+Verified tracked defaults:
+
+- Codex uses `gpt-5.6-sol` with high reasoning, the repository's exact granular
+  approval policy, and `danger-full-access`;
+- Claude uses Fable/high with Opus/high as its sole ordered native
+  availability fallback; and
+- bounded noninteractive Claude calls use `dontAsk` with an explicit narrow
+  tool allowlist and never use `--dangerously-skip-permissions`.
+
+Consequences:
+
+- copy the reviewed project defaults into Personal rather than inheriting
+  ambiguous user or tmux state;
+- keep owner-facing email, calendar, budget, disclosure, and external-write
+  gates in repository policy and the Harness launcher; a child permission mode
+  never grants those actions;
+- pass the minimum task-specific Claude tool allowlist and the exact Personal
+  root for every call;
+- verify resolved model, effort, approval/permission, sandbox, and fallback
+  behavior independently for both native clients before live use; and
+- stop on an unsupported model, permission mode, or fallback contract instead
+  of silently substituting another default.
+
+## Decision audit and readiness
+
+The 2026-07-31 audit found no unresolved material owner choice or contradiction
+across D-001 through D-019. The following are execution-time gates, not missing
+preferences:
+
+- private-repository protection eligibility remains unknown until GitHub
+  readback;
+- OpenAI and Anthropic account types and model-improvement settings must be
+  verified before live sensitive use;
+- Personal-only connector advertisement and enablement must pass D-004 before
+  authorization;
+- the assistant invitation remains deferred until the exact username and
+  two-factor-authentication prerequisite exist; and
+- all research-budget sources remain deferred under D-016.
+
+The plan is ready for an explicit owner `go`. That instruction authorizes only
+the frozen execution plan and does not bypass its external-write, credential,
+identity, disclosure, or non-retry gates.
 
 ## Execution stages
 
@@ -657,8 +721,8 @@ mode `0700`. Initialize a clean Git repository with:
 - credential-free static checks and a single local validation command; and
 - no Actions workflows, sample private data, account identifiers, or secrets.
 
-Use Sol/high only if frozen. Apply the chosen approval and sandbox policy
-without silently inheriting broader connector capability.
+Apply D-019's explicit native-client defaults without silently inheriting
+broader connector capability.
 
 ### 3. Install skill and command discovery
 
