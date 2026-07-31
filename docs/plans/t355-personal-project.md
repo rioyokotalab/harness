@@ -125,23 +125,23 @@ reason, consequences, and any future approval gate.
 
 ### D-001 — Repository ownership and group exclusion
 
-Status: open; blocking.
+Status: frozen on 2026-07-31.
 
-Recommended default: prioritize confidentiality and create
-`rioyokota/personal` as a private user-owned repository. This meets group
-exclusion with the smallest blast radius, but does not meet the requested
-`rioyokotalab` ownership.
+Selected: create `rioyokota/personal` as a private user-owned repository.
+The owner's exact answer was `1`, selecting the recommended option.
 
-Alternatives:
+Rationale and consequences:
 
-- create a dedicated organization for sensitive Personal work, accepting
-  separate administration and possible billing;
-- first run a separately planned organization-wide migration from base
-  permission `write` to `none`, explicitly restoring intended access across
-  every existing repository, then create `rioyokotalab/personal`; this has
-  broad impact and cannot be bundled as a small Personal-project change; or
-- knowingly allow all organization members inherited write access, which
-  contradicts the stated privacy requirement and is not recommended.
+- group exclusion and minimal blast radius take precedence over the original
+  `rioyokotalab` ownership preference;
+- do not change `rioyokotalab` base permissions or any existing repository;
+- organization members receive no access merely through their organization
+  membership;
+- verify private visibility and the exact collaborator list before and after
+  the first push; and
+- assistant access, if later selected, must use the capabilities available to
+  a personal-account repository rather than organization roles such as
+  `Triage`.
 
 ### D-002 — Security isolation from other same-user agents
 
@@ -205,11 +205,13 @@ commitment.
 
 Status: open.
 
-Recommended default: after the assistant creates a GitHub account and enables
-two-factor authentication, add that account as an outside collaborator with
-`Triage` if the chosen owner surface supports it. Escalate to `Write` only for
-a concrete repository workflow. Do not make the assistant an organization
-member or share Personal connector authorization.
+The D-001 selection removes organization roles such as `Triage` from the
+design. Before this decision is asked, verify the current permissions granted
+to collaborators on a private personal-account repository. Recommended
+direction: wait until the assistant creates an account and enables two-factor
+authentication, then grant the least capability that the selected
+collaboration workflow actually requires. Do not add the assistant to
+`rioyokotalab` or share Personal connector authorization.
 
 ### D-009 — Collaboration content
 
@@ -310,11 +312,10 @@ before any mutation.
 
 ### 1. Establish the selected access boundary
 
-Implement D-001 as its own atomic prerequisite. For organization-wide base
-permission migration, create a separate repository-access inventory and
-rollback plan and obtain exact approval before any write. For a personal or
-dedicated-organization repository, verify private visibility and effective
-viewer lists before the first push. Do not invite the assistant yet.
+Create only the private personal-account repository
+`rioyokota/personal`. Verify private visibility and the exact collaborator
+list before the first push and again afterward. Do not change
+`rioyokotalab`, transfer ownership, or invite the assistant at this stage.
 
 ### 2. Scaffold the private local project
 
