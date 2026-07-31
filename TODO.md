@@ -17,13 +17,6 @@ Next free ID: T-358.
 
 ## Active queue
 
-### T-357 — Personal owned-calendar write controller
-
-**Phase:** executing; implementation and focused validation pass. Publish the
-Personal and Harness boundaries before live consent or Calendar mutation.
-
-**Record:** `docs/tasks/T-357.md`.
-
 ### T-354 — Relocate repository-native Codex roots under `projects`
 
 **Phase:** blocked until the live checkout occupying the exact Students
