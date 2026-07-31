@@ -65,11 +65,12 @@ case "$command" in
         ;;
     list-panes)
         tty=${FAKE_TTY:-/dev/pts/7}
+        role=${FAKE_PANE_ROLE:-harness}
         if [ "${FAKE_AMBIGUOUS:-0}" -eq 1 ]; then
-            printf '%%0\t0\t%s/harness\t%s\t0\tharness\n' "$HOME" "$tty"
-            printf '%%1\t0\t%s/harness\t/dev/pts/8\t0\tharness\n' "$HOME"
+            printf '%%0\t0\t%s/harness\t%s\t0\tcodex\t0\tharness\t%s\n' "$HOME" "$tty" "$role"
+            printf '%%1\t0\t%s/harness\t/dev/pts/8\t0\tcodex\t0\tharness\t%s\n' "$HOME" "$role"
         else
-            printf '%%0\t0\t%s/harness\t%s\t0\tharness\n' "$HOME" "$tty"
+            printf '%%0\t0\t%s/harness\t%s\t0\tcodex\t0\tharness\t%s\n' "$HOME" "$tty" "$role"
         fi
         ;;
     display-message)
@@ -158,6 +159,7 @@ run_helper() {
         FAKE_ATTACHED=${FAKE_ATTACHED:-0} \
         FAKE_AMBIGUOUS=${FAKE_AMBIGUOUS:-0} \
         FAKE_CODEX_COUNT=${FAKE_CODEX_COUNT:-1} \
+        FAKE_PANE_ROLE=${FAKE_PANE_ROLE:-harness} \
         FAKE_TTY=${FAKE_TTY:-/dev/pts/7} \
         PATH="$fake_bin:/usr/bin:/bin" \
         python3 -B "$HELPER" "$@"
@@ -225,6 +227,11 @@ if FAKE_CODEX_COUNT=2 run_helper receive --source riken \
     --target-role controller <"$state/message" \
     >"$state/process-ambiguous.out" 2>&1; then
     fail "ambiguous Codex process accepted"
+fi
+if FAKE_PANE_ROLE=students run_helper receive --source riken \
+    --target-role controller <"$state/message" \
+    >"$state/wrong-pane-role.out" 2>&1; then
+    fail "wrong controller pane role accepted"
 fi
 
 (

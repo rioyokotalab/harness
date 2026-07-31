@@ -9,6 +9,11 @@ import subprocess
 import sys
 
 
+SESSION_NAME = "projects"
+WINDOW_INDEX = 0
+WINDOW_NAME = "codex"
+INITIAL_LAYOUT = "main-vertical"
+PANE_ROLE_OPTION = "@harness_target"
 TARGET_NAMES = ("harness", "students", "swallow")
 HARNESS_TOKEN = "@HARNESS_ROOT@"
 

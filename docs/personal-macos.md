@@ -510,11 +510,11 @@ ABQ.
 On Local, `harness tmux-codex-monitor --interval 30 --enforce-order
 --auto-recover` additionally recognizes one exact Students or Swallow
 `blocked/unsafe-tail` watcher. It submits one durably deduplicated request to
-the healthy idle Harness controller only when the canonical three-window
-topology, healthy peer, shared app-server identity, and unattached target all
-remain exact. It reads no pane or transcript content and leaves active,
-attached, ambiguous, multi-target, and Harness-controller failures
-report-only.
+the healthy idle Harness controller only when the canonical one-window,
+three-pane topology, healthy peer, shared app-server identity, and unselected
+target pane all remain exact. It reads no pane or transcript content and
+leaves selected target panes, ambiguous topology, and Harness-controller
+failures report-only. Separate eligible blocked panes are durably serialized.
 
 The updater requires the expected `main` branch, exactly one `origin`, normal
 `origin/main` tracking, a clean worktree, an explicit full target equal to the

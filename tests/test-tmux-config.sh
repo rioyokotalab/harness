@@ -2,6 +2,7 @@
 set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+unset HARNESS_ROOT HARNESS_CONTROL_ROOT HARNESS_TARGET_ROOT
 HARNESS=$ROOT/bin/harness
 unset HARNESS_LOGICAL_HOST HARNESS_HOME_ROOT HARNESS_HOME_CANONICAL_ROOT
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
@@ -29,6 +30,8 @@ file_mode() {
 }
 
 command -v tmux >/dev/null 2>&1 || fail "tmux unavailable"
+grep -F -x 'bind-key z resize-pane -Z' "$ROOT/config/tmux/tmux.conf" \
+    >/dev/null || fail "managed pane zoom binding"
 home=$TEMP_DIR/home
 mkdir "$home"
 long_tmp=$TEMP_DIR/long-default-temporary-directory/with-enough-components/to-exceed-the-tmux-socket-path-limit

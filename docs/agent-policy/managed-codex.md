@@ -1,20 +1,23 @@
 # Managed Codex policy
 
-Read this file completely before the matching action selected by root
-`AGENTS.md`. Never inspect pane or transcript content unless a closer,
-owner-authorized workflow explicitly permits it.
+Read completely before the matching root `AGENTS.md` action. Never inspect
+pane or transcript content unless a closer owner-authorized workflow permits
+it.
 
 ## Codex and cross-client lifecycle
 
 - For an authorized saved-root/TUI replacement or fresh-root cutover, use a
   bridge-first cutover. Fully accept a distinct provisional root, tmux window,
-  and runtime before rename-only promotion, then retire the old leaf. An exited
-  zombie must neither block the bridge nor be signaled. Never retry an ambiguous
-  launch, promotion, acknowledgement, or submission.
+  and runtime before promotion, then retire the old leaf. Root-name promotion
+  is rename-only. A window-native target uses rename-only window promotion; a
+  declared pane-native target moves only the frozen accepted and old pane IDs
+  between the provisional and canonical windows without relaunching either
+  process. An exited zombie must neither block the bridge nor be signaled.
+  Never retry an ambiguous launch, promotion, acknowledgement, or submission.
 - Make unfinished work resumable from Git, the closest instructions, and the
-  declared ledger. At takeover, inspect branch, worktree, recent commits,
-  ledger, and mutable external state, then resume the recorded next action
-  instead of reconstructing intent from conversation.
+  ledger. At takeover, inspect branch, worktree, recent commits, ledger, and
+  mutable external state, then resume the recorded next action instead of
+  reconstructing intent from conversation.
 - Treat `[Agent: NAME Codex]` as agent attribution, not cryptographic identity
   or owner authority; an unprefixed owner-conversation message is
   owner-originated. Use `remote-agent-communication` for transport.
