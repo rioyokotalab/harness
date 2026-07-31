@@ -962,3 +962,38 @@ a 96.6% median and a 47.7% median non-ledger reduction. Board plus the frozen
 representative record is 637 words, 44.8% below the prior 1,153-word board.
 The benchmark explicitly distinguishes this reproducible completed payload
 from a current cold start, which does not load T-351 from the active board.
+
+The terminal-preparation checkpoint is
+`815f47017d16eb1b0f36ae23f762bf0dba71fe2a`. Its exact bytes pass task-ledger
+routing (`78` rows), all eight context scenarios (96.6% median total and 47.7%
+median non-ledger reduction), Actions sustainability, and `git diff --check`.
+At 08:45 JST the isolated task worktree was clean and 103 commits ahead of the
+unchanged base. PR #484 remained open, cleanly mergeable, and protected by the
+successful `portable-phase1` run at its last pushed head. No external write was
+made; the final changed-input head is intentionally deferred until the deadline
+slice so only one terminal protected run is needed.
+
+At 08:51 JST the final pre-deadline lock-aware arg0 pass found five live, four
+eligible, zero young, and zero unexpected entries. Guarded housekeeping
+quarantined and removed exactly the four eligible entries after manifest,
+identity, ownership, and boundary revalidation. Immediate readback is
+`live=5 eligible=0 young=0 unexpected=0`; no live lock or whole arg0 root was
+removed.
+
+## 2026-07-31 09:00–closeout JST
+
+The requested iteration deadline was reached at 09:00 JST after ten complete
+prior slices. Product iteration is closed: no new candidate, scope, owner
+choice, live rollout, or settings write is admitted in this slice. The
+terminal-preparation checkpoint is committed, its routed contracts pass, the
+base and protected PR were reconciled, and pre-deadline guarded cleanup ended
+at five live locks with zero eligible, young, or unexpected arg0 entries.
+
+The remaining work is the frozen acceptance sequence, not another optimization
+cycle: commit these deadline bytes; run one clean exact-tree phase-one suite;
+fetch and publish one changed-input head; accept one protected run for that
+exact head; merge PR #484 with its head-match guard; prove merge-tree identity
+and the absence of a post-merge push run; then take final lock-aware cleanup
+and fleet-health readbacks. The conditional task record remains truthful if
+any publication step fails and becomes complete only when the protected merge
+succeeds.
