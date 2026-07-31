@@ -19,9 +19,10 @@ Next free ID: T-357.
 
 ### T-356 — Personal-only email/calendar connector boundary
 
-**Phase:** blocked on the exact Gmail OAuth-client path and owner consent. Both
-provider model-improvement controls are attested off and the private profile
-is privacy-ready; no OAuth grant or live-source action occurred.
+**Phase:** blocked on owner selection of an interactively accessible browser
+host. The authorized Local attempt stopped before consent because no browser is
+installed; the client is private, the token is absent, and connectors remain
+blocked.
 
 **Record:** `docs/tasks/T-356.md`.
 
