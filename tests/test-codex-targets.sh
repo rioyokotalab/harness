@@ -85,7 +85,7 @@ harness, students = sys.argv[1:]
 assert SESSION_NAME == "projects"
 assert WINDOW_INDEX == 0
 assert WINDOW_NAME == "codex"
-assert INITIAL_LAYOUT == "main-vertical"
+assert INITIAL_LAYOUT == "even-horizontal"
 assert PANE_ROLE_OPTION == "@harness_target"
 assert cwd_allowed("students", students)
 assert not cwd_allowed("students", harness)
