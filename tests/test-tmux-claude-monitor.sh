@@ -30,8 +30,6 @@ fail() {
 
 MONITOR=$ROOT/libexec/harness-tmux-claude-monitor
 RECOVERY=$ROOT/libexec/harness-claude-pane-recovery
-HELPER=$ROOT/libexec/harness-codex-recovery-helper
-TARGETS=$ROOT/libexec/harness_claude_targets.py
 
 # --- source audits -------------------------------------------------------
 python3 -B - "$MONITOR" "$RECOVERY" <<'PY'
@@ -63,10 +61,12 @@ for repo in "$REPO_A" "$REPO_B" "$REPO_C"; do
     git -C "$repo" init -q
     printf '@AGENTS.md\n' > "$repo/CLAUDE.md"
 done
-printf '# target\tpane_index\tcanonical_repository\n' > "$PROFILE"
-printf 'harness\t0\t%s\n' "$REPO_A" >> "$PROFILE"
-printf 'students\t1\t%s\n' "$REPO_B" >> "$PROFILE"
-printf 'swallow\t2\t%s\n' "$REPO_C" >> "$PROFILE"
+{
+    printf '# target\tpane_index\tcanonical_repository\n'
+    printf 'harness\t0\t%s\n' "$REPO_A"
+    printf 'students\t1\t%s\n' "$REPO_B"
+    printf 'swallow\t2\t%s\n' "$REPO_C"
+} > "$PROFILE"
 
 # --- module unit tests ----------------------------------------------------
 HARNESS_TESTING=1 \
