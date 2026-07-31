@@ -1,6 +1,6 @@
 # T-356 Harness integration plan
 
-Phase: `blocked on Gmail OAuth-client path and owner consent`.
+Phase: `blocked on an owner-selected browser host for the loopback flow`.
 
 ## Outcome
 
