@@ -235,12 +235,42 @@ Rationale and consequences:
 
 ### D-006 — Calendar authority
 
+Status: option selected on 2026-07-31; D-006a parameters remain open.
+
+Selected: balanced autonomy. The owner's exact answer was `2`.
+
+Frozen portion:
+
+- Personal may autonomously perform bounded reads, conflict and availability
+  analysis, meeting preparation, room search, and exact change drafting;
+- Personal may create or remove qualifying attendee-free transparent holds and
+  modify personal reminders without a second confirmation under the fixed
+  rule still to be selected in D-006a;
+- every event change involving attendees, resources, busy time, recurrence,
+  RSVPs, notifications, cancellation, or deletion other than a qualifying
+  Personal-created hold requires exact owner confirmation; and
+- ambiguous writes are never retried until the event and calendar are read
+  back with exact date, time, timezone, and recurrence scope.
+
+D-006a must choose whether qualifying autonomous writes occur only inside an
+explicit owner-requested calendar task or may be created proactively under
+bounded rules. D-006 is not fully frozen until that parameter is selected.
+
+#### D-006a — Trigger for qualifying autonomous calendar writes
+
 Status: open.
 
-Recommended default: autonomous read, conflict analysis, availability search,
-and draft changes; require exact owner confirmation before create, update,
-reschedule, cancel, invite, RSVP, or notify. Holds that affect others count as
-writes.
+Recommended default: explicit-task-only. Once the owner requests a calendar
+task that includes a hold or reminder, Personal may perform the qualifying
+write without a second confirmation when it is on the exact requested
+calendar and time range, attendee/resource/conference-free, non-recurring,
+transparent for a hold, private and metadata-minimal, and sends no
+notification. It may remove only a qualifying hold it created and may change
+only personal reminder fields while preserving all other event data.
+
+Alternative: allow proactive holds or reminders under additional numeric
+limits on horizon, duration, count, and expiry. If selected, those limits
+require a further frozen sub-decision before D-006 is complete.
 
 ### D-007 — Research-budget authority
 
