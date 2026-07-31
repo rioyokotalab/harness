@@ -502,10 +502,25 @@ Rationale and consequences:
 
 Status: open.
 
-Recommended default: private repository; protected `main`; linear history;
-block deletion and force-push; pull-request workflow with required approvals
-set to zero and owner/admin bypass preserved; no GitHub Actions. Run local
-credential-free checks and store only a metadata-safe validation receipt.
+Verified evidence on 2026-07-31:
+
+- GitHub documents repository rulesets and protected branches for private
+  personal-account repositories only with GitHub Pro (or a higher applicable
+  plan):
+  <https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets>.
+- The authenticated read-only user response did not expose the account plan,
+  so current GitHub Pro eligibility is unknown rather than absent.
+
+The already selected governance package is: private repository; protected
+`main`; required pull request with required approvals exactly zero; linear
+history; block deletion and force-push; preserve owner bypass; no required
+status checks; no GitHub Actions or workflow files; and credential-free local
+validation with a metadata-safe receipt.
+
+One cost/fallback choice remains: make GitHub Pro-capable protection a hard
+prerequisite, allow an unprotected collaborator repository, or keep the
+repository owner-only when protection is unavailable. No agent action may
+purchase or change a GitHub plan.
 
 ### D-015 — Retention, logs, and backup
 
