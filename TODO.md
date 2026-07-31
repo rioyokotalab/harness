@@ -19,9 +19,10 @@ Next free ID: T-357.
 
 ### T-356 — Personal-only email/calendar connector boundary
 
-**Phase:** interviewing in Personal P-002; architecture and one shared Google
-identity are frozen, and the OpenAI account class is the next open decision.
-No connector or provider mutation is authorized.
+**Phase:** interviewing in Personal P-002; architecture, one shared Google
+identity, and a personal ChatGPT workspace are frozen. The Anthropic account
+class is the next open decision. No connector or provider mutation is
+authorized.
 
 **Record:** `docs/tasks/T-356.md`.
 
