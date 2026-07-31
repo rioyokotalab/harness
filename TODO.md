@@ -19,8 +19,10 @@ Next free ID: T-357.
 
 ### T-356 — Personal-only email/calendar connector boundary
 
-**Phase:** ready-for-go; all Personal P-002 decisions are frozen and execution
-awaits explicit `go`. No connector or provider mutation is authorized.
+**Phase:** executing; synthetic connector and launcher tests pass. Publish the
+credential-free changes, then stop because ordinary Claude inventories expose
+account-wide Google connectors outside Personal. No provider logout, privacy,
+OAuth, or live-source mutation is authorized.
 
 **Record:** `docs/tasks/T-356.md`.
 

@@ -1,6 +1,6 @@
 # T-356 Harness integration plan
 
-Phase: `ready-for-go`.
+Phase: `executing`.
 
 ## Outcome
 

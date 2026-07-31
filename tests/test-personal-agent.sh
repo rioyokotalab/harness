@@ -31,12 +31,17 @@ fail() {
 personal=$TEST_ROOT/personal
 runtime=$TEST_ROOT/runtime
 capture=$TEST_ROOT/capture
-mkdir -m 700 "$personal" "$runtime" "$capture"
-mkdir -m 700 "$personal/.codex" "$personal/.claude" "$personal/config"
+state=$TEST_ROOT/state
+profile=$state/harness-personal-agent/google
+mkdir -m 700 "$personal" "$runtime" "$capture" "$state"
+mkdir -m 700 "$personal/.codex" "$personal/.claude" "$personal/config" \
+    "$personal/bin"
 for required in AGENTS.md CLAUDE.md TODO.md; do
     printf '%s\n' fixture >"$personal/$required"
 done
-printf '%s\n' 'model = "gpt-5.6-sol"' >"$personal/.codex/config.toml"
+printf '%s\n' 'model = "gpt-5.6-sol"' \
+    '[mcp_servers.personal-google-readonly]' \
+    'enabled = false' >"$personal/.codex/config.toml"
 printf '%s\n' '{}' >"$personal/.claude/settings.json"
 printf '%s\n' \
     '# client	domain	status	reason' \
@@ -48,6 +53,19 @@ printf '%s\n' \
     'claude	research-budget	blocked	test' \
     >"$personal/config/connector-readiness.tsv"
 printf '%s\n' '{"mcpServers":{}}' >"$personal/config/empty-mcp.json"
+printf '%s\n' '{"mcpServers":{"personal-google-readonly":{"command":"fixture"}}}' \
+    >"$personal/config/personal-mcp.json"
+printf '%s\n' '#!/bin/sh' 'exit 0' >"$personal/bin/personal-google-mcp"
+# The single quotes intentionally preserve fixture-runtime expansion.
+# shellcheck disable=SC2016
+printf '%s\n' \
+    '#!/bin/sh' \
+    'set -eu' \
+    'printf "%s\n" "$@" >"$PERSONAL_CAPTURE/auth.args"' \
+    'printf "synthetic-auth\n"' \
+    >"$personal/bin/personal-google-auth"
+chmod 700 "$personal/bin/personal-google-mcp" \
+    "$personal/bin/personal-google-auth"
 git -C "$personal" init -q -b main
 
 fake_codex=$TEST_ROOT/codex
@@ -56,6 +74,8 @@ cat >"$fake_codex" <<'EOF'
 #!/bin/sh
 set -eu
 env | sed -n '/^HARNESS_/p' >"$PERSONAL_CAPTURE/codex.env"
+env | sed -n '/^PERSONAL_GOOGLE_/p' \
+    >"$PERSONAL_CAPTURE/codex.connector-env"
 printf '%s\n' "$@" >"$PERSONAL_CAPTURE/codex.args"
 sed -n '1,20p' >"$PERSONAL_CAPTURE/codex.stdin"
 printf 'codex-result\n'
@@ -64,6 +84,8 @@ cat >"$fake_claude" <<'EOF'
 #!/bin/sh
 set -eu
 env | sed -n '/^HARNESS_/p' >"$PERSONAL_CAPTURE/claude.env"
+env | sed -n '/^PERSONAL_GOOGLE_/p' \
+    >"$PERSONAL_CAPTURE/claude.connector-env"
 env | sed -n \
     -e '/^CLAUDE_CODE_DISABLE_AUTO_MEMORY=/p' \
     -e '/^CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=/p' \
@@ -82,15 +104,44 @@ run_agent() {
     HARNESS_TESTING=1 \
     HARNESS_TEST_PERSONAL_ROOT="$personal" \
     HARNESS_TEST_RUNTIME_ROOT="$runtime" \
+    HARNESS_TEST_PROFILE_ROOT="$profile" \
     HARNESS_TEST_NATIVE_CODEX="$fake_codex" \
     HARNESS_TEST_NATIVE_CLAUDE="$fake_claude" \
+    PERSONAL_GOOGLE_BACKEND=fixture \
+    PERSONAL_GOOGLE_FIXTURE=/unexpected \
     PERSONAL_CAPTURE="$capture" \
         "$HARNESS" personal-agent "$@"
 }
 
 run_agent --status >"$TEST_ROOT/status.out"
-grep -F 'status=ready root=ready lock=free connectors=blocked managed_target=false' \
+grep -F 'status=ready root=ready lock=free profile=absent privacy=blocked connectors=blocked managed_target=false' \
     "$TEST_ROOT/status.out" >/dev/null || fail status
+
+if run_agent --authorize --domain email \
+    --client-file "$TEST_ROOT/absent.json" \
+    >"$TEST_ROOT/preprivacy.out" 2>&1; then
+    fail 'authorization bypassed profile gate'
+fi
+grep -F 'reason=profile-not-ready' "$TEST_ROOT/preprivacy.out" >/dev/null ||
+    fail 'authorization profile gate'
+
+run_agent --profile-bootstrap >"$TEST_ROOT/bootstrap.out"
+[ -d "$profile" ] && [ ! -L "$profile" ] ||
+    fail 'profile bootstrap type'
+[ "$(stat -c %a "$profile")" = 700 ] ||
+    fail 'profile bootstrap permissions'
+run_agent --privacy-attest --provider openai --value off \
+    >"$TEST_ROOT/openai.out"
+run_agent --status >"$TEST_ROOT/partial-status.out"
+grep -F 'profile=ready privacy=blocked' "$TEST_ROOT/partial-status.out" \
+    >/dev/null || fail 'partial privacy status'
+run_agent --privacy-attest --provider anthropic --value off \
+    >"$TEST_ROOT/anthropic.out"
+[ "$(stat -c %a "$profile/privacy.tsv")" = 600 ] ||
+    fail 'privacy marker permissions'
+run_agent --status >"$TEST_ROOT/ready-status.out"
+grep -F 'profile=ready privacy=ready connectors=blocked' \
+    "$TEST_ROOT/ready-status.out" >/dev/null || fail 'ready privacy status'
 
 printf '%s\n' 'bounded codex fixture' |
     run_agent --run --client codex --task P-TEST-1 --domain local \
@@ -106,6 +157,12 @@ for argument in exec --ephemeral --ignore-user-config --strict-config \
     grep -Fx -- "$argument" "$capture/codex.args" >/dev/null ||
         fail "Codex argument: $argument"
 done
+if grep -Fx 'mcp_servers.personal-google-readonly.enabled=true' \
+    "$capture/codex.args" >/dev/null; then
+    fail 'local Codex connector enabled'
+fi
+[ ! -s "$capture/codex.connector-env" ] ||
+    fail 'local Codex connector environment'
 
 printf '%s\n' 'bounded claude fixture' |
     run_agent --run --client claude --task P-TEST-2 --domain local \
@@ -123,6 +180,8 @@ for argument in --print --no-session-persistence --no-chrome \
 done
 [ "$(wc -l <"$capture/claude.retention" | tr -d ' ')" = 6 ] ||
     fail 'Claude retention environment'
+[ ! -s "$capture/claude.connector-env" ] ||
+    fail 'local Claude connector environment'
 
 grep -Fx 'state=complete' "$runtime/harness-personal-agent/last.receipt" \
     >/dev/null || fail receipt-state
@@ -139,6 +198,55 @@ if printf '%s\n' blocked |
 fi
 grep -F 'reason=connector-not-ready' "$TEST_ROOT/blocked.out" >/dev/null ||
     fail 'blocked connector classification'
+
+sed 's/^codex	email	blocked	/codex	email	ready	/;
+     s/^claude	email	blocked	/claude	email	ready	/' \
+    "$personal/config/connector-readiness.tsv" \
+    >"$personal/config/connector-readiness.tmp"
+mv "$personal/config/connector-readiness.tmp" \
+    "$personal/config/connector-readiness.tsv"
+
+printf '%s\n' 'bounded codex email fixture' |
+    run_agent --run --client codex --task P-TEST-EMAIL-C --domain email \
+        >"$TEST_ROOT/codex-email.out" 2>"$TEST_ROOT/codex-email.err"
+grep -Fx 'mcp_servers.personal-google-readonly.enabled=true' \
+    "$capture/codex.args" >/dev/null || fail 'Codex connector override'
+grep -Fx "mcp_servers.personal-google-readonly.env={ PERSONAL_GOOGLE_PROFILE=\"$profile\" }" \
+    "$capture/codex.args" >/dev/null || fail 'Codex profile override'
+grep -Fx 'PERSONAL_GOOGLE_ALLOWED_DOMAIN=email' \
+    "$capture/codex.connector-env" >/dev/null ||
+    fail 'Codex domain gate'
+
+printf '%s\n' 'bounded claude email fixture' |
+    run_agent --run --client claude --task P-TEST-EMAIL-A --domain email \
+        >"$TEST_ROOT/claude-email.out" 2>"$TEST_ROOT/claude-email.err"
+grep -Fx "$personal/config/personal-mcp.json" "$capture/claude.args" \
+    >/dev/null || fail 'Claude connector manifest'
+grep -Fx 'PERSONAL_GOOGLE_ALLOWED_DOMAIN=email' \
+    "$capture/claude.connector-env" >/dev/null ||
+    fail 'Claude domain gate'
+for argument in \
+    'mcp__personal-google-readonly__personal_google_status' \
+    'mcp__personal-google-readonly__personal_gmail_search' \
+    'mcp__personal-google-readonly__personal_gmail_thread'; do
+    grep -Fx "$argument" "$capture/claude.args" >/dev/null ||
+        fail "Claude connector permission: $argument"
+done
+if grep -Fx 'mcp__personal-google-readonly__personal_calendar_events' \
+    "$capture/claude.args" >/dev/null; then
+    fail 'Claude cross-domain permission'
+fi
+
+run_agent --authorize --domain email \
+    --client-file "$TEST_ROOT/synthetic-client.json" \
+    >"$TEST_ROOT/auth.out"
+grep -Fx synthetic-auth "$TEST_ROOT/auth.out" >/dev/null ||
+    fail 'synthetic authorization helper'
+for argument in --profile "$profile" --domain email \
+    --client-file "$TEST_ROOT/synthetic-client.json"; do
+    grep -Fx -- "$argument" "$capture/auth.args" >/dev/null ||
+        fail "authorization argument: $argument"
+done
 
 lock_file=$runtime/harness-personal-agent/operation.lock
 flock "$lock_file" sleep 1 &
