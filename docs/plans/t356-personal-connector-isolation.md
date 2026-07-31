@@ -1,6 +1,6 @@
 # T-356 Harness integration plan
 
-Phase: `blocked on exact Calendar read-only consent authorization`.
+Phase: `blocked on owner-selected non-sensitive Calendar read acceptance`.
 
 ## Outcome
 
