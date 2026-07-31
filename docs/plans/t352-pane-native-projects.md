@@ -11,9 +11,10 @@ containing three independently supervised Codex panes:
 | Students | `projects:0.1`, title `students` | `/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students` |
 | Swallow | `projects:0.2`, title `swallow` | `/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow` |
 
-The sole window is `projects:0:codex`. Its initial layout is
-`main-vertical`; Harness is the main pane. `Ctrl-b z` toggles the selected
-pane's zoom without changing target identity.
+The sole window is `projects:0:codex`. Its canonical layout is
+`even-horizontal`, with three equal-width panes ordered Harness, Students,
+Swallow from left to right. `Ctrl-b z` toggles the selected pane's zoom
+without changing target identity.
 
 ## Scope and boundaries
 
@@ -109,8 +110,8 @@ work, or promise Local host-reboot resurrection. Managed-Mac
 6. Apply the process-preserving cutover:
    rename `@87` to `codex`; assign frozen pane-local roles and titles to
    `%87`, `%99`, `%100`; join `%99` and `%100` into `@87`; require pane
-   indices `0`, `1`, `2`; apply `main-vertical` and stable role-based border
-   labels; preserve the attached client and active Harness pane.
+   indices `0`, `1`, `2`; apply `even-horizontal` and stable role-based
+   border labels; preserve the attached client and active Harness pane.
 7. Run the published monitor/helper checks against the new topology. On any
    failure, use the frozen pane IDs with `break-pane -d` to reconstruct exact
    `0:harness`, `1:students`, `2:swallow` windows before restarting the old

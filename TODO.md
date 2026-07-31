@@ -19,12 +19,11 @@ Next free ID: T-353.
 
 ### T-352 — Consolidate Local Codex sessions into one pane-native window
 
-**Phase:** live migration accepted; Riken post-sync context refresh deferred
-because its managed tmux session is absent.
+**Phase:** equal horizontal live layout accepted; protected publication and
+post-sync refresh remain, with Riken's managed tmux session absent.
 
-**Record:** `docs/tasks/T-352.md`. Retry only the retained Riken refresh after
-one detached managed session is proven live; do not create that session under
-refresh authority.
+**Record:** `docs/tasks/T-352.md`. Publish and synchronize the canonical-layout
+amendment, then refresh only safe detached managed Mac sessions.
 
 ### T-196 — Backup lifecycle phase 2
 

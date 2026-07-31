@@ -82,7 +82,7 @@ tmux_test select-pane -t "$students_id" -T students
 tmux_test select-pane -t "$swallow_id" -T swallow
 tmux_test swap-pane -d -s "$harness_id" -t projects:codex.0
 tmux_test swap-pane -d -s "$students_id" -t projects:codex.1
-tmux_test select-layout -t projects:codex main-vertical >/dev/null
+tmux_test select-layout -t projects:codex even-horizontal >/dev/null
 tmux_test set-option -w -t projects:codex pane-border-status top
 tmux_test set-option -w -t projects:codex pane-border-format \
     ' #{pane_index}:#{@harness_target} '
@@ -99,6 +99,11 @@ tmux_test set-option -w -t projects:codex pane-border-format \
 [ "$(tmux_test display-message -p -t projects:codex \
     '#{pane-border-status}|#{pane-border-format}')" = \
     'top| #{pane_index}:#{@harness_target} ' ] || fail "stable pane labels"
+pane_widths=$(tmux_test list-panes -t projects:codex -F '#{pane_width}')
+minimum_width=$(printf '%s\n' "$pane_widths" | sort -n | head -n 1)
+maximum_width=$(printf '%s\n' "$pane_widths" | sort -n | tail -n 1)
+[ $((maximum_width - minimum_width)) -le 1 ] ||
+    fail "even-horizontal pane widths"
 assert_pane_identity projects:codex.0 "$harness_id" "$harness_pid"
 assert_pane_identity projects:codex.1 "$students_id" "$students_pid"
 assert_pane_identity projects:codex.2 "$swallow_id" "$swallow_pid"
