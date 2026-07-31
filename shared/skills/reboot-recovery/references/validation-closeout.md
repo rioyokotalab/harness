@@ -1,7 +1,7 @@
 # Validation and closeout
 
-Require both aliases to pass fresh independent probes. Through the recovered
-Mac, run the current value-free checks:
+Require both aliases to pass fresh independent probes. On the recovered Mac,
+run value-free checks:
 
 - `macos-ssh-supervisor --host HOST --auth-status`
 - `macos-ssh-supervisor --host HOST --status`
@@ -14,7 +14,7 @@ eligible tracked residue through its guarded workflow.
 
 Without reading pane content, confirm exactly one detached, live
 `harness-codex-resume` session with one Codex pane rooted at `~/harness`. The
-pane may report `codex`, `codex.real`, `sh`, or `sleep` while running,
+pane may report `codex`, `codex.real`, `sh`, `bash`, or `sleep` while running,
 diagnosing, or backing off. Whenever its foreground command is not Codex,
 require the live value-free supervisor receipt to match the tmux pane owner.
 

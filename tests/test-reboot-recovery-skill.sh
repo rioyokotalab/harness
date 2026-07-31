@@ -308,6 +308,8 @@ case $command in
     list-panes)
         if [ "${FAKE_TMUX_STATE:-absent}" = supervisor ]; then
             echo "0|$HOME/harness|sleep|4242"
+        elif [ "${FAKE_TMUX_STATE:-absent}" = supervisor-bash ]; then
+            echo "0|$HOME/harness|bash|4242"
         else
             echo "0|$HOME/harness|codex|4242"
         fi
@@ -331,7 +333,8 @@ exit 0
 SH
 cat >"$fake_home/harness/bin/harness" <<'SH'
 #!/bin/sh
-if [ "${FAKE_TMUX_STATE:-absent}" = supervisor ]; then
+if [ "${FAKE_TMUX_STATE:-absent}" = supervisor ] ||
+    [ "${FAKE_TMUX_STATE:-absent}" = supervisor-bash ]; then
     echo 'CODEX_RESILIENT mode=status name=harness-codex-resume phase=backoff selector=last owner_pid=4242 attempt=2 delay=30 reason=transient-exit'
 else
     echo 'CODEX_RESILIENT mode=status name=harness-codex-resume phase=absent'
@@ -408,6 +411,11 @@ HOME="$fake_home" FAKE_STATE="$state" FAKE_TMUX_STATE=supervisor \
     "$TEST_ROOT/mac-reboot-state" status >"$TEST_ROOT/supervisor.out"
 assert_contains "$TEST_ROOT/supervisor.out" \
     'tmux=ready status=ready' "supervisor backoff readiness"
+
+HOME="$fake_home" FAKE_STATE="$state" FAKE_TMUX_STATE=supervisor-bash \
+    "$TEST_ROOT/mac-reboot-state" status >"$TEST_ROOT/supervisor-bash.out"
+assert_contains "$TEST_ROOT/supervisor-bash.out" \
+    'tmux=ready status=ready' "macOS bash supervisor readiness"
 
 printf '%s\n' \
     "Reboot recovery skill tests passed: aggregate $BASELINE_AGGREGATE->$aggregate_words words; largest selected route $BASELINE_LARGEST_ROUTE->$largest_route words (-$route_reduction%)"
