@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-356.
+Next free ID: T-357.
 
 ## Resume contract
 
@@ -16,6 +16,13 @@ Next free ID: T-356.
 5. A failed mutable-state query is unknown, never evidence of absence.
 
 ## Active queue
+
+### T-356 — Personal-only email/calendar connector boundary
+
+**Phase:** interviewing in Personal P-002; no connector or provider mutation
+is authorized.
+
+**Record:** `docs/tasks/T-356.md`.
 
 ### T-354 — Relocate repository-native Codex roots under `projects`
 
