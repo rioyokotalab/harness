@@ -1,6 +1,6 @@
 # T-356 Harness integration plan
 
-Phase: `blocked on one changed-input Gmail consent authorization`.
+Phase: `blocked on owner-selected non-sensitive Gmail read acceptance`.
 
 ## Outcome
 
