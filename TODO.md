@@ -19,10 +19,9 @@ Next free ID: T-357.
 
 ### T-356 — Personal-only email/calendar connector boundary
 
-**Phase:** executing; synthetic connector and launcher tests pass. Publish the
-credential-free changes, then stop because ordinary Claude inventories expose
-account-wide Google connectors outside Personal. No provider logout, privacy,
-OAuth, or live-source mutation is authorized.
+**Phase:** blocked on the owner choice for connected account-wide Claude
+Google connectors. The merged strict launcher and empty private profile are
+ready; no logout, privacy attestation, OAuth, or live-source action occurred.
 
 **Record:** `docs/tasks/T-356.md`.
 

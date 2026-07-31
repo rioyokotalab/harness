@@ -1,6 +1,6 @@
 # T-356 Harness integration plan
 
-Phase: `executing`.
+Phase: `blocked`.
 
 ## Outcome
 
