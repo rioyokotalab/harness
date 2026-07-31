@@ -36,3 +36,8 @@
 evaluation/runs/
 evaluation/results/raw/
 evaluation/results/*.tmp
+
+# NFS silly-rename residue: stale inodes of scripts still open by running
+# shells (supervisors, monitors). Never tracked, and must not fail the
+# clean-checkout gates used by fleet sync and the tmux/terminfo suites.
+libexec/.nfs*
