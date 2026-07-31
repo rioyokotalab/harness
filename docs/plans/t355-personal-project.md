@@ -385,20 +385,30 @@ Consequences:
 
 #### D-010a — Sensitive-operation execution context
 
-Status: open.
+Status: frozen on 2026-07-31.
 
-Recommended default: Harness remains the driver but launches one bounded,
-non-persistent Codex process rooted at Personal only for a sensitive Personal
-operation. That process reads Personal's project policy and effective
-connector configuration, records only the metadata-safe result, and exits. It
-has no tmux pane, saved root, phone identity, monitor role, or durable
-conversation dependency. This requires a narrowly tested, exact-path
-launch-sentinel admission that is explicitly not a managed target. Harness
-continues ordinary repository development directly.
+Selected: Harness remains the driver but launches one bounded, non-persistent
+Codex process rooted at Personal for each sensitive Personal operation. The
+owner's exact answer was `1`.
 
-Alternative: perform sensitive operations in the existing Harness-rooted
-session. This is simpler, but it supersedes D-004 because connector exposure
-and policy would be Harness-scoped rather than Personal-project-scoped.
+Consequences:
+
+- the bounded process starts only from an explicit Harness operation with
+  exact Personal cwd and task identity, reads Personal's project policy,
+  ledger, skills, and effective connector configuration, then exits;
+- permit at most one bounded Personal operation process at a time and use an
+  exact current-user lock so concurrent Harness work cannot duplicate it;
+- give it no tmux pane/window/session, saved root, phone identity, monitor or
+  helper role, recovery mapping, app-server root, or durable conversation
+  dependency;
+- add only the narrowly tested exact-path launch-sentinel admission needed for
+  this non-managed process;
+- write only a metadata-safe durable receipt and never persist source content
+  or sensitive output under D-003;
+- an ambiguous launch or connector write is never retried until exact process
+  and source state are reconciled; and
+- D-015 must still freeze how sensitive output appears in the owner-facing
+  Harness conversation and how product-side context is retained.
 
 ### D-011 — Meaning of cold restart
 
@@ -407,8 +417,9 @@ Status: open.
 Recommended direction after D-010: require the Harness session to reconstruct
 Personal work from Harness's T-355 record plus Personal's compact repository
 ledger after a cold restart. No Personal TUI, saved-root, phone, tmux, or host
-reboot restoration is promised. Whether a bounded Personal-rooted process is
-also part of this contract depends on D-010a.
+reboot restoration is promised. A newly launched bounded process must
+reconstruct only from Personal's repository state and the exact Harness
+request, never a prior child conversation.
 
 ### D-012 — Harness skill coupling
 
@@ -534,14 +545,13 @@ for actual Harness code or policy changes.
 
 ### 6. Validate the selected non-persistent execution context
 
-Implement D-010a without creating a managed target. If a bounded
-Personal-rooted process is selected, launch it only through an explicit
-Harness operation, validate exact cwd, project policy, model/config, effective
-tool inventory, connector restrictions, and metadata-safe handoff, then
-require it to exit. Prove there is no tmux pane, saved root, phone identity,
-monitor role, app-server root, or durable conversation dependency. If the
-Harness-rooted session is selected instead, explicitly supersede D-004 and
-validate the resulting broader connector boundary before authorization.
+Implement D-010a without creating a managed target. Launch one bounded
+Personal-rooted process only through an explicit Harness operation and an
+exact current-user lock. Validate exact cwd, project policy, model/config,
+effective tool inventory, connector restrictions, metadata-safe handoff, and
+clean exit. Prove there is no concurrent Personal process, tmux pane, saved
+root, phone identity, monitor role, app-server root, or durable conversation
+dependency. Never replay or blindly retry an ambiguous child launch.
 
 ### 7. Connect domains incrementally
 
