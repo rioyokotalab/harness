@@ -19,13 +19,12 @@ Next free ID: T-354.
 
 ### T-352 — Consolidate Local Codex sessions into one pane-native window
 
-**Phase:** equal horizontal layout published and fleet-synchronized; Riken's
-managed tmux session and both required remote-control daemons are absent, so
-recovery is waiting on one owner-local prerequisite.
+**Phase:** Riken remote control is ready; its first managed tmux start exposed
+a macOS runtime-release path-canonicalization defect before Codex launched.
 
-**Record:** `docs/tasks/T-352.md`. After the owner starts native remote control
-on Riken, restore its managed tmux session and retry only the newest retained
-refresh; do not submit both retained inputs.
+**Record:** `docs/tasks/T-352.md`. Publish and synchronize the focused runtime
+fix, then restore Riken's managed tmux session and submit only the newest
+retained refresh.
 
 ### T-196 — Backup lifecycle phase 2
 
