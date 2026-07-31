@@ -1,4 +1,5 @@
 task	state	summary	source
+T-354	blocked	Relocate repository-native Codex roots under projects	TODO.md;docs/tasks/T-354.md
 T-353	complete	Graceful Claude Fable-to-Opus fallback	docs/tasks/T-353.md
 T-352	complete	Pane-native Local Codex session	docs/tasks/T-352.md;docs/plans/t352-pane-native-projects.md
 T-351	complete	Autonomy and execution-efficiency duration task	docs/tasks/T-351.md;docs/plans/t351-autonomy-efficiency.md;docs/audits/t351-autonomy-efficiency/time-slices.md
