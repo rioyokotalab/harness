@@ -1,6 +1,6 @@
 # T-356 Harness integration plan
 
-Phase: `interviewing`.
+Phase: `ready-for-go`.
 
 ## Outcome
 
@@ -68,6 +68,15 @@ exact answer `1`. Live access requires a value-free owner attestation that
 **Help Improve Claude** is off. Existing T-355 D-015 already accepts applicable
 provider retention; revalidate it before first live use without repeating the
 settled decision unless terms materially change.
+
+P-002 P2-D005 froze Gmail read-only before Calendar read-only on 2026-07-31
+from the owner's exact answer `1`. Both domains retain separate scopes and
+readiness; no write scope is part of P-002.
+
+All P-002 decisions are audited and consistent. T-356 is ready for explicit
+owner `go`. The first authorized mutation after `go` is synthetic code and
+tests only; provider privacy, OAuth, and live-source actions remain later exact
+owner gates.
 
 ## Safety and retry contract
 

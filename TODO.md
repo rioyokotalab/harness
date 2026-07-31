@@ -19,10 +19,8 @@ Next free ID: T-357.
 
 ### T-356 — Personal-only email/calendar connector boundary
 
-**Phase:** interviewing in Personal P-002; architecture, one shared Google
-identity, a personal ChatGPT workspace, and a consumer Claude account are
-frozen. Initial source order is the final open decision. No connector or
-provider mutation is authorized.
+**Phase:** ready-for-go; all Personal P-002 decisions are frozen and execution
+awaits explicit `go`. No connector or provider mutation is authorized.
 
 **Record:** `docs/tasks/T-356.md`.
 
