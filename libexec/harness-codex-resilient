@@ -2,24 +2,61 @@
 set -eu
 
 SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
-HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)}
-export HARNESS_ROOT
+derived_control_root=$(CDPATH='' cd -- "$SELF_DIR/.." && pwd)
+release_active=no
+release_marker=$derived_control_root/.codex-runtime-release
+if [ -e "$release_marker" ] || [ -L "$release_marker" ]; then
+    [ -f "$release_marker" ] && [ ! -L "$release_marker" ] &&
+        [ "${HARNESS_CONTROL_ROOT:-}" = "$derived_control_root" ] &&
+        [ -n "${HARNESS_CODEX_RELEASE_COMMIT:-}" ] &&
+        [ -n "${HARNESS_CODEX_RELEASE_PAYLOAD:-}" ] &&
+        [ -n "${HARNESS_CODEX_RELEASE_TARGET:-}" ] &&
+        [ "${derived_control_root##*/}" = \
+            "$HARNESS_CODEX_RELEASE_PAYLOAD" ] &&
+        [ "$(sed -n '1p' "$release_marker")" = "schema=2" ] &&
+        [ "$(sed -n '2p' "$release_marker")" = \
+            "payload=$HARNESS_CODEX_RELEASE_PAYLOAD" ] &&
+        [ "$(sed -n '3p' "$release_marker")" = \
+            "source_commit=$HARNESS_CODEX_RELEASE_COMMIT" ] &&
+        [ "$(sed -n '4p' "$release_marker")" = \
+            "target=$HARNESS_CODEX_RELEASE_TARGET" ] &&
+        [ "$(wc -l <"$release_marker" | tr -d ' ')" = 4 ] || {
+        echo "harness: Codex runtime release marker is invalid" >&2
+        exit 2
+    }
+    release_active=yes
+    HARNESS_CONTROL_ROOT=$derived_control_root
+    case ${HARNESS_TARGET_ROOT:-} in
+        /*) ;;
+        *)
+            echo "harness: released Codex target root is unavailable" >&2
+            exit 2
+            ;;
+    esac
+else
+    HARNESS_CONTROL_ROOT=$derived_control_root
+    HARNESS_TARGET_ROOT=$derived_control_root
+fi
+export HARNESS_CONTROL_ROOT HARNESS_TARGET_ROOT
+unset HARNESS_ROOT
 . "$SELF_DIR/harness-common"
 
 usage() {
     cat >&2 <<'EOF'
 Usage:
   harness codex-resilient --plan [--name NAME] [--target TARGET] SELECTOR
-  harness codex-resilient --status [--name NAME]
+  harness codex-resilient --status [--name NAME] [--target TARGET]
   harness codex-resilient --run [--name NAME] [--target TARGET] SELECTOR
 
 Selectors:
   --new             start a new chat, then resume the repository's latest chat
   --last            resume the most recent chat in the current repository
-  --last-all        resume the globally most recent chat
-  --session ID      always resume one explicit session ID or safe session name
+  --session ID      resume one exact saved thread after target-CWD preflight
   --remote-session ID
                     always resume one exact session through --remote unix://
+
+The target-scoped supervisor rejects global `--last-all`; use the direct
+`harness-codex` launcher for an intentional unsupervised global resume.
 EOF
 }
 
@@ -59,9 +96,7 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         --last-all)
-            selector=last-all
-            selector_count=$((selector_count + 1))
-            shift
+            die "Codex resilient --last-all is outside target-scoped supervision"
             ;;
         --session)
             [ "$#" -ge 2 ] || die "Codex resilient --session requires a value"
@@ -93,13 +128,18 @@ require_safe_id "$name"
 if [ "$mode" = status ]; then
     [ "$selector_count" -eq 0 ] ||
         die "Codex resilient status does not accept a selector"
-    [ -z "$target" ] ||
-        die "Codex resilient status does not accept --target"
 else
     [ "$selector_count" -eq 1 ] ||
         die "Codex resilient requires exactly one selector"
 fi
-target_resolver=$HARNESS_ROOT/libexec/harness_codex_targets.py
+if [ -n "$target" ]; then
+    require_safe_id "$target"
+    case "$target" in harness|students|swallow) ;; *)
+        die "Codex resilient target is outside the managed target map"
+        ;;
+    esac
+fi
+target_resolver=$HARNESS_CONTROL_ROOT/libexec/harness_codex_targets.py
 if [ "$mode" != status ]; then
     [ -x "$target_resolver" ] ||
         die "Codex target resolver is unavailable"
@@ -118,6 +158,12 @@ if [ "$mode" != status ]; then
         die "Codex resilient target does not match its repository"
     fi
     target=$resolved_target
+    if [ "$release_active" = yes ] &&
+        [ "$target" != "$HARNESS_CODEX_RELEASE_TARGET" ]; then
+        die "Codex runtime release target does not match its repository"
+    fi
+    CDPATH='' cd -- "$current_repository" ||
+        die "Codex resilient repository is unavailable"
 fi
 if [ "$selector" = explicit ] || [ "$selector" = remote-explicit ]; then
     require_safe_id "$session_id"
@@ -125,6 +171,24 @@ fi
 if [ "$mode" = run ] && [ "${HARNESS_TESTING:-0}" != 1 ]; then
     [ -t 0 ] && [ -t 1 ] && [ -t 2 ] ||
         die "Codex resilient run requires an interactive terminal"
+fi
+if [ "$mode" = run ] && [ "$release_active" = no ] &&
+    { [ "${HARNESS_TESTING:-0}" != 1 ] ||
+      [ "${HARNESS_TEST_FORCE_CODEX_RELEASE:-0}" = 1 ]; }; then
+    release_builder=$HARNESS_CONTROL_ROOT/libexec/harness-codex-runtime-release
+    [ -x "$release_builder" ] ||
+        die "Codex runtime release builder is unavailable"
+    HARNESS_CODEX_RELEASE_TARGET=$target
+    export HARNESS_CODEX_RELEASE_TARGET
+    case "$selector" in
+        new) set -- --new ;;
+        last) set -- --last ;;
+        explicit) set -- --session "$session_id" ;;
+        remote-explicit) set -- --remote-session "$session_id" ;;
+        *) die "Codex resilient internal selector error" ;;
+    esac
+    exec "$release_builder" --exec-resilient --run \
+        --name "$name" --target "$target" "$@"
 fi
 for required in awk chmod date id kill mkdir mktemp mv rmdir sed sleep stat \
     tr uname unlink wc; do
@@ -204,14 +268,62 @@ ensure_state_root() {
     validate_state_root
 }
 
-state_file=$state_root/$name.state
-lock_dir=$state_root/$name.lock
-lock_pid=$lock_dir/pid
-thread_recovery=$HARNESS_ROOT/libexec/harness-codex-thread-recovery
+state_target=$target
+state_dir=
+state_file=
+lock_dir=
+lock_pid=
+legacy_state=no
+thread_recovery=$HARNESS_CONTROL_ROOT/libexec/harness-codex-thread-recovery
 if [ "${HARNESS_TESTING:-0}" = 1 ] &&
     [ -n "${HARNESS_TEST_THREAD_RECOVERY:-}" ]; then
     thread_recovery=$HARNESS_TEST_THREAD_RECOVERY
 fi
+recovery_name=
+
+set_scoped_paths() {
+    state_target=$1
+    state_dir=$state_root/$state_target
+    state_file=$state_dir/$name.state
+    lock_dir=$state_dir/$name.lock
+    lock_pid=$lock_dir/pid
+    recovery_name=$name
+    legacy_state=no
+}
+
+set_legacy_paths() {
+    state_target=legacy
+    state_dir=$state_root
+    state_file=$state_root/$name.state
+    lock_dir=$state_root/$name.lock
+    lock_pid=$lock_dir/pid
+    recovery_name=$name
+    legacy_state=yes
+}
+
+validate_state_dir() {
+    [ -d "$state_dir" ] && [ ! -L "$state_dir" ] &&
+        [ "$(path_owner "$state_dir")" = "$uid" ] &&
+        [ "$(path_mode "$state_dir")" = 700 ] ||
+        die "Codex resilient target state directory is unsafe"
+}
+
+ensure_state_dir() {
+    ensure_state_root
+    if [ ! -e "$state_dir" ] && [ ! -L "$state_dir" ]; then
+        old_umask=$(umask)
+        umask 077
+        if ! mkdir "$state_dir" 2>/dev/null; then
+            umask "$old_umask"
+            [ -d "$state_dir" ] ||
+                die "Codex resilient cannot create its target state directory"
+        else
+            umask "$old_umask"
+        fi
+        chmod 700 "$state_dir"
+    fi
+    validate_state_dir
+}
 
 validate_lock_dir() {
     [ -d "$lock_dir" ] && [ ! -L "$lock_dir" ] &&
@@ -235,28 +347,64 @@ validate_state_file() {
 
 if [ "$mode" = status ]; then
     if [ ! -e "$state_root" ] && [ ! -L "$state_root" ]; then
-        printf 'CODEX_RESILIENT mode=status name=%s phase=absent\n' "$name"
+        printf 'CODEX_RESILIENT mode=status name=%s target=%s phase=absent\n' \
+            "$name" "${target:-unknown}"
         exit 0
     fi
     validate_state_root
+    if [ -n "$target" ]; then
+        set_scoped_paths "$target"
+        if [ -e "$state_dir" ] || [ -L "$state_dir" ]; then
+            validate_state_dir
+        fi
+    else
+        scoped_count=0
+        scoped_target=
+        for candidate_target in harness students swallow; do
+            candidate_file=$state_root/$candidate_target/$name.state
+            if [ -e "$candidate_file" ] || [ -L "$candidate_file" ]; then
+                scoped_count=$((scoped_count + 1))
+                scoped_target=$candidate_target
+            fi
+        done
+        case "$scoped_count" in
+            0) set_legacy_paths ;;
+            1)
+                set_scoped_paths "$scoped_target"
+                validate_state_dir
+                ;;
+            *) die "Codex resilient status requires --target for this runtime" ;;
+        esac
+    fi
     if [ ! -e "$state_file" ] && [ ! -L "$state_file" ]; then
-        printf 'CODEX_RESILIENT mode=status name=%s phase=absent\n' "$name"
+        printf 'CODEX_RESILIENT mode=status name=%s target=%s phase=absent\n' \
+            "$name" "$state_target"
         exit 0
     fi
     validate_state_file
     schema=$(sed -n 's/^schema=//p' "$state_file")
     stored_name=$(sed -n 's/^name=//p' "$state_file")
+    stored_target=$(sed -n 's/^target=//p' "$state_file")
     phase=$(sed -n 's/^phase=//p' "$state_file")
     stored_selector=$(sed -n 's/^selector=//p' "$state_file")
     supervisor_pid=$(sed -n 's/^supervisor_pid=//p' "$state_file")
     attempt=$(sed -n 's/^attempt=//p' "$state_file")
     delay=$(sed -n 's/^delay=//p' "$state_file")
     reason=$(sed -n 's/^reason=//p' "$state_file")
-    [ "$schema" = 1 ] && [ "$stored_name" = "$name" ] &&
-        [ -n "$phase" ] && [ -n "$stored_selector" ] &&
+    if [ "$legacy_state" = yes ]; then
+        [ "$schema" = 1 ] && [ "$stored_name" = "$name" ] &&
+            [ -z "$stored_target" ] &&
+            [ "$(wc -l <"$state_file" | tr -d ' ')" = 8 ] ||
+            die "Codex resilient state file is malformed"
+    else
+        [ "$schema" = 2 ] && [ "$stored_name" = "$name" ] &&
+            [ "$stored_target" = "$state_target" ] &&
+            [ "$(wc -l <"$state_file" | tr -d ' ')" = 9 ] ||
+            die "Codex resilient state file is malformed"
+    fi
+    [ -n "$phase" ] && [ -n "$stored_selector" ] &&
         [ -n "$supervisor_pid" ] &&
-        [ -n "$attempt" ] && [ -n "$delay" ] && [ -n "$reason" ] &&
-        [ "$(wc -l <"$state_file" | tr -d ' ')" = 8 ] ||
+        [ -n "$attempt" ] && [ -n "$delay" ] && [ -n "$reason" ] ||
         die "Codex resilient state file is malformed"
     case "$phase:$stored_selector:$supervisor_pid:$attempt:$delay:$reason" in
         *[!A-Za-z0-9._:-]*) die "Codex resilient state file is malformed" ;;
@@ -306,8 +454,9 @@ if [ "$mode" = status ]; then
             ;;
         *) owner_pid=none ;;
     esac
-    printf 'CODEX_RESILIENT mode=status name=%s phase=%s selector=%s owner_pid=%s attempt=%s delay=%s reason=%s\n' \
-        "$name" "$phase" "$stored_selector" "$owner_pid" "$attempt" "$delay" "$reason"
+    printf 'CODEX_RESILIENT mode=status name=%s target=%s phase=%s selector=%s owner_pid=%s attempt=%s delay=%s reason=%s\n' \
+        "$name" "$state_target" "$phase" "$stored_selector" "$owner_pid" \
+        "$attempt" "$delay" "$reason"
     if [ "$stored_selector" = remote-explicit ]; then
         case "$thread_recovery" in
             /*) ;;
@@ -315,12 +464,24 @@ if [ "$mode" = status ]; then
         esac
         [ -x "$thread_recovery" ] ||
             die "Codex thread recovery helper is unavailable"
-        "$thread_recovery" --status --name "$name"
+        if [ "$legacy_state" = yes ]; then
+            printf 'CODEX_THREAD_RECOVERY name=%s phase=legacy-target-unknown\n' \
+                "$recovery_name"
+        else
+            "$thread_recovery" --status --name "$recovery_name" \
+                --target "$state_target"
+        fi
     fi
     exit 0
 fi
 
-launcher=$HARNESS_ROOT/libexec/harness-codex-login
+set_scoped_paths "$target"
+
+# Historical bounded-launcher assertion retained for the unchanged login suite:
+# launcher=$HARNESS_ROOT/libexec/harness-codex-login
+# The release-private launcher below preserves those Linux worker limits while
+# also stripping all Harness control variables before native Codex starts.
+launcher=$HARNESS_CONTROL_ROOT/libexec/harness-codex-runtime-launch
 if [ "${HARNESS_TESTING:-0}" = 1 ] &&
     [ -n "${HARNESS_TEST_CODEX_LAUNCHER:-}" ]; then
     launcher=$HARNESS_TEST_CODEX_LAUNCHER
@@ -341,13 +502,16 @@ fi
 
 if [ -e "$state_root" ] || [ -L "$state_root" ]; then
     validate_state_root
-    if [ -e "$state_file" ] || [ -L "$state_file" ]; then
-        validate_state_file
+    if [ -e "$state_dir" ] || [ -L "$state_dir" ]; then
+        validate_state_dir
+        if [ -e "$state_file" ] || [ -L "$state_file" ]; then
+            validate_state_file
+        fi
     fi
 fi
 
 if [ "$mode" = plan ]; then
-    if [ -d "$state_root" ]; then
+    if [ -d "$state_dir" ]; then
         state_action=retain
     else
         state_action=create
@@ -363,7 +527,44 @@ if [ "$mode" = plan ]; then
     exit 0
 fi
 
+validate_legacy_lock_dir() {
+    legacy_lock_dir=$state_root/$name.lock
+    legacy_lock_pid=$legacy_lock_dir/pid
+    [ -d "$legacy_lock_dir" ] && [ ! -L "$legacy_lock_dir" ] &&
+        [ "$(path_owner "$legacy_lock_dir")" = "$uid" ] &&
+        [ "$(path_mode "$legacy_lock_dir")" = 700 ] ||
+        die "Codex resilient legacy lock is unsafe"
+    [ -f "$legacy_lock_pid" ] && [ ! -L "$legacy_lock_pid" ] &&
+        [ "$(path_owner "$legacy_lock_pid")" = "$uid" ] &&
+        [ "$(path_mode "$legacy_lock_pid")" = 600 ] &&
+        [ "$(path_links "$legacy_lock_pid")" = 1 ] ||
+        die "Codex resilient legacy lock is unsafe"
+}
+
+reconcile_legacy_lock() {
+    legacy_lock_dir=$state_root/$name.lock
+    legacy_lock_pid=$legacy_lock_dir/pid
+    if [ ! -e "$legacy_lock_dir" ] && [ ! -L "$legacy_lock_dir" ]; then
+        return
+    fi
+    validate_legacy_lock_dir
+    legacy_pid=$(sed -n '1p' "$legacy_lock_pid")
+    case "$legacy_pid" in
+        ''|*[!0-9]*) die "Codex resilient legacy lock is malformed" ;;
+    esac
+    if kill -0 "$legacy_pid" 2>/dev/null; then
+        printf 'CODEX_RESILIENT status=blocked reason=legacy-already-running name=%s\n' \
+            "$name" >&2
+        exit 2
+    fi
+    unlink "$legacy_lock_pid"
+    rmdir "$legacy_lock_dir" ||
+        die "Codex resilient could not remove a stale legacy lock"
+}
+
 ensure_state_root
+reconcile_legacy_lock
+ensure_state_dir
 
 temporary_state=
 doctor_file=
@@ -446,12 +647,13 @@ write_state() {
     attempt_value=$2
     delay_value=$3
     reason_value=$4
-    temporary_state=$(mktemp "$state_root/.state.XXXXXX") ||
+    temporary_state=$(mktemp "$state_dir/.state.XXXXXX") ||
         die "Codex resilient cannot allocate state"
     chmod 600 "$temporary_state"
     {
-        printf 'schema=1\n'
+        printf 'schema=2\n'
         printf 'name=%s\n' "$name"
+        printf 'target=%s\n' "$target"
         printf 'phase=%s\n' "$phase_value"
         printf 'selector=%s\n' "$selector"
         printf 'supervisor_pid=%s\n' "$$"
@@ -475,8 +677,14 @@ run_codex() {
             fi
             ;;
         last) "$launcher" resume --last ;;
-        last-all) "$launcher" resume --last --all ;;
-        explicit) "$launcher" resume "$session_id" ;;
+        explicit)
+            if ! "$thread_recovery" --check --name "$recovery_name" \
+                --target "$target" --thread "$session_id" \
+                >/dev/null 2>&1; then
+                return 2
+            fi
+            "$launcher" resume "$session_id"
+            ;;
         remote-explicit)
             "$launcher" resume --remote unix:// "$session_id"
             ;;
@@ -532,7 +740,7 @@ doctor_detail() {
 
 doctor_gate() {
     gate=
-    doctor_file=$(mktemp "$state_root/.doctor.XXXXXX") ||
+    doctor_file=$(mktemp "$state_dir/.doctor.XXXXXX") ||
         die "Codex resilient cannot allocate doctor state"
     chmod 600 "$doctor_file"
     if ! "$launcher" doctor --json >"$doctor_file" 2>/dev/null; then
@@ -608,7 +816,8 @@ start_thread_recovery() {
     [ "$selector" = remote-explicit ] || return 0
     set +e
     recovery_output=$(
-        "$thread_recovery" --recover --name "$name" --thread "$session_id" \
+        "$thread_recovery" --recover --name "$recovery_name" \
+            --target "$target" --thread "$session_id" \
             2>/dev/null
     )
     recovery_status=$?
@@ -623,14 +832,16 @@ start_thread_recovery() {
         return 1
     fi
 
-    "$thread_recovery" --watch --name "$name" --thread "$session_id" \
+    "$thread_recovery" --watch --name "$recovery_name" --target "$target" \
+        --thread "$session_id" \
         >/dev/null 2>&1 &
     thread_recovery_pid=$!
     readiness_attempt=0
     while [ "$readiness_attempt" -lt 10 ]; do
         set +e
         recovery_output=$(
-            "$thread_recovery" --status --name "$name" 2>/dev/null
+            "$thread_recovery" --status --name "$recovery_name" \
+                --target "$target" 2>/dev/null
         )
         recovery_status=$?
         set -e

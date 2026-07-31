@@ -1,6 +1,6 @@
 ---
 name: research-engineering-validation
-description: Develop, refactor, debug, or optimize distributed-training systems, scientific HPC codes, numerical algorithms, GPU kernels, and performance-critical research software. Use when correctness, reproducibility, scaling, numerical stability, or matched performance evidence is required.
+description: Develop or validate distributed-training, HPC, numerical, GPU, or performance-critical research software requiring correctness, reproducibility, stability, scaling, or matched benchmarks.
 ---
 
 # Research engineering validation

@@ -22,6 +22,7 @@ import time
 
 
 SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
+MANAGED_TARGETS = ("harness", "students", "swallow")
 MAX_ROLLBACK_TURNS = 8
 MAX_WEBSOCKET_MESSAGE = 64 * 1024 * 1024
 LOCK_WAIT_SECONDS = 30
@@ -39,6 +40,10 @@ class RecoveryBlocked(RecoveryError):
     pass
 
 
+class TargetMismatch(RecoveryBlocked):
+    pass
+
+
 def fail(message):
     raise RecoveryError(message)
 
@@ -50,6 +55,70 @@ def block(message):
 def validate_safe_id(value, label):
     if not SAFE_ID.match(value):
         fail("{} is malformed".format(label))
+
+
+def logical_recovery_name(target, name):
+    prefix = "{}:".format(target)
+    if name.startswith(prefix):
+        name = name[len(prefix) :]
+    if not name or ":" in name:
+        fail("recovery name is not target-local")
+    validate_safe_id(name, "recovery name")
+    return name
+
+
+def scoped_recovery_name(target, name):
+    return "{}:{}".format(target, logical_recovery_name(target, name))
+
+
+def repository_for_target(target):
+    validate_safe_id(target, "recovery target")
+    if target not in MANAGED_TARGETS:
+        fail("recovery target is outside the managed target map")
+    control_root = os.environ.get("HARNESS_CONTROL_ROOT") or os.environ.get(
+        "HARNESS_ROOT"
+    )
+    if (
+        not control_root
+        or not os.path.isabs(control_root)
+        or os.path.normpath(control_root) != control_root
+    ):
+        fail("Harness control root is unavailable")
+    resolver = os.path.join(control_root, "libexec", "harness_codex_targets.py")
+    try:
+        info = os.lstat(resolver)
+    except OSError:
+        fail("Codex target resolver is unavailable")
+    if (
+        not stat.S_ISREG(info.st_mode)
+        or stat.S_ISLNK(info.st_mode)
+        or info.st_uid != os.getuid()
+        or info.st_nlink != 1
+        or stat.S_IMODE(info.st_mode) & 0o002
+    ):
+        fail("Codex target resolver is unsafe")
+    environment = os.environ.copy()
+    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+    result = subprocess.run(
+        [sys.executable, resolver, "repository", target],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        env=environment,
+        check=False,
+    )
+    try:
+        repository = result.stdout.decode("utf-8", "strict").strip()
+    except UnicodeError:
+        fail("Codex target repository is malformed")
+    if (
+        result.returncode != 0
+        or not repository
+        or not os.path.isabs(repository)
+        or os.path.normpath(repository) != repository
+    ):
+        fail("Codex target repository is unavailable")
+    return repository
 
 
 def state_root():
@@ -557,6 +626,29 @@ def validate_rollout(path, thread_id):
     return real_path, identity
 
 
+def validate_thread_repository(path, thread_id, expected_repository):
+    with open(path, "r") as source:
+        for raw_line in source:
+            try:
+                record = json.loads(raw_line)
+            except ValueError:
+                block("thread rollout contains malformed JSON")
+            if record.get("type") != "session_meta":
+                continue
+            payload = record.get("payload")
+            if (
+                not isinstance(payload, dict)
+                or payload.get("id") != thread_id
+            ):
+                block("thread rollout session identity mismatch")
+            if payload.get("cwd") != expected_repository:
+                raise TargetMismatch(
+                    "thread rollout repository does not match target"
+                )
+            return
+    block("thread rollout session metadata is unavailable")
+
+
 def analyze_rollout(path, thread_id):
     turns = []
     current = None
@@ -723,16 +815,45 @@ def default_message_lock():
     )
 
 
-def recover_once(thread_id):
+def check_once(thread_id, expected_repository):
     backend = Backend()
     try:
         before = backend.read_thread(thread_id)
+        status_value = before.get("status")
+        if status_value not in ("idle", "active", "notLoaded"):
+            block("thread status is not safe for an exact resume")
+        path, identity = validate_rollout(before.get("path"), thread_id)
+        validate_thread_repository(path, thread_id, expected_repository)
+        second = backend.read_thread(thread_id)
+        if (
+            second.get("status") != status_value
+            or second.get("path") != before.get("path")
+        ):
+            fail("thread state changed during target preflight")
+        second_path, second_identity = validate_rollout(
+            second.get("path"), thread_id
+        )
+        validate_thread_repository(
+            second_path, thread_id, expected_repository
+        )
+        if second_path != path or second_identity != identity:
+            fail("thread rollout changed during target preflight")
+        return status_value
+    finally:
+        backend.close()
+
+
+def recover_once(thread_id, expected_repository):
+    backend = Backend()
+    try:
+        before = backend.read_thread(thread_id)
+        path, identity = validate_rollout(before.get("path"), thread_id)
+        validate_thread_repository(path, thread_id, expected_repository)
         status_value = before.get("status")
         if status_value != "systemError":
             if status_value in ("idle", "active", "notLoaded"):
                 return "watching", "thread-{}".format(status_value), 0
             block("thread status is not recognized")
-        path, identity = validate_rollout(before.get("path"), thread_id)
         count = analyze_rollout(path, thread_id)
         message_lock = default_message_lock()
         message_parent = os.path.dirname(message_lock)
@@ -748,6 +869,9 @@ def recover_once(thread_id):
             second_path, second_identity = validate_rollout(
                 second.get("path"), thread_id
             )
+            validate_thread_repository(
+                second_path, thread_id, expected_repository
+            )
             if second_path != path or second_identity != identity:
                 fail("thread rollout changed before rollback")
             backend.rollback(thread_id, count)
@@ -760,6 +884,12 @@ def recover_once(thread_id):
             return "blocked", "post-rollback-system-error", count
         if status_value not in ("idle", "active", "notLoaded"):
             return "blocked", "post-rollback-check-failed", count
+        after_path, _after_identity = validate_rollout(
+            after.get("path"), thread_id
+        )
+        validate_thread_repository(
+            after_path, thread_id, expected_repository
+        )
         return "recovered", "system-error-safe-tail", count
     finally:
         backend.close()
@@ -807,9 +937,11 @@ def parse_arguments():
     modes = parser.add_mutually_exclusive_group(required=True)
     modes.add_argument("--plan", action="store_true")
     modes.add_argument("--status", action="store_true")
+    modes.add_argument("--check", action="store_true")
     modes.add_argument("--recover", action="store_true")
     modes.add_argument("--watch", action="store_true")
     parser.add_argument("--name", default="default")
+    parser.add_argument("--target")
     parser.add_argument("--thread")
     parser.add_argument("--interval", type=int, default=5)
     arguments = parser.parse_args()
@@ -817,7 +949,20 @@ def parse_arguments():
     if arguments.status:
         if arguments.thread is not None:
             parser.error("--status does not accept --thread")
+        if arguments.target is None:
+            parser.error("--status requires --target")
     else:
+        if arguments.target is None:
+            parser.error("this mode requires --target")
+    if arguments.target is not None:
+        validate_safe_id(arguments.target, "recovery target")
+        if arguments.target not in MANAGED_TARGETS:
+            parser.error("--target is outside the managed target map")
+        try:
+            logical_recovery_name(arguments.target, arguments.name)
+        except RecoveryError as error:
+            parser.error(str(error))
+    if not arguments.status:
         if arguments.thread is None:
             parser.error("this mode requires --thread")
         validate_safe_id(arguments.thread, "thread ID")
@@ -828,17 +973,47 @@ def parse_arguments():
 
 def main():
     arguments = parse_arguments()
+    expected_repository = None
+    if not arguments.status:
+        expected_repository = repository_for_target(arguments.target)
+    if arguments.check:
+        status_value = check_once(arguments.thread, expected_repository)
+        print(
+            "CODEX_THREAD_RECOVERY mode=check target={} thread={} "
+            "status=ready thread_status={}".format(
+                arguments.target,
+                arguments.thread,
+                status_value,
+            )
+        )
+        return 0
+    if arguments.plan:
+        print(
+            "CODEX_THREAD_RECOVERY mode=plan name={} target={} thread={} "
+            "status=ready rollback=safe-tail-only max_turns={} "
+            "prompt=replay-disabled".format(
+                arguments.name,
+                arguments.target,
+                arguments.thread,
+                MAX_ROLLBACK_TURNS,
+            )
+        )
+        return 0
     root = state_root()
-    path = state_path(root, arguments.name)
+    logical_name = logical_recovery_name(arguments.target, arguments.name)
+    recovery_name = scoped_recovery_name(arguments.target, logical_name)
+    path = state_path(root, recovery_name)
     if arguments.status:
         if not os.path.exists(path):
             print(
-                "CODEX_THREAD_RECOVERY name={} phase=absent".format(
-                    arguments.name
+                "CODEX_THREAD_RECOVERY name={} target={} phase=absent".format(
+                    logical_name, arguments.target
                 )
             )
             return 0
         values = read_state(path)
+        if values["name"] != recovery_name:
+            fail("Codex thread recovery state target differs")
         print_status(
             values["name"],
             values["thread"],
@@ -849,26 +1024,24 @@ def main():
             values["owner_pid"],
         )
         return 0
-    if arguments.plan:
-        print(
-            "CODEX_THREAD_RECOVERY mode=plan name={} thread={} "
-            "status=ready rollback=safe-tail-only max_turns={} "
-            "prompt=replay-disabled".format(
-                arguments.name,
-                arguments.thread,
-                MAX_ROLLBACK_TURNS,
-            )
-        )
-        return 0
-
     recoveries = 0
     rolled_back = 0
+    legacy_lock = lock_path(root, logical_name)
+    if os.path.exists(legacy_lock):
+        with exclusive_file_lock(legacy_lock, 0):
+            pass
     with exclusive_file_lock(
-        lock_path(root, arguments.name), 0 if arguments.watch else 30
+        lock_path(root, recovery_name), 0 if arguments.watch else 30
     ):
         if arguments.recover:
             try:
-                phase, reason, count = recover_once(arguments.thread)
+                phase, reason, count = recover_once(
+                    arguments.thread, expected_repository
+                )
+            except TargetMismatch:
+                phase = "blocked"
+                reason = "target-mismatch"
+                count = 0
             except RecoveryBlocked:
                 phase = "blocked"
                 reason = "unsafe-tail"
@@ -880,7 +1053,7 @@ def main():
                 rolled_back = count
             write_state(
                 path,
-                arguments.name,
+                recovery_name,
                 arguments.thread,
                 phase,
                 reason,
@@ -888,7 +1061,7 @@ def main():
                 rolled_back,
             )
             print_status(
-                arguments.name,
+                recovery_name,
                 arguments.thread,
                 phase,
                 reason,
@@ -907,7 +1080,9 @@ def main():
         signal.signal(signal.SIGHUP, stop_watch)
         while not stopping[0]:
             try:
-                phase, reason, count = recover_once(arguments.thread)
+                phase, reason, count = recover_once(
+                    arguments.thread, expected_repository
+                )
                 if phase == "recovered":
                     recoveries += 1
                     rolled_back += count
@@ -918,7 +1093,7 @@ def main():
                 reason = "rollback-ambiguous"
                 write_state(
                     path,
-                    arguments.name,
+                    recovery_name,
                     arguments.thread,
                     phase,
                     reason,
@@ -926,6 +1101,9 @@ def main():
                     rolled_back,
                 )
                 return 75
+            except TargetMismatch:
+                phase = "blocked"
+                reason = "target-mismatch"
             except RecoveryBlocked:
                 phase = "blocked"
                 reason = "unsafe-tail"
@@ -934,7 +1112,7 @@ def main():
                 reason = "recovery-check-failed"
             write_state(
                 path,
-                arguments.name,
+                recovery_name,
                 arguments.thread,
                 phase,
                 reason,
@@ -944,7 +1122,7 @@ def main():
             wait_for_interval(stopping, arguments.interval)
         write_state(
             path,
-            arguments.name,
+            recovery_name,
             arguments.thread,
             "stopped",
             "operator-stop",

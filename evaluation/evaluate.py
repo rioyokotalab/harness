@@ -646,7 +646,11 @@ def allowed_control_plane_read(command: str, allowed_paths: set[str]) -> bool:
     if any(token in (">", ">>", "<", "<<") for token in tokens):
         return False
     separators = {"&&", "||", ";", "|", "&"}
-    outside_indices = [index for index, token in enumerate(tokens) if str(ACCOUNT_HOME) in token]
+    outside_indices = [
+        index
+        for index, token in enumerate(tokens)
+        if token in allowed_paths or str(ACCOUNT_HOME) in token
+    ]
     if not outside_indices:
         return False
     for index in outside_indices:
@@ -1545,13 +1549,25 @@ def selftest(root: Path) -> None:
     if not {"external_command_attempt", "outside_scope_attempt"}.issubset(set(external["codes"])):
         fail("external or outside-scope evidence selftest was not rejected")
     ledger_control_paths = control_plane_paths(corpus, task_by_id(corpus, "ledger-resume"))
-    ledger_skill = str(ROOT / "shared" / "skills" / "long-running-task-ledger" / "SKILL.md")
+    if len(ledger_control_paths) != 1:
+        fail("ledger task does not have one frozen control-plane skill")
+    ledger_skill = next(iter(ledger_control_paths))
+    allowed_control_command = (
+        f'/bin/bash -lc "sed -n \'1,240p\' {ledger_skill}"'
+    )
+    if not allowed_control_plane_read(
+        allowed_control_command, ledger_control_paths
+    ):
+        fail("frozen control-plane read command is not allowlisted")
     allowed_control_log = candidate_private / "selftest-control-read.jsonl"
     private_write(
         allowed_control_log,
         canonical_json({
             "type": "item.completed",
-            "item": {"type": "command_execution", "command": f'/bin/bash -lc "sed -n \'1,240p\' {ledger_skill}"'},
+            "item": {
+                "type": "command_execution",
+                "command": allowed_control_command,
+            },
         }),
     )
     if "outside_scope_attempt" in parse_events(allowed_control_log, corpus["limits"], ledger_control_paths)["codes"]:

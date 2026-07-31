@@ -1,6 +1,6 @@
 ---
 name: long-running-task-ledger
-description: Maintain durable state for multi-step, interrupted, multi-session, or long-running work. Use when a repository already declares a task ledger, the user asks Codex to keep going or resume later, or recovery must not depend on chat history.
+description: Maintain durable state when work spans steps, sessions, interruptions, handoffs, duration boundaries, or recovery that must not depend on chat history.
 ---
 
 # Long-running task ledger

@@ -45,6 +45,9 @@ cat >"$FAKE_BIN/ssh" <<'EOF'
 all=" $* "
 case "$all" in
     *' macos-tunnel-supervisor '*)
+        if [ -n "${HARNESS_MONITOR_SUPERVISOR_LOG:-}" ]; then
+            printf '%s\n' "$all" >>"$HARNESS_MONITOR_SUPERVISOR_LOG"
+        fi
         case "$all" in
             *' --host aist --auth-status '*) auth_host=aist ;;
             *' --host office --auth-status '*) auth_host=office ;;
@@ -78,7 +81,46 @@ route=
 for candidate in aist aist2 office office2 riken riken2 home home2 abq abq2; do
     case "$all" in *" $candidate "*) route=$candidate; break ;; esac
 done
-[ -n "$route" ] && [ -e "$HARNESS_MONITOR_STATE/$route.up" ] || exit 1
+[ -n "$route" ] || exit 1
+
+instrument_lock() {
+    while ! mkdir "$HARNESS_MONITOR_INSTRUMENT/lock" 2>/dev/null; do
+        sleep 0.01
+    done
+}
+
+if [ -n "${HARNESS_MONITOR_PROBE_LOG:-}" ]; then
+    printf '%s\n' "$route" >>"$HARNESS_MONITOR_PROBE_LOG"
+fi
+if [ -n "${HARNESS_MONITOR_INSTRUMENT:-}" ]; then
+    instrument_lock
+    instrument_active=$(cat "$HARNESS_MONITOR_INSTRUMENT/active")
+    instrument_active=$((instrument_active + 1))
+    printf '%s\n' "$instrument_active" >"$HARNESS_MONITOR_INSTRUMENT/active"
+    instrument_max=$(cat "$HARNESS_MONITOR_INSTRUMENT/max")
+    if [ "$instrument_active" -gt "$instrument_max" ]; then
+        printf '%s\n' "$instrument_active" >"$HARNESS_MONITOR_INSTRUMENT/max"
+    fi
+    : >"$HARNESS_MONITOR_INSTRUMENT/$route.active"
+    if [ "$route" = riken ] &&
+        [ -e "$HARNESS_MONITOR_INSTRUMENT/aist.active" ]; then
+        : >"$HARNESS_MONITOR_INSTRUMENT/work-conserving-overlap"
+    fi
+    rmdir "$HARNESS_MONITOR_INSTRUMENT/lock"
+
+    case "$route" in
+        aist) sleep 0.24 ;;
+        *) sleep 0.06 ;;
+    esac
+
+    instrument_lock
+    instrument_active=$(cat "$HARNESS_MONITOR_INSTRUMENT/active")
+    instrument_active=$((instrument_active - 1))
+    printf '%s\n' "$instrument_active" >"$HARNESS_MONITOR_INSTRUMENT/active"
+    unlink "$HARNESS_MONITOR_INSTRUMENT/$route.active"
+    rmdir "$HARNESS_MONITOR_INSTRUMENT/lock"
+fi
+[ -e "$HARNESS_MONITOR_STATE/$route.up" ] || exit 1
 EOF
 chmod 755 "$FAKE_BIN/ssh"
 
@@ -95,10 +137,75 @@ for auth_host in aist office riken home; do
     : >"$STATE/$auth_host.auth"
 done
 
+now_ms() {
+    python3 -c 'import time; print(time.monotonic_ns() // 1000000)'
+}
+
+INSTRUMENT=$TEMP_DIR/instrument
+PROBE_LOG=$TEMP_DIR/probes.log
+SUPERVISOR_LOG=$TEMP_DIR/supervisor.log
+mkdir "$INSTRUMENT"
+
+reset_instrumentation() {
+    printf '0\n' >"$INSTRUMENT/active"
+    printf '0\n' >"$INSTRUMENT/max"
+    : >"$PROBE_LOG"
+    : >"$SUPERVISOR_LOG"
+    [ ! -e "$INSTRUMENT/work-conserving-overlap" ] ||
+        unlink "$INSTRUMENT/work-conserving-overlap"
+}
+
 PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_MONITOR_STATE="$STATE" \
     "$MONITOR" --once >"$TEMP_DIR/healthy.out"
 [ "$(grep -c 'state=healthy action=none' "$TEMP_DIR/healthy.out")" -eq 5 ] ||
     fail "healthy pair classification"
+
+unlink "$STATE/riken.up"
+reset_instrumentation
+serial_started=$(now_ms)
+for route in aist aist2 office office2 riken riken2 home home2 abq abq2; do
+    PATH="$FAKE_BIN:/usr/bin:/bin" \
+        HARNESS_MONITOR_STATE="$STATE" \
+        HARNESS_MONITOR_INSTRUMENT="$INSTRUMENT" \
+        "$FAKE_BIN/ssh" -x -o BatchMode=yes -o ConnectTimeout=8 \
+        -o ConnectionAttempts=1 -o ControlMaster=no -o ControlPath=none \
+        -o ServerAliveInterval=15 -o ServerAliveCountMax=3 "$route" true \
+        >/dev/null 2>&1 || true
+done
+serial_finished=$(now_ms)
+serial_ms=$((serial_finished - serial_started))
+[ "$(cat "$INSTRUMENT/max")" -eq 1 ] ||
+    fail "matched serial fixture was not serial"
+
+reset_instrumentation
+queue_started=$(now_ms)
+PATH="$FAKE_BIN:/usr/bin:/bin" \
+    HARNESS_MONITOR_STATE="$STATE" \
+    HARNESS_MONITOR_INSTRUMENT="$INSTRUMENT" \
+    HARNESS_MONITOR_PROBE_LOG="$PROBE_LOG" \
+    HARNESS_MONITOR_SUPERVISOR_LOG="$SUPERVISOR_LOG" \
+    "$MONITOR" --once >"$TEMP_DIR/queued.out"
+queue_finished=$(now_ms)
+queue_ms=$((queue_finished - queue_started))
+[ "$(cat "$INSTRUMENT/max")" -eq 4 ] ||
+    fail "snapshot probe concurrency was not exactly four"
+[ -e "$INSTRUMENT/work-conserving-overlap" ] ||
+    fail "later probe did not overlap delayed first probe"
+for route in aist aist2 office office2 riken riken2 home home2 abq abq2; do
+    [ "$(grep -cx "$route" "$PROBE_LOG")" -eq 1 ] ||
+        fail "initial snapshot did not probe $route exactly once"
+done
+[ ! -s "$SUPERVISOR_LOG" ] ||
+    fail "snapshot attempted unintended recovery or authorization"
+grep -F 'pair=riken/riken2' "$TEMP_DIR/queued.out" |
+    grep -F 'primary=down secondary=ready state=degraded action=recovery-disabled' \
+        >/dev/null ||
+    fail "delayed down-route classification"
+[ "$(grep -c 'state=healthy action=none' "$TEMP_DIR/queued.out")" -eq 4 ] ||
+    fail "queued snapshot changed healthy classifications"
+[ "$queue_ms" -lt "$serial_ms" ] ||
+    fail "queued snapshot did not beat matched serial critical path"
+: >"$STATE/riken.up"
 
 unlink "$STATE/home.auth"
 PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_MONITOR_STATE="$STATE" \
@@ -172,4 +279,4 @@ fi
 grep -F 'connection monitor has no safe SSH agent socket' "$TEMP_DIR/no-agent.out" >/dev/null ||
     fail "missing agent refusal"
 
-echo "connection monitor tests: PASS"
+echo "connection monitor tests: PASS (serial=${serial_ms}ms queue=${queue_ms}ms)"

@@ -21,16 +21,37 @@ def fail(message):
     raise TargetError(message)
 
 
+def control_root():
+    root = os.environ.get("HARNESS_CONTROL_ROOT") or os.environ.get(
+        "HARNESS_ROOT"
+    )
+    if (
+        not root
+        or not os.path.isabs(root)
+        or os.path.normpath(root) != root
+    ):
+        fail("Harness control root is unavailable")
+    return root
+
+
+def harness_repository_root():
+    root = os.environ.get("HARNESS_TARGET_ROOT")
+    if root is None:
+        root = os.environ.get("HARNESS_ROOT") or control_root()
+    if not os.path.isabs(root) or os.path.normpath(root) != root:
+        fail("Harness target root is malformed")
+    return root
+
+
 def profile_path():
     override = os.environ.get("HARNESS_TEST_CODEX_TARGETS_FILE")
     if override:
         if os.environ.get("HARNESS_TESTING") != "1" or not os.path.isabs(override):
             fail("test target profile override is forbidden")
         return override
-    root = os.environ.get("HARNESS_ROOT")
-    if not root or not os.path.isabs(root):
-        fail("Harness root is unavailable")
-    return os.path.join(root, "profiles", "codex-session-targets.tsv")
+    return os.path.join(
+        control_root(), "profiles", "codex-session-targets.tsv"
+    )
 
 
 def _safe_regular_file(path):
@@ -56,7 +77,7 @@ def load_targets():
             lines = stream.read().splitlines()
     except (IOError, OSError, UnicodeError):
         fail("Codex target profile cannot be read")
-    root = os.environ.get("HARNESS_ROOT")
+    root = harness_repository_root()
     values = []
     for line_number, line in enumerate(lines, 1):
         if not line or line.startswith("#"):
@@ -172,15 +193,9 @@ def target_for_repository(path, validate=True):
     return matches[0]
 
 
-def cwd_allowed(name, path, allow_legacy=True):
+def cwd_allowed(name, path):
     expected = repository_for(name)
-    if path == expected:
-        return True
-    return bool(
-        allow_legacy
-        and name in ("students", "swallow")
-        and path == repository_for("harness")
-    )
+    return path == expected
 
 
 def validate_all():

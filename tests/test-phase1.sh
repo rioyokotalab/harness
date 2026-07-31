@@ -4,15 +4,32 @@ set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 # A managed Codex process exports the live checkout for its launchers. Focused
 # suites must instead let each executable derive the checkout under test.
-unset HARNESS_ROOT
+unset HARNESS_ROOT HARNESS_CONTROL_ROOT HARNESS_TARGET_ROOT
+unset HARNESS_CODEX_RELEASE_COMMIT HARNESS_CODEX_RELEASE_PAYLOAD
+unset HARNESS_CODEX_RELEASE_TARGET
 HARNESS=$ROOT/bin/harness
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
+focused_pid=
+shellcheck_pid=
 
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
+    if [ -n "$shellcheck_pid" ]; then
+        if ! wait "$shellcheck_pid"; then
+            echo "FAIL: ShellCheck warning/error gate" >&2
+            [ "$status" -ne 0 ] || status=1
+        fi
+        shellcheck_pid=
+    fi
+    if [ -n "$focused_pid" ]; then
+        if ! wait "$focused_pid"; then
+            [ "$status" -ne 0 ] || status=1
+        fi
+        focused_pid=
+    fi
     cleanup_failed=0
     if [ -d "$TEMP_DIR" ]; then
         "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEMP_DIR" \
@@ -77,6 +94,8 @@ for script in \
     "$ROOT/libexec/harness-codex-arg0-wrapper" \
     "$ROOT/libexec/harness-codex-login" \
     "$ROOT/libexec/harness-codex-resilient" \
+    "$ROOT/libexec/harness-codex-runtime-launch" \
+    "$ROOT/libexec/harness-codex-runtime-release" \
     "$ROOT/libexec/codex-arg0-launcher-wrapper" \
     "$ROOT/libexec/harness-storage-readiness" \
     "$ROOT/libexec/harness-replica" \
@@ -108,6 +127,7 @@ for script in \
     "$ROOT/tests/test-claude-takeover.sh" \
     "$ROOT/tests/test-bash-startup-unify.sh" \
     "$ROOT/tests/test-focused-runner.sh" \
+    "$ROOT/tests/test-codex-runtime-isolation.sh" \
     "$ROOT/tests/test-local-mpi-profile.sh" \
     "$ROOT/tests/test-native-mpi.sh" \
     "$ROOT/tests/test-onboard-personal-mac-skill.sh" \
@@ -157,151 +177,51 @@ python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/tools/run-foc
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("'"$ROOT"'/shared/skills/remote-agent-communication/scripts/agent-message").read_text())' ||
     fail "Python syntax: remote agent communication"
 
-if [ "${HARNESS_TEST_JOBS:-auto}" = legacy ]; then
-"$ROOT/tests/test-startup-normalize.sh" >/dev/null ||
-    fail "startup normalization focused suite"
-"$ROOT/tests/test-ssh-agent-profile.sh" >/dev/null ||
-    fail "SSH agent profile focused suite"
-"$ROOT/tests/test-remote-session.sh" >/dev/null ||
-    fail "remote-session focused suite"
-"$ROOT/tests/test-codex-thread-recovery.sh" >/dev/null ||
-    fail "Codex thread systemError recovery"
-"$ROOT/tests/test-recover-codex-unsafe-tail-skill.sh" >/dev/null ||
-    fail "Codex unsafe-tail recovery skill"
-"$ROOT/tests/test-remote-agent-communication.sh" >/dev/null ||
-    fail "remote agent communication focused suite"
-"$ROOT/tests/test-reboot-recovery-skill.sh" >/dev/null ||
-    fail "managed Mac reboot recovery skill"
-"$ROOT/tests/test-al-session.sh" >/dev/null ||
-    fail "personal AL session focused suite"
-"$ROOT/tests/test-safety-guards.sh" >/dev/null ||
-    fail "interactive safety-guard focused suite"
-"$ROOT/tests/test-github-rulesets.sh" >/dev/null ||
-    fail "GitHub ruleset payload focused suite"
-"$ROOT/tests/test-repository-independence.sh" >/dev/null ||
-    fail "repository independence focused suite"
-"$ROOT/tests/test-claude-takeover.sh" >/dev/null ||
-    fail "Claude takeover focused suite"
-"$ROOT/tests/test-local-mpi-profile.sh" >/dev/null ||
-    fail "local MPI profile focused suite"
-"$ROOT/tests/test-personal-macos-profile.sh" >/dev/null ||
-    fail "personal macOS private-profile focused suite"
-"$ROOT/tests/test-personal-macos-inventory.sh" >/dev/null ||
-    fail "personal macOS inventory focused suite"
-"$ROOT/tests/test-personal-macos-plan-doctor.sh" >/dev/null ||
-    fail "personal macOS plan/doctor focused suite"
-"$ROOT/tests/test-personal-macos-control.sh" >/dev/null ||
-    fail "personal macOS control-plane focused suite"
-"$ROOT/tests/test-personal-macos-homebrew.sh" >/dev/null ||
-    fail "personal macOS Homebrew focused suite"
-"$ROOT/tests/test-personal-macos-bash.sh" >/dev/null ||
-    fail "personal macOS Bash focused suite"
-"$ROOT/tests/test-personal-macos-bash-hooks.sh" >/dev/null ||
-    fail "personal macOS Bash-hook focused suite"
-"$ROOT/tests/test-personal-macos-shell.sh" >/dev/null ||
-    fail "personal macOS shell focused suite"
-"$ROOT/tests/test-personal-macos-login-shell.sh" >/dev/null ||
-    fail "personal macOS login-shell focused suite"
-"$ROOT/tests/test-tmux-config.sh" >/dev/null ||
-    fail "shared tmux configuration focused suite"
-"$ROOT/tests/test-agent-config.sh" >/dev/null ||
-    fail "agent configuration focused suite"
-"$ROOT/tests/test-codex-targets.sh" >/dev/null ||
-    fail "repository-native Codex target map focused suite"
-"$ROOT/tests/test-agent-config-fleet.sh" >/dev/null ||
-    fail "agent configuration fleet focused suite"
-"$ROOT/tests/test-personal-macos-update.sh" >/dev/null ||
-    fail "personal macOS long-gap update focused suite"
-"$ROOT/tests/test-personal-macos-ssh-supervisor.sh" >/dev/null ||
-    fail "personal macOS SSH supervisor focused suite"
-"$ROOT/tests/test-personal-macos-python.sh" >/dev/null ||
-    fail "personal macOS Python focused suite"
-"$ROOT/tests/test-personal-macos-ssh-sync.sh" >/dev/null ||
-    fail "personal macOS SSH-sync focused suite"
-"$ROOT/tests/test-personal-macos-config-sync.sh" >/dev/null ||
-    fail "personal macOS config-sync focused suite"
-"$ROOT/tests/test-personal-macos-config-migrate.sh" >/dev/null ||
-    fail "personal macOS config-migration focused suite"
-"$ROOT/tests/test-ssh-config-mirror.sh" >/dev/null ||
-    fail "fixed SSH-config mirror focused suite"
-"$ROOT/tests/test-ssh-config-layout.sh" >/dev/null ||
-    fail "SSH configuration layout focused suite"
-"$ROOT/tests/test-fleet-inventory.sh" >/dev/null ||
-    fail "fleet inventory focused suite"
-
-"$ROOT/tests/test-restic-schedule.sh" >/dev/null ||
-    fail "Restic schedule focused suite"
-"$ROOT/tests/test-onboard-mirrored-node.sh" >/dev/null ||
-    fail "onboarding focused suite"
-"$ROOT/tests/test-evaluation.sh" >/dev/null ||
-    fail "evaluation focused suite"
-"$ROOT/tests/test-public-repo-audit.sh" >/dev/null ||
-    fail "public repository audit focused suite"
-"$ROOT/tests/test-fleet-readiness-audit.sh" >/dev/null ||
-    fail "fleet readiness audit focused suite"
-"$ROOT/tests/test-hpc-readiness.sh" >/dev/null ||
-    fail "HPC readiness job focused suite"
-"$ROOT/tests/test-hpc-multinode-mpi-routes.sh" >/dev/null ||
-    fail "multi-node MPI route focused suite"
-"$ROOT/tests/test-multinode-mpi-readiness.sh" >/dev/null ||
-    fail "multi-node MPI readiness focused suite"
-"$ROOT/tests/test-shared-executable-visibility.sh" >/dev/null ||
-    fail "shared executable visibility focused suite"
-"$ROOT/tests/test-hpc-result-hygiene.sh" >/dev/null ||
-    fail "HPC result hygiene focused suite"
-"$ROOT/tests/test-hpc-job-preflight.sh" >/dev/null ||
-    fail "HPC job preflight focused suite"
-"$ROOT/tests/test-hpc-topology-surface.sh" >/dev/null ||
-    fail "HPC topology surface focused suite"
-"$ROOT/tests/test-hpc-project-intake.sh" >/dev/null ||
-    fail "HPC project intake focused suite"
-"$ROOT/tests/test-hpc-project-intake-validator.sh" >/dev/null ||
-    fail "HPC project intake validator focused suite"
-"$ROOT/tests/test-llm-hpc-next-actions.sh" >/dev/null ||
-    fail "LLM/HPC next-action queue focused suite"
-"$ROOT/tests/test-pytorch-lock.sh" >/dev/null ||
-    fail "PyTorch dual-architecture lock focused suite"
-"$ROOT/tests/test-pytorch-readiness.sh" >/dev/null ||
-    fail "PyTorch single-device readiness focused suite"
-"$ROOT/tests/test-storage-readiness.sh" >/dev/null ||
-    fail "storage readiness focused suite"
-"$ROOT/tests/test-debugger-readiness.sh" >/dev/null ||
-    fail "debugger readiness focused suite"
-"$ROOT/tests/test-venv-readiness.sh" >/dev/null ||
-    fail "venv readiness focused suite"
-"$ROOT/tests/test-locked-venv-readiness.sh" >/dev/null ||
-    fail "locked venv readiness focused suite"
-"$ROOT/tests/test-scientific-library-readiness.sh" >/dev/null ||
-    fail "scientific library readiness focused suite"
-"$ROOT/tests/test-fleet-sync.sh" >/dev/null ||
-    fail "fleet sync focused suite"
-"$ROOT/tests/test-fleet-health.sh" >/dev/null ||
-    fail "canonical fleet health focused suite"
-"$ROOT/tests/test-connection-monitor.sh" >/dev/null ||
-    fail "managed Mac connection monitor focused suite"
-"$ROOT/tests/test-tmux-codex-monitor.sh" >/dev/null ||
-    fail "Local tmux Codex monitor focused suite"
-"$ROOT/tests/test-codex-recovery-helper.sh" >/dev/null ||
-    fail "dedicated Local Codex recovery helper"
-"$ROOT/tests/test-checkpoint-restart.sh" >/dev/null ||
-    fail "checkpoint restart focused suite"
-"$ROOT/tests/test-hpc-cpu-routes.sh" >/dev/null ||
-    fail "bounded CPU route focused suite"
-"$ROOT/tests/test-source-contract.sh" >/dev/null ||
-    fail "source contract focused suite"
-else
-    case ${HARNESS_TEST_JOBS:-auto} in
-        auto) ;;
-        ''|*[!0-9]*) fail "HARNESS_TEST_JOBS must be auto, legacy, or an integer" ;;
-    esac
+case ${HARNESS_TEST_JOBS:-auto} in
+    legacy)
+        focused_jobs=1
+        focused_reserve=0
+        overlap_gates=no
+        ;;
+    auto)
+        focused_jobs=auto
+        focused_reserve=1
+        visible_cpus=$(python3 -c \
+            'import os; print(len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1))')
+        if [ "$visible_cpus" -le 2 ]; then
+            overlap_gates=no
+        else
+            overlap_gates=yes
+        fi
+        ;;
+    ''|*[!0-9]*)
+        fail "HARNESS_TEST_JOBS must be auto, legacy, or an integer"
+        ;;
+    *)
+        focused_jobs=$HARNESS_TEST_JOBS
+        focused_reserve=0
+        if [ "$focused_jobs" -eq 1 ]; then
+            overlap_gates=no
+        else
+            overlap_gates=yes
+        fi
+        ;;
+esac
+run_focused_suites() {
     python3 "$ROOT/tools/run-focused-tests.py" \
         --root "$ROOT" \
         --manifest "$ROOT/tests/focused-suites.tsv" \
         --log-dir "$TEMP_DIR/focused-logs" \
-        --jobs "${HARNESS_TEST_JOBS:-auto}" ||
-        fail "parallel focused suites"
+        --reserve-cpus "$focused_reserve" \
+        --jobs "$focused_jobs"
+}
+if [ "$overlap_gates" = yes ]; then
+    run_focused_suites &
+    focused_pid=$!
+else
+    run_focused_suites ||
+        fail "focused suites"
 fi
-
 # Direct non-interactive SSH can omit ~/.local/bin even when the managed
 # Restic installation is healthy. The harness route must find that exact
 # fallback, while retaining normal PATH precedence when a site command exists.
@@ -435,9 +355,20 @@ if env -u HARNESS_INTERACTIVE_LOADED -u HARNESS_REMOTE_SESSION_LOADED \
 fi
 
 if command -v shellcheck >/dev/null 2>&1; then
-    git -C "$ROOT" grep -Il -z '^#!.*\(sh\|bash\)' -- . \
-        ':(exclude)tests/fixtures/**' |
-        xargs -0 shellcheck --severity=warning || fail "ShellCheck warning/error gate"
+    if [ "$overlap_gates" = yes ]; then
+        (
+            git -C "$ROOT" grep -Il -z '^#!.*\(sh\|bash\)' -- . \
+                ':(exclude)tests/fixtures/**' |
+                xargs -0 shellcheck --severity=warning
+        ) &
+        shellcheck_pid=$!
+    elif ! (
+        git -C "$ROOT" grep -Il -z '^#!.*\(sh\|bash\)' -- . \
+            ':(exclude)tests/fixtures/**' |
+            xargs -0 shellcheck --severity=warning
+    ); then
+        fail "ShellCheck warning/error gate"
+    fi
 fi
 
 for script in \
@@ -2152,5 +2083,22 @@ HOME="$test_home" "$test_repo/bin/harness" rollback "$artifact_transaction" \
 [ ! -e "$artifact_link" ] && [ ! -L "$artifact_link" ] ||
     fail "artifact rollback left link"
 [ ! -e "$artifact_dir" ] || fail "artifact rollback left directory"
+
+shellcheck_status=0
+focused_status=0
+set +e
+if [ -n "$shellcheck_pid" ]; then
+    wait "$shellcheck_pid"
+    shellcheck_status=$?
+    shellcheck_pid=
+fi
+if [ -n "$focused_pid" ]; then
+    wait "$focused_pid"
+    focused_status=$?
+    focused_pid=
+fi
+set -e
+[ "$shellcheck_status" -eq 0 ] || fail "ShellCheck warning/error gate"
+[ "$focused_status" -eq 0 ] || fail "focused suites"
 
 echo "phase-1 harness tests passed"

@@ -50,6 +50,10 @@ git -C "$repo" commit -qm baseline
 PREFLIGHT=$ROOT/shared/skills/onboard-external-user/scripts/preflight
 SKILL=$ROOT/shared/skills/onboard-external-user/SKILL.md
 OPENAI=$ROOT/shared/skills/onboard-external-user/agents/openai.yaml
+BOUNDARY=$ROOT/shared/skills/onboard-external-user/references/boundary.md
+PREFLIGHT_REF=$ROOT/shared/skills/onboard-external-user/references/preflight.md
+INSTALLATION=$ROOT/shared/skills/onboard-external-user/references/installation.md
+ACCEPTANCE=$ROOT/shared/skills/onboard-external-user/references/acceptance.md
 sh -n "$PREFLIGHT" || fail 'preflight syntax'
 HOME="$home" CODEX_HOME="$home/.codex" CLAUDE_HOME="$home/.claude" \
     "$PREFLIGHT" --repo "$repo" >"$TEMP_DIR/absent.out"
@@ -77,7 +81,41 @@ grep -F 'repo=dirty' "$TEMP_DIR/dirty.out" >/dev/null || fail 'dirty classificat
 
 grep -F -x 'name: onboard-external-user' "$SKILL" >/dev/null || fail 'skill name'
 grep -F 'local-first' "$SKILL" >/dev/null || fail 'local-first boundary'
-grep -F 'onboard-mirrored-node' "$SKILL" >/dev/null || fail 'remote handoff'
+for reference in "$BOUNDARY" "$PREFLIGHT_REF" "$INSTALLATION" "$ACCEPTANCE"; do
+    [ -f "$reference" ] && [ ! -L "$reference" ] ||
+        fail "missing routed reference: $reference"
+    grep -F "$(basename "$reference")" "$SKILL" >/dev/null ||
+        fail "unreachable routed reference: $reference"
+done
+grep -F 'separate approval boundaries' "$SKILL" >/dev/null ||
+    fail 'unloaded-reference authority boundary'
+grep -F 'Never pipe a remote' "$SKILL" >/dev/null ||
+    fail 'unloaded-reference installer boundary'
+grep -F 'clone deletion' "$SKILL" >/dev/null ||
+    fail 'unloaded-reference deletion trigger'
+grep -F 'onboard-mirrored-node' "$ACCEPTANCE" >/dev/null || fail 'remote handoff'
+cat "$SKILL" "$BOUNDARY" "$PREFLIGHT_REF" "$INSTALLATION" "$ACCEPTANCE" \
+    >"$TEMP_DIR/skill-all"
+for gate in \
+    'On Linux, do not infer' \
+    'sudo or package-manager authority.' \
+    'Stop on `status=blocked`' \
+    'without sudo' \
+    'collisions=0' \
+    'exact-unlink only links that still point there' \
+    'Never record usernames'
+do
+    grep -F "$gate" "$TEMP_DIR/skill-all" >/dev/null ||
+        fail "routed skill lost gate: $gate"
+done
+[ "$(wc -w <"$SKILL" | tr -d ' ')" -le 230 ] ||
+    fail 'skill router word budget'
+largest=0
+for reference in "$BOUNDARY" "$PREFLIGHT_REF" "$INSTALLATION" "$ACCEPTANCE"; do
+    selected=$(( $(wc -w <"$SKILL") + $(wc -w <"$reference") ))
+    [ "$selected" -le 475 ] || fail "selected route word budget: $reference"
+    [ "$selected" -le "$largest" ] || largest=$selected
+done
 grep -F '$onboard-external-user' "$OPENAI" >/dev/null || fail 'default prompt'
 if rg -n '\[TODO:' "$SKILL" "$OPENAI" >/dev/null; then fail 'template placeholder'; fi
-echo 'external user onboarding skill tests: PASS'
+echo "external user onboarding skill tests: PASS largest_route_words=$largest"

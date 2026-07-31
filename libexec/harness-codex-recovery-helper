@@ -20,7 +20,12 @@ import time
 
 
 sys.dont_write_bytecode = True
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+CONTROL_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+TARGET_ROOT = CONTROL_ROOT
+os.environ["HARNESS_CONTROL_ROOT"] = CONTROL_ROOT
+os.environ["HARNESS_TARGET_ROOT"] = TARGET_ROOT
+os.environ.pop("HARNESS_ROOT", None)
+sys.path.insert(0, os.path.join(CONTROL_ROOT, "libexec"))
 from harness_codex_targets import (  # noqa: E402
     TargetError,
     cwd_allowed,
@@ -35,6 +40,11 @@ EXPECTED = tuple((value["name"], value["index"]) for value in TARGETS)
 TARGET_PATHS = {
     value["name"]: value["repository"] for value in TARGETS
 }
+TARGETLESS_EVENT_KINDS = (
+    "mirror-drift",
+    "phone-mirror-drift",
+    "remote-control-absent",
+)
 INTERACTIVE_SOURCES = ("cli", "vscode")
 TERMINAL_PHASES = ("completed", "failed", "ambiguous", "deferred")
 ACCEPTED_RESULT = re.compile(r"^RECOVERY_RESULT status=accepted(?:[ \t]|$)")
@@ -57,6 +67,25 @@ def safe_id(value, label):
     if not SAFE_ID.match(value):
         fail("{} is malformed".format(label))
     return value
+
+
+def managed_target(value):
+    if not isinstance(value, str):
+        fail("target is malformed")
+    safe_id(value, "target")
+    if value not in TARGET_PATHS:
+        fail("target is outside the closed managed target map")
+    return value
+
+
+def event_target(identity):
+    if not isinstance(identity, dict):
+        fail("event identity is malformed")
+    if "target" not in identity:
+        if identity.get("kind") not in TARGETLESS_EVENT_KINDS:
+            fail("event target is required")
+        return "harness"
+    return managed_target(identity["target"])
 
 
 def safe_window_id(value):
@@ -229,6 +258,7 @@ def receipt_path(root, event_id):
 
 
 def enqueue_event(root, identity):
+    event_target(identity)
     event_id = event_identity(identity)
     path = event_path(root, event_id)
     if os.path.exists(path):
@@ -250,7 +280,7 @@ def blocked_identity(arguments):
     return {
         "schema": 1,
         "kind": "blocked-root",
-        "target": safe_id(arguments.target, "target"),
+        "target": managed_target(arguments.target),
         "runtime": safe_id(arguments.runtime, "runtime"),
         "thread": safe_id(arguments.thread, "thread"),
         "watcher_pid": arguments.watcher_pid,
@@ -403,10 +433,7 @@ def rollout_eligible(path, codex_home):
 
 def phone_mirror_snapshot(mapping, database, processes, target_paths, codex_home):
     def mapped_cwd_allowed(role, path):
-        return path == target_paths[role] or (
-            role in ("students", "swallow")
-            and path == target_paths["harness"]
-        )
+        return path == target_paths[role]
 
     now = int(time.time())
     owner = process_info(os.getpid())
@@ -530,7 +557,7 @@ def phone_mirror_snapshot(mapping, database, processes, target_paths, codex_home
         failed = sorted(
             name
             for name, value in checks.items()
-            if name != "native_cwd" and not value
+            if not value
         )
         if failed:
             role_mismatches[role] = failed
@@ -623,9 +650,7 @@ def observe_mirror(root):
 def worker_prompt(event):
     identity = event["identity"]
     serialized = json.dumps(identity, sort_keys=True, separators=(",", ":"))
-    target = identity.get("target", "harness")
-    if target not in TARGET_PATHS:
-        target = "harness"
+    target = event_target(identity)
     target_repository = TARGET_PATHS[target]
     return """\
 You are the dedicated Local Codex recovery worker for one immutable event.
@@ -729,7 +754,7 @@ def codex_command():
         "exec",
         "--ephemeral",
         "-C",
-        os.environ["HARNESS_ROOT"],
+        TARGET_ROOT,
         "-m",
         "sol",
         "-c",
@@ -757,6 +782,7 @@ def event_files(root):
             or event_identity(event.get("identity")) != event.get("event")
         ):
             fail("queued event is malformed")
+        event_target(event["identity"])
         paths.append((event.get("created_ns", 0), name, event))
     return [value[2] for value in sorted(paths)]
 
@@ -792,6 +818,7 @@ def reconcile_started(root, event):
 
 
 def process_event(root, event):
+    prompt = worker_prompt(event).encode("utf-8")
     if reconcile_started(root, event):
         return False
     event_id = event["event"]
@@ -813,11 +840,23 @@ def process_event(root, event):
         descriptor = os.open(log_path, flags, 0o600)
     finally:
         os.umask(old)
-    prompt = worker_prompt(event).encode("utf-8")
+    worker_environment = os.environ.copy()
+    for variable in (
+        "HARNESS_ROOT",
+        "HARNESS_CONTROL_ROOT",
+        "HARNESS_TARGET_ROOT",
+        "HARNESS_CODEX_RELEASE_COMMIT",
+        "HARNESS_CODEX_RELEASE_PAYLOAD",
+        "HARNESS_CODEX_RELEASE_TARGET",
+        "HARNESS_TEST_CODEX_RELEASE_ROOT",
+        "HARNESS_TEST_FORCE_CODEX_RELEASE",
+    ):
+        worker_environment.pop(variable, None)
     try:
         process = subprocess.Popen(
             codex_command(),
-            cwd=os.environ["HARNESS_ROOT"],
+            cwd=TARGET_ROOT,
+            env=worker_environment,
             stdin=subprocess.PIPE,
             stdout=descriptor,
             stderr=subprocess.STDOUT,
@@ -974,9 +1013,10 @@ def parse_arguments():
 
 def main():
     arguments = parse_arguments()
+    blocked = blocked_identity(arguments) if arguments.enqueue_blocked else None
     root = runtime_root()
     if arguments.enqueue_blocked:
-        _event, action = enqueue_event(root, blocked_identity(arguments))
+        _event, action = enqueue_event(root, blocked)
         print("CODEX_RECOVERY_HELPER enqueue={}".format(action))
         return 0
     helper_receipt = os.path.join(root, "helper.json")

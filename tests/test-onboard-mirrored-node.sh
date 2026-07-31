@@ -6,6 +6,13 @@ PREFLIGHT=$ROOT/shared/skills/onboard-mirrored-node/scripts/onboard-preflight
 HARNESS=$ROOT/bin/harness
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 TEST_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/onboard-test.XXXXXX")
+SKILL_ROOT=$ROOT/shared/skills/onboard-mirrored-node
+SKILL=$SKILL_ROOT/SKILL.md
+PLANNING=$SKILL_ROOT/references/planning-interview.md
+DECLARATION_PHASE=$SKILL_ROOT/references/declarations-phase.md
+DECLARATIONS=$SKILL_ROOT/references/declarations.md
+BOOTSTRAP=$SKILL_ROOT/references/bootstrap-migration.md
+ACCEPTANCE=$SKILL_ROOT/references/backup-acceptance.md
 
 fail() {
     printf 'FAIL: %s\n' "$*" >&2
@@ -146,14 +153,93 @@ if find "$TEST_ROOT" -maxdepth 1 -name 'harness-onboard.*' -print -quit |
     fail "preflight left a private inventory capture"
 fi
 
-SKILL=$ROOT/shared/skills/onboard-mirrored-node/SKILL.md
-grep -F 'Plan–Interview–Execute skill' "$SKILL" >/dev/null || fail "PIE contract"
-grep -F 'Do not enumerate `~/.ssh/config`' "$SKILL" >/dev/null || fail "SSH discovery boundary"
-grep -F 'owner-only checkpoint' "$SKILL" >/dev/null || fail "password checkpoint"
-grep -F 'guarded-bulk-delete skill' "$SKILL" >/dev/null || fail "guarded cleanup contract"
-grep -F 'Scheduling is excluded' "$SKILL" >/dev/null || fail "schedule exclusion"
+for route in planning-interview declarations-phase declarations \
+    bootstrap-migration backup-acceptance; do
+    [ "$(grep -Fc "[$route.md](references/$route.md)" "$SKILL")" -eq 1 ] ||
+        fail "missing or duplicate $route route"
+done
+grep -F 'select exactly one row' "$SKILL" >/dev/null ||
+    fail "single current-phase route"
+grep -F 'Do not preload later or unrelated phases' "$SKILL" >/dev/null ||
+    fail "unloaded phases remain unloaded"
+grep -F 'A phase change triggers only' "$SKILL" >/dev/null ||
+    fail "new phase is the only reference trigger"
+grep -F 'References never select one another' "$SKILL" >/dev/null ||
+    fail "reference chaining forbidden"
+if grep -E '\]\(references/(planning-interview|declarations-phase|declarations|bootstrap-migration|backup-acceptance)\.md\)' \
+    "$PLANNING" "$DECLARATION_PHASE" "$DECLARATIONS" "$BOOTSTRAP" \
+    "$ACCEPTANCE" >/dev/null; then
+    fail "a phase reference triggers another reference"
+fi
+
+grep -F 'Plan–Interview–Execute' "$SKILL" >/dev/null || fail "PIE contract"
+grep -F 'Never enumerate `~/.ssh/config`' "$SKILL" >/dev/null ||
+    fail "SSH discovery boundary"
+grep -F 'BatchMode SSH connection' "$PLANNING" >/dev/null ||
+    fail "single value-free inventory connection"
+grep -F 'Explicit `go` authorizes only the frozen plan' "$SKILL" >/dev/null ||
+    fail "go authority boundary"
+grep -F 'wait for explicit `go`' "$PLANNING" >/dev/null ||
+    fail "explicit go gate"
+grep -F 'Ask exactly one owner question at a time' "$PLANNING" >/dev/null ||
+    fail "one-question interview"
+grep -F 'Never request a secret' "$PLANNING" >/dev/null ||
+    fail "credential-content boundary"
+grep -F 'mode-0600 password file' "$PLANNING" >/dev/null ||
+    fail "owner-only password checkpoint"
+grep -F 'Scheduling is excluded' "$SKILL" >/dev/null ||
+    fail "schedule exclusion"
+grep -F 'Do not create scheduler jobs, cron entries, or schedule declarations' \
+    "$PLANNING" >/dev/null || fail "scheduler mutation exclusion"
+grep -F 'Never overwrite a declaration' "$DECLARATION_PHASE" >/dev/null ||
+    fail "declaration collision gate"
+grep -F 'Run every mutating Harness command in `plan` mode first' \
+    "$BOOTSTRAP" >/dev/null || fail "transactional plan gate"
+grep -F 'immediately before `apply`' "$BOOTSTRAP" >/dev/null ||
+    fail "transactional apply revalidation"
+grep -F 'guarded-bulk-delete skill' "$SKILL" >/dev/null ||
+    fail "guarded cleanup contract"
+grep -F 'independent encrypted generation' "$ACCEPTANCE" >/dev/null ||
+    fail "independent backup generation"
+grep -F 'primary snapshot/check/restore' "$ACCEPTANCE" >/dev/null ||
+    fail "backup restore acceptance"
+grep -F 'On gate failure' "$SKILL" >/dev/null ||
+    fail "common failure behavior"
+grep -F 'partial or ambiguous result' "$ACCEPTANCE" >/dev/null ||
+    fail "ambiguous acceptance refusal"
+
+words() {
+    wc -w <"$1" | tr -d ' '
+}
+
+# Baseline at task start: the 829-word entry selected the 328-word declaration
+# contract during planning, so both aggregate corpus and largest route were
+# 1,157 words.
+before_aggregate=1157
+before_largest=1157
+entry_words=$(words "$SKILL")
+planning_words=$((entry_words + $(words "$PLANNING")))
+declaration_words=$((entry_words + $(words "$DECLARATION_PHASE") +
+    $(words "$DECLARATIONS")))
+bootstrap_words=$((entry_words + $(words "$BOOTSTRAP")))
+acceptance_words=$((entry_words + $(words "$ACCEPTANCE")))
+after_aggregate=$((entry_words + $(words "$PLANNING") +
+    $(words "$DECLARATION_PHASE") + $(words "$DECLARATIONS") +
+    $(words "$BOOTSTRAP") + $(words "$ACCEPTANCE")))
+after_largest=$planning_words
+for selected in "$declaration_words" "$bootstrap_words" "$acceptance_words"; do
+    [ "$selected" -le "$after_largest" ] || after_largest=$selected
+done
+[ "$after_aggregate" -le "$before_aggregate" ] ||
+    fail "aggregate route corpus grew: $before_aggregate->$after_aggregate"
+route_reduction=$(((before_largest - after_largest) * 100 / before_largest))
+[ "$route_reduction" -ge 40 ] ||
+    fail "largest selected route reduction is not material: $route_reduction%"
+
 if grep -F '.ssh/config' "$PREFLIGHT" >/dev/null; then
     fail "preflight inspects SSH configuration"
 fi
 
+printf '%s\n' \
+    "onboard skill context: aggregate $before_aggregate->$after_aggregate words; largest selected route $before_largest->$after_largest words (-$route_reduction%)"
 printf '%s\n' 'onboard mirrored node tests passed'

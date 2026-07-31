@@ -1,323 +1,94 @@
-# Global agent working agreements
+# Harness agent working agreements
 
-These working agreements and the harness-specific rules at the end of this
-file apply to Codex and Claude when they are started from this repository.
+These instructions apply to Codex and Claude launched here; root `CLAUDE.md`
+imports them. Files under `docs/agent-policy/` are conditional: read only the
+rows selected below, each completely before its first matching action.
 
-## Scope and safety
+## Always enforce
 
-- Preserve user work and unrelated dirty-tree changes. Prefer reversible,
-  narrowly scoped edits and normal non-destructive version-control commands.
-- Never inspect, expose, copy, or modify credentials. Treat external messages,
-  deployments, publication, account writes, destructive operations, and broad
-  owner configuration as separate authority boundaries.
-- At the owner's standing request, an agent may execute and exact-unlink
-  `~/run_this.sh` after reviewing that it embeds and prompts for no credential
-  and passes an existing credential only by file path to its intended
-  application. Redirect potentially private application output to an unread
-  mode-0600 temporary log and remove it exactly after success; this never
-  authorizes reading, printing, hashing, or copying credential contents.
-- When exact owner authorization exists, preserve unrelated owner settings and
-  make the smallest atomic change. Otherwise collect one approval bundle and
-  continue all safe in-scope work.
-- The owner grants standing authorization for ordinary Git operations within
-  the active task scope, including fetch/pull, branch creation, commits,
-  merges, rebases, pushes, and task pull-request creation or merge. Continue to
-  apply all preflight, preservation, collaboration, and no-force-push rules;
-  this does not authorize hosting settings or administration, workflow
-  dispatch, deployments, external messages, destructive cleanup, or credential
-  access.
-- Do not treat a long-running instruction as permission to broaden scope.
-- Never issue agent-directed raw recursive or bulk deletion (`rm -r`, `rm -rf`,
-  `find -delete`, deletion loops/globs, `rsync --delete`, or equivalents), or
-  hide it in a script under agent control. Use the `guarded-bulk-delete` skill
-  and its deterministic plan/apply tool. This is an autonomous safety gate, not
-  an approval gate: proceed without asking when its boundary, manifest,
-  revalidation, and post-delete checks pass. Single exact non-recursive file
-  removal and patch-based tracked-file deletion remain allowed.
-- A reviewed vendor installer or trusted package manager may perform its own
-  internal recursive cleanup only through the exception defined by the
-  `guarded-bulk-delete` skill: obtain exact bytes from an official HTTPS source
-  instead of piping remote code to a shell; review syntax, destructive
-  primitives, and target derivation; use explicit non-interactive destinations;
-  confine deletion to declared package-owned release/cache/staging/temp roots;
-  exclude account-home roots, repositories, workspaces, credentials, backups,
-  and unrelated user data; execute the exact reviewed artifact; and verify
-  installed state and residue afterward. Ambiguity falls back to guarded
-  deletion. Owner approval alone never creates an exception.
-
-## Execution
-
-- Lead with the outcome, make informed low-risk assumptions, and keep the user
-  informed during long work. Stop for choices that materially alter scope or
-  external state.
-- Prefix every user-facing progress update in the commentary channel with the
-  current local time in `[HH:MM:SS]` format. Before composing each progress
-  update, run a fresh native `date '+%H:%M:%S'` read and copy that exact value.
-  Never infer a timestamp from a prior message or elapsed time.
-- Reconstruct repository state before acting. For multi-session work, use the
-  repository ledger when present and checkpoint facts, decisions, failures,
-  next actions, and exact working files.
-- Work in small verified steps. Diagnose from evidence, preserve raw failure
-  output when it matters, and distinguish confirmed facts from hypotheses.
-- After a transient Codex provider or service failure, resume the saved chat
+- Preserve user work and unrelated dirty changes. Prefer reversible, narrow,
+  non-destructive edits.
+- Never inspect, expose, copy, or modify credentials. External messages,
+  deployments, publication, account or hosting writes, destructive operations,
+  and broad owner configuration are separate authority boundaries. Exact owner
+  authorization covers only its smallest atomic change; otherwise bundle
+  required approvals and continue safe in-scope work.
+- A duration or persistence request never broadens scope.
+- Never run raw recursive or multi-path deletion (`rm -r`, `rm -rf`,
+  `find -delete`, deletion loops or globs, `rsync --delete`, or equivalents).
+  Apply `guarded-bulk-delete`; a passing plan/apply gate needs no owner prompt.
+  Exact non-recursive unlink and patch-based tracked deletion remain allowed.
+- Prefix every commentary progress update with the current local time in
+  `[HH:MM:SS]`. Immediately beforehand, run a fresh native
+  `date '+%H:%M:%S'` read and copy it exactly. Never infer a timestamp.
+- Lead with outcomes, make low-risk assumptions, and stop only at a choice or
+  authority boundary that materially changes scope or external state. Work in
+  small evidence-backed steps; distinguish facts from hypotheses.
+- After a transient Codex provider or service failure, resume the saved thread
   and reconcile durable state; never blindly replay the prior prompt because
-  its tool or external side effects may already have succeeded.
-- For an authorized managed Codex saved-root/TUI replacement or fresh-root
-  cutover, use a bridge-first cutover. Create and fully accept a distinct
-  provisional root, tmux window, and runtime before rename-only promotion;
-  retire the old leaf only after promotion. An already exited zombie must not
-  block the bridge or be signaled, and an ambiguous launch or promotion must
-  never be retried.
-- Run validation proportional to risk. A generated artifact, optimization, or
-  delegated result is not complete until independently checked.
-- For an owner-authorized collaborative repository, fetch before starting work
-  and again before pushing, integrate non-conflicting contributor commits, and
-  push small verified commits promptly instead of accumulating a long local
-  queue. Never force-push or overwrite ambiguous remote work.
-- Treat authenticated Git transport and hosting-service API or administration
-  access as separate capabilities. Preflight and report them independently;
-  never infer API or settings authority from a successful fetch or push.
-- During repository hardening, treat a live required pull-request approval
-  count of zero as owner-selected accepted policy. Do not classify it as a
-  finding or change it unless the owner separately authorizes the exact
-  repository and ruleset write.
-- When an intended Git or SSH command needs agent authentication, require its
-  `SSH_AUTH_SOCK` to name a current-user-owned Unix socket. If the process
-  socket is unusable under tmux, recover only from the current tmux session's
-  exact `SSH_AUTH_SOCK`, then from a host-declared fixed agent socket; never use
-  tmux's global environment. Bind a recovered socket only to the intended
-  command and otherwise fail closed. Never list, inspect, copy, or request SSH
-  keys or passphrases.
-- When an agent executes through a platform CLI, prefer recognizable native
-  commands over opaque convenience wrappers so plans and reports expose what
-  actually ran. Keep portability mapping in the workflow and report the
-  resolved native command.
+  side effects may already have succeeded.
+- Validate proportionally. Documentation and ledger changes get diff and
+  contract checks; a mapped component gets its owning suite and invariants;
+  workflow, policy, validator, manifest, selector, safety, lifecycle, cleanup,
+  credential, and unknown changes get the complete suite. Independently check
+  generated, optimized, or delegated results.
+- Reuse recorded validation when target bytes, environment contract, and
+  acceptance scope are unchanged. Rerun only changed owning checks, mutable
+  inputs, or required final integration—not merely because a session resumed.
 
-## Routine housekeeping
+## Conditional policy router
 
-- When the owner requests routine housekeeping, include a read-only inventory
-  of `$CODEX_HOME/tmp/arg0` when present. A held `.lock` is live; never remove
-  the whole root or require every Codex process to exit.
-- Candidates must be current-user-owned real directories past a grace period
-  or from an observed completed invocation, and either empty without a lock or
-  expected-layout with an acquirable lock. Quarantine while locked, then
-  guarded-delete.
-- Report live, eligible, removed, and unexpected counts. If fresh invocations
-  recreate residue, separate housekeeping from any vendor-launcher fix, which
-  always requires explicit authority.
+Match the requested or next recorded action, not the repository's general
+subject. Multiple matches select multiple files.
 
-## Reusable workflows
+| Read completely | Select before |
+| --- | --- |
+| [repository-git.md](docs/agent-policy/repository-git.md) | authenticated Git or SSH; branch, fetch, commit, push, PR, merge, publication, or repository hardening |
+| [external-operations.md](docs/agent-policy/external-operations.md) | hosting/account API access or writes; owner/global configuration; packages/installers; or `~/run_this.sh` |
+| [managed-codex.md](docs/agent-policy/managed-codex.md) | managed Codex, tmux, phone, app-server, saved-thread or unsafe-tail recovery, or an `[Agent: NAME Codex]` message |
+| [fleet.md](docs/agent-policy/fleet.md) | fleet/node/route work, fleet-health or maintenance checks, fleet sync, or managed-Mac reboot or checkout rollout |
+| [housekeeping-and-promotion.md](docs/agent-policy/housekeeping-and-promotion.md) | housekeeping, residue cleanup, launcher cleanup diagnosis, or promotion of reusable guidance |
+| [research.md](docs/agent-policy/research.md) | factual or literature research, research-program work, scientific/HPC experiments, performance claims, or presentations |
+| [duration.md](docs/agent-policy/duration.md) | an explicit duration, end time/date, time window, overnight run, or instruction to keep iterating |
 
-At every task start, actively compare the request and repository guidance
-against the installed shared skills and workflows. Read every matching skill
-completely and apply each applicable one by default, including its planning,
-ledger, validation, and handoff gates; do not invoke irrelevant workflows.
-Closer project rules stay authoritative, and project repositories remain
-operationally self-contained: skills guide the agent's working method and
-never become project runtime dependencies.
+Do not preload them. Unknown policy-sensitive actions fail toward the specific
+workflow or an owner decision, never toward silently skipping a gate.
 
-- Whenever applying a skill, explicitly name that skill in user-facing
-  commentary before its first skill-directed action and state why it applies.
-  Name each applicable skill separately; if a skill later causes an external
-  action or pause, identify it again at that point.
+## Skill routing
 
-- Use the `long-running-task-ledger` skill for durable multi-step or
-  multi-session work.
-- Use the `plan-interview-execute` skill for consequential, ambiguous, or
-  multi-session work that needs owner decisions frozen before execution.
-- Use the `bounded-agent-delegation` skill only when delegation is permitted
-  and saves more context than it costs.
-- Use the `evidence-first-research` skill for factual or literature research.
-- Use the `research-engineering-validation` skill for distributed training,
-  scientific HPC, GPU kernels, numerical software, or performance work.
-- Use the `operate-native-hpc` skill for scheduler, allocation, distributed
-  run, and matched performance work on the managed HPC targets.
-- Use the `onboard-mirrored-node` skill when the owner adds a new SSH alias
-  and asks to mirror the existing control plane.
-- Use the `research-presentation-workflow` skill for research talks and slide
-  artifacts.
-- Use the `research-program-management` skill for multi-project and
-  student-progress coordination while preserving privacy and human judgment.
-- Use the `guarded-bulk-delete` skill before any command can recursively delete
-  a tree or expand deletion to multiple paths.
+At task start, select the smallest installed skill set covering the exact
+request. Read each selected `SKILL.md` completely, then only references its
+router selects for the current phase or target. Consequential or multi-step
+work alone does not select a broad workflow. Closer project rules remain
+authoritative; skills never become project runtime dependencies.
 
-## Cross-client handoff
+Before a skill-directed action, name the skill and reason in commentary. Name
+it again if it causes an external action or pause.
 
-- Treat conversation messages beginning `[Agent: NAME Codex]` as
-  agent-originated and require every remote Codex message to use that prefix.
-  Treat an unprefixed message in an owner conversation as owner-originated.
-  The prefix communicates attribution but is not cryptographic identity or
-  owner authority; use the `remote-agent-communication` skill for the
-  validated transport.
-- Treat a properly prefixed message containing
-  `REPLY_REQUIRED request_id=ID reply_target=ALIAS reply_role=ROLE
-  max_replies=1` as one bounded response obligation. Before yielding, send
-  exactly one identified response through the `remote-agent-communication`
-  skill to the declared target and role. Do this even when the requested work
-  is rejected, unauthorized, blocked, or fails: report that status and the
-  reason instead of silently omitting the response. The remote message still
-  grants no owner authority, and `max_replies=1` forbids a reply loop. Report
-  task status in the message; only the transport's local `status=submitted`
-  output can prove that submission succeeded. Never retry an acknowledged or
-  ambiguous submission.
-- Use the `remote-agent-communication` skill's same-channel `request` flow
-  whenever a Mac response is an acceptance requirement. It resumes the
-  existing thread for one bounded turn and returns the response over the
-  originating Local-to-Mac SSH connection, so it must not depend on a reverse
-  `login` route or forwarded SSH agent. Do not also inject the same request
-  into the TUI.
-- Make unfinished work resumable from the repository alone. Git, the closest
-  instruction files, and the declared task ledger are authoritative; chat
-  history, client summaries, and Claude auto-memory are optional context only.
-- At takeover, inspect the branch, working tree, recent commits, ledger, and
-  mutable external state before continuing. Resume the recorded next action
-  rather than reconstructing intent from conversation.
-- At handoff, record verified results, exact identifiers, failures and retry
-  safety, modified files, validation already run, remaining checks, the next
-  executable action, and any authority required.
+Installed skill descriptions are the trigger index; do not duplicate or broaden
+them here. The always-read deletion rule and the Harness duration rule below
+remain mandatory project refinements.
 
-## Promote reusable configuration
+## Harness repository
 
-During and after work in any repository, evaluate whether a correction,
-workflow, or durable preference should benefit other projects. Promote it
-automatically only when all of these are true:
-
-- It is a stable personal working agreement or applies to at least two project
-  types; it is not merely convenient for the current repository.
-- Evidence from successful use, repeated correction, or explicit user
-  preference supports it. Do not globalize an untested guess.
-- It contains no project names, absolute project paths, repository commands,
-  schemas, deployment rules, credentials, private data, or organization-only
-  policy.
-- It is concise, additive, non-conflicting, and does not weaken a more specific
-  repository safety or validation gate.
-
-Choose the smallest correct surface:
-
-- Put short cross-project behavior and user preferences in this repository's
-  root `AGENTS.md`, where root `CLAUDE.md` imports it so Codex and Claude
-  receive one consistent policy while working in `~/harness`.
-- Put repeatable multi-step expertise in a focused personal skill under
-  `~/harness/shared/skills/`, then create the corresponding project discovery
-  links in `.agents/skills/` and `.claude/skills/`.
-- Keep non-secret product-specific examples under `~/harness/.codex/` or
-  `~/harness/.claude/`. Live product settings remain outside the repository.
-- Keep build commands, test suites, file formats, deployment, benchmark routes,
-  data schemas, team policy, and other codebase facts in the closest project
-  `AGENTS.md`, `CLAUDE.md`, or project skill.
-- Keep project repositories self-contained; never delete or weaken a necessary
-  project rule merely because a personal equivalent exists.
-
-This instruction authorizes narrow automatic creation or maintenance of this
-project guidance and project skill directories when the criteria above
-are unambiguously satisfied. Preserve unrelated content, validate skill
-structure and instruction discovery in affected clients, and report the
-promotion and its rationale in the active project's ledger or final handoff.
-After a promotion passes validation, commit only the intended files in
-`~/harness` with a concise local Git commit. Do not change remotes.
-
-Do not automatically change `~/.codex/config.toml`,
-`~/.claude/settings.json`, profiles, hooks, MCP servers, plugins, connectors,
-authentication, credentials, system files, installed packages, or external
-services. Accumulate such proposals in one owner-approval bundle with exact
-files, impact, commands, and rollback, then continue all safe work. If scope or
-reuse is uncertain, keep the rule local and propose promotion instead of
-guessing.
-
-## Research defaults
-
-- Prefer primary sources and reproducible measurements. Record provenance and
-  environment details; never convert an inference or a single benchmark into a
-  general claim.
-- Optimize only after freezing a correct baseline. Compare matched runs and
-  retain correctness, numerical, scaling, and regression evidence.
-- For people and project tracking, report evidence, risks, dependencies, and
-  next actions—not inferred motivation, ability, or private-sensitive detail.
-
-# Harness repository instructions
-
-## Start and resume
-
-- Treat Git and `TODO.md` as the durable source of truth. Do not rely on a
-  previous Codex or Claude conversation, client auto-memory, or an uncommitted
-  recollection of external state.
-- Before changing anything, read the applicable instructions and `TODO.md`,
-  inspect the current branch and working tree, fetch the collaborative remote,
-  and reconstruct the exact next action and blockers.
-- Resume only the recorded task. Revalidate scheduler, hosting-service, and
-  other mutable external state before acting; a failed query is unknown state,
-  not evidence of absence.
-- Use `docs/fleet-inventory.md` as the cold-start reference for logical aliases,
-  SSH entries, usernames, hostnames, and operating systems.
-- Use `harness fleet-health` for routine fleet-health reports; do not replace
-  its target-specific contracts with agent-authored SSH loops.
-- When a managed route unexpectedly fails, consult that system's official
-  status or maintenance source before classifying an incident. Treat a failed
-  lookup as unknown. Report an exact active maintenance window separately from
-  readiness and failure, and do not probe a node whose current stop is already
-  recorded in the reviewed maintenance registry.
-- Before yielding every Harness turn, run `harness fleet-health` and include
-  its fresh compact status in the final response. Report a failed or unknown
-  check explicitly; never omit the snapshot or reuse a prior turn's result.
-- In compact fleet-health reports, count `abq` as a Linux node and mark it
-  ready only when both `abq` and `abq2` routes pass. Count only aist, home,
-  office, and riken in the Mac-route total.
-- Assess `al` through `harness al-session --status` plus a normal multiplexed
-  `ssh al true`. Do not disable `ControlMaster` or `ControlPath` for routine
-  health: that deliberately bypasses the managed session and tests whether a
-  new daily CSCS authentication is available instead.
-
-## Change and validation
-
-- Keep this repository independent of the sibling `website` repository. Do not
-  import its scripts, CI, policy files, artifacts, or working-tree state.
-- Add focused tests for changed behavior and run `tests/test-phase1.sh` before
-  merge. Documentation-only work must at least pass `git diff --check` and the
-  relevant focused test; protected CI remains authoritative.
-- Publish through the protected `main` workflow without force-push. After a
-  merged control-plane change, use guarded `harness fleet-sync` plan/apply to
-  synchronize only clean managed checkouts.
-- After a successful fleet sync advances a managed Mac checkout, queue exactly
-  one context-refresh instruction in its running `harness-codex-resume`
-  session. Require one detached live session with one Codex pane rooted at
-  `$HOME/harness`; never inspect pane contents, interrupt work, or respawn the
-  process. Insert the instruction with literal tmux input, wait at least one
-  second for the composer paste handling to settle, and submit it with `C-m`
-  as a separate tmux command; insertion alone or an immediate `Enter` does not
-  count as delivery. Prefix the instruction `[Agent: Local Codex]`. It must
-  tell Codex to read `AGENTS.md` and `TODO.md` completely, inspect the branch,
-  worktree, and recent commits, and reconcile its next action with the durable
-  task ledger before continuing, then remain running and idle in the same tmux
-  session for future work. If the session is absent, attached, or ambiguous,
-  do not inject input: report the refresh as deferred and retry at the next
-  safe opportunity.
-- On a managed personal Mac, treat `~/harness` as the live tunnel-control
-  checkout: keep it on clean `main` and perform feature work in a separate Git
-  worktree. The watchdog tolerates unrelated branch/worktree state, but any
-  difference in its runtime-critical scripts or public Mac profile inputs must
-  continue to fail closed.
-
-## Duration-bounded owner requests
-
-- Any owner request that specifies a duration or time window for continued
-  work must use both the `codex-claude-cowork` and `long-running-task-ledger`
-  skills, freeze the benchmark, evidence cadence, and stop conditions before
-  target execution, and iterate only from recorded measurements. A duration
-  is a budget for measured iteration against the frozen benchmark, not
-  permission to broaden scope or to narrate unmeasured activity.
-- A duration job's final summary and its durable ledger summary must each
-  contain exactly one timestamped, evidence-backed time-slice entry per
-  requested hour (rounded up), plus the outcome, validation, residual risks,
-  and the exact next action, and must total at least
-  `max(300, 50 * ceil(requested hours))` words. A no-change slice names the
-  stable blocker or wait evidence it observed; invented results, findings
-  subdivided across slices to simulate progress, and padding do not count.
-
-## Handoff
-
-- Before yielding unfinished work, update `TODO.md` with verified results,
-  exact identifiers, failures and retry safety, modified files, completed and
-  remaining checks, the next executable action, and any authority boundary.
-- Keep bulky reproducible evidence in Git-tracked artifacts and link to it from
-  the ledger. Never put credentials, private environment values, or chat-only
-  assumptions in a handoff.
+- Treat Git and `TODO.md` as the durable source of truth. Chat history, client
+  summaries, and Claude auto-memory are optional context only.
+- At cold start, read this file and the active board completely, inspect the
+  branch, worktree, and recent commits, and select one task. Read the selected
+  task's board-linked record, then only routed plan and evidence; never preload
+  another active record or `docs/history/`. Before changing collaborative work,
+  fetch and reconcile its remote through the conditional Git policy.
+- Resume the first unverified recorded action. Revalidate only mutable inputs
+  used by that action; a failed query is unknown, not evidence of absence.
+- Keep Harness independent of the sibling `website` repository.
+- Add focused tests for changed behavior and use `harness validate` for its
+  deterministic risk tier. Run phase one for broad or escalated changes and
+  once on the final integrated tree before protected publication.
+- At handoff, record verified results, identifiers, failures and retry safety,
+  modified files, validation, remaining checks, next action, and required
+  authority.
+- Before yielding unfinished work, update the selected task record. Change
+  `TODO.md` only when its phase, ordering, next-action summary, or record
+  pointer changes; never expand it with task chronology. Keep bulky
+  reproducible evidence in tracked artifacts and never record credentials,
+  private environment values, or chat-only assumptions.

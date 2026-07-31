@@ -151,6 +151,34 @@ tree_facts() (
     }' "$facts_file"
 )
 
+validate_tree_directory_owners() (
+    target=$1
+    uid=$2
+    foreign=$(mktemp "${TMPDIR:-/tmp}/guarded-delete-owners.XXXXXX") ||
+        die "cannot create directory-owner inventory"
+    trap 'remove_file "$foreign"' EXIT HUP INT TERM
+    case "$platform" in
+        Darwin)
+            find -x "$target" -type d ! -user "$uid" -print >"$foreign" ||
+                die "cannot inventory target directory owners: $target"
+            ;;
+        *)
+            find "$target" -xdev -type d ! -user "$uid" -print >"$foreign" ||
+                die "cannot inventory target directory owners: $target"
+            ;;
+    esac
+    [ ! -s "$foreign" ] ||
+        die "target contains a directory owned by another uid: $target"
+)
+
+make_tree_owner_writable() {
+    target=$1
+    case "$platform" in
+        Darwin) find -x "$target" -type d -exec chmod u+w {} + ;;
+        *) find "$target" -xdev -type d -exec chmod u+w {} + ;;
+    esac
+}
+
 authoritative_home() {
     uid=$1
     case "$platform" in
@@ -321,9 +349,14 @@ plan() {
         facts=$(tree_facts "$target")
         entries=${facts%%"$TAB"*}
         bytes=${facts#*"$TAB"}
-        printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
-            "$target" "$(path_id "$target")" "$parent" \
-            "$(path_id "$parent")" "$entries" "$bytes" >>"$target_list"
+        target_owner=$(path_owner "$target")
+        [ "$target_owner" = "$uid" ] ||
+            die "target owner differs from current uid: $target"
+        validate_tree_directory_owners "$target" "$uid"
+        printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+            "$target" "$(path_id "$target")" "$target_owner" \
+            "$(path_mode "$target")" "$parent" "$(path_id "$parent")" \
+            "$entries" "$bytes" >>"$target_list"
     done
 
     created=$(date +%s)
@@ -331,7 +364,7 @@ plan() {
         die "cannot create independent manifest source"
     chmod 600 "$manifest_source"
     {
-        printf 'schema\tguarded-delete-v2\n'
+        printf 'schema\tguarded-delete-v3\n'
         printf 'created_epoch\t%s\n' "$created"
         printf 'uid\t%s\n' "$uid"
         printf 'home_lexical\t%s\n' "$home_lexical"
@@ -348,9 +381,11 @@ plan() {
         fi
         printf 'root\t%s\n' "$root"
         printf 'root_id\t%s\n' "$(path_id "$root")"
-        while IFS="$TAB" read -r target target_id parent parent_id entries bytes; do
-            printf 'target\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-                "$target" "$target_id" "$parent" "$parent_id" "$entries" "$bytes"
+        while IFS="$TAB" read -r target target_id target_owner target_mode \
+            parent parent_id entries bytes; do
+            printf 'target\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+                "$target" "$target_id" "$target_owner" "$target_mode" \
+                "$parent" "$parent_id" "$entries" "$bytes"
         done <"$target_list"
     } >"$manifest_source" || die "cannot write independent manifest source"
 
@@ -386,7 +421,9 @@ plan() {
     token=$expected_token
 
     printf 'PLAN within=%s targets=%s\n' "$root" "$(awk -F '\t' '$1 == "target" { n++ } END { print n + 0 }' "$manifest")"
-    awk -F '\t' '$1 == "target" { printf "TARGET path=%s entries=%s bytes=%s\n", $2, $6, $7 }' "$manifest"
+    awk -F '\t' '$1 == "target" {
+        printf "TARGET path=%s entries=%s bytes=%s\n", $2, $8, $9
+    }' "$manifest"
     printf 'MANIFEST path=%s mode=600\n' "$manifest"
     printf 'TOKEN sha256=%s\n' "$token"
     printf 'NEXT harness guarded-delete apply --manifest '
@@ -447,7 +484,7 @@ apply_manifest() {
     [ "$actual_token" = "$supplied_token" ] || die "manifest token mismatch; re-plan"
 
     schema=$(field_value schema "$manifest") || die "manifest schema field is invalid"
-    [ "$schema" = guarded-delete-v2 ] || die "unsupported manifest schema: $schema"
+    [ "$schema" = guarded-delete-v3 ] || die "unsupported manifest schema: $schema"
     manifest_uid=$(field_value uid "$manifest") || die "manifest uid field is invalid"
     [ "$manifest_uid" = "$(id -u)" ] || die "manifest uid differs from current uid"
     created=$(field_value created_epoch "$manifest") || die "manifest timestamp field is invalid"
@@ -492,10 +529,11 @@ apply_manifest() {
 
     target_count=$(awk -F '\t' '$1 == "target" { n++ } END { print n + 0 }' "$manifest")
     [ "$target_count" -gt 0 ] || die "manifest contains no targets"
-    awk -F '\t' '$1 == "target" && NF != 7 { bad=1 } END { exit bad }' "$manifest" ||
+    awk -F '\t' '$1 == "target" && NF != 9 { bad=1 } END { exit bad }' "$manifest" ||
         die "manifest target record is invalid"
 
-    while IFS="$TAB" read -r kind target target_id parent parent_id entries bytes; do
+    while IFS="$TAB" read -r kind target target_id target_owner target_mode \
+        parent parent_id entries bytes; do
         [ "$kind" = target ] || continue
         reject_control_characters "$target"
         [ -d "$target" ] && [ ! -L "$target" ] || die "target changed type or disappeared: $target"
@@ -503,7 +541,13 @@ apply_manifest() {
         is_strict_descendant "$target" "$root" || die "target escaped --within: $target"
         reject_protected_target "$target" "$home_lexical" "$home_canonical" "$cwd" "$repo"
         [ "$(path_id "$target")" = "$target_id" ] || die "target identity changed: $target"
+        [ "$target_owner" = "$manifest_uid" ] &&
+            [ "$(path_owner "$target")" = "$target_owner" ] ||
+            die "target owner changed: $target"
+        [ "$(path_mode "$target")" = "$target_mode" ] ||
+            die "target mode changed; re-plan: $target"
         [ "$(path_id "$parent")" = "$parent_id" ] || die "target parent identity changed: $parent"
+        validate_tree_directory_owners "$target" "$manifest_uid"
         facts=$(tree_facts "$target")
         current_entries=${facts%%"$TAB"*}
         current_bytes=${facts#*"$TAB"}
@@ -515,10 +559,28 @@ apply_manifest() {
     done <"$manifest"
 
     printf 'VALIDATED manifest=%s targets=%s age_seconds=%s\n' "$manifest" "$target_count" "$age"
-    while IFS="$TAB" read -r kind target target_id parent parent_id _entries _bytes; do
+    while IFS="$TAB" read -r kind target target_id target_owner _target_mode \
+        parent parent_id _entries _bytes; do
+        [ "$kind" = target ] || continue
+        [ "$(path_id "$parent")" = "$parent_id" ] ||
+            die "target parent changed before preparation: $parent"
+        [ "$(path_id "$target")" = "$target_id" ] ||
+            die "target changed before preparation: $target"
+        [ "$(path_owner "$target")" = "$target_owner" ] ||
+            die "target owner changed before preparation: $target"
+        validate_tree_directory_owners "$target" "$manifest_uid"
+        make_tree_owner_writable "$target" ||
+            die "cannot make owner directories writable: $target"
+        printf 'PREPARED path=%s owner_directories=writable\n' "$target"
+    done <"$manifest"
+
+    while IFS="$TAB" read -r kind target target_id target_owner _target_mode \
+        parent parent_id _entries _bytes; do
         [ "$kind" = target ] || continue
         [ "$(path_id "$parent")" = "$parent_id" ] || die "target parent changed before delete: $parent"
         [ "$(path_id "$target")" = "$target_id" ] || die "target changed before delete: $target"
+        [ "$(path_owner "$target")" = "$target_owner" ] ||
+            die "target owner changed before delete: $target"
         case "$platform" in
             Darwin) find -x "$target" -depth -delete ;;
             *) rm -rf --one-file-system -- "$target" ;;
@@ -539,7 +601,7 @@ apply_manifest() {
     printf 'VERIFIED protected_anchors=unchanged targets=absent\n'
 }
 
-for required in awk cp date find git id ln mktemp realpath rm sed stat uname; do
+for required in awk chmod cp date find git id ln mktemp realpath rm sed stat uname; do
     require_command "$required"
 done
 case "$platform" in

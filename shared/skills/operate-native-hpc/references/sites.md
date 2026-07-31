@@ -1,4 +1,8 @@
-# Configured native HPC sites
+# Legacy aggregate native HPC sites
+
+This compatibility aggregate preserves historical links and existing
+readiness-test assertions. Normal skill routing reads `common.md` and exactly
+one selected site reference from `SKILL.md`; do not preload this file.
 
 Use this reference only after resolving an in-scope logical profile. Facts here
 are validated baselines, not permission to guess a project's resource choices.

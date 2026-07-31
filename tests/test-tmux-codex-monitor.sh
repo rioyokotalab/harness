@@ -68,6 +68,51 @@ assert parsed == {
     "start": "424242",
     "comm": "codex TUI",
 }
+snapshot_fixture = {
+    1: {"pid": 1, "parent": 0},
+    2: {"pid": 2, "parent": 1},
+    3: {"pid": 3, "parent": 2},
+    4: {"pid": 4, "parent": 9},
+}
+assert [
+    item["pid"]
+    for item in module.snapshot_descendants(1, snapshot_fixture)
+] == [2, 3]
+module.socket_pairs = lambda: [
+    (101, 202, 11),
+    (202, 101, 99),
+    (303, 404, 12),
+]
+assert module.reciprocal_socket_snapshot() == {11: 99, 99: 11}
+original_listdir = module.os.listdir
+original_metadata = module.process_metadata
+original_process_info = module.process_info
+detailed_calls = []
+try:
+    module.os.listdir = lambda _path: ["10", "11", "not-a-pid"]
+    module.process_metadata = lambda pid: {
+        "pid": pid,
+        "parent": 1,
+        "start": "start-{}".format(pid),
+        "comm": "fixture",
+        "uid": os.getuid(),
+    }
+    module.process_info = lambda pid: detailed_calls.append(pid) or {
+        "pid": pid,
+        "parent": 1,
+        "start": "start-{}".format(pid),
+        "comm": "fixture",
+        "uid": os.getuid(),
+        "argv": ["managed", str(pid)],
+    }
+    bounded_snapshot = module.process_snapshot([11])
+    assert detailed_calls == [11]
+    assert "argv" not in bounded_snapshot[10]
+    assert bounded_snapshot[11]["argv"] == ["managed", "11"]
+finally:
+    module.os.listdir = original_listdir
+    module.process_metadata = original_metadata
+    module.process_info = original_process_info
 
 with tempfile.TemporaryDirectory() as helper_root:
     os.environ["HARNESS_TESTING"] = "1"
@@ -79,6 +124,7 @@ with tempfile.TemporaryDirectory() as helper_root:
             "unarchived": True,
             "exact_name": True,
             "exact_cwd": True,
+            "native_cwd": True,
             "rollout_location": True,
             "rollout_exists": True,
             "interactive_source": True,
@@ -103,6 +149,7 @@ with tempfile.TemporaryDirectory() as helper_root:
     }
     module.atomic_json(os.path.join(helper_root, "phone-mirror.json"), receipt)
     assert module.phone_mirror_health() == "healthy"
+    assert module.phone_mirror_health(processes={os.getpid(): current}) == "healthy"
     receipt["status"] = "degraded"
     receipt["roles"]["swallow"]["interactive_source"] = False
     receipt["mismatch_classes"] = ["interactive_source:swallow"]
@@ -182,10 +229,10 @@ module.parse_supervisor = lambda _info: {
     "runtime": "students-t338",
     "thread": "thread-students",
     "start": "supervisor-start",
-    "target": None,
+    "target": "students",
 }
-module.resilient_status = lambda _runtime: (
-    {"phase": "running", "owner_pid": "10"},
+module.resilient_status = lambda _target, _runtime: (
+    {"target": "students", "phase": "running", "owner_pid": "10"},
     {
         "phase": "watching",
         "owner_pid": "12",
@@ -217,9 +264,8 @@ codex_0146 = module.collect_health(
         }
     ]
 )
-assert codex_0146["students"]["state"] == "healthy"
-assert codex_0146["students"]["tui"]["pid"] == 11
-assert codex_0146["students"]["app_server_pid"] == 99
+assert codex_0146["students"]["state"] == "unhealthy"
+assert codex_0146["students"]["reason"] == "native-cwd"
 native_window = [
     {
         "index": 1,
@@ -232,6 +278,12 @@ native_window = [
         "dead": False,
     }
 ]
+module.parse_supervisor = lambda _info: {
+    "runtime": "students-t338",
+    "thread": "thread-students",
+    "start": "supervisor-start",
+    "target": None,
+}
 native_missing_target = module.collect_health(native_window)
 assert native_missing_target["students"]["state"] == "unhealthy"
 assert native_missing_target["students"]["reason"] == "supervisor-target"
@@ -243,8 +295,32 @@ module.parse_supervisor = lambda _info: {
 }
 native_targeted = module.collect_health(native_window)
 assert native_targeted["students"]["state"] == "healthy"
-module.resilient_status = lambda _runtime: (
-    {"phase": "running", "owner_pid": "10"},
+assert native_targeted["students"]["tui"]["pid"] == 11
+assert native_targeted["students"]["app_server_pid"] == 99
+snapshot_processes = {
+    10: process(10),
+    11: {
+        "pid": 11,
+        "parent": 10,
+        "start": "tui-start",
+        "comm": "codex",
+        "argv": [],
+        "uid": os.getuid(),
+    },
+    12: process(12),
+    99: process(99),
+}
+snapshot_targeted = module.collect_health(
+    native_window, snapshot_processes, {11: 99, 99: 11}
+)
+assert snapshot_targeted["students"]["state"] == "healthy"
+assert module.mapping_snapshot(
+    {},
+    snapshot_targeted,
+    snapshot_processes,
+)["students"]["app_server_start"] == "app-server-start"
+module.resilient_status = lambda _target, _runtime: (
+    {"target": "students", "phase": "running", "owner_pid": "10"},
     {
         "phase": "blocked",
         "reason": "unsafe-tail",
@@ -263,15 +339,15 @@ unsafe_0146 = module.collect_health(
             "panes": 1,
             "pane_id": "%fixture",
             "pane_pid": 10,
-            "path": os.environ["HARNESS_MONITOR_ROOT"],
+            "path": module.TARGET_PATHS["students"],
             "dead": False,
         }
     ]
 )
 assert unsafe_0146["students"]["state"] == "blocked"
 assert unsafe_0146["students"]["reason"] == "unsafe-tail"
-module.resilient_status = lambda _runtime: (
-    {"phase": "running", "owner_pid": "10"},
+module.resilient_status = lambda _target, _runtime: (
+    {"target": "students", "phase": "running", "owner_pid": "10"},
     {
         "phase": "blocked",
         "reason": "post-rollback-system-error",
@@ -288,7 +364,7 @@ other_blocked = module.collect_health(
             "panes": 1,
             "pane_id": "%fixture",
             "pane_pid": 10,
-            "path": os.environ["HARNESS_MONITOR_ROOT"],
+            "path": module.TARGET_PATHS["students"],
             "dead": False,
         }
     ]
@@ -304,7 +380,7 @@ windows = [
         "panes": 1,
         "pane_id": "%{}".format(index),
         "pane_pid": 10 + index,
-        "path": os.environ["HARNESS_MONITOR_ROOT"],
+        "path": module.TARGET_PATHS[name],
         "dead": False,
     }
     for name, index in module.EXPECTED
@@ -377,7 +453,7 @@ calls = []
 module.subprocess.run = lambda arguments, **_kwargs: calls.append(arguments) or Result()
 assert module.enqueue_helper_recovery(candidates[0])
 assert len(calls) == 1
-assert "codex-recovery-helper" in calls[0]
+assert calls[0][0].endswith("/libexec/harness-codex-recovery-helper")
 assert "--enqueue-blocked" in calls[0]
 assert "--thread" in calls[0]
 PY

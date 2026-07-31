@@ -37,7 +37,23 @@ runtime=$TEST_ROOT/runtime
 codex_home=$TEST_ROOT/codex
 sessions=$codex_home/sessions/2026/07/27
 message_state=$TEST_ROOT/message-state
+target_harness=$TEST_ROOT/repositories/harness
+target_students=$TEST_ROOT/repositories/students
+target_swallow=$TEST_ROOT/repositories/swallow
+target_profile=$TEST_ROOT/targets.tsv
 mkdir -p "$runtime" "$sessions" "$message_state"
+for repository in "$target_harness" "$target_students" "$target_swallow"; do
+    mkdir -p "$repository/.codex"
+    git -C "$repository" init -q -b main
+    printf '%s\n' 'model = "gpt-5.6-sol"' \
+        >"$repository/.codex/config.toml"
+done
+{
+    printf '# target\tindex\tcanonical_repository\n'
+    printf 'harness\t0\t@HARNESS_ROOT@\n'
+    printf 'students\t1\t%s\n' "$target_students"
+    printf 'swallow\t2\t%s\n' "$target_swallow"
+} >"$target_profile"
 chmod 700 "$runtime" "$codex_home" "$codex_home/sessions" \
     "$codex_home/sessions/2026" "$codex_home/sessions/2026/07" \
     "$sessions" "$message_state"
@@ -113,7 +129,11 @@ if len(clock.sleeps) != 1 or not 0 < clock.sleeps[0] <= 0.2:
 PY
 
 run_recovery() {
+    set -- --target "${RECOVERY_TARGET:-harness}" "$@"
     HARNESS_TESTING=1 \
+    HARNESS_CONTROL_ROOT="$ROOT" \
+    HARNESS_TARGET_ROOT="$target_harness" \
+    HARNESS_TEST_CODEX_TARGETS_FILE="$target_profile" \
     HARNESS_TEST_RUNTIME_DIR="$runtime" \
     HARNESS_TEST_RECOVERY_BACKEND="$backend" \
     HARNESS_TEST_MESSAGE_LOCK="$message_state/agent-message.lock" \
@@ -127,8 +147,18 @@ write_read_response() {
     thread=$1
     status_value=$2
     rollout=$3
-    printf '{"threadId":"%s","status":"%s","path":"%s"}\n' \
-        "$thread" "$status_value" "$rollout" \
+    thread_cwd=${4:-$target_harness}
+    if ! sed -n '1p' "$rollout" | grep -F '"cwd":' >/dev/null; then
+        sed "1s|}}$|,\"cwd\":\"$thread_cwd\"}}|" "$rollout" \
+            >"$rollout.next"
+        mv "$rollout.next" "$rollout"
+        chmod 600 "$rollout"
+    elif ! sed -n '1p' "$rollout" |
+        grep -F "\"cwd\":\"$thread_cwd\"" >/dev/null; then
+        fail "test rollout CWD changed across responses"
+    fi
+    printf '{"threadId":"%s","status":"%s","path":"%s","cwd":"%s"}\n' \
+        "$thread" "$status_value" "$rollout" "$thread_cwd" \
         >"$TEST_ROOT/read-response.json"
 }
 
@@ -163,11 +193,48 @@ grep -F 'rolled_back=2' "$TEST_ROOT/safe.out" >/dev/null ||
     fail "safe rollback count"
 [ "$(cat "$TEST_ROOT/rollback.calls")" = 'thread-safe	2' ] ||
     fail "safe rollback request"
-[ "$(stat -c %a "$runtime/safe.recovery.state")" = 600 ] ||
+[ "$(stat -c %a "$runtime/harness:safe.recovery.state")" = 600 ] ||
     fail "recovery state mode"
 grep -E 'blocked one|blocked two|baseline|policy' \
-    "$runtime/safe.recovery.state" >/dev/null &&
+    "$runtime/harness:safe.recovery.state" >/dev/null &&
     fail "recovery state retained transcript content"
+
+student_parallel_rollout=$sessions/student-parallel.jsonl
+cat >"$student_parallel_rollout" <<'EOF'
+{"timestamp":"1","type":"session_meta","payload":{"id":"thread-student-parallel"}}
+{"timestamp":"2","type":"event_msg","payload":{"type":"task_started"}}
+{"timestamp":"3","type":"response_item","payload":{"type":"message","role":"user"}}
+{"timestamp":"4","type":"response_item","payload":{"type":"message","role":"assistant"}}
+{"timestamp":"5","type":"event_msg","payload":{"type":"task_complete"}}
+EOF
+chmod 600 "$student_parallel_rollout"
+write_read_response thread-student-parallel idle "$student_parallel_rollout" \
+    "$target_students"
+RECOVERY_TARGET=students run_recovery \
+    --recover --name parallel --thread thread-student-parallel \
+    >"$TEST_ROOT/student-parallel.out"
+
+harness_parallel_rollout=$sessions/harness-parallel.jsonl
+cat >"$harness_parallel_rollout" <<'EOF'
+{"timestamp":"1","type":"session_meta","payload":{"id":"thread-harness-parallel"}}
+{"timestamp":"2","type":"event_msg","payload":{"type":"task_started"}}
+{"timestamp":"3","type":"response_item","payload":{"type":"message","role":"user"}}
+{"timestamp":"4","type":"response_item","payload":{"type":"message","role":"assistant"}}
+{"timestamp":"5","type":"event_msg","payload":{"type":"task_complete"}}
+EOF
+chmod 600 "$harness_parallel_rollout"
+write_read_response thread-harness-parallel idle "$harness_parallel_rollout"
+run_recovery --recover --name parallel --thread thread-harness-parallel \
+    >"$TEST_ROOT/harness-parallel.out"
+[ -f "$runtime/students:parallel.recovery.state" ] &&
+    [ -f "$runtime/harness:parallel.recovery.state" ] ||
+    fail "same-name recovery state is not target-scoped"
+grep -F 'thread=thread-student-parallel' \
+    "$runtime/students:parallel.recovery.state" >/dev/null ||
+    fail "Students recovery state was overwritten"
+grep -F 'thread=thread-harness-parallel' \
+    "$runtime/harness:parallel.recovery.state" >/dev/null ||
+    fail "Harness recovery state was overwritten"
 
 : >"$TEST_ROOT/rollback.calls"
 write_read_response thread-safe systemError "$safe_rollout"
@@ -364,13 +431,38 @@ FAKE_MUTATE_ROLLOUT="$drift_rollout" \
     fail "rollout identity drift reached rollback"
 
 : >"$TEST_ROOT/rollback.calls"
-write_read_response thread-idle idle "$safe_rollout"
-run_recovery --recover --name idle --thread thread-idle \
+write_read_response thread-safe idle "$safe_rollout"
+run_recovery --recover --name idle --thread thread-safe \
     >"$TEST_ROOT/idle.out"
 grep -F 'phase=watching reason=thread-idle' "$TEST_ROOT/idle.out" \
     >/dev/null || fail "idle thread classification"
 [ ! -s "$TEST_ROOT/rollback.calls" ] ||
     fail "idle thread reached rollback"
+
+cross_rollout=$sessions/cross-target.jsonl
+cat >"$cross_rollout" <<'EOF'
+{"timestamp":"1","type":"session_meta","payload":{"id":"thread-cross"}}
+{"timestamp":"2","type":"event_msg","payload":{"type":"task_started"}}
+{"timestamp":"3","type":"response_item","payload":{"type":"message","role":"user"}}
+{"timestamp":"4","type":"event_msg","payload":{"type":"task_complete"}}
+EOF
+chmod 600 "$cross_rollout"
+: >"$TEST_ROOT/rollback.calls"
+write_read_response thread-cross idle "$cross_rollout" "$target_students"
+run_recovery --check --name cross-idle --thread thread-cross \
+    >"$TEST_ROOT/cross-idle.out" 2>&1 &&
+    fail "cross-target idle thread passed exact-resume preflight"
+[ ! -s "$TEST_ROOT/rollback.calls" ] ||
+    fail "cross-target idle thread reached rollback"
+write_read_response thread-cross systemError "$cross_rollout" "$target_students"
+run_recovery --recover --name cross-error --thread thread-cross \
+    >"$TEST_ROOT/cross-error.out" 2>&1 &&
+    fail "cross-target systemError thread was accepted"
+grep -F 'phase=blocked reason=target-mismatch' \
+    "$TEST_ROOT/cross-error.out" >/dev/null ||
+    fail "cross-target systemError was not classified"
+[ ! -s "$TEST_ROOT/rollback.calls" ] ||
+    fail "cross-target systemError thread reached rollback"
 
 : >"$TEST_ROOT/rollback.calls"
 write_read_response thread-safe systemError "$safe_rollout"
@@ -390,6 +482,12 @@ grep -F 'rollback=safe-tail-only max_turns=8 prompt=replay-disabled' \
 run_recovery --status --name safe >"$TEST_ROOT/status.out"
 grep -F 'phase=recovered' "$TEST_ROOT/status.out" >/dev/null ||
     fail "recovery status readback"
+if HARNESS_TESTING=1 HARNESS_TEST_RUNTIME_DIR="$runtime" \
+    "$HARNESS" codex-thread-recovery --plan \
+        --name missing-target --thread thread-missing \
+        >"$TEST_ROOT/missing-target.out" 2>&1; then
+    fail "targetless recovery plan was accepted"
+fi
 
 websocket_rollout=$sessions/websocket.jsonl
 cat >"$websocket_rollout" <<'EOF'
@@ -399,6 +497,7 @@ cat >"$websocket_rollout" <<'EOF'
 {"timestamp":"4","type":"event_msg","payload":{"type":"task_complete"}}
 EOF
 chmod 600 "$websocket_rollout"
+write_read_response thread-websocket systemError "$websocket_rollout"
 
 websocket_server=$TEST_ROOT/fake-websocket-server.py
 cat >"$websocket_server" <<'PY'
@@ -547,12 +646,15 @@ while [ ! -S "$control_socket" ] && [ "$socket_wait" -lt 50 ]; do
 done
 [ -S "$control_socket" ] || fail "fake WebSocket server did not start"
 HARNESS_TESTING=1 \
+HARNESS_CONTROL_ROOT="$ROOT" \
+HARNESS_TARGET_ROOT="$target_harness" \
+HARNESS_TEST_CODEX_TARGETS_FILE="$target_profile" \
 HARNESS_TEST_RUNTIME_DIR="$runtime" \
 HARNESS_TEST_MESSAGE_LOCK="$message_state/agent-message.lock" \
 HARNESS_CODEX_APP_SERVER_SOCKET="$control_socket" \
 CODEX_HOME="$codex_home" \
     "$HARNESS" codex-thread-recovery --recover \
-    --name websocket --thread thread-websocket \
+    --name websocket --target harness --thread thread-websocket \
     >"$TEST_ROOT/websocket.out"
 wait "$server_pid"
 server_pid=

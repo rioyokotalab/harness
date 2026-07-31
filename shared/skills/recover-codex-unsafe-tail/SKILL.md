@@ -1,69 +1,61 @@
 ---
 name: recover-codex-unsafe-tail
-description: Diagnose, recover, or replace a managed remote Codex thread that repeatedly shows Request blocked, reports systemError, has an unsafe or unavailable recovery tail, has lost its recovery watcher, or requires an authorized saved-root/TUI replacement. Use for Harness-managed phone/tmux Codex sessions when recovery must preserve tool-bearing work, avoid rejected-prompt replay, and choose safely between one proven rollback and a bridge-first fresh-root cutover.
+description: Diagnose or recover a managed phone/tmux Codex thread with Request blocked, systemError, an unsafe tail, lost watcher, or authorized root/TUI replacement—never replay rejected prompts.
 ---
 
 # Recover or replace Codex unsafe tails
 
-Restore one managed Codex surface from durable repository state while
-preserving the poisoned root and unrelated sessions.
+Restore one surface from repository truth; preserve poisoned root
+and unrelated sessions.
 
-## Reconstruct authority
+## Reconstruct and diagnose without content
 
-1. Read the controlling repository instructions and durable task ledger
-   completely. Do not use prior chat as the recovery source.
-2. Inspect Git branch, worktree, recent commits, and mutable runtime metadata.
-3. Record a task checkpoint before any app-server, name, tmux, or process
-   write. Treat the owner's direct request to fix the named blocked session as
-   authority for the narrow recovery, not for unrelated sessions or services.
-4. Read [references/protocol.md](references/protocol.md) completely before a
-   live recovery.
+- Read repository instructions and durable ledger completely; never use chat
+  as the recovery source. Inspect branch, worktree, commits, and mutable
+  runtime metadata.
+- Resolve `TARGET` from closed canonical map; stored thread CWD must
+  equal its exact repository. Every direct `codex-thread-recovery` `--plan`,
+  `--recover`, or `--watch` requires `--target TARGET`;
+  identify target on status where applicable. Unknown target/CWD mismatch stops.
+- A direct owner request grants narrow authority for that session, never
+  unrelated sessions/services; checkpoint before any app-server, root-name,
+  tmux, or process write.
+- Use `harness codex-resilient --status --name NAME --target TARGET`
+  and `harness codex-thread-recovery` surfaces. Validate exact root ID, tmux
+  window/pane owner, supervisor/watcher/launcher/TUI identities and start
+  ticks, app-server identity, reciprocal socket, native doctor, and unaffected
+  sessions.
+- Inspect only protocol status, item types/roles, completion, and safe rollout
+  structure. Never read pane text, transcript or message text,
+  commands, tool payloads, credentials, or rejected prompts.
+- Failed queries are unknown, never absence or success.
 
-## Diagnose without content
+## Route only the selected recovery
 
-- Use the installed `harness codex-resilient --status --name NAME` and
-  `harness codex-thread-recovery` surfaces.
-- Validate exact root ID, tmux window/pane owner, supervisor/watcher/launcher/
-  TUI identities and start ticks, app-server identity, reciprocal socket,
-  native doctor, and unaffected sessions.
-- Inspect only protocol status, item types, roles, completion state, and safe
-  rollout structure. Never read pane text, transcript/message text, commands,
-  tool payloads, credentials, or rejected prompts.
-- Treat a failed query as unknown. Never infer absence or success.
+Classify read-only; completely read only the selected row before action.
 
-## Select the recovery path
+| Current action | Read completely |
+| --- | --- |
+| diagnose or classify without mutation | no transaction reference |
+| perform the helper-proven one-shot rollback | [safe-rollback.md](references/safe-rollback.md) and [acceptance.md](references/acceptance.md) |
+| replace a root/TUI through a fresh bridge | [bridge-first.md](references/bridge-first.md) and [acceptance.md](references/acceptance.md) |
 
-Use exactly one branch:
+Diagnosis reads no reference. Normal routes never load the legacy aggregate.
+References do not select one another. On a path change, return here and load
+only the new row.
 
-- `idle`, `active`, or `notLoaded`: do not mutate the thread. Repair only a
+Use exactly one path:
+
+- For `idle`, `active`, or `notLoaded`, do not mutate the thread. Repair only a
   separately proven watcher/supervisor lifecycle defect.
-- `systemError` with a helper-proven assistant-less, side-effect-free tail:
-  invoke one exact safe-tail recovery after a final identity gate. Require an
-  acknowledged rollback and independent post-read. Never retry an ambiguous
-  request.
-- Post-rollback `systemError`, `unsafe-tail`, unrecognized structure, or a
-  watcher refusal: preserve the root and use the bridge-first fresh-root cutover.
-- An authorized saved-root/TUI replacement that does not have a safe in-place
-  path: use the same bridge-first fresh-root cutover.
-- Unavailable app server, identity drift, unsafe rollout metadata, active
-  ambiguous request, or missing authority: stop and checkpoint the blocker.
+- Select one-shot rollback only for `systemError` with a helper-proven
+  assistant-less, side-effect-free tail.
+- Select bridge-first replacement for post-rollback `systemError`,
+  `unsafe-tail`, unrecognized structure, watcher refusal, or an authorized
+  saved-root/TUI replacement without a safe in-place path.
+- For unavailable app server, identity drift, unsafe rollout metadata, an
+  active ambiguous request, or missing authority, stop and checkpoint.
 
-Never weaken the analyzer, replay the rejected prompt, restart the shared app
-server, fork a poisoned root, archive/delete a saved root, signal a process
-group, or use `SIGKILL`.
-
-## Accept and hand off
-
-Require an assistant-bearing completed cold-start turn, no active item or
-`systemError`, exact phone/tmux name agreement, a live watcher and TUI socket,
-the accepted bridge runtime identity unchanged, an absent old TUI/launcher
-chain, a preserved blocked root, unchanged unaffected sessions/app server,
-coherent Git, and canonical fleet health.
-
-Treat an unreaped zombie as already exited but not absent: never signal it
-again, record its parent-owned reaping boundary, and do not claim a zero-zombie
-gate.
-
-Checkpoint every non-retryable acknowledgement and final identifiers. If
-generated schema or diagnostic trees require cleanup, invoke the
-`guarded-bulk-delete` skill; do not issue recursive deletion directly.
+Never weaken the analyzer or reconstruct or replay a rejected prompt. Never
+restart the shared app server, fork a poisoned root, archive or delete a saved
+root, signal a process group, or use `SIGKILL`.

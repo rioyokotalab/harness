@@ -5,7 +5,12 @@ ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 SKILL=$ROOT/shared/skills/codex-claude-cowork/SKILL.md
-PROTOCOL=$ROOT/shared/skills/codex-claude-cowork/references/protocol.md
+SESSION_PLANNING=$ROOT/shared/skills/codex-claude-cowork/references/session-planning.md
+EVIDENCE_REVIEW=$ROOT/shared/skills/codex-claude-cowork/references/evidence-review.md
+EVIDENCE_EXCHANGE=$ROOT/shared/skills/codex-claude-cowork/references/evidence-exchange.md
+NATIVE_CLIENTS=$ROOT/shared/skills/codex-claude-cowork/references/native-clients.md
+EXECUTION_DURATION=$ROOT/shared/skills/codex-claude-cowork/references/execution-duration.md
+RECOVERY=$ROOT/shared/skills/codex-claude-cowork/references/recovery.md
 SESSION=$ROOT/shared/skills/codex-claude-cowork/scripts/cowork-session
 OPENAI=$ROOT/shared/skills/codex-claude-cowork/agents/openai.yaml
 TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/harness-cowork-test.XXXXXX")
@@ -32,65 +37,62 @@ trap 'exit 143' TERM
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 
-for path in "$SKILL" "$PROTOCOL" "$SESSION" "$OPENAI"; do
+for path in "$SKILL" "$SESSION_PLANNING" "$EVIDENCE_REVIEW" "$EVIDENCE_EXCHANGE" \
+    "$NATIVE_CLIENTS" "$EXECUTION_DURATION" "$RECOVERY" "$SESSION" "$OPENAI"; do
     [ -f "$path" ] && [ ! -L "$path" ] || fail "missing regular file: $path"
 done
 [ -x "$SESSION" ] || fail 'session validator is not executable'
 
 grep -Fx 'name: codex-claude-cowork' "$SKILL" >/dev/null || fail 'skill name'
-grep -F 'as driver and the other as co-pilot' "$SKILL" >/dev/null || fail 'driver rule'
-grep -F 'the content of `copilot-evidence.md`' "$SKILL" >/dev/null ||
+grep -F 'The client handling the owner' "$SKILL" | grep -F '**driver**' >/dev/null ||
+    fail 'driver rule'
+grep -F 'driver owns session content except' "$SESSION_PLANNING" >/dev/null &&
+    grep -F '`copilot-evidence.md`' "$SESSION_PLANNING" >/dev/null ||
     fail 'co-pilot content ownership'
-grep -F 'prose-only review is insufficient' "$SKILL" >/dev/null || fail 'experiment gate'
+grep -F 'prose-only' "$EVIDENCE_REVIEW" >/dev/null &&
+    grep -F 'review is insufficient' "$EVIDENCE_REVIEW" >/dev/null ||
+    fail 'experiment gate'
 grep -F 'Let only the driver mutate the target' "$SKILL" >/dev/null || fail 'execution role'
 grep -F 'Do not grant either' "$SKILL" >/dev/null || fail 'role symmetry'
-grep -F 'claude --print --permission-mode dontAsk' "$PROTOCOL" >/dev/null ||
+grep -F 'claude --print --permission-mode dontAsk' "$NATIVE_CLIENTS" >/dev/null ||
     fail 'Codex-driver native Claude mapping'
-grep -F 'codex --ask-for-approval never exec --ephemeral' "$PROTOCOL" >/dev/null ||
+grep -F 'codex --ask-for-approval never exec --ephemeral' "$NATIVE_CLIENTS" >/dev/null ||
     fail 'Claude-driver native Codex mapping'
-grep -F -- '`--dangerously-skip-permissions`' "$PROTOCOL" >/dev/null ||
+grep -F -- '`--dangerously-skip-permissions`' "$NATIVE_CLIENTS" >/dev/null ||
     fail 'Claude bypass refusal'
-grep -F 'digests SESSION_DIR' "$PROTOCOL" >/dev/null ||
+grep -F 'digests SESSION_DIR' "$RECOVERY" >/dev/null ||
     fail 'protocol missing digest-seal instruction'
-grep -F 'outside' "$PROTOCOL" | grep -F 'SESSION_DIR' >/dev/null ||
+grep -F 'outside' "$RECOVERY" | grep -F 'SESSION_DIR' >/dev/null ||
     fail 'protocol missing external-manifest requirement'
-grep -F 'link count' "$PROTOCOL" >/dev/null ||
+grep -F 'link count' "$EVIDENCE_EXCHANGE" >/dev/null ||
     fail 'protocol missing hard-link description'
-grep -F -- '--predecessor' "$PROTOCOL" >/dev/null ||
+grep -F -- '--predecessor' "$RECOVERY" >/dev/null ||
     fail 'protocol missing predecessor takeover mapping'
-grep -F 'digests SESSION_DIR' "$SKILL" >/dev/null ||
-    fail 'skill missing digest-seal guidance'
-grep -F 'advisory tripwire' "$SKILL" >/dev/null ||
+grep -F 'advisory tripwire' "$RECOVERY" >/dev/null ||
     fail 'skill missing read-only advisory note'
-grep -F 'stage SESSION_DIR STAGE_DIR --mode independent' "$SKILL" >/dev/null ||
+grep -F 'stage SESSION_DIR STAGE_DIR --mode independent' "$EVIDENCE_EXCHANGE" >/dev/null ||
     fail 'skill missing independent staged exchange'
-grep -F 'import-copilot' "$SKILL" >/dev/null ||
+grep -F 'import-copilot' "$EVIDENCE_EXCHANGE" >/dev/null ||
     fail 'skill missing staged import'
-grep -F '> STAGE_DIR/candidate-copilot-evidence.md' "$PROTOCOL" >/dev/null ||
+grep -F '> STAGE_DIR/candidate-copilot-evidence.md' "$NATIVE_CLIENTS" >/dev/null ||
     fail 'Claude mapping does not return a staged candidate'
 grep -F -- '--output-last-message STAGE_DIR/candidate-copilot-evidence.md' \
-    "$PROTOCOL" >/dev/null || fail 'Codex mapping does not return a staged candidate'
-grep -F 'not an OS filesystem sandbox' "$PROTOCOL" >/dev/null ||
+    "$NATIVE_CLIENTS" >/dev/null || fail 'Codex mapping does not return a staged candidate'
+grep -F 'not an OS filesystem sandbox' "$NATIVE_CLIENTS" >/dev/null ||
     fail 'protocol missing Claude enforcement boundary'
 grep -F -- '--exchange-mode direct' "$SKILL" >/dev/null ||
     fail 'skill missing explicit direct fallback declaration'
-grep -F 'verify-receipts SESSION_DIR' "$SKILL" >/dev/null ||
+grep -F 'verify-receipts SESSION_DIR' "$EVIDENCE_EXCHANGE" >/dev/null ||
     fail 'skill missing receipt verification step'
-grep -F 'stage_sha256' "$PROTOCOL" >/dev/null ||
+grep -F 'stage_sha256' "$EVIDENCE_EXCHANGE" >/dev/null ||
     fail 'protocol missing external stage-manifest seal'
-grep -F 'not cross-file crash' "$SKILL" >/dev/null ||
+grep -F 'not cross-file crash' "$EVIDENCE_EXCHANGE" >/dev/null ||
     fail 'skill overstates receipt atomicity'
-grep -F -- '--seal EXTERNAL_SEAL_FILE' "$SKILL" >/dev/null ||
+grep -F -- '--seal EXTERNAL_SEAL_FILE' "$EVIDENCE_EXCHANGE" >/dev/null ||
     fail 'skill missing mandatory seal command'
-grep -F -- '--seal EXTERNAL_SEAL_FILE' "$PROTOCOL" >/dev/null ||
-    fail 'protocol missing mandatory seal command'
-grep -F -- '--prompt DRIVER_PROMPT_FILE' "$SKILL" >/dev/null ||
+grep -F -- '--prompt DRIVER_PROMPT_FILE' "$EVIDENCE_EXCHANGE" >/dev/null ||
     fail 'skill missing sealed prompt command'
-grep -F -- '--prompt DRIVER_PROMPT_FILE' "$PROTOCOL" >/dev/null ||
-    fail 'protocol missing sealed prompt command'
-grep -F 'status SESSION_DIR --stage STAGE_DIR' "$SKILL" >/dev/null ||
-    fail 'skill missing co-pilot status surface'
-grep -F 'status SESSION_DIR --stage STAGE_DIR' "$PROTOCOL" >/dev/null ||
+grep -F 'status SESSION_DIR --stage STAGE_DIR' "$EVIDENCE_EXCHANGE" >/dev/null ||
     fail 'protocol missing co-pilot status surface'
 python3 - "$SESSION" <<'PY'
 import pathlib, sys
@@ -171,31 +173,25 @@ assert code == 0, value
 assert value["wait_observation"]["outcome"] == "ready", value
 assert value["wait_observation"]["elapsed_seconds"] == 0.95, value
 PY
-grep -F 'stage_manifest_sha256' "$PROTOCOL" >/dev/null ||
+grep -F 'stage_manifest_sha256' "$EVIDENCE_EXCHANGE" >/dev/null ||
     fail 'protocol missing sealed manifest binding'
-grep -F 'does not reopen' "$PROTOCOL" >/dev/null ||
+grep -F 'does not reopen' "$EVIDENCE_EXCHANGE" >/dev/null ||
     fail 'protocol overstates verify-receipts seal coverage'
-grep -F 'benchmark agreement precedes target execution' "$SKILL" >/dev/null ||
-    fail 'skill missing benchmark-agreement execution gate'
-grep -F 'benchmark agreement precedes target execution' "$PROTOCOL" >/dev/null ||
+grep -F 'benchmark agreement precedes target execution' "$SESSION_PLANNING" >/dev/null ||
     fail 'protocol missing benchmark-agreement execution gate'
-grep -F 'agreement: role=driver client=' "$PROTOCOL" >/dev/null ||
+grep -F 'agreement: role=driver client=' "$SESSION_PLANNING" >/dev/null ||
     fail 'protocol missing exact role-bound agreement record format'
-grep -F 'Unchanged blind retries do not count' "$SKILL" >/dev/null ||
-    fail 'skill missing blind-retry exclusion'
-grep -F 'Unchanged blind retries do not count' "$PROTOCOL" >/dev/null ||
+grep -F 'Unchanged blind retries' "$EXECUTION_DURATION" >/dev/null ||
     fail 'protocol missing blind-retry exclusion'
-grep -F 'keep/revert decision' "$PROTOCOL" >/dev/null ||
+grep -F 'keep/revert decision' "$EXECUTION_DURATION" >/dev/null ||
     fail 'protocol missing iteration record contract'
-grep -F -- '--tools ""' "$PROTOCOL" >/dev/null ||
+grep -F -- '--tools ""' "$NATIVE_CLIENTS" >/dev/null ||
     fail 'protocol missing documented no-tools critique flag'
-grep -F 'not an empty `--allowedTools`' "$PROTOCOL" >/dev/null ||
+grep -F '`--allowedTools` is not an equivalent denial' "$NATIVE_CLIENTS" >/dev/null ||
     fail 'protocol missing empty-allowedTools refusal'
 grep -F 'time-slice entry per requested hour' "$SKILL" >/dev/null ||
     fail 'skill missing duration-job summary contract'
-grep -F 'default to `fable` at `high` effort' "$SKILL" >/dev/null ||
-    fail 'skill missing Claude Fable/high default'
-grep -F 'Default to `--model fable --effort high`' "$PROTOCOL" >/dev/null ||
+grep -F 'Default to `--model fable --effort high`' "$NATIVE_CLIENTS" >/dev/null ||
     fail 'protocol missing native Claude Fable/high default'
 
 fill() {

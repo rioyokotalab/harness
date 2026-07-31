@@ -2,16 +2,58 @@
 set -eu
 
 launcher_path=$0
-if [ -L "$launcher_path" ]; then
+case "$launcher_path" in
+    */*) ;;
+    *)
+        launcher_path=$(command -v "$launcher_path") || {
+            echo "harness-codex: launcher path is unavailable" >&2
+            exit 2
+        }
+        ;;
+esac
+launcher_links=0
+while [ -L "$launcher_path" ]; do
+    launcher_links=$((launcher_links + 1))
+    [ "$launcher_links" -le 40 ] || {
+        echo "harness-codex: launcher symlink chain is invalid" >&2
+        exit 2
+    }
+    launcher_dir=$(
+        CDPATH='' cd -- "$(dirname -- "$launcher_path")" 2>/dev/null &&
+            pwd -P
+    ) || {
+        echo "harness-codex: launcher path is unavailable" >&2
+        exit 2
+    }
     launcher_target=$(readlink "$launcher_path")
     case "$launcher_target" in
         /*) launcher_path=$launcher_target ;;
-        *) launcher_path=${launcher_path%/*}/$launcher_target ;;
+        *) launcher_path=$launcher_dir/$launcher_target ;;
     esac
-fi
+done
 SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$launcher_path")" 2>/dev/null && pwd -P)
-HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$SELF_DIR/.." 2>/dev/null && pwd -P)}
-export HARNESS_ROOT
+derived_control_root=$(
+    CDPATH='' cd -- "$SELF_DIR/.." 2>/dev/null && pwd -P
+)
+if [ -n "${HARNESS_ROOT:-}" ] &&
+    [ "$HARNESS_ROOT" != "$derived_control_root" ]; then
+    echo "harness-codex: HARNESS_ROOT does not match its launcher" >&2
+    exit 2
+fi
+if [ -n "${HARNESS_CONTROL_ROOT:-}" ] &&
+    [ "$HARNESS_CONTROL_ROOT" != "$derived_control_root" ]; then
+    echo "harness-codex: control root does not match its launcher" >&2
+    exit 2
+fi
+if [ -n "${HARNESS_TARGET_ROOT:-}" ] &&
+    [ "$HARNESS_TARGET_ROOT" != "$derived_control_root" ]; then
+    echo "harness-codex: target root does not match its launcher" >&2
+    exit 2
+fi
+HARNESS_CONTROL_ROOT=$derived_control_root
+HARNESS_TARGET_ROOT=$derived_control_root
+export HARNESS_CONTROL_ROOT HARNESS_TARGET_ROOT
+unset HARNESS_ROOT
 
 if project_root=$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null); then
     project_root=$(CDPATH='' cd -- "$project_root" 2>/dev/null && pwd -P) || {
@@ -25,7 +67,7 @@ case "$project_root" in
     *'"'*|*'\'*|*'
 '*) echo "harness-codex: current project root cannot be encoded safely" >&2; exit 2 ;;
 esac
-target_resolver=$HARNESS_ROOT/libexec/harness_codex_targets.py
+target_resolver=$HARNESS_CONTROL_ROOT/libexec/harness_codex_targets.py
 [ -x "$target_resolver" ] || {
     echo "harness-codex: target resolver is unavailable" >&2
     exit 2
@@ -42,6 +84,10 @@ case "$target" in
     harness|students|swallow) ;;
     *) echo "harness-codex: target resolver returned an invalid target" >&2; exit 2 ;;
 esac
+CDPATH='' cd -- "$project_root" || {
+    echo "harness-codex: current project root is unavailable" >&2
+    exit 2
+}
 
 native_codex=$HOME/.local/bin/codex
 if [ "$(uname -s)" = Darwin ] && command -v brew >/dev/null 2>&1; then
@@ -70,6 +116,16 @@ fi
     echo "harness-codex: relocated native codex command is unavailable" >&2
     exit 2
 }
+
+unset HARNESS_ROOT HARNESS_CONTROL_ROOT HARNESS_TARGET_ROOT
+release_test_variables=$(
+    env | sed -n \
+        -e 's/^\(HARNESS_CODEX_RELEASE_[A-Z0-9_]*\)=.*/\1/p' \
+        -e 's/^\(HARNESS_TEST[A-Z0-9_]*\)=.*/\1/p'
+)
+for release_test_variable in $release_test_variables; do
+    unset "$release_test_variable"
+done
 
 exec "$native_codex" --config \
     'approval_policy={ granular = { sandbox_approval = false, rules = false, mcp_elicitations = true, request_permissions = false, skill_approval = false } }' \

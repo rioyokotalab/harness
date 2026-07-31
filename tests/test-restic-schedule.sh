@@ -23,6 +23,28 @@ expect_failure() {
         fail "missing failure evidence: $expected"
 }
 
+expect_status() {
+    expected_status=$1
+    expected=$2
+    output=$3
+    shift 3
+    actual_status=0
+    "$@" >"$output" 2>&1 || actual_status=$?
+    [ "$actual_status" -eq "$expected_status" ] ||
+        fail "unexpected status $actual_status (wanted $expected_status): $*"
+    grep -F "$expected" "$output" >/dev/null ||
+        fail "missing status evidence: $expected"
+}
+
+expect_count() {
+    expected=$1
+    label=$2
+    file=$3
+    actual=$(wc -l <"$file" | tr -d ' ')
+    [ "$actual" -eq "$expected" ] ||
+        fail "$label count $actual (wanted $expected)"
+}
+
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
@@ -59,9 +81,11 @@ grep '^ri|slurm|Asia/Tokyo|Sun|02:00|rkp00015|none|' "$schedule_map" >/dev/null 
 
 fake_bin=$TEST_ROOT/fake-bin
 fake_sched=$TEST_ROOT/fake-scheduler
-mkdir -p "$fake_bin" "$fake_sched"
+warning_instrument_bin=$TEST_ROOT/warning-instrument-bin
+mkdir -p "$fake_bin" "$fake_sched" "$warning_instrument_bin"
 RESTIC_TEST_PYTHON=$(command -v python3) || fail "python3 unavailable"
-export RESTIC_TEST_PYTHON
+RESTIC_TEST_AWK=$(command -v awk) || fail "awk unavailable"
+export RESTIC_TEST_PYTHON RESTIC_TEST_AWK
 cat >"$fake_bin/date" <<'EOF'
 #!/bin/sh
 exec "$RESTIC_TEST_PYTHON" "$0.py" "$@"
@@ -111,7 +135,20 @@ case $(/usr/bin/uname -s) in
     *) exec /usr/bin/stat -c "$format" -- "$@" ;;
 esac
 EOF
-chmod 755 "$fake_bin/date" "$fake_bin/date.py" "$fake_bin/stat"
+cat >"$warning_instrument_bin/awk" <<'EOF'
+#!/bin/sh
+if [ -n "${WARNING_STATE_PARSE_LOG:-}" ] &&
+    [ -n "${WARNING_STATE_FILE:-}" ]; then
+    for argument in "$@"; do
+        if [ "$argument" = "$WARNING_STATE_FILE" ]; then
+            printf '%s\n' parse >>"$WARNING_STATE_PARSE_LOG"
+        fi
+    done
+fi
+exec "$RESTIC_TEST_AWK" "$@"
+EOF
+chmod 755 "$fake_bin/date" "$fake_bin/date.py" "$fake_bin/stat" \
+    "$warning_instrument_bin/awk"
 real_jq=$(command -v jq) || fail "jq unavailable"
 ln -s "$real_jq" "$fake_bin/jq"
 printf '%s\n' 100 >"$fake_sched/counter"
@@ -205,6 +242,9 @@ case "$command_name" in
         fi
         ;;
     squeue)
+        if [ -n "${FAKE_QUERY_LOG:-}" ]; then
+            printf '%s\n' squeue >>"$FAKE_QUERY_LOG"
+        fi
         [ "${FAKE_QUERY_FAIL:-0}" != 1 ] || exit 2
         wanted_name=
         wanted_id=
@@ -221,6 +261,9 @@ case "$command_name" in
         ' "$jobs"
         ;;
     qstat)
+        if [ -n "${FAKE_QUERY_LOG:-}" ]; then
+            printf '%s\n' qstat >>"$FAKE_QUERY_LOG"
+        fi
         if [ "${1:-}" = -u ]; then
             if [ "$FAKE_FAMILY" = pbs ] || [ "$FAKE_FAMILY" = abciq ]; then
                 awk -F'|' -v user="$username" '{ print $1, $2, user, "0", $3, "queue" }' "$jobs"
@@ -268,11 +311,19 @@ run_schedule() {
     family=$2
     home=$3
     shift 3
-    env HOME="$home" PATH="$fake_bin:/usr/bin:/bin" \
+    schedule_path=$fake_bin:/usr/bin:/bin
+    if [ -n "${WARNING_STATE_PARSE_LOG:-}" ]; then
+        schedule_path=$warning_instrument_bin:$schedule_path
+    fi
+    env HOME="$home" PATH="$schedule_path" \
         HARNESS_TESTING=1 HARNESS_LOGICAL_HOST="$host" \
         HARNESS_TESTING_ALLOW_UNSMOKED_SEED=1 \
         HARNESS_NOW_EPOCH=1784149200 FAKE_SCHED_DIR="$fake_sched" \
-        FAKE_FAMILY="$family" "$HARNESS" restic-schedule "$@" --host "$host"
+        FAKE_FAMILY="$family" FAKE_QUERY_LOG="${FAKE_QUERY_LOG:-}" \
+        FAKE_QUERY_FAIL="${FAKE_QUERY_FAIL:-0}" \
+        WARNING_STATE_FILE="${WARNING_STATE_FILE:-}" \
+        WARNING_STATE_PARSE_LOG="${WARNING_STATE_PARSE_LOG:-}" \
+        "$HARNESS" restic-schedule "$@" --host "$host"
 }
 
 for declaration in 'local ybatch' 'ri slurm' 'ab pbs' 'abq abciq' 't4 age'; do
@@ -303,9 +354,18 @@ for declaration in 'local ybatch' 'ri slurm' 'ab pbs' 'abq abciq' 't4 age'; do
     run_schedule "$host" "$family" "$home" status >"$TEST_ROOT/$host.status" ||
         fail "$host status"
     grep 'present=1' "$TEST_ROOT/$host.status" >/dev/null || fail "$host present"
+    WARNING_STATE_FILE=$home/.local/state/harness/restic-chain/chain.state
+    WARNING_STATE_PARSE_LOG=$TEST_ROOT/$host.warning-state-parses
+    FAKE_QUERY_LOG=$TEST_ROOT/$host.warning-scheduler-queries
+    : >"$WARNING_STATE_PARSE_LOG"
+    : >"$FAKE_QUERY_LOG"
     run_schedule "$host" "$family" "$home" warning >"$TEST_ROOT/$host.warning" 2>&1 ||
-        fail "$host healthy warning"
+        { sed -n '1,80p' "$TEST_ROOT/$host.warning" >&2;
+          fail "$host healthy warning"; }
     [ ! -s "$TEST_ROOT/$host.warning" ] || fail "$host healthy warning was noisy"
+    expect_count 1 "$host warning state parse" "$WARNING_STATE_PARSE_LOG"
+    expect_count 1 "$host warning scheduler query" "$FAKE_QUERY_LOG"
+    unset WARNING_STATE_FILE WARNING_STATE_PARSE_LOG FAKE_QUERY_LOG
     run_schedule "$host" "$family" "$home" seed >"$TEST_ROOT/$host.reseed" 2>&1 ||
         fail "$host idempotent seed"
     [ "$(wc -l <"$fake_sched/jobs" | tr -d ' ')" -eq 1 ] || fail "$host reseed duplicate"
@@ -383,19 +443,107 @@ warning_home=$TEST_ROOT/warning-home
 mkdir -p "$warning_home"
 : >"$fake_sched/jobs"
 run_schedule ri slurm "$warning_home" seed >/dev/null 2>&1 || fail "warning seed"
+warning_state=$warning_home/.local/state/harness/restic-chain/chain.state
+warning_state_good=$TEST_ROOT/warning-state.good
+cp "$warning_state" "$warning_state_good"
+WARNING_STATE_FILE=$warning_state
+WARNING_STATE_PARSE_LOG=$TEST_ROOT/warning-state-parses
+FAKE_QUERY_LOG=$TEST_ROOT/warning-scheduler-queries
+
+for failed_result in backup-failed successor-failed; do
+    sed "s/^last_result=seeded$/last_result=$failed_result/" \
+        "$warning_state_good" >"$TEST_ROOT/warning-state.failed"
+    chmod 600 "$TEST_ROOT/warning-state.failed"
+    mv "$TEST_ROOT/warning-state.failed" "$warning_state"
+    : >"$WARNING_STATE_PARSE_LOG"
+    : >"$FAKE_QUERY_LOG"
+    run_schedule ri slurm "$warning_home" warning \
+        >"$TEST_ROOT/$failed_result.warning" 2>&1 ||
+        fail "$failed_result warning command"
+    grep -F -x \
+        'harness: weekly backup chain warning on ri: last run failed; successor is PENDING' \
+        "$TEST_ROOT/$failed_result.warning" >/dev/null ||
+        fail "$failed_result warning wording"
+    expect_count 1 "$failed_result state parse" "$WARNING_STATE_PARSE_LOG"
+    expect_count 1 "$failed_result scheduler query" "$FAKE_QUERY_LOG"
+done
+
+cp "$warning_state_good" "$warning_state"
+chmod 600 "$warning_state"
 : >"$fake_sched/jobs"
+: >"$WARNING_STATE_PARSE_LOG"
+: >"$FAKE_QUERY_LOG"
 run_schedule ri slurm "$warning_home" warning >"$TEST_ROOT/missing.warning" 2>&1 ||
     fail "missing warning command"
-grep 'captured future job is missing' "$TEST_ROOT/missing.warning" >/dev/null ||
+grep -F -x \
+    'harness: weekly backup chain warning on ri: captured future job is missing' \
+    "$TEST_ROOT/missing.warning" >/dev/null ||
     fail "missing job warning"
-expect_failure 'native Slurm job query failed' "$TEST_ROOT/query-failure.out" \
-    env HOME="$warning_home" PATH="$fake_bin:/usr/bin:/bin" \
-    HARNESS_TESTING=1 HARNESS_LOGICAL_HOST=ri FAKE_QUERY_FAIL=1 \
-    FAKE_SCHED_DIR="$fake_sched" FAKE_FAMILY=slurm \
-    "$HARNESS" restic-schedule warning --host ri
+expect_count 1 "missing-job state parse" "$WARNING_STATE_PARSE_LOG"
+expect_count 1 "missing-job scheduler query" "$FAKE_QUERY_LOG"
+
+: >"$WARNING_STATE_PARSE_LOG"
+: >"$FAKE_QUERY_LOG"
+FAKE_QUERY_FAIL=1
+expect_status 2 'native Slurm job query failed' "$TEST_ROOT/query-failure.out" \
+    run_schedule ri slurm "$warning_home" warning
+unset FAKE_QUERY_FAIL
+expect_count 1 "failed-query state parse" "$WARNING_STATE_PARSE_LOG"
+expect_count 1 "failed-query scheduler query" "$FAKE_QUERY_LOG"
 if grep 'captured future job is missing' "$TEST_ROOT/query-failure.out" >/dev/null; then
     fail "scheduler query failure was reported as a missing job"
 fi
+
+cp "$warning_state_good" "$warning_state"
+printf '%s\n' 'job_id=999' >>"$warning_state"
+chmod 600 "$warning_state"
+: >"$WARNING_STATE_PARSE_LOG"
+: >"$FAKE_QUERY_LOG"
+expect_status 2 'duplicate private state key' "$TEST_ROOT/duplicate.warning" \
+    run_schedule ri slurm "$warning_home" warning
+expect_count 1 "duplicate-key state parse" "$WARNING_STATE_PARSE_LOG"
+expect_count 0 "duplicate-key scheduler query" "$FAKE_QUERY_LOG"
+
+sed 's/^status=active$/status active/' "$warning_state_good" \
+    >"$TEST_ROOT/warning-state.malformed"
+chmod 600 "$TEST_ROOT/warning-state.malformed"
+mv "$TEST_ROOT/warning-state.malformed" "$warning_state"
+: >"$WARNING_STATE_PARSE_LOG"
+: >"$FAKE_QUERY_LOG"
+run_schedule ri slurm "$warning_home" warning \
+    >"$TEST_ROOT/malformed.warning" 2>&1 ||
+    fail "malformed inactive warning status"
+[ ! -s "$TEST_ROOT/malformed.warning" ] ||
+    fail "malformed inactive state was noisy"
+expect_count 1 "malformed state parse" "$WARNING_STATE_PARSE_LOG"
+expect_count 0 "malformed scheduler query" "$FAKE_QUERY_LOG"
+
+cp "$warning_state_good" "$warning_state"
+chmod 644 "$warning_state"
+: >"$WARNING_STATE_PARSE_LOG"
+: >"$FAKE_QUERY_LOG"
+expect_status 2 'private state mode mismatch' "$TEST_ROOT/unsafe-mode.warning" \
+    run_schedule ri slurm "$warning_home" warning
+expect_count 0 "unsafe-metadata state parse" "$WARNING_STATE_PARSE_LOG"
+expect_count 0 "unsafe-metadata scheduler query" "$FAKE_QUERY_LOG"
+chmod 600 "$warning_state"
+unset WARNING_STATE_FILE WARNING_STATE_PARSE_LOG FAKE_QUERY_LOG
+
+absent_warning_home=$TEST_ROOT/absent-warning-home
+mkdir -p "$absent_warning_home"
+WARNING_STATE_FILE=$absent_warning_home/.local/state/harness/restic-chain/chain.state
+WARNING_STATE_PARSE_LOG=$TEST_ROOT/absent-warning-state-parses
+FAKE_QUERY_LOG=$TEST_ROOT/absent-warning-scheduler-queries
+: >"$WARNING_STATE_PARSE_LOG"
+: >"$FAKE_QUERY_LOG"
+run_schedule ri slurm "$absent_warning_home" warning \
+    >"$TEST_ROOT/absent.warning" 2>&1 ||
+    fail "absent warning command"
+[ ! -s "$TEST_ROOT/absent.warning" ] || fail "absent warning was noisy"
+expect_count 0 "absent state parse" "$WARNING_STATE_PARSE_LOG"
+expect_count 0 "absent scheduler query" "$FAKE_QUERY_LOG"
+unset WARNING_STATE_FILE WARNING_STATE_PARSE_LOG FAKE_QUERY_LOG
+
 query_seed_home=$TEST_ROOT/query-seed-home
 mkdir -p "$query_seed_home"
 : >"$fake_sched/jobs"

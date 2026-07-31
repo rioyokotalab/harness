@@ -2,19 +2,25 @@
 
 ## Implemented harness gate
 
-`.github/workflows/ci.yml` runs on every `main` push and pull request with only
-`contents: read`. It uses the official checkout action pinned to the immutable
-v6.0.2 commit and disables persisted Git credentials. It has no secrets,
-deployment, model calls, remote-node access, scheduler commands, package
-installation, or cache writes outside its ephemeral runner.
+`.github/workflows/ci.yml` runs for pull requests to `main`, one weekly
+independent full check, and manual full checks, with only `contents: read`.
+After a strict required pull-request check, the merge does not allocate a
+duplicate `main` push runner. It uses the official checkout action pinned to
+the immutable v7.0.1 commit and disables persisted Git credentials. It has no
+secrets, deployment, model calls, remote-node access, scheduler commands,
+package installation, or cache writes outside its ephemeral runner.
 Checkout fetches complete public history because the evaluation validator
 loads its guidance from the experiment's exact immutable baseline revision; a
 shallow checkout may not contain that commit. Later live global-guidance
 maintenance does not alter the frozen baseline, corpus, or recorded reports.
 
-The unique required-check candidate is `portable-phase1`. It runs the complete
-phase-one integration suite except for explicitly client/site-specific native
-checks. Native MPI compile/run is a separate explicit
+The unique required-check candidate is `portable-phase1`. On pull requests it
+runs the deterministic impact selector against the event's exact base SHA:
+documentation and routed skills receive their owning checks, while workflow,
+policy, validator, manifest, safety, lifecycle, cleanup, credential, and
+unknown changes escalate to the complete phase-one integration suite. Weekly
+and manual events run that complete portable suite unconditionally. Native MPI
+compile/run is a separate explicit
 `HARNESS_NATIVE_MPI=1 tests/test-native-mpi.sh` gate for a declared MPI
 environment and is not part of the portable default.
 GitHub's declared Ubuntu 24.04 image includes the required C/C++ compilers,
@@ -30,7 +36,7 @@ The security choices follow GitHub's official guidance to grant read-only
 default token access and pin actions to a full commit SHA:
 
 - <https://docs.github.com/en/actions/reference/security/secure-use>
-- <https://github.com/actions/checkout/releases/tag/v6.0.2>
+- <https://github.com/actions/checkout/releases/tag/v7.0.1>
 - <https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md>
 
 The first complete hosted validation succeeded as
@@ -41,8 +47,8 @@ The first complete hosted validation succeeded as
 Harness ruleset `19127355` is active on `main`. It requires a pull request,
 conversation resolution, an up-to-date branch, linear history, and this
 repository's GitHub Actions check from integration `15368`. Force pushes and
-branch deletion are blocked, there is no bypass actor, and the workflow retains
-read-only token permissions.
+branch deletion are blocked. Repository-role actor `5` has the preserved
+`always` bypass, and the workflow retains read-only token permissions.
 
 The owner later chose zero required approvals so personal work does not depend
 on a second account. An author may therefore merge after the required CI check
@@ -51,8 +57,11 @@ PR #5 in the harness repository exercised this zero-approval path successfully.
 
 The exact restore/update payload is
 [`harness-main.json`](github-rulesets/harness-main.json). It matches the live
-zero-approval policy, uses no bypass actor, and allows only squash or rebase
-merges. Relevant official documentation:
+zero-approval policy, preserves repository-role actor `5` as an `always`
+bypass, and does not encode repository merge-method settings. Current
+repository readback permits merge commits, squash, and rebase; changing those
+methods remains a separate hosting-setting write. Relevant official
+documentation:
 
 - <https://docs.github.com/en/rest/repos/rules?apiVersion=2026-03-10>
 - <https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets>

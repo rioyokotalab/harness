@@ -1,0 +1,70 @@
+# regex|tier|suite-or--|reason
+^tests/test-.*\.sh$|R3|-|validator contract
+^TODO\.md$|R0|tests/test-task-ledger-routing.sh|active ledger contract
+^docs/tasks/T-[0-9]+\.md$|R0|tests/test-task-ledger-routing.sh|routed task record
+^docs/history/TODO-full-archive-[0-9]{4}-[0-9]{2}-[0-9]{2}\.md$|R0|tests/test-task-ledger-routing.sh|archived ledger identity
+^docs/tasks/index\.tsv$|R0|tests/test-task-ledger-routing.sh|task index contract
+^tests/test-task-ledger-routing\.sh$|R3|-|task ledger validator
+^docs/github-rulesets/|R1|tests/test-github-rulesets.sh|ruleset fixture
+^tests/test-github-rulesets\.sh$|R3|-|ruleset fixture validator
+^shared/skills/codex-claude-cowork/(SKILL\.md|references/(session-planning|evidence-review|evidence-exchange|native-clients|execution-duration|recovery)\.md)$|R1|tests/test-skill-context-budgets.sh|cowork routed context budget
+^shared/skills/codex-claude-cowork/(SKILL\.md|references/(session-planning|evidence-review|evidence-exchange|native-clients|execution-duration|recovery)\.md)$|R1|tests/test-skill-context-gates.sh|cowork routed safety gates
+^shared/skills/codex-claude-cowork/references/protocol\.md$|R3|-|cowork compatibility aggregate
+^shared/skills/codex-claude-cowork/(scripts|agents)/|R3|-|cowork executable or client configuration
+^tests/test-codex-claude-cowork-skill\.sh$|R3|-|cowork executable validator
+^shared/skills/operate-native-hpc/(SKILL\.md|references/(common|current|abci|riken|alps|rccs|tsubame|planning|execute-monitor|validation)\.md)$|R1|tests/test-skill-context-budgets.sh|HPC routed context budget
+^shared/skills/operate-native-hpc/(SKILL\.md|references/(common|current|abci|riken|alps|rccs|tsubame|planning|execute-monitor|validation)\.md)$|R1|tests/test-skill-context-gates.sh|HPC routed safety gates
+^shared/skills/operate-native-hpc/references/sites\.md$|R3|-|HPC compatibility aggregate
+^shared/skills/plan-interview-execute/(SKILL\.md|references/(planning|interview|execution)\.md)$|R1|tests/test-skill-context-budgets.sh|PIE routed context budget
+^shared/skills/plan-interview-execute/(SKILL\.md|references/(planning|interview|execution)\.md)$|R1|tests/test-skill-context-gates.sh|PIE routed behavior gates
+^tests/test-skill-context-(budgets|gates)\.sh$|R3|-|skill routing validator
+^tests/test-skill-catalog-budget\.sh$|R3|-|always-visible skill catalog validator
+^shared/skills/fleet-repository-hardening/(SKILL\.md|references/.*\.md)$|R1|tests/test-fleet-repository-hardening-skill.sh|hardening skill
+^shared/skills/fleet-repository-hardening/(SKILL\.md|references/.*\.md)$|R1|tests/test-skill-context-budgets.sh|hardening routed context budget
+^shared/skills/fleet-repository-hardening/(SKILL\.md|references/.*\.md)$|R1|tests/test-skill-context-gates.sh|hardening routed safety gates
+^shared/skills/fleet-repository-hardening/agents/|R3|-|hardening client configuration
+^tests/test-fleet-repository-hardening-skill\.sh$|R3|-|hardening skill validator
+^shared/skills/onboard-personal-mac/(SKILL\.md|references/.*\.md)$|R1|tests/test-onboard-personal-mac-skill.sh|personal Mac skill
+^shared/skills/onboard-personal-mac/(SKILL\.md|references/.*\.md)$|R1|tests/test-skill-context-budgets.sh|personal Mac routed context budget
+^shared/skills/onboard-personal-mac/(SKILL\.md|references/.*\.md)$|R1|tests/test-skill-context-gates.sh|personal Mac routed safety gates
+^shared/skills/onboard-personal-mac/agents/|R3|-|personal Mac client configuration
+^tests/test-onboard-personal-mac-skill\.sh$|R3|-|personal Mac skill validator
+^shared/skills/onboard-mirrored-node/(SKILL\.md|references/(planning-interview|declarations-phase|declarations|bootstrap-migration|backup-acceptance)\.md)$|R1|tests/test-onboard-mirrored-node.sh|SSH mirrored-node routed safety gates
+^shared/skills/onboard-mirrored-node/(scripts|agents)/|R3|-|mirrored-node executable or client configuration
+^shared/skills/onboard-external-user/(SKILL\.md|references/(boundary|preflight|installation|acceptance)\.md)$|R1|tests/test-onboard-external-user.sh|external-user routed contract
+^shared/skills/onboard-external-user/(scripts|agents)/|R3|-|external-user executable or client configuration
+^shared/skills/reboot-recovery/(SKILL\.md|references/(status-discovery|recovery-start|validation-closeout)\.md)$|R1|tests/test-reboot-recovery-skill.sh|reboot recovery routed safety gates
+^shared/skills/reboot-recovery/(scripts|agents)/|R3|-|reboot recovery executable or client configuration
+^tests/test-reboot-recovery-skill\.sh$|R3|-|reboot recovery validator
+^shared/skills/recover-codex-unsafe-tail/|R3|-|managed lifecycle recovery
+^tests/test-recover-codex-unsafe-tail-skill\.sh$|R3|-|managed lifecycle recovery validator
+^shared/skills/remote-agent-communication/|R3|-|cross-client message transport
+^tests/test-remote-agent-communication\.sh$|R3|-|message transport validator
+^shared/skills/guarded-bulk-delete/|R3|-|recursive deletion safety
+^AGENTS\.md$|R3|-|root authorization and validation policy
+^CLAUDE\.md$|R3|-|root client policy import
+^docs/agent-policy/|R3|-|conditional authorization and safety policy
+^tests/test-agent-policy-routing\.sh$|R3|-|policy routing validator
+^docs/audits/t351-autonomy-efficiency/context-(benchmark\.md|scenarios\.tsv)$|R1|tests/test-context-routing-benchmark.sh|context routing benchmark
+^tests/test-context-routing-benchmark\.sh$|R3|-|context benchmark validator
+^\.github/workflows/|R3|-|hosted workflow
+^tests/test-actions-sustainability\.sh$|R3|-|hosted workflow trigger contract
+^docs/ci-and-merge-controls\.md$|R1|tests/test-actions-sustainability.sh|hosted workflow documentation
+^docs/audits/t351-autonomy-efficiency/actions-transition\.md$|R1|tests/test-actions-sustainability.sh|hosted workflow evidence
+^bin/|R3|-|public command dispatcher
+^libexec/harness-validate$|R3|-|validation selector
+^tests/validation-impact\.tsv$|R3|-|validation impact map
+^tests/focused-suites\.tsv$|R3|-|complete-suite manifest
+^tests/test-phase1\.sh$|R3|-|complete-suite runner
+^tests/guarded-test-cleanup\.sh$|R3|-|test cleanup safety
+^tools/run-focused-tests\.py$|R3|-|parallel focused runner
+^libexec/harness_codex_targets\.py$|R3|-|managed target identity
+^libexec/.*(codex|tmux|recovery|fleet|agent|ssh|restic|replica|delete|credential|secret|safety)|R3|-|lifecycle or authority-sensitive runtime
+^tests/.*(codex|tmux|recovery|fleet|agent|ssh|restic|replica|delete|credential|secret|safety)|R3|-|lifecycle or authority-sensitive test
+^libexec/harness-terminfo$|R2|tests/test-terminfo.sh|mapped ordinary component
+^config/terminfo/tmux-256color\.src$|R2|tests/test-terminfo.sh|mapped ordinary terminfo source
+^tests/test-terminfo\.sh$|R3|-|mapped ordinary component validator
+^tests/smoke/debugger\.c$|R2|tests/test-debugger-readiness.sh|mapped ordinary debugger source fixture
+^tests/fixtures/scientific-library-bin/(h5cc|nc-config|pkg-config)$|R2|tests/test-scientific-library-readiness.sh|mapped ordinary scientific-library fixture
+^docs/|R0|-|documentation
+^README\.md$|R1|tests/test-fleet-inventory.sh|owner guide and fleet table

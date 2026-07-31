@@ -1,6 +1,6 @@
 ---
 name: research-program-management
-description: Organize multiple research projects, collaborations, and student progress with durable evidence and humane boundaries. Use for portfolio reviews, project ledgers, meeting preparation, milestone tracking, dependency/risk review, and next-action coordination.
+description: Coordinate research portfolios, collaborations, student progress, meetings, milestones, dependencies, and risks through durable evidence and humane boundaries.
 ---
 
 # Research program management

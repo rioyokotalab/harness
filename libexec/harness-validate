@@ -1,0 +1,617 @@
+#!/usr/bin/env python3
+"""Select and run the smallest deterministic Harness validation tier."""
+
+from __future__ import annotations
+
+import argparse
+from dataclasses import dataclass
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import platform
+import re
+import stat
+import subprocess
+import sys
+import tempfile
+import time
+from typing import Iterable
+
+
+TIERS = {"R0": 0, "R1": 1, "R2": 2, "R3": 3}
+FULL_SUITE = "tests/test-phase1.sh"
+IMPACT_MAP = "tests/validation-impact.tsv"
+NONCACHE_TOKENS = (
+    "auth",
+    "codex",
+    "credential",
+    "delete",
+    "fleet",
+    "lifecycle",
+    "process",
+    "recovery",
+    "restic",
+    "safety",
+    "scheduler",
+    "secret",
+    "ssh",
+    "tmux",
+)
+
+
+@dataclass(frozen=True)
+class Rule:
+    pattern: str
+    tier: str
+    suite: str | None
+    reason: str
+    regex: re.Pattern[str]
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run risk-tiered local validation and emit a self-attested receipt."
+    )
+    parser.add_argument("--base", default="HEAD^")
+    parser.add_argument("--jobs", default=os.environ.get("HARNESS_TEST_JOBS", "auto"))
+    parser.add_argument("--plan", action="store_true")
+    parser.add_argument("--path", action="append", default=[])
+    parser.add_argument("--receipt-dir")
+    parser.add_argument("--no-receipt", action="store_true")
+    return parser.parse_args()
+
+
+def run_git(root: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+    env = os.environ.copy()
+    env["GIT_OPTIONAL_LOCKS"] = "0"
+    return subprocess.run(
+        ["git", *args],
+        cwd=root,
+        env=env,
+        stdin=subprocess.DEVNULL,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=check,
+    )
+
+
+def load_rules(root: Path) -> list[Rule]:
+    path = root / IMPACT_MAP
+    rules: list[Rule] = []
+    for number, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if not raw or raw.startswith("#"):
+            continue
+        fields = raw.rsplit("|", 3)
+        if len(fields) != 4:
+            raise ValueError(f"invalid impact-map line {number}")
+        pattern, tier, suite, reason = fields
+        if tier not in TIERS or not pattern or not reason:
+            raise ValueError(f"invalid impact-map line {number}")
+        selected = None if suite == "-" else suite
+        if selected:
+            candidate = root / selected
+            if not candidate.is_file() or candidate.is_symlink():
+                raise ValueError(f"unsafe or absent mapped suite: {selected}")
+        rules.append(Rule(pattern, tier, selected, reason, re.compile(pattern)))
+    if not rules:
+        raise ValueError("empty impact map")
+    return rules
+
+
+def normalize_paths(paths: Iterable[str]) -> list[str]:
+    normalized: set[str] = set()
+    for raw in paths:
+        path = raw.strip()
+        candidate = Path(path)
+        if (
+            not path
+            or candidate.is_absolute()
+            or ".." in candidate.parts
+            or path.startswith("./")
+        ):
+            raise ValueError(f"unsafe changed path: {raw!r}")
+        normalized.add(candidate.as_posix())
+    return sorted(normalized)
+
+
+def ignored_top_level_files(root: Path) -> list[str]:
+    tracked_roots = {
+        Path(path).parts[0]
+        for path in run_git(root, "ls-files").stdout.splitlines()
+        if Path(path).parts
+    }
+    unexpected: list[str] = []
+    for candidate in root.iterdir():
+        if candidate.name == ".git" or candidate.name in tracked_roots:
+            continue
+        try:
+            info = candidate.lstat()
+        except FileNotFoundError:
+            continue
+        if not (stat.S_ISREG(info.st_mode) or stat.S_ISLNK(info.st_mode)):
+            continue
+        ignored = run_git(
+            root, "check-ignore", "-q", "--", candidate.name, check=False
+        )
+        if ignored.returncode == 0:
+            unexpected.append(candidate.name)
+    return sorted(unexpected)
+
+
+def changed_paths(root: Path, base: str) -> list[str]:
+    run_git(root, "cat-file", "-e", f"{base}^{{commit}}")
+    tracked = run_git(
+        root,
+        "diff",
+        "--name-only",
+        "--diff-filter=ACDMRTUXB",
+        base,
+        "--",
+    ).stdout.splitlines()
+    untracked = run_git(
+        root, "ls-files", "--others", "--exclude-standard"
+    ).stdout.splitlines()
+    ignored_top_level = ignored_top_level_files(root)
+    return normalize_paths([*tracked, *untracked, *ignored_top_level])
+
+
+def classify(root: Path, paths: list[str], rules: list[Rule]) -> dict:
+    tier = "R0"
+    suites: set[str] = set()
+    matches: list[dict[str, str]] = []
+    if not paths:
+        return {
+            "tier": tier,
+            "paths": [],
+            "suites": [],
+            "matches": [{"path": "-", "pattern": "-", "reason": "no changed paths"}],
+            "full": False,
+            "cacheable": True,
+        }
+
+    for path in paths:
+        path_matches = [rule for rule in rules if rule.regex.search(path)]
+        if not path_matches:
+            tier = "R3"
+            matches.append(
+                {
+                    "path": path,
+                    "pattern": "-",
+                    "reason": "unmapped path escalates",
+                }
+            )
+            continue
+        for rule in path_matches:
+            if TIERS[rule.tier] > TIERS[tier]:
+                tier = rule.tier
+            if rule.suite:
+                suites.add(rule.suite)
+            matches.append(
+                {"path": path, "pattern": rule.pattern, "reason": rule.reason}
+            )
+
+    full = tier == "R3"
+    selected = [FULL_SUITE] if full else sorted(suites)
+    cache_text = " ".join([*paths, *selected, *(item["reason"] for item in matches)])
+    cacheable = tier in {"R0", "R1"} and not any(
+        token in cache_text.lower() for token in NONCACHE_TOKENS
+    )
+    return {
+        "tier": tier,
+        "paths": paths,
+        "suites": selected,
+        "matches": matches,
+        "full": full,
+        "cacheable": cacheable,
+    }
+
+
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def environment_contract(jobs: str) -> dict[str, str]:
+    git_version = subprocess.run(
+        ["git", "--version"],
+        stdin=subprocess.DEVNULL,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=True,
+    ).stdout.strip()
+    def value_digest(name: str) -> str:
+        marker = (
+            b"set\0" + os.fsencode(os.environ[name])
+            if name in os.environ
+            else b"unset\0"
+        )
+        return hashlib.sha256(marker).hexdigest()
+
+    return {
+        "home_sha256": value_digest("HOME"),
+        "git": git_version,
+        "jobs": jobs,
+        "lang_sha256": value_digest("LANG"),
+        "lc_all_sha256": value_digest("LC_ALL"),
+        "machine": platform.machine(),
+        "path_sha256": value_digest("PATH"),
+        "portable_ci": os.environ.get("HARNESS_PORTABLE_CI", ""),
+        "python": platform.python_version(),
+        "pythonoptimize_sha256": value_digest("PYTHONOPTIMIZE"),
+        "release": platform.release(),
+        "system": platform.system(),
+        "tmpdir_sha256": value_digest("TMPDIR"),
+    }
+
+
+def validate_python_mode() -> None:
+    if os.environ.get("PYTHONOPTIMIZE", "") not in ("", "0"):
+        raise ValueError("PYTHONOPTIMIZE would disable validator assertions")
+
+
+def validator_contract(root: Path, suites: list[str]) -> dict:
+    paths = ["libexec/harness-validate", IMPACT_MAP, *suites]
+    return {
+        path: file_sha256(root / path)
+        for path in sorted(set(paths))
+    }
+
+
+def private_receipt_dir(root: Path, requested: str | None) -> Path:
+    if requested:
+        path = Path(requested).resolve(strict=True)
+        info = path.stat()
+        if (
+            not stat.S_ISDIR(info.st_mode)
+            or info.st_uid != os.getuid()
+            or info.st_mode & (stat.S_IRWXG | stat.S_IRWXO)
+        ):
+            raise ValueError("receipt directory must be private and current-user-owned")
+        return path
+
+    runtime = os.environ.get("XDG_RUNTIME_DIR")
+    if runtime:
+        parent = Path(runtime)
+        info = parent.stat()
+        if (
+            not stat.S_ISDIR(info.st_mode)
+            or info.st_uid != os.getuid()
+            or parent.is_symlink()
+        ):
+            raise ValueError("unsafe XDG_RUNTIME_DIR")
+    else:
+        parent = Path(tempfile.gettempdir()) / f"harness-validation-{os.getuid()}"
+        try:
+            parent.mkdir(mode=0o700)
+        except FileExistsError:
+            pass
+        info = parent.lstat()
+        if (
+            not stat.S_ISDIR(info.st_mode)
+            or stat.S_ISLNK(info.st_mode)
+            or info.st_uid != os.getuid()
+            or stat.S_IMODE(info.st_mode) != 0o700
+        ):
+            raise ValueError("unsafe fallback validation root")
+
+    identity = hashlib.sha256(os.fsencode(str(root.resolve()))).hexdigest()[:20]
+    path = parent / "harness-validation" / identity
+    current = parent
+    for component in ("harness-validation", identity):
+        current = current / component
+        try:
+            current.mkdir(mode=0o700)
+        except FileExistsError:
+            pass
+        info = current.lstat()
+        if (
+            not stat.S_ISDIR(info.st_mode)
+            or stat.S_ISLNK(info.st_mode)
+            or info.st_uid != os.getuid()
+            or stat.S_IMODE(info.st_mode) != 0o700
+        ):
+            raise ValueError("unsafe validation receipt root")
+    return path
+
+
+def canonical_json(value: object) -> bytes:
+    return (
+        json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+        + "\n"
+    ).encode("utf-8")
+
+
+def clean_tree_identity(root: Path, base: str, decision: dict, jobs: str) -> dict | None:
+    if run_git(root, "status", "--porcelain", "--untracked-files=all").stdout:
+        return None
+    head = run_git(root, "rev-parse", "HEAD").stdout.strip()
+    tree = run_git(root, "rev-parse", "HEAD^{tree}").stdout.strip()
+    contract = validator_contract(root, decision["suites"])
+    identity = {
+        "base": run_git(root, "rev-parse", f"{base}^{{commit}}").stdout.strip(),
+        "cacheable": decision["cacheable"],
+        "changed_paths": decision["paths"],
+        "environment": environment_contract(jobs),
+        "head": head,
+        "kind": "owner-self-attested-local-validation",
+        "schema": 1,
+        "suites": decision["suites"],
+        "tier": decision["tier"],
+        "tree": tree,
+        "validator_contract": contract,
+    }
+    identity["identity_sha256"] = hashlib.sha256(canonical_json(identity)).hexdigest()
+    return identity
+
+
+def cached_receipt(receipt_dir: Path, identity: dict) -> Path | None:
+    if not identity["cacheable"]:
+        return None
+    prefix = identity["identity_sha256"] + "--"
+    for path in sorted(receipt_dir.glob(prefix + "*.json")):
+        try:
+            info = path.lstat()
+            if (
+                not stat.S_ISREG(info.st_mode)
+                or stat.S_ISLNK(info.st_mode)
+                or info.st_uid != os.getuid()
+                or stat.S_IMODE(info.st_mode) != 0o600
+                or info.st_nlink != 1
+            ):
+                continue
+            data = path.read_bytes()
+            digest = hashlib.sha256(data).hexdigest()
+            if path.name != f"{identity['identity_sha256']}--{digest}.json":
+                continue
+            payload = json.loads(data.decode("utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            continue
+        if payload.get("identity") == identity and payload.get("result", {}).get(
+            "status"
+        ) == "pass":
+            return path
+    return None
+
+
+def untracked_whitespace_check(root: Path, paths: list[str]) -> int:
+    if not paths:
+        return 0
+    tracked = set(
+        run_git(root, "ls-files", "--", *paths).stdout.splitlines()
+    )
+    for relative in paths:
+        if relative in tracked:
+            continue
+        ignored = run_git(
+            root, "check-ignore", "-q", "--", relative, check=False
+        )
+        if ignored.returncode == 0:
+            # An ignored top-level file is not a publishable source input.
+            # Reject it without opening or diffing potentially private bytes.
+            return 1
+        candidate = root / relative
+        try:
+            info = candidate.lstat()
+        except FileNotFoundError:
+            return 1
+        if not stat.S_ISREG(info.st_mode) or stat.S_ISLNK(info.st_mode):
+            return 1
+        result = subprocess.run(
+            ["git", "diff", "--no-index", "--check", "--", "/dev/null", relative],
+            cwd=root,
+            env={**os.environ, "GIT_OPTIONAL_LOCKS": "0"},
+            stdin=subprocess.DEVNULL,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        # --no-index returns one for an ordinary nonempty difference. Any
+        # diagnostic output under --check is a whitespace error; other status
+        # values are command failures.
+        if result.returncode not in (0, 1) or result.stdout or result.stderr:
+            return 1
+    return 0
+
+
+def run_validation(root: Path, base: str, decision: dict, jobs: str) -> list[dict]:
+    started = time.monotonic()
+    diff = subprocess.run(
+        ["git", "diff", "--check", base, "--"],
+        cwd=root,
+        env={**os.environ, "GIT_OPTIONAL_LOCKS": "0"},
+        stdin=subprocess.DEVNULL,
+        check=False,
+    )
+    results = [
+        {
+            "path": "git diff --check",
+            "seconds": round(time.monotonic() - started, 6),
+            "status": diff.returncode,
+        }
+    ]
+    if diff.returncode != 0:
+        return results
+
+    untracked_started = time.monotonic()
+    untracked_status = untracked_whitespace_check(root, decision["paths"])
+    results.append(
+        {
+            "path": "git diff --no-index --check (untracked)",
+            "seconds": round(time.monotonic() - untracked_started, 6),
+            "status": untracked_status,
+        }
+    )
+    if untracked_status != 0:
+        return results
+
+    env = os.environ.copy()
+    env.pop("HARNESS_ROOT", None)
+    env["HARNESS_TEST_JOBS"] = jobs
+    for suite in decision["suites"]:
+        suite_started = time.monotonic()
+        result = subprocess.run(
+            [str(root / suite)],
+            cwd=root,
+            env=env,
+            stdin=subprocess.DEVNULL,
+            check=False,
+        )
+        results.append(
+            {
+                "path": suite,
+                "seconds": round(time.monotonic() - suite_started, 6),
+                "status": result.returncode,
+            }
+        )
+        if result.returncode != 0:
+            break
+    return results
+
+
+def publish_receipt(receipt_dir: Path, identity: dict, results: list[dict]) -> Path:
+    payload = {
+        "attestation": (
+            "Owner self-attestation from the same trust root; not independent CI."
+        ),
+        "completed_at": datetime.now(timezone.utc).isoformat(),
+        "identity": identity,
+        "result": {
+            "status": "pass",
+            "steps": results,
+        },
+    }
+    data = canonical_json(payload)
+    digest = hashlib.sha256(data).hexdigest()
+    path = receipt_dir / f"{identity['identity_sha256']}--{digest}.json"
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    descriptor = os.open(path, flags, 0o600)
+    try:
+        with os.fdopen(descriptor, "wb", closefd=False) as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+    finally:
+        os.close(descriptor)
+    return path
+
+
+def main() -> int:
+    args = parse_args()
+    root = Path(__file__).resolve().parent.parent
+    try:
+        validate_python_mode()
+        rules = load_rules(root)
+        if args.path:
+            if not args.plan:
+                raise ValueError("--path is permitted only with --plan")
+            paths = normalize_paths(args.path)
+        else:
+            paths = changed_paths(root, args.base)
+        decision = classify(root, paths, rules)
+    except (OSError, ValueError, subprocess.CalledProcessError) as error:
+        print(f"validate: {error}", file=sys.stderr)
+        return 2
+
+    plan = {
+        "base": args.base,
+        "cacheable": decision["cacheable"],
+        "full": decision["full"],
+        "matches": decision["matches"],
+        "paths": decision["paths"],
+        "schema": 1,
+        "suites": decision["suites"],
+        "tier": decision["tier"],
+    }
+    if args.plan:
+        print(json.dumps(plan, sort_keys=True, indent=2))
+        return 0
+
+    identity = clean_tree_identity(root, args.base, decision, args.jobs)
+    receipt_dir: Path | None = None
+    if identity and not args.no_receipt:
+        try:
+            receipt_dir = private_receipt_dir(root, args.receipt_dir)
+        except (OSError, ValueError) as error:
+            print(f"validate: {error}", file=sys.stderr)
+            return 2
+        cached = cached_receipt(receipt_dir, identity)
+        if cached:
+            if clean_tree_identity(
+                root, args.base, decision, args.jobs
+            ) != identity:
+                print(
+                    "validate: tree or validation contract changed during "
+                    "receipt lookup",
+                    file=sys.stderr,
+                )
+                return 2
+            print(
+                f"VALIDATE status=pass reuse=1 tier={decision['tier']} "
+                f"receipt={cached}"
+            )
+            return 0
+
+    results = run_validation(root, args.base, decision, args.jobs)
+    passed = all(item["status"] == 0 for item in results)
+    if not passed:
+        print(
+            f"VALIDATE status=fail reuse=0 tier={decision['tier']}",
+            file=sys.stderr,
+        )
+        return 1
+
+    if identity and clean_tree_identity(
+        root, args.base, decision, args.jobs
+    ) != identity:
+        print(
+            "validate: tree or validation contract changed during validation",
+            file=sys.stderr,
+        )
+        return 2
+
+    receipt = "none-dirty" if identity is None else "none-disabled"
+    if identity and receipt_dir:
+        try:
+            receipt_path = publish_receipt(receipt_dir, identity, results)
+        except FileExistsError:
+            print("validate: ambiguous receipt collision", file=sys.stderr)
+            return 2
+        if clean_tree_identity(root, args.base, decision, args.jobs) != identity:
+            try:
+                info = receipt_path.lstat()
+                if (
+                    stat.S_ISREG(info.st_mode)
+                    and not stat.S_ISLNK(info.st_mode)
+                    and info.st_uid == os.getuid()
+                    and stat.S_IMODE(info.st_mode) == 0o600
+                    and info.st_nlink == 1
+                ):
+                    receipt_path.unlink()
+            except OSError:
+                pass
+            print(
+                "validate: tree or validation contract changed during "
+                "receipt publication",
+                file=sys.stderr,
+            )
+            return 2
+        receipt = str(receipt_path)
+    print(
+        f"VALIDATE status=pass reuse=0 tier={decision['tier']} "
+        f"receipt={receipt}"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

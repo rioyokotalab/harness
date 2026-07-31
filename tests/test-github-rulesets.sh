@@ -41,10 +41,15 @@ for name, context in expected_contexts.items():
     assert pull_request["parameters"] == {
         "allowed_merge_methods": ["squash", "rebase"],
         "dismiss_stale_reviews_on_push": True,
+        "dismissal_restriction": {
+            "allowed_actors": [],
+            "enabled": False,
+        },
         "require_code_owner_review": False,
         "require_last_push_approval": False,
-        "required_approving_review_count": 1,
+        "required_approving_review_count": 0,
         "required_review_thread_resolution": True,
+        "required_reviewers": [],
     }
     checks = next(rule for rule in data["rules"] if rule["type"] == "required_status_checks")
     assert checks["parameters"] == {

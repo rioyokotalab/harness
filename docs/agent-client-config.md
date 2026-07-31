@@ -7,7 +7,8 @@ The harness owns one reviewed project-settings body for each client:
   `config/agent-clients/claude.json`.
 
 Codex and Claude load those files only when started from `~/harness`. Root
-`AGENTS.md` is the self-contained shared policy; root `CLAUDE.md` imports it.
+`AGENTS.md` is the always-read shared policy router; root `CLAUDE.md` imports
+it. Exact conditional modules remain project-local under `docs/agent-policy/`.
 Every canonical skill has one tracked link under `.agents/skills/` and one
 under `.claude/skills/`. No harness behavioral setting, rule, or skill link is
 required from the user's home-directory client configuration.
@@ -127,16 +128,18 @@ inside tmux. It always delegates to `bin/harness-codex`, so the existing
 project trust, approval, sandbox, Darwin path, and version-scoped arg0
 contracts remain authoritative.
 
-The supervisor supports `--new`, `--last`, `--last-all`, and
-`--session ID`, plus `--remote-session ID` for an exact app-server-backed
-thread. An explicit saved-session identifier is the concurrency-safe choice.
-The two latest-session selectors rely on the fleet's established single active
-Codex session per checkout or global scope. A fresh first launch recovers with
-repository-scoped `resume --last`; every other recovery retains its selected
-resume scope. A remote selector always retains `resume --remote unix:// ID`.
-No recovery command contains a prompt.
+The supervisor supports `--new`, `--last`, and `--session ID`, plus
+`--remote-session ID` for an exact app-server-backed thread. An explicit
+saved-session identifier is concurrency-safe only after its persisted CWD
+matches the current closed target; that check runs before every launch.
+The latest-session selector is repository-scoped. Global `--last-all` is
+rejected under supervision and remains available only through the intentional
+direct launcher. A fresh first launch recovers with repository-scoped
+`resume --last`; every other recovery retains its selected resume scope. A
+remote selector always retains `resume --remote unix:// ID`. No recovery
+command contains a prompt.
 
-An exact remote selector starts one
+An exact remote selector starts one target-bound
 `harness codex-thread-recovery --watch` child. A one-shot readiness transaction
 must succeed before the TUI launches, and the supervisor stops and reaps the
 watcher at exit. If a ready watcher unexpectedly exits while the same TUI

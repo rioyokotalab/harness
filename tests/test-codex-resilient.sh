@@ -189,22 +189,25 @@ mode=$1
 shift
 name=
 thread=
+target=
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --name) name=$2; shift 2 ;;
+        --target) target=$2; shift 2 ;;
         --thread) thread=$2; shift 2 ;;
         *) exit 2 ;;
     esac
 done
-[ -n "$name" ] || exit 2
-state=$HARNESS_TEST_RUNTIME_DIR/$name.recovery.state
+[ -n "$name" ] && [ -n "$target" ] || exit 2
+effective_name=$target:$name
+state=$HARNESS_TEST_RUNTIME_DIR/$effective_name.recovery.state
 write_state() {
     phase=$1
     reason=$2
     owner=$3
     {
         printf 'schema=1\n'
-        printf 'name=%s\n' "$name"
+        printf 'name=%s\n' "$effective_name"
         printf 'thread=%s\n' "$thread"
         printf 'owner_pid=%s\n' "$owner"
         printf 'phase=%s\n' "$phase"
@@ -220,11 +223,17 @@ print_state() {
     owner=$(sed -n 's/^owner_pid=//p' "$state")
     stored_thread=$(sed -n 's/^thread=//p' "$state")
     printf 'CODEX_THREAD_RECOVERY name=%s thread=%s phase=%s reason=%s recoveries=0 rolled_back=0 owner_pid=%s\n' \
-        "$name" "$stored_thread" "$phase" "$reason" "$owner"
+        "$effective_name" "$stored_thread" "$phase" "$reason" "$owner"
 }
 case "$mode" in
+    --check)
+        [ -n "$thread" ] && [ -n "$target" ] || exit 2
+        [ "${FAKE_RECOVERY_MODE:-watching}" != blocked-check ] || exit 2
+        printf 'CODEX_THREAD_RECOVERY mode=check target=%s thread=%s status=ready thread_status=idle\n' \
+            "$target" "$thread"
+        ;;
     --recover)
-        [ -n "$thread" ] || exit 2
+        [ -n "$thread" ] && [ -n "$target" ] || exit 2
         if [ "${FAKE_RECOVERY_MODE:-watching}" = blocked ]; then
             write_state blocked unsafe-tail "$$"
             print_state
@@ -234,7 +243,7 @@ case "$mode" in
         print_state
         ;;
     --watch)
-        [ -n "$thread" ] || exit 2
+        [ -n "$thread" ] && [ -n "$target" ] || exit 2
         stop() {
             write_state stopped operator-stop "$$"
             exit 0
@@ -247,7 +256,7 @@ case "$mode" in
                 exit 1
                 ;;
             exit-once-after-ready)
-                marker=$HARNESS_TEST_RUNTIME_DIR/$name.recovery.once
+                marker=$HARNESS_TEST_RUNTIME_DIR/$effective_name.recovery.once
                 if [ ! -e "$marker" ]; then
                     : >"$marker"
                     /bin/sleep 1
@@ -261,7 +270,7 @@ case "$mode" in
         ;;
     --status)
         if [ ! -f "$state" ]; then
-            printf 'CODEX_THREAD_RECOVERY name=%s phase=absent\n' "$name"
+            printf 'CODEX_THREAD_RECOVERY name=%s phase=absent\n' "$effective_name"
         else
             print_state
         fi
@@ -314,6 +323,17 @@ run_supervisor --run --name fresh --new >"$TEST_ROOT/fresh.out"
     fail "first retry delay"
 grep -F 'CODEX_RESILIENT status=stopped reason=clean-exit' \
     "$TEST_ROOT/fresh.out" >/dev/null || fail "clean exit status"
+grep -F 'schema=2' "$runtime/harness/fresh.state" >/dev/null ||
+    fail "target-scoped state schema"
+grep -F 'target=harness' "$runtime/harness/fresh.state" >/dev/null ||
+    fail "target identity is absent from state"
+[ ! -e "$runtime/fresh.state" ] ||
+    fail "new state used the legacy flat namespace"
+run_supervisor --status --target students --name fresh \
+    >"$TEST_ROOT/cross-target-status.out"
+grep -F 'target=students phase=absent' \
+    "$TEST_ROOT/cross-target-status.out" >/dev/null ||
+    fail "cross-target runtime status leaked"
 
 : >"$TEST_ROOT/codex.calls"
 : >"$TEST_ROOT/sleep.calls"
@@ -324,6 +344,13 @@ run_supervisor --run --name explicit --session session-123 \
     "resume session-123" ] || fail "explicit first resume"
 [ "$(sed -n '3p' "$TEST_ROOT/codex.calls")" = \
     "resume session-123" ] || fail "explicit recovery drifted"
+: >"$TEST_ROOT/codex.calls"
+FAKE_RECOVERY_MODE=blocked-check \
+    run_supervisor --run --name explicit-cross --session session-cross \
+        >"$TEST_ROOT/explicit-cross.out" 2>&1 &&
+    fail "cross-target explicit session was launched"
+[ ! -s "$TEST_ROOT/codex.calls" ] ||
+    fail "cross-target explicit session reached native Codex"
 
 : >"$TEST_ROOT/codex.calls"
 : >"$TEST_ROOT/sleep.calls"
@@ -342,13 +369,13 @@ run_supervisor --run --name remote-explicit \
     fail "remote explicit unexpected call count"
 [ "$(sed -n '1p' "$TEST_ROOT/sleep.calls")" = 15 ] ||
     fail "remote explicit first retry delay"
-grep -F -- '--recover --name remote-explicit --thread session-remote' \
+grep -F -- '--recover --name remote-explicit --target harness --thread session-remote' \
     "$TEST_ROOT/recovery.calls" >/dev/null ||
     fail "remote explicit recovery preflight"
-grep -F -- '--watch --name remote-explicit --thread session-remote' \
+grep -F -- '--watch --name remote-explicit --target harness --thread session-remote' \
     "$TEST_ROOT/recovery.calls" >/dev/null ||
     fail "remote explicit recovery watcher"
-grep -F 'phase=stopped' "$runtime/remote-explicit.recovery.state" \
+grep -F 'phase=stopped' "$runtime/harness:remote-explicit.recovery.state" \
     >/dev/null || fail "remote explicit recovery watcher cleanup"
 
 : >"$TEST_ROOT/codex.calls"
@@ -367,10 +394,10 @@ grep -F 'reason=clean-exit' "$TEST_ROOT/watcher-restart.out" >/dev/null ||
 [ "$(grep -c '^resume --remote unix:// session-watcher-restart$' \
     "$TEST_ROOT/codex.calls")" = 1 ] ||
     fail "watcher replacement relaunched Codex"
-[ "$(grep -c '^--recover --name watcher-restart --thread session-watcher-restart$' \
+[ "$(grep -c '^--recover --name watcher-restart --target harness --thread session-watcher-restart$' \
     "$TEST_ROOT/recovery.calls")" = 2 ] ||
     fail "watcher replacement did not repeat safe-tail preflight once"
-[ "$(grep -c '^--watch --name watcher-restart --thread session-watcher-restart$' \
+[ "$(grep -c '^--watch --name watcher-restart --target harness --thread session-watcher-restart$' \
     "$TEST_ROOT/recovery.calls")" = 2 ] ||
     fail "watcher replacement count"
 
@@ -389,10 +416,10 @@ grep -F 'reason=thread-recovery-blocked' \
 [ "$(grep -c '^resume --remote unix:// session-watcher-exit$' \
     "$TEST_ROOT/codex.calls")" = 1 ] ||
     fail "dead recovery watcher relaunched Codex"
-[ "$(grep -c '^--recover --name watcher-exit --thread session-watcher-exit$' \
+[ "$(grep -c '^--recover --name watcher-exit --target harness --thread session-watcher-exit$' \
     "$TEST_ROOT/recovery.calls")" = 4 ] ||
     fail "persistent watcher failure preflight was not bounded"
-[ "$(grep -c '^--watch --name watcher-exit --thread session-watcher-exit$' \
+[ "$(grep -c '^--watch --name watcher-exit --target harness --thread session-watcher-exit$' \
     "$TEST_ROOT/recovery.calls")" = 4 ] ||
     fail "persistent watcher replacement was not bounded"
 
@@ -472,8 +499,19 @@ grep -F 'reason=client-usage' "$TEST_ROOT/usage.out" >/dev/null ||
 
 : >"$TEST_ROOT/codex.calls"
 : >"$TEST_ROOT/sleep.calls"
+if run_supervisor --run --name global --last-all \
+    >"$TEST_ROOT/global.out" 2>&1; then
+    fail "global resume entered target-scoped supervision"
+fi
+[ ! -s "$TEST_ROOT/codex.calls" ] ||
+    fail "rejected global resume reached native Codex"
+grep -F 'outside target-scoped supervision' "$TEST_ROOT/global.out" \
+    >/dev/null || fail "global resume rejection reason"
+
+: >"$TEST_ROOT/codex.calls"
+: >"$TEST_ROOT/sleep.calls"
 printf '1\n1\n1\n1\n1\n1\n0\n' >"$TEST_ROOT/codex.statuses"
-run_supervisor --run --name backoff --last-all >"$TEST_ROOT/backoff.out"
+run_supervisor --run --name backoff --last >"$TEST_ROOT/backoff.out"
 expected_delays='15
 30
 60
@@ -482,8 +520,8 @@ expected_delays='15
 300'
 [ "$(cat "$TEST_ROOT/sleep.calls")" = "$expected_delays" ] ||
     fail "exponential retry schedule"
-run_count=$(grep -c '^resume --last --all$' "$TEST_ROOT/codex.calls")
-[ "$run_count" = 7 ] || fail "global resume selector changed"
+run_count=$(grep -c '^resume --last$' "$TEST_ROOT/codex.calls")
+[ "$run_count" = 7 ] || fail "repository resume selector changed"
 [ "$(grep -c '^doctor --json$' "$TEST_ROOT/codex.calls")" = 6 ] ||
     fail "doctor count"
 
@@ -508,12 +546,12 @@ run_supervisor --run --name signal --last >"$TEST_ROOT/signal.out" 2>&1 &&
     fail "operator signal retried"
 [ ! -s "$TEST_ROOT/sleep.calls" ] || fail "operator signal slept"
 
-run_supervisor --status --name backoff >"$TEST_ROOT/status.out"
-grep -F 'CODEX_RESILIENT mode=status name=backoff phase=stopped' \
+run_supervisor --status --target harness --name backoff >"$TEST_ROOT/status.out"
+grep -F 'CODEX_RESILIENT mode=status name=backoff target=harness phase=stopped' \
     "$TEST_ROOT/status.out" >/dev/null || fail "status output"
 run_supervisor --status --name remote-explicit \
     >"$TEST_ROOT/remote-status.out"
-grep -F 'CODEX_THREAD_RECOVERY name=remote-explicit' \
+grep -F 'CODEX_THREAD_RECOVERY name=harness:remote-explicit' \
     "$TEST_ROOT/remote-status.out" >/dev/null ||
     fail "remote recovery status output"
 
@@ -558,10 +596,38 @@ grep -F 'reason=thread-recovery-blocked' \
     "$TEST_ROOT/recovery-blocked.out" >/dev/null ||
     fail "unsafe thread recovery classification"
 
-mkdir "$runtime/locked.lock"
-chmod 700 "$runtime/locked.lock"
-printf '%s\n' "$$" >"$runtime/locked.lock/pid"
-chmod 600 "$runtime/locked.lock/pid"
+mkdir "$runtime/legacy-live.lock"
+chmod 700 "$runtime/legacy-live.lock"
+printf '%s\n' "$$" >"$runtime/legacy-live.lock/pid"
+chmod 600 "$runtime/legacy-live.lock/pid"
+: >"$TEST_ROOT/codex.calls"
+printf '0\n' >"$TEST_ROOT/codex.statuses"
+run_supervisor --run --name legacy-live --last \
+    >"$TEST_ROOT/legacy-live.out" 2>&1 &&
+    fail "target-scoped supervisor bypassed a live legacy lock"
+grep -F 'reason=legacy-already-running' \
+    "$TEST_ROOT/legacy-live.out" >/dev/null ||
+    fail "live legacy lock classification"
+unlink "$runtime/legacy-live.lock/pid"
+rmdir "$runtime/legacy-live.lock"
+
+mkdir "$runtime/legacy-stale.lock"
+chmod 700 "$runtime/legacy-stale.lock"
+printf '99999999\n' >"$runtime/legacy-stale.lock/pid"
+chmod 600 "$runtime/legacy-stale.lock/pid"
+: >"$TEST_ROOT/codex.calls"
+printf '0\n' >"$TEST_ROOT/codex.statuses"
+run_supervisor --run --name legacy-stale --last \
+    >"$TEST_ROOT/legacy-stale.out"
+grep -F 'reason=clean-exit' "$TEST_ROOT/legacy-stale.out" >/dev/null ||
+    fail "stale legacy lock was not recovered"
+[ ! -e "$runtime/legacy-stale.lock" ] ||
+    fail "stale legacy lock residue"
+
+mkdir "$runtime/harness/locked.lock"
+chmod 700 "$runtime/harness/locked.lock"
+printf '%s\n' "$$" >"$runtime/harness/locked.lock/pid"
+chmod 600 "$runtime/harness/locked.lock/pid"
 : >"$TEST_ROOT/codex.calls"
 : >"$TEST_ROOT/sleep.calls"
 printf '0\n' >"$TEST_ROOT/codex.statuses"
@@ -570,10 +636,10 @@ run_supervisor --run --name locked --last >"$TEST_ROOT/locked.out" 2>&1 &&
 grep -F 'reason=already-running' "$TEST_ROOT/locked.out" >/dev/null ||
     fail "live lock classification"
 
-mkdir "$runtime/stale-lock.lock"
-chmod 700 "$runtime/stale-lock.lock"
-printf '99999999\n' >"$runtime/stale-lock.lock/pid"
-chmod 600 "$runtime/stale-lock.lock/pid"
+mkdir "$runtime/harness/stale-lock.lock"
+chmod 700 "$runtime/harness/stale-lock.lock"
+printf '99999999\n' >"$runtime/harness/stale-lock.lock/pid"
+chmod 600 "$runtime/harness/stale-lock.lock/pid"
 : >"$TEST_ROOT/codex.calls"
 : >"$TEST_ROOT/sleep.calls"
 printf '0\n' >"$TEST_ROOT/codex.statuses"
@@ -581,7 +647,7 @@ run_supervisor --run --name stale-lock --last \
     >"$TEST_ROOT/stale-lock.out"
 grep -F 'reason=clean-exit' "$TEST_ROOT/stale-lock.out" >/dev/null ||
     fail "stale lock recovery"
-[ ! -e "$runtime/stale-lock.lock" ] ||
+[ ! -e "$runtime/harness/stale-lock.lock" ] ||
     fail "stale lock residue"
 
 cat >"$runtime/stale-state.state" <<'EOF'
@@ -609,7 +675,7 @@ grep -F 'state file is unsafe' "$TEST_ROOT/unsafe.out" >/dev/null ||
     fail "unsafe state classification"
 unlink "$runtime/unsafe.state"
 
-for state in "$runtime"/*.state; do
+for state in "$runtime"/*.state "$runtime"/*/*.state; do
     [ -f "$state" ] || continue
     case $(uname -s) in
         Darwin) mode=$(stat -f %Lp "$state") ;;

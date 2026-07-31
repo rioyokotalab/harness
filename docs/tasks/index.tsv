@@ -1,0 +1,79 @@
+task	state	summary	source
+T-351	complete	Autonomy and execution-efficiency duration task	docs/tasks/T-351.md;docs/plans/t351-autonomy-efficiency.md;docs/audits/t351-autonomy-efficiency/time-slices.md
+T-350	complete	Repository-native Codex sessions	docs/history/TODO-full-archive-2026-07-30.md;docs/plans/t350-repository-native-codex-sessions.md
+T-349	complete	Rename canonical Local tmux session to projects	docs/history/TODO-full-archive-2026-07-30.md
+T-348	complete	Phone-visible roots mirrored to Local tmux	docs/history/TODO-full-archive-2026-07-30.md
+T-347	complete	T-345 mirror convergence	docs/history/TODO-full-archive-2026-07-30.md
+T-346	complete	Reprioritize durable Harness queue	docs/history/TODO-full-archive-2026-07-30.md
+T-345	complete	Dedicated recovery helper and phone/tmux mirror	docs/history/TODO-full-archive-2026-07-30.md
+T-344	complete	Recover Swallow and automate blocked-root cutover	docs/history/TODO-full-archive-2026-07-30.md
+T-343	complete	Durable Codex-to-Claude handoff	docs/history/TODO-full-archive-2026-07-30.md;docs/audits/t343-claude-handoff-hardening/cowork/plan.md
+T-342	complete	Cowork benchmark discipline and Claude defaults	docs/history/TODO-full-archive-2026-07-30.md
+T-341	complete	Archive retired Swallow saved root	docs/history/TODO-full-archive-2026-07-30.md
+T-340	complete	Map phone-visible Swallow root into Local tmux	docs/history/TODO-full-archive-2026-07-30.md
+T-339	complete	Consolidate Local monitor tmux sessions	docs/history/TODO-full-archive-2026-07-30.md
+T-338	complete	Restore absent canonical Local tmux session	docs/history/TODO-full-archive-2026-07-30.md
+T-337	complete	Bridge-first managed Codex cutovers	docs/history/TODO-full-archive-2026-07-30.md
+T-336	complete	Benchmark Codex and Claude Harness development	docs/history/TODO-full-archive-2026-07-30.md;docs/audits/t336-codex-claude-benchmark
+T-335	complete	Restore Slack tools for Swallow	docs/history/TODO-full-archive-2026-07-30.md
+T-334	complete	Maintenance awareness for remote Linux nodes	docs/history/TODO-full-archive-2026-07-30.md
+T-333	complete	Maintenance-aware fleet health	docs/history/TODO-full-archive-2026-07-30.md
+T-332	complete	Preserve codex and use co shorthand	docs/history/TODO-full-archive-2026-07-30.md
+T-331	complete	Restore disappeared Harness tmux window	docs/history/TODO-full-archive-2026-07-30.md
+T-330	complete	Monitor and order Local tmux Codex windows	docs/history/TODO-full-archive-2026-07-30.md
+T-329	complete	Restore disappeared Swallow tmux window	docs/history/TODO-full-archive-2026-07-30.md
+T-328	time-gated	Deferred Local reboot during Institute outage	TODO.md;docs/tasks/T-328.md;docs/history/TODO-full-archive-2026-07-30.md
+T-327	complete	Align MCP approvals and retire blocked phone sessions	docs/history/TODO-full-archive-2026-07-30.md
+T-326	complete	Exact progress clocks and Sol-high defaults	docs/history/TODO-full-archive-2026-07-30.md
+T-325	complete	Reusable unsafe-tail recovery	docs/history/TODO-full-archive-2026-07-30.md
+T-324	complete	Nightly fleet and repository hardening	docs/history/TODO-full-archive-2026-07-30.md
+T-323	complete	Recover Harness unsafe tail	docs/history/TODO-full-archive-2026-07-30.md
+T-322	complete	Unique phone-visible Swallow name	docs/history/TODO-full-archive-2026-07-30.md
+T-321	complete	Recover recurring Swallow unsafe tail	docs/history/TODO-full-archive-2026-07-30.md
+T-320	complete	Portable interactive ls color	docs/history/TODO-full-archive-2026-07-30.md
+T-319	complete	Fleet-health reporting policy	docs/history/TODO-full-archive-2026-07-30.md
+T-318	complete	Recover poisoned remote Codex threads	docs/history/TODO-full-archive-2026-07-30.md
+T-317	complete	Remote-aware fleet housekeeping and resilience	docs/history/TODO-full-archive-2026-07-30.md;docs/audits/t317-fleet-housekeeping-2026-07-27.md
+T-316	complete	Map Local tmux to three phone roots	docs/history/TODO-full-archive-2026-07-30.md
+T-315	complete	One-to-one Local Codex thread mapping	docs/history/TODO-full-archive-2026-07-30.md
+T-314	complete	Recover Local Slack connector	docs/history/TODO-full-archive-2026-07-30.md
+T-313	complete	Auto-merge and login-node worker limits	docs/history/TODO-full-archive-2026-07-30.md
+T-312	complete	Post-hardening fleet and repository housekeeping	docs/history/TODO-full-archive-2026-07-30.md
+T-311	complete	Fleet and repository hardening	docs/history/TODO-full-archive-2026-07-30.md
+T-310	complete	Portable Codex transient-service resilience	docs/history/TODO-full-archive-2026-07-30.md;docs/plans/t310-codex-service-resilience.md
+T-309	complete	Canonical fleet-health probing	docs/history/TODO-full-archive-2026-07-30.md
+T-308	complete	Reboot recovery skill and deterministic helper	docs/history/TODO-full-archive-2026-07-30.md;docs/plans/t308-reboot-recovery-skill.md
+T-307	complete	Symmetric visible TUI messaging and requests	docs/history/TODO-full-archive-2026-07-30.md;docs/plans/t307-remote-agent-communication.md
+T-306	complete	Post-sync managed Codex context refresh	docs/history/TODO-full-archive-2026-07-30.md
+T-305	complete	Fleet Codex managed update convergence	docs/history/TODO-full-archive-2026-07-30.md;docs/plans/t305-codex-managed-update.md
+T-303	blocked	NFS latency requires trusted server access	TODO.md;docs/tasks/T-303.md;docs/audits/t303-nfs-observation-2026-07-24.md
+T-302	complete	Accept AL daily authentication	docs/history/TODO-full-archive-2026-07-30.md
+T-301	complete	Shared SSH defaults and multiplex-path hardening	docs/history/TODO-full-archive-2026-07-30.md;docs/plans/t301-ssh-defaults-review.md
+T-300	complete	Canonical fleet inventory and node-guide links	docs/history/TODO-full-archive-2026-07-30.md
+T-299	complete	Owner-facing README and fleet reconciliation	docs/history/TODO-full-archive-2026-07-30.md
+T-298	complete	Compact active task board	docs/history/TODO-full-archive-2026-07-30.md
+T-297	complete	Local and four-Mac SSH hygiene convergence	docs/history/TODO-full-archive-2026-07-30.md
+T-296	complete	Mac connectivity resilience	docs/history/TODO-full-archive-2026-07-30.md;docs/plans/t296-mac-connectivity-resilience.md;docs/audits/t296-mac-connectivity-resilience-2026-07-23.md
+T-295	complete	Fleet convergence	docs/history/TODO-full-archive-2026-07-30.md;docs/plans/t295-fleet-convergence.md
+T-294	complete	Lock-aware Codex arg0 recovery	docs/history/TODO-full-archive-2026-07-30.md
+T-293	complete	Independent Mac reverse-route recovery	docs/history/TODO-full-archive-2026-07-30.md;docs/audits/t293-connection-self-healing-2026-07-22.md
+T-292	complete	Four-Mac final private migration	docs/history/TODO-full-archive-2026-07-30.md;docs/audits/macos-ssh-finalization-2026-07-21.md
+T-291	complete	Four-Mac login isolation	docs/history/TODO-full-archive-2026-07-30.md;docs/audits/macos-ssh-finalization-2026-07-21.md
+T-290	complete	Four-Mac SSH configuration convergence	docs/history/TODO-full-archive-2026-07-30.md;docs/audits/macos-ssh-finalization-2026-07-21.md
+T-289	complete	Four-Mac onboarding cleanup	docs/history/TODO-full-archive-2026-07-30.md;docs/audits/macos-ssh-finalization-2026-07-21.md
+T-288	complete	Four-Mac onboarding finalization	docs/history/TODO-full-archive-2026-07-30.md;docs/audits/macos-ssh-finalization-2026-07-21.md
+T-287	complete	Mac onboarding and ledger foundation	docs/history/TODO-full-archive-2026-07-30.md
+T-286	complete	Mac onboarding and ledger foundation	docs/history/TODO-full-archive-2026-07-30.md
+T-285	complete	Mac onboarding and ledger foundation	docs/history/TODO-full-archive-2026-07-30.md
+T-284	complete	Accelerated Codex-Claude cowork	docs/history/TODO-full-archive-2026-07-30.md
+T-283	complete	Symmetric Codex-Claude cowork	docs/history/TODO-full-archive-2026-07-30.md
+T-282	complete	Mac onboarding and ledger foundation	docs/history/TODO-full-archive-2026-07-30.md
+T-281	complete	Mac onboarding and ledger foundation	docs/history/TODO-full-archive-2026-07-30.md
+T-280	complete	Mac onboarding and ledger foundation	docs/history/TODO-full-archive-2026-07-30.md
+T-279	complete	Mac onboarding and ledger foundation	docs/history/TODO-full-archive-2026-07-30.md
+T-274	complete	Bash and Mac onboarding foundation	docs/history/TODO-full-archive-2026-07-30.md
+T-273	complete	Maintenance closeout and durable guardrails	docs/history/TODO-full-archive-2026-07-30.md
+T-210	complete	Earlier Harness lifecycle work	docs/history/TODO-full-archive-2026-07-30.md
+T-196	time-gated	Backup lifecycle weekly successors	TODO.md;docs/tasks/T-196.md;docs/backup-lifecycle-phase2.md
+T-191	complete	First native weekly backups	docs/history/TODO-full-archive-2026-07-30.md
+T-181	complete	Earlier safety acceptance	docs/history/TODO-full-archive-2026-07-30.md

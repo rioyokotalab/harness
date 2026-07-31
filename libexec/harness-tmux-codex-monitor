@@ -18,7 +18,11 @@ import time
 
 
 sys.dont_write_bytecode = True
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+CONTROL_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+os.environ["HARNESS_CONTROL_ROOT"] = CONTROL_ROOT
+os.environ["HARNESS_TARGET_ROOT"] = CONTROL_ROOT
+os.environ.pop("HARNESS_ROOT", None)
+sys.path.insert(0, os.path.join(CONTROL_ROOT, "libexec"))
 from harness_codex_targets import (  # noqa: E402
     TargetError,
     load_targets,
@@ -44,12 +48,7 @@ def fail(message):
 
 
 def target_cwd_allowed(name, path):
-    if path == TARGET_PATHS[name]:
-        return True
-    return (
-        name in ("students", "swallow")
-        and path == TARGET_PATHS["harness"]
-    )
+    return path == TARGET_PATHS[name]
 
 
 def run(arguments, check=True):
@@ -137,7 +136,8 @@ def helper_runtime_root():
     )
 
 
-def phone_mirror_health(now=None):
+def phone_mirror_health(now=None, processes=None):
+    lookup_process = process_info if processes is None else processes.get
     root = helper_runtime_root()
     if not root:
         return "unavailable"
@@ -152,7 +152,7 @@ def phone_mirror_health(now=None):
     current = int(time.time()) if now is None else now
     if current - receipt.get("epoch", 0) > 120:
         return "unavailable"
-    owner = process_info(receipt.get("owner_pid", 0))
+    owner = lookup_process(receipt.get("owner_pid", 0))
     if (
         not owner
         or owner.get("uid") != os.getuid()
@@ -164,7 +164,7 @@ def phone_mirror_health(now=None):
         return "unavailable"
     remote = receipt.get("remote_control", {})
     if remote.get("exactly_one"):
-        process = process_info(remote.get("pid", 0))
+        process = lookup_process(remote.get("pid", 0))
         if (
             not process
             or process.get("uid") != os.getuid()
@@ -179,6 +179,7 @@ def phone_mirror_health(now=None):
         "unarchived",
         "exact_name",
         "exact_cwd",
+        "native_cwd",
         "rollout_location",
         "rollout_exists",
         "interactive_source",
@@ -230,17 +231,54 @@ def parse_proc_stat(pid, value):
     }
 
 
-def process_info(pid):
+def process_metadata(pid):
     try:
         with open("/proc/{}/stat".format(pid), "r") as stream:
             info = parse_proc_stat(pid, stream.read())
+        info["uid"] = os.stat("/proc/{}".format(pid)).st_uid
+    except (IOError, OSError, ValueError):
+        return None
+    return info
+
+
+def process_info(pid):
+    info = process_metadata(pid)
+    if not info:
+        return None
+    try:
         with open("/proc/{}/cmdline".format(pid), "rb") as stream:
             argv = [part.decode("utf-8", "strict") for part in stream.read().split(b"\0") if part]
-        info["uid"] = os.stat("/proc/{}".format(pid)).st_uid
     except (IOError, OSError, UnicodeError, ValueError):
         return None
     info["argv"] = argv
     return info
+
+
+def process_snapshot(command_pids=()):
+    processes = {}
+    try:
+        names = os.listdir("/proc")
+    except OSError:
+        return processes
+    for name in names:
+        if not name.isdigit():
+            continue
+        info = process_metadata(int(name))
+        if info:
+            processes[info["pid"]] = info
+    for pid in command_pids:
+        summary = processes.get(pid)
+        detailed = process_info(pid)
+        if (
+            not summary
+            or not detailed
+            or detailed["start"] != summary["start"]
+            or detailed["uid"] != summary["uid"]
+        ):
+            processes.pop(pid, None)
+            continue
+        processes[pid] = detailed
+    return processes
 
 
 def children(parent):
@@ -256,6 +294,24 @@ def children(parent):
         if info and info["parent"] == parent:
             result.append(info)
     return result
+
+
+def snapshot_descendants(parent, processes):
+    by_parent = {}
+    for info in processes.values():
+        by_parent.setdefault(info["parent"], []).append(info)
+    pending = [parent]
+    found = []
+    visited = set()
+    while pending:
+        current = pending.pop()
+        if current in visited:
+            continue
+        visited.add(current)
+        for child in by_parent.get(current, ()):
+            found.append(child)
+            pending.append(child["pid"])
+    return found
 
 
 def descendants(parent):
@@ -276,7 +332,7 @@ def descendants(parent):
 def parse_supervisor(info):
     if not info:
         return None
-    argv = info["argv"]
+    argv = info.get("argv", ())
     if len(argv) < 7 or "harness-codex-resilient" not in " ".join(argv[:2]):
         return None
     try:
@@ -307,10 +363,21 @@ def parse_supervisor(info):
     }
 
 
-def resilient_status(runtime_name):
-    harness = os.path.join(os.environ["HARNESS_ROOT"], "bin", "harness")
+def resilient_status(target, runtime_name):
+    resilient = os.path.join(
+        os.environ["HARNESS_CONTROL_ROOT"],
+        "libexec",
+        "harness-codex-resilient",
+    )
     result = subprocess.run(
-        [harness, "codex-resilient", "--status", "--name", runtime_name],
+        [
+            resilient,
+            "--status",
+            "--target",
+            target,
+            "--name",
+            runtime_name,
+        ],
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
         check=False,
@@ -326,7 +393,7 @@ def resilient_status(runtime_name):
     return first, recovery
 
 
-def reciprocal_socket(tui_pid):
+def socket_pairs():
     output = run(["ss", "-xnpH"], check=False)
     pairs = []
     expression = re.compile(r"\*\s+([0-9]+)\s+\*\s+([0-9]+).*pid=([0-9]+)")
@@ -335,11 +402,32 @@ def reciprocal_socket(tui_pid):
         match = expression.search(line) or path_expression.search(line)
         if match:
             pairs.append((int(match.group(1)), int(match.group(2)), int(match.group(3))))
+    return pairs
+
+
+def reciprocal_socket(tui_pid):
+    pairs = socket_pairs()
     tui_pairs = {(left, right) for left, right, pid in pairs if pid == tui_pid}
     for left, right, pid in pairs:
         if pid != tui_pid and (right, left) in tui_pairs:
             return pid
     return None
+
+
+def reciprocal_socket_snapshot():
+    pairs = socket_pairs()
+    peers = {}
+    for tui_pid in {pid for _left, _right, pid in pairs}:
+        tui_pairs = {
+            (left, right)
+            for left, right, pid in pairs
+            if pid == tui_pid
+        }
+        for left, right, peer_pid in pairs:
+            if peer_pid != tui_pid and (right, left) in tui_pairs:
+                peers[tui_pid] = peer_pid
+                break
+    return peers
 
 
 def tmux_windows():
@@ -430,7 +518,8 @@ def enforce_order(windows):
     return windows, action
 
 
-def collect_health(windows):
+def collect_health(windows, processes=None, socket_peers=None):
+    lookup_process = process_info if processes is None else processes.get
     health = {}
     for name, expected_index in EXPECTED:
         matches = [window for window in windows if window["name"] == name]
@@ -439,38 +528,32 @@ def collect_health(windows):
             continue
         window = matches[0]
         entry = {"window": window, "state": "unhealthy", "reason": "metadata"}
-        if (
-            window["panes"] != 1
-            or window["dead"]
-            or not target_cwd_allowed(name, window["path"])
-        ):
+        if window["panes"] != 1 or window["dead"]:
             health[name] = entry
             continue
-        supervisor_info = process_info(window["pane_pid"])
+        if not target_cwd_allowed(name, window["path"]):
+            entry["reason"] = "native-cwd"
+            health[name] = entry
+            continue
+        supervisor_info = lookup_process(window["pane_pid"])
         identity = parse_supervisor(supervisor_info)
         if not identity or supervisor_info["uid"] != os.getuid():
             entry["reason"] = "supervisor-identity"
             health[name] = entry
             continue
-        if (
-            identity.get("target") not in (None, name)
-            or (
-                window["path"] == TARGET_PATHS[name]
-                and name != "harness"
-                and identity.get("target") != name
-            )
-        ):
+        if identity.get("target") != name:
             entry["reason"] = "supervisor-target"
             health[name] = entry
             continue
-        status_value = resilient_status(identity["runtime"])
+        status_value = resilient_status(name, identity["runtime"])
         if not status_value:
             entry["reason"] = "supervisor-status"
             health[name] = entry
             continue
         supervisor, recovery = status_value
         if (
-            supervisor.get("phase") not in ("running", "backoff")
+            supervisor.get("target") != name
+            or supervisor.get("phase") not in ("running", "backoff")
             or supervisor.get("owner_pid") != str(window["pane_pid"])
         ):
             entry["reason"] = "supervisor-owner"
@@ -478,10 +561,19 @@ def collect_health(windows):
             continue
         entry["identity"] = identity
         tui_candidates = []
-        for item in descendants(window["pane_pid"]):
+        process_descendants = (
+            descendants(window["pane_pid"])
+            if processes is None
+            else snapshot_descendants(window["pane_pid"], processes)
+        )
+        for item in process_descendants:
             if item["comm"] not in CODEX_COMMS:
                 continue
-            peer_pid = reciprocal_socket(item["pid"])
+            peer_pid = (
+                reciprocal_socket(item["pid"])
+                if socket_peers is None
+                else socket_peers.get(item["pid"])
+            )
             if peer_pid:
                 tui_candidates.append((item, peer_pid))
         tui = tui_candidates[0][0] if len(tui_candidates) == 1 else None
@@ -504,7 +596,7 @@ def collect_health(windows):
             health[name] = entry
             continue
         peer_pid = tui_candidates[0][1]
-        peer = process_info(peer_pid)
+        peer = lookup_process(peer_pid)
         if (
             not peer
             or peer["uid"] != os.getuid()
@@ -521,7 +613,7 @@ def collect_health(windows):
                 watcher_pid = int(recovery.get("owner_pid", "0"))
             except ValueError:
                 watcher_pid = 0
-            watcher = process_info(watcher_pid)
+            watcher = lookup_process(watcher_pid)
             watcher_ok = bool(
                 watcher
                 and watcher["uid"] == os.getuid()
@@ -566,7 +658,8 @@ def collect_health(windows):
     return health
 
 
-def mapping_snapshot(mapping, health):
+def mapping_snapshot(mapping, health, processes=None):
+    lookup_process = process_info if processes is None else processes.get
     for name, _index in EXPECTED:
         entry = health.get(name, {})
         identity = entry.get("identity")
@@ -575,11 +668,14 @@ def mapping_snapshot(mapping, health):
             and entry.get("state") == "healthy"
             and entry.get("app_server_pid")
         ):
+            server = lookup_process(entry["app_server_pid"])
+            if not server:
+                continue
             mapping[name] = {
                 "runtime": identity["runtime"],
                 "thread": identity["thread"],
                 "app_server_pid": entry["app_server_pid"],
-                "app_server_start": process_info(entry["app_server_pid"])["start"],
+                "app_server_start": server["start"],
                 "index": entry["window"]["index"],
                 "window_id": entry["window"]["window_id"],
                 "cwd": entry["window"]["path"],
@@ -607,7 +703,8 @@ def canonical_topology(windows):
     return True
 
 
-def recovery_candidates(windows, health, clients):
+def recovery_candidates(windows, health, clients, processes=None):
+    lookup_process = process_info if processes is None else processes.get
     blocked = [
         name
         for name, _index in EXPECTED
@@ -643,7 +740,7 @@ def recovery_candidates(windows, health, clients):
         identity = target_entry.get("identity") or {}
         watcher = target_entry.get("watcher") or {}
         recovery = target_entry.get("recovery") or {}
-        server = process_info(target_entry["app_server_pid"])
+        server = lookup_process(target_entry["app_server_pid"])
         required = (
             identity.get("runtime"),
             identity.get("thread"),
@@ -676,10 +773,13 @@ def recovery_candidates(windows, health, clients):
 
 
 def enqueue_helper_recovery(candidate):
-    harness = os.path.join(os.environ["HARNESS_ROOT"], "bin", "harness")
+    helper = os.path.join(
+        os.environ["HARNESS_CONTROL_ROOT"],
+        "libexec",
+        "harness-codex-recovery-helper",
+    )
     arguments = [
-        harness,
-        "codex-recovery-helper",
+        helper,
         "--enqueue-blocked",
         "--target",
         candidate["target"],
@@ -815,14 +915,18 @@ def main():
                 windows = tmux_windows()
                 if arguments.enforce_order:
                     windows, order_action = enforce_order(windows)
-                health = collect_health(windows)
+                processes = process_snapshot(
+                    window["pane_pid"] for window in windows
+                )
+                socket_peers = reciprocal_socket_snapshot()
+                health = collect_health(windows, processes, socket_peers)
                 mapping = read_private_json(mapping_path, {})
-                mapping = mapping_snapshot(mapping, health)
+                mapping = mapping_snapshot(mapping, health, processes)
                 atomic_json(mapping_path, mapping)
                 healthy = sum(
                     1 for entry in health.values() if entry["state"] == "healthy"
                 )
-                phone_mirror = phone_mirror_health()
+                phone_mirror = phone_mirror_health(processes=processes)
                 phase = (
                     "healthy"
                     if healthy == 3
@@ -835,6 +939,7 @@ def main():
                         windows,
                         health,
                         tmux_clients(),
+                        processes,
                     )
                     if candidates:
                         queued = sum(

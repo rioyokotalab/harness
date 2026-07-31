@@ -58,8 +58,39 @@ for argument do
     esac
 done
 [ -n "$route" ] || exit 2
+
+counter_lock=$HARNESS_FLEET_HEALTH_STATE/concurrency.lock
+acquire_counter_lock() {
+    while ! mkdir "$counter_lock" 2>/dev/null; do :; done
+}
+finish_probe() {
+    probe_exit_status=$?
+    trap - 0 HUP INT TERM
+    acquire_counter_lock
+    active=$(sed -n '1p' "$HARNESS_FLEET_HEALTH_STATE/active")
+    active=$((active - 1))
+    printf '%s\n' "$active" >"$HARNESS_FLEET_HEALTH_STATE/active"
+    printf 'end %s\n' "$route" >>"$HARNESS_FLEET_HEALTH_STATE/events"
+    rmdir "$counter_lock"
+    exit "$probe_exit_status"
+}
+
+acquire_counter_lock
+active=$(sed -n '1p' "$HARNESS_FLEET_HEALTH_STATE/active")
+active=$((active + 1))
+printf '%s\n' "$active" >"$HARNESS_FLEET_HEALTH_STATE/active"
+maximum=$(sed -n '1p' "$HARNESS_FLEET_HEALTH_STATE/max-active")
+if [ "$active" -gt "$maximum" ]; then
+    printf '%s\n' "$active" >"$HARNESS_FLEET_HEALTH_STATE/max-active"
+fi
+printf 'start %s\n' "$route" >>"$HARNESS_FLEET_HEALTH_STATE/events"
+rmdir "$counter_lock"
+trap finish_probe 0
+
 printf '%s %s\n' "$route" "$*" >>"$HARNESS_FLEET_HEALTH_STATE/calls"
-[ "$route" != ab ] || sleep 0.2
+if [ -f "$HARNESS_FLEET_HEALTH_STATE/$route.delay" ]; then
+    sleep "$(sed -n '1p' "$HARNESS_FLEET_HEALTH_STATE/$route.delay")"
+fi
 if [ -e "$HARNESS_FLEET_HEALTH_STATE/$route.fail" ]; then
     echo 'PRIVATE-SSH-DIAGNOSTIC' >&2
     exit 1
@@ -74,9 +105,48 @@ ssh-agent -a "$SSH_AUTH_SOCK" -s >"$TEMP_DIR/agent.env"
 AGENT_PID=$(sed -n 's/^SSH_AGENT_PID=\([0-9][0-9]*\);.*/\1/p' "$TEMP_DIR/agent.env")
 [ -n "$AGENT_PID" ] || fail "test SSH agent PID"
 
+printf '%s\n' 0 >"$STATE/active"
+printf '%s\n' 0 >"$STATE/max-active"
+: >"$STATE/events"
+# These delayed routes occupied the first, second, and third former batches.
+# Batch barriers therefore imposed a fixture-only lower bound of 4500 ms.
+printf '%s\n' 1.5 >"$STATE/ab.delay"
+printf '%s\n' 0.3 >"$STATE/ab2.delay"
+printf '%s\n' 0.3 >"$STATE/ri.delay"
+printf '%s\n' 0.3 >"$STATE/al.delay"
+printf '%s\n' 1.5 >"$STATE/rc.delay"
+printf '%s\n' 1.5 >"$STATE/aist.delay"
+queue_start_ns=$(python3 -c 'import time; print(time.monotonic_ns())')
 PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_ROOT="$PUBLIC" HARNESS_TESTING=1 \
     HARNESS_FLEET_HEALTH_NOW_EPOCH=1785312000 \
     HARNESS_FLEET_HEALTH_STATE="$STATE" "$HEALTH" >"$TEMP_DIR/healthy.out"
+queue_end_ns=$(python3 -c 'import time; print(time.monotonic_ns())')
+queue_elapsed_ms=$(((queue_end_ns - queue_start_ns) / 1000000))
+max_active=$(sed -n '1p' "$STATE/max-active")
+[ "$max_active" -le 4 ] || fail "probe queue exceeded concurrency cap"
+[ "$max_active" -eq 4 ] || fail "probe queue did not fill available slots"
+[ "$(sed -n '1p' "$STATE/active")" -eq 0 ] ||
+    fail "probe queue left an active fake probe"
+[ "$queue_elapsed_ms" -lt 3500 ] ||
+    fail "probe queue exceeded former-batch critical-path bound"
+ab_end_line=$(sed -n '/^end ab$/{=;q;}' "$STATE/events")
+rc_start_line=$(sed -n '/^start rc$/{=;q;}' "$STATE/events")
+aist_start_line=$(sed -n '/^start aist$/{=;q;}' "$STATE/events")
+[ -n "$ab_end_line" ] && [ -n "$rc_start_line" ] &&
+    [ "$rc_start_line" -lt "$ab_end_line" ] ||
+    fail "former second batch did not overlap the delayed first batch"
+[ -n "$ab_end_line" ] && [ -n "$aist_start_line" ] &&
+    [ "$aist_start_line" -lt "$ab_end_line" ] ||
+    fail "former third batch did not overlap the delayed first batch"
+printf 'fleet health queue fixture: elapsed_ms=%s former_barrier_min_ms=4500 max_concurrency=%s\n' \
+    "$queue_elapsed_ms" "$max_active"
+unlink "$STATE/ab.delay"
+unlink "$STATE/ab2.delay"
+unlink "$STATE/ri.delay"
+unlink "$STATE/al.delay"
+unlink "$STATE/rc.delay"
+unlink "$STATE/aist.delay"
+
 expected='local ab ab2 ri al rc t4 abq aist home office riken'
 observed=$(sed -n 's/^FLEET_HEALTH node=\([^ ]*\).*/\1/p' "$TEMP_DIR/healthy.out" |
     tr '\n' ' ' | sed 's/ $//')
@@ -90,6 +160,12 @@ grep '^al ' "$STATE/calls" | grep -F 'ControlPath=' >/dev/null &&
     fail "AL probe overrode ControlPath"
 [ "$(grep -c '^al-session$' "$STATE/calls")" -eq 1 ] ||
     fail "AL managed status was not checked"
+for route in \
+    ab ab2 ri al rc t4 abq abq2 \
+    aist aist2 home home2 office office2 riken riken2; do
+    [ "$(grep -c "^$route " "$STATE/calls")" -eq 1 ] ||
+        fail "route was not probed exactly once: $route"
+done
 for excluded in login login2 abci_login alps_login web; do
     grep -F "$excluded" "$STATE/calls" >/dev/null &&
         fail "excluded transport was probed"
@@ -214,9 +290,10 @@ if PATH="$FAKE_BIN:/usr/bin:/bin" HARNESS_ROOT="$PUBLIC" HARNESS_TESTING=1 \
 fi
 [ ! -s "$STATE/calls" ] || fail "overlapping registry reached probes"
 
-grep -F 'Before yielding every Harness turn, run `harness fleet-health`' \
-    "$ROOT/AGENTS.md" >/dev/null || fail "per-turn fleet health policy"
-grep -F 'consult that system'\''s official' "$ROOT/AGENTS.md" >/dev/null ||
+POLICY=$ROOT/docs/agent-policy/fleet.md
+grep -F 'Run fresh `harness fleet-health` for fleet/runtime work' \
+    "$POLICY" >/dev/null || fail "risk-bounded fleet health policy"
+grep -F 'consult that system'\''s official' "$POLICY" >/dev/null ||
     fail "official maintenance lookup policy"
 
 echo "fleet health tests: PASS"

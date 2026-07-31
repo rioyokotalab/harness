@@ -1,6 +1,6 @@
 ---
 name: research-presentation-workflow
-description: Plan, create, revise, or validate research presentations and slide decks. Use for talks, seminars, defenses, project reviews, posters adapted to slides, speaker notes, or visual explanations that require sourced technical claims and artifact-level review.
+description: Create or revise sourced research talks, slide decks, defenses, project reviews, or visual technical explanations with artifact-level validation.
 ---
 
 # Research presentation workflow

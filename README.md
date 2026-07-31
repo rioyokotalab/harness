@@ -36,11 +36,12 @@ preserves every credential and runtime-state file, and records rollback
 preimages. It never installs or authorizes a plugin, marketplace, MCP server,
 connector, or credential.
 
-Current work and the exact resume checkpoint live in [TODO.md](TODO.md).
-Completed command-level evidence lives in Git history and
-[docs/audits/](docs/audits/). A cold-started agent should read the root
-`AGENTS.md` or `CLAUDE.md`, `TODO.md`, and the canonical
-[fleet inventory](docs/fleet-inventory.md) before acting.
+The compact queue lives in [TODO.md](TODO.md); each active item links one
+task-specific record containing its exact resume checkpoint. Completed
+command-level evidence lives in Git history and [docs/audits/](docs/audits/).
+A cold-started agent reads the root `AGENTS.md` or `CLAUDE.md`, the queue, and
+only the selected task record. It reads the canonical
+[fleet inventory](docs/fleet-inventory.md) only for fleet or host work.
 
 For a new account that does not share the owner's hidden files, credentials,
 remote nodes, or backup layout, use
@@ -72,8 +73,8 @@ requiring an active controller session. See
 
 ### Resume work safely
 
-Both clients reconstruct unfinished work from Git and [TODO.md](TODO.md), not
-from conversation history or client-local memory:
+Both clients reconstruct unfinished work from Git, [TODO.md](TODO.md), and the
+selected task record—not conversation history or client-local memory:
 
 ```bash
 cd "$HOME/harness"
@@ -82,9 +83,9 @@ git log -3 --oneline
 ```
 
 Before changing a collaborative branch, fetch the protected remote and confirm
-the active task. Before handing work to the other client, checkpoint verified
-facts, failures, files, validation, and the next executable action in
-`TODO.md`.
+the active task. Before handoff, checkpoint verified facts, failures, files,
+validation, and the next executable action in that task's record. Change
+`TODO.md` only when the queue-level phase, order, summary, or pointer changes.
 
 ### Survive transient Codex service failures
 
@@ -101,10 +102,13 @@ harness codex-resilient --run --name harness --last
 ```
 
 Use `--session ID` instead of `--last` when multiple Codex chats can be started
-from the same repository. `--new` creates a new chat on the first launch and
-resumes the repository's most recent chat thereafter; `--last-all` selects the
-globally most recent saved chat. `harness-codex` remains the explicit direct
-launcher for a fresh or intentionally unsupervised client.
+from the same repository. Before every exact-ID launch, the supervisor requires
+the saved thread's persisted CWD to match the current managed target. `--new`
+creates a new chat on the first launch and resumes the repository's most recent
+chat thereafter. The target-scoped supervisor rejects global `--last-all`;
+use `harness-codex resume --last --all` only for an intentional unsupervised
+global resume. `harness-codex` remains the explicit direct launcher for a fresh
+or intentionally unsupervised client.
 
 For a phone-visible chat owned by the local remote-control app server, preserve
 both the remote transport and exact root ID on every retry:
@@ -134,8 +138,8 @@ or external effects, and the removed prompt is never replayed.
 Plan or inspect the value-free recovery receipt independently:
 
 ```bash
-harness codex-thread-recovery --plan --name harness --thread ID
-harness codex-thread-recovery --status --name harness
+harness codex-thread-recovery --plan --name harness --target harness --thread ID
+harness codex-thread-recovery --status --name harness --target harness
 ```
 
 For an intentional per-thread cold reconnect, do not restart the shared
@@ -289,8 +293,9 @@ weekly primary job exists per node. Keep-all remains in force: no scheduled
 `forget`, `prune`, replica, full-data check, login-node cron job, or user
 timer exists.
 
-The current successor gate is in [TODO.md](TODO.md). Recovery procedures and
-the reviewed topology are in [docs/home-backup.md](docs/home-backup.md).
+The current successor gate is in
+[the T-196 record](docs/tasks/T-196.md). Recovery procedures and the reviewed
+topology are in [docs/home-backup.md](docs/home-backup.md).
 
 ## Codex and Claude use the same harness
 
@@ -305,6 +310,11 @@ shared skills are linked inside the repository:
 The only global client files retained by the harness are minimal sentinels at
 `~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md`. Outside `~/harness`, they
 refuse task work and give the exact restart command.
+
+Inside Harness, the root router loads only policy modules matching the next
+action. Each selected skill likewise routes only its current phase, site, or
+mode references; unrelated workflows and completed task history are not
+preloaded.
 
 This gives both clients the same start, planning, safety, validation,
 publication, fleet-sync, and handoff expectations. Consequential joint work can
@@ -543,11 +553,29 @@ for the default Power setting; the aggregate itself correctly retains
 - `evaluation/`: deterministic cross-agent acceptance corpus.
 - `tests/`: focused suites, fixtures, and native smoke sources.
 - `docs/`: architecture, operating instructions, plans, and audit evidence.
-- `TODO.md`: the compact active task ledger.
+- `TODO.md`: compact active queue; `docs/tasks/`: selected active-task records
+  and the completed-task index.
 
 ## Validation
 
-Run the complete portable validation suite with:
+Use the deterministic impact selector during ordinary work:
+
+```bash
+harness validate --base origin/main
+harness validate --plan --path PATH
+```
+
+Documentation and ledger changes run their contracts, routed skills run budget
+and gate fixtures, and mapped components run their owning suite. Workflow,
+policy, selector, manifest, safety, lifecycle, cleanup, credential, and unknown
+changes escalate automatically. Exact clean-tree R0/R1 results may reuse a
+content-addressed local receipt; that receipt is owner self-attestation, not
+independent CI. Recorded validation is also reused when the target bytes,
+environment contract, and acceptance scope are unchanged: resuming a session
+alone does not trigger another run.
+
+Run the complete portable suite for broad changes and once on the final
+integrated tree:
 
 ```bash
 tests/test-phase1.sh
@@ -555,6 +583,21 @@ tests/test-phase1.sh
 
 Documentation-only changes must at least pass `git diff --check` and the
 relevant focused tests. Protected CI remains authoritative.
+
+Protected Harness pull requests use the same impact selector with the event's
+exact base revision. Narrow changes therefore run only their owning contracts,
+while workflow, policy, validator, manifest, safety, lifecycle, cleanup,
+credential, and unknown changes still run the complete suite. Weekly and
+manual events remain unconditional full portable backstops.
+
+For private Students and Swallow work, owner-authored pull requests use an
+exact-tree local validation receipt and skip before hosted-runner allocation;
+mixed or non-owner pull requests still run hosted checks. Duplicate post-merge
+`main` runs are disabled, while weekly and manual hosted runs provide an
+independent backstop. Harness is public and keeps hosted pull-request CI but
+likewise avoids the redundant post-merge run. The measured cost model, trust
+boundary, and rejected alternatives are recorded in
+[`docs/audits/t351-autonomy-efficiency/actions-transition.md`](docs/audits/t351-autonomy-efficiency/actions-transition.md).
 
 ## Local shell compatibility
 

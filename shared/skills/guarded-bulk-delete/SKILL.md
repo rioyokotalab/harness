@@ -1,6 +1,6 @@
 ---
 name: guarded-bulk-delete
-description: Plan, execute, and verify autonomous deletion of directory trees with protected-root rejection, explicit canonical boundaries, immutable short-lived manifests, identity and size revalidation, and post-delete checks. Use whenever Codex or Claude would otherwise run recursive rm, find -delete, wildcard cleanup, synchronization with deletion, or any command that can remove multiple files or directories, including to classify whether reviewed installer or package-manager internal cleanup qualifies for the narrow exception.
+description: Use before recursive, wildcard, synchronized, or multi-path deletion, including installer-cleanup classification; enforce protected roots, immutable manifests, identity/size revalidation, and post-delete checks.
 ---
 
 # Guarded bulk delete
@@ -63,9 +63,11 @@ reconstruct its token.
 Apply fails closed unless the lexical account home, its canonical resolved
 home, working directory, repository, boundary, parent and target identities,
 entry counts, byte counts, owner, mode, token, and 15-minute freshness window
-all still match. Both account-home spellings are protected. It deletes only the
-canonical target roots, stays on each target filesystem, then verifies the
-targets are absent and protected anchors are unchanged.
+all still match. Every recursive directory must remain current-user-owned.
+After every target validates, apply adds only the owner-write bit needed to
+remove read-only directories. Both account-home spellings are protected. It
+deletes only the canonical target roots, stays on each target filesystem, then
+verifies the targets are absent and protected anchors are unchanged.
 
 If any check fails, preserve the failure, inspect the changed state, and create
 a new plan only when retrying remains in scope. Do not bypass the tool with raw

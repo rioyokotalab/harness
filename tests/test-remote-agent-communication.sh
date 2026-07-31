@@ -3,6 +3,11 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HELPER=$ROOT/shared/skills/remote-agent-communication/scripts/agent-message
+SKILL=$ROOT/shared/skills/remote-agent-communication/SKILL.md
+DELIVERY=$ROOT/shared/skills/remote-agent-communication/references/delivery.md
+REQUEST=$ROOT/shared/skills/remote-agent-communication/references/request.md
+FALLBACK=$ROOT/shared/skills/remote-agent-communication/references/fallback.md
+RUNTIME_POLICY=$ROOT/docs/agent-policy/managed-codex.md
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 TEST_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/remote-agent-communication-test.XXXXXX")
 
@@ -23,18 +28,25 @@ trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
+for path in "$SKILL" "$DELIVERY" "$REQUEST" "$FALLBACK" "$RUNTIME_POLICY"; do
+    [ -f "$path" ] && [ ! -L "$path" ] ||
+        fail "missing routed communication resource: $path"
+done
+
 grep -F 'REPLY_REQUIRED request_id=ID reply_target=ALIAS reply_role=ROLE' \
-    "$ROOT/AGENTS.md" >/dev/null || fail "shared required-reply policy"
-grep -F 'report that status and the' "$ROOT/AGENTS.md" >/dev/null ||
+    "$RUNTIME_POLICY" >/dev/null || fail "shared required-reply policy"
+grep -F 'report the status and reason' "$RUNTIME_POLICY" >/dev/null ||
     fail "blocked reply policy"
-grep -F 'Do not put `submission=succeeded` in the response payload' \
-    "$ROOT/shared/skills/remote-agent-communication/SKILL.md" >/dev/null ||
+grep -F '`submission=succeeded` in the response payload' "$DELIVERY" \
+    >/dev/null ||
     fail "reply submission semantics"
-grep -F 'same-channel `request` flow' "$ROOT/AGENTS.md" >/dev/null ||
+grep -F 'same-channel `request`' "$RUNTIME_POLICY" >/dev/null ||
     fail "required-response same-channel policy"
 grep -F 'does not use `ssh login`' \
-    "$ROOT/shared/skills/remote-agent-communication/SKILL.md" >/dev/null ||
+    "$REQUEST" >/dev/null ||
     fail "request reverse-route independence"
+grep -F 'Never invoke it twice' "$FALLBACK" >/dev/null ||
+    fail "fallback replay refusal"
 
 home=$TEST_ROOT/home
 fake_bin=$TEST_ROOT/bin
