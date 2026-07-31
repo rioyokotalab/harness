@@ -1,6 +1,6 @@
 # T-356 Harness integration plan
 
-Phase: `blocked after one non-retryable unknown Calendar acceptance read`.
+Phase: `blocked on the OAuth project Google Calendar API gate`.
 
 ## Outcome
 
