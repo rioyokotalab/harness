@@ -319,7 +319,7 @@ Rationale and consequences:
 
 ### D-008 — Administrative-assistant access
 
-Status: open.
+Status: frozen on 2026-07-31.
 
 Verified evidence on 2026-07-31:
 
@@ -333,25 +333,36 @@ Verified evidence on 2026-07-31:
 - Removing a collaborator revokes remote access and deletes a private fork,
   but cannot retract a local clone already made.
 
-Recommended default: after the assistant creates an account and enables
-two-factor authentication, add the exact username as a collaborator only if
-the owner wants the assistant to edit metadata-safe policy or task records.
-Accept that this grants repository write access, protect `main`, keep all
-sensitive content and connector authorization outside GitHub, and do not add
-the assistant to `rioyokotalab`.
+Selected: after the assistant creates an account and enables two-factor
+authentication, invite the exact verified username as a write collaborator.
+The owner's exact answer was `1`.
 
-Alternative: give no repository access and collaborate through a separately
-selected metadata-safe channel. If granular read-only or `Triage` GitHub
-access is essential, D-001 must be superseded by a dedicated-organization
-design; `rioyokotalab` remains unsuitable under its inherited group access.
+Rationale and consequences:
+
+- accept GitHub's personal-repository write permission because the assistant
+  is the one intended exception to group exclusion;
+- do not send an invitation until the owner supplies the exact username and
+  confirms the two-factor-authentication prerequisite;
+- protect `main` and route changes through pull requests, while recognizing
+  that a collaborator may create branches and retain a local clone;
+- keep repository content metadata-safe under D-003 and D-009 so repository
+  access never grants source email, calendar, or budget content;
+- grant no connector, credential, `rioyokotalab`, or Personal runtime access;
+  and
+- treat the future invitation as a separate non-retryable external write,
+  deferred until its identity prerequisite is satisfied.
 
 ### D-009 — Collaboration content
 
-Status: open.
+Status: frozen on 2026-07-31 as a consequence of D-003 and D-008.
 
-Recommended default: issues and pull requests may contain metadata-safe task
-descriptions, redacted decisions, and policy changes only. Sensitive source
-content remains in the source system and is referenced by opaque identifier.
+Selected: issues, pull requests, comments, and commits may contain
+metadata-safe task descriptions, policy/code changes, checklists, opaque
+source identifiers, and redacted decisions only. Sensitive email or calendar
+content, attendee details, attachments, budget values, reports, exports,
+credentials, and connector data remain in their source systems and must not be
+pasted, uploaded, or committed. This is not a separate preference choice:
+allowing sensitive collaboration content would contradict frozen D-003.
 
 ### D-010 — Local tmux topology
 
