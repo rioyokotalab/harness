@@ -19,8 +19,9 @@ Next free ID: T-356.
 
 ### T-355 — Private Personal operations project
 
-**Phase:** ready-for-go; D-001 through D-019 are frozen. Local, GitHub,
-connector, and bounded-process execution remain deferred until explicit `go`.
+**Phase:** executing; D-001 through D-019 are frozen. The 2026-07-31 owner
+`go` authorized the plan. The first unverified action is the private local
+scaffold and its non-managed Harness integration; connector use remains gated.
 
 **Record:** `docs/tasks/T-355.md`. **Plan:** `docs/plans/t355-personal-project.md`.
 
