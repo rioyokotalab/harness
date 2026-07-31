@@ -235,8 +235,7 @@ Rationale and consequences:
 
 ### D-006 — Calendar authority
 
-Status: option and proactive trigger selected on 2026-07-31; D-006b bounds
-remain open.
+Status: frozen on 2026-07-31.
 
 Selected: balanced autonomy. The owner's exact answer was `2`.
 
@@ -253,8 +252,7 @@ Frozen portion:
 - ambiguous writes are never retried until the event and calendar are read
   back with exact date, time, timezone, and recurrence scope.
 
-D-006b must freeze the proactive horizon, duration, count, expiry, and reminder
-scope. D-006 is not fully frozen until that package is selected.
+D-006a and D-006b below complete the trigger and bound this authority.
 
 #### D-006a — Trigger for qualifying autonomous calendar writes
 
@@ -276,18 +274,23 @@ Consequences:
 
 #### D-006b — Proactive calendar limits
 
-Status: open.
+Status: frozen on 2026-07-31.
 
-Recommended default: proactive holds only. Allow at most three active holds on
-the selected Personal calendar, no more than 14 days ahead and two hours each,
-with a generic private title and no description, location, conference, guest,
-resource, recurrence, or notification. Remove an unaccepted hold within
-48 hours. Reminder changes remain explicit-task-only but need no second
-confirmation when they otherwise satisfy D-006.
+Selected: the recommended proactive-holds-only package. The owner's exact
+answer was `1`.
 
-Alternative: use the same hold limits and additionally allow proactive
-personal reminders on user-owned events within 30 days, with at most two
-reminders per event. Exact lead times would require one further sub-decision.
+Frozen limits:
+
+- at most three active Personal-created holds;
+- each begins no more than 14 days ahead and lasts no more than two hours;
+- each is transparent and private, uses a generic title, and has no
+  description, location, conference, guest, resource, recurrence, or
+  notification;
+- remove an unaccepted hold within 48 hours, with exact state readback before
+  any retry; and
+- do not change reminders proactively. Reminder changes are allowed without a
+  second confirmation only inside an explicit owner-requested calendar task
+  and while preserving all non-reminder fields.
 
 ### D-007 — Research-budget authority
 
