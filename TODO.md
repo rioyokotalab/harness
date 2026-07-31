@@ -19,10 +19,9 @@ Next free ID: T-357.
 
 ### T-356 — Personal-only email/calendar connector boundary
 
-**Phase:** blocked on owner verification that both providers' model-improvement
-controls are off. The owner reports no authenticated Google connector; the
-merged strict launcher and empty private profile are ready, and no logout,
-privacy attestation, OAuth, or live-source action occurred.
+**Phase:** blocked on the exact Gmail OAuth-client path and owner consent. Both
+provider model-improvement controls are attested off and the private profile
+is privacy-ready; no OAuth grant or live-source action occurred.
 
 **Record:** `docs/tasks/T-356.md`.
 
