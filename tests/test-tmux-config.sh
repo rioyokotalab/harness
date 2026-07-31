@@ -2,6 +2,7 @@
 set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+unset HARNESS_ROOT HARNESS_CONTROL_ROOT HARNESS_TARGET_ROOT
 HARNESS=$ROOT/bin/harness
 unset HARNESS_LOGICAL_HOST HARNESS_HOME_ROOT HARNESS_HOME_CANONICAL_ROOT
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
