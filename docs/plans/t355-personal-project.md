@@ -188,14 +188,26 @@ Rationale and consequences:
 
 ### D-004 — Connector and authentication boundary
 
-Status: open.
+Status: frozen on 2026-07-31.
 
-Recommended default: authorize only required read capabilities in the Personal
-runtime, add write capabilities one domain at a time, and verify they are not
-advertised or enabled in the effective configuration of fresh Harness,
-Students, and Swallow roots. Under frozen D-002 this is a tested operational
-guardrail, not proof of technical inaccessibility from another same-user
-process. Never commit connector state or tokens.
+Selected: use project-scoped effective configuration first, with fail-closed
+cross-root validation and no automatic fallback. The owner's exact answer was
+`1`.
+
+Rationale and consequences:
+
+- declare or enable only the connectors and tools required by Personal through
+  its trusted project configuration and supported plugin policy;
+- do not enable a connector globally merely to satisfy Personal;
+- before live data access, compare fresh Personal, Harness, Students, and
+  Swallow effective tool inventories and require Personal-only advertisement
+  and enablement for the selected connectors;
+- if current Codex/plugin behavior cannot satisfy that contract, stop before
+  authorization and return with a revised dedicated-profile/runtime plan;
+- authorize only read capabilities initially and add domain writes only under
+  the later frozen D-005 through D-007 contracts; and
+- under D-002 this remains a tested operational guardrail rather than
+  technical same-user isolation. Never commit connector state or tokens.
 
 ### D-005 — Email authority
 
@@ -400,6 +412,9 @@ For each selected source, authorize the minimum capability, run a synthetic or
 owner-selected non-sensitive read test, then verify it is not advertised or
 enabled in fresh non-Personal roots. Record that this validates the
 configuration boundary selected in D-002, not technical same-user isolation.
+If the cross-root contract fails, do not enable the connector or silently
+switch to global configuration; pause with a dedicated-profile/runtime
+proposal as required by D-004.
 Enable writes only after the corresponding action contract and confirmation
 UX pass. Fetch live content only just in time for an owner task, never as a
 test fixture, and persist only the metadata-safe result selected in D-003.
