@@ -544,7 +544,7 @@ def tmux_panes():
             SESSION_NAME,
             "-F",
             "#{window_index}\t#{window_id}\t#{window_name}\t"
-            "#{pane_index}\t#{pane_id}\t#{pane_title}\t"
+            "#{pane_index}\t#{pane_id}\t"
             + PANE_ROLE_FORMAT
             + "\t#{pane_pid}\t#{pane_current_path}\t#{pane_dead}",
         ]
@@ -552,7 +552,7 @@ def tmux_panes():
     panes = []
     for line in output.splitlines():
         fields = line.split("\t")
-        if len(fields) != 10:
+        if len(fields) != 9:
             fail("tmux pane metadata is malformed")
         panes.append(
             {
@@ -561,11 +561,10 @@ def tmux_panes():
                 "window_name": fields[2],
                 "index": int(fields[3]),
                 "pane_id": fields[4],
-                "title": fields[5],
-                "name": fields[6],
-                "pane_pid": int(fields[7]),
-                "path": fields[8],
-                "dead": fields[9] == "1",
+                "name": fields[5],
+                "pane_pid": int(fields[6]),
+                "path": fields[7],
+                "dead": fields[8] == "1",
             }
         )
     return panes
@@ -615,21 +614,6 @@ def enforce_order(panes):
         return panes, "deferred-ambiguous"
     before_clients = tmux_clients()
     action = "none"
-    for pane in panes:
-        if pane["title"] != pane["name"]:
-            run(
-                [
-                    "tmux",
-                    "select-pane",
-                    "-t",
-                    pane["pane_id"],
-                    "-T",
-                    pane["name"],
-                ]
-            )
-            action = "titled"
-    if action == "titled":
-        panes = tmux_panes()
     for name, target_index in EXPECTED:
         current = next(pane for pane in panes if pane["name"] == name)
         if current["index"] != target_index:

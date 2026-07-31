@@ -175,9 +175,10 @@ operation because it interrupts every remote-controlled thread.
 
 The canonical Local layout is one `projects:0:codex` window with panes
 `0:harness`, `1:students`, and `2:swallow`. `Ctrl-b z` toggles the selected
-pane between the overview and full-window zoom. Resilient supervisors recover
-Codex failures while tmux remains alive; this is not a Local host-reboot
-session-restoration service.
+pane between the overview and full-window zoom. The visible border labels use
+the stable pane-local role because applications may change terminal titles.
+Resilient supervisors recover Codex failures while tmux remains alive; this
+is not a Local host-reboot session-restoration service.
 
 On Linux, the supervisor launches Codex through `harness codex-login`, which
 sets `RAYON_NUM_THREADS=8` and `TOKIO_WORKER_THREADS=8` for login-node

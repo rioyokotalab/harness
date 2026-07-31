@@ -54,8 +54,8 @@ work, or promise Local host-reboot resurrection. Managed-Mac
 3. Change monitor snapshots from one row per window to one row per pane,
    requiring exact window index/name/ID, pane-local `@harness_target` role,
    pane index, cwd, dead state, supervisor target, runtime, watcher, TUI, and
-   app-server identity. Treat title as presentation only and restore it from
-   the stable pane-local role without changing the selected pane.
+   app-server identity. Treat application-owned title as presentation only;
+   render stable border labels from the pane-local role.
 4. Order only an otherwise exact topology with native `tmux swap-pane -d`.
    Freeze attached clients' selected pane IDs before and after ordering.
 5. Record pane ID/index in durable monitor mappings and blocked-root events.
@@ -109,8 +109,8 @@ work, or promise Local host-reboot resurrection. Managed-Mac
 6. Apply the process-preserving cutover:
    rename `@87` to `codex`; assign frozen pane-local roles and titles to
    `%87`, `%99`, `%100`; join `%99` and `%100` into `@87`; require pane
-   indices `0`, `1`, `2`; apply `main-vertical`; preserve the attached client
-   and active Harness pane.
+   indices `0`, `1`, `2`; apply `main-vertical` and stable role-based border
+   labels; preserve the attached client and active Harness pane.
 7. Run the published monitor/helper checks against the new topology. On any
    failure, use the frozen pane IDs with `break-pane -d` to reconstruct exact
    `0:harness`, `1:students`, `2:swallow` windows before restarting the old
@@ -124,7 +124,8 @@ work, or promise Local host-reboot resurrection. Managed-Mac
 ## Acceptance gates
 
 - One attached `projects` session, one `0:codex` window, and exactly three live
-  panes titled and indexed `harness/0`, `students/1`, `swallow/2`.
+  panes role-marked and indexed `harness/0`, `students/1`, `swallow/2`, with
+  stable role-based border labels.
 - Original project pane IDs, pane PIDs, supervisor identities, TUI identities,
   saved threads, app-server identity, cwd, and attached client are unchanged.
 - `Ctrl-b z` changes `window_zoomed_flag` from `0` to `1` and back to `0`.

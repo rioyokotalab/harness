@@ -139,9 +139,8 @@ assert module.pending_event_for_kind(
 original_run_value = module.run_value
 original_process_info = module.process_info
 rows = [
-    "0\tcodex\t@50\t{}\t{}\t{}\t%{}\t{}\t{}\t0".format(
+    "0\tcodex\t@50\t{}\t{}\t%{}\t{}\t{}\t0".format(
         index,
-        role,
         role,
         index,
         100 + index,
@@ -162,18 +161,6 @@ assert sorted(pane_mapping) == ["harness", "students", "swallow"]
 assert pane_mapping["harness"]["pane_id"] == "%0"
 assert pane_mapping["swallow"]["window_id"] == "@50"
 assert pane_mapping["students"]["window_name"] == "codex"
-title_drift = [
-    row.replace(
-        "\t{}\t{}\t".format(role, role),
-        "\tapplication-title\t{}\t".format(role),
-        1,
-    )
-    for row, (role, _index) in zip(rows, module.EXPECTED)
-]
-module.run_value = lambda _arguments, check=False: (
-    "\n".join(title_drift) + "\n"
-)
-assert module.tmux_mapping() is not None
 module.run_value = lambda _arguments, check=False: (
     "\n".join(row.replace("\tcodex\t", "\twrong\t") for row in rows) + "\n"
 )
