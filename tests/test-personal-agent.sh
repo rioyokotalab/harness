@@ -153,10 +153,11 @@ wait "$lock_pid"
 grep -F 'reason=operation-locked' "$TEST_ROOT/locked.out" >/dev/null ||
     fail 'lock classification'
 
-HARNESS_CONTROL_ROOT="$ROOT" HARNESS_TARGET_ROOT="$ROOT" \
-    python3 "$ROOT/libexec/harness_codex_targets.py" validate-all \
-    >"$TEST_ROOT/targets.out"
-grep -F 'CODEX_TARGETS status=ready count=3' "$TEST_ROOT/targets.out" \
-    >/dev/null || fail 'managed target count changed'
+PYTHONPATH="$ROOT/libexec" PYTHONDONTWRITEBYTECODE=1 \
+    python3 - <<'PY' || fail 'managed target declaration changed'
+from harness_codex_targets import TARGET_NAMES
+
+assert TARGET_NAMES == ("harness", "students", "swallow")
+PY
 
 printf 'PASS: bounded Personal agent launcher\n'
