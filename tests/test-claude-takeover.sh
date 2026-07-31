@@ -70,7 +70,8 @@ grep -F 'Never infer a timestamp' \
 for managed_root in \
     '$HOME/harness' \
     '/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students' \
-    '/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow'
+    '/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow' \
+    '/mnt/nfs-03/safe/Users/rioyokota/projects/personal'
 do
     grep -F -- "$managed_root" "$ROOT/.codex/AGENTS.md" >/dev/null ||
         fail "Codex launch sentinel root: $managed_root"
@@ -78,6 +79,11 @@ do
         "$ROOT/config/agent-clients/claude-sentinel.md" >/dev/null ||
         fail "Claude launch sentinel root: $managed_root"
 done
+grep -F 'non-managed bounded root' "$ROOT/.codex/AGENTS.md" >/dev/null ||
+    fail 'Codex Personal non-managed classification'
+grep -F 'non-managed bounded root' \
+    "$ROOT/config/agent-clients/claude-sentinel.md" >/dev/null ||
+    fail 'Claude Personal non-managed classification'
 grep -F "Never apply one repository's policy to another" \
     "$ROOT/.codex/AGENTS.md" >/dev/null ||
     fail "Codex cross-repository policy isolation"

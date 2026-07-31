@@ -1,0 +1,245 @@
+#!/bin/sh
+set -eu
+
+SELF_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd -P)
+CONTROL_ROOT=$(CDPATH='' cd -- "$SELF_DIR/.." && pwd -P)
+DEFAULT_PERSONAL_ROOT=/mnt/nfs-03/safe/Users/rioyokota/projects/personal
+
+usage() {
+    cat >&2 <<'EOF'
+Usage:
+  harness personal-agent --status
+  harness personal-agent --run --client codex|claude --task ID --domain local
+
+The run prompt must arrive on standard input. Email, calendar, and
+research-budget domains remain blocked until their Personal-only connector
+profiles pass the durable readiness gate.
+EOF
+}
+
+mode=
+client=
+task=
+domain=
+while [ "$#" -gt 0 ]; do
+    case $1 in
+        --status) mode=status; shift ;;
+        --run) mode=run; shift ;;
+        --client)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            client=$2
+            shift 2
+            ;;
+        --task)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            task=$2
+            shift 2
+            ;;
+        --domain)
+            [ "$#" -ge 2 ] || { usage; exit 2; }
+            domain=$2
+            shift 2
+            ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+
+case $mode in status|run) ;; *) usage; exit 2 ;; esac
+
+if [ "${HARNESS_TESTING:-0}" = 1 ]; then
+    personal_root=${HARNESS_TEST_PERSONAL_ROOT:-$DEFAULT_PERSONAL_ROOT}
+    runtime_base=${HARNESS_TEST_RUNTIME_ROOT:-${XDG_RUNTIME_DIR:-/run/user/$(id -u)}}
+else
+    personal_root=$DEFAULT_PERSONAL_ROOT
+    runtime_base=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
+fi
+
+fail() {
+    printf 'PERSONAL_AGENT status=failed reason=%s\n' "$1" >&2
+    exit 2
+}
+
+case "$personal_root:$runtime_base" in /*:/*) ;; *) fail non-absolute-path ;; esac
+
+invoking_root=$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null || true)
+[ -n "$invoking_root" ] || fail outside-harness
+invoking_root=$(CDPATH='' cd -- "$invoking_root" 2>/dev/null && pwd -P) ||
+    fail unavailable-harness
+[ "$invoking_root" = "$CONTROL_ROOT" ] || fail outside-harness
+
+[ -d "$personal_root" ] && [ ! -L "$personal_root" ] ||
+    fail personal-root-type
+personal_root=$(CDPATH='' cd -- "$personal_root" 2>/dev/null && pwd -P) ||
+    fail personal-root-unavailable
+if [ "${HARNESS_TESTING:-0}" != 1 ]; then
+    [ "$personal_root" = "$DEFAULT_PERSONAL_ROOT" ] ||
+        fail personal-root-identity
+fi
+[ "$(stat -c %u "$personal_root")" = "$(id -u)" ] ||
+    fail personal-root-owner
+[ "$(stat -c %a "$personal_root")" = 700 ] ||
+    fail personal-root-mode
+[ "$(git -C "$personal_root" rev-parse --show-toplevel 2>/dev/null)" = \
+    "$personal_root" ] || fail personal-git-root
+
+for required in AGENTS.md CLAUDE.md TODO.md .codex/config.toml \
+    .claude/settings.json config/connector-readiness.tsv \
+    config/empty-mcp.json; do
+    [ -f "$personal_root/$required" ] &&
+        [ ! -L "$personal_root/$required" ] ||
+        fail "personal-contract-$required"
+    [ "$(stat -c %u "$personal_root/$required")" = "$(id -u)" ] ||
+        fail "personal-owner-$required"
+    [ "$(stat -c %h "$personal_root/$required")" = 1 ] ||
+        fail "personal-links-$required"
+done
+
+[ -d "$runtime_base" ] && [ ! -L "$runtime_base" ] ||
+    fail runtime-base-type
+[ "$(stat -c %u "$runtime_base")" = "$(id -u)" ] ||
+    fail runtime-base-owner
+runtime_dir=$runtime_base/harness-personal-agent
+if [ ! -e "$runtime_dir" ]; then
+    mkdir -m 700 "$runtime_dir"
+fi
+[ -d "$runtime_dir" ] && [ ! -L "$runtime_dir" ] ||
+    fail runtime-directory-type
+[ "$(stat -c %u "$runtime_dir")" = "$(id -u)" ] &&
+    [ "$(stat -c %a "$runtime_dir")" = 700 ] ||
+    fail runtime-directory-permissions
+
+lock_file=$runtime_dir/operation.lock
+umask 077
+exec 9>"$lock_file"
+chmod 600 "$lock_file"
+if ! flock -n 9; then
+    if [ "$mode" = status ]; then
+        printf 'PERSONAL_AGENT status=ready root=ready lock=busy connectors=blocked managed_target=false\n'
+        exit 0
+    fi
+    fail operation-locked
+fi
+
+if [ "$mode" = status ]; then
+    printf 'PERSONAL_AGENT status=ready root=ready lock=free connectors=blocked managed_target=false\n'
+    exit 0
+fi
+
+case $client in codex|claude) ;; *) fail invalid-client ;; esac
+case $task in
+    [A-Za-z0-9]*)
+        case $task in *[!A-Za-z0-9._-]*)
+            fail invalid-task
+        esac
+        [ "${#task}" -le 64 ] || fail invalid-task
+        ;;
+    *) fail invalid-task ;;
+esac
+case $domain in
+    local) ;;
+    email|calendar|research-budget)
+        readiness=$(awk -F '\t' -v client="$client" -v domain="$domain" '
+            $1 == client && $2 == domain { print $3; count++ }
+            END { if (count != 1) exit 1 }
+        ' "$personal_root/config/connector-readiness.tsv") ||
+            fail connector-readiness-ambiguous
+        [ "$readiness" = ready ] || fail connector-not-ready
+        fail connector-runtime-profile-unimplemented
+        ;;
+    *) fail invalid-domain ;;
+esac
+[ ! -t 0 ] || fail prompt-must-use-stdin
+
+receipt=$runtime_dir/last.receipt
+receipt_tmp=$runtime_dir/receipt.$$.tmp
+write_receipt() {
+    receipt_state=$1
+    receipt_result=$2
+    {
+        printf 'schema=1\n'
+        printf 'state=%s\n' "$receipt_state"
+        printf 'task=%s\n' "$task"
+        printf 'client=%s\n' "$client"
+        printf 'domain=%s\n' "$domain"
+        printf 'result=%s\n' "$receipt_result"
+        date -u '+time=%Y-%m-%dT%H:%M:%SZ'
+    } >"$receipt_tmp"
+    chmod 600 "$receipt_tmp"
+    mv "$receipt_tmp" "$receipt"
+}
+
+native_codex=$HOME/.local/bin/codex
+native_claude=$(command -v claude 2>/dev/null || true)
+if [ "${HARNESS_TESTING:-0}" = 1 ]; then
+    native_codex=${HARNESS_TEST_NATIVE_CODEX:-$native_codex}
+    native_claude=${HARNESS_TEST_NATIVE_CLAUDE:-$native_claude}
+fi
+if [ "$client" = codex ]; then
+    [ -x "$native_codex" ] || fail codex-unavailable
+else
+    [ -n "$native_claude" ] && [ -x "$native_claude" ] ||
+        fail claude-unavailable
+fi
+write_receipt running pending
+
+set +e
+if [ "$client" = codex ]; then
+    (
+        CDPATH='' cd -- "$personal_root" || exit 2
+        harness_variables=$(env | sed -n \
+            's/^\(HARNESS_[A-Za-z0-9_]*\)=.*/\1/p')
+        for harness_variable in $harness_variables; do
+            unset "$harness_variable"
+        done
+        "$native_codex" exec --ephemeral --ignore-user-config --strict-config \
+            -C "$personal_root" --model gpt-5.6-sol \
+            -c 'model_reasoning_effort="high"' \
+            -c 'approval_policy={ granular = { sandbox_approval = false, rules = false, mcp_elicitations = true, request_permissions = false, skill_approval = false } }' \
+            -c 'history.persistence="none"' \
+            -c 'memories.generate_memories=false' \
+            -c 'memories.use_memories=false' \
+            -c 'feedback.enabled=false' \
+            -c 'tool_suggest.discoverables=[]' \
+            -c 'web_search="disabled"' \
+            --sandbox danger-full-access -
+    )
+    result=$?
+else
+    (
+        CDPATH='' cd -- "$personal_root" || exit 2
+        harness_variables=$(env | sed -n \
+            's/^\(HARNESS_[A-Za-z0-9_]*\)=.*/\1/p')
+        for harness_variable in $harness_variables; do
+            unset "$harness_variable"
+        done
+        CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 \
+        CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 \
+        DISABLE_TELEMETRY=1 \
+        DISABLE_ERROR_REPORTING=1 \
+        DISABLE_BUG_COMMAND=1 \
+        CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1 \
+        "$native_claude" --print --no-session-persistence --no-chrome \
+            --setting-sources project \
+            --settings "$personal_root/.claude/settings.json" \
+            --strict-mcp-config \
+            --mcp-config "$personal_root/config/empty-mcp.json" \
+            --model fable --effort high --fallback-model opus \
+            --permission-mode dontAsk \
+            --allowedTools Read Grep Glob Edit Write 'Bash(git *)' \
+                'Bash(./bin/validate)' 'Bash(harness *)'
+    )
+    result=$?
+fi
+set -e
+
+if [ "$result" -eq 0 ]; then
+    write_receipt complete success
+    printf 'PERSONAL_AGENT_RECEIPT status=complete task=%s client=%s domain=%s result=success\n' \
+        "$task" "$client" "$domain" >&2
+else
+    write_receipt complete "exit-$result"
+    printf 'PERSONAL_AGENT_RECEIPT status=complete task=%s client=%s domain=%s result=exit-%s retry=forbidden-until-reconciled\n' \
+        "$task" "$client" "$domain" "$result" >&2
+fi
+exit "$result"

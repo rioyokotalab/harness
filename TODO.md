@@ -19,9 +19,9 @@ Next free ID: T-356.
 
 ### T-355 — Private Personal operations project
 
-**Phase:** executing; D-001 through D-019 are frozen. The 2026-07-31 owner
-`go` authorized the plan. The first unverified action is the private local
-scaffold and its non-managed Harness integration; connector use remains gated.
+**Phase:** validating. The private scaffold and protected owner-only remote
+pass. The bounded launcher and sentinel admission are implemented on the task
+branch; merge, live agent-config apply, and final cold-start readback remain.
 
 **Record:** `docs/tasks/T-355.md`. **Plan:** `docs/plans/t355-personal-project.md`.
 
