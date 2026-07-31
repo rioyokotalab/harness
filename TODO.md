@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-358.
+Next free ID: T-360.
 
 ## Resume contract
 
@@ -16,6 +16,20 @@ Next free ID: T-358.
 5. A failed mutable-state query is unknown, never evidence of absence.
 
 ## Active queue
+
+### T-358 — Overnight duration run: claude tmux window and multi-repo development
+
+**Phase:** validated; awaiting review of the single publication PR. Next:
+owner merges it, answers the students T-043 go request, and decides the Mac
+remote-control gates.
+
+**Record:** `docs/tasks/T-358.md`.
+
+### T-359 — Claude pane monitor and recovery parity
+
+**Phase:** deployed and drill-proven; published with T-358.
+
+**Record:** `docs/tasks/T-359.md`.
 
 ### T-354 — Relocate repository-native Codex roots under `projects`
 

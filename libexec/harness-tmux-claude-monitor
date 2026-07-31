@@ -1,0 +1,686 @@
+#!/usr/bin/env python3
+"""Content-blind health, ordering, and bounded repair for Local Claude panes.
+
+Mirrors harness-tmux-codex-monitor for the projects:claude window. Health is
+tmux metadata plus /proc identity only; repair is one idempotent enqueue to
+harness-codex-recovery-helper per dead-pane generation, rate-limited per
+target. No pane content is ever captured and no keys are ever sent.
+"""
+
+from __future__ import print_function
+
+import argparse
+import contextlib
+import fcntl
+import json
+import os
+import signal
+import stat
+import subprocess
+import sys
+import tempfile
+import time
+
+
+sys.dont_write_bytecode = True
+CONTROL_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+os.environ["HARNESS_CONTROL_ROOT"] = CONTROL_ROOT
+os.environ["HARNESS_TARGET_ROOT"] = CONTROL_ROOT
+os.environ.pop("HARNESS_ROOT", None)
+sys.path.insert(0, os.path.join(CONTROL_ROOT, "libexec"))
+from harness_claude_targets import (  # noqa: E402
+    LAUNCH_FLAGS,
+    PANE_ROLE_OPTION,
+    SESSION_NAME,
+    WINDOW_INDEX,
+    WINDOW_NAME,
+    TargetError,
+    load_targets,
+    validate_all,
+)
+
+TARGETS = load_targets()
+EXPECTED = tuple((value["name"], value["index"]) for value in TARGETS)
+PANE_ROLE_FORMAT = "#{" + PANE_ROLE_OPTION + "}"
+TARGET_PATHS = {value["name"]: value["repository"] for value in TARGETS}
+RATE_LIMIT_WINDOW_SECONDS = 3600
+RATE_LIMIT_MAX_EVENTS = 3
+CLAUDE_EVENT_KIND = "claude-pane-blocked"
+ATTACHED_DEAD_GRACE_SECONDS = 600
+
+
+class MonitorError(RuntimeError):
+    pass
+
+
+def fail(message):
+    raise MonitorError(message)
+
+
+def run(arguments):
+    result = subprocess.run(
+        arguments,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    if result.returncode != 0:
+        fail("native command failed")
+    try:
+        return result.stdout.decode("utf-8", "strict")
+    except UnicodeError:
+        fail("native command output is malformed")
+
+
+def runtime_root():
+    override = os.environ.get("HARNESS_TEST_RUNTIME_DIR")
+    if override:
+        if os.environ.get("HARNESS_TESTING") != "1" or not os.path.isabs(override):
+            fail("test runtime override is unsafe")
+        base = override
+    else:
+        base = (
+            os.environ.get("XDG_RUNTIME_DIR")
+            or os.environ.get("TMPDIR")
+            or "/tmp"
+        )
+    root = os.path.join(
+        base, "harness-tmux-claude-monitor-{}".format(os.getuid())
+    )
+    if not os.path.isdir(root):
+        os.makedirs(root, 0o700, exist_ok=True)
+    info = os.lstat(root)
+    if (
+        not stat.S_ISDIR(info.st_mode)
+        or info.st_uid != os.getuid()
+        or stat.S_IMODE(info.st_mode) != 0o700
+    ):
+        fail("monitor runtime root is unsafe")
+    return root
+
+
+def helper_runtime_root():
+    override = os.environ.get("HARNESS_TEST_RECOVERY_RUNTIME_DIR")
+    if override:
+        if os.environ.get("HARNESS_TESTING") != "1" or not os.path.isabs(override):
+            fail("test recovery runtime override is unsafe")
+        base = override
+    else:
+        base = (
+            os.environ.get("XDG_RUNTIME_DIR")
+            or os.environ.get("TMPDIR")
+            or "/tmp"
+        )
+    return os.path.join(
+        base, "harness-codex-recovery-helper-{}".format(os.getuid())
+    )
+
+
+@contextlib.contextmanager
+def exclusive_lock(path):
+    flags = os.O_CREAT | os.O_RDWR
+    if hasattr(os, "O_CLOEXEC"):
+        flags |= os.O_CLOEXEC
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    descriptor = os.open(path, flags, 0o600)
+    try:
+        info = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(info.st_mode)
+            or info.st_uid != os.getuid()
+            or info.st_nlink != 1
+        ):
+            fail("monitor lock is unsafe")
+        fcntl.flock(descriptor, fcntl.LOCK_EX)
+        yield
+    finally:
+        os.close(descriptor)
+
+
+def atomic_json(path, value):
+    directory = os.path.dirname(path)
+    descriptor, temporary = tempfile.mkstemp(dir=directory)
+    try:
+        os.fchmod(descriptor, 0o600)
+        with os.fdopen(descriptor, "w") as stream:
+            json.dump(value, stream, sort_keys=True)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    except BaseException:
+        with contextlib.suppress(OSError):
+            os.unlink(temporary)
+        raise
+
+
+def read_private_json(path, default):
+    try:
+        info = os.lstat(path)
+    except OSError:
+        return default
+    if (
+        not stat.S_ISREG(info.st_mode)
+        or info.st_uid != os.getuid()
+        or info.st_nlink != 1
+        or stat.S_IMODE(info.st_mode) != 0o600
+    ):
+        return default
+    try:
+        with open(path, "r") as stream:
+            value = json.load(stream)
+    except (IOError, OSError, ValueError, UnicodeError):
+        return default
+    return value
+
+
+def process_identity(pid):
+    try:
+        with open("/proc/{}/stat".format(pid), "r") as stream:
+            data = stream.read()
+        info = os.stat("/proc/{}".format(pid))
+        with open("/proc/{}/cmdline".format(pid), "rb") as stream:
+            raw = stream.read(4096)
+    except (IOError, OSError):
+        return None
+    close = data.rfind(")")
+    fields = data[close + 2:].split()
+    argv = [
+        part.decode("utf-8", "replace")
+        for part in raw.split(b"\0")
+        if part
+    ]
+    return {
+        "pid": pid,
+        "uid": info.st_uid,
+        "start": fields[19] if len(fields) > 19 else "",
+        "argv": argv,
+    }
+
+
+def claude_process_ok(identity):
+    if not identity or identity["uid"] != os.getuid():
+        return False
+    if not identity["argv"]:
+        return False
+    basename = os.path.basename(identity["argv"][0])
+    if basename not in ("claude", "node"):
+        return False
+    joined = " ".join(identity["argv"])
+    return "claude" in joined
+
+
+def tmux_panes():
+    output = run(
+        [
+            "tmux",
+            "list-panes",
+            "-s",
+            "-t",
+            SESSION_NAME,
+            "-F",
+            "#{window_index}\t#{window_id}\t#{window_name}\t"
+            "#{pane_index}\t#{pane_id}\t"
+            + PANE_ROLE_FORMAT
+            + "\t#{pane_pid}\t#{pane_current_path}\t#{pane_dead}",
+        ]
+    )
+    panes = []
+    for line in output.splitlines():
+        fields = line.split("\t")
+        if len(fields) != 9:
+            fail("tmux pane metadata is malformed")
+        panes.append(
+            {
+                "window_index": int(fields[0]),
+                "window_id": fields[1],
+                "window_name": fields[2],
+                "pane_index": int(fields[3]),
+                "pane_id": fields[4],
+                "role": fields[5],
+                "pane_pid": int(fields[6]),
+                "path": fields[7],
+                "dead": fields[8] == "1",
+            }
+        )
+    return panes
+
+
+def tmux_clients():
+    return run(["tmux", "list-clients", "-F", "#{client_name}\t#{pane_id}"])
+
+
+def claude_panes(panes):
+    return [pane for pane in panes if pane["window_name"] == WINDOW_NAME]
+
+
+def collect_health(panes):
+    health = {}
+    window_panes = claude_panes(panes)
+    for name, index in EXPECTED:
+        matches = [pane for pane in window_panes if pane["role"] == name]
+        if len(matches) != 1:
+            health[name] = {"state": "unhealthy", "reason": "pane-missing"}
+            continue
+        pane = matches[0]
+        if (
+            pane["window_index"] != WINDOW_INDEX
+            or pane["window_name"] != WINDOW_NAME
+        ):
+            health[name] = {"state": "unhealthy", "reason": "metadata"}
+            continue
+        if pane["dead"]:
+            health[name] = {
+                "state": "blocked",
+                "reason": "pane-dead",
+                "pane": pane,
+            }
+            continue
+        if pane["path"] != TARGET_PATHS[name]:
+            health[name] = {"state": "unhealthy", "reason": "native-cwd"}
+            continue
+        identity = process_identity(pane["pane_pid"])
+        if not claude_process_ok(identity):
+            health[name] = {"state": "unhealthy", "reason": "process-identity"}
+            continue
+        health[name] = {"state": "healthy", "reason": "ready", "pane": pane}
+    seen = {}
+    for name, value in health.items():
+        pane = value.get("pane")
+        if pane:
+            seen.setdefault(pane["pane_id"], []).append(name)
+    for pane_id, names in seen.items():
+        if len(names) > 1:
+            for name in names:
+                health[name] = {
+                    "state": "unhealthy",
+                    "reason": "identity-duplicate",
+                }
+    return health
+
+
+def canonical_topology(panes):
+    window_panes = claude_panes(panes)
+    if len(window_panes) != len(EXPECTED):
+        return False
+    windows = {
+        (pane["window_index"], pane["window_id"], pane["window_name"])
+        for pane in window_panes
+    }
+    if len(windows) != 1:
+        return False
+    for name, index in EXPECTED:
+        matches = [pane for pane in window_panes if pane["role"] == name]
+        if len(matches) != 1:
+            return False
+        pane = matches[0]
+        if not pane["dead"] and pane["path"] != TARGET_PATHS[name]:
+            return False
+    return True
+
+
+def enforce_order(panes):
+    if not canonical_topology(panes):
+        return "deferred-ambiguous"
+    before_clients = tmux_clients()
+    action = "none"
+    for name, index in EXPECTED:
+        current = claude_panes(tmux_panes())
+        by_role = {pane["role"]: pane for pane in current}
+        by_index = {pane["pane_index"]: pane for pane in current}
+        pane = by_role.get(name)
+        if pane is None:
+            return "deferred-ambiguous"
+        if pane["pane_index"] == index:
+            continue
+        occupant = by_index.get(index)
+        if occupant is None:
+            return "deferred-ambiguous"
+        run(
+            [
+                "tmux",
+                "swap-pane",
+                "-d",
+                "-s",
+                pane["pane_id"],
+                "-t",
+                occupant["pane_id"],
+            ]
+        )
+        action = "ordered"
+    final = claude_panes(tmux_panes())
+    for name, index in EXPECTED:
+        matches = [
+            pane
+            for pane in final
+            if pane["role"] == name and pane["pane_index"] == index
+        ]
+        if len(matches) != 1:
+            fail("tmux order correction did not converge")
+    if tmux_clients() != before_clients:
+        fail("tmux order correction changed attached clients")
+    return action
+
+
+def recent_event_stats(target):
+    events_dir = os.path.join(helper_runtime_root(), "events")
+    now_ns = time.time_ns()
+    recent = 0
+    failed_recent = False
+    try:
+        names = os.listdir(events_dir)
+    except OSError:
+        return 0, False
+    receipts_dir = os.path.join(helper_runtime_root(), "receipts")
+    for entry in names:
+        if not entry.endswith(".json"):
+            continue
+        event = read_private_json(os.path.join(events_dir, entry), None)
+        if not isinstance(event, dict):
+            continue
+        identity = event.get("identity")
+        if (
+            not isinstance(identity, dict)
+            or identity.get("kind") != CLAUDE_EVENT_KIND
+            or identity.get("target") != target
+        ):
+            continue
+        created = event.get("created_ns")
+        if (
+            not isinstance(created, int)
+            or now_ns - created > RATE_LIMIT_WINDOW_SECONDS * 10**9
+        ):
+            continue
+        recent += 1
+        receipt = read_private_json(
+            os.path.join(receipts_dir, entry), None
+        )
+        if isinstance(receipt, dict) and receipt.get("phase") in (
+            "failed",
+            "ambiguous",
+        ):
+            failed_recent = True
+    return recent, failed_recent
+
+
+def attached_pane_ids():
+    attached = set()
+    for line in tmux_clients().splitlines():
+        fields = line.split("\t")
+        if len(fields) == 2 and fields[1]:
+            attached.add(fields[1])
+    return attached
+
+
+def attachment_grace_expired(root, pane):
+    """A dead pane focused by an attached client defers for a bounded grace
+    window (crash output stays readable), then recovers anyway."""
+    path = os.path.join(root, "attached-dead.json")
+    state = read_private_json(path, {})
+    key = "{}:{}".format(pane["pane_id"], pane["pane_pid"])
+    now = int(time.time())
+    entry = state.get(key)
+    if not isinstance(entry, int):
+        state = {key: now}
+        atomic_json(path, state)
+        return False
+    if now - entry >= ATTACHED_DEAD_GRACE_SECONDS:
+        return True
+    return False
+
+
+def recovery_candidates(panes, health, root):
+    blocked = [
+        (name, value)
+        for name, value in health.items()
+        if value["state"] == "blocked" and value["reason"] == "pane-dead"
+    ]
+    if not blocked:
+        return [], "none"
+    if not canonical_topology(panes):
+        return [], "deferred-ambiguous"
+    attached = attached_pane_ids()
+    candidates = []
+    deferred = False
+    for name, value in blocked:
+        pane = value["pane"]
+        if pane["pane_id"] in attached and not attachment_grace_expired(
+            root, pane
+        ):
+            deferred = True
+            continue
+        recent, failed_recent = recent_event_stats(name)
+        if recent >= RATE_LIMIT_MAX_EVENTS:
+            deferred = True
+            continue
+        candidates.append(
+            {
+                "target": name,
+                "window_id": pane["window_id"],
+                "window_index": pane["window_index"],
+                "pane_id": pane["pane_id"],
+                "pane_index": pane["pane_index"],
+                "pane_pid": pane["pane_pid"],
+                "relaunch": "plain" if failed_recent else "continue",
+            }
+        )
+    if candidates:
+        return candidates, "candidates"
+    if deferred:
+        return [], "deferred-target-attached"
+    return [], "deferred-identity"
+
+
+def enqueue_helper_recovery(candidate):
+    helper = os.path.join(
+        CONTROL_ROOT, "libexec", "harness-codex-recovery-helper"
+    )
+    identity = process_identity(candidate["pane_pid"])
+    pane_start = identity["start"] if identity else "0"
+    result = subprocess.run(
+        [
+            helper,
+            "--enqueue-claude-blocked",
+            "--target",
+            candidate["target"],
+            "--window-id",
+            candidate["window_id"],
+            "--window-index",
+            str(candidate["window_index"]),
+            "--pane-id",
+            candidate["pane_id"],
+            "--pane-index",
+            str(candidate["pane_index"]),
+            "--pane-pid",
+            str(candidate["pane_pid"]),
+            "--pane-start",
+            pane_start,
+            "--relaunch",
+            candidate["relaunch"],
+        ],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return result.returncode == 0
+
+
+def test_fixture():
+    path = os.environ.get("HARNESS_TEST_TMUX_CLAUDE_FIXTURE")
+    if not path:
+        return None
+    if os.environ.get("HARNESS_TESTING") != "1":
+        fail("fixture requires the test gate")
+    with open(path, "r") as stream:
+        return json.load(stream)
+
+
+def fixture_iteration(fixture):
+    healthy = 0
+    for name, index in EXPECTED:
+        state = fixture.get("health", {}).get(name, {})
+        value = state.get("state", "unhealthy")
+        reason = state.get("reason", "missing")
+        if value == "healthy":
+            healthy += 1
+        print(
+            "TMUX_CLAUDE_PANE index={} name={} state={} reason={}".format(
+                index, name, value, reason
+            )
+        )
+    order_action = fixture.get("order_action", "none")
+    repair_action = fixture.get("repair_action", "none")
+    phase = (
+        "healthy"
+        if healthy == 3 and order_action != "deferred-ambiguous"
+        else "degraded"
+    )
+    print(
+        "TMUX_CLAUDE_MONITOR phase={} healthy={} order_action={} "
+        "repair_action={}".format(phase, healthy, order_action, repair_action)
+    )
+    return 0 if phase == "healthy" else 1
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(prog="harness tmux-claude-monitor")
+    modes = parser.add_mutually_exclusive_group(required=True)
+    modes.add_argument("--once", action="store_true")
+    modes.add_argument("--interval", type=int)
+    modes.add_argument("--status", action="store_true")
+    parser.add_argument("--enforce-order", action="store_true")
+    parser.add_argument("--auto-recover", action="store_true")
+    arguments = parser.parse_args()
+    if arguments.interval is not None and not 30 <= arguments.interval <= 3600:
+        parser.error("--interval must be between 30 and 3600 seconds")
+    if arguments.status and (arguments.enforce_order or arguments.auto_recover):
+        parser.error("--status is read-only")
+    return arguments
+
+
+def iteration(arguments, root, receipt_path):
+    panes = tmux_panes()
+    order_action = "none"
+    if arguments.enforce_order:
+        order_action = enforce_order(panes)
+        panes = tmux_panes()
+    health = collect_health(panes)
+    healthy = sum(
+        1 for value in health.values() if value["state"] == "healthy"
+    )
+    repair_action = "none"
+    if arguments.auto_recover:
+        candidates, selection = recovery_candidates(panes, health, root)
+        if candidates:
+            queued = 0
+            for candidate in candidates:
+                if enqueue_helper_recovery(candidate):
+                    queued += 1
+            repair_action = (
+                "helper-queued-{}".format(queued)
+                if queued
+                else "deferred-helper-unavailable"
+            )
+        else:
+            repair_action = selection
+    for name, index in EXPECTED:
+        value = health[name]
+        print(
+            "TMUX_CLAUDE_PANE index={} name={} state={} reason={}".format(
+                index, name, value["state"], value["reason"]
+            )
+        )
+    phase = (
+        "healthy"
+        if healthy == 3 and order_action != "deferred-ambiguous"
+        else "degraded"
+    )
+    receipt = {
+        "schema": 1,
+        "phase": phase,
+        "healthy": healthy,
+        "order_action": order_action,
+        "repair_action": repair_action,
+        "owner_pid": os.getpid(),
+        "epoch": int(time.time()),
+    }
+    atomic_json(receipt_path, receipt)
+    print(
+        "TMUX_CLAUDE_MONITOR phase={} healthy={} order_action={} "
+        "repair_action={}".format(phase, healthy, order_action, repair_action)
+    )
+    return phase
+
+
+def status(receipt_path):
+    receipt = read_private_json(receipt_path, None)
+    if not isinstance(receipt, dict):
+        print("TMUX_CLAUDE_MONITOR phase=absent")
+        return 1
+    phase = receipt.get("phase", "absent")
+    owner = receipt.get("owner_pid")
+    epoch = receipt.get("epoch", 0)
+    stale = time.time() - epoch > 120
+    if not stale and isinstance(owner, int):
+        identity = process_identity(owner)
+        if not identity or "python3" not in os.path.basename(
+            identity["argv"][0] if identity["argv"] else ""
+        ):
+            stale = True
+    if stale:
+        phase = "stale"
+    print(
+        "TMUX_CLAUDE_MONITOR phase={} healthy={} order_action={} "
+        "repair_action={} owner_pid={}".format(
+            phase,
+            receipt.get("healthy", 0),
+            receipt.get("order_action", "none"),
+            receipt.get("repair_action", "none"),
+            owner,
+        )
+    )
+    return 0 if phase == "healthy" else 1
+
+
+def main():
+    arguments = parse_arguments()
+    fixture = test_fixture()
+    if fixture is not None:
+        return fixture_iteration(fixture)
+    validate_all()
+    root = runtime_root()
+    receipt_path = os.path.join(root, "receipt.json")
+    if arguments.status:
+        return status(receipt_path)
+    stopping = [False]
+
+    def handle(signum, frame):
+        stopping[0] = True
+
+    signal.signal(signal.SIGTERM, handle)
+    signal.signal(signal.SIGINT, handle)
+    lock_path = os.path.join(root, "monitor.lock")
+    while True:
+        deadline = time.time() + (arguments.interval or 0)
+        phase = "unavailable"
+        try:
+            with exclusive_lock(lock_path):
+                phase = iteration(arguments, root, receipt_path)
+        except MonitorError as error:
+            print("TMUX_CLAUDE_MONITOR phase=unavailable error={}".format(error))
+        if arguments.once:
+            return 0 if phase == "healthy" else 1
+        while time.time() < deadline and not stopping[0]:
+            time.sleep(0.2)
+        if stopping[0]:
+            return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except TargetError as error:
+        print("harness: {}".format(error), file=sys.stderr)
+        sys.exit(2)
