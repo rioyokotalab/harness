@@ -388,16 +388,18 @@ Consequences:
 Status: frozen on 2026-07-31.
 
 Selected: Harness remains the driver but launches one bounded, non-persistent
-Codex process rooted at Personal for each sensitive Personal operation. The
-owner's exact answer was `1`.
+native agent process rooted at Personal for each sensitive Personal operation.
+The owner selected Codex in D-010a option `1`; D-013 later expanded the
+eligible native client to Codex or Claude under equivalent gates.
 
 Consequences:
 
 - the bounded process starts only from an explicit Harness operation with
   exact Personal cwd and task identity, reads Personal's project policy,
   ledger, skills, and effective connector configuration, then exits;
-- permit at most one bounded Personal operation process at a time and use an
-  exact current-user lock so concurrent Harness work cannot duplicate it;
+- permit at most one bounded Personal operation process across both native
+  clients at a time and use an exact current-user lock so concurrent Harness
+  work cannot duplicate it;
 - give it no tmux pane/window/session, saved root, phone identity, monitor or
   helper role, recovery mapping, app-server root, or durable conversation
   dependency;
@@ -463,11 +465,38 @@ Rationale and consequences:
 
 ### D-013 — Agent-client support
 
-Status: open.
+Status: frozen on 2026-07-31.
 
-Recommended default: Codex-only at first to minimize connector exposure and
-policy surfaces. Add Claude only after equivalent discovery, connector,
-permission, and no-memory-leak validation exists.
+Selected: full Codex/Claude parity for bounded Personal operations. The owner's
+exact answer was `2`.
+
+Rationale and consequences:
+
+- either native client may be the one task driver after independently passing
+  exact-root, policy, skill, connector, permission, retention, and clean-exit
+  validation;
+- the one-at-a-time D-010a lock is shared across Codex and Claude, and a task
+  names exactly one driver;
+- create matching `AGENTS.md`/`CLAUDE.md`, `.agents/skills`/
+  `.claude/skills`, and client-specific project configuration without
+  duplicating shared policy;
+- connector installation, authorization, effective tool inventory, and write
+  gates are validated separately for each client; success in one never proves
+  parity in the other;
+- both clients obey D-003 through D-007, never rely on conversation history,
+  Codex memory, or Claude auto-memory, and write only metadata-safe durable
+  receipts;
+- Claude uses Fable/high as primary and Opus/high only as its ordered native
+  availability fallback;
+- explicit collaboration, comparison, handoff, and every duration-specified
+  job use the `codex-claude-cowork` protocol with one target driver, two native
+  clients, an agreed benchmark before execution, isolated disposable
+  sandboxes, reciprocal evidence critique, and driver-only target mutation;
+  and
+- cowork prompts, sandboxes, evidence, seals, receipts, and artifacts contain
+  no credentials, private values, or live source content. Sensitive live
+  operations remain a driver-only bounded step governed by the frozen domain
+  authority.
 
 ### D-014 — Git governance and automation
 
@@ -535,8 +564,8 @@ list before the first push and again afterward. Do not change
 Create the exact real directory with umask `077`, current-user ownership, and
 mode `0700`. Initialize a clean Git repository with:
 
-- compact `AGENTS.md`, `CLAUDE.md` only if selected, `README.md`, `.gitignore`,
-  and project `.codex/config.toml`;
+- compact `AGENTS.md`, a compact `CLAUDE.md` that imports it, `README.md`,
+  `.gitignore`, and client-specific Codex and Claude project configuration;
 - `TODO.md`, `docs/tasks/`, and a small task index sufficient for cold-start
   recovery;
 - narrowly routed policy modules for Git, sensitive data, email, calendar,
@@ -578,12 +607,13 @@ for actual Harness code or policy changes.
 ### 6. Validate the selected non-persistent execution context
 
 Implement D-010a without creating a managed target. Launch one bounded
-Personal-rooted process only through an explicit Harness operation and an
-exact current-user lock. Validate exact cwd, project policy, model/config,
-effective tool inventory, connector restrictions, metadata-safe handoff, and
-clean exit. Prove there is no concurrent Personal process, tmux pane, saved
-root, phone identity, monitor role, app-server root, or durable conversation
-dependency. Never replay or blindly retry an ambiguous child launch.
+Personal-rooted native process only through an explicit Harness operation and
+an exact cross-client current-user lock. Independently validate Codex and
+Claude exact cwd, project policy, model/config, effective tool inventory,
+connector restrictions, metadata-safe handoff, and clean exit. Prove there is
+no concurrent Personal process, tmux pane, saved root, phone identity, monitor
+role, app-server root, or durable conversation dependency. Never replay or
+blindly retry an ambiguous child launch.
 
 ### 7. Connect domains incrementally
 
