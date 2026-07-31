@@ -205,6 +205,59 @@ assert module.mapping_snapshot(mapping, health) == {
     },
 }
 
+saved_runtime_parent = os.environ.get("XDG_RUNTIME_DIR")
+with tempfile.TemporaryDirectory() as legacy_parent:
+    os.chmod(legacy_parent, 0o700)
+    legacy_root = os.path.join(
+        legacy_parent,
+        "harness-codex-resilient-{}".format(os.getuid()),
+    )
+    os.mkdir(legacy_root, 0o700)
+    legacy_path = os.path.join(
+        legacy_root, "harness-next.recovery.state"
+    )
+    with open(legacy_path, "w") as stream:
+        stream.write(
+            "schema=1\n"
+            "name=harness-next\n"
+            "thread=thread-harness\n"
+            "owner_pid=12\n"
+            "phase=watching\n"
+            "reason=thread-idle\n"
+            "recoveries=0\n"
+            "rolled_back=0\n"
+        )
+    os.chmod(legacy_path, 0o600)
+    os.environ["XDG_RUNTIME_DIR"] = legacy_parent
+    legacy_recovery = module.legacy_recovery_status("harness-next")
+    assert legacy_recovery["thread"] == "thread-harness"
+    os.chmod(legacy_path, 0o644)
+    assert module.legacy_recovery_status("harness-next") is None
+    os.chmod(legacy_path, 0o600)
+    original_resilient_status = module.resilient_status
+    module.resilient_status = lambda target, runtime, legacy=False: (
+        {
+            "name": runtime,
+            "target": "legacy",
+            "phase": "running",
+            "owner_pid": "10",
+        },
+        {"phase": "legacy-target-unknown"},
+    )
+    legacy_status = module.legacy_resilient_status(
+        "harness",
+        "harness-next",
+        {"thread": "thread-harness"},
+    )
+    assert legacy_status[0]["target"] == "harness"
+    assert legacy_status[0]["legacy_state"] == "true"
+    assert legacy_status[1]["legacy_state"] == "true"
+    module.resilient_status = original_resilient_status
+if saved_runtime_parent is None:
+    os.environ.pop("XDG_RUNTIME_DIR", None)
+else:
+    os.environ["XDG_RUNTIME_DIR"] = saved_runtime_parent
+
 def process(pid):
     values = {
         10: {
@@ -302,11 +355,62 @@ native_missing_target = module.collect_health(native_pane)
 assert native_missing_target["students"]["state"] == "unhealthy"
 assert native_missing_target["students"]["reason"] == "supervisor-target"
 module.parse_supervisor = lambda _info: {
+    "runtime": "harness-next",
+    "thread": "thread-harness",
+    "start": "supervisor-start",
+    "target": None,
+}
+module.resilient_status = lambda _target, _runtime: (
+    {"target": "harness", "phase": "absent", "owner_pid": "none"},
+    None,
+)
+module.legacy_resilient_status = lambda _target, _runtime, _identity: (
+    {
+        "target": "harness",
+        "phase": "running",
+        "owner_pid": "10",
+        "legacy_state": "true",
+    },
+    {
+        "phase": "watching",
+        "owner_pid": "12",
+        "thread": "thread-harness",
+        "legacy_state": "true",
+    },
+)
+legacy_harness = module.collect_health(
+    [
+        {
+            "index": 0,
+            "window_index": 0,
+            "window_id": "@fixture",
+            "window_name": "codex",
+            "name": "harness",
+            "title": "harness",
+            "pane_id": "%fixture",
+            "pane_pid": 10,
+            "path": module.TARGET_PATHS["harness"],
+            "dead": False,
+        }
+    ]
+)
+assert legacy_harness["harness"]["state"] == "healthy"
+assert legacy_harness["harness"]["recovery"]["legacy_state"] == "true"
+module.parse_supervisor = lambda _info: {
     "runtime": "students-t338",
     "thread": "thread-students",
     "start": "supervisor-start",
     "target": "students",
 }
+module.legacy_resilient_status = lambda *_arguments: None
+module.resilient_status = lambda _target, _runtime: (
+    {"target": "students", "phase": "running", "owner_pid": "10"},
+    {
+        "phase": "watching",
+        "owner_pid": "12",
+        "thread": "thread-students",
+    },
+)
 native_targeted = module.collect_health(native_pane)
 assert native_targeted["students"]["state"] == "healthy"
 assert native_targeted["students"]["tui"]["pid"] == 11

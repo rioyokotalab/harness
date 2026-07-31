@@ -67,12 +67,17 @@ def run(arguments, check=True):
     return result.stdout.decode("utf-8", "strict")
 
 
-def runtime_root():
+def runtime_parent():
     parent = os.environ.get("XDG_RUNTIME_DIR")
     if not parent or not os.path.isabs(parent):
         parent = os.environ.get("TMPDIR", "/tmp")
     if not os.path.isabs(parent):
         fail("runtime parent must be absolute")
+    return parent
+
+
+def runtime_root():
+    parent = runtime_parent()
     root = os.path.join(parent, "harness-tmux-codex-monitor-{}".format(os.getuid()))
     if not os.path.exists(root):
         old = os.umask(0o077)
@@ -367,21 +372,17 @@ def parse_supervisor(info):
     }
 
 
-def resilient_status(target, runtime_name):
+def resilient_status(target, runtime_name, legacy=False):
     resilient = os.path.join(
         os.environ["HARNESS_CONTROL_ROOT"],
         "libexec",
         "harness-codex-resilient",
     )
+    arguments = [resilient, "--status", "--name", runtime_name]
+    if not legacy:
+        arguments.extend(["--target", target])
     result = subprocess.run(
-        [
-            resilient,
-            "--status",
-            "--target",
-            target,
-            "--name",
-            runtime_name,
-        ],
+        arguments,
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
         check=False,
@@ -395,6 +396,105 @@ def resilient_status(target, runtime_name):
     if len(lines) > 1:
         recovery = dict(item.split("=", 1) for item in lines[1].split()[1:] if "=" in item)
     return first, recovery
+
+
+def legacy_recovery_status(runtime_name):
+    root = os.path.join(
+        runtime_parent(), "harness-codex-resilient-{}".format(os.getuid())
+    )
+    root_descriptor = -1
+    state_descriptor = -1
+    try:
+        root_descriptor = os.open(
+            root,
+            os.O_RDONLY
+            | getattr(os, "O_CLOEXEC", 0)
+            | getattr(os, "O_DIRECTORY", 0)
+            | getattr(os, "O_NOFOLLOW", 0),
+        )
+        root_info = os.fstat(root_descriptor)
+        if (
+            not stat.S_ISDIR(root_info.st_mode)
+            or root_info.st_uid != os.getuid()
+            or stat.S_IMODE(root_info.st_mode) != 0o700
+        ):
+            return None
+        state_descriptor = os.open(
+            "{}.recovery.state".format(runtime_name),
+            os.O_RDONLY
+            | getattr(os, "O_CLOEXEC", 0)
+            | getattr(os, "O_NOFOLLOW", 0),
+            dir_fd=root_descriptor,
+        )
+        info = os.fstat(state_descriptor)
+        if (
+            not stat.S_ISREG(info.st_mode)
+            or info.st_uid != os.getuid()
+            or info.st_nlink != 1
+            or stat.S_IMODE(info.st_mode) != 0o600
+        ):
+            return None
+        with os.fdopen(state_descriptor, "r") as stream:
+            state_descriptor = -1
+            lines = stream.read().splitlines()
+    except (IOError, OSError, UnicodeError):
+        return None
+    finally:
+        if state_descriptor >= 0:
+            os.close(state_descriptor)
+        if root_descriptor >= 0:
+            os.close(root_descriptor)
+    values = {}
+    for line in lines:
+        fields = line.split("=", 1)
+        if len(fields) != 2 or fields[0] in values:
+            return None
+        values[fields[0]] = fields[1]
+    if set(values) != {
+        "schema",
+        "name",
+        "thread",
+        "owner_pid",
+        "phase",
+        "reason",
+        "recoveries",
+        "rolled_back",
+    }:
+        return None
+    if (
+        values["schema"] != "1"
+        or values["name"] != runtime_name
+        or not SAFE_ID.match(values["thread"])
+        or values["phase"]
+        not in ("watching", "blocked", "recovered", "stopped", "unavailable")
+        or not SAFE_ID.match(values["reason"])
+        or not values["owner_pid"].isdigit()
+        or not values["recoveries"].isdigit()
+        or not values["rolled_back"].isdigit()
+    ):
+        return None
+    return values
+
+
+def legacy_resilient_status(target, runtime_name, identity):
+    value = resilient_status(target, runtime_name, legacy=True)
+    if not value:
+        return None
+    supervisor, _placeholder = value
+    recovery = legacy_recovery_status(runtime_name)
+    if (
+        supervisor.get("name") != runtime_name
+        or supervisor.get("target") != "legacy"
+        or not recovery
+        or recovery.get("thread") != identity.get("thread")
+    ):
+        return None
+    supervisor = dict(supervisor)
+    supervisor["target"] = target
+    supervisor["legacy_state"] = "true"
+    recovery = dict(recovery)
+    recovery["legacy_state"] = "true"
+    return supervisor, recovery
 
 
 def socket_pairs():
@@ -589,11 +689,17 @@ def collect_health(panes, processes=None, socket_peers=None):
             entry["reason"] = "supervisor-identity"
             health[name] = entry
             continue
-        if identity.get("target") != name:
+        if identity.get("target") not in (name, None) or (
+            identity.get("target") is None and name != "harness"
+        ):
             entry["reason"] = "supervisor-target"
             health[name] = entry
             continue
         status_value = resilient_status(name, identity["runtime"])
+        if status_value and status_value[0].get("phase") == "absent":
+            status_value = legacy_resilient_status(
+                name, identity["runtime"], identity
+            )
         if not status_value:
             entry["reason"] = "supervisor-status"
             health[name] = entry
