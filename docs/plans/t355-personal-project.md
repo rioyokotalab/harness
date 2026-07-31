@@ -537,13 +537,53 @@ Consequences:
 
 ### D-015 — Retention, logs, and backup
 
-Status: open.
+Status: researched on 2026-07-31; owner choice open.
 
 Frozen D-003 prohibits a local sensitive-data vault and source-content backup.
-Recommended direction: no plaintext sensitive logs or transcripts in the
-project; minimize local caches; redact command output; retain Git only for
-policy, code, and metadata-safe records. This decision still must freeze Codex
-thread/history handling and any backup needed for non-sensitive runtime state.
+Official product documentation establishes:
+
+- Codex saves local session transcripts under `CODEX_HOME` by default, but
+  supports `[history] persistence = "none"`:
+  <https://developers.openai.com/codex/config-advanced#history-persistence>.
+- Claude Code stores plaintext local session transcripts for 30 days by
+  default. For a bounded `-p` process it supports
+  `--no-session-persistence`; `CLAUDE_CODE_SKIP_PROMPT_HISTORY=1` disables
+  transcript writes; `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` disables auto-memory;
+  and `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` disables nonessential
+  telemetry, error-reporting, feedback, and survey traffic:
+  <https://code.claude.com/docs/en/data-usage>,
+  <https://code.claude.com/docs/en/settings>, and
+  <https://code.claude.com/docs/en/memory>.
+- Local controls do not establish provider-side zero retention. ChatGPT chats
+  remain in the account until deleted and are then scheduled for deletion
+  within 30 days, subject to stated exceptions:
+  <https://help.openai.com/en/articles/8983778-chat-and-file-retention-policies-in-chatgpt>.
+  Anthropic documents 30-day retention for consumer Claude Code when model
+  improvement is off, five years when it is on, 30 days for standard
+  commercial use, and qualified-account zero-data-retention options. The
+  exact OpenAI and Anthropic account types and privacy settings in use remain
+  unknown and must be verified before live sensitive work.
+
+The implementation can therefore prohibit child-side local history, resume,
+auto-memory, plaintext logs, feedback, telemetry, retained temporary output,
+and sensitive backups. Git and normal backup may contain only policy, code,
+and metadata-safe records. That still leaves a material owner-facing choice:
+any detailed result shown in this Harness conversation becomes OpenAI product
+content. If Claude is the driver, live source content goes to Anthropic and a
+detailed result relayed here also goes to OpenAI.
+
+Options to freeze:
+
+1. Recommended for useful summaries and drafts: permit only the minimum
+   task-scoped sensitive result in this owner-facing Harness conversation,
+   accept the applicable product-side retention, and require model-improvement
+   controls off for both providers before first live use. Never relay raw
+   source dumps, attachments, or credentials.
+2. Permit detailed results here only when Codex is the driver. Claude may
+   perform non-sensitive work and metadata-only live operations, narrowing
+   D-013's live parity but avoiding a two-provider detailed-result path.
+3. Permit only metadata-safe results in Harness regardless of driver. The
+   owner must inspect all sensitive details and drafts in their source systems.
 
 ### D-016 — Budget sources and classification
 
