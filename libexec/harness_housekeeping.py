@@ -608,6 +608,31 @@ def create_generation(coordinator_repo: Path) -> Dict[str, Any]:
                 item["tip"], (source_bundle, item["archive"])
             )
 
+    existing_generations = []
+    for receipt in sorted(directory.glob("*.json")):
+        value = parse_generation_receipt(receipt, state)
+        created = datetime.strptime(
+            value["created_utc"], "%Y-%m-%dT%H:%M:%SZ"
+        ).replace(tzinfo=timezone.utc)
+        existing_generations.append((created, value))
+    if existing_generations:
+        created, latest = max(existing_generations, key=lambda row: row[0])
+        current_main = {
+            repository_value: origin_main(grouped[repository_value]["repository"])
+            for repository_value in grouped
+        }
+        recorded_main = {
+            repository["repository_canonical"]: repository["protected_main"]["tip"]
+            for repository in latest["repositories"]
+        }
+        age_days = max(0, (datetime.now(timezone.utc) - created).days)
+        if (
+            latest["source_receipts"] == sources
+            and recorded_main == current_main
+            and age_days < GENERATION_AGE_DAYS_TRIGGER
+        ):
+            die("latest archive generation already covers current sources")
+
     prepared: List[Dict[str, Any]] = []
     created_refs: List[Tuple[Path, str, str]] = []
     linked_bundles: List[Path] = []
@@ -1022,6 +1047,7 @@ def plan_archives(coordinator_repo: Path) -> None:
                 ref
                 for ref in containing
                 if not ref.startswith("refs/harness-housekeeping/archive/")
+                and not ref.startswith("refs/harness-housekeeping/generation/")
             ]
             only = not normal_refs
             archive_only += int(only)
