@@ -27,6 +27,7 @@ expected = {
     ),
     "recover-codex-unsafe-tail": ("Request blocked", "never replay"),
     "remote-agent-communication": ("without reading panes", "bounded reply"),
+    "remote-claude-communication": ("without reading panes", "managed Claude window"),
     "research-engineering-validation": ("matched benchmarks",),
     "research-presentation-workflow": ("sourced research",),
     "research-program-management": ("humane boundaries",),
