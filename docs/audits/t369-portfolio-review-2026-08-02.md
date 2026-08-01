@@ -15,7 +15,7 @@ executed.
 | Git worktrees | Git, [git-worktree](https://git-scm.com/docs/git-worktree.html) | Adopt isolated worktrees and explicit removal of stale administration; add Harness lifecycle enforcement rather than relying on eventual prune. |
 | Branch safety | GitHub, [protected branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches) | Preserve protected `main`, linear history, blocked force updates, and accepted zero approvals; archive exact local tips before cleanup. |
 | Portfolio flow | GitHub, [Projects best practices](https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/best-practices-for-projects) and [Kanban Guide 2025](https://kanbanguides.org/the-kanban-guide/2025.5/pdf/kanban-guide.v2025.5.en.pdf) | Adopt one source of truth, smaller work items, explicit status/priority, and limited work in progress. Completed tasks and dormant implementation proposals do not belong in active queues. |
-| Student-facing AI | NIST, [AI RMF](https://airc.nist.gov/airmf-resources/airmf/) and [AI RMF Core](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/); Slack, [least-privilege scopes](https://slack.dev/least-privilege-a-slack-approach-to-scopes/) | Require a use-case-specific pilot profile with explicit human oversight, knowledge limits, risk tolerance, participant feedback, and measured benefits/costs. Every Slack scope must map to a current feature; reject speculative scopes and model action authority. |
+| Student-facing AI | NIST, [AI RMF](https://airc.nist.gov/airmf-resources/airmf/) and [AI RMF Core](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/); Slack, [least-privilege scopes](https://slack.dev/least-privilege-a-slack-approach-to-scopes/) | Require a use-case-specific pilot profile with explicit human oversight, knowledge limits, risk tolerance, participant feedback, and measured benefits/costs. Every Slack scope must map to a current feature; reject speculative scopes and model action authority. AI RMF 1.0 is currently being revised, so use the final 1.0 baseline and monitor rather than adopting an unfinished revision. |
 | Actions sustainability | GitHub, [billing and usage](https://docs.github.com/en/billing/concepts/product-billing/github-actions), [GitHub-hosted runners](https://docs.github.com/en/actions/reference/runners/github-hosted-runners), [self-hosted runners](https://docs.github.com/en/actions/concepts/runners/self-hosted-runners), and [secure use](https://docs.github.com/en/actions/reference/security/secure-use) | Keep owner-authored protected local validation and retain hosted isolation for untrusted or mixed-contributor work plus bounded periodic/manual gates. Do not register these persistent, credentialed project machines as general self-hosted runners: GitHub warns they lack clean-VM guarantees and can be persistently compromised. Do not add scheduled hosted work merely for bookkeeping. |
 | Research software | FAIR4RS, [RDA recommendation](https://doi.org/10.15497/RDA00068) and [primary paper](https://www.nature.com/articles/s41597-022-01710-x) | Adopt versioned, identifiable, documented, reusable artifacts and explicit software/environment provenance. |
 | Artifact evidence | ACM, [Artifact Review and Badging](https://www.acm.org/publications/policies/artifact-review-and-badging-current) | Adapt the functional-artifact criteria—documented, consistent, complete, exercisable, validated—to SW-034 before spending more compute. |
@@ -171,6 +171,14 @@ self-attestation; no required approval setting changed.
   `aec19c622ffb158d2d18ebb5475d06e3667d8784`. Its canonical validator passed
   24 synthetic tests and proved exact-subset partial consent plus no-persist
   rejection of an unrequested scope.
+- Harness PR #553 merged exact head
+  `65a677b7ec1b94d31e0e5b69918827f81eba2ce6` as
+  `4996e198366992a79568237368f925388f3f1306`. T-372 converts interrupted
+  directory/admin checkpoints into an explicit later-invocation recovery,
+  binds recovery to the original plan digest and exact archive item, and
+  leaves unstarted bulk candidates for a fresh plan. Local and protected R3
+  phase one passed; its real completed closeout produced an idempotent recovery
+  no-op.
 
 The new T-370 lifecycle opened both Personal tasks from independently verified
 clean `main`, then archived and guarded-retired each exact merged worktree and
@@ -178,3 +186,111 @@ local branch. `git bundle verify` passed for the P-005, P-006, and T-370
 archives. Personal is again a single clean `main`
 worktree. T-371 records, but does not execute, the corresponding migration for
 the live legacy Students and Swallow primary task branches.
+
+Website's still-local worker candidate is `e0a8aa1`. Its complete offline suite
+passed again after T-213 was anchored to W3C WCAG-EM 2.0 and WAI sustaining
+guidance. Worker policy still forbids push or `tools/state/session.md`; the
+clean worktree remains the exact handoff for a Website driver. Because that
+commit is intentionally absent from GitHub, transaction
+`website-t369-worker-handoff-20260802` also preserves its exact full history in
+a current-user mode-0600 bundle (80,842,296 bytes, SHA-256
+`229b0bb9a5ad6c660667982154be0083c3a4c858d4b900d2d3f9b1e433f8ff1e`);
+the native archive audit passed with one live exact ref.
+
+GitHub was also not a complete backup for either live legacy managed branch.
+Without reading project payloads or changing a checkout, two additional
+mode-0600 native bundles now preserve their exact tips: Students
+`2f8771894...` in `students-t369-active-handoff-20260802` (3,279,773 bytes,
+SHA-256 `1d3968e6aef5f9f5de66dbcf39d85e8c9679b0e17d0bbff235bdb869e396d88d`)
+and Swallow `ec809eaf...` in `swallow-t369-active-handoff-20260802`
+(1,716,887 bytes, SHA-256
+`98d8a54df4baa7ff73a3708d16b05a3e78b6898647185078559afc9a577636a5`).
+Both native audits passed with one exact live ref. The bundles do not include
+ignored environments or Swallow's untracked local Claude setting; those remain
+preserved in place and were not inspected or copied.
+
+A fresh live readback of all five protected-main rulesets found enforcement
+active, required approvals exactly zero, and one owner/admin bypass in each:
+Harness `19127355`, Students `19716717`, Swallow `19734040`, Website
+`19127356`, and Personal `20104679`. No hardening or cleanup action changed a
+ruleset, and no stale document was allowed to restore the former one-review
+policy.
+
+Live workflow readback also matches the accepted sustainability design.
+Harness is public and retains PR plus weekly/manual full gates; Website is
+public and PR-only. Private Students and Swallow skip trusted-owner PR jobs,
+retain one unconditional weekly/manual backstop, and have no push trigger;
+Students' separate trusted-base boundary job runs only for non-owner pull
+requests. Personal has no workflow. GitHub's system-managed Dependabot entries
+remain visible, but no project added a nightly or bookkeeping schedule, a
+persistent self-hosted runner, or a duplicate post-merge run.
+
+Students' sole open PR, Dependabot #560, is behind current `main` and failed
+for one understood safety reason: all 695 other tests and 34 subtests passed,
+but changing the Codex package manifests invalidated the exact digest embedded
+in the staged non-activating installer. The guard worked as designed. T-371
+now records the post-migration repair: update package bytes and installer
+digest together from fresh `main`, pass locally, then replace or supersede the
+stale PR without spending another hosted run on a known mismatch.
+
+A metadata-only `/tmp` rescan caught 20 owner-created files that the
+directory-oriented routine did not select: completed Mac formula-policy and
+Harness checksum/manifests plus SW-021, SW-031, and SW-032 job, result, patch,
+prompt, and board snapshots. No file was open, every file was a current-user
+single-link regular file, and the associated tasks were complete, canceled, or
+superseded. Their exact bytes remain in mode-0600
+`t369-residual-files-20260802.tar.gz` (194,981 bytes, SHA-256
+`79038742efaeb1d664d924a8806e7acf2da6e078d8a1489955492f1cb22a2e78`);
+gzip and 21-entry archive traversal checks passed. One guarded manifest then
+removed only the explicit staging directory (21 entries / 773,385 bytes),
+with protected anchors unchanged. The remaining project-named `/tmp` roots are
+the live connection monitor, this T-369 worktree, Website's clean worker
+handoff, and three `ishida`-owned research directories; all remain untouched.
+`git fsck --full --no-dangling` passed independently in all five repositories,
+all five worktree databases report zero stale administration entries, and all
+17 native archive receipts pass a fresh audit against their owning repository.
+`git count-objects` found one 23,449-byte Students `tmp_obj` from an interrupted
+Git object write; it was a current-user, single-link, 17-hour-old regular file
+with no open descriptor and was not a valid object. Exact non-recursive unlink
+removed only that file, after which Students `git fsck` passed and object-store
+garbage returned to zero. The 224 loose objects already represented in packs
+remain for ordinary Git maintenance at T-371's idle boundary rather than
+contending with the live managed session for negligible storage benefit.
+
+The project-name sweep was not sufficient: a complete current-user top-level
+`/tmp` inventory found 613 entries. The metadata-only classification is frozen
+in `docs/audits/t369-tmp-inventory.tsv` with exact type, owner, mode, link,
+device, inode, size, and mtime identities. It retained 14 managed runtime or
+active-handoff roots and selected 599 unchanged, unopened candidates: 352
+completed Swallow/Harness research and test artifacts, 141 old zero-byte tool
+locks, and 106 stale browser/profile, dead-socket, or opaque temporary entries.
+The 352
+potentially useful artifacts were moved without reading into a private archive
+`t369-expanded-tmp-artifacts-20260802.tar.gz` (45,312,876 bytes, SHA-256
+`1961d548f5040ef267da4063a496178dfc667c0cdc650143ba5c7364d58c42ae`);
+gzip validation passed. Browser/profile and opaque bytes were intentionally not
+copied because extending their lifetime had no recovery value and could retain
+sensitive state. One immutable guarded transaction then removed the two exact
+staging roots: 5,963 recursive entries and 501,328,891 bytes, with protected
+anchors unchanged. A listener-only socket readback then distinguished three
+live SSH-agent directories from two July 22 directories whose socket paths had
+no listener or open descriptor; a second guarded transaction removed only the
+two dead directories. Post-audit found exactly 14 current-user top-level
+entries, all declared runtime/handoff state, plus the same three out-of-scope
+`ishida`-owned research directories.
+
+An open-unlinked-file audit exposed a separate Harness lifecycle defect that a
+directory inventory cannot see: 18 orphaned synthetic `codex-resilient` test
+launchers, parented by PID 1 and running for 8–25 hours from already-deleted
+fixture roots. Their command identity was the exact fake
+`session-watcher-exit` client, not a managed Codex session. Each exact PID was
+revalidated and terminated with `SIGTERM`; all 18 and their transient sleep
+children exited, leaving zero deleted-fixture descriptors. The product cause
+was a background shell-function wrapper around the remote client: watcher
+failure could signal the wrapper rather than the actual client. The
+remote-explicit branch now `exec`s the launcher so the recorded PID is the
+client, and the focused test records that PID and fails if it survives. Two
+consecutive focused suites passed with zero residual fixture processes. The
+first dirty-tree R3 run passed the changed lifecycle suite and every other
+executable gate except two suites whose explicit contract requires a clean
+committed checkout; their clean-tree rerun is required before publication.
