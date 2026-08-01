@@ -131,3 +131,23 @@ back new refs and unpublished artifacts; source receipts and bundles are never
 deleted. The synthetic test covers a bundle-only orphan and proves that a
 successful creation re-audits through report mode while a no-trigger retry is
 rejected.
+
+The first live action created
+`generation-20260801t222637z-3834971-8937fd`: five repository bundles, 48 exact
+heads, and 98,998,863 bytes. Every independent fetch, exact-tip comparison, and
+full object check passed before its 25-source immutable receipt was published.
+Report re-audit validates that receipt and all prior receipts/bundles. Total
+state is 722,092,740 bytes; this first generation adds recovery redundancy but
+does not authorize deletion.
+
+The first post-create report also proved that generation refs must not count as
+ordinary refs: doing so changed the seven archive-only classifications to zero
+even though no publication ref had appeared. The follow-up excludes both
+housekeeping archive and generation namespaces from ordinary-ref counts. It
+also rejects a repeated generation for the same source receipt digests and
+protected-main tips until the newest matching generation reaches 30 days;
+changed receipts or protected main permit a new generation. This prevents the
+still-true byte trigger from creating identical generations in a loop.
+A live unchanged-input retry returned
+`latest archive generation already covers current sources`; generation count
+and state remained unchanged.
