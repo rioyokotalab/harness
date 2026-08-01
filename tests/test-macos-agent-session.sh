@@ -56,7 +56,8 @@ PY
 
 # --- stub environment ----------------------------------------------------
 BIN=$TEST_ROOT/bin
-mkdir -p "$BIN" "$TEST_ROOT/agents" "$TEST_ROOT/repo"
+mkdir -p "$BIN" "$TEST_ROOT/agents" "$TEST_ROOT/repo" "$TEST_ROOT/projects"
+: >"$TEST_ROOT/projects/existing-conversation.jsonl"
 STATE=$TEST_ROOT/tmux-state
 : >"$STATE"
 
@@ -178,6 +179,7 @@ agent() {
     HARNESS_TEST_LAUNCH_AGENTS="$TEST_ROOT/agents" \
     HARNESS_TEST_AGENT_REPO="$TEST_ROOT/repo" \
     HARNESS_TEST_BIN="$BIN" \
+    HARNESS_TEST_CLAUDE_PROJECTS="${FAKE_PROJECTS:-$TEST_ROOT/projects}" \
         "$HARNESS" macos-agent-session "$@"
 }
 
@@ -197,6 +199,18 @@ grep -Fq -- '--model fable' "$TEST_ROOT/tmux-calls" || fail "model flag missing"
 grep -Fq -- '--effort high' "$TEST_ROOT/tmux-calls" || fail "effort flag missing"
 grep -Fq -- '--remote-control office' "$TEST_ROOT/tmux-calls" ||
     fail "remote control flag missing"
+
+# --- a host with no prior conversation must not be given --continue ------
+mkdir -p "$TEST_ROOT/empty-projects"
+: >"$TEST_ROOT/tmux-calls"
+printf 'session\ncodex\n' >"$STATE"
+FAKE_PROJECTS="$TEST_ROOT/empty-projects" agent --host office --run-once >/dev/null ||
+    fail "fresh-host run failed"
+grep -Fq -- '--continue' "$TEST_ROOT/tmux-calls" &&
+    fail "--continue was passed on a host with no conversation to resume"
+grep -Fq -- '--remote-control office' "$TEST_ROOT/tmux-calls" ||
+    fail "fresh-host launch lost its remote control flag"
+printf 'session\ncodex\nclaude\n' >"$STATE"
 
 # --- idempotence: a second run creates nothing ---------------------------
 : >"$TEST_ROOT/tmux-calls"
