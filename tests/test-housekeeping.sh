@@ -348,6 +348,53 @@ printf '%s\n' "$OUT" | grep -Fq \
 if house --create-generation >/dev/null 2>&1; then
     fail "duplicate archive generation was accepted"
 fi
+if house --plan-archive-compaction --source-receipt "$GC_RECEIPT" >/dev/null 2>&1; then
+    fail "single-generation archive compaction was accepted"
+fi
+
+# Two independently restored generations permit one exact source-bundle
+# compaction. The immutable source receipt remains auditable, and later
+# generations recover its tips from the retained generation bundles.
+printf 'advance protected main for second generation\n' >>"$REPO/TODO.md"
+git -C "$REPO" add TODO.md
+git -C "$REPO" commit -qm 'advance generation proof'
+git -C "$REPO" update-ref refs/remotes/origin/main "$(git -C "$REPO" rev-parse HEAD)"
+OUT=$(house --create-generation) || fail "second covering generation failed"
+printf '%s\n' "$OUT" | grep -Fq 'restore=pass status=verified' ||
+    fail "second generation restore proof changed"
+GC_BUNDLE=$(sed -n 's/^bundle=//p' "$GC_RECEIPT")
+[ -f "$GC_BUNDLE" ] || fail "compaction source bundle is missing"
+OUT=$(house --plan-archive-compaction --source-receipt "$GC_RECEIPT") ||
+    fail "archive compaction plan failed"
+COMPACTION=$(receipt_from "$OUT")
+COMPACTION_TOKEN=$(token_from "$OUT")
+printf '%s\n' "$OUT" | grep -Fq 'generations=2 candidate=yes' ||
+    fail "archive compaction omitted dual-generation proof"
+house --apply-archive-compaction --receipt "$COMPACTION" \
+    --token "$COMPACTION_TOKEN" | grep -Fq 'removed=1' ||
+    fail "archive compaction apply failed"
+[ ! -e "$GC_BUNDLE" ] || fail "compacted source bundle survived"
+[ -f "$GC_RECEIPT" ] || fail "compaction removed source metadata"
+OUT=$(house --audit --receipt "$GC_RECEIPT") ||
+    fail "compacted archive audit failed"
+printf '%s\n' "$OUT" | grep -Fq 'retired=1 generations=2' ||
+    fail "compacted archive omitted generation coverage"
+OUT=$(house --plan --routine archives) || fail "compacted inventory failed"
+printf '%s\n' "$OUT" | grep -Fq 'retired_bundles=1' ||
+    fail "compacted inventory omitted retired bundle"
+printf '%s\n' "$OUT" | grep -Fq 'compactions=1' ||
+    fail "compacted inventory omitted compaction receipt"
+if house --plan-archive-compaction --source-receipt "$GC_RECEIPT" >/dev/null 2>&1; then
+    fail "already compacted archive was accepted"
+fi
+printf 'advance protected main after compaction\n' >>"$REPO/TODO.md"
+git -C "$REPO" add TODO.md
+git -C "$REPO" commit -qm 'prove compacted generation source'
+git -C "$REPO" update-ref refs/remotes/origin/main "$(git -C "$REPO" rev-parse HEAD)"
+OUT=$(house --create-generation) ||
+    fail "generation could not recover a compacted source"
+printf '%s\n' "$OUT" | grep -Fq 'restore=pass status=verified' ||
+    fail "post-compaction generation restore proof changed"
 unlink "$THRESHOLD_PAYLOAD"
 if house --create-generation >/dev/null 2>&1; then
     fail "archive generation ignored the measured trigger"

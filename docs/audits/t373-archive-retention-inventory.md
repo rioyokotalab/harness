@@ -151,3 +151,19 @@ still-true byte trigger from creating identical generations in a loop.
 A live unchanged-input retry returned
 `latest archive generation already covers current sources`; generation count
 and state remained unchanged.
+
+Two newly guarded T-373 closeouts added source receipts not covered by the
+first generation, so the duplicate guard correctly permitted a second:
+`generation-20260801t223710z-210357-fd5426`, five repositories, 50 exact heads,
+and 98,982,843 bytes. Every independent restore and object check passed. Fresh
+report re-audits two generations, all 27 source receipts, 52 item rows, seven
+archive-only tips, and zero incomplete transactions at 847,444,982 total bytes.
+
+No source bundle is classified disposable yet. Generation refs preserve exact
+commits, but the immutable source receipts preserve branch names,
+classification, pull-request linkage, and closeout evidence and still point to
+their original bundle paths. Safe compaction therefore needs a separate
+immutable receipt that binds each original receipt/bundle digest to at least
+two independently audited generation receipts and teaches later archive audits
+to accept an absent bundle only through that exact coverage proof. Until that
+contract and guarded apply exist, candidate count remains zero.
