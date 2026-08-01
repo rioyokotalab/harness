@@ -1,0 +1,19 @@
+{
+  "candidate_sha256": "b3ab2140218045c75d0b4cd3a91573f62267ca7808d703b839b728c9b3040bc2",
+  "copilot": "claude",
+  "destination_before_sha256": "da32107e44a02377b76bf9e79cea08250357c548157a4adc8125295031c5a4b6",
+  "driver": "codex",
+  "imported_at": "2026-08-01T09:08:56+00:00",
+  "inputs": {
+    "benchmark.md": "9f3d26864cf0fe02a73a4b036278f8dca436388cc842cc8d75114e8861b71928",
+    "charter.md": "756bcdcc82854672f2d1360cf601cdf432fa011eb9d2fde7b28f5742983ef27e",
+    "plan.md": "f277b5eee2b917da3e20c3f7f5ebf4ab5e107b063776ce4fe2921371b08f63c2",
+    "state.json": "ef7a23a0048135e80082fe072eeba501298d39491e52af310cfa6632b89d76e1"
+  },
+  "mode": "independent",
+  "phase": "discussing",
+  "raw_state_sha256": "ef7a23a0048135e80082fe072eeba501298d39491e52af310cfa6632b89d76e1",
+  "schema_version": 2,
+  "seal_sha256": "336028627cd0f6710f72170e4d832962df001b1b329dfddba41b1d78f6991da5",
+  "stage_manifest_sha256": "2c6325d0ec8edd0c8791682ddf518ddb1e6f550fd23ef05e7c9da9ea06f1565f"
+}
