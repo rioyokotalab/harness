@@ -85,8 +85,8 @@ Other or ambiguous outcomes require a separate recovery decision.
 
 These packets are task evidence, not credentials or standing authority. They
 do not change the ordinary interactive Claude profile, authorize target
-execution, prove model authorship, or replace Cowork's benchmark, seals,
-receipts, owner `go`, and driver-only target writes.
+execution, prove model authorship, or replace the task's benchmark, evidence,
+owner `go`, and target-write boundaries.
 
 The reviewed Codex body uses an explicit granular approval policy with only
 `mcp_elicitations = true`; sandbox, command-rule, request-permission, and

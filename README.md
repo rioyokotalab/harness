@@ -332,9 +332,9 @@ mode references; unrelated workflows and completed task history are not
 preloaded.
 
 This gives both clients the same start, planning, safety, validation,
-publication, fleet-sync, and handoff expectations. Consequential joint work can
-use the `codex-claude-cowork` skill for durable planning, independent sandbox
-evidence, reciprocal critique, a frozen plan, and driver-only execution.
+publication, fleet-sync, and handoff expectations. Cross-client communication
+is task-directed and optional; duration and nightly work do not require a
+second client.
 
 `tests/test-claude-takeover.sh` validates the instruction chain, public
 settings examples, skill discovery, idempotent installation, and

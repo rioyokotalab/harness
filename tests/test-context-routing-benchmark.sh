@@ -120,7 +120,7 @@ labels = {
     "unsafe-tail-recovery": "unsafe-tail recovery",
     "fleet-hardening": "fleet hardening",
     "native-hpc-experiment": "native HPC experiment",
-    "duration-cowork": "duration Cowork",
+    "duration-ledger": "duration ledger",
 }
 
 

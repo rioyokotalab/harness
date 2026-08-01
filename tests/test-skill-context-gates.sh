@@ -2,7 +2,6 @@
 set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
-COWORK=$ROOT/shared/skills/codex-claude-cowork
 HPC=$ROOT/shared/skills/operate-native-hpc
 HPC_PLANNING=$HPC/references/planning.md
 HPC_EXECUTE=$HPC/references/execute-monitor.md
@@ -26,13 +25,6 @@ assert_contains() {
 }
 
 for path in \
-    "$COWORK/SKILL.md" \
-    "$COWORK/references/session-planning.md" \
-    "$COWORK/references/evidence-review.md" \
-    "$COWORK/references/evidence-exchange.md" \
-    "$COWORK/references/native-clients.md" \
-    "$COWORK/references/execution-duration.md" \
-    "$COWORK/references/recovery.md" \
     "$HPC/SKILL.md" \
     "$HPC/references/common.md" \
     "$HPC/references/current.md" \
@@ -81,52 +73,6 @@ for path in \
     "$UNSAFE_PROTOCOL"; do
     [ -f "$path" ] && [ ! -L "$path" ] || fail "missing regular file: $path"
 done
-
-# Cowork keeps authority and stop gates in the always-read entry.
-assert_contains 'Cowork never grants credential access' "$COWORK/SKILL.md" \
-    'cowork credential/authority gate'
-assert_contains 'co-pilot is unavailable, stop before target execution' \
-    "$COWORK/SKILL.md" 'cowork unavailable-client stop'
-assert_contains 'Planning and co-pilot experiments are read-only' \
-    "$COWORK/SKILL.md" 'cowork target-read-only gate'
-assert_contains 'never grant the co-pilot the live session' "$COWORK/SKILL.md" \
-    'cowork live-session boundary'
-assert_contains 'seal driver-owned live state outside all' "$COWORK/SKILL.md" \
-    'cowork protected-state seal gate'
-assert_contains 'A seal, freshness, destination,' "$COWORK/SKILL.md" \
-    'cowork staged failure gate'
-assert_contains 'They never authorize import' "$COWORK/SKILL.md" \
-    'cowork advisory-status gate'
-assert_contains 'Let only the driver mutate the target' "$COWORK/SKILL.md" \
-    'cowork sole-writer gate'
-assert_contains 'Otherwise wait for a new' "$COWORK/SKILL.md" \
-    'cowork owner-go gate'
-assert_contains 'Never use a bypass flag' "$COWORK/SKILL.md" \
-    'cowork permission-refusal gate'
-assert_contains 'guarded-deletion workflow' "$COWORK/SKILL.md" \
-    'cowork guarded-cleanup gate'
-assert_contains 'Cross-product role transfer requires an explicit owner instruction' \
-    "$COWORK/SKILL.md" 'cowork takeover authority gate'
-
-for route in session-planning evidence-review evidence-exchange native-clients \
-    execution-duration recovery; do
-    assert_contains "[$route.md](references/$route.md)" "$COWORK/SKILL.md" \
-        "cowork missing $route route"
-done
-assert_contains 'benchmark agreement precedes target execution' \
-    "$COWORK/references/session-planning.md" 'cowork benchmark gate'
-assert_contains 'prose-only review is insufficient' \
-    "$COWORK/references/evidence-review.md" 'cowork experiment gate'
-assert_contains 'not cross-file crash atomic' \
-    "$COWORK/references/evidence-exchange.md" 'cowork crash ambiguity gate'
-assert_contains '`--dangerously-skip-permissions`' \
-    "$COWORK/references/native-clients.md" 'cowork Claude bypass gate'
-assert_contains 'Unchanged blind retries' \
-    "$COWORK/references/execution-duration.md" 'cowork iteration gate'
-assert_contains 'retain a recoverable preimage' \
-    "$COWORK/references/recovery.md" 'cowork recovery preimage gate'
-assert_contains 'routing must use the task- and phase-specific references' \
-    "$COWORK/references/protocol.md" 'cowork legacy aggregate marker'
 
 # PIE must not manufacture an interview when decisions and authorization exist.
 pie_frontmatter=$(sed -n '1,5p' "$PIE/SKILL.md")

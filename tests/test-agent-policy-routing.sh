@@ -119,8 +119,11 @@ assert_contains '$CODEX_HOME/tmp/arg0' "$HOUSEKEEPING" \
     'arg0 housekeeping route'
 assert_contains 'Prefer primary sources' "$RESEARCH" \
     'research provenance default'
-assert_contains '`codex-claude-cowork` and `long-running-task-ledger`' \
-    "$DURATION" 'duration cowork route'
+assert_contains 'Use `long-running-task-ledger`' \
+    "$DURATION" 'duration ledger route'
+if grep -F 'codex-claude-cowork' "$DURATION" >/dev/null; then
+    fail 'duration policy retains removed Cowork dependency'
+fi
 assert_contains 'max(300, 50 * ceil(requested hours))' "$DURATION" \
     'duration summary floor'
 assert_contains 'saved-thread or unsafe-tail recovery' "$AGENTS" \
