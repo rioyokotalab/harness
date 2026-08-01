@@ -1,4 +1,5 @@
 task	state	summary	source
+T-361	active	Unified managed-Mac agent session with Claude parity	TODO.md;docs/tasks/T-361.md
 T-360	complete	Correct Mac remote-control readiness detection	docs/tasks/T-360.md
 T-359	complete	Claude pane monitor and recovery parity	docs/tasks/T-359.md
 T-358	complete	Overnight duration run: claude tmux window and multi-repo development	docs/tasks/T-358.md
