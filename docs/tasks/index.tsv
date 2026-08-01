@@ -1,5 +1,5 @@
 task	state	summary	source
-T-370	blocked	Enforce symmetric task-worktree lifecycle after T-369	TODO.md;docs/tasks/T-370.md
+T-370	active	Enforce symmetric task-worktree lifecycle	TODO.md;docs/tasks/T-370.md
 T-369	active	Evidence-first portfolio reset and guarded cleanup	TODO.md;docs/tasks/T-369.md;docs/audits/t369-portfolio-review-2026-08-02.md
 T-368	complete	Retired the Codex-Claude Cowork skill	docs/tasks/T-368.md
 T-367	complete	Post-reorganization quick fixes	docs/tasks/T-367.md

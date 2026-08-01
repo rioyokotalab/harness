@@ -46,6 +46,8 @@ source = pathlib.Path(sys.argv[1]).read_text()
 assert "update-ref" in source
 assert "bundle" in source and "bundle_sha256" in source
 assert "guarded-delete" in source
+assert '"--open-worktree"' in source and '"--expected-main"' in source
+assert '"--repo"' in source
 assert 'choices=("all", "scratch", "branches", "remotes", "worktrees"' in source
 PY
 
@@ -62,6 +64,8 @@ GH=$TEST_ROOT/gh
 cat >"$GH" <<'SH'
 #!/bin/sh
 [ "${HARNESS_TEST_GH_FAIL:-0}" = 0 ] || exit 1
+[ -z "${HARNESS_TEST_EXPECT_GH_CWD:-}" ] ||
+    [ "$(pwd -P)" = "$HARNESS_TEST_EXPECT_GH_CWD" ] || exit 2
 cat "$HARNESS_TEST_PR_DATA"
 SH
 chmod 700 "$GH"
@@ -139,6 +143,8 @@ printf '%s\n' "$OUT" | grep -Fq 'CANDIDATE branch=squash' || fail "exact squash 
 printf '%s\n' "$OUT" | grep -Fq 'REPORT branch=reused' || fail "reused branch was accepted"
 printf '%s\n' "$OUT" | grep -Fq 'reason=merged-pr-head-mismatch' || fail "reused reason missing"
 printf '%s\n' "$OUT" | grep -Fq 'REPORT branch=held' || fail "held branch was accepted"
+HARNESS_TEST_EXPECT_GH_CWD=$REPO house --plan --routine branches >/dev/null ||
+    fail "repository-explicit PR query did not run from the selected root"
 PLAN=$(receipt_from "$OUT")
 TOKEN=$(token_from "$OUT")
 OUT=$(house --apply --routine branches --receipt "$PLAN" --token "$TOKEN") || fail "branch apply failed"
@@ -235,6 +241,48 @@ OUT=$(house --apply --routine launchers --launcher "$HOME_DIR/t001_other_launche
 printf '%s\n' "$OUT" | grep -Fq 'removed=1' || fail "second exact launcher apply changed"
 [ -f "$HOME_DIR/run_this.sh" ] || fail "run_this.sh was removed"
 
+# Opening a task worktree requires an exact clean primary main and produces a
+# branch-bound isolated tree that the normal closeout transaction fully retires.
+REPO=$TEST_ROOT/open-worktree
+init_repo "$REPO"
+BASE=$(git -C "$REPO" rev-parse main)
+OPEN_PATH=$TEST_ROOT/opened-task
+printf 'dirty\n' >>"$REPO/tracked"
+if house --open-worktree --branch task/open-dirty --path "$OPEN_PATH" \
+    --expected-main "$BASE" >/dev/null 2>&1; then
+    fail "dirty reference checkout opened a worktree"
+fi
+git -C "$REPO" restore tracked
+git -C "$REPO" switch -qc off-main
+if house --open-worktree --branch task/open-off-main --path "$OPEN_PATH" \
+    --expected-main "$BASE" >/dev/null 2>&1; then
+    fail "off-main reference checkout opened a worktree"
+fi
+git -C "$REPO" switch -q main
+if house --open-worktree --branch task/open-stale --path "$OPEN_PATH" \
+    --expected-main 0000000000000000000000000000000000000000 \
+    >/dev/null 2>&1; then
+    fail "stale expected main opened a worktree"
+fi
+OUT=$(house --open-worktree --branch task/open --path "$OPEN_PATH" \
+    --expected-main "$BASE") || fail "exact task worktree open failed"
+printf '%s\n' "$OUT" | grep -Fq \
+    "routine=worktree-open mode=apply branch=task/open tip=$BASE path=$OPEN_PATH" ||
+    fail "task worktree open readback changed"
+[ "$(git -C "$OPEN_PATH" branch --show-current)" = task/open ] ||
+    fail "task worktree branch changed"
+[ "$(git -C "$OPEN_PATH" rev-parse HEAD)" = "$BASE" ] ||
+    fail "task worktree tip changed"
+printf '[]\n' >"$PR_DATA"
+OUT=$(house --plan --routine worktrees)
+PLAN=$(receipt_from "$OUT")
+TOKEN=$(token_from "$OUT")
+OUT=$(house --apply --routine worktrees --receipt "$PLAN" --token "$TOKEN") ||
+    fail "opened task worktree closeout failed"
+[ ! -e "$OPEN_PATH" ] || fail "opened task worktree survived closeout"
+git -C "$REPO" show-ref --verify --quiet refs/heads/task/open &&
+    fail "opened task branch survived closeout"
+
 # Worktree planning rejects every residue and liveness class.
 REPO=$TEST_ROOT/worktrees
 init_repo "$REPO"
@@ -264,7 +312,8 @@ TOKEN=$(token_from "$OUT")
 OUT=$(house --apply --routine worktrees --receipt "$PLAN" --token "$TOKEN") || fail "guarded worktree apply failed"
 printf '%s\n' "$OUT" | grep -Fq 'removed=1' || fail "worktree apply count changed"
 [ ! -e "$TEST_ROOT/wt-clean" ] || fail "clean worktree directory survived"
-git -C "$REPO" show-ref --verify --quiet refs/heads/clean || fail "worktree apply removed its branch"
+git -C "$REPO" show-ref --verify --quiet refs/heads/clean &&
+    fail "worktree apply retained its branch"
 for name in dirty untracked ignored nested submodule locked live openfile; do
     [ -d "$TEST_ROOT/wt-$name" ] || fail "blocked worktree was removed: $name"
 done
@@ -279,11 +328,31 @@ if HARNESS_TEST_INTERRUPT_AFTER_WORKTREE=1 house --apply --routine worktrees --r
     fail "synthetic interruption unexpectedly succeeded"
 fi
 [ ! -e "$TEST_ROOT/wt-interrupted" ] || fail "interruption did not follow directory stage"
+git -C "$REPO" show-ref --verify --quiet refs/heads/interrupted ||
+    fail "interruption removed the task branch before admin cleanup"
 ADMIN=$(git -C "$REPO" worktree list --porcelain | awk -v path="$TEST_ROOT/wt-interrupted" '
     $1 == "worktree" { selected=($2 == path) }
     selected && $1 == "branch" { print $2; exit }
 ')
 [ -n "$ADMIN" ] || fail "interruption did not retain stale admin metadata"
 grep -R '"phase":"directory-deleted"' "$STATE" >/dev/null || fail "interruption checkpoint missing"
+
+# Interruption after admin cleanup leaves the archived exact-old branch for
+# deterministic branch reconciliation and records the later phase precisely.
+git -C "$REPO" branch admin-interrupted "$BASE"
+git -C "$REPO" worktree add -q "$TEST_ROOT/wt-admin-interrupted" admin-interrupted
+OUT=$(house --plan --routine worktrees)
+PLAN=$(receipt_from "$OUT")
+TOKEN=$(token_from "$OUT")
+if HARNESS_TEST_INTERRUPT_AFTER_ADMIN=1 house --apply --routine worktrees \
+    --receipt "$PLAN" --token "$TOKEN" >/dev/null 2>&1; then
+    fail "admin-stage synthetic interruption unexpectedly succeeded"
+fi
+[ ! -e "$TEST_ROOT/wt-admin-interrupted" ] ||
+    fail "admin-stage interruption retained the worktree directory"
+git -C "$REPO" show-ref --verify --quiet refs/heads/admin-interrupted ||
+    fail "admin-stage interruption removed the branch"
+grep -R '"phase":"admin-deleted"' "$STATE" >/dev/null ||
+    fail "admin-stage interruption checkpoint missing"
 
 printf 'Routine housekeeping tests: PASS\n'

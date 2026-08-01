@@ -23,6 +23,10 @@ Create one umbrella plan in the coordinating repository and one task in every
 affected repository's own ledger. Give each stream an isolated worktree and
 task branch.
 
+After an immediate fetch, both clients use repository-explicit `harness
+housekeeping --open-worktree` with root, branch, scratch path, and main OID;
+its fail-closed checks replace conventions or leases.
+
 Freeze all of the following before target mutation:
 
 - exact repositories, hosts, risk-ranked findings, and non-goals;
