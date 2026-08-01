@@ -47,6 +47,7 @@ assert "update-ref" in source
 assert "bundle" in source and "bundle_sha256" in source
 assert "guarded-delete" in source
 assert '"--open-worktree"' in source and '"--expected-main"' in source
+assert '"--recover-worktree"' in source
 assert '"--repo"' in source
 assert 'choices=("all", "scratch", "branches", "remotes", "worktrees"' in source
 PY
@@ -336,6 +337,22 @@ ADMIN=$(git -C "$REPO" worktree list --porcelain | awk -v path="$TEST_ROOT/wt-in
 ')
 [ -n "$ADMIN" ] || fail "interruption did not retain stale admin metadata"
 grep -R '"phase":"directory-deleted"' "$STATE" >/dev/null || fail "interruption checkpoint missing"
+RECOVERY=$(grep -l '"phase":"directory-deleted"' \
+    "$STATE"/worktree-apply-*.json | grep -v 'worktree-apply-unsafe.json$' | tail -1)
+OUT=$(house --recover-worktree --receipt "$RECOVERY") ||
+    fail "directory-stage recovery failed"
+printf '%s\n' "$OUT" | grep -Fq 'status=recovered' ||
+    fail "directory-stage recovery status changed"
+[ ! -e "$TEST_ROOT/wt-interrupted" ] ||
+    fail "directory-stage recovery restored the worktree"
+git -C "$REPO" worktree list --porcelain | grep -Fq "$TEST_ROOT/wt-interrupted" &&
+    fail "directory-stage recovery retained administration metadata"
+git -C "$REPO" show-ref --verify --quiet refs/heads/interrupted &&
+    fail "directory-stage recovery retained the branch"
+OUT=$(house --recover-worktree --receipt "$RECOVERY") ||
+    fail "completed recovery was not idempotent"
+printf '%s\n' "$OUT" | grep -Fq 'status=no-op' ||
+    fail "completed recovery did not report a no-op"
 
 # Interruption after admin cleanup leaves the archived exact-old branch for
 # deterministic branch reconciliation and records the later phase precisely.
@@ -354,5 +371,91 @@ git -C "$REPO" show-ref --verify --quiet refs/heads/admin-interrupted ||
     fail "admin-stage interruption removed the branch"
 grep -R '"phase":"admin-deleted"' "$STATE" >/dev/null ||
     fail "admin-stage interruption checkpoint missing"
+RECOVERY=$(grep -l '"phase":"admin-deleted"' \
+    "$STATE"/worktree-apply-*.json | tail -1)
+OUT=$(house --recover-worktree --receipt "$RECOVERY") ||
+    fail "admin-stage recovery failed"
+printf '%s\n' "$OUT" | grep -Fq 'status=recovered' ||
+    fail "admin-stage recovery status changed"
+git -C "$REPO" show-ref --verify --quiet refs/heads/admin-interrupted &&
+    fail "admin-stage recovery retained the branch"
+grep -Fq '"phase":"complete"' "$RECOVERY" ||
+    fail "admin-stage recovery did not complete durable state"
+
+# A changed exact-old branch is rejected before remaining administration is
+# removed, and a symlink cannot substitute for the private recovery receipt.
+git -C "$REPO" branch changed-interrupted "$BASE"
+git -C "$REPO" worktree add -q "$TEST_ROOT/wt-changed-interrupted" \
+    changed-interrupted
+OUT=$(house --plan --routine worktrees)
+PLAN=$(receipt_from "$OUT")
+TOKEN=$(token_from "$OUT")
+if HARNESS_TEST_INTERRUPT_AFTER_WORKTREE=1 house --apply --routine worktrees \
+    --receipt "$PLAN" --token "$TOKEN" >/dev/null 2>&1; then
+    fail "changed-tip interruption unexpectedly succeeded"
+fi
+RECOVERY=$(grep -l '"current":"'$TEST_ROOT'/wt-changed-interrupted"' \
+    "$STATE"/worktree-apply-*.json | tail -1)
+CHANGED=$(printf 'changed recovery fixture\n' | \
+    git -C "$REPO" commit-tree "$BASE^{tree}" -p "$BASE")
+git -C "$REPO" update-ref refs/heads/changed-interrupted "$CHANGED" "$BASE"
+if house --recover-worktree --receipt "$RECOVERY" >/dev/null 2>&1; then
+    fail "changed-tip recovery unexpectedly succeeded"
+fi
+git -C "$REPO" worktree list --porcelain | \
+    grep -Fq "$TEST_ROOT/wt-changed-interrupted" ||
+    fail "changed-tip rejection removed administration metadata"
+UNSAFE_RECEIPT=$STATE/worktree-apply-unsafe.json
+ln -s "$RECOVERY" "$UNSAFE_RECEIPT"
+if house --recover-worktree --receipt "$UNSAFE_RECEIPT" >/dev/null 2>&1; then
+    fail "symlink recovery receipt unexpectedly succeeded"
+fi
+RECOVERY_PLAN=$(sed -n 's/.*"plan":"\([^"]*\)".*/\1/p' "$RECOVERY")
+printf ' ' >>"$RECOVERY_PLAN"
+if ERROR=$(house --recover-worktree --receipt "$RECOVERY" 2>&1); then
+    fail "changed recovery plan unexpectedly succeeded"
+fi
+printf '%s\n' "$ERROR" | grep -Fq 'plan digest changed' ||
+    fail "changed recovery plan did not fail at its digest"
+
+# If a bulk closeout stops on its first candidate, recovery finishes only that
+# exact candidate and leaves every unstarted candidate for a fresh normal plan.
+REPO=$TEST_ROOT/worktrees-multi-recovery
+init_repo "$REPO"
+BASE=$(git -C "$REPO" rev-parse main)
+for name in multi-a multi-b; do
+    git -C "$REPO" branch "$name" "$BASE"
+    git -C "$REPO" worktree add -q "$TEST_ROOT/wt-$name" "$name"
+done
+printf '[]\n' >"$PR_DATA"
+OUT=$(house --plan --routine worktrees)
+PLAN=$(receipt_from "$OUT")
+TOKEN=$(token_from "$OUT")
+if HARNESS_TEST_INTERRUPT_AFTER_WORKTREE=1 house --apply --routine worktrees \
+    --receipt "$PLAN" --token "$TOKEN" >/dev/null 2>&1; then
+    fail "multi-candidate interruption unexpectedly succeeded"
+fi
+RECOVERY=$(grep -l '"current":"'$TEST_ROOT'/wt-multi-' \
+    "$STATE"/worktree-apply-*.json | tail -1)
+OUT=$(house --recover-worktree --receipt "$RECOVERY") ||
+    fail "multi-candidate recovery failed"
+printf '%s\n' "$OUT" | grep -Fq 'remaining_replan=1' ||
+    fail "multi-candidate recovery did not preserve unstarted work"
+remaining=0
+for name in multi-a multi-b; do
+    [ ! -d "$TEST_ROOT/wt-$name" ] || remaining=$((remaining + 1))
+done
+[ "$remaining" -eq 1 ] || fail "multi-candidate recovery changed extra worktrees"
+OUT=$(house --plan --routine worktrees)
+PLAN=$(receipt_from "$OUT")
+TOKEN=$(token_from "$OUT")
+OUT=$(house --apply --routine worktrees --receipt "$PLAN" --token "$TOKEN") ||
+    fail "fresh plan did not retire the remaining multi-candidate worktree"
+printf '%s\n' "$OUT" | grep -Fq 'removed=1' ||
+    fail "fresh multi-candidate plan removed the wrong count"
+for name in multi-a multi-b; do
+    git -C "$REPO" show-ref --verify --quiet "refs/heads/$name" &&
+        fail "multi-candidate branch survived recovery: $name"
+done
 
 printf 'Routine housekeeping tests: PASS\n'

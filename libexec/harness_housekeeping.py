@@ -1055,6 +1055,217 @@ def execution_state(path: Path, value: Dict[str, Any]) -> None:
             temporary.unlink()
 
 
+def load_recovery_state(repo: Path, path: Path) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    validate_private_file(path)
+    _lexical, state = state_directory()
+    if path.resolve(strict=True).parent != state or not path.name.startswith(
+        "worktree-apply-"
+    ):
+        die("worktree recovery receipt is outside durable state")
+    try:
+        progress = json.loads(path.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise HousekeepingError("worktree recovery receipt is malformed") from exc
+    if (
+        not isinstance(progress, dict)
+        or progress.get("schema") != "harness-housekeeping-worktree-apply-v1"
+        or not isinstance(progress.get("plan"), str)
+        or not isinstance(progress.get("plan_sha256"), str)
+        or not re.fullmatch(r"[0-9a-f]{64}", progress["plan_sha256"])
+        or not isinstance(progress.get("completed"), list)
+        or any(not isinstance(item, str) for item in progress["completed"])
+    ):
+        die("worktree recovery receipt schema changed")
+    plan_path = Path(progress["plan"])
+    validate_private_file(plan_path)
+    plans = state / "plans"
+    if plan_path.resolve(strict=True).parent != plans.resolve(strict=True):
+        die("worktree recovery plan is outside durable state")
+    if digest(plan_path) != progress["plan_sha256"]:
+        die("worktree recovery plan digest changed")
+    try:
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise HousekeepingError("worktree recovery plan is malformed") from exc
+    if (
+        not isinstance(plan, dict)
+        or plan.get("schema") != PLAN_SCHEMA
+        or plan.get("kind") != "worktrees"
+        or plan.get("repository") != str(repo)
+        or plan.get("repository_id") != list(path_id(repo))
+        or not isinstance(plan.get("records"), list)
+    ):
+        die("worktree recovery repository or plan changed")
+    return progress, plan
+
+
+def recovery_admin_identity(
+    repo: Path, record: Dict[str, Any], path: Path, admin: Path
+) -> None:
+    if admin.is_symlink() or not admin.is_dir() or admin.lstat().st_uid != os.getuid():
+        die("worktree recovery administration identity changed")
+    if (admin / "locked").exists() or (admin / "locked").is_symlink():
+        die("worktree recovery administration became locked")
+    rows = [
+        row
+        for row in worktree_rows(repo)
+        if row.get("worktree") == str(path)
+    ]
+    if (
+        len(rows) != 1
+        or rows[0].get("HEAD") != record["tip"]
+        or rows[0].get("branch") != f"refs/heads/{record['branch']}"
+    ):
+        die("worktree recovery administration metadata changed")
+    try:
+        backlink = (admin / "gitdir").read_text(encoding="utf-8").strip()
+        head = (admin / "HEAD").read_text(encoding="utf-8").strip()
+    except (OSError, UnicodeDecodeError) as exc:
+        raise HousekeepingError(
+            "worktree recovery administration metadata is unreadable"
+        ) from exc
+    if Path(backlink).resolve() != (path / ".git").resolve() or head != (
+        f"ref: refs/heads/{record['branch']}"
+    ):
+        die("worktree recovery administration backlink changed")
+
+
+def recover_worktree(repo: Path, receipt_path: Path) -> None:
+    progress, plan = load_recovery_state(repo, receipt_path)
+    phase = progress.get("phase")
+    if phase in {"complete", "recovered"}:
+        remaining = progress.get("remaining", [])
+        if not isinstance(remaining, list):
+            die("worktree recovery remaining set changed")
+        print(
+            "HOUSEKEEPING routine=worktrees mode=recover "
+            f"phase={phase} status=no-op remaining_replan={len(remaining)}"
+        )
+        return
+    if phase not in {"directory-deleted", "admin-deleted", "branch-deleted"}:
+        die("worktree recovery phase requires ordinary re-plan")
+    current = progress.get("current")
+    if not isinstance(current, str):
+        die("worktree recovery current path is missing")
+    candidates = [
+        row
+        for row in plan["records"]
+        if isinstance(row, dict)
+        and row.get("candidate") is True
+        and row.get("path") == current
+    ]
+    if len(candidates) != 1:
+        die("worktree recovery candidate changed")
+    record = candidates[0]
+    branch = record.get("branch")
+    tip = record.get("tip")
+    archive_receipt = progress.get("archive_receipt")
+    if (
+        not isinstance(branch, str)
+        or not isinstance(tip, str)
+        or not OID_RE.fullmatch(tip)
+        or not isinstance(archive_receipt, str)
+    ):
+        die("worktree recovery candidate metadata changed")
+    validate_item(branch, tip)
+    branch_ref = f"refs/heads/{branch}"
+    existing = git(repo, "rev-parse", "--verify", branch_ref, check=False)
+    if existing.returncode == 0 and text(existing).strip() != tip:
+        die("worktree recovery branch tip changed")
+    if existing.returncode != 0 and phase == "directory-deleted":
+        die("worktree recovery branch disappeared before administration cleanup")
+    prs = pull_requests(repo)
+    main_oid = origin_main(repo)
+    classification = classify_tip(repo, branch, tip, prs, main_oid)
+    if (
+        not classification["candidate"]
+        or classification["reason"] != record.get("branch_reason")
+    ):
+        die("worktree recovery merge classification changed or is unknown")
+    path = Path(current)
+    if not path.is_absolute() or path.exists() or path.is_symlink():
+        die("worktree recovery directory is present or unsafe")
+    archive_path = Path(archive_receipt)
+    parsed_archive = parse_archive_receipt(archive_path)
+    if (
+        len(parsed_archive["items"]) != 1
+        or parsed_archive["items"][0]["branch"] != branch
+        or parsed_archive["items"][0]["tip"] != tip
+    ):
+        die("worktree recovery archive candidate changed")
+    archive_audit(repo, archive_path)
+
+    common = Path(text(git(repo, "rev-parse", "--git-common-dir")).strip())
+    if not common.is_absolute():
+        common = repo / common
+    common = common.resolve(strict=True)
+    admin_boundary = common / "worktrees"
+    admin = Path(str(record.get("admin", "")))
+    if (
+        not admin.is_absolute()
+        or admin.parent != admin_boundary
+        or record.get("admin_boundary") != str(admin_boundary)
+    ):
+        die("worktree recovery administration path changed")
+    if admin.exists() or admin.is_symlink():
+        if phase != "directory-deleted":
+            die("worktree recovery administration unexpectedly remains")
+        recovery_admin_identity(repo, record, path, admin)
+        _lexical, state = state_directory()
+        manifests = state / "worktree-manifests"
+        manifests.mkdir(mode=0o700, exist_ok=True)
+        info = manifests.lstat()
+        if (
+            manifests.is_symlink()
+            or info.st_uid != os.getuid()
+            or stat.S_IMODE(info.st_mode) != 0o700
+        ):
+            die("worktree recovery manifest directory is unsafe")
+        manifest = manifests / (transaction_id("worktree-recovery") + ".manifest")
+        token = guarded_plan(repo, admin_boundary, admin, manifest)
+        guarded_apply(repo, str(manifest), token)
+    if admin.exists() or admin.is_symlink():
+        die("worktree recovery administration survived deletion")
+    progress["phase"] = "admin-deleted"
+    execution_state(receipt_path, progress)
+
+    held = [
+        row
+        for row in worktree_rows(repo)
+        if row.get("branch") == f"refs/heads/{branch}"
+    ]
+    if held:
+        die("worktree recovery branch remains worktree-held")
+    existing = git(repo, "rev-parse", "--verify", branch_ref, check=False)
+    if existing.returncode == 0 and text(existing).strip() != tip:
+        die("worktree recovery branch tip changed")
+    git(repo, "update-ref", "-d", branch_ref, tip)
+    if git(repo, "show-ref", "--verify", "--quiet", branch_ref, check=False).returncode == 0:
+        die("worktree recovery branch survived expected-old deletion")
+    if current not in progress["completed"]:
+        progress["completed"].append(current)
+    progress["phase"] = "branch-deleted"
+    execution_state(receipt_path, progress)
+    planned_paths = [
+        row.get("path")
+        for row in plan["records"]
+        if isinstance(row, dict) and row.get("candidate") is True
+    ]
+    remaining = [item for item in planned_paths if item not in progress["completed"]]
+    progress["phase"] = "recovered" if remaining else "complete"
+    progress.pop("current", None)
+    if remaining:
+        progress["remaining"] = remaining
+    else:
+        progress.pop("remaining", None)
+    execution_state(receipt_path, progress)
+    print(
+        "HOUSEKEEPING routine=worktrees mode=recover "
+        f"phase={progress['phase']} worktree={current} status=recovered "
+        f"remaining_replan={len(remaining)}"
+    )
+
+
 def comparable_worktree(record: Dict[str, Any]) -> Dict[str, Any]:
     excluded = {"directory_manifest", "directory_token", "admin_manifest", "admin_token"}
     return {key: value for key, value in record.items() if key not in excluded}
@@ -1094,6 +1305,7 @@ def apply_worktrees(repo: Path, receipt_path: Path, token: str) -> None:
     progress: Dict[str, Any] = {
         "schema": "harness-housekeeping-worktree-apply-v1",
         "plan": str(receipt_path),
+        "plan_sha256": digest(receipt_path),
         "phase": "validated",
         "completed": [],
     }
@@ -1304,6 +1516,7 @@ def parser() -> argparse.ArgumentParser:
     action.add_argument("--archive", action="store_true")
     action.add_argument("--audit", action="store_true")
     action.add_argument("--open-worktree", action="store_true")
+    action.add_argument("--recover-worktree", action="store_true")
     value.add_argument(
         "--routine",
         choices=("all", "scratch", "branches", "remotes", "worktrees", "launchers", "board", "evidence"),
@@ -1338,6 +1551,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             arguments.worktree_path,
             arguments.expected_main,
         )
+        return 0
+    if arguments.recover_worktree:
+        if not arguments.receipt:
+            die("worktree recovery requires --receipt")
+        recover_worktree(repo, Path(arguments.receipt).absolute())
         return 0
     if arguments.archive:
         if not arguments.items or not arguments.transaction:

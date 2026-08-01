@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-372.
+Next free ID: T-373.
 
 ## Resume contract
 
@@ -23,6 +23,13 @@ Next free ID: T-372.
 freeze are in progress. Material changes stop at 10:45 JST.
 
 **Record:** `docs/tasks/T-369.md`.
+
+### T-372 — Complete interrupted worktree teardown
+
+**Phase:** active defect found by independent T-370 review. Durable checkpoints
+exist, but actual later-invocation completion is not yet implemented or tested.
+
+**Record:** `docs/tasks/T-372.md`.
 
 ### T-371 — Migrate legacy managed primary branches
 
