@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-362.
+Next free ID: T-364.
 
 ## Resume contract
 
@@ -24,6 +24,22 @@ breadth, reboot-durability mechanism, bypass-permission acceptance, injection
 blast radius). No Mac or owner-global state changed.
 
 **Record:** `docs/tasks/T-361.md`.
+
+### T-362 — Routine housekeeping workflow
+
+**Phase:** proposal; awaiting owner approval of scope and of whether this
+becomes a new skill or an extension of the existing housekeeping policy.
+Nothing implemented.
+
+**Record:** `docs/tasks/T-362.md`.
+
+### T-363 — Workspace lifecycle for alternating clients
+
+**Phase:** proposal; awaiting an owner decision between per-turn worktrees and
+the same plus an observability lease, and on the enforcement surface. Nothing
+implemented.
+
+**Record:** `docs/tasks/T-363.md`.
 
 ### T-354 — Relocate repository-native Codex roots under `projects`
 
