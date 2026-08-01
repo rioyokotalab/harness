@@ -123,16 +123,17 @@ Remote branch deletion is deliberately excluded: current Harness policy makes
 remote branches report-only. Active, unpublished, open-PR, sensitive, and
 event-gated state is preserved even when deletion would reduce counts.
 
-The fresh report-only remote inventory contains 4 Harness branches, 4
+The first report-only remote inventory contained 4 Harness branches, 4
 Students branches, 98 Swallow branches, and only `main` in Website and
-Personal. Students has one open branch, Dependabot PR #560; the other
-repositories have no open PR. Swallow therefore retains 97 non-`main` remote
-branches as visible cleanup debt, but policy intentionally provides no remote
-delete path. More importantly, its live local SW034 tip is `ec809eaf...` while
-the same-named remote ref is only `81ecc2ba...`; GitHub is not a complete
-backup of that active result. Harness has three merged task branches still
-visible remotely, also report-only. These counts are not interpreted as a
-reason to bypass the protected cleanup contract.
+Personal. After the protected T-369/T-370/T-372 publications, Harness has 7:
+`main` plus six exact merged-PR task branches. Students still has one open
+branch, Dependabot PR #560; the other repositories have no open PR. Swallow
+therefore retains 97 non-`main` remote branches as visible cleanup debt, but
+policy intentionally provides no remote delete path. More importantly, its
+live local SW034 tip is `ec809eaf...` while the same-named remote ref is only
+`81ecc2ba...`; GitHub is not a complete backup of that active result. All six
+Harness task branches remain report-only. These counts are not interpreted as
+a reason to bypass the protected cleanup contract.
 
 ## First publication checkpoint
 
@@ -216,14 +217,43 @@ Harness `19127355`, Students `19716717`, Swallow `19734040`, Website
 ruleset, and no stale document was allowed to restore the former one-review
 policy.
 
-Live workflow readback also matches the accepted sustainability design.
-Harness is public and retains PR plus weekly/manual full gates; Website is
-public and PR-only. Private Students and Swallow skip trusted-owner PR jobs,
-retain one unconditional weekly/manual backstop, and have no push trigger;
-Students' separate trusted-base boundary job runs only for non-owner pull
-requests. Personal has no workflow. GitHub's system-managed Dependabot entries
-remain visible, but no project added a nightly or bookkeeping schedule, a
-persistent self-hosted runner, or a duplicate post-merge run.
+Live workflow readback identified one remaining autonomy cost. Harness is
+public, but 47 owner-authored pull-request jobs ran during 2026-08-01/02 even
+though their exact trees were already validated locally. Public minutes do not
+consume the private allowance, but the queue and required-check wait still
+slow every owner task. Harness now applies the proven Students/Swallow
+owner/owner job skip while retaining hosted isolation for non-owner or
+mixed-sender events and unconditional weekly/manual full gates. Website is
+public and PR-only. Private Students and Swallow retain one unconditional
+weekly/manual backstop and have no push trigger; Students' separate trusted-base
+boundary job runs only for non-owner pull requests. Personal has no workflow.
+GitHub's system-managed Dependabot entries remain visible, but no project added
+a nightly or bookkeeping schedule, a persistent self-hosted runner, or a
+duplicate post-merge run. Organization billing totals remain unknown because
+the available read-only GitHub identity lacks `admin:org`; no scope expansion
+was requested or needed for the repository-local correction.
+
+## Recovery and retained-branch drills
+
+The three unpublished handoff bundles were restored into independent bare
+repositories rather than merely verified structurally. Each restored tip
+matched its recorded source exactly: Students `2f8771894...`, Swallow
+`ec809eaf...`, and Website `e0a8aa1a...`. `git fsck --full --no-dangling`
+passed in all three restores. The 86,594,716-byte drill boundary was then
+removed through an immutable guarded transaction; the post-delete identity
+check found no recovery residue and all protected anchors were unchanged.
+
+A fresh mirror classified every retained remote branch without deleting one.
+Harness has one branch already ancestral to `main` and five squash-merged task
+tips that appear divergent by graph ancestry. Students has three divergent
+refs, including the open Dependabot update and two T-035 histories. Swallow has
+23 refs ancestral to `main` and 74 graph-divergent refs; Website and Personal
+have none outside `main`. The largest unique Swallow histories are
+SW-033 (179 commits), SW-030 (138), SW-038 (42), SW-031 host generation (31),
+and the remote SW-034 continuation (24). These counts explain why blind
+ancestry-based deletion would be unsafe after protected squash merges and why
+remote refs remain report-only. The independently bundled live SW-034 tip is
+still newer than its same-named remote ref.
 
 Students' sole open PR, Dependabot #560, is behind current `main` and failed
 for one understood safety reason: all 695 other tests and 34 subtests passed,
@@ -278,6 +308,18 @@ no listener or open descriptor; a second guarded transaction removed only the
 two dead directories. Post-audit found exactly 14 current-user top-level
 entries, all declared runtime/handoff state, plus the same three out-of-scope
 `ishida`-owned research directories.
+
+A final boundary sweep covered `/var/tmp` and `/dev/shm`. The only
+current-user `/var/tmp` entry was T-303's completed 24-hour NFS observation:
+16 entries / 166,906,198 bytes, unopened but still referenced by its audit.
+Without reading payloads, its exact directory was preserved as private
+mode-0600 `t303-nfs-monitor-20260724.tar.gz` (11,722,016 bytes, SHA-256
+`b5b23debd22cd2be50fcf16b46950f87e9f275abaa6187fa6d6eea60ca532302`),
+gzip-validated, guarded-retired, and given a durable archive pointer in the
+T-303 audit. Five July OpenMPI shared-memory segments in `/dev/shm` were
+current-user, single-link, unopened, and had no matching MPI process; one
+guarded transaction removed the exact five files and released 83,886,080
+bytes without archiving ephemeral process memory.
 
 An open-unlinked-file audit exposed a separate Harness lifecycle defect that a
 directory inventory cannot see: 18 orphaned synthetic `codex-resilient` test

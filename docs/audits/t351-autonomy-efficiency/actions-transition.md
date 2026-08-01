@@ -8,11 +8,13 @@ locally. Remove duplicate `main` push workflows, retain one unconditional
 weekly/manual hosted gate in each private repository, and use one coherent PR
 per task instead of opening PRs for ledger-only checkpoints.
 
-Harness remains publicly hosted and independently validates every pull request,
-but it also removes its duplicate post-merge `main` run and retains a weekly
-plus manual full gate. This does not change the private-minute allowance; it
-removes 678 observed public duplicate runs and eliminates needless post-merge
-waiting and hosted work.
+Harness remains publicly hosted and validates non-owner or mixed-sender pull
+requests independently. Owner/owner pull requests use the same local
+self-attestation route as the private repositories. Harness also removes its
+duplicate post-merge `main` run and retains a weekly plus manual full gate.
+This does not change the private-minute allowance; it removes
+678 observed public duplicate runs and eliminates needless post-merge and
+owner-PR waiting.
 
 This is repository-only and required no organization, billing, ruleset, or
 approval-count write. It avoids the security and maintenance burden of a
@@ -93,6 +95,11 @@ Harness:
 - Its task branch retains the required `portable-phase1` pull-request job,
   removes the duplicate `main` push trigger, and adds weekly
   (`11 19 * * 6` UTC) plus manual full runs.
+- Owner/owner pull-request events skip that job after exact-tree local
+  validation; non-owner or mixed-sender events still run it in hosted
+  isolation. A 2026-08-01/02 readback found 47 owner-authored Harness PR runs,
+  demonstrating material avoidable queue latency even though public-repository
+  minutes do not consume the private allowance.
 - Pull requests use the deterministic impact selector against the immutable
   event base SHA. Narrow changes run owning contracts; workflow, policy,
   validator, manifest, safety, lifecycle, cleanup, credential, and unknown

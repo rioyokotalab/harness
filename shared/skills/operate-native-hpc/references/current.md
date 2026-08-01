@@ -21,10 +21,9 @@ native `yrun --help` and `ybatch --help` for the live interface.
   output plus the empty `.harness-smoke` directory.
 - Inside a one-node allocation, the validated two-rank route is
   `mpirun -n 2`; `srun -n 2` previously formed two rank-one singletons.
-- The current Slurm/ybatch surface has no residue-free test-only mode. Direct
-  `sbatch` is refused, native `/usr/bin/sbatch` exposes no verify option, and
-  `ybatch -d` exits before cleaning its generated temporary script. Do not
-  claim a multi-node dry run or bypass `ybatch` resource accounting.
+- The current interface has no residue-free test-only mode: direct `sbatch` is refused,
+  `/usr/bin/sbatch` has no verify option, and `ybatch -d` leaves its generated
+  script. Do not claim a multi-node dry run or bypass `ybatch` accounting.
 - The reviewed `openmpi/5.0-cuda-12.8` module supplies `mpicc` and `mpirun`.
   Managed interactive shells load it only when no MPI compiler is selected;
   tracked jobs source `shell/module-stack.sh local`. Login initialization can

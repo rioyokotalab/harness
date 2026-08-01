@@ -29,6 +29,7 @@ for path in \
     "$HPC/references/common.md" \
     "$HPC/references/current.md" \
     "$HPC/references/abci.md" \
+    "$HPC/references/abciq.md" \
     "$HPC/references/riken.md" \
     "$HPC/references/alps.md" \
     "$HPC/references/rccs.md" \
@@ -146,7 +147,7 @@ assert_contains 'do not preload this compatibility index' \
     'hardening legacy aggregate marker'
 
 # HPC selects common plus one exact site and retains site-specific stop gates.
-for route in common current abci riken alps rccs tsubame; do
+for route in common current abci abciq riken alps rccs tsubame; do
     assert_contains "[$route.md](references/$route.md)" "$HPC/SKILL.md" \
         "HPC missing $route route"
 done
@@ -154,8 +155,8 @@ for route in planning execute-monitor validation; do
     [ "$(grep -Fc "[$route.md](references/$route.md)" "$HPC/SKILL.md")" -eq 1 ] ||
         fail "HPC $route phase is not uniquely reachable"
 done
-[ "$(grep -Eoc '\[(current|abci|riken|alps|rccs|tsubame)\.md\]\(references/[a-z-]+\.md\)' \
-    "$HPC/SKILL.md")" -eq 6 ] || fail 'HPC route table is not one-reference-per-site'
+[ "$(grep -Eoc '\[(current|abci|abciq|riken|alps|rccs|tsubame)\.md\]\(references/[a-z-]+\.md\)' \
+    "$HPC/SKILL.md")" -eq 7 ] || fail 'HPC route table is not one-reference-per-site'
 assert_contains 'Then read exactly one' "$HPC/SKILL.md" \
     'HPC one-site routing gate'
 assert_contains 'target has no exact row, stop' "$HPC/SKILL.md" \
@@ -174,8 +175,8 @@ if grep -E 'ABCI|RIKYU|Alps|R-CCS|TSUBAME|`ab2?`|`ri`|`al`|`rc`|`t4`' \
     "$HPC/references/common.md" >/dev/null; then
     fail 'HPC common reference contains selected-site material'
 fi
-for route in current abci riken alps rccs tsubame; do
-    if grep -E '\]\((current|abci|riken|alps|rccs|tsubame)\.md\)' \
+for route in current abci abciq riken alps rccs tsubame; do
+    if grep -E '\]\((current|abci|abciq|riken|alps|rccs|tsubame)\.md\)' \
         "$HPC/references/$route.md" >/dev/null; then
         fail "HPC $route reference pulls another site reference"
     fi
@@ -250,6 +251,10 @@ assert_contains 'no residue-free test-only mode' \
     "$HPC/references/current.md" 'current-node dry-run gate'
 assert_contains 'explicit billing group and resource request' \
     "$HPC/references/abci.md" 'ABCI billing gate'
+assert_contains 'Check the status page before contacting the site' \
+    "$HPC/references/abciq.md" 'ABCI-Q maintenance gate'
+assert_contains 'never print PBS `Variable_List`' \
+    "$HPC/references/abciq.md" 'ABCI-Q environment-output gate'
 assert_contains 'do not describe a job as CPU-only' \
     "$HPC/references/riken.md" 'RIKEN allocation gate'
 assert_contains 'requires an explicit project account' \

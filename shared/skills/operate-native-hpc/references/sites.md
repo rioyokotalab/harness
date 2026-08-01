@@ -13,6 +13,7 @@ are validated baselines, not permission to guess a project's resource choices.
 |---|---|
 | current | [Validated local operational baseline](#current-node); run native `yrun --help` and `ybatch --help` for the live interface |
 | `ab`, `ab2` | [ABCI 3.0 User Guide](https://docs.abci.ai/v3/en/) |
+| `abq` | [ABCI-Q System H user guide](https://g-quat-abciq.github.io/abciq-docs/ja/job-execution/); check the [official status page](https://unit.aist.go.jp/g-quat/HowToUse/abci_q/#status) before contact |
 | `ri` | [Official RIKYU system announcement](https://www.riken.jp/en/news_pubs/news/2026/20260619_1/index.html); no public user guide was found as of 2026-07-15, so consult site-local help and do not substitute Fugaku commands |
 | `al` | [CSCS Alps documentation](https://docs.cscs.ch/alps/) |
 | `rc` | [R-CCS Cloud Service Portal and manual](https://portal.cloud.r-ccs.riken.jp/) |
@@ -24,6 +25,7 @@ are validated baselines, not permission to guess a project's resource choices.
 |---|---|---|---|---|
 | current | local `yrun`/`ybatch` over Slurm | `yrun`, `ybatch` | native returned Slurm ID and `squeue` | `scancel JOB_ID` |
 | `ab`, `ab2` | PBS Pro | `qsub` | `qstat JOB_ID` | `qdel JOB_ID` |
+| `abq` | PBS Pro | `qsub` | `qstat JOB_ID` | `qdel JOB_ID` |
 | `ri`, `al`, `rc` | Slurm | `srun` or `sbatch` | `squeue -j JOB_ID` | `scancel JOB_ID` |
 | `t4` | AGE | `qsub` or `qrsh` | `qstat JOB_ID` | `qdel JOB_ID` |
 
