@@ -1,4 +1,5 @@
 task	state	summary	source
+T-364	active	Safe repository cleanup and durable recovery evidence	TODO.md;docs/tasks/T-364.md;docs/plans/t364-housekeeping-cleanup-safety.md;docs/audits/t364-housekeeping-cleanup/audit.md
 T-363	active	Workspace lifecycle for alternating clients	TODO.md;docs/tasks/T-363.md
 T-362	complete	Routine housekeeping workflow	docs/tasks/T-362.md
 T-361	complete	Unified managed-Mac agent session with Claude parity	docs/tasks/T-361.md
