@@ -142,7 +142,10 @@ legacy_codex_live() {
     ps -axo pid=,args= 2>/dev/null |
         awk -v mine="${unified_pid:-0}" '
             $1 == mine { next }
-            /harness-codex-resilient|codex-resilient/ { found = 1 }
+            # Match the supervisor invocation itself, not any command line
+            # that merely mentions it -- an operator ssh or grep would
+            # otherwise defer the codex window for as long as it ran.
+            /codex-resilient/ && /--run/ && /--name/ { found = 1 }
             END { exit found ? 0 : 1 }
         '
 }

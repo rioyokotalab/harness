@@ -142,6 +142,9 @@ case "$*" in
         # supervisor-orphan probe
         [ "${FAKE_ORPHAN_SUPERVISOR:-0}" = 1 ] &&
             echo "4242 /bin/sh /tmp/harness-codex-resilient --run --name harness-codex-resume"
+        # A passer-by that merely mentions the supervisor must not defer.
+        [ "${FAKE_MENTION_ONLY:-0}" = 1 ] &&
+            echo "4243 ssh office pgrep -f codex-resilient"
         exit 0 ;;
 esac
 if [ "${FAKE_RC_READY:-0}" = 1 ]; then
@@ -254,6 +257,15 @@ grep -Fq 'codex-deferred-legacy' "$TEST_ROOT/orphan.out" ||
     fail "an orphaned supervisor did not defer the codex window"
 grep -Fq 'codex-resilient' "$TEST_ROOT/tmux-calls" &&
     fail "codex window was created while a supervisor was still alive"
+printf 'session\ncodex\nclaude\n' >"$STATE"
+
+# --- a command that merely mentions the supervisor must not defer --------
+printf 'session\nclaude\n' >"$STATE"
+: >"$TEST_ROOT/tmux-calls"
+FAKE_MENTION_ONLY=1 agent --host office --run-once >"$TEST_ROOT/mention.out" ||
+    fail "mention-only run failed"
+grep -Fq 'codex-deferred-legacy' "$TEST_ROOT/mention.out" &&
+    fail "an unrelated command mentioning the supervisor deferred codex"
 printf 'session\ncodex\nclaude\n' >"$STATE"
 
 # --- a missing window is never reported live -----------------------------
