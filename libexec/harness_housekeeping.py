@@ -21,6 +21,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 
 ARCHIVE_SCHEMA = "harness-housekeeping-archive-v2"
+COMPACTION_SCHEMA = "harness-housekeeping-compaction-v1"
 GENERATION_SCHEMA = "harness-housekeeping-generation-v1"
 PLAN_SCHEMA = "harness-housekeeping-plan-v2"
 MAX_PLAN_AGE = 900
@@ -359,17 +360,46 @@ def archive_audit(repo: Path, receipt_path: Path) -> Dict[str, Any]:
     if common.resolve(strict=True) != Path(values["git_common_dir"]).resolve(strict=True):
         die("archive receipt belongs to a different Git repository")
     bundle = Path(values["bundle"])
-    validate_private_file(bundle)
-    if digest(bundle) != values["bundle_sha256"]:
-        die("archive bundle digest changed")
-    git(repo, "bundle", "verify", str(bundle))
     heads: Dict[str, str] = {}
-    for line in text(git(repo, "bundle", "list-heads", str(bundle))).splitlines():
-        fields = line.split(" ", 1)
-        if len(fields) == 2:
-            heads[fields[1]] = fields[0]
-    if len(heads) != len(parsed["items"]):
-        die("archive bundle head set changed")
+    recovery_sources: Dict[str, Tuple[Path, str]] = {}
+    compaction = None
+    if bundle.exists() or bundle.is_symlink():
+        validate_private_file(bundle)
+        if digest(bundle) != values["bundle_sha256"]:
+            die("archive bundle digest changed")
+        git(repo, "bundle", "verify", str(bundle))
+        for line in text(git(repo, "bundle", "list-heads", str(bundle))).splitlines():
+            fields = line.split(" ", 1)
+            if len(fields) == 2:
+                heads[fields[1]] = fields[0]
+        if len(heads) != len(parsed["items"]):
+            die("archive bundle head set changed")
+        recovery_sources = {
+            row["tip"]: (bundle, row["archive"]) for row in parsed["items"]
+        }
+    else:
+        compaction = applied_compaction(repo, receipt_path)
+        if compaction is None:
+            die("archive bundle is absent without verified compaction")
+        state = state_directory()[1]
+        for generation in compaction["value"]["generations"]:
+            generation_value = parse_generation_receipt(
+                Path(generation["receipt"]), state
+            )
+            rows = [
+                row
+                for row in generation_value["repositories"]
+                if row["repository_canonical"] == str(repo)
+            ]
+            if len(rows) != 1:
+                die("archive compaction recovery repository changed")
+            for head in rows[0]["heads"]:
+                if head["tip"] in compaction["value"]["tips"]:
+                    recovery_sources.setdefault(
+                        head["tip"], (Path(rows[0]["bundle"]), head["ref"])
+                    )
+        if set(recovery_sources) != set(compaction["value"]["tips"]):
+            die("archive compaction recovery coverage changed")
     live = 0
     bundled = 0
     for row in parsed["items"]:
@@ -382,9 +412,27 @@ def archive_audit(repo: Path, receipt_path: Path) -> Dict[str, Any]:
             live += 1
         elif heads.get(row["archive"]) == row["tip"]:
             bundled += 1
+        elif compaction is not None and row["tip"] in recovery_sources:
+            continue
         else:
             die("archive tip is unavailable from both ref and bundle")
-    return {"items": len(parsed["items"]), "live": live, "bundled": bundled}
+    return {
+        "items": len(parsed["items"]),
+        "live": live,
+        "bundled": bundled,
+        "retired": compaction is not None,
+        "bundle_bytes": (
+            compaction["value"]["bundle_bytes"]
+            if compaction is not None
+            else validate_private_file(bundle).st_size
+        ),
+        "recovery_sources": recovery_sources,
+        "generations": (
+            len(compaction["value"]["generations"])
+            if compaction is not None
+            else 0
+        ),
+    }
 
 
 def generation_headset_digest(heads: Sequence[Dict[str, str]]) -> str:
@@ -523,6 +571,326 @@ def parse_generation_receipt(path: Path, state: Path) -> Dict[str, Any]:
     return value
 
 
+def parse_compaction_receipt(path: Path) -> Dict[str, Any]:
+    validate_private_file(path)
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise HousekeepingError("archive compaction receipt is malformed") from exc
+    required = {
+        "schema",
+        "transaction",
+        "created_epoch",
+        "source_receipt",
+        "source_sha256",
+        "repository_canonical",
+        "repository_id",
+        "bundle",
+        "bundle_sha256",
+        "bundle_bytes",
+        "bundle_id",
+        "tips",
+        "generations",
+    }
+    if not isinstance(value, dict) or set(value) != required:
+        die("archive compaction receipt fields are malformed")
+    if (
+        value["schema"] != COMPACTION_SCHEMA
+        or not isinstance(value["transaction"], str)
+        or not TXN_RE.fullmatch(value["transaction"])
+        or not isinstance(value["created_epoch"], int)
+        or value["created_epoch"] < 0
+        or not isinstance(value["repository_canonical"], str)
+        or not Path(value["repository_canonical"]).is_absolute()
+        or not isinstance(value["repository_id"], list)
+        or len(value["repository_id"]) != 2
+        or any(not isinstance(item, int) or item < 0 for item in value["repository_id"])
+        or not isinstance(value["bundle_bytes"], int)
+        or value["bundle_bytes"] < 0
+        or not isinstance(value["bundle_id"], list)
+        or len(value["bundle_id"]) != 2
+        or any(not isinstance(item, int) or item < 0 for item in value["bundle_id"])
+    ):
+        die("archive compaction receipt identity is malformed")
+    for field in ("source_receipt", "bundle"):
+        if not isinstance(value[field], str) or not Path(value[field]).is_absolute():
+            die("archive compaction path is malformed")
+    for field in ("source_sha256", "bundle_sha256"):
+        if not re.fullmatch(r"[0-9a-f]{64}", str(value[field])):
+            die("archive compaction digest is malformed")
+    tips = value["tips"]
+    if (
+        not isinstance(tips, list)
+        or not tips
+        or len(set(tips)) != len(tips)
+        or any(not isinstance(tip, str) or not OID_RE.fullmatch(tip) for tip in tips)
+    ):
+        die("archive compaction tips are malformed")
+    generations = value["generations"]
+    if not isinstance(generations, list) or len(generations) < 2:
+        die("archive compaction has insufficient generations")
+    generation_paths: set[str] = set()
+    for generation in generations:
+        if (
+            not isinstance(generation, dict)
+            or set(generation) != {"receipt", "sha256"}
+            or not isinstance(generation["receipt"], str)
+            or not Path(generation["receipt"]).is_absolute()
+            or not re.fullmatch(r"[0-9a-f]{64}", str(generation["sha256"]))
+            or generation["receipt"] in generation_paths
+        ):
+            die("archive compaction generation row is malformed")
+        generation_paths.add(generation["receipt"])
+    return value
+
+
+def generation_covers_source(
+    state: Path,
+    generation_path: Path,
+    source_name: str,
+    source_sha256: str,
+    repository: str,
+    tips: Sequence[str],
+) -> bool:
+    generation = parse_generation_receipt(generation_path, state)
+    if {"name": source_name, "sha256": source_sha256} not in generation[
+        "source_receipts"
+    ]:
+        return False
+    rows = [
+        row
+        for row in generation["repositories"]
+        if row["repository_canonical"] == repository
+    ]
+    if len(rows) != 1:
+        return False
+    covered = {head["tip"] for head in rows[0]["heads"]}
+    return set(tips).issubset(covered)
+
+
+def audit_compaction(
+    repo: Path, compaction_path: Path, expected_source: Optional[Path] = None
+) -> Dict[str, Any]:
+    value = parse_compaction_receipt(compaction_path)
+    source = Path(value["source_receipt"])
+    if expected_source is not None and source.resolve(strict=True) != expected_source.resolve(
+        strict=True
+    ):
+        die("archive compaction source receipt changed")
+    validate_private_file(source)
+    if digest(source) != value["source_sha256"]:
+        die("archive compaction source receipt digest changed")
+    if str(repo) != value["repository_canonical"] or list(path_id(repo)) != value[
+        "repository_id"
+    ]:
+        die("archive compaction repository identity changed")
+    parsed_source = parse_archive_receipt(source)
+    source_values = parsed_source["values"]
+    _lexical, state = state_directory()
+    if source.resolve(strict=True).parent != state or Path(value["bundle"]).parent != state:
+        die("archive compaction source is outside durable state")
+    if (
+        source_values["bundle"] != value["bundle"]
+        or source_values["bundle_sha256"] != value["bundle_sha256"]
+        or sorted(item["tip"] for item in parsed_source["items"])
+        != sorted(value["tips"])
+    ):
+        die("archive compaction source metadata changed")
+    generation_directory = state / "generations"
+    for generation in value["generations"]:
+        path = Path(generation["receipt"])
+        if path.resolve(strict=True).parent != generation_directory.resolve(strict=True):
+            die("archive compaction generation is outside durable state")
+        validate_private_file(path)
+        if digest(path) != generation["sha256"]:
+            die("archive compaction generation receipt changed")
+        if not generation_covers_source(
+            state,
+            path,
+            source.name,
+            value["source_sha256"],
+            str(repo),
+            value["tips"],
+        ):
+            die("archive compaction generation coverage changed")
+    bundle = Path(value["bundle"])
+    if bundle.exists() or bundle.is_symlink():
+        info = validate_private_file(bundle)
+        if (
+            list(path_id(bundle)) != value["bundle_id"]
+            or
+            info.st_size != value["bundle_bytes"]
+            or digest(bundle) != value["bundle_sha256"]
+        ):
+            die("archive compaction bundle changed")
+        status = "planned"
+    else:
+        status = "applied"
+    return {"status": status, "value": value}
+
+
+def applied_compaction(repo: Path, source: Path) -> Optional[Dict[str, Any]]:
+    _lexical, state = state_directory()
+    directory = state / "compactions"
+    if not directory.exists() and not directory.is_symlink():
+        return None
+    if directory.is_symlink() or not directory.is_dir():
+        die("archive compaction directory identity is unsafe")
+    info = directory.lstat()
+    if info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o700:
+        die("archive compaction directory identity is unsafe")
+    matches = []
+    for path in sorted(directory.glob("*.json")):
+        value = parse_compaction_receipt(path)
+        if value["source_receipt"] == str(source):
+            result = audit_compaction(repo, path, source)
+            if result["status"] == "applied":
+                matches.append(result)
+    if len(matches) > 1:
+        die("archive source has ambiguous compaction receipts")
+    return matches[0] if matches else None
+
+
+def compaction_directory() -> Path:
+    state = state_directory()[1]
+    directory = state / "compactions"
+    directory.mkdir(mode=0o700, exist_ok=True)
+    if directory.is_symlink() or not directory.is_dir():
+        die("archive compaction directory identity is unsafe")
+    info = directory.lstat()
+    if info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o700:
+        die("archive compaction directory identity is unsafe")
+    return directory
+
+
+def plan_archive_compaction(repo: Path, source: Path) -> Dict[str, Any]:
+    state = state_directory()[1]
+    validate_private_file(source)
+    if source.resolve(strict=True).parent != state or source.suffix != ".receipt":
+        die("archive compaction source receipt is outside durable state")
+    parsed = parse_archive_receipt(source)
+    values = parsed["values"]
+    if values.get("repository_canonical") != str(repo):
+        die("archive compaction source belongs to a different repository")
+    audit = archive_audit(repo, source)
+    if audit["retired"]:
+        die("archive source bundle is already compacted")
+    bundle = Path(values["bundle"])
+    bundle_info = validate_private_file(bundle)
+    if bundle.parent != state:
+        die("archive compaction bundle is outside durable state")
+
+    directory = compaction_directory()
+    for path in sorted(directory.glob("*.json")):
+        existing = parse_compaction_receipt(path)
+        if existing["source_receipt"] == str(source):
+            die("archive compaction plan already exists for source receipt")
+
+    generations = []
+    generation_directory = state / "generations"
+    if generation_directory.exists() or generation_directory.is_symlink():
+        if generation_directory.is_symlink() or not generation_directory.is_dir():
+            die("archive generation directory identity is unsafe")
+        generation_info = generation_directory.lstat()
+        if (
+            generation_info.st_uid != os.getuid()
+            or stat.S_IMODE(generation_info.st_mode) != 0o700
+        ):
+            die("archive generation directory identity is unsafe")
+        for path in sorted(generation_directory.glob("*.json")):
+            if generation_covers_source(
+                state,
+                path,
+                source.name,
+                digest(source),
+                str(repo),
+                [item["tip"] for item in parsed["items"]],
+            ):
+                generation_digest = digest(path)
+                generations.append(
+                    {"receipt": str(path), "sha256": generation_digest}
+                )
+    if len(generations) < 2:
+        die("archive compaction requires two verified covering generations")
+
+    transaction = transaction_id("compaction")
+    value: Dict[str, Any] = {
+        "schema": COMPACTION_SCHEMA,
+        "transaction": transaction,
+        "created_epoch": int(time.time()),
+        "source_receipt": str(source),
+        "source_sha256": digest(source),
+        "repository_canonical": str(repo),
+        "repository_id": list(path_id(repo)),
+        "bundle": str(bundle),
+        "bundle_sha256": values["bundle_sha256"],
+        "bundle_bytes": bundle_info.st_size,
+        "bundle_id": list(path_id(bundle)),
+        "tips": sorted(item["tip"] for item in parsed["items"]),
+        "generations": generations,
+    }
+    receipt = publish_bytes(directory, transaction + ".json", json_bytes(value))
+    result = audit_compaction(repo, receipt, source)
+    if result["status"] != "planned":
+        die("archive compaction plan changed before publication")
+    token = digest(receipt)
+    print(
+        "HOUSEKEEPING routine=archive-compaction mode=plan "
+        f"source={source.name} bytes={bundle_info.st_size} "
+        f"generations={len(generations)} candidate=yes"
+    )
+    print(f"  RECEIPT path={receipt} token={token}")
+    return {"receipt": str(receipt), "token": token, "bytes": bundle_info.st_size}
+
+
+def apply_archive_compaction(repo: Path, receipt: Path, token: str) -> None:
+    directory = compaction_directory()
+    validate_private_file(receipt)
+    if receipt.resolve(strict=True).parent != directory.resolve(strict=True):
+        die("archive compaction receipt is outside durable state")
+    if not re.fullmatch(r"[0-9a-f]{64}", token) or digest(receipt) != token:
+        die("archive compaction token changed")
+    result = audit_compaction(repo, receipt)
+    value = result["value"]
+    if result["status"] == "applied":
+        print(
+            "HOUSEKEEPING routine=archive-compaction mode=apply "
+            f"source={Path(value['source_receipt']).name} removed=0 status=already-applied"
+        )
+        return
+    bundle = Path(value["bundle"])
+    state = state_directory()[1]
+    if bundle.parent != state:
+        die("archive compaction bundle escaped durable state")
+    descriptor = os.open(str(state), os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    try:
+        info = os.stat(bundle.name, dir_fd=descriptor, follow_symlinks=False)
+        if (
+            not stat.S_ISREG(info.st_mode)
+            or [info.st_dev, info.st_ino] != value["bundle_id"]
+            or info.st_uid != os.getuid()
+            or stat.S_IMODE(info.st_mode) != 0o600
+            or info.st_nlink != 1
+            or info.st_size != value["bundle_bytes"]
+        ):
+            die("archive compaction bundle identity changed before unlink")
+        os.unlink(bundle.name, dir_fd=descriptor)
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+    if bundle.exists() or bundle.is_symlink():
+        die("archive compaction bundle survived exact unlink")
+    final = audit_compaction(repo, receipt)
+    if final["status"] != "applied":
+        die("archive compaction did not reach applied state")
+    print(
+        "HOUSEKEEPING routine=archive-compaction mode=apply "
+        f"source={Path(value['source_receipt']).name} removed=1 "
+        f"bytes={value['bundle_bytes']} generations={len(value['generations'])} "
+        "status=verified"
+    )
+
+
 def state_tree_bytes(state: Path) -> int:
     return sum(
         path.lstat().st_size
@@ -596,17 +964,14 @@ def create_generation(coordinator_repo: Path) -> Dict[str, Any]:
         if not repository_value or not Path(repository_value).is_absolute():
             die("archive generation source repository is missing")
         owner = canonical_repo(Path(repository_value))
-        archive_audit(owner, receipt)
+        audit = archive_audit(owner, receipt)
         sources.append({"name": receipt.name, "sha256": digest(receipt)})
         row = grouped.setdefault(
             repository_value,
             {"repository": owner, "tips": {}},
         )
-        source_bundle = Path(values["bundle"])
         for item in parsed["items"]:
-            row["tips"].setdefault(
-                item["tip"], (source_bundle, item["archive"])
-            )
+            row["tips"].setdefault(item["tip"], audit["recovery_sources"][item["tip"]])
 
     existing_generations = []
     for receipt in sorted(directory.glob("*.json")):
@@ -958,6 +1323,8 @@ def plan_archives(coordinator_repo: Path) -> None:
         return
     total_items = 0
     total_bytes = 0
+    retired_bundles = 0
+    retired_bytes = 0
     archive_only = 0
     pr_equal = 0
     pr_unknown = 0
@@ -995,9 +1362,13 @@ def plan_archives(coordinator_repo: Path) -> None:
         owner_repo, main_oid, pull_rows, refs = repo_cache[repository_value]
         audit = archive_audit(owner_repo, receipt)
         bundle = Path(values["bundle"])
-        bundle_bytes = validate_private_file(bundle).st_size
-        bound_bundles.add(bundle.resolve(strict=True))
-        total_bytes += bundle_bytes
+        bundle_bytes = audit["bundle_bytes"]
+        if audit["retired"]:
+            retired_bundles += 1
+            retired_bytes += bundle_bytes
+        else:
+            bound_bundles.add(bundle.resolve(strict=True))
+            total_bytes += bundle_bytes
         transaction = values.get("transaction", receipt.stem)
         try:
             created = datetime.strptime(
@@ -1070,7 +1441,10 @@ def plan_archives(coordinator_repo: Path) -> None:
             )
             ledger_yes += int(ledger_status == "yes")
             ledger_unknown += int(ledger_status == "unknown")
-            copy_status = "ref+bundle" if archive_ref_live else "bundle"
+            if audit["retired"]:
+                copy_status = "ref+generation" if archive_ref_live else "generation"
+            else:
+                copy_status = "ref+bundle" if archive_ref_live else "bundle"
             output_rows.append(
                 "  ITEM "
                 f"repository={owner_repo.name} transaction={transaction} "
@@ -1083,6 +1457,7 @@ def plan_archives(coordinator_repo: Path) -> None:
             "  REPORT "
             f"repository={owner_repo.name} transaction={transaction} "
             f"items={audit['items']} bytes={bundle_bytes} age_days={age_days} "
+            f"retired={int(audit['retired'])} generations={audit['generations']} "
             f"archive_only={receipt_archive_only} pr_equal={receipt_equal} "
             f"pr_unknown={receipt_unknown} audit=pass candidate=no",
         )
@@ -1096,9 +1471,10 @@ def plan_archives(coordinator_repo: Path) -> None:
     apply_paths = sorted(state.glob("worktree-apply-*.json"))
     all_bundles = sorted(state.rglob("*.bundle"))
     evidence_payloads = sorted(state.rglob("*.tar.gz"))
+    compaction_paths = sorted((state / "compactions").glob("*.json")) if (state / "compactions").is_dir() else []
     auxiliary_names = [
         path.name
-        for paths in (plan_paths, manifest_paths, apply_paths, all_bundles, evidence_payloads)
+        for paths in (plan_paths, manifest_paths, apply_paths, all_bundles, evidence_payloads, compaction_paths)
         for path in paths
     ]
     auxiliary_ledger = ledger_reference_map([coordinator_repo], auxiliary_names)
@@ -1185,6 +1561,17 @@ def plan_archives(coordinator_repo: Path) -> None:
             f"sources={len(value['source_receipts'])} "
             "restore_drill=pass status=valid candidate=no"
         )
+    for path in compaction_paths:
+        value = parse_compaction_receipt(path)
+        owner = canonical_repo(Path(value["repository_canonical"]))
+        audited = audit_compaction(owner, path)
+        output_rows.append(
+            "  AUX "
+            f"type=compaction name={path.name} bytes={value['bundle_bytes']} "
+            f"source={Path(value['source_receipt']).name} "
+            f"generations={len(value['generations'])} status={audited['status']} "
+            "candidate=no"
+        )
     oldest_days = max(
         artifact_age_days(validate_private_file(receipt)) for receipt in receipts
     )
@@ -1200,6 +1587,7 @@ def plan_archives(coordinator_repo: Path) -> None:
         "HOUSEKEEPING routine=archives mode=report "
         f"receipts={len(receipts)} items={total_items} "
         f"unique_tips={len(unique_tips)} bytes={total_bytes} "
+        f"retired_bundles={retired_bundles} retired_bytes={retired_bytes} "
         f"archive_only={archive_only} pr_equal={pr_equal} "
         f"pr_unknown={pr_unknown} ledger_yes={ledger_yes} "
         f"ledger_unknown={ledger_unknown} plans={len(plan_paths)} "
@@ -1209,6 +1597,7 @@ def plan_archives(coordinator_repo: Path) -> None:
         f"evidence_payloads={len(evidence_payloads)} "
         f"state_bytes={state_bytes} oldest_days={oldest_days} "
         f"generations={len(generation_receipts)} generation_trigger={trigger} "
+        f"compactions={len(compaction_paths)} "
         "candidates=0 apply=unavailable"
     )
     for row in output_rows:
@@ -2392,6 +2781,8 @@ def parser() -> argparse.ArgumentParser:
     action.add_argument("--apply", action="store_true")
     action.add_argument("--archive", action="store_true")
     action.add_argument("--create-generation", action="store_true")
+    action.add_argument("--plan-archive-compaction", action="store_true")
+    action.add_argument("--apply-archive-compaction", action="store_true")
     action.add_argument("--audit", action="store_true")
     action.add_argument("--open-worktree", action="store_true")
     action.add_argument("--recover-worktree", action="store_true")
@@ -2405,6 +2796,7 @@ def parser() -> argparse.ArgumentParser:
     value.add_argument("--items")
     value.add_argument("--transaction")
     value.add_argument("--source", default="manual")
+    value.add_argument("--source-receipt")
     value.add_argument("--launcher")
     value.add_argument("--repo")
     value.add_argument("--branch")
@@ -2450,6 +2842,18 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             f"receipt={result['receipt']} restore=pass status=verified"
         )
         return 0
+    if arguments.plan_archive_compaction:
+        if not arguments.source_receipt:
+            die("archive compaction plan requires --source-receipt")
+        plan_archive_compaction(repo, Path(arguments.source_receipt).absolute())
+        return 0
+    if arguments.apply_archive_compaction:
+        if not arguments.receipt or not arguments.token:
+            die("archive compaction apply requires --receipt and --token")
+        apply_archive_compaction(
+            repo, Path(arguments.receipt).absolute(), arguments.token
+        )
+        return 0
     if arguments.archive:
         if not arguments.items or not arguments.transaction:
             die("archive requires --items and --transaction")
@@ -2465,7 +2869,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         if not arguments.receipt:
             die("audit requires --receipt")
         result = archive_audit(repo, Path(arguments.receipt).absolute())
-        print(f"HOUSEKEEPING routine=archive mode=audit items={result['items']} live={result['live']} bundled={result['bundled']} status=pass")
+        print(
+            "HOUSEKEEPING routine=archive mode=audit "
+            f"items={result['items']} live={result['live']} "
+            f"bundled={result['bundled']} status=pass "
+            f"retired={int(result['retired'])} generations={result['generations']}"
+        )
         return 0
     if arguments.plan:
         selected = (
