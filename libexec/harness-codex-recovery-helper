@@ -536,6 +536,7 @@ def phone_mirror_snapshot(mapping, database, processes, target_paths, codex_home
             "rollout_location": False,
             "rollout_exists": False,
             "interactive_source": False,
+            "initialized_turn": False,
             "native_cwd": False,
         }
     if not mapping:
@@ -569,7 +570,7 @@ def phone_mirror_snapshot(mapping, database, processes, target_paths, codex_home
         for role, *_location in EXPECTED:
             canonical_rows[role] = connection.execute(
                 "SELECT archived, COALESCE(NULLIF(name, ''), title), cwd, "
-                "source, rollout_path FROM threads WHERE id = ?",
+                "source, rollout_path, tokens_used FROM threads WHERE id = ?",
                 (mapping[role]["thread"],),
             ).fetchone()
     except sqlite3.Error:
@@ -618,6 +619,7 @@ def phone_mirror_snapshot(mapping, database, processes, target_paths, codex_home
                         rollout_path, codex_home
                     ),
                     "interactive_source": row[3] in INTERACTIVE_SOURCES,
+                    "initialized_turn": isinstance(row[5], int) and row[5] > 0,
                 }
             )
         failed = sorted(

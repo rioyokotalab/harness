@@ -19,11 +19,11 @@ Next free ID: T-367.
 
 ### T-366 — Unified Harness cowork and Personal tmux layout
 
-**Phase:** final topology remains live, but physical-phone acceptance found
-Codex Personal absent and an extra retired Claude Harness lineage. Metadata
-proves Personal is the sole empty Codex root; one journaled generic
-initialization turn is next. Preserve the failed Claude lineage pending a
-supported product-side retirement path.
+**Phase:** the missing Codex Personal initialization turn was submitted once
+and is complete; monitor regression coverage now rejects empty canonical
+roots. Awaiting fresh physical-phone confirmation. Preserve the inactive
+failed Claude Harness lineage pending a supported product-side retirement
+path.
 
 **Record:** `docs/tasks/T-366.md`.
 
