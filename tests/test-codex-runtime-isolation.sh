@@ -8,14 +8,14 @@ TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEST_ROOT=$(mktemp -d "$TEMP_BASE/harness-codex-runtime-test.XXXXXX")
 harness_pid=
 students_pid=
-swallow_pid=
+personal_pid=
 harness_release=
 students_release=
-swallow_release=
+personal_release=
 canonical_release=
 harness_payload=
 students_payload=
-swallow_payload=
+personal_payload=
 
 fail() {
     printf 'FAIL: %s\n' "$*" >&2
@@ -41,11 +41,11 @@ stop_process() {
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
-    stop_process "$swallow_pid"
+    stop_process "$personal_pid"
     stop_process "$students_pid"
     stop_process "$harness_pid"
     for runtime_release in \
-        "$harness_release" "$students_release" "$swallow_release" \
+        "$harness_release" "$students_release" "$personal_release" \
         "$canonical_release"
     do
         if [ -n "$runtime_release" ] && [ -d "$runtime_release" ] &&
@@ -89,12 +89,12 @@ git_wrapper_dir=$TEST_ROOT/git-wrapper
 git_log=$TEST_ROOT/git.log
 target_harness=$TEST_ROOT/target-harness
 target_students=$TEST_ROOT/target-students
-target_swallow=$TEST_ROOT/target-swallow
+target_personal=$TEST_ROOT/target-personal
 mkdir -m 700 "$control" "$release_root" "$runtime" "$capture" \
     "$git_wrapper_dir"
 mkdir "$control/libexec" "$control/profiles"
 
-for repository in "$target_harness" "$target_students" "$target_swallow"; do
+for repository in "$target_harness" "$target_students" "$target_personal"; do
     mkdir -p "$repository/.codex"
     git -C "$repository" init -q -b main
     printf '%s\n' 'model = "gpt-5.6-sol"' \
@@ -131,13 +131,13 @@ for path in \
 do
     cp "$ROOT/$path" "$control/$path"
 done
-printf '# target\tindex\tcanonical_repository\n' \
+printf '# target\twindow_index\twindow_name\tpane_index\tcanonical_repository\n' \
     >"$control/profiles/codex-session-targets.tsv"
-printf 'harness\t0\t%s\n' "$target_harness" \
+printf 'harness\t0\tcowork\t0\t%s\n' "$target_harness" \
     >>"$control/profiles/codex-session-targets.tsv"
-printf 'students\t1\t%s\n' "$target_students" \
+printf 'personal\t1\tcodex\t0\t%s\n' "$target_personal" \
     >>"$control/profiles/codex-session-targets.tsv"
-printf 'swallow\t2\t%s\n' "$target_swallow" \
+printf 'students\t1\tcodex\t1\t%s\n' "$target_students" \
     >>"$control/profiles/codex-session-targets.tsv"
 chmod 755 "$control"/libexec/*
 chmod 644 "$control"/profiles/*
@@ -314,22 +314,22 @@ grep -F 'target=students' "$runtime/students/shared.state" >/dev/null ||
 [ -d "$runtime/harness/shared.lock" ] ||
     fail "same-name Students supervisor interfered with Harness lock"
 
-launch_supervisor "$target_swallow" swallow "$TEST_ROOT/swallow.out"
-swallow_pid=$launched_pid
-wait_for_file "$runtime/swallow/shared.state" "$swallow_pid"
-swallow_release=$(release_for_target swallow)
-swallow_payload=${swallow_release##*/}
-[ -f "$swallow_release/.codex-runtime-release" ] ||
-    fail "Swallow target-scoped runtime release was not created"
-grep -F 'target=swallow' "$runtime/swallow/shared.state" >/dev/null ||
-    fail "Swallow supervisor state lost target identity"
-[ -d "$runtime/swallow/shared.lock" ] ||
-    fail "Swallow target lock is absent"
+launch_supervisor "$target_personal" personal "$TEST_ROOT/personal.out"
+personal_pid=$launched_pid
+wait_for_file "$runtime/personal/shared.state" "$personal_pid"
+personal_release=$(release_for_target personal)
+personal_payload=${personal_release##*/}
+[ -f "$personal_release/.codex-runtime-release" ] ||
+    fail "Personal target-scoped runtime release was not created"
+grep -F 'target=personal' "$runtime/personal/shared.state" >/dev/null ||
+    fail "Personal supervisor state lost target identity"
+[ -d "$runtime/personal/shared.lock" ] ||
+    fail "Personal target lock is absent"
 [ -d "$runtime/harness/shared.lock" ] &&
     [ -d "$runtime/students/shared.lock" ] ||
-    fail "same-name Swallow supervisor interfered with another target lock"
+    fail "same-name Personal supervisor interfered with another target lock"
 [ "$harness_payload" = "$students_payload" ] &&
-    [ "$harness_payload" = "$swallow_payload" ] ||
+    [ "$harness_payload" = "$personal_payload" ] ||
     fail "identical payload changed identity across target-scoped releases"
 
 status_output=$(
@@ -486,7 +486,7 @@ run_released_launcher() {
 
 run_released_launcher harness "$harness_release" "$target_harness"
 run_released_launcher students "$students_release" "$target_students"
-run_released_launcher swallow "$swallow_release" "$target_swallow"
+run_released_launcher personal "$personal_release" "$target_personal"
 
 subdir_capture=$capture/released-subdirectory
 mkdir "$subdir_capture"
@@ -543,15 +543,15 @@ assert_wrong_release_repository() {
 assert_wrong_release_repository \
     harness "$harness_release" students "$target_students"
 assert_wrong_release_repository \
-    harness "$harness_release" swallow "$target_swallow"
+    harness "$harness_release" personal "$target_personal"
 assert_wrong_release_repository \
     students "$students_release" harness "$target_harness"
 assert_wrong_release_repository \
-    students "$students_release" swallow "$target_swallow"
+    students "$students_release" personal "$target_personal"
 assert_wrong_release_repository \
-    swallow "$swallow_release" harness "$target_harness"
+    personal "$personal_release" harness "$target_harness"
 assert_wrong_release_repository \
-    swallow "$swallow_release" students "$target_students"
+    personal "$personal_release" students "$target_students"
 
 invalid_capture=$capture/invalid-release-target
 mkdir "$invalid_capture"
@@ -598,8 +598,8 @@ grep -F 'released runtime target is invalid' \
 [ ! -e "$missing_capture/native-executed" ] ||
     fail "missing released runtime target reached native Codex"
 
-stop_process "$swallow_pid"
-swallow_pid=
+stop_process "$personal_pid"
+personal_pid=
 stop_process "$students_pid"
 students_pid=
 stop_process "$harness_pid"

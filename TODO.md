@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-366.
+Next free ID: T-367.
 
 ## Resume contract
 
@@ -16,6 +16,14 @@ Next free ID: T-366.
 5. A failed mutable-state query is unknown, never evidence of absence.
 
 ## Active queue
+
+### T-366 — Unified Harness cowork and Personal tmux layout
+
+**Phase:** executing after the owner authorized direct reconstruction into the
+final topology. Repository changes are under focused validation; live launch
+remains gated on protected publication and exact one-shot identity checks.
+
+**Record:** `docs/tasks/T-366.md`.
 
 ### T-363 — Workspace lifecycle for alternating clients
 

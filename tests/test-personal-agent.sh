@@ -378,7 +378,7 @@ PYTHONPATH="$ROOT/libexec" PYTHONDONTWRITEBYTECODE=1 \
     python3 - <<'PY' || fail 'managed target declaration changed'
 from harness_codex_targets import TARGET_NAMES
 
-assert TARGET_NAMES == ("harness", "students", "swallow")
+assert TARGET_NAMES == ("harness", "personal", "students")
 PY
 
 printf 'PASS: bounded Personal agent launcher\n'

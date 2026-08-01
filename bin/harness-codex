@@ -81,7 +81,7 @@ target=$(python3 "$target_resolver" target-for-repository "$project_root") || {
     exit 2
 }
 case "$target" in
-    harness|students|swallow) ;;
+    harness|personal|students) ;;
     *) echo "harness-codex: target resolver returned an invalid target" >&2; exit 2 ;;
 esac
 CDPATH='' cd -- "$project_root" || {

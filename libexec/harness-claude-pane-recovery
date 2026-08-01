@@ -11,6 +11,8 @@ from __future__ import print_function
 
 import argparse
 import os
+import re
+import shlex
 import subprocess
 import sys
 import time
@@ -23,9 +25,10 @@ sys.path.insert(0, os.path.join(CONTROL_ROOT, "libexec"))
 from harness_claude_targets import (  # noqa: E402
     LAUNCH_FLAGS,
     PANE_ROLE_OPTION,
+    PANE_SESSION_OPTION,
     SESSION_NAME,
-    WINDOW_NAME,
     TargetError,
+    location_for,
     repository_for,
 )
 
@@ -89,41 +92,57 @@ def pane_snapshot(tmux, pane_id):
                     "#{session_name}",
                     "#{window_id}",
                     "#{window_name}",
+                    "#{window_index}",
                     "#{pane_id}",
+                    "#{pane_index}",
                     "#{pane_dead}",
                     "#{pane_pid}",
                     "#{pane_current_path}",
                     "#{" + PANE_ROLE_OPTION + "}",
+                    "#{" + PANE_SESSION_OPTION + "}",
                 )
             ),
         ]
     )
     fields = output.split("\t")
-    if len(fields) != 8:
+    if len(fields) != 11:
         fail("tmux pane metadata is malformed")
     return {
         "session": fields[0],
         "window_id": fields[1],
         "window_name": fields[2],
-        "pane_id": fields[3],
-        "dead": fields[4] == "1",
-        "pane_pid": fields[5],
-        "path": fields[6],
-        "role": fields[7],
+        "window_index": int(fields[3]),
+        "pane_id": fields[4],
+        "pane_index": int(fields[5]),
+        "dead": fields[6] == "1",
+        "pane_pid": fields[7],
+        "path": fields[8],
+        "role": fields[9],
+        "session_id": fields[10],
     }
 
 
 def verify_target_pane(snapshot, arguments, repository):
+    window_index, window_name, pane_index = location_for(arguments.target)
     if snapshot["session"] != SESSION_NAME:
         fail("pane is outside the managed session")
     if snapshot["window_id"] != arguments.window_id:
         fail("pane window identity drifted")
-    if snapshot["window_name"] != WINDOW_NAME:
+    if snapshot["window_name"] != window_name:
         fail("pane window name drifted")
+    if (
+        arguments.window_index != window_index
+        or arguments.pane_index != pane_index
+        or snapshot["window_index"] != window_index
+        or snapshot["pane_index"] != pane_index
+    ):
+        fail("pane location drifted")
     if snapshot["pane_id"] != arguments.pane_id:
         fail("pane identity drifted")
     if snapshot["role"] != arguments.target:
         fail("pane role option drifted")
+    if snapshot["session_id"] != arguments.session_id:
+        fail("pane session identity drifted")
     if not snapshot["dead"] and snapshot["path"] != repository:
         fail("pane working directory drifted")
 
@@ -137,8 +156,14 @@ def main():
     parser.add_argument("--pane-index", type=int, required=True)
     parser.add_argument("--pane-pid", type=int, required=True)
     parser.add_argument("--pane-start", required=True)
-    parser.add_argument("--relaunch", choices=("continue", "plain"), required=True)
+    parser.add_argument("--relaunch", choices=("exact",), required=True)
+    parser.add_argument("--session-id", required=True)
     arguments = parser.parse_args()
+    if not re.fullmatch(
+        r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        arguments.session_id,
+    ):
+        fail("Claude session identity is malformed")
 
     tmux = tmux_binary()
     claude = claude_binary()
@@ -153,9 +178,13 @@ def main():
         )
         return 1
 
-    command = "exec {} {}".format(claude, " ".join(LAUNCH_FLAGS))
-    if arguments.relaunch == "continue":
-        command += " --continue"
+    command = "exec {} {} --name {} --remote-control {} --resume {}".format(
+        shlex.quote(claude),
+        " ".join(shlex.quote(value) for value in LAUNCH_FLAGS),
+        shlex.quote(arguments.target),
+        shlex.quote(arguments.target),
+        shlex.quote(arguments.session_id),
+    )
     subprocess.run(
         [tmux, "respawn-pane", "-t", arguments.pane_id, command],
         stdin=subprocess.DEVNULL,

@@ -25,8 +25,6 @@ os.environ.pop("HARNESS_ROOT", None)
 sys.path.insert(0, os.path.join(CONTROL_ROOT, "libexec"))
 from harness_codex_targets import (  # noqa: E402
     SESSION_NAME,
-    WINDOW_INDEX,
-    WINDOW_NAME,
     PANE_ROLE_OPTION,
     TargetError,
     load_targets,
@@ -34,7 +32,21 @@ from harness_codex_targets import (  # noqa: E402
 )
 
 TARGETS = load_targets()
-EXPECTED = tuple((value["name"], value["index"]) for value in TARGETS)
+EXPECTED = tuple(
+    (
+        value["name"],
+        value["window_index"],
+        value["window_name"],
+        value["pane_index"],
+    )
+    for value in TARGETS
+)
+TARGET_LOCATIONS = {
+    value["name"]: (
+        value["window_index"], value["window_name"], value["pane_index"]
+    )
+    for value in TARGETS
+}
 PANE_ROLE_FORMAT = "#{" + PANE_ROLE_OPTION + "}"
 TARGET_PATHS = {
     value["name"]: value["repository"] for value in TARGETS
@@ -198,10 +210,10 @@ def phone_mirror_health(now=None, processes=None):
         or receipt.get("canonical_count") != len(EXPECTED)
         or receipt.get("active_top_level_count") != len(EXPECTED)
         or receipt.get("mismatch_classes")
-        or sorted(roles) != sorted(name for name, _index in EXPECTED)
+        or sorted(roles) != sorted(name for name, *_location in EXPECTED)
         or any(
             not all(roles[name].get(field) is True for field in required)
-            for name, _index in EXPECTED
+            for name, *_location in EXPECTED
         )
     ):
         return "unavailable"
@@ -567,7 +579,7 @@ def tmux_panes():
                 "dead": fields[8] == "1",
             }
         )
-    return panes
+    return [pane for pane in panes if pane["name"]]
 
 
 def tmux_clients():
@@ -588,37 +600,34 @@ def tmux_clients():
     )
 
 
-def canonical_window(panes):
-    identities = {
-        (pane["window_index"], pane["window_id"], pane["window_name"])
-        for pane in panes
-    }
-    if len(identities) != 1:
-        return False
-    index, _window_id, name = next(iter(identities))
-    return index == WINDOW_INDEX and name == WINDOW_NAME
-
-
 def enforce_order(panes):
-    expected_names = [name for name, _index in EXPECTED]
+    expected_names = [name for name, *_location in EXPECTED]
     if (
         len(panes) != len(EXPECTED)
-        or not canonical_window(panes)
         or sorted(pane["name"] for pane in panes) != sorted(expected_names)
         or any(pane["dead"] for pane in panes)
         or any(
             not target_cwd_allowed(pane["name"], pane["path"])
             for pane in panes
         )
+        or any(
+            (pane["window_index"], pane["window_name"])
+            != TARGET_LOCATIONS[pane["name"]][:2]
+            for pane in panes
+        )
     ):
         return panes, "deferred-ambiguous"
     before_clients = tmux_clients()
     action = "none"
-    for name, target_index in EXPECTED:
+    for name, _window_index, window_name, target_index in EXPECTED:
         current = next(pane for pane in panes if pane["name"] == name)
         if current["index"] != target_index:
             target = next(
-                (pane for pane in panes if pane["index"] == target_index),
+                (
+                    pane for pane in panes
+                    if pane["window_name"] == window_name
+                    and pane["index"] == target_index
+                ),
                 None,
             )
             if target is None:
@@ -638,7 +647,7 @@ def enforce_order(panes):
             panes = tmux_panes()
     if any(
         next(pane for pane in panes if pane["name"] == name)["index"] != index
-        for name, index in EXPECTED
+        for name, _window_index, _window_name, index in EXPECTED
     ):
         fail("tmux order correction did not converge")
     if tmux_clients() != before_clients:
@@ -649,7 +658,7 @@ def enforce_order(panes):
 def collect_health(panes, processes=None, socket_peers=None):
     lookup_process = process_info if processes is None else processes.get
     health = {}
-    for name, expected_index in EXPECTED:
+    for name, expected_window_index, expected_window_name, expected_index in EXPECTED:
         matches = [pane for pane in panes if pane["name"] == name]
         if len(matches) != 1:
             health[name] = {"state": "unhealthy", "reason": "pane-missing"}
@@ -658,8 +667,9 @@ def collect_health(panes, processes=None, socket_peers=None):
         entry = {"pane": pane, "state": "unhealthy", "reason": "metadata"}
         if (
             pane["dead"]
-            or pane["window_index"] != WINDOW_INDEX
-            or pane["window_name"] != WINDOW_NAME
+            or pane["window_index"] != expected_window_index
+            or pane["window_name"] != expected_window_name
+            or pane["index"] != expected_index
         ):
             health[name] = entry
             continue
@@ -798,7 +808,7 @@ def collect_health(panes, processes=None, socket_peers=None):
 
 def mapping_snapshot(mapping, health, processes=None):
     lookup_process = process_info if processes is None else processes.get
-    for name, _index in EXPECTED:
+    for name, *_location in EXPECTED:
         entry = health.get(name, {})
         identity = entry.get("identity")
         if (
@@ -826,13 +836,16 @@ def mapping_snapshot(mapping, health, processes=None):
 
 
 def canonical_topology(panes):
-    if len(panes) != len(EXPECTED) or not canonical_window(panes):
+    if len(panes) != len(EXPECTED):
         return False
-    for name, index in EXPECTED:
+    for name, window_index, window_name, index in EXPECTED:
         matches = [
             pane
             for pane in panes
-            if pane["name"] == name and pane["index"] == index
+            if pane["name"] == name
+            and pane["window_index"] == window_index
+            and pane["window_name"] == window_name
+            and pane["index"] == index
         ]
         if (
             len(matches) != 1
@@ -847,7 +860,7 @@ def recovery_candidates(panes, health, clients, processes=None):
     lookup_process = process_info if processes is None else processes.get
     blocked = [
         name
-        for name, _index in EXPECTED
+        for name, *_location in EXPECTED
         if health.get(name, {}).get("state") == "blocked"
         and health[name].get("reason") == "unsafe-tail"
     ]
@@ -856,7 +869,7 @@ def recovery_candidates(panes, health, clients, processes=None):
     if not canonical_topology(panes):
         return [], "deferred-ambiguous"
     stable = []
-    for name, _index in EXPECTED:
+    for name, *_location in EXPECTED:
         entry = health.get(name, {})
         if (
             not entry.get("identity")
@@ -962,8 +975,8 @@ def test_fixture(path, enforce):
     order_action = "none"
     names = [pane["name"] for pane in panes]
     if enforce:
-        if len(panes) == 3 and sorted(names) == sorted(name for name, _ in EXPECTED):
-            for name, index in EXPECTED:
+        if len(panes) == 3 and sorted(names) == sorted(name for name, *_location in EXPECTED):
+            for name, _window_index, _window_name, index in EXPECTED:
                 next(pane for pane in panes if pane["name"] == name)["index"] = index
             order_action = "ordered" if fixture.get("out_of_order") else "none"
         else:
@@ -1100,7 +1113,7 @@ def main():
                         )
                     elif selection != "none":
                         repair_action = selection
-                for name, index in EXPECTED:
+                for name, _window_index, _window_name, index in EXPECTED:
                     entry = health.get(name, {})
                     print(
                         "TMUX_CODEX_PANE index={} name={} state={} reason={}".format(

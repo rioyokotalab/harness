@@ -5,23 +5,23 @@ ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 HARNESS=$ROOT/bin/harness
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
-TEST_ROOT=$(mktemp -d "$TEMP_BASE/harness-projects-pane-layout-test.XXXXXX")
+TEST_ROOT=$(mktemp -d "$TEMP_BASE/harness-final-pane-layout-test.XXXXXX")
 SOCKET_DIR=$TEST_ROOT/socket
-SOCKET_NAME=projects-pane-layout
-mkdir "$SOCKET_DIR"
+SOCKET_PATH=$SOCKET_DIR/tmux.sock
+mkdir -m 700 "$SOCKET_DIR"
 
+# The explicit private socket and removal of inherited TMUX are both mandatory.
+# This fixture must be incapable of discovering or mutating the user's server.
 tmux_test() {
-    TMUX_TMPDIR=$SOCKET_DIR tmux -L "$SOCKET_NAME" "$@"
+    env -u TMUX tmux -S "$SOCKET_PATH" "$@"
 }
 
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
     cleanup_failed=0
-    if TMUX_TMPDIR=$SOCKET_DIR tmux -L "$SOCKET_NAME" has-session \
-        -t projects 2>/dev/null; then
-        TMUX_TMPDIR=$SOCKET_DIR tmux -L "$SOCKET_NAME" kill-server ||
-            cleanup_failed=1
+    if [ -S "$SOCKET_PATH" ] && tmux_test has-session -t harness 2>/dev/null; then
+        tmux_test kill-server || cleanup_failed=1
     fi
     if [ -d "$TEST_ROOT" ]; then
         "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEST_ROOT" "$TEMP_BASE" \
@@ -41,94 +41,84 @@ fail() {
 }
 
 pane_field() {
-    pane=$1
-    format=$2
-    tmux_test display-message -p -t "$pane" "$format"
+    tmux_test display-message -p -t "$1" "$2"
 }
 
-assert_pane_identity() {
+assert_even() {
+    widths=$(tmux_test list-panes -t "$1" -F '#{pane_width}')
+    minimum=$(printf '%s\n' "$widths" | sort -n | head -n 1)
+    maximum=$(printf '%s\n' "$widths" | sort -n | tail -n 1)
+    [ $((maximum - minimum)) -le 1 ] || fail "$1 panes are not even-horizontal"
+}
+
+set_codex_role() {
     pane=$1
-    expected_id=$2
-    expected_pid=$3
-    [ "$(pane_field "$pane" '#{pane_id}')" = "$expected_id" ] ||
-        fail "$pane pane ID changed"
-    [ "$(pane_field "$pane" '#{pane_pid}')" = "$expected_pid" ] ||
-        fail "$pane process changed"
+    role=$2
+    tmux_test set-option -p -t "$pane" @harness_target "$role"
+    tmux_test select-pane -t "$pane" -T "$role"
+}
+
+set_claude_role() {
+    pane=$1
+    role=$2
+    session_id=$3
+    tmux_test set-option -p -t "$pane" @harness_claude_target "$role"
+    tmux_test set-option -p -t "$pane" @harness_claude_session_id "$session_id"
+    tmux_test select-pane -t "$pane" -T "$role"
+}
+
+label_window() {
+    window=$1
+    format=$2
+    tmux_test select-layout -t "$window" even-horizontal >/dev/null
+    tmux_test set-option -w -t "$window" pane-border-status top
+    tmux_test set-option -w -t "$window" pane-border-format "$format"
 }
 
 command -v tmux >/dev/null 2>&1 || fail "tmux unavailable"
 grep -F -x 'bind-key z resize-pane -Z' "$ROOT/config/tmux/tmux.conf" \
     >/dev/null || fail "managed pane zoom binding"
 
-tmux_test -f /dev/null new-session -d -s projects -n harness 'exec sleep 600'
-tmux_test new-window -d -t projects:1 -n students 'exec sleep 600'
-tmux_test new-window -d -t projects:2 -n swallow 'exec sleep 600'
+tmux_test -f /dev/null new-session -d -s harness -n cowork 'exec sleep 600'
+tmux_test split-window -d -h -t harness:cowork 'exec sleep 600'
+tmux_test new-window -d -t harness:1 -n codex 'exec sleep 600'
+tmux_test split-window -d -h -t harness:codex 'exec sleep 600'
+tmux_test new-window -d -t harness:2 -n claude 'exec sleep 600'
+tmux_test split-window -d -h -t harness:claude 'exec sleep 600'
 
-harness_id=$(pane_field projects:harness.0 '#{pane_id}')
-harness_pid=$(pane_field "$harness_id" '#{pane_pid}')
-students_id=$(pane_field projects:students.0 '#{pane_id}')
-students_pid=$(pane_field "$students_id" '#{pane_pid}')
-swallow_id=$(pane_field projects:swallow.0 '#{pane_id}')
-swallow_pid=$(pane_field "$swallow_id" '#{pane_pid}')
+set_codex_role harness:cowork.0 harness
+set_claude_role harness:cowork.1 harness 00000000-0000-4000-8000-000000000001
+set_codex_role harness:codex.0 personal
+set_codex_role harness:codex.1 students
+set_claude_role harness:claude.0 personal 00000000-0000-4000-8000-000000000002
+set_claude_role harness:claude.1 students 00000000-0000-4000-8000-000000000003
 
-tmux_test join-pane -d -s "$students_id" -t "$harness_id"
-tmux_test join-pane -d -s "$swallow_id" -t "$harness_id"
-tmux_test rename-window -t "$harness_id" codex
-tmux_test set-option -p -t "$harness_id" @harness_target harness
-tmux_test set-option -p -t "$students_id" @harness_target students
-tmux_test set-option -p -t "$swallow_id" @harness_target swallow
-tmux_test select-pane -t "$harness_id" -T harness
-tmux_test select-pane -t "$students_id" -T students
-tmux_test select-pane -t "$swallow_id" -T swallow
-tmux_test swap-pane -d -s "$harness_id" -t projects:codex.0
-tmux_test swap-pane -d -s "$students_id" -t projects:codex.1
-tmux_test select-layout -t projects:codex even-horizontal >/dev/null
-tmux_test set-option -w -t projects:codex pane-border-status top
-tmux_test set-option -w -t projects:codex pane-border-format \
-    ' #{pane_index}:#{@harness_target} '
+label_window harness:cowork \
+    ' #{pane_index}:#{?#{@harness_target},codex/#{@harness_target},claude/#{@harness_claude_target}} '
+label_window harness:codex ' #{pane_index}:codex/#{@harness_target} '
+label_window harness:claude ' #{pane_index}:claude/#{@harness_claude_target} '
 
-[ "$(tmux_test list-windows -t projects -F '#{window_index}:#{window_name}')" = \
-    '0:codex' ] || fail "canonical sole window"
-[ "$(tmux_test list-panes -t projects:codex \
-    -F '#{pane_index}:#{pane_title}:#{@harness_target}' | tr '\n' ' ')" = \
-    '0:harness:harness 1:students:students 2:swallow:swallow ' ] ||
-    fail "canonical pane order and roles"
-[ "$(tmux_test list-panes -t projects:codex \
-    -F '#{pane_index}:#{pane_title}' | tr '\n' ' ')" = \
-    '0:harness 1:students 2:swallow ' ] || fail "canonical pane order"
-[ "$(tmux_test display-message -p -t projects:codex \
-    '#{pane-border-status}|#{pane-border-format}')" = \
-    'top| #{pane_index}:#{@harness_target} ' ] || fail "stable pane labels"
-pane_widths=$(tmux_test list-panes -t projects:codex -F '#{pane_width}')
-minimum_width=$(printf '%s\n' "$pane_widths" | sort -n | head -n 1)
-maximum_width=$(printf '%s\n' "$pane_widths" | sort -n | tail -n 1)
-[ $((maximum_width - minimum_width)) -le 1 ] ||
-    fail "even-horizontal pane widths"
-assert_pane_identity projects:codex.0 "$harness_id" "$harness_pid"
-assert_pane_identity projects:codex.1 "$students_id" "$students_pid"
-assert_pane_identity projects:codex.2 "$swallow_id" "$swallow_pid"
+[ "$(tmux_test list-windows -t harness -F '#{window_index}:#{window_name}' | tr '\n' ' ')" = \
+    '0:cowork 1:codex 2:claude ' ] || fail "canonical window topology"
+[ "$(tmux_test list-panes -s -t harness \
+    -F '#{window_index}:#{pane_index}:#{@harness_target}:#{@harness_claude_target}' | tr '\n' ' ')" = \
+    '0:0:harness: 0:1::harness 1:0:personal: 1:1:students: 2:0::personal 2:1::students ' ] ||
+    fail "canonical pane roles"
 
-[ "$(pane_field "$harness_id" '#{window_zoomed_flag}')" = 0 ] ||
+assert_even harness:cowork
+assert_even harness:codex
+assert_even harness:claude
+
+[ "$(pane_field harness:cowork.0 '#{window_zoomed_flag}')" = 0 ] ||
     fail "initial pane zoom state"
-tmux_test resize-pane -Z -t "$harness_id"
-[ "$(pane_field "$harness_id" '#{window_zoomed_flag}')" = 1 ] ||
+tmux_test resize-pane -Z -t harness:cowork.0
+[ "$(pane_field harness:cowork.0 '#{window_zoomed_flag}')" = 1 ] ||
     fail "pane zoom activation"
-tmux_test resize-pane -Z -t "$harness_id"
-[ "$(pane_field "$harness_id" '#{window_zoomed_flag}')" = 0 ] ||
+tmux_test resize-pane -Z -t harness:cowork.0
+[ "$(pane_field harness:cowork.0 '#{window_zoomed_flag}')" = 0 ] ||
     fail "pane zoom restoration"
 
-tmux_test break-pane -d -s "$students_id" -t projects:1 -n students
-tmux_test break-pane -d -s "$swallow_id" -t projects:2 -n swallow
-tmux_test rename-window -t "$harness_id" harness
+[ "$(tmux_test list-sessions -F '#{session_name}')" = harness ] ||
+    fail "private fixture session"
 
-[ "$(tmux_test list-windows -t projects \
-    -F '#{window_index}:#{window_name}' | tr '\n' ' ')" = \
-    '0:harness 1:students 2:swallow ' ] || fail "rollback window topology"
-assert_pane_identity projects:harness.0 "$harness_id" "$harness_pid"
-assert_pane_identity projects:students.0 "$students_id" "$students_pid"
-assert_pane_identity projects:swallow.0 "$swallow_id" "$swallow_pid"
-[ "$(tmux_test list-panes -s -t projects -F '#{@harness_target}' |
-    sort | tr '\n' ' ')" = 'harness students swallow ' ] ||
-    fail "rollback pane roles"
-
-echo 'projects pane layout tests: PASS'
+echo 'final harness pane layout tests: PASS'

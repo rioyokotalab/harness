@@ -76,7 +76,7 @@ assert "codex unarchive" not in source
 assert "phone-mirror-drift" in source
 assert "physical-phone visibility" in source
 assert "never rewrite it" in source
-assert "projects:0:codex" in source
+assert "profile-declared `harness` session location" in source
 assert "@harness_target" in source
 assert "shared window alone" in source
 PY
@@ -92,9 +92,7 @@ source, test_root = sys.argv[1:3]
 module = importlib.machinery.SourceFileLoader(
     "recovery_helper_phone_test", source
 ).load_module()
-assert module.SESSION_NAME == "projects"
-assert module.WINDOW_INDEX == 0
-assert module.WINDOW_NAME == "codex"
+assert module.SESSION_NAME == "harness"
 assert module.PANE_ROLE_OPTION == "@harness_target"
 for kind in module.TARGETLESS_EVENT_KINDS:
     prompt = module.worker_prompt({"identity": {"kind": kind}})
@@ -138,28 +136,36 @@ assert module.pending_event_for_kind(
 ) is None
 original_run_value = module.run_value
 original_process_info = module.process_info
-rows = [
-    "0\tcodex\t@50\t{}\t{}\t%{}\t{}\t{}\t0".format(
-        index,
-        role,
-        index,
-        100 + index,
-        module.TARGET_PATHS[role],
+rows = []
+pid_roles = {}
+for ordinal, (role, window_index, window_name, index) in enumerate(
+    module.EXPECTED
+):
+    pid = 100 + ordinal
+    pid_roles[pid] = role
+    rows.append(
+        "{}\t{}\t@50\t{}\t{}\t%{}\t{}\t{}\t0".format(
+            window_index,
+            window_name,
+            index,
+            role,
+            ordinal,
+            pid,
+            module.TARGET_PATHS[role],
+        )
     )
-    for role, index in module.EXPECTED
-]
 module.run_value = lambda _arguments, check=False: "\n".join(rows) + "\n"
 module.process_info = lambda pid: {
     "argv": [
         "harness-codex-resilient",
         "--remote-session",
-        "thread-{}".format(module.EXPECTED[pid - 100][0]),
+        "thread-{}".format(pid_roles[pid]),
     ]
 }
 pane_mapping = module.tmux_mapping()
-assert sorted(pane_mapping) == ["harness", "students", "swallow"]
+assert sorted(pane_mapping) == ["harness", "personal", "students"]
 assert pane_mapping["harness"]["pane_id"] == "%0"
-assert pane_mapping["swallow"]["window_id"] == "@50"
+assert pane_mapping["personal"]["window_id"] == "@50"
 assert pane_mapping["students"]["window_name"] == "codex"
 module.run_value = lambda _arguments, check=False: (
     "\n".join(row.replace("\tcodex\t", "\twrong\t") for row in rows) + "\n"
@@ -175,7 +181,7 @@ harness_root = str(base / "harness")
 target_paths = {
     "harness": harness_root,
     "students": str(base / "students"),
-    "swallow": str(base / "swallow"),
+    "personal": harness_root,
 }
 mapping = {}
 connection = sqlite3.connect(str(database))
@@ -184,7 +190,13 @@ connection.execute(
     "id TEXT PRIMARY KEY, rollout_path TEXT, source TEXT, cwd TEXT, "
     "title TEXT, archived INTEGER, name TEXT)"
 )
-for index, role in enumerate(("harness", "students", "swallow")):
+locations = {
+    "harness": (0, "cowork", 0),
+    "personal": (1, "codex", 0),
+    "students": (1, "codex", 1),
+}
+for role in ("harness", "personal", "students"):
+    window_index, window_name, index = locations[role]
     thread = "thread-{}".format(role)
     rollout = sessions / "{}.jsonl".format(role)
     rollout.write_text("{}\n")
@@ -204,12 +216,12 @@ for index, role in enumerate(("harness", "students", "swallow")):
     mapping[role] = {
         "index": index,
         "pane_id": "%{}".format(index),
-        "window_index": 0,
+        "window_index": window_index,
         "window_id": "@0",
-        "window_name": "codex",
+        "window_name": window_name,
         "thread": thread,
         "cwd": harness_root,
-        "native_cwd": role == "harness",
+        "native_cwd": role != "students",
     }
 connection.commit()
 processes = [{"pid": os.getpid(), "start": "remote-start"}]
@@ -220,10 +232,9 @@ legacy_cwd, drift = module.phone_mirror_snapshot(
 assert legacy_cwd["status"] == "degraded"
 assert legacy_cwd["active_top_level_count"] == 3
 assert "native_cwd:students" in legacy_cwd["mismatch_classes"]
-assert "native_cwd:swallow" in legacy_cwd["mismatch_classes"]
 assert legacy_cwd["roles"]["harness"]["native_cwd"] is True
 assert legacy_cwd["roles"]["students"]["native_cwd"] is False
-assert legacy_cwd["roles"]["swallow"]["native_cwd"] is False
+assert legacy_cwd["roles"]["personal"]["native_cwd"] is True
 assert drift["kind"] == "phone-mirror-drift"
 
 connection.execute(
@@ -236,20 +247,19 @@ mapping["students"]["native_cwd"] = True
 partially_native, _drift = module.phone_mirror_snapshot(
     mapping, str(database), processes, target_paths, str(codex_home)
 )
-assert partially_native["status"] == "degraded"
+assert partially_native["status"] == "healthy"
 assert partially_native["active_top_level_count"] == 3
 assert partially_native["roles"]["students"]["exact_cwd"] is True
 assert partially_native["roles"]["students"]["native_cwd"] is True
-assert partially_native["roles"]["swallow"]["native_cwd"] is False
-assert "native_cwd:swallow" in partially_native["mismatch_classes"]
+assert partially_native["roles"]["personal"]["native_cwd"] is True
 
 connection.execute(
-    "UPDATE threads SET cwd = ? WHERE id = 'thread-swallow'",
-    (target_paths["swallow"],),
+    "UPDATE threads SET cwd = ? WHERE id = 'thread-personal'",
+    (target_paths["personal"],),
 )
 connection.commit()
-mapping["swallow"]["cwd"] = target_paths["swallow"]
-mapping["swallow"]["native_cwd"] = True
+mapping["personal"]["cwd"] = target_paths["personal"]
+mapping["personal"]["native_cwd"] = True
 healthy, _drift = module.phone_mirror_snapshot(
     mapping, str(database), processes, target_paths, str(codex_home)
 )
@@ -257,19 +267,19 @@ assert healthy["status"] == "healthy"
 assert healthy["mismatch_classes"] == []
 
 connection.execute(
-    "UPDATE threads SET source = 'exec' WHERE id = 'thread-swallow'"
+    "UPDATE threads SET source = 'exec' WHERE id = 'thread-personal'"
 )
 connection.commit()
 ineligible, _drift = module.phone_mirror_snapshot(
     mapping, str(database), processes, target_paths, str(codex_home)
 )
 assert ineligible["status"] == "degraded"
-assert ineligible["roles"]["swallow"]["interactive_source"] is False
-assert "interactive_source:swallow" in ineligible["mismatch_classes"]
+assert ineligible["roles"]["personal"]["interactive_source"] is False
+assert "interactive_source:personal" in ineligible["mismatch_classes"]
 
 connection.execute(
     "UPDATE threads SET source = 'vscode', rollout_path = ? "
-    "WHERE id = 'thread-swallow'",
+    "WHERE id = 'thread-personal'",
     (str(sessions / "absent.jsonl"),),
 )
 connection.commit()
@@ -277,25 +287,25 @@ missing_rollout, _drift = module.phone_mirror_snapshot(
     mapping, str(database), processes, target_paths, str(codex_home)
 )
 assert missing_rollout["status"] == "degraded"
-assert missing_rollout["roles"]["swallow"]["rollout_location"] is True
-assert missing_rollout["roles"]["swallow"]["rollout_exists"] is False
+assert missing_rollout["roles"]["personal"]["rollout_location"] is True
+assert missing_rollout["roles"]["personal"]["rollout_exists"] is False
 
 connection.execute(
     "UPDATE threads SET archived = 1, name = 'wrong', rollout_path = ? "
-    "WHERE id = 'thread-swallow'",
-    (str(sessions / "swallow.jsonl"),),
+    "WHERE id = 'thread-personal'",
+    (str(sessions / "personal.jsonl"),),
 )
 connection.commit()
 metadata_drift, _drift = module.phone_mirror_snapshot(
     mapping, str(database), processes, target_paths, str(codex_home)
 )
 assert metadata_drift["status"] == "degraded"
-assert metadata_drift["roles"]["swallow"]["unarchived"] is False
-assert metadata_drift["roles"]["swallow"]["exact_name"] is False
+assert metadata_drift["roles"]["personal"]["unarchived"] is False
+assert metadata_drift["roles"]["personal"]["exact_name"] is False
 
 connection.execute(
-    "UPDATE threads SET archived = 0, name = 'swallow' "
-    "WHERE id = 'thread-swallow'"
+    "UPDATE threads SET archived = 0, name = 'personal' "
+    "WHERE id = 'thread-personal'"
 )
 extra_rollout = sessions / "extra.jsonl"
 extra_rollout.write_text("{}\n")
@@ -382,33 +392,39 @@ done
     fail "unknown target invoked the worker"
 
 completed=0
-for target in harness students swallow
+for target in harness personal students
 do
     case "$target" in
         harness)
+            ordinal=0
             index=0
+            window_index=0
+            repository=$ROOT
+            ;;
+        personal)
+            ordinal=1
+            index=0
+            window_index=1
             repository=$ROOT
             ;;
         students)
+            ordinal=2
             index=1
+            window_index=1
             repository=/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/students
-            ;;
-        swallow)
-            index=2
-            repository=/mnt/nfs-03/safe/Users/rioyokota/codex-workspaces/swallow
             ;;
     esac
     helper --enqueue-blocked \
         --target "$target" \
         --runtime "$target-recovery-t351" \
         --thread "thread-$target" \
-        --watcher-pid "$((4240 + index))" \
-        --watcher-start "12345$index" \
-        --app-server-pid "$((4340 + index))" \
-        --app-server-start "65432$index" \
-        --window-id @90 \
-        --window-index 0 \
-        --pane-id "%9$index" \
+        --watcher-pid "$((4240 + ordinal))" \
+        --watcher-start "12345$ordinal" \
+        --app-server-pid "$((4340 + ordinal))" \
+        --app-server-start "65432$ordinal" \
+        --window-id "@9$window_index" \
+        --window-index "$window_index" \
+        --pane-id "%9$ordinal" \
         --pane-index "$index" >"$TEST_ROOT/enqueue-$target.out"
     grep -F 'enqueue=queued' "$TEST_ROOT/enqueue-$target.out" >/dev/null ||
         fail "$target blocked event was not queued"
@@ -451,17 +467,17 @@ helper --once >"$TEST_ROOT/repeat.out"
     fail "completed event was retried"
 
 helper --enqueue-blocked \
-    --target swallow \
-    --runtime swallow-recovery-t351 \
-    --thread thread-swallow \
-    --watcher-pid 4242 \
-    --watcher-start 123452 \
-    --app-server-pid 4342 \
-    --app-server-start 654322 \
-    --window-id @90 \
-    --window-index 0 \
-    --pane-id %92 \
-    --pane-index 2 >"$TEST_ROOT/duplicate.out"
+    --target personal \
+    --runtime personal-recovery-t351 \
+    --thread thread-personal \
+    --watcher-pid 4241 \
+    --watcher-start 123451 \
+    --app-server-pid 4341 \
+    --app-server-start 654321 \
+    --window-id @91 \
+    --window-index 1 \
+    --pane-id %91 \
+    --pane-index 0 >"$TEST_ROOT/duplicate.out"
 grep -F 'enqueue=already-queued' "$TEST_ROOT/duplicate.out" >/dev/null ||
     fail "duplicate event was not deduplicated"
 

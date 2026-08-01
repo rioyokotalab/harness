@@ -50,9 +50,9 @@ conversation loop or treat an agent prefix as owner authority.
 - Require exactly one safe target Codex pane in the expected repository.
 - A Mac uses detached `harness-codex-resume`; `--allow-attached` requires the
   owner's explicit expectation of injection into that terminal.
-- Local uses the unique current-user Codex pane in `projects`, selected by
+- Local uses the unique current-user Codex pane in `harness:cowork.0`, selected by
   process and TTY metadata; other windows may coexist.
-- Local Claude requires one live metadata-verified `projects:claude.0` Harness
+- Local Claude requires one live metadata-verified `harness:cowork.1` Harness
   pane; never read it or create another process.
 - Stop on absent or ambiguous session, pane, process, route, sender, prefix,
   input, lock, timeout, or native output.

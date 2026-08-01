@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Content-blind health, ordering, and bounded repair for Local Claude panes.
 
-Mirrors harness-tmux-codex-monitor for the projects:claude window. Health is
+Mirrors harness-tmux-codex-monitor across the managed Harness windows. Health is
 tmux metadata plus /proc identity only; repair is one idempotent enqueue to
 harness-codex-recovery-helper per dead-pane generation, rate-limited per
 target. No pane content is ever captured and no keys are ever sent.
@@ -14,6 +14,7 @@ import contextlib
 import fcntl
 import json
 import os
+import re
 import signal
 import stat
 import subprocess
@@ -31,17 +32,31 @@ sys.path.insert(0, os.path.join(CONTROL_ROOT, "libexec"))
 from harness_claude_targets import (  # noqa: E402
     LAUNCH_FLAGS,
     PANE_ROLE_OPTION,
+    PANE_SESSION_OPTION,
     SESSION_NAME,
-    WINDOW_INDEX,
-    WINDOW_NAME,
     TargetError,
     load_targets,
     validate_all,
 )
 
 TARGETS = load_targets()
-EXPECTED = tuple((value["name"], value["index"]) for value in TARGETS)
+EXPECTED = tuple(
+    (
+        value["name"],
+        value["window_index"],
+        value["window_name"],
+        value["pane_index"],
+    )
+    for value in TARGETS
+)
+TARGET_LOCATIONS = {
+    value["name"]: (
+        value["window_index"], value["window_name"], value["pane_index"]
+    )
+    for value in TARGETS
+}
 PANE_ROLE_FORMAT = "#{" + PANE_ROLE_OPTION + "}"
+PANE_SESSION_FORMAT = "#{" + PANE_SESSION_OPTION + "}"
 TARGET_PATHS = {value["name"]: value["repository"] for value in TARGETS}
 RATE_LIMIT_WINDOW_SECONDS = 3600
 RATE_LIMIT_MAX_EVENTS = 3
@@ -223,13 +238,15 @@ def tmux_panes():
             "#{window_index}\t#{window_id}\t#{window_name}\t"
             "#{pane_index}\t#{pane_id}\t"
             + PANE_ROLE_FORMAT
+            + "\t"
+            + PANE_SESSION_FORMAT
             + "\t#{pane_pid}\t#{pane_current_path}\t#{pane_dead}",
         ]
     )
     panes = []
     for line in output.splitlines():
         fields = line.split("\t")
-        if len(fields) != 9:
+        if len(fields) != 10:
             fail("tmux pane metadata is malformed")
         panes.append(
             {
@@ -239,9 +256,10 @@ def tmux_panes():
                 "pane_index": int(fields[3]),
                 "pane_id": fields[4],
                 "role": fields[5],
-                "pane_pid": int(fields[6]),
-                "path": fields[7],
-                "dead": fields[8] == "1",
+                "session_id": fields[6],
+                "pane_pid": int(fields[7]),
+                "path": fields[8],
+                "dead": fields[9] == "1",
             }
         )
     return panes
@@ -252,21 +270,22 @@ def tmux_clients():
 
 
 def claude_panes(panes):
-    return [pane for pane in panes if pane["window_name"] == WINDOW_NAME]
+    return [pane for pane in panes if pane["role"]]
 
 
 def collect_health(panes):
     health = {}
     window_panes = claude_panes(panes)
-    for name, index in EXPECTED:
+    for name, window_index, window_name, index in EXPECTED:
         matches = [pane for pane in window_panes if pane["role"] == name]
         if len(matches) != 1:
             health[name] = {"state": "unhealthy", "reason": "pane-missing"}
             continue
         pane = matches[0]
         if (
-            pane["window_index"] != WINDOW_INDEX
-            or pane["window_name"] != WINDOW_NAME
+            pane["window_index"] != window_index
+            or pane["window_name"] != window_name
+            or pane["pane_index"] != index
         ):
             health[name] = {"state": "unhealthy", "reason": "metadata"}
             continue
@@ -284,6 +303,22 @@ def collect_health(panes):
         if not claude_process_ok(identity):
             health[name] = {"state": "unhealthy", "reason": "process-identity"}
             continue
+        session_id = pane["session_id"]
+        if not re.fullmatch(
+            r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+            session_id,
+        ):
+            health[name] = {"state": "unhealthy", "reason": "session-id"}
+            continue
+        argv = identity["argv"]
+        if not any(
+            argv[position] in ("--resume", "--session-id")
+            and position + 1 < len(argv)
+            and argv[position + 1] == session_id
+            for position in range(len(argv))
+        ):
+            health[name] = {"state": "unhealthy", "reason": "session-binding"}
+            continue
         health[name] = {"state": "healthy", "reason": "ready", "pane": pane}
     seen = {}
     for name, value in health.items():
@@ -297,6 +332,18 @@ def collect_health(panes):
                     "state": "unhealthy",
                     "reason": "identity-duplicate",
                 }
+    sessions = {}
+    for name, value in health.items():
+        pane = value.get("pane")
+        if pane:
+            sessions.setdefault(pane["session_id"], []).append(name)
+    for names in sessions.values():
+        if len(names) > 1:
+            for name in names:
+                health[name] = {
+                    "state": "unhealthy",
+                    "reason": "session-duplicate",
+                }
     return health
 
 
@@ -304,30 +351,50 @@ def canonical_topology(panes):
     window_panes = claude_panes(panes)
     if len(window_panes) != len(EXPECTED):
         return False
-    windows = {
-        (pane["window_index"], pane["window_id"], pane["window_name"])
-        for pane in window_panes
-    }
-    if len(windows) != 1:
-        return False
-    for name, index in EXPECTED:
+    for name, window_index, window_name, index in EXPECTED:
         matches = [pane for pane in window_panes if pane["role"] == name]
         if len(matches) != 1:
             return False
         pane = matches[0]
-        if not pane["dead"] and pane["path"] != TARGET_PATHS[name]:
+        if (
+            pane["window_index"] != window_index
+            or pane["window_name"] != window_name
+            or pane["pane_index"] != index
+            or (not pane["dead"] and pane["path"] != TARGET_PATHS[name])
+        ):
+            return False
+    return True
+
+
+def orderable_topology(panes):
+    window_panes = claude_panes(panes)
+    if len(window_panes) != len(EXPECTED) or any(
+        pane["dead"] for pane in window_panes
+    ):
+        return False
+    for name, window_index, window_name, _index in EXPECTED:
+        matches = [pane for pane in window_panes if pane["role"] == name]
+        if len(matches) != 1:
+            return False
+        pane = matches[0]
+        if (
+            pane["window_index"] != window_index
+            or pane["window_name"] != window_name
+            or pane["path"] != TARGET_PATHS[name]
+        ):
             return False
     return True
 
 
 def enforce_order(panes):
-    if not canonical_topology(panes):
+    if not orderable_topology(panes):
         return "deferred-ambiguous"
     before_clients = tmux_clients()
     action = "none"
-    for name, index in EXPECTED:
+    for name, _window_index, window_name, index in EXPECTED:
         current = claude_panes(tmux_panes())
         by_role = {pane["role"]: pane for pane in current}
+        current = [pane for pane in current if pane["window_name"] == window_name]
         by_index = {pane["pane_index"]: pane for pane in current}
         pane = by_role.get(name)
         if pane is None:
@@ -350,11 +417,14 @@ def enforce_order(panes):
         )
         action = "ordered"
     final = claude_panes(tmux_panes())
-    for name, index in EXPECTED:
+    for name, window_index, window_name, index in EXPECTED:
         matches = [
             pane
             for pane in final
-            if pane["role"] == name and pane["pane_index"] == index
+            if pane["role"] == name
+            and pane["window_index"] == window_index
+            and pane["window_name"] == window_name
+            and pane["pane_index"] == index
         ]
         if len(matches) != 1:
             fail("tmux order correction did not converge")
@@ -462,7 +532,8 @@ def recovery_candidates(panes, health, root):
                 "pane_id": pane["pane_id"],
                 "pane_index": pane["pane_index"],
                 "pane_pid": pane["pane_pid"],
-                "relaunch": "plain" if failed_recent else "continue",
+                "session_id": pane["session_id"],
+                "relaunch": "exact",
             }
         )
     if candidates:
@@ -498,6 +569,8 @@ def enqueue_helper_recovery(candidate):
             pane_start,
             "--relaunch",
             candidate["relaunch"],
+            "--session-id",
+            candidate["session_id"],
         ],
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
@@ -519,7 +592,7 @@ def test_fixture():
 
 def fixture_iteration(fixture):
     healthy = 0
-    for name, index in EXPECTED:
+    for name, _window_index, _window_name, index in EXPECTED:
         state = fixture.get("health", {}).get(name, {})
         value = state.get("state", "unhealthy")
         reason = state.get("reason", "missing")
@@ -585,7 +658,7 @@ def iteration(arguments, root, receipt_path):
             )
         else:
             repair_action = selection
-    for name, index in EXPECTED:
+    for name, _window_index, _window_name, index in EXPECTED:
         value = health[name]
         print(
             "TMUX_CLAUDE_PANE index={} name={} state={} reason={}".format(
