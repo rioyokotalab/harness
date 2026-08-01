@@ -2,7 +2,7 @@
 
 ## Runtime residue
 
-- Inventory `$CODEX_HOME/tmp/arg0` read-only. A held `.lock` is live; never
+- Include a read-only inventory of `$CODEX_HOME/tmp/arg0`. A held `.lock` is live; never
   remove the root or require all Codex processes to exit.
 - Candidates are current-user-owned real directories past grace or from a
   completed invocation, empty without a lock or expected-layout with an
