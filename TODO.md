@@ -19,8 +19,8 @@ Next free ID: T-365.
 
 ### T-364 — Safe repository cleanup and durable recovery evidence
 
-**Phase:** ready-for-go; the audit and implementation plan are frozen. No
-branch, worktree, remote ref, archive ref, or runtime state has been changed.
+**Phase:** validating; all 21 tips are durably protected and the archive,
+branch, remote-report, and guarded-worktree implementation is in focused test.
 
 **Record:** `docs/tasks/T-364.md`.
 
