@@ -108,6 +108,7 @@ def pane(name, index, **overrides):
         "pane_pid": PIDS[name],
         "path": REPOS[name],
         "dead": False,
+        "remain_on_exit": True,
     }
     value.update(overrides)
     return value
@@ -124,6 +125,13 @@ module.process_identity = lambda pid: {
 }
 health = module.collect_health(HEALTHY)
 assert all(value["state"] == "healthy" for value in health.values()), health
+
+# Claude panes must survive process exit so the monitor can recover the exact
+# saved session in place.
+no_remain = [pane("harness", 1, remain_on_exit=False), pane("personal", 0), pane("students", 1)]
+health = module.collect_health(no_remain)
+assert health["harness"]["reason"] == "metadata"
+assert not module.canonical_topology(no_remain)
 
 # dead pane -> blocked/pane-dead (dead panes report an empty cwd)
 dead = [pane("harness", 1, dead=True, path=""), pane("personal", 0), pane("students", 1)]

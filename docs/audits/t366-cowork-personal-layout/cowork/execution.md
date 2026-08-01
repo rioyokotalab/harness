@@ -44,6 +44,18 @@
     already selected Personal. A narrow follow-up now validates the explicit
     release target directly; a new regression proves Harness and Personal can
     share one physical repository while retaining distinct releases.
+11. PR #542 merged as `2351539` and the corrected Personal supervisor resumed
+    exact root `019fbcbe-cbb8-7e40-b12a-161271f98f57`. The selected Harness
+    Claude lineage `f09e496b-a80d-4eff-91a1-7e0b4fab6895` then failed two
+    bounded exact resumes with exit status 1. A value-free diagnostic matched
+    the product's non-reconnectable Remote Control session class. The original
+    session remains preserved; fresh Harness Claude identity
+    `d950c16c-e073-48fb-ad90-de046285f0ec` was created once and is live.
+12. Final tmux metadata is exact and all pane widths are 77 columns. Both
+    monitors report `healthy=3`; Codex phone-mirror metadata is healthy; the
+    recovery helper is idle after its stale pre-incident runtime was
+    reversibly quarantined. Live Claude panes now use `remain-on-exit on` so
+    exact recovery can observe a dead process instead of losing its pane.
 
 ## Deviations
 
