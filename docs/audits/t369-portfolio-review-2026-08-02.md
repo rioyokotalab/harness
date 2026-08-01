@@ -280,6 +280,18 @@ exact tips are bundled, and T-371 remains the sole idle-boundary migration
 path. This is preserved isolation debt, not evidence that either live checkout
 should be switched in place.
 
+One live closeout exposed a parallelism defect before mutation: the broad
+worktree planner correctly classified the merged old continuation, but also
+classified the newly opened, still-clean next continuation because both tips
+were ancestors of protected `main`. The plan was not applied. After the new
+task tree received its first ledger commit, a fresh plan retired only the old
+tree. The durable fix adds `--path EXACT_TASK_TREE` to worktree planning,
+records that canonical selection in the immutable receipt, reapplies it during
+mutable-state verification, and marks every other otherwise eligible tree
+`not-selected`. A focused fixture proves one selected clean tree is archived
+and removed while a second parallel clean tree survives. Broad housekeeping
+discovery remains available when no path is supplied.
+
 Students' sole open PR, Dependabot #560, is behind current `main` and failed
 for one understood safety reason: all 695 other tests and 34 subtests passed,
 but changing the Codex package manifests invalidated the exact digest embedded
