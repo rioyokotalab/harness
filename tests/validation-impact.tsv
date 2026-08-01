@@ -7,8 +7,8 @@
 ^tests/test-task-ledger-routing\.sh$|R3|-|task ledger validator
 ^docs/github-rulesets/|R1|tests/test-github-rulesets.sh|ruleset fixture
 ^tests/test-github-rulesets\.sh$|R3|-|ruleset fixture validator
-^shared/skills/operate-native-hpc/(SKILL\.md|references/(common|current|abci|riken|alps|rccs|tsubame|planning|execute-monitor|validation)\.md)$|R1|tests/test-skill-context-budgets.sh|HPC routed context budget
-^shared/skills/operate-native-hpc/(SKILL\.md|references/(common|current|abci|riken|alps|rccs|tsubame|planning|execute-monitor|validation)\.md)$|R1|tests/test-skill-context-gates.sh|HPC routed safety gates
+^shared/skills/operate-native-hpc/(SKILL\.md|references/(common|current|abci|abciq|riken|alps|rccs|tsubame|planning|execute-monitor|validation)\.md)$|R1|tests/test-skill-context-budgets.sh|HPC routed context budget
+^shared/skills/operate-native-hpc/(SKILL\.md|references/(common|current|abci|abciq|riken|alps|rccs|tsubame|planning|execute-monitor|validation)\.md)$|R1|tests/test-skill-context-gates.sh|HPC routed safety gates
 ^shared/skills/operate-native-hpc/references/sites\.md$|R3|-|HPC compatibility aggregate
 ^shared/skills/plan-interview-execute/(SKILL\.md|references/(planning|interview|execution)\.md)$|R1|tests/test-skill-context-budgets.sh|PIE routed context budget
 ^shared/skills/plan-interview-execute/(SKILL\.md|references/(planning|interview|execution)\.md)$|R1|tests/test-skill-context-gates.sh|PIE routed behavior gates

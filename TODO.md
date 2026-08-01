@@ -37,7 +37,9 @@ saved thread, phone root, or app-server connection in place.
 
 ### T-196 — Backup lifecycle phase 2
 
-**Phase:** time-gated until 2026-08-02; all eight chains are 2/8.
+**Phase:** read-only monitoring; six 2026-08-02 successors are terminal-success,
+ABQ is terminal but lacks exit-status evidence, AL remains time-gated to 08:00
+JST, and all eight chains stay 2/8 pending snapshot/private-state acceptance.
 
 **Record:** `docs/tasks/T-196.md`. Do not query or mutate a successor early.
 

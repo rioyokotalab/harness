@@ -12,6 +12,8 @@ available for discovery. Consult the
 - Every compute request needs an explicit billing group and resource request.
   Ask the owner or use an already-reviewed project script. Do not submit even a
   one-minute smoke with guessed values.
+- For exact-ID history, emit only the required job identity, state, exit, and
+  timestamps through a status-checked filter; never print PBS `Variable_List`.
 - Login nodes expose a compiler/MPI baseline. Run GPU or scaled MPI checks only
   through a reviewed PBS allocation.
 - Login PATH exposes `cuda-gdb`, `nsys`, and `ncu`. Run GPU capture only inside

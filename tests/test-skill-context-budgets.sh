@@ -22,6 +22,10 @@ assert_max() {
 # Frozen T-351 baselines measured before conditional routing.
 HPC_BEFORE=2668
 HPC_LARGEST_BEFORE=1397
+# One independently routed ABCI-Q reference adds capability without increasing
+# any unrelated selected route. Keep that addition bounded rather than
+# rewriting the historical pre-routing baseline.
+HPC_ABCIQ_ADDITION_MAX=220
 REMOTE_BEFORE=1241
 # Before routing, every hardening invocation selected both the 1,130-word
 # entry and its 301-word aggregate checklist.
@@ -51,7 +55,7 @@ done
 
 hpc_site_total=0
 hpc_largest=0
-for name in current abci riken alps rccs tsubame; do
+for name in current abci abciq riken alps rccs tsubame; do
     site_words=$(words "$HPC/references/$name.md")
     assert_max "$site_words" 350 "HPC $name reference"
     hpc_site_total=$((hpc_site_total + site_words))
@@ -62,7 +66,8 @@ for name in current abci riken alps rccs tsubame; do
 done
 hpc_aggregate=$((hpc_entry + hpc_common + hpc_site_total +
     hpc_phase_total))
-assert_max "$hpc_aggregate" "$HPC_BEFORE" 'HPC aggregate'
+assert_max "$hpc_aggregate" "$((HPC_BEFORE + HPC_ABCIQ_ADDITION_MAX))" \
+    'HPC aggregate with bounded ABCI-Q route'
 hpc_reduction=$(((HPC_LARGEST_BEFORE - hpc_largest) * 100 /
     HPC_LARGEST_BEFORE))
 [ "$hpc_reduction" -ge 20 ] ||
