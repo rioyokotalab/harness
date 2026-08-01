@@ -45,7 +45,10 @@ this compaction.
 
 `tests/test-context-routing-benchmark.sh` recalculates every current count,
 checks that selected inputs are regular tracked files, enforces all frozen
-thresholds, and fails if the active board or policy router regresses.
+thresholds, and fails if the active board or policy router regresses. When a
+deliberate routed-context edit changes generated values,
+`tools/refresh-context-benchmark.py --write` updates them deterministically;
+`--check` prints the exact stale diff instead of a Python assertion payload.
 
 Phase routing reduced the largest selected routes as follows: HPC
 2,668→1,116 words (58.1%), PIE 1,088→615 (43.5%), remote communication
