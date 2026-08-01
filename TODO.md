@@ -26,9 +26,9 @@ freeze are in progress. Material changes stop at 10:45 JST.
 
 ### T-370 — Enforce symmetric task-worktree lifecycle
 
-**Phase:** queued after T-369; design A is frozen: isolated worktree per task,
-reference checkout kept clean on `main`, and mandatory guarded teardown. No
-lease is required for correctness.
+**Phase:** active after T-369's first publication; design A is frozen:
+isolated worktree per task, reference checkout kept clean on `main`, and
+mandatory guarded teardown. No lease is required for correctness.
 
 **Record:** `docs/tasks/T-370.md`.
 

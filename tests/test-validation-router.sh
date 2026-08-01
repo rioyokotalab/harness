@@ -124,6 +124,12 @@ cases = [
         False,
     ),
     (
+        ["libexec/harness_housekeeping.py"],
+        "R3",
+        ["tests/test-phase1.sh"],
+        False,
+    ),
+    (
         ["config/terminfo/tmux-256color.src"],
         "R2",
         ["tests/test-terminfo.sh"],

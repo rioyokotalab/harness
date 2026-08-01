@@ -54,7 +54,7 @@
 ^tests/guarded-test-cleanup\.sh$|R3|-|test cleanup safety
 ^tools/run-focused-tests\.py$|R3|-|parallel focused runner
 ^libexec/harness_codex_targets\.py$|R3|-|managed target identity
-^libexec/.*(codex|tmux|recovery|fleet|agent|ssh|restic|replica|delete|credential|secret|safety)|R3|-|lifecycle or authority-sensitive runtime
+^libexec/.*(codex|tmux|recovery|fleet|agent|ssh|restic|replica|delete|housekeeping|credential|secret|safety)|R3|-|lifecycle or authority-sensitive runtime
 ^tests/.*(codex|tmux|recovery|fleet|agent|ssh|restic|replica|delete|credential|secret|safety)|R3|-|lifecycle or authority-sensitive test
 ^libexec/harness-terminfo$|R2|tests/test-terminfo.sh|mapped ordinary component
 ^config/terminfo/tmux-256color\.src$|R2|tests/test-terminfo.sh|mapped ordinary terminfo source

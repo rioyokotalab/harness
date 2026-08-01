@@ -442,7 +442,7 @@ def gh_program() -> Optional[str]:
     return shutil.which("gh")
 
 
-def pull_requests() -> Optional[List[Dict[str, Any]]]:
+def pull_requests(repo: Path) -> Optional[List[Dict[str, Any]]]:
     program = gh_program()
     if not program:
         return None
@@ -458,6 +458,7 @@ def pull_requests() -> Optional[List[Dict[str, Any]]]:
             "--json",
             "number,state,headRefName,headRefOid,baseRefName,mergedAt",
         ],
+        cwd=repo,
         check=False,
     )
     if result.returncode != 0:
@@ -600,7 +601,7 @@ def checked_out_branches(repo: Path) -> List[str]:
 
 
 def local_branch_records(repo: Path) -> Tuple[List[Dict[str, Any]], Optional[str], bool]:
-    prs = pull_requests()
+    prs = pull_requests(repo)
     main_oid = origin_main(repo)
     current_result = git(repo, "symbolic-ref", "--quiet", "--short", "HEAD", check=False)
     current = text(current_result).strip() if current_result.returncode == 0 else ""
@@ -680,7 +681,7 @@ def apply_branches(repo: Path, receipt_path: Path, token: str) -> None:
 
 
 def remote_records(repo: Path) -> Tuple[List[Dict[str, Any]], Optional[str], bool]:
-    prs = pull_requests()
+    prs = pull_requests(repo)
     main_oid = origin_main(repo)
     rows: List[Dict[str, Any]] = []
     output = text(
@@ -998,7 +999,7 @@ def guarded_plan(repo: Path, boundary: Path, target: Path, manifest: Path) -> st
 
 
 def plan_worktrees(repo: Path) -> None:
-    prs = pull_requests()
+    prs = pull_requests(repo)
     main_oid = origin_main(repo)
     rows = worktree_rows(repo)
     records = [worktree_snapshot(repo, row, prs, main_oid) for row in rows]
@@ -1075,7 +1076,7 @@ def guarded_apply(repo: Path, manifest: str, token: str) -> None:
 
 def apply_worktrees(repo: Path, receipt_path: Path, token: str) -> None:
     plan = load_plan(receipt_path, token, "worktrees", repo)
-    prs = pull_requests()
+    prs = pull_requests(repo)
     main_oid = origin_main(repo)
     if prs is None or main_oid != plan.get("origin_main"):
         die("worktree mutable state changed or is unknown")
@@ -1128,8 +1129,18 @@ def apply_worktrees(repo: Path, receipt_path: Path, token: str) -> None:
             die("primary repository changed after worktree deletion")
         archive_audit(repo, Path(archived["receipt"]))
         guarded_apply(repo, record["admin_manifest"], record["admin_token"])
-        progress["completed"].append(record["path"])
         progress["phase"] = "admin-deleted"
+        execution_state(state_path, progress)
+        if os.environ.get("HARNESS_TEST_INTERRUPT_AFTER_ADMIN") == "1":
+            if os.environ.get("HARNESS_TESTING") != "1":
+                die("test interruption override is unsafe")
+            die("synthetic interruption after worktree-admin deletion")
+        branch_ref = f"refs/heads/{record['branch']}"
+        git(repo, "update-ref", "-d", branch_ref, record["tip"])
+        if git(repo, "show-ref", "--verify", "--quiet", branch_ref, check=False).returncode == 0:
+            die("task branch survived expected-old deletion")
+        progress["completed"].append(record["path"])
+        progress["phase"] = "branch-deleted"
         execution_state(state_path, progress)
     progress["phase"] = "complete"
     progress.pop("current", None)
@@ -1201,9 +1212,87 @@ def plan_evidence(repo: Path) -> None:
     print(f"HOUSEKEEPING routine=evidence mode=report cowork_sessions={count} note=retained-by-default")
 
 
-def repository_from_environment() -> Path:
+def open_worktree(
+    repo: Path,
+    branch: Optional[str],
+    destination_value: Optional[str],
+    expected_main: Optional[str],
+) -> None:
+    if not branch or not destination_value or not expected_main:
+        die("open-worktree requires --branch, --path, and --expected-main")
+    if not OID_RE.fullmatch(expected_main):
+        die("expected main tip is malformed")
+    checked = git(repo, "check-ref-format", "--branch", branch, check=False)
+    if checked.returncode != 0 or branch == "main":
+        die("task branch name is unsafe")
+
+    rows = worktree_rows(repo)
+    if not rows or Path(rows[0].get("worktree", "")).resolve() != repo:
+        die("worktree creation requires the primary repository root")
+    current = text(
+        git(repo, "symbolic-ref", "--quiet", "--short", "HEAD", check=False)
+    ).strip()
+    if current != "main":
+        die("reference checkout must be on main")
+    counts = status_counts(repo)
+    if counts["tracked"] or counts["untracked"]:
+        die("reference checkout must be clean")
+    local_main = text(git(repo, "rev-parse", "refs/heads/main")).strip()
+    remote_main = origin_main(repo)
+    head = text(git(repo, "rev-parse", "HEAD")).strip()
+    if not remote_main or len({head, local_main, remote_main, expected_main}) != 1:
+        die("reference checkout and expected protected main are not identical")
+    if git(repo, "show-ref", "--verify", "--quiet", f"refs/heads/{branch}", check=False).returncode == 0:
+        die("task branch already exists")
+
+    destination = Path(destination_value)
+    absolute = Path(os.path.abspath(os.fspath(destination)))
+    if destination != absolute or destination.exists() or destination.is_symlink():
+        die("task worktree path must be an absent absolute path")
+    boundaries = scratch_boundaries()
+    boundary = next(
+        (item for item in boundaries if strict_descendant(absolute, item)), None
+    )
+    if not boundary:
+        die("task worktree path is outside a declared scratch boundary")
+    try:
+        parent = absolute.parent.resolve(strict=True)
+    except FileNotFoundError as exc:
+        raise HousekeepingError("task worktree parent is unavailable") from exc
+    if absolute.parent != parent:
+        die("task worktree parent changed through a symlink")
+    if not strict_descendant(parent, boundary) and parent != boundary:
+        die("task worktree parent is outside the declared boundary")
+    if parent != boundary and parent.lstat().st_uid != os.getuid():
+        die("task worktree parent owner is unsafe")
+
+    git(repo, "worktree", "add", "-b", branch, str(absolute), expected_main)
+    matches = [
+        row
+        for row in worktree_rows(repo)
+        if Path(row.get("worktree", "")).resolve() == absolute
+    ]
+    if (
+        len(matches) != 1
+        or matches[0].get("HEAD") != expected_main
+        or matches[0].get("branch") != f"refs/heads/{branch}"
+    ):
+        die("created task worktree failed exact readback")
+    print(
+        "HOUSEKEEPING routine=worktree-open mode=apply "
+        f"branch={branch} tip={expected_main} path={absolute} "
+        f"ignored_reference_entries={counts['ignored']} status=created"
+    )
+
+
+def repository_from_environment(explicit: Optional[str] = None) -> Path:
     override = testing_override("HARNESS_TEST_HOUSEKEEPING_REPO")
-    root = Path(override) if override else Path(os.environ["HARNESS_ROOT"])
+    if override:
+        root = Path(override)
+    elif explicit:
+        root = Path(explicit)
+    else:
+        root = Path(os.environ["HARNESS_ROOT"])
     return canonical_repo(root)
 
 
@@ -1214,6 +1303,7 @@ def parser() -> argparse.ArgumentParser:
     action.add_argument("--apply", action="store_true")
     action.add_argument("--archive", action="store_true")
     action.add_argument("--audit", action="store_true")
+    action.add_argument("--open-worktree", action="store_true")
     value.add_argument(
         "--routine",
         choices=("all", "scratch", "branches", "remotes", "worktrees", "launchers", "board", "evidence"),
@@ -1225,6 +1315,10 @@ def parser() -> argparse.ArgumentParser:
     value.add_argument("--transaction")
     value.add_argument("--source", default="manual")
     value.add_argument("--launcher")
+    value.add_argument("--repo")
+    value.add_argument("--branch")
+    value.add_argument("--path", dest="worktree_path")
+    value.add_argument("--expected-main")
     return value
 
 
@@ -1236,7 +1330,15 @@ def require_receipt(arguments: argparse.Namespace) -> Tuple[Path, str]:
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     arguments = parser().parse_args(argv)
-    repo = repository_from_environment()
+    repo = repository_from_environment(arguments.repo)
+    if arguments.open_worktree:
+        open_worktree(
+            repo,
+            arguments.branch,
+            arguments.worktree_path,
+            arguments.expected_main,
+        )
+        return 0
     if arguments.archive:
         if not arguments.items or not arguments.transaction:
             die("archive requires --items and --transaction")
