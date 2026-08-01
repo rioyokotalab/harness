@@ -19,19 +19,11 @@ Next free ID: T-374.
 
 ### T-369 — Evidence-first portfolio reset and guarded cleanup
 
-**Phase:** active until 2026-08-02 12:00 JST; four protected repository resets
-and the guarded cleanup are published, while Website's validated worker handoff
-remains local for its driver. Material changes stop at 10:45 JST.
+**Phase:** active until 2026-08-02 12:00 JST; all five protected repository
+resets and guarded cleanup are published, and restore-proven archive compaction
+is complete. Material changes stop at 10:45 JST.
 
 **Record:** `docs/tasks/T-369.md`.
-
-### T-373 — Bound housekeeping archive growth
-
-**Phase:** active after the first restore-proven generation succeeded. Publish
-the archive-only/duplicate guard, then create a second generation only after
-new closeout receipts exist; no artifact is yet disposable.
-
-**Record:** `docs/tasks/T-373.md`.
 
 ### T-371 — Migrate legacy managed primary branches
 
@@ -46,8 +38,8 @@ saved thread, phone root, or app-server connection in place.
 ### T-196 — Backup lifecycle phase 2
 
 **Phase:** read-only monitoring; seven 2026-08-02 successors are terminal-success,
-AL remains time-gated to 08:00 JST, and all eight chains stay 2/8 pending
-snapshot/private-state acceptance.
+while AL matched its recorded identity but was still running at its one frozen
+checkpoint. All eight chains stay 2/8 pending snapshot/private-state acceptance.
 
 **Record:** `docs/tasks/T-196.md`. Do not query or mutate a successor early.
 
