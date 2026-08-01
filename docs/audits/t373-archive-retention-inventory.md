@@ -101,9 +101,11 @@ trigger.
 
 Ledger matching now batches fixed-string patterns once per receipt and once for
 the auxiliary inventory, while still emitting only the matched identifier and
-never source context. The exact live summary remained 22 receipts, 47 items,
-41 unique tips, 29 ledger references, zero unknowns, and zero candidates. A
-same-state sequential read measured the protected-main implementation at 24.32
-seconds and the batched implementation at 19.10 seconds, a 21.5% wall-time
-reduction. This is a bounded improvement to an occasional report; the report
-remains read-only and is not promoted into a frequent polling loop.
+never source context. Each owning repository's refs are also snapshotted once,
+eliminating redundant per-item object and archive-ref probes without weakening
+the bundled-only fallback. The exact live summary remained 22 receipts, 47
+items, 41 unique tips, 29 ledger references, zero unknowns, and zero candidates.
+A same-state sequential read measured the protected-main implementation at
+24.32 seconds and the optimized implementation at 18.50 seconds, a 23.9%
+wall-time reduction. This is a bounded improvement to an occasional report;
+the report remains read-only and is not promoted into a frequent polling loop.

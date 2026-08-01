@@ -666,7 +666,10 @@ def plan_archives(coordinator_repo: Path) -> None:
     ledger_unknown = 0
     unique_tips: set[str] = set()
     bound_bundles: set[Path] = set()
-    repo_cache: Dict[str, Tuple[Path, Optional[str], Optional[List[Dict[str, Any]]]]] = {}
+    repo_cache: Dict[
+        str,
+        Tuple[Path, Optional[str], Optional[List[Dict[str, Any]]], Dict[str, str]],
+    ] = {}
     output_rows: List[str] = []
     for receipt in receipts:
         parsed = parse_archive_receipt(receipt)
@@ -676,12 +679,21 @@ def plan_archives(coordinator_repo: Path) -> None:
             die("archive receipt repository identity is missing")
         if repository_value not in repo_cache:
             owner_repo = canonical_repo(Path(repository_value))
+            refs = {}
+            for line in text(
+                git(owner_repo, "for-each-ref", "--format=%(refname) %(objectname)")
+            ).splitlines():
+                fields = line.split(" ", 1)
+                if len(fields) != 2 or not OID_RE.fullmatch(fields[1]):
+                    die("archive repository ref inventory is malformed")
+                refs[fields[0]] = fields[1]
             repo_cache[repository_value] = (
                 owner_repo,
                 origin_main(owner_repo),
                 pull_requests(owner_repo),
+                refs,
             )
-        owner_repo, main_oid, pull_rows = repo_cache[repository_value]
+        owner_repo, main_oid, pull_rows, refs = repo_cache[repository_value]
         audit = archive_audit(owner_repo, receipt)
         bundle = Path(values["bundle"])
         bundle_bytes = validate_private_file(bundle).st_size
@@ -708,8 +720,15 @@ def plan_archives(coordinator_repo: Path) -> None:
             tip = row["tip"]
             unique_tips.add(tip)
             total_items += 1
-            object_present = (
-                git(owner_repo, "cat-file", "-e", f"{tip}^{{commit}}", check=False).returncode
+            archive_ref_live = refs.get(row["archive"]) == tip
+            object_present = archive_ref_live or (
+                git(
+                    owner_repo,
+                    "cat-file",
+                    "-e",
+                    f"{tip}^{{commit}}",
+                    check=False,
+                ).returncode
                 == 0
             )
             containing = (
@@ -751,12 +770,7 @@ def plan_archives(coordinator_repo: Path) -> None:
             )
             ledger_yes += int(ledger_status == "yes")
             ledger_unknown += int(ledger_status == "unknown")
-            ref_result = git(owner_repo, "rev-parse", "--verify", row["archive"], check=False)
-            copy_status = (
-                "ref+bundle"
-                if ref_result.returncode == 0 and text(ref_result).strip() == tip
-                else "bundle"
-            )
+            copy_status = "ref+bundle" if archive_ref_live else "bundle"
             output_rows.append(
                 "  ITEM "
                 f"repository={owner_repo.name} transaction={transaction} "
