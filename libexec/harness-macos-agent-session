@@ -94,9 +94,15 @@ session_exists() {
 }
 
 window_live() {
-    # A window counts as live only when it exists and its pane is not dead.
-    dead=$($TMUX display-message -p -t "=$SESSION:$1" '#{pane_dead}' 2>/dev/null || printf '')
-    [ "$dead" = 0 ]
+    # Liveness must come from list-windows, which enumerates exactly. A
+    # display-message probe for a missing window silently falls back to the
+    # session's current window and would report a phantom window as live.
+    $TMUX list-windows -t "=$SESSION" -F '#{window_name}|#{pane_dead}' \
+        2>/dev/null |
+        awk -F '|' -v wanted="$1" '
+            $1 == wanted && $2 == 0 { found = 1 }
+            END { exit found ? 0 : 1 }
+        '
 }
 
 codex_command() {
