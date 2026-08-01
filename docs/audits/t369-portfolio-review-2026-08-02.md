@@ -123,16 +123,17 @@ Remote branch deletion is deliberately excluded: current Harness policy makes
 remote branches report-only. Active, unpublished, open-PR, sensitive, and
 event-gated state is preserved even when deletion would reduce counts.
 
-The fresh report-only remote inventory contains 4 Harness branches, 4
+The first report-only remote inventory contained 4 Harness branches, 4
 Students branches, 98 Swallow branches, and only `main` in Website and
-Personal. Students has one open branch, Dependabot PR #560; the other
-repositories have no open PR. Swallow therefore retains 97 non-`main` remote
-branches as visible cleanup debt, but policy intentionally provides no remote
-delete path. More importantly, its live local SW034 tip is `ec809eaf...` while
-the same-named remote ref is only `81ecc2ba...`; GitHub is not a complete
-backup of that active result. Harness has three merged task branches still
-visible remotely, also report-only. These counts are not interpreted as a
-reason to bypass the protected cleanup contract.
+Personal. After the protected T-369/T-370/T-372 publications, Harness has 7:
+`main` plus six exact merged-PR task branches. Students still has one open
+branch, Dependabot PR #560; the other repositories have no open PR. Swallow
+therefore retains 97 non-`main` remote branches as visible cleanup debt, but
+policy intentionally provides no remote delete path. More importantly, its
+live local SW034 tip is `ec809eaf...` while the same-named remote ref is only
+`81ecc2ba...`; GitHub is not a complete backup of that active result. All six
+Harness task branches remain report-only. These counts are not interpreted as
+a reason to bypass the protected cleanup contract.
 
 ## First publication checkpoint
 
