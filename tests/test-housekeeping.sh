@@ -340,8 +340,11 @@ CREATED_GENERATION=$(printf '%s\n' "$OUT" | sed -n 's/.*receipt=\([^ ]*\).*/\1/p
 [ -f "$CREATED_GENERATION" ] || fail "archive generation receipt missing"
 OUT=$(house --plan --routine archives)
 printf '%s\n' "$OUT" | grep -Fq \
-    'generations=2 generation_trigger=bytes' ||
+    'generations=2 generation_trigger=no' ||
     fail "created archive generation did not re-audit"
+printf '%s\n' "$OUT" | grep -Fq \
+    'generation_trigger_basis=delta generation_uncovered=0' ||
+    fail "created generation did not baseline covered receipts"
 printf '%s\n' "$OUT" | grep -Fq \
     'archive_only=2' ||
     fail "generation refs masked archive-only tips"
@@ -355,6 +358,12 @@ fi
 # Two independently restored generations permit one exact source-bundle
 # compaction. The immutable source receipt remains auditable, and later
 # generations recover its tips from the retained generation bundles.
+index=1
+while [ "$index" -le 31 ]; do
+    cp "$ARCHIVE" "$STATE/delta-before-compaction-$index.receipt"
+    chmod 600 "$STATE/delta-before-compaction-$index.receipt"
+    index=$((index + 1))
+done
 printf 'advance protected main for second generation\n' >>"$REPO/TODO.md"
 git -C "$REPO" add TODO.md
 git -C "$REPO" commit -qm 'advance generation proof'
@@ -362,6 +371,9 @@ git -C "$REPO" update-ref refs/remotes/origin/main "$(git -C "$REPO" rev-parse H
 OUT=$(house --create-generation) || fail "second covering generation failed"
 printf '%s\n' "$OUT" | grep -Fq 'restore=pass status=verified' ||
     fail "second generation restore proof changed"
+printf '%s\n' "$OUT" | grep -Fq \
+    'trigger=receipts trigger_basis=delta uncovered=31' ||
+    fail "second generation did not use uncovered-receipt growth"
 GC_BUNDLE=$(sed -n 's/^bundle=//p' "$GC_RECEIPT")
 [ -f "$GC_BUNDLE" ] || fail "compaction source bundle is missing"
 OUT=$(house --plan-archive-compaction --source-receipt "$GC_RECEIPT") ||
@@ -391,10 +403,20 @@ printf 'advance protected main after compaction\n' >>"$REPO/TODO.md"
 git -C "$REPO" add TODO.md
 git -C "$REPO" commit -qm 'prove compacted generation source'
 git -C "$REPO" update-ref refs/remotes/origin/main "$(git -C "$REPO" rev-parse HEAD)"
+index=1
+while [ "$index" -le 31 ]; do
+    cp "$ARCHIVE" "$STATE/delta-after-compaction-$index.receipt"
+    chmod 600 "$STATE/delta-after-compaction-$index.receipt"
+    index=$((index + 1))
+done
 OUT=$(house --create-generation) ||
     fail "generation could not recover a compacted source"
 printf '%s\n' "$OUT" | grep -Fq 'restore=pass status=verified' ||
     fail "post-compaction generation restore proof changed"
+OUT=$(house --plan --routine archives)
+printf '%s\n' "$OUT" | grep -Fq \
+    'generation_trigger=no generation_trigger_basis=delta generation_uncovered=0' ||
+    fail "latest generation did not turn off lifetime receipt trigger"
 unlink "$THRESHOLD_PAYLOAD"
 if house --create-generation >/dev/null 2>&1; then
     fail "archive generation ignored the measured trigger"
