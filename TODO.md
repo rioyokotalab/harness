@@ -19,9 +19,9 @@ Next free ID: T-367.
 
 ### T-366 — Unified Harness cowork and Personal tmux layout
 
-**Phase:** executing after the owner authorized direct reconstruction into the
-final topology. Repository changes are under focused validation; live launch
-remains gated on protected publication and exact one-shot identity checks.
+**Phase:** final topology is live and healthy; awaiting only the owner's
+physical-phone confirmation for Harness, Personal, and Students in both Codex
+and Claude before durable closeout.
 
 **Record:** `docs/tasks/T-366.md`.
 

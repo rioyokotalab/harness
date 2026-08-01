@@ -64,6 +64,7 @@ set_claude_role() {
     session_id=$3
     tmux_test set-option -p -t "$pane" @harness_claude_target "$role"
     tmux_test set-option -p -t "$pane" @harness_claude_session_id "$session_id"
+    tmux_test set-option -p -t "$pane" remain-on-exit on
     tmux_test select-pane -t "$pane" -T "$role"
 }
 
@@ -104,6 +105,9 @@ label_window harness:claude ' #{pane_index}:claude/#{@harness_claude_target} '
     -F '#{window_index}:#{pane_index}:#{@harness_target}:#{@harness_claude_target}' | tr '\n' ' ')" = \
     '0:0:harness: 0:1::harness 1:0:personal: 1:1:students: 2:0::personal 2:1::students ' ] ||
     fail "canonical pane roles"
+[ "$(tmux_test list-panes -s -t harness \
+    -F '#{@harness_claude_target}:#{remain-on-exit}' | sed -n '/^[^:]/p' | tr '\n' ' ')" = \
+    'harness:on personal:on students:on ' ] || fail "Claude dead-pane durability"
 
 assert_even harness:cowork
 assert_even harness:codex

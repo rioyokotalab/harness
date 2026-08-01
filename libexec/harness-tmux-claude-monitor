@@ -240,13 +240,14 @@ def tmux_panes():
             + PANE_ROLE_FORMAT
             + "\t"
             + PANE_SESSION_FORMAT
-            + "\t#{pane_pid}\t#{pane_current_path}\t#{pane_dead}",
+            + "\t#{pane_pid}\t#{pane_current_path}\t#{pane_dead}"
+            + "\t#{remain-on-exit}",
         ]
     )
     panes = []
     for line in output.splitlines():
         fields = line.split("\t")
-        if len(fields) != 10:
+        if len(fields) != 11:
             fail("tmux pane metadata is malformed")
         panes.append(
             {
@@ -260,6 +261,7 @@ def tmux_panes():
                 "pane_pid": int(fields[7]),
                 "path": fields[8],
                 "dead": fields[9] == "1",
+                "remain_on_exit": fields[10] == "on",
             }
         )
     return panes
@@ -286,6 +288,7 @@ def collect_health(panes):
             pane["window_index"] != window_index
             or pane["window_name"] != window_name
             or pane["pane_index"] != index
+            or not pane.get("remain_on_exit", False)
         ):
             health[name] = {"state": "unhealthy", "reason": "metadata"}
             continue
@@ -360,6 +363,7 @@ def canonical_topology(panes):
             pane["window_index"] != window_index
             or pane["window_name"] != window_name
             or pane["pane_index"] != index
+            or not pane.get("remain_on_exit", False)
             or (not pane["dead"] and pane["path"] != TARGET_PATHS[name])
         ):
             return False
@@ -380,6 +384,7 @@ def orderable_topology(panes):
         if (
             pane["window_index"] != window_index
             or pane["window_name"] != window_name
+            or not pane.get("remain_on_exit", False)
             or pane["path"] != TARGET_PATHS[name]
         ):
             return False
