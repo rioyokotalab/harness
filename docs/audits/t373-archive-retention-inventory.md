@@ -110,3 +110,24 @@ A same-state sequential read measured the protected-main implementation at
 24.32 seconds and the optimized implementation at 18.50 seconds, a 23.9%
 wall-time reduction. This is a bounded improvement to an occasional report;
 the report remains read-only and is not promoted into a frequent polling loop.
+
+## First-generation creation gate
+
+The creator is now separately exposed as an explicit action; report mode and
+ordinary apply still cannot create or delete a generation. Creation fails
+unless a frozen byte, receipt-count, or age trigger is currently true. It
+audits and digest-binds all source receipts, derives every owning repository,
+adds current protected main to every exact unique archived tip set, and writes
+one standalone bundle per repository under a generation-specific ref
+namespace. A tip available only inside an older bundle is fetched from that
+already-audited bundle into its exact generation ref before bundling.
+
+Before an immutable generation receipt is published, every bundle is fetched
+into a new independent bare repository, every restored head is compared to its
+expected commit, and full no-dangling object integrity passes. Drill trees use
+guarded deletion. A final mutable-input check requires the complete receipt
+name/digest set and each protected-main tip to remain unchanged. Failure rolls
+back new refs and unpublished artifacts; source receipts and bundles are never
+deleted. The synthetic test covers a bundle-only orphan and proves that a
+successful creation re-audits through report mode while a no-trigger retry is
+rejected.

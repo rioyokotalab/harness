@@ -531,6 +531,280 @@ def state_tree_bytes(state: Path) -> int:
     )
 
 
+def generation_trigger_reasons(state: Path, receipts: Sequence[Path]) -> List[str]:
+    oldest_days = max(
+        (artifact_age_days(validate_private_file(receipt)) for receipt in receipts),
+        default=0,
+    )
+    reasons = []
+    if state_tree_bytes(state) > GENERATION_BYTES_TRIGGER:
+        reasons.append("bytes")
+    if len(receipts) > GENERATION_RECEIPTS_TRIGGER:
+        reasons.append("receipts")
+    if oldest_days >= GENERATION_AGE_DAYS_TRIGGER:
+        reasons.append("age")
+    return reasons
+
+
+def remove_restore_tree(repo: Path, target: Path) -> None:
+    boundaries = scratch_boundaries()
+    boundary = next(
+        (item for item in boundaries if strict_descendant(target, item)), None
+    )
+    if boundary is None:
+        die("archive generation restore path is outside scratch boundaries")
+    manifest = target.parent / f".{target.name}.manifest"
+    if manifest.exists() or manifest.is_symlink():
+        die("archive generation restore manifest already exists")
+    token = guarded_plan(repo, boundary, target, manifest)
+    try:
+        guarded_apply(repo, str(manifest), token)
+    finally:
+        if manifest.exists() or manifest.is_symlink():
+            validate_private_file(manifest)
+            manifest.unlink()
+    if target.exists() or target.is_symlink():
+        die("archive generation restore tree survived guarded cleanup")
+
+
+def create_generation(coordinator_repo: Path) -> Dict[str, Any]:
+    _lexical, state = state_directory()
+    receipts = sorted(state.glob("*.receipt"))
+    if not receipts:
+        die("archive generation requires source receipts")
+    reasons = generation_trigger_reasons(state, receipts)
+    if not reasons:
+        die("archive generation trigger is not met")
+    generation = transaction_id("generation")
+    directory = state / "generations"
+    directory.mkdir(mode=0o700, exist_ok=True)
+    info = directory.lstat()
+    if (
+        directory.is_symlink()
+        or not directory.is_dir()
+        or info.st_uid != os.getuid()
+        or stat.S_IMODE(info.st_mode) != 0o700
+    ):
+        die("archive generation directory identity is unsafe")
+
+    sources = []
+    grouped: Dict[str, Dict[str, Any]] = {}
+    for receipt in receipts:
+        parsed = parse_archive_receipt(receipt)
+        values = parsed["values"]
+        repository_value = values.get("repository_canonical")
+        if not repository_value or not Path(repository_value).is_absolute():
+            die("archive generation source repository is missing")
+        owner = canonical_repo(Path(repository_value))
+        archive_audit(owner, receipt)
+        sources.append({"name": receipt.name, "sha256": digest(receipt)})
+        row = grouped.setdefault(
+            repository_value,
+            {"repository": owner, "tips": {}},
+        )
+        source_bundle = Path(values["bundle"])
+        for item in parsed["items"]:
+            row["tips"].setdefault(
+                item["tip"], (source_bundle, item["archive"])
+            )
+
+    prepared: List[Dict[str, Any]] = []
+    created_refs: List[Tuple[Path, str, str]] = []
+    linked_bundles: List[Path] = []
+    temporary_bundles: List[Path] = []
+    published_receipt: Optional[Path] = None
+    try:
+        for index, repository_value in enumerate(sorted(grouped)):
+            owner = grouped[repository_value]["repository"]
+            main_tip = origin_main(owner)
+            if main_tip is None:
+                die("archive generation protected main is unknown")
+            tip_sources = grouped[repository_value]["tips"]
+            tips = set(tip_sources)
+            tips.add(main_tip)
+            prefix = f"refs/harness-housekeeping/generation/{generation}/r{index}"
+            if text(
+                git(owner, "for-each-ref", "--format=%(refname)", prefix)
+            ).strip():
+                die("archive generation ref namespace already exists")
+            heads = []
+            prefetched_refs: set[str] = set()
+            for tip in sorted(tips):
+                label = "main" if tip == main_tip else f"tip-{tip}"
+                ref = f"{prefix}/{label}"
+                run(["git", "check-ref-format", ref])
+                if (
+                    git(
+                        owner,
+                        "cat-file",
+                        "-e",
+                        f"{tip}^{{commit}}",
+                        check=False,
+                    ).returncode
+                    != 0
+                ):
+                    source = tip_sources.get(tip)
+                    if source is None:
+                        die("archive generation protected main object is unavailable")
+                    source_bundle, source_ref = source
+                    git(
+                        owner,
+                        "fetch",
+                        "--quiet",
+                        str(source_bundle),
+                        f"{source_ref}:{ref}",
+                    )
+                    restored = text(git(owner, "rev-parse", "--verify", ref)).strip()
+                    if restored != tip:
+                        die("archive generation source bundle changed a tip")
+                    prefetched_refs.add(ref)
+                    created_refs.append((owner, ref, tip))
+                heads.append({"ref": ref, "tip": tip})
+            commands = ["start"]
+            commands.extend(
+                f"create {head['ref']} {head['tip']}"
+                for head in heads
+                if head["ref"] not in prefetched_refs
+            )
+            commands.extend(("prepare", "commit"))
+            run(
+                ["git", "-C", str(owner), "update-ref", "--stdin"],
+                input_bytes=("\n".join(commands) + "\n").encode(),
+            )
+            created_refs.extend(
+                (owner, head["ref"], head["tip"])
+                for head in heads
+                if head["ref"] not in prefetched_refs
+            )
+
+            descriptor, temporary_name = tempfile.mkstemp(
+                prefix=f".{generation}-r{index}-", dir=str(directory)
+            )
+            os.close(descriptor)
+            temporary = Path(temporary_name)
+            temporary.unlink()
+            temporary_bundles.append(temporary)
+            final_bundle = directory / f"{generation}-r{index}.bundle"
+            if final_bundle.exists() or final_bundle.is_symlink():
+                die("archive generation bundle already exists")
+            git(
+                owner,
+                "bundle",
+                "create",
+                str(temporary),
+                *[head["ref"] for head in heads],
+            )
+            os.chmod(temporary, 0o600)
+            with temporary.open("rb") as handle:
+                os.fsync(handle.fileno())
+            git(owner, "bundle", "verify", str(temporary))
+
+            restore = Path(
+                tempfile.mkdtemp(prefix=f"harness-{generation}-r{index}-", dir="/tmp")
+            )
+            try:
+                git(restore, "init", "--bare")
+                git(
+                    restore,
+                    "fetch",
+                    "--quiet",
+                    str(temporary),
+                    *[f"{head['ref']}:{head['ref']}" for head in heads],
+                )
+                for head in heads:
+                    restored = text(
+                        git(restore, "rev-parse", "--verify", head["ref"])
+                    ).strip()
+                    if restored != head["tip"]:
+                        die("archive generation independent restore changed a head")
+                git(restore, "fsck", "--full", "--no-dangling")
+            finally:
+                remove_restore_tree(coordinator_repo, restore)
+
+            prepared.append(
+                {
+                    "repository_canonical": repository_value,
+                    "repository_id": list(path_id(owner)),
+                    "protected_main": {
+                        "ref": "refs/remotes/origin/main",
+                        "tip": main_tip,
+                    },
+                    "bundle": str(final_bundle),
+                    "bundle_sha256": digest(temporary),
+                    "heads": heads,
+                    "restore_drill": {
+                        "method": "independent-bare-fetch-exact-heads-v1",
+                        "verified_utc": datetime.now(timezone.utc).strftime(
+                            "%Y-%m-%dT%H:%M:%SZ"
+                        ),
+                        "headset_sha256": generation_headset_digest(heads),
+                    },
+                    "temporary": temporary,
+                }
+            )
+
+        current_receipts = sorted(state.glob("*.receipt"))
+        current_sources = []
+        for receipt in current_receipts:
+            validate_private_file(receipt)
+            current_sources.append(
+                {"name": receipt.name, "sha256": digest(receipt)}
+            )
+        if current_sources != sources:
+            die("archive generation source receipt set changed")
+        for repository in prepared:
+            owner = canonical_repo(Path(repository["repository_canonical"]))
+            if origin_main(owner) != repository["protected_main"]["tip"]:
+                die("archive generation protected main changed")
+
+        for repository in prepared:
+            temporary = repository.pop("temporary")
+            final_bundle = Path(repository["bundle"])
+            os.link(temporary, final_bundle)
+            temporary.unlink()
+            temporary_bundles.remove(temporary)
+            fsync_directory(directory)
+            validate_private_file(final_bundle)
+            linked_bundles.append(final_bundle)
+        receipt_path = directory / f"{generation}.json"
+        payload = {
+            "schema": GENERATION_SCHEMA,
+            "generation": generation,
+            "created_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "source_receipts": sources,
+            "repositories": prepared,
+        }
+        published_receipt = publish_bytes(
+            directory, receipt_path.name, json_bytes(payload)
+        )
+        parse_generation_receipt(published_receipt, state)
+        return {
+            "generation": generation,
+            "receipt": str(published_receipt),
+            "repositories": len(prepared),
+            "heads": sum(len(repository["heads"]) for repository in prepared),
+            "bytes": sum(path.lstat().st_size for path in linked_bundles),
+            "trigger": ",".join(reasons),
+        }
+    except BaseException:
+        if published_receipt is not None and published_receipt.exists():
+            published_receipt.unlink()
+        for path in linked_bundles:
+            if path.exists() and not path.is_symlink():
+                validate_private_file(path)
+                path.unlink()
+        for path in temporary_bundles:
+            if path.exists() and not path.is_symlink():
+                path.unlink()
+        for repository in prepared:
+            temporary = repository.get("temporary")
+            if isinstance(temporary, Path) and temporary.exists():
+                temporary.unlink()
+        for owner, ref, tip in reversed(created_refs):
+            git(owner, "update-ref", "-d", ref, tip, check=False)
+        raise
+
+
 def pr_tree_status(
     repo: Path,
     row: Dict[str, str],
@@ -2091,6 +2365,7 @@ def parser() -> argparse.ArgumentParser:
     action.add_argument("--plan", action="store_true")
     action.add_argument("--apply", action="store_true")
     action.add_argument("--archive", action="store_true")
+    action.add_argument("--create-generation", action="store_true")
     action.add_argument("--audit", action="store_true")
     action.add_argument("--open-worktree", action="store_true")
     action.add_argument("--recover-worktree", action="store_true")
@@ -2138,6 +2413,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         if not arguments.receipt:
             die("worktree recovery requires --receipt")
         recover_worktree(repo, Path(arguments.receipt).absolute())
+        return 0
+    if arguments.create_generation:
+        result = create_generation(repo)
+        print(
+            "HOUSEKEEPING routine=archives mode=create-generation "
+            f"generation={result['generation']} "
+            f"repositories={result['repositories']} heads={result['heads']} "
+            f"bytes={result['bytes']} trigger={result['trigger']} "
+            f"receipt={result['receipt']} restore=pass status=verified"
+        )
         return 0
     if arguments.archive:
         if not arguments.items or not arguments.transaction:

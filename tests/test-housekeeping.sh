@@ -50,6 +50,7 @@ assert '"--open-worktree"' in source and '"--expected-main"' in source
 assert '"--recover-worktree"' in source
 assert '"--repo"' in source
 assert 'choices=("all", "scratch", "branches", "remotes", "worktrees"' in source
+assert '"--create-generation"' in source
 PY
 
 STATE=$TEST_ROOT/state
@@ -322,7 +323,29 @@ chmod 600 "$THRESHOLD_PAYLOAD"
 OUT=$(house --plan --routine archives)
 printf '%s\n' "$OUT" | grep -Fq 'generation_trigger=bytes' ||
     fail "archive byte trigger was not measured"
+OUT=$(house --create-generation) || fail "triggered archive generation failed"
+printf '%s\n' "$OUT" | grep -Fq \
+    'routine=archives mode=create-generation' ||
+    fail "archive generation result changed"
+printf '%s\n' "$OUT" | grep -Fq \
+    'repositories=1 heads=4' ||
+    fail "archive generation head coverage changed"
+printf '%s\n' "$OUT" | grep -Fq \
+    'trigger=bytes' ||
+    fail "archive generation omitted its trigger"
+printf '%s\n' "$OUT" | grep -Fq \
+    'restore=pass status=verified' ||
+    fail "archive generation omitted its restore proof"
+CREATED_GENERATION=$(printf '%s\n' "$OUT" | sed -n 's/.*receipt=\([^ ]*\).*/\1/p')
+[ -f "$CREATED_GENERATION" ] || fail "archive generation receipt missing"
+OUT=$(house --plan --routine archives)
+printf '%s\n' "$OUT" | grep -Fq \
+    'generations=2 generation_trigger=bytes' ||
+    fail "created archive generation did not re-audit"
 unlink "$THRESHOLD_PAYLOAD"
+if house --create-generation >/dev/null 2>&1; then
+    fail "archive generation ignored the measured trigger"
+fi
 if house --apply --routine archives >/dev/null 2>&1; then
     fail "archive inventory accepted apply"
 fi
