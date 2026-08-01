@@ -56,7 +56,11 @@ cat >"$BIN/tmux" <<SH
 #!/bin/sh
 STATE=$STATE
 case \$1 in
-    has-session) grep -q '^session\$' "\$STATE" || exit 1; exit 0 ;;
+    has-session)
+        case "\$3" in
+            harness-codex-resume) [ "\${FAKE_LEGACY:-0}" = 1 ] || exit 1; exit 0 ;;
+        esac
+        grep -q '^session\$' "\$STATE" || exit 1; exit 0 ;;
     new-session) printf 'session\ncodex\n' >>"\$STATE"; printf '%s\n' "\$*" >>"$TEST_ROOT/tmux-calls"; exit 0 ;;
     new-window)
         for a in "\$@"; do
@@ -135,6 +139,17 @@ FAKE_CLAUDE_DEAD=1 agent --host office --run-once >/dev/null ||
 grep -Fq 'respawn-window' "$TEST_ROOT/tmux-calls" || fail "respawn call missing"
 grep -Fq 'harness:codex' "$TEST_ROOT/tmux-calls" &&
     fail "live codex window must not be respawned"
+
+# --- the codex window is deferred while the legacy session is alive ------
+: >"$TEST_ROOT/tmux-calls"
+printf 'session\n' >"$STATE"        # unified session exists, no windows yet
+FAKE_LEGACY=1 agent --host office --run-once >"$TEST_ROOT/legacy.out" ||
+    fail "legacy-aware run failed"
+grep -Fq 'codex-deferred-legacy' "$TEST_ROOT/legacy.out" ||
+    fail "codex window was not deferred while the legacy session lives"
+grep -Fq 'codex-resilient' "$TEST_ROOT/tmux-calls" &&
+    fail "a second codex supervisor was started under the same name"
+printf 'session\ncodex\nclaude\n' >"$STATE"
 
 # --- codex remote control is started only when absent --------------------
 [ -f "$TEST_ROOT/rc-started" ] || fail "codex remote control was not started"

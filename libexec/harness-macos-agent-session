@@ -16,6 +16,7 @@ SESSION=harness
 CODEX_WINDOW=codex
 CLAUDE_WINDOW=claude
 LABEL_BASE=org.rioyokota.harness.agent-session
+LEGACY_SESSION=harness-codex-resume
 
 die() {
     printf 'harness: %s\n' "$1" >&2
@@ -100,14 +101,29 @@ claude_command() {
         "$(claude_bin)" "$logical_host"
 }
 
+legacy_codex_live() {
+    # The legacy session runs codex-resilient under the same --name, and that
+    # supervisor keys its state file by name. Two live supervisors would fight
+    # over one state file, so the codex window is deferred until the legacy
+    # session is retired. The claude window has no such conflict.
+    $TMUX has-session -t "$LEGACY_SESSION" 2>/dev/null
+}
+
 ensure_session() {
     created=
     if ! session_exists; then
-        $TMUX new-session -d -s "$SESSION" -n "$CODEX_WINDOW" \
-            -c "$(repo_root)" "$(codex_command)"
+        if legacy_codex_live; then
+            $TMUX new-session -d -s "$SESSION" -n "$CLAUDE_WINDOW" \
+                -c "$(repo_root)" "$(claude_command)"
+        else
+            $TMUX new-session -d -s "$SESSION" -n "$CODEX_WINDOW" \
+                -c "$(repo_root)" "$(codex_command)"
+        fi
         created="$created session"
     fi
-    if ! $TMUX list-windows -t "$SESSION" -F '#{window_name}' 2>/dev/null |
+    if legacy_codex_live; then
+        created="$created codex-deferred-legacy"
+    elif ! $TMUX list-windows -t "$SESSION" -F '#{window_name}' 2>/dev/null |
         grep -qx "$CODEX_WINDOW"; then
         $TMUX new-window -d -t "$SESSION" -n "$CODEX_WINDOW" \
             -c "$(repo_root)" "$(codex_command)"
