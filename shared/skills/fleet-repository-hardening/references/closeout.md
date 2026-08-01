@@ -23,8 +23,9 @@ task-owned residue after identity revalidation. Preserve unrelated worktrees,
 files, sessions, and live locks. Verify clean trees and account for every
 task-owned stash or helper in its ledger.
 
-For a Harness-opened task tree, run repository-explicit `harness housekeeping
---plan --routine worktrees`, then apply only its exact fresh receipt and token.
+For a Harness-opened tree, plan `harness housekeeping --plan --routine
+worktrees --path EXACT_TASK_TREE`; apply only its fresh receipt/token, isolating
+parallel closeouts.
 An eligible closeout proves the exact merged/ancestor classification, zero
 tracked, untracked, or ignored residue, no nested repository, submodule, lock,
 process, or open file, and safe Git marker/admin backlinks. Apply archives the

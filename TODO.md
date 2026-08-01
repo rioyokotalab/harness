@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-373.
+Next free ID: T-374.
 
 ## Resume contract
 
@@ -25,6 +25,13 @@ remains local for its driver. Material changes stop at 10:45 JST.
 
 **Record:** `docs/tasks/T-369.md`.
 
+### T-373 — Bound housekeeping archive growth
+
+**Phase:** queued report-first retention design; current archives are healthy
+and no bundle, receipt, plan, or manifest is yet disposable.
+
+**Record:** `docs/tasks/T-373.md`.
+
 ### T-371 — Migrate legacy managed primary branches
 
 **Phase:** event-gated until the live Students and Swallow managed sessions
@@ -37,9 +44,9 @@ saved thread, phone root, or app-server connection in place.
 
 ### T-196 — Backup lifecycle phase 2
 
-**Phase:** read-only monitoring; six 2026-08-02 successors are terminal-success,
-ABQ is terminal but lacks exit-status evidence, AL remains time-gated to 08:00
-JST, and all eight chains stay 2/8 pending snapshot/private-state acceptance.
+**Phase:** read-only monitoring; seven 2026-08-02 successors are terminal-success,
+AL remains time-gated to 08:00 JST, and all eight chains stay 2/8 pending
+snapshot/private-state acceptance.
 
 **Record:** `docs/tasks/T-196.md`. Do not query or mutate a successor early.
 

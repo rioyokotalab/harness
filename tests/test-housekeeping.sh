@@ -274,8 +274,16 @@ printf '%s\n' "$OUT" | grep -Fq \
     fail "task worktree branch changed"
 [ "$(git -C "$OPEN_PATH" rev-parse HEAD)" = "$BASE" ] ||
     fail "task worktree tip changed"
+OTHER_OPEN_PATH=$TEST_ROOT/other-opened-task
+git -C "$REPO" branch task/other-open "$BASE"
+git -C "$REPO" worktree add -q "$OTHER_OPEN_PATH" task/other-open
 printf '[]\n' >"$PR_DATA"
-OUT=$(house --plan --routine worktrees)
+OUT=$(house --plan --routine worktrees --path "$OPEN_PATH")
+printf '%s\n' "$OUT" | grep -Fq "selected=$OPEN_PATH" ||
+    fail "exact worktree selection was not recorded"
+printf '%s\n' "$OUT" | grep -Fq \
+    "REPORT worktree=$OTHER_OPEN_PATH branch=task/other-open tip=$BASE reason=not-selected" ||
+    fail "parallel clean worktree was not excluded"
 PLAN=$(receipt_from "$OUT")
 TOKEN=$(token_from "$OUT")
 OUT=$(house --apply --routine worktrees --receipt "$PLAN" --token "$TOKEN") ||
@@ -283,6 +291,9 @@ OUT=$(house --apply --routine worktrees --receipt "$PLAN" --token "$TOKEN") ||
 [ ! -e "$OPEN_PATH" ] || fail "opened task worktree survived closeout"
 git -C "$REPO" show-ref --verify --quiet refs/heads/task/open &&
     fail "opened task branch survived closeout"
+[ -d "$OTHER_OPEN_PATH" ] || fail "parallel clean worktree was removed"
+git -C "$REPO" worktree remove "$OTHER_OPEN_PATH"
+git -C "$REPO" update-ref -d refs/heads/task/other-open "$BASE"
 
 # Worktree planning rejects every residue and liveness class.
 REPO=$TEST_ROOT/worktrees

@@ -998,11 +998,38 @@ def guarded_plan(repo: Path, boundary: Path, target: Path, manifest: Path) -> st
     die("guarded-delete plan omitted its token")
 
 
-def plan_worktrees(repo: Path) -> None:
+def select_worktree_records(
+    records: List[Dict[str, Any]], selected_path: Optional[str]
+) -> Optional[str]:
+    if selected_path is None:
+        return None
+    if not isinstance(selected_path, str):
+        die("selected worktree path is malformed")
+    requested = Path(selected_path)
+    if (
+        not requested.is_absolute()
+        or not requested.exists()
+        or requested.is_symlink()
+    ):
+        die("selected worktree path is missing or unsafe")
+    canonical = str(requested.resolve(strict=True))
+    matches = [record for record in records if record.get("path") == canonical]
+    if len(matches) != 1:
+        die("selected worktree is not an exact repository worktree")
+    for record in records:
+        if record is matches[0] or not record.get("candidate"):
+            continue
+        record["candidate"] = False
+        record["reasons"].append("not-selected")
+    return canonical
+
+
+def plan_worktrees(repo: Path, selected_path: Optional[str] = None) -> None:
     prs = pull_requests(repo)
     main_oid = origin_main(repo)
     rows = worktree_rows(repo)
     records = [worktree_snapshot(repo, row, prs, main_oid) for row in rows]
+    selected = select_worktree_records(records, selected_path)
     candidates = [record for record in records if record["candidate"]]
     _lexical, state = state_directory()
     manifests = state / "worktree-manifests"
@@ -1027,9 +1054,18 @@ def plan_worktrees(repo: Path) -> None:
     receipt, token = publish_plan(
         "worktrees",
         repo,
-        {"origin_main": main_oid, "api_ok": prs is not None, "records": records},
+        {
+            "origin_main": main_oid,
+            "api_ok": prs is not None,
+            "selected_path": selected,
+            "records": records,
+        },
     )
-    print(f"HOUSEKEEPING routine=worktrees mode=plan candidates={len(candidates)} reports={len(records)-len(candidates)} api={'ok' if prs is not None else 'unknown'}")
+    print(
+        "HOUSEKEEPING routine=worktrees mode=plan "
+        f"candidates={len(candidates)} reports={len(records)-len(candidates)} "
+        f"api={'ok' if prs is not None else 'unknown'} selected={selected or 'all'}"
+    )
     for record in records:
         label = "CANDIDATE" if record["candidate"] else "REPORT"
         reason = "eligible" if record["candidate"] else ",".join(record["reasons"])
@@ -1293,6 +1329,7 @@ def apply_worktrees(repo: Path, receipt_path: Path, token: str) -> None:
         die("worktree mutable state changed or is unknown")
     current_rows = worktree_rows(repo)
     current = [worktree_snapshot(repo, row, prs, main_oid) for row in current_rows]
+    select_worktree_records(current, plan.get("selected_path"))
     planned = plan.get("records", [])
     if [comparable_worktree(row) for row in current] != [comparable_worktree(row) for row in planned]:
         die("worktree candidate set changed; re-plan")
@@ -1544,6 +1581,11 @@ def require_receipt(arguments: argparse.Namespace) -> Tuple[Path, str]:
 def main(argv: Optional[Sequence[str]] = None) -> int:
     arguments = parser().parse_args(argv)
     repo = repository_from_environment(arguments.repo)
+    if arguments.worktree_path and not (
+        arguments.open_worktree
+        or (arguments.plan and arguments.routine == "worktrees")
+    ):
+        die("--path is valid only for worktree open or an exact worktrees plan")
     if arguments.open_worktree:
         open_worktree(
             repo,
@@ -1579,7 +1621,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             ("scratch", plan_scratch),
             ("branches", plan_branches),
             ("remotes", plan_remotes),
-            ("worktrees", plan_worktrees),
+            (
+                "worktrees",
+                lambda selected_repo: plan_worktrees(
+                    selected_repo, arguments.worktree_path
+                ),
+            ),
             ("launchers", lambda _repo: plan_launchers()),
             ("board", plan_board),
             ("evidence", plan_evidence),
