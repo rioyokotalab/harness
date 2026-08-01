@@ -11,7 +11,6 @@ import sys
 root = Path(sys.argv[1])
 expected = {
     "bounded-agent-delegation": ("policy permits", "dispatch and review"),
-    "codex-claude-cowork": ("duration work", "agreed benchmark"),
     "evidence-first-research": ("primary-source provenance",),
     "fleet-repository-hardening": ("repository-local LIFO",),
     "guarded-bulk-delete": ("multi-path deletion", "post-delete checks"),

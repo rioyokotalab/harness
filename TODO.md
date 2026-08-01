@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-368.
+Next free ID: T-369.
 
 ## Resume contract
 
@@ -16,6 +16,15 @@ Next free ID: T-368.
 5. A failed mutable-state query is unknown, never evidence of absence.
 
 ## Active queue
+
+### T-368 — Retire the Codex–Claude Cowork skill
+
+**Phase:** dependency investigation complete; awaiting owner go. Remove the
+installed/discoverable skill and all current duration/nightly requirements
+across Harness, Students, Swallow, and Personal while preserving historical
+evidence and the unrelated `harness:cowork` tmux window.
+
+**Record:** `docs/tasks/T-368.md`.
 
 ### T-363 — Workspace lifecycle for alternating clients
 

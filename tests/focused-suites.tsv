@@ -37,7 +37,6 @@ tests/test-codex-resilient.sh|Codex transient-service supervisor|12
 tests/test-codex-runtime-isolation.sh|Codex target-scoped immutable runtime
 tests/test-codex-thread-recovery.sh|Codex thread systemError recovery
 tests/test-recover-codex-unsafe-tail-skill.sh|Codex unsafe-tail recovery skill
-tests/test-codex-claude-cowork-skill.sh|Codex-Claude cowork skill protocol|19
 tests/test-fleet-repository-hardening-skill.sh|fleet and repository hardening skill
 tests/test-hardening-audit.sh|value-free repository hardening preflight
 tests/test-local-mpi-profile.sh|local MPI profile focused suite

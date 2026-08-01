@@ -15,9 +15,8 @@ coordinating harness. Never stash pre-existing owner or agent work.
 - Apply `plan-interview-execute` only for an owner-requested plan, interview,
   separate explicit `go`, or a still-open material choice. Do not add an
   interview or confirmation to frozen, authorized execution.
-- Apply `long-running-task-ledger` to multi-session or deadline-bound work.
-- Apply both `codex-claude-cowork` and `long-running-task-ledger` before target
-  execution for any duration-specified owner request.
+- Apply `long-running-task-ledger` to multi-session, deadline-bound, or
+  duration-specified work.
 - Apply `evidence-first-research` to current advisories, entitlements, vendor
   guidance, or security claims.
 - Apply `operate-native-hpc` before scheduler or allocation work.

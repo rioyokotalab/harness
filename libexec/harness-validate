@@ -380,14 +380,31 @@ def cached_receipt(receipt_dir: Path, identity: dict) -> Path | None:
     return None
 
 
-def untracked_whitespace_check(root: Path, paths: list[str]) -> int:
+def untracked_whitespace_check(
+    root: Path, paths: list[str], base: str | None = None
+) -> int:
     if not paths:
         return 0
     tracked = set(
         run_git(root, "ls-files", "--", *paths).stdout.splitlines()
     )
+    deleted = set()
+    if base:
+        deleted = set(
+            run_git(
+                root,
+                "diff",
+                "--name-only",
+                "--diff-filter=D",
+                base,
+                "--",
+                *paths,
+            ).stdout.splitlines()
+        )
     for relative in paths:
         if relative in tracked:
+            continue
+        if relative in deleted:
             continue
         ignored = run_git(
             root, "check-ignore", "-q", "--", relative, check=False
@@ -441,7 +458,9 @@ def run_validation(root: Path, base: str, decision: dict, jobs: str) -> list[dic
         return results
 
     untracked_started = time.monotonic()
-    untracked_status = untracked_whitespace_check(root, decision["paths"])
+    untracked_status = untracked_whitespace_check(
+        root, decision["paths"], base
+    )
     results.append(
         {
             "path": "git diff --no-index --check (untracked)",

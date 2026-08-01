@@ -56,24 +56,6 @@ cases = [
         True,
     ),
     (
-        ["shared/skills/codex-claude-cowork/SKILL.md"],
-        "R1",
-        [
-            "tests/test-skill-context-budgets.sh",
-            "tests/test-skill-context-gates.sh",
-        ],
-        False,
-    ),
-    (
-        ["shared/skills/codex-claude-cowork/references/evidence-review.md"],
-        "R1",
-        [
-            "tests/test-skill-context-budgets.sh",
-            "tests/test-skill-context-gates.sh",
-        ],
-        False,
-    ),
-    (
         ["shared/skills/plan-interview-execute/references/execution.md"],
         "R1",
         [
@@ -297,6 +279,33 @@ with tempfile.TemporaryDirectory() as raw_repo:
     assert module["untracked_whitespace_check"](
         fixture, ["new.txt"]
     ) == 1
+    deleted_candidate = fixture / "deleted.txt"
+    deleted_candidate.write_text("tracked\n", encoding="utf-8")
+    subprocess.run(
+        ["git", "add", "deleted.txt"], cwd=fixture, check=True,
+        stdin=subprocess.DEVNULL,
+    )
+    subprocess.run(
+        [
+            "git", "-c", "user.name=Harness Validator",
+            "-c", "user.email=validator@invalid", "commit", "-qm",
+            "fixture",
+        ],
+        cwd=fixture,
+        check=True,
+        stdin=subprocess.DEVNULL,
+    )
+    deleted_candidate.unlink()
+    subprocess.run(
+        ["git", "add", "-u", "deleted.txt"], cwd=fixture, check=True,
+        stdin=subprocess.DEVNULL,
+    )
+    assert module["untracked_whitespace_check"](
+        fixture, ["deleted.txt"], "HEAD"
+    ) == 0
+    assert module["untracked_whitespace_check"](
+        fixture, ["deleted.txt"]
+    ) == 1
     (fixture / ".gitignore").write_text(
         "*\n!.gitignore\n", encoding="utf-8"
     )
@@ -454,7 +463,7 @@ print(
 PY
 
 docs_plan=$(plan --path TODO.md --path docs/tasks/index.tsv)
-skill_plan=$(plan --path shared/skills/codex-claude-cowork/SKILL.md)
+skill_plan=$(plan --path shared/skills/plan-interview-execute/SKILL.md)
 ordinary_plan=$(plan \
     --path config/terminfo/tmux-256color.src \
     --path tests/smoke/debugger.c \

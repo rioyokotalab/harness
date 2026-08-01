@@ -2,7 +2,6 @@
 set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
-COWORK=$ROOT/shared/skills/codex-claude-cowork
 HPC=$ROOT/shared/skills/operate-native-hpc
 PIE=$ROOT/shared/skills/plan-interview-execute
 REMOTE=$ROOT/shared/skills/remote-agent-communication
@@ -21,7 +20,6 @@ assert_max() {
 }
 
 # Frozen T-351 baselines measured before conditional routing.
-COWORK_BEFORE=5926
 HPC_BEFORE=2668
 HPC_LARGEST_BEFORE=1397
 REMOTE_BEFORE=1241
@@ -35,31 +33,6 @@ PERSONAL_MAC_BEFORE=1527
 # transaction selected that entry plus the 766-word aggregate protocol.
 UNSAFE_DIAGNOSIS_BEFORE=455
 UNSAFE_TRANSACTION_BEFORE=1221
-
-cowork_entry=$(words "$COWORK/SKILL.md")
-cowork_plan=$(words "$COWORK/references/session-planning.md")
-cowork_review=$(words "$COWORK/references/evidence-review.md")
-cowork_exchange=$(words "$COWORK/references/evidence-exchange.md")
-cowork_initial=$((cowork_entry + cowork_plan))
-assert_max "$cowork_entry" 750 'cowork entry'
-assert_max "$cowork_plan" 400 'cowork planning reference'
-assert_max "$cowork_initial" 1100 'cowork initial planning route'
-assert_max "$((cowork_entry + cowork_review))" 900 \
-    'cowork evidence-review route'
-assert_max "$((cowork_entry + cowork_exchange))" 1150 \
-    'cowork staged-exchange route'
-cowork_reduction=$(((COWORK_BEFORE - cowork_initial) * 100 / COWORK_BEFORE))
-[ "$cowork_reduction" -ge 75 ] ||
-    fail "cowork initial reduction is not material: $cowork_reduction%"
-
-for name in evidence-review evidence-exchange native-clients execution-duration recovery; do
-    count=$(words "$COWORK/references/$name.md")
-    assert_max "$count" 800 "cowork $name reference"
-done
-
-if grep -F '](references/protocol.md)' "$COWORK/SKILL.md" >/dev/null; then
-    fail 'cowork entry still selects the aggregate protocol'
-fi
 
 hpc_entry=$(words "$HPC/SKILL.md")
 hpc_common=$(words "$HPC/references/common.md")
@@ -240,4 +213,4 @@ assert_max "$(words "$UNSAFE/references/protocol.md")" 80 \
     'unsafe-tail compatibility protocol index'
 
 printf '%s\n' \
-    "Skill context budgets passed: cowork $COWORK_BEFORE->$cowork_initial words (-$cowork_reduction%); HPC aggregate $HPC_BEFORE->$hpc_aggregate words, largest route $HPC_LARGEST_BEFORE->$hpc_largest (-$hpc_reduction%); PIE $PIE_BEFORE->$pie_largest words (-$pie_reduction%); remote $REMOTE_BEFORE->$remote_largest words (-$remote_reduction%); hardening $HARDENING_BEFORE->$hardening_largest words (-$hardening_reduction%, largest selected routes including interrupted phase); personal-Mac $PERSONAL_MAC_BEFORE->$personal_largest words (-$personal_reduction%, cumulative component acceptance); unsafe-tail diagnosis $UNSAFE_DIAGNOSIS_BEFORE->$unsafe_diagnosis_route words (-$unsafe_diagnosis_reduction%), rollback $UNSAFE_TRANSACTION_BEFORE->$unsafe_safe_route words (-$unsafe_safe_reduction%), bridge $UNSAFE_TRANSACTION_BEFORE->$unsafe_bridge_route words (-$unsafe_bridge_reduction%)"
+    "Skill context budgets passed: HPC aggregate $HPC_BEFORE->$hpc_aggregate words, largest route $HPC_LARGEST_BEFORE->$hpc_largest (-$hpc_reduction%); PIE $PIE_BEFORE->$pie_largest words (-$pie_reduction%); remote $REMOTE_BEFORE->$remote_largest words (-$remote_reduction%); hardening $HARDENING_BEFORE->$hardening_largest words (-$hardening_reduction%, largest selected routes including interrupted phase); personal-Mac $PERSONAL_MAC_BEFORE->$personal_largest words (-$personal_reduction%, cumulative component acceptance); unsafe-tail diagnosis $UNSAFE_DIAGNOSIS_BEFORE->$unsafe_diagnosis_route words (-$unsafe_diagnosis_reduction%), rollback $UNSAFE_TRANSACTION_BEFORE->$unsafe_safe_route words (-$unsafe_safe_reduction%), bridge $UNSAFE_TRANSACTION_BEFORE->$unsafe_bridge_route words (-$unsafe_bridge_reduction%)"
