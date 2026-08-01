@@ -255,6 +255,31 @@ ancestry-based deletion would be unsafe after protected squash merges and why
 remote refs remain report-only. The independently bundled live SW-034 tip is
 still newer than its same-named remote ref.
 
+The same two-day Actions sample contained eight failed Harness PR runs. All
+were owner-authored intermediate heads, not failures on the protected merge
+trees. Four included a stale exact-number context benchmark, two included an
+in-progress task-ledger contract, and the remaining focused failures were
+subsequently corrected managed-session/startup changes. The context benchmark
+was the repeated avoidable repair cost: its threshold checks remain mandatory,
+but a new deterministic `--check`/`--write` helper now prints the exact stale
+diff and refreshes only generated values. This replaces a large assertion
+payload and manual arithmetic without weakening scenario, resource, board, or
+reduction gates.
+
+Live repository-isolation checks found seven distinct worktree paths across
+the five repositories, with no duplicate, parent/child, or cross-owner path
+collision. Every Git common directory and object database is repository-local;
+all five report no object alternates, no lock file, and an empty worktree-prune
+dry run. Harness has only canonical `main` plus the active T-369 worktree;
+Website has canonical `main` plus its preserved worker handoff; the other
+three have one primary worktree each. Tmux metadata, read without pane or
+transcript content, keeps Harness/Personal work rooted in Harness and Students
+work rooted in Students for both clients. The legacy Students and Swallow
+primary branches are intentionally ahead of and behind protected `main`; their
+exact tips are bundled, and T-371 remains the sole idle-boundary migration
+path. This is preserved isolation debt, not evidence that either live checkout
+should be switched in place.
+
 Students' sole open PR, Dependabot #560, is behind current `main` and failed
 for one understood safety reason: all 695 other tests and 34 subtests passed,
 but changing the Codex package manifests invalidated the exact digest embedded

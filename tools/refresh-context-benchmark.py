@@ -102,8 +102,11 @@ def render(root: Path, document: Path, manifest: Path) -> str:
     todo_lines = len(todo.read_text(encoding="utf-8").splitlines())
     todo_words = word_count(todo)
     text = re.sub(
-        r"active board is [0-9]+ lines / [0-9]+ words",
-        f"active board is {todo_lines} lines / {todo_words} words",
+        r"active board is(\n?)[0-9]+ lines / [0-9]+ words",
+        lambda match: (
+            f"active board is{match.group(1)}{todo_lines} lines / "
+            f"{todo_words} words"
+        ),
         text,
     )
     task_words = word_count(root / "docs/tasks/T-351.md")
