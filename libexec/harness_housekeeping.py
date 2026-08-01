@@ -1003,8 +1003,14 @@ def select_worktree_records(
 ) -> Optional[str]:
     if selected_path is None:
         return None
+    if not isinstance(selected_path, str):
+        die("selected worktree path is malformed")
     requested = Path(selected_path)
-    if not requested.is_absolute() or not requested.exists() or requested.is_symlink():
+    if (
+        not requested.is_absolute()
+        or not requested.exists()
+        or requested.is_symlink()
+    ):
         die("selected worktree path is missing or unsafe")
     canonical = str(requested.resolve(strict=True))
     matches = [record for record in records if record.get("path") == canonical]
@@ -1055,7 +1061,11 @@ def plan_worktrees(repo: Path, selected_path: Optional[str] = None) -> None:
             "records": records,
         },
     )
-    print(f"HOUSEKEEPING routine=worktrees mode=plan candidates={len(candidates)} reports={len(records)-len(candidates)} api={'ok' if prs is not None else 'unknown'} selected={selected or 'all'}")
+    print(
+        "HOUSEKEEPING routine=worktrees mode=plan "
+        f"candidates={len(candidates)} reports={len(records)-len(candidates)} "
+        f"api={'ok' if prs is not None else 'unknown'} selected={selected or 'all'}"
+    )
     for record in records:
         label = "CANDIDATE" if record["candidate"] else "REPORT"
         reason = "eligible" if record["candidate"] else ",".join(record["reasons"])
