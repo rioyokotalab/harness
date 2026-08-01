@@ -17,14 +17,6 @@ Next free ID: T-364.
 
 ## Active queue
 
-### T-361 — Unified managed-Mac agent session with Claude parity
-
-**Phase:** planning; scope frozen, awaiting four owner decisions (fleet
-breadth, reboot-durability mechanism, bypass-permission acceptance, injection
-blast radius). No Mac or owner-global state changed.
-
-**Record:** `docs/tasks/T-361.md`.
-
 ### T-362 — Routine housekeeping workflow
 
 **Phase:** proposal; awaiting owner approval of scope and of whether this

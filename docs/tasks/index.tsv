@@ -1,7 +1,7 @@
 task	state	summary	source
 T-363	active	Workspace lifecycle for alternating clients	TODO.md;docs/tasks/T-363.md
 T-362	active	Routine housekeeping workflow	TODO.md;docs/tasks/T-362.md
-T-361	active	Unified managed-Mac agent session with Claude parity	TODO.md;docs/tasks/T-361.md
+T-361	complete	Unified managed-Mac agent session with Claude parity	docs/tasks/T-361.md
 T-360	complete	Correct Mac remote-control readiness detection	docs/tasks/T-360.md
 T-359	complete	Claude pane monitor and recovery parity	docs/tasks/T-359.md
 T-358	complete	Overnight duration run: claude tmux window and multi-repo development	docs/tasks/T-358.md
