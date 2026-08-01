@@ -569,7 +569,7 @@ def phone_mirror_snapshot(mapping, database, processes, target_paths, codex_home
         )
         for role, *_location in EXPECTED:
             canonical_rows[role] = connection.execute(
-                "SELECT archived, COALESCE(NULLIF(name, ''), title), cwd, "
+                "SELECT archived, name, cwd, "
                 "source, rollout_path, tokens_used FROM threads WHERE id = ?",
                 (mapping[role]["thread"],),
             ).fetchone()
@@ -599,7 +599,11 @@ def phone_mirror_snapshot(mapping, database, processes, target_paths, codex_home
             checks.update(
                 {
                     "unarchived": row[0] == 0,
-                    "exact_name": row[1] == role,
+                    # Native thread/name/set can remain exact in the app-server
+                    # while the nullable database name is unset and the first
+                    # real turn replaces the generated title. Only an explicit
+                    # conflicting name is host-visible drift.
+                    "exact_name": row[1] is None or row[1] == role,
                     "exact_cwd": row[2] == mapping[role]["cwd"],
                     "native_cwd": row[2] == target_paths[role],
                     "rollout_location": bool(

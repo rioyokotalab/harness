@@ -268,6 +268,22 @@ assert healthy["status"] == "healthy"
 assert healthy["mismatch_classes"] == []
 
 connection.execute(
+    "UPDATE threads SET name = NULL, title = 'generated title' "
+    "WHERE id = 'thread-personal'"
+)
+connection.commit()
+unset_native_name, _drift = module.phone_mirror_snapshot(
+    mapping, str(database), processes, target_paths, str(codex_home)
+)
+assert unset_native_name["status"] == "healthy"
+assert unset_native_name["roles"]["personal"]["exact_name"] is True
+connection.execute(
+    "UPDATE threads SET name = 'personal', title = 'personal' "
+    "WHERE id = 'thread-personal'"
+)
+connection.commit()
+
+connection.execute(
     "UPDATE threads SET tokens_used = 0 WHERE id = 'thread-personal'"
 )
 connection.commit()
