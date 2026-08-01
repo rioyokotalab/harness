@@ -37,9 +37,9 @@ available only from its archive ref/bundle remains independently protected even
 when a merge tree is equal.
 
 The report also measures the complete state tree and evaluates the frozen
-generation triggers. The current readback is 448,208,304 bytes, 22 receipts,
+generation triggers. The current readback is 529,056,189 bytes, 23 receipts,
 oldest receipt below one day, zero generation receipts, and
-`generation_trigger=no`.
+`generation_trigger=no`; this is 7,814,723 bytes below 512 MiB.
 
 ## Measured consolidation opportunity
 
@@ -68,7 +68,7 @@ until two independently verified generations exist and a fresh report proves
 that removing an exact older generation preserves every required tip, ledger
 reference, rollback, and interrupted-closeout path. Current state meets none of
 those deletion gates, so immediate compaction would trade recoverability for
-only 427 MiB of storage and is rejected.
+only 505 MiB of storage and is rejected.
 
 ## Generation receipt and restore contract
 
