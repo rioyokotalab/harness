@@ -26,7 +26,7 @@ its eventual protected publication.
 | native HPC experiment | 77,550 | 3,380 | 95.6% | 6,722 | 3,107 | 53.7% |
 | duration Cowork | 80,599 | 4,927 | 93.8% | 9,771 | 4,654 | 52.3% |
 
-The median total reduction is 96.4%, above the frozen 85% threshold; every
+The median total reduction is 96.5%, above the frozen 85% threshold; every
 scenario exceeds 93%, above the per-scenario 50% floor. Median non-ledger
 reduction is 47.2%, above the 30% independent policy/skill threshold. The
 always-read policy is 805 words, and the active board is 50 lines / 240 words,
