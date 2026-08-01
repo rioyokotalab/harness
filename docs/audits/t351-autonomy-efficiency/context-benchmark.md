@@ -17,25 +17,25 @@ protected publication.
 
 | Scenario | Before total | After total | Total reduction | Before non-ledger | After non-ledger | Non-ledger reduction |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| factual lookup | 73,734 | 1,820 | 97.5% | 2,906 | 1,483 | 48.9% |
-| documentation edit | 73,545 | 2,132 | 97.1% | 2,717 | 1,795 | 33.9% |
-| ordinary code fix | 74,455 | 1,858 | 97.5% | 3,627 | 1,521 | 58.0% |
-| tmux health diagnosis | 73,545 | 1,819 | 97.5% | 2,717 | 1,482 | 45.4% |
-| unsafe-tail recovery | 75,931 | 3,178 | 95.8% | 5,103 | 2,841 | 44.3% |
-| fleet hardening | 76,238 | 4,679 | 93.8% | 5,410 | 4,342 | 19.7% |
-| native HPC experiment | 77,550 | 3,445 | 95.5% | 6,722 | 3,108 | 53.7% |
-| duration ledger | 80,599 | 2,139 | 97.3% | 9,771 | 1,802 | 81.5% |
+| factual lookup | 73,734 | 1,841 | 97.5% | 2,906 | 1,483 | 48.9% |
+| documentation edit | 73,545 | 2,153 | 97.0% | 2,717 | 1,795 | 33.9% |
+| ordinary code fix | 74,455 | 1,879 | 97.4% | 3,627 | 1,521 | 58.0% |
+| tmux health diagnosis | 73,545 | 1,840 | 97.4% | 2,717 | 1,482 | 45.4% |
+| unsafe-tail recovery | 75,931 | 3,199 | 95.7% | 5,103 | 2,841 | 44.3% |
+| fleet hardening | 76,238 | 4,700 | 93.8% | 5,410 | 4,342 | 19.7% |
+| native HPC experiment | 77,550 | 3,465 | 95.5% | 6,722 | 3,107 | 53.7% |
+| duration ledger | 80,599 | 2,160 | 97.3% | 9,771 | 1,802 | 81.5% |
 
-The median total reduction is 97.2%, above the frozen 85% threshold; every
+The median total reduction is 97.1%, above the frozen 85% threshold; every
 scenario remains far above the per-scenario 50% floor. Median non-ledger
 reduction is 47.1%, above the 30% independent policy/skill threshold. The
-always-read policy is 806 words, and the active board is 67 lines / 337 words,
+always-read policy is 806 words, and the active board is 69 lines / 358 words,
 and selected conditional policy routes are separately budgeted by
 `tests/test-agent-policy-routing.sh`.
 
 The frozen benchmark deliberately retains the completed T-351 record as its
 representative task payload. That record is 426 words and the active board is
-67 lines / 337 words, so board plus representative payload is 763 words—33.8%
+69 lines / 358 words, so board plus representative payload is 784 words—32.0%
 below the prior 1,153-word board. A current cold start reads the
 board and only a selected active record; it does not load completed T-351 or
 unrelated backup successor IDs, outage contingency details, and the blocked
@@ -48,7 +48,7 @@ checks that selected inputs are regular tracked files, enforces all frozen
 thresholds, and fails if the active board or policy router regresses.
 
 Phase routing reduced the largest selected routes as follows: HPC
-2,668→1,117 words (58.1%), PIE 1,088→615 (43.5%), remote communication
+2,668→1,116 words (58.1%), PIE 1,088→615 (43.5%), remote communication
 1,241→795 (35.9%), fleet hardening 1,431→877 (38.7%, including LIFO handling
 and explicit interrupted-closeout recovery in the largest selected phase),
 and personal-Mac onboarding 1,527→953 (37.6%, including component
@@ -59,7 +59,7 @@ conservatively counts every phase and both host types, not just its largest
 instantaneous route.
 
 Within the already site-routed HPC workflow, a second routing layer reduced
-the former 1,397-word largest route to 1,117 words (20.0%). The mandatory
+the former 1,397-word largest route to 1,116 words (20.0%). The mandatory
 entry still loads `common.md`, exactly one site, and exactly one current
 planning, execution, or validation phase.
 
