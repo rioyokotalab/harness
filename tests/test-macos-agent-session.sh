@@ -89,6 +89,26 @@ exit 0
 SH
 chmod 700 "$BIN/claude"
 
+# Deterministic process view: readiness must not depend on the host's real ps.
+cat >"$BIN/id" <<'SH'
+#!/bin/sh
+case ${1:-} in
+    -un) echo managed-owner ;;
+    -u) echo 501 ;;
+esac
+SH
+chmod 700 "$BIN/id"
+
+cat >"$BIN/ps" <<'SH'
+#!/bin/sh
+if [ "${FAKE_RC_READY:-0}" = 1 ]; then
+    echo "managed-owner /path/codex app-server --remote-control --listen unix://"
+    echo "managed-owner /path/codex app-server daemon pid-update-loop"
+fi
+exit 0
+SH
+chmod 700 "$BIN/ps"
+
 cat >"$BIN/harness-codex" <<SH
 #!/bin/sh
 printf '%s\n' "\$*" >>"$TEST_ROOT/codex-rc-calls"
@@ -104,6 +124,7 @@ agent() {
     HARNESS_TEST_CODEX_LAUNCHER="$BIN/harness-codex" \
     HARNESS_TEST_LAUNCH_AGENTS="$TEST_ROOT/agents" \
     HARNESS_TEST_AGENT_REPO="$TEST_ROOT/repo" \
+    PATH="$BIN:$PATH" \
         "$HARNESS" macos-agent-session "$@"
 }
 
@@ -153,6 +174,14 @@ printf 'session\ncodex\nclaude\n' >"$STATE"
 
 # --- codex remote control is started only when absent --------------------
 [ -f "$TEST_ROOT/rc-started" ] || fail "codex remote control was not started"
+
+# --- an already-live daemon pair is never restarted ----------------------
+rm -f "$TEST_ROOT/rc-started"
+FAKE_RC_READY=1 agent --host office --run-once |
+    grep -Fq 'codex_remote_control=ready' ||
+    fail "a live daemon pair was not recognized"
+[ ! -f "$TEST_ROOT/rc-started" ] ||
+    fail "codex remote control was restarted while already live"
 
 # --- launchd plan and apply ----------------------------------------------
 OUT=$(agent --host office --plan) || fail "plan failed"
