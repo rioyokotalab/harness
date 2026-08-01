@@ -21,6 +21,11 @@
 6. Focused target, runtime isolation, thread recovery, Codex monitor, Claude
    monitor, recovery-helper, messaging, alias, skill-routing, safety, Personal,
    and final-layout suites pass. Full phase-1 validation remains next.
+7. Local phase 1 passed all 96 suites. PR #541's first portable run exposed a
+   portability-only classification defect: an absent mismatched target root
+   was validated before the current-root mismatch was reported. The supervisor
+   now compares the profile's value-free declared path first, then validates
+   the selected matching repository; its focused suite passes locally.
 
 ## Deviations
 

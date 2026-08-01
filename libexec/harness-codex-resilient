@@ -153,10 +153,15 @@ if [ "$mode" != status ]; then
     ) || die "Codex resilient repository is unavailable"
     if [ -n "$target" ]; then
         expected_repository=$(
+            python3 "$target_resolver" repository "$target"
+        ) || die "Codex resilient target repository is unavailable"
+        [ "$current_repository" = "$expected_repository" ] ||
+            die "Codex resilient target does not match its repository"
+        expected_repository=$(
             python3 "$target_resolver" validate-target "$target"
         ) || die "Codex resilient target repository is invalid"
         [ "$current_repository" = "$expected_repository" ] ||
-            die "Codex resilient target does not match its repository"
+            die "Codex resilient validated repository identity drifted"
     else
         target=$(
             python3 "$target_resolver" target-for-repository "$current_repository"
