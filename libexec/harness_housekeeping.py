@@ -351,7 +351,11 @@ def parse_archive_receipt(path: Path) -> Dict[str, Any]:
     return {"values": values, "items": items}
 
 
-def archive_audit(repo: Path, receipt_path: Path) -> Dict[str, Any]:
+def archive_audit(
+    repo: Path,
+    receipt_path: Path,
+    generation_cache: Optional[Dict[Path, Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
     parsed = parse_archive_receipt(receipt_path)
     values = parsed["values"]
     common = Path(text(git(repo, "rev-parse", "--git-common-dir")).strip())
@@ -378,14 +382,17 @@ def archive_audit(repo: Path, receipt_path: Path) -> Dict[str, Any]:
             row["tip"]: (bundle, row["archive"]) for row in parsed["items"]
         }
     else:
-        compaction = applied_compaction(repo, receipt_path)
+        cache = generation_cache if generation_cache is not None else {}
+        compaction = applied_compaction(repo, receipt_path, cache)
         if compaction is None:
             die("archive bundle is absent without verified compaction")
         state = state_directory()[1]
         for generation in compaction["value"]["generations"]:
-            generation_value = parse_generation_receipt(
-                Path(generation["receipt"]), state
-            )
+            generation_path = Path(generation["receipt"])
+            generation_value = cache.get(generation_path)
+            if generation_value is None:
+                generation_value = parse_generation_receipt(generation_path, state)
+                cache[generation_path] = generation_value
             rows = [
                 row
                 for row in generation_value["repositories"]
@@ -651,8 +658,13 @@ def generation_covers_source(
     source_sha256: str,
     repository: str,
     tips: Sequence[str],
+    generation_value: Optional[Dict[str, Any]] = None,
 ) -> bool:
-    generation = parse_generation_receipt(generation_path, state)
+    generation = (
+        generation_value
+        if generation_value is not None
+        else parse_generation_receipt(generation_path, state)
+    )
     if {"name": source_name, "sha256": source_sha256} not in generation[
         "source_receipts"
     ]:
@@ -669,7 +681,10 @@ def generation_covers_source(
 
 
 def audit_compaction(
-    repo: Path, compaction_path: Path, expected_source: Optional[Path] = None
+    repo: Path,
+    compaction_path: Path,
+    expected_source: Optional[Path] = None,
+    generation_cache: Optional[Dict[Path, Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     value = parse_compaction_receipt(compaction_path)
     source = Path(value["source_receipt"])
@@ -704,6 +719,13 @@ def audit_compaction(
         validate_private_file(path)
         if digest(path) != generation["sha256"]:
             die("archive compaction generation receipt changed")
+        generation_value = (
+            generation_cache.get(path) if generation_cache is not None else None
+        )
+        if generation_value is None:
+            generation_value = parse_generation_receipt(path, state)
+            if generation_cache is not None:
+                generation_cache[path] = generation_value
         if not generation_covers_source(
             state,
             path,
@@ -711,6 +733,7 @@ def audit_compaction(
             value["source_sha256"],
             str(repo),
             value["tips"],
+            generation_value,
         ):
             die("archive compaction generation coverage changed")
     bundle = Path(value["bundle"])
@@ -729,7 +752,11 @@ def audit_compaction(
     return {"status": status, "value": value}
 
 
-def applied_compaction(repo: Path, source: Path) -> Optional[Dict[str, Any]]:
+def applied_compaction(
+    repo: Path,
+    source: Path,
+    generation_cache: Optional[Dict[Path, Dict[str, Any]]] = None,
+) -> Optional[Dict[str, Any]]:
     _lexical, state = state_directory()
     directory = state / "compactions"
     if not directory.exists() and not directory.is_symlink():
@@ -743,7 +770,7 @@ def applied_compaction(repo: Path, source: Path) -> Optional[Dict[str, Any]]:
     for path in sorted(directory.glob("*.json")):
         value = parse_compaction_receipt(path)
         if value["source_receipt"] == str(source):
-            result = audit_compaction(repo, path, source)
+            result = audit_compaction(repo, path, source, generation_cache)
             if result["status"] == "applied":
                 matches.append(result)
     if len(matches) > 1:
@@ -957,6 +984,7 @@ def create_generation(coordinator_repo: Path) -> Dict[str, Any]:
 
     sources = []
     grouped: Dict[str, Dict[str, Any]] = {}
+    generation_cache: Dict[Path, Dict[str, Any]] = {}
     for receipt in receipts:
         parsed = parse_archive_receipt(receipt)
         values = parsed["values"]
@@ -964,7 +992,7 @@ def create_generation(coordinator_repo: Path) -> Dict[str, Any]:
         if not repository_value or not Path(repository_value).is_absolute():
             die("archive generation source repository is missing")
         owner = canonical_repo(Path(repository_value))
-        audit = archive_audit(owner, receipt)
+        audit = archive_audit(owner, receipt, generation_cache)
         sources.append({"name": receipt.name, "sha256": digest(receipt)})
         row = grouped.setdefault(
             repository_value,
@@ -1301,6 +1329,7 @@ def plan_archives(coordinator_repo: Path) -> None:
         (path, parse_generation_receipt(path, state))
         for path in generation_receipts
     ]
+    generation_cache = {path: value for path, value in generation_values}
     state_bytes = state_tree_bytes(state)
     if not receipts:
         print(
@@ -1360,7 +1389,7 @@ def plan_archives(coordinator_repo: Path) -> None:
                 refs,
             )
         owner_repo, main_oid, pull_rows, refs = repo_cache[repository_value]
-        audit = archive_audit(owner_repo, receipt)
+        audit = archive_audit(owner_repo, receipt, generation_cache)
         bundle = Path(values["bundle"])
         bundle_bytes = audit["bundle_bytes"]
         if audit["retired"]:
@@ -1564,7 +1593,7 @@ def plan_archives(coordinator_repo: Path) -> None:
     for path in compaction_paths:
         value = parse_compaction_receipt(path)
         owner = canonical_repo(Path(value["repository_canonical"]))
-        audited = audit_compaction(owner, path)
+        audited = audit_compaction(owner, path, generation_cache=generation_cache)
         output_rows.append(
             "  AUX "
             f"type=compaction name={path.name} bytes={value['bundle_bytes']} "
