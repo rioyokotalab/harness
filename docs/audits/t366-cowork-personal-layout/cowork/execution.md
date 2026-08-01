@@ -26,6 +26,24 @@
    was validated before the current-root mismatch was reported. The supervisor
    now compares the profile's value-free declared path first, then validates
    the selected matching repository; its focused suite passes locally.
+8. PR #541 passed its second portable run and merged as `7a6b739`. Guarded
+   fleet sync advanced all six managed Linux checkouts from their verified
+   common ancestor `d30f92b` to the merge.
+9. One app-server `thread/start` created Personal Codex root
+   `019fbcbe-cbb8-7e40-b12a-161271f98f57`. The controller reported refused
+   because persistence verification ran before asynchronous name/default-field
+   convergence; read-only app-server reconciliation proved the acknowledged
+   root exact, idle, empty-turn, Harness-rooted, and named Personal. The
+   rollout inode was tightened from product-created mode 0664 to 0600. The
+   start was not retried.
+10. Initial direct assembly left Harness/Students Codex and
+    Personal/Students Claude live, but Personal Codex exited with the
+    value-free `client-usage` classification and Harness Claude exited before
+    acceptance. Personal Codex exposed a real same-root defect: its immutable
+    launcher reverse-mapped the shared cwd to Harness after the supervisor had
+    already selected Personal. A narrow follow-up now validates the explicit
+    release target directly; a new regression proves Harness and Personal can
+    share one physical repository while retaining distinct releases.
 
 ## Deviations
 
