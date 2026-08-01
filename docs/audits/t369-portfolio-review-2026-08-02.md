@@ -279,6 +279,18 @@ two dead directories. Post-audit found exactly 14 current-user top-level
 entries, all declared runtime/handoff state, plus the same three out-of-scope
 `ishida`-owned research directories.
 
+A final boundary sweep covered `/var/tmp` and `/dev/shm`. The only
+current-user `/var/tmp` entry was T-303's completed 24-hour NFS observation:
+16 entries / 166,906,198 bytes, unopened but still referenced by its audit.
+Without reading payloads, its exact directory was preserved as private
+mode-0600 `t303-nfs-monitor-20260724.tar.gz` (11,722,016 bytes, SHA-256
+`b5b23debd22cd2be50fcf16b46950f87e9f275abaa6187fa6d6eea60ca532302`),
+gzip-validated, guarded-retired, and given a durable archive pointer in the
+T-303 audit. Five July OpenMPI shared-memory segments in `/dev/shm` were
+current-user, single-link, unopened, and had no matching MPI process; one
+guarded transaction removed the exact five files and released 83,886,080
+bytes without archiving ephemeral process memory.
+
 An open-unlinked-file audit exposed a separate Harness lifecycle defect that a
 directory inventory cannot see: 18 orphaned synthetic `codex-resilient` test
 launchers, parented by PID 1 and running for 8–25 hours from already-deleted

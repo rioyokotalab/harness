@@ -29,15 +29,20 @@ metadata patterns therefore remain hypotheses rather than conclusions.
 - Unit: `nfs-io-monitor-20260724T083822.service`
 - Start: 2026-07-24 08:41:19 JST
 - Scheduled end: 2026-07-25 08:41:19 JST
-- Local evidence:
-  `/var/tmp/nfs-monitor-20260724T083822+0900`
-- Handoff:
-  `/var/tmp/nfs-monitor-20260724T083822+0900/HANDOFF.txt`
+- Preserved evidence archive:
+  `~/.local/state/harness/housekeeping/t303-nfs-monitor-20260724.tar.gz`
+- Archive identity: 11,722,016 bytes, SHA-256
+  `b5b23debd22cd2be50fcf16b46950f87e9f275abaa6187fa6d6eea60ca532302`.
+- Handoff member:
+  `nfs-monitor-20260724T083822+0900/HANDOFF.txt`
 
-The evidence directory resides on local ext4 rather than NFS, is owned by the
-current user with mode 0700, and contains mode-0600 logs. The collector itself
-is mode 0700. It observes fixed startup mount identities and does not read user
-file contents.
+The original evidence directory resided on local ext4 rather than NFS, was
+owned by the current user with mode 0700, and contained mode-0600 logs. The
+collector itself was mode 0700. It observed fixed startup mount identities and
+did not read user file contents. After collection and analysis were complete,
+T-369 preserved the exact directory in the current-user, single-link,
+mode-0600 archive above; gzip validation passed before guarded removal of the
+original `/var/tmp` directory.
 
 Every ten seconds it records per-mount NFS interval statistics, load, memory,
 pressure-stall information, aggregate uninterruptible-sleep counts, server
@@ -112,7 +117,7 @@ trace. Local sudo is not required for further client analysis.
 The next useful evidence requires the administrator of `192.168.33.30` to
 correlate pool/disk latency, NFS daemon saturation, cache pressure, and system
 logs for 2026-07-24 08:42–11:04 JST and the later 21:55 JST read spike.
-Preserve the mode-0700 evidence directory unchanged until that review is
+Preserve the exact mode-0600 evidence archive unchanged until that review is
 complete; do not infer a specific disk, pool, or daemon failure from the
 client trace alone.
 
