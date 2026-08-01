@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-367.
+Next free ID: T-368.
 
 ## Resume contract
 
@@ -16,6 +16,16 @@ Next free ID: T-367.
 5. A failed mutable-state query is unknown, never evidence of absence.
 
 ## Active queue
+
+### T-367 — Post-reorganization quick fixes
+
+**Phase:** executing an owner-requested batch before T-363. First fix removes
+inherited monochrome tmux state, restores true-color capability, and refreshes
+the six exact managed clients. Live acceptance and the Codex-to-Claude
+round-trip passed; clean-checkout validation and protected publication are in
+progress.
+
+**Record:** `docs/tasks/T-367.md`.
 
 ### T-363 — Workspace lifecycle for alternating clients
 

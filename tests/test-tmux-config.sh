@@ -8,10 +8,12 @@ unset HARNESS_LOGICAL_HOST HARNESS_HOME_ROOT HARNESS_HOME_CANONICAL_ROOT
 TEMP_BASE=$(CDPATH='' cd -- "${TMPDIR:-/tmp}" && pwd -P)
 TEMP_DIR=$(mktemp -d "$TEMP_BASE/harness-tmux-config-test.XXXXXX")
 CLEANUP=$ROOT/tests/guarded-test-cleanup.sh
+TMUX_TEST_SOCKET=harness-tmux-config-test-$$
 
 cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
+    tmux -L "$TMUX_TEST_SOCKET" kill-server >/dev/null 2>&1 || true
     if [ -d "$TEMP_DIR" ]; then
         "$CLEANUP" "$HARNESS" "$TEMP_BASE" "$TEMP_DIR" "$TEMP_BASE" >/dev/null || status=1
     fi
@@ -32,6 +34,16 @@ file_mode() {
 command -v tmux >/dev/null 2>&1 || fail "tmux unavailable"
 grep -F -x 'bind-key z resize-pane -Z' "$ROOT/config/tmux/tmux.conf" \
     >/dev/null || fail "managed pane zoom binding"
+NO_COLOR=1 COLORTERM= tmux -L "$TMUX_TEST_SOCKET" \
+    -f "$ROOT/config/tmux/tmux.conf" new-session -d -s color-test 'sleep 30'
+if tmux -L "$TMUX_TEST_SOCKET" show-environment -g NO_COLOR >/dev/null 2>&1; then
+    fail "managed tmux retained NO_COLOR"
+fi
+[ "$(tmux -L "$TMUX_TEST_SOCKET" show-environment -g COLORTERM)" = \
+    'COLORTERM=truecolor' ] || fail "managed tmux true-color environment"
+tmux -L "$TMUX_TEST_SOCKET" show-options -g terminal-features | \
+    grep -F 'xterm*:RGB' >/dev/null || fail "managed tmux RGB feature"
+tmux -L "$TMUX_TEST_SOCKET" kill-server
 home=$TEMP_DIR/home
 mkdir "$home"
 long_tmp=$TEMP_DIR/long-default-temporary-directory/with-enough-components/to-exceed-the-tmux-socket-path-limit
