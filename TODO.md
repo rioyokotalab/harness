@@ -17,15 +17,6 @@ Next free ID: T-369.
 
 ## Active queue
 
-### T-368 — Retire the Codex–Claude Cowork skill
-
-**Phase:** dependency investigation complete; awaiting owner go. Remove the
-installed/discoverable skill and all current duration/nightly requirements
-across Harness, Students, Swallow, and Personal while preserving historical
-evidence and the unrelated `harness:cowork` tmux window.
-
-**Record:** `docs/tasks/T-368.md`.
-
 ### T-363 — Workspace lifecycle for alternating clients
 
 **Phase:** proposal; awaiting an owner decision between per-turn worktrees and

@@ -1,5 +1,5 @@
 task	state	summary	source
-T-368	active	Retire the Codex-Claude Cowork skill	TODO.md;docs/tasks/T-368.md
+T-368	complete	Retired the Codex-Claude Cowork skill	docs/tasks/T-368.md
 T-367	complete	Post-reorganization quick fixes	docs/tasks/T-367.md
 T-366	complete	Unified Harness cowork and Personal tmux layout	docs/tasks/T-366.md;docs/audits/t366-cowork-personal-layout/cowork
 T-365	complete	Direct Local Codex-to-Claude messages	docs/tasks/T-365.md
