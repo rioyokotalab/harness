@@ -113,6 +113,27 @@ credential access was used.
   mode-0600 bundle; no historical worktree or project-named scratch root
   existed.
 
+The four manually created pre-native archive bundles remain intentionally
+preserved because they have no immutable native receipt. Metadata-only
+reconciliation proves every bundled head still has an exact live archive ref,
+but a live ref is not a durable recovery contract and therefore does not make
+the bundle disposable:
+
+- `personal-t369-20260801.bundle`: 97,883 bytes, 11/11 exact live heads,
+  SHA-256 `64c28998f486e5198c61441015e475bc017a45233f5ad51543d97bf761fa99b3`;
+- `students-t369-20260801.bundle`: 3,028,993 bytes, 9/9 exact live heads,
+  SHA-256 `e8a16ff9ce50d68c76b84c8c87dd1ad8d5dccca00664f44a9aa158e206ea996a`;
+- `swallow-sw036-t369-20260801.bundle`: 1,735,623 bytes, 1/1 exact live head,
+  SHA-256 `33e6a4340e88b4a90c2c1920fd77fffea098c43b2524d0e900cde237bf64a13b`;
+- `swallow-t369-20260801.bundle`: 1,697,276 bytes, 14/14 exact live heads,
+  SHA-256 `c37f59e4db1e3c4c29472ed65d17d65f5eba5889f185eecb39a138ef300d3a32`.
+
+Swallow's separately preserved untracked evidence is
+`swallow-t369-untracked-evidence-20260801.tar.gz` (206,800 bytes, SHA-256
+`7ac3623313bd6bb11bc9ce131efba9e74bce7e33353a1c139483c1f2ab9187f0`).
+It remains required until T-371 reaches its owner-visible idle/cold-restart
+gate; no payload was opened during this reconciliation.
+
 Final validation residue was independently classified. Guarded manifests
 removed generated caches from the isolated Students, Swallow, and Website
 worktrees and a 117,021,029-byte pytest scratch tree after owner, process, and
