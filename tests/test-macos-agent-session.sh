@@ -49,7 +49,9 @@ for required in ("--permission-mode bypassPermissions", "--model fable",
 assert "PATH=/opt/homebrew/bin:" in source
 # launchd's TMPDIR differs from the login session's; tmux derives its socket
 # from it, so the agent must pin the canonical per-user temp directory.
-assert "DARWIN_USER_TEMP_DIR" in source and "TMUX_TMPDIR" in source
+# tmux ignores TMPDIR and defaults to /tmp; the agent must pin that same
+# socket or it builds a session on a server the owner never attaches to.
+assert 'TMUX_TMPDIR:=/tmp' in source
 PY
 
 # --- stub environment ----------------------------------------------------

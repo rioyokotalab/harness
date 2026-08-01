@@ -19,14 +19,14 @@ else
 fi
 export PATH
 
-# launchd hands agents a different TMPDIR than the login session, and tmux
-# derives its socket from it. Without pinning, the agent builds the session
-# on a private server that the owner's own tmux never sees. Use the account's
-# canonical per-user temp directory, which is what interactive logins get.
-if [ -z "${TMUX_TMPDIR:-}" ]; then
-    TMUX_TMPDIR=$(getconf DARWIN_USER_TEMP_DIR 2>/dev/null || printf '')
-    [ -n "$TMUX_TMPDIR" ] && export TMUX_TMPDIR
-fi
+# tmux derives its socket from TMUX_TMPDIR, falling back to /tmp -- it does
+# not follow TMPDIR. launchd and login sessions can disagree about TMPDIR, so
+# pin the socket explicitly to tmux's own default. The agent must land on the
+# same server a plain interactive `tmux` attaches to, or it builds a session
+# the owner can never see. Verified on office: `tmux display-message -p
+# "#{socket_path}"` resolves to /private/tmp/tmux-<uid>/default.
+: "${TMUX_TMPDIR:=/tmp}"
+export TMUX_TMPDIR
 
 HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)}
 export HARNESS_ROOT
