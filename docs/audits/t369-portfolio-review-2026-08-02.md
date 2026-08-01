@@ -145,6 +145,11 @@ a reason to bypass the protected cleanup contract.
   as protected squash `42ff730aa6f0cc4bdd107ae8b1c23eef8cc1f6ce`;
   canonical-root validation passed before publication and again after its
   final documentation amendment.
+- Website PR #38 merged exact head
+  `e0a8aa1a81d706c8f2f2afd37534fadaaed77d56` as protected squash
+  `3573e75d3374391905ec99230252c7a4052e7311`. Its complete offline suite and
+  required 5m26s hosted gate passed; only the board changed and no deployment
+  ran.
 
 Each merged task worktree was clean, inactive, nested-repository-free, and the
 exact head of its merged pull request. Guarded manifests removed the three
@@ -188,11 +193,12 @@ archives. Personal is again a single clean `main`
 worktree. T-371 records, but does not execute, the corresponding migration for
 the live legacy Students and Swallow primary task branches.
 
-Website's still-local worker candidate is `e0a8aa1`. Its complete offline suite
-passed again after T-213 was anchored to W3C WCAG-EM 2.0 and WAI sustaining
-guidance. Worker policy still forbids push or `tools/state/session.md`; the
-clean worktree remains the exact handoff for a Website driver. Because that
-commit is intentionally absent from GitHub, transaction
+Website's worker candidate `e0a8aa1` passed its complete offline suite after
+T-213 was anchored to W3C WCAG-EM 2.0 and WAI sustaining guidance. Caller-owned
+integration then published it through PR #38 without changing site bytes or
+deploying. The generated Python cache and exact merged worktree were guarded-
+retired; canonical Website is clean on protected `main`. Before publication,
+transaction
 `website-t369-worker-handoff-20260802` also preserves its exact full history in
 a current-user mode-0600 bundle (80,842,296 bytes, SHA-256
 `229b0bb9a5ad6c660667982154be0083c3a4c858d4b900d2d3f9b1e433f8ff1e`);
@@ -239,6 +245,21 @@ wall time is 4,652 seconds, with a 131-second median and 142-second p90. This is
 not billable private usage, but it quantifies the normal protected-merge wait
 removed from owner tasks while leaving non-owner isolation unchanged.
 
+Website supplied a second latency result. Its board-only PR #38 spent 5m26s in
+the required hosted job, and workflow-changing PR #39 spent 5m02s on the full
+path. PR #39 therefore retained the required `Offline checks` job and complete
+offline policy suite for every pull request but scoped only browser dependency
+installation and locked browser execution to paths outside an explicit
+ledger/documentation-only set. The classifier is NUL-delimited, disables rename
+detection so removed public paths remain visible, and fails closed on empty,
+malformed, absolute, traversal, control-byte, non-UTF-8, workflow, tool, test,
+package, and public-site paths. Protected documentation-only PR #40 proved the
+fast path twice: required runs passed in 23 and 25 seconds while both browser
+steps reported skipped. Against the 302-second full-path proof, this removes
+279 seconds / 92.4% without weakening non-owner isolation or changing a site
+byte, deployment, ruleset, or approval count. PRs #39/#40 merged as `5849ffaa`
+and `e22c8dc`; the exact worktree was guarded-retired.
+
 ## Recovery and retained-branch drills
 
 The three unpublished handoff bundles were restored into independent bare
@@ -272,13 +293,13 @@ diff and refreshes only generated values. This replaces a large assertion
 payload and manual arithmetic without weakening scenario, resource, board, or
 reduction gates.
 
-Live repository-isolation checks found seven distinct worktree paths across
+The latest repository-isolation check found six distinct worktree paths across
 the five repositories, with no duplicate, parent/child, or cross-owner path
 collision. Every Git common directory and object database is repository-local;
 all five report no object alternates, no lock file, and an empty worktree-prune
 dry run. Harness has only canonical `main` plus the active T-369 worktree;
-Website has canonical `main` plus its preserved worker handoff; the other
-three have one primary worktree each. Tmux metadata, read without pane or
+all four sibling repositories have one primary worktree each. Tmux metadata,
+read without pane or
 transcript content, keeps Harness/Personal work rooted in Harness and Students
 work rooted in Students for both clients. The legacy Students and Swallow
 primary branches are intentionally ahead of and behind protected `main`; their
