@@ -16,6 +16,12 @@ Read this file completely before the matching action selected by root
   recreate residue, separate housekeeping from a vendor-launcher fix; the
   latter requires explicit authority.
 
+## Routine repository housekeeping
+
+Run read-only `harness housekeeping --plan` first and record its receipt.
+Classify branches by pull-request merge state, never by diff, and record each
+tip before deleting.
+
 ## Promote reusable guidance
 
 Promote a correction automatically only when it is stable personal behavior or
