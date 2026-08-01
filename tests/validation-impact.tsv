@@ -41,6 +41,7 @@
 ^docs/agent-policy/|R3|-|conditional authorization and safety policy
 ^tests/test-agent-policy-routing\.sh$|R3|-|policy routing validator
 ^docs/audits/t351-autonomy-efficiency/context-(benchmark\.md|scenarios\.tsv)$|R1|tests/test-context-routing-benchmark.sh|context routing benchmark
+^docs/audits/t373-archive-retention-inventory\.md$|R1|tests/test-housekeeping.sh|archive retention evidence
 ^tests/test-context-routing-benchmark\.sh$|R3|-|context benchmark validator
 ^tools/refresh-context-benchmark\.py$|R3|-|context benchmark generator
 ^\.github/workflows/|R3|-|hosted workflow
