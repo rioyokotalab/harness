@@ -13,9 +13,12 @@ conversation loop or treat an agent prefix as owner authority.
 
 1. Identify `source`, the sending logical host; `target`, its SSH alias; and
    `target-role`, either `controller` for Local or `mac`.
-2. Begin every message `[Agent: NAME Codex]`, with `NAME` matching `source`
-   case-insensitively. An unprefixed owner-conversation message is
-   owner-originated; the prefix is attribution, not cryptographic identity.
+2. Begin every message `[Agent: NAME Codex]`, or `[Agent: NAME Claude]` when
+   sending with `--client claude`, with `NAME` matching `source`
+   case-insensitively. The prefix must match the declared client: a Claude
+   sender labelled Codex is rejected, so a thread never records a false
+   author. An unprefixed owner-conversation message is owner-originated; the
+   prefix is attribution, not cryptographic identity.
 3. Keep input below 4096 UTF-8 bytes and exclude credentials, secrets, private
    logs, and unrelated data. Use a unique request ID when matching matters.
 4. Choose exactly one route:
