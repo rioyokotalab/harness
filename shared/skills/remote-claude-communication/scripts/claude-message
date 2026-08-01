@@ -1,0 +1,200 @@
+#!/usr/bin/env python3
+"""Send one identified prompt into an existing managed Claude window.
+
+Send-only. Content-blind: the target window is validated from tmux metadata
+and process identity, never from pane content. Local status=submitted proves
+submission only, never receipt or completion.
+"""
+
+from __future__ import annotations
+
+import argparse
+import contextlib
+import fcntl
+import os
+import re
+import stat
+import subprocess
+import sys
+import tempfile
+import time
+
+MAX_BYTES = 4096
+SESSION = "harness"
+WINDOW = "claude"
+MANAGED_TARGETS = ("aist", "home", "office", "riken")
+SOURCE_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
+
+
+class MessageError(RuntimeError):
+    pass
+
+
+def fail(message: str) -> None:
+    raise MessageError(message)
+
+
+def ssh_base(target: str) -> list[str]:
+    return [
+        "ssh",
+        "-x",
+        "-a",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ClearAllForwardings=yes",
+        target,
+    ]
+
+
+def remote(target: str, script: str, *, stdin: bytes | None = None) -> str:
+    result = subprocess.run(
+        ssh_base(target) + [script],
+        input=stdin if stdin is not None else b"",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    if result.returncode != 0:
+        fail("remote command failed")
+    try:
+        return result.stdout.decode("utf-8", "strict")
+    except UnicodeError:
+        fail("remote output is malformed")
+    return ""
+
+
+def validate_target_window(target: str) -> None:
+    probe = (
+        "tmux display-message -p -t {session}:{window} "
+        "'#{{session_attached}}\t#{{pane_dead}}\t#{{pane_current_command}}\t"
+        "#{{window_name}}' 2>/dev/null"
+    ).format(session=SESSION, window=WINDOW)
+    output = remote(target, probe).strip()
+    if not output:
+        fail("target Claude window is absent")
+    fields = output.split("\t")
+    if len(fields) != 4:
+        fail("target window metadata is malformed")
+    attached, dead, command, window_name = fields
+    if window_name != WINDOW:
+        fail("target window identity drifted")
+    if attached != "0":
+        fail("target session is attached")
+    if dead != "0":
+        fail("target Claude window is dead")
+    if os.path.basename(command) not in ("claude", "node"):
+        fail("target window is not running Claude")
+
+
+def read_message() -> bytes:
+    data = sys.stdin.buffer.read()
+    if not data.strip():
+        fail("message is empty")
+    if len(data) > MAX_BYTES:
+        fail("message exceeds the bounded size")
+    try:
+        text = data.decode("utf-8", "strict")
+    except UnicodeError:
+        fail("message is not valid UTF-8")
+        return b""
+    return text.encode("utf-8")
+
+
+def require_attribution(message: bytes, source: str) -> None:
+    head = message.decode("utf-8").lstrip().split("\n", 1)[0]
+    expected = "[Agent: {} Claude]".format(source)
+    if head[: len(expected)].lower() != expected.lower():
+        fail("message must begin with the exact agent attribution prefix")
+
+
+@contextlib.contextmanager
+def local_lock():
+    path = os.path.join(
+        os.environ.get("XDG_RUNTIME_DIR") or tempfile.gettempdir(),
+        "harness-claude-message-{}.lock".format(os.getuid()),
+    )
+    flags = os.O_CREAT | os.O_RDWR
+    if hasattr(os, "O_CLOEXEC"):
+        flags |= os.O_CLOEXEC
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    descriptor = os.open(path, flags, 0o600)
+    try:
+        info = os.fstat(descriptor)
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid():
+            fail("message lock is unsafe")
+        try:
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            fail("another Claude message is in flight")
+        yield
+    finally:
+        os.close(descriptor)
+
+
+def send(source: str, target: str) -> int:
+    if not SOURCE_PATTERN.match(source):
+        fail("source identifier is malformed")
+    if target not in MANAGED_TARGETS:
+        fail("target is outside the managed Mac set")
+    message = read_message()
+    require_attribution(message, source)
+    validate_target_window(target)
+
+    buffer_name = "harness-claude-message-{}".format(os.getpid())
+    with local_lock():
+        remote(
+            target,
+            "tmux load-buffer -b {} -".format(buffer_name),
+            stdin=message,
+        )
+        try:
+            remote(
+                target,
+                "tmux paste-buffer -b {} -t {}:{} -d".format(
+                    buffer_name, SESSION, WINDOW
+                ),
+            )
+            time.sleep(1.5)
+            remote(
+                target,
+                "tmux send-keys -t {}:{} C-m".format(SESSION, WINDOW),
+            )
+        finally:
+            with contextlib.suppress(MessageError):
+                remote(
+                    target, "tmux delete-buffer -b {} 2>/dev/null || true".format(
+                        buffer_name
+                    )
+                )
+        time.sleep(1.0)
+    print(
+        "CLAUDE_MESSAGE status=submitted source={} target={} window={}:{} "
+        "bytes={}".format(source, target, SESSION, WINDOW, len(message))
+    )
+    print(
+        "CLAUDE_MESSAGE note=submission-only; receipt and completion are not proven"
+    )
+    return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(prog="claude-message")
+    sub = parser.add_subparsers(dest="command", required=True)
+    send_parser = sub.add_parser("send")
+    send_parser.add_argument("--source", required=True)
+    send_parser.add_argument("--target", required=True)
+    arguments = parser.parse_args()
+    if arguments.command == "send":
+        return send(arguments.source, arguments.target)
+    parser.error("unknown command")
+    return 2
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except MessageError as error:
+        print("harness: {}".format(error), file=sys.stderr)
+        sys.exit(2)

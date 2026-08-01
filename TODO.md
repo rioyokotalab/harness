@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-361.
+Next free ID: T-362.
 
 ## Resume contract
 
@@ -16,6 +16,14 @@ Next free ID: T-361.
 5. A failed mutable-state query is unknown, never evidence of absence.
 
 ## Active queue
+
+### T-361 — Unified managed-Mac agent session with Claude parity
+
+**Phase:** planning; scope frozen, awaiting four owner decisions (fleet
+breadth, reboot-durability mechanism, bypass-permission acceptance, injection
+blast radius). No Mac or owner-global state changed.
+
+**Record:** `docs/tasks/T-361.md`.
 
 ### T-354 — Relocate repository-native Codex roots under `projects`
 

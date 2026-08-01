@@ -1,0 +1,317 @@
+#!/bin/sh
+# Ensure the unified managed-Mac agent tmux session and its launchd agent.
+#
+# Session `harness` carries window `codex` (supervised Codex resume) and
+# window `claude` (Claude TUI with remote control). The run-once mode is
+# idempotent: it creates only what is absent, never touches a live window,
+# and never reads pane or transcript content. A launchd agent invokes
+# run-once at load and every 30 seconds, which supplies both reboot
+# durability and failure auto-resume.
+set -eu
+
+HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)}
+export HARNESS_ROOT
+
+SESSION=harness
+CODEX_WINDOW=codex
+CLAUDE_WINDOW=claude
+LABEL_BASE=org.rioyokota.harness.agent-session
+LEGACY_SESSION=harness-codex-resume
+
+die() {
+    printf 'harness: %s\n' "$1" >&2
+    exit 2
+}
+
+usage() {
+    cat >&2 <<'EOF'
+Usage:
+  harness macos-agent-session --host LOGICAL_ID [--run-once|--status]
+  harness macos-agent-session --host LOGICAL_ID [--plan|--apply|--doctor]
+  harness macos-agent-session --rollback TRANSACTION_ID
+EOF
+    exit 64
+}
+
+mode=
+logical_host=
+transaction=
+while [ "$#" -gt 0 ]; do
+    case $1 in
+        --host) shift; [ "$#" -gt 0 ] || usage; logical_host=$1 ;;
+        --run-once|--status|--plan|--apply|--doctor) [ -z "$mode" ] || usage; mode=${1#--} ;;
+        --rollback) shift; [ "$#" -gt 0 ] || usage; mode=rollback; transaction=$1 ;;
+        -h|--help) usage ;;
+        *) usage ;;
+    esac
+    shift
+done
+[ -n "$mode" ] || mode=run-once
+[ "$mode" = rollback ] || [ -n "$logical_host" ] || usage
+
+case $logical_host in
+    ''|aist|home|office|riken) ;;
+    *) die "agent session host is outside the managed Mac set" ;;
+esac
+
+tmux_bin() {
+    if [ -n "${HARNESS_TEST_TMUX:-}" ]; then
+        [ "${HARNESS_TESTING:-}" = 1 ] || die "test tmux override is unsafe"
+        printf '%s' "$HARNESS_TEST_TMUX"
+        return
+    fi
+    command -v tmux >/dev/null 2>&1 || die "tmux is unavailable"
+    printf 'tmux'
+}
+
+claude_bin() {
+    if [ -n "${HARNESS_TEST_CLAUDE:-}" ]; then
+        [ "${HARNESS_TESTING:-}" = 1 ] || die "test Claude override is unsafe"
+        printf '%s' "$HARNESS_TEST_CLAUDE"
+        return
+    fi
+    printf '%s' "$HOME/.local/bin/claude"
+}
+
+repo_root() {
+    printf '%s' "${HARNESS_TEST_AGENT_REPO:-$HOME/harness}"
+}
+
+TMUX=$(tmux_bin)
+
+session_exists() {
+    $TMUX has-session -t "$SESSION" 2>/dev/null
+}
+
+window_live() {
+    # A window counts as live only when it exists and its pane is not dead.
+    dead=$($TMUX display-message -p -t "$SESSION:$1" '#{pane_dead}' 2>/dev/null || printf '')
+    [ "$dead" = 0 ]
+}
+
+codex_command() {
+    printf 'exec %s codex-resilient --run --name %s --last' \
+        "$HARNESS_ROOT/bin/harness" harness-codex-resume
+}
+
+claude_command() {
+    # Frozen launch contract: bypass permissions, Fable, high effort, remote
+    # control named for the logical host, resuming the latest conversation.
+    printf 'exec %s --permission-mode bypassPermissions --model fable --effort high --remote-control %s --continue' \
+        "$(claude_bin)" "$logical_host"
+}
+
+legacy_codex_live() {
+    # The legacy session runs codex-resilient under the same --name, and that
+    # supervisor keys its state file by name. Two live supervisors would fight
+    # over one state file, so the codex window is deferred until the legacy
+    # session is retired. The claude window has no such conflict.
+    $TMUX has-session -t "$LEGACY_SESSION" 2>/dev/null
+}
+
+ensure_session() {
+    created=
+    if ! session_exists; then
+        if legacy_codex_live; then
+            $TMUX new-session -d -s "$SESSION" -n "$CLAUDE_WINDOW" \
+                -c "$(repo_root)" "$(claude_command)"
+        else
+            $TMUX new-session -d -s "$SESSION" -n "$CODEX_WINDOW" \
+                -c "$(repo_root)" "$(codex_command)"
+        fi
+        created="$created session"
+    fi
+    if legacy_codex_live; then
+        created="$created codex-deferred-legacy"
+    elif ! $TMUX list-windows -t "$SESSION" -F '#{window_name}' 2>/dev/null |
+        grep -qx "$CODEX_WINDOW"; then
+        $TMUX new-window -d -t "$SESSION" -n "$CODEX_WINDOW" \
+            -c "$(repo_root)" "$(codex_command)"
+        created="$created codex"
+    elif ! window_live "$CODEX_WINDOW"; then
+        $TMUX respawn-window -t "$SESSION:$CODEX_WINDOW" "$(codex_command)"
+        created="$created codex-respawn"
+    fi
+    if ! $TMUX list-windows -t "$SESSION" -F '#{window_name}' 2>/dev/null |
+        grep -qx "$CLAUDE_WINDOW"; then
+        $TMUX new-window -d -t "$SESSION" -n "$CLAUDE_WINDOW" \
+            -c "$(repo_root)" "$(claude_command)"
+        created="$created claude"
+    elif ! window_live "$CLAUDE_WINDOW"; then
+        $TMUX respawn-window -t "$SESSION:$CLAUDE_WINDOW" "$(claude_command)"
+        created="$created claude-respawn"
+    fi
+    printf '%s' "${created:- none}"
+}
+
+codex_remote_control_ready() {
+    # One pass: count both daemon roles among this account's processes.
+    counts=$(ps -axo user=,args= 2>/dev/null | awk -v owner="$(id -un)" '
+        $1 != owner { next }
+        { argv = $0; sub(/^[^ ]+[ ]+/, "", argv) }
+        argv ~ /app-server .*--remote-control/ { server++ }
+        argv ~ /app-server daemon pid-update-loop/ { loop++ }
+        END { print (server + 0) "," (loop + 0) }
+    ')
+    [ "${counts%,*}" -ge 1 ] && [ "${counts#*,}" -ge 1 ]
+}
+
+ensure_codex_remote_control() {
+    if codex_remote_control_ready; then
+        printf 'ready'
+        return
+    fi
+    launcher=${HARNESS_TEST_CODEX_LAUNCHER:-$HOME/.local/bin/harness-codex}
+    if [ ! -x "$launcher" ]; then
+        printf 'unavailable'
+        return
+    fi
+    ( cd "$(repo_root)" && "$launcher" remote-control start >/dev/null 2>&1 ) || true
+    if codex_remote_control_ready; then printf 'started'; else printf 'failed'; fi
+}
+
+run_once() {
+    created=$(ensure_session)
+    remote=$(ensure_codex_remote_control)
+    printf 'MACOS_AGENT_SESSION mode=run-once host=%s session=%s ensured=%s codex_remote_control=%s\n' \
+        "$logical_host" "$SESSION" "$created" "$remote"
+}
+
+status() {
+    if ! session_exists; then
+        printf 'MACOS_AGENT_SESSION mode=status host=%s session=absent\n' "$logical_host"
+        return 1
+    fi
+    codex_state=absent
+    claude_state=absent
+    window_live "$CODEX_WINDOW" && codex_state=live
+    window_live "$CLAUDE_WINDOW" && claude_state=live
+    remote=degraded
+    codex_remote_control_ready && remote=ready
+    printf 'MACOS_AGENT_SESSION mode=status host=%s session=present codex=%s claude=%s codex_remote_control=%s\n' \
+        "$logical_host" "$codex_state" "$claude_state" "$remote"
+    [ "$codex_state" = live ] && [ "$claude_state" = live ] && [ "$remote" = ready ]
+}
+
+# --- launchd agent -------------------------------------------------------
+
+label() { printf '%s.%s' "$LABEL_BASE" "$logical_host"; }
+
+agents_dir() {
+    printf '%s' "${HARNESS_TEST_LAUNCH_AGENTS:-$HOME/Library/LaunchAgents}"
+}
+
+plist_path() { printf '%s/%s.plist' "$(agents_dir)" "$(label)"; }
+
+xml_escape() {
+    printf '%s' "$1" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' \
+        -e 's/"/\&quot;/g' -e "s/'/\\\&apos;/g"
+}
+
+render_plist() {
+    command_path=$(xml_escape "$HARNESS_ROOT/libexec/harness-macos-agent-session")
+    host_value=$(xml_escape "$logical_host")
+    cat <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>$(label)</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>$command_path</string>
+    <string>--host</string>
+    <string>$host_value</string>
+    <string>--run-once</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StartInterval</key>
+  <integer>30</integer>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>Umask</key>
+  <integer>63</integer>
+  <key>StandardOutPath</key>
+  <string>/dev/null</string>
+  <key>StandardErrorPath</key>
+  <string>/dev/null</string>
+</dict>
+</plist>
+EOF
+}
+
+plan() {
+    printf 'MACOS_AGENT_SESSION mode=plan host=%s label=%s plist=%s installed=%s\n' \
+        "$logical_host" "$(label)" "$(plist_path)" \
+        "$([ -f "$(plist_path)" ] && printf yes || printf no)"
+    render_plist
+}
+
+apply() {
+    directory=$(agents_dir)
+    [ -d "$directory" ] || die "LaunchAgents directory is absent"
+    target=$(plist_path)
+    transaction_id=$(date -u '+%Y%m%dT%H%M%SZ')
+    backup=
+    if [ -f "$target" ]; then
+        backup="$target.harness-backup-$transaction_id"
+        cp -p "$target" "$backup"
+    fi
+    umask 077
+    render_plist >"$target.tmp"
+    if command -v plutil >/dev/null 2>&1; then
+        plutil -lint "$target.tmp" >/dev/null 2>&1 || {
+            rm -f "$target.tmp"
+            die "rendered agent plist is malformed"
+        }
+    fi
+    mv "$target.tmp" "$target"
+    chmod 600 "$target"
+    if command -v launchctl >/dev/null 2>&1; then
+        launchctl bootout "gui/$(id -u)/$(label)" >/dev/null 2>&1 || true
+        launchctl bootstrap "gui/$(id -u)" "$target" >/dev/null 2>&1 ||
+            die "launchd bootstrap failed"
+    fi
+    printf 'MACOS_AGENT_SESSION mode=apply host=%s label=%s transaction=%s backup=%s\n' \
+        "$logical_host" "$(label)" "$transaction_id" "${backup:-none}"
+}
+
+doctor() {
+    target=$(plist_path)
+    present=no
+    [ -f "$target" ] && [ ! -L "$target" ] && present=yes
+    loaded=no
+    if command -v launchctl >/dev/null 2>&1; then
+        launchctl print "gui/$(id -u)/$(label)" >/dev/null 2>&1 && loaded=yes
+    fi
+    printf 'MACOS_AGENT_SESSION mode=doctor host=%s plist=%s loaded=%s\n' \
+        "$logical_host" "$present" "$loaded"
+    [ "$present" = yes ] && [ "$loaded" = yes ]
+}
+
+rollback() {
+    case $transaction in
+        ''|*[!A-Za-z0-9]*) die "agent session transaction id is malformed" ;;
+    esac
+    restored=none
+    for candidate in "$(agents_dir)"/*.harness-backup-"$transaction"; do
+        [ -f "$candidate" ] || continue
+        original=${candidate%.harness-backup-"$transaction"}
+        mv "$candidate" "$original"
+        restored=$original
+    done
+    printf 'MACOS_AGENT_SESSION mode=rollback transaction=%s restored=%s\n' \
+        "$transaction" "$restored"
+}
+
+case $mode in
+    run-once) run_once ;;
+    status) status ;;
+    plan) plan ;;
+    apply) apply ;;
+    doctor) doctor ;;
+    rollback) rollback ;;
+    *) usage ;;
+esac

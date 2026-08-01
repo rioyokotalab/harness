@@ -17,6 +17,7 @@ tests/test-fleet-health.sh|canonical fleet health focused suite
 tests/test-connection-monitor.sh|managed Mac connection monitor focused suite
 tests/test-tmux-codex-monitor.sh|Local tmux Codex monitor focused suite
 tests/test-tmux-claude-monitor.sh|Local tmux Claude monitor focused suite
+tests/test-macos-agent-session.sh|unified managed-Mac agent session suite
 tests/test-projects-pane-layout.sh|process-preserving projects pane migration
 tests/test-codex-recovery-helper.sh|dedicated Local Codex recovery helper
 tests/test-al-session.sh|personal AL session focused suite|7
