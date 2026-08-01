@@ -129,8 +129,8 @@ if [ "${FAKE_SSH_MODE:-send}" = response ]; then
         "${FAKE_RESPONDER:?}"
     printf 'verified clean\n'
 else
-    printf 'AGENT_MESSAGE_RECEIVE source=%s target_role=%s status=submitted\n' \
-        "${FAKE_SOURCE:?}" "${FAKE_TARGET_ROLE:?}"
+    printf 'AGENT_MESSAGE_RECEIVE source=%s target_role=%s client=%s status=submitted\n' \
+        "${FAKE_SOURCE:?}" "${FAKE_TARGET_ROLE:?}" "${FAKE_CLIENT:-codex}"
 fi
 EOF
 chmod 755 "$fake_bin/ssh"
@@ -171,7 +171,7 @@ printf '%s\n' "$message" |
     run_helper receive --source riken --target-role controller \
     >"$state/controller.out"
 grep -F -x \
-    'AGENT_MESSAGE_RECEIVE source=riken target_role=controller status=submitted' \
+    'AGENT_MESSAGE_RECEIVE source=riken target_role=controller client=codex status=submitted' \
     "$state/controller.out" >/dev/null || fail "controller receive output"
 grep -F 'load-buffer ' "$state/operations" >/dev/null ||
     fail "private buffer load"
@@ -255,7 +255,7 @@ FAKE_SOURCE=riken FAKE_TARGET_ROLE=controller \
     run_helper send --source riken --target login --target-role controller \
     <"$state/message" >"$state/send.out"
 grep -F -x \
-    'AGENT_MESSAGE_SEND source=riken target=login target_role=controller status=submitted' \
+    'AGENT_MESSAGE_SEND source=riken target=login target_role=controller client=codex status=submitted' \
     "$state/send.out" >/dev/null || fail "send output"
 cmp -s "$state/message" "$state/ssh-message" ||
     fail "send message changed"
@@ -379,5 +379,30 @@ fi
 python3 -m json.tool \
     "$ROOT/shared/skills/remote-agent-communication/references/reply.schema.json" \
     >/dev/null || fail "fallback response schema"
+
+# A Claude sender may address a Codex thread, but only with honest
+# attribution: the prefix client must match the declared --client.
+if printf '%s\n' '[Agent: Riken Claude] claude sender' |
+    run_helper receive --source riken --target-role controller \
+    --client claude >"$state/claude-ok.out" 2>&1; then
+    grep -F 'client=claude' "$state/claude-ok.out" >/dev/null ||
+        fail "claude receive did not report its client"
+else
+    fail "an honestly attributed Claude message was rejected"
+fi
+
+if printf '%s\n' '[Agent: Riken Claude] mislabelled' |
+    run_helper receive --source riken --target-role controller \
+    >"$state/claude-as-codex.out" 2>&1; then
+    fail "a Claude message was accepted as Codex"
+fi
+grep -F 'message client does not match the declared sender client' \
+    "$state/claude-as-codex.out" >/dev/null || fail "client mismatch rejection"
+
+if printf '%s\n' '[Agent: Riken Codex] mislabelled' |
+    run_helper receive --source riken --target-role controller \
+    --client claude >"$state/codex-as-claude.out" 2>&1; then
+    fail "a Codex message was accepted as Claude"
+fi
 
 printf '%s\n' 'remote agent communication tests: PASS'

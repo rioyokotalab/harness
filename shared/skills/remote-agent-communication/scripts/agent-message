@@ -25,7 +25,10 @@ LOCK_WAIT_SECONDS = 30
 PASTE_SETTLE_SECONDS = 1
 SUBMIT_SETTLE_SECONDS = 1
 ALIAS_RE = re.compile(r"^[a-z][a-z0-9-]{0,31}$")
-PREFIX_RE = re.compile(r"^\[Agent: ([A-Za-z0-9_-]+) Codex\](?:\s|$)")
+PREFIX_RE = re.compile(
+    r"^\[Agent: ([A-Za-z0-9_-]+) (Codex|Claude)\](?:\s|$)"
+)
+SENDER_CLIENTS = ("codex", "claude")
 TTY_RE = re.compile(r"^/dev/(?:pts/[0-9]+|ttys[0-9A-Za-z]+)$")
 REQUEST_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 REPLY_STATUSES = {"complete", "blocked", "rejected", "failed"}
@@ -76,7 +79,11 @@ def run(
         raise MessageError("native command timed out") from exc
 
 
-def validate_message(source: str, message: bytes) -> bytes:
+def validate_message(
+    source: str, message: bytes, client: str = "codex"
+) -> bytes:
+    if client not in SENDER_CLIENTS:
+        raise MessageError("sender client is unsupported")
     if not ALIAS_RE.fullmatch(source):
         raise MessageError("source alias is malformed")
     if len(message) > MAX_MESSAGE_BYTES:
@@ -93,11 +100,18 @@ def validate_message(source: str, message: bytes) -> bytes:
     prefix = PREFIX_RE.match(text)
     if prefix is None or prefix.group(1).lower() != source:
         raise MessageError("message does not identify the declared agent")
+    # The prefix is attribution. A Claude sender must not label its message
+    # as Codex, and vice versa, or the receiving thread records a false
+    # author.
+    if prefix.group(2).lower() != client:
+        raise MessageError("message client does not match the declared sender client")
     return text.encode("utf-8")
 
 
-def read_message(source: str) -> bytes:
-    return validate_message(source, sys.stdin.buffer.read(MAX_MESSAGE_BYTES + 1))
+def read_message(source: str, client: str = "codex") -> bytes:
+    return validate_message(
+        source, sys.stdin.buffer.read(MAX_MESSAGE_BYTES + 1), client
+    )
 
 
 def tmux_output(arguments: list[str]) -> str:
@@ -256,8 +270,9 @@ def inject_message(
     target_role: str,
     allow_attached: bool,
     message: bytes,
+    client: str = "codex",
 ) -> None:
-    message = validate_message(source, message)
+    message = validate_message(source, message, client)
     with injection_lock():
         if target_role == "controller":
             if allow_attached:
@@ -295,11 +310,18 @@ def inject_message(
         time.sleep(SUBMIT_SETTLE_SECONDS)
 
 
-def receive(source: str, target_role: str, allow_attached: bool) -> None:
-    inject_message(source, target_role, allow_attached, read_message(source))
+def receive(
+    source: str,
+    target_role: str,
+    allow_attached: bool,
+    client: str = "codex",
+) -> None:
+    inject_message(
+        source, target_role, allow_attached, read_message(source, client), client
+    )
     print(
         f"AGENT_MESSAGE_RECEIVE source={source} "
-        f"target_role={target_role} status=submitted"
+        f"target_role={target_role} client={client} status=submitted"
     )
 
 
@@ -309,13 +331,14 @@ def deliver_message(
     target_role: str,
     allow_attached: bool,
     message: bytes,
+    client: str = "codex",
 ) -> None:
     if not ALIAS_RE.fullmatch(target):
         raise MessageError("target SSH alias is malformed")
     remote = (
         'exec "$HOME/harness/shared/skills/remote-agent-communication/'
         f'scripts/agent-message" receive --source {source} '
-        f"--target-role {target_role}"
+        f"--target-role {target_role} --client {client}"
     )
     if allow_attached:
         remote += " --allow-attached"
@@ -337,18 +360,26 @@ def deliver_message(
     )
     expected = (
         f"AGENT_MESSAGE_RECEIVE source={source} "
-        f"target_role={target_role} status=submitted\n"
+        f"target_role={target_role} client={client} status=submitted\n"
     ).encode()
     if result.returncode != 0 or result.stdout != expected:
         raise MessageError("remote agent-message delivery failed")
 
 
-def send(source: str, target: str, target_role: str, allow_attached: bool) -> None:
-    message = read_message(source)
-    deliver_message(source, target, target_role, allow_attached, message)
+def send(
+    source: str,
+    target: str,
+    target_role: str,
+    allow_attached: bool,
+    client: str = "codex",
+) -> None:
+    message = read_message(source, client)
+    deliver_message(
+        source, target, target_role, allow_attached, message, client
+    )
     print(
         f"AGENT_MESSAGE_SEND source={source} target={target} "
-        f"target_role={target_role} status=submitted"
+        f"target_role={target_role} client={client} status=submitted"
     )
 
 
@@ -663,6 +694,9 @@ def build_parser() -> argparse.ArgumentParser:
             "--target-role", choices=("controller", "mac"), required=True
         )
         command.add_argument("--allow-attached", action="store_true")
+        command.add_argument(
+            "--client", choices=SENDER_CLIENTS, default="codex"
+        )
         if name == "send":
             command.add_argument("--target", required=True)
     request_command = commands.add_parser("request")
@@ -692,12 +726,14 @@ def main() -> int:
                 arguments.target,
                 arguments.target_role,
                 arguments.allow_attached,
+                arguments.client,
             )
         elif arguments.command == "receive":
             receive(
                 arguments.source,
                 arguments.target_role,
                 arguments.allow_attached,
+                arguments.client,
             )
         elif arguments.command == "request":
             request(
