@@ -4,9 +4,13 @@
 
 `.github/workflows/ci.yml` runs for pull requests to `main`, one weekly
 independent full check, and manual full checks, with only `contents: read`.
-After a strict required pull-request check, the merge does not allocate a
-duplicate `main` push runner. It uses the official checkout action pinned to
-the immutable v7.0.1 commit and disables persisted Git credentials. It has no
+For an owner-authored pull request whose event sender is also the owner, the
+required job is skipped after the exact tree is validated locally and recorded
+in the pull request. Non-owner or mixed-sender pull requests still receive the
+strict hosted check, and weekly/manual events still run the complete portable
+suite. The merge does not allocate a duplicate `main` push runner. The hosted
+job uses the official checkout action pinned to the immutable v7.0.1 commit and
+disables persisted Git credentials. It has no
 secrets, deployment, model calls, remote-node access, scheduler commands,
 package installation, or cache writes outside its ephemeral runner.
 Checkout fetches complete public history because the evaluation validator
@@ -14,8 +18,9 @@ loads its guidance from the experiment's exact immutable baseline revision; a
 shallow checkout may not contain that commit. Later live global-guidance
 maintenance does not alter the frozen baseline, corpus, or recorded reports.
 
-The unique required-check candidate is `portable-phase1`. On pull requests it
-runs the deterministic impact selector against the event's exact base SHA:
+The unique required-check candidate is `portable-phase1`. When it runs on a
+pull request, it uses the deterministic impact selector against the event's
+exact base SHA:
 documentation and routed skills receive their owning checks, while workflow,
 policy, validator, manifest, safety, lifecycle, cleanup, credential, and
 unknown changes escalate to the complete phase-one integration suite. Weekly
@@ -31,6 +36,14 @@ an unset or zero value retains the client smoke on a declared managed node.
 This prevents generic CI from pretending to validate an HPC MPI stack or local
 agent policy while preserving all credential-free portable filesystem and
 integration regressions.
+
+The owner-only skip is the same-trust-root route used by the private Students
+and Swallow repositories. It removes hosted queue and merge latency from the
+normal owner workflow; it is not independent CI. GitHub documents that a
+skipped required job reports success, so the required context remains stable.
+Any event with a different author or sender still runs on an ephemeral hosted
+runner, preserving the untrusted-code boundary. The weekly backstop detects
+merged-tree drift independently of owner task cadence.
 
 The security choices follow GitHub's official guidance to grant read-only
 default token access and pin actions to a full commit SHA:

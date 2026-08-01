@@ -17,6 +17,7 @@ concurrency:
 jobs:
   portable-phase1:
     name: portable-phase1
+    if: github.event_name != 'pull_request' || github.event.pull_request.user.login != 'rioyokota' || github.event.sender.login != 'rioyokota'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:

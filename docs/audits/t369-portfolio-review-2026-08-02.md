@@ -217,14 +217,43 @@ Harness `19127355`, Students `19716717`, Swallow `19734040`, Website
 ruleset, and no stale document was allowed to restore the former one-review
 policy.
 
-Live workflow readback also matches the accepted sustainability design.
-Harness is public and retains PR plus weekly/manual full gates; Website is
-public and PR-only. Private Students and Swallow skip trusted-owner PR jobs,
-retain one unconditional weekly/manual backstop, and have no push trigger;
-Students' separate trusted-base boundary job runs only for non-owner pull
-requests. Personal has no workflow. GitHub's system-managed Dependabot entries
-remain visible, but no project added a nightly or bookkeeping schedule, a
-persistent self-hosted runner, or a duplicate post-merge run.
+Live workflow readback identified one remaining autonomy cost. Harness is
+public, but 47 owner-authored pull-request jobs ran during 2026-08-01/02 even
+though their exact trees were already validated locally. Public minutes do not
+consume the private allowance, but the queue and required-check wait still
+slow every owner task. Harness now applies the proven Students/Swallow
+owner/owner job skip while retaining hosted isolation for non-owner or
+mixed-sender events and unconditional weekly/manual full gates. Website is
+public and PR-only. Private Students and Swallow retain one unconditional
+weekly/manual backstop and have no push trigger; Students' separate trusted-base
+boundary job runs only for non-owner pull requests. Personal has no workflow.
+GitHub's system-managed Dependabot entries remain visible, but no project added
+a nightly or bookkeeping schedule, a persistent self-hosted runner, or a
+duplicate post-merge run. Organization billing totals remain unknown because
+the available read-only GitHub identity lacks `admin:org`; no scope expansion
+was requested or needed for the repository-local correction.
+
+## Recovery and retained-branch drills
+
+The three unpublished handoff bundles were restored into independent bare
+repositories rather than merely verified structurally. Each restored tip
+matched its recorded source exactly: Students `2f8771894...`, Swallow
+`ec809eaf...`, and Website `e0a8aa1a...`. `git fsck --full --no-dangling`
+passed in all three restores. The 86,594,716-byte drill boundary was then
+removed through an immutable guarded transaction; the post-delete identity
+check found no recovery residue and all protected anchors were unchanged.
+
+A fresh mirror classified every retained remote branch without deleting one.
+Harness has one branch already ancestral to `main` and five squash-merged task
+tips that appear divergent by graph ancestry. Students has three divergent
+refs, including the open Dependabot update and two T-035 histories. Swallow has
+23 refs ancestral to `main` and 74 graph-divergent refs; Website and Personal
+have none outside `main`. The largest unique Swallow histories are
+SW-033 (179 commits), SW-030 (138), SW-038 (42), SW-031 host generation (31),
+and the remote SW-034 continuation (24). These counts explain why blind
+ancestry-based deletion would be unsafe after protected squash merges and why
+remote refs remain report-only. The independently bundled live SW-034 tip is
+still newer than its same-named remote ref.
 
 Students' sole open PR, Dependabot #560, is behind current `main` and failed
 for one understood safety reason: all 695 other tests and 34 subtests passed,
