@@ -566,29 +566,49 @@ def pr_tree_status(
     return "equal" if text(head_tree).strip() == text(merge_tree).strip() else "different"
 
 
-def ledger_reference_status(repositories: Sequence[Path], needles: Sequence[str]) -> str:
+def ledger_reference_map(
+    repositories: Sequence[Path], needles: Sequence[str]
+) -> Dict[str, str]:
+    unique = sorted(set(needles))
+    if not unique or any(not needle or CONTROL_RE.search(needle) for needle in unique):
+        die("archive ledger lookup is malformed")
+    statuses = {needle: "no" for needle in unique}
+    pattern_arguments = [argument for needle in unique for argument in ("-e", needle)]
     unknown = False
     for repository in repositories:
-        for needle in needles:
-            result = git(
-                repository,
-                "grep",
-                "-l",
-                "-F",
-                "-e",
-                needle,
-                "refs/remotes/origin/main",
-                "--",
-                "TODO.md",
-                "docs/tasks",
-                "docs/audits",
-                check=False,
-            )
-            if result.returncode == 0:
-                return "yes"
-            if result.returncode != 1:
-                unknown = True
-    return "unknown" if unknown else "no"
+        result = git(
+            repository,
+            "grep",
+            "--no-color",
+            "-h",
+            "-o",
+            "-F",
+            *pattern_arguments,
+            "refs/remotes/origin/main",
+            "--",
+            "TODO.md",
+            "docs/tasks",
+            "docs/audits",
+            check=False,
+        )
+        if result.returncode == 0:
+            for match in text(result).splitlines():
+                if match in statuses:
+                    statuses[match] = "yes"
+        elif result.returncode != 1:
+            unknown = True
+    if unknown:
+        for needle, status in statuses.items():
+            if status == "no":
+                statuses[needle] = "unknown"
+    return statuses
+
+
+def combined_ledger_status(statuses: Dict[str, str], needles: Sequence[str]) -> str:
+    values = [statuses[needle] for needle in needles]
+    if "yes" in values:
+        return "yes"
+    return "unknown" if "unknown" in values else "no"
 
 
 def artifact_age_days(info: os.stat_result) -> int:
@@ -678,6 +698,12 @@ def plan_archives(coordinator_repo: Path) -> None:
         receipt_archive_only = 0
         receipt_equal = 0
         receipt_unknown = 0
+        ledgers = [owner_repo]
+        if coordinator_repo != owner_repo:
+            ledgers.append(coordinator_repo)
+        receipt_needles = [transaction, receipt.name]
+        receipt_needles.extend(row["tip"] for row in parsed["items"])
+        receipt_ledger = ledger_reference_map(ledgers, receipt_needles)
         for row in parsed["items"]:
             tip = row["tip"]
             unique_tips.add(tip)
@@ -720,12 +746,8 @@ def plan_archives(coordinator_repo: Path) -> None:
             pr_unknown += int(tree_status == "unknown")
             receipt_equal += int(tree_status == "equal")
             receipt_unknown += int(tree_status == "unknown")
-            ledgers = [owner_repo]
-            if coordinator_repo != owner_repo:
-                ledgers.append(coordinator_repo)
-            ledger_status = ledger_reference_status(
-                ledgers,
-                (tip, transaction, receipt.name),
+            ledger_status = combined_ledger_status(
+                receipt_ledger, (tip, transaction, receipt.name)
             )
             ledger_yes += int(ledger_status == "yes")
             ledger_unknown += int(ledger_status == "unknown")
@@ -758,6 +780,14 @@ def plan_archives(coordinator_repo: Path) -> None:
         for path in directory.glob("*.manifest")
     )
     apply_paths = sorted(state.glob("worktree-apply-*.json"))
+    all_bundles = sorted(state.rglob("*.bundle"))
+    evidence_payloads = sorted(state.rglob("*.tar.gz"))
+    auxiliary_names = [
+        path.name
+        for paths in (plan_paths, manifest_paths, apply_paths, all_bundles, evidence_payloads)
+        for path in paths
+    ]
+    auxiliary_ledger = ledger_reference_map([coordinator_repo], auxiliary_names)
     for path in plan_paths:
         info = validate_private_file(path)
         try:
@@ -770,7 +800,7 @@ def plan_archives(coordinator_repo: Path) -> None:
             "  AUX "
             f"type=plan name={path.name} bytes={info.st_size} "
             f"age_days={artifact_age_days(info)} kind={value['kind']} "
-            f"ledger={ledger_reference_status([coordinator_repo], [path.name])} "
+            f"ledger={auxiliary_ledger[path.name]} "
             "status=valid candidate=no"
         )
     for path in manifest_paths:
@@ -779,7 +809,7 @@ def plan_archives(coordinator_repo: Path) -> None:
             "  AUX "
             f"type=manifest name={path.name} bytes={info.st_size} "
             f"age_days={artifact_age_days(info)} "
-            f"ledger={ledger_reference_status([coordinator_repo], [path.name])} "
+            f"ledger={auxiliary_ledger[path.name]} "
             "status=identity-valid candidate=no"
         )
     incomplete_applies = 0
@@ -799,10 +829,9 @@ def plan_archives(coordinator_repo: Path) -> None:
             "  AUX "
             f"type=worktree-apply name={path.name} bytes={info.st_size} "
             f"age_days={artifact_age_days(info)} phase={phase} "
-            f"ledger={ledger_reference_status([coordinator_repo], [path.name])} "
+            f"ledger={auxiliary_ledger[path.name]} "
             "status=valid candidate=no"
         )
-    all_bundles = sorted(state.rglob("*.bundle"))
     generation_bundles = {
         Path(repository["bundle"]).resolve(strict=True)
         for _path, value in generation_values
@@ -820,17 +849,16 @@ def plan_archives(coordinator_repo: Path) -> None:
             "  AUX "
             f"type=unbound-bundle name={path.relative_to(state)} bytes={info.st_size} "
             f"age_days={artifact_age_days(info)} "
-            f"ledger={ledger_reference_status([coordinator_repo], [path.name])} "
+            f"ledger={auxiliary_ledger[path.name]} "
             "status=preserved-unknown candidate=no"
         )
-    evidence_payloads = sorted(state.rglob("*.tar.gz"))
     for path in evidence_payloads:
         info = validate_private_file(path)
         output_rows.append(
             "  AUX "
             f"type=evidence-payload name={path.relative_to(state)} bytes={info.st_size} "
             f"age_days={artifact_age_days(info)} "
-            f"ledger={ledger_reference_status([coordinator_repo], [path.name])} "
+            f"ledger={auxiliary_ledger[path.name]} "
             "status=preserved candidate=no"
         )
     for path, value in generation_values:

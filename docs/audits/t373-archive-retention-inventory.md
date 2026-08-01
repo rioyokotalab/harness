@@ -37,7 +37,7 @@ available only from its archive ref/bundle remains independently protected even
 when a merge tree is equal.
 
 The report also measures the complete state tree and evaluates the frozen
-generation triggers. The current readback is 421,791,676 bytes, 20 receipts,
+generation triggers. The current readback is 448,208,304 bytes, 22 receipts,
 oldest receipt below one day, zero generation receipts, and
 `generation_trigger=no`.
 
@@ -48,9 +48,9 @@ Harness archive refs. `git bundle verify` passed at 12,988,438 bytes, compared
 with 184,262,769 bytes across the 16 then-current Harness-history bundles:
 171,274,331 bytes / 92.9% smaller. The benchmark was guarded-deleted and all
 real receipts, refs, and bundles remained unchanged. The subsequent exact
-T-369 closeout advanced the live state to 17 Harness-history bundles and
-197,349,782 bytes, confirming that per-task full-history packing is the growth
-source.
+T-369 and T-373 closeouts advanced the live state to 17 Harness-history bundles
+and 223,552,356 bytes, confirming that per-task full-history packing is the
+growth source.
 
 ## Frozen phase-one decision
 
@@ -68,7 +68,7 @@ until two independently verified generations exist and a fresh report proves
 that removing an exact older generation preserves every required tip, ledger
 reference, rollback, and interrupted-closeout path. Current state meets none of
 those deletion gates, so immediate compaction would trade recoverability for
-only 409 MiB of storage and is rejected.
+only 427 MiB of storage and is rejected.
 
 ## Generation receipt and restore contract
 
@@ -96,3 +96,14 @@ the receipt only after that success, and proves report-mode re-audit. Production
 inventory creates no generation, plan, or delete candidate. This keeps the
 mechanism testable now without spending recovery redundancy before a measured
 trigger.
+
+## Report efficiency follow-up
+
+Ledger matching now batches fixed-string patterns once per receipt and once for
+the auxiliary inventory, while still emitting only the matched identifier and
+never source context. The exact live summary remained 22 receipts, 47 items,
+41 unique tips, 29 ledger references, zero unknowns, and zero candidates. A
+same-state sequential read measured the protected-main implementation at 24.32
+seconds and the batched implementation at 19.10 seconds, a 21.5% wall-time
+reduction. This is a bounded improvement to an occasional report; the report
+remains read-only and is not promoted into a frequent polling loop.

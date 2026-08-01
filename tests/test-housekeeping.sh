@@ -267,6 +267,10 @@ cat >"$GEN_RECEIPT" <<EOF
 {"schema":"harness-housekeeping-generation-v1","generation":"$GENERATION_ID","created_utc":"2026-08-02T00:00:00Z","source_receipts":[{"name":"$ARCHIVE_NAME","sha256":"$(sha256sum "$ARCHIVE" | awk '{print $1}')"},{"name":"$GC_NAME","sha256":"$(sha256sum "$GC_RECEIPT" | awk '{print $1}')"}],"repositories":[{"repository_canonical":"$REPO","repository_id":[$(stat -c %d "$REPO"),$(stat -c %i "$REPO")],"protected_main":{"ref":"refs/remotes/origin/main","tip":"$BASE"},"bundle":"$GEN_BUNDLE","bundle_sha256":"$(sha256sum "$GEN_BUNDLE" | awk '{print $1}')","heads":[{"ref":"$GEN_MAIN_REF","tip":"$BASE"},{"ref":"$GEN_TIP_REF","tip":"$DRIFT"}],"restore_drill":{"method":"independent-bare-fetch-exact-heads-v1","verified_utc":"2026-08-02T00:01:00Z","headset_sha256":"$GEN_HEADSET"}}]}
 EOF
 chmod 600 "$GEN_RECEIPT"
+printf 'archived tip %s\n' "$SQUASH" >>"$REPO/TODO.md"
+git -C "$REPO" add TODO.md
+git -C "$REPO" commit -qm 'reference archived tip'
+git -C "$REPO" update-ref refs/remotes/origin/main "$(git -C "$REPO" rev-parse HEAD)"
 
 # Archive retention discovery audits every receipt but remains report-only and
 # does not create another plan merely by observing the state directory.
@@ -281,6 +285,9 @@ printf '%s\n' "$OUT" | grep -Fq \
 printf '%s\n' "$OUT" | grep -Fq \
     'archive_only=2 pr_equal=0 pr_unknown=1' ||
     fail "archive inventory classification changed"
+printf '%s\n' "$OUT" | grep -Fq \
+    'ledger_yes=1 ledger_unknown=0' ||
+    fail "batched ledger inventory changed"
 printf '%s\n' "$OUT" | grep -Fq \
     'candidates=0 apply=unavailable' ||
     fail "archive inventory exposed deletion"

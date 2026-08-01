@@ -27,9 +27,9 @@ remains local for its driver. Material changes stop at 10:45 JST.
 
 ### T-373 — Bound housekeeping archive growth
 
-**Phase:** report-only inventory is published; the immutable generation receipt
-and independent restore contract are in validation. Current archives are
-healthy, no creation trigger is met, and no artifact is disposable.
+**Phase:** dormant after the report-only inventory and immutable generation
+contract were published. Current archives are healthy, no creation trigger is
+met, and no artifact is disposable.
 
 **Record:** `docs/tasks/T-373.md`.
 
