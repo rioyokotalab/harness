@@ -17,16 +17,6 @@ Next free ID: T-367.
 
 ## Active queue
 
-### T-366 — Unified Harness cowork and Personal tmux layout
-
-**Phase:** the missing Codex Personal initialization turn was submitted once
-and is complete; monitor regression coverage now rejects empty canonical
-roots. Awaiting fresh physical-phone confirmation. Preserve the inactive
-failed Claude Harness lineage pending a supported product-side retirement
-path.
-
-**Record:** `docs/tasks/T-366.md`.
-
 ### T-363 — Workspace lifecycle for alternating clients
 
 **Phase:** proposal; awaiting an owner decision between per-turn worktrees and
