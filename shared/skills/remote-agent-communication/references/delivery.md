@@ -19,13 +19,22 @@ Examples:
 - Riken to Local: `--source riken --target login --target-role controller`
 - Local to Riken: `--source local --target riken --target-role mac`
 
-The helper uses native non-interactive SSH with forwarding disabled. It passes
-the message only through stdin, validates the destination session and Codex
-process without capturing the pane, loads a private transient tmux buffer,
-pastes it, waits for composer handling, submits a separate `C-m`, and deletes
-the buffer. A current-user private advisory lock covers paste, submission, and
-a short settle interval so concurrent agents cannot combine prompts.
-Exact-unlink the private input after confirmed success.
+The remote helper uses native non-interactive SSH with forwarding disabled and
+message only on stdin. It selects the Codex pane without capture, locks
+delivery, loads/pastes/deletes a private tmux buffer, settles, then submits a
+separate `C-m`. Exact-unlink the input after confirmed success.
+
+## Send from Local Codex to Local Claude
+
+Use one private mode-0600 `[Agent: Local Codex]` input:
+
+```text
+scripts/agent-message send-local-claude --source local < MESSAGE_FILE
+```
+
+The exact metadata-selected route is local, content-blind, single-process,
+submission-only, no-retry, and never auto-replies. Claude replies separately
+through `receive --client claude`.
 
 Do not retry after `status=submitted`. A failure after submission but before
 acknowledgement is ambiguous; retain the input and diagnose without

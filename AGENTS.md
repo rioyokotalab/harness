@@ -45,7 +45,7 @@ subject. Multiple matches select multiple files.
 | --- | --- |
 | [repository-git.md](docs/agent-policy/repository-git.md) | authenticated Git or SSH; branch, fetch, commit, push, PR, merge, publication, or repository hardening |
 | [external-operations.md](docs/agent-policy/external-operations.md) | hosting/account API access or writes; owner/global configuration; packages/installers; or `~/run_this.sh` |
-| [managed-codex.md](docs/agent-policy/managed-codex.md) | managed Codex, tmux, phone, app-server, saved-thread or unsafe-tail recovery, or an `[Agent: NAME Codex]` message |
+| [managed-codex.md](docs/agent-policy/managed-codex.md) | managed Codex or Claude, tmux, phone, app-server, saved-thread or unsafe-tail recovery, or an identified agent message |
 | [fleet.md](docs/agent-policy/fleet.md) | fleet/node/route work, fleet-health or maintenance checks, fleet sync, or managed-Mac reboot or checkout rollout |
 | [housekeeping-and-promotion.md](docs/agent-policy/housekeeping-and-promotion.md) | housekeeping, residue cleanup, launcher cleanup diagnosis, or promotion of reusable guidance |
 | [research.md](docs/agent-policy/research.md) | factual or literature research, research-program work, scientific/HPC experiments, performance claims, or presentations |

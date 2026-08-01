@@ -32,6 +32,9 @@ for path in "$SKILL" "$DELIVERY" "$REQUEST" "$FALLBACK" "$RUNTIME_POLICY"; do
     [ -f "$path" ] && [ ! -L "$path" ] ||
         fail "missing routed communication resource: $path"
 done
+if grep -E 'capture-pane|pipe-pane|show-buffer' "$HELPER" >/dev/null; then
+    fail "message transport may inspect pane content"
+fi
 
 grep -F 'REPLY_REQUIRED request_id=ID reply_target=ALIAS reply_role=ROLE' \
     "$RUNTIME_POLICY" >/dev/null || fail "shared required-reply policy"
@@ -42,6 +45,10 @@ grep -F '`submission=succeeded` in the response payload' "$DELIVERY" \
     fail "reply submission semantics"
 grep -F 'same-channel `request`' "$RUNTIME_POLICY" >/dev/null ||
     fail "required-response same-channel policy"
+grep -F '`[Agent: NAME Claude]`' "$RUNTIME_POLICY" >/dev/null ||
+    fail "Claude-originated attribution policy"
+grep -F 'send-local-claude --source local' "$DELIVERY" >/dev/null ||
+    fail "Local Codex-to-Claude route guidance"
 grep -F 'does not use `ssh login`' \
     "$REQUEST" >/dev/null ||
     fail "request reverse-route independence"
@@ -65,12 +72,31 @@ case "$command" in
         ;;
     list-panes)
         tty=${FAKE_TTY:-/dev/pts/7}
-        role=${FAKE_PANE_ROLE:-harness}
-        if [ "${FAKE_AMBIGUOUS:-0}" -eq 1 ]; then
-            printf '%%0\t0\t%s/harness\t%s\t0\tcodex\t0\t%s\n' "$HOME" "$tty" "$role"
-            printf '%%1\t0\t%s/harness\t/dev/pts/8\t0\tcodex\t0\t%s\n' "$HOME" "$role"
+        pane_path=${FAKE_PANE_PATH:-$HOME/harness}
+        if [ "${FAKE_TARGET_CLIENT:-codex}" = claude ]; then
+            window_index=${FAKE_WINDOW_INDEX:-1}
+            window_name=${FAKE_WINDOW_NAME:-claude}
+            pane_index=${FAKE_PANE_INDEX:-0}
+            role=
+            claude_role=${FAKE_CLAUDE_ROLE:-harness}
         else
-            printf '%%0\t0\t%s/harness\t%s\t0\tcodex\t0\t%s\n' "$HOME" "$tty" "$role"
+            window_index=${FAKE_WINDOW_INDEX:-0}
+            window_name=${FAKE_WINDOW_NAME:-codex}
+            pane_index=${FAKE_PANE_INDEX:-0}
+            role=${FAKE_PANE_ROLE:-harness}
+            claude_role=
+        fi
+        if [ "${FAKE_AMBIGUOUS:-0}" -eq 1 ]; then
+            printf '%%0\t0\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+                "$pane_path" "$tty" "$window_index" "$window_name" \
+                "$pane_index" "$role" "$claude_role"
+            printf '%%1\t0\t%s\t/dev/pts/8\t%s\t%s\t%s\t%s\t%s\n' \
+                "$pane_path" "$window_index" "$window_name" "$pane_index" \
+                "$role" "$claude_role"
+        else
+            printf '%%0\t0\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+                "$pane_path" "$tty" "$window_index" "$window_name" \
+                "$pane_index" "$role" "$claude_role"
         fi
         ;;
     display-message)
@@ -103,7 +129,15 @@ chmod 755 "$fake_bin/tmux"
 cat >"$fake_bin/ps" <<'EOF'
 #!/bin/sh
 set -eu
-if [ "${FAKE_CODEX_COUNT:-1}" -eq 2 ]; then
+if [ "${FAKE_TARGET_CLIENT:-codex}" = claude ]; then
+    if [ "${FAKE_CLAUDE_COUNT:-1}" -eq 2 ]; then
+        printf 'claude\nclaude\n'
+    elif [ "${FAKE_CLAUDE_COUNT:-1}" -eq 0 ]; then
+        printf 'sh\n'
+    else
+        printf 'claude\ncodex\n'
+    fi
+elif [ "${FAKE_CODEX_COUNT:-1}" -eq 2 ]; then
     printf 'codex.real\ncodex.real\n'
 elif [ "${FAKE_TTY:-}" = /dev/ttys000 ]; then
     printf '/opt/homebrew/bin/codex\n'
@@ -118,6 +152,7 @@ cat >"$fake_bin/ssh" <<'EOF'
 set -eu
 : "${FAKE_STATE:?}"
 printf '%s\n' "$*" >"$FAKE_STATE/ssh-arguments"
+printf 'call\n' >>"$FAKE_STATE/ssh-calls"
 cp /dev/stdin "$FAKE_STATE/ssh-message"
 if [ "${FAKE_SSH_FAIL:-0}" -eq 1 ]; then
     printf 'unexpected remote failure\n' >&2
@@ -159,7 +194,15 @@ run_helper() {
         FAKE_ATTACHED=${FAKE_ATTACHED:-0} \
         FAKE_AMBIGUOUS=${FAKE_AMBIGUOUS:-0} \
         FAKE_CODEX_COUNT=${FAKE_CODEX_COUNT:-1} \
+        FAKE_CLAUDE_COUNT=${FAKE_CLAUDE_COUNT:-1} \
+        FAKE_TARGET_CLIENT=${FAKE_TARGET_CLIENT:-codex} \
+        FAKE_CLIENT=${FAKE_CLIENT:-codex} \
         FAKE_PANE_ROLE=${FAKE_PANE_ROLE:-harness} \
+        FAKE_CLAUDE_ROLE=${FAKE_CLAUDE_ROLE:-harness} \
+        FAKE_WINDOW_INDEX=${FAKE_WINDOW_INDEX:-} \
+        FAKE_WINDOW_NAME=${FAKE_WINDOW_NAME:-} \
+        FAKE_PANE_INDEX=${FAKE_PANE_INDEX:-} \
+        FAKE_PANE_PATH=${FAKE_PANE_PATH:-} \
         FAKE_TTY=${FAKE_TTY:-/dev/pts/7} \
         PATH="$fake_bin:/usr/bin:/bin" \
         python3 -B "$HELPER" "$@"
@@ -270,6 +313,81 @@ if run_helper send --source riken --target '../unsafe' \
     --target-role controller <"$state/message" \
     >"$state/unsafe-target.out" 2>&1; then
     fail "unsafe target accepted"
+fi
+
+claude_sender='[Agent: Riken Claude] cross-client send'
+FAKE_SOURCE=riken FAKE_TARGET_ROLE=controller FAKE_CLIENT=claude \
+    run_helper send --source riken --target login --target-role controller \
+    --client claude <<EOF >"$state/claude-send.out"
+$claude_sender
+EOF
+grep -F -x \
+    'AGENT_MESSAGE_SEND source=riken target=login target_role=controller client=claude status=submitted' \
+    "$state/claude-send.out" >/dev/null || fail "Claude send output"
+grep -F -- '--client claude' "$state/ssh-arguments" >/dev/null ||
+    fail "Claude client was not carried over SSH"
+
+local_claude_message='[Agent: Local Codex] review T-365 and reply once'
+ssh_calls_before=$(wc -l <"$state/ssh-calls")
+printf '%s\n' "$local_claude_message" |
+    FAKE_TARGET_CLIENT=claude run_helper send-local-claude --source local \
+    >"$state/local-claude.out"
+grep -F -x \
+    'AGENT_MESSAGE_LOCAL_CLAUDE source=local target=local client=codex status=submitted' \
+    "$state/local-claude.out" >/dev/null || fail "local Claude output"
+ssh_calls_after=$(wc -l <"$state/ssh-calls")
+[ "$ssh_calls_before" -eq "$ssh_calls_after" ] ||
+    fail "local Claude delivery used SSH"
+grep -F 'send-keys -t %0 C-m' "$state/operations" >/dev/null ||
+    fail "local Claude separate submit"
+if grep -F "$local_claude_message" "$state/operations" >/dev/null; then
+    fail "local Claude message leaked into tmux arguments"
+fi
+
+if printf '%s\n' '[Agent: Riken Codex] wrong local source' |
+    FAKE_TARGET_CLIENT=claude run_helper send-local-claude --source riken \
+    >"$state/local-claude-source.out" 2>&1; then
+    fail "non-Local source reached Local Claude"
+fi
+grep -F 'local Claude source must be local' \
+    "$state/local-claude-source.out" >/dev/null ||
+    fail "local Claude source rejection"
+
+if printf '%s\n' '[Agent: Local Claude] false Codex attribution' |
+    FAKE_TARGET_CLIENT=claude run_helper send-local-claude --source local \
+    >"$state/local-claude-client.out" 2>&1; then
+    fail "Claude-labelled message accepted from Codex route"
+fi
+
+if printf '%s\n' "$local_claude_message" |
+    FAKE_TARGET_CLIENT=claude FAKE_CLAUDE_ROLE=students \
+    run_helper send-local-claude --source local \
+    >"$state/local-claude-role.out" 2>&1; then
+    fail "wrong Local Claude pane role accepted"
+fi
+if printf '%s\n' "$local_claude_message" |
+    FAKE_TARGET_CLIENT=claude FAKE_WINDOW_NAME=codex \
+    run_helper send-local-claude --source local \
+    >"$state/local-claude-window.out" 2>&1; then
+    fail "wrong Local Claude window accepted"
+fi
+if printf '%s\n' "$local_claude_message" |
+    FAKE_TARGET_CLIENT=claude FAKE_PANE_PATH=/tmp/not-harness \
+    run_helper send-local-claude --source local \
+    >"$state/local-claude-path.out" 2>&1; then
+    fail "wrong Local Claude repository accepted"
+fi
+if printf '%s\n' "$local_claude_message" |
+    FAKE_TARGET_CLIENT=claude FAKE_CLAUDE_COUNT=2 \
+    run_helper send-local-claude --source local \
+    >"$state/local-claude-process.out" 2>&1; then
+    fail "ambiguous Local Claude process accepted"
+fi
+if printf '%s\n' "$local_claude_message" |
+    FAKE_TARGET_CLIENT=claude FAKE_AMBIGUOUS=1 \
+    run_helper send-local-claude --source local \
+    >"$state/local-claude-ambiguous.out" 2>&1; then
+    fail "ambiguous Local Claude pane accepted"
 fi
 
 reply_id=t307-home-request-test

@@ -1,6 +1,6 @@
 ---
 name: remote-claude-communication
-description: Send one identified prompt into an existing managed Claude window without reading panes; use for owner-requested handoffs or notifications.
+description: Send one Claude-originated prompt into a managed Claude window on a Mac without reading panes; use for owner-requested remote-Mac handoffs or notifications.
 ---
 
 # Remote Claude communication
@@ -15,6 +15,9 @@ covers Codex threads. It deliberately ships **one route, `send`**. There is no
 `request` or `fallback` route: no acceptance-critical response path exists for
 Claude yet, so nothing here may be treated as proof that the target understood
 or completed anything.
+
+For Local Codex-to-Local Claude delivery, use
+`remote-agent-communication`'s `send-local-claude` route instead.
 
 ## Always establish
 
