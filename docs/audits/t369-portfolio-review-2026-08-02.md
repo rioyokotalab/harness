@@ -15,13 +15,14 @@ executed.
 | Git worktrees | Git, [git-worktree](https://git-scm.com/docs/git-worktree.html) | Adopt isolated worktrees and explicit removal of stale administration; add Harness lifecycle enforcement rather than relying on eventual prune. |
 | Branch safety | GitHub, [protected branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches) | Preserve protected `main`, linear history, blocked force updates, and accepted zero approvals; archive exact local tips before cleanup. |
 | Portfolio flow | GitHub, [Projects best practices](https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/best-practices-for-projects) and [Kanban Guide 2025](https://kanbanguides.org/the-kanban-guide/2025.5/pdf/kanban-guide.v2025.5.en.pdf) | Adopt one source of truth, smaller work items, explicit status/priority, and limited work in progress. Completed tasks and dormant implementation proposals do not belong in active queues. |
-| Actions sustainability | GitHub, [billing and usage](https://docs.github.com/en/actions/concepts/billing-and-usage), [GitHub-hosted runners](https://docs.github.com/en/actions/reference/runners/github-hosted-runners), and [self-hosted runners](https://docs.github.com/en/actions/concepts/runners/self-hosted-runners) | Keep owner-only protected local validation and retain hosted isolation for untrusted/mixed work plus periodic/manual gates. Do not add scheduled hosted work merely for task bookkeeping. |
+| Student-facing AI | NIST, [AI RMF](https://airc.nist.gov/airmf-resources/airmf/) and [AI RMF Core](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/); Slack, [least-privilege scopes](https://slack.dev/least-privilege-a-slack-approach-to-scopes/) | Require a use-case-specific pilot profile with explicit human oversight, knowledge limits, risk tolerance, participant feedback, and measured benefits/costs. Every Slack scope must map to a current feature; reject speculative scopes and model action authority. |
+| Actions sustainability | GitHub, [billing and usage](https://docs.github.com/en/billing/concepts/product-billing/github-actions), [GitHub-hosted runners](https://docs.github.com/en/actions/reference/runners/github-hosted-runners), [self-hosted runners](https://docs.github.com/en/actions/concepts/runners/self-hosted-runners), and [secure use](https://docs.github.com/en/actions/reference/security/secure-use) | Keep owner-authored protected local validation and retain hosted isolation for untrusted or mixed-contributor work plus bounded periodic/manual gates. Do not register these persistent, credentialed project machines as general self-hosted runners: GitHub warns they lack clean-VM guarantees and can be persistently compromised. Do not add scheduled hosted work merely for bookkeeping. |
 | Research software | FAIR4RS, [RDA recommendation](https://doi.org/10.15497/RDA00068) and [primary paper](https://www.nature.com/articles/s41597-022-01710-x) | Adopt versioned, identifiable, documented, reusable artifacts and explicit software/environment provenance. |
 | Artifact evidence | ACM, [Artifact Review and Badging](https://www.acm.org/publications/policies/artifact-review-and-badging-current) | Adapt the functional-artifact criteria—documented, consistent, complete, exercisable, validated—to SW-034 before spending more compute. |
 | ML benchmarking | MLCommons, [benchmark principles](https://mlcommons.org/benchmarks/) and [inference rules](https://github.com/mlcommons/inference_policies/blob/master/inference_rules.adoc) | Preserve fixed inputs/seeds, full hardware/software disclosure, matched systems, replicability, and claim limits; reject unmatched score transfer. |
 | Web accessibility | W3C WAI, [evaluation overview](https://www.w3.org/WAI/test-evaluate/), [ongoing monitoring](https://www.w3.org/WAI/eval/considerations), and [sustainability](https://www.w3.org/WAI/planning-and-managing/sustain/) | Keep automated gates but add bounded human, keyboard, and assistive-technology sampling at material changes and quarterly checkpoints. |
-| Sensitive automation | NIST, [Privacy Framework 1.0](https://www.nist.gov/document/nist-privacy-frameworkv10pdf) | Keep source content in authoritative services, minimize collection/retention, and design the full creation-to-disposition lifecycle. |
-| OAuth capability | Google, [OAuth best practices](https://developers.google.com/identity/protocols/oauth2/resources/best-practices) and [granular permissions](https://developers.google.com/identity/protocols/oauth2/resources/granular-permissions) | Request the smallest scope in context, handle partial denial, store tokens securely outside Git, and make revocation/recovery explicit. |
+| Sensitive automation | NIST, [Privacy Framework 1.0](https://www.nist.gov/document/nist-privacy-frameworkv10pdf) and [Privacy Framework home](https://www.nist.gov/privacy-framework) | Keep source content in authoritative services, minimize collection/retention, and design the full creation-to-disposition lifecycle. Version 1.0 remains the final baseline; 1.1 is still an initial public draft, so monitor rather than silently adopting draft text. |
+| OAuth capability | Google, [OAuth best practices](https://developers.google.com/identity/protocols/oauth2/resources/best-practices), [granular permissions](https://developers.google.com/identity/protocols/oauth2/resources/granular-permissions), and [desktop-app flow](https://developers.google.com/identity/protocols/oauth2/native-app) | Request the smallest scope in context and handle partial denial. Because installed apps do not support incremental authorization, request the complete staged set when adding a feature, then persist only the granted subset, disable denied capabilities, store tokens outside Git, and make revocation/recovery explicit. |
 
 ## Local repository judgments
 
@@ -80,6 +81,11 @@ lagged the accepted Calendar work and is corrected without source values. P-005
 adds a value-free capability inventory plus offline revocation, partial-scope,
 and recovery tests before any new connector. Research-budget and assistant
 access remain explicit source/identity gates, not speculative implementation.
+The freshness pass exposed one real integration gap: the pure partial-scope
+classifier did not yet control the installed-app consent write. P-006 closes
+that gap by atomically replacing old token metadata with the exact granted
+subset and rejecting unrequested scopes before persistence; no live consent or
+credential access was used.
 
 ## Cleanup snapshot
 
@@ -117,6 +123,17 @@ Remote branch deletion is deliberately excluded: current Harness policy makes
 remote branches report-only. Active, unpublished, open-PR, sensitive, and
 event-gated state is preserved even when deletion would reduce counts.
 
+The fresh report-only remote inventory contains 4 Harness branches, 4
+Students branches, 98 Swallow branches, and only `main` in Website and
+Personal. Students has one open branch, Dependabot PR #560; the other
+repositories have no open PR. Swallow therefore retains 97 non-`main` remote
+branches as visible cleanup debt, but policy intentionally provides no remote
+delete path. More importantly, its live local SW034 tip is `ec809eaf...` while
+the same-named remote ref is only `81ecc2ba...`; GitHub is not a complete
+backup of that active result. Harness has three merged task branches still
+visible remotely, also report-only. These counts are not interpreted as a
+reason to bypass the protected cleanup contract.
+
 ## First publication checkpoint
 
 - Students PR #562 merged exact head `e34d8b640a8ea1d7c724972edeb386c0cd1f40e4`
@@ -136,3 +153,28 @@ checkouts remain on their active unpublished branches, while Personal primary
 is clean and fast-forwarded to protected `main`. Hosted owner-authored checks
 were skipped where repository sustainability policy prescribes local
 self-attestation; no required approval setting changed.
+
+## Second publication checkpoint
+
+- Harness PR #551 merged exact head
+  `3bce54f26a909f5d9c9b4d53159553d0e9f607c6` as
+  `85d59a1d99ea8f19b1489b23651dc87d2fe578f9`. T-370 now enforces clean,
+  current-main task creation and exact merged-head guarded teardown across an
+  explicitly selected repository. Clean local phase one and the protected
+  portable phase-one check passed.
+- Personal PR #18 merged exact head
+  `5fb25767d4701c09b311fa794451d9c22e388e80` as
+  `67b7053bf50de0455022da74347ff88410e8eab9`. Its canonical validator passed
+  22 synthetic tests and recorded a value-free lifecycle inventory.
+- Personal PR #19 merged exact head
+  `e245ea77d09294097bb593282b991b9348881c49` as
+  `aec19c622ffb158d2d18ebb5475d06e3667d8784`. Its canonical validator passed
+  24 synthetic tests and proved exact-subset partial consent plus no-persist
+  rejection of an unrequested scope.
+
+The new T-370 lifecycle opened both Personal tasks from independently verified
+clean `main`, then archived and guarded-retired each exact merged worktree and
+local branch. `git bundle verify` passed for the P-005, P-006, and T-370
+archives. Personal is again a single clean `main`
+worktree. T-371 records, but does not execute, the corresponding migration for
+the live legacy Students and Swallow primary task branches.

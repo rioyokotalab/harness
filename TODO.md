@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-371.
+Next free ID: T-372.
 
 ## Resume contract
 
@@ -24,13 +24,13 @@ freeze are in progress. Material changes stop at 10:45 JST.
 
 **Record:** `docs/tasks/T-369.md`.
 
-### T-370 — Enforce symmetric task-worktree lifecycle
+### T-371 — Migrate legacy managed primary branches
 
-**Phase:** active after T-369's first publication; design A is frozen:
-isolated worktree per task, reference checkout kept clean on `main`, and
-mandatory guarded teardown. No lease is required for correctness.
+**Phase:** event-gated until the live Students and Swallow managed sessions
+reach a verified idle or cold-restart boundary. Do not move a cwd, process,
+saved thread, phone root, or app-server connection in place.
 
-**Record:** `docs/tasks/T-370.md`.
+**Record:** `docs/tasks/T-371.md`.
 
 ## Deferred gates
 
