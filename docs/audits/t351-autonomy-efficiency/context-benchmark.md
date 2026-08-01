@@ -17,25 +17,25 @@ its eventual protected publication.
 
 | Scenario | Before total | After total | Total reduction | Before non-ledger | After non-ledger | Non-ledger reduction |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| factual lookup | 73,734 | 1,780 | 97.5% | 2,906 | 1,483 | 48.9% |
-| documentation edit | 73,545 | 2,092 | 97.1% | 2,717 | 1,795 | 33.9% |
-| ordinary code fix | 74,455 | 1,818 | 97.5% | 3,627 | 1,521 | 58.0% |
-| tmux health diagnosis | 73,545 | 1,779 | 97.5% | 2,717 | 1,482 | 45.4% |
-| unsafe-tail recovery | 75,931 | 3,138 | 95.8% | 5,103 | 2,841 | 44.3% |
-| fleet hardening | 76,238 | 4,483 | 94.1% | 5,410 | 4,186 | 22.6% |
-| native HPC experiment | 77,550 | 3,405 | 95.6% | 6,722 | 3,108 | 53.7% |
-| duration Cowork | 80,599 | 4,952 | 93.8% | 9,771 | 4,655 | 52.3% |
+| factual lookup | 73,734 | 1,756 | 97.6% | 2,906 | 1,483 | 48.9% |
+| documentation edit | 73,545 | 2,068 | 97.1% | 2,717 | 1,795 | 33.9% |
+| ordinary code fix | 74,455 | 1,794 | 97.5% | 3,627 | 1,521 | 58.0% |
+| tmux health diagnosis | 73,545 | 1,755 | 97.6% | 2,717 | 1,482 | 45.4% |
+| unsafe-tail recovery | 75,931 | 3,114 | 95.8% | 5,103 | 2,841 | 44.3% |
+| fleet hardening | 76,238 | 4,459 | 94.1% | 5,410 | 4,186 | 22.6% |
+| native HPC experiment | 77,550 | 3,381 | 95.6% | 6,722 | 3,108 | 53.7% |
+| duration Cowork | 80,599 | 4,928 | 93.8% | 9,771 | 4,655 | 52.3% |
 
 The median total reduction is 96.4%, above the frozen 85% threshold; every
 scenario exceeds 93%, above the per-scenario 50% floor. Median non-ledger
 reduction is 47.1%, above the 30% independent policy/skill threshold. The
-always-read policy is 806 words, and the active board is 65 lines / 297 words,
+always-read policy is 806 words, and the active board is 58 lines / 273 words,
 and selected conditional policy routes are separately budgeted by
 `tests/test-agent-policy-routing.sh`.
 
 The frozen benchmark deliberately retains the completed T-351 record as its
 representative task payload. That record is 426 words and the active board is
-65 lines / 297 words, so board plus representative payload is 723 words—37.3%
+58 lines / 273 words, so board plus representative payload is 699 words—39.3%
 below the prior 1,153-word board. A current cold start reads the
 board and only a selected active record; it does not load completed T-351 or
 unrelated backup successor IDs, outage contingency details, and the blocked
