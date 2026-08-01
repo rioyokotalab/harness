@@ -53,15 +53,13 @@ command -v python3 >/dev/null 2>&1 || {
     echo "harness-codex: python3 is unavailable" >&2
     exit 2
 }
-target=$(python3 "$target_resolver" target-for-repository "$project_root") || {
-    echo "harness-codex: current repository is outside the managed target map" >&2
+expected_repository=$(
+    python3 "$target_resolver" validate-target "$release_target"
+) || {
+    echo "harness-codex: released runtime target repository is invalid" >&2
     exit 2
 }
-case "$target" in
-    harness|personal|students) ;;
-    *) echo "harness-codex: target resolver returned an invalid target" >&2; exit 2 ;;
-esac
-if [ "$release_target" != "$target" ]; then
+if [ "$project_root" != "$expected_repository" ]; then
     echo "harness-codex: released runtime target does not match current repository" >&2
     exit 2
 fi

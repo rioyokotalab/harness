@@ -488,6 +488,41 @@ run_released_launcher harness "$harness_release" "$target_harness"
 run_released_launcher students "$students_release" "$target_students"
 run_released_launcher personal "$personal_release" "$target_personal"
 
+# Harness and Personal intentionally share one repository in the live Local
+# profile. The immutable release target, not reverse lookup by cwd, must select
+# between them.
+same_root_release=$TEST_ROOT/same-root-release
+mkdir -p "$same_root_release/libexec" "$same_root_release/profiles"
+cp "$personal_release/libexec/harness-codex-runtime-launch" \
+    "$personal_release/libexec/harness_codex_targets.py" \
+    "$same_root_release/libexec/"
+{
+    printf '# target\twindow_index\twindow_name\tpane_index\tcanonical_repository\n'
+    printf 'harness\t0\tcowork\t0\t@HARNESS_ROOT@\n'
+    printf 'personal\t1\tcodex\t0\t@HARNESS_ROOT@\n'
+    printf 'students\t1\tcodex\t1\t%s\n' "$target_students"
+} >"$same_root_release/profiles/codex-session-targets.tsv"
+chmod 755 "$same_root_release/libexec/"*
+chmod 644 "$same_root_release/profiles/codex-session-targets.tsv"
+same_root_capture=$capture/same-root-personal
+mkdir "$same_root_capture"
+(
+    cd "$target_harness"
+    env \
+        HARNESS_CONTROL_ROOT="$same_root_release" \
+        HARNESS_TARGET_ROOT="$target_harness" \
+        HARNESS_CODEX_RELEASE_COMMIT="$commit" \
+        HARNESS_CODEX_RELEASE_TARGET=personal \
+        HARNESS_TESTING=1 \
+        HARNESS_TEST_NATIVE_CODEX="$fake_native" \
+        CODEX_LAUNCH_CAPTURE="$same_root_capture" \
+        CODEX_EXPECTED_REPOSITORY="$target_harness" \
+        "$same_root_release/libexec/harness-codex-runtime-launch" \
+            --probe same-root-personal
+)
+[ -f "$same_root_capture/native-executed" ] ||
+    fail "same-root Personal release did not reach native Codex"
+
 subdir_capture=$capture/released-subdirectory
 mkdir "$subdir_capture"
 (
