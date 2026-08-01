@@ -81,14 +81,28 @@ case \$1 in
         done
         printf '%s\n' "\$*" >>"$TEST_ROOT/tmux-calls"; exit 0 ;;
     respawn-window) printf '%s\n' "\$*" >>"$TEST_ROOT/tmux-calls"; printf 'respawn\n' >>"$TEST_ROOT/respawned"; exit 0 ;;
-    list-windows) grep -v '^session\$' "\$STATE"; exit 0 ;;
+    list-windows)
+        # Honour the requested format: names only, or name|pane_dead.
+        want_dead=no
+        for a in "\$@"; do
+            case \$a in *pane_dead*) want_dead=yes ;; esac
+        done
+        grep -v '^session\$' "\$STATE" | while read -r w; do
+            if [ "\$want_dead" = no ]; then
+                printf '%s\n' "\$w"
+                continue
+            fi
+            case \$w in
+                codex) printf 'codex|%s\n' "\${FAKE_CODEX_DEAD:-0}" ;;
+                claude) printf 'claude|%s\n' "\${FAKE_CLAUDE_DEAD:-0}" ;;
+                *) printf '%s|0\n' "\$w" ;;
+            esac
+        done
+        exit 0 ;;
     display-message)
-        target=\$4
-        case "\$target" in
-            *:codex) printf '%s\n' "\${FAKE_CODEX_DEAD:-0}" ;;
-            *:claude) printf '%s\n' "\${FAKE_CLAUDE_DEAD:-0}" ;;
-            *) exit 1 ;;
-        esac
+        # Real tmux falls back to the session's current window when the
+        # requested window is absent, so a probe never reports "missing".
+        printf '%s\n' "\${FAKE_CLAUDE_DEAD:-0}"
         exit 0 ;;
 esac
 exit 0
@@ -194,6 +208,13 @@ FAKE_RC_READY=1 agent --host office --run-once |
     fail "a live daemon pair was not recognized"
 [ ! -f "$TEST_ROOT/rc-started" ] ||
     fail "codex remote control was restarted while already live"
+
+# --- a missing window is never reported live -----------------------------
+printf 'session\nclaude\n' >"$STATE"
+agent --host office --status >"$TEST_ROOT/status.out" 2>&1 || true
+grep -Fq 'codex=absent' "$TEST_ROOT/status.out" ||
+    fail "a missing codex window was reported live"
+printf 'session\ncodex\nclaude\n' >"$STATE"
 
 # --- launchd plan and apply ----------------------------------------------
 OUT=$(agent --host office --plan) || fail "plan failed"

@@ -76,10 +76,16 @@ unified_ready() {
     # are both live. Its own launchd agent owns creation and repair, so this
     # workflow only recognizes it and never starts or edits it.
     tmux has-session -t "=$unified_session" 2>/dev/null || return 1
+    windows=$(tmux list-windows -t "=$unified_session" \
+        -F '#{window_name}|#{pane_dead}' 2>/dev/null || true)
     for wanted in codex claude; do
-        dead=$(tmux display-message -p -t "$unified_session:$wanted" \
-            '#{pane_dead}' 2>/dev/null || printf '')
-        [ "$dead" = 0 ] || return 1
+        # Enumerate exactly: a display-message probe for a missing window
+        # falls back to the current window and reports a phantom as live.
+        printf '%s\n' "$windows" |
+            awk -F '|' -v w="$wanted" '
+                $1 == w && $2 == 0 { found = 1 }
+                END { exit found ? 0 : 1 }
+            ' || return 1
     done
     return 0
 }
