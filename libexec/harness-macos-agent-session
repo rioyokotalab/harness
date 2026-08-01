@@ -19,6 +19,15 @@ else
 fi
 export PATH
 
+# launchd hands agents a different TMPDIR than the login session, and tmux
+# derives its socket from it. Without pinning, the agent builds the session
+# on a private server that the owner's own tmux never sees. Use the account's
+# canonical per-user temp directory, which is what interactive logins get.
+if [ -z "${TMUX_TMPDIR:-}" ]; then
+    TMUX_TMPDIR=$(getconf DARWIN_USER_TEMP_DIR 2>/dev/null || printf '')
+    [ -n "$TMUX_TMPDIR" ] && export TMUX_TMPDIR
+fi
+
 HARNESS_ROOT=${HARNESS_ROOT:-$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)}
 export HARNESS_ROOT
 
@@ -195,8 +204,12 @@ ensure_codex_remote_control() {
         printf 'unavailable'
         return
     fi
-    ( cd "$(repo_root)" && "$launcher" remote-control start >/dev/null 2>&1 ) || true
-    if codex_remote_control_ready; then printf 'started'; else printf 'failed'; fi
+    # The launcher can block. A scheduled agent must never hang: launchd will
+    # not start the next tick while this one runs, which would silently end
+    # all auto-resume. Start it detached and let the next tick confirm.
+    ( cd "$(repo_root)" && "$launcher" remote-control start >/dev/null 2>&1 & ) || true
+    sleep 2
+    if codex_remote_control_ready; then printf 'started'; else printf 'starting'; fi
 }
 
 run_once() {

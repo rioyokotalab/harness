@@ -47,6 +47,9 @@ for required in ("--permission-mode bypassPermissions", "--model fable",
 # launchd supplies a minimal PATH; Homebrew must be located explicitly or the
 # agent cannot find tmux and every scheduled run fails.
 assert "PATH=/opt/homebrew/bin:" in source
+# launchd's TMPDIR differs from the login session's; tmux derives its socket
+# from it, so the agent must pin the canonical per-user temp directory.
+assert "DARWIN_USER_TEMP_DIR" in source and "TMUX_TMPDIR" in source
 PY
 
 # --- stub environment ----------------------------------------------------
@@ -212,6 +215,25 @@ printf 'session\ncodex\nclaude\n' >"$STATE"
 
 # --- codex remote control is started only when absent --------------------
 [ -f "$TEST_ROOT/rc-started" ] || fail "codex remote control was not started"
+
+# --- a blocking remote-control launcher must not hang the agent ----------
+cat >"$BIN/harness-codex-slow" <<'SH'
+#!/bin/sh
+sleep 30
+SH
+chmod 700 "$BIN/harness-codex-slow"
+START=$(date +%s)
+HARNESS_TESTING=1 \
+HARNESS_TEST_TMUX="$BIN/tmux" \
+HARNESS_TEST_CLAUDE="$BIN/claude" \
+HARNESS_TEST_CODEX_LAUNCHER="$BIN/harness-codex-slow" \
+HARNESS_TEST_LAUNCH_AGENTS="$TEST_ROOT/agents" \
+HARNESS_TEST_AGENT_REPO="$TEST_ROOT/repo" \
+HARNESS_TEST_BIN="$BIN" \
+    "$HARNESS" macos-agent-session --host office --run-once >/dev/null 2>&1 || true
+ELAPSED=$(( $(date +%s) - START ))
+[ "$ELAPSED" -lt 10 ] ||
+    fail "a blocking launcher stalled the agent for ${ELAPSED}s"
 
 # --- an already-live daemon pair is never restarted ----------------------
 rm -f "$TEST_ROOT/rc-started"
