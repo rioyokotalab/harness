@@ -30,8 +30,13 @@ lines = text.splitlines()
 words = text.split()
 assert len(lines) <= 80, len(lines)
 assert len(words) <= 600, len(words)
-assert hashlib.sha256(archive.read_bytes()).hexdigest() == (
+archive_digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+expected_archive_digest = (
     "d55459a2944fdb86986677d7fce6bdcbccd0b86a6b6eee799f60fe183a9ff95a"
+)
+assert archive_digest == expected_archive_digest, (
+    "historical board digest",
+    archive_digest,
 )
 board_tasks = re.findall(r"^### (T-\d+) —", text, re.MULTILINE)
 assert board_tasks and len(board_tasks) == len(set(board_tasks)), board_tasks
@@ -69,10 +74,10 @@ for routed_only in (
 
 with index.open(encoding="utf-8", newline="") as handle:
     rows = list(csv.DictReader(handle, delimiter="\t"))
-assert rows
-assert list(rows[0]) == ["task", "state", "summary", "source"]
+assert rows, "task index is empty"
+assert list(rows[0]) == ["task", "state", "summary", "source"], list(rows[0])
 by_task = {row["task"]: row for row in rows}
-assert len(by_task) == len(rows)
+assert len(by_task) == len(rows), "task index contains duplicate IDs"
 task_numbers = []
 allowed_states = {"active", "time-gated", "blocked", "complete"}
 indexed_sources = set()
@@ -90,8 +95,12 @@ for row in rows:
         )
         resolved = root / candidate
         assert resolved.exists() and not resolved.is_symlink(), (row["task"], source)
-assert task_numbers == sorted(task_numbers, reverse=True), task_numbers
-assert f"Next free ID: T-{max(task_numbers) + 1}." in text
+assert task_numbers == sorted(task_numbers, reverse=True), (
+    "task index order",
+    task_numbers,
+)
+expected_free_id = f"Next free ID: T-{max(task_numbers) + 1}."
+assert expected_free_id in text, ("next free ID", expected_free_id)
 archives = sorted((root / "docs/history").glob("TODO-full-archive-*.md"))
 assert archives, archives
 for archive_path in archives:
@@ -117,7 +126,12 @@ for task, state in {
     "T-303": "blocked",
     "T-350": "complete",
 }.items():
-    assert by_task[task]["state"] == state
+    assert by_task[task]["state"] == state, (
+        "frozen task state",
+        task,
+        state,
+        by_task[task]["state"],
+    )
 
 archive_text = archive.read_text(encoding="utf-8")
 archived_records = set(
