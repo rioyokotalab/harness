@@ -245,6 +245,21 @@ wall time is 4,652 seconds, with a 131-second median and 142-second p90. This is
 not billable private usage, but it quantifies the normal protected-merge wait
 removed from owner tasks while leaving non-owner isolation unchanged.
 
+Website supplied a second latency result. Its board-only PR #38 spent 5m26s in
+the required hosted job, and workflow-changing PR #39 spent 5m02s on the full
+path. PR #39 therefore retained the required `Offline checks` job and complete
+offline policy suite for every pull request but scoped only browser dependency
+installation and locked browser execution to paths outside an explicit
+ledger/documentation-only set. The classifier is NUL-delimited, disables rename
+detection so removed public paths remain visible, and fails closed on empty,
+malformed, absolute, traversal, control-byte, non-UTF-8, workflow, tool, test,
+package, and public-site paths. Protected documentation-only PR #40 proved the
+fast path twice: required runs passed in 23 and 25 seconds while both browser
+steps reported skipped. Against the 302-second full-path proof, this removes
+279 seconds / 92.4% without weakening non-owner isolation or changing a site
+byte, deployment, ruleset, or approval count. PRs #39/#40 merged as `5849ffaa`
+and `e22c8dc`; the exact worktree was guarded-retired.
+
 ## Recovery and retained-branch drills
 
 The three unpublished handoff bundles were restored into independent bare

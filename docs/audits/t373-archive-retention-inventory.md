@@ -37,9 +37,9 @@ available only from its archive ref/bundle remains independently protected even
 when a merge tree is equal.
 
 The report also measures the complete state tree and evaluates the frozen
-generation triggers. The current readback is 529,056,189 bytes, 23 receipts,
-oldest receipt below one day, zero generation receipts, and
-`generation_trigger=no`; this is 7,814,723 bytes below 512 MiB.
+generation triggers. After exact Website T-214 closeout, the current readback
+is 609,907,224 bytes, 24 receipts, oldest receipt below one day, zero generation
+receipts, and `generation_trigger=bytes`.
 
 ## Measured consolidation opportunity
 
@@ -67,8 +67,9 @@ Evaluate generation creation when state exceeds 512 MiB, receipt count exceeds
 until two independently verified generations exist and a fresh report proves
 that removing an exact older generation preserves every required tip, ledger
 reference, rollback, and interrupted-closeout path. Current state meets none of
-those deletion gates, so immediate compaction would trade recoverability for
-only 505 MiB of storage and is rejected.
+those deletion gates. The state is now about 582 MiB, so first-generation
+creation is due; deletion remains rejected because zero prior verified
+generation exists.
 
 ## Generation receipt and restore contract
 

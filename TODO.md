@@ -27,9 +27,9 @@ remains local for its driver. Material changes stop at 10:45 JST.
 
 ### T-373 — Bound housekeeping archive growth
 
-**Phase:** dormant after the report-only inventory and immutable generation
-contract were published. Current archives are healthy, no creation trigger is
-met, and no artifact is disposable.
+**Phase:** active after exact Website closeout crossed the 512 MiB byte trigger.
+The report and immutable generation contract are published; implement the first
+restore-proven generation, but no artifact is yet disposable.
 
 **Record:** `docs/tasks/T-373.md`.
 
