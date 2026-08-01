@@ -1,5 +1,5 @@
 task	state	summary	source
-T-367	active	Post-reorganization quick fixes	TODO.md;docs/tasks/T-367.md
+T-367	complete	Post-reorganization quick fixes	docs/tasks/T-367.md
 T-366	complete	Unified Harness cowork and Personal tmux layout	docs/tasks/T-366.md;docs/audits/t366-cowork-personal-layout/cowork
 T-365	complete	Direct Local Codex-to-Claude messages	docs/tasks/T-365.md
 T-364	complete	Safe repository cleanup and durable recovery evidence	docs/tasks/T-364.md;docs/plans/t364-housekeeping-cleanup-safety.md;docs/audits/t364-housekeeping-cleanup/audit.md

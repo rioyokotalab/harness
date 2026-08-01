@@ -17,16 +17,6 @@ Next free ID: T-368.
 
 ## Active queue
 
-### T-367 — Post-reorganization quick fixes
-
-**Phase:** executing an owner-requested batch before T-363. First fix removes
-inherited monochrome tmux state, restores true-color capability, and refreshes
-the six exact managed clients. Live acceptance and the Codex-to-Claude
-round-trip passed; clean-checkout validation and protected publication are in
-progress.
-
-**Record:** `docs/tasks/T-367.md`.
-
 ### T-363 — Workspace lifecycle for alternating clients
 
 **Phase:** proposal; awaiting an owner decision between per-turn worktrees and
