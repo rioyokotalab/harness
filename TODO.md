@@ -17,13 +17,6 @@ Next free ID: T-365.
 
 ## Active queue
 
-### T-364 — Safe repository cleanup and durable recovery evidence
-
-**Phase:** validating; all 21 tips are durably protected and the archive,
-branch, remote-report, and guarded-worktree implementation is in focused test.
-
-**Record:** `docs/tasks/T-364.md`.
-
 ### T-363 — Workspace lifecycle for alternating clients
 
 **Phase:** proposal; awaiting an owner decision between per-turn worktrees and
