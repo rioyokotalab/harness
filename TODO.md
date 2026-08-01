@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-364.
+Next free ID: T-365.
 
 ## Resume contract
 
@@ -16,6 +16,13 @@ Next free ID: T-364.
 5. A failed mutable-state query is unknown, never evidence of absence.
 
 ## Active queue
+
+### T-364 — Safe repository cleanup and durable recovery evidence
+
+**Phase:** ready-for-go; the audit and implementation plan are frozen. No
+branch, worktree, remote ref, archive ref, or runtime state has been changed.
+
+**Record:** `docs/tasks/T-364.md`.
 
 ### T-363 — Workspace lifecycle for alternating clients
 
