@@ -150,10 +150,24 @@ legacy_codex_live() {
         '
 }
 
+claude_ready() {
+    # A window launched without credentials exits at once, so an unauthenticated
+    # host would recreate and lose it on every tick. Treat authentication as a
+    # precondition and report it instead of looping.
+    binary=$(claude_bin) || return 1
+    [ -x "$binary" ] || return 1
+    "$binary" auth status 2>/dev/null | tr -d ' \n' |
+        grep -q '"loggedIn":true'
+}
+
 ensure_session() {
     created=
     if ! session_exists; then
-        if legacy_codex_live; then
+        if legacy_codex_live && ! claude_ready; then
+            created="$created session-deferred"
+            printf '%s' "${created:- none}"
+            return
+        elif legacy_codex_live; then
             $TMUX new-session -d -s "$SESSION" -n "$CLAUDE_WINDOW" \
                 -c "$(repo_root)" "$(claude_command)"
         else
@@ -173,7 +187,9 @@ ensure_session() {
         $TMUX respawn-window -t "=$SESSION:$CODEX_WINDOW" "$(codex_command)"
         created="$created codex-respawn"
     fi
-    if ! $TMUX list-windows -t "=$SESSION" -F '#{window_name}' 2>/dev/null |
+    if ! claude_ready; then
+        created="$created claude-deferred-unauthenticated"
+    elif ! $TMUX list-windows -t "=$SESSION" -F '#{window_name}' 2>/dev/null |
         grep -qx "$CLAUDE_WINDOW"; then
         $TMUX new-window -d -t "=$SESSION" -n "$CLAUDE_WINDOW" \
             -c "$(repo_root)" "$(claude_command)"
@@ -231,10 +247,12 @@ status() {
     claude_state=absent
     window_live "$CODEX_WINDOW" && codex_state=live
     window_live "$CLAUDE_WINDOW" && claude_state=live
+    claude_auth=ok
+    claude_ready || claude_auth=unauthenticated
     remote=degraded
     codex_remote_control_ready && remote=ready
-    printf 'MACOS_AGENT_SESSION mode=status host=%s session=present codex=%s claude=%s codex_remote_control=%s\n' \
-        "$logical_host" "$codex_state" "$claude_state" "$remote"
+    printf 'MACOS_AGENT_SESSION mode=status host=%s session=present codex=%s claude=%s claude_auth=%s codex_remote_control=%s\n' \
+        "$logical_host" "$codex_state" "$claude_state" "$claude_auth" "$remote"
     [ "$codex_state" = live ] && [ "$claude_state" = live ] && [ "$remote" = ready ]
 }
 
