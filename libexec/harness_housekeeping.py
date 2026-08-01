@@ -383,6 +383,286 @@ def archive_audit(repo: Path, receipt_path: Path) -> Dict[str, Any]:
     return {"items": len(parsed["items"]), "live": live, "bundled": bundled}
 
 
+def pr_tree_status(
+    repo: Path,
+    row: Dict[str, str],
+    pull_rows: Optional[List[Dict[str, Any]]],
+) -> str:
+    number = row.get("pr", "none")
+    if number == "none":
+        return "none"
+    if not number.isdigit() or pull_rows is None:
+        return "unknown"
+    matches = [item for item in pull_rows if item["number"] == int(number)]
+    if len(matches) != 1:
+        return "unknown"
+    pull = matches[0]
+    merge = pull.get("mergeCommit")
+    if (
+        pull["state"].upper() != "MERGED"
+        or pull["headRefOid"] != row["tip"]
+        or not isinstance(merge, dict)
+        or not OID_RE.fullmatch(str(merge.get("oid", "")))
+    ):
+        return "unknown"
+    head_tree = git(repo, "rev-parse", "--verify", f"{row['tip']}^{{tree}}", check=False)
+    merge_tree = git(
+        repo,
+        "rev-parse",
+        "--verify",
+        f"{merge['oid']}^{{tree}}",
+        check=False,
+    )
+    if head_tree.returncode != 0 or merge_tree.returncode != 0:
+        return "unknown"
+    return "equal" if text(head_tree).strip() == text(merge_tree).strip() else "different"
+
+
+def ledger_reference_status(repositories: Sequence[Path], needles: Sequence[str]) -> str:
+    unknown = False
+    for repository in repositories:
+        for needle in needles:
+            result = git(
+                repository,
+                "grep",
+                "-l",
+                "-F",
+                "-e",
+                needle,
+                "refs/remotes/origin/main",
+                "--",
+                "TODO.md",
+                "docs/tasks",
+                "docs/audits",
+                check=False,
+            )
+            if result.returncode == 0:
+                return "yes"
+            if result.returncode != 1:
+                unknown = True
+    return "unknown" if unknown else "no"
+
+
+def artifact_age_days(info: os.stat_result) -> int:
+    return max(0, int((time.time() - info.st_mtime) // 86400))
+
+
+def plan_archives(coordinator_repo: Path) -> None:
+    _lexical, state = state_directory()
+    receipts = sorted(state.glob("*.receipt"))
+    if not receipts:
+        print(
+            "HOUSEKEEPING routine=archives mode=report receipts=0 items=0 "
+            "unique_tips=0 bytes=0 archive_only=0 pr_equal=0 "
+            "pr_unknown=0 ledger_yes=0 ledger_unknown=0 "
+            "candidates=0 apply=unavailable"
+        )
+        return
+    total_items = 0
+    total_bytes = 0
+    archive_only = 0
+    pr_equal = 0
+    pr_unknown = 0
+    ledger_yes = 0
+    ledger_unknown = 0
+    unique_tips: set[str] = set()
+    bound_bundles: set[Path] = set()
+    repo_cache: Dict[str, Tuple[Path, Optional[str], Optional[List[Dict[str, Any]]]]] = {}
+    output_rows: List[str] = []
+    for receipt in receipts:
+        parsed = parse_archive_receipt(receipt)
+        values = parsed["values"]
+        repository_value = values.get("repository_canonical")
+        if not repository_value or not Path(repository_value).is_absolute():
+            die("archive receipt repository identity is missing")
+        if repository_value not in repo_cache:
+            owner_repo = canonical_repo(Path(repository_value))
+            repo_cache[repository_value] = (
+                owner_repo,
+                origin_main(owner_repo),
+                pull_requests(owner_repo),
+            )
+        owner_repo, main_oid, pull_rows = repo_cache[repository_value]
+        audit = archive_audit(owner_repo, receipt)
+        bundle = Path(values["bundle"])
+        bundle_bytes = validate_private_file(bundle).st_size
+        bound_bundles.add(bundle.resolve(strict=True))
+        total_bytes += bundle_bytes
+        transaction = values.get("transaction", receipt.stem)
+        try:
+            created = datetime.strptime(
+                values["created_utc"], "%Y-%m-%dT%H:%M:%SZ"
+            ).replace(tzinfo=timezone.utc)
+        except (KeyError, ValueError) as exc:
+            raise HousekeepingError("archive receipt creation time is malformed") from exc
+        age_days = max(0, (datetime.now(timezone.utc) - created).days)
+        receipt_archive_only = 0
+        receipt_equal = 0
+        receipt_unknown = 0
+        for row in parsed["items"]:
+            tip = row["tip"]
+            unique_tips.add(tip)
+            total_items += 1
+            object_present = (
+                git(owner_repo, "cat-file", "-e", f"{tip}^{{commit}}", check=False).returncode
+                == 0
+            )
+            containing = (
+                text(
+                    git(
+                        owner_repo,
+                        "for-each-ref",
+                        "--contains",
+                        tip,
+                        "--format=%(refname)",
+                    )
+                ).splitlines()
+                if object_present
+                else []
+            )
+            normal_refs = [
+                ref
+                for ref in containing
+                if not ref.startswith("refs/harness-housekeeping/archive/")
+            ]
+            only = not normal_refs
+            archive_only += int(only)
+            receipt_archive_only += int(only)
+            ancestry = (
+                None
+                if main_oid is None or not object_present
+                else is_ancestor(owner_repo, tip, main_oid)
+            )
+            main_status = (
+                "unknown" if ancestry is None else ("yes" if ancestry else "no")
+            )
+            tree_status = pr_tree_status(owner_repo, row, pull_rows)
+            pr_equal += int(tree_status == "equal")
+            pr_unknown += int(tree_status == "unknown")
+            receipt_equal += int(tree_status == "equal")
+            receipt_unknown += int(tree_status == "unknown")
+            ledgers = [owner_repo]
+            if coordinator_repo != owner_repo:
+                ledgers.append(coordinator_repo)
+            ledger_status = ledger_reference_status(
+                ledgers,
+                (tip, transaction, receipt.name),
+            )
+            ledger_yes += int(ledger_status == "yes")
+            ledger_unknown += int(ledger_status == "unknown")
+            ref_result = git(owner_repo, "rev-parse", "--verify", row["archive"], check=False)
+            copy_status = (
+                "ref+bundle"
+                if ref_result.returncode == 0 and text(ref_result).strip() == tip
+                else "bundle"
+            )
+            output_rows.append(
+                "  ITEM "
+                f"repository={owner_repo.name} transaction={transaction} "
+                f"branch={row['branch']} tip={tip} main={main_status} "
+                f"normal_refs={len(normal_refs)} archive={copy_status} "
+                f"pr_tree={tree_status} ledger={ledger_status} candidate=no"
+            )
+        output_rows.insert(
+            len(output_rows) - len(parsed["items"]),
+            "  REPORT "
+            f"repository={owner_repo.name} transaction={transaction} "
+            f"items={audit['items']} bytes={bundle_bytes} age_days={age_days} "
+            f"archive_only={receipt_archive_only} pr_equal={receipt_equal} "
+            f"pr_unknown={receipt_unknown} audit=pass candidate=no",
+        )
+    plan_paths = sorted((state / "plans").glob("*.json")) if (state / "plans").is_dir() else []
+    manifest_paths = sorted(
+        path
+        for directory in (state / "plans", state / "worktree-manifests")
+        if directory.is_dir()
+        for path in directory.glob("*.manifest")
+    )
+    apply_paths = sorted(state.glob("worktree-apply-*.json"))
+    for path in plan_paths:
+        info = validate_private_file(path)
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise HousekeepingError("archive inventory found a malformed plan") from exc
+        if value.get("schema") != PLAN_SCHEMA or not isinstance(value.get("kind"), str):
+            die("archive inventory found an unsupported plan")
+        output_rows.append(
+            "  AUX "
+            f"type=plan name={path.name} bytes={info.st_size} "
+            f"age_days={artifact_age_days(info)} kind={value['kind']} "
+            f"ledger={ledger_reference_status([coordinator_repo], [path.name])} "
+            "status=valid candidate=no"
+        )
+    for path in manifest_paths:
+        info = validate_private_file(path)
+        output_rows.append(
+            "  AUX "
+            f"type=manifest name={path.name} bytes={info.st_size} "
+            f"age_days={artifact_age_days(info)} "
+            f"ledger={ledger_reference_status([coordinator_repo], [path.name])} "
+            "status=identity-valid candidate=no"
+        )
+    incomplete_applies = 0
+    for path in apply_paths:
+        info = validate_private_file(path)
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise HousekeepingError("archive inventory found malformed apply state") from exc
+        if value.get("schema") != "harness-housekeeping-worktree-apply-v1":
+            die("archive inventory found unsupported apply state")
+        phase = value.get("phase")
+        if not isinstance(phase, str):
+            die("archive inventory found apply state without a phase")
+        incomplete_applies += int(phase != "complete")
+        output_rows.append(
+            "  AUX "
+            f"type=worktree-apply name={path.name} bytes={info.st_size} "
+            f"age_days={artifact_age_days(info)} phase={phase} "
+            f"ledger={ledger_reference_status([coordinator_repo], [path.name])} "
+            "status=valid candidate=no"
+        )
+    all_bundles = sorted(state.rglob("*.bundle"))
+    unbound_bundles = [
+        path for path in all_bundles if path.resolve(strict=True) not in bound_bundles
+    ]
+    for path in unbound_bundles:
+        info = validate_private_file(path)
+        output_rows.append(
+            "  AUX "
+            f"type=unbound-bundle name={path.relative_to(state)} bytes={info.st_size} "
+            f"age_days={artifact_age_days(info)} "
+            f"ledger={ledger_reference_status([coordinator_repo], [path.name])} "
+            "status=preserved-unknown candidate=no"
+        )
+    evidence_payloads = sorted(state.rglob("*.tar.gz"))
+    for path in evidence_payloads:
+        info = validate_private_file(path)
+        output_rows.append(
+            "  AUX "
+            f"type=evidence-payload name={path.relative_to(state)} bytes={info.st_size} "
+            f"age_days={artifact_age_days(info)} "
+            f"ledger={ledger_reference_status([coordinator_repo], [path.name])} "
+            "status=preserved candidate=no"
+        )
+    print(
+        "HOUSEKEEPING routine=archives mode=report "
+        f"receipts={len(receipts)} items={total_items} "
+        f"unique_tips={len(unique_tips)} bytes={total_bytes} "
+        f"archive_only={archive_only} pr_equal={pr_equal} "
+        f"pr_unknown={pr_unknown} ledger_yes={ledger_yes} "
+        f"ledger_unknown={ledger_unknown} plans={len(plan_paths)} "
+        f"manifests={len(manifest_paths)} applies={len(apply_paths)} "
+        f"incomplete_applies={incomplete_applies} "
+        f"unbound_bundles={len(unbound_bundles)} "
+        f"evidence_payloads={len(evidence_payloads)} "
+        "candidates=0 apply=unavailable"
+    )
+    for row in output_rows:
+        print(row)
+
+
 def json_bytes(value: Dict[str, Any]) -> bytes:
     return (json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n").encode()
 
@@ -456,7 +736,7 @@ def pull_requests(repo: Path) -> Optional[List[Dict[str, Any]]]:
             "--limit",
             "200",
             "--json",
-            "number,state,headRefName,headRefOid,baseRefName,mergedAt",
+            "number,state,headRefName,headRefOid,baseRefName,mergedAt,mergeCommit",
         ],
         cwd=repo,
         check=False,
@@ -483,6 +763,14 @@ def pull_requests(repo: Path) -> Optional[List[Dict[str, Any]]]:
             or not isinstance(row["baseRefName"], str)
             or (row["headRefOid"] is not None and not isinstance(row["headRefOid"], str))
             or (row["mergedAt"] is not None and not isinstance(row["mergedAt"], str))
+            or (
+                "mergeCommit" in row
+                and row["mergeCommit"] is not None
+                and (
+                    not isinstance(row["mergeCommit"], dict)
+                    or not isinstance(row["mergeCommit"].get("oid"), str)
+                )
+            )
         ):
             return None
         records.append(row)
@@ -1556,7 +1844,7 @@ def parser() -> argparse.ArgumentParser:
     action.add_argument("--recover-worktree", action="store_true")
     value.add_argument(
         "--routine",
-        choices=("all", "scratch", "branches", "remotes", "worktrees", "launchers", "board", "evidence"),
+        choices=("all", "scratch", "branches", "remotes", "worktrees", "archives", "launchers", "board", "evidence"),
         default="all",
     )
     value.add_argument("--receipt")
@@ -1627,6 +1915,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     selected_repo, arguments.worktree_path
                 ),
             ),
+            ("archives", plan_archives),
             ("launchers", lambda _repo: plan_launchers()),
             ("board", plan_board),
             ("evidence", plan_evidence),

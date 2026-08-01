@@ -230,6 +230,46 @@ if house --archive --items "$ITEMS" --transaction orphan-gc-proof --source synth
 fi
 house --audit --receipt "$GC_RECEIPT" | grep -Fq 'status=pass' || fail "repeat rejection changed archive"
 
+# Archive retention discovery audits every receipt but remains report-only and
+# does not create another plan merely by observing the state directory.
+printf 'legacy bundle identity only\n' >"$STATE/legacy.bundle"
+printf 'legacy evidence identity only\n' >"$STATE/legacy.tar.gz"
+chmod 600 "$STATE/legacy.bundle" "$STATE/legacy.tar.gz"
+ARCHIVE_FILES_BEFORE=$(find "$STATE" -type f | wc -l)
+OUT=$(house --plan --routine archives) || fail "archive inventory failed"
+printf '%s\n' "$OUT" | grep -Fq \
+    'routine=archives mode=report receipts=2 items=3 unique_tips=3' ||
+    fail "archive inventory summary changed"
+printf '%s\n' "$OUT" | grep -Fq \
+    'archive_only=2 pr_equal=0 pr_unknown=1' ||
+    fail "archive inventory classification changed"
+printf '%s\n' "$OUT" | grep -Fq \
+    'candidates=0 apply=unavailable' ||
+    fail "archive inventory exposed deletion"
+printf '%s\n' "$OUT" | grep -Fq \
+    'incomplete_applies=0 unbound_bundles=1 evidence_payloads=1' ||
+    fail "archive auxiliary inventory changed"
+printf '%s\n' "$OUT" | grep -Fq 'audit=pass candidate=no' ||
+    fail "archive inventory omitted receipt audit"
+printf '%s\n' "$OUT" | grep -Fq \
+    'type=unbound-bundle name=legacy.bundle' ||
+    fail "archive inventory omitted unbound bundle"
+printf '%s\n' "$OUT" | grep -Fq \
+    'type=evidence-payload name=legacy.tar.gz' ||
+    fail "archive inventory omitted evidence payload"
+ARCHIVE_FILES_AFTER=$(find "$STATE" -type f | wc -l)
+[ "$ARCHIVE_FILES_BEFORE" -eq "$ARCHIVE_FILES_AFTER" ] ||
+    fail "archive inventory created durable state"
+if house --apply --routine archives >/dev/null 2>&1; then
+    fail "archive inventory accepted apply"
+fi
+printf '%s\n' '{"schema":"unexpected"}' >"$STATE/plans/malformed.json"
+chmod 600 "$STATE/plans/malformed.json"
+if house --plan --routine archives >/dev/null 2>&1; then
+    fail "archive inventory accepted malformed plan state"
+fi
+unlink "$STATE/plans/malformed.json"
+
 # Launcher behavior remains exact and preserves run_this.sh.
 OUT=$(house --plan --routine launchers)
 printf '%s\n' "$OUT" | grep -Fq 'candidates=2' || fail "launcher plan changed"
