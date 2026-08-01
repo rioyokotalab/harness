@@ -17,14 +17,6 @@ Next free ID: T-364.
 
 ## Active queue
 
-### T-362 — Routine housekeeping workflow
-
-**Phase:** proposal; awaiting owner approval of scope and of whether this
-becomes a new skill or an extension of the existing housekeeping policy.
-Nothing implemented.
-
-**Record:** `docs/tasks/T-362.md`.
-
 ### T-363 — Workspace lifecycle for alternating clients
 
 **Phase:** proposal; awaiting an owner decision between per-turn worktrees and
