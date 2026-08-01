@@ -410,6 +410,13 @@ ln -s "$RECOVERY" "$UNSAFE_RECEIPT"
 if house --recover-worktree --receipt "$UNSAFE_RECEIPT" >/dev/null 2>&1; then
     fail "symlink recovery receipt unexpectedly succeeded"
 fi
+RECOVERY_PLAN=$(sed -n 's/.*"plan":"\([^"]*\)".*/\1/p' "$RECOVERY")
+printf ' ' >>"$RECOVERY_PLAN"
+if ERROR=$(house --recover-worktree --receipt "$RECOVERY" 2>&1); then
+    fail "changed recovery plan unexpectedly succeeded"
+fi
+printf '%s\n' "$ERROR" | grep -Fq 'plan digest changed' ||
+    fail "changed recovery plan did not fail at its digest"
 
 # If a bulk closeout stops on its first candidate, recovery finishes only that
 # exact candidate and leaves every unstarted candidate for a fresh normal plan.
@@ -428,8 +435,8 @@ if HARNESS_TEST_INTERRUPT_AFTER_WORKTREE=1 house --apply --routine worktrees \
     --receipt "$PLAN" --token "$TOKEN" >/dev/null 2>&1; then
     fail "multi-candidate interruption unexpectedly succeeded"
 fi
-RECOVERY=$(grep -l '"phase":"directory-deleted"' \
-    "$STATE"/worktree-apply-*.json | grep -v 'worktree-apply-unsafe.json$' | tail -1)
+RECOVERY=$(grep -l '"current":"'$TEST_ROOT'/wt-multi-' \
+    "$STATE"/worktree-apply-*.json | tail -1)
 OUT=$(house --recover-worktree --receipt "$RECOVERY") ||
     fail "multi-candidate recovery failed"
 printf '%s\n' "$OUT" | grep -Fq 'remaining_replan=1' ||

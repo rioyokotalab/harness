@@ -1070,6 +1070,8 @@ def load_recovery_state(repo: Path, path: Path) -> Tuple[Dict[str, Any], Dict[st
         not isinstance(progress, dict)
         or progress.get("schema") != "harness-housekeeping-worktree-apply-v1"
         or not isinstance(progress.get("plan"), str)
+        or not isinstance(progress.get("plan_sha256"), str)
+        or not re.fullmatch(r"[0-9a-f]{64}", progress["plan_sha256"])
         or not isinstance(progress.get("completed"), list)
         or any(not isinstance(item, str) for item in progress["completed"])
     ):
@@ -1079,6 +1081,8 @@ def load_recovery_state(repo: Path, path: Path) -> Tuple[Dict[str, Any], Dict[st
     plans = state / "plans"
     if plan_path.resolve(strict=True).parent != plans.resolve(strict=True):
         die("worktree recovery plan is outside durable state")
+    if digest(plan_path) != progress["plan_sha256"]:
+        die("worktree recovery plan digest changed")
     try:
         plan = json.loads(plan_path.read_text(encoding="utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
@@ -1181,7 +1185,15 @@ def recover_worktree(repo: Path, receipt_path: Path) -> None:
     path = Path(current)
     if not path.is_absolute() or path.exists() or path.is_symlink():
         die("worktree recovery directory is present or unsafe")
-    archive_audit(repo, Path(archive_receipt))
+    archive_path = Path(archive_receipt)
+    parsed_archive = parse_archive_receipt(archive_path)
+    if (
+        len(parsed_archive["items"]) != 1
+        or parsed_archive["items"][0]["branch"] != branch
+        or parsed_archive["items"][0]["tip"] != tip
+    ):
+        die("worktree recovery archive candidate changed")
+    archive_audit(repo, archive_path)
 
     common = Path(text(git(repo, "rev-parse", "--git-common-dir")).strip())
     if not common.is_absolute():
@@ -1293,6 +1305,7 @@ def apply_worktrees(repo: Path, receipt_path: Path, token: str) -> None:
     progress: Dict[str, Any] = {
         "schema": "harness-housekeeping-worktree-apply-v1",
         "plan": str(receipt_path),
+        "plan_sha256": digest(receipt_path),
         "phase": "validated",
         "completed": [],
     }
