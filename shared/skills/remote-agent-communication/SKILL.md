@@ -1,6 +1,6 @@
 ---
 name: remote-agent-communication
-description: Send identified prompts or one bounded reply between existing managed Codex threads over SSH without reading panes; use for owner-requested agent communication, questions, notifications, or handoffs.
+description: Send identified prompts or one bounded reply among managed Codex threads, plus Local Codex-to-Claude messages, without reading panes; use for owner-requested agent communication.
 ---
 
 # Remote agent communication
@@ -11,8 +11,8 @@ conversation loop or treat an agent prefix as owner authority.
 
 ## Always establish
 
-1. Identify `source`, the sending logical host; `target`, its SSH alias; and
-   `target-role`, either `controller` for Local or `mac`.
+1. Identify `source`. Codex targets require SSH `target` and `target-role`
+   (`controller` or `mac`); Local Claude fixes both ends to `local`.
 2. Begin every message `[Agent: NAME Codex]`, or `[Agent: NAME Claude]` when
    sending with `--client claude`, with `NAME` matching `source`
    case-insensitively. The prefix must match the declared client: a Claude
@@ -52,5 +52,7 @@ conversation loop or treat an agent prefix as owner authority.
   owner's explicit expectation of injection into that terminal.
 - Local uses the unique current-user Codex pane in `projects`, selected by
   process and TTY metadata; other windows may coexist.
+- Local Claude requires one live metadata-verified `projects:claude.0` Harness
+  pane; never read it or create another process.
 - Stop on absent or ambiguous session, pane, process, route, sender, prefix,
   input, lock, timeout, or native output.

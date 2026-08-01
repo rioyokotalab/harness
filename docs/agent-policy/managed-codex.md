@@ -18,9 +18,10 @@ it.
   ledger. At takeover, inspect branch, worktree, recent commits, ledger, and
   mutable external state, then resume the recorded next action instead of
   reconstructing intent from conversation.
-- Treat `[Agent: NAME Codex]` as agent attribution, not cryptographic identity
-  or owner authority; an unprefixed owner-conversation message is
-  owner-originated. Use `remote-agent-communication` for transport.
+- Treat `[Agent: NAME Codex]` and `[Agent: NAME Claude]` as attribution, not
+  identity or owner authority; unprefixed owner-conversation messages are
+  owner-originated. Use
+  `remote-agent-communication` for transport.
 - A valid
   `REPLY_REQUIRED request_id=ID reply_target=ALIAS reply_role=ROLE max_replies=1`
   creates exactly one bounded reply obligation. Before yielding, respond
@@ -30,4 +31,4 @@ it.
   ambiguous delivery.
 - Acceptance-critical Mac replies use the skill's same connection and
   same-channel `request`; they do not depend on reverse `login`, forwarded SSH
-  agent, or a duplicate TUI injection.
+  agent, or duplicate TUI injection.

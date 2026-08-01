@@ -4,7 +4,7 @@ This is the authoritative active queue. Read it completely at cold start, then
 read only the linked record for the selected task. Completed chronology is
 indexed by `docs/tasks/index.tsv`; do not preload the historical snapshot.
 
-Next free ID: T-365.
+Next free ID: T-366.
 
 ## Resume contract
 
@@ -16,6 +16,13 @@ Next free ID: T-365.
 5. A failed mutable-state query is unknown, never evidence of absence.
 
 ## Active queue
+
+### T-365 — Direct Local Codex-to-Claude messages
+
+**Phase:** implementation validated; publish the protected change, then
+reconcile rollout without sending a live message.
+
+**Record:** `docs/tasks/T-365.md`.
 
 ### T-363 — Workspace lifecycle for alternating clients
 
